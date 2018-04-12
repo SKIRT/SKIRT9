@@ -1,0 +1,36 @@
+/**
+
+\page LegalInfo Legal Information
+
+\section LegalLic Licensing
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General
+Public License version 3, as published by the Free Software Foundation. A copy of this license can be found in the file
+\c LICENSE.txt provided with the program, or at <http://www.gnu.org/licenses/>.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+details.
+
+\section LegalThird Third-party libraries
+
+This program includes source code from the following third-party libraries:
+
+ - <b>CFITSIO</b> developed by NASA's HEASARC;
+   see <http://heasarc.gsfc.nasa.gov/docs/software/fitsio/fitsio.html>.
+ - <b>Voro++</b> described in Rycroft (2009, Chaos, 19);
+   see <http://math.lbl.gov/voro++/>.
+
+Please refer to the original licensing conditions for each of these third party software libraries.
+
+\section LegalCit Citations
+
+If you use (portions of) this program in your work, please cite one or more of the relevant papers listed on the SKIRT
+web site <http://www.skirt.ugent.be>.
+
+\section LegalCon Contact
+
+We invite you to use this program under the terms described above. We're also open to cooperation on selected projects.
+Please find our contact information on the SKIRT web site <http://www.skirt.ugent.be>.
+
+*/

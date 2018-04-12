@@ -1,0 +1,47 @@
+/*//////////////////////////////////////////////////////////////////
+////     The SKIRT project -- advanced radiative transfer       ////
+////       © Astronomical Observatory, Ghent University         ////
+///////////////////////////////////////////////////////////////// */
+
+#include "DoublePropertyHandler.hpp"
+#include "Item.hpp"
+#include "PropertyDef.hpp"
+#include "PropertyHandlerVisitor.hpp"
+
+////////////////////////////////////////////////////////////////////
+
+bool DoublePropertyHandler::hasDefaultValue() const
+{
+    return isValidDouble(property()->defaultValue());
+}
+
+////////////////////////////////////////////////////////////////////
+
+void DoublePropertyHandler::acceptVisitor(PropertyHandlerVisitor* visitor)
+{
+    visitor->visitPropertyHandler(this);
+}
+
+////////////////////////////////////////////////////////////////////
+
+double DoublePropertyHandler::defaultValue() const
+{
+    return toDouble(property()->defaultValue());
+}
+
+////////////////////////////////////////////////////////////////////
+
+double DoublePropertyHandler::value() const
+{
+    return target()->getDoubleProperty(property());
+}
+
+////////////////////////////////////////////////////////////////////
+
+void DoublePropertyHandler::setValue(double value)
+{
+    target()->setDoubleProperty(property(), value);
+    setChanged();
+}
+
+////////////////////////////////////////////////////////////////////

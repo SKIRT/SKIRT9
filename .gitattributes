@@ -1,0 +1,35 @@
+# Set the default behavior, in case people don't have core.autocrlf set.
+* text=auto
+
+# Explicitly declare text files that must be normalized to native line endings on checkout.
+*.h text
+*.hh text
+*.hpp text
+*.c text
+*.cc text
+*.cpp text
+*.py text
+*.sh text
+*.txt text
+*.dat text
+*.DAT text
+*.rawdat text
+*.rhb text
+*_chab_ssp.* text
+*.doxygen text
+*.xml text
+*.html text
+*.css text
+*.rc text
+
+# Explicitly declare files that are truly binary and should not be modified.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.pdf binary
+*.icns binary
+*.ico binary
+*.nb binary
+*.save binary
+*.fits binary
+*.gz binary

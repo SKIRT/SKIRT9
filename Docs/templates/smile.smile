@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--SMILE - Simple Metadata Interactive Language Editing © Astronomical Observatory, Ghent University-->
+<smile-schema type="Schema" format="1.1" producer="Peter Camps -- 16 Feb 2017">
+    <Schema name="SMILE" title="a SMILE schema file" version="1.0" extension="smile" root="smile-schema" type="Schema" format="1.1">
+        <types type="Type">
+            <Type name="Schema" base="" title="a SMILE schema describing the structure of a dataset" concrete="true">
+                <properties type="Property">
+                    <StringProperty name="name" title="the brief name of the schema"/>
+                    <StringProperty name="title" title="the user-friendly description for a dataset described by the schema"/>
+                    <StringProperty name="version" title="the version string for the schema definition"/>
+                    <StringProperty name="extension" title="the filename extension for data sets described by the schema"/>
+                    <StringProperty name="root" title="the name of the root element in data sets described by the schema"/>
+                    <StringProperty name="type" title="the base type of the top-level item in data sets described by the schema"/>
+                    <StringProperty name="format" title="the version string for the data format described by the schema"/>
+                    <StringProperty name="url" title="a URL pointing to information on the Web for the schema" optional="true"/>
+                    <ItemListProperty name="types" title="the types in the schema" base="Type"/>
+                    <ItemListProperty name="quantities" title="the physical quantities in the schema" base="Quantity" optional="true"/>
+                    <ItemListProperty name="unitSystems" title="the unit systems in the schema" base="UnitSystem" optional="true"/>
+                </properties>
+            </Type>
+            <Type name="Type" base="" title="a concrete or abstract type for use in the described data set" concrete="true">
+                <properties type="Property">
+                    <StringProperty name="name" title="the brief name of the type"/>
+                    <StringProperty name="title" title="the user-friendly description for the type"/>
+                    <StringProperty name="base" title="the name of the type from which this type directly inherits" optional="true"/>
+                    <BoolProperty name="concrete" title="allow this type to actually occur in the data set (concrete type)" default="true"/>
+                    <BoolProperty name="subPropertiesFirst" title="list properties of sub-types before those of this base type" default="false"/>
+                    <StringProperty name="allowedIf" title="the Boolean expression that determines when this type is allowed" optional="true"/>
+                    <ItemListProperty name="properties" title="the properties of the type" base="Property" optional="true" default="StringProperty"/>
+                </properties>
+            </Type>
+            <Type name="Property" base="" title="a property of a type, for use in the described data set" concrete="false">
+                <properties type="Property">
+                    <StringProperty name="name" title="the brief name of the property"/>
+                    <StringProperty name="title" title="the user-friendly description for the property"/>
+                    <BoolProperty name="silent" title="hide the property from non-expert users" default="false"/>
+                    <StringProperty name="default" title="the default value for the property in case it is missing" optional="true"/>
+                    <StringProperty name="relevantIf" title="the Boolean expression that determines when this property is relevant" optional="true"/>
+                </properties>
+            </Type>
+            <Type name="StringProperty" base="Property" title="a string property" concrete="true">
+                <properties type="Property">
+                    <BoolProperty name="optional" title="allow the property to be missing or empty" default="false"/>
+                </properties>
+            </Type>
+            <Type name="BoolProperty" base="Property" title="a Boolean property" concrete="true"/>
+            <Type name="IntProperty" base="Property" title="an integer property" concrete="true">
+                <properties type="Property">
+                    <StringProperty name="min" title="the minimum value for the property" optional="true"/>
+                    <StringProperty name="max" title="the maximum value for the property" optional="true"/>
+                </properties>
+            </Type>
+            <Type name="EnumProperty" base="Property" title="an enumeration property" concrete="true">
+                <properties type="Property">
+                    <StringProperty name="trueIf" title="the brief name of the enumeration for which this property is considered true" optional="true"/>
+                    <ItemListProperty name="enumValues" title="the enumeration values for the property" base="EnumValue"/>
+                </properties>
+            </Type>
+            <Type name="EnumValue" base="" title="an enumeration value" concrete="true">
+                <properties type="Property">
+                    <StringProperty name="name" title="the brief name of the enumeration value"/>
+                    <StringProperty name="title" title="the user-friendly description for the enumeration value"/>
+                </properties>
+            </Type>
+            <Type name="DoubleProperty" base="Property" title="a floating point property" concrete="true">
+                <properties type="Property">
+                    <StringProperty name="min" title="the minimum value for the property" optional="true"/>
+                    <StringProperty name="max" title="the maximum value for the property" optional="true"/>
+                    <StringProperty name="quantity" title="the physical quantity represented by the property value" optional="true"/>
+                </properties>
+            </Type>
+            <Type name="DoubleListProperty" base="Property" title="a floating point list property" concrete="true">
+                <properties type="Property">
+                    <StringProperty name="min" title="the minimum value for the property" optional="true"/>
+                    <StringProperty name="max" title="the maximum value for the property" optional="true"/>
+                    <StringProperty name="quantity" title="the physical quantity represented by the property values" optional="true"/>
+                </properties>
+            </Type>
+            <Type name="ItemProperty" base="Property" title="a compound item property" concrete="true">
+                <properties type="Property">
+                    <BoolProperty name="optional" title="allow the property to be missing" default="false"/>
+                    <StringProperty name="base" title="the base type for the property item"/>
+                </properties>
+            </Type>
+            <Type name="ItemListProperty" base="Property" title="a compound item list property" concrete="true">
+                <properties type="Property">
+                    <BoolProperty name="optional" title="allow the property to be missing" default="false"/>
+                    <StringProperty name="base" title="the base type for the property items"/>
+                </properties>
+            </Type>
+
+            <Type name="Quantity" base="" title="a physical quantity for use in the described data set" concrete="true">
+                <properties type="Property">
+                    <StringProperty name="name" title="the brief name of the physical quantity"/>
+                    <StringProperty name="title" title="the user-friendly description for the physical quantity" optional="true"/>
+                    <ItemListProperty name="units" title="the units for the physical quantity" base="Unit"/>
+                </properties>
+            </Type>
+            <Type name="Unit" base="" title="a unit used to express values in the described data set" concrete="true">
+                <properties type="Property">
+                    <StringProperty name="name" title="the brief name of the unit"/>
+                    <StringProperty name="title" title="the user-friendly description for the unit" optional="true"/>
+                    <DoubleProperty name="factor" title="the factor for converting a value in this unit to internal units" default="1"/>
+                    <DoubleProperty name="offset" title="the offset for converting a value in this unit to internal units" default="0"/>
+                </properties>
+            </Type>
+            <Type name="UnitSystem" base="" title="a unit system for use in the described data set" concrete="true">
+                <properties type="Property">
+                    <StringProperty name="name" title="the brief name of the unit system"/>
+                    <StringProperty name="title" title="the user-friendly description for the unit system" optional="true"/>
+                    <ItemListProperty name="defaultUnits" title="the default units for the unit system" base="DefaultUnit"/>
+                </properties>
+            </Type>
+            <Type name="DefaultUnit" base="" title="a default unit for a physical quantity" concrete="true">
+                <properties type="Property">
+                    <StringProperty name="quantity" title="the brief name of the physical quantity"/>
+                    <StringProperty name="unit" title="the brief name of the default unit for the physical quantity"/>
+                </properties>
+            </Type>
+        </types>
+    </Schema>
+</smile-schema>
