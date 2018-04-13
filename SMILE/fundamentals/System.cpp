@@ -25,6 +25,7 @@
 #else
 #include <dirent.h>     // for reading directories
 #include <execinfo.h>   // for stack trace
+#include <fcntl.h>      // for opening files (low-level)
 #include <sys/stat.h>   // for reading file status
 #include <sys/mman.h>   // for memory mapped files
 #include <unistd.h>     // for gethostname
