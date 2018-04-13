@@ -8,6 +8,7 @@
 #include "StringUtils.hpp"
 #include "System.hpp"
 #include <mutex>
+#include <unordered_map>
 
 ////////////////////////////////////////////////////////////////////
 
@@ -16,41 +17,62 @@ namespace
     // flag becomes true if the static paths have been initialized
     std::once_flag _initialized;
 
-    // the static application and resource paths
-    string _applicationPath;
-    string _resourcePath;
+    // the resource paths:  <filename, complete_path>
+    std::unordered_map<string,string> _resourcePaths;
 
-    // relative paths to check for presence of data folder (built-in resources)
-    const char* _datpaths[] = { "data", "../../../git/SKIRT/data", "../../../../git/SKIRT/data" };
-    const int _Ndatpaths = sizeof(_datpaths) / sizeof(const char*);
+    // relative paths to check for presence of built-in resources
+    const char* _intpaths[] = { "../../../git/SKIRT/resources", "../../../../git/SKIRT/resources" };
+    const int _Nintpaths = sizeof(_intpaths) / sizeof(const char*);
 
-    // relative paths to check for presence of extdat folder (external resources)
-    const char* _extdatpaths[] = { "extdat", "../../../extdat", "../../../../extdat" };
-    const int _Nextdatpaths = sizeof(_extdatpaths) / sizeof(const char*);
+    // relative paths to check for presence of external resources
+    const char* _extpaths[] = {"../../../resources", "../../../../resources" };
+    const int _Nextpaths = sizeof(_extpaths) / sizeof(const char*);
 
-    // sets the static application and resource paths, or throws an error if there is a problem
-    void setStaticPaths()
+    // recursively searches the given directory and its subdirectories for any files
+    // and adds the corresponding canonical paths to the resource dictionary
+    void findResourcePathsIn(string directory)
     {
-        // get the executable path (or the empty string in case of failure)
-        string execPath = System::executablePath();
-        if (execPath.empty()) throw FATALERROR("Could not determine path to executable");
-
-        // store the location of the executable (i.e. the path to the containing directory)
-        _applicationPath = StringUtils::dirPath(execPath);
-
-        // iterate over the relative paths
-        for (int i=0; i<_Ndatpaths; i++)
+        // search the current level
+        for (const string& filename : System::filesInDirectory(directory))
         {
-            string test = StringUtils::joinPaths(_applicationPath, _datpaths[i]);
-            if (System::isDir(test))
-            {
-                _resourcePath = System::canonicalPath(test) + "/";
-                return;
-            }
+            if (!_resourcePaths.count(filename))
+                _resourcePaths.emplace(filename, System::canonicalPath(StringUtils::joinPaths(directory, filename)));
         }
 
-        // if we reach here, the resource folder wasn't found
-        throw FATALERROR("Could not locate 'data' directory relative to '" + _applicationPath + "'");
+        // search the subdirectories
+        for (const string& subdirname : System::dirsInDirectory(directory))
+        {
+            findResourcePathsIn(StringUtils::joinPaths(directory, subdirname));
+        }
+    }
+
+    // populates the dictionary with resource paths, or throws an error if there is a problem
+    void findResourcePaths()
+    {
+        // get the executable path (or the empty string in case of failure)
+        string executableFilePath = System::executablePath();
+        if (executableFilePath.empty()) throw FATALERROR("Could not determine path to executable");
+
+        // get the location of the executable (i.e. the path to the containing directory)
+        string executableDirPath = StringUtils::dirPath(executableFilePath);
+
+        // iterate over the relative paths for built-in resources
+        for (int i=0; i<_Nintpaths; i++)
+        {
+            string test = StringUtils::joinPaths(executableDirPath, _intpaths[i]);
+            if (System::isDir(test)) findResourcePathsIn(test);
+        }
+
+        // at this point we should have found at least some internal resources
+        if (_resourcePaths.empty())
+            throw FATALERROR("Could not locate built-in resources relative to '" + executableDirPath + "'");
+
+        // iterate over the relative paths for external resources
+        for (int i=0; i<_Nextpaths; i++)
+        {
+            string test = StringUtils::joinPaths(executableDirPath, _extpaths[i]);
+            if (System::isDir(test)) findResourcePathsIn(test);
+        }
     }
 }
 
@@ -66,7 +88,7 @@ FilePaths::FilePaths(SimulationItem* parent)
 void FilePaths::setupSelfBefore()
 {
     SimulationItem::setupSelfBefore();
-    std::call_once(_initialized, setStaticPaths);
+    std::call_once(_initialized, findResourcePaths);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -131,55 +153,15 @@ string FilePaths::output(string name) const
 
 string FilePaths::resource(string name)
 {
-    // initialize the static paths if needed
-    std::call_once(_initialized, setStaticPaths);
-    return _resourcePath + name;
-}
+    // initialize the resource paths if needed
+    std::call_once(_initialized, findResourcePaths);
 
-////////////////////////////////////////////////////////////////////
-
-namespace
-{
-    // recursively searches the given directory and its subdirectories for the given file
-    // returns the full path if found or the empty string if not
-    string findFile(string directory, string filename)
+    if (!_resourcePaths.count(name))
     {
-        // search the current level
-        if (StringUtils::contains(System::filesInDirectory(directory), filename))
-        {
-            return StringUtils::joinPaths(directory, filename);
-        }
-
-        // search the subdirectories
-        for (const string& subdir : System::dirsInDirectory(directory))
-        {
-            string result = findFile(StringUtils::joinPaths(directory, subdir), filename);
-            if (!result.empty()) return result;
-        }
-
-        // report failure
-        return string();
+        throw FATALERROR("Could not locate resource '" + name + "'"
+                         "\nDownload additional resources from www.skirt.ugent.be");
     }
-}
-
-////////////////////////////////////////////////////////////////////
-
-string FilePaths::externalResource(string name)
-{
-    // initialize the static paths if needed
-    std::call_once(_initialized, setStaticPaths);
-
-    // iterate over the relative paths
-    for (int i=0; i<_Nextdatpaths; i++)
-    {
-        // recursively iterate over subdirectories looking for a file with the specified name
-        string path = findFile(_applicationPath + _extdatpaths[i], name);
-        if (!path.empty()) return System::canonicalPath(path);
-    }
-
-    // if we reach here, the resource wasn't found
-    throw FATALERROR("Could not locate external resource '" + name + "'"
-                     "\nDownload external resources from www.skirt.ugent.be using downloadextdat.sh");
+    return _resourcePaths.at(name);
 }
 
 ////////////////////////////////////////////////////////////////////

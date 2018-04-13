@@ -10,6 +10,9 @@
 #include "StringUtils.hpp"
 #include "TimeLogger.hpp"
 
+// included for testing purposes
+#include "FilePaths.hpp"
+
 ////////////////////////////////////////////////////////////////////
 
 void MonteCarloSimulation::setupSelfBefore()
@@ -43,7 +46,10 @@ int MonteCarloSimulation::dimension() const
 
 void MonteCarloSimulation::runSelf()
 {
-    TimeLogger logger(log(), "the fake simulation");
+    TimeLogger logger(log(), "the test phase");
+
+    log()->info("Located resource "+ FilePaths::resource("README.txt"));
+    log()->info("Located resource "+ FilePaths::resource("SunSED.stab"));
 }
 
 ////////////////////////////////////////////////////////////////////
