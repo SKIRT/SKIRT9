@@ -157,6 +157,29 @@ public:
         processing the path. */
     static string canonicalPath(string path);
 
+    // ================== Mapped File I/O ==================
+
+    /** This function acquires a read-only memory map on the specified file. In other words, the
+        contents of the file is mapped directly into the memory space of the calling process. If
+        successful, the function returns the address and the length (in bytes) of the memory map.
+        If the memory map cannot be acquired, the returned address is the null pointer and the
+        returned length is zero. On Windows the function replaces forward slashes in the specified
+        file path by backward slashes.
+
+        It is allowed to acquire a memory map on the same file more than once (in the same or in
+        different execution threads). As long as the previous memory map on the file has not been
+        released, the same memory map is returned for subsequent acquisitions. */
+    static std::pair<void*,size_t> acquireMemoryMap(string path);
+
+    /** This function releases a previously acquired memory map on the specified file. Releasing a
+        memory map invalidates any and all pointers into the memory range previously occupied by
+        the memory map. On Windows the function replaces forward slashes in the specified file path
+        by backward slashes.
+
+        If multiple memory maps have been acquired on the same file, a matching number of release
+        operations is needed to actually release the memory map. */
+    static void releaseMemoryMap(string path);
+
     // ================== Debugging ==================
 
     /** This function returns a list of lines representing a stack trace to the current execution

@@ -12,6 +12,7 @@
 #include <ctime>
 #include <locale>
 #include <mutex>
+#include <unordered_map>
 
 #ifdef _WIN64
 #include <Windows.h>
@@ -25,6 +26,7 @@
 #include <dirent.h>     // for reading directories
 #include <execinfo.h>   // for stack trace
 #include <sys/stat.h>   // for reading file status
+#include <sys/mman.h>   // for memory mapped files
 #include <unistd.h>     // for gethostname
 #include <iostream>
 #endif
@@ -42,7 +44,7 @@ namespace
     vector<string> _arguments;
 
     // Mutex to guard console input/output operations
-    std::mutex _mutex;
+    std::mutex _consoleMutex;
 
     // The strings beginning and ending a message, indexed by level (Info, Warning, Success, Error, Prompt=Error+1)
     // NOTE: this depends on the order in the Level enum --> rather dirty
@@ -76,6 +78,26 @@ namespace
 
     // Arbitrary maximum path length; functions may fail or even crash if paths exceed this length
     constexpr int MAXPATHLEN = 8000;
+
+    // Mutex to guard the acquisition and release of file memory maps
+    std::mutex _mapMutex;
+
+    // Data type for storing information on a currently acquired file memory map
+    struct MapRecord
+    {
+        void* start{nullptr};   // pointer to start of memory map
+        size_t length{0};       // length of memory map
+        int count{0};           // current number of acquisitions for this map
+#ifdef _WIN64
+        HANDLE filehandle{INVALID_HANDLE_VALUE};
+        HANDLE maphandle{NULL};
+#else
+        int filehandle{-1};
+#endif
+    };
+
+    // Dictionary keeping track of all currently acquired file memory maps: <canonical_path, map_record>
+    std::unordered_map<string,MapRecord> _maps;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -196,6 +218,9 @@ void System::initialize(int argc, char **argv)
 
 void System::finalize()
 {
+    // Release any remaining file memory mappings
+    while (!_maps.empty()) System::releaseMemoryMap(_maps.begin()->first);
+
     // Clear and deallocate the list of command line arguments
     vector<string>().swap(_arguments);
 
@@ -372,7 +397,7 @@ namespace
 
 void System::log(string message, LogLevel level)
 {
-    std::unique_lock<std::mutex> lock(_mutex);
+    std::unique_lock<std::mutex> lock(_consoleMutex);
     outputMessage(message, static_cast<size_t>(level));  // dirty cast
 }
 
@@ -380,7 +405,7 @@ void System::log(string message, LogLevel level)
 
 string System::prompt(string message)
 {
-    std::unique_lock<std::mutex> lock(_mutex);
+    std::unique_lock<std::mutex> lock(_consoleMutex);
     outputMessage(message, static_cast<size_t>(LogLevel::Error)+1);  // dirty cast
 
 #ifdef _WIN64
@@ -491,7 +516,7 @@ namespace
         if (directory.empty()) directory += '.';
 
         // lock although functions are probably thread-safe in modern library implementations
-        std::unique_lock<std::mutex> lock(_mutex);
+        std::unique_lock<std::mutex> lock(_consoleMutex);
 
     #ifdef _WIN64
         // open directory stream
@@ -578,6 +603,118 @@ string System::canonicalPath(string path)
     if (realpath(path.c_str(), buffer)) return buffer;
 # endif
     return path;
+}
+
+////////////////////////////////////////////////////////////////////
+
+std::pair<void*, size_t> System::acquireMemoryMap(string path)
+{
+    // use the canonical path as a unique identifier for the file
+    path = canonicalPath(path);
+
+    // perform the mapping operation in a critical section because
+    //  - access to our map dictionary is certainly not thread-safe
+    //  - thread-safety of the operating system calls is not so clear
+    std::unique_lock<std::mutex> lock(_mapMutex);
+
+    // make a new map only if we don't have one cached
+    if (!_maps.count(path))
+    {
+        MapRecord record;
+
+        // attempt to acquire the map:
+        //   - when this fails, the start field remains nullptr and other fields are unspecified
+        //   - when this succeeds, all fields will be properly initialized (and thus start will be nonzero)
+
+#if defined(_WIN64)
+        // open the file
+        record.filehandle = CreateFile(toUTF16(path).get(), GENERIC_READ, FILE_SHARE_READ, 0,
+                                       OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+        if (record.filehandle != INVALID_HANDLE_VALUE)
+        {
+            // get the file size
+            LARGE_INTEGER filesize;
+            if (GetFileSizeEx(filehandle, &filesize)) record.length = filesize.QuadPart;
+
+            if (record.length)
+            {
+                // create the map object (without mapping it into memory)
+                record.maphandle = CreateFileMapping(filehandle, 0, PAGE_READONLY, 0, 0, 0);
+                if (record.maphandle != NULL)
+                {
+                    // actually map it into memory
+                    record.start = MapViewOfFile(maphandle, FILE_MAP_READ, 0, 0, 0));
+                }
+            }
+
+            // if map acquisition failed, close any successful handles
+            if (!record.start)
+            {
+                if (record.maphandle != NULL) CloseHandle(record.maphandle);
+                CloseHandle(record.filehandle);
+            }
+        }
+#else
+        // open the file
+        record.filehandle = open(path.c_str(), O_RDONLY);
+        if (record.filehandle != -1)
+        {
+            // get the file size
+            struct stat filesize;
+            if (fstat(record.filehandle, &filesize) != -1) record.length = filesize.st_size;
+
+            if (record.length)
+            {
+                // create the mapping
+                auto start = mmap(0, record.length, PROT_READ, MAP_PRIVATE, record.filehandle, 0);
+                if (start != MAP_FAILED) record.start = start;
+            }
+
+            // if map acquisition failed, close the file
+            if (!record.start)
+            {
+                close(record.filehandle);
+            }
+        }
+#endif
+
+        // if successful, add the map to our dictionary; otherwise return "failure"
+        if (record.start) _maps.emplace(path, record);
+        else return std::make_pair(nullptr, 0);
+    }
+
+    // retrieve and return the new or existing map
+    MapRecord& record = _maps.at(path);
+    record.count++;
+    return std::make_pair(record.start, record.length);
+}
+
+////////////////////////////////////////////////////////////////////
+
+void System::releaseMemoryMap(string path)
+{
+    if (_maps.count(path))
+    {
+        MapRecord& record = _maps.at(path);
+        record.count--;
+
+        // actually release the memory map only when count has reached zero
+        if (!record.count)
+        {
+
+#if defined(_WIN64)
+            UnmapViewOfFile(record.start);
+            CloseHandle(record.maphandle);
+            CloseHandle(record.filehandle);
+#else
+            munmap(record.start, record.length);
+            close(record.filehandle);
+#endif
+
+            // remove the map entry from our dictionary
+            _maps.erase(path);
+        }
+    }
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -8,6 +8,7 @@
 #include "Log.hpp"
 #include "Random.hpp"
 #include "StringUtils.hpp"
+#include "System.hpp"
 #include "TimeLogger.hpp"
 
 // included for testing purposes
@@ -50,6 +51,19 @@ void MonteCarloSimulation::runSelf()
 
     log()->info("Located resource "+ FilePaths::resource("README.txt"));
     log()->info("Located resource "+ FilePaths::resource("SunSED.stab"));
+
+    auto map = System::acquireMemoryMap(FilePaths::resource("SunSED.stab"));
+    auto map2 = System::acquireMemoryMap(FilePaths::resource("SunSED.stab"));
+    if (map != map2) log()->error("Mappings differ !");
+
+    auto start = static_cast<const char*>(map.first);
+    auto end = static_cast<const char*>(map.first) + map.second;
+
+    if (map.first)
+    {
+        log()->warning(string(start, 7));
+        log()->warning(string(end-8, 7));
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
