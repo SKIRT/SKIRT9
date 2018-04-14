@@ -629,22 +629,22 @@ std::pair<void*, size_t> System::acquireMemoryMap(string path)
 
 #if defined(_WIN64)
         // open the file
-        record.filehandle = CreateFile(toUTF16(path).get(), GENERIC_READ, FILE_SHARE_READ, 0,
+        record.filehandle = CreateFileW(toUTF16(path).get(), GENERIC_READ, FILE_SHARE_READ, 0,
                                        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
         if (record.filehandle != INVALID_HANDLE_VALUE)
         {
             // get the file size
             LARGE_INTEGER filesize;
-            if (GetFileSizeEx(filehandle, &filesize)) record.length = filesize.QuadPart;
+            if (GetFileSizeEx(record.filehandle, &filesize)) record.length = filesize.QuadPart;
 
             if (record.length)
             {
                 // create the map object (without mapping it into memory)
-                record.maphandle = CreateFileMapping(filehandle, 0, PAGE_READONLY, 0, 0, 0);
+                record.maphandle = CreateFileMapping(record.filehandle, 0, PAGE_READONLY, 0, 0, 0);
                 if (record.maphandle != NULL)
                 {
                     // actually map it into memory
-                    record.start = MapViewOfFile(maphandle, FILE_MAP_READ, 0, 0, 0));
+                    record.start = MapViewOfFile(record.maphandle, FILE_MAP_READ, 0, 0, 0);
                 }
             }
 
