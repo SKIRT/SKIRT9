@@ -141,8 +141,8 @@ public:
         First of all, the number of axes in this stored table resource file must match the template
         parameter \em N. Furthermore, one of the tabulated quantity names in the resource file and
         its corresponding unit must match the information specified in the \em quantity argument.
-        The string passed to this argument must have the syntax "quantityName(quantityUnit)".
-        Examples include "Llambda(W/m)", "Qabs(1)", and "h(J/m3)". For a stored table resource file
+        The string passed to this argument must have the syntax "quantityName;quantityUnit".
+        Examples include "Llambda;W/m", "Qabs;1", and "h;J/m3". For a stored table resource file
         with multiple tabulated quantities, the \em quantity argument at the same time determines
         which of these quantities will be associated with the stored table instance.
 

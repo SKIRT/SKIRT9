@@ -12,7 +12,7 @@
 #include "TimeLogger.hpp"
 
 // included for testing purposes
-#include "FilePaths.hpp"
+#include "StaticPaths.hpp"
 #include "StoredTable.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -50,11 +50,16 @@ void MonteCarloSimulation::runSelf()
 {
     TimeLogger logger(log(), "the test phase");
 
+    {
+        StoredTable<1> table;
+        table.open("SunSED", "Llambda;W/m");
+    }
+
     for (int k = 1; k<=9; ++k)
     {
         TimeLogger logger(log(), "big table " + std::to_string(k));
 
-        auto map = System::acquireMemoryMap(FilePaths::resource("BigTable"+std::to_string(k)+".stab"));
+        auto map = System::acquireMemoryMap(StaticPaths::resource("BigTable"+std::to_string(k)+".stab"));
         if (!map.first) throw FATALERROR("Cannot acquire memory map");
         auto start = static_cast<const char*>(map.first);
         auto end = static_cast<const char*>(map.first) + map.second;
@@ -75,11 +80,6 @@ void MonteCarloSimulation::runSelf()
             ysum += y[i];
         }
         log()->warning("xsum: " + StringUtils::toString(xsum) + "    ysum: " + StringUtils::toString(ysum));
-    }
-
-    {
-        StoredTable<1> table;
-        table.open("SunSED", "Llambda(W/m)");
     }
 }
 

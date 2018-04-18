@@ -141,6 +141,14 @@ string StringUtils::padLeft(string text, size_t length, char pad)
 
 ////////////////////////////////////////////////////////////////////
 
+string StringUtils::padRight(string text, size_t length, char pad)
+{
+    if (text.length() < length) text.append(length-text.length(), pad);
+    return text;
+}
+
+////////////////////////////////////////////////////////////////////
+
 string StringUtils::toLower(string text)
 {
     // use the C++ function, which works with any character type (as opposed to the less portable C function)

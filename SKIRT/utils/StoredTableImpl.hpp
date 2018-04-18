@@ -19,7 +19,7 @@ namespace StoredTable_Impl
     /** This function performs the open() operation as described for the function with the same name in the
         StoredTable class template. It receives references or pointers to all data members of the
         stored table instance, in addition to the input parameters of the open() function. */
-    void open(size_t N, string filename, string quantity,                   // input parameters
+    void open(size_t numAxes, string filename, string quantity,             // input parameters
               string& filePath,                                             // output parameter by reference
               const double** axBeg, const double** qtyBeg, size_t* axLen,   // output parameters via pointers
               bool* axLog, bool* qtyLog);

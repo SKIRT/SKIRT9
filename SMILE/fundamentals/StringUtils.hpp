@@ -54,6 +54,12 @@ public:
         specified length, the input string is returned unchanged. */
     static string padLeft(string text, size_t length, char pad = ' ');
 
+    /** Pads the text string with the specified pad character at the right until it has the
+        specified length (so that the string is left-aligned), and returns the result. The default
+        pad character is a space. If the length of the input string is equal to or larger than the
+        specified length, the input string is returned unchanged. */
+    static string padRight(string text, size_t length, char pad = ' ');
+
     /** Converts upper-case characters in the text string to lower case, and returns the result. */
     static string toLower(string text);
 
