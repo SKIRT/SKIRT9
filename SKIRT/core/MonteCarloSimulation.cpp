@@ -13,6 +13,7 @@
 
 // included for testing purposes
 #include "FilePaths.hpp"
+#include "StoredTable.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -74,6 +75,11 @@ void MonteCarloSimulation::runSelf()
             ysum += y[i];
         }
         log()->warning("xsum: " + StringUtils::toString(xsum) + "    ysum: " + StringUtils::toString(ysum));
+    }
+
+    {
+        StoredTable<1> table;
+        table.open("SunSED", "Llambda(W/m)");
     }
 }
 

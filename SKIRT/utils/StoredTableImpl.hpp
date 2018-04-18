@@ -1,0 +1,35 @@
+/*//////////////////////////////////////////////////////////////////
+////     The SKIRT project -- advanced radiative transfer       ////
+////       © Astronomical Observatory, Ghent University         ////
+///////////////////////////////////////////////////////////////// */
+
+#ifndef STOREDTABLEIMPL_HPP
+#define STOREDTABLEIMPL_HPP
+
+#include "Basics.hpp"
+
+////////////////////////////////////////////////////////////////////
+
+/** This namespace contains private utilities for StoredTable. These non-template functions are
+    seperated out into a seperate compilation unit (1) to avoid duplicating the code for each type
+    of StoredTable and (2) to avoid propagating the dependencies (includes) of the implementation
+    to all StoredTable users. */
+namespace StoredTable_Impl
+{
+    /** This function performs the open() operation as described for the function with the same name in the
+        StoredTable class template. It receives references or pointers to all data members of the
+        stored table instance, in addition to the input parameters of the open() function. */
+    void open(size_t N, string filename, string quantity,                   // input parameters
+              string& filePath,                                             // output parameter by reference
+              const double** axBeg, const double** qtyBeg, size_t* axLen,   // output parameters via pointers
+              bool* axLog, bool* qtyLog);
+
+    /** This function performs the close() operation as described for the destructor of the
+        StoredTable class template. It receives the canonical path to the associated resource file,
+        or the empty string if no association exists. */
+    void close(string filePath);
+}
+
+////////////////////////////////////////////////////////////////////
+
+#endif
