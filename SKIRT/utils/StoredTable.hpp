@@ -8,6 +8,7 @@
 
 #include "Array.hpp"
 #include "StoredTableImpl.hpp"
+#include "TableImpl.hpp"
 #include <array>
 #include <functional>
 
@@ -165,14 +166,6 @@ public:
 
 public:
 
-    /** This function returns a copy of the value at the specified N indices. There is no range
-        checking. Out-of-range index values cause unpredictable behavior. */
-//    template <typename... Indices, typename = std::enable_if_t<Table_Impl::isValidArgList<N, Indices...>()>>
-//    double operator()(Indices... indices) const
-//    {
-//       return _data[flattenedIndex(indices...)];
-//    }
-
     /** This function returns a copy of the value at the specified index (for a one-dimensional
         table only). There is no range checking. Out-of-range index values cause unpredictable
         behavior. */
@@ -181,18 +174,25 @@ public:
 
     // ================== Accessing the raw data ==================
 
-private:
+public:
+    /** This function returns a copy of the value at the specified N indices. There is no range
+        checking. Out-of-range index values cause unpredictable behavior. */
+    template <typename... Indices, typename = std::enable_if_t<Table_Impl::isValidArgList<N, Indices...>()>>
+    double atIndices(Indices... indices) const
+    {
+       return _qtyBeg[flattenedIndex(indices...)];
+    }
+
     /** This template function returns the flattened index in the underlying data array for the
         specified N indices. */
-//    template <typename... Indices, typename = std::enable_if_t<Table_Impl::isValidArgList<N, Indices...>()>>
-//    size_t flattenedIndex(Indices... indices) const
-//    {
-//        std::array<size_t, N> indexes = {{ static_cast<size_t>(indices)... }};
-//        size_t result = indexes[0];
-//        for (size_t k = 1; k!=N; ++k) result = result * _sizes[k] + indexes[k];
-//        return result;
-//    }
-
+    template <typename... Indices, typename = std::enable_if_t<Table_Impl::isValidArgList<N, Indices...>()>>
+    size_t flattenedIndex(Indices... indices) const
+    {
+        std::array<size_t, N> indexes = {{ static_cast<size_t>(indices)... }};
+        size_t result = indexes[0];
+        for (size_t k = 1; k!=N; ++k) result = result * _axLen[k] + indexes[k];
+        return result;
+    }
 
     // ================== Data members ==================
 

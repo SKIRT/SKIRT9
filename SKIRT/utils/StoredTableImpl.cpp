@@ -58,9 +58,12 @@ void StoredTable_Impl::open(size_t numAxes, string filename, string quantity,
     for (size_t i = 0; i<numAxes; ++i) *axLog++ = (memcmp("log     ", currentItem++->stringType, itemSize) == 0);
 
     // store the grid length and a pointer to the first value for each axis
+    // calculate the number of values in a quantity table on the fly
+    size_t qntyLen = 1;
     for (size_t i = 0; i<numAxes; ++i)
     {
         size_t length = currentItem++->sizeType;
+        qntyLen *= length;
         *axLen++ = length;
         *axBeg++ = &currentItem->doubleType;
         currentItem += length;
@@ -74,16 +77,26 @@ void StoredTable_Impl::open(size_t numAxes, string filename, string quantity,
     string qntySpec = StringUtils::padRight(splitQuantity[0], itemSize);
     string unitSpec = StringUtils::padRight(splitQuantity[1], itemSize);
 
-    // look for the appropriate quantity and unit
+    // look for the appropriate quantity
     size_t numQnts = currentItem++->sizeType;
     size_t qntyIndex = numQnts;
     for (size_t i = 0; i<numQnts; ++i)
+    {
         if (!memcmp(qntySpec.c_str(), currentItem++->stringType, itemSize)) qntyIndex = i;
-    size_t unitIndex = numQnts;
+    }
+    if (qntyIndex==numQnts)
+        throw FATALERROR("Tabulated quantity " + qntySpec + " is not in stored table " + filePath);
+
+    // verify the corresponding unit
     for (size_t i = 0; i<numQnts; ++i)
-        if (!memcmp(unitSpec.c_str(), currentItem++->stringType, itemSize)) unitIndex = i;
-    if (qntyIndex != unitIndex || qntyIndex==numQnts)
-        throw FATALERROR("Tabulated quantity " + quantity + " is not in stored table " + filePath);
+    {
+        if (i==qntyIndex)
+        {
+            if (memcmp(unitSpec.c_str(), currentItem++->stringType, itemSize))
+                throw FATALERROR("Tabulated quantity does not have unit" + unitSpec + " in stored table " + filePath);
+        }
+        else currentItem++;
+    }
 
     // store the corresponding interpolation scale
     for (size_t i = 0; i<numQnts; ++i)
@@ -93,7 +106,6 @@ void StoredTable_Impl::open(size_t numAxes, string filename, string quantity,
     }
 
     // calculate and store the pointer to the first quantity value
-    size_t qntyLen = std::accumulate(axLen, axLen+numAxes, static_cast<size_t>(1), std::multiplies<size_t>());
     *qtyBeg = (&currentItem->doubleType) + qntyIndex*qntyLen;
 }
 

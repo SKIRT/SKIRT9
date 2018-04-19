@@ -52,8 +52,13 @@ void MonteCarloSimulation::runSelf()
 
     {
         StoredTable<1> table;
-        table.open("SunSED", "Llambda;W/m");
+        table.open("MeanDraineLiOpticalProps", "sigmaabs;m2/H");
+
+        log()->warning("0: " + StringUtils::toString(table.atIndices(0)));
+        log()->warning("10: " + StringUtils::toString(table.atIndices(10)));
+        log()->warning("799: " + StringUtils::toString(table.atIndices(799)));
     }
+/*
 
     for (int k = 1; k<=9; ++k)
     {
@@ -81,6 +86,7 @@ void MonteCarloSimulation::runSelf()
         }
         log()->warning("xsum: " + StringUtils::toString(xsum) + "    ysum: " + StringUtils::toString(ysum));
     }
+*/
 }
 
 ////////////////////////////////////////////////////////////////////
