@@ -30,7 +30,8 @@ namespace
 
 void StoredTable_Impl::open(size_t numAxes, string filename, string quantity,
                             string& filePath,
-                            const double** axBeg, const double** qtyBeg, size_t* axLen,
+                            const double** axBeg, const double** qtyBeg,
+                            size_t* axLen, size_t* qtyStep,
                             bool* axLog, bool* qtyLog)
 {
     // add the mandatory filename extension if needed
@@ -58,12 +59,9 @@ void StoredTable_Impl::open(size_t numAxes, string filename, string quantity,
     for (size_t i = 0; i<numAxes; ++i) *axLog++ = (memcmp("log     ", currentItem++->stringType, itemSize) == 0);
 
     // store the grid length and a pointer to the first value for each axis
-    // calculate the number of values in a quantity table on the fly
-    size_t qntyLen = 1;
     for (size_t i = 0; i<numAxes; ++i)
     {
         size_t length = currentItem++->sizeType;
-        qntyLen *= length;
         *axLen++ = length;
         *axBeg++ = &currentItem->doubleType;
         currentItem += length;
@@ -93,7 +91,7 @@ void StoredTable_Impl::open(size_t numAxes, string filename, string quantity,
         if (i==qntyIndex)
         {
             if (memcmp(unitSpec.c_str(), currentItem++->stringType, itemSize))
-                throw FATALERROR("Tabulated quantity does not have unit" + unitSpec + " in stored table " + filePath);
+                throw FATALERROR("Tabulated quantity does not have unit " + unitSpec + " in stored table " + filePath);
         }
         else currentItem++;
     }
@@ -105,8 +103,10 @@ void StoredTable_Impl::open(size_t numAxes, string filename, string quantity,
         else currentItem++;
     }
 
-    // calculate and store the pointer to the first quantity value
-    *qtyBeg = (&currentItem->doubleType) + qntyIndex*qntyLen;
+    // calculate and store the pointer to the first quantity value, and store the number of quantities
+    *qtyBeg = &currentItem->doubleType + qntyIndex;
+    *qtyStep = numQnts;
+
 }
 
 ////////////////////////////////////////////////////////////////////

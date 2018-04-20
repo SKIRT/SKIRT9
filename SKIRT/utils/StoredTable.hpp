@@ -154,7 +154,7 @@ public:
     void open(string filename, string quantity)
     {
         StoredTable_Impl::open(N, filename, quantity,
-                               _filePath, _axBeg.begin(), &_qtyBeg, _axLen.begin(), _axLog.begin(), &_qtyLog);
+                               _filePath, _axBeg.begin(), &_qtyBeg, _axLen.begin(), &_qtyStep, _axLog.begin(), &_qtyLog);
     }
 
     /** The destructor breaks the association with a stored table resource file established by the
@@ -189,9 +189,9 @@ public:
     size_t flattenedIndex(Indices... indices) const
     {
         std::array<size_t, N> indexes = {{ static_cast<size_t>(indices)... }};
-        size_t result = indexes[0];
-        for (size_t k = 1; k!=N; ++k) result = result * _axLen[k] + indexes[k];
-        return result;
+        size_t result = indexes[N-1];
+        for (size_t k = N-2; k<N; --k) result = result * _axLen[k] + indexes[k];
+        return result * _qtyStep;
     }
 
     // ================== Data members ==================
@@ -201,6 +201,7 @@ private:
     std::array<const double*, N> _axBeg;    // pointer to first grid point for each axis
     const double* _qtyBeg;                  // pointer to first quantity value
     std::array<size_t, N> _axLen;           // number of grid points for each axis
+    size_t _qtyStep;                        // step size from one quantity value to the next (1=adjacent)
     std::array<bool, N> _axLog;             // interpolation type (true=log, false=linear) for each axis
     bool _qtyLog;                           // interpolation type (true=log, false=linear) for quantity
 };

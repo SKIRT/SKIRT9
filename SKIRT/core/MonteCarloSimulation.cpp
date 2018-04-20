@@ -52,11 +52,11 @@ void MonteCarloSimulation::runSelf()
 
     {
         StoredTable<1> table;
-        table.open("MeanDraineLiOpticalProps", "sigmaabs;m2/H");
+        table.open("SunSED", "Llambda;W/m");
 
         log()->warning("0: " + StringUtils::toString(table.atIndices(0)));
-        log()->warning("10: " + StringUtils::toString(table.atIndices(10)));
-        log()->warning("799: " + StringUtils::toString(table.atIndices(799)));
+        log()->warning("1: " + StringUtils::toString(table.atIndices(10)));
+        log()->warning("2: " + StringUtils::toString(table.atIndices(700)));
     }
 /*
 
