@@ -5,6 +5,7 @@
 
 #include "StoredTableImpl.hpp"
 #include "FatalError.hpp"
+#include "Log.hpp"
 #include "StaticPaths.hpp"
 #include "StringUtils.hpp"
 #include "System.hpp"
@@ -14,13 +15,13 @@
 namespace
 {
     // the alternate interpretations for 8-byte items in the stored table format
-    union Item
+    union StabItem
     {
         double doubleType;
         size_t sizeType;
         char stringType[8];
     };
-    const size_t itemSize = sizeof(Item);
+    const size_t itemSize = sizeof(StabItem);
 
     static_assert((sizeof(size_t) == 8) & (sizeof(double) == 8) & (itemSize == 8),
                   "Cannot properly declare union for items in stored table format");
@@ -31,7 +32,7 @@ namespace
 namespace
 {
     // returns true if the name part of the given specification string matches the given 8-byte item
-    bool matchesName(string specification, const Item* nameItem)
+    bool matchesName(string specification, const StabItem* nameItem)
     {
         // parse the name part from the specified string
         auto index = specification.find('(');
@@ -44,7 +45,7 @@ namespace
     }
 
     // returns true if the unit part of the given specification string matches the given 8-byte item
-    bool matchesUnit(string specification, const Item* unitItem)
+    bool matchesUnit(string specification, const StabItem* unitItem)
     {
         // parse the unit part from the specified string
         auto size = specification.size();
@@ -61,7 +62,7 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-void StoredTable_Impl::open(size_t numAxes, string filename,
+void StoredTable_Impl::open(size_t numAxes, const SimulationItem* item, string filename,
                             string axes, string quantity,
                             string& filePath,
                             const double** axBeg, const double** qtyBeg,
@@ -77,7 +78,7 @@ void StoredTable_Impl::open(size_t numAxes, string filename,
     // acquire a memory map for the resource; the function returns zeros if the memory map cannot be created
     auto map = System::acquireMemoryMap(filePath);
     if (!map.first) throw FATALERROR("Cannot acquire memory map for resource file: " + filePath);
-    const Item* currentItem = static_cast<const Item*>(map.first);
+    const StabItem* currentItem = static_cast<const StabItem*>(map.first);
 
     // verify the name tag and the Endianness tag
     if (memcmp("SKIRT X\n", currentItem++->stringType, itemSize) || currentItem++->sizeType != 0x010203040A0BFEFF)
@@ -154,6 +155,9 @@ void StoredTable_Impl::open(size_t numAxes, string filename,
     // calculate and store the pointer to the first quantity value, and store the number of quantities
     *qtyBeg = &currentItem->doubleType + qtyIndex;
     *qtyStep = numQties;
+
+    // log success
+    item->find<Log>()->info(item->type() + " opened stored table " + filePath);
 }
 
 ////////////////////////////////////////////////////////////////////

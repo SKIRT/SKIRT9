@@ -51,7 +51,7 @@ void MonteCarloSimulation::runSelf()
     TimeLogger logger(log(), "the test phase");
 
     StoredTable<1> table;
-    table.open("SunSED", "lambda(m)", "Llambda(W/m)");
+    table.open(this, "SunSED", "lambda(m)", "Llambda(W/m)");
 
     log()->warning("0: " + StringUtils::toString(table.atIndices(0)));
     log()->warning("1: " + StringUtils::toString(table.atIndices(10)));
