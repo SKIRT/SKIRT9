@@ -12,7 +12,6 @@
 #include "TimeLogger.hpp"
 
 // included for testing purposes
-#include "StaticPaths.hpp"
 #include "StoredTable.hpp"
 
 ////////////////////////////////////////////////////////////////////

@@ -5,8 +5,8 @@
 
 #include "StoredTableImpl.hpp"
 #include "FatalError.hpp"
+#include "FilePaths.hpp"
 #include "Log.hpp"
-#include "StaticPaths.hpp"
 #include "StringUtils.hpp"
 #include "System.hpp"
 
@@ -73,7 +73,7 @@ void StoredTable_Impl::open(size_t numAxes, const SimulationItem* item, string f
     if (!StringUtils::endsWith(filename, ".stab")) filename += ".stab";
 
     // retrieve the canonical path for the resource; the function throws a fatal error if the resource cannot be found
-    filePath = StaticPaths::resource(filename);
+    filePath = FilePaths::resource(filename);
 
     // acquire a memory map for the resource; the function returns zeros if the memory map cannot be created
     auto map = System::acquireMemoryMap(filePath);

@@ -10,7 +10,8 @@
 
 ////////////////////////////////////////////////////////////////////
 
-/** The FilePaths class manages the paths for the input and output files of a simulation. */
+/** The FilePaths class manages the paths for the input and output files of a simulation, and for
+    the resources included with the code or provided externally. */
 class FilePaths : public SimulationItem
 {
     //============= Construction - Setup - Destruction =============
@@ -20,6 +21,12 @@ public:
         parent in the simulation hierarchy, so that it will automatically be deleted. The setup()
         function is \em not called by this constructor. */
     explicit FilePaths(SimulationItem* parent);
+
+protected:
+    /** This function determines and caches the resource file paths that can be returned by this
+        class. This avoids repeated searches through the resource directories, and allows reporting
+        any problems as early as possible in the program's lifecycle. */
+    void setupSelfBefore() override;
 
     //======== Setters & Getters for Discoverable Attributes =======
 
@@ -56,6 +63,29 @@ public:
         outputPrefix() is inserted in front of the filename specified here. The prefix and the
         filename are separated by an underscore. */
     string output(string name) const;
+
+    /** This function returns the absolute canonical path for a resource with the specified
+        filename. The filename should \em not include any directory segments (just the base
+        filename and filename extension). The function first looks for built-in resource files and
+        then looks for externally provided resource files. This mechanism allows to provide small
+        and frequently-used resource files as part of the SKIRT build tree in the source code
+        repository, while requiring larger resource files to be downloaded seperately from the
+        SKIRT web site using a shell script provided for this purpose.
+
+        Specifically, the function searches the following directories, and all nested subdirectories
+        inside these directories, recursively:
+
+        - the \c resources directory inside the SKIRT build tree.
+        - the \c resources directory (if any) next to the SKIRT \c git directory
+          (i.e. outside of the build tree).
+
+        The top-level directories are searched in the order listed above. The search order for the
+        nested directories inside the top-level directories is unspecified. The first occurrence of
+        the specified filename terminates the search. This means that one cannot replace a built-in
+        resource by placing a file with the same name in an external directory.
+
+        If the function cannot locate the specified resource, a fatal error is thrown. */
+    static string resource(string name);
 
     //======================== Data Members ========================
 
