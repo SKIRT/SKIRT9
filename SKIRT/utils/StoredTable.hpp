@@ -60,11 +60,12 @@
     StoredTable<N> instance for each of those quantities.
 
     The default constructor creates an invalid stored table instance. The alternate constructor and
-    the open() function associate a particular stored table resource file with the stored
-    table instance. The number of axes in this stored table resource file must match the template
-    parameter \em N. Also, one of the tabulated quantity names in the file and its corresponding
-    unit must match the information passed to the alternate constructor or the open() function. The
-    destructor automatically releases the file association and any related resources.
+    the open() function associate a particular stored table resource file with the stored table
+    instance. The number of axes in this stored table resource file must match the template
+    parameter \em N. Also, the axis names and the corresponding units in the file, and one of the
+    tabulated quantity names and its corresponding unit in the file, must match the information
+    passed to the alternate constructor or the open() function. The destructor automatically
+    releases the file association and any related resources.
 
     The parenthesis operator returns the quantity represented by the StoredTable<N> for the \em N
     specified axis values, interpolated from the tabulated values. Other functions offer access
@@ -114,7 +115,7 @@
 */
 template<size_t N> class StoredTable
 {
-    static_assert(N >= 1, "StoredTable dimension must be at least 1");
+    static_assert(N >= 1, "StoredTable number of axes must be at least 1");
 
     // ================== Constructing ==================
 
@@ -128,7 +129,7 @@ public:
     /** This alternate constructor constructs a stored table instance and immediately associates a
         given stored table resource file with it by calling the open() function. Refer to the
         open() function for a description of the arguments and of its operation. */
-    StoredTable(string filename, string quantity) { open(filename, quantity); }
+    StoredTable(string filename, string axes, string quantity) { open(filename, axes, quantity); }
 
     /** This function associates a given stored table resource file with the stored table instance.
         If such an association already exists, this function throws a fatal error. Conversely,
@@ -140,21 +141,29 @@ public:
         to the specified filename if needed.
 
         First of all, the number of axes in this stored table resource file must match the template
-        parameter \em N. Furthermore, one of the tabulated quantity names in the resource file and
-        its corresponding unit must match the information specified in the \em quantity argument.
-        The string passed to this argument must have the syntax "quantityName;quantityUnit".
-        Examples include "Llambda;W/m", "Qabs;1", and "h;J/m3". For a stored table resource file
-        with multiple tabulated quantities, the \em quantity argument at the same time determines
-        which of these quantities will be associated with the stored table instance.
+        parameter \em N. Furthermore, the axes names in the resource file and the corresponding
+        units for each axis must match the information specified in the \em axes argument. Finally,
+        one of the tabulated quantity names in the resource file and its corresponding unit must
+        match the information specified in the \em quantity argument. For a stored table resource
+        file with multiple tabulated quantities, the \em quantity argument at the same time
+        determines which of these quantities will be associated with the stored table instance.
+
+        The string passed to the \em axes argument must have the syntax
+        "name1(unit1),...,nameN(unitN)". In other words, a unit string between parenthesis follows
+        each axis name, and the specifications for different axes are separated by a comma. For
+        example, "lambda(m),a(m)". Whitespace is not allowed. The string passed to the \em quantity
+        argument must have a similar syntax, for a single name/unit combination. Examples include
+        "Llambda(W/m)", "Qabs(1)", and "h(J/m3)".
 
         In summary, this function (1) locates the specified stored table resource file, (2)
         acquires a memory map on the file, (3) verifies that the stored table matches all
         requirements, and (4) stores relevant information in data members. If any of these steps
         fail, the function throws a fatal error. */
-    void open(string filename, string quantity)
+    void open(string filename, string axes, string quantity)
     {
-        StoredTable_Impl::open(N, filename, quantity,
-                               _filePath, _axBeg.begin(), &_qtyBeg, _axLen.begin(), &_qtyStep, _axLog.begin(), &_qtyLog);
+        StoredTable_Impl::open(N, filename, axes, quantity,
+                               _filePath, _axBeg.begin(), &_qtyBeg, _axLen.begin(), &_qtyStep,
+                               _axLog.begin(), &_qtyLog);
     }
 
     /** The destructor breaks the association with a stored table resource file established by the

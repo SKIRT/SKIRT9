@@ -28,7 +28,41 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-void StoredTable_Impl::open(size_t numAxes, string filename, string quantity,
+namespace
+{
+    // returns true if the name part of the given specification string matches the given 8-byte item
+    bool matchesName(string specification, const Item* nameItem)
+    {
+        // parse the name part from the specified string
+        auto index = specification.find('(');
+        if (index == string::npos || index == 0 || index > 8)
+            throw FATALERROR("Invalid stored table name specification: " + specification);
+        string nameString = StringUtils::padRight(specification.substr(0,index), itemSize);
+
+        // compare with the item
+        return memcmp(nameString.c_str(), nameItem->stringType, itemSize) == 0;
+    }
+
+    // returns true if the unit part of the given specification string matches the given 8-byte item
+    bool matchesUnit(string specification, const Item* unitItem)
+    {
+        // parse the unit part from the specified string
+        auto size = specification.size();
+        auto index = specification.find('(');
+        if (index == string::npos || size-index <= 2 || size-index > 10 || specification[size-1] != ')')
+            throw FATALERROR("Invalid stored table unit specification: " + specification);
+        string unitString = StringUtils::padRight(specification.substr(index+1,size-index-2), itemSize);
+
+        // compare with the item
+        return memcmp(unitString.c_str(), unitItem->stringType, itemSize) == 0;
+    }
+}
+
+
+////////////////////////////////////////////////////////////////////
+
+void StoredTable_Impl::open(size_t numAxes, string filename,
+                            string axes, string quantity,
                             string& filePath,
                             const double** axBeg, const double** qtyBeg,
                             size_t* axLen, size_t* qtyStep,
@@ -53,10 +87,32 @@ void StoredTable_Impl::open(size_t numAxes, string filename, string quantity,
     if (currentItem++->sizeType != numAxes)
         throw FATALERROR("Number of axes in stored table file does not match: " + filePath);
 
-    // skip the axes names and units, and store the interpolation scale
-    for (size_t i = 0; i<numAxes; ++i) currentItem++;
-    for (size_t i = 0; i<numAxes; ++i) currentItem++;
-    for (size_t i = 0; i<numAxes; ++i) *axLog++ = (memcmp("log     ", currentItem++->stringType, itemSize) == 0);
+    // split the axes specification into a list
+    auto axesSpecs = StringUtils::split(axes, ",");
+    if (axesSpecs.size() != numAxes)
+        throw FATALERROR("Number of axes in stored table axes specification does not match: " + axes);
+
+    // verify the axes names
+    for (size_t i = 0; i<numAxes; ++i)
+    {
+        if (!matchesName(axesSpecs[i], currentItem++))
+            throw FATALERROR("Axis " + std::to_string(i) + " does not have name " + axesSpecs[i] +
+                             " in stored table " + filePath);
+    }
+
+    // verify the axes units
+    for (size_t i = 0; i<numAxes; ++i)
+    {
+        if (!matchesUnit(axesSpecs[i], currentItem++))
+            throw FATALERROR("Axis " + std::to_string(i) + " does not have unit " + axesSpecs[i] +
+                             " in stored table " + filePath);
+    }
+
+    // store the interpolation scale for each axis
+    for (size_t i = 0; i<numAxes; ++i)
+    {
+        *axLog++ = (memcmp("log     ", currentItem++->stringType, itemSize) == 0);
+    }
 
     // store the grid length and a pointer to the first value for each axis
     for (size_t i = 0; i<numAxes; ++i)
@@ -67,46 +123,37 @@ void StoredTable_Impl::open(size_t numAxes, string filename, string quantity,
         currentItem += length;
     }
 
-    // parse the requested quantity and unit from the specified string
-    auto splitQuantity = StringUtils::split(quantity, ";");
-    if (splitQuantity.size() != 2 || splitQuantity[0].size() < 1 || splitQuantity[1].size() < 1
-                                  || splitQuantity[0].size() > 8 || splitQuantity[1].size() > 8)
-        throw FATALERROR("Invalid tabulated quantity specification: " + quantity);
-    string qntySpec = StringUtils::padRight(splitQuantity[0], itemSize);
-    string unitSpec = StringUtils::padRight(splitQuantity[1], itemSize);
-
     // look for the appropriate quantity
-    size_t numQnts = currentItem++->sizeType;
-    size_t qntyIndex = numQnts;
-    for (size_t i = 0; i<numQnts; ++i)
+    size_t numQties = currentItem++->sizeType;
+    size_t qtyIndex = numQties;
+    for (size_t i = 0; i<numQties; ++i)
     {
-        if (!memcmp(qntySpec.c_str(), currentItem++->stringType, itemSize)) qntyIndex = i;
+        if (matchesName(quantity, currentItem++)) qtyIndex = i;
     }
-    if (qntyIndex==numQnts)
-        throw FATALERROR("Tabulated quantity " + qntySpec + " is not in stored table " + filePath);
+    if (qtyIndex==numQties)
+        throw FATALERROR("Tabulated quantity " + quantity + " is not in stored table " + filePath);
 
     // verify the corresponding unit
-    for (size_t i = 0; i<numQnts; ++i)
+    for (size_t i = 0; i<numQties; ++i)
     {
-        if (i==qntyIndex)
+        if (i==qtyIndex)
         {
-            if (memcmp(unitSpec.c_str(), currentItem++->stringType, itemSize))
-                throw FATALERROR("Tabulated quantity does not have unit " + unitSpec + " in stored table " + filePath);
+            if (!matchesUnit(quantity, currentItem++))
+                throw FATALERROR("Tabulated quantity does not have unit " + quantity + " in stored table " + filePath);
         }
         else currentItem++;
     }
 
     // store the corresponding interpolation scale
-    for (size_t i = 0; i<numQnts; ++i)
+    for (size_t i = 0; i<numQties; ++i)
     {
-        if (i==qntyIndex) *qtyLog = (memcmp("log     ", currentItem++->stringType, itemSize) == 0);
+        if (i==qtyIndex) *qtyLog = (memcmp("log     ", currentItem++->stringType, itemSize) == 0);
         else currentItem++;
     }
 
     // calculate and store the pointer to the first quantity value, and store the number of quantities
-    *qtyBeg = &currentItem->doubleType + qntyIndex;
-    *qtyStep = numQnts;
-
+    *qtyBeg = &currentItem->doubleType + qtyIndex;
+    *qtyStep = numQties;
 }
 
 ////////////////////////////////////////////////////////////////////

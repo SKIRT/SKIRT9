@@ -19,11 +19,12 @@ namespace StoredTable_Impl
     /** This function performs the open() operation as described for the function with the same name in the
         StoredTable class template. It receives references or pointers to all data members of the
         stored table instance, in addition to the input parameters of the open() function. */
-    void open(size_t numAxes, string filename, string quantity,     // input parameters
-              string& filePath,                                     // output parameter by reference
-              const double** axBeg, const double** qtyBeg,          // output parameters via pointers
-              size_t* axLen, size_t* qtyStep,
-              bool* axLog, bool* qtyLog);
+    void open(size_t numAxes, string filename,              // input parameters
+              string axes, string quantity,                 //   "
+              string& filePath,                             // output parameter by reference
+              const double** axBeg, const double** qtyBeg,  // output parameters via pointers
+              size_t* axLen, size_t* qtyStep,               //   "
+              bool* axLog, bool* qtyLog);                   //   "
 
     /** This function performs the close() operation as described for the destructor of the
         StoredTable class template. It receives the canonical path to the associated resource file,
