@@ -14,17 +14,17 @@
 
 ////////////////////////////////////////////////////////////////////
 
-TextOutFile::TextOutFile(const SimulationItem* item, string filename, string description, bool overwrite)
+TextOutFile::TextOutFile(const SimulationItem* item, string filename, string description)
 {
     _log = item->find<Log>();
-    _filepath = item->find<FilePaths>()->output(filename + ".dat");
     _units = item->find<Units>();
+    string filepath = item->find<FilePaths>()->output(filename + ".dat");
 
     // Only open the output file if this is the root process
     if (ProcessManager::isRoot())
     {
-        _log->info("Writing " + description + " to " + _filepath + "...");
-        _out = System::ofstream(_filepath, !overwrite);
+        _log->info(item->type() + " starts writing " + description + " to " + filepath + "...");
+        _out = System::ofstream(filepath);
     }
 }
 
@@ -36,7 +36,7 @@ TextOutFile::~TextOutFile()
     if (_out.is_open())
     {
         _out.close();
-        _log->info("File " + _filepath + " created.");
+        _log->info("Done writing.");
     }
 }
 

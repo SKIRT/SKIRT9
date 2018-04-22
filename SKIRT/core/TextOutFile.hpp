@@ -7,9 +7,9 @@
 #define TEXTOUTFILE_HPP
 
 #include "Array.hpp"
-#include "SimulationItem.hpp"
 #include <fstream>
 class Log;
+class SimulationItem;
 class Units;
 
 ////////////////////////////////////////////////////////////////////
@@ -29,15 +29,13 @@ public:
         other processes, this output stream remains uninitialized and is never used, i.e. calling
         the writeLine() function has no effect. The constructor takes several arguments: (1) \em
         item specifies a simulation item in the hierarchy of the caller (usually the caller itself)
-        used to retrieve the output file path and an appropriate logger; (2) \em filename specifies
-        the name of the file, excluding path, simulation prefix and filename extension; (3) \em
-        description specifies a description used in the log message issued after the file was
-        successfully written; (4) \em overwrite is an optional flag that can be set to false to
-        append the new lines to the existing file (it should be left to the default of true in
-        almost all cases). */
-    TextOutFile(const SimulationItem* item, string filename, string description, bool overwrite = true);
+        used to retrieve the output file path and an appropriate logger, and to determine whether
+        this is the root process; (2) \em filename specifies the name of the file, excluding path,
+        simulation prefix and filename extension; (3) \em description specifies a description used
+        in the log message issued when the file was successfully opened. */
+    TextOutFile(const SimulationItem* item, string filename, string description);
 
-    /** The destructor of the TextOutFile class. On the root process, the file is closed and a log
+    /** The destructor of the TextOutFile class. In the root process, the file is closed and a log
         message is issued. */
     ~TextOutFile();
 
@@ -66,12 +64,11 @@ public:
     //======================== Data Members ========================
 
 protected:
-    Log* _log;
-    Units* _units;
+    Units* _units;       // can be used by subclasses
     std::ofstream _out;  // the output stream
 
 private:
-    string _filepath;
+    Log* _log;
     size_t _ncolumns{0};
     vector<char> _formats;
     vector<int> _precisions;

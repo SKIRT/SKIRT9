@@ -8,27 +8,32 @@
 
 #include "Array.hpp"
 #include <fstream>
+class Log;
 class SimulationItem;
 
 ////////////////////////////////////////////////////////////////////
 
 /** This class allows reading floating point values from the input text file specified in the
-    constructor. The values should be organized in columns, forming a table. An informational
-    message is logged when the file is opened, and the file is automatically closed when the object
-    is destructed. */
+    constructor. The values should be organized in columns, forming a table. The file is
+    automatically closed when the object is destructed. */
 class TextInFile
 {
     //=============== Construction - Destruction  ==================
 
 public:
-    /** The constructor opens the specified file for reading, and logs a message when successful.
-        If the file can't be opened, a FatalError is thrown. The constructor takes several
-        arguments: (1) \em item specifies a simulation item in the hierarchy of the caller (usually
-        the caller itself) used to retrieve the input file path and an appropriate logger; (2) \em
-        filename specifies the name of the file, including filename extension but excluding path
-        and simulation prefix; (3) \em description specifies a description used in the log message
-        issued after the file is successfully opened; */
+    /** The constructor opens the specified file for reading; if the file can't be opened, a
+        FatalError is thrown. The constructor takes several arguments: (1) \em item specifies a
+        simulation item in the hierarchy of the caller (usually the caller itself) used to retrieve
+        the input file path and an appropriate logger; (2) \em filename specifies the name of the
+        file, including filename extension but excluding path and simulation prefix; (3) \em
+        description specifies a description used in the log message issued after the file is
+        successfully opened. */
     TextInFile(const SimulationItem* item, string filename, string description);
+
+    /** The destructor closes the file and logs a brief informational message. It is therefore
+        important to allow the object to go out of scope before logging other messages or starting
+        another significant chunk of work. */
+    ~TextInFile();
 
     //====================== Other functions =======================
 
@@ -83,6 +88,7 @@ private:
     //======================== Data Members ========================
 
 private:
+    Log* _log;          // the logger
     std::ifstream _in;  // the input stream
 };
 
