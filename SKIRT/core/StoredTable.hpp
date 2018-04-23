@@ -8,9 +8,7 @@
 
 #include "Array.hpp"
 #include "StoredTableImpl.hpp"
-#include "TableImpl.hpp"
 #include <array>
-#include <functional>
 
 ////////////////////////////////////////////////////////////////////
 
@@ -181,26 +179,93 @@ public:
 
 public:
 
-    /** This function returns a copy of the value at the specified index (for a one-dimensional
-        table only). There is no range checking. Out-of-range index values cause unpredictable
-        behavior. */
-//    template <typename Index, typename = std::enable_if_t<N==1 && Table_Impl::isValidArgList<1, Index>()>>
-//    double operator[](Index index) const { return _data[index]; }
+    /** This function returns the value of the quantity represented by this stored table for the
+        specified axes values, interpolated over the grid points of the actual tabulated values in
+        all dimensions. The function uses linear or logarithmic interpolation for the axes and
+        quantity values according to the flags specified in the stored table. Out-of-range axes
+        values are automatically clamped to the corresponding outer grid point. */
+    template <typename... Values, typename = std::enable_if_t<StoredTable_Impl::isNumericArgList<N, Values...>()>>
+    double operator()(Values... values) const
+    {
+        std::array<double, N> axValues = {{ static_cast<double>(values)... }};
+        return axValues[0];
+    }
+
+    /** For a one-dimensional table only, this function returns the value of the quantity
+        represented by the stored table for the specified axes value, interpolated over the grid
+        points of the actual tabulated values. The function uses linear or logarithmic
+        interpolation for the axis and quantity values according to the flags specified in the
+        stored table. Out-of-range axes values are automatically clamped to the corresponding outer
+        grid point. */
+    template <typename Value, typename = std::enable_if_t<N==1 && StoredTable_Impl::isNumericArgList<1, Value>()>>
+    double operator[](Value value) const
+    {
+        // get the index of the upper border of the axis grid bin containing the specified axis value
+        size_t right = std::lower_bound(_axBeg[0], _axBeg[0]+_axLen[0], value) - _axBeg[0];
+
+        // if the value is beyond the grid borders, adjust both the bin border and the value
+        if (right == 0)
+        {
+            right++;
+            value = _axBeg[0][0];
+        }
+        else if (right == _axLen[0])
+        {
+            right--;
+            value = _axBeg[0][right];
+        }
+
+        // get the index of the lower border of the axis grid bin containing the specified axis value
+        size_t left = right-1;
+
+        // get the values
+        double x = value;
+        double x1 = _axBeg[0][left];
+        double x2 = _axBeg[0][right];
+        double f1 = valueAtIndices(left);
+        double f2 = valueAtIndices(right);
+
+        // if requested, compute logarithm of coordinate values
+        if (_axLog[0])
+        {
+            x  = log10(x);
+            x1 = log10(x1);
+            x2 = log10(x2);
+        }
+
+        // perform logarithmic interpolation of function value if requested and the bordering values are positive
+        bool logf = _qtyLog && f1>0 && f2>0;
+
+        // compute logarithm of function values if required
+        if (logf)
+        {
+            f1 = log10(f1);
+            f2 = log10(f2);
+        }
+
+        // perform the interpolation
+        double fx = f1 + ((x-x1)/(x2-x1))*(f2-f1);
+
+        // compute the inverse logarithm of the resulting function value if required
+        if (logf) fx = pow(10,fx);
+
+        return fx;
+    }
 
     // ================== Accessing the raw data ==================
 
-public:
+private:
     /** This function returns a copy of the value at the specified N indices. There is no range
         checking. Out-of-range index values cause unpredictable behavior. */
-    template <typename... Indices, typename = std::enable_if_t<Table_Impl::isValidArgList<N, Indices...>()>>
-    double atIndices(Indices... indices) const
+    template <typename... Indices, typename = std::enable_if_t<StoredTable_Impl::isIntegralArgList<N, Indices...>()>>
+    double valueAtIndices(Indices... indices) const
     {
        return _qtyBeg[flattenedIndex(indices...)];
     }
 
     /** This template function returns the flattened index in the underlying data array for the
         specified N indices. */
-    template <typename... Indices, typename = std::enable_if_t<Table_Impl::isValidArgList<N, Indices...>()>>
+    template <typename... Indices, typename = std::enable_if_t<StoredTable_Impl::isIntegralArgList<N, Indices...>()>>
     size_t flattenedIndex(Indices... indices) const
     {
         std::array<size_t, N> indexes = {{ static_cast<size_t>(indices)... }};
