@@ -187,8 +187,49 @@ public:
     template <typename... Values, typename = std::enable_if_t<StoredTable_Impl::isNumericArgList<N, Values...>()>>
     double operator()(Values... values) const
     {
-        std::array<double, N> axValues = {{ static_cast<double>(values)... }};
-        return axValues[0];
+        // storage for each axis
+        std::array<double, N> value = {{ static_cast<double>(values)... }};
+        std::array<size_t, N> i;  // upper grid bin boundary index
+        std::array<size_t, N> f;  // fraction of axis value in bin
+
+        // precompute for each axis
+        for (size_t k = 0; k!=N; ++k)
+        {
+            // get the index of the upper border of the axis grid bin containing the specified axis value
+            double x = value[k];
+            size_t right = std::lower_bound(_axBeg[k], _axBeg[k]+_axLen[k], x) - _axBeg[k];
+
+            // if the value is beyond the grid borders, adjust both the bin border and the value
+            if (right == 0)
+            {
+                right++;
+                x = _axBeg[k][0];
+            }
+            else if (right == _axLen[k])
+            {
+                right--;
+                x = _axBeg[k][right];
+            }
+            i[k] = right;
+
+            // get the axis values at the grid borders
+            double x1 = _axBeg[k][right-1];
+            double x2 = _axBeg[k][right];
+
+            // if requested, compute logarithm of coordinate values
+            if (_axLog[k])
+            {
+                x = log10(x);
+                x1 = log10(x1);
+                x2 = log10(x2);
+            }
+
+            // calculate the fraction of the requested axis value in the bin
+            f[k] = (x-x1)/(x2-x1);
+        }
+
+
+        return f[0];
     }
 
     /** For a one-dimensional table only, this function returns the value of the quantity
@@ -218,14 +259,12 @@ public:
         // get the index of the lower border of the axis grid bin containing the specified axis value
         size_t left = right-1;
 
-        // get the values
+        // get the x values
         double x = value;
         double x1 = _axBeg[0][left];
         double x2 = _axBeg[0][right];
-        double f1 = valueAtIndices(left);
-        double f2 = valueAtIndices(right);
 
-        // if requested, compute logarithm of coordinate values
+        // if requested, compute logarithm of x values
         if (_axLog[0])
         {
             x  = log10(x);
@@ -233,23 +272,27 @@ public:
             x2 = log10(x2);
         }
 
-        // perform logarithmic interpolation of function value if requested and the bordering values are positive
-        bool logf = _qtyLog && f1>0 && f2>0;
+        // get the tabulated y values
+        double y1 = valueAtIndices(left);
+        double y2 = valueAtIndices(right);
+
+        // perform logarithmic interpolation of y value if requested and the bordering values are positive
+        bool logy = _qtyLog && y1>0 && y2>0;
 
         // compute logarithm of function values if required
-        if (logf)
+        if (logy)
         {
-            f1 = log10(f1);
-            f2 = log10(f2);
+            y1 = log10(y1);
+            y2 = log10(y2);
         }
 
         // perform the interpolation
-        double fx = f1 + ((x-x1)/(x2-x1))*(f2-f1);
+        double y = y1 + ((x-x1)/(x2-x1))*(y2-y1);
 
         // compute the inverse logarithm of the resulting function value if required
-        if (logf) fx = pow(10,fx);
+        if (logy) y = pow(10,y);
 
-        return fx;
+        return y;
     }
 
     // ================== Accessing the raw data ==================
