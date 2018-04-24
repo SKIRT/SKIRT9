@@ -189,8 +189,8 @@ public:
     {
         // storage for each axis
         std::array<double, N> value = {{ static_cast<double>(values)... }};
-        std::array<size_t, N> i;  // upper grid bin boundary index
-        std::array<size_t, N> f;  // fraction of axis value in bin
+        std::array<size_t, N> i2;  // upper grid bin boundary index
+        std::array<double, N> f;  // fraction of axis value in bin
 
         // precompute for each axis
         for (size_t k = 0; k!=N; ++k)
@@ -210,7 +210,7 @@ public:
                 right--;
                 x = _axBeg[k][right];
             }
-            i[k] = right;
+            i2[k] = right;
 
             // get the axis values at the grid borders
             double x1 = _axBeg[k][right-1];
@@ -228,8 +228,46 @@ public:
             f[k] = (x-x1)/(x2-x1);
         }
 
+        // storage for each term in the interpolation
+        constexpr size_t numTerms = 1 << N;    // there are 2^N terms
+        std::array<double, numTerms> ff;       // front factor
+        std::array<double, numTerms> yy;       // tabulated value
 
-        return f[0];
+        // perform logarithmic interpolation of y value if requested and all bordering values are positive
+        bool logy = _qtyLog;
+
+        // determine front factor and tabulated value for each term of the interplation
+        std::array<size_t, N> indices;         // storage for indices of the current term
+        for (size_t t = 0; t!=numTerms; ++t)
+        {
+            // use the binary representation of the term index to determine left/right for each axis
+            size_t term = t;    // temporary version of term index that will be bit-shifted
+            double front = 1.;
+            for (size_t k = 0; k!=N; ++k)
+            {
+                size_t left = term & 1;    // lowest significant digit = 1 means lower border
+                indices[k] = i2[k] - left;
+                front *= left ? (1-f[k]) : f[k];
+                term >>= 1;
+            }
+            ff[t] = front;
+            yy[t] = valueAtIndices(indices);
+            if (yy[t]<=0) logy = false;
+        }
+
+        // calculate sum
+        double y = 0.;
+        if (logy)
+        {
+            for (size_t t = 0; t!=numTerms; ++t) y += ff[t] * log10(yy[t]);
+            y = pow(10,y);
+        }
+        else
+        {
+            for (size_t t = 0; t!=numTerms; ++t) y += ff[t] * yy[t];
+        }
+
+        return y;
     }
 
     /** For a one-dimensional table only, this function returns the value of the quantity
@@ -298,22 +336,27 @@ public:
     // ================== Accessing the raw data ==================
 
 private:
-    /** This function returns a copy of the value at the specified N indices. There is no range
-        checking. Out-of-range index values cause unpredictable behavior. */
+    /** This template function returns a copy of the value at the specified N indices. There is no
+        range checking. Out-of-range index values cause unpredictable behavior. */
     template <typename... Indices, typename = std::enable_if_t<StoredTable_Impl::isIntegralArgList<N, Indices...>()>>
     double valueAtIndices(Indices... indices) const
     {
-       return _qtyBeg[flattenedIndex(indices...)];
+        return _qtyBeg[flattenedIndex(std::array<size_t, N>({{ static_cast<size_t>(indices)... }}))];
     }
 
-    /** This template function returns the flattened index in the underlying data array for the
-        specified N indices. */
-    template <typename... Indices, typename = std::enable_if_t<StoredTable_Impl::isIntegralArgList<N, Indices...>()>>
-    size_t flattenedIndex(Indices... indices) const
+    /** This function returns a copy of the value at the specified N indices. There is no range
+        checking. Out-of-range index values cause unpredictable behavior. */
+    double valueAtIndices(const std::array<size_t, N>& indices) const
     {
-        std::array<size_t, N> indexes = {{ static_cast<size_t>(indices)... }};
-        size_t result = indexes[N-1];
-        for (size_t k = N-2; k<N; --k) result = result * _axLen[k] + indexes[k];
+        return _qtyBeg[flattenedIndex(indices)];
+    }
+
+    /** This function returns the flattened index in the underlying data array for the specified N
+        indices. */
+    size_t flattenedIndex(const std::array<size_t, N>& indices) const
+    {
+        size_t result = indices[N-1];
+        for (size_t k = N-2; k<N; --k) result = result * _axLen[k] + indices[k];
         return result * _qtyStep;
     }
 
