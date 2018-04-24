@@ -7,6 +7,8 @@
 #define STOREDTABLE_HPP
 
 #include "Array.hpp"
+#include "CompileTimeUtils.hpp"
+#include "NR.hpp"
 #include "StoredTableImpl.hpp"
 #include <array>
 
@@ -184,7 +186,7 @@ public:
         all dimensions. The function uses linear or logarithmic interpolation for the axes and
         quantity values according to the flags specified in the stored table. Out-of-range axes
         values are automatically clamped to the corresponding outer grid point. */
-    template <typename... Values, typename = std::enable_if_t<StoredTable_Impl::isNumericArgList<N, Values...>()>>
+    template <typename... Values, typename = std::enable_if_t<CompileTimeUtils::isFloatArgList<N, Values...>()>>
     double operator()(Values... values) const
     {
         // storage for each axis
@@ -266,7 +268,6 @@ public:
         {
             for (size_t t = 0; t!=numTerms; ++t) y += ff[t] * yy[t];
         }
-
         return y;
     }
 
@@ -276,10 +277,73 @@ public:
         interpolation for the axis and quantity values according to the flags specified in the
         stored table. Out-of-range axes values are automatically clamped to the corresponding outer
         grid point. */
-    template <typename Value, typename = std::enable_if_t<N==1 && StoredTable_Impl::isNumericArgList<1, Value>()>>
+    template <typename Value, typename = std::enable_if_t<N==1 && CompileTimeUtils::isFloatArgList<1, Value>()>>
     double operator[](Value value) const
     {
         return operator()(value);
+    }
+
+    // ------------------------------------------
+
+    /** This function constructs the normalized cumulative distribution function for the tabulated
+        quantity across a given range in the first axis (the \em xmin and \em xmax arguments),
+        using given fixed values for the other axes, if any (the arguments at the end of the list).
+        If the internal representation of the table includes at least the specified number of
+        minimum bins (the \em minBins argument) in the specified range of the first axis, then the
+        internal grid points are used, because they should offer optimal resolution everywhere.
+        Otherwise, a new grid is constructed (linear or logarithmic depending on the internal
+        representation of the first axis) with the specified number of minimum bins. This can be
+        useful to interpolate on a finer grid than the internal grid of the table.
+
+        The resulting first-axis grid is constructed into \em xv, and the corresponding normalized
+        cumulative distribution is constructed into \em Yv. Assuming that the function decided to
+        return $n$ bins, these two arrays will each have $n+1$ elements (border points). In all
+        cases, xv[0]=xmin, xv[n]=xmax, Yv[0]=0, and Yv[n]=1. The function returns the normalization
+        factor, i.e. the value of Yv[n] before normalization.
+
+        If any of the axes values, including the \em xmin or \em xmax specifying the range for the
+        first axis, are out of range of the internal grid, extra quantity values are fabricated by
+        clamping the interpolation to the corresponding outer grid point. */
+    template <typename... Values, typename = std::enable_if_t<CompileTimeUtils::isFloatArgList<N-1, Values...>()>>
+    double cdf(Array& xv, Array& Yv, size_t minBins, double xmin, double xmax, Values... values) const
+    {
+        // there must be at least one bin  (n = number of bins; n+1 = number of border points)
+        size_t n = std::max(static_cast<size_t>(1), minBins);
+
+        // if the number of grid points is sufficient, copy the relevant portion of the internal axis grid
+        size_t minRight = std::lower_bound(_axBeg[0], _axBeg[0]+_axLen[0], xmin) - _axBeg[0];
+        size_t maxRight = std::lower_bound(_axBeg[0], _axBeg[0]+_axLen[0], xmax) - _axBeg[0];
+        if (minRight + n <= maxRight  )
+        {
+            n = 1 + maxRight - minRight;  // n = number of bins
+            xv.resize(n+1);               // n+1 = number of border points
+            size_t i = 0;                 // i = index in target array
+            xv[i++] = xmin;               // j = index in internal grid array
+            for (size_t j = minRight; j < maxRight; ) xv[i++] = _axBeg[0][j++];
+            xv[i++] = xmax;
+        }
+        // otherwise, build a new grid with the requested number of bins
+        else
+        {
+            if (_axLog[0]) NR::buildLogGrid(xv, xmin, xmax, n);
+            else NR::buildLinearGrid(xv, xmin, xmax, n);
+        }
+
+        // resize Y array; also sets Yv[0] to zero
+        Yv.resize(n+1);
+
+        // calculate cumulative values corresponding to each x grid point (and any extra axis values)
+        for (size_t i = 0; i!=n; ++i)
+        {
+            double dx = xv[i+1] - xv[i];
+            double y = operator()(xv[i], values...);
+            Yv[i+1] = Yv[i] + y*dx;
+        }
+
+        // normalize cumulative distribution and return normalization factor
+        double norm = Yv[n];
+        Yv /= norm;
+        return norm;
     }
 
     // ================== Accessing the raw data ==================
@@ -287,7 +351,7 @@ public:
 private:
     /** This template function returns a copy of the value at the specified N indices. There is no
         range checking. Out-of-range index values cause unpredictable behavior. */
-    template <typename... Indices, typename = std::enable_if_t<StoredTable_Impl::isIntegralArgList<N, Indices...>()>>
+    template <typename... Indices, typename = std::enable_if_t<CompileTimeUtils::isFloatArgList<N, Indices...>()>>
     double valueAtIndices(Indices... indices) const
     {
         return _qtyBeg[flattenedIndex(std::array<size_t, N>({{ static_cast<size_t>(indices)... }}))];

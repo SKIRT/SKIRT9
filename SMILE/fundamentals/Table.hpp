@@ -7,7 +7,7 @@
 #define TABLE_HPP
 
 #include "Array.hpp"
-#include "TableImpl.hpp"
+#include "CompileTimeUtils.hpp"
 #include <array>
 #include <functional>
 
@@ -33,7 +33,7 @@ public:
     /** This function resizes the table so that it holds the specified number of items in each of
         the N dimensions. All values are set to zero, i.e. any values that were previously in the
         table are lost. */
-    template <typename... Sizes, typename = std::enable_if_t<Table_Impl::isValidArgList<N, Sizes...>()>>
+    template <typename... Sizes, typename = std::enable_if_t<CompileTimeUtils::isIntegralArgList<N, Sizes...>()>>
     void resize(Sizes... sizes)
     {
         _sizes = {{ static_cast<size_t>(sizes)... }};
@@ -56,7 +56,7 @@ public:
 
     /** This function returns a writable reference to the value at the specified N indices. There
         is no range checking. Out-of-range index values cause unpredictable behavior. */
-    template <typename... Indices, typename = std::enable_if_t<Table_Impl::isValidArgList<N, Indices...>()>>
+    template <typename... Indices, typename = std::enable_if_t<CompileTimeUtils::isIntegralArgList<N, Indices...>()>>
     double& operator()(Indices... indices)
     {
         return _data[flattenedIndex(indices...)];
@@ -64,7 +64,7 @@ public:
 
     /** This function returns a copy of the value at the specified N indices. There is no range
         checking. Out-of-range index values cause unpredictable behavior. */
-    template <typename... Indices, typename = std::enable_if_t<Table_Impl::isValidArgList<N, Indices...>()>>
+    template <typename... Indices, typename = std::enable_if_t<CompileTimeUtils::isIntegralArgList<N, Indices...>()>>
     double operator()(Indices... indices) const
     {
         return _data[flattenedIndex(indices...)];
@@ -73,20 +73,20 @@ public:
     /** This function returns a writable reference to the value at the specified index (for a
         one-dimensional table only). There is no range checking. Out-of-range index values cause
         unpredictable behavior. */
-    template <typename Index, typename = std::enable_if_t<N==1 && Table_Impl::isValidArgList<1, Index>()>>
+    template <typename Index, typename = std::enable_if_t<N==1 && CompileTimeUtils::isIntegralArgList<1, Index>()>>
     double& operator[](Index index) { return _data[index]; }
 
     /** This function returns a copy of the value at the specified index (for a one-dimensional
         table only). There is no range checking. Out-of-range index values cause unpredictable
         behavior. */
-    template <typename Index, typename = std::enable_if_t<N==1 && Table_Impl::isValidArgList<1, Index>()>>
+    template <typename Index, typename = std::enable_if_t<N==1 && CompileTimeUtils::isIntegralArgList<1, Index>()>>
     double operator[](Index index) const { return _data[index]; }
 
     // ================== Accessing the raw data ==================
 
     /** This template function returns the flattened index in the underlying data array for the
         specified N indices. */
-    template <typename... Indices, typename = std::enable_if_t<Table_Impl::isValidArgList<N, Indices...>()>>
+    template <typename... Indices, typename = std::enable_if_t<CompileTimeUtils::isIntegralArgList<N, Indices...>()>>
     size_t flattenedIndex(Indices... indices) const
     {
         std::array<size_t, N> indexes = {{ static_cast<size_t>(indices)... }};

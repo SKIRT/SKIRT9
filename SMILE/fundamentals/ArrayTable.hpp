@@ -7,7 +7,7 @@
 #define ARRAYTABLE_HPP
 
 #include "Array.hpp"
-#include "TableImpl.hpp"
+#include "CompileTimeUtils.hpp"
 #include <array>
 #include <functional>
 
@@ -47,7 +47,7 @@ public:
         are resized correspondingly and all values are set to zero. If the last dimension is zero,
         the arrays are emptied and should be appropriately resized by the client code. In any case,
         any values that were previously in the table are lost. */
-    template <typename... Sizes, typename = std::enable_if_t<Table_Impl::isValidArgList<N, Sizes...>()>>
+    template <typename... Sizes, typename = std::enable_if_t<CompileTimeUtils::isIntegralArgList<N, Sizes...>()>>
     void resize(Sizes... sizes)
     {
         _sizes = {{ static_cast<size_t>(sizes)... }};
@@ -75,7 +75,7 @@ public:
 
     /** This function returns a writable reference to the value at the specified N indices. There
         is no range checking. Out-of-range index values cause unpredictable behavior. */
-    template <typename... Indices, typename = std::enable_if_t<Table_Impl::isValidArgList<N, Indices...>()>>
+    template <typename... Indices, typename = std::enable_if_t<CompileTimeUtils::isIntegralArgList<N, Indices...>()>>
     double& operator()(Indices... indices)
     {
         std::array<size_t, N> indexes = {{ static_cast<size_t>(indices)... }};
@@ -87,7 +87,7 @@ public:
 
     /** This function returns a copy of the value at the specified N indices. There is no range
         checking. Out-of-range index values cause unpredictable behavior. */
-    template <typename... Indices, typename = std::enable_if_t<Table_Impl::isValidArgList<N, Indices...>()>>
+    template <typename... Indices, typename = std::enable_if_t<CompileTimeUtils::isIntegralArgList<N, Indices...>()>>
     double operator()(Indices... indices) const
     {
         std::array<size_t, N> indexes = {{ static_cast<size_t>(indices)... }};
@@ -99,7 +99,7 @@ public:
 
     /** This function returns a writable reference to the row at the specified N-1 indices. There
         is no range checking. Out-of-range index values cause unpredictable behavior. */
-    template <typename... Indices, typename = std::enable_if_t<Table_Impl::isValidArgList<N-1, Indices...>()>>
+    template <typename... Indices, typename = std::enable_if_t<CompileTimeUtils::isIntegralArgList<N-1, Indices...>()>>
     Array& operator()(Indices... indices)
     {
         std::array<size_t, N-1> indexes = {{ static_cast<size_t>(indices)... }};
@@ -110,7 +110,7 @@ public:
 
     /** This function returns a read-only reference to the row at the specified N-1 indices. There
         is no range checking. Out-of-range index values cause unpredictable behavior. */
-    template <typename... Indices, typename = std::enable_if_t<Table_Impl::isValidArgList<N-1, Indices...>()>>
+    template <typename... Indices, typename = std::enable_if_t<CompileTimeUtils::isIntegralArgList<N-1, Indices...>()>>
     const Array& operator()(Indices... indices) const
     {
         std::array<size_t, N-1> indexes = {{ static_cast<size_t>(indices)... }};
@@ -122,13 +122,13 @@ public:
     /** This function returns a writable reference to the row at the specified index (for a
         2-dimensional table only). There is no range checking. Out-of-range index values cause
         unpredictable behavior. */
-    template <typename Index, typename = std::enable_if_t<N==2 && Table_Impl::isValidArgList<1, Index>()>>
+    template <typename Index, typename = std::enable_if_t<N==2 && CompileTimeUtils::isIntegralArgList<1, Index>()>>
     Array& operator[](Index index) { return _rows[index]; }
 
     /** This function returns a read-only reference to the row at the specified index (for a
         2-dimensional table only). There is no range checking. Out-of-range index values cause
         unpredictable behavior. */
-    template <typename Index, typename = std::enable_if_t<N==2 && Table_Impl::isValidArgList<1, Index>()>>
+    template <typename Index, typename = std::enable_if_t<N==2 && CompileTimeUtils::isIntegralArgList<1, Index>()>>
     const Array& operator[](Index index) const { return _rows[index]; }
 
     // ================== Data members ==================

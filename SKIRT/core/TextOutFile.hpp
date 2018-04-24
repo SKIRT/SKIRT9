@@ -7,6 +7,7 @@
 #define TEXTOUTFILE_HPP
 
 #include "Array.hpp"
+#include "CompileTimeUtils.hpp"
 #include <fstream>
 class Log;
 class SimulationItem;
@@ -56,10 +57,28 @@ public:
     void addColumn(string description, char format = 'e', int precision = 6);
 
     /** This function writes the specified list of (double) values to the text file, on a single row
-        where adjecent values are seperated by a space. The values are formatted according to the
+        where adjacent values are seperated by a space. The values are formatted according to the
         'format' and 'precision' specified by the addColumn function. If the number of values in the
         list does not match the number of columns, a FatalError is thrown. */
     void writeRow(vector<double> values);
+
+    /** This template function writes the specified list of values to the text file, on a single
+        row where adjacent values are seperated by a space. The values are formatted according to
+        the 'format' and 'precision' specified by the addColumn function. If the number of values
+        in the list does not match the number of columns, a FatalError is thrown. */
+    template <typename... Values, typename = std::enable_if_t<CompileTimeUtils::isNumericArgList<Values...>()>>
+    void writeRow(Values... values)
+    {
+        std::array<double, sizeof...(values)> list = {{ static_cast<double>(values)... }};
+        writeRowPrivate(sizeof...(values), list.cbegin());
+    }
+
+private:
+    /** This function writes the specified list of (double) values to the text file with the same
+        semantics as the other writeRow() functions. It is intended for private use from the
+        template writeRow() functions. */
+    void writeRowPrivate(size_t n, const double* values);
+
 
     //======================== Data Members ========================
 

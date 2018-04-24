@@ -17,27 +17,6 @@ class SimulationItem;
     to all StoredTable users. */
 namespace StoredTable_Impl
 {
-    //============= Compile time utilities =============
-
-    // recursive implementation of "all_off" algorithm
-    constexpr bool all() { return true; }
-    template <typename... Ts>
-    constexpr bool all(bool b, Ts... bs) { return b && all(bs...); }
-
-    // returns true if the parameter pack has the specified number of integral arguments
-    template <size_t N, typename... Ts>
-    inline constexpr bool isIntegralArgList()
-    {
-        return sizeof...(Ts) == N && all(std::is_integral<Ts>::value...);
-    }
-
-    // returns true if the parameter pack has the specified number of floating point arguments
-    template <size_t N, typename... Ts>
-    inline constexpr bool isNumericArgList()
-    {
-        return sizeof...(Ts) == N && all(std::is_floating_point<Ts>::value...);
-    }
-
     //============= Open and close =============
 
     /** This function performs the open() operation as described for the function with the same name in the

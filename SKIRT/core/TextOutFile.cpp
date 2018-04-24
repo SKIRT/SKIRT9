@@ -64,7 +64,14 @@ void TextOutFile::writeLine(string line)
 
 void TextOutFile::writeRow(vector<double> values)
 {
-    if (values.size() != _ncolumns) throw FATALERROR("Number of values in row does not match the number of columns");
+    writeRowPrivate(values.size(), &values[0]);
+}
+
+////////////////////////////////////////////////////////////////////
+
+void TextOutFile::writeRowPrivate(size_t n, const double* values)
+{
+    if (n != _ncolumns) throw FATALERROR("Number of values in row does not match the number of columns");
 
     string line;
     for (size_t i=0; i<_ncolumns; i++)
