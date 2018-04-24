@@ -279,58 +279,7 @@ public:
     template <typename Value, typename = std::enable_if_t<N==1 && StoredTable_Impl::isNumericArgList<1, Value>()>>
     double operator[](Value value) const
     {
-        // get the index of the upper border of the axis grid bin containing the specified axis value
-        size_t right = std::lower_bound(_axBeg[0], _axBeg[0]+_axLen[0], value) - _axBeg[0];
-
-        // if the value is beyond the grid borders, adjust both the bin border and the value
-        if (right == 0)
-        {
-            right++;
-            value = _axBeg[0][0];
-        }
-        else if (right == _axLen[0])
-        {
-            right--;
-            value = _axBeg[0][right];
-        }
-
-        // get the index of the lower border of the axis grid bin containing the specified axis value
-        size_t left = right-1;
-
-        // get the x values
-        double x = value;
-        double x1 = _axBeg[0][left];
-        double x2 = _axBeg[0][right];
-
-        // if requested, compute logarithm of x values
-        if (_axLog[0])
-        {
-            x  = log10(x);
-            x1 = log10(x1);
-            x2 = log10(x2);
-        }
-
-        // get the tabulated y values
-        double y1 = valueAtIndices(left);
-        double y2 = valueAtIndices(right);
-
-        // perform logarithmic interpolation of y value if requested and the bordering values are positive
-        bool logy = _qtyLog && y1>0 && y2>0;
-
-        // compute logarithm of function values if required
-        if (logy)
-        {
-            y1 = log10(y1);
-            y2 = log10(y2);
-        }
-
-        // perform the interpolation
-        double y = y1 + ((x-x1)/(x2-x1))*(y2-y1);
-
-        // compute the inverse logarithm of the resulting function value if required
-        if (logy) y = pow(10,y);
-
-        return y;
+        return operator()(value);
     }
 
     // ================== Accessing the raw data ==================
