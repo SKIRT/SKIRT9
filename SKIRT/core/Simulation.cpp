@@ -5,6 +5,7 @@
 
 #include "Simulation.hpp"
 #include "FatalError.hpp"
+#include "ProcessManager.hpp"
 #include "TimeLogger.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -17,8 +18,8 @@ void Simulation::setup()
     TimeLogger logger(_log, "setup");
     SimulationItem::setup();
 
-    // Wait for the other processes to reach this point
-    _communicator->wait("the setup");
+    find<Log>()->info("Waiting for other processes to finish setup...");
+    ProcessManager::wait();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -28,7 +29,8 @@ void Simulation::run()
     // verify setup
     if (!setupStarted()) throw FATALERROR("Simulation has not been setup before being run");
 
-    if (_communicator->isMultiProc()) _random->randomize();
+    // make each process use different random seeds
+    if (ProcessManager::isMultiProc()) _random->randomize();
 
     TimeLogger logger(_log, "the simulation run");
     runSelf();
@@ -45,18 +47,9 @@ void Simulation::setupAndRun()
     if (threads > 1) processInfo += " using " + std::to_string(threads) + " threads";
     else processInfo += " using a single thread";
 
-    _communicator->setup();
-    auto procs = _communicator->size();
-    if (procs > 1)
-    {
-        processInfo += " for each of " + std::to_string(procs) + " processes";
-        if (_communicator->dataParallel()) processInfo += " in data parallelization mode";
-        else processInfo += " in task parallelization mode";
-    }
-    else
-    {
-        processInfo += " and a single process";
-    }
+    auto procs = ProcessManager::size();
+    if (procs > 1) processInfo += " for each of " + std::to_string(procs) + " processes";
+    else processInfo += " and a single process";
 
     _log->setup();
     TimeLogger logger(_log, "simulation " + _paths->outputPrefix() + processInfo);
@@ -84,13 +77,6 @@ Log* Simulation::log() const
 ParallelFactory* Simulation::parallelFactory() const
 {
     return _factory;
-}
-
-////////////////////////////////////////////////////////////////////
-
-PeerToPeerCommunicator* Simulation::communicator() const
-{
-    return _communicator;
 }
 
 ////////////////////////////////////////////////////////////////////

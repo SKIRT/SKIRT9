@@ -12,7 +12,6 @@
 #include "MonteCarloSimulation.hpp"
 #include "Parallel.hpp"
 #include "ParallelFactory.hpp"
-#include "PeerToPeerCommunicator.hpp"
 #include "ProcessManager.hpp"
 #include "SchemaDef.hpp"
 #include "SimulationItemRegistry.hpp"
@@ -161,7 +160,7 @@ int SkirtCommandLineHandler::doBatch()
                           + (_parallelSims > 1 ? ", " + std::to_string(_parallelSims) + " in parallel" : ""));
         ParallelFactory factory;
         factory.setMaxThreadCount(_parallelSims);
-        factory.parallel()->call(this, &SkirtCommandLineHandler::doSimulation, _skifiles.size());
+        ////factory.parallel()->call(this, &SkirtCommandLineHandler::doSimulation, _skifiles.size());
     }
 
     // report memory statistics for the complete run

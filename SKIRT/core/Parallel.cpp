@@ -6,7 +6,6 @@
 #include "Parallel.hpp"
 #include "FatalError.hpp"
 #include "ParallelFactory.hpp"
-#include "ProcessAssigner.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -25,7 +24,6 @@ Parallel::Parallel(int threadCount, ParallelFactory* factory)
 
         // Initialize shared data members
         _target = nullptr;
-        _assigner = nullptr;
         _limit = 0;
         _active.assign(threadCount, true);
         _exception = nullptr;
@@ -69,7 +67,7 @@ int Parallel::threadCount() const
 }
 
 ////////////////////////////////////////////////////////////////////
-
+/*
 void Parallel::call(ParallelTarget* target, const ProcessAssigner* assigner, size_t repetitions)
 {
     size_t assigned = assigner->assigned();
@@ -126,7 +124,7 @@ void Parallel::call(ParallelTarget* target, const ProcessAssigner* assigner, siz
         throw *_exception;  // throw by value (the memory for the heap-allocated exception is leaked)
     }
 }
-
+*/
 ////////////////////////////////////////////////////////////////////
 
 void Parallel::run(int threadIndex)
@@ -177,7 +175,7 @@ void Parallel::doWork()
             index = index % _loopRange;
 
             // Convert the index if using an assigner
-            if (_assigner) index = _assigner->absoluteIndex(index);
+//            if (_assigner) index = _assigner->absoluteIndex(index);
 
             // Execute the body
             _target->body(index);

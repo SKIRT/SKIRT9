@@ -8,7 +8,7 @@
 #include "Log.hpp"
 #include "NR.hpp"
 #include "ParallelFactory.hpp"
-#include "PeerToPeerCommunicator.hpp"
+#include "ProcessManager.hpp"
 #include "Position.hpp"
 
 //////////////////////////////////////////////////////////////////////
@@ -49,13 +49,12 @@ void Random::initialize(int Nthreads)
 void Random::randomize()
 {
     find<Log>()->info("Setting different seeds for each process.");
-    PeerToPeerCommunicator* comm = find<PeerToPeerCommunicator>();
 
     int Nthreads = _parfac->maxThreadCount();
     _mtv.resize(Nthreads);      // Because the number of threads can be different during and after the setup
     _mtiv.resize(Nthreads);     // of the simulation.
 
-    _seed = _seed + Nthreads * comm->rank();
+    _seed = _seed + Nthreads * ProcessManager::rank();
 
     initialize(Nthreads);
 }

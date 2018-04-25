@@ -10,7 +10,6 @@
 #include "ConsoleLog.hpp"
 #include "FilePaths.hpp"
 #include "ParallelFactory.hpp"
-#include "PeerToPeerCommunicator.hpp"
 #include "Random.hpp"
 #include "Units.hpp"
 
@@ -20,19 +19,18 @@
     simulation and sits at the top of a run-time simulation hierarchy (i.e. it has no parent). A
     Simulation instance holds a number of essential simulation-wide property instances. Some of
     these (a random number generator and a system of units) are discoverable and hence fully
-    user-configurable. The other properties (a file paths object, a logging mechanism, a parallel
-    factory, and a peer-to-peer communicator) are not discoverable. When a Simulation instance is
-    constructed, a default instance is created for each of these properties. A reference to these
-    property instances can be retrieved through the corresponding getter, and in some cases, the
-    property can be further configured under program control (e.g., to set the input and output
-    file paths for the simulation).
+    user-configurable. The other properties (a file paths object, a logging mechanism, and a
+    parallel factory) are not discoverable. When a Simulation instance is constructed, a default
+    instance is created for each of these properties. A reference to these property instances can
+    be retrieved through the corresponding getter, and in some cases, the property can be further
+    configured under program control (e.g., to set the input and output file paths for the
+    simulation).
 
-    Specifically, when a Simulation instance is constructed, the \em filePaths property is set to
-    an instance of the FilePaths class with default paths and no filename prefix; the \em log
-    attribute is set to an instance of the Console class; the \em parallelFactory attribute is set
-    to an instance of the ParallelFactory class with the default maximum number of parallel
-    threads; and the \em communicator attribute is set to an instance of the PeerToPeerCommunicator
-    class. */
+    Specifically, when a Simulation instance is constructed, the \em log property is set to an
+    instance of the ConsoleLog class; the \em filePaths property is set to an instance of the
+    FilePaths class with default paths and no filename prefix; and the \em parallelFactory property
+    is set to an instance of the ParallelFactory class with the default maximum number of parallel
+    threads. */
 class Simulation : public SimulationItem
 {
     ITEM_ABSTRACT(Simulation, SimulationItem, "the simulation")
@@ -72,9 +70,6 @@ protected:
     //======== Getters for Non-Discoverable Attributes =======
 
 public:
-    /** Returns the PeerToPeerCommunicator of the simulation. */
-    PeerToPeerCommunicator* communicator() const;
-
     /** Returns the logging mechanism for this simulation hierarchy. */
     Log* log() const;
 
@@ -88,7 +83,6 @@ public:
 
 private:
     // data members
-    PeerToPeerCommunicator* _communicator{ new PeerToPeerCommunicator(this) };
     Log* _log{ new ConsoleLog(this) };
     FilePaths* _paths{ new FilePaths(this) };
     ParallelFactory* _factory{ new ParallelFactory(this) };

@@ -13,7 +13,6 @@
 #include <thread>
 class FatalError;
 class ParallelFactory;
-class ProcessAssigner;
 
 ////////////////////////////////////////////////////////////////////
 
@@ -89,14 +88,14 @@ public:
         distributed over the parallel threads in an unpredicable manner. If the \em repetitions
         argument is > 1, this function will loop through the indices specified by the assigner
         multiple times. */
-    void call(ParallelTarget* target, const ProcessAssigner* assigner, size_t repetitions = 1);
+//    void call(ParallelTarget* target, const ProcessAssigner* assigner, size_t repetitions = 1);
 
     /** Calls the body() function of the specified specified target object a certain number of
         times, with the \em index argument of that function taking values from 0 to \em maxIndex-1.
         The work will be distributed over the parallel threads in an unpredicable manner. If the
         \em repetitions argument is > 1, the loop over the indices will be repeated multiple times.
         With every repetition, the index starts from 0 and goes up to \em maxIndex-1. */
-    void call(ParallelTarget* target, size_t maxIndex, size_t repetitions = 1);
+//    void call(ParallelTarget* target, size_t maxIndex, size_t repetitions = 1);
 
     /** Calls the specified member function for the specified target object a certain number of
         times, with the \em index argument of that function taking values that are determined by
@@ -105,8 +104,8 @@ public:
         distributed over the parallel threads in an unpredicable manner. If the \em repetitions
         argument is > 1, this function will loop through the indices specified by the assigner
         multiple times. */
-    template<class T> void call(T* targetObject, void (T::*targetMember)(size_t index),
-                                const ProcessAssigner* assigner, size_t repetitions = 1);
+//    template<class T> void call(T* targetObject, void (T::*targetMember)(size_t index),
+//                                const ProcessAssigner* assigner, size_t repetitions = 1);
 
     /** Calls the specified member function for the specified target object a certain number of
         times, with the \em index argument of that function taking values from 0 to \em maxIndex-1.
@@ -119,7 +118,7 @@ public:
 private:
     /** This function gets called by all other versions of the call() function. It sets the data
         members shared by the threads and starts the parallel execution. */
-    void call(ParallelTarget* target, const ProcessAssigner* assigner, size_t limit, size_t loopRange);
+//    void call(ParallelTarget* target, const ProcessAssigner* assigner, size_t limit, size_t loopRange);
 
     /** The function that gets executed inside each of the parallel threads. */
     void run(int threadIndex);
@@ -178,7 +177,6 @@ private:
 
     // data members shared by all threads; changes are protected by a mutex
     ParallelTarget* _target;    // the target to be called
-    const ProcessAssigner* _assigner; // the process assigner
     size_t _limit;              // the total number of calls to the given function
     size_t _loopRange;          // the number of function calls in one iteration of the for loop
     std::vector<bool> _active;  // flag for each parallel thread (other than the parent thread)
@@ -193,6 +191,7 @@ private:
 
 ////////////////////////////////////////////////////////////////////
 
+/*
 // outermost portion of the call() template function implementation
 template<class T> void Parallel::call(T* targetObject, void (T::*targetMember)(size_t index),
                                       const ProcessAssigner* assigner, size_t repetitions)
@@ -209,7 +208,7 @@ template<class T> void Parallel::call(T* targetObject, void (T::*targetMember)(s
     Target<T> target(targetObject, targetMember);
     call(&target, maxIndex, repetitions);
 }
-
+*/
 ////////////////////////////////////////////////////////////////////
 
 #endif

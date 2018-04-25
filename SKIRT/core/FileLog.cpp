@@ -6,7 +6,7 @@
 #include "FileLog.hpp"
 #include "FatalError.hpp"
 #include "FilePaths.hpp"
-#include "PeerToPeerCommunicator.hpp"
+#include "ProcessManager.hpp"
 #include "System.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -29,11 +29,9 @@ void FileLog::setupSelfBefore()
     // Call the setup of the base class first, to ensure the string identifying the process is set.
     Log::setupSelfBefore();
 
-    PeerToPeerCommunicator* comm = find<PeerToPeerCommunicator>();
-
     // If not in verbose mode, the log file for a process that is not the root needn't be
     // created at this point; only when an error or a warning is encountered from this process.
-    if (!comm->isRoot() && !verbose()) return;
+    if (!ProcessManager::isRoot() && !verbose()) return;
 
     // Open the log output file
     open();
@@ -43,10 +41,8 @@ void FileLog::setupSelfBefore()
 
 void FileLog::open()
 {
-    PeerToPeerCommunicator* comm = find<PeerToPeerCommunicator>();
-
     string filepath;
-    if (comm->isRoot())
+    if (ProcessManager::isRoot())
     {
         filepath = find<FilePaths>()->output("log.txt");
     }

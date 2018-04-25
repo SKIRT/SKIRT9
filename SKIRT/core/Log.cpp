@@ -4,7 +4,6 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "Log.hpp"
-#include "ProcessCommunicator.hpp"
 #include "ProcessManager.hpp"
 #include "StringUtils.hpp"
 #include "System.hpp"
@@ -22,9 +21,8 @@ void Log::setupSelfBefore()
 {
     SimulationItem::setupSelfBefore();
 
-    // get a pointer to the ProcessCommunicator and remember our rank
-    auto comm = find<ProcessCommunicator>();
-    if (comm->isMultiProc()) setRank(comm->rank());
+    // remember our rank
+    if (ProcessManager::isMultiProc()) setRank(ProcessManager::rank());
 }
 
 ////////////////////////////////////////////////////////////////////

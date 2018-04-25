@@ -7,7 +7,7 @@
 #include "FatalError.hpp"
 #include "FilePaths.hpp"
 #include "Log.hpp"
-#include "PeerToPeerCommunicator.hpp"
+#include "ProcessManager.hpp"
 #include "System.hpp"
 #include "fitsio.h"
 #include <mutex>
@@ -35,12 +35,8 @@ void FITSInOut::write(const SimulationItem* item, string description, string fil
                       const Array& data, int nx, int ny, int nz,
                       double incx, double incy, double xc, double yc, string dataUnits, string xyUnits)
 {
-    // Try to find a PeerToPeerCommunicator object and ensure it is setup
-    PeerToPeerCommunicator* comm = item->find<PeerToPeerCommunicator>(false);
-    if (comm) comm->setup();
-
-    // Only write the FITS file if this process is the root or no PeerToPeerCommunicator was found
-    if (!comm || comm->isRoot())
+    // Only write the FITS file if this process is the root
+    if (ProcessManager::isRoot())
     {
         // Determine the path of the output FITS file
         string filepath = item->find<FilePaths>()->output(filename + ".fits");
