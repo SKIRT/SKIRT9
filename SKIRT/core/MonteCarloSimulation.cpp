@@ -11,8 +11,14 @@
 #include "TimeLogger.hpp"
 
 // included for testing purposes
+#include "FITSInOut.hpp"
+#include "LockFree.hpp"
+#include "ParallelFactory.hpp"
+#include "Parallel.hpp"
 #include "StoredTable.hpp"
+#include "Table.hpp"
 #include "TextOutFile.hpp"
+#include <atomic>
 
 ////////////////////////////////////////////////////////////////////
 
@@ -41,6 +47,22 @@ bool MonteCarloSimulation::emulationMode()
 int MonteCarloSimulation::dimension() const
 {
     return 0;
+}
+
+////////////////////////////////////////////////////////////////////
+
+namespace
+{
+    std::atomic<size_t> countPixels;
+
+    // test function adds 1/limit to a random pixel in the specified frame
+    void addPixel(Table<2>& frame, Random* random, size_t limit)
+    {
+        size_t i = static_cast<size_t>( random->uniform() * frame.size(0) );
+        size_t j = static_cast<size_t>( random->uniform() * frame.size(1) );
+        LockFree::add(frame(i,j), 1./limit);
+        countPixels++;
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -83,6 +105,17 @@ void MonteCarloSimulation::runSelf()
         out.addColumn("wavelength");
         out.addColumn("normalized cumulative SED");
         for (size_t i = 0; i!=xv.size(); ++i) out.writeRow(xv[i],Yv[i]);
+    }
+    {
+        const size_t numPixels = 100*1000*1000;
+        Table<2> frame(500,500);
+
+        auto parallel = find<ParallelFactory>()->parallel();
+        parallel->call([this,&frame](size_t) { addPixel(frame, random(), numPixels); }, numPixels);
+        log()->warning("Sent pixels: " + std::to_string(numPixels));
+        log()->warning("Rcvd pixels: " + std::to_string(countPixels));
+
+        FITSInOut::write(this, "frame", "frame", frame.data(), frame.size(0), frame.size(1), 1, 0,0,0,0,"","");
     }
 }
 

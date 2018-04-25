@@ -59,7 +59,9 @@ public:
         this factory object. */
     int maxThreadCount() const;
 
-    /** Returns the number of logical cores detected on the computer running the code. */
+    /** Returns the number of logical cores detected on the computer running the code, with a
+        minimum of one and a maximum of 24 (additional threads in single process do not increase
+        performance). */
     static int defaultThreadCount();
 
     /** Returns a Parallel instance with a particular number of execution threads. If the argument

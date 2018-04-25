@@ -38,7 +38,9 @@ int ParallelFactory::maxThreadCount() const
 int ParallelFactory::defaultThreadCount()
 {
     int count = std::thread::hardware_concurrency();
-    return count>0 ? count : 1;
+    if (count < 1) return 1;    // the number of threads could not be determined
+    if (count > 24) return 24;  // additional threads in single process do not increase performance
+    return count;
 }
 
 ////////////////////////////////////////////////////////////////////
