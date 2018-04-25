@@ -696,6 +696,11 @@ void System::releaseMemoryMap(string path)
 {
     if (_maps.count(path))
     {
+        // perform the mapping operation in a critical section because
+        //  - access to our map dictionary is certainly not thread-safe
+        //  - thread-safety of the operating system calls is not so clear
+        std::unique_lock<std::mutex> lock(_mapMutex);
+
         MapRecord& record = _maps.at(path);
         record.count--;
 
