@@ -23,7 +23,9 @@ Parallel::Parallel(int threadCount, ParallelFactory* factory)
         std::unique_lock<std::mutex> lock(_mutex);
 
         // Initialize shared data members
-        _limit = 0;
+        _numChunks = 0;
+        _chunkSize = 0;
+        _maxIndex = 0;
         _active.assign(threadCount, true);
         _exception = nullptr;
         _terminate = false;
@@ -67,7 +69,7 @@ int Parallel::threadCount() const
 
 ////////////////////////////////////////////////////////////////////
 
-void Parallel::call(std::function<void(size_t)> target, size_t maxIndex)
+void Parallel::call(std::function<void(size_t,size_t)> target, size_t maxIndex, bool useChunksOfSizeOne)
 {
     // Verify that we're being called from our parent thread
     if (std::this_thread::get_id() != _parentThread)
@@ -77,9 +79,15 @@ void Parallel::call(std::function<void(size_t)> target, size_t maxIndex)
     {
         std::unique_lock<std::mutex> lock(_mutex);
 
-        // Copy the arguments so they can be used from any of the threads
+        // Copy the target function so it can be invoked from any of the threads
         _target = target;
-        _limit = maxIndex;
+
+        // Determine the chunk size and the number of chunks
+        _maxIndex = maxIndex;
+        if (useChunksOfSizeOne) _numChunks = _maxIndex;
+        else _numChunks = _threadCount * 8;   // empirical multiplicator to achieve acceptable load balancing
+        _chunkSize = _maxIndex / _numChunks;
+        if (_numChunks * _chunkSize < _maxIndex) _numChunks++;
 
         // Initialize the number of active threads (i.e. not waiting for new work)
         _active.assign(_threadCount, true);
@@ -150,11 +158,11 @@ void Parallel::doWork()
         // Do work as long as some is available
         while (true)
         {
-            size_t index = _next++;                  // get the next index atomically
-            if (index >= _limit) break;              // break if no more are available
+            size_t chunkIndex = _next++;             // get the next chunk index atomically
+            if (chunkIndex >= _numChunks) break;     // break if no more are available
 
             // Execute the body
-            _target(index);
+            _target(chunkIndex*_chunkSize, min(_chunkSize,_maxIndex-chunkIndex*_chunkSize));
         }
     }
     catch (FatalError& error)
@@ -180,7 +188,7 @@ void Parallel::reportException(FatalError* exception)
         _exception = exception;
 
         // Make the other threads stop by taking away their work
-        _limit = 0;  // this is safe because another thread will see either the old value, or zero
+        _numChunks = 0;  // another thread will hopefully see either the old value, or zero
     }
 }
 
