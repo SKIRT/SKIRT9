@@ -152,15 +152,14 @@ int SkirtCommandLineHandler::doBatch()
 
         // prevent different simulations to be launched at once while MPI parallelization is used
         if (ProcessManager::isMultiProc() && _parallelSims > 1)
-            throw FATALERROR("You cannot run different simulations in parallel whilst parallelizing them with MPI.\n"
-                             "Retry with -s set to 1 or consider launching different SKIRT instances.");
+            throw FATALERROR("Cannot run multiple simulations in parallel when there are multiple MPI processes");
 
         // perform a simulation for each ski file
         TimeLogger logger(&_console, "a set of " + std::to_string(_skifiles.size()) + " simulations"
                           + (_parallelSims > 1 ? ", " + std::to_string(_parallelSims) + " in parallel" : ""));
         ParallelFactory factory;
         factory.setMaxThreadCount(_parallelSims);
-        ////factory.parallel()->call(this, &SkirtCommandLineHandler::doSimulation, _skifiles.size());
+        factory.parallel()->call([this](int i){doSimulation(i);}, _skifiles.size());
     }
 
     // report memory statistics for the complete run

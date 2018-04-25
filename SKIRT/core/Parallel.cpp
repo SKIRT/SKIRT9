@@ -23,7 +23,6 @@ Parallel::Parallel(int threadCount, ParallelFactory* factory)
         std::unique_lock<std::mutex> lock(_mutex);
 
         // Initialize shared data members
-        _target = nullptr;
         _limit = 0;
         _active.assign(threadCount, true);
         _exception = nullptr;
@@ -67,23 +66,8 @@ int Parallel::threadCount() const
 }
 
 ////////////////////////////////////////////////////////////////////
-/*
-void Parallel::call(ParallelTarget* target, const ProcessAssigner* assigner, size_t repetitions)
-{
-    size_t assigned = assigner->assigned();
-    call(target, assigner, assigned*repetitions, assigned);
-}
 
-////////////////////////////////////////////////////////////////////
-
-void Parallel::call(ParallelTarget* target, size_t maxIndex, size_t repetitions)
-{
-    call(target, nullptr, maxIndex*repetitions, maxIndex);
-}
-
-////////////////////////////////////////////////////////////////////
-
-void Parallel::call(ParallelTarget* target, const ProcessAssigner* assigner, size_t limit, size_t loopRange)
+void Parallel::call(std::function<void(size_t)> target, size_t maxIndex)
 {
     // Verify that we're being called from our parent thread
     if (std::this_thread::get_id() != _parentThread)
@@ -95,15 +79,13 @@ void Parallel::call(ParallelTarget* target, const ProcessAssigner* assigner, siz
 
         // Copy the arguments so they can be used from any of the threads
         _target = target;
-        _assigner = assigner;
-        _limit = limit;
-        _loopRange = loopRange;
+        _limit = maxIndex;
 
         // Initialize the number of active threads (i.e. not waiting for new work)
         _active.assign(_threadCount, true);
 
         // Clear the exception pointer
-        _exception = 0;
+        _exception = nullptr;
 
         // Initialize the loop variable
         _next = 0;
@@ -124,7 +106,7 @@ void Parallel::call(ParallelTarget* target, const ProcessAssigner* assigner, siz
         throw *_exception;  // throw by value (the memory for the heap-allocated exception is leaked)
     }
 }
-*/
+
 ////////////////////////////////////////////////////////////////////
 
 void Parallel::run(int threadIndex)
@@ -171,14 +153,8 @@ void Parallel::doWork()
             size_t index = _next++;                  // get the next index atomically
             if (index >= _limit) break;              // break if no more are available
 
-            // Repeat the same index range if necessary
-            index = index % _loopRange;
-
-            // Convert the index if using an assigner
-//            if (_assigner) index = _assigner->absoluteIndex(index);
-
             // Execute the body
-            _target->body(index);
+            _target(index);
         }
     }
     catch (FatalError& error)
