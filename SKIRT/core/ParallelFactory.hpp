@@ -11,25 +11,86 @@
 #include <thread>
 #include <unordered_map>
 
-/** A ParallelFactory object serves as a factory for instances of the Parallel class, called its
-    children. An important attribute of a factory object is the maximum number of parallel
-    execution threads to be handed to its children. When requesting a new child, the client can
-    specify a more stringent limit on the number of threads, but the factory's limit is never
-    exceeded. This allows a client to request a Parallel object with a smaller number of threads,
-    usually for performance reasons, while still sharing the thread indexing mechanism provided by
-    the currentThreadIndex() function. A factory object assumes ownership for all its children. If
-    a child with the appropriate number of threads already exists, it will be handed out again.
+/** A ParallelFactory object serves as a factory for instances of Parallel subclasses, called its
+    children. An important property of a factory object is the maximum number of parallel execution
+    threads per process to be handed to its children. During construction of a ParallelFactory
+    instance, the maximum thread count is set to the return value of the defaultThreadCount()
+    function. The value can be changed after construction by calling the setMaxThreadCount()
+    function, but it should not be changed after any children have been requested. When requesting
+    a new child, the client can specify a more stringent limit on the number of threads, but the
+    factory's limit is never exceeded. This allows a client to request a Parallel object with a
+    smaller number of threads, usually for performance reasons.
 
-    A particular Parallel instance can be reused many times for calling various member functions in
-    various objects, reducing the overhead of creating and destroying the threads. However all
-    children of a particular factory share the same thread pool (at least logically if not
-    physically), so they should \em never be used in parallel. Specifically, recursively invoking
-    the call() function on the same Parallel instance is not allowed and results in undefined
-    behavior. The recommended use is to have a single ParallelFactory instance per simulation, and
-    to use yet another ParallelFactory instance to run multiple simulations at the same time.
+    A factory object assumes ownership for all its children. If a child of the appropriate type
+    (see below) and with the appropriate number of threads already exists, it will be handed out
+    again. As a result, a particular Parallel instance may be reused several times, reducing the
+    overhead of creating and destroying the threads. However, the children of a particular factory
+    should \em never be used in parallel. Also, recursively invoking the call() function on a
+    Parallel instance is not allowed and results in undefined behavior. The recommended use is to
+    have a single ParallelFactory instance per simulation, and to use yet another ParallelFactory
+    instance to run multiple simulations at the same time.
 
-    During construction of a ParallelFactory instance, the maximum thread count is set to the
-    return value of the defaultThreadCount() function. */
+    ParallelFactory clients can request a Parallel instance for one of the three task allocation
+    modes described in the table below.
+
+    Task mode | Description
+    ----------|------------
+    Distributed | All threads in all processes perform the tasks in parallel
+    Duplicated | Each process performs all tasks; the results should be identical on all processes
+    RootOnly | All threads in the root process perform the tasks in parallel; the other processes ignore the tasks
+
+    In support of these task modes, the Parallel class has several subclasses, each implementing
+    a specific parallelization scheme as described in the table below.
+
+    Shorthand | %Parallel subclass | Description
+    ----------|-----------------|------------
+    S | SerialParallel | Single thread in the current process; isolated from any other processes
+    MT | MultiThreadParallel | Multiple coordinated threads in the current process; isolated from any other processes
+    MP | MultiProcessParallel | Single thread in each of multiple, coordinated processes
+    MTP | HybridParallel | Multiple threads in each of multiple processes, all coordinated as a group
+    0 | NullParallel | No operation; any requests for performing work are ignored
+
+    Depending on the requested task mode and the current run-time configuration (number of processes
+    and number of threads in each process), a ParallelFactory object hands out the appropriate
+    Parallel subclass as listed in the table below. (Header: P=process, T=thread, 1=one, M=multiple.)
+
+    Mode/Runtime | 1P 1T | 1P MT | MP 1T | MP MT |
+    -------------|-------|-------|-------|-------|
+    Distributed  |  S    |  MT   |  MP   |  MTP  |
+    Duplicated   |  S    |  MT   |  S    |  S*   |
+    RootOnly     |  S    |  MT   |  S/0  |  MT/0 |
+
+    (*) In Duplicated mode with multiple processes, all tasks are performed by a single thread
+        (in each process) because parallel threads executing tasks in a non-stable order would see
+        different random number sequences, possibly causing differences in the calculated results.
+
+    The random generator for the simulation can be seeded in one of two ways (in addition to the
+    unseeded state) as described in the table below.
+
+    Seed mode  | Description
+    -----------|------------
+    L (Local)  | Each thread in a process has a different seed; all processes use the same seeds
+    G (Global) | Each tread has a different seed across all processes
+
+    Before handing a child to a client, the ParallelFactory object will properly seed the random generator
+    for each thread of the child as listed in the table below.
+
+    Mode/Runtime | 1P 1T | 1P MT | MP 1T | MP MT |
+    -------------|-------|-------|-------|-------|
+    Distributed  |  LG   |  LG   |  G    |  G    |
+    Duplicated   |  LG   |  LG   |  L    |  L    |
+    RootOnly     |  LG   |  LG   |  LG/0 |  LG/0 |
+
+    The recipes in the above table are described in the table below.
+
+    Seeding recipe | Description
+    ---------------|------------
+    L  | Seed the generator in Local mode, unless it already is seeded in Local mode
+    G  | Seed the generator in Global mode, unless it already is seeded in Global mode
+    LG | Allow both L or G; seed the generator in L mode if it has not yet been seeded
+    0  | Never seed the generator (because no tasks will be performed)
+
+    */
 class ParallelFactory : public SimulationItem
 {
     friend class Parallel;
