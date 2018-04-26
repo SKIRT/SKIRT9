@@ -69,11 +69,14 @@ int Parallel::threadCount() const
 
 ////////////////////////////////////////////////////////////////////
 
-void Parallel::call(std::function<void(size_t,size_t)> target, size_t maxIndex, bool useChunksOfSizeOne)
+void Parallel::call(std::function<void(size_t,size_t)> target, size_t maxIndex)
 {
     // Verify that we're being called from our parent thread
     if (std::this_thread::get_id() != _parentThread)
         throw FATALERROR("Parallel call not invoked from thread that constructed this object");
+
+    // Intercept the pathological case where we have no work at all to avoid zero division later on
+    if (!maxIndex) return;
 
     // Initialize shared data members and activate threads in a critical section
     {
@@ -83,11 +86,11 @@ void Parallel::call(std::function<void(size_t,size_t)> target, size_t maxIndex, 
         _target = target;
 
         // Determine the chunk size and the number of chunks
+        const size_t numChunksPerThread = 8;   // empirical multiplicator to achieve acceptable load balancing
         _maxIndex = maxIndex;
-        if (useChunksOfSizeOne) _numChunks = _maxIndex;
-        else _numChunks = _threadCount * 8;   // empirical multiplicator to achieve acceptable load balancing
-        _chunkSize = _maxIndex / _numChunks;
-        if (_numChunks * _chunkSize < _maxIndex) _numChunks++;
+        _numChunks = min(_threadCount>1 ? _threadCount*numChunksPerThread : 1, maxIndex);
+        _chunkSize = maxIndex / _numChunks;
+        if (_numChunks * _chunkSize < maxIndex) _numChunks++;
 
         // Initialize the number of active threads (i.e. not waiting for new work)
         _active.assign(_threadCount, true);

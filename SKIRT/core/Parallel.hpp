@@ -24,11 +24,9 @@ class ParallelFactory;
     To reduce the overhead of handing out the work and invoking the target, the loop is actualy
     carved into \em chunks of consecutive indices. Rather than a single index, the target function
     is handed the first index of the chunk and the number of indices in the chunk, and it is
-    expected to iterate over the specified index range. By default, the chunk sizes are determined
+    expected to iterate over the specified index range. The chunk sizes are determined
     automatically to achieve optimal load balancing given the number of available parallel threads,
-    while still maximally reducing the overhead of handing out the chunks. If desired, the user can
-    override this behavior so that all chunks have a size of one, and the target function can
-    ignore its second argument and does not need to iterate over the chunk size.
+    while still maximally reducing the overhead of handing out the chunks.
 
     A Parallel instance can be created only through the ParallelFactory class. The default
     construction determines a reasonable number of threads for the computer on which the code is
@@ -80,18 +78,15 @@ public:
     int threadCount() const;
 
     /** Calls the specified target function repeatedly for index chunks that, taken together, will
-        exactly cover the range from zero to \em maxIndex-1. Each index chunk is specified to the
-        target function through its two arguments, \em firstIndex and \em numIndices. The
+        exactly cover the index range from zero to \em maxIndex-1. Each index chunk is specified to
+        the target function through its two arguments, \em firstIndex and \em numIndices. The
         invocations of the target function will be distributed over the parallel threads in an
-        unpredicable manner, and the various chunks may be processed in arbitrary order.
+        unpredicable manner, and the various index chunks may be processed in arbitrary order.
 
-        By default, the index chunk sizes are determined automatically to achieve optimal load
-        balancing given the number of available parallel threads, while still maximally reducing
-        the overhead of handing out the chunks. If the optional \em useChunksOfSizeOne flag is set
-        to true, however, all chunks wil have a size of one. In this case, the target function can
-        ignore its second argument and does not need to iterate over the chunk size. */
-    void call(std::function<void(size_t firstIndex, size_t numIndices)> target,
-              size_t maxIndex, bool useChunksOfSizeOne=false);
+        The index chunk sizes are determined automatically to achieve optimal load balancing given
+        the number of available parallel threads, while still maximally reducing the overhead of
+        handing out the chunks. */
+    void call(std::function<void(size_t firstIndex, size_t numIndices)> target, size_t maxIndex);
 
 private:
     /** The function that gets executed inside each of the parallel threads. */
