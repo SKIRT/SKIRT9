@@ -29,9 +29,6 @@ void Simulation::run()
     // verify setup
     if (!setupStarted()) throw FATALERROR("Simulation has not been setup before being run");
 
-    // make each process use different random seeds
-    if (ProcessManager::isMultiProc()) _random->randomize();
-
     TimeLogger logger(_log, "the simulation run");
     runSelf();
 }

@@ -37,7 +37,7 @@ class Position;
     the predictable random generator to its fixed initial state (depending on the value of the
     user-configurable \em seed property), and causes the calling thread (i.e., its parent thread)
     to use the predictable generator. The Random::switchToArbitrary() and
-    Random::swithToPredictable() functions can be used to switch the parent thread between both
+    Random::switchToPredictable() functions can be used to switch the parent thread between both
     generators.
 
     This complicated mechanism is intended to support the following use cases:
@@ -56,7 +56,7 @@ class Position;
 
     The recommended use of the Random class is to include a single instance in each simulation
     run-time hierarchy. The Parallel subclasses returned from a ParallelFactory in the same
-    run-time hierarchy will then call the switchToArbitrary() and swithToPredictable() functions
+    run-time hierarchy will then call the switchToArbitrary() and switchToPredictable() functions
     at the appropriate times.
 
     All rng's used in this class are based on the 64-bit Mersenne twister, which offers a
@@ -66,49 +66,38 @@ class Random : public SimulationItem
     ITEM_CONCRETE(Random, SimulationItem, "the default random generator")
 
     PROPERTY_INT(seed, "the seed for the random generator")
-        ATTRIBUTE_MIN_VALUE(seed, "1")
-        ATTRIBUTE_DEFAULT_VALUE(seed, "4357")
+        ATTRIBUTE_MIN_VALUE(seed, "0")
+        ATTRIBUTE_MAX_VALUE(seed, "1000000")
+        ATTRIBUTE_DEFAULT_VALUE(seed, "0")
+        ATTRIBUTE_SILENT(seed)
 
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============
 
 protected:
-    /** This function initializes the data structure that is used for the calculation of the random
-        numbers, using the current value of the seed. */
+    /** This function (re-)initializes the predictable random generator to its fixed initial state
+        (depending on the value of the user-configurable \em seed property), and causes the calling
+        thread (i.e., the parent thread) to use the predictable generator as opposed to the default
+        arbitrary generator. The switchToArbitrary() and switchToPredictable() functions can be used
+        to switch the parent thread between both generators. */
     void setupSelfBefore() override;
 
-private:
-    /** This function serves as the body of two different functions: the setupSelfBefore() function and
-        the randomize() function. Based on the seed stored in the \c _seed attribute, this function
-        generates random sequences for each different thread in the simulation. This is done by
-        incrementing the seed with each increment of the thread number. During setup, the \c _seed
-        variable is equal on each process, providing them with the same random sequences. When this
-        function is called from randomize(), each process has given a different seed, yielding
-        different random sequences for every thread in the multiprocessing environment. */
-    void initialize();
+public:
+    /** This function switches the calling thread to the arbitrary generator. It should be called
+        only from the parent thread, i.e. the thread that called setup() on this instance. */
+    void switchToArbitrary();
+
+    /** This function switches the calling thread to the predictable generator. It should be called
+        only from the parent thread, i.e. the thread that called setup() on this instance. */
+    void switchToPredictable();
 
     //======================== Other Functions =======================
 
 public:
-    /** This function is used to give each thread in the multiprocessing environment a different random
-        seed and regenerating their random sequences. This function uses the find algorithm to obtain a
-        pointer to the PeerToPeerCommunicator object. Next, the \c _seed variable is shifted by exactly
-        the number of threads for each successive process. At least, the initialize() function is
-        called with the number of threads as an argument. */
-    void randomize();
-
-    /** This function generates a random uniform deviate, i.e. a random double precision number in
-        the interval [0,1]. For details how this is exactly done, see the information at
-        http://www.math.keio.ac.jp/matumoto/emt.html. */
+    /** This function generates a uniform deviate, i.e. a random double precision number in the
+        open interval (0,1). The interval borders zero and one are never returned. */
     double uniform();
-
-    /** This function generates a random number drawn from an arbitrary probability distribution
-        \f$p(x)\,{\text{d}}x\f$ with corresponding cumulative distribution function \f$P(x)\f$.
-        The routine reads in a discretized version \f$P_i\f$ of the cdf sampled at a set of
-        points \f$x_i\f$. A uniform deviate \f$X\f$ is generated, and the equation \f$X=P(x)\f$
-        is solved using linear interpolation. */
-    double cdf(const Array& xv, const Array& Xv);
 
     /** This function generates a random number from a Gaussian distribution function with mean 0
         and standard deviation 1, i.e. defined by the probability distribution \f[ p(x)\,{\rm d}x =
@@ -151,6 +140,13 @@ public:
     /** This function generates a uniformly distributed random position in a given box (i.e. a
         cuboid lined up with the coordinate axes). */
     Position position(const Box& box);
+
+    /** This function generates a random number drawn from an arbitrary probability distribution
+        \f$p(x)\,{\text{d}}x\f$ with corresponding cumulative distribution function \f$P(x)\f$. The
+        function accepts a discretized version \f$P_i\f$ of the cdf sampled at a set of \f$N\f$
+        points \f$x_i\f$. A uniform deviate \f$\cal{X}\f$ is generated, and the equation
+        \f${\cal{X}}=P(x)\f$ is solved using linear interpolation. */
+    double cdf(const Array& xv, const Array& Pv);
 };
 
 //////////////////////////////////////////////////////////////////////

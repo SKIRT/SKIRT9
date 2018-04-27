@@ -5,11 +5,55 @@
 
 #include "Random.hpp"
 #include "Box.hpp"
-#include "Log.hpp"
 #include "NR.hpp"
-#include "ParallelFactory.hpp"
-#include "ProcessManager.hpp"
 #include "Position.hpp"
+#include <random>
+
+//////////////////////////////////////////////////////////////////////
+
+namespace
+{
+    // This helper class represents a pseudo-random generator. An instance is always constructed as
+    // an arbitrary generator, but it can be turned into a predictable generator through setState().
+    class Rand
+    {
+    private:
+        // use 64-bit Mersenne twister
+        std::mt19937_64 _generator;
+        // explicitly exclude zero from range; one is excluded automatically
+        std::uniform_real_distribution<double> _distribution
+                    {std::nextafter(static_cast<double>(0.), static_cast<double>(1.)), 1.};
+
+    public:
+        // construct arbitrary generator, seeded with a truly random sequence
+        Rand()
+        {
+            std::random_device r;
+            std::seed_seq seedseq{r(), r(), r(), r(), r(), r(), r(), r()};
+            _generator.seed(seedseq);
+        }
+
+        // turn into predictable generator, seeded with fixed sequence depending on given seed
+        void setState(int seed)
+        {
+            std::seed_seq seedseq{979364188u+seed, 871244425u+seed, 1693909487u+seed, 1290454318u+seed,
+                                  210509498u+seed, 542237529u+seed, 3429911442u+seed, 3321294726u+seed};
+            _generator.seed(seedseq);
+        }
+
+        // get uniform deviate
+        double get()
+        {
+            return _distribution(_generator);
+        }
+    };
+
+    // allocate two random generators for each thread, and a pointer to the current generator
+    // (these objects are constructed and initialized when the thread is created)
+    thread_local Rand _predictable;
+    thread_local Rand _arbitrary;
+    thread_local Rand* _rand = &_arbitrary;
+}
 
 //////////////////////////////////////////////////////////////////////
 
@@ -17,34 +61,32 @@ void Random::setupSelfBefore()
 {
     SimulationItem::setupSelfBefore();
 
+    // (re-)initialize the predictable generator for this thread
+    _predictable.setState(seed());
+
+    // switch to the predictable generator
+    switchToPredictable();
 }
 
 //////////////////////////////////////////////////////////////////////
 
-void Random::initialize()
+void Random::switchToArbitrary()
 {
+    _rand = &_arbitrary;
 }
 
 //////////////////////////////////////////////////////////////////////
 
-void Random::randomize()
+void Random::switchToPredictable()
 {
+    _rand = &_predictable;
 }
 
 //////////////////////////////////////////////////////////////////////
 
 double Random::uniform()
 {
-    return 0;
-}
-
-//////////////////////////////////////////////////////////////////////
-
-double Random::cdf(const Array& xv, const Array& Xv)
-{
-    double X = uniform();
-    int i = NR::locateClip(Xv, X);
-    return NR::interpolateLinLin(X, Xv[i], Xv[i+1], xv[i], xv[i+1]);
+    return _rand->get();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -64,7 +106,7 @@ double Random::gauss()
 
 double Random::expon()
 {
-    return -log(1.0-uniform());
+    return -log(uniform());
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -143,3 +185,11 @@ Position Random::position(const Box& box)
 }
 
 //////////////////////////////////////////////////////////////////////
+
+double Random::cdf(const Array& xv, const Array& Pv)
+{
+    double X = uniform();
+    int i = NR::locateClip(Pv, X);
+    return NR::interpolateLinLin(X, Pv[i], Pv[i+1], xv[i], xv[i+1]);
+}
+
