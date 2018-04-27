@@ -13,7 +13,6 @@
 #include <mutex>
 #include <thread>
 class FatalError;
-class ParallelFactory;
 
 ////////////////////////////////////////////////////////////////////
 
@@ -65,7 +64,7 @@ class Parallel
 private:
     /** Constructs a Parallel instance with the specified number of execution threads. The
         constructor is not public; use the ParallelFactory::parallel() function instead. */
-    Parallel(int threadCount, ParallelFactory* factory);
+    explicit Parallel(int threadCount);
 
 public:
     /** Destructs the instance and its parallel threads. */

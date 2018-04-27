@@ -8,8 +8,8 @@
 
 #include "SimulationItem.hpp"
 #include "Parallel.hpp"
+#include <map>
 #include <thread>
-#include <unordered_map>
 
 /** A ParallelFactory object serves as a factory for instances of Parallel subclasses, called its
     children. An important property of a factory object is the maximum number of parallel execution
@@ -70,8 +70,6 @@
 */
 class ParallelFactory : public SimulationItem
 {
-    friend class Parallel;
-
     //============= Construction - Setup - Destruction =============
 
 public:
@@ -102,24 +100,29 @@ public:
         performance). */
     static int defaultThreadCount();
 
-    /** Returns a Parallel instance with a particular number of execution threads. If the argument
-        is zero or omitted, the number of threads equals the factory maximum. If the argument is
-        nonzero, the number of threads is the smaller of the factory maximum and the specified
-        maximum. */
-    Parallel* parallel(int maxThreadCount=0);
+    /** This enumeration includes a constant for each task allocation mode supported by ParallelFactory
+     * and the Parallel subclasses. */
+    enum class TaskMode { Distributed, Duplicated, RootOnly };
 
-    /** Returns an index for the parallel thread from which this function is called. When invoked
-        from within a loop body being iterated by one of the factory's Parallel children, the
-        function returns an index from zero to the number of threads in the Parallel instance minus
-        one. When invoked from a thread that does not belong to any of the factory's children, the
-        function throws a fatal error. */
-    int currentThreadIndex() const;
+    /** This function returns a Parallel subclass instance of the appropriate type and with an
+        appropriate number of execution threads, depending on the requested task allocation mode,
+        the specified maximum number of threads, and the current run-time environment (number of
+        threads in the factory maximum and number of processes in the MPI group). The recipe for
+        determining the appropriate paralllization scheme is described in the main documentation
+        for this class.
 
-private:
-    /** Adds a dictionary item linking the specified thread to a particular index. This is a
-        private function used from the Parallel() constructor to provide the information required
-        by the currentThreadIndex() function. */
-    void addThreadIndex(std::thread::id threadid, int index);
+        The first argument specifies the task mode. The second argument, if present, limits the
+        maximum number of threads to the specified number. */
+    Parallel* parallel(TaskMode mode, int maxThreadCount=0);
+
+    /** This function calls the parallel() function for the Distributed task allocation mode. */
+    Parallel* parallelDistributed(int maxThreadCount=0) { return parallel(TaskMode::Distributed, maxThreadCount); }
+
+    /** This function calls the parallel() function for the Duplicated task allocation mode. */
+    Parallel* parallelDuplicated(int maxThreadCount=0) { return parallel(TaskMode::Duplicated, maxThreadCount); }
+
+    /** This function calls the parallel() function for the RootOnly task allocation mode. */
+    Parallel* parallelRootOnly(int maxThreadCount=0) { return parallel(TaskMode::RootOnly, maxThreadCount); }
 
     //======================== Data Members ========================
 
@@ -130,11 +133,11 @@ private:
     // The thread that invoked our constructor, initialized - obviously - upon construction
     std::thread::id _parentThread{ std::this_thread::get_id() };
 
-    // The set of our children, keyed on number of threads; initially empty
-    std::unordered_map<int, std::unique_ptr<Parallel>> _children;
+    // Private enumeration of the supported Parallel subclasses
+    enum class ParallelType { Null=0, Serial, MultiThread, MultiProcess, Hybrid };
 
-    // The index for each child thread and for the parent thread; the latter is added upon construction
-    std::unordered_map<std::thread::id, int> _indices{ { std::this_thread::get_id(), 0 } };
+    // The collection of our children, keyed on Parallel subclass type and number of threads; initially empty
+    std::map<std::pair<ParallelType,int>, std::unique_ptr<Parallel>> _children;
 };
 
 #endif

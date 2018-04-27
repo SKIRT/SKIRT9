@@ -159,8 +159,8 @@ int SkirtCommandLineHandler::doBatch()
                           + (_parallelSims > 1 ? ", " + std::to_string(_parallelSims) + " in parallel" : ""));
         ParallelFactory factory;
         factory.setMaxThreadCount(_parallelSims);
-        factory.parallel()->call([this](size_t first, size_t size)
-                                 { for (size_t i=0; i!=size; ++i) doSimulation(first+i); }, _skifiles.size());
+        factory.parallelRootOnly()->call([this](size_t first, size_t size)
+                                         { for (size_t i=0; i!=size; ++i) doSimulation(first+i); }, _skifiles.size());
     }
 
     // report memory statistics for the complete run

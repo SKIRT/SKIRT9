@@ -5,18 +5,16 @@
 
 #include "Parallel.hpp"
 #include "FatalError.hpp"
-#include "ParallelFactory.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-Parallel::Parallel(int threadCount, ParallelFactory* factory)
+Parallel::Parallel(int threadCount)
 {
     // Cache the number of threads
     _threadCount = threadCount;
 
     // Remember the ID of the current thread
     _parentThread = std::this_thread::get_id();
-    factory->addThreadIndex(_parentThread, 0);
 
     // Initialize shared data members and launch threads in a critical section
     {
@@ -35,7 +33,6 @@ Parallel::Parallel(int threadCount, ParallelFactory* factory)
         for (int index = 1; index < threadCount; index++)
         {
             _threads.push_back(std::thread(&Parallel::run, this, index));
-            factory->addThreadIndex(_threads.back().get_id(), index);
         }
     }
 

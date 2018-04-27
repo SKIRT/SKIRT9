@@ -111,7 +111,7 @@ void MonteCarloSimulation::runSelf()
         const size_t numPixels = 100*1000*1000 + 11;
         Table<2> frame(500,500);
 
-        auto parallel = find<ParallelFactory>()->parallel();
+        auto parallel = find<ParallelFactory>()->parallelDistributed();
         parallel->call([this,&frame](size_t i ,size_t n) { addPixels(frame, random(), numPixels, i, n); }, numPixels);
         log()->warning("Frame intensity: " + StringUtils::toString(frame.data().sum(), 'e', 9));
 
