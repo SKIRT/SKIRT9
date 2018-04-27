@@ -48,7 +48,7 @@
     MT | MultiThreadParallel | Multiple coordinated threads in the current process; isolated from any other processes
     MP | MultiProcessParallel | Single thread in each of multiple, coordinated processes
     MTP | HybridParallel | Multiple threads in each of multiple processes, all coordinated as a group
-    0 | NullParallel | No operation; any requests for performing work are ignored
+    0 | NullParallel | No operation; any requests for performing tasks are ignored
 
     Depending on the requested task mode and the current run-time configuration (number of processes
     and number of threads in each process), a ParallelFactory object hands out the appropriate
@@ -56,41 +56,18 @@
 
     Mode/Runtime | 1P 1T | 1P MT | MP 1T | MP MT |
     -------------|-------|-------|-------|-------|
-    Distributed  |  S    |  MT   |  MP   |  MTP  |
+    Distributed  |  S    |  MT   |  MP#  |  MTP# |
     Duplicated   |  S    |  MT   |  S    |  S*   |
     RootOnly     |  S    |  MT   |  S/0  |  MT/0 |
 
+    (#) In Distributed mode with multiple processes, all threads require a different random number
+        sequences. Therefore, the MultiProcessParallel and HybridParallel classes swith the Random
+        instance associated with the simulation to abitrary mode before performing tasks, and back to
+        predictable mode after performing the tasks.
     (*) In Duplicated mode with multiple processes, all tasks are performed by a single thread
-        (in each process) because parallel threads executing tasks in a non-stable order would see
-        different random number sequences, possibly causing differences in the calculated results.
-
-    The random generator for the simulation can be seeded in one of two ways (in addition to the
-    unseeded state) as described in the table below.
-
-    Seed mode  | Description
-    -----------|------------
-    L (Local)  | Each thread in a process has a different seed; all processes use the same seeds
-    G (Global) | Each tread has a different seed across all processes
-
-    Before handing a child to a client, the ParallelFactory object will properly seed the random generator
-    for each thread of the child as listed in the table below.
-
-    Mode/Runtime | 1P 1T | 1P MT | MP 1T | MP MT |
-    -------------|-------|-------|-------|-------|
-    Distributed  |  LG   |  LG   |  G    |  G    |
-    Duplicated   |  LG   |  LG   |  L    |  L    |
-    RootOnly     |  LG   |  LG   |  LG/0 |  LG/0 |
-
-    The recipes in the above table are described in the table below.
-
-    Seeding recipe | Description
-    ---------------|------------
-    L  | Seed the generator in Local mode, unless it already is seeded in Local mode
-    G  | Seed the generator in Global mode, unless it already is seeded in Global mode
-    LG | Allow both L or G; seed the generator in L mode if it has not yet been seeded
-    0  | Never seed the generator (because no tasks will be performed)
-
-    */
+        (in each process) because parallel threads executing tasks in an unpredictable order would
+        see different random number sequences, possibly causing differences in the calculated results.
+*/
 class ParallelFactory : public SimulationItem
 {
     friend class Parallel;
