@@ -3,12 +3,12 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "Parallel.hpp"
+#include "MultiThreadParallel.hpp"
 #include "FatalError.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-Parallel::Parallel(int threadCount)
+MultiThreadParallel::MultiThreadParallel(int threadCount)
 {
     // Cache the number of threads
     _threadCount = threadCount;
@@ -32,7 +32,7 @@ Parallel::Parallel(int threadCount)
         // Create the extra parallel threads with one-based index (parent thread has index zero)
         for (int index = 1; index < threadCount; index++)
         {
-            _threads.push_back(std::thread(&Parallel::run, this, index));
+            _threads.push_back(std::thread(&MultiThreadParallel::run, this, index));
         }
     }
 
@@ -42,7 +42,7 @@ Parallel::Parallel(int threadCount)
 
 ////////////////////////////////////////////////////////////////////
 
-Parallel::~Parallel()
+MultiThreadParallel::~MultiThreadParallel()
 {
     // Ask the parallel threads to exit in a critical section
     {
@@ -59,14 +59,7 @@ Parallel::~Parallel()
 
 ////////////////////////////////////////////////////////////////////
 
-int Parallel::threadCount() const
-{
-    return _threadCount;
-}
-
-////////////////////////////////////////////////////////////////////
-
-void Parallel::call(std::function<void(size_t,size_t)> target, size_t maxIndex)
+void MultiThreadParallel::call(std::function<void(size_t,size_t)> target, size_t maxIndex)
 {
     // Verify that we're being called from our parent thread
     if (std::this_thread::get_id() != _parentThread)
@@ -117,7 +110,7 @@ void Parallel::call(std::function<void(size_t,size_t)> target, size_t maxIndex)
 
 ////////////////////////////////////////////////////////////////////
 
-void Parallel::run(int threadIndex)
+void MultiThreadParallel::run(int threadIndex)
 {
     while (true)
     {
@@ -151,7 +144,7 @@ void Parallel::run(int threadIndex)
 
 ////////////////////////////////////////////////////////////////////
 
-void Parallel::doWork()
+void MultiThreadParallel::doWork()
 {
     try
     {
@@ -161,7 +154,7 @@ void Parallel::doWork()
             size_t chunkIndex = _next++;             // get the next chunk index atomically
             if (chunkIndex >= _numChunks) break;     // break if no more are available
 
-            // Execute the body
+            // Invoke the target function
             _target(chunkIndex*_chunkSize, min(_chunkSize,_maxIndex-chunkIndex*_chunkSize));
         }
     }
@@ -179,7 +172,7 @@ void Parallel::doWork()
 
 ////////////////////////////////////////////////////////////////////
 
-void Parallel::reportException(FatalError* exception)
+void MultiThreadParallel::reportException(FatalError* exception)
 {
     // Need to lock, in case multiple threads throw simultaneously
     std::unique_lock<std::mutex> lock(_mutex);
@@ -194,7 +187,7 @@ void Parallel::reportException(FatalError* exception)
 
 ////////////////////////////////////////////////////////////////////
 
-void Parallel::waitForThreads()
+void MultiThreadParallel::waitForThreads()
 {
     // Wait until all parallel threads are inactive
     std::unique_lock<std::mutex> lock(_mutex);
@@ -203,7 +196,7 @@ void Parallel::waitForThreads()
 
 ////////////////////////////////////////////////////////////////////
 
-bool Parallel::threadsActive()
+bool MultiThreadParallel::threadsActive()
 {
     // Check for active threads, skipping the parent thread with index 0
     return std::any_of(_active.begin()+1, _active.end(), [](bool flag){return flag;});

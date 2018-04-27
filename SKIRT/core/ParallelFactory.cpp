@@ -5,7 +5,12 @@
 
 #include "ParallelFactory.hpp"
 #include "FatalError.hpp"
+#include "HybridParallel.hpp"
+#include "MultiProcessParallel.hpp"
+#include "MultiThreadParallel.hpp"
+#include "NullParallel.hpp"
 #include "ProcessManager.hpp"
+#include "SerialParallel.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -18,6 +23,12 @@ ParallelFactory::ParallelFactory()
 ParallelFactory::ParallelFactory(SimulationItem* parent)
 {
     parent->addChild(this);
+}
+
+////////////////////////////////////////////////////////////////////
+
+ParallelFactory::~ParallelFactory()
+{
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -71,7 +82,17 @@ Parallel* ParallelFactory::parallel(TaskMode mode, int maxThreadCount)
 
     // Get or create a child of that type and with that number of threads
     auto& child = _children[std::make_pair(type, numThreads)];
-    if (!child) child.reset( new Parallel(numThreads) );
+    if (!child)
+    {
+        switch (type)
+        {
+        case ParallelType::Null:         child.reset( new NullParallel(numThreads) );         break;
+        case ParallelType::Serial:       child.reset( new SerialParallel(numThreads) );       break;
+        case ParallelType::MultiThread:  child.reset( new MultiThreadParallel(numThreads) );  break;
+        case ParallelType::MultiProcess: child.reset( new MultiProcessParallel(numThreads) ); break;
+        case ParallelType::Hybrid:       child.reset( new HybridParallel(numThreads) );       break;
+        }
+     }
     return child.get();
 }
 

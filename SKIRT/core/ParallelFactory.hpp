@@ -7,9 +7,9 @@
 #define PARALLELFACTORY_HPP
 
 #include "SimulationItem.hpp"
-#include "Parallel.hpp"
 #include <map>
 #include <thread>
+class Parallel;
 
 /** A ParallelFactory object serves as a factory for instances of Parallel subclasses, called its
     children. An important property of a factory object is the maximum number of parallel execution
@@ -83,6 +83,9 @@ public:
         parent in the simulation hierarchy, so that it will automatically be deleted. The setup()
         function is \em not called by this constructor. */
     explicit ParallelFactory(SimulationItem* parent);
+
+    /** The destructor releases any resources held by the parallel factory. */
+    ~ParallelFactory();
 
     //====================== Other Functions =======================
 

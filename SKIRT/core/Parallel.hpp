@@ -7,130 +7,67 @@
 #define PARALLEL_HPP
 
 #include "Basics.hpp"
-#include <atomic>
-#include <condition_variable>
-#include <functional>
-#include <mutex>
-#include <thread>
-class FatalError;
 
 ////////////////////////////////////////////////////////////////////
 
-/** This class supports a simple parallel execution model similar to a for loop. In essence, the
-    body of the for loop consists of a function specified by the caller which gets passed the index
-    of the current iteration.
+/** Parallel is an abstract base class for subclasses that implement various parallelization
+    schemes using one or more execution threads and/or one or more processes in an MPI group.
 
-    To reduce the overhead of handing out the work and invoking the target, the loop is actualy
-    carved into \em chunks of consecutive indices. Rather than a single index, the target function
-    is handed the first index of the chunk and the number of indices in the chunk, and it is
-    expected to iterate over the specified index range. The chunk sizes are determined
-    automatically to achieve optimal load balancing given the number of available parallel threads,
-    while still maximally reducing the overhead of handing out the chunks.
+    A Parallel subclass instance can be created only through the parallel() function of the
+    ParallelFactory class. This function constructs the appropriate Parallel subclass instance
+    depending on the requested task allocation mode and the available parallel resources. The
+    client accesses the returned Parallel subclass instance using the common interface defined in
+    this abstract base class.
 
-    A Parallel instance can be created only through the ParallelFactory class. The default
-    construction determines a reasonable number of threads for the computer on which the code is
-    running, and the call() function distributes the work over these threads.
+    The call() function offered by this interface executes a specified target function \f$N\f$
+    times as if it were part of a for loop over a range of indices from zero to \f$N-1\f$. Each
+    index in the range represents a particular task. To reduce the overhead of handing out the
+    tasks, the loop is actualy chopped into \em chunks of consecutive indices. Rather than a single
+    index, the target function is handed the first index of the chunk and the number of indices
+    (tasks) in the chunk, and it is expected to iterate over the specified index range. The chunk
+    sizes are determined automatically to achieve optimal load balancing given the available
+    parallel resources, while still maximally reducing the overhead of handing out the chunks.
 
-    The parallelized body should protect (write) access to shared data through the use of some
-    synchronization mechanism. Shared data includes the data members of the target object (in the
-    context of which the target function executes) and essentially everything other than local
-    variables. Also note that the parallelized body includes all functions directly or indirectly
-    called by the target function.
+    Because it may be invoked from multiple parallel threads, the target function should protect
+    (write) access to shared data through the use of some synchronization mechanism. Shared data
+    includes essentially everything other than local variables. Also note that this requirement
+    also holds for all functions directly or indirectly called by the target function.
 
-    When an exception is thrown by one of the threads excuting the parallelized body, all other
-    threads are gracefully shut down and a FatalError exception is thrown in the context of the
-    thread that invoked the call() function. If the original exception was a FatalError instance,
-    the newly thrown exception is a copy thereof. Otherwise a fresh FatalError instance is created
-    with a generic error message.
-
-    Between invocations of the call() function, the parallel threads are put in wait so that they
-    consume no CPU cycles (and very little memory). Thus a particular Parallel instance can be
-    reused many times for calling various member functions in various objects, reducing the
-    overhead of creating and destroying the threads. One can also use multiple Parallel instances
-    in an application. For example, a parallelized body can invoke the call() function on another
-    Parallel instance that is constructed and destructed within the scope of the loop body.
-    Recursively invoking the call() function on the same Parallel instance is not allowed and
-    results in undefined behavior.
-
-    The Parallel class uses C++ multi-threading capabilities, avoiding the complexities of using
-    yet another library (such as OpenMP) and making it possible to properly handle exceptions. It
-    is designed to minimize the run-time overhead for loops with many iterations. */
+    A particular Parallel subclass instance can be reused for calling various target functions,
+    reducing the overhead of creating and destroying the resources employed by the parallelization
+    schem. One can also use multiple Parallel instances in a program. For example, a parallelized
+    target function can invoke the call() function on another Parallel subclass instance that is
+    requested from a ParallelFactory constructed and destructed within the scope of the target
+    function. Recursively invoking the call() function on the same Parallel instance is not allowed
+    and results in undefined behavior. */
 class Parallel
 {
-    friend class ParallelFactory;
+    //============= Construction - Destruction =============
 
-    //============= Construction - Setup - Destruction =============
-
-private:
-    /** Constructs a Parallel instance with the specified number of execution threads. The
-        constructor is not public; use the ParallelFactory::parallel() function instead. */
-    explicit Parallel(int threadCount);
+protected:
+    /** The constructor is declared protected because this is an abstract class. At the level of
+        this abstract class, the constructor does not do anything. */
+    Parallel() { }
 
 public:
-    /** Destructs the instance and its parallel threads. */
-    ~Parallel();
+    /** Destructs the instance and releases all resources. At the level of this abstract class, the
+        destructor does not do anything. */
+   virtual ~Parallel() { }
 
     //======================== Other Functions =======================
 
 public:
-    /** Returns the number of threads used by this instance. */
-    int threadCount() const;
+     /** This function calls the specified target function repeatedly for index chunks that, taken
+         together, will exactly cover the index range from zero to \em maxIndex-1. Each index chunk
+         is specified to the target function through its two arguments, \em firstIndex and \em
+         numIndices. The invocations of the target function will be distributed over the parallel
+         resources in an unpredicable manner, and the various index chunks may be processed in
+         arbitrary order.
 
-    /** Calls the specified target function repeatedly for index chunks that, taken together, will
-        exactly cover the index range from zero to \em maxIndex-1. Each index chunk is specified to
-        the target function through its two arguments, \em firstIndex and \em numIndices. The
-        invocations of the target function will be distributed over the parallel threads in an
-        unpredicable manner, and the various index chunks may be processed in arbitrary order.
-
-        The index chunk sizes are determined automatically to achieve optimal load balancing given
-        the number of available parallel threads, while still maximally reducing the overhead of
-        handing out the chunks. */
-    void call(std::function<void(size_t firstIndex, size_t numIndices)> target, size_t maxIndex);
-
-private:
-    /** The function that gets executed inside each of the parallel threads. */
-    void run(int threadIndex);
-
-    /** The function to do the actual work; used by call() and run(). */
-    void doWork();
-
-    /** A function to report an exception; used by doWork(). */
-    void reportException(FatalError* exception);
-
-    /** A function to wait for the parallel threads; used by constructor and call(). */
-    void waitForThreads();
-
-    /** This helper function returns true if at least one of the parallel threads (not including
-        the parent thread) is still active, and false if not. This function does not perform any
-        locking; callers should lock the shared data members of this class instance. */
-    bool threadsActive();
-
-    //======================== Data Members ========================
-
-private:
-    // data members keeping track of the threads
-    int _threadCount;                   // the total number of threads, including the parent thread
-    std::thread::id _parentThread;      // the ID of the thread that invoked our constructor
-    std::vector<std::thread> _threads;  // the parallel threads (other than the parent thread)
-
-    // synchronization
-    std::mutex _mutex;                         // the mutex to synchronize with the parallel threads
-    std::condition_variable _conditionExtra;   // the wait condition used by the parallel threads
-    std::condition_variable _conditionMain;    // the wait condition used by the main thread
-
-    // data members shared by all threads; changes are protected by a mutex
-    std::function<void(size_t,size_t)> _target;    // the target function to be called
-    size_t _numChunks;          // the number of chunks, or invocations of the target function
-    size_t _chunkSize;          // the number of indices in all but the last chunk
-    size_t _maxIndex;           // the maximum index (i.e. limiting the last chunk)
-    std::vector<bool> _active;  // flag for each parallel thread (other than the parent thread)
-                                // ... that indicates whether the thread is currently active
-    FatalError* _exception;     // a pointer to a heap-allocated copy of the exception thrown by a work thread
-                                // ... or zero if no exception was thrown
-    bool _terminate;            // becomes true when the parallel threads must exit
-
-    // data member shared by all threads; incrementing is atomic (no need for protection)
-    std::atomic<size_t> _next;  // the current index of the for loop being implemented
+         The index chunk sizes are determined automatically to achieve optimal load balancing given
+         the available parallel resources, while still maximally reducing the overhead of handing
+         out the chunks. */
+    virtual void call(std::function<void(size_t firstIndex, size_t numIndices)> target, size_t maxIndex) = 0;
 };
 
 ////////////////////////////////////////////////////////////////////
