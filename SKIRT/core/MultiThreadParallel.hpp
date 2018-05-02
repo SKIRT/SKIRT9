@@ -84,17 +84,16 @@ private:
 
     // data members shared by all threads; changes are protected by a mutex
     std::function<void(size_t,size_t)> _target;    // the target function to be called
-    size_t _numChunks;          // the number of chunks, or invocations of the target function
-    size_t _chunkSize;          // the number of indices in all but the last chunk
-    size_t _maxIndex;           // the maximum index (i.e. limiting the last chunk)
-    std::vector<bool> _active;  // flag for each parallel thread (other than the parent thread)
-                                // ... that indicates whether the thread is currently active
-    FatalError* _exception;     // a pointer to a heap-allocated copy of the exception thrown by a work thread
-                                // ... or zero if no exception was thrown
-    bool _terminate;            // becomes true when the parallel threads must exit
+    size_t _chunkSize{0};               // the number of indices in all but the last chunk
+    size_t _maxIndex{0};                // the maximum index (i.e. limiting the last chunk)
+    FatalError* _exception{nullptr};    // a pointer to a heap-allocated copy of the exception thrown by a work thread
+                                        // ... or zero if no exception was thrown
+    std::vector<bool> _active;          // flag for each parallel thread (other than the parent thread)
+                                        // ... that indicates whether the thread is currently active
+    bool _terminate{false};             // becomes true when the parallel threads must exit
 
     // data member shared by all threads; incrementing is atomic (no need for protection)
-    std::atomic<size_t> _next;  // the current index of the for loop being implemented
+    std::atomic<size_t> _nextIndex{0};  // tthe first index of the next availabe chunk
 };
 
 ////////////////////////////////////////////////////////////////////

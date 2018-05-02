@@ -20,14 +20,8 @@ MultiThreadParallel::MultiThreadParallel(int threadCount)
     {
         std::unique_lock<std::mutex> lock(_mutex);
 
-        // Initialize shared data members
-        _numChunks = 0;
-        _chunkSize = 0;
-        _maxIndex = 0;
+        // Initialize shared data members that are not initialized in the class declaration
         _active.assign(threadCount, true);
-        _exception = nullptr;
-        _terminate = false;
-        _next = 0;
 
         // Create the extra parallel threads with one-based index (parent thread has index zero)
         for (int index = 1; index < threadCount; index++)
@@ -65,9 +59,6 @@ void MultiThreadParallel::call(std::function<void(size_t,size_t)> target, size_t
     if (std::this_thread::get_id() != _parentThread)
         throw FATALERROR("Parallel call not invoked from thread that constructed this object");
 
-    // Intercept the pathological case where we have no work at all to avoid zero division later on
-    if (!maxIndex) return;
-
     // Initialize shared data members and activate threads in a critical section
     {
         std::unique_lock<std::mutex> lock(_mutex);
@@ -77,21 +68,15 @@ void MultiThreadParallel::call(std::function<void(size_t,size_t)> target, size_t
 
         // Determine the chunk size and the number of chunks
         const size_t numChunksPerThread = 8;   // empirical multiplicator to achieve acceptable load balancing
+        _chunkSize = max(static_cast<size_t>(1), maxIndex / (_threadCount*numChunksPerThread));
+
+        // Initialize the other data members
         _maxIndex = maxIndex;
-        _numChunks = min(_threadCount>1 ? _threadCount*numChunksPerThread : 1, maxIndex);
-        _chunkSize = maxIndex / _numChunks;
-        if (_numChunks * _chunkSize < maxIndex) _numChunks++;
-
-        // Initialize the number of active threads (i.e. not waiting for new work)
-        _active.assign(_threadCount, true);
-
-        // Clear the exception pointer
         _exception = nullptr;
+        _active.assign(_threadCount, true);
+        _nextIndex = 0;
 
-        // Initialize the loop variable
-        _next = 0;
-
-        // Wake all parallel threads, if multithreading is allowed
+        // Wake all parallel threads
         _conditionExtra.notify_all();
     }
 
@@ -151,11 +136,12 @@ void MultiThreadParallel::doWork()
         // Do work as long as some is available
         while (true)
         {
-            size_t chunkIndex = _next++;             // get the next chunk index atomically
-            if (chunkIndex >= _numChunks) break;     // break if no more are available
+            // Get and increment the next chunk index atomically, and break if no more chunks are available
+            size_t firstIndex = _nextIndex.fetch_add(_chunkSize);
+            if (firstIndex >= _maxIndex) break;
 
             // Invoke the target function
-            _target(chunkIndex*_chunkSize, min(_chunkSize,_maxIndex-chunkIndex*_chunkSize));
+            _target(firstIndex, min(_chunkSize,_maxIndex-firstIndex));
         }
     }
     catch (FatalError& error)
@@ -181,7 +167,7 @@ void MultiThreadParallel::reportException(FatalError* exception)
         _exception = exception;
 
         // Make the other threads stop by taking away their work
-        _numChunks = 0;  // another thread will hopefully see either the old value, or zero
+        _maxIndex = 0;  // another thread will see either the old value, or zero
     }
 }
 

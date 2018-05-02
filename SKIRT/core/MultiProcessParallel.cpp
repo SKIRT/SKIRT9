@@ -57,14 +57,14 @@ void MultiProcessParallel::call(std::function<void(size_t,size_t)> target, size_
             _target = target;
 
             // Determine the chunk size
-            const size_t numChunksPerProcess = 12;   // empirical multiplicator to achieve acceptable load balancing
-            _chunkSize = max(static_cast<size_t>(1), maxIndex / (ProcessManager::size()*numChunksPerProcess));
+            const size_t numChunksPerThread = 8;   // empirical multiplicator to achieve acceptable load balancing
+            _chunkSize = max(static_cast<size_t>(1), maxIndex / (ProcessManager::size()*numChunksPerThread));
 
             // Initialize the other data members
             _maxIndex = maxIndex;
-            _nextIndex = 0;
             _exception = nullptr;
             _active = true;
+            _nextIndex = 0;
 
             // Wake the child thread
             _conditionChild.notify_all();
