@@ -15,6 +15,7 @@
 #include "LockFree.hpp"
 #include "ParallelFactory.hpp"
 #include "Parallel.hpp"
+#include "ProcessManager.hpp"
 #include "StoredTable.hpp"
 #include "Table.hpp"
 #include "TextOutFile.hpp"
@@ -56,6 +57,8 @@ namespace
     // test function adds 1/inverseFraction to numPixels random pixels in the specified frame
     void addPixels(Table<2>& frame, Random* random, size_t inverseFraction, size_t firstIndex, size_t numIndices)
     {
+        random->find<Log>()->warning("Chunk: " + std::to_string(firstIndex) + "," + std::to_string(numIndices));
+
         for (size_t p = 0; p!=numIndices; ++p)
         {
             size_t i = static_cast<size_t>( random->uniform() * frame.size(0) );
@@ -76,31 +79,31 @@ void MonteCarloSimulation::runSelf()
         StoredTable<1> table;
         table.open(this, "SunSED", "lambda(m)", "Llambda(W/m)");
 
-        log()->warning("0: " + StringUtils::toString(table[0.55e-6], 'e', 9));
-        log()->warning("1: " + StringUtils::toString(table[1e-6], 'e', 9));
-        log()->warning("2: " + StringUtils::toString(table[100e-6], 'e', 9));
+        log()->info("0: " + StringUtils::toString(table[0.55e-6], 'e', 9));
+        log()->info("1: " + StringUtils::toString(table[1e-6], 'e', 9));
+        log()->info("2: " + StringUtils::toString(table[100e-6], 'e', 9));
     }
     {
         StoredTable<2> table;
         table.open(this, "DustEM_Gra_OpticalProps", "lambda(m),a(m)", "Qabs(1)");
 
-        log()->warning("3: " + StringUtils::toString(table(0.55e-6, 0.01e-6), 'e', 9));
+        log()->info("3: " + StringUtils::toString(table(0.55e-6, 0.01e-6), 'e', 9));
     }
     {
         StoredTable<1> table;
         table.open(this, "MeanIvezicBenchmarkOpticalProps", "lambda(m)", "sigmaabs(m2/H)");
 
         Array xv, Yv;
-        log()->warning("4: " + StringUtils::toString(table.cdf(xv, Yv, 100, 0.1e-6, 1e-6), 'e', 9));
-        log()->warning("5: " + StringUtils::toString(table.cdf(xv, Yv, 1000, 1e-6, 10e-6), 'e', 9));
+        log()->info("4: " + StringUtils::toString(table.cdf(xv, Yv, 100, 0.1e-6, 1e-6), 'e', 9));
+        log()->info("5: " + StringUtils::toString(table.cdf(xv, Yv, 1000, 1e-6, 10e-6), 'e', 9));
     }
     {
         StoredTable<3> table;
         table.open(this, "BruzualCharlotSEDFamily_Chabrier_hr", "lambda(m),Z(1),t(yr)", "Llambda(W/m)");
 
         Array xv, Yv;
-        log()->warning("6: " + StringUtils::toString(table.cdf(xv, Yv, 100, 1e-8, 1e-4, 0.0004, 1e7), 'e', 9));
-        log()->warning("7: " + std::to_string(xv.size()));
+        log()->info("6: " + StringUtils::toString(table.cdf(xv, Yv, 100, 1e-8, 1e-4, 0.0004, 1e7), 'e', 9));
+        log()->info("7: " + std::to_string(xv.size()));
 
         TextOutFile out(this, "stellar_sed", "stellar sed");
         out.addColumn("wavelength");
@@ -113,7 +116,10 @@ void MonteCarloSimulation::runSelf()
 
         auto parallel = find<ParallelFactory>()->parallelDistributed();
         parallel->call([this,&frame](size_t i ,size_t n) { addPixels(frame, random(), numPixels, i, n); }, numPixels);
-        log()->warning("Frame intensity: " + StringUtils::toString(frame.data().sum(), 'e', 9));
+        ProcessManager::sumToRoot(frame.data());
+
+        if (ProcessManager::isRoot())
+            log()->info("Frame intensity: " + StringUtils::toString(frame.data().sum(), 'e', 9));
 
         FITSInOut::write(this, "frame", "frame", frame.data(), frame.size(0), frame.size(1), 1, 0,0,0,0,"","");
     }

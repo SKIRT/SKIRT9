@@ -74,7 +74,31 @@ public:
         without MPI, the function always returns true. */
     static bool isRoot() { return _rank==0; }
 
-    //======== Communication  ===========
+    //======== Master-slave communication  ===========
+
+    /** This function is part of the mechanism for dynamically allocating chunks of parallel
+        tasks across multiple processes. It requests the next available chunk from the root process
+        and waits for a response. When successful, the function places a chunk index range in its
+        arguments and returns true. If no more chunks are available, the function returns false
+        (and the output arguments are both set to zero). If there is only one process, or if the
+        function is invoked from the root process, a fatal error is thrown. */
+    static bool requestChunk(size_t& firstIndex, size_t& numIndices);
+
+    /** This function is part of the mechanism for dynamically allocating chunks of parallel
+        tasks across multiple processes. It waits for a chunk request from any of the processes in
+        the MPI group and returns the rank of the requesting process. If there is only one process,
+        or if the function is invoked from any process other than the root process, a fatal error
+        is thrown. */
+    static int waitForChunkRequest();
+
+    /** This function is part of the mechanism for dynamically allocating chunks of parallel
+        tasks across multiple processes. It communicates the index range of the next available
+        chunk request to the process in the MPI group with the specified rank. If there is only one
+        process, or if the function is invoked from any process other than the root process, a
+        fatal error is thrown. */
+    static void serveChunkRequest(int rank, size_t firstIndex, size_t numIndices);
+
+    //======== Collective Communication  ===========
 
     /** This function causes the calling process to block until all other processes have invoked it
         as well. If there is only one process, the function does nothing. */
@@ -83,14 +107,15 @@ public:
     /** This function adds the floating point values of an array element-wise across the different
         processes. The resulting sums are then stored in the same Array passed to this function on
         each individual process. All processes must call this function for the communication to
-        proceed. */
+        proceed. If there is only one process, the function does nothing. */
     static void sumToAll(Array& arr);
 
     /** This function adds the floating point values of an array element-wise across the different
         processes. The resulting sums are then stored in the same Array passed to this function on
         the root process. The arrays on the other processes are left untouched. All processes must
-        call this function for the communication to proceed. */
-    void sumToRoot(Array& arr);
+        call this function for the communication to proceed. If there is only one process, the
+        function does nothing. */
+    static void sumToRoot(Array& arr);
 
     //======== Data members  ===========
 

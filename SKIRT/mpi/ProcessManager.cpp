@@ -5,6 +5,7 @@
 
 #include "ProcessManager.hpp"
 #include "FatalError.hpp"
+#include <array>
 
 #ifdef BUILD_WITH_MPI
 #include <mpi.h>
@@ -59,6 +60,71 @@ void ProcessManager::finalize()
 {
 #ifdef BUILD_WITH_MPI
     MPI_Finalize();
+#endif
+}
+
+//////////////////////////////////////////////////////////////////////
+
+namespace
+{
+    void throwInvalidChunkInvocation()
+    {
+        throw FATALERROR("Multi-process chunk allocation function called from inappropriate process");
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+
+bool ProcessManager::requestChunk(size_t& firstIndex, size_t& numIndices)
+{
+#ifdef BUILD_WITH_MPI
+    if (isRoot()) throwInvalidChunkInvocation();
+
+    std::array<int,1> sendbuf{{_rank}};  // we pass our rank so that the receiver can ignore MPI status
+    std::array<size_t,2> recvbuf{{0,0}};
+    MPI_Sendrecv(sendbuf.begin(), sendbuf.size(), MPI_INT, 0, 1,
+                 recvbuf.begin(), recvbuf.size(), MPI_UNSIGNED_LONG, 0, 1,
+                 MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    firstIndex = recvbuf[0];
+    numIndices = recvbuf[1];
+    return numIndices > 0;
+#else
+    (void)firstIndex; (void)numIndices;
+    throwInvalidChunkInvocation();
+    return false;
+#endif
+}
+
+//////////////////////////////////////////////////////////////////////
+
+int ProcessManager::waitForChunkRequest()
+{
+#ifdef BUILD_WITH_MPI
+    if (!isMultiProc() || !isRoot()) throwInvalidChunkInvocation();
+
+    std::array<int,1> recvbuf{{0}};
+    MPI_Recv(recvbuf.begin(), recvbuf.size(), MPI_INT, MPI_ANY_SOURCE, 1,
+             MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    return recvbuf[0];
+#else
+    throwInvalidChunkInvocation();
+    return 0;
+#endif
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void ProcessManager::serveChunkRequest(int rank, size_t firstIndex, size_t numIndices)
+{
+#ifdef BUILD_WITH_MPI
+    if (!isMultiProc() || !isRoot()) throwInvalidChunkInvocation();
+
+    std::array<size_t,2> sendbuf{{firstIndex,numIndices}};
+    MPI_Send(sendbuf.begin(), sendbuf.size(), MPI_UNSIGNED_LONG, rank, 1,
+             MPI_COMM_WORLD);
+#else
+    (void)rank; (void)firstIndex; (void)numIndices;
+    throwInvalidChunkInvocation();
 #endif
 }
 
