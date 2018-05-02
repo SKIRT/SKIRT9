@@ -37,13 +37,8 @@ void MultiProcessParallel::call(std::function<void(size_t,size_t)> target, size_
         // Copy the target function so it can be invoked from the child thread
         _target = target;
 
-        // Determine the chunk size
-        const size_t numChunksPerThread = 8;   // empirical multiplicator to achieve acceptable load balancing
-        _chunkSize = max(static_cast<size_t>(1), maxIndex / (ProcessManager::size()*numChunksPerThread));
-
-        // Initialize the other data members
-        _maxIndex = maxIndex;
-        _nextIndex = 0;
+        // Initialize the chunk maker
+        chunkMaker.initialize(maxIndex, 1, ProcessManager::size());
 
         // Activate child thread
         activateThreads();
@@ -53,9 +48,9 @@ void MultiProcessParallel::call(std::function<void(size_t,size_t)> target, size_
         while (true)
         {
             rank = ProcessManager::waitForChunkRequest();
-            size_t firstIndex = _nextIndex.fetch_add(_chunkSize); // get and increment the next chunk index atomically
-            if (firstIndex >= _maxIndex) break;                   // break if no more chunks are available
-            ProcessManager::serveChunkRequest(rank, firstIndex, min(_chunkSize,_maxIndex-firstIndex));
+            size_t firstIndex, numIndices;
+            if (!chunkMaker.next(firstIndex, numIndices)) break;
+            ProcessManager::serveChunkRequest(rank, firstIndex, numIndices);
         }
 
         // Serve each non-root process an empty chunk as a terminating signal
@@ -82,13 +77,7 @@ void MultiProcessParallel::call(std::function<void(size_t,size_t)> target, size_
 
 bool MultiProcessParallel::doSomeWork()
 {
-    // Get and increment the next chunk index atomically, and report "done" if no more chunks are available
-    size_t firstIndex = _nextIndex.fetch_add(_chunkSize);
-    if (firstIndex >= _maxIndex) return false;
-
-    // Invoke the target function
-    _target(firstIndex, min(_chunkSize,_maxIndex-firstIndex));
-    return true;
+    return chunkMaker.callForNext(_target);
 }
 
 ///////////////////////////////////////////////////////////////////

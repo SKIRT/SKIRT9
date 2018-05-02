@@ -67,6 +67,8 @@ void ProcessManager::abort(int exitcode)
 {
 #ifdef BUILD_WITH_MPI
     if (isMultiProc()) MPI_Abort(MPI_COMM_WORLD, exitcode);
+#else
+    (void)exitcode;
 #endif
 }
 

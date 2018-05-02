@@ -7,7 +7,7 @@
 #define MULTIPROCESSPARALLEL_HPP
 
 #include "MultiParallel.hpp"
-class FatalError;
+#include "ChunkMaker.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -54,9 +54,7 @@ private:
 private:
     // data members are used only in the root process
     std::function<void(size_t,size_t)> _target; // the target function to be called
-    size_t _chunkSize{0};                       // the number of indices in all but the last chunk
-    size_t _maxIndex{0};                        // the maximum index (i.e. limiting the last chunk)
-    std::atomic<size_t> _nextIndex{0};          // the first index of the next availabe chunk
+    ChunkMaker chunkMaker;                      // the chunk maker
 };
 
 ////////////////////////////////////////////////////////////////////
