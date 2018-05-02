@@ -60,6 +60,7 @@ int SkirtCommandLineHandler::perform()
         if (_args.isPresent("-x")) return doSmileSchema();
         _console.error("Invalid command line arguments");
         printHelp();
+        return EXIT_FAILURE;
     }
     catch (FatalError& error)
     {
@@ -69,6 +70,7 @@ int SkirtCommandLineHandler::perform()
     {
         _console.error("Standard Library Exception: " + string(except.what()));
     }
+    ProcessManager::abort(EXIT_FAILURE);
     return EXIT_FAILURE;
 }
 
@@ -368,6 +370,8 @@ void SkirtCommandLineHandler::logErrorToFile(const vector<string>& message, stri
 
 void SkirtCommandLineHandler::printHelp()
 {
+    if (!ProcessManager::isRoot()) return;
+
     _console.warning("");
     _console.warning("To create a new ski file interactively:    skirt");
     _console.warning("To run a simulation with default options:  skirt <ski-filename>");

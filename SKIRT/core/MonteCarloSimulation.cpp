@@ -59,13 +59,14 @@ namespace
     {
         random->find<Log>()->warning("Chunk: " + std::to_string(firstIndex) + "," + std::to_string(numIndices));
 
+        ///if (firstIndex>10*1000*1000) throw FATALERROR("Test exception handling");
+
         for (size_t p = 0; p!=numIndices; ++p)
         {
             size_t i = static_cast<size_t>( random->uniform() * frame.size(0) );
             size_t j = static_cast<size_t>( random->uniform() * frame.size(1) );
             LockFree::add(frame(i,j), 1./inverseFraction);
         }
-        (void)firstIndex;
     }
 }
 

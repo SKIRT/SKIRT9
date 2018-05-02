@@ -51,6 +51,13 @@ public:
         or moved. */
     ProcessManager& operator=(const ProcessManager&) = delete;
 
+    /** This function should be called when a process experiences a fatal error (after the error
+        was reported to the user). If there are two or more processes in the current run-time
+        environment, this function aborts the complete MPI process group, including the calling
+        process. If the MPI library is not present, or the program was invoked without MPI, or
+        there is only one process, this function does nothing. */
+    static void abort(int exitcode);
+
     //======== Environment info  ===========
 
     /** This function returns the number of processes in the current run-time environment. If the

@@ -87,6 +87,12 @@ void MultiProcessParallel::call(std::function<void(size_t,size_t)> target, size_
             rank = ProcessManager::waitForChunkRequest();
             ProcessManager::serveChunkRequest(rank, 0, 0);
         }
+
+        // Check for and process any exception raised in the child process
+        if (_exception)
+        {
+            throw *_exception;  // throw by value (the memory for the heap-allocated exception is leaked)
+        }
     }
 
     // In non-root processes, the parent (and only) thread performs work in a straightforward loop
@@ -172,7 +178,7 @@ void MultiProcessParallel::reportException(FatalError* exception)
         _exception = exception;
 
         // Make the parent thread stop by taking away its work
-        _maxIndex = 0;  // another thread will hopefully see either the old value, or zero
+        _maxIndex = 0;  // another thread will see either the old value, or zero
     }
 }
 

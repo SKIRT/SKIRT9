@@ -16,7 +16,7 @@ SerialParallel::SerialParallel(int /*threadCount*/)
 void SerialParallel::call(std::function<void(size_t,size_t)> target, size_t maxIndex)
 {
     // Invoke the target function in a single chunk
-    target(0, maxIndex);
+    if (maxIndex) target(0, maxIndex);
 }
 
 ////////////////////////////////////////////////////////////////////

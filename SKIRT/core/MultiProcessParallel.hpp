@@ -15,8 +15,16 @@ class FatalError;
 
 ////////////////////////////////////////////////////////////////////
 
-/** This class implements the Parallel base class interface using a single thread in each of
-    multiple processes. TODO: document and implement. */
+/** This class implements the Parallel base class interface using a single execution thread in each
+    of multiple processes. In the root process, the class in fact employs a second thread to
+    perform the actual work, so that the parent thread can serve chunk requests to the other
+    processes (the MPI functions should be called only from the main thread). This extra thread is
+    not counted towards the number of threads specified by the user because it does not consume
+    significant resources. In the other (non-root) processes, there is no extra thread; the work is
+    performed in a loop that simply requests and performs new chunks.
+
+    The implementation of the extra thread and the synchronization between the threads is
+    implemented using the same techniques as those described for the MultiThreadParallel class. */
 class MultiProcessParallel : public Parallel
 {
     friend class ParallelFactory;       // so ParallelFactory can access our private constructor
@@ -26,7 +34,7 @@ class MultiProcessParallel : public Parallel
 private:
     /** Constructs a MultiProcessParallel instance. The specified number of execution threads is
         ignored. The number of processes is retrieved from the ProcessManager. In the root process,
-        a child thread is created (and put on hold) so that the parent thread can be use to
+        a child thread is created (and put on hold) so that the parent thread can be used to
         communicate with the other processes. This constructor is private; use the
         ParallelFactory::parallel() function instead. */
     explicit MultiProcessParallel(int threadCount);
