@@ -20,6 +20,7 @@
 #include "Table.hpp"
 #include "TextOutFile.hpp"
 #include <atomic>
+#include <map>
 
 ////////////////////////////////////////////////////////////////////
 
@@ -54,10 +55,22 @@ int MonteCarloSimulation::dimension() const
 
 namespace
 {
+    // get a short but consistent identifier for the current thread
+    int threadID()
+    {
+        static std::map<std::thread::id, int> threads;
+        static std::mutex mutex;
+        auto me = std::this_thread::get_id();
+        std::unique_lock<std::mutex> lock(mutex);
+        if (!threads.count(me)) threads.emplace(me, threads.size()+1);
+        return threads.at(me);
+    }
+
     // test function adds 1/inverseFraction to numPixels random pixels in the specified frame
     void addPixels(Table<2>& frame, Random* random, size_t inverseFraction, size_t firstIndex, size_t numIndices)
     {
-        random->find<Log>()->warning("Chunk: " + std::to_string(firstIndex) + "," + std::to_string(numIndices));
+        random->find<Log>()->warning("[T" + std::to_string(threadID()) + "] Chunk: "
+                                     + std::to_string(firstIndex) + "," + std::to_string(numIndices));
 
         ///if (firstIndex>10*1000*1000) throw FATALERROR("Test exception handling");
 

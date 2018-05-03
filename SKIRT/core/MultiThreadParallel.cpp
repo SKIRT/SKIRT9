@@ -27,7 +27,7 @@ void MultiThreadParallel::call(std::function<void(size_t,size_t)> target, size_t
     _target = target;
 
     // Initialize the chunk maker
-    chunkMaker.initialize(maxIndex, numThreads());
+    _chunkMaker.initialize(maxIndex, numThreads());
 
     // Activate child threads and wait until they are done; we don't do anything in the parent thread
     activateThreads();
@@ -38,7 +38,7 @@ void MultiThreadParallel::call(std::function<void(size_t,size_t)> target, size_t
 
 bool MultiThreadParallel::doSomeWork()
 {
-    return chunkMaker.callForNext(_target);
+    return _chunkMaker.callForNext(_target);
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -43,7 +43,7 @@ protected:
 
 private:
     std::function<void(size_t,size_t)> _target; // the target function to be called
-    ChunkMaker chunkMaker;                      // the chunk maker
+    ChunkMaker _chunkMaker;                     // the chunk maker
 };
 
 ////////////////////////////////////////////////////////////////////

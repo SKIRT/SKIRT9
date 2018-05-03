@@ -38,7 +38,7 @@ void MultiProcessParallel::call(std::function<void(size_t,size_t)> target, size_
         _target = target;
 
         // Initialize the chunk maker
-        chunkMaker.initialize(maxIndex, 1, ProcessManager::size());
+        _chunkMaker.initialize(maxIndex, 1, ProcessManager::size());
 
         // Activate child thread
         activateThreads();
@@ -49,7 +49,7 @@ void MultiProcessParallel::call(std::function<void(size_t,size_t)> target, size_
         {
             rank = ProcessManager::waitForChunkRequest();
             size_t firstIndex, numIndices;
-            if (!chunkMaker.next(firstIndex, numIndices)) break;
+            if (!_chunkMaker.next(firstIndex, numIndices)) break;
             ProcessManager::serveChunkRequest(rank, firstIndex, numIndices);
         }
 
@@ -77,7 +77,7 @@ void MultiProcessParallel::call(std::function<void(size_t,size_t)> target, size_
 
 bool MultiProcessParallel::doSomeWork()
 {
-    return chunkMaker.callForNext(_target);
+    return _chunkMaker.callForNext(_target);
 }
 
 ///////////////////////////////////////////////////////////////////

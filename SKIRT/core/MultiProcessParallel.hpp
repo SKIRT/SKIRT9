@@ -54,7 +54,7 @@ private:
 private:
     // data members are used only in the root process
     std::function<void(size_t,size_t)> _target; // the target function to be called
-    ChunkMaker chunkMaker;                      // the chunk maker
+    ChunkMaker _chunkMaker;                     // the chunk maker
 };
 
 ////////////////////////////////////////////////////////////////////

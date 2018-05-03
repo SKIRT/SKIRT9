@@ -5,7 +5,7 @@
 
 #include "ParallelFactory.hpp"
 #include "FatalError.hpp"
-#include "HybridParallel.hpp"
+#include "MultiHybridParallel.hpp"
 #include "MultiProcessParallel.hpp"
 #include "MultiThreadParallel.hpp"
 #include "NullParallel.hpp"
@@ -74,7 +74,7 @@ Parallel* ParallelFactory::parallel(TaskMode mode, int maxThreadCount)
     if (ProcessManager::isMultiProc())
     {
         if (mode == TaskMode::Distributed)
-            type = numThreads == 1 ? ParallelType::MultiProcess : ParallelType::Hybrid;
+            type = numThreads == 1 ? ParallelType::MultiProcess : ParallelType::MultiHybrid;
         else if (mode == TaskMode::RootOnly && !ProcessManager::isRoot())
             type = ParallelType::Null;
         // for the other cases, the type is already set correctly by the very first assignement
@@ -90,7 +90,7 @@ Parallel* ParallelFactory::parallel(TaskMode mode, int maxThreadCount)
         case ParallelType::Serial:       child.reset( new SerialParallel(numThreads) );       break;
         case ParallelType::MultiThread:  child.reset( new MultiThreadParallel(numThreads) );  break;
         case ParallelType::MultiProcess: child.reset( new MultiProcessParallel(numThreads) ); break;
-        case ParallelType::Hybrid:       child.reset( new HybridParallel(numThreads) );       break;
+        case ParallelType::MultiHybrid:  child.reset( new MultiHybridParallel(numThreads) );  break;
         }
      }
     return child.get();

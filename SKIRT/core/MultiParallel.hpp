@@ -85,7 +85,7 @@ private:
     std::vector<std::thread> _threads;          // the child threads
 
     // synchronization
-    std::mutex _mutex;                          // the mutex to synchronize with the child threads
+    std::mutex _mutex;                          // the mutex to synchronize the threads
     std::condition_variable _conditionChildren; // the wait condition used by the child threads
     std::condition_variable _conditionParent;   // the wait condition used by the parent thread
 

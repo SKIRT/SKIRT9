@@ -47,7 +47,7 @@ class Parallel;
     S | SerialParallel | Single thread in the current process; isolated from any other processes
     MT | MultiThreadParallel | Multiple coordinated threads in the current process; isolated from any other processes
     MP | MultiProcessParallel | Single thread in each of multiple, coordinated processes
-    MTP | HybridParallel | Multiple threads in each of multiple processes, all coordinated as a group
+    MTP | MultiHybridParallel | Multiple threads in each of multiple processes, all coordinated as a group
     0 | NullParallel | No operation; any requests for performing tasks are ignored
 
     Depending on the requested task mode and the current run-time configuration (number of processes
@@ -61,7 +61,7 @@ class Parallel;
     RootOnly     |  S    |  MT   |  S/0  |  MT/0 |
 
     (#) In Distributed mode with multiple processes, all threads require a different random number
-        sequences. Therefore, the MultiProcessParallel and HybridParallel classes swith the Random
+        sequences. Therefore, the MultiProcessParallel and MultiHybridParallel classes swith the Random
         instance associated with the simulation to abitrary mode before performing tasks, and back to
         predictable mode after performing the tasks.
     (*) In Duplicated mode with multiple processes, all tasks are performed by a single thread
@@ -137,7 +137,7 @@ private:
     std::thread::id _parentThread{ std::this_thread::get_id() };
 
     // Private enumeration of the supported Parallel subclasses
-    enum class ParallelType { Null=0, Serial, MultiThread, MultiProcess, Hybrid };
+    enum class ParallelType { Null=0, Serial, MultiThread, MultiProcess, MultiHybrid };
 
     // The collection of our children, keyed on Parallel subclass type and number of threads; initially empty
     std::map<std::pair<ParallelType,int>, std::unique_ptr<Parallel>> _children;
