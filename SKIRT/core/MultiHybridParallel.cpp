@@ -133,6 +133,7 @@ bool MultiHybridParallel::doSomeWork()
             _ready = false;
             _requests--;
         }
+        _conditionParent.notify_all();
 
         // Invoke the target function
         _target(firstIndex, numIndices);
