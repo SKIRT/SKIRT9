@@ -22,6 +22,7 @@
 #include "TextOutFile.hpp"
 #include <atomic>
 #include <map>
+#include <mutex>
 #include <thread>
 
 ////////////////////////////////////////////////////////////////////
