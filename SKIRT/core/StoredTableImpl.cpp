@@ -9,6 +9,7 @@
 #include "Log.hpp"
 #include "StringUtils.hpp"
 #include "System.hpp"
+#include <cstring>
 
 ////////////////////////////////////////////////////////////////////
 
