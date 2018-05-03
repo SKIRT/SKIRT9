@@ -16,11 +16,13 @@
 #include "ParallelFactory.hpp"
 #include "Parallel.hpp"
 #include "ProcessManager.hpp"
+#include "StopWatch.hpp"
 #include "StoredTable.hpp"
 #include "Table.hpp"
 #include "TextOutFile.hpp"
 #include <atomic>
 #include <map>
+#include <thread>
 
 ////////////////////////////////////////////////////////////////////
 
@@ -69,17 +71,20 @@ namespace
     // test function adds 1/inverseFraction to numPixels random pixels in the specified frame
     void addPixels(Table<2>& frame, Random* random, size_t inverseFraction, size_t firstIndex, size_t numIndices)
     {
-        random->find<Log>()->warning("[T" + std::to_string(threadID()) + "] Chunk: "
+        int id = threadID();
+        random->find<Log>()->warning("[T" + std::to_string(id) + "] Chunk: "
                                      + std::to_string(firstIndex) + "," + std::to_string(numIndices));
 
         ///if (firstIndex>10*1000*1000) throw FATALERROR("Test exception handling");
 
+        if (id==1) StopWatch::start();      // time only one of the threads
         for (size_t p = 0; p!=numIndices; ++p)
         {
             size_t i = static_cast<size_t>( random->uniform() * frame.size(0) );
             size_t j = static_cast<size_t>( random->uniform() * frame.size(1) );
             LockFree::add(frame(i,j), 1./inverseFraction);
         }
+        if (id==1) StopWatch::stop();
     }
 }
 
@@ -129,7 +134,9 @@ void MonteCarloSimulation::runSelf()
         Table<2> frame(500,500);
 
         auto parallel = find<ParallelFactory>()->parallelDistributed();
+        StopWatch::start();
         parallel->call([this,&frame](size_t i ,size_t n) { addPixels(frame, random(), numPixels, i, n); }, numPixels);
+        StopWatch::stop();
         ProcessManager::sumToRoot(frame.data());
 
         if (ProcessManager::isRoot())
