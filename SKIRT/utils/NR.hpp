@@ -19,7 +19,7 @@ namespace NR
 
     /** This template function converts the source sequence to an Array object and returns the
         result. This template function works for any source container type with indexed random
-        access (including std::vector and QList), and for any item types, as long as the source
+        access (specifically including std::vector), and for any item types, as long as the source
         items can be assigned to or converted to double. */
     template<class V> inline Array array(const V& sourcev)
     {
@@ -31,9 +31,8 @@ namespace NR
 
     /** This template function assigns the source sequence to the destination array, resizing the
         destination array if necessary. This template function works for any source container type
-        with indexed random access (including std::vector and QList), and for any item types, as
-        long as the source items can be assigned to or converted to double. This template function
-        serves mostly to convert other container types to Array. */
+        with indexed random access (specifically including std::vector), and for any item types, as
+        long as the source items can be assigned to or converted to double. */
     template<class V> inline void assign(Array& targetv, const V& sourcev)
     {
         size_t n = sourcev.size();
@@ -108,7 +107,7 @@ namespace NR
         return jl;
     }
 
-    /** The locate(), locate_clip() and locate_fail() functions perform a binary search on the
+    /** The locate(), locateClip() and locateFail() functions perform a binary search on the
         ordered sequence of double values in an array. There are subtle differences between the
         various "locate" functions, as decribed below. All functions assume that the specified
         array contains at least two elements, and that all elements are sorted in ascending order.
@@ -127,9 +126,9 @@ namespace NR
         <TR><TD><B>Function</B></TD> <TD><B>\f$x<x_0\f$</B></TD> <TD><B>\f$x>x_N\f$</B></TD>
         <TD><B>Comments</B> (note that there are \f$N+1\f$ values)</TD></TR> <TR><TD>locate()</TD>
         <TD>\f$-1\f$</TD> <TD>\f$N\f$</TD> <TD>Out-of-range values are indicated with a
-        corresponding out-of-range index</TD></TR> <TR><TD>locate_clip()</TD> <TD>\f$0\f$</TD>
+        corresponding out-of-range index</TD></TR> <TR><TD>locateClip()</TD> <TD>\f$0\f$</TD>
         <TD>\f$N-1\f$</TD> <TD>Out-of-range values are considered to be inside the corresponding
-        outermost bin</TD></TR> <TR><TD>locate_fail()</TD> <TD>\f$-1\f$</TD> <TD>\f$-1\f$</TD>
+        outermost bin</TD></TR> <TR><TD>locateFail()</TD> <TD>\f$-1\f$</TD> <TD>\f$-1\f$</TD>
         <TD>Out-of-range values are indicated with a negative index</TD></TR> </TABLE> */
     inline int locate(const Array& xv, double x)
     {

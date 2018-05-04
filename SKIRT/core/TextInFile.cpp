@@ -26,9 +26,20 @@ TextInFile::TextInFile(const SimulationItem* item, string filename, string descr
 
 ////////////////////////////////////////////////////////////////////
 
+void TextInFile::close()
+{
+    if (_in.is_open())
+    {
+        _in.close();
+        _log->info("Done reading");
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
 TextInFile::~TextInFile()
 {
-    _log->info("Done reading");
+    close();
 }
 
 ////////////////////////////////////////////////////////////////////

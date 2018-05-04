@@ -10,7 +10,11 @@
 // ---> add new items below in alphabetical order
 
 #include "ExtragalacticUnits.hpp"
+#include "FileWavelengthGrid.hpp"
+#include "ListWavelengthGrid.hpp"
+#include "LogWavelengthGrid.hpp"
 #include "MonteCarloSimulation.hpp"
+#include "NestedLogWavelengthGrid.hpp"
 #include "Random.hpp"
 #include "SIUnits.hpp"
 #include "StellarUnits.hpp"
@@ -39,6 +43,13 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<SIUnits>();
     ItemRegistry::add<StellarUnits>();
     ItemRegistry::add<ExtragalacticUnits>();
+
+    // wavelength grids
+    ItemRegistry::add<WavelengthGrid>();
+    ItemRegistry::add<ListWavelengthGrid>();
+    ItemRegistry::add<LogWavelengthGrid>();
+    ItemRegistry::add<NestedLogWavelengthGrid>();
+    ItemRegistry::add<FileWavelengthGrid>();
 
     // Monte Carlo simulations
     ItemRegistry::add<MonteCarloSimulation>();

@@ -30,9 +30,14 @@ public:
         successfully opened. */
     TextInFile(const SimulationItem* item, string filename, string description);
 
-    /** The destructor closes the file and logs a brief informational message. It is therefore
-        important to allow the object to go out of scope before logging other messages or starting
-        another significant chunk of work. */
+    /** This function closes the file and logs a brief informational message, if the file was not
+        already closed. It is important to call close() or allow the object to go out of scope
+        before logging other messages or starting another significant chunk of work. */
+    void close();
+
+    /** The destructor calls the close() function. It is important to call close() or allow the
+        object to go out of scope before logging other messages or starting another significant
+        chunk of work. */
     ~TextInFile();
 
     //====================== Other functions =======================
