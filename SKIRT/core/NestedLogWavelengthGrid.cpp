@@ -24,26 +24,16 @@ void NestedLogWavelengthGrid::setupSelfBefore()
     NR::buildLogGrid(lambdalowv, _minWavelengthBaseGrid, _maxWavelengthBaseGrid, _numWavelengthsBaseGrid-1);
     NR::buildLogGrid(lambdazoomv, _minWavelengthSubGrid, _maxWavelengthSubGrid, _numWavelengthsSubGrid-1);
 
-    // merge the two grids
+    // merge the two grids (don't worry about order because wavelengths will be sorted later anyway)
     vector<double> lambdav;
-    for (int ell=0; ell<_numWavelengthsBaseGrid; ell++)
+    for (double lambda : lambdalowv)
     {
-        double lambda = lambdalowv[ell];
-        if (lambda<_minWavelengthSubGrid) lambdav.push_back(lambda);
+        if (lambda<_minWavelengthSubGrid || lambda>_maxWavelengthSubGrid) lambdav.push_back(lambda);
     }
-    for (int ell=0; ell<_numWavelengthsSubGrid; ell++)
-    {
-        double lambda = lambdazoomv[ell];
-        lambdav.push_back(lambda);
-    }
-    for (int ell=0; ell<_numWavelengthsBaseGrid; ell++)
-    {
-        double lambda = lambdalowv[ell];
-        if (lambda>_maxWavelengthSubGrid) lambdav.push_back(lambda);
-    }
+    for (double lambda : lambdazoomv) lambdav.push_back(lambda);
 
     // store the result
-    setWavelengths(NR::array(lambdav));
+    setWavelengthRange(NR::array(lambdav));
 }
 
 ////////////////////////////////////////////////////////////////////

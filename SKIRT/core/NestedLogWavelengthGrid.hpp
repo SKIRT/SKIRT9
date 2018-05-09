@@ -51,7 +51,7 @@ class NestedLogWavelengthGrid : public WavelengthGrid
     //============= Construction - Setup - Destruction =============
 
 protected:
-    /** This function constructs the list of representative wavelengths. First, \f$N\f$ wavelength
+    /** This function constructs the list of characteristic wavelengths. First, \f$N\f$ wavelength
         grid points are distributed logarithmically between \f$\lambda_{\text{min}}\f$ and
         \f$\lambda_{\text{max}}\f$. Next, \f$N_{\text{zoom}}\f$ wavelength grid points are
         distributed logarithmically between \f$\lambda_{\text{zoom,min}}\f$ and

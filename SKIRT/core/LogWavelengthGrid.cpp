@@ -19,7 +19,7 @@ void LogWavelengthGrid::setupSelfBefore()
     // construct the grid
     Array lambdav;
     NR::buildLogGrid(lambdav, _minWavelength, _maxWavelength, _numWavelengths-1);
-    setWavelengths(lambdav);
+    setWavelengthRange(lambdav);
 }
 
 ////////////////////////////////////////////////////////////////////

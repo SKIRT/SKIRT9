@@ -21,7 +21,10 @@ void FileWavelengthGrid::setupSelfBefore()
     size_t n = rows.size();
     Array lambdav(n);
     for (size_t i=0; i<n; i++) lambdav[i] = rows[i][0] * 1e-6;
-    setWavelengths(lambdav);
+
+    // set the wavelength grid
+    if (_relativeHalfWidth) setWavelengthBins(lambdav, _relativeHalfWidth);
+    else setWavelengthRange(lambdav);
 }
 
 //////////////////////////////////////////////////////////////////////

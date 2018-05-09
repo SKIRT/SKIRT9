@@ -40,7 +40,7 @@ class LogWavelengthGrid : public WavelengthGrid
     //============= Construction - Setup - Destruction =============
 
 protected:
-    /** This function constructs the list of \f$N\f$ representative wavelengths distributed
+    /** This function constructs the list of \f$N\f$ characteristic wavelengths distributed
         logarithmically between \f$\lambda_{\text{min}}\f$ and \f$\lambda_{\text{max}}\f$. */
     void setupSelfBefore() override;
 };
