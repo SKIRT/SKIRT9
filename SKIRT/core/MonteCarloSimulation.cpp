@@ -37,7 +37,7 @@ void MonteCarloSimulation::setupSelfBefore()
 void MonteCarloSimulation::setEmulationMode()
 {
     _emulationMode = true;
-    _numPackages = 0;
+    _numPackets = 0;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -145,6 +145,8 @@ void MonteCarloSimulation::runSelf()
 
         FITSInOut::write(this, "frame", "frame", frame.data(), frame.size(0), frame.size(1), 1, 0,0,0,0,"","");
     }
+
+    instrumentSystem()->write();
 }
 
 ////////////////////////////////////////////////////////////////////

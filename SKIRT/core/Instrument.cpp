@@ -1,0 +1,19 @@
+/*//////////////////////////////////////////////////////////////////
+////     The SKIRT project -- advanced radiative transfer       ////
+////       © Astronomical Observatory, Ghent University         ////
+///////////////////////////////////////////////////////////////// */
+
+#include "Instrument.hpp"
+#include "FatalError.hpp"
+
+////////////////////////////////////////////////////////////////////
+
+void Instrument::setupSelfBefore()
+{
+    SimulationItem::setupSelfBefore();
+
+    // select "local" or default wavelength grid
+    _instrumentWavelengthGrid = wavelengthGrid() ? wavelengthGrid() : find<WavelengthGrid>();
+}
+
+////////////////////////////////////////////////////////////////////

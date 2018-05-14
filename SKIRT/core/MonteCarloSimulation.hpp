@@ -7,22 +7,26 @@
 #define MONTECARLOSIMULATION_HPP
 
 #include "Simulation.hpp"
+#include "InstrumentSystem.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
 /** The MonteCarloSimulation class is the general abstract base class describing Monte Carlo
     simulations. Running a Monte Carlo simulation with SKIRT essentially comes down to constructing
     an instance of one of the subclasses of the MonteCarloSimulation base class and invoking the
-    setupAndRun() function on it. The general MonteCarloSimulation class manages ... . */
+    setupAndRun() function on it. The MonteCarloSimulation class ... . */
 class MonteCarloSimulation : public Simulation
 {
     ITEM_CONCRETE(MonteCarloSimulation, Simulation, "a Monte Carlo simulation")
         ATTRIBUTE_SUB_PROPERTIES_FIRST(MonteCarloSimulation)
 
-    PROPERTY_DOUBLE(numPackages, "the total number of photon packages")
-        ATTRIBUTE_MIN_VALUE(numPackages, "[0")
-        ATTRIBUTE_MAX_VALUE(numPackages, "1e15]")
-        ATTRIBUTE_DEFAULT_VALUE(numPackages, "1e6")
+    PROPERTY_ITEM(instrumentSystem, InstrumentSystem, "the instrument system")
+        ATTRIBUTE_DEFAULT_VALUE(instrumentSystem, "InstrumentSystem")
+
+    PROPERTY_DOUBLE(numPackets, "the total number of photon packets")
+        ATTRIBUTE_MIN_VALUE(numPackets, "[0")
+        ATTRIBUTE_MAX_VALUE(numPackets, "1e19]")
+        ATTRIBUTE_DEFAULT_VALUE(numPackets, "1e6")
 
     ITEM_END()
 
@@ -34,22 +38,16 @@ protected:
 
     //======== Setters & Getters for Discoverable Attributes =======
 
-    /** \fn numPackages
-        Photon packages are launched in chunks of the same size. The chunk size is determined
-        automatically during setup. The number of photon packages actually launched is always an
-        integer multiple of the chunk size, and thus may be slightly above the specified number.
-        Unless the specified number of photon packages is exactly equal to zero, a simulation
-        always launches at least one chunk.
-
-        The maximum number of photon packages per wavelength is somewhat arbitrarily set to 1e15.
-        This function throws an error if a larger number is specified. The argument is of type
-        double (which can exactly represent all integers up to 9e15) rather than 64-bit integer to
-        avoid implementing yet another discoverable property type. As a side benefit, one can use
-        exponential notation to specify a large number of photon packages. */
+    /** \fn numPackets The number of photon packets is specified as a double-precision floating
+        point number rather than as a 64-bit integer to avoid implementing yet another discoverable
+        property type. As a side benefit, one can use exponential notation to specify a large
+        number of photon packets. Also, note that a double can exactly represent all integers up to
+        9e15. The maximum number of photon packets is somewhat arbitrarily set to 1e19 because that
+        number is close to the maximum number representable with a 64-bit unsigned integer. */
 
 public:
     /** This function puts the simulation in emulation mode. Specifically, it sets an internal flag
-        that can be queried other classes and it sets the number of photon packages to zero. */
+        that can be queried other classes and it sets the number of photon packets to zero. */
     void setEmulationMode();
 
     /** This function returns true if the simulation has been put in emulation mode. */
