@@ -112,10 +112,9 @@ SkirtUnitDef::SkirtUnitDef()
     addUnit("bolluminosity", "W", 1.);
     addUnit("bolluminosity", "Lsun", Lsun);
 
-    // monochromatic luminosity
-    addUnit("monluminosity", "W/m", 1.);
-    addUnit("monluminosity", "W/micron", 1e6);
-    addUnit("monluminosity", "Lsun/micron", Lsun * 1e6);
+    // neutral monochromatic luminosity
+    addUnit("neutralmonluminosity", "W", 1.);
+    addUnit("neutralmonluminosity", "Lsun", Lsun);
 
     // neutral flux density (lambda F_lambda = nu F_nu)
     addUnit("neutralfluxdensity", "W/m2", 1.);
@@ -123,6 +122,11 @@ SkirtUnitDef::SkirtUnitDef()
     // neutral surface brightness (lambda f_lambda = nu f_nu)
     addUnit("neutralsurfacebrightness", "W/m2/sr", 1.);
     addUnit("neutralsurfacebrightness", "W/m2/arcsec2", 1. / pow(M_PI/(180.*3600.),2));
+
+    // wavelength monochromatic luminosity
+    addUnit("wavelengthmonluminosity", "W/m", 1.);
+    addUnit("wavelengthmonluminosity", "W/micron", 1e6);
+    addUnit("wavelengthmonluminosity", "Lsun/micron", Lsun * 1e6);
 
     // wavelength flux density (F_lambda)
     addUnit("wavelengthfluxdensity", "W/m3", 1.);
@@ -132,6 +136,10 @@ SkirtUnitDef::SkirtUnitDef()
     addUnit("wavelengthsurfacebrightness", "W/m3/sr", 1.);
     addUnit("wavelengthsurfacebrightness", "W/m2/micron/sr", 1e6);
     addUnit("wavelengthsurfacebrightness", "W/m2/micron/arcsec2", 1e6 / pow(M_PI/(180.*3600.),2));
+
+    // frequency monochromatic luminosity
+    addUnit("frequencymonluminosity", "W/Hz", 1.);
+    addUnit("frequencymonluminosity", "Lsun/Hz", Lsun);
 
     // frequency flux density (F_nu)
     addUnit("frequencyfluxdensity", "W/m2/Hz", 1.);

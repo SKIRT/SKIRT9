@@ -30,14 +30,20 @@ TextOutFile::TextOutFile(const SimulationItem* item, string filename, string des
 
 ////////////////////////////////////////////////////////////////////
 
-TextOutFile::~TextOutFile()
+void TextOutFile::close()
 {
-    // Close the output file, if it was opened by this process
     if (_out.is_open())
     {
         _out.close();
         _log->info("Done writing.");
     }
+}
+
+////////////////////////////////////////////////////////////////////
+
+TextOutFile::~TextOutFile()
+{
+    close();
 }
 
 ////////////////////////////////////////////////////////////////////

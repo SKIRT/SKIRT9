@@ -161,7 +161,10 @@ void ProcessManager::sumToAll(Array& arr)
             data += maxMessageSize;
             remaining -= maxMessageSize;
         }
-        MPI_Allreduce(MPI_IN_PLACE, data, remaining, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        if (remaining)
+        {
+            MPI_Allreduce(MPI_IN_PLACE, data, remaining, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        }
     }
 #else
     (void)arr;
@@ -188,10 +191,13 @@ void ProcessManager::sumToRoot(Array& arr)
             remaining -= maxMessageSize;
             data += maxMessageSize;
         }
-        if (isRoot())
-            MPI_Reduce(MPI_IN_PLACE, data, remaining, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-        else
-            MPI_Reduce(data, data, remaining, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        if (remaining)
+        {
+            if (isRoot())
+                MPI_Reduce(MPI_IN_PLACE, data, remaining, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+            else
+                MPI_Reduce(data, data, remaining, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        }
     }
 #else
     (void)arr;

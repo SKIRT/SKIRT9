@@ -114,14 +114,15 @@ public:
     /** This function adds the floating point values of an array element-wise across the different
         processes. The resulting sums are then stored in the same Array passed to this function on
         each individual process. All processes must call this function for the communication to
-        proceed. If there is only one process, the function does nothing. */
+        proceed. If there is only one process, or if the array has zero size, the function does
+        nothing. */
     static void sumToAll(Array& arr);
 
     /** This function adds the floating point values of an array element-wise across the different
         processes. The resulting sums are then stored in the same Array passed to this function on
         the root process. The arrays on the other processes are left untouched. All processes must
-        call this function for the communication to proceed. If there is only one process, the
-        function does nothing. */
+        call this function for the communication to proceed. If there is only one process, or if
+        the array has zero size, the function does nothing. */
     static void sumToRoot(Array& arr);
 
     //======== Data members  ===========

@@ -187,13 +187,23 @@ public:
         (W) to the program's output units. */
     double obolluminosity(double L) const;
 
+    /** This function returns a string describing the monochromatic luminosity output style adopted
+        by the program. */
+    string smonluminosity() const;
+
     /** This function returns a string containing the name of the unit of monochromatic luminosity
-        adopted by the program for output. */
+        adopted by the program for output, depending on the selected flux output style. */
     string umonluminosity() const;
 
-    /** This function converts the monochromatic luminosity \f$L_\lambda\f$ from the internally
-        used SI units (\f${\text{W}}\, {\text{m}}^{-1}\f$) to the program's output units. */
-    double omonluminosity(double Llambda) const;
+    /** This function converts the monochromatic per-wavelength luminosity \f$L_\lambda\f$ from the
+        internally used SI units (\f${\text{W}}\, {\text{m}}^{-1}\f$) to the program's flux output
+        style (neutral, wavelength or frequency) and units. */
+    double omonluminosityWavelength(double lambda, double Llambda) const;
+
+    /** This function converts the monochromatic per-frequency luminosity \f$L_\nu\f$ from the
+        internally used SI units (\f${\text{W}}\, {\text{Hz}}^{-1}\f$) to the program's flux output
+        style (neutral, wavelength or frequency) and units. */
+    double omonluminosityFrequency(double lambda, double Lnu) const;
 
     /** This function returns a string describing the flux density output style adopted by the
         program. */
@@ -203,10 +213,16 @@ public:
         the program for output, depending on the selected flux output style. */
     string ufluxdensity() const;
 
-    /** This function converts the wavelength flux density \f$F_\lambda\f$ for wavelength
-        \f$\lambda\f$ from the internally used SI units to the program's flux output style
-        (neutral, wavelength or frequency) and units. */
-    double ofluxdensity(double lambda, double Flambda) const;
+    /** This function converts the per-wavelength flux density \f$F_\lambda\f$ for wavelength
+        \f$\lambda\f$ from the internally used SI units (\f${\text{W}}\, {\text{m}}^{-3}\f$) to the
+        program's flux output style (neutral, wavelength or frequency) and units. */
+    double ofluxdensityWavelength(double lambda, double Flambda) const;
+
+    /** This function converts the per-frequency flux density \f$F_\nu\f$ for wavelength
+        \f$\lambda\f$ from the internally used SI units (\f${\text{W}}\, {\text{m}}^{-2}\,
+        {\text{Hz}}^{-1}\f$) to the program's flux output style (neutral, wavelength or frequency)
+        and units. */
+    double ofluxdensityFrequency(double lambda, double Fnu) const;
 
     /** This function returns a string describing the surface brightness output style adopted by
         the program. */
@@ -216,10 +232,17 @@ public:
         adopted by the program for output, depending on the selected flux output style. */
     string usurfacebrightness() const;
 
-    /** This function converts the wavelength surface brightness \f$f_\lambda\f$ for wavelength
-        \f$\lambda\f$ from the internally used SI units to the program's flux output style
-        (neutral, wavelength or frequency) and units. */
-    double osurfacebrightness(double lambda, double flambda) const;
+    /** This function converts the per-wavelength surface brightness \f$f_\lambda\f$ for wavelength
+        \f$\lambda\f$ from the internally used SI units (\f${\text{W}}\, {\text{m}}^{-3}\,
+        {\text{sr}}^{-1}\f$) to the program's flux output style (neutral, wavelength or frequency)
+        and units. */
+    double osurfacebrightnessWavelength(double lambda, double flambda) const;
+
+    /** This function converts the per-frequency surface brightness \f$f_\nu\f$ for wavelength
+        \f$\lambda\f$ from the internally used SI units (\f${\text{W}}\, {\text{m}}^{-2}\,
+        {\text{Hz}}^{-1}\, {\text{sr}}^{-1}\f$) to the program's flux output style (neutral,
+        wavelength or frequency) and units. */
+    double osurfacebrightnessFrequency(double lambda, double fnu) const;
 
     /** This function returns a string containing the name of the unit of temperature adopted by
         the program for output. */
