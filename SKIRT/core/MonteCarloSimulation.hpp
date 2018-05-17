@@ -38,12 +38,13 @@ protected:
 
     //======== Setters & Getters for Discoverable Attributes =======
 
-    /** \fn numPackets The number of photon packets is specified as a double-precision floating
-        point number rather than as a 64-bit integer to avoid implementing yet another discoverable
-        property type. As a side benefit, one can use exponential notation to specify a large
-        number of photon packets. Also, note that a double can exactly represent all integers up to
-        9e15. The maximum number of photon packets is somewhat arbitrarily set to 1e19 because that
-        number is close to the maximum number representable with a 64-bit unsigned integer. */
+    /** \fn numPackets
+        The number of photon packets is specified as a double-precision floating point number
+        rather than as a 64-bit integer to avoid implementing yet another discoverable property
+        type. As a side benefit, one can use exponential notation to specify a large number of
+        photon packets. Also, note that a double can exactly represent all integers up to 9e15. The
+        maximum number of photon packets is somewhat arbitrarily set to 1e19 because that number is
+        close to the maximum number representable with a 64-bit unsigned integer. */
 
 public:
     /** This function puts the simulation in emulation mode. Specifically, it sets an internal flag
