@@ -8,6 +8,7 @@
 
 #include "SimulationItem.hpp"
 #include "Direction.hpp"
+#include "FluxRecorder.hpp"
 #include "Position.hpp"
 #include "WavelengthGrid.hpp"
 class PhotonPacket;
@@ -18,9 +19,10 @@ class PhotonPacket;
     Monte Carlo simulation. Subclasses implement instruments that can vary in type of projection
     (e.g. parallel or perspective) and in what is recorded (e.g. SED or full integral field data
     cube). This top-level abstract class offers a generic interface for receiving photon packets
-    from the simulation. It also includes the facilities for configuring the instrument's
-    wavelength grid either by specifying a grid for this instrument specifically, or by defaulting
-    to the common grid specified for the instrument system. */
+    from the simulation. It also includes facilities for configuring user properties that are
+    common to all instruments, such as which flux contributions need to be recorded. A wavelength
+    grid is established either by specifying a grid for this instrument specifically, or by
+    defaulting to the common grid specified for the instrument system. */
 class Instrument : public SimulationItem
 {
     ITEM_ABSTRACT(Instrument, SimulationItem, "an instrument")
@@ -31,16 +33,40 @@ class Instrument : public SimulationItem
         ATTRIBUTE_DEFAULT_VALUE(wavelengthGrid, "LogWavelengthGrid")
         ATTRIBUTE_OPTIONAL(wavelengthGrid)
 
+    PROPERTY_BOOL(recordComponents, "record flux components separately")
+        ATTRIBUTE_DEFAULT_VALUE(recordComponents, "false")
+
+    PROPERTY_INT(numScatteringLevels, "the number of individually recorded scattering levels")
+        ATTRIBUTE_RELEVANT_IF(numScatteringLevels, "recordComponents")
+        ATTRIBUTE_MIN_VALUE(numScatteringLevels, "0")
+        ATTRIBUTE_MAX_VALUE(numScatteringLevels, "99")
+        ATTRIBUTE_DEFAULT_VALUE(numScatteringLevels, "0")
+
+    PROPERTY_BOOL(recordPolarization, "record polarization (Stokes vector elements)")
+        ATTRIBUTE_DEFAULT_VALUE(recordPolarization, "false")
+
+    PROPERTY_BOOL(recordStatistics, "record information for calculating statistical properties")
+        ATTRIBUTE_DEFAULT_VALUE(recordStatistics, "false")
+
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============
 
 protected:
-    /** This function performs setup for the instrument. It sets the wavelength grid for the
-        instrument: if a grid is specified for the instrument, this grid is used. If not, the
-        default wavelength grid specified for the instrument system is used. If neither of these
-        grids are specified, the function throws a fatal error. */
+    /** This function performs setup for the instrument. It establishes the wavelength grid for the
+        instrument: if a grid is specified for the instrument, that grid is used. If not, the
+        default wavelength grid specified for the instrument system is used instead. If neither of
+        these grids are specified, the function throws a fatal error.
+
+        The function also partially configures the FluxRecorder instance for this instrument,
+        passing it the values of the user properties offered by this class and some extra
+        information on the simulation. The setupSelfBefore() function of each subclass is expected
+        to augment the configuration by calling the includeFluxDensity() and/or
+        includeSurfaceBrightness() functions. */
     void setupSelfBefore() override;
+
+    /** This function finalizes the configuration of FluxRecorder instance for this instrument. */
+    void setupSelfAfter() override;
 
     //======================== Other Functions =======================
 
@@ -78,6 +104,7 @@ public:
 
 private:
     const WavelengthGrid* _instrumentWavelengthGrid{nullptr};
+    FluxRecorder _recorder;
 };
 
 ////////////////////////////////////////////////////////////////////
