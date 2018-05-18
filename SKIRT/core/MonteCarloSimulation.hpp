@@ -67,6 +67,10 @@ protected:
     /** This function actually runs the simulation. */
     void runSelf() override;
 
+private:
+    /** This test function launches the specified chunk of photon packets. */
+    void doTestEmissionChunk(size_t firstIndex, size_t numIndices);
+
     //======================== Data Members ========================
 
 private:

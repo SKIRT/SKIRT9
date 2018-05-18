@@ -10,6 +10,7 @@
 #include "ThreadLocalMember.hpp"
 #include <tuple>
 class PhotonPacket;
+class SimulationItem;
 class WavelengthGrid;
 
 ////////////////////////////////////////////////////////////////////
@@ -180,16 +181,18 @@ public:
         actually destructed, the flush() function should be called from a single thread. */
     void flush();
 
-    /** This function calibrates and outputs the instrument data. The calibration includes
-        conversion from specific luminosity to flux density (incorporating distance) and/or to
-        surface brightness (i.e. incorporating distance and solid angle per pixel) based on the
-        information passed during configuration. The function also converts the resulting values
-        from internal units to output units depending on the simulation's choices for flux output
-        style.
+    /** This function calibrates and outputs the instrument data. The argument specifies a
+        simulation item in the hierarchy of the caller (usually the caller itself).
+
+        The calibration includes conversion from specific luminosity to flux density (incorporating
+        distance) and/or to surface brightness (i.e. incorporating distance and solid angle per
+        pixel) based on the information passed during configuration. The function also converts the
+        resulting values from internal units to output units depending on the simulation's choices
+        for flux output style.
 
         For more information on the names and contents of the generated files, see the
         documentation in the header of this class. */
-    void calibrateAndWrite();
+    void calibrateAndWrite(const SimulationItem* item);
 
     //================= Private Types and Functions ===============
 

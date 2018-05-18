@@ -30,7 +30,6 @@ class Instrument : public SimulationItem
     PROPERTY_STRING(instrumentName, "the name for this instrument")
 
     PROPERTY_ITEM(wavelengthGrid, WavelengthGrid, "the wavelength grid for this instrument")
-        ATTRIBUTE_DEFAULT_VALUE(wavelengthGrid, "LogWavelengthGrid")
         ATTRIBUTE_OPTIONAL(wavelengthGrid)
 
     PROPERTY_BOOL(recordComponents, "record flux components separately")

@@ -32,8 +32,12 @@ class InstrumentSystem : public SimulationItem
     //======================== Other Functions =======================
 
 public:
-    /** This function writes the recorded data for the complete instrument system to set of files.
-        It calls the write() function for each of the instruments. */
+    /** This function flushes any information buffered during photon packet detection for the
+        complete instrument system. It calls the flush() function for each of the instruments. */
+    void flush();
+
+    /** This function writes the recorded data for the complete instrument system to a set of
+        files. It calls the write() function for each of the instruments. */
     void write();
 };
 

@@ -165,6 +165,7 @@ void FluxRecorder::finalizeConfiguration()
         _sed[TotalV].resize(lenSED);  _ifu[TotalV].resize(lenIFU);
     }
 
+
     // allocate and resize the statistics detector arrays
     if (_recordStatistics)
     {
@@ -299,7 +300,7 @@ void FluxRecorder::flush()
 
 ////////////////////////////////////////////////////////////////////
 
-void FluxRecorder::calibrateAndWrite()
+void FluxRecorder::calibrateAndWrite(const SimulationItem* item)
 {
     // collect recorded data from all processes
     for (auto& array : _sed) ProcessManager::sumToRoot(array);
@@ -320,7 +321,7 @@ void FluxRecorder::calibrateAndWrite()
 
     // convert from recorded quantities to output quantities and from internal units to user-selected output units
     // (for performance reasons, determine the units scaling factor only once for each wavelength)
-    Units* units = _lambdagrid->find<Units>();
+    Units* units = item->find<Units>();
     int numWavelengths = _lambdagrid->numWavelengths();
     for (int ell=0; ell!=numWavelengths; ++ell)
     {
@@ -390,7 +391,7 @@ void FluxRecorder::calibrateAndWrite()
         }
 
         // open the file and add the column headers
-        TextOutFile sedFile(_lambdagrid, _instrumentName + "_sed", "SED");
+        TextOutFile sedFile(item, _instrumentName + "_sed", "SED");
         sedFile.addColumn("lambda (" + units->uwavelength() + ")", 'e', 9);
         for (const string& name : sedNames)
         {
@@ -410,7 +411,7 @@ void FluxRecorder::calibrateAndWrite()
         if (_recordStatistics)
         {
             // open the file and add the column headers
-            TextOutFile statFile(_lambdagrid, _instrumentName + "_sedstats", "SED statistics");
+            TextOutFile statFile(item, _instrumentName + "_sedstats", "SED statistics");
             statFile.addColumn("lambda (" + units->uwavelength() + ")", 'e', 9);
             for (int k=0; k<=maxContributionPower; ++k)
             {
@@ -483,7 +484,7 @@ void FluxRecorder::calibrateAndWrite()
         {
             string filename = _instrumentName + "_" + ifuNames[q];
             string description = ifuNames[q] + " flux";
-            FITSInOut::write(_lambdagrid, description, filename, *(ifuArrays[q]),
+            FITSInOut::write(item, description, filename, *(ifuArrays[q]),
                              _numPixelsX, _numPixelsY, numWavelengths,
                              units->olength(_pixelSizeX), units->olength(_pixelSizeY),
                              units->olength(_centerX), units->olength(_centerY),
@@ -502,7 +503,7 @@ void FluxRecorder::calibrateAndWrite()
                 string filename = _instrumentName + "_stats" + std::to_string(k);
                 string description = "sum of contributions to the power of " + std::to_string(k);
                 _wifu[k] *= cn;
-                FITSInOut::write(_lambdagrid, description, filename, _wifu[k],
+                FITSInOut::write(item, description, filename, _wifu[k],
                                  _numPixelsX, _numPixelsY, numWavelengths,
                                  units->olength(_pixelSizeX), units->olength(_pixelSizeY),
                                  units->olength(_centerX), units->olength(_centerY),

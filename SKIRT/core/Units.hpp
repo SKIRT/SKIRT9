@@ -39,7 +39,7 @@ class Units : public SimulationItem
     ITEM_ABSTRACT(Units, SimulationItem, "a units system")
 
     PROPERTY_ENUM(fluxOutputStyle, FluxOutputStyle, "the output style for flux density and surface brightness")
-        ATTRIBUTE_DEFAULT_VALUE(fluxOutputStyle, "Neutral")
+        ATTRIBUTE_DEFAULT_VALUE(fluxOutputStyle, "Frequency")
 
     ITEM_END()
 

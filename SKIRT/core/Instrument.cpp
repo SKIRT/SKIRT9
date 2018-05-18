@@ -45,7 +45,7 @@ void Instrument::flush()
 
 void Instrument::write()
 {
-    _recorder.calibrateAndWrite();
+    _recorder.calibrateAndWrite(this);
 }
 
 ////////////////////////////////////////////////////////////////////
