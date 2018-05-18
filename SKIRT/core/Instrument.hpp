@@ -77,6 +77,20 @@ public:
         throws a fatal error if neither of these grids are specified. */
     const WavelengthGrid* instrumentWavelengthGrid() const { return _instrumentWavelengthGrid; }
 
+    /** This function flushes any information buffered by the detect() function. It simply calls
+        the corresponding function of the FluxRecorder instance associated with this instrument. */
+    void flush();
+
+    /** This function calibrates the instrument and outputs the recorded contents to a set of
+        files. It simply calls the corresponding function of the FluxRecorder instance associated
+        with this instrument. */
+    void write();
+
+protected:
+    /** Returns the FluxRecorder instance associated with this instrument. This function is
+        intended for use in subclasses only. */
+    FluxRecorder* instrumentFluxRecorder() { return &_recorder; }
+
     //=========== Functions to be implemented in subclass ===========
 
 public:
@@ -95,10 +109,6 @@ public:
     /** This function simulates the detection of a photon packet by the instrument. Its
         implementation must be provided in a subclass. */
     virtual void detect(PhotonPacket* pp) = 0;
-
-    /** This function calibrates the instrument and writes down the recorded contents to a set of
-        files. Its implementation must be provided in a subclass. */
-    virtual void write() = 0;
 
     //======================== Data Members =======================
 

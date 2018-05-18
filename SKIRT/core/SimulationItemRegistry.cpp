@@ -11,11 +11,14 @@
 
 #include "ExtragalacticUnits.hpp"
 #include "FileWavelengthGrid.hpp"
+#include "FrameInstrument.hpp"
+#include "InstrumentSystem.hpp"
 #include "ListWavelengthGrid.hpp"
 #include "LogWavelengthGrid.hpp"
 #include "MonteCarloSimulation.hpp"
 #include "NestedLogWavelengthGrid.hpp"
 #include "Random.hpp"
+#include "SEDInstrument.hpp"
 #include "SIUnits.hpp"
 #include "StellarUnits.hpp"
 
@@ -50,6 +53,13 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<LogWavelengthGrid>();
     ItemRegistry::add<NestedLogWavelengthGrid>();
     ItemRegistry::add<FileWavelengthGrid>();
+
+    // instrument system and instruments
+    ItemRegistry::add<InstrumentSystem>();
+    ItemRegistry::add<Instrument>();
+    ItemRegistry::add<DistantInstrument>();
+    ItemRegistry::add<SEDInstrument>();
+    ItemRegistry::add<FrameInstrument>();
 
     // Monte Carlo simulations
     ItemRegistry::add<MonteCarloSimulation>();

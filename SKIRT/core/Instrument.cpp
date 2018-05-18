@@ -24,12 +24,28 @@ void Instrument::setupSelfBefore()
     _recorder.setUserFlags(_recordComponents, _numScatteringLevels, _recordPolarization, _recordStatistics);
 }
 
+////////////////////////////////////////////////////////////////////
+
 void Instrument::setupSelfAfter()
 {
     SimulationItem::setupSelfAfter();
 
     // finalize configuration of the flux recorder
     _recorder.finalizeConfiguration();
+}
+
+////////////////////////////////////////////////////////////////////
+
+void Instrument::flush()
+{
+    _recorder.flush();
+}
+
+////////////////////////////////////////////////////////////////////
+
+void Instrument::write()
+{
+    _recorder.calibrateAndWrite();
 }
 
 ////////////////////////////////////////////////////////////////////
