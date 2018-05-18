@@ -31,47 +31,6 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-// data structures to queue and combine all contributions from a photon packet history to a statistics bin;
-// we assume that all detections for a given history are handled inside the same execution thread
-// and that histories (within a particular thread) are handled one after the other (not interleaved)
-
-namespace
-{
-    // structure to remember a single contribution
-    class Contribution
-    {
-    public:
-        Contribution(int ell, int l, double w) : _ell(ell), _l(l), _w(w) { }
-        bool operator<(const Contribution& c) const { return std::tie(_ell, _l) < std::tie(c._ell, c._l); }
-        int ell() const { return _ell; }
-        int l() const { return _l; }
-        double w() const { return _w; }
-    private:
-        int _ell{0};     // wavelength index
-        int _l{0};       // pixel index (relevant only for IFUs)
-        double _w{0};    // contribution
-    };
-}
-
-namespace FluxRecorder_Impl
-{
-    // structure to remember a list of contributions for a given photon packet history
-    class ContributionList
-    {
-    public:
-        bool hasHistoryIndex(size_t historyIndex) const { return _historyIndex == historyIndex; }
-        void addContribution(int ell, int l, double w) { _contributions.emplace_back(ell, l, w); }
-        void reset(size_t historyIndex = 0) { _historyIndex = historyIndex, _contributions.clear(); }
-        void sort() { std::sort(_contributions.begin(), _contributions.end()); }
-        const vector<Contribution>& contributions() const { return _contributions; }
-    private:
-        size_t _historyIndex{0};
-        vector<Contribution> _contributions;
-    };
-}
-
-////////////////////////////////////////////////////////////////////
-
 FluxRecorder::FluxRecorder()
 {
 }
