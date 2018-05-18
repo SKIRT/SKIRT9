@@ -455,7 +455,7 @@ void FluxRecorder::calibrateAndWrite(const SimulationItem* item)
         {
             // the output files have single-precision floating point numbers with range of only 10^+-38
             // --> scale the values to a range that includes unity to avoid too many overflows or underflows
-            double c = 1. / _wifu[0].max();
+            double c = 1. / _wifu[1].max();
             double cn = 1.;
             for (int k=0; k<=maxContributionPower; ++k)
             {
