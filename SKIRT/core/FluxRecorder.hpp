@@ -163,12 +163,20 @@ public:
         its configuration. This function is thread-safe, so it may be (and often is) called from
         multiple parallel execution threads.
 
-        If the luminosity of the photon packet at the site of its last emission or scattering event
-        is equal to \f$L_\nu\f$, the fraction that will reach the observer is equal to \f[
-        L_\nu^{\text{obs}} = L_\nu\, {\text{e}}^{-\tau_{\ell,{\text{path}}}} \f] with
-        \f$\tau_{\ell,{\text{path}}}\f$ the optical depth through the media system towards the
-        observer. */
-    void detect(const PhotonPacket* pp, int l, double tau);
+        The calling instrument is responsible for providing the index \em l of the pixel in the
+        instrument frame where the photon packet arrives, because this depends on the projection
+        being used. In addition, the instrument can specify a \em distance from the photon packet's
+        last interaction site to the instrument. For distant instruments with parallel projection,
+        this distance should be left at its default value of infinity (or it can be set at the
+        actual instrument distance). For instruments that may be placed close by or inside the
+        model, the actual distance should be specified so that the flux calibration can be properly
+        corrected for each individual photon packet.
+
+        All other information is obtained directly or indirectly from the photon packet. If there
+        is an obscuring medium, the optical depth from the photon packet's last interaction site to
+        the instrument is determined and the corresponding extincton is applied to the luminosity
+        before detection. */
+    void detect(const PhotonPacket* pp, int l, double distance = std::numeric_limits<double>::infinity());
 
     /** This function processes and clears any information that may have been buffered by the
         detect() function in thread-local storage. It is not thread-safe. After parallel threads
@@ -254,6 +262,7 @@ private:
     int _numPixelsY{0};
     double _pixelSizeX{0};
     double _pixelSizeY{0};
+    double _pixelSizeAverage{0};
     double _centerX{0};
     double _centerY{0};
 

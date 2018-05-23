@@ -18,6 +18,7 @@
 #include "LogWavelengthGrid.hpp"
 #include "MonteCarloSimulation.hpp"
 #include "NestedLogWavelengthGrid.hpp"
+#include "PerspectiveInstrument.hpp"
 #include "Random.hpp"
 #include "SEDInstrument.hpp"
 #include "SIUnits.hpp"
@@ -62,6 +63,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<SEDInstrument>();
     ItemRegistry::add<FrameInstrument>();
     ItemRegistry::add<FullInstrument>();
+    ItemRegistry::add<PerspectiveInstrument>();
 
     // Monte Carlo simulations
     ItemRegistry::add<MonteCarloSimulation>();

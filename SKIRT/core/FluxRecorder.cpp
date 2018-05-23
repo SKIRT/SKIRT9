@@ -76,6 +76,7 @@ void FluxRecorder::includeSurfaceBrightness(double distance, int numPixelsX, int
     _numPixelsY = numPixelsY;
     _pixelSizeX = pixelSizeX;
     _pixelSizeY = pixelSizeY;
+    _pixelSizeAverage = sqrt(pixelSizeX*pixelSizeY);
     _centerX = centerX;
     _centerY = centerY;
 }
@@ -124,7 +125,6 @@ void FluxRecorder::finalizeConfiguration()
         _sed[TotalV].resize(lenSED);  _ifu[TotalV].resize(lenIFU);
     }
 
-
     // allocate and resize the statistics detector arrays
     if (_recordStatistics)
     {
@@ -145,15 +145,35 @@ void FluxRecorder::finalizeConfiguration()
 
 ////////////////////////////////////////////////////////////////////
 
-void FluxRecorder::detect(const PhotonPacket* pp, int l, double tau)
+void FluxRecorder::detect(const PhotonPacket* pp, int l, double distance)
 {
+    // abort if we're not recording integrated fluxes and the photon packet arrives outside of the frame
+    if (!_includeFluxDensity && l < 0) return;
+
     // get the wavelength bin index, and abort if the wavelength falls outside of our grid
     int ell = _lambdagrid->ell(pp->lambda());
     if (ell < 0) return;
 
-    // get the luminosity contribution from the photon packet
+    // ask the medium system to calculate the optical depth
+    double taupath = 0;
+    if (_hasMedium)
+    {
+        // TODO: taupath = opticalDepth(pp, distance);
+    }
+
+    // get the luminosity contribution from the photon packet and adjust for near distance if needed
     double L = pp->luminosity();
-    double Lext = L * exp(-tau);
+    if (distance < _distance)
+    {
+        double r = _pixelSizeAverage / (2.*distance);
+        double rar = r / atan(r);
+        L *= rar*rar;
+    }
+
+    // apply extinction
+    double Lext = L * exp(-taupath);
+
+    // get number of scatterings (because we use it a lot)
     int numScatt = pp->numScatt();
 
     // record in SED arrays

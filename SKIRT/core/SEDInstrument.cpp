@@ -20,9 +20,7 @@ void SEDInstrument::setupSelfBefore()
 
 void SEDInstrument::detect(PhotonPacket* pp)
 {
-    //double taupath = opticalDepth(pp);
-    double taupath = 0;     // TODO: ask medium system to calculate optical depth
-    instrumentFluxRecorder()->detect(pp, 0, taupath);
+    instrumentFluxRecorder()->detect(pp, 0);
 }
 
 ////////////////////////////////////////////////////////////////////
