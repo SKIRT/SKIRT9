@@ -24,7 +24,7 @@ class InstrumentSystem : public SimulationItem
         ATTRIBUTE_OPTIONAL(defaultWavelengthGrid)
 
     PROPERTY_ITEM_LIST(instruments, Instrument, "the instruments")
-        ATTRIBUTE_DEFAULT_VALUE(instruments, "DistantInstrument")
+        ATTRIBUTE_DEFAULT_VALUE(instruments, "SEDInstrument")
         ATTRIBUTE_OPTIONAL(instruments)
 
     ITEM_END()
