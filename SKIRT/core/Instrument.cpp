@@ -5,6 +5,7 @@
 
 #include "Instrument.hpp"
 #include "FatalError.hpp"
+#include "FluxRecorder.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -20,8 +21,9 @@ void Instrument::setupSelfBefore()
     bool hasMediumEmission = false;
 
     // partially configure the flux recorder
-    _recorder.setSimulationInfo(instrumentName(), instrumentWavelengthGrid(), hasMedium, hasMediumEmission);
-    _recorder.setUserFlags(_recordComponents, _numScatteringLevels, _recordPolarization, _recordStatistics);
+    _recorder = new FluxRecorder();
+    _recorder->setSimulationInfo(instrumentName(), instrumentWavelengthGrid(), hasMedium, hasMediumEmission);
+    _recorder->setUserFlags(_recordComponents, _numScatteringLevels, _recordPolarization, _recordStatistics);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -31,21 +33,28 @@ void Instrument::setupSelfAfter()
     SimulationItem::setupSelfAfter();
 
     // finalize configuration of the flux recorder
-    _recorder.finalizeConfiguration();
+    _recorder->finalizeConfiguration();
+}
+
+////////////////////////////////////////////////////////////////////
+
+Instrument::~Instrument()
+{
+    delete _recorder;
 }
 
 ////////////////////////////////////////////////////////////////////
 
 void Instrument::flush()
 {
-    _recorder.flush();
+    _recorder->flush();
 }
 
 ////////////////////////////////////////////////////////////////////
 
 void Instrument::write()
 {
-    _recorder.calibrateAndWrite(this);
+    _recorder->calibrateAndWrite(this);
 }
 
 ////////////////////////////////////////////////////////////////////

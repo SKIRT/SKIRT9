@@ -8,9 +8,9 @@
 
 #include "SimulationItem.hpp"
 #include "Direction.hpp"
-#include "FluxRecorder.hpp"
 #include "Position.hpp"
 #include "WavelengthGrid.hpp"
+class FluxRecorder;
 class PhotonPacket;
 
 ////////////////////////////////////////////////////////////////////
@@ -57,15 +57,18 @@ protected:
         default wavelength grid specified for the instrument system is used instead. If neither of
         these grids are specified, the function throws a fatal error.
 
-        The function also partially configures the FluxRecorder instance for this instrument,
-        passing it the values of the user properties offered by this class and some extra
-        information on the simulation. The setupSelfBefore() function of each subclass is expected
-        to augment the configuration by calling the includeFluxDensity() and/or
+        The function also creates and partially configures the FluxRecorder instance for this
+        instrument, passing it the values of the user properties offered by this class and some
+        extra information on the simulation. The setupSelfBefore() function of each subclass is
+        expected to augment the configuration by calling the includeFluxDensity() and/or
         includeSurfaceBrightness() functions. */
     void setupSelfBefore() override;
 
     /** This function finalizes the configuration of FluxRecorder instance for this instrument. */
     void setupSelfAfter() override;
+
+    /** The destructor releases the FluxRecorder instance for this instrument. */
+    ~Instrument();
 
     //======================== Other Functions =======================
 
@@ -88,7 +91,7 @@ public:
 protected:
     /** Returns the FluxRecorder instance associated with this instrument. This function is
         intended for use in subclasses only. */
-    FluxRecorder* instrumentFluxRecorder() { return &_recorder; }
+    FluxRecorder* instrumentFluxRecorder() { return _recorder; }
 
     //=========== Functions to be implemented in subclass ===========
 
@@ -113,7 +116,7 @@ public:
 
 private:
     const WavelengthGrid* _instrumentWavelengthGrid{nullptr};
-    FluxRecorder _recorder;
+    FluxRecorder* _recorder{nullptr};
 };
 
 ////////////////////////////////////////////////////////////////////

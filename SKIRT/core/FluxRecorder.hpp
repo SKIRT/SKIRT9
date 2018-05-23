@@ -15,41 +15,6 @@ class WavelengthGrid;
 
 ////////////////////////////////////////////////////////////////////
 
-// data structures to queue and combine all contributions from a photon packet history to a statistics bin;
-// we assume that all detections for a given history are handled inside the same execution thread
-// and that histories (within a particular thread) are handled one after the other (not interleaved)
-
-// structure to remember a single contribution
-class Contribution
-{
-public:
-    Contribution(int ell, int l, double w) : _ell(ell), _l(l), _w(w) { }
-    bool operator<(const Contribution& c) const { return std::tie(_ell, _l) < std::tie(c._ell, c._l); }
-    int ell() const { return _ell; }
-    int l() const { return _l; }
-    double w() const { return _w; }
-private:
-    int _ell{0};     // wavelength index
-    int _l{0};       // pixel index (relevant only for IFUs)
-    double _w{0};    // contribution
-};
-
-// structure to remember a list of contributions for a given photon packet history
-class ContributionList
-{
-public:
-    bool hasHistoryIndex(size_t historyIndex) const { return _historyIndex == historyIndex; }
-    void addContribution(int ell, int l, double w) { _contributions.emplace_back(ell, l, w); }
-    void reset(size_t historyIndex = 0) { _historyIndex = historyIndex, _contributions.clear(); }
-    void sort() { std::sort(_contributions.begin(), _contributions.end()); }
-    const vector<Contribution>& contributions() const { return _contributions; }
-private:
-    size_t _historyIndex{0};
-    vector<Contribution> _contributions;
-};
-
-////////////////////////////////////////////////////////////////////
-
 /** FluxRecorder is a helper class used by instruments to actually record the effects of detected
     photon packets. Each Instrument instance employs a single FluxRecorder instance.
 
@@ -227,8 +192,41 @@ public:
     //================= Private Types and Functions ===============
 
 private:
-    /** This private helper function records the photon history contributions in the specified list
-        into the statistics arrays. */
+    /** Private data structure to remember a single contribution from a photon packet to a
+        statistics bin. */
+    class Contribution
+    {
+    public:
+        Contribution(int ell, int l, double w) : _ell(ell), _l(l), _w(w) { }
+        bool operator<(const Contribution& c) const { return std::tie(_ell, _l) < std::tie(c._ell, c._l); }
+        int ell() const { return _ell; }
+        int l() const { return _l; }
+        double w() const { return _w; }
+    private:
+        int _ell{0};     // wavelength index
+        int _l{0};       // pixel index (relevant only for IFUs)
+        double _w{0};    // contribution
+    };
+
+    /** Private data structure to remember a list of contributions for a given photon packet
+        history. We assume that all detections for a given history are handled inside the same
+        execution thread and that histories (within a particular thread) are handled one after the
+        other (i.e. not interleaved). */
+    class ContributionList
+    {
+    public:
+        bool hasHistoryIndex(size_t historyIndex) const { return _historyIndex == historyIndex; }
+        void addContribution(int ell, int l, double w) { _contributions.emplace_back(ell, l, w); }
+        void reset(size_t historyIndex = 0) { _historyIndex = historyIndex, _contributions.clear(); }
+        void sort() { std::sort(_contributions.begin(), _contributions.end()); }
+        const vector<Contribution>& contributions() const { return _contributions; }
+    private:
+        size_t _historyIndex{0};
+        vector<Contribution> _contributions;
+    };
+
+    /** This private helper function records the photon packet history contributions in the
+        specified list into the statistics arrays. */
     void recordContributions(ContributionList& contributionList);
 
     //======================== Data Members ========================
