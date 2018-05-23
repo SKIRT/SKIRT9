@@ -21,7 +21,7 @@ void Instrument::setupSelfBefore()
     bool hasMediumEmission = false;
 
     // partially configure the flux recorder
-    _recorder = new FluxRecorder();
+    _recorder = new FluxRecorder;
     _recorder->setSimulationInfo(instrumentName(), instrumentWavelengthGrid(), hasMedium, hasMediumEmission);
     _recorder->setUserFlags(_recordComponents, _numScatteringLevels, _recordPolarization, _recordStatistics);
 }

@@ -608,7 +608,8 @@ QWidget* WizardEngine::createPane()
             }
 
             // if we reach here, we have a Bool, Int or Double property;
-            // gather subsequent properties of these types at the same level in a single multi-pane
+            // gather consecutive eligible properties of these types at the same level in a single multi-pane
+            bool firstPropertyOnPaneEligible = eligableForMultiPane(handler.get());
             int numProperties = static_cast<int>(_schema->properties(_current->type()).size());
             auto multipane = new MultiPropertyWizardPane(this);
             while (true)
@@ -625,6 +626,11 @@ QWidget* WizardEngine::createPane()
 
                 // terminate if this was the last property at this level
                 if (_propertyIndex+1 >= numProperties) break;
+
+                // terminate if the first property is not eligible for combining in a multi-pane;
+                // this avoids including a property on a multipane or not depending on whether it is relevant or not
+                // and it avoids problems when retreating from a multiplane
+                if (!firstPropertyOnPaneEligible) break;
 
                 // terminate if the next property is not eligible for combining in a multi-pane
                 handler = createCurrentPropertyHandler(+1);
