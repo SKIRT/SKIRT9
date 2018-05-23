@@ -57,11 +57,25 @@ public:
         is the default). */
     void setConcrete() { _concrete = true; }
 
-    /** Sets the flag indicating that properties of sub-types of this type must be listed before
-        the properties of this base type. By default (i.e. if the flag is not set), the order is
-        the other way around, i.e. properties of sub-types are listed after the properties of the
-        base type. */
-    void setSubPropertiesFirst() { _subPropertiesFirst = true; }
+    /** Sets the index in the property list where properties of subtypes should be listed to the
+        number of properties currently held by this type definition. This has the effect of listing
+        properties of subtypes just before the next property added to the type definition (or at
+        the end if no further properties are added). */
+    void setSubPropertyIndexHere() { _subPropertyIndex = _propertyDefs.size(); }
+
+    /** Sets the index in the property list where properties of subtypes should be listed. If the
+        index is nonnegative, properties of subtypes must be listed just before the property with
+        the specified index. If the index is negative, properties of subtypes must be listed after
+        the properties of the base type. This is the default behavior if this function is never
+        called. */
+    void setSubPropertyIndex(int index) { _subPropertyIndex = index; }
+
+    /** Add a new property definition to the list for this type with the given property type, name
+        and title, and returns a reference to the newly constructed PropertyDef instance so that
+        its further attributes can be initialized. Properties are stored in order of addition,
+        which should correspond to the order of appearance in the schema definition. Ownership of
+        the PropertyDef instance is passed to the receiving type definition. */
+    PropertyDef& addPropertyDef(string type, string name, string title);
 
     /** Type definition for a function that creates an instance of an Item subclass. */
     using Instantiator = Item* (*)();
@@ -70,13 +84,6 @@ public:
         this type definition. This information is set only for concrete hardcoded classes (i.e. not
         when using ghost items or for hardcoded abstract classes). */
     void setInstantiator(Instantiator instantiator) { _instantiator = instantiator; }
-
-    /** Add a new property definition to the list for this type with the given property type, name
-        and title, and returns a reference to the newly constructed PropertyDef instance so that
-        its further attributes can be initialized. Properties are stored in order of addition,
-        which should correspond to the order of appearance in the schema definition. Ownership of
-        the PropertyDef instance is passed to the receiving type definition. */
-    PropertyDef& addPropertyDef(string type, string name, string title);
 
     // ================== Getters ==================
 
@@ -97,20 +104,25 @@ public:
     /** Returns true if this is a concrete type, and false if this is an abstract type. */
     bool concrete() const { return _concrete; }
 
-    /** Returns true if properties of sub-types of this type must be listed before the properties
-        of this base type, and false if properties of sub-types must be listed after the properties
-        of the base type (the default). */
-    bool subPropertiesFirst() const { return _subPropertiesFirst; }
+    /** Returns the index in the property list where properties of subtypes should be listed. If
+        the index is nonnegative, properties of subtypes must be listed just before the property
+        with the specified index. If the index is negative, properties of subtypes must be listed
+        after the properties of the base type (the default). */
+    int subPropertyIndex() const { return _subPropertyIndex; }
+
+    /** Returns the number of properties defined for the type. Properties of base types are NOT
+        counted towards this number. */
+    int numSubProperties() const { return _propertyDefs.size(); }
+
+    /** Returns (a reference to a list of) the definitions of the type's properties, in order of
+        appearance in the schema. Properties of base types are NOT included in the list. */
+    const std::list<PropertyDef>& propertyDefs() const { return _propertyDefs; }
 
     /** Returns a pointer to the function that creates an instance of the Item subclass described
         by this type definition. This information is available only for concrete hardcoded classes.
         The function returns a null pointer when using ghost items or for hardcoded abstract
         classes). */
     Instantiator instantiator() const { return _instantiator; }
-
-    /** Returns (a reference to a list of) the definitions of the type's properties, in order of
-        appearance in the schema. Properties of base types are NOT included in the list. */
-    const std::list<PropertyDef>& propertyDefs() const { return _propertyDefs; }
 
     // ================== Data members ==================
 
@@ -120,9 +132,10 @@ private:
     string _base;           // the name of the immediate base type, or the empty string for the root type
     string _allowedIf;      // a Boolean expression using names of other types, or the empty string
     bool _concrete{false};  // true if this is a concrete type
-    bool _subPropertiesFirst{false};  // true if sub-type properties must be listed first
+    int _subPropertyIndex{-1};            // if nonnegative, subproperties are inserted before the property
+                                          // with the specified index rather than added at the end of the list
     std::list<PropertyDef> _propertyDefs; // the definitions of the type's properties
-                            // (we use std::list because it can handle items that aren't copyable)
+                                          // (we use std::list because it can handle items that aren't copyable)
     Instantiator _instantiator{nullptr};  // function to create Item subclass of this type
 };
 

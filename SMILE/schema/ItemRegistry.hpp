@@ -46,7 +46,6 @@ public:
         - \em root: the name of the root element in datasets described by this schema
         - \em type: the type of the top-level item in datasets described by this schema
         - \em format: the version of the described data format (specified on the root element)
-        - \em format: the version of the described data format (specified on the root element)
         - \em url: a URL pointing to information on the Web for this schema (or the empty string if not available)
 
         This function is \em not thread-safe and may be called only during program startup
@@ -108,9 +107,11 @@ public:
         i.e. a Boolean expression using names of other types in this schema definition. */
     static void setAllowedIf(const char* expression);
 
-    /** This function sets the flag for the current target type indicating that properties of
-        sub-types must be listed before the properties of the base type. */
-    static void setSubPropertiesFirst();
+    /** This function sets the index in the property list where properties of subtypes should be
+        listed to the number of properties currently held by the target type definition. This has
+        the effect of listing properties of subtypes just before the next property added to the
+        type definition (or at the end if no further properties are added). */
+    static void setSubPropertyIndexHere();
 
     /** This function creates a new property definition and initializes its basic properties as
         specified by the function arguments. The new property definition becomes the \em target for

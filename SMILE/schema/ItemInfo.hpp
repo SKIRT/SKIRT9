@@ -402,20 +402,20 @@ private: \
     { \
         ItemRegistry::setAllowedIf(boolexpr);
 
-/** This macro sets the \em subPropertiesFirst attribute for the item type being declared. The
-    first and only argument repeats the type name. If this attribute is present, properties of
-    sub-types of this type are listed in user interfaces before the properties of this type. If the
-    attribute is absent, properties of sub-types are listed after the properties of the base type
-    (the default). */
-#define ATTRIBUTE_SUB_PROPERTIES_FIRST(itemtype) \
-        ii_loadItemInfo_subPropertiesFirst(); \
+/** This macro sets the \em subPropertyIndex attribute for the item type being declared to a value
+    depending on the position of the macro in the list of property definitions. As a result,
+    properties of subtypes will be listed at the position where the macro appears. If the macro
+    does not occur, by default properties of subtypes are listed after all properties of the base
+    type. The macro's first and only argument repeats the type name. */
+#define ATTRIBUTE_SUB_PROPERTIES_HERE(itemtype) \
+        ii_loadItemInfo_subPropertiesHere(); \
     } \
     /** \class itemtype itemtype itemtype Properties of sub-types of this type are listed in user
-        interfaces before the properties of this type. */ \
+        interfaces somewhere in between the properties of this type. */ \
 private: \
-    static void ii_loadItemInfo_subPropertiesFirst() \
+    static void ii_loadItemInfo_subPropertiesHere() \
     { \
-        ItemRegistry::setSubPropertiesFirst();
+        ItemRegistry::setSubPropertyIndexHere();
 
 // ================== PROPERTY ATTRIBUTES ==================
 

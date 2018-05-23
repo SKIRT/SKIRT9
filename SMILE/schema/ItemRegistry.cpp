@@ -81,9 +81,9 @@ void ItemRegistry::setAllowedIf(const char* expression)
 
 ////////////////////////////////////////////////////////////////////
 
-void ItemRegistry::setSubPropertiesFirst()
+void ItemRegistry::setSubPropertyIndexHere()
 {
-    _targetType->setSubPropertiesFirst();
+    _targetType->setSubPropertyIndexHere();
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -32,6 +32,8 @@ class Instrument : public SimulationItem
     PROPERTY_ITEM(wavelengthGrid, WavelengthGrid, "the wavelength grid for this instrument")
         ATTRIBUTE_OPTIONAL(wavelengthGrid)
 
+    ATTRIBUTE_SUB_PROPERTIES_HERE(MonteCarloSimulation)
+
     PROPERTY_BOOL(recordComponents, "record flux components separately")
         ATTRIBUTE_DEFAULT_VALUE(recordComponents, "false")
 

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--SMILE - Simple Metadata Interactive Language Editing © Astronomical Observatory, Ghent University-->
-<smile-schema type="Schema" format="1.1" producer="Peter Camps -- 16 Feb 2017">
-    <Schema name="SMILE" title="a SMILE schema file" version="1.0" extension="smile" root="smile-schema" type="Schema" format="1.1">
+<smile-schema type="Schema" format="1.2" producer="Peter Camps -- 16 Feb 2017">
+    <Schema name="SMILE" title="a SMILE schema file" version="1.2" extension="smile" root="smile-schema" type="Schema" format="1.2">
         <types type="Type">
             <Type name="Schema" base="" title="a SMILE schema describing the structure of a dataset" concrete="true">
                 <properties type="Property">
@@ -24,7 +24,7 @@
                     <StringProperty name="title" title="the user-friendly description for the type"/>
                     <StringProperty name="base" title="the name of the type from which this type directly inherits" optional="true"/>
                     <BoolProperty name="concrete" title="allow this type to actually occur in the data set (concrete type)" default="true"/>
-                    <BoolProperty name="subPropertiesFirst" title="list properties of sub-types before those of this base type" default="false"/>
+                    <IntProperty name="subPropertyIndex" title="the index of the property before which sub-type properties should be listed" default="-1"/>
                     <StringProperty name="allowedIf" title="the Boolean expression that determines when this type is allowed" optional="true"/>
                     <ItemListProperty name="properties" title="the properties of the type" base="Property" optional="true" default="StringProperty"/>
                 </properties>

@@ -139,7 +139,8 @@ SchemaDef::SchemaDef(string filePath)
                 def.setTitle(reader.attributeValue("title"));
                 def.setBase(reader.attributeValue("base"));
                 def.setAllowedIf(reader.attributeValue("allowedIf"));
-                if (StringUtils::toBool(reader.attributeValue("subPropertiesFirst"))) def.setSubPropertiesFirst();
+                if (!reader.attributeValue("subPropertyIndex").empty())
+                    def.setSubPropertyIndex(StringUtils::toInt(reader.attributeValue("subPropertyIndex")));
 
                 // read the property element, if present
                 if (reader.readNextStartElement())
@@ -310,7 +311,8 @@ namespace
         writer.writeAttribute("base", tdef.base());
         writer.writeAttribute("title", tdef.title());
         if (tdef.concrete()) writer.writeAttribute("concrete", "true");
-        if (tdef.subPropertiesFirst()) writer.writeAttribute("subPropertiesFirst", "true");
+        if (tdef.subPropertyIndex() >= 0)
+            writer.writeAttribute("subPropertyIndex", std::to_string(tdef.subPropertyIndex()));
         if (!tdef.allowedIf().empty()) writer.writeAttribute("allowedIf", tdef.allowedIf());
 
         // if this type defines properties
@@ -384,7 +386,7 @@ void SchemaDef::save(string filePath, string producer) const
     // start root element
     writer.writeStartElement("smile-schema");
     writer.writeAttribute("type", "Schema");
-    writer.writeAttribute("format", "1.1");
+    writer.writeAttribute("format", "1.2");
     writer.writeAttribute("producer", !producer.empty() ? producer : "SMILE");
     writer.writeAttribute("time", System::timestamp(true));
 
@@ -671,16 +673,17 @@ vector<string> SchemaDef::properties(string type) const
     {
         auto& def = typeDef(type);
 
-        if (def.subPropertiesFirst())
+        // get the index of the first base property that should be added *after* the sub-properties
+        int insertIndex = def.subPropertyIndex();
+        if (insertIndex < 0 || insertIndex > def.numSubProperties()) insertIndex = def.numSubProperties();
+
+        // insert the base properties at the front or at the end depending on the above index
+        int currentIndex = 0;
+        for (auto& propDef : def.propertyDefs())
         {
-            // insert properties for the base class at the end of the list
-            for (auto& propDef : def.propertyDefs()) result.push_back(propDef.name());
-        }
-        else
-        {
-            // insert properties for the base class at the beginning of the list
-            size_t index = 0;
-            for (auto& propDef : def.propertyDefs()) result.insert(result.cbegin()+index++, propDef.name());
+            if (currentIndex < insertIndex) result.insert(result.cbegin()+currentIndex, propDef.name());
+            else result.push_back(propDef.name());
+            currentIndex++;
         }
 
         type = def.base();

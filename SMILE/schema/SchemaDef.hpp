@@ -164,9 +164,11 @@ public:
         isAllowed() function) based on the specified set of keywords. */
     vector<string> allowedDescendants(string type, const std::unordered_set<string>& keys) const;
 
-    /** Returns the names of all properties for the specified type, including inherited properties.
-        The properties of the base types are listed first, and for each type, they are listed in
-        the order of the schema definition. */
+    /** Returns the names of all properties for the specified type, including inherited properties
+        for all direct and indirect base types. By default, base type properties are listed first,
+        and for each type, properties are listed in the order of the schema definition. However,
+        base types can specify that subtype properties must be inserted before a given property
+        rather than being added at the end of the list. */
     vector<string> properties(string type) const;
 
     /** Returns the name of the particular (base) type in which the specified property is defined

@@ -18,7 +18,8 @@
 class MonteCarloSimulation : public Simulation
 {
     ITEM_CONCRETE(MonteCarloSimulation, Simulation, "a Monte Carlo simulation")
-        ATTRIBUTE_SUB_PROPERTIES_FIRST(MonteCarloSimulation)
+
+    ATTRIBUTE_SUB_PROPERTIES_HERE(MonteCarloSimulation)
 
     PROPERTY_ITEM(instrumentSystem, InstrumentSystem, "the instrument system")
         ATTRIBUTE_DEFAULT_VALUE(instrumentSystem, "InstrumentSystem")
