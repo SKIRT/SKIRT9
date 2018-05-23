@@ -14,8 +14,7 @@ class SimulationItem;
 ////////////////////////////////////////////////////////////////////
 
 /** This class allows reading floating point values from the input text file specified in the
-    constructor. The values should be organized in columns, forming a table. The file is
-    automatically closed when the object is destructed. */
+    constructor. The values should be organized in columns, forming a table. */
 class TextInFile
 {
     //=============== Construction - Destruction  ==================
@@ -26,11 +25,11 @@ public:
         simulation item in the hierarchy of the caller (usually the caller itself) used to retrieve
         the input file path and an appropriate logger; (2) \em filename specifies the name of the
         file, including filename extension but excluding path and simulation prefix; (3) \em
-        description specifies a description used in the log message issued after the file is
-        successfully opened. */
+        description describes the contents of the file for use in the log message issued after the
+        file is successfully closed. */
     TextInFile(const SimulationItem* item, string filename, string description);
 
-    /** This function closes the file and logs a brief informational message, if the file was not
+    /** This function closes the file and logs an informational message, if the file was not
         already closed. It is important to call close() or allow the object to go out of scope
         before logging other messages or starting another significant chunk of work. */
     void close();
@@ -82,7 +81,7 @@ public:
     /** This function reads all rows from a column text file (from the current position until the
         end of the file), and returns the resulting values as a vector of arrays. For each row,
         this function behaves just like readRow(Array&). */
-    std::vector<Array> readAllRows(size_t ncols, size_t noptcols = 0);
+    vector<Array> readAllRows(size_t ncols, size_t noptcols = 0);
 
 private:
     // recursively assign values from Array to double& arguments; used in variadic readRow()
@@ -93,8 +92,9 @@ private:
     //======================== Data Members ========================
 
 private:
-    Log* _log;          // the logger
     std::ifstream _in;  // the input stream
+    Log* _log{nullptr}; // the logger
+    string _message;    // the message
 };
 
 ////////////////////////////////////////////////////////////////////

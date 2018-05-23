@@ -345,7 +345,7 @@ string System::timestamp(bool iso8601)
     const char* format = iso8601 ? "%Y-%m-%dT%H:%M:%S.xxx" : "%d/%m/%Y %H:%M:%S.xxx";
     const size_t resultLength = 23;
     const size_t milliOffset = 20;
-    char resultBuf[resultLength+1];
+    char resultBuf[resultLength+2];  // add 2 rather than 1 to avoid warning by GCC v8.1
 
     // get the current wall time
     system_clock::time_point now_tp = system_clock::now();

@@ -15,31 +15,31 @@ class Units;
 
 ////////////////////////////////////////////////////////////////////
 
-/** This class represents a writable text file that can be initizialized by providing a filename to
-    its constructor. Text is written per line, by calling the writeLine() function. The file is
-    automatically closed when the object is destructed. In a multiprocessing environment, only the
-    root process will be allowed to write to the specified file; calls to writeLine() performed by
-    other processes will have no effect. */
+/** This class allows writing text to a file specified in the constructor, with explicit support
+    for formatting columns of floating point or integer numbers. Text is written per line, by
+    calling the writeLine() or writeRow() functions. In a multiprocessing environment, only the
+    root process will be allowed to write to the specified file; calls to writeLine() or writeRow()
+    performed by other processes will have no effect. */
 class TextOutFile
 {
     //=============== Construction - Destruction  ==================
 
 public:
     /** The constructor of the TextOutFile class. If the constructor is invoked from the root
-        process, the output stream for the file is initialized and a log message is issued. For
-        other processes, this output stream remains uninitialized and is never used, i.e. calling
-        the writeLine() function has no effect. The constructor takes several arguments: (1) \em
-        item specifies a simulation item in the hierarchy of the caller (usually the caller itself)
-        used to retrieve the output file path and an appropriate logger, and to determine whether
-        this is the root process; (2) \em filename specifies the name of the file, excluding path,
-        simulation prefix and filename extension; (3) \em description specifies a description used
-        in the log message issued when the file was successfully opened. */
+        process, the output file is opened and a stream for the file is initialized. For other
+        processes, the output stream remains uninitialized and is never used, i.e. calling the
+        writeLine() function has no effect. The constructor takes several arguments: (1) \em item
+        specifies a simulation item in the hierarchy of the caller (usually the caller itself) used
+        to retrieve the output file path and an appropriate logger, and to determine whether this
+        is the root process; (2) \em filename specifies the name of the file, excluding path,
+        simulation prefix and filename extension; (3) \em description describes the contents of the
+        file for use in the log message issued after the file is successfully closed. */
     TextOutFile(const SimulationItem* item, string filename, string description);
 
-    /** In the root process, this function closes the file and logs a brief informational message,
-        if the file was not already closed. It is important to call close() or allow the object to
-        go out of scope before logging other messages or starting another significant chunk of
-        work. */
+    /** In the root process, this function closes the file and logs an informational message, if
+        the file was not already closed. It is important to call close() or allow the object to go
+        out of scope before logging other messages or starting another significant chunk of work.
+        */
     void close();
 
     /** The destructor calls the close() function. It is important to call close() or allow the
@@ -90,14 +90,19 @@ private:
     //======================== Data Members ========================
 
 protected:
-    Units* _units;       // can be used by subclasses
-    std::ofstream _out;  // the output stream
+    // can be used by subclasses
+    Units* _units{nullptr};     // for conversion to output units
+    std::ofstream _out;         // the output stream
 
 private:
-    Log* _log;
+    // used for column formatting
     size_t _ncolumns{0};
     vector<char> _formats;
     vector<int> _precisions;
+
+    // used when closing
+    Log* _log{nullptr};         // the logger
+    string _message;            // the message
 };
 
 ////////////////////////////////////////////////////////////////////

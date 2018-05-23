@@ -14,14 +14,14 @@
 
 TextInFile::TextInFile(const SimulationItem* item, string filename, string description)
 {
-    // remember the logger
-    _log = item->find<Log>();
-
     // open the file and log a message
     string filepath = item->find<FilePaths>()->input(filename);
     _in = System::ifstream(filepath);
     if (!_in) throw FATALERROR("Could not open the " + description + " text file " + filepath);
-    _log->info(item->type() + " starts reading " + description + " from text file " + filepath + "...");
+
+    // remember the logger and the message to be issued upon closing
+    _log = item->find<Log>();
+    _message = item->type() + " read " + description + " from text file " + filepath + "...";
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -31,7 +31,7 @@ void TextInFile::close()
     if (_in.is_open())
     {
         _in.close();
-        _log->info("Done reading");
+        _log->info(_message);
     }
 }
 

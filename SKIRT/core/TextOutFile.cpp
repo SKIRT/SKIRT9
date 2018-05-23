@@ -16,15 +16,16 @@
 
 TextOutFile::TextOutFile(const SimulationItem* item, string filename, string description)
 {
-    _log = item->find<Log>();
-    _units = item->find<Units>();
-    string filepath = item->find<FilePaths>()->output(filename + ".dat");
-
     // Only open the output file if this is the root process
     if (ProcessManager::isRoot())
     {
-        _log->info(item->type() + " starts writing " + description + " to " + filepath + "...");
+        string filepath = item->find<FilePaths>()->output(filename + ".dat");
         _out = System::ofstream(filepath);
+        if (!_out) throw FATALERROR("Could not open the " + description + " output file " + filepath);
+
+        _log = item->find<Log>();
+        _units = item->find<Units>();
+        _message = item->type() + " wrote " + description + " to " + filepath + "...";
     }
 }
 
@@ -35,7 +36,7 @@ void TextOutFile::close()
     if (_out.is_open())
     {
         _out.close();
-        _log->info("Done writing.");
+        _log->info(_message);
     }
 }
 
