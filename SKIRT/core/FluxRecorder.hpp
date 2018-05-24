@@ -174,8 +174,8 @@ public:
 
         All other information is obtained directly or indirectly from the photon packet. If there
         is an obscuring medium, the optical depth from the photon packet's last interaction site to
-        the instrument is determined and the corresponding extincton is applied to the luminosity
-        before detection. */
+        the instrument is determined and the corresponding extincton is applied to the packet's
+        contribution before detection. */
     void detect(const PhotonPacket* pp, int l, double distance = std::numeric_limits<double>::infinity());
 
     /** This function processes and clears any information that may have been buffered by the
@@ -187,11 +187,12 @@ public:
     /** This function calibrates and outputs the instrument data. The argument specifies a
         simulation item in the hierarchy of the caller (usually the caller itself).
 
-        The calibration includes conversion from specific luminosity to flux density (incorporating
-        distance) and/or to surface brightness (i.e. incorporating distance and solid angle per
-        pixel) based on the information passed during configuration. The function also converts the
-        resulting values from internal units to output units depending on the simulation's choices
-        for flux output style.
+        The calibration includes dividing the luminosities (W) recorded for each bin by the
+        wavelength bin width to obtain specific luminosities (W/m) and further conversion to flux
+        density (incorporating distance) and/or to surface brightness (i.e. incorporating distance
+        and solid angle per pixel) based on the information passed during configuration. The
+        function also converts the resulting values from internal units to output units depending
+        on the simulation's choices for flux output style.
 
         For more information on the names and contents of the generated files, see the
         documentation in the header of this class. */

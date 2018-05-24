@@ -291,12 +291,8 @@ void FluxRecorder::calibrateAndWrite(const SimulationItem* item)
     if (!ProcessManager::isRoot()) return;
 
     // calculate front factors for converting from recorded quantities to output quantities:
-    //  - cFluxDensity converts from W/Hz to W/Hz/m2 (i.e. incorporating distance)
-    //  - cSurfaceBrightness converts from W/Hz to W/Hz/m2/sr (i.e. incorporating distance and solid angle per pixel)
     double fourpid2 = 4.*M_PI * _distance*_distance;
     double omega = 4. * atan(0.5*_pixelSizeX/_distance) * atan(0.5*_pixelSizeY/_distance);
-    double cFluxDensity = 1. / fourpid2;
-    double cSurfaceBrightness = 1. / fourpid2 / omega;
 
     // convert from recorded quantities to output quantities and from internal units to user-selected output units
     // (for performance reasons, determine the units scaling factor only once for each wavelength)
@@ -307,13 +303,16 @@ void FluxRecorder::calibrateAndWrite(const SimulationItem* item)
         // SEDs
         if (_includeFluxDensity)
         {
-            double factor = cFluxDensity * units->ofluxdensityFrequency(_lambdagrid->lambda(ell), 1.);
+            double factor = 1. / fourpid2 / _lambdagrid->dlambda(ell)
+                            * units->ofluxdensityWavelength(_lambdagrid->lambda(ell), 1.)
+                                         ;
             for (auto& array : _sed) if (array.size()) array[ell] *= factor;
         }
         // IFUs
         if (_includeSurfaceBrightness)
         {
-            double factor = cSurfaceBrightness * units->osurfacebrightnessFrequency(_lambdagrid->lambda(ell), 1.);
+            double factor = 1. / fourpid2 / omega / _lambdagrid->dlambda(ell)
+                            * units->osurfacebrightnessWavelength(_lambdagrid->lambda(ell), 1.);
             size_t begin = ell * _numPixelsInFrame;
             size_t end = begin + _numPixelsInFrame;
             for (auto& array : _ifu) if (array.size()) for (size_t lell=begin; lell!=end; ++lell) array[lell] *= factor;

@@ -14,11 +14,11 @@ PhotonPacket::PhotonPacket()
 
 ////////////////////////////////////////////////////////////////////
 
-void PhotonPacket::launch(size_t historyIndex, double Lnu, double lambda, Position bfr, Direction bfk)
+void PhotonPacket::launch(size_t historyIndex, double lambda, double L, Position bfr, Direction bfk)
 {
-    _Lnu = Lnu;
     _lambda = lambda;
     _nu = Constants::c() / lambda;
+    _W = L / _nu;
     _nscatt = 0;
     _compIndex = 0;
     _historyIndex = historyIndex;
@@ -45,9 +45,9 @@ void PhotonPacket::setSecondaryOrigin(int mediumCompIndex)
 
 void PhotonPacket::launchEmissionPeelOff(const PhotonPacket* pp, Direction bfk, double w)
 {
-    _Lnu = pp->_Lnu * w;
     _lambda = pp->_lambda;
     _nu = pp->_nu;
+    _W = pp->_W * w;
     _nscatt = 0;
     _compIndex = pp->_compIndex;
     _historyIndex = pp->_historyIndex;
@@ -60,9 +60,9 @@ void PhotonPacket::launchEmissionPeelOff(const PhotonPacket* pp, Direction bfk, 
 
 void PhotonPacket::launchScatteringPeelOff(const PhotonPacket* pp, Direction bfk, double w)
 {
-    _Lnu = pp->_Lnu * w;
     _lambda = pp->_lambda;
     _nu = pp->_nu;
+    _W = pp->_W * w;
     _nscatt = pp->_nscatt + 1;
     _compIndex = pp->_compIndex;
     _historyIndex = pp->_historyIndex;
@@ -88,9 +88,9 @@ void PhotonPacket::scatter(Direction bfk)
 
 ////////////////////////////////////////////////////////////////////
 
-void PhotonPacket::applyLuminosityBias(double w)
+void PhotonPacket::applyBias(double w)
 {
-    _Lnu *= w;
+    _W *= w;
 }
 
 ////////////////////////////////////////////////////////////////////

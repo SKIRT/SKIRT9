@@ -7,6 +7,7 @@
 #define MONTECARLOSIMULATION_HPP
 
 #include "Simulation.hpp"
+#include "Array.hpp"
 #include "InstrumentSystem.hpp"
 
 //////////////////////////////////////////////////////////////////////
@@ -69,14 +70,22 @@ protected:
     void runSelf() override;
 
 private:
-    /** This test function launches the specified chunk of photon packets. */
+    /** This test function launches the specified chunk of photon packets, simulating some sources. */
     void doTestEmissionChunk(size_t firstIndex, size_t numIndices);
+
+    /** This test function launches the specified chunk of photon packets, simulating the sun. */
+    void doSolarEmissionChunk(size_t firstIndex, size_t numIndices);
 
     //======================== Data Members ========================
 
 private:
     // *** data member to remember whether emulation mode is enabled
     bool _emulationMode{false};
+
+    // for testing SED sampling and instrument calibration
+    Array _sunLambda;
+    Array _sunCDF;
+    double _Ltot{0};
 };
 
 ////////////////////////////////////////////////////////////////////

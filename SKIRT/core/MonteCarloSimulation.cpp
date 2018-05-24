@@ -59,6 +59,7 @@ int MonteCarloSimulation::dimension() const
 
 ////////////////////////////////////////////////////////////////////
 
+/*
 namespace
 {
     // get a short but consistent identifier for the current thread
@@ -91,13 +92,14 @@ namespace
         if (id==1) StopWatch::stop();
     }
 }
+*/
 
 ////////////////////////////////////////////////////////////////////
 
 void MonteCarloSimulation::runSelf()
 {
     TimeLogger logger(log(), "the test phase");
-
+/*
     // --- stored tables ---
     {
         StoredTable<1> table;
@@ -197,10 +199,26 @@ void MonteCarloSimulation::runSelf()
         instrumentSystem()->flush();
         instrumentSystem()->write();
     }
+*/
+    // --- sampling SEDs and calibrating instruments ---
+    {
+        // get the cumulative distribution for the solar SED
+        StoredTable<1> table;
+        table.open(this, "SunSED", "lambda(m)", "Llambda(W/m)");
+        _Ltot = table.cdf(_sunLambda, _sunCDF, 200, 0.1e-6, 20e-6);
+        log()->info("Fraction of solar luminosity: " + StringUtils::toString(_Ltot/Constants::Lsun() , 'f', 5));
+
+        // shoot photons
+        auto parallel = find<ParallelFactory>()->parallelDistributed();
+        parallel->call([this](size_t i ,size_t n) { doSolarEmissionChunk(i, n); }, numPackets());
+        instrumentSystem()->flush();
+        instrumentSystem()->write();
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
 
+/*
 namespace
 {
     const int numSources = 2;
@@ -210,9 +228,11 @@ namespace
     const std::array<double,numSources> sourceMinLambda{{0.15, 4}};              //  in micron
     const std::array<double,numSources> sourceMaxLambda{{20, 50}};               //  in micron
 }
+*/
 
 ////////////////////////////////////////////////////////////////////
 
+/*
 void MonteCarloSimulation::doTestEmissionChunk(size_t firstIndex, size_t numIndices)
 {
     PhotonPacket pp,ppp;
@@ -240,7 +260,41 @@ void MonteCarloSimulation::doTestEmissionChunk(size_t firstIndex, size_t numIndi
         double luminosity = sourceLuminosity[index] * LsunPerPacket;
 
         // launch the primary photon packet
-        pp.launch(historyIndex, luminosity, lambda, bfr, random()->direction());
+        pp.launch(historyIndex, lambda, luminosity, bfr, random()->direction());
+        pp.setPrimaryOrigin(0);
+
+        // peel off towards each instrument
+        for (Instrument* instrument : _instrumentSystem->instruments())
+        {
+            ppp.launchEmissionPeelOff(&pp, instrument->bfkobs(pp.position()), 1.);
+            instrument->detect(&ppp);
+        }
+    }
+}
+*/
+
+////////////////////////////////////////////////////////////////////
+
+void MonteCarloSimulation::doSolarEmissionChunk(size_t firstIndex, size_t numIndices)
+{
+    PhotonPacket pp,ppp;
+    double Lpacket = _Ltot / numPackets();
+    double sigma = 0.01 * Constants::AU();
+
+    // iterate over the chunk of indices
+    for (size_t historyIndex = firstIndex; historyIndex!=firstIndex+numIndices; ++historyIndex)
+    {
+        // generate a random position for this source according to a Gaussian kernel
+        double x = random()->gauss();
+        double y = random()->gauss();
+        double z = random()->gauss();
+        Position bfr( Vec(x,y,z)*sigma );
+
+        // generate a random wavelength for this source from the SED
+        double lambda = random()->cdf(_sunLambda, _sunCDF);
+
+        // launch the primary photon packet
+        pp.launch(historyIndex, lambda, Lpacket, bfr, random()->direction());
         pp.setPrimaryOrigin(0);
 
         // peel off towards each instrument
