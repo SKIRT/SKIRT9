@@ -38,14 +38,14 @@ Direction DistantInstrument::bfkobs(const Position& /*bfr*/) const
 
 ////////////////////////////////////////////////////////////////////
 
-Direction DistantInstrument::bfkx() const
+Direction DistantInstrument::bfkx(const Position& /*bfr*/) const
 {
     return _bfkx;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-Direction DistantInstrument::bfky() const
+Direction DistantInstrument::bfky(const Position& /*bfr*/) const
 {
     return _bfky;
 }

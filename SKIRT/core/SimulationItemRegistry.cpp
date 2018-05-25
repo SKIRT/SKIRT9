@@ -9,6 +9,7 @@
 
 // ---> add new items below in alphabetical order
 
+#include "AllSkyInstrument.hpp"
 #include "ExtragalacticUnits.hpp"
 #include "FileWavelengthGrid.hpp"
 #include "FrameInstrument.hpp"
@@ -63,6 +64,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<SEDInstrument>();
     ItemRegistry::add<FrameInstrument>();
     ItemRegistry::add<FullInstrument>();
+    ItemRegistry::add<AllSkyInstrument>();
     ItemRegistry::add<PerspectiveInstrument>();
 
     // Monte Carlo simulations

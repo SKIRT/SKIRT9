@@ -65,21 +65,23 @@ protected:
     //======================== Other Functions =======================
 
 public:
-    /** Returns the direction towards the observer, as seen from the origin of the coordinate
-        system. The provided photon packet's launching position is not used; it is considered to
-        be very close to the coordinate origin from the observer's standpoint, since the distance
-        is sufficiently large. */
+    /** Returns the direction towards the observer, expressed in model coordinates. The provided
+        photon packet's launching position is not used; it is considered to be very close to the
+        coordinate origin from the observer's standpoint, since the distance is sufficiently large.
+        */
     Direction bfkobs(const Position& bfr) const override;
 
     /** Returns the direction along the positive x-axis of the instrument frame, expressed in model
         coordinates. The function applies the inverse instrument transformation to the pixel
-        frame's x-axis. */
-    Direction bfkx() const override;
+        frame's x-axis. The provided photon packet's launching position is not used because the
+        orientation of the instrument frame does not depend on it. */
+    Direction bfkx(const Position& bfr) const override;
 
     /** Returns the direction along the positive y-axis of the instrument frame, expressed in model
         coordinates. The function applies the inverse instrument transformation to the pixel
-        frame's y-axis. */
-    Direction bfky() const override;
+        frame's y-axis. The provided photon packet's launching position is not used because the
+        orientation of the instrument frame does not depend on it. */
+    Direction bfky(const Position& bfr) const override;
 
     //======================== Data Members ========================
 

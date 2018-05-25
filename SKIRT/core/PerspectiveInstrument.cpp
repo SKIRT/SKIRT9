@@ -107,14 +107,14 @@ Direction PerspectiveInstrument::bfkobs(const Position& bfr) const
 
 ////////////////////////////////////////////////////////////////////
 
-Direction PerspectiveInstrument::bfkx() const
+Direction PerspectiveInstrument::bfkx(const Position& /*bfr*/) const
 {
     return _bfkx;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-Direction PerspectiveInstrument::bfky() const
+Direction PerspectiveInstrument::bfky(const Position& /*bfr*/) const
 {
     return _bfky;
 }

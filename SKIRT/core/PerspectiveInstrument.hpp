@@ -85,12 +85,14 @@ public:
     Direction bfkobs(const Position& bfr) const override;
 
     /** Returns the direction along the positive x-axis of the instrument frame, expressed in model
-        coordinates. */
-    Direction bfkx() const override;
+        coordinates. The provided photon packet's launching position is not used because the
+        orientation of the instrument frame does not depend on it. */
+    Direction bfkx(const Position& bfr) const override;
 
     /** Returns the direction along the positive y-axis of the instrument frame, expressed in model
-        coordinates. */
-    Direction bfky() const override;
+        coordinates. The provided photon packet's launching position is not used because the
+        orientation of the instrument frame does not depend on it. */
+    Direction bfky(const Position& bfr) const override;
 
 protected:
     /** This function simulates the detection of a photon packet by the instrument. */

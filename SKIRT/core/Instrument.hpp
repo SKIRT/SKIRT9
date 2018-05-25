@@ -98,17 +98,19 @@ protected:
     //=========== Functions to be implemented in subclass ===========
 
 public:
-    /** Returns the direction towards the observer, given the photon packet's launching position.
-        The implementation must be provided in a subclass. */
+    /** Returns the direction towards the observer, expressed in model coordinates, given the
+        photon packet's launching position. The implementation must be provided in a subclass. */
     virtual Direction bfkobs(const Position& bfr) const = 0;
 
     /** Returns the direction along the positive x-axis of the instrument frame, expressed in model
-        coordinates. The implementation must be provided in a subclass. */
-    virtual Direction bfkx() const = 0;
+        coordinates, given the photon packet's launching position. The implementation must be
+        provided in a subclass. */
+    virtual Direction bfkx(const Position& bfr) const = 0;
 
     /** Returns the direction along the positive y-axis of the instrument frame, expressed in model
-        coordinates. The implementation must be provided in a subclass. */
-    virtual Direction bfky() const = 0;
+        coordinates, given the photon packet's launching position. The implementation must be
+        provided in a subclass. */
+    virtual Direction bfky(const Position& bfr) const = 0;
 
     /** This function simulates the detection of a photon packet by the instrument. Its
         implementation must be provided in a subclass. */
