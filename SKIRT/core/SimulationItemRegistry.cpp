@@ -14,9 +14,11 @@
 #include "FileWavelengthGrid.hpp"
 #include "FrameInstrument.hpp"
 #include "FullInstrument.hpp"
+#include "HammerAitoffProjection.hpp"
 #include "InstrumentSystem.hpp"
 #include "ListWavelengthGrid.hpp"
 #include "LogWavelengthGrid.hpp"
+#include "MollweideProjection.hpp"
 #include "MonteCarloSimulation.hpp"
 #include "NestedLogWavelengthGrid.hpp"
 #include "PerspectiveInstrument.hpp"
@@ -66,6 +68,11 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<FullInstrument>();
     ItemRegistry::add<AllSkyInstrument>();
     ItemRegistry::add<PerspectiveInstrument>();
+
+    // all-sky projections
+    ItemRegistry::add<AllSkyProjection>();
+    ItemRegistry::add<HammerAitoffProjection>();
+    ItemRegistry::add<MollweideProjection>();
 
     // Monte Carlo simulations
     ItemRegistry::add<MonteCarloSimulation>();

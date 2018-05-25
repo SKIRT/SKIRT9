@@ -152,15 +152,9 @@ void AllSkyInstrument::detect(PhotonPacket* pp)
     // if the radial distance is very small, ignore the photon packet
     if (d < _s) return;
 
-    // convert the angular coordinates to longitude and latitude:  -pi < lam < pi  and  -pi/2 < phi < pi/2
-    double lam = -azi;  // flip east-west
-    double phi = inc - M_PI_2;
-
-    // convert longitude and latitude to viewport coordinates:  -1 < x < 1  and -1 < y < 1
-    // using the Hammer-Aitoff projection
-    double t = 1/sqrt(1+cos(phi)*cos(lam/2));
-    double x = t*cos(phi)*sin(lam/2);
-    double y = t*sin(phi);
+    // convert spherical coordinates to viewport coordinates:  -1 < x < 1  and -1 < y < 1
+    double x, y;
+    projection()->fromSphereToRectangle(inc, azi, x, y);
 
     // convert viewport coordinates to pixel indices
     int i = max(0, min(static_cast<int>((x+1)*_Nx/2.), _Nx-1));

@@ -7,6 +7,7 @@
 #define ALLSKYINSTRUMENT_HPP
 
 #include "Instrument.hpp"
+#include "AllSkyProjection.hpp"
 #include "HomogeneousTransform.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -29,6 +30,9 @@
 class AllSkyInstrument : public Instrument
 {
     ITEM_CONCRETE(AllSkyInstrument, Instrument, "an all-sky instrument (for observing inside a model)")
+
+    PROPERTY_ITEM(projection, AllSkyProjection, "the projection used for mapping the sky to a rectangle")
+        ATTRIBUTE_DEFAULT_VALUE(projection, "HammerAitoffProjection")
 
     PROPERTY_INT(numPixelsY, "the number of image pixels in the vertical (shortest) direction")
         ATTRIBUTE_MIN_VALUE(numPixelsY, "25")
