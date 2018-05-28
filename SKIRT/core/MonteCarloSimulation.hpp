@@ -9,6 +9,7 @@
 #include "Simulation.hpp"
 #include "Array.hpp"
 #include "InstrumentSystem.hpp"
+#include "ProbeSystem.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -21,6 +22,9 @@ class MonteCarloSimulation : public Simulation
     ITEM_CONCRETE(MonteCarloSimulation, Simulation, "a Monte Carlo simulation")
 
     ATTRIBUTE_SUB_PROPERTIES_HERE(MonteCarloSimulation)
+
+    PROPERTY_ITEM(probeSystem, ProbeSystem, "the probe system")
+        ATTRIBUTE_DEFAULT_VALUE(probeSystem, "ProbeSystem")
 
     PROPERTY_ITEM(instrumentSystem, InstrumentSystem, "the instrument system")
         ATTRIBUTE_DEFAULT_VALUE(instrumentSystem, "InstrumentSystem")

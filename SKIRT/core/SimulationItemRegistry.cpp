@@ -22,10 +22,12 @@
 #include "MonteCarloSimulation.hpp"
 #include "NestedLogWavelengthGrid.hpp"
 #include "PerspectiveInstrument.hpp"
+#include "ProbeSystem.hpp"
 #include "Random.hpp"
 #include "SEDInstrument.hpp"
 #include "SIUnits.hpp"
 #include "StellarUnits.hpp"
+#include "WavelengthProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -58,6 +60,11 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<LogWavelengthGrid>();
     ItemRegistry::add<NestedLogWavelengthGrid>();
     ItemRegistry::add<FileWavelengthGrid>();
+
+    // probe system and probes
+    ItemRegistry::add<ProbeSystem>();
+    ItemRegistry::add<Probe>();
+    ItemRegistry::add<WavelengthProbe>();
 
     // instrument system and instruments
     ItemRegistry::add<InstrumentSystem>();

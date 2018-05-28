@@ -200,6 +200,11 @@ void MonteCarloSimulation::runSelf()
         instrumentSystem()->write();
     }
 */
+    // --- probes ---
+    {
+        _probeSystem->probeSetup();
+    }
+
     // --- sampling SEDs and calibrating instruments ---
     {
         // get the cumulative distribution for the solar SED

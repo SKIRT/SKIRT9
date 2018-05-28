@@ -8,6 +8,7 @@
 
 #include "Array.hpp"
 #include "CompileTimeUtils.hpp"
+#include <array>
 #include <fstream>
 class Log;
 class SimulationItem;
