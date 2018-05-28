@@ -10,23 +10,53 @@
 // ---> add new items below in alphabetical order
 
 #include "AllSkyInstrument.hpp"
+#include "BoxClipGeometryDecorator.hpp"
+#include "BrokenExpDiskGeometry.hpp"
+#include "ClumpyGeometryDecorator.hpp"
+#include "CombineGeometryDecorator.hpp"
+#include "ConicalShellGeometry.hpp"
+#include "CubicSplineSmoothingKernel.hpp"
+#include "CylindricalClipGeometryDecorator.hpp"
+#include "EinastoGeometry.hpp"
+#include "ExpDiskGeometry.hpp"
 #include "ExtragalacticUnits.hpp"
 #include "FileWavelengthGrid.hpp"
 #include "FrameInstrument.hpp"
 #include "FullInstrument.hpp"
+#include "GammaGeometry.hpp"
+#include "GaussianGeometry.hpp"
 #include "HammerAitoffProjection.hpp"
+#include "HyperboloidGeometry.hpp"
+#include "HyperboloidShellGeometry.hpp"
 #include "InstrumentSystem.hpp"
 #include "ListWavelengthGrid.hpp"
 #include "LogWavelengthGrid.hpp"
 #include "MollweideProjection.hpp"
 #include "MonteCarloSimulation.hpp"
 #include "NestedLogWavelengthGrid.hpp"
+#include "OffsetGeometryDecorator.hpp"
+#include "ParaboloidGeometry.hpp"
+#include "ParaboloidShellGeometry.hpp"
 #include "PerspectiveInstrument.hpp"
+#include "PlummerGeometry.hpp"
 #include "ProbeSystem.hpp"
+#include "PseudoSersicGeometry.hpp"
 #include "Random.hpp"
+#include "ReadFitsGeometry.hpp"
+#include "RingGeometry.hpp"
+#include "RotateGeometryDecorator.hpp"
 #include "SEDInstrument.hpp"
 #include "SIUnits.hpp"
+#include "SersicGeometry.hpp"
+#include "ShellGeometry.hpp"
+#include "SphericalClipGeometryDecorator.hpp"
+#include "SpheroidalGeometryDecorator.hpp"
+#include "SpiralStructureGeometryDecorator.hpp"
 #include "StellarUnits.hpp"
+#include "TorusGeometry.hpp"
+#include "TriaxialGeometryDecorator.hpp"
+#include "UniformBoxGeometry.hpp"
+#include "UniformSmoothingKernel.hpp"
 #include "WavelengthProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -53,6 +83,50 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<SIUnits>();
     ItemRegistry::add<StellarUnits>();
     ItemRegistry::add<ExtragalacticUnits>();
+
+    // geometries
+    ItemRegistry::add<Geometry>();
+    ItemRegistry::add<SpheGeometry>();
+    ItemRegistry::add<PlummerGeometry>();
+    ItemRegistry::add<GammaGeometry>();
+    ItemRegistry::add<SersicGeometry>();
+    ItemRegistry::add<PseudoSersicGeometry>();
+    ItemRegistry::add<EinastoGeometry>();
+    ItemRegistry::add<GaussianGeometry>();
+    ItemRegistry::add<ShellGeometry>();
+    ItemRegistry::add<AxGeometry>();
+    ItemRegistry::add<SepAxGeometry>();
+    ItemRegistry::add<ExpDiskGeometry>();
+    ItemRegistry::add<BrokenExpDiskGeometry>();
+    ItemRegistry::add<RingGeometry>();
+    ItemRegistry::add<TorusGeometry>();
+    ItemRegistry::add<ConicalShellGeometry>();
+    ItemRegistry::add<ParaboloidGeometry>();
+    ItemRegistry::add<ParaboloidShellGeometry>();
+    ItemRegistry::add<HyperboloidGeometry>();
+    ItemRegistry::add<HyperboloidShellGeometry>();
+    ItemRegistry::add<GenGeometry>();
+    ItemRegistry::add<BoxGeometry>();
+    ItemRegistry::add<UniformBoxGeometry>();
+    ItemRegistry::add<ReadFitsGeometry>();
+
+    // geometry decorators
+    ItemRegistry::add<OffsetGeometryDecorator>();
+    ItemRegistry::add<RotateGeometryDecorator>();
+    ItemRegistry::add<SpheroidalGeometryDecorator>();
+    ItemRegistry::add<TriaxialGeometryDecorator>();
+    ItemRegistry::add<ClipGeometryDecorator>();
+    ItemRegistry::add<SphericalClipGeometryDecorator>();
+    ItemRegistry::add<CylindricalClipGeometryDecorator>();
+    ItemRegistry::add<BoxClipGeometryDecorator>();
+    ItemRegistry::add<SpiralStructureGeometryDecorator>();
+    ItemRegistry::add<ClumpyGeometryDecorator>();
+    ItemRegistry::add<CombineGeometryDecorator>();
+
+    // smoothing kernels
+    ItemRegistry::add<SmoothingKernel>();
+    ItemRegistry::add<UniformSmoothingKernel>();
+    ItemRegistry::add<CubicSplineSmoothingKernel>();
 
     // wavelength grids
     ItemRegistry::add<WavelengthGrid>();

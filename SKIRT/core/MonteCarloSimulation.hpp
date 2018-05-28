@@ -11,6 +11,8 @@
 #include "InstrumentSystem.hpp"
 #include "ProbeSystem.hpp"
 
+#include "Geometry.hpp"
+
 //////////////////////////////////////////////////////////////////////
 
 /** The MonteCarloSimulation class is the general abstract base class describing Monte Carlo
@@ -22,6 +24,9 @@ class MonteCarloSimulation : public Simulation
     ITEM_CONCRETE(MonteCarloSimulation, Simulation, "a Monte Carlo simulation")
 
     ATTRIBUTE_SUB_PROPERTIES_HERE(MonteCarloSimulation)
+
+    PROPERTY_ITEM(geometry, Geometry, "the primary source geometry")
+        ATTRIBUTE_DEFAULT_VALUE(geometry, "PlummerGeometry")
 
     PROPERTY_ITEM(instrumentSystem, InstrumentSystem, "the instrument system")
         ATTRIBUTE_DEFAULT_VALUE(instrumentSystem, "InstrumentSystem")

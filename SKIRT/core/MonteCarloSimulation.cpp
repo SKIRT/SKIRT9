@@ -143,16 +143,12 @@ void MonteCarloSimulation::doSolarEmissionChunk(size_t firstIndex, size_t numInd
 {
     PhotonPacket pp,ppp;
     double Lpacket = _Ltot / numPackets();
-    double sigma = 0.01 * Constants::AU();
 
     // iterate over the chunk of indices
     for (size_t historyIndex = firstIndex; historyIndex!=firstIndex+numIndices; ++historyIndex)
     {
-        // generate a random position for this source according to a Gaussian kernel
-        double x = random()->gauss();
-        double y = random()->gauss();
-        double z = random()->gauss();
-        Position bfr( Vec(x,y,z)*sigma );
+        // generate a random position for this source according to the configured geometry
+        Position bfr = geometry()->generatePosition();
 
         // generate a random wavelength for this source from the SED
         double lambda = random()->cdf(_sunLambda, _sunCDF);
