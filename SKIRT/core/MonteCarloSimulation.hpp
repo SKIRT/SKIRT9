@@ -88,14 +88,11 @@ protected:
     //======================== Temporary Testing =======================
 
 private:
-    /** This function performs some temporary tests. */
-    void test();
-
-    /** This test function launches the specified chunk of photon packets, simulating some sources. */
-    void doTestEmissionChunk(size_t firstIndex, size_t numIndices);
-
     /** This test function launches the specified chunk of photon packets, simulating the sun. */
     void doSolarEmissionChunk(size_t firstIndex, size_t numIndices);
+
+    /** This function performs some temporary tests. */
+    void test();
 
     //======================== Data Members ========================
 
