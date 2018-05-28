@@ -14,14 +14,14 @@
 
 TextInFile::TextInFile(const SimulationItem* item, string filename, string description)
 {
-    // open the file and log a message
+    // open the file
     string filepath = item->find<FilePaths>()->input(filename);
     _in = System::ifstream(filepath);
     if (!_in) throw FATALERROR("Could not open the " + description + " text file " + filepath);
 
     // remember the logger and the message to be issued upon closing
     _log = item->find<Log>();
-    _message = item->type() + " read " + description + " from text file " + filepath + "...";
+    _message = item->typeAndName() + " read " + description + " from text file " + filepath + "...";
 }
 
 ////////////////////////////////////////////////////////////////////

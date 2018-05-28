@@ -20,6 +20,11 @@ class Probe : public SimulationItem
     //======================== Other Functions =======================
 
 public:
+    /** This function returns the probe name as human-readable name for the simulation item, so
+        that it can be used in log messages to identify the probe and differentiate it from other
+        probes. */
+    string itemName() const override;
+
     /** This function performs probing after setup. */
     virtual void probeSetup();
 

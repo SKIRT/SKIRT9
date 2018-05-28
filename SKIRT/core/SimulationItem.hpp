@@ -48,11 +48,22 @@ protected:
         by calling the same function in its immediate base class. */
     virtual void setupSelfAfter();
 
-    /** This function returns true if the setup() function has been invoked for this item, even
-        during execution of the setup() function, and false otherwise. */
-    bool setupStarted();
-
     //======================== Other Functions =======================
+
+public:
+    /** This function returns the concatenation the type of the simulation item and its
+        human-readable name if it has one. The resulting string can be used, for example, in log
+        messages to identify the item and differentiate it from other items of a similar type. */
+    string typeAndName() const;
+
+protected:
+    /** This function returns a human-readable name for the simulation item, or the empty string if
+        it does not have one. The item name can be used to differentiate the item from other items
+        of a similar type. The implementation in this base class returns the empty string.
+        Subclasses can override the implementation to return something meaningful. */
+    virtual string itemName() const;
+
+    //======================== Finding items =======================
 
 public:
     /** This template function looks for a simulation item of the type specified as template

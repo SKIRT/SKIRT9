@@ -19,13 +19,17 @@ TextOutFile::TextOutFile(const SimulationItem* item, string filename, string des
     // Only open the output file if this is the root process
     if (ProcessManager::isRoot())
     {
+        // open the file
         string filepath = item->find<FilePaths>()->output(filename + ".dat");
         _out = System::ofstream(filepath);
         if (!_out) throw FATALERROR("Could not open the " + description + " output file " + filepath);
 
+        // remember some pointers
         _log = item->find<Log>();
         _units = item->find<Units>();
-        _message = item->type() + " wrote " + description + " to " + filepath + "...";
+
+        // remember the message to be issued upon closing
+        _message = item->typeAndName() + " wrote " + description + " to " + filepath + "...";
     }
 }
 

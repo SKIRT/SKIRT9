@@ -36,9 +36,19 @@ void SimulationItem::setupSelfAfter()
 
 ////////////////////////////////////////////////////////////////////
 
-bool SimulationItem::setupStarted()
+string SimulationItem::typeAndName() const
 {
-    return _setupStarted;
+    string result = type();
+    string name = itemName();
+    if (!name.empty()) result += " " + name;
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////
+
+std::string SimulationItem::itemName() const
+{
+    return string();
 }
 
 ////////////////////////////////////////////////////////////////////

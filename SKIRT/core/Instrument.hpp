@@ -75,6 +75,11 @@ protected:
     //======================== Other Functions =======================
 
 public:
+    /** This function returns the instrument name as human-readable name for the simulation item,
+        so that it can be used in log messages to identify the instrument and differentiate it from
+        other instruments. */
+    string itemName() const override;
+
     /** Returns the wavelength grid for the instrument as determined during setup, i.e. either the
         grid specified for this instrument or the default grid specified for the instrument system.
         After setup has completed, the function never returns a nulltpr because setupSelfBefore()

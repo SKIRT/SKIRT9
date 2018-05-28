@@ -21,7 +21,7 @@ void Instrument::setupSelfBefore()
     bool hasMediumEmission = false;
 
     // partially configure the flux recorder
-    _recorder = new FluxRecorder;
+    _recorder = new FluxRecorder(this);
     _recorder->setSimulationInfo(instrumentName(), instrumentWavelengthGrid(), hasMedium, hasMediumEmission);
     _recorder->setUserFlags(_recordComponents, _numScatteringLevels, _recordPolarization, _recordStatistics);
 }
@@ -45,6 +45,13 @@ Instrument::~Instrument()
 
 ////////////////////////////////////////////////////////////////////
 
+std::string Instrument::itemName() const
+{
+    return instrumentName();
+}
+
+////////////////////////////////////////////////////////////////////
+
 void Instrument::flush()
 {
     _recorder->flush();
@@ -54,7 +61,7 @@ void Instrument::flush()
 
 void Instrument::write()
 {
-    _recorder->calibrateAndWrite(this);
+    _recorder->calibrateAndWrite();
 }
 
 ////////////////////////////////////////////////////////////////////

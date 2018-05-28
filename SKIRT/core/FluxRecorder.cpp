@@ -31,7 +31,8 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-FluxRecorder::FluxRecorder()
+FluxRecorder::FluxRecorder(const SimulationItem* parentItem)
+    : _parentItem{parentItem}
 {
 }
 
@@ -139,7 +140,7 @@ void FluxRecorder::finalizeConfiguration()
     for (const auto& array : _ifu) allocatedSize += array.size();
     for (const auto& array : _wsed) allocatedSize += array.size();
     for (const auto& array : _wifu) allocatedSize += array.size();
-    _lambdagrid->find<Log>()->info("Instrument " + _instrumentName + " allocated " +
+    _lambdagrid->find<Log>()->info(_parentItem->typeAndName() + " allocated " +
                                    StringUtils::toMemSizeString(allocatedSize) + " of memory");
 }
 
@@ -279,7 +280,7 @@ void FluxRecorder::flush()
 
 ////////////////////////////////////////////////////////////////////
 
-void FluxRecorder::calibrateAndWrite(const SimulationItem* item)
+void FluxRecorder::calibrateAndWrite()
 {
     // collect recorded data from all processes
     for (auto& array : _sed) ProcessManager::sumToRoot(array);
@@ -296,7 +297,7 @@ void FluxRecorder::calibrateAndWrite(const SimulationItem* item)
 
     // convert from recorded quantities to output quantities and from internal units to user-selected output units
     // (for performance reasons, determine the units scaling factor only once for each wavelength)
-    Units* units = item->find<Units>();
+    Units* units = _parentItem->find<Units>();
     int numWavelengths = _lambdagrid->numWavelengths();
     for (int ell=0; ell!=numWavelengths; ++ell)
     {
@@ -369,7 +370,7 @@ void FluxRecorder::calibrateAndWrite(const SimulationItem* item)
         }
 
         // open the file and add the column headers
-        TextOutFile sedFile(item, _instrumentName + "_sed", "SED");
+        TextOutFile sedFile(_parentItem, _instrumentName + "_sed", "SED");
         sedFile.addColumn("lambda (" + units->uwavelength() + ")", 'e', 9);
         for (const string& name : sedNames)
         {
@@ -389,7 +390,7 @@ void FluxRecorder::calibrateAndWrite(const SimulationItem* item)
         if (_recordStatistics)
         {
             // open the file and add the column headers
-            TextOutFile statFile(item, _instrumentName + "_sedstats", "SED statistics");
+            TextOutFile statFile(_parentItem, _instrumentName + "_sedstats", "SED statistics");
             statFile.addColumn("lambda (" + units->uwavelength() + ")", 'e', 9);
             for (int k=0; k<=maxContributionPower; ++k)
             {
@@ -462,7 +463,7 @@ void FluxRecorder::calibrateAndWrite(const SimulationItem* item)
         {
             string filename = _instrumentName + "_" + ifuNames[q];
             string description = ifuNames[q] + " flux";
-            FITSInOut::write(item, description, filename, *(ifuArrays[q]),
+            FITSInOut::write(_parentItem, description, filename, *(ifuArrays[q]),
                              _numPixelsX, _numPixelsY, numWavelengths,
                              units->olength(_pixelSizeX), units->olength(_pixelSizeY),
                              units->olength(_centerX), units->olength(_centerY),
@@ -481,7 +482,7 @@ void FluxRecorder::calibrateAndWrite(const SimulationItem* item)
                 string filename = _instrumentName + "_stats" + std::to_string(k);
                 string description = "sum of contributions to the power of " + std::to_string(k);
                 _wifu[k] *= cn;
-                FITSInOut::write(item, description, filename, _wifu[k],
+                FITSInOut::write(_parentItem, description, filename, _wifu[k],
                                  _numPixelsX, _numPixelsY, numWavelengths,
                                  units->olength(_pixelSizeX), units->olength(_pixelSizeY),
                                  units->olength(_centerX), units->olength(_centerY),
