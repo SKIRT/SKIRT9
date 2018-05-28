@@ -28,7 +28,7 @@ public:
     void probeSetup();
 
     /** This function invokes the function of the same name on all probes in the probe system. */
-    void probeSimulation();
+    void probeRun();
 };
 
 ////////////////////////////////////////////////////////////////////

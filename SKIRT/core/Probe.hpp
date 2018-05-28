@@ -24,7 +24,7 @@ public:
     virtual void probeSetup();
 
     /** This function performs probing after the simulation. */
-    virtual void probeSimulation();
+    virtual void probeRun();
 };
 
 ////////////////////////////////////////////////////////////////////

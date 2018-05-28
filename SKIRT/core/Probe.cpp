@@ -13,7 +13,7 @@ void Probe::probeSetup()
 
 ////////////////////////////////////////////////////////////////////
 
-void Probe::probeSimulation()
+void Probe::probeRun()
 {
 }
 

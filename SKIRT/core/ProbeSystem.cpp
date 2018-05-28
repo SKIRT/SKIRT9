@@ -14,9 +14,9 @@ void ProbeSystem::probeSetup()
 
 ////////////////////////////////////////////////////////////////////
 
-void ProbeSystem::probeSimulation()
+void ProbeSystem::probeRun()
 {
-    for (auto probe : probes()) probe->probeSimulation();
+    for (auto probe : probes()) probe->probeRun();
 }
 
 ////////////////////////////////////////////////////////////////////

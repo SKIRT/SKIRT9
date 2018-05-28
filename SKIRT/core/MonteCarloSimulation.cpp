@@ -30,6 +30,19 @@
 
 ////////////////////////////////////////////////////////////////////
 
+void MonteCarloSimulation::setupSimulation()
+{
+    // perform regular setup for the hierarchy and wait for all processes to finish
+    TimeLogger logger(log(), "setup");
+    SimulationItem::setup();
+    wait("setup");
+
+    // notify the probe system
+    probeSystem()->probeSetup();
+}
+
+////////////////////////////////////////////////////////////////////
+
 void MonteCarloSimulation::setupSelfBefore()
 {
     Simulation::setupSelfBefore();
@@ -55,6 +68,38 @@ bool MonteCarloSimulation::emulationMode()
 int MonteCarloSimulation::dimension() const
 {
     return 0;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void MonteCarloSimulation::wait(std::string scope)
+{
+    if (ProcessManager::isMultiProc())
+    {
+        find<Log>()->info("Waiting for other processes to finish " + scope + "...");
+        ProcessManager::wait();
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
+void MonteCarloSimulation::runSimulation()
+{
+    {
+        // perform the run and wait for all processes to finish
+        TimeLogger logger(log(), "the run");
+        test();
+        wait("the run");
+
+        // notify the probe system
+        probeSystem()->probeRun();
+    }
+    {
+        // write simulation output
+        TimeLogger logger(log(), "the output");
+        instrumentSystem()->flush();
+        instrumentSystem()->write();
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -96,9 +141,8 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-void MonteCarloSimulation::runSelf()
+void MonteCarloSimulation::test()
 {
-    TimeLogger logger(log(), "the test phase");
 /*
     // --- stored tables ---
     {
@@ -200,10 +244,6 @@ void MonteCarloSimulation::runSelf()
         instrumentSystem()->write();
     }
 */
-    // --- probes ---
-    {
-        _probeSystem->probeSetup();
-    }
 
     // --- sampling SEDs and calibrating instruments ---
     {
@@ -217,7 +257,6 @@ void MonteCarloSimulation::runSelf()
         auto parallel = find<ParallelFactory>()->parallelDistributed();
         parallel->call([this](size_t i ,size_t n) { doSolarEmissionChunk(i, n); }, numPackets());
         instrumentSystem()->flush();
-        instrumentSystem()->write();
     }
 }
 

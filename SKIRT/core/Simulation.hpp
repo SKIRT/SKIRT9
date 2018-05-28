@@ -46,26 +46,24 @@ class Simulation : public SimulationItem
     //======== Construction - Setup - Run - Destruction  ===========
 
 public:
-    /** This function performs setup for the complete simulation hierarchy. It invokes the setup()
-        function defined in the SimulationItem base class, surrounded by start/finish log messages.
-        It is recommended to use the setupAndRun() function rather than setup() and run() separately.
-        */
-    void setup();
+    /** This function performs setup for the complete simulation hierarchy by invoking the setup()
+        function defined in the SimulationItem base class, and then runs the simulation by invoking
+        the run() function which must be defined in a subclass. The complete operation is
+        surrounded by start/finish log messages.
 
-    /** This function performs the simulation by invoking the runSelf() function to be defined in a
-        subclass, surrounded by start/finish log messages. The setup() function must have been called
-        before invoking run(). It is recommended to use the setupAndRun() function rather than
-        setup() and run() separately. */
-    void run();
-
-    /** This function performs setup and executes the simulation by invoking setup() and run() in
-        succession. */
+        It is highly recommended for the creator/manager of a simulation hierarchy to immediately
+        call setupAndRun() on the Simulation instance rather than first calling the setup()
+        function. */
     void setupAndRun();
 
 protected:
-    /** This function actually runs the simulation, assuming that setup() has been already performed.
+    /** This function actually performs setup for the complete simulation hierarchy. Its
+        implementation must be provided by a subclass. */
+    virtual void setupSimulation() = 0;
+
+    /** This function actually runs the simulation, assuming that setup has been already performed.
         Its implementation must be provided by a subclass. */
-    virtual void runSelf() = 0;
+    virtual void runSimulation() = 0;
 
     //======== Getters for Non-Discoverable Attributes =======
 

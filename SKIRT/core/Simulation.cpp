@@ -4,39 +4,14 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "Simulation.hpp"
-#include "FatalError.hpp"
 #include "ProcessManager.hpp"
 #include "TimeLogger.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-void Simulation::setup()
-{
-    if (setupStarted()) return;
-
-    _log->setup();
-    TimeLogger logger(_log, "setup");
-    SimulationItem::setup();
-
-    find<Log>()->info("Waiting for other processes to finish setup...");
-    ProcessManager::wait();
-}
-
-////////////////////////////////////////////////////////////////////
-
-void Simulation::run()
-{
-    // verify setup
-    if (!setupStarted()) throw FATALERROR("Simulation has not been setup before being run");
-
-    TimeLogger logger(_log, "the simulation run");
-    runSelf();
-}
-
-////////////////////////////////////////////////////////////////////
-
 void Simulation::setupAndRun()
 {
+    // get information on the number of executions threads and processes
     string processInfo;
 
     _factory->setup();
@@ -48,11 +23,13 @@ void Simulation::setupAndRun()
     if (procs > 1) processInfo += " for each of " + std::to_string(procs) + " processes";
     else processInfo += " and a single process";
 
+    // log a start/finish message (ensure that the logger is initialized)
     _log->setup();
     TimeLogger logger(_log, "simulation " + _paths->outputPrefix() + processInfo);
 
-    setup();
-    run();
+    // setup and run the simulation
+    setupSimulation();
+    runSimulation();
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -23,11 +23,11 @@ class MonteCarloSimulation : public Simulation
 
     ATTRIBUTE_SUB_PROPERTIES_HERE(MonteCarloSimulation)
 
-    PROPERTY_ITEM(probeSystem, ProbeSystem, "the probe system")
-        ATTRIBUTE_DEFAULT_VALUE(probeSystem, "ProbeSystem")
-
     PROPERTY_ITEM(instrumentSystem, InstrumentSystem, "the instrument system")
         ATTRIBUTE_DEFAULT_VALUE(instrumentSystem, "InstrumentSystem")
+
+    PROPERTY_ITEM(probeSystem, ProbeSystem, "the probe system")
+        ATTRIBUTE_DEFAULT_VALUE(probeSystem, "ProbeSystem")
 
     PROPERTY_DOUBLE(numPackets, "the total number of photon packets")
         ATTRIBUTE_MIN_VALUE(numPackets, "[0")
@@ -39,7 +39,12 @@ class MonteCarloSimulation : public Simulation
     //============= Construction - Setup - Destruction =============
 
 protected:
-    /** This function caches some frequently used pointers. */
+    /** This function performs setup for the complete simulation hierarchy. It calls the regular
+        setup() function and notifies the probe system when setup has been completed. */
+    void setupSimulation() override;
+
+    /** This function performs setup for the MonteCarloSimulation object; it caches some frequently
+        used pointers. */
     void setupSelfBefore() override;
 
     //======== Setters & Getters for Discoverable Attributes =======
@@ -69,11 +74,23 @@ public:
         (i.e. the highest dimension) determines the result for the whole simulation. */
     int dimension() const;
 
+private:
+    /** In a multi-processing environment, this function logs a message and waits for all processes
+        to finish the work (i.e. it places a barrier). The string argument is included in the log
+        message to indicate the scope of work that is being finished. If there is only a single
+        process, the function does nothing. */
+    void wait(string scope);
+
 protected:
-    /** This function actually runs the simulation. */
-    void runSelf() override;
+    /** This function actually runs the simulation, assuming setup has been completed. */
+    void runSimulation() override;
+
+    //======================== Temporary Testing =======================
 
 private:
+    /** This function performs some temporary tests. */
+    void test();
+
     /** This test function launches the specified chunk of photon packets, simulating some sources. */
     void doTestEmissionChunk(size_t firstIndex, size_t numIndices);
 
