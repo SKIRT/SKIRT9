@@ -8,6 +8,7 @@
 
 #include "SimulationItem.hpp"
 class PhotonPacket;
+class Random;
 
 //////////////////////////////////////////////////////////////////////
 
@@ -47,6 +48,12 @@ class Source : public SimulationItem
 
     ITEM_END()
 
+    //============= Construction - Setup - Destruction =============
+
+protected:
+    /** This function caches the simulation's random generator for use by subclasses. */
+    void setupSelfBefore() override;
+
     //======================== Other Functions =======================
 
 public:
@@ -71,6 +78,18 @@ public:
         given history index and luminosity contribution. The photon packet's contents is fully
         (re-)initialized so that it is ready to start its lifecycle. */
     virtual void launch(PhotonPacket* pp, size_t historyIndex, double L) const = 0;
+
+    //======================== Other Functions =======================
+
+protected:
+    /** This function returns the simulation's random generator as a service to subclasses. */
+    Random* random() const { return _random; }
+
+    //======================== Data Members ========================
+
+private:
+    // data member initialized during setup
+    Random* _random{nullptr};
 };
 
 //////////////////////////////////////////////////////////////////////

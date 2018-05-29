@@ -143,20 +143,12 @@ namespace
 void MonteCarloSimulation::doSolarEmissionChunk(size_t firstIndex, size_t numIndices)
 {
     PhotonPacket pp,ppp;
-    double Lpacket = _Ltot / numPackets();
 
     // iterate over the chunk of indices
     for (size_t historyIndex = firstIndex; historyIndex!=firstIndex+numIndices; ++historyIndex)
     {
-        // generate a random position for this source according to the configured geometry
-        Position bfr = sourceSystem()->find<GeometricSource>()->geometry()->generatePosition();
-
-        // generate a random wavelength for this source from the SED
-        double lambda = random()->cdf(_sunLambda, _sunCDF);
-
-        // launch the primary photon packet
-        pp.launch(historyIndex, lambda, Lpacket, bfr, random()->direction());
-        pp.setPrimaryOrigin(0);
+        // launch a photon packet
+        sourceSystem()->launch(&pp, historyIndex);
 
         // peel off towards each instrument
         for (Instrument* instrument : _instrumentSystem->instruments())
@@ -190,15 +182,11 @@ void MonteCarloSimulation::test()
 
     // --- sampling SEDs and calibrating instruments ---
     {
-        // get the cumulative distribution for the solar SED
-        StoredTable<1> table;
-        table.open(this, "SunSED", "lambda(m)", "Llambda(W/m)");
-        _Ltot = table.cdf(_sunLambda, _sunCDF, 200, 0.1e-6, 20e-6);
-        log()->info("Fraction of solar luminosity: " + StringUtils::toString(_Ltot/Constants::Lsun() , 'f', 5));
-
         // shoot photons
+        size_t Npp = numPackets() * sourceSystem()->emissionMultiplier();
+        sourceSystem()->prepareForlaunch(Npp);
         auto parallel = find<ParallelFactory>()->parallelDistributed();
-        parallel->call([this](size_t i ,size_t n) { doSolarEmissionChunk(i, n); }, numPackets());
+        parallel->call([this](size_t i ,size_t n) { doSolarEmissionChunk(i, n); }, Npp);
         instrumentSystem()->flush();
     }
 }

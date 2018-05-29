@@ -8,6 +8,8 @@
 
 #include "Source.hpp"
 #include "Geometry.hpp"
+#include "LuminosityNormalization.hpp"
+#include "SED.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -21,8 +23,14 @@ class GeometricSource : public Source
 {
     ITEM_CONCRETE(GeometricSource, Source, "a primary source with a built-in geometry")
 
-    PROPERTY_ITEM(geometry, Geometry, "the geometry of the spatial source distribution")
+    PROPERTY_ITEM(geometry, Geometry, "the geometry of the spatial luminosity distribution for the source")
         ATTRIBUTE_DEFAULT_VALUE(geometry, "PlummerGeometry")
+
+    PROPERTY_ITEM(sed, SED, "the spectral energy distribution for the source")
+        ATTRIBUTE_DEFAULT_VALUE(sed, "SunSED")
+
+    PROPERTY_ITEM(normalization, LuminosityNormalization, "the type of luminosity normalization for the source")
+        ATTRIBUTE_DEFAULT_VALUE(normalization, "BolometricLuminosityNormalization")
 
     ITEM_END()
 

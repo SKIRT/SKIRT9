@@ -7,7 +7,6 @@
 #define MONTECARLOSIMULATION_HPP
 
 #include "Simulation.hpp"
-#include "Array.hpp"
 #include "InstrumentSystem.hpp"
 #include "ProbeSystem.hpp"
 #include "SourceSystem.hpp"
@@ -103,11 +102,6 @@ private:
 private:
     // *** data member to remember whether emulation mode is enabled
     bool _emulationMode{false};
-
-    // for testing SED sampling and instrument calibration
-    Array _sunLambda;
-    Array _sunCDF;
-    double _Ltot{0};
 };
 
 ////////////////////////////////////////////////////////////////////

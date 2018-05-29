@@ -5,6 +5,7 @@
 
 #include "GeometricSource.hpp"
 #include "PhotonPacket.hpp"
+#include "Random.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -17,13 +18,21 @@ int GeometricSource::dimension() const
 
 double GeometricSource::luminosity() const
 {
-    return 0;
+    return _normalization->luminosity(_sed);
 }
 
 //////////////////////////////////////////////////////////////////////
 
 void GeometricSource::launch(PhotonPacket* pp, size_t historyIndex, double L) const
 {
+    // generate a random position from the geometry
+    Position bfr = _geometry->generatePosition();
+
+    // generate a random wavelength from the SED
+    double lambda = _sed->generateWavelength();
+
+    // launch the photon packet with isotropic direction
+    pp->launch(historyIndex, lambda, L, bfr, random()->direction());
 }
 
 //////////////////////////////////////////////////////////////////////

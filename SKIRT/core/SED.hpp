@@ -7,12 +7,15 @@
 #define SED_HPP
 
 #include "SimulationItem.hpp"
+class Random;
 
 ////////////////////////////////////////////////////////////////////
 
 /** An instance of a SED subclass represents a spectral energy distribution \f$L_\lambda\f$, i.e.
     power per unit of wavelength. By definition, the distribution is normalized to unity, i.e.
-    integrating over all wavelengths yields one.
+    integrating over all wavelengths yields one. There are two key member functions that each SED
+    subclass should have: a function returning the specific luminosity at a given wavelength, and a
+    function drawing a random wavelength from the spectral energy distribution.
 
     This abstract base class just defines an interface that must be implemented by each subclass.
     */
@@ -21,13 +24,35 @@ class SED : public SimulationItem
     ITEM_ABSTRACT(SED, SimulationItem, "a spectral energy distribution")
     ITEM_END()
 
+    //============= Construction - Setup - Destruction =============
+
+protected:
+    /** This function caches the simulation's random generator for use by subclasses. */
+    void setupSelfBefore() override;
+
     //======================== Other Functions =======================
 
 public:
     /** This function returns the normalized specific luminosity \f$L_\lambda\f$ (i.e. power per
         unit of wavelength) at the specified wavelength, or zero if the wavelength is outside of
         the distribution's spectral range. */
-    double specificLuminosity(double wavelength) const;
+    virtual double specificLuminosity(double wavelength) const = 0;
+
+    /** This function draws a random wavelength from the normalized spectral energy distribution
+        represented by this object. */
+    virtual double generateWavelength() const = 0;
+
+    //======================== Other Functions =======================
+
+protected:
+    /** This function returns the simulation's random generator as a service to subclasses. */
+    Random* random() const { return _random; }
+
+    //======================== Data Members ========================
+
+private:
+    // data member initialized during setup
+    Random* _random{nullptr};
 };
 
 ////////////////////////////////////////////////////////////////////

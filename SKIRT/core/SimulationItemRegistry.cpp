@@ -10,6 +10,7 @@
 // ---> add new items below in alphabetical order
 
 #include "AllSkyInstrument.hpp"
+#include "BolometricLuminosityNormalization.hpp"
 #include "BoxClipGeometryDecorator.hpp"
 #include "BrokenExpDiskGeometry.hpp"
 #include "ClumpyGeometryDecorator.hpp"
@@ -51,16 +52,17 @@
 #include "SersicGeometry.hpp"
 #include "ShellGeometry.hpp"
 #include "SourceSystem.hpp"
+#include "SpecificLuminosityNormalization.hpp"
 #include "SphericalClipGeometryDecorator.hpp"
 #include "SpheroidalGeometryDecorator.hpp"
 #include "SpiralStructureGeometryDecorator.hpp"
 #include "StellarUnits.hpp"
+#include "SunSED.hpp"
 #include "TorusGeometry.hpp"
 #include "TriaxialGeometryDecorator.hpp"
 #include "UniformBoxGeometry.hpp"
 #include "UniformSmoothingKernel.hpp"
 #include "WavelengthProbe.hpp"
-
 
 ////////////////////////////////////////////////////////////////////
 
@@ -91,6 +93,15 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<SourceSystem>();
     ItemRegistry::add<Source>();
     ItemRegistry::add<GeometricSource>();
+
+    // luminosity normalizations
+    ItemRegistry::add<LuminosityNormalization>();
+    ItemRegistry::add<BolometricLuminosityNormalization>();
+    ItemRegistry::add<SpecificLuminosityNormalization>();
+
+    // SEDs
+    ItemRegistry::add<SED>();
+    ItemRegistry::add<SunSED>();
 
     // geometries
     ItemRegistry::add<Geometry>();
