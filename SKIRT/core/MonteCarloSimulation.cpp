@@ -7,6 +7,7 @@
 #include "Constants.hpp"
 #include "FITSInOut.hpp"
 #include "FatalError.hpp"
+#include "GeometricSource.hpp"
 #include "LockFree.hpp"
 #include "Log.hpp"
 #include "Parallel.hpp"
@@ -148,7 +149,7 @@ void MonteCarloSimulation::doSolarEmissionChunk(size_t firstIndex, size_t numInd
     for (size_t historyIndex = firstIndex; historyIndex!=firstIndex+numIndices; ++historyIndex)
     {
         // generate a random position for this source according to the configured geometry
-        Position bfr = geometry()->generatePosition();
+        Position bfr = sourceSystem()->find<GeometricSource>()->geometry()->generatePosition();
 
         // generate a random wavelength for this source from the SED
         double lambda = random()->cdf(_sunLambda, _sunCDF);

@@ -10,8 +10,7 @@
 #include "Array.hpp"
 #include "InstrumentSystem.hpp"
 #include "ProbeSystem.hpp"
-
-#include "Geometry.hpp"
+#include "SourceSystem.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -25,8 +24,8 @@ class MonteCarloSimulation : public Simulation
 
     ATTRIBUTE_SUB_PROPERTIES_HERE(MonteCarloSimulation)
 
-    PROPERTY_ITEM(geometry, Geometry, "the primary source geometry")
-        ATTRIBUTE_DEFAULT_VALUE(geometry, "PlummerGeometry")
+    PROPERTY_ITEM(sourceSystem, SourceSystem, "the source system")
+        ATTRIBUTE_DEFAULT_VALUE(sourceSystem, "SourceSystem")
 
     PROPERTY_ITEM(instrumentSystem, InstrumentSystem, "the instrument system")
         ATTRIBUTE_DEFAULT_VALUE(instrumentSystem, "InstrumentSystem")
@@ -34,7 +33,7 @@ class MonteCarloSimulation : public Simulation
     PROPERTY_ITEM(probeSystem, ProbeSystem, "the probe system")
         ATTRIBUTE_DEFAULT_VALUE(probeSystem, "ProbeSystem")
 
-    PROPERTY_DOUBLE(numPackets, "the total number of photon packets")
+    PROPERTY_DOUBLE(numPackets, "the number of photon packets launched per simulation segment")
         ATTRIBUTE_MIN_VALUE(numPackets, "[0")
         ATTRIBUTE_MAX_VALUE(numPackets, "1e19]")
         ATTRIBUTE_DEFAULT_VALUE(numPackets, "1e6")

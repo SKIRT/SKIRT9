@@ -25,6 +25,7 @@
 #include "FullInstrument.hpp"
 #include "GammaGeometry.hpp"
 #include "GaussianGeometry.hpp"
+#include "GeometricSource.hpp"
 #include "HammerAitoffProjection.hpp"
 #include "HyperboloidGeometry.hpp"
 #include "HyperboloidShellGeometry.hpp"
@@ -49,6 +50,7 @@
 #include "SIUnits.hpp"
 #include "SersicGeometry.hpp"
 #include "ShellGeometry.hpp"
+#include "SourceSystem.hpp"
 #include "SphericalClipGeometryDecorator.hpp"
 #include "SpheroidalGeometryDecorator.hpp"
 #include "SpiralStructureGeometryDecorator.hpp"
@@ -58,6 +60,7 @@
 #include "UniformBoxGeometry.hpp"
 #include "UniformSmoothingKernel.hpp"
 #include "WavelengthProbe.hpp"
+
 
 ////////////////////////////////////////////////////////////////////
 
@@ -83,6 +86,11 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<SIUnits>();
     ItemRegistry::add<StellarUnits>();
     ItemRegistry::add<ExtragalacticUnits>();
+
+    // source system and sources
+    ItemRegistry::add<SourceSystem>();
+    ItemRegistry::add<Source>();
+    ItemRegistry::add<GeometricSource>();
 
     // geometries
     ItemRegistry::add<Geometry>();
