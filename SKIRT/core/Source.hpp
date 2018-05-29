@@ -16,9 +16,11 @@ class PhotonPacket;
     point in the spatial domain of the source (which is independent of the spatial grid in the
     simulation):
       - The spectral energy distribution (SED) of the emission averaged over the unit sphere.
+      - Some normalization for the luminosity (e.g., bolometric, at a given wavelength, ...).
       - If the emission is anisotropic, the rest-frame angular distribution of the emission.
       - If the emission is polarized, the polarization state of the emission in each direction.
       - The bulk velocity of the source relative to the model coordinate frame.
+
     Furthermore, each source has a function for launching a photon packet that proceeds roughly
     as follows:
       - Sample a location from the spatial density distribution.

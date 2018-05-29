@@ -65,10 +65,9 @@ void SourceSystem::prepareForlaunch(size_t numPackets)
     _Iv[0] = 0;
     for (int h=0; h!=Ns; ++h)
     {
-        size_t numIndices = static_cast<size_t>(std::round(_Wv[h] * numPackets));
-        _sources[h]->prepareForLaunch(_Iv[h], numIndices);
         // limit first index to numPackets to avoid run-over due to rounding errors
-        _Iv[h+1] = min(numPackets, _Iv[h] + numIndices);
+        _Iv[h+1] = min(numPackets, _Iv[h] + static_cast<size_t>(std::round(_Wv[h] * numPackets)));
+        _sources[h]->prepareForLaunch(_Iv[h], _Iv[h+1]-_Iv[h]);
     }
 }
 
