@@ -88,14 +88,9 @@ protected:
     /** This function actually runs the simulation, assuming setup has been completed. */
     void runSimulation() override;
 
-    //======================== Temporary Testing =======================
-
 private:
-    /** This test function launches the specified chunk of photon packets, simulating the sun. */
-    void doSolarEmissionChunk(size_t firstIndex, size_t numIndices);
-
-    /** This function performs some temporary tests. */
-    void test();
+    /** This function launches the specified chunk of photon packets from primary sources. */
+    void doPrimaryEmissionChunk(size_t firstIndex, size_t numIndices);
 
     //======================== Data Members ========================
 

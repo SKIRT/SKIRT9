@@ -87,9 +87,18 @@ void MonteCarloSimulation::wait(std::string scope)
 void MonteCarloSimulation::runSimulation()
 {
     {
-        // perform the run and wait for all processes to finish
         TimeLogger logger(log(), "the run");
-        test();
+
+        // shoot photons from primary sources
+        size_t Npp = numPackets() * sourceSystem()->emissionMultiplier();
+        sourceSystem()->prepareForlaunch(Npp);
+        auto parallel = find<ParallelFactory>()->parallelDistributed();
+        StopWatch::start();
+        parallel->call([this](size_t i ,size_t n) { doPrimaryEmissionChunk(i, n); }, Npp);
+        StopWatch::stop();
+        instrumentSystem()->flush();
+
+        // wait for all processes to finish
         wait("the run");
 
         // notify the probe system
@@ -107,7 +116,7 @@ void MonteCarloSimulation::runSimulation()
 
 namespace
 {
-    // get a short but consistent identifier for the current thread
+    // get a short but consistent identifier for the current thread, used for debugging purposes
     int threadID()
     {
         static std::map<std::thread::id, int> threads;
@@ -117,78 +126,41 @@ namespace
         if (!threads.count(me)) threads.emplace(me, threads.size()+1);
         return threads.at(me);
     }
-
-    // test function adds 1/inverseFraction to numPixels random pixels in the specified frame
-    void addPixels(Table<2>& frame, Random* random, size_t inverseFraction, size_t firstIndex, size_t numIndices)
-    {
-        int id = threadID();
-        random->find<Log>()->warning("[T" + std::to_string(id) + "] Chunk: "
-                                     + std::to_string(firstIndex) + "," + std::to_string(numIndices));
-
-        ///if (firstIndex>10*1000*1000) throw FATALERROR("Test exception handling");
-
-        if (id==1) StopWatch::start();      // time only one of the threads
-        for (size_t p = 0; p!=numIndices; ++p)
-        {
-            size_t i = static_cast<size_t>( random->uniform() * frame.size(0) );
-            size_t j = static_cast<size_t>( random->uniform() * frame.size(1) );
-            LockFree::add(frame(i,j), 1./inverseFraction);
-        }
-        if (id==1) StopWatch::stop();
-    }
 }
 
 ////////////////////////////////////////////////////////////////////
 
-void MonteCarloSimulation::doSolarEmissionChunk(size_t firstIndex, size_t numIndices)
+void MonteCarloSimulation::doPrimaryEmissionChunk(size_t firstIndex, size_t numIndices)
 {
-    PhotonPacket pp,ppp;
+    // log chunk info for debugging purposes
+    int id = threadID();
+    log()->warning("[T" + std::to_string(id) + "] Chunk: "
+                   + std::to_string(firstIndex) + "," + std::to_string(numIndices));
 
-    // iterate over the chunk of indices
-    for (size_t historyIndex = firstIndex; historyIndex!=firstIndex+numIndices; ++historyIndex)
+    // time one of the threads for debugging purposes
+    if (id==1) StopWatch::start();
+
+    // actually shoot the photon packets
     {
-        // launch a photon packet
-        sourceSystem()->launch(&pp, historyIndex);
+        PhotonPacket pp,ppp;
 
-        // peel off towards each instrument
-        for (Instrument* instrument : _instrumentSystem->instruments())
+        // iterate over the chunk of indices
+        for (size_t historyIndex = firstIndex; historyIndex!=firstIndex+numIndices; ++historyIndex)
         {
-            ppp.launchEmissionPeelOff(&pp, instrument->bfkobs(pp.position()), 1.);
-            instrument->detect(&ppp);
+            // launch a photon packet
+            sourceSystem()->launch(&pp, historyIndex);
+
+            // peel off towards each instrument
+            for (Instrument* instrument : _instrumentSystem->instruments())
+            {
+                ppp.launchEmissionPeelOff(&pp, instrument->bfkobs(pp.position()), 1.);
+                instrument->detect(&ppp);
+            }
         }
     }
-}
 
-////////////////////////////////////////////////////////////////////
-
-void MonteCarloSimulation::test()
-{
-    // --- parallelization ---
-    {
-        const size_t numPixels = 100*1000*1000 + 11;
-        Table<2> frame(500,500);
-
-        auto parallel = find<ParallelFactory>()->parallelDistributed();
-        StopWatch::start();
-        parallel->call([this,&frame](size_t i ,size_t n) { addPixels(frame, random(), numPixels, i, n); }, numPixels);
-        StopWatch::stop();
-        ProcessManager::sumToRoot(frame.data());
-
-        if (ProcessManager::isRoot())
-            log()->info("Frame intensity: " + StringUtils::toString(frame.data().sum(), 'e', 9));
-
-        FITSInOut::write(this, "frame", "frame", frame.data(), frame.size(0), frame.size(1), 1, 0,0,0,0,"","");
-    }
-
-    // --- sampling SEDs and calibrating instruments ---
-    {
-        // shoot photons
-        size_t Npp = numPackets() * sourceSystem()->emissionMultiplier();
-        sourceSystem()->prepareForlaunch(Npp);
-        auto parallel = find<ParallelFactory>()->parallelDistributed();
-        parallel->call([this](size_t i ,size_t n) { doSolarEmissionChunk(i, n); }, Npp);
-        instrumentSystem()->flush();
-    }
+    // time one of the threads for debugging purposes
+    if (id==1) StopWatch::stop();
 }
 
 ////////////////////////////////////////////////////////////////////
