@@ -4,30 +4,23 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "MonteCarloSimulation.hpp"
-#include "Constants.hpp"
-#include "FITSInOut.hpp"
-#include "FatalError.hpp"
-#include "GeometricSource.hpp"
-#include "LockFree.hpp"
 #include "Log.hpp"
 #include "Parallel.hpp"
 #include "ParallelFactory.hpp"
 #include "PhotonPacket.hpp"
 #include "ProcessManager.hpp"
-#include "Random.hpp"
 #include "StopWatch.hpp"
-#include "StoredTable.hpp"
 #include "StringUtils.hpp"
-#include "Table.hpp"
-#include "TextOutFile.hpp"
 #include "TimeLogger.hpp"
-#include "Units.hpp"
-#include "WavelengthGrid.hpp"
-#include <array>
-#include <atomic>
+
+// uncomment this line to skip the code producing chunk debugging messages
+#define LOG_CHUNKS
+
+#ifdef LOG_CHUNKS
 #include <map>
 #include <mutex>
 #include <thread>
+#endif
 
 ////////////////////////////////////////////////////////////////////
 
@@ -73,17 +66,6 @@ int MonteCarloSimulation::dimension() const
 
 ////////////////////////////////////////////////////////////////////
 
-void MonteCarloSimulation::wait(std::string scope)
-{
-    if (ProcessManager::isMultiProc())
-    {
-        find<Log>()->info("Waiting for other processes to finish " + scope + "...");
-        ProcessManager::wait();
-    }
-}
-
-////////////////////////////////////////////////////////////////////
-
 void MonteCarloSimulation::runSimulation()
 {
     {
@@ -91,6 +73,7 @@ void MonteCarloSimulation::runSimulation()
 
         // shoot photons from primary sources
         size_t Npp = numPackets() * sourceSystem()->emissionMultiplier();
+        initProgress("primary emission", Npp);
         sourceSystem()->prepareForlaunch(Npp);
         auto parallel = find<ParallelFactory>()->parallelDistributed();
         StopWatch::start();
@@ -114,6 +97,51 @@ void MonteCarloSimulation::runSimulation()
 
 ////////////////////////////////////////////////////////////////////
 
+void MonteCarloSimulation::wait(std::string scope)
+{
+    if (ProcessManager::isMultiProc())
+    {
+        find<Log>()->info("Waiting for other processes to finish " + scope + "...");
+        ProcessManager::wait();
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
+void MonteCarloSimulation::initProgress(string segment, size_t numPackets)
+{
+    _segment = segment;
+    _numTotal = numPackets;
+    _numDone = 0;
+
+    log()->info("Launching " + StringUtils::toString(static_cast<double>(_numTotal))
+                + " " + _segment + " photon packages");
+    log()->infoSetElapsed(3);
+}
+
+////////////////////////////////////////////////////////////////////
+
+void MonteCarloSimulation::logProgress(size_t extraDone)
+{
+    // accumulate the work already done
+    _numDone.fetch_add(extraDone);
+
+    // log message if the minimum time has elapsed
+    double completed = _numDone * 100. / _numTotal;
+    log()->infoIfElapsed("Launched " + _segment + " photon packages: " + StringUtils::toString(completed,'f',1) + "%");
+}
+
+////////////////////////////////////////////////////////////////////
+
+namespace
+{
+    // maximum number of photon packets processed between two invocations of logProgress()
+    const size_t logProgressChunkSize = 50000;
+}
+
+////////////////////////////////////////////////////////////////////
+
+#ifdef LOG_CHUNKS
 namespace
 {
     // get a short but consistent identifier for the current thread, used for debugging purposes
@@ -127,11 +155,13 @@ namespace
         return threads.at(me);
     }
 }
+#endif
 
 ////////////////////////////////////////////////////////////////////
 
 void MonteCarloSimulation::doPrimaryEmissionChunk(size_t firstIndex, size_t numIndices)
 {
+#ifdef LOG_CHUNKS
     // log chunk info for debugging purposes
     int id = threadID();
     log()->warning("[T" + std::to_string(id) + "] Chunk: "
@@ -139,28 +169,41 @@ void MonteCarloSimulation::doPrimaryEmissionChunk(size_t firstIndex, size_t numI
 
     // time one of the threads for debugging purposes
     if (id==1) StopWatch::start();
+#endif
 
     // actually shoot the photon packets
     {
         PhotonPacket pp,ppp;
 
-        // iterate over the chunk of indices
-        for (size_t historyIndex = firstIndex; historyIndex!=firstIndex+numIndices; ++historyIndex)
+        // split the chunk of indices into sub-chunks no larger than the progress logging frequency
+        size_t historyIndex = firstIndex;
+        size_t remaining = numIndices;
+        while (remaining)
         {
-            // launch a photon packet
-            sourceSystem()->launch(&pp, historyIndex);
+            size_t count = min(remaining, logProgressChunkSize);
 
-            // peel off towards each instrument
-            for (Instrument* instrument : _instrumentSystem->instruments())
+            // iterate over the sub-chunk
+            for (size_t i=0; i!=count; ++i)
             {
-                ppp.launchEmissionPeelOff(&pp, instrument->bfkobs(pp.position()), 1.);
-                instrument->detect(&ppp);
+                // launch a photon packet
+                sourceSystem()->launch(&pp, historyIndex++);
+
+                // peel off towards each instrument
+                for (Instrument* instrument : _instrumentSystem->instruments())
+                {
+                    ppp.launchEmissionPeelOff(&pp, instrument->bfkobs(pp.position()), 1.);
+                    instrument->detect(&ppp);
+                }
             }
+            logProgress(count);
+            remaining -= count;
         }
     }
 
+#ifdef LOG_CHUNKS
     // time one of the threads for debugging purposes
     if (id==1) StopWatch::stop();
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////

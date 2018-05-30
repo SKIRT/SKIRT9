@@ -10,6 +10,7 @@
 #include "InstrumentSystem.hpp"
 #include "ProbeSystem.hpp"
 #include "SourceSystem.hpp"
+#include <atomic>
 
 //////////////////////////////////////////////////////////////////////
 
@@ -77,6 +78,10 @@ public:
         (i.e. the highest dimension) determines the result for the whole simulation. */
     int dimension() const;
 
+protected:
+    /** This function actually runs the simulation, assuming setup has been completed. */
+    void runSimulation() override;
+
 private:
     /** In a multi-processing environment, this function logs a message and waits for all processes
         to finish the work (i.e. it places a barrier). The string argument is included in the log
@@ -84,11 +89,16 @@ private:
         process, the function does nothing. */
     void wait(string scope);
 
-protected:
-    /** This function actually runs the simulation, assuming setup has been completed. */
-    void runSimulation() override;
+    /** This function initializes the progress counter used in logprogress() for the specified
+        segment and logs the number of photon packets to be processed. */
+    void initProgress(string segment, size_t numPackets);
 
-private:
+    /** This function logs a progress message for the segment specified in the initprogress()
+        function if the previous message was issued at least 3 seconds ago. The function
+        must be called regularly while processing photon packets. The argument specifies the
+        number of photon packets processed since the most recent invocation in the same thread. */
+    void logProgress(size_t extraDone);
+
     /** This function launches the specified chunk of photon packets from primary sources. */
     void doPrimaryEmissionChunk(size_t firstIndex, size_t numIndices);
 
@@ -97,6 +107,11 @@ private:
 private:
     // *** data member to remember whether emulation mode is enabled
     bool _emulationMode{false};
+
+    // *** data members used by the XXXprogress() functions in this class ***
+    string _segment;               // a string identifying the photon shooting segment for use in the log message
+    size_t _numTotal;              // the total number of photon packages to be processed for this segment
+    std::atomic<size_t> _numDone;  // the number of photon packages processed so far (for all threads)
 };
 
 ////////////////////////////////////////////////////////////////////
