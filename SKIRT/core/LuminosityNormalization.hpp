@@ -23,8 +23,9 @@ class LuminosityNormalization : public SimulationItem
     //======================== Other Functions =======================
 
 public:
-    /** This function returns the bolometric luminosity of a source with the normalized spectral
-        distribution described by the specified SED object. */
+    /** This function returns the luminosity of a source with the normalized spectral distribution
+        described by the specified SED object, limited to the source's wavelength range (which is
+        known by the SED object). */
     virtual double luminosity(SED* sed) const = 0;
 };
 

@@ -30,7 +30,7 @@ class GeometricSource : public Source
         ATTRIBUTE_DEFAULT_VALUE(sed, "SunSED")
 
     PROPERTY_ITEM(normalization, LuminosityNormalization, "the type of luminosity normalization for the source")
-        ATTRIBUTE_DEFAULT_VALUE(normalization, "BolometricLuminosityNormalization")
+        ATTRIBUTE_DEFAULT_VALUE(normalization, "IntegratedLuminosityNormalization")
 
     ITEM_END()
 

@@ -129,9 +129,9 @@ public:
     /** This alternate constructor constructs a stored table instance and immediately associates a
         given stored table resource file with it by calling the open() function. Refer to the
         open() function for a description of the arguments and of its operation. */
-    StoredTable(const SimulationItem* item, string filename, string axes, string quantity)
+    StoredTable(const SimulationItem* item, string filename, string axes, string quantity, bool clamp=false)
     {
-        open(item, filename, axes, quantity);
+        open(item, filename, axes, quantity, clamp);
     }
 
     /** This function associates a given stored table resource file with the stored table instance.
@@ -161,15 +161,23 @@ public:
         argument must have a similar syntax, for a single name/unit combination. Examples include
         "Llambda(W/m)", "Qabs(1)", and "h(J/m3)".
 
+        The optional \em clamp flag sets the policy for handling out-of-range axes values when
+        retrieving data points from the table. If the flag is omitted or set to false, the quantity
+        value for out-of-range axes values is considered to be zero. If the \em clamp flag is set
+        to true, out-of-range axes values are clamped to the corresponding outer grid point. In
+        other words, a "nearby" quantity value at some outer grid point is used for out-of-range
+        axes values.
+
         In summary, this function (1) locates the specified stored table resource file, (2)
         acquires a memory map on the file, (3) verifies that the stored table matches all
         requirements, and (4) stores relevant information in data members. If any of these steps
         fail, the function throws a fatal error. */
-    void open(const SimulationItem* item, string filename, string axes, string quantity)
+    void open(const SimulationItem* item, string filename, string axes, string quantity, bool clamp=false)
     {
         StoredTable_Impl::open(N, item, filename, axes, quantity,
                                _filePath, _axBeg.begin(), &_qtyBeg, _axLen.begin(), &_qtyStep,
                                _axLog.begin(), &_qtyLog);
+        _clamp = clamp;
     }
 
     /** The destructor breaks the association with a stored table resource file established by the
@@ -185,7 +193,8 @@ public:
         specified axes values, interpolated over the grid points of the actual tabulated values in
         all dimensions. The function uses linear or logarithmic interpolation for the axes and
         quantity values according to the flags specified in the stored table. Out-of-range axes
-        values are automatically clamped to the corresponding outer grid point. */
+        values are handled according to the policy set by the \em clamp flag in the open()
+        function. */
     template <typename... Values, typename = std::enable_if_t<CompileTimeUtils::isFloatArgList<N, Values...>()>>
     double operator()(Values... values) const
     {
@@ -201,14 +210,18 @@ public:
             double x = value[k];
             size_t right = std::lower_bound(_axBeg[k], _axBeg[k]+_axLen[k], x) - _axBeg[k];
 
-            // if the value is beyond the grid borders, adjust both the bin border and the value
+            // if the value is beyond the grid borders:
+            //    - if we're not clamping, simply return zero
+            //    - if we're clamping, adjust both the bin border and the value
             if (right == 0)
             {
+                if (!_clamp) return 0.;
                 right++;
                 x = _axBeg[k][0];
             }
             else if (right == _axLen[k])
             {
+                if (!_clamp) return 0.;
                 right--;
                 x = _axBeg[k][right];
             }
@@ -275,8 +288,8 @@ public:
         represented by the stored table for the specified axes value, interpolated over the grid
         points of the actual tabulated values. The function uses linear or logarithmic
         interpolation for the axis and quantity values according to the flags specified in the
-        stored table. Out-of-range axes values are automatically clamped to the corresponding outer
-        grid point. */
+        stored table. Out-of-range axes values are handled according to the policy set by the \em
+        clamp flag in the open() function. */
     template <typename Value, typename = std::enable_if_t<N==1 && CompileTimeUtils::isFloatArgList<1, Value>()>>
     double operator[](Value value) const
     {
@@ -302,8 +315,8 @@ public:
         factor, i.e. the value of Yv[n] before normalization.
 
         If any of the axes values, including the \em xmin or \em xmax specifying the range for the
-        first axis, are out of range of the internal grid, extra quantity values are fabricated by
-        clamping the interpolation to the corresponding outer grid point. */
+        first axis, are out of range of the internal grid, extra quantity values are fabricated
+        according to the policy set by the \em clamp flag in the open() function. */
     template <typename... Values, typename = std::enable_if_t<CompileTimeUtils::isFloatArgList<N-1, Values...>()>>
     double cdf(Array& xv, Array& Yv, size_t minBins, double xmin, double xmax, Values... values) const
     {
@@ -383,6 +396,7 @@ private:
     size_t _qtyStep;                        // step size from one quantity value to the next (1=adjacent)
     std::array<bool, N> _axLog;             // interpolation type (true=log, false=linear) for each axis
     bool _qtyLog;                           // interpolation type (true=log, false=linear) for quantity
+    bool _clamp;                            // value for out-of-range indices: true=clamped, false=zero
 };
 
 ////////////////////////////////////////////////////////////////////

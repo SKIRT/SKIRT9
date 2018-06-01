@@ -10,7 +10,7 @@
 // ---> add new items below in alphabetical order
 
 #include "AllSkyInstrument.hpp"
-#include "BolometricLuminosityNormalization.hpp"
+#include "IntegratedLuminosityNormalization.hpp"
 #include "BoxClipGeometryDecorator.hpp"
 #include "BrokenExpDiskGeometry.hpp"
 #include "ClumpyGeometryDecorator.hpp"
@@ -96,7 +96,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
 
     // luminosity normalizations
     ItemRegistry::add<LuminosityNormalization>();
-    ItemRegistry::add<BolometricLuminosityNormalization>();
+    ItemRegistry::add<IntegratedLuminosityNormalization>();
     ItemRegistry::add<SpecificLuminosityNormalization>();
 
     // SEDs

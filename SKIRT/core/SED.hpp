@@ -44,10 +44,15 @@ protected:
     //======================== Other Functions =======================
 
 public:
-    /** This function returns the normalized specific luminosity \f$L_\lambda\f$ (i.e. power per
-        unit of wavelength) at the specified wavelength, or zero if the wavelength is outside of
-        the distribution's spectral range. */
+    /** This function returns the normalized specific luminosity \f$L_\lambda\f$ (i.e. radiative
+        power per unit of wavelength) at the specified wavelength, or zero if the wavelength is
+        outside of the distribution's spectral range. */
     virtual double specificLuminosity(double wavelength) const = 0;
+
+    /** This function returns the normalized integrated luminosity \f$L\f$ (i.e. radiative power)
+        over the specified wavelength range, or zero if the range is fully outside of the
+        distribution's spectral range. */
+    virtual double integratedLuminosity(double minWavelength, double maxWavelength) const = 0;
 
     /** This function draws a random wavelength from the normalized spectral energy distribution
         represented by this object. */

@@ -25,6 +25,14 @@ double SunSED::specificLuminosity(double wavelength) const
 
 //////////////////////////////////////////////////////////////////////
 
+double SunSED::integratedLuminosity(double minWavelength, double maxWavelength) const
+{
+    Array lambdav, cdfv;  // the contents of these arrays is not used, so this could be optimized if needed
+    return _table.cdf(lambdav, cdfv, 1, minWavelength, maxWavelength) / _Ltot;
+}
+
+//////////////////////////////////////////////////////////////////////
+
 double SunSED::generateWavelength() const
 {
     return random()->cdf(_lambdav, _cdfv);

@@ -61,9 +61,6 @@ class SourceSystem : public SimulationItem
 {
     ITEM_CONCRETE(SourceSystem, SimulationItem, "a primary source system")
 
-    PROPERTY_ITEM_LIST(sources, Source, "the primary sources")
-        ATTRIBUTE_DEFAULT_VALUE(sources, "GeometricSource")
-
     PROPERTY_DOUBLE(minWavelength, "the shortest wavelength of photon packets launched from primary sources")
         ATTRIBUTE_QUANTITY(minWavelength, "wavelength")
         ATTRIBUTE_MIN_VALUE(minWavelength, "1 A")
@@ -75,6 +72,9 @@ class SourceSystem : public SimulationItem
         ATTRIBUTE_MIN_VALUE(maxWavelength, "1 A")
         ATTRIBUTE_MAX_VALUE(maxWavelength, "1 m")
         ATTRIBUTE_DEFAULT_VALUE(maxWavelength, "20 micron")
+
+    PROPERTY_ITEM_LIST(sources, Source, "the primary sources")
+        ATTRIBUTE_DEFAULT_VALUE(sources, "GeometricSource")
 
     PROPERTY_DOUBLE(sourceBias, "the fraction of photon packets distributed uniformly across primary sources")
         ATTRIBUTE_MIN_VALUE(sourceBias, "[0")
