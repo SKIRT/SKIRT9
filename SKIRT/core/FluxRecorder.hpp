@@ -237,7 +237,7 @@ private:
 
     /** This private helper function records the photon packet history contributions in the
         specified list into the statistics arrays. */
-    void recordContributions(ContributionList& contributionList);
+    void recordContributions(ContributionList* contributionList);
 
     //======================== Data Members ========================
 

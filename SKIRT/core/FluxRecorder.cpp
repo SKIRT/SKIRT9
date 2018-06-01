@@ -256,13 +256,13 @@ void FluxRecorder::detect(const PhotonPacket* pp, int l, double distance)
     // record statistics for both SEDs and IFUs
     if (_recordStatistics)
     {
-        ContributionList& contributionList = _contributionLists.local();
-        if (!contributionList.hasHistoryIndex(pp->historyIndex()))
+        ContributionList* contributionList = _contributionLists.local();
+        if (!contributionList->hasHistoryIndex(pp->historyIndex()))
         {
             recordContributions(contributionList);
-            contributionList.reset(pp->historyIndex());
+            contributionList->reset(pp->historyIndex());
         }
-        contributionList.addContribution(ell, l, Lext);
+        contributionList->addContribution(ell, l, Lext);
     }
 }
 
@@ -273,7 +273,7 @@ void FluxRecorder::flush()
     // record the dangling contributions from all threads
     for (ContributionList* contributionList : _contributionLists.all())
     {
-        recordContributions(*contributionList);
+        recordContributions(contributionList);
         contributionList->reset();
     }
 }
@@ -495,11 +495,11 @@ void FluxRecorder::calibrateAndWrite()
 
 ////////////////////////////////////////////////////////////////////
 
-void FluxRecorder::recordContributions(ContributionList& contributionList)
+void FluxRecorder::recordContributions(ContributionList* contributionList)
 {
     // sort the contributions on wavelength and pixel index so that contributions to the same bin are consecutive
-    contributionList.sort();
-    const vector<Contribution>& contributions = contributionList.contributions();
+    contributionList->sort();
+    const vector<Contribution>& contributions = contributionList->contributions();
     size_t numContributions = contributions.size();
 
     // for SEDs, group contributions on ell index (wavelength bin)

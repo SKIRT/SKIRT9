@@ -37,11 +37,8 @@
 template<class T> class ThreadLocalMember
 {
 public:
-    /** This function returns a writable reference to the thread-local copy of the data member. */
-    T& local() { return repository.map[this]; }
-
-    /** This function returns a read-only reference to the thread-local copy of the data member. */
-    const T& local() const { return repository.map[this]; }
+    /** This function returns a pointer to the thread-local copy of the data member. */
+    T* local() { return &repository.map[this]; }
 
     /** This function returns a list of pointers to the copies of the data member for all threads
         that ever referred to it and that are not yet destructed. The list is in arbitrary order.
