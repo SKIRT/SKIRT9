@@ -40,15 +40,20 @@ class Source : public SimulationItem
 {
     ITEM_ABSTRACT(Source, SimulationItem, "a primary radiation source")
 
-    PROPERTY_DOUBLE(emissionWeight, "the weight of this source for the number of photon packets launched")
-        ATTRIBUTE_MIN_VALUE(emissionWeight, "]0")
-        ATTRIBUTE_MAX_VALUE(emissionWeight, "1000]")
-        ATTRIBUTE_DEFAULT_VALUE(emissionWeight, "1")
-        ATTRIBUTE_SILENT(emissionWeight)
+    PROPERTY_DOUBLE(sourceWeight, "the weight of this source for the number of photon packets launched")
+        ATTRIBUTE_MIN_VALUE(sourceWeight, "]0")
+        ATTRIBUTE_MAX_VALUE(sourceWeight, "1000]")
+        ATTRIBUTE_DEFAULT_VALUE(sourceWeight, "1")
+        ATTRIBUTE_SILENT(sourceWeight)
 
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============
+
+public:
+    /** This function sets the wavelength range for the source. It is called by the source system
+        during setup \em before the setupSelfBefore() function is invoked. */
+    void setWavelengthRange(double minWavelength, double maxWavelength);
 
 protected:
     /** This function caches the simulation's random generator for use by subclasses. */
@@ -85,10 +90,20 @@ protected:
     /** This function returns the simulation's random generator as a service to subclasses. */
     Random* random() const { return _random; }
 
+    /** This function returns the minimum of the source wavelength range. */
+    double minWavelength() const { return _minWavelength; }
+
+    /** This function returns the maximum of the source wavelength range. */
+    double maxWavelength() const { return _maxWavelength; }
+
     //======================== Data Members ========================
 
 private:
-    // data member initialized during setup
+    // data members initialized during setup by setWavelengthRange()
+    double _minWavelength{0};
+    double _maxWavelength{0};
+
+    // data members initialized during setup by setupSelfBefore()
     Random* _random{nullptr};
 };
 

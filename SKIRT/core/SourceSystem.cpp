@@ -6,6 +6,15 @@
 
 //////////////////////////////////////////////////////////////////////
 
+void SourceSystem::setupSelfBefore()
+{
+    SimulationItem::setupSelfBefore();
+
+    for (auto source : _sources) source->setWavelengthRange(_minWavelength, _maxWavelength);
+}
+
+//////////////////////////////////////////////////////////////////////
+
 void SourceSystem::setupSelfAfter()
 {
     SimulationItem::setupSelfAfter();
@@ -21,9 +30,9 @@ void SourceSystem::setupSelfAfter()
 
     // calculate the launch weight for each source, normalized to unity
     Array wv(Ns);
-    for (int h=0; h!=Ns; ++h) wv[h] = _sources[h]->emissionWeight();
+    for (int h=0; h!=Ns; ++h) wv[h] = _sources[h]->sourceWeight();
     Array wLv = wv * _Lv;
-    double xi = emissionBias();
+    double xi = sourceBias();
     _Wv = (1-xi)*wLv/wLv.sum() + xi*wv/wv.sum();
 
     // resize the history index mapping vector

@@ -64,23 +64,39 @@ class SourceSystem : public SimulationItem
     PROPERTY_ITEM_LIST(sources, Source, "the primary sources")
         ATTRIBUTE_DEFAULT_VALUE(sources, "GeometricSource")
 
-    PROPERTY_DOUBLE(emissionBias, "the fraction of photon packets distributed uniformly across sources")
-        ATTRIBUTE_MIN_VALUE(emissionBias, "[0")
-        ATTRIBUTE_MAX_VALUE(emissionBias, "1]")
-        ATTRIBUTE_DEFAULT_VALUE(emissionBias, "0.5")
-        ATTRIBUTE_SILENT(emissionBias)
+    PROPERTY_DOUBLE(minWavelength, "the shortest wavelength of photon packets launched from primary sources")
+        ATTRIBUTE_QUANTITY(minWavelength, "wavelength")
+        ATTRIBUTE_MIN_VALUE(minWavelength, "1 A")
+        ATTRIBUTE_MAX_VALUE(minWavelength, "1 m")
+        ATTRIBUTE_DEFAULT_VALUE(minWavelength, "0.09 micron")
 
-    PROPERTY_DOUBLE(emissionMultiplier, "the multiplier on the number of photon packets launched from primary sources")
-        ATTRIBUTE_MIN_VALUE(emissionMultiplier, "]0")
-        ATTRIBUTE_MAX_VALUE(emissionMultiplier, "1000]")
-        ATTRIBUTE_DEFAULT_VALUE(emissionMultiplier, "1")
-        ATTRIBUTE_SILENT(emissionMultiplier)
+    PROPERTY_DOUBLE(maxWavelength, "the longest wavelength of photon packets launched from primary sources")
+        ATTRIBUTE_QUANTITY(maxWavelength, "wavelength")
+        ATTRIBUTE_MIN_VALUE(maxWavelength, "1 A")
+        ATTRIBUTE_MAX_VALUE(maxWavelength, "1 m")
+        ATTRIBUTE_DEFAULT_VALUE(maxWavelength, "20 micron")
+
+    PROPERTY_DOUBLE(sourceBias, "the fraction of photon packets distributed uniformly across primary sources")
+        ATTRIBUTE_MIN_VALUE(sourceBias, "[0")
+        ATTRIBUTE_MAX_VALUE(sourceBias, "1]")
+        ATTRIBUTE_DEFAULT_VALUE(sourceBias, "0.5")
+        ATTRIBUTE_SILENT(sourceBias)
+
+    PROPERTY_DOUBLE(numPacketsMultiplier,
+                    "the multiplier on the number of photon packets launched from primary sources")
+        ATTRIBUTE_MIN_VALUE(numPacketsMultiplier, "]0")
+        ATTRIBUTE_MAX_VALUE(numPacketsMultiplier, "1000]")
+        ATTRIBUTE_DEFAULT_VALUE(numPacketsMultiplier, "1")
+        ATTRIBUTE_SILENT(numPacketsMultiplier)
 
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============
 
 protected:
+    /** This function passes the source wavelength range on to all sources. */
+    void setupSelfBefore() override;
+
     /** This function obtains the bolometric luminosity of each source for later use. */
     void setupSelfAfter() override;
 

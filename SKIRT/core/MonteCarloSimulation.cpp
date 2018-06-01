@@ -13,8 +13,8 @@
 #include "StringUtils.hpp"
 #include "TimeLogger.hpp"
 
-// uncomment this line to skip the code producing chunk debugging messages
-#define LOG_CHUNKS
+// uncomment this line to produce chunk debugging messages
+//#define LOG_CHUNKS
 
 #ifdef LOG_CHUNKS
 #include <map>
@@ -72,7 +72,7 @@ void MonteCarloSimulation::runSimulation()
         TimeLogger logger(log(), "the run");
 
         // shoot photons from primary sources
-        size_t Npp = numPackets() * sourceSystem()->emissionMultiplier();
+        size_t Npp = numPackets() * sourceSystem()->numPacketsMultiplier();
         initProgress("primary emission", Npp);
         sourceSystem()->prepareForlaunch(Npp);
         auto parallel = find<ParallelFactory>()->parallelDistributed();
@@ -108,11 +108,10 @@ void MonteCarloSimulation::wait(std::string scope)
 
 ////////////////////////////////////////////////////////////////////
 
-void MonteCarloSimulation::initProgress(string segment, size_t numPackets)
+void MonteCarloSimulation::initProgress(string segment, size_t numTotal)
 {
     _segment = segment;
-    _numTotal = numPackets;
-    _numDone = 0;
+    _numTotal = numTotal;
 
     log()->info("Launching " + StringUtils::toString(static_cast<double>(_numTotal))
                 + " " + _segment + " photon packages");
@@ -121,13 +120,10 @@ void MonteCarloSimulation::initProgress(string segment, size_t numPackets)
 
 ////////////////////////////////////////////////////////////////////
 
-void MonteCarloSimulation::logProgress(size_t extraDone)
+void MonteCarloSimulation::logProgress(size_t numDone)
 {
-    // accumulate the work already done
-    _numDone.fetch_add(extraDone);
-
     // log message if the minimum time has elapsed
-    double completed = _numDone * 100. / _numTotal;
+    double completed = numDone * 100. / _numTotal;
     log()->infoIfElapsed("Launched " + _segment + " photon packages: " + StringUtils::toString(completed,'f',1) + "%");
 }
 
@@ -175,29 +171,22 @@ void MonteCarloSimulation::doPrimaryEmissionChunk(size_t firstIndex, size_t numI
     {
         PhotonPacket pp,ppp;
 
-        // split the chunk of indices into sub-chunks no larger than the progress logging frequency
-        size_t historyIndex = firstIndex;
-        size_t remaining = numIndices;
-        while (remaining)
+        size_t endIndex = firstIndex + numIndices;
+        for (size_t historyIndex=firstIndex; historyIndex!=endIndex; ++historyIndex)
         {
-            size_t count = min(remaining, logProgressChunkSize);
+            if (historyIndex%logProgressChunkSize == 0) logProgress(historyIndex);
 
-            // iterate over the sub-chunk
-            for (size_t i=0; i!=count; ++i)
+            // launch a photon packet
+            sourceSystem()->launch(&pp, historyIndex);
+
+            // peel off towards each instrument
+            for (Instrument* instrument : _instrumentSystem->instruments())
             {
-                // launch a photon packet
-                sourceSystem()->launch(&pp, historyIndex++);
-
-                // peel off towards each instrument
-                for (Instrument* instrument : _instrumentSystem->instruments())
-                {
-                    ppp.launchEmissionPeelOff(&pp, instrument->bfkobs(pp.position()), 1.);
-                    instrument->detect(&ppp);
-                }
+                ppp.launchEmissionPeelOff(&pp, instrument->bfkobs(pp.position()), 1.);
+                instrument->detect(&ppp);
             }
-            logProgress(count);
-            remaining -= count;
         }
+        logProgress(endIndex);
     }
 
 #ifdef LOG_CHUNKS

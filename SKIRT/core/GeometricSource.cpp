@@ -9,6 +9,15 @@
 
 //////////////////////////////////////////////////////////////////////
 
+void GeometricSource::setupSelfBefore()
+{
+    Source::setupSelfBefore();
+
+    _sed->setWavelengthRange(minWavelength(), maxWavelength());
+}
+
+//////////////////////////////////////////////////////////////////////
+
 int GeometricSource::dimension() const
 {
     return _geometry->dimension();

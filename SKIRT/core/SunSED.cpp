@@ -10,10 +10,10 @@
 
 void SunSED::setupSelfBefore()
 {
-    SimulationItem::setupSelfBefore();
+    SED::setupSelfBefore();
 
     _table.open(this, "SunSED", "lambda(m)", "Llambda(W/m)");
-    _Ltot = _table.cdf(_lambdav, _cdfv, 200, 0.1e-6, 20e-6);
+    _Ltot = _table.cdf(_lambdav, _cdfv, 200, minWavelength(), maxWavelength());
 }
 
 //////////////////////////////////////////////////////////////////////

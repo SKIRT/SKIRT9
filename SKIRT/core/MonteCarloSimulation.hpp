@@ -91,13 +91,13 @@ private:
 
     /** This function initializes the progress counter used in logprogress() for the specified
         segment and logs the number of photon packets to be processed. */
-    void initProgress(string segment, size_t numPackets);
+    void initProgress(string segment, size_t numTotal);
 
     /** This function logs a progress message for the segment specified in the initprogress()
         function if the previous message was issued at least 3 seconds ago. The function
         must be called regularly while processing photon packets. The argument specifies the
-        number of photon packets processed since the most recent invocation in the same thread. */
-    void logProgress(size_t extraDone);
+        number of photon packets processed so far. */
+    void logProgress(size_t numDone);
 
     /** This function launches the specified chunk of photon packets from primary sources. */
     void doPrimaryEmissionChunk(size_t firstIndex, size_t numIndices);
@@ -111,7 +111,6 @@ private:
     // *** data members used by the XXXprogress() functions in this class ***
     string _segment;               // a string identifying the photon shooting segment for use in the log message
     size_t _numTotal;              // the total number of photon packages to be processed for this segment
-    std::atomic<size_t> _numDone;  // the number of photon packages processed so far (for all threads)
 };
 
 ////////////////////////////////////////////////////////////////////
