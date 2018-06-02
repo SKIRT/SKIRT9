@@ -25,11 +25,11 @@ void LuminosityProbe::probeSetup()
 
     // create a text file and add the columns
     TextOutFile file(this, "luminosities", "primary source luminosities");
-    file.addColumn("characteristic wavelength (" + units->uwavelength() + ")", 'e', 9);
-    file.addColumn("specific luminosity (" + units->umonluminosity() + ")", 'e', 9);
-    file.addColumn("luminosity in bin (" + units->ubolluminosity() + ")", 'e', 9);
-    for (int i=0; i!=numSources; ++i) file.addColumn("luminosity fraction for source " + std::to_string(i+1)
-                                                     + " (1)", 'e', 9);
+    file.addColumn("wavelength", units->uwavelength(), 'e', 9);
+    file.addColumn("specific luminosity", units->umonluminosity(), 'e', 9);
+    file.addColumn("luminosity in bin", units->ubolluminosity(), 'e', 9);
+    for (int i=0; i!=numSources; ++i)
+        file.addColumn("luminosity fraction for source " + std::to_string(i+1), "", 'e', 9);
 
     // write the rows
     for (int ell=0; ell!=numWavelengths; ++ell)

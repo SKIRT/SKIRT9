@@ -53,12 +53,13 @@ TextOutFile::~TextOutFile()
 
 ////////////////////////////////////////////////////////////////////
 
-void TextOutFile::addColumn(string description, char format, int precision)
+void TextOutFile::addColumn(string quantityDescription, string unitDescription, char format, int precision)
 {
     _formats.push_back(format);
     _precisions.push_back(precision);
 
-    writeLine("# column " + std::to_string(++_ncolumns) + ": " + description);
+    writeLine("# column " + std::to_string(++_ncolumns) + ": " + quantityDescription
+              + (!unitDescription.empty() ? (" (" + unitDescription + ")") : ""));
 }
 
 ////////////////////////////////////////////////////////////////////

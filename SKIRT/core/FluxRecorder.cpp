@@ -371,10 +371,10 @@ void FluxRecorder::calibrateAndWrite()
 
         // open the file and add the column headers
         TextOutFile sedFile(_parentItem, _instrumentName + "_sed", "SED");
-        sedFile.addColumn("lambda (" + units->uwavelength() + ")", 'e', 9);
+        sedFile.addColumn("wavelength", units->uwavelength(), 'e', 9);
         for (const string& name : sedNames)
         {
-            sedFile.addColumn(name + "; " + units->sfluxdensity() + " " + "(" + units->ufluxdensity() + ")", 'e', 9);
+            sedFile.addColumn(name + "; " + units->sfluxdensity(), units->ufluxdensity(), 'e', 9);
         }
 
         // write the column data
@@ -391,10 +391,10 @@ void FluxRecorder::calibrateAndWrite()
         {
             // open the file and add the column headers
             TextOutFile statFile(_parentItem, _instrumentName + "_sedstats", "SED statistics");
-            statFile.addColumn("lambda (" + units->uwavelength() + ")", 'e', 9);
+            statFile.addColumn("wavelength", units->uwavelength(), 'e', 9);
             for (int k=0; k<=maxContributionPower; ++k)
             {
-                statFile.addColumn("Sum[w_i**" + std::to_string(k) + "]", 'e', 9);
+                statFile.addColumn("Sum[w_i**" + std::to_string(k) + "]", "", 'e', 9);
             }
             statFile.writeLine("# --> w_i is luminosity contribution (in W/Hz) from i_th launched photon");
 
