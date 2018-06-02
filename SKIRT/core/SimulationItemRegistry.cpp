@@ -32,6 +32,7 @@
 #include "HyperboloidShellGeometry.hpp"
 #include "InstrumentSystem.hpp"
 #include "ListWavelengthGrid.hpp"
+#include "LuminosityProbe.hpp"
 #include "LogWavelengthGrid.hpp"
 #include "MollweideProjection.hpp"
 #include "MonteCarloSimulation.hpp"
@@ -158,6 +159,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ProbeSystem>();
     ItemRegistry::add<Probe>();
     ItemRegistry::add<WavelengthProbe>();
+    ItemRegistry::add<LuminosityProbe>();
 
     // instrument system and instruments
     ItemRegistry::add<InstrumentSystem>();

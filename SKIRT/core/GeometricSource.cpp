@@ -32,6 +32,14 @@ double GeometricSource::luminosity() const
 
 //////////////////////////////////////////////////////////////////////
 
+double GeometricSource::specificLuminosity(double wavelength) const
+{
+    if (wavelength < minWavelength() || wavelength > maxWavelength()) return 0.;
+    return _sed->specificLuminosity(wavelength) * luminosity();
+}
+
+//////////////////////////////////////////////////////////////////////
+
 void GeometricSource::launch(PhotonPacket* pp, size_t historyIndex, double L) const
 {
     // generate a random position from the geometry

@@ -67,9 +67,16 @@ public:
         none of these symmetries. */
     virtual int dimension() const = 0;
 
-    /** This function returns the bolometric luminosity \f$L\f$ of the source across its spatial
-        and spectral domain. */
+    /** This function returns the luminosity \f$L\f$ (i.e. radiative power) of the source
+        integrated over the wavelength range of primary sources (configured for the source system
+        as a whole) and across its complete spatial domain. */
     virtual double luminosity() const = 0;
+
+    /** This function returns the specific luminosity \f$L_\lambda\f$ (i.e. radiative power per
+        unit of wavelength) of the source at the specified wavelength, or zero if the wavelength is
+        outside the wavelength range of primary sources (configured for the source system as a
+        whole) or if the source simply does not emit at the wavelength. */
+    virtual double specificLuminosity(double wavelength) const = 0;
 
     /** This function may perform some preparations for launching photon packets. It is called in
         serial mode before each segment of photon packet launches, providing the history indices

@@ -47,9 +47,16 @@ public:
      * its source, except if there is a nonzero bulk velocity. */
     int dimension() const override;
 
-    /** This function returns the bolometric luminosity \f$L\f$ of the source across its spatial
-        and spectral domain. */
+    /** This function returns the luminosity \f$L\f$ (i.e. radiative power) of the source
+        integrated over the wavelength range of primary sources (configured for the source system
+        as a whole) and across its complete spatial domain. */
      double luminosity() const override;
+
+     /** This function returns the specific luminosity \f$L_\lambda\f$ (i.e. radiative power per
+         unit of wavelength) of the source at the specified wavelength, or zero if the wavelength is
+         outside the wavelength range of primary sources (configured for the source system as a
+         whole) or if the source simply does not emit at the wavelength. */
+     double specificLuminosity(double wavelength) const override;
 
      /** This function causes the photon packet \em pp to be launched from the source using the
          given history index and luminosity contribution. The position and propagation direction of
