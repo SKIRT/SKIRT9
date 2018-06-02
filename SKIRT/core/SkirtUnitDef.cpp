@@ -256,7 +256,7 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("ExtragalacticUnits", "neutralmonluminosity", "Lsun");
     addDefaultUnit("ExtragalacticUnits", "neutralfluxdensity", "W/m2");
     addDefaultUnit("ExtragalacticUnits", "neutralsurfacebrightness", "W/m2/arcsec2");
-    addDefaultUnit("ExtragalacticUnits", "wavelengthmonluminosity", "Lsun/m");
+    addDefaultUnit("ExtragalacticUnits", "wavelengthmonluminosity", "Lsun/micron");
     addDefaultUnit("ExtragalacticUnits", "wavelengthfluxdensity", "W/m2/micron");
     addDefaultUnit("ExtragalacticUnits", "wavelengthsurfacebrightness", "W/m2/micron/arcsec2");
     addDefaultUnit("ExtragalacticUnits", "frequencymonluminosity", "Lsun/Hz");
