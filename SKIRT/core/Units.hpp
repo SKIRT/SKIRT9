@@ -32,8 +32,8 @@ class Units : public SimulationItem
         \f$F_\lambda\f$; and Frequency indicates \f$F_\nu\f$. */
     ENUM_DEF(FluxOutputStyle, Neutral, Wavelength, Frequency)
     ENUM_VAL(FluxOutputStyle, Neutral, "neutral: λ F_λ = ν F_ν")
-    ENUM_VAL(FluxOutputStyle, Wavelength, "wavelength: F_λ")
-    ENUM_VAL(FluxOutputStyle, Frequency, "frequency: F_ν")
+    ENUM_VAL(FluxOutputStyle, Wavelength, "per unit of wavelength: F_λ")
+    ENUM_VAL(FluxOutputStyle, Frequency, "per unit of frequency: F_ν")
     ENUM_END()
 
     ITEM_ABSTRACT(Units, SimulationItem, "a units system")

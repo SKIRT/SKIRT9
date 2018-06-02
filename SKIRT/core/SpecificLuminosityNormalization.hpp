@@ -15,6 +15,14 @@
     certain wavelength. */
 class SpecificLuminosityNormalization : public LuminosityNormalization
 {
+    /** The enumeration type indicating the specific luminosity unit style, e.g. whether to use
+        specific luminosity per unit of wavelength or per unit of frequency. */
+    ENUM_DEF(UnitStyle, wavelengthmonluminosity, frequencymonluminosity, neutralmonluminosity)
+    ENUM_VAL(UnitStyle, wavelengthmonluminosity, "per unit of wavelength: L_λ")
+    ENUM_VAL(UnitStyle, frequencymonluminosity, "per unit of frequency: L_ν")
+    ENUM_VAL(UnitStyle, neutralmonluminosity, "neutral: λ L_λ = ν L_ν")
+    ENUM_END()
+
     ITEM_CONCRETE(SpecificLuminosityNormalization, LuminosityNormalization,
                   "source normalization through the specific luminosity at a given wavelength")
 
@@ -23,8 +31,11 @@ class SpecificLuminosityNormalization : public LuminosityNormalization
         ATTRIBUTE_MIN_VALUE(wavelength, "1 A")
         ATTRIBUTE_MAX_VALUE(wavelength, "1 m")
 
+    PROPERTY_ENUM(unitStyle, UnitStyle, "the luminosity unit style")
+        ATTRIBUTE_DEFAULT_VALUE(unitStyle, "wavelengthmonluminosity")
+
     PROPERTY_DOUBLE(specificLuminosity, "the specific luminosity at the given wavelength")
-        ATTRIBUTE_QUANTITY(specificLuminosity, "wavelengthmonluminosity")
+        ATTRIBUTE_QUANTITY(specificLuminosity, "@unitStyle")
         ATTRIBUTE_MIN_VALUE(specificLuminosity, "]0")
 
     ITEM_END()
