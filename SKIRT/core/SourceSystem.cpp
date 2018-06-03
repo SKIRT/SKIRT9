@@ -57,6 +57,13 @@ int SourceSystem::numSources() const
 
 //////////////////////////////////////////////////////////////////////
 
+Range SourceSystem::wavelengthRange() const
+{
+    return Range(_minWavelength, _maxWavelength);
+}
+
+//////////////////////////////////////////////////////////////////////
+
 double SourceSystem::luminosity() const
 {
     return _L;

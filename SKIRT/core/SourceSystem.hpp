@@ -9,6 +9,7 @@
 #include "SimulationItem.hpp"
 #include "Array.hpp"
 #include "Source.hpp"
+#include "WavelengthRangeInterface.hpp"
 class PhotonPacket;
 
 //////////////////////////////////////////////////////////////////////
@@ -57,7 +58,7 @@ class PhotonPacket;
     \f$\xi\f$ is the \em emissionBias property value of the source system, and the sums range over
     all sources in the source system.
 */
-class SourceSystem : public SimulationItem
+class SourceSystem : public SimulationItem, public WavelengthRangeInterface
 {
     ITEM_CONCRETE(SourceSystem, SimulationItem, "a primary source system")
 
@@ -111,6 +112,10 @@ public:
 
     /** This function returns the number of sources in the source system. */
     int numSources() const;
+
+    /** This function returns the wavelength range configured by the user for this source system.
+        It implements the WavelengthRangeInterface interface. */
+    Range wavelengthRange() const override;
 
     /** This function returns the bolometric luminosity \f$L\f$ of the source system across its
         spatial and spectral domain, which is the sum of the luminosities of the sources in the
