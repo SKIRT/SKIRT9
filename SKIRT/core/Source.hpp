@@ -50,11 +50,6 @@ class Source : public SimulationItem
 
     //============= Construction - Setup - Destruction =============
 
-public:
-    /** This function sets the wavelength range for the source. It is called by the source system
-        during setup \em before the setupSelfBefore() function is invoked. */
-    void setWavelengthRange(double minWavelength, double maxWavelength);
-
 protected:
     /** This function caches the simulation's random generator for use by subclasses. */
     void setupSelfBefore() override;
@@ -97,19 +92,9 @@ protected:
     /** This function returns the simulation's random generator as a service to subclasses. */
     Random* random() const { return _random; }
 
-    /** This function returns the minimum of the source wavelength range. */
-    double minWavelength() const { return _minWavelength; }
-
-    /** This function returns the maximum of the source wavelength range. */
-    double maxWavelength() const { return _maxWavelength; }
-
     //======================== Data Members ========================
 
 private:
-    // data members initialized during setup by setWavelengthRange()
-    double _minWavelength{0};
-    double _maxWavelength{0};
-
     // data members initialized during setup by setupSelfBefore()
     Random* _random{nullptr};
 };

@@ -6,15 +6,7 @@
 #include "GeometricSource.hpp"
 #include "PhotonPacket.hpp"
 #include "Random.hpp"
-
-//////////////////////////////////////////////////////////////////////
-
-void GeometricSource::setupSelfBefore()
-{
-    Source::setupSelfBefore();
-
-    _sed->setWavelengthRange(minWavelength(), maxWavelength());
-}
+#include "WavelengthRangeInterface.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -34,7 +26,7 @@ double GeometricSource::luminosity() const
 
 double GeometricSource::specificLuminosity(double wavelength) const
 {
-    if (wavelength < minWavelength() || wavelength > maxWavelength()) return 0.;
+    if (!interface<WavelengthRangeInterface>()->wavelengthRange().contains(wavelength)) return 0.;
     return _sed->specificLuminosity(wavelength) * luminosity();
 }
 

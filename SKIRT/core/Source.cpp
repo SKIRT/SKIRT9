@@ -5,14 +5,6 @@
 
 //////////////////////////////////////////////////////////////////////
 
-void Source::setWavelengthRange(double minWavelength, double maxWavelength)
-{
-    _minWavelength = minWavelength;
-    _maxWavelength = maxWavelength;
-}
-
-//////////////////////////////////////////////////////////////////////
-
 void Source::setupSelfBefore()
 {
     SimulationItem::setupSelfBefore();

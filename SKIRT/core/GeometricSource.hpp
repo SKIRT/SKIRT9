@@ -34,12 +34,6 @@ class GeometricSource : public Source
 
     ITEM_END()
 
-    //============= Construction - Setup - Destruction =============
-
-protected:
-    /** This passes the source wavelength range on to the %SED. */
-    void setupSelfBefore() override;
-
     //======================== Other Functions =======================
 
 public:

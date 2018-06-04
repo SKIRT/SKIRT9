@@ -6,15 +6,6 @@
 
 //////////////////////////////////////////////////////////////////////
 
-void SourceSystem::setupSelfBefore()
-{
-    SimulationItem::setupSelfBefore();
-
-    for (auto source : _sources) source->setWavelengthRange(_minWavelength, _maxWavelength);
-}
-
-//////////////////////////////////////////////////////////////////////
-
 void SourceSystem::setupSelfAfter()
 {
     SimulationItem::setupSelfAfter();

@@ -8,14 +8,6 @@
 
 //////////////////////////////////////////////////////////////////////
 
-void SED::setWavelengthRange(double minWavelength, double maxWavelength)
-{
-    _minWavelength = minWavelength;
-    _maxWavelength = maxWavelength;
-}
-
-//////////////////////////////////////////////////////////////////////
-
 void SED::setupSelfBefore()
 {
     SimulationItem::setupSelfBefore();

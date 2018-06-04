@@ -88,9 +88,29 @@ Item* SimulationItem::find(bool setup, SimulationItem* castToRequestedType(Item*
 
 ////////////////////////////////////////////////////////////////////
 
-vector<SimulationItem*> SimulationItem::interfaceCandidates(const std::type_info& /*interfaceTypeInfo*/)
+SimulationItem* SimulationItem::interface(bool setup, bool implementsRequestedInterface(SimulationItem*)) const
 {
-    return vector<SimulationItem*>({this});
+    for (SimulationItem* candidate : interfaceCandidates())
+    {
+        if (implementsRequestedInterface(candidate))
+        {
+            if (setup) candidate->setup();
+            return candidate;
+        }
+    }
+    if (setup) throw FATALERROR("No simulation item implementing requested interface found in hierarchy");
+    return nullptr;
+}
+
+////////////////////////////////////////////////////////////////////
+
+vector<SimulationItem*> SimulationItem::interfaceCandidates() const
+{
+    vector<SimulationItem*> result({const_cast<SimulationItem*>(this)});  // cast away const
+    if (parent())
+        for (auto item : static_cast<SimulationItem*>(parent())->interfaceCandidates())
+            result.push_back(item);
+    return result;
 }
 
 ////////////////////////////////////////////////////////////////////

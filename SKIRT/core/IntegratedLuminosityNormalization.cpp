@@ -18,7 +18,7 @@ double IntegratedLuminosityNormalization::luminosity(SED* sed) const
     double maxWavelength = _wavelengthRange == WavelengthRange::Custom ? _maxWavelength : 1;
 
     // get the normalized integrated luminosity from the sed
-    double L = sed->integratedLuminosity(minWavelength, maxWavelength);
+    double L = sed->integratedLuminosity(Range(minWavelength, maxWavelength));
     return _integratedLuminosity / L;
 }
 

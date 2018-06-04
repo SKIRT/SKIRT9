@@ -35,7 +35,7 @@ public:
     /** This function returns the normalized integrated luminosity \f$L\f$ (i.e. radiative power)
         over the specified wavelength range, or zero if the range is fully outside of the
         distribution's spectral range. */
-    double integratedLuminosity(double minWavelength, double maxWavelength) const override;
+    double integratedLuminosity(const Range& wavelengthRange) const override;
 
     /** This function draws a random wavelength from the normalized spectral energy distribution
         represented by this object. */

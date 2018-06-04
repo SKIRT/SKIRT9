@@ -7,6 +7,7 @@
 #define SED_HPP
 
 #include "SimulationItem.hpp"
+#include "Range.hpp"
 class Random;
 
 ////////////////////////////////////////////////////////////////////
@@ -26,20 +27,9 @@ class SED : public SimulationItem
 
     //============= Construction - Setup - Destruction =============
 
-public:
-    /** This function sets the wavelength range for the %SED. It must be called by its owning
-        source during setup \em before the setupSelfBefore() function is invoked. */
-    void setWavelengthRange(double minWavelength, double maxWavelength);
-
 protected:
     /** This function caches the simulation's random generator for use by subclasses. */
     void setupSelfBefore() override;
-
-    /** This function returns the minimum of the %SED wavelength range. */
-    double minWavelength() const { return _minWavelength; }
-
-    /** This function returns the maximum of the %SED wavelength range. */
-    double maxWavelength() const { return _maxWavelength; }
 
     //======================== Other Functions =======================
 
@@ -52,7 +42,7 @@ public:
     /** This function returns the normalized integrated luminosity \f$L\f$ (i.e. radiative power)
         over the specified wavelength range, or zero if the range is fully outside of the
         distribution's spectral range. */
-    virtual double integratedLuminosity(double minWavelength, double maxWavelength) const = 0;
+    virtual double integratedLuminosity(const Range& wavelengthRange) const = 0;
 
     /** This function draws a random wavelength from the normalized spectral energy distribution
         represented by this object. */
@@ -67,10 +57,6 @@ protected:
     //======================== Data Members ========================
 
 private:
-    // data members initialized during setup by setWavelengthRange()
-    double _minWavelength{0};
-    double _maxWavelength{0};
-
     // data member initialized during setup
     Random* _random{nullptr};
 };

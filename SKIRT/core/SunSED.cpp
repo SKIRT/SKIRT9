@@ -5,6 +5,7 @@
 
 #include "SunSED.hpp"
 #include "Random.hpp"
+#include "WavelengthRangeInterface.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -13,7 +14,7 @@ void SunSED::setupSelfBefore()
     SED::setupSelfBefore();
 
     _table.open(this, "SunSED", "lambda(m)", "Llambda(W/m)");
-    _Ltot = _table.cdf(_lambdav, _cdfv, 200, minWavelength(), maxWavelength());
+    _Ltot = _table.cdf(_lambdav, _cdfv, 200, interface<WavelengthRangeInterface>()->wavelengthRange());
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -25,10 +26,10 @@ double SunSED::specificLuminosity(double wavelength) const
 
 //////////////////////////////////////////////////////////////////////
 
-double SunSED::integratedLuminosity(double minWavelength, double maxWavelength) const
+double SunSED::integratedLuminosity(const Range& wavelengthRange) const
 {
     Array lambdav, cdfv;  // the contents of these arrays is not used, so this could be optimized if needed
-    return _table.cdf(lambdav, cdfv, 1, minWavelength, maxWavelength) / _Ltot;
+    return _table.cdf(lambdav, cdfv, 1, wavelengthRange) / _Ltot;
 }
 
 //////////////////////////////////////////////////////////////////////

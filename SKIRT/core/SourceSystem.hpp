@@ -95,9 +95,6 @@ class SourceSystem : public SimulationItem, public WavelengthRangeInterface
     //============= Construction - Setup - Destruction =============
 
 protected:
-    /** This function passes the source wavelength range on to all sources. */
-    void setupSelfBefore() override;
-
     /** This function obtains the bolometric luminosity of each source for later use. */
     void setupSelfAfter() override;
 

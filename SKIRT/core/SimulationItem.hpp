@@ -7,7 +7,6 @@
 #define SIMULATIONITEM_HPP
 
 #include "ItemInfo.hpp"
-#include <typeinfo>
 
 ////////////////////////////////////////////////////////////////////
 
@@ -88,24 +87,25 @@ public:
 
     /** This template function looks for an interface of a specific type offered by the receiving
         simulation item, or by one of its self-designated delegates. The interface type is
-        specified as the template argument. If an interface of the requested type is found, the
-        function returns a pointer to it, or rather to the simulation item that implements the
-        interface after it has been dynamically cast to the requested interface type. If no
-        interface of the requested type is found, the function returns a null pointer. Thus the
-        caller must check the returned pointer before dereferencing it.
+        specified as the template argument. By default the receiving simulation item and its
+        ancestors are considered as candidates for implementing the interface, but a simulation
+        item subclass can provide a different list of candidates to which the interface
+        implementation can be delegated by overriding the implementation of the
+        interfaceCandidates() function.
 
-        By default only the receiving simulation item is considered as a candidate for implementing
-        the interface, but a simulation item subclass can provide a longer list of candidates to
-        which the interface implementation can be delegated by overriding the implementation of the
-        interfaceCandidates() function. */
-    template<class T> T* interface()
+        If the \em setup flag is true (the default value), the function behaves as follows. If an
+        interface of the requested type is found, the function invokes the setup() function on the
+        simulation item that implements the interface and then it returns a pointer to the item, or
+        rather to the item after it has been dynamically cast to the requested interface type. If
+        no appropriate item is found, a FatalError is thrown.
+
+        If the \em setup flag is false, the function does not perform setup on the returned
+        item/interface, and if no appropriate item is found, the function returns a null pointer.
+        */
+    template<class T> T* interface(bool setup = true) const
     {
-        for (SimulationItem* candidate : interfaceCandidates(typeid(T)))
-        {
-            T* interface = dynamic_cast<T*>(candidate);
-            if (interface) return interface;
-        }
-        return nullptr;
+        return dynamic_cast<T*>(interface(setup,
+           [] (SimulationItem* item) { return dynamic_cast<T*>(item) != nullptr; } ));
     }
 
 private:
@@ -116,14 +116,21 @@ private:
         */
     Item* find(bool setup, SimulationItem* castToRequestedType(Item*)) const;
 
+    /** This is the private implementation used by the interface() template function. The first
+        argument has the same semantics as the \em setup argument of the template function. The
+        second argument accepts a function that returns true if the given simulation item
+        implements the requested interface, and false otherwise. */
+    SimulationItem* interface(bool setup, bool implementsRequestedInterface(SimulationItem*)) const;
+
 protected:
     /** This virtual function is for use only by the interface() template function. It returns a
         list of simulation items that should be considered in the search for an item that
         implements the requested interface. The first item in the list that actually implements the
         interface will be returned by the interface() function. The implementation in this abstract
-        class returns a list containing just the receiving item. A simulation item subclass can
-        override this function to provide a longer list of candidates. */
-    virtual vector<SimulationItem*> interfaceCandidates(const std::type_info& interfaceTypeInfo);
+        class returns a list containing the receiving item and its ancestors, in ascending order. A
+        simulation item subclass can override this function to provide a different list of
+        candidates. */
+    virtual vector<SimulationItem*> interfaceCandidates() const;
 
     //======================== Data Members ========================
 

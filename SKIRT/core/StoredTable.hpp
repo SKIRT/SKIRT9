@@ -9,6 +9,7 @@
 #include "Array.hpp"
 #include "CompileTimeUtils.hpp"
 #include "NR.hpp"
+#include "Range.hpp"
 #include "StoredTableImpl.hpp"
 #include <array>
 
@@ -299,7 +300,7 @@ public:
     // ------------------------------------------
 
     /** This function constructs the normalized cumulative distribution function for the tabulated
-        quantity across a given range in the first axis (the \em xmin and \em xmax arguments),
+        quantity across a given range in the first axis (the \em xrange argument),
         using given fixed values for the other axes, if any (the arguments at the end of the list).
         If the internal representation of the table includes at least the specified number of
         minimum bins (the \em minBins argument) in the specified range of the first axis, then the
@@ -314,32 +315,32 @@ public:
         cases, xv[0]=xmin, xv[n]=xmax, Yv[0]=0, and Yv[n]=1. The function returns the normalization
         factor, i.e. the value of Yv[n] before normalization.
 
-        If any of the axes values, including the \em xmin or \em xmax specifying the range for the
+        If any of the axes values, including the \em xrange values specifying the range for the
         first axis, are out of range of the internal grid, extra quantity values are fabricated
         according to the policy set by the \em clamp flag in the open() function. */
     template <typename... Values, typename = std::enable_if_t<CompileTimeUtils::isFloatArgList<N-1, Values...>()>>
-    double cdf(Array& xv, Array& Yv, size_t minBins, double xmin, double xmax, Values... values) const
+    double cdf(Array& xv, Array& Yv, size_t minBins, Range xrange, Values... values) const
     {
         // there must be at least one bin  (n = number of bins; n+1 = number of border points)
         size_t n = std::max(static_cast<size_t>(1), minBins);
 
         // if the number of grid points is sufficient, copy the relevant portion of the internal axis grid
-        size_t minRight = std::lower_bound(_axBeg[0], _axBeg[0]+_axLen[0], xmin) - _axBeg[0];
-        size_t maxRight = std::lower_bound(_axBeg[0], _axBeg[0]+_axLen[0], xmax) - _axBeg[0];
+        size_t minRight = std::lower_bound(_axBeg[0], _axBeg[0]+_axLen[0], xrange.min()) - _axBeg[0];
+        size_t maxRight = std::lower_bound(_axBeg[0], _axBeg[0]+_axLen[0], xrange.max()) - _axBeg[0];
         if (minRight + n <= maxRight  )
         {
             n = 1 + maxRight - minRight;  // n = number of bins
             xv.resize(n+1);               // n+1 = number of border points
             size_t i = 0;                 // i = index in target array
-            xv[i++] = xmin;               // j = index in internal grid array
+            xv[i++] = xrange.min();       // j = index in internal grid array
             for (size_t j = minRight; j < maxRight; ) xv[i++] = _axBeg[0][j++];
-            xv[i++] = xmax;
+            xv[i++] = xrange.max();
         }
         // otherwise, build a new grid with the requested number of bins
         else
         {
-            if (_axLog[0]) NR::buildLogGrid(xv, xmin, xmax, n);
-            else NR::buildLinearGrid(xv, xmin, xmax, n);
+            if (_axLog[0]) NR::buildLogGrid(xv, xrange.min(), xrange.max(), n);
+            else NR::buildLinearGrid(xv, xrange.min(), xrange.max(), n);
         }
 
         // resize Y array; also sets Yv[0] to zero
