@@ -31,8 +31,10 @@
 #include "HyperboloidGeometry.hpp"
 #include "HyperboloidShellGeometry.hpp"
 #include "InstrumentSystem.hpp"
+#include "LinearWavelengthDistribution.hpp"
 #include "ListWavelengthGrid.hpp"
 #include "LuminosityProbe.hpp"
+#include "LogWavelengthDistribution.hpp"
 #include "LogWavelengthGrid.hpp"
 #include "MollweideProjection.hpp"
 #include "MonteCarloSimulation.hpp"
@@ -103,6 +105,12 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // SEDs
     ItemRegistry::add<SED>();
     ItemRegistry::add<SunSED>();
+
+    // Wavelength distributions
+    ItemRegistry::add<WavelengthDistribution>();
+    ItemRegistry::add<RangeWavelengthDistribution>();
+    ItemRegistry::add<LinearWavelengthDistribution>();
+    ItemRegistry::add<LogWavelengthDistribution>();
 
     // geometries
     ItemRegistry::add<Geometry>();

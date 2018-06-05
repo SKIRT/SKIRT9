@@ -21,24 +21,23 @@ class SunSED : public SED
     //============= Construction - Setup - Destruction =============
 
 protected:
-    /** This function opens the stored table resource tabulating the solar %SED. */
+    /** This function opens the stored table resource tabulating the solar %SED and sets up the
+        cumulative distribution that will be used to sample random wavelengths. */
     void setupSelfBefore() override;
 
     //======================== Other Functions =======================
 
 public:
     /** This function returns the normalized specific luminosity \f$L_\lambda\f$ (i.e. radiative
-        power per unit of wavelength) at the specified wavelength, or zero if the wavelength is
-        outside of the distribution's spectral range. */
+        power per unit of wavelength) at the specified wavelength. */
     double specificLuminosity(double wavelength) const override;
 
     /** This function returns the normalized integrated luminosity \f$L\f$ (i.e. radiative power)
-        over the specified wavelength range, or zero if the range is fully outside of the
-        distribution's spectral range. */
+        over the specified wavelength range. */
     double integratedLuminosity(const Range& wavelengthRange) const override;
 
-    /** This function draws a random wavelength from the normalized spectral energy distribution
-        represented by this object. */
+    /** This function draws a random wavelength from the normalized spectral energy distribution.
+        */
     double generateWavelength() const override;
 
     //======================== Data Members ========================

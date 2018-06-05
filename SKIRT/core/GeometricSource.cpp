@@ -37,8 +37,9 @@ void GeometricSource::launch(PhotonPacket* pp, size_t historyIndex, double L) co
     // generate a random position from the geometry
     Position bfr = _geometry->generatePosition();
 
-    // generate a random wavelength from the SED
+    // generate a random wavelength from the SED and/or from the bias distribution
     double lambda = _sed->generateWavelength();
+    // lambda = wavelengthBiasDistribution()->generateWavelength();
 
     // launch the photon packet with isotropic direction
     pp->launch(historyIndex, lambda, L, bfr, random()->direction());

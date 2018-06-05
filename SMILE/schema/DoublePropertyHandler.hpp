@@ -24,6 +24,9 @@ public:
     // ================== Overriding base class functions ==================
 
 public:
+    /** Returns true if the value of the handled property is nonzero, and false if it is zero. */
+    bool isTrueInCondition() const override;
+
     /** Returns true if the handled property has a valid default value, or false if not. */
     bool hasDefaultValue() const override;
 

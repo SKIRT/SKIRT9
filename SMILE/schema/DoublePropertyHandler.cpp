@@ -10,6 +10,13 @@
 
 ////////////////////////////////////////////////////////////////////
 
+bool DoublePropertyHandler::isTrueInCondition() const
+{
+    return value() != 0;
+}
+
+////////////////////////////////////////////////////////////////////
+
 bool DoublePropertyHandler::hasDefaultValue() const
 {
     return isValidDouble(property()->defaultValue());

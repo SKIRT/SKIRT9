@@ -81,14 +81,12 @@ class SourceSystem : public SimulationItem, public WavelengthRangeInterface
         ATTRIBUTE_MIN_VALUE(sourceBias, "[0")
         ATTRIBUTE_MAX_VALUE(sourceBias, "1]")
         ATTRIBUTE_DEFAULT_VALUE(sourceBias, "0.5")
-        ATTRIBUTE_SILENT(sourceBias)
 
     PROPERTY_DOUBLE(numPacketsMultiplier,
                     "the multiplier on the number of photon packets launched from primary sources")
         ATTRIBUTE_MIN_VALUE(numPacketsMultiplier, "]0")
         ATTRIBUTE_MAX_VALUE(numPacketsMultiplier, "1000]")
         ATTRIBUTE_DEFAULT_VALUE(numPacketsMultiplier, "1")
-        ATTRIBUTE_SILENT(numPacketsMultiplier)
 
     ITEM_END()
 

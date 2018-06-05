@@ -40,6 +40,19 @@ public:
 
     /** This function returns true if the given value is inside the range, and false otherwise. */
     bool contains(double x) const { return x >= _min && x <= _max; }
+
+    /** This function returns true if the range is empty (its minimum is larger than or equal to
+        its maximum), and false otherwise. */
+    bool empty() const { return _min >= _max; }
+
+    /** This function updates the range so that it represents the intersection of the original
+        range with the other range given as an argument. If the two ranges do not overlap, the
+        resulting range will have a minimum larger than or equal to its maximum. */
+    void intersect(const Range& range)
+    {
+        if (_min < range._min) _min = range._min;
+        if (_max > range._max) _max = range._max;
+    }
 };
 
 //////////////////////////////////////////////////////////////////////
