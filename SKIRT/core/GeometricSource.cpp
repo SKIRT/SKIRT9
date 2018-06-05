@@ -38,11 +38,27 @@ void GeometricSource::launch(PhotonPacket* pp, size_t historyIndex, double L) co
     Position bfr = _geometry->generatePosition();
 
     // generate a random wavelength from the SED and/or from the bias distribution
-    double lambda = _sed->generateWavelength();
-    // lambda = wavelengthBiasDistribution()->generateWavelength();
+    double lambda, w;
+    double xi = wavelengthBias();
+    if (!xi)
+    {
+        // no biasing -- simply use the intrinsic spectral distribution
+        lambda = _sed->generateWavelength();
+        w = 1.;
+    }
+    else
+    {
+        // biasing -- use one or the other distribution
+        if (random()->uniform() >= xi) lambda = sed()->generateWavelength();
+        else lambda = wavelengthBiasDistribution()->generateWavelength();
+        // calculate the compensating weight factor
+        double s = sed()->specificLuminosity(lambda);
+        double d = wavelengthBiasDistribution()->probability(lambda);
+        w = s / ((1-xi)*s + xi*d);
+    }
 
     // launch the photon packet with isotropic direction
-    pp->launch(historyIndex, lambda, L, bfr, random()->direction());
+    pp->launch(historyIndex, lambda, L*w, bfr, random()->direction());
 }
 
 //////////////////////////////////////////////////////////////////////

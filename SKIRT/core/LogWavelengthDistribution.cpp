@@ -10,6 +10,8 @@
 
 void LogWavelengthDistribution::setupSelfBefore()
 {
+    RangeWavelengthDistribution::setupSelfBefore();
+
     _logMin = log(range().min());
     _logWidth = log(range().max()) - log(range().min());
 }
