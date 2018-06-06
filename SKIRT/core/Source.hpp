@@ -26,7 +26,7 @@ class Random;
     Furthermore, each source has a function for launching a photon packet that proceeds roughly
     as follows:
       - Sample a location from the spatial density distribution.
-      - Sample a wavelength from the SED at that location.
+      - Sample a wavelength from the SED at that location (also see below).
       - Determine the corresponding (possibly biased) luminosity weight
       - Determine the rest-frame angular distribution of the emission at that location and at
         that wavelength, i.e. an object offering the AngularDistribution interface (functions
@@ -36,6 +36,21 @@ class Random;
         given a propagation direction)
       - Determine the bulk velocity of the source at that location
       - Pass the items listed above to the photon packet launch procedure
+
+    Wavelengths for new photon packets can be sampled from the intrinsic spectral distribution of
+    the source \f$s(\lambda)\f$ and/or from a \em bias wavelength distribution \f$b(\lambda)\f$. Both
+    the bias fraction \f$\xi\f$ and the bias distribution \f$b(\lambda)\f$ can be configured by the
+    user. Given these distributions and bias factor, the composite distribution \f$q(\lambda)\f$ is
+
+    \f[ q(\lambda) = (1-\xi) s(\lambda) + \xi b(\lambda) \f]
+
+    and the corresponding biasing weight factor becomes
+
+    \f[ w(\lambda) = \frac{s(\lambda)}{q(\lambda)} = \frac{s(\lambda)}{(1-\xi) s(\lambda) + \xi b(\lambda)} \f]
+
+    By default, half of the photon packet wavelengths are sampled from each of the distributions,
+    and the default bias distribution spreads wavelengths logarithmically over the wavelength range
+    of the source (more precisely, the logarithm of the wavelength is distributed uniformly).
 */
 class Source : public SimulationItem
 {

@@ -64,8 +64,8 @@ void GeometricSource::launch(PhotonPacket* pp, size_t historyIndex, double L) co
         else
         {
             // regular composite bias weight
-            double d = wavelengthBiasDistribution()->probability(lambda);
-            w = s / ((1-xi)*s + xi*d);
+            double b = wavelengthBiasDistribution()->probability(lambda);
+            w = s / ((1-xi)*s + xi*b);
         }
     }
 
