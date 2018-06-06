@@ -7,6 +7,7 @@
 #define NR_HPP
 
 #include "Array.hpp"
+#include "Range.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -375,7 +376,7 @@ namespace NR
 
     //=============== Constructing cumulative distribution functions ==================
 
-    /** Given a distribution discretized over \f$N\f$ points \f[p_i \qquad i=0,\dots,N-1\f] this
+    /** Given a discrete distribution over \f$N\f$ points \f[p_i \qquad i=0,\dots,N-1\f] this
         function builds the corresponding normalized cumulative distribution \f[P_0=0;\quad
         P_{i+1}=\frac{\sum_{j=0}^i p_j}{\sum_{j=0}^{N-1} p_j} \qquad i=0,\dots,N-1\f] with
         \f$N+1\f$ elements. In this version of the function, the source distribution is specified
@@ -389,7 +390,7 @@ namespace NR
         Pv /= Pv[n];
     }
 
-    /** Given a distribution discretized over \f$N\f$ points \f[p_i \qquad i=0,\dots,N-1\f] this
+    /** Given a discrete distribution over \f$N\f$ points \f[p_i \qquad i=0,\dots,N-1\f] this
         function builds the corresponding normalized cumulative distribution \f[P_0=0;\quad
         P_{i+1}=\frac{\sum_{j=0}^i p_j}{\sum_{j=0}^{N-1} p_j} \qquad i=0,\dots,N-1\f] with
         \f$N+1\f$ elements. In this version of the function, the source distribution is specified
@@ -401,6 +402,41 @@ namespace NR
     {
         Pv.resize(n+1);  // also sets Pv[0] to zero
         for (int i=0; i<n; i++) Pv[i+1] = Pv[i] + pv(i);
+        Pv /= Pv[n];
+    }
+
+    /** Given the tabulated probability density for a continuous probability distribution, this
+        function constructs the normalized cumulative distribution function across a given range.
+
+        TODO: test and provide detailed documentation.
+
+        */
+    template < double interpolateFunction(double, double, double, double, double) >
+    void cdf(Array& xv, Array& pv, Array& Pv, const Array& inxv, const Array& inpv, Range xrange)
+    {
+        // copy the relevant portion of the axis grid
+        size_t minRight = std::lower_bound(begin(inxv), end(inxv), xrange.min()) - begin(inxv);
+        size_t maxRight = std::lower_bound(begin(inxv), end(inxv), xrange.max()) - begin(inxv);
+        size_t n = 1 + maxRight - minRight;  // n = number of bins
+        xv.resize(n+1);                      // n+1 = number of border points
+        size_t i = 0;                        // i = index in target array
+        xv[i++] = xrange.min();              // j = index in input array
+        for (size_t j = minRight; j < maxRight; ) xv[i++] = inxv[j++];
+        xv[i++] = xrange.max();
+
+        // interpolate or copy the corresponding probability density values
+        pv.resize(n+1);
+        pv[0] = minRight == 0 ? 0. :
+                interpolateFunction(xv[0], inxv[minRight-1], inxv[minRight], inpv[minRight-1], inpv[minRight]);
+        for (size_t i = 1; i < n; ++i) xv[i] = inxv[minRight+i-1];
+        pv[n] = maxRight == inxv.size() ? 0. :
+                interpolateFunction(xv[n], inxv[maxRight-1], inxv[maxRight], inpv[maxRight-1], inpv[maxRight]);
+
+        // calculate cumulative values corresponding to each x grid point (and any extra axis values)
+        Pv.resize(n+1);                     // also sets Pv[0] to zero
+        for (size_t i = 0; i!=n; ++i) Pv[i+1] = Pv[i] + inpv[i]*(xv[i+1]-xv[i]);
+
+        // normalize cumulative distribution
         Pv /= Pv[n];
     }
 }

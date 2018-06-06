@@ -21,6 +21,7 @@
 #include "EinastoGeometry.hpp"
 #include "ExpDiskGeometry.hpp"
 #include "ExtragalacticUnits.hpp"
+#include "FileWavelengthDistribution.hpp"
 #include "FileWavelengthGrid.hpp"
 #include "FrameInstrument.hpp"
 #include "FullInstrument.hpp"
@@ -111,6 +112,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<RangeWavelengthDistribution>();
     ItemRegistry::add<LinWavelengthDistribution>();
     ItemRegistry::add<LogWavelengthDistribution>();
+    ItemRegistry::add<FileWavelengthDistribution>();
 
     // geometries
     ItemRegistry::add<Geometry>();

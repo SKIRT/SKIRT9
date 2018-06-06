@@ -110,3 +110,21 @@ vector<Array> TextInFile::readAllRows(size_t ncols, size_t noptcols)
 }
 
 ////////////////////////////////////////////////////////////////////
+
+vector<Array> TextInFile::readAllColumns(size_t ncols, size_t noptcols)
+{
+    // read the remainder of file into rows
+    const vector<Array>& rows = readAllRows(ncols, noptcols);
+    size_t nrows = rows.size();
+
+    // transpose the result into columns
+    vector<Array> columns(ncols, Array(nrows));
+    for (size_t c=0; c!=ncols; ++c)
+        for (size_t r=0; r!=nrows; ++r)
+            columns[c][r] = rows[r][c];
+
+    return columns;
+}
+
+
+////////////////////////////////////////////////////////////////////

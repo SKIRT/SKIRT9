@@ -79,9 +79,15 @@ public:
     bool readRow(size_t noptcols, Values&... values);
 
     /** This function reads all rows from a column text file (from the current position until the
-        end of the file), and returns the resulting values as a vector of arrays. For each row,
+        end of the file), and returns the resulting values as a vector of row arrays. For each row,
         this function behaves just like readRow(Array&). */
     vector<Array> readAllRows(size_t ncols, size_t noptcols = 0);
+
+    /** This function reads all rows from a column text file (from the current position until the
+        end of the file), transposes the data repesentation from rows into columns, and returns the
+        resulting values as a vector of column arrays. For each row, this function behaves just
+        like readRow(Array&). */
+    vector<Array> readAllColumns(size_t ncols, size_t noptcols = 0);
 
 private:
     // recursively assign values from Array to double& arguments; used in variadic readRow()
