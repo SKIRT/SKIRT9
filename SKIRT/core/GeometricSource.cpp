@@ -49,12 +49,24 @@ void GeometricSource::launch(PhotonPacket* pp, size_t historyIndex, double L) co
     else
     {
         // biasing -- use one or the other distribution
-        if (random()->uniform() >= xi) lambda = sed()->generateWavelength();
+        if (random()->uniform() > xi) lambda = sed()->generateWavelength();
         else lambda = wavelengthBiasDistribution()->generateWavelength();
+
         // calculate the compensating weight factor
         double s = sed()->specificLuminosity(lambda);
-        double d = wavelengthBiasDistribution()->probability(lambda);
-        w = s / ((1-xi)*s + xi*d);
+        if (!s)
+        {
+            // if the wavelength can't occur in the intrinsic distribution,
+            // the weight factor is zero regardless of the probability in the bias distribution
+            // (handling this separately also avoids NaNs in the pathological case s=d=0)
+            w = 0.;
+        }
+        else
+        {
+            // regular composite bias weight
+            double d = wavelengthBiasDistribution()->probability(lambda);
+            w = s / ((1-xi)*s + xi*d);
+        }
     }
 
     // launch the photon packet with isotropic direction
