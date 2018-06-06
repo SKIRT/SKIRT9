@@ -3,18 +3,18 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef LINEARWAVELENGTHDISTRIBUTION_HPP
-#define LINEARWAVELENGTHDISTRIBUTION_HPP
+#ifndef LINWAVELENGTHDISTRIBUTION_HPP
+#define LINWAVELENGTHDISTRIBUTION_HPP
 
 #include "RangeWavelengthDistribution.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-/** A LinearWavelengthDistribution object represents a (uniform) linear wavelength probability
+/** A LinWavelengthDistribution object represents a (uniform) linear wavelength probability
     distribution in a wavelength range configured by the user. */
-class LinearWavelengthDistribution : public RangeWavelengthDistribution
+class LinWavelengthDistribution : public RangeWavelengthDistribution
 {
-    ITEM_CONCRETE(LinearWavelengthDistribution, RangeWavelengthDistribution,
+    ITEM_CONCRETE(LinWavelengthDistribution, RangeWavelengthDistribution,
                   "a linear wavelength probability distribution")
     ITEM_END()
 

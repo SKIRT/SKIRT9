@@ -3,19 +3,20 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "LinearWavelengthDistribution.hpp"
+#include "LinWavelengthDistribution.hpp"
 #include "Random.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
-double LinearWavelengthDistribution::probability(double /*wavelength*/) const
+double LinWavelengthDistribution::probability(double wavelength) const
 {
-    return 1. / range().width();
+    if (range().contains(wavelength)) return 1. / range().width();
+    else return 0.;
 }
 
 //////////////////////////////////////////////////////////////////////
 
-double LinearWavelengthDistribution::generateWavelength() const
+double LinWavelengthDistribution::generateWavelength() const
 {
     return range().min() + random()->uniform() * range().width();
 }

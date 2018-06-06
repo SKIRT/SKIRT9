@@ -20,7 +20,8 @@ void LogWavelengthDistribution::setupSelfBefore()
 
 double LogWavelengthDistribution::probability(double wavelength) const
 {
-    return 1. / (_logWidth * wavelength);
+    if (range().contains(wavelength)) return 1. / (_logWidth * wavelength);
+    else return 0.;
 }
 
 //////////////////////////////////////////////////////////////////////

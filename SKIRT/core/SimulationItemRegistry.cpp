@@ -31,7 +31,7 @@
 #include "HyperboloidGeometry.hpp"
 #include "HyperboloidShellGeometry.hpp"
 #include "InstrumentSystem.hpp"
-#include "LinearWavelengthDistribution.hpp"
+#include "LinWavelengthDistribution.hpp"
 #include "ListWavelengthGrid.hpp"
 #include "LuminosityProbe.hpp"
 #include "LogWavelengthDistribution.hpp"
@@ -109,7 +109,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // Wavelength distributions
     ItemRegistry::add<WavelengthDistribution>();
     ItemRegistry::add<RangeWavelengthDistribution>();
-    ItemRegistry::add<LinearWavelengthDistribution>();
+    ItemRegistry::add<LinWavelengthDistribution>();
     ItemRegistry::add<LogWavelengthDistribution>();
 
     // geometries
