@@ -14,7 +14,7 @@ void SunSED::setupSelfBefore()
     SED::setupSelfBefore();
 
     _table.open(this, "SunSED", "lambda(m)", "Llambda(W/m)");
-    _Ltot = _table.cdf(_lambdav, _cdfv, 200, interface<WavelengthRangeInterface>()->wavelengthRange());
+    _Ltot = _table.cdf(_lambdav, _cdfv, 10000, interface<WavelengthRangeInterface>()->wavelengthRange());
 }
 
 //////////////////////////////////////////////////////////////////////

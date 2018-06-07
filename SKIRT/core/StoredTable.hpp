@@ -216,7 +216,7 @@ public:
             //    - if we're clamping, adjust both the bin border and the value
             if (right == 0)
             {
-                if (!_clamp) return 0.;
+                if (!_clamp && x != _axBeg[k][0]) return 0.;
                 right++;
                 x = _axBeg[k][0];
             }
@@ -325,7 +325,7 @@ public:
         size_t n = std::max(static_cast<size_t>(1), minBins);
 
         // if the number of grid points is sufficient, copy the relevant portion of the internal axis grid
-        size_t minRight = std::lower_bound(_axBeg[0], _axBeg[0]+_axLen[0], xrange.min()) - _axBeg[0];
+        size_t minRight = std::upper_bound(_axBeg[0], _axBeg[0]+_axLen[0], xrange.min()) - _axBeg[0];
         size_t maxRight = std::lower_bound(_axBeg[0], _axBeg[0]+_axLen[0], xrange.max()) - _axBeg[0];
         if (minRight + n <= maxRight  )
         {
@@ -347,11 +347,13 @@ public:
         Yv.resize(n+1);
 
         // calculate cumulative values corresponding to each x grid point (and any extra axis values)
+        double y0 = operator()(xv[0], values...);
         for (size_t i = 0; i!=n; ++i)
         {
             double dx = xv[i+1] - xv[i];
-            double y = operator()(xv[i], values...);
-            Yv[i+1] = Yv[i] + y*dx;
+            double y1 = operator()(xv[i+1], values...);
+            Yv[i+1] = Yv[i] + 0.5*(y0+y1)*dx;
+            y0 = y1;
         }
 
         // normalize cumulative distribution and return normalization factor

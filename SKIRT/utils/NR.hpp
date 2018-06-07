@@ -407,15 +407,16 @@ namespace NR
 
     /** Given the tabulated probability density for a continuous probability distribution, this
         function constructs the normalized cumulative distribution function across a given range.
-
-        TODO: test and provide detailed documentation.
-
-        */
+        The incoming distribution (specified by \em inxv and inpv) does not need to be normalized.
+        The specified \em xrange must overlap the incoming grid, but it does not need to coincide
+        with it. The function constructs a new grid \em xv that matches the given range in and
+        returns both the normalized distribution \em pv and the normalized cumulative distribution
+        \em Pv corresponding to this new grid. */
     template < double interpolateFunction(double, double, double, double, double) >
     void cdf(Array& xv, Array& pv, Array& Pv, const Array& inxv, const Array& inpv, Range xrange)
     {
         // copy the relevant portion of the axis grid
-        size_t minRight = std::lower_bound(begin(inxv), end(inxv), xrange.min()) - begin(inxv);
+        size_t minRight = std::upper_bound(begin(inxv), end(inxv), xrange.min()) - begin(inxv);
         size_t maxRight = std::lower_bound(begin(inxv), end(inxv), xrange.max()) - begin(inxv);
         size_t n = 1 + maxRight - minRight;  // n = number of bins
         xv.resize(n+1);                      // n+1 = number of border points
@@ -428,16 +429,18 @@ namespace NR
         pv.resize(n+1);
         pv[0] = minRight == 0 ? 0. :
                 interpolateFunction(xv[0], inxv[minRight-1], inxv[minRight], inpv[minRight-1], inpv[minRight]);
-        for (size_t i = 1; i < n; ++i) xv[i] = inxv[minRight+i-1];
+        for (size_t i = 1; i < n; ++i) pv[i] = inpv[minRight+i-1];
         pv[n] = maxRight == inxv.size() ? 0. :
                 interpolateFunction(xv[n], inxv[maxRight-1], inxv[maxRight], inpv[maxRight-1], inpv[maxRight]);
 
         // calculate cumulative values corresponding to each x grid point (and any extra axis values)
         Pv.resize(n+1);                     // also sets Pv[0] to zero
-        for (size_t i = 0; i!=n; ++i) Pv[i+1] = Pv[i] + inpv[i]*(xv[i+1]-xv[i]);
+        for (size_t i = 0; i!=n; ++i) Pv[i+1] = Pv[i] + 0.5*(inpv[i]+inpv[i+1])*(xv[i+1]-xv[i]);
 
-        // normalize cumulative distribution
-        Pv /= Pv[n];
+        // normalize both cumulative and regular distribution
+        double norm = Pv[n];
+        pv /= norm;
+        Pv /= norm;
     }
 }
 

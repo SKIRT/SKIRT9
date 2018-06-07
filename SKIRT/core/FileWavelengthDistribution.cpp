@@ -27,8 +27,13 @@ void FileWavelengthDistribution::setupSelfBefore()
     range.intersect(interface<WavelengthRangeInterface>()->wavelengthRange());
     if (range.empty()) throw FATALERROR("Wavelength distribution range does not overlap source wavelength range");
 
+    // resample the input distribition on a fine grid (temporary fix)
+    Array lambdav;
+    NR::buildLogGrid(lambdav, range.min(), range.max(), 5000);
+    const Array& pv = NR::resample<NR::interpolateLogLog>(lambdav, columns[0]*1e-6, columns[1]);
+
     // construct the regular and cumulative distributions in the intersected range
-    NR::cdf<NR::interpolateLogLog>(_lambdav, _pv, _Pv, columns[0]*1e-6, columns[1], range);
+    NR::cdf<NR::interpolateLogLog>(_lambdav, _pv, _Pv, lambdav, pv, range);
 }
 
 //////////////////////////////////////////////////////////////////////
