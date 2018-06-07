@@ -48,6 +48,7 @@
 #include "PlummerGeometry.hpp"
 #include "ProbeSystem.hpp"
 #include "PseudoSersicGeometry.hpp"
+#include "QuasarSED.hpp"
 #include "Random.hpp"
 #include "ReadFitsGeometry.hpp"
 #include "RingGeometry.hpp"
@@ -106,7 +107,9 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
 
     // SEDs
     ItemRegistry::add<SED>();
+    ItemRegistry::add<ResourceSED>();
     ItemRegistry::add<SunSED>();
+    ItemRegistry::add<QuasarSED>();
 
     // Wavelength distributions
     ItemRegistry::add<WavelengthDistribution>();
