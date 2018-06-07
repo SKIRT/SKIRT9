@@ -15,6 +15,8 @@
 
 void LaunchedPacketsProbe::setupSelfAfter()
 {
+    Probe::setupSelfAfter();
+
     // install ourselves as the launch call-back with the source system
     find<SourceSystem>()->installLaunchCallBack(this);
 

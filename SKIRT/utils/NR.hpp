@@ -409,11 +409,12 @@ namespace NR
         function constructs the normalized cumulative distribution function across a given range.
         The incoming distribution (specified by \em inxv and inpv) does not need to be normalized.
         The specified \em xrange must overlap the incoming grid, but it does not need to coincide
-        with it. The function constructs a new grid \em xv that matches the given range in and
-        returns both the normalized distribution \em pv and the normalized cumulative distribution
-        \em Pv corresponding to this new grid. */
+        with it. The function constructs a new grid \em xv that matches the given range in and then
+        constructs both the normalized distribution \em pv and the normalized cumulative
+        distribution \em Pv corresponding to this new grid. It returns the factor used to
+        normalized the distribitions. */
     template < double interpolateFunction(double, double, double, double, double) >
-    void cdf(Array& xv, Array& pv, Array& Pv, const Array& inxv, const Array& inpv, Range xrange)
+    double cdf(Array& xv, Array& pv, Array& Pv, const Array& inxv, const Array& inpv, Range xrange)
     {
         // copy the relevant portion of the axis grid
         size_t minRight = std::upper_bound(begin(inxv), end(inxv), xrange.min()) - begin(inxv);
@@ -441,6 +442,7 @@ namespace NR
         double norm = Pv[n];
         pv /= norm;
         Pv /= norm;
+        return norm;
     }
 }
 

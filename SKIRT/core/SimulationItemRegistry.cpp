@@ -21,6 +21,7 @@
 #include "EinastoGeometry.hpp"
 #include "ExpDiskGeometry.hpp"
 #include "ExtragalacticUnits.hpp"
+#include "FileSED.hpp"
 #include "FileWavelengthDistribution.hpp"
 #include "FileWavelengthGrid.hpp"
 #include "FrameInstrument.hpp"
@@ -110,6 +111,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ResourceSED>();
     ItemRegistry::add<SunSED>();
     ItemRegistry::add<QuasarSED>();
+    ItemRegistry::add<FileSED>();
 
     // Wavelength distributions
     ItemRegistry::add<WavelengthDistribution>();
