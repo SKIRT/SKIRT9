@@ -10,7 +10,6 @@
 #include "ProbePhotonPacketInterface.hpp"
 #include "Table.hpp"
 #include "WavelengthGrid.hpp"
-#include <mutex>
 
 ////////////////////////////////////////////////////////////////////
 
@@ -38,15 +37,9 @@ class LaunchedPacketsProbe : public Probe, public ProbePhotonPacketInterface
     //============= Construction - Setup - Destruction =============
 
 protected:
-    /** This function installs the call-back function for this probe with the source system. */
-    void setupSelfBefore() override;
-
-private:
-    /** This function resizes and initializes the photon packet counters. It should be called
-        exactly once. We cannot do the initialization during setup because Probe subclasses are not
-        allowed to cause setup of target objects (such as, in our case, the default instrument
-        wavelength grid). */
-    void initializeDataMembers();
+    /** This function installs the call-back function for this probe with the source system and
+        initializes the photon packet counters. */
+    void setupSelfAfter() override;
 
     //======================== Other Functions =======================
 
@@ -61,8 +54,7 @@ public:
     //======================== Data Members ========================
 
 private:
-    // data members are initialized when the first photon packet is probed
-    std::once_flag _initialized;                    // flag to synchronize initialization
+    // data members initialized during setup
     WavelengthGrid* _probeWavelengthGrid{nullptr};  // probe wavelength grid (local or default)
     Table<2> _counts;                               // photon packet counters; indices h, ell
 };

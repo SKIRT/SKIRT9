@@ -13,17 +13,11 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void LaunchedPacketsProbe::setupSelfBefore()
+void LaunchedPacketsProbe::setupSelfAfter()
 {
     // install ourselves as the launch call-back with the source system
-    auto sourceSystem = find<SourceSystem>(false);
-    if (sourceSystem) sourceSystem->installLaunchCallBack(this);
-}
+    find<SourceSystem>()->installLaunchCallBack(this);
 
-////////////////////////////////////////////////////////////////////
-
-void LaunchedPacketsProbe::initializeDataMembers()
-{
     // select "local" or default wavelength grid
     _probeWavelengthGrid = wavelengthGrid() ? wavelengthGrid() : find<InstrumentSystem>()->find<WavelengthGrid>();
 
@@ -37,9 +31,6 @@ void LaunchedPacketsProbe::initializeDataMembers()
 
 void LaunchedPacketsProbe::probePhotonPacket(const PhotonPacket* pp)
 {
-    // initialize our data members if this is the first invocation
-    std::call_once(_initialized, &LaunchedPacketsProbe::initializeDataMembers, this);
-
     // get the source component index, and abort if this is not a primary source packet
     if (!pp->hasPrimaryOrigin()) return;
     int h = pp->compIndex();
