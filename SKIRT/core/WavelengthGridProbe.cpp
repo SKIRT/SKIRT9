@@ -24,10 +24,10 @@ void WavelengthGridProbe::probeSetup()
 
         // create a text file and add the columns
         TextOutFile file(this, instrumentName+"_wavelengths", "wavelengths for instrument " + instrumentName);
-        file.addColumn("characteristic wavelength", units->uwavelength(), 'e', 9);
-        file.addColumn("wavelength bin width", units->uwavelength(), 'e', 9);
-        file.addColumn("left border of wavelength bin", units->uwavelength(), 'e', 9);
-        file.addColumn("right border of wavelength bin", units->uwavelength(), 'e', 9);
+        file.addColumn("characteristic wavelength", units->uwavelength());
+        file.addColumn("wavelength bin width", units->uwavelength());
+        file.addColumn("left border of wavelength bin", units->uwavelength());
+        file.addColumn("right border of wavelength bin", units->uwavelength());
 
         // write the rows
         int numWavelengths = wavelengthGrid->numWavelengths();

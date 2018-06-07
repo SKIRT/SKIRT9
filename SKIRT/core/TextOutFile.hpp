@@ -62,7 +62,7 @@ public:
         point. For the 'g' format, the precision represents the maximum number of significant
         digits (trailing zeroes are omitted). The description of each column is added to the header of
         the text file, along with the column number. */
-    void addColumn(string quantityDescription, string unitDescription, char format = 'e', int precision = 6);
+    void addColumn(string quantityDescription, string unitDescription = string(), char format = 'e', int precision = 9);
 
     /** This function writes the specified list of (double) values to the text file, on a single row
         where adjacent values are seperated by a space. The values are formatted according to the

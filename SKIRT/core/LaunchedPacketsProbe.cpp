@@ -62,10 +62,10 @@ void LaunchedPacketsProbe::probeRun()
 
     // create a text file and add the columns
     TextOutFile file(this, "launchedpackets", "photon packets launched by primary sources");
-    file.addColumn("wavelength", units->uwavelength(), 'e', 9);
-    file.addColumn("total nr of photon packets launched in bin", "", 'e', 9);
+    file.addColumn("wavelength", units->uwavelength());
+    file.addColumn("total nr of photon packets launched in bin");
     for (int h=0; h!=numSources; ++h)
-        file.addColumn("nr of photon packets launched in bin by source " + std::to_string(h+1), "", 'e', 9);
+        file.addColumn("nr of photon packets launched in bin by source " + std::to_string(h+1));
 
     // write the rows
     for (int ell=0; ell!=numWavelengths; ++ell)
