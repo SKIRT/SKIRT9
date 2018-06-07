@@ -18,9 +18,11 @@
     - Data encapsulation: a probe can use public interfaces only, even if these interfaces are in
       some cases written specifically to support the probe (refer to the scenarios described in
       the ProbeSystem class).
-    - Read-only access: a probe cannot change the data structures held by the target in any way.
+    - Read-only access: a probe cannot (cause to) change the data structures held by the target.
       As a corollary, during its own setup, a probe cannot cause setup of a target (it is allowed
       to get and cache pointers to items, as long as they are not caused to perform setup).
+      There is one exception to this rule: a probe can use a public function, provided by the
+      target for this purpose, to install a call-back function that will be invoked by the target.
     - Interprobe independence: a probe cannot look for or depend on another probe, nor on the order
       of the various probes in the list held by the probe system.
 */

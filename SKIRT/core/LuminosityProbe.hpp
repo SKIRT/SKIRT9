@@ -12,7 +12,7 @@
 ////////////////////////////////////////////////////////////////////
 
 /** LuminosityProbe outputs a text column file with the primary source luminosities on a specified
-    wavelength grid (or on the default instrument wavelength grid. The file is named
+    wavelength grid (or on the default instrument wavelength grid). The file is named
     <tt>prefix_luminosities.txt</tt>. The first three columns list the characteristic wavelength of
     the wavelength bin, the total specific luminosity at that wavelength, and the total luminosity
     integrated over the bin (in both cases summed over all primary sources). Furthermore, there is

@@ -3,7 +3,7 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "WavelengthProbe.hpp"
+#include "WavelengthGridProbe.hpp"
 #include "Instrument.hpp"
 #include "InstrumentSystem.hpp"
 #include "TextOutFile.hpp"
@@ -12,7 +12,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void WavelengthProbe::probeSetup()
+void WavelengthGridProbe::probeSetup()
 {
     auto units = find<Units>();
 

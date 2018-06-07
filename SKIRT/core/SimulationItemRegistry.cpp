@@ -66,7 +66,7 @@
 #include "TriaxialGeometryDecorator.hpp"
 #include "UniformBoxGeometry.hpp"
 #include "UniformSmoothingKernel.hpp"
-#include "WavelengthProbe.hpp"
+#include "WavelengthGridProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -168,7 +168,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // probe system and probes
     ItemRegistry::add<ProbeSystem>();
     ItemRegistry::add<Probe>();
-    ItemRegistry::add<WavelengthProbe>();
+    ItemRegistry::add<WavelengthGridProbe>();
     ItemRegistry::add<LuminosityProbe>();
 
     // instrument system and instruments
