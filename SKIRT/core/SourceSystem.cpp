@@ -1,8 +1,10 @@
 ////////////////////////////////////////////////////////////////////
 
 #include "SourceSystem.hpp"
+#include "FatalError.hpp"
 #include "NR.hpp"
 #include "PhotonPacket.hpp"
+#include "ProbePhotonPacketInterface.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -28,6 +30,14 @@ void SourceSystem::setupSelfAfter()
 
     // resize the history index mapping vector
     _Iv.resize(Ns+1);
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void SourceSystem::installLaunchCallBack(ProbePhotonPacketInterface* callback)
+{
+    if (_callback) throw FATALERROR("Cannot install more than one photon packet launch probe");
+    _callback = callback;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -82,10 +92,16 @@ void SourceSystem::prepareForlaunch(size_t numPackets)
 
 void SourceSystem::launch(PhotonPacket* pp, size_t historyIndex) const
 {
+    // ask the appropriate source to prepare the photon packet for launch
     auto h = std::upper_bound(_Iv.cbegin(), _Iv.cend(), historyIndex) - _Iv.cbegin() - 1;
     double weight = _Lv[h] / _Wv[h];
     _sources[h]->launch(pp, historyIndex, _Lpp*weight);
+
+    // add additional info
     pp->setPrimaryOrigin(h);
+
+    // invoke launch call-back if installed
+    if (_callback) _callback->probePhotonPacket(pp);
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -11,6 +11,7 @@
 #include "Source.hpp"
 #include "WavelengthRangeInterface.hpp"
 class PhotonPacket;
+class ProbePhotonPacketInterface;
 
 //////////////////////////////////////////////////////////////////////
 
@@ -96,6 +97,12 @@ protected:
     /** This function obtains the bolometric luminosity of each source for later use. */
     void setupSelfAfter() override;
 
+public:
+    /** This function installs the specified interface as photon packet launch call-back. The
+        function probePhotonPacket() provided by the interface will be called for each photon
+        packet that is ready to be launched. */
+    void installLaunchCallBack(ProbePhotonPacketInterface* callback);
+
     //======================== Other Functions =======================
 
 public:
@@ -133,6 +140,7 @@ private:
     double _L{0};   // the total bolometric luminosity of all sources (absolute number)
     Array _Lv;      // the relative bolometric luminosity of each source (normalized to unity)
     Array _Wv;      // the relative launch weight for each source (normalized to unity)
+    ProbePhotonPacketInterface* _callback{nullptr}; // interface to be invoked for each packet launch if nonzero
 
     // intialized by prepareForLaunch()
     double _Lpp{0};     // the average luminosity contribution for each packet
