@@ -7,14 +7,41 @@
 #define TEXTINFILE_HPP
 
 #include "Array.hpp"
+#include "CompileTimeUtils.hpp"
 #include <fstream>
 class Log;
 class SimulationItem;
+class Units;
 
 ////////////////////////////////////////////////////////////////////
 
-/** This class allows reading floating point values from the input text file specified in the
-    constructor. The values should be organized in columns, forming a table. */
+/** This class allows reading a table of floating point values from a column text file with support
+    for unit conversions. The filename is specified in the constructor, and information about the
+    columns expected in the file is specified by calling the addColumn() function for each column.
+    It is recommended that the header of the input file includes column information in the format
+    described below. For example, a two-column input file might have the following header:
+
+        # My personal SED written from Python
+        # column 1: wavelength (A)
+        # column 2: specific luminosity (W/Hz)
+        #
+        ... data ...
+
+    There must be a header line for each column with the following contents from left to right:
+      - the hash character indicating a header line
+      - the word "column" (case insensitive)
+      - the one-based column number (optional)
+      - a colon
+      - a description that does not contain parenthesis (optional)
+      - a unit string between parenthesis (optional for dimensionless quantities)
+
+    Extra whitespace is allowed between the various fields. The unit string must exactly match one
+    of the unit strings supported by SKIRT for the expected quantity. The column info lines must
+    occur in the same order as the data columns. Extra header lines are allowed between, before,
+    and after the column info lines.
+
+    If there is no column information in the file (i.e. none of the header lines match the syntax
+    decribed above), the default units provided by the program are used. */
 class TextInFile
 {
     //=============== Construction - Destruction  ==================
@@ -41,88 +68,145 @@ public:
 
     //====================== Other functions =======================
 
-    /** This function looks through the header at the current position in the file, and returns the
-        first header line containing the specified string, or the empty string if no such line is
-        found. In this context, a header is defined as consecutive set of lines starting with a
-        hash. A line not starting with a hash (including an empty line) ends the header and will
-        not be consumed by this function. */
-    string readHeaderLine(string find);
+    /** This function (virtually) adds a new column to the text file, characterized by the given
+        description and unit information. The \em description argument is used only for
+        logging purposes. The \em quantity argument specifies the physical quantity represented by
+        the column. It must match one of the quantity strings supported by the Units system, or one
+        of the special quantity strings recognized by this class (see below). The \em defaultUnit
+        argument specifies the default unit string, which is used in case the input file does not
+        contain column information.
+
+        In addition to the quantity strings supported by the Units system, this function supports
+        the following special quantity strings.
+           - The empty string (the default argument value): indicates a dimensionless quantity;
+             the value of the default unit is not used in this case.
+           - The string "specific": indicates a quantity that represents a specific luminosity per
+             unit of frequency or per unit of wavelength, in arbitrary units (because the values
+             will be normalized after being read). The function determines the frequency/wavelength
+             flavor based on the units given in the file header or the default units. The values
+             are converted to "per wavelength" flavor if needed using the value of the first
+             preceding column described as "wavelength". However, the values will remain scaled
+             with some arbitary wavelength-independent constant.
+
+        For a regular column, the \em isGhostColumn flag must be omitted or set to false. In this
+        case, this function looks for and, if present, reads the header information line
+        corresponding to this column. The unit information from the header is stored with the
+        information provided by the function arguments for later use.
+
+        On the other hand, if the \em isGhostColumn flag is set to true, the function constructs a
+        \em ghost \em column that has no counterpart in the input file. Rather than reading a value
+        from the file, the value specified as the \em ghostValue argument is copied into the output
+        array instead. This capability is useful to keep the number of values obtained by readRow()
+        constant even if some of the columns are sometimes missing from the input file.
+    */
+    void addColumn(string description, string quantity = string(), string defaultUnit = string(),
+                   bool isGhostColumn = false, double ghostValue = 0.);
 
     /** This function reads the next row from a column text file and stores the resulting values in
         the array passed to the function by reference. The function first skips empty lines and
-        lines starting with a hash character, and then reads a single text line containing between
-        \em ncols - \em noptcols and up to \em ncols values separated by white space. These values
-        are converted to floating point and stored in the specified \em values array. If a row was
-        successfully read, the \em values array is resized to \em ncols and overwritten with the
-        results, and the function returns true. Missing optional values at the end of the row are
-        replaced by zeroes. Any additional information on the line beyond the last value is
-        ignored. If the end of the file is reached before a row can be read, the function returns
-        false and the contents of the \em values array is undefined. If the line contains
-        improperly formatted floating point numbers, or if there are less than \em ncols - \em
-        noptcols values, the function throws a FatalError (and the contents of the \em values array
-        is undefined). */
-    bool readRow(Array& values, size_t ncols, size_t noptcols = 0);
+        lines starting with a hash character, and then reads a single text line containing data
+        values separated by white space.
+
+        The number of expected values corresponds to the number of columns in the file, which is
+        determined by repeated calls to the addColumn() function. If the data line contains less
+        values than expected, or if any of the values is improperly formatted for a floating point
+        number, the function throws a FatalError (the size and contents of the \em values array are
+        undefined). Any additional information on the line beyond the last expected value is
+        ignored.
+
+        If a row was successfully read, the input values are converted from the input units (as
+        specified in the file header or using the default given in the addColumn() function) to
+        SKIRT-internal units. Finally, the \em values array is set to the appropriate length, the
+        converted input values are stored into it in column order, and the function returns true.
+
+        If the end of the file is reached before a row can be read, the function returns false and
+        the size and contents of the \em values array are undefined. */
+    bool readRow(Array& values);
 
     /** This variadic template function reads the next row from a column text file and stores the
         resulting values in the variables passed to the function by reference. For example:
 
         \verbatim
         double a,b,c,d;
-        bool success = in.readRow(1, a,b,c,d);  // reads a line with 4 values,
-                                                // the last of which is optional
+        bool success = in.readRow(a,b,c,d);  // reads a row from a file with 4 columns
         \endverbatim
 
-        This function behaves just like the readRow(Array&) version, except that the number of
-        requested values is derived from the number of double& arguments, and that the number of
-        optional values (\em noptcols) is specified as the first argument. */
-    template <typename... Values>
-    bool readRow(size_t noptcols, Values&... values);
+        This function behaves just like the readRow(Array&) version. The number of arguments
+        must match the number of columns in the file. */
+    template <typename... Values, typename = std::enable_if_t<CompileTimeUtils::isFloatArgList<Values...>()>>
+    bool readRow(Values&... values)
+    {
+        Array result;
+        bool success = readRow(result);
+        if (success) assignValues(0, result, values...);
+        return success;
+    }
 
     /** This function reads all rows from a column text file (from the current position until the
         end of the file), and returns the resulting values as a vector of row arrays. For each row,
         this function behaves just like readRow(Array&). */
-    vector<Array> readAllRows(size_t ncols, size_t noptcols = 0);
+    vector<Array> readAllRows();
 
     /** This function reads all rows from a column text file (from the current position until the
         end of the file), transposes the data repesentation from rows into columns, and returns the
         resulting values as a vector of column arrays. For each row, this function behaves just
         like readRow(Array&). */
-    vector<Array> readAllColumns(size_t ncols, size_t noptcols = 0);
+    vector<Array> readAllColumns();
+
+    /** This function reads all rows from a column text file (from the current position until the
+        end of the file), transposes the data repesentation from rows into columns, and stores the
+        resulting column arrays in the variables passed to the function by reference. For each row,
+        this function behaves just like readRow(Array&). */
+    template <typename... Columns, typename = std::enable_if_t<sizeof...(Columns)!=0>>
+    void readAllColumns(Columns&... columns)
+    {
+        auto result = readAllColumns();
+        assignColumns(0, result, columns...);
+    }
 
 private:
     // recursively assign values from Array to double& arguments; used in variadic readRow()
     template <typename... Values>
-    void assign(size_t index, const Array& result, double& value, Values&... values);
-    inline void assign(size_t index, const Array& result);
+    void assignValues(size_t index, const Array& result, double& value, Values&... values)
+    {
+        value = result[index];
+        assignValues(index+1, result, values...);
+    }
+    inline void assignValues(size_t /*index*/, const Array& /*result*/) { }
+
+    // recursively assign columns from vector to Array& arguments; used in variadic readAllColumns()
+    template <typename... Columns>
+    void assignColumns(size_t index, vector<Array>& result, Array& column, Columns&... columns)
+    {
+        column = std::move(result[index]);
+        assignColumns(index+1, result, columns...);
+    }
+    inline void assignColumns(size_t /*index*/, vector<Array>& /*result*/) { }
 
     //======================== Data Members ========================
 
 private:
-    std::ifstream _in;  // the input stream
-    Log* _log{nullptr}; // the logger
-    string _message;    // the message
+    // data members initialized in the constructor
+    std::ifstream _in;      // the input stream
+    Units* _units{nullptr}; // the units system
+    Log* _log{nullptr};     // the logger
+    string _message;        // the message
+
+    // private type to remember column info
+    struct ColumnInfo
+    {
+        ColumnInfo(string description_, string quantity_, string unit_, bool isGhost_, double ghostValue_)
+        : description(description_), quantity(quantity_), unit(unit_), isGhost(isGhost_), ghostValue(ghostValue_) { }
+        string description;
+        string quantity;
+        string unit;
+        bool isGhost;
+        double ghostValue;
+    };
+
+    // data members initialized by repeated calls to addColumn()
+    vector<ColumnInfo> _colv;
 };
-
-////////////////////////////////////////////////////////////////////
-
-template <typename... Values>
-bool TextInFile::readRow(size_t noptcols, Values&... values)
-{
-    Array result;
-    bool success = readRow(result, sizeof...(Values), noptcols);
-    if (success) assign(0, result, values...);
-    return success;
-}
-
-template <typename... Values>
-void TextInFile::assign(size_t index, const Array& result, double& value, Values&... values)
-{
-    value = result[index];
-    assign(index+1, result, values...);
-}
-void TextInFile::assign(size_t /*index*/, const Array& /*result*/)
-{
-}
 
 ////////////////////////////////////////////////////////////////////
 

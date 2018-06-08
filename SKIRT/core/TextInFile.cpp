@@ -8,6 +8,7 @@
 #include "FilePaths.hpp"
 #include "Log.hpp"
 #include "System.hpp"
+#include "Units.hpp"
 #include <sstream>
 
 ////////////////////////////////////////////////////////////////////
@@ -18,6 +19,9 @@ TextInFile::TextInFile(const SimulationItem* item, string filename, string descr
     string filepath = item->find<FilePaths>()->input(filename);
     _in = System::ifstream(filepath);
     if (!_in) throw FATALERROR("Could not open the " + description + " text file " + filepath);
+
+    // remember the units system
+    _units = item->find<Units>();
 
     // remember the logger and the message to be issued upon closing
     _log = item->find<Log>();
@@ -44,8 +48,18 @@ TextInFile::~TextInFile()
 
 ////////////////////////////////////////////////////////////////////
 
-string TextInFile::readHeaderLine(string find)
+void TextInFile::addColumn(string description, string quantity, string defaultUnit,
+                           bool isGhostColumn, double ghostValue)
 {
+    _colv.emplace_back(description, quantity, defaultUnit, isGhostColumn,  ghostValue);
+
+    if (quantity=="specific") _colv.back().quantity = "wavelengthmonluminosity";
+
+    // TODO: parse column info in input file and update column info data structures
+    // TODO: cache unit conversion factor in column info?
+    // TODO: support dimensionless and specific
+
+    /*
     string line;
     while(_in.peek() == '#')
     {
@@ -53,12 +67,16 @@ string TextInFile::readHeaderLine(string find)
         if (line.find(find) != string::npos) return line;
     }
     return string();
+    */
 }
 
 ////////////////////////////////////////////////////////////////////
 
-bool TextInFile::readRow(Array& values, size_t ncols, size_t noptcols)
+bool TextInFile::readRow(Array& values)
 {
+    size_t ncols = _colv.size();
+    if (!ncols) throw FATALERROR("No columns were declared for column text file");
+
     // read new line until it is non-empty and non-comment
     string line;
     while (_in.good())
@@ -67,22 +85,27 @@ bool TextInFile::readRow(Array& values, size_t ncols, size_t noptcols)
         auto pos = line.find_first_not_of(" \t");
         if (pos!=string::npos && line[pos]!='#')
         {
-            // resize and clear result array
-            values.resize(ncols);
+            // resize result array if needed (we don't need it to be cleared)
+            if (values.size() != ncols) values.resize(ncols);
 
             // convert values from line and store them in result array
             std::stringstream linestream(line);
             for (size_t i=0; i<ncols; ++i)
             {
-                if (linestream.eof())
+                // substitute ghost value if requested for this column
+                if (_colv[i].isGhost) values[i] = _colv[i].ghostValue;
+                else
                 {
-                    if (i<ncols-noptcols) throw FATALERROR("One or more required value(s) on text line are missing");
-                    break;
+                    // convert the value to floating point
+                    if (linestream.eof()) throw FATALERROR("One or more required value(s) on text line are missing");
+                    double value;
+                    linestream >> value;
+                    if (linestream.fail()) throw FATALERROR("Input text is not formatted as a floating point number");
+
+                    // convert from input units to internal units
+                    // TODO: support dimensionless and specific
+                    values[i] = _units->in(_colv[i].quantity, _colv[i].unit, value);
                 }
-                double value;
-                linestream >> value;
-                if (linestream.fail()) throw FATALERROR("Input text is not formatted as a floating point number");
-                values[i] = value;
             }
             return true;
         }
@@ -94,15 +117,15 @@ bool TextInFile::readRow(Array& values, size_t ncols, size_t noptcols)
 
 ////////////////////////////////////////////////////////////////////
 
-vector<Array> TextInFile::readAllRows(size_t ncols, size_t noptcols)
+vector<Array> TextInFile::readAllRows()
 {
     vector<Array> rows;
     while (true)
     {
-        rows.emplace_back();                        // add a default-constructed array to the vector
-        if (!readRow(rows.back(), ncols, noptcols)) // read next line's values into that array
+        rows.emplace_back();        // add a default-constructed array to the vector
+        if (!readRow(rows.back()))  // read next line's values into that array
         {
-            rows.pop_back();                        // at the end, remove the extraneous array
+            rows.pop_back();        // at the end, remove the extraneous array
             break;
         }
     }
@@ -111,11 +134,12 @@ vector<Array> TextInFile::readAllRows(size_t ncols, size_t noptcols)
 
 ////////////////////////////////////////////////////////////////////
 
-vector<Array> TextInFile::readAllColumns(size_t ncols, size_t noptcols)
+vector<Array> TextInFile::readAllColumns()
 {
-    // read the remainder of file into rows
-    const vector<Array>& rows = readAllRows(ncols, noptcols);
+    // read the remainder of the file into rows
+    const vector<Array>& rows = readAllRows();
     size_t nrows = rows.size();
+    size_t ncols = _colv.size();
 
     // transpose the result into columns
     vector<Array> columns(ncols, Array(nrows));

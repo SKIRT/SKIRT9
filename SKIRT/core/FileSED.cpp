@@ -19,12 +19,11 @@ void FileSED::setupSelfBefore()
 
     // read the wavelengths and specific luminosities from the input file
     TextInFile infile(this, _filename, "spectral energy distribution");
-    const vector<Array>& columns = infile.readAllColumns(2);
+    infile.addColumn("wavelength", "wavelength", "micron");
+    infile.addColumn("specific luminosity", "specific", "W/m");
+    Array inlambdav, inpv;
+    infile.readAllColumns(inlambdav, inpv);
     infile.close();
-
-    // convert units
-    Array inlambdav = columns[0] * 1e-6;
-    Array inpv = columns[1];
 
     // resample the input distribution on a fine grid (temporary fix)
     NR::buildLogGrid(_inlambdav, inlambdav[0], inlambdav[inlambdav.size()-1], 5000);

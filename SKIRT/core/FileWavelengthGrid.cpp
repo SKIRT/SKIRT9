@@ -14,12 +14,14 @@ void FileWavelengthGrid::setupSelfBefore()
 
     // read the wavelengths from the input file
     TextInFile infile(this, _filename, "wavelength grid");
-    const vector<Array>& columns = infile.readAllColumns(1);
+    infile.addColumn("wavelength", "wavelength", "micron");
+    Array wavelengths;
+    infile.readAllColumns(wavelengths);
     infile.close();
 
-    // set the wavelength grid (convert from micron to m)
-    if (_relativeHalfWidth) setWavelengthBins(columns[0]*1e-6, _relativeHalfWidth);
-    else setWavelengthRange(columns[0]*1e-6);
+    // set the wavelength grid
+    if (_relativeHalfWidth) setWavelengthBins(wavelengths, _relativeHalfWidth);
+    else setWavelengthRange(wavelengths);
 }
 
 //////////////////////////////////////////////////////////////////////
