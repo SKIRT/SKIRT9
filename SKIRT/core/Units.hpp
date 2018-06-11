@@ -46,6 +46,10 @@ class Units : public SimulationItem
     //======================== Other Functions =======================
 
 public:
+    /** This function returns true if the specified combination of physical quantity and unit or
+        unit system is present in the unit definition, and false if not. */
+    bool has(string qty, string unit) const;
+
     /** This function returns a string containing the name of the output unit adopted by the
         program for the specified physical quantity. The name of the physical quantity must be
         specified in all lowercase and without any spaces. The function throws a fatal error if the

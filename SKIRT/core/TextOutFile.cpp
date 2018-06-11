@@ -11,6 +11,7 @@
 #include "StringUtils.hpp"
 #include "System.hpp"
 #include "Units.hpp"
+#include <exception>
 
 ////////////////////////////////////////////////////////////////////
 
@@ -29,7 +30,7 @@ TextOutFile::TextOutFile(const SimulationItem* item, string filename, string des
         _units = item->find<Units>();
 
         // remember the message to be issued upon closing
-        _message = item->typeAndName() + " wrote " + description + " to " + filepath + "...";
+        _message = item->typeAndName() + " wrote " + description + " to " + filepath;
     }
 }
 
@@ -40,7 +41,9 @@ void TextOutFile::close()
     if (_out.is_open())
     {
         _out.close();
-        _log->info(_message);
+
+        // log success message, except if an exception has been thrown
+        if (!std::uncaught_exception()) _log->info(_message);;
     }
 }
 
@@ -58,8 +61,8 @@ void TextOutFile::addColumn(string quantityDescription, string unitDescription, 
     _formats.push_back(format);
     _precisions.push_back(precision);
 
-    writeLine("# column " + std::to_string(++_ncolumns) + ": " + quantityDescription
-              + (!unitDescription.empty() ? (" (" + unitDescription + ")") : ""));
+    if (unitDescription.empty()) unitDescription = "1";
+    writeLine("# column " + std::to_string(++_ncolumns) + ": " + quantityDescription + " (" + unitDescription + ")");
 }
 
 ////////////////////////////////////////////////////////////////////

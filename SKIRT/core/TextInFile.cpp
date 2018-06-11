@@ -9,7 +9,30 @@
 #include "Log.hpp"
 #include "System.hpp"
 #include "Units.hpp"
+#include <exception>
+#include <regex>
 #include <sstream>
+
+////////////////////////////////////////////////////////////////////
+
+namespace TextInFile_Private
+{
+    // private type to remember column info
+    class ColumnInfo
+    {
+    public:
+        ColumnInfo(string description_, string quantity_, string unit_, bool isGhost_, double ghostValue_)
+        : description(description_), quantity(quantity_), unit(unit_), isGhost(isGhost_), ghostValue(ghostValue_) { }
+        string description;
+        string quantity;
+        string unit;
+        bool isGhost{false};
+        double ghostValue{0.};
+        double convFactor{1.};    // unit conversion factor from input to internal
+        int waveExponent{0};      // wavelength exponent for converting "specific" quantities
+        size_t waveIndex{0};      // index of wavelength column for converting "specific" quantities
+    };
+}
 
 ////////////////////////////////////////////////////////////////////
 
@@ -20,12 +43,12 @@ TextInFile::TextInFile(const SimulationItem* item, string filename, string descr
     _in = System::ifstream(filepath);
     if (!_in) throw FATALERROR("Could not open the " + description + " text file " + filepath);
 
-    // remember the units system
+    // remember the units system and the logger
     _units = item->find<Units>();
-
-    // remember the logger and the message to be issued upon closing
     _log = item->find<Log>();
-    _message = item->typeAndName() + " read " + description + " from text file " + filepath + "...";
+
+    // log "reading file" message
+    _log->info( item->typeAndName() + " reads " + description + " from text file " + filepath + "...");
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -35,7 +58,9 @@ void TextInFile::close()
     if (_in.is_open())
     {
         _in.close();
-        _log->info(_message);
+
+        // log "done" message, except if an exception has been thrown
+        if (!std::uncaught_exception()) _log->info("Done reading");
     }
 }
 
@@ -44,6 +69,84 @@ void TextInFile::close()
 TextInFile::~TextInFile()
 {
     close();
+
+    // delete column info structures
+    for (auto col : _colv) delete col;
+}
+
+////////////////////////////////////////////////////////////////////
+
+namespace
+{
+    // This function looks for the next header line that conforms to the required structured syntax.
+    // If such a line is found, the column index and the unit string are stored in the arguments and true is returned.
+    // If no such header line is found, the function consumes the complete header and returns false.
+    bool getNextInfoLine(std::ifstream& in, size_t& colIndex, string& unit)
+    {
+        // continue reading until a conforming header line is found or until the complete header has been consumed
+        while (true)
+        {
+            // consume whitespace characters but nothing else
+            while (true)
+            {
+                auto ch = in.peek();
+                if (ch != ' ' && ch != '\t' && ch != '\n' && ch != '\r') break;
+                in.get();
+            }
+
+            // if the first non-whitespace character is not a hash character, there is no header line
+            if (in.peek() != '#') return false;
+
+            // read the header line
+            string line;
+            getline(in, line);
+
+            // if the line conforms to the required syntax, return the extracted information
+            static const std::regex syntax("#\\s*column\\s*(\\d+)\\s*:[^()]*\\(\\s*([a-z0-9/]*)\\s*\\)\\s*",
+                                           std::regex::icase);
+            std::smatch matches;
+            if (std::regex_match(line, matches, syntax) && matches.size()==3)
+            {
+                colIndex = std::stoul(matches[1].str());
+                unit = matches[2].str();
+                return true;
+            }
+        }
+    }
+
+    // This function returns the wavelength exponent needed to convert a per wavelength / per frequency
+    // quantity to internal (per wavelength) flavor, given the input units, or the error value of 99 if the
+    // given units are not supported by any of the relevant quantities.
+    int waveExponentForSpecificQuantity(Units* unitSystem, string unitString)
+    {
+        // a list of known per wavelength / per frequency quantities and the corresponding exponents
+        static const vector<string> specificQuantities({
+                           "wavelengthmonluminosity", "wavelengthfluxdensity", "wavelengthsurfacebrightness",
+                           "neutralmonluminosity", "neutralfluxdensity", "neutralsurfacebrightness",
+                           "frequencymonluminosity", "frequencyfluxdensity", "frequencysurfacebrightness"});
+        static const vector<int> specificExponents({0,0,0, -1,-1,-1, -2,-2,-2});
+
+        // loop over the list
+        for (size_t q=0; q!=specificQuantities.size(); ++q)
+        {
+            // if this quantity supports the given unit, return the corresponding exponent
+            if (unitSystem->has(specificQuantities[q], unitString)) return specificExponents[q];
+        }
+        return 99;  // error value
+    }
+
+    // This function returns the index of the first column in the given list that is described as "wavelength",
+    // or the error value of 99 if there is no such column.
+    size_t waveIndexForSpecificQuantity(const vector<TextInFile_Private::ColumnInfo*>& colv)
+    {
+        size_t index = 0;
+        for (auto col : colv)
+        {
+            if (col->description == "wavelength") return index;
+            index++;
+        }
+        return 99;  // error value
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -51,23 +154,62 @@ TextInFile::~TextInFile()
 void TextInFile::addColumn(string description, string quantity, string defaultUnit,
                            bool isGhostColumn, double ghostValue)
 {
-    _colv.emplace_back(description, quantity, defaultUnit, isGhostColumn,  ghostValue);
+    // store the column info provided by the program
+    auto col = new TextInFile_Private::ColumnInfo(description, quantity, defaultUnit, isGhostColumn, ghostValue);
+    _colv.push_back(col);
+    auto colIndex = _colv.size();
 
-    if (quantity=="specific") _colv.back().quantity = "wavelengthmonluminosity";
+    // if this is a ghost column, we're done
+    if (isGhostColumn) return;
 
-    // TODO: parse column info in input file and update column info data structures
-    // TODO: cache unit conversion factor in column info?
-    // TODO: support dimensionless and specific
-
-    /*
-    string line;
-    while(_in.peek() == '#')
+    // if this is the first column, or we know from previous columns that the file has header info,
+    // look for the next structured header line and, if present, process it
+    if (_hasHeaderInfo)
     {
-        getline(_in,line);
-        if (line.find(find) != string::npos) return line;
+        size_t index;
+        string unit;
+        if (getNextInfoLine(_in, index, unit))
+        {
+            if (index != colIndex)
+                throw FATALERROR("Incorrect column index in file header for column " + std::to_string(colIndex));
+            col->unit = unit;
+        }
+        else
+        {
+            if (colIndex > 1)
+                throw FATALERROR("No column info in file header for column " + std::to_string(colIndex));
+            _hasHeaderInfo = false;
+        }
     }
-    return string();
-    */
+
+    // verify units and determine conversion factor for this column
+    if (col->quantity.empty())       // dimensionless quantity
+    {
+        if (!col->unit.empty() && col->unit != "1")
+            throw FATALERROR("Invalid units for dimensionless quantity in column " + std::to_string(colIndex));
+        col->unit = "1";
+    }
+    else if (col->quantity == "specific")    // arbitrarily scaled value per wavelength or per frequency
+    {
+        col->waveExponent = waveExponentForSpecificQuantity(_units, col->unit);
+        if (col->waveExponent == 99)
+            throw FATALERROR("Invalid units for specific quantity in column " + std::to_string(colIndex));
+        if (col->waveExponent)
+        {
+            col->waveIndex = waveIndexForSpecificQuantity(_colv);
+            if (col->waveIndex == 99) throw FATALERROR("No preceding wavelength column for specific quantity in column "
+                                                       + std::to_string(colIndex));
+        }
+    }
+    else
+    {
+        if (!_units->has(col->quantity, col->unit))
+            throw FATALERROR("Invalid units for quantity in column " + std::to_string(colIndex));
+        col->convFactor = _units->in(col->quantity, col->unit, 1.);
+    }
+
+    // log column information
+    _log->info("  Column " + std::to_string(colIndex) + ": " + col->description + " (" + col->unit + ")");
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -92,8 +234,10 @@ bool TextInFile::readRow(Array& values)
             std::stringstream linestream(line);
             for (size_t i=0; i<ncols; ++i)
             {
+                auto col = _colv[i];
+
                 // substitute ghost value if requested for this column
-                if (_colv[i].isGhost) values[i] = _colv[i].ghostValue;
+                if (col->isGhost) values[i] = col->ghostValue;
                 else
                 {
                     // convert the value to floating point
@@ -103,8 +247,8 @@ bool TextInFile::readRow(Array& values)
                     if (linestream.fail()) throw FATALERROR("Input text is not formatted as a floating point number");
 
                     // convert from input units to internal units
-                    // TODO: support dimensionless and specific
-                    values[i] = _units->in(_colv[i].quantity, _colv[i].unit, value);
+                    values[i] = value * (col->waveExponent ? pow(values[col->waveIndex],col->waveExponent)
+                                                           : col->convFactor);
                 }
             }
             return true;

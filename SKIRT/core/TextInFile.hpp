@@ -12,6 +12,7 @@
 class Log;
 class SimulationItem;
 class Units;
+namespace TextInFile_Private { class ColumnInfo; }
 
 ////////////////////////////////////////////////////////////////////
 
@@ -33,7 +34,7 @@ class Units;
       - the one-based column number (optional)
       - a colon
       - a description that does not contain parenthesis (optional)
-      - a unit string between parenthesis (optional for dimensionless quantities)
+      - a unit string between parenthesis (may be "(1)" or "()" for dimensionless quantities)
 
     Extra whitespace is allowed between the various fields. The unit string must exactly match one
     of the unit strings supported by SKIRT for the expected quantity. The column info lines must
@@ -53,17 +54,17 @@ public:
         the input file path and an appropriate logger; (2) \em filename specifies the name of the
         file, including filename extension but excluding path and simulation prefix; (3) \em
         description describes the contents of the file for use in the log message issued after the
-        file is successfully closed. */
+        file is successfully opened. */
     TextInFile(const SimulationItem* item, string filename, string description);
 
-    /** This function closes the file and logs an informational message, if the file was not
-        already closed. It is important to call close() or allow the object to go out of scope
-        before logging other messages or starting another significant chunk of work. */
+    /** This function closes the file if it was not already closed. It is best to call close() or
+        allow the object to go out of scope before logging other messages or starting another
+        significant chunk of work. */
     void close();
 
-    /** The destructor calls the close() function. It is important to call close() or allow the
-        object to go out of scope before logging other messages or starting another significant
-        chunk of work. */
+    /** The destructor calls the close() function. It is best to call close() or allow the object
+        to go out of scope before logging other messages or starting another significant chunk of
+        work. */
     ~TextInFile();
 
     //====================== Other functions =======================
@@ -79,7 +80,7 @@ public:
         In addition to the quantity strings supported by the Units system, this function supports
         the following special quantity strings.
            - The empty string (the default argument value): indicates a dimensionless quantity;
-             the value of the default unit is not used in this case.
+             the default unit must be the empty string as well.
            - The string "specific": indicates a quantity that represents a specific luminosity per
              unit of frequency or per unit of wavelength, in arbitrary units (because the values
              will be normalized after being read). The function determines the frequency/wavelength
@@ -190,22 +191,10 @@ private:
     std::ifstream _in;      // the input stream
     Units* _units{nullptr}; // the units system
     Log* _log{nullptr};     // the logger
-    string _message;        // the message
-
-    // private type to remember column info
-    struct ColumnInfo
-    {
-        ColumnInfo(string description_, string quantity_, string unit_, bool isGhost_, double ghostValue_)
-        : description(description_), quantity(quantity_), unit(unit_), isGhost(isGhost_), ghostValue(ghostValue_) { }
-        string description;
-        string quantity;
-        string unit;
-        bool isGhost;
-        double ghostValue;
-    };
 
     // data members initialized by repeated calls to addColumn()
-    vector<ColumnInfo> _colv;
+    vector<TextInFile_Private::ColumnInfo*> _colv;  // info for each column
+    bool _hasHeaderInfo{true};   // true if the input file has structured column info in header
 };
 
 ////////////////////////////////////////////////////////////////////
