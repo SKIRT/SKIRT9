@@ -52,7 +52,8 @@ private:
     // data members initialized during setup
     StoredTable<1> _table;
     Array _lambdav;
-    Array _cdfv;
+    Array _pv;
+    Array _Pv;
     double _Ltot{0};
 };
 

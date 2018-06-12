@@ -235,9 +235,9 @@ public:
             // if requested, compute logarithm of coordinate values
             if (_axLog[k])
             {
-                x = log10(x);
-                x1 = log10(x1);
-                x2 = log10(x2);
+                x = log(x);
+                x1 = log(x1);
+                x2 = log(x2);
             }
 
             // calculate the fraction of the requested axis value in the bin
@@ -252,7 +252,7 @@ public:
         // perform logarithmic interpolation of y value if requested and all bordering values are positive
         bool logy = _qtyLog;
 
-        // determine front factor and tabulated value for each term of the interplation
+        // determine front factor and tabulated value for each term of the interpolation
         std::array<size_t, N> indices;         // storage for indices of the current term
         for (size_t t = 0; t!=numTerms; ++t)
         {
@@ -275,8 +275,8 @@ public:
         double y = 0.;
         if (logy)
         {
-            for (size_t t = 0; t!=numTerms; ++t) y += ff[t] * log10(yy[t]);
-            y = pow(10,y);
+            for (size_t t = 0; t!=numTerms; ++t) y += ff[t] * log(yy[t]);
+            y = exp(y);
         }
         else
         {
@@ -319,47 +319,24 @@ public:
         first axis, are out of range of the internal grid, extra quantity values are fabricated
         according to the policy set by the \em clamp flag in the open() function. */
     template <typename... Values, typename = std::enable_if_t<CompileTimeUtils::isFloatArgList<N-1, Values...>()>>
-    double cdf(Array& xv, Array& Yv, size_t minBins, Range xrange, Values... values) const
+    double cdf(Array& xv, Array& pv, Array& Pv, Range xrange, Values... values) const
     {
-        // there must be at least one bin  (n = number of bins; n+1 = number of border points)
-        size_t n = std::max(static_cast<size_t>(1), minBins);
-
-        // if the number of grid points is sufficient, copy the relevant portion of the internal axis grid
+        // copy the relevant portion of the internal axis grid
         size_t minRight = std::upper_bound(_axBeg[0], _axBeg[0]+_axLen[0], xrange.min()) - _axBeg[0];
         size_t maxRight = std::lower_bound(_axBeg[0], _axBeg[0]+_axLen[0], xrange.max()) - _axBeg[0];
-        if (minRight + n <= maxRight  )
-        {
-            n = 1 + maxRight - minRight;  // n = number of bins
-            xv.resize(n+1);               // n+1 = number of border points
-            size_t i = 0;                 // i = index in target array
-            xv[i++] = xrange.min();       // j = index in internal grid array
-            for (size_t j = minRight; j < maxRight; ) xv[i++] = _axBeg[0][j++];
-            xv[i++] = xrange.max();
-        }
-        // otherwise, build a new grid with the requested number of bins
-        else
-        {
-            if (_axLog[0]) NR::buildLogGrid(xv, xrange.min(), xrange.max(), n);
-            else NR::buildLinearGrid(xv, xrange.min(), xrange.max(), n);
-        }
+        size_t n = 1 + maxRight - minRight; // n = number of bins
+        xv.resize(n+1);                     // n+1 = number of border points
+        size_t i = 0;                       // i = index in target array
+        xv[i++] = xrange.min();             // j = index in internal grid array
+        for (size_t j = minRight; j < maxRight; ) xv[i++] = _axBeg[0][j++];
+        xv[i++] = xrange.max();
 
-        // resize Y array; also sets Yv[0] to zero
-        Yv.resize(n+1);
+        // interpolate or copy the corresponding probability density values
+        pv.resize(n+1);
+        for (size_t i = 0; i<=n; ++i) pv[i] = operator()(xv[i], values...);
 
-        // calculate cumulative values corresponding to each x grid point (and any extra axis values)
-        double y0 = operator()(xv[0], values...);
-        for (size_t i = 0; i!=n; ++i)
-        {
-            double dx = xv[i+1] - xv[i];
-            double y1 = operator()(xv[i+1], values...);
-            Yv[i+1] = Yv[i] + 0.5*(y0+y1)*dx;
-            y0 = y1;
-        }
-
-        // normalize cumulative distribution and return normalization factor
-        double norm = Yv[n];
-        Yv /= norm;
-        return norm;
+        // perform the rest of the operation in a non-templated function
+        return StoredTable_Impl::cdf(_axLog[0] && _qtyLog, xv, pv, Pv);
     }
 
     // ================== Accessing the raw data ==================

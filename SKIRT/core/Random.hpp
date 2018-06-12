@@ -145,8 +145,17 @@ public:
         \f$p(x)\,{\text{d}}x\f$ with corresponding cumulative distribution function \f$P(x)\f$. The
         function accepts a discretized version \f$P_i\f$ of the cdf sampled at a set of \f$N\f$
         points \f$x_i\f$. A uniform deviate \f$\cal{X}\f$ is generated, and the equation
-        \f${\cal{X}}=P(x)\f$ is solved using linear interpolation. */
-    double cdf(const Array& xv, const Array& Pv);
+        \f${\cal{X}}=P(x)\f$ is solved using linear interpolation on both the axis and probability
+        density values. */
+    double cdfLinLin(const Array& xv, const Array& Pv);
+
+    /** This function generates a random number drawn from an arbitrary probability distribution
+        \f$p(x)\,{\text{d}}x\f$ with corresponding cumulative distribution function \f$P(x)\f$. The
+        function accepts a discretized version \f$P_i\f$ of the cdf sampled at a set of \f$N\f$
+        points \f$x_i\f$. A uniform deviate \f$\cal{X}\f$ is generated, and the equation
+        \f${\cal{X}}=P(x)\f$ is solved using logarithmic interpolation on both the axis and
+        probability density values. */
+    double cdfLogLog(const Array& xv, const Array& pv, const Array& Pv);
 };
 
 //////////////////////////////////////////////////////////////////////

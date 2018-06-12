@@ -12,8 +12,8 @@
 ////////////////////////////////////////////////////////////////////
 
 /** This namespace contains a collection of functions that operate on Array objects and on
-    std::vector<T> objects where T is some numeric type. All implementations are provided inline in
-    the header. */
+    std::vector<T> objects where T is some numeric type. Most implementations are provided inline
+    in the header. */
 namespace NR
 {
     //======================== Conversion and Assignment =======================
@@ -266,9 +266,9 @@ namespace NR
     inline void buildLogGrid(Array& xv, double xmin, double xmax, int n)
     {
         xv.resize(n+1);
-        double logxmin = log10(xmin);
-        double dlogx = log10(xmax/xmin)/n;
-        for (int i=0; i<=n; i++) xv[i] = pow(10, logxmin + i*dlogx);
+        double logxmin = log(xmin);
+        double dlogx = log(xmax/xmin)/n;
+        for (int i=0; i<=n; i++) xv[i] = exp(logxmin + i*dlogx);
     }
 
     /** This function builds a grid with its first bin starting at zero, and subsequent logarithmic
@@ -280,9 +280,9 @@ namespace NR
     inline void buildZeroLogGrid(Array& xv, double xmin, double xmax, int n)
     {
         xv.resize(n+1);  // this also initializes xv[0] to zero
-        double logxmin = log10(xmin);
-        double dlogx = log10(xmax/xmin)/(n-1);
-        for (int i=0; i<n; i++) xv[i+1] = pow(10, logxmin + i*dlogx);
+        double logxmin = log(xmin);
+        double dlogx = log(xmax/xmin)/(n-1);
+        for (int i=0; i<n; i++) xv[i+1] = exp(logxmin + i*dlogx);
     }
 
     //=================== Interpolating and resampling ===================
@@ -302,9 +302,9 @@ namespace NR
     inline double interpolateLogLin(double x, double x1, double x2, double f1, double f2)
     {
         // compute logarithm of coordinate values
-        x  = log10(x);
-        x1 = log10(x1);
-        x2 = log10(x2);
+        x  = log(x);
+        x1 = log(x1);
+        x2 = log(x2);
 
         // perform the interpolation
         return f1 + ((x-x1)/(x2-x1))*(f2-f1);
@@ -318,9 +318,9 @@ namespace NR
     inline double interpolateLogLog(double x, double x1, double x2, double f1, double f2)
     {
         // compute logarithm of coordinate values
-        x  = log10(x);
-        x1 = log10(x1);
-        x2 = log10(x2);
+        x  = log(x);
+        x1 = log(x1);
+        x2 = log(x2);
 
         // turn off logarithmic interpolation of function value if not all given values are positive
         bool logf = f1>0 && f2>0;
@@ -328,15 +328,15 @@ namespace NR
         // compute logarithm of function values if required
         if (logf)
         {
-            f1 = log10(f1);
-            f2 = log10(f2);
+            f1 = log(f1);
+            f2 = log(f2);
         }
 
         // perform the interpolation
         double fx = f1 + ((x-x1)/(x2-x1))*(f2-f1);
 
         // compute the inverse logarithm of the resulting function value if required
-        if (logf) fx = pow(10,fx);
+        if (logf) fx = exp(fx);
 
         return fx;
     }
@@ -409,40 +409,20 @@ namespace NR
         function constructs the normalized cumulative distribution function across a given range.
         The incoming distribution (specified by \em inxv and inpv) does not need to be normalized.
         The specified \em xrange must overlap the incoming grid, but it does not need to coincide
-        with it. The function constructs a new grid \em xv that matches the given range in and then
+        with it. The function constructs a new grid \em xv that matches the given range and then
         constructs both the normalized distribution \em pv and the normalized cumulative
         distribution \em Pv corresponding to this new grid. It returns the factor used to
-        normalized the distribitions. */
-    template < double interpolateFunction(double, double, double, double, double) >
-    double cdf(Array& xv, Array& pv, Array& Pv, const Array& inxv, const Array& inpv, Range xrange)
+        normalize the distributions. */
+    double cdf(bool loglog, Array& xv, Array& pv, Array& Pv, const Array& inxv, const Array& inpv, Range xrange);
+
+    inline double cdfLinLin(Array& xv, Array& pv, Array& Pv, const Array& inxv, const Array& inpv, Range xrange)
     {
-        // copy the relevant portion of the axis grid
-        size_t minRight = std::upper_bound(begin(inxv), end(inxv), xrange.min()) - begin(inxv);
-        size_t maxRight = std::lower_bound(begin(inxv), end(inxv), xrange.max()) - begin(inxv);
-        size_t n = 1 + maxRight - minRight;  // n = number of bins
-        xv.resize(n+1);                      // n+1 = number of border points
-        size_t i = 0;                        // i = index in target array
-        xv[i++] = xrange.min();              // j = index in input array
-        for (size_t j = minRight; j < maxRight; ) xv[i++] = inxv[j++];
-        xv[i++] = xrange.max();
+        return cdf(false, xv, pv, Pv, inxv, inpv, xrange);
+    }
 
-        // interpolate or copy the corresponding probability density values
-        pv.resize(n+1);
-        pv[0] = minRight == 0 ? 0. :
-                interpolateFunction(xv[0], inxv[minRight-1], inxv[minRight], inpv[minRight-1], inpv[minRight]);
-        for (size_t i = 1; i < n; ++i) pv[i] = inpv[minRight+i-1];
-        pv[n] = maxRight == inxv.size() ? 0. :
-                interpolateFunction(xv[n], inxv[maxRight-1], inxv[maxRight], inpv[maxRight-1], inpv[maxRight]);
-
-        // calculate cumulative values corresponding to each x grid point (and any extra axis values)
-        Pv.resize(n+1);                     // also sets Pv[0] to zero
-        for (size_t i = 0; i!=n; ++i) Pv[i+1] = Pv[i] + 0.5*(inpv[i]+inpv[i+1])*(xv[i+1]-xv[i]);
-
-        // normalize both cumulative and regular distribution
-        double norm = Pv[n];
-        pv /= norm;
-        Pv /= norm;
-        return norm;
+    inline double cdfLogLog(Array& xv, Array& pv, Array& Pv, const Array& inxv, const Array& inpv, Range xrange)
+    {
+        return cdf(true, xv, pv, Pv, inxv, inpv, xrange);
     }
 }
 

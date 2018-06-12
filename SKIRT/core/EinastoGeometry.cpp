@@ -48,7 +48,7 @@ double EinastoGeometry::density(double r) const
 
 double EinastoGeometry::randomRadius() const
 {
-    return random()->cdf(_rv,_Xv);
+    return random()->cdfLinLin(_rv,_Xv);
 }
 
 //////////////////////////////////////////////////////////////////////

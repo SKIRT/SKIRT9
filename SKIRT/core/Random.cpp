@@ -7,6 +7,7 @@
 #include "Box.hpp"
 #include "NR.hpp"
 #include "Position.hpp"
+#include "SpecialFunctions.hpp"
 #include <random>
 
 //////////////////////////////////////////////////////////////////////
@@ -186,10 +187,22 @@ Position Random::position(const Box& box)
 
 //////////////////////////////////////////////////////////////////////
 
-double Random::cdf(const Array& xv, const Array& Pv)
+double Random::cdfLinLin(const Array& xv, const Array& Pv)
 {
     double X = uniform();
     int i = NR::locateClip(Pv, X);
     return NR::interpolateLinLin(X, Pv[i], Pv[i+1], xv[i], xv[i+1]);
 }
 
+//////////////////////////////////////////////////////////////////////
+
+double Random::cdfLogLog(const Array& xv, const Array& pv, const Array& Pv)
+{
+    double X = uniform();
+    int i = NR::locateClip(Pv, X);
+    return NR::interpolateLogLog(X, Pv[i], Pv[i+1], xv[i], xv[i+1]);
+    //double alpha = log(pv[i+1]/pv[i]) / log(xv[i+1]/xv[i]);
+    //return xv[i] * SpecialFunctions::gexp(-alpha, X/(pv[i]*xv[i]));
+}
+
+//////////////////////////////////////////////////////////////////////

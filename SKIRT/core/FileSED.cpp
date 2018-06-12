@@ -21,13 +21,8 @@ void FileSED::setupSelfBefore()
     TextInFile infile(this, _filename, "spectral energy distribution");
     infile.addColumn("wavelength", "wavelength", "micron");
     infile.addColumn("specific luminosity", "specific", "W/m");
-    Array inlambdav, inpv;
-    infile.readAllColumns(inlambdav, inpv);
+    infile.readAllColumns(_inlambdav, _inpv);
     infile.close();
-
-    // resample the input distribution on a fine grid (temporary fix)
-    NR::buildLogGrid(_inlambdav, inlambdav[0], inlambdav[inlambdav.size()-1], 5000);
-    _inpv = NR::resample<NR::interpolateLogLog>(_inlambdav, inlambdav, inpv);
 
     // determine the intersected wavelength range
     Range range(_inlambdav[0], _inlambdav[_inlambdav.size()-1]);
@@ -35,7 +30,7 @@ void FileSED::setupSelfBefore()
     if (range.empty()) throw FATALERROR("SED wavelength range does not overlap source wavelength range");
 
     // construct the regular and cumulative distributions in the intersected range
-    double norm = NR::cdf<NR::interpolateLogLog>(_lambdav, _pv, _Pv, _inlambdav, _inpv, range);
+    double norm = NR::cdfLogLog(_lambdav, _pv, _Pv, _inlambdav, _inpv, range);
 
     // also normalize the intrinsic distribution
     _inpv /= norm;
@@ -55,14 +50,14 @@ double FileSED::specificLuminosity(double wavelength) const
 double FileSED::integratedLuminosity(const Range& wavelengthRange) const
 {
     Array lambdav, pv, Pv;  // the contents of these arrays is not used, so this could be optimized if needed
-    return NR::cdf<NR::interpolateLogLog>(lambdav, pv, Pv, _inlambdav, _inpv, wavelengthRange);
+    return NR::cdfLogLog(lambdav, pv, Pv, _inlambdav, _inpv, wavelengthRange);
 }
 
 //////////////////////////////////////////////////////////////////////
 
 double FileSED::generateWavelength() const
 {
-    return random()->cdf(_lambdav, _Pv);
+    return random()->cdfLogLog(_lambdav, _pv, _Pv);
 }
 
 //////////////////////////////////////////////////////////////////////

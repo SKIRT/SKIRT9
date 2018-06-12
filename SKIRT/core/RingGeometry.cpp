@@ -46,7 +46,7 @@ double RingGeometry::density(double R, double z) const
 
 double RingGeometry::randomCylRadius() const
 {
-    return random()->cdf(_Rv,_Xv);
+    return random()->cdfLinLin(_Rv,_Xv);
 }
 
 //////////////////////////////////////////////////////////////////////
