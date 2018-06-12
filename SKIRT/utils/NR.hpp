@@ -405,14 +405,15 @@ namespace NR
         Pv /= Pv[n];
     }
 
-    /** Given the tabulated probability density for a continuous probability distribution, this
-        function constructs the normalized cumulative distribution function across a given range.
-        The incoming distribution (specified by \em inxv and inpv) does not need to be normalized.
-        The specified \em xrange must overlap the incoming grid, but it does not need to coincide
-        with it. The function constructs a new grid \em xv that matches the given range and then
-        constructs both the normalized distribution \em pv and the normalized cumulative
-        distribution \em Pv corresponding to this new grid. It returns the factor used to
-        normalize the distributions. */
+    /** Given the tabulated values for a continuous probability distribution, this function
+        constructs both the normalized probability density function (pdf) and the corresponding
+        normalized cumulative distribution function (cdf) within a given range. The incoming
+        distribution is specified by the \em inxv and inpv arrays and does not need to be
+        normalized. The specified \em xrange must overlap the incoming grid, but it does not need
+        to coincide with it. The function constructs a new grid \em xv that matches the given range
+        and then constructs both the normalized pdf \em pv and the normalized cdf \em Pv
+        corresponding to this new grid. It returns the factor used to normalize the distributions.
+        */
     double cdf(bool loglog, Array& xv, Array& pv, Array& Pv, const Array& inxv, const Array& inpv, Range xrange);
 
     inline double cdfLinLin(Array& xv, Array& pv, Array& Pv, const Array& inxv, const Array& inpv, Range xrange)

@@ -299,21 +299,15 @@ public:
 
     // ------------------------------------------
 
-    /** This function constructs the normalized cumulative distribution function for the tabulated
-        quantity across a given range in the first axis (the \em xrange argument),
-        using given fixed values for the other axes, if any (the arguments at the end of the list).
-        If the internal representation of the table includes at least the specified number of
-        minimum bins (the \em minBins argument) in the specified range of the first axis, then the
-        internal grid points are used, because they should offer optimal resolution everywhere.
-        Otherwise, a new grid is constructed (linear or logarithmic depending on the internal
-        representation of the first axis) with the specified number of minimum bins. This can be
-        useful to interpolate on a finer grid than the internal grid of the table.
+    /** This function constructs both the normalized probability density function (pdf) and the
+        corresponding normalized cumulative distribution function (cdf) for the tabulated quantity
+        across a given range in the first axis (the \em xrange argument), using given fixed values
+        for the other axes, if any (the arguments at the end of the list).
 
-        The resulting first-axis grid is constructed into \em xv, and the corresponding normalized
-        cumulative distribution is constructed into \em Yv. Assuming that the function decided to
-        return $n$ bins, these two arrays will each have $n+1$ elements (border points). In all
-        cases, xv[0]=xmin, xv[n]=xmax, Yv[0]=0, and Yv[n]=1. The function returns the normalization
-        factor, i.e. the value of Yv[n] before normalization.
+        The resulting first-axis grid is constructed into \em xv, the corresponding pdf into \em
+        pv, and the corresponding cdf into \em Yv. In all cases, xv[0]=xmin, xv[n]=xmax, Pv[0]=0,
+        and Pv[n]=1. The function returns the normalization factor, i.e. the value of Pv[n] before
+        normalization.
 
         If any of the axes values, including the \em xrange values specifying the range for the
         first axis, are out of range of the internal grid, extra quantity values are fabricated

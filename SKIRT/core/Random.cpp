@@ -196,7 +196,7 @@ double Random::cdfLinLin(const Array& xv, const Array& Pv)
 
 //////////////////////////////////////////////////////////////////////
 
-double Random::cdfLogLog(const Array& xv, const Array& pv, const Array& Pv)
+double Random::cdfLogLog(const Array& xv, const Array& /*pv*/, const Array& Pv)
 {
     double X = uniform();
     int i = NR::locateClip(Pv, X);
