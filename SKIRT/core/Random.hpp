@@ -153,8 +153,23 @@ public:
         \f$p(x)\,{\text{d}}x\f$ with corresponding cumulative distribution function \f$P(x)\f$. The
         function accepts discretized versions \f$p_i\f$ and \f$P_i\f$ of the pdf and cdf sampled at
         a set of \f$N\f$ points \f$x_i\f$. A uniform deviate \f$\cal{X}\f$ is generated, and the
-        equation \f${\cal{X}}=P(x)\f$ is solved using a interpolation mechanism that assumes
-        piece-wise log-log behavior of the pdf between the grid points. */
+        equation \f${\cal{X}}=P(x)\f$ is solved using a interpolation mechanism that assumes that
+        the pdf is linear in log-log space between any two grid points (equivalent to power-law
+        behavior), as described below.
+
+        Consider the pdf values \f$p_i\f$ and \f$p_{i+1}\f$ at two consecutive grid points
+        \f$x_i\f$ and \f$x_{i+1}\f$. Assuming power-law behavior, the pdf between these two grid
+        points can be written as \f[ p(x) = p_i \left(\frac{x}{x_i}\right)^{\alpha_i},
+        \quad\mathrm{with}\; \alpha_i = \frac{\ln p_{i+1}/\ln p_i}{\ln x_{i+1}/\ln x_i} \f]
+
+        With \f$\mathcal{X}\f$ a random deviate for which \f$x_i\leq\mathcal{X}\leq x_{i+1}\f$
+        happens to be true, we thus need to invert the relation \f[ \mathcal{X}-x_i = \int_{x_i}^x
+        p(x')\,\mathrm{d}x' = \int_{x_i}^x p_i \left(\frac{x'}{x_i}\right)^{\alpha_i}\mathrm{d}x' =
+        p_i x_i \;\mathrm{gln}\left(-\alpha_i, \frac{x}{x_i}\right) \f] which leads to
+        \f[x = x_i \;\mathrm{gexp}\left(-\alpha_i, \frac{\mathcal{X}-x_i}{p_i x_i}\right)\f]
+        where \f$\mathrm{gln}(a,x)\f$ is the generalized logarithm and \f$\mathrm{gexp}(a,x)\f$ the
+        generalized exponential, defined in the description of respectively the
+        SpecialFunctions::gln() and SpecialFunctions::gexp() functions. */
     double cdfLogLog(const Array& xv, const Array& pv, const Array& Pv);
 };
 
