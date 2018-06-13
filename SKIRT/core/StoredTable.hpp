@@ -8,7 +8,7 @@
 
 #include "Array.hpp"
 #include "CompileTimeUtils.hpp"
-#include "NR.hpp"
+#include "NRImpl.hpp"
 #include "Range.hpp"
 #include "StoredTableImpl.hpp"
 #include <array>
@@ -311,7 +311,13 @@ public:
 
         If any of the axes values, including the \em xrange values specifying the range for the
         first axis, are out of range of the internal grid, extra quantity values are fabricated
-        according to the policy set by the \em clamp flag in the open() function. */
+        according to the policy set by the \em clamp flag in the open() function.
+
+        If the flags specified in the stored table indicate that both the first axis and the
+        quantity represented by the table should be interpolated logarithmically, it is assumed
+        that the pdf behaves as a power-law between any two grid points, and the integration to
+        determine the cdf is performed accordingly. In all other cases, piece-wise linear behavior
+        is assumed and regular trapezium-rule integration is used. */
     template <typename... Values, typename = std::enable_if_t<CompileTimeUtils::isFloatArgList<N-1, Values...>()>>
     double cdf(Array& xv, Array& pv, Array& Pv, Range xrange, Values... values) const
     {
@@ -330,7 +336,7 @@ public:
         for (size_t i = 0; i<=n; ++i) pv[i] = operator()(xv[i], values...);
 
         // perform the rest of the operation in a non-templated function
-        return StoredTable_Impl::cdf(_axLog[0] && _qtyLog, xv, pv, Pv);
+        return NR_Impl::cdf2(_axLog[0] && _qtyLog, xv, pv, Pv);
     }
 
     // ================== Accessing the raw data ==================

@@ -33,10 +33,6 @@ namespace StoredTable_Impl
         StoredTable class template. It receives the canonical path to the associated resource file,
         or the empty string if no association exists. */
     void close(string filePath);
-
-    /** This function ... */
-    double cdf(bool loglog, const Array& xv, Array& pv, Array& Pv);
-
 }
 
 ////////////////////////////////////////////////////////////////////

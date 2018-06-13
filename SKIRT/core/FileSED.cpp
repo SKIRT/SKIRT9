@@ -30,7 +30,7 @@ void FileSED::setupSelfBefore()
     if (range.empty()) throw FATALERROR("SED wavelength range does not overlap source wavelength range");
 
     // construct the regular and cumulative distributions in the intersected range
-    double norm = NR::cdfLogLog(_lambdav, _pv, _Pv, _inlambdav, _inpv, range);
+    double norm = NR::cdf<NR::interpolateLogLog>(_lambdav, _pv, _Pv, _inlambdav, _inpv, range);
 
     // also normalize the intrinsic distribution
     _inpv /= norm;
@@ -50,7 +50,7 @@ double FileSED::specificLuminosity(double wavelength) const
 double FileSED::integratedLuminosity(const Range& wavelengthRange) const
 {
     Array lambdav, pv, Pv;  // the contents of these arrays is not used, so this could be optimized if needed
-    return NR::cdfLogLog(lambdav, pv, Pv, _inlambdav, _inpv, wavelengthRange);
+    return NR::cdf<NR::interpolateLogLog>(lambdav, pv, Pv, _inlambdav, _inpv, wavelengthRange);
 }
 
 //////////////////////////////////////////////////////////////////////

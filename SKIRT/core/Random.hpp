@@ -145,16 +145,16 @@ public:
         \f$p(x)\,{\text{d}}x\f$ with corresponding cumulative distribution function \f$P(x)\f$. The
         function accepts a discretized version \f$P_i\f$ of the cdf sampled at a set of \f$N\f$
         points \f$x_i\f$. A uniform deviate \f$\cal{X}\f$ is generated, and the equation
-        \f${\cal{X}}=P(x)\f$ is solved using linear interpolation on both the axis and probability
-        density values. */
+        \f${\cal{X}}=P(x)\f$ is solved using linear interpolation (i.e. assuming piece-wise linear
+        behavior of the cdf (and equivalently, of the underlying pdf). */
     double cdfLinLin(const Array& xv, const Array& Pv);
 
     /** This function generates a random number drawn from an arbitrary probability distribution
         \f$p(x)\,{\text{d}}x\f$ with corresponding cumulative distribution function \f$P(x)\f$. The
-        function accepts a discretized version \f$P_i\f$ of the cdf sampled at a set of \f$N\f$
-        points \f$x_i\f$. A uniform deviate \f$\cal{X}\f$ is generated, and the equation
-        \f${\cal{X}}=P(x)\f$ is solved using logarithmic interpolation on both the axis and
-        probability density values. */
+        function accepts discretized versions \f$p_i\f$ and \f$P_i\f$ of the pdf and cdf sampled at
+        a set of \f$N\f$ points \f$x_i\f$. A uniform deviate \f$\cal{X}\f$ is generated, and the
+        equation \f${\cal{X}}=P(x)\f$ is solved using a interpolation mechanism that assumes
+        piece-wise log-log behavior of the pdf between the grid points. */
     double cdfLogLog(const Array& xv, const Array& pv, const Array& Pv);
 };
 

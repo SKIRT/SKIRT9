@@ -31,7 +31,7 @@ void FileWavelengthDistribution::setupSelfBefore()
     if (range.empty()) throw FATALERROR("Wavelength distribution range does not overlap source wavelength range");
 
     // construct the regular and cumulative distributions in the intersected range
-    NR::cdfLogLog(_lambdav, _pv, _Pv, inlambdav, inpv, range);
+    NR::cdf<NR::interpolateLogLog>(_lambdav, _pv, _Pv, inlambdav, inpv, range);
 }
 
 //////////////////////////////////////////////////////////////////////

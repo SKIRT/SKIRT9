@@ -7,6 +7,7 @@
 #define NR_HPP
 
 #include "Array.hpp"
+#include "NRImpl.hpp"
 #include "Range.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -347,7 +348,7 @@ namespace NR
         grid. For new grid points that fall beyond the original grid, the function value is set to
         zero. For new grid points inside the original grid, the function value is interpolated
         using the function specified as template argument. The interpolation functions provided by
-        this class can be passed as a template argument for this purpose. */
+        this namespace can be passed as a template argument for this purpose. */
     template < double interpolateFunction(double, double, double, double, double) >
     inline Array resample(const Array& xresv, const Array& xoriv, const Array& yoriv)
     {
@@ -413,17 +414,42 @@ namespace NR
         to coincide with it. The function constructs a new grid \em xv that matches the given range
         and then constructs both the normalized pdf \em pv and the normalized cdf \em Pv
         corresponding to this new grid. It returns the factor used to normalize the distributions.
-        */
-    double cdf(bool loglog, Array& xv, Array& pv, Array& Pv, const Array& inxv, const Array& inpv, Range xrange);
 
-    inline double cdfLinLin(Array& xv, Array& pv, Array& Pv, const Array& inxv, const Array& inpv, Range xrange)
-    {
-        return cdf(false, xv, pv, Pv, inxv, inpv, xrange);
-    }
+        The outer grid points of the new grid match the specified range, and therefore usually do
+        not occur in the incoming grid. The \em pv values for those new grid points are
+        interpolated using the function specified as template argument. The interpolation functions
+        provided by this namespace can be passed as a template argument for this purpose.
 
-    inline double cdfLogLog(Array& xv, Array& pv, Array& Pv, const Array& inxv, const Array& inpv, Range xrange)
+        The interpolation function specified as a template argument also determines the integration
+        mechanism used to calculate the cdf. If the NR::interpolateLogLog() function is specified,
+        it is assumed that the pdf behaves as a power-law between any two grid points, and the
+        integration is performed accordingly. In all other cases, piece-wise linear behavior is
+        assumed and regular trapezium-rule integration is used. */
+    template < double interpolateFunction(double, double, double, double, double) >
+    inline double cdf(Array& xv, Array& pv, Array& Pv, const Array& inxv, const Array& inpv, Range xrange)
     {
-        return cdf(true, xv, pv, Pv, inxv, inpv, xrange);
+        // copy the relevant portion of the axis grid
+        size_t minRight = std::upper_bound(begin(inxv), end(inxv), xrange.min()) - begin(inxv);
+        size_t maxRight = std::lower_bound(begin(inxv), end(inxv), xrange.max()) - begin(inxv);
+        size_t n = 1 + maxRight - minRight;  // n = number of bins
+        xv.resize(n+1);                      // n+1 = number of border points
+        size_t i = 0;                        // i = index in target array
+        xv[i++] = xrange.min();              // j = index in input array
+        for (size_t j = minRight; j < maxRight; ) xv[i++] = inxv[j++];
+        xv[i++] = xrange.max();
+
+        // interpolate or copy the corresponding probability density values
+        pv.resize(n+1);
+        pv[0] = minRight == 0 ? 0. :
+                interpolateFunction(xv[0], inxv[minRight-1], inxv[minRight], inpv[minRight-1], inpv[minRight]);
+        for (size_t i = 1; i < n; ++i) pv[i] = inpv[minRight+i-1];
+        pv[n] = maxRight == inxv.size() ? 0. :
+                interpolateFunction(xv[n], inxv[maxRight-1], inxv[maxRight], inpv[maxRight-1], inpv[maxRight]);
+
+        // perform the rest of the operation in a non-templated function
+        // assume log-log behavior for the cdf integration if the template parameter is NR::interpolateLogLog
+        //  --> this will break if the user specifies another log-log interpolation function
+        return NR_Impl::cdf2(interpolateFunction == NR::interpolateLogLog, xv, pv, Pv);
     }
 }
 
