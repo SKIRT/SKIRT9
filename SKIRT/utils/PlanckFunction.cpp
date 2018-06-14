@@ -5,35 +5,42 @@
 
 #include "PlanckFunction.hpp"
 #include "Constants.hpp"
+#include "NR.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
 PlanckFunction::PlanckFunction(double T)
     : _T(T)
 {
+    // precompute some front factors
+    double h = Constants::h();
+    double c = Constants::c();
+    double k = Constants::k();
+    _f1 = h*c/(k*_T);
+    _f2 = 2.0*h*c*c;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double PlanckFunction::operator()(double lambda) const
+double PlanckFunction::value(double lambda) const
 {
-    const double& h = Constants::h();
-    const double& c = Constants::c();
-    const double& k = Constants::k();
-    double x = h*c/(lambda*k*_T);
-    return 2.0*h*c*c / pow(lambda,5) / (exp(x)-1.0);
+    return _f2 / pow(lambda,5) / (exp(_f1/lambda)-1.0);
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double PlanckFunction::derivative(double lambda) const
+double PlanckFunction::cdf(Array& lambdav, Array& pv, Array& Pv, Range lambdaRange) const
 {
-    const double& h = Constants::h();
-    const double& c = Constants::c();
-    const double& k = Constants::k();
-    double x = h*c/(lambda*k*_T);
-    double ans = (2.0*h*c*c*x/_T) / pow(lambda,5) / (2.0*(cosh(x)-1.0));
-    return ans;
+    // build an appropriate grid
+    size_t n = max(100ul, static_cast<size_t>(1000. * log10(lambdaRange.max() / lambdaRange.min())));
+    NR::buildLogGrid(lambdav, lambdaRange.min(), lambdaRange.max(), n);
+
+    // calculate the tabulated probability densities
+    pv.resize(n+1);
+    for (size_t i = 0; i<=n; ++i) pv[i] = value(lambdav[i]);
+
+    // perform the rest of the operation in an implementation function using log-log interpolation
+    return NR_Impl::cdf2(true, lambdav, pv, Pv);
 }
 
 ////////////////////////////////////////////////////////////////////

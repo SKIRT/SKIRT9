@@ -11,6 +11,7 @@
 
 #include "AllSkyInstrument.hpp"
 #include "IntegratedLuminosityNormalization.hpp"
+#include "BlackBodySED.hpp"
 #include "BoxClipGeometryDecorator.hpp"
 #include "BrokenExpDiskGeometry.hpp"
 #include "ClumpyGeometryDecorator.hpp"
@@ -108,6 +109,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
 
     // SEDs
     ItemRegistry::add<SED>();
+    ItemRegistry::add<BlackBodySED>();
     ItemRegistry::add<ResourceSED>();
     ItemRegistry::add<SunSED>();
     ItemRegistry::add<QuasarSED>();
