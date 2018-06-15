@@ -10,6 +10,7 @@
 #include "Geometry.hpp"
 #include "LuminosityNormalization.hpp"
 #include "SED.hpp"
+class RedshiftInterface;
 
 //////////////////////////////////////////////////////////////////////
 
@@ -32,7 +33,32 @@ class GeometricSource : public Source
     PROPERTY_ITEM(normalization, LuminosityNormalization, "the type of luminosity normalization for the source")
         ATTRIBUTE_DEFAULT_VALUE(normalization, "IntegratedLuminosityNormalization")
 
+    PROPERTY_DOUBLE(velocityX, "the bulk velocity of the source, x component")
+        ATTRIBUTE_QUANTITY(velocityX, "velocity")
+        ATTRIBUTE_MIN_VALUE(velocityX, "[0")
+        ATTRIBUTE_DEFAULT_VALUE(velocityX, "0")
+
+    PROPERTY_DOUBLE(velocityY, "the bulk velocity of the source, y component")
+        ATTRIBUTE_QUANTITY(velocityY, "velocity")
+        ATTRIBUTE_MIN_VALUE(velocityY, "[0")
+        ATTRIBUTE_DEFAULT_VALUE(velocityY, "0")
+
+    PROPERTY_DOUBLE(velocityZ, "the bulk velocity of the source, z component")
+        ATTRIBUTE_QUANTITY(velocityZ, "velocity")
+        ATTRIBUTE_MIN_VALUE(velocityZ, "[0")
+        ATTRIBUTE_DEFAULT_VALUE(velocityZ, "0")
+
     ITEM_END()
+
+    //============= Construction - Setup - Destruction =============
+
+protected:
+    /** This function creates a private object offering the redshift interface if the bulk velocity
+        is nonzero. */
+    void setupSelfBefore() override;
+
+    /** The destructor deletes the private object offering the redshift interface. */
+    ~GeometricSource();
 
     //======================== Other Functions =======================
 
@@ -56,6 +82,12 @@ public:
          given history index and luminosity contribution. The position and propagation direction of
          the emission are determined randomly from the geometry of the source. */
     void launch(PhotonPacket* pp, size_t historyIndex, double L) const override;
+
+    //======================== Data Members ========================
+
+private:
+    // pointer to object offering the redshift interface, or null pointer if the bulk velocity is zero
+    RedshiftInterface* _bulkvelocity{nullptr};
 };
 
 //////////////////////////////////////////////////////////////////////

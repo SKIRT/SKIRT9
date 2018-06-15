@@ -4,15 +4,52 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "GeometricSource.hpp"
+#include "Constants.hpp"
 #include "PhotonPacket.hpp"
 #include "Random.hpp"
+#include "RedshiftInterface.hpp"
 #include "WavelengthRangeInterface.hpp"
+
+//////////////////////////////////////////////////////////////////////
+
+namespace
+{
+    // An instance of this class offers the redshift interface for the bulk velocity specified in the constructor
+    class BulkVelocity : public RedshiftInterface
+    {
+    private:
+        Vec _bfv;
+    public:
+        BulkVelocity(Vec bfv) : _bfv(bfv) { }
+        double redshiftForDirection(Direction bfk) const override { return -Vec::dot(_bfv, bfk) / Constants::c(); }
+    };
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void GeometricSource::setupSelfBefore()
+{
+    Source::setupSelfBefore();
+
+    if (velocityX() || velocityY() || velocityZ())
+        _bulkvelocity = new BulkVelocity(Vec(velocityX(), velocityY(), velocityZ()));
+}
+
+//////////////////////////////////////////////////////////////////////
+
+GeometricSource::~GeometricSource()
+{
+    delete _bulkvelocity;
+}
 
 //////////////////////////////////////////////////////////////////////
 
 int GeometricSource::dimension() const
 {
-    return _geometry->dimension();
+    int velocityDimension = 1;
+    if (velocityZ()) velocityDimension = 2;
+    if (velocityX() || velocityY()) velocityDimension = 3;
+    return max(_geometry->dimension(), velocityDimension);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -70,7 +107,7 @@ void GeometricSource::launch(PhotonPacket* pp, size_t historyIndex, double L) co
     }
 
     // launch the photon packet with isotropic direction
-    pp->launch(historyIndex, lambda, L*w, bfr, random()->direction());
+    pp->launch(historyIndex, lambda, L*w, bfr, random()->direction(), _bulkvelocity);
 }
 
 //////////////////////////////////////////////////////////////////////

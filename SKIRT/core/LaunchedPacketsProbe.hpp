@@ -15,7 +15,10 @@
 
 /** LaunchedPacketsProbe outputs a text column file with the number of photon packets launched from
     primary sources on a specified wavelength grid (or on the default instrument wavelength grid).
-    The file is named <tt>prefix_launchedpackets.txt</tt>. The first column lists the
+    The probe uses the wavelength at the time when the photon packet was originally emitted, in the
+    rest-frame of the original source.
+
+    The output file is named <tt>prefix_launchedpackets.txt</tt>. The first column lists the
     characteristic wavelength of the wavelength bin. The second column lists the total number of
     photon packets launched from primary sources in that wavelength bin (i.e. summed over all
     primary sources). Furthermore, there is an additional column for each primary source, listing

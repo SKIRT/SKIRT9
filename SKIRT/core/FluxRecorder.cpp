@@ -152,7 +152,7 @@ void FluxRecorder::detect(const PhotonPacket* pp, int l, double distance)
     if (!_includeFluxDensity && l < 0) return;
 
     // get the wavelength bin index, and abort if the wavelength falls outside of our grid
-    int ell = _lambdagrid->ell(pp->lambda());
+    int ell = _lambdagrid->ell(pp->wavelength());
     if (ell < 0) return;
 
     // ask the medium system to calculate the optical depth

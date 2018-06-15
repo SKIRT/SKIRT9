@@ -38,7 +38,7 @@ void LaunchedPacketsProbe::probePhotonPacket(const PhotonPacket* pp)
     int h = pp->compIndex();
 
     // get the wavelength bin index, and abort if the wavelength falls outside of our grid
-    int ell = _probeWavelengthGrid->ell(pp->wavelength());
+    int ell = _probeWavelengthGrid->ell(pp->sourceRestFrameWavelength());
     if (ell < 0) return;
 
     // count the packet

@@ -57,6 +57,7 @@ void PhotonPacket::launchEmissionPeelOff(const PhotonPacket* pp, Direction bfk)
 {
     _lambda = pp->_lambda;
     _W = pp->_W;
+    _lambda0 = pp->_lambda0;
     _compIndex = pp->_compIndex;
     _historyIndex = pp->_historyIndex;
     _nscatt = 0;
@@ -65,7 +66,7 @@ void PhotonPacket::launchEmissionPeelOff(const PhotonPacket* pp, Direction bfk)
 
     if (pp->_rsi)
     {
-        _lambda = pp->_lambda0;  // recover the source's rest-frame wavelength
+        _lambda = _lambda0;  // recover the source's rest-frame wavelength
         applyRedshift(pp->_rsi->redshiftForDirection(bfk));
     }
     if (pp->_adi) applyBias(pp->_adi->probabilityForDirection(bfk));
@@ -79,6 +80,7 @@ void PhotonPacket::launchScatteringPeelOff(const PhotonPacket* pp, Direction bfk
 {
     _lambda = pp->_lambda;
     _W = pp->_W * w;
+    _lambda0 = pp->_lambda0;
     _compIndex = pp->_compIndex;
     _historyIndex = pp->_historyIndex;
     _nscatt = pp->_nscatt + 1;

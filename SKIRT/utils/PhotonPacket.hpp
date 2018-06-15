@@ -151,11 +151,13 @@ public:
 
     // ------- Getting trivial properties -------
 
-    /** This function returns the wavelength \f$\lambda\f$ of the photon packet. */
+    /** This function returns the current wavelength \f$\lambda\f$ of the photon packet relative to
+        the model coordinate system. */
     double wavelength() const { return _lambda; }
 
-    /** This function returns the wavelength \f$\lambda\f$ of the photon packet. */
-    double lambda() const { return _lambda; }
+    /** This function returns the wavelength \f$\lambda_0\f$ of the photon packet when it was
+        launched, relative to the rest-frame of the original source. */
+    double sourceRestFrameWavelength() const { return _lambda0; }
 
     /** This function returns the luminosity \f$L\f$ represented by the photon packet, calculated
         from its current wavelength and weight. */
@@ -187,7 +189,7 @@ private:
     double _lambda{0};       // current wavelength relative to the model coordinate system
     double _W{0};            // current weight, defined as L*lambda to avoid division and multiplication by hc
 
-    // physical information on radiation source; not used in peel-off photon packets
+    // physical information on radiation source; the interfaces are not used in peel-off photon packets
     double _lambda0{0};      // original wavelength in the rest-frame of the source
     RedshiftInterface* _rsi{nullptr};
     AngularDistributionInterface* _adi{nullptr};
