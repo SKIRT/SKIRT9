@@ -25,6 +25,13 @@ void StokesVector::setPolarized(double I, double Q, double U, double V, Directio
 
 //////////////////////////////////////////////////////////////////////
 
+void StokesVector::setPolarized(const StokesVector& polarization)
+{
+    *this = polarization;
+}
+
+//////////////////////////////////////////////////////////////////////
+
 double StokesVector::totalPolarizationDegree() const
 {
     return sqrt(_Q*_Q+_U*_U+_V*_V);

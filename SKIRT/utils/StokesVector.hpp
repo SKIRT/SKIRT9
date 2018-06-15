@@ -40,6 +40,9 @@ public:
         state. */
     void setPolarized(double I, double Q, double U, double V, Direction n);
 
+    /** This function copies the specified Stokes vector into the receiver. */
+    void setPolarized(const StokesVector& polarization);
+
     // ------------ getters --------------
 
     /** This function returns the Stokes parameter \f$I\f$, which is always equal to one. */

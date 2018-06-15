@@ -33,7 +33,7 @@ class Random;
         to return a random direction, and to return the probability for a given direction)
       - Determine the polarization state of the emission at that location and at that wavelength,
         i.e. an object offering the PolarizationState interface (function to return a Stokes vector
-        given a propagation direction)
+        for a given direction)
       - Determine the bulk velocity of the source at that location
       - Pass the items listed above to the photon packet launch procedure
 

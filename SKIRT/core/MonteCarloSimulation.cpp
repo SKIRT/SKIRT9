@@ -182,7 +182,7 @@ void MonteCarloSimulation::doPrimaryEmissionChunk(size_t firstIndex, size_t numI
             // peel off towards each instrument
             for (Instrument* instrument : _instrumentSystem->instruments())
             {
-                ppp.launchEmissionPeelOff(&pp, instrument->bfkobs(pp.position()), 1.);
+                ppp.launchEmissionPeelOff(&pp, instrument->bfkobs(pp.position()));
                 instrument->detect(&ppp);
             }
         }
