@@ -3,26 +3,33 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef GEOMETRICSOURCE_HPP
-#define GEOMETRICSOURCE_HPP
+#ifndef POINTSOURCE_HPP
+#define POINTSOURCE_HPP
 
 #include "NormalizedSource.hpp"
-#include "Geometry.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
-/** GeometricSource represents a primary radiation source for which the spatial luminosity
-    distribution is characterized by a Geometry object. The spectral distribution is identical in
-    all locations and is characterized by an SED object. The bolometric output is characterized by
-    a LuminosityNormalization object. The emitted radiation is isotropic and unpolarized. The
-    source can have a single bulk velocity, i.e. the bulk velocity is identical in all locations.
-    */
-class GeometricSource : public NormalizedSource
+/** PointSource represents a primary radiation source that is limited to a single point in space.
+    The spectral distribution is characterized by an SED object, and the bolometric output is
+    characterized by a LuminosityNormalization object. The emitted radiation can be anisotropic
+    (configured through an AngularDistribution object) and/or be polarized (configured through a
+    PolarizationState object). The point source can also have a bulk velocity. */
+class PointSource : public NormalizedSource
 {
-    ITEM_CONCRETE(GeometricSource, NormalizedSource, "a primary source with a built-in geometry")
+    ITEM_CONCRETE(PointSource, NormalizedSource, "a primary point source")
 
-    PROPERTY_ITEM(geometry, Geometry, "the geometry of the spatial luminosity distribution for the source")
-        ATTRIBUTE_DEFAULT_VALUE(geometry, "PlummerGeometry")
+    PROPERTY_DOUBLE(positionX, "the position of the point source, x component")
+        ATTRIBUTE_QUANTITY(positionX, "length")
+        ATTRIBUTE_DEFAULT_VALUE(positionX, "0")
+
+    PROPERTY_DOUBLE(positionY, "the position of the point source, y component")
+        ATTRIBUTE_QUANTITY(positionY, "length")
+        ATTRIBUTE_DEFAULT_VALUE(positionY, "0")
+
+    PROPERTY_DOUBLE(positionZ, "the position of the point source, z component")
+        ATTRIBUTE_QUANTITY(positionZ, "length")
+        ATTRIBUTE_DEFAULT_VALUE(positionZ, "0")
 
     ITEM_END()
 

@@ -48,6 +48,7 @@
 #include "ParaboloidShellGeometry.hpp"
 #include "PerspectiveInstrument.hpp"
 #include "PlummerGeometry.hpp"
+#include "PointSource.hpp"
 #include "ProbeSystem.hpp"
 #include "PseudoSersicGeometry.hpp"
 #include "QuasarSED.hpp"
@@ -100,6 +101,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // source system and sources
     ItemRegistry::add<SourceSystem>();
     ItemRegistry::add<Source>();
+    ItemRegistry::add<NormalizedSource>();
+    ItemRegistry::add<PointSource>();
     ItemRegistry::add<GeometricSource>();
 
     // luminosity normalizations

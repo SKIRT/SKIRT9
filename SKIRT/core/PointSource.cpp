@@ -3,24 +3,27 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "GeometricSource.hpp"
+#include "PointSource.hpp"
 #include "PhotonPacket.hpp"
 #include "Random.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
-int GeometricSource::geometryDimension() const
+int PointSource::geometryDimension() const
 {
-    return geometry()->dimension();
+    int dimension = 1;
+    if (positionZ()) dimension = 2;
+    if (positionX() || positionY()) dimension = 3;
+    return dimension;
 }
 
 //////////////////////////////////////////////////////////////////////
 
-void GeometricSource::launchNormalized(PhotonPacket* pp, size_t historyIndex, double lambda, double Lw,
+void PointSource::launchNormalized(PhotonPacket* pp, size_t historyIndex, double lambda, double Lw,
                                        RedshiftInterface* rsi) const
 {
-    // generate a random position from the geometry
-    Position bfr = _geometry->generatePosition();
+    // get the source position
+    Position bfr(positionX(), positionY(), positionZ());
 
     // launch the photon packet with isotropic direction
     pp->launch(historyIndex, lambda, Lw, bfr, random()->direction(), rsi);
