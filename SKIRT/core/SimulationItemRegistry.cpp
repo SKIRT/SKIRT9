@@ -10,7 +10,6 @@
 // ---> add new items below in alphabetical order
 
 #include "AllSkyInstrument.hpp"
-#include "IntegratedLuminosityNormalization.hpp"
 #include "BlackBodySED.hpp"
 #include "BoxClipGeometryDecorator.hpp"
 #include "BrokenExpDiskGeometry.hpp"
@@ -34,15 +33,19 @@
 #include "HyperboloidGeometry.hpp"
 #include "HyperboloidShellGeometry.hpp"
 #include "InstrumentSystem.hpp"
+#include "IntegratedLuminosityNormalization.hpp"
+#include "IsotropicAngularDistribution.hpp"
+#include "LaserAngularDistribution.hpp"
 #include "LaunchedPacketsProbe.hpp"
 #include "LinWavelengthDistribution.hpp"
 #include "ListWavelengthGrid.hpp"
-#include "LuminosityProbe.hpp"
 #include "LogWavelengthDistribution.hpp"
 #include "LogWavelengthGrid.hpp"
+#include "LuminosityProbe.hpp"
 #include "MollweideProjection.hpp"
 #include "MonteCarloSimulation.hpp"
 #include "NestedLogWavelengthGrid.hpp"
+#include "NetzerAngularDistribution.hpp"
 #include "OffsetGeometryDecorator.hpp"
 #include "ParaboloidGeometry.hpp"
 #include "ParaboloidShellGeometry.hpp"
@@ -124,6 +127,12 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<LinWavelengthDistribution>();
     ItemRegistry::add<LogWavelengthDistribution>();
     ItemRegistry::add<FileWavelengthDistribution>();
+
+    // Angular distributions
+    ItemRegistry::add<AngularDistribution>();
+    ItemRegistry::add<IsotropicAngularDistribution>();
+    ItemRegistry::add<LaserAngularDistribution>();
+    ItemRegistry::add<NetzerAngularDistribution>();
 
     // geometries
     ItemRegistry::add<Geometry>();

@@ -11,10 +11,10 @@
 
 int PointSource::geometryDimension() const
 {
-    int dimension = 1;
-    if (positionZ()) dimension = 2;
-    if (positionX() || positionY()) dimension = 3;
-    return dimension;
+    int positionDimension = 1;
+    if (positionZ()) positionDimension = 2;
+    if (positionX() || positionY()) positionDimension = 3;
+    return max(positionDimension, angularDistribution()->dimension());
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -26,7 +26,7 @@ void PointSource::launchNormalized(PhotonPacket* pp, size_t historyIndex, double
     Position bfr(positionX(), positionY(), positionZ());
 
     // launch the photon packet with isotropic direction
-    pp->launch(historyIndex, lambda, Lw, bfr, random()->direction(), rsi);
+    pp->launch(historyIndex, lambda, Lw, bfr, random()->direction(), rsi, angularDistribution());
 }
 
 //////////////////////////////////////////////////////////////////////

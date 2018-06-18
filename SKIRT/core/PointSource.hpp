@@ -7,6 +7,7 @@
 #define POINTSOURCE_HPP
 
 #include "NormalizedSource.hpp"
+#include "AngularDistribution.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -30,6 +31,9 @@ class PointSource : public NormalizedSource
     PROPERTY_DOUBLE(positionZ, "the position of the point source, z component")
         ATTRIBUTE_QUANTITY(positionZ, "length")
         ATTRIBUTE_DEFAULT_VALUE(positionZ, "0")
+
+    PROPERTY_ITEM(angularDistribution, AngularDistribution, "the angular luminosity distribution of the emission")
+        ATTRIBUTE_DEFAULT_VALUE(angularDistribution, "IsotropicAngularDistribution")
 
     ITEM_END()
 
