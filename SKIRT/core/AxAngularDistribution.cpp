@@ -19,6 +19,7 @@ void AxAngularDistribution::setupSelfBefore()
 }
 
 //////////////////////////////////////////////////////////////////////
+
 int AxAngularDistribution::dimension() const
 {
     return symmetryX() || symmetryY() ? 3 : 2;
