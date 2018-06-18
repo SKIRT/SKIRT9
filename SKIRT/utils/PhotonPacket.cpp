@@ -5,7 +5,7 @@
 
 #include "PhotonPacket.hpp"
 #include "AngularDistributionInterface.hpp"
-#include "PolarizationStateInterface.hpp"
+#include "PolarizationProfileInterface.hpp"
 #include "RedshiftInterface.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -19,21 +19,21 @@ PhotonPacket::PhotonPacket()
 void PhotonPacket::launch(size_t historyIndex, double lambda, double L, Position bfr, Direction bfk,
                           RedshiftInterface* rsi,
                           AngularDistributionInterface* adi,
-                          PolarizationStateInterface* psi)
+                          PolarizationProfileInterface* ppi)
 {
     _lambda = lambda;
     _W = L * lambda;
     _lambda0 = lambda;
     _rsi = rsi;
     _adi = adi;
-    _psi = psi;
+    _ppi = ppi;
     _compIndex = 0;
     _historyIndex = historyIndex;
     _nscatt = 0;
     _bfr = bfr;
     _bfk = bfk;
     if (rsi) applyRedshift(rsi->redshiftForDirection(bfk));
-    if (psi) setPolarized(psi->polarizationForDirection(bfk));
+    if (ppi) setPolarized(ppi->polarizationForDirection(bfk));
     else setUnpolarized();
 }
 
@@ -70,7 +70,7 @@ void PhotonPacket::launchEmissionPeelOff(const PhotonPacket* pp, Direction bfk)
         applyRedshift(pp->_rsi->redshiftForDirection(bfk));
     }
     if (pp->_adi) applyBias(pp->_adi->probabilityForDirection(bfk));
-    if (pp->_psi) setPolarized(pp->_psi->polarizationForDirection(bfk));
+    if (pp->_ppi) setPolarized(pp->_ppi->polarizationForDirection(bfk));
     else setUnpolarized();
 }
 

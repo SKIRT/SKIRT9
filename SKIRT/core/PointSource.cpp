@@ -21,7 +21,10 @@ int PointSource::geometryDimension() const
     // ... the angular distribution of the emission
     int angularDimension = angularDistribution() ? angularDistribution()->dimension() : 1;
 
-    return max(positionDimension, angularDimension);
+    // ... the polarization profile of the emission
+    int polarizationDimension = polarizationProfile() ? polarizationProfile()->dimension() : 1;
+
+    return max({positionDimension, angularDimension, polarizationDimension});
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -32,10 +35,10 @@ void PointSource::launchNormalized(PhotonPacket* pp, size_t historyIndex, double
     // get the source position
     Position bfr(positionX(), positionY(), positionZ());
 
-    // launch the photon packet with the appropriate angular distribution
+    // launch the photon packet with the appropriate angular distribution and polarization profile
     pp->launch(historyIndex, lambda, Lw, bfr,
                angularDistribution() ? angularDistribution()->generateDirection() : random()->direction(),
-               rsi, angularDistribution());
+               rsi, angularDistribution(), polarizationProfile());
 }
 
 //////////////////////////////////////////////////////////////////////

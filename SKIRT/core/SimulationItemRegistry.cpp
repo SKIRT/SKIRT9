@@ -46,6 +46,7 @@
 #include "MonteCarloSimulation.hpp"
 #include "NestedLogWavelengthGrid.hpp"
 #include "NetzerAngularDistribution.hpp"
+#include "NoPolarizationProfile.hpp"
 #include "OffsetGeometryDecorator.hpp"
 #include "ParaboloidGeometry.hpp"
 #include "ParaboloidShellGeometry.hpp"
@@ -134,6 +135,10 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<AxAngularDistribution>();
     ItemRegistry::add<LaserAngularDistribution>();
     ItemRegistry::add<NetzerAngularDistribution>();
+
+    // Polarization profiles
+    ItemRegistry::add<PolarizationProfile>();
+    ItemRegistry::add<NoPolarizationProfile>();
 
     // geometries
     ItemRegistry::add<Geometry>();

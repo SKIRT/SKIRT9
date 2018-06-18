@@ -8,6 +8,7 @@
 
 #include "NormalizedSource.hpp"
 #include "AngularDistribution.hpp"
+#include "PolarizationProfile.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -35,6 +36,10 @@ class PointSource : public NormalizedSource
     PROPERTY_ITEM(angularDistribution, AngularDistribution, "the angular luminosity distribution of the emission")
         ATTRIBUTE_DEFAULT_VALUE(angularDistribution, "IsotropicAngularDistribution")
         ATTRIBUTE_OPTIONAL(angularDistribution)
+
+    PROPERTY_ITEM(polarizationProfile, PolarizationProfile, "the polarization profile of the emission")
+        ATTRIBUTE_DEFAULT_VALUE(polarizationProfile, "NoPolarizationProfile")
+        ATTRIBUTE_OPTIONAL(polarizationProfile)
 
     ITEM_END()
 

@@ -9,7 +9,7 @@
 #include "DustGridPath.hpp"
 #include "StokesVector.hpp"
 class AngularDistributionInterface;
-class PolarizationStateInterface;
+class PolarizationProfileInterface;
 class RedshiftInterface;
 
 ////////////////////////////////////////////////////////////////////
@@ -81,7 +81,7 @@ public:
     void launch(size_t historyIndex, double lambda, double L, Position bfr, Direction bfk,
                 RedshiftInterface* rsi=nullptr,
                 AngularDistributionInterface* adi=nullptr,
-                PolarizationStateInterface* psi=nullptr);
+                PolarizationProfileInterface* ppi=nullptr);
 
     /** This function establishes that the photon packet has been emitted by a primary source and
         registers the index of the emitting source component. This information is used by some
@@ -193,7 +193,7 @@ private:
     double _lambda0{0};      // original wavelength in the rest-frame of the source
     RedshiftInterface* _rsi{nullptr};
     AngularDistributionInterface* _adi{nullptr};
-    PolarizationStateInterface* _psi{nullptr};
+    PolarizationProfileInterface* _ppi{nullptr};
 
     // administrative information on origin
     int _compIndex{0};       // sign * (index of the originating source or medium component + 1)
