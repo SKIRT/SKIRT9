@@ -6,35 +6,31 @@
 #ifndef LASERANGULARDISTRIBUTION_HPP
 #define LASERANGULARDISTRIBUTION_HPP
 
-#include "AngularDistribution.hpp"
+#include "AxAngularDistribution.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-/** The LaserAngularDistribution class describes the angular distribition for a point source that
-    emits all its radiation towards the positive Z-axis. In other words, the probability
-    distribution is a Dirac delta function, \f$4\pi\delta({\bf{k}}-{\bf{e}}_z)\f$.
-
-    The emission pattern is axisymmetric, so this geometry has a dimension of 2. */
-class LaserAngularDistribution : public AngularDistribution
+/** The LaserAngularDistribution class describes the axisymmetric angular emission distribution for
+    a point source that emits all its radiation in a single direction, namely towards the positive
+    symmetry axis configured in the base class. In other words, the probability distribution is a
+    Dirac delta function, \f$4\pi\delta({\bf{k}}-{\bf{e}}_\mathrm{sym})\f$. */
+class LaserAngularDistribution : public AxAngularDistribution
 {
-    ITEM_CONCRETE(LaserAngularDistribution, AngularDistribution, "a laser emission profile")
+    ITEM_CONCRETE(LaserAngularDistribution, AxAngularDistribution, "a laser emission profile")
     ITEM_END()
 
     //======================== Other Functions =======================
 
 public:
-    /** This function returns the dimension of the angular distribution, which is 2 in this case.
-        */
-    int dimension() const override;
+    /** This function returns the normalized probability for a given inclination cosine
+        \f$\cos\theta\f$ relative to the symmetry axis. In this case, the function returns infinity
+        if \f$\theta=0\f$, or equivalently \f$\cos\theta=1\f$, and zero in all other cases. */
+    double probabilityForInclinationCosine(double costheta) const override;
 
-    /** This function returns the normalized probability for a given direction \f${\bf{k}} =
-        (\theta,\phi)\f$. In this case, the function returns infinity if \f${\bf{k}} =
-        {\bf{e}}_z\f$, or equivalently if \f$\theta=0\f$, and zero in all other cases. */
-    double probabilityForDirection(Direction bfk) const override;
-
-    /** This function generates a random direction drawn from the angular probability distribution.
-        In this case, this function returns \f${\bf{k}} = {\bf{e}}_z\f$. */
-    Direction generateDirection() const override;
+    /** This function generates a random inclination cosine relative to the symmetry axis, drawn
+        from the angular probability distribution. In this case, the function returns
+        \f$\cos\theta=1\f$, which is equivalent to \f$\theta=0\f$. */
+    double generateInclinationCosine() const override;
 };
 
 ////////////////////////////////////////////////////////////////////

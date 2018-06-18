@@ -7,25 +7,16 @@
 
 //////////////////////////////////////////////////////////////////////
 
-int LaserAngularDistribution::dimension() const
+double LaserAngularDistribution::probabilityForInclinationCosine(double costheta) const
 {
-    return 2;
+    return costheta>0.99999 ? std::numeric_limits<double>::infinity() : 0.;
 }
 
 //////////////////////////////////////////////////////////////////////
 
-double LaserAngularDistribution::probabilityForDirection(Direction bfk) const
+double LaserAngularDistribution::generateInclinationCosine() const
 {
-    double theta, phi;
-    bfk.spherical(theta, phi);
-    return (theta==0.0) ? std::numeric_limits<double>::infinity() : 0.0;
-}
-
-//////////////////////////////////////////////////////////////////////
-
-Direction LaserAngularDistribution::generateDirection() const
-{
-    return Direction(0.0,0.0,1.0);
+    return 1.;
 }
 
 //////////////////////////////////////////////////////////////////////

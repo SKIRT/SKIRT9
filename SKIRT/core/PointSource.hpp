@@ -34,6 +34,7 @@ class PointSource : public NormalizedSource
 
     PROPERTY_ITEM(angularDistribution, AngularDistribution, "the angular luminosity distribution of the emission")
         ATTRIBUTE_DEFAULT_VALUE(angularDistribution, "IsotropicAngularDistribution")
+        ATTRIBUTE_OPTIONAL(angularDistribution)
 
     ITEM_END()
 

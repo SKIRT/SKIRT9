@@ -11,10 +11,17 @@
 
 int PointSource::geometryDimension() const
 {
+    // point source symmetry depends on
+
+    // ... the point's location
     int positionDimension = 1;
     if (positionZ()) positionDimension = 2;
     if (positionX() || positionY()) positionDimension = 3;
-    return max(positionDimension, angularDistribution()->dimension());
+
+    // ... the angular distribution of the emission
+    int angularDimension = angularDistribution() ? angularDistribution()->dimension() : 1;
+
+    return max(positionDimension, angularDimension);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -25,8 +32,10 @@ void PointSource::launchNormalized(PhotonPacket* pp, size_t historyIndex, double
     // get the source position
     Position bfr(positionX(), positionY(), positionZ());
 
-    // launch the photon packet with isotropic direction
-    pp->launch(historyIndex, lambda, Lw, bfr, random()->direction(), rsi, angularDistribution());
+    // launch the photon packet with the appropriate angular distribution
+    pp->launch(historyIndex, lambda, Lw, bfr,
+               angularDistribution() ? angularDistribution()->generateDirection() : random()->direction(),
+               rsi, angularDistribution());
 }
 
 //////////////////////////////////////////////////////////////////////

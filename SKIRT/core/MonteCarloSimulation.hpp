@@ -47,9 +47,13 @@ protected:
         setup() function and notifies the probe system when setup has been completed. */
     void setupSimulation() override;
 
-    /** This function performs setup for the MonteCarloSimulation object; it caches some frequently
-        used pointers. */
+    /** This function performs initial setup for the MonteCarloSimulation object; it caches some
+        frequently used pointers. */
     void setupSelfBefore() override;
+
+    /** This function performs final setup for the MonteCarloSimulation object; it logs the
+        dimension of the simulation. */
+    void setupSelfAfter() override;
 
     //======== Setters & Getters for Discoverable Attributes =======
 

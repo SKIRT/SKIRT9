@@ -27,7 +27,7 @@ class Random;
 */
 class AngularDistribution : public SimulationItem, public AngularDistributionInterface
 {
-    ITEM_ABSTRACT(AngularDistribution, SimulationItem, "an angular distribution of point source emission")
+    ITEM_ABSTRACT(AngularDistribution, SimulationItem, "an angular emission profile")
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============

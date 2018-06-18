@@ -131,6 +131,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // Angular distributions
     ItemRegistry::add<AngularDistribution>();
     ItemRegistry::add<IsotropicAngularDistribution>();
+    ItemRegistry::add<AxAngularDistribution>();
     ItemRegistry::add<LaserAngularDistribution>();
     ItemRegistry::add<NetzerAngularDistribution>();
 

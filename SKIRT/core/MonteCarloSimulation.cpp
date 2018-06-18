@@ -44,6 +44,15 @@ void MonteCarloSimulation::setupSelfBefore()
 
 ////////////////////////////////////////////////////////////////////
 
+void MonteCarloSimulation::setupSelfAfter()
+{
+    Simulation::setupSelfAfter();
+
+    log()->info("Model symmetry is " + std::to_string(dimension()) + "D");
+}
+
+////////////////////////////////////////////////////////////////////
+
 void MonteCarloSimulation::setEmulationMode()
 {
     _emulationMode = true;
@@ -61,7 +70,7 @@ bool MonteCarloSimulation::emulationMode()
 
 int MonteCarloSimulation::dimension() const
 {
-    return 0;
+    return sourceSystem()->dimension();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -101,7 +110,7 @@ void MonteCarloSimulation::wait(std::string scope)
 {
     if (ProcessManager::isMultiProc())
     {
-        find<Log>()->info("Waiting for other processes to finish " + scope + "...");
+        log()->info("Waiting for other processes to finish " + scope + "...");
         ProcessManager::wait();
     }
 }
