@@ -32,6 +32,11 @@ public:
     /** The default constructor initializes the Stokes vector to an unpolarized state. */
     StokesVector() : _polarized(false), _Q(0), _U(0), _V(0), _normal(0,0,0) { }
 
+    /** This constructor initializes the Stokes vector to the specified parameter values, after
+        normalizing them through division by \f$I\f$. If \f$I=0\f$, the Stokes vector is set to an
+        unpolarized state. */
+    StokesVector(double I, double Q, double U, double V, Direction n);
+
     /** This function sets the Stokes vector to an unpolarized state. */
     void setUnpolarized() { _polarized = false; _Q = 0; _U = 0; _V = 0; _normal.set(0, 0, 0); }
 

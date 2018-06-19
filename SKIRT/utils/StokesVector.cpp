@@ -7,6 +7,13 @@
 
 //////////////////////////////////////////////////////////////////////
 
+StokesVector::StokesVector(double I, double Q, double U, double V, Direction n)
+{
+    setPolarized(I, Q, U, V, n);
+}
+
+//////////////////////////////////////////////////////////////////////
+
 void StokesVector::setPolarized(double I, double Q, double U, double V, Direction n)
 {
     if (I!=0.0)

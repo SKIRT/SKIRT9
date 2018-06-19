@@ -64,6 +64,7 @@
 #include "SIUnits.hpp"
 #include "SersicGeometry.hpp"
 #include "ShellGeometry.hpp"
+#include "SineSquarePolarizationProfile.hpp"
 #include "SourceSystem.hpp"
 #include "SpecificLuminosityNormalization.hpp"
 #include "SphericalClipGeometryDecorator.hpp"
@@ -139,6 +140,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // Polarization profiles
     ItemRegistry::add<PolarizationProfile>();
     ItemRegistry::add<NoPolarizationProfile>();
+    ItemRegistry::add<SineSquarePolarizationProfile>();
 
     // geometries
     ItemRegistry::add<Geometry>();
