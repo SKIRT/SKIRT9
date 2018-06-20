@@ -19,6 +19,7 @@ int SphericalBackgroundSource::intrinsicDimension() const
 ////////////////////////////////////////////////////////////////////
 
 namespace
+{
     // this function generates a random launch direction for a given launch position on the unit sphere
     // (the launch position on the unit sphere is actually specified as a direction)
     Direction generateDirectionForLaunchPosition(Random* random, Direction bfu)
