@@ -3,7 +3,7 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "DustGridPath.hpp"
+#include "SpatialGridPath.hpp"
 #include "Box.hpp"
 #include "NR.hpp"
 
@@ -16,7 +16,7 @@ namespace
 
 //////////////////////////////////////////////////////////////////////
 
-DustGridPath::DustGridPath(const Position& bfr, const Direction& bfk)
+SpatialGridPath::SpatialGridPath(const Position& bfr, const Direction& bfk)
     : _bfr(bfr), _bfk(bfk), _s(0)
 {
     _v.reserve(INITIAL_CAPACITY);
@@ -24,7 +24,7 @@ DustGridPath::DustGridPath(const Position& bfr, const Direction& bfk)
 
 //////////////////////////////////////////////////////////////////////
 
-DustGridPath::DustGridPath()
+SpatialGridPath::SpatialGridPath()
     : _s(0)
 {
     _v.reserve(INITIAL_CAPACITY);
@@ -32,7 +32,7 @@ DustGridPath::DustGridPath()
 
 //////////////////////////////////////////////////////////////////////
 
-void DustGridPath::clear()
+void SpatialGridPath::clear()
 {
     _s = 0;
     _v.clear();
@@ -40,7 +40,7 @@ void DustGridPath::clear()
 
 //////////////////////////////////////////////////////////////////////
 
-void DustGridPath::addSegment(int m, double ds)
+void SpatialGridPath::addSegment(int m, double ds)
 {
     if (ds>0)
     {
@@ -51,7 +51,7 @@ void DustGridPath::addSegment(int m, double ds)
 
 //////////////////////////////////////////////////////////////////////
 
-Position DustGridPath::moveInside(const Box& box, double eps)
+Position SpatialGridPath::moveInside(const Box& box, double eps)
 {
     // a position that is certainly not inside any box
     static const Position OUTSIDE(std::numeric_limits<double>::infinity(),
@@ -148,7 +148,7 @@ Position DustGridPath::moveInside(const Box& box, double eps)
 
 //////////////////////////////////////////////////////////////////////
 
-double DustGridPath::tau() const
+double SpatialGridPath::tau() const
 {
     int N = _v.size();
     return N ? _v[N-1].tau : 0;
@@ -156,7 +156,7 @@ double DustGridPath::tau() const
 
 //////////////////////////////////////////////////////////////////////
 
-double DustGridPath::pathLength(double tau) const
+double SpatialGridPath::pathLength(double tau) const
 {
     int N = _v.size();
     if (N>0 && tau>0)

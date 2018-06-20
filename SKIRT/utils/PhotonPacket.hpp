@@ -6,7 +6,7 @@
 #ifndef PHOTONPACKET_HPP
 #define PHOTONPACKET_HPP
 
-#include "DustGridPath.hpp"
+#include "SpatialGridPath.hpp"
 #include "StokesVector.hpp"
 class AngularDistributionInterface;
 class PolarizationProfileInterface;
@@ -48,7 +48,7 @@ class RedshiftInterface;
     is usually constructed once at the start of a loop and then reused in the loop body for many
     consecutive launches; this allows the vectors with path information to remain allocated. Also,
     some trivial functions are implemented inline in the header. */
-class PhotonPacket : public DustGridPath, public StokesVector
+class PhotonPacket : public SpatialGridPath, public StokesVector
 {
 public:
 

@@ -3,26 +3,26 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef DUSTGRIDPLOTFILE_HPP
-#define DUSTGRIDPLOTFILE_HPP
+#ifndef SPATIALGRIDPLOTFILE_HPP
+#define SPATIALGRIDPLOTFILE_HPP
 
 #include "TextOutFile.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
 /** This class inherits from the TextOutFile class and is specifically used to write geometric
-    information about a dust grid to a data file in a text format that can be easily plotted. There
-    are two format variations for 2D and 3D information, respectively. The 2D format describes the
-    intersection of a dust grid with one of the coordinate planes. The 3D format fully describes
-    all or part of the dust cells in the grid. Each line in the file contains two (2D) or three
-    (3D) coordinates seperated by whitespace, or is empty. Consecutive nonempty lines represent a
-    sequence of "lineto" commands; an empty line marks a "moveto" command. */
-class DustGridPlotFile : TextOutFile
+    information about a spatial grid to a data file in a text format that can be easily plotted.
+    There are two format variations for 2D and 3D information, respectively. The 2D format
+    describes the intersection of a spatial grid with one of the coordinate planes. The 3D format
+    fully describes all or part of the spatial cells in the grid. Each line in the file contains
+    two (2D) or three (3D) coordinates seperated by whitespace, or is empty. Consecutive nonempty
+    lines represent a sequence of "lineto" commands; an empty line marks a "moveto" command. */
+class SpatialGridPlotFile : TextOutFile
 {
 public:
     /** The constructor creates the output file with the specified name and sets the appropriate
         precision for the numerical values in the text file. */
-    DustGridPlotFile(const SimulationItem* item, string filename);
+    SpatialGridPlotFile(const SimulationItem* item, string filename);
 
     /** This function outputs the specified 2D line segment, using the Units object specified in
         the constructor to convert the coordinates to output units. */

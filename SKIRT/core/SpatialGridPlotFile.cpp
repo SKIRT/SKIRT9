@@ -3,14 +3,14 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "DustGridPlotFile.hpp"
+#include "SpatialGridPlotFile.hpp"
 #include "Units.hpp"
 #include <iomanip>
 
 ////////////////////////////////////////////////////////////////////
 
-DustGridPlotFile::DustGridPlotFile(const SimulationItem* item, string filename)
-    : TextOutFile(item, filename, "data to plot the dust grid")
+SpatialGridPlotFile::SpatialGridPlotFile(const SimulationItem* item, string filename)
+    : TextOutFile(item, filename, "data to plot the spatial grid")
 {
     // Set the precision
     if (_out.is_open())
@@ -21,7 +21,7 @@ DustGridPlotFile::DustGridPlotFile(const SimulationItem* item, string filename)
 
 ////////////////////////////////////////////////////////////////////
 
-void DustGridPlotFile::writeLine(double beg1, double beg2, double end1, double end2)
+void SpatialGridPlotFile::writeLine(double beg1, double beg2, double end1, double end2)
 {
     if (!_out.is_open()) return;
 
@@ -35,7 +35,7 @@ void DustGridPlotFile::writeLine(double beg1, double beg2, double end1, double e
 
 ////////////////////////////////////////////////////////////////////
 
-void DustGridPlotFile::writeRectangle(double min1, double min2, double max1, double max2)
+void SpatialGridPlotFile::writeRectangle(double min1, double min2, double max1, double max2)
 {
     if (!_out.is_open()) return;
 
@@ -52,7 +52,7 @@ void DustGridPlotFile::writeRectangle(double min1, double min2, double max1, dou
 
 ////////////////////////////////////////////////////////////////////
 
-void DustGridPlotFile::writeCircle(double radius)
+void SpatialGridPlotFile::writeCircle(double radius)
 {
     if (!_out.is_open()) return;
 
@@ -68,7 +68,7 @@ void DustGridPlotFile::writeCircle(double radius)
 
 ////////////////////////////////////////////////////////////////////
 
-void DustGridPlotFile::writeLine(double x1, double y1, double z1, double x2, double y2, double z2)
+void SpatialGridPlotFile::writeLine(double x1, double y1, double z1, double x2, double y2, double z2)
 {
     if (!_out.is_open()) return;
 
@@ -84,7 +84,7 @@ void DustGridPlotFile::writeLine(double x1, double y1, double z1, double x2, dou
 
 ////////////////////////////////////////////////////////////////////
 
-void DustGridPlotFile::writeCube(double x1, double y1, double z1, double x2, double y2, double z2)
+void SpatialGridPlotFile::writeCube(double x1, double y1, double z1, double x2, double y2, double z2)
 {
     if (!_out.is_open()) return;
 
@@ -118,7 +118,7 @@ void DustGridPlotFile::writeCube(double x1, double y1, double z1, double x2, dou
 
 ////////////////////////////////////////////////////////////////////
 
-void DustGridPlotFile::writePolyhedron(const vector<double>& coords, const vector<int>& indices)
+void SpatialGridPlotFile::writePolyhedron(const vector<double>& coords, const vector<int>& indices)
 {
     if (!_out.is_open()) return;
 

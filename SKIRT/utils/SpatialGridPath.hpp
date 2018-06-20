@@ -3,8 +3,8 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef DUSTGRIDPATH_HPP
-#define DUSTGRIDPATH_HPP
+#ifndef SPATIALGRIDPATH_HPP
+#define SPATIALGRIDPATH_HPP
 
 #include "Direction.hpp"
 #include "Position.hpp"
@@ -12,17 +12,17 @@ class Box;
 
 //////////////////////////////////////////////////////////////////////
 
-/** A DustGridPath object contains the details of a path through a dust grid. Given a dust grid,
-    i.e. an object of a DustGrid subclass, a starting position \f${\bf{r}}\f$ and a propagation
-    direction \f${\bf{k}}\f$, one can calculate the path through the dust grid. A DustGridPath
-    object keeps record of all the cells that are crossed by this path, together with the physical
-    path length \f$\Delta s\f$ covered within each cell, and the path length \f$s\f$ covered along
-    the entire path up to the end of the cell. Given additional information about the dust
-    properties in each cell (at a particular wavelength), one can also calculate optical depth
-    information for the path. A DustGridPath object keeps record of the optical depth
-    \f$\Delta\tau\f$ along the path segment within each cell, and the optical depth \f$\tau\f$
-    along the entire path up to the end of the cell. */
-class DustGridPath
+/** A SpatialGridPath object contains the details of a path through a spatial grid. Given a spatial
+    grid, i.e. some partition of space into cells, a starting position \f${\bf{r}}\f$ and a
+    propagation direction \f${\bf{k}}\f$, one can calculate the path through the grid. A
+    SpatialGridPath object keeps record of all the cells that are crossed by this path, together
+    with the physical path length \f$\Delta s\f$ covered within each cell, and the path length
+    \f$s\f$ covered along the entire path up to the end of the cell. Given additional information
+    about the transfer medium properties in each cell (at a particular wavelength), one can also
+    calculate optical depth information for the path. A SpatialGridPath object keeps record of the
+    optical depth \f$\Delta\tau\f$ along the path segment within each cell, and the optical depth
+    \f$\tau\f$ along the entire path up to the end of the cell. */
+class SpatialGridPath
 {
 public:
 
@@ -30,12 +30,12 @@ public:
 
     /** This constructor creates an empty path with the specified initial position and propagation
         direction. */
-    DustGridPath(const Position& bfr, const Direction& bfk);
+    SpatialGridPath(const Position& bfr, const Direction& bfk);
 
     /** This constructor creates an empty path with the initial position and propagation direction
         initialized to null values. After using this constructor, invoke the setPosition() and
         setDirection() functions to set these properties to appropriate values. */
-    DustGridPath();
+    SpatialGridPath();
 
     /** This function sets the initial position of the path to a new value. */
     void setPosition(const Position& bfr) { _bfr = bfr; }
@@ -89,7 +89,7 @@ public:
         if the second argument is missing, for the complete path), using the path segment lengths
         \f$\Delta s_i\f$ already stored within the path object, and the multiplication factors
         \f$(\kappa\rho)_{m_i}\f$ provided by the caller through a call-back function, where
-        \f$m_i\f$ is the number of the dust cell being crossed in path segment \f$i\f$. The
+        \f$m_i\f$ is the number of the cell being crossed in path segment \f$i\f$. The
         call-back function must have the signature "double kapparho(int m)". The optical depth
         information in the path is neither used nor stored. */
     template<typename Functor> double opticalDepth(const Functor& kapparho,
@@ -108,7 +108,7 @@ public:
         (\Delta\tau)_i = (\Delta s)_i \times (\kappa\rho)_{m_i}, \f] \f[ \tau_i = \sum_{j=0}^i
         (\Delta\tau)_j,\f] using the path segment lengths \f$\Delta s_i\f$ already stored within
         the path object, and the multiplication factors \f$(\kappa\rho)_{m_i}\f$ provided by the
-        caller through a call-back function, where \f$m_i\f$ is the number of the dust cell being
+        caller through a call-back function, where \f$m_i\f$ is the number of the cell being
         crossed in path segment \f$i\f$. The call-back function must have the signature "double
         kapparho(int m)". */
     template<typename Functor> inline void fillOpticalDepth(const Functor& kapparho)
@@ -141,7 +141,7 @@ public:
         physical path length \f$s\f$. The function assumes that the fillOpticalDepth() function was
         previously invoked for the path. We have to determine the first cell along the path for
         which the cumulative optical depth \f$\tau_{m}\f$ becomes larger than \f$\tau\f$. This
-        means that the position we are looking for lies within the \f$m\f$'th dust cell. The exact
+        means that the position we are looking for lies within the \f$m\f$'th cell. The exact
         path length corresponding to \f$\tau\f$ is then found by linear interpolation within this
         cell. */
     double pathLength(double tau) const;
