@@ -30,7 +30,7 @@ int PointSource::geometryDimension() const
 //////////////////////////////////////////////////////////////////////
 
 void PointSource::launchNormalized(PhotonPacket* pp, size_t historyIndex, double lambda, double Lw,
-                                       RedshiftInterface* rsi) const
+                                   RedshiftInterface* rsi) const
 {
     // get the source position
     Position bfr(positionX(), positionY(), positionZ());

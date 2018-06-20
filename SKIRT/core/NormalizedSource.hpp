@@ -67,7 +67,7 @@ protected:
 
 public:
     /** This function returns the dimension of the source, which is the same as the dimension of
-        its spatial distribition (to be provided by the subclass), except if there is a nonzero
+        its spatial distribution (to be provided by the subclass), except if there is a nonzero
         bulk velocity. */
     int dimension() const override;
 
@@ -90,9 +90,9 @@ public:
 
     //============== Functions to be implemented in each subclass =============
 
-    /** This function returns the dimension of the spatial distribition implemented by the
+    /** This function returns the dimension of the spatial distribution implemented by the
         subclass, taking into account anisotropic emission or polarization, if any. It must be
-implemented in a subclass. */
+        implemented in a subclass. */
     virtual int geometryDimension() const = 0;
 
     /** This function causes the photon packet \em pp to be launched from the source using the

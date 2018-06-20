@@ -46,7 +46,9 @@ class PointSource : public NormalizedSource
     //======================== Other Functions =======================
 
 public:
-    /** This function returns the dimension of the geometry configured for the source. */
+    /** This function returns the dimension of the point source, taking into account anisotropic
+        emission or polarization, if present, but ignoring the bulk velocity (because this is
+        handled in the base class). */
     int geometryDimension() const override;
 
     /** This function causes the photon packet \em pp to be launched from the source using the

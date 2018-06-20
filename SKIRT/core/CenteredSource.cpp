@@ -1,0 +1,19 @@
+/*//////////////////////////////////////////////////////////////////
+////     The SKIRT project -- advanced radiative transfer       ////
+////       © Astronomical Observatory, Ghent University         ////
+///////////////////////////////////////////////////////////////// */
+
+#include "CenteredSource.hpp"
+
+//////////////////////////////////////////////////////////////////////
+
+int CenteredSource::geometryDimension() const
+{
+    int centerDimension = 1;
+    if (centerZ()) centerDimension = 2;
+    if (centerX() || centerY()) centerDimension = 3;
+
+    return max(centerDimension, intrinsicDimension());
+}
+
+//////////////////////////////////////////////////////////////////////

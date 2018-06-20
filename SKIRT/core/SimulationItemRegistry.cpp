@@ -70,6 +70,7 @@
 #include "SphericalClipGeometryDecorator.hpp"
 #include "SpheroidalGeometryDecorator.hpp"
 #include "SpiralStructureGeometryDecorator.hpp"
+#include "StellarSurfaceSource.hpp"
 #include "StellarUnits.hpp"
 #include "SunSED.hpp"
 #include "TorusGeometry.hpp"
@@ -109,6 +110,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<NormalizedSource>();
     ItemRegistry::add<PointSource>();
     ItemRegistry::add<GeometricSource>();
+    ItemRegistry::add<CenteredSource>();
+    ItemRegistry::add<StellarSurfaceSource>();
 
     // luminosity normalizations
     ItemRegistry::add<LuminosityNormalization>();
