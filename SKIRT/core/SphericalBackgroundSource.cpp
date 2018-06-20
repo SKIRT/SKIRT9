@@ -3,7 +3,7 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "StellarSurfaceSource.hpp"
+#include "SphericalBackgroundSource.hpp"
 #include "AngularDistributionInterface.hpp"
 #include "PhotonPacket.hpp"
 #include "Position.hpp"
@@ -11,7 +11,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-int StellarSurfaceSource::intrinsicDimension() const
+int SphericalBackgroundSource::intrinsicDimension() const
 {
     return 1;
 }
@@ -19,13 +19,12 @@ int StellarSurfaceSource::intrinsicDimension() const
 ////////////////////////////////////////////////////////////////////
 
 namespace
-{
     // this function generates a random launch direction for a given launch position on the unit sphere
     // (the launch position on the unit sphere is actually specified as a direction)
     Direction generateDirectionForLaunchPosition(Random* random, Direction bfu)
     {
         // picking a random (theta',phi')
-        double thetap = asin(sqrt(random->uniform()));
+        double thetap = M_PI-acos(sqrt(random->uniform()));
         double phip = 2.0*M_PI*random->uniform();
         Direction bfkp(thetap,phip);
         double kpx, kpy, kpz;
@@ -49,8 +48,8 @@ namespace
     double probabilityOfDirectionForLaunchPosition(Direction bfk, Direction bfu)
     {
         double costhetap = Vec::dot(bfk,bfu);
-        if (costhetap > 0.)
-            return 4. * costhetap;
+        if (costhetap < 0.)
+            return -4. * costhetap;
         else
             return 0.;
     }
@@ -75,8 +74,8 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-void StellarSurfaceSource::launchNormalized(PhotonPacket* pp, size_t historyIndex, double lambda, double Lw,
-                                            RedshiftInterface* rsi) const
+void SphericalBackgroundSource::launchNormalized(PhotonPacket* pp, size_t historyIndex, double lambda, double Lw,
+                                                 RedshiftInterface* rsi) const
 {
     // generate a random intrinsic launch "position" on the unit sphere
     Direction bfu = random()->direction();
@@ -85,7 +84,7 @@ void StellarSurfaceSource::launchNormalized(PhotonPacket* pp, size_t historyInde
     Direction bfk = generateDirectionForLaunchPosition(random(), bfu);
 
     // scale and translate the launch position according to the stellar radius and center
-    Position bfr(stellarRadius(), bfu);
+    Position bfr(backgroundRadius(), bfu);
     bfr += Vec(centerX(), centerY(), centerZ());
 
     // configure the local angular distribution object with the intrinsic launch position

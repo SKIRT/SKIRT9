@@ -16,6 +16,7 @@
 #include "ClumpyGeometryDecorator.hpp"
 #include "CombineGeometryDecorator.hpp"
 #include "ConicalShellGeometry.hpp"
+#include "CubicalBackgroundSource.hpp"
 #include "CubicSplineSmoothingKernel.hpp"
 #include "CylindricalClipGeometryDecorator.hpp"
 #include "EinastoGeometry.hpp"
@@ -67,6 +68,7 @@
 #include "SineSquarePolarizationProfile.hpp"
 #include "SourceSystem.hpp"
 #include "SpecificLuminosityNormalization.hpp"
+#include "SphericalBackgroundSource.hpp"
 #include "SphericalClipGeometryDecorator.hpp"
 #include "SpheroidalGeometryDecorator.hpp"
 #include "SpiralStructureGeometryDecorator.hpp"
@@ -112,6 +114,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<GeometricSource>();
     ItemRegistry::add<CenteredSource>();
     ItemRegistry::add<StellarSurfaceSource>();
+    ItemRegistry::add<CubicalBackgroundSource>();
+    ItemRegistry::add<SphericalBackgroundSource>();
 
     // luminosity normalizations
     ItemRegistry::add<LuminosityNormalization>();
