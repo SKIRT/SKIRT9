@@ -7,7 +7,9 @@
 #define SNAPSHOT_HPP
 
 #include "Position.hpp"
+#include "Box.hpp"
 #include "SnapshotParameter.hpp"
+class Random;
 class SimulationItem;
 class TextInFile;
 
@@ -51,7 +53,7 @@ public:
         a pointer to this base class. */
     virtual ~Snapshot();
 
-    //========== Managing the input file ==========
+    //========== Input file ==========
 
 public:
     /** This function creates an input file object corresponding to the specified file and opens it
@@ -80,34 +82,36 @@ protected:
         subclasses. */
     TextInFile* infile() { return _infile; }
 
-    //========== Configuring options ==========
+    //========== Configuration ==========
 
 public:
     /** This function configures the snapshot to import a spatial position with three components
-        (x,y,z). */
+        (x,y,z). The default unit is pc. */
     void importPosition();
 
-    /** This function configures the snapshot to import a spatial radial size. */
+    /** This function configures the snapshot to import a spatial radial size. The default unit is
+        pc. */
     void importSize();
 
     /** This function configures the snapshot to import a mass density per unit of volume. The
-        importMass() and importDensity() options are mutually exclusive; calling both functions for
-        the same snapshot results in undefined behavior. */
+        default unit is Msun/pc3. The importMass() and importDensity() options are mutually
+        exclusive; calling both functions for the same snapshot results in undefined behavior. */
     void importDensity();
 
     /** This function configures the snapshot to import a mass (i.e. density integrated over
-        volume). The importMass() and importDensity() options are mutually exclusive; calling both
-        functions for the same snapshot results in undefined behavior. */
+        volume). The default unit is Msun. The importMass() and importDensity() options are
+        mutually exclusive; calling both functions for the same snapshot results in undefined
+        behavior. */
     void importMass();
 
-    /** This function configures the snapshot to import a metallicity fraction. */
+    /** This function configures the snapshot to import a (dimensionless) metallicity fraction. */
     void importMetallicity();
 
-    /** This function configures the snapshot to import a temperature. */
+    /** This function configures the snapshot to import a temperature. The default unit is K. */
     void importTemperature();
 
     /** This function configures the snapshot to import a velocity with three components (x,y,z).
-        */
+        The default unit is km/s. */
     void importVelocity();
 
     /** This function configures the snapshot to import alignment characteristics including
@@ -168,6 +172,10 @@ protected:
         this is not being imported, for use by subclasses. */
     int parametersIndex() { return _parametersIndex; }
 
+    /** This function returns the number of parameters being imported (which may be zero), for use
+        by subclasses. */
+    int numParameters() { return _numParameters; }
+
     /** This function returns the mass or mass density multiplier configured by the user, or zero
         if the user did not configure the mass or mass density policy, for use by subclasses. */
     double multiplier() { return _multiplier; }
@@ -176,6 +184,78 @@ protected:
         mass, or zero if the user did not configure the mass or mass density policy, for use by
         subclasses. */
     double maxTemperature() { return _maxTemperature; }
+
+    //============== Interrogation (to be implemented in subclass) =============
+
+public:
+    /** This function returns the extent of the complete spatial domain of the snapshot as a box
+        lined up with the coordinate axes. */
+    virtual Box extent() const = 0;
+
+    /** This function returns the number of entities \f$N_\mathrm{ent}\f$ in the snapshot. */
+    virtual int numEntities() const = 0;
+
+    /** This function returns a characteristic position for the entity with index \f$0\le m \le
+        N_\mathrm{ent}-1\f$. Such a position is always available for all snapshot types, regardless
+        of whether a position is explicitly being imported or not. If the index is out of range,
+        the behavior is undefined. */
+    virtual Position position(int m) const = 0;
+
+    /** This function returns the velocity of the entity with index \f$0\le m \le
+        N_\mathrm{ent}-1\f$. If the velocity is not being imported, or the index is out of range,
+        the behavior is undefined. */
+    virtual Vec velocity(int m) const = 0;
+
+    /** This function returns the mass density represented by the snapshot at a given point
+        \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If no
+        density policy has been set or no mass/density information is being imported, the behavior
+        is undefined. */
+    virtual double density(Position bfr) const = 0;
+
+    /** This function returns the total mass represented by the snapshot, which is equivalent to
+        the mass density integrated over the complete spatial domain. If no density policy has been
+        set or no mass/density information is being imported, the behavior is undefined. */
+    virtual double mass() const = 0;
+
+    /** This function returns a random position within the entity with index \f$0\le m \le
+        N_\mathrm{ent}-1\f$, drawn from an appropriate probability distribution depending on the
+        snapshot type (e.g. uniform for cells, and some smoothing kernel for particles). If the
+        index is out of range, the behavior is undefined. The first argument provides the random
+        generator to be used. */
+    virtual Position generatePosition(Random* random, int m) const = 0;
+
+    /** This function returns a random position within the spatial domain of the snapshot, drawn
+        from the mass density distribution represented by the snapshot. If no density policy has
+        been set or no mass/density information is being imported, the behavior is undefined. The
+        first argument provides the random generator to be used. */
+    virtual Position generatePosition(Random* random) const = 0;
+
+    //============== Interrogation implemented here =============
+
+    /** This function returns the volume of the complete domain of the snapshot, taken to be a box
+        lined up with the coordinate axes. */
+    double volume() const;
+
+    /** This function returns the X-axis surface density of the density distribution represented by
+        the snapshot, defined as the integration of the density along the entire X-axis, \f[
+        \Sigma_X = \int_{x_\text{min}}^{x_\text{max}} \rho(x,0,0)\, {\text{d}}x.\f] This integral
+        is calculated numerically using 10000 samples along the X-axis. If no density policy has
+        been set or no mass/density information is being imported, the behavior is undefined. */
+    double SigmaX() const;
+
+    /** This function returns the Y-axis surface density of the density distribution represented by
+        the snapshot, defined as the integration of the density along the entire Y-axis, \f[
+        \Sigma_Y = \int_{y_\text{min}}^{y_\text{max}} \rho(0,y,0)\, {\text{d}}y.\f] This integral
+        is calculated numerically using 10000 samples along the Y-axis. If no density policy has
+        been set or no mass/density information is being imported, the behavior is undefined. */
+    double SigmaY() const;
+
+    /** This function returns the Z-axis surface density of the density distribution represented by
+        the snapshot, defined as the integration of the density along the entire Z-axis, \f[
+        \Sigma_Z = \int_{z_\text{min}}^{z_\text{max}} \rho(0,0,z)\, {\text{d}}z.\f] This integral
+        is calculated numerically using 10000 samples along the Z-axis. If no density policy has
+        been set or no mass/density information is being imported, the behavior is undefined. */
+    double SigmaZ() const;
 
     //======================== Data Members ========================
 

@@ -21,7 +21,7 @@ Snapshot::~Snapshot()
 
 ////////////////////////////////////////////////////////////////////
 
-void Snapshot::open(const SimulationItem* item, std::string filename, std::string description)
+void Snapshot::open(const SimulationItem* item, string filename, string description)
 {
     _infile = new TextInFile(item, filename, description);
 }
@@ -110,6 +110,75 @@ void Snapshot::setMassDensityPolicy(double multiplier, double maxTemperature)
 {
     _multiplier = multiplier;
     _maxTemperature = maxTemperature;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double Snapshot::volume() const
+{
+    return extent().volume();
+}
+
+////////////////////////////////////////////////////////////////////
+
+namespace
+{
+    // the number of samples used for integrating the surface densities
+    const int NSAMPLES = 10000;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double Snapshot::SigmaX() const
+{
+    // determine a small value relative to the domain extent;
+    // we integrate along a small offset from the axis to avoid cell borders
+    double eps = 1e-12 * extent().widths().norm();
+
+    double sum = 0;
+    double xmin = extent().xmin();
+    double xmax = extent().xmax();
+    for (int k = 0; k < NSAMPLES; k++)
+    {
+        sum += density(Position(xmin + k*(xmax-xmin)/NSAMPLES, eps, eps));
+    }
+    return (sum/NSAMPLES)*(xmax-xmin);
+}
+
+////////////////////////////////////////////////////////////////////
+
+double Snapshot::SigmaY() const
+{
+    // determine a small value relative to the domain extent;
+    // we integrate along a small offset from the axis to avoid cell borders
+    double eps = 1e-12 * extent().widths().norm();
+
+    double sum = 0;
+    double ymin = extent().ymin();
+    double ymax = extent().ymax();
+    for (int k = 0; k < NSAMPLES; k++)
+    {
+        sum += density(Position(eps, ymin + k*(ymax-ymin)/NSAMPLES, eps));
+    }
+    return (sum/NSAMPLES)*(ymax-ymin);
+}
+
+////////////////////////////////////////////////////////////////////
+
+double Snapshot::SigmaZ() const
+{
+    // determine a small value relative to the domain extent;
+    // we integrate along a small offset from the axis to avoid cell borders
+    double eps = 1e-12 * extent().widths().norm();
+
+    double sum = 0;
+    double zmin = extent().zmin();
+    double zmax = extent().zmax();
+    for (int k = 0; k < NSAMPLES; k++)
+    {
+        sum += density(Position(eps, eps, zmin + k*(zmax-zmin)/NSAMPLES));
+    }
+    return (sum/NSAMPLES)*(zmax-zmin);
 }
 
 ////////////////////////////////////////////////////////////////////
