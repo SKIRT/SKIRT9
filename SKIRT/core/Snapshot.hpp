@@ -9,6 +9,7 @@
 #include "Position.hpp"
 #include "Box.hpp"
 #include "SnapshotParameter.hpp"
+class Log;
 class Random;
 class SimulationItem;
 class TextInFile;
@@ -82,6 +83,14 @@ protected:
         subclasses. */
     TextInFile* infile() { return _infile; }
 
+    /** This function returns a pointer to an appropriate log object. It is intended for use in
+        subclasses. */
+    Log* log() const { return _log; }
+
+    /** This function returns a pointer to an appropriate random generator. It is intended for use
+        in subclasses. */
+    Random* random() const { return _random; }
+
     //========== Configuration ==========
 
 public:
@@ -142,48 +151,57 @@ public:
 protected:
     /** This function returns the column index of the first position field, or -1 if this is not
         being imported, for use by subclasses. */
-    int positionIndex() { return _positionIndex; }
+    int positionIndex() const { return _positionIndex; }
 
     /** This function returns the column index of the size field, or -1 if this is not being
         imported, for use by subclasses. */
-    int sizeIndex() { return _sizeIndex; }
+    int sizeIndex() const { return _sizeIndex; }
 
     /** This function returns the column index of the density field, or -1 if this is not being
         imported, for use by subclasses. */
-    int densityIndex() { return _densityIndex; }
+    int densityIndex() const { return _densityIndex; }
 
     /** This function returns the column index of the mass field, or -1 if this is not being
         imported, for use by subclasses. */
-    int massIndex() { return _massIndex; }
+    int massIndex() const { return _massIndex; }
 
     /** This function returns the column index of the metallicity field, or -1 if this is not being
         imported, for use by subclasses. */
-    int metallicityIndex() { return _metallicityIndex; }
+    int metallicityIndex() const { return _metallicityIndex; }
 
     /** This function returns the column index of the temperature field, or -1 if this is not being
         imported, for use by subclasses. */
-    int temperatureIndex() { return _temperatureIndex; }
+    int temperatureIndex() const { return _temperatureIndex; }
 
     /** This function returns the column index of the first velocity field, or -1 if this is not
         being imported, for use by subclasses. */
-    int velocityIndex() { return _velocityIndex; }
+    int velocityIndex() const { return _velocityIndex; }
 
     /** This function returns the column index of the first field in the parameter list, or -1 if
         this is not being imported, for use by subclasses. */
-    int parametersIndex() { return _parametersIndex; }
+    int parametersIndex() const { return _parametersIndex; }
 
     /** This function returns the number of parameters being imported (which may be zero), for use
         by subclasses. */
-    int numParameters() { return _numParameters; }
+    int numParameters() const { return _numParameters; }
 
     /** This function returns the mass or mass density multiplier configured by the user, or zero
         if the user did not configure the mass or mass density policy, for use by subclasses. */
-    double multiplier() { return _multiplier; }
+    double multiplier() const { return _multiplier; }
 
     /** This function returns the maximum temperature configured by the user for an entity to have
         mass, or zero if the user did not configure the mass or mass density policy, for use by
         subclasses. */
-    double maxTemperature() { return _maxTemperature; }
+    double maxTemperature() const { return _maxTemperature; }
+
+    /** This function returns true if the user configured the mass or mass density policy and false
+        otherwise, for use by subclasses. */
+    bool hasDensityPolicy() const { return _hasDensityPolicy; }
+
+    /** This function returns true if the user configured the mass or mass density policy with a
+        nonzero temperature and the temperature field is being imported. Returns false otherwise.
+        For use by subclasses. */
+    bool hasTemperatureCutoff() const { return _hasDensityPolicy && _maxTemperature>0 && _temperatureIndex>=0; }
 
     //============== Interrogation (to be implemented in subclass) =============
 
@@ -220,15 +238,13 @@ public:
     /** This function returns a random position within the entity with index \f$0\le m \le
         N_\mathrm{ent}-1\f$, drawn from an appropriate probability distribution depending on the
         snapshot type (e.g. uniform for cells, and some smoothing kernel for particles). If the
-        index is out of range, the behavior is undefined. The first argument provides the random
-        generator to be used. */
-    virtual Position generatePosition(Random* random, int m) const = 0;
+        index is out of range, the behavior is undefined. */
+    virtual Position generatePosition(int m) const = 0;
 
     /** This function returns a random position within the spatial domain of the snapshot, drawn
         from the mass density distribution represented by the snapshot. If no density policy has
-        been set or no mass/density information is being imported, the behavior is undefined. The
-        first argument provides the random generator to be used. */
-    virtual Position generatePosition(Random* random) const = 0;
+        been set or no mass/density information is being imported, the behavior is undefined. */
+    virtual Position generatePosition() const = 0;
 
     //============== Interrogation implemented here =============
 
@@ -262,6 +278,8 @@ public:
 private:
     // data members initialized during configuration
     TextInFile* _infile{nullptr};
+    Log* _log{nullptr};
+    Random* _random{nullptr};
 
     // column indices
     int _nextIndex{0};
@@ -278,6 +296,7 @@ private:
     // mass and mass density policy
     double _multiplier{0.};
     double _maxTemperature{0.};
+    bool _hasDensityPolicy{false};
 };
 
 ////////////////////////////////////////////////////////////////////

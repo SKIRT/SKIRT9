@@ -19,6 +19,15 @@ namespace TextInFile_Private { class ColumnInfo; }
 /** This class allows reading a table of floating point values from a column text file with support
     for unit conversions. The filename is specified in the constructor, and information about the
     columns expected in the file is specified by calling the addColumn() function for each column.
+
+    When reading a column text file, empty lines and lines starting with # are ignored, except for
+    the unit specification header lines described below. Other lines must contain a predefined
+    number of floating point values separated by whitespace (spaces or tabs). The number of
+    expected values is determined for each input file under program control. It is an error for a
+    line to contain fewer values than expected (or for any of the values to be improperly
+    formatted). On the other hand, any additional information on a line beyond the last expected
+    value is ignored.
+
     It is recommended that the header of the input file includes column information in the format
     described below. For example, a two-column input file might have the following header:
 
@@ -109,7 +118,7 @@ public:
         values separated by white space.
 
         The number of expected values corresponds to the number of columns in the file, which is
-        determined by repeated calls to the addColumn() function. If the data line contains less
+        determined by repeated calls to the addColumn() function. If the data line contains fewer
         values than expected, or if any of the values is improperly formatted for a floating point
         number, the function throws a FatalError (the size and contents of the \em values array are
         undefined). Any additional information on the line beyond the last expected value is

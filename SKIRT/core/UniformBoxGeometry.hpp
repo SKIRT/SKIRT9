@@ -6,22 +6,42 @@
 #ifndef UNIFORMBOXGEOMETRY_HPP
 #define UNIFORMBOXGEOMETRY_HPP
 
-#include "BoxGeometry.hpp"
+#include "GenGeometry.hpp"
+#include "Box.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
 /** The UniformBoxGeometry class describes a 3D geometry consisting of a uniform cuboid aligned
     with the coordinate system. */
-class UniformBoxGeometry : public BoxGeometry
+class UniformBoxGeometry : public GenGeometry, public Box
 {
-    ITEM_CONCRETE(UniformBoxGeometry, BoxGeometry, "a uniform box geometry")
+    ITEM_CONCRETE(UniformBoxGeometry, GenGeometry, "a geometry with uniform density inside a box")
+
+    PROPERTY_DOUBLE(minX, "the start point of the box in the X direction")
+        ATTRIBUTE_QUANTITY(minX, "length")
+
+    PROPERTY_DOUBLE(maxX, "the end point of the box in the X direction")
+        ATTRIBUTE_QUANTITY(maxX, "length")
+
+    PROPERTY_DOUBLE(minY, "the start point of the box in the Y direction")
+        ATTRIBUTE_QUANTITY(minY, "length")
+
+    PROPERTY_DOUBLE(maxY, "the end point of the box in the Y direction")
+        ATTRIBUTE_QUANTITY(maxY, "length")
+
+    PROPERTY_DOUBLE(minZ, "the start point of the box in the Z direction")
+        ATTRIBUTE_QUANTITY(minZ, "length")
+
+    PROPERTY_DOUBLE(maxZ, "the end point of the box in the Z direction")
+        ATTRIBUTE_QUANTITY(maxZ, "length")
+
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============
 
 protected:
-    /** This function calculates the (constant) density at each point, assuming a total mass of 1.
-        */
+    /** This function verifies that the box has a positive volume, and calculates the (constant)
+        density at each point, assuming a total mass of 1. */
     void setupSelfBefore() override;
 
     //======================== Other Functions =======================

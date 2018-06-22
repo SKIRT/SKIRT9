@@ -5,6 +5,8 @@
 
 #include "Snapshot.hpp"
 #include "TextInFile.hpp"
+#include "Log.hpp"
+#include "Random.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -24,6 +26,8 @@ Snapshot::~Snapshot()
 void Snapshot::open(const SimulationItem* item, string filename, string description)
 {
     _infile = new TextInFile(item, filename, description);
+    _log = item->find<Log>();
+    _random = item->find<Random>();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -110,6 +114,7 @@ void Snapshot::setMassDensityPolicy(double multiplier, double maxTemperature)
 {
     _multiplier = multiplier;
     _maxTemperature = maxTemperature;
+    _hasDensityPolicy = true;
 }
 
 ////////////////////////////////////////////////////////////////////

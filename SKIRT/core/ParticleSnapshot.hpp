@@ -7,6 +7,7 @@
 #define PARTICLESNAPSHOT_HPP
 
 #include "Snapshot.hpp"
+#include "Array.hpp"
 class SmoothingKernel;
 
 ////////////////////////////////////////////////////////////////////
@@ -76,17 +77,16 @@ public:
     double mass() const override;
 
     /** This function returns a random position drawn from the smoothing kernel of the particle
-        with index \em m. If the index is out of range, the behavior is undefined. The first
-        argument provides the random generator to be used. */
-    Position generatePosition(Random* random, int m) const override;
+        with index \em m. If the index is out of range, the behavior is undefined. */
+    Position generatePosition(int m) const override;
 
     /** This function returns a random position within the spatial domain of the snapshot, drawn
         from the mass density distribution represented by the snapshot. The function first selects
         a random particle from the discrete probability distribution formed by the respective
         particle masses, and then generates a random position from the smoothing kernel of that
         particle. If no density policy has been set or no mass information is being imported, the
-        behavior is undefined. The first argument provides the random generator to be used. */
-    Position generatePosition(Random* random) const override;
+        behavior is undefined. */
+    Position generatePosition() const override;
 
     //======================== Data Members ========================
 
@@ -95,6 +95,9 @@ private:
     const SmoothingKernel* _kernel{nullptr};
 
     // data members initialized when reading the input file
+    vector<Array> _propv;   // particle properties as imported
+    Array _cumrhov;         // cumulative density distribution for particles
+    double _mass;           // total effective mass
 };
 
 ////////////////////////////////////////////////////////////////////

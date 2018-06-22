@@ -171,7 +171,6 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<HyperboloidGeometry>();
     ItemRegistry::add<HyperboloidShellGeometry>();
     ItemRegistry::add<GenGeometry>();
-    ItemRegistry::add<BoxGeometry>();
     ItemRegistry::add<UniformBoxGeometry>();
     ItemRegistry::add<ReadFitsGeometry>();
 
