@@ -13,6 +13,7 @@ class Log;
 class Random;
 class SimulationItem;
 class TextInFile;
+class Units;
 
 ////////////////////////////////////////////////////////////////////
 
@@ -86,6 +87,10 @@ protected:
     /** This function returns a pointer to an appropriate log object. It is intended for use in
         subclasses. */
     Log* log() const { return _log; }
+
+    /** This function returns a pointer to an appropriate units object. It is intended for use in
+        subclasses. */
+    Units* units() const { return _units; }
 
     /** This function returns a pointer to an appropriate random generator. It is intended for use
         in subclasses. */
@@ -196,7 +201,7 @@ protected:
 
     /** This function returns true if the user configured the mass or mass density policy and false
         otherwise, for use by subclasses. */
-    bool hasDensityPolicy() const { return _hasDensityPolicy; }
+    bool hasMassDensityPolicy() const { return _hasDensityPolicy; }
 
     /** This function returns true if the user configured the mass or mass density policy with a
         nonzero temperature and the temperature field is being imported. Returns false otherwise.
@@ -279,6 +284,7 @@ private:
     // data members initialized during configuration
     TextInFile* _infile{nullptr};
     Log* _log{nullptr};
+    Units* _units{nullptr};
     Random* _random{nullptr};
 
     // column indices

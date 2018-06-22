@@ -7,6 +7,7 @@
 #include "TextInFile.hpp"
 #include "Log.hpp"
 #include "Random.hpp"
+#include "Units.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -27,6 +28,7 @@ void Snapshot::open(const SimulationItem* item, string filename, string descript
 {
     _infile = new TextInFile(item, filename, description);
     _log = item->find<Log>();
+    _units = item->find<Units>();
     _random = item->find<Random>();
 }
 

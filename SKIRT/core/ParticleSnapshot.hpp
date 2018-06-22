@@ -8,6 +8,8 @@
 
 #include "Snapshot.hpp"
 #include "Array.hpp"
+#include "SmoothedParticle.hpp"
+class SmoothedParticleGrid;
 class SmoothingKernel;
 
 ////////////////////////////////////////////////////////////////////
@@ -24,6 +26,12 @@ class SmoothingKernel;
     large number of smoothed particles. */
 class ParticleSnapshot : public Snapshot
 {
+    //================= Construction - Destruction =================
+
+public:
+    /** The destructor deletes the smoothed particle grid, if it was constructed. */
+    ~ParticleSnapshot();
+
     //========== Reading ==========
 
 public:
@@ -95,9 +103,13 @@ private:
     const SmoothingKernel* _kernel{nullptr};
 
     // data members initialized when reading the input file
-    vector<Array> _propv;   // particle properties as imported
-    Array _cumrhov;         // cumulative density distribution for particles
-    double _mass;           // total effective mass
+    vector<Array> _propv;           // particle properties as imported
+
+    // data members initialized when reading the input file, but only if a density policy has been set
+    vector<SmoothedParticle> _pv;   // compact particle objects in the same order
+    SmoothedParticleGrid* _grid{nullptr};  // smart grid for locating smoothed particles
+    Array _cumrhov;                 // cumulative density distribution for particles
+    double _mass{0.};               // total effective mass
 };
 
 ////////////////////////////////////////////////////////////////////
