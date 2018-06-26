@@ -44,7 +44,8 @@ void Snapshot::readAndClose()
 
 void Snapshot::importPosition()
 {
-    _positionIndex = _nextIndex++;
+    _positionIndex = _nextIndex;
+    _nextIndex += 3;
     _infile->addColumn("position x", "length", "pc");
     _infile->addColumn("position y", "length", "pc");
     _infile->addColumn("position z", "length", "pc");
@@ -94,7 +95,8 @@ void Snapshot::importTemperature()
 
 void Snapshot::importVelocity()
 {
-    _velocityIndex = _nextIndex++;
+    _velocityIndex = _nextIndex;
+    _nextIndex += 3;
     _infile->addColumn("velocity x", "velocity", "km/s");
     _infile->addColumn("velocity y", "velocity", "km/s");
     _infile->addColumn("velocity z", "velocity", "km/s");
@@ -104,8 +106,9 @@ void Snapshot::importVelocity()
 
 void Snapshot::importParameters(const vector<SnapshotParameter>& parameters)
 {
-    _parametersIndex = _nextIndex++;
+    _parametersIndex = _nextIndex;
     _numParameters = parameters.size();
+    _nextIndex += _numParameters;
     for (const auto& p : parameters)
         _infile->addColumn(p.description(), p.quantity(), p.defaultUnit());
 }

@@ -52,6 +52,7 @@
 #include "OffsetGeometryDecorator.hpp"
 #include "ParaboloidGeometry.hpp"
 #include "ParaboloidShellGeometry.hpp"
+#include "ParticleGeometry.hpp"
 #include "PerspectiveInstrument.hpp"
 #include "PlummerGeometry.hpp"
 #include "PointSource.hpp"
@@ -174,6 +175,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<GenGeometry>();
     ItemRegistry::add<UniformBoxGeometry>();
     ItemRegistry::add<ReadFitsGeometry>();
+    ItemRegistry::add<ImportedGeometry>();
+    ItemRegistry::add<ParticleGeometry>();
 
     // geometry decorators
     ItemRegistry::add<OffsetGeometryDecorator>();
@@ -190,8 +193,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
 
     // smoothing kernels
     ItemRegistry::add<SmoothingKernel>();
-    ItemRegistry::add<UniformSmoothingKernel>();
     ItemRegistry::add<CubicSplineSmoothingKernel>();
+    ItemRegistry::add<UniformSmoothingKernel>();
 
     // wavelength grids
     ItemRegistry::add<WavelengthGrid>();

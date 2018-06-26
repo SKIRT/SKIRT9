@@ -20,8 +20,8 @@
     spherical symmetry only the intersection with the xy plane is written, for axial symmetry the
     intersections with the xy and xz planes are written, and for general geometries all three
     intersections are written. The difference between the theoretical mass density maps (named
-    <tt>prefix_ds_trhoXX.fits</tt>) and the grid-discretized mass density maps (named
-    <tt>prefix_ds_grhoXX.fits</tt>) is the following: the theoretical density is the density
+    <tt>prefix_probe_trhoXX.fits</tt>) and the grid-discretized mass density maps (named
+    <tt>prefix_probe_grhoXX.fits</tt>) is the following: the theoretical density is the density
     represented by the media system, i.e.\ the true dust density that would correspond to an
     infinitely fine spatial grid. The grid-discretized density maps on the other hand give the
     value of the density as read from the finite-resolution spatial grid in the simulation. A

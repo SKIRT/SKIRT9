@@ -28,7 +28,7 @@ namespace
         Array trhov;
 
         // data members initialized in constructor
-        Probe* client;
+        Probe* item;
         Geometry* geom;
         Units* units;
         Log* log;
@@ -40,11 +40,11 @@ namespace
 
     public:
         // constructor
-        WriteDensity(Probe* client_, Geometry* geom_, const Box& bounds_)
-            : trhov(Np*Np), client(client_), geom(geom_), units(client_->find<Units>()), log(client_->find<Log>())
+        WriteDensity(Probe* item_, Geometry* geom_, const Box& bounds)
+            : trhov(Np*Np), item(item_), geom(geom_), units(item_->find<Units>()), log(item_->find<Log>())
         {
              double xmin, ymin, zmin, xmax, ymax, zmax;
-            bounds_.extent(xmin,ymin,zmin,xmax,ymax,zmax);
+            bounds.extent(xmin,ymin,zmin,xmax,ymax,zmax);
             xpsize = (xmax-xmin)/Np;
             ypsize = (ymax-ymin)/Np;
             zpsize = (zmax-zmin)/Np;
@@ -66,7 +66,7 @@ namespace
             if (xd) plane += "x";
             if (yd) plane += "y";
             if (zd) plane += "z";
-            log->info(client->typeAndName() + " is calculating the media mass density in the " + plane + " plane...");
+            log->info(item->typeAndName() + " is calculating the media mass density in the " + plane + " plane...");
         }
 
         // the parallized loop body; calculates the results for a series of lines in the images
@@ -89,14 +89,14 @@ namespace
         // write the results to two FITS files with appropriate names
         void write()
         {
-            write(trhov, "theoretical density", "ds_trho");
+            write(trhov, "theoretical density", item->itemName()+"_trho");
         }
 
     private:
         void write(const Array& rhov, string label, string prefix)
         {
             string filename = prefix + plane;
-            FITSInOut::write(client, label + " in the " + plane + " plane", filename, rhov, Np, Np, 1,
+            FITSInOut::write(item, label + " in the " + plane + " plane", filename, rhov, Np, Np, 1,
                              units->olength(xd?xpsize:ypsize), units->olength(zd?zpsize:ypsize),
                              units->olength(xd?xcenter:ycenter), units->olength(zd?zcenter:ycenter),
                              units->umassvolumedensity(), units->ulength());

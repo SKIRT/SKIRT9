@@ -32,6 +32,13 @@ void ImportedGeometry::setupSelfBefore()
 
 //////////////////////////////////////////////////////////////////////
 
+ImportedGeometry::~ImportedGeometry()
+{
+    delete _snapshot;
+}
+
+//////////////////////////////////////////////////////////////////////
+
 double ImportedGeometry::density(Position bfr) const
 {
     return _snapshot->density(bfr) * _norm;

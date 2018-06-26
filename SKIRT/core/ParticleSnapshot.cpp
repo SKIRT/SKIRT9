@@ -85,11 +85,11 @@ void ParticleSnapshot::readAndClose()
 
     // log mass statistics
     log()->info("  Total original mass : " +
-                StringUtils::toString(units()->omass(totalOriginalMass)) + units()->umass());
+                StringUtils::toString(units()->omass(totalOriginalMass),'e',4) + " " + units()->umass());
     log()->info("  Total metallic mass : "
-                + StringUtils::toString(units()->omass(totalMetallicMass)) + units()->umass());
+                + StringUtils::toString(units()->omass(totalMetallicMass),'e',4) + " " + units()->umass());
     log()->info("  Total effective mass: "
-                + StringUtils::toString(units()->omass(totalEffectiveMass)) + units()->umass());
+                + StringUtils::toString(units()->omass(totalEffectiveMass),'e',4) + " " + units()->umass());
 
     // if one of the total masses is negative, suppress the complete mass distribution
     if (totalOriginalMass < 0 || totalMetallicMass < 0 || totalEffectiveMass < 0)
