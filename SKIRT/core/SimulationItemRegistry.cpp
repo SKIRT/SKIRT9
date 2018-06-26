@@ -19,6 +19,7 @@
 #include "CubicalBackgroundSource.hpp"
 #include "CubicSplineSmoothingKernel.hpp"
 #include "CylindricalClipGeometryDecorator.hpp"
+#include "DefaultMediaDensityCutsProbe.hpp"
 #include "EinastoGeometry.hpp"
 #include "ExpDiskGeometry.hpp"
 #include "ExtragalacticUnits.hpp"
@@ -199,13 +200,6 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<NestedLogWavelengthGrid>();
     ItemRegistry::add<FileWavelengthGrid>();
 
-    // probe system and probes
-    ItemRegistry::add<ProbeSystem>();
-    ItemRegistry::add<Probe>();
-    ItemRegistry::add<WavelengthGridProbe>();
-    ItemRegistry::add<LuminosityProbe>();
-    ItemRegistry::add<LaunchedPacketsProbe>();
-
     // instrument system and instruments
     ItemRegistry::add<InstrumentSystem>();
     ItemRegistry::add<Instrument>();
@@ -220,6 +214,14 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<AllSkyProjection>();
     ItemRegistry::add<HammerAitoffProjection>();
     ItemRegistry::add<MollweideProjection>();
+
+    // probe system and probes
+    ItemRegistry::add<ProbeSystem>();
+    ItemRegistry::add<Probe>();
+    ItemRegistry::add<WavelengthGridProbe>();
+    ItemRegistry::add<LuminosityProbe>();
+    ItemRegistry::add<LaunchedPacketsProbe>();
+    ItemRegistry::add<DefaultMediaDensityCutsProbe>();
 
     // Monte Carlo simulations
     ItemRegistry::add<MonteCarloSimulation>();

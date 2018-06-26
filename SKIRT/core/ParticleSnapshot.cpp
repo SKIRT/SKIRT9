@@ -187,7 +187,7 @@ double ParticleSnapshot::density(Position bfr) const
         double u = (bfr - p->center()).norm() / p->radius();
         sum += _kernel->density(u) * p->mass();
     }
-    return sum;
+    return sum > 0. ? sum : 0.;     // guard against negative densities
 }
 
 ////////////////////////////////////////////////////////////////////

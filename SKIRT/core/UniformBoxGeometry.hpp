@@ -13,7 +13,7 @@
 
 /** The UniformBoxGeometry class describes a 3D geometry consisting of a uniform cuboid aligned
     with the coordinate system. */
-class UniformBoxGeometry : public GenGeometry, public Box
+class UniformBoxGeometry : public GenGeometry
 {
     ITEM_CONCRETE(UniformBoxGeometry, GenGeometry, "a geometry with uniform density inside a box")
 
@@ -74,6 +74,7 @@ public:
 private:
     // data members initialized during setup
     double _rho{0.};
+    Box _box;
 };
 
 ////////////////////////////////////////////////////////////////////
