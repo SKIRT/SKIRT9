@@ -65,6 +65,7 @@
 #include "RotateGeometryDecorator.hpp"
 #include "SEDInstrument.hpp"
 #include "SIUnits.hpp"
+#include "ScaledGaussianSmoothingKernel.hpp"
 #include "SersicGeometry.hpp"
 #include "ShellGeometry.hpp"
 #include "SineSquarePolarizationProfile.hpp"
@@ -194,6 +195,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // smoothing kernels
     ItemRegistry::add<SmoothingKernel>();
     ItemRegistry::add<CubicSplineSmoothingKernel>();
+    ItemRegistry::add<ScaledGaussianSmoothingKernel>();
     ItemRegistry::add<UniformSmoothingKernel>();
 
     // wavelength grids
