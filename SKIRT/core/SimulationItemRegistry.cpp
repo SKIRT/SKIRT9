@@ -53,6 +53,7 @@
 #include "ParaboloidGeometry.hpp"
 #include "ParaboloidShellGeometry.hpp"
 #include "ParticleGeometry.hpp"
+#include "ParticleSource.hpp"
 #include "PerspectiveInstrument.hpp"
 #include "PlummerGeometry.hpp"
 #include "PointSource.hpp"
@@ -115,6 +116,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<NormalizedSource>();
     ItemRegistry::add<PointSource>();
     ItemRegistry::add<GeometricSource>();
+    ItemRegistry::add<ImportedSource>();
+    ItemRegistry::add<ParticleSource>();
     ItemRegistry::add<CenteredSource>();
     ItemRegistry::add<StellarSurfaceSource>();
     ItemRegistry::add<CubicalBackgroundSource>();

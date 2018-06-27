@@ -87,7 +87,7 @@ void SourceSystem::prepareForlaunch(size_t numPackets)
     {
         // limit first index to numPackets to avoid run-over due to rounding errors
         _Iv[h+1] = min(numPackets, _Iv[h] + static_cast<size_t>(std::round(_Wv[h] * numPackets)));
-        _sources[h]->prepareForLaunch(_Iv[h], _Iv[h+1]-_Iv[h]);
+        _sources[h]->prepareForLaunch(sourceBias(), _Iv[h], _Iv[h+1]-_Iv[h]);
     }
 }
 

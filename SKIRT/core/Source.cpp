@@ -17,7 +17,7 @@ void Source::setupSelfBefore()
 
 //////////////////////////////////////////////////////////////////////
 
-void Source::prepareForLaunch(size_t /*firstIndex*/, size_t /*numIndices*/)
+void Source::prepareForLaunch(double /*sourceBias*/, size_t /*firstIndex*/, size_t /*numIndices*/)
 {
 }
 

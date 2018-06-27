@@ -106,7 +106,7 @@ public:
         map these indices to subsources if that would be meaningful. See the description of the
         SourceSystem class for more information. The default implementation of this function does
         nothing. */
-    virtual void prepareForLaunch(size_t firstIndex, size_t numIndices);
+    virtual void prepareForLaunch(double sourceBias, size_t firstIndex, size_t numIndices);
 
     /** This function causes the photon packet \em pp to be launched from the source using the
         given history index and luminosity contribution. The photon packet's contents is fully
