@@ -305,7 +305,7 @@ public:
         for the other axes, if any (the arguments at the end of the list).
 
         The resulting first-axis grid is constructed into \em xv, the corresponding pdf into \em
-        pv, and the corresponding cdf into \em Yv. In all cases, xv[0]=xmin, xv[n]=xmax, Pv[0]=0,
+        pv, and the corresponding cdf into \em Pv. In all cases, xv[0]=xmin, xv[n]=xmax, Pv[0]=0,
         and Pv[n]=1. The function returns the normalization factor, i.e. the value of Pv[n] before
         normalization.
 

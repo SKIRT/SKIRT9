@@ -7,6 +7,7 @@
 #define SNAPSHOT_HPP
 
 #include "Position.hpp"
+#include "Array.hpp"
 #include "Box.hpp"
 #include "SnapshotParameter.hpp"
 class Log;
@@ -228,6 +229,11 @@ public:
         N_\mathrm{ent}-1\f$. If the velocity is not being imported, or the index is out of range,
         the behavior is undefined. */
     virtual Vec velocity(int m) const = 0;
+
+    /** This function stores the parameters of the entity with index \f$0\le m \le
+        N_\mathrm{ent}-1\f$ into the given array. If parameters are not being imported, or the
+        index is out of range, the behavior is undefined. */
+    virtual void parameters(int m, Array& params) const = 0;
 
     /** This function returns the mass density represented by the snapshot at a given point
         \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If no

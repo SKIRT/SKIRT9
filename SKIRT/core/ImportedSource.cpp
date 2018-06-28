@@ -5,24 +5,29 @@
 
 #include "ImportedSource.hpp"
 #include "Constants.hpp"
+#include "NR.hpp"
 #include "PhotonPacket.hpp"
 #include "Random.hpp"
 #include "RedshiftInterface.hpp"
+#include "SEDFamily.hpp"
 #include "Snapshot.hpp"
 #include "WavelengthRangeInterface.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-void ImportedSource::setupSelfBefore()
+void ImportedSource::setupSelfAfter()
 {
-    Source::setupSelfBefore();
+    Source::setupSelfAfter();
+
+    // get the primary source wavelength range
+    _wavelengthRange = interface<WavelengthRangeInterface>()->wavelengthRange();
 
     // create the snapshot with preconfigured spatial columns
     _snapshot = createAndOpenSnapshot();
 
     // add optional columns if applicable
     if (_importVelocity) _snapshot->importVelocity();
-    //_snapshot->importParameters(1);     // XXXX
+    _snapshot->importParameters(_sedFamily->parameterInfo());
 
     // read the data from file
     _snapshot->readAndClose();
@@ -31,10 +36,14 @@ void ImportedSource::setupSelfBefore()
     int M = _snapshot->numEntities();
     if (M)
     {
+        Array lambdav, pv, Pv;  // the contents of these arrays is not used, so this could be optimized if needed
+        Array params;
+
         _Lv.resize(M);
         for (int m=0; m!=M; ++m)
         {
-            _Lv[m] = 1 * Constants::Lsun();    // XXX
+            _snapshot->parameters(m, params);
+            _Lv[m] = _sedFamily->cdf(lambdav, pv, Pv, _wavelengthRange, params);
         }
         _L = _Lv.sum();
         if (_L) _Lv /= _L;
@@ -66,9 +75,17 @@ double ImportedSource::luminosity() const
 
 double ImportedSource::specificLuminosity(double wavelength) const
 {
-    if (!interface<WavelengthRangeInterface>()->wavelengthRange().contains(wavelength)) return 0.;
-  //  return _sed->specificLuminosity(wavelength) * luminosity();   XXX
-    return 0;
+    if (!_wavelengthRange.contains(wavelength)) return 0.;
+
+    Array params;
+    double sum = 0.;
+    int M = _snapshot->numEntities();
+    for (int m=0; m!=M; ++m)
+    {
+        _snapshot->parameters(m, params);
+        sum += _sedFamily->specificLuminosity(wavelength, params);
+    }
+    return sum;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -97,6 +114,52 @@ void ImportedSource::prepareForLaunch(double sourceBias, size_t firstIndex, size
 
 namespace
 {
+    // an instance of this class holds the normalized regular and cumulative spectral distributions for a single entity
+    // which can be used to generate wavelengths and to calculate bias weights
+    class EntitySED
+    {
+    private:
+        // these two variables unambiguously identify a particular entity, even with multiple imported sources
+        int _m{-1};                         // entity index
+        const Snapshot* _snapshot{nullptr}; // snapshot
+        Array _lambdav, _pv, _Pv;           // normalized distributions
+
+    public:
+        EntitySED() { }
+
+        // sets the normalized distributions from the SED family if this is a different entity or snapshot
+        void setIfNeeded(int m, const Snapshot* snapshot, const SEDFamily* family, Range range)
+        {
+            if (m!=_m || snapshot!=_snapshot)
+            {
+                Array params;
+                snapshot->parameters(m, params);
+                family->cdf(_lambdav, _pv, _Pv, range, params);
+                _snapshot=snapshot; _m=m;
+            }
+        }
+
+        // returns a random wavelength generated from the distribution
+        double generateWavelength(Random* random) const
+        {
+            return random->cdfLogLog(_lambdav, _pv, _Pv);
+        }
+
+        // returns the normalized specific luminosity for the given wavelength
+        double specificLuminosity(double lambda) const
+        {
+            int i = NR::locateClip(_lambdav, lambda);
+            return NR::interpolateLogLog(lambda, _lambdav[i], _lambdav[i+1], _pv[i], _pv[i+1]);
+        }
+    };
+
+    // setup an SED instance for each parallel execution thread to cache discretized SED data; this works even if
+    // there are multiple sources of this type because each thread handles a single photon packet at a time
+    thread_local EntitySED t_sed;
+}
+
+namespace
+{
     // an instance of this class offers the redshift interface for the velocity specified for an imported entity
     class EntityVelocity : public RedshiftInterface
     {
@@ -110,7 +173,7 @@ namespace
 
     // setup a velocity instance (with the redshift interface) for each parallel execution thread; this works even if
     // there are multiple sources of this type because each thread handles a single photon packet at a time
-    thread_local EntityVelocity _velocity;
+    thread_local EntityVelocity t_velocity;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -122,16 +185,15 @@ void ImportedSource::launch(PhotonPacket* pp, size_t historyIndex, double L) con
     if (m < 0)
     {
         // if there are no entities in the source, launch a photon packet with zero luminosity
-        pp->launch(historyIndex, interface<WavelengthRangeInterface>()->wavelengthRange().mid(),
-                   0., Position(), Direction());
+        pp->launch(historyIndex, _wavelengthRange.mid(), 0., Position(), Direction());
         return;
     }
 
     // calculate the weight related to biased source selection
     double ws = _Lv[m] / _Wv[m];
 
-    // get the SED for this entity
-    // XXXX
+    // get the normalized regular and cumulative distributions for this entity, if not already available
+    t_sed.setIfNeeded(m, _snapshot, _sedFamily, _wavelengthRange);
 
     // generate a random wavelength from the SED and/or from the bias distribution
     double lambda, w;
@@ -139,17 +201,17 @@ void ImportedSource::launch(PhotonPacket* pp, size_t historyIndex, double L) con
     if (!xi)
     {
         // no biasing -- simply use the intrinsic spectral distribution
-        lambda = _sed->generateWavelength();
+        lambda = t_sed.generateWavelength(random());
         w = 1.;
     }
     else
     {
         // biasing -- use one or the other distribution
-        if (random()->uniform() > xi) lambda = sed()->generateWavelength();
+        if (random()->uniform() > xi) lambda = t_sed.generateWavelength(random());
         else lambda = wavelengthBiasDistribution()->generateWavelength();
 
         // calculate the compensating weight factor
-        double s = sed()->specificLuminosity(lambda);
+        double s = t_sed.specificLuminosity(lambda);
         if (!s)
         {
             // if the wavelength can't occur in the intrinsic distribution,
@@ -172,8 +234,8 @@ void ImportedSource::launch(PhotonPacket* pp, size_t historyIndex, double L) con
     RedshiftInterface* rsi = nullptr;
     if (importVelocity())
     {
-        _velocity.setVelocity(_snapshot->velocity(m));
-        rsi = &_velocity;
+        t_velocity.setVelocity(_snapshot->velocity(m));
+        rsi = &t_velocity;
     }
 
     // launch the photon packet with isotropic direction

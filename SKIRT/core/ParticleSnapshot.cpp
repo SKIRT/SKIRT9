@@ -179,6 +179,15 @@ Vec ParticleSnapshot::velocity(int m) const
 
 ////////////////////////////////////////////////////////////////////
 
+void ParticleSnapshot::parameters(int m, Array& params) const
+{
+    int n = numParameters();
+    params.resize(n);
+    for (int i=0; i!=n; ++i) params[i] = _propv[m][parametersIndex()+i];
+}
+
+////////////////////////////////////////////////////////////////////
+
 double ParticleSnapshot::density(Position bfr) const
 {
     double sum = 0.;

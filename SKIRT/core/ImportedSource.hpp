@@ -8,7 +8,8 @@
 
 #include "Source.hpp"
 #include "Array.hpp"
-#include "SED.hpp"
+#include "Range.hpp"
+#include "SEDFamily.hpp"
 class Snapshot;
 
 //////////////////////////////////////////////////////////////////////
@@ -47,8 +48,8 @@ class ImportedSource : public Source
     PROPERTY_BOOL(importVelocity, "import velocity components (3 columns)")
         ATTRIBUTE_DEFAULT_VALUE(importVelocity, "false")
 
-    PROPERTY_ITEM(sed, SED, "the spectral energy distribution for the source XXX")
-        ATTRIBUTE_DEFAULT_VALUE(sed, "SunSED")
+    PROPERTY_ITEM(sedFamily, SEDFamily, "the SED family for assigning spectra to the imported sources")
+        ATTRIBUTE_DEFAULT_VALUE(sed, "BlackBodySEDFamily")
 
     ITEM_END()
 
@@ -64,7 +65,7 @@ protected:
         Finally, the function constructs a vector with the luminosities (integrated over the
         primary source wavelength range) for all imported entities. This information is used when
         deciding how many photon packets should be launched from each entity. */
-    void setupSelfBefore() override;
+    void setupSelfAfter() override;
 
     /** This function constructs a new Snapshot object of the type appropriate for the subclass,
         calls its open() function, and returns a pointer to the object. Ownership of the Snapshot
@@ -112,13 +113,32 @@ public:
      void prepareForLaunch(double sourceBias, size_t firstIndex, size_t numIndices) override;
 
      /** This function causes the photon packet \em pp to be launched from the source using the
-         given history index and luminosity contribution. XXX. */
+         given history index and luminosity contribution. It proceeds as follows.
+
+         First, the function finds the entity index that corresponding to the history index using
+         the map constructed by the prepareForLaunch() function. It obtains the normalized spectral
+         distribition (and the corresponding cumulative distribution) for that entity from the SED
+         family configured for this source. In fact, the function sets up a thread-local object
+         that caches the spectral distribution for an entity between consecutive invocations of the
+         launch() function. This works even if there are multiple sources of this type because each
+         thread handles a single photon packet at a time.
+
+         Subsequently, the function samples a wavelength from the entity's SED, properly handling
+         the configured wavelength biasing, and asks the Snapshot object to generate a random
+         launch position for the entity. If the importVelocity flag is enabled, the function also
+         constructs an object that serves a RedshiftInterface appropriate for the velocity of the
+         entity. Again, this object is allocated in thread-local storage so that it stays around
+         after being handed to the photon packet.
+
+         Finally, the function causes the photon packet to be launched with the information
+         described above and an isotropic launch direction. */
     void launch(PhotonPacket* pp, size_t historyIndex, double L) const override;
 
     //======================== Data Members ========================
 
 private:
     // initialized during setup
+    Range _wavelengthRange; // the wavelength range configured for all primary sources
     Snapshot* _snapshot{nullptr};
     double _L{0};       // the total bolometric luminosity of all entities (absolute number)
     Array _Lv;          // the relative bolometric luminosity of each entity (normalized to unity)
