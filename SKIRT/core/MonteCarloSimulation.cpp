@@ -80,15 +80,26 @@ void MonteCarloSimulation::runSimulation()
     {
         TimeLogger logger(log(), "the run");
 
-        // shoot photons from primary sources
+        // shoot photons from primary sources, if needed
         size_t Npp = numPackets() * sourceSystem()->numPacketsMultiplier();
-        initProgress("primary emission", Npp);
-        sourceSystem()->prepareForlaunch(Npp);
-        auto parallel = find<ParallelFactory>()->parallelDistributed();
-        StopWatch::start();
-        parallel->call([this](size_t i ,size_t n) { doPrimaryEmissionChunk(i, n); }, Npp);
-        StopWatch::stop();
-        instrumentSystem()->flush();
+        if (!Npp)
+        {
+            log()->warning("Skipping primary emission because no photon packets were requested");
+        }
+        else if (!sourceSystem()->luminosity())
+        {
+            log()->warning("Skipping primary emission because the total luminosity of primary sources is zero");
+        }
+        else
+        {
+            initProgress("primary emission", Npp);
+            sourceSystem()->prepareForlaunch(Npp);
+            auto parallel = find<ParallelFactory>()->parallelDistributed();
+            StopWatch::start();
+            parallel->call([this](size_t i ,size_t n) { doPrimaryEmissionChunk(i, n); }, Npp);
+            StopWatch::stop();
+            instrumentSystem()->flush();
+        }
 
         // wait for all processes to finish
         wait("the run");

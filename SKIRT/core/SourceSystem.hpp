@@ -77,6 +77,7 @@ class SourceSystem : public SimulationItem, public WavelengthRangeInterface
 
     PROPERTY_ITEM_LIST(sources, Source, "the primary sources")
         ATTRIBUTE_DEFAULT_VALUE(sources, "GeometricSource")
+        ATTRIBUTE_OPTIONAL(sources)
 
     PROPERTY_DOUBLE(sourceBias, "the fraction of photon packets distributed uniformly across primary sources")
         ATTRIBUTE_MIN_VALUE(sourceBias, "[0")

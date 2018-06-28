@@ -15,13 +15,18 @@ void SourceSystem::setupSelfAfter()
 {
     SimulationItem::setupSelfAfter();
 
-    // obtain the luminosity for each source
+    // skip preparations if there are no sources
     int Ns = _sources.size();
+    if (!Ns) return;
+
+    // obtain the luminosity for each source
     _Lv.resize(Ns);
     for (int h=0; h!=Ns; ++h) _Lv[h] = _sources[h]->luminosity();
 
     // calculate the total luminosity, and normalize the individual luminosities to unity
+    // skip further preparations if the total luminosity is zero
     _L = _Lv.sum();
+    if (!_L) return;
     _Lv /= _L;
 
     // calculate the launch weight for each source, normalized to unity
@@ -77,18 +82,23 @@ double SourceSystem::luminosity() const
 
 void SourceSystem::prepareForlaunch(size_t numPackets)
 {
-    // calculate the average luminosity contribution for each packet
-    _Lpp = _L / numPackets;
+    if (!_L ) throw FATALERROR("Cannot launch primary source photon packets when total luminosity is zero");
 
-    // determine the first history index for each source and pass the mapping on to each source
+    // determine the first history index for each source
     int Ns = _sources.size();
     _Iv[0] = 0;
-    for (int h=0; h!=Ns; ++h)
+    for (int h=1; h!=Ns; ++h)
     {
         // limit first index to numPackets to avoid run-over due to rounding errors
-        _Iv[h+1] = min(numPackets, _Iv[h] + static_cast<size_t>(std::round(_Wv[h] * numPackets)));
-        _sources[h]->prepareForLaunch(sourceBias(), _Iv[h], _Iv[h+1]-_Iv[h]);
+        _Iv[h] = min(numPackets, _Iv[h-1] + static_cast<size_t>(std::round(_Wv[h-1] * numPackets)));
     }
+    _Iv[Ns] = numPackets;
+
+    //  pass the mapping on to each source
+    for (int h=0; h!=Ns; ++h) _sources[h]->prepareForLaunch(sourceBias(), _Iv[h], _Iv[h+1]-_Iv[h]);
+
+    // calculate the average luminosity contribution for each packet
+    _Lpp = _L / numPackets;
 }
 
 //////////////////////////////////////////////////////////////////////

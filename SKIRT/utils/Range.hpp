@@ -35,6 +35,9 @@ public:
     /** This function returns the maximum value of the range. */
     double max() const { return _max; }
 
+    /** This function returns the middle value of the range. */
+    double mid() const { return 0.5 * (_min + _max); }
+
     /** This function returns the width of the range, i.e. the maximum value minus the minimum value. */
     double width() const { return _max - _min; }
 
