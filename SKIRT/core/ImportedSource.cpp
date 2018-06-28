@@ -11,22 +11,7 @@
 #include "Snapshot.hpp"
 #include "WavelengthRangeInterface.hpp"
 
-//////////////////////////////////////////////////////////////////////
-
-namespace
-{
-    // An instance of this class offers the redshift interface for the bulk velocity specified in the constructor
-    class BulkVelocity : public RedshiftInterface
-    {
-    private:
-        Vec _bfv;
-    public:
-        BulkVelocity(Vec bfv) : _bfv(bfv) { }
-        double redshiftForDirection(Direction bfk) const override { return -Vec::dot(_bfv, bfk) / Constants::c(); }
-    };
-}
-
-//////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
 
 void ImportedSource::setupSelfBefore()
 {
@@ -49,35 +34,35 @@ void ImportedSource::setupSelfBefore()
         _Lv.resize(M);
         for (int m=0; m!=M; ++m)
         {
-            _Lv[m] = (m+1)*(m+1) * Constants::Lsun();    // XXX
+            _Lv[m] = 1 * Constants::Lsun();    // XXX
         }
         _L = _Lv.sum();
         if (_L) _Lv /= _L;
     }
 }
 
-//////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
 
 ImportedSource::~ImportedSource()
 {
     delete _snapshot;
 }
 
-//////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
 
 int ImportedSource::dimension() const
 {
     return 3;
 }
 
-//////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
 
 double ImportedSource::luminosity() const
 {
    return _L;
 }
 
-//////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
 
 double ImportedSource::specificLuminosity(double wavelength) const
 {
@@ -86,7 +71,7 @@ double ImportedSource::specificLuminosity(double wavelength) const
     return 0;
 }
 
-//////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
 
 void ImportedSource::prepareForLaunch(double sourceBias, size_t firstIndex, size_t numIndices)
 {
@@ -108,7 +93,27 @@ void ImportedSource::prepareForLaunch(double sourceBias, size_t firstIndex, size
     _Iv[M] = firstIndex+numIndices;
 }
 
-//////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+
+namespace
+{
+    // an instance of this class offers the redshift interface for the velocity specified for an imported entity
+    class EntityVelocity : public RedshiftInterface
+    {
+    private:
+        Vec _bfv;
+    public:
+        EntityVelocity() { }
+        void setVelocity(Vec bfv) { _bfv = bfv; }
+        double redshiftForDirection(Direction bfk) const override { return -Vec::dot(_bfv, bfk) / Constants::c(); }
+    };
+
+    // setup a velocity instance (with the redshift interface) for each parallel execution thread; this works even if
+    // there are multiple sources of this type because each thread handles a single photon packet at a time
+    thread_local EntityVelocity _velocity;
+}
+
+////////////////////////////////////////////////////////////////////
 
 void ImportedSource::launch(PhotonPacket* pp, size_t historyIndex, double L) const
 {
@@ -164,10 +169,15 @@ void ImportedSource::launch(PhotonPacket* pp, size_t historyIndex, double L) con
     Position bfr = _snapshot->generatePosition(m);
 
     // provide a redshift interface for the appropriate velocity, if enabled
-    // XXXX
+    RedshiftInterface* rsi = nullptr;
+    if (importVelocity())
+    {
+        _velocity.setVelocity(_snapshot->velocity(m));
+        rsi = &_velocity;
+    }
 
     // launch the photon packet with isotropic direction
-    pp->launch(historyIndex, lambda, L*w*ws, bfr, random()->direction());
+    pp->launch(historyIndex, lambda, L*w*ws, bfr, random()->direction(), rsi);
 }
 
-//////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
