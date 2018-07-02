@@ -40,7 +40,7 @@ double PlanckFunction::cdf(Array& lambdav, Array& pv, Array& Pv, Range lambdaRan
     for (size_t i = 0; i<=n; ++i) pv[i] = value(lambdav[i]);
 
     // perform the rest of the operation in an implementation function using log-log interpolation
-    return NR_Impl::cdf2(true, lambdav, pv, Pv);
+    return NR::cdf2(true, lambdav, pv, Pv);
 }
 
 ////////////////////////////////////////////////////////////////////

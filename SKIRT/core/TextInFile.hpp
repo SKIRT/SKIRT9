@@ -177,21 +177,21 @@ public:
 private:
     // recursively assign values from Array to double& arguments; used in variadic readRow()
     template <typename... Values>
-    void assignValues(size_t index, const Array& result, double& value, Values&... values)
+    static inline void assignValues(size_t index, const Array& result, double& value, Values&... values)
     {
         value = result[index];
         assignValues(index+1, result, values...);
     }
-    inline void assignValues(size_t /*index*/, const Array& /*result*/) { }
+    static inline void assignValues(size_t /*index*/, const Array& /*result*/) { }
 
     // recursively assign columns from vector to Array& arguments; used in variadic readAllColumns()
     template <typename... Columns>
-    void assignColumns(size_t index, vector<Array>& result, Array& column, Columns&... columns)
+    static inline void assignColumns(size_t index, vector<Array>& result, Array& column, Columns&... columns)
     {
         column = std::move(result[index]);
         assignColumns(index+1, result, columns...);
     }
-    inline void assignColumns(size_t /*index*/, vector<Array>& /*result*/) { }
+    static inline void assignColumns(size_t /*index*/, vector<Array>& /*result*/) { }
 
     //======================== Data Members ========================
 

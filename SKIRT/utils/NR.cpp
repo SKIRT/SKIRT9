@@ -3,12 +3,12 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "NRImpl.hpp"
+#include "NR.hpp"
 #include "SpecialFunctions.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-double NR_Impl::cdf2(bool loglog, const Array& xv, Array& pv, Array& Pv)
+double NR::cdf2(bool loglog, const Array& xv, Array& pv, Array& Pv)
 {
     size_t n = xv.size() - 1;
 

@@ -8,23 +8,23 @@
 
 #include "Array.hpp"
 #include "CompileTimeUtils.hpp"
-#include "NRImpl.hpp"
 #include "Range.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-/** This namespace contains a collection of functions that operate on Array objects and on
+/** This static class contains a collection of functions that operate on Array objects and on
     std::vector<T> objects where T is some numeric type. Most implementations are provided inline
     in the header. */
-namespace NR
+class NR
 {
     //======================== Conversion and Assignment =======================
 
+public:
     /** This template function converts the source sequence to an Array object and returns the
         result. This template function works for any source container type with indexed random
         access (specifically including std::vector), and for any item types, as long as the source
         items can be assigned to or converted to double. */
-    template<class V> inline Array array(const V& sourcev)
+    template<class V> static inline Array array(const V& sourcev)
     {
         size_t n = sourcev.size();
         Array resultv(n);
@@ -36,50 +36,53 @@ namespace NR
         destination array if necessary. This template function works for any source container type
         with indexed random access (specifically including std::vector), and for any item types, as
         long as the source items can be assigned to or converted to double. */
-    template<class V> inline void assign(Array& targetv, const V& sourcev)
+    template<class V> static inline void assign(Array& targetv, const V& sourcev)
     {
         size_t n = sourcev.size();
         targetv.resize(n);
         for (size_t i=0; i<n; i++) targetv[i] = sourcev[i];
     }
 
-    // recursively assign values from double arguments to Array
-    inline void assignValues(size_t /*index*/, Array& /*target*/) { }
-    template <typename... Values>
-    inline void assignValues(size_t index, Array& target, double value, Values... values)
-    {
-        target[index] = value;
-        assignValues(index+1, target, values...);
-    }
-
     /** This template function assigns the floating point values specified as its arguments to the
         destination array, resizing the destination array if necessary. */
     template <typename... Values,
               typename = std::enable_if_t<sizeof...(Values) != 0 && CompileTimeUtils::isFloatArgList<Values...>()>>
-    inline void assign(Array& targetv, Values... values)
+    static inline void assign(Array& targetv, Values... values)
     {
         targetv.resize(sizeof...(Values));
         assignValues(0, targetv, values...);
     }
 
+private:
+    // recursively assign values from double arguments to Array
+    static inline void assignValues(size_t /*index*/, Array& /*target*/) { }
+    template <typename... Values>
+    static inline void assignValues(size_t index, Array& target, double value, Values... values)
+    {
+        target[index] = value;
+        assignValues(index+1, target, values...);
+    }
+
     //======================== Sorting =======================
 
+public:
     /** This template function sorts a sequence of items given as a std::vector<T> where T is any
         built-in or user-defined type that implements the less-than operator (including the
         standard numeric types). */
-    template<typename T> inline void sort(std::vector<T>& xv)
+    template<typename T> static inline void sort(std::vector<T>& xv)
     {
         std::sort(xv.begin(),xv.end());
     }
 
     /** This function sorts the values in the specified array. */
-    inline void sort(Array& xv)
+    static inline void sort(Array& xv)
     {
         std::sort(begin(xv), end(xv));
     }
 
     //======================== Searching =======================
 
+public:
     /** This template function quickly performs a binary search on an ordered sequence of items
         provided as a std::vector<T>. It works for any item type T that implements the less-than
         operator (including the built-in numeric types). Given a sequence \f$\{x_i,\,i=0...N-1\}\f$
@@ -91,7 +94,7 @@ namespace NR
         sequence contains at least one element, and that the elements are sorted in ascending
         order. If this is not the case, the result is undefined. The algorithm is adapted from the
         Numerical Recipes in C++ handbook. */
-    template<typename T> inline int locate(const std::vector<T>& xv, const T& x)
+    template<typename T> static inline int locate(const std::vector<T>& xv, const T& x)
     {
         int n = xv.size();
         if (x < xv[0]) return -1;
@@ -114,7 +117,7 @@ namespace NR
 
     /** This function is an implementation detail and not intended for public use. See the
         description of the locate() function for more information. */
-    inline int locateBasicImpl(const Array& xv, double x, int n)
+    static inline int locateBasicImpl(const Array& xv, double x, int n)
     {
         int jl = -1;
         int ju = n;
@@ -152,7 +155,7 @@ namespace NR
         <TD>\f$N-1\f$</TD> <TD>Out-of-range values are considered to be inside the corresponding
         outermost bin</TD></TR> <TR><TD>locateFail()</TD> <TD>\f$-1\f$</TD> <TD>\f$-1\f$</TD>
         <TD>Out-of-range values are indicated with a negative index</TD></TR> </TABLE> */
-    inline int locate(const Array& xv, double x)
+    static inline int locate(const Array& xv, double x)
     {
         int n = xv.size();
         if (x==xv[n-1]) return n-2;
@@ -161,7 +164,7 @@ namespace NR
 
     /** This function performs a binary search on the ordered sequence of double values in an
         array. See the description of the locate() function for more information. */
-    inline int locateClip(const Array& xv, double x)
+    static inline int locateClip(const Array& xv, double x)
     {
         int n = xv.size();
         if (x<xv[0]) return 0;
@@ -170,7 +173,7 @@ namespace NR
 
     /** This function performs a binary search on the ordered sequence of double values in an
         array. See the description of the locate() function for more information. */
-    inline int locateFail(const Array& xv, double x)
+    static inline int locateFail(const Array& xv, double x)
     {
         int n = xv.size();
         if (x>xv[n-1]) return -1;
@@ -179,6 +182,7 @@ namespace NR
 
     //======================== Constructing grids =======================
 
+public:
     /** This function builds a linear grid over the specified range \f$[x_{\text{min}},
         x_{\text{max}}]\f$ and with the specified number of \f$N>0\f$ bins, and stores the
         resulting \f$N+1\f$ border points \f$x_i\f$ in the provided array, which is resized
@@ -186,7 +190,7 @@ namespace NR
         x_{\text{min}} + (x_{\text{max}}-x_{\text{min}})\,\frac{i}{N} \qquad i=0,\ldots,N. \f] The
         function returns the bin width, i.e. the distance between two adjacent border points, given
         by \f$(x_{\text{max}}-x_{\text{min}})/N\f$. */
-    inline double buildLinearGrid(Array& xv, double xmin, double xmax, int n)
+    static inline double buildLinearGrid(Array& xv, double xmin, double xmax, int n)
     {
         xv.resize(n+1);
         double dx = (xmax-xmin)/n;
@@ -204,7 +208,7 @@ namespace NR
         {\cal{R}}^{1/(N-1)} \f$. It is easy to check that the ratio between the widths of the last
         and first bins is indeed \f${\cal{R}}\f$: \f[ \frac{ x_N-x_{N-1} }{ x_1-x_0 } = \frac{
         q^{N-1} - q^N }{ 1-q } = q^{N-1} = {\cal{R}}. \f] */
-    inline void buildPowerLawGrid(Array& xv, double xmin, double xmax, int n, double ratio)
+    static inline void buildPowerLawGrid(Array& xv, double xmin, double xmax, int n, double ratio)
     {
         if (fabs(ratio-1.)<1e-3)
         {
@@ -240,7 +244,7 @@ namespace NR
         {\cal{R}}^{1/(M-1)} \f$. The ratio between the widths of the outermost and the innermost
         bins is for this case \f[ \frac{ x_{2M-1}-x_{2M-2} }{ x_M-x_{M-1} } = \frac{ q^{M-1} - q^M
         }{ 1-q } = q^{M-1} = {\cal{R}}. \f] */
-    inline void buildSymmetricPowerLawGrid(Array& xv, double xmin, double xmax, int n, double ratio)
+    static inline void buildSymmetricPowerLawGrid(Array& xv, double xmin, double xmax, int n, double ratio)
     {
         if (fabs(ratio-1.)<1e-3)
         {
@@ -284,7 +288,7 @@ namespace NR
         appropriately. The grid's border points are calculated according to \f[ x_i =
         x_{\text{min}} \left( \frac{x_{\text{max}}}{x_{\text{min}}} \right)^{i/N} \qquad
         i=0,\ldots,N. \f] */
-    inline void buildLogGrid(Array& xv, double xmin, double xmax, int n)
+    static inline void buildLogGrid(Array& xv, double xmin, double xmax, int n)
     {
         xv.resize(n+1);
         double logxmin = log(xmin);
@@ -298,7 +302,7 @@ namespace NR
         are stored in the provided array, which is resized appropriately. The grid's border points
         are calculated according to \f$x_0=0\f$ and \f[ x_i = x_{\text{min}} \left(
         \frac{x_{\text{max}}}{x_{\text{min}}} \right)^{(i-1)/(N-1)} \qquad i=1,\ldots,N. \f] */
-    inline void buildZeroLogGrid(Array& xv, double xmin, double xmax, int n)
+    static inline void buildZeroLogGrid(Array& xv, double xmin, double xmax, int n)
     {
         xv.resize(n+1);  // this also initializes xv[0] to zero
         double logxmin = log(xmin);
@@ -308,10 +312,11 @@ namespace NR
 
     //=================== Interpolating and resampling ===================
 
+public:
     /** This function computes the interpolated value of a one-dimensional function, given its
         values at the edges of an interval. Both the axes coordinate \f$x\f$ and the function value
         \f$f(x)\f$ are interpolated linearly. */
-    inline double interpolateLinLin(double x, double x1, double x2, double f1, double f2)
+    static inline double interpolateLinLin(double x, double x1, double x2, double f1, double f2)
     {
         return f1 + ((x-x1)/(x2-x1))*(f2-f1);
     }
@@ -320,7 +325,7 @@ namespace NR
         values at the edges of an interval. The axes coordinate \f$x\f$ is always interpolated
         logarithmically, and thus must have positive values. The function value \f$f(x)\f$ is
         interpolated linearly. */
-    inline double interpolateLogLin(double x, double x1, double x2, double f1, double f2)
+    static inline double interpolateLogLin(double x, double x1, double x2, double f1, double f2)
     {
         // compute logarithm of coordinate values
         x  = log(x);
@@ -336,7 +341,7 @@ namespace NR
         logarithmically, and thus must have positive values. The function value \f$f(x)\f$ is
         interpolated logarithmically if the function values are positive; otherwise it is
         interpolated linearly. */
-    inline double interpolateLogLog(double x, double x1, double x2, double f1, double f2)
+    static inline double interpolateLogLog(double x, double x1, double x2, double f1, double f2)
     {
         // compute logarithm of coordinate values
         x  = log(x);
@@ -370,7 +375,7 @@ namespace NR
         using the function specified as template argument. The interpolation functions provided by
         this namespace can be passed as a template argument for this purpose. */
     template < double interpolateFunction(double, double, double, double, double) >
-    inline Array resample(const Array& xresv, const Array& xoriv, const Array& yoriv)
+    static inline Array resample(const Array& xresv, const Array& xoriv, const Array& yoriv)
     {
         int Nori = xoriv.size();
         double xmin = xoriv[0];
@@ -397,13 +402,14 @@ namespace NR
 
     //=============== Constructing cumulative distribution functions ==================
 
+public:
     /** Given a discrete distribution over \f$N\f$ points \f[p_i \qquad i=0,\dots,N-1\f] this
         function builds the corresponding normalized cumulative distribution \f[P_0=0;\quad
         P_{i+1}=\frac{\sum_{j=0}^i p_j}{\sum_{j=0}^{N-1} p_j} \qquad i=0,\dots,N-1\f] with
         \f$N+1\f$ elements. In this version of the function, the source distribution is specified
         as an array with at least one element; the target array is resized appropriately and
         replaced by the cumulative distribution. */
-    inline void cdf(Array& Pv, const Array& pv)
+    static inline void cdf(Array& Pv, const Array& pv)
     {
         int n = pv.size();
         Pv.resize(n+1);  // also sets Pv[0] to zero
@@ -419,7 +425,7 @@ namespace NR
         is specified as a separate argument. The source function is called once for each index
         \f$i=0,\dots,N-1\f$. The target array is resized appropriately and replaced by the
         cumulative distribution. */
-    template<typename Functor> inline void cdf(Array& Pv, int n, Functor pv)
+    template<typename Functor> static inline void cdf(Array& Pv, int n, Functor pv)
     {
         Pv.resize(n+1);  // also sets Pv[0] to zero
         for (int i=0; i<n; i++) Pv[i+1] = Pv[i] + pv(i);
@@ -446,7 +452,7 @@ namespace NR
         integration is performed accordingly. In all other cases, piece-wise linear behavior is
         assumed and regular trapezium-rule integration is used. */
     template < double interpolateFunction(double, double, double, double, double) >
-    inline double cdf(Array& xv, Array& pv, Array& Pv, const Array& inxv, const Array& inpv, Range xrange)
+    static inline double cdf(Array& xv, Array& pv, Array& Pv, const Array& inxv, const Array& inpv, Range xrange)
     {
         // copy the relevant portion of the axis grid
         size_t minRight = std::upper_bound(begin(inxv), end(inxv), xrange.min()) - begin(inxv);
@@ -469,9 +475,32 @@ namespace NR
         // perform the rest of the operation in a non-templated function
         // assume log-log behavior for the cdf integration if the template parameter is NR::interpolateLogLog
         //  --> this will break if the user specifies another log-log interpolation function
-        return NR_Impl::cdf2(interpolateFunction == NR::interpolateLogLog, xv, pv, Pv);
+        return cdf2(interpolateFunction == NR::interpolateLogLog, xv, pv, Pv);
     }
-}
+
+    /** This function calculates the normalized cdf \em Pv for the given axis grid \em xv and
+        corresponding unnormalized pdf \em pv. It also normalizes the incoming pdf \em pv and
+        returns the normalization factor. This non-template function is not implemented inline (1)
+        to avoid code-duplication and (2) to avoid propagating the dependencies (includes) of the
+        implementation to all NR users.
+
+        If the \em loglog flag is false, piece-wise linear behavior of both the pdf and cdf is
+        assumed and regular trapezium-rule integration is used. If the \em loglog flag is true, it
+        is assumed that the pdf is linear in log-log space between any two grid points (equivalent
+        to power-law behavior), and the integration is performed accordingly, as described below.
+
+        Consider the pdf values \f$p_i\f$ and \f$p_{i+1}\f$ at two consecutive grid points
+        \f$x_i\f$ and \f$x_{i+1}\f$. Assuming power-law behavior, the pdf between these two grid
+        points can be written as \f[ p(x) = p_i \left(\frac{x}{x_i}\right)^{\alpha_i},
+        \quad\mathrm{with}\; \alpha_i = \frac{\ln p_{i+1}/\ln p_i}{\ln x_{i+1}/\ln x_i} \f]
+
+        The area under the curve is then \f[ \int_{x_i}^{x_{i+1}} p(x)\,\mathrm{d}x =
+        \int_{x_i}^{x_{i+1}} p_i \left(\frac{x}{x_i}\right)^{\alpha_i}\mathrm{d}x = p_i x_i
+        \;\mathrm{gln}\left(-\alpha_i, \frac{x_{i+1}}{x_i}\right) \f] where \f$\mathrm{gln}(a,x)\f$
+        is the generalized logarithm defined in the description of the SpecialFunctions::gln()
+        function. */
+        static double cdf2(bool loglog, const Array& xv, Array& pv, Array& Pv);
+};
 
 ////////////////////////////////////////////////////////////////////
 

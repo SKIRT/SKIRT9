@@ -8,7 +8,7 @@
 
 #include "Array.hpp"
 #include "CompileTimeUtils.hpp"
-#include "NRImpl.hpp"
+#include "NR.hpp"
 #include "Range.hpp"
 #include "StoredTableImpl.hpp"
 #include <array>
@@ -336,7 +336,7 @@ public:
         for (size_t i = 0; i<=n; ++i) pv[i] = operator()(xv[i], values...);
 
         // perform the rest of the operation in a non-templated function
-        return NR_Impl::cdf2(_axLog[0] && _qtyLog, xv, pv, Pv);
+        return NR::cdf2(_axLog[0] && _qtyLog, xv, pv, Pv);
     }
 
     // ================== Accessing the raw data ==================
