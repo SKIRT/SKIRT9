@@ -41,6 +41,7 @@
 #include "LaserAngularDistribution.hpp"
 #include "LaunchedPacketsProbe.hpp"
 #include "LinWavelengthDistribution.hpp"
+#include "ListWavelengthDistribution.hpp"
 #include "ListWavelengthGrid.hpp"
 #include "ListSED.hpp"
 #include "LogWavelengthDistribution.hpp"
@@ -154,7 +155,9 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<RangeWavelengthDistribution>();
     ItemRegistry::add<LinWavelengthDistribution>();
     ItemRegistry::add<LogWavelengthDistribution>();
+    ItemRegistry::add<TabulatedWavelengthDistribution>();
     ItemRegistry::add<FileWavelengthDistribution>();
+    ItemRegistry::add<ListWavelengthDistribution>();
 
     // Angular distributions
     ItemRegistry::add<AngularDistribution>();

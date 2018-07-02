@@ -12,7 +12,7 @@
 ////////////////////////////////////////////////////////////////////
 
 /** TabulatedSED is an abstract class for representing spectral energy distributions that are
-    tabulated by the user in a the form of wavelength/luminosity pairs. The luminosity outside the
+    tabulated by the user in the form of wavelength/luminosity pairs. The luminosity outside the
     range indicated by the first and the last wavelength is considered to be zero.
 
     The subclass must load the tabulated data, and this abstract class handles everything else. */
@@ -24,8 +24,8 @@ class TabulatedSED : public SED
     //============= Construction - Setup - Destruction =============
 
 protected:
-    /** This function asks the subclass to loads the wavelength/luminosity pairs and precalculates
-        the cumulative distribition for use by the other functions in this class. */
+    /** This function asks the subclass to load the wavelength/luminosity pairs and precalculates
+        the cumulative distribution for use by the other functions in this class. */
     void setupSelfBefore() override;
 
     /** This function must be implemented in each subclass to return the wavelengths and the
