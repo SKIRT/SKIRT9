@@ -42,6 +42,7 @@
 #include "LaunchedPacketsProbe.hpp"
 #include "LinWavelengthDistribution.hpp"
 #include "ListWavelengthGrid.hpp"
+#include "ListSED.hpp"
 #include "LogWavelengthDistribution.hpp"
 #include "LogWavelengthGrid.hpp"
 #include "LuminosityProbe.hpp"
@@ -139,7 +140,9 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<QuasarSED>();
     ItemRegistry::add<FamilySED>();
     ItemRegistry::add<Starburst99SED>();
+    ItemRegistry::add<TabulatedSED>();
     ItemRegistry::add<FileSED>();
+    ItemRegistry::add<ListSED>();
 
     // SED families
     ItemRegistry::add<SEDFamily>();
@@ -213,10 +216,10 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
 
     // wavelength grids
     ItemRegistry::add<WavelengthGrid>();
-    ItemRegistry::add<ListWavelengthGrid>();
     ItemRegistry::add<LogWavelengthGrid>();
     ItemRegistry::add<NestedLogWavelengthGrid>();
     ItemRegistry::add<FileWavelengthGrid>();
+    ItemRegistry::add<ListWavelengthGrid>();
 
     // instrument system and instruments
     ItemRegistry::add<InstrumentSystem>();
