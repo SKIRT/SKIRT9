@@ -3,48 +3,28 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef STARBURST99SEDFAMILY_HPP
-#define STARBURST99SEDFAMILY_HPP
+#ifndef BLACKBODYSEDFAMILY_HPP
+#define BLACKBODYSEDFAMILY_HPP
 
 #include "SEDFamily.hpp"
-#include "StoredTable.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
-/** An instance of the Starburst99SEDFamily class represents a family of Starburst99 SEDs for
-    single stellar populations (Leitherer et al. 1999, ApJS, 123, 3), assuming the Kroupa initial
-    mass function (Kroupa 2001, MNRAS, 322, 231), and parameterized on metallicity and age. The
-    library data was prepared and bundled into a FITS file by Patrik Jonsson for use by the \c
-    Sunrise code (<tt>2013ascl.soft03030J</tt>).
-
-    The data were downloaded from
-    <tt>https://bitbucket.org/lutorm/sunrise/downloads/Patrik-imfKroupa-Zmulti-ml.fits.gz</tt> and
-    converted to SKIRT stored table format for inclusion as a resource file. The stored table is
-    opened during setup, and it is subsequently interpolated to the desired parameters and
-    wavelength grid when needed.
+/** An instance of the BlackBodySEDFamily class represents a family of black body %SEDs, i.e.
+    emission spectra of perfect absorbers in thermal equilibrium. The %SED family is parameterized
+    on the temperature \f$T\f$ of the black body (defining the form of the spectrum) and the radius
+    \f$R\f$ of the black body (determining the absolute luminosity scale). As a function of these
+    two parameters, the specific luminosity is given by \f[ L_\lambda(\lambda,R,T) =
+    4\pi\,R^2\;\pi\;B_\lambda(\lambda,T) \f] where \f$B_\lambda(\lambda,T)\f$ is the Planck
+    function.
 
     When imported from a text column file, the parameters for this %SED family must appear in the
     following order in the specified default units (unless these units are overridden by column
-    header info): \f[ M_\mathrm{init}\,(\mathrm{M}_\odot) \quad Z\,(\mathrm{dimensionless})
-    \quad t\,(\mathrm{yr}) \f] */
-class Starburst99SEDFamily : public SEDFamily
+    header info): \f[ R\,(\mathrm{km}) \quad T\,(\mathrm{K}) \f] */
+class BlackBodySEDFamily : public SEDFamily
 {
-    ITEM_CONCRETE(Starburst99SEDFamily, SEDFamily, "a Starburst99 SED family for single stellar populations")
+    ITEM_CONCRETE(BlackBodySEDFamily, SEDFamily, "a black body SED family")
     ITEM_END()
-
-    //============= Construction - Setup - Destruction =============
-
-public:
-    /** This constructor can be invoked programmatically by classes that use a hard-coded SED
-        family (as opposed to selected through the ski file). Before the constructor returns, the
-        newly created object is hooked up as a child to the specified parent in the simulation
-        hierarchy (so it will automatically be deleted), and its setup() function has been called.
-        */
-    explicit Starburst99SEDFamily(SimulationItem* parent);
-
-protected:
-    /** This function opens the appropriate resource file (in SKIRT stored table format). */
-    void setupSelfBefore() override;
 
     //====================== Other functions =====================
 
@@ -68,11 +48,6 @@ public:
         by the parameterInfo() function; if not the behavior is undefined. */
     double cdf(Array& lambdav, Array& pv, Array& Pv,
                const Range& wavelengthRange, const Array& parameters) const override;
-
-    //====================== Data members =====================
-
-private:
-    StoredTable<3> _table;
 };
 
 ////////////////////////////////////////////////////////////////////

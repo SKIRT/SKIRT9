@@ -11,6 +11,7 @@
 
 #include "AllSkyInstrument.hpp"
 #include "BlackBodySED.hpp"
+#include "BlackBodySEDFamily.hpp"
 #include "BoxClipGeometryDecorator.hpp"
 #include "BrokenExpDiskGeometry.hpp"
 #include "ClumpyGeometryDecorator.hpp"
@@ -142,6 +143,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
 
     // SED families
     ItemRegistry::add<SEDFamily>();
+    ItemRegistry::add<BlackBodySEDFamily>();
     ItemRegistry::add<Starburst99SEDFamily>();
 
     // Wavelength distributions
