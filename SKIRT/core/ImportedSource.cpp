@@ -75,7 +75,7 @@ double ImportedSource::luminosity() const
 
 double ImportedSource::specificLuminosity(double wavelength) const
 {
-    if (!_wavelengthRange.contains(wavelength)) return 0.;
+    if (!_wavelengthRange.containsFuzzy(wavelength)) return 0.;
 
     Array params;
     double sum = 0.;

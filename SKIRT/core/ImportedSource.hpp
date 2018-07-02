@@ -49,7 +49,7 @@ class ImportedSource : public Source
         ATTRIBUTE_DEFAULT_VALUE(importVelocity, "false")
 
     PROPERTY_ITEM(sedFamily, SEDFamily, "the SED family for assigning spectra to the imported sources")
-        ATTRIBUTE_DEFAULT_VALUE(sed, "BlackBodySEDFamily")
+        ATTRIBUTE_DEFAULT_VALUE(sedFamily, "BlackBodySEDFamily")
 
     ITEM_END()
 

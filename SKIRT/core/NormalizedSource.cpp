@@ -63,7 +63,7 @@ double NormalizedSource::luminosity() const
 
 double NormalizedSource::specificLuminosity(double wavelength) const
 {
-    if (!interface<WavelengthRangeInterface>()->wavelengthRange().contains(wavelength)) return 0.;
+    if (!interface<WavelengthRangeInterface>()->wavelengthRange().containsFuzzy(wavelength)) return 0.;
     return _sed->specificLuminosity(wavelength) * luminosity();
 }
 

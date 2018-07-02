@@ -44,6 +44,10 @@ public:
     /** This function returns true if the given value is inside the range, and false otherwise. */
     bool contains(double x) const { return x >= _min && x <= _max; }
 
+    /** This function returns true if the given value is inside the range, with the given fuzzyness
+        factor, and false otherwise. */
+    bool containsFuzzy(double x, double eps=1e-14) const { return x >= _min*(1-eps) && x <= _max*(1+eps); }
+
     /** This function returns true if the range is empty (its minimum is larger than or equal to
         its maximum), and false otherwise. */
     bool empty() const { return _min >= _max; }
