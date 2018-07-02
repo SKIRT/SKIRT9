@@ -64,19 +64,6 @@ public:
     double cdf(Array& lambdav, Array& pv, Array& Pv,
                const Range& wavelengthRange, const Array& parameters) const override;
 
-    /** This function behaves exactly as the generic function with the same name, but it requires
-        the parameters to be specified as separate arguments. The parameters describe a stellar
-        population with given initial mass \em M (i.e. the mass at at \f$t=0\f$), metallicity \em
-        Z, and age \em t, all specified in SI units. */
-    double specificLuminosity(double wavelength, double M, double Z, double t) const;
-
-    /** This function behaves exactly as the generic function with the same name, but it requires
-        the parameters to be specified as separate arguments. The parameters describe a stellar
-        population with given initial mass \em M (i.e. the mass at at \f$t=0\f$), metallicity \em
-        Z, and age \em t, all specified in SI units. */
-    double cdf(Array& lambdav, Array& pv, Array& Pv,
-               const Range& wavelengthRange, double M, double Z, double t) const;
-
     //====================== Data members =====================
 
 private:

@@ -76,6 +76,7 @@
 #include "SphericalClipGeometryDecorator.hpp"
 #include "SpheroidalGeometryDecorator.hpp"
 #include "SpiralStructureGeometryDecorator.hpp"
+#include "Starburst99SED.hpp"
 #include "Starburst99SEDFamily.hpp"
 #include "StellarSurfaceSource.hpp"
 #include "StellarUnits.hpp"
@@ -135,6 +136,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ResourceSED>();
     ItemRegistry::add<SunSED>();
     ItemRegistry::add<QuasarSED>();
+    ItemRegistry::add<FamilySED>();
+    ItemRegistry::add<Starburst99SED>();
     ItemRegistry::add<FileSED>();
 
     // SED families

@@ -3,14 +3,14 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef TABLEIMPL_HPP
-#define TABLEIMPL_HPP
+#ifndef COMPILETIMEUTILS_HPP
+#define COMPILETIMEUTILS_HPP
 
 #include "Basics.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-// private compile-time utilities for Table and ArrayTable
+// compile-time utilities for templated functions
 namespace CompileTimeUtils
 {
     // recursive implementation of "all" algorithm

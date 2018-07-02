@@ -3,32 +3,37 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef RESOURCESED_HPP
-#define RESOURCESED_HPP
+#ifndef FAMILYSED_HPP
+#define FAMILYSED_HPP
 
 #include "SED.hpp"
 #include "Array.hpp"
-#include "StoredTable.hpp"
+class SEDFamily;
 
 ////////////////////////////////////////////////////////////////////
 
-/** ResourceSED is an abstract class for representing a spectral energy distribution loaded from a
-    resource in SKIRT stored table format. The subclass must provide the name of the resource. */
-class ResourceSED : public SED
+/** FamilySED is an abstract class for representing a spectral energy distribution obtained from an
+    SED family for a set of parameters configured by the user. The subclass must provide a function
+    to create the appropriate SEDFamily object and to return the configuration parameters. */
+class FamilySED : public SED
 {
-    ITEM_ABSTRACT(ResourceSED, SED, "a spectral energy distribution loaded from a resource")
+    ITEM_ABSTRACT(FamilySED, SED, "a spectral energy distribution obtained from an SED family")
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============
 
 protected:
-    /** This function opens the stored table resource tabulating the %SED and sets up the
-        cumulative distribution that will be used to sample random wavelengths. */
+    /** This function asks the subclass to create the appropriate SEDFamily object and to return
+        the configuration parameters. It then sets up the cumulative distribution that will be used
+        to sample random wavelengths. */
     void setupSelfBefore() override;
 
-    /** This function must be implemented in each subclass to return the name of the stored table
-        resource tabulating the %SED. */
-    virtual string resourceName() const = 0;
+    /** This function must be implemented in each subclass to return a newly created SEDFamily
+        object (which is already hooked into the simulation item hierachy so it will be
+        automatcially deleted) and to store the parameters for the specific SED configured by the
+        user in the specified array. The SED will be normalized by this abstract base class, so the
+        parameter values can be given for arbitary scaling. */
+    virtual const SEDFamily* getFamilyAndParameters(Array& parameters) = 0;
 
     //======================== Other Functions =======================
 
@@ -49,7 +54,8 @@ public:
 
 private:
     // data members initialized during setup
-    StoredTable<1> _table;
+    const SEDFamily* _family;
+    Array _parameters;
     Array _lambdav;
     Array _pv;
     Array _Pv;

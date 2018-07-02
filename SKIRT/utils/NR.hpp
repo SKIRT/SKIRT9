@@ -7,6 +7,7 @@
 #define NR_HPP
 
 #include "Array.hpp"
+#include "CompileTimeUtils.hpp"
 #include "NRImpl.hpp"
 #include "Range.hpp"
 
@@ -40,6 +41,25 @@ namespace NR
         size_t n = sourcev.size();
         targetv.resize(n);
         for (size_t i=0; i<n; i++) targetv[i] = sourcev[i];
+    }
+
+    // recursively assign values from double arguments to Array
+    inline void assignValues(size_t /*index*/, Array& /*target*/) { }
+    template <typename... Values>
+    inline void assignValues(size_t index, Array& target, double value, Values... values)
+    {
+        target[index] = value;
+        assignValues(index+1, target, values...);
+    }
+
+    /** This template function assigns the floating point values specified as its arguments to the
+        destination array, resizing the destination array if necessary. */
+    template <typename... Values,
+              typename = std::enable_if_t<sizeof...(Values) != 0 && CompileTimeUtils::isFloatArgList<Values...>()>>
+    inline void assign(Array& targetv, Values... values)
+    {
+        targetv.resize(sizeof...(Values));
+        assignValues(0, targetv, values...);
     }
 
     //======================== Sorting =======================
