@@ -30,8 +30,8 @@ protected:
 
     /** This function must be implemented in each subclass to return a newly created SEDFamily
         object (which is already hooked into the simulation item hierachy so it will be
-        automatcially deleted) and to store the parameters for the specific SED configured by the
-        user in the specified array. The SED will be normalized by this abstract base class, so the
+        automatcially deleted) and to store the parameters for the specific %SED configured by the
+        user in the specified array. The %SED will be normalized by this abstract base class, so the
         parameter values can be given for arbitary scaling. */
     virtual const SEDFamily* getFamilyAndParameters(Array& parameters) = 0;
 

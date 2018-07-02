@@ -14,6 +14,8 @@
 #include "BlackBodySEDFamily.hpp"
 #include "BoxClipGeometryDecorator.hpp"
 #include "BrokenExpDiskGeometry.hpp"
+#include "BruzualCharlotSED.hpp"
+#include "BruzualCharlotSEDFamily.hpp"
 #include "ClumpyGeometryDecorator.hpp"
 #include "CombineGeometryDecorator.hpp"
 #include "ConicalShellGeometry.hpp"
@@ -140,6 +142,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<SunSED>();
     ItemRegistry::add<QuasarSED>();
     ItemRegistry::add<FamilySED>();
+    ItemRegistry::add<BruzualCharlotSED>();
     ItemRegistry::add<Starburst99SED>();
     ItemRegistry::add<TabulatedSED>();
     ItemRegistry::add<FileSED>();
@@ -148,6 +151,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // SED families
     ItemRegistry::add<SEDFamily>();
     ItemRegistry::add<BlackBodySEDFamily>();
+    ItemRegistry::add<BruzualCharlotSEDFamily>();
     ItemRegistry::add<Starburst99SEDFamily>();
 
     // Wavelength distributions

@@ -3,30 +3,39 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef STARBURST99SED_HPP
-#define STARBURST99SED_HPP
+#ifndef BRUZUALCHARLOTSED_HPP
+#define BRUZUALCHARLOTSED_HPP
 
 #include "FamilySED.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-/** Starburst99SED is a class that represents spectral energy distributions of simple stellar
-    populations (SSPs), parameterized on metallicity and age according to the Starburst99 model
-    using a Kroupa initial mass function. See the Starburst99SEDFamily class for more information.
-    */
-class Starburst99SED : public FamilySED
+/** BruzualCharlotSED is a class that represents spectral energy distributions of simple stellar
+    populations (SSPs), parameterized on metallicity and age according to the Bruzual & Charlot
+    2003 model assuming a Chabrier or Salpeter initial mass function. It always uses the high
+    wavelength resolution version. See the BruzualCharlotSEDFamily class for more information. */
+class BruzualCharlotSED : public FamilySED
 {
-    ITEM_CONCRETE(Starburst99SED, FamilySED, "a Starburst99 simple stellar population SED")
+    /** The enumeration type indicating the assumed initial mass function (IMF). */
+    ENUM_DEF(IMF, Chabrier, Salpeter)
+    ENUM_VAL(IMF, Chabrier, "Chabrier IMF")
+    ENUM_VAL(IMF, Salpeter, "Salpeter IMF")
+    ENUM_END()
+
+    ITEM_CONCRETE(BruzualCharlotSED, FamilySED, "a Bruzual-Charlot simple stellar population SED")
+
+    PROPERTY_ENUM(imf, IMF, "the assumed initial mass function")
+        ATTRIBUTE_DEFAULT_VALUE(imf, "Chabrier")
 
     PROPERTY_DOUBLE(metallicity, "the metallicity of the SSP")
-        ATTRIBUTE_MIN_VALUE(metallicity, "[0.0004")
+        ATTRIBUTE_MIN_VALUE(metallicity, "[0.0001")
         ATTRIBUTE_MAX_VALUE(metallicity, "0.05]")
         ATTRIBUTE_DEFAULT_VALUE(metallicity, "0.02")
 
     PROPERTY_DOUBLE(age, "the age of the SSP")
         ATTRIBUTE_QUANTITY(age, "time")
-        ATTRIBUTE_MIN_VALUE(age, "[1e4 yr")
-        ATTRIBUTE_MAX_VALUE(age, "1.53e10 yr]")
+        ATTRIBUTE_MIN_VALUE(age, "[0 Gyr")
+        ATTRIBUTE_MAX_VALUE(age, "20 Gyr]")
         ATTRIBUTE_DEFAULT_VALUE(age, "5 Gyr")
 
     ITEM_END()
