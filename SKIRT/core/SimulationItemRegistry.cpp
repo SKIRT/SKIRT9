@@ -49,6 +49,8 @@
 #include "LogWavelengthDistribution.hpp"
 #include "LogWavelengthGrid.hpp"
 #include "LuminosityProbe.hpp"
+#include "MappingsSED.hpp"
+#include "MappingsSEDFamily.hpp"
 #include "MarastonSED.hpp"
 #include "MarastonSEDFamily.hpp"
 #include "MollweideProjection.hpp"
@@ -147,6 +149,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<BruzualCharlotSED>();
     ItemRegistry::add<MarastonSED>();
     ItemRegistry::add<Starburst99SED>();
+    ItemRegistry::add<MappingsSED>();
     ItemRegistry::add<TabulatedSED>();
     ItemRegistry::add<FileSED>();
     ItemRegistry::add<ListSED>();
@@ -157,6 +160,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<BruzualCharlotSEDFamily>();
     ItemRegistry::add<MarastonSEDFamily>();
     ItemRegistry::add<Starburst99SEDFamily>();
+    ItemRegistry::add<MappingsSEDFamily>();
 
     // Wavelength distributions
     ItemRegistry::add<WavelengthDistribution>();

@@ -11,12 +11,12 @@
 
 //////////////////////////////////////////////////////////////////////
 
-/** An instance of the MarastonSEDFamily class represents the family of Maraston 1998 SEDs for
-    single stellar populations, parameterized on metallicity and age (1998, MNRAS, 300, 872–892).
-    We use both the Kroupa and Salpeter models, in each case for the red horizontal branch
-    morphology (the models for the blue horizontal branch morphology cover only a fraction of the
-    parameter space). In other words, the %SED family is available for two assumed initial mass
-    functions (Kroupa and Salpeter).
+/** An instance of the MarastonSEDFamily class represents the family of Maraston SEDs for single
+    stellar populations (SSPs), parameterized on metallicity and age and scaled by the initial mass
+    of the SSP (Maraston 1998, MNRAS, 300, 872–892). We use both the Kroupa and Salpeter models,
+    in each case for the red horizontal branch morphology (the models for the blue horizontal
+    branch morphology cover only a fraction of the parameter space). In other words, the %SED
+    family is available for two assumed initial mass functions (Kroupa and Salpeter).
 
     For metallicities [Z/H] = -1.35, -0.33, 0, 0.35, models are given for ages from 10^3 yr to 15
     Gyr. For metallicities [Z/H] = -2.25 and +0.67, only models from 1 to 15 Gyr are provided.

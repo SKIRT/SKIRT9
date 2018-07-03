@@ -3,33 +3,39 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef STARBURST99SEDFAMILY_HPP
-#define STARBURST99SEDFAMILY_HPP
+#ifndef MAPPINGSSEDFAMILY_HPP
+#define MAPPINGSSEDFAMILY_HPP
 
 #include "SEDFamily.hpp"
 #include "StoredTable.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
-/** An instance of the Starburst99SEDFamily class represents a family of Starburst99 SEDs for
-    single stellar populations (Leitherer et al. 1999, ApJS, 123, 3), assuming the Kroupa initial
-    mass function (Kroupa 2001, MNRAS, 322, 231), parameterized on metallicity and age, and scaled
-    by the initial mass of the SSP. The library data was prepared and bundled into a FITS file by
-    Patrik Jonsson for use by the \c Sunrise code (<tt>2013ascl.soft03030J</tt>).
+/** An instance of the MappingsSEDFamily class represents the family of MAPPINGS III star-forming
+    region template SEDs, parameterized on metallicity, compactness, ISM pressure and PDR covering
+    factor, and scaled by star formation rate, as described by Groves et al. 2008 (ApJS,176,438).
+    The model spectra have 1800 wavelength bins and cover 5 metallicities, 6 compactness
+    parameters, 5 pressure values, and 2 covering factors (0 for pure HII and 1 for 100% PDR).
 
-    The data were downloaded from
-    <tt>https://bitbucket.org/lutorm/sunrise/downloads/Patrik-imfKroupa-Zmulti-ml.fits.gz</tt> and
-    converted to SKIRT stored table format for inclusion as a resource file. The stored table is
-    opened during setup, and it is subsequently interpolated to the desired parameters and
-    wavelength grid when needed.
+    The data were downloaded from http://www.mpia-hd.mpg.de/~brent/starburst.html ->
+    Cparam_models.save, however it seems that this page/download is no longer available. The
+    contents of the IDL save file were converted to SKIRT stored table format for inclusion as a
+    resource file. The stored table is opened during setup, and it is subsequently interpolated to
+    the desired parameters and wavelength grid when needed.
 
-    When imported from a text column file, the parameters for this %SED family must appear in the
-    following order in the specified default units (unless these units are overridden by column
-    header info): \f[ M_\mathrm{init}\,(\mathrm{M}_\odot) \quad Z\,(\mathrm{dimensionless}) \quad
-    t\,(\mathrm{yr}) \f] */
-class Starburst99SEDFamily : public SEDFamily
+    When imported from a text column file, the properties of the star-forming region represented by
+    this %SED family must appear in the following order, and have the specified default units
+    unless these units are overridden by column header info:
+
+    \f[ \dot{M}\,(\mathrm{M}_\odot\,{\text{yr}}^{-1}) \quad Z\,(\mathrm{dimless}) \quad \log
+    C\,(\mathrm{dimless}) \quad p\,(\mathrm{Pa}) \quad f_{\text{PDR}}\,(\mathrm{dimless}) \f]
+
+    where \f$\dot{M}\f$ is the star formation rate, assumed to be constant over the past 10 Myr,
+    \f$Z\f$ is the metallicity, \f$\log C\f$ is the logarithm of the compactness, \f$p\f$ is the
+    ISM pressure, and \f$f_{\text{PDR}}\f$ is the PDR covering factor. */
+class MappingsSEDFamily : public SEDFamily
 {
-    ITEM_CONCRETE(Starburst99SEDFamily, SEDFamily, "a Starburst99 SED family for single stellar populations")
+    ITEM_CONCRETE(MappingsSEDFamily, SEDFamily, "a MAPPINGS III SED family for star-forming regions")
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============
@@ -40,7 +46,7 @@ public:
         newly created object is hooked up as a child to the specified parent in the simulation
         hierarchy (so it will automatically be deleted), and its setup() function has been called.
         */
-    explicit Starburst99SEDFamily(SimulationItem* parent);
+    explicit MappingsSEDFamily(SimulationItem* parent);
 
 protected:
     /** This function opens the appropriate resource file (in SKIRT stored table format). */
@@ -72,7 +78,7 @@ public:
     //====================== Data members =====================
 
 private:
-    StoredTable<3> _table;
+    StoredTable<5> _table;
 };
 
 ////////////////////////////////////////////////////////////////////
