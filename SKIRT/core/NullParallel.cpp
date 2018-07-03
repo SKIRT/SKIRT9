@@ -13,7 +13,7 @@ NullParallel::NullParallel(int /*threadCount*/)
 
 ////////////////////////////////////////////////////////////////////
 
-void NullParallel::call(std::function<void(size_t,size_t)> /*target*/, size_t /*maxIndex*/)
+void NullParallel::call(size_t /*maxIndex*/, std::function<void(size_t,size_t)> /*target*/)
 {
     // Do nothing
 }

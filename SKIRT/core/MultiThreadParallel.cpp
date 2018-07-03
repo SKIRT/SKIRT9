@@ -21,7 +21,7 @@ MultiThreadParallel::~MultiThreadParallel()
 
 ////////////////////////////////////////////////////////////////////
 
-void MultiThreadParallel::call(std::function<void(size_t,size_t)> target, size_t maxIndex)
+void MultiThreadParallel::call(size_t maxIndex, std::function<void(size_t,size_t)> target)
 {
     // Copy the target function so it can be invoked from any of the threads
     _target = target;

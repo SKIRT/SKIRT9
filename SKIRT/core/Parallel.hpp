@@ -68,7 +68,7 @@ public:
          The index chunk sizes are determined automatically to achieve optimal load balancing given
          the available parallel resources, while still maximally reducing the overhead of handing
          out the chunks. */
-    virtual void call(std::function<void(size_t firstIndex, size_t numIndices)> target, size_t maxIndex) = 0;
+    virtual void call(size_t maxIndex, std::function<void(size_t firstIndex, size_t numIndices)> target) = 0;
 };
 
 ////////////////////////////////////////////////////////////////////

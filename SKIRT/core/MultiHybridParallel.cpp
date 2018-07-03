@@ -23,7 +23,7 @@ MultiHybridParallel::~MultiHybridParallel()
 
 ////////////////////////////////////////////////////////////////////
 
-void MultiHybridParallel::call(std::function<void(size_t,size_t)> target, size_t maxIndex)
+void MultiHybridParallel::call(size_t maxIndex, std::function<void(size_t,size_t)> target)
 {
     // Copy the target function so it can be invoked from the child threads
     _target = target;

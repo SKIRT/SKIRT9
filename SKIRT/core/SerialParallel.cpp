@@ -13,7 +13,7 @@ SerialParallel::SerialParallel(int /*threadCount*/)
 
 ////////////////////////////////////////////////////////////////////
 
-void SerialParallel::call(std::function<void(size_t,size_t)> target, size_t maxIndex)
+void SerialParallel::call(size_t maxIndex, std::function<void(size_t,size_t)> target)
 {
     // Invoke the target function in a single chunk
     if (maxIndex) target(0, maxIndex);

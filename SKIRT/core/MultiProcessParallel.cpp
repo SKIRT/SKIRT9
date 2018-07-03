@@ -29,7 +29,7 @@ MultiProcessParallel::~MultiProcessParallel()
 
 ////////////////////////////////////////////////////////////////////
 
-void MultiProcessParallel::call(std::function<void(size_t,size_t)> target, size_t maxIndex)
+void MultiProcessParallel::call(size_t maxIndex, std::function<void(size_t,size_t)> target)
 {
     // In the root process, the child thread performs work, and the parent thread serves other processes
     if (ProcessManager::isRoot())

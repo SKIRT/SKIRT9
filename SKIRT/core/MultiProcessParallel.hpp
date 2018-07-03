@@ -43,7 +43,7 @@ public:
 public:
     /** This function implements the call() interface described in the Parallel base class for the
         parallelization scheme offered by this subclass. */
-    void call(std::function<void(size_t firstIndex, size_t numIndices)> target, size_t maxIndex) override;
+    void call(size_t maxIndex, std::function<void(size_t firstIndex, size_t numIndices)> target) override;
 
 private:
     /** The function to do the actual work, one chunk at a time. */

@@ -120,7 +120,7 @@ void DefaultMediaDensityCutsProbe::probeSetup()
     // For the xy plane (always)
     {
         wd.setup(1,1,0);
-        parallel->call([&wd](size_t i ,size_t n) { wd.body(i, n); }, Np);
+        parallel->call(Np, [&wd](size_t i ,size_t n) { wd.body(i, n); });
         wd.write();
     }
 
@@ -128,7 +128,7 @@ void DefaultMediaDensityCutsProbe::probeSetup()
     if (dimDust >= 2)
     {
         wd.setup(1,0,1);
-        parallel->call([&wd](size_t i ,size_t n) { wd.body(i, n); }, Np);
+        parallel->call(Np, [&wd](size_t i ,size_t n) { wd.body(i, n); });
         wd.write();
     }
 
@@ -136,7 +136,7 @@ void DefaultMediaDensityCutsProbe::probeSetup()
     if (dimDust == 3)
     {
         wd.setup(0,1,1);
-        parallel->call([&wd](size_t i ,size_t n) { wd.body(i, n); }, Np);
+        parallel->call(Np, [&wd](size_t i ,size_t n) { wd.body(i, n); });
         wd.write();
     }
 }

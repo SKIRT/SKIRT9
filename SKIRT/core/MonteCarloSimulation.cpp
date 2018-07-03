@@ -96,7 +96,7 @@ void MonteCarloSimulation::runSimulation()
             sourceSystem()->prepareForlaunch(Npp);
             auto parallel = find<ParallelFactory>()->parallelDistributed();
             StopWatch::start();
-            parallel->call([this](size_t i ,size_t n) { doPrimaryEmissionChunk(i, n); }, Npp);
+            parallel->call(Npp, [this](size_t i ,size_t n) { doPrimaryEmissionChunk(i, n); });
             StopWatch::stop();
             instrumentSystem()->flush();
         }
