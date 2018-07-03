@@ -182,9 +182,11 @@ void ImportedSource::launch(PhotonPacket* pp, size_t historyIndex, double L) con
 {
     // select the entity corresponding to this history index
     auto m = std::upper_bound(_Iv.cbegin(), _Iv.cend(), historyIndex) - _Iv.cbegin() - 1;
-    if (m < 0)
+
+    // if there are no entities in the source, or the selected entity has no contribution,
+    // launch a photon packet with zero luminosity
+    if (m < 0 || !_Lv[m])
     {
-        // if there are no entities in the source, launch a photon packet with zero luminosity
         pp->launch(historyIndex, _wavelengthRange.mid(), 0., Position(), Direction());
         return;
     }
