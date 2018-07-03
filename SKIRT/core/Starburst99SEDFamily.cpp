@@ -20,7 +20,7 @@ void Starburst99SEDFamily::setupSelfBefore()
 {
     SEDFamily::setupSelfBefore();
 
-    _table.open(this, "Starburst99SEDFamily", "lambda(m),Z(1),t(yr)", "Llambda(W/m)");
+    _table.open(this, "Starburst99SEDFamily", "lambda(m),Z(1),t(yr)", "Llambda(W/m)", false);
 }
 
 ////////////////////////////////////////////////////////////////////

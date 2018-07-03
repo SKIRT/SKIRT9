@@ -343,28 +343,21 @@ public:
         interpolated linearly. */
     static inline double interpolateLogLog(double x, double x1, double x2, double f1, double f2)
     {
-        // compute logarithm of coordinate values
+        // if not all function values are positive, we can't do loglog interpolation, so return zero
+        if (f1<=0 || f2<=0) return 0;
+
+        // compute logarithm of all values
         x  = log(x);
         x1 = log(x1);
         x2 = log(x2);
-
-        // turn off logarithmic interpolation of function value if not all given values are positive
-        bool logf = f1>0 && f2>0;
-
-        // compute logarithm of function values if required
-        if (logf)
-        {
-            f1 = log(f1);
-            f2 = log(f2);
-        }
+        f1 = log(f1);
+        f2 = log(f2);
 
         // perform the interpolation
         double fx = f1 + ((x-x1)/(x2-x1))*(f2-f1);
 
-        // compute the inverse logarithm of the resulting function value if required
-        if (logf) fx = exp(fx);
-
-        return fx;
+        // compute the inverse logarithm of the resulting function value
+        return fx = exp(fx);
     }
 
     /** This template function resamples the function values \f$y_k\f$ defined on a grid \f$x_k\f$

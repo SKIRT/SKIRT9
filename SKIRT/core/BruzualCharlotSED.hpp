@@ -44,7 +44,7 @@ class BruzualCharlotSED : public FamilySED
 
 protected:
     /** This function returns a newly created SEDFamily object (which is already hooked into the
-        simulation item hierachy so it will be automatcially deleted) and stores the parameters for
+        simulation item hierachy so it will be automatically deleted) and stores the parameters for
         the specific %SED configured by the user in the specified array. */
     const SEDFamily* getFamilyAndParameters(Array& parameters) override;
 };

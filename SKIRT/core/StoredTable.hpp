@@ -130,9 +130,9 @@ public:
     /** This alternate constructor constructs a stored table instance and immediately associates a
         given stored table resource file with it by calling the open() function. Refer to the
         open() function for a description of the arguments and of its operation. */
-    StoredTable(const SimulationItem* item, string filename, string axes, string quantity, bool clamp=false)
+    StoredTable(const SimulationItem* item, string filename, string axes, string quantity, bool clampFirstAxis=true)
     {
-        open(item, filename, axes, quantity, clamp);
+        open(item, filename, axes, quantity, clampFirstAxis);
     }
 
     /** This function associates a given stored table resource file with the stored table instance.
@@ -162,23 +162,22 @@ public:
         argument must have a similar syntax, for a single name/unit combination. Examples include
         "Llambda(W/m)", "Qabs(1)", and "h(J/m3)".
 
-        The optional \em clamp flag sets the policy for handling out-of-range axes values when
-        retrieving data points from the table. If the flag is omitted or set to false, the quantity
-        value for out-of-range axes values is considered to be zero. If the \em clamp flag is set
-        to true, out-of-range axes values are clamped to the corresponding outer grid point. In
+        By default, out-of-range axes values are clamped to the corresponding outer grid point. In
         other words, a "nearby" quantity value at some outer grid point is used for out-of-range
-        axes values.
+        axes values. This behavior can be turned off for the first axis (but not for the other
+        axes) by passing a value of false to the optional \em clampFirstAxis flag. In that case,
+        the quantity value for out-of-range first-axis values is considered to be zero.
 
         In summary, this function (1) locates the specified stored table resource file, (2)
         acquires a memory map on the file, (3) verifies that the stored table matches all
         requirements, and (4) stores relevant information in data members. If any of these steps
         fail, the function throws a fatal error. */
-    void open(const SimulationItem* item, string filename, string axes, string quantity, bool clamp=false)
+    void open(const SimulationItem* item, string filename, string axes, string quantity, bool clampFirstAxis=true)
     {
         StoredTable_Impl::open(N, item, filename, axes, quantity,
                                _filePath, _axBeg.begin(), &_qtyBeg, _axLen.begin(), &_qtyStep,
                                _axLog.begin(), &_qtyLog);
-        _clamp = clamp;
+        _clamp = clampFirstAxis;
     }
 
     /** The destructor breaks the association with a stored table resource file established by the
@@ -194,7 +193,7 @@ public:
         specified axes values, interpolated over the grid points of the actual tabulated values in
         all dimensions. The function uses linear or logarithmic interpolation for the axes and
         quantity values according to the flags specified in the stored table. Out-of-range axes
-        values are handled according to the policy set by the \em clamp flag in the open()
+        values are handled according to the policy set by the \em clampFirstAxis flag in the open()
         function. */
     template <typename... Values, typename = std::enable_if_t<CompileTimeUtils::isFloatArgList<N, Values...>()>>
     double operator()(Values... values) const
@@ -216,13 +215,13 @@ public:
             //    - if we're clamping, adjust both the bin border and the value
             if (right == 0)
             {
-                if (!_clamp && x != _axBeg[k][0]) return 0.;
+                if (!_clamp && k==0 && x != _axBeg[k][0]) return 0.;
                 right++;
                 x = _axBeg[k][0];
             }
             else if (right == _axLen[k])
             {
-                if (!_clamp) return 0.;
+                if (!_clamp && k==0) return 0.;
                 right--;
                 x = _axBeg[k][right];
             }
@@ -249,9 +248,6 @@ public:
         std::array<double, numTerms> ff;       // front factor
         std::array<double, numTerms> yy;       // tabulated value
 
-        // perform logarithmic interpolation of y value if requested and all bordering values are positive
-        bool logy = _qtyLog;
-
         // determine front factor and tabulated value for each term of the interpolation
         std::array<size_t, N> indices;         // storage for indices of the current term
         for (size_t t = 0; t!=numTerms; ++t)
@@ -266,16 +262,27 @@ public:
                 front *= left ? (1-f[k]) : f[k];
                 term >>= 1;
             }
-            ff[t] = front;
-            yy[t] = valueAtIndices(indices);
-            if (yy[t]<=0) logy = false;
+            if (front)
+            {
+                ff[t] = front;
+                yy[t] = valueAtIndices(indices);
+
+                // if logarithmic interpolation of y value is requested and not all bordering values are positive,
+                // we can't comply with the request, so return zero
+                if (_qtyLog && yy[t]<=0) return 0.;
+            }
+            else
+            {
+                ff[t] = 0.;
+                yy[t] = 0.;
+            }
         }
 
         // calculate sum
         double y = 0.;
-        if (logy)
+        if (_qtyLog)
         {
-            for (size_t t = 0; t!=numTerms; ++t) y += ff[t] * log(yy[t]);
+            for (size_t t = 0; t!=numTerms; ++t) if (ff[t]) y += ff[t] * log(yy[t]);
             y = exp(y);
         }
         else
@@ -290,7 +297,7 @@ public:
         points of the actual tabulated values. The function uses linear or logarithmic
         interpolation for the axis and quantity values according to the flags specified in the
         stored table. Out-of-range axes values are handled according to the policy set by the \em
-        clamp flag in the open() function. */
+        clampFirstAxis flag in the open() function. */
     template <typename Value, typename = std::enable_if_t<N==1 && CompileTimeUtils::isFloatArgList<1, Value>()>>
     double operator[](Value value) const
     {
@@ -311,7 +318,7 @@ public:
 
         If any of the axes values, including the \em xrange values specifying the range for the
         first axis, are out of range of the internal grid, extra quantity values are fabricated
-        according to the policy set by the \em clamp flag in the open() function.
+        according to the policy set by the \em clampFirstAxis flag in the open() function.
 
         If the flags specified in the stored table indicate that both the first axis and the
         quantity represented by the table should be interpolated logarithmically, it is assumed
@@ -376,7 +383,7 @@ private:
     size_t _qtyStep;                        // step size from one quantity value to the next (1=adjacent)
     std::array<bool, N> _axLog;             // interpolation type (true=log, false=linear) for each axis
     bool _qtyLog;                           // interpolation type (true=log, false=linear) for quantity
-    bool _clamp;                            // value for out-of-range indices: true=clamped, false=zero
+    bool _clamp;                            // value for out-of-range first-axis indices: true=clamped, false=zero
 };
 
 ////////////////////////////////////////////////////////////////////

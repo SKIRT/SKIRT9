@@ -3,53 +3,48 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef BRUZUALCHARLOTSEDFAMILY_HPP
-#define BRUZUALCHARLOTSEDFAMILY_HPP
+#ifndef MARASTONSEDFAMILY_HPP
+#define MARASTONSEDFAMILY_HPP
 
 #include "SEDFamily.hpp"
 #include "StoredTable.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
-/** An instance of the BruzualCharlotSEDFamily class represents the family of Bruzual & Charlot
-    2003 SEDs for single stellar populations, parameterized on metallicity and age (Bruzual &
-    Charlot 2003, RAS 344, 1000-1026). We use the original 2003 Padova1994/Chabrier and
-    Padova1994/Salpeter models, the two recommended models. In other words, the %SED family is
-    available for two assumed initial mass functions (Chabrier and Salpeter). Each of those
-    families can be loaded in two wavelength resolution versions, with respectively 1221 and 6900
-    wavelength points. The low-resolution version uses less resources and is sufficient for most
-    purposes. However, if the model under study zooms in on narrow wavelength ranges, the
-    high-resolution version may be required.
+/** An instance of the MarastonSEDFamily class represents the family of Maraston 1998 SEDs for
+    single stellar populations, parameterized on metallicity and age (1998, MNRAS, 300, 872–892).
+    We use both the Kroupa and Salpeter models, in each case for the red horizontal branch
+    morphology (the models for the blue horizontal branch morphology cover only a fraction of the
+    parameter space). In other words, the %SED family is available for two assumed initial mass
+    functions (Kroupa and Salpeter).
 
-    The data were downloaded from http://www.bruzual.org/~gbruzual/bc03/ and converted to SKIRT
-    stored table format for inclusion as a resource file. The stored table is opened during setup,
-    and it is subsequently interpolated to the desired parameters and wavelength grid when needed.
+    For metallicities [Z/H] = -1.35, -0.33, 0, 0.35, models are given for ages from 10^3 yr to 15
+    Gyr. For metallicities [Z/H] = -2.25 and +0.67, only models from 1 to 15 Gyr are provided.
+    These six metallicity values correspond to \f$Z \approx 0.00011247, 0.00089337, 0.0093547,
+    0.02, 0.04477442, 0.09354703\f$.
+
+    The data were downloaded from
+    http://www.icg.port.ac.uk/~maraston/Claudia's_Stellar_Population_Model.html and converted to
+    SKIRT stored table format for inclusion as a resource file. The stored table is opened during
+    setup, and it is subsequently interpolated to the desired parameters and wavelength grid when
+    needed.
 
     When imported from a text column file, the parameters for this %SED family must appear in the
     following order in the specified default units (unless these units are overridden by column
     header info): \f[ M_\mathrm{init}\,(\mathrm{M}_\odot) \quad Z\,(\mathrm{dimensionless}) \quad
     t\,(\mathrm{yr}) \f] */
-class BruzualCharlotSEDFamily : public SEDFamily
+class MarastonSEDFamily : public SEDFamily
 {
     /** The enumeration type indicating the assumed initial mass function (IMF). */
-    ENUM_DEF(IMF, Chabrier, Salpeter)
-    ENUM_VAL(IMF, Chabrier, "Chabrier IMF")
+    ENUM_DEF(IMF, Kroupa, Salpeter)
+    ENUM_VAL(IMF, Kroupa, "Kroupa IMF")
     ENUM_VAL(IMF, Salpeter, "Salpeter IMF")
     ENUM_END()
 
-    /** The enumeration type indicating the wavelength resolution. */
-    ENUM_DEF(Resolution, Low, High)
-    ENUM_VAL(Resolution, Low, "Low wavelength resolution (1221 points)")
-    ENUM_VAL(Resolution, High, "High wavelength resolution (6900 points)")
-    ENUM_END()
-
-    ITEM_CONCRETE(BruzualCharlotSEDFamily, SEDFamily, "a Bruzual-Charlot SED family for single stellar populations")
+    ITEM_CONCRETE(MarastonSEDFamily, SEDFamily, "a Maraston SED family for single stellar populations")
 
     PROPERTY_ENUM(imf, IMF, "the assumed initial mass function")
-        ATTRIBUTE_DEFAULT_VALUE(imf, "Chabrier")
-
-    PROPERTY_ENUM(resolution, Resolution, "the wavelength resolution")
-        ATTRIBUTE_DEFAULT_VALUE(resolution, "Low")
+        ATTRIBUTE_DEFAULT_VALUE(imf, "Kroupa")
 
     ITEM_END()
 
@@ -61,7 +56,7 @@ public:
         newly created object is hooked up as a child to the specified parent in the simulation
         hierarchy (so it will automatically be deleted), and its setup() function has been called.
         */
-    explicit BruzualCharlotSEDFamily(SimulationItem* parent, IMF imf, Resolution resolution);
+    explicit MarastonSEDFamily(SimulationItem* parent, IMF imf);
 
 protected:
     /** This function opens the appropriate resource file (in SKIRT stored table format). */

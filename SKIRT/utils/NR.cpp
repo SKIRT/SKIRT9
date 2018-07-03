@@ -17,11 +17,11 @@ double NR::cdf2(bool loglog, const Array& xv, Array& pv, Array& Pv)
     for (size_t i = 0; i!=n; ++i)
     {
         double area = 0.;
-        if (!loglog || pv[i]==0 || pv[i+1]==0)
+        if (!loglog)
         {
             area = 0.5*(pv[i]+pv[i+1])*(xv[i+1]-xv[i]);
         }
-        else
+        else if (pv[i]>0 && pv[i+1]>0)
         {
             double alpha = log(pv[i+1]/pv[i]) / log(xv[i+1]/xv[i]);
             area = pv[i]*xv[i] * SpecialFunctions::gln(-alpha, xv[i+1]/xv[i]);
