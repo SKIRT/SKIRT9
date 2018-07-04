@@ -75,6 +75,12 @@ SkirtUnitDef::SkirtUnitDef()
     addUnit("velocity", "km/s", 1e3);
     addUnit("velocity", "km/h", 1000./3600.);
 
+    // acceleration
+    addUnit("acceleration", "m/s2", 1.);
+    addUnit("acceleration", "cm/s2", 1e-2);
+    addUnit("acceleration", "mm/s2", 1e-3);
+    addUnit("acceleration", "km/s2", 1e3);
+
     // mass
     addUnit("mass", "kg", 1.);
     addUnit("mass", "g", 1e-3);
@@ -245,6 +251,7 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("SIUnits", "section", "m2");
     addDefaultUnit("SIUnits", "volume", "m3");
     addDefaultUnit("SIUnits", "velocity", "m/s");
+    addDefaultUnit("SIUnits", "acceleration", "m/s2");
     addDefaultUnit("SIUnits", "mass", "kg");
     addDefaultUnit("SIUnits", "bulkmass", "kg");
     addDefaultUnit("SIUnits", "bulkmassdensity", "kg/m3");
@@ -278,6 +285,7 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("StellarUnits", "section", "m2");
     addDefaultUnit("StellarUnits", "volume", "AU3");
     addDefaultUnit("StellarUnits", "velocity", "km/s");
+    addDefaultUnit("StellarUnits", "acceleration", "m/s2");
     addDefaultUnit("StellarUnits", "mass", "Msun");
     addDefaultUnit("StellarUnits", "bulkmass", "kg");
     addDefaultUnit("StellarUnits", "bulkmassdensity", "kg/m3");
@@ -311,6 +319,7 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("ExtragalacticUnits", "section", "m2");
     addDefaultUnit("ExtragalacticUnits", "volume", "pc3");
     addDefaultUnit("ExtragalacticUnits", "velocity", "km/s");
+    addDefaultUnit("ExtragalacticUnits", "acceleration", "m/s2");
     addDefaultUnit("ExtragalacticUnits", "mass", "Msun");
     addDefaultUnit("ExtragalacticUnits", "bulkmass", "kg");
     addDefaultUnit("ExtragalacticUnits", "bulkmassdensity", "kg/m3");

@@ -16,6 +16,8 @@
 #include "BrokenExpDiskGeometry.hpp"
 #include "BruzualCharlotSED.hpp"
 #include "BruzualCharlotSEDFamily.hpp"
+#include "CastelliKuruczSED.hpp"
+#include "CastelliKuruczSEDFamily.hpp"
 #include "ClumpyGeometryDecorator.hpp"
 #include "CombineGeometryDecorator.hpp"
 #include "ConicalShellGeometry.hpp"
@@ -146,6 +148,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<SunSED>();
     ItemRegistry::add<QuasarSED>();
     ItemRegistry::add<FamilySED>();
+    ItemRegistry::add<CastelliKuruczSED>();
     ItemRegistry::add<BruzualCharlotSED>();
     ItemRegistry::add<MarastonSED>();
     ItemRegistry::add<Starburst99SED>();
@@ -157,6 +160,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // SED families
     ItemRegistry::add<SEDFamily>();
     ItemRegistry::add<BlackBodySEDFamily>();
+    ItemRegistry::add<CastelliKuruczSEDFamily>();
     ItemRegistry::add<BruzualCharlotSEDFamily>();
     ItemRegistry::add<MarastonSEDFamily>();
     ItemRegistry::add<Starburst99SEDFamily>();
