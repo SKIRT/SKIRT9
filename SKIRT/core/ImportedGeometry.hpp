@@ -92,7 +92,7 @@ public:
         zero-based index. If the index is out of range, the behavior is undefined. The function is
         part of the SiteListInterface. It simply calls the corresponding function in the snapshot
         object. */
-    Position siteCenter(int index) const override;
+    Position sitePosition(int index) const override;
 
     //======================== Data Members ========================
 

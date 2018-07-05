@@ -29,7 +29,7 @@ public:
 
     /** This function returns the coordinates of the site with the specified zero-based index. If
         the index is out of range, the behavior is undefined. */
-    virtual Position siteCenter(int index) const = 0;
+    virtual Position sitePosition(int index) const = 0;
 };
 
 /////////////////////////////////////////////////////////////////////////////

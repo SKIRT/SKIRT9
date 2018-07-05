@@ -81,7 +81,7 @@ int ImportedGeometry::numSites() const
 
 //////////////////////////////////////////////////////////////////////
 
-Position ImportedGeometry::siteCenter(int index) const
+Position ImportedGeometry::sitePosition(int index) const
 {
     return _snapshot->position(index);
 }

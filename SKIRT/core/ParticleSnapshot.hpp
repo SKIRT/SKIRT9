@@ -22,7 +22,7 @@ class SmoothingKernel;
     particles in the snapshot.
 
     If the snapshot configuration requires the ability to determine the density at a given spatial
-    position, a lot of effort is made to optimize the density interpolation over a potentially
+    position, a lot of effort is made to accelerate the density interpolation over a potentially
     large number of smoothed particles. */
 class ParticleSnapshot : public Snapshot
 {
@@ -44,14 +44,18 @@ public:
     /** This function reads the snapshot data from the input file, honoring the options set through
         the configuration functions, stores the data for later use, and finally closes the file by
         calling the base class Snapshot::readAndClose() function. The function also logs some
-        statistical information about the import. */
+        statistical information about the import. If the snapshot configuration requires the
+        ability to determine the density at a given spatial position, this function builds a data
+        structure that accelerates the density interpolation over a potentially large number of
+        smoothed particles. */
     void readAndClose() override;
 
     //========== Configuration ==========
 
 public:
-    /** This function sets the smoothing kernel used for interpolating the smoothed particles.
-     TO DO: specify defaults and implement arbitary kernels. */
+    /** This function sets the smoothing kernel used for interpolating the smoothed particles. This
+        function must be called during configuration. There is no default; failing to set the
+        smoothing kernel results in undefined behavior. */
     void setSmoothingKernel(const SmoothingKernel* kernel);
 
     //=========== Interrogation ==========

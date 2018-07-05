@@ -56,14 +56,14 @@ public:
         a pointer to this base class. */
     virtual ~Snapshot();
 
-    //========== Input file ==========
+    //========== Input file and context ==========
 
 public:
     /** This function creates an input file object corresponding to the specified file and opens it
         for reading; if the file can't be opened, a FatalError is thrown. It must be called \em
         before invoking any of the configuration functions(). This function takes several
         arguments: (1) \em item specifies a simulation item in the hierarchy of the caller (usually
-        the caller itself) used to retrieve the input file path and an appropriate logger; (2) \em
+        the caller itself) used to retrieve context such as an appropriate logger; (2) \em
         filename specifies the name of the file, including filename extension but excluding path
         and simulation prefix; (3) \em description describes the contents of the file for use in
         the log message issued after the file is successfully opened.
@@ -81,6 +81,11 @@ public:
     virtual void readAndClose();
 
 protected:
+    /** This function retrieves the relevant simulation hierarchy context (such as an appropriate
+        logger) from the specified simulation item (usually the caller itself). It is intended for
+        use in subclasses that support use cases where the open() function is never invoked. */
+    void setContext(const SimulationItem* item);
+
     /** This function returns a pointer to the input file object. It is intended for use in
         subclasses. */
     TextInFile* infile() { return _infile; }

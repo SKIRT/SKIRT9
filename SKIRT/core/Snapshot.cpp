@@ -27,9 +27,7 @@ Snapshot::~Snapshot()
 void Snapshot::open(const SimulationItem* item, string filename, string description)
 {
     _infile = new TextInFile(item, filename, description);
-    _log = item->find<Log>();
-    _units = item->find<Units>();
-    _random = item->find<Random>();
+    setContext(item);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -38,6 +36,15 @@ void Snapshot::readAndClose()
 {
     delete _infile;
     _infile = nullptr;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void Snapshot::setContext(const SimulationItem* item)
+{
+    _log = item->find<Log>();
+    _units = item->find<Units>();
+    _random = item->find<Random>();
 }
 
 ////////////////////////////////////////////////////////////////////

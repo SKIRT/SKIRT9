@@ -94,7 +94,7 @@ void ParticleSnapshot::readAndClose()
     // if one of the total masses is negative, suppress the complete mass distribution
     if (totalOriginalMass < 0 || totalMetallicMass < 0 || totalEffectiveMass < 0)
     {
-        log()->warning("  Total imported mass is negative; suppressing the complete mass distribition");
+        log()->warning("  Total imported mass is negative; suppressing the complete mass distribution");
         _propv.clear();
         _pv.clear();
         return;         // abort
