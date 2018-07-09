@@ -509,22 +509,28 @@ void VoronoiMeshSnapshot::buildMesh(const vector<Vec>& sites, bool ignoreNearbyA
     //   - compute the corresponding cell in the Voronoi tesselation
     //   - extract and copy the relevant information to one of our own cell objects
     //   - store the cell object in the vector indexed on cell number
-    int ii = 0;
+    log()->info("Computing Voronoi tessellation with " + std::to_string(numCells) + " cells");
+    log()->infoSetElapsed(3);
+    int numDone = 0;
     voro::c_loop_all loop(con);
     if (loop.start()) do
     {
-        if (ii%10000==0) log()->info("Computing Voronoi cell " + std::to_string(ii+1) + "...");
-
-        // Compute the cell
+        // compute the cell
         voro::voronoicell_neighbor fullcell;
         bool ok = con.compute_cell(fullcell, loop);
         if (!ok) throw FATALERROR("Can't compute Voronoi cell");
 
-        // Copy all relevant information to the cell object that will stay around
+        // copy all relevant information to the cell object that will stay around
         VoronoiCell* cell = _cells[loop.pid()];
         cell->init(fullcell);
 
-        ii++;
+        // log message if the minimum time has elapsed
+        numDone++;
+        if (numDone%2000==0)
+        {
+            double completed = numDone * 100. / numCells;
+            log()->infoIfElapsed("Computed Voronoi cells: " + StringUtils::toString(completed,'f',1) + "%");
+        }
     }
     while (loop.inc());
 
@@ -542,7 +548,7 @@ void VoronoiMeshSnapshot::buildMesh(const vector<Vec>& sites, bool ignoreNearbyA
     double avgNeighbors = double(totNeighbors)/numCells;
 
     // log neighbor statistics
-    log()->info("Computed Voronoi tessellation with " + std::to_string(numCells) + " cells");
+    log()->info("Done computing Voronoi tessellation with " + std::to_string(numCells) + " cells");
     log()->info("  Average number of neighbors per cell: " + StringUtils::toString(avgNeighbors,'f',1));
     log()->info("  Minimum number of neighbors per cell: " + std::to_string(minNeighbors));
     log()->info("  Maximum number of neighbors per cell: " + std::to_string(maxNeighbors));
