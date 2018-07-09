@@ -96,6 +96,7 @@
 #include "TriaxialGeometryDecorator.hpp"
 #include "UniformBoxGeometry.hpp"
 #include "UniformSmoothingKernel.hpp"
+#include "VoronoiMeshSource.hpp"
 #include "WavelengthGridProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -131,6 +132,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<GeometricSource>();
     ItemRegistry::add<ImportedSource>();
     ItemRegistry::add<ParticleSource>();
+    ItemRegistry::add<MeshSource>();
+    ItemRegistry::add<VoronoiMeshSource>();
     ItemRegistry::add<CenteredSource>();
     ItemRegistry::add<StellarSurfaceSource>();
     ItemRegistry::add<CubicalBackgroundSource>();

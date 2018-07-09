@@ -11,7 +11,6 @@
 
 ////////////////////////////////////////////////////////////////////
 
-
 /** A ParticleSource instance represents a primary radiation source with a spatial and spectral
     luminosity distribution described by a list of smoothed particles. The particle data is usually
     extracted from a cosmological simulation snapshot, and it must be provided in a column text
@@ -29,8 +28,8 @@
 
     The first three columns are the \f$x\f$, \f$y\f$ and \f$z\f$ coordinates of the particle, and
     the fourth column is the particle smoothing length \f$h\f$. If the \em importVelocity option is
-    enabled, the next three columns specifies the \f$v_x\f$, \f$v_y\f$, \f$v_z\f$ velocity
-    components of the particle (considers as the bulk velocity for the source population
+    enabled, the next three columns specify the \f$v_x\f$, \f$v_y\f$, \f$v_z\f$ velocity
+    components of the particle (considered as the bulk velocity for the source population
     represented by the particle). Finally, the remaining columns specify the parameters required by
     the configured %SED family to select and scale the appropriate %SED. For example for the
     Bruzual-Charlot %SED family, the remaining columns provide the initial mass, the metallicity,
