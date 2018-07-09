@@ -74,10 +74,11 @@ public:
 
     /** This function reads the snapshot data from the input file, honoring the options set through
         the configuration functions, stores the data for later use, and closes the file by calling
-        the base class Snapshot::readAndClose() function.
+        the base class Snapshot::readAndClose() function. Any sites located outside of the domain,
+        and any sites that violate the temperature configuration settings, are discarded.
 
-        The function then calls the private buildMesh() function to build the Voronoi mesh based
-        on the imported site positions. If the snapshot configuration requires the ability to
+        The function then calls the private buildMesh() function to build the Voronoi mesh based on
+        the imported site positions. If the snapshot configuration requires the ability to
         determine the density at a given spatial position, the function also calls the private
         buildSearch() function to create a data structure that accelerates locating the cell
         containing a given point.
@@ -142,12 +143,15 @@ private:
     /** Given a list of generating sites, this private function actually builds the Voronoi
         tessellation and stores the corresponding list of cells, including any properties relevant
         for supporting the interrogation capabilities offered by this class. All other data (such
-        as Voronoi cell vertices, edges and faces) is discarded.
+        as Voronoi cell vertices, edges and faces) is discarded. In practice, the function adds the
+        sites to a Voro++ container, computes the Voronoi cells one by one, and copies the relevant
+        cell information (such as the list of neighboring cells) from the Voro++ data structures
+        into its own.
 
-        In practice, the function adds the sites to a Voro++ container, computes the Voronoi cells
-        one by one, and copies the relevant cell information (such as the list of neighboring
-        cells) from the Voro++ data structures into its own. */
-    void buildMesh(const vector<Vec>& sites);
+        If the \em ignoreNearbyAndOutliers flag is set to true, the function discards sites that
+        are too close to another site, and sites outside of the domain, before actually starting to
+        build the Voronoi tessellation. */
+    void buildMesh(const vector<Vec>& sites, bool ignoreNearbyAndOutliers);
 
     /** This private function builds data structures that allow accelerating the operation of the
         cellIndex() function.
@@ -162,8 +166,7 @@ private:
         cellIndex() function.
 
         To further reduce the search time within blocks that overlap with a large number of cells,
-        the function builds a binary search tree on the cell particle locations for those blocks
-        (see for example
+        the function builds a binary search tree on the cell sites for those blocks (see for example
         <a href="http://en.wikipedia.org/wiki/Kd-tree">en.wikipedia.org/wiki/Kd-tree</a>). */
     void buildSearch();
 

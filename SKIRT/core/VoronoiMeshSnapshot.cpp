@@ -4,10 +4,12 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "VoronoiMeshSnapshot.hpp"
+#include "FatalError.hpp"
 #include "Log.hpp"
 #include "NR.hpp"
 #include "Random.hpp"
 #include "SiteListInterface.hpp"
+#include "SpatialGridPath.hpp"
 #include "StringUtils.hpp"
 #include "TextInFile.hpp"
 #include "Units.hpp"
@@ -221,6 +223,28 @@ using namespace VoronoiMesh_Private;
 
 ////////////////////////////////////////////////////////////////////
 
+namespace
+{
+    // function to recursively build the binary search tree (see en.wikipedia.org/wiki/Kd-tree)
+    Node* buildTree(const vector<VoronoiCell*>& cells,
+                    vector<int>::iterator first, vector<int>::iterator last, int depth)
+    {
+        auto length = last-first;
+        if (length>0)
+        {
+            auto median = length >> 1;
+            std::nth_element(first, first+median, last, [&cells, depth] (int m1, int m2)
+                            { return m1!=m2 && lessthan(cells[m1]->position(), cells[m2]->position(), depth%3); });
+            return new Node(*(first+median), depth,
+                            buildTree(cells, first, first+median, depth+1),
+                            buildTree(cells, first+median+1, last, depth+1));
+        }
+        return nullptr;
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
 VoronoiMeshSnapshot::VoronoiMeshSnapshot()
 {
 }
@@ -277,7 +301,7 @@ void VoronoiMeshSnapshot::readAndClose()
     sites.reserve(_propv.size());
     for (const Array& prop : _propv)
         sites.emplace_back(prop[positionIndex()+0], prop[positionIndex()+1], prop[positionIndex()+2]);
-    buildMesh(sites);
+    buildMesh(sites, false);
 
     // if a mass density policy has been set, calculate masses and densities for all cells
     if (hasMassDensityPolicy())
@@ -297,7 +321,8 @@ void VoronoiMeshSnapshot::readAndClose()
         {
             const Array& prop = _propv[m];
             double originalMass = massIndex() ? prop[massIndex()] : prop[densityIndex()] * _cells[m]->volume();
-            double metallicMass = originalMass * (metallicityIndex()>=0 ? prop[metallicityIndex()] : 1.);
+            // guard against negative masses
+            double metallicMass = max(0., originalMass * (metallicityIndex()>=0 ? prop[metallicityIndex()] : 1.));
             double effectiveMass = metallicMass * multiplier();
 
             Mv[m] = effectiveMass;
@@ -370,7 +395,7 @@ VoronoiMeshSnapshot::VoronoiMeshSnapshot(const SimulationItem* item, const Box& 
     for (const Array& prop : propv) sites.emplace_back(prop[0], prop[1], prop[2]);
 
     // calculate the Voronoi cells
-    buildMesh(sites);
+    buildMesh(sites, true);
     buildSearch();
 }
 
@@ -387,7 +412,7 @@ VoronoiMeshSnapshot::VoronoiMeshSnapshot(const SimulationItem* item, const Box& 
     for (int m=0; m!=n; ++m) sites[m] = sli->sitePosition(m);
 
     // calculate the Voronoi cells
-    buildMesh(sites);
+    buildMesh(sites, true);
     buildSearch();
 }
 
@@ -399,22 +424,218 @@ VoronoiMeshSnapshot::VoronoiMeshSnapshot(const SimulationItem* item, const Box& 
     setExtent(extent);
 
     // calculate the Voronoi cells
-    buildMesh(sites);
+    buildMesh(sites, true);
     buildSearch();
 }
 
 ////////////////////////////////////////////////////////////////////
 
-void VoronoiMeshSnapshot::buildMesh(const vector<Vec>& sites)
+void VoronoiMeshSnapshot::buildMesh(const vector<Vec>& sites, bool ignoreNearbyAndOutliers)
 {
+    // create a list of site indices
+    int numSites =  sites.size();
+    vector<int> indices(numSites);
+    for (int m=0; m!=numSites; ++m) indices[m] = m;
 
+    // if requested to remove nearby sites and sites outside of the domain...
+    int numIgnored = 0;
+    if (ignoreNearbyAndOutliers)
+    {
+        // sort the list of site indices on the site's x coordinate
+        std::sort(indices.begin(), indices.end(),
+                  [&sites] (int m1, int m2) { return sites[m1].x() < sites[m2].x(); });
+
+        // find sites that violate the conditions and tag them for removal
+        for (int i=0; i!=numSites; ++i)
+        {
+            // outside of the domain
+            if (!_extent.contains(sites[indices[i]]))
+            {
+                indices[i] = -1;
+                numIgnored++;
+            }
+            else
+            {
+                // too nearby
+                for (int j = i+1; j < numSites && sites[indices[j]].x()-sites[indices[i]].x() < _eps; ++j)
+                {
+                    if ((sites[indices[j]]-sites[indices[i]]).norm2() < _eps*_eps)
+                    {
+                        indices[i] = -1;
+                        numIgnored++;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // log the number of sites
+        if (!numIgnored)
+        {
+            log()->info("  Number of sites: " + std::to_string(numSites));
+        }
+        else
+        {
+            log()->info("  Number of sites ignored: " + std::to_string(numIgnored));
+            log()->info("  Number of sites retained: " + std::to_string(numSites-numIgnored));
+        }
+    }
+
+    // abort if there are no cells to calculate
+    int numCells = numSites - numIgnored;
+    if (numCells <= 0) return;
+
+    // initialize the vector that will hold pointers to the cell objects that will stay around,
+    // using the serial number of the cell as index in the vector
+    _cells.resize(numCells);
+
+    // add the specified sites to our cell vector AND to a temporary Voronoi container,
+    // using the serial number of the cell as site ID
+    int nb = max(3, min(1000, static_cast<int>(3.*pow(numCells,1./3.)) ));
+    voro::container con(_extent.xmin(), _extent.xmax(), _extent.ymin(), _extent.ymax(), _extent.zmin(), _extent.zmax(),
+                        nb, nb, nb, false,false,false, 8);
+    int m = 0;
+    for (int i=0; i!=numSites; ++i)
+    {
+        if (indices[i]>=0)                      // skip sites that were tagged for removal
+        {
+            Vec r = sites[indices[i]];
+            _cells[m] = new VoronoiCell(r);     // these objects will be deleted by the destructor
+            con.put(m, r.x(),r.y(),r.z());
+            m++;
+        }
+    }
+
+    // for each site:
+    //   - compute the corresponding cell in the Voronoi tesselation
+    //   - extract and copy the relevant information to one of our own cell objects
+    //   - store the cell object in the vector indexed on cell number
+    int ii = 0;
+    voro::c_loop_all loop(con);
+    if (loop.start()) do
+    {
+        if (ii%10000==0) log()->info("Computing Voronoi cell " + std::to_string(ii+1) + "...");
+
+        // Compute the cell
+        voro::voronoicell_neighbor fullcell;
+        bool ok = con.compute_cell(fullcell, loop);
+        if (!ok) throw FATALERROR("Can't compute Voronoi cell");
+
+        // Copy all relevant information to the cell object that will stay around
+        VoronoiCell* cell = _cells[loop.pid()];
+        cell->init(fullcell);
+
+        ii++;
+    }
+    while (loop.inc());
+
+    // compile neighbor statistics
+    int minNeighbors = INT_MAX;
+    int maxNeighbors = 0;
+    int64_t totNeighbors = 0;
+    for (int m=0; m<numCells; m++)
+    {
+        int ns = _cells[m]->neighbors().size();
+        totNeighbors += ns;
+        minNeighbors = min(minNeighbors, ns);
+        maxNeighbors = max(maxNeighbors, ns);
+    }
+    double avgNeighbors = double(totNeighbors)/numCells;
+
+    // log neighbor statistics
+    log()->info("Computed Voronoi tessellation with " + std::to_string(numCells) + " cells");
+    log()->info("  Average number of neighbors per cell: " + StringUtils::toString(avgNeighbors,'f',1));
+    log()->info("  Minimum number of neighbors per cell: " + std::to_string(minNeighbors));
+    log()->info("  Maximum number of neighbors per cell: " + std::to_string(maxNeighbors));
 }
 
 ////////////////////////////////////////////////////////////////////
 
 void VoronoiMeshSnapshot::buildSearch()
 {
+    // abort if there are no cells
+    int numCells = _cells.size();
+    if (!numCells) return;
 
+    log()->info("Building data structures to accelerate searching the Voronoi tesselation...");
+
+    // -------------  block lists  -------------
+
+    // initialize a vector of nb x nb x nb lists, each containing the cells overlapping a certain block in the domain
+    _nb = max(3, min(1000, static_cast<int>(3.*pow(numCells,1./3.)) ));
+    _nb2 = _nb*_nb;
+    _nb3 = _nb*_nb*_nb;
+    _blocklists.resize(_nb3);
+
+    // add the cell object to the lists for all blocks it may overlap
+    int i1,j1,k1, i2,j2,k2;
+    for (int m=0; m!=numCells; ++m)
+    {
+        _extent.cellIndices(i1,j1,k1, _cells[m]->rmin()-Vec(_eps,_eps,_eps), _nb,_nb,_nb);
+        _extent.cellIndices(i2,j2,k2, _cells[m]->rmax()+Vec(_eps,_eps,_eps), _nb,_nb,_nb);
+        for (int i=i1; i<=i2; i++)
+            for (int j=j1; j<=j2; j++)
+                for (int k=k1; k<=k2; k++)
+                    _blocklists[i*_nb2+j*_nb+k].push_back(m);
+    }
+
+    // compile block list statistics
+    int minRefsPerBlock = INT_MAX;
+    int maxRefsPerBlock = 0;
+    int64_t totalBlockRefs = 0;
+    for (int b = 0; b<_nb3; b++)
+    {
+        int refs = _blocklists[b].size();
+        totalBlockRefs += refs;
+        minRefsPerBlock = min(minRefsPerBlock, refs);
+        maxRefsPerBlock = max(maxRefsPerBlock, refs);
+    }
+    double avgRefsPerBlock = double(totalBlockRefs)/_nb3;
+
+    // log block list statistics
+    log()->info("  Number of blocks in search grid: " + std::to_string(_nb3) + " (" + std::to_string(_nb) + "^3)");
+    log()->info("  Average number of cells per block: " + StringUtils::toString(avgRefsPerBlock,'f',1));
+    log()->info("  Minimum number of cells per block: " + std::to_string(minRefsPerBlock));
+    log()->info("  Maximum number of cells per block: " + std::to_string(maxRefsPerBlock));
+
+    // -------------  search trees  -------------
+
+    // for each block that contains more than a predefined number of cells,
+    // construct a search tree on the site locations of the cells
+    _blocktrees.resize(_nb3);
+    for (int b = 0; b<_nb3; b++)
+    {
+        vector<int>& ids = _blocklists[b];
+        if (ids.size() > 5) _blocktrees[b] = buildTree(_cells, ids.begin(), ids.end(), 0);
+    }
+
+    // compile search tree statistics
+    int minRefsPerTree = INT_MAX;
+    int maxRefsPerTree = 0;
+    int64_t totalTreeRefs = 0;
+    int numTrees = 0;
+    for (int b = 0; b<_nb3; b++)
+    {
+        if (_blocktrees[b])
+        {
+            numTrees++;
+            int refs = _blocklists[b].size();
+            totalTreeRefs += refs;
+            minRefsPerTree = min(minRefsPerTree, refs);
+            maxRefsPerTree = max(maxRefsPerTree, refs);
+        }
+    }
+    double avgRefsPerTree = double(totalTreeRefs)/numTrees;
+
+    // log search tree statistics
+    log()->info("  Number of search trees: " + std::to_string(numTrees) +
+              " (" + StringUtils::toString(100.*numTrees/_nb3,'f',1) + "% of blocks)");
+    if (numTrees)
+    {
+        log()->info("  Average number of cells per tree: " + StringUtils::toString(avgRefsPerTree,'f',1));
+        log()->info("  Minimum number of cells per tree: " + std::to_string(minRefsPerTree));
+        log()->info("  Maximum number of cells per tree: " + std::to_string(maxRefsPerTree));
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -442,21 +663,21 @@ Position VoronoiMeshSnapshot::position(int m) const
 
 Position VoronoiMeshSnapshot::centroidPosition(int m) const
 {
-
+    return Position(_cells[m]->centroid());
 }
 
 ////////////////////////////////////////////////////////////////////
 
 double VoronoiMeshSnapshot::volume(int m) const
 {
-
+    return _cells[m]->volume();
 }
 
 ////////////////////////////////////////////////////////////////////
 
 Box VoronoiMeshSnapshot::extent(int m) const
 {
-
+    return _cells[m]->extent();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -477,27 +698,42 @@ void VoronoiMeshSnapshot::parameters(int m, Array& params) const
 
 ////////////////////////////////////////////////////////////////////
 
+namespace
+{
+    // returns true if the given point is closer to the site with index m than to the sites with indices ids
+    bool isPointClosestTo(const vector<VoronoiCell*>& cells, Vec r, int m, const vector<int>& ids)
+    {
+        double target = cells[m]->squaredDistanceTo(r);
+        for (int id : ids)
+        {
+            if (id>=0 && cells[id]->squaredDistanceTo(r) < target) return false;
+        }
+        return true;
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
 Position VoronoiMeshSnapshot::generatePosition(int m) const
 {
-/*
+    // get loop-invariant information about the cell
+    const Box& box = _cells[m]->extent();
+    const vector<int>& neighbors = _cells[m]->neighbors();
 
-    // get center position and size for this particle
-    Position rc(_propv[m][positionIndex()+0], _propv[m][positionIndex()+1], _propv[m][positionIndex()+2]);
-    double h = _propv[m][sizeIndex()];
-
-    // sample random position inside the smoothed unit volume
-    double u = _kernel->generateRadius();
-    Direction k = random()->direction();
-
-    return Position(rc + k*u*h);
-    */
+    // generate random points in the enclosing box until one happens to be inside the cell
+    for (int i=0; i<10000; i++)
+    {
+        Position r = random()->position(box);
+        if (isPointClosestTo(_cells, r, m, neighbors)) return r;
+    }
+    throw FATALERROR("Can't find random position in cell");
 }
 
 ////////////////////////////////////////////////////////////////////
 
 double VoronoiMeshSnapshot::density(int m) const
 {
-
+    return _rhov[m];
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -511,34 +747,153 @@ double VoronoiMeshSnapshot::mass() const
 
 int VoronoiMeshSnapshot::cellIndex(Position bfr) const
 {
+    // make sure the position is inside the domain
+    if (!_extent.contains(bfr)) return -1;
 
+    // determine the block in which the point falls
+    int i,j,k;
+    _extent.cellIndices(i,j,k, bfr, _nb,_nb,_nb);
+    int b = i*_nb2+j*_nb+k;
+
+    // look for the closest site in this block, using the search tree if there is one
+    Node* tree = _blocktrees[b];
+    if (tree) return tree->nearest(bfr,_cells)->m();
+
+    // if there is no search tree, simply loop over the index list
+    const vector<int>& ids = _blocklists[b];
+    int m = -1;
+    double mdist = DBL_MAX;
+    int n = ids.size();
+    for (int i=0; i<n; i++)
+    {
+        double idist = _cells[ids[i]]->squaredDistanceTo(bfr);
+        if (idist < mdist)
+        {
+            m = ids[i];
+            mdist = idist;
+        }
+    }
+    return m;
 }
 
 ////////////////////////////////////////////////////////////////////
 
 double VoronoiMeshSnapshot::density(Position bfr) const
 {
-/*    double sum = 0.;
-    if (_grid) for (const SmoothedParticle* p : _grid->particlesFor(bfr))
-    {
-        double u = (bfr - p->center()).norm() / p->radius();
-        sum += _kernel->density(u) * p->mass();
-    }
-    return sum > 0. ? sum : 0.;     // guard against negative densities
-*/
+    int m = cellIndex(bfr);
+    return m>=0 ? _rhov[m] : 0;
 }
 
 ////////////////////////////////////////////////////////////////////
 
 Position VoronoiMeshSnapshot::generatePosition() const
 {
-    // if there are no particles, return the origin
-    if (_propv.empty()) return Position();
+    // if there are no sites, return the origin
+    if (_cells.empty()) return Position();
 
-    // select a particle according to its mass contribution
+    // select a site according to its mass contribution
     int m = NR::locateClip(_cumrhov, random()->uniform());
 
     return generatePosition(m);
+}
+
+////////////////////////////////////////////////////////////////////
+
+void VoronoiMeshSnapshot::path(SpatialGridPath* path) const
+{
+    // Initialize the path
+    path->clear();
+    Direction bfk = path->direction();
+
+    // If the photon package starts outside the dust grid, move it into the first grid cell that it will pass
+    Position r = path->moveInside(_extent, _eps);
+
+    // Get the index of the cell containing the current position;
+    // if the position is not inside the grid, return an empty path
+    int mr = cellIndex(r);
+    if (mr<0) return path->clear();
+
+    // Start the loop over cells/path segments until we leave the grid
+    while (mr>=0)
+    {
+        // get the site position for this cell
+        Vec pr = _cells[mr]->position();
+
+        // initialize the smallest nonnegative intersection distance and corresponding index
+        double sq = DBL_MAX;          // very large, but not infinity (so that infinite si values are discarded)
+        const int NO_INDEX = -99;     // meaningless cell index
+        int mq = NO_INDEX;
+
+        // loop over the list of neighbor indices
+        const vector<int>& mv = _cells[mr]->neighbors();
+        int n = mv.size();
+        for (int i=0; i<n; i++)
+        {
+            int mi = mv[i];
+
+            // declare the intersection distance for this neighbor (init to a value that will be rejected)
+            double si = 0;
+
+            // --- intersection with neighboring cell
+            if (mi>=0)
+            {
+                // get the site position for this neighbor
+                Vec pi = _cells[mi]->position();
+
+                // calculate the (unnormalized) normal on the bisecting plane
+                Vec n = pi - pr;
+
+                // calculate the denominator of the intersection quotient
+                double ndotk = Vec::dot(n,bfk);
+
+                // if the denominator is negative the intersection distance is negative, so don't calculate it
+                if (ndotk > 0)
+                {
+                    // calculate a point on the bisecting plane
+                    Vec p = 0.5 * (pi + pr);
+
+                    // calculate the intersection distance
+                    si = Vec::dot(n,p-r) / ndotk;
+                }
+            }
+
+            // --- intersection with domain wall
+            else
+            {
+                switch (mi)
+                {
+                case -1: si = (extent().xmin()-r.x())/bfk.x(); break;
+                case -2: si = (extent().xmax()-r.x())/bfk.x(); break;
+                case -3: si = (extent().ymin()-r.y())/bfk.y(); break;
+                case -4: si = (extent().ymax()-r.y())/bfk.y(); break;
+                case -5: si = (extent().zmin()-r.z())/bfk.z(); break;
+                case -6: si = (extent().zmax()-r.z())/bfk.z(); break;
+                default: throw FATALERROR("Invalid neighbor ID");
+                }
+            }
+
+            // remember the smallest nonnegative intersection point
+            if (si > 0 && si < sq)
+            {
+                sq = si;
+                mq = mi;
+            }
+        }
+
+        // if no exit point was found, advance the current point by small distance and recalculate cell index
+        if (mq == NO_INDEX)
+        {
+            r += bfk*_eps;
+            mr = cellIndex(r);
+        }
+        // otherwise add a path segment and set the current point to the exit point
+        else
+        {
+            path->addSegment(mr, sq);
+            r += (sq+_eps)*bfk;
+            mr = mq;
+        }
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
