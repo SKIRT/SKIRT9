@@ -96,6 +96,7 @@
 #include "TriaxialGeometryDecorator.hpp"
 #include "UniformBoxGeometry.hpp"
 #include "UniformSmoothingKernel.hpp"
+#include "VoronoiMeshGeometry.hpp"
 #include "VoronoiMeshSource.hpp"
 #include "WavelengthGridProbe.hpp"
 
@@ -216,6 +217,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ReadFitsGeometry>();
     ItemRegistry::add<ImportedGeometry>();
     ItemRegistry::add<ParticleGeometry>();
+    ItemRegistry::add<MeshGeometry>();
+    ItemRegistry::add<VoronoiMeshGeometry>();
 
     // geometry decorators
     ItemRegistry::add<OffsetGeometryDecorator>();

@@ -40,7 +40,7 @@ void ImportedSource::setupSelfAfter()
     int M = _snapshot->numEntities();
     if (M)
     {
-        find<Log>()->info("  Calculating luminosities from imported properties");
+        find<Log>()->info("Calculating luminosities from imported properties");
         _Lv.resize(M);
 
         // integrating over the SED for each entity can be time-consuming, so we do this in parallel

@@ -74,8 +74,10 @@ public:
 
     /** This function reads the snapshot data from the input file, honoring the options set through
         the configuration functions, stores the data for later use, and closes the file by calling
-        the base class Snapshot::readAndClose() function. Any sites located outside of the domain,
-        and any sites that violate the temperature configuration settings, are discarded.
+        the base class Snapshot::readAndClose() function. Any sites located outside of the domain
+        are discarded. Sites with an associated temperature above the cutoff temperature (if one
+        has been configured) are assigned a density value of zero, so that the corresponding cell
+        has zero mass (regardless of the imported mass/density properties).
 
         The function then calls the private buildMesh() function to build the Voronoi mesh based on
         the imported site positions. If the snapshot configuration requires the ability to
@@ -150,7 +152,8 @@ private:
 
         If the \em ignoreNearbyAndOutliers flag is set to true, the function discards sites that
         are too close to another site, and sites outside of the domain, before actually starting to
-        build the Voronoi tessellation. */
+        build the Voronoi tessellation. If the flag is set to false, the caller must guarantee that
+        all sites are inside the domain and that no two sites are exceptionally nearby. */
     void buildMesh(const vector<Vec>& sites, bool ignoreNearbyAndOutliers);
 
     /** This private function builds data structures that allow accelerating the operation of the

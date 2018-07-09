@@ -269,16 +269,13 @@ void VoronoiMeshSnapshot::open(const SimulationItem* item, string filename, stri
 
 void VoronoiMeshSnapshot::readAndClose()
 {
-    // read the site info into memory
-    //  -> if the user configured a temperature cutoff, we need to skip the "hot" sites
-    //  -> in any case, we need to skip sites outside our domain
-    double maxT  = hasTemperatureCutoff() ? maxTemperature() : 0.;
-    int numIgnored = 0;
+    // read the site info into memory, skipping any sites outside our domain
+    int numOutside = 0;
     Array prop;
     while (infile()->readRow(prop))
     {
         Vec r(prop[positionIndex()+0], prop[positionIndex()+1], prop[positionIndex()+2]);
-        if (!_extent.contains(r) || (maxT && prop[temperatureIndex()] > maxT)) numIgnored++;
+        if (!_extent.contains(r)) numOutside++;
         else _propv.push_back(prop);
     }
 
@@ -286,13 +283,13 @@ void VoronoiMeshSnapshot::readAndClose()
     Snapshot::readAndClose();
 
     // log the number of sites
-    if (!numIgnored)
+    if (!numOutside)
     {
         log()->info("  Number of sites: " + std::to_string(_propv.size()));
     }
     else
     {
-        log()->info("  Number of sites ignored: " + std::to_string(numIgnored));
+        log()->info("  Number of sites outside domain: " + std::to_string(numOutside));
         log()->info("  Number of sites retained: " + std::to_string(_propv.size()));
     }
 
@@ -311,18 +308,26 @@ void VoronoiMeshSnapshot::readAndClose()
         Array Mv(n);
         _rhov.resize(n);
 
+        // get the maximum temperature, or zero of there is none
+        double maxT = hasTemperatureCutoff() ? maxTemperature() : 0.;
+
         // initialize statistics
         double totalOriginalMass = 0;
         double totalMetallicMass = 0;
         double totalEffectiveMass = 0;
 
         // loop over all sites/cells
+        int numIgnored = 0;
         for (size_t m=0; m!=n; ++m)
         {
             const Array& prop = _propv[m];
-            double originalMass = massIndex() ? prop[massIndex()] : prop[densityIndex()] * _cells[m]->volume();
-            // guard against negative masses
-            double metallicMass = max(0., originalMass * (metallicityIndex()>=0 ? prop[metallicityIndex()] : 1.));
+
+            // original mass is zero if temperature is above cutoff or if imported mass/density is not positive
+            double originalMass = 0.;
+            if (maxT && prop[temperatureIndex()] > maxT) numIgnored++;
+            else originalMass = max(0., massIndex() ? prop[massIndex()] : prop[densityIndex()] * _cells[m]->volume());
+
+            double metallicMass = originalMass * (metallicityIndex()>=0 ? prop[metallicityIndex()] : 1.);
             double effectiveMass = metallicMass * multiplier();
 
             Mv[m] = effectiveMass;
@@ -334,22 +339,14 @@ void VoronoiMeshSnapshot::readAndClose()
         }
 
         // log mass statistics
+        if (numIgnored)
+            log()->info("  Ignored mass in " + std::to_string(numIgnored) + " high-temperature cells" );
         log()->info("  Total original mass : " +
                     StringUtils::toString(units()->omass(totalOriginalMass),'e',4) + " " + units()->umass());
         log()->info("  Total metallic mass : "
                     + StringUtils::toString(units()->omass(totalMetallicMass),'e',4) + " " + units()->umass());
         log()->info("  Total effective mass: "
                     + StringUtils::toString(units()->omass(totalEffectiveMass),'e',4) + " " + units()->umass());
-
-        // if one of the total masses is negative, suppress the complete mass distribution
-        if (totalOriginalMass < 0 || totalMetallicMass < 0 || totalEffectiveMass < 0)
-        {
-            log()->warning("  Total imported mass is negative; suppressing the complete mass distribution");
-            totalEffectiveMass = 0;
-            _propv.clear();
-            _rhov.resize(0);
-            _cells.clear();
-        }
 
         // remember the effective mass
         _mass = totalEffectiveMass;
@@ -438,7 +435,8 @@ void VoronoiMeshSnapshot::buildMesh(const vector<Vec>& sites, bool ignoreNearbyA
     for (int m=0; m!=numSites; ++m) indices[m] = m;
 
     // if requested to remove nearby sites and sites outside of the domain...
-    int numIgnored = 0;
+    int numOutside = 0;
+    int numNearby = 0;
     if (ignoreNearbyAndOutliers)
     {
         // sort the list of site indices on the site's x coordinate
@@ -452,7 +450,7 @@ void VoronoiMeshSnapshot::buildMesh(const vector<Vec>& sites, bool ignoreNearbyA
             if (!_extent.contains(sites[indices[i]]))
             {
                 indices[i] = -1;
-                numIgnored++;
+                numOutside++;
             }
             else
             {
@@ -462,7 +460,7 @@ void VoronoiMeshSnapshot::buildMesh(const vector<Vec>& sites, bool ignoreNearbyA
                     if ((sites[indices[j]]-sites[indices[i]]).norm2() < _eps*_eps)
                     {
                         indices[i] = -1;
-                        numIgnored++;
+                        numNearby++;
                         break;
                     }
                 }
@@ -470,19 +468,20 @@ void VoronoiMeshSnapshot::buildMesh(const vector<Vec>& sites, bool ignoreNearbyA
         }
 
         // log the number of sites
-        if (!numIgnored)
+        if (!numOutside && !numNearby)
         {
             log()->info("  Number of sites: " + std::to_string(numSites));
         }
         else
         {
-            log()->info("  Number of sites ignored: " + std::to_string(numIgnored));
-            log()->info("  Number of sites retained: " + std::to_string(numSites-numIgnored));
+            log()->info("  Number of sites outside domain: " + std::to_string(numOutside));
+            log()->info("  Number of sites too nearby others: " + std::to_string(numNearby));
+            log()->info("  Number of sites retained: " + std::to_string(numSites-numOutside-numNearby));
         }
     }
 
     // abort if there are no cells to calculate
-    int numCells = numSites - numIgnored;
+    int numCells = numSites - numOutside - numNearby;
     if (numCells <= 0) return;
 
     // initialize the vector that will hold pointers to the cell objects that will stay around,
@@ -491,7 +490,7 @@ void VoronoiMeshSnapshot::buildMesh(const vector<Vec>& sites, bool ignoreNearbyA
 
     // add the specified sites to our cell vector AND to a temporary Voronoi container,
     // using the serial number of the cell as site ID
-    int nb = max(3, min(1000, static_cast<int>(3.*pow(numCells,1./3.)) ));
+    int nb = max(3, min(1000, static_cast<int>(3*cbrt(numCells)) ));
     voro::container con(_extent.xmin(), _extent.xmax(), _extent.ymin(), _extent.ymax(), _extent.zmin(), _extent.zmax(),
                         nb, nb, nb, false,false,false, 8);
     int m = 0;
@@ -562,7 +561,7 @@ void VoronoiMeshSnapshot::buildSearch()
     // -------------  block lists  -------------
 
     // initialize a vector of nb x nb x nb lists, each containing the cells overlapping a certain block in the domain
-    _nb = max(3, min(1000, static_cast<int>(3.*pow(numCells,1./3.)) ));
+    _nb = max(3, min(1000, static_cast<int>(3*cbrt(numCells)) ));
     _nb2 = _nb*_nb;
     _nb3 = _nb*_nb*_nb;
     _blocklists.resize(_nb3);
@@ -609,33 +608,11 @@ void VoronoiMeshSnapshot::buildSearch()
         if (ids.size() > 5) _blocktrees[b] = buildTree(_cells, ids.begin(), ids.end(), 0);
     }
 
-    // compile search tree statistics
-    int minRefsPerTree = INT_MAX;
-    int maxRefsPerTree = 0;
-    int64_t totalTreeRefs = 0;
+    // compile and log search tree statistics
     int numTrees = 0;
-    for (int b = 0; b<_nb3; b++)
-    {
-        if (_blocktrees[b])
-        {
-            numTrees++;
-            int refs = _blocklists[b].size();
-            totalTreeRefs += refs;
-            minRefsPerTree = min(minRefsPerTree, refs);
-            maxRefsPerTree = max(maxRefsPerTree, refs);
-        }
-    }
-    double avgRefsPerTree = double(totalTreeRefs)/numTrees;
-
-    // log search tree statistics
+    for (int b = 0; b<_nb3; b++) if (_blocktrees[b]) numTrees++;
     log()->info("  Number of search trees: " + std::to_string(numTrees) +
               " (" + StringUtils::toString(100.*numTrees/_nb3,'f',1) + "% of blocks)");
-    if (numTrees)
-    {
-        log()->info("  Average number of cells per tree: " + StringUtils::toString(avgRefsPerTree,'f',1));
-        log()->info("  Minimum number of cells per tree: " + std::to_string(minRefsPerTree));
-        log()->info("  Maximum number of cells per tree: " + std::to_string(maxRefsPerTree));
-    }
 }
 
 ////////////////////////////////////////////////////////////////////

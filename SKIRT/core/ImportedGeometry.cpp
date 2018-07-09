@@ -8,9 +8,9 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void ImportedGeometry::setupSelfBefore()
+void ImportedGeometry::setupSelfAfter()
 {
-    GenGeometry::setupSelfBefore();
+    GenGeometry::setupSelfAfter();
 
     // create the snapshot with preconfigured mass or density column
     _snapshot = createAndOpenSnapshot();

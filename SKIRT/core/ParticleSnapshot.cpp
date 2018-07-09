@@ -57,7 +57,7 @@ void ParticleSnapshot::readAndClose()
     }
     else
     {
-        log()->info("  Number of particles ignored: " + std::to_string(numIgnored));
+        log()->info("  Number of high-temperature particles ignored: " + std::to_string(numIgnored));
         log()->info("  Number of particles retained: " + std::to_string(_propv.size()));
     }
 

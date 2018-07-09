@@ -47,7 +47,7 @@ protected:
         must be implemented in a subclass, to construct and open a Snapshot object of the appropriate type.
         It then passes the user-configurable options of this class to the Snapshot object and tells
         it to import the data. */
-    void setupSelfBefore() override;
+    void setupSelfAfter() override;
 
     /** This function constructs a new Snapshot object of the type appropriate for the subclass,
         calls its open() function, configures the mass or density column, and returns a pointer to

@@ -11,8 +11,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-
-/** A ParticleGeometry instance represents an 3D geometry with a spatial density distribution
+/** A ParticleGeometry instance represents a 3D geometry with a spatial density distribution
     described by a list of smoothed particles. The particle data is usually extracted from a
     cosmological simulation snapshot, and it must be provided in a column text file formatted as
     described below. The total mass in the geometry is normalized to unity after importing the
