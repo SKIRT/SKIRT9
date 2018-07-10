@@ -461,7 +461,7 @@ void VoronoiMeshSnapshot::buildMesh()
     if (numCells <= 0) return;
 
     // add the retained sites to a temporary Voronoi container, using the cell index m as ID
-    int nb = max(3, min(1000, static_cast<int>(3*cbrt(numCells)) ));
+    int nb = max(3, min(250, static_cast<int>(cbrt(numCells))));
     voro::container con(_extent.xmin(), _extent.xmax(), _extent.ymin(), _extent.ymax(), _extent.zmin(), _extent.zmax(),
                         nb, nb, nb, false,false,false, 8);
     for (int m=0; m!=numCells; ++m)
@@ -532,7 +532,7 @@ void VoronoiMeshSnapshot::buildSearch()
     // -------------  block lists  -------------
 
     // initialize a vector of nb x nb x nb lists, each containing the cells overlapping a certain block in the domain
-    _nb = max(3, min(1000, static_cast<int>(3*cbrt(numCells)) ));
+    _nb = max(3, min(250, static_cast<int>(cbrt(numCells))));
     _nb2 = _nb*_nb;
     _nb3 = _nb*_nb*_nb;
     _blocklists.resize(_nb3);
@@ -576,7 +576,7 @@ void VoronoiMeshSnapshot::buildSearch()
     for (int b = 0; b<_nb3; b++)
     {
         vector<int>& ids = _blocklists[b];
-        if (ids.size() > 5) _blocktrees[b] = buildTree(_cells, ids.begin(), ids.end(), 0);
+        if (ids.size() > 9) _blocktrees[b] = buildTree(_cells, ids.begin(), ids.end(), 0);
     }
 
     // compile and log search tree statistics
