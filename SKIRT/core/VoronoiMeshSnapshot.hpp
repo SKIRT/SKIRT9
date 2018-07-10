@@ -189,26 +189,26 @@ public:
         range, the behavior is undefined. */
     Position position(int m) const override;
 
-    /** This function returns the centroid of the Voronoi cell with given index \f$0\le m \le
-        N_{cells}-1\f$. If the index is out of range, the behavior is undefined. */
+    /** This function returns the centroid of the Voronoi cell with index \em m. If the index is
+        out of range, the behavior is undefined. */
     Position centroidPosition(int m) const;
 
-    /** This function returns the volume of the Voronoi cell with given index \f$0\le m \le
-        N_{cells}-1\f$. If the index is out of range, the behavior is undefined. */
+    /** This function returns the volume of the Voronoi cell with index \em m. If the index is out
+        of range, the behavior is undefined. */
     double volume(int m) const;
 
     /** This function returns the bounding box (enclosing cuboid lined up with the coordinate axes)
-        of the Voronoi cell with given index \f$0\le m \le N_{cells}-1\f$. If the index is out of
-        range, the behavior is undefined. */
+        of the Voronoi cell with index \em m. If the index is out of range, the behavior is
+        undefined. */
     Box extent(int m) const;
 
     /** This function returns the velocity of the cell with index \em m. If the velocity is not
         being imported, or the index is out of range, the behavior is undefined. */
     Vec velocity(int m) const override;
 
-    /** This function stores the parameters of the cell with index \f$0\le m \le
-        N_\mathrm{ent}-1\f$ into the given array. If parameters are not being imported, or the
-        index is out of range, the behavior is undefined. */
+    /** This function stores the parameters of the cell with index \em m into the given array. If
+        parameters are not being imported, or the index is out of range, the behavior is undefined.
+        */
     void parameters(int m, Array& params) const override;
 
     /** This function returns a random position drawn uniformly from the (polyhedron) volume of the
@@ -219,9 +219,9 @@ public:
         to the cell's site position than to any neighbor cell's site positions. */
     Position generatePosition(int m) const override;
 
-    /** This function returns the mass density associated with the cell with given index \f$0\le m
-        \le N_\mathrm{ent}-1\f$. If no density policy has been set or no mass information is being
-        imported, or if the index is out of range, the behavior is undefined. */
+    /** This function returns the mass density associated with the cell with index \em m. If no
+        density policy has been set or no mass information is being imported, or if the index is
+        out of range, the behavior is undefined. */
     double density(int m) const;
 
     /** This function returns the total mass represented by the snapshot, in other words the sum of

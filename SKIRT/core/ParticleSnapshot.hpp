@@ -77,9 +77,9 @@ public:
         being imported, or the index is out of range, the behavior is undefined. */
     Vec velocity(int m) const override;
 
-    /** This function stores the parameters of the entity with index \f$0\le m \le
-        N_\mathrm{ent}-1\f$ into the given array. If parameters are not being imported, or the
-        index is out of range, the behavior is undefined. */
+    /** This function stores the parameters of the particle with index \em m into the given array.
+        If parameters are not being imported, or the index is out of range, the behavior is
+        undefined. */
     void parameters(int m, Array& params) const override;
 
     /** This function returns the mass density represented by the snapshot at a given point

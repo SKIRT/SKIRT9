@@ -9,6 +9,8 @@
 
 // ---> add new items below in alphabetical order
 
+#include "AdaptiveMeshGeometry.hpp"
+#include "AdaptiveMeshSource.hpp"
 #include "AllSkyInstrument.hpp"
 #include "BlackBodySED.hpp"
 #include "BlackBodySEDFamily.hpp"
@@ -134,6 +136,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ImportedSource>();
     ItemRegistry::add<ParticleSource>();
     ItemRegistry::add<MeshSource>();
+    ItemRegistry::add<AdaptiveMeshSource>();
     ItemRegistry::add<VoronoiMeshSource>();
     ItemRegistry::add<CenteredSource>();
     ItemRegistry::add<StellarSurfaceSource>();
@@ -218,6 +221,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ImportedGeometry>();
     ItemRegistry::add<ParticleGeometry>();
     ItemRegistry::add<MeshGeometry>();
+    ItemRegistry::add<AdaptiveMeshGeometry>();
     ItemRegistry::add<VoronoiMeshGeometry>();
 
     // geometry decorators
