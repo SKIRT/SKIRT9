@@ -315,7 +315,7 @@ void VoronoiMeshSnapshot::readAndClose()
             // original mass is zero if temperature is above cutoff or if imported mass/density is not positive
             double originalMass = 0.;
             if (maxT && prop[temperatureIndex()] > maxT) numIgnored++;
-            else originalMass = max(0., massIndex() ? prop[massIndex()] : prop[densityIndex()] * _cells[m]->volume());
+            else originalMass = max(0., massIndex()>=0 ? prop[massIndex()] : prop[densityIndex()]*_cells[m]->volume());
 
             double metallicMass = originalMass * (metallicityIndex()>=0 ? prop[metallicityIndex()] : 1.);
             double effectiveMass = metallicMass * multiplier();

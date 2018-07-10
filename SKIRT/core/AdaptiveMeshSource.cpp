@@ -12,7 +12,7 @@ Snapshot* AdaptiveMeshSource::createAndOpenSnapshot()
 {
     // create and open the snapshot
     auto snapshot = new AdaptiveMeshSnapshot;
-    snapshot->open(this, filename(), "AMR source cells");
+    snapshot->open(this, filename(), "adaptive mesh source cells");
 
     // set the domain extent
     snapshot->setExtent(domain());

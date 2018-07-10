@@ -261,6 +261,51 @@ bool TextInFile::readRow(Array& values)
 
 ////////////////////////////////////////////////////////////////////
 
+bool TextInFile::readNonLeaf(int& nx, int& ny, int& nz)
+{
+    string line;
+
+    while (true)
+    {
+        int c = _in.peek();
+
+        // skip comments line
+        if (c=='#')
+        {
+            getline(_in,line);
+        }
+
+        // process nonleaf line
+        else if (c=='!')
+        {
+            _in.get();              // skip exclamation mark
+            getline(_in,line);
+
+            // convert nx,ny,nz values from line and store them in output arguments
+            std::stringstream linestream(line);
+            linestream >> nx >> ny >> nz;
+            if (linestream.fail())
+                throw FATALERROR("Nonleaf subdivision specifiers are missing or not formatted as integers");
+
+            return true;
+        }
+
+        // eat leading white space and empty lines
+        else if (c==' ' || c=='\t' || c=='\n' || c=='\r')
+        {
+            _in.get();
+        }
+
+        // signal not a nonleaf line
+        else
+        {
+            return false;
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
 vector<Array> TextInFile::readAllRows()
 {
     vector<Array> rows;

@@ -12,7 +12,7 @@ Snapshot* AdaptiveMeshGeometry::createAndOpenSnapshot()
 {
     // create and open the snapshot
     auto snapshot = new AdaptiveMeshSnapshot;
-    snapshot->open(this, filename(), "AMR cells");
+    snapshot->open(this, filename(), "adaptive mesh cells");
 
     // configure the mass or density column
     if (useMass()) snapshot->importMass();

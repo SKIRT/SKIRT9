@@ -24,10 +24,43 @@ namespace AdaptiveMesh_Private
     class Node : public Box
     {
     public:
-        /* The constructor receives the node's extent .... */
-        Node(const Box& extent) : Box(extent)
+        /* The constructor receives the node's extent, and reads the other node data from the
+           following line in the specified input file. It then recursively constructs any child
+           nodes. In addition to constructing the new node(s), the constructor also adds leaf node
+           pointers to the vector held by the AdaptiveMeshSnapshot class. */
+        Node(const Box& extent, TextInFile* infile, vector<Node*>& leafnodes) : Box(extent)
         {
-            // TO DO
+            // if this is a nonleaf line, process it
+            if (infile->readNonLeaf(_Nx, _Ny, _Nz))
+            {
+                _m = -1;
+
+                // construct and store our children, in local Morton order
+                _nodes.resize(_Nx*_Ny*_Nz);
+                int m = 0;
+                for (int k=0; k<_Nz; k++)
+                    for (int j=0; j<_Ny; j++)
+                        for (int i=0; i<_Nx; i++)
+                        {
+                            Vec r0 = extent.fracPos(i,j,k, _Nx, _Ny, _Nz);
+                            Vec r1 = extent.fracPos(i+1,j+1,k+1, _Nx, _Ny, _Nz);
+                            _nodes[m++] = new Node(Box(r0, r1), infile, leafnodes);
+                        }
+            }
+
+            // if this is not a nonleaf line, it should be a leaf line
+            else
+            {
+                _Nx = 0; _Ny = 0; _Nz = 0;
+
+                // read a leaf line and detect premature end-of file
+                if (!infile->readRow(_properties))
+                     throw FATALERROR("Reached end of file in adaptive mesh data before all nodes were read");
+
+                // add this leaf node to the list
+                _m = leafnodes.size();
+                leafnodes.push_back(this);
+            }
         }
 
         /* This function adds neighbor information to the receiving leaf node. Specifically, it
@@ -151,10 +184,17 @@ AdaptiveMeshSnapshot::~AdaptiveMeshSnapshot()
 
 void AdaptiveMeshSnapshot::readAndClose()
 {
-    // TO DO: init _root and _cells
+    // construct the root node, and recursively all other nodes;
+    // this also fills the _cells vector
+    _root = new Node(_extent, infile(), _cells);
 
-    // close the file
+    // verify that all data was read and close the file
+    Array dummy;
+    if (infile()->readRow(dummy)) throw FATALERROR("Superfluous lines in adaptive mesh data after all nodes were read");
     Snapshot::readAndClose();
+
+    // log nr of cells
+    log()->info("  Number of leaf cells: " + std::to_string(_cells.size()));
 
     // if a mass density policy has been set, calculate masses and densities for all cells
     if (hasMassDensityPolicy())
@@ -181,7 +221,7 @@ void AdaptiveMeshSnapshot::readAndClose()
             // original mass is zero if temperature is above cutoff or if imported mass/density is not positive
             double originalMass = 0.;
             if (maxT && prop[temperatureIndex()] > maxT) numIgnored++;
-            else originalMass = max(0., massIndex() ? prop[massIndex()] : prop[densityIndex()] * _cells[m]->volume());
+            else originalMass = max(0., massIndex()>=0 ? prop[massIndex()] : prop[densityIndex()]*_cells[m]->volume());
 
             double metallicMass = originalMass * (metallicityIndex()>=0 ? prop[metallicityIndex()] : 1.);
             double effectiveMass = metallicMass * multiplier();

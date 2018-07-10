@@ -133,6 +133,23 @@ public:
         the size and contents of the \em values array are undefined. */
     bool readRow(Array& values);
 
+    /** This is a specialy function intended for use by the AdaptiveMeshSnapshot class when
+        importing an adaptive mesh text column file. The function attempts to read a line
+        containing a nonleaf node specification. Such a line starts with an exclamation mark, which
+        must be followed by three integers (one subdivision specifier for each dimension).
+
+        If the next line (after skipping comments and empty lines) starts with an exclamation mark,
+        the function processes it as a nonleaf node specification. If this is successful, the
+        function stores the parsed specifiers in the arguments and returns true. If the line cannot
+        be parsed, a fatal error is thrown.
+
+        If the next line (after skipping comments and empty lines) does not start with an
+        exclamation mark, the contents of the function arguments is undefined and the function
+        returns false. In this case, the function has not consumed any information other than
+        comments and white space. The file cursor is left just before the next regular line (i.e. a
+        line not starting with an exclamation mark), or at the end of the file. */
+    bool readNonLeaf(int& nx, int& ny, int& nz);
+
     /** This variadic template function reads the next row from a column text file and stores the
         resulting values in the variables passed to the function by reference. For example:
 
