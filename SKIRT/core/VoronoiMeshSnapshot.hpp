@@ -74,16 +74,17 @@ public:
 
     /** This function reads the snapshot data from the input file, honoring the options set through
         the configuration functions, stores the data for later use, and closes the file by calling
-        the base class Snapshot::readAndClose() function. Any sites located outside of the domain
-        are discarded. Sites with an associated temperature above the cutoff temperature (if one
-        has been configured) are assigned a density value of zero, so that the corresponding cell
-        has zero mass (regardless of the imported mass/density properties).
+        the base class Snapshot::readAndClose() function. Sites located outside of the domain and
+        sites that are too close to another site are discarded. Sites with an associated
+        temperature above the cutoff temperature (if one has been configured) are assigned a
+        density value of zero, so that the corresponding cell has zero mass (regardless of the
+        imported mass/density properties).
 
-        The function then calls the private buildMesh() function to build the Voronoi mesh based on
-        the imported site positions. If the snapshot configuration requires the ability to
-        determine the density at a given spatial position, the function also calls the private
-        buildSearch() function to create a data structure that accelerates locating the cell
-        containing a given point.
+        The function calls the private buildMesh() function to build the Voronoi mesh based on the
+        imported site positions. If the snapshot configuration requires the ability to determine
+        the density at a given spatial position, the function also calls the private buildSearch()
+        function to create a data structure that accelerates locating the cell containing a given
+        point.
 
         During its operation, the function logs some statistical information about the imported
         snapshot and the resulting data structures. */
@@ -109,10 +110,10 @@ public:
 
         The \em item argument specifies a simulation item in the hierarchy of the caller (usually
         the caller itself) used to retrieve context such as an appropriate logger. The \em extent
-        argument specifies the extent of the domain as a box lined up with the coordinate axes. Any
-        sites located outside of the domain are discarded. The \em filename argument specifies the
-        name of the input file, including filename extension but excluding path and simulation
-        prefix. */
+        argument specifies the extent of the domain as a box lined up with the coordinate axes.
+        Sites located outside of the domain and sites that are too close to another site are
+        discarded. The \em filename argument specifies the name of the input file, including
+        filename extension but excluding path and simulation prefix. */
     VoronoiMeshSnapshot(const SimulationItem* item, const Box& extent, string filename);
 
     /** This constructor obtains the site positions from a SiteListInterface instance. The
@@ -122,9 +123,10 @@ public:
 
         The \em item argument specifies a simulation item in the hierarchy of the caller (usually
         the caller itself) used to retrieve context such as an appropriate logger. The \em extent
-        argument specifies the extent of the domain as a box lined up with the coordinate axes. Any
-        sites located outside of the domain are discarded. The \em sli argument specifies an object
-        that provides the SiteListInterface interface from which to obtain the site positions. */
+        argument specifies the extent of the domain as a box lined up with the coordinate axes.
+        Sites located outside of the domain and sites that are too close to another site are
+        discarded. The \em sli argument specifies an object that provides the SiteListInterface
+        interface from which to obtain the site positions. */
     VoronoiMeshSnapshot(const SimulationItem* item, const Box& extent, SiteListInterface* sli);
 
     /** This constructor obtains the site positions from a programmatically prepared list. The
@@ -134,27 +136,27 @@ public:
 
         The \em item argument specifies a simulation item in the hierarchy of the caller (usually
         the caller itself) used to retrieve context such as an appropriate logger. The \em extent
-        argument specifies the extent of the domain as a box lined up with the coordinate axes. Any
-        sites located outside of the domain are discarded. The \em sites argument specifies the
-        list of site positions. */
+        argument specifies the extent of the domain as a box lined up with the coordinate axes.
+        Sites located outside of the domain and sites that are too close to another site are
+        discarded. The \em sites argument specifies the list of site positions. */
     VoronoiMeshSnapshot(const SimulationItem* item, const Box& extent, const vector<Vec>& sites);
 
     //=========== Private construction ==========
 
 private:
-    /** Given a list of generating sites, this private function actually builds the Voronoi
-        tessellation and stores the corresponding list of cells, including any properties relevant
-        for supporting the interrogation capabilities offered by this class. All other data (such
-        as Voronoi cell vertices, edges and faces) is discarded. In practice, the function adds the
-        sites to a Voro++ container, computes the Voronoi cells one by one, and copies the relevant
-        cell information (such as the list of neighboring cells) from the Voro++ data structures
-        into its own.
+    /** Given a list of generating sites (represented as partially initialized VoronoiCell
+        objects), this private function builds the Voronoi tessellation and stores the
+        corresponding cell information, including any properties relevant for supporting the
+        interrogation capabilities offered by this class. All other data (such as Voronoi cell
+        vertices, edges and faces) are discarded. In practice, the function adds the sites to a
+        Voro++ container, computes the Voronoi cells one by one, and copies the relevant cell
+        information (such as the list of neighboring cells) from the Voro++ data structures into
+        its own.
 
-        If the \em ignoreNearbyAndOutliers flag is set to true, the function discards sites that
-        are too close to another site, and sites outside of the domain, before actually starting to
-        build the Voronoi tessellation. If the flag is set to false, the caller must guarantee that
-        all sites are inside the domain and that no two sites are exceptionally nearby. */
-    void buildMesh(const vector<Vec>& sites, bool ignoreNearbyAndOutliers);
+        Before actually starting to build the Voronoi tessellation, the function discards sites
+        (represented as VoronoiCell objects) outside of the domain and sites that are too close to
+        another site. */
+    void buildMesh();
 
     /** This private function builds data structures that allow accelerating the operation of the
         cellIndex() function.
@@ -351,16 +353,13 @@ private:
     Box _extent;                    // the spatial domain of the mesh
     double _eps{0.};                // small fraction of extent
 
-    // data members initialized when processing snapshot input
-    vector<Array> _propv;           // cell properties as imported, indexed on m
+    // data members initialized when processing snapshot input and further completed by BuildMesh()
+    vector<VoronoiMesh_Private::VoronoiCell*> _cells;   // cell objects, indexed on m
 
     // data members initialized when processing snapshot input, but only if a density policy has been set
     Array _rhov;                    // density for each cell (not normalized)
     Array _cumrhov;                 // normalized cumulative density distribution for cells
     double _mass{0.};               // total effective mass
-
-    // data members initialized by BuildMesh()
-    vector<VoronoiMesh_Private::VoronoiCell*> _cells;   // cell objects, indexed on m
 
     // data members initialized by BuildSearch()
     int _nb{0};                                     // number of blocks in each dimension (limit for indices i,j,k)

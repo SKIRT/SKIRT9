@@ -25,12 +25,17 @@ namespace VoronoiMesh_Private
     private:
         Vec _r;                     // site position
         Vec _c;                     // centroid position
-        double _volume;             // volume
-        vector<int> _neighbors;     // list of neighbor indices in cells vector
+        double _volume{0.};         // volume
+        vector<int> _neighbors;     // list of neighbor indices in _cells vector
+        Array _properties;          // user-defined properties, if any
 
     public:
-        // constructor stores the specified site position; the other data members are set to zero
-        VoronoiCell(Vec r) : _r(r), _volume(0) { }
+        // constructor stores the specified site position; the other data members are set to zero or empty
+        VoronoiCell(Vec r) : _r(r) { }
+
+        // constructor derives the site position from the first three property values and stores the user properties;
+        // the other data members are set to zero or empty
+        VoronoiCell(const Array& prop) : _r(prop[0],prop[1],prop[2]), _properties{prop} { }
 
         // initializes the receiver with information taken from the specified fully computed Voronoi cell
         void init(voro::voronoicell_neighbor& cell)
@@ -63,6 +68,9 @@ namespace VoronoiMesh_Private
         // returns the cell's site position
         Vec position() const { return _r; }
 
+        // returns the x coordinate of the cell's site position
+        double x() const { return _r.x(); }
+
         // returns the squared distance from the cell's site to the specified point
         double squaredDistanceTo(Vec r) const { return (r-_r).norm2(); }
 
@@ -74,6 +82,9 @@ namespace VoronoiMesh_Private
 
         // returns a list of neighboring cell/site ids
         const vector<int>& neighbors() { return _neighbors; }
+
+        // returns the cell/site user properties, if any
+        const Array& properties() { return _properties; }
     };
 
     // function to compare two points according to the specified axis (0,1,2)
@@ -269,42 +280,21 @@ void VoronoiMeshSnapshot::open(const SimulationItem* item, string filename, stri
 
 void VoronoiMeshSnapshot::readAndClose()
 {
-    // read the site info into memory, skipping any sites outside our domain
-    int numOutside = 0;
+    // read the site info into memory
     Array prop;
-    while (infile()->readRow(prop))
-    {
-        Vec r(prop[positionIndex()+0], prop[positionIndex()+1], prop[positionIndex()+2]);
-        if (!_extent.contains(r)) numOutside++;
-        else _propv.push_back(prop);
-    }
+    while (infile()->readRow(prop)) _cells.push_back(new VoronoiCell(prop));
 
     // close the file
     Snapshot::readAndClose();
 
-    // log the number of sites
-    if (!numOutside)
-    {
-        log()->info("  Number of sites: " + std::to_string(_propv.size()));
-    }
-    else
-    {
-        log()->info("  Number of sites outside domain: " + std::to_string(numOutside));
-        log()->info("  Number of sites retained: " + std::to_string(_propv.size()));
-    }
-
     // calculate the Voronoi cells
-    vector<Vec> sites;
-    sites.reserve(_propv.size());
-    for (const Array& prop : _propv)
-        sites.emplace_back(prop[positionIndex()+0], prop[positionIndex()+1], prop[positionIndex()+2]);
-    buildMesh(sites, false);
+    buildMesh();
 
     // if a mass density policy has been set, calculate masses and densities for all cells
     if (hasMassDensityPolicy())
     {
         // allocate vectors for mass and density
-        size_t n = _propv.size();
+        size_t n = _cells.size();
         Array Mv(n);
         _rhov.resize(n);
 
@@ -320,7 +310,7 @@ void VoronoiMeshSnapshot::readAndClose()
         int numIgnored = 0;
         for (size_t m=0; m!=n; ++m)
         {
-            const Array& prop = _propv[m];
+            const Array& prop = _cells[m]->properties();
 
             // original mass is zero if temperature is above cutoff or if imported mass/density is not positive
             double originalMass = 0.;
@@ -351,15 +341,11 @@ void VoronoiMeshSnapshot::readAndClose()
         // remember the effective mass
         _mass = totalEffectiveMass;
 
-        // if there is at least one site...
-        if (!_propv.empty())
-        {
-            // construct a vector with the normalized cumulative site densities
-            NR::cdf(_cumrhov, Mv);
+        // construct a vector with the normalized cumulative site densities
+        if (n) NR::cdf(_cumrhov, Mv);
 
-            // build the search data structure
-            buildSearch();
-        }
+        // build the search data structure
+        buildSearch();
     }
 }
 
@@ -375,24 +361,19 @@ void VoronoiMeshSnapshot::setExtent(const Box& extent)
 
 VoronoiMeshSnapshot::VoronoiMeshSnapshot(const SimulationItem* item, const Box& extent, std::string filename)
 {
-    setContext(item);
-    setExtent(extent);
-
     // read the input file
     TextInFile in(item, filename, "Voronoi sites");
     in.addColumn("position x", "length", "pc");
     in.addColumn("position y", "length", "pc");
     in.addColumn("position z", "length", "pc");
-    auto propv = in.readAllRows();
+    Array coords;
+    while (infile()->readRow(coords)) _cells.push_back(new VoronoiCell(Vec(coords[0], coords[1], coords[2])));
     in.close();
 
-    // prepare the data
-    vector<Vec> sites;
-    sites.reserve(_propv.size());
-    for (const Array& prop : propv) sites.emplace_back(prop[0], prop[1], prop[2]);
-
     // calculate the Voronoi cells
-    buildMesh(sites, true);
+    setContext(item);
+    setExtent(extent);
+    buildMesh();
     buildSearch();
 }
 
@@ -400,16 +381,15 @@ VoronoiMeshSnapshot::VoronoiMeshSnapshot(const SimulationItem* item, const Box& 
 
 VoronoiMeshSnapshot::VoronoiMeshSnapshot(const SimulationItem* item, const Box& extent, SiteListInterface* sli)
 {
-    setContext(item);
-    setExtent(extent);
-
     // prepare the data
     int n = sli->numSites();
-    vector<Vec> sites(n);
-    for (int m=0; m!=n; ++m) sites[m] = sli->sitePosition(m);
+    _cells.resize(n);
+    for (int m=0; m!=n; ++m) _cells[m] = new VoronoiCell(sli->sitePosition(m));
 
     // calculate the Voronoi cells
-    buildMesh(sites, true);
+    setContext(item);
+    setExtent(extent);
+    buildMesh();
     buildSearch();
 }
 
@@ -417,92 +397,77 @@ VoronoiMeshSnapshot::VoronoiMeshSnapshot(const SimulationItem* item, const Box& 
 
 VoronoiMeshSnapshot::VoronoiMeshSnapshot(const SimulationItem* item, const Box& extent, const vector<Vec>& sites)
 {
-    setContext(item);
-    setExtent(extent);
+    // prepare the data
+    int n = sites.size();
+    _cells.resize(n);
+    for (int m=0; m!=n; ++m) _cells[m] = new VoronoiCell(sites[m]);
 
     // calculate the Voronoi cells
-    buildMesh(sites, true);
+    setContext(item);
+    setExtent(extent);
+    buildMesh();
     buildSearch();
 }
 
 ////////////////////////////////////////////////////////////////////
 
-void VoronoiMeshSnapshot::buildMesh(const vector<Vec>& sites, bool ignoreNearbyAndOutliers)
+void VoronoiMeshSnapshot::buildMesh()
 {
-    // create a list of site indices
-    int numSites =  sites.size();
-    vector<int> indices(numSites);
-    for (int m=0; m!=numSites; ++m) indices[m] = m;
-
-    // if requested to remove nearby sites and sites outside of the domain...
+    // remove sites that lie outside of the domain
     int numOutside = 0;
-    int numNearby = 0;
-    if (ignoreNearbyAndOutliers)
+    for (int m = _cells.size()-1; m >= 0; --m)
     {
-        // sort the list of site indices on the site's x coordinate
-        std::sort(indices.begin(), indices.end(),
-                  [&sites] (int m1, int m2) { return sites[m1].x() < sites[m2].x(); });
-
-        // find sites that violate the conditions and tag them for removal
-        for (int i=0; i!=numSites; ++i)
+        if (!_extent.contains(_cells[m]->position()))
         {
-            // outside of the domain
-            if (!_extent.contains(sites[indices[i]]))
-            {
-                indices[i] = -1;
-                numOutside++;
-            }
-            else
-            {
-                // too nearby
-                for (int j = i+1; j < numSites && sites[indices[j]].x()-sites[indices[i]].x() < _eps; ++j)
-                {
-                    if ((sites[indices[j]]-sites[indices[i]]).norm2() < _eps*_eps)
-                    {
-                        indices[i] = -1;
-                        numNearby++;
-                        break;
-                    }
-                }
-            }
-        }
-
-        // log the number of sites
-        if (!numOutside && !numNearby)
-        {
-            log()->info("  Number of sites: " + std::to_string(numSites));
-        }
-        else
-        {
-            log()->info("  Number of sites outside domain: " + std::to_string(numOutside));
-            log()->info("  Number of sites too nearby others: " + std::to_string(numNearby));
-            log()->info("  Number of sites retained: " + std::to_string(numSites-numOutside-numNearby));
+            delete _cells[m];
+            _cells.erase(_cells.cbegin()+m);
+            numOutside++;
         }
     }
 
+    // sort sites in order of increasing x coordinate to accelerate search for nearby sites
+    std::sort(_cells.begin(), _cells.end(), [](VoronoiCell* c1, VoronoiCell* c2) { return c1->x() < c2->x(); });
+
+    // remove sites that lie too nearby another site
+    int numNearby = 0;
+    for (int m = _cells.size()-1; m >= 0; --m)
+    {
+        for (int j = m-1; j >= 0 && _cells[m]->x() - _cells[j]->x() < _eps; --j)
+        {
+            if ((_cells[m]->position() - _cells[j]->position()).norm2() < _eps*_eps)
+            {
+                delete _cells[m];
+                _cells.erase(_cells.cbegin()+m);
+                numNearby++;
+                break;
+            }
+        }
+    }
+
+    // log the number of sites
+    int numCells = _cells.size();
+    if (!numOutside && !numNearby)
+    {
+        log()->info("  Number of sites: " + std::to_string(numCells));
+    }
+    else
+    {
+        if (numOutside) log()->info("  Number of sites outside domain: " + std::to_string(numOutside));
+        if (numNearby) log()->info("  Number of sites too nearby others: " + std::to_string(numNearby));
+        log()->info("  Number of sites retained: " + std::to_string(numCells));
+    }
+
     // abort if there are no cells to calculate
-    int numCells = numSites - numOutside - numNearby;
     if (numCells <= 0) return;
 
-    // initialize the vector that will hold pointers to the cell objects that will stay around,
-    // using the serial number of the cell as index in the vector
-    _cells.resize(numCells);
-
-    // add the specified sites to our cell vector AND to a temporary Voronoi container,
-    // using the serial number of the cell as site ID
+    // add the retained sites to a temporary Voronoi container, using the cell index m as ID
     int nb = max(3, min(1000, static_cast<int>(3*cbrt(numCells)) ));
     voro::container con(_extent.xmin(), _extent.xmax(), _extent.ymin(), _extent.ymax(), _extent.zmin(), _extent.zmax(),
                         nb, nb, nb, false,false,false, 8);
-    int m = 0;
-    for (int i=0; i!=numSites; ++i)
+    for (int m=0; m!=numCells; ++m)
     {
-        if (indices[i]>=0)                      // skip sites that were tagged for removal
-        {
-            Vec r = sites[indices[i]];
-            _cells[m] = new VoronoiCell(r);     // these objects will be deleted by the destructor
-            con.put(m, r.x(),r.y(),r.z());
-            m++;
-        }
+        Vec r = _cells[m]->position();
+        con.put(m, r.x(),r.y(),r.z());
     }
 
     // for each site:
@@ -562,7 +527,7 @@ void VoronoiMeshSnapshot::buildSearch()
     int numCells = _cells.size();
     if (!numCells) return;
 
-    log()->info("Building data structures to accelerate searching the Voronoi tesselation...");
+    log()->info("Building data structures to accelerate searching the Voronoi tesselation");
 
     // -------------  block lists  -------------
 
@@ -667,7 +632,8 @@ Box VoronoiMeshSnapshot::extent(int m) const
 
 Vec VoronoiMeshSnapshot::velocity(int m) const
 {
-    return Vec(_propv[m][velocityIndex()+0], _propv[m][velocityIndex()+1], _propv[m][velocityIndex()+2]);
+    const Array& prop = _cells[m]->properties();
+    return Vec(prop[velocityIndex()+0], prop[velocityIndex()+1], prop[velocityIndex()+2]);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -676,7 +642,8 @@ void VoronoiMeshSnapshot::parameters(int m, Array& params) const
 {
     int n = numParameters();
     params.resize(n);
-    for (int i=0; i!=n; ++i) params[i] = _propv[m][parametersIndex()+i];
+    const Array& prop = _cells[m]->properties();
+    for (int i=0; i!=n; ++i) params[i] = prop[parametersIndex()+i];
 }
 
 ////////////////////////////////////////////////////////////////////
