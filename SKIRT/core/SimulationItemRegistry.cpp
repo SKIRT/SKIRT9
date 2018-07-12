@@ -59,6 +59,7 @@
 #include "MarastonSEDFamily.hpp"
 #include "MollweideProjection.hpp"
 #include "MonteCarloSimulation.hpp"
+#include "MultiGaussianExpansionGeometry.hpp"
 #include "NestedLogWavelengthGrid.hpp"
 #include "NetzerAngularDistribution.hpp"
 #include "NoPolarizationProfile.hpp"
@@ -215,6 +216,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ParaboloidShellGeometry>();
     ItemRegistry::add<HyperboloidGeometry>();
     ItemRegistry::add<HyperboloidShellGeometry>();
+    ItemRegistry::add<MultiGaussianExpansionGeometry>();
     ItemRegistry::add<GenGeometry>();
     ItemRegistry::add<UniformBoxGeometry>();
     ItemRegistry::add<ReadFitsGeometry>();

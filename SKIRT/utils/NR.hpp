@@ -399,30 +399,34 @@ public:
     /** Given a discrete distribution over \f$N\f$ points \f[p_i \qquad i=0,\dots,N-1\f] this
         function builds the corresponding normalized cumulative distribution \f[P_0=0;\quad
         P_{i+1}=\frac{\sum_{j=0}^i p_j}{\sum_{j=0}^{N-1} p_j} \qquad i=0,\dots,N-1\f] with
-        \f$N+1\f$ elements. In this version of the function, the source distribution is specified
-        as an array with at least one element; the target array is resized appropriately and
-        replaced by the cumulative distribution. */
-    static inline void cdf(Array& Pv, const Array& pv)
+        \f$N+1\f$ elements. The function returns the factor used to normalize the cumulative
+        distribution. In this version of the function, the source distribution is specified as an
+        array with at least one element; the target array is resized appropriately and replaced by
+        the cumulative distribution. */
+    static inline double cdf(Array& Pv, const Array& pv)
     {
         int n = pv.size();
         Pv.resize(n+1);  // also sets Pv[0] to zero
         for (int i=0; i<n; i++) Pv[i+1] = Pv[i] + pv[i];
         Pv /= Pv[n];
+        return Pv[n];
     }
 
     /** Given a discrete distribution over \f$N\f$ points \f[p_i \qquad i=0,\dots,N-1\f] this
         function builds the corresponding normalized cumulative distribution \f[P_0=0;\quad
         P_{i+1}=\frac{\sum_{j=0}^i p_j}{\sum_{j=0}^{N-1} p_j} \qquad i=0,\dots,N-1\f] with
-        \f$N+1\f$ elements. In this version of the function, the source distribution is specified
-        by a function object with signature double pv(int i); the number of source points \f$N>0\f$
-        is specified as a separate argument. The source function is called once for each index
+        \f$N+1\f$ elements. The function returns the factor used to normalize the cumulative
+        distribution. In this version of the function, the source distribution is specified by a
+        function object with signature double pv(int i); the number of source points \f$N>0\f$ is
+        specified as a separate argument. The source function is called once for each index
         \f$i=0,\dots,N-1\f$. The target array is resized appropriately and replaced by the
         cumulative distribution. */
-    template<typename Functor> static inline void cdf(Array& Pv, int n, Functor pv)
+    template<typename Functor> static inline double cdf(Array& Pv, int n, Functor pv)
     {
         Pv.resize(n+1);  // also sets Pv[0] to zero
         for (int i=0; i<n; i++) Pv[i+1] = Pv[i] + pv(i);
         Pv /= Pv[n];
+        return Pv[n];
     }
 
     /** Given the tabulated values for a continuous probability distribution, this function
