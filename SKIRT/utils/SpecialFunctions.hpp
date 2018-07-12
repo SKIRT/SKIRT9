@@ -202,12 +202,12 @@ namespace SpecialFunctions
     double DebyeD(int n, double x);
 
     /** This function returns a generalized logarithmic function \f${\text{gln}}(p,x)\f$, defined
-        as \f[ {\text{gln}}(p,x) = \int_1^x t^{-p}\,{\text{d}}t = \begin{cases} \;
-        \dfrac{x^{1-p}-1}{1-p} & p\ne1 \\ \; \ln x & p=1. \end{cases} \f] Both \f$x\f$ and \f$p\f$
-        should be positive real numbers. This function is included in this library of special
-        functions because the power law expression diverges as \f$p\f$ approaches 1. In that case
-        we can use the expansion \f[ {\text{gln}}(p,x) \approx \ln x + \frac12\,(1-p)\ln^2x +
-        \frac16\,(1-p)^2 \ln^3x + \frac{1}{24}\,(1-p)^3\ln^4x + \ldots \f] */
+        for \f$x>0\f$ and arbitrary real \f$p\f$ as \f[ {\text{gln}}(p,x) = \int_1^x
+        t^{-p}\,{\text{d}}t = \begin{cases} \; \dfrac{x^{1-p}-1}{1-p} & p\ne1 \\ \; \ln x & p=1
+        \end{cases}. \f] This function is included in this library of special functions because the
+        power law expression diverges as \f$p\f$ approaches 1. In that case we can use the
+        expansion \f[ {\text{gln}}(p,x) \approx \ln x + \frac12\,(1-p)\ln^2x + \frac16\,(1-p)^2
+        \ln^3x + \frac{1}{24}\,(1-p)^3\ln^4x + \ldots \f] */
     double gln(double p, double x);
 
     /** This function returns the difference between two values of the generalized logarithmic
@@ -220,11 +220,10 @@ namespace SpecialFunctions
 
     /** This function returns a generalized exponential function \f${\text{gexp}}(p,x)\f$, defined
         as the inverse of the function gln. In formula it is defined as \f[ {\text{gexp}}(p,x) =
-        \begin{cases} \; ((1-p)\,x+1)^{\frac{1}{1-p}} & p\ne1 \\ \; {\text{e}}^p & p=1. \end{cases}
-        \f] Both \f$x\f$ and \f$p\f$ should be positive real numbers. When \f$p\f$ approaches 1, we
-        use the expansion \f[ {\text{gexp}}(p,x) \approx {\text{e}}^x\left[ 1 - \frac12\,(1-p)\,x^2
-        + \frac{1}{24}\, (1-p)^2\, (3x+8)\,x^3 - \frac{1}{48}\, (1-p)^3\, (x^2+8x+12)\, x^4 +
-        \ldots \right] \f] */
+        \begin{cases} \; ((1-p)\,x+1)^{\frac{1}{1-p}} & p\ne1 \\ \; {\text{e}}^p & p=1 \end{cases}
+        \f] When \f$p\f$ approaches 1, we use the expansion \f[ {\text{gexp}}(p,x) \approx
+        {\text{e}}^x\left[ 1 - \frac12\,(1-p)\,x^2 + \frac{1}{24}\, (1-p)^2\, (3x+8)\,x^3 -
+        \frac{1}{48}\, (1-p)^3\, (x^2+8x+12)\, x^4 + \ldots \right] \f] */
     double gexp(double p, double x);
 }
 
