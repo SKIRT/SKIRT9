@@ -6,11 +6,9 @@
 #include "MultiGaussianExpansionGeometry.hpp"
 #include "FatalError.hpp"
 #include "TextInFile.hpp"
-#include "Log.hpp"
 #include "Random.hpp"
 #include "StringUtils.hpp"
 #include "NR.hpp"
-#include "System.hpp"
 
 //////////////////////////////////////////////////////////////////////
 

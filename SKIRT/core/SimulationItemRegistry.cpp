@@ -22,6 +22,7 @@
 #include "CastelliKuruczSEDFamily.hpp"
 #include "ClumpyGeometryDecorator.hpp"
 #include "CombineGeometryDecorator.hpp"
+#include "ConicalAngularDistribution.hpp"
 #include "ConicalShellGeometry.hpp"
 #include "CubicalBackgroundSource.hpp"
 #include "CubicSplineSmoothingKernel.hpp"
@@ -188,6 +189,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<IsotropicAngularDistribution>();
     ItemRegistry::add<AxAngularDistribution>();
     ItemRegistry::add<LaserAngularDistribution>();
+    ItemRegistry::add<ConicalAngularDistribution>();
     ItemRegistry::add<NetzerAngularDistribution>();
 
     // Polarization profiles
