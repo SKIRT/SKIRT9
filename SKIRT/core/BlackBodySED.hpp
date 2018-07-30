@@ -44,6 +44,11 @@ public:
         power per unit of wavelength) at the specified wavelength. */
     double specificLuminosity(double wavelength) const override;
 
+    /** This function returns the normalized specific luminosity \f$L_\lambda\f$ (i.e. radiative
+        power per unit of wavelength) at a number of wavelength points within the specified
+        wavelength range. */
+    void specificLuminosityArray(Array& lambdav, Array& pv, const Range& wavelengthRange) const override;
+
     /** This function returns the normalized integrated luminosity \f$L\f$ (i.e. radiative power)
         over the specified wavelength range. */
     double integratedLuminosity(const Range& wavelengthRange) const override;

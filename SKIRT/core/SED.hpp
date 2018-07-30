@@ -7,6 +7,7 @@
 #define SED_HPP
 
 #include "SimulationItem.hpp"
+#include "Array.hpp"
 #include "Range.hpp"
 class Random;
 
@@ -49,6 +50,15 @@ public:
         power per unit of wavelength) at the specified wavelength, or zero if the wavelength is
         outside of the distribution's intrinsic spectral range. */
     virtual double specificLuminosity(double wavelength) const = 0;
+
+    /** This function returns the normalized specific luminosity \f$L_\lambda\f$ (i.e. radiative
+        power per unit of wavelength) at a number of wavelength points within the specified
+        wavelength range. The number of points returned is implementation-dependent and usually
+        matches the internal tabular representation of the %SED. The minimum and maximum
+        wavelengths in the specified range are always included in the returned result, even if they
+        fall outside of the distribution's intrinsic spectral range (in which case the
+        corresponding specific luminosity is set to zero. */
+    virtual void specificLuminosityArray(Array& lambdav, Array& pv, const Range& wavelengthRange) const = 0;
 
     /** This function returns the normalized integrated luminosity \f$L\f$ (i.e. radiative power)
         over the specified wavelength range, or zero if the range is fully outside of the
