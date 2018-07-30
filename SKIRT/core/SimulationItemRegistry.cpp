@@ -98,6 +98,7 @@
 #include "SunSED.hpp"
 #include "TorusGeometry.hpp"
 #include "TriaxialGeometryDecorator.hpp"
+#include "TTauriDiskGeometry.hpp"
 #include "UniformBoxGeometry.hpp"
 #include "UniformSmoothingKernel.hpp"
 #include "VoronoiMeshGeometry.hpp"
@@ -213,6 +214,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<BrokenExpDiskGeometry>();
     ItemRegistry::add<RingGeometry>();
     ItemRegistry::add<TorusGeometry>();
+    ItemRegistry::add<TTauriDiskGeometry>();
     ItemRegistry::add<ConicalShellGeometry>();
     ItemRegistry::add<ParaboloidGeometry>();
     ItemRegistry::add<ParaboloidShellGeometry>();
