@@ -3,53 +3,57 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "ListBand.hpp"
+#include "FileBand.hpp"
 #include "FatalError.hpp"
-#include "NR.hpp"
+#include "TextInFile.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-void ListBand::setupSelfBefore()
+void FileBand::setupSelfBefore()
 {
     Band::setupSelfBefore();
 
-    // verify number of configured parameters
-    if (_wavelengths.size() != _transmissionValues.size())
-        throw FATALERROR("Number of listed luminosities does not match number of listed transmission values");
-    if (_transmissionValues.size() < 2)
-        throw FATALERROR("Number of listed transmission values is less than 2");
+    // read the wavelengths and transmission values from the input file
+    TextInFile infile(this, _filename, "transmission curve");
+    infile.addColumn("wavelength", "wavelength", "micron");
+    infile.addColumn("transmission value");
+    infile.readAllColumns(_lambdav, _transv);
+    infile.close();
+
+    // verify the number of values
+    if (_transv.size() < 2) throw FATALERROR("Number of loaded transmission values is less than 2");
 
     // calculate the normalization factor for the transmission values
-    size_t size = _transmissionValues.size();
+    size_t size = _transv.size();
     double norm = 0.;
     for (size_t i=1; i!=size; ++i)
     {
-        double dlambda = _wavelengths[i]-_wavelengths[i-1];
-        double trans =  0.5*(_transmissionValues[i-1]+_transmissionValues[i]);
+        double dlambda = _lambdav[i]-_lambdav[i-1];
+        double trans =  0.5*(_transv[i-1]+_transv[i]);
         norm += trans*dlambda;
     }
 
-    // copy the transmission values from the configuration and normalize them
-    _transv = NR::array(_transmissionValues) / norm;
+    // normalize the transmission values
+    _transv /= norm;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-size_t ListBand::dataSize() const
+size_t FileBand::dataSize() const
 {
     return _transv.size();
 }
 
 ////////////////////////////////////////////////////////////////////
 
-const double* ListBand::wavelengthData() const
+const double* FileBand::wavelengthData() const
 {
-    return &_wavelengths[0];
+    return &_lambdav[0];
 }
 
 ////////////////////////////////////////////////////////////////////
 
-const double* ListBand::transmissionData() const
+const double* FileBand::transmissionData() const
 {
     return &_transv[0];
 }

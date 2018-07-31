@@ -32,6 +32,7 @@
 #include "EinastoGeometry.hpp"
 #include "ExpDiskGeometry.hpp"
 #include "ExtragalacticUnits.hpp"
+#include "FileBand.hpp"
 #include "FileSED.hpp"
 #include "FileWavelengthDistribution.hpp"
 #include "FileWavelengthGrid.hpp"
@@ -190,6 +191,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
 
     // Bands
     ItemRegistry::add<Band>();
+    ItemRegistry::add<FileBand>();
     ItemRegistry::add<ListBand>();
 
     // Angular distributions

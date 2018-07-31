@@ -3,42 +3,37 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef LISTBAND_HPP
-#define LISTBAND_HPP
+#ifndef FILEBAND_HPP
+#define FILEBAND_HPP
 
 #include "Band.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-/** A ListBand object represents a wavelength band with a transmission curve that is fully
-    specified inside the configuration file (i.e. without referring to an input file). It is
-    intended for use in cases where there are just a few wavelength/transmission pairs, but nothing
-    keeps the user from specifying a long list. The transmission outside the range indicated by the
-    first and the last wavelength in the list is considered to be zero.
+/** A FileBand object represents a wavelength band with a transmission curve that is loaded from an
+    input file. The floating point numbers in the first two columns of the text file specify
+    respectively the wavelength and the corresponding transmission value. Any additional columns in
+    the file are ignored. The transmission outside the range indicated by the first and the last
+    wavelength in the list is considered to be zero.
 
-    The wavelengths must listed be in increasing order, and a transmission value must be specified
-    corresponding to each wavelength. The scaling of the transmission values is arbitrary because
-    the transmission curve will be normalized after being loaded. Refer to the description of the
-    Band class for more information. */
-class ListBand : public Band
+    The wavelengths are by default given in micron (the units can be overridden by column header
+    info in the file) and must listed be in increasing order. The transmission values are
+    dimensionless. The scaling of these values is arbitrary because the transmission curve will be
+    normalized after being loaded. Refer to the description of the Band class for more information.
+    */
+class FileBand : public Band
 {
-    ITEM_CONCRETE(ListBand, Band, "a wavelength band (transmission curve) specified inside the configuration file")
+    ITEM_CONCRETE(FileBand, Band, "a wavelength band (transmission curve) loaded from a text file")
 
-    PROPERTY_DOUBLE_LIST(wavelengths, "the wavelengths at which to specify the transmission")
-        ATTRIBUTE_QUANTITY(wavelengths, "wavelength")
-        ATTRIBUTE_MIN_VALUE(wavelengths, "1 A")
-        ATTRIBUTE_MAX_VALUE(wavelengths, "1 m")
-
-    PROPERTY_DOUBLE_LIST(transmissionValues, "the transmission at each of the given wavelengths")
-        ATTRIBUTE_MIN_VALUE(transmissionValues, "]0")
+    PROPERTY_STRING(filename, "the name of the file defining the transmission curve")
 
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============
 
 protected:
-    /** This function normalizes the transmission values configured by the user as described in the
-        Band class header. */
+    /** This function loads the input file and normalizes the transmission values as described in
+        the Band class header. */
     void setupSelfBefore() override;
 
     //============= Functions required by base class =============
@@ -63,7 +58,8 @@ protected:
 
 private:
     // data members initialized during setup
-    Array _transv;  // normalized transmission values
+    Array _lambdav;  // wavelengths
+    Array _transv;   // normalized transmission values
 };
 
 ////////////////////////////////////////////////////////////////////
