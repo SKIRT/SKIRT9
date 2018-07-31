@@ -346,6 +346,36 @@ public:
         return NR::cdf2(_axLog[0] && _qtyLog, xv, pv, Pv);
     }
 
+    // ================== Accessing the raw data in a 1D table ==================
+
+public:
+    /** This function is available only for one-dimensional tables. It returns the number of
+        entries in the table, i.e. the number of grid points in the single axis and the number of
+        corresponding quantity values. */
+    size_t size() const
+    {
+        static_assert (N==1, "This function is available only for one-dimensional tables");
+        return _axLen[0];
+    }
+
+    /** This function is available only for one-dimensional tables. It returns a pointer to the
+        first element in the axis data array. The number of elements in this array can be obtained
+        through the size() function. */
+    const double* axisData() const
+    {
+        static_assert (N==1, "This function is available only for one-dimensional tables");
+        return _axBeg[0];
+    }
+
+    /** This function is available only for one-dimensional tables. It returns a pointer to the
+        first element in the quantity data array. The number of elements in this array can be
+        obtained through the size() function. */
+    const double* quantityData() const
+    {
+        static_assert (N==1, "This function is available only for one-dimensional tables");
+        return _qtyBeg;
+    }
+
     // ================== Accessing the raw data ==================
 
 private:

@@ -3,17 +3,19 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef SPECIFICLUMINOSITYNORMALIZATION_HPP
-#define SPECIFICLUMINOSITYNORMALIZATION_HPP
+#ifndef BANDLUMINOSITYNORMALIZATION_HPP
+#define BANDLUMINOSITYNORMALIZATION_HPP
 
 #include "LuminosityNormalization.hpp"
+#include "Band.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-/** A SpecificLuminosityNormalization instance sets the normalization of a primary source by
-    specifying the specific luminosity (radiative power per units of wavelength or frequency) at a
-    certain wavelength. */
-class SpecificLuminosityNormalization : public LuminosityNormalization
+/** A BandLuminosityNormalization instance sets the normalization of a primary source by specifying
+    the mean specific luminosity (radiative power per units of wavelength or frequency) for a given
+    wavelength band such as, for example, a standard Johnson filter or the transmission curve for
+    an actual instrument. See the Band class for more information. */
+class BandLuminosityNormalization : public LuminosityNormalization
 {
     /** The enumeration type indicating the specific luminosity unit style, e.g. whether to use
         specific luminosity per unit of wavelength or per unit of frequency. */
@@ -23,13 +25,11 @@ class SpecificLuminosityNormalization : public LuminosityNormalization
     ENUM_VAL(UnitStyle, neutralmonluminosity, "neutral: λ L_λ = ν L_ν")
     ENUM_END()
 
-    ITEM_CONCRETE(SpecificLuminosityNormalization, LuminosityNormalization,
-                  "source normalization through the specific luminosity at a given wavelength")
+    ITEM_CONCRETE(BandLuminosityNormalization, LuminosityNormalization,
+                  "source normalization through the specific luminosity for a given wavelength band")
 
-    PROPERTY_DOUBLE(wavelength, "the wavelength at which to provide the specific luminosity")
-        ATTRIBUTE_QUANTITY(wavelength, "wavelength")
-        ATTRIBUTE_MIN_VALUE(wavelength, "1 A")
-        ATTRIBUTE_MAX_VALUE(wavelength, "1 m")
+    PROPERTY_ITEM(band, Band, "the wavelength band for which to provide the specific luminosity")
+        ATTRIBUTE_DEFAULT_VALUE(band, "ListBand")
 
     PROPERTY_ENUM(unitStyle, UnitStyle, "the luminosity unit style")
         ATTRIBUTE_DEFAULT_VALUE(unitStyle, "wavelengthmonluminosity")

@@ -12,6 +12,7 @@
 #include "AdaptiveMeshGeometry.hpp"
 #include "AdaptiveMeshSource.hpp"
 #include "AllSkyInstrument.hpp"
+#include "BandLuminosityNormalization.hpp"
 #include "BlackBodySED.hpp"
 #include "BlackBodySEDFamily.hpp"
 #include "BoxClipGeometryDecorator.hpp"
@@ -48,6 +49,7 @@
 #include "LaserAngularDistribution.hpp"
 #include "LaunchedPacketsProbe.hpp"
 #include "LinWavelengthDistribution.hpp"
+#include "ListBand.hpp"
 #include "ListWavelengthDistribution.hpp"
 #include "ListWavelengthGrid.hpp"
 #include "ListSED.hpp"
@@ -150,6 +152,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<LuminosityNormalization>();
     ItemRegistry::add<IntegratedLuminosityNormalization>();
     ItemRegistry::add<SpecificLuminosityNormalization>();
+    ItemRegistry::add<BandLuminosityNormalization>();
 
     // SEDs
     ItemRegistry::add<SED>();
@@ -184,6 +187,10 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<TabulatedWavelengthDistribution>();
     ItemRegistry::add<FileWavelengthDistribution>();
     ItemRegistry::add<ListWavelengthDistribution>();
+
+    // Bands
+    ItemRegistry::add<Band>();
+    ItemRegistry::add<ListBand>();
 
     // Angular distributions
     ItemRegistry::add<AngularDistribution>();
