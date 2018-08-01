@@ -31,8 +31,11 @@ double NR::cdf2(bool loglog, const Array& xv, Array& pv, Array& Pv)
 
     // normalize both cumulative and regular distribution
     double norm = Pv[n];
-    pv /= norm;
-    Pv /= norm;
+    if (norm>0.)
+    {
+        pv /= norm;
+        Pv /= norm;
+    }
     return norm;
 }
 

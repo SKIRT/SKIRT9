@@ -27,69 +27,69 @@
 
     | %Band name | Pivot wavelength (micron)
     |------------|--------------------------
-    | 2MASS_2MASS_H      |   1.65
     | 2MASS_2MASS_J      |   1.24
+    | 2MASS_2MASS_H      |   1.65
     | 2MASS_2MASS_KS     |   2.16
     | ALMA_ALMA_10       |    350
-    | ALMA_ALMA_6        |   1244
-    | ALMA_ALMA_7        |    938
-    | ALMA_ALMA_8        |    690
     | ALMA_ALMA_9        |    456
+    | ALMA_ALMA_8        |    690
+    | ALMA_ALMA_7        |    938
+    | ALMA_ALMA_6        |   1244
     | GALEX_GALEX_FUV    |   0.15
     | GALEX_GALEX_NUV    |   0.23
+    | GENERIC_JOHNSON_U  |   0.35
     | GENERIC_JOHNSON_B  |   0.44
+    | GENERIC_JOHNSON_V  |   0.55
+    | GENERIC_JOHNSON_R  |   0.69
     | GENERIC_JOHNSON_I  |   0.87
     | GENERIC_JOHNSON_J  |   1.24
     | GENERIC_JOHNSON_M  |   5.01
-    | GENERIC_JOHNSON_R  |   0.69
-    | GENERIC_JOHNSON_U  |   0.35
-    | GENERIC_JOHNSON_V  |   0.55
     | HERSCHEL_PACS_70   |   70.8
     | HERSCHEL_PACS_100  |    101
     | HERSCHEL_PACS_160  |    162
-    | HERSCHEL_SPIRE_500 |    515
-    | HERSCHEL_SPIRE_350 |    354
     | HERSCHEL_SPIRE_250 |    253
-    | IRAS_IRAS_100      |    101
+    | HERSCHEL_SPIRE_350 |    354
+    | HERSCHEL_SPIRE_500 |    515
     | IRAS_IRAS_12       |   11.4
     | IRAS_IRAS_25       |   23.6
     | IRAS_IRAS_60       |   60.4
+    | IRAS_IRAS_100      |    101
     | JCMT_SCUBA2_450    |    449
     | JCMT_SCUBA2_850    |    854
-    | PLANCK_HFI_217     |   1368
-    | PLANCK_HFI_353     |    839
-    | PLANCK_HFI_545     |    545
     | PLANCK_HFI_857     |    352
-    | SLOAN_SDSS_G       |   0.47
-    | SLOAN_SDSS_I       |   0.75
-    | SLOAN_SDSS_R       |   0.62
+    | PLANCK_HFI_545     |    545
+    | PLANCK_HFI_353     |    839
+    | PLANCK_HFI_217     |   1368
     | SLOAN_SDSS_U       |   0.36
+    | SLOAN_SDSS_G       |   0.47
+    | SLOAN_SDSS_R       |   0.62
+    | SLOAN_SDSS_I       |   0.75
     | SLOAN_SDSS_Z       |   0.89
     | SPITZER_IRAC_I1    |   3.55
-    | SPITZER_IRAC_I2    |    4.5
+    | SPITZER_IRAC_I2    |   4.50
     | SPITZER_IRAC_I3    |   5.72
     | SPITZER_IRAC_I4    |   7.88
-    | SPITZER_MIPS_160   |    156
     | SPITZER_MIPS_24    |   23.8
     | SPITZER_MIPS_70    |     72
-    | SWIFT_UVOT_B       |   0.43
-    | SWIFT_UVOT_U       |   0.35
+    | SPITZER_MIPS_160   |    156
+    | SWIFT_UVOT_UVW2    |   0.21
     | SWIFT_UVOT_UVM2    |   0.22
     | SWIFT_UVOT_UVW1    |   0.26
-    | SWIFT_UVOT_UVW2    |   0.21
+    | SWIFT_UVOT_U       |   0.35
+    | SWIFT_UVOT_B       |   0.43
     | SWIFT_UVOT_V       |   0.54
-    | TNG_NICS_H         |   1.63
-    | TNG_NICS_J         |   1.28
-    | TNG_NICS_K         |    2.2
-    | TNG_OIG_B          |   0.44
-    | TNG_OIG_R          |   0.64
     | TNG_OIG_U          |   0.37
+    | TNG_OIG_B          |   0.44
     | TNG_OIG_V          |   0.54
-    | UKIRT_UKIDSS_H     |   1.64
-    | UKIRT_UKIDSS_J     |   1.25
-    | UKIRT_UKIDSS_K     |   2.21
-    | UKIRT_UKIDSS_Y     |   1.03
+    | TNG_OIG_R          |   0.64
+    | TNG_NICS_J         |   1.28
+    | TNG_NICS_H         |   1.63
+    | TNG_NICS_K         |    2.2
     | UKIRT_UKIDSS_Z     |   0.88
+    | UKIRT_UKIDSS_Y     |   1.03
+    | UKIRT_UKIDSS_J     |   1.25
+    | UKIRT_UKIDSS_H     |   1.64
+    | UKIRT_UKIDSS_K     |   2.21
     | WISE_WISE_W1       |   3.39
     | WISE_WISE_W2       |   4.64
     | WISE_WISE_W3       |   12.6
