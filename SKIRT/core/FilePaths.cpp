@@ -165,3 +165,58 @@ string FilePaths::resource(string name)
 }
 
 ////////////////////////////////////////////////////////////////////
+
+namespace
+{
+    // returns true if the resource filename matches the requirements, false otherwise;
+    // see documentation of the resourceName() function for more details
+    bool matches(string resource, string type, const vector<string>& segments)
+    {
+        if (!StringUtils::endsWith(resource, type)) return false;
+        for (string segment : segments)
+        {
+            if (!StringUtils::contains(resource, segment)) return false;
+        }
+        return true;
+    }
+
+    // returns a human-readable message describing the specified requirements;
+    // see documentation of the resourceName() function for more details
+    string message(string type, const vector<string>& segments)
+    {
+        string msg = "type '" + type +"'";
+        if (!segments.empty())
+        {
+            msg += " with filename containing";
+            for (string segment : segments) msg += " '" + segment + "',";
+            msg.erase(msg.size()-1, 1);
+        }
+        return msg;
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
+string FilePaths::resourceName(string type, const vector<string>& segments)
+{
+    // initialize the resource paths if needed
+    std::call_once(_initialized, findResourcePaths);
+
+    // look for matching resource filename
+    string result;
+    for (const auto& pair : _resourcePaths)
+    {
+        const string& resource = pair.first;
+        if (matches(resource, type, segments))
+        {
+            // fail if there is ambiguity
+            if (!result.empty()) throw FATALERROR("Multiple resources matching " + message(type, segments));
+            result = resource;
+        }
+    }
+    // fail if not found
+    if (result.empty()) throw FATALERROR("No resources matching " + message(type, segments));
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////

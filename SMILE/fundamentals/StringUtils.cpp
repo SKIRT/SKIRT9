@@ -163,6 +163,20 @@ string StringUtils::toLower(string text)
 
 ////////////////////////////////////////////////////////////////////
 
+string StringUtils::toUpper(string text)
+{
+    // use the C++ function, which works with any character type (as opposed to the less portable C function)
+    // use the global C++ locale, which is set to the standard "C" locale in System::initialize()
+    std::locale loc;
+    for (auto& c : text)      // writable reference to character in string
+    {
+        c = std::toupper(c, loc);
+    }
+    return text;
+}
+
+////////////////////////////////////////////////////////////////////
+
 string StringUtils::toUpperFirst(string text)
 {
     if (!text.empty())

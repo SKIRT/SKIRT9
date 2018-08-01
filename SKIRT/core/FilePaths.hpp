@@ -87,6 +87,17 @@ public:
         If the function cannot locate the specified resource, a fatal error is thrown. */
     static string resource(string name);
 
+    /** This function returns the filename (without directory segments) for a resource with the
+        specified type and with a filename including the specified segments. The list of resources
+        scanned by this function is the same as that described for the resource() function.
+
+        For a resource to be considered by this function, the end of its filename (including the
+        filename extension) must match the specified type string, and the filename must also
+        contain each of the specified segments. If no resources or multiple resources match these
+        requirements, the function throws a fatal error. If a single resource matches, the function
+        returns its filename. */
+    static string resourceName(string type, const vector<string>& segments);
+
     //======================== Data Members ========================
 
 private:

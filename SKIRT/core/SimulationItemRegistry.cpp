@@ -16,6 +16,7 @@
 #include "BlackBodySED.hpp"
 #include "BlackBodySEDFamily.hpp"
 #include "BoxClipGeometryDecorator.hpp"
+#include "BroadBand.hpp"
 #include "BrokenExpDiskGeometry.hpp"
 #include "BruzualCharlotSED.hpp"
 #include "BruzualCharlotSEDFamily.hpp"
@@ -191,6 +192,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
 
     // Bands
     ItemRegistry::add<Band>();
+    ItemRegistry::add<BroadBand>();
     ItemRegistry::add<FileBand>();
     ItemRegistry::add<ListBand>();
 

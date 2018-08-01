@@ -63,6 +63,9 @@ public:
     /** Converts upper-case characters in the text string to lower case, and returns the result. */
     static string toLower(string text);
 
+    /** Converts lower-case characters in the text string to upper case, and returns the result. */
+    static string toUpper(string text);
+
     /** Converts the first character in the string to upper-case, if applicable, and returns the
         result. */
     static string toUpperFirst(string text);
