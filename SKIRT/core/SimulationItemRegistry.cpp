@@ -13,6 +13,7 @@
 #include "AdaptiveMeshSource.hpp"
 #include "AllSkyInstrument.hpp"
 #include "BandLuminosityNormalization.hpp"
+#include "BandWavelengthGrid.hpp"
 #include "BlackBodySED.hpp"
 #include "BlackBodySEDFamily.hpp"
 #include "BoxClipGeometryDecorator.hpp"
@@ -265,6 +266,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<DisjointWavelengthGrid>();
     ItemRegistry::add<LogWavelengthGrid>();
     ItemRegistry::add<NestedLogWavelengthGrid>();
+    ItemRegistry::add<BandWavelengthGrid>();
     ItemRegistry::add<FileWavelengthGrid>();
     ItemRegistry::add<ListWavelengthGrid>();
 

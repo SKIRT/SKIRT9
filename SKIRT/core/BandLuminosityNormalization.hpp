@@ -29,7 +29,7 @@ class BandLuminosityNormalization : public LuminosityNormalization
                   "source normalization through the specific luminosity for a given wavelength band")
 
     PROPERTY_ITEM(band, Band, "the wavelength band for which to provide the specific luminosity")
-        ATTRIBUTE_DEFAULT_VALUE(band, "ListBand")
+        ATTRIBUTE_DEFAULT_VALUE(band, "BroadBand")
 
     PROPERTY_ENUM(unitStyle, UnitStyle, "the luminosity unit style")
         ATTRIBUTE_DEFAULT_VALUE(unitStyle, "wavelengthmonluminosity")
