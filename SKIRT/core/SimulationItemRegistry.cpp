@@ -262,6 +262,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
 
     // wavelength grids
     ItemRegistry::add<WavelengthGrid>();
+    ItemRegistry::add<DisjointWavelengthGrid>();
     ItemRegistry::add<LogWavelengthGrid>();
     ItemRegistry::add<NestedLogWavelengthGrid>();
     ItemRegistry::add<FileWavelengthGrid>();

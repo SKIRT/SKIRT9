@@ -11,7 +11,7 @@
 
 void LogWavelengthGrid::setupSelfBefore()
 {
-    WavelengthGrid::setupSelfBefore();
+    DisjointWavelengthGrid::setupSelfBefore();
 
     // verify property values
     if (_maxWavelength <= _minWavelength) throw FATALERROR("the longest wavelength should be larger than the shortest");

@@ -11,7 +11,7 @@
 
 void NestedLogWavelengthGrid::setupSelfBefore()
 {
-    WavelengthGrid::setupSelfBefore();
+    DisjointWavelengthGrid::setupSelfBefore();
 
     // verify property values
     if (_minWavelengthSubGrid <= _minWavelengthBaseGrid ||

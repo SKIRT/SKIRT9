@@ -6,17 +6,17 @@
 #ifndef NESTEDLOGWAVELENGTHGRID_HPP
 #define NESTEDLOGWAVELENGTHGRID_HPP
 
-#include "WavelengthGrid.hpp"
+#include "DisjointWavelengthGrid.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-/** NestedLogWavelengthGrid is a subclass of the WavelengthGrid class representing hybrid grids
+/** NestedLogWavelengthGrid is a subclass of the DisjointWavelengthGrid class representing hybrid grids
     consisting of a logarithmically distributed wavelength grid in which another, more compact
     logarithmic grid is embedded. It can be very useful to get higher-resolution spectra in a
     particular wavelength grid while still covering a broad wavelength range. */
-class NestedLogWavelengthGrid : public WavelengthGrid
+class NestedLogWavelengthGrid : public DisjointWavelengthGrid
 {
-    ITEM_CONCRETE(NestedLogWavelengthGrid, WavelengthGrid, "a nested logarithmic wavelength grid")
+    ITEM_CONCRETE(NestedLogWavelengthGrid, DisjointWavelengthGrid, "a nested logarithmic wavelength grid")
 
     PROPERTY_DOUBLE(minWavelengthBaseGrid, "the shortest wavelength of the low-resolution grid")
         ATTRIBUTE_QUANTITY(minWavelengthBaseGrid, "wavelength")

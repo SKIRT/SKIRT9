@@ -25,7 +25,7 @@ void LaunchedPacketsProbe::setupSelfAfter()
 
     // resize the counts table with the appropriate number of sources and number of wavelengths
     int numSources = find<SourceSystem>()->sources().size();
-    int numWavelengths = _probeWavelengthGrid->numWavelengths();
+    int numWavelengths = _probeWavelengthGrid->numBins();
     _counts.resize(numSources, numWavelengths);
 }
 
@@ -37,12 +37,9 @@ void LaunchedPacketsProbe::probePhotonPacket(const PhotonPacket* pp)
     if (!pp->hasPrimaryOrigin()) return;
     int h = pp->compIndex();
 
-    // get the wavelength bin index, and abort if the wavelength falls outside of our grid
-    int ell = _probeWavelengthGrid->ell(pp->sourceRestFrameWavelength());
-    if (ell < 0) return;
-
-    // count the packet
-    LockFree::add(_counts(h,ell), 1);
+    // count the packet for each wavelength bin index
+    for (int ell : _probeWavelengthGrid->bins(pp->sourceRestFrameWavelength()))
+        LockFree::add(_counts(h,ell), 1);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -63,7 +60,7 @@ void LaunchedPacketsProbe::probeRun()
     // write the rows
     for (int ell=0; ell!=numWavelengths; ++ell)
     {
-        double lambda = _probeWavelengthGrid->lambda(ell);
+        double lambda = _probeWavelengthGrid->wavelength(ell);
 
         std::vector<double> row({units->owavelength(lambda), 0.});
         for (int h=0; h!=numSources; ++h)

@@ -6,11 +6,11 @@
 #ifndef LISTWAVELENGTHGRID_HPP
 #define LISTWAVELENGTHGRID_HPP
 
-#include "WavelengthGrid.hpp"
+#include "DisjointWavelengthGrid.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
-/** ListWavelengthGrid is a subclass of the WavelengthGrid class that allows an arbitrary
+/** ListWavelengthGrid is a subclass of the DisjointWavelengthGrid class that allows an arbitrary
     wavelength grid to be fully specified inside the configuration file (i.e. without referring to
     an input file). It is intended for use in cases where there are just a few wavelengths, but
     nothing keeps the user from specifying a long list. The order of the specified wavelengths is
@@ -19,10 +19,10 @@
     The class constructs either a consecutive range of adjacent wavelength bins (when \em
     relativeHalfWidth is zero, the default value) or a set of distinct nonadjacent wavelength bins
     (with the relative half bin width given by a nonzero value of \em relativeHalfWidth). Refer to
-    the WavelengthGrid class for more details. */
-class ListWavelengthGrid : public WavelengthGrid
+    the DisjointWavelengthGrid class for more details. */
+class ListWavelengthGrid : public DisjointWavelengthGrid
 {
-    ITEM_CONCRETE(ListWavelengthGrid, WavelengthGrid, "a list of one or more wavelengths")
+    ITEM_CONCRETE(ListWavelengthGrid, DisjointWavelengthGrid, "a list of one or more wavelengths")
 
     PROPERTY_DOUBLE_LIST(wavelengths, "the characteristic wavelength for each bin")
         ATTRIBUTE_QUANTITY(wavelengths, "wavelength")

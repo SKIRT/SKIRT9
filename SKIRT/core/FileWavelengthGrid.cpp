@@ -10,7 +10,7 @@
 
 void FileWavelengthGrid::setupSelfBefore()
 {
-    WavelengthGrid::setupSelfBefore();
+    DisjointWavelengthGrid::setupSelfBefore();
 
     // read the wavelengths from the input file
     TextInFile infile(this, _filename, "wavelength grid");

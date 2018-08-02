@@ -18,24 +18,30 @@
 
     This abstract base class implements the key operations offered by all Band objects: obtaining
     the transmission at a given wavelength, calculating the mean specific luminosity for a given
-    %SED after convolving it with the transmission curve, and determining the pivot wavelength (a
-    characteristic wavelength of the band at which the mean specific luminosity can be easily
-    converted between wavelength and frequency representations). Subclasses are responsible only
-    for acquiring and serving the data points defining the transmission curve for the band.
+    %SED after convolving it with the transmission curve, and determining the pivot wavelength.
+    Subclasses are responsible only for acquiring and serving the data points defining the
+    transmission curve for the band.
 
     Refer to the appendix in Camps et al. 2016 (MNRAS 462, 1057-1075) for a brief introduction of
     the relevant concepts and a derivation of the corresponding formulas. For the purposes of this
-    class, a band is defined through its transmission curve \f$T(\lambda)\f$. The normalized
-    transmission (or the transmission probablity) at a given wavelength can then be written as \f[
-    T_\text{norm}(\lambda) = \frac{ T(\lambda) } { \int T(\lambda) \,\mathrm{d}\lambda }. \f]
+    class, a band is defined through its arbitrarily scaled transmission curve \f$T(\lambda)\f$.
+    The relative transmission at a given wavelength can then be written as \f[
+    T_\text{rel}(\lambda) = \frac{ T(\lambda) } { \max[ T(\lambda) ] }. \f]
 
     Given a spectral energy distribution \f$L_\lambda(\lambda)\f$, the mean specific luminosity
-    \f$\left<L_\lambda\right>\f$ can then be obtained through \f[ \left<L_\lambda\right> = \frac{
-    \int L_\lambda(\lambda)T(\lambda) \,\mathrm{d}\lambda } { \int T(\lambda) \,\mathrm{d}\lambda
-    }. \f]
+    over the band \f$\left<L_\lambda\right>\f$ can then be obtained through \f[
+    \left<L_\lambda\right> = \frac{ \int L_\lambda(\lambda)T(\lambda) \,\mathrm{d}\lambda } { \int
+    T(\lambda) \,\mathrm{d}\lambda }. \f]
 
-    Furthermore, the pivot wavelength is given by \f[ \lambda_\mathrm{pivot} = \sqrt{ \frac{ \int
-    T(\lambda) \,\mathrm{d}\lambda } { \int T(\lambda) \,\mathrm{d}\lambda/\lambda^2 } }. \f]
+    The pivot wavelength of the band is defined as the wavelength at which the mean specific
+    luminosity can be properly converted between wavelength and frequency representations. It is
+    given by \f[ \lambda_\mathrm{pivot} = \sqrt{ \frac{ \int T(\lambda) \,\mathrm{d}\lambda } {
+    \int T(\lambda) \,\mathrm{d}\lambda/\lambda^2 } }. \f]
+
+    The effective width of the band is defined as the horizontal size of a rectangle with height
+    equal to the maximum transmission and with the same area as the one covered by the band's
+    transmission curve. It is given by \f[ W_\mathrm{eff} = \frac{ \int T(\lambda)
+    \,\mathrm{d}\lambda } { \max[ T(\lambda) ] }. \f]
 
     As set forth by Camps et al. 2016, for energy measuring devices (bolometers) the total system
     transmission \f$T(\lambda)\f$ is usually given by the instrument designers, and it can be used
@@ -67,8 +73,8 @@ public:
         nonzero. */
     Range wavelengthRange() const;
 
-    /** This function returns the normalized transmission \f$T_\text{norm}(\lambda)\f$ for this
-        band at the specified wavelength. See the class header for the relevant formulas. */
+    /** This function returns the relative transmission \f$T_\text{rel}(\lambda)\f$ for this band
+        at the specified wavelength. See the class header for the relevant formulas. */
     double transmission(double wavelength) const;
 
     /** This function returns the mean specific luminosity \f$\left<L_\lambda\right>\f$ for a given
@@ -77,9 +83,15 @@ public:
     double meanSpecificLuminosity(const Array& lambdav, const Array& pv) const;
 
     /** This function returns the pivot wavelength for this band, i.e. the wavelength at which the
-        mean specific luminosity can be easily converted between wavelength and frequency
+        mean specific luminosity can be properly converted between wavelength and frequency
         representations. See the class header for the relevant formulas. */
     double pivotWavelength() const;
+
+    /** This function returns the effective width for this band, i.e. the horizontal size of a
+        rectangle with height equal to the maximum transmission and with the same area as the one
+        covered by the band's transmission curve. See the class header for the relevant formulas.
+        */
+    double effectiveWidth() const;
 
     //============== Functions to be implemented in subclasses ============
 
@@ -107,6 +119,7 @@ private:
     const double* _lambdav{nullptr};
     const double* _transv{nullptr};
     double _pivot{0.};
+    double _width{0.};
 };
 
 ////////////////////////////////////////////////////////////////////

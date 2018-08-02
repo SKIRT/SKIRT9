@@ -88,8 +88,8 @@ void FluxRecorder::finalizeConfiguration()
 {
     // get array lengths
     _numPixelsInFrame = _numPixelsX * _numPixelsY;  // convert to size_t before calculating lenIFU
-    size_t lenSED = _includeFluxDensity ? _lambdagrid->numWavelengths() : 0;
-    size_t lenIFU = _includeSurfaceBrightness ? _numPixelsInFrame * _lambdagrid->numWavelengths() : 0;
+    size_t lenSED = _includeFluxDensity ? _lambdagrid->numBins() : 0;
+    size_t lenIFU = _includeSurfaceBrightness ? _numPixelsInFrame * _lambdagrid->numBins() : 0;
 
     // do not try to record components if there is no medium
     _recordTotalOnly = !_recordComponents || !_hasMedium;
@@ -151,118 +151,121 @@ void FluxRecorder::detect(const PhotonPacket* pp, int l, double distance)
     // abort if we're not recording integrated fluxes and the photon packet arrives outside of the frame
     if (!_includeFluxDensity && l < 0) return;
 
-    // get the wavelength bin index, and abort if the wavelength falls outside of our grid
-    int ell = _lambdagrid->ell(pp->wavelength());
-    if (ell < 0) return;
-
-    // ask the medium system to calculate the optical depth
-    double taupath = 0;
-    if (_hasMedium)
+    // get the wavelength bin indices that overlap the photon packet wavelength and perform recording for each
+    for (int ell : _lambdagrid->bins(pp->wavelength()))
     {
-        // TODO: taupath = opticalDepth(pp, distance);
-    }
-
-    // get the luminosity contribution from the photon packet and adjust for near distance if needed
-    double L = pp->luminosity();
-    if (distance < _distance)
-    {
-        double r = _pixelSizeAverage / (2.*distance);
-        double rar = r / atan(r);
-        L *= rar*rar;
-    }
-
-    // apply extinction
-    double Lext = L * exp(-taupath);
-
-    // get number of scatterings (because we use it a lot)
-    int numScatt = pp->numScatt();
-
-    // record in SED arrays
-    if (_includeFluxDensity)
-    {
-        if (_recordTotalOnly)
+        // ask the medium system to calculate the optical depth
+        double taupath = 0;
+        if (_hasMedium)
         {
-            LockFree::add(_sed[Total][ell], L);
+            // TODO: taupath = opticalDepth(pp, distance);
         }
-        else
+
+        // get the luminosity contribution from the photon packet,
+        // taking into account the transmission for the detector bin at this wavelength
+        double L = pp->luminosity() * _lambdagrid->transmission(ell, pp->wavelength());
+
+        // adjust luminosity for near distance if needed
+        if (distance < _distance)
         {
-            if (pp->hasPrimaryOrigin())
+            double r = _pixelSizeAverage / (2.*distance);
+            double rar = r / atan(r);
+            L *= rar*rar;
+        }
+
+        // apply extinction
+        double Lext = L * exp(-taupath);
+
+        // get number of scatterings (because we use it a lot)
+        int numScatt = pp->numScatt();
+
+        // record in SED arrays
+        if (_includeFluxDensity)
+        {
+            if (_recordTotalOnly)
             {
-                if (numScatt==0)
-                {
-                    LockFree::add(_sed[Transparent][ell], L);
-                    LockFree::add(_sed[PrimaryDirect][ell], Lext);
-                }
-                else
-                {
-                    LockFree::add(_sed[PrimaryScattered][ell], Lext);
-                    if (numScatt<=_numScatteringLevels)
-                        LockFree::add(_sed[PrimaryScatteredLevel+numScatt-1][ell], Lext);
-                }
+                LockFree::add(_sed[Total][ell], L);
             }
             else
             {
-                if (numScatt==0) LockFree::add(_sed[SecondaryDirect][ell], Lext);
-                else LockFree::add(_sed[SecondaryScattered][ell], Lext);
-            }
-        }
-        if (_recordPolarization)
-        {
-            LockFree::add(_sed[TotalQ][ell], Lext*pp->stokesQ());
-            LockFree::add(_sed[TotalU][ell], Lext*pp->stokesU());
-            LockFree::add(_sed[TotalV][ell], Lext*pp->stokesV());
-        }
-    }
-
-    // record in IFU arrays
-    if (_includeSurfaceBrightness && l>=0)
-    {
-        size_t lell = l + ell*_numPixelsInFrame;
-
-        if (_recordTotalOnly)
-        {
-            LockFree::add(_ifu[Total][lell], L);
-        }
-        else
-        {
-            if (pp->hasPrimaryOrigin())
-            {
-                if (numScatt==0)
+                if (pp->hasPrimaryOrigin())
                 {
-                    LockFree::add(_ifu[Transparent][lell], L);
-                    LockFree::add(_ifu[PrimaryDirect][lell], Lext);
+                    if (numScatt==0)
+                    {
+                        LockFree::add(_sed[Transparent][ell], L);
+                        LockFree::add(_sed[PrimaryDirect][ell], Lext);
+                    }
+                    else
+                    {
+                        LockFree::add(_sed[PrimaryScattered][ell], Lext);
+                        if (numScatt<=_numScatteringLevels)
+                            LockFree::add(_sed[PrimaryScatteredLevel+numScatt-1][ell], Lext);
+                    }
                 }
                 else
                 {
-                    LockFree::add(_ifu[PrimaryScattered][lell], Lext);
-                    if (numScatt<=_numScatteringLevels)
-                        LockFree::add(_ifu[PrimaryScatteredLevel+numScatt-1][lell], Lext);
+                    if (numScatt==0) LockFree::add(_sed[SecondaryDirect][ell], Lext);
+                    else LockFree::add(_sed[SecondaryScattered][ell], Lext);
                 }
+            }
+            if (_recordPolarization)
+            {
+                LockFree::add(_sed[TotalQ][ell], Lext*pp->stokesQ());
+                LockFree::add(_sed[TotalU][ell], Lext*pp->stokesU());
+                LockFree::add(_sed[TotalV][ell], Lext*pp->stokesV());
+            }
+        }
+
+        // record in IFU arrays
+        if (_includeSurfaceBrightness && l>=0)
+        {
+            size_t lell = l + ell*_numPixelsInFrame;
+
+            if (_recordTotalOnly)
+            {
+                LockFree::add(_ifu[Total][lell], L);
             }
             else
             {
-                if (numScatt==0) LockFree::add(_ifu[SecondaryDirect][lell], Lext);
-                else LockFree::add(_ifu[SecondaryScattered][lell], Lext);
+                if (pp->hasPrimaryOrigin())
+                {
+                    if (numScatt==0)
+                    {
+                        LockFree::add(_ifu[Transparent][lell], L);
+                        LockFree::add(_ifu[PrimaryDirect][lell], Lext);
+                    }
+                    else
+                    {
+                        LockFree::add(_ifu[PrimaryScattered][lell], Lext);
+                        if (numScatt<=_numScatteringLevels)
+                            LockFree::add(_ifu[PrimaryScatteredLevel+numScatt-1][lell], Lext);
+                    }
+                }
+                else
+                {
+                    if (numScatt==0) LockFree::add(_ifu[SecondaryDirect][lell], Lext);
+                    else LockFree::add(_ifu[SecondaryScattered][lell], Lext);
+                }
+            }
+            if (_recordPolarization)
+            {
+                LockFree::add(_ifu[TotalQ][lell], Lext*pp->stokesQ());
+                LockFree::add(_ifu[TotalU][lell], Lext*pp->stokesU());
+                LockFree::add(_ifu[TotalV][lell], Lext*pp->stokesV());
             }
         }
-        if (_recordPolarization)
-        {
-            LockFree::add(_ifu[TotalQ][lell], Lext*pp->stokesQ());
-            LockFree::add(_ifu[TotalU][lell], Lext*pp->stokesU());
-            LockFree::add(_ifu[TotalV][lell], Lext*pp->stokesV());
-        }
-    }
 
-    // record statistics for both SEDs and IFUs
-    if (_recordStatistics)
-    {
-        ContributionList* contributionList = _contributionLists.local();
-        if (!contributionList->hasHistoryIndex(pp->historyIndex()))
+        // record statistics for both SEDs and IFUs
+        if (_recordStatistics)
         {
-            recordContributions(contributionList);
-            contributionList->reset(pp->historyIndex());
+            ContributionList* contributionList = _contributionLists.local();
+            if (!contributionList->hasHistoryIndex(pp->historyIndex()))
+            {
+                recordContributions(contributionList);
+                contributionList->reset(pp->historyIndex());
+            }
+            contributionList->addContribution(ell, l, Lext);
         }
-        contributionList->addContribution(ell, l, Lext);
     }
 }
 
@@ -298,22 +301,22 @@ void FluxRecorder::calibrateAndWrite()
     // convert from recorded quantities to output quantities and from internal units to user-selected output units
     // (for performance reasons, determine the units scaling factor only once for each wavelength)
     Units* units = _parentItem->find<Units>();
-    int numWavelengths = _lambdagrid->numWavelengths();
+    int numWavelengths = _lambdagrid->numBins();
     for (int ell=0; ell!=numWavelengths; ++ell)
     {
         // SEDs
         if (_includeFluxDensity)
         {
-            double factor = 1. / fourpid2 / _lambdagrid->dlambda(ell)
-                            * units->ofluxdensityWavelength(_lambdagrid->lambda(ell), 1.)
+            double factor = 1. / fourpid2 / _lambdagrid->effectiveWidth(ell)
+                            * units->ofluxdensityWavelength(_lambdagrid->wavelength(ell), 1.)
                                          ;
             for (auto& array : _sed) if (array.size()) array[ell] *= factor;
         }
         // IFUs
         if (_includeSurfaceBrightness)
         {
-            double factor = 1. / fourpid2 / omega / _lambdagrid->dlambda(ell)
-                            * units->osurfacebrightnessWavelength(_lambdagrid->lambda(ell), 1.);
+            double factor = 1. / fourpid2 / omega / _lambdagrid->effectiveWidth(ell)
+                            * units->osurfacebrightnessWavelength(_lambdagrid->wavelength(ell), 1.);
             size_t begin = ell * _numPixelsInFrame;
             size_t end = begin + _numPixelsInFrame;
             for (auto& array : _ifu) if (array.size()) for (size_t lell=begin; lell!=end; ++lell) array[lell] *= factor;
@@ -380,7 +383,7 @@ void FluxRecorder::calibrateAndWrite()
         // write the column data
         for (int ell=0; ell!=numWavelengths; ++ell)
         {
-            vector<double> values({units->owavelength(_lambdagrid->lambda(ell))});
+            vector<double> values({units->owavelength(_lambdagrid->wavelength(ell))});
             for (const Array* array : sedArrays) values.push_back(array->size() ? (*array)[ell] : 0.);
             sedFile.writeRow(values);
         }
@@ -401,7 +404,7 @@ void FluxRecorder::calibrateAndWrite()
             // write the column data
             for (int ell=0; ell!=numWavelengths; ++ell)
             {
-                vector<double> values({units->owavelength(_lambdagrid->lambda(ell))});
+                vector<double> values({units->owavelength(_lambdagrid->wavelength(ell))});
                 for (int k=0; k<=maxContributionPower; ++k) values.push_back(_wsed[k][ell]);
                 statFile.writeRow(values);
             }

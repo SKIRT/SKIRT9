@@ -17,7 +17,7 @@ void LuminosityProbe::probeSetup()
 
     // select "local" or default wavelength grid
     auto probeWavelengthGrid = wavelengthGrid() ? wavelengthGrid() : find<InstrumentSystem>()->find<WavelengthGrid>();
-    int numWavelengths = probeWavelengthGrid->numWavelengths();
+    int numWavelengths = probeWavelengthGrid->numBins();
 
     // get the sources
     const auto& sources = find<SourceSystem>()->sources();
@@ -34,8 +34,8 @@ void LuminosityProbe::probeSetup()
     // write the rows
     for (int ell=0; ell!=numWavelengths; ++ell)
     {
-        double lambda = probeWavelengthGrid->lambda(ell);
-        double dlambda = probeWavelengthGrid->dlambda(ell);
+        double lambda = probeWavelengthGrid->wavelength(ell);
+        double dlambda = probeWavelengthGrid->effectiveWidth(ell);
         Array Llambdav(numSources);
         for (int i=0; i!=numSources; ++i) Llambdav[i] = sources[i]->specificLuminosity(lambda);
         double Llambdatot = Llambdav.sum();

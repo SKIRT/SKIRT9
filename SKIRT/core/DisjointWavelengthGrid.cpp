@@ -3,14 +3,14 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "WavelengthGrid.hpp"
+#include "DisjointWavelengthGrid.hpp"
 #include "FatalError.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-void WavelengthGrid::setupSelfAfter()
+void DisjointWavelengthGrid::setupSelfAfter()
 {
-    SimulationItem::setupSelfAfter();
+    WavelengthGrid::setupSelfAfter();
 
     // the subclass should have added wavelengths
     if (!_lambdav.size()) throw FATALERROR("Wavelength grid should have been initialized by subclass");
@@ -18,7 +18,7 @@ void WavelengthGrid::setupSelfAfter()
 
 ////////////////////////////////////////////////////////////////////
 
-void WavelengthGrid::setWavelengthRange(const Array& lambdav)
+void DisjointWavelengthGrid::setWavelengthRange(const Array& lambdav)
 {
     // copy and sort the specified characteristic wavelengths
     _lambdav = lambdav;
@@ -57,7 +57,7 @@ void WavelengthGrid::setWavelengthRange(const Array& lambdav)
 
 ////////////////////////////////////////////////////////////////////
 
-void WavelengthGrid::setWavelengthBins(const Array& lambdav, double relativeHalfWidth)
+void DisjointWavelengthGrid::setWavelengthBins(const Array& lambdav, double relativeHalfWidth)
 {
     // copy and sort the specified characteristic wavelengths
     _lambdav = lambdav;
@@ -100,42 +100,49 @@ void WavelengthGrid::setWavelengthBins(const Array& lambdav, double relativeHalf
 
 ////////////////////////////////////////////////////////////////////
 
-int WavelengthGrid::numWavelengths() const
+int DisjointWavelengthGrid::numBins() const
 {
     return _lambdav.size();
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double WavelengthGrid::lambda(int ell) const
+double DisjointWavelengthGrid::wavelength(int ell) const
 {
     return _lambdav[ell];
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double WavelengthGrid::dlambda(int ell) const
-{
-    return _dlambdav[ell];
-}
-
-////////////////////////////////////////////////////////////////////
-
-double WavelengthGrid::lambdaLeft(int ell) const
+double DisjointWavelengthGrid::leftBorder(int ell) const
 {
     return _lambdaleftv[ell];
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double WavelengthGrid::lambdaRight(int ell) const
+double DisjointWavelengthGrid::rightBorder(int ell) const
 {
     return _lambdarightv[ell];
 }
 
 ////////////////////////////////////////////////////////////////////
 
-int WavelengthGrid::ell(double lambda) const
+double DisjointWavelengthGrid::effectiveWidth(int ell) const
+{
+    return _dlambdav[ell];
+}
+
+////////////////////////////////////////////////////////////////////
+
+double DisjointWavelengthGrid::transmission(int /*ell*/, double /*lambda*/) const
+{
+    return 1.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+vector<int> DisjointWavelengthGrid::bins(double lambda) const
 {
     // get the index of the phantom wavelength bin defined by the list of all K borders (where K=N+1 or K=N*2)
     //  0  => out of range on the left side
@@ -143,21 +150,12 @@ int WavelengthGrid::ell(double lambda) const
     size_t index = std::upper_bound(begin(_borderv), end(_borderv), lambda) - begin(_borderv);
 
     // map this index to the actual wavelength bin index, or to "out of range"
-    return _ellv[index];
-}
+    int ell = _ellv[index];
 
-////////////////////////////////////////////////////////////////////
-
-const Array& WavelengthGrid::lambdav() const
-{
-    return _lambdav;
-}
-
-////////////////////////////////////////////////////////////////////
-
-const Array& WavelengthGrid::dlambdav() const
-{
-    return _dlambdav;
+    // wrap the result in a list
+    vector<int> result;
+    if (ell >= 0) result.push_back(ell);
+    return result;
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -6,15 +6,15 @@
 #ifndef LOGWAVELENGTHGRID_HPP
 #define LOGWAVELENGTHGRID_HPP
 
-#include "WavelengthGrid.hpp"
+#include "DisjointWavelengthGrid.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-/** LogWavelengthGrid is a subclass of the WavelengthGrid class representing logarithmically
-    distributed wavelength grids. */
-class LogWavelengthGrid : public WavelengthGrid
+/** LogWavelengthGrid is a subclass of the DisjointWavelengthGrid class representing
+    logarithmically distributed wavelength grids. */
+class LogWavelengthGrid : public DisjointWavelengthGrid
 {
-    ITEM_CONCRETE(LogWavelengthGrid, WavelengthGrid, "a logarithmic wavelength grid")
+    ITEM_CONCRETE(LogWavelengthGrid, DisjointWavelengthGrid, "a logarithmic wavelength grid")
 
     PROPERTY_DOUBLE(minWavelength, "the shortest wavelength")
         ATTRIBUTE_QUANTITY(minWavelength, "wavelength")
@@ -31,11 +31,6 @@ class LogWavelengthGrid : public WavelengthGrid
         ATTRIBUTE_DEFAULT_VALUE(numWavelengths, "25")
 
     ITEM_END()
-
-    /** \fn numWavelengths
-        Implementation note: this function hides the WavelengthGrid::numWavelengths() function with
-        the same name; this is not a problem because once the wavelength grid has been constructed,
-        both functions return the same value. */
 
     //============= Construction - Setup - Destruction =============
 

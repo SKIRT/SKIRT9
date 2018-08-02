@@ -27,6 +27,9 @@ void Band::setupSelfAfter()
         integral += trans*dlambda/lambda/lambda;
     }
     _pivot = 1. / sqrt(integral);
+
+    // calculate the effective width, assuming a normalized transmission curve
+    _width = 1. / *std::max_element(_transv, _transv+_size);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -43,7 +46,10 @@ double Band::transmission(double wavelength) const
     // interpolate from the normalized transmission curve
     size_t index = std::upper_bound(_lambdav, _lambdav+_size, wavelength) - _lambdav;
     if (index == 0 || index >= _size) return 0.;
-    return NR::interpolateLinLin(wavelength, _lambdav[index-1], _lambdav[index], _transv[index-1], _transv[index]);
+    double T = NR::interpolateLinLin(wavelength, _lambdav[index-1], _lambdav[index], _transv[index-1], _transv[index]);
+
+    // scale to relative transmission
+    return T * _width;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -85,6 +91,13 @@ double Band::meanSpecificLuminosity(const Array& lambdav, const Array& pv) const
 double Band::pivotWavelength() const
 {
     return _pivot;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double Band::effectiveWidth() const
+{
+    return _width;
 }
 
 ////////////////////////////////////////////////////////////////////
