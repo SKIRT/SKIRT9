@@ -32,6 +32,7 @@
 #include "CylindricalClipGeometryDecorator.hpp"
 #include "DefaultMediaDensityCutsProbe.hpp"
 #include "EinastoGeometry.hpp"
+#include "ElectronMix.hpp"
 #include "ExpDiskGeometry.hpp"
 #include "ExtinctionOnlyMode.hpp"
 #include "ExtragalacticUnits.hpp"
@@ -91,6 +92,7 @@
 #include "SersicGeometry.hpp"
 #include "ShellGeometry.hpp"
 #include "SineSquarePolarizationProfile.hpp"
+#include "SingleGrainDustMix.hpp"
 #include "SourceSystem.hpp"
 #include "SpecificLuminosityNormalization.hpp"
 #include "SphericalBackgroundSource.hpp"
@@ -266,6 +268,11 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<CubicSplineSmoothingKernel>();
     ItemRegistry::add<ScaledGaussianSmoothingKernel>();
     ItemRegistry::add<UniformSmoothingKernel>();
+
+    // material mixes
+    ItemRegistry::add<MaterialMix>();
+    ItemRegistry::add<SingleGrainDustMix>();
+    ItemRegistry::add<ElectronMix>();
 
     // wavelength grids
     ItemRegistry::add<WavelengthGrid>();
