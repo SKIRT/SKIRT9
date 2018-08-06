@@ -33,6 +33,7 @@
 #include "DefaultMediaDensityCutsProbe.hpp"
 #include "EinastoGeometry.hpp"
 #include "ExpDiskGeometry.hpp"
+#include "ExtinctionOnlyMode.hpp"
 #include "ExtragalacticUnits.hpp"
 #include "FileBand.hpp"
 #include "FileSED.hpp"
@@ -134,6 +135,11 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<SIUnits>();
     ItemRegistry::add<StellarUnits>();
     ItemRegistry::add<ExtragalacticUnits>();
+
+    // simulation modes
+    ItemRegistry::add<SimulationMode>();
+    ItemRegistry::add<NoMediaMode>();
+    ItemRegistry::add<ExtinctionOnlyMode>();
 
     // source system and sources
     ItemRegistry::add<SourceSystem>();

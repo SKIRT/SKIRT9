@@ -300,11 +300,8 @@ void SkirtCommandLineHandler::doSimulation(size_t index)
         // put the simulation in emulation mode if requested
         if (_args.isPresent("-e"))
         {
-            throw FATALERROR("Emulation mode (-e option) is not supported at this time");
             simulation->log()->setLowestLevel(Log::Level::Error);
-            simulation->setEmulationMode();
-            //auto pds = simulation->find<PanDustSystem>(false);
-            //if (pds) pds->setEmulationMode();
+            simulation->config()->setEmulationMode();
         }
 
         // issue welcome message to the simulation log file

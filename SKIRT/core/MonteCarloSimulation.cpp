@@ -28,6 +28,7 @@ void MonteCarloSimulation::setupSimulation()
 {
     // perform regular setup for the hierarchy and wait for all processes to finish
     TimeLogger logger(log(), "setup");
+    _config->setup();           // first of all perform setup for the configuration object
     SimulationItem::setup();
     wait("setup");
 
@@ -53,17 +54,9 @@ void MonteCarloSimulation::setupSelfAfter()
 
 ////////////////////////////////////////////////////////////////////
 
-void MonteCarloSimulation::setEmulationMode()
+Configuration* MonteCarloSimulation::config() const
 {
-    _emulationMode = true;
-    _numPackets = 0;
-}
-
-////////////////////////////////////////////////////////////////////
-
-bool MonteCarloSimulation::emulationMode()
-{
-    return _emulationMode;
+    return _config;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -81,7 +74,7 @@ void MonteCarloSimulation::runSimulation()
         TimeLogger logger(log(), "the run");
 
         // shoot photons from primary sources, if needed
-        size_t Npp = numPackets() * sourceSystem()->numPacketsMultiplier();
+        size_t Npp = _config->numPrimaryPackets();
         if (!Npp)
         {
             log()->warning("Skipping primary emission because no photon packets were requested");

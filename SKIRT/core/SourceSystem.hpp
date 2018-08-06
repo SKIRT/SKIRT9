@@ -38,13 +38,13 @@ class ProbePhotonPacketInterface;
 
     For each primary emission segment (i.e. a sequence of photon packet launches) in the
     simulation, the MonteCarloSimulation object uses the following procedure. It first determines
-    the number of photon packets to be launched by multiplying its own \em numPackets property by
-    the SourceSystem \em emissionMultiplier property. This number \f$N\f$ is passed to the
-    SourceSystem::prepareForLaunch() function in serial mode. Subsequently, the
-    MonteCarloSimulation object launches \f$N\f$ photon packets in (potentially) parallel mode,
-    labeling each of the packets with a \em history \em index in the range \f$0,...,N-1\f$. While
-    parallel execution threads are working on photon packets in various \em chunks of this range,
-    each thread handles photon packets with consecutive history indices within a given chunk.
+    the number of photon packets to be launched from the simulation configuration. This number
+    \f$N\f$ is passed to the SourceSystem::prepareForLaunch() function in serial mode.
+    Subsequently, the MonteCarloSimulation object launches \f$N\f$ photon packets in (potentially)
+    parallel mode, labeling each of the packets with a \em history \em index in the range
+    \f$0,...,N-1\f$. While parallel execution threads are working on photon packets in various \em
+    chunks of this range, each thread handles photon packets with consecutive history indices
+    within a given chunk.
 
     To achieve the goals described above, the SourceSystem::prepareForLaunch() function maps
     consecutive history index ranges to each of the sources being held. This mapping is also passed
@@ -83,12 +83,6 @@ class SourceSystem : public SimulationItem, public WavelengthRangeInterface
         ATTRIBUTE_MIN_VALUE(sourceBias, "[0")
         ATTRIBUTE_MAX_VALUE(sourceBias, "1]")
         ATTRIBUTE_DEFAULT_VALUE(sourceBias, "0.5")
-
-    PROPERTY_DOUBLE(numPacketsMultiplier,
-                    "the multiplier on the number of photon packets launched from primary sources")
-        ATTRIBUTE_MIN_VALUE(numPacketsMultiplier, "]0")
-        ATTRIBUTE_MAX_VALUE(numPacketsMultiplier, "1000]")
-        ATTRIBUTE_DEFAULT_VALUE(numPacketsMultiplier, "1")
 
     ITEM_END()
 
