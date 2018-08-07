@@ -7,6 +7,7 @@
 #define MATERIALMIX_HPP
 
 #include "SimulationItem.hpp"
+class Random;
 
 ////////////////////////////////////////////////////////////////////
 
@@ -17,12 +18,13 @@
     three of these material types.
 
     The MaterialMix base class offers no properties nor functions (other than those common to all
-    simulation items). Subclasses are expected to implement the relevant "XxxMixInterface"
-    interfaces depending on the represented material type(s) and depending on the level of support
-    offered for each. For example, a dust mix describing a single representative grain may
-    implement just the DustExtinctionMixInterface and the ScatteringMixInterface, while other dust
-    mixes may also implement more advanced interfaces that provide properties needed to calculate
-    stochastic dust heating.
+    simulation items and a function that allows subclasses to obtain the simulation's random
+    generator). Subclasses are expected to implement the relevant "XxxMixInterface" interfaces
+    depending on the represented material type(s) and depending on the level of support offered for
+    each. For example, a dust mix describing a single representative grain may implement just the
+    DustExtinctionMixInterface and the ScatteringMixInterface, while other dust mixes may also
+    implement more advanced interfaces that provide properties needed to calculate stochastic dust
+    heating.
 
     In any case, each subclass must implement at least one XxxExtinctionMixInterface where Xxx is
     Dust, Electron, or Gas, because that is how the Medium object to which the MaterialMix is
@@ -43,6 +45,24 @@ class MaterialMix : public SimulationItem
 {
     ITEM_ABSTRACT(MaterialMix, SimulationItem, "a material mix")
     ITEM_END()
+
+    //============= Construction - Setup - Destruction =============
+
+protected:
+    /** This function caches the simulation's random generator for use by subclasses. */
+    void setupSelfBefore() override;
+
+    //======================== Other Functions =======================
+
+protected:
+    /** This function returns the simulation's random generator as a service to subclasses. */
+    Random* random() const { return _random; }
+
+    //======================== Data Members ========================
+
+private:
+    // data member initialized during setup
+    Random* _random{nullptr};
 };
 
 ////////////////////////////////////////////////////////////////////

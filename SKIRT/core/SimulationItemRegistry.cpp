@@ -65,6 +65,7 @@
 #include "MappingsSEDFamily.hpp"
 #include "MarastonSED.hpp"
 #include "MarastonSEDFamily.hpp"
+#include "MeanTrustBenchmarkDustMix.hpp"
 #include "MollweideProjection.hpp"
 #include "MonteCarloSimulation.hpp"
 #include "MultiGaussianExpansionGeometry.hpp"
@@ -272,6 +273,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // material mixes
     ItemRegistry::add<MaterialMix>();
     ItemRegistry::add<SingleGrainDustMix>();
+    ItemRegistry::add<MeanTrustBenchmarkDustMix>();
     ItemRegistry::add<ElectronMix>();
 
     // wavelength grids
