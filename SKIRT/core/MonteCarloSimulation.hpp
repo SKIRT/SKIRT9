@@ -14,6 +14,8 @@
 #include "SourceSystem.hpp"
 #include <atomic>
 
+#include "MaterialMix.hpp"
+
 //////////////////////////////////////////////////////////////////////
 
 /** The MonteCarloSimulation class is the top-level class describing a SKIRT simulation. Running a
@@ -40,6 +42,9 @@ class MonteCarloSimulation : public Simulation
 
     PROPERTY_ITEM(sourceSystem, SourceSystem, "the source system")
         ATTRIBUTE_DEFAULT_VALUE(sourceSystem, "SourceSystem")
+
+    PROPERTY_ITEM(mix, MaterialMix, "the material mix")
+        ATTRIBUTE_DEFAULT_VALUE(mix, "MeanTrustBenchmarkDustMix")
 
     PROPERTY_ITEM(instrumentSystem, InstrumentSystem, "the instrument system")
         ATTRIBUTE_DEFAULT_VALUE(instrumentSystem, "InstrumentSystem")
