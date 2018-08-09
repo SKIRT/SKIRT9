@@ -129,8 +129,8 @@ public:
         \frac{3}{8}\,(t^2+1),\text{ with } -1<t<1. \f] The corresponding cumulative distribution is
         \f[ P(t) = \int_{-1}^t \frac{3}{8}\,(t'^2+1)\,\text{d}t' = \frac{1}{8}\,(t^3+3t+4). \f] The
         equation \f${\cal{X}} = P(t)\f$, with \f${\cal{X}}\f$ a uniform deviate, has a single
-        real-valued solution, \f[ t = \frac{p^{2/3}-1}{p^{1/3}} \quad\text{with}\quad p =
-        4{\cal{X}}-2 +\sqrt{16{\cal{X}}^2 -16{\cal{X}} +5}\f]
+        real-valued solution, \f[ t = p - \frac{1}{p} \quad\text{with}\quad p =
+        \left( 4{\cal{X}}-2 +\sqrt{16{\cal{X}}^2 -16{\cal{X}} +5} \right)^{1/3}\f]
 
         Once we have selected a random scattering angle \f$\theta=\arccos(t)\f$, we sample a random
         azimuthal angle \f$\phi\f$ from the normalized conditional distribution, \f[

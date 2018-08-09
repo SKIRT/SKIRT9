@@ -92,8 +92,8 @@ double ElectronMix::phaseFunctionValueForCosine(double /*lambda*/, double costhe
 double ElectronMix::generateCosineFromPhaseFunction(double /*lambda*/) const
 {
     double X = random()->uniform();
-    double p = cbrt( sqrt(16.*X*(X-1.) + 5.) + 4.*X - 2. );
-    return (p*p-1.) / p;
+    double p = cbrt( 4.*X - 2. + sqrt(16.*X*(X-1.) + 5.) );
+    return p - 1./p;
 }
 
 ////////////////////////////////////////////////////////////////////
