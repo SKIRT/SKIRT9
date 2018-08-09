@@ -5,6 +5,18 @@
 
 #include "MeanTrustBenchmarkDustMix.hpp"
 
+////////////////////////////////////////////////////////////////////
+
+MaterialMix::ScatteringMode MeanTrustBenchmarkDustMix::scatteringMode() const
+{
+    switch (scatteringType())
+    {
+    case ScatteringType::HenyeyGreenstein: return ScatteringMode::HenyeyGreenstein;
+    case ScatteringType::MaterialPhaseFunction: return ScatteringMode::MaterialPhaseFunction;
+    case ScatteringType::SphericalPolarization: return ScatteringMode::SphericalPolarization;
+    }
+}
+
 //////////////////////////////////////////////////////////////////////
 
 string MeanTrustBenchmarkDustMix::resourceNameForOpticalProps() const
@@ -16,7 +28,7 @@ string MeanTrustBenchmarkDustMix::resourceNameForOpticalProps() const
 
 string MeanTrustBenchmarkDustMix::resourceNameForMuellerMatrix() const
 {
-    return includePolarization() ? "MeanTrustBenchmarkMuellerMatrix" : "";
+    return "MeanTrustBenchmarkMuellerMatrix";
 }
 
 //////////////////////////////////////////////////////////////////////

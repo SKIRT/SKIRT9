@@ -23,15 +23,28 @@
     */
 class MeanTrustBenchmarkDustMix : public SingleGrainDustMix
 {
+    /** The enumeration type indicating the scattering mode. */
+    ENUM_DEF(ScatteringType, HenyeyGreenstein, MaterialPhaseFunction, SphericalPolarization)
+    ENUM_VAL(ScatteringType, HenyeyGreenstein, "use the Henyey-Greenstein phase function (unpolarized)")
+    ENUM_VAL(ScatteringType, MaterialPhaseFunction,
+                                      "use the phase function derived from actual material properties (unpolarized)")
+    ENUM_VAL(ScatteringType, SphericalPolarization, "support polarization through scattering by spherical grains")
+    ENUM_END()
+
     ITEM_CONCRETE(MeanTrustBenchmarkDustMix, SingleGrainDustMix,
                   "a dust mix from the TRUST benchmark (mean properties, optionally with polarization)")
 
-    PROPERTY_BOOL(includePolarization, "include support for polarization by scattering")
-        ATTRIBUTE_DEFAULT_VALUE(includePolarization, "false")
+    PROPERTY_ENUM(scatteringType, ScatteringType, "the type of scattering to be implemented")
+        ATTRIBUTE_DEFAULT_VALUE(scatteringType, "HenyeyGreenstein")
 
     ITEM_END()
 
     //======================== Other Functions =======================
+
+    /** This function returns the scattering mode supported by this material mix. Specifically, it
+        returns ScatteringMode::SphericalPolarization if this material mix supports polarization;
+        otherwise it returns ScatteringMode::HenyeyGreenstein. */
+    ScatteringMode scatteringMode() const override;
 
     /** This function returns the name of the stored table resource tabulating the basic optical
         properties for this dust mix. */

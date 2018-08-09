@@ -100,7 +100,7 @@ double Constants::kappaV()
 
 double Constants::sigmaThomson()
 {
-    return 6.652458734e-29;
+    return 6.6524587158e-29;
 }
 
 ////////////////////////////////////////////////////////////////////

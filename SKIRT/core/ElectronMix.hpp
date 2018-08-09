@@ -7,42 +7,65 @@
 #define ELECTRONMIX_HPP
 
 #include "MaterialMix.hpp"
-#include "ElectronExtinctionMixInterface.hpp"
-#include "ScatteringMixInterface.hpp"
+#include "Array.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
 /** The ElectronMix class describes the material properties for a population of electrons,
     including support for polarization by scattering.
 
-    Electrons do not absorb photons, and Thomson scattering of photons by electrons is
-    wavelength-independent. The scattering cross section is given by the well-known Thomson cross
-    section (a constant) and the Mueller matrix elements (and hence the phase function) can be
-    expressed analytically as a function of just the scattering angle; see Bohren & Huffman (1998)
-    or Wolf 2003 (Computer Physics Communications, 150, 99–115). */
-class ElectronMix : public MaterialMix, public ElectronExtinctionMixInterface, public ScatteringMixInterface
+    Electrons do not absorb photons, and at the wavelengths relevant for SKIRT, scattering of
+    photons by electrons can be described by elastic and wavelength-independent Thomson scattering.
+    The scattering cross section is given by the well-known Thomson cross section (a constant) and
+    the Mueller matrix elements (and hence the phase function) can be expressed analytically as a
+    function of just the scattering angle; see Bohren & Huffman (1998) or Wolf 2003 (Computer
+    Physics Communications, 150, 99–115). */
+class ElectronMix : public MaterialMix
 {
     ITEM_CONCRETE(ElectronMix, MaterialMix, "a population of electrons")
+
+    PROPERTY_BOOL(includePolarization, "include support for polarization")
+        ATTRIBUTE_DEFAULT_VALUE(includePolarization, "false")
+
     ITEM_END()
 
-    //============= Implementing ElectronExtinctionMixInterface =============
+    //============= Construction - Setup - Destruction =============
+
+protected:
+    /** This function caches some pre-calculated arrays. */
+    void setupSelfBefore() override;
+
+    //======== Functionality levels =======
+
+public:
+    /** This function returns the fundamental material type represented by this material mix, which
+        is MaterialType::Electrons. See the documentation of the MaterialMix class for more
+        information. */
+    MaterialType materialType() const override;
+
+    /** This function returns the scattering mode supported by this material mix, which is
+        ScatteringMode::MaterialPhaseFunction or ScatteringMode::SphericalPolarization depending on
+        the value of the \em includePolarization flag. */
+    ScatteringMode scatteringMode() const override;
+
+    //======== Basic material properties =======
 
 public:
     /** This function returns the absorption cross section per electron
         \f$\varsigma^{\text{abs}}_{\lambda}\f$, which is trivially zero for all wavelengths
         \f$\lambda\f$. */
-    double sigmaabs(double lambda) const override;
+    double sectionAbs(double lambda) const override;
 
     /** This function returns the scattering cross section per electron
         \f$\varsigma^{\text{sca}}_{\lambda}\f$ which is constant and equal to the Thomson cross
         section for all wavelengths \f$\lambda\f$. */
-    double sigmasca(double lambda) const override;
+    double sectionSca(double lambda) const override;
 
     /** This function returns the total extinction cross section per electron
         \f$\varsigma^{\text{ext}}_{\lambda} = \varsigma^{\text{abs}}_{\lambda} +
         \varsigma^{\text{sca}}_{\lambda}\f$ which is constant and equal to the Thomson cross
         section for all wavelengths \f$\lambda\f$.. */
-    double sigmaext(double lambda) const override;
+    double sectionExt(double lambda) const override;
 
     /** This function returns the scattering albedo \f$\varpi_\lambda =
         \varsigma_{\lambda}^{\text{sca}} / \varsigma_{\lambda}^{\text{ext}} =
@@ -50,53 +73,48 @@ public:
         population, which is trivially equal to one for all wavelengths \f$\lambda\f$. */
     double albedo(double lambda) const override;
 
-    //============= Implementing ScatteringMixInterface =============
+    //======== Scattering with material phase function =======
 
 public:
-    /** This function returns true because the electron mix supports polarization by scattering. */
-    bool hasScatteringPolarization() const override;
+    /** This function returns the value of the scattering phase function
+        \f$\Phi_\lambda(\cos\theta)\f$ at wavelength \f$\lambda\f$ for the specified scattering
+        angle cosine \f$\cos\theta\f$, where the phase function is normalized as \f[\int_{-1}^1
+        \Phi_\lambda(\cos\theta) \,\mathrm{d}\cos\theta =2.\f] */
+    double phaseFunctionValueForCosine(double lambda, double costheta) const override;
 
-    /** This function generates a new direction \f${\bf{k}}_{\text{new}}\f$ in case the specified
-        photon packet scatters, and calculates the new polarization state of the scattered photon
-        packet. The function passes the new direction to the caller as its return value, and stores
-        the new polarization state in the provided Stokes vector. It is permitted for the provided
-        Stokes vector to actually reside in the specified photon packet.
+    /** This function generates a random scattering angle cosine sampled from the phase function
+        \f$\Phi_\lambda(\cos\theta)\f$ at wavelength \f$\lambda\f$. */
+    double generateCosineFromPhaseFunction(double lambda) const override;
 
-        The function generates a new direction \f${\bf{k}}_{\text{new}}\f$ after a scattering
-        event, given that the original direction before the scattering event is \f${\bf{k}}\f$ and
-        taking into account the polarization state of the photon. First, the polarization degree
-        and angle are computed from the Stokes parameters. Then, scattering angles \f$\theta\f$ and
-        \f$\phi\f$ are sampled from the phase function, and the Stokes vector is rotated into the
-        scattering plane and transformed by applying the Mueller matrix. Finally, the new direction
-        is computed from the previously sampled \f$\theta\f$ and \f$\phi\f$ angles. */
-    Direction scatteringDirectionAndPolarization(StokesVector* out, const PhotonPacket* pp) const override;
+    //======== Polarization through scattering by spherical particles =======
 
-    /** This function calculates the polarization state appropriate for a peel off photon packet
-        generated by a scattering event for the specified photon packet, and stores the result in
-        the provided Stokes vector.
+public:
+    /** This function returns the value of the scattering phase function
+        \f$\Phi_\lambda(\theta,\phi)\f$ at wavelength \f$\lambda\f$ for the specified scattering
+        angles \f$\theta\f$ and \f$\phi\f$, and for the specified incoming polarization state. The
+        phase function is normalized as \f[\int\Phi_\lambda(\theta,\phi) \,\mathrm{d}\Omega
+        =4\pi.\f] */
+   double phaseFunctionValue(double lambda, double theta, double phi, const StokesVector* sv) const override;
 
-        The function rotates the Stokes vector from the reference direction in the previous
-        scattering plane into the peel-off scattering plane, applies the Mueller matrix on the
-        Stokes vector, and further rotates the Stokes vector from the reference direction in the
-        peel-off scattering plane to the x-axis of the instrument to which the peel-off photon
-        packet is headed. */
-    void scatteringPeelOffPolarization(StokesVector* out, const PhotonPacket* pp, Direction bfknew,
-                                       Direction bfkx, Direction bfky) override;
+    /** This function generates random scattering angles \f$\theta\f$ and \f$\phi\f$ sampled from
+        the phase function \f$\Phi_\lambda(\theta,\phi)\f$ at wavelength \f$\lambda\f$, and for the
+        specified incoming polarization state. The results are returned as a pair of numbers in the
+        order \f$\theta\f$ and \f$\phi\f$. */
+    std::pair<double,double> generateAnglesFromPhaseFunction(double lambda, const StokesVector* sv) const override;
 
-    /** This function returns the value of the scattering phase function in case the specified
-        photon packet is scattered to the specified new direction, where the phase function is
-        normalized as \f[\int\Phi_\lambda(\Omega)\,\mathrm{d}\Omega=4\pi.\f]
+    /** This function applies the Mueller matrix transformation for the specified wavelength
+        \f$\lambda\f$ and scattering angle \f$\theta\f$ to the given polarization state (which
+        serves as both input and output for the function). */
+    void applyMueller(double lambda, double theta, StokesVector* sv) const override;
 
-        The function returns the phase function for polarized radiation given by
-        \f[\Phi_\lambda(\Omega) = N \left( S_{11,\lambda}(\theta) + P_\text{L}
-        S_{12,\lambda}(\theta) \cos 2(\varphi-\gamma) \right)\f] where \f$\lambda\f$ is the
-        wavelength of the photon packet, \f$\theta\f$ is the angle between the photon packet's
-        propagation direction and the new scattering direction; \f$\phi\f$ is the angle between the
-        previous and current scattering plane of the photon packet; \f$\gamma\f$ is the
-        polarization angle of the photon packet, \f$P_\text{L}\f$ is the linear polarization degree
-        of the photon packet; and \f$N\f$ is a normalization factor to ensure that the integral
-        over the unit sphere is equal to \f$4\pi\f$. */
-    double phaseFunctionValue(const PhotonPacket* pp, Direction bfknew) const override;
+    //======================== Data Members ========================
+
+private:
+    // precalculated discretizations - initialized during setup
+    Array _phiv;                    // indexed on f
+    Array _phi1v;                   // indexed on f
+    Array _phisv;                   // indexed on f
+    Array _phicv;                   // indexed on f
 };
 
 ////////////////////////////////////////////////////////////////////
