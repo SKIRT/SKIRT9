@@ -3,27 +3,23 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef OPTICALDEPTHMATERIALNORMALIZATION_HPP
-#define OPTICALDEPTHMATERIALNORMALIZATION_HPP
+#ifndef NUMBERCOLUMNMATERIALNORMALIZATION_HPP
+#define NUMBERCOLUMNMATERIALNORMALIZATION_HPP
 
 #include "AxisMaterialNormalization.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
-/** A OpticalDepthMaterialNormalization object normalizes the amount of material in a geometric
-    medium by specifying the optical depth along one of the coordinate axes at a given wavelength. */
-class OpticalDepthMaterialNormalization : public AxisMaterialNormalization
+/** A NumberColumnMaterialNormalization object normalizes the amount of material in a geometric
+    medium by specifying the number column density along one of the coordinate axes. */
+class NumberColumnMaterialNormalization : public AxisMaterialNormalization
 {
-    ITEM_CONCRETE(OpticalDepthMaterialNormalization, MaterialNormalization,
-                  "normalization by defining the optical depth along a coordinate axis")
+    ITEM_CONCRETE(NumberColumnMaterialNormalization, MaterialNormalization,
+                  "normalization by defining the number column density along a coordinate axis")
 
-    PROPERTY_DOUBLE(wavelength, "the wavelength at which to specify the optical depth")
-        ATTRIBUTE_QUANTITY(wavelength, "wavelength")
-        ATTRIBUTE_MIN_VALUE(wavelength, "1 A")
-        ATTRIBUTE_MAX_VALUE(wavelength, "1 m")
-
-    PROPERTY_DOUBLE(opticalDepth, "the optical depth along this axis at this wavelength")
-    ATTRIBUTE_MIN_VALUE(opticalDepth, "]0")
+    PROPERTY_DOUBLE(numberColumnDensity, "the number column density along this axis")
+    ATTRIBUTE_QUANTITY(numberColumnDensity, "numbersurfacedensity")
+    ATTRIBUTE_MIN_VALUE(numberColumnDensity, "]0")
 
     ITEM_END()
 

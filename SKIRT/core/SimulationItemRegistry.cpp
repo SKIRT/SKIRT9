@@ -27,8 +27,8 @@
 #include "CombineGeometryDecorator.hpp"
 #include "ConicalAngularDistribution.hpp"
 #include "ConicalShellGeometry.hpp"
-#include "CubicalBackgroundSource.hpp"
 #include "CubicSplineSmoothingKernel.hpp"
+#include "CubicalBackgroundSource.hpp"
 #include "CylindricalClipGeometryDecorator.hpp"
 #include "DefaultMediaDensityCutsProbe.hpp"
 #include "EinastoGeometry.hpp"
@@ -56,9 +56,9 @@
 #include "LaunchedPacketsProbe.hpp"
 #include "LinWavelengthDistribution.hpp"
 #include "ListBand.hpp"
+#include "ListSED.hpp"
 #include "ListWavelengthDistribution.hpp"
 #include "ListWavelengthGrid.hpp"
-#include "ListSED.hpp"
 #include "LogWavelengthDistribution.hpp"
 #include "LogWavelengthGrid.hpp"
 #include "LuminosityProbe.hpp"
@@ -66,6 +66,8 @@
 #include "MappingsSEDFamily.hpp"
 #include "MarastonSED.hpp"
 #include "MarastonSEDFamily.hpp"
+#include "MassColumnMaterialNormalization.hpp"
+#include "MassMaterialNormalization.hpp"
 #include "MeanTrustBenchmarkDustMix.hpp"
 #include "MollweideProjection.hpp"
 #include "MonteCarloSimulation.hpp"
@@ -73,7 +75,9 @@
 #include "NestedLogWavelengthGrid.hpp"
 #include "NetzerAngularDistribution.hpp"
 #include "NoPolarizationProfile.hpp"
+#include "NumberColumnMaterialNormalization.hpp"
 #include "OffsetGeometryDecorator.hpp"
+#include "OpticalDepthMaterialNormalization.hpp"
 #include "ParaboloidGeometry.hpp"
 #include "ParaboloidShellGeometry.hpp"
 #include "ParticleGeometry.hpp"
@@ -105,9 +109,9 @@
 #include "StellarSurfaceSource.hpp"
 #include "StellarUnits.hpp"
 #include "SunSED.hpp"
+#include "TTauriDiskGeometry.hpp"
 #include "TorusGeometry.hpp"
 #include "TriaxialGeometryDecorator.hpp"
-#include "TTauriDiskGeometry.hpp"
 #include "UniformBoxGeometry.hpp"
 #include "UniformSmoothingKernel.hpp"
 #include "VoronoiMeshGeometry.hpp"
@@ -273,6 +277,14 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // media
     ItemRegistry::add<Medium>();
     ItemRegistry::add<GeometricMedium>();
+
+    // material normalizations
+    ItemRegistry::add<MaterialNormalization>();
+    ItemRegistry::add<MassMaterialNormalization>();
+    ItemRegistry::add<AxisMaterialNormalization>();
+    ItemRegistry::add<OpticalDepthMaterialNormalization>();
+    ItemRegistry::add<MassColumnMaterialNormalization>();
+    ItemRegistry::add<NumberColumnMaterialNormalization>();
 
     // material mixes
     ItemRegistry::add<MaterialMix>();
