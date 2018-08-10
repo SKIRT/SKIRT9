@@ -29,6 +29,7 @@
 #include <memory>
 #include <numeric>
 #include <string>
+#include <tuple>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -62,6 +63,7 @@ using std::max;
     | \<memory\>           | resource management pointers
     | \<numeric\>          | numeric algorithms, e.g. accumulate
     | \<string\>           | sequence of characters
+    | \<tuple\>            | tuples, tie
     | \<type_traits\>      | type traits
     | \<utility\>          | pair, swap, rvalue casts
     | \<vector\>           | one-dimensional resizable array

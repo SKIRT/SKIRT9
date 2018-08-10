@@ -44,6 +44,7 @@
 #include "FullInstrument.hpp"
 #include "GammaGeometry.hpp"
 #include "GaussianGeometry.hpp"
+#include "GeometricMedium.hpp"
 #include "GeometricSource.hpp"
 #include "HammerAitoffProjection.hpp"
 #include "HyperboloidGeometry.hpp"
@@ -93,7 +94,6 @@
 #include "SersicGeometry.hpp"
 #include "ShellGeometry.hpp"
 #include "SineSquarePolarizationProfile.hpp"
-#include "SingleGrainDustMix.hpp"
 #include "SourceSystem.hpp"
 #include "SpecificLuminosityNormalization.hpp"
 #include "SphericalBackgroundSource.hpp"
@@ -269,6 +269,10 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<CubicSplineSmoothingKernel>();
     ItemRegistry::add<ScaledGaussianSmoothingKernel>();
     ItemRegistry::add<UniformSmoothingKernel>();
+
+    // media
+    ItemRegistry::add<Medium>();
+    ItemRegistry::add<GeometricMedium>();
 
     // material mixes
     ItemRegistry::add<MaterialMix>();

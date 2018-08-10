@@ -58,6 +58,9 @@ public:
     //======== Basic material properties =======
 
 public:
+    /** This function returns the dust mass per hydrogen atom \f$\mu\f$ for this material. */
+    double mass() const override;
+
     /** This function returns the absorption cross section per hydrogen atom
         \f$\varsigma^{\text{abs}}_{\lambda}\f$ of the dust mix at wavelength \f$\lambda\f$. */
     double sectionAbs(double lambda) const override;

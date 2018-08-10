@@ -54,6 +54,13 @@ MaterialMix::ScatteringMode ElectronMix::scatteringMode() const
 
 ////////////////////////////////////////////////////////////////////
 
+double ElectronMix::mass() const
+{
+    return Constants::Melectron();
+}
+
+////////////////////////////////////////////////////////////////////
+
 double ElectronMix::sectionAbs(double /*lambda*/) const
 {
     return 0.;

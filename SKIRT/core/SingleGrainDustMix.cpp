@@ -93,6 +93,13 @@ MaterialMix::MaterialType SingleGrainDustMix::materialType() const
 
 ////////////////////////////////////////////////////////////////////
 
+double SingleGrainDustMix::mass() const
+{
+    return _mu;
+}
+
+////////////////////////////////////////////////////////////////////
+
 double SingleGrainDustMix::sectionAbs(double lambda) const
 {
     return _sigmaabs[lambda];

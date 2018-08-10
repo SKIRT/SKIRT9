@@ -54,6 +54,9 @@ public:
     //======== Basic material properties =======
 
 public:
+    /** This function returns the electron mass. */
+    double mass() const override;
+
     /** This function returns the absorption cross section per electron
         \f$\varsigma^{\text{abs}}_{\lambda}\f$, which is trivially zero for all wavelengths
         \f$\lambda\f$. */
