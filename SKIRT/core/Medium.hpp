@@ -61,6 +61,7 @@ class Medium : public SimulationItem
 
     //======================== Functions implemented by subclasses =======================
 
+public:
     /** This function returns the dimension of the medium, which depends on the (lack of) symmetry
         of its geometry. A value of 1 means spherical symmetry, 2 means axial symmetry and 3 means
         none of these symmetries. */

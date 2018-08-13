@@ -69,6 +69,7 @@
 #include "MassColumnMaterialNormalization.hpp"
 #include "MassMaterialNormalization.hpp"
 #include "MeanTrustBenchmarkDustMix.hpp"
+#include "MediumSystem.hpp"
 #include "MollweideProjection.hpp"
 #include "MonteCarloSimulation.hpp"
 #include "MultiGaussianExpansionGeometry.hpp"
@@ -274,7 +275,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ScaledGaussianSmoothingKernel>();
     ItemRegistry::add<UniformSmoothingKernel>();
 
-    // media
+    // medium system and media
+    ItemRegistry::add<MediumSystem>();
     ItemRegistry::add<Medium>();
     ItemRegistry::add<GeometricMedium>();
 
