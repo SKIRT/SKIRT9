@@ -1,0 +1,24 @@
+/*//////////////////////////////////////////////////////////////////
+////     The SKIRT project -- advanced radiative transfer       ////
+////       © Astronomical Observatory, Ghent University         ////
+///////////////////////////////////////////////////////////////// */
+
+#include "CylinderSpatialGrid.hpp"
+#include "FatalError.hpp"
+
+//////////////////////////////////////////////////////////////////////
+
+void CylinderSpatialGrid::setupSelfBefore()
+{
+    SpatialGrid::setupSelfBefore();
+    if (_maxZ <= _minZ) throw FATALERROR("The extent of the cylinder should be positive in the Z direction");
+}
+
+//////////////////////////////////////////////////////////////////////
+
+Box CylinderSpatialGrid::boundingBox() const
+{
+    return Box(-_maxRadius,-_maxRadius,_minZ, _maxRadius,_maxRadius,_maxZ);
+}
+
+//////////////////////////////////////////////////////////////////////

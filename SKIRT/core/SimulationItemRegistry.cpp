@@ -21,6 +21,7 @@
 #include "BrokenExpDiskGeometry.hpp"
 #include "BruzualCharlotSED.hpp"
 #include "BruzualCharlotSEDFamily.hpp"
+#include "CartesianSpatialGrid.hpp"
 #include "CastelliKuruczSED.hpp"
 #include "CastelliKuruczSEDFamily.hpp"
 #include "ClumpyGeometryDecorator.hpp"
@@ -29,6 +30,7 @@
 #include "ConicalShellGeometry.hpp"
 #include "CubicSplineSmoothingKernel.hpp"
 #include "CubicalBackgroundSource.hpp"
+#include "Cylinder2DSpatialGrid.hpp"
 #include "CylindricalClipGeometryDecorator.hpp"
 #include "DefaultMediaDensityCutsProbe.hpp"
 #include "EinastoGeometry.hpp"
@@ -37,6 +39,7 @@
 #include "ExtinctionOnlyMode.hpp"
 #include "ExtragalacticUnits.hpp"
 #include "FileBand.hpp"
+#include "FileMesh.hpp"
 #include "FileSED.hpp"
 #include "FileWavelengthDistribution.hpp"
 #include "FileWavelengthGrid.hpp"
@@ -54,11 +57,13 @@
 #include "IsotropicAngularDistribution.hpp"
 #include "LaserAngularDistribution.hpp"
 #include "LaunchedPacketsProbe.hpp"
+#include "LinMesh.hpp"
 #include "LinWavelengthDistribution.hpp"
 #include "ListBand.hpp"
 #include "ListSED.hpp"
 #include "ListWavelengthDistribution.hpp"
 #include "ListWavelengthGrid.hpp"
+#include "LogMesh.hpp"
 #include "LogWavelengthDistribution.hpp"
 #include "LogWavelengthGrid.hpp"
 #include "LuminosityProbe.hpp"
@@ -86,6 +91,7 @@
 #include "PerspectiveInstrument.hpp"
 #include "PlummerGeometry.hpp"
 #include "PointSource.hpp"
+#include "PowMesh.hpp"
 #include "ProbeSystem.hpp"
 #include "PseudoSersicGeometry.hpp"
 #include "QuasarSED.hpp"
@@ -100,7 +106,10 @@
 #include "ShellGeometry.hpp"
 #include "SineSquarePolarizationProfile.hpp"
 #include "SourceSystem.hpp"
+#include "SpatialGrid.hpp"
 #include "SpecificLuminosityNormalization.hpp"
+#include "Sphere1DSpatialGrid.hpp"
+#include "Sphere2DSpatialGrid.hpp"
 #include "SphericalBackgroundSource.hpp"
 #include "SphericalClipGeometryDecorator.hpp"
 #include "SpheroidalGeometryDecorator.hpp"
@@ -110,6 +119,7 @@
 #include "StellarSurfaceSource.hpp"
 #include "StellarUnits.hpp"
 #include "SunSED.hpp"
+#include "SymPowMesh.hpp"
 #include "TTauriDiskGeometry.hpp"
 #include "TorusGeometry.hpp"
 #include "TriaxialGeometryDecorator.hpp"
@@ -118,12 +128,6 @@
 #include "VoronoiMeshGeometry.hpp"
 #include "VoronoiMeshSource.hpp"
 #include "WavelengthGridProbe.hpp"
-
-#include "PowMesh.hpp"
-#include "FileMesh.hpp"
-#include "LinMesh.hpp"
-#include "LogMesh.hpp"
-#include "SymPowMesh.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -202,7 +206,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<Starburst99SEDFamily>();
     ItemRegistry::add<MappingsSEDFamily>();
 
-    // Wavelength distributions
+    // wavelength distributions
     ItemRegistry::add<WavelengthDistribution>();
     ItemRegistry::add<RangeWavelengthDistribution>();
     ItemRegistry::add<LinWavelengthDistribution>();
@@ -211,13 +215,13 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<FileWavelengthDistribution>();
     ItemRegistry::add<ListWavelengthDistribution>();
 
-    // Bands
+    // bands
     ItemRegistry::add<Band>();
     ItemRegistry::add<BroadBand>();
     ItemRegistry::add<FileBand>();
     ItemRegistry::add<ListBand>();
 
-    // Angular distributions
+    // angular distributions
     ItemRegistry::add<AngularDistribution>();
     ItemRegistry::add<IsotropicAngularDistribution>();
     ItemRegistry::add<AxAngularDistribution>();
@@ -225,7 +229,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ConicalAngularDistribution>();
     ItemRegistry::add<NetzerAngularDistribution>();
 
-    // Polarization profiles
+    // polarization profiles
     ItemRegistry::add<PolarizationProfile>();
     ItemRegistry::add<NoPolarizationProfile>();
     ItemRegistry::add<SineSquarePolarizationProfile>();
@@ -281,7 +285,17 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ScaledGaussianSmoothingKernel>();
     ItemRegistry::add<UniformSmoothingKernel>();
 
-    // one-dimensional meshes for the spatial grids
+    // spatial grids
+    ItemRegistry::add<SpatialGrid>();
+    ItemRegistry::add<SphereSpatialGrid>();
+    ItemRegistry::add<Sphere1DSpatialGrid>();
+    ItemRegistry::add<Sphere2DSpatialGrid>();
+    ItemRegistry::add<CylinderSpatialGrid>();
+    ItemRegistry::add<Cylinder2DSpatialGrid>();
+    ItemRegistry::add<BoxSpatialGrid>();
+    ItemRegistry::add<CartesianSpatialGrid>();
+
+    // one-dimensional meshes for spatial grids
     ItemRegistry::add<Mesh>();
     ItemRegistry::add<MoveableMesh>();
     ItemRegistry::add<AnchoredMesh>();
