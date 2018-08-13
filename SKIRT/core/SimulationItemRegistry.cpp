@@ -119,6 +119,12 @@
 #include "VoronoiMeshSource.hpp"
 #include "WavelengthGridProbe.hpp"
 
+#include "PowMesh.hpp"
+#include "FileMesh.hpp"
+#include "LinMesh.hpp"
+#include "LogMesh.hpp"
+#include "SymPowMesh.hpp"
+
 ////////////////////////////////////////////////////////////////////
 
 SimulationItemRegistry::SimulationItemRegistry(string version, string format)
@@ -274,6 +280,16 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<CubicSplineSmoothingKernel>();
     ItemRegistry::add<ScaledGaussianSmoothingKernel>();
     ItemRegistry::add<UniformSmoothingKernel>();
+
+    // one-dimensional meshes for the spatial grids
+    ItemRegistry::add<Mesh>();
+    ItemRegistry::add<MoveableMesh>();
+    ItemRegistry::add<AnchoredMesh>();
+    ItemRegistry::add<LinMesh>();
+    ItemRegistry::add<PowMesh>();
+    ItemRegistry::add<SymPowMesh>();
+    ItemRegistry::add<LogMesh>();
+    ItemRegistry::add<FileMesh>();
 
     // medium system and media
     ItemRegistry::add<MediumSystem>();
