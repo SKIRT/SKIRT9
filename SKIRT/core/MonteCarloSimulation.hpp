@@ -9,12 +9,11 @@
 #include "Simulation.hpp"
 #include "Configuration.hpp"
 #include "InstrumentSystem.hpp"
+#include "MediumSystem.hpp"
 #include "ProbeSystem.hpp"
 #include "SimulationMode.hpp"
 #include "SourceSystem.hpp"
 #include <atomic>
-
-#include "MaterialMix.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -43,8 +42,9 @@ class MonteCarloSimulation : public Simulation
     PROPERTY_ITEM(sourceSystem, SourceSystem, "the source system")
         ATTRIBUTE_DEFAULT_VALUE(sourceSystem, "SourceSystem")
 
-    PROPERTY_ITEM(mix, MaterialMix, "the material mix")
-        ATTRIBUTE_DEFAULT_VALUE(mix, "MeanTrustBenchmarkDustMix")
+    PROPERTY_ITEM(mediumSystem, MediumSystem, "the medium system")
+        ATTRIBUTE_DEFAULT_VALUE(mediumSystem, "MediumSystem")
+        ATTRIBUTE_OPTIONAL(mediumSystem)
 
     PROPERTY_ITEM(instrumentSystem, InstrumentSystem, "the instrument system")
         ATTRIBUTE_DEFAULT_VALUE(instrumentSystem, "InstrumentSystem")

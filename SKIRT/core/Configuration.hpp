@@ -73,6 +73,9 @@ public:
         distribution. */
     double pathLengthBias() const { return _pathLengthBias; }
 
+    /** Returns the number of random density samples for determining spatial cell mass. */
+    double numDensitySamples() const { return _numDensitySamples; }
+
     /** Returns true if the media in the simulation support polarization. */
     bool hasPolarization() const { return _hasPolarization; }
 
@@ -89,6 +92,7 @@ private:
     double _minWeightReduction{1e4};
     int _minScattEvents{0};
     double _pathLengthBias{0.5};
+    int _numDensitySamples{100};
     bool _hasPolarization{false};
 };
 

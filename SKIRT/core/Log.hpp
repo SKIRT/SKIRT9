@@ -89,13 +89,15 @@ public:
         function, and resets the interval timer. Call this function once before issuing a sequence
         of potentially frequent log messages through the infoIfElapsed() function. This function is
         thread-safe, although it is usually called only from a single thread. */
-    void infoSetElapsed(int seconds);
+    void infoSetElapsed(int seconds = 3);
 
     /** Calls the info() function to log an informational message if a certain time interval
         (specified with the infoSetElapsed() function) has elapsed since the previous invocation of
         the infoIfElapsed() function (or of the infoSetElapsed() function). Otherwise it does
-        nothing. This function is thread-safe. */
-    void infoIfElapsed(string message);
+        nothing. If \em numTotal is specified and nonzero, the function adds a percentage of
+        completion to the basic log message, calculated as 100.*numDone/numTotal. This function is
+        thread-safe. */
+    void infoIfElapsed(string message, size_t numDone=0, size_t numTotal=0);
 
     /** Logs a warning message (i.e. at level Warning). Each warning message is logged,
         irrespective of the which process invokes this function. The warning message is prefixed

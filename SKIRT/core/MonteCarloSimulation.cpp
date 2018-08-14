@@ -128,7 +128,7 @@ void MonteCarloSimulation::initProgress(string segment, size_t numTotal)
 
     log()->info("Launching " + StringUtils::toString(static_cast<double>(_numTotal))
                 + " " + _segment + " photon packages");
-    log()->infoSetElapsed(3);
+    log()->infoSetElapsed();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -136,8 +136,7 @@ void MonteCarloSimulation::initProgress(string segment, size_t numTotal)
 void MonteCarloSimulation::logProgress(size_t numDone)
 {
     // log message if the minimum time has elapsed
-    double completed = numDone * 100. / _numTotal;
-    log()->infoIfElapsed("Launched " + _segment + " photon packages: " + StringUtils::toString(completed,'f',1) + "%");
+    log()->infoIfElapsed("Launched " + _segment + " photon packages: ", numDone, _numTotal);
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -73,9 +73,9 @@ public:
         (such as, e.g., polarization) must be the same for all positions. An object of the
         appropriate type must be returned even if the density of the material happens to be zero at
         the specified position. As a result of this rule, one can call this function with an
-        arbitrary location (e.g. a default-constructed Position object) to obtain a MaterialMix
+        arbitrary location (or a missing argument to substitute the default) to obtain a MaterialMix
         object with a type and level of support representative for this medium. */
-    virtual const MaterialMix* mix(Position bfr) const = 0;
+    virtual const MaterialMix* mix(Position bfr = Position()) const = 0;
 
     /** This function returns the number density of the medium at the specified position. */
     virtual double numberDensity(Position bfr) const = 0;

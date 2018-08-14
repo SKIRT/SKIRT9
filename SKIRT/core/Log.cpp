@@ -130,7 +130,7 @@ void Log::infoSetElapsed(int seconds)
 
 ////////////////////////////////////////////////////////////////////
 
-void Log::infoIfElapsed(string message)
+void Log::infoIfElapsed(string message, size_t numDone, size_t numTotal)
 {
     using namespace std::chrono;
 
@@ -146,6 +146,11 @@ void Log::infoIfElapsed(string message)
         if (_started.compare_exchange_weak(localStarted, now))
         {
             // if no other thread changed the start time, issue the message and return
+            if (numTotal)
+            {
+                double completed = 100. * numDone / numTotal;
+                message += StringUtils::toString(completed,'f',1) + "%";
+            }
             info(message);
             return;
         }

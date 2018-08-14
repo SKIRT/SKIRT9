@@ -35,6 +35,11 @@ class ExtinctionOnlyMode : public NoMediaMode
         ATTRIBUTE_MAX_VALUE(pathLengthBias, "1]")
         ATTRIBUTE_DEFAULT_VALUE(pathLengthBias, "0.5")
 
+    PROPERTY_INT(numDensitySamples, "the number of random density samples for determining spatial cell mass")
+        ATTRIBUTE_MIN_VALUE(numDensitySamples, "10")
+        ATTRIBUTE_MAX_VALUE(numDensitySamples, "1000")
+        ATTRIBUTE_DEFAULT_VALUE(numDensitySamples, "100")
+
     ITEM_END()
 };
 
