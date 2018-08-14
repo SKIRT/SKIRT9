@@ -141,7 +141,7 @@ void FluxRecorder::finalizeConfiguration()
     for (const auto& array : _wsed) allocatedSize += array.size();
     for (const auto& array : _wifu) allocatedSize += array.size();
     _lambdagrid->find<Log>()->info(_parentItem->typeAndName() + " allocated " +
-                                   StringUtils::toMemSizeString(allocatedSize) + " of memory");
+                                   StringUtils::toMemSizeString(allocatedSize*sizeof(double)) + " of memory");
 }
 
 ////////////////////////////////////////////////////////////////////

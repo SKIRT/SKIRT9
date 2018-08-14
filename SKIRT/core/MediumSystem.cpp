@@ -10,6 +10,7 @@
 #include "ParallelFactory.hpp"
 #include "ProcessManager.hpp"
 #include "ShortArray.hpp"
+#include "StringUtils.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -19,11 +20,17 @@ void MediumSystem::setupSelfAfter()
     auto log = find<Log>();
     auto parfac = find<ParallelFactory>();
 
-    // resize the tables that hold essential dust cell properties
+    // allocate the tables that hold essential dust cell properties
     int numCells = _grid->numCells();
     int numMedia = _media.size();
     _Vv.resize(numCells);
     _nvv.resize(numCells,numMedia);
+
+    // calculate and log allocated memory size
+    size_t memSize = 0;
+    memSize += _Vv.size();
+    memSize += _nvv.size();
+    log->info(typeAndName() + " allocated " + StringUtils::toMemSizeString(memSize*sizeof(double)) + " of memory");
 
     // calculate the volume of the cells
     log->info("Calculating cell volumes...");
@@ -43,7 +50,7 @@ void MediumSystem::setupSelfAfter()
         ShortArray<8> sumv(numMedia);
         for (size_t m=firstIndex; m!=firstIndex+numIndices; ++m)
         {
-            if (m%10000==0) log->infoIfElapsed("Calculated cell density: ", m, numCells);
+            if (m%10000==0) log->infoIfElapsed("Calculated cell densities: ", m, numCells);
 
             sumv.clear();
             for (int n=0; n<numSamples; n++)
@@ -59,7 +66,6 @@ void MediumSystem::setupSelfAfter()
 }
 
 ////////////////////////////////////////////////////////////////////
-
 
 int MediumSystem::dimension() const
 {

@@ -14,7 +14,7 @@
     medium by specifying the mass column density along one of the coordinate axes. */
 class MassColumnMaterialNormalization : public AxisMaterialNormalization
 {
-    ITEM_CONCRETE(MassColumnMaterialNormalization, MaterialNormalization,
+    ITEM_CONCRETE(MassColumnMaterialNormalization, AxisMaterialNormalization,
                   "normalization by defining the mass column density along a coordinate axis")
 
     PROPERTY_DOUBLE(massColumnDensity, "the mass column density along this axis")

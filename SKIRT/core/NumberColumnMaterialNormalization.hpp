@@ -14,7 +14,7 @@
     medium by specifying the number column density along one of the coordinate axes. */
 class NumberColumnMaterialNormalization : public AxisMaterialNormalization
 {
-    ITEM_CONCRETE(NumberColumnMaterialNormalization, MaterialNormalization,
+    ITEM_CONCRETE(NumberColumnMaterialNormalization, AxisMaterialNormalization,
                   "normalization by defining the number column density along a coordinate axis")
 
     PROPERTY_DOUBLE(numberColumnDensity, "the number column density along this axis")

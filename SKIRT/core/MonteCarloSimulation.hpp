@@ -77,13 +77,6 @@ public:
 
     //======================== Other Functions =======================
 
-public:
-    /** This function returns the dimension of the simulation, which depends on the (lack of)
-        symmetry in the media geometries. A value of 1 means spherical symmetry, 2 means axial
-        symmetry and 3 means none of these symmetries. The media component with the least symmetry
-        (i.e. the highest dimension) determines the result for the whole simulation. */
-    int dimension() const;
-
 protected:
     /** This function actually runs the simulation, assuming setup has been completed. */
     void runSimulation() override;

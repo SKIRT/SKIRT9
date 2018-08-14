@@ -7,9 +7,9 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void GeometricMedium::setupSelfBefore()
+void GeometricMedium::setupSelfAfter()
 {
-    Medium::setupSelfBefore();
+    Medium::setupSelfAfter();
 
     // determine normalization
     std::tie(_number, _mass) = normalization()->numberAndMass(geometry(), materialMix());

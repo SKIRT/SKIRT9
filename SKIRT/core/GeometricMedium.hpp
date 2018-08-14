@@ -56,7 +56,7 @@ protected:
     /** This function determines the normalization for number and mass density in this medium.
         Given that a geometry has a total mass of one by definition, the normalization factors
         correspond to the total number and the total mass of the medium. */
-    void setupSelfBefore() override;
+    void setupSelfAfter() override;
 
     //======================== Functions implemented by subclasses =======================
 

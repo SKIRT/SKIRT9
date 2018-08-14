@@ -14,7 +14,7 @@
     medium by specifying the optical depth along one of the coordinate axes at a given wavelength. */
 class OpticalDepthMaterialNormalization : public AxisMaterialNormalization
 {
-    ITEM_CONCRETE(OpticalDepthMaterialNormalization, MaterialNormalization,
+    ITEM_CONCRETE(OpticalDepthMaterialNormalization, AxisMaterialNormalization,
                   "normalization by defining the optical depth along a coordinate axis")
 
     PROPERTY_DOUBLE(wavelength, "the wavelength at which to specify the optical depth")
