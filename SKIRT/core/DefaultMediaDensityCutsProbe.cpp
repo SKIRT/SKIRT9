@@ -7,7 +7,6 @@
 #include "Array.hpp"
 #include "Configuration.hpp"
 #include "FITSInOut.hpp"
-#include "Log.hpp"
 #include "Medium.hpp"
 #include "MediumSystem.hpp"
 #include "Parallel.hpp"
@@ -32,7 +31,6 @@ namespace
         MediumSystem* ms;
         SpatialGrid* grid;
         Units* units;
-        Log* log;
         double xbase, ybase, zbase, xpsize, ypsize, zpsize, xcenter, ycenter, zcenter;
 
         // data members initialized in setup()
@@ -47,8 +45,7 @@ namespace
     public:
         // constructor
         WriteDensity(Probe* item_, MediumSystem* ms_)
-            : item(item_), ms(ms_), grid(ms_->grid()),
-              units(ms_->find<Units>()), log(ms_->find<Log>())
+            : item(item_), ms(ms_), grid(ms_->grid()), units(ms_->find<Units>())
         {
             double xmin, ymin, zmin, xmax, ymax, zmax;
             grid->boundingBox().extent(xmin,ymin,zmin,xmax,ymax,zmax);

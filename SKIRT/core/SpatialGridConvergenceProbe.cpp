@@ -5,7 +5,6 @@
 
 #include "SpatialGridConvergenceProbe.hpp"
 #include "Configuration.hpp"
-#include "Log.hpp"
 #include "Medium.hpp"
 #include "MediumSystem.hpp"
 #include "SpatialGrid.hpp"
