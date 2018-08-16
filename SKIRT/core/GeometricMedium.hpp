@@ -71,38 +71,26 @@ protected:
     /** This function returns the number density of the medium at the specified position. */
     double numberDensity(Position bfr) const override;
 
-    /** This function returns the number column density (also called surface density) of the medium
-        along the X-axis of the model coordinate system. */
-    double numberColumnDensityX() const override;
-
-    /** This function returns the number column density (also called surface density) of the medium
-        along the Y-axis of the model coordinate system. */
-    double numberColumnDensityY() const override;
-
-    /** This function returns the number column density (also called surface density) of the medium
-        along the Z-axis of the model coordinate system. */
-    double numberColumnDensityZ() const override;
-
     /** This function returns the total number of material entities in the medium. */
     double number() const override;
 
     /** This function returns the mass density of the medium at the specified position. */
     double massDensity(Position bfr) const override;
 
-    /** This function returns the mass column density (also called surface density) of the medium
-        along the X-axis of the model coordinate system. */
-    double massColumnDensityX() const override;
-
-    /** This function returns the mass column density (also called surface density) of the medium
-        along the Y-axis of the model coordinate system. */
-    double massColumnDensityY() const override;
-
-    /** This function returns the mass column density (also called surface density) of the medium
-        along the Z-axis of the model coordinate system. */
-    double massColumnDensityZ() const override;
-
     /** This function returns the total mass in the medium. */
     double mass() const override;
+
+    /** This function returns the optical depth of the medium at wavelength \f$\lambda\f$
+        along the full X axis of the model coordinate system. */
+    double opticalDepthX(double lambda) const override;
+
+    /** This function returns the optical depth of the medium at wavelength \f$\lambda\f$
+        along the full Y axis of the model coordinate system. */
+    double opticalDepthY(double lambda) const override;
+
+    /** This function returns the optical depth of the medium at wavelength \f$\lambda\f$
+        along the full Z axis of the model coordinate system. */
+    double opticalDepthZ(double lambda) const override;
 
     /** This function generates a random position sampled from the medium's spatial density
         distribution. Because the conversion from number to mass is the same throughout the

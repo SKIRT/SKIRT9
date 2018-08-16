@@ -73,7 +73,6 @@ namespace
             if (xd) plane += "x";
             if (yd) plane += "y";
             if (zd) plane += "z";
-            log->info(item->typeAndName() + " is calculating the media density in the " + plane + " plane...");
 
             if (ms->hasDust()) { dust_tv.resize(Np*Np), dust_gv.resize(Np*Np); }
             if (ms->hasElectrons()) { elec_tv.resize(Np*Np), elec_gv.resize(Np*Np); }

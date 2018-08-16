@@ -107,6 +107,7 @@
 #include "SineSquarePolarizationProfile.hpp"
 #include "SourceSystem.hpp"
 #include "SpatialGrid.hpp"
+#include "SpatialGridConvergenceProbe.hpp"
 #include "SpecificLuminosityNormalization.hpp"
 #include "Sphere1DSpatialGrid.hpp"
 #include "Sphere2DSpatialGrid.hpp"
@@ -354,6 +355,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<WavelengthGridProbe>();
     ItemRegistry::add<LuminosityProbe>();
     ItemRegistry::add<LaunchedPacketsProbe>();
+    ItemRegistry::add<SpatialGridConvergenceProbe>();
     ItemRegistry::add<DefaultMediaDensityCutsProbe>();
 
     // Monte Carlo simulations

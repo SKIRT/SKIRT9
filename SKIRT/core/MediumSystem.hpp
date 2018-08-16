@@ -28,6 +28,7 @@
 class MediumSystem : public SimulationItem
 {
     ITEM_CONCRETE(MediumSystem, SimulationItem, "a medium system")
+        ATTRIBUTE_ALLOWED_IF(MediumSystem, "ExtinctionOnlyMode")
 
     PROPERTY_ITEM_LIST(media, Medium, "the transfer media")
         ATTRIBUTE_DEFAULT_VALUE(media, "GeometricMedium")
@@ -66,6 +67,9 @@ public:
     /** This function returns the number of cells in the spatial grid held by the medium system. */
     int numCells() const;
 
+    /** This function returns the volume of the spatial cell with index \f$m\f$. */
+    double volume(int m) const;
+
     /** This function returns true if at least one of the media in the medium system has the
         specified fundamental material type (i.e. dust, electrons, or gas). */
     bool hasMaterialType(MaterialMix::MaterialType type) const;
@@ -103,6 +107,19 @@ public:
     /** This function returns the mass density of the medium component with index \f$h\f$ in
         spatial cell with index \f$m\f$. */
     double massDensity(int m, int h) const;
+
+    /** This function returns the opacity \f$k=n_h\sigma_h\f$ at wavelength \f$\lambda\f$ of the
+        medium component with index \f$h\f$ in spatial cell with index \f$m\f$. */
+    double opacity(double lambda, int m, int h) const;
+
+    /** This function returns the opacity \f$k=\sum_h n_h\sigma_h\f$ (summed over all medium
+        components with the specified material type) at wavelength \f$\lambda\f$ in spatial cell
+        with index \f$m\f$. */
+    double opacity(double lambda, int m, MaterialMix::MaterialType type) const;
+
+    /** This function returns the total opacity \f$k=\sum_h n_h\sigma_h\f$ (summed over all medium
+        components) at wavelength \f$\lambda\f$ in spatial cell with index \f$m\f$. */
+    double opacity(double lambda, int m) const;
 
     //======================== Private Types ========================
 

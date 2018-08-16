@@ -131,6 +131,13 @@ int MediumSystem::numCells() const
 
 ////////////////////////////////////////////////////////////////////
 
+double MediumSystem::volume(int m) const
+{
+    return _Vv[m];
+}
+
+////////////////////////////////////////////////////////////////////
+
 bool MediumSystem::hasMaterialType(MaterialMix::MaterialType type) const
 {
     for (int h=0; h!=_numMedia; ++h) if (state(0,h).mix->materialType() == type) return true;
@@ -156,6 +163,31 @@ double MediumSystem::numberDensity(int m, int h) const
 double MediumSystem::massDensity(int m, int h) const
 {
     return state(m,h).n * state(m,h).mix->mass();
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::opacity(double lambda, int m, int h) const
+{
+    return state(m,h).n * state(m,h).mix->sectionExt(lambda);
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::opacity(double lambda, int m, MaterialMix::MaterialType type) const
+{
+    double result = 0.;
+    for (int h=0; h!=_numMedia; ++h) if (state(0,h).mix->materialType() == type) result += opacity(lambda, m, h);
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::opacity(double lambda, int m) const
+{
+    double result = 0.;
+    for (int h=0; h!=_numMedia; ++h) result += opacity(lambda, m, h);
+    return result;
 }
 
 ////////////////////////////////////////////////////////////////////

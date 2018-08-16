@@ -80,38 +80,26 @@ public:
     /** This function returns the number density of the medium at the specified position. */
     virtual double numberDensity(Position bfr) const = 0;
 
-    /** This function returns the number column density (also called surface density) of the medium
-        along the X-axis of the model coordinate system. */
-    virtual double numberColumnDensityX() const = 0;
-
-    /** This function returns the number column density (also called surface density) of the medium
-        along the Y-axis of the model coordinate system. */
-    virtual double numberColumnDensityY() const = 0;
-
-    /** This function returns the number column density (also called surface density) of the medium
-        along the Z-axis of the model coordinate system. */
-    virtual double numberColumnDensityZ() const = 0;
-
     /** This function returns the total number of material entities in the medium. */
     virtual double number() const = 0;
 
     /** This function returns the mass density of the medium at the specified position. */
     virtual double massDensity(Position bfr) const = 0;
 
-    /** This function returns the mass column density (also called surface density) of the medium
-        along the X-axis of the model coordinate system. */
-    virtual double massColumnDensityX() const = 0;
-
-    /** This function returns the mass column density (also called surface density) of the medium
-        along the Y-axis of the model coordinate system. */
-    virtual double massColumnDensityY() const = 0;
-
-    /** This function returns the mass column density (also called surface density) of the medium
-        along the Z-axis of the model coordinate system. */
-    virtual double massColumnDensityZ() const = 0;
-
     /** This function returns the total mass in the medium. */
     virtual double mass() const = 0;
+
+    /** This function returns the optical depth of the medium at wavelength \f$\lambda\f$
+        along the full X axis of the model coordinate system. */
+    virtual double opticalDepthX(double lambda) const = 0;
+
+    /** This function returns the optical depth of the medium at wavelength \f$\lambda\f$
+        along the full Y axis of the model coordinate system. */
+    virtual double opticalDepthY(double lambda) const = 0;
+
+    /** This function returns the optical depth of the medium at wavelength \f$\lambda\f$
+        along the full Z axis of the model coordinate system. */
+    virtual double opticalDepthZ(double lambda) const = 0;
 
     /** This function generates a random position sampled from the medium's spatial density
         distribution. It is undefined whether the function uses the number density or the mass

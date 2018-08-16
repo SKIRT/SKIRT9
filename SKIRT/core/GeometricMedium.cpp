@@ -41,27 +41,6 @@ double GeometricMedium::numberDensity(Position bfr) const
 
 ////////////////////////////////////////////////////////////////////
 
-double GeometricMedium::numberColumnDensityX() const
-{
-    return _number * geometry()->SigmaX();
-}
-
-////////////////////////////////////////////////////////////////////
-
-double GeometricMedium::numberColumnDensityY() const
-{
-    return _number * geometry()->SigmaY();
-}
-
-////////////////////////////////////////////////////////////////////
-
-double GeometricMedium::numberColumnDensityZ() const
-{
-    return _number * geometry()->SigmaZ();
-}
-
-////////////////////////////////////////////////////////////////////
-
 double GeometricMedium::number() const
 {
     return _number;
@@ -76,30 +55,30 @@ double GeometricMedium::massDensity(Position bfr) const
 
 ////////////////////////////////////////////////////////////////////
 
-double GeometricMedium::massColumnDensityX() const
-{
-    return _mass * geometry()->SigmaX();
-}
-
-////////////////////////////////////////////////////////////////////
-
-double GeometricMedium::massColumnDensityY() const
-{
-    return _mass * geometry()->SigmaY();
-}
-
-////////////////////////////////////////////////////////////////////
-
-double GeometricMedium::massColumnDensityZ() const
-{
-    return _mass * geometry()->SigmaZ();
-}
-
-////////////////////////////////////////////////////////////////////
-
 double GeometricMedium::mass() const
 {
     return _mass;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double GeometricMedium::opticalDepthX(double lambda) const
+{
+    return _number * geometry()->SigmaX() * _materialMix->sectionExt(lambda);
+}
+
+////////////////////////////////////////////////////////////////////
+
+double GeometricMedium::opticalDepthY(double lambda) const
+{
+    return _number * geometry()->SigmaY() * _materialMix->sectionExt(lambda);
+}
+
+////////////////////////////////////////////////////////////////////
+
+double GeometricMedium::opticalDepthZ(double lambda) const
+{
+    return _number * geometry()->SigmaZ() * _materialMix->sectionExt(lambda);
 }
 
 ////////////////////////////////////////////////////////////////////
