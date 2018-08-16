@@ -117,6 +117,12 @@ SkirtUnitDef::SkirtUnitDef()
     addUnit("numbersurfacedensity", "1/AU2", 1/pow(AU,2));
     addUnit("numbersurfacedensity", "1/pc2", 1/pow(pc,2));
 
+    // number volume density
+    addUnit("numbervolumedensity", "1/m3", 1.);
+    addUnit("numbervolumedensity", "1/cm3", 1e6);
+    addUnit("numbervolumedensity", "1/AU3", 1/pow(AU,3));
+    addUnit("numbervolumedensity", "1/pc3", 1/pow(pc,3));
+
     // opacity
     addUnit("opacity", "m2/kg", 1.);
     addUnit("opacity", "cm2/g", 0.1);
@@ -265,6 +271,7 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("SIUnits", "massvolumedensity", "kg/m3");
     addDefaultUnit("SIUnits", "massrate", "kg/s");
     addDefaultUnit("SIUnits", "numbersurfacedensity", "1/m2");
+    addDefaultUnit("SIUnits", "numbervolumedensity", "1/m3");
     addDefaultUnit("SIUnits", "opacity", "m2/kg");
     addDefaultUnit("SIUnits", "time", "s");
     addDefaultUnit("SIUnits", "temperature", "K");
@@ -299,7 +306,8 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("StellarUnits", "masssurfacedensity", "Msun/AU2");
     addDefaultUnit("StellarUnits", "massvolumedensity", "Msun/AU3");
     addDefaultUnit("StellarUnits", "massrate", "Msun/yr");
-    addDefaultUnit("StellarUnits", "numbersurfacedensity", "1/AU2");
+    addDefaultUnit("StellarUnits", "numbersurfacedensity", "1/cm3");
+    addDefaultUnit("StellarUnits", "numbervolumedensity", "1/cm3");
     addDefaultUnit("StellarUnits", "opacity", "m2/kg");
     addDefaultUnit("StellarUnits", "time", "Gyr");
     addDefaultUnit("StellarUnits", "temperature", "K");
@@ -334,7 +342,8 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("ExtragalacticUnits", "masssurfacedensity", "Msun/pc2");
     addDefaultUnit("ExtragalacticUnits", "massvolumedensity", "Msun/pc3");
     addDefaultUnit("ExtragalacticUnits", "massrate", "Msun/yr");
-    addDefaultUnit("ExtragalacticUnits", "numbersurfacedensity", "1/pc2");
+    addDefaultUnit("ExtragalacticUnits", "numbersurfacedensity", "1/cm2");
+    addDefaultUnit("ExtragalacticUnits", "numbervolumedensity", "1/cm3");
     addDefaultUnit("ExtragalacticUnits", "opacity", "m2/kg");
     addDefaultUnit("ExtragalacticUnits", "time", "Gyr");
     addDefaultUnit("ExtragalacticUnits", "temperature", "K");

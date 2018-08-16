@@ -205,6 +205,34 @@ double Units::omassvolumedensity(double rho) const
 
 ////////////////////////////////////////////////////////////////////
 
+string Units::unumbersurfacedensity() const
+{
+    return unit("numbersurfacedensity");
+}
+
+////////////////////////////////////////////////////////////////////
+
+double Units::onumbersurfacedensity(double N) const
+{
+    return out("numbersurfacedensity", N);
+}
+
+////////////////////////////////////////////////////////////////////
+
+string Units::unumbervolumedensity() const
+{
+    return unit("numbervolumedensity");
+}
+
+////////////////////////////////////////////////////////////////////
+
+double Units::onumbervolumedensity(double n) const
+{
+    return out("numbervolumedensity", n);
+}
+
+////////////////////////////////////////////////////////////////////
+
 string Units::uopacity() const
 {
     return unit("opacity");

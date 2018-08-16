@@ -5,17 +5,20 @@
 
 #include "DefaultMediaDensityCutsProbe.hpp"
 #include "Array.hpp"
-#include "Box.hpp"
+#include "Configuration.hpp"
 #include "FITSInOut.hpp"
 #include "Log.hpp"
+#include "Medium.hpp"
+#include "MediumSystem.hpp"
 #include "Parallel.hpp"
 #include "ParallelFactory.hpp"
+#include "SpatialGrid.hpp"
 #include "Units.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-// Private class to output FITS files with the theoretical mass density
-// in one of the coordinate planes (xy, xz, or yz).
+// Private class to output FITS files with the theoretical and grid density
+// for each material type in one of the coordinate planes (xy, xz, or yz).
 namespace
 {
     // The image size in each direction, in pixels
@@ -24,12 +27,10 @@ namespace
     class WriteDensity
     {
     private:
-        // results -- sized to fit in constructor
-        Array trhov;
-
         // data members initialized in constructor
         Probe* item;
-        Geometry* geom;
+        MediumSystem* ms;
+        SpatialGrid* grid;
         Units* units;
         Log* log;
         double xbase, ybase, zbase, xpsize, ypsize, zpsize, xcenter, ycenter, zcenter;
@@ -38,13 +39,19 @@ namespace
         bool xd, yd, zd; // direction of coordinate plane (110, 101, 011)
         string plane;    // name of the coordinate plane (xy, xz, yz)
 
+        // results -- resized and initialized to zero in setup()
+        Array dust_tv, dust_gv;
+        Array elec_tv, elec_gv;
+        Array gas_tv, gas_gv;
+
     public:
         // constructor
-        WriteDensity(Probe* item_, Geometry* geom_, const Box& bounds)
-            : trhov(Np*Np), item(item_), geom(geom_), units(item_->find<Units>()), log(item_->find<Log>())
+        WriteDensity(Probe* item_, MediumSystem* ms_)
+            : item(item_), ms(ms_), grid(ms_->grid()),
+              units(ms_->find<Units>()), log(ms_->find<Log>())
         {
-             double xmin, ymin, zmin, xmax, ymax, zmax;
-            bounds.extent(xmin,ymin,zmin,xmax,ymax,zmax);
+            double xmin, ymin, zmin, xmax, ymax, zmax;
+            grid->boundingBox().extent(xmin,ymin,zmin,xmax,ymax,zmax);
             xpsize = (xmax-xmin)/Np;
             ypsize = (ymax-ymin)/Np;
             zpsize = (zmax-zmin)/Np;
@@ -66,12 +73,17 @@ namespace
             if (xd) plane += "x";
             if (yd) plane += "y";
             if (zd) plane += "z";
-            log->info(item->typeAndName() + " is calculating the media mass density in the " + plane + " plane...");
+            log->info(item->typeAndName() + " is calculating the media density in the " + plane + " plane...");
+
+            if (ms->hasDust()) { dust_tv.resize(Np*Np), dust_gv.resize(Np*Np); }
+            if (ms->hasElectrons()) { elec_tv.resize(Np*Np), elec_gv.resize(Np*Np); }
+            if (ms->hasGas()) { gas_tv.resize(Np*Np), gas_gv.resize(Np*Np); }
         }
 
         // the parallized loop body; calculates the results for a series of lines in the images
         void body(size_t firstIndex, size_t numIndices)
         {
+            int numMedia = ms->numMedia();
             for (size_t j = firstIndex; j != firstIndex+numIndices; ++j)
             {
                 double z = zd ? (zbase + j*zpsize) : 0.;
@@ -81,7 +93,26 @@ namespace
                     double x = xd ? (xbase + i*xpsize) : 0.;
                     double y = yd ? (ybase + (zd ? i : j)*ypsize) : 0.;
                     Position bfr(x,y,z);
-                    trhov[l] = units->omassvolumedensity(geom->density(bfr));
+                    int m = grid->cellIndex(bfr);
+
+                    for (int h=0; h!=numMedia; ++h)
+                    {
+                        if (ms->isDust(h))
+                        {
+                            dust_tv[l] += ms->media()[h]->massDensity(bfr);
+                            if (m>=0) dust_gv[l] += ms->massDensity(m,h);
+                        }
+                        else if (ms->isElectrons(h))
+                        {
+                            elec_tv[l] += ms->media()[h]->numberDensity(bfr);
+                            if (m>=0) elec_gv[l] += ms->numberDensity(m,h);
+                        }
+                        else if (ms->isGas(h))
+                        {
+                            gas_tv[l] += ms->media()[h]->numberDensity(bfr);
+                            if (m>=0) gas_gv[l] += ms->numberDensity(m,h);
+                        }
+                    }
                 }
             }
         }
@@ -89,17 +120,30 @@ namespace
         // write the results to two FITS files with appropriate names
         void write()
         {
-            write(trhov, "theoretical density", item->itemName()+"_trho");
+            write(dust_tv, "dust theoretical density", "dust_t", true);
+            write(dust_gv, "dust gridded density", "dust_g", true);
+            write(elec_tv, "electron theoretical density", "elec_t", false);
+            write(elec_gv, "electron gridded density", "elec_g", false);
+            write(gas_tv, "gas theoretical density", "gas_t", false);
+            write(gas_gv, "gas gridded density", "gas_g", false);
         }
 
     private:
-        void write(const Array& rhov, string label, string prefix)
+        void write(Array& v, string label, string prefix, bool massDensity)
         {
-            string filename = prefix + plane;
-            FITSInOut::write(item, label + " in the " + plane + " plane", filename, rhov, Np, Np, 1,
-                             units->olength(xd?xpsize:ypsize), units->olength(zd?zpsize:ypsize),
-                             units->olength(xd?xcenter:ycenter), units->olength(zd?zcenter:ycenter),
-                             units->umassvolumedensity(), units->ulength());
+            if (v.size())
+            {
+                // convert to output units
+                v *= (massDensity ? units->omassvolumedensity(1.) : units->onumbervolumedensity(1.));
+                string densityUnits = massDensity ? units->umassvolumedensity() : units->unumbervolumedensity();
+
+                // write file
+                string filename = item->itemName() + "_" + prefix + "_" + plane;
+                FITSInOut::write(item, label + " in the " + plane + " plane", filename, v, Np, Np, 1,
+                                 units->olength(xd?xpsize:ypsize), units->olength(zd?zpsize:ypsize),
+                                 units->olength(xd?xcenter:ycenter), units->olength(zd?zcenter:ycenter),
+                                 densityUnits, units->ulength());
+            }
         }
     };
 }
@@ -108,36 +152,40 @@ namespace
 
 void DefaultMediaDensityCutsProbe::probeSetup()
 {
-    // construct a private class instance to do the work
-    WriteDensity wd(this, _geometry, Box(_minX, _minY, _minZ, _maxX, _maxY, _maxZ));
-
-    // configure parallelization; perform only at the root processs
-    Parallel* parallel = find<ParallelFactory>()->parallelRootOnly();
-
-    // get the dimension of the geometry
-    int dimDust = _geometry->dimension();
-
-    // For the xy plane (always)
+    if (find<Configuration>()->hasMedia())
     {
-        wd.setup(1,1,0);
-        parallel->call(Np, [&wd](size_t i ,size_t n) { wd.body(i, n); });
-        wd.write();
-    }
+        // locate the medium system
+        auto ms = find<MediumSystem>();
 
-    // For the xz plane (only if dimension is at least 2)
-    if (dimDust >= 2)
-    {
-        wd.setup(1,0,1);
-        parallel->call(Np, [&wd](size_t i ,size_t n) { wd.body(i, n); });
-        wd.write();
-    }
+        // configure parallelization; perform only at the root processs
+        Parallel* parallel = find<ParallelFactory>()->parallelRootOnly();
 
-    // For the yz plane (only if dimension is 3)
-    if (dimDust == 3)
-    {
-        wd.setup(0,1,1);
-        parallel->call(Np, [&wd](size_t i ,size_t n) { wd.body(i, n); });
-        wd.write();
+        // construct a private class instance to do the work
+        WriteDensity wd(this, ms);
+
+        // for the xy plane (always)
+        {
+            wd.setup(1,1,0);
+            parallel->call(Np, [&wd](size_t i ,size_t n) { wd.body(i, n); });
+            wd.write();
+        }
+
+        // for the xz plane (only if dimension is at least 2)
+        int dimension = ms->dimension();
+        if (dimension >= 2)
+        {
+            wd.setup(1,0,1);
+            parallel->call(Np, [&wd](size_t i ,size_t n) { wd.body(i, n); });
+            wd.write();
+        }
+
+        // for the yz plane (only if dimension is 3)
+        if (dimension == 3)
+        {
+            wd.setup(0,1,1);
+            parallel->call(Np, [&wd](size_t i ,size_t n) { wd.body(i, n); });
+            wd.write();
+        }
     }
 }
 

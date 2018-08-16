@@ -9,8 +9,8 @@
 #include "SimulationItem.hpp"
 #include "Array.hpp"
 #include "Medium.hpp"
+#include "MaterialMix.hpp"
 #include "SpatialGrid.hpp"
-#include "Table.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -66,12 +66,70 @@ public:
     /** This function returns the number of cells in the spatial grid held by the medium system. */
     int numCells() const;
 
+    /** This function returns true if at least one of the media in the medium system has the
+        specified fundamental material type (i.e. dust, electrons, or gas). */
+    bool hasMaterialType(MaterialMix::MaterialType type) const;
+
+    /** This function returns true if at least one of the media in the medium system contains dust.
+        */
+    bool hasDust() const { return hasMaterialType(MaterialMix::MaterialType::Dust); }
+
+    /** This function returns true if at least one of the media in the medium system contains
+        electrons. */
+    bool hasElectrons() const { return hasMaterialType(MaterialMix::MaterialType::Electrons); }
+
+    /** This function returns true if at least one of the media in the medium system contains gas.
+        */
+    bool hasGas() const { return hasMaterialType(MaterialMix::MaterialType::Gas); }
+
+    /** This function returns true if the medium component with index \f$h\f$ has the specified
+        fundamental material type (i.e. dust, electrons, or gas). */
+    bool isMaterialType(MaterialMix::MaterialType type, int h) const;
+
+    /** This function returns true if the medium component with index \f$h\f$ contains dust. */
+    bool isDust(int h) const { return isMaterialType(MaterialMix::MaterialType::Dust, h); }
+
+    /** This function returns true if the medium component with index \f$h\f$ contains electrons.
+        */
+    bool isElectrons(int h) const { return isMaterialType(MaterialMix::MaterialType::Electrons, h); }
+
+    /** This function returns true if the medium component with index \f$h\f$ contains gas. */
+    bool isGas(int h) const { return isMaterialType(MaterialMix::MaterialType::Gas, h); }
+
+    /** This function returns the number density of the medium component with index \f$h\f$ in
+        spatial cell with index \f$m\f$. */
+    double numberDensity(int m, int h) const;
+
+    /** This function returns the mass density of the medium component with index \f$h\f$ in
+        spatial cell with index \f$m\f$. */
+    double massDensity(int m, int h) const;
+
+    //======================== Private Types ========================
+
+private:
+    /** This private data structure holds the information maintained per cell and per medium. */
+    struct State
+    {
+        double n;                   // the number density
+        const MaterialMix* mix;     // pointer to the material mix
+    };
+
+    /** This function returns a writable reference to the state data structure for the given cell
+        and medium indices. */
+    State& state(int m, int h) { return _Svv[m*_numMedia+h]; }
+
+    /** This function returns a read-only reference to the state data structure for the given cell
+        and medium indices. */
+    const State& state(int m, int h) const { return _Svv[m*_numMedia+h]; }
+
     //======================== Data Members ========================
 
 private:
     // initialized during setup
-    Array _Vv;      // volume of each cell (indexed on m)
-    Table<2> _nvv;  // number density for each cell and each dust component (indexed on m,h)
+    int _numCells{0};       // index m
+    int _numMedia{0};       // index h
+    Array _Vv;              // volume of each cell (indexed on m)
+    vector<State> _Svv;     // state info for each cell and each medium (indexed on m,h)
 };
 
 ////////////////////////////////////////////////////////////////

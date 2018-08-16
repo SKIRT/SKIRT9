@@ -151,21 +151,37 @@ public:
         (\f${\text{kg}}\, {\text{m}}^{-3}\f$) to the program's output units. */
     double obulkmassdensity(double rho) const;
 
-    /** This function returns a string containing the name of the unit of surface density adopted
+    /** This function returns a string containing the name of the unit of mass surface density adopted
         by the program for output. */
     string umasssurfacedensity() const;
 
-    /** This function converts the surface density \f$\Sigma\f$ from the internally used SI units
+    /** This function converts the mass surface density \f$\Sigma\f$ from the internally used SI units
         (\f${\text{kg}}\, {\text{m}}^{-2}\f$) to the program's output units. */
     double omasssurfacedensity(double Sigma) const;
 
-    /** This function returns a string containing the name of the unit of mass density adopted by
+    /** This function returns a string containing the name of the unit of mass volume density adopted by
         the program for output. */
     string umassvolumedensity() const;
 
-    /** This function converts the mass density \f$\rho\f$ from the internally used SI units
+    /** This function converts the mass volume density \f$\rho\f$ from the internally used SI units
         (\f${\text{kg}}\, {\text{m}}^{-3}\f$) to the program's output units. */
     double omassvolumedensity(double rho) const;
+
+    /** This function returns a string containing the name of the unit of number surface density adopted
+        by the program for output. */
+    string unumbersurfacedensity() const;
+
+    /** This function converts the number surface density \f$\mathcal{N}\f$ from the internally used SI units
+        (\f${\text{m}}^{-2}\f$) to the program's output units. */
+    double onumbersurfacedensity(double N) const;
+
+    /** This function returns a string containing the name of the unit of number volume density adopted by
+        the program for output. */
+    string unumbervolumedensity() const;
+
+    /** This function converts the number volume density \f$n\f$ from the internally used SI units
+        (\f${\text{m}}^{-3}\f$) to the program's output units. */
+    double onumbervolumedensity(double n) const;
 
     /** This function returns a string containing the name of the unit of opacity adopted by the
         program for output. */
