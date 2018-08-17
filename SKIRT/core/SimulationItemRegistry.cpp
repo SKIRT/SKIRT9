@@ -110,6 +110,7 @@
 #include "SpatialGrid.hpp"
 #include "SpatialGridConvergenceProbe.hpp"
 #include "SpatialGridPlotProbe.hpp"
+#include "SpatialGridSourceDensityProbe.hpp"
 #include "SpatialCellPropertiesProbe.hpp"
 #include "SpecificLuminosityNormalization.hpp"
 #include "Sphere1DSpatialGrid.hpp"
@@ -363,6 +364,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<DefaultMediaDensityCutsProbe>();
     ItemRegistry::add<OpticalDepthMapProbe>();
     ItemRegistry::add<SpatialCellPropertiesProbe>();
+    ItemRegistry::add<SpatialGridSourceDensityProbe>();
 
     // Monte Carlo simulations
     ItemRegistry::add<MonteCarloSimulation>();
