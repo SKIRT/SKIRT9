@@ -24,7 +24,9 @@
     finite-resolution spatial grid in the simulation. A comparison of both sets of values offers a
     first indication of whether the configured spatial grid properly captures the material mass in
     the simulation (in the ideal case, there would be no difference between both sets of values).
-    */
+
+    Finally, the file includes some basic statistics on the diagonal optical depths of the spatial
+    grid cells: the largest and average diagonal optical depth, and the 90% percentile. */
 class SpatialGridConvergenceProbe : public Probe
 {
     ITEM_CONCRETE(SpatialGridConvergenceProbe, Probe, "convergence information on the spatial grid")

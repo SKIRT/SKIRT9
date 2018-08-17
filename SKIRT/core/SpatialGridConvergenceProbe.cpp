@@ -103,6 +103,47 @@ namespace
                                 + " " + units->uwavelength() + " along full Z-axis");
         writeValues(out, tau_Z_t, tau_Z_g, 1., "");
     }
+
+    // outputs statistics on optical depth
+    void writeOpticalDepthStatistics(TextOutFile& out, MediumSystem* ms, double lambda)
+    {
+        Units* units = ms->find<Units>();
+
+        // calculate diagonal optical depth for all spatial cells
+        int numCells = ms->numCells();
+        Array tauV(numCells);
+        for (int m=0; m!=numCells; ++m) tauV[m] = cbrt(ms->volume(m)) * ms->opacity(lambda, m);
+
+        // calculate statistics on optical depth
+        double tauavg = tauV.sum()/numCells;
+        double taumin = tauV.min();
+        double taumax = tauV.max();
+        const int numBins = 500;
+        vector<int> countV(numBins+1);
+        for (double tau : tauV)
+        {
+            int index = max(0,min(numBins, static_cast<int>((tau-taumin)/(taumax-taumin)*numBins)));
+            countV[index]++;
+        }
+        int count = 0;
+        int index = 0;
+        for (; index<numBins; index++)
+        {
+            count += countV[index];
+            if (count > 0.9*numCells) break;
+        }
+        double tau90 = taumin + index*(taumax-taumin)/numBins;
+
+        // write the statistics on optical depth to the file
+        out.writeLine("");
+        out.writeLine("------ Cell statistics ------");
+        out.writeLine("");
+        out.writeLine("Optical depth of cell diagonal at " + StringUtils::toString(units->owavelength(lambda), 'g')
+                                + " " + units->uwavelength());
+        out.writeLine("  Largest: " + StringUtils::toString(taumax, 'g'));
+        out.writeLine("  Average: " + StringUtils::toString(tauavg, 'g'));
+        out.writeLine("  90% <  : " + StringUtils::toString(tau90, 'g'));
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -124,6 +165,9 @@ void SpatialGridConvergenceProbe::probeSetup()
         if (ms->hasDust()) writeConvergenceForMaterialType(out, ms, _wavelength, Type::Dust, "Dust");
         if (ms->hasElectrons()) writeConvergenceForMaterialType(out, ms, _wavelength, Type::Electrons, "Electrons");
         if (ms->hasGas()) writeConvergenceForMaterialType(out, ms, _wavelength, Type::Gas, "Gas");
+
+        // write statistics on optical depth
+        writeOpticalDepthStatistics(out, ms, _wavelength);
 
         // write footer
         out.writeLine("");
