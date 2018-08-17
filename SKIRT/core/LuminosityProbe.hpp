@@ -24,7 +24,7 @@
     configured in the source system. */
 class LuminosityProbe : public Probe
 {
-    ITEM_CONCRETE(LuminosityProbe, Probe, "a probe of the primary source luminosities")
+    ITEM_CONCRETE(LuminosityProbe, Probe, "probe of the primary source luminosities")
 
     PROPERTY_ITEM(wavelengthGrid, WavelengthGrid, "the wavelength grid for the luminosity probe")
         ATTRIBUTE_OPTIONAL(wavelengthGrid)

@@ -17,7 +17,7 @@
     */
 class WavelengthGridProbe : public Probe
 {
-    ITEM_CONCRETE(WavelengthGridProbe, Probe, "a probe of the instrument wavelength grids")
+    ITEM_CONCRETE(WavelengthGridProbe, Probe, "the instrument wavelength grids")
     ITEM_END()
 
     //======================== Other Functions =======================
