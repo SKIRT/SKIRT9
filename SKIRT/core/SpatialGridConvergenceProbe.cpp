@@ -22,12 +22,12 @@ namespace
     double griddedOpticalDepth(MediumSystem* ms, double lambda, MaterialMix::MaterialType type, Direction axis)
     {
         double tau = 0;
-        SpatialGridPath dgp(Position(0.,0.,0.), axis);
-        ms->grid()->path(&dgp);
-        tau += dgp.opticalDepth([ms,lambda,type](int m){ return ms->opacity(lambda, m, type); });
-        dgp.setDirection(Direction(-axis.x(),-axis.y(),-axis.z()));
-        ms->grid()->path(&dgp);
-        tau += dgp.opticalDepth([ms,lambda,type](int m){ return ms->opacity(lambda, m, type); });
+        SpatialGridPath path(Position(0.,0.,0.), axis);
+        ms->grid()->path(&path);
+        tau += path.opticalDepth([ms,lambda,type](int m){ return ms->opacity(lambda, m, type); });
+        path.setDirection(Direction(-axis.x(),-axis.y(),-axis.z()));
+        ms->grid()->path(&path);
+        tau += path.opticalDepth([ms,lambda,type](int m){ return ms->opacity(lambda, m, type); });
         return tau;
     }
 

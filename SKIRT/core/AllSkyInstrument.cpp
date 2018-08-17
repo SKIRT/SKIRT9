@@ -15,8 +15,11 @@ void AllSkyInstrument::setupSelfBefore()
     Instrument::setupSelfBefore();
 
     // verify consistency of vector properties
-    if (Vec(_Ox-_Cx, _Oy-_Cy, _Oz-_Cz).norm() < 1e-20) throw FATALERROR("Crosshair is too close to observer");
-    if (Vec(_Ux, _Uy, _Uz).norm() < 1e-20) throw FATALERROR("Upwards direction cannot be null vector");
+    Vec co(_Ox-_Cx, _Oy-_Cy, _Oz-_Cz); // vector in direction from crosshair to observer
+    Vec up(_Ux, _Uy, _Uz);             // vector in the upward direction
+    if (co.norm() < 1e-20) throw FATALERROR("Crosshair is too close to observer");
+    if (up.norm() < 1e-20) throw FATALERROR("Upwards direction cannot be null vector");
+    if (Vec::cross(co,up).norm() < 1e-20) throw FATALERROR("Upwards direction cannot be parallel to viewing direction");
 
     // set number of pixels using fixed aspect ratio
     _Nx = 2 * _numPixelsY;
@@ -25,19 +28,6 @@ void AllSkyInstrument::setupSelfBefore()
     // determine linear size of a single pixel
     // assume: square pixels; fraction of effective pixels pi/4; total area sphere with radius R
     _s = sqrt(8)*_radius/_numPixelsY;
-
-/*
-    // unit vectors along x and y axes in the plane normal to the line crosshair-observer
-    //              with y-axis oriented along projection of up direction in that plane
-    Vec kn(_Ox-_Cx, _Oy-_Cy, _Oz-_Cz);
-    if (kn.norm() < 1e-20) throw FATALERROR("Crosshair is too close to observer");
-    Vec ku(_Ux, _Uy, _Uz);
-    if (ku.norm() < 1e-20) throw FATALERROR("Upwards direction cannot be null vector");
-    Vec ky = Vec::cross(kn,Vec::cross(ku,kn));
-    Vec kx = Vec::cross(ky,kn);
-    _bfkx = Direction(kx/kx.norm());
-    _bfky = Direction(ky/ky.norm());
-*/
 
     // setup the transformation from world to observer coordinates
 

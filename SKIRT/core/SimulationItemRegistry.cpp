@@ -84,6 +84,7 @@
 #include "NumberColumnMaterialNormalization.hpp"
 #include "OffsetGeometryDecorator.hpp"
 #include "OpticalDepthMaterialNormalization.hpp"
+#include "OpticalDepthMapProbe.hpp"
 #include "ParaboloidGeometry.hpp"
 #include "ParaboloidShellGeometry.hpp"
 #include "ParticleGeometry.hpp"
@@ -356,9 +357,10 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<WavelengthGridProbe>();
     ItemRegistry::add<LuminosityProbe>();
     ItemRegistry::add<LaunchedPacketsProbe>();
+    ItemRegistry::add<SpatialGridPlotProbe>();
     ItemRegistry::add<SpatialGridConvergenceProbe>();
     ItemRegistry::add<DefaultMediaDensityCutsProbe>();
-    ItemRegistry::add<SpatialGridPlotProbe>();
+    ItemRegistry::add<OpticalDepthMapProbe>();
 
     // Monte Carlo simulations
     ItemRegistry::add<MonteCarloSimulation>();
