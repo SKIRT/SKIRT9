@@ -11,6 +11,8 @@
 #include "Medium.hpp"
 #include "MaterialMix.hpp"
 #include "SpatialGrid.hpp"
+class PhotonPacket;
+class Random;
 
 //////////////////////////////////////////////////////////////////////
 
@@ -108,18 +110,78 @@ public:
         spatial cell with index \f$m\f$. */
     double massDensity(int m, int h) const;
 
-    /** This function returns the opacity \f$k=n_h\sigma_h\f$ at wavelength \f$\lambda\f$ of the
-        medium component with index \f$h\f$ in spatial cell with index \f$m\f$. */
-    double opacity(double lambda, int m, int h) const;
+    /** This function returns the material mix corresponding to the medium component with index
+        \f$h\f$ in spatial cell with index \f$m\f$. */
+    const MaterialMix* mix(int m, int h) const;
 
-    /** This function returns the opacity \f$k=\sum_h n_h\sigma_h\f$ (summed over all medium
-        components with the specified material type) at wavelength \f$\lambda\f$ in spatial cell
-        with index \f$m\f$. */
-    double opacity(double lambda, int m, MaterialMix::MaterialType type) const;
+    /** This function randomly returns a material mix corresponding to one of the medium components
+        in spatial cell with index \f$m\f$. The sampling is weighted by the scattering opacity
+        \f$k=n_h\sigma_h^\text{sca}\f$ at wavelength \f$\lambda\f$ of each medium component with
+        index \f$h\f$ in the spatial cell with index \f$m\f$. */
+    const MaterialMix* randomMixForScattering(Random* random, double lambda, int m) const;
 
-    /** This function returns the total opacity \f$k=\sum_h n_h\sigma_h\f$ (summed over all medium
-        components) at wavelength \f$\lambda\f$ in spatial cell with index \f$m\f$. */
-    double opacity(double lambda, int m) const;
+    /** This function returns the scattering opacity \f$k=n_h\sigma_h^\text{sca}\f$ at wavelength
+        \f$\lambda\f$ of the medium component with index \f$h\f$ in spatial cell with index
+        \f$m\f$. */
+    double opacitySca(double lambda, int m, int h) const;
+
+    /** This function returns the scattering opacity \f$k=\sum_h n_h\sigma_h^\text{sca}\f$ summed
+        over all medium components at wavelength \f$\lambda\f$ in spatial cell with index \f$m\f$.
+        */
+    double opacitySca(double lambda, int m) const;
+
+    /** This function returns the extinction opacity \f$k=n_h\sigma_h^\text{ext}\f$ at wavelength
+        \f$\lambda\f$ of the medium component with index \f$h\f$ in spatial cell with index
+        \f$m\f$. */
+    double opacityExt(double lambda, int m, int h) const;
+
+    /** This function returns the extinction opacity \f$k=\sum_h n_h\sigma_h^\text{ext}\f$ summed
+        over all medium components at wavelength \f$\lambda\f$ in spatial cell with index \f$m\f$.
+        */
+    double opacityExt(double lambda, int m) const;
+
+    /** This function returns the extinction opacity \f$k=\sum_h n_h\sigma_h^\text{ext}\f$ summed
+        over all medium components with the specified material type at wavelength \f$\lambda\f$ in
+        spatial cell with index \f$m\f$. */
+    double opacityExt(double lambda, int m, MaterialMix::MaterialType type) const;
+
+    /** This function returns the scattering albedo \f$\sigma_h^\text{sca}/\sigma_h^\text{ext}\f$
+        at wavelength \f$\lambda\f$ of the medium component with index \f$h\f$ in spatial cell with
+        index \f$m\f$. */
+    double albedo(double lambda, int m, int h) const;
+
+    /** This function returns the weighted scattering albedo \f[\frac{\sum_h
+        n_h\sigma_h^\text{sca}} {\sum_h n_h\sigma_h^\text{ext}}\f] over all medium components at
+        wavelength \f$\lambda\f$ in spatial cell with index \f$m\f$. */
+    double albedo(double lambda, int m) const;
+
+    /** This function calculates the optical depth
+        \f$\tau_{\lambda,{\text{path}}}({\boldsymbol{r}},{\boldsymbol{k}})\f$ at wavelength
+        \f$\lambda\f$ along a path through the media system starting at the position
+        \f${\boldsymbol{r}}\f$ into the direction \f${\boldsymbol{k}}\f$, where \f$\lambda\f$,
+        \f${\boldsymbol{r}}\f$ and \f${\boldsymbol{k}}\f$ are obtained from the specified
+        PhotonPacket, and it stores the resulting details back into the photon packet.
+
+        The hard work is done by calling the SpatialGrid::path() function which stores the
+        geometrical information on the path through the spatial grid into the photon packet: the
+        cell indices \f$m\f$ of the cells that are crossed by the path, the path length \f$(\Delta
+        s)_m\f$ covered in that particular cell and a total path length counter \f$s_m\f$ that
+        gives the total path length covered between the starting point \f${\boldsymbol{r}}\f$ and
+        the boundary of the cell.
+
+        With this information given, the calculation of the optical depth is rather
+        straightforward. It is calculated as \f[
+        \tau_{\lambda,{\text{path}}}({\boldsymbol{r}},{\boldsymbol{k}}) = \sum_m (\Delta s)_m
+        \sum_h \varsigma_{\lambda,h}^{\text{ext}}\, n_m, \f] where
+        \f$\varsigma_{\lambda,h}^{\text{abs}}\f$ is the extinction cross section corresponding to
+        the \f$h\f$'th medium component at wavelength \f$\lambda\f$ and \f$n_{m,h}\f$ the number
+        density in the cell with index \f$m\f$ corresponding to the \f$h\f$'th medium component.
+        The function also stores the details on the calculation of the optical depth in the photon
+        packet, specifically it stores the optical depth covered within the \f$m\f$'th spatial
+        cell, \f[ (\Delta\tau_\lambda)_m = (\Delta s)_m \sum_h \varsigma_{\lambda,h}^{\text{ext}}\,
+        n_m, \f] and the total optical depth \f$\tau_{\lambda,m}\f$ covered between the starting
+        point \f${\boldsymbol{r}}\f$ and the boundary of the cell. */
+    void fillOpticalDepth(PhotonPacket* pp);
 
     //======================== Private Types ========================
 

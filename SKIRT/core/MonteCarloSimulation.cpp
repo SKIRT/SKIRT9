@@ -6,10 +6,13 @@
 #include "MonteCarloSimulation.hpp"
 #include "FatalError.hpp"
 #include "Log.hpp"
+#include "MaterialMix.hpp"
 #include "Parallel.hpp"
 #include "ParallelFactory.hpp"
 #include "PhotonPacket.hpp"
 #include "ProcessManager.hpp"
+#include "ShortArray.hpp"
+#include "SpatialGrid.hpp"
 #include "StopWatch.hpp"
 #include "StringUtils.hpp"
 #include "TimeLogger.hpp"
@@ -209,12 +212,22 @@ void MonteCarloSimulation::doPrimaryEmissionChunk(size_t firstIndex, size_t numI
 
             // launch a photon packet
             sourceSystem()->launch(&pp, historyIndex);
-
-            // peel off towards each instrument
-            for (Instrument* instrument : _instrumentSystem->instruments())
+            if (pp.luminosity()>0)
             {
-                ppp.launchEmissionPeelOff(&pp, instrument->bfkobs(pp.position()));
-                instrument->detect(&ppp);
+                peelOffEmission(&pp, &ppp);
+
+                // trace the packet through the media
+                double Lthreshold = pp.luminosity() / _config->minWeightReduction();
+                int minScattEvents = _config->minScattEvents();
+                if (_config->hasMedia()) while (true)
+                {
+                    mediumSystem()->fillOpticalDepth(&pp);
+                    simulateEscapeAndAbsorption(&pp, false);    // TO DO: support storing absorption
+                    if (pp.luminosity()<=0 || (pp.luminosity()<=Lthreshold && pp.numScatt()>=minScattEvents)) break;
+                    simulatePropagation(&pp);
+                    peelOffScattering(&pp,&ppp);
+                    simulateScattering(&pp);
+                }
             }
         }
         logProgress(endIndex);
@@ -224,6 +237,259 @@ void MonteCarloSimulation::doPrimaryEmissionChunk(size_t firstIndex, size_t numI
     // time one of the threads for debugging purposes
     if (id==1) StopWatch::stop();
 #endif
+}
+
+////////////////////////////////////////////////////////////////////
+
+void MonteCarloSimulation::peelOffEmission(const PhotonPacket* pp, PhotonPacket* ppp)
+{
+    for (Instrument* instrument : _instrumentSystem->instruments())
+    {
+        ppp->launchEmissionPeelOff(pp, instrument->bfkobs(pp->position()));
+        instrument->detect(ppp);
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
+void MonteCarloSimulation::simulateEscapeAndAbsorption(PhotonPacket* pp, bool storeAbsorption)
+{
+    // determine the portion of the packet's luminosity that will be scattered
+    // and register the absorbed portion in everry cell, if so requested
+    double wsca = 0.;
+    int numCells = pp->size();
+    for (int n=0; n<numCells; n++)
+    {
+        int m = pp->m(n);
+        if (m!=-1)
+        {
+            double albedo = mediumSystem()->albedo(pp->wavelength(), m);
+            double taustart = (n==0) ? 0. : pp->tau(n-1);
+            double dtau = pp->dtau(n);
+            double expfactorm = -expm1(-dtau);
+            double wextm = exp(-taustart) * expfactorm;
+            wsca += albedo * wextm;
+            if (storeAbsorption)
+            {
+                double wabsm = wextm - wsca;
+                // TO DO: support storing absorption
+                (void)wabsm;
+            }
+        }
+    }
+    pp->applyBias(wsca);
+}
+
+////////////////////////////////////////////////////////////////////
+
+void MonteCarloSimulation::simulatePropagation(PhotonPacket* pp)
+{
+    double taupath = pp->tau();
+    if (taupath==0.) return;
+
+    double xi = _config->pathLengthBias();
+    double tau = 0.;
+    if (xi==0.)
+    {
+        tau = random()->exponCutoff(taupath);
+    }
+    else
+    {
+        double X = random()->uniform();
+        tau = X<xi ? random()->uniform()*taupath : random()->exponCutoff(taupath);
+        double p = -exp(-tau)/expm1(-taupath);
+        double q = (1.0-xi)*p + xi/taupath;
+        double weight = p/q;
+        pp->applyBias(weight);
+    }
+
+    double s = pp->pathLength(tau);
+    pp->propagate(s);
+}
+
+////////////////////////////////////////////////////////////////////
+
+namespace
+{
+    // This helper function returns the angle phi between the previous and current scattering planes
+    // given the normal to the previous scattering plane and the current and new propagation directions
+    // of the photon package. The function returns a zero angle if the light is unpolarized or when the
+    // current scattering event is completely forward or backward.
+    double angleBetweenScatteringPlanes(Direction np, Direction kc, Direction kn)
+    {
+        Vec nc = Vec::cross(kc,kn);
+        nc /= nc.norm();
+        double cosphi = Vec::dot(np,nc);
+        double sinphi = Vec::dot(Vec::cross(np,nc), kc);
+        double phi = atan2(sinphi,cosphi);
+        if (std::isfinite(phi)) return phi;
+        return 0.;
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
+void MonteCarloSimulation::peelOffScattering(const PhotonPacket* pp, PhotonPacket* ppp)
+{
+    double lambda = pp->wavelength();
+    int m = mediumSystem()->grid()->cellIndex(pp->position());
+    int numMedia = mediumSystem()->numMedia();
+
+    // determine the weighting factor for each medium component as its scattering opacity (n * sigma_sca)
+    ShortArray<8> wv(numMedia);
+    if (numMedia==1)
+    {
+        wv[0] = 1.;
+    }
+    else
+    {
+        double sum = 0.;
+        for (int h=0; h!=numMedia; ++h)
+        {
+            wv[h] = mediumSystem()->opacitySca(lambda, m, h);
+            sum += wv[h];
+        }
+        if (sum<=0) return; // abort peel-off if none of the media scatters
+        for (int h=0; h!=numMedia; ++h) wv[h] /= sum;
+    }
+
+    // now do the actual peel-off for each instrument
+    for (Instrument* instr : _instrumentSystem->instruments())
+    {
+        // get the instrument direction
+        Direction bfkobs = instr->bfkobs(pp->position());
+
+        // calculate the weighted sum of the effects on the Stokes vector for all media
+        double I = 0., Q = 0., U = 0., V = 0.;
+        for (int h=0; h!=numMedia; ++h)
+        {
+            // use the appropriate algorithm for each mix
+            // (all mixes must either support polarization or not; combining these support levels is not allowed)
+            auto mix = mediumSystem()->mix(m,h);
+            switch (mix->scatteringMode())
+            {
+            case MaterialMix::ScatteringMode::HenyeyGreenstein:
+                {
+                    // calculate the value of the Henyey-Greenstein phase function
+                    double costheta = Vec::dot(pp->direction(), bfkobs);
+                    double g = mix->asymmpar(lambda);
+                    double t = 1.0+g*g-2*g*costheta;
+                    double value = (1.0-g)*(1.0+g)/sqrt(t*t*t);
+
+                    // accumulate the weighted sum in the intensity (there is no support for polarization in this case)
+                    I += wv[h] * value;
+                    break;
+                }
+            case MaterialMix::ScatteringMode::MaterialPhaseFunction:
+                {
+                    // calculate the value of the material-specific phase function
+                    double costheta = Vec::dot(pp->direction(), bfkobs);
+                    double value = mix->phaseFunctionValueForCosine(lambda, costheta);
+
+                    // accumulate the weighted sum in the intensity (there is no support for polarization in this case)
+                    I += wv[h] * value;
+                    break;
+                }
+            case MaterialMix::ScatteringMode::SphericalPolarization:
+                {
+                    // calculate the value of the material-specific phase function
+                    double theta = acos(Vec::dot(pp->direction(),bfkobs));
+                    double phi = angleBetweenScatteringPlanes(pp->normal(), pp->direction(), bfkobs);
+                    double value = mix->phaseFunctionValue(lambda, theta, phi, pp);
+
+                    // copy the polarization state so we can change it without affecting the incoming photon packet
+                    StokesVector sv = *pp;
+
+                    // rotate the Stokes vector reference direction into the scattering plane
+                    sv.rotateIntoPlane(pp->direction(), bfkobs);
+
+                    // apply the Mueller matrix
+                    mix->applyMueller(lambda, theta, &sv);
+
+                    // rotate the Stokes vector reference direction parallel to the instrument frame y-axis
+                    // it is given bfkobs because the photon is at this point aimed towards the observer
+                    sv.rotateIntoPlane(bfkobs, instr->bfky(pp->position()));
+
+                    // acumulate the weighted sum of all Stokes components to support polarization
+                    double w = wv[h] * value;
+                    I += w * sv.stokesI();
+                    Q += w * sv.stokesQ();
+                    U += w * sv.stokesU();
+                    V += w * sv.stokesV();
+                    break;
+                }
+            }
+        }
+
+        // pass the result to the peel-off photon packet and have it detected
+        ppp->launchScatteringPeelOff(pp, bfkobs, I);
+        if (_config->hasPolarization()) ppp->setPolarized(I, Q, U, V, pp->normal());
+        instr->detect(ppp);
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
+void MonteCarloSimulation::simulateScattering(PhotonPacket* pp)
+{
+    double lambda = pp->wavelength();
+    int m = mediumSystem()->grid()->cellIndex(pp->position());
+
+    // randomly select a material mix; the probability of each component is weighted by the scattering opacity
+    auto mix = mediumSystem()->randomMixForScattering(random(), lambda, m);
+
+    // now perform the scattering using this material mix
+    //   - determine the new propagation direction
+    //   - if supported, update the polarization state of the photon packet along the way
+    Direction bfknew;
+    switch (mix->scatteringMode())
+    {
+    case MaterialMix::ScatteringMode::HenyeyGreenstein:
+        {
+            // sample a scattering angle from the Henyey-Greenstein phase function
+            // handle isotropic scattering separately because the HG sampling procedure breaks down in this case
+            double g = mix->asymmpar(lambda);
+            if (fabs(g) < 1e-6)
+            {
+                bfknew = random()->direction();
+            }
+            else
+            {
+                double f = ((1.0-g)*(1.0+g))/(1.0-g+2.0*g*random()->uniform());
+                double costheta = (1.0+g*g-f*f)/(2.0*g);
+                bfknew = random()->direction(pp->direction(), costheta);
+            }
+            break;
+        }
+    case MaterialMix::ScatteringMode::MaterialPhaseFunction:
+        {
+            // sample a scattering angle from the material-specific phase function
+            double costheta = mix->generateCosineFromPhaseFunction(lambda);
+            bfknew = random()->direction(pp->direction(), costheta);
+            break;
+        }
+    case MaterialMix::ScatteringMode::SphericalPolarization:
+        {
+            // sample the angles between the previous and new direction from the material-specific phase function,
+            // given the incoming polarization state
+            double theta, phi;
+            std::tie(theta, phi) = mix->generateAnglesFromPhaseFunction(lambda, pp);
+
+            // rotate the Stokes vector (and the scattering plane) of the photon packet
+            pp->rotateStokes(phi, pp->direction());
+
+            // apply Mueller matrix to the Stokes vector of the photon packet
+            mix->applyMueller(lambda, theta, pp);
+
+            // rotate the propagation direction in the scattering plane
+            Vec newdir = pp->direction()*cos(theta) + Vec::cross(pp->normal(), pp->direction())*sin(theta);
+
+            // normalize the new direction to prevent degradation
+            bfknew = Direction(newdir/newdir.norm());
+            break;
+        }
+    }
+    pp->scatter(bfknew);
 }
 
 ////////////////////////////////////////////////////////////////////

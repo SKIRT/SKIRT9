@@ -24,10 +24,10 @@ namespace
         double tau = 0;
         SpatialGridPath path(Position(0.,0.,0.), axis);
         ms->grid()->path(&path);
-        tau += path.opticalDepth([ms,lambda,type](int m){ return ms->opacity(lambda, m, type); });
+        tau += path.opticalDepth([ms,lambda,type](int m){ return ms->opacityExt(lambda, m, type); });
         path.setDirection(Direction(-axis.x(),-axis.y(),-axis.z()));
         ms->grid()->path(&path);
-        tau += path.opticalDepth([ms,lambda,type](int m){ return ms->opacity(lambda, m, type); });
+        tau += path.opticalDepth([ms,lambda,type](int m){ return ms->opacityExt(lambda, m, type); });
         return tau;
     }
 
@@ -112,7 +112,7 @@ namespace
         // calculate diagonal optical depth for all spatial cells
         int numCells = ms->numCells();
         Array tauV(numCells);
-        for (int m=0; m!=numCells; ++m) tauV[m] = cbrt(ms->volume(m)) * ms->opacity(lambda, m);
+        for (int m=0; m!=numCells; ++m) tauV[m] = cbrt(ms->volume(m)) * ms->opacityExt(lambda, m);
 
         // calculate statistics on optical depth
         double tauavg = tauV.sum()/numCells;

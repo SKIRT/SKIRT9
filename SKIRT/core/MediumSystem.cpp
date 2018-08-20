@@ -8,9 +8,12 @@
 #include "FatalError.hpp"
 #include "Log.hpp"
 #include "MaterialMix.hpp"
+#include "NR.hpp"
 #include "Parallel.hpp"
 #include "ParallelFactory.hpp"
+#include "PhotonPacket.hpp"
 #include "ProcessManager.hpp"
+#include "Random.hpp"
 #include "ShortArray.hpp"
 #include "StringUtils.hpp"
 #include "Table.hpp"
@@ -167,27 +170,106 @@ double MediumSystem::massDensity(int m, int h) const
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::opacity(double lambda, int m, int h) const
+const MaterialMix* MediumSystem::mix(int m, int h) const
+{
+    return state(m,h).mix;
+}
+
+////////////////////////////////////////////////////////////////////
+
+const MaterialMix* MediumSystem::randomMixForScattering(Random* random, double lambda, int m) const
+{
+    int h = 0;
+    if (_numMedia>1)
+    {
+        Array Xv;
+        NR::cdf(Xv, _numMedia, [this,lambda,m](int h){ return state(m,h).n * state(m,h).mix->sectionSca(lambda); });
+        h = NR::locateClip(Xv, random->uniform());
+    }
+    return state(m,h).mix;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::opacitySca(double lambda, int m, int h) const
+{
+    return state(m,h).n * state(m,h).mix->sectionSca(lambda);
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::opacitySca(double lambda, int m) const
+{
+    double result = 0.;
+    for (int h=0; h!=_numMedia; ++h) result += state(m,h).n * state(m,h).mix->sectionSca(lambda);
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::opacityExt(double lambda, int m, int h) const
 {
     return state(m,h).n * state(m,h).mix->sectionExt(lambda);
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::opacity(double lambda, int m, MaterialMix::MaterialType type) const
+double MediumSystem::opacityExt(double lambda, int m) const
 {
     double result = 0.;
-    for (int h=0; h!=_numMedia; ++h) if (state(0,h).mix->materialType() == type) result += opacity(lambda, m, h);
+    for (int h=0; h!=_numMedia; ++h) result += state(m,h).n * state(m,h).mix->sectionExt(lambda);
     return result;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::opacity(double lambda, int m) const
+double MediumSystem::opacityExt(double lambda, int m, MaterialMix::MaterialType type) const
 {
     double result = 0.;
-    for (int h=0; h!=_numMedia; ++h) result += opacity(lambda, m, h);
+    for (int h=0; h!=_numMedia; ++h)
+        if (state(0,h).mix->materialType() == type) result += state(m,h).n * state(m,h).mix->sectionExt(lambda);
     return result;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::albedo(double lambda, int m, int h) const
+{
+    return state(m,h).mix->albedo(lambda);
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::albedo(double lambda, int m) const
+{
+    double ksca = 0.;
+    double kext = 0.;
+    for (int h=0; h!=_numMedia; ++h)
+    {
+        double n = state(m,h).n;
+        auto mix = state(m,h).mix;
+        ksca += n * mix->sectionSca(lambda);
+        kext += n * mix->sectionExt(lambda);
+    }
+    return kext>0. ? ksca/kext : 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void MediumSystem::fillOpticalDepth(PhotonPacket* pp)
+{
+    // determine the path and store the geometric details in the photon package
+    _grid->path(pp);
+
+    // calculate and store the optical depth details in the photon package
+    double lambda = pp->wavelength();
+    pp->fillOpticalDepth([this,lambda](int m){ return opacityExt(lambda, m); });
+
+    // verify that the result makes sense
+    double tau = pp->tau();
+    if (tau<0.0 || std::isnan(tau) || std::isinf(tau))
+        throw FATALERROR("The optical depth along the path is not a positive number: tau = "
+                         + StringUtils::toString(tau));
 }
 
 ////////////////////////////////////////////////////////////////////
