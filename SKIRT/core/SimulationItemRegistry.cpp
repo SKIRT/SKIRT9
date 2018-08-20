@@ -85,6 +85,7 @@
 #include "OffsetGeometryDecorator.hpp"
 #include "OpticalDepthMaterialNormalization.hpp"
 #include "OpticalDepthMapProbe.hpp"
+#include "OpticalMaterialPropertiesProbe.hpp"
 #include "ParaboloidGeometry.hpp"
 #include "ParaboloidShellGeometry.hpp"
 #include "ParticleGeometry.hpp"
@@ -365,6 +366,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<OpticalDepthMapProbe>();
     ItemRegistry::add<SpatialCellPropertiesProbe>();
     ItemRegistry::add<SpatialGridSourceDensityProbe>();
+    ItemRegistry::add<OpticalMaterialPropertiesProbe>();
 
     // Monte Carlo simulations
     ItemRegistry::add<MonteCarloSimulation>();
