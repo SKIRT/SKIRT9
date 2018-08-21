@@ -54,7 +54,7 @@ void MonteCarloSimulation::setupSelfAfter()
     Simulation::setupSelfAfter();
 
     // if there are no media, simply log the source model symmetry
-    if (!_config->hasMedia())
+    if (!_config->hasMedium())
     {
         log()->info("Model symmetry is " + std::to_string(sourceSystem()->dimension()) + "D");
     }
@@ -219,7 +219,7 @@ void MonteCarloSimulation::doPrimaryEmissionChunk(size_t firstIndex, size_t numI
                 // trace the packet through the media
                 double Lthreshold = pp.luminosity() / _config->minWeightReduction();
                 int minScattEvents = _config->minScattEvents();
-                if (_config->hasMedia()) while (true)
+                if (_config->hasMedium()) while (true)
                 {
                     mediumSystem()->fillOpticalDepth(&pp);
                     simulateEscapeAndAbsorption(&pp, false);    // TO DO: support storing absorption

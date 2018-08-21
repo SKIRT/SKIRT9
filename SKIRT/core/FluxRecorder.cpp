@@ -7,6 +7,7 @@
 #include "FITSInOut.hpp"
 #include "LockFree.hpp"
 #include "Log.hpp"
+#include "MediumSystem.hpp"
 #include "PhotonPacket.hpp"
 #include "ProcessManager.hpp"
 #include "StringUtils.hpp"
@@ -86,6 +87,9 @@ void FluxRecorder::includeSurfaceBrightness(double distance, int numPixelsX, int
 
 void FluxRecorder::finalizeConfiguration()
 {
+    // get a pointer to the medium system, if present
+    _ms = _parentItem->find<MediumSystem>(false);
+
     // get array lengths
     _numPixelsInFrame = _numPixelsX * _numPixelsY;  // convert to size_t before calculating lenIFU
     size_t lenSED = _includeFluxDensity ? _lambdagrid->numBins() : 0;
@@ -140,13 +144,13 @@ void FluxRecorder::finalizeConfiguration()
     for (const auto& array : _ifu) allocatedSize += array.size();
     for (const auto& array : _wsed) allocatedSize += array.size();
     for (const auto& array : _wifu) allocatedSize += array.size();
-    _lambdagrid->find<Log>()->info(_parentItem->typeAndName() + " allocated " +
+    _parentItem->find<Log>()->info(_parentItem->typeAndName() + " allocated " +
                                    StringUtils::toMemSizeString(allocatedSize*sizeof(double)) + " of memory");
 }
 
 ////////////////////////////////////////////////////////////////////
 
-void FluxRecorder::detect(const PhotonPacket* pp, int l, double distance)
+void FluxRecorder::detect(PhotonPacket* pp, int l, double distance)
 {
     // abort if we're not recording integrated fluxes and the photon packet arrives outside of the frame
     if (!_includeFluxDensity && l < 0) return;
@@ -155,11 +159,7 @@ void FluxRecorder::detect(const PhotonPacket* pp, int l, double distance)
     for (int ell : _lambdagrid->bins(pp->wavelength()))
     {
         // ask the medium system to calculate the optical depth
-        double taupath = 0;
-        if (_hasMedium)
-        {
-            // TODO: taupath = opticalDepth(pp, distance);
-        }
+        double taupath = _hasMedium ? _ms->opticalDepth(pp, distance) : 0.;
 
         // get the luminosity contribution from the photon packet,
         // taking into account the transmission for the detector bin at this wavelength
@@ -184,7 +184,7 @@ void FluxRecorder::detect(const PhotonPacket* pp, int l, double distance)
         {
             if (_recordTotalOnly)
             {
-                LockFree::add(_sed[Total][ell], L);
+                LockFree::add(_sed[Total][ell], Lext);
             }
             else
             {
@@ -223,7 +223,7 @@ void FluxRecorder::detect(const PhotonPacket* pp, int l, double distance)
 
             if (_recordTotalOnly)
             {
-                LockFree::add(_ifu[Total][lell], L);
+                LockFree::add(_ifu[Total][lell], Lext);
             }
             else
             {

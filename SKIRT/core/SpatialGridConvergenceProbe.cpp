@@ -150,7 +150,7 @@ namespace
 
 void SpatialGridConvergenceProbe::probeSetup()
 {
-    if (find<Configuration>()->hasMedia())
+    if (find<Configuration>()->hasMedium())
     {
         // locate the medium system
         auto ms = find<MediumSystem>();

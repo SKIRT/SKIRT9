@@ -155,6 +155,21 @@ public:
         wavelength \f$\lambda\f$ in spatial cell with index \f$m\f$. */
     double albedo(double lambda, int m) const;
 
+    /** This function returns the optical depth
+        \f$\tau_{\lambda,{\text{d}}}({\boldsymbol{r}},{\boldsymbol{k}})\f$ at wavelength
+        \f$\lambda\f$ along a path through the dust system starting at the position
+        \f${\boldsymbol{r}}\f$ into the direction \f${\boldsymbol{k}}\f$ for a distance \f$d\f$,
+        where \f$\lambda\f$, \f${\boldsymbol{r}}\f$ and \f${\boldsymbol{k}}\f$ are obtained from
+        the specified PhotonPacket object.
+
+        The function first calls the SpatialGrid::path() function to store the geometrical
+        information on the path through the spatial grid into the photon packet and then calculates
+        the optical depth at the specified distance. The calculation proceeds as described for the
+        fillOpticalDepth() function, the differences being that the path length is limited to the
+        specified distance, and that this function does not store the optical depth information
+        back into the PhotonPacket object. */
+    double opticalDepth(PhotonPacket* pp, double distance);
+
     /** This function calculates the optical depth
         \f$\tau_{\lambda,{\text{path}}}({\boldsymbol{r}},{\boldsymbol{k}})\f$ at wavelength
         \f$\lambda\f$ along a path through the media system starting at the position

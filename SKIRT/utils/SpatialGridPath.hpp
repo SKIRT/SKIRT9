@@ -95,10 +95,10 @@ public:
     template<typename Functor> double opticalDepth(const Functor& kapparho,
                                                    double distance=std::numeric_limits<double>::infinity()) const
     {
-        double tau = 0;
+        double tau = 0.;
         for (const Segment& segment : _v)
         {
-            tau += kapparho(segment.m) * segment.ds;
+            if (segment.m >= 0) tau += kapparho(segment.m) * segment.ds;
             if (segment.s > distance) break;
         }
         return tau;
@@ -113,10 +113,10 @@ public:
         kapparho(int m)". */
     template<typename Functor> inline void fillOpticalDepth(const Functor& kapparho)
     {
-        double tau = 0;
+        double tau = 0.;
         for (Segment& segment : _v)
         {
-            double dtau = kapparho(segment.m) * segment.ds;
+            double dtau = segment.m >= 0 ? kapparho(segment.m) * segment.ds : 0.;
             tau += dtau;
             segment.dtau = dtau;
             segment.tau = tau;

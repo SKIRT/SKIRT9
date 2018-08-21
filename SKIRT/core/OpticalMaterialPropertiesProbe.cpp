@@ -44,7 +44,7 @@ namespace
 
 void OpticalMaterialPropertiesProbe::probeSetup()
 {
-    if (find<Configuration>()->hasMedia())
+    if (find<Configuration>()->hasMedium())
     {
         auto units = find<Units>();
 

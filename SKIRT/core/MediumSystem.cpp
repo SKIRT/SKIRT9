@@ -254,11 +254,21 @@ double MediumSystem::albedo(double lambda, int m) const
     return kext>0. ? ksca/kext : 0.;
 }
 
+double MediumSystem::opticalDepth(PhotonPacket* pp, double distance)
+{
+    // determine the path and store the geometric details in the photon packet
+    _grid->path(pp);
+
+    // calculate and return the optical depth at the specified distance
+    double lambda = pp->wavelength();
+    return pp->opticalDepth([this,lambda](int m){ return opacityExt(lambda, m); }, distance);
+}
+
 ////////////////////////////////////////////////////////////////////
 
 void MediumSystem::fillOpticalDepth(PhotonPacket* pp)
 {
-    // determine the path and store the geometric details in the photon package
+    // determine the path and store the geometric details in the photon packet
     _grid->path(pp);
 
     // calculate and store the optical depth details in the photon package

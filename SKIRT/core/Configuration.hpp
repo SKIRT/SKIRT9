@@ -76,8 +76,8 @@ public:
     /** Returns the number of random density samples for determining spatial cell mass. */
     double numDensitySamples() const { return _numDensitySamples; }
 
-    /** Returns true if there are media in the simulation. */
-    bool hasMedia() const { return _hasMedia; }
+    /** Returns true if there is at least one medium component in the simulation. */
+    bool hasMedium() const { return _hasMedium; }
 
     /** Returns true if the media in the simulation support polarization. */
     bool hasPolarization() const { return _hasPolarization; }
@@ -98,7 +98,7 @@ private:
     int _numDensitySamples{100};
 
     // derived
-    bool _hasMedia{false};
+    bool _hasMedium{false};
     bool _hasPolarization{false};
 };
 

@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "Instrument.hpp"
+#include "Configuration.hpp"
 #include "FatalError.hpp"
 #include "FluxRecorder.hpp"
 
@@ -17,7 +18,8 @@ void Instrument::setupSelfBefore()
     _instrumentWavelengthGrid = wavelengthGrid() ? wavelengthGrid() : find<WavelengthGrid>();
 
     // TO DO: discover details about the simulation
-    bool hasMedium = false;
+    auto config = find<Configuration>();
+    bool hasMedium = config->hasMedium();
     bool hasMediumEmission = false;
 
     // partially configure the flux recorder

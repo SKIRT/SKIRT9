@@ -53,16 +53,16 @@ void Configuration::setupSelfBefore()
     int numMedia = 0;
     auto ms = find<MediumSystem>(false);
     if (ms) numMedia = ms->numMedia();  // may be zero
-    _hasMedia = (numMedia!=0);
+    _hasMedium = (numMedia!=0);
 
     // verify this with the requirements set by the simulation mode
-    if (!mustHaveMedia && _hasMedia)
+    if (!mustHaveMedia && _hasMedium)
         throw FATALERROR("This simulation mode does not allow media to be configured");
-    if (mustHaveMedia && !_hasMedia)
+    if (mustHaveMedia && !_hasMedium)
         throw FATALERROR("This simulation mode requires at least one medium to be configured");
 
     // check for polarization
-    if (_hasMedia)
+    if (_hasMedium)
     {
         int numPolarization = 0;
         for (auto medium : ms->media()) if (medium->mix()->hasPolarization()) numPolarization++;

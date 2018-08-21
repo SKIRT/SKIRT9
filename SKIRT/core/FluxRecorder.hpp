@@ -9,6 +9,7 @@
 #include "Array.hpp"
 #include "ThreadLocalMember.hpp"
 #include <tuple>
+class MediumSystem;
 class PhotonPacket;
 class SimulationItem;
 class WavelengthGrid;
@@ -179,7 +180,7 @@ public:
         is an obscuring medium, the optical depth from the photon packet's last interaction site to
         the instrument is determined and the corresponding extincton is applied to the packet's
         contribution before detection. */
-    void detect(const PhotonPacket* pp, int l, double distance = std::numeric_limits<double>::infinity());
+    void detect(PhotonPacket* pp, int l, double distance = std::numeric_limits<double>::infinity());
 
     /** This function processes and clears any information that may have been buffered by the
         detect() function in thread-local storage. It is not thread-safe. After parallel threads
@@ -270,6 +271,7 @@ private:
     double _centerY{0};
 
     // cached info, initialized when configuration is finalized
+    MediumSystem* _ms{nullptr};         // pointer to medium system, if present (used only if hasMedium is true)
     bool _recordTotalOnly{true};        // becomes false if recordComponents and hasMedium are both true
     size_t _numPixelsInFrame{0};        // number of pixels in a single IFU frame
 
