@@ -267,7 +267,7 @@ void MediumSystem::fillOpticalDepth(PhotonPacket* pp)
 
     // verify that the result makes sense
     double tau = pp->tau();
-    if (tau<0.0 || std::isnan(tau) || std::isinf(tau))
+    if (tau<0. || !std::isfinite(tau))
         throw FATALERROR("The optical depth along the path is not a positive number: tau = "
                          + StringUtils::toString(tau));
 }

@@ -98,149 +98,187 @@ private:
         number of photon packets processed so far. */
     void logProgress(size_t numDone);
 
-    /** This function launches the specified chunk of photon packets from primary sources. */
+    /** This function launches the specified chunk of photon packets from primary sources. It
+        implements the complete photon packet life-cycle, including emission and multiple forced
+        scattering events, as well as the corresponding peel-off photon packets towards the
+        instruments. If required for the configuration of the simulation, the function also
+        registers the contribution of the photon packet to the radiation field in each spatial
+        cell crossed by its path. */
     void doPrimaryEmissionChunk(size_t firstIndex, size_t numIndices);
 
-    /** This function simulates the peel-off of a photon packet after an emission event. This
-        means that we create peel-off or shadow photon packets, one for every instrument in the
-        instrument system, that we force to propagate in the direction of the observer(s) instead
-        of in the propagation direction \f${\bf{k}}\f$ determined randomly by the emission process.
-        Each peel-off photon packet has the same characteristics as the original peel-off photon
-        packet, except that the propagation direction is altered to the direction
-        \f${\bf{k}}_{\text{obs}}\f$ of the observer. For anistropic emission, a weight factor is
-        applied to the luminosity to compensate for the fact that the probability that a photon
-        packet would have been emitted towards the observer is not the same as the probability
-        that it is emitted in any other direction. For each instrument in the instrument system,
-        the function creates such a peel-off photon packet and feeds it to the instrument. The
-        first argument specifies the photon packet that was just emitted; the second argument
+    /** This function implements the peel-off of a photon packet after an emission event. This
+        means that we create a peel-off photon packet for every instrument in the instrument
+        system, which is forced to propagate in the direction of the observer instead of in the
+        propagation direction determined randomly by the emission process. Each peel-off photon
+        packet is subsequently fed into its target instrument for detection.
+
+        A peel-off photon packet has the same characteristics as the original photon packet, except
+        that the propagation direction is altered from the emission direction \f${\bf{k}}\f$ to the
+        direction of the observer \f${\bf{k}}_{\text{obs}}\f$. For anisotropic emission, a weight
+        factor is applied to the luminosity to compensate for the fact that the probability that a
+        photon packet would have been emitted towards the observer is not the same as the
+        probability that it is emitted in any other direction.
+
+        The first argument specifies the photon packet that was just emitted; the second argument
         provides a placeholder peel off photon packet for use by the function. */
     void peelOffEmission(const PhotonPacket* pp, PhotonPacket* ppp);
 
-    /** This function simulates the escape from the system and the absorption by dust of a fraction
-        of the luminosity of a photon packet. It actually splits the luminosity \f$L_\ell\f$ of
-        the photon packet in \f$N+2\f$ different parts, with \f$N\f$ the number of dust cells
-        along its path through the dust system: a part \f$L_\ell^{\text{esc}}\f$ that escapes from
-        the system, a part \f$L_\ell^{\text{sca}}\f$ that is scattered before it leaves the system,
-        and \f$N\f$ parts \f$L_{\ell,n}^{\text{abs}}\f$, each of them corresponding to the fraction
-        that is absorbed in a dust cell along the path. The part that scatters is the actual part
-        of the photon packet that survives and continues in the photon packet's life cycle. So we
-        alter the luminosity of the photon packet from \f$L_\ell\f$ to \f$L_\ell^{\text{sca}}\f$.
-        If the absorption rates are not considered in the simulation, that is also the only part
-        that matters.
+    /** This function simulates the escape from the system and the absorption by the transfer
+        medium of a fraction of the luminosity of a photon packet. It actually splits the
+        luminosity \f$L\f$ of the photon packet in \f$N+2\f$ different parts, with \f$N\f$ the
+        number of spatial cells along its path through the medium: a part \f$L^{\text{esc}}\f$ that
+        escapes from the system, a part \f$L^{\text{sca}}\f$ that is scattered before it leaves the
+        system, and \f$N\f$ parts \f$L_n^{\text{abs}}\f$, each of them corresponding to the
+        fraction that is absorbed in a cell along the path. The part that scatters is the part of
+        the photon packet that survives and continues in the photon packet's life cycle. So we
+        alter the luminosity of the photon packet from \f$L\f$ to \f$L^{\text{sca}}\f$.
 
-        On the other hand, if the absorption rates need to be taken into account in the simulation
-        (if dust emission is included in the simulation, or the mean radiation field is
-        calculated), we have to simulate the absorption of the fractions
-        \f$L_{\ell,n}^{\text{abs}}\f$ by the appropriate dust cells. It is obviously crucial to
-        have expressions for \f$L_\ell^{\text{sca}}\f$ and \f$L_{\ell,n}^{\text{abs}}\f$ (and
-        \f$L_\ell^{\text{esc}}\f$, but this does not really matter...). If we denote the total
-        optical depth along the path of the photon packet as \f$\tau_{\ell,\text{path}}\f$ (this
-        quantity is stored in the PhotonPacket object provided as an input parameter of this
-        function), the fraction of the luminosity that escapes from the system without any
-        interaction is \f[ L_\ell^{\text{esc}} = L_\ell\, {\text{e}}^{-\tau_{\ell,\text{path}}}.
-        \f] Remains to subdivide the remainder of the initial luminosity, \f[ L_\ell \left( 1 -
-        {\text{e}}^{-\tau_{\ell,\text{path}}} \right), \f] between the scattered fraction
-        \f$L_\ell^{\text{sca}}\f$ and the \f$N\f$ absorbed fractions \f$L_{\ell,n}^{\text{abs}}\f$.
-        When there is only one single dust component, the optical properties of the dust are the
-        same everywhere along the path, and we easily have \f[ L_\ell^{\text{sca}} = \varpi_\ell\,
-        L_\ell \left( 1 - {\text{e}}^{-\tau_{\ell,\text{path}}} \right) \f] with \f[ \varpi_\ell =
-        \frac{ \kappa_\ell^{\text{sca}} }{ \kappa_\ell^{\text{ext}} } \f] the scattering albedo of
-        the dust, and \f[ L_{\ell,n}^{\text{abs}} = (1-\varpi_\ell)\, L_\ell \left(
-        {\text{e}}^{-\tau_{\ell,n-1}} - {\text{e}}^{-\tau_{\ell,n}} \right), \f] with
-        \f$\tau_{\ell,n}\f$ the optical depth measured from the initial position of the path until
-        the exit point of the \f$n\f$'th dust cell along the path (this quantity is also stored in
-        the PhotonPacket object). It is straightforward to check that the sum of escaped,
-        scattered and absorbed luminosities is \f[ L_\ell^{\text{esc}} + L_\ell^{\text{sca}} +
-        \sum_{n=0}^{N-1} L_{\ell,n}^{\text{abs}} = L_\ell, \f] as desired. When there is more than
-        one dust component, the dust properties are no longer uniform in every cell and things
-        become a bit more messy. The expression for \f$L_{\ell,n}^{\text{abs}}\f$ can be readily
-        expanded from the corresponding expression in the case of a single dust component, \f[
-        L_{\ell,n}^{\text{abs}} = (1-\varpi_{\ell,n})\, L_\ell \left( {\text{e}}^{-\tau_{\ell,n-1}}
-        - {\text{e}}^{-\tau_{\ell,n}} \right). \f] The only change is that the global albedo
-        \f$\varpi_\ell\f$ is now replaced by a local albedo \f$\varpi_{\ell,n}\f$. It is found as
-        the weighted mean of the albedo of the different dust components in the \f$n\f$'th dust
-        cell along the path, \f[ \varpi_{\ell,n} = \frac{ \sum_h \kappa_{\ell,h}^{\text{sca}}\,
-        \rho_{h,n} }{ \sum_h \kappa_{\ell,h}^{\text{ext}}\, \rho_{h,n} } \f] with \f$\rho_{h,n}\f$
-        the density of the \f$h\f$'th dust component in the \f$n\f$'th cell. To calculate
-        \f$L_\ell^{\text{sca}}\f$, we also have to take into account that the albedo varies from
-        cell to cell, \f[ L_\ell^{\text{sca}} = L_\ell\, \sum_{n=0}^{N-1} \varpi_{\ell,n} \left(
-        {\text{e}}^{-\tau_{\ell,n-1}} - {\text{e}}^{-\tau_{\ell,n}} \right). \f] Also in this case,
-        it is easy to see that \f[ L_\ell^{\text{esc}} + L_\ell^{\text{sca}} + \sum_{n=0}^{N-1}
-        L_{\ell,n}^{\text{abs}} = L_\ell. \f] */
+        In the analysis below, we drop the wavelength-dependency of the material properties from
+        the notation. Given the total optical depth along the path of the photon packet
+        \f$\tau_\text{path}\f$ (this quantity is stored in the PhotonPacket object provided as an
+        input parameter to this function), the fraction of the luminosity that escapes from the
+        system without any interaction is \f[ L^{\text{esc}} = L\, {\text{e}}^{-\tau_\text{path}}.
+        \f] Remains to subdivide the remainder of the initial luminosity, \f[ L \left( 1 -
+        {\text{e}}^{-\tau_\text{path}} \right), \f] between the scattered fraction
+        \f$L^{\text{sca}}\f$ and the \f$N\f$ absorbed fractions \f$L_n^{\text{abs}}\f$. Taking into
+        account that the medium properties may differ between spatial cells, \f$L_n^{\text{abs}}\f$
+        can written as \f[ L_n^{\text{abs}} = (1-\varpi_n)\, L \left( {\text{e}}^{-\tau_{n-1}} -
+        {\text{e}}^{-\tau_n} \right). \f] The local albedo \f$\varpi_n\f$ is found as the weighted
+        mean of the albedo of the different medium components in the \f$n\f$'th cell along the
+        path, \f[ \varpi_n = \frac{ \sum_h \varsigma_h^{\text{sca}}\, n_{h,n} }{ \sum_h
+        \varsigma_h^{\text{ext}}\, n_{h,n} } \f] with \f$n_{h,n}\f$ the number density of the
+        \f$h\f$'th medium component in the \f$n\f$'th cell. In a similar fashion, we can write
+        \f$L^{\text{sca}}\f$ as \f[ L^{\text{sca}} = L\, \sum_{n=0}^{N-1} \varpi_n \left(
+        {\text{e}}^{-\tau_{n-1}} - {\text{e}}^{-\tau_n} \right). \f] It is easy to see that
+        \f[ L^{\text{esc}} + L^{\text{sca}} + \sum_{n=0}^{N-1} L_n^{\text{abs}} = L. \f]
+
+        The first argument specifies the photon packet that needs to be handled; its luminosity is
+        updated as described above. If the second argument is set to true, the function also
+        registers the contribution of the photon packet to the radiation field in each spatial cell
+        crossed by its path. */
     void simulateEscapeAndAbsorption(PhotonPacket* pp, bool storeAbsorption);
 
     /** This function determines the next scattering location of a photon packet and the simulates
-        the propagation to this position. Given the total optical depth along the path of the
-        photon packet \f$\tau_{\ell,\text{path}}\f$ (this quantity is stored in the PhotonPacket
-        object provided as an input parameter of this function), the appropriate probability
-        distribution for the covered optical depth is an exponential probability
-        distribution cut off at \f$\tau_{\ell,\text{path}}\f$. Properly normalized, it reads as
-        \f[ p(\tau_\ell) = \frac{{\text{e}}^{-\tau_\ell}}
-        {1-{\text{e}}^{-\tau_{\ell,\text{path}}}} \f] where the range of \f$\tau_\ell\f$ is limited
-        to the interval \f$[0,\tau_{\ell,\text{path}}]\f$. Instead of generating a
-        random optical depth \f$\tau_\ell\f$ directly from this distribution, we use the biasing
-        technique in order to cover the entire allowed optical depth range \f$[0,\tau_{\ell,
-        \text{path}}]\f$ more uniformly. As the biased probability distribution, we use a linear
-        combination between an exponential distribution and a uniform distribution, with a parameter
-        \f$\xi\f$ setting the relative importance of the uniform part. In formula form, \f[
-        q(\tau_\ell) = (1-\xi)\, \frac{ {\text{e}}^{-\tau_\ell} }
-        { 1-{\text{e}}^{-\tau_{\ell,\text{path}}} } + \frac{\xi}{\tau_{\ell,\text{path}}}. \f] A
-        random optical depth from this distribution is readily determined. Since we use biasing, the
-        weight, or correspondingly the luminosity, of the photon packet needs to be adjusted with
-        a bias factor \f$p(\tau_\ell)/q(\tau_\ell)\f$. Finally, the randomly determined optical
-        depth is converted to a physical path length \f$s\f$, and the photon packet is
-        propagated over this distance. */
+        the propagation to this position. In the analysis below, we drop the wavelength-dependency
+        of the optical depth from the notation. Given the total optical depth along the path of the
+        photon packet \f$\tau_\text{path}\f$ (this quantity is stored in the PhotonPacket object
+        provided as an input parameter to this function), the appropriate probability distribution
+        for the covered optical depth is an exponential probability distribution cut off at
+        \f$\tau_\text{path}\f$. Properly normalized, it reads as \f[ p(\tau) =
+        \frac{{\text{e}}^{-\tau}} {1-{\text{e}}^{-\tau_\text{path}}} \f] where the range of
+        \f$\tau\f$ is limited to the interval \f$[0,\tau_\text{path}]\f$. Instead of generating a
+        random optical depth \f$\tau\f$ directly from this distribution, we use the biasing
+        technique in order to cover the entire allowed optical depth range
+        \f$[0,\tau_\text{path}]\f$ more uniformly. As the biased probability distribution, we use a
+        linear combination between an exponential distribution and a uniform distribution, with a
+        parameter \f$\xi\f$ setting the relative importance of the uniform part. In formula form,
+        \f[ q(\tau) = (1-\xi)\, \frac{ {\text{e}}^{-\tau} } { 1-{\text{e}}^{-\tau_\text{path}} } +
+        \frac{\xi}{\tau_\text{path}}. \f] A random optical depth from this distribution is readily
+        determined. Since we use biasing, the weight, or correspondingly the luminosity, of the
+        photon packet needs to be adjusted with a bias factor \f$p(\tau)/q(\tau)\f$. Finally, the
+        randomly determined optical depth is converted to a physical path length \f$s\f$, and the
+        photon packet is propagated over this distance. */
     void simulatePropagation(PhotonPacket* pp);
 
     /** This function simulates the peel-off of a photon packet before a scattering event. This
-        means that, just before a scattering event, we create peel-off or shadow photon packets,
-        one for every instrument in the instrument system, that we force to propagate in the
-        direction of the observer(s) instead of in the propagation direction \f${\bf{k}}\f$
-        determined randomly by the scattering process. Each peel-off photon packet has the same
-        characteristics as the original photon packet, apart from three differences. The first one
-        is, obviously, that the propagation direction is altered to the direction
-        \f${\bf{k}}_{\text{obs}}\f$ towards the observer. The second difference is that we have to
+        means that, just before a scattering event, we create a peel-off photon packet for every
+        instrument in the instrument system, which is forced to propagate in the direction of the
+        observer instead of in the propagation direction determined randomly by the scattering
+        process. Each peel-off photon packet is subsequently fed into its target instrument for
+        detection.
+
+        A peel-off photon packet has the same characteristics as the original photon packet, apart
+        from three differences. The first one is, obviously, that the propagation direction is
+        altered to the direction towards the observer. The second difference is that we have to
         alter the luminosity of the photon packet to compensate for this change in propagation
-        direction. This compensation is necessary because the scattering process is anisotropic.
-        Since we force the peel-off photon packet to be scattered from the direction
-        \f${\bf{k}}\f$ into the direction \f${\bf{k}}_{\text{obs}}\f$, we give it as additional
-        weight factor the probability that a photon packet would be scattered into the direction
+        direction, because the scattering process is anisotropic. The third difference is that the
+        polarization state of the peel-off photon packet is adjusted. We discuss these changes in
+        more detail below. In this analysis, we drop the wavelength-dependency of the material
+        properties from the notation.
+
+        Since we force the peel-off photon packet to be scattered from the direction \f${\bf{k}}\f$
+        into the direction \f${\bf{k}}_{\text{obs}}\f$, the corresponding biasing weight factor is
+        given by the probability that a photon packet would be scattered into the direction
         \f${\bf{k}}_{\text{obs}}\f$ if its original propagation direction was \f${\bf{k}}\f$. If
-        there is only one dust component in the dust system, this weight factor is equal to the
-        scattering phase function \f$w= \Phi_\ell({\bf{k}},{\bf{k}}_{\text{obs}})\f$ of the dust
-        mixture at the wavelength index of the photon packet. If there are different dust
-        components, each with their own density and dust mixture, the appropriate weight factor is
-        a weighted mean of the scattering phase functions, \f[ w = \frac{ \sum_h
-        \kappa_{\ell,h}^{\text{sca}}\, \rho_{m,h}\, \Phi_{\ell,h}({\bf{k}}, {\bf{k}}_{\text{obs}})
-        }{ \sum_h \kappa_{\ell,h}^{\text{sca}}\, \rho_{m,h} }, \f] where \f$\rho_{m,h}\f$ is the
-        density of the dust corresponding to the \f$h\f$'th dust component in the dust cell where
-        the scattering event takes place, and \f$\kappa_{\ell,h}^{\text{sca}}\f$ and
-        \f$\Phi_{\ell,h}\f$ are the scattering coefficient and phase function corresponding to the
-        \f$h\f$'th dust component respectively (both evaluated at the wavelength index \f$\ell\f$
-        of the photon packet). The third difference is that the polarization state of the peel off
-        photon packet is adjusted. If there are multiple dust components, the weight factors
+        there is only one medium component in the system, this weight factor is equal to the value
+        of the scattering phase function \f$w= \Phi({\bf{k}},{\bf{k}}_{\text{obs}})\f$ for that
+        medium component. If there are multiple medium components, the weight factor is the
+        weighted mean of the scattering phase function values, \f[ w = \frac{ \sum_h
+        \varsigma_h^{\text{sca}}\, n_{m,h}\, \Phi_h({\bf{k}}, {\bf{k}}_{\text{obs}}) }{ \sum_h
+        \varsigma_h^{\text{sca}}\, n_{m,h} }, \f] where \f$n_{m,h}\f$ is the number density of the
+        medium corresponding to the \f$h\f$'th component in the cell where the scattering event
+        takes place, and \f$\varsigma_h^{\text{sca}}\f$ and \f$\Phi_h\f$ are the scattering cross
+        section and phase function corresponding to the \f$h\f$'th component respectively.
+
+        Evaluation of the phase function depends on the scattering mode supported by each medium's
+        material mix. For the most basic mode, the material mix provides a value for the scattering
+        asymmetry parameter \f$g=\left<\cos\theta\right>\f$. A value of \f$g=0\f$ corresponds to
+        isotropic scattering. Other values \f$-1\le g\le 1\f$ are substituted in the
+        Henyey-Greenstein phase function, \f[ \Phi(\cos\theta) = \frac{1-g^2}
+        {(1+g^2-2g\cos\theta)^{3/2}}. \f] For other scattering modes, the phase function provided
+        by the material mix is invoked instead.
+
+        In case polarization is supported in the current simulation configuration, the polarization
+        state of the peel off photon packet is adjusted as well. Note that all media must either
+        support polarization or not support it, mixing these support levels is not allowed.
+        Compliance with this requirement is verified during setup of the simulation. The adjusted
+        Stokes vector for a particular medium component is obtained as follows. The function
+        rotates the Stokes vector from the reference direction in the previous scattering plane
+        into the peel-off scattering plane, applies the Mueller matrix on the Stokes vector, and
+        further rotates the Stokes vector from the reference direction in the peel-off scattering
+        plane to the x-axis of the instrument to which the peel-off photon package is headed. If
+        there are multiple medium components (all supporting polarization), the weight factors
         described above are used not just for the luminosity but also for the components of the
-        Stokes vector. For each instrument in the instrument system, the function creates such a
-        peel-off photon packet and feeds it to the instrument. The first argument specifies the
-        photon packet that was just emitted; the second argument provides a placeholder peel off
-        photon packet for use by the function. */
+        Stokes vector.
+
+        The first argument to this function specifies the photon packet that is about to be
+        scattered; the second argument provides a placeholder peel off photon packet for use by the
+        function. */
     void peelOffScattering(const PhotonPacket* pp, PhotonPacket* ppp);
 
     /** This function simulates a scattering event of a photon packet. Most of the properties of
         the photon packet remain unaltered, including the position and the luminosity. The
-        properties that change are the number of scattering events experienced by the photon
-        packet (this is obviously increased by one) the propagation direction, which is generated
-        randomly, and the polarization state. If there is only one dust component, the propagation
-        direction and polarization state are obtained from the scattering phase function. If there
-        are several components, the function first generates a random dust component (where the
-        relative weight of each dust component is equal to \f[ w_h = \frac{
-        \kappa_{\ell,h}^{\text{sca}}\, \rho_{h,m} }{ \sum_{h'} \kappa_{\ell,h'}^{\text{sca}}\,
-        \rho_{h',m} }, \f] where \f$\rho_{m,h}\f$ is the density of the dust corresponding to the
-        \f$h\f$'th dust component in the dust cell where the scattering event takes place, and
-        \f$\kappa_{\ell,h}^{\text{sca}}\f$ is the scattering coefficient corresponding to the
-        \f$h\f$'th dust component respectively. When a random dust component is generated, a random
-        propagation direction and polarization state are obtained from the corresponding scattering
-        phase function. */
+        properties that change are the number of scattering events experienced by the photon packet
+        (this is obviously increased by one), the propagation direction, which is generated
+        randomly, and the polarization state. In the analysis below, we drop the
+        wavelength-dependency of the material properties from the notation.
+
+        If there is only one medium component, the scattering event is governed by the
+        corresponding material mix. If there are several components, the function first randomly
+        selects a medium component from the list, where the relative weight of each component is
+        equal to \f[ w_h = \frac{ \varsigma_h^{\text{sca}}\, n_{h,m} }{ \sum_{h'}
+        \varsigma_{\ell,h'}^{\text{sca}}\, n_{h',m} }, \f] where \f$n_{m,h}\f$ is the number
+        density of the medium corresponding to the \f$h\f$'th component in the cell where the
+        scattering event takes place, and \f$\varsigma_h^{\text{sca}}\f$ is the scattering cross
+        section corresponding to the \f$h\f$'th component respectively.
+
+        The remainder of the operation depends on the scattering mode supported by the selected
+        medium component's material mix. For the most basic mode, the material mix provides a value
+        for the scattering asymmetry parameter \f$g=\left<\cos\theta\right>\f$. For the value
+        \f$g=0\f$, corresponding to isotropic scattering, a new direction is generated uniformly on
+        the unit sphere. For other values \f$-1\le g\le 1\f$, a scattering angle \f$\theta\f$ is
+        sampled from the Henyey-Greenstein phase function, \f[ \Phi(\cos\theta) =
+        \frac{1-g^2}{(1+g^2-2g\cos\theta)^{3/2}}. \f] This can be accomplished as follows.
+        Substituting \f$\mu=\cos\theta\f$, the probability distribution for \f$\mu\f$ (normalized
+        to unity) becomes \f[ p(\mu)\,\text{d}\mu = \frac{1}{2} \,
+        \frac{1-g^2}{(1+g^2-2g\mu)^{3/2}} \,\text{d}\mu \qquad -1\leq\mu\leq1 \f] We can use the
+        transformation method to sample from this distribution. Given a uniform deviate
+        \f$\mathcal{X}\f$, we need to solve \f[ {\mathcal{X}} = \int_{-1}^\mu p(\mu')\,\text{d}\mu'
+        \f] Performing the integration and solving for \f$\mu\f$ yields \f[ \cos\theta = \mu =
+        \frac{1+g^2-f^2}{2g} \quad\text{with}\quad f=\frac{1-g^2}{1-g+2g {\mathcal{X}}}
+        \qquad\text{for}\; g\neq 0 \f] For other scattering modes, a function provided by the
+        material mix is invoked instead to obtain a random scattering direction for the photon
+        packet.
+
+        In case polarization is supported in the current simulation configuration, the polarization
+        state of the photon packet is adjusted as well. Note that all media must either support
+        polarization or not support it, mixing these support levels is not allowed. Compliance with
+        this requirement is verified during setup of the simulation. The adjusted Stokes vector is
+        obtained as follows, again using the randomly selected medium component. After obtaining
+        the sampled scattering angles \f$\theta\f$ and \f$\phi\f$ from the material mix, the Stokes
+        vector of the photon packet is rotated into the scattering plane and transformed by
+        applying the Mueller matrix. Finally, the new direction is computed from the previously
+        sampled \f$\theta\f$ and \f$\phi\f$ angles. */
     void simulateScattering(PhotonPacket* pp);
 
     //======================== Data Members ========================
