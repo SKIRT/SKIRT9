@@ -26,80 +26,103 @@ void MediumSystem::setupSelfAfter()
     auto log = find<Log>();
     auto parfac = find<ParallelFactory>();
 
-    // accumulator for allocated memory in bytes
-    size_t allocatedBytes = 0;
+    // ----- allocate memory -----
 
-
-    // ----- volumes -----
-
-    // allocate space for the grid cell volumes
     _numCells = _grid->numCells();
     if (_numCells<1) throw FATALERROR("The spatial grid must have at least one cell");
-    _Vv.resize(_numCells);
-    allocatedBytes += _numCells*sizeof(double);
-
-    // calculate the grid cell volumes
-    log->info("Calculating cell volumes...");
-    parfac->parallelDistributed()->call(_numCells, [this](size_t firstIndex, size_t numIndices)
-    {
-        for (size_t m=firstIndex; m!=firstIndex+numIndices; ++m) _Vv[m] = _grid->volume(m);
-    });
-    ProcessManager::sumToAll(_Vv);
-
-    // ----- cell states -----
-
-    // if there are no media, do not create media states
     _numMedia = _media.size();
-    if (_numMedia)
+
+    size_t allocatedBytes = 0;
+    _state1v.resize(_numCells);
+    allocatedBytes += _state1v.size()*sizeof(State1);
+    _state2vv.resize(_numCells*_numMedia);
+    allocatedBytes += _state2vv.size()*sizeof(State2);
+    log->info(typeAndName() + " allocated " + StringUtils::toMemSizeString(allocatedBytes) + " of memory");
+
+
+    // ----- calculate cell densities, bulk velocities, and volumes in parallel -----
+
+    log->info("Calculating densities for " + std::to_string(_numCells) + " cells...");
+    log->infoSetElapsed();
+    int numSamples = find<Configuration>()->numDensitySamples();
+    parfac->parallelDistributed()->call(_numCells,
+                                        [this, log, numSamples](size_t firstIndex, size_t numIndices)
     {
-        // allocate temporary space for the densities per cell and per medium
-        // so that we can calculate them in parallel and communicate the result between processes
-        Table<2> nvv(_numCells,_numMedia);      // indexed on m,h
-
-        // calculate the density in the cells (by sampling in 100 random positions within the cell)
-        log->info("Calculating densities for " + std::to_string(_numCells) + " cells...");
-        log->infoSetElapsed();
-        int numSamples = find<Configuration>()->numDensitySamples();
-        parfac->parallelDistributed()->call(_numCells,
-                                            [this, &nvv, log, numSamples](size_t firstIndex, size_t numIndices)
+        ShortArray<8> nsumv(_numMedia);
+        for (size_t m=firstIndex; m!=firstIndex+numIndices; ++m)
         {
-            ShortArray<8> sumv(_numMedia);
-            for (size_t m=firstIndex; m!=firstIndex+numIndices; ++m)
+            if (m%10000==0) log->infoIfElapsed("Calculated cell densities: ", m, _numCells);
+
+            // density: sample 100 random positions within the cell
+            nsumv.clear();
+            for (int n=0; n<numSamples; n++)
             {
-                if (m%10000==0) log->infoIfElapsed("Calculated cell densities: ", m, _numCells);
-
-                sumv.clear();
-                for (int n=0; n<numSamples; n++)
-                {
-                    Position bfr = _grid->randomPositionInCell(m);
-                    for (int h=0; h<_numMedia; h++) sumv[h] += _media[h]->numberDensity(bfr);
-                }
-                for (int h=0; h<_numMedia; h++) nvv(m,h) = sumv[h]/numSamples;
+                Position bfr = _grid->randomPositionInCell(m);
+                for (int h=0; h<_numMedia; h++) nsumv[h] += _media[h]->numberDensity(bfr);
             }
-        });
-        ProcessManager::sumToAll(nvv.data());
-        log->info("Done calculating cell densities");
+            for (int h=0; h<_numMedia; h++) state(m,h).n = nsumv[h]/numSamples;
 
-        // allocate space for the state per cell and per medium
-        _Svv.resize(_numCells*_numMedia);
-        allocatedBytes += _numCells*_numMedia*sizeof(State);
-
-        // insert the densities and the material mix pointers into the states
-        for (int m=0; m!=_numCells; ++m)
-        {
+            // bulk velocity: weighted average; assumes densities have been calculated
             Position bfr = _grid->centralPositionInCell(m);
+            double n = 0.;
+            Vec v;
             for (int h=0; h!=_numMedia; ++h)
             {
-                state(m,h).n = nvv(m,h);
-                state(m,h).mix = _media[h]->mix(bfr);
+                n += state(m,h).n;
+                v += state(m,h).n * _media[h]->bulkVelocity(bfr);
             }
+            if (n > 0.) state(m).v = v / n;  // leave bulk velocity at zero if cell has no material
+
+            // volume
+            state(m).V = _grid->volume(m);
         }
+    });
+
+    // communicate the calculated states across multiple processes, if needed
+    communicateStates();
+
+    log->info("Done calculating cell densities");
+
+    // ----- obtain the material mix pointers -----
+
+    for (int m=0; m!=_numCells; ++m)
+    {
+        Position bfr = _grid->centralPositionInCell(m);
+        for (int h=0; h!=_numMedia; ++h) state(m,h).mix = _media[h]->mix(bfr);
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
+void MediumSystem::communicateStates()
+{
+    if (!ProcessManager::isMultiProc()) return;
+
+    // NOTE: once the design of the state data structures is stable, a custom communication procedure could be provided
+    //       in the meantime, we copy the data into a temporary table so we can use the standard sumToAll procedure
+    Table<2> data;
+
+    // volumes and bulk velocities
+    data.resize(_numCells,4);
+    for (int m=0; m!=_numCells; ++m)
+    {
+        data(m,0) = state(m).V;
+        data(m,1) = state(m).v.x();
+        data(m,2) = state(m).v.y();
+        data(m,3) = state(m).v.z();
+    }
+    ProcessManager::sumToAll(data.data());
+    for (int m=0; m!=_numCells; ++m)
+    {
+        state(m).V = data(m,0);
+        state(m).v = Vec(data(m,1), data(m,3), data(m,3));
     }
 
-    // ----------
-
-    // log allocated memory size
-    log->info(typeAndName() + " allocated " + StringUtils::toMemSizeString(allocatedBytes) + " of memory");
+    // densities
+    data.resize(_numCells,_numMedia);
+    for (int m=0; m!=_numCells; ++m) for (int h=0; h!=_numMedia; ++h) data(m,h) = state(m,h).n;
+    ProcessManager::sumToAll(data.data());
+    for (int m=0; m!=_numCells; ++m) for (int h=0; h!=_numMedia; ++h) state(m,h).n = data(m,h);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -122,21 +145,28 @@ int MediumSystem::gridDimension() const
 
 int MediumSystem::numMedia() const
 {
-    return _media.size(); // don't use cached value because this function should work before setup has completed
+    return _numMedia;
 }
 
 ////////////////////////////////////////////////////////////////////
 
 int MediumSystem::numCells() const
 {
-    return _grid->numCells(); // don't use cached value because this function should work before setup has completed
+    return _numCells;
 }
 
 ////////////////////////////////////////////////////////////////////
 
 double MediumSystem::volume(int m) const
 {
-    return _Vv[m];
+    return state(m).V;
+}
+
+////////////////////////////////////////////////////////////////////
+
+Vec MediumSystem::bulkVelocity(int m)
+{
+    return state(m).v;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -254,14 +284,15 @@ double MediumSystem::albedo(double lambda, int m) const
     return kext>0. ? ksca/kext : 0.;
 }
 
+////////////////////////////////////////////////////////////////////
+
 double MediumSystem::opticalDepth(PhotonPacket* pp, double distance)
 {
     // determine the path and store the geometric details in the photon packet
     _grid->path(pp);
 
     // calculate and return the optical depth at the specified distance
-    double lambda = pp->wavelength();
-    return pp->opticalDepth([this,lambda](int m){ return opacityExt(lambda, m); }, distance);
+    return pp->opticalDepth([this,pp](int m){ return opacityExt(pp->perceivedWavelength(state(m).v), m); }, distance);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -272,8 +303,7 @@ void MediumSystem::fillOpticalDepth(PhotonPacket* pp)
     _grid->path(pp);
 
     // calculate and store the optical depth details in the photon package
-    double lambda = pp->wavelength();
-    pp->fillOpticalDepth([this,lambda](int m){ return opacityExt(lambda, m); });
+    pp->fillOpticalDepth([this,pp](int m){ return opacityExt(pp->perceivedWavelength(state(m).v), m); });
 
     // verify that the result makes sense
     double tau = pp->tau();

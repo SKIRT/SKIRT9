@@ -52,7 +52,7 @@ void Configuration::setupSelfBefore()
     // determine the number of media in the simulation hierarchy
     int numMedia = 0;
     auto ms = find<MediumSystem>(false);
-    if (ms) numMedia = ms->numMedia();  // may be zero
+    if (ms) numMedia = ms->media().size();  // may be zero
     _hasMedium = (numMedia!=0);
 
     // verify this with the requirements set by the simulation mode

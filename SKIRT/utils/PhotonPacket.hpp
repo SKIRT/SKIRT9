@@ -10,7 +10,7 @@
 #include "StokesVector.hpp"
 class AngularDistributionInterface;
 class PolarizationProfileInterface;
-class RedshiftInterface;
+class BulkVelocityInterface;
 
 ////////////////////////////////////////////////////////////////////
 
@@ -23,6 +23,10 @@ class RedshiftInterface;
     actually represents a photon stream, consisting of a number of photons per unit of time. The
     weight can be fractional because it is derived from some arbitrary luminosity, and because it
     can be adjusted by arbitrary biasing factors during the photon packet's lifetime.
+
+    Note that adjusting a photon packet's wavelength (perhaps because of a Doppler shift)
+    indirectly affects the luminosity represented by the packet, because the latter is directly
+    proportional to the frequency and thus inversely proportional to the wavelength.
 
     Apart from its wavelength and weight, a photon packet carries information about its polarization
     state, about its origin (e.g. emission by a primary or secondary source), about the
@@ -67,8 +71,8 @@ public:
         arguments to the corresponding data members and initializes the other data members as
         described below.
 
-        If the RedshiftInterface is specified (i.e. it is not the null pointer), then the packet's
-        wavelength is redshifted corresponding to its emission direction. If the
+        If the BulkVelocityInterface is specified (i.e. it is not the null pointer), then the
+        packet's wavelength is Doppler shifted corresponding to its emission direction. If the
         PolarizationStateInterface is specified, the packet's polarization state is set according
         to its emission direction; otherwise the polarization state is set to unpolarized. The
         AngularDistributionInterface is not used by this function, but pointers to all three
@@ -79,7 +83,7 @@ public:
         set to zero. The current path is invalidated, and all information about the previous life
         cycle is lost. */
     void launch(size_t historyIndex, double lambda, double L, Position bfr, Direction bfk,
-                RedshiftInterface* rsi=nullptr,
+                BulkVelocityInterface* bvi=nullptr,
                 AngularDistributionInterface* adi=nullptr,
                 PolarizationProfileInterface* ppi=nullptr);
 
@@ -101,13 +105,13 @@ public:
         from the base photon packet to the peel off photon packet, updates the peel off direction,
         and honors some extra source properties tracked by the base photon packet as follows.
 
-        If the base packet has a RedshiftInterface (i.e. if it is not the null pointer), then the
-        peel-off packet's wavelength is redshifted corresponding to its propagation direction. If
-        the base packet has an AngularDistributionInterface, a bias for the probability of the
-        peel-off propagation direction is applied to the peel-off packet's weight. If the base
-        packet has a PolarizationStateInterface, the peel-off packet's polarization state is set
-        according to its propagation direction; otherwise its polarization state is set to
-        unpolarized.
+        If the base packet has a BulkVelocityInterface (i.e. if it is not the null pointer), then
+        the peel-off packet's wavelength is Doppler shifted corresponding to its propagation
+        direction. If the base packet has an AngularDistributionInterface, a bias for the
+        probability of the peel-off propagation direction is applied to the peel-off packet's
+        weight. If the base packet has a PolarizationStateInterface, the peel-off packet's
+        polarization state is set according to its propagation direction; otherwise its
+        polarization state is set to unpolarized.
 
         The current path of the peel off photon packet is invalidated, and all information about
         its previous life cycle is lost. The base photon packet remains unchanged. */
@@ -115,15 +119,18 @@ public:
 
     /** This function initializes a peel off photon packet being sent to an instrument for a
         scattering event. The arguments specify the base photon packet from which the peel off
-        derives, the direction towards the instrument, and the weight bias (as a multiplication
-        factor). The function copies the relevant values from the base photon packet to the peel
-        off photon packet, updates the peel off direction and weight, and increments the
-        scattering counter. The peel off photon packet is initialized to an unpolarized state; the
-        polarization state should be properly updated after the launch through the StokesVector
-        class functions. The current path of the peel off photon packet is invalidated, and all
-        information about its previous life cycle is lost. The base photon packet remains
-        unchanged. */
-    void launchScatteringPeelOff(const PhotonPacket* pp, Direction bfk, double w);
+        derives, the direction towards the instrument, the bulk velocity of the scatterer, and the
+        weight bias (as a multiplication factor). The function copies the relevant values from the
+        base photon packet to the peel off photon packet, updates the peel off direction and
+        weight, and increments the scattering counter. If the specified bulk velocity is nonzero,
+        the wavelength is adjusted for both the incoming and outgoing Doppler shifts during the
+        scattering event.
+
+        The peel off photon packet is initialized to an unpolarized state; the polarization state
+        should be properly updated after the launch through the StokesVector class functions. The
+        current path of the peel off photon packet is invalidated, and all information about its
+        previous life cycle is lost. The base photon packet remains unchanged. */
+    void launchScatteringPeelOff(const PhotonPacket* pp, Direction bfk, Vec bfv, double w);
 
     /** This function causes the propagation of the photon packet over a physical distance \f$s\f$.
         It updates the position from \f${\bf{r}}\f$ to \f${\bf{r}}+s\,{\bf{k}}\f$, where
@@ -133,31 +140,24 @@ public:
 
     /** This function scatters the photon packet into the new direction \f${\bf{k}}\f$. It
         increments the counter that keeps track of scattering events and updates the direction,
-        invalidating the current path. The polarization remains unchanged; it should be properly
-        updated through the StokesVector class functions. */
-    void scatter(Direction bfk);
+        invalidating the current path. If the specified bulk velocity is nonzero, the wavelength is
+        adjusted for both the incoming and outgoing Doppler shifts during the scattering event. The
+        polarization remains unchanged; it should be properly updated through the StokesVector
+        class functions. */
+    void scatter(Direction bfk, Vec bfv);
 
-    /** This function applies the weight bias given as a multiplication factor. */
+    /** This function applies the given weight bias given as a multiplication factor. */
     void applyBias(double w);
 
-    /** This function adjusts the packet's wavelength according to the specified (non-relativistic)
-        redshift \f$z=v/c\f$: \f[ \lambda' = \lambda (1+z) \f] In other words, if \f$z>0\f$, then
-        the packet is shifted to longer wavelengths (and lower frequencies).
-
-        Note that calling this function with nonzero redshift indirectly affects the luminosity
-        represented by the packet, because the latter is directly proportional to the frequency and
-        thus inversely proportional to the wavelength. */
-    void applyRedshift(double z);
-
     // ------- Getting trivial properties -------
+
+    /** This function returns the wavelength \f$\lambda_0\f$ of the photon packet when it was
+        launched, relative to the rest frame of the original source. */
+    double sourceRestFrameWavelength() const { return _lambda0; }
 
     /** This function returns the current wavelength \f$\lambda\f$ of the photon packet relative to
         the model coordinate system. */
     double wavelength() const { return _lambda; }
-
-    /** This function returns the wavelength \f$\lambda_0\f$ of the photon packet when it was
-        launched, relative to the rest-frame of the original source. */
-    double sourceRestFrameWavelength() const { return _lambda0; }
 
     /** This function returns the luminosity \f$L\f$ represented by the photon packet, calculated
         from its current wavelength and weight. */
@@ -182,6 +182,36 @@ public:
     /** This function returns the number of scattering events the photon packet has experienced. */
     int numScatt() const { return _nscatt; }
 
+    // ------- Calculating Doppler shifts -------
+
+    /** This function returns the Doppler-shifted wavelength that should be assigned to a photon
+        packet (i.e. the wavelength relative to the model coordinate frame) when the packet is
+        emitted from a moving source (with non-relativistic velocity). The arguments specify the
+        emitted wavelength \f$\lambda_\text{src}\f$ in the source rest frame, the direction
+        \f${\bf{k}}_\text{ph}\f$ of the emitted photon packet, and the velocity of the source
+        \f${\bf{v}}_\text{src}\f$ relative to the model coordinate frame. The photon packet
+        wavelength \f$\lambda_\text{ph}\f$ can then be written as \f[ \lambda_\text{ph} =
+        \lambda_\text{src} \left(1 - \frac{{\bf{k}}_\text{ph} \cdot {\bf{v}}_\text{src}}{c} \right)
+        \f] where \f$c\f$ is the speed of light in vacuum. */
+    static double shiftedEmissionWavelength(double sourceWavelength, Direction photonDirection, Vec sourceVelocity);
+
+    /** This function returns the Doppler-shifted wavelength perceived by a moving receiver (with
+        non-relativistic velocity) for an incoming photon packet. The arguments specify the photon
+        packet wavelength \f$\lambda_\text{ph}\f$ in the model coordinate frame, the direction
+        \f${\bf{k}}_\text{ph}\f$ of the incoming photon packet, and the velocity of the receiver
+        \f${\bf{v}}_\text{rec}\f$ relative to the model coordinate frame. The wavelength
+        \f$\lambda_\text{rec}\f$ perceived by the receiver can then be written as \f[ \left.
+        \lambda_\text{rec} = \lambda_\text{ph} \middle/ \left(1 - \frac{{\bf{k}}_\text{ph} \cdot
+        {\bf{v}}_\text{rec}}{c} \right) \right. \f] where \f$c\f$ is the speed of light in vacuum.
+        */
+    static double shiftedReceptionWavelength(double photonWavelength, Direction photonDirection, Vec receiverVelocity);
+
+    /** This function returns the Doppler-shifted wavelength perceived for this photon packet by a
+        moving receiver (with non-relativistic velocity). The argument specifies the velocity of
+        the receiver \f${\bf{v}}_\text{rec}\f$ relative to the model coordinate frame. See the
+        shiftedReceptionWavelength() function for more details. */
+    double perceivedWavelength(Vec receiverVelocity) const;
+
     // ------- Data members -------
 
 private:
@@ -191,7 +221,7 @@ private:
 
     // physical information on radiation source; the interfaces are not used in peel-off photon packets
     double _lambda0{0};      // original wavelength in the rest-frame of the source
-    RedshiftInterface* _rsi{nullptr};
+    BulkVelocityInterface* _bvi{nullptr};
     AngularDistributionInterface* _adi{nullptr};
     PolarizationProfileInterface* _ppi{nullptr};
 

@@ -7,23 +7,7 @@
 #include "Constants.hpp"
 #include "PhotonPacket.hpp"
 #include "Random.hpp"
-#include "RedshiftInterface.hpp"
 #include "WavelengthRangeInterface.hpp"
-
-//////////////////////////////////////////////////////////////////////
-
-namespace
-{
-    // An instance of this class offers the redshift interface for the bulk velocity specified in the constructor
-    class BulkVelocity : public RedshiftInterface
-    {
-    private:
-        Vec _bfv;
-    public:
-        BulkVelocity(Vec bfv) : _bfv(bfv) { }
-        double redshiftForDirection(Direction bfk) const override { return -Vec::dot(_bfv, bfk) / Constants::c(); }
-    };
-}
 
 //////////////////////////////////////////////////////////////////////
 
@@ -31,15 +15,8 @@ void NormalizedSource::setupSelfBefore()
 {
     Source::setupSelfBefore();
 
-    if (velocityX() || velocityY() || velocityZ())
-        _bulkvelocity = new BulkVelocity(Vec(velocityX(), velocityY(), velocityZ()));
-}
-
-//////////////////////////////////////////////////////////////////////
-
-NormalizedSource::~NormalizedSource()
-{
-    delete _bulkvelocity;
+    // if we have a nonzero bulk velocity, set the interface object to ourselves; otherwise leave it at null pointer
+    if (velocityX() || velocityY() || velocityZ()) _bvi = this;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -65,6 +42,13 @@ double NormalizedSource::specificLuminosity(double wavelength) const
 {
     if (!interface<WavelengthRangeInterface>()->wavelengthRange().containsFuzzy(wavelength)) return 0.;
     return _sed->specificLuminosity(wavelength) * luminosity();
+}
+
+//////////////////////////////////////////////////////////////////////
+
+Vec NormalizedSource::bulkVelocity() const
+{
+    return Vec(velocityX(), velocityY(), velocityZ());
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -104,7 +88,7 @@ void NormalizedSource::launch(PhotonPacket* pp, size_t historyIndex, double L) c
     }
 
     // cause the subclas to launch the photon packet
-    launchNormalized(pp, historyIndex, lambda, L*w, _bulkvelocity);
+    launchNormalized(pp, historyIndex, lambda, L*w, _bvi);
 }
 
 //////////////////////////////////////////////////////////////////////

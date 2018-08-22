@@ -34,6 +34,13 @@ const MaterialMix*GeometricMedium::mix(Position /*bfr*/) const
 
 ////////////////////////////////////////////////////////////////////
 
+Vec GeometricMedium::bulkVelocity(Position /*bfr*/) const
+{
+    return Vec(velocityX(), velocityY(), velocityZ());
+}
+
+////////////////////////////////////////////////////////////////////
+
 double GeometricMedium::numberDensity(Position bfr) const
 {
     return _number * geometry()->density(bfr);

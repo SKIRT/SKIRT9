@@ -263,7 +263,8 @@ void MonteCarloSimulation::simulateEscapeAndAbsorption(PhotonPacket* pp, bool st
         int m = pp->m(n);
         if (m!=-1)
         {
-            double albedo = mediumSystem()->albedo(pp->wavelength(), m);
+            Vec bfv = mediumSystem()->bulkVelocity(m);
+            double albedo = mediumSystem()->albedo(pp->perceivedWavelength(bfv), m);
             double taustart = (n==0) ? 0. : pp->tau(n-1);
             double dtau = pp->dtau(n);
             double expfactorm = -expm1(-dtau);
@@ -331,11 +332,17 @@ namespace
 
 void MonteCarloSimulation::peelOffScattering(const PhotonPacket* pp, PhotonPacket* ppp)
 {
-    double lambda = pp->wavelength();
+    // locate the cell hosting the scattering event
     int m = mediumSystem()->grid()->cellIndex(pp->position());
-    int numMedia = mediumSystem()->numMedia();
+
+    // get the bulk velocity of the material in that cell
+    Vec bfv = mediumSystem()->bulkVelocity(m);
+
+    // determine the perceived wavelength, Doppler-shifted from the incoming wavelength according to the bulk velocity
+    double lambda = pp->perceivedWavelength(bfv);
 
     // determine the weighting factor for each medium component as its scattering opacity (n * sigma_sca)
+    int numMedia = mediumSystem()->numMedia();
     ShortArray<8> wv(numMedia);
     if (numMedia==1)
     {
@@ -422,7 +429,7 @@ void MonteCarloSimulation::peelOffScattering(const PhotonPacket* pp, PhotonPacke
         }
 
         // pass the result to the peel-off photon packet and have it detected
-        ppp->launchScatteringPeelOff(pp, bfkobs, I);
+        ppp->launchScatteringPeelOff(pp, bfkobs, bfv, I);
         if (_config->hasPolarization()) ppp->setPolarized(I, Q, U, V, pp->normal());
         instr->detect(ppp);
     }
@@ -432,8 +439,14 @@ void MonteCarloSimulation::peelOffScattering(const PhotonPacket* pp, PhotonPacke
 
 void MonteCarloSimulation::simulateScattering(PhotonPacket* pp)
 {
-    double lambda = pp->wavelength();
+    // locate the cell hosting the scattering event
     int m = mediumSystem()->grid()->cellIndex(pp->position());
+
+    // get the bulk velocity of the material in that cell
+    Vec bfv = mediumSystem()->bulkVelocity(m);
+
+    // determine the perceived wavelength, Doppler-shifted from the incoming wavelength according to the bulk velocity
+    double lambda = pp->perceivedWavelength(bfv);
 
     // randomly select a material mix; the probability of each component is weighted by the scattering opacity
     auto mix = mediumSystem()->randomMixForScattering(random(), lambda, m);
@@ -489,7 +502,7 @@ void MonteCarloSimulation::simulateScattering(PhotonPacket* pp)
             break;
         }
     }
-    pp->scatter(bfknew);
+    pp->scatter(bfknew, bfv);
 }
 
 ////////////////////////////////////////////////////////////////////

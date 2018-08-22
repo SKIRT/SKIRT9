@@ -80,7 +80,7 @@ public:
         Finally, the function launches the photon packet, passing it all of the above information.
         */
     void launchNormalized(PhotonPacket* pp, size_t historyIndex, double lambda, double Lw,
-                          RedshiftInterface* rsi) const override;
+                          BulkVelocityInterface* bvi) const override;
 };
 
 ////////////////////////////////////////////////////////////////////

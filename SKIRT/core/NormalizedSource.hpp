@@ -7,9 +7,9 @@
 #define NORMALIZEDSOURCE_HPP
 
 #include "Source.hpp"
+#include "BulkVelocityInterface.hpp"
 #include "LuminosityNormalization.hpp"
 #include "SED.hpp"
-class RedshiftInterface;
 
 //////////////////////////////////////////////////////////////////////
 
@@ -21,7 +21,7 @@ class RedshiftInterface;
 
     Subclasses must handle the spatial distribution of the source, and can optionally add
     anisotropy and/or polarization. */
-class NormalizedSource : public Source
+class NormalizedSource : public Source, public BulkVelocityInterface
 {
     ITEM_ABSTRACT(NormalizedSource, Source, "a primary source with a single SED")
 
@@ -60,9 +60,6 @@ protected:
         is nonzero. */
     void setupSelfBefore() override;
 
-    /** The destructor deletes the private object offering the redshift interface. */
-    ~NormalizedSource();
-
     //======================== Other Functions =======================
 
 public:
@@ -81,6 +78,10 @@ public:
          outside the wavelength range of primary sources (configured for the source system as a
          whole) or if the source simply does not emit at the wavelength. */
      double specificLuminosity(double wavelength) const override;
+
+     /** This function implements the BulkVelocityInterface interface. It returns the bulk velocity
+         of this source, as configured by the user. */
+     Vec bulkVelocity() const override;
 
      /** This function causes the photon packet \em pp to be launched from the source using the
          given history index and luminosity contribution. In this abstract class, the function
@@ -101,13 +102,13 @@ public:
         handle the spatial distribution of the source, optionally adding anisotropy and/or
         polarization. */
     virtual void launchNormalized(PhotonPacket* pp, size_t historyIndex, double lambda, double Lw,
-                                  RedshiftInterface* rsi) const = 0;
+                                  BulkVelocityInterface* bvi) const = 0;
 
     //======================== Data Members ========================
 
 private:
-    // pointer to object offering the redshift interface, or null pointer if the bulk velocity is zero
-    RedshiftInterface* _bulkvelocity{nullptr};
+    // pointer to an object offering the redshift interface; either "this" or null pointer if the bulk velocity is zero
+    BulkVelocityInterface* _bvi{nullptr};
 };
 
 //////////////////////////////////////////////////////////////////////

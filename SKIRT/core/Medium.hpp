@@ -77,6 +77,9 @@ public:
         object with a type and level of support representative for this medium. */
     virtual const MaterialMix* mix(Position bfr = Position()) const = 0;
 
+    /** This function returns the bulk velocity of the medium at the specified position. */
+    virtual Vec bulkVelocity(Position bfr) const = 0;
+
     /** This function returns the number density of the medium at the specified position. */
     virtual double numberDensity(Position bfr) const = 0;
 

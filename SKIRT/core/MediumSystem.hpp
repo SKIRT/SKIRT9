@@ -63,14 +63,23 @@ public:
         */
     int gridDimension() const;
 
-    /** This function returns the number of media in the medium system. */
+    /** This function returns the number of media in the medium system. The returned value is valid
+        only after setup has been performed. */
     int numMedia() const;
 
-    /** This function returns the number of cells in the spatial grid held by the medium system. */
+    /** This function returns the number of cells in the spatial grid held by the medium system.
+        The returned value is valid only after setup has been performed. */
     int numCells() const;
 
     /** This function returns the volume of the spatial cell with index \f$m\f$. */
     double volume(int m) const;
+
+    /** This function returns the aggregate bulk velocity \f${\boldsymbol{v}}\f$ of the medium in
+        spatial cell with index \f$m\f$. If there are multiple media components, the aggregate bulk
+        velocity \f${\boldsymbol{v}}\f$ is determined by averaging the respective bulk velocities
+        over the corresponding number densities, \f[{\boldsymbol{v}} = \frac{\sum_h n_h
+        {\boldsymbol{v}}_h} {\sum_h n_h}.\f] */
+    Vec bulkVelocity(int m);
 
     /** This function returns true if at least one of the media in the medium system has the
         specified fundamental material type (i.e. dust, electrons, or gas). */
@@ -171,7 +180,7 @@ public:
     double opticalDepth(PhotonPacket* pp, double distance);
 
     /** This function calculates the optical depth
-        \f$\tau_{\lambda,{\text{path}}}({\boldsymbol{r}},{\boldsymbol{k}})\f$ at wavelength
+        \f$\tau_\text{path}(\lambda,{\boldsymbol{r}},{\boldsymbol{k}})\f$ at wavelength
         \f$\lambda\f$ along a path through the media system starting at the position
         \f${\boldsymbol{r}}\f$ into the direction \f${\boldsymbol{k}}\f$, where \f$\lambda\f$,
         \f${\boldsymbol{r}}\f$ and \f${\boldsymbol{k}}\f$ are obtained from the specified
@@ -184,46 +193,67 @@ public:
         gives the total path length covered between the starting point \f${\boldsymbol{r}}\f$ and
         the boundary of the cell.
 
-        With this information given, the calculation of the optical depth is rather
-        straightforward. It is calculated as \f[
-        \tau_{\lambda,{\text{path}}}({\boldsymbol{r}},{\boldsymbol{k}}) = \sum_m (\Delta s)_m
-        \sum_h \varsigma_{\lambda,h}^{\text{ext}}\, n_m, \f] where
-        \f$\varsigma_{\lambda,h}^{\text{abs}}\f$ is the extinction cross section corresponding to
-        the \f$h\f$'th medium component at wavelength \f$\lambda\f$ and \f$n_{m,h}\f$ the number
+        With this information given, the optical depth can calculated as \f[
+        \tau_\text{path}(\lambda,{\boldsymbol{r}},{\boldsymbol{k}}) = \sum_m (\Delta s)_m \sum_h
+        \varsigma_{\lambda_m,h}^{\text{ext}}\, n_m, \f] where
+        \f$\varsigma_{\lambda_m,h}^{\text{abs}}\f$ is the extinction cross section corresponding to
+        the \f$h\f$'th medium component at wavelength \f$\lambda_m\f$ and \f$n_{m,h}\f$ the number
         density in the cell with index \f$m\f$ corresponding to the \f$h\f$'th medium component.
+        The wavelength \f$\lambda_m\f$ is the wavelength perceived by the medium in cell \f$m\f$
+        taking into account the bulk velocity in that cell.
+
         The function also stores the details on the calculation of the optical depth in the photon
         packet, specifically it stores the optical depth covered within the \f$m\f$'th spatial
-        cell, \f[ (\Delta\tau_\lambda)_m = (\Delta s)_m \sum_h \varsigma_{\lambda,h}^{\text{ext}}\,
-        n_m, \f] and the total optical depth \f$\tau_{\lambda,m}\f$ covered between the starting
-        point \f${\boldsymbol{r}}\f$ and the boundary of the cell. */
+        cell, \f[ (\Delta\tau)_m = (\Delta s)_m \sum_h \varsigma_{\lambda_m,h}^{\text{ext}}\, n_m,
+        \f] and the total optical depth \f$\tau_m\f$ covered between the starting point
+        \f${\boldsymbol{r}}\f$ and the boundary of the cell. */
     void fillOpticalDepth(PhotonPacket* pp);
 
-    //======================== Private Types ========================
+    //================== Private Types and Functions ====================
 
 private:
-    /** This private data structure holds the information maintained per cell and per medium. */
-    struct State
+    /** This data structure holds the information maintained per cell. */
+    struct State1
+    {
+        double V;                   // volume
+        Vec v;                      // bulk velocity
+    };
+
+    /** This data structure holds the information maintained per cell and per medium. */
+    struct State2
     {
         double n;                   // the number density
         const MaterialMix* mix;     // pointer to the material mix
     };
 
     /** This function returns a writable reference to the state data structure for the given cell
+        index. */
+    State1& state(int m) { return _state1v[m]; }
+
+    /** This function returns a read-only reference to the state data structure for the given cell
+        index. */
+    const State1& state(int m) const { return _state1v[m]; }
+
+    /** This function returns a writable reference to the state data structure for the given cell
         and medium indices. */
-    State& state(int m, int h) { return _Svv[m*_numMedia+h]; }
+    State2& state(int m, int h) { return _state2vv[m*_numMedia+h]; }
 
     /** This function returns a read-only reference to the state data structure for the given cell
         and medium indices. */
-    const State& state(int m, int h) const { return _Svv[m*_numMedia+h]; }
+    const State2& state(int m, int h) const { return _state2vv[m*_numMedia+h]; }
+
+    /** This function communicates the cell states between multiple processes after the states have
+        been initialized in parallel (i.e. each process initialized a subset of the states). */
+    void communicateStates();
 
     //======================== Data Members ========================
 
 private:
     // initialized during setup
-    int _numCells{0};       // index m
-    int _numMedia{0};       // index h
-    Array _Vv;              // volume of each cell (indexed on m)
-    vector<State> _Svv;     // state info for each cell and each medium (indexed on m,h)
+    int _numCells{0};           // index m
+    int _numMedia{0};           // index h
+    vector<State1> _state1v;    // state info for each cell (indexed on m)
+    vector<State2> _state2vv;   // state info for each cell and each medium (indexed on m,h)
 };
 
 ////////////////////////////////////////////////////////////////

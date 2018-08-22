@@ -94,7 +94,7 @@ namespace
 ////////////////////////////////////////////////////////////////////
 
 void CubicalBackgroundSource::launchNormalized(PhotonPacket* pp, size_t historyIndex, double lambda, double Lw,
-                                               RedshiftInterface* rsi) const
+                                               BulkVelocityInterface* bvi) const
 {
     // generate a random launch wall
     Direction bfu = generateLaunchWall(random());
@@ -112,7 +112,7 @@ void CubicalBackgroundSource::launchNormalized(PhotonPacket* pp, size_t historyI
     _lad.setLaunchWall(bfu);
 
     // launch the photon packet with the appropriate angular distribution
-    pp->launch(historyIndex, lambda, Lw, bfr, bfk, rsi, &_lad);
+    pp->launch(historyIndex, lambda, Lw, bfr, bfk, bvi, &_lad);
 }
 
 ////////////////////////////////////////////////////////////////////

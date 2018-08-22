@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "ImportedSource.hpp"
+#include "BulkVelocityInterface.hpp"
 #include "Constants.hpp"
 #include "Log.hpp"
 #include "NR.hpp"
@@ -12,7 +13,6 @@
 #include "PhotonPacket.hpp"
 #include "ProcessManager.hpp"
 #include "Random.hpp"
-#include "RedshiftInterface.hpp"
 #include "SEDFamily.hpp"
 #include "Snapshot.hpp"
 #include "WavelengthRangeInterface.hpp"
@@ -173,15 +173,15 @@ namespace
 
 namespace
 {
-    // an instance of this class offers the redshift interface for the velocity specified for an imported entity
-    class EntityVelocity : public RedshiftInterface
+    // an instance of this class offers the bulk velocity interface for an imported entity
+    class EntityVelocity : public BulkVelocityInterface
     {
     private:
         Vec _bfv;
     public:
         EntityVelocity() { }
-        void setVelocity(Vec bfv) { _bfv = bfv; }
-        double redshiftForDirection(Direction bfk) const override { return -Vec::dot(_bfv, bfk) / Constants::c(); }
+        void setBulkVelocity(Vec bfv) { _bfv = bfv; }
+        Vec bulkVelocity() const override { return _bfv; }
     };
 
     // setup a velocity instance (with the redshift interface) for each parallel execution thread; this works even if
@@ -246,15 +246,15 @@ void ImportedSource::launch(PhotonPacket* pp, size_t historyIndex, double L) con
     Position bfr = _snapshot->generatePosition(m);
 
     // provide a redshift interface for the appropriate velocity, if enabled
-    RedshiftInterface* rsi = nullptr;
+    BulkVelocityInterface* bvi = nullptr;
     if (importVelocity())
     {
-        t_velocity.setVelocity(_snapshot->velocity(m));
-        rsi = &t_velocity;
+        t_velocity.setBulkVelocity(_snapshot->velocity(m));
+        bvi = &t_velocity;
     }
 
     // launch the photon packet with isotropic direction
-    pp->launch(historyIndex, lambda, L*w*ws, bfr, random()->direction(), rsi);
+    pp->launch(historyIndex, lambda, L*w*ws, bfr, random()->direction(), bvi);
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -117,7 +117,8 @@ private:
         direction of the observer \f${\bf{k}}_{\text{obs}}\f$. For anisotropic emission, a weight
         factor is applied to the luminosity to compensate for the fact that the probability that a
         photon packet would have been emitted towards the observer is not the same as the
-        probability that it is emitted in any other direction.
+        probability that it is emitted in any other direction. If the source has a bulk velocity,
+        the wavelength of the peel-off photon packet is Doppler-shifted for the new direction.
 
         The first argument specifies the photon packet that was just emitted; the second argument
         provides a placeholder peel off photon packet for use by the function. */
@@ -149,8 +150,12 @@ private:
         \varsigma_h^{\text{ext}}\, n_{h,n} } \f] with \f$n_{h,n}\f$ the number density of the
         \f$h\f$'th medium component in the \f$n\f$'th cell. In a similar fashion, we can write
         \f$L^{\text{sca}}\f$ as \f[ L^{\text{sca}} = L\, \sum_{n=0}^{N-1} \varpi_n \left(
-        {\text{e}}^{-\tau_{n-1}} - {\text{e}}^{-\tau_n} \right). \f] It is easy to see that
-        \f[ L^{\text{esc}} + L^{\text{sca}} + \sum_{n=0}^{N-1} L_n^{\text{abs}} = L. \f]
+        {\text{e}}^{-\tau_{n-1}} - {\text{e}}^{-\tau_n} \right). \f] It is easy to see that \f[
+        L^{\text{esc}} + L^{\text{sca}} + \sum_{n=0}^{N-1} L_n^{\text{abs}} = L. \f]
+
+        The albedo \f$\varpi_n\f$ in the above analysis is calculated for each spatial cell at the
+        wavelength perceived by the medium in that cell taking into account the local bulk
+        velocity.
 
         The first argument specifies the photon packet that needs to be handled; its luminosity is
         updated as described above. If the second argument is set to true, the function also
@@ -188,13 +193,15 @@ private:
         detection.
 
         A peel-off photon packet has the same characteristics as the original photon packet, apart
-        from three differences. The first one is, obviously, that the propagation direction is
+        from four differences. The first one is, obviously, that the propagation direction is
         altered to the direction towards the observer. The second difference is that we have to
         alter the luminosity of the photon packet to compensate for this change in propagation
         direction, because the scattering process is anisotropic. The third difference is that the
-        polarization state of the peel-off photon packet is adjusted. We discuss these changes in
-        more detail below. In this analysis, we drop the wavelength-dependency of the material
-        properties from the notation.
+        polarization state of the peel-off photon packet is adjusted. And the last difference is
+        that the wavelength of the peel-off photon packet is properly Doppler-shifted taking into
+        account the bulk velocity of the medium. We discuss some of these changes in more detail
+        below. In this analysis, we drop the wavelength-dependency of the material properties from
+        the notation.
 
         Since we force the peel-off photon packet to be scattered from the direction \f${\bf{k}}\f$
         into the direction \f${\bf{k}}_{\text{obs}}\f$, the corresponding biasing weight factor is
@@ -240,7 +247,8 @@ private:
         the photon packet remain unaltered, including the position and the luminosity. The
         properties that change are the number of scattering events experienced by the photon packet
         (this is obviously increased by one), the propagation direction, which is generated
-        randomly, and the polarization state. In the analysis below, we drop the
+        randomly, the polarization state, and the wavelength, which is properly Doppler-shifted
+        taking into account the bulk velocity of the medium. In the analysis below, we drop the
         wavelength-dependency of the material properties from the notation.
 
         If there is only one medium component, the scattering event is governed by the

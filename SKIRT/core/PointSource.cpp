@@ -30,7 +30,7 @@ int PointSource::geometryDimension() const
 //////////////////////////////////////////////////////////////////////
 
 void PointSource::launchNormalized(PhotonPacket* pp, size_t historyIndex, double lambda, double Lw,
-                                   RedshiftInterface* rsi) const
+                                   BulkVelocityInterface* bvi) const
 {
     // get the source position
     Position bfr(positionX(), positionY(), positionZ());
@@ -38,7 +38,7 @@ void PointSource::launchNormalized(PhotonPacket* pp, size_t historyIndex, double
     // launch the photon packet with the appropriate angular distribution and polarization profile
     pp->launch(historyIndex, lambda, Lw, bfr,
                angularDistribution() ? angularDistribution()->generateDirection() : random()->direction(),
-               rsi, angularDistribution(), polarizationProfile());
+               bvi, angularDistribution(), polarizationProfile());
 }
 
 //////////////////////////////////////////////////////////////////////

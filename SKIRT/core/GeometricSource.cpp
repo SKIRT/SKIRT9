@@ -17,13 +17,13 @@ int GeometricSource::geometryDimension() const
 //////////////////////////////////////////////////////////////////////
 
 void GeometricSource::launchNormalized(PhotonPacket* pp, size_t historyIndex, double lambda, double Lw,
-                                       RedshiftInterface* rsi) const
+                                       BulkVelocityInterface* bvi) const
 {
     // generate a random position from the geometry
     Position bfr = _geometry->generatePosition();
 
     // launch the photon packet with isotropic direction
-    pp->launch(historyIndex, lambda, Lw, bfr, random()->direction(), rsi);
+    pp->launch(historyIndex, lambda, Lw, bfr, random()->direction(), bvi);
 }
 
 //////////////////////////////////////////////////////////////////////

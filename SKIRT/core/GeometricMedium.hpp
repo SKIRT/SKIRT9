@@ -68,6 +68,10 @@ protected:
         medium. The same object is returned regardless of position. */
     const MaterialMix* mix(Position bfr) const override;
 
+    /** This function returns the bulk velocity of the medium. The same velocity is returned
+        regardless of position. */
+    Vec bulkVelocity(Position bfr) const override;
+
     /** This function returns the number density of the medium at the specified position. */
     double numberDensity(Position bfr) const override;
 

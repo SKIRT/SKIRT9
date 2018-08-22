@@ -76,7 +76,7 @@ namespace
 ////////////////////////////////////////////////////////////////////
 
 void StellarSurfaceSource::launchNormalized(PhotonPacket* pp, size_t historyIndex, double lambda, double Lw,
-                                            RedshiftInterface* rsi) const
+                                            BulkVelocityInterface* bvi) const
 {
     // generate a random intrinsic launch "position" on the unit sphere
     Direction bfu = random()->direction();
@@ -92,7 +92,7 @@ void StellarSurfaceSource::launchNormalized(PhotonPacket* pp, size_t historyInde
     _lad.setLaunchPosition(bfu);
 
     // launch the photon packet with the appropriate angular distribution
-    pp->launch(historyIndex, lambda, Lw, bfr, bfk, rsi, &_lad);
+    pp->launch(historyIndex, lambda, Lw, bfr, bfk, bvi, &_lad);
 }
 
 ////////////////////////////////////////////////////////////////////

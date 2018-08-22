@@ -39,6 +39,13 @@ public:
         _z = z;
     }
 
+    /** This function returns true if all components of the vector are trivially zero, and false
+        otherwise. */
+    inline bool isNull() const
+    {
+        return _x==0. && _y==0. && _z==0.;
+    }
+
     /** This function returns the \em x component of the vector. */
     inline double x() const
     {
