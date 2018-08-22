@@ -64,7 +64,7 @@ void PhotonPacket::launchEmissionPeelOff(const PhotonPacket* pp, Direction bfk)
     _nscatt = 0;
     _bfr = pp->_bfr;
     _bfk = bfk;
-    if (pp->_bvi) _lambda = shiftedEmissionWavelength(_lambda0, bfk, _bvi->bulkVelocity());
+    if (pp->_bvi) _lambda = shiftedEmissionWavelength(_lambda0, bfk, pp->_bvi->bulkVelocity());
     if (pp->_adi) applyBias(pp->_adi->probabilityForDirection(bfk));
     if (pp->_ppi) setPolarized(pp->_ppi->polarizationForDirection(bfk));
     else setUnpolarized();

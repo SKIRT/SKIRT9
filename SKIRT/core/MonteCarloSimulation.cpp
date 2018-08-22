@@ -166,7 +166,7 @@ void MonteCarloSimulation::logProgress(size_t numDone)
 namespace
 {
     // maximum number of photon packets processed between two invocations of logProgress()
-    const size_t logProgressChunkSize = 50000;
+    const size_t logProgressChunkSize = 25000;
 }
 
 ////////////////////////////////////////////////////////////////////
