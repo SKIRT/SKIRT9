@@ -25,7 +25,7 @@ class GeometricMedium : public Medium
         ATTRIBUTE_DEFAULT_VALUE(geometry, "PlummerGeometry")
 
     PROPERTY_ITEM(materialMix, MaterialMix, "the material type and properties throughout the medium")
-        ATTRIBUTE_DEFAULT_VALUE(materialMix, "MeanTrustBenchmarkDustMix")
+        ATTRIBUTE_DEFAULT_VALUE(materialMix, "MeanInterstellarDustMix")
 
     PROPERTY_ITEM(normalization, MaterialNormalization, "the type of normalization for the amount of material")
         ATTRIBUTE_DEFAULT_VALUE(normalization, "OpticalDepthMaterialNormalization")

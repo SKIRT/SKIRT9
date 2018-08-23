@@ -73,10 +73,13 @@
 #include "MarastonSEDFamily.hpp"
 #include "MassColumnMaterialNormalization.hpp"
 #include "MassMaterialNormalization.hpp"
+#include "MeanDraineLiDustMix.hpp"
+#include "MeanInterstellarDustMix.hpp"
 #include "MeanIvezicBenchmarkDustMix.hpp"
 #include "MeanPascucciBenchmarkDustMix.hpp"
 #include "MeanPinteBenchmarkDustMix.hpp"
 #include "MeanTrustBenchmarkDustMix.hpp"
+#include "MeanZubkoDustMix.hpp"
 #include "MediumSystem.hpp"
 #include "MollweideProjection.hpp"
 #include "MonteCarloSimulation.hpp"
@@ -330,6 +333,9 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // material mixes
     ItemRegistry::add<MaterialMix>();
     ItemRegistry::add<SingleGrainDustMix>();
+    ItemRegistry::add<MeanInterstellarDustMix>();
+    ItemRegistry::add<MeanDraineLiDustMix>();
+    ItemRegistry::add<MeanZubkoDustMix>();
     ItemRegistry::add<MeanTrustBenchmarkDustMix>();
     ItemRegistry::add<MeanPinteBenchmarkDustMix>();
     ItemRegistry::add<MeanPascucciBenchmarkDustMix>();
