@@ -40,7 +40,7 @@ class MeanListDustMix : public MeanTabulatedDustMix
         ATTRIBUTE_MAX_VALUE(wavelengths, "1 m")
 
     PROPERTY_DOUBLE_LIST(extinctionCoefficients, "the extinction mass coefficients at each of the given wavelengths")
-        ATTRIBUTE_QUANTITY(extinctionCoefficients, "opacity")
+        ATTRIBUTE_QUANTITY(extinctionCoefficients, "masscoefficient")
         ATTRIBUTE_MIN_VALUE(extinctionCoefficients, "[0")
 
     PROPERTY_DOUBLE_LIST(albedos, "the scattering albedos at each of the given wavelengths")

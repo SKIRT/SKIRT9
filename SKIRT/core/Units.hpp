@@ -183,13 +183,13 @@ public:
         (\f${\text{m}}^{-3}\f$) to the program's output units. */
     double onumbervolumedensity(double n) const;
 
-    /** This function returns a string containing the name of the unit of opacity adopted by the
-        program for output. */
-    string uopacity() const;
+    /** This function returns a string containing the name of the unit of mass coefficient adopted
+        by the program for output. */
+    string umasscoefficient() const;
 
-    /** This function converts the opacity \f$\kappa\f$ from the internally used SI units
+    /** This function converts the mass coefficient \f$\kappa\f$ from the internally used SI units
         (\f${\text{m}}^{-2}\, {\text{kg}}^{-1}\f$) to the program's output units. */
-    double oopacity(double kappa) const;
+    double omasscoefficient(double kappa) const;
 
     /** This function returns a string containing the name of the unit of energy adopted by the
         program for output. */

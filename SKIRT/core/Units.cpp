@@ -233,16 +233,16 @@ double Units::onumbervolumedensity(double n) const
 
 ////////////////////////////////////////////////////////////////////
 
-string Units::uopacity() const
+string Units::umasscoefficient() const
 {
-    return unit("opacity");
+    return unit("masscoefficient");
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double Units::oopacity(double kappa) const
+double Units::omasscoefficient(double kappa) const
 {
-    return out("opacity", kappa);
+    return out("masscoefficient", kappa);
 }
 
 ////////////////////////////////////////////////////////////////////

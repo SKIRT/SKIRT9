@@ -13,7 +13,7 @@ double MeanFileDustMix::getDustProperties(Array& lambdav, Array& kappaextv, Arra
     // read the wavelengths and optical properties from the input file
     TextInFile infile(this, _filename, "spectral energy distribution");
     infile.addColumn("wavelength", "wavelength", "micron");
-    infile.addColumn("extinction mass coefficient", "opacity", "m2/kg");
+    infile.addColumn("extinction mass coefficient", "masscoefficient", "m2/kg");
     infile.addColumn("scattering albedo");
     infile.addColumn("scattering asymmetry parameter");
     infile.readAllColumns(lambdav, kappaextv, albedov, asymmparv);

@@ -73,9 +73,9 @@ void OpticalMaterialPropertiesProbe::probeSetup()
             out.addColumn("extinction cross section per " + entityForType(mix->materialType()), units->usection());
             out.addColumn("absorption cross section per " + entityForType(mix->materialType()), units->usection());
             out.addColumn("scattering cross section per " + entityForType(mix->materialType()), units->usection());
-            out.addColumn("extinction mass coefficient", units->uopacity());
-            out.addColumn("absorption mass coefficient", units->uopacity());
-            out.addColumn("scattering mass coefficient", units->uopacity());
+            out.addColumn("extinction mass coefficient", units->umasscoefficient());
+            out.addColumn("absorption mass coefficient", units->umasscoefficient());
+            out.addColumn("scattering mass coefficient", units->umasscoefficient());
             out.addColumn("scattering albedo");
             out.addColumn("scattering asymmetry parameter");
 
@@ -88,9 +88,9 @@ void OpticalMaterialPropertiesProbe::probeSetup()
                                               units->osection(mix->sectionExt(lambda)),
                                               units->osection(mix->sectionAbs(lambda)),
                                               units->osection(mix->sectionSca(lambda)),
-                                              units->oopacity(mix->sectionExt(lambda)/mix->mass()),
-                                              units->oopacity(mix->sectionAbs(lambda)/mix->mass()),
-                                              units->oopacity(mix->sectionSca(lambda)/mix->mass()),
+                                              units->omasscoefficient(mix->sectionExt(lambda)/mix->mass()),
+                                              units->omasscoefficient(mix->sectionAbs(lambda)/mix->mass()),
+                                              units->omasscoefficient(mix->sectionSca(lambda)/mix->mass()),
                                               mix->albedo(lambda),
                                               mix->asymmpar(lambda) }));
             }

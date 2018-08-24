@@ -123,9 +123,9 @@ SkirtUnitDef::SkirtUnitDef()
     addUnit("numbervolumedensity", "1/AU3", 1/pow(AU,3));
     addUnit("numbervolumedensity", "1/pc3", 1/pow(pc,3));
 
-    // opacity
-    addUnit("opacity", "m2/kg", 1.);
-    addUnit("opacity", "cm2/g", 0.1);
+    // mass coefficient
+    addUnit("masscoefficient", "m2/kg", 1.);
+    addUnit("masscoefficient", "cm2/g", 0.1);
 
     // time
     addUnit("time", "s", 1.);
@@ -272,7 +272,7 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("SIUnits", "massrate", "kg/s");
     addDefaultUnit("SIUnits", "numbersurfacedensity", "1/m2");
     addDefaultUnit("SIUnits", "numbervolumedensity", "1/m3");
-    addDefaultUnit("SIUnits", "opacity", "m2/kg");
+    addDefaultUnit("SIUnits", "masscoefficient", "m2/kg");
     addDefaultUnit("SIUnits", "time", "s");
     addDefaultUnit("SIUnits", "temperature", "K");
     addDefaultUnit("SIUnits", "energy", "J");
@@ -308,7 +308,7 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("StellarUnits", "massrate", "Msun/yr");
     addDefaultUnit("StellarUnits", "numbersurfacedensity", "1/cm3");
     addDefaultUnit("StellarUnits", "numbervolumedensity", "1/cm3");
-    addDefaultUnit("StellarUnits", "opacity", "m2/kg");
+    addDefaultUnit("StellarUnits", "masscoefficient", "m2/kg");
     addDefaultUnit("StellarUnits", "time", "Gyr");
     addDefaultUnit("StellarUnits", "temperature", "K");
     addDefaultUnit("StellarUnits", "energy", "J");
@@ -344,7 +344,7 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("ExtragalacticUnits", "massrate", "Msun/yr");
     addDefaultUnit("ExtragalacticUnits", "numbersurfacedensity", "1/cm2");
     addDefaultUnit("ExtragalacticUnits", "numbervolumedensity", "1/cm3");
-    addDefaultUnit("ExtragalacticUnits", "opacity", "m2/kg");
+    addDefaultUnit("ExtragalacticUnits", "masscoefficient", "m2/kg");
     addDefaultUnit("ExtragalacticUnits", "time", "Gyr");
     addDefaultUnit("ExtragalacticUnits", "temperature", "K");
     addDefaultUnit("ExtragalacticUnits", "energy", "J");
