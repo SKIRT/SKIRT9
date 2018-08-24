@@ -74,8 +74,10 @@
 #include "MassColumnMaterialNormalization.hpp"
 #include "MassMaterialNormalization.hpp"
 #include "MeanDraineLiDustMix.hpp"
+#include "MeanFileDustMix.hpp"
 #include "MeanInterstellarDustMix.hpp"
 #include "MeanIvezicBenchmarkDustMix.hpp"
+#include "MeanListDustMix.hpp"
 #include "MeanPascucciBenchmarkDustMix.hpp"
 #include "MeanPinteBenchmarkDustMix.hpp"
 #include "MeanTrustBenchmarkDustMix.hpp"
@@ -89,8 +91,8 @@
 #include "NoPolarizationProfile.hpp"
 #include "NumberColumnMaterialNormalization.hpp"
 #include "OffsetGeometryDecorator.hpp"
-#include "OpticalDepthMaterialNormalization.hpp"
 #include "OpticalDepthMapProbe.hpp"
+#include "OpticalDepthMaterialNormalization.hpp"
 #include "OpticalMaterialPropertiesProbe.hpp"
 #include "ParaboloidGeometry.hpp"
 #include "ParaboloidShellGeometry.hpp"
@@ -114,11 +116,11 @@
 #include "ShellGeometry.hpp"
 #include "SineSquarePolarizationProfile.hpp"
 #include "SourceSystem.hpp"
+#include "SpatialCellPropertiesProbe.hpp"
 #include "SpatialGrid.hpp"
 #include "SpatialGridConvergenceProbe.hpp"
 #include "SpatialGridPlotProbe.hpp"
 #include "SpatialGridSourceDensityProbe.hpp"
-#include "SpatialCellPropertiesProbe.hpp"
 #include "SpecificLuminosityNormalization.hpp"
 #include "Sphere1DSpatialGrid.hpp"
 #include "Sphere2DSpatialGrid.hpp"
@@ -336,6 +338,9 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<MeanInterstellarDustMix>();
     ItemRegistry::add<MeanDraineLiDustMix>();
     ItemRegistry::add<MeanZubkoDustMix>();
+    ItemRegistry::add<MeanTabulatedDustMix>();
+    ItemRegistry::add<MeanFileDustMix>();
+    ItemRegistry::add<MeanListDustMix>();
     ItemRegistry::add<MeanTrustBenchmarkDustMix>();
     ItemRegistry::add<MeanPinteBenchmarkDustMix>();
     ItemRegistry::add<MeanPascucciBenchmarkDustMix>();
