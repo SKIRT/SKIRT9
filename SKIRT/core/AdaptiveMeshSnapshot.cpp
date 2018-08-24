@@ -351,6 +351,14 @@ int AdaptiveMeshSnapshot::cellIndex(Position bfr) const
 
 ////////////////////////////////////////////////////////////////////
 
+Vec AdaptiveMeshSnapshot::velocity(Position bfr) const
+{
+    int m = cellIndex(bfr);
+    return m>=0 ? velocity(m) : Vec();
+}
+
+////////////////////////////////////////////////////////////////////
+
 double AdaptiveMeshSnapshot::density(Position bfr) const
 {
     int m = cellIndex(bfr);

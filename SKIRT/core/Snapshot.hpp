@@ -114,15 +114,28 @@ public:
     void importSize();
 
     /** This function configures the snapshot to import a mass density per unit of volume. The
-        default unit is Msun/pc3. The importMass() and importDensity() options are mutually
-        exclusive; calling both functions for the same snapshot results in undefined behavior. */
-    void importDensity();
+        default unit is Msun/pc3. The importMassDensity(), importMass(), importNumberDensity(), and
+        importNumber() options are mutually exclusive; calling more than one of these functions for
+        the same snapshot results in undefined behavior. */
+    void importMassDensity();
 
-    /** This function configures the snapshot to import a mass (i.e. density integrated over
-        volume). The default unit is Msun. The importMass() and importDensity() options are
-        mutually exclusive; calling both functions for the same snapshot results in undefined
-        behavior. */
+    /** This function configures the snapshot to import a mass (i.e. mass density integrated over
+        volume). The default unit is Msun. The importMassDensity(), importMass(),
+        importNumberDensity(), and importNumber() options are mutually exclusive; calling more than
+        one of these functions for the same snapshot results in undefined behavior. */
     void importMass();
+
+    /** This function configures the snapshot to import a number density per unit of volume. The
+        default unit is 1/cm3. The importMassDensity(), importMass(), importNumberDensity(), and
+        importNumber() options are mutually exclusive; calling more than one of these functions for
+        the same snapshot results in undefined behavior. */
+    void importNumberDensity();
+
+    /** This function configures the snapshot to import a number (i.e. number density integrated
+        over volume). The default unit is 1. The importMassDensity(), importMass(),
+        importNumberDensity(), and importNumber() options are mutually exclusive; calling more than
+        one of these functions for the same snapshot results in undefined behavior. */
+    void importNumber();
 
     /** This function configures the snapshot to import a (dimensionless) metallicity fraction. */
     void importMetallicity();
@@ -158,6 +171,10 @@ public:
         and then it is multiplied by the value of the \em multiplier argument to obtain the final
         result. */
     void setMassDensityPolicy(double multiplier = 1., double maxTemperature = 0.);
+
+    /** This function returns true if the snapshot holds number (density) values, and false if it
+        holds mass (density) values (or if no mass or density column is being imported). */
+    bool holdsNumber() const { return _holdsNumber; }
 
 protected:
     /** This function returns the column index of the first position field, or -1 if this is not
@@ -234,6 +251,11 @@ public:
         N_\mathrm{ent}-1\f$. If the velocity is not being imported, or the index is out of range,
         the behavior is undefined. */
     virtual Vec velocity(int m) const = 0;
+
+    /** This function returns the velocity of the entity nearest to (or at) the specified point
+        \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero velocity. If
+        the velocity is not being imported, the behavior is undefined. */
+    virtual Vec velocity(Position bfr) const = 0;
 
     /** This function stores the parameters of the entity with index \f$0\le m \le
         N_\mathrm{ent}-1\f$ into the given array. If parameters are not being imported, or the
@@ -314,6 +336,7 @@ private:
     double _multiplier{0.};
     double _maxTemperature{0.};
     bool _hasDensityPolicy{false};
+    bool _holdsNumber{false};   // true if snapshot holds number (density); false if it holds mass (density)
 };
 
 ////////////////////////////////////////////////////////////////////

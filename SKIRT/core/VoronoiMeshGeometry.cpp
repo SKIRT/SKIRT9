@@ -15,8 +15,13 @@ Snapshot* VoronoiMeshGeometry::createAndOpenSnapshot()
     snapshot->open(this, filename(), "Voronoi sites");
 
     // configure the mass or density column (position columns are configured by the snapshot itself)
-    if (useMass()) snapshot->importMass();
-    else snapshot->importDensity();
+    switch (massType())
+    {
+    case MassType::MassDensity: snapshot->importMassDensity(); break;
+    case MassType::Mass: snapshot->importMass(); break;
+    case MassType::NumberDensity: snapshot->importNumberDensity(); break;
+    case MassType::Number: snapshot->importNumber(); break;
+    }
 
     // set the domain extent
     snapshot->setExtent(domain());

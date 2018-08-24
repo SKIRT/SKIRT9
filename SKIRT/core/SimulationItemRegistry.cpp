@@ -10,6 +10,7 @@
 // ---> add new items below in alphabetical order
 
 #include "AdaptiveMeshGeometry.hpp"
+#include "AdaptiveMeshMedium.hpp"
 #include "AdaptiveMeshSource.hpp"
 #include "AllSkyInstrument.hpp"
 #include "BandLuminosityNormalization.hpp"
@@ -97,6 +98,7 @@
 #include "ParaboloidGeometry.hpp"
 #include "ParaboloidShellGeometry.hpp"
 #include "ParticleGeometry.hpp"
+#include "ParticleMedium.hpp"
 #include "ParticleSource.hpp"
 #include "PerspectiveInstrument.hpp"
 #include "PlummerGeometry.hpp"
@@ -140,6 +142,7 @@
 #include "UniformBoxGeometry.hpp"
 #include "UniformSmoothingKernel.hpp"
 #include "VoronoiMeshGeometry.hpp"
+#include "VoronoiMeshMedium.hpp"
 #include "VoronoiMeshSource.hpp"
 #include "WavelengthGridProbe.hpp"
 
@@ -323,6 +326,11 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<MediumSystem>();
     ItemRegistry::add<Medium>();
     ItemRegistry::add<GeometricMedium>();
+    ItemRegistry::add<ImportedMedium>();
+    ItemRegistry::add<ParticleMedium>();
+    ItemRegistry::add<MeshMedium>();
+    ItemRegistry::add<AdaptiveMeshMedium>();
+    ItemRegistry::add<VoronoiMeshMedium>();
 
     // material normalizations
     ItemRegistry::add<MaterialNormalization>();

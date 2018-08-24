@@ -82,6 +82,11 @@ public:
         undefined. */
     void parameters(int m, Array& params) const override;
 
+    /** This function returns the velocity of the particle centered nearest to the specified point
+        \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero velocity. If
+        the velocity is not being imported, the behavior is undefined. */
+    Vec velocity(Position bfr) const override;
+
     /** This function returns the mass density represented by the snapshot at a given point
         \f${\bf{r}}\f$, determined by interpolating (conceptually) over all smoothed particles. If
         the point is outside the domain, the function returns zero. If no density policy has been

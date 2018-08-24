@@ -3,12 +3,12 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "AdaptiveMeshGeometry.hpp"
+#include "AdaptiveMeshMedium.hpp"
 #include "AdaptiveMeshSnapshot.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-Snapshot* AdaptiveMeshGeometry::createAndOpenSnapshot()
+Snapshot* AdaptiveMeshMedium::createAndOpenSnapshot()
 {
     // create and open the snapshot
     auto snapshot = new AdaptiveMeshSnapshot;

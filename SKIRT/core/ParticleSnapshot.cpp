@@ -68,14 +68,17 @@ void ParticleSnapshot::readAndClose()
     double totalOriginalMass = 0;
     double totalMetallicMass = 0;
     double totalEffectiveMass = 0;
-    _pv.reserve(_propv.size());
-    for (const Array& prop : _propv)
+    int numParticles = _propv.size();
+    _pv.reserve(numParticles);
+    for (int m = 0; m!=numParticles; ++m)
     {
+        const Array& prop = _propv[m];
+
         double originalMass = prop[massIndex()];
         double metallicMass = originalMass * (metallicityIndex()>=0 ? prop[metallicityIndex()] : 1.);
         double effectiveMass = metallicMass * multiplier();
 
-        _pv.emplace_back(prop[positionIndex()+0], prop[positionIndex()+1], prop[positionIndex()+2],
+        _pv.emplace_back(m, prop[positionIndex()+0], prop[positionIndex()+1], prop[positionIndex()+2],
                 prop[sizeIndex()], effectiveMass);
 
         totalOriginalMass += originalMass;
@@ -184,6 +187,24 @@ void ParticleSnapshot::parameters(int m, Array& params) const
     int n = numParameters();
     params.resize(n);
     for (int i=0; i!=n; ++i) params[i] = _propv[m][parametersIndex()+i];
+}
+
+////////////////////////////////////////////////////////////////////
+
+Vec ParticleSnapshot::velocity(Position bfr) const
+{
+    const SmoothedParticle* nearestParticle = nullptr;
+    double nearestSquaredDistance = std::numeric_limits<double>::infinity();
+    if (_grid) for (const SmoothedParticle* p : _grid->particlesFor(bfr))
+    {
+        double d2 = (bfr - p->center()).norm2();
+        if (d2 < nearestSquaredDistance)
+        {
+            nearestParticle = p;
+            nearestSquaredDistance = d2;
+        }
+    }
+    return nearestParticle ? velocity(nearestParticle->index()) : Vec();
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -724,6 +724,14 @@ int VoronoiMeshSnapshot::cellIndex(Position bfr) const
 
 ////////////////////////////////////////////////////////////////////
 
+Vec VoronoiMeshSnapshot::velocity(Position bfr) const
+{
+    int m = cellIndex(bfr);
+    return m>=0 ? velocity(m) : Vec();
+}
+
+////////////////////////////////////////////////////////////////////
+
 double VoronoiMeshSnapshot::density(Position bfr) const
 {
     int m = cellIndex(bfr);

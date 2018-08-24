@@ -3,18 +3,18 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "AdaptiveMeshGeometry.hpp"
-#include "AdaptiveMeshSnapshot.hpp"
+#include "VoronoiMeshMedium.hpp"
+#include "VoronoiMeshSnapshot.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-Snapshot* AdaptiveMeshGeometry::createAndOpenSnapshot()
+Snapshot* VoronoiMeshMedium::createAndOpenSnapshot()
 {
     // create and open the snapshot
-    auto snapshot = new AdaptiveMeshSnapshot;
-    snapshot->open(this, filename(), "adaptive mesh cells");
+    auto snapshot = new VoronoiMeshSnapshot;
+    snapshot->open(this, filename(), "Voronoi sites");
 
-    // configure the mass or density column
+    // configure the mass or density column (position columns are configured by the snapshot itself)
     switch (massType())
     {
     case MassType::MassDensity: snapshot->importMassDensity(); break;

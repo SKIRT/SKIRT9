@@ -68,7 +68,7 @@ void Snapshot::importSize()
 
 ////////////////////////////////////////////////////////////////////
 
-void Snapshot::importDensity()
+void Snapshot::importMassDensity()
 {
     _densityIndex = _nextIndex++;
     _infile->addColumn("mass density", "massvolumedensity", "Msun/pc3");
@@ -80,6 +80,24 @@ void Snapshot::importMass()
 {
     _massIndex = _nextIndex++;
     _infile->addColumn("mass", "mass", "Msun");
+}
+
+////////////////////////////////////////////////////////////////////
+
+void Snapshot::importNumberDensity()
+{
+    _densityIndex = _nextIndex++;
+    _infile->addColumn("number density", "numbervolumedensity", "1/cm3");
+    _holdsNumber = true;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void Snapshot::importNumber()
+{
+    _massIndex = _nextIndex++;
+    _infile->addColumn("number");
+    _holdsNumber = true;
 }
 
 ////////////////////////////////////////////////////////////////////

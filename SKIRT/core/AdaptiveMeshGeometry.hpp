@@ -24,14 +24,14 @@
     should contain 1, 2, or 3 columns, depending on the options configured by the user for this
     AdaptiveMeshGeometry instance:
 
-    \f[ \{\, \rho\,(\mathrm{M}_\odot\,\mathrm{pc}^{-3}) \;\;|\;\; M\,(\mathrm{M}_\odot) \,\} \quad
-    [Z\,(1)] \quad [T\,(\mathrm{K})] \f]
+    \f[ \{\, \rho\,(\text{M}_\odot\,\text{pc}^{-3}) \;\;|\;\; M\,(\text{M}_\odot) \;\;|\;\;
+    n\,(\text{cm}^{-3}) \;\;|\;\; N\,(1) \,\} \quad [Z\,(1)] \quad [T\,(\mathrm{K})] \f]
 
-    The first column lists either the average mass density \f$\rho\f$ (if the \em useMass flag is
-    false) or the integrated mass \f$M\f$ (if the \em useMass flag is true) for the cell
-    corresponding to the site. The precise units for this field are irrelevant because the total
-    mass in the geometry will be normalized to unity after importing the data. However, the import
-    procedure still insists on knowing the units.
+    Depending on the value of the \em massType option, the first column lists the average mass
+    density \f$\rho\f$, the integrated mass \f$M\f$, the average number density \f$n\f$, or the
+    integrated number density \f$N\f$ for the cell corresponding to the site. The precise units for
+    this field are irrelevant because the total mass in the geometry will be normalized to unity
+    after importing the data. However, the import procedure still insists on knowing the units.
 
     If the \em importMetallicity option is enabled, the next column specifies a "metallicity"
     fraction, which in this context is simply multiplied with the mass/density column to obtain the

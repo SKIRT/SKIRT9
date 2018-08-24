@@ -19,10 +19,13 @@ class Box;
 class SmoothedParticle
 {
 public:
-    /** The constructor arguments specify the particle attributes: coordinates of the center,
-        smoothing length, and effective mass. */
-    SmoothedParticle(double x, double y, double z, double h, double M)
-        : _r{x,y,z}, _h(h), _M(M) { }
+    /** The constructor arguments specify the particle attributes: particle index, coordinates of
+        the center, smoothing length, and effective mass. */
+    SmoothedParticle(int m, double x, double y, double z, double h, double M)
+        : _r{x,y,z}, _h(h), _M(M), _m(m)  { }
+
+    /** This function returns the index of the particle. */
+    int index() const { return _m; }
 
     /** This function returns the coordinates of the center of the particle. */
     Vec center() const { return Vec(_r[0], _r[1], _r[2]); }
@@ -43,6 +46,7 @@ private:
     double _r[3];   // center coordinates
     double _h;      // smoothing length
     double _M;      // total mass
+    int _m;         // index
 };
 
 ////////////////////////////////////////////////////////////////////

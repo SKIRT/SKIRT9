@@ -3,22 +3,22 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef MESHGEOMETRY_HPP
-#define MESHGEOMETRY_HPP
+#ifndef MESHMEDIUM_HPP
+#define MESHMEDIUM_HPP
 
-#include "ImportedGeometry.hpp"
+#include "ImportedMedium.hpp"
 #include "Box.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-/** MeshGeometry is an abstract class for representing a 3D geometry with a spatial density
+/** MeshMedium is an abstract class for representing a transfer medium with a spatial density
     distribution that is discretized on some structured or unstructured tessellation of a cuboidal
-    spatial domain. The class derives from the ImportedGeometry class, and its main (or only)
+    spatial domain. The class derives from the ImportedMedium class, and its main (or only)
     function is to allow the user to configure the extent of the cuboidal domain of the
     tessellation, and to indicate the type of mass quantity to be imported for each cell.
     Subclasses need to define the actual tessellation being used, and deal with the other
-    requirements set by the ImportedGeometry class. */
-class MeshGeometry : public ImportedGeometry
+    requirements set by the ImportedMedium class. */
+class MeshMedium : public ImportedMedium
 {
     /** The enumeration type indicating the type of mass quantity to be imported. */
     ENUM_DEF(MassType, MassDensity, Mass, NumberDensity, Number)
@@ -28,7 +28,7 @@ class MeshGeometry : public ImportedGeometry
     ENUM_VAL(MassType, Number,        "number (volume-integrated number density)")
     ENUM_END()
 
-    ITEM_ABSTRACT(MeshGeometry, ImportedGeometry, "a geometry imported from mesh-based data")
+    ITEM_ABSTRACT(MeshMedium, ImportedMedium, "a geometry imported from mesh-based data")
 
     PROPERTY_DOUBLE(minX, "the start point of the domain in the X direction")
         ATTRIBUTE_QUANTITY(minX, "length")
