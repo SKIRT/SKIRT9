@@ -53,7 +53,7 @@ const MaterialMix* ImportedMedium::mix(Position /*bfr*/) const
 
 Vec ImportedMedium::bulkVelocity(Position bfr) const
 {
-    return _snapshot->velocity(bfr);
+    return _importVelocity ? _snapshot->velocity(bfr) : Vec();
 }
 
 ////////////////////////////////////////////////////////////////////

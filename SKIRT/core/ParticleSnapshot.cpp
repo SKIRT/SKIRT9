@@ -214,8 +214,9 @@ double ParticleSnapshot::density(Position bfr) const
     double sum = 0.;
     if (_grid) for (const SmoothedParticle* p : _grid->particlesFor(bfr))
     {
-        double u = (bfr - p->center()).norm() / p->radius();
-        sum += _kernel->density(u) * p->mass();
+        double h = p->radius();
+        double u = (bfr - p->center()).norm() / h;
+        sum += _kernel->density(u) * p->mass() / (h*h*h);
     }
     return sum > 0. ? sum : 0.;     // guard against negative densities
 }
