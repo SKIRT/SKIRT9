@@ -423,6 +423,13 @@ string StringUtils::toString(double value, char format, int precision, int width
         precision = 0;
     }
 
+    // avoid very large values in fixed point format (because they would overrun our output buffer)
+    if (format=='f' && value>=1e20)
+    {
+        format = 'e';
+        precision = 18;
+    }
+
     // force precision within range
     precision = min(max(precision,0),18);
 
