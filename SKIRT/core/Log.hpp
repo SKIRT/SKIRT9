@@ -85,19 +85,23 @@ public:
         thread-safe. */
     void info(string message);
 
-    /** Sets the time interval in seconds between log messages issued through the infoIfElapsed()
-        function, and resets the interval timer. Call this function once before issuing a sequence
-        of potentially frequent log messages through the infoIfElapsed() function. This function is
-        thread-safe, although it is usually called only from a single thread. */
-    void infoSetElapsed(int seconds = 3);
+    /** Resets the interval timer for progress messages issued through the infoIfElapsed()
+        function. The first argument specifies the total number of tasks to be performed, which
+        will be used to calculate a completion percentage in each progress message. Use a value of
+        zero to disable this feature. The second argument optionally specifies the minimum time
+        interval between messages in seconds; the default is 5 seconds. Call this function once
+        before issuing a sequence of potentially frequent progress messages through the
+        infoIfElapsed() function. This function should be called only from a single thread (for a
+        given Log instance). */
+    void infoSetElapsed(size_t numTotal, int seconds = 5);
 
     /** Calls the info() function to log an informational message if a certain time interval
         (specified with the infoSetElapsed() function) has elapsed since the previous invocation of
-        the infoIfElapsed() function (or of the infoSetElapsed() function). Otherwise it does
-        nothing. If \em numTotal is specified and nonzero, the function adds a percentage of
-        completion to the basic log message, calculated as 100.*numDone/numTotal. This function is
-        thread-safe. */
-    void infoIfElapsed(string message, size_t numDone=0, size_t numTotal=0);
+        the infoIfElapsed() function (or of the infoSetElapsed() function). If the value of \em
+        numTotal passed to infoSetElapsed() is nonzero, this function accumulates the values of \em
+        numDone passed to the successive calls of infoIfElapsed() and uses this running subtotal to
+        add a percentage of completion to the basic log message. This function is thread-safe. */
+    void infoIfElapsed(string message, size_t numDone);
 
     /** Logs a warning message (i.e. at level Warning). Each warning message is logged,
         irrespective of the which process invokes this function. The warning message is prefixed
@@ -136,8 +140,10 @@ private:
     bool _logmemory{false};
     string _procNameShort;
     string _procNameLong;
-    std::atomic<uint64_t> _started{0};  // counts since epoch when timer started
-    std::atomic<uint64_t> _interval{0}; // counts in interval between messages
+    std::atomic<uint64_t> _interval{0};     // counts in interval between messages
+    std::atomic<uint64_t> _started{0};      // counts since epoch when timer started
+    std::atomic<size_t> _numTotal{0};       // total number of tasks to be completed
+    std::atomic<size_t> _numDone{0};        // number of tasks completed so far
 };
 
 ////////////////////////////////////////////////////////////////////

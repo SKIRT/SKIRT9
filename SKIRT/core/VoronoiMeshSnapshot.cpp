@@ -475,7 +475,7 @@ void VoronoiMeshSnapshot::buildMesh()
     //   - extract and copy the relevant information to one of our own cell objects
     //   - store the cell object in the vector indexed on cell number
     log()->info("Computing Voronoi tessellation with " + std::to_string(numCells) + " cells");
-    log()->infoSetElapsed();
+    log()->infoSetElapsed(numCells);
     int numDone = 0;
     voro::c_loop_all loop(con);
     if (loop.start()) do
@@ -491,7 +491,7 @@ void VoronoiMeshSnapshot::buildMesh()
 
         // log message if the minimum time has elapsed
         numDone++;
-        if (numDone%2000==0) log()->infoIfElapsed("Computed Voronoi cells: ", numDone, numCells);
+        if (numDone%2000==0) log()->infoIfElapsed("Computed Voronoi cells: ", 2000);
     }
     while (loop.inc());
 

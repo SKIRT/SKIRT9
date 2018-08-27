@@ -93,9 +93,9 @@ private:
     void initProgress(string segment, size_t numTotal);
 
     /** This function logs a progress message for the segment specified in the initprogress()
-        function if the previous message was issued at least 3 seconds ago. The function
-        must be called regularly while processing photon packets. The argument specifies the
-        number of photon packets processed so far. */
+        function if the previous message was issued at least some time interval ago. The function
+        must be called regularly while processing photon packets. The argument specifies the number
+        of photon packets processed. */
     void logProgress(size_t numDone);
 
     /** This function launches the specified chunk of photon packets from primary sources. It
@@ -297,7 +297,6 @@ private:
 
     // data members used by the XXXprogress() functions in this class
     string _segment;               // a string identifying the photon shooting segment for use in the log message
-    size_t _numTotal;              // the total number of photon packets to be processed for this segment
 };
 
 ////////////////////////////////////////////////////////////////////

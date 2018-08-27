@@ -120,19 +120,24 @@ void Log::info(string message)
 
 ////////////////////////////////////////////////////////////////////
 
-void Log::infoSetElapsed(int seconds)
+void Log::infoSetElapsed(size_t numTotal, int seconds)
 {
     using namespace std::chrono;
 
     _interval = static_cast<uint64_t>(seconds) * steady_clock::period::den / steady_clock::period::num;
     _started = steady_clock::now().time_since_epoch().count();
+    _numTotal = numTotal / ProcessManager::size();
+    _numDone = 0;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-void Log::infoIfElapsed(string message, size_t numDone, size_t numTotal)
+void Log::infoIfElapsed(string message, size_t numDone)
 {
     using namespace std::chrono;
+
+    // accumulate the number of completed tasks
+    _numDone += numDone;
 
     // get a local copy of the shared start time
     uint64_t localStarted = _started;
@@ -146,9 +151,11 @@ void Log::infoIfElapsed(string message, size_t numDone, size_t numTotal)
         if (_started.compare_exchange_weak(localStarted, now))
         {
             // if no other thread changed the start time, issue the message and return
-            if (numTotal)
+
+            // add a completion fraction if requested
+            if (_numTotal)
             {
-                double completed = 100. * numDone / numTotal;
+                double completed = 100. * _numDone / _numTotal;
                 message += StringUtils::toString(completed,'f',1) + "%";
             }
             info(message);

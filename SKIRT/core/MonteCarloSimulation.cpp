@@ -146,11 +146,10 @@ void MonteCarloSimulation::wait(std::string scope)
 void MonteCarloSimulation::initProgress(string segment, size_t numTotal)
 {
     _segment = segment;
-    _numTotal = numTotal;
 
-    log()->info("Launching " + StringUtils::toString(static_cast<double>(_numTotal))
+    log()->info("Launching " + StringUtils::toString(static_cast<double>(numTotal))
                 + " " + _segment + " photon packages");
-    log()->infoSetElapsed();
+    log()->infoSetElapsed(numTotal);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -158,15 +157,15 @@ void MonteCarloSimulation::initProgress(string segment, size_t numTotal)
 void MonteCarloSimulation::logProgress(size_t numDone)
 {
     // log message if the minimum time has elapsed
-    log()->infoIfElapsed("Launched " + _segment + " photon packages: ", numDone, _numTotal);
+    log()->infoIfElapsed("Launched " + _segment + " photon packages: ", numDone);
 }
 
 ////////////////////////////////////////////////////////////////////
 
 namespace
 {
-    // maximum number of photon packets processed between two invocations of logProgress()
-    const size_t logProgressChunkSize = 25000;
+    // maximum number of photon packets processed between two invocations of infoIfElapsed()
+    const size_t logProgressChunkSize = 10000;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -205,32 +204,39 @@ void MonteCarloSimulation::doPrimaryEmissionChunk(size_t firstIndex, size_t numI
     {
         PhotonPacket pp,ppp;
 
-        size_t endIndex = firstIndex + numIndices;
-        for (size_t historyIndex=firstIndex; historyIndex!=endIndex; ++historyIndex)
+        // loop over the history indices, with interruptions for progress logging
+        while (numIndices)
         {
-            if (historyIndex%logProgressChunkSize == 0) logProgress(historyIndex);
-
-            // launch a photon packet
-            sourceSystem()->launch(&pp, historyIndex);
-            if (pp.luminosity()>0)
+            size_t currentChunkSize = min(logProgressChunkSize, numIndices);
+            for (size_t historyIndex=firstIndex; historyIndex!=firstIndex+currentChunkSize; ++historyIndex)
             {
-                peelOffEmission(&pp, &ppp);
-
-                // trace the packet through the media
-                double Lthreshold = pp.luminosity() / _config->minWeightReduction();
-                int minScattEvents = _config->minScattEvents();
-                if (_config->hasMedium()) while (true)
+                // launch a photon packet
+                sourceSystem()->launch(&pp, historyIndex);
+                if (pp.luminosity()>0)
                 {
-                    mediumSystem()->fillOpticalDepth(&pp);
-                    simulateEscapeAndAbsorption(&pp, false);    // TO DO: support storing absorption
-                    if (pp.luminosity()<=0 || (pp.luminosity()<=Lthreshold && pp.numScatt()>=minScattEvents)) break;
-                    simulatePropagation(&pp);
-                    peelOffScattering(&pp,&ppp);
-                    simulateScattering(&pp);
+                    peelOffEmission(&pp, &ppp);
+
+                    // trace the packet through the media
+                    double Lthreshold = pp.luminosity() / _config->minWeightReduction();
+                    int minScattEvents = _config->minScattEvents();
+                    if (_config->hasMedium()) while (true)
+                    {
+                        mediumSystem()->fillOpticalDepth(&pp);
+                        simulateEscapeAndAbsorption(&pp, false);    // TO DO: support storing absorption
+                        if (pp.luminosity()<=0 || (pp.luminosity()<=Lthreshold && pp.numScatt()>=minScattEvents)) break;
+                        simulatePropagation(&pp);
+                        peelOffScattering(&pp,&ppp);
+                        simulateScattering(&pp);
+                    }
                 }
+
             }
+
+            // log progress
+            logProgress(currentChunkSize);
+            firstIndex += currentChunkSize;
+            numIndices -= currentChunkSize;
         }
-        logProgress(endIndex);
     }
 
 #ifdef LOG_CHUNKS

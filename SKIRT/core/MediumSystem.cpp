@@ -20,6 +20,14 @@
 
 ////////////////////////////////////////////////////////////////////
 
+namespace
+{
+    // maximum number of cell densities calculated between two invocations of infoIfElapsed()
+    const size_t logProgressChunkSize = 10000;
+}
+
+////////////////////////////////////////////////////////////////////
+
 void MediumSystem::setupSelfAfter()
 {
     SimulationItem::setupSelfAfter();
@@ -39,42 +47,47 @@ void MediumSystem::setupSelfAfter()
     allocatedBytes += _state2vv.size()*sizeof(State2);
     log->info(typeAndName() + " allocated " + StringUtils::toMemSizeString(allocatedBytes) + " of memory");
 
-
     // ----- calculate cell densities, bulk velocities, and volumes in parallel -----
 
     log->info("Calculating densities for " + std::to_string(_numCells) + " cells...");
-    log->infoSetElapsed();
     int numSamples = find<Configuration>()->numDensitySamples();
+    log->infoSetElapsed(_numCells);
     parfac->parallelDistributed()->call(_numCells,
                                         [this, log, numSamples](size_t firstIndex, size_t numIndices)
     {
         ShortArray<8> nsumv(_numMedia);
-        for (size_t m=firstIndex; m!=firstIndex+numIndices; ++m)
+
+        while (numIndices)
         {
-            if (m%10000==0) log->infoIfElapsed("Calculated cell densities: ", m, _numCells);
-
-            // density: sample 100 random positions within the cell
-            nsumv.clear();
-            for (int n=0; n<numSamples; n++)
+            size_t currentChunkSize = min(logProgressChunkSize, numIndices);
+            for (size_t m=firstIndex; m!=firstIndex+currentChunkSize; ++m)
             {
-                Position bfr = _grid->randomPositionInCell(m);
-                for (int h=0; h<_numMedia; h++) nsumv[h] += _media[h]->numberDensity(bfr);
-            }
-            for (int h=0; h<_numMedia; h++) state(m,h).n = nsumv[h]/numSamples;
+                // density: sample 100 random positions within the cell
+                nsumv.clear();
+                for (int n=0; n<numSamples; n++)
+                {
+                    Position bfr = _grid->randomPositionInCell(m);
+                    for (int h=0; h<_numMedia; h++) nsumv[h] += _media[h]->numberDensity(bfr);
+                }
+                for (int h=0; h<_numMedia; h++) state(m,h).n = nsumv[h]/numSamples;
 
-            // bulk velocity: weighted average; assumes densities have been calculated
-            Position bfr = _grid->centralPositionInCell(m);
-            double n = 0.;
-            Vec v;
-            for (int h=0; h!=_numMedia; ++h)
-            {
-                n += state(m,h).n;
-                v += state(m,h).n * _media[h]->bulkVelocity(bfr);
-            }
-            if (n > 0.) state(m).v = v / n;  // leave bulk velocity at zero if cell has no material
+                // bulk velocity: weighted average; assumes densities have been calculated
+                Position bfr = _grid->centralPositionInCell(m);
+                double n = 0.;
+                Vec v;
+                for (int h=0; h!=_numMedia; ++h)
+                {
+                    n += state(m,h).n;
+                    v += state(m,h).n * _media[h]->bulkVelocity(bfr);
+                }
+                if (n > 0.) state(m).v = v / n;  // leave bulk velocity at zero if cell has no material
 
-            // volume
-            state(m).V = _grid->volume(m);
+                // volume
+                state(m).V = _grid->volume(m);
+            }
+            log->infoIfElapsed("Calculated cell densities: ", currentChunkSize);
+            firstIndex += currentChunkSize;
+            numIndices -= currentChunkSize;
         }
     });
 
