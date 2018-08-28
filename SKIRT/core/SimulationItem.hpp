@@ -7,6 +7,7 @@
 #define SIMULATIONITEM_HPP
 
 #include "ItemInfo.hpp"
+#include <typeinfo>
 
 ////////////////////////////////////////////////////////////////////
 
@@ -72,7 +73,7 @@ public:
         (including the receiving item itself) and their immediate children. In other words, it
         recursively runs upwards along the ancestors and goes just one level down for each
         ancestor. The function returns the first appropriate item found; if multiple items of the
-        same type exist in the hierarchy, there is no telling which one of these will be returned.
+        same type exist in the hierarchy, it is undefined which one of these will be returned.
 
         If the \em setup flag is true (the default value), the function invokes the setup()
         function on the item before it is returned; if no appropriate item is found, a FatalError
@@ -85,27 +86,32 @@ public:
         return dynamic_cast<T*>(find(setup, [] (Item* item) ->SimulationItem* { return dynamic_cast<T*>(item); } ));
     }
 
-    /** This template function looks for an interface of a specific type offered by the receiving
-        simulation item, or by one of its self-designated delegates. The interface type is
-        specified as the template argument. By default the receiving simulation item and its
-        ancestors are considered as candidates for implementing the interface, but a simulation
-        item subclass can provide a different list of candidates to which the interface
-        implementation can be delegated by overriding the implementation of the
-        interfaceCandidates() function.
+    /** This template function looks for a simulation item that offers the interface specified as
+        template argument in the hierarchy containing the receiving object and, if found, returns a
+        pointer to that item (or rather, a pointer to the item after it has been dynamically cast
+        to the requested interface type). The function searches for an appropriate item among all
+        ancestors of the receiving item (including the receiving item itself) and their immediate
+        children. In other words, it recursively runs upwards along the ancestors and goes just one
+        level down for each ancestor. The function returns the first appropriate item found; if
+        multiple items of the same type exist in the hierarchy, it is undefined which one of these
+        will be returned.
 
-        If the \em setup flag is true (the default value), the function behaves as follows. If an
-        interface of the requested type is found, the function invokes the setup() function on the
-        simulation item that implements the interface and then it returns a pointer to the item, or
-        rather to the item after it has been dynamically cast to the requested interface type. If
-        no appropriate item is found, a FatalError is thrown.
+        For a simulation item to be considered as offering the requested interface, two conditions
+        must be fullfilled. First, obviously, the item's class must inherit from and implement the
+        interface. Second, the offersInterface() function, when invoked on the item under
+        consideration for the requested interface type, must return \em true. The default
+        implementation of the offersInterface() function provided in this base class always returns
+        true. Overriding it in a subclass allows the subclass to decide at run time whether the
+        conditions for offering a certain interface are fullfilled.
 
-        If the \em setup flag is false, the function does not perform setup on the returned
-        item/interface, and if no appropriate item is found, the function returns a null pointer.
-        */
+        If the \em setup flag is true (the default value), the function invokes the setup()
+        function on the item before it is returned; if no appropriate item is found, a FatalError
+        is thrown. If the \em setup flag is false, the function does not perform setup on the item,
+        and if no appropriate item is found, the function returns a null pointer. */
     template<class T> T* interface(bool setup = true) const
     {
-        return dynamic_cast<T*>(interface(setup,
-           [] (SimulationItem* item) { return dynamic_cast<T*>(item) != nullptr; } ));
+        return dynamic_cast<T*>(interface(setup, [] (SimulationItem* item)
+                { return dynamic_cast<T*>(item) != nullptr && item->offersInterface(typeid(T)); } ));
     }
 
 private:
@@ -120,17 +126,20 @@ private:
         argument has the same semantics as the \em setup argument of the template function. The
         second argument accepts a function that returns true if the given simulation item
         implements the requested interface, and false otherwise. */
-    SimulationItem* interface(bool setup, bool implementsRequestedInterface(SimulationItem*)) const;
+    SimulationItem* interface(bool setup, bool offersRequestedInterface(SimulationItem*)) const;
 
 protected:
-    /** This virtual function is for use only by the interface() template function. It returns a
-        list of simulation items that should be considered in the search for an item that
-        implements the requested interface. The first item in the list that actually implements the
-        interface will be returned by the interface() function. The implementation in this abstract
-        class returns a list containing the receiving item and its ancestors, in ascending order. A
-        simulation item subclass can override this function to provide a different list of
-        candidates. */
-    virtual vector<SimulationItem*> interfaceCandidates() const;
+    /** This function is for use only by the interface() function. After detecting that the
+        receiving item implements the specified interface (i.e. its type inherits the interface),
+        the interface() function invokes the offersInterface() function to ensure that the object
+        can actually offer the interface.
+
+        Thus, this function must return true if the receiving item actually offers (not just
+        implements) the specified interface in the current run-time environment, and false if not.
+        The default implementation of the function provided in this base class always returns true.
+        Overriding it in a subclass allows the subclass to decide at run time whether the
+        conditions for offering a certain interface are fullfilled. */
+    virtual bool offersInterface(const std::type_info& interfaceTypeInfo) const;
 
     //======================== Data Members ========================
 

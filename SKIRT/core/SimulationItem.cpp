@@ -88,29 +88,44 @@ Item* SimulationItem::find(bool setup, SimulationItem* castToRequestedType(Item*
 
 ////////////////////////////////////////////////////////////////////
 
-SimulationItem* SimulationItem::interface(bool setup, bool implementsRequestedInterface(SimulationItem*)) const
+SimulationItem* SimulationItem::interface(bool setup, bool offersRequestedInterface(SimulationItem*)) const
 {
-    for (SimulationItem* candidate : interfaceCandidates())
+    // loop over all ancestors
+    Item* ancestor = const_cast<SimulationItem*>(this);  // cast away const
+    while (ancestor)
     {
-        if (implementsRequestedInterface(candidate))
+        // test the ancestor
+        SimulationItem* candidate = dynamic_cast<SimulationItem*>(ancestor);
+        if (offersRequestedInterface(candidate))
         {
             if (setup) candidate->setup();
             return candidate;
         }
+
+        // test its children
+        for (Item* child : ancestor->children())
+        {
+            SimulationItem* candidate = dynamic_cast<SimulationItem*>(child);
+            if (offersRequestedInterface(candidate))
+            {
+                if (setup) candidate->setup();
+                return candidate;
+            }
+        }
+
+        // next ancestor
+        ancestor = ancestor->parent();
     }
+
     if (setup) throw FATALERROR("No simulation item implementing requested interface found in hierarchy");
     return nullptr;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-vector<SimulationItem*> SimulationItem::interfaceCandidates() const
+bool SimulationItem::offersInterface(const std::type_info& /*interfaceTypeInfo*/) const
 {
-    vector<SimulationItem*> result({const_cast<SimulationItem*>(this)});  // cast away const
-    if (parent())
-        for (auto item : static_cast<SimulationItem*>(parent())->interfaceCandidates())
-            result.push_back(item);
-    return result;
+    return true;
 }
 
 ////////////////////////////////////////////////////////////////////
