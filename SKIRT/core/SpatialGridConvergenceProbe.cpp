@@ -21,10 +21,12 @@ namespace
     // along the coordinate axis with the given direction
     double griddedOpticalDepth(MediumSystem* ms, double lambda, MaterialMix::MaterialType type, Direction axis)
     {
-        double tau = 0;
-        SpatialGridPath path(Position(0.,0.,0.), axis);
+        // determine a small value relative to the domain extent;
+        // we integrate along a small offset from the axes to avoid cell borders
+        double eps = 1e-12 * ms->grid()->boundingBox().widths().norm();
+        SpatialGridPath path(Position(eps,eps,eps), axis);
         ms->grid()->path(&path);
-        tau += path.opticalDepth([ms,lambda,type](int m){ return ms->opacityExt(lambda, m, type); });
+        double tau = path.opticalDepth([ms,lambda,type](int m){ return ms->opacityExt(lambda, m, type); });
         path.setDirection(Direction(-axis.x(),-axis.y(),-axis.z()));
         ms->grid()->path(&path);
         tau += path.opticalDepth([ms,lambda,type](int m){ return ms->opacityExt(lambda, m, type); });
