@@ -11,21 +11,28 @@
 Snapshot* AdaptiveMeshMedium::createAndOpenSnapshot()
 {
     // create and open the snapshot
-    auto snapshot = new AdaptiveMeshSnapshot;
-    snapshot->open(this, filename(), "adaptive mesh cells");
+    _adaptiveMeshSnapshot = new AdaptiveMeshSnapshot;
+    _adaptiveMeshSnapshot->open(this, filename(), "adaptive mesh cells");
 
     // configure the mass or density column
     switch (massType())
     {
-    case MassType::MassDensity: snapshot->importMassDensity(); break;
-    case MassType::Mass: snapshot->importMass(); break;
-    case MassType::NumberDensity: snapshot->importNumberDensity(); break;
-    case MassType::Number: snapshot->importNumber(); break;
+    case MassType::MassDensity: _adaptiveMeshSnapshot->importMassDensity(); break;
+    case MassType::Mass: _adaptiveMeshSnapshot->importMass(); break;
+    case MassType::NumberDensity: _adaptiveMeshSnapshot->importNumberDensity(); break;
+    case MassType::Number: _adaptiveMeshSnapshot->importNumber(); break;
     }
 
     // set the domain extent
-    snapshot->setExtent(domain());
-    return snapshot;
+    _adaptiveMeshSnapshot->setExtent(domain());
+    return _adaptiveMeshSnapshot;
+}
+
+////////////////////////////////////////////////////////////////////
+
+AdaptiveMeshSnapshot* AdaptiveMeshMedium::adaptiveMesh() const
+{
+    return _adaptiveMeshSnapshot;
 }
 
 ////////////////////////////////////////////////////////////////////

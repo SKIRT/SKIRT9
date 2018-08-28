@@ -24,7 +24,7 @@ public:
 
     /** This function must be implemented in a derived class. It returns a pointer to the adaptive
         mesh snapshot maintained by the object that implements the interface. */
-    virtual AdaptiveMeshSnapshot* mesh() const = 0;
+    virtual AdaptiveMeshSnapshot* adaptiveMesh() const = 0;
 };
 
 /////////////////////////////////////////////////////////////////////////////

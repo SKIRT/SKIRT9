@@ -89,12 +89,19 @@ public:
     /** This template function looks for a simulation item that offers the interface specified as
         template argument in the hierarchy containing the receiving object and, if found, returns a
         pointer to that item (or rather, a pointer to the item after it has been dynamically cast
-        to the requested interface type). The function searches for an appropriate item among all
-        ancestors of the receiving item (including the receiving item itself) and their immediate
-        children. In other words, it recursively runs upwards along the ancestors and goes just one
-        level down for each ancestor. The function returns the first appropriate item found; if
-        multiple items of the same type exist in the hierarchy, it is undefined which one of these
-        will be returned.
+        to the requested interface type). The function returns the first appropriate item found.
+        The portion of the hierarchy searched by the function for an appropriate item is defined by
+        the value of the \em levels argument as follows.
+
+        For levels=0, only the receiving object is considered. For levels=-N (with N a positive
+        integer), the receiving object plus N of its ancestors are considered in the order from
+        nearest to more distant ancestor. For levels=N (with N a positive integer), the receiving
+        object plus N levels of children are considered. Children at the same level are searched in
+        an undefined order, except that children part of the same item list property are guaranteed
+        to be searched in configuration order. Multiple levels are searched depth-first, i.e. the
+        children of an item are searched before the next item on the same level is considered. The
+        default value of levels is -999999, which has the effect of searching the the receiving
+        object plus all of its ancestors.
 
         For a simulation item to be considered as offering the requested interface, two conditions
         must be fullfilled. First, obviously, the item's class must inherit from and implement the
@@ -108,9 +115,9 @@ public:
         function on the item before it is returned; if no appropriate item is found, a FatalError
         is thrown. If the \em setup flag is false, the function does not perform setup on the item,
         and if no appropriate item is found, the function returns a null pointer. */
-    template<class T> T* interface(bool setup = true) const
+    template<class T> T* interface(int levels=-999999, bool setup = true) const
     {
-        return dynamic_cast<T*>(interface(setup, [] (SimulationItem* item)
+        return dynamic_cast<T*>(interface(levels, setup, [] (SimulationItem* item)
                 { return dynamic_cast<T*>(item) != nullptr && item->offersInterface(typeid(T)); } ));
     }
 
@@ -122,11 +129,11 @@ private:
         */
     Item* find(bool setup, SimulationItem* castToRequestedType(Item*)) const;
 
-    /** This is the private implementation used by the interface() template function. The first
-        argument has the same semantics as the \em setup argument of the template function. The
-        second argument accepts a function that returns true if the given simulation item
+    /** This is the private implementation used by the interface() template function. The first two
+        arguments have the same semantics as the corresponding arguments of the template function.
+        The last argument accepts a function that returns true if the given simulation item
         implements the requested interface, and false otherwise. */
-    SimulationItem* interface(bool setup, bool offersRequestedInterface(SimulationItem*)) const;
+    SimulationItem* interface(int levels, bool setup, bool offersRequestedInterface(SimulationItem*)) const;
 
 protected:
     /** This function is for use only by the interface() function. After detecting that the

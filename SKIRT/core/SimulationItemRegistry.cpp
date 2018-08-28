@@ -12,6 +12,7 @@
 #include "AdaptiveMeshGeometry.hpp"
 #include "AdaptiveMeshMedium.hpp"
 #include "AdaptiveMeshSource.hpp"
+#include "AdaptiveMeshSpatialGrid.hpp"
 #include "AllSkyInstrument.hpp"
 #include "BandLuminosityNormalization.hpp"
 #include "BandWavelengthGrid.hpp"
@@ -311,6 +312,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<Cylinder2DSpatialGrid>();
     ItemRegistry::add<BoxSpatialGrid>();
     ItemRegistry::add<CartesianSpatialGrid>();
+    ItemRegistry::add<AdaptiveMeshSpatialGrid>();
 
     // one-dimensional meshes for spatial grids
     ItemRegistry::add<Mesh>();

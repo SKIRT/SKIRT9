@@ -88,33 +88,43 @@ Item* SimulationItem::find(bool setup, SimulationItem* castToRequestedType(Item*
 
 ////////////////////////////////////////////////////////////////////
 
-SimulationItem* SimulationItem::interface(bool setup, bool offersRequestedInterface(SimulationItem*)) const
+SimulationItem* SimulationItem::interface(int levels, bool setup, bool offersRequestedInterface(SimulationItem*)) const
 {
-    // loop over all ancestors
-    Item* ancestor = const_cast<SimulationItem*>(this);  // cast away const
-    while (ancestor)
+    // always test the receiving object
+    SimulationItem* candidate = const_cast<SimulationItem*>(this);  // cast away const
+    if (offersRequestedInterface(candidate))
     {
-        // test the ancestor
-        SimulationItem* candidate = dynamic_cast<SimulationItem*>(ancestor);
-        if (offersRequestedInterface(candidate))
-        {
-            if (setup) candidate->setup();
-            return candidate;
-        }
+        if (setup) candidate->setup();
+        return candidate;
+    }
 
-        // test its children
-        for (Item* child : ancestor->children())
+    // test the requested number of ancestors
+    if (levels < 0)
+    {
+        while (levels++)
         {
-            SimulationItem* candidate = dynamic_cast<SimulationItem*>(child);
+            candidate = dynamic_cast<SimulationItem*>(candidate->parent());
+            if (!candidate) break;
             if (offersRequestedInterface(candidate))
             {
                 if (setup) candidate->setup();
                 return candidate;
             }
         }
+    }
 
-        // next ancestor
-        ancestor = ancestor->parent();
+    // test the requested number of child levels, recursively
+    else if (levels > 0)
+    {
+        for (Item* child : candidate->children())
+        {
+            auto result = dynamic_cast<SimulationItem*>(child)->interface(levels-1, false, offersRequestedInterface);
+            if (result)
+            {
+                if (setup) result->setup();
+                return result;
+            }
+        }
     }
 
     if (setup) throw FATALERROR("No simulation item implementing requested interface found in hierarchy");

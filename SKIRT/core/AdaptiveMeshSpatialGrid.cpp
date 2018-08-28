@@ -17,19 +17,18 @@ void AdaptiveMeshSpatialGrid::setupSelfBefore()
 {
     SpatialGrid::setupSelfBefore();
 
-    // locate the adaptive mesh
+    // locate the adaptive mesh, scanning medium components in configuration order
     auto ms = find<MediumSystem>(false);
-    auto interface = ms ? ms->interface<AdaptiveMeshInterface>() : nullptr;
-    if (!interface) throw FATALERROR("Can't find an adaptive mesh in the medium system");
-    _snapshot = interface->mesh();
+    if (!ms) throw FATALERROR("There is no medium system in which to locate an adaptive mesh");
+    _mesh = ms->interface<AdaptiveMeshInterface>(2)->adaptiveMesh();
 
     // tell it to construct neighbor information for its cells
     find<Log>()->info("Adding neighbor information to adaptive mesh...");
-    _snapshot->addNeighbors();
+    _mesh->addNeighbors();
 
     // if there is a single medium component, calculate the normalization factor imposed by it;
     // we need this to directly compute cell densities for the DensityInCellInterface
-    if (ms->media().size() == 1)  _norm = ms->media()[0]->mass() / _snapshot->mass();
+    if (ms->media().size() == 1)  _norm = ms->media()[0]->number() / _mesh->mass();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -43,56 +42,49 @@ int AdaptiveMeshSpatialGrid::dimension() const
 
 int AdaptiveMeshSpatialGrid::numCells() const
 {
-    return _snapshot->numEntities();
+    return _mesh->numEntities();
 }
 
 //////////////////////////////////////////////////////////////////////
 
 Box AdaptiveMeshSpatialGrid::boundingBox() const
 {
-    return _snapshot->extent();
+    return _mesh->extent();
 }
 
 //////////////////////////////////////////////////////////////////////
 
 double AdaptiveMeshSpatialGrid::volume(int m) const
 {
-    return _snapshot->volume(m);
+    return _mesh->volume(m);
 }
 
 //////////////////////////////////////////////////////////////////////
 
 int AdaptiveMeshSpatialGrid::cellIndex(Position bfr) const
 {
-    return _snapshot->cellIndex(bfr);
+    return _mesh->cellIndex(bfr);
 }
 
 //////////////////////////////////////////////////////////////////////
 
 Position AdaptiveMeshSpatialGrid::centralPositionInCell(int m) const
 {
-    return _snapshot->position(m);
+    return _mesh->position(m);
 }
 
 //////////////////////////////////////////////////////////////////////
 
 Position AdaptiveMeshSpatialGrid::randomPositionInCell(int m) const
 {
-    return _snapshot->generatePosition(m);
-}
-
-//////////////////////////////////////////////////////////////////////
-
-double AdaptiveMeshSpatialGrid::density(int /*h*/, int m) const
-{
-    return _norm * _snapshot->density(m);
+    return _mesh->generatePosition(m);
 }
 
 //////////////////////////////////////////////////////////////////////
 
 void AdaptiveMeshSpatialGrid::path(SpatialGridPath* path) const
 {
-    _snapshot->path(path);
+    _mesh->path(path);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -108,7 +100,7 @@ void AdaptiveMeshSpatialGrid::write_xy(SpatialGridPlotFile* outfile) const
     double eps = 1e-8*(zmax-zmin);
     for (int m=0; m<numCells(); m++)
     {
-        _snapshot->extent(m).extent(xmin, ymin, zmin, xmax, ymax, zmax);
+        _mesh->extent(m).extent(xmin, ymin, zmin, xmax, ymax, zmax);
         if (zmin < eps && zmax > -eps)
         {
             outfile->writeRectangle(xmin, ymin, xmax, ymax);
@@ -129,7 +121,7 @@ void AdaptiveMeshSpatialGrid::write_xz(SpatialGridPlotFile* outfile) const
     double eps = 1e-8*(ymax-ymin);
     for (int m=0; m<numCells(); m++)
     {
-        _snapshot->extent(m).extent(xmin, ymin, zmin, xmax, ymax, zmax);
+        _mesh->extent(m).extent(xmin, ymin, zmin, xmax, ymax, zmax);
         if (ymin < eps && ymax > -eps)
         {
             outfile->writeRectangle(xmin, zmin, xmax, zmax);
@@ -150,7 +142,7 @@ void AdaptiveMeshSpatialGrid::write_yz(SpatialGridPlotFile* outfile) const
     double eps = 1e-8*(xmax-xmin);
     for (int m=0; m<numCells(); m++)
     {
-        _snapshot->extent(m).extent(xmin, ymin, zmin, xmax, ymax, zmax);
+        _mesh->extent(m).extent(xmin, ymin, zmin, xmax, ymax, zmax);
         if (xmin < eps && xmax > -eps)
         {
             outfile->writeRectangle(ymin, zmin, ymax, zmax);
@@ -166,9 +158,28 @@ void AdaptiveMeshSpatialGrid::write_xyz(SpatialGridPlotFile* outfile) const
     for (int m=0; m<numCells(); m++)
     {
         double xmin, ymin, zmin, xmax, ymax, zmax;
-        _snapshot->extent(m).extent(xmin, ymin, zmin, xmax, ymax, zmax);
+        _mesh->extent(m).extent(xmin, ymin, zmin, xmax, ymax, zmax);
         outfile->writeCube(xmin, ymin, zmin, xmax, ymax, zmax);
     }
+}
+
+//////////////////////////////////////////////////////////////////////
+
+double AdaptiveMeshSpatialGrid::numberDensity(int /*h*/, int m) const
+{
+    return _norm * _mesh->density(m);
+}
+
+//////////////////////////////////////////////////////////////////////
+
+bool AdaptiveMeshSpatialGrid::offersInterface(const std::type_info& interfaceTypeInfo) const
+{
+    if (interfaceTypeInfo == typeid(DensityInCellInterface))
+    {
+        auto ms = find<MediumSystem>(false);
+        return ms && ms->media().size() == 1;
+    }
+    return SpatialGrid::offersInterface(interfaceTypeInfo);
 }
 
 //////////////////////////////////////////////////////////////////////

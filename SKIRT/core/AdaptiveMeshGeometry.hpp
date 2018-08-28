@@ -7,6 +7,7 @@
 #define ADAPTIVEMESHGEOMETRY_HPP
 
 #include "MeshGeometry.hpp"
+#include "AdaptiveMeshInterface.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -40,7 +41,7 @@
     temperature, the mass and density for the site are set to zero, regardless of the mass or
     density specified in the fourth column. If the \em importTemperature option is disabled, or the
     maximum temperature value is set to zero, such a cutoff is not applied. */
-class AdaptiveMeshGeometry : public MeshGeometry
+class AdaptiveMeshGeometry : public MeshGeometry, public AdaptiveMeshInterface
 {
     ITEM_CONCRETE(AdaptiveMeshGeometry, MeshGeometry,
                   "a geometry imported from data represented on an adaptive mesh (AMR grid)")
@@ -54,6 +55,19 @@ protected:
         density column, and finally returns a pointer to the object. Ownership of the Snapshot
         object is transferred to the caller. */
     Snapshot* createAndOpenSnapshot() override;
+
+    //=================== Other functions ==================
+
+protected:
+    /** This function implements the AdaptiveMeshInterface interface. It returns a pointer to the
+        adaptive mesh snapshot maintained by this geometry. */
+    AdaptiveMeshSnapshot* adaptiveMesh() const override;
+
+    //===================== Data members ====================
+
+private:
+    // an extra pointer to our snapshot used to implement AdaptiveMeshInterface (ownership is passed to base class)
+    AdaptiveMeshSnapshot* _adaptiveMeshSnapshot{nullptr};
 };
 
 ////////////////////////////////////////////////////////////////////

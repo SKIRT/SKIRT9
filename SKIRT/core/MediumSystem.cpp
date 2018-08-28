@@ -5,6 +5,7 @@
 
 #include "MediumSystem.hpp"
 #include "Configuration.hpp"
+#include "DensityInCellInterface.hpp"
 #include "FatalError.hpp"
 #include "Log.hpp"
 #include "MaterialMix.hpp"
@@ -50,10 +51,11 @@ void MediumSystem::setupSelfAfter()
     // ----- calculate cell densities, bulk velocities, and volumes in parallel -----
 
     log->info("Calculating densities for " + std::to_string(_numCells) + " cells...");
+    auto dic = _grid->interface<DensityInCellInterface>(0, false);  // optional fast-track interface for densities
     int numSamples = find<Configuration>()->numDensitySamples();
     log->infoSetElapsed(_numCells);
     parfac->parallelDistributed()->call(_numCells,
-                                        [this, log, numSamples](size_t firstIndex, size_t numIndices)
+                                        [this, log, dic, numSamples](size_t firstIndex, size_t numIndices)
     {
         ShortArray<8> nsumv(_numMedia);
 
@@ -62,14 +64,22 @@ void MediumSystem::setupSelfAfter()
             size_t currentChunkSize = min(logProgressChunkSize, numIndices);
             for (size_t m=firstIndex; m!=firstIndex+currentChunkSize; ++m)
             {
-                // density: sample 100 random positions within the cell
-                nsumv.clear();
-                for (int n=0; n<numSamples; n++)
+
+                // density: use optional fast-track interface or sample 100 random positions within the cell
+                if (dic)
                 {
-                    Position bfr = _grid->randomPositionInCell(m);
-                    for (int h=0; h<_numMedia; h++) nsumv[h] += _media[h]->numberDensity(bfr);
+                    for (int h=0; h!=_numMedia; ++h) state(m,h).n = dic->numberDensity(h,m);
                 }
-                for (int h=0; h<_numMedia; h++) state(m,h).n = nsumv[h]/numSamples;
+                else
+                {
+                    nsumv.clear();
+                    for (int n=0; n<numSamples; n++)
+                    {
+                        Position bfr = _grid->randomPositionInCell(m);
+                        for (int h=0; h!=_numMedia; ++h) nsumv[h] += _media[h]->numberDensity(bfr);
+                    }
+                    for (int h=0; h!=_numMedia; ++h) state(m,h).n = nsumv[h]/numSamples;
+                }
 
                 // bulk velocity: weighted average; assumes densities have been calculated
                 Position bfr = _grid->centralPositionInCell(m);

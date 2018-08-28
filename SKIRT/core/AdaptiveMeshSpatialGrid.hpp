@@ -16,7 +16,9 @@ class AdaptiveMeshSnapshot;
     the structure of which is described by an imported adaptive mesh. In fact, this class directly
     uses the adaptive mesh created by an AdaptiveMeshGeometry or AdaptiveMeshMedium object. For
     this to work, the medium system must include at least one component that uses an imported
-    AdaptiveMeshSnapshot to represent its spatial distribution. */
+    AdaptiveMeshSnapshot to represent its spatial distribution. If multiple media components are
+    based on an imported AdaptiveMeshSnapshot, the first component (in configuration order) is used
+    for the spatial grid. */
 class AdaptiveMeshSpatialGrid : public SpatialGrid, public DensityInCellInterface
 {
     ITEM_CONCRETE(AdaptiveMeshSpatialGrid, SpatialGrid, "a spatial grid based on an imported adaptive mesh snapshot")
@@ -25,8 +27,8 @@ class AdaptiveMeshSpatialGrid : public SpatialGrid, public DensityInCellInterfac
     //============= Construction - Setup - Destruction =============
 
 public:
-    /** This function locates the adaptive mesh in the simulation hierarchy, and remembers a
-        pointer to it. */
+    /** This function locates the adaptive mesh snapshot in the simulation hierarchy, and remembers
+        a pointer to it. */
     void setupSelfBefore() override;
 
     //======================== Other Functions =======================
@@ -54,15 +56,6 @@ public:
     /** This function returns a random location from the cell with index \f$m\f$. */
     Position randomPositionInCell(int m) const override;
 
-    /** This function implements the DensityInCellInterface interface. It returns the density for
-        medium component \f$h\f$ in the grid cell with index \f$m\f$. For an adaptive mesh grid,
-        this interface can be offered only when the medium system consists of a single component,
-        which then, by definition, supplies the adaptive mesh. Thus, the component index \f$h\f$
-        passed to this function should always be zero; in fact, its value is actually ignored. */
-    double density(int h, int m) const override;
-
-    // TO DO: allow DensityInCellInterface only when there is just a single medium component
-
     /** This function calculates a path through the grid. The SpatialGridPath object passed as an
         argument specifies the starting position \f${\bf{r}}\f$ and the direction \f${\bf{k}}\f$
         for the path. The data on the calculated path are added back into the same object. */
@@ -84,11 +77,27 @@ public:
         SpatialGridPlotFile object. */
     void write_xyz(SpatialGridPlotFile* outfile) const override;
 
+    /** This function implements the DensityInCellInterface interface. It returns the number
+        density for medium component \f$h\f$ in the grid cell with index \f$m\f$. For an adaptive
+        mesh grid, this interface can be offered only when the medium system consists of a single
+        component, which then, by definition, supplies the adaptive mesh. Thus, the component index
+        \f$h\f$ passed to this function should always be zero; in fact, its value is actually
+        ignored. */
+    double numberDensity(int h, int m) const override;
+
+protected:
+    /** This function is used by the interface() function to ensure that the receiving item can
+        actually offer the specified interface. If the requested interface is the
+        DensityInCellInterface, the implementation in this class returns true if the medium system
+        consists of a single component, and false otherwise. For other requested interfaces, the
+        function invokes its counterpart in the base class. */
+    bool offersInterface(const std::type_info& interfaceTypeInfo) const override;
+
     //======================== Data Members ========================
 
 private:
-    AdaptiveMeshSnapshot* _snapshot{nullptr};  // adaptive grid obtained from medium component
-    double _norm{0.};                          // normalization factor obtained from medium component
+    AdaptiveMeshSnapshot* _mesh{nullptr};   // adaptive mesh snapshot obtained from medium component
+    double _norm{0.};                       // normalization factor obtained from medium component
 };
 
 ////////////////////////////////////////////////////////////////////
