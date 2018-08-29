@@ -19,14 +19,19 @@ class VoronoiMeshSnapshot;
     The class offers several options for determining the positions of the sites generating the
     Voronoi tesselation. A specified number of sites can be distributed randomly over the domain,
     either uniformly or with the same overall density distribution as the medium. Alternatively,
-    the positions can be copied from the sites in the imported distribution(s). */
+    the positions can be copied from the sites in the imported distribution(s).
+
+    Furthermore, the user can opt to perform a relaxation step on the site positions to avoid
+    overly elongated cells. */
 class VoronoiMeshSpatialGrid : public BoxSpatialGrid, public DensityInCellInterface
 {
     /** The enumeration type indicating the policy for determining the positions of the sites. */
-    ENUM_DEF(Policy, Uniform, CentralPeak, MediumDensity, File, ImportedSites, ImportedMesh)
+    ENUM_DEF(Policy, Uniform, CentralPeak, DustDensity, ElectronDensity, GasDensity, File, ImportedSites, ImportedMesh)
     ENUM_VAL(Policy, Uniform, "random from uniform distribution")
     ENUM_VAL(Policy, CentralPeak, "random from distribution with a steep central peak")
-    ENUM_VAL(Policy, MediumDensity, "random from total medium density distribution")
+    ENUM_VAL(Policy, DustDensity, "random from dust density distribution")
+    ENUM_VAL(Policy, ElectronDensity, "random from electron density distribution")
+    ENUM_VAL(Policy, GasDensity, "random from gas density distribution")
     ENUM_VAL(Policy, File, "loaded from text column data file")
     ENUM_VAL(Policy, ImportedSites, "positions of particles, sites or cells in imported distribution")
     ENUM_VAL(Policy, ImportedMesh, "employ imported Voronoi mesh in medium system")
@@ -35,10 +40,10 @@ class VoronoiMeshSpatialGrid : public BoxSpatialGrid, public DensityInCellInterf
     ITEM_CONCRETE(VoronoiMeshSpatialGrid, BoxSpatialGrid, "a spatial grid based on a Voronoi tessellation")
 
     PROPERTY_ENUM(policy, Policy, "the policy for determining the positions of the sites")
-        ATTRIBUTE_DEFAULT_VALUE(policy, "MediumDensity")
+        ATTRIBUTE_DEFAULT_VALUE(policy, "DustDensity")
 
     PROPERTY_INT(numSites, "the number of random sites (or cells in the grid)")
-        // ATTRIBUTE_RELEVANT_IF(numSites, "policy==Uniform,CentralPeak,MediumDensity")
+        // ATTRIBUTE_RELEVANT_IF(numSites, "policy==Uniform|CentralPeak|DustDensity|ElectronDensity|GasDensity,")
         ATTRIBUTE_MIN_VALUE(numSites, "5")
         ATTRIBUTE_DEFAULT_VALUE(numSites, "500")
 
@@ -46,7 +51,7 @@ class VoronoiMeshSpatialGrid : public BoxSpatialGrid, public DensityInCellInterf
         // ATTRIBUTE_RELEVANT_IF(filename, "policy==File")
 
     PROPERTY_BOOL(relaxSites, "perform site relaxation to avoid overly elongated cells")
-        // ATTRIBUTE_RELEVANT_IF(filename, "policy!=ImportedMesh")
+        // ATTRIBUTE_RELEVANT_IF(relaxSites, "policy==!ImportedMesh")
         ATTRIBUTE_DEFAULT_VALUE(relaxSites, "false")
 
     ITEM_END()
