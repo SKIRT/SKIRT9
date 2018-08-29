@@ -10,6 +10,7 @@
 #include "Random.hpp"
 #include "SiteListInterface.hpp"
 #include "SpatialGridPath.hpp"
+#include "SpatialGridPlotFile.hpp"
 #include "StringUtils.hpp"
 #include "TextInFile.hpp"
 #include "Units.hpp"
@@ -36,6 +37,14 @@ namespace VoronoiMesh_Private
         // constructor derives the site position from the first three property values and stores the user properties;
         // the other data members are set to zero or empty
         VoronoiCell(const Array& prop) : _r(prop[0],prop[1],prop[2]), _properties{prop} { }
+
+        // adjusts the site position to the centroid position of the specified fully computed Voronoi cell
+        void relax(voro::voronoicell& cell)
+        {
+            double cx, cy, cz;
+            cell.centroid(cx,cy,cz);
+            _r += Vec(cx,cy,cz);
+        }
 
         // initializes the receiver with information taken from the specified fully computed Voronoi cell
         void init(voro::voronoicell_neighbor& cell)
@@ -288,7 +297,7 @@ void VoronoiMeshSnapshot::readAndClose()
     Snapshot::readAndClose();
 
     // calculate the Voronoi cells
-    buildMesh();
+    buildMesh(false);
 
     // if a mass density policy has been set, calculate masses and densities for all cells
     if (hasMassDensityPolicy())
@@ -359,7 +368,8 @@ void VoronoiMeshSnapshot::setExtent(const Box& extent)
 
 ////////////////////////////////////////////////////////////////////
 
-VoronoiMeshSnapshot::VoronoiMeshSnapshot(const SimulationItem* item, const Box& extent, std::string filename)
+VoronoiMeshSnapshot::VoronoiMeshSnapshot(const SimulationItem* item, const Box& extent,
+                                         string filename, bool relax)
 {
     // read the input file
     TextInFile in(item, filename, "Voronoi sites");
@@ -373,13 +383,14 @@ VoronoiMeshSnapshot::VoronoiMeshSnapshot(const SimulationItem* item, const Box& 
     // calculate the Voronoi cells
     setContext(item);
     setExtent(extent);
-    buildMesh();
+    buildMesh(relax);
     buildSearch();
 }
 
 ////////////////////////////////////////////////////////////////////
 
-VoronoiMeshSnapshot::VoronoiMeshSnapshot(const SimulationItem* item, const Box& extent, SiteListInterface* sli)
+VoronoiMeshSnapshot::VoronoiMeshSnapshot(const SimulationItem* item, const Box& extent,
+                                         SiteListInterface* sli, bool relax)
 {
     // prepare the data
     int n = sli->numSites();
@@ -389,13 +400,14 @@ VoronoiMeshSnapshot::VoronoiMeshSnapshot(const SimulationItem* item, const Box& 
     // calculate the Voronoi cells
     setContext(item);
     setExtent(extent);
-    buildMesh();
+    buildMesh(relax);
     buildSearch();
 }
 
 ////////////////////////////////////////////////////////////////////
 
-VoronoiMeshSnapshot::VoronoiMeshSnapshot(const SimulationItem* item, const Box& extent, const vector<Vec>& sites)
+VoronoiMeshSnapshot::VoronoiMeshSnapshot(const SimulationItem* item, const Box& extent,
+                                         const vector<Vec>& sites, bool relax)
 {
     // prepare the data
     int n = sites.size();
@@ -405,13 +417,13 @@ VoronoiMeshSnapshot::VoronoiMeshSnapshot(const SimulationItem* item, const Box& 
     // calculate the Voronoi cells
     setContext(item);
     setExtent(extent);
-    buildMesh();
+    buildMesh(relax);
     buildSearch();
 }
 
 ////////////////////////////////////////////////////////////////////
 
-void VoronoiMeshSnapshot::buildMesh()
+void VoronoiMeshSnapshot::buildMesh(bool relax)
 {
     // remove sites that lie outside of the domain
     int numOutside = 0;
@@ -460,10 +472,50 @@ void VoronoiMeshSnapshot::buildMesh()
     // abort if there are no cells to calculate
     if (numCells <= 0) return;
 
-    // add the retained sites to a temporary Voronoi container, using the cell index m as ID
-    int nb = max(3, min(250, static_cast<int>(cbrt(numCells))));
+    // calculate number of blocks in each direction based on number of cells
+    _nb = max(3, min(250, static_cast<int>(cbrt(numCells))));
+    _nb2 = _nb*_nb;
+    _nb3 = _nb*_nb*_nb;
+
+    // if requested, perform a single relaxation step
+    if (relax)
+    {
+        // add the retained original sites to a temporary Voronoi container, using the cell index m as ID
+        voro::container con(_extent.xmin(), _extent.xmax(), _extent.ymin(), _extent.ymax(), _extent.zmin(), _extent.zmax(),
+                            _nb, _nb, _nb, false,false,false, 8);
+        for (int m=0; m!=numCells; ++m)
+        {
+            Vec r = _cells[m]->position();
+            con.put(m, r.x(),r.y(),r.z());
+        }
+
+        // for each site:
+        //   - compute the corresponding cell in the Voronoi tesselation
+        //   - replace the site position by the cell centroid position
+        log()->info("Relaxing Voronoi tessellation with " + std::to_string(numCells) + " cells");
+        log()->infoSetElapsed(numCells);
+        int numDone = 0;
+        voro::c_loop_all loop(con);
+        if (loop.start()) do
+        {
+            // compute the cell
+            voro::voronoicell fullcell;
+            bool ok = con.compute_cell(fullcell, loop);
+            if (!ok) throw FATALERROR("Can't compute Voronoi cell");
+
+            // replace the site position
+            _cells[loop.pid()]->relax(fullcell);
+
+            // log message if the minimum time has elapsed
+            numDone++;
+            if (numDone%2000==0) log()->infoIfElapsed("Computed Voronoi cells: ", 2000);
+        }
+        while (loop.inc());
+    }
+
+    // add the final sites to a temporary Voronoi container, using the cell index m as ID
     voro::container con(_extent.xmin(), _extent.xmax(), _extent.ymin(), _extent.ymax(), _extent.zmin(), _extent.zmax(),
-                        nb, nb, nb, false,false,false, 8);
+                        _nb, _nb, _nb, false,false,false, 8);
     for (int m=0; m!=numCells; ++m)
     {
         Vec r = _cells[m]->position();
@@ -474,7 +526,7 @@ void VoronoiMeshSnapshot::buildMesh()
     //   - compute the corresponding cell in the Voronoi tesselation
     //   - extract and copy the relevant information to one of our own cell objects
     //   - store the cell object in the vector indexed on cell number
-    log()->info("Computing Voronoi tessellation with " + std::to_string(numCells) + " cells");
+    log()->info("Constructing Voronoi tessellation with " + std::to_string(numCells) + " cells");
     log()->infoSetElapsed(numCells);
     int numDone = 0;
     voro::c_loop_all loop(con);
@@ -486,8 +538,7 @@ void VoronoiMeshSnapshot::buildMesh()
         if (!ok) throw FATALERROR("Can't compute Voronoi cell");
 
         // copy all relevant information to the cell object that will stay around
-        VoronoiCell* cell = _cells[loop.pid()];
-        cell->init(fullcell);
+        _cells[loop.pid()]->init(fullcell);
 
         // log message if the minimum time has elapsed
         numDone++;
@@ -528,9 +579,6 @@ void VoronoiMeshSnapshot::buildSearch()
     // -------------  block lists  -------------
 
     // initialize a vector of nb x nb x nb lists, each containing the cells overlapping a certain block in the domain
-    _nb = max(3, min(250, static_cast<int>(cbrt(numCells))));
-    _nb2 = _nb*_nb;
-    _nb3 = _nb*_nb*_nb;
     _blocklists.resize(_nb3);
 
     // add the cell object to the lists for all blocks it may overlap
@@ -580,6 +628,59 @@ void VoronoiMeshSnapshot::buildSearch()
     for (int b = 0; b<_nb3; b++) if (_blocktrees[b]) numTrees++;
     log()->info("  Number of search trees: " + std::to_string(numTrees) +
               " (" + StringUtils::toString(100.*numTrees/_nb3,'f',1) + "% of blocks)");
+}
+
+////////////////////////////////////////////////////////////////////
+
+void VoronoiMeshSnapshot::writeGridPlotFiles(const SimulationItem* probe) const
+{
+    // create the plot files
+    SpatialGridPlotFile plotxy(probe, probe->itemName() + "_grid_xy");
+    SpatialGridPlotFile plotxz(probe, probe->itemName() + "_grid_xz");
+    SpatialGridPlotFile plotyz(probe, probe->itemName() + "_grid_yz");
+    SpatialGridPlotFile plotxyz(probe, probe->itemName() + "_grid_xyz");
+
+    // load all sites in a Voro container
+    int numCells = _cells.size();
+    voro::container con(_extent.xmin(), _extent.xmax(), _extent.ymin(), _extent.ymax(), _extent.zmin(), _extent.zmax(),
+                        _nb, _nb, _nb, false,false,false, 8);
+    for (int m=0; m!=numCells; ++m)
+    {
+        Vec r = _cells[m]->position();
+        con.put(m, r.x(),r.y(),r.z());
+    }
+
+    // for each site, compute the corresponding cell and output its edges
+    log()->info("Writing plot files for Voronoi tessellation with " + std::to_string(numCells) + " cells");
+    log()->infoSetElapsed(numCells);
+    int numDone = 0;
+    voro::c_loop_all loop(con);
+    if (loop.start()) do
+    {
+        // compute the cell
+        voro::voronoicell fullcell;
+        con.compute_cell(fullcell, loop);
+
+        // get the edges of the cell
+        double x,y,z;
+        loop.pos(x,y,z);
+        vector<double> coords;
+        fullcell.vertices(x,y,z, coords);
+        vector<int> indices;
+        fullcell.face_vertices(indices);
+
+        // write the edges of the cell to the plot files
+        Box bounds = _cells[loop.pid()]->extent();
+        if (bounds.zmin()<=0 && bounds.zmax()>=0) plotxy.writePolyhedron(coords, indices);
+        if (bounds.ymin()<=0 && bounds.ymax()>=0) plotxz.writePolyhedron(coords, indices);
+        if (bounds.xmin()<=0 && bounds.xmax()>=0) plotyz.writePolyhedron(coords, indices);
+        if (loop.pid() <= 1000) plotxyz.writePolyhedron(coords, indices);
+
+        // log message if the minimum time has elapsed
+        numDone++;
+        if (numDone%2000==0) log()->infoIfElapsed("Computed Voronoi cells: ", 2000);
+    }
+    while (loop.inc());
 }
 
 ////////////////////////////////////////////////////////////////////

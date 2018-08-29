@@ -113,8 +113,9 @@ public:
         argument specifies the extent of the domain as a box lined up with the coordinate axes.
         Sites located outside of the domain and sites that are too close to another site are
         discarded. The \em filename argument specifies the name of the input file, including
-        filename extension but excluding path and simulation prefix. */
-    VoronoiMeshSnapshot(const SimulationItem* item, const Box& extent, string filename);
+        filename extension but excluding path and simulation prefix. If the \em relax argument is
+        true, the function performs a single relaxation step on the site positions. */
+    VoronoiMeshSnapshot(const SimulationItem* item, const Box& extent, string filename, bool relax);
 
     /** This constructor obtains the site positions from a SiteListInterface instance. The
         constructor completes the configuration for the object (but without importing mass density
@@ -126,8 +127,9 @@ public:
         argument specifies the extent of the domain as a box lined up with the coordinate axes.
         Sites located outside of the domain and sites that are too close to another site are
         discarded. The \em sli argument specifies an object that provides the SiteListInterface
-        interface from which to obtain the site positions. */
-    VoronoiMeshSnapshot(const SimulationItem* item, const Box& extent, SiteListInterface* sli);
+        interface from which to obtain the site positions. If the \em relax argument is true, the
+        function performs a single relaxation step on the site positions. */
+    VoronoiMeshSnapshot(const SimulationItem* item, const Box& extent, SiteListInterface* sli, bool relax);
 
     /** This constructor obtains the site positions from a programmatically prepared list. The
         constructor completes the configuration for the object (but without importing mass density
@@ -138,8 +140,9 @@ public:
         the caller itself) used to retrieve context such as an appropriate logger. The \em extent
         argument specifies the extent of the domain as a box lined up with the coordinate axes.
         Sites located outside of the domain and sites that are too close to another site are
-        discarded. The \em sites argument specifies the list of site positions. */
-    VoronoiMeshSnapshot(const SimulationItem* item, const Box& extent, const vector<Vec>& sites);
+        discarded. The \em sites argument specifies the list of site positions. If the \em relax
+        argument is true, the function performs a single relaxation step on the site positions. */
+    VoronoiMeshSnapshot(const SimulationItem* item, const Box& extent, const vector<Vec>& sites, bool relax);
 
     //=========== Private construction ==========
 
@@ -155,8 +158,17 @@ private:
 
         Before actually starting to build the Voronoi tessellation, the function discards sites
         (represented as VoronoiCell objects) outside of the domain and sites that are too close to
-        another site. */
-    void buildMesh();
+        another site.
+
+        If the \em relax argument is true, the function performs a single relaxation step on the
+        site positions using Lloyd's algorithm (Lloyd 1982; Du, Faber and Gunzburger 1999, SIAM
+        review 41.4, pp 637-676; Dobbels 2017, master thesis). An intermediate Voronoi tessellation
+        is built using the original site positions, and subsequently each site position is replaced
+        by the centroid (mass center) of the corresponding cell. The final tessellation is then
+        constructed with these adjusted site positions, which are distributed more uniformly,
+        thereby avoiding overly elongated cells in the Voronoi tessellation. Relaxation can be
+        quite time-consuming because the Voronoi tessellation must be constructed twice. */
+    void buildMesh(bool relax);
 
     /** This private function builds data structures that allow accelerating the operation of the
         cellIndex() function.
@@ -174,6 +186,14 @@ private:
         the function builds a binary search tree on the cell sites for those blocks (see for example
         <a href="http://en.wikipedia.org/wiki/Kd-tree">en.wikipedia.org/wiki/Kd-tree</a>). */
     void buildSearch();
+
+    //====================== Output =====================
+
+public:
+    /** This function outputs grid plot files as described for the SpatialGridPlotProbe. The
+        function reconstructs the Voronoi tesselation in order to produce the coordinates of the
+        Voronoi cell vertices. */
+    void writeGridPlotFiles(const SimulationItem* probe) const;
 
     //=========== Interrogation ==========
 

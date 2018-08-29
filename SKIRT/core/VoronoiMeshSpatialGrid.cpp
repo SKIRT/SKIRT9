@@ -9,10 +9,8 @@
 #include "MediumSystem.hpp"
 #include "Random.hpp"
 #include "SiteListInterface.hpp"
-#include "SpatialGridPlotFile.hpp"
 #include "VoronoiMeshInterface.hpp"
 #include "VoronoiMeshSnapshot.hpp"
-#include "container.hh"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -35,7 +33,7 @@ void VoronoiMeshSpatialGrid::setupSelfBefore()
             auto random = find<Random>();
             vector<Vec> rv(_numSites);
             for (int m=0; m!=_numSites; ++m) rv[m] = random->position(extent());
-            _mesh = new VoronoiMeshSnapshot(this, extent(), rv);
+            _mesh = new VoronoiMeshSnapshot(this, extent(), rv, _relaxSites);
             break;
         }
     case Policy::CentralPeak:
@@ -58,7 +56,7 @@ void VoronoiMeshSpatialGrid::setupSelfBefore()
                     }
                 }
             }
-            _mesh = new VoronoiMeshSnapshot(this, extent(), rv);
+            _mesh = new VoronoiMeshSnapshot(this, extent(), rv, _relaxSites);
             break;
         }
     case Policy::MediumDensity:
@@ -77,18 +75,18 @@ void VoronoiMeshSpatialGrid::setupSelfBefore()
                     }
                 }
             }
-            _mesh = new VoronoiMeshSnapshot(this, extent(), rv);
+            _mesh = new VoronoiMeshSnapshot(this, extent(), rv, _relaxSites);
             break;
         }
     case Policy::File:
         {
-            _mesh = new VoronoiMeshSnapshot(this, extent(), _filename);
+            _mesh = new VoronoiMeshSnapshot(this, extent(), _filename, _relaxSites);
             break;
         }
     case Policy::ImportedSites:
         {
             auto sli = find<MediumSystem>()->interface<SiteListInterface>(2);
-            _mesh = new VoronoiMeshSnapshot(this, extent(), sli);
+            _mesh = new VoronoiMeshSnapshot(this, extent(), sli, _relaxSites);
             break;
         }
     case Policy::ImportedMesh:
@@ -150,46 +148,7 @@ void VoronoiMeshSpatialGrid::path(SpatialGridPath* path) const
 
 void VoronoiMeshSpatialGrid::writeGridPlotFiles(const SimulationItem* probe) const
 {
-    // create the plot files
-    SpatialGridPlotFile plotxy(probe, probe->itemName() + "_grid_xy");
-    SpatialGridPlotFile plotxz(probe, probe->itemName() + "_grid_xz");
-    SpatialGridPlotFile plotyz(probe, probe->itemName() + "_grid_yz");
-    SpatialGridPlotFile plotxyz(probe, probe->itemName() + "_grid_xyz");
-
-    // load all sites in a Voro container
-    int numCells = _mesh->numEntities();
-    int nb = max(3, min(1000, static_cast<int>(pow(numCells/5.,1./3.)) ));
-    voro::container con(xmin(), xmax(), ymin(), ymax(), zmin(), zmax(), nb, nb, nb, false,false,false, 8);
-    for (int m=0; m!=numCells; ++m)
-    {
-        Vec r = _mesh->position(m);
-        con.put(m, r.x(),r.y(),r.z());
-    }
-
-    // loop over all Voro cells
-    voro::c_loop_all loop(con);
-    if (loop.start()) do
-    {
-        // Compute the cell
-        voro::voronoicell fullcell;
-        con.compute_cell(fullcell, loop);
-
-        // Get the edges of the cell
-        double x,y,z;
-        loop.pos(x,y,z);
-        vector<double> coords;
-        fullcell.vertices(x,y,z, coords);
-        vector<int> indices;
-        fullcell.face_vertices(indices);
-
-        // Write the edges of the cell to the plot files
-        Box bounds = _mesh->extent(loop.pid());
-        if (bounds.zmin()<=0 && bounds.zmax()>=0) plotxy.writePolyhedron(coords, indices);
-        if (bounds.ymin()<=0 && bounds.ymax()>=0) plotxz.writePolyhedron(coords, indices);
-        if (bounds.xmin()<=0 && bounds.xmax()>=0) plotyz.writePolyhedron(coords, indices);
-        if (loop.pid() <= 1000) plotxyz.writePolyhedron(coords, indices);
-    }
-    while (loop.inc());
+    _mesh->writeGridPlotFiles(probe);
 }
 
 //////////////////////////////////////////////////////////////////////

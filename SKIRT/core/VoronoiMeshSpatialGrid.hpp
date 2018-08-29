@@ -19,10 +19,7 @@ class VoronoiMeshSnapshot;
     The class offers several options for determining the positions of the sites generating the
     Voronoi tesselation. A specified number of sites can be distributed randomly over the domain,
     either uniformly or with the same overall density distribution as the medium. Alternatively,
-    the positions can be copied from the sites in the imported distribution(s).
-
-    This class uses the Voro++ code written by Chris H. Rycroft (LBL / UC Berkeley) to generate
-    output files for plotting the Voronoi grid. */
+    the positions can be copied from the sites in the imported distribution(s). */
 class VoronoiMeshSpatialGrid : public BoxSpatialGrid, public DensityInCellInterface
 {
     /** The enumeration type indicating the policy for determining the positions of the sites. */
@@ -47,6 +44,10 @@ class VoronoiMeshSpatialGrid : public BoxSpatialGrid, public DensityInCellInterf
 
     PROPERTY_STRING(filename, "the name of the file containing the site positions")
         // ATTRIBUTE_RELEVANT_IF(filename, "policy==File")
+
+    PROPERTY_BOOL(relaxSites, "perform site relaxation to avoid overly elongated cells")
+        // ATTRIBUTE_RELEVANT_IF(filename, "policy!=ImportedMesh")
+        ATTRIBUTE_DEFAULT_VALUE(relaxSites, "false")
 
     ITEM_END()
 
