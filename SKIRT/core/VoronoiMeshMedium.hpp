@@ -7,6 +7,7 @@
 #define VORONOIMESHMEDIUM_HPP
 
 #include "MeshMedium.hpp"
+#include "VoronoiMeshInterface.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -52,7 +53,7 @@
     If the \em importVelocity option is enabled, the final three columns specify the \f$v_x\f$,
     \f$v_y\f$, \f$v_z\f$ velocity components of the site (considered as the bulk velocity for the
     mass represented by the site). */
-class VoronoiMeshMedium : public MeshMedium
+class VoronoiMeshMedium : public MeshMedium, public VoronoiMeshInterface
 {
     ITEM_CONCRETE(VoronoiMeshMedium, MeshMedium, "a transfer medium imported from data represented on a Voronoi mesh")
     ITEM_END()
@@ -65,6 +66,19 @@ protected:
         density column, and finally returns a pointer to the object. Ownership of the Snapshot
         object is transferred to the caller. */
     Snapshot* createAndOpenSnapshot() override;
+
+    //=================== Other functions ==================
+
+protected:
+    /** This function implements the VoronoiMeshInterface interface. It returns a pointer to the
+        Voronoi mesh snapshot maintained by this geometry. */
+    VoronoiMeshSnapshot* voronoiMesh() const override;
+
+    //===================== Data members ====================
+
+private:
+    // an extra pointer to our snapshot used to implement VoronoiMeshInterface (ownership is passed to base class)
+    VoronoiMeshSnapshot* _voronoiMeshSnapshot{nullptr};
 };
 
 ////////////////////////////////////////////////////////////////////

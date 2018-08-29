@@ -108,7 +108,7 @@ public:
         distribution. It is undefined whether the function uses the number density or the mass
         density. If the conversion from number to mass is the same throughout the medium's spatial
         domain, there is no difference. In cases where it matters, the function will often use the
-        more logical choice, depending on the the way the density distribution was imported or
+        more logical choice, depending on the way the density distribution was imported or
         normalized, but there is no guarantee. */
     virtual Position generatePosition() const = 0;
 };

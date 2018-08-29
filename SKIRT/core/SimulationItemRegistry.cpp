@@ -145,6 +145,7 @@
 #include "VoronoiMeshGeometry.hpp"
 #include "VoronoiMeshMedium.hpp"
 #include "VoronoiMeshSource.hpp"
+#include "VoronoiMeshSpatialGrid.hpp"
 #include "WavelengthGridProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -313,6 +314,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<BoxSpatialGrid>();
     ItemRegistry::add<CartesianSpatialGrid>();
     ItemRegistry::add<AdaptiveMeshSpatialGrid>();
+    ItemRegistry::add<VoronoiMeshSpatialGrid>();
 
     // one-dimensional meshes for spatial grids
     ItemRegistry::add<Mesh>();

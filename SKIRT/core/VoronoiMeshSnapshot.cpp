@@ -367,7 +367,7 @@ VoronoiMeshSnapshot::VoronoiMeshSnapshot(const SimulationItem* item, const Box& 
     in.addColumn("position y", "length", "pc");
     in.addColumn("position z", "length", "pc");
     Array coords;
-    while (infile()->readRow(coords)) _cells.push_back(new VoronoiCell(Vec(coords[0], coords[1], coords[2])));
+    while (in.readRow(coords)) _cells.push_back(new VoronoiCell(Vec(coords[0], coords[1], coords[2])));
     in.close();
 
     // calculate the Voronoi cells

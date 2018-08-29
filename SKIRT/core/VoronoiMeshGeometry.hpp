@@ -7,6 +7,7 @@
 #define VORONOIMESHGEOMETRY_HPP
 
 #include "MeshGeometry.hpp"
+#include "VoronoiMeshInterface.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -42,7 +43,7 @@
     temperature, the mass and density for the site are set to zero, regardless of the mass or
     density specified in the fourth column. If the \em importTemperature option is disabled, or the
     maximum temperature value is set to zero, such a cutoff is not applied. */
-class VoronoiMeshGeometry : public MeshGeometry
+class VoronoiMeshGeometry : public MeshGeometry, public VoronoiMeshInterface
 {
     ITEM_CONCRETE(VoronoiMeshGeometry, MeshGeometry, "a geometry imported from data represented on a Voronoi mesh")
     ITEM_END()
@@ -55,6 +56,19 @@ protected:
         density column, and finally returns a pointer to the object. Ownership of the Snapshot
         object is transferred to the caller. */
     Snapshot* createAndOpenSnapshot() override;
+
+    //=================== Other functions ==================
+
+protected:
+    /** This function implements the VoronoiMeshInterface interface. It returns a pointer to the
+        Voronoi mesh snapshot maintained by this geometry. */
+    VoronoiMeshSnapshot* voronoiMesh() const override;
+
+    //===================== Data members ====================
+
+private:
+    // an extra pointer to our snapshot used to implement VoronoiMeshInterface (ownership is passed to base class)
+    VoronoiMeshSnapshot* _voronoiMeshSnapshot{nullptr};
 };
 
 ////////////////////////////////////////////////////////////////////
