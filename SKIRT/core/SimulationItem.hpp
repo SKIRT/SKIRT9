@@ -56,7 +56,6 @@ public:
         messages to identify the item and differentiate it from other items of a similar type. */
     string typeAndName() const;
 
-protected:
     /** This function returns a human-readable name for the simulation item, or the empty string if
         it does not have one. The item name can be used to differentiate the item from other items
         of a similar type. The implementation in this base class returns the empty string.

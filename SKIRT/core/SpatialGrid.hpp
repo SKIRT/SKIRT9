@@ -69,6 +69,26 @@ public:
     //================ Functions that may be implemented in subclasses ===============
 
 public:
+    /** This function outputs text data files that allow plotting the structure of the spatial
+        grid. The number of data files written depends on the dimension of the spatial grid: for
+        spherical symmetry only the intersection with the xy plane is written, for axial symmetry
+        the intersections with the xy and xz planes are written, and for general geometries all
+        three intersections are written. In the latter case, an extra file with three-dimensional
+        information is written as well.
+
+        The function is called from the SpatialGridPlotProbe class, and receives a pointer to the
+        probe as its argument. The output files are called <tt>prefix_probe_grid_XXX.dat</tt>,
+        where XXX is replaced by "xy", "xz", "yz" or "xyz" depending on the file under
+        consideration. Within a file, each line contains two coordinates seperated by whitespace or
+        is empty. Consecutive nonempty lines represent a sequence of "lineto" commands; an empty
+        line marks a "moveto" command.
+
+        The default implementation of this function invokes the write_XXX() functions as
+        appropriate for the dimension of the grid. Subclasses usually override the write_XXX()
+        functions, but can opt to override this function instead if that makes more sense. */
+    virtual void writeGridPlotFiles(const SimulationItem* probe) const;
+
+protected:
     /** This function writes the intersection of the grid with the xy plane to the specified
         SpatialGridPlotFile object. The default implementation does nothing. */
     virtual void write_xy(SpatialGridPlotFile* outfile) const;

@@ -87,10 +87,10 @@ public:
         for the path. The data on the calculated path are added back into the same object. */
     void path(SpatialGridPath* path) const override;
 
-    /** This function outputs the plot files; it is provided here because the regular mechanism
-        does not apply. The function reconstructs the Voronoi tesselation in order to produce the
-        coordinates of the Voronoi cell vertices. */
-    void performWriteGrid() const;
+    /** This function outputs the grid plot files; it is provided here because the regular
+        mechanism does not apply. The function reconstructs the Voronoi tesselation in order to
+        produce the coordinates of the Voronoi cell vertices. */
+    void writeGridPlotFiles(const SimulationItem* probe) const override;
 
     /** This function implements the DensityInCellInterface interface. It returns the number
         density for medium component \f$h\f$ in the grid cell with index \f$m\f$. For a Voronoi

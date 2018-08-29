@@ -148,13 +148,13 @@ void VoronoiMeshSpatialGrid::path(SpatialGridPath* path) const
 
 //////////////////////////////////////////////////////////////////////
 
-void VoronoiMeshSpatialGrid::performWriteGrid() const
+void VoronoiMeshSpatialGrid::writeGridPlotFiles(const SimulationItem* probe) const
 {
     // create the plot files
-    SpatialGridPlotFile plotxy(this, "ds_gridxy");
-    SpatialGridPlotFile plotxz(this, "ds_gridxz");
-    SpatialGridPlotFile plotyz(this, "ds_gridyz");
-    SpatialGridPlotFile plotxyz(this, "ds_gridxyz");
+    SpatialGridPlotFile plotxy(probe, probe->itemName() + "_grid_xy");
+    SpatialGridPlotFile plotxz(probe, probe->itemName() + "_grid_xz");
+    SpatialGridPlotFile plotyz(probe, probe->itemName() + "_grid_yz");
+    SpatialGridPlotFile plotxyz(probe, probe->itemName() + "_grid_xyz");
 
     // load all sites in a Voro container
     int numCells = _mesh->numEntities();

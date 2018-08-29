@@ -61,6 +61,7 @@ public:
         for the path. The data on the calculated path are added back into the same object. */
     void path(SpatialGridPath* path) const override;
 
+protected:
     /** This function writes the intersection of the grid structure with the xy plane to the
         specified SpatialGridPlotFile object. */
     void write_xy(SpatialGridPlotFile* outfile) const override;
@@ -77,6 +78,7 @@ public:
         SpatialGridPlotFile object. */
     void write_xyz(SpatialGridPlotFile* outfile) const override;
 
+public:
     /** This function implements the DensityInCellInterface interface. It returns the number
         density for medium component \f$h\f$ in the grid cell with index \f$m\f$. For an adaptive
         mesh grid, this interface can be offered only when the medium system consists of a single

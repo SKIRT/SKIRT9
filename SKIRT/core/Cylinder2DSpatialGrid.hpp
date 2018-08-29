@@ -80,7 +80,7 @@ public:
         for the path. The data on the calculated path are added back into the same object. */
     void path(SpatialGridPath* path) const override;
 
-private:
+protected:
     /** This function writes the intersection of the grid with the xy plane to the specified
         SpatialGridPlotFile object. */
     void write_xy(SpatialGridPlotFile* outfile) const override;
