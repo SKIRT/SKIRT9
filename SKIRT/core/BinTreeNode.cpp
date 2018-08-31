@@ -68,11 +68,6 @@ void BinTreeNode::addNeighbors()
     // if we don't have any children, we can't add neighbors
     if (isChildless()) return;
 
-    // ensure that all involved nodes have a neighbor list for each of the walls
-    ensureNeighborLists();
-    CHILD_0->ensureNeighborLists();
-    CHILD_1->ensureNeighborLists();
-
     switch (level() % 3)
     {
     case XDIR:

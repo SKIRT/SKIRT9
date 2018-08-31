@@ -48,10 +48,6 @@ void OctTreeNode::addNeighbors()
     // if we don't have any children, we can't add neighbors
     if (isChildless()) return;
 
-    // ensure that all involved nodes have a neighbor list for each of the walls
-    ensureNeighborLists();
-    for (auto child : children()) child->ensureNeighborLists();
-
     // Internal neighbors: each of the 8 new children has 3 neighbors among its siblings
     makeNeighbors(FRONT, CHILD_0, CHILD_1);
     makeNeighbors(RIGHT, CHILD_0, CHILD_2);

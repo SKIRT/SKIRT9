@@ -4,14 +4,12 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "TreeSpatialGrid.hpp"
+#include "Log.hpp"
+#include "Random.hpp"
 #include "SpatialGridPath.hpp"
 #include "SpatialGridPlotFile.hpp"
-#include "FatalError.hpp"
-#include "Log.hpp"
-#include "NR.hpp"
-#include "Random.hpp"
+#include "StringUtils.hpp"
 #include "TreeNode.hpp"
-#include "Units.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -30,6 +28,8 @@ void TreeSpatialGrid::setupSelfBefore()
     _eps = 1e-12 * extent().widths().norm();
 
     // make subclass construct the tree
+    Log* log = find<Log>();
+    log->info("Constructing the spatial tree grid...");
     _nodev = constructTree();
 
     // construct the vectors to help translating between node indices (leaf and nonleaf) and cell indices (leaf only)
@@ -59,13 +59,14 @@ void TreeSpatialGrid::setupSelfBefore()
     }
 
     // log these statistics
-    Log* log = find<Log>();
-    log->info("Construction of the tree finished");
-    log->info("  Total number of cells: " + std::to_string(numCells));
-    log->info("  Number of cells at each tree level:");
+    log->info("Finished construction of the spatial tree grid");
+    log->info("Number of cells at each level in the tree hierarchy:");
     int numLevels = countv.size();
     for (int level=0; level!=numLevels; ++level)
-        log->info("    Level " + std::to_string(level) + ": " + std::to_string(countv[level]) + " cells");
+        log->info("  Level " + StringUtils::toString(level, 'd', 0, 2) + ":"
+                             + StringUtils::toString(countv[level], 'd', 0, 9) + " ("
+                             + StringUtils::toString(100.*countv[level]/numCells, 'f', 1, 5) + "%)");
+    log->info("  TOTAL   :" + StringUtils::toString(numCells, 'd', 0, 9) + " (100.0%)");
 }
 
 ////////////////////////////////////////////////////////////////////

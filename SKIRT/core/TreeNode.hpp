@@ -7,6 +7,7 @@
 #define TREENODE_HPP
 
 #include "Box.hpp"
+#include <array>
 
 ////////////////////////////////////////////////////////////////////
 
@@ -114,10 +115,6 @@ public:
         particular external neighbor may be neighbor to multiple children. */
     virtual void addNeighbors() = 0;
 
-    /** This function ensures that the node has 6 neighbor lists; it should be called before adding
-        any neighbors to the node. */
-    void ensureNeighborLists();
-
     /** This function adds a node to the list of neighbors corresponding to a given wall. */
     void addNeighbor(Wall wall, TreeNode* node);
 
@@ -141,7 +138,7 @@ private:
     int _level{0};
     TreeNode* _parent{nullptr};
     vector<TreeNode*> _children;
-    vector<vector<TreeNode*>> _neighbors;
+    std::array<vector<TreeNode*>,6> _neighbors;    // one empty neighbor list for each wall
 };
 
 ////////////////////////////////////////////////////////////////////

@@ -110,13 +110,6 @@ const TreeNode* TreeNode::neighbor(Wall wall, Vec r) const
 
 ////////////////////////////////////////////////////////////////////
 
-void TreeNode::ensureNeighborLists()
-{
-    _neighbors.resize(6);
-}
-
-////////////////////////////////////////////////////////////////////
-
 void TreeNode::addNeighbor(Wall wall, TreeNode* node)
 {
     _neighbors[wall].push_back(node);
