@@ -1,0 +1,21 @@
+/*//////////////////////////////////////////////////////////////////
+////     The SKIRT project -- advanced radiative transfer       ////
+////       © Astronomical Observatory, Ghent University         ////
+///////////////////////////////////////////////////////////////// */
+
+#include "DensityTreePolicy.hpp"
+#include "TreeNode.hpp"
+
+////////////////////////////////////////////////////////////////////
+
+vector<TreeNode*> DensityTreePolicy::constructTree(TreeNode* root)
+{
+    // construct the tree node list, adding the root node as the first item
+    vector<TreeNode*> nodev{root};
+
+    // TO DO.
+
+    return nodev;
+}
+
+////////////////////////////////////////////////////////////////////

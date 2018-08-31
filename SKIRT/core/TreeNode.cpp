@@ -14,6 +14,13 @@ TreeNode::TreeNode(TreeNode* parent, int id, const Box& extent)
 
 ////////////////////////////////////////////////////////////////////
 
+TreeNode::TreeNode(const Box& extent)
+    : TreeNode(nullptr, 0, extent)
+{
+}
+
+////////////////////////////////////////////////////////////////////
+
 TreeNode::~TreeNode()
 {
 }

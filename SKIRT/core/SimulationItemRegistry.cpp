@@ -35,6 +35,7 @@
 #include "Cylinder2DSpatialGrid.hpp"
 #include "CylindricalClipGeometryDecorator.hpp"
 #include "DefaultMediaDensityCutsProbe.hpp"
+#include "DensityTreePolicy.hpp"
 #include "EinastoGeometry.hpp"
 #include "ElectronMix.hpp"
 #include "ExpDiskGeometry.hpp"
@@ -104,6 +105,7 @@
 #include "PerspectiveInstrument.hpp"
 #include "PlummerGeometry.hpp"
 #include "PointSource.hpp"
+#include "PolicyTreeSpatialGrid.hpp"
 #include "PowMesh.hpp"
 #include "ProbeSystem.hpp"
 #include "PseudoSersicGeometry.hpp"
@@ -139,6 +141,8 @@
 #include "SymPowMesh.hpp"
 #include "TTauriDiskGeometry.hpp"
 #include "TorusGeometry.hpp"
+#include "TreePolicy.hpp"
+#include "TreeSpatialGrid.hpp"
 #include "TriaxialGeometryDecorator.hpp"
 #include "UniformBoxGeometry.hpp"
 #include "UniformSmoothingKernel.hpp"
@@ -313,8 +317,14 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<Cylinder2DSpatialGrid>();
     ItemRegistry::add<BoxSpatialGrid>();
     ItemRegistry::add<CartesianSpatialGrid>();
+    ItemRegistry::add<TreeSpatialGrid>();
+    ItemRegistry::add<PolicyTreeSpatialGrid>();
     ItemRegistry::add<AdaptiveMeshSpatialGrid>();
     ItemRegistry::add<VoronoiMeshSpatialGrid>();
+
+    // spatial grid policies
+    ItemRegistry::add<TreePolicy>();
+    ItemRegistry::add<DensityTreePolicy>();
 
     // one-dimensional meshes for spatial grids
     ItemRegistry::add<Mesh>();

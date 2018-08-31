@@ -17,14 +17,17 @@ class TreeNode : public Box
 {
     //============= Constructing and destructing =============
 
-protected:
+public:
     /** This constructor creates a new tree node with the specified parent node, identifier, and
         spatial extent. The constructor sets the level of the new node to be one higher than the
         level of the parent. If the pointer to the parent is null, the level of the new node is
         zero. */
     TreeNode(TreeNode* parent, int id, const Box& extent);
 
-public:
+    /** This constructor creates a new root node with the specified spatial extent. The constructor
+        sets both the node identifier and the level of the new root node to zero. */
+    TreeNode(const Box& extent);
+
     /** Trivial virtual destructor. */
     virtual ~TreeNode();
 
