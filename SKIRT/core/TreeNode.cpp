@@ -83,6 +83,15 @@ const TreeNode* TreeNode::leafChild(Vec r) const
 
 ////////////////////////////////////////////////////////////////////
 
+void TreeNode::subdivide(vector<TreeNode*>& nodev)
+{
+    createChildren(nodev.size());
+    nodev.insert(nodev.end(), _children.begin(), _children.end());
+    addNeighbors();
+}
+
+////////////////////////////////////////////////////////////////////
+
 void TreeNode::addChild(TreeNode* child)
 {
     _children.push_back(child);

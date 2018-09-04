@@ -47,7 +47,7 @@ protected:
         nodes, i.e. the rank \f$m\f$ of the node in the ID vector if the node is a leaf, and the
         number -1 if the node is not a leaf (and hence not a spatial cell). Finally, the function
         logs some details on the number of cells in the tree. */
-    void setupSelfBefore() override;
+    void setupSelfAfter() override;
 
     /** This function must be implemented in a subclass. It constructs the hierarchical tree and
         all (interconnected) nodes forming the tree. All nodes are instances of the same TreeNode

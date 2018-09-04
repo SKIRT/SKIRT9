@@ -20,9 +20,9 @@ TreeSpatialGrid::~TreeSpatialGrid()
 
 ////////////////////////////////////////////////////////////////////
 
-void TreeSpatialGrid::setupSelfBefore()
+void TreeSpatialGrid::setupSelfAfter()
 {
-    BoxSpatialGrid::setupSelfBefore();
+    BoxSpatialGrid::setupSelfAfter();
 
     // determine a small fraction relative to the spatial extent of the grid; used during path traversal
     _eps = 1e-12 * extent().widths().norm();

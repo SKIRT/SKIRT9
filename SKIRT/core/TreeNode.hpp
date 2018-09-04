@@ -75,6 +75,13 @@ public:
     //============= Managing children =============
 
 public:
+    /** This function subdivides the node by creating the appropriate number of child subnodes
+        (through the createChildren() function) and appending pointers to these children to the
+        specified node list. The node identifiers of the child nodes are set so that the node
+        identifier matches the index of the node in the node list. Finally, the neighbor lists are
+        updated (through the addNeighbors() function). */
+    void subdivide(vector<TreeNode*>& nodev);
+
     /** This function creates new nodes partitioning the node, and adds these new nodes as its own
         child nodes. Subdivision happens according to a fixed scheme determined by each subclass.
         The children are assigned consecutive integer identifiers, starting with the identifier
@@ -83,6 +90,7 @@ public:
         Invoking this function on a node that already has children results in undefined behavior.
         */
     virtual void createChildren(int id) = 0;
+
 
 protected:
     /** This function adds the specified child to the end of the child list. */

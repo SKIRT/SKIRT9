@@ -38,6 +38,10 @@ class TreePolicy : public SimulationItem
 
     //============= Construction - Setup - Destruction =============
 
+protected:
+    /** This function verifies that the maximum level is not below the minimum level. */
+    void setupSelfBefore() override;
+
 public:
     /** This function must be implemented in a subclass. It constructs the hierarchical tree and
         all (interconnected) nodes forming the tree. All nodes are instances of the same TreeNode
