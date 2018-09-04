@@ -91,7 +91,6 @@ public:
         */
     virtual void createChildren(int id) = 0;
 
-
 protected:
     /** This function adds the specified child to the end of the child list. */
     void addChild(TreeNode* child);

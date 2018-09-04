@@ -74,7 +74,7 @@ public:
     double pathLengthBias() const { return _pathLengthBias; }
 
     /** Returns the number of random density samples for determining spatial cell mass. */
-    double numDensitySamples() const { return _numDensitySamples; }
+    int numDensitySamples() const { return _numDensitySamples; }
 
     /** Returns true if there is at least one medium component in the simulation. */
     bool hasMedium() const { return _hasMedium; }

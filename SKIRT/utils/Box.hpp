@@ -101,6 +101,12 @@ public:
     inline double volume() const
     { return (_xmax-_xmin) * (_ymax-_ymin) * (_zmax-_zmin); }
 
+    /** This function returns the length of the diagonal of the box, i.e. \f$\sqrt{
+        (x_\text{max}-x_\text{min})^2 + (y_\text{max}-y_\text{min})^2 +
+        (z_\text{max}-z_\text{min})^2 }\f$. */
+    inline double diagonal() const
+    { return sqrt( (_xmax-_xmin)*(_xmax-_xmin) + (_ymax-_ymin)*(_ymax-_ymin) + (_zmax-_zmin)*(_zmax-_zmin) ); }
+
     /** This function returns the position corresponding to the center of the box
         \f[ x=\tfrac12 (x_\text{min}+x_\text{max}) \f]
         \f[ y=\tfrac12 (y_\text{min}+y_\text{max}) \f]
