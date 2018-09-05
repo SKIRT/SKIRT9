@@ -58,14 +58,19 @@ void TreeSpatialGrid::setupSelfAfter()
         countv[level]++;
     }
 
-    // log these statistics
+    // log these statistics, including a basic histogram
     log->info("Finished construction of the spatial tree grid");
     log->info("Number of cells at each level in the tree hierarchy:");
     int numLevels = countv.size();
+    int maxCount = *std::max_element(countv.cbegin(), countv.cend());
     for (int level=0; level!=numLevels; ++level)
+    {
+        size_t numStars = std::round(20.*countv[level]/maxCount);
         log->info("  Level " + StringUtils::toString(level, 'd', 0, 2) + ":"
                              + StringUtils::toString(countv[level], 'd', 0, 9) + " ("
-                             + StringUtils::toString(100.*countv[level]/numCells, 'f', 1, 5) + "%)");
+                             + StringUtils::toString(100.*countv[level]/numCells, 'f', 1, 5) + "%)  |"
+                             + string(numStars,'*'));
+    }
     log->info("  TOTAL   :" + StringUtils::toString(numCells, 'd', 0, 9) + " (100.0%)");
 }
 
