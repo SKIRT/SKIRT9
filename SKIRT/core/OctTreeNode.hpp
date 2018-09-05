@@ -35,7 +35,7 @@ public:
         point relative to the node's central division point. If the specified point is inside the
         node, then it will also be inside the returned child. This function crashes if the node is
         childless. */
-    TreeNode* child(Vec r) const override;
+    TreeNode* child(Vec r) override;
 
     /** This function adds the relevant neighbors to a node with children (the function does
         nothing if the node doesn't have any children). It considers internal neighbors (each of

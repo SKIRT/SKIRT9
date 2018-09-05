@@ -50,7 +50,7 @@ void BinTreeNode::createChildren(int id)
 
 ////////////////////////////////////////////////////////////////////
 
-TreeNode* BinTreeNode::child(Vec r) const
+TreeNode* BinTreeNode::child(Vec r)
 {
     switch (level() % 3)
     {

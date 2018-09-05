@@ -42,7 +42,7 @@ public:
         specified point relative to the node's central division plane. If the specified point is
         inside the node, then it will also be inside the returned child. Invoking this function on
         a childless node results in undefined behavior. */
-    TreeNode* child(Vec r) const override;
+    TreeNode* child(Vec r) override;
 
     /** This function adds the relevant neighbors to a node with children (the function does
         nothing if the node doesn't have any children). It considers internal neighbors among the

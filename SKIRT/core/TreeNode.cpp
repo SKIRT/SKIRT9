@@ -27,7 +27,7 @@ TreeNode::~TreeNode()
 
 ////////////////////////////////////////////////////////////////////
 
-TreeNode* TreeNode::parent() const
+TreeNode* TreeNode::parent()
 {
     return _parent;
 }
@@ -62,18 +62,18 @@ const vector<TreeNode*>& TreeNode::children() const
 
 ////////////////////////////////////////////////////////////////////
 
-TreeNode* TreeNode::childAt(int l) const
+TreeNode* TreeNode::childAt(int l)
 {
     return _children[l];
 }
 
 ////////////////////////////////////////////////////////////////////
 
-const TreeNode* TreeNode::leafChild(Vec r) const
+TreeNode* TreeNode::leafChild(Vec r)
 {
     if (!contains(r)) return nullptr;
 
-    const TreeNode* node = this;
+    TreeNode* node = this;
     while (!node->isChildless())
     {
         node = node->child(r);

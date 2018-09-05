@@ -120,6 +120,7 @@
 #include "SersicGeometry.hpp"
 #include "ShellGeometry.hpp"
 #include "SineSquarePolarizationProfile.hpp"
+#include "SiteListTreePolicy.hpp"
 #include "SourceSystem.hpp"
 #include "SpatialCellPropertiesProbe.hpp"
 #include "SpatialGrid.hpp"
@@ -325,6 +326,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // spatial grid policies
     ItemRegistry::add<TreePolicy>();
     ItemRegistry::add<DensityTreePolicy>();
+    ItemRegistry::add<SiteListTreePolicy>();
 
     // one-dimensional meshes for spatial grids
     ItemRegistry::add<Mesh>();

@@ -36,7 +36,7 @@ public:
 
 public:
     /** This function returns a pointer to the parent of the node. */
-    TreeNode* parent() const;
+    TreeNode* parent();
 
     /** This function returns the ID number of the node. */
     int id() const;
@@ -59,18 +59,18 @@ protected:
         range for the index depends on the subclass (e.g. 0-1 for binary tree, 0-7 for octtree).
         Invoking this function on a childless node of with a child index out of the appropriate
         range results in undefined behavior. */
-    TreeNode* childAt(int l) const;
+    TreeNode* childAt(int l);
 
 public:
     /** This function returns a pointer to the node's child that contains the specified point,
         assuming that the point is inside the node. Invoking this function on a childless node
         results in undefined behavior. */
-    virtual TreeNode* child(Vec r) const = 0;
+    virtual TreeNode* child(Vec r) = 0;
 
     /** This function returns a pointer to the deepest node in the descendent hierarchy of this
         node that contains the specified position, or the null pointer if the position is outside
         the node. It uses the child(r) function resursively to locate the appropriate node. */
-    const TreeNode* leafChild(Vec r) const;
+    TreeNode* leafChild(Vec r);
 
     //============= Managing children =============
 

@@ -34,7 +34,7 @@ void OctTreeNode::createChildren(int id)
 
 ////////////////////////////////////////////////////////////////////
 
-TreeNode* OctTreeNode::child(Vec r) const
+TreeNode* OctTreeNode::child(Vec r)
 {
     Vec rc = CHILD_0->rmax();
     int l = (r.x()<rc.x() ? 0 : 1) + (r.y()<rc.y() ? 0 : 2) + (r.z()<rc.z() ? 0 : 4);
