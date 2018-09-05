@@ -77,6 +77,12 @@ public:
         z\f$. */
     double volume(int m) const override;
 
+    /** This function returns the actuale diagonal of the cell with index \f$m\f$. For a tree grid,
+        it determines the node ID corresponding to the cell index \f$m\f$, and then simply
+        calculates the diagonal of the corresponding cuboidal node using \f$d = \sqrt{ (\Delta x)^2
+        + (\Delta y)^2 + (\Delta z)^2 }\f$. */
+    double diagonal(int m) const override;
+
     /** This function returns the index of the cell that contains the position \f${\bf{r}}\f$. For
         a tree grid, the search algorithm starts at the root node and selects the child node that
         contains the position. This procedure is repeated until the node is childless, i.e. until

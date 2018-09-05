@@ -181,6 +181,10 @@ public:
         range, the behavior is undefined. */
     double volume(int m) const;
 
+    /** This function returns the diagonal of the leaf cell with index \em m. If the index is out of
+        range, the behavior is undefined. */
+    double diagonal(int m) const;
+
     /** This function returns the bounding box (which is by definition lined up with the coordinate
         axes) of the leaf cell with index \em m. If the index is out of range, the behavior is
         undefined. */

@@ -297,6 +297,13 @@ double AdaptiveMeshSnapshot::volume(int m) const
 
 ////////////////////////////////////////////////////////////////////
 
+double AdaptiveMeshSnapshot::diagonal(int m) const
+{
+    return _cells[m]->diagonal();
+}
+
+////////////////////////////////////////////////////////////////////
+
 Box AdaptiveMeshSnapshot::extent(int m) const
 {
     return _cells[m]->extent();

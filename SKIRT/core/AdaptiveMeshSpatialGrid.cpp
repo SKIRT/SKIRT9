@@ -61,6 +61,13 @@ double AdaptiveMeshSpatialGrid::volume(int m) const
 
 //////////////////////////////////////////////////////////////////////
 
+double AdaptiveMeshSpatialGrid::diagonal(int m) const
+{
+    return _mesh->diagonal(m);
+}
+
+//////////////////////////////////////////////////////////////////////
+
 int AdaptiveMeshSpatialGrid::cellIndex(Position bfr) const
 {
     return _mesh->cellIndex(bfr);

@@ -49,6 +49,12 @@ public:
         (y_{j+1}-y_j)\, (z_{k+1}-z_k) \f$. */
     double volume(int m) const override;
 
+    /** This function returns the diagonal of the cell with index \f$m\f$. For a cartesian grid, the
+        function determines the bin indices \f$i\f$, \f$j\f$ and \f$k\f$ corresponding to the X, Y
+        and Z directions. The diagonal is then easily calculated as \f$d = \sqrt{ (x_{i+1}-x_i)^2 +
+        (y_{j+1}-y_j)^2 + (z_{k+1}-z_k)^2 }\f$. */
+    double diagonal(int m) const override;
+
     /** This function returns the index \f$m\f$ of the cell that contains the position
         \f${\bf{r}}\f$. For a cartesian grid, the function determines the bin indices in the X, Y
         and Z directions and calculates the correct index based on these indices. */

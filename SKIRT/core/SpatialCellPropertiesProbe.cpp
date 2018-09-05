@@ -45,7 +45,7 @@ void SpatialCellPropertiesProbe::probeSetup()
         {
             Position p = grid->centralPositionInCell(m);
             double V = ms->volume(m);
-            double tau = cbrt(V) * ms->opacityExt(wavelength(), m);
+            double tau = grid->diagonal(m) * ms->opacityExt(wavelength(), m);
             double dust = 0.;
             double elec = 0.;
             double gas = 0.;

@@ -43,6 +43,13 @@ double CartesianSpatialGrid::volume(int m) const
 
 //////////////////////////////////////////////////////////////////////
 
+double CartesianSpatialGrid::diagonal(int m) const
+{
+    return box(m).diagonal();
+}
+
+//////////////////////////////////////////////////////////////////////
+
 int CartesianSpatialGrid::cellIndex(Position bfr) const
 {
     int i = NR::locateFail(_xv, bfr.x());

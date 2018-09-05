@@ -198,7 +198,7 @@ vector<TreeNode*> DensityTreePolicy::constructTree(TreeNode* root)
     }
 
     // recursively subdivide the nodes beyond the minimum level until all nodes satisfy the configured criteria
-    while (level!=maxLevel())
+    while (level!=maxLevel() && lend!=lbeg)
     {
         size_t numEvalNodes = lend-lbeg;
         log->info("Subdividing level " + std::to_string(level) + ": " + std::to_string(numEvalNodes) + " nodes");

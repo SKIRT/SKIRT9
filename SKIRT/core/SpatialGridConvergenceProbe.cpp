@@ -114,7 +114,7 @@ namespace
         // calculate diagonal optical depth for all spatial cells
         int numCells = ms->numCells();
         Array tauV(numCells);
-        for (int m=0; m!=numCells; ++m) tauV[m] = cbrt(ms->volume(m)) * ms->opacityExt(lambda, m);
+        for (int m=0; m!=numCells; ++m) tauV[m] = ms->grid()->diagonal(m) * ms->opacityExt(lambda, m);
 
         // calculate statistics on optical depth
         double tauavg = tauV.sum()/numCells;

@@ -85,6 +85,13 @@ double TreeSpatialGrid::volume(int m) const
 
 ////////////////////////////////////////////////////////////////////
 
+double TreeSpatialGrid::diagonal(int m) const
+{
+    return nodeForCellIndex(m)->diagonal();
+}
+
+////////////////////////////////////////////////////////////////////
+
 int TreeSpatialGrid::cellIndex(Position bfr) const
 {
     const TreeNode* node = root()->leafChild(bfr);

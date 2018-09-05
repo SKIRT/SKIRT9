@@ -46,6 +46,9 @@ public:
     /** This function returns the volume of the cell with index \f$m\f$. */
     double volume(int m) const override;
 
+    /** This function returns the diagonal of the cell with index \f$m\f$. */
+    double diagonal(int m) const override;
+
     /** This function returns the index \f$m\f$ of the cell that contains the position
         \f${\bf{r}}\f$. */
     int cellIndex(Position bfr) const override;
