@@ -44,6 +44,7 @@
 #include "FileBand.hpp"
 #include "FileMesh.hpp"
 #include "FileSED.hpp"
+#include "FileTreeSpatialGrid.hpp"
 #include "FileWavelengthDistribution.hpp"
 #include "FileWavelengthGrid.hpp"
 #include "FrameInstrument.hpp"
@@ -144,6 +145,7 @@
 #include "TorusGeometry.hpp"
 #include "TreePolicy.hpp"
 #include "TreeSpatialGrid.hpp"
+#include "TreeSpatialGridTopologyProbe.hpp"
 #include "TriaxialGeometryDecorator.hpp"
 #include "UniformBoxGeometry.hpp"
 #include "UniformSmoothingKernel.hpp"
@@ -320,6 +322,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<CartesianSpatialGrid>();
     ItemRegistry::add<TreeSpatialGrid>();
     ItemRegistry::add<PolicyTreeSpatialGrid>();
+    ItemRegistry::add<FileTreeSpatialGrid>();
     ItemRegistry::add<AdaptiveMeshSpatialGrid>();
     ItemRegistry::add<VoronoiMeshSpatialGrid>();
 
@@ -403,6 +406,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<LaunchedPacketsProbe>();
     ItemRegistry::add<SpatialGridPlotProbe>();
     ItemRegistry::add<SpatialGridConvergenceProbe>();
+    ItemRegistry::add<TreeSpatialGridTopologyProbe>();
     ItemRegistry::add<DefaultMediaDensityCutsProbe>();
     ItemRegistry::add<OpticalDepthMapProbe>();
     ItemRegistry::add<SpatialCellPropertiesProbe>();

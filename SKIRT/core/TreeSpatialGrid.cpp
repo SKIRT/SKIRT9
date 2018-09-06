@@ -202,6 +202,32 @@ void TreeSpatialGrid::path(SpatialGridPath* path) const
 
 ////////////////////////////////////////////////////////////////////
 
+namespace
+{
+    // this function writes a "0" for a leaf node or a "1" for a nonleaf node
+    // followed by the recursive topological representation of its children
+    void writeTopologyForNode(TreeNode* node, TextOutFile* outfile)
+    {
+        if (node->isChildless()) outfile->writeLine("0");
+        else
+        {
+            outfile->writeLine("1");
+            for (auto child : node->children()) writeTopologyForNode(child, outfile);
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
+void TreeSpatialGrid::writeTopology(TextOutFile* outfile) const
+{
+    outfile->writeLine("# Topology for tree spatial grid with " + std::to_string(numCells()) + " cells");
+    outfile->writeLine(std::to_string(root()->children().size()));  // zero if the root node is not subdivided
+    writeTopologyForNode(root(), outfile);
+}
+
+////////////////////////////////////////////////////////////////////
+
 void TreeSpatialGrid::write_xy(SpatialGridPlotFile* outfile) const
 {
     // Output the root cell and all leaf cells that are close to the section plane

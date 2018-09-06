@@ -7,6 +7,7 @@
 #define TREESPATIALGRID_HPP
 
 #include "BoxSpatialGrid.hpp"
+class TextOutFile;
 class TreeNode;
 
 //////////////////////////////////////////////////////////////////////
@@ -122,6 +123,15 @@ public:
         To determine the cell index of the "next cell" in this algorithm, the function uses the
         neighbor lists constructed for each tree node during setup. */
     void path(SpatialGridPath* path) const override;
+
+    /** This function writes the topology of the tree to the specified text file in a simple,
+        proprietary format. After a brief descriptive header, it writes lines that each contain
+        just a single integer number. The first line specifies the number of children for each
+        nonleaf node (2 for a binary tree, 8 for an octtree, or 0 if the root node has not been
+        subdivided). The second line contains 1 if the root node is subdivided, or 0 if not. The
+        following lines similarly contain 1 or 0 indicating subdivision for any children of the
+        preceding node, recursively, in a depth-first traversal of the tree. */
+    void writeTopology(TextOutFile* outfile) const;
 
 protected:
     /** This function writes the intersection of the grid with the xy plane to the specified
