@@ -610,8 +610,7 @@ bool SchemaDef::isAllowed(string type, const std::unordered_set<string>& keys) c
     }
 
     // evaluate the combined expression
-    if (condition.empty()) return true;
-    return BooleanExpression::evaluate(condition, keys);
+    return BooleanExpression::evaluateBoolean(condition, [&keys](string key) { return keys.count(key) > 0; });
 }
 
 ////////////////////////////////////////////////////////////////////

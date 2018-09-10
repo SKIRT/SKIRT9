@@ -5,6 +5,7 @@
 
 #include "BooleanExpression.hpp"
 #include "FatalError.hpp"
+#include "StringUtils.hpp"
 #include <sstream>
 
 ////////////////////////////////////////////////////////////////////
@@ -13,7 +14,7 @@ namespace
 {
     bool isLetterOrDigit(int c)
     {
-        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')  || (c >= '0' && c <= '9');
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9');
     }
 
     class BooleanExpressionParser final
@@ -76,12 +77,12 @@ namespace
                 string identifier(1, c);
                 while (isLetterOrDigit(_in.peek())) identifier += _in.get();
 
-                // check presence in the identifier list
+                // get its value from the call-back function
                 result = _isTrue(identifier);
             }
 
             // unsupported character
-            else throw FATALERROR("Invalid Boolean expression");;
+            else throw FATALERROR("Invalid Boolean expression");
 
             return result;
         }
@@ -90,21 +91,30 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-bool BooleanExpression::evaluate(string expression, std::function<bool(string)> isIdentifierTrue)
+bool BooleanExpression::evaluateBoolean(string expression, std::function<bool(string)> isIdentifierTrue)
 {
+    if (expression.empty()) return true;
     BooleanExpressionParser parser(expression, isIdentifierTrue);
     return parser.evaluate();
 }
 
 ////////////////////////////////////////////////////////////////////
 
-bool BooleanExpression::evaluate(string expression, const std::unordered_set<string>& trueIdentifiers)
+string BooleanExpression::evaluateConditionalValue(string expression, std::function<bool(string)> isIdentifierTrue)
 {
-    BooleanExpressionParser parser(expression, [&trueIdentifiers] (string identifier)
+    // loop over all pairs in the expression
+    for (string pair : StringUtils::split(expression, ";"))
     {
-        return trueIdentifiers.count(identifier) > 0;
-    });
-    return parser.evaluate();
+        auto splitpair = StringUtils::split(pair, ":");
+        if (splitpair.size() > 2) throw FATALERROR("Invalid conditional value expression");
+
+        // if there is no colon, this pair becomes the result
+        if (splitpair.size() == 1) return pair;
+
+        // if there is a colon, evaluate the condition
+        if (evaluateBoolean(splitpair[0], isIdentifierTrue)) return splitpair[1];
+    }
+    return string();
 }
 
 ////////////////////////////////////////////////////////////////////

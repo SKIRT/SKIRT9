@@ -58,10 +58,9 @@ bool PropertyHandler::isRelevant() const
 {
     // get the expression
     string expression = property()->relevantIf();
-    if (expression.empty()) return true;
 
     // evaluate the expression
-    return BooleanExpression::evaluate(expression, [this] (string name)
+    return BooleanExpression::evaluateBoolean(expression, [this] (string name)
         {
             // construct a handler for the target property and evaluate our relevancy
             auto handler = schema()->createPropertyHandler(target(), name);
