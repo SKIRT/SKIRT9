@@ -20,7 +20,7 @@ bool StringPropertyHandler::isTrueInCondition() const
 
 bool StringPropertyHandler::isOptional() const
 {
-    return StringUtils::toBool(property()->optional()) && property()->defaultValue().empty();
+    // TO DO return StringUtils::toBool(property()->optional()) && property()->defaultValue().empty();
 }
 
 ////////////////////////////////////////////////////////////////////

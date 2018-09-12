@@ -25,7 +25,7 @@
     implements the core aspects of the photon packet life-cycle, and manages the iterative
     processes in the simulation (including phases, iterations and segments).
 
-    TODO: more documentation ...
+    TO DO: more documentation ...
 
     The MonteCarloSimulation class also holds the non-discoverable \em config property, which is
     automatically set to an instance of the Configuration class. The setup() function of the config
@@ -44,7 +44,7 @@ class MonteCarloSimulation : public Simulation
 
     PROPERTY_ITEM(mediumSystem, MediumSystem, "the medium system")
         ATTRIBUTE_DEFAULT_VALUE(mediumSystem, "MediumSystem")
-        ATTRIBUTE_OPTIONAL(mediumSystem)
+        ATTRIBUTE_REQUIRED_IF(mediumSystem, "false")
 
     PROPERTY_ITEM(instrumentSystem, InstrumentSystem, "the instrument system")
         ATTRIBUTE_DEFAULT_VALUE(instrumentSystem, "InstrumentSystem")

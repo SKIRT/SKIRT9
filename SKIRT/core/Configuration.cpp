@@ -71,7 +71,7 @@ void Configuration::setupSelfBefore()
         _hasPolarization = numPolarization!=0;
     }
 
-    // TODO: retrieve options from and verify configuration for other modes
+    // TO DO: retrieve options from and verify configuration for other modes
 
     // in case emulation mode has been set before our setup() was called, perform the emulation overrides again
     if (emulationMode()) setEmulationMode();
@@ -83,8 +83,8 @@ void Configuration::setEmulationMode()
 {
     _emulationMode = true;
     _numPrimaryPackets = 0.;
-    // TODO: set other number of packet variables to zero
-    // TODO: force the number of state iterations to one, if applicable
+    // TO DO: set other number of packet variables to zero
+    // TO DO: force the number of state iterations to one, if applicable
 }
 
 ////////////////////////////////////////////////////////////////////

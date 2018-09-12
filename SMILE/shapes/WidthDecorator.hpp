@@ -15,7 +15,7 @@
 class WidthDecorator : public ShapeDecorator
 {
     ITEM_CONCRETE(WidthDecorator, ShapeDecorator, "a decorator that sets the line width of a shape or group of shapes")
-        ATTRIBUTE_ALLOWED_IF(WidthDecorator, "!PolygonShape")
+        ATTRIBUTE_TYPE_ALLOWED_IF(WidthDecorator, "!PolygonShape")
     PROPERTY_DOUBLE(width, "the line width of the decorated shape or group of shapes")
         ATTRIBUTE_MIN_VALUE(width, "0")
         ATTRIBUTE_MAX_VALUE(width, "1")

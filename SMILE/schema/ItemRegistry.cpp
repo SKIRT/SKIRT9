@@ -74,9 +74,23 @@ void ItemRegistry::beginType(const char* type, const char* baseType, const char*
 
 ////////////////////////////////////////////////////////////////////
 
-void ItemRegistry::setAllowedIf(const char* expression)
+void ItemRegistry::setTypeAllowedIf(const char* expression)
 {
     _targetType->setAllowedIf(expression);
+}
+
+////////////////////////////////////////////////////////////////////
+
+void ItemRegistry::setTypeDisplayedIf(const char* expression)
+{
+    _targetType->setDisplayedIf(expression);
+}
+
+////////////////////////////////////////////////////////////////////
+
+void ItemRegistry::setTypeInsert(const char* expression)
+{
+    _targetType->setInsert(expression);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -125,13 +139,6 @@ void ItemRegistry::endEnum()
 
 ////////////////////////////////////////////////////////////////////
 
-void ItemRegistry::setSilent()
-{
-    _targetProperty->setSilent("true");
-}
-
-////////////////////////////////////////////////////////////////////
-
 void ItemRegistry::setRelevantIf(const char* expression)
 {
     _targetProperty->setRelevantIf(expression);
@@ -139,9 +146,23 @@ void ItemRegistry::setRelevantIf(const char* expression)
 
 ////////////////////////////////////////////////////////////////////
 
-void ItemRegistry::setOptional()
+void ItemRegistry::setDisplayedIf(const char* expression)
 {
-    _targetProperty->setOptional("true");
+    _targetProperty->setDisplayedIf(expression);
+}
+
+////////////////////////////////////////////////////////////////////
+
+void ItemRegistry::setRequiredIf(const char* expression)
+{
+    _targetProperty->setRequiredIf(expression);
+}
+
+////////////////////////////////////////////////////////////////////
+
+void ItemRegistry::setInsert(const char* expression)
+{
+    _targetProperty->setInsert(expression);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -177,13 +198,6 @@ void ItemRegistry::setQuantity(const char* value)
 void ItemRegistry::setBase(const char* type)
 {
     _targetProperty->setBase(type);
-}
-
-////////////////////////////////////////////////////////////////////
-
-void ItemRegistry::setTrueIf(const char* enumName)
-{
-    _targetProperty->setTrueIf(enumName);
 }
 
 ////////////////////////////////////////////////////////////////////

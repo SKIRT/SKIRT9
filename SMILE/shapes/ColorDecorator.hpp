@@ -30,9 +30,8 @@ class ColorDecorator : public ShapeDecorator
 
     ITEM_CONCRETE(ColorDecorator, ShapeDecorator, "a decorator that sets the color of a shape or group of shapes")
     PROPERTY_ENUM(color, Color, "the color of the decorated shape or group of shapes")
-        ATTRIBUTE_TRUE_IF(color, "Custom")
     PROPERTY_DOUBLE_LIST(rgb, "the red, green, blue intensities of the decorated shape or group of shapes")
-        ATTRIBUTE_RELEVANT_IF(rgb, "color")
+        ATTRIBUTE_RELEVANT_IF(rgb, "colorCustom")
         ATTRIBUTE_MIN_VALUE(rgb, "0")
         ATTRIBUTE_MAX_VALUE(rgb, "1")
         ATTRIBUTE_DEFAULT_VALUE(rgb, "0.5, 0.5, 0.5")

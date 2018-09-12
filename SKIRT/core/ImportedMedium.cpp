@@ -14,7 +14,6 @@ void ImportedMedium::setupSelfAfter()
 
     // create the snapshot with preconfigured mass or density column
     _snapshot = createAndOpenSnapshot();
-    // _holdsNumber = ???;  TO DO
 
     // add optional columns if applicable
     if (_importMetallicity) _snapshot->importMetallicity();

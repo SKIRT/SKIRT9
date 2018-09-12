@@ -26,15 +26,15 @@ class Random;
     tessellates the spatial domain of the simulation into cells, and manages the medium state for
     each spatial cell in this grid.
 
-    TODO: add more info on managing the medium state. */
+    TO DO: add more info on managing the medium state. */
 class MediumSystem : public SimulationItem
 {
     ITEM_CONCRETE(MediumSystem, SimulationItem, "a medium system")
-        ATTRIBUTE_ALLOWED_IF(MediumSystem, "ExtinctionOnlyMode")
+        ATTRIBUTE_TYPE_ALLOWED_IF(MediumSystem, "ExtinctionOnlyMode")
 
     PROPERTY_ITEM_LIST(media, Medium, "the transfer media")
         ATTRIBUTE_DEFAULT_VALUE(media, "GeometricMedium")
-        ATTRIBUTE_OPTIONAL(media)
+        ATTRIBUTE_REQUIRED_IF(media, "false")
 
     PROPERTY_ITEM(grid, SpatialGrid, "the spatial grid")
         ATTRIBUTE_DEFAULT_VALUE(grid, "CartesianSpatialGrid")

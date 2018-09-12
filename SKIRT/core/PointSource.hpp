@@ -35,11 +35,11 @@ class PointSource : public NormalizedSource
 
     PROPERTY_ITEM(angularDistribution, AngularDistribution, "the angular luminosity distribution of the emission")
         ATTRIBUTE_DEFAULT_VALUE(angularDistribution, "IsotropicAngularDistribution")
-        ATTRIBUTE_OPTIONAL(angularDistribution)
+        ATTRIBUTE_REQUIRED_IF(angularDistribution, "false")
 
     PROPERTY_ITEM(polarizationProfile, PolarizationProfile, "the polarization profile of the emission")
         ATTRIBUTE_DEFAULT_VALUE(polarizationProfile, "NoPolarizationProfile")
-        ATTRIBUTE_OPTIONAL(polarizationProfile)
+        ATTRIBUTE_REQUIRED_IF(polarizationProfile, "false")
 
     ITEM_END()
 

@@ -30,7 +30,7 @@ class Instrument : public SimulationItem
     PROPERTY_STRING(instrumentName, "the name for this instrument")
 
     PROPERTY_ITEM(wavelengthGrid, WavelengthGrid, "the wavelength grid for this instrument")
-        ATTRIBUTE_OPTIONAL(wavelengthGrid)
+        ATTRIBUTE_REQUIRED_IF(wavelengthGrid, "false")
 
     ATTRIBUTE_SUB_PROPERTIES_HERE(MonteCarloSimulation)
 

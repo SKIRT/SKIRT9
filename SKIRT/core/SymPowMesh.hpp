@@ -23,7 +23,6 @@
 class SymPowMesh : public MoveableMesh
 {
     ITEM_CONCRETE(SymPowMesh, MoveableMesh, "a symmetric power-law mesh")
-        ATTRIBUTE_ALLOWED_IF(SymPowMesh, "!TwoPhaseDustGrid")
 
     PROPERTY_DOUBLE(ratio, "the bin width ratio between the outermost and the innermost bins")
         ATTRIBUTE_MIN_VALUE(ratio, "]0")

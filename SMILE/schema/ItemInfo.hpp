@@ -82,6 +82,28 @@
     the last ItemInfo macro with an explicit reference to the documented property as shown
     in the example below.
 
+    <B><I> Conditionals </I></B>
+
+    The SMILE system supports dynamically adjusting displayed options and default values to choices
+    made earlier in the configuration process. These earlier choices may represent various aspects
+    of the configuration, including the level of expertise selected by the user, some overall mode
+    configured early on, or the value of the option just preceding this one.
+
+    When processing a SMILE dataset, the system maintains two sets of names with a different scope.
+    The global set contains names that stay around for the duration of the configuration session.
+    The local set contains names that stay around only while considering the properties of a
+    particular type; a fresh local set is created for each type instance. By definition, the global
+    set contains names that start with an uppercase letter, and the local set contains names that
+    start with a lowercase letter. As a result, the two sets form disjoint namespaces. After the
+    first character (which must be a letter), a name can include any mix of letters and digits (and
+    no other characters).
+
+    Names are never removed from a set (although the current local set is regularly discarded and
+    replaced by a new one as a whole). Names are inserted in each of these sets as the dataset gets
+    processed according to the rules set forth by the SMILE specification. Boolean expressions and
+    conditional value expressions can then be evaluated as they occur in type and property
+    attributes, replacing names contained in one of the sets by true, and other names by false.
+
     <B><I> Example </I></B>
 
     \verbatim
@@ -99,9 +121,8 @@
 
         ITEM_CONCRETE(ColorDecorator, ShapeDecorator, "a decorator that sets the color of a shape")
         PROPERTY_ENUM(color, Color, "the color of the decorated shape")
-        ATTRIBUTE_TRUE_IF(color, Custom)
         PROPERTY_DOUBLE_LIST(rgb, "the red, green, blue intensities of the decorated shape")
-        ATTRIBUTE_RELEVANT_IF(rgb, "color")
+        ATTRIBUTE_RELEVANT_IF(rgb, "colorCustom")
         ITEM_END()
 
         /// \fn rgb
@@ -386,21 +407,52 @@ private: \
 
 /** This macro sets the \em allowedIf attribute for the item type being declared. The first
     argument repeats the type name. The second argument specifies the Boolean expression to be set
-    as the \em allowedIf attribute value (as a quoted string). The Boolean expression uses names of
-    other types defined in the schema. The value of the expression in an actual dataset is
-    determined by replacing each name by true if the type is present in the dataset, and false if
-    it is not. The values of \em allowedIf attributes for all direct and indirect base types of
-    this type are ANDed with this value. The final value indicates whether this type is allowed in
-    that dataset. */
-#define ATTRIBUTE_ALLOWED_IF(itemtype, boolexpr) \
+    as the \em allowedIf attribute value (as a quoted string). The values of \em allowedIf
+    attributes for all direct and indirect base types of this type are ANDed with this value. The
+    final value (after evaluation against the names in the current global and local name sets)
+    indicates whether this type is allowed in that dataset. */
+#define ATTRIBUTE_TYPE_ALLOWED_IF(itemtype, boolexpr) \
         ii_loadItemInfo_allowedIf(); \
     } \
     /** \class itemtype itemtype itemtype This item type is allowed only if the Boolean expression boolexpr
-        evaluates to true after replacing the type names by true or false depending on their presence. */ \
+        evaluates to true after replacing the names by true or false depending on their presence. */ \
 private: \
     static void ii_loadItemInfo_allowedIf() \
     { \
-        ItemRegistry::setAllowedIf(boolexpr);
+        ItemRegistry::setTypeAllowedIf(boolexpr);
+
+/** This macro sets the \em displayedIf attribute for the item type being declared. The first
+    argument repeats the type name. The second argument specifies the Boolean expression to be set
+    as the \em displayedIf attribute value (as a quoted string). The values of \em displayedIf
+    attributes for all direct and indirect base types of this type are ANDed with this value. The
+    final value (after evaluation against the names in the current global and local name sets)
+    indicates whether this type is displayed as one of the choices. */
+#define ATTRIBUTE_TYPE_DISPLAYED_IF(itemtype, boolexpr) \
+        ii_loadItemInfo_displayedIf(); \
+    } \
+    /** \class itemtype itemtype itemtype This item type is displayed only if the Boolean expression boolexpr
+        evaluates to true after replacing the names by true or false depending on their presence. */ \
+private: \
+    static void ii_loadItemInfo_displayedIf() \
+    { \
+        ItemRegistry::setTypeDisplayedIf(boolexpr);
+
+/** This macro sets the \em insert attribute for the item type being declared. The first argument
+    repeats the type name. The second argument specifies the conditional value expression to be set
+    as the \em insert attribute value (as a quoted string). The value of the expression (after
+    evaluation against the names in the current global and local name sets) provides a list of
+    extra names to be inserted in the global and/or local name set when an item of this type is
+    added to the dataset, in addition to the names of the type and its ancestors. */
+#define ATTRIBUTE_TYPE_INSERT(itemtype, valexpr) \
+        ii_loadItemInfo_insert(); \
+    } \
+    /** \class itemtype itemtype itemtype When an item of this type is used, the names provided by
+        the conditional value expression valexpr are inserted into the name sets used for
+        evaluating Boolean expressions. */ \
+private: \
+    static void ii_loadItemInfo_insert() \
+    { \
+        ItemRegistry::setTypeInsert(valexpr);
 
 /** This macro sets the \em subPropertyIndex attribute for the item type being declared to a value
     depending on the position of the macro in the list of property definitions. As a result,
@@ -419,56 +471,83 @@ private: \
 
 // ================== PROPERTY ATTRIBUTES ==================
 
-/** This macro sets the \em silent attribute for the most recently declared property to true,
-    indicating that the property should be hidden from non-expert users. The first and only
-    argument repeats the property name (as an identifier). */
-#define ATTRIBUTE_SILENT(propname) \
-        ii_loadItemInfo_##propname##_silent(); \
-    } \
-    /** \function{propname()} This property is silent, i.e. it should be hidden from non-expert users. */ \
-private: \
-    static void ii_loadItemInfo_##propname##_silent() \
-    { \
-        ItemRegistry::setSilent();
-
 /** This macro sets the \em relevantIf attribute for the most recently declared property. The first
     argument repeats the property name (as an identifier). The second argument specifies the
     Boolean expression to be set as the \em relevantIf attribute value (as a quoted string). In
     other words, the property will be relevant only if the specified Boolean expression evaluates
-    to true after replacing the property names by their current Booleanized values. */
+    to true against the names in the current global and local name sets. */
 #define ATTRIBUTE_RELEVANT_IF(propname, boolexpr) \
         ii_loadItemInfo_##propname##_relevantIf(); \
     } \
     /** \function{propname()} This property is relevant only if the Boolean expression boolexpr evaluates to true
-        after replacing the property names by their current Booleanized values. */ \
+        after replacing the names by true or false depending on their presence. */ \
 private: \
     static void ii_loadItemInfo_##propname##_relevantIf() \
     { \
         ItemRegistry::setRelevantIf(boolexpr);
 
-/** This macro sets the \em optional attribute for the most recently declared property to true,
-    indicating that the property can be missing or have an empty value. The first and only argument
-    repeats the property name (as an identifier). */
-#define ATTRIBUTE_OPTIONAL(propname) \
-        ii_loadItemInfo_##propname##_optional(); \
+/** This macro sets the \em displayedIf attribute for the most recently declared property. The first
+    argument repeats the property name (as an identifier). The second argument specifies the
+    Boolean expression to be set as the \em displayedIf attribute value (as a quoted string). In
+    other words, the property will be displayed only if the specified Boolean expression evaluates
+    to true against the names in the current global and local name sets. */
+#define ATTRIBUTE_DISPLAYED_IF(propname, boolexpr) \
+        ii_loadItemInfo_##propname##_displayedIf(); \
     } \
-    /** \function{propname()} This property is optional, i.e. it can be missing or have an empty value. */ \
+    /** \function{propname()} This property is displayed only if the Boolean expression boolexpr evaluates to true
+        after replacing the names by true or false depending on their presence. */ \
 private: \
-    static void ii_loadItemInfo_##propname##_optional() \
+    static void ii_loadItemInfo_##propname##_displayedIf() \
     { \
-        ItemRegistry::setOptional();
+        ItemRegistry::setDisplayedIf(boolexpr);
+
+/** This macro sets the \em requiredIf attribute for the most recently declared property. The first
+    argument repeats the property name (as an identifier). The second argument specifies the
+    Boolean expression to be set as the \em requiredIf attribute value (as a quoted string). In
+    other words, the property is required if the specified Boolean expression evaluates
+    to true against the names in the current global and local name sets, and optional otherwise. */
+#define ATTRIBUTE_REQUIRED_IF(propname, boolexpr) \
+        ii_loadItemInfo_##propname##_requiredIf(); \
+    } \
+    /** \function{propname()} This property is required only if the Boolean expression boolexpr evaluates to true
+        after replacing the names by true or false depending on their presence. */ \
+private: \
+    static void ii_loadItemInfo_##propname##_requiredIf() \
+    { \
+        ItemRegistry::setRequiredIf(boolexpr);
+
+/** This macro sets the \em insert attribute for the most recently declared property. The first
+    argument repeats the property name (as an identifier). The second argument specifies the
+    conditional value expression to be set as the \em insert attribute value (as a quoted string).
+    The value of the expression (after evaluation against the names in the current global and local
+    name sets) provides a list of extra names to be inserted in the global and/or local name set
+    when a value is entered for this property, in addition to the name automatically associated
+    with the property. */
+#define ATTRIBUTE_INSERT(propname, valexpr) \
+        ii_loadItemInfo_##propname##_insert(); \
+    } \
+    /** \function{propname()} When a value is entered for this property, the names provided by the
+        conditional value expression valexpr are inserted into the name sets used for evaluating
+        Boolean expressions. */ \
+private: \
+    static void ii_loadItemInfo_##propname##_insert() \
+    { \
+        ItemRegistry::setInsert(valexpr);
 
 /** This macro sets the default value for the most recently declared property. The first argument
     repeats the property name (as an identifier). The second argument specifies the default value
-    (as a quoted string) in a format that can be properly converted to the property data type. */
-#define ATTRIBUTE_DEFAULT_VALUE(propname, valstring) \
+    (as a quoted string) in the form of a conditional value expression, which is evaluated against
+    the names in the current global and local name sets. Each value in the conditional expression
+    must have a format that can be properly converted to the property data type. */
+#define ATTRIBUTE_DEFAULT_VALUE(propname, valexpr) \
         ii_loadItemInfo_##propname##_defaultValue(); \
     } \
-    /** \function{propname()} The default value for this property is valstring. */ \
+    /** \function{propname()} The default value for this property is given by the conditional value
+        expression valexpr. */ \
 private: \
     static void ii_loadItemInfo_##propname##_defaultValue() \
     { \
-        ItemRegistry::setDefaultValue(valstring);
+        ItemRegistry::setDefaultValue(valexpr);
 
 /** This macro sets the minimum value for the most recently declared property. The first argument
     repeats the property name (as an identifier). The second argument specifies the minimum value
@@ -509,20 +588,6 @@ private: \
     static void ii_loadItemInfo_##propname##_quantity() \
     { \
         ItemRegistry::setQuantity(quantityname);
-
-/** This macro sets the \em trueIf attribute for the most recently declared property, which must
-    have an enumeration data type. The first argument repeats the property name (as an identifier).
-    The second argument specifies the enumeration value to be set as the \em trueIf attribute value
-    (as a quoted string). In other words, the property will evaluate to true in relevancy tests if
-    it is set to the specified enumeration value. */
-#define ATTRIBUTE_TRUE_IF(propname, enumvalstring) \
-        ii_loadItemInfo_##propname##_trueIf(); \
-    } \
-    /** \function{propname()} This property evaluates to true in relevancy tests if it is set to enumvalue. */ \
-private: \
-    static void ii_loadItemInfo_##propname##_trueIf() \
-    { \
-        ItemRegistry::setTrueIf(enumvalstring);
 
 ////////////////////////////////////////////////////////////////////
 

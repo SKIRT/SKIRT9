@@ -21,7 +21,6 @@
 class PowMesh : public MoveableMesh
 {
     ITEM_CONCRETE(PowMesh, MoveableMesh, "a power-law mesh")
-        ATTRIBUTE_ALLOWED_IF(PowMesh, "!TwoPhaseDustGrid")
 
     PROPERTY_DOUBLE(ratio, "the bin width ratio between the last and the first bin")
         ATTRIBUTE_MIN_VALUE(ratio, "]0")

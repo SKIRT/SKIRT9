@@ -49,9 +49,19 @@ public:
     /** Sets the name of the immediate base type (use the empty string for the root type). */
     void setBase(string base) { _base = base; }
 
-    /** Sets a Boolean expression using names of other types that indicates whether items of the
-        type are allowed in the dataset. An empty string means always allowed. */
+    /** Sets a Boolean expression that indicates whether items of the type are allowed. An empty
+        string means always allowed. */
     void setAllowedIf(string allowedIf) { _allowedIf = allowedIf; }
+
+    /** Sets a Boolean expression that indicates whether items of the type are displayed. An empty
+        string means always displayed. */
+    void setDisplayedIf(string displayedIf) { _displayedIf = displayedIf; }
+
+    /** Sets a conditional value expression providing a list of extra names to be inserted in the
+        global and/or local name set when an item of this type is added to the dataset, in addition
+        to the names of the type and its ancestors. An empty string means that no extra names will
+        be added. */
+    void setInsert(string insert) { _insert = insert; }
 
     /** Sets the flag indicating that this is a concrete type rather than an abstract type (which
         is the default). */
@@ -97,9 +107,19 @@ public:
     /** Returns the name of the immediate base type, or the empty string for the root type. */
     string base() const { return _base; }
 
-    /** Returns a Boolean expression using names of other types that indicates whether items of the
-        type are allowed in the dataset. An empty string means always allowed. */
+    /** Returns a Boolean expression that indicates whether items of the type are allowed. An empty
+        string means always allowed. */
     string allowedIf() const { return _allowedIf; }
+
+    /** Returns a Boolean expression that indicates whether the type is displayed. An empty string
+        means always displayed. */
+    string displayedIf() const { return _displayedIf; }
+
+    /** Returns a conditional value expression providing a list of extra names to be inserted in
+        the global and/or local name set when an item of this type is added to the dataset, in
+        addition to the names of the type and its ancestors. An empty string means that no extra
+        names will be added. */
+    string insert() const { return _insert; }
 
     /** Returns true if this is a concrete type, and false if this is an abstract type. */
     bool concrete() const { return _concrete; }
@@ -130,7 +150,9 @@ private:
     string _name;           // the name of the type
     string _title;          // a description for display to a user
     string _base;           // the name of the immediate base type, or the empty string for the root type
-    string _allowedIf;      // a Boolean expression using names of other types, or the empty string
+    string _allowedIf;      // a Boolean expression indicating whether items of this type are allowed
+    string _displayedIf;    // a Boolean expression indicating whether this type is displayed
+    string _insert;         // a conditional value expression providing a list of extra names to be inserted
     bool _concrete{false};  // true if this is a concrete type
     int _subPropertyIndex{-1};            // if nonnegative, subproperties are inserted before the property
                                           // with the specified index rather than added at the end of the list

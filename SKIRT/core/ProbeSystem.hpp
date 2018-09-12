@@ -60,7 +60,7 @@ class ProbeSystem : public SimulationItem
     ITEM_CONCRETE(ProbeSystem, SimulationItem, "a probe system")
 
     PROPERTY_ITEM_LIST(probes, Probe, "the probes")
-        ATTRIBUTE_OPTIONAL(probes)
+        ATTRIBUTE_REQUIRED_IF(probes, "false")
 
     ITEM_END()
 

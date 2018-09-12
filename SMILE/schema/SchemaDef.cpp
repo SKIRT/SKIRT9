@@ -139,6 +139,8 @@ SchemaDef::SchemaDef(string filePath)
                 def.setTitle(reader.attributeValue("title"));
                 def.setBase(reader.attributeValue("base"));
                 def.setAllowedIf(reader.attributeValue("allowedIf"));
+                def.setDisplayedIf(reader.attributeValue("displayedIf"));
+                def.setInsert(reader.attributeValue("insert"));
                 if (!reader.attributeValue("subPropertyIndex").empty())
                     def.setSubPropertyIndex(StringUtils::toInt(reader.attributeValue("subPropertyIndex")));
 
@@ -156,15 +158,15 @@ SchemaDef::SchemaDef(string filePath)
                         auto& propDef = def.addPropertyDef(reader.elementName(), name, reader.attributeValue("title"));
 
                         // add further property info from element attributes
-                        propDef.setSilent(reader.attributeValue("silent"));
                         propDef.setRelevantIf(reader.attributeValue("relevantIf"));
-                        propDef.setOptional(reader.attributeValue("optional"));
+                        propDef.setDisplayedIf(reader.attributeValue("displayedIf"));
+                        propDef.setRequiredIf(reader.attributeValue("requiredIf"));
+                        propDef.setInsert(reader.attributeValue("insert"));
                         propDef.setDefaultValue(reader.attributeValue("default"));
                         propDef.setMinValue(reader.attributeValue("min"));
                         propDef.setMaxValue(reader.attributeValue("max"));
                         propDef.setQuantity(reader.attributeValue("quantity"));
                         propDef.setBase(reader.attributeValue("base"));
-                        propDef.setTrueIf(reader.attributeValue("trueIf"));
 
                         // for enumeration properties, read the elements defining the enumeration values
                         if (propDef.type() == "EnumProperty")
@@ -314,6 +316,8 @@ namespace
         if (tdef.subPropertyIndex() >= 0)
             writer.writeAttribute("subPropertyIndex", std::to_string(tdef.subPropertyIndex()));
         if (!tdef.allowedIf().empty()) writer.writeAttribute("allowedIf", tdef.allowedIf());
+        if (!tdef.displayedIf().empty()) writer.writeAttribute("displayedIf", tdef.displayedIf());
+        if (!tdef.insert().empty()) writer.writeAttribute("insert", tdef.insert());
 
         // if this type defines properties
         if (tdef.propertyDefs().size())
@@ -329,15 +333,15 @@ namespace
                 writer.writeStartElement(pdef.type());
                 writer.writeAttribute("name", pdef.name());
                 writer.writeAttribute("title", pdef.title());
-                if (!pdef.silent().empty()) writer.writeAttribute("silent", pdef.silent());
                 if (!pdef.relevantIf().empty()) writer.writeAttribute("relevantIf", pdef.relevantIf());
-                if (!pdef.optional().empty()) writer.writeAttribute("optional", pdef.optional());
+                if (!pdef.displayedIf().empty()) writer.writeAttribute("displayedIf", pdef.displayedIf());
+                if (!pdef.requiredIf().empty()) writer.writeAttribute("requiredIf", pdef.requiredIf());
+                if (!pdef.insert().empty()) writer.writeAttribute("insert", pdef.insert());
                 if (!pdef.defaultValue().empty()) writer.writeAttribute("default", pdef.defaultValue());
                 if (!pdef.minValue().empty()) writer.writeAttribute("min", pdef.minValue());
                 if (!pdef.maxValue().empty()) writer.writeAttribute("max", pdef.maxValue());
                 if (!pdef.quantity().empty()) writer.writeAttribute("quantity", pdef.quantity());
                 if (!pdef.base().empty()) writer.writeAttribute("base", pdef.base());
-                if (!pdef.trueIf().empty()) writer.writeAttribute("trueIf", pdef.trueIf());
 
                 // if the property is an enumeration
                 if (pdef.enumNames().size())
@@ -594,23 +598,35 @@ vector<string> SchemaDef::titles(const vector<string>& types) const
 
 ////////////////////////////////////////////////////////////////////
 
-bool SchemaDef::isAllowed(string type, const std::unordered_set<string>& keys) const
+namespace
 {
-    // combine all "AllowedIf" attributes inherited by the type
+    // combine two Boolean expressions into a single one with the "and" operator
+    void addAndSegment(string& condition, string segment)
+    {
+        if (!segment.empty())
+        {
+            // conditions are evaluated from left to right,
+            // so there is no need for parenthesis around the left-hand-side operand
+            if (!condition.empty()) condition += "&";
+            condition += "(" + segment + ")";
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
+string SchemaDef::allowedAndDisplayed(string type) const
+{
+    // combine all "allowedIf" and "displayedIf" attributes inherited by the type
     string condition;
     while (!type.empty())
     {
         auto& def = typeDef(type);
-        if (!def.allowedIf().empty())
-        {
-            if (!condition.empty()) condition += "&";
-            condition += "(" + def.allowedIf() + ")";
-        }
+        addAndSegment(condition, def.allowedIf());
+        addAndSegment(condition, def.displayedIf());
         type = def.base();
     }
-
-    // evaluate the combined expression
-    return BooleanExpression::evaluateBoolean(condition, [&keys](string key) { return keys.count(key) > 0; });
+    return condition;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -647,18 +663,6 @@ vector<string> SchemaDef::descendants(string type) const
     for (string candidate : _concreteTypes)
     {
         if (inherits(candidate, type)) result.push_back(candidate);
-    }
-    return result;
-}
-
-////////////////////////////////////////////////////////////////////
-
-vector<string> SchemaDef::allowedDescendants(string type, const std::unordered_set<string>& keys) const
-{
-    vector<string> result;
-    for (string candidate : _concreteTypes)
-    {
-        if (inherits(candidate, type) && isAllowed(candidate, keys)) result.push_back(candidate);
     }
     return result;
 }

@@ -13,7 +13,7 @@
 
 bool EnumPropertyHandler::isTrueInCondition() const
 {
-    return property()->trueIf() == value();
+    return false;   /// TO DO
 }
 
 ////////////////////////////////////////////////////////////////////

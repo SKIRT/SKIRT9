@@ -10,7 +10,6 @@
 #include "TypeDef.hpp"
 #include "UnitDef.hpp"
 #include <map>
-#include <unordered_set>
 class Item;
 class PropertyHandler;
 
@@ -133,16 +132,13 @@ public:
         same order. */
     vector<string> titles(const vector<string>& types) const;
 
-    /** Returns true if the specified type is allowed according to the "AllowedIf" attributes in
-        its type definition, as tested against the specified set of keywords. The Boolean
-        expressions in the "AllowedIf" attribute values for the specified type and for any of its
-        base types, recursively, are concatenated with the AND opertator into a single Boolean
-        expression. If there are no "AllowedIf" attributes, the function returns true. Otherwise,
-        the function returns the value of the combined Boolean expression, after replacing an
-        identifier by true if the identifier is found in the specified set of keywords, and by
-        false if it is not. The function throws an error if the specified type is not defined in
-        the schema. */
-    bool isAllowed(string type, const std::unordered_set<string>& keys) const;
+    /** Returns a Boolean expression that, when evaluated against the current global and local name
+        sets, will determine whether the specified type is allowed and displayed. To obtain this
+        result, the Boolean expressions in the "allowedIf" and "displayedIf" attribute values for
+        the specified type and for any of its base types, recursively, are concatenated with the
+        AND opertator into a single Boolean expression. The function throws an error if the
+        specified type is not defined in the schema. */
+    string allowedAndDisplayed(string type) const;
 
     /** Returns true if the first type inherits the second. The function throws an error if the
         first type (the child type) is not defined in the schema. */
@@ -158,11 +154,6 @@ public:
         the schema definition. The function throws an error if the specified type is not defined in
         the schema. */
     vector<string> descendants(string type) const;
-
-    /** Returns a list of concrete types, in the order listed in the schema definition, that
-        inherit the specified type and that are allowed according to conditional rules (see the
-        isAllowed() function) based on the specified set of keywords. */
-    vector<string> allowedDescendants(string type, const std::unordered_set<string>& keys) const;
 
     /** Returns the names of all properties for the specified type, including inherited properties
         for all direct and indirect base types. By default, base type properties are listed first,

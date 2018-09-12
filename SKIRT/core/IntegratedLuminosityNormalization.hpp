@@ -29,14 +29,13 @@ class IntegratedLuminosityNormalization : public LuminosityNormalization
     PROPERTY_ENUM(wavelengthRange, WavelengthRange,
                   "the wavelength range for which to provide the integrated luminosity")
         ATTRIBUTE_DEFAULT_VALUE(wavelengthRange, "Source")
-        ATTRIBUTE_TRUE_IF(wavelengthRange, "Custom")
 
     PROPERTY_DOUBLE(minWavelength, "the shortest wavelength of the integration range")
         ATTRIBUTE_QUANTITY(minWavelength, "wavelength")
         ATTRIBUTE_MIN_VALUE(minWavelength, "1 A")
         ATTRIBUTE_MAX_VALUE(minWavelength, "1 m")
         ATTRIBUTE_DEFAULT_VALUE(minWavelength, "0.09 micron")
-        ATTRIBUTE_RELEVANT_IF(minWavelength, "wavelengthRange")
+        ATTRIBUTE_RELEVANT_IF(minWavelength, "wavelengthRangeCustom")
 
     PROPERTY_DOUBLE(maxWavelength, "the longest wavelength of the integration range")
         ATTRIBUTE_QUANTITY(maxWavelength, "wavelength")

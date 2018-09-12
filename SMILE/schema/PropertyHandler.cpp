@@ -42,7 +42,7 @@ string PropertyHandler::title() const
 
 bool PropertyHandler::isSilent() const
 {
-    return StringUtils::toBool(property()->silent());
+   // TO DO return StringUtils::toBool(property()->silent());
 }
 
 ////////////////////////////////////////////////////////////////////

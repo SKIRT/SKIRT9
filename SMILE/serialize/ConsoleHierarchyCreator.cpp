@@ -87,7 +87,8 @@ namespace
         void visitPropertyHandler(ItemPropertyHandler* handler) override
         {
             // make the user select the appropriate subclass for this property
-            vector<string> choices = _schema->allowedDescendants(handler->baseType(), _keys);
+            // TO DO
+            vector<string> choices; // = _schema->allowedDescendants(handler->baseType(), _keys);
             int choice = Console::promptForChoice(handler->title(), _schema->titles(choices),
                                                   handler->hasDefaultValue(),
                                                   StringUtils::indexOf(choices, handler->defaultType()),
@@ -113,7 +114,8 @@ namespace
         void visitPropertyHandler(ItemListPropertyHandler* handler) override
         {
             // get a list of the subclasses for this property
-            vector<string> choices = _schema->allowedDescendants(handler->baseType(), _keys);
+            // TO DO
+            vector<string> choices; // = _schema->allowedDescendants(handler->baseType(), _keys);
 
             // initialize the property value
             handler->setToEmpty();

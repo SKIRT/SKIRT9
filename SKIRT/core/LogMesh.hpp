@@ -18,7 +18,6 @@
 class LogMesh : public AnchoredMesh
 {
     ITEM_CONCRETE(LogMesh, AnchoredMesh, "a logarithmic mesh")
-        ATTRIBUTE_ALLOWED_IF(LogMesh, "!TwoPhaseDustGrid")
 
     PROPERTY_DOUBLE(centralBinFraction, "the central bin width fraction")
         ATTRIBUTE_MIN_VALUE(centralBinFraction, "]0")

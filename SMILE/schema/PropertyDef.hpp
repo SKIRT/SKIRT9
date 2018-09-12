@@ -44,25 +44,26 @@ public:
     // ================== Setters ==================
 
 public:
-    /** Sets the Boolean string value indicating whether the property should be hidden from
-        non-expert users. The empty string means false; i.e. the property shoud not be hidden. */
-    void setSilent(string value) { _silent = value; }
-
-    /** Sets the Boolean expression indicating whether this property is relevant for a dataset.
-        The expression can use the names of other properties associated with the same type. The
-        value of the expression in an actual dataset is obtained by replacing the property names
-        by their actual "Booleanized" values. If the Boolean expression is empty, the property is
-        always relevant. */
+    /** Sets the Boolean expression indicating whether this property is relevant. If the Boolean
+        expression is empty, the property is always relevant. */
     void setRelevantIf(string value) { _relevantIf = value; }
 
-    /** Sets the Boolean string value indicating whether the property is optional, i.e. can be
-        missing or have an empty value. The empty string means false; i.e. the property is
-        required. */
-    void setOptional(string value) { _optional = value; }
+    /** Sets the Boolean expression indicating whether this property is displayed. If the Boolean
+        expression is empty, the property is always displayed. */
+    void setDisplayedIf(string value) { _displayedIf = value; }
 
-    /** Sets the default value for the property in case the property is missing, in a format
-        compatible with the particular property type. If the string is empty, there is no default
-        value. */
+    /** Sets the Boolean expression indicating whether the property is required. If the Boolean
+        expression is empty, the property is always required. */
+    void setRequiredIf(string value) { _requiredIf = value; }
+
+    /** Sets a conditional value expression providing a list of extra names to be inserted in the
+        global and/or local name set when a value of this item is entered into the dataset, in
+        addition to the name automatically associated with the property. An empty string means that
+        no extra names will be added. */
+    void setInsert(string insert) { _insert = insert; }
+
+    /** Sets the conditional value expression defining the default value for the property in case
+        the property is missing. If the string is empty, there is no default value. */
     void setDefaultValue(string value) { _default = value; }
 
     /** Sets the minimum value for the property, in a format compatible with the particular
@@ -85,9 +86,6 @@ public:
         properties (i.e. properties containing other items of some type), and for those properties
         it should not be left empty. */
     void setBase(string value) { _base = value; }
-
-    /** Sets the enumeration value for which this property is true in "RelevantIf" tests. */
-    void setTrueIf(string value) { _trueIf = value; }
 
     /** Adds a name/title pair for one of the enumeration values defined for this property.
         Enumeration values must be added in order of occurrence in the schema definition. This
@@ -112,21 +110,23 @@ public:
     /** Returns the description for the property for display to a user. */
     string title() const { return _title; }
 
-    /** Returns the Boolean string value indicating whether the property should be hidden from
-        non-expert users. The empty string means false; i.e. the property should not be hidden. */
-    string silent() const { return _silent; }
-
-    /** Returns the Boolean expression indicating whether this property is relevant for a dataset.
-        The expression can use the names of other properties associated with the same type. The
-        value of the expression in an actual dataset is obtained by replacing the property names
-        by their actual "Booleanized" values. If the Boolean expression is empty, the property is
-        always relevant. */
+    /** Returns the Boolean expression indicating whether this property is relevant. If the Boolean
+        expression is empty, the property is always relevant. */
     string relevantIf() const { return _relevantIf; }
 
-    /** Returns the Boolean string value indicating whether the property is optional, i.e. can be
-        missing or have an empty value. The empty string means false; i.e. the property is
-        required. */
-    string optional() const { return _optional; }
+    /** Returns the Boolean expression indicating whether this property is displayed. If the
+        Boolean expression is empty, the property is always displayed. */
+    string displayedIf() const { return _displayedIf; }
+
+    /** Returns the Boolean expression indicating whether this property is required. If the
+        Boolean expression is empty, the property is always required. */
+    string requiredIf() const { return _requiredIf; }
+
+    /** Returns a conditional value expression providing a list of extra names to be inserted in the
+        global and/or local name set when a value of this item is entered into the dataset, in
+        addition to the name automatically associated with the property. An empty string means that
+        no extra names will be added. */
+    string insert() const { return _insert; }
 
     /** Returns the default value for the property in case the property is missing, in a format
         compatible with the particular property type. If the string is empty, there is no default
@@ -153,9 +153,6 @@ public:
         properties (i.e. properties containing other items of some type). */
     string base() const { return _base; }
 
-    /** Returns enumeration value for which this property is true in "RelevantIf" tests. */
-    string trueIf() const { return _trueIf; }
-
     /** Returns a list of all enumeration names defined for this property, in order of occurrence
         in the schema. For properties other than enumeration properties, this function returns an
         empty list. */
@@ -181,15 +178,15 @@ private:
     string _type;           // property type
     string _name;           // name of the property
     string _title;          // description of the property
-    string _silent;         // Boolean string indicating whether the property should be hidden from non-expert users
-    string _relevantIf;     // Boolean expression indicating whether this property is relevant for a dataset
-    string _optional;       // Boolean string indicating whether the property is optional
-    string _default;        // default value of the property
+    string _relevantIf;     // Boolean expression indicating whether this property is relevant
+    string _displayedIf;    // Boolean expression indicating whether the property should be displayed
+    string _requiredIf;     // Boolean expression indicating whether the property is required
+    string _insert;         // conditional value expression providing a list of extra names to be inserted
+    string _default;        // default value of the property (as a conditional value expression)
     string _min;            // minimum value of the property
     string _max;            // maximum value of the property
     string _quantity;       // name of the physical quantity represented by this property
     string _base;           // name of the base type for the instances of this property
-    string _trueIf;         // enumeration value for which this property is true in "RelevantIf" tests
     vector<string> _enumNames;  // list of names for the enumeration values of this property
     vector<string> _enumTitles; // list of titles for the enumeration values of this property, in the same order
     std::unique_ptr<const PropertyAccessor> _accessor; // accessor block for the property's getters and setters

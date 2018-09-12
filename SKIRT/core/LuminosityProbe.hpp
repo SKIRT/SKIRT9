@@ -27,7 +27,7 @@ class LuminosityProbe : public Probe
     ITEM_CONCRETE(LuminosityProbe, Probe, "the primary source luminosities")
 
     PROPERTY_ITEM(wavelengthGrid, WavelengthGrid, "the wavelength grid for the luminosity probe")
-        ATTRIBUTE_OPTIONAL(wavelengthGrid)
+        ATTRIBUTE_REQUIRED_IF(wavelengthGrid, "false")
 
     ITEM_END()
 

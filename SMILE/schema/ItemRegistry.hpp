@@ -104,8 +104,16 @@ public:
                           Instantiator instantiator = nullptr);
 
     /** This function sets the value of the 'allowedIf' attribute of the current target type,
-        i.e. a Boolean expression using names of other types in this schema definition. */
-    static void setAllowedIf(const char* expression);
+        i.e. a Boolean expression using names inserted elsewhere in this schema definition. */
+    static void setTypeAllowedIf(const char* expression);
+
+    /** This function sets the value of the 'displayedIf' attribute of the current target type,
+        i.e. a Boolean expression using names inserted elsewhere in this schema definition. */
+    static void setTypeDisplayedIf(const char* expression);
+
+    /** This function sets the value of the 'insert' attribute of the current target type,
+        i.e. a conditional value expression providing names inserted when the type is used. */
+    static void setTypeInsert(const char* expression);
 
     /** This function sets the index in the property list where properties of subtypes should be
         listed to the number of properties currently held by the target type definition. This has
@@ -138,19 +146,26 @@ public:
         call to beginEnum() have been added. */
     static void endEnum();
 
-    /** This function sets the value of the 'silent' attribute of the current target property to
-        true, indicating that the property should be hidden from non-expert users. */
-    static void setSilent();
-
     /** This function sets the value of the 'relevantIf' attribute of the current target property,
-        i.e. a Boolean expression using names of other properties associated with the same type. */
+        i.e. a Boolean expression using names inserted elsewhere in this schema definition. */
     static void setRelevantIf(const char* expression);
 
-    /** This function sets the value of the 'optional' attribute of the current target property to
-        true, indicating that the property can be missing or have an empty value. */
-    static void setOptional();
+    /** This function sets the value of the 'displayedIf' attribute of the current target property,
+        i.e. a Boolean expression using names inserted elsewhere in this schema definition. */
+    static void setDisplayedIf(const char* expression);
 
-    /** This function sets the default value for the property in case the property is missing, in a
+    /** This function sets the value of the 'requiredIf' attribute of the current target property,
+        i.e. a Boolean expression using names inserted elsewhere in this schema definition. */
+    static void setRequiredIf(const char* expression);
+
+    /** This function sets the value of the 'insert' attribute of the current target property, i.e.
+        a conditional value expression providing names inserted when a value is entered for the
+        property. */
+    static void setInsert(const char* expression);
+
+    /** This function sets the default value for the property in case the property is missing, in
+        the form of a conditional value expression, which is evaluated against the names inserted
+        elsewhere in this schema definition. Each value in the conditional expression must have a
         format compatible with the particular property type. If the string is empty, there is no
         default value. */
     static void setDefaultValue(const char* value);
@@ -176,12 +191,6 @@ public:
         relevant only for compound properties (i.e. properties containing other items of some
         type), and for those properties it should not be left empty. */
     static void setBase(const char* type);
-
-    /** This function sets the value of the 'trueIf' attribute of the current target property,
-        specifying the value for which this enumeration property is considered to be true in
-        RelevantIf tests. This attribute is used only for enumeration properties. The specified
-        string must match one of the enumeration names in enumeration type. */
-    static void setTrueIf(const char* enumName);
 
     // ================== Obtaining a schema definition ==================
 

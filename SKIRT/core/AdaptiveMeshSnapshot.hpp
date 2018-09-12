@@ -137,7 +137,7 @@ public:
         the configuration functions, stores the data for later use, and closes the file by calling
         the base class Snapshot::readAndClose() function.
 
-        XXX TODO: describe the special data format for adaptive meshes; describe Morton order and
+        TO DO: describe the special data format for adaptive meshes; describe Morton order and
         state that the leaf cell indices used by this class reflect Morton order.
 
         Cells with an associated temperature above the cutoff temperature (if one has been

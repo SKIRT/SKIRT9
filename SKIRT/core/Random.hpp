@@ -69,7 +69,6 @@ class Random : public SimulationItem
         ATTRIBUTE_MIN_VALUE(seed, "0")
         ATTRIBUTE_MAX_VALUE(seed, "1000000")
         ATTRIBUTE_DEFAULT_VALUE(seed, "0")
-        ATTRIBUTE_SILENT(seed)
 
     ITEM_END()
 

@@ -14,7 +14,7 @@
 
 bool AbstractItemPropertyHandler::isOptional() const
 {
-    return StringUtils::toBool(property()->optional());
+    // TO DO return StringUtils::toBool(property()->optional());
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -77,7 +77,7 @@ vector<string> AbstractItemPropertyHandler::allowedDescendants()
 {
     std::unordered_set<string> keys;
     addHierarchyTypeNames(schema(), getRoot(target()), keys);
-    return schema()->allowedDescendants(baseType(), keys);
+// TO DO    return schema()->allowedDescendants(baseType(), keys);
 }
 
 ////////////////////////////////////////////////////////////////////
