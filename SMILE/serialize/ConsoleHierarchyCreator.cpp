@@ -209,7 +209,7 @@ namespace
         // setup all properties of the item
         for (const string& property : schema->properties(item->type()))
         {
-            auto handler = schema->createPropertyHandler(item, property);
+            auto handler = schema->createPropertyHandler(item, property, nullptr);
 
             // distribute to setup methods depending on property type (using visitor pattern)
             if (!handler->isSilent() && handler->isRelevant()) handler->acceptVisitor(&consoleSetter);

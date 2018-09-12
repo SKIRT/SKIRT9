@@ -5,6 +5,7 @@
 
 #include "ItemPropertyHandler.hpp"
 #include "Item.hpp"
+#include "NameManager.hpp"
 #include "PropertyDef.hpp"
 #include "PropertyHandlerVisitor.hpp"
 #include "SchemaDef.hpp"
@@ -12,9 +13,9 @@
 
 ////////////////////////////////////////////////////////////////////
 
-bool ItemPropertyHandler::isTrueInCondition() const
+void ItemPropertyHandler::insertNames()
 {
-    return value() != 0;
+    if (value()) nameManager()->insert(property()->name());
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -35,7 +36,7 @@ Item* ItemPropertyHandler::value() const
 
 bool ItemPropertyHandler::setValue(Item* value)
 {
-    if (schema()->inherits(value->type(), baseType()))
+    if (isValidValue(value->type()))
     {
         target()->setItemProperty(property(), value);
         setChanged();
@@ -48,7 +49,7 @@ bool ItemPropertyHandler::setValue(Item* value)
 
 bool ItemPropertyHandler::setToNewItemOfType(string type)
 {
-    if (schema()->inherits(type, baseType()))
+    if (isValidValue(type))
     {
         target()->setItemProperty(property(), schema()->createItem(type).release());
         setChanged();

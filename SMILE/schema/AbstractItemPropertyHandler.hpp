@@ -24,18 +24,16 @@ public:
     // ================== Overriding base class functions ==================
 
 public:
-    /** Returns true if the handled property is optional (i.e. its value may be a null pointer or
-        an empty list), or false if not. */
-    bool isOptional() const override;
-
-    /** Returns true if the handled property has a valid default value, or false if not. */
-    bool hasDefaultValue() const override;
+    /** Returns true if the given string can be successfully converted to a value of the property's
+        type. For item and item list properties, the function returns true if the string matches
+        the type name of one of the currently allowed descendants, and false otherwise. */
+    bool isValidValue(string value) const override;
 
     /** Returns true, indicating that the handled property type is compound, i.e. it aggregates
         other items that are part of the item hierarchy. */
     bool isCompound() const override;
 
-    // ================== Functionality for this property type ==================
+    // ================== Specific functions for this property type ==================
 
 public:
     /** Returns the base type of the item being pointed to by the handled property. */
@@ -44,18 +42,15 @@ public:
     /** Returns the default type for the handled property, or empty if unavailable. */
     string defaultType() const;
 
-    // ================== Utilities for editing ==================
-
-public:
-    /** This function returns a list of item types, in order of addition to the item registry,
-        which inherit the base type of the target item and which are allowed according to
-        conditional rules based on the presence of other item types in the hierarchy in which the
-        target item resides. The function first finds the root of the hierarchy in which the target
-        item resides, and then traverses the complete hierarchy to build a set containing the item
-        types of all items present in the hierarchy, and the item types of all their compile-time
-        ascendants. Finally the function calls the Schema::allowedDescendants() function to produce
-        the result. */
-    vector<string> allowedDescendants();
+    /** Returns a list of item types, in order of addition to the item registry, which inherit the
+        base type of the target item and which are allowed and should be displayed for the current
+        dataset configuration. For each candidate type, the function obtains a compound conditional
+        expression by concatenating the "allowedIf" and "displayedIf" attribute values for that
+        type and for any of its base types, recursively, with the AND operator into a single
+        Boolean expression. After replacing names currently present in the global or local name
+        sets by true, and other names by false, it then evaluates this expression to determine
+        whether the type is to be included in the returned list. */
+    vector<string> allowedAndDisplayedDescendants();
 };
 
 ////////////////////////////////////////////////////////////////////

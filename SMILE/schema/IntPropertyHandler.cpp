@@ -5,6 +5,7 @@
 
 #include "IntPropertyHandler.hpp"
 #include "Item.hpp"
+#include "NameManager.hpp"
 #include "PropertyDef.hpp"
 #include "PropertyHandlerVisitor.hpp"
 #include "StringUtils.hpp"
@@ -19,16 +20,16 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-bool IntPropertyHandler::isTrueInCondition() const
+bool IntPropertyHandler::isValidValue(string value) const
 {
-    return value() != 0;
+    return StringUtils::isValidInt(value);
 }
 
 ////////////////////////////////////////////////////////////////////
 
-bool IntPropertyHandler::hasDefaultValue() const
+void IntPropertyHandler::insertNames()
 {
-    return StringUtils::isValidInt(property()->defaultValue());
+    if (value() != 0) nameManager()->insert(property()->name());
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -42,7 +43,7 @@ void IntPropertyHandler::acceptVisitor(PropertyHandlerVisitor* visitor)
 
 int IntPropertyHandler::defaultValue() const
 {
-    return StringUtils::toInt(property()->defaultValue());
+    return StringUtils::toInt(nameManager()->evaluateConditionalValue(property()->defaultValue()));
 }
 
 ////////////////////////////////////////////////////////////////////

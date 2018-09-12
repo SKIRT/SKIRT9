@@ -23,7 +23,7 @@ public:
         schema definition. */
     using PropertyHandler::PropertyHandler;
 
-    // ================== Functionality for this property type ==================
+    // ================== Specific functions for this property type ==================
 
 private:
     /** Returns the minimum value for the handled property. If no minimum value is specified in the

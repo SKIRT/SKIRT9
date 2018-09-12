@@ -23,14 +23,18 @@ public:
     // ================== Overriding base class functions ==================
 
 public:
-    /** Returns true if the value of the handled property is not null, and false if it is null. */
-    bool isTrueInCondition() const override;
+    /** Causes the name manager associated with this handler to insert names into the global and/or
+        local name sets corresponding to the current value of the target property. For item
+        properties, the function inserts the target property's name if the current property value
+        is not null (i.e. an item is present), and does not insert any names if the value is null
+        (i.e no item is present). */
+    void insertNames() override;
 
     /** Accepts the specified visitor. This function is part of the "visitor" design pattern
         implementation used to handle properties of various types. */
     void acceptVisitor(PropertyHandlerVisitor* visitor) override;
 
-    // ================== Functionality for this property type ==================
+    // ================== Specific functions for this property type ==================
 
 public:
     /** Returns the value of the handled property in the target item. There is no transfer of

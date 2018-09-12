@@ -126,12 +126,12 @@ namespace
         //  - then handle properties that are written to XML as child elements
         for (const string& property : schema->properties(item->type()))
         {
-            auto handler = schema->createPropertyHandler(item, property);
+            auto handler = schema->createPropertyHandler(item, property, nullptr);
             if (!handler->isCompound()) handler->acceptVisitor(&propertyWriter);
         }
         for (const string& property : schema->properties(item->type()))
         {
-            auto handler = schema->createPropertyHandler(item, property);
+            auto handler = schema->createPropertyHandler(item, property, nullptr);
             if (handler->isCompound()) handler->acceptVisitor(&propertyWriter);
         }
 

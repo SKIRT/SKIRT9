@@ -5,22 +5,23 @@
 
 #include "EnumPropertyHandler.hpp"
 #include "Item.hpp"
+#include "NameManager.hpp"
 #include "PropertyDef.hpp"
 #include "PropertyHandlerVisitor.hpp"
 #include "StringUtils.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-bool EnumPropertyHandler::isTrueInCondition() const
+bool EnumPropertyHandler::isValidValue(string value) const
 {
-    return false;   /// TO DO
+    return StringUtils::contains(property()->enumNames(), value);
 }
 
 ////////////////////////////////////////////////////////////////////
 
-bool EnumPropertyHandler::hasDefaultValue() const
+void EnumPropertyHandler::insertNames()
 {
-    return isValid(property()->defaultValue());
+    nameManager()->insert(property()->name() + value());
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -48,7 +49,7 @@ vector<string> EnumPropertyHandler::titlesForValues() const
 
 string EnumPropertyHandler::defaultValue() const
 {
-    return property()->defaultValue();
+    return nameManager()->evaluateConditionalValue(property()->defaultValue());
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -63,13 +64,6 @@ string EnumPropertyHandler::value() const
 string EnumPropertyHandler::titleForValue() const
 {
     return property()->enumTitle(value());
-}
-
-////////////////////////////////////////////////////////////////////
-
-bool EnumPropertyHandler::isValid(string value) const
-{
-    return StringUtils::contains(property()->enumNames(), value);
 }
 
 ////////////////////////////////////////////////////////////////////

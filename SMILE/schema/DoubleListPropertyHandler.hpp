@@ -24,14 +24,24 @@ public:
     // ================== Overriding base class functions ==================
 
 public:
-    /** Returns true if the handled property has a valid default value, or false if not. */
-    bool hasDefaultValue() const override;
+    /** Returns true if the given string can be successfully converted to a value of the property's
+        type. For double list properties, the function returns true if the string conforms to the syntax
+        recognized by the AbstractDoublePropertyHandler::isValidDoubleList() function, and false
+        otherwise. */
+    bool isValidValue(string value) const override;
+
+    /** Causes the name manager associated with this handler to insert names into the global and/or
+        local name sets corresponding to the current value of the target property. For double list
+        properties, the function inserts the target property's name if the current property value
+        is a nonempty list (i.e. including at least one number), and does not insert any names if
+        the value is the empty list. */
+    void insertNames() override;
 
     /** Accepts the specified visitor. This function is part of the "visitor" design pattern
         implementation used to handle properties of various types. */
     void acceptVisitor(PropertyHandlerVisitor* visitor) override;
 
-    // ================== Functionality for this property type ==================
+    // ================== Specific functions for this property type ==================
 
 public:
     /** Returns the default value for the handled property, or zero if unavailable. */

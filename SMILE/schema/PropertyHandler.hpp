@@ -8,6 +8,7 @@
 
 #include "Basics.hpp"
 class Item;
+class NameManager;
 class PropertyDef;
 class PropertyHandlerVisitor;
 class SchemaDef;
@@ -26,10 +27,14 @@ class PropertyHandler
 
 public:
     /** Constructs a property handler for the specified target item and property, with a given
-        schema definition. The caller must guarantee that the specified instances are not deleted
-        during the lifetime of the property handler (the property handler does not assume
-        ownership, nor is there a reference counting scheme). */
-    PropertyHandler(Item* target, const PropertyDef* property, const SchemaDef* schema);
+        schema definition. The last argument, a pointer to the name manager used for the current
+        dataset, allows the property handler to access the global and local name sets for
+        evaluating Boolean expressions.
+
+        The caller must guarantee that the specified instances are not deleted during the lifetime
+        of the property handler (the property handler does not assume ownership, nor is there a
+        reference counting scheme). */
+    PropertyHandler(Item* target, const PropertyDef* property, const SchemaDef* schema, NameManager* nameMgr);
 
     /** Destructs the property handler. This virtual destructor is declared here because
         PropertyHandler is the top-level class in the hierarchy of property handlers. */
@@ -49,8 +54,11 @@ protected:
     /** Returns the SMILE data item for which a property is being handled. */
     Item* target() const { return _target; }
 
-    /** Returns the property definition for the property being handled. */
+    /** Returns the property definition for the SMILE property being handled. */
     const PropertyDef* property() const { return _property; }
+
+    /** Returns the name manager for the SMILE dataset in which the target item resides. */
+    NameManager* nameManager() const { return _nameMgr; }
 
 public:
     /** Returns the schema definition describing the SMILE dataset in which the target item
@@ -66,44 +74,42 @@ public:
     /** Returns the title (used for display to a user) for the handled property. */
     string title() const;
 
-    /** Returns true if the handled property is silent, i.e. an interactive Q&A session should
-        not ask for a value corresponding to this property. A silent property must have an
-        appropriate default value. */
-    bool isSilent() const;
-
-    /** Returns true if the handled property has a non-empty "RelevantIf" attribute so that it may
-        become irrelevant depending on the values of other properties. */
-    bool hasRelevantIf() const;
-
-    /** Returns true if the handled property is relevant given the current values of the other
-        properties in the target item, and false otherwise. A property that does not have the
-        "RelevantIf" attribute is always relevant. A property that has the "RelevantIf" attribute
-        is relevant if the provided Boolean expression evaluates to true. For this evaluation, a
-        property name in the expression are replaced by true if that property is relevant in its
-        own right (as determined by a recursive call to isRelevant()), and has a value that would
-        test as true in a condition (as determined by isTrueInCondition()). Otherwise the property
-        name is replaced by false in the expression. */
+    /** Returns true if the handled property is relevant in the current dataset configuration. A
+        property that does not have the "relevantIf" attribute is always relevant. A property that
+        has the "relevantIf" attribute is relevant if the provided Boolean expression evaluates to
+        true, after replacing names currently present in the global or local name sets by true, and
+        other names by false. */
     bool isRelevant() const;
 
-    /** Returns true if the value of the handled property would test as true in a condition, and
-        false if it would test as false or if the property type can't be used in a condition. For
-        example a boolean property would simply return its value; an integer property would return
-        true if its value is nonzero. This function is used by isRelevant() to test a simple
-        condition on the value of a property in the current dataset in a way that doesn't depend
-        on the property type. The default implementation provided in this abstract class always
-        returns false; this function must be overridden by property handler subclasses that support
-        condition testing. */
-    virtual bool isTrueInCondition() const;
+    /** Returns true if the handled property should be displayed in the current dataset
+        configuration. A property that does not have the "displayedIf" attribute is always
+        displayed. A property that has the "displayedIf" attribute is displayed if the provided
+        Boolean expression evaluates to true, after replacing names currently present in the global
+        or local name sets by true, and other names by false. */
+    bool isDisplayed() const;
 
-    /** Returns true if the handled property is optional (i.e. its value may remain unset), or
-        false if not. The default implementation in this abstract class returns false; this
-        function must be overridden by property handler subclasses that support optional values. */
-    virtual bool isOptional() const;
+    /** Returns true if the handled property is required to have a nonempty value in the current
+        dataset configuration. A property that does not have the "requiredIf" attribute is always
+        required. A property that has the "requiredIf" attribute is required if the provided
+        Boolean expression evaluates to true, after replacing names currently present in the global
+        or local name sets by true, and other names by false. The "requiredIf" attribute (and thus
+        the return value of this function) is intended for complex property types including
+        strings, compound types, and lists. Scalar numeric and enumeration property types ignore
+        its value. */
+    bool isRequired() const;
 
-    /** Returns true if the handled property has a valid default value, or false if not. The
-        default implementation in this abstract class returns false; this function must be
-        overridden by property handler subclasses that may offer a default value. */
-    virtual bool hasDefaultValue() const;
+    /** Returns true if the handled property has a valid default value in the current dataset
+        configuration, or false if not. A property that does not have the "default" attribute does
+        not have a default value. A property that has the "default" attribute has a default value
+        if the provided conditional value expression evaluates to a valid value for the property
+        type, after replacing names currently present in the global or local name sets by true, and
+        other names by false. */
+    bool hasDefaultValue() const;
+
+    /** Returns true if the given string can be successfully converted to a value of the property's
+        type. For an empty string, the function always returns false. This function must be
+        overridden by property handler subclasses. */
+    virtual bool isValidValue(string value) const = 0;
 
     /** Returns true if the handled property type is compound in the sense that the property may
         hold (in other words, aggregate) other items that are part of the item hierarchy. The
@@ -116,6 +122,11 @@ public:
         otherwise returns false. */
     bool hasChanged() const;
 
+    // ================== OBSOLETE ==================
+
+    bool isOptional() const { return false; }  // TO DO
+    bool isSilent() const{ return false; }  // TO DO
+
     // ================== Setters & Modifiers ==================
 
 protected:
@@ -124,6 +135,12 @@ protected:
     void setChanged();
 
 public:
+    /** Causes the name manager associated with this handler to insert names into the global and/or
+        local name sets corresponding to the current value of the target property. Because the list
+        of inserted names depends on the property type, this function must be implemented in every
+        subclass. */
+    virtual void insertNames() = 0;
+
     /** Accepts the specified property handler visitor. This function is part of the "visitor"
         design pattern implementation used to handle properties of various types. It must be
         implemented in every subclass. */
@@ -149,6 +166,7 @@ private:
     Item* _target{nullptr};                 // the item being handled
     const PropertyDef* _property{nullptr};  // the property definition for the property being handled
     const SchemaDef* _schema{nullptr};      // the schema definition for the dataset in which the item resides
+    NameManager* _nameMgr{nullptr};         // the name manager for the dataset in which the item resides
     bool _changed{false};           // becomes true if the target property has been modified by this handler
 };
 

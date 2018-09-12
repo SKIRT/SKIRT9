@@ -6,6 +6,7 @@
 #include "ItemListPropertyHandler.hpp"
 #include "Item.hpp"
 #include "ItemUtils.hpp"
+#include "NameManager.hpp"
 #include "PropertyDef.hpp"
 #include "PropertyHandlerVisitor.hpp"
 #include "SchemaDef.hpp"
@@ -13,9 +14,9 @@
 
 ////////////////////////////////////////////////////////////////////
 
-bool ItemListPropertyHandler::isTrueInCondition() const
+void ItemListPropertyHandler::insertNames()
 {
-    return !value().empty();
+    if (!value().empty()) nameManager()->insert(property()->name());
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -43,7 +44,7 @@ void ItemListPropertyHandler::setToEmpty()
 
 bool ItemListPropertyHandler::addValue(Item* value)
 {
-    if (schema()->inherits(value->type(), baseType()))
+    if (isValidValue(value->type()))
     {
         target()->insertIntoItemListProperty(property(), -1, value);
         setChanged();
@@ -56,7 +57,7 @@ bool ItemListPropertyHandler::addValue(Item* value)
 
 bool ItemListPropertyHandler::addNewItemOfType(string type)
 {
-    if (schema()->inherits(type, baseType()))
+    if (isValidValue(type))
     {
         target()->insertIntoItemListProperty(property(), -1, schema()->createItem(type).release());
         setChanged();
@@ -69,7 +70,7 @@ bool ItemListPropertyHandler::addNewItemOfType(string type)
 
 bool ItemListPropertyHandler::insertValue(int index, Item* value)
 {
-    if (schema()->inherits(value->type(), baseType()))
+    if (isValidValue(value->type()))
     {
         target()->insertIntoItemListProperty(property(), index, value);
         setChanged();
@@ -82,7 +83,7 @@ bool ItemListPropertyHandler::insertValue(int index, Item* value)
 
 bool ItemListPropertyHandler::insertNewItemOfType(int index, string type)
 {
-    if (schema()->inherits(type, baseType()))
+    if (isValidValue(type))
     {
         target()->insertIntoItemListProperty(property(), index, schema()->createItem(type).release());
         setChanged();

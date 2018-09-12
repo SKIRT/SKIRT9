@@ -23,17 +23,21 @@ public:
     // ================== Overriding base class functions ==================
 
 public:
-    /** Returns true if the handled property has a "TrueIf" attribute, and if that attribute's
-        value matches the current property value; otherwise returns false. */
-    bool isTrueInCondition() const override;
+    /** Returns true if the given string can be successfully converted to a value of the property's
+        type. For enumeration properties, the function returns true if the specified string matches
+        one of the enumeration names for the handled property; otherwise it returns false. */
+    bool isValidValue(string value) const override;
 
-    /** Returns true if the handled property has a valid default value, or false if not. */
-    bool hasDefaultValue() const override;
+    /** Causes the name manager associated with this handler to insert names into the global and/or
+        local name sets corresponding to the current value of the target property. For enumeration
+        properties, the function inserts a name obtained by concatenating the target property's
+        name and the enumeration name for the current value. */
+    virtual void insertNames() override;
 
     /** Accepts the specified property handler visitor. */
     void acceptVisitor(PropertyHandlerVisitor* visitor) override;
 
-    // ================== Functionality for this property type ==================
+    // ================== Specific functions for this property type ==================
 
 public:
     /** Returns a list of all enumeration names defined for the type of the handled property. */
@@ -54,10 +58,6 @@ public:
     /** Returns the title corresponding to the value of the handled property in the
         target item. If there is no title, the empty string is returned instead. */
     string titleForValue() const;
-
-    /** Returns true if the specified string matches one of the enumeration names for the handled
-        property; otherwise returns false. */
-    bool isValid(string value) const;
 
     /** Sets the value of the handled property in the target item to the value corresponding to the
         specified enumeration name. If the specified key is invalid for this property, nothing

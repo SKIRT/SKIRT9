@@ -5,29 +5,23 @@
 
 #include "StringPropertyHandler.hpp"
 #include "Item.hpp"
+#include "NameManager.hpp"
 #include "PropertyDef.hpp"
 #include "PropertyHandlerVisitor.hpp"
 #include "StringUtils.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-bool StringPropertyHandler::isTrueInCondition() const
+bool StringPropertyHandler::isValidValue(string value) const
 {
-    return !value().empty();
+    return !value.empty();
 }
 
 ////////////////////////////////////////////////////////////////////
 
-bool StringPropertyHandler::isOptional() const
+void StringPropertyHandler::insertNames()
 {
-    // TO DO return StringUtils::toBool(property()->optional()) && property()->defaultValue().empty();
-}
-
-////////////////////////////////////////////////////////////////////
-
-bool StringPropertyHandler::hasDefaultValue() const
-{
-    return !property()->defaultValue().empty();
+    if (!value().empty()) nameManager()->insert(property()->name());
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -41,7 +35,7 @@ void StringPropertyHandler::acceptVisitor(PropertyHandlerVisitor* visitor)
 
 string StringPropertyHandler::defaultValue() const
 {
-    return property()->defaultValue();
+    return nameManager()->evaluateConditionalValue(property()->defaultValue());
 }
 
 ////////////////////////////////////////////////////////////////////

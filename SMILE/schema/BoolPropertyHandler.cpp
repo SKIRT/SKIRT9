@@ -5,22 +5,23 @@
 
 #include "BoolPropertyHandler.hpp"
 #include "Item.hpp"
+#include "NameManager.hpp"
 #include "PropertyDef.hpp"
 #include "PropertyHandlerVisitor.hpp"
 #include "StringUtils.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-bool BoolPropertyHandler::isTrueInCondition() const
+bool BoolPropertyHandler::isValidValue(string value) const
 {
-    return value();
+    return StringUtils::isValidBool(value);
 }
 
 ////////////////////////////////////////////////////////////////////
 
-bool BoolPropertyHandler::hasDefaultValue() const
+void BoolPropertyHandler::insertNames()
 {
-    return StringUtils::isValidBool(property()->defaultValue());
+    if (value()) nameManager()->insert(property()->name());
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -34,7 +35,7 @@ void BoolPropertyHandler::acceptVisitor(PropertyHandlerVisitor* visitor)
 
 bool BoolPropertyHandler::defaultValue() const
 {
-    return StringUtils::toBool(property()->defaultValue());
+    return StringUtils::toBool(nameManager()->evaluateConditionalValue(property()->defaultValue()));
 }
 
 ////////////////////////////////////////////////////////////////////

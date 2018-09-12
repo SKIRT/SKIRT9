@@ -23,21 +23,21 @@ public:
     // ================== Overriding base class functions ==================
 
 public:
-    /** Returns true if the value of the handled property is a non-empty string, or false if the
-        value is the empty string. */
-    bool isTrueInCondition() const override;
+    /** Returns true if the given string can be successfully converted to a value of the property's
+        type. For string properties, the function returns true if the string is nonempty, and false
+        if it is empty. */
+    bool isValidValue(string value) const override;
 
-    /** Returns true if the handled property is optional (i.e. it may have an empty value), or
-        false if it is required. */
-    bool isOptional() const override;
-
-    /** Returns true if the handled property has a valid default value, or false if not. */
-    bool hasDefaultValue() const override;
+    /** Causes the name manager associated with this handler to insert names into the global and/or
+        local name sets corresponding to the current value of the target property. For string
+        properties, the function inserts the target property's name if the current property value
+        is nonempty, and does not insert any names if the value is empty. */
+    void insertNames() override;
 
     /** Accepts the specified property handler visitor. */
     void acceptVisitor(PropertyHandlerVisitor* visitor) override;
 
-    // ================== Functionality for this property type ==================
+    // ================== Specific functions for this property type ==================
 
 public:
     /** Returns the default value for the handled property, or the empty string if unavailable. */

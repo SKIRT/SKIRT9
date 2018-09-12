@@ -5,24 +5,17 @@
 
 #include "AbstractItemPropertyHandler.hpp"
 #include "Item.hpp"
+#include "NameManager.hpp"
 #include "PropertyDef.hpp"
 #include "SchemaDef.hpp"
 #include "StringUtils.hpp"
-#include <unordered_set>
 
 ////////////////////////////////////////////////////////////////////
 
-bool AbstractItemPropertyHandler::isOptional() const
+bool AbstractItemPropertyHandler::isValidValue(string value) const
 {
-    // TO DO return StringUtils::toBool(property()->optional());
-}
-
-////////////////////////////////////////////////////////////////////
-
-bool AbstractItemPropertyHandler::hasDefaultValue() const
-{
-    string type = property()->defaultValue();
-    return !type.empty() && schema()->inherits(type, baseType());
+    return !value.empty() && schema()->inherits(value, baseType())
+            && nameManager()->evaluateBoolean(schema()->allowed(value));
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -43,41 +36,20 @@ string AbstractItemPropertyHandler::baseType() const
 
 string AbstractItemPropertyHandler::defaultType() const
 {
-    return property()->defaultValue();
+    return nameManager()->evaluateConditionalValue(property()->defaultValue());
 }
 
 ////////////////////////////////////////////////////////////////////
 
-namespace
+vector<string> AbstractItemPropertyHandler::allowedAndDisplayedDescendants()
 {
-    // Returns the root of the hierarchy in which the specified item resides.
-    Item* getRoot(Item* item)
+    vector<string> descendants;
+    for (auto candidate : schema()->descendants(property()->base()))
     {
-        while (item->parent()) item = item->parent();
-        return item;
+        if (nameManager()->evaluateBoolean(schema()->allowedAndDisplayed(candidate)))
+            descendants.push_back(candidate);
     }
-
-    // Adds to the specified set:
-    //  - the types of all items present in the specified hierarchy, and
-    //  - the types of all their compile-time ascendants.
-    // The function calls itself recursively to process the children of the specified root item.
-    void addHierarchyTypeNames(const SchemaDef* schema, Item* root, std::unordered_set<string>& keys)
-    {
-        // process the specified root item
-        for (auto key : schema->ascendants(root->type())) keys.insert(key);
-
-        // process all children of the specified root item
-        for (auto child : root->children()) addHierarchyTypeNames(schema, child, keys);
-    }
-}
-
-////////////////////////////////////////////////////////////////////
-
-vector<string> AbstractItemPropertyHandler::allowedDescendants()
-{
-    std::unordered_set<string> keys;
-    addHierarchyTypeNames(schema(), getRoot(target()), keys);
-// TO DO    return schema()->allowedDescendants(baseType(), keys);
+    return descendants;
 }
 
 ////////////////////////////////////////////////////////////////////

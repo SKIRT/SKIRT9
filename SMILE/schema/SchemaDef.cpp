@@ -615,6 +615,21 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
+string SchemaDef::allowed(string type) const
+{
+    // combine all "allowedIf" attributes inherited by the type
+    string condition;
+    while (!type.empty())
+    {
+        auto& def = typeDef(type);
+        addAndSegment(condition, def.allowedIf());
+        type = def.base();
+    }
+    return condition;
+}
+
+////////////////////////////////////////////////////////////////////
+
 string SchemaDef::allowedAndDisplayed(string type) const
 {
     // combine all "allowedIf" and "displayedIf" attributes inherited by the type
@@ -733,21 +748,21 @@ std::unique_ptr<Item> SchemaDef::createItem(string type) const
 
 ////////////////////////////////////////////////////////////////////
 
-std::unique_ptr<PropertyHandler> SchemaDef::createPropertyHandler(Item* item, string property) const
+std::unique_ptr<PropertyHandler> SchemaDef::createPropertyHandler(Item* item, string property, NameManager* nameMgr) const
 {
     // get the property definition (throws if not found)
     auto& propDef = propertyDef(item->type(), property);
 
     // construct handler of subclass corresponding to property type
     string type = propDef.type();
-    if (type == "StringProperty") return std::make_unique<StringPropertyHandler>(item, &propDef, this);
-    if (type == "BoolProperty") return std::make_unique<BoolPropertyHandler>(item, &propDef, this);
-    if (type == "IntProperty") return std::make_unique<IntPropertyHandler>(item, &propDef, this);
-    if (type == "EnumProperty") return std::make_unique<EnumPropertyHandler>(item, &propDef, this);
-    if (type == "DoubleProperty") return std::make_unique<DoublePropertyHandler>(item, &propDef, this);
-    if (type == "DoubleListProperty") return std::make_unique<DoubleListPropertyHandler>(item, &propDef, this);
-    if (type == "ItemProperty") return std::make_unique<ItemPropertyHandler>(item, &propDef, this);
-    if (type == "ItemListProperty") return std::make_unique<ItemListPropertyHandler>(item, &propDef, this);
+    if (type == "StringProperty") return std::make_unique<StringPropertyHandler>(item, &propDef, this, nameMgr);
+    if (type == "BoolProperty") return std::make_unique<BoolPropertyHandler>(item, &propDef, this, nameMgr);
+    if (type == "IntProperty") return std::make_unique<IntPropertyHandler>(item, &propDef, this, nameMgr);
+    if (type == "EnumProperty") return std::make_unique<EnumPropertyHandler>(item, &propDef, this, nameMgr);
+    if (type == "DoubleProperty") return std::make_unique<DoublePropertyHandler>(item, &propDef, this, nameMgr);
+    if (type == "DoubleListProperty") return std::make_unique<DoubleListPropertyHandler>(item, &propDef, this, nameMgr);
+    if (type == "ItemProperty") return std::make_unique<ItemPropertyHandler>(item, &propDef, this, nameMgr);
+    if (type == "ItemListProperty") return std::make_unique<ItemListPropertyHandler>(item, &propDef, this, nameMgr);
     throw FATALERROR("Unsupported property type: " + type);
 }
 

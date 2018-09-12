@@ -5,21 +5,22 @@
 
 #include "DoublePropertyHandler.hpp"
 #include "Item.hpp"
+#include "NameManager.hpp"
 #include "PropertyDef.hpp"
 #include "PropertyHandlerVisitor.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-bool DoublePropertyHandler::isTrueInCondition() const
+bool DoublePropertyHandler::isValidValue(string value) const
 {
-    return value() != 0;
+    return isValidDouble(value);
 }
 
 ////////////////////////////////////////////////////////////////////
 
-bool DoublePropertyHandler::hasDefaultValue() const
+void DoublePropertyHandler::insertNames()
 {
-    return isValidDouble(property()->defaultValue());
+    if (value() != 0.) nameManager()->insert(property()->name());
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -33,7 +34,7 @@ void DoublePropertyHandler::acceptVisitor(PropertyHandlerVisitor* visitor)
 
 double DoublePropertyHandler::defaultValue() const
 {
-    return toDouble(property()->defaultValue());
+    return toDouble(nameManager()->evaluateConditionalValue(property()->defaultValue()));
 }
 
 ////////////////////////////////////////////////////////////////////

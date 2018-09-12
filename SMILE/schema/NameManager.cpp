@@ -62,7 +62,7 @@ void NameManager::insert(string name)
 
 ////////////////////////////////////////////////////////////////////
 
-bool NameManager::evaluateBoolean(string expression)
+bool NameManager::evaluateBoolean(string expression) const
 {
     return BooleanExpression::evaluateBoolean(expression, [this](string name)
     {
@@ -72,7 +72,7 @@ bool NameManager::evaluateBoolean(string expression)
 
 ////////////////////////////////////////////////////////////////////
 
-string NameManager::evaluateConditionalValue(string expression)
+string NameManager::evaluateConditionalValue(string expression) const
 {
     return BooleanExpression::evaluateConditionalValue(expression, [this](string name)
     {

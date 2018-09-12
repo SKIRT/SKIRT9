@@ -11,6 +11,7 @@
 #include "UnitDef.hpp"
 #include <map>
 class Item;
+class NameManager;
 class PropertyHandler;
 
 ////////////////////////////////////////////////////////////////////
@@ -133,10 +134,18 @@ public:
     vector<string> titles(const vector<string>& types) const;
 
     /** Returns a Boolean expression that, when evaluated against the current global and local name
+        sets, will determine whether the specified type is allowed. To obtain this result, the
+        Boolean expressions in the "allowedIf" attribute values for the specified type and for any
+        of its base types, recursively, are concatenated with the AND operator into a single
+        Boolean expression. The function throws an error if the specified type is not defined in
+        the schema. */
+    string allowed(string type) const;
+
+    /** Returns a Boolean expression that, when evaluated against the current global and local name
         sets, will determine whether the specified type is allowed and displayed. To obtain this
         result, the Boolean expressions in the "allowedIf" and "displayedIf" attribute values for
         the specified type and for any of its base types, recursively, are concatenated with the
-        AND opertator into a single Boolean expression. The function throws an error if the
+        AND operator into a single Boolean expression. The function throws an error if the
         specified type is not defined in the schema. */
     string allowedAndDisplayed(string type) const;
 
@@ -180,12 +189,15 @@ public:
     std::unique_ptr<Item> createItem(string type) const;
 
     /** Creates a new property handler for the specified property in the specified SMILE data item,
-        and returns a unique pointer to this new instance. The returned handler is of a
-        PropertyHandler subclass appropriate for the property type. Because it is guarded by a
-        unique pointer, the handler is automatically deleted when the return value goes out of
-        scope. This function throws an error if the specified item does not have a property with
-        the specified name. */
-    std::unique_ptr<PropertyHandler> createPropertyHandler(Item* item, string property) const;
+        and returns a unique pointer to this new instance. The third argument, a pointer to the
+        name manager used for the current dataset, is passed to the property handler so that it can
+        access the global and local name sets for evaluating Boolean expressions.
+
+        The returned handler is of a PropertyHandler subclass appropriate for the property type.
+        Because it is guarded by a unique pointer, the handler is automatically deleted when the
+        return value goes out of scope. This function throws an error if the specified item does
+        not have a property with the specified name. */
+    std::unique_ptr<PropertyHandler> createPropertyHandler(Item* item, string property, NameManager* nameMgr) const;
 
     // -------------------------------------
 

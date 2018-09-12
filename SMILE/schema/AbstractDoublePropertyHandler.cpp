@@ -223,7 +223,7 @@ string AbstractDoublePropertyHandler::quantity() const
     if (StringUtils::startsWith(result, "@"))
     {
         // construct a handler for the target property and get its enumeration value
-        auto handler = schema()->createPropertyHandler(target(), result.substr(1));
+        auto handler = schema()->createPropertyHandler(target(), result.substr(1), nameManager());
         EnumPropertyHandler* enumHandler = dynamic_cast<EnumPropertyHandler*>(handler.get());
 
         // if the property has the wrong type, or its value is an unknown quantity,

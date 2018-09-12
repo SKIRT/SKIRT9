@@ -7,13 +7,15 @@
 #include "BooleanExpression.hpp"
 #include "Item.hpp"
 #include "ItemUtils.hpp"
+#include "NameManager.hpp"
 #include "SchemaDef.hpp"
 #include "StringUtils.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-PropertyHandler::PropertyHandler(Item* target, const PropertyDef* property, const SchemaDef* schema)
-    : _target(target), _property(property), _schema(schema)
+PropertyHandler::PropertyHandler(Item* target, const PropertyDef* property,
+                                 const SchemaDef* schema, NameManager* nameMgr)
+    : _target(target), _property(property), _schema(schema), _nameMgr(nameMgr)
 {
 }
 
@@ -40,53 +42,30 @@ string PropertyHandler::title() const
 
 ////////////////////////////////////////////////////////////////////
 
-bool PropertyHandler::isSilent() const
-{
-   // TO DO return StringUtils::toBool(property()->silent());
-}
-
-////////////////////////////////////////////////////////////////////
-
-bool PropertyHandler::hasRelevantIf() const
-{
-    return !property()->relevantIf().empty();
-}
-
-////////////////////////////////////////////////////////////////////
-
 bool PropertyHandler::isRelevant() const
 {
-    // get the expression
-    string expression = property()->relevantIf();
-
-    // evaluate the expression
-    return BooleanExpression::evaluateBoolean(expression, [this] (string name)
-        {
-            // construct a handler for the target property and evaluate our relevancy
-            auto handler = schema()->createPropertyHandler(target(), name);
-            return handler->isRelevant() && handler->isTrueInCondition();
-        });
+    return nameManager()->evaluateBoolean(property()->relevantIf());
 }
 
 ////////////////////////////////////////////////////////////////////
 
-bool PropertyHandler::isTrueInCondition() const
+bool PropertyHandler::isDisplayed() const
 {
-    return false;
+    return nameManager()->evaluateBoolean(property()->displayedIf());
 }
 
 ////////////////////////////////////////////////////////////////////
 
-bool PropertyHandler::isOptional() const
+bool PropertyHandler::isRequired() const
 {
-    return false;
+    return nameManager()->evaluateBoolean(property()->requiredIf());
 }
 
 ////////////////////////////////////////////////////////////////////
 
 bool PropertyHandler::hasDefaultValue() const
 {
-    return false;
+    return isValidValue(nameManager()->evaluateConditionalValue(property()->defaultValue()));
 }
 
 ////////////////////////////////////////////////////////////////////

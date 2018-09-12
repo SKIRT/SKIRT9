@@ -81,14 +81,14 @@ public:
         identifier is replaced by true if the corresponding name is in the global or the local set,
         and by false if it is not. The function throws an error if the expression string does not
         conform to the syntax of a Boolean expression. */
-    bool evaluateBoolean(string expression);
+    bool evaluateBoolean(string expression) const;
 
     /** This function evaluates the specified string as a conditional value expression in the
         format decribed in the class header, and returns the result. When evaluating the
         expression, each identifier is replaced by true if the corresponding name is in the global
         or the local set, and by false if it is not. The function throws an error if the expression
         string does not conform to the syntax of a conditional value expression. */
-    string evaluateConditionalValue(string expression);
+    string evaluateConditionalValue(string expression) const;
 
     // ================== Data members ==================
 

@@ -94,7 +94,7 @@ namespace
         void visitPropertyHandler(EnumPropertyHandler* handler) override
         {
             string value = removeBrackets(_reader.attributeValue(handler->name()));
-            if (handler->isValid(value))
+            if (handler->isValidValue(value))
             {
                 handler->setValue(value);
             }
@@ -287,7 +287,7 @@ namespace
         std::unordered_map<string,std::unique_ptr<PropertyHandler>> handlers;
         for (const string& name : schema->properties(item->type()))
         {
-            handlers[name] = schema->createPropertyHandler(item, name);
+            handlers[name] = schema->createPropertyHandler(item, name, nullptr);
         }
 
         // process scalar properties (derived from XML attributes)
@@ -341,7 +341,7 @@ namespace
         // process properties in order of schema definition so that relevancy can be determined
         for (const string& name : schema->properties(item->type()))
         {
-            auto handler = schema->createPropertyHandler(item, name);
+            auto handler = schema->createPropertyHandler(item, name, nullptr);
             if (!handler->isOptional() && !handler->hasDefaultValue() && handler->isRelevant())
                 reader.throwError("Value for required property '" + handler->name() + "' in item of type '"
                                   + item->type() + "' is not specified and has no default value");

@@ -5,14 +5,22 @@
 
 #include "DoubleListPropertyHandler.hpp"
 #include "Item.hpp"
+#include "NameManager.hpp"
 #include "PropertyDef.hpp"
 #include "PropertyHandlerVisitor.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-bool DoubleListPropertyHandler::hasDefaultValue() const
+bool DoubleListPropertyHandler::isValidValue(string value) const
 {
-    return isValidDoubleList(property()->defaultValue());
+    return isValidDoubleList(value);
+}
+
+////////////////////////////////////////////////////////////////////
+
+void DoubleListPropertyHandler::insertNames()
+{
+    if (!value().empty()) nameManager()->insert(property()->name());
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -26,7 +34,7 @@ void DoubleListPropertyHandler::acceptVisitor(PropertyHandlerVisitor* visitor)
 
 vector<double> DoubleListPropertyHandler::defaultValue() const
 {
-    return toDoubleList(property()->defaultValue());
+    return toDoubleList(nameManager()->evaluateConditionalValue(property()->defaultValue()));
 }
 
 ////////////////////////////////////////////////////////////////////

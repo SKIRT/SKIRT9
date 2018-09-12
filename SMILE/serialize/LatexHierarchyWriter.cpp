@@ -204,7 +204,7 @@ namespace
             // handle all properties of the item
             for (const string& property : _schema->properties(item->type()))
             {
-                auto handler = _schema->createPropertyHandler(item, property);
+                auto handler = _schema->createPropertyHandler(item, property, nullptr);
                 // distribute to write methods depending on property type (using visitor pattern)
                 handler->acceptVisitor(this);
             }
