@@ -57,13 +57,13 @@ protected:
     /** Returns the property definition for the SMILE property being handled. */
     const PropertyDef* property() const { return _property; }
 
-    /** Returns the name manager for the SMILE dataset in which the target item resides. */
-    NameManager* nameManager() const { return _nameMgr; }
-
 public:
     /** Returns the schema definition describing the SMILE dataset in which the target item
         resides. */
     const SchemaDef* schema() const { return _schema; }
+
+    /** Returns the name manager for the SMILE dataset in which the target item resides. */
+    NameManager* nameManager() const { return _nameMgr; }
 
     /** Returns the type of the target item. */
     string type() const;
@@ -122,16 +122,12 @@ public:
         otherwise returns false. */
     bool hasChanged() const;
 
-    // ================== OBSOLETE ==================
-
-    bool isOptional() const { return false; }  // TO DO
-    bool isSilent() const{ return false; }  // TO DO
-
     // ================== Setters & Modifiers ==================
 
 protected:
     /** Sets the flag indicating that the value of the target property has been modified by this
-        handler. Subclasses must call this function when the target property is updated. */
+        handler, and invokes the insertNames() function. Subclasses must call this function when
+        the target property is updated. */
     void setChanged();
 
 public:

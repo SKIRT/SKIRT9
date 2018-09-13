@@ -87,6 +87,7 @@ bool PropertyHandler::hasChanged() const
 void PropertyHandler::setChanged()
 {
     _changed = true;
+    insertNames();
 }
 
 ////////////////////////////////////////////////////////////////////

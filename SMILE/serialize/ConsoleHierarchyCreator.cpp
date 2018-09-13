@@ -14,20 +14,20 @@
 #include "Item.hpp"
 #include "ItemListPropertyHandler.hpp"
 #include "ItemPropertyHandler.hpp"
+#include "NameManager.hpp"
 #include "PropertyDef.hpp"
 #include "PropertyHandlerVisitor.hpp"
 #include "SchemaDef.hpp"
 #include "StringPropertyHandler.hpp"
 #include "StringUtils.hpp"
 #include "System.hpp"
-#include <unordered_set>
 
 ////////////////////////////////////////////////////////////////////
 
 namespace
 {
     // Forward declaration; see function definition at the end of this anonymous namespace
-    void setupProperties(Item* item, const SchemaDef* schema, std::unordered_set<string>& keys);
+    void setupProperties(Item* item, const SchemaDef* schema, NameManager* nameMgr);
 
     // ----------------------------------------------------------
 
@@ -35,18 +35,11 @@ namespace
     // They set the value of a property by asking the user at the console for a value.
     class ConsolePropertySetter : public PropertyHandlerVisitor
     {
-    private:
-        const SchemaDef* _schema;
-        std::unordered_set<string>& _keys;
-
     public:
-        ConsolePropertySetter(const SchemaDef* schema, std::unordered_set<string>& keys)
-            : _schema(schema), _keys(keys) { }
-
         void visitPropertyHandler(StringPropertyHandler* handler) override
         {
             string value = Console::promptForString("Enter " + handler->title(),
-                                                    handler->hasDefaultValue() || handler->isOptional(),
+                                                    handler->hasDefaultValue() || !handler->isRequired(),
                                                     handler->defaultValue());
             handler->setValue(value);
         }
@@ -87,12 +80,11 @@ namespace
         void visitPropertyHandler(ItemPropertyHandler* handler) override
         {
             // make the user select the appropriate subclass for this property
-            // TO DO
-            vector<string> choices; // = _schema->allowedDescendants(handler->baseType(), _keys);
-            int choice = Console::promptForChoice(handler->title(), _schema->titles(choices),
+            vector<string> choices = handler->allowedAndDisplayedDescendants();
+            int choice = Console::promptForChoice(handler->title(), handler->schema()->titles(choices),
                                                   handler->hasDefaultValue(),
                                                   StringUtils::indexOf(choices, handler->defaultType()),
-                                                  handler->isOptional(), "or zero to select none");
+                                                  !handler->isRequired(), "or zero to select none");
 
             if (choice < 0)
             {
@@ -104,18 +96,16 @@ namespace
                 // create the item and set the property
                 bool success = handler->setToNewItemOfType(choices[choice]);
                 if (!success) throw FATALERROR("Can't create simulation item of type " + choices[choice]);
-                for (auto& key : _schema->ascendants(choices[choice])) _keys.insert(key);
 
                 // recursively handle the newly created simulation item
-                setupProperties(handler->value(), _schema, _keys);
+                setupProperties(handler->value(), handler->schema(), handler->nameManager());
             }
         }
 
         void visitPropertyHandler(ItemListPropertyHandler* handler) override
         {
             // get a list of the subclasses for this property
-            // TO DO
-            vector<string> choices; // = _schema->allowedDescendants(handler->baseType(), _keys);
+            vector<string> choices = handler->allowedAndDisplayedDescendants();
 
             // initialize the property value
             handler->setToEmpty();
@@ -126,9 +116,9 @@ namespace
                 // make the user select the appropriate subclass for this item
                 int choice = Console::promptForChoice(
                                         "item #" + std::to_string(count) + " in " + handler->title() + " list",
-                                        _schema->titles(choices), handler->hasDefaultValue(),
+                                        handler->schema()->titles(choices), handler->hasDefaultValue(),
                                         StringUtils::indexOf(choices, handler->defaultType()),
-                                        count != 1  || handler->isOptional(), "or zero to terminate the list");
+                                        count != 1  || !handler->isRequired(), "or zero to terminate the list");
 
                 // terminate the list if requested
                 if (choice < 0) return;
@@ -136,10 +126,9 @@ namespace
                 // create the item and set the property
                 bool success = handler->addNewItemOfType(choices[choice]);
                 if (!success) throw FATALERROR("Can't create simulation item of type " + choices[choice]);
-                for (auto& key : _schema->ascendants(choices[choice])) _keys.insert(key);
 
                 // recursively handle the newly created simulation item
-                setupProperties(handler->value().back(), _schema, _keys);
+                setupProperties(handler->value().back(), handler->schema(), handler->nameManager());
             }
         }
     };
@@ -152,8 +141,6 @@ namespace
     class SilentPropertySetter : public PropertyHandlerVisitor
     {
     public:
-        SilentPropertySetter() { }
-
         void visitPropertyHandler(StringPropertyHandler* handler) override
         {
             handler->setValue(handler->defaultValue());
@@ -201,18 +188,18 @@ namespace
     // This is accomplished by asking each of the properties to accept an appropriate PropertyHandlerVisitor
     // instance as a visitor, which causes a call-back to the visitPropertyHandler() function with
     // the corresponding PropertyHandler type.
-    void setupProperties(Item* item, const SchemaDef* schema, std::unordered_set<string>& keys)
+    void setupProperties(Item* item, const SchemaDef* schema, NameManager* nameMgr)
     {
-        ConsolePropertySetter consoleSetter(schema, keys);
+        ConsolePropertySetter consoleSetter;
         SilentPropertySetter silentSetter;
 
         // setup all properties of the item
         for (const string& property : schema->properties(item->type()))
         {
-            auto handler = schema->createPropertyHandler(item, property, nullptr);
+            auto handler = schema->createPropertyHandler(item, property, nameMgr);
 
             // distribute to setup methods depending on property type (using visitor pattern)
-            if (!handler->isSilent() && handler->isRelevant()) handler->acceptVisitor(&consoleSetter);
+            if (handler->isRelevant() && handler->isDisplayed()) handler->acceptVisitor(&consoleSetter);
             else handler->acceptVisitor(&silentSetter);
         }
     }
@@ -222,20 +209,22 @@ namespace
 
 std::unique_ptr<Item> ConsoleHierarchyCreator::create(const SchemaDef* schema)
 {
-    // initialize set of keywords used for conditional relevancy of class types
-    std::unordered_set<string> keys;
-
-    // make the user select the appropriate subclass of the root item type
-    string rootItemType = schema->schemaType();
-    vector<string> choices = schema->descendants(rootItemType);
-    int choice = Console::promptForChoice(schema->title(rootItemType), schema->titles(choices));
+    // make the user select a subtype of the root base type
+    string rootBaseType = schema->schemaType();
+    vector<string> choices = schema->descendants(rootBaseType);
+    int choice = Console::promptForChoice(schema->title(rootBaseType), schema->titles(choices));
+    string rootType = choices[choice];
 
     // create the root item
-    auto rootItem = schema->createItem(choices[choice]);
-    for (auto& key : schema->ascendants(choices[choice])) keys.insert(key);
+    auto rootItem = schema->createItem(rootType);
+
+    // construct the name manager for this session, and insert the appropriate names for the root item type
+    NameManager nameMgr;
+    nameMgr.insert(schema->ascendants(rootType));
+    nameMgr.insertFromConditionalValue(schema->toBeInserted(rootType));
 
     // recursively setup all properties of the top-level item and its children
-    setupProperties(rootItem.get(), schema, keys);
+    setupProperties(rootItem.get(), schema, &nameMgr);
     return rootItem;
 }
 
