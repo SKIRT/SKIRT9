@@ -16,11 +16,9 @@
 class ShapeCanvas : public ShapeItem
 {
     ITEM_CONCRETE(ShapeCanvas, ShapeItem, "the root of a shape hierarchy, managing the canvas")
-        ATTRIBUTE_TYPE_INSERT(savePath, "CanvasUsed")
     PROPERTY_STRING(savePath, "the path of the output file when saving this canvas")
         ATTRIBUTE_DISPLAYED_IF(savePath, "false")
         ATTRIBUTE_REQUIRED_IF(savePath, "false")
-        ATTRIBUTE_INSERT(savePath, "CanvasFilePath")
     PROPERTY_ITEM(shape, Shape, "the top-level shape in this hierarchy")
         ATTRIBUTE_DEFAULT_VALUE(shape, "ShapeGroup")
     ITEM_END()

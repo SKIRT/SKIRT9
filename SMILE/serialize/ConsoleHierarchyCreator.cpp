@@ -193,15 +193,19 @@ namespace
         ConsolePropertySetter consoleSetter;
         SilentPropertySetter silentSetter;
 
-        // setup all properties of the item
+        // setup all properties of the item, using a fresh local name space
+        nameMgr->pushLocal();
         for (const string& property : schema->properties(item->type()))
         {
             auto handler = schema->createPropertyHandler(item, property, nameMgr);
 
             // distribute to setup methods depending on property type (using visitor pattern)
-            if (handler->isRelevant() && handler->isDisplayed()) handler->acceptVisitor(&consoleSetter);
+            if ( handler->isRelevant() &&
+                (handler->isDisplayed() || (handler->isRequired() && !handler->hasDefaultValue())) )
+                handler->acceptVisitor(&consoleSetter);
             else handler->acceptVisitor(&silentSetter);
         }
+        nameMgr->popLocal();
     }
 }
 

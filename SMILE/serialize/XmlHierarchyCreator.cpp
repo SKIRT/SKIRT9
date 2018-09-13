@@ -308,6 +308,9 @@ namespace
         ReaderPropertySetter readerSetter(reader);
         DefaultPropertySetter defaultSetter(reader);
 
+        // privide a fresh local name space
+        nameMgr->pushLocal();
+
         // build a dictionary of handlers for all defined properties
         std::unordered_map<string,std::unique_ptr<PropertyHandler>> handlers;
         for (const string& name : schema->properties(item->type()))
@@ -346,12 +349,15 @@ namespace
             auto& handler = handlers[name];
             if (!handler->hasChanged())
             {
-                if (handler->isRequired() && !handler->hasDefaultValue() && handler->isRelevant())
+                if (handler->isRelevant() && handler->isRequired() && !handler->hasDefaultValue())
                     reader.throwError("Value for required property '" + handler->name() + "' in item of type '"
                                       + item->type() + "' is not specified and has no default value");
                 handler->acceptVisitor(&defaultSetter);
             }
         }
+
+        // terminate the local name space
+        nameMgr->popLocal();
     }
 }
 
