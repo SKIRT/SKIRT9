@@ -598,54 +598,6 @@ vector<string> SchemaDef::titles(const vector<string>& types) const
 
 ////////////////////////////////////////////////////////////////////
 
-namespace
-{
-    // combine two Boolean expressions into a single one with the "and" operator
-    void addAndSegment(string& condition, string segment)
-    {
-        if (!segment.empty())
-        {
-            // conditions are evaluated from left to right,
-            // so there is no need for parenthesis around the left-hand-side operand
-            if (!condition.empty()) condition += "&";
-            condition += "(" + segment + ")";
-        }
-    }
-}
-
-////////////////////////////////////////////////////////////////////
-
-string SchemaDef::allowed(string type) const
-{
-    // combine all "allowedIf" attributes inherited by the type
-    string condition;
-    while (!type.empty())
-    {
-        auto& def = typeDef(type);
-        addAndSegment(condition, def.allowedIf());
-        type = def.base();
-    }
-    return condition;
-}
-
-////////////////////////////////////////////////////////////////////
-
-string SchemaDef::allowedAndDisplayed(string type) const
-{
-    // combine all "allowedIf" and "displayedIf" attributes inherited by the type
-    string condition;
-    while (!type.empty())
-    {
-        auto& def = typeDef(type);
-        addAndSegment(condition, def.allowedIf());
-        addAndSegment(condition, def.displayedIf());
-        type = def.base();
-    }
-    return condition;
-}
-
-////////////////////////////////////////////////////////////////////
-
 bool SchemaDef::inherits(string childType, string parentType) const
 {
     string type = childType;
@@ -730,6 +682,68 @@ string SchemaDef::definingType(string type, string property) const
 string SchemaDef::propertyTitle(string type, string property) const
 {
     return propertyDef(type, property).title();
+}
+
+////////////////////////////////////////////////////////////////////
+
+namespace
+{
+    // combine two Boolean expressions into a single one with the "and" operator
+    void addAndSegment(string& condition, string segment)
+    {
+        if (!segment.empty())
+        {
+            // conditions are evaluated from left to right,
+            // so there is no need for parenthesis around the left-hand-side operand
+            if (!condition.empty()) condition += "&";
+            condition += "(" + segment + ")";
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
+string SchemaDef::allowed(string type) const
+{
+    // combine all "allowedIf" attributes inherited by the type
+    string condition;
+    while (!type.empty())
+    {
+        auto& def = typeDef(type);
+        addAndSegment(condition, def.allowedIf());
+        type = def.base();
+    }
+    return condition;
+}
+
+////////////////////////////////////////////////////////////////////
+
+string SchemaDef::allowedAndDisplayed(string type) const
+{
+    // combine all "allowedIf" and "displayedIf" attributes inherited by the type
+    string condition;
+    while (!type.empty())
+    {
+        auto& def = typeDef(type);
+        addAndSegment(condition, def.allowedIf());
+        addAndSegment(condition, def.displayedIf());
+        type = def.base();
+    }
+    return condition;
+}
+
+////////////////////////////////////////////////////////////////////
+
+vector<string> SchemaDef::toBeInserted(string type) const
+{
+    vector<string> result;
+    while (!type.empty())
+    {
+        auto& def = typeDef(type);
+        if (!def.insert().empty()) result.push_back(def.insert());
+        type = def.base();
+    }
+    return result;
 }
 
 ////////////////////////////////////////////////////////////////////

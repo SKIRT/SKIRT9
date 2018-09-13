@@ -22,6 +22,7 @@ bool StringPropertyHandler::isValidValue(string value) const
 void StringPropertyHandler::insertNames()
 {
     if (!value().empty()) nameManager()->insert(property()->name());
+    nameManager()->insertFromConditionalValue(property()->insert());
 }
 
 ////////////////////////////////////////////////////////////////////

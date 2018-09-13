@@ -22,6 +22,7 @@ bool EnumPropertyHandler::isValidValue(string value) const
 void EnumPropertyHandler::insertNames()
 {
     nameManager()->insert(property()->name() + value());
+    nameManager()->insertFromConditionalValue(property()->insert());
 }
 
 ////////////////////////////////////////////////////////////////////

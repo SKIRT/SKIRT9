@@ -22,6 +22,7 @@ bool BoolPropertyHandler::isValidValue(string value) const
 void BoolPropertyHandler::insertNames()
 {
     if (value()) nameManager()->insert(property()->name());
+    nameManager()->insertFromConditionalValue(property()->insert());
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -30,6 +30,7 @@ bool IntPropertyHandler::isValidValue(string value) const
 void IntPropertyHandler::insertNames()
 {
     if (value() != 0) nameManager()->insert(property()->name());
+    nameManager()->insertFromConditionalValue(property()->insert());
 }
 
 ////////////////////////////////////////////////////////////////////

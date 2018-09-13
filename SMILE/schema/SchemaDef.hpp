@@ -133,22 +133,6 @@ public:
         same order. */
     vector<string> titles(const vector<string>& types) const;
 
-    /** Returns a Boolean expression that, when evaluated against the current global and local name
-        sets, will determine whether the specified type is allowed. To obtain this result, the
-        Boolean expressions in the "allowedIf" attribute values for the specified type and for any
-        of its base types, recursively, are concatenated with the AND operator into a single
-        Boolean expression. The function throws an error if the specified type is not defined in
-        the schema. */
-    string allowed(string type) const;
-
-    /** Returns a Boolean expression that, when evaluated against the current global and local name
-        sets, will determine whether the specified type is allowed and displayed. To obtain this
-        result, the Boolean expressions in the "allowedIf" and "displayedIf" attribute values for
-        the specified type and for any of its base types, recursively, are concatenated with the
-        AND operator into a single Boolean expression. The function throws an error if the
-        specified type is not defined in the schema. */
-    string allowedAndDisplayed(string type) const;
-
     /** Returns true if the first type inherits the second. The function throws an error if the
         first type (the child type) is not defined in the schema. */
     bool inherits(string childType, string parentType) const;
@@ -180,6 +164,33 @@ public:
         the specified type. The function throws an error if the specified property and type
         combination is not defined in the schema. */
     string propertyTitle(string type, string property) const;
+
+    // -------------------------------------
+
+    /** Returns a Boolean expression that, when evaluated against the current global and local name
+        sets, will determine whether the specified type is allowed. To obtain this result, the
+        Boolean expressions in the "allowedIf" attribute values for the specified type and for any
+        of its base types, recursively, are concatenated with the AND operator into a single
+        Boolean expression. The function throws an error if the specified type is not defined in
+        the schema. */
+    string allowed(string type) const;
+
+    /** Returns a Boolean expression that, when evaluated against the current global and local name
+        sets, will determine whether the specified type is allowed and displayed. To obtain this
+        result, the Boolean expressions in the "allowedIf" and "displayedIf" attribute values for
+        the specified type and for any of its base types, recursively, are concatenated with the
+        AND operator into a single Boolean expression. The function throws an error if the
+        specified type is not defined in the schema. */
+    string allowedAndDisplayed(string type) const;
+
+    /** Returns a list of conditional value expressions that, when evaluated against the current
+        global and local name sets, will provide the names that need to be inserted when the
+        specified type is entered into a dataset. The list includes the conditional value
+        expressions given as "insert" attribute values for the specified type and for any of its
+        base types, recursively. Empty "insert" attribute values are not included, so the returned
+        list may be empty. The function throws an error if the specified type is not defined in the
+        schema. */
+    vector<string> toBeInserted(string type) const;
 
     // -------------------------------------
 

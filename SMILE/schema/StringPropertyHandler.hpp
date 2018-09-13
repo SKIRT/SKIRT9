@@ -31,7 +31,9 @@ public:
     /** Causes the name manager associated with this handler to insert names into the global and/or
         local name sets corresponding to the current value of the target property. For string
         properties, the function inserts the target property's name if the current property value
-        is nonempty, and does not insert any names if the value is empty. */
+        is nonempty, and does not insert any names if the value is empty. In addition, the function
+        inserts the names provided in the conditional expression of the "insert" attribute of the
+        target property, if any. */
     void insertNames() override;
 
     /** Accepts the specified property handler visitor. */

@@ -4,8 +4,9 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "NameManager.hpp"
-#include "FatalError.hpp"
 #include "BooleanExpression.hpp"
+#include "FatalError.hpp"
+#include "StringUtils.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -58,6 +59,28 @@ void NameManager::insert(string name)
     if (isUppercase(name[0])) _globalSet.insert(name);
     else if (isLowercase(name[0])) _localSetStack.top().insert(name);
     else throw FATALERROR("First character in name must be a letter");
+}
+
+////////////////////////////////////////////////////////////////////
+
+void NameManager::insert(const vector<std::string>& names)
+{
+    for (auto name : names) insert(name);
+}
+
+////////////////////////////////////////////////////////////////////
+
+void NameManager::insertFromConditionalValue(string nameExpression)
+{
+    string names = evaluateConditionalValue(nameExpression);
+    if (!names.empty()) insert(StringUtils::split(names, ","));
+}
+
+////////////////////////////////////////////////////////////////////
+
+void NameManager::insertFromConditionalValue(const vector<string>& nameExpressions)
+{
+    for (auto nameExpression : nameExpressions) insert(nameExpression);
 }
 
 ////////////////////////////////////////////////////////////////////

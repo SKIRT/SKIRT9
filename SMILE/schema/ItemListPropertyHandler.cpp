@@ -17,6 +17,13 @@
 void ItemListPropertyHandler::insertNames()
 {
     if (!value().empty()) nameManager()->insert(property()->name());
+    nameManager()->insertFromConditionalValue(property()->insert());
+
+    for (auto item : value())
+    {
+        nameManager()->insert(schema()->ascendants(item->type()));
+        nameManager()->insertFromConditionalValue(schema()->toBeInserted(item->type()));
+    }
 }
 
 ////////////////////////////////////////////////////////////////////

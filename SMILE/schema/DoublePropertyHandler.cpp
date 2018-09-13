@@ -21,6 +21,7 @@ bool DoublePropertyHandler::isValidValue(string value) const
 void DoublePropertyHandler::insertNames()
 {
     if (value() != 0.) nameManager()->insert(property()->name());
+    nameManager()->insertFromConditionalValue(property()->insert());
 }
 
 ////////////////////////////////////////////////////////////////////

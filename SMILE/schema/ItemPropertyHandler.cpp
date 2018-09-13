@@ -16,6 +16,13 @@
 void ItemPropertyHandler::insertNames()
 {
     if (value()) nameManager()->insert(property()->name());
+    nameManager()->insertFromConditionalValue(property()->insert());
+
+    if (value())
+    {
+        nameManager()->insert(schema()->ascendants(value()->type()));
+        nameManager()->insertFromConditionalValue(schema()->toBeInserted(value()->type()));
+    }
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -74,6 +74,20 @@ public:
         contains characters other than letters and digits, a fatal error is thrown. */
     void insert(string name);
 
+    /** Adds the specified names to the appropriate name set(s) as described for the insert(string)
+        function. */
+    void insert(const vector<string>& names);
+
+    /** Adds the names provided in the specified conditional value expression to the appropriate
+        name set(s). The conditional value expression is evaluated as described for the
+        evaluateConditionalValue() function. The result is interpreted as a comma-separated list of
+        names. Each of these names is inserted as described for the insert() function. */
+    void insertFromConditionalValue(string nameExpression);
+
+    /** Adds the names provided in the specified conditional value expressions to the appropriate
+        name set(s) as described for the insertFromConditionalValue(string) function. */
+    void insertFromConditionalValue(const vector<string>& nameExpressions);
+
     // ================== Evaluating expressions ==================
 
     /** This function evaluates the specified string as a Boolean expression in the format decribed

@@ -21,6 +21,7 @@ bool DoubleListPropertyHandler::isValidValue(string value) const
 void DoubleListPropertyHandler::insertNames()
 {
     if (!value().empty()) nameManager()->insert(property()->name());
+    nameManager()->insertFromConditionalValue(property()->insert());
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -34,7 +34,8 @@ public:
         local name sets corresponding to the current value of the target property. For double list
         properties, the function inserts the target property's name if the current property value
         is a nonempty list (i.e. including at least one number), and does not insert any names if
-        the value is the empty list. */
+        the value is the empty list. In addition, the function inserts the names provided in the
+        conditional expression of the "insert" attribute of the target property, if any. */
     void insertNames() override;
 
     /** Accepts the specified visitor. This function is part of the "visitor" design pattern
