@@ -36,7 +36,7 @@ SubItemPropertyWizardPane::SubItemPropertyWizardPane(std::unique_ptr<PropertyHan
     auto buttonGroup = new QButtonGroup;
 
     // add the choices
-    for (auto choiceType : hdlr->allowedDescendants())
+    for (auto choiceType : hdlr->allowedAndDisplayedDescendants())
     {
         string choiceTitle = StringUtils::toUpperFirst(hdlr->schema()->title(choiceType));
         if (hdlr->schema()->inherits(choiceType,defaultType)) choiceTitle += "  [default]";

@@ -7,6 +7,7 @@
 #define WIZARDENGINE_HPP
 
 #include "Basics.hpp"
+#include "NameManager.hpp"
 #include <QObject>
 class Item;
 class PropertyHandler;
@@ -203,6 +204,9 @@ private:
     // the path of the file to which the current dataset has already been saved (although it may have changed),
     // or the empty string if it has never been saved; always valid
     QString _filepath;
+
+    // the name manager
+    NameManager _nameMgr;
 };
 
 ////////////////////////////////////////////////////////////////////

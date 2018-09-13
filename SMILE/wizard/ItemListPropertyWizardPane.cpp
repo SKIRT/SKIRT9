@@ -27,7 +27,7 @@ namespace
     {
         for (const string& property : schema->properties(item->type()))
         {
-            auto handler = schema->createPropertyHandler(item, property);
+            auto handler = schema->createPropertyHandler(item, property, nullptr);
             auto itemhandler = dynamic_cast<ItemPropertyHandler*>(handler.get());
             if (itemhandler && itemhandler->isConfigured() && itemhandler->value())
             {
@@ -121,7 +121,7 @@ void ItemListPropertyWizardPane::addItem()
     auto hdlr = handlerCast<ItemListPropertyHandler>();
 
     // select a new item type that inherits from the default, or if none is found, use the first type in the list
-    auto choiceList = hdlr->allowedDescendants();
+    auto choiceList = hdlr->allowedAndDisplayedDescendants();
     if (choiceList.empty()) return;   // can we do something more informative to the user in case of failure?
     auto newType = choiceList[0];
     if (hdlr->hasDefaultValue())
@@ -206,7 +206,7 @@ void ItemListPropertyWizardPane::setButtonsEnabled()
     auto hdlr = handlerCast<ItemListPropertyHandler>();
     bool complete = true;
     for (auto item : hdlr->value()) if (!ItemUtils::isItemComplete(item)) complete = false;
-    emit propertyValidChanged(complete && (hasItems || hdlr->isOptional()));
+    emit propertyValidChanged(complete && (hasItems || !hdlr->isRequired()));
 }
 
 ////////////////////////////////////////////////////////////////////

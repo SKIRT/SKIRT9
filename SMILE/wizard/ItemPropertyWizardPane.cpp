@@ -22,8 +22,8 @@ ItemPropertyWizardPane::ItemPropertyWizardPane(std::unique_ptr<PropertyHandler> 
     auto hdlr = handlerCast<ItemPropertyHandler>();
 
     // if there is exactly one choice, make it the forced type
-    auto choiceList = hdlr->allowedDescendants();
-    string forcedType = (choiceList.size()==1 && !hdlr->isOptional()) ? choiceList[0] : "";
+    auto choiceList = hdlr->allowedAndDisplayedDescendants();
+    string forcedType = (choiceList.size()==1 && hdlr->isRequired()) ? choiceList[0] : "";
 
     // determine the default type, if there is one
     string defaultType = hdlr->hasDefaultValue() ? hdlr->defaultType() : "";
@@ -44,7 +44,7 @@ ItemPropertyWizardPane::ItemPropertyWizardPane(std::unique_ptr<PropertyHandler> 
             hdlr->setConfigured();
         }
         // otherwise, if the property is optional, set the property value to null
-        else if (hdlr->isOptional())
+        else if (!hdlr->isRequired())
         {
             hdlr->setToNull();
             hdlr->setConfigured();
@@ -65,7 +65,7 @@ ItemPropertyWizardPane::ItemPropertyWizardPane(std::unique_ptr<PropertyHandler> 
     auto buttonGroup = new QButtonGroup;
 
     // if the property is optional, add the "None" choice
-    if (hdlr->isOptional())
+    if (!hdlr->isRequired())
     {
         auto choiceButton = new QRadioButton("None");
         choiceButton->setFocusPolicy(Qt::NoFocus);

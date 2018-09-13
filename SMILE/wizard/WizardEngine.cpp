@@ -100,7 +100,7 @@ int WizardEngine::propertyIndexForChild(Item* parent, Item* child)
     int index = 0;
     for (auto property : _schema->properties(parent->type()))
     {
-        auto handler = _schema->createPropertyHandler(parent, property);
+        auto handler = _schema->createPropertyHandler(parent, property, &_nameMgr);
 
         // check the value of item properties
         auto itemhandler = dynamic_cast<ItemPropertyHandler*>(handler.get());
@@ -122,7 +122,8 @@ int WizardEngine::propertyIndexForChild(Item* parent, Item* child)
 
 std::unique_ptr<PropertyHandler> WizardEngine::createCurrentPropertyHandler(int offset)
 {
-    return _schema->createPropertyHandler(_current, _schema->properties(_current->type())[_propertyIndex+offset]);
+    return _schema->createPropertyHandler(_current, _schema->properties(_current->type())[_propertyIndex+offset],
+                                          &_nameMgr);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -134,14 +135,14 @@ namespace
     // and the subitem pane of item list properties that offer only one choice (if the second argument is provided)
     bool silentForWizard(PropertyHandler* handler, int subItemIndex = -1)
     {
-        if (handler->isSilent() || !handler->isRelevant()) return true;
+        if (!handler->isDisplayed() || !handler->isRelevant()) return true;
 
         auto itemhdlr = dynamic_cast<ItemPropertyHandler*>(handler);
-        if (itemhdlr && !itemhdlr->isOptional() && itemhdlr->allowedDescendants().size() == 1) return true;
+        if (itemhdlr && itemhdlr->isRequired() && itemhdlr->allowedAndDisplayedDescendants().size() == 1) return true;
 
         if (subItemIndex < 0) return false;
         auto itemlisthdlr = dynamic_cast<ItemListPropertyHandler*>(handler);
-        if (itemlisthdlr && itemlisthdlr->allowedDescendants().size() == 1) return true;
+        if (itemlisthdlr && itemlisthdlr->allowedAndDisplayedDescendants().size() == 1) return true;
 
         return false;
     }
@@ -187,8 +188,8 @@ namespace
 
         void visitPropertyHandler(ItemPropertyHandler* handler) override
         {
-            if (!handler->isOptional() && handler->allowedDescendants().size() == 1)
-                handler->setToNewItemOfType(handler->allowedDescendants()[0]);
+            if (handler->isRequired() && handler->allowedAndDisplayedDescendants().size() == 1)
+                handler->setToNewItemOfType(handler->allowedAndDisplayedDescendants()[0]);
             else
                 handler->setToNull();
         }
@@ -350,11 +351,10 @@ namespace
     }
 
     // returns true if the specified property is of type Bool, Int, or Double,
-    // it is not silent and it cannot become irrelevant
+    // and it cannot become "silent"
     bool eligableForMultiPane(PropertyHandler* handler)
     {
-        if (handler->isSilent()) return false;
-        if (handler->hasRelevantIf()) return false;
+        if (handler->hasIfAttribute()) return false;
         if (dynamic_cast<BoolPropertyHandler*>(handler)) return true;
         if (dynamic_cast<IntPropertyHandler*>(handler)) return true;
         if (dynamic_cast<DoublePropertyHandler*>(handler)) return true;

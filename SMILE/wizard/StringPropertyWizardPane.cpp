@@ -46,7 +46,7 @@ StringPropertyWizardPane::StringPropertyWizardPane(std::unique_ptr<PropertyHandl
     }
     else
     {
-        if (hdlr->hasDefaultValue() || hdlr->isOptional())
+        if (hdlr->hasDefaultValue() || !hdlr->isRequired())
         {
             field->setText(QString::fromStdString(hdlr->defaultValue()));
             hdlr->setValue(hdlr->defaultValue());
@@ -59,7 +59,7 @@ StringPropertyWizardPane::StringPropertyWizardPane(std::unique_ptr<PropertyHandl
     }
 
     // ensure proper validity state
-    emit propertyValidChanged(hdlr->isOptional() || !field->text().isEmpty());
+    emit propertyValidChanged(!hdlr->isRequired() || !field->text().isEmpty());
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -70,7 +70,7 @@ void StringPropertyWizardPane::updateValue(const QString& text)
 
     // verify that value is non-empty before setting it
     string value = text.simplified().toStdString();
-    bool valid = hdlr->isOptional() || !value.empty();
+    bool valid = !hdlr->isRequired() || !value.empty();
     if (valid && (!hdlr->isConfigured() || value!=hdlr->value()))
     {
         hdlr->setValue(value);
