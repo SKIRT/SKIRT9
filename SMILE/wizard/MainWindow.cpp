@@ -15,6 +15,7 @@
 #include <QMessageBox>
 #include <QMenu>
 #include <QPushButton>
+#include <QScrollArea>
 #include <QSettings>
 #include <QStatusBar>
 #include <QUrl>
@@ -25,7 +26,7 @@
 MainWindow::MainWindow()
 {
     // setup the window, restoring previous position and size
-    setMinimumSize(680, 510);
+    setMinimumSize(600, 400);
     readSettings();
 
     // create the status bar
@@ -53,11 +54,15 @@ MainWindow::MainWindow()
     // create the pane that will hold the wizard UI
     _wizardPane = new QWidget;
     _wizardLayout = new QHBoxLayout;
+    _wizardLayout->setSizeConstraint(QLayout::SetMinAndMaxSize);
     _wizardLayout->addWidget(_wizardPane);
-    auto wizardArea = new QFrame;
+    auto wizardFrame = new QFrame;
+    wizardFrame->setLayout(_wizardLayout);
+    wizardFrame->setToolTip("Right-click for help");
+    auto wizardArea = new QScrollArea;
     wizardArea->setFrameStyle(QFrame::StyledPanel);
-    wizardArea->setLayout(_wizardLayout);
-    wizardArea->setToolTip("Right-click for help");
+    wizardArea->setWidgetResizable(true);
+    wizardArea->setWidget(wizardFrame);
 
     // create the central area
     auto centralLayout = new QVBoxLayout;
