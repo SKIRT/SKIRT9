@@ -168,6 +168,10 @@ public slots:
         saved. */
     void hierarchyWasSaved(QString filepath);
 
+    /** This function intializes the state of the wizard as if it has just been started, and causes
+        the basic choice pane to be shown. */
+    void restartWizard();
+
     // ================== GUI Generation ====================
 
 public:

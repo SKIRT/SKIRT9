@@ -580,6 +580,29 @@ void WizardEngine::hierarchyWasSaved(QString filepath)
 
 ////////////////////////////////////////////////////////////////////
 
+void WizardEngine::restartWizard()
+{
+    // clear the state
+    _openExisting = false;
+    _schemaName.clear();
+    _schema.reset();
+    _root.reset();
+    _stage = Stage::BasicChoice;
+    _current = nullptr;
+    while (!_stateStack.empty()) _stateStack.pop();
+    while (!_stateIndexStack.empty()) _stateIndexStack.pop();
+    _dirty = false;
+    _filepath.clear();
+    _nameMgr.clearAll();
+
+    // emit notifications
+    emit titleChanged();
+    emit dirtyChanged();
+    emitStateChanged();
+}
+
+////////////////////////////////////////////////////////////////////
+
 QWidget* WizardEngine::createPane()
 {
     switch (_stage)

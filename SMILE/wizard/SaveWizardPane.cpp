@@ -10,6 +10,7 @@
 #include <QApplication>
 #include <QFileDialog>
 #include <QLabel>
+#include <QMessageBox>
 #include <QPushButton>
 #include <QStandardPaths>
 #include <QVBoxLayout>
@@ -22,6 +23,7 @@ SaveWizardPane::SaveWizardPane(const SchemaDef* schema, Item* root, QString file
 {
     // connect ourselves to the target
     connect(this, SIGNAL(hierarchyWasSaved(QString)), target, SLOT(hierarchyWasSaved(QString)));
+    connect(this, SIGNAL(restartWizard()), target, SLOT(restartWizard()));
 
     // get a description for the type of dataset, removing the first letter (which should be "a")
     QString filetype = QString::fromStdString(schema->schemaTitle().substr(1));
@@ -63,6 +65,22 @@ SaveWizardPane::SaveWizardPane(const SchemaDef* schema, Item* root, QString file
 
         // connect the button
         connect(_saveAsButton, SIGNAL(clicked()), this, SLOT(saveAs()));
+    }
+
+    // ---- restart ----
+    {
+        // add the caption
+        layout->addWidget(new QLabel("Press this button to restart the wizard:"));
+
+        // add the button
+        _restartButton = new QPushButton("Restart");
+        auto buttonLayout = new QHBoxLayout;
+        layout->addLayout(buttonLayout);
+        buttonLayout->addWidget(_restartButton, 1);
+        buttonLayout->addStretch(4);
+
+        // connect the button
+        connect(_restartButton, SIGNAL(clicked()), this, SLOT(restart()));
     }
 
     // ---- quit ----
@@ -119,6 +137,22 @@ void SaveWizardPane::saveAs()
         if (!filepath.toLower().endsWith("." + extension.toLower())) filepath += "." + extension;
         saveToFile(filepath);
     }
+}
+
+////////////////////////////////////////////////////////////////////
+
+void SaveWizardPane::restart()
+{
+    if (_dirty)
+    {
+        auto ret = QMessageBox::warning(this, qApp->applicationName(),
+                                        "Do you want to discard your unsaved changes?",
+                                        QMessageBox::Discard | QMessageBox::Cancel, QMessageBox::Cancel);
+        if (ret == QMessageBox::Cancel) return;
+    }
+
+    // tell the wizard to restart
+    emit restartWizard();
 }
 
 ////////////////////////////////////////////////////////////////////

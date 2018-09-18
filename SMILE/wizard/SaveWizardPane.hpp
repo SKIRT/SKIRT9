@@ -47,6 +47,9 @@ public slots:
         emitting a hierarchyWasSaved() signal. */
     void saveAs();
 
+    /** This function attempts to restart the wizard. */
+    void restart();
+
     /** This function attempts to quit the application. */
     void quit();
 
@@ -63,6 +66,10 @@ signals:
     /** This signal is emitted after the simulation item hierarchy has been successfully saved. */
     void hierarchyWasSaved(QString filepath);
 
+    /** This signal is emitted after the user pushes the restart button (and declines to save any
+        changes, if applicable). */
+    void restartWizard();
+
     // ==================== Data members ======================
 
 private:
@@ -73,6 +80,7 @@ private:
     QLabel* _filepathLabel;
     QPushButton* _saveButton;
     QPushButton* _saveAsButton;
+    QPushButton* _restartButton;
     QPushButton* _quitButton;
 };
 
