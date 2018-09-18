@@ -121,7 +121,7 @@ int WizardEngine::propertyIndexForChild(Item* child)
 
 ////////////////////////////////////////////////////////////////////
 
-std::unique_ptr<PropertyHandler> WizardEngine::createCurrentPropertyHandler(int propertyIndex)
+std::unique_ptr<PropertyHandler> WizardEngine::createPropertyHandler(int propertyIndex)
 {
     return _schema->createPropertyHandler(_current, _schema->properties(_current->type())[propertyIndex], &_nameMgr);
 }
@@ -130,36 +130,63 @@ std::unique_ptr<PropertyHandler> WizardEngine::createCurrentPropertyHandler(int 
 
 bool WizardEngine::isPropertyEligableForMultiPane(int propertyIndex)
 {
-    auto handler = createCurrentPropertyHandler(propertyIndex);
+    auto handler = createPropertyHandler(propertyIndex);
+    if (dynamic_cast<StringPropertyHandler*>(handler.get())) return true;
     if (dynamic_cast<BoolPropertyHandler*>(handler.get())) return true;
     if (dynamic_cast<IntPropertyHandler*>(handler.get())) return true;
-    if (dynamic_cast<DoublePropertyHandler*>(handler.get())) return true;
     if (dynamic_cast<EnumPropertyHandler*>(handler.get())) return true;
-    if (dynamic_cast<StringPropertyHandler*>(handler.get())) return true;
+    if (dynamic_cast<DoublePropertyHandler*>(handler.get())) return true;
+    if (dynamic_cast<DoubleListPropertyHandler*>(handler.get())) return true;
     return false;
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool WizardEngine::isPropertySilent(int propertyIndex)
+{
+    auto handler = createPropertyHandler(propertyIndex);
+
+    // an irrelevant property is always silent
+    if (!handler->isRelevant()) return true;
+
+    // a property that should not be displayed is silent unless it is required and has no default value
+    if (!handler->isDisplayed() && (!handler->isRequired() || handler->hasDefaultValue())) return true;
+
+    // an item property that offers only a single choice is silent
+    auto itemhdlr = dynamic_cast<ItemPropertyHandler*>(handler.get());
+    if (itemhdlr)
+    {
+        auto numChoices = itemhdlr->allowedAndDisplayedDescendants().size();
+        if (numChoices == 0) return true;
+        if (numChoices == 1 && itemhdlr->isRequired()) return true;
+    }
+
+    // the subitem for an item list property that offers only a single choice is silent
+    auto itemlisthdlr = dynamic_cast<ItemListPropertyHandler*>(handler.get());
+    if (itemlisthdlr && _subItemIndex < 0)
+    {
+        if (itemlisthdlr->allowedAndDisplayedDescendants().size() <= 1) return true;
+    }
+
+    // if we reach here, the property is not silent
+    return false;
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool WizardEngine::isCurrentPropertyRangeSilent()
+{
+    for (int propertyIndex=_firstPropertyIndex; propertyIndex<=_lastPropertyIndex; ++propertyIndex)
+    {
+        if (!isPropertySilent(propertyIndex)) return false;
+    }
+    return true;
 }
 
 ////////////////////////////////////////////////////////////////////
 
 namespace
 {
-    // This function returns true if the specified property is "silent" for purposes of the wizard; this includes
-    // silent properties, irrelevant properties, item properties that offer only one choice,
-    // and the subitem pane of item list properties that offer only one choice (if the second argument is provided)
-    bool silentForWizard(PropertyHandler* handler, int subItemIndex = -1)
-    {
-        //if (!handler->isDisplayed() || !handler->isRelevant()) return true;
-
-        auto itemhdlr = dynamic_cast<ItemPropertyHandler*>(handler);
-        if (itemhdlr && itemhdlr->isRequired() && itemhdlr->allowedAndDisplayedDescendants().size() == 1) return true;
-
-        if (subItemIndex < 0) return false;
-        auto itemlisthdlr = dynamic_cast<ItemListPropertyHandler*>(handler);
-        if (itemlisthdlr && itemlisthdlr->allowedAndDisplayedDescendants().size() == 1) return true;
-
-        return false;
-    }
-
     // The functions in this class are part of the visitor pattern initiated by the setupProperties() function.
     // They set the value of a non-compound property to its default value, the value of a compound property
     // to "not present", i.e. the null pointer or the empty list, and the value of an item property that
@@ -201,14 +228,42 @@ namespace
 
         void visitPropertyHandler(ItemPropertyHandler* handler) override
         {
-            if (handler->isRequired() && handler->allowedAndDisplayedDescendants().size() == 1)
-                handler->setToNewItemOfType(handler->allowedAndDisplayedDescendants()[0]);
-            else
-                handler->setToNull();
+            if (handler->isRelevant())
+            {
+                if (handler->hasDefaultValue())
+                {
+                    handler->setToNewItemOfType(handler->defaultType());
+                    return;
+                }
+                if (handler->isRequired())
+                {
+                    auto choices = handler->allowedAndDisplayedDescendants();
+                    if (choices.size() == 1)
+                    {
+                        handler->setToNewItemOfType(choices[0]);
+                        return;
+                    }
+                }
+            }
+            handler->setToNull();
         }
 
         void visitPropertyHandler(ItemListPropertyHandler* handler) override
         {
+            if (handler->isRelevant() && handler->isRequired())
+            {
+                if (handler->hasDefaultValue())
+                {
+                    handler->addNewItemOfType(handler->defaultType());
+                    return;
+                }
+                auto choices = handler->allowedAndDisplayedDescendants();
+                if (choices.size() == 1)
+                {
+                    handler->addNewItemOfType(choices[0]);
+                    return;
+                }
+            }
             handler->setToEmpty();
         }
     };
@@ -246,7 +301,7 @@ void WizardEngine::advance(bool recursive)
             // if the (single) property being handled is an item or an item list, we may need to descend the hierarchy
             if (_lastPropertyIndex == _firstPropertyIndex)
             {
-                auto handler = createCurrentPropertyHandler(_firstPropertyIndex);
+                auto handler = createPropertyHandler(_firstPropertyIndex);
                 auto itemhdlr = dynamic_cast<ItemPropertyHandler*>(handler.get());
                 auto itemlisthdlr = dynamic_cast<ItemListPropertyHandler*>(handler.get());
 
@@ -291,7 +346,7 @@ void WizardEngine::advance(bool recursive)
                 _current = _current->parent();
 
                 // if we're advancing out of a subitem, stay with the item list property
-                if (dynamic_cast<ItemListPropertyHandler*>(createCurrentPropertyHandler(_firstPropertyIndex).get()))
+                if (dynamic_cast<ItemListPropertyHandler*>(createPropertyHandler(_firstPropertyIndex).get()))
                 {
                     // and also chop off the retreat states for the sub-item editing sequence
                     while (_stateStack.size() > _stateIndexStack.back()) _stateStack.pop_back();
@@ -335,15 +390,14 @@ void WizardEngine::advance(bool recursive)
                    && isPropertyEligableForMultiPane(_lastPropertyIndex+1)) _lastPropertyIndex++;
         }
 
-        // skip silent properties, irrelevant properties, and item properties that offer only one choice
-        auto handler = createCurrentPropertyHandler(_firstPropertyIndex);
-        if (silentForWizard(handler.get()))
+        // skip silent properties after setting their default values
+        if (isCurrentPropertyRangeSilent())
         {
-            if (!handler->isConfigured())
+            SilentPropertySetter silentSetter;
+            for (int propertyIndex=_firstPropertyIndex; propertyIndex<=_lastPropertyIndex; ++propertyIndex)
             {
-                SilentPropertySetter silentSetter;
-                handler->acceptVisitor(&silentSetter);
-                handler->setConfigured();
+                auto handler = createPropertyHandler(propertyIndex);
+                if (!handler->isConfigured()) handler->acceptVisitor(&silentSetter);
             }
             advance(true);
         }
@@ -369,8 +423,7 @@ void WizardEngine::advanceToEditSubItem(int subItemIndex)
     _subItemIndex = subItemIndex;
 
     // skip this wizard pane if there is only one choice for the subitem class
-    auto handler = createCurrentPropertyHandler(_firstPropertyIndex);
-    if (silentForWizard(handler.get(), _subItemIndex)) advance(true);
+    if (isCurrentPropertyRangeSilent()) advance(true);
 
     emitStateChanged();
 }
@@ -487,18 +540,18 @@ QWidget* WizardEngine::createPane()
             // single pane
             if (_lastPropertyIndex == _firstPropertyIndex)
             {
-                auto handler = createCurrentPropertyHandler(_firstPropertyIndex);
+                auto handler = createPropertyHandler(_firstPropertyIndex);
 
+                if (dynamic_cast<StringPropertyHandler*>(handler.get()))
+                    return new StringPropertyWizardPane(std::move(handler), this);
                 if (dynamic_cast<BoolPropertyHandler*>(handler.get()))
                     return new BoolPropertyWizardPane(std::move(handler), this);
                 if (dynamic_cast<IntPropertyHandler*>(handler.get()))
                     return new IntPropertyWizardPane(std::move(handler), this);
-                if (dynamic_cast<DoublePropertyHandler*>(handler.get()))
-                    return new DoublePropertyWizardPane(std::move(handler), this);
                 if (dynamic_cast<EnumPropertyHandler*>(handler.get()))
                     return new EnumPropertyWizardPane(std::move(handler), this);
-                if (dynamic_cast<StringPropertyHandler*>(handler.get()))
-                    return new StringPropertyWizardPane(std::move(handler), this);
+                if (dynamic_cast<DoublePropertyHandler*>(handler.get()))
+                    return new DoublePropertyWizardPane(std::move(handler), this);
                 if (dynamic_cast<DoubleListPropertyHandler*>(handler.get()))
                     return new DoubleListPropertyWizardPane(std::move(handler), this);
                 if (dynamic_cast<ItemPropertyHandler*>(handler.get()))
@@ -516,18 +569,20 @@ QWidget* WizardEngine::createPane()
                 auto multipane = new MultiPropertyWizardPane(this);
                 for (int propertyIndex=_firstPropertyIndex; propertyIndex<=_lastPropertyIndex; ++propertyIndex)
                 {
-                    auto handler = createCurrentPropertyHandler(propertyIndex);
+                    auto handler = createPropertyHandler(propertyIndex);
 
-                    if (dynamic_cast<BoolPropertyHandler*>(handler.get()))
+                    if (dynamic_cast<StringPropertyHandler*>(handler.get()))
+                        multipane->addPane(new StringPropertyWizardPane(std::move(handler), multipane));
+                    else if (dynamic_cast<BoolPropertyHandler*>(handler.get()))
                         multipane->addPane(new BoolPropertyWizardPane(std::move(handler), multipane));
                     else if (dynamic_cast<IntPropertyHandler*>(handler.get()))
                         multipane->addPane(new IntPropertyWizardPane(std::move(handler), multipane));
-                    else if (dynamic_cast<DoublePropertyHandler*>(handler.get()))
-                        multipane->addPane(new DoublePropertyWizardPane(std::move(handler), multipane));
                     else if (dynamic_cast<EnumPropertyHandler*>(handler.get()))
                         multipane->addPane(new EnumPropertyWizardPane(std::move(handler), multipane));
-                    else if (dynamic_cast<StringPropertyHandler*>(handler.get()))
-                        multipane->addPane(new StringPropertyWizardPane(std::move(handler), multipane));
+                    else if (dynamic_cast<DoublePropertyHandler*>(handler.get()))
+                        multipane->addPane(new DoublePropertyWizardPane(std::move(handler), multipane));
+                    else if (dynamic_cast<DoubleListPropertyHandler*>(handler.get()))
+                        multipane->addPane(new DoubleListPropertyWizardPane(std::move(handler), multipane));
                 }
                 return multipane;
             }

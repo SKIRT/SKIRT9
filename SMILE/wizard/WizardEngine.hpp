@@ -68,13 +68,27 @@ private:
     /** This function creates and returns a unique pointer to a property handler for the property
         of the current item with the specified property index. The function does \em not check
         whether the property index is within range. */
-    std::unique_ptr<PropertyHandler> createCurrentPropertyHandler(int propertyIndex);
+    std::unique_ptr<PropertyHandler> createPropertyHandler(int propertyIndex);
 
     /** This function returns true if the property of the current item with the specified property
         index can be grouped with other properties on a multi-pane. In the current implementation,
-        this is the case for properties of type Bool, Int, or Double. The function does \em not
-        check whether the property index is within range. */
+        this is the case for properties of type String, Bool, Int, Enum, Double, or DoubleList. The
+        function does \em not check whether the property index is within range. */
     bool isPropertyEligableForMultiPane(int propertyIndex);
+
+    /** This function returns true if the property of the current item with the specified property
+        index is "silent", i.e. it should not be shown by the wizard for one reason or another.
+        Reasons for a property to be silent include that the property is irrelevant or that it
+        should not displayed to the user (after evaluation of the corresponding conditions against
+        the appropriate set of names), or that there is only a single choice for the value of the
+        property so that it can be entered automatically. The function does \em not check whether
+        the property index is within range. */
+    bool isPropertySilent(int propertyIndex);
+
+    /** This function returns true if the property or properties currently being handled (according
+        to the current state of the wizard) are all "silent", as described for the
+        isPropertySilent() function. */
+    bool isCurrentPropertyRangeSilent();
 
 public slots:
     /** This function advances the wizard to the next state. It should only be called if
