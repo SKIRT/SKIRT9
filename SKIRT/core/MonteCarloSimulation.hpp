@@ -43,8 +43,8 @@ class MonteCarloSimulation : public Simulation
         ATTRIBUTE_DEFAULT_VALUE(sourceSystem, "SourceSystem")
 
     PROPERTY_ITEM(mediumSystem, MediumSystem, "the medium system")
-        ATTRIBUTE_DEFAULT_VALUE(mediumSystem, "MediumSystem")
-        ATTRIBUTE_REQUIRED_IF(mediumSystem, "false")
+        ATTRIBUTE_DEFAULT_VALUE(mediumSystem, "ExtinctionOnlyMode:MediumSystem;")
+        ATTRIBUTE_REQUIRED_IF(mediumSystem, "ExtinctionOnlyMode")
 
     PROPERTY_ITEM(instrumentSystem, InstrumentSystem, "the instrument system")
         ATTRIBUTE_DEFAULT_VALUE(instrumentSystem, "InstrumentSystem")

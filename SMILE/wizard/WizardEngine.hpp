@@ -9,7 +9,7 @@
 #include "Basics.hpp"
 #include "NameManager.hpp"
 #include <QObject>
-#include <deque>
+#include <stack>
 class Item;
 class PropertyHandler;
 class SchemaDef;
@@ -60,34 +60,46 @@ public:
     const SchemaDef* schema();
 
 private:
-    /** This function returns the property index for the specified child item in its parent item,
-        or -1 if the specified child item does not have a parent or it is not a child of its
-        parent (which should never happen). */
-    int propertyIndexForChild(Item* child);
-
     /** This function creates and returns a unique pointer to a property handler for the property
         of the current item with the specified property index. The function does \em not check
         whether the property index is within range. */
     std::unique_ptr<PropertyHandler> createPropertyHandler(int propertyIndex);
 
+    /** This function returns the property index for the specified child item in its parent item,
+        or -1 if the specified child item does not have a parent or if it is not a child of its
+        parent (which should never happen). The result does not depend on the evaluation of
+        conditional expressions against the current name sets. */
+    int propertyIndexForChild(Item* child);
+
     /** This function returns true if the property of the current item with the specified property
         index can be grouped with other properties on a multi-pane. In the current implementation,
         this is the case for properties of type String, Bool, Int, Enum, Double, or DoubleList. The
-        function does \em not check whether the property index is within range. */
+        result does not depend on the evaluation of conditional expressions against the current
+        name sets. The function does \em not check whether the property index is within range. */
     bool isPropertyEligableForMultiPane(int propertyIndex);
+
+    /** This function rebuilds the conditional name sets in the wizard engine's name manager so
+        that they reflect the contents of the current dataset, up to (and \em not including) the
+        first of the properties currently being handled (according to the current state of the
+        wizard). To this end, the function performs a depth-first traversal of the dataset;
+        properties at the same level are scanned in schema definition order, and children of an
+        item list are scanned in order of dataset occurrence. */
+    void rebuildConditionalNameSets();
 
     /** This function returns true if the property of the current item with the specified property
         index is "silent", i.e. it should not be shown by the wizard for one reason or another.
         Reasons for a property to be silent include that the property is irrelevant or that it
         should not displayed to the user (after evaluation of the corresponding conditions against
         the appropriate set of names), or that there is only a single choice for the value of the
-        property so that it can be entered automatically. The function does \em not check whether
-        the property index is within range. */
-    bool isPropertySilent(int propertyIndex);
+        property so that it can be entered automatically. The function assumes that the name sets
+        in the wizard engine's name manager reflect the contents of the current dataset, up to (and
+        \em not including) the property for which the query is made. */
+    bool isPropertySilent(PropertyHandler* handler);
 
     /** This function returns true if the property or properties currently being handled (according
         to the current state of the wizard) are all "silent", as described for the
-        isPropertySilent() function. */
+        isPropertySilent() function. The function properly initializes the conditional name sets in
+        the wizard engine's name manager. */
     bool isCurrentPropertyRangeSilent();
 
 public slots:
@@ -228,10 +240,10 @@ private:
     };
 
     // stack on which the state is pushed before each advance, and popped after each retreat (with some complications)
-    std::deque<State> _stateStack;
+    std::stack<State> _stateStack;
 
     // stack on which indices into the state stack are pushed to prevent retreating into subitem editing
-    std::deque<size_t> _stateIndexStack;
+    std::stack<size_t> _stateIndexStack;
 
     // ---- other data members related to the state of the wizard ----
 

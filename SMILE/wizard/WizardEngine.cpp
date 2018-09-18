@@ -95,6 +95,13 @@ const SchemaDef* WizardEngine::schema()
 
 ////////////////////////////////////////////////////////////////////
 
+std::unique_ptr<PropertyHandler> WizardEngine::createPropertyHandler(int propertyIndex)
+{
+    return _schema->createPropertyHandler(_current, _schema->properties(_current->type())[propertyIndex], &_nameMgr);
+}
+
+////////////////////////////////////////////////////////////////////
+
 int WizardEngine::propertyIndexForChild(Item* child)
 {
     int index = 0;
@@ -121,13 +128,6 @@ int WizardEngine::propertyIndexForChild(Item* child)
 
 ////////////////////////////////////////////////////////////////////
 
-std::unique_ptr<PropertyHandler> WizardEngine::createPropertyHandler(int propertyIndex)
-{
-    return _schema->createPropertyHandler(_current, _schema->properties(_current->type())[propertyIndex], &_nameMgr);
-}
-
-////////////////////////////////////////////////////////////////////
-
 bool WizardEngine::isPropertyEligableForMultiPane(int propertyIndex)
 {
     auto handler = createPropertyHandler(propertyIndex);
@@ -142,45 +142,55 @@ bool WizardEngine::isPropertyEligableForMultiPane(int propertyIndex)
 
 ////////////////////////////////////////////////////////////////////
 
-bool WizardEngine::isPropertySilent(int propertyIndex)
+namespace
 {
-    auto handler = createPropertyHandler(propertyIndex);
-
-    // an irrelevant property is always silent
-    if (!handler->isRelevant()) return true;
-
-    // a property that should not be displayed is silent unless it is required and has no default value
-    if (!handler->isDisplayed() && (!handler->isRequired() || handler->hasDefaultValue())) return true;
-
-    // an item property that offers only a single choice is silent
-    auto itemhdlr = dynamic_cast<ItemPropertyHandler*>(handler.get());
-    if (itemhdlr)
+    bool insertNames(Item* item, const SchemaDef* schema, NameManager* nameMgr,
+                     Item* current, int firstPropertyIndex)
     {
-        auto numChoices = itemhdlr->allowedAndDisplayedDescendants().size();
-        if (numChoices == 0) return true;
-        if (numChoices == 1 && itemhdlr->isRequired()) return true;
-    }
+        nameMgr->pushLocal();
 
-    // the subitem for an item list property that offers only a single choice is silent
-    auto itemlisthdlr = dynamic_cast<ItemListPropertyHandler*>(handler.get());
-    if (itemlisthdlr && _subItemIndex < 0)
-    {
-        if (itemlisthdlr->allowedAndDisplayedDescendants().size() <= 1) return true;
-    }
+        // loop over all properties of this item
+        int index = 0;
+        for (const string& property : schema->properties(item->type()))
+        {
+            // abort the recursion just before the current property in the current item
+            if (item == current && index == firstPropertyIndex) return false;
 
-    // if we reach here, the property is not silent
-    return false;
+            // insert the names for this property
+            auto handler = schema->createPropertyHandler(item, property, nameMgr);
+            handler->insertNames();
+
+            // recursively handle the properties of the item child
+            auto itemhdlr = dynamic_cast<ItemPropertyHandler*>(handler.get());
+            if (itemhdlr && itemhdlr->value())
+            {
+                if (!insertNames(itemhdlr->value(), schema, nameMgr, current, firstPropertyIndex)) return false;
+            }
+
+            // recursively handle the properties of the item list children
+            auto itemlisthdlr = dynamic_cast<ItemListPropertyHandler*>(handler.get());
+            if (itemlisthdlr) for (Item* item : itemlisthdlr->value())
+            {
+                if (!insertNames(item, schema, nameMgr, current, firstPropertyIndex)) return false;
+            }
+
+            index++;
+        }
+
+        nameMgr->popLocal();
+        return true;
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
 
-bool WizardEngine::isCurrentPropertyRangeSilent()
+void WizardEngine::rebuildConditionalNameSets()
 {
-    for (int propertyIndex=_firstPropertyIndex; propertyIndex<=_lastPropertyIndex; ++propertyIndex)
-    {
-        if (!isPropertySilent(propertyIndex)) return false;
-    }
-    return true;
+    // clear the name sets
+    _nameMgr.clearAll();
+
+    // start the recursion with the root item
+    insertNames(_root.get(), _schema.get(), &_nameMgr, _current, _firstPropertyIndex);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -271,10 +281,68 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
+bool WizardEngine::isPropertySilent(PropertyHandler* handler)
+{
+    // an irrelevant property is always silent
+    if (!handler->isRelevant()) return true;
+
+    // a property that should not be displayed is silent unless it is required and has no default value
+    if (!handler->isDisplayed() && (!handler->isRequired() || handler->hasDefaultValue())) return true;
+
+    // an item property that offers only a single choice is silent
+    auto itemhdlr = dynamic_cast<ItemPropertyHandler*>(handler);
+    if (itemhdlr)
+    {
+        auto numChoices = itemhdlr->allowedAndDisplayedDescendants().size();
+        if (numChoices == 0) return true;
+        if (numChoices == 1 && itemhdlr->isRequired()) return true;
+    }
+
+    // the subitem for an item list property that offers only a single choice is silent
+    auto itemlisthdlr = dynamic_cast<ItemListPropertyHandler*>(handler);
+    if (itemlisthdlr && _subItemIndex < 0)
+    {
+        if (itemlisthdlr->allowedAndDisplayedDescendants().size() <= 1) return true;
+    }
+
+    // if we reach here, the property is not silent
+    return false;
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool WizardEngine::isCurrentPropertyRangeSilent()
+{
+    // intialize name manager up to just before the current property range
+    rebuildConditionalNameSets();
+
+    // loop over all properties in the range
+    for (int propertyIndex=_firstPropertyIndex; propertyIndex<=_lastPropertyIndex; ++propertyIndex)
+    {
+        auto handler = createPropertyHandler(propertyIndex);
+
+        // if this property is not silent, the complete range is not silent
+        if (!isPropertySilent(handler.get())) return false;
+
+        // if this silent property was not previously configured by the user, set its default value;
+        // the corresponding names are automatically inserted
+        if (!handler->isConfigured())
+        {
+            SilentPropertySetter silentSetter;
+            handler->acceptVisitor(&silentSetter);
+        }
+        // otherwise, explicitly insert the names for the property
+        else handler->insertNames();
+    }
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////
+
 void WizardEngine::advance(bool recursive)
 {
     // remember the current state so we can retreat to it
-    if (!recursive) _stateStack.emplace_back(_stage, _current, _firstPropertyIndex, _lastPropertyIndex, _subItemIndex);
+    if (!recursive) _stateStack.emplace(_stage, _current, _firstPropertyIndex, _lastPropertyIndex, _subItemIndex);
 
     // advance the state depending on the current stage and details within the stage
     switch (_stage)
@@ -349,8 +417,8 @@ void WizardEngine::advance(bool recursive)
                 if (dynamic_cast<ItemListPropertyHandler*>(createPropertyHandler(_firstPropertyIndex).get()))
                 {
                     // and also chop off the retreat states for the sub-item editing sequence
-                    while (_stateStack.size() > _stateIndexStack.back()) _stateStack.pop_back();
-                    _stateIndexStack.pop_back();
+                    while (_stateStack.size() > _stateIndexStack.top()) _stateStack.pop();
+                    _stateIndexStack.pop();
                 }
                 // otherwise go to the next property
                 else _firstPropertyIndex++;
@@ -393,12 +461,6 @@ void WizardEngine::advance(bool recursive)
         // skip silent properties after setting their default values
         if (isCurrentPropertyRangeSilent())
         {
-            SilentPropertySetter silentSetter;
-            for (int propertyIndex=_firstPropertyIndex; propertyIndex<=_lastPropertyIndex; ++propertyIndex)
-            {
-                auto handler = createPropertyHandler(propertyIndex);
-                if (!handler->isConfigured()) handler->acceptVisitor(&silentSetter);
-            }
             advance(true);
         }
     }
@@ -414,10 +476,10 @@ void WizardEngine::advanceToEditSubItem(int subItemIndex)
     // remember the index of the previous state,
     // so that we can chop off all subsequent states when advancing out of a sub-item
     // (with the effect that subsequent retreats do not goi back into the sub-item editing sequence)
-    _stateIndexStack.emplace_back(_stateStack.size());
+    _stateIndexStack.emplace(_stateStack.size());
 
     // remember the current state so we can retreat to it
-    _stateStack.emplace_back(_stage, _current, _firstPropertyIndex, _lastPropertyIndex, _subItemIndex);
+    _stateStack.emplace(_stage, _current, _firstPropertyIndex, _lastPropertyIndex, _subItemIndex);
 
     // indicate that we're editing the current sub-item
     _subItemIndex = subItemIndex;
@@ -433,8 +495,8 @@ void WizardEngine::advanceToEditSubItem(int subItemIndex)
 void WizardEngine::retreat()
 {
     // restore the previous state
-    _stateStack.back().getState(_stage, _current, _firstPropertyIndex, _lastPropertyIndex, _subItemIndex);
-    _stateStack.pop_back();
+    _stateStack.top().getState(_stage, _current, _firstPropertyIndex, _lastPropertyIndex, _subItemIndex);
+    _stateStack.pop();
 
     emitStateChanged();
 }
