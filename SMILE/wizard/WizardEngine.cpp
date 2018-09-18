@@ -49,17 +49,17 @@ WizardEngine::~WizardEngine()
 
 bool WizardEngine::canAdvance()
 {
-    switch (_state)
+    switch (_stage)
     {
-    case State::BasicChoice:
+    case Stage::BasicChoice:
         return _schema != nullptr;
-    case State::CreateRoot:
+    case Stage::CreateRoot:
         return (_schema && _root) ? _schema->inherits(_root->type(), _schema->schemaType()) : false;
-    case State::OpenHierarchy:
+    case Stage::OpenHierarchy:
         return !_filepath.isEmpty();
-    case State::ConstructHierarchy:
+    case Stage::ConstructHierarchy:
         return _propertyValid;
-    case State::SaveHierarchy:
+    case Stage::SaveHierarchy:
         return false;
     }
     return false;   // to satisfy some compilers
@@ -69,7 +69,7 @@ bool WizardEngine::canAdvance()
 
 bool WizardEngine::canRetreat()
 {
-    return _state != State::BasicChoice;
+    return _stage != Stage::BasicChoice;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -95,10 +95,11 @@ const SchemaDef* WizardEngine::schema()
 
 ////////////////////////////////////////////////////////////////////
 
-int WizardEngine::propertyIndexForChild(Item* parent, Item* child)
+int WizardEngine::propertyIndexForChild(Item* child)
 {
     int index = 0;
-    for (auto property : _schema->properties(parent->type()))
+    Item* parent = child->parent();
+    if (parent) for (auto property : _schema->properties(parent->type()))
     {
         auto handler = _schema->createPropertyHandler(parent, property, &_nameMgr);
 
@@ -115,27 +116,39 @@ int WizardEngine::propertyIndexForChild(Item* parent, Item* child)
 
         index++;
     }
-    return 0;  // this should never happen
+    return -1;  // this should never happen
 }
 
 ////////////////////////////////////////////////////////////////////
 
-std::unique_ptr<PropertyHandler> WizardEngine::createCurrentPropertyHandler(int offset)
+std::unique_ptr<PropertyHandler> WizardEngine::createCurrentPropertyHandler(int propertyIndex)
 {
-    return _schema->createPropertyHandler(_current, _schema->properties(_current->type())[_propertyIndex+offset],
-                                          &_nameMgr);
+    return _schema->createPropertyHandler(_current, _schema->properties(_current->type())[propertyIndex], &_nameMgr);
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool WizardEngine::isPropertyEligableForMultiPane(int propertyIndex)
+{
+    auto handler = createCurrentPropertyHandler(propertyIndex);
+    if (dynamic_cast<BoolPropertyHandler*>(handler.get())) return true;
+    if (dynamic_cast<IntPropertyHandler*>(handler.get())) return true;
+    if (dynamic_cast<DoublePropertyHandler*>(handler.get())) return true;
+    if (dynamic_cast<EnumPropertyHandler*>(handler.get())) return true;
+    if (dynamic_cast<StringPropertyHandler*>(handler.get())) return true;
+    return false;
 }
 
 ////////////////////////////////////////////////////////////////////
 
 namespace
 {
-    // Returns true if the specified property is "silent" for purposes of the wizard; this includes
+    // This function returns true if the specified property is "silent" for purposes of the wizard; this includes
     // silent properties, irrelevant properties, item properties that offer only one choice,
     // and the subitem pane of item list properties that offer only one choice (if the second argument is provided)
     bool silentForWizard(PropertyHandler* handler, int subItemIndex = -1)
     {
-        if (!handler->isDisplayed() || !handler->isRelevant()) return true;
+        //if (!handler->isDisplayed() || !handler->isRelevant()) return true;
 
         auto itemhdlr = dynamic_cast<ItemPropertyHandler*>(handler);
         if (itemhdlr && itemhdlr->isRequired() && itemhdlr->allowedAndDisplayedDescendants().size() == 1) return true;
@@ -203,93 +216,99 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-void WizardEngine::advance()
+void WizardEngine::advance(bool recursive)
 {
-    switch (_state)
+    // remember the current state so we can retreat to it
+    if (!recursive) _stateStack.emplace_back(_stage, _current, _firstPropertyIndex, _lastPropertyIndex, _subItemIndex);
+
+    // advance the state depending on the current stage and details within the stage
+    switch (_stage)
     {
-    case State::BasicChoice:
+    case Stage::BasicChoice:
         {
-            _state = _openExisting ? State::OpenHierarchy : State::CreateRoot;
+            _stage = _openExisting ? Stage::OpenHierarchy : Stage::CreateRoot;
+            break;
         }
-        break;
-    case State::OpenHierarchy:
+    case Stage::OpenHierarchy:
         {
-            _state = State::CreateRoot;
+            _stage = Stage::CreateRoot;
+            break;
         }
-        break;
-    case State::CreateRoot:
+    case Stage::CreateRoot:
         {
-            _state = State::ConstructHierarchy;
+            _stage = Stage::ConstructHierarchy;
             _current = _root.get();
-            _propertyIndex = 0; // assumes that the root has at least one property
-            _propertyValid = false;
-            // indicate not editing sub-item (meaningless and harmless if current item is not an item list)
-            _subItemIndex = -1;
+            _firstPropertyIndex = 0; // assumes that the root has at least one property
+            break;
         }
-        break;
-    case State::ConstructHierarchy:
+    case Stage::ConstructHierarchy:
         {
-            auto handler = createCurrentPropertyHandler();
-            auto itemhdlr = dynamic_cast<ItemPropertyHandler*>(handler.get());
-            auto itemlisthdlr = dynamic_cast<ItemListPropertyHandler*>(handler.get());
-
-            // if the property being handled is an item, and the item has properties, then descend the hierarchy
-            if (itemhdlr && itemhdlr->value() && _schema->properties(itemhdlr->value()->type()).size()>0)
+            // if the (single) property being handled is an item or an item list, we may need to descend the hierarchy
+            if (_lastPropertyIndex == _firstPropertyIndex)
             {
-                _current = itemhdlr->value();
-                _propertyIndex = 0;
-            }
+                auto handler = createCurrentPropertyHandler(_firstPropertyIndex);
+                auto itemhdlr = dynamic_cast<ItemPropertyHandler*>(handler.get());
+                auto itemlisthdlr = dynamic_cast<ItemListPropertyHandler*>(handler.get());
 
-            // otherwise, if the property being handled is an item list, and we're editing one of its subitems,
-            // and the subitem has properties, then descend the hierarchy into that subitem
-            else if (itemlisthdlr && _subItemIndex>=0 &&
-                     _schema->properties(itemlisthdlr->value()[_subItemIndex]->type()).size()>0)
-            {
-                _current = itemlisthdlr->value()[_subItemIndex];
-                _propertyIndex = 0;
-            }
-
-            // otherwise, if this was the last property at this level, move up the hierarchy to a level where
-            // there are properties to advance to; if we encounter the root item, then move to the SaveHierarchy state
-            else
-            {
-                while (static_cast<size_t>(_propertyIndex+1) == _schema->properties(_current->type()).size())
+                // if the property being handled is an item, and the item has properties, then descend the hierarchy
+                if (itemhdlr && itemhdlr->value() && _schema->properties(itemhdlr->value()->type()).size()>0)
                 {
-                    // indicate that the item we're backing out of is "complete"
-                    ItemUtils::setItemComplete(_current);
-
-                    // special case for root
-                    if (_current == _root.get())
-                    {
-                        _state = State::SaveHierarchy;
-                        break;
-                    }
-
-                    // move up the hierarchy
-                    Item* parent = _current->parent();
-                    _propertyIndex = propertyIndexForChild(parent, _current);
-                    _current = parent;
-
-                    // if we're advancing out of a subitem, go to the item list property rather than the next property
-                    if (dynamic_cast<ItemListPropertyHandler*>(createCurrentPropertyHandler().get())) _propertyIndex--;
+                    _current = itemhdlr->value();
+                    _firstPropertyIndex = 0;
+                    break;
                 }
 
-                // advance to the next property (meaningless and harmless if state has changed to SaveHierarchy)
-                _propertyIndex++;
+                // if the property being handled is an item list, and we're editing one of its subitems,
+                // and the subitem has properties, then descend the hierarchy into that subitem
+                if (itemlisthdlr && _subItemIndex>=0 &&
+                    _schema->properties(itemlisthdlr->value()[_subItemIndex]->type()).size()>0)
+                {
+                    _current = itemlisthdlr->value()[_subItemIndex];
+                    _firstPropertyIndex = 0;
+                    break;
+                }
             }
 
-            // indicate property invalid (meaningless and harmless if state has changed to SaveHierarchy)
-            _propertyValid = false;
+            // if we did not descend the hierarchy, attempt to advance to the next property
+            _firstPropertyIndex = _lastPropertyIndex+1;
 
-            // indicate not editing sub-item (meaningless and harmless if current item is not an item list)
-            _subItemIndex = -1;
+            // if we handled the last property at this level, move up the hierarchy to a level where
+            // there are properties to advance to; if we encounter the root item, then move to the SaveHierarchy stage
+            while (static_cast<size_t>(_firstPropertyIndex) == _schema->properties(_current->type()).size())
+            {
+                // indicate that the item we're backing out of is "complete"
+                ItemUtils::setItemComplete(_current);
+
+                // special case for root
+                if (_current == _root.get())
+                {
+                    _stage = Stage::SaveHierarchy;
+                    break;
+                }
+
+                // move up the hierarchy
+                _firstPropertyIndex = propertyIndexForChild(_current);
+                _current = _current->parent();
+
+                // if we're advancing out of a subitem, stay with the item list property
+                if (dynamic_cast<ItemListPropertyHandler*>(createCurrentPropertyHandler(_firstPropertyIndex).get()))
+                {
+                    // and also chop off the retreat states for the sub-item editing sequence
+                    while (_stateStack.size() > _stateIndexStack.back()) _stateStack.pop_back();
+                    _stateIndexStack.pop_back();
+                }
+                // otherwise go to the next property
+                else _firstPropertyIndex++;
+            }
+            break;
         }
-        break;
-    case State::SaveHierarchy:
-        break;
+    case Stage::SaveHierarchy:
+        {
+            break;
+        }
     }
 
-    if (_state == State::CreateRoot)
+    if (_stage == Stage::CreateRoot)
     {
         // skip create root pane if it offers only one choice
         auto choices = _schema->descendants(_schema->schemaType());
@@ -299,13 +318,25 @@ void WizardEngine::advance()
             {
                 setRootType(choices[0]);
             }
-            return advance();
+            advance(true);
         }
     }
-    else if (_state == State::ConstructHierarchy)
+    else if (_stage == Stage::ConstructHierarchy)
     {
+        // a regular advance can never descend into a subitem, so we always clear the sub-item index
+        // (this is meaningless and harmless if the current item is not an item list)
+        _subItemIndex = -1;
+
+        // determine the range of properties that can be combined onto a single multi-pane
+        _lastPropertyIndex = _firstPropertyIndex;
+        if (isPropertyEligableForMultiPane(_firstPropertyIndex))
+        {
+            while (static_cast<size_t>(_lastPropertyIndex+1) != _schema->properties(_current->type()).size()
+                   && isPropertyEligableForMultiPane(_lastPropertyIndex+1)) _lastPropertyIndex++;
+        }
+
         // skip silent properties, irrelevant properties, and item properties that offer only one choice
-        auto handler = createCurrentPropertyHandler();
+        auto handler = createCurrentPropertyHandler(_firstPropertyIndex);
         if (silentForWizard(handler.get()))
         {
             if (!handler->isConfigured())
@@ -314,178 +345,43 @@ void WizardEngine::advance()
                 handler->acceptVisitor(&silentSetter);
                 handler->setConfigured();
             }
-            return advance();
+            advance(true);
         }
     }
+
+    if (!recursive) emitStateChanged();
+}
+
+
+////////////////////////////////////////////////////////////////////
+
+void WizardEngine::advanceToEditSubItem(int subItemIndex)
+{
+    // remember the index of the previous state,
+    // so that we can chop off all subsequent states when advancing out of a sub-item
+    // (with the effect that subsequent retreats do not goi back into the sub-item editing sequence)
+    _stateIndexStack.emplace_back(_stateStack.size());
+
+    // remember the current state so we can retreat to it
+    _stateStack.emplace_back(_stage, _current, _firstPropertyIndex, _lastPropertyIndex, _subItemIndex);
+
+    // indicate that we're editing the current sub-item
+    _subItemIndex = subItemIndex;
+
+    // skip this wizard pane if there is only one choice for the subitem class
+    auto handler = createCurrentPropertyHandler(_firstPropertyIndex);
+    if (silentForWizard(handler.get(), _subItemIndex)) advance(true);
 
     emitStateChanged();
-}
-
-////////////////////////////////////////////////////////////////////
-
-void WizardEngine::descendToDeepest()
-{
-    while (true)
-    {
-        // if the current property is an item, and the item has properties, then descend the hierarchy
-        auto handler = createCurrentPropertyHandler();
-        auto itemhandler = dynamic_cast<ItemPropertyHandler*>(handler.get());
-        if (itemhandler && itemhandler->value() && _schema->properties(itemhandler->value()->type()).size()>0)
-        {
-            _current = itemhandler->value();
-            _propertyIndex = static_cast<int>(_schema->properties(_current->type()).size()) - 1;
-        }
-        else break;
-    }
-}
-
-////////////////////////////////////////////////////////////////////
-
-namespace
-{
-    // returns the index of a given item in the list
-    template <class T> int indexOf(const vector<T>& list, const T& item)
-    {
-        auto pos = find(list.cbegin(), list.cend(), item);
-        return pos != list.cend() ? pos - list.cbegin() : -1;
-    }
-
-    // returns true if the specified property is of type Bool, Int, or Double,
-    // and it cannot become "silent"
-    bool eligableForMultiPane(PropertyHandler* handler)
-    {
-        if (handler->hasIfAttribute()) return false;
-        if (dynamic_cast<BoolPropertyHandler*>(handler)) return true;
-        if (dynamic_cast<IntPropertyHandler*>(handler)) return true;
-        if (dynamic_cast<DoublePropertyHandler*>(handler)) return true;
-        return false;
-    }
 }
 
 ////////////////////////////////////////////////////////////////////
 
 void WizardEngine::retreat()
 {
-    switch (_state)
-    {
-    case State::BasicChoice:
-        break;
-    case State::OpenHierarchy:
-        {
-            _state = State::BasicChoice;
-        }
-        break;
-    case State::CreateRoot:
-        {
-            _state = _openExisting ? State::OpenHierarchy : State::BasicChoice;
-        }
-        break;
-    case State::ConstructHierarchy:
-        {
-            // if we're retreating from a multi-pane, scuttle back to the first property on the pane
-            if (eligableForMultiPane(createCurrentPropertyHandler().get()))
-            {
-                while (_propertyIndex>0)
-                {
-                    if (!eligableForMultiPane(createCurrentPropertyHandler(-1).get())) break;
-                    _propertyIndex--;
-                }
-            }
-
-            // if this is an item list property, and we're editing a subitem,
-            // go to the item list property rather than the previous property
-            if (dynamic_cast<ItemListPropertyHandler*>(createCurrentPropertyHandler().get())
-                     && _subItemIndex>=0) _subItemIndex = -1;
-
-            // otherwise, if this was the first property at this level, move up the hierarchy to the previous level
-            // unless this is already the root item, in which case we move to the CreateRoot state
-            else if (_propertyIndex == 0)
-            {
-                if (_current == _root.get())
-                {
-                    _state = State::CreateRoot;
-                }
-                else
-                {
-                    auto child = _current;
-                    _current = child->parent();
-                    _propertyIndex = propertyIndexForChild(_current, child);
-
-                    // if we're retreating out of a subitem, go to the subitem choice pane first
-                    auto handler = createCurrentPropertyHandler();
-                    auto itemlisthdlr = dynamic_cast<ItemListPropertyHandler*>(handler.get());
-                    if (itemlisthdlr) _subItemIndex = indexOf(itemlisthdlr->value(), child);
-                    else _subItemIndex = -1;
-                }
-            }
-
-            // otherwise, retreat to the previous property, and descend its hierarchy as deep as possible
-            else
-            {
-                _propertyIndex--;
-                descendToDeepest();
-
-                // indicate not editing sub-item (meaningless and harmless if current item is not an item list)
-                _subItemIndex = -1;
-            }
-
-            // indicate property invalid (meaningless and harmless if state has changed to CreateRoot)
-            _propertyValid = false;
-        }
-        break;
-    case State::SaveHierarchy:
-        {
-            // go back to hierarchy construction
-            _state = State::ConstructHierarchy;
-            _propertyValid = false;
-
-            // descend the existing hierarchy as deep as possible
-            // assumes that the root has at least one property
-            _current = _root.get();
-            _propertyIndex = static_cast<int>(_schema->properties(_root->type()).size()) - 1;
-            descendToDeepest();
-
-            // indicate not editing sub-item (meaningless and harmless if current item is not an item list)
-            _subItemIndex = -1;
-        }
-        break;
-    }
-
-    if (_state == State::ConstructHierarchy)
-    {
-        // skip silent, irrelevant and "forced value" properties
-        auto handler = createCurrentPropertyHandler();
-        if (silentForWizard(handler.get(), _subItemIndex)) return retreat();
-
-        // if we landed on a multi-pane, scuttle back to the first property on the pane
-        if (eligableForMultiPane(createCurrentPropertyHandler().get()))
-        {
-            while (_propertyIndex>0)
-            {
-                if (!eligableForMultiPane(createCurrentPropertyHandler(-1).get())) break;
-                _propertyIndex--;
-            }
-        }
-    }
-    else if (_state == State::CreateRoot)
-    {
-        // skip create root pane if it offers only one choice
-        if (_schema->descendants(_schema->schemaType()).size() == 1) return retreat();
-    }
-
-    emitStateChanged();
-}
-
-////////////////////////////////////////////////////////////////////
-
-void WizardEngine::advanceToEditSubItem(int subItemIndex)
-{
-    // indicate that we're editing the current sub-item
-    _subItemIndex = subItemIndex;
-
-    // skip this wizard pane if there is only one choice for the subitem class
-    auto handler = createCurrentPropertyHandler();
-    if (silentForWizard(handler.get(), _subItemIndex)) return advance();
+    // restore the previous state
+    _stateStack.back().getState(_stage, _current, _firstPropertyIndex, _lastPropertyIndex, _subItemIndex);
+    _stateStack.pop_back();
 
     emitStateChanged();
 }
@@ -571,75 +467,72 @@ void WizardEngine::hierarchyWasSaved(QString filepath)
 
 QWidget* WizardEngine::createPane()
 {
-    switch (_state)
+    switch (_stage)
     {
-    case State::BasicChoice:
+    case Stage::BasicChoice:
         {
             return new BasicChoiceWizardPane(_openExisting, _schemaName, _dirty, this);
         }
-    case State::CreateRoot:
+    case Stage::CreateRoot:
         {
             string currentType = _root ? _root->type() : "";
             return new CreateRootWizardPane(_schema.get(), currentType, this);
         }
-    case State::OpenHierarchy:
+    case Stage::OpenHierarchy:
         {
             return new OpenWizardPane(_schema.get(), _filepath, _dirty, this);
         }
-    case State::ConstructHierarchy:
+    case Stage::ConstructHierarchy:
         {
-            auto handler = createCurrentPropertyHandler();
+            // single pane
+            if (_lastPropertyIndex == _firstPropertyIndex)
+            {
+                auto handler = createCurrentPropertyHandler(_firstPropertyIndex);
 
-            // handle properties that are not combined on a multi-pane
-            if (dynamic_cast<StringPropertyHandler*>(handler.get()))
-                return new StringPropertyWizardPane(std::move(handler), this);
-            if (dynamic_cast<EnumPropertyHandler*>(handler.get()))
-                return new EnumPropertyWizardPane(std::move(handler), this);
-            if (dynamic_cast<DoubleListPropertyHandler*>(handler.get()))
-                return new DoubleListPropertyWizardPane(std::move(handler), this);
-            if (dynamic_cast<ItemPropertyHandler*>(handler.get()))
-            {
-                return new ItemPropertyWizardPane(std::move(handler), this);
-            }
-            if (dynamic_cast<ItemListPropertyHandler*>(handler.get()))
-            {
-                if (_subItemIndex<0) return new ItemListPropertyWizardPane(std::move(handler), this);
-                else                 return new SubItemPropertyWizardPane(std::move(handler), this);
-            }
-
-            // if we reach here, we have a Bool, Int or Double property;
-            // gather consecutive eligible properties of these types at the same level in a single multi-pane
-            bool firstPropertyOnPaneEligible = eligableForMultiPane(handler.get());
-            int numProperties = static_cast<int>(_schema->properties(_current->type()).size());
-            auto multipane = new MultiPropertyWizardPane(this);
-            while (true)
-            {
-                // create and add the appropriate pane for the current property
-                PropertyWizardPane* pane = nullptr;
                 if (dynamic_cast<BoolPropertyHandler*>(handler.get()))
-                    pane = new BoolPropertyWizardPane(std::move(handler), multipane);
-                else if (dynamic_cast<IntPropertyHandler*>(handler.get()))
-                    pane = new IntPropertyWizardPane(std::move(handler), multipane);
-                else if (dynamic_cast<DoublePropertyHandler*>(handler.get()))
-                    pane = new DoublePropertyWizardPane(std::move(handler), multipane);
-                if (pane) multipane->addPane(pane);
-
-                // terminate if this was the last property at this level
-                if (_propertyIndex+1 >= numProperties) break;
-
-                // terminate if the first property is not eligible for combining in a multi-pane;
-                // this avoids including a property on a multipane or not depending on whether it is relevant or not
-                // and it avoids problems when retreating from a multiplane
-                if (!firstPropertyOnPaneEligible) break;
-
-                // terminate if the next property is not eligible for combining in a multi-pane
-                handler = createCurrentPropertyHandler(+1);
-                if (!eligableForMultiPane(handler.get())) break;
-                _propertyIndex++;
+                    return new BoolPropertyWizardPane(std::move(handler), this);
+                if (dynamic_cast<IntPropertyHandler*>(handler.get()))
+                    return new IntPropertyWizardPane(std::move(handler), this);
+                if (dynamic_cast<DoublePropertyHandler*>(handler.get()))
+                    return new DoublePropertyWizardPane(std::move(handler), this);
+                if (dynamic_cast<EnumPropertyHandler*>(handler.get()))
+                    return new EnumPropertyWizardPane(std::move(handler), this);
+                if (dynamic_cast<StringPropertyHandler*>(handler.get()))
+                    return new StringPropertyWizardPane(std::move(handler), this);
+                if (dynamic_cast<DoubleListPropertyHandler*>(handler.get()))
+                    return new DoubleListPropertyWizardPane(std::move(handler), this);
+                if (dynamic_cast<ItemPropertyHandler*>(handler.get()))
+                    return new ItemPropertyWizardPane(std::move(handler), this);
+                if (dynamic_cast<ItemListPropertyHandler*>(handler.get()))
+                {
+                    if (_subItemIndex<0) return new ItemListPropertyWizardPane(std::move(handler), this);
+                    else                 return new SubItemPropertyWizardPane(std::move(handler), this);
+                }
             }
-            return multipane;
+
+            // multi-pane
+            else
+            {
+                auto multipane = new MultiPropertyWizardPane(this);
+                for (int propertyIndex=_firstPropertyIndex; propertyIndex<=_lastPropertyIndex; ++propertyIndex)
+                {
+                    auto handler = createCurrentPropertyHandler(propertyIndex);
+
+                    if (dynamic_cast<BoolPropertyHandler*>(handler.get()))
+                        multipane->addPane(new BoolPropertyWizardPane(std::move(handler), multipane));
+                    else if (dynamic_cast<IntPropertyHandler*>(handler.get()))
+                        multipane->addPane(new IntPropertyWizardPane(std::move(handler), multipane));
+                    else if (dynamic_cast<DoublePropertyHandler*>(handler.get()))
+                        multipane->addPane(new DoublePropertyWizardPane(std::move(handler), multipane));
+                    else if (dynamic_cast<EnumPropertyHandler*>(handler.get()))
+                        multipane->addPane(new EnumPropertyWizardPane(std::move(handler), multipane));
+                    else if (dynamic_cast<StringPropertyHandler*>(handler.get()))
+                        multipane->addPane(new StringPropertyWizardPane(std::move(handler), multipane));
+                }
+                return multipane;
+            }
         }
-    case State::SaveHierarchy:
+    case Stage::SaveHierarchy:
         {
             return new SaveWizardPane(_schema.get(), _root.get(), _filepath, _dirty, this);
         }
@@ -653,10 +546,10 @@ QString WizardEngine::hierarchyPath()
 {
     string result;
 
-    if (_state == State::ConstructHierarchy)
+    if (_stage == Stage::ConstructHierarchy)
     {
         // on the lowest level, show item type and property name
-        result = _current->type() + " : " + _schema->properties(_current->type())[_propertyIndex];
+        result = _current->type() + " : " + _schema->properties(_current->type())[_firstPropertyIndex];
 
         // for higher levels, show only item type
         Item* current = _current->parent();

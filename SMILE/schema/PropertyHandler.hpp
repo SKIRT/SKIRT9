@@ -98,11 +98,6 @@ public:
         its value. */
     bool isRequired() const;
 
-    /** Returns true if the handled property has a non-empty "relevantIf", "displayedIf" and/or
-        "requiredIf" attribute, implying that it may have a non-standard and possibly changing
-        display or hide status in interactive editors. */
-    bool hasIfAttribute() const;
-
     /** Returns true if the handled property has a valid default value in the current dataset
         configuration, or false if not. A property that does not have the "default" attribute does
         not have a default value. A property that has the "default" attribute has a default value

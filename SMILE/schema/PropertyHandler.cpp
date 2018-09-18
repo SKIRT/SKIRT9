@@ -63,13 +63,6 @@ bool PropertyHandler::isRequired() const
 
 ////////////////////////////////////////////////////////////////////
 
-bool PropertyHandler::hasIfAttribute() const
-{
-    return !property()->relevantIf().empty() || !property()->displayedIf().empty() || !property()->requiredIf().empty();
-}
-
-////////////////////////////////////////////////////////////////////
-
 bool PropertyHandler::hasDefaultValue() const
 {
     return isValidValue(nameManager()->evaluateConditionalValue(property()->defaultValue()));

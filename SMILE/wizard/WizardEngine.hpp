@@ -9,6 +9,7 @@
 #include "Basics.hpp"
 #include "NameManager.hpp"
 #include <QObject>
+#include <deque>
 class Item;
 class PropertyHandler;
 class SchemaDef;
@@ -59,34 +60,34 @@ public:
     const SchemaDef* schema();
 
 private:
-    /** This function returns the property index for the specified child item in the specified
-        parent item, or zero if the specified child item is not a child of the specified parent
-        item. */
-    int propertyIndexForChild(Item* parent, Item* child);
+    /** This function returns the property index for the specified child item in its parent item,
+        or -1 if the specified child item does not have a parent or it is not a child of its
+        parent (which should never happen). */
+    int propertyIndexForChild(Item* child);
 
-    /** If no argument is given, this function creates and returns a unique pointer to a property
-        handler for the current property of the current item. If an argument is given, it serves as
-        an offset to the property index, i.e. 1 means the next property and -1 means the previous
-        property of the current item. The function does \em not check whether the adjusted index is
-        within range. */
-    std::unique_ptr<PropertyHandler> createCurrentPropertyHandler(int offset=0);
+    /** This function creates and returns a unique pointer to a property handler for the property
+        of the current item with the specified property index. The function does \em not check
+        whether the property index is within range. */
+    std::unique_ptr<PropertyHandler> createCurrentPropertyHandler(int propertyIndex);
 
-    /** This function descends the hierarchy as deeply as possible, starting from the current item
-        and property index, updating the current item and property index as a result. */
-    void descendToDeepest();
+    /** This function returns true if the property of the current item with the specified property
+        index can be grouped with other properties on a multi-pane. In the current implementation,
+        this is the case for properties of type Bool, Int, or Double. The function does \em not
+        check whether the property index is within range. */
+    bool isPropertyEligableForMultiPane(int propertyIndex);
 
 public slots:
     /** This function advances the wizard to the next state. It should only be called if
         canAdvance() returns true. */
-    void advance();
-
-    /** This function retreats the wizard to the previous state. It should only be called if
-        canRetreat() returns true. */
-    void retreat();
+    void advance(bool recursive=false);
 
     /** This function advances the wizard to a state that starts editing the specified item in the
         current item list property. */
     void advanceToEditSubItem(int subItemIndex);
+
+    /** This function retreats the wizard to the previous state. It should only be called if
+        canRetreat() returns true. */
+    void retreat();
 
 signals:
     /** This signal is emitted when the return value of the canAdvance() function may have changed.
@@ -158,11 +159,7 @@ public:
     // ================== Data Members ====================
 
 private:
-    // ---- data members representing the state of the wizard ----
-
-    // the top-level state; always valid
-    enum class State { BasicChoice, CreateRoot, OpenHierarchy, ConstructHierarchy, SaveHierarchy };
-    State _state = State::BasicChoice;
+    // ---- data members reflecting the basic choice and dataset root creation ----
 
     // part of the basic choice: true = open existing dataset, false = create new dataset; always valid
     bool _openExisting = false;
@@ -179,24 +176,54 @@ private:
     // always valid but remains null until CreateRoot has been completed at least once
     std::unique_ptr<Item> _root;
 
+    // ---- data members determining the information currently being handled ----
+
+    // the wizard stage; always valid
+    enum class Stage { BasicChoice, CreateRoot, OpenHierarchy, ConstructHierarchy, SaveHierarchy };
+    Stage _stage = Stage::BasicChoice;
+
     // the item in the dataset currently being handled; pointer is a reference without ownership;
     // valid only during ConstructHierarchy
     Item* _current = nullptr;
 
-    // the zero-based index of the property currently being handled (in the current item);
+    // the zero-based index of the first or only property currently being handled (in the current item);
     // valid only during ConstructHierarchy
-    int _propertyIndex = -1;
+    int _firstPropertyIndex = -1;
+
+    // the zero-based index of the last property currently being handled (in the current item);
+    // if a single property is being handled, then _lastPropertyIndex ==  _firstPropertyIndex;
+    // valid only during ConstructHierarchy
+    int _lastPropertyIndex = -1;
 
     // the zero-based index of the currently selected sub-item of the current item list property,
     // or -1 when editing the item list property itself;
-    // valid only if the current property is an item list
+    // valid only during ConstructHierarchy and if the current property is an item list
     int _subItemIndex = -1;
+
+    // ---- data members implementing the advance/retreat state stack ----
+
+    class State
+    {
+    public:
+        State(Stage stage, Item* current, int firstIndex, int lastIndex, int subIndex)
+            : _stage(stage), _current(current), _firstIndex(firstIndex), _lastIndex(lastIndex), _subIndex(subIndex) { }
+        void getState(Stage& stage, Item*& current, int& firstIndex, int& lastIndex, int& subIndex)
+            { stage=_stage; current=_current; firstIndex=_firstIndex; lastIndex=_lastIndex; subIndex=_subIndex; }
+    private:
+        Stage _stage; Item* _current; int _firstIndex, _lastIndex, _subIndex;
+    };
+
+    // stack on which the state is pushed before each advance, and popped after each retreat (with some complications)
+    std::deque<State> _stateStack;
+
+    // stack on which indices into the state stack are pushed to prevent retreating into subitem editing
+    std::deque<size_t> _stateIndexStack;
+
+    // ---- other data members related to the state of the wizard ----
 
     // true if the value of the property being handled is valid, false otherwise
     // valid only during ConstructHierarchy
     bool _propertyValid = false;
-
-    // ---- data members related to the state of the wizard ----
 
     // true if the current dataset holds unsaved information, false otherwise; always valid
     bool _dirty = false;
@@ -205,7 +232,7 @@ private:
     // or the empty string if it has never been saved; always valid
     QString _filepath;
 
-    // the name manager
+    // the name manager used to evaluate the conditional attributes of a property
     NameManager _nameMgr;
 };
 
