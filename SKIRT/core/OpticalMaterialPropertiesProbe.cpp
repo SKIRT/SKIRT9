@@ -26,6 +26,7 @@ namespace
         case MaterialMix::MaterialType::Electrons: return "electron";
         case MaterialMix::MaterialType::Gas: return "gas";
         }
+        return string();  // to satisfy gcc compiler
     }
 
     // returns a human readable string describing a single entity in the specified material type
@@ -37,6 +38,7 @@ namespace
         case MaterialMix::MaterialType::Electrons: return "electron";
         case MaterialMix::MaterialType::Gas: return "hydrogen atom";
         }
+        return string();  // to satisfy gcc compiler
     }
 }
 

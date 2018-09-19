@@ -655,6 +655,7 @@ QWidget* WizardEngine::createPane()
                 }
                 return multipane;
             }
+            break;  // to satisfy gcc compiler
         }
     case Stage::SaveHierarchy:
         {

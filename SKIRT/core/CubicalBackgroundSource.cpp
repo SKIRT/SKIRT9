@@ -29,7 +29,7 @@ namespace
         if (X < 3./6.) return Direction( 0.,-1., 0.);
         if (X < 4./6.) return Direction( 0., 1., 0.);
         if (X < 5./6.) return Direction( 0., 0.,-1.);
-                       return Direction( 0., 0., 1.);
+        return Direction( 0., 0., 1.);
     }
 
     // this function generates a random launch position on the wall specified by its outward normal
@@ -39,7 +39,7 @@ namespace
         double t2 = 2.*random->uniform()-1.;
         if (bfu.x()) return Position(bfu.x(), t1, t2);
         if (bfu.y()) return Position(t1, bfu.y(), t2);
-                     return Position(t1, t2, bfu.z());
+        return Position(t1, t2, bfu.z());
     }
 
     // this function generates a random launch direction for a given launch wall
@@ -59,7 +59,7 @@ namespace
         if (bfu.y() == -1.) return Direction(kpy,-kpz,-kpx);
         if (bfu.y() ==  1.) return Direction(-kpy,kpz,-kpx);
         if (bfu.z() == -1.) return Direction(-kpx,kpy,-kpz);
-                            return Direction(kpx,kpy,kpz);
+        return Direction(kpx,kpy,kpz);
     }
 
     // this function returns the normalized probability of launching in a certain direction

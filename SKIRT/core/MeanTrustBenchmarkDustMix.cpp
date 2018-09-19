@@ -15,6 +15,7 @@ MaterialMix::ScatteringMode MeanTrustBenchmarkDustMix::scatteringMode() const
     case ScatteringType::MaterialPhaseFunction: return ScatteringMode::MaterialPhaseFunction;
     case ScatteringType::SphericalPolarization: return ScatteringMode::SphericalPolarization;
     }
+    return ScatteringMode::HenyeyGreenstein;  // to satisfy gcc compiler
 }
 
 //////////////////////////////////////////////////////////////////////
