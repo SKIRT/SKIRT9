@@ -65,6 +65,15 @@ public:
     /** Returns the name manager for the SMILE dataset in which the target item resides. */
     NameManager* nameManager() const { return _nameMgr; }
 
+    /** Returns the SMILE data item that sits at the root of the dataset in which the target item
+        resides, i.e. the recursive ancestor item that has no parent. */
+    Item* root() const;
+
+    /** Returns a list of SMILE data items including the immediate children of the target item in
+        the dataset in which the target item resides. The default implementation in this abstract
+        class returns an empty list. */
+    virtual vector<Item*> children() const;
+
     /** Returns the type of the target item. */
     string type() const;
 
@@ -136,6 +145,14 @@ public:
         of inserted names depends on the property type, this function must be implemented in every
         subclass. */
     virtual void insertNames() = 0;
+
+    /** This function rebuilds the global and local name sets in the name manager associated with
+        this handler so that they reflect the contents of the dataset in which the target item
+        resides, up to (and \em not including) the target item. To this end, the function performs
+        a depth-first traversal of the dataset; properties at the same level are scanned in schema
+        definition order, and children of an item list are scanned in order of dataset occurrence.
+        */
+    void rebuildNames();
 
     /** Accepts the specified property handler visitor. This function is part of the "visitor"
         design pattern implementation used to handle properties of various types. It must be

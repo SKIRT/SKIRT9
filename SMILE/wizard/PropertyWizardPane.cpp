@@ -14,6 +14,9 @@ PropertyWizardPane::PropertyWizardPane(std::unique_ptr<PropertyHandler> handler,
 {
     connect(this, SIGNAL(propertyValidChanged(bool)), target, SLOT(setPropertyValid(bool)));
     connect(this, SIGNAL(propertyValueChanged()), target, SLOT(hierarchyWasChanged()));
+
+    // rebuild the name sets so that conditional expressions are correctly interpreted
+    _handler->rebuildNames();
 }
 
 ////////////////////////////////////////////////////////////////////

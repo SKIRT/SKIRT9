@@ -23,6 +23,12 @@ public:
     // ================== Overriding base class functions ==================
 
 public:
+    /** Returns a list of SMILE data items including the immediate children of the target item in
+        the dataset in which the target item resides. The implementation in this class returns the
+        result of the value() function encapsulated in a list, or the empty list if the value is
+        null. */
+    vector<Item*> children() const override;
+
     /** Causes the name manager associated with this handler to insert names into the global and/or
         local name sets corresponding to the current value of the target property. For item
         properties, the function inserts the target property's name if the current property value

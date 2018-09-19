@@ -21,6 +21,22 @@ PropertyHandler::PropertyHandler(Item* target, const PropertyDef* property,
 
 ////////////////////////////////////////////////////////////////////
 
+Item* PropertyHandler::root() const
+{
+    Item* result = target();
+    while (result->parent()) result = result->parent();
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////
+
+vector<Item*> PropertyHandler::children() const
+{
+    return vector<Item*>();
+}
+
+////////////////////////////////////////////////////////////////////
+
 string PropertyHandler::type() const
 {
     return target()->type();
@@ -88,6 +104,50 @@ void PropertyHandler::setChanged()
 {
     _changed = true;
     insertNames();
+}
+
+////////////////////////////////////////////////////////////////////
+
+namespace
+{
+    // This function is used by rebuildNames() to recursively insert the names
+    // starting at the specified item and ending just before the specified target item/property
+    bool insertNamesRecursively(Item* item, const SchemaDef* schema, NameManager* nameMgr,
+                                Item* targetItem, string targetProperty)
+    {
+        nameMgr->pushLocal();
+
+        // loop over all properties of this item
+        for (const string& property : schema->properties(item->type()))
+        {
+            // abort the recursion just before the target property in the target item
+            if (item == targetItem && property == targetProperty) return false;
+
+            // insert the names for this property
+            auto handler = schema->createPropertyHandler(item, property, nameMgr);
+            handler->insertNames();
+
+            // recursively handle the properties of the item's children, if any
+            for (Item* child : handler->children())
+            {
+                if (!insertNamesRecursively(child, schema, nameMgr, targetItem, targetProperty)) return false;
+            }
+        }
+
+        nameMgr->popLocal();
+        return true;
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
+void PropertyHandler::rebuildNames()
+{
+    // clear the name sets
+    nameManager()->clearAll();
+
+    // start the recursion with the root item
+    insertNamesRecursively(root(), schema(), nameManager(), target(), property()->name());
 }
 
 ////////////////////////////////////////////////////////////////////

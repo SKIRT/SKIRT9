@@ -13,6 +13,15 @@
 
 ////////////////////////////////////////////////////////////////////
 
+vector<Item*> ItemPropertyHandler::children() const
+{
+    vector<Item*> result;
+    if (value()) result.push_back(value());
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////
+
 void ItemPropertyHandler::insertNames()
 {
     if (value()) nameManager()->insert(property()->name());

@@ -78,14 +78,6 @@ private:
         name sets. The function does \em not check whether the property index is within range. */
     bool isPropertyEligableForMultiPane(int propertyIndex);
 
-    /** This function rebuilds the conditional name sets in the wizard engine's name manager so
-        that they reflect the contents of the current dataset, up to (and \em not including) the
-        first of the properties currently being handled (according to the current state of the
-        wizard). To this end, the function performs a depth-first traversal of the dataset;
-        properties at the same level are scanned in schema definition order, and children of an
-        item list are scanned in order of dataset occurrence. */
-    void rebuildConditionalNameSets();
-
     /** This function returns true if the property of the current item with the specified property
         index is "silent", i.e. it should not be shown by the wizard for one reason or another.
         Reasons for a property to be silent include that the property is irrelevant or that it
@@ -99,7 +91,8 @@ private:
     /** This function returns true if the property or properties currently being handled (according
         to the current state of the wizard) are all "silent", as described for the
         isPropertySilent() function. The function properly initializes the conditional name sets in
-        the wizard engine's name manager. */
+        the wizard engine's name manager. As an important side effect, this function ensures that
+        each so far unconfigured property in the range receives some default value. */
     bool isCurrentPropertyRangeSilent();
 
 public slots:

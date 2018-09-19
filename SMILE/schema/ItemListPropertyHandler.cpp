@@ -14,6 +14,13 @@
 
 ////////////////////////////////////////////////////////////////////
 
+vector<Item*> ItemListPropertyHandler::children() const
+{
+    return value();
+}
+
+////////////////////////////////////////////////////////////////////
+
 void ItemListPropertyHandler::insertNames()
 {
     if (!value().empty()) nameManager()->insert(property()->name());

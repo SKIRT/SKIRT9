@@ -144,59 +144,6 @@ bool WizardEngine::isPropertyEligableForMultiPane(int propertyIndex)
 
 namespace
 {
-    bool insertNames(Item* item, const SchemaDef* schema, NameManager* nameMgr,
-                     Item* current, int firstPropertyIndex)
-    {
-        nameMgr->pushLocal();
-
-        // loop over all properties of this item
-        int index = 0;
-        for (const string& property : schema->properties(item->type()))
-        {
-            // abort the recursion just before the current property in the current item
-            if (item == current && index == firstPropertyIndex) return false;
-
-            // insert the names for this property
-            auto handler = schema->createPropertyHandler(item, property, nameMgr);
-            handler->insertNames();
-
-            // recursively handle the properties of the item child
-            auto itemhdlr = dynamic_cast<ItemPropertyHandler*>(handler.get());
-            if (itemhdlr && itemhdlr->value())
-            {
-                if (!insertNames(itemhdlr->value(), schema, nameMgr, current, firstPropertyIndex)) return false;
-            }
-
-            // recursively handle the properties of the item list children
-            auto itemlisthdlr = dynamic_cast<ItemListPropertyHandler*>(handler.get());
-            if (itemlisthdlr) for (Item* item : itemlisthdlr->value())
-            {
-                if (!insertNames(item, schema, nameMgr, current, firstPropertyIndex)) return false;
-            }
-
-            index++;
-        }
-
-        nameMgr->popLocal();
-        return true;
-    }
-}
-
-////////////////////////////////////////////////////////////////////
-
-void WizardEngine::rebuildConditionalNameSets()
-{
-    // clear the name sets
-    _nameMgr.clearAll();
-
-    // start the recursion with the root item
-    insertNames(_root.get(), _schema.get(), &_nameMgr, _current, _firstPropertyIndex);
-}
-
-////////////////////////////////////////////////////////////////////
-
-namespace
-{
     // The functions in this class are part of the visitor pattern initiated by the setupProperties() function.
     // They set the value of a non-compound property to its default value, the value of a compound property
     // to "not present", i.e. the null pointer or the empty list, and the value of an item property that
@@ -208,32 +155,62 @@ namespace
 
         void visitPropertyHandler(StringPropertyHandler* handler) override
         {
-            handler->setValue(handler->defaultValue());
+            if (handler->hasDefaultValue())
+            {
+                handler->setValue(handler->defaultValue());
+                handler->setConfigured();
+            }
+            else handler->setValue(string());
         }
 
         void visitPropertyHandler(BoolPropertyHandler* handler) override
         {
-            handler->setValue(handler->defaultValue());
+            if (handler->hasDefaultValue())
+            {
+                handler->setValue(handler->defaultValue());
+                handler->setConfigured();
+            }
+            else handler->setValue(false);
         }
 
         void visitPropertyHandler(IntPropertyHandler* handler) override
         {
-            handler->setValue(handler->defaultValue());
+            if (handler->hasDefaultValue())
+            {
+                handler->setValue(handler->defaultValue());
+                handler->setConfigured();
+            }
+            else handler->setValue(0);
         }
 
         void visitPropertyHandler(EnumPropertyHandler* handler) override
         {
-            handler->setValue(handler->defaultValue());
+            if (handler->hasDefaultValue())
+            {
+                handler->setValue(handler->defaultValue());
+                handler->setConfigured();
+            }
+            else handler->setValue(handler->values()[0]);
         }
 
         void visitPropertyHandler(DoublePropertyHandler* handler) override
         {
-            handler->setValue(handler->defaultValue());
+            if (handler->hasDefaultValue())
+            {
+                handler->setValue(handler->defaultValue());
+                handler->setConfigured();
+            }
+            else handler->setValue(0.);
         }
 
         void visitPropertyHandler(DoubleListPropertyHandler* handler) override
         {
-            handler->setValue(handler->defaultValue());
+            if (handler->hasDefaultValue())
+            {
+                handler->setValue(handler->defaultValue());
+                handler->setConfigured();
+            }
+            else handler->setValue(vector<double>());
         }
 
         void visitPropertyHandler(ItemPropertyHandler* handler) override
@@ -243,6 +220,7 @@ namespace
                 if (handler->hasDefaultValue())
                 {
                     handler->setToNewItemOfType(handler->defaultType());
+                    handler->setConfigured();
                     return;
                 }
                 if (handler->isRequired())
@@ -251,6 +229,7 @@ namespace
                     if (choices.size() == 1)
                     {
                         handler->setToNewItemOfType(choices[0]);
+                        handler->setConfigured();
                         return;
                     }
                 }
@@ -265,12 +244,14 @@ namespace
                 if (handler->hasDefaultValue())
                 {
                     handler->addNewItemOfType(handler->defaultType());
+                    handler->setConfigured();
                     return;
                 }
                 auto choices = handler->allowedAndDisplayedDescendants();
                 if (choices.size() == 1)
                 {
                     handler->addNewItemOfType(choices[0]);
+                    handler->setConfigured();
                     return;
                 }
             }
@@ -313,8 +294,11 @@ bool WizardEngine::isPropertySilent(PropertyHandler* handler)
 
 bool WizardEngine::isCurrentPropertyRangeSilent()
 {
-    // intialize name manager up to just before the current property range
-    rebuildConditionalNameSets();
+    // initialize name manager up to just before the current property range
+    createPropertyHandler(_firstPropertyIndex)->rebuildNames();
+
+    // becomes false if at least one of the properties in the range is not silent
+    bool result = true;
 
     // loop over all properties in the range
     for (int propertyIndex=_firstPropertyIndex; propertyIndex<=_lastPropertyIndex; ++propertyIndex)
@@ -322,7 +306,7 @@ bool WizardEngine::isCurrentPropertyRangeSilent()
         auto handler = createPropertyHandler(propertyIndex);
 
         // if this property is not silent, the complete range is not silent
-        if (!isPropertySilent(handler.get())) return false;
+        if (!isPropertySilent(handler.get())) result = false;
 
         // if this silent property was not previously configured by the user, set its default value;
         // the corresponding names are automatically inserted
@@ -334,7 +318,7 @@ bool WizardEngine::isCurrentPropertyRangeSilent()
         // otherwise, explicitly insert the names for the property
         else handler->insertNames();
     }
-    return true;
+    return result;
 }
 
 ////////////////////////////////////////////////////////////////////
