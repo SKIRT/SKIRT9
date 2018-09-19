@@ -9,6 +9,7 @@
 #include "Basics.hpp"
 #include <QWidget>
 class PropertyHandler;
+class QLabel;
 
 ////////////////////////////////////////////////////////////////////
 
@@ -32,7 +33,21 @@ public:
     /** The destructor destroys the property handler being held by this wizard pane. */
     ~PropertyWizardPane();
 
+    // ==================== Getters ====================
+
+public:
+    /** This function returns the handler retained by this wizard pane, without transferring
+        ownership. */
+    PropertyHandler* handler() { return _handler.get(); }
+
     // ==================== Event Handling ====================
+
+public:
+    /** This function can be implemented by subclasses that may need to update their interface when
+        values of other properties have changed (e.g., when the units of a double property are
+        determined by the value of another enumeration property). The implementation in this
+        abstract base class does nothing. */
+    virtual void updateInterface();
 
 protected:
     /** This function ensures that the first focus-enabled widget in the pane receives the focus
@@ -60,7 +75,7 @@ protected:
 
     /** This function creates a QLabel widget with the given text and with a status tip that is
         appropriate for the property being handled by this property wizard pane. */
-    QWidget* createHeader(string text);
+    QLabel* createHeader(string text);
 
     // ================== Data Members ====================
 

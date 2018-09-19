@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "MultiPropertyWizardPane.hpp"
+#include "PropertyHandler.hpp"
 #include "PropertyWizardPane.hpp"
 #include <QHash>
 #include <QVBoxLayout>
@@ -22,7 +23,6 @@ MultiPropertyWizardPane::MultiPropertyWizardPane(QObject* target)
     _multiLayout->setContentsMargins(0,0,0,0);
     _multiLayout->setSpacing(0);
     setLayout(_multiLayout);
-    _lastPane = nullptr;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -30,9 +30,9 @@ MultiPropertyWizardPane::MultiPropertyWizardPane(QObject* target)
 void MultiPropertyWizardPane::addPane(PropertyWizardPane* pane)
 {
     // remove the stretch layout item from the end of the layout for the previous subpane
-    if (_lastPane)
+    if (!_subPanes.empty())
     {
-        auto layout = _lastPane->layout();
+        auto layout = _subPanes.back()->layout();
         auto count = layout->count();
         if (count > 0)
         {
@@ -41,20 +41,50 @@ void MultiPropertyWizardPane::addPane(PropertyWizardPane* pane)
         }
     }
 
-    // if it has not yet been set, initialize the subpane state to invalid
-    if (!_subPaneState.contains(pane)) _subPaneState.insert(pane, false);
-
     // add the subpane to our layout
     _multiLayout->addWidget(pane);
 
-    // remember this pane as the last one added
-    _lastPane = pane;
+    // add the subpane to our list
+    _subPanes.append(pane);
+
+    // if it has not yet been set, initialize the subpane state to invalid
+    if (!_subPaneState.contains(pane)) _subPaneState.insert(pane, false);
+}
+
+////////////////////////////////////////////////////////////////////
+
+void MultiPropertyWizardPane::updateVisibility()
+{
+    if (!_subPanes.empty())
+    {
+        // initialize name manager up to just before the property in the first subpane
+        _subPanes.front()->handler()->rebuildNames();
+
+        // loop over all subpanes
+        for (auto pane : _subPanes)
+        {
+            auto handler = pane->handler();
+
+            // a property is silent if it is irrelevant,
+            // or if it should not be displayed (unless it is required and has no default value)
+            bool silent = (!handler->isRelevant()) ||
+                          (!handler->isDisplayed() && (!handler->isRequired() || handler->hasDefaultValue()));
+
+            // set the visibility accordingly
+            if (!silent) pane->updateInterface();
+            pane->setVisible(!silent);
+
+            // insert the names for the property
+            handler->insertNames();
+        }
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
 
 void MultiPropertyWizardPane::showEvent(QShowEvent* event)
 {
+    updateVisibility();
     setFocus();
     focusNextChild();
     QWidget::showEvent(event);
@@ -77,6 +107,7 @@ void MultiPropertyWizardPane::setPropertyValid(bool valid)
 
 void MultiPropertyWizardPane::hierarchyWasChanged()
 {
+    updateVisibility();
     emit multiPropertyValueChanged();
 }
 

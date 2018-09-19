@@ -27,6 +27,12 @@ PropertyWizardPane::~PropertyWizardPane()
 
 ////////////////////////////////////////////////////////////////////
 
+void PropertyWizardPane::updateInterface()
+{
+}
+
+////////////////////////////////////////////////////////////////////
+
 void PropertyWizardPane::showEvent(QShowEvent* event)
 {
     setFocus();
@@ -36,7 +42,7 @@ void PropertyWizardPane::showEvent(QShowEvent* event)
 
 ////////////////////////////////////////////////////////////////////
 
-QWidget* PropertyWizardPane::createHeader(string text)
+QLabel* PropertyWizardPane::createHeader(string text)
 {
     auto label = new QLabel(QString::fromStdString(text));
     label->setStatusTip(QString::fromStdString(_handler->type() + " : " + _handler->name()));

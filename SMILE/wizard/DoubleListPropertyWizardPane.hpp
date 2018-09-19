@@ -7,6 +7,8 @@
 #define DOUBLELISTPROPERTYWIZARDPANE_HPP
 
 #include "PropertyWizardPane.hpp"
+class QLabel;
+class QLineEdit;
 
 ////////////////////////////////////////////////////////////////////
 
@@ -26,10 +28,23 @@ public:
 
     // ==================== Event Handling ====================
 
+protected:
+    /** This function updates the interface of the wizard pane if the quantity of the handled
+        property (and thus its units) have changed since construction or since the previous
+        invocation of this function. */
+    void updateInterface() override;
+
 public slots:
     /** This function stores the value corresponding to the specified text string into the target
         property. */
     void updateValue(const QString& text);
+
+    // ==================== Data Members ====================
+
+private:
+    QLabel* _header;
+    QLineEdit* _field;
+    string _quantity{"*"};   // the quantity currently in use, initialized to an impossible value
 };
 
 ////////////////////////////////////////////////////////////////////

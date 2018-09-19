@@ -92,7 +92,6 @@ public:
         for more information. */
     string toString(vector<double> value) const;
 
-private:
     /** Returns the physical quantity name for the handled property, as described in the schema
         definition class, or the empty string if the handled property is a dimensionless quantity.
         If the value of the "quantity" attribute in the schema definition starts with an at sign,

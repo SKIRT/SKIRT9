@@ -37,6 +37,11 @@ public:
 
     // ==================== Event Handling ====================
 
+private:
+    /** This function hides subpanes that are currently silent for the purpose of this wizard and
+        shows the other subpanes. */
+    void updateVisibility();
+
 protected:
     /** This function ensures that the first focus-enabled widget in the pane receives the focus
         when the pane is shown. */
@@ -65,9 +70,9 @@ public slots:
     // ================== Data Members ====================
 
 private:
-    QHash<QObject*, bool> _subPaneState;
     QLayout* _multiLayout;
-    PropertyWizardPane* _lastPane;
+    QList<PropertyWizardPane*> _subPanes;
+    QHash<QObject*, bool> _subPaneState;
 };
 
 ////////////////////////////////////////////////////////////////////
