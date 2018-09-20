@@ -26,7 +26,8 @@
 
 namespace
 {
-    // Forward declaration; see function definition at the end of this anonymous namespace
+    // Forward declarations; see function definitions at the end of this anonymous namespace
+    void setPropertiesToDefaults(Item* item, const SchemaDef* schema, NameManager* nameMgr);
     void setupProperties(Item* item, const SchemaDef* schema, NameManager* nameMgr);
 
     // ----------------------------------------------------------
@@ -135,10 +136,9 @@ namespace
 
     // ----------------------------------------------------------
 
-    // The functions in this class are part of the visitor pattern initiated by the setupProperties() function.
-    // They set the value of a non-compound property to its default value, and the value of a compound property
-    // to "not present", i.e. the null pointer or the empty list.
-    class SilentPropertySetter : public PropertyHandlerVisitor
+    // The functions in this class are part of the visitor pattern.
+    // They set the value of a property to its default value (assuming it has one).
+    class DefaultPropertySetter : public PropertyHandlerVisitor
     {
     public:
         void visitPropertyHandler(StringPropertyHandler* handler) override
@@ -173,14 +173,52 @@ namespace
 
         void visitPropertyHandler(ItemPropertyHandler* handler) override
         {
-            handler->setToNull();
+            if (handler->isRelevant() && handler->isRequired())
+            {
+                // create the default item and set the property
+                bool success = handler->setToNewItemOfType(handler->defaultType());
+                if (!success) throw FATALERROR("Can't create item of type " + handler->defaultType());
+
+                // recursively default-construct the properties of the new item
+                setPropertiesToDefaults(handler->value(), handler->schema(), handler->nameManager());
+            }
+            else handler->setToNull();
         }
 
         void visitPropertyHandler(ItemListPropertyHandler* handler) override
         {
             handler->setToEmpty();
+            if (handler->isRelevant() && handler->isRequired())
+            {
+                // create the default item and add it to the property
+                bool success = handler->addNewItemOfType(handler->defaultType());
+                if (!success) throw FATALERROR("Can't create item of type " + handler->defaultType());
+
+                // recursively default-construct the properties of the new item
+                setPropertiesToDefaults(handler->value().back(), handler->schema(), handler->nameManager());
+            }
         }
     };
+
+    // ----------------------------------------------------------
+
+    // This function recursively sets all properties of the specified SMILE data item and its children
+    // to their default values, without reading anything from the console. The function throws an error
+    // if not all properties (recursively) have a default value.
+    void setPropertiesToDefaults(Item* item, const SchemaDef* schema, NameManager* nameMgr)
+    {
+        DefaultPropertySetter defaultSetter;
+
+        // process properties in order of schema definition so that relevancy can be determined
+        for (const string& name : schema->properties(item->type()))
+        {
+            auto handler = schema->createPropertyHandler(item, name, nameMgr);
+            if (handler->isRelevant() && handler->isRequired() && !handler->hasDefaultValue())
+                throw FATALERROR("Value for required property '" + handler->name() + "' in item of type '"
+                                  + item->type() + "' is not specified and has no default value");
+            handler->acceptVisitor(&defaultSetter);
+        }
+    }
 
     // ----------------------------------------------------------
 
@@ -191,7 +229,7 @@ namespace
     void setupProperties(Item* item, const SchemaDef* schema, NameManager* nameMgr)
     {
         ConsolePropertySetter consoleSetter;
-        SilentPropertySetter silentSetter;
+        DefaultPropertySetter defaultSetter;
 
         // setup all properties of the item, using a fresh local name space
         nameMgr->pushLocal();
@@ -200,7 +238,7 @@ namespace
             auto handler = schema->createPropertyHandler(item, property, nameMgr);
 
             // distribute to setup methods depending on property type (using visitor pattern)
-            if (handler->isSilent()) handler->acceptVisitor(&silentSetter);
+            if (handler->isSilent()) handler->acceptVisitor(&defaultSetter);
             else handler->acceptVisitor(&consoleSetter);
         }
         nameMgr->popLocal();
@@ -225,7 +263,7 @@ std::unique_ptr<Item> ConsoleHierarchyCreator::create(const SchemaDef* schema)
     nameMgr.insert(schema->ascendants(rootType));
     nameMgr.insertFromConditionalValue(schema->toBeInserted(rootType));
 
-    // recursively setup all properties of the top-level item and its children
+    // recursively setup all properties of the root item and its children
     setupProperties(rootItem.get(), schema, &nameMgr);
     return rootItem;
 }

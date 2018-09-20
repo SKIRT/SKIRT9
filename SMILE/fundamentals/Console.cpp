@@ -131,7 +131,7 @@ string Console::promptForString(string message, bool hasDef, string def)
 int Console::promptForChoice(string message, const vector<string>& choices, bool hasDef, int defIndex,
                              bool allowNoChoice, string noChoiceMessage)
 {
-    if (choices.empty()) throw FATALERROR("There are no choices to prompt for");
+    if (choices.empty() && !allowNoChoice) throw FATALERROR("There are no choices to prompt for");
     if (defIndex < 0) hasDef = false;
 
     info("Possible choices for " + message + ":");
@@ -145,6 +145,11 @@ int Console::promptForChoice(string message, const vector<string>& choices, bool
     {
         info("Automatically selected the only choice: 1");
         return 0;
+    }
+    if (choices.empty() && allowNoChoice)
+    {
+        info("Automatically selected the only choice: 0");
+        return -1;
     }
     return promptForInt("Enter one of these numbers" + (allowNoChoice ? " " + noChoiceMessage : ""),
                         (allowNoChoice ? 0 : 1), static_cast<int>(choices.size()),
