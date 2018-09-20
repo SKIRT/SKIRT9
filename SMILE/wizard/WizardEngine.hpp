@@ -71,34 +71,12 @@ private:
         conditional expressions against the current name sets. */
     int propertyIndexForChild(Item* child);
 
-    /** This function returns true if the property of the current item with the specified property
-        index can be grouped with other properties on a multi-pane. In the current implementation,
-        this is the case for properties of type String, Bool, Int, Enum, Double, or DoubleList. The
-        result does not depend on the evaluation of conditional expressions against the current
-        name sets. The function does \em not check whether the property index is within range. */
-    bool isPropertyEligableForMultiPane(int propertyIndex);
-
-    /** This function returns true if the property of the current item with the specified property
-        index is "silent", i.e. it should not be shown by the wizard for one reason or another.
-        Reasons for a property to be silent include that the property is irrelevant or that it
-        should not displayed to the user (after evaluation of the corresponding conditions against
-        the appropriate set of names), or that there is only a single choice for the value of the
-        property so that it can be entered automatically. The function assumes that the name sets
-        in the wizard engine's name manager reflect the contents of the current dataset, up to (and
-        \em not including) the property for which the query is made. */
-    bool isPropertySilent(PropertyHandler* handler);
-
-    /** This function returns true if the property or properties currently being handled (according
-        to the current state of the wizard) are all "silent", as described for the
-        isPropertySilent() function. The function properly initializes the conditional name sets in
-        the wizard engine's name manager. As an important side effect, this function ensures that
-        each so far unconfigured property in the range receives some default value. */
-    bool isCurrentPropertyRangeSilent();
-
 public slots:
     /** This function advances the wizard to the next state. It should only be called if
-        canAdvance() returns true. */
-    void advance(bool recursive=false);
+        canAdvance() returns true. Th optional flags are used for recursive calls. If \em state is
+        set to false, the current advance state is not saved. If \em descend is set to false, the
+        function will not descend into the current compound property. */
+    void advance(bool state=true, bool descend=true);
 
     /** This function advances the wizard to a state that starts editing the specified item in the
         current item list property. */

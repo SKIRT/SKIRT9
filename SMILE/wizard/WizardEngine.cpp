@@ -128,201 +128,217 @@ int WizardEngine::propertyIndexForChild(Item* child)
 
 ////////////////////////////////////////////////////////////////////
 
-bool WizardEngine::isPropertyEligableForMultiPane(int propertyIndex)
-{
-    auto handler = createPropertyHandler(propertyIndex);
-    if (dynamic_cast<StringPropertyHandler*>(handler.get())) return true;
-    if (dynamic_cast<BoolPropertyHandler*>(handler.get())) return true;
-    if (dynamic_cast<IntPropertyHandler*>(handler.get())) return true;
-    if (dynamic_cast<EnumPropertyHandler*>(handler.get())) return true;
-    if (dynamic_cast<DoublePropertyHandler*>(handler.get())) return true;
-    if (dynamic_cast<DoubleListPropertyHandler*>(handler.get())) return true;
-    return false;
-}
-
-////////////////////////////////////////////////////////////////////
-
 namespace
 {
+    // Forward declaration; see function definition at the end of this anonymous namespace
+    void setPropertiesToDefaults(Item* item, const SchemaDef* schema, NameManager* nameMgr);
+
     // The functions in this class are part of the visitor pattern initiated by the setupProperties() function.
     // They set the value of a non-compound property to its default value, the value of a compound property
     // to "not present", i.e. the null pointer or the empty list, and the value of an item property that
     // offers only one choice to the "forced" value
-    class SilentPropertySetter : public PropertyHandlerVisitor
+    class DefaultPropertySetter : public PropertyHandlerVisitor
     {
     public:
-        SilentPropertySetter() { }
-
         void visitPropertyHandler(StringPropertyHandler* handler) override
         {
-            if (handler->hasDefaultValue())
+            if (!handler->isConfigured())
             {
-                handler->setValue(handler->defaultValue());
-                handler->setConfigured();
+                if (handler->hasDefaultValue())
+                {
+                    handler->setValue(handler->defaultValue());
+                    handler->setConfigured();
+                }
+                else handler->setValue(string());
             }
-            else handler->setValue(string());
         }
 
         void visitPropertyHandler(BoolPropertyHandler* handler) override
         {
-            if (handler->hasDefaultValue())
+            if (!handler->isConfigured())
             {
-                handler->setValue(handler->defaultValue());
-                handler->setConfigured();
+                if (handler->hasDefaultValue())
+                {
+                    handler->setValue(handler->defaultValue());
+                    handler->setConfigured();
+                }
+                else handler->setValue(false);
             }
-            else handler->setValue(false);
         }
 
         void visitPropertyHandler(IntPropertyHandler* handler) override
         {
-            if (handler->hasDefaultValue())
+            if (!handler->isConfigured())
             {
-                handler->setValue(handler->defaultValue());
-                handler->setConfigured();
+                if (handler->hasDefaultValue())
+                {
+                    handler->setValue(handler->defaultValue());
+                    handler->setConfigured();
+                }
+                else handler->setValue(0);
             }
-            else handler->setValue(0);
         }
 
         void visitPropertyHandler(EnumPropertyHandler* handler) override
         {
-            if (handler->hasDefaultValue())
+            if (!handler->isConfigured())
             {
-                handler->setValue(handler->defaultValue());
-                handler->setConfigured();
+                if (handler->hasDefaultValue())
+                {
+                    handler->setValue(handler->defaultValue());
+                    handler->setConfigured();
+                }
+                else handler->setValue(handler->values()[0]);
             }
-            else handler->setValue(handler->values()[0]);
         }
 
         void visitPropertyHandler(DoublePropertyHandler* handler) override
         {
-            if (handler->hasDefaultValue())
+            if (!handler->isConfigured())
             {
-                handler->setValue(handler->defaultValue());
-                handler->setConfigured();
+                if (handler->hasDefaultValue())
+                {
+                    handler->setValue(handler->defaultValue());
+                    handler->setConfigured();
+                }
+                else handler->setValue(0.);
             }
-            else handler->setValue(0.);
         }
 
         void visitPropertyHandler(DoubleListPropertyHandler* handler) override
         {
-            if (handler->hasDefaultValue())
+            if (!handler->isConfigured())
             {
-                handler->setValue(handler->defaultValue());
-                handler->setConfigured();
+                if (handler->hasDefaultValue())
+                {
+                    handler->setValue(handler->defaultValue());
+                    handler->setConfigured();
+                }
+                else handler->setValue(vector<double>());
             }
-            else handler->setValue(vector<double>());
         }
 
         void visitPropertyHandler(ItemPropertyHandler* handler) override
         {
             if (handler->isRelevant())
             {
-                if (handler->hasDefaultValue())
+                if (!handler->isConfigured())
                 {
-                    handler->setToNewItemOfType(handler->defaultType());
-                    handler->setConfigured();
-                    return;
-                }
-                if (handler->isRequired())
-                {
-                    auto choices = handler->allowedAndDisplayedDescendants();
-                    if (choices.size() == 1)
+                    if ( handler->isRequired() && handler->hasDefaultValue()
+                         && handler->setToNewItemOfType(handler->defaultType()) )
                     {
-                        handler->setToNewItemOfType(choices[0]);
+                        // recursively default-construct the properties of the new item
+                        setPropertiesToDefaults(handler->value(), handler->schema(), handler->nameManager());
                         handler->setConfigured();
-                        return;
                     }
+                    else handler->setToNull();
                 }
             }
-            handler->setToNull();
+            else
+            {
+                handler->setToNull();
+                handler->setConfigured(false);
+            }
         }
 
         void visitPropertyHandler(ItemListPropertyHandler* handler) override
         {
-            if (handler->isRelevant() && handler->isRequired())
+            if (handler->isRelevant())
             {
-                if (handler->hasDefaultValue())
+                if (!handler->isConfigured())
                 {
-                    handler->addNewItemOfType(handler->defaultType());
-                    handler->setConfigured();
-                    return;
-                }
-                auto choices = handler->allowedAndDisplayedDescendants();
-                if (choices.size() == 1)
-                {
-                    handler->addNewItemOfType(choices[0]);
-                    handler->setConfigured();
-                    return;
+                    if ( handler->isRequired() && handler->hasDefaultValue()
+                         && handler->addNewItemOfType(handler->defaultType()) )
+                    {
+                        // recursively default-construct the properties of the new item
+                        setPropertiesToDefaults(handler->value().back(), handler->schema(), handler->nameManager());
+                        handler->setConfigured();
+                    }
+                    else handler->setToEmpty();
                 }
             }
-            handler->setToEmpty();
+            else
+            {
+                handler->setToEmpty();
+                handler->setConfigured(false);
+            }
         }
     };
-}
 
-////////////////////////////////////////////////////////////////////
+    // ----------------------------------------------------------
 
-bool WizardEngine::isPropertySilent(PropertyHandler* handler)
-{
-    if (handler->isSilent()) return true;
-
-    // an item property that offers only a single choice is silent
-    auto itemhdlr = dynamic_cast<ItemPropertyHandler*>(handler);
-    if (itemhdlr)
+    // This function recursively sets all properties of the specified SMILE data item and its children
+    // to their default values, without reading anything from the console.
+    void setPropertiesToDefaults(Item* item, const SchemaDef* schema, NameManager* nameMgr)
     {
-        auto numChoices = itemhdlr->allowedAndDisplayedDescendants().size();
-        if (numChoices == 0) return true;
-        if (numChoices == 1 && itemhdlr->isRequired()) return true;
-    }
+        DefaultPropertySetter defaultSetter;
 
-    // the subitem for an item list property that offers only a single choice is silent
-    auto itemlisthdlr = dynamic_cast<ItemListPropertyHandler*>(handler);
-    if (itemlisthdlr && _subItemIndex < 0)
-    {
-        if (itemlisthdlr->allowedAndDisplayedDescendants().size() <= 1) return true;
-    }
-
-    // if we reach here, the property is not silent
-    return false;
-}
-
-////////////////////////////////////////////////////////////////////
-
-bool WizardEngine::isCurrentPropertyRangeSilent()
-{
-    // initialize name manager up to just before the current property range
-    createPropertyHandler(_firstPropertyIndex)->rebuildNames();
-
-    // becomes false if at least one of the properties in the range is not silent
-    bool result = true;
-
-    // loop over all properties in the range
-    for (int propertyIndex=_firstPropertyIndex; propertyIndex<=_lastPropertyIndex; ++propertyIndex)
-    {
-        auto handler = createPropertyHandler(propertyIndex);
-
-        // if this property is not silent, the complete range is not silent
-        if (!isPropertySilent(handler.get())) result = false;
-
-        // if this silent property was not previously configured by the user, set its default value;
-        // the corresponding names are automatically inserted
-        if (!handler->isConfigured())
+        // process properties in order of schema definition so that relevancy can be determined
+        for (const string& name : schema->properties(item->type()))
         {
-            SilentPropertySetter silentSetter;
-            handler->acceptVisitor(&silentSetter);
+            auto handler = schema->createPropertyHandler(item, name, nameMgr);
+            handler->acceptVisitor(&defaultSetter);
         }
-        // otherwise, explicitly insert the names for the property
-        else handler->insertNames();
     }
-    return result;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-void WizardEngine::advance(bool recursive)
+namespace
+{
+    // This function returns true if the handler represents an item property and there is only
+    // a single choice for the item type, either "missing" or a specific type. In the latter
+    // case, the function also sets the value of the item to a new instance of that type.
+    // The function assumes that the name sets have been properly built before it is called.
+    bool isAutomaticItemProperty(PropertyHandler* handler)
+    {
+        auto itemhdlr = dynamic_cast<ItemPropertyHandler*>(handler);
+        if (itemhdlr)
+        {
+            auto choices = itemhdlr->allowedAndDisplayedDescendants();
+
+            // the only choice is "missing"
+            if (choices.empty() && !itemhdlr->isRequired())
+            {
+                itemhdlr->setToNull();
+                itemhdlr->setConfigured();
+                return true;
+            }
+
+            // the only choice is some specific type
+            if (choices.size() == 1 && itemhdlr->isRequired())
+            {
+                // if an item of the correct type is already configured, leave it alone
+                if (itemhdlr->isConfigured() && itemhdlr->value() && itemhdlr->value()->type()==choices[0]) return true;
+
+                // otherwise, configure an item of the correct type
+                bool success = itemhdlr->setToNewItemOfType(choices[0]);
+                if (success)
+                {
+                    itemhdlr->setConfigured();
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    // This function returns true if the handler represents an item list property and there is only
+    // a single choice for the item type.
+    // The function assumes that the name sets have been properly built before it is called.
+    bool isAutomaticItemListProperty(PropertyHandler* handler)
+    {
+        auto itemlisthdlr = dynamic_cast<ItemListPropertyHandler*>(handler);
+        return itemlisthdlr && itemlisthdlr->allowedAndDisplayedDescendants().size() <= 1;
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
+void WizardEngine::advance(bool state, bool descend)
 {
     // remember the current state so we can retreat to it
-    if (!recursive) _stateStack.emplace(_stage, _current, _firstPropertyIndex, _lastPropertyIndex, _subItemIndex);
+    if (state) _stateStack.emplace(_stage, _current, _firstPropertyIndex, _lastPropertyIndex, _subItemIndex);
 
     // advance the state depending on the current stage and details within the stage
     switch (_stage)
@@ -347,7 +363,7 @@ void WizardEngine::advance(bool recursive)
     case Stage::ConstructHierarchy:
         {
             // if the (single) property being handled is an item or an item list, we may need to descend the hierarchy
-            if (_lastPropertyIndex == _firstPropertyIndex)
+            if (descend && _lastPropertyIndex == _firstPropertyIndex)
             {
                 auto handler = createPropertyHandler(_firstPropertyIndex);
 
@@ -421,7 +437,7 @@ void WizardEngine::advance(bool recursive)
             {
                 setRootType(choices[0]);
             }
-            advance(true);
+            advance(false, true);
         }
     }
     else if (_stage == Stage::ConstructHierarchy)
@@ -430,24 +446,62 @@ void WizardEngine::advance(bool recursive)
         // (this is meaningless and harmless if the current item is not an item list)
         _subItemIndex = -1;
 
-        // determine the range of properties that can be combined onto a single multi-pane
+        // start a property range
         _lastPropertyIndex = _firstPropertyIndex;
-        if (isPropertyEligableForMultiPane(_firstPropertyIndex))
+        auto handler = createPropertyHandler(_firstPropertyIndex);
+        handler->rebuildNames();
+
+        // handle a compound property (which cannot be combined into a multi-pane)
+        if (handler->isCompound())
         {
-            while (static_cast<size_t>(_lastPropertyIndex+1) != _schema->properties(_current->type()).size()
-                   && isPropertyEligableForMultiPane(_lastPropertyIndex+1)) _lastPropertyIndex++;
+            if (handler->isSilent())
+            {
+                DefaultPropertySetter defaultSetter;
+                handler->acceptVisitor(&defaultSetter);
+                advance(false, false);  // request no descent
+            }
+            else if (isAutomaticItemProperty(handler.get()))
+            {
+                advance(false, true);  // request descent
+            }
         }
 
-        // skip silent properties after setting their default values
-        if (isCurrentPropertyRangeSilent())
+        // handle one or a range of non-compound properties
+        else
         {
-            advance(true);
+            // set a default value for the first property
+            DefaultPropertySetter defaultSetter;
+            handler->acceptVisitor(&defaultSetter);
+            handler->insertNames();
+
+            // this flag becomes false if at least one of the properties in the range is not silent
+            bool silent = handler->isSilent();
+
+            // determine the range of properties that can be combined onto a single multi-pane;
+            // meanwhile also handle each property
+            while (static_cast<size_t>(_lastPropertyIndex+1) != _schema->properties(_current->type()).size())
+            {
+                // break if the next property is compound
+                handler = createPropertyHandler(_lastPropertyIndex+1);
+                if (handler->isCompound()) break;
+
+                // keep track of silent-ness
+                if (!handler->isSilent()) silent = false;
+
+                // set a default value for this property
+                handler->acceptVisitor(&defaultSetter);
+                handler->insertNames();
+
+                _lastPropertyIndex++;
+            }
+
+            // skip a range of silent properties
+            if (silent) advance(false, false);
         }
     }
 
-    if (!recursive) emitStateChanged();
+    if (state) emitStateChanged();
 }
-
 
 ////////////////////////////////////////////////////////////////////
 
@@ -465,7 +519,9 @@ void WizardEngine::advanceToEditSubItem(int subItemIndex)
     _subItemIndex = subItemIndex;
 
     // skip this wizard pane if there is only one choice for the subitem class
-    if (isCurrentPropertyRangeSilent()) advance(true);
+    auto handler = createPropertyHandler(_firstPropertyIndex);
+    handler->rebuildNames();
+    if (isAutomaticItemListProperty(handler.get())) advance(false, true);  // request descent
 
     emitStateChanged();
 }
