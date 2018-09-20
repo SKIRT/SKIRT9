@@ -81,9 +81,23 @@ void MultiPropertyWizardPane::updateVisibility()
 
 ////////////////////////////////////////////////////////////////////
 
+void MultiPropertyWizardPane::emitValidity()
+{
+    // calculate and emit the aggregate state
+    auto states = _subPaneState.values();
+    bool multivalid = std::all_of(_subPanes.cbegin(), _subPanes.cend(), [this](PropertyWizardPane* subPane)
+    {
+        return !subPane->isVisible() || _subPaneState[subPane];
+    });
+    emit multiPropertyValidChanged(multivalid);
+}
+
+////////////////////////////////////////////////////////////////////
+
 void MultiPropertyWizardPane::showEvent(QShowEvent* event)
 {
     updateVisibility();
+    emitValidity();
     setFocus();
     focusNextChild();
     QWidget::showEvent(event);
@@ -93,13 +107,8 @@ void MultiPropertyWizardPane::showEvent(QShowEvent* event)
 
 void MultiPropertyWizardPane::setPropertyValid(bool valid)
 {
-    // update subpane state
     _subPaneState.insert(sender(), valid);
-
-    // calculate and emit the aggregate state
-    auto states = _subPaneState.values();
-    bool multivalid = std::all_of(states.cbegin(), states.cend(), [](bool s){return s;});
-    emit multiPropertyValidChanged(multivalid);
+    emitValidity();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -107,6 +116,7 @@ void MultiPropertyWizardPane::setPropertyValid(bool valid)
 void MultiPropertyWizardPane::hierarchyWasChanged()
 {
     updateVisibility();
+    emitValidity();
     emit multiPropertyValueChanged();
 }
 

@@ -42,6 +42,10 @@ private:
         shows the other subpanes. */
     void updateVisibility();
 
+    /** This function emits the multiPropertyValidChanged signal with the aggregate validity of the
+        visible subpanes. */
+    void emitValidity();
+
 protected:
     /** This function ensures that the first focus-enabled widget in the pane receives the focus
         when the pane is shown. */
