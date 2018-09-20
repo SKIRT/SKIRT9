@@ -86,6 +86,13 @@ bool PropertyHandler::hasDefaultValue() const
 
 ////////////////////////////////////////////////////////////////////
 
+bool PropertyHandler::isSilent() const
+{
+    return !isRelevant() || (!isDisplayed() && (!isRequired() || hasDefaultValue()));
+}
+
+////////////////////////////////////////////////////////////////////
+
 bool PropertyHandler::isCompound() const
 {
     return false;

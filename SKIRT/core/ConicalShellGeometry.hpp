@@ -76,10 +76,10 @@ class ConicalShellGeometry : public AxGeometry
         ATTRIBUTE_DEFAULT_VALUE(reshapeInnerRadius, "false")
 
     PROPERTY_DOUBLE(cutoffRadius, "the inner cutoff radius of the conical shell")
-        ATTRIBUTE_RELEVANT_IF(cutoffRadius, "reshapeInnerRadius")
         ATTRIBUTE_QUANTITY(cutoffRadius, "length")
         ATTRIBUTE_MIN_VALUE(cutoffRadius, "[0")
         ATTRIBUTE_DEFAULT_VALUE(cutoffRadius, "0")
+        ATTRIBUTE_RELEVANT_IF(cutoffRadius, "reshapeInnerRadius")
 
     ITEM_END()
 

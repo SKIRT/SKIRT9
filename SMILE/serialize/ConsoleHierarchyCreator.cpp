@@ -200,10 +200,8 @@ namespace
             auto handler = schema->createPropertyHandler(item, property, nameMgr);
 
             // distribute to setup methods depending on property type (using visitor pattern)
-            if ( handler->isRelevant() &&
-                (handler->isDisplayed() || (handler->isRequired() && !handler->hasDefaultValue())) )
-                handler->acceptVisitor(&consoleSetter);
-            else handler->acceptVisitor(&silentSetter);
+            if (handler->isSilent()) handler->acceptVisitor(&silentSetter);
+            else handler->acceptVisitor(&consoleSetter);
         }
         nameMgr->popLocal();
     }

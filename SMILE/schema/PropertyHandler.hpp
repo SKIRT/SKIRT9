@@ -115,6 +115,11 @@ public:
         other names by false. */
     bool hasDefaultValue() const;
 
+    /** Returns true if the handled property can be considered to be "silent" for interactive
+        purposes. An irrelevant property is always silent. A property that should not be displayed
+        is silent unless it is required and has no default value. */
+    bool isSilent() const;
+
     /** Returns true if the given string can be successfully converted to a value of the property's
         type. For an empty string, the function always returns false. This function must be
         overridden by property handler subclasses. */

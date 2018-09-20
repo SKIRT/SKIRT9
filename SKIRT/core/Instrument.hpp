@@ -30,7 +30,7 @@ class Instrument : public SimulationItem
     PROPERTY_STRING(instrumentName, "the name for this instrument")
 
     PROPERTY_ITEM(wavelengthGrid, WavelengthGrid, "the wavelength grid for this instrument")
-        ATTRIBUTE_REQUIRED_IF(wavelengthGrid, "false")
+        ATTRIBUTE_REQUIRED_IF(wavelengthGrid, "!DefaultInstrumentWavelengthGrid")
 
     ATTRIBUTE_SUB_PROPERTIES_HERE(MonteCarloSimulation)
 
@@ -38,10 +38,10 @@ class Instrument : public SimulationItem
         ATTRIBUTE_DEFAULT_VALUE(recordComponents, "false")
 
     PROPERTY_INT(numScatteringLevels, "the number of individually recorded scattering levels")
-        ATTRIBUTE_RELEVANT_IF(numScatteringLevels, "recordComponents")
         ATTRIBUTE_MIN_VALUE(numScatteringLevels, "0")
         ATTRIBUTE_MAX_VALUE(numScatteringLevels, "99")
         ATTRIBUTE_DEFAULT_VALUE(numScatteringLevels, "0")
+        ATTRIBUTE_RELEVANT_IF(numScatteringLevels, "recordComponents")
 
     PROPERTY_BOOL(recordPolarization, "record polarization (Stokes vector elements)")
         ATTRIBUTE_DEFAULT_VALUE(recordPolarization, "false")

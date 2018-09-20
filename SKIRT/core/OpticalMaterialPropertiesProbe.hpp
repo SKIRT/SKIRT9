@@ -36,7 +36,7 @@ class OpticalMaterialPropertiesProbe : public Probe
     ITEM_CONCRETE(OpticalMaterialPropertiesProbe, Probe, "aggregate optical material properties for each medium")
 
     PROPERTY_ITEM(wavelengthGrid, WavelengthGrid, "the wavelength grid for the optical properties")
-        ATTRIBUTE_REQUIRED_IF(wavelengthGrid, "false")
+        ATTRIBUTE_REQUIRED_IF(wavelengthGrid, "!DefaultInstrumentWavelengthGrid")
 
     ITEM_END()
 

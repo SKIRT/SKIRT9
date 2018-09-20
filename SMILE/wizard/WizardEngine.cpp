@@ -264,11 +264,7 @@ namespace
 
 bool WizardEngine::isPropertySilent(PropertyHandler* handler)
 {
-    // an irrelevant property is always silent
-    if (!handler->isRelevant()) return true;
-
-    // a property that should not be displayed is silent unless it is required and has no default value
-    if (!handler->isDisplayed() && (!handler->isRequired() || handler->hasDefaultValue())) return true;
+    if (handler->isSilent()) return true;
 
     // an item property that offers only a single choice is silent
     auto itemhdlr = dynamic_cast<ItemPropertyHandler*>(handler);
@@ -354,10 +350,9 @@ void WizardEngine::advance(bool recursive)
             if (_lastPropertyIndex == _firstPropertyIndex)
             {
                 auto handler = createPropertyHandler(_firstPropertyIndex);
-                auto itemhdlr = dynamic_cast<ItemPropertyHandler*>(handler.get());
-                auto itemlisthdlr = dynamic_cast<ItemListPropertyHandler*>(handler.get());
 
-                // if the property being handled is an item, and the item has properties, then descend the hierarchy
+                // if the property is an item, and the item has properties, then descend the hierarchy
+                auto itemhdlr = dynamic_cast<ItemPropertyHandler*>(handler.get());
                 if (itemhdlr && itemhdlr->value() && _schema->properties(itemhdlr->value()->type()).size()>0)
                 {
                     _current = itemhdlr->value();
@@ -365,8 +360,9 @@ void WizardEngine::advance(bool recursive)
                     break;
                 }
 
-                // if the property being handled is an item list, and we're editing one of its subitems,
+                // if the property is an item list, and we're editing one of its subitems,
                 // and the subitem has properties, then descend the hierarchy into that subitem
+                auto itemlisthdlr = dynamic_cast<ItemListPropertyHandler*>(handler.get());
                 if (itemlisthdlr && _subItemIndex>=0 &&
                     _schema->properties(itemlisthdlr->value()[_subItemIndex]->type()).size()>0)
                 {

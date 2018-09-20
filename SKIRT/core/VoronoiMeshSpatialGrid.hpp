@@ -43,16 +43,17 @@ class VoronoiMeshSpatialGrid : public BoxSpatialGrid, public DensityInCellInterf
         ATTRIBUTE_DEFAULT_VALUE(policy, "DustDensity")
 
     PROPERTY_INT(numSites, "the number of random sites (or cells in the grid)")
-        // ATTRIBUTE_RELEVANT_IF(numSites, "policy==Uniform|CentralPeak|DustDensity|ElectronDensity|GasDensity,")
         ATTRIBUTE_MIN_VALUE(numSites, "5")
         ATTRIBUTE_DEFAULT_VALUE(numSites, "500")
+        ATTRIBUTE_RELEVANT_IF(numSites, "policyUniform|policyCentralPeak|policyDustDensity|"
+                                        "policyElectronDensity|policyGasDensity")
 
     PROPERTY_STRING(filename, "the name of the file containing the site positions")
-        // ATTRIBUTE_RELEVANT_IF(filename, "policy==File")
+        ATTRIBUTE_RELEVANT_IF(filename, "policyFile")
 
     PROPERTY_BOOL(relaxSites, "perform site relaxation to avoid overly elongated cells")
-        // ATTRIBUTE_RELEVANT_IF(relaxSites, "policy==!ImportedMesh")
         ATTRIBUTE_DEFAULT_VALUE(relaxSites, "false")
+        ATTRIBUTE_RELEVANT_IF(relaxSites, "!policyImportedMesh")
 
     ITEM_END()
 

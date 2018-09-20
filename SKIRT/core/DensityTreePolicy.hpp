@@ -84,11 +84,11 @@ class DensityTreePolicy : public TreePolicy
         ATTRIBUTE_DEFAULT_VALUE(maxDustOpticalDepth, "0")
 
     PROPERTY_DOUBLE(wavelength, "the wavelength at which to evaluate the optical depth")
-        ATTRIBUTE_RELEVANT_IF(wavelength, "maxDustOpticalDepth")
         ATTRIBUTE_QUANTITY(wavelength, "wavelength")
         ATTRIBUTE_MIN_VALUE(wavelength, "1 A")
         ATTRIBUTE_MAX_VALUE(wavelength, "1 m")
         ATTRIBUTE_DEFAULT_VALUE(wavelength, "0.55 micron")
+        ATTRIBUTE_RELEVANT_IF(wavelength, "maxDustOpticalDepth")
 
     PROPERTY_DOUBLE(maxDustDensityDispersion, "the maximum dust density dispersion in each cell")
         ATTRIBUTE_MIN_VALUE(maxDustDensityDispersion, "[0")

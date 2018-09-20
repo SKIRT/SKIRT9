@@ -34,7 +34,7 @@ class MediumSystem : public SimulationItem
 
     PROPERTY_ITEM_LIST(media, Medium, "the transfer media")
         ATTRIBUTE_DEFAULT_VALUE(media, "GeometricMedium")
-        ATTRIBUTE_REQUIRED_IF(media, "false")
+        ATTRIBUTE_REQUIRED_IF(media, "ExtinctionOnlyMode")
 
     PROPERTY_ITEM(grid, SpatialGrid, "the spatial grid")
         ATTRIBUTE_DEFAULT_VALUE(grid, "CartesianSpatialGrid")

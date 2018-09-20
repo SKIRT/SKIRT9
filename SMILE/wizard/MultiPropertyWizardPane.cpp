@@ -67,8 +67,7 @@ void MultiPropertyWizardPane::updateVisibility()
 
             // a property is silent if it is irrelevant,
             // or if it should not be displayed (unless it is required and has no default value)
-            bool silent = (!handler->isRelevant()) ||
-                          (!handler->isDisplayed() && (!handler->isRequired() || handler->hasDefaultValue()));
+            bool silent = handler->isSilent();
 
             // set the visibility accordingly
             if (!silent) pane->updateInterface();
