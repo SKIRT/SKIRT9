@@ -35,7 +35,7 @@
 
     The syntax of a conditional value expression can be illustrated as follows:
 
-    <Boolean-expression1>:<value1>; ... ;[<Boolean-expressionN>:]<valueN>
+        <Boolean-expression1>:<value1>; ... ;[<Boolean-expressionN>:]<valueN>
 
     In other words, there is a sequence of one or more condition-value pairs separated by a
     semicolon, while the condition and the value are separated by a colon. The pairs in the
