@@ -40,6 +40,7 @@ class Snapshot;
 class ImportedSource : public Source
 {
     ITEM_ABSTRACT(ImportedSource, Source, "a primary source imported from snapshot data")
+        ATTRIBUTE_TYPE_INSERT(ImportedSource, "Dimension3")
 
     PROPERTY_STRING(filename, "the name of the file to be imported")
 

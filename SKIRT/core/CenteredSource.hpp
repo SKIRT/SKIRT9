@@ -26,14 +26,17 @@ class CenteredSource : public NormalizedSource
     PROPERTY_DOUBLE(centerX, "the center of the source, x component")
         ATTRIBUTE_QUANTITY(centerX, "length")
         ATTRIBUTE_DEFAULT_VALUE(centerX, "0")
+        ATTRIBUTE_INSERT(centerX, "centerX:Dimension3")
 
     PROPERTY_DOUBLE(centerY, "the center of the source, y component")
         ATTRIBUTE_QUANTITY(centerY, "length")
         ATTRIBUTE_DEFAULT_VALUE(centerY, "0")
+        ATTRIBUTE_INSERT(centerY, "centerY:Dimension3")
 
     PROPERTY_DOUBLE(centerZ, "the center of the source, z component")
         ATTRIBUTE_QUANTITY(centerZ, "length")
         ATTRIBUTE_DEFAULT_VALUE(centerZ, "0")
+        ATTRIBUTE_INSERT(centerZ, "centerZ:Dimension2")
 
     ITEM_END()
 

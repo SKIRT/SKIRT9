@@ -41,19 +41,21 @@ class DistantInstrument : public Instrument
         ATTRIBUTE_MIN_VALUE(inclination, "0 deg")
         ATTRIBUTE_MAX_VALUE(inclination, "180 deg")
         ATTRIBUTE_DEFAULT_VALUE(inclination, "0 deg")
+        ATTRIBUTE_DISPLAYED_IF(inclination, "Dimension2|Dimension3")
 
     PROPERTY_DOUBLE(azimuth, "the azimuth angle φ of the detector")
         ATTRIBUTE_QUANTITY(azimuth, "posangle")
         ATTRIBUTE_MIN_VALUE(azimuth, "-360 deg")
         ATTRIBUTE_MAX_VALUE(azimuth, "360 deg")
         ATTRIBUTE_DEFAULT_VALUE(azimuth, "0 deg")
+        ATTRIBUTE_DISPLAYED_IF(azimuth, "Dimension3")
 
     PROPERTY_DOUBLE(rollAngle, "the roll angle ω of the detector")
         ATTRIBUTE_QUANTITY(rollAngle, "posangle")
         ATTRIBUTE_MIN_VALUE(rollAngle, "-360 deg")
         ATTRIBUTE_MAX_VALUE(rollAngle, "360 deg")
         ATTRIBUTE_DEFAULT_VALUE(rollAngle, "0 deg")
-        ATTRIBUTE_DISPLAYED_IF(rollAngle, "Level2")
+        ATTRIBUTE_DISPLAYED_IF(rollAngle, "Level2&(Dimension2|Dimension3)")
 
     ITEM_END()
 

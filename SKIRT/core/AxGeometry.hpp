@@ -16,6 +16,7 @@
 class AxGeometry : public Geometry
 {
     ITEM_ABSTRACT(AxGeometry, Geometry, "an axisymmetric geometry")
+        ATTRIBUTE_TYPE_INSERT(AxGeometry, "Dimension2")
     ITEM_END()
 
     //======================== Other Functions =======================

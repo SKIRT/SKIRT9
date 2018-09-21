@@ -15,6 +15,7 @@
 class GenGeometry : public Geometry
 {
     ITEM_ABSTRACT(GenGeometry, Geometry, "a geometry without a specific symmetry")
+        ATTRIBUTE_TYPE_INSERT(GenGeometry, "Dimension3")
     ITEM_END()
 
     //======================== Other Functions =======================

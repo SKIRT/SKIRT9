@@ -24,14 +24,17 @@ class PointSource : public NormalizedSource
     PROPERTY_DOUBLE(positionX, "the position of the point source, x component")
         ATTRIBUTE_QUANTITY(positionX, "length")
         ATTRIBUTE_DEFAULT_VALUE(positionX, "0")
+        ATTRIBUTE_INSERT(positionX, "positionX:Dimension3")
 
     PROPERTY_DOUBLE(positionY, "the position of the point source, y component")
         ATTRIBUTE_QUANTITY(positionY, "length")
         ATTRIBUTE_DEFAULT_VALUE(positionY, "0")
+        ATTRIBUTE_INSERT(positionY, "positionY:Dimension3")
 
     PROPERTY_DOUBLE(positionZ, "the position of the point source, z component")
         ATTRIBUTE_QUANTITY(positionZ, "length")
         ATTRIBUTE_DEFAULT_VALUE(positionZ, "0")
+        ATTRIBUTE_INSERT(positionZ, "positionZ:Dimension2")
 
     PROPERTY_ITEM(angularDistribution, AngularDistribution, "the angular luminosity distribution of the emission")
         ATTRIBUTE_DEFAULT_VALUE(angularDistribution, "IsotropicAngularDistribution")

@@ -14,7 +14,7 @@ class Random;
 //////////////////////////////////////////////////////////////////////
 
 /** The Sphere2DSpatialGrid class is subclass of the SphereSpatialGrid class, and represents
-    axisymmetric Spatial grids based on spherical coordinates. The grid is defined in the
+    axisymmetric spatial grids based on spherical coordinates. The grid is defined in the
     meridional plane and rotated around the Z-axis. The meridional grid is specified through a set
     of \f$N_r+1\f$ radial grid points \f$r_i\f$ (with \f$i=0,\ldots,N_r\f$) and a set of
     \f$N_\theta+1\f$ angular grid points \f$\theta_k\f$ (with \f$k=0,\ldots,N_\theta\f$). In total
@@ -22,6 +22,7 @@ class Random;
 class Sphere2DSpatialGrid : public SphereSpatialGrid
 {
     ITEM_CONCRETE(Sphere2DSpatialGrid, SphereSpatialGrid, "an axisymmetric spatial grid in spherical coordinates")
+        ATTRIBUTE_TYPE_ALLOWED_IF(Sphere2DSpatialGrid, "!Dimension3")
 
     PROPERTY_ITEM(meshRadial, Mesh, "the bin distribution in the radial direction")
         ATTRIBUTE_DEFAULT_VALUE(meshRadial, "LinMesh")

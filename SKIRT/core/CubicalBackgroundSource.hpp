@@ -19,6 +19,7 @@ class CubicalBackgroundSource : public CenteredSource
 {
     ITEM_CONCRETE(CubicalBackgroundSource, CenteredSource,
                   "a cubical background source with an anisotropic inward radiation field")
+        ATTRIBUTE_TYPE_INSERT(CubicalBackgroundSource, "Dimension3")
 
     PROPERTY_DOUBLE(edgeLength, "the edge length of the background cube")
         ATTRIBUTE_QUANTITY(edgeLength, "length")

@@ -19,14 +19,17 @@
 class AxAngularDistribution : public AngularDistribution
 {
     ITEM_ABSTRACT(AxAngularDistribution, AngularDistribution, "an axisymmetric angular emission profile")
+        ATTRIBUTE_TYPE_INSERT(AxAngularDistribution, "Dimension2")
 
     PROPERTY_DOUBLE(symmetryX, "the direction of the positive symmetry axis, x component")
         ATTRIBUTE_QUANTITY(symmetryX, "length")
         ATTRIBUTE_DEFAULT_VALUE(symmetryX, "0")
+        ATTRIBUTE_INSERT(symmetryX, "symmetryX:Dimension3")
 
     PROPERTY_DOUBLE(symmetryY, "the direction of the positive symmetry axis, y component")
         ATTRIBUTE_QUANTITY(symmetryY, "length")
         ATTRIBUTE_DEFAULT_VALUE(symmetryY, "0")
+        ATTRIBUTE_INSERT(symmetryY, "symmetryY:Dimension3")
 
     PROPERTY_DOUBLE(symmetryZ, "the direction of the positive symmetry axis, z component")
         ATTRIBUTE_QUANTITY(symmetryZ, "length")

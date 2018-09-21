@@ -37,7 +37,8 @@ class MediumSystem : public SimulationItem
         ATTRIBUTE_REQUIRED_IF(media, "ExtinctionOnlyMode")
 
     PROPERTY_ITEM(grid, SpatialGrid, "the spatial grid")
-        ATTRIBUTE_DEFAULT_VALUE(grid, "CartesianSpatialGrid")
+        ATTRIBUTE_DEFAULT_VALUE(grid,
+                            "Dimension3:PolicyTreeSpatialGrid;Dimension2:Cylinder2DSpatialGrid;Sphere1DSpatialGrid")
 
     ITEM_END()
 

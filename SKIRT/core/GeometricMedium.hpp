@@ -36,6 +36,7 @@ class GeometricMedium : public Medium
         ATTRIBUTE_MAX_VALUE(velocityX, "100000 km/s]")
         ATTRIBUTE_DEFAULT_VALUE(velocityX, "0")
         ATTRIBUTE_DISPLAYED_IF(velocityX, "Level2")
+        ATTRIBUTE_INSERT(velocityX, "velocityX:Dimension3")
 
     PROPERTY_DOUBLE(velocityY, "the bulk velocity of the medium, y component")
         ATTRIBUTE_QUANTITY(velocityY, "velocity")
@@ -43,6 +44,7 @@ class GeometricMedium : public Medium
         ATTRIBUTE_MAX_VALUE(velocityY, "100000 km/s]")
         ATTRIBUTE_DEFAULT_VALUE(velocityY, "0")
         ATTRIBUTE_DISPLAYED_IF(velocityY, "Level2")
+        ATTRIBUTE_INSERT(velocityY, "velocityY:Dimension3")
 
     PROPERTY_DOUBLE(velocityZ, "the bulk velocity of the medium, z component")
         ATTRIBUTE_QUANTITY(velocityZ, "velocity")
@@ -50,6 +52,7 @@ class GeometricMedium : public Medium
         ATTRIBUTE_MAX_VALUE(velocityZ, "100000 km/s]")
         ATTRIBUTE_DEFAULT_VALUE(velocityZ, "0")
         ATTRIBUTE_DISPLAYED_IF(velocityZ, "Level2")
+        ATTRIBUTE_INSERT(velocityZ, "velocityZ:Dimension2")
 
     ITEM_END()
 

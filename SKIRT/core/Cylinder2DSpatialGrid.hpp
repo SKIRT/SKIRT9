@@ -21,6 +21,7 @@
 class Cylinder2DSpatialGrid : public CylinderSpatialGrid
 {
     ITEM_CONCRETE(Cylinder2DSpatialGrid, CylinderSpatialGrid, "an axisymmetric spatial grid in cylindrical coordinates")
+        ATTRIBUTE_TYPE_ALLOWED_IF(Cylinder2DSpatialGrid, "!Dimension3")
 
     PROPERTY_ITEM(meshRadial, Mesh, "the bin distribution in the radial direction")
         ATTRIBUTE_DEFAULT_VALUE(meshRadial, "LinMesh")

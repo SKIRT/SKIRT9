@@ -29,14 +29,17 @@ class OffsetGeometryDecorator : public Geometry
     PROPERTY_DOUBLE(offsetX, "the offset in the x direction")
         ATTRIBUTE_QUANTITY(offsetX, "length")
         ATTRIBUTE_DEFAULT_VALUE(offsetX, "0")
+        ATTRIBUTE_INSERT(offsetX, "offsetX:Dimension3")
 
     PROPERTY_DOUBLE(offsetY, "the offset in the y direction")
         ATTRIBUTE_QUANTITY(offsetY, "length")
         ATTRIBUTE_DEFAULT_VALUE(offsetY, "0")
+        ATTRIBUTE_INSERT(offsetY, "offsetY:Dimension3")
 
     PROPERTY_DOUBLE(offsetZ, "the offset in the z direction")
         ATTRIBUTE_QUANTITY(offsetZ, "length")
         ATTRIBUTE_DEFAULT_VALUE(offsetZ, "0")
+        ATTRIBUTE_INSERT(offsetZ, "offsetZ:Dimension2")
 
     ITEM_END()
 

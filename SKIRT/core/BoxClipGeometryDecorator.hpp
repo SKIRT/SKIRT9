@@ -17,6 +17,7 @@ class BoxClipGeometryDecorator : public ClipGeometryDecorator
 {
     ITEM_CONCRETE(BoxClipGeometryDecorator, ClipGeometryDecorator,
                   "a decorator that clips another geometry using a cubodial box")
+        ATTRIBUTE_TYPE_INSERT(BoxClipGeometryDecorator, "Dimension3")
 
     PROPERTY_DOUBLE(minX, "the start point of the box in the X direction")
         ATTRIBUTE_QUANTITY(minX, "length")
