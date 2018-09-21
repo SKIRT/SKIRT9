@@ -38,6 +38,7 @@ class VoronoiMeshSpatialGrid : public BoxSpatialGrid, public DensityInCellInterf
     ENUM_END()
 
     ITEM_CONCRETE(VoronoiMeshSpatialGrid, BoxSpatialGrid, "a spatial grid based on a Voronoi tessellation")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(VoronoiMeshSpatialGrid, "Level2")
 
     PROPERTY_ENUM(policy, Policy, "the policy for determining the positions of the sites")
         ATTRIBUTE_DEFAULT_VALUE(policy, "DustDensity")

@@ -40,6 +40,7 @@ class PolicyTreeSpatialGrid : public TreeSpatialGrid
 
     PROPERTY_ENUM(treeType, TreeType, "the type of tree")
         ATTRIBUTE_DEFAULT_VALUE(treeType, "OctTree")
+        ATTRIBUTE_DISPLAYED_IF(treeType, "Level2")
 
     PROPERTY_ITEM(policy, TreePolicy, "the tree construction policy (configuration options)")
         ATTRIBUTE_DEFAULT_VALUE(policy, "DensityTreePolicy")

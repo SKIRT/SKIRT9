@@ -53,6 +53,7 @@ class DistantInstrument : public Instrument
         ATTRIBUTE_MIN_VALUE(rollAngle, "-360 deg")
         ATTRIBUTE_MAX_VALUE(rollAngle, "360 deg")
         ATTRIBUTE_DEFAULT_VALUE(rollAngle, "0 deg")
+        ATTRIBUTE_DISPLAYED_IF(rollAngle, "Level2")
 
     ITEM_END()
 

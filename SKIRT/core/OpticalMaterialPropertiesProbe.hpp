@@ -37,6 +37,7 @@ class OpticalMaterialPropertiesProbe : public Probe
 
     PROPERTY_ITEM(wavelengthGrid, WavelengthGrid, "the wavelength grid for the optical properties")
         ATTRIBUTE_REQUIRED_IF(wavelengthGrid, "!DefaultInstrumentWavelengthGrid")
+        ATTRIBUTE_DISPLAYED_IF(wavelengthGrid, "Level2")
 
     ITEM_END()
 

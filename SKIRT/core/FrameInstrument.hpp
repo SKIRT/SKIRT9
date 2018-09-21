@@ -30,6 +30,7 @@ class FrameInstrument : public DistantInstrument
     PROPERTY_DOUBLE(centerX, "the center of the frame in the horizontal direction")
         ATTRIBUTE_QUANTITY(centerX, "length")
         ATTRIBUTE_DEFAULT_VALUE(centerX, "0")
+        ATTRIBUTE_DISPLAYED_IF(centerX, "Level2")
 
     PROPERTY_DOUBLE(fieldOfViewY, "the total field of view in the vertical direction")
         ATTRIBUTE_QUANTITY(fieldOfViewY, "length")
@@ -43,6 +44,7 @@ class FrameInstrument : public DistantInstrument
     PROPERTY_DOUBLE(centerY, "the center of the frame in the vertical direction")
         ATTRIBUTE_QUANTITY(centerY, "length")
         ATTRIBUTE_DEFAULT_VALUE(centerY, "0")
+        ATTRIBUTE_DISPLAYED_IF(centerY, "Level2")
 
     ITEM_END()
 

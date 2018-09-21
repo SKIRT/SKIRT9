@@ -20,6 +20,7 @@
 class OpticalDepthMapProbe : public Probe
 {
     ITEM_CONCRETE(OpticalDepthMapProbe, Probe, "all-sky optical depth map as seen from given location")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(OpticalDepthMapProbe, "Level2")
 
     PROPERTY_ITEM(projection, AllSkyProjection, "the projection used for mapping the sky to a rectangle")
         ATTRIBUTE_DEFAULT_VALUE(projection, "HammerAitoffProjection")

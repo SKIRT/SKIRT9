@@ -36,6 +36,7 @@ class MeanPinteBenchmarkDustMix : public SingleGrainDustMix
 
     ITEM_CONCRETE(MeanPinteBenchmarkDustMix, SingleGrainDustMix,
                   "a dust mix from the Pinte benchmark (mean properties, optionally with polarization at 1 micron)")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(MeanPinteBenchmarkDustMix, "Level2")
 
     PROPERTY_ENUM(scatteringType, ScatteringType, "the type of scattering to be implemented")
         ATTRIBUTE_DEFAULT_VALUE(scatteringType, "HenyeyGreenstein")

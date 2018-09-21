@@ -82,6 +82,7 @@ class DensityTreePolicy : public TreePolicy
         ATTRIBUTE_MIN_VALUE(maxDustOpticalDepth, "[0")
         ATTRIBUTE_MAX_VALUE(maxDustOpticalDepth, "100]")
         ATTRIBUTE_DEFAULT_VALUE(maxDustOpticalDepth, "0")
+        ATTRIBUTE_DISPLAYED_IF(maxDustOpticalDepth, "Level2")
 
     PROPERTY_DOUBLE(wavelength, "the wavelength at which to evaluate the optical depth")
         ATTRIBUTE_QUANTITY(wavelength, "wavelength")
@@ -94,6 +95,7 @@ class DensityTreePolicy : public TreePolicy
         ATTRIBUTE_MIN_VALUE(maxDustDensityDispersion, "[0")
         ATTRIBUTE_MAX_VALUE(maxDustDensityDispersion, "1]")
         ATTRIBUTE_DEFAULT_VALUE(maxDustDensityDispersion, "0")
+        ATTRIBUTE_DISPLAYED_IF(maxDustDensityDispersion, "Level2")
 
     PROPERTY_DOUBLE(maxElectronFraction, "the maximum fraction of electrons contained in each cell")
         ATTRIBUTE_MIN_VALUE(maxElectronFraction, "[0")
@@ -104,6 +106,7 @@ class DensityTreePolicy : public TreePolicy
         ATTRIBUTE_MIN_VALUE(maxGasFraction, "[0")
         ATTRIBUTE_MAX_VALUE(maxGasFraction, "1e-2]")
         ATTRIBUTE_DEFAULT_VALUE(maxGasFraction, "1e-6")
+        ATTRIBUTE_DISPLAYED_IF(maxGasFraction, "Level2")
 
     ITEM_END()
 

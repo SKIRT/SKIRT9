@@ -22,6 +22,7 @@ class AdaptiveMeshSnapshot;
 class AdaptiveMeshSpatialGrid : public SpatialGrid, public DensityInCellInterface
 {
     ITEM_CONCRETE(AdaptiveMeshSpatialGrid, SpatialGrid, "a spatial grid based on an imported adaptive mesh snapshot")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(AdaptiveMeshSpatialGrid, "Level2")
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============

@@ -24,6 +24,7 @@
 class FileBand : public Band
 {
     ITEM_CONCRETE(FileBand, Band, "a wavelength band (transmission curve) loaded from a text file")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(FileBand, "Level2")
 
     PROPERTY_STRING(filename, "the name of the file defining the transmission curve")
 

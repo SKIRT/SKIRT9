@@ -22,6 +22,7 @@
 class FileWavelengthGrid : public DisjointWavelengthGrid
 {
     ITEM_CONCRETE(FileWavelengthGrid, DisjointWavelengthGrid, "a wavelength grid loaded from a text file")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(FileWavelengthGrid, "Level2")
 
     PROPERTY_STRING(filename, "the name of the file with the characteristic wavelengths")
 

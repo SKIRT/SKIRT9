@@ -30,6 +30,7 @@
 class AllSkyInstrument : public Instrument
 {
     ITEM_CONCRETE(AllSkyInstrument, Instrument, "an all-sky instrument (for observing inside a model)")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(AllSkyInstrument, "Level2")
 
     PROPERTY_ITEM(projection, AllSkyProjection, "the projection used for mapping the sky to a rectangle")
         ATTRIBUTE_DEFAULT_VALUE(projection, "HammerAitoffProjection")

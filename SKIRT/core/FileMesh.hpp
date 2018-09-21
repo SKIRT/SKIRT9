@@ -21,6 +21,7 @@
 class FileMesh : public MoveableMesh
 {
     ITEM_CONCRETE(FileMesh, MoveableMesh, "a mesh read from a file")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(FileMesh, "Level2")
 
     PROPERTY_STRING(filename, "the name of the file with the mesh border points")
 

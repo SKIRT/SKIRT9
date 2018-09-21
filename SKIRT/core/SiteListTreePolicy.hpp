@@ -29,6 +29,7 @@ class SiteListTreePolicy : public TreePolicy
 {
     ITEM_CONCRETE(SiteListTreePolicy, TreePolicy,
                   "a tree grid construction policy using positions defined by an imported medium")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(SiteListTreePolicy, "Level2")
 
     PROPERTY_INT(numExtraLevels, "the number of additional subdivision levels")
         ATTRIBUTE_MIN_VALUE(numExtraLevels, "0")

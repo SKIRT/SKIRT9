@@ -29,6 +29,7 @@ class ElectronMix : public MaterialMix
 
     PROPERTY_BOOL(includePolarization, "include support for polarization")
         ATTRIBUTE_DEFAULT_VALUE(includePolarization, "false")
+        ATTRIBUTE_DISPLAYED_IF(includePolarization, "Level2")
 
     ITEM_END()
 

@@ -31,6 +31,7 @@
 class LaunchedPacketsProbe : public Probe, public ProbePhotonPacketInterface
 {
     ITEM_CONCRETE(LaunchedPacketsProbe, Probe, "the number of photon packets launched from primary sources")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(LaunchedPacketsProbe, "Level2")
 
     PROPERTY_ITEM(wavelengthGrid, WavelengthGrid, "the wavelength grid for the photon packet probe")
         ATTRIBUTE_REQUIRED_IF(wavelengthGrid, "!DefaultInstrumentWavelengthGrid")

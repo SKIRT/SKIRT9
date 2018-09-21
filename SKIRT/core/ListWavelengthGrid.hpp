@@ -23,6 +23,7 @@
 class ListWavelengthGrid : public DisjointWavelengthGrid
 {
     ITEM_CONCRETE(ListWavelengthGrid, DisjointWavelengthGrid, "a list of one or more wavelengths")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(ListWavelengthGrid, "Level2")
 
     PROPERTY_DOUBLE_LIST(wavelengths, "the characteristic wavelength for each bin")
         ATTRIBUTE_QUANTITY(wavelengths, "wavelength")

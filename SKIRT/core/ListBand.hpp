@@ -23,6 +23,7 @@
 class ListBand : public Band
 {
     ITEM_CONCRETE(ListBand, Band, "a wavelength band (transmission curve) specified inside the configuration file")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(ListBand, "Level2")
 
     PROPERTY_DOUBLE_LIST(wavelengths, "the wavelengths at which to specify the transmission")
         ATTRIBUTE_QUANTITY(wavelengths, "wavelength")

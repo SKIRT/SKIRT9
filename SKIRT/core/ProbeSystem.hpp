@@ -60,6 +60,7 @@ class ProbeSystem : public SimulationItem
     ITEM_CONCRETE(ProbeSystem, SimulationItem, "a probe system")
 
     PROPERTY_ITEM_LIST(probes, Probe, "the probes")
+        ATTRIBUTE_DEFAULT_VALUE(probes, "ExtinctionOnlyMode:SpatialGridConvergenceProbe;LuminosityProbe")
         ATTRIBUTE_REQUIRED_IF(probes, "false")
 
     ITEM_END()

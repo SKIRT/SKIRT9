@@ -28,6 +28,7 @@ class MeanIvezicBenchmarkDustMix : public SingleGrainDustMix
 {
     ITEM_CONCRETE(MeanIvezicBenchmarkDustMix, SingleGrainDustMix,
                   "a dust mix from the Ivezic 1D benchmark (mean properties)")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(MeanIvezicBenchmarkDustMix, "Level2")
     ITEM_END()
 
     //======================== Other Functions =======================

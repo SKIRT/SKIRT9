@@ -32,6 +32,7 @@
 class MeanTabulatedDustMix : public MaterialMix
 {
     ITEM_ABSTRACT(MeanTabulatedDustMix, MaterialMix, "a basic dust mix with properties tabulated by the user")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(MeanTabulatedDustMix, "Level2")
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============

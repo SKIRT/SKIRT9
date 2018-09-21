@@ -22,6 +22,7 @@
 class PerspectiveInstrument : public Instrument
 {
     ITEM_CONCRETE(PerspectiveInstrument, Instrument, "a perspective instrument (mostly for making movies)")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(PerspectiveInstrument, "Level2")
 
     PROPERTY_INT(numPixelsX, "the number of viewport pixels in the horizontal direction")
         ATTRIBUTE_MIN_VALUE(numPixelsX, "25")

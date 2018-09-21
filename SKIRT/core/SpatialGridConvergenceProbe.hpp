@@ -33,9 +33,10 @@ class SpatialGridConvergenceProbe : public Probe
 
     PROPERTY_DOUBLE(wavelength, "the wavelength at which to list the optical depth")
         ATTRIBUTE_QUANTITY(wavelength, "wavelength")
-        ATTRIBUTE_DEFAULT_VALUE(wavelength, "0.55 micron")
         ATTRIBUTE_MIN_VALUE(wavelength, "1 A")
         ATTRIBUTE_MAX_VALUE(wavelength, "1 m")
+        ATTRIBUTE_DEFAULT_VALUE(wavelength, "0.55 micron")
+        ATTRIBUTE_DISPLAYED_IF(wavelength, "Level2")
 
     ITEM_END()
 
