@@ -197,15 +197,17 @@ void ItemListPropertyWizardPane::setButtonsEnabled()
     // we assume that an item is always selected unless the list is empty
     bool hasItems = _listWidget->count() > 0;
 
-    // enable/disable buttons
-    _removeButton->setEnabled(hasItems);
-    _editButton->setEnabled(hasItems);
-    _addButton->setEnabled(true);
-
-    // validate/invalidate property
+    // check whether all items are completed
     auto hdlr = handlerCast<ItemListPropertyHandler>();
     bool complete = true;
     for (auto item : hdlr->value()) if (!ItemUtils::isItemComplete(item)) complete = false;
+
+    // enable/disable buttons
+    _removeButton->setEnabled(hasItems);
+    _editButton->setEnabled(hasItems);
+    _addButton->setEnabled(complete);   // block new editing because the name manager dislikes incomplete items
+
+    // emit validate/invalidate signal
     emit propertyValidChanged(complete && (hasItems || !hdlr->isRequired()));
 }
 
