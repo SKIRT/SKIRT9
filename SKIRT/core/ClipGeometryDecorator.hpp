@@ -25,6 +25,7 @@ class ClipGeometryDecorator : public Geometry
     ENUM_END()
 
     ITEM_ABSTRACT(ClipGeometryDecorator, Geometry, "a decorator that clips another geometry")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(ClipGeometryDecorator, "Level2")
 
     PROPERTY_ITEM(geometry, Geometry, "the geometry to be clipped")
 

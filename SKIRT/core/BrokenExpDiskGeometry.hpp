@@ -38,6 +38,7 @@
 class BrokenExpDiskGeometry : public SepAxGeometry
 {
     ITEM_CONCRETE(BrokenExpDiskGeometry, SepAxGeometry, "a broken exponential disk geometry")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(BrokenExpDiskGeometry, "Level2")
 
     PROPERTY_DOUBLE(scaleLengthInner, "the scale length of the inner disk")
         ATTRIBUTE_QUANTITY(scaleLengthInner, "length")

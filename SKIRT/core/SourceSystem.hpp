@@ -75,14 +75,15 @@ class SourceSystem : public SimulationItem, public WavelengthRangeInterface
         ATTRIBUTE_MAX_VALUE(maxWavelength, "1 m")
         ATTRIBUTE_DEFAULT_VALUE(maxWavelength, "20 micron")
 
-    PROPERTY_ITEM_LIST(sources, Source, "the primary sources")
-        ATTRIBUTE_DEFAULT_VALUE(sources, "GeometricSource")
-        ATTRIBUTE_REQUIRED_IF(sources, "false")
-
     PROPERTY_DOUBLE(sourceBias, "the fraction of photon packets distributed uniformly across primary sources")
         ATTRIBUTE_MIN_VALUE(sourceBias, "[0")
         ATTRIBUTE_MAX_VALUE(sourceBias, "1]")
         ATTRIBUTE_DEFAULT_VALUE(sourceBias, "0.5")
+        ATTRIBUTE_DISPLAYED_IF(sourceBias, "Level3")
+
+    PROPERTY_ITEM_LIST(sources, Source, "the primary sources")
+        ATTRIBUTE_DEFAULT_VALUE(sources, "GeometricSource")
+        ATTRIBUTE_REQUIRED_IF(sources, "false")
 
     ITEM_END()
 

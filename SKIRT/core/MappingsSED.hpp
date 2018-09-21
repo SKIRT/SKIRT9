@@ -16,6 +16,7 @@
 class MappingsSED : public FamilySED
 {
     ITEM_CONCRETE(MappingsSED, FamilySED, "a star-forming region SED from the MAPPINGS III model")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(MappingsSED, "Level2")
 
     PROPERTY_DOUBLE(metallicity, "the metallicity")
         ATTRIBUTE_MIN_VALUE(metallicity, "[0.0006")

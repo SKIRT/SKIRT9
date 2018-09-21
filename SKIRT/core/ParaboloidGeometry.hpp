@@ -27,6 +27,7 @@
 class ParaboloidGeometry : public AxGeometry
 {
     ITEM_CONCRETE(ParaboloidGeometry, AxGeometry, "a paraboloid geometry")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(ParaboloidGeometry, "Level2")
 
     PROPERTY_DOUBLE(radialExtent, "the radial extent of the paraboloid")
         ATTRIBUTE_QUANTITY(radialExtent, "length")

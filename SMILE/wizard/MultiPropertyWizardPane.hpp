@@ -10,7 +10,7 @@
 #include <QWidget>
 #include <QHash>
 class PropertyWizardPane;
-class QLayout;
+class QVBoxLayout;
 
 ////////////////////////////////////////////////////////////////////
 
@@ -74,7 +74,7 @@ public slots:
     // ================== Data Members ====================
 
 private:
-    QLayout* _multiLayout;
+    QVBoxLayout* _multiLayout;
     QList<PropertyWizardPane*> _subPanes;
     QHash<QObject*, bool> _subPaneState;
 };

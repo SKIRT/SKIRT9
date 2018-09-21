@@ -25,31 +25,34 @@ class NormalizedSource : public Source, public BulkVelocityInterface
 {
     ITEM_ABSTRACT(NormalizedSource, Source, "a primary source with a single SED")
 
+    ATTRIBUTE_SUB_PROPERTIES_HERE()
+
     PROPERTY_ITEM(sed, SED, "the spectral energy distribution for the source")
         ATTRIBUTE_DEFAULT_VALUE(sed, "SunSED")
 
     PROPERTY_ITEM(normalization, LuminosityNormalization, "the type of luminosity normalization for the source")
         ATTRIBUTE_DEFAULT_VALUE(normalization, "IntegratedLuminosityNormalization")
 
-    ATTRIBUTE_SUB_PROPERTIES_HERE()
-
     PROPERTY_DOUBLE(velocityX, "the bulk velocity of the source, x component")
         ATTRIBUTE_QUANTITY(velocityX, "velocity")
         ATTRIBUTE_MIN_VALUE(velocityX, "[0")
         ATTRIBUTE_MAX_VALUE(velocityX, "100000 km/s]")
         ATTRIBUTE_DEFAULT_VALUE(velocityX, "0")
+        ATTRIBUTE_DISPLAYED_IF(velocityX, "Level2")
 
     PROPERTY_DOUBLE(velocityY, "the bulk velocity of the source, y component")
         ATTRIBUTE_QUANTITY(velocityY, "velocity")
         ATTRIBUTE_MIN_VALUE(velocityY, "[0")
         ATTRIBUTE_MAX_VALUE(velocityY, "100000 km/s]")
         ATTRIBUTE_DEFAULT_VALUE(velocityY, "0")
+        ATTRIBUTE_DISPLAYED_IF(velocityY, "Level2")
 
     PROPERTY_DOUBLE(velocityZ, "the bulk velocity of the source, z component")
         ATTRIBUTE_QUANTITY(velocityZ, "velocity")
         ATTRIBUTE_MIN_VALUE(velocityZ, "[0")
         ATTRIBUTE_MAX_VALUE(velocityZ, "100000 km/s]")
         ATTRIBUTE_DEFAULT_VALUE(velocityZ, "0")
+        ATTRIBUTE_DISPLAYED_IF(velocityZ, "Level2")
 
     ITEM_END()
 

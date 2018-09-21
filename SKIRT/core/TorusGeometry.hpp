@@ -66,6 +66,7 @@ class TorusGeometry : public AxGeometry
 
     PROPERTY_BOOL(reshapeInnerRadius, "reshape the inner radius according to the Netzer luminosity profile")
         ATTRIBUTE_DEFAULT_VALUE(reshapeInnerRadius, "false")
+        ATTRIBUTE_DISPLAYED_IF(reshapeInnerRadius, "Level2")
 
     PROPERTY_DOUBLE(cutoffRadius, "the inner cutoff radius of the torus")
         ATTRIBUTE_QUANTITY(cutoffRadius, "length")

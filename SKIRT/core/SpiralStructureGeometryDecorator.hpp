@@ -64,6 +64,7 @@ class SpiralStructureGeometryDecorator : public GenGeometry
         ATTRIBUTE_MIN_VALUE(phaseZeroPoint, "[0 deg")
         ATTRIBUTE_MAX_VALUE(phaseZeroPoint, "360 deg]")
         ATTRIBUTE_DEFAULT_VALUE(phaseZeroPoint, "0 deg")
+        ATTRIBUTE_DISPLAYED_IF(phaseZeroPoint, "Level2")
 
     PROPERTY_DOUBLE(perturbationWeight, "the weight of the spiral perturbation")
         ATTRIBUTE_MIN_VALUE(perturbationWeight, "]0")
@@ -73,6 +74,7 @@ class SpiralStructureGeometryDecorator : public GenGeometry
         ATTRIBUTE_MIN_VALUE(index, "0")
         ATTRIBUTE_MAX_VALUE(index, "10")
         ATTRIBUTE_DEFAULT_VALUE(index, "1")
+        ATTRIBUTE_DISPLAYED_IF(index, "Level2")
 
     ITEM_END()
 

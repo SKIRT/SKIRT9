@@ -27,6 +27,7 @@ class NoMediaMode : public SimulationMode
         ATTRIBUTE_MIN_VALUE(primaryPacketsMultiplier, "]0")
         ATTRIBUTE_MAX_VALUE(primaryPacketsMultiplier, "1000]")
         ATTRIBUTE_DEFAULT_VALUE(primaryPacketsMultiplier, "1")
+        ATTRIBUTE_DISPLAYED_IF(primaryPacketsMultiplier, "Level2")
 
     ITEM_END()
 

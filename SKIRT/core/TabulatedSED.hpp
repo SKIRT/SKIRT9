@@ -19,6 +19,7 @@
 class TabulatedSED : public SED
 {
     ITEM_ABSTRACT(TabulatedSED, SED, "a spectral energy distribution tabulated by the user")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(TabulatedSED, "Level2")
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============

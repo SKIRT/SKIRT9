@@ -22,6 +22,7 @@ MultiPropertyWizardPane::MultiPropertyWizardPane(QObject* target)
     _multiLayout = new QVBoxLayout;
     _multiLayout->setContentsMargins(0,0,0,0);
     _multiLayout->setSpacing(0);
+    _multiLayout->addStretch();
     setLayout(_multiLayout);
 }
 
@@ -29,20 +30,17 @@ MultiPropertyWizardPane::MultiPropertyWizardPane(QObject* target)
 
 void MultiPropertyWizardPane::addPane(PropertyWizardPane* pane)
 {
-    // remove the stretch layout item from the end of the layout for the previous subpane
-    if (!_subPanes.empty())
+    // remove the stretch item from the end of the layout for the subpane
+    auto layout = pane->layout();
+    auto count = layout->count();
+    if (count > 0)
     {
-        auto layout = _subPanes.back()->layout();
-        auto count = layout->count();
-        if (count > 0)
-        {
-            auto item = layout->itemAt(count-1);
-            if (item->spacerItem()) layout->removeItem(item);
-        }
+        auto item = layout->itemAt(count-1);
+        if (item->spacerItem()) layout->removeItem(item);
     }
 
-    // add the subpane to our layout
-    _multiLayout->addWidget(pane);
+    // add the subpane to our layout, just before the stretch item added during construction
+    _multiLayout->insertWidget(_subPanes.size(), pane);
 
     // add the subpane to our list
     _subPanes.append(pane);

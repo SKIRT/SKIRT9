@@ -52,6 +52,7 @@
 class HyperboloidGeometry : public AxGeometry
 {
     ITEM_CONCRETE(HyperboloidGeometry, AxGeometry, "a hyperboloid geometry")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(HyperboloidGeometry, "Level2")
 
     PROPERTY_DOUBLE(radialExtent, "the radial extent of the hyperboloid")
         ATTRIBUTE_QUANTITY(radialExtent, "length")

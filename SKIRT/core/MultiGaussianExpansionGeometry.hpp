@@ -21,6 +21,7 @@
 class MultiGaussianExpansionGeometry : public AxGeometry
 {
     ITEM_CONCRETE(MultiGaussianExpansionGeometry, AxGeometry, "a multi-gaussian expansion geometry")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(MultiGaussianExpansionGeometry, "Level2")
 
     PROPERTY_STRING(filename, "the name of the file with the multi-gaussian expansion parameters")
 

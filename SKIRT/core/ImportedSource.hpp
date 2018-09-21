@@ -47,6 +47,7 @@ class ImportedSource : public Source
 
     PROPERTY_BOOL(importVelocity, "import velocity components (3 columns)")
         ATTRIBUTE_DEFAULT_VALUE(importVelocity, "false")
+        ATTRIBUTE_DISPLAYED_IF(importVelocity, "Level2")
 
     PROPERTY_ITEM(sedFamily, SEDFamily, "the SED family for assigning spectra to the imported sources")
         ATTRIBUTE_DEFAULT_VALUE(sedFamily, "BlackBodySEDFamily")

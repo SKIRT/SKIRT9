@@ -62,16 +62,19 @@ class Source : public SimulationItem
         ATTRIBUTE_MIN_VALUE(sourceWeight, "]0")
         ATTRIBUTE_MAX_VALUE(sourceWeight, "1000]")
         ATTRIBUTE_DEFAULT_VALUE(sourceWeight, "1")
+        ATTRIBUTE_DISPLAYED_IF(sourceWeight, "Level3")
 
     PROPERTY_DOUBLE(wavelengthBias, "the fraction of photon packet wavelengths sampled from a bias distribution")
         ATTRIBUTE_MIN_VALUE(wavelengthBias, "[0")
         ATTRIBUTE_MAX_VALUE(wavelengthBias, "1]")
         ATTRIBUTE_DEFAULT_VALUE(wavelengthBias, "0.5")
+        ATTRIBUTE_DISPLAYED_IF(wavelengthBias, "Level3")
 
     PROPERTY_ITEM(wavelengthBiasDistribution, WavelengthDistribution,
                   "the bias distribution for sampling photon packet wavelengths")
         ATTRIBUTE_DEFAULT_VALUE(wavelengthBiasDistribution, "LogWavelengthDistribution")
         ATTRIBUTE_RELEVANT_IF(wavelengthBiasDistribution, "wavelengthBias")
+        ATTRIBUTE_DISPLAYED_IF(wavelengthBiasDistribution, "Level3")
 
     ITEM_END()
 

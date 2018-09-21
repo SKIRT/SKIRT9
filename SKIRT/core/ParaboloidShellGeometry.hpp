@@ -28,6 +28,7 @@
 class ParaboloidShellGeometry : public AxGeometry
 {
     ITEM_CONCRETE(ParaboloidShellGeometry, AxGeometry, "a paraboloid shell geometry")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(ParaboloidShellGeometry, "Level2")
 
     PROPERTY_DOUBLE(innerRadialExtent, "the radial extent of the inner paraboloid wall")
         ATTRIBUTE_QUANTITY(innerRadialExtent, "length")

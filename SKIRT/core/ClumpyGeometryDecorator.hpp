@@ -44,8 +44,11 @@ class ClumpyGeometryDecorator : public GenGeometry
 
     PROPERTY_BOOL(cutoffClumps, "cut off clumps at the boundary of the underlying geometry")
         ATTRIBUTE_DEFAULT_VALUE(cutoffClumps, "false")
+        ATTRIBUTE_DISPLAYED_IF(cutoffClumps, "Level2")
 
-    PROPERTY_ITEM(kernel, SmoothingKernel, "the smoothing kernel that describes the density of a single clump")
+    PROPERTY_ITEM(smoothingKernel, SmoothingKernel, "the smoothing kernel that describes the density of a single clump")
+        ATTRIBUTE_DEFAULT_VALUE(smoothingKernel, "CubicSplineSmoothingKernel")
+        ATTRIBUTE_DISPLAYED_IF(smoothingKernel, "Level2")
 
     ITEM_END()
 

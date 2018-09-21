@@ -36,6 +36,7 @@
 class MappingsSEDFamily : public SEDFamily
 {
     ITEM_CONCRETE(MappingsSEDFamily, SEDFamily, "a MAPPINGS III SED family for star-forming regions")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(MappingsSEDFamily, "Level2")
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============

@@ -31,6 +31,7 @@
 class HyperboloidShellGeometry : public AxGeometry
 {
     ITEM_CONCRETE(HyperboloidShellGeometry, AxGeometry, "a hyperboloid shell geometry")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(HyperboloidShellGeometry, "Level2")
 
     PROPERTY_DOUBLE(outerRadialExtent, "the radial extent of the hyperboloid outer wall")
         ATTRIBUTE_QUANTITY(outerRadialExtent, "length")

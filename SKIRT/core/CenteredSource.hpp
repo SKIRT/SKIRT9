@@ -21,6 +21,7 @@
 class CenteredSource : public NormalizedSource
 {
     ITEM_ABSTRACT(CenteredSource, NormalizedSource, "a centered primary source")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(CenteredSource, "Level2")
 
     PROPERTY_DOUBLE(centerX, "the center of the source, x component")
         ATTRIBUTE_QUANTITY(centerX, "length")

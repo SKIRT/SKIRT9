@@ -31,6 +31,7 @@
 class TTauriDiskGeometry : public AxGeometry
 {
     ITEM_CONCRETE(TTauriDiskGeometry, AxGeometry, "a T Tauri disk geometry")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(TTauriDiskGeometry, "Level2")
 
     PROPERTY_DOUBLE(scaleLength, "the scale length")
         ATTRIBUTE_QUANTITY(scaleLength, "length")

@@ -24,6 +24,7 @@
 class ReadFitsGeometry: public GenGeometry
 {
     ITEM_CONCRETE(ReadFitsGeometry, GenGeometry, "a geometry read from a FITS file")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(ReadFitsGeometry, "Level2")
 
     PROPERTY_STRING(filename, "the name of the input image file")
 

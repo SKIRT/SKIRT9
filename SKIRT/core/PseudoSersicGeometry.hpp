@@ -26,6 +26,7 @@
 class PseudoSersicGeometry : public SpheGeometry
 {
     ITEM_CONCRETE(PseudoSersicGeometry, SpheGeometry, "a pseudo-Sérsic geometry")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(PseudoSersicGeometry, "Level2")
 
     PROPERTY_DOUBLE(effectiveRadius, "the effective radius")
         ATTRIBUTE_QUANTITY(effectiveRadius, "length")

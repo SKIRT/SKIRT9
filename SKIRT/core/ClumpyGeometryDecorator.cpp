@@ -36,7 +36,7 @@ double ClumpyGeometryDecorator::density(Position bfr) const
     for (int i=istart; i<=iend; i++)
     {
         double u = (bfr-_clumpv[i]).norm() / _clumpRadius;
-        rhoclumpy += Mclump * _kernel->density(u)/pow(_clumpRadius,3);
+        rhoclumpy += Mclump * _smoothingKernel->density(u)/pow(_clumpRadius,3);
     }
 
     return rhosmooth + rhoclumpy;
@@ -56,7 +56,7 @@ Position ClumpyGeometryDecorator::generatePosition() const
         {
             // random clump number based on X
             int i = min(static_cast<int>((X/_clumpFraction)*_numClumps), _numClumps-1);
-            double u = _kernel->generateRadius();
+            double u = _smoothingKernel->generateRadius();
             Direction bfk(random()->direction());
             Position bfr(_clumpv[i] + u*_clumpRadius*bfk);
 
