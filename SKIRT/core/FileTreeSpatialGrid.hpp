@@ -34,7 +34,7 @@
     the spatial domain. */
 class FileTreeSpatialGrid : public TreeSpatialGrid
 {
-    ITEM_CONCRETE(FileTreeSpatialGrid, TreeSpatialGrid, "a tree spatial grid loaded from a topology data file")
+    ITEM_CONCRETE(FileTreeSpatialGrid, TreeSpatialGrid, "a tree-based spatial grid loaded from a topology data file")
         ATTRIBUTE_TYPE_DISPLAYED_IF(FileTreeSpatialGrid, "Level2")
 
     PROPERTY_STRING(filename, "the name of the file with the tree topology data")

@@ -21,7 +21,8 @@ class AdaptiveMeshSnapshot;
     for the spatial grid. */
 class AdaptiveMeshSpatialGrid : public SpatialGrid, public DensityInCellInterface
 {
-    ITEM_CONCRETE(AdaptiveMeshSpatialGrid, SpatialGrid, "a spatial grid based on an imported adaptive mesh snapshot")
+    ITEM_CONCRETE(AdaptiveMeshSpatialGrid, SpatialGrid, "a spatial grid taken from an imported adaptive mesh snapshot")
+        ATTRIBUTE_TYPE_ALLOWED_IF(AdaptiveMeshSpatialGrid, "AdaptiveMeshInterface")
         ATTRIBUTE_TYPE_DISPLAYED_IF(AdaptiveMeshSpatialGrid, "Level2")
     ITEM_END()
 

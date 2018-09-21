@@ -45,6 +45,7 @@ class AdaptiveMeshGeometry : public MeshGeometry, public AdaptiveMeshInterface
 {
     ITEM_CONCRETE(AdaptiveMeshGeometry, MeshGeometry,
                   "a geometry imported from data represented on an adaptive mesh (AMR grid)")
+        ATTRIBUTE_TYPE_INSERT(AdaptiveMeshGeometry, "AdaptiveMeshInterface")
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============

@@ -16,8 +16,8 @@ class Random;
     mechanisms for constructing spatial tree grids based on the positions of particles, sites or
     cells in an imported medium distribution. The policy locates a site list offered by one of the
     media components in the medium system. See the ImportedMedium class and the various Snapshot
-    subclasses for more information on the site positions returned by imported media. offer a site
-    list, the first one in configuration order (i.e. ski file order) is used.
+    subclasses for more information on the site positions returned by imported media. If multiple
+    media offer a site list, the first one in configuration order (i.e. ski file order) is used.
 
     In a first step the tree is subdivided in such a way that each leaf node contains at most one
     of the sites in the list. Subsequently each of these leaf nodes is further subdivided a fixed
@@ -29,6 +29,7 @@ class SiteListTreePolicy : public TreePolicy
 {
     ITEM_CONCRETE(SiteListTreePolicy, TreePolicy,
                   "a tree grid construction policy using positions defined by an imported medium")
+        ATTRIBUTE_TYPE_ALLOWED_IF(SiteListTreePolicy, "SiteListInterface")
         ATTRIBUTE_TYPE_DISPLAYED_IF(SiteListTreePolicy, "Level2")
 
     PROPERTY_INT(numExtraLevels, "the number of additional subdivision levels")

@@ -37,7 +37,7 @@ class VoronoiMeshSpatialGrid : public BoxSpatialGrid, public DensityInCellInterf
     ENUM_VAL(Policy, ImportedMesh, "employ imported Voronoi mesh in medium system")
     ENUM_END()
 
-    ITEM_CONCRETE(VoronoiMeshSpatialGrid, BoxSpatialGrid, "a spatial grid based on a Voronoi tessellation")
+    ITEM_CONCRETE(VoronoiMeshSpatialGrid, BoxSpatialGrid, "a Voronoi tessellation-based spatial grid")
         ATTRIBUTE_TYPE_DISPLAYED_IF(VoronoiMeshSpatialGrid, "Level2")
 
     PROPERTY_ENUM(policy, Policy, "the policy for determining the positions of the sites")

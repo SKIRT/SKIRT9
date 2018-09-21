@@ -19,6 +19,7 @@ class Snapshot;
 class ImportedGeometry : public GenGeometry, public SiteListInterface
 {
     ITEM_ABSTRACT(ImportedGeometry, GenGeometry, "a geometry imported from snapshot data")
+        ATTRIBUTE_TYPE_INSERT(ImportedGeometry, "SiteListInterface")
 
     PROPERTY_STRING(filename, "the name of the file to be imported")
 

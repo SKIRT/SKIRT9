@@ -21,7 +21,7 @@ class Snapshot;
 class ImportedMedium : public Medium, public SiteListInterface
 {
     ITEM_ABSTRACT(ImportedMedium, Medium, "a transfer medium imported from snapshot data")
-        ATTRIBUTE_TYPE_INSERT(ImportedMedium, "Dimension3")
+        ATTRIBUTE_TYPE_INSERT(ImportedMedium, "Dimension3,SiteListInterface")
 
     PROPERTY_STRING(filename, "the name of the file to be imported")
 

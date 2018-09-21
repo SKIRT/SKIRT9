@@ -80,7 +80,7 @@ void NameManager::insertFromConditionalValue(string nameExpression)
 
 void NameManager::insertFromConditionalValue(const vector<string>& nameExpressions)
 {
-    for (auto nameExpression : nameExpressions) insert(nameExpression);
+    for (auto nameExpression : nameExpressions) insertFromConditionalValue(nameExpression);
 }
 
 ////////////////////////////////////////////////////////////////////

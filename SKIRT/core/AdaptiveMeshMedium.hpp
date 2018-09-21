@@ -55,6 +55,7 @@ class AdaptiveMeshMedium : public MeshMedium, public AdaptiveMeshInterface
 {
     ITEM_CONCRETE(AdaptiveMeshMedium, MeshMedium,
                   "a transfer medium imported from data represented on an adaptive mesh (AMR grid)")
+        ATTRIBUTE_TYPE_INSERT(AdaptiveMeshMedium, "AdaptiveMeshInterface")
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============

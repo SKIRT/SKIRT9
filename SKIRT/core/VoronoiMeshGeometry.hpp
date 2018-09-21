@@ -46,6 +46,7 @@
 class VoronoiMeshGeometry : public MeshGeometry, public VoronoiMeshInterface
 {
     ITEM_CONCRETE(VoronoiMeshGeometry, MeshGeometry, "a geometry imported from data represented on a Voronoi mesh")
+        ATTRIBUTE_TYPE_INSERT(VoronoiMeshGeometry, "VoronoiMeshInterface")
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============

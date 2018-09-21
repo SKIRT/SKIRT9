@@ -36,7 +36,7 @@ class PolicyTreeSpatialGrid : public TreeSpatialGrid
     ENUM_VAL(TreeType, BinTree, "a binary tree (2 children per node)")
     ENUM_END()
 
-    ITEM_CONCRETE(PolicyTreeSpatialGrid, TreeSpatialGrid, "a configurable hierarchical tree spatial grid")
+    ITEM_CONCRETE(PolicyTreeSpatialGrid, TreeSpatialGrid, "a tree-based spatial grid")
 
     PROPERTY_ENUM(treeType, TreeType, "the type of tree")
         ATTRIBUTE_DEFAULT_VALUE(treeType, "OctTree")

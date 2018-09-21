@@ -56,6 +56,7 @@
 class VoronoiMeshMedium : public MeshMedium, public VoronoiMeshInterface
 {
     ITEM_CONCRETE(VoronoiMeshMedium, MeshMedium, "a transfer medium imported from data represented on a Voronoi mesh")
+        ATTRIBUTE_TYPE_INSERT(VoronoiMeshMedium, "VoronoiMeshInterface")
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============
