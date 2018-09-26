@@ -26,6 +26,7 @@
 class SpatialGridPlotProbe : public Probe
 {
     ITEM_CONCRETE(SpatialGridPlotProbe, Probe, "data files for plotting the structure of the grid")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(SpatialGridPlotProbe, "SpatialGrid")
     ITEM_END()
 
     //======================== Other Functions =======================

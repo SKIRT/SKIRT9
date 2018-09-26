@@ -34,6 +34,7 @@
 class DefaultMediaDensityCutsProbe : public Probe
 {
     ITEM_CONCRETE(DefaultMediaDensityCutsProbe, Probe, "cuts of the media densities along the coordinate axes")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(DefaultMediaDensityCutsProbe, "Medium&SpatialGrid")
     ITEM_END()
 
     //======================== Other Functions =======================

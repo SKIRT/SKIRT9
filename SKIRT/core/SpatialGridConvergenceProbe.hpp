@@ -30,6 +30,7 @@
 class SpatialGridConvergenceProbe : public Probe
 {
     ITEM_CONCRETE(SpatialGridConvergenceProbe, Probe, "convergence information on the spatial grid")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(SpatialGridConvergenceProbe, "Medium&SpatialGrid")
 
     PROPERTY_DOUBLE(wavelength, "the wavelength at which to list the optical depth")
         ATTRIBUTE_QUANTITY(wavelength, "wavelength")

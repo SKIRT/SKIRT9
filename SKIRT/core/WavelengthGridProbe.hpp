@@ -18,6 +18,7 @@
 class WavelengthGridProbe : public Probe
 {
     ITEM_CONCRETE(WavelengthGridProbe, Probe, "the instrument wavelength grids")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(WavelengthGridProbe, "Instrument")
     ITEM_END()
 
     //======================== Other Functions =======================

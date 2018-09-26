@@ -19,7 +19,7 @@
 class SpatialCellPropertiesProbe : public Probe
 {
     ITEM_CONCRETE(SpatialCellPropertiesProbe, Probe, "relevant properties for all spatial cells")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(SpatialCellPropertiesProbe, "Level2")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(SpatialCellPropertiesProbe, "Level2&SpatialGrid")
 
     PROPERTY_DOUBLE(wavelength, "the wavelength at which to list the optical depth")
         ATTRIBUTE_QUANTITY(wavelength, "wavelength")

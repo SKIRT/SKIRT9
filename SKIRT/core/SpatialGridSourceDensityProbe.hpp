@@ -25,7 +25,7 @@
 class SpatialGridSourceDensityProbe : public Probe
 {
     ITEM_CONCRETE(SpatialGridSourceDensityProbe, Probe, "primary source density discretized on spatial grid")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(SpatialGridSourceDensityProbe, "Level2")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(SpatialGridSourceDensityProbe, "Level2&GeometricSource&SpatialGrid")
     ITEM_END()
 
     //======================== Other Functions =======================
