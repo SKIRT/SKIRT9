@@ -4,10 +4,10 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "TabulatedSED.hpp"
+#include "Configuration.hpp"
 #include "FatalError.hpp"
 #include "NR.hpp"
 #include "Random.hpp"
-#include "WavelengthRangeInterface.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -23,7 +23,7 @@ void TabulatedSED::setupSelfBefore()
 
     // determine the intersected wavelength range
     Range range(_inlambdav[0], _inlambdav[_inlambdav.size()-1]);
-    range.intersect(interface<WavelengthRangeInterface>()->wavelengthRange());
+    range.intersect(find<Configuration>()->sourceWavelengthRange());
     if (range.empty()) throw FATALERROR("SED wavelength range does not overlap source wavelength range");
 
     // construct the regular and cumulative distributions in the intersected range

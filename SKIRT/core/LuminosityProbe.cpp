@@ -4,7 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "LuminosityProbe.hpp"
-#include "InstrumentSystem.hpp"
+#include "Configuration.hpp"
 #include "SourceSystem.hpp"
 #include "TextOutFile.hpp"
 #include "Units.hpp"
@@ -16,7 +16,7 @@ void LuminosityProbe::probeSetup()
     auto units = find<Units>();
 
     // select "local" or default wavelength grid
-    auto probeWavelengthGrid = wavelengthGrid() ? wavelengthGrid() : find<InstrumentSystem>()->find<WavelengthGrid>();
+    auto probeWavelengthGrid = find<Configuration>()->wavelengthGrid(wavelengthGrid());
     int numWavelengths = probeWavelengthGrid->numBins();
 
     // get the sources
@@ -24,7 +24,7 @@ void LuminosityProbe::probeSetup()
     int numSources = sources.size();
 
     // create a text file and add the columns
-    TextOutFile file(this, "luminosities", "primary source luminosities");
+    TextOutFile file(this, probeName()+"_luminosities", "primary source luminosities");
     file.addColumn("wavelength", units->uwavelength());
     file.addColumn("specific luminosity", units->umonluminosity());
     file.addColumn("luminosity in bin", units->ubolluminosity());

@@ -113,6 +113,11 @@ public:
     //======================== Data Members ========================
 
 private:
+    // true if the simulation is oligochromatic
+    bool _oligochromatic{false};
+    Array _oligoWavelengths;
+    double _oligoTotalBinWidth{0.};
+
     // pointer to an object offering the redshift interface; either "this" or null pointer if the bulk velocity is zero
     BulkVelocityInterface* _bvi{nullptr};
 };

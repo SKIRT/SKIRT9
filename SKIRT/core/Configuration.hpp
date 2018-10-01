@@ -7,6 +7,9 @@
 #define CONFIGURATION_HPP
 
 #include "SimulationItem.hpp"
+#include "Array.hpp"
+#include "Range.hpp"
+class WavelengthGrid;
 
 ////////////////////////////////////////////////////////////////////
 
@@ -57,7 +60,37 @@ public:
 
 public:
     /** Returns true if the simulation has been put in emulation mode. */
-    bool emulationMode() { return _emulationMode; }
+    bool emulationMode() const { return _emulationMode; }
+
+    /** Returns true if the wavelength regime of the simulation is oligochromatic. */
+    bool oligochromatic() const { return _oligochromatic; }
+
+    /** For oligochromatic simulations, this function returns the list of oligochromatic
+        wavelengths (sorted in ascending order). For panchromatic simulations, this function
+        returns the empty list. */
+    const Array& oligoWavelengths() const { return _oligoWavelengths; }
+
+    /** For oligochromatic simulations, this function returns the width of the wavelength bins on
+        the wavelength grid (all bins have the same width). For panchromatic simulations, this
+        function returns zero. */
+    double oligoBinWidth() const { return _oligoBinWidth; }
+
+    /** Returns the wavelength grid to be used for an instrument or probe, given the wavelength
+        grid configured locally for the calling instrument or probe (which may the null pointer to
+        indicate that no local grid was configured). For oligochromatic simulations, the function
+        always returns a wavelength grid with disjoint bins centered around the discrete source
+        wavelengths used in the simulation. For panchromatic simulations, the function returns the
+        provided local wavelength grid if it is non-null, and otherwise it returns the default
+        instrument wavelength grid obtained from the instrument system. If both the provided local
+        wavelength grid and the default instrument wavelength grid are the null pointer, the
+        function throws a fatal error. */
+    WavelengthGrid* wavelengthGrid(WavelengthGrid* localWavelengthGrid) const;
+
+    /** Returns the total wavelength range of the primary sources in the simulation. For
+        panchromatic simulations, this range is configured by the user in the source system. For
+        oligochromatic simulations, the range includes the discrete source wavelengths used in the
+        simulation, which are also user-configured in the source system. */
+    Range sourceWavelengthRange() const { return _sourceWavelengthRange; }
 
     /** Returns the number of photon packets launched per primary emission simulation segment. */
     double numPrimaryPackets() const { return _numPrimaryPackets; }
@@ -87,6 +120,13 @@ public:
 private:
     // general
     bool _emulationMode{false};
+
+    // wavelengths
+    bool _oligochromatic{false};
+    Array _oligoWavelengths;
+    double _oligoBinWidth{0.};
+    WavelengthGrid* _defaultWavelengthGrid{nullptr};
+    Range _sourceWavelengthRange;
 
     // no media
     double _numPrimaryPackets{0.};

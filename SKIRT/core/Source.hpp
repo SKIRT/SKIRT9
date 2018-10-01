@@ -68,12 +68,13 @@ class Source : public SimulationItem
         ATTRIBUTE_MIN_VALUE(wavelengthBias, "[0")
         ATTRIBUTE_MAX_VALUE(wavelengthBias, "1]")
         ATTRIBUTE_DEFAULT_VALUE(wavelengthBias, "0.5")
+        ATTRIBUTE_RELEVANT_IF(wavelengthBias, "Panchromatic")
         ATTRIBUTE_DISPLAYED_IF(wavelengthBias, "Level3")
 
     PROPERTY_ITEM(wavelengthBiasDistribution, WavelengthDistribution,
                   "the bias distribution for sampling photon packet wavelengths")
         ATTRIBUTE_DEFAULT_VALUE(wavelengthBiasDistribution, "LogWavelengthDistribution")
-        ATTRIBUTE_RELEVANT_IF(wavelengthBiasDistribution, "wavelengthBias")
+        ATTRIBUTE_RELEVANT_IF(wavelengthBiasDistribution, "Panchromatic&wavelengthBias")
         ATTRIBUTE_DISPLAYED_IF(wavelengthBiasDistribution, "Level3")
 
     ITEM_END()

@@ -18,13 +18,11 @@ class Random;
     random wavelength from the probability distribution, and returning the probability for a given
     wavelength.
 
-    The wavelength probability distribution is automatically normalized to unity over the
-    wavelength range associated with the hierarchy containing the WavelengthDistribution object,
-    intersected with the intrinsic wavelength range of the distribution. The external wavelength
-    range is retrieved through the WavelengthRangeInterface interface, which may be provided, for
-    example, by the primary source system. Consequently, the random wavelengths returned by the
-    generateWavelength() function will always fall inside the intersected range, and the value
-    returned by the probability() function can be nonzero only within that same range. */
+    The wavelength probability distribution is automatically normalized to unity over the source
+    wavelength range intersected with the intrinsic wavelength range of the distribution.
+    Consequently, the random wavelengths returned by the generateWavelength() function will always
+    fall inside the intersected range, and the value returned by the probability() function can be
+    nonzero only within that same range. */
 class WavelengthDistribution : public SimulationItem
 {
     ITEM_ABSTRACT(WavelengthDistribution, SimulationItem, "a wavelength probability distribution")

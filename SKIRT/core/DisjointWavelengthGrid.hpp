@@ -73,9 +73,10 @@ protected:
         ascending order and then calculates the bin borders using \f$\lambda^\mathrm{left}_\ell =
         \lambda^\mathrm{c}_\ell(1-w)\f$ and \f$\lambda^\mathrm{right}_\ell =
         \lambda^\mathrm{c}_\ell(1+w)\;, \ell=0\dots N-1\f$, where \f$w\f$ is the specified relative
-        half bin width. Finally the function trivially calculates the wavelength bin widths from
-        the bin borders. */
-    void setWavelengthBins(const Array& lambdav, double relativeHalfWidth);
+        half bin width. If the \em constantWidth flag is true, the width for the shortest
+        wavelength is used for all bin widths instead. Finally the function trivially calculates
+        the wavelength bin widths from the bin borders. */
+    void setWavelengthBins(const Array& lambdav, double relativeHalfWidth, bool constantWidth = false);
 
     //======================== Other Functions =======================
 

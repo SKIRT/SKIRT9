@@ -8,6 +8,7 @@
 #include "PropertyWizardPane.hpp"
 #include <QHash>
 #include <QVBoxLayout>
+#include <QScrollArea>
 #include <QSpacerItem>
 
 ////////////////////////////////////////////////////////////////////
@@ -96,8 +97,23 @@ void MultiPropertyWizardPane::showEvent(QShowEvent* event)
 {
     updateVisibility();
     emitValidity();
+
+    // set focus in the first editable field
     setFocus();
     focusNextChild();
+
+    // scroll the area containing this widget to the top
+    QWidget* current = this;
+    while ((current = current->parentWidget()))
+    {
+        auto area = dynamic_cast<QScrollArea*>(current);
+        if (area)
+        {
+            area->ensureVisible(0,0,0,0);
+            break;
+        }
+    }
+
     QWidget::showEvent(event);
 }
 

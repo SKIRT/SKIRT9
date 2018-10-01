@@ -39,7 +39,6 @@
 #include "EinastoGeometry.hpp"
 #include "ElectronMix.hpp"
 #include "ExpDiskGeometry.hpp"
-#include "ExtinctionOnlyMode.hpp"
 #include "ExtragalacticUnits.hpp"
 #include "FileBand.hpp"
 #include "FileMesh.hpp"
@@ -182,8 +181,6 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
 
     // simulation modes
     ItemRegistry::add<SimulationMode>();
-    ItemRegistry::add<NoMediaMode>();
-    ItemRegistry::add<ExtinctionOnlyMode>();
 
     // source system and sources
     ItemRegistry::add<SourceSystem>();

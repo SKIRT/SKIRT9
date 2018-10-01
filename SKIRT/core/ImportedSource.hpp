@@ -140,6 +140,11 @@ public:
 
 private:
     // initialized during setup
+    bool _oligochromatic{false};   // true if the simulation is oligochromatic
+    Array _oligoWavelengths;
+    double _oligoTotalBinWidth{0.};
+
+    // initialized during setup
     Range _wavelengthRange; // the wavelength range configured for all primary sources
     Snapshot* _snapshot{nullptr};
     double _L{0};       // the total bolometric luminosity of all entities (absolute number)

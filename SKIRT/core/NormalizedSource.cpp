@@ -4,16 +4,26 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "NormalizedSource.hpp"
+#include "Configuration.hpp"
 #include "Constants.hpp"
 #include "PhotonPacket.hpp"
 #include "Random.hpp"
-#include "WavelengthRangeInterface.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
 void NormalizedSource::setupSelfBefore()
 {
     Source::setupSelfBefore();
+
+    auto config = find<Configuration>();
+    _oligochromatic = config->oligochromatic();
+
+    if (_oligochromatic)
+    {
+        // cache the oligochromatic wavelengths
+        _oligoWavelengths = config->oligoWavelengths();
+        _oligoTotalBinWidth = config->oligoBinWidth() * _oligoWavelengths.size();
+    }
 
     // if we have a nonzero bulk velocity, set the interface object to ourselves; otherwise leave it at null pointer
     if (velocityX() || velocityY() || velocityZ()) _bvi = this;
@@ -40,7 +50,7 @@ double NormalizedSource::luminosity() const
 
 double NormalizedSource::specificLuminosity(double wavelength) const
 {
-    if (!interface<WavelengthRangeInterface>()->wavelengthRange().containsFuzzy(wavelength)) return 0.;
+    if (!find<Configuration>()->sourceWavelengthRange().containsFuzzy(wavelength)) return 0.;
     return _sed->specificLuminosity(wavelength) * luminosity();
 }
 
@@ -55,39 +65,52 @@ Vec NormalizedSource::bulkVelocity() const
 
 void NormalizedSource::launch(PhotonPacket* pp, size_t historyIndex, double L) const
 {
-    // generate a random wavelength from the SED and/or from the bias distribution
     double lambda, w;
-    double xi = wavelengthBias();
-    if (!xi)
+
+    if (_oligochromatic)
     {
-        // no biasing -- simply use the intrinsic spectral distribution
-        lambda = _sed->generateWavelength();
-        w = 1.;
+        // generate one of the oligochromatic wavelengths with equal probability
+        size_t index = static_cast<size_t>(random()->uniform() * _oligoWavelengths.size());
+        lambda = _oligoWavelengths[index];
+
+        // bias the weight for the actual luminosity at this wavelength
+        w = _oligoTotalBinWidth * sed()->specificLuminosity(lambda);
     }
     else
     {
-        // biasing -- use one or the other distribution
-        if (random()->uniform() > xi) lambda = sed()->generateWavelength();
-        else lambda = wavelengthBiasDistribution()->generateWavelength();
-
-        // calculate the compensating weight factor
-        double s = sed()->specificLuminosity(lambda);
-        if (!s)
+        // generate a random wavelength from the SED and/or from the bias distribution
+        double xi = wavelengthBias();
+        if (!xi)
         {
-            // if the wavelength can't occur in the intrinsic distribution,
-            // the weight factor is zero regardless of the probability in the bias distribution
-            // (handling this separately also avoids NaNs in the pathological case s=d=0)
-            w = 0.;
+            // no biasing -- simply use the intrinsic spectral distribution
+            lambda = _sed->generateWavelength();
+            w = 1.;
         }
         else
         {
-            // regular composite bias weight
-            double b = wavelengthBiasDistribution()->probability(lambda);
-            w = s / ((1-xi)*s + xi*b);
+            // biasing -- use one or the other distribution
+            if (random()->uniform() > xi) lambda = sed()->generateWavelength();
+            else lambda = wavelengthBiasDistribution()->generateWavelength();
+
+            // calculate the compensating weight factor
+            double s = sed()->specificLuminosity(lambda);
+            if (!s)
+            {
+                // if the wavelength can't occur in the intrinsic distribution,
+                // the weight factor is zero regardless of the probability in the bias distribution
+                // (handling this separately also avoids NaNs in the pathological case s=b=0)
+                w = 0.;
+            }
+            else
+            {
+                // regular composite bias weight
+                double b = wavelengthBiasDistribution()->probability(lambda);
+                w = s / ((1-xi)*s + xi*b);
+            }
         }
     }
 
-    // cause the subclas to launch the photon packet
+    // cause the subclass to launch the photon packet
     launchNormalized(pp, historyIndex, lambda, L*w, _bvi);
 }
 

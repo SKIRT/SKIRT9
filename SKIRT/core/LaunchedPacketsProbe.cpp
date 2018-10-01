@@ -4,7 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "LaunchedPacketsProbe.hpp"
-#include "InstrumentSystem.hpp"
+#include "Configuration.hpp"
 #include "LockFree.hpp"
 #include "PhotonPacket.hpp"
 #include "SourceSystem.hpp"
@@ -21,7 +21,7 @@ void LaunchedPacketsProbe::setupSelfAfter()
     find<SourceSystem>()->installLaunchCallBack(this);
 
     // select "local" or default wavelength grid
-    _probeWavelengthGrid = wavelengthGrid() ? wavelengthGrid() : find<InstrumentSystem>()->find<WavelengthGrid>();
+    _probeWavelengthGrid = find<Configuration>()->wavelengthGrid(wavelengthGrid());
 
     // resize the counts table with the appropriate number of sources and number of wavelengths
     int numSources = find<SourceSystem>()->sources().size();

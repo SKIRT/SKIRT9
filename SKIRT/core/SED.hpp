@@ -19,12 +19,10 @@ class Random;
     the spectral energy distribution, calculating the specific luminosity at a given wavelength,
     and calculating the integrated luminosity over a given wavelength range.
 
-    The spectral energy distribution is automatically normalized to unity over the wavelength range
-    associated with the hierarchy containing the SED object, intersected with the intrinsic
-    wavelength range of the distribution. The external wavelength range is retrieved through the
-    WavelengthRangeInterface interface, which may be provided, for example, by the primary source
-    system. Consequently, the random wavelengths returned by the generateWavelength() function will
-    always fall inside that range.
+    The spectral energy distribution is automatically normalized to unity over the source
+    wavelength range intersected with the intrinsic wavelength range of the distribution.
+    Consequently, the random wavelengths returned by the generateWavelength() function will always
+    fall inside that range.
 
     The functions calculating specific or integrated luminosities use just the intrinsic wavelength
     range of the distribution (i.e. they are not limited by the source range). However, for

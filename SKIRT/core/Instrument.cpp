@@ -15,10 +15,10 @@ void Instrument::setupSelfBefore()
     SimulationItem::setupSelfBefore();
 
     // select "local" or default wavelength grid
-    _instrumentWavelengthGrid = wavelengthGrid() ? wavelengthGrid() : find<WavelengthGrid>();
+    auto config = find<Configuration>();
+    _instrumentWavelengthGrid = config->wavelengthGrid(wavelengthGrid());
 
     // TO DO: discover details about the simulation
-    auto config = find<Configuration>();
     bool hasMedium = config->hasMedium();
     bool hasMediumEmission = false;
 

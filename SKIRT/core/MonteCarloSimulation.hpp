@@ -37,14 +37,14 @@ class MonteCarloSimulation : public Simulation
     ITEM_CONCRETE(MonteCarloSimulation, Simulation, "a Monte Carlo simulation")
 
     PROPERTY_ITEM(mode, SimulationMode, "the overall simulation mode")
-        ATTRIBUTE_DEFAULT_VALUE(mode, "ExtinctionOnlyMode")
+        ATTRIBUTE_DEFAULT_VALUE(mode, "SimulationMode")
 
     PROPERTY_ITEM(sourceSystem, SourceSystem, "the source system")
         ATTRIBUTE_DEFAULT_VALUE(sourceSystem, "SourceSystem")
 
     PROPERTY_ITEM(mediumSystem, MediumSystem, "the medium system")
-        ATTRIBUTE_DEFAULT_VALUE(mediumSystem, "ExtinctionOnlyMode:MediumSystem;")
-        ATTRIBUTE_REQUIRED_IF(mediumSystem, "ExtinctionOnlyMode")
+        ATTRIBUTE_DEFAULT_VALUE(mediumSystem, "!NoMedium:MediumSystem;")
+        ATTRIBUTE_REQUIRED_IF(mediumSystem, "!NoMedium")
 
     PROPERTY_ITEM(instrumentSystem, InstrumentSystem, "the instrument system")
         ATTRIBUTE_DEFAULT_VALUE(instrumentSystem, "InstrumentSystem")

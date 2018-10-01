@@ -4,9 +4,9 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "FamilySED.hpp"
+#include "Configuration.hpp"
 #include "Random.hpp"
 #include "SEDFamily.hpp"
-#include "WavelengthRangeInterface.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -15,7 +15,7 @@ void FamilySED::setupSelfBefore()
     SED::setupSelfBefore();
 
     _family = getFamilyAndParameters(_parameters);
-    _Ltot = _family->cdf(_lambdav, _pv, _Pv, interface<WavelengthRangeInterface>()->wavelengthRange(), _parameters);
+    _Ltot = _family->cdf(_lambdav, _pv, _Pv, find<Configuration>()->sourceWavelengthRange(), _parameters);
 }
 
 //////////////////////////////////////////////////////////////////////

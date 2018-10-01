@@ -4,11 +4,13 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "Configuration.hpp"
-#include "ExtinctionOnlyMode.hpp"
 #include "FatalError.hpp"
+#include "InstrumentSystem.hpp"
 #include "MaterialMix.hpp"
 #include "MediumSystem.hpp"
-#include "NoMediaMode.hpp"
+#include "NR.hpp"
+#include "OligoWavelengthGrid.hpp"
+#include "SimulationMode.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -23,30 +25,40 @@ void Configuration::setupSelfBefore()
 {
     SimulationItem::setupSelfBefore();
 
-    // Impementation note: this function is NOT allowed to perform setup on any simulation item in the hierarchy;
-    //                     in other words, always use find<XXX>(false) and check for a nullptr result.
+    // Implementation note: this function is NOT allowed to perform setup on any simulation item in the hierarchy;
+    //                      in other words, always use find<XXX>(false) and check for a nullptr result.
 
-    // keep track of configuration requirements that need to be verified
-    bool mustHaveMedia = false;
 
-    // retrieve options from NoMediaMode
+    // retrieve objects that we'll need anyway
+    auto mode = find<SimulationMode>(false);
+    if (!mode) throw FATALERROR("Cannot locate a SimulationMode object in the simulation hierarchy");
+
+    // retrieve wavelength-related options
+    _oligochromatic = mode->wavelengthRegime() == SimulationMode::WavelengthRegime::Oligochromatic;
+    if (_oligochromatic)
     {
-        auto mode = find<NoMediaMode>(false);
-        if (!mode) throw FATALERROR("Cannot locate a SimulationMode object in the simulation hierarchy");
-        _numPrimaryPackets = mode->numPackets() * mode->primaryPacketsMultiplier();
+        NR::assign(_oligoWavelengths, mode->wavelengths());
+        _defaultWavelengthGrid = new OligoWavelengthGrid(this, mode->wavelengths());
+        _oligoBinWidth = _defaultWavelengthGrid->effectiveWidth(0);
+        _sourceWavelengthRange.set(_defaultWavelengthGrid->leftBorder(0),
+                                   _defaultWavelengthGrid->rightBorder(_defaultWavelengthGrid->numBins()-1));
+    }
+    else
+    {
+        auto is = find<InstrumentSystem>(false);
+        if (is) _defaultWavelengthGrid = is->defaultWavelengthGrid();
+        _sourceWavelengthRange.set(mode->minWavelength(), mode->maxWavelength());
     }
 
-    // retrieve extra options from ExtinctionOnlyMode, if present
+    // retrieve medium-related options
+    bool mustHaveMedium = mode->mediaTreatment() != SimulationMode::MediaTreatment::NoMedium;
+    _numPrimaryPackets = mode->numPackets() * mode->primaryPacketsMultiplier();
+    if (mustHaveMedium)
     {
-        auto mode = find<ExtinctionOnlyMode>(false);
-        if (mode)
-        {
-            mustHaveMedia = true;
-            _minWeightReduction = mode->minWeightReduction();
-            _minScattEvents = mode->minScattEvents();
-            _pathLengthBias = mode->pathLengthBias();
-            _numDensitySamples = mode->numDensitySamples();
-        }
+        _minWeightReduction = mode->minWeightReduction();
+        _minScattEvents = mode->minScattEvents();
+        _pathLengthBias = mode->pathLengthBias();
+        _numDensitySamples = mode->numDensitySamples();
     }
 
     // determine the number of media in the simulation hierarchy
@@ -56,9 +68,9 @@ void Configuration::setupSelfBefore()
     _hasMedium = (numMedia!=0);
 
     // verify this with the requirements set by the simulation mode
-    if (!mustHaveMedia && _hasMedium)
+    if (!mustHaveMedium && _hasMedium)
         throw FATALERROR("This simulation mode does not allow media to be configured");
-    if (mustHaveMedia && !_hasMedium)
+    if (mustHaveMedium && !_hasMedium)
         throw FATALERROR("This simulation mode requires at least one medium to be configured");
 
     // check for polarization
@@ -85,6 +97,15 @@ void Configuration::setEmulationMode()
     _numPrimaryPackets = 0.;
     // TO DO: set other number of packet variables to zero
     // TO DO: force the number of state iterations to one, if applicable
+}
+
+////////////////////////////////////////////////////////////////////
+
+WavelengthGrid* Configuration::wavelengthGrid(WavelengthGrid* localWavelengthGrid) const
+{
+    auto result = localWavelengthGrid && !_oligochromatic ? localWavelengthGrid : _defaultWavelengthGrid;
+    if (!result) throw FATALERROR("Cannot find a wavelength grid for instrument or probe");
+    return result;
 }
 
 ////////////////////////////////////////////////////////////////////

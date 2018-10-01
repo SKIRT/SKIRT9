@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "ImportedSource.hpp"
+#include "Configuration.hpp"
 #include "BulkVelocityInterface.hpp"
 #include "Constants.hpp"
 #include "Log.hpp"
@@ -15,7 +16,6 @@
 #include "Random.hpp"
 #include "SEDFamily.hpp"
 #include "Snapshot.hpp"
-#include "WavelengthRangeInterface.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -23,8 +23,18 @@ void ImportedSource::setupSelfAfter()
 {
     Source::setupSelfAfter();
 
+    auto config = find<Configuration>();
+    _oligochromatic = config->oligochromatic();
+
+    if (_oligochromatic)
+    {
+        // cache the oligochromatic wavelengths
+        _oligoWavelengths = config->oligoWavelengths();
+        _oligoTotalBinWidth = config->oligoBinWidth() * _oligoWavelengths.size();
+    }
+
     // get the primary source wavelength range
-    _wavelengthRange = interface<WavelengthRangeInterface>()->wavelengthRange();
+    _wavelengthRange = config->sourceWavelengthRange();
 
     // create the snapshot with preconfigured spatial columns
     _snapshot = createAndOpenSnapshot();
@@ -200,7 +210,8 @@ void ImportedSource::launch(PhotonPacket* pp, size_t historyIndex, double L) con
     // launch a photon packet with zero luminosity
     if (m < 0 || !_Lv[m])
     {
-        pp->launch(historyIndex, _wavelengthRange.mid(), 0., Position(), Direction());
+        double lambda = _oligochromatic ? _oligoWavelengths[0] : _wavelengthRange.mid();
+        pp->launch(historyIndex, lambda, 0., Position(), Direction());
         return;
     }
 
@@ -212,33 +223,45 @@ void ImportedSource::launch(PhotonPacket* pp, size_t historyIndex, double L) con
 
     // generate a random wavelength from the SED and/or from the bias distribution
     double lambda, w;
-    double xi = wavelengthBias();
-    if (!xi)
+    if (_oligochromatic)
     {
-        // no biasing -- simply use the intrinsic spectral distribution
-        lambda = t_sed.generateWavelength(random());
-        w = 1.;
+        // generate one of the oligochromatic wavelengths with equal probability
+        size_t index = static_cast<size_t>(random()->uniform() * _oligoWavelengths.size());
+        lambda = _oligoWavelengths[index];
+
+        // bias the weight for the actual luminosity at this wavelength
+        w = _oligoTotalBinWidth * t_sed.specificLuminosity(lambda);
     }
     else
     {
-        // biasing -- use one or the other distribution
-        if (random()->uniform() > xi) lambda = t_sed.generateWavelength(random());
-        else lambda = wavelengthBiasDistribution()->generateWavelength();
-
-        // calculate the compensating weight factor
-        double s = t_sed.specificLuminosity(lambda);
-        if (!s)
+        double xi = wavelengthBias();
+        if (!xi)
         {
-            // if the wavelength can't occur in the intrinsic distribution,
-            // the weight factor is zero regardless of the probability in the bias distribution
-            // (handling this separately also avoids NaNs in the pathological case s=d=0)
-            w = 0.;
+            // no biasing -- simply use the intrinsic spectral distribution
+            lambda = t_sed.generateWavelength(random());
+            w = 1.;
         }
         else
         {
-            // regular composite bias weight
-            double b = wavelengthBiasDistribution()->probability(lambda);
-            w = s / ((1-xi)*s + xi*b);
+            // biasing -- use one or the other distribution
+            if (random()->uniform() > xi) lambda = t_sed.generateWavelength(random());
+            else lambda = wavelengthBiasDistribution()->generateWavelength();
+
+            // calculate the compensating weight factor
+            double s = t_sed.specificLuminosity(lambda);
+            if (!s)
+            {
+                // if the wavelength can't occur in the intrinsic distribution,
+                // the weight factor is zero regardless of the probability in the bias distribution
+                // (handling this separately also avoids NaNs in the pathological case s=d=0)
+                w = 0.;
+            }
+            else
+            {
+                // regular composite bias weight
+                double b = wavelengthBiasDistribution()->probability(lambda);
+                w = s / ((1-xi)*s + xi*b);
+            }
         }
     }
 

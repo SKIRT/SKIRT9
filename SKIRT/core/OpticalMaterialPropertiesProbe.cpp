@@ -55,8 +55,8 @@ void OpticalMaterialPropertiesProbe::probeSetup()
         int numMedia = ms->numMedia();
 
         // select "local" or default wavelength grid
-        auto probeWaveGrid = wavelengthGrid() ? wavelengthGrid() : find<InstrumentSystem>()->find<WavelengthGrid>();
-        int numWavelengths = probeWaveGrid->numBins();
+        auto probeWavelengthGrid = find<Configuration>()->wavelengthGrid(wavelengthGrid());
+        int numWavelengths = probeWavelengthGrid->numBins();
 
         // create a seperate file for each medium
         for (int h=0; h!=numMedia; ++h)
@@ -84,7 +84,7 @@ void OpticalMaterialPropertiesProbe::probeSetup()
             // write the columns
             for (int ell=0; ell!=numWavelengths; ++ell)
             {
-                double lambda = probeWaveGrid->wavelength(ell);
+                double lambda = probeWavelengthGrid->wavelength(ell);
 
                 out.writeRow(vector<double>({ units->owavelength(lambda),
                                               units->osection(mix->sectionExt(lambda)),

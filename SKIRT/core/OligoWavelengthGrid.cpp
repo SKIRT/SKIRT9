@@ -3,25 +3,26 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "Probe.hpp"
+#include "OligoWavelengthGrid.hpp"
+#include "NR.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-string Probe::itemName() const
+OligoWavelengthGrid::OligoWavelengthGrid(SimulationItem* parent, const vector<double>& wavelengths)
 {
-    return probeName();
+    parent->addChild(this);
+    _wavelengths = wavelengths;
+    setup();
 }
 
 ////////////////////////////////////////////////////////////////////
 
-void Probe::probeSetup()
+void OligoWavelengthGrid::setupSelfBefore()
 {
-}
+    DisjointWavelengthGrid::setupSelfBefore();
 
-////////////////////////////////////////////////////////////////////
-
-void Probe::probeRun()
-{
+    // set the wavelength grid from the list of property values; use the same absolute width for all bins
+    setWavelengthBins(NR::array(_wavelengths), 1e-3, true);
 }
 
 ////////////////////////////////////////////////////////////////////

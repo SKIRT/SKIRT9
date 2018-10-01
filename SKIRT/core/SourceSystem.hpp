@@ -9,7 +9,6 @@
 #include "SimulationItem.hpp"
 #include "Array.hpp"
 #include "Source.hpp"
-#include "WavelengthRangeInterface.hpp"
 class PhotonPacket;
 class ProbePhotonPacketInterface;
 
@@ -59,21 +58,9 @@ class ProbePhotonPacketInterface;
     \f$\xi\f$ is the \em emissionBias property value of the source system, and the sums range over
     all sources in the source system.
 */
-class SourceSystem : public SimulationItem, public WavelengthRangeInterface
+class SourceSystem : public SimulationItem
 {
     ITEM_CONCRETE(SourceSystem, SimulationItem, "a primary source system")
-
-    PROPERTY_DOUBLE(minWavelength, "the shortest wavelength of photon packets launched from primary sources")
-        ATTRIBUTE_QUANTITY(minWavelength, "wavelength")
-        ATTRIBUTE_MIN_VALUE(minWavelength, "1 A")
-        ATTRIBUTE_MAX_VALUE(minWavelength, "1 m")
-        ATTRIBUTE_DEFAULT_VALUE(minWavelength, "0.09 micron")
-
-    PROPERTY_DOUBLE(maxWavelength, "the longest wavelength of photon packets launched from primary sources")
-        ATTRIBUTE_QUANTITY(maxWavelength, "wavelength")
-        ATTRIBUTE_MIN_VALUE(maxWavelength, "1 A")
-        ATTRIBUTE_MAX_VALUE(maxWavelength, "1 m")
-        ATTRIBUTE_DEFAULT_VALUE(maxWavelength, "20 micron")
 
     PROPERTY_DOUBLE(sourceBias, "the fraction of photon packets distributed uniformly across primary sources")
         ATTRIBUTE_MIN_VALUE(sourceBias, "[0")
@@ -110,10 +97,6 @@ public:
 
     /** This function returns the number of sources in the source system. */
     int numSources() const;
-
-    /** This function returns the wavelength range configured by the user for this source system.
-        It implements the WavelengthRangeInterface interface. */
-    Range wavelengthRange() const override;
 
     /** This function returns the bolometric luminosity \f$L\f$ of the source system across its
         spatial and spectral domain, which is the sum of the luminosities of the sources in the

@@ -57,7 +57,7 @@ void DisjointWavelengthGrid::setWavelengthRange(const Array& lambdav)
 
 ////////////////////////////////////////////////////////////////////
 
-void DisjointWavelengthGrid::setWavelengthBins(const Array& lambdav, double relativeHalfWidth)
+void DisjointWavelengthGrid::setWavelengthBins(const Array& lambdav, double relativeHalfWidth, bool constantWidth)
 {
     // copy and sort the specified characteristic wavelengths
     _lambdav = lambdav;
@@ -75,10 +75,22 @@ void DisjointWavelengthGrid::setWavelengthBins(const Array& lambdav, double rela
     _lambdaleftv.resize(n);
     _lambdarightv.resize(n);
     _borderv.resize(2*n);
-    for (size_t ell=0; ell!=n; ++ell)
+    if (!constantWidth)
     {
-        _borderv[2*ell] = _lambdaleftv[ell] = _lambdav[ell] * (1.-relativeHalfWidth);
-        _borderv[2*ell+1] = _lambdarightv[ell] = _lambdav[ell] * (1.+relativeHalfWidth);
+        for (size_t ell=0; ell!=n; ++ell)
+        {
+            _borderv[2*ell] = _lambdaleftv[ell] = _lambdav[ell] * (1.-relativeHalfWidth);
+            _borderv[2*ell+1] = _lambdarightv[ell] = _lambdav[ell] * (1.+relativeHalfWidth);
+        }
+    }
+    else
+    {
+        double delta = _lambdav[0] * relativeHalfWidth;
+        for (size_t ell=0; ell!=n; ++ell)
+        {
+            _borderv[2*ell] = _lambdaleftv[ell] = _lambdav[ell] - delta;
+            _borderv[2*ell+1] = _lambdarightv[ell] = _lambdav[ell] + delta;
+        }
     }
 
     // verify that the bins do not overlap
