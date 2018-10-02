@@ -19,6 +19,7 @@
 class ExtinctionOnlyMode : public WithMediumMode
 {
     ITEM_CONCRETE(ExtinctionOnlyMode, WithMediumMode, "an extinction-only simulation (no secondary emission)")
+        ATTRIBUTE_TYPE_INSERT(ExtinctionOnlyMode, "ExtinctionOnly")
     ITEM_END()
 };
 

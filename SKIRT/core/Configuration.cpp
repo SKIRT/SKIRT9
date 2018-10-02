@@ -73,7 +73,7 @@ void Configuration::setupSelfBefore()
     {
         _numPrimaryPackets = sim->numPackets() * emode->primaryPacketsMultiplier();
         _numSecondaryPackets = sim->numPackets() * emode->secondaryPacketsMultiplier();
-        throw FATALERROR("Dust emission is not yet supported - " + std::to_string(emode->dummy()));
+        throw FATALERROR("Dust emission is not yet supported");
     }
 
     // determine the number of media in the simulation hierarchy
