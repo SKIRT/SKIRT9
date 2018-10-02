@@ -34,6 +34,7 @@ void MediumSystem::setupSelfAfter()
     SimulationItem::setupSelfAfter();
     auto log = find<Log>();
     auto parfac = find<ParallelFactory>();
+    auto config = find<Configuration>();
 
     // ----- allocate memory -----
 
@@ -52,10 +53,11 @@ void MediumSystem::setupSelfAfter()
 
     log->info("Calculating densities for " + std::to_string(_numCells) + " cells...");
     auto dic = _grid->interface<DensityInCellInterface>(0, false);  // optional fast-track interface for densities
-    int numSamples = find<Configuration>()->numDensitySamples();
+    int numSamples = config->numDensitySamples();
+    bool oligo = config->oligochromatic();
     log->infoSetElapsed(_numCells);
     parfac->parallelDistributed()->call(_numCells,
-                                        [this, log, dic, numSamples](size_t firstIndex, size_t numIndices)
+                                        [this, log, dic, numSamples, oligo](size_t firstIndex, size_t numIndices)
     {
         ShortArray<8> nsumv(_numMedia);
 
@@ -81,16 +83,20 @@ void MediumSystem::setupSelfAfter()
                     for (int h=0; h!=_numMedia; ++h) state(m,h).n = nsumv[h]/numSamples;
                 }
 
-                // bulk velocity: weighted average; assumes densities have been calculated
-                Position bfr = _grid->centralPositionInCell(m);
-                double n = 0.;
-                Vec v;
-                for (int h=0; h!=_numMedia; ++h)
+                // for oligochromatic simulations, leave bulk velocity at zero
+                if (!oligo)
                 {
-                    n += state(m,h).n;
-                    v += state(m,h).n * _media[h]->bulkVelocity(bfr);
+                    // bulk velocity: weighted average at cell center; assumes densities have been calculated
+                    Position bfr = _grid->centralPositionInCell(m);
+                    double n = 0.;
+                    Vec v;
+                    for (int h=0; h!=_numMedia; ++h)
+                    {
+                        n += state(m,h).n;
+                        v += state(m,h).n * _media[h]->bulkVelocity(bfr);
+                    }
+                    if (n > 0.) state(m).v = v / n;  // leave bulk velocity at zero if cell has no material
                 }
-                if (n > 0.) state(m).v = v / n;  // leave bulk velocity at zero if cell has no material
 
                 // volume
                 state(m).V = _grid->volume(m);

@@ -270,7 +270,7 @@ void ImportedSource::launch(PhotonPacket* pp, size_t historyIndex, double L) con
 
     // provide a redshift interface for the appropriate velocity, if enabled
     BulkVelocityInterface* bvi = nullptr;
-    if (importVelocity())
+    if (!_oligochromatic && importVelocity())
     {
         t_velocity.setBulkVelocity(_snapshot->velocity(m));
         bvi = &t_velocity;

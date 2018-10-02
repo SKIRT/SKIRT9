@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "GeometricMedium.hpp"
+#include "Configuration.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -20,8 +21,11 @@ void GeometricMedium::setupSelfAfter()
 int GeometricMedium::dimension() const
 {
     int velocityDimension = 1;
-    if (velocityZ()) velocityDimension = 2;
-    if (velocityX() || velocityY()) velocityDimension = 3;
+    if (!find<Configuration>()->oligochromatic())
+    {
+        if (velocityZ()) velocityDimension = 2;
+        if (velocityX() || velocityY()) velocityDimension = 3;
+    }
     return max(geometry()->dimension(), velocityDimension);
 }
 

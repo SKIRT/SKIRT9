@@ -28,6 +28,7 @@ class LuminosityProbe : public Probe
         ATTRIBUTE_TYPE_DISPLAYED_IF(LuminosityProbe, "Source")
 
     PROPERTY_ITEM(wavelengthGrid, WavelengthGrid, "the wavelength grid for the luminosity probe")
+        ATTRIBUTE_RELEVANT_IF(wavelengthGrid, "Panchromatic")
         ATTRIBUTE_REQUIRED_IF(wavelengthGrid, "!DefaultInstrumentWavelengthGrid")
         ATTRIBUTE_DISPLAYED_IF(wavelengthGrid, "Level2")
 

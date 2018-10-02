@@ -26,7 +26,7 @@ void NormalizedSource::setupSelfBefore()
     }
 
     // if we have a nonzero bulk velocity, set the interface object to ourselves; otherwise leave it at null pointer
-    if (velocityX() || velocityY() || velocityZ()) _bvi = this;
+    if (!_oligochromatic && (velocityX() || velocityY() || velocityZ())) _bvi = this;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -34,8 +34,11 @@ void NormalizedSource::setupSelfBefore()
 int NormalizedSource::dimension() const
 {
     int velocityDimension = 1;
-    if (velocityZ()) velocityDimension = 2;
-    if (velocityX() || velocityY()) velocityDimension = 3;
+    if (!find<Configuration>()->oligochromatic())
+    {
+        if (velocityZ()) velocityDimension = 2;
+        if (velocityX() || velocityY()) velocityDimension = 3;
+    }
     return max(geometryDimension(), velocityDimension);
 }
 

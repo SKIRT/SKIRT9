@@ -47,7 +47,7 @@ class ImportedMedium : public Medium, public SiteListInterface
 
     PROPERTY_BOOL(importVelocity, "import velocity components (3 columns)")
         ATTRIBUTE_DEFAULT_VALUE(importVelocity, "false")
-        ATTRIBUTE_DISPLAYED_IF(importVelocity, "Level2")
+        ATTRIBUTE_DISPLAYED_IF(importVelocity, "(Panchromatic&Level2)|Level3")
 
     PROPERTY_ITEM(materialMix, MaterialMix, "the material type and properties throughout the medium")
         ATTRIBUTE_DEFAULT_VALUE(materialMix, "MeanInterstellarDustMix")

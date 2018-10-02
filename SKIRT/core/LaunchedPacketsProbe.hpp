@@ -34,6 +34,7 @@ class LaunchedPacketsProbe : public Probe, public ProbePhotonPacketInterface
         ATTRIBUTE_TYPE_DISPLAYED_IF(LaunchedPacketsProbe, "Level2&Source")
 
     PROPERTY_ITEM(wavelengthGrid, WavelengthGrid, "the wavelength grid for the photon packet probe")
+        ATTRIBUTE_RELEVANT_IF(wavelengthGrid, "Panchromatic")
         ATTRIBUTE_REQUIRED_IF(wavelengthGrid, "!DefaultInstrumentWavelengthGrid")
 
     ITEM_END()
