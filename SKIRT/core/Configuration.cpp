@@ -5,12 +5,10 @@
 
 #include "Configuration.hpp"
 #include "FatalError.hpp"
-#include "InstrumentSystem.hpp"
 #include "MaterialMix.hpp"
-#include "MediumSystem.hpp"
+#include "MonteCarloSimulation.hpp"
 #include "NR.hpp"
 #include "OligoWavelengthGrid.hpp"
-#include "SimulationMode.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -30,15 +28,19 @@ void Configuration::setupSelfBefore()
 
 
     // retrieve objects that we'll need anyway
+    auto sim = find<MonteCarloSimulation>(false);
+    if (!sim) throw FATALERROR("Cannot locate a MonteCarloSimulation object in the simulation hierarchy");
     auto mode = find<SimulationMode>(false);
     if (!mode) throw FATALERROR("Cannot locate a SimulationMode object in the simulation hierarchy");
+    auto ss = find<SourceSystem>(false);
+    if (!ss) throw FATALERROR("Cannot locate a SourceSystem object in the simulation hierarchy");
 
     // retrieve wavelength-related options
-    _oligochromatic = mode->wavelengthRegime() == SimulationMode::WavelengthRegime::Oligochromatic;
+    _oligochromatic = sim->wavelengthRegime() == MonteCarloSimulation::WavelengthRegime::Oligochromatic;
     if (_oligochromatic)
     {
-        NR::assign(_oligoWavelengths, mode->wavelengths());
-        _defaultWavelengthGrid = new OligoWavelengthGrid(this, mode->wavelengths());
+        NR::assign(_oligoWavelengths, ss->wavelengths());
+        _defaultWavelengthGrid = new OligoWavelengthGrid(this, ss->wavelengths());
         _oligoBinWidth = _defaultWavelengthGrid->effectiveWidth(0);
         _sourceWavelengthRange.set(_defaultWavelengthGrid->leftBorder(0),
                                    _defaultWavelengthGrid->rightBorder(_defaultWavelengthGrid->numBins()-1));
@@ -47,12 +49,12 @@ void Configuration::setupSelfBefore()
     {
         auto is = find<InstrumentSystem>(false);
         if (is) _defaultWavelengthGrid = is->defaultWavelengthGrid();
-        _sourceWavelengthRange.set(mode->minWavelength(), mode->maxWavelength());
+        _sourceWavelengthRange.set(ss->minWavelength(), ss->maxWavelength());
     }
 
     // retrieve medium-related options
     bool mustHaveMedium = mode->mediaTreatment() != SimulationMode::MediaTreatment::NoMedium;
-    _numPrimaryPackets = mode->numPackets() * mode->primaryPacketsMultiplier();
+    _numPrimaryPackets = sim->numPackets() * sim->primaryPacketsMultiplier();
     if (mustHaveMedium)
     {
         _minWeightReduction = mode->minWeightReduction();

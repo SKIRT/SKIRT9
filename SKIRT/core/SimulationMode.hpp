@@ -28,16 +28,6 @@
     remaining configuration process to those relevant for the selected mode. */
 class SimulationMode : public SimulationItem
 {
-    /** The enumeration type indicating the wavelength regime (oligochromatic or panchromatic).
-        Oligochromatic simulations use just a few pre-defined, discrete wavelengths. They do not
-        support secondary emission by the transfer medium because the radiation field must be known
-        across a wide spectrum to calculate the medium state and the resulting emission.
-        Panchromatic simulations use a continuous range of wavelengths, lifting this limitation. */
-    ENUM_DEF(WavelengthRegime, Oligochromatic, Panchromatic)
-    ENUM_VAL(WavelengthRegime, Oligochromatic, "Oligochromatic simulation (just a few discrete wavelengths)")
-    ENUM_VAL(WavelengthRegime, Panchromatic, "Panchromatic simulation (a continuous range of wavelengths)")
-    ENUM_END()
-
     /** The enumeration type indicating the treatment of media in the simulation. NoMedium
         indicates a simulation without transfer media, i.e. with primary sources only.
         ExtinctionOnly indicates a simulation that calculates the extinction of the primary
@@ -53,61 +43,23 @@ class SimulationMode : public SimulationItem
 
     ITEM_CONCRETE(SimulationMode, SimulationItem, "a simulation mode")
 
-    PROPERTY_ENUM(wavelengthRegime, WavelengthRegime, "the wavelength regime of the simulation")
-        ATTRIBUTE_DEFAULT_VALUE(wavelengthRegime, "Panchromatic")
-        ATTRIBUTE_INSERT(wavelengthRegime,  "wavelengthRegimeOligochromatic:Oligochromatic;"
-                                            "wavelengthRegimePanchromatic:Panchromatic")
-
     PROPERTY_ENUM(mediaTreatment, MediaTreatment, "the treatment of transfer media in the simulation")
         ATTRIBUTE_DEFAULT_VALUE(mediaTreatment, "ExtinctionOnly")
         ATTRIBUTE_INSERT(mediaTreatment, "mediaTreatmentNoMedium:NoMedium;"
                                          "mediaTreatmentExtinctionOnly:ExtinctionOnly")
 
-    PROPERTY_DOUBLE(minWavelength, "the shortest wavelength of photon packets launched from primary sources")
-        ATTRIBUTE_QUANTITY(minWavelength, "wavelength")
-        ATTRIBUTE_MIN_VALUE(minWavelength, "1 A")
-        ATTRIBUTE_MAX_VALUE(minWavelength, "1 m")
-        ATTRIBUTE_DEFAULT_VALUE(minWavelength, "0.09 micron")
-        ATTRIBUTE_RELEVANT_IF(minWavelength, "Panchromatic")
-
-    PROPERTY_DOUBLE(maxWavelength, "the longest wavelength of photon packets launched from primary sources")
-        ATTRIBUTE_QUANTITY(maxWavelength, "wavelength")
-        ATTRIBUTE_MIN_VALUE(maxWavelength, "1 A")
-        ATTRIBUTE_MAX_VALUE(maxWavelength, "1 m")
-        ATTRIBUTE_DEFAULT_VALUE(maxWavelength, "20 micron")
-        ATTRIBUTE_RELEVANT_IF(maxWavelength, "Panchromatic")
-
-    PROPERTY_DOUBLE_LIST(wavelengths, "the discrete wavelengths of photon packets launched from primary sources")
-        ATTRIBUTE_QUANTITY(wavelengths, "wavelength")
-        ATTRIBUTE_MIN_VALUE(wavelengths, "1 A")
-        ATTRIBUTE_MAX_VALUE(wavelengths, "1 m")
-        ATTRIBUTE_DEFAULT_VALUE(wavelengths, "0.55 micron")
-        ATTRIBUTE_RELEVANT_IF(wavelengths, "Oligochromatic")
-
-    PROPERTY_DOUBLE(numPackets, "the default number of photon packets launched per simulation segment")
-        ATTRIBUTE_MIN_VALUE(numPackets, "[0")
-        ATTRIBUTE_MAX_VALUE(numPackets, "1e19]")
-        ATTRIBUTE_DEFAULT_VALUE(numPackets, "1e6")
-
-    PROPERTY_DOUBLE(primaryPacketsMultiplier,
-                    "the multiplier on the number of photon packets launched from primary sources")
-        ATTRIBUTE_MIN_VALUE(primaryPacketsMultiplier, "]0")
-        ATTRIBUTE_MAX_VALUE(primaryPacketsMultiplier, "1000]")
-        ATTRIBUTE_DEFAULT_VALUE(primaryPacketsMultiplier, "1")
-        ATTRIBUTE_DISPLAYED_IF(primaryPacketsMultiplier, "Level3")
-
     PROPERTY_DOUBLE(minWeightReduction, "the minimum weight reduction factor before a photon packet is terminated")
         ATTRIBUTE_MIN_VALUE(minWeightReduction, "[1e3")
         ATTRIBUTE_DEFAULT_VALUE(minWeightReduction, "1e4")
         ATTRIBUTE_RELEVANT_IF(minWeightReduction, "!NoMedium")
-        ATTRIBUTE_DISPLAYED_IF(minWeightReduction, "Level2")
+        ATTRIBUTE_DISPLAYED_IF(minWeightReduction, "Level3")
 
     PROPERTY_INT(minScattEvents, "the minimum number of forced scattering events before a photon packet is terminated")
         ATTRIBUTE_MIN_VALUE(minScattEvents, "0")
         ATTRIBUTE_MAX_VALUE(minScattEvents, "1000")
         ATTRIBUTE_DEFAULT_VALUE(minScattEvents, "0")
         ATTRIBUTE_RELEVANT_IF(minScattEvents, "!NoMedium")
-        ATTRIBUTE_DISPLAYED_IF(minScattEvents, "Level2")
+        ATTRIBUTE_DISPLAYED_IF(minScattEvents, "Level3")
 
     PROPERTY_DOUBLE(pathLengthBias,
                     "the fraction of path lengths sampled from a linear rather than an exponential distribution")
@@ -125,14 +77,6 @@ class SimulationMode : public SimulationItem
         ATTRIBUTE_DISPLAYED_IF(numDensitySamples, "Level2")
 
     ITEM_END()
-
-    /** \fn numPackets
-        The number of photon packets is specified as a double-precision floating point number
-        rather than as a 64-bit integer to avoid implementing yet another discoverable property
-        type. As a side benefit, one can use exponential notation to specify a large number of
-        photon packets. Also, note that a double can exactly represent all integers up to 9e15. The
-        maximum number of photon packets is somewhat arbitrarily set to 1e19 because that number is
-        close to the maximum number representable with a 64-bit unsigned integer. */
 };
 
 ////////////////////////////////////////////////////////////////////

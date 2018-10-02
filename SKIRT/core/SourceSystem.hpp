@@ -62,6 +62,27 @@ class SourceSystem : public SimulationItem
 {
     ITEM_CONCRETE(SourceSystem, SimulationItem, "a primary source system")
 
+    PROPERTY_DOUBLE(minWavelength, "the shortest wavelength of photon packets launched from primary sources")
+        ATTRIBUTE_QUANTITY(minWavelength, "wavelength")
+        ATTRIBUTE_MIN_VALUE(minWavelength, "1 A")
+        ATTRIBUTE_MAX_VALUE(minWavelength, "1 m")
+        ATTRIBUTE_DEFAULT_VALUE(minWavelength, "0.09 micron")
+        ATTRIBUTE_RELEVANT_IF(minWavelength, "Panchromatic")
+
+    PROPERTY_DOUBLE(maxWavelength, "the longest wavelength of photon packets launched from primary sources")
+        ATTRIBUTE_QUANTITY(maxWavelength, "wavelength")
+        ATTRIBUTE_MIN_VALUE(maxWavelength, "1 A")
+        ATTRIBUTE_MAX_VALUE(maxWavelength, "1 m")
+        ATTRIBUTE_DEFAULT_VALUE(maxWavelength, "20 micron")
+        ATTRIBUTE_RELEVANT_IF(maxWavelength, "Panchromatic")
+
+    PROPERTY_DOUBLE_LIST(wavelengths, "the discrete wavelengths of photon packets launched from primary sources")
+        ATTRIBUTE_QUANTITY(wavelengths, "wavelength")
+        ATTRIBUTE_MIN_VALUE(wavelengths, "1 A")
+        ATTRIBUTE_MAX_VALUE(wavelengths, "1 m")
+        ATTRIBUTE_DEFAULT_VALUE(wavelengths, "0.55 micron")
+        ATTRIBUTE_RELEVANT_IF(wavelengths, "Oligochromatic")
+
     PROPERTY_DOUBLE(sourceBias, "the fraction of photon packets distributed uniformly across primary sources")
         ATTRIBUTE_MIN_VALUE(sourceBias, "[0")
         ATTRIBUTE_MAX_VALUE(sourceBias, "1]")
