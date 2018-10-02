@@ -95,6 +95,9 @@ public:
     /** Returns the number of photon packets launched per primary emission simulation segment. */
     double numPrimaryPackets() const { return _numPrimaryPackets; }
 
+    /** Returns the number of photon packets launched per secondary emission simulation segment. */
+    double numSecondaryPackets() const { return _numSecondaryPackets; }
+
     /** Returns the minimum weight reduction factor before a photon packet is terminated. */
     double minWeightReduction() const { return _minWeightReduction; }
 
@@ -128,14 +131,17 @@ private:
     WavelengthGrid* _defaultWavelengthGrid{nullptr};
     Range _sourceWavelengthRange;
 
-    // no media
+    // launch
     double _numPrimaryPackets{0.};
+    double _numSecondaryPackets{0.};
 
-    // extinction only
+    // extinction
     double _minWeightReduction{1e4};
     int _minScattEvents{0};
     double _pathLengthBias{0.5};
     int _numDensitySamples{100};
+
+    // emission
 
     // derived
     bool _hasMedium{false};

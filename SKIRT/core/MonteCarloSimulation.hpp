@@ -56,15 +56,8 @@ class MonteCarloSimulation : public Simulation
         ATTRIBUTE_MAX_VALUE(numPackets, "1e19]")
         ATTRIBUTE_DEFAULT_VALUE(numPackets, "1e6")
 
-    PROPERTY_DOUBLE(primaryPacketsMultiplier,
-                    "the multiplier on the number of photon packets launched from primary sources")
-        ATTRIBUTE_MIN_VALUE(primaryPacketsMultiplier, "]0")
-        ATTRIBUTE_MAX_VALUE(primaryPacketsMultiplier, "1000]")
-        ATTRIBUTE_DEFAULT_VALUE(primaryPacketsMultiplier, "1")
-        ATTRIBUTE_DISPLAYED_IF(primaryPacketsMultiplier, "Level3")
-
     PROPERTY_ITEM(mode, SimulationMode, "the overall simulation mode")
-        ATTRIBUTE_DEFAULT_VALUE(mode, "SimulationMode")
+        ATTRIBUTE_DEFAULT_VALUE(mode, "ExtinctionOnlyMode")
 
     PROPERTY_ITEM(sourceSystem, SourceSystem, "the source system")
         ATTRIBUTE_DEFAULT_VALUE(sourceSystem, "SourceSystem")

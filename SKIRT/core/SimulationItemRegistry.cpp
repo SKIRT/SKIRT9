@@ -36,9 +36,11 @@
 #include "CylindricalClipGeometryDecorator.hpp"
 #include "DefaultMediaDensityCutsProbe.hpp"
 #include "DensityTreePolicy.hpp"
+#include "DustEmissionMode.hpp"
 #include "EinastoGeometry.hpp"
 #include "ElectronMix.hpp"
 #include "ExpDiskGeometry.hpp"
+#include "ExtinctionOnlyMode.hpp"
 #include "ExtragalacticUnits.hpp"
 #include "FileBand.hpp"
 #include "FileMesh.hpp"
@@ -91,6 +93,7 @@
 #include "MultiGaussianExpansionGeometry.hpp"
 #include "NestedLogWavelengthGrid.hpp"
 #include "NetzerAngularDistribution.hpp"
+#include "NoMediumMode.hpp"
 #include "NoPolarizationProfile.hpp"
 #include "NumberColumnMaterialNormalization.hpp"
 #include "OffsetGeometryDecorator.hpp"
@@ -181,6 +184,10 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
 
     // simulation modes
     ItemRegistry::add<SimulationMode>();
+    ItemRegistry::add<NoMediumMode>();
+    ItemRegistry::add<WithMediumMode>();
+    ItemRegistry::add<ExtinctionOnlyMode>();
+    ItemRegistry::add<DustEmissionMode>();
 
     // source system and sources
     ItemRegistry::add<SourceSystem>();

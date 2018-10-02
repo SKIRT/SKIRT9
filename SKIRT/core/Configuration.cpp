@@ -4,10 +4,13 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "Configuration.hpp"
+#include "DustEmissionMode.hpp"
+#include "ExtinctionOnlyMode.hpp"
 #include "FatalError.hpp"
 #include "MaterialMix.hpp"
 #include "MonteCarloSimulation.hpp"
 #include "NR.hpp"
+#include "NoMediumMode.hpp"
 #include "OligoWavelengthGrid.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -25,7 +28,6 @@ void Configuration::setupSelfBefore()
 
     // Implementation note: this function is NOT allowed to perform setup on any simulation item in the hierarchy;
     //                      in other words, always use find<XXX>(false) and check for a nullptr result.
-
 
     // retrieve objects that we'll need anyway
     auto sim = find<MonteCarloSimulation>(false);
@@ -52,15 +54,26 @@ void Configuration::setupSelfBefore()
         _sourceWavelengthRange.set(ss->minWavelength(), ss->maxWavelength());
     }
 
-    // retrieve medium-related options
-    bool mustHaveMedium = mode->mediaTreatment() != SimulationMode::MediaTreatment::NoMedium;
-    _numPrimaryPackets = sim->numPackets() * sim->primaryPacketsMultiplier();
-    if (mustHaveMedium)
+    // retrieve photon life-cycle and medium-related options
+    _numPrimaryPackets = sim->numPackets();
+    bool mustHaveMedium = false;
+    auto mmode = dynamic_cast<WithMediumMode*>(mode);
+    if (mmode)
     {
-        _minWeightReduction = mode->minWeightReduction();
-        _minScattEvents = mode->minScattEvents();
-        _pathLengthBias = mode->pathLengthBias();
-        _numDensitySamples = mode->numDensitySamples();
+        mustHaveMedium = true;
+        _minWeightReduction = mmode->minWeightReduction();
+        _minScattEvents = mmode->minScattEvents();
+        _pathLengthBias = mmode->pathLengthBias();
+        _numDensitySamples = mmode->numDensitySamples();
+    }
+
+    // retrieve dust emission-related options
+    auto emode = dynamic_cast<DustEmissionMode*>(mode);
+    if (emode)
+    {
+        _numPrimaryPackets = sim->numPackets() * emode->primaryPacketsMultiplier();
+        _numSecondaryPackets = sim->numPackets() * emode->secondaryPacketsMultiplier();
+        throw FATALERROR("Dust emission is not yet supported - " + std::to_string(emode->dummy()));
     }
 
     // determine the number of media in the simulation hierarchy
