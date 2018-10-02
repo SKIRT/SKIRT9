@@ -51,7 +51,7 @@ void LaunchedPacketsProbe::probeRun()
     int numWavelengths = _counts.size(1);
 
     // create a text file and add the columns
-    TextOutFile file(this, "launchedpackets", "photon packets launched by primary sources");
+    TextOutFile file(this, itemName() + "_launchedpackets", "photon packets launched by primary sources");
     file.addColumn("wavelength", units->uwavelength());
     file.addColumn("total nr of photon packets launched in bin");
     for (int h=0; h!=numSources; ++h)

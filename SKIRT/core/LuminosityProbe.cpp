@@ -24,7 +24,7 @@ void LuminosityProbe::probeSetup()
     int numSources = sources.size();
 
     // create a text file and add the columns
-    TextOutFile file(this, probeName()+"_luminosities", "primary source luminosities");
+    TextOutFile file(this, itemName() + "_luminosities", "primary source luminosities");
     file.addColumn("wavelength", units->uwavelength());
     file.addColumn("specific luminosity", units->umonluminosity());
     file.addColumn("luminosity in bin", units->ubolluminosity());
