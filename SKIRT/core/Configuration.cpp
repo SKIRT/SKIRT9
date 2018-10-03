@@ -67,15 +67,6 @@ void Configuration::setupSelfBefore()
         _numDensitySamples = mmode->numDensitySamples();
     }
 
-    // retrieve dust emission-related options
-    auto emode = dynamic_cast<DustEmissionMode*>(mode);
-    if (emode)
-    {
-        _numPrimaryPackets = sim->numPackets() * emode->primaryPacketsMultiplier();
-        _numSecondaryPackets = sim->numPackets() * emode->secondaryPacketsMultiplier();
-        throw FATALERROR("Dust emission is not yet supported");
-    }
-
     // determine the number of media in the simulation hierarchy
     int numMedia = 0;
     auto ms = find<MediumSystem>(false);
@@ -88,6 +79,27 @@ void Configuration::setupSelfBefore()
     if (mustHaveMedium && !_hasMedium)
         throw FATALERROR("This simulation mode requires at least one medium to be configured");
 
+    // retrieve dust emission-related options
+    auto emode = dynamic_cast<DustEmissionMode*>(mode);
+    if (_hasMedium && emode)
+    {
+        _hasDustEmission = true;
+        _radiationFieldWLG = emode->radiationFieldWLG();
+        _emissionSpectrumWLG = emode->emissionSpectrumWLG();
+        _emissionBias = emode->emissionBias();
+        _iterateSelfAbsorption = emode->iterateSelfAbsorption();
+        if (_iterateSelfAbsorption)
+        {
+            _minIterations = emode->minIterations();
+            _maxIterations = emode->maxIterations();
+            _maxFractionOfPrimary = emode->maxFractionOfPrimary();
+            _maxFractionOfPrevious = emode->maxFractionOfPrevious();
+        }
+        _numPrimaryPackets = sim->numPackets() * emode->primaryPacketsMultiplier();
+        _numSecondaryPackets = sim->numPackets() * emode->secondaryPacketsMultiplier();
+        if (_iterateSelfAbsorption) _numIterationPackets = sim->numPackets() * emode->iterationPacketsMultiplier();
+    }
+
     // check for polarization
     if (_hasMedium)
     {
@@ -97,8 +109,6 @@ void Configuration::setupSelfBefore()
             throw FATALERROR("All media must consistenly support polarization, or not support polarization");
         _hasPolarization = numPolarization!=0;
     }
-
-    // TO DO: retrieve options from and verify configuration for other modes
 
     // in case emulation mode has been set before our setup() was called, perform the emulation overrides again
     if (emulationMode()) setEmulationMode();
@@ -110,8 +120,10 @@ void Configuration::setEmulationMode()
 {
     _emulationMode = true;
     _numPrimaryPackets = 0.;
-    // TO DO: set other number of packet variables to zero
-    // TO DO: force the number of state iterations to one, if applicable
+    _numIterationPackets = 0.;
+    _numSecondaryPackets = 0.;
+    _minIterations = 1;
+    _maxIterations = 1;
 }
 
 ////////////////////////////////////////////////////////////////////

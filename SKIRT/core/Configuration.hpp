@@ -96,7 +96,16 @@ public:
     double numPrimaryPackets() const { return _numPrimaryPackets; }
 
     /** Returns the number of photon packets launched per secondary emission simulation segment. */
+    double numIterationPackets() const { return _numIterationPackets; }
+
+    /** Returns the number of photon packets launched per secondary emission simulation segment. */
     double numSecondaryPackets() const { return _numSecondaryPackets; }
+
+    /** Returns true if there is at least one medium component in the simulation. */
+    bool hasMedium() const { return _hasMedium; }
+
+    /** Returns true if the media in the simulation support polarization. */
+    bool hasPolarization() const { return _hasPolarization; }
 
     /** Returns the minimum weight reduction factor before a photon packet is terminated. */
     double minWeightReduction() const { return _minWeightReduction; }
@@ -112,11 +121,41 @@ public:
     /** Returns the number of random density samples for determining spatial cell mass. */
     int numDensitySamples() const { return _numDensitySamples; }
 
-    /** Returns true if there is at least one medium component in the simulation. */
-    bool hasMedium() const { return _hasMedium; }
+    /** Returns true if absorption must be stored during the photon cycle, and false otherwise. */
+    bool storeAbsorption() const { return _hasDustEmission; }
 
-    /** Returns true if the media in the simulation support polarization. */
-    bool hasPolarization() const { return _hasPolarization; }
+    /** Returns true if secondary dust emission must be calculated, and false otherwise. */
+    bool hasDustEmission() const { return _hasDustEmission; }
+
+    /** Returns true if dust self-absorption must be self-consistently calculated through
+        iteration, and false otherwise. */
+    bool iterateSelfAbsorption() const { return _iterateSelfAbsorption; }
+
+    /** Returns the wavelength grid to be used for storing the radiation field. */
+    WavelengthGrid* radiationFieldWavelengthGrid() const { return _radiationFieldWLG; }
+
+    /** Returns the wavelength grid to be used for calculating the dust emission spectrum. */
+    WavelengthGrid* emissionSpectrumWavelengthGrid() const { return _emissionSpectrumWLG; }
+
+    /** Returns the fraction of secondary photon packets distributed uniformly across spatial
+        cells. */
+    double emissionBias() const { return _emissionBias; }
+
+    /** Returns the minimum number of self-absorption iterations. */
+    int minIterations() const { return _minIterations; }
+
+    /** Returns the maximum number of self-absorption iterations. */
+    int maxIterations() const { return _maxIterations; }
+
+    /** Returns the self-absorption iteration convergece criterion described as follows:
+        convergence is reached when the total absorbed dust luminosity is less than this fraction
+        of the total absorbed primary luminosity. */
+    double maxFractionOfPrimary() const { return _maxFractionOfPrimary; }
+
+    /** Returns the self-absorption iteration convergece criterion described as follows:
+        convergence is reached when the total absorbed dust luminosity has changed by less than
+        this fraction compared to the previous iteration. */
+    double maxFractionOfPrevious() const { return _maxFractionOfPrevious; }
 
     //======================== Data Members ========================
 
@@ -133,19 +172,27 @@ private:
 
     // launch
     double _numPrimaryPackets{0.};
+    double _numIterationPackets{0.};
     double _numSecondaryPackets{0.};
 
     // extinction
+    bool _hasMedium{false};
+    bool _hasPolarization{false};
     double _minWeightReduction{1e4};
     int _minScattEvents{0};
     double _pathLengthBias{0.5};
     int _numDensitySamples{100};
 
     // emission
-
-    // derived
-    bool _hasMedium{false};
-    bool _hasPolarization{false};
+    bool _hasDustEmission{false};
+    bool _iterateSelfAbsorption{false};
+    WavelengthGrid* _radiationFieldWLG{nullptr};
+    WavelengthGrid* _emissionSpectrumWLG{nullptr};
+    double _emissionBias{0.5};
+    int _minIterations{1};
+    int _maxIterations{10};
+    double _maxFractionOfPrimary{0.01};
+    double _maxFractionOfPrevious{0.03};
 };
 
 ////////////////////////////////////////////////////////////////////
