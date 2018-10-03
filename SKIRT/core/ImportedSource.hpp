@@ -44,7 +44,7 @@ class ImportedSource : public Source
 
     PROPERTY_STRING(filename, "the name of the file to be imported")
 
-    ATTRIBUTE_SUB_PROPERTIES_HERE()
+    ATTRIBUTE_SUB_PROPERTIES_HERE(ImportedSource)
 
     PROPERTY_BOOL(importVelocity, "import velocity components (3 columns)")
         ATTRIBUTE_DEFAULT_VALUE(importVelocity, "false")

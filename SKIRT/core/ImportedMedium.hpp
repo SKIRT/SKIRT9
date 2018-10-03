@@ -25,7 +25,7 @@ class ImportedMedium : public Medium, public SiteListInterface
 
     PROPERTY_STRING(filename, "the name of the file to be imported")
 
-    ATTRIBUTE_SUB_PROPERTIES_HERE()
+    ATTRIBUTE_SUB_PROPERTIES_HERE(ImportedMedium)
 
     PROPERTY_DOUBLE(massFraction, "the fraction of the mass to be included (or one to include all)")
         ATTRIBUTE_MIN_VALUE(massFraction, "[0")

@@ -261,7 +261,7 @@ void MonteCarloSimulation::peelOffEmission(const PhotonPacket* pp, PhotonPacket*
 void MonteCarloSimulation::simulateEscapeAndAbsorption(PhotonPacket* pp, bool storeAbsorption)
 {
     // determine the portion of the packet's luminosity that will be scattered
-    // and register the absorbed portion in everry cell, if so requested
+    // and register the absorbed portion in every cell, if so requested
     double wsca = 0.;
     int numCells = pp->size();
     for (int n=0; n<numCells; n++)
@@ -273,14 +273,14 @@ void MonteCarloSimulation::simulateEscapeAndAbsorption(PhotonPacket* pp, bool st
             double albedo = mediumSystem()->albedo(pp->perceivedWavelength(bfv), m);
             double taustart = (n==0) ? 0. : pp->tau(n-1);
             double dtau = pp->dtau(n);
-            double expfactorm = -expm1(-dtau);
-            double wextm = exp(-taustart) * expfactorm;
+            double wextm = exp(-taustart) * (-expm1(-dtau));
             wsca += albedo * wextm;
             if (storeAbsorption)
             {
-                double wabsm = wextm - wsca;
+                double wabsm = (1.-albedo) * wextm;
+                double Labsm = pp->luminosity() * wabsm;
                 // TO DO: support storing absorption
-                (void)wabsm;
+                (void)Labsm;
             }
         }
     }

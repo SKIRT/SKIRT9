@@ -34,7 +34,7 @@ class Instrument : public SimulationItem
         ATTRIBUTE_REQUIRED_IF(wavelengthGrid, "!DefaultInstrumentWavelengthGrid")
         ATTRIBUTE_DISPLAYED_IF(wavelengthGrid, "Level2")
 
-    ATTRIBUTE_SUB_PROPERTIES_HERE(MonteCarloSimulation)
+    ATTRIBUTE_SUB_PROPERTIES_HERE(Instrument)
 
     PROPERTY_BOOL(recordComponents, "record flux components separately")
         ATTRIBUTE_DEFAULT_VALUE(recordComponents, "false")

@@ -56,7 +56,7 @@ class Source : public SimulationItem
 {
     ITEM_ABSTRACT(Source, SimulationItem, "a primary radiation source")
 
-    ATTRIBUTE_SUB_PROPERTIES_HERE()
+    ATTRIBUTE_SUB_PROPERTIES_HERE(Source)
 
     PROPERTY_DOUBLE(sourceWeight, "the weight of this source for the number of photon packets launched")
         ATTRIBUTE_MIN_VALUE(sourceWeight, "]0")

@@ -25,7 +25,7 @@ class NormalizedSource : public Source, public BulkVelocityInterface
 {
     ITEM_ABSTRACT(NormalizedSource, Source, "a primary source with a single SED")
 
-    ATTRIBUTE_SUB_PROPERTIES_HERE()
+    ATTRIBUTE_SUB_PROPERTIES_HERE(NormalizedSource)
 
     PROPERTY_ITEM(sed, SED, "the spectral energy distribution for the source")
         ATTRIBUTE_DEFAULT_VALUE(sed, "SunSED")

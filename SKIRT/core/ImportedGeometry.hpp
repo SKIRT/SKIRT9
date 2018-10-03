@@ -23,7 +23,7 @@ class ImportedGeometry : public GenGeometry, public SiteListInterface
 
     PROPERTY_STRING(filename, "the name of the file to be imported")
 
-    ATTRIBUTE_SUB_PROPERTIES_HERE()
+    ATTRIBUTE_SUB_PROPERTIES_HERE(ImportedGeometry)
 
     PROPERTY_BOOL(importMetallicity, "import a metallicity column")
         ATTRIBUTE_DEFAULT_VALUE(importMetallicity, "false")
