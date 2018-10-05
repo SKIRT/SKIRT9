@@ -225,6 +225,21 @@ namespace SpecialFunctions
         {\text{e}}^x\left[ 1 - \frac12\,(1-p)\,x^2 + \frac{1}{24}\, (1-p)^2\, (3x+8)\,x^3 -
         \frac{1}{48}\, (1-p)^3\, (x^2+8x+12)\, x^4 + \ldots \right] \f] */
     double gexp(double p, double x);
+
+    /** This function returns the logarithmic mean \f$M(x_1,x_2)\f$ of two nonnegative values
+        \f$x_1\geq 0\f$ and \f$x_2\geq 0\f$, defined as \f[ M(x_1,x_2) = \begin{cases} 0 &
+        \mathrm{if}\, x_1=0 \,\mathrm{or}\, x_2=0 \\ x_1 & \mathrm{if}\, x_1=x_2 \\ \dfrac{x_2 -
+        x_1}{\ln x_2 - \ln x_1}&\mathrm{otherwise}.\end{cases} \f] The function is invariant for
+        swapping of it arguments, and it can be proven that the logarithmic mean lies between the
+        geometric mean and the arithmetic mean, \f[ \sqrt{(x_1 x_2)} \leq M(x_1,x_2) \leq
+        \frac{x_1+x_2}{2}, \f] where the equality realizes for \f$x_1=x_2\f$.
+
+        The function is implemented here because the quotient becomes numerically unstable when
+        \f$x_1\approx x_2\f$. In that case, the function value is calculated using the substitution
+        \f$x=\dfrac{x_2}{x_1}-1\f$ and the following expansion: \f[ M(x_1,x_2) = x_1 \,
+        \frac{x}{\ln(1+x)} = \dfrac{x_1}{1 - \dfrac{x}{2} + \dfrac{x^2}{3} - \dfrac{x^3}{4} + ...}
+        \f] */
+    double lnmean(double x1, double x2);
 }
 
 ////////////////////////////////////////////////////////////////////
