@@ -322,42 +322,25 @@ public:
     }
 
     /** This function computes the interpolated value of a one-dimensional function, given its
-        values at the edges of an interval. The axes coordinate \f$x\f$ is always interpolated
-        logarithmically, and thus must have positive values. The function value \f$f(x)\f$ is
-        interpolated linearly. */
+        values at the edges of an interval. The axes coordinate \f$x\f$ is interpolated
+        logarithmically, and thus \f$x_1\f$ and \f$x_2\f$ must have positive values. If this is not
+        the case, the function returns zero. The function value \f$f(x)\f$ is interpolated
+        linearly. */
     static inline double interpolateLogLin(double x, double x1, double x2, double f1, double f2)
     {
-        // compute logarithm of coordinate values
-        x  = log(x);
-        x1 = log(x1);
-        x2 = log(x2);
-
-        // perform the interpolation
-        return f1 + ((x-x1)/(x2-x1))*(f2-f1);
+        if (x1<=0 || x2<=0) return 0;
+        return f1 + log(x/x1)/log(x2/x1)*(f2-f1);
     }
 
     /** This function computes the interpolated value of a one-dimensional function, given its
-        values at the edges of an interval. The axes coordinate \f$x\f$ is always interpolated
-        logarithmically, and thus must have positive values. The function value \f$f(x)\f$ is
-        interpolated logarithmically if the function values are positive; otherwise it is
-        interpolated linearly. */
+        values at the edges of an interval. The coordinates on both axes are interpolated
+        logarithmically, and thus all arguments must have positive values. If the function values
+        \f$f(x_1)\f$ and/or \f$f(x_2)\f$ are not positive, the function returns zero. The other
+        values are not verified. */
     static inline double interpolateLogLog(double x, double x1, double x2, double f1, double f2)
     {
-        // if not all function values are positive, we can't do loglog interpolation, so return zero
         if (f1<=0 || f2<=0) return 0;
-
-        // compute logarithm of all values
-        x  = log(x);
-        x1 = log(x1);
-        x2 = log(x2);
-        f1 = log(f1);
-        f2 = log(f2);
-
-        // perform the interpolation
-        double fx = f1 + ((x-x1)/(x2-x1))*(f2-f1);
-
-        // compute the inverse logarithm of the resulting function value
-        return fx = exp(fx);
+        return f1 * exp( log(x/x1)/log(x2/x1)*(log(f2/f1)) );
     }
 
     /** This template function resamples the function values \f$y_k\f$ defined on a grid \f$x_k\f$
