@@ -79,102 +79,25 @@ Position CartesianSpatialGrid::randomPositionInCell(int m) const
 
 void CartesianSpatialGrid::path(SpatialGridPath* path) const
 {
-    // Determination of the initial position and direction of the path,
-    // and calculation of some initial values
+    // If the photon packet starts outside the grid, move it inside;
+    // if this is impossible, return an empty path
+    double eps = 1e-12 * extent().widths().norm();
+    Position bfr = path->moveInside(extent(), eps);
+    if (!contains(bfr)) return path->clear();
 
-    path->clear();
+    // Get the direction and the current position of the path
     double kx,ky,kz;
     path->direction().cartesian(kx,ky,kz);
     double x,y,z;
-    path->position().cartesian(x,y,z);
-    double ds, dsx, dsy, dsz;
+    bfr.cartesian(x,y,z);
 
-    // move the photon package to the first grid cell that it will
-    // pass. If it does not pass any grid cell, return an empty path.
-
-    if (x<xmin())
-    {
-        if (kx<=0.0) return path->clear();
-        else
-        {
-            ds = (xmin()-x)/kx;
-            path->addSegment(-1,ds);
-            x = xmin() + 1e-8*(_xv[1]-_xv[0]);
-            y += ky*ds;
-            z += kz*ds;
-        }
-    }
-    else if (x>xmax())
-    {
-        if (kx>=0.0) return path->clear();
-        else
-        {
-            ds = (xmax()-x)/kx;
-            path->addSegment(-1,ds);
-            x = xmax() - 1e-8*(_xv[_Nx]-_xv[_Nx-1]);
-            y += ky*ds;
-            z += kz*ds;
-        }
-    }
-    if (y<ymin())
-    {
-        if (ky<=0.0) return path->clear();
-        else
-        {
-            ds = (ymin()-y)/ky;
-            path->addSegment(-1,ds);
-            x += kx*ds;
-            y = ymin() + 1e-8*(_yv[1]-_yv[0]);
-            z += kz*ds;
-        }
-    }
-    else if (y>ymax())
-    {
-        if (ky>=0.0) return path->clear();
-        else
-        {
-            ds = (ymax()-y)/ky;
-            path->addSegment(-1,ds);
-            x += kx*ds;
-            y = ymax() - 1e-8*(_yv[_Ny]-_yv[_Ny-1]);
-            z += kz*ds;
-        }
-    }
-    if (z<zmin())
-    {
-        if (kz<=0.0) return path->clear();
-        else
-        {
-            ds = (zmin()-z)/kz;
-            path->addSegment(-1,ds);
-            x += kx*ds;
-            y += ky*ds;
-            z = zmin() + 1e-8*(_zv[1]-_zv[0]);
-        }
-    }
-    else if (z>zmax())
-    {
-        if (kz>=0.0) return path->clear();
-        else
-        {
-            ds = (zmax()-z)/kz;
-            path->addSegment(-1,ds);
-            x += kx*ds;
-            y += ky*ds;
-            z = zmax() - 1e-8*(_zv[_Nz]-_zv[_Nz-1]);
-        }
-    }
-
-    if (!contains(x,y,z)) return path->clear();
-
-    // Now determine which grid cell we are in...
-
+    // Determine which grid cell we are in
     int i = NR::locateClip(_xv, x);
     int j = NR::locateClip(_yv, y);
     int k = NR::locateClip(_zv, z);
 
-    // And there we go...
-
+    // There we go...
+    double ds, dsx, dsy, dsz;
     while (true)
     {
         int m = index(i,j,k);

@@ -69,9 +69,16 @@ public:
 
     /** This function returns a list of indices \f$\ell_k\f$ of the bands that may have a nonzero
         transmission at the specified wavelength \f$\lambda\f$, i.e. for which
-        \f$\lambda^\mathrm{left}_\ell \le \lambda \le \lambda^\mathrm{right}_\ell\f$. If no
-        wavelengths bins match this condition, the function returns an empty list. */
+        \f$\lambda^\mathrm{left}_\ell \le \lambda \le \lambda^\mathrm{right}_\ell\f$. If no bands
+        match this condition, the function returns an empty list. */
     vector<int> bins(double lambda) const override;
+
+    /** This function returns the index \f$\ell\f$ of a band that may have a nonzero transmission
+        at the specified wavelength \f$\lambda\f$, i.e. for which \f$\lambda^\mathrm{left}_\ell \le
+        \lambda \le \lambda^\mathrm{right}_\ell\f$. If no bands match this condition, the function
+        returns -1. If multiple bands match this condition, the function returns the index for the
+        band with the shortest characteristic wavelength. */
+    int bin(double lambda) const override;
 };
 
 //////////////////////////////////////////////////////////////////////

@@ -7,49 +7,47 @@
 #include "Box.hpp"
 #include "NR.hpp"
 
-//////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
 
 namespace
 {
     const int INITIAL_CAPACITY = 1000;
 }
 
-//////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
 
 SpatialGridPath::SpatialGridPath(const Position& bfr, const Direction& bfk)
-    : _bfr(bfr), _bfk(bfk), _s(0)
+    : _bfr(bfr), _bfk(bfk)
 {
-    _v.reserve(INITIAL_CAPACITY);
+    _segments.reserve(INITIAL_CAPACITY);
 }
 
-//////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
 
 SpatialGridPath::SpatialGridPath()
-    : _s(0)
 {
-    _v.reserve(INITIAL_CAPACITY);
+    _segments.reserve(INITIAL_CAPACITY);
 }
 
-//////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
 
 void SpatialGridPath::clear()
 {
-    _s = 0;
-    _v.clear();
+    _segments.clear();
 }
 
-//////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
 
 void SpatialGridPath::addSegment(int m, double ds)
 {
     if (ds>0)
     {
-        _s += ds;
-        _v.push_back(Segment{m,ds,_s,0,0});
+        double s = !_segments.empty() ? _segments.back().s : 0.;
+        _segments.push_back(Segment{m, ds, s+ds, 0.});
     }
 }
 
-//////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
 
 Position SpatialGridPath::moveInside(const Box& box, double eps)
 {
@@ -57,6 +55,9 @@ Position SpatialGridPath::moveInside(const Box& box, double eps)
     static const Position OUTSIDE(std::numeric_limits<double>::infinity(),
                                   std::numeric_limits<double>::infinity(),
                                   std::numeric_limits<double>::infinity());
+
+    // clear the path
+    clear();
 
     // initial position and direction
     double kx,ky,kz;
@@ -146,27 +147,44 @@ Position SpatialGridPath::moveInside(const Box& box, double eps)
     return Position(rx,ry,rz);
 }
 
-//////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
 
-double SpatialGridPath::tau() const
+void SpatialGridPath::findInteractionPoint(double zeta)
 {
-    int N = _v.size();
-    return N ? _v[N-1].tau : 0;
-}
+    _interactionCellIndex = -1;
+    _interactionDistance = 0.;
 
-//////////////////////////////////////////////////////////////////////
-
-double SpatialGridPath::pathLength(double tau) const
-{
-    int N = _v.size();
-    if (N>0 && tau>0)
+    // we can't handle an empty path, nor a specified extinction factor of one (or more)
+    if (!_segments.empty() && zeta>=1)
     {
-        int i = NR::locate(_v,Segment{0,0,0,0,tau});
-        if (i<0) return NR::interpolateLinLin(tau, 0, _v[0].tau, 0, _v[0].s);
-        if (i<N-1) return NR::interpolateLinLin(tau, _v[i].tau, _v[i+1].tau, _v[i].s, _v[i+1].s);
-        return _v[N-1].s;
+        // find a pointer to the first segment that has an extinction factor smaller than or equal to the given value,
+        // or a pointer beyond the list if no such element is found
+        auto p = std::upper_bound(_segments.cbegin(), _segments.cend(), zeta,
+                                  [](double z, const Segment& seg) {return z >= seg.zeta; });
+
+        // if we find the first segment, interpolate with the extinction factor for the path's entry point (i.e. 1.)
+        if (p == _segments.cbegin())
+        {
+            _interactionCellIndex = _segments[0].m;
+            _interactionDistance = NR::interpolateLogLin(zeta, 1., _segments[0].zeta, 0., _segments[0].s);
+        }
+
+        // if we find some other segment, interpolate with the previous segment
+        else if (p < _segments.cend())
+        {
+            auto i = p - _segments.cbegin();
+            _interactionCellIndex = _segments[i].m;
+            _interactionDistance = NR::interpolateLogLin(zeta, _segments[i-1].zeta, _segments[i].zeta,
+                                                               _segments[i-1].s, _segments[i].s);
+        }
+
+        // if we are beyond the last segment, just use the last segment (i.e. assume this is a numerical inaccuracy)
+        else
+        {
+            _interactionCellIndex = _segments.back().m;
+            _interactionDistance = _segments.back().s;
+        }
     }
-    return 0;
 }
 
-//////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////

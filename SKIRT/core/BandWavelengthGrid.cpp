@@ -78,3 +78,15 @@ vector<int> BandWavelengthGrid::bins(double lambda) const
 }
 
 ////////////////////////////////////////////////////////////////////
+
+int BandWavelengthGrid::bin(double lambda) const
+{
+    int n = _bands.size();
+    for (int ell=0; ell!=n; ++ell)
+    {
+        if (_bands[ell]->wavelengthRange().contains(lambda)) return ell;
+    }
+    return -1;
+}
+
+////////////////////////////////////////////////////////////////////

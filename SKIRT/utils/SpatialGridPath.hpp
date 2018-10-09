@@ -12,16 +12,24 @@ class Box;
 
 //////////////////////////////////////////////////////////////////////
 
-/** A SpatialGridPath object contains the details of a path through a spatial grid. Given a spatial
-    grid, i.e. some partition of space into cells, a starting position \f${\bf{r}}\f$ and a
-    propagation direction \f${\bf{k}}\f$, one can calculate the path through the grid. A
-    SpatialGridPath object keeps record of all the cells that are crossed by this path, together
-    with the physical path length \f$\Delta s\f$ covered within each cell, and the path length
-    \f$s\f$ covered along the entire path up to the end of the cell. Given additional information
-    about the transfer medium properties in each cell (at a particular wavelength), one can also
-    calculate optical depth information for the path. A SpatialGridPath object keeps record of the
-    optical depth \f$\Delta\tau\f$ along the path segment within each cell, and the optical depth
-    \f$\tau\f$ along the entire path up to the end of the cell. */
+/** A SpatialGridPath object contains the geometric details of a path through a spatial grid. Given
+    a spatial grid, i.e. some partition of space into cells, a starting position \f${\bf{r}}\f$ and
+    a propagation direction \f${\bf{k}}\f$, one can calculate the path through the grid. A
+    SpatialGridPath object maintains a record for each cell crossed by the path, called a \em
+    segment. A segment stores the spatial cell index (so the cell can be identified in the grid),
+    together with the physical path length \f$\Delta s\f$ covered within the cell, and the path
+    length \f$s\f$ covered along the entire path up to the end of the cell.
+
+    In addition, a SpatialGridPath object allows storing a (cumulative) extinction factor
+    \f$zeta\f$ for each path segment. If this non-geometric information is used, it must be set
+    explicitly by a client class after the segments of the path have been calculated. As a
+    convenience to client classes, the SpatialGridPath class offers some operations on the
+    extinction information, such as locating the interaction point along the path corresponding to
+    a given extinction factor.
+
+    Updating the initial position and/or the direction of the path invalidates all segments in the
+    path, but the segments are not automatically cleared. One should call the clear() function to
+    do so. */
 class SpatialGridPath
 {
 public:
@@ -43,123 +51,99 @@ public:
     /** This function sets the propagation direction along the path to a new value. */
     void setDirection(const Direction& bfk) { _bfk = bfk; }
 
+    /** This function propagates the initial position of the path over a distance \f$s\f$. In other
+        words, it updates the position from \f${\bf{r}}\f$ to \f${\bf{r}}+s\,{\bf{k}}\f$. */
+    void propagatePosition(double s) { _bfr += s*_bfk; }
+
     /** This function returns the initial position of the path. */
     Position position() const { return _bfr; }
 
     /** This function returns the propagation direction along the path. */
     Direction direction() const { return _bfk; }
 
-    // ------- Handling geometric data on path segments -------
+    // ------- Adding path segments -------
 
     /** This function removes all path segments, resulting in an empty path with the original
         initial position and propagation direction. */
     void clear();
 
-    /** This function adds a segment in cell \f$m\f$ with length \f$\Delta s\f$ to the path,
-        assuming \f$\Delta s>0\f$. Otherwise the function does nothing. */
+    /** This function adds a segment in cell \f$m\f$ with length \f$\Delta s\f$ to the path.
+        If \f$\Delta s\le 0\f$, the function does nothing. */
     void addSegment(int m, double ds);
 
-    /** This function adds the segments to the path that are needed to move the initial position
-        along the propagation direction (both specified in the constructor) inside a given box, and
-        returns the final position. If the initial position is already inside the box, no segments
-        are added. If the half-ray formed by the initial position and the propagation direction
-        does not intersect the box, the function returns some arbitrary position outside the box.
-        The small value specified by \em eps is added to the path length beyond the intersection
-        point so that the final position is well inside the box, guarding against rounding errors.
-        */
+    /** This function clears the path, adds any segments needed to move the initial position along
+        the propagation direction (both specified in the constructor) inside a given box, and
+        finally returns the resulting position. The small value specified by \em eps is added to
+        the path length beyond the intersection point so that the final position is well inside the
+        box, guarding against rounding errors. If the initial position is already inside the box,
+        no segments are added. If the half-ray formed by the initial position and the propagation
+        direction does not intersect the box, the function returns some arbitrary position outside
+        the box. */
     Position moveInside(const Box &box, double eps);
 
-    /** This function returns the number of cells crossed along the path. */
-    int size() const { return _v.size(); }
+    // ------- Retrieving path segments -------
 
-    /** This function returns the cell number \f$m\f$ for segment \f$i\f$ in the path. */
-    int m(int i) const { return _v[i].m; }
-
-    /** This function returns the path length covered within the cell in segment \f$i\f$ in the
-        path. */
-    double ds(int i) const { return _v[i].ds; }
-
-    /** This function returns the path length covered from the initial position of the path until
-        the end point of the cell in segment \f$i\f$ in the path. */
-    double s(int i) const { return _v[i].s; }
-
-    // ------- Handling data on optical depth -------
-
-    /** This function calculates the optical depth for the specified distance along the path (or,
-        if the second argument is missing, for the complete path), using the path segment lengths
-        \f$\Delta s_i\f$ already stored within the path object, and the multiplication factors
-        \f$(\kappa\rho)_{m_i}\f$ provided by the caller through a call-back function, where
-        \f$m_i\f$ is the number of the cell being crossed in path segment \f$i\f$. The
-        call-back function must have the signature "double kapparho(int m)". The optical depth
-        information in the path is neither used nor stored. */
-    template<typename Functor> double opticalDepth(const Functor& kapparho,
-                                                   double distance=std::numeric_limits<double>::infinity()) const
-    {
-        double tau = 0.;
-        for (const Segment& segment : _v)
-        {
-            if (segment.m >= 0) tau += kapparho(segment.m) * segment.ds;
-            if (segment.s > distance) break;
-        }
-        return tau;
-    }
-
-    /** This function calculates and stores the optical depth details for the path \f[
-        (\Delta\tau)_i = (\Delta s)_i \times (\kappa\rho)_{m_i}, \f] \f[ \tau_i = \sum_{j=0}^i
-        (\Delta\tau)_j,\f] using the path segment lengths \f$\Delta s_i\f$ already stored within
-        the path object, and the multiplication factors \f$(\kappa\rho)_{m_i}\f$ provided by the
-        caller through a call-back function, where \f$m_i\f$ is the number of the cell being
-        crossed in path segment \f$i\f$. The call-back function must have the signature "double
-        kapparho(int m)". */
-    template<typename Functor> inline void fillOpticalDepth(const Functor& kapparho)
-    {
-        double tau = 0.;
-        for (Segment& segment : _v)
-        {
-            double dtau = segment.m >= 0 ? kapparho(segment.m) * segment.ds : 0.;
-            tau += dtau;
-            segment.dtau = dtau;
-            segment.tau = tau;
-        }
-    }
-
-    /** This function returns the optical depth covered within the cell in segment $i$ in the path.
-        It assumes that the fillOpticalDepth() function was previously invoked for the path. */
-    double dtau(int i) const { return _v[i].dtau; }
-
-    /** This function returns the optical depth covered from the initial position of the path until
-        the end point of the cell in segment $i$ in the path. It assumes that the
-        fillOpticalDepth() function was previously invoked for the path. */
-    double tau(int i) const { return _v[i].tau; }
-
-    /** This function returns the total optical depth along the entire path. It assumes that the
-        fillOpticalDepth() function was previously invoked for the path. */
-    double tau() const;
-
-    /** This function calculates the distance travelled along the path until an optical depth
-        \f$\tau\f$ has been covered. In other words, it converts an optical depth \f$\tau\f$ to a
-        physical path length \f$s\f$. The function assumes that the fillOpticalDepth() function was
-        previously invoked for the path. We have to determine the first cell along the path for
-        which the cumulative optical depth \f$\tau_{m}\f$ becomes larger than \f$\tau\f$. This
-        means that the position we are looking for lies within the \f$m\f$'th cell. The exact
-        path length corresponding to \f$\tau\f$ is then found by linear interpolation within this
-        cell. */
-    double pathLength(double tau) const;
-
-    // ------- Data members -------
-
-protected:
-    Position _bfr;
-    Direction _bfk;
-private:
-    double _s;
+    // basic data structure holding information about a given segment in the path
     struct Segment
     {
-        int m;
-        double ds, s, dtau, tau;
-        bool operator<(Segment other) const { return tau < other.tau; }
+        int m;       // cell index
+        double ds;   // distance within the cell
+        double s;    // cumulative distance until cell exit
+        double zeta; // cumulative extinction factor at cell exit
     };
-    std::vector<Segment> _v;
+
+    /** This function returns (a read-only reference to) a list of the current segments in the
+        path. Each Segment object holds the following public data members: the index \em m of the
+        spatial cell being represented, the distance \f$\Delta s\f$ covered by the path inside the
+        cell, the cumulative distance \f$s\f$ covered by the path from its initial position to the
+        exit point from the cell, and the cumulative extinction factor \f$\zeta\f$ at the exit
+        point (or zero if this information has not been set for the path). */
+    const vector<Segment>& segments() const { return _segments; }
+
+    // ------- Handling extinction factors -------
+
+    /** This function sets the extinction factor corresponding to the end of the path segment with
+        zero-based index \f$i\f$ to the specified value. The extinction factors for consecutive
+        segments must form a non-ascending sequence, i.e. \f[
+        1\geq\zeta_0\geq\zeta_1\geq\,\dots\,\geq\zeta_{N-1}\geq 0\f] where \f$N\f$ is the number of
+        segments in the path.
+
+        This (non-geometric) information can be stored here as a convenience to client classes. If
+        the index is out of range, undefined behavior results. */
+    void setExtinctionFactor(int i, double zeta) { _segments[i].zeta = zeta; }
+
+    /** This function determines the interaction point along the path corresponding to the
+        specified extinction factor, and stores relevant information about it in data members for
+        later retrieval through the interactionCellIndex() and interactionDistance() functions.
+        Specifically, the function first determines the path segment for which the exit extinction
+        factor becomes smaller than the specified extinction factor. It then stores the index of
+        the spatial cell corresponding to the interacting segment. Finally, it calculates and
+        stores the distance covered along the path until the given extinction has been reached by
+        interpolating the cumulative distance within the interacting cell assuming exponential
+        behavior of the extinction.
+
+        The function assumes that both the geometric and extinction information for the path have
+        been set; if this is not the case, the behavior is undefined. */
+    void findInteractionPoint(double zeta);
+
+    /** This function returns the spatial cell index \f$m\f$ corresponding to the interaction point
+        most recently calculated by the findInteractionPoint() function, or -1 if this function has
+        never been called or if there was no interaction point within the path. */
+    int interactionCellIndex() const { return _interactionCellIndex; }
+
+    /** This function returns the distance along the path from its initial position to the
+        interaction point most recently calculated by the findInteractionPoint() function, or 0. if
+        this function has never been called or if there was no interaction point within the path.
+        */
+    double interactionDistance() const { return _interactionDistance; }
+
+    // ------- Data members -------
+private:
+    Position _bfr;
+    Direction _bfk;
+    vector<Segment> _segments;
+    int _interactionCellIndex{-1};
+    double _interactionDistance{0.};
 };
 
 //////////////////////////////////////////////////////////////////////

@@ -112,6 +112,12 @@ public:
         does not lie inside one of the wavelength bins, the function returns an empty list. */
     vector<int> bins(double lambda) const override;
 
+    /** This function returns the index \f$\ell\f$ of the wavelength bin that contains the
+        specified wavelength \f$\lambda\f$, i.e. for which \f$\lambda^\mathrm{left}_\ell <= \lambda
+        < \lambda^\mathrm{right}_\ell\f$. If \f$\lambda\f$ does not lie inside one of the
+        wavelength bins, the function returns -1. */
+    int bin(double lambda) const override;
+
     //======================== Data Members ========================
 
 private:

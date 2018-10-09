@@ -389,9 +389,6 @@ Position AdaptiveMeshSnapshot::generatePosition() const
 
 void AdaptiveMeshSnapshot::path(SpatialGridPath* path) const
 {
-    // initialize the path
-    path->clear();
-
     // if the photon package starts outside the dust grid, move it into the first grid cell that it will pass
     Position r = path->moveInside(_root->extent(), _eps);
 

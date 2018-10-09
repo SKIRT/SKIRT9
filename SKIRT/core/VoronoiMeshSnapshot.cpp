@@ -857,7 +857,6 @@ Position VoronoiMeshSnapshot::generatePosition() const
 void VoronoiMeshSnapshot::path(SpatialGridPath* path) const
 {
     // Initialize the path
-    path->clear();
     Direction bfk = path->direction();
 
     // If the photon package starts outside the dust grid, move it into the first grid cell that it will pass

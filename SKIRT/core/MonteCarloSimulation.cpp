@@ -13,6 +13,7 @@
 #include "ProcessManager.hpp"
 #include "ShortArray.hpp"
 #include "SpatialGrid.hpp"
+#include "SpecialFunctions.hpp"
 #include "StopWatch.hpp"
 #include "StringUtils.hpp"
 #include "TimeLogger.hpp"
@@ -221,10 +222,10 @@ void MonteCarloSimulation::doPrimaryEmissionChunk(size_t firstIndex, size_t numI
                     int minScattEvents = _config->minScattEvents();
                     if (_config->hasMedium()) while (true)
                     {
-                        mediumSystem()->fillOpticalDepth(&pp);
-                        simulateEscapeAndAbsorption(&pp, false);    // TO DO: support storing absorption
-                        if (pp.luminosity()<=0 || (pp.luminosity()<=Lthreshold && pp.numScatt()>=minScattEvents)) break;
+                        mediumSystem()->fillExtinctionInfo(&pp);
+                        if (_config->hasRadiationField()) storeRadiationField(&pp);
                         simulatePropagation(&pp);
+                        if (pp.luminosity()<=0 || (pp.luminosity()<=Lthreshold && pp.numScatt()>=minScattEvents)) break;
                         peelOffScattering(&pp,&ppp);
                         simulateScattering(&pp);
                     }
@@ -258,39 +259,56 @@ void MonteCarloSimulation::peelOffEmission(const PhotonPacket* pp, PhotonPacket*
 
 ////////////////////////////////////////////////////////////////////
 
-void MonteCarloSimulation::simulateEscapeAndAbsorption(PhotonPacket* pp, bool storeAbsorption)
+void MonteCarloSimulation::storeRadiationField(const PhotonPacket* pp)
 {
-    // determine the portion of the packet's luminosity that will be scattered
-    // and register the absorbed portion in every cell, if so requested
-    double wsca = 0.;
-    int numCells = pp->size();
-    for (int n=0; n<numCells; n++)
+    double zetaprev = 1.;
+    for (const auto& segment : pp->segments())
     {
-        int m = pp->m(n);
-        if (m!=-1)
+        int m = segment.m;
+        if (m >= 0)
         {
-            Vec bfv = mediumSystem()->bulkVelocity(m);
-            double albedo = mediumSystem()->albedo(pp->perceivedWavelength(bfv), m);
-            double taustart = (n==0) ? 0. : pp->tau(n-1);
-            double dtau = pp->dtau(n);
-            double wextm = exp(-taustart) * (-expm1(-dtau));
-            wsca += albedo * wextm;
-            if (storeAbsorption)
-            {
-                double wabsm = (1.-albedo) * wextm;
-                double Labsm = pp->luminosity() * wabsm;
-                // TO DO: support storing absorption
-                (void)Labsm;
-            }
+            double lambda = pp->perceivedWavelength(mediumSystem()->bulkVelocity(m));
+            int ell = _config->radiationFieldWavelengthGrid()->bin(lambda);
+            double Lds = pp->perceivedLuminosity(lambda) *
+                            SpecialFunctions::lnmean(zetaprev, segment.zeta) * segment.ds;
+            mediumSystem()->storeRadiationField(m, ell, Lds);
         }
+        zetaprev = segment.zeta;
     }
-    pp->applyBias(wsca);
 }
 
 ////////////////////////////////////////////////////////////////////
 
 void MonteCarloSimulation::simulatePropagation(PhotonPacket* pp)
 {
+    (void)pp;
+    /*    // determine the portion of the packet's luminosity that will be scattered
+        // and register the absorbed portion in every cell, if so requested
+        double wsca = 0.;
+        int numCells = pp->size();
+        for (int n=0; n<numCells; n++)
+        {
+            int m = pp->m(n);
+            if (m!=-1)
+            {
+                Vec bfv = mediumSystem()->bulkVelocity(m);
+                double albedo = mediumSystem()->albedo(pp->perceivedWavelength(bfv), m);
+                double taustart = (n==0) ? 0. : pp->tau(n-1);
+                double dtau = pp->dtau(n);
+                double wextm = exp(-taustart) * (-expm1(-dtau));
+                wsca += albedo * wextm;
+                if (storeAbsorption)
+                {
+                    double wabsm = (1.-albedo) * wextm;
+                    double Labsm = pp->luminosity() * wabsm;
+                    // TO DO: support storing absorption
+                    (void)Labsm;
+                }
+            }
+        }
+        pp->applyBias(wsca);
+    */
+/*
     double taupath = pp->tau();
     if (taupath==0.) return;
 
@@ -312,6 +330,7 @@ void MonteCarloSimulation::simulatePropagation(PhotonPacket* pp)
 
     double s = pp->pathLength(tau);
     pp->propagate(s);
+*/
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -338,8 +357,8 @@ namespace
 
 void MonteCarloSimulation::peelOffScattering(const PhotonPacket* pp, PhotonPacket* ppp)
 {
-    // locate the cell hosting the scattering event
-    int m = mediumSystem()->grid()->cellIndex(pp->position());
+    // get the cell hosting the scattering event
+    int m = pp->interactionCellIndex();
 
     // get the bulk velocity of the material in that cell
     Vec bfv = mediumSystem()->bulkVelocity(m);
@@ -446,7 +465,7 @@ void MonteCarloSimulation::peelOffScattering(const PhotonPacket* pp, PhotonPacke
 void MonteCarloSimulation::simulateScattering(PhotonPacket* pp)
 {
     // locate the cell hosting the scattering event
-    int m = mediumSystem()->grid()->cellIndex(pp->position());
+    int m = pp->interactionCellIndex();
 
     // get the bulk velocity of the material in that cell
     Vec bfv = mediumSystem()->bulkVelocity(m);

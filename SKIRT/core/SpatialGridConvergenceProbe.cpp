@@ -7,7 +7,6 @@
 #include "Configuration.hpp"
 #include "Medium.hpp"
 #include "MediumSystem.hpp"
-#include "SpatialGrid.hpp"
 #include "SpatialGridPath.hpp"
 #include "StringUtils.hpp"
 #include "TextOutFile.hpp"
@@ -25,11 +24,9 @@ namespace
         // we integrate along a small offset from the axes to avoid cell borders
         double eps = 1e-12 * ms->grid()->boundingBox().widths().norm();
         SpatialGridPath path(Position(eps,eps,eps), axis);
-        ms->grid()->path(&path);
-        double tau = path.opticalDepth([ms,lambda,type](int m){ return ms->opacityExt(lambda, m, type); });
+        double tau = ms->opticalDepth(&path, lambda, type);
         path.setDirection(Direction(-axis.x(),-axis.y(),-axis.z()));
-        ms->grid()->path(&path);
-        tau += path.opticalDepth([ms,lambda,type](int m){ return ms->opacityExt(lambda, m, type); });
+        tau += ms->opticalDepth(&path, lambda, type);
         return tau;
     }
 

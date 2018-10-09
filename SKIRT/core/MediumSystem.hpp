@@ -165,50 +165,70 @@ public:
         wavelength \f$\lambda\f$ in spatial cell with index \f$m\f$. */
     double albedo(double lambda, int m) const;
 
-    /** This function returns the optical depth
-        \f$\tau_{\lambda,{\text{d}}}({\boldsymbol{r}},{\boldsymbol{k}})\f$ at wavelength
-        \f$\lambda\f$ along a path through the dust system starting at the position
-        \f${\boldsymbol{r}}\f$ into the direction \f${\boldsymbol{k}}\f$ for a distance \f$d\f$,
-        where \f$\lambda\f$, \f${\boldsymbol{r}}\f$ and \f${\boldsymbol{k}}\f$ are obtained from
-        the specified PhotonPacket object.
+    /** This function returns the optical depth at the specified wavelength along a path through
+        the medium system, taking into account only medium components with the specified material
+        type. The starting position and the direction of the path are taken from the specified
+        SpatialGridPath object.
 
         The function first calls the SpatialGrid::path() function to store the geometrical
-        information on the path through the spatial grid into the photon packet and then calculates
-        the optical depth at the specified distance. The calculation proceeds as described for the
-        fillOpticalDepth() function, the differences being that the path length is limited to the
-        specified distance, and that this function does not store the optical depth information
-        back into the PhotonPacket object. */
-    double opticalDepth(PhotonPacket* pp, double distance);
-
-    /** This function calculates the optical depth
-        \f$\tau_\text{path}(\lambda,{\boldsymbol{r}},{\boldsymbol{k}})\f$ at wavelength
-        \f$\lambda\f$ along a path through the media system starting at the position
-        \f${\boldsymbol{r}}\f$ into the direction \f${\boldsymbol{k}}\f$, where \f$\lambda\f$,
-        \f${\boldsymbol{r}}\f$ and \f${\boldsymbol{k}}\f$ are obtained from the specified
-        PhotonPacket, and it stores the resulting details back into the photon packet.
-
-        The hard work is done by calling the SpatialGrid::path() function which stores the
-        geometrical information on the path through the spatial grid into the photon packet: the
-        cell indices \f$m\f$ of the cells that are crossed by the path, the path length \f$(\Delta
-        s)_m\f$ covered in that particular cell and a total path length counter \f$s_m\f$ that
-        gives the total path length covered between the starting point \f${\boldsymbol{r}}\f$ and
-        the boundary of the cell.
-
-        With this information given, the optical depth can calculated as \f[
+        information on the path through the spatial grid into the SpatialGridPath object. It then
+        calculates the optical depth along the path as \f[
         \tau_\text{path}(\lambda,{\boldsymbol{r}},{\boldsymbol{k}}) = \sum_m (\Delta s)_m \sum_h
-        \varsigma_{\lambda_m,h}^{\text{ext}}\, n_m, \f] where
+        \varsigma_{\lambda}^{\text{ext}}\, n_m, \f] where \f$\varsigma_{\lambda}^{\text{abs}}\f$ is
+        the extinction cross section corresponding to the \f$h\f$'th medium component at wavelength
+        \f$\lambda\f$ and \f$n_{m,h}\f$ the number density in the cell with index \f$m\f$
+        corresponding to the \f$h\f$'th medium component, and where the sum runs only over the
+        medium components with the specified material type. */
+    double opticalDepth(SpatialGridPath* path, double lambda, MaterialMix::MaterialType type);
+
+    /** This function returns the extinction factor along a path through the medium system, taking
+        into account all medium components. The wavelength, the starting position and the direction
+        of the path are taken from the specified PhotonPacket object. The path length is limited to
+        the specified distance, if this is smaller than the distance to the edge of the spatial
+        grid.
+
+        The function first calls the SpatialGrid::path() function to store the geometrical
+        information on the path through the spatial grid into the PhotonPacket object. It then
+        calculates the optical depth at the specified distance as as \f[
+        \tau_\text{path}(\lambda,{\boldsymbol{r}},{\boldsymbol{k},d}) = \sum_m^{s_m<d} (\Delta s)_m
+        \sum_h \varsigma_{\lambda_m,h}^{\text{ext}}\, n_m, \f] where
+        \f$\varsigma_{\lambda_m,h}^{\text{abs}}\f$ is the extinction cross section corresponding to
+        the \f$h\f$'th medium component at wavelength \f$\lambda_m\f$ and \f$n_{m,h}\f$ the number
+        density in the cell with index \f$m\f$ corresponding to the \f$h\f$'th medium component.
+        The wavelength \f$\lambda_m\f$ is the wavelength perceived by the medium in cell \f$m\f$
+        taking into account the bulk velocity in that cell. The sum over the cells is limited to
+        the cells that fall inside the specified distance. Finally, the function calculates the
+        exinction factor \f$\zeta\f$ from the optical depth through \f$\zeta = \exp(-\tau)\f$. */
+    double extinctionFactor(PhotonPacket* pp, double distance);
+
+    /** This function calculates the extinction along a path through the media system defined by
+        the specified PhotonPacket object, and stores the results of the calculation into the same
+        PhotonPacket object.
+
+        The function first calls the SpatialGrid::path() function to store the geometrical
+        information on the path through the spatial grid into the photon packet object, using the
+        initial position \f${\boldsymbol{r}}\f$ and direction \f${\boldsymbol{k}}\f$ obtained from
+        the photon packet.
+
+        With this information given, the function calculates the optical depth for each path
+        segment (or equivalently, for each crossed cell \f$m\f$) as \f[ \tau_m(\lambda_m) = (\Delta
+        s)_m \sum_h \varsigma_{\lambda_m,h}^{\text{ext}}\, n_m, \f] where
         \f$\varsigma_{\lambda_m,h}^{\text{abs}}\f$ is the extinction cross section corresponding to
         the \f$h\f$'th medium component at wavelength \f$\lambda_m\f$ and \f$n_{m,h}\f$ the number
         density in the cell with index \f$m\f$ corresponding to the \f$h\f$'th medium component.
         The wavelength \f$\lambda_m\f$ is the wavelength perceived by the medium in cell \f$m\f$
         taking into account the bulk velocity in that cell.
 
-        The function also stores the details on the calculation of the optical depth in the photon
-        packet, specifically it stores the optical depth covered within the \f$m\f$'th spatial
-        cell, \f[ (\Delta\tau)_m = (\Delta s)_m \sum_h \varsigma_{\lambda_m,h}^{\text{ext}}\, n_m,
-        \f] and the total optical depth \f$\tau_m\f$ covered between the starting point
-        \f${\boldsymbol{r}}\f$ and the boundary of the cell. */
-    void fillOpticalDepth(PhotonPacket* pp);
+        Subsequently, the function calculates the cumulative extinction factors at the segment exit
+        boundaries. Assuming the path crosses \f$N\f$ cells (i.e. consists of \f$N\f$ segments),
+        the \f$N\f$ extinction factors \f$\zeta_i\f$ are determined as \f[ \zeta_{i} = \exp\left(
+        -\sum_{m=0}^{i} \tau_m \right),\; i=0...N-1 \f] These extinction factors are stored into
+        the specified photon packet object. Note that the extinction factor at entry of the initial
+        segment is equal to unity by definition. */
+    void fillExtinctionInfo(PhotonPacket* pp);
+
+    /** TO DO */
+    void storeRadiationField(int m, int ell, double Lds);
 
     //================== Private Types and Functions ====================
 

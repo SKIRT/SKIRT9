@@ -89,6 +89,14 @@ public:
         \f$\lambda^\mathrm{left}_\ell \le \lambda \le \lambda^\mathrm{right}_\ell\f$. If no
         wavelengths bins match this condition, the function returns an empty list. */
     virtual vector<int> bins(double lambda) const = 0;
+
+    /** This function returns the index \f$\ell\f$ of one the wavelength bins that may have a
+        nonzero transmission at the specified wavelength \f$\lambda\f$, i.e. for which
+        \f$\lambda^\mathrm{left}_\ell \le \lambda \le \lambda^\mathrm{right}_\ell\f$. If no
+        wavelengths bins match this condition, the function returns -1. If multiple bins match this
+        condition, the function returns the index for the bin with the shortest characteristic
+        wavelength. */
+    virtual int bin(double lambda) const = 0;
 };
 
 //////////////////////////////////////////////////////////////////////

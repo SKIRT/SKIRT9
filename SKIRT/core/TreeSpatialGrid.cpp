@@ -121,9 +121,6 @@ Position TreeSpatialGrid::randomPositionInCell(int m) const
 
 void TreeSpatialGrid::path(SpatialGridPath* path) const
 {
-    // initialize the path
-    path->clear();
-
     // if the photon package starts outside the dust grid, move it into the first grid cell that it will pass
     Position bfr = path->moveInside(extent(), _eps);
 

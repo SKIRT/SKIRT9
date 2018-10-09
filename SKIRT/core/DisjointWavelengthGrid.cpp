@@ -156,18 +156,26 @@ double DisjointWavelengthGrid::transmission(int /*ell*/, double /*lambda*/) cons
 
 vector<int> DisjointWavelengthGrid::bins(double lambda) const
 {
-    // get the index of the phantom wavelength bin defined by the list of all K borders (where K=N+1 or K=N*2)
-    //  0  => out of range on the left side
-    //  K  => out of range on the right side
-    size_t index = std::upper_bound(begin(_borderv), end(_borderv), lambda) - begin(_borderv);
-
-    // map this index to the actual wavelength bin index, or to "out of range"
-    int ell = _ellv[index];
+    // get the bin index, or -1 for "out of range"
+    int ell = bin(lambda);
 
     // wrap the result in a list
     vector<int> result;
     if (ell >= 0) result.push_back(ell);
     return result;
+}
+
+////////////////////////////////////////////////////////////////////
+
+int DisjointWavelengthGrid::bin(double lambda) const
+{
+    // get the index of the phantom wavelength bin defined by the list of all K borders (where K=N+1 or K=N*2)
+    //  0  => out of range on the left side
+    //  K  => out of range on the right side
+    size_t index = std::upper_bound(begin(_borderv), end(_borderv), lambda) - begin(_borderv);
+
+    // map this index to the actual wavelength bin index, or to -1 for "out of range"
+    return _ellv[index];
 }
 
 ////////////////////////////////////////////////////////////////////

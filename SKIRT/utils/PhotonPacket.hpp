@@ -31,7 +31,7 @@ class BulkVelocityInterface;
     Apart from its wavelength and weight, a photon packet carries information about its polarization
     state, about its origin (e.g. emission by a primary or secondary source), about the
     interactions it experienced since its emission (e.g. the number of scattering events), and
-    about its current path (e.g. starting position, propagation direction, list of dust cells being
+    about its current path (e.g. starting position, propagation direction, spatial grid cells being
     crossed). A photon packet also carries a unique identifier (within the current emission
     segment) for the \em history it is part of, i.e. the collection of scattered and peeled-off
     packets derived from the same originally launched packet (emitted by a primary or secondary
@@ -48,7 +48,7 @@ class BulkVelocityInterface;
     the weight tracked by a photon packet is instead simply defined as \f$W'=L\lambda\f$.
 
     The current path and the polarization state are handled by publicly inheriting repectively the
-    DustGridPath class and the StokesVector class. For performance reasons, a PhotonPacket object
+    SpatialGridPath class and the StokesVector class. For performance reasons, a PhotonPacket object
     is usually constructed once at the start of a loop and then reused in the loop body for many
     consecutive launches; this allows the vectors with path information to remain allocated. Also,
     some trivial functions are implemented inline in the header. */
@@ -211,6 +211,10 @@ public:
         the receiver \f${\bf{v}}_\text{rec}\f$ relative to the model coordinate frame. See the
         shiftedReceptionWavelength() function for more details. */
     double perceivedWavelength(Vec receiverVelocity) const;
+
+    /** This function returns the luminosity \f$L\f$ represented by the photon packet, calculated
+        from its current weight and the specified perceived wavelength. */
+    double perceivedLuminosity(double lambda) const { return _W / lambda; }
 
     // ------- Data members -------
 

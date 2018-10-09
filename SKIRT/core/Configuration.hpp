@@ -121,15 +121,15 @@ public:
     /** Returns the number of random density samples for determining spatial cell mass. */
     int numDensitySamples() const { return _numDensitySamples; }
 
-    /** Returns true if absorption must be stored during the photon cycle, and false otherwise. */
-    bool storeAbsorption() const { return _hasDustEmission; }
+    /** Returns true if the radiation field must be stored during the photon cycle, and false otherwise. */
+    bool hasRadiationField() const { return _hasDustEmission; }
 
     /** Returns true if secondary dust emission must be calculated, and false otherwise. */
     bool hasDustEmission() const { return _hasDustEmission; }
 
     /** Returns true if dust self-absorption must be self-consistently calculated through
         iteration, and false otherwise. */
-    bool iterateSelfAbsorption() const { return _iterateSelfAbsorption; }
+    bool hasSelfAbsorption() const { return _hasSelfAbsorption; }
 
     /** Returns the wavelength grid to be used for storing the radiation field. */
     WavelengthGrid* radiationFieldWavelengthGrid() const { return _radiationFieldWLG; }
@@ -185,7 +185,7 @@ private:
 
     // emission
     bool _hasDustEmission{false};
-    bool _iterateSelfAbsorption{false};
+    bool _hasSelfAbsorption{false};
     WavelengthGrid* _radiationFieldWLG{nullptr};
     WavelengthGrid* _emissionSpectrumWLG{nullptr};
     double _emissionBias{0.5};

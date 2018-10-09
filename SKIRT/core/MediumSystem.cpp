@@ -315,30 +315,59 @@ double MediumSystem::albedo(double lambda, int m) const
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::opticalDepth(PhotonPacket* pp, double distance)
+double MediumSystem::opticalDepth(SpatialGridPath* path, double lambda, MaterialMix::MaterialType type)
 {
-    // determine the path and store the geometric details in the photon packet
-    _grid->path(pp);
+    // determine the geometric details of the path
+    _grid->path(path);
 
-    // calculate and return the optical depth at the specified distance
-    return pp->opticalDepth([this,pp](int m){ return opacityExt(pp->perceivedWavelength(state(m).v), m); }, distance);
+    // calculate the optical depth
+    double tau = 0.;
+    for (const auto& segment : path->segments())
+    {
+        if (segment.m >= 0) tau += opacityExt(lambda, segment.m, type) * segment.ds;
+    }
+    return tau;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-void MediumSystem::fillOpticalDepth(PhotonPacket* pp)
+double MediumSystem::extinctionFactor(PhotonPacket* pp, double distance)
 {
-    // determine the path and store the geometric details in the photon packet
+    // determine the geometric details of the path
     _grid->path(pp);
 
-    // calculate and store the optical depth details in the photon package
-    pp->fillOpticalDepth([this,pp](int m){ return opacityExt(pp->perceivedWavelength(state(m).v), m); });
+    // calculate the optical depth
+    double tau = 0.;
+    for (const auto& segment : pp->segments())
+    {
+        if (segment.m >= 0) tau += opacityExt(pp->perceivedWavelength(state(segment.m).v), segment.m) * segment.ds;
+        if (segment.s > distance) break;
+    }
+    return exp(-tau);
+}
 
-    // verify that the result makes sense
-    double tau = pp->tau();
-    if (tau<0. || !std::isfinite(tau))
-        throw FATALERROR("The optical depth along the path is not a positive number: tau = "
-                         + StringUtils::toString(tau));
+////////////////////////////////////////////////////////////////////
+
+void MediumSystem::fillExtinctionInfo(PhotonPacket* pp)
+{
+    // determine the geometric details of the path
+    _grid->path(pp);
+
+    // calculate the cumulative optical depth and store the corresponding extinction factors in the photon package
+    double tau = 0.;
+    int i = 0;
+    for (auto& segment : pp->segments())
+    {
+        if (segment.m >= 0) tau += opacityExt(pp->perceivedWavelength(state(segment.m).v), segment.m) * segment.ds;
+        pp->setExtinctionFactor(i++, exp(-tau));
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
+void MediumSystem::storeRadiationField(int /*m*/, int /*ell*/, double /*Lds*/)
+{
+    // TO DO
 }
 
 ////////////////////////////////////////////////////////////////////

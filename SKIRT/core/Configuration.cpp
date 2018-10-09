@@ -87,8 +87,8 @@ void Configuration::setupSelfBefore()
         _radiationFieldWLG = emode->radiationFieldWLG();
         _emissionSpectrumWLG = emode->emissionSpectrumWLG();
         _emissionBias = emode->emissionBias();
-        _iterateSelfAbsorption = emode->iterateSelfAbsorption();
-        if (_iterateSelfAbsorption)
+        _hasSelfAbsorption = emode->iterateSelfAbsorption();
+        if (_hasSelfAbsorption)
         {
             _minIterations = emode->minIterations();
             _maxIterations = emode->maxIterations();
@@ -97,7 +97,7 @@ void Configuration::setupSelfBefore()
         }
         _numPrimaryPackets = sim->numPackets() * emode->primaryPacketsMultiplier();
         _numSecondaryPackets = sim->numPackets() * emode->secondaryPacketsMultiplier();
-        if (_iterateSelfAbsorption) _numIterationPackets = sim->numPackets() * emode->iterationPacketsMultiplier();
+        if (_hasSelfAbsorption) _numIterationPackets = sim->numPackets() * emode->iterationPacketsMultiplier();
     }
 
     // check for polarization

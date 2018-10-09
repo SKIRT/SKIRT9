@@ -14,7 +14,6 @@
 #include "MediumSystem.hpp"
 #include "Parallel.hpp"
 #include "ParallelFactory.hpp"
-#include "SpatialGrid.hpp"
 #include "SpatialGridPath.hpp"
 #include "StringUtils.hpp"
 #include "Units.hpp"
@@ -90,8 +89,7 @@ namespace
                     {
                         // set the path direction after transforming from observer to world coordinates
                         path.setDirection(Direction(transform.transform(Direction(theta, phi))));
-                        ms->grid()->path(&path);
-                        tauv[i+Nx*j] = path.opticalDepth([this](int m){ return ms->opacityExt(lambda, m, type); });
+                        tauv[i+Nx*j] = ms->opticalDepth(&path, lambda, type);
                     }
                 }
             }

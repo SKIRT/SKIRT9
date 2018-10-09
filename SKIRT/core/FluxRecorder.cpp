@@ -158,8 +158,8 @@ void FluxRecorder::detect(PhotonPacket* pp, int l, double distance)
     // get the wavelength bin indices that overlap the photon packet wavelength and perform recording for each
     for (int ell : _lambdagrid->bins(pp->wavelength()))
     {
-        // ask the medium system to calculate the optical depth
-        double taupath = _hasMedium ? _ms->opticalDepth(pp, distance) : 0.;
+        // ask the medium system to calculate the extinction factor
+        double zetapath = _hasMedium ? _ms->extinctionFactor(pp, distance) : 1.;
 
         // get the luminosity contribution from the photon packet,
         // taking into account the transmission for the detector bin at this wavelength
@@ -173,8 +173,8 @@ void FluxRecorder::detect(PhotonPacket* pp, int l, double distance)
             L *= rar*rar;
         }
 
-        // apply extinction
-        double Lext = L * exp(-taupath);
+        // apply the extinction
+        double Lext = L * zetapath;
 
         // get number of scatterings (because we use it a lot)
         int numScatt = pp->numScatt();
