@@ -112,6 +112,12 @@ public:
         the index is out of range, undefined behavior results. */
     void setExtinctionFactor(int i, double zeta) { _segments[i].zeta = zeta; }
 
+    /** This function returns the extinction factor corresponding to the end of the last path
+        segment in the path, or 1 if the path has no segments. The function assumes that both the
+        geometric and extinction information for the path have been set; if this is not the case,
+        the behavior is undefined. */
+    double escapeExtinctionFactor();
+
     /** This function determines the interaction point along the path corresponding to the
         specified extinction factor, and stores relevant information about it in data members for
         later retrieval through the interactionCellIndex() and interactionDistance() functions.

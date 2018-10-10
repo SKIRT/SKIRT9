@@ -64,6 +64,7 @@ void Configuration::setupSelfBefore()
         _minWeightReduction = mmode->minWeightReduction();
         _minScattEvents = mmode->minScattEvents();
         _pathLengthBias = mmode->pathLengthBias();
+        _minExtinctionFraction = mmode->minExtinctionFraction();
         _numDensitySamples = mmode->numDensitySamples();
     }
 

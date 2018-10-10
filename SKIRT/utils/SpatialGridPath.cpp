@@ -149,6 +149,13 @@ Position SpatialGridPath::moveInside(const Box& box, double eps)
 
 ////////////////////////////////////////////////////////////////////
 
+double SpatialGridPath::escapeExtinctionFactor()
+{
+    return !_segments.empty() ? _segments.back().zeta : 1.;
+}
+
+////////////////////////////////////////////////////////////////////
+
 void SpatialGridPath::findInteractionPoint(double zeta)
 {
     _interactionCellIndex = -1;

@@ -281,56 +281,47 @@ void MonteCarloSimulation::storeRadiationField(const PhotonPacket* pp)
 
 void MonteCarloSimulation::simulatePropagation(PhotonPacket* pp)
 {
-    (void)pp;
-    /*    // determine the portion of the packet's luminosity that will be scattered
-        // and register the absorbed portion in every cell, if so requested
-        double wsca = 0.;
-        int numCells = pp->size();
-        for (int n=0; n<numCells; n++)
-        {
-            int m = pp->m(n);
-            if (m!=-1)
-            {
-                Vec bfv = mediumSystem()->bulkVelocity(m);
-                double albedo = mediumSystem()->albedo(pp->perceivedWavelength(bfv), m);
-                double taustart = (n==0) ? 0. : pp->tau(n-1);
-                double dtau = pp->dtau(n);
-                double wextm = exp(-taustart) * (-expm1(-dtau));
-                wsca += albedo * wextm;
-                if (storeAbsorption)
-                {
-                    double wabsm = (1.-albedo) * wextm;
-                    double Labsm = pp->luminosity() * wabsm;
-                    // TO DO: support storing absorption
-                    (void)Labsm;
-                }
-            }
-        }
-        pp->applyBias(wsca);
-    */
-/*
-    double taupath = pp->tau();
-    if (taupath==0.) return;
+    // get the escape fraction
+    double zetaesc = pp->escapeExtinctionFactor();
 
+    // if there is no extinction along the path, this photon packet cannot scatter, so terminate it right away
+    if (zetaesc >= 1.)
+    {
+        pp->applyBias(0.);
+        return;
+    }
+
+    // generate a random extinction factor
     double xi = _config->pathLengthBias();
-    double tau = 0.;
+    double zeta = 0.;
     if (xi==0.)
     {
-        tau = random()->exponCutoff(taupath);
+        zeta = 1. - (1.-zetaesc)*random()->uniform();
     }
     else
     {
+        double b = max(zetaesc, _config->minExtinctionFraction());
+        double bb = pow(b,b);
         double X = random()->uniform();
-        tau = X<xi ? random()->uniform()*taupath : random()->exponCutoff(taupath);
-        double p = -exp(-tau)/expm1(-taupath);
-        double q = (1.0-xi)*p + xi/taupath;
-        double weight = p/q;
-        pp->applyBias(weight);
+        zeta = random()->uniform() < xi ? 1. - (1.-zetaesc)*X : pow(1. - (1.-bb)*X, 1./b);
+        double p = -1./(1.-zetaesc);
+        double q = -b*pow(zeta,b-1.) / (1.-bb);
+        double w = p / ((1.0-xi)*p + xi*q);
+        pp->applyBias(w);
     }
 
-    double s = pp->pathLength(tau);
-    pp->propagate(s);
-*/
+    // determine the physical position of the interaction point
+    pp->findInteractionPoint(zeta);
+
+    // calculate the albedo for the cell containing the interaction point
+    Vec bfv = mediumSystem()->bulkVelocity(pp->interactionCellIndex());
+    double albedo = mediumSystem()->albedo(pp->perceivedWavelength(bfv), pp->interactionCellIndex());
+
+    // adjust the weight by the scattered fraction
+    pp->applyBias( (1.-zetaesc)*albedo );
+
+    // advance the position
+    pp->propagate(pp->interactionDistance());
 }
 
 ////////////////////////////////////////////////////////////////////
