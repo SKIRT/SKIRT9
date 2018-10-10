@@ -198,7 +198,7 @@ public:
         The wavelength \f$\lambda_m\f$ is the wavelength perceived by the medium in cell \f$m\f$
         taking into account the bulk velocity in that cell. The sum over the cells is limited to
         the cells that fall inside the specified distance. Finally, the function calculates the
-        exinction factor \f$\zeta\f$ from the optical depth through \f$\zeta = \exp(-\tau)\f$. */
+        exinction factor from the optical depth through \f$\exp(-\tau)\f$. */
     double extinctionFactor(PhotonPacket* pp, double distance);
 
     /** This function calculates the extinction along a path through the media system defined by
@@ -219,13 +219,10 @@ public:
         The wavelength \f$\lambda_m\f$ is the wavelength perceived by the medium in cell \f$m\f$
         taking into account the bulk velocity in that cell.
 
-        Subsequently, the function calculates the cumulative extinction factors at the segment exit
-        boundaries. Assuming the path crosses \f$N\f$ cells (i.e. consists of \f$N\f$ segments),
-        the \f$N\f$ extinction factors \f$\zeta_i\f$ are determined as \f[ \zeta_{i} = \exp\left(
-        -\sum_{m=0}^{i} \tau_m \right),\; i=0...N-1 \f] These extinction factors are stored into
-        the specified photon packet object. Note that the extinction factor at entry of the initial
-        segment is equal to unity by definition. */
-    void fillExtinctionInfo(PhotonPacket* pp);
+        Subsequently, the function calculates the cumulative optical depth values at the segment
+        exit boundaries and stores them into the specified photon packet object. Note that the
+        optical depth at entry of the initial segment is equal to zero by definition. */
+    void fillOpticalDepthInfo(PhotonPacket* pp);
 
     /** TO DO */
     void storeRadiationField(int m, int ell, double Lds);

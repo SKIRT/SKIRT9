@@ -149,47 +149,47 @@ Position SpatialGridPath::moveInside(const Box& box, double eps)
 
 ////////////////////////////////////////////////////////////////////
 
-double SpatialGridPath::escapeExtinctionFactor()
+double SpatialGridPath::totalOpticalDepth()
 {
-    return !_segments.empty() ? _segments.back().zeta : 1.;
+    return !_segments.empty() ? _segments.back().tau : 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-void SpatialGridPath::findInteractionPoint(double zeta)
+void SpatialGridPath::findInteractionPoint(double tau)
 {
-    _interactionCellIndex = -1;
-    _interactionDistance = 0.;
-
-    // we can't handle an empty path, nor a specified extinction factor of one (or more)
-    if (!_segments.empty() && zeta<1)
+    // we can't handle an empty path
+    if (_segments.empty())
     {
-        // find a pointer to the first segment that has an extinction factor smaller than or equal to the given value,
+        _interactionCellIndex = -1;
+        _interactionDistance = 0.;
+    }
+    else
+    {
+        // find a pointer to the first segment that has an exit optical depth larger than or equal to the given value,
         // or a pointer beyond the list if no such element is found
-        auto p = std::upper_bound(_segments.cbegin(), _segments.cend(), zeta,
-                                  [](double z, const Segment& seg) {return z >= seg.zeta; });
+        auto seg = std::lower_bound(_segments.cbegin(), _segments.cend(), tau,
+                                    [](const Segment& seg, double t) {return seg.tau < t; });
 
-        // if we find the first segment, interpolate with the extinction factor for the path's entry point (i.e. 1.)
-        if (p == _segments.cbegin())
+        // if we find the first segment, interpolate with the path's entry point
+        if (seg == _segments.cbegin())
         {
-            _interactionCellIndex = _segments[0].m;
-            _interactionDistance = NR::interpolateLogLin(zeta, 1., _segments[0].zeta, 0., _segments[0].s);
+            _interactionCellIndex = seg->m;
+            _interactionDistance = NR::interpolateLinLin(tau, 0., seg->tau, 0., seg->s);
         }
 
         // if we find some other segment, interpolate with the previous segment
-        else if (p < _segments.cend())
+        else if (seg < _segments.cend())
         {
-            auto i = p - _segments.cbegin();
-            _interactionCellIndex = _segments[i].m;
-            _interactionDistance = NR::interpolateLogLin(zeta, _segments[i-1].zeta, _segments[i].zeta,
-                                                               _segments[i-1].s, _segments[i].s);
+            _interactionCellIndex = seg->m;
+            _interactionDistance = NR::interpolateLinLin(tau, (seg-1)->tau, seg->tau, (seg-1)->s, seg->s);
         }
 
         // if we are beyond the last segment, just use the last segment (i.e. assume this is a numerical inaccuracy)
         else
         {
-            _interactionCellIndex = _segments.back().m;
-            _interactionDistance = _segments.back().s;
+            _interactionCellIndex = (seg-1)->m;
+            _interactionDistance = (seg-1)->s;
         }
     }
 }

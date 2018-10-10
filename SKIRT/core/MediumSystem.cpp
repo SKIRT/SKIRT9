@@ -350,7 +350,7 @@ double MediumSystem::extinctionFactor(PhotonPacket* pp, double distance)
 
 ////////////////////////////////////////////////////////////////////
 
-void MediumSystem::fillExtinctionInfo(PhotonPacket* pp)
+void MediumSystem::fillOpticalDepthInfo(PhotonPacket* pp)
 {
     // determine the geometric details of the path
     _grid->path(pp);
@@ -361,7 +361,7 @@ void MediumSystem::fillExtinctionInfo(PhotonPacket* pp)
     for (auto& segment : pp->segments())
     {
         if (segment.m >= 0) tau += opacityExt(pp->perceivedWavelength(state(segment.m).v), segment.m) * segment.ds;
-        pp->setExtinctionFactor(i++, exp(-tau));
+        pp->setOpticalDepth(i++, tau);
     }
 }
 

@@ -20,16 +20,16 @@ class Box;
     together with the physical path length \f$\Delta s\f$ covered within the cell, and the path
     length \f$s\f$ covered along the entire path up to the end of the cell.
 
-    In addition, a SpatialGridPath object allows storing a (cumulative) extinction factor
-    \f$zeta\f$ for each path segment. If this non-geometric information is used, it must be set
+    In addition, a SpatialGridPath object allows storing a (cumulative) optical depth \f$tau\f$
+    with each path segment. Before this non-geometric information is used, it must be set
     explicitly by a client class after the segments of the path have been calculated. As a
-    convenience to client classes, the SpatialGridPath class offers some operations on the
-    extinction information, such as locating the interaction point along the path corresponding to
-    a given extinction factor.
+    convenience to client classes, the SpatialGridPath class offers some operations on this extra
+    information, such as locating the interaction point along the path corresponding to a given
+    optical depth.
 
     Updating the initial position and/or the direction of the path invalidates all segments in the
-    path, but the segments are not automatically cleared. One should call the clear() function to
-    do so. */
+    path, but the segments are not automatically cleared. One should call the clear() function or
+    the moveInside() function to do so. */
 class SpatialGridPath
 {
 public:
@@ -89,48 +89,47 @@ public:
         int m;       // cell index
         double ds;   // distance within the cell
         double s;    // cumulative distance until cell exit
-        double zeta; // cumulative extinction factor at cell exit
+        double tau;  // cumulative optical depth at cell exit
     };
 
     /** This function returns (a read-only reference to) a list of the current segments in the
         path. Each Segment object holds the following public data members: the index \em m of the
         spatial cell being represented, the distance \f$\Delta s\f$ covered by the path inside the
         cell, the cumulative distance \f$s\f$ covered by the path from its initial position to the
-        exit point from the cell, and the cumulative extinction factor \f$\zeta\f$ at the exit
-        point (or zero if this information has not been set for the path). */
+        exit point from the cell, and the cumulative cumulative optical depth \f$\tau\f$ at the
+        exit point (or zero if this information has not been set for the path). */
     const vector<Segment>& segments() const { return _segments; }
 
-    // ------- Handling extinction factors -------
+    // ------- Handling optical depth -------
 
-    /** This function sets the extinction factor corresponding to the end of the path segment with
-        zero-based index \f$i\f$ to the specified value. The extinction factors for consecutive
-        segments must form a non-ascending sequence, i.e. \f[
-        1\geq\zeta_0\geq\zeta_1\geq\,\dots\,\geq\zeta_{N-1}\geq 0\f] where \f$N\f$ is the number of
-        segments in the path.
+    /** This function sets the optical depth corresponding to the end of the path segment with
+        zero-based index \f$i\f$ to the specified value. The optical depth values for consecutive
+        segments must form a non-descending sequence, i.e. \f[ 0\leq\tau_0 \leq\tau_1 \leq\,\dots\,
+        \leq\tau_{N-1}\f] where \f$N\f$ is the number of segments in the path.
 
         This (non-geometric) information can be stored here as a convenience to client classes. If
         the index is out of range, undefined behavior results. */
-    void setExtinctionFactor(int i, double zeta) { _segments[i].zeta = zeta; }
+    void setOpticalDepth(int i, double tau) { _segments[i].tau = tau; }
 
-    /** This function returns the extinction factor corresponding to the end of the last path
-        segment in the path, or 1 if the path has no segments. The function assumes that both the
-        geometric and extinction information for the path have been set; if this is not the case,
-        the behavior is undefined. */
-    double escapeExtinctionFactor();
+    /** This function returns the optical depth corresponding to the end of the last path segment
+        in the path, or zero if the path has no segments. The function assumes that both the
+        geometric and optical depth information for the path have been set; if this is not the
+        case, the behavior is undefined. */
+    double totalOpticalDepth();
 
     /** This function determines the interaction point along the path corresponding to the
-        specified extinction factor, and stores relevant information about it in data members for
-        later retrieval through the interactionCellIndex() and interactionDistance() functions.
-        Specifically, the function first determines the path segment for which the exit extinction
-        factor becomes smaller than the specified extinction factor. It then stores the index of
-        the spatial cell corresponding to the interacting segment. Finally, it calculates and
-        stores the distance covered along the path until the given extinction has been reached by
-        interpolating the cumulative distance within the interacting cell assuming exponential
-        behavior of the extinction.
+        specified optical depth, and stores relevant information about it in data members for later
+        retrieval through the interactionCellIndex() and interactionDistance() functions.
+        Specifically, the function first determines the path segment for which the exit optical
+        depth becomes smaller than the specified optical depth. It then stores the index of the
+        spatial cell corresponding to the interacting segment. Finally, it calculates and stores
+        the distance covered along the path until the specified optical depth has been reached by
+        linear interpolation within the interacting cell (which is equivalent to assuming
+        exponential behavior of the extinction within the cell).
 
-        The function assumes that both the geometric and extinction information for the path have
-        been set; if this is not the case, the behavior is undefined. */
-    void findInteractionPoint(double zeta);
+        The function assumes that both the geometric and optical depth information for the path
+        have been set; if this is not the case, the behavior is undefined. */
+    void findInteractionPoint(double tau);
 
     /** This function returns the spatial cell index \f$m\f$ corresponding to the interaction point
         most recently calculated by the findInteractionPoint() function, or -1 if this function has
@@ -138,7 +137,7 @@ public:
     int interactionCellIndex() const { return _interactionCellIndex; }
 
     /** This function returns the distance along the path from its initial position to the
-        interaction point most recently calculated by the findInteractionPoint() function, or 0. if
+        interaction point most recently calculated by the findInteractionPoint() function, or zero if
         this function has never been called or if there was no interaction point within the path.
         */
     double interactionDistance() const { return _interactionDistance; }

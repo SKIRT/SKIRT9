@@ -222,7 +222,7 @@ void MonteCarloSimulation::doPrimaryEmissionChunk(size_t firstIndex, size_t numI
                     int minScattEvents = _config->minScattEvents();
                     if (_config->hasMedium()) while (true)
                     {
-                        mediumSystem()->fillExtinctionInfo(&pp);
+                        mediumSystem()->fillOpticalDepthInfo(&pp);
                         if (_config->hasRadiationField()) storeRadiationField(&pp);
                         simulatePropagation(&pp);
                         if (pp.luminosity()<=0 || (pp.luminosity()<=Lthreshold && pp.numScatt()>=minScattEvents)) break;
@@ -261,19 +261,19 @@ void MonteCarloSimulation::peelOffEmission(const PhotonPacket* pp, PhotonPacket*
 
 void MonteCarloSimulation::storeRadiationField(const PhotonPacket* pp)
 {
-    double zetaprev = 1.;
+    double extBeg = 1.;                         // extinction factor at begin of current segment
     for (const auto& segment : pp->segments())
     {
+        double extEnd = exp(-segment.tau);      // extinction factor at end of current segment
         int m = segment.m;
         if (m >= 0)
         {
             double lambda = pp->perceivedWavelength(mediumSystem()->bulkVelocity(m));
             int ell = _config->radiationFieldWavelengthGrid()->bin(lambda);
-            double Lds = pp->perceivedLuminosity(lambda) *
-                            SpecialFunctions::lnmean(zetaprev, segment.zeta) * segment.ds;
+            double Lds = pp->perceivedLuminosity(lambda) * SpecialFunctions::lnmean(extBeg, extEnd) * segment.ds;
             mediumSystem()->storeRadiationField(m, ell, Lds);
         }
-        zetaprev = segment.zeta;
+        extBeg = extEnd;
     }
 }
 
@@ -281,48 +281,43 @@ void MonteCarloSimulation::storeRadiationField(const PhotonPacket* pp)
 
 void MonteCarloSimulation::simulatePropagation(PhotonPacket* pp)
 {
-    // get the escape fraction
-    double zetaesc = pp->escapeExtinctionFactor();
+    // get the total optical depth
+    double taupath = pp->totalOpticalDepth();
 
     // if there is no extinction along the path, this photon packet cannot scatter, so terminate it right away
-    if (zetaesc >= 1.)
+    if (taupath <= 0.)
     {
         pp->applyBias(0.);
         return;
     }
 
-    // generate a random extinction factor
+    // generate a random optical depth
     double xi = _config->pathLengthBias();
-    double zeta = 0.;
-    double X = random()->uniform();
+    double tau = 0.;
     if (xi==0.)
     {
-        zeta = 1. - (1.-zetaesc)*X;
+        tau = random()->exponCutoff(taupath);
     }
     else
     {
-        double b = max(zetaesc, 0.01);
-        double bb = pow(b,b);
-        zeta = random()->uniform() < xi ? 1. - (1.-zetaesc)*X : pow(1. - (1.-bb)*X, 1./b);
-        double p = -1./(1.-zetaesc);
-        double q = -b*pow(zeta,b-1.) / (1.-bb);
-        double w = p / ((1.0-xi)*p + xi*q);
-        pp->applyBias(w);
+        tau = random()->uniform()<xi ? random()->uniform()*taupath : random()->exponCutoff(taupath);
+        double p = -exp(-tau)/expm1(-taupath);
+        double q = (1.0-xi)*p + xi/taupath;
+        double weight = p/q;
+        pp->applyBias(weight);
     }
 
     // determine the physical position of the interaction point
-    pp->findInteractionPoint(zeta);
-    if (pp->interactionCellIndex()<0)
-    {
-        throw FATALERROR("Cannot locate photon packet interaction point");
-    }
+    pp->findInteractionPoint(tau);
+    int m = pp->interactionCellIndex();
+    if (m<0) throw FATALERROR("Cannot locate photon packet interaction point");
 
     // calculate the albedo for the cell containing the interaction point
-    Vec bfv = mediumSystem()->bulkVelocity(pp->interactionCellIndex());
-    double albedo = mediumSystem()->albedo(pp->perceivedWavelength(bfv), pp->interactionCellIndex());
+    Vec bfv = mediumSystem()->bulkVelocity(m);
+    double albedo = mediumSystem()->albedo(pp->perceivedWavelength(bfv), m);
 
     // adjust the weight by the scattered fraction
-    pp->applyBias( (1.-zetaesc)*albedo );
+    pp->applyBias( -expm1(-taupath) * albedo );
 
     // advance the position
     pp->propagate(pp->interactionDistance());
