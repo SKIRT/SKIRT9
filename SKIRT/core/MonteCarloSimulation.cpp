@@ -294,15 +294,15 @@ void MonteCarloSimulation::simulatePropagation(PhotonPacket* pp)
     // generate a random extinction factor
     double xi = _config->pathLengthBias();
     double zeta = 0.;
+    double X = random()->uniform();
     if (xi==0.)
     {
-        zeta = 1. - (1.-zetaesc)*random()->uniform();
+        zeta = 1. - (1.-zetaesc)*X;
     }
     else
     {
         double b = max(zetaesc, _config->minExtinctionFraction());
         double bb = pow(b,b);
-        double X = random()->uniform();
         zeta = random()->uniform() < xi ? 1. - (1.-zetaesc)*X : pow(1. - (1.-bb)*X, 1./b);
         double p = -1./(1.-zetaesc);
         double q = -b*pow(zeta,b-1.) / (1.-bb);
@@ -312,6 +312,10 @@ void MonteCarloSimulation::simulatePropagation(PhotonPacket* pp)
 
     // determine the physical position of the interaction point
     pp->findInteractionPoint(zeta);
+    if (pp->interactionCellIndex()<0)
+    {
+        throw FATALERROR("Cannot locate photon packet interaction point");
+    }
 
     // calculate the albedo for the cell containing the interaction point
     Vec bfv = mediumSystem()->bulkVelocity(pp->interactionCellIndex());

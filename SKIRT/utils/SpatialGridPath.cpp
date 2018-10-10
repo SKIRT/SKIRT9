@@ -162,7 +162,7 @@ void SpatialGridPath::findInteractionPoint(double zeta)
     _interactionDistance = 0.;
 
     // we can't handle an empty path, nor a specified extinction factor of one (or more)
-    if (!_segments.empty() && zeta>=1)
+    if (!_segments.empty() && zeta<1)
     {
         // find a pointer to the first segment that has an extinction factor smaller than or equal to the given value,
         // or a pointer beyond the list if no such element is found
