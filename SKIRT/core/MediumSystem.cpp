@@ -343,6 +343,8 @@ double MediumSystem::extinctionFactor(PhotonPacket* pp, double distance)
         if (segment.m >= 0) tau += opacityExt(pp->perceivedWavelength(state(segment.m).v), segment.m) * segment.ds;
         if (segment.s > distance) break;
     }
+
+    // return the corresponding extinction factor
     return exp(-tau);
 }
 

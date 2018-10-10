@@ -118,10 +118,6 @@ public:
         distribution. */
     double pathLengthBias() const { return _pathLengthBias; }
 
-    /** Returns the fraction of path lengths sampled from a linear rather than an exponential
-        distribution. */
-    double minExtinctionFraction() const { return _minExtinctionFraction; }
-
     /** Returns the number of random density samples for determining spatial cell mass. */
     int numDensitySamples() const { return _numDensitySamples; }
 
@@ -185,7 +181,6 @@ private:
     double _minWeightReduction{1e4};
     int _minScattEvents{0};
     double _pathLengthBias{0.5};
-    double _minExtinctionFraction{0.01};
     int _numDensitySamples{100};
 
     // emission

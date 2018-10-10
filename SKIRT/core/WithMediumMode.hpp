@@ -35,13 +35,6 @@ class WithMediumMode : public SimulationMode
         ATTRIBUTE_DEFAULT_VALUE(pathLengthBias, "0.5")
         ATTRIBUTE_DISPLAYED_IF(pathLengthBias, "Level3")
 
-    PROPERTY_DOUBLE(minExtinctionFraction,
-                    "the minimum extinction fraction allowed in the stretched path length distribution")
-        ATTRIBUTE_MIN_VALUE(minExtinctionFraction, "]0")
-        ATTRIBUTE_MAX_VALUE(minExtinctionFraction, "1[")
-        ATTRIBUTE_DEFAULT_VALUE(minExtinctionFraction, "0.01")
-        ATTRIBUTE_DISPLAYED_IF(minExtinctionFraction, "Level3")
-
     PROPERTY_INT(numDensitySamples, "the number of random density samples for determining spatial cell mass")
         ATTRIBUTE_MIN_VALUE(numDensitySamples, "10")
         ATTRIBUTE_MAX_VALUE(numDensitySamples, "1000")

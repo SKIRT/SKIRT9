@@ -301,7 +301,7 @@ void MonteCarloSimulation::simulatePropagation(PhotonPacket* pp)
     }
     else
     {
-        double b = max(zetaesc, _config->minExtinctionFraction());
+        double b = max(zetaesc, 0.01);
         double bb = pow(b,b);
         zeta = random()->uniform() < xi ? 1. - (1.-zetaesc)*X : pow(1. - (1.-bb)*X, 1./b);
         double p = -1./(1.-zetaesc);
