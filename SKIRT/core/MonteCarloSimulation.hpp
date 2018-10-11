@@ -153,12 +153,9 @@ private:
     void peelOffEmission(const PhotonPacket* pp, PhotonPacket* ppp);
 
     /** This function stores the contribution of the specified photon packet to the radiation field
-        in the cells crossed by the packet's path. The function assumes that the extinction factors
-        corresponding to path segment endings have been set for the photon packet, and that these
-        factors form a non-ascending sequence, i.e. \f[ 1\geq\zeta_0\geq\zeta_1\geq\,
-        \dots\,\geq\zeta_{N-1}\geq 0\f] where \f$N\f$ is the number of segments in the path. By
-        definition, the extinction factor at the beginning of the path (i.e. at the start of the
-        first segment) is equal to one.
+        in the cells crossed by the packet's path. The function assumes that both the geometric and
+        optical depth information for the photon packet's path have been set; if this is not the
+        case, the behavior is undefined.
 
         The radiation field is discretized on the spatial grid of the simulation (held by the
         MediumSystem object) and on a wavelength grid provided specifically for this purpose (see
@@ -169,15 +166,15 @@ private:
         velocity of the medium in that cell.
 
         For each segment \f$n\f$ in the photon packet's path, this function first determines the
-        corresponding spatial/wavelength bin. To the contents of that bin, the function adds the
-        product of the mean luminosity carried by the photon packet along the segment and the
-        distance covered by the segment, or \f[ (L\Delta s)_n = L_{\mathrm{mean},n} \,(\Delta s)_n
-        = L\,\mathrm{lnmean}(\zeta_{n-1},\zeta_n) \,(\Delta s)_n \f] where \f$L\f$ is the
-        luminosity carried by the photon packet, and \f$\mathrm{lnmean}(\zeta_{n-1},\zeta_n)\f$ is
-        the logarithmic mean of the extinction factors at the start and end of the segment. Using
-        the logarithmic mean assumes an exponential behavior of the exinction within the segment.
-        This assumption is exact when the medium consists of spherical dust grains. In other cases
-        (for example with spheriodal grains), it is an approximation.
+        corresponding spatial/wavelength bin as described above. To the contents of that bin, the
+        function adds the product of the mean luminosity carried by the photon packet along the
+        segment and the distance covered by the segment, or \f[ (L\Delta s)_n = L_{\text{mean},n}
+        \,(\Delta s)_n = L\,\text{lnmean} \left(\text{e}^{-\tau_{n-1}}, \text{e}^{-\tau_n}\right)
+        \,(\Delta s)_n \f] where \f$L\f$ is the luminosity carried by the photon packet,
+        \f$\text{lnmean}()\f$ is the logarithmic mean, \f$\tau_{n-1}\f$ and \f$\tau_n\f$ represent
+        the cumulative optical depth at the start and end of the segment, and \f$(\Delta s)_n\f$ is
+        the distance covered by the segment. Using the logarithmic mean assumes an exponential
+        behavior of the exinction with distance within the segment.
 
         Once this information has been accumulated for all photon packets launched during a segment
         of the simulation, the mean intensity of the radiation field in each spatial/wavelength bin
@@ -191,81 +188,43 @@ private:
     void storeRadiationField(const PhotonPacket* pp);
 
     /** This function determines the next scattering location of a photon packet and simulates its
-        propagation to this position. The function assumes that the extinction factors
-        corresponding to path segment endings have been set for the photon packet, and that these
-        factors form a non-ascending sequence, i.e. \f[ 1\geq\zeta_0\geq\zeta_1\geq\,
-        \dots\,\geq\zeta_{N-1}\geq 0\f] where \f$N\f$ is the number of segments in the path. By
-        definition, the extinction factor at the beginning of the path (i.e. at the start of the
-        first segment) is equal to one.
+        propagation to that position. The function assumes that both the geometric and optical
+        depth information for the photon packet's path have been set; if this is not the case, the
+        behavior is undefined. The function proceeds in a number of steps as outlined below.
 
-        The function proceeds in a number of steps as outlined below.
+        <b>Total optical depth</b>
 
-        <b>Escape fraction</b>
+        We first determine the total optical depth \f$\tau_\text{path}\f$ of the photon packet's
+        path. Because the path has been calculated until the edge of the simulation's spatial grid,
+        \f$\tau_\text{path}\f$ is equal to the cumulative optical depth at the end of the last
+        segment in the path.
 
-        We first determine the fraction \f$f_\mathrm{esc}\f$ of the photon packet's luminosity that
-        escapes from the model. Because the path has been calculated until the edge of the
-        simulation's spatial grid, the escaping luminosity fraction is equal to the extinction
-        factor at the end of the last segment in the path, i.e. \f$f_\mathrm{esc}=\zeta_{N-1}\f$.
+        <b>%Random optical depth</b>
 
-        <b>%Random extinction factor</b>
-
-        We then randomly generate the extinction factor \f$\zeta\f$ at the interaction site from an
-        appropriate distribution.
-
-        With \f$L(s)\f$ the photon packet luminosity at a distance \f$s\f$ along the path, the
-        probability that a photon packet has \em not interacted between 0 and \f$s\f$ is given by
-        \f$L(s)/L(0)\equiv\zeta(s)\f$. The cumulative distribution function for the interaction
-        site thus is \f$P(s)=1-\zeta(s)\f$, or \f$P(\zeta)=1-\zeta\f$. Because we implement forced
-        scattering, we actually need to cut off the distribution at the escape extinction factor
-        \f$\zeta_{N-1}\f$. Thus we finally get
-
-        \f[ P(\zeta) = \frac{1-\zeta}{1-\zeta_{N-1}} \qquad 1\geq\zeta\geq\zeta_{N-1}. \f]
-
-        Equating this cumulative distribution to a uniform deviate \f$\mathcal{X}\f$ and solving
-        for \f$\zeta\f$ yields \f[ \zeta = 1 - (1-\zeta_{N-1}) \mathcal{X}. \f]
-
-        Note that we don't need the probability density distribution \f$p(\zeta)\f$ for generating
-        an unbiased extinction factor. However, it is easily calculated as the derivative of
-        \f$P(\zeta)\f$ above,
-
-        \f[ p(\zeta) = \frac{-1}{1-\zeta_{N-1}} \qquad 1\geq\zeta\geq\zeta_{N-1}. \f]
-
-        <b>%Biased extinction factor</b>
-
-        In case the configured biasing fraction \f$\xi\f$ is nonzero, we sample that fraction of
-        the extinction factors from an alternate probability distribution \f$q(\zeta)\f$ that
-        favors lower values, effectively stretching the interaction distances toward higher optical
-        depths, on average. The selected alternate probability density and its corresponding
-        cumulative distribution are
-
-        \f[ q(\zeta) = \frac{-b\,\zeta^{b-1}}{1-b^b} \qquad Q(\zeta) = \frac{1-\zeta^b}{1-b^b}
-        \qquad 1\geq\zeta\geq b. \f]
-
-        where the parameter \f$b\f$ controls both the range of the distribution and the power-law
-        index. It is chosen as the largest of the escape extinction factor and some configured
-        minimum extinction factor, \f[ b = \max(\zeta_{N-1}, \zeta_\mathrm{min}). \f] Limiting the
-        range to a reasonable extinction factor (e.g. \f$\zeta_\mathrm{min}=0.01\f$) avoids
-        stretching the path length to such an extent that the photon packet's luminosity becomes
-        insignificant in a single step.
-
-        Equating the cumulative distribution \f$Q(\zeta)\f$ to a uniform deviate \f$\mathcal{X}\f$
-        and solving for \f$\zeta\f$ yields \f[ \zeta = \left[1 - (1-b^b) \mathcal{X}\right]^{1/b}.
-        \f]
-
-        As the final biased probability distribution, we thus use a linear combination between the
-        original distribution and the stretched distribution, \f[ q^*(\zeta) = (1-\xi)\,p(\zeta) +
-        \xi\,q(\zeta) \f] so that the bias weight can be written as \f[ w^*(\zeta) =
-        \frac{p(\zeta)} {(1-\xi)\,p(\zeta) + \xi\,q(\zeta)}. \f]
+        We then randomly generate the optical depth \f$\tau\f$ at the interaction site from an
+        appropriate distribution. Given the total optical depth along the path of the photon packet
+        \f$\tau_\text{path}\f$, the appropriate probability distribution for the covered optical
+        depth is an exponential probability distribution cut off at \f$\tau_\text{path}\f$.
+        Properly normalized, it reads as \f[ p(\tau) = \frac{{\text{e}}^{-\tau}}
+        {1-{\text{e}}^{-\tau_\text{path}}} \f] where the range of \f$\tau\f$ is limited to the
+        interval \f$[0,\tau_\text{path}]\f$. Instead of generating a random optical depth
+        \f$\tau\f$ directly from this distribution, we use the biasing technique in order to cover
+        the entire allowed optical depth range \f$[0,\tau_\text{path}]\f$ more uniformly. As the
+        biased probability distribution, we use a linear combination between an exponential
+        distribution and a uniform distribution, with a parameter \f$\xi\f$ setting the relative
+        importance of the uniform part. In formula form, \f[ q(\tau) = (1-\xi)\, \frac{
+        {\text{e}}^{-\tau} } { 1-{\text{e}}^{-\tau_\text{path}} } + \frac{\xi}{\tau_\text{path}}.
+        \f] A random optical depth from this distribution is readily determined. Since we use
+        biasing, the weight, or correspondingly the luminosity, of the photon packet needs to be
+        adjusted with a bias factor \f$p(\tau)/q(\tau)\f$.
 
         <b>Interaction point</b>
 
-        Now that the extinction factor \f$\zeta\f$ at the interaction site has been (randomly)
-        chosen, we determine the physical position of the interaction point along the path. This is
+        Now that the optical depth \f$\tau\f$ at the interaction site has been (randomly) chosen,
+        we determine the physical position of the interaction point along the path. This is
         accomplished in two steps: a binary search among the path segments to determine the segment
-        (or cell) "containing" the given extinction factor, and subsequent interpolation within the
-        cell assuming exponential behavior of the extinction. This assumption is exact when the
-        medium consists of spherical dust grains. In other cases (for example with spheriodal
-        grains), it is an approximation.
+        (or cell) "containing" the given cumulative optical depth, and subsequent linear
+        interpolation within the cell assuming exponential behavior of the extinction.
 
         <b>Albedo</b>
 
@@ -276,14 +235,15 @@ private:
 
         We adjust the weight of the photon packet to compensate for the escaped and absorbed
         portions of the luminosity. More precisely, the weight is multiplied by the scattered
-        fraction \f$f_\mathrm{sca} = (1-f_\mathrm{esc})\,\varpi = (1-\zeta_{N-1})\,\varpi\f$.
+        fraction, i.e. the fraction of the luminosity that does not escape and does not get
+        absorbed, \f[ f_\text{sca} = (1-f_\text{esc}) \,\varpi = (1-\text{e}^{-\tau_\text{path}})
+        \,\varpi. \f]
 
         <b>Advance position</b>
 
         Finally we advance the initial position of the photon packet to the interaction point. This
-        last step invalidates the photon packet's path (including geometric and extinction
-        information). The packet is now ready to be scattered into a new direction.
-        */
+        last step invalidates the photon packet's path (including geometric and optical depth
+        information). The packet is now ready to be scattered into a new direction. */
     void simulatePropagation(PhotonPacket* pp);
 
     /** This function simulates the peel-off of a photon packet before a scattering event. This

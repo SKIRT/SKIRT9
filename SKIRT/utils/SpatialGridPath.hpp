@@ -124,8 +124,8 @@ public:
         depth becomes smaller than the specified optical depth. It then stores the index of the
         spatial cell corresponding to the interacting segment. Finally, it calculates and stores
         the distance covered along the path until the specified optical depth has been reached by
-        linear interpolation within the interacting cell (which is equivalent to assuming
-        exponential behavior of the extinction within the cell).
+        linear interpolation within the interacting cell. Using linear interpolation is equivalent
+        to assuming exponential behavior of the extinction with distance within the cell.
 
         The function assumes that both the geometric and optical depth information for the path
         have been set; if this is not the case, the behavior is undefined. */
