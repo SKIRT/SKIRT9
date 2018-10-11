@@ -7,6 +7,7 @@
 #include "Configuration.hpp"
 #include "DensityInCellInterface.hpp"
 #include "FatalError.hpp"
+#include "LockFree.hpp"
 #include "Log.hpp"
 #include "MaterialMix.hpp"
 #include "NR.hpp"
@@ -17,7 +18,7 @@
 #include "Random.hpp"
 #include "ShortArray.hpp"
 #include "StringUtils.hpp"
-#include "Table.hpp"
+#include "WavelengthGrid.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -118,6 +119,14 @@ void MediumSystem::setupSelfAfter()
     {
         Position bfr = _grid->centralPositionInCell(m);
         for (int h=0; h!=_numMedia; ++h) state(m,h).mix = _media[h]->mix(bfr);
+    }
+
+    // ----- initialize the radiation field -----
+
+    if (config->hasRadiationField())
+    {
+        _wavelengthGrid = config->radiationFieldWavelengthGrid();
+        _radiationField.resize(_numCells, _wavelengthGrid->numBins());
     }
 }
 
@@ -367,9 +376,37 @@ void MediumSystem::fillOpticalDepthInfo(PhotonPacket* pp)
 
 ////////////////////////////////////////////////////////////////////
 
-void MediumSystem::storeRadiationField(int /*m*/, int /*ell*/, double /*Lds*/)
+void MediumSystem::clearRadiationField()
 {
-    // TO DO
+    _radiationField.setToZero();
+}
+
+////////////////////////////////////////////////////////////////////
+
+void MediumSystem::storeRadiationField(int m, int ell, double Lds)
+{
+    LockFree::add(_radiationField(m,ell), Lds);
+}
+
+////////////////////////////////////////////////////////////////////
+
+void MediumSystem::communicateRadiationField()
+{
+    ProcessManager::sumToAll(_radiationField.data());
+}
+
+////////////////////////////////////////////////////////////////////
+
+Array MediumSystem::meanIntensity(int m) const
+{
+    int numWavelengths = _wavelengthGrid->numBins();
+    Array Jv(numWavelengths);
+    double factor = 1. / (4.*M_PI*volume(m));
+    for (int ell=0; ell<numWavelengths; ell++)
+    {
+        Jv[ell] = _radiationField(m,ell) * factor / _wavelengthGrid->effectiveWidth(ell);
+    }
+    return Jv;
 }
 
 ////////////////////////////////////////////////////////////////////

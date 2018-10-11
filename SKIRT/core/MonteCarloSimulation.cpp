@@ -96,6 +96,9 @@ void MonteCarloSimulation::runSimulation()
     {
         TimeLogger logger(log(), "the run");
 
+        // clear the radiation field
+        if (_config->hasRadiationField()) mediumSystem()->clearRadiationField();
+
         // shoot photons from primary sources, if needed
         size_t Npp = _config->numPrimaryPackets();
         if (!Npp)
@@ -117,8 +120,9 @@ void MonteCarloSimulation::runSimulation()
             instrumentSystem()->flush();
         }
 
-        // wait for all processes to finish
+        // wait for all processes to finish and synchronize the radiation field
         wait("the run");
+        if (_config->hasRadiationField()) mediumSystem()->communicateRadiationField();
 
         // notify the probe system
         probeSystem()->probeRun();

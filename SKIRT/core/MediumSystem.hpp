@@ -11,8 +11,10 @@
 #include "Medium.hpp"
 #include "MaterialMix.hpp"
 #include "SpatialGrid.hpp"
+#include "Table.hpp"
 class PhotonPacket;
 class Random;
+class WavelengthGrid;
 
 //////////////////////////////////////////////////////////////////////
 
@@ -224,8 +226,46 @@ public:
         optical depth at entry of the initial segment is equal to zero by definition. */
     void fillOpticalDepthInfo(PhotonPacket* pp);
 
-    /** TO DO */
+    /** This function initializes the radiation field memory. In simulation modes that record the
+        radiation field, the function should be called before starting a simulation segment (i.e.
+        before a set of photon packets is launched). The function properly resizes the radiation
+        field data table to include a bin for each spatial cell in the simulation and for each bin
+        in the wavelength grid returned by the Configuration::radiationFieldWavelengthGrid()
+        function. Finally, the function initializes all values to zero. */
+    void clearRadiationField();
+
+    /** This function adds the specified value of \f$L\,\Delta s\f$ to the radiation field bin
+        corresponding to the spatial cell index \f$m\f$ and the wavelength index\f$\ell\f$. The
+        addition happens in a thread-safe way, so that this function can be called from multiple
+        parallel threads, even for the same spatial/wavelength bin. If any of the indices are out
+        of range, undefined behavior results. */
     void storeRadiationField(int m, int ell, double Lds);
+
+    /** This function accumulates the radiation field between multiple processes. In simulation
+        modes that record the radiation field, the function should be called when finishing a
+        simulation segment (i.e. after a before set of photon packets has been launched) and before
+        querying the radiation field's contents. */
+    void communicateRadiationField();
+
+    /** This function returns an array with the mean radiation field intensity
+        \f$(J_\lambda)_{\ell,m}\f$ in the spatial cell with index \f$m\f$ at each of the wavelength
+        bins \f$\ell\f$ defined by the wavelength grid returned by the
+        Configuration::radiationFieldWavelengthGrid() function.
+
+        This function assumes that a set of photon packets have been launched for a particular
+        simulation segment, and that radiation field information has been accumulated during their
+        life cycles by calling the storeRadiationField() function. Furthermore, the
+        communicateRadiationField() function must have been called before invoking this function.
+        If this is not the case, the behavior is undefined.
+
+        The mean intensity is calculated using \f[ (J_\lambda)_{\ell,m} = \frac{ (L\Delta
+        s)_{\ell,m} }{4\pi\,V_m\,(\Delta \lambda)_\ell} \f] where \f$\ell\f$ is the index of the
+        wavelength bin, \f$(\Delta \lambda)_\ell\f$ is the wavelength bin width, \f$m\f$ is the
+        spatial cell index, \f$V_m\f$ is the volume of the cell, and \f$(L\Delta s)_{\ell,m}\f$ has
+        been accumulated over all photon packets contributing to the bin. The resulting mean
+        intensity \f$J_\lambda\f$ is expressed as an amount of energy per unit of time, per unit of
+        area, per unit of wavelength, and per unit of solid angle. */
+    Array meanIntensity(int m) const;
 
     //================== Private Types and Functions ====================
 
@@ -267,11 +307,15 @@ private:
     //======================== Data Members ========================
 
 private:
-    // initialized during setup
+    // relevant for any simulation mode that includes a medium
     int _numCells{0};           // index m
     int _numMedia{0};           // index h
     vector<State1> _state1v;    // state info for each cell (indexed on m)
     vector<State2> _state2vv;   // state info for each cell and each medium (indexed on m,h)
+
+    // relevant for any simulation mode that stores the radiation field
+    WavelengthGrid* _wavelengthGrid{0};  // index ell
+    Table<2> _radiationField;   // radiation field info for each cell and each wavelength (indexed on m,ell)
 };
 
 ////////////////////////////////////////////////////////////////
