@@ -23,7 +23,7 @@ class DustEmissionMode : public WithMediumMode
 {
     ITEM_CONCRETE(DustEmissionMode, WithMediumMode, "a simulation with secondary emission from dust")
         ATTRIBUTE_TYPE_ALLOWED_IF(DustEmissionMode, "Panchromatic")
-        ATTRIBUTE_TYPE_INSERT(DustEmissionMode, "DustEmission,Emission")
+        ATTRIBUTE_TYPE_INSERT(DustEmissionMode, "DustEmission,Emission,RadiationField")
 
 //    PROPERTY_ITEM(dustEmissivity, DustEmissivity, "the type of dust emissivity calculation")
 //        ATTRIBUTE_DEFAULT_VALUE(dustEmissivity, "GreyBodyDustEmissivity")

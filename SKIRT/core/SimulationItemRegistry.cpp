@@ -35,6 +35,7 @@
 #include "Cylinder2DSpatialGrid.hpp"
 #include "CylindricalClipGeometryDecorator.hpp"
 #include "DefaultMediaDensityCutsProbe.hpp"
+#include "DefaultRadiationFieldCutsProbe.hpp"
 #include "DensityTreePolicy.hpp"
 #include "DustEmissionMode.hpp"
 #include "EinastoGeometry.hpp"
@@ -416,6 +417,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<SpatialCellPropertiesProbe>();
     ItemRegistry::add<SpatialGridSourceDensityProbe>();
     ItemRegistry::add<OpticalMaterialPropertiesProbe>();
+
+    ItemRegistry::add<DefaultRadiationFieldCutsProbe>();
 
     // Monte Carlo simulations
     ItemRegistry::add<MonteCarloSimulation>();

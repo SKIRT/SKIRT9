@@ -10,7 +10,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-/** DefaultmediaDensityCutsProbe outputs FITS files with cuts through the true input media density
+/** DefaultMediaDensityCutsProbe outputs FITS files with cuts through the true input media density
     and the grid-discretized media density along the coordinate planes. Each of these maps contains
     1024 x 1024 pixels, and covers as a field of view the total extension of the spatial grid in
     the simulation.
