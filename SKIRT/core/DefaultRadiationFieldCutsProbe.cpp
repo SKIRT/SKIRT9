@@ -7,11 +7,11 @@
 #include "Array.hpp"
 #include "Configuration.hpp"
 #include "FITSInOut.hpp"
-#include "Medium.hpp"
 #include "MediumSystem.hpp"
 #include "Parallel.hpp"
 #include "ParallelFactory.hpp"
 #include "SpatialGrid.hpp"
+#include "TextOutFile.hpp"
 #include "Units.hpp"
 #include "WavelengthGrid.hpp"
 
@@ -152,6 +152,30 @@ void DefaultRadiationFieldCutsProbe::probeRun()
             wmi.setup(0,1,1);
             parallel->call(Np, [&wmi](size_t i ,size_t n) { wmi.body(i, n); });
             wmi.write();
+        }
+
+        // if requested, also output the wavelength grid
+        if (writeWavelengthGrid())
+        {
+            auto wavelengthGrid = find<Configuration>()->radiationFieldWavelengthGrid();
+            auto units = find<Units>();
+
+            // create a text file and add the columns
+            TextOutFile file(this, itemName()+"_wavelengths", "wavelengths for mean intensity");
+            file.addColumn("characteristic wavelength", units->uwavelength());
+            file.addColumn("effective wavelength bin width", units->uwavelength());
+            file.addColumn("left border of wavelength bin", units->uwavelength());
+            file.addColumn("right border of wavelength bin", units->uwavelength());
+
+            // write the rows
+            int numWavelengths = wavelengthGrid->numBins();
+            for (int ell=0; ell!=numWavelengths; ++ell)
+            {
+                file.writeRow(units->owavelength(wavelengthGrid->wavelength(ell)),
+                              units->owavelength(wavelengthGrid->effectiveWidth(ell)),
+                              units->owavelength(wavelengthGrid->leftBorder(ell)),
+                              units->owavelength(wavelengthGrid->rightBorder(ell)) );
+            }
         }
     }
 }
