@@ -275,6 +275,16 @@ double MediumSystem::opacitySca(double lambda, int m) const
 
 ////////////////////////////////////////////////////////////////////
 
+double MediumSystem::opacityAbs(double lambda, int m, MaterialMix::MaterialType type) const
+{
+    double result = 0.;
+    for (int h=0; h!=_numMedia; ++h)
+        if (state(0,h).mix->materialType() == type) result += state(m,h).n * state(m,h).mix->sectionAbs(lambda);
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////
+
 double MediumSystem::opacityExt(double lambda, int m, int h) const
 {
     return state(m,h).n * state(m,h).mix->sectionExt(lambda);

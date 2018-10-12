@@ -38,6 +38,7 @@
 #include "DefaultRadiationFieldCutsProbe.hpp"
 #include "DensityTreePolicy.hpp"
 #include "DustEmissionMode.hpp"
+#include "DustAbsorptionPerCellProbe.hpp"
 #include "EinastoGeometry.hpp"
 #include "ElectronMix.hpp"
 #include "ExpDiskGeometry.hpp"
@@ -421,6 +422,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
 
     ItemRegistry::add<DefaultRadiationFieldCutsProbe>();
     ItemRegistry::add<RadiationFieldPerCellProbe>();
+    ItemRegistry::add<DustAbsorptionPerCellProbe>();
 
     // Monte Carlo simulations
     ItemRegistry::add<MonteCarloSimulation>();

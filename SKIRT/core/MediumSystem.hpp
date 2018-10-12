@@ -142,6 +142,11 @@ public:
         */
     double opacitySca(double lambda, int m) const;
 
+    /** This function returns the absorption opacity \f$k=\sum_h n_h\sigma_h^\text{abs}\f$ summed
+        over all medium components with the specified material type at wavelength \f$\lambda\f$ in
+        spatial cell with index \f$m\f$. */
+    double opacityAbs(double lambda, int m, MaterialMix::MaterialType type) const;
+
     /** This function returns the extinction opacity \f$k=n_h\sigma_h^\text{ext}\f$ at wavelength
         \f$\lambda\f$ of the medium component with index \f$h\f$ in spatial cell with index
         \f$m\f$. */
