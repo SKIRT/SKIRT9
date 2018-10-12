@@ -43,11 +43,22 @@ void MediumSystem::setupSelfAfter()
     if (_numCells<1) throw FATALERROR("The spatial grid must have at least one cell");
     _numMedia = _media.size();
 
+    // initial state
     size_t allocatedBytes = 0;
     _state1v.resize(_numCells);
     allocatedBytes += _state1v.size()*sizeof(State1);
     _state2vv.resize(_numCells*_numMedia);
     allocatedBytes += _state2vv.size()*sizeof(State2);
+
+    // radiation field
+    if (config->hasRadiationField())
+    {
+        _wavelengthGrid = config->radiationFieldWavelengthGrid();
+        _radiationField.resize(_numCells, _wavelengthGrid->numBins());
+        allocatedBytes += _radiationField.size()*sizeof(double);
+    }
+
+    // inform user
     log->info(typeAndName() + " allocated " + StringUtils::toMemSizeString(allocatedBytes) + " of memory");
 
     // ----- calculate cell densities, bulk velocities, and volumes in parallel -----
@@ -119,14 +130,6 @@ void MediumSystem::setupSelfAfter()
     {
         Position bfr = _grid->centralPositionInCell(m);
         for (int h=0; h!=_numMedia; ++h) state(m,h).mix = _media[h]->mix(bfr);
-    }
-
-    // ----- initialize the radiation field -----
-
-    if (config->hasRadiationField())
-    {
-        _wavelengthGrid = config->radiationFieldWavelengthGrid();
-        _radiationField.resize(_numCells, _wavelengthGrid->numBins());
     }
 }
 
