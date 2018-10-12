@@ -79,10 +79,20 @@ void Configuration::setupSelfBefore()
     if (mustHaveMedium && !_hasMedium)
         throw FATALERROR("This simulation mode requires at least one medium to be configured");
 
-    // retrieve dust emission-related options
+    // retrieve extinction-only options
+    auto xmode = dynamic_cast<ExtinctionOnlyMode*>(mode);
+    if (_hasMedium && xmode)
+    {
+        _hasRadiationField = xmode->storeRadiationField();
+        if (_hasRadiationField)
+            _radiationFieldWLG = _oligochromatic ? _defaultWavelengthGrid : xmode->radiationFieldWLG();
+    }
+
+    // retrieve dust emission options
     auto emode = dynamic_cast<DustEmissionMode*>(mode);
     if (_hasMedium && emode)
     {
+        _hasRadiationField = true;
         _hasDustEmission = true;
         _radiationFieldWLG = emode->radiationFieldWLG();
         _emissionSpectrumWLG = emode->emissionSpectrumWLG();

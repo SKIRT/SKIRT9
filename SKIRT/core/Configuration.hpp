@@ -122,7 +122,7 @@ public:
     int numDensitySamples() const { return _numDensitySamples; }
 
     /** Returns true if the radiation field must be stored during the photon cycle, and false otherwise. */
-    bool hasRadiationField() const { return _hasDustEmission; }
+    bool hasRadiationField() const { return _hasRadiationField; }
 
     /** Returns true if secondary dust emission must be calculated, and false otherwise. */
     bool hasDustEmission() const { return _hasDustEmission; }
@@ -183,10 +183,13 @@ private:
     double _pathLengthBias{0.5};
     int _numDensitySamples{100};
 
+    // radiation field
+    bool _hasRadiationField{false};
+    WavelengthGrid* _radiationFieldWLG{nullptr};
+
     // emission
     bool _hasDustEmission{false};
     bool _hasSelfAbsorption{false};
-    WavelengthGrid* _radiationFieldWLG{nullptr};
     WavelengthGrid* _emissionSpectrumWLG{nullptr};
     double _emissionBias{0.5};
     int _minIterations{1};

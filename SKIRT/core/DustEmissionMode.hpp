@@ -32,10 +32,10 @@ class DustEmissionMode : public WithMediumMode
 //        ATTRIBUTE_DEFAULT_VALUE(cellLibrary, "AllCellsLibrary")
 
     PROPERTY_ITEM(radiationFieldWLG, WavelengthGrid, "the wavelength grid for storing the radiation field")
-        ATTRIBUTE_REQUIRED_IF(radiationFieldWLG, "false")
+        ATTRIBUTE_DEFAULT_VALUE(radiationFieldWLG, "LogWavelengthGrid")
 
     PROPERTY_ITEM(emissionSpectrumWLG, WavelengthGrid, "the wavelength grid for calculating the dust emission spectrum")
-        ATTRIBUTE_REQUIRED_IF(emissionSpectrumWLG, "false")
+        ATTRIBUTE_DEFAULT_VALUE(emissionSpectrumWLG, "LogWavelengthGrid")
 
     PROPERTY_DOUBLE(emissionBias, "the fraction of secondary photon packets distributed uniformly across spatial cells")
         ATTRIBUTE_MIN_VALUE(emissionBias, "[0")
