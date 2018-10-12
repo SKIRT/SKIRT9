@@ -19,6 +19,7 @@ void RadiationFieldPerCellProbe::probeRun()
 {
     if (find<Configuration>()->hasRadiationField())
     {
+        // output the mean intensity for each cell
         {
             auto wavelengthGrid = find<Configuration>()->radiationFieldWavelengthGrid();
             auto ms = find<MediumSystem>();
@@ -32,9 +33,9 @@ void RadiationFieldPerCellProbe::probeRun()
             file.writeLine("# Mean radiation field intensities per spatial cell");
             file.addColumn("spatial cell index", "", 'd');
             for (int ell=0; ell!=wavelengthGrid->numBins(); ++ell)
-                file.addColumn("J_lambda for lambda = "
+                file.addColumn(units->smeanintensity() + " at lambda = "
                                + StringUtils::toString(units->owavelength(wavelengthGrid->wavelength(ell)), 'g')
-                               + " " + units->uwavelength(), units->usurfacebrightness());
+                               + " " + units->uwavelength(), units->umeanintensity());
 
             // write a line for each cell
             int numCells = grid->numCells();
@@ -44,7 +45,7 @@ void RadiationFieldPerCellProbe::probeRun()
                 const Array& Jv = ms->meanIntensity(m);
                 for (int ell=0; ell!=wavelengthGrid->numBins(); ++ell)
                 {
-                    values.push_back( units->osurfacebrightnessWavelength(wavelengthGrid->wavelength(ell), Jv[ell]) );
+                    values.push_back( units->omeanintensityWavelength(wavelengthGrid->wavelength(ell), Jv[ell]) );
                 }
                 file.writeRow(values);
             }

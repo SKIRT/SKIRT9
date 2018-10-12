@@ -264,6 +264,26 @@ public:
         wavelength or frequency) and units. */
     double osurfacebrightnessFrequency(double lambda, double fnu) const;
 
+    /** This function returns a string describing the mean intensity output style adopted by
+        the program. */
+    string smeanintensity() const;
+
+    /** This function returns a string containing the name of the unit of mean intensity
+        adopted by the program for output, depending on the selected flux output style. */
+    string umeanintensity() const;
+
+    /** This function converts the per-wavelength mean intensity \f$J_\lambda\f$ for wavelength
+        \f$\lambda\f$ from the internally used SI units (\f${\text{W}}\, {\text{m}}^{-3}\,
+        {\text{sr}}^{-1}\f$) to the program's flux output style (neutral, wavelength or frequency)
+        and units. */
+    double omeanintensityWavelength(double lambda, double Jlambda) const;
+
+    /** This function converts the per-frequency mean intensity \f$J_\nu\f$ for wavelength
+        \f$\lambda\f$ from the internally used SI units (\f${\text{W}}\, {\text{m}}^{-2}\,
+        {\text{Hz}}^{-1}\, {\text{sr}}^{-1}\f$) to the program's flux output style (neutral,
+        wavelength or frequency) and units. */
+    double omeanintensityFrequency(double lambda, double Jnu) const;
+
     /** This function returns a string containing the name of the unit of temperature adopted by
         the program for output. */
     string utemperature() const;

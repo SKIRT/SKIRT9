@@ -431,6 +431,58 @@ double Units::osurfacebrightnessFrequency(double lambda, double fnu) const
 
 ////////////////////////////////////////////////////////////////////
 
+std::string Units::smeanintensity() const
+{
+    switch (_fluxOutputStyle)
+    {
+    case FluxOutputStyle::Wavelength: return "J_lambda";
+    case FluxOutputStyle::Frequency:  return "J_nu";
+    case FluxOutputStyle::Neutral:    return "lambda*J_lambda";
+    }
+    return string();
+}
+
+////////////////////////////////////////////////////////////////////
+
+std::string Units::umeanintensity() const
+{
+    switch (_fluxOutputStyle)
+    {
+    case FluxOutputStyle::Wavelength: return unit("wavelengthmeanintensity");
+    case FluxOutputStyle::Frequency:  return unit("frequencymeanintensity");
+    case FluxOutputStyle::Neutral:    return unit("neutralmeanintensity");
+    }
+    return string();
+}
+
+////////////////////////////////////////////////////////////////////
+
+double Units::omeanintensityWavelength(double lambda, double Jlambda) const
+{
+    switch (_fluxOutputStyle)
+    {
+    case FluxOutputStyle::Wavelength: return out("wavelengthmeanintensity", Jlambda);
+    case FluxOutputStyle::Frequency:  return out("frequencymeanintensity", lambda*lambda*Jlambda/Constants::c());
+    case FluxOutputStyle::Neutral:    return out("neutralmeanintensity", lambda*Jlambda);
+    }
+    return 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double Units::omeanintensityFrequency(double lambda, double Jnu) const
+{
+    switch (_fluxOutputStyle)
+    {
+    case FluxOutputStyle::Wavelength: return out("wavelengthmeanintensity", Jnu*Constants::c()/lambda/lambda);
+    case FluxOutputStyle::Frequency:  return out("frequencymeanintensity", Jnu);
+    case FluxOutputStyle::Neutral:    return out("neutralmeanintensity", Jnu*Constants::c()/lambda);
+    }
+    return 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
 string Units::utemperature() const
 {
     return unit("temperature");

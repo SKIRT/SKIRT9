@@ -96,7 +96,7 @@ namespace
                         for (int ell=0; ell!=wavelengthGrid->numBins(); ++ell)
                         {
                             int l = i + Np*j + Np*Np*ell;
-                            Jvv[l] = units->osurfacebrightnessWavelength(wavelengthGrid->wavelength(ell), Jv[ell]);
+                            Jvv[l] = units->omeanintensityWavelength(wavelengthGrid->wavelength(ell), Jv[ell]);
                         }
                     }
                 }
@@ -111,7 +111,7 @@ namespace
             FITSInOut::write(item, description, filename, Jvv, Np, Np, wavelengthGrid->numBins(),
                              units->olength(xd?xpsize:ypsize), units->olength(zd?zpsize:ypsize),
                              units->olength(xd?xcenter:ycenter), units->olength(zd?zcenter:ycenter),
-                             units->usurfacebrightness(), units->ulength());
+                             units->umeanintensity(), units->ulength());
         }
     };
 }
