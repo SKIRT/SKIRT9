@@ -14,30 +14,37 @@
 
 void WavelengthGridProbe::probeSetup()
 {
-    auto units = find<Units>();
-
     // loop over instruments
     for (auto instrument : find<InstrumentSystem>()->instruments())
     {
-        auto wavelengthGrid = instrument->instrumentWavelengthGrid();
-        auto instrumentName = instrument->instrumentName();
+        writeWavelengthGrid(this, instrument->instrumentWavelengthGrid(),
+                            instrument->instrumentName() + "_wavelengths",
+                            "wavelengths for instrument " + instrument->instrumentName());
+    }
+}
 
-        // create a text file and add the columns
-        TextOutFile file(this, instrumentName+"_wavelengths", "wavelengths for instrument " + instrumentName);
-        file.addColumn("characteristic wavelength", units->uwavelength());
-        file.addColumn("effective wavelength bin width", units->uwavelength());
-        file.addColumn("left border of wavelength bin", units->uwavelength());
-        file.addColumn("right border of wavelength bin", units->uwavelength());
+////////////////////////////////////////////////////////////////////
 
-        // write the rows
-        int numWavelengths = wavelengthGrid->numBins();
-        for (int ell=0; ell!=numWavelengths; ++ell)
-        {
-            file.writeRow(units->owavelength(wavelengthGrid->wavelength(ell)),
-                          units->owavelength(wavelengthGrid->effectiveWidth(ell)),
-                          units->owavelength(wavelengthGrid->leftBorder(ell)),
-                          units->owavelength(wavelengthGrid->rightBorder(ell)) );
-        }
+void WavelengthGridProbe::writeWavelengthGrid(Probe* item, const WavelengthGrid* wavelengthGrid,
+                                              string filename, string description)
+{
+    auto units = item->find<Units>();
+
+    // create a text file and add the columns
+    TextOutFile file(item, filename, description);
+    file.addColumn("characteristic wavelength", units->uwavelength());
+    file.addColumn("effective wavelength bin width", units->uwavelength());
+    file.addColumn("left border of wavelength bin", units->uwavelength());
+    file.addColumn("right border of wavelength bin", units->uwavelength());
+
+    // write the rows
+    int numWavelengths = wavelengthGrid->numBins();
+    for (int ell=0; ell!=numWavelengths; ++ell)
+    {
+        file.writeRow(units->owavelength(wavelengthGrid->wavelength(ell)),
+                      units->owavelength(wavelengthGrid->effectiveWidth(ell)),
+                      units->owavelength(wavelengthGrid->leftBorder(ell)),
+                      units->owavelength(wavelengthGrid->rightBorder(ell)) );
     }
 }
 

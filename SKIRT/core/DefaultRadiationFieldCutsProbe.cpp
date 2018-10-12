@@ -14,6 +14,7 @@
 #include "TextOutFile.hpp"
 #include "Units.hpp"
 #include "WavelengthGrid.hpp"
+#include "WavelengthGridProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -157,25 +158,8 @@ void DefaultRadiationFieldCutsProbe::probeRun()
         // if requested, also output the wavelength grid
         if (writeWavelengthGrid())
         {
-            auto wavelengthGrid = find<Configuration>()->radiationFieldWavelengthGrid();
-            auto units = find<Units>();
-
-            // create a text file and add the columns
-            TextOutFile file(this, itemName()+"_wavelengths", "wavelengths for mean intensity");
-            file.addColumn("characteristic wavelength", units->uwavelength());
-            file.addColumn("effective wavelength bin width", units->uwavelength());
-            file.addColumn("left border of wavelength bin", units->uwavelength());
-            file.addColumn("right border of wavelength bin", units->uwavelength());
-
-            // write the rows
-            int numWavelengths = wavelengthGrid->numBins();
-            for (int ell=0; ell!=numWavelengths; ++ell)
-            {
-                file.writeRow(units->owavelength(wavelengthGrid->wavelength(ell)),
-                              units->owavelength(wavelengthGrid->effectiveWidth(ell)),
-                              units->owavelength(wavelengthGrid->leftBorder(ell)),
-                              units->owavelength(wavelengthGrid->rightBorder(ell)) );
-            }
+            WavelengthGridProbe::writeWavelengthGrid(this, find<Configuration>()->radiationFieldWavelengthGrid(),
+                                                     itemName() + "_wavelengths", "wavelengths for mean intensity");
         }
     }
 }

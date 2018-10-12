@@ -117,6 +117,7 @@
 #include "Random.hpp"
 #include "ReadFitsGeometry.hpp"
 #include "RingGeometry.hpp"
+#include "RadiationFieldPerCellProbe.hpp"
 #include "RotateGeometryDecorator.hpp"
 #include "SEDInstrument.hpp"
 #include "SIUnits.hpp"
@@ -419,6 +420,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<OpticalMaterialPropertiesProbe>();
 
     ItemRegistry::add<DefaultRadiationFieldCutsProbe>();
+    ItemRegistry::add<RadiationFieldPerCellProbe>();
 
     // Monte Carlo simulations
     ItemRegistry::add<MonteCarloSimulation>();

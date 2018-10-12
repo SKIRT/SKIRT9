@@ -20,7 +20,11 @@
     Each of the output files actually contains a datacube with a map for each bin in the wavelength
     grid returned by the Configuration::radiationFieldWavelengthGrid() function. The maps have 1024
     x 1024 pixels, and cover a field of view equal to the total extension of the spatial grid in
-    the simulation. */
+    the simulation.
+
+    The probe offers an option to output a separate text column file with details on the radiation
+    field wavelength grid. For each wavelength bin, the file lists the characteristic wavelength,
+    the wavelength bin width, and the left and right borders of the bin. */
 class DefaultRadiationFieldCutsProbe : public Probe
 {
     ITEM_CONCRETE(DefaultRadiationFieldCutsProbe, Probe,
