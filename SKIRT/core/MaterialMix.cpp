@@ -56,12 +56,12 @@ void MaterialMix::setupSelfAfter()
             Array lambdav;
             NR::buildLogGrid(lambdav, 0.1e-6, 10000e-6, numWavelengths-1);
 
-            // the absorption coefficients of this material on the above wavelength grid
+            // the absorption cross sections of this material on the above wavelength grid
             Array sigmaabsv(numWavelengths);
             for (int ell=0; ell!=numWavelengths; ++ell) sigmaabsv[ell] = sectionAbs(lambdav[ell]);
 
-            // the Planck-integrated absorption coefficients on the above temperature grid
-            _planckabsv.resize(numTemperatures+1);
+            // the Planck-integrated absorption cross sections on the above temperature grid
+            _planckabsv.resize(numTemperatures);
             for (int p=1; p!=numTemperatures; ++p)   // leave value for p==0 at zero
             {
                 PlanckFunction B(_Tv[p]);
@@ -133,7 +133,7 @@ double MaterialMix::equilibriumTemperature(const Array& Jv) const
         inputabs += _sigmaabsv[ell] * Jv[ell] * _radiationFieldWLG->effectiveWidth(ell);
     }
 
-    // find the temperature corresponding to this amount of absorption
+    // find the temperature corresponding to this amount of emission on the output side of the equation
     int p = NR::locateClip(_planckabsv, inputabs);
     return NR::interpolateLinLin(inputabs, _planckabsv[p], _planckabsv[p+1], _Tv[p], _Tv[p+1]);
 }
