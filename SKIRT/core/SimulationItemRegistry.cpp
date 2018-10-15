@@ -34,6 +34,7 @@
 #include "CubicalBackgroundSource.hpp"
 #include "Cylinder2DSpatialGrid.hpp"
 #include "CylindricalClipGeometryDecorator.hpp"
+#include "DefaultDustTemperatureCutsProbe.hpp"
 #include "DefaultMediaDensityCutsProbe.hpp"
 #include "DefaultRadiationFieldCutsProbe.hpp"
 #include "DensityTreePolicy.hpp"
@@ -422,6 +423,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
 
     ItemRegistry::add<DefaultRadiationFieldCutsProbe>();
     ItemRegistry::add<RadiationFieldPerCellProbe>();
+    ItemRegistry::add<DefaultDustTemperatureCutsProbe>();
     ItemRegistry::add<DustAbsorptionPerCellProbe>();
 
     // Monte Carlo simulations

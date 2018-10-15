@@ -22,6 +22,7 @@
 class SingleGrainDustMix : public MaterialMix
 {
     ITEM_ABSTRACT(SingleGrainDustMix, MaterialMix, "a dust mix described by a single representative grain")
+        ATTRIBUTE_TYPE_INSERT(SingleGrainDustMix, "Dust")
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============

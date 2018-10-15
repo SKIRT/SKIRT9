@@ -7,8 +7,10 @@
 #define MATERIALMIX_HPP
 
 #include "SimulationItem.hpp"
+#include "Array.hpp"
 class Random;
 class StokesVector;
+class WavelengthGrid;
 
 ////////////////////////////////////////////////////////////////////
 
@@ -71,6 +73,11 @@ class MaterialMix : public SimulationItem
 protected:
     /** This function caches the simulation's random generator for use by subclasses. */
     void setupSelfBefore() override;
+
+    /** This function precalculates information used to accelerate certain operations, such as
+        obtaining the equilibrium temperature of the material mix in a given embedding radiation
+        field. */
+    void setupSelfAfter() override;
 
     //======== Material type =======
 
@@ -215,6 +222,25 @@ public:
         for the function). The default implementation in this base class does nothing. */
     virtual void applyMueller(double lambda, double theta, StokesVector* sv) const;
 
+    //======== Equilibrium Temperature =======
+
+    /** This function returns the equilibrium temperature \f$T_{\text{eq}}\f$ of the material mix
+        when it would be embedded in the radiation field specified by the mean intensities
+        \f$(J_\lambda)_\ell\f$, which must be discretized on the simulation's radiation field
+        wavelength grid as returned by the Configuration::radiationFieldWavelengthGrid() function.
+
+        The equilibrium temperature is obtained from the energy balance equation, \f[ \int_0^\infty
+        \varsigma^\text{abs}(\lambda) \,J_\lambda(\lambda) \,\text{d}\lambda = \int_0^\infty
+        \varsigma^\text{abs}(\lambda) \,B_\lambda(T_\text{eq},\lambda) \,\text{d}\lambda, \f] where
+        the left-hand side is integrated over the radiation field wavelength grid, and the
+        right-hand side is precalculated during setup for a range of temperatures through
+        integration over a built-in wavelength grid.
+
+        The behavior of this function is undefined if the simulation does not track the radiation
+        field, because in that case setup does not calcalate the info on which this function
+        relies. */
+    double equilibriumTemperature(const Array& Jv) const;
+
     //======================== Other Functions =======================
 
 protected:
@@ -224,8 +250,14 @@ protected:
     //======================== Data Members ========================
 
 private:
-    // data member initialized during setup
+    // data member initialized in setupSelfBefore
     Random* _random{nullptr};
+
+    // information precalculated in setupSelfAfter()
+    WavelengthGrid* _radiationFieldWLG{nullptr};  // the radiation field wavelength grid
+    Array _sigmaabsv;   // absorption cross sections on the above wavelength grid
+    Array _Tv;          // temperature grid for the Planck-integrated absorption cross sections
+    Array _planckabsv;  // Planck-integrated absorption cross sections for each of the temperatures in the above grid
 };
 
 ////////////////////////////////////////////////////////////////////
