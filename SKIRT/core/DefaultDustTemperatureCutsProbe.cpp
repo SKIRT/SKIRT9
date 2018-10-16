@@ -46,7 +46,7 @@ namespace
         // constructor
         WriteTemperatureCut(Probe* item_, MediumSystem* ms_)
             : item(item_), ms(ms_), grid(ms_->grid()),
-              wavelengthGrid(ms_->find<Configuration>()->radiationFieldWavelengthGrid()), units(ms_->find<Units>())
+              wavelengthGrid(ms_->find<Configuration>()->radiationFieldWLG()), units(ms_->find<Units>())
         {
             double xmin, ymin, zmin, xmax, ymax, zmax;
             grid->boundingBox().extent(xmin,ymin,zmin,xmax,ymax,zmax);

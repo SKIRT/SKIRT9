@@ -33,7 +33,7 @@ void MaterialMix::setupSelfAfter()
         // energy input side
         {
             // cache the simulation's radiation field wavelength grid
-            _radiationFieldWLG = find<Configuration>()->radiationFieldWavelengthGrid();
+            _radiationFieldWLG = find<Configuration>()->radiationFieldWLG();
 
             // prepare it for immediate use
             _radiationFieldWLG->setup();

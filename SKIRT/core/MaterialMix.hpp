@@ -227,7 +227,7 @@ public:
     /** This function returns the equilibrium temperature \f$T_{\text{eq}}\f$ of the material mix
         when it would be embedded in the radiation field specified by the mean intensities
         \f$(J_\lambda)_\ell\f$, which must be discretized on the simulation's radiation field
-        wavelength grid as returned by the Configuration::radiationFieldWavelengthGrid() function.
+        wavelength grid as returned by the Configuration::radiationFieldWLG() function.
 
         The equilibrium temperature is obtained from the energy balance equation, \f[ \int_0^\infty
         \varsigma^\text{abs}(\lambda) \,J_\lambda(\lambda) \,\text{d}\lambda = \int_0^\infty

@@ -159,11 +159,11 @@ private:
 
         The radiation field is discretized on the spatial grid of the simulation (held by the
         MediumSystem object) and on a wavelength grid provided specifically for this purpose (see
-        the Configuration::radiationFieldWavelengthGrid() function for more information). Locating
-        the appropriate spatial bin is trivial because each segment in the photon packet's path
-        stores the index of the cell being crossed. The wavelength bin is derived from the photon
-        packet's perceived wavelength in the cell under consideration, taking into account the bulk
-        velocity of the medium in that cell.
+        the Configuration::radiationFieldWLG() function for more information). Locating the
+        appropriate spatial bin is trivial because each segment in the photon packet's path stores
+        the index of the cell being crossed. The wavelength bin is derived from the photon packet's
+        perceived wavelength in the cell under consideration, taking into account the bulk velocity
+        of the medium in that cell.
 
         For each segment \f$n\f$ in the photon packet's path, this function first determines the
         corresponding spatial/wavelength bin as described above. To the contents of that bin, the

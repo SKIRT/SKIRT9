@@ -132,10 +132,10 @@ public:
     bool hasSelfAbsorption() const { return _hasSelfAbsorption; }
 
     /** Returns the wavelength grid to be used for storing the radiation field. */
-    WavelengthGrid* radiationFieldWavelengthGrid() const { return _radiationFieldWLG; }
+    WavelengthGrid* radiationFieldWLG() const { return _radiationFieldWLG; }
 
     /** Returns the wavelength grid to be used for calculating the dust emission spectrum. */
-    WavelengthGrid* emissionSpectrumWavelengthGrid() const { return _emissionSpectrumWLG; }
+    WavelengthGrid* emissionSpectrumWLG() const { return _emissionSpectrumWLG; }
 
     /** Returns the fraction of secondary photon packets distributed uniformly across spatial
         cells. */

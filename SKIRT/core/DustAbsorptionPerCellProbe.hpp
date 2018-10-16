@@ -25,7 +25,7 @@
     Specifically, the output file contains a line for each cell in the spatial grid of the
     simulation. The first columns specifies the cell index, and subsequent columns list the
     spectral luminosity absorbed by dust for each bin in the wavelength grid returned by the
-    Configuration::radiationFieldWavelengthGrid() function.
+    Configuration::radiationFieldWLG() function.
 
     The probe offers an option to output a separate text column file with details on the radiation
     field wavelength grid. For each wavelength bin, the file lists the characteristic wavelength,

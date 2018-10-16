@@ -235,8 +235,8 @@ public:
         radiation field, the function should be called before starting a simulation segment (i.e.
         before a set of photon packets is launched). The function properly resizes the radiation
         field data table to include a bin for each spatial cell in the simulation and for each bin
-        in the wavelength grid returned by the Configuration::radiationFieldWavelengthGrid()
-        function. Finally, the function initializes all values to zero. */
+        in the wavelength grid returned by the Configuration::radiationFieldWLG() function.
+        Finally, the function initializes all values to zero. */
     void clearRadiationField();
 
     /** This function adds the specified value of \f$L\,\Delta s\f$ to the radiation field bin
@@ -255,7 +255,7 @@ public:
     /** This function returns an array with the mean radiation field intensity
         \f$(J_\lambda)_{\ell,m}\f$ in the spatial cell with index \f$m\f$ at each of the wavelength
         bins \f$\ell\f$ defined by the wavelength grid returned by the
-        Configuration::radiationFieldWavelengthGrid() function.
+        Configuration::radiationFieldWLG() function.
 
         This function assumes that a set of photon packets have been launched for a particular
         simulation segment, and that radiation field information has been accumulated during their

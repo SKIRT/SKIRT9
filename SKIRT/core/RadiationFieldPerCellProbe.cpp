@@ -21,7 +21,7 @@ void RadiationFieldPerCellProbe::probeRun()
     {
         // output the mean intensity for each cell
         {
-            auto wavelengthGrid = find<Configuration>()->radiationFieldWavelengthGrid();
+            auto wavelengthGrid = find<Configuration>()->radiationFieldWLG();
             auto ms = find<MediumSystem>();
             auto grid = ms->grid();
             auto units = find<Units>();
@@ -54,7 +54,7 @@ void RadiationFieldPerCellProbe::probeRun()
         // if requested, also output the wavelength grid
         if (writeWavelengthGrid())
         {
-            WavelengthGridProbe::writeWavelengthGrid(this, find<Configuration>()->radiationFieldWavelengthGrid(),
+            WavelengthGridProbe::writeWavelengthGrid(this, find<Configuration>()->radiationFieldWLG(),
                                                      itemName() + "_wavelengths", "wavelengths for mean intensity");
         }
     }

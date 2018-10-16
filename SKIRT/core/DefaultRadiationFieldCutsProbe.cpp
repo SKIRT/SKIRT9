@@ -47,7 +47,7 @@ namespace
         // constructor
         WriteMeanIntensityCut(Probe* item_, MediumSystem* ms_)
             : item(item_), ms(ms_), grid(ms_->grid()),
-              wavelengthGrid(ms_->find<Configuration>()->radiationFieldWavelengthGrid()), units(ms_->find<Units>())
+              wavelengthGrid(ms_->find<Configuration>()->radiationFieldWLG()), units(ms_->find<Units>())
         {
             double xmin, ymin, zmin, xmax, ymax, zmax;
             grid->boundingBox().extent(xmin,ymin,zmin,xmax,ymax,zmax);
@@ -158,7 +158,7 @@ void DefaultRadiationFieldCutsProbe::probeRun()
         // if requested, also output the wavelength grid
         if (writeWavelengthGrid())
         {
-            WavelengthGridProbe::writeWavelengthGrid(this, find<Configuration>()->radiationFieldWavelengthGrid(),
+            WavelengthGridProbe::writeWavelengthGrid(this, find<Configuration>()->radiationFieldWLG(),
                                                      itemName() + "_wavelengths", "wavelengths for mean intensity");
         }
     }

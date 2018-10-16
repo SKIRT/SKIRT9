@@ -53,7 +53,7 @@ void MediumSystem::setupSelfAfter()
     // radiation field
     if (config->hasRadiationField())
     {
-        _wavelengthGrid = config->radiationFieldWavelengthGrid();
+        _wavelengthGrid = config->radiationFieldWLG();
         _radiationField.resize(_numCells, _wavelengthGrid->numBins());
         allocatedBytes += _radiationField.size()*sizeof(double);
     }

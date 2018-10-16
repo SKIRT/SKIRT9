@@ -18,9 +18,9 @@
     intersections are written.
 
     Each of the output files actually contains a datacube with a map for each bin in the wavelength
-    grid returned by the Configuration::radiationFieldWavelengthGrid() function. The maps have 1024
-    x 1024 pixels, and cover a field of view equal to the total extension of the spatial grid in
-    the simulation.
+    grid returned by the Configuration::radiationFieldWLG() function. The maps have 1024 x 1024
+    pixels, and cover a field of view equal to the total extension of the spatial grid in the
+    simulation.
 
     The probe offers an option to output a separate text column file with details on the radiation
     field wavelength grid. For each wavelength bin, the file lists the characteristic wavelength,
