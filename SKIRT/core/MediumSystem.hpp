@@ -272,6 +272,23 @@ public:
         area, per unit of wavelength, and per unit of solid angle. */
     Array meanIntensity(int m) const;
 
+    /** This function returns the bolometric luminosity \f$L^\text{abs}_{\text{bol},m}\f$ that has
+        been absorbed by media of the specified type in the spatial cell with index \f$m\f$.
+
+        This function assumes that a set of photon packets have been launched for a particular
+        simulation segment, and that radiation field information has been accumulated during their
+        life cycles by calling the storeRadiationField() function. Furthermore, the
+        communicateRadiationField() function must have been called before invoking this function.
+        If this is not the case, the behavior is undefined.
+
+        The bolometric luminosity is calculated using \f[ L^\text{abs}_{\text{bol},m} = \sum_\ell
+        (k^\text{abs}_\text{type})_{\ell,m} \,(L\Delta s)_{\ell,m} \f] where \f$\ell\f$ runs over
+        the wavelengths in the simulation's radiation field wavelength grid, \f$m\f$ is the spatial
+        cell index, \f$(k^\text{abs}_\text{type})_{\ell,m}\f$ is the absorption opacity of the
+        specified material type in the cell, and \f$(L\Delta s)_{\ell,m}\f$ has been accumulated
+        over all photon packets contributing to the bin. */
+    double absorbedLuminosity(int m, MaterialMix::MaterialType type);
+
     //================== Private Types and Functions ====================
 
 private:

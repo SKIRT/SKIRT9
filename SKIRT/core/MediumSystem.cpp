@@ -423,3 +423,16 @@ Array MediumSystem::meanIntensity(int m) const
 }
 
 ////////////////////////////////////////////////////////////////////
+
+double MediumSystem::absorbedLuminosity(int m, MaterialMix::MaterialType type)
+{
+    double Labs = 0.;
+    int numWavelengths = _wavelengthGrid->numBins();
+    for (int ell=0; ell<numWavelengths; ell++)
+    {
+        Labs += opacityAbs(_wavelengthGrid->wavelength(ell), m, type) * _radiationField(m,ell);
+    }
+    return Labs;
+}
+
+////////////////////////////////////////////////////////////////////
