@@ -39,10 +39,12 @@
 #include "DefaultRadiationFieldCutsProbe.hpp"
 #include "DensityTreePolicy.hpp"
 #include "DustEmissionMode.hpp"
+#include "DustEmissivityProbe.hpp"
 #include "DustAbsorptionPerCellProbe.hpp"
 #include "DustTemperaturePerCellProbe.hpp"
 #include "EinastoGeometry.hpp"
 #include "ElectronMix.hpp"
+#include "EquilibriumDustEmissivity.hpp"
 #include "ExpDiskGeometry.hpp"
 #include "ExtinctionOnlyMode.hpp"
 #include "ExtragalacticUnits.hpp"
@@ -383,6 +385,10 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<MeanIvezicBenchmarkDustMix>();
     ItemRegistry::add<ElectronMix>();
 
+    // dust emissivity calculators
+    ItemRegistry::add<DustEmissivity>();
+    ItemRegistry::add<EquilibriumDustEmissivity>();
+
     // wavelength grids
     ItemRegistry::add<WavelengthGrid>();
     ItemRegistry::add<DisjointWavelengthGrid>();
@@ -427,6 +433,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<DefaultDustTemperatureCutsProbe>();
     ItemRegistry::add<DustTemperaturePerCellProbe>();
     ItemRegistry::add<DustAbsorptionPerCellProbe>();
+    ItemRegistry::add<DustEmissivityProbe>();
 
     // Monte Carlo simulations
     ItemRegistry::add<MonteCarloSimulation>();

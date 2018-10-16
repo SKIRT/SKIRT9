@@ -96,6 +96,7 @@ void Configuration::setupSelfBefore()
         _hasDustEmission = true;
         _radiationFieldWLG = emode->radiationFieldWLG();
         _emissionSpectrumWLG = emode->emissionSpectrumWLG();
+        _dustEmissivity = emode->dustEmissivity();
         _emissionBias = emode->emissionBias();
         _hasSelfAbsorption = emode->iterateSelfAbsorption();
         if (_hasSelfAbsorption)

@@ -7,6 +7,7 @@
 #define DUSTEMISSIONMODE_HPP
 
 #include "WithMediumMode.hpp"
+#include "DustEmissivity.hpp"
 #include "WavelengthGrid.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -25,10 +26,10 @@ class DustEmissionMode : public WithMediumMode
         ATTRIBUTE_TYPE_ALLOWED_IF(DustEmissionMode, "Panchromatic")
         ATTRIBUTE_TYPE_INSERT(DustEmissionMode, "DustEmission,Emission,RadiationField")
 
-//    PROPERTY_ITEM(dustEmissivity, DustEmissivity, "the type of dust emissivity calculation")
-//        ATTRIBUTE_DEFAULT_VALUE(dustEmissivity, "GreyBodyDustEmissivity")
+    PROPERTY_ITEM(dustEmissivity, DustEmissivity, "the dust emissivity calculator")
+        ATTRIBUTE_DEFAULT_VALUE(dustEmissivity, "EquilibriumDustEmissivity")
 
-//    PROPERTY_ITEM(cellLibrary, CellLibrary, "the library mechanism for spatial cells")
+//    PROPERTY_ITEM(cellLibrary, CellLibrary, "the library mechanism for combining spatial cells")
 //        ATTRIBUTE_DEFAULT_VALUE(cellLibrary, "AllCellsLibrary")
 
     PROPERTY_ITEM(radiationFieldWLG, WavelengthGrid, "the wavelength grid for storing the radiation field")
