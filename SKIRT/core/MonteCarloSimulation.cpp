@@ -32,13 +32,20 @@
 void MonteCarloSimulation::setupSimulation()
 {
     // perform regular setup for the hierarchy and wait for all processes to finish
-    TimeLogger logger(log(), "setup");
-    _config->setup();           // first of all perform setup for the configuration object
-    SimulationItem::setup();
-    wait("setup");
+    {
+        TimeLogger logger(log(), "setup");
+        _config->setup();           // first of all perform setup for the configuration object
+        SimulationItem::setup();
+        wait("setup");
+    }
 
-    // notify the probe system
-    probeSystem()->probeSetup();
+    // write setup output
+    {
+        TimeLogger logger(log(), "setup output");
+
+        // notify the probe system
+        probeSystem()->probeSetup();
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -93,6 +100,7 @@ Configuration* MonteCarloSimulation::config() const
 
 void MonteCarloSimulation::runSimulation()
 {
+    // run the complete simulation
     {
         TimeLogger logger(log(), "the run");
 
@@ -123,13 +131,16 @@ void MonteCarloSimulation::runSimulation()
         // wait for all processes to finish and synchronize the radiation field
         wait("the run");
         if (_config->hasRadiationField()) mediumSystem()->communicateRadiationField();
+    }
+
+    // write final output
+    {
+        TimeLogger logger(log(), "final output");
 
         // notify the probe system
         probeSystem()->probeRun();
-    }
-    {
-        // write simulation output
-        TimeLogger logger(log(), "the output");
+
+        // write instrument output
         instrumentSystem()->flush();
         instrumentSystem()->write();
     }
