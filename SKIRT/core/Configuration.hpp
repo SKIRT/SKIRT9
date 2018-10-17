@@ -9,6 +9,7 @@
 #include "SimulationItem.hpp"
 #include "Array.hpp"
 #include "Range.hpp"
+class WavelengthDistribution;
 class WavelengthGrid;
 class DustEmissivity;
 
@@ -136,7 +137,7 @@ public:
     WavelengthGrid* radiationFieldWLG() const { return _radiationFieldWLG; }
 
     /** Returns the wavelength grid to be used for calculating the dust emission spectrum. */
-    WavelengthGrid* emissionSpectrumWLG() const { return _emissionSpectrumWLG; }
+    WavelengthGrid* dustEmissionWLG() const { return _dustEmissionWLG; }
 
     /** Returns the dust emissivity calculator to be used for calculating the dust emission
         spectrum. */
@@ -144,7 +145,14 @@ public:
 
     /** Returns the fraction of secondary photon packets distributed uniformly across spatial
         cells. */
-    double emissionBias() const { return _emissionBias; }
+    double secondarySpatialBias() const { return _secondarySpatialBias; }
+
+    /** Returns the the fraction of secondary photon packet wavelengths sampled from a bias
+        distribution. */
+    double secondaryWavelengthBias() const { return _secondaryWavelengthBias; }
+
+    /** Returns the bias distribution for sampling secondary photon packet wavelengths. */
+    WavelengthDistribution* secondaryWavelengthBiasDistribution() const { return _secondaryWavelengthBiasDistribution; }
 
     /** Returns the minimum number of self-absorption iterations. */
     int minIterations() const { return _minIterations; }
@@ -195,9 +203,11 @@ private:
     // emission
     bool _hasDustEmission{false};
     bool _hasSelfAbsorption{false};
-    WavelengthGrid* _emissionSpectrumWLG{nullptr};
+    WavelengthGrid* _dustEmissionWLG{nullptr};
     DustEmissivity* _dustEmissivity{nullptr};
-    double _emissionBias{0.5};
+    double _secondarySpatialBias{0.5};
+    double _secondaryWavelengthBias{0.5};
+    WavelengthDistribution* _secondaryWavelengthBiasDistribution{nullptr};
     int _minIterations{1};
     int _maxIterations{10};
     double _maxFractionOfPrimary{0.01};

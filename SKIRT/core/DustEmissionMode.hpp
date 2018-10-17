@@ -8,6 +8,7 @@
 
 #include "WithMediumMode.hpp"
 #include "DustEmissivity.hpp"
+#include "WavelengthDistribution.hpp"
 #include "WavelengthGrid.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -35,14 +36,28 @@ class DustEmissionMode : public WithMediumMode
     PROPERTY_ITEM(radiationFieldWLG, WavelengthGrid, "the wavelength grid for storing the radiation field")
         ATTRIBUTE_DEFAULT_VALUE(radiationFieldWLG, "LogWavelengthGrid")
 
-    PROPERTY_ITEM(emissionSpectrumWLG, WavelengthGrid, "the wavelength grid for calculating the dust emission spectrum")
-        ATTRIBUTE_DEFAULT_VALUE(emissionSpectrumWLG, "LogWavelengthGrid")
+    PROPERTY_ITEM(dustEmissionWLG, WavelengthGrid, "the wavelength grid for calculating the dust emission spectrum")
+        ATTRIBUTE_DEFAULT_VALUE(dustEmissionWLG, "LogWavelengthGrid")
 
-    PROPERTY_DOUBLE(emissionBias, "the fraction of secondary photon packets distributed uniformly across spatial cells")
-        ATTRIBUTE_MIN_VALUE(emissionBias, "[0")
-        ATTRIBUTE_MAX_VALUE(emissionBias, "1]")
-        ATTRIBUTE_DEFAULT_VALUE(emissionBias, "0.5")
-        ATTRIBUTE_DISPLAYED_IF(emissionBias, "Level3")
+    PROPERTY_DOUBLE(spatialBias, "the fraction of secondary photon packets distributed uniformly across spatial cells")
+        ATTRIBUTE_MIN_VALUE(spatialBias, "[0")
+        ATTRIBUTE_MAX_VALUE(spatialBias, "1]")
+        ATTRIBUTE_DEFAULT_VALUE(spatialBias, "0.5")
+        ATTRIBUTE_DISPLAYED_IF(spatialBias, "Level3")
+
+    PROPERTY_DOUBLE(wavelengthBias,
+                    "the fraction of secondary photon packet wavelengths sampled from a bias distribution")
+        ATTRIBUTE_MIN_VALUE(wavelengthBias, "[0")
+        ATTRIBUTE_MAX_VALUE(wavelengthBias, "1]")
+        ATTRIBUTE_DEFAULT_VALUE(wavelengthBias, "0.5")
+        ATTRIBUTE_RELEVANT_IF(wavelengthBias, "Panchromatic")
+        ATTRIBUTE_DISPLAYED_IF(wavelengthBias, "Level3")
+
+    PROPERTY_ITEM(wavelengthBiasDistribution, WavelengthDistribution,
+                  "the bias distribution for sampling secondary photon packet wavelengths")
+        ATTRIBUTE_DEFAULT_VALUE(wavelengthBiasDistribution, "LogWavelengthDistribution")
+        ATTRIBUTE_RELEVANT_IF(wavelengthBiasDistribution, "wavelengthBias")
+        ATTRIBUTE_DISPLAYED_IF(wavelengthBiasDistribution, "Level3")
 
     PROPERTY_BOOL(iterateSelfAbsorption, "self-consistently calculate dust self-absorption through iteration")
         ATTRIBUTE_DEFAULT_VALUE(iterateSelfAbsorption, "false")

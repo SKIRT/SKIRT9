@@ -55,7 +55,7 @@ class ProbePhotonPacketInterface;
     where \f$N\f$ is the total number of photon packets to be launched, \f$N_s\f$ is the number of
     photon packets to be launched by source \f$s\f$, \f$L_s\f$ is the bolometric luminosity of
     source \f$s\f$, \f$w_s\f$ is the \em emissionWeight property value for source \f$s\f$,
-    \f$\xi\f$ is the \em emissionBias property value of the source system, and the sums range over
+    \f$\xi\f$ is the \em sourceBias property value of the source system, and the sums range over
     all sources in the source system.
 */
 class SourceSystem : public SimulationItem

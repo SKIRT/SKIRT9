@@ -75,7 +75,7 @@ namespace
     {
         auto ms = probe->find<MediumSystem>();
         auto units = probe->find<Units>();
-        auto wavelengthGrid = probe->find<Configuration>()->emissionSpectrumWLG();
+        auto wavelengthGrid = probe->find<Configuration>()->dustEmissionWLG();
         auto dustEmissivity = probe->find<Configuration>()->dustEmissivity();
 
         // construct a list of indices and material mixes for medium components that actually contain dust
@@ -142,7 +142,7 @@ void DustEmissivityProbe::probeSetup()
         // if requested, also output the wavelength grid
         if (writeWavelengthGrid())
         {
-            WavelengthGridProbe::writeWavelengthGrid(this, find<Configuration>()->emissionSpectrumWLG(),
+            WavelengthGridProbe::writeWavelengthGrid(this, find<Configuration>()->dustEmissionWLG(),
                                                      itemName() + "_wavelengths", "emission spectrum wavelengths");
         }
     }

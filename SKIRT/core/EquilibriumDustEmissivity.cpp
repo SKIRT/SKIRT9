@@ -14,7 +14,7 @@
 Array EquilibriumDustEmissivity::emissivity(const MaterialMix* mix, const Array& Jv) const
 {
     // get the output wavelength grid
-    auto wavelengthGrid = find<Configuration>()->emissionSpectrumWLG();
+    auto wavelengthGrid = find<Configuration>()->dustEmissionWLG();
     int numWavelengths = wavelengthGrid->numBins();
 
     // accumulate the emissivities at the equilibrium temperature for all populations in the dust mix
