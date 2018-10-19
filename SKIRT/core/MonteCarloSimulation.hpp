@@ -11,7 +11,6 @@
 #include "InstrumentSystem.hpp"
 #include "MediumSystem.hpp"
 #include "ProbeSystem.hpp"
-#include "SimulationMode.hpp"
 #include "SourceSystem.hpp"
 #include <atomic>
 class SecondarySourceSystem;
@@ -35,30 +34,73 @@ class SecondarySourceSystem;
     for other simulation items to retrieve information from the config object during setup. */
 class MonteCarloSimulation : public Simulation
 {
-    /** The enumeration type indicating the wavelength regime (oligochromatic or panchromatic).
-        Oligochromatic simulations use just a few pre-defined, discrete wavelengths. They do not
-        support secondary emission by the transfer medium because the radiation field must be known
-        across a wide spectrum to calculate the medium state and the resulting emission.
-        Panchromatic simulations use a continuous range of wavelengths, lifting this limitation. */
-    ENUM_DEF(WavelengthRegime, Oligochromatic, Panchromatic)
-    ENUM_VAL(WavelengthRegime, Oligochromatic, "Oligochromatic simulation (just a few discrete wavelengths)")
-    ENUM_VAL(WavelengthRegime, Panchromatic, "Panchromatic simulation (a continuous range of wavelengths)")
+    /** The enumeration type indicating the simulation mode, which determines the overall structure
+        of the simulation and its capabilities. The choice made for the simulation mode has a
+        significant impact on which options are allowed or required in the simulation's
+        configuration. For example, some basic simulation modes support just primary sources
+        without any media.
+
+        An important aspect determined by the simulation mode is the simulation's wavelength
+        regime, which can be oligochromatic or panchromatic. Oligochromatic simulations use just a
+        few pre-defined, discrete wavelengths. They do not support secondary emission by the
+        transfer medium because the radiation field must be known across a wide spectrum to
+        calculate the medium state and the resulting emission. Panchromatic simulations use a
+        continuous range of wavelengths, lifting this limitation.
+
+        For panchromatic simulations, the simulation mode further determines fundamental choices
+        such as whether to include secondary emission, and whether to iterate over the radiation
+        field state to obtain self-consistent results taking into account, for example, dust
+        self-absorption.
+
+        The "extinction-only" simulation modes calculate the extinction of the primary radiation
+        through the configured media, including the effects of absorption and scattering. There is
+        no secondary emission, so these modes are meaningful only for wavelengths at which
+        secondary sources (radiation from the media) can be neglected, i.e. in the ultraviolet,
+        optical and near-infrared. Also, the media state is constant, i.e. it is initialized from
+        the properties defined in the input model (density distributions, material properties) and
+        is never updated. As a result, there is no need to store the radiation field during the
+        photon packet life cycle. However, there is user-configurable option to store the radiation
+        field anyway so that it can be probed for output.
+
+        The "dust emission" simulation modes (which require a panchromatic wavelength range that
+        includes optical to far-infrared regimes) include secondary emission from dust, in addition
+        to the effects of absorption and scattering. In these modes, the simulation keeps track of
+        the radation field (to calculate the dust emission) and optionally performs iterations to
+        self-consistently calculate the effects of dust self-absorption. */
+    ENUM_DEF(SimulationMode, OligoNoMedium, OligoExtinctionOnly, NoMedium, ExtinctionOnly,
+             DustEmission, DustEmissionWithSelfAbsorption)
+    ENUM_VAL(SimulationMode, OligoNoMedium,
+                "No medium - oligochromatic regime (a few discrete wavelengths)")
+    ENUM_VAL(SimulationMode, OligoExtinctionOnly,
+                "Extinction only - oligochromatic regime (a few discrete wavelengths)")
+    ENUM_VAL(SimulationMode, NoMedium,
+                "No medium (primary sources only)")
+    ENUM_VAL(SimulationMode, ExtinctionOnly,
+                "Extinction-only (no secondary emission)")
+    ENUM_VAL(SimulationMode, DustEmission,
+                "With secondary emission from dust")
+    ENUM_VAL(SimulationMode, DustEmissionWithSelfAbsorption,
+                "With secondary emission from dust and iterations for dust self-absorption")
     ENUM_END()
+
 
     ITEM_CONCRETE(MonteCarloSimulation, Simulation, "a Monte Carlo simulation")
 
-    PROPERTY_ENUM(wavelengthRegime, WavelengthRegime, "the wavelength regime of the simulation")
-        ATTRIBUTE_DEFAULT_VALUE(wavelengthRegime, "Panchromatic")
-        ATTRIBUTE_INSERT(wavelengthRegime,  "wavelengthRegimeOligochromatic:Oligochromatic;"
-                                            "wavelengthRegimePanchromatic:Panchromatic")
+    PROPERTY_ENUM(simulationMode, SimulationMode, "the wavelength regime of the simulation")
+        ATTRIBUTE_DEFAULT_VALUE(simulationMode, "ExtinctionOnly")
+        ATTRIBUTE_INSERT(simulationMode,
+                         "simulationModeOligoNoMedium:Oligochromatic,NoMedium;"
+                         "simulationModeOligoExtinctionOnly:Oligochromatic,ExtinctionOnly;"
+                         "simulationModeNoMedium:Panchromatic,NoMedium;"
+                         "simulationModeExtinctionOnly:Panchromatic,ExtinctionOnly;"
+                         "simulationModeDustEmission:Panchromatic,DustEmission,Emission,RadiationField;"
+                         "simulationModeDustEmissionWithSelfAbsorption:"
+                                    "Panchromatic,DustEmission,Emission,RadiationField,DustSelfAbsorption")
 
     PROPERTY_DOUBLE(numPackets, "the default number of photon packets launched per simulation segment")
         ATTRIBUTE_MIN_VALUE(numPackets, "[0")
         ATTRIBUTE_MAX_VALUE(numPackets, "1e19]")
         ATTRIBUTE_DEFAULT_VALUE(numPackets, "1e6")
-
-    PROPERTY_ITEM(mode, SimulationMode, "the overall simulation mode")
-        ATTRIBUTE_DEFAULT_VALUE(mode, "ExtinctionOnlyMode")
 
     PROPERTY_ITEM(sourceSystem, SourceSystem, "the source system")
         ATTRIBUTE_DEFAULT_VALUE(sourceSystem, "SourceSystem")

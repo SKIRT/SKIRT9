@@ -4,14 +4,15 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "Configuration.hpp"
-#include "DustEmissionMode.hpp"
-#include "ExtinctionOnlyMode.hpp"
+#include "DustEmissionOptions.hpp"
+#include "DustSelfAbsorptionOptions.hpp"
+#include "ExtinctionOnlyOptions.hpp"
 #include "FatalError.hpp"
 #include "MaterialMix.hpp"
 #include "MonteCarloSimulation.hpp"
 #include "NR.hpp"
-#include "NoMediumMode.hpp"
 #include "OligoWavelengthGrid.hpp"
+#include "PhotonPacketOptions.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -25,7 +26,7 @@ Configuration::Configuration(SimulationItem* parent)
 void Configuration::setupSelfBefore()
 {
     SimulationItem::setupSelfBefore();
-
+/*
     // Implementation note: this function is NOT allowed to perform setup on any simulation item in the hierarchy;
     //                      in other words, always use find<XXX>(false) and check for a nullptr result.
 
@@ -126,6 +127,7 @@ void Configuration::setupSelfBefore()
 
     // in case emulation mode has been set before our setup() was called, perform the emulation overrides again
     if (emulationMode()) setEmulationMode();
+    */
 }
 
 ////////////////////////////////////////////////////////////////////

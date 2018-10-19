@@ -3,19 +3,19 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef WITHMEDIUMMODE_HPP
-#define WITHMEDIUMMODE_HPP
+#ifndef PHOTONPACKETOPTIONS_HPP
+#define PHOTONPACKETOPTIONS_HPP
 
-#include "SimulationMode.hpp"
+#include "SimulationItem.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-/** WithMediumMode is an abstract (i.e. intermediate) SimulationMode subclass indicating a
-    simulation mode with a transfer medium. It offers options that are relevant as soon as there is
-    a medium, e.g. related to the photon cycle and to sampling the medium density. */
-class WithMediumMode : public SimulationMode
+/** The PhotonPacketOptions class simply offers a number of configuration options related to the
+    Monte Carlo photon packet lifecycle, such as when a photon packet should be terminated. These options
+    are relevant as soon as there is a medium in the configuration. */
+class PhotonPacketOptions : public SimulationItem
 {
-    ITEM_ABSTRACT(WithMediumMode, SimulationMode, "a simulation with a transfer medium")
+    ITEM_ABSTRACT(PhotonPacketOptions, SimulationItem, "a set of options related to the photon packet lifecycle")
 
     PROPERTY_DOUBLE(minWeightReduction, "the minimum weight reduction factor before a photon packet is terminated")
         ATTRIBUTE_MIN_VALUE(minWeightReduction, "[1e3")
@@ -34,12 +34,6 @@ class WithMediumMode : public SimulationMode
         ATTRIBUTE_MAX_VALUE(pathLengthBias, "1]")
         ATTRIBUTE_DEFAULT_VALUE(pathLengthBias, "0.5")
         ATTRIBUTE_DISPLAYED_IF(pathLengthBias, "Level3")
-
-    PROPERTY_INT(numDensitySamples, "the number of random density samples for determining spatial cell mass")
-        ATTRIBUTE_MIN_VALUE(numDensitySamples, "10")
-        ATTRIBUTE_MAX_VALUE(numDensitySamples, "1000")
-        ATTRIBUTE_DEFAULT_VALUE(numDensitySamples, "100")
-        ATTRIBUTE_DISPLAYED_IF(numDensitySamples, "Level2")
 
     ITEM_END()
 };

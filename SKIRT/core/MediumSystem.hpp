@@ -34,6 +34,12 @@ class MediumSystem : public SimulationItem
     ITEM_CONCRETE(MediumSystem, SimulationItem, "a medium system")
         ATTRIBUTE_TYPE_ALLOWED_IF(MediumSystem, "!NoMedium")
 
+    PROPERTY_INT(numDensitySamples, "the number of random density samples for determining spatial cell mass")
+        ATTRIBUTE_MIN_VALUE(numDensitySamples, "10")
+        ATTRIBUTE_MAX_VALUE(numDensitySamples, "1000")
+        ATTRIBUTE_DEFAULT_VALUE(numDensitySamples, "100")
+        ATTRIBUTE_DISPLAYED_IF(numDensitySamples, "Level2")
+
     PROPERTY_ITEM_LIST(media, Medium, "the transfer media")
         ATTRIBUTE_DEFAULT_VALUE(media, "GeometricMedium")
         ATTRIBUTE_REQUIRED_IF(media, "!NoMedium")

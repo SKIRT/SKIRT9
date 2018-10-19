@@ -38,15 +38,16 @@
 #include "DefaultMediaDensityCutsProbe.hpp"
 #include "DefaultRadiationFieldCutsProbe.hpp"
 #include "DensityTreePolicy.hpp"
-#include "DustEmissionMode.hpp"
-#include "DustEmissivityProbe.hpp"
 #include "DustAbsorptionPerCellProbe.hpp"
+#include "DustEmissionOptions.hpp"
+#include "DustEmissivityProbe.hpp"
+#include "DustSelfAbsorptionOptions.hpp"
 #include "DustTemperaturePerCellProbe.hpp"
 #include "EinastoGeometry.hpp"
 #include "ElectronMix.hpp"
 #include "EquilibriumDustEmissivity.hpp"
 #include "ExpDiskGeometry.hpp"
-#include "ExtinctionOnlyMode.hpp"
+#include "ExtinctionOnlyOptions.hpp"
 #include "ExtragalacticUnits.hpp"
 #include "FileBand.hpp"
 #include "FileMesh.hpp"
@@ -99,7 +100,6 @@
 #include "MultiGaussianExpansionGeometry.hpp"
 #include "NestedLogWavelengthGrid.hpp"
 #include "NetzerAngularDistribution.hpp"
-#include "NoMediumMode.hpp"
 #include "NoPolarizationProfile.hpp"
 #include "NumberColumnMaterialNormalization.hpp"
 #include "OffsetGeometryDecorator.hpp"
@@ -112,6 +112,7 @@
 #include "ParticleMedium.hpp"
 #include "ParticleSource.hpp"
 #include "PerspectiveInstrument.hpp"
+#include "PhotonPacketOptions.hpp"
 #include "PlummerGeometry.hpp"
 #include "PointSource.hpp"
 #include "PolicyTreeSpatialGrid.hpp"
@@ -119,10 +120,10 @@
 #include "ProbeSystem.hpp"
 #include "PseudoSersicGeometry.hpp"
 #include "QuasarSED.hpp"
+#include "RadiationFieldPerCellProbe.hpp"
 #include "Random.hpp"
 #include "ReadFitsGeometry.hpp"
 #include "RingGeometry.hpp"
-#include "RadiationFieldPerCellProbe.hpp"
 #include "RotateGeometryDecorator.hpp"
 #include "SEDInstrument.hpp"
 #include "SIUnits.hpp"
@@ -188,13 +189,6 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<SIUnits>();
     ItemRegistry::add<StellarUnits>();
     ItemRegistry::add<ExtragalacticUnits>();
-
-    // simulation modes
-    ItemRegistry::add<SimulationMode>();
-    ItemRegistry::add<NoMediumMode>();
-    ItemRegistry::add<WithMediumMode>();
-    ItemRegistry::add<ExtinctionOnlyMode>();
-    ItemRegistry::add<DustEmissionMode>();
 
     // source system and sources
     ItemRegistry::add<SourceSystem>();
@@ -361,6 +355,12 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<MeshMedium>();
     ItemRegistry::add<AdaptiveMeshMedium>();
     ItemRegistry::add<VoronoiMeshMedium>();
+
+    // medium system options
+    ItemRegistry::add<PhotonPacketOptions>();
+    ItemRegistry::add<ExtinctionOnlyOptions>();
+    ItemRegistry::add<DustEmissionOptions>();
+    ItemRegistry::add<DustSelfAbsorptionOptions>();
 
     // material normalizations
     ItemRegistry::add<MaterialNormalization>();
