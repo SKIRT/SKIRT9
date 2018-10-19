@@ -15,18 +15,9 @@
 #include "ShortArray.hpp"
 #include "SpatialGrid.hpp"
 #include "SpecialFunctions.hpp"
-#include "StopWatch.hpp"
+#include "SecondarySourceSystem.hpp"
 #include "StringUtils.hpp"
 #include "TimeLogger.hpp"
-
-// uncomment this line to produce chunk debugging messages
-//#define LOG_CHUNKS
-
-#ifdef LOG_CHUNKS
-#include <map>
-#include <mutex>
-#include <thread>
-#endif
 
 ////////////////////////////////////////////////////////////////////
 
@@ -54,6 +45,9 @@ void MonteCarloSimulation::setupSimulation()
 void MonteCarloSimulation::setupSelfBefore()
 {
     Simulation::setupSelfBefore();
+
+    // construct a secondary source system to help launch secondary photon packets if required
+    if (_config->hasSecondaryEmission()) _secondarySourceSystem = new SecondarySourceSystem(this);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -101,37 +95,68 @@ Configuration* MonteCarloSimulation::config() const
 
 void MonteCarloSimulation::runSimulation()
 {
-    // run the complete simulation
+    // run the simulation
     {
         TimeLogger logger(log(), "the run");
 
-        // clear the radiation field
-        if (_config->hasRadiationField()) mediumSystem()->clearRadiationField();
+        // ------ primary emission segment ------
+        {
+            TimeLogger logger(log(), "primary emission");
 
-        // shoot photons from primary sources, if needed
-        size_t Npp = _config->numPrimaryPackets();
-        if (!Npp)
-        {
-            log()->warning("Skipping primary emission because no photon packets were requested");
-        }
-        else if (!sourceSystem()->luminosity())
-        {
-            log()->warning("Skipping primary emission because the total luminosity of primary sources is zero");
-        }
-        else
-        {
-            initProgress("primary emission", Npp);
-            sourceSystem()->prepareForlaunch(Npp);
-            auto parallel = find<ParallelFactory>()->parallelDistributed();
-            StopWatch::start();
-            parallel->call(Npp, [this](size_t i ,size_t n) { doPrimaryEmissionChunk(i, n); });
-            StopWatch::stop();
-            instrumentSystem()->flush();
+            // clear the radiation field
+            if (_config->hasRadiationField()) mediumSystem()->clearRadiationField();
+
+            // shoot photons from primary sources, if needed
+            size_t Npp = _config->numPrimaryPackets();
+            if (!Npp)
+            {
+                log()->warning("Skipping primary emission because no photon packets were requested");
+            }
+            else if (!sourceSystem()->luminosity())
+            {
+                log()->warning("Skipping primary emission because the total luminosity of primary sources is zero");
+            }
+            else
+            {
+                initProgress("primary emission", Npp);
+                sourceSystem()->prepareForlaunch(Npp);
+                auto parallel = find<ParallelFactory>()->parallelDistributed();
+                parallel->call(Npp, [this](size_t i ,size_t n) { doPrimaryEmissionChunk(i, n); });
+                instrumentSystem()->flush();
+            }
+
+            // wait for all processes to finish and synchronize the radiation field
+            wait("primary emission");
+            if (_config->hasRadiationField()) mediumSystem()->communicateRadiationField();
         }
 
-        // wait for all processes to finish and synchronize the radiation field
-        wait("the run");
-        if (_config->hasRadiationField()) mediumSystem()->communicateRadiationField();
+        // ------ secondary emission segment ------
+
+        if (_config->hasSecondaryEmission())
+        {
+            TimeLogger logger(log(), "secondary emission");
+
+            // shoot photons from secondary sources, if needed
+            size_t Npp = _config->numSecondaryPackets();
+            if (!Npp)
+            {
+                log()->warning("Skipping secondary emission because no photon packets were requested");
+            }
+            else if (!_secondarySourceSystem->prepareForlaunch(Npp))
+            {
+                log()->warning("Skipping secondary emission because the total luminosity of secondary sources is zero");
+            }
+            else
+            {
+                initProgress("secondary emission", Npp);
+                auto parallel = find<ParallelFactory>()->parallelDistributed();
+                parallel->call(Npp, [this](size_t i ,size_t n) { doSecondaryEmissionChunk(i, n); });
+                instrumentSystem()->flush();
+            }
+
+            // wait for all processes to finish
+            wait("secondary emission");
+        }
     }
 
     // write final output
@@ -187,36 +212,8 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-#ifdef LOG_CHUNKS
-namespace
-{
-    // get a short but consistent identifier for the current thread, used for debugging purposes
-    int threadID()
-    {
-        static std::map<std::thread::id, int> threads;
-        static std::mutex mutex;
-        auto me = std::this_thread::get_id();
-        std::unique_lock<std::mutex> lock(mutex);
-        if (!threads.count(me)) threads.emplace(me, threads.size()+1);
-        return threads.at(me);
-    }
-}
-#endif
-
-////////////////////////////////////////////////////////////////////
-
 void MonteCarloSimulation::doPrimaryEmissionChunk(size_t firstIndex, size_t numIndices)
 {
-#ifdef LOG_CHUNKS
-    // log chunk info for debugging purposes
-    int id = threadID();
-    log()->warning("[T" + std::to_string(id) + "] Chunk: "
-                   + std::to_string(firstIndex) + "," + std::to_string(numIndices));
-
-    // time one of the threads for debugging purposes
-    if (id==1) StopWatch::start();
-#endif
-
     // actually shoot the photon packets
     {
         PhotonPacket pp,ppp;
@@ -255,11 +252,45 @@ void MonteCarloSimulation::doPrimaryEmissionChunk(size_t firstIndex, size_t numI
             numIndices -= currentChunkSize;
         }
     }
+}
 
-#ifdef LOG_CHUNKS
-    // time one of the threads for debugging purposes
-    if (id==1) StopWatch::stop();
-#endif
+////////////////////////////////////////////////////////////////////
+
+void MonteCarloSimulation::doSecondaryEmissionChunk(size_t firstIndex, size_t numIndices)
+{
+    PhotonPacket pp,ppp;
+
+    // loop over the history indices, with interruptions for progress logging
+    while (numIndices)
+    {
+        size_t currentChunkSize = min(logProgressChunkSize, numIndices);
+        for (size_t historyIndex=firstIndex; historyIndex!=firstIndex+currentChunkSize; ++historyIndex)
+        {
+            // launch a photon packet
+            _secondarySourceSystem->launch(&pp, historyIndex);
+            if (pp.luminosity()>0)
+            {
+                peelOffEmission(&pp, &ppp);
+
+                // trace the packet through the media
+                double Lthreshold = pp.luminosity() / _config->minWeightReduction();
+                int minScattEvents = _config->minScattEvents();
+                while (true)
+                {
+                    mediumSystem()->fillOpticalDepthInfo(&pp);
+                    simulatePropagation(&pp);
+                    if (pp.luminosity()<=0 || (pp.luminosity()<=Lthreshold && pp.numScatt()>=minScattEvents)) break;
+                    peelOffScattering(&pp,&ppp);
+                    simulateScattering(&pp);
+                }
+            }
+        }
+
+        // log progress
+        logProgress(currentChunkSize);
+        firstIndex += currentChunkSize;
+        numIndices -= currentChunkSize;
+    }
 }
 
 ////////////////////////////////////////////////////////////////////

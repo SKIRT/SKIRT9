@@ -391,8 +391,9 @@ public:
         int n = pv.size();
         Pv.resize(n+1);  // also sets Pv[0] to zero
         for (int i=0; i<n; i++) Pv[i+1] = Pv[i] + pv[i];
-        Pv /= Pv[n];
-        return Pv[n];
+        double norm = Pv[n];
+        Pv /= norm;
+        return norm;
     }
 
     /** Given a discrete distribution over \f$N\f$ points \f[p_i \qquad i=0,\dots,N-1\f] this
@@ -408,8 +409,9 @@ public:
     {
         Pv.resize(n+1);  // also sets Pv[0] to zero
         for (int i=0; i<n; i++) Pv[i+1] = Pv[i] + pv(i);
-        Pv /= Pv[n];
-        return Pv[n];
+        double norm = Pv[n];
+        Pv /= norm;
+        return norm;
     }
 
     /** Given the tabulated values for a continuous probability distribution, this function

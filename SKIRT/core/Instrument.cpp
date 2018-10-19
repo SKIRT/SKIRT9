@@ -18,9 +18,9 @@ void Instrument::setupSelfBefore()
     auto config = find<Configuration>();
     _instrumentWavelengthGrid = config->wavelengthGrid(wavelengthGrid());
 
-    // TO DO: discover details about the simulation
+    // discover details about the simulation
     bool hasMedium = config->hasMedium();
-    bool hasMediumEmission = false;
+    bool hasMediumEmission = config->hasSecondaryEmission();
 
     // partially configure the flux recorder
     _recorder = new FluxRecorder(this);

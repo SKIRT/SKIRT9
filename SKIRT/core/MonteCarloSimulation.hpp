@@ -14,6 +14,7 @@
 #include "SimulationMode.hpp"
 #include "SourceSystem.hpp"
 #include <atomic>
+class SecondarySourceSystem;
 
 //////////////////////////////////////////////////////////////////////
 
@@ -89,8 +90,9 @@ protected:
         setup() function and notifies the probe system when setup has been completed. */
     void setupSimulation() override;
 
-    /** This function performs initial setup for the MonteCarloSimulation object; it caches some
-        frequently used pointers. */
+    /** This function performs initial setup for the MonteCarloSimulation object. For example,
+        constructs a SecondarySourceSystem object if the simulation configuration requires
+        secondary emission. */
     void setupSelfBefore() override;
 
     /** This function performs final setup for the MonteCarloSimulation object; it logs the
@@ -133,6 +135,13 @@ private:
         registers the contribution of the photon packet to the radiation field in each spatial
         cell crossed by its path. */
     void doPrimaryEmissionChunk(size_t firstIndex, size_t numIndices);
+
+    /** This function launches the specified chunk of photon packets from secondary sources. It
+        implements the complete photon packet life-cycle, including emission and multiple forced
+        scattering events, as well as the corresponding peel-off photon packets towards the
+        instruments. Because this function operates in the final simulation segment, it makes no
+        changes to the stored radiation field. */
+    void doSecondaryEmissionChunk(size_t firstIndex, size_t numIndices);
 
     /** This function implements the peel-off of a photon packet after an emission event. This
         means that we create a peel-off photon packet for every instrument in the instrument
@@ -355,6 +364,7 @@ private:
 private:
     // non-discoverable simulation items
     Configuration* _config{ new Configuration(this) };
+    SecondarySourceSystem* _secondarySourceSystem{nullptr};  // constructed only when there is secondary emission
 
     // data members used by the XXXprogress() functions in this class
     string _segment;               // a string identifying the photon shooting segment for use in the log message

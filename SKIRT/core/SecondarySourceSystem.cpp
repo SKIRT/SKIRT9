@@ -7,6 +7,7 @@
 #include "BulkVelocityInterface.hpp"
 #include "Configuration.hpp"
 #include "DisjointWavelengthGrid.hpp"
+#include "DustEmissivity.hpp"
 #include "FatalError.hpp"
 #include "MediumSystem.hpp"
 #include "NR.hpp"
@@ -107,9 +108,10 @@ namespace
     class DustCellEmission : public BulkVelocityInterface
     {
     private:
-        int _m{-1};                 // spatial cell index
-        Array _lambdav, _pv, _Pv;   // normalized emission spectra
-        Vec _bfv;                   // bulk velocity
+        int _m{-1};                         // spatial cell index
+        const Array* _lambdav{nullptr};     // wavelengths for emission spectrum
+        Array _pv, _Pv;                     // normalized emission spectra
+        Vec _bfv;                           // bulk velocity
 
     public:
         DustCellEmission() { }
@@ -121,19 +123,27 @@ namespace
             {
                 _m=m;
 
-                // copy the wavelengths of the configured emission wavelength grid
-                auto wavelengthGrid = config->dustEmissionWLG();
-                int numWavelengths = wavelengthGrid->numBins();
-                for (int ell=0; ell!=numWavelengths; ++ell) _lambdav[ell] = wavelengthGrid->wavelength(ell);
-
                 // get the mean intensities of the radiation field in the cell
                 Array Jv = ms->meanIntensity(m);
 
-                // accumulate the emmissivity spectrum for all dust medium components in the cell, weighed by density
-                // XXXX
+                // get the configured emission wavelength grid and remember a pointer to its wavelengths
+                auto wavelengthGrid = config->dustEmissionWLG();
+                int numWavelengths = wavelengthGrid->numBins();
+                _lambdav = &wavelengthGrid->lambdav();
 
-                // calculate the emission spectrum
-                (void)config; // XXXX
+                // accumulate the emmissivity spectrum for all dust medium components in the cell, weighed by density
+                _pv.resize(numWavelengths);
+                for (int h=0; h!=ms->numMedia(); ++h) if (ms->isDust(h))
+                {
+                    _pv += ms->massDensity(m,h) * config->dustEmissivity()->emissivity(ms->mix(m,h), Jv);
+                }
+
+                // convert from spectral emissivity to emission per bin
+                _pv *= wavelengthGrid->dlambdav();
+
+                // calculate the normalized cumulative distribution and normalize the plain distribution as well
+                double total = NR::cdf(_Pv, _pv);
+                 _pv /= total;
 
                 // remember the average bulk velocity
                 _bfv = ms->bulkVelocity(m);
@@ -143,14 +153,14 @@ namespace
         // returns a random wavelength generated from the spectral distribution
         double generateWavelength(Random* random) const
         {
-            return random->cdfLogLog(_lambdav, _pv, _Pv);
+            return random->cdfLogLog(*_lambdav, _pv, _Pv);
         }
 
         // returns the normalized specific luminosity for the given wavelength
         double specificLuminosity(double lambda) const
         {
-            int i = NR::locateClip(_lambdav, lambda);
-            return NR::interpolateLogLog(lambda, _lambdav[i], _lambdav[i+1], _pv[i], _pv[i+1]);
+            int i = NR::locateClip(*_lambdav, lambda);
+            return NR::interpolateLogLog(lambda, (*_lambdav)[i], (*_lambdav)[i+1], _pv[i], _pv[i+1]);
         }
 
         Vec bulkVelocity() const override { return _bfv; }

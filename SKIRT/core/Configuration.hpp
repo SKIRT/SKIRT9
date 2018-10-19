@@ -127,6 +127,9 @@ public:
     /** Returns true if the radiation field must be stored during the photon cycle, and false otherwise. */
     bool hasRadiationField() const { return _hasRadiationField; }
 
+    /** Returns true if secondary emission must be calculated for any media type, and false otherwise. */
+    bool hasSecondaryEmission() const { return _hasDustEmission; }
+
     /** Returns true if secondary dust emission must be calculated, and false otherwise. */
     bool hasDustEmission() const { return _hasDustEmission; }
 
