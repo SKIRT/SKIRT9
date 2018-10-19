@@ -7,7 +7,7 @@
 #define EXTINCTIONONLYMODE_HPP
 
 #include "WithMediumMode.hpp"
-#include "WavelengthGrid.hpp"
+#include "DisjointWavelengthGrid.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -32,7 +32,7 @@ class ExtinctionOnlyMode : public WithMediumMode
         ATTRIBUTE_DISPLAYED_IF(storeRadiationField, "Level3")
         ATTRIBUTE_INSERT(storeRadiationField, "storeRadiationField:RadiationField")
 
-    PROPERTY_ITEM(radiationFieldWLG, WavelengthGrid, "the wavelength grid for storing the radiation field")
+    PROPERTY_ITEM(radiationFieldWLG, DisjointWavelengthGrid, "the wavelength grid for storing the radiation field")
         ATTRIBUTE_RELEVANT_IF(radiationFieldWLG, "storeRadiationField&Panchromatic")
 
     ITEM_END()

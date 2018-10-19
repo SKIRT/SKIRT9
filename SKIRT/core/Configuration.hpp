@@ -9,6 +9,7 @@
 #include "SimulationItem.hpp"
 #include "Array.hpp"
 #include "Range.hpp"
+class DisjointWavelengthGrid;
 class WavelengthDistribution;
 class WavelengthGrid;
 class DustEmissivity;
@@ -134,10 +135,10 @@ public:
     bool hasSelfAbsorption() const { return _hasSelfAbsorption; }
 
     /** Returns the wavelength grid to be used for storing the radiation field. */
-    WavelengthGrid* radiationFieldWLG() const { return _radiationFieldWLG; }
+    DisjointWavelengthGrid* radiationFieldWLG() const { return _radiationFieldWLG; }
 
     /** Returns the wavelength grid to be used for calculating the dust emission spectrum. */
-    WavelengthGrid* dustEmissionWLG() const { return _dustEmissionWLG; }
+    DisjointWavelengthGrid* dustEmissionWLG() const { return _dustEmissionWLG; }
 
     /** Returns the dust emissivity calculator to be used for calculating the dust emission
         spectrum. */
@@ -198,12 +199,12 @@ private:
 
     // radiation field
     bool _hasRadiationField{false};
-    WavelengthGrid* _radiationFieldWLG{nullptr};
+    DisjointWavelengthGrid* _radiationFieldWLG{nullptr};
 
     // emission
     bool _hasDustEmission{false};
     bool _hasSelfAbsorption{false};
-    WavelengthGrid* _dustEmissionWLG{nullptr};
+    DisjointWavelengthGrid* _dustEmissionWLG{nullptr};
     DustEmissivity* _dustEmissivity{nullptr};
     double _secondarySpatialBias{0.5};
     double _secondaryWavelengthBias{0.5};

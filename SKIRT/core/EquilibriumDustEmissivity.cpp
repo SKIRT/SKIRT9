@@ -5,9 +5,9 @@
 
 #include "EquilibriumDustEmissivity.hpp"
 #include "Configuration.hpp"
+#include "DisjointWavelengthGrid.hpp"
 #include "MaterialMix.hpp"
 #include "PlanckFunction.hpp"
-#include "WavelengthGrid.hpp"
 
 ////////////////////////////////////////////////////////////////////
 

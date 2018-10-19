@@ -4,8 +4,9 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "SecondarySourceSystem.hpp"
-#include "Configuration.hpp"
 #include "BulkVelocityInterface.hpp"
+#include "Configuration.hpp"
+#include "DisjointWavelengthGrid.hpp"
 #include "FatalError.hpp"
 #include "MediumSystem.hpp"
 #include "NR.hpp"
@@ -16,7 +17,6 @@
 #include "ProcessManager.hpp"
 #include "Random.hpp"
 #include "WavelengthDistribution.hpp"
-#include "WavelengthGrid.hpp"
 
 ////////////////////////////////////////////////////////////////////
 

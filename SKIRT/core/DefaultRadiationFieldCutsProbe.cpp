@@ -6,6 +6,7 @@
 #include "DefaultRadiationFieldCutsProbe.hpp"
 #include "Array.hpp"
 #include "Configuration.hpp"
+#include "DisjointWavelengthGrid.hpp"
 #include "FITSInOut.hpp"
 #include "MediumSystem.hpp"
 #include "Parallel.hpp"
@@ -13,7 +14,6 @@
 #include "SpatialGrid.hpp"
 #include "TextOutFile.hpp"
 #include "Units.hpp"
-#include "WavelengthGrid.hpp"
 #include "WavelengthGridProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////

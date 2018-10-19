@@ -5,6 +5,7 @@
 
 #include "DustEmissivityProbe.hpp"
 #include "ArrayTable.hpp"
+#include "DisjointWavelengthGrid.hpp"
 #include "DustEmissivity.hpp"
 #include "Configuration.hpp"
 #include "MediumSystem.hpp"
@@ -12,7 +13,6 @@
 #include "StringUtils.hpp"
 #include "TextOutFile.hpp"
 #include "Units.hpp"
-#include "WavelengthGrid.hpp"
 #include "WavelengthGridProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////

@@ -5,12 +5,12 @@
 
 #include "DustAbsorptionPerCellProbe.hpp"
 #include "Configuration.hpp"
+#include "DisjointWavelengthGrid.hpp"
 #include "MediumSystem.hpp"
 #include "SpatialGrid.hpp"
 #include "StringUtils.hpp"
 #include "TextOutFile.hpp"
 #include "Units.hpp"
-#include "WavelengthGrid.hpp"
 #include "WavelengthGridProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////

@@ -6,6 +6,7 @@
 #include "MediumSystem.hpp"
 #include "Configuration.hpp"
 #include "DensityInCellInterface.hpp"
+#include "DisjointWavelengthGrid.hpp"
 #include "FatalError.hpp"
 #include "LockFree.hpp"
 #include "Log.hpp"
@@ -18,7 +19,6 @@
 #include "Random.hpp"
 #include "ShortArray.hpp"
 #include "StringUtils.hpp"
-#include "WavelengthGrid.hpp"
 
 ////////////////////////////////////////////////////////////////////
 

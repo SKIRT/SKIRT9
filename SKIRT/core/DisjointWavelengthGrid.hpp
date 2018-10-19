@@ -78,7 +78,7 @@ protected:
         the wavelength bin widths from the bin borders. */
     void setWavelengthBins(const Array& lambdav, double relativeHalfWidth, bool constantWidth = false);
 
-    //======================== Other Functions =======================
+    //================= Functions implementing virtual base class functions ===================
 
 public:
     /** This function returns the number of bins, \f$N\f$, in the grid (or equivalently, the number
@@ -118,6 +118,19 @@ public:
         wavelength bins, the function returns -1. */
     int bin(double lambda) const override;
 
+    //=============== Functions specific to disjoint wavelength grids =================
+
+public:
+    /** This function returns (a reference to) the list of characteristic wavelengths in this
+        wavelength grid. In combination with the dlambdav() function, it allows easily expressing
+        calculations involving consecutive wavelength grids. */
+    const Array& lambdav() const { return _lambdav; }
+
+    /** This function returns (a reference to) the list of bin widths in this wavelength grid. In
+        combination with the lambdav() function, it allows easily expressing calculations involving
+        consecutive wavelength grids. */
+    const Array& dlambdav() const { return _dlambdav; }
+
     //======================== Data Members ========================
 
 private:
@@ -128,6 +141,7 @@ private:
     Array _lambdarightv; // N right wavelength bin widths
     Array _borderv;      // K=N+1 or K=N*2 ordered border points (depending on whether bins are adjacent)
     vector<int> _ellv;   // K+1 indices of the wavelength bins defined by the border points, or -1 if out of range
+    bool _isConsecutive{false};
 };
 
 //////////////////////////////////////////////////////////////////////

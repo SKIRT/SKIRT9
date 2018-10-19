@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "MonteCarloSimulation.hpp"
+#include "DisjointWavelengthGrid.hpp"
 #include "FatalError.hpp"
 #include "Log.hpp"
 #include "MaterialMix.hpp"

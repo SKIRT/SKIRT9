@@ -9,7 +9,7 @@
 #include "WithMediumMode.hpp"
 #include "DustEmissivity.hpp"
 #include "WavelengthDistribution.hpp"
-#include "WavelengthGrid.hpp"
+#include "DisjointWavelengthGrid.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -33,10 +33,10 @@ class DustEmissionMode : public WithMediumMode
 //    PROPERTY_ITEM(cellLibrary, CellLibrary, "the library mechanism for combining spatial cells")
 //        ATTRIBUTE_DEFAULT_VALUE(cellLibrary, "AllCellsLibrary")
 
-    PROPERTY_ITEM(radiationFieldWLG, WavelengthGrid, "the wavelength grid for storing the radiation field")
+    PROPERTY_ITEM(radiationFieldWLG, DisjointWavelengthGrid, "the wavelength grid for storing the radiation field")
         ATTRIBUTE_DEFAULT_VALUE(radiationFieldWLG, "LogWavelengthGrid")
 
-    PROPERTY_ITEM(dustEmissionWLG, WavelengthGrid, "the wavelength grid for calculating the dust emission spectrum")
+    PROPERTY_ITEM(dustEmissionWLG, DisjointWavelengthGrid, "the wavelength grid for calculating the dust emission spectrum")
         ATTRIBUTE_DEFAULT_VALUE(dustEmissionWLG, "LogWavelengthGrid")
 
     PROPERTY_DOUBLE(spatialBias, "the fraction of secondary photon packets distributed uniformly across spatial cells")

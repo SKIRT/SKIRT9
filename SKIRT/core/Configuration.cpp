@@ -85,7 +85,8 @@ void Configuration::setupSelfBefore()
     {
         _hasRadiationField = xmode->storeRadiationField();
         if (_hasRadiationField)
-            _radiationFieldWLG = _oligochromatic ? _defaultWavelengthGrid : xmode->radiationFieldWLG();
+            _radiationFieldWLG = _oligochromatic ? dynamic_cast<OligoWavelengthGrid*>(_defaultWavelengthGrid)
+                                                 : xmode->radiationFieldWLG();
     }
 
     // retrieve dust emission options

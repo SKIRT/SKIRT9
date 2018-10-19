@@ -5,11 +5,11 @@
 
 #include "MaterialMix.hpp"
 #include "Configuration.hpp"
+#include "DisjointWavelengthGrid.hpp"
 #include "NR.hpp"
 #include "PlanckFunction.hpp"
 #include "Random.hpp"
 #include "StokesVector.hpp"
-#include "WavelengthGrid.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
