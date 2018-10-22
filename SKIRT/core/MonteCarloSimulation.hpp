@@ -150,7 +150,15 @@ public:
     //======================== Other Functions =======================
 
 protected:
-    /** This function actually runs the simulation, assuming setup has been completed. */
+    /** This function actually runs the simulation, assuming setup has been completed. It
+        consecutively performs all segments of the simulation, including primary source segments,
+        secondary source segments, and any required iterations. For each segment, it tells the
+        source system to prepare for launching photon packets in serial code, and then it causes
+        photon packets to be launched (and traced through their life cycles) by calling the
+        doXxxEmissionChunk() functions in appropriately parallelized code depending on the run-time
+        environment and the command-line options. After each of the segments but the last one, the
+        function also tells the medium system to synchronize the radiation field between processes
+        (in a multi-process environment). */
     void runSimulation() override;
 
 private:

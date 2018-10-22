@@ -103,14 +103,38 @@ public:
 
 public:
     /** This function prepares the mapping of history indices to sources; see the description in
-        the class header for more information. The function returns false of the total bolometric
+        the class header for more information. The function returns false if the total bolometric
         luminosity of the secondary sources is zero (which means no photon packets can be
         launched), and true otherwise. */
     bool prepareForlaunch(size_t numPackets);
 
     /** This function causes the photon packet \em pp to be launched from one of the cells in the
-        spatial grid using the given history index. The photon packet's contents is fully
-        (re-)initialized so that it is ready to start its lifecycle. */
+        spatial grid using the given history index; see the description in the class header for
+        more information. The photon packet's contents is fully (re-)initialized so that it is
+        ready to start its lifecycle.
+
+        Before it can randomly emit photon packets from a spatial cell, this function must
+        calculate the normalized regular and cumulative dust emission spectrum for the cell from
+        the radiation field and the dust properties held by the medium system, using the configured
+        emission calculator (LTE or NLTE). Also, it must obtain the average bulk velocity of the
+        material in the cell from the medium system. Especially the NLTE emission spectrum
+        calculations can be very time-consuming, so it is important to perform them only once for
+        each cell. On the other hand, pre-calculating and storing the spectra for all cells in
+        advance requires a potentially large amount of memory (proportional to both the number of
+        cells and to the number of wavelengths on which the emission is discretized). As described
+        in the class header, photon packets launched from a given spatial cell are usually handled
+        consecutively by the same execution thread, allowing this function to remember the
+        information calculated for the "current" cell from one invocation to the next in a helper
+        object allocated with thread-local storage scope. As a result, memory requirements are
+        limited to storing the information for only a single cell per execution thread, and the
+        calculation is still performed only once per cell.
+
+        Once the emission spectrum for the current cell is known, the function randomly generates a
+        wavelength either from this emission spectrum or from the configured bias wavelength
+        distribution, adjusting the launch weight with the proper bias factor. It then generates a
+        random position uniformly within the spatial cell, and a random direction uniformly on the
+        unit sphere (since the emission is assumed to be isotropic). Finally, it actually
+        initializes the photon packet with this information. */
     void launch(PhotonPacket* pp, size_t historyIndex) const;
 
     //======================== Data Members ========================
