@@ -86,7 +86,7 @@ class MonteCarloSimulation : public Simulation
 
     ITEM_CONCRETE(MonteCarloSimulation, Simulation, "a Monte Carlo simulation")
 
-    PROPERTY_ENUM(simulationMode, SimulationMode, "the wavelength regime of the simulation")
+    PROPERTY_ENUM(simulationMode, SimulationMode, "the overall simulation mode")
         ATTRIBUTE_DEFAULT_VALUE(simulationMode, "ExtinctionOnly")
         ATTRIBUTE_INSERT(simulationMode,
                          "simulationModeOligoNoMedium:Oligochromatic,NoMedium;"

@@ -6,10 +6,14 @@
 #ifndef MEDIUMSYSTEM_HPP
 #define MEDIUMSYSTEM_HPP
 
-#include "SimulationItem.hpp"
 #include "Array.hpp"
-#include "Medium.hpp"
+#include "DustEmissionOptions.hpp"
+#include "DustSelfAbsorptionOptions.hpp"
+#include "ExtinctionOnlyOptions.hpp"
 #include "MaterialMix.hpp"
+#include "Medium.hpp"
+#include "PhotonPacketOptions.hpp"
+#include "SimulationItem.hpp"
 #include "SpatialGrid.hpp"
 #include "Table.hpp"
 class PhotonPacket;
@@ -33,6 +37,22 @@ class MediumSystem : public SimulationItem
 {
     ITEM_CONCRETE(MediumSystem, SimulationItem, "a medium system")
         ATTRIBUTE_TYPE_ALLOWED_IF(MediumSystem, "!NoMedium")
+
+    PROPERTY_ITEM(photonPacketOptions, PhotonPacketOptions, "the photon packet options")
+        ATTRIBUTE_DEFAULT_VALUE(photonPacketOptions, "PhotonPacketOptions")
+        ATTRIBUTE_RELEVANT_IF(media, "!NoMedium")
+
+    PROPERTY_ITEM(extinctionOnlyOptions, ExtinctionOnlyOptions, "the photon packet options")
+        ATTRIBUTE_DEFAULT_VALUE(extinctionOnlyOptions, "ExtinctionOnlyOptions")
+        ATTRIBUTE_RELEVANT_IF(extinctionOnlyOptions, "ExtinctionOnly")
+
+    PROPERTY_ITEM(dustEmissionOptions, DustEmissionOptions, "the photon packet options")
+        ATTRIBUTE_DEFAULT_VALUE(dustEmissionOptions, "DustEmissionOptions")
+        ATTRIBUTE_RELEVANT_IF(dustEmissionOptions, "DustEmission")
+
+    PROPERTY_ITEM(dustSelfAbsorptionOptions, DustSelfAbsorptionOptions, "the photon packet options")
+        ATTRIBUTE_DEFAULT_VALUE(dustSelfAbsorptionOptions, "DustSelfAbsorptionOptions")
+        ATTRIBUTE_RELEVANT_IF(dustSelfAbsorptionOptions, "DustSelfAbsorption")
 
     PROPERTY_INT(numDensitySamples, "the number of random density samples for determining spatial cell mass")
         ATTRIBUTE_MIN_VALUE(numDensitySamples, "10")

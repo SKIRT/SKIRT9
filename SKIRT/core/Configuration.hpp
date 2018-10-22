@@ -135,7 +135,7 @@ public:
 
     /** Returns true if dust self-absorption must be self-consistently calculated through
         iteration, and false otherwise. */
-    bool hasSelfAbsorption() const { return _hasSelfAbsorption; }
+    bool hasDustSelfAbsorption() const { return _hasDustSelfAbsorption; }
 
     /** Returns the wavelength grid to be used for storing the radiation field. */
     DisjointWavelengthGrid* radiationFieldWLG() const { return _radiationFieldWLG; }
@@ -206,7 +206,7 @@ private:
 
     // emission
     bool _hasDustEmission{false};
-    bool _hasSelfAbsorption{false};
+    bool _hasDustSelfAbsorption{false};
     DisjointWavelengthGrid* _dustEmissionWLG{nullptr};
     DustEmissivity* _dustEmissivity{nullptr};
     double _secondarySpatialBias{0.5};

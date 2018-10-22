@@ -15,7 +15,7 @@
     are relevant as soon as there is a medium in the configuration. */
 class PhotonPacketOptions : public SimulationItem
 {
-    ITEM_ABSTRACT(PhotonPacketOptions, SimulationItem, "a set of options related to the photon packet lifecycle")
+    ITEM_CONCRETE(PhotonPacketOptions, SimulationItem, "a set of options related to the photon packet lifecycle")
 
     PROPERTY_DOUBLE(minWeightReduction, "the minimum weight reduction factor before a photon packet is terminated")
         ATTRIBUTE_MIN_VALUE(minWeightReduction, "[1e3")

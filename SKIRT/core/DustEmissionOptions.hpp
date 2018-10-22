@@ -14,8 +14,9 @@
 ////////////////////////////////////////////////////////////////////
 
 /** The DustEmissionOptions class simply offers a number of configuration options related to
-    secondary emission from dust. In this mode, the simulation keeps track of the radation field
-    and it also needs a wavelength grid on which to calculate the dust emission spectrum. */
+    secondary emission from dust. In a mode where dust emission is enabled, the simulation keeps
+    track of the radation field and it also needs a wavelength grid on which to calculate the dust
+    emission spectrum. */
 class DustEmissionOptions : public SimulationItem
 {
     ITEM_CONCRETE(DustEmissionOptions, SimulationItem, "a set of options related to secondary emission from dust")

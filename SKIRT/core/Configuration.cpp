@@ -26,46 +26,31 @@ Configuration::Configuration(SimulationItem* parent)
 void Configuration::setupSelfBefore()
 {
     SimulationItem::setupSelfBefore();
-/*
+
     // Implementation note: this function is NOT allowed to perform setup on any simulation item in the hierarchy;
     //                      in other words, always use find<XXX>(false) and check for a nullptr result.
 
     // retrieve objects that we'll need anyway
     auto sim = find<MonteCarloSimulation>(false);
     if (!sim) throw FATALERROR("Cannot locate a MonteCarloSimulation object in the simulation hierarchy");
-    auto mode = find<SimulationMode>(false);
-    if (!mode) throw FATALERROR("Cannot locate a SimulationMode object in the simulation hierarchy");
     auto ss = find<SourceSystem>(false);
     if (!ss) throw FATALERROR("Cannot locate a SourceSystem object in the simulation hierarchy");
 
     // retrieve wavelength-related options
-    _oligochromatic = sim->wavelengthRegime() == MonteCarloSimulation::WavelengthRegime::Oligochromatic;
+    _oligochromatic = sim->simulationMode() == MonteCarloSimulation::SimulationMode::OligoNoMedium ||
+                      sim->simulationMode() == MonteCarloSimulation::SimulationMode::OligoExtinctionOnly;
     if (_oligochromatic)
     {
         NR::assign(_oligoWavelengths, ss->wavelengths());
         _defaultWavelengthGrid = new OligoWavelengthGrid(this, ss->wavelengths());
         _oligoBinWidth = _defaultWavelengthGrid->effectiveWidth(0);
-        _sourceWavelengthRange.set(_defaultWavelengthGrid->leftBorder(0),
-                                   _defaultWavelengthGrid->rightBorder(_defaultWavelengthGrid->numBins()-1));
+        _sourceWavelengthRange = _defaultWavelengthGrid->wavelengthRange();
     }
     else
     {
         auto is = find<InstrumentSystem>(false);
         if (is) _defaultWavelengthGrid = is->defaultWavelengthGrid();
         _sourceWavelengthRange.set(ss->minWavelength(), ss->maxWavelength());
-    }
-
-    // retrieve photon life-cycle and medium-related options
-    _numPrimaryPackets = sim->numPackets();
-    bool mustHaveMedium = false;
-    auto mmode = dynamic_cast<WithMediumMode*>(mode);
-    if (mmode)
-    {
-        mustHaveMedium = true;
-        _minWeightReduction = mmode->minWeightReduction();
-        _minScattEvents = mmode->minScattEvents();
-        _pathLengthBias = mmode->pathLengthBias();
-        _numDensitySamples = mmode->numDensitySamples();
     }
 
     // determine the number of media in the simulation hierarchy
@@ -75,44 +60,57 @@ void Configuration::setupSelfBefore()
     _hasMedium = (numMedia!=0);
 
     // verify this with the requirements set by the simulation mode
+    bool mustHaveMedium = sim->simulationMode() != MonteCarloSimulation::SimulationMode::OligoNoMedium &&
+                          sim->simulationMode() != MonteCarloSimulation::SimulationMode::NoMedium;;
     if (!mustHaveMedium && _hasMedium)
         throw FATALERROR("This simulation mode does not allow media to be configured");
     if (mustHaveMedium && !_hasMedium)
         throw FATALERROR("This simulation mode requires at least one medium to be configured");
 
-    // retrieve extinction-only options
-    auto xmode = dynamic_cast<ExtinctionOnlyMode*>(mode);
-    if (_hasMedium && xmode)
+    // retrieve photon life-cycle and basic medium-related options
+    _numPrimaryPackets = sim->numPackets();
+    if (_hasMedium)
     {
-        _hasRadiationField = xmode->storeRadiationField();
+        _numDensitySamples = ms->numDensitySamples();
+        _minWeightReduction = ms->photonPacketOptions()->minWeightReduction();
+        _minScattEvents = ms->photonPacketOptions()->minScattEvents();
+        _pathLengthBias = ms->photonPacketOptions()->pathLengthBias();
+    }
+
+    // retrieve extinction-only options
+    if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::OligoExtinctionOnly ||
+        sim->simulationMode() == MonteCarloSimulation::SimulationMode::ExtinctionOnly)
+    {
+        _hasRadiationField = ms->extinctionOnlyOptions()->storeRadiationField();
         if (_hasRadiationField)
             _radiationFieldWLG = _oligochromatic ? dynamic_cast<OligoWavelengthGrid*>(_defaultWavelengthGrid)
-                                                 : xmode->radiationFieldWLG();
+                                                 : ms->extinctionOnlyOptions()->radiationFieldWLG();
     }
 
     // retrieve dust emission options
-    auto emode = dynamic_cast<DustEmissionMode*>(mode);
-    if (_hasMedium && emode)
+    if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustEmission ||
+        sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustEmissionWithSelfAbsorption)
     {
         _hasRadiationField = true;
         _hasDustEmission = true;
-        _radiationFieldWLG = emode->radiationFieldWLG();
-        _dustEmissionWLG = emode->dustEmissionWLG();
-        _dustEmissivity = emode->dustEmissivity();
-        _secondarySpatialBias = emode->spatialBias();
-        _secondaryWavelengthBias = emode->wavelengthBias();
-        _secondaryWavelengthBiasDistribution = emode->wavelengthBiasDistribution();
-        _hasSelfAbsorption = emode->iterateSelfAbsorption();
-        if (_hasSelfAbsorption)
-        {
-            _minIterations = emode->minIterations();
-            _maxIterations = emode->maxIterations();
-            _maxFractionOfPrimary = emode->maxFractionOfPrimary();
-            _maxFractionOfPrevious = emode->maxFractionOfPrevious();
-        }
-        _numPrimaryPackets = sim->numPackets() * emode->primaryPacketsMultiplier();
-        _numSecondaryPackets = sim->numPackets() * emode->secondaryPacketsMultiplier();
-        if (_hasSelfAbsorption) _numIterationPackets = sim->numPackets() * emode->iterationPacketsMultiplier();
+        _dustEmissivity = ms->dustEmissionOptions()->dustEmissivity();
+        _radiationFieldWLG = ms->dustEmissionOptions()->radiationFieldWLG();
+        _dustEmissionWLG = ms->dustEmissionOptions()->dustEmissionWLG();
+        _numSecondaryPackets = sim->numPackets() * ms->dustEmissionOptions()->secondaryPacketsMultiplier();
+        _secondarySpatialBias = ms->dustEmissionOptions()->spatialBias();
+        _secondaryWavelengthBias = ms->dustEmissionOptions()->wavelengthBias();
+        _secondaryWavelengthBiasDistribution = ms->dustEmissionOptions()->wavelengthBiasDistribution();
+    }
+
+    // retrieve dust self-absorption options
+    if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustEmissionWithSelfAbsorption)
+    {
+        _hasDustSelfAbsorption = true;
+        _minIterations = ms->dustSelfAbsorptionOptions()->minIterations();
+        _maxIterations = ms->dustSelfAbsorptionOptions()->maxIterations();
+        _maxFractionOfPrimary = ms->dustSelfAbsorptionOptions()->maxFractionOfPrimary();
+        _maxFractionOfPrevious = ms->dustSelfAbsorptionOptions()->maxFractionOfPrevious();
+        _numIterationPackets = sim->numPackets() * ms->dustSelfAbsorptionOptions()->iterationPacketsMultiplier();
     }
 
     // check for polarization
@@ -127,7 +125,6 @@ void Configuration::setupSelfBefore()
 
     // in case emulation mode has been set before our setup() was called, perform the emulation overrides again
     if (emulationMode()) setEmulationMode();
-    */
 }
 
 ////////////////////////////////////////////////////////////////////

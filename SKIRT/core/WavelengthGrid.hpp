@@ -8,6 +8,7 @@
 
 #include "SimulationItem.hpp"
 #include "Array.hpp"
+#include "Range.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -97,6 +98,13 @@ public:
         condition, the function returns the index for the bin with the shortest characteristic
         wavelength. */
     virtual int bin(double lambda) const = 0;
+
+    /** This function returns the wavelength range covered by the wavelength grid, which is defined
+        as the range from the left border of the leftmost bin to the right border of the rightmost
+        bin. This range includes all wavelengths possibly covered by the wavelength grid except in
+        the rare case of overlapping bins where an inner bin is so wide that it outer limit extends
+        beyond the outer bin. */
+    Range wavelengthRange() const;
 };
 
 //////////////////////////////////////////////////////////////////////
