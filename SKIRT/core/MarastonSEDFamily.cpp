@@ -41,6 +41,13 @@ vector<SnapshotParameter> MarastonSEDFamily::parameterInfo() const
 
 ////////////////////////////////////////////////////////////////////
 
+Range MarastonSEDFamily::intrinsicWavelengthRange() const
+{
+    return _table.axisRange<0>();
+}
+
+////////////////////////////////////////////////////////////////////
+
 double MarastonSEDFamily::specificLuminosity(double wavelength, const Array& parameters) const
 {
     double M = parameters[0] / Constants::Msun();

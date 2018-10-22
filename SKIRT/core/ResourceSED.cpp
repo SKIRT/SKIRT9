@@ -4,7 +4,6 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "ResourceSED.hpp"
-#include "Configuration.hpp"
 #include "Random.hpp"
 
 //////////////////////////////////////////////////////////////////////
@@ -14,7 +13,14 @@ void ResourceSED::setupSelfBefore()
     SED::setupSelfBefore();
 
     _table.open(this, resourceName(), "lambda(m)", "Llambda(W/m)", false);
-    _Ltot = _table.cdf(_lambdav, _pv, _Pv, find<Configuration>()->sourceWavelengthRange());
+    _Ltot = _table.cdf(_lambdav, _pv, _Pv, wavelengthRange());
+}
+
+//////////////////////////////////////////////////////////////////////
+
+Range ResourceSED::intrinsicWavelengthRange() const
+{
+    return _table.axisRange<0>();
 }
 
 //////////////////////////////////////////////////////////////////////

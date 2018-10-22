@@ -44,6 +44,13 @@ vector<SnapshotParameter> BruzualCharlotSEDFamily::parameterInfo() const
 
 ////////////////////////////////////////////////////////////////////
 
+Range BruzualCharlotSEDFamily::intrinsicWavelengthRange() const
+{
+    return _table.axisRange<0>();
+}
+
+////////////////////////////////////////////////////////////////////
+
 double BruzualCharlotSEDFamily::specificLuminosity(double wavelength, const Array& parameters) const
 {
     double M = parameters[0] / Constants::Msun();

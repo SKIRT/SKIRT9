@@ -37,6 +37,13 @@ vector<SnapshotParameter> Starburst99SEDFamily::parameterInfo() const
 
 ////////////////////////////////////////////////////////////////////
 
+Range Starburst99SEDFamily::intrinsicWavelengthRange() const
+{
+    return _table.axisRange<0>();
+}
+
+////////////////////////////////////////////////////////////////////
+
 double Starburst99SEDFamily::specificLuminosity(double wavelength, const Array& parameters) const
 {
     double M = parameters[0] / Constants::Msun();

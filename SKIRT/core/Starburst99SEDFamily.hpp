@@ -54,6 +54,10 @@ public:
         and a human-readable descripton for the parameter. */
     vector<SnapshotParameter> parameterInfo() const override;
 
+    /** This function returns the intrinsic wavelength range of the %SED family. It retrieves this
+        range from the underlying stored table. */
+    Range intrinsicWavelengthRange() const override;
+
     /** This function returns the specific luminosity \f$L_\lambda\f$ (i.e. radiative power per
         unit of wavelength) for the %SED with the specified parameters at the specified wavelength,
         or zero if the wavelength is outside of the %SED's intrinsic wavelength range. The number

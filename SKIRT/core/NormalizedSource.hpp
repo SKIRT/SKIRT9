@@ -77,6 +77,14 @@ public:
         bulk velocity. */
     int dimension() const override;
 
+    /** This function returns the wavelength range for this source. Outside this range, all
+        luminosities are zero. This source's wavelength range is determined as the intersection of the
+        simulation's source wavelength range (obtained from the simulation configuration) and the
+        intrinsic wavelength range of the %SED associated with the source.
+
+        This function implements the WavelengthRangeInterface interface. */
+    Range wavelengthRange() const override;
+
     /** This function returns the luminosity \f$L\f$ (i.e. radiative power) of the source
         integrated over the wavelength range of primary sources (configured for the source system
         as a whole) and across its complete spatial domain. */

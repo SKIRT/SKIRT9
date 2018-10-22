@@ -4,7 +4,6 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "BlackBodySED.hpp"
-#include "Configuration.hpp"
 #include "Random.hpp"
 #include "PlanckFunction.hpp"
 
@@ -15,7 +14,7 @@ void BlackBodySED::setupSelfBefore()
     SED::setupSelfBefore();
 
     _planck = new PlanckFunction(temperature());
-    _Ltot = _planck->cdf(_lambdav, _pv, _Pv, find<Configuration>()->sourceWavelengthRange());
+    _Ltot = _planck->cdf(_lambdav, _pv, _Pv, wavelengthRange());
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -23,6 +22,13 @@ void BlackBodySED::setupSelfBefore()
 BlackBodySED::~BlackBodySED()
 {
     delete _planck;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+Range BlackBodySED::intrinsicWavelengthRange() const
+{
+    return Range(std::numeric_limits<double>::denorm_min(), std::numeric_limits<double>::max());
 }
 
 //////////////////////////////////////////////////////////////////////

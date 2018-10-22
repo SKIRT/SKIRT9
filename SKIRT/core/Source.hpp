@@ -8,6 +8,7 @@
 
 #include "SimulationItem.hpp"
 #include "WavelengthDistribution.hpp"
+#include "WavelengthRangeInterface.hpp"
 class PhotonPacket;
 class Random;
 
@@ -52,7 +53,7 @@ class Random;
     and the default bias distribution spreads wavelengths logarithmically over the wavelength range
     of the source (more precisely, the logarithm of the wavelength is distributed uniformly).
 */
-class Source : public SimulationItem
+class Source : public SimulationItem, public WavelengthRangeInterface
 {
     ITEM_ABSTRACT(Source, SimulationItem, "a primary radiation source")
 

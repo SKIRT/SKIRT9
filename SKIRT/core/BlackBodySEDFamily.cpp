@@ -19,6 +19,13 @@ vector<SnapshotParameter> BlackBodySEDFamily::parameterInfo() const
 
 ////////////////////////////////////////////////////////////////////
 
+Range BlackBodySEDFamily::intrinsicWavelengthRange() const
+{
+    return Range(std::numeric_limits<double>::denorm_min(), std::numeric_limits<double>::max());
+}
+
+////////////////////////////////////////////////////////////////////
+
 double BlackBodySEDFamily::specificLuminosity(double wavelength, const Array& parameters) const
 {
     double R = parameters[0];

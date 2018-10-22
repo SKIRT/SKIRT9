@@ -44,6 +44,13 @@ int NormalizedSource::dimension() const
 
 //////////////////////////////////////////////////////////////////////
 
+Range NormalizedSource::wavelengthRange() const
+{
+    return sed()->wavelengthRange();
+}
+
+//////////////////////////////////////////////////////////////////////
+
 double NormalizedSource::luminosity() const
 {
     return _normalization->luminosity(_sed);
@@ -53,7 +60,7 @@ double NormalizedSource::luminosity() const
 
 double NormalizedSource::specificLuminosity(double wavelength) const
 {
-    if (!find<Configuration>()->sourceWavelengthRange().containsFuzzy(wavelength)) return 0.;
+    if (!sed()->wavelengthRange().containsFuzzy(wavelength)) return 0.;
     return _sed->specificLuminosity(wavelength) * luminosity();
 }
 

@@ -11,7 +11,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-/** TabulatedWavelengthDistribution is an abstract class for representin wavelength probability
+/** TabulatedWavelengthDistribution is an abstract class for representing wavelength probability
     distributions that are tabulated by the user in the form of wavelength/probability pairs.
     Probability values outside the range indicated by the first and the last wavelength are
     considered to be zero.
@@ -21,8 +21,6 @@ class TabulatedWavelengthDistribution : public WavelengthDistribution
 {
     ITEM_ABSTRACT(TabulatedWavelengthDistribution, WavelengthDistribution,
                   "a wavelength probability distribution tabulated by the user")
-
-    PROPERTY_STRING(filename, "the name of the file with the wavelength probability distribution")
 
     ITEM_END()
 

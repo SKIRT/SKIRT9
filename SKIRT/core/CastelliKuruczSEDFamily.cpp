@@ -36,6 +36,13 @@ vector<SnapshotParameter> CastelliKuruczSEDFamily::parameterInfo() const
 
 ////////////////////////////////////////////////////////////////////
 
+Range CastelliKuruczSEDFamily::intrinsicWavelengthRange() const
+{
+    return _table.axisRange<0>();
+}
+
+////////////////////////////////////////////////////////////////////
+
 namespace
 {
     // force the gravity value inside the valid portion of the grid depending on the temperature

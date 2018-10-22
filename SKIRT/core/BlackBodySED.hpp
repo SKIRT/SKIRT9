@@ -40,6 +40,11 @@ protected:
     //======================== Other Functions =======================
 
 public:
+    /** This function returns the intrinsic wavelength range of the %SED. For the BlackBodySED, the
+        intrinsic range is unlimited, so this function returns a range including all representable
+        positive floating point values. */
+    Range intrinsicWavelengthRange() const override;
+
     /** This function returns the normalized specific luminosity \f$L_\lambda\f$ (i.e. radiative
         power per unit of wavelength) at the specified wavelength. */
     double specificLuminosity(double wavelength) const override;

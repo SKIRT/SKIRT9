@@ -41,9 +41,13 @@ protected:
     /** This function caches the simulation's random generator for use by subclasses. */
     void setupSelfBefore() override;
 
-    //======================== Other Functions =======================
+    //============== Functions to be implemented in subclasses ==============
 
 public:
+    /** This function returns the intrinsic wavelength range of the %SED. Outside this range, all
+        luminosities are zero. */
+    virtual Range intrinsicWavelengthRange() const = 0;
+
     /** This function returns the normalized specific luminosity \f$L_\lambda\f$ (i.e. radiative
         power per unit of wavelength) at the specified wavelength, or zero if the wavelength is
         outside of the distribution's intrinsic spectral range. */
@@ -67,7 +71,14 @@ public:
         limited to the external wavelength range. */
     virtual double generateWavelength() const = 0;
 
-    //======================== Other Functions =======================
+    //================== Functions implemented here ==================
+
+public:
+    /** This function returns the %SED's wavelength range. This range is defined as the
+        intersection of the simulation's source wavelength range (obtained from the simulation
+        configuration) and the intrinsic wavelength range of the %SED (obtained throught the
+        abtract intrinsicWavelengthRange() function which must be impemented in each subclass. */
+    Range wavelengthRange() const;
 
 protected:
     /** This function returns the simulation's random generator as a service to subclasses. */

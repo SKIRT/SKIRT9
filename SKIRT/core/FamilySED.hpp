@@ -38,6 +38,10 @@ protected:
     //======================== Other Functions =======================
 
 public:
+    /** This function returns the intrinsic wavelength range of the %SED. For the current class,
+        the range is retrieved from the associated %SED family. */
+    Range intrinsicWavelengthRange() const override;
+
     /** This function returns the normalized specific luminosity \f$L_\lambda\f$ (i.e. radiative
         power per unit of wavelength) at the specified wavelength. */
     double specificLuminosity(double wavelength) const override;

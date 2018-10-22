@@ -39,6 +39,13 @@ vector<SnapshotParameter> MappingsSEDFamily::parameterInfo() const
 
 ////////////////////////////////////////////////////////////////////
 
+Range MappingsSEDFamily::intrinsicWavelengthRange() const
+{
+    return _table.axisRange<0>();
+}
+
+////////////////////////////////////////////////////////////////////
+
 double MappingsSEDFamily::specificLuminosity(double wavelength, const Array& parameters) const
 {
     double SFR  = parameters[0] / Constants::Msun() * Constants::year();

@@ -7,6 +7,7 @@
 #include "Configuration.hpp"
 #include "BulkVelocityInterface.hpp"
 #include "Constants.hpp"
+#include "FatalError.hpp"
 #include "Log.hpp"
 #include "NR.hpp"
 #include "Parallel.hpp"
@@ -33,8 +34,11 @@ void ImportedSource::setupSelfAfter()
         _oligoTotalBinWidth = config->oligoBinWidth() * _oligoWavelengths.size();
     }
 
-    // get the primary source wavelength range
+    // determine the wavelength range for this soource
     _wavelengthRange = config->sourceWavelengthRange();
+    _wavelengthRange.intersect(_sedFamily->intrinsicWavelengthRange());
+    if (_wavelengthRange.empty())
+        throw FATALERROR("Intrinsic SED family wavelength range does not overlap source wavelength range");
 
     // create the snapshot with preconfigured spatial columns
     _snapshot = createAndOpenSnapshot();
@@ -85,6 +89,13 @@ ImportedSource::~ImportedSource()
 int ImportedSource::dimension() const
 {
     return 3;
+}
+
+////////////////////////////////////////////////////////////////////
+
+Range ImportedSource::wavelengthRange() const
+{
+    return _wavelengthRange;
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -28,6 +28,10 @@ public:
         and a human-readable descripton for the parameter. */
     virtual vector<SnapshotParameter> parameterInfo() const = 0;
 
+    /** This function returns the intrinsic wavelength range of the %SED family. Outside this
+        range, all luminosities are zero. */
+    virtual Range intrinsicWavelengthRange() const = 0;
+
     /** This function returns the specific luminosity \f$L_\lambda\f$ (i.e. radiative power per
         unit of wavelength) for the %SED with the specified parameters at the specified wavelength,
         or zero if the wavelength is outside of the %SED's intrinsic wavelength range. The number

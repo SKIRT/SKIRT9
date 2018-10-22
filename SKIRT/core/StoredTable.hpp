@@ -346,6 +346,13 @@ public:
         return NR::cdf2(_axLog[0] && _qtyLog, xv, pv, Pv);
     }
 
+    // ------------------------------------------
+
+    /** This function returns the range of the table axis indicated by the zero-based index in the
+        template argument. */
+    template <size_t axisIndex, typename = std::enable_if_t< axisIndex<=N >>
+    Range axisRange() const { return Range(_axBeg[axisIndex][0], _axBeg[axisIndex][_axLen[axisIndex]-1]); }
+
     // ================== Accessing the raw data in a 1D table ==================
 
 public:
