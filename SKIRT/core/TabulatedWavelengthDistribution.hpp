@@ -14,7 +14,8 @@
 /** TabulatedWavelengthDistribution is an abstract class for representing wavelength probability
     distributions that are tabulated by the user in the form of wavelength/probability pairs.
     Probability values outside the range indicated by the first and the last wavelength are
-    considered to be zero.
+    considered to be zero. In addition, this range is intersected with wavelength range of the
+    associated source (obtained through the WavelengthRangeInterface).
 
     The subclass must load the tabulated data, and this abstract class handles everything else. */
 class TabulatedWavelengthDistribution : public WavelengthDistribution

@@ -7,9 +7,10 @@
 #define DUSTEMISSIONOPTIONS_HPP
 
 #include "SimulationItem.hpp"
+#include "DisjointWavelengthGrid.hpp"
 #include "DustEmissivity.hpp"
 #include "WavelengthDistribution.hpp"
-#include "DisjointWavelengthGrid.hpp"
+#include "WavelengthRangeInterface.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -17,7 +18,7 @@
     secondary emission from dust. In a mode where dust emission is enabled, the simulation keeps
     track of the radation field and it also needs a wavelength grid on which to calculate the dust
     emission spectrum. */
-class DustEmissionOptions : public SimulationItem
+class DustEmissionOptions : public SimulationItem, public WavelengthRangeInterface
 {
     ITEM_CONCRETE(DustEmissionOptions, SimulationItem, "a set of options related to secondary emission from dust")
 
@@ -61,6 +62,14 @@ class DustEmissionOptions : public SimulationItem
         ATTRIBUTE_DISPLAYED_IF(wavelengthBiasDistribution, "Level3")
 
     ITEM_END()
+
+    //======================== Other Functions =======================
+
+public:
+    /** This function returns the wavelength range of the dust emission wavelength grid,
+        implementing the WavelengthRangeInterface interface so that the wavelength bias
+        distribution configured here can locate its associated "source" wavelength range. */
+    Range wavelengthRange() const override { return _dustEmissionWLG->wavelengthRange(); }
 };
 
 ////////////////////////////////////////////////////////////////////

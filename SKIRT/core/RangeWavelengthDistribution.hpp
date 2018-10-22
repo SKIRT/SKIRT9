@@ -14,7 +14,12 @@
 /** RangeWavelengthDistribution is an intermediate abstract class that serves as a base class for
     wavelength probability distributions that require the user to configure the intrinsic
     wavelength range. Usually this is because the underlying mathematical function (e.g. uniform,
-    logarithmic) has no natural wavelength range of its own. */
+    logarithmic) has no natural wavelength range of its own.
+
+    The range configured by the user for a RangeWavelengthDistribution object is intersected with
+    the wavelength range of the associated source (obtained through the WavelengthRangeInterface).
+    As a result, the configured minimum and maximum wavelength values can usually be left to their
+    default values (defining a very wide wavelength range). */
 class RangeWavelengthDistribution : public WavelengthDistribution
 {
     ITEM_ABSTRACT(RangeWavelengthDistribution, WavelengthDistribution,

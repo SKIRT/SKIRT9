@@ -99,8 +99,8 @@ public:
         an undefined order, except that children part of the same item list property are guaranteed
         to be searched in configuration order. Multiple levels are searched depth-first, i.e. the
         children of an item are searched before the next item on the same level is considered. The
-        default value of levels is -999999, which has the effect of searching the the receiving
-        object plus all of its ancestors.
+        default value of levels is -999999, which has the effect of searching the receiving object
+        plus all of its ancestors.
 
         For a simulation item to be considered as offering the requested interface, two conditions
         must be fullfilled. First, obviously, the item's class must inherit from and implement the

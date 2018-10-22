@@ -73,7 +73,7 @@ class SourceSystem : public SimulationItem
         ATTRIBUTE_QUANTITY(maxWavelength, "wavelength")
         ATTRIBUTE_MIN_VALUE(maxWavelength, "1 A")
         ATTRIBUTE_MAX_VALUE(maxWavelength, "1 m")
-        ATTRIBUTE_DEFAULT_VALUE(maxWavelength, "20 micron")
+        ATTRIBUTE_DEFAULT_VALUE(maxWavelength, "100 micron")
         ATTRIBUTE_RELEVANT_IF(maxWavelength, "Panchromatic")
 
     PROPERTY_DOUBLE_LIST(wavelengths, "the discrete wavelengths of photon packets launched from primary sources")
