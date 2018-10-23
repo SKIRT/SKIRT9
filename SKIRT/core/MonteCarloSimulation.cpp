@@ -164,7 +164,7 @@ void MonteCarloSimulation::runDustSelfAbsorptionPhase()
     TimeLogger logger(log(), "the dust self-absorption phase");
 
     // get number of photons; return if zero
-    size_t Npp = _config->numSecondaryPackets();
+    size_t Npp = _config->numIterationPackets();
     if (!Npp)
     {
         log()->warning("Skipping dust self-absorption phase because no photon packets were requested");
@@ -215,10 +215,10 @@ void MonteCarloSimulation::runDustSelfAbsorptionPhase()
         double Labsprim = mediumSystem()->totalAbsorbedLuminosity(true, MaterialMix::MaterialType::Dust);
         double Labsdust = mediumSystem()->totalAbsorbedLuminosity(false, MaterialMix::MaterialType::Dust);
         log()->info("The total dust-absorbed primary luminosity is "
-                   + StringUtils::toString(units()->obolluminosity(Labsprim)) + " "
+                   + StringUtils::toString(units()->obolluminosity(Labsprim), 'g') + " "
                    + units()->ubolluminosity() );
         log()->info("The total dust-absorbed dust luminosity in iteration " + std::to_string(iter) + " is "
-                   + StringUtils::toString(units()->obolluminosity(Labsdust)) + " "
+                   + StringUtils::toString(units()->obolluminosity(Labsdust), 'g') + " "
                    + units()->ubolluminosity() );
 
         // log the current performance and corresponding convergence criteria
