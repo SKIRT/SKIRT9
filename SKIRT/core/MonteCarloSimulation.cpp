@@ -99,65 +99,14 @@ void MonteCarloSimulation::runSimulation()
     {
         TimeLogger logger(log(), "the run");
 
-        auto parallel = find<ParallelFactory>()->parallelDistributed();
+        // primary emission segment
+        runPrimaryEmission();
 
-        // ------ primary emission segment ------
-        {
-            TimeLogger logger(log(), "primary emission");
+        // dust self-absorption iteration segments
+        if (_config->hasDustSelfAbsorption()) runDustSelfAbsorptionPhase();
 
-            // clear the radiation field
-            if (_config->hasRadiationField()) mediumSystem()->clearRadiationField(true);
-
-            // shoot photons from primary sources, if needed
-            size_t Npp = _config->numPrimaryPackets();
-            if (!Npp)
-            {
-                log()->warning("Skipping primary emission because no photon packets were requested");
-            }
-            else if (!sourceSystem()->luminosity())
-            {
-                log()->warning("Skipping primary emission because the total luminosity of primary sources is zero");
-            }
-            else
-            {
-                initProgress("primary emission", Npp);
-                sourceSystem()->prepareForlaunch(Npp);
-                parallel->call(Npp, [this](size_t i ,size_t n)
-                                    { performLifeCycle(i, n, true, true, _config->hasRadiationField()); });
-                instrumentSystem()->flush();
-            }
-
-            // wait for all processes to finish and synchronize the radiation field
-            wait("primary emission");
-            if (_config->hasRadiationField()) mediumSystem()->communicateRadiationField(true);
-        }
-
-        // ------ secondary emission segment ------
-
-        if (_config->hasSecondaryEmission())
-        {
-            TimeLogger logger(log(), "secondary emission");
-
-            // shoot photons from secondary sources, if needed
-            size_t Npp = _config->numSecondaryPackets();
-            if (!Npp)
-            {
-                log()->warning("Skipping secondary emission because no photon packets were requested");
-            }
-            else if (!_secondarySourceSystem->prepareForlaunch(Npp))
-            {
-                log()->warning("Skipping secondary emission because the total luminosity of secondary sources is zero");
-            }
-            else
-            {
-                initProgress("secondary emission", Npp);
-                parallel->call(Npp, [this](size_t i ,size_t n) { performLifeCycle(i, n, false, true, false); });
-                instrumentSystem()->flush();
-            }
-
-            // wait for all processes to finish
-            wait("secondary emission");
-        }
+        // secondary emission segment
+        if (_config->hasSecondaryEmission()) runSecondaryEmission();
     }
 
     // write final output
@@ -171,6 +120,184 @@ void MonteCarloSimulation::runSimulation()
         instrumentSystem()->flush();
         instrumentSystem()->write();
     }
+}
+
+////////////////////////////////////////////////////////////////////
+
+void MonteCarloSimulation::runPrimaryEmission()
+{
+    string segment = "primary emission";
+    TimeLogger logger(log(), segment);
+
+    // clear the radiation field
+    if (_config->hasRadiationField()) mediumSystem()->clearRadiationField(true);
+
+    // shoot photons from primary sources, if needed
+    size_t Npp = _config->numPrimaryPackets();
+    if (!Npp)
+    {
+        log()->warning("Skipping primary emission because no photon packets were requested");
+    }
+    else if (!sourceSystem()->luminosity())
+    {
+        log()->warning("Skipping primary emission because the total luminosity of primary sources is zero");
+    }
+    else
+    {
+        initProgress(segment, Npp);
+        sourceSystem()->prepareForlaunch(Npp);
+        auto parallel = find<ParallelFactory>()->parallelDistributed();
+        parallel->call(Npp, [this](size_t i ,size_t n)
+                            { performLifeCycle(i, n, true, true, _config->hasRadiationField()); });
+        instrumentSystem()->flush();
+    }
+
+    // wait for all processes to finish and synchronize the radiation field
+    wait(segment);
+    if (_config->hasRadiationField()) mediumSystem()->communicateRadiationField(true);
+}
+
+////////////////////////////////////////////////////////////////////
+
+void MonteCarloSimulation::runDustSelfAbsorptionPhase()
+{
+    TimeLogger logger(log(), "the dust self-absorption phase");
+
+    // get number of photons; return if zero
+    size_t Npp = _config->numSecondaryPackets();
+    if (!Npp)
+    {
+        log()->warning("Skipping dust self-absorption phase because no photon packets were requested");
+        return;
+    }
+
+    // get the parallel engine
+    auto parallel = find<ParallelFactory>()->parallelDistributed();
+
+    // get the parameters controlling the self-absorption iteration
+    int minIters = _config->minIterations();
+    int maxIters = _config->maxIterations();
+    double fractionOfPrimary = _config->maxFractionOfPrimary();
+    double fractionOfPrevious = _config->maxFractionOfPrevious();
+
+    // initialize the total absorbed luminosity in the previous iteration
+    double prevLabsdust = 0.;
+
+    // iterate over the maximum number of iterations; the loop body returns from the function
+    // when convergence is reached after the minimum number of iterations have been completed
+    for (int iter = 1; iter<=maxIters; iter++)
+    {
+        string segment = "dust self-absorption iteration " + std::to_string(iter);
+        {
+            TimeLogger logger(log(), segment);
+
+            // clear the secondary radiation field
+            mediumSystem()->clearRadiationField(false);
+
+            // prepare the source system; terminate if the dust has zero luminosity (which should never happen)
+            if (!_secondarySourceSystem->prepareForlaunch(Npp))
+            {
+                log()->warning("Terminating dust self-absorption phase because the total dust luminosity is zero");
+                return;
+            }
+
+            // launch photon packets
+            initProgress(segment, Npp);
+            parallel->call(Npp, [this](size_t i ,size_t n) { performLifeCycle(i, n, false, false, true); });
+            instrumentSystem()->flush();
+
+            // wait for all processes to finish and synchronize the radiation field
+            wait(segment);
+            mediumSystem()->communicateRadiationField(false);
+        }
+
+        // determine and log the total absorbed luminosity
+        double Labsprim = mediumSystem()->totalAbsorbedLuminosity(true, MaterialMix::MaterialType::Dust);
+        double Labsdust = mediumSystem()->totalAbsorbedLuminosity(false, MaterialMix::MaterialType::Dust);
+        log()->info("The total dust-absorbed primary luminosity is "
+                   + StringUtils::toString(units()->obolluminosity(Labsprim)) + " "
+                   + units()->ubolluminosity() );
+        log()->info("The total dust-absorbed dust luminosity in iteration " + std::to_string(iter) + " is "
+                   + StringUtils::toString(units()->obolluminosity(Labsdust)) + " "
+                   + units()->ubolluminosity() );
+
+        // log the current performance and corresponding convergence criteria
+        if (Labsprim > 0. && Labsdust > 0.)
+        {
+            if (iter == 1)
+            {
+                log()->info("--> absorbed dust luminosity is "
+                            + StringUtils::toString(Labsdust/Labsprim*100., 'f', 2)
+                            + "% of absorbed stellar luminosity (convergence criterion is "
+                            + StringUtils::toString(fractionOfPrimary*100., 'f', 2) + "%)");
+            }
+            else
+            {
+                log()->info("--> absorbed dust luminosity changed by "
+                            + StringUtils::toString(abs((Labsdust-prevLabsdust)/Labsdust)*100., 'f', 2)
+                            + "% compared to previous iteration (convergence criterion is "
+                            + StringUtils::toString(fractionOfPrevious*100., 'f', 2) + "%)");
+            }
+        }
+
+        // force at least the minimum number of iterations
+        if (iter < minIters)
+        {
+            log()->info("Continuing until " + std::to_string(minIters) + " iterations have been performed");
+        }
+        else
+        {
+            // the self-absorption iteration has reached convergence if one or more of the following conditions holds:
+            // - the absorbed stellar luminosity is zero
+            // - the absorbed dust luminosity is zero
+            // - the absorbed dust luminosity is less than a given fraction of the absorbed stellar luminosity
+            // - the absorbed dust luminosity has changed by less than a given fraction compared to the previous iter
+            if (Labsprim <= 0. || Labsdust <= 0.
+                || Labsdust/Labsprim < fractionOfPrimary
+                || abs((Labsdust-prevLabsdust)/Labsdust) < fractionOfPrevious)
+            {
+                log()->info("Convergence reached after " + std::to_string(iter) + " iterations");
+                return; // end the iteration by returning from the function
+            }
+            else
+            {
+                log()->info("Convergence not yet reached after " + std::to_string(iter) + " iterations");
+            }
+        }
+        prevLabsdust = Labsdust;
+    }
+
+    // if the loop runs out, convergence was not reached even after the maximum number of iterations
+    log()->error("Convergence not yet reached after " + std::to_string(maxIters) + " iterations");
+}
+
+////////////////////////////////////////////////////////////////////
+
+void MonteCarloSimulation::runSecondaryEmission()
+{
+    string segment = "secondary emission";
+    TimeLogger logger(log(), segment);
+
+    // shoot photons from secondary sources, if needed
+    size_t Npp = _config->numSecondaryPackets();
+    if (!Npp)
+    {
+        log()->warning("Skipping secondary emission because no photon packets were requested");
+    }
+    else if (!_secondarySourceSystem->prepareForlaunch(Npp))
+    {
+        log()->warning("Skipping secondary emission because the total luminosity of secondary sources is zero");
+    }
+    else
+    {
+        initProgress(segment, Npp);
+        auto parallel = find<ParallelFactory>()->parallelDistributed();
+        parallel->call(Npp, [this](size_t i ,size_t n) { performLifeCycle(i, n, false, true, false); });
+        instrumentSystem()->flush();
+    }
+
+    // wait for all processes to finish
+    wait(segment);
 }
 
 ////////////////////////////////////////////////////////////////////

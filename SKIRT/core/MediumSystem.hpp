@@ -29,10 +29,12 @@ class WavelengthGrid;
     the same throughout the spatial domain for each medium.
 
     In addition to the media input model, the MediumSystem class includes the spatial grid that
-    tessellates the spatial domain of the simulation into cells, and manages the medium state for
-    each spatial cell in this grid.
+    tessellates the spatial domain of the simulation into cells, and manages the medium state and
+    the radiation field for each spatial cell in this grid.
 
-    TO DO: add more info on managing the medium state. */
+    TO DO: add more info on managing the medium state and the radiation field.
+
+    */
 class MediumSystem : public SimulationItem
 {
     ITEM_CONCRETE(MediumSystem, SimulationItem, "a medium system")
@@ -263,16 +265,18 @@ public:
     /** This function initializes all values of the primary and/or secondary radiation field info
         tables to zero. In simulation modes that record the radiation field, the function should be
         called before starting a simulation segment (i.e. before a set of photon packets is
-        launched). If the \em primary flag is true, the function clears both the primary and
-        secondary table (if present). The secondary table is cleared as well so that we can use its
-        contents even if no secondary of photon packet segment has been launched yet. If the flag
-        is false, the function clears just the secondary table. */
+        launched). If the \em primary flag is true, the function clears both the primary table and
+        the stable secondary table (if present). The stable secondary table is cleared as well so
+        that we can use its contents even if no secondary of photon packet segment has been
+        launched yet. If the flag is false, the function clears just the temporary secondary table,
+        so that the stable secondary table remains available for calculating secondary emission
+        spectra. */
     void clearRadiationField(bool primary);
 
     /** This function adds the specified value of \f$L\,\Delta s\f$ to the radiation field bin
         corresponding to the spatial cell index \f$m\f$ and the wavelength index\f$\ell\f$. If the
         \em primary flag is true, the value is added to the primary table; otherwise it is added to
-        the secondary table.
+        the temporary secondary table.
 
         The addition happens in a thread-safe way, so that this function can be called from
         multiple parallel threads, even for the same spatial/wavelength bin. If any of the indices
@@ -283,9 +287,24 @@ public:
         modes that record the radiation field, the function should be called in serial code after
         finishing a simulation segment (i.e. after a before set of photon packets has been
         launched) and before querying the radiation field's contents. If the \em primary flag is
-        true, the primary table is synchronized; otherwise the secondary table is synchronized. */
+        true, the primary table is synchronized; otherwise the temporary secondary table is
+        synchronized and its contents is copied into the stable secondary table. */
     void communicateRadiationField(bool primary);
 
+    /** This function returns the bolometric luminosity absorbed by media with the specified
+        material type across the complete domain of the spatial grid, using the partial radiation
+        field stored in the table indicated by the \em primary flag (true for the primary table,
+        false for the stable secondary table). The bolometric absorbed luminosity in each cell is
+        calculated as described for the absorbedLuminosity() function. */
+    double totalAbsorbedLuminosity(bool primary, MaterialMix::MaterialType type) const;
+
+private:
+    /** This function returns the sum of the values in both the primary and the stable secondary
+        radiation field tables at the specified cell and wavelength indices. If a table is not
+        present, the value for that table is assumed to be zero. */
+    double radiationField(int m, int ell) const;
+
+public:
     /** This function returns an array with the mean radiation field intensity
         \f$(J_\lambda)_{\ell,m}\f$ in the spatial cell with index \f$m\f$ at each of the wavelength
         bins \f$\ell\f$ defined by the wavelength grid returned by the
@@ -321,13 +340,7 @@ public:
         cell index, \f$(k^\text{abs}_\text{type})_{\ell,m}\f$ is the absorption opacity of the
         specified material type in the cell, and \f$(L\Delta s)_{\ell,m}\f$ has been accumulated
         over all photon packets contributing to the bin. */
-    double absorbedLuminosity(int m, MaterialMix::MaterialType type);
-
-private:
-    /** This function returns the sum of the values in both primary and secondary radiation field
-        info tables at the specified cell and wavelength indices. If a table is not present, the
-        value for that table is assumed to be zero. */
-    double radiationField(int m, int ell) const;
+    double absorbedLuminosity(int m, MaterialMix::MaterialType type) const;
 
     //================== Private Types and Functions ====================
 
@@ -377,8 +390,13 @@ private:
 
     // relevant for any simulation mode that stores the radiation field
     WavelengthGrid* _wavelengthGrid{0};  // index ell
-    Table<2> _rf1;  // radiation field from primary sources for each cell and each wavelength (indexed on m,ell)
-    Table<2> _rf2;  // radiation field from secondary sources for each cell and each wavelength (indexed on m,ell)
+    // each radiation field table has an entry for each cell and each wavelength (indexed on m,ell)
+    // - the sum of rf1 and rf2 represents the stable radiation field to be used as input for regular calculations
+    // - rf2c serves as a target for storing the secondary radiation field so that rf1+rf2 remain available for
+    //   calculating secondary emission spectra while already shooting photons through the grid
+    Table<2> _rf1;  // radiation field from primary sources
+    Table<2> _rf2;  // radiation field from secondary sources (copied from _rf2c at the appropriate time)
+    Table<2> _rf2c; // radiation field currently being accumulated from secondary sources
 };
 
 ////////////////////////////////////////////////////////////////

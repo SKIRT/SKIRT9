@@ -60,7 +60,8 @@ void MediumSystem::setupSelfAfter()
         if (config->hasSecondaryRadiationField())
         {
             _rf2.resize(_numCells, _wavelengthGrid->numBins());
-            allocatedBytes += _rf2.size()*sizeof(double);
+            _rf2c.resize(_numCells, _wavelengthGrid->numBins());
+            allocatedBytes += 2*_rf2.size()*sizeof(double);
         }
     }
 
@@ -397,10 +398,15 @@ void MediumSystem::fillOpticalDepthInfo(PhotonPacket* pp)
 
 void MediumSystem::clearRadiationField(bool primary)
 {
-    if (primary) _rf1.setToZero();
-    // always clear the secondary table, if present,
-    // so that we can use its contents even if no secondary segment has been launched yet
-    if (_rf2.size()) _rf2.setToZero();
+    if (primary)
+    {
+        _rf1.setToZero();
+        if (_rf2.size()) _rf2.setToZero();
+    }
+    else
+    {
+        _rf2c.setToZero();
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -408,7 +414,7 @@ void MediumSystem::clearRadiationField(bool primary)
 void MediumSystem::storeRadiationField(bool primary, int m, int ell, double Lds)
 {
     if (primary) LockFree::add(_rf1(m,ell), Lds);
-    else LockFree::add(_rf2(m,ell), Lds);
+    else LockFree::add(_rf2c(m,ell), Lds);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -416,7 +422,39 @@ void MediumSystem::storeRadiationField(bool primary, int m, int ell, double Lds)
 void MediumSystem::communicateRadiationField(bool primary)
 {
     if (primary) ProcessManager::sumToAll(_rf1.data());
-    else ProcessManager::sumToAll(_rf2.data());
+    else
+    {
+        ProcessManager::sumToAll(_rf2c.data());
+        _rf2 = _rf2c;
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::radiationField(int m, int ell) const
+{
+    double rf = 0.;
+    if (_rf1.size()) rf += _rf1(m,ell);
+    if (_rf2.size()) rf += _rf2(m,ell);
+    return rf;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::totalAbsorbedLuminosity(bool primary, MaterialMix::MaterialType type) const
+{
+    double Labs = 0.;
+    int numWavelengths = _wavelengthGrid->numBins();
+    for (int ell=0; ell!=numWavelengths; ++ell)
+    {
+        double lambda = _wavelengthGrid->wavelength(ell);
+        for (int m=0; m!=_numCells; ++m)
+        {
+            double rf = primary ? _rf1(m,ell) : _rf2(m,ell);
+            Labs += opacityAbs(lambda, m, type) * rf;
+        }
+    }
+    return Labs;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -435,7 +473,7 @@ Array MediumSystem::meanIntensity(int m) const
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::absorbedLuminosity(int m, MaterialMix::MaterialType type)
+double MediumSystem::absorbedLuminosity(int m, MaterialMix::MaterialType type) const
 {
     double Labs = 0.;
     int numWavelengths = _wavelengthGrid->numBins();
@@ -444,16 +482,6 @@ double MediumSystem::absorbedLuminosity(int m, MaterialMix::MaterialType type)
         Labs += opacityAbs(_wavelengthGrid->wavelength(ell), m, type) * radiationField(m,ell);
     }
     return Labs;
-}
-
-////////////////////////////////////////////////////////////////////
-
-double MediumSystem::radiationField(int m, int ell) const
-{
-    double rf = 0.;
-    if (_rf1.size()) rf += _rf1(m,ell);
-    if (_rf2.size()) rf += _rf2(m,ell);
-    return rf;
 }
 
 ////////////////////////////////////////////////////////////////////

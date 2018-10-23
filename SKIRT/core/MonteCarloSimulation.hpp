@@ -155,13 +155,44 @@ protected:
         secondary source segments, and any required iterations. For each segment, it tells the
         source system to prepare for launching photon packets in serial code, and then it causes
         photon packets to be launched (and traced through their life cycles) by calling the
-        doXxxEmissionChunk() functions in appropriately parallelized code depending on the run-time
+        performLifeCycle() function in appropriately parallelized code depending on the run-time
         environment and the command-line options. After each of the segments but the last one, the
         function also tells the medium system to synchronize the radiation field between processes
         (in a multi-process environment). */
     void runSimulation() override;
 
 private:
+    /** This function runs the primary source emission segment. It implements a parallelized loop
+        that iterates over the configured number of photon packets and drives the photon packet
+        life cycle for each. The primary emission segment includes peel-off and records radiation
+        field contributions if the configuration requires it (e.g., because secondary emisison must
+        be calculated, or because the user configured probes to directly output radiation field
+        information.) */
+    void runPrimaryEmission();
+
+    /** This function runs the dust self-absorption phase. This phase includes a series of
+        intermediate secondary source emission segments in an iteration to self-consistently
+        calculate the radiation field, taking into account the fraction of dust emission absorbed
+        by the dust itself. The intermediate secondary emission segments do not perform peel-off
+        towards the instruments (because the radiation field is not yet converged). They record
+        radiation field contributions in a seperate table, so that the radiation field resulting
+        from primary emission remains untouched and can be reused.
+
+        The minimum and maximum number of iterations can be specified as configuration options.
+        Within these limits, the actual number of iterations performed is determined by convergence
+        criteria which can also be specified as configuration options. Convergence is reached (and
+        the function exits) when (a) the absorbed dust luminosity is less than a given fraction of
+        the absorbed stellar luminosity, \em OR (b) the absorbed dust luminosity has changed by
+        less than a given fraction compared to the previous iteration. */
+    void runDustSelfAbsorptionPhase();
+
+    /** This function runs the final secondary source emission segment. It implements a
+        parallelized loop that iterates over the configured number of photon packets and drives the
+        photon packet life cycle for each. The final secondary emission segment includes peel-off
+        but does not record radiation field contributions, because the radiation field is assumed
+        to be converged (or simply immutable). */
+    void runSecondaryEmission();
+
     /** In a multi-processing environment, this function logs a message and waits for all processes
         to finish the work (i.e. it places a barrier). The string argument is included in the log
         message to indicate the scope of work that is being finished. If there is only a single
@@ -184,11 +215,25 @@ private:
         corresponding peel-off towards the instruments, and registration of the contribution to the
         radiation field in each spatial cell crossed.
 
-        The first two arguments specify the range of photon packet history indices to be handled.
-        The \em primary flag is true to launch from primary sources, false for secondary sources.
-        The \em peel flag indicates whether peeloff photon packets should be sent towards the
-        instruments. The \em store flag indicates whether the contribution to the radiation field
-        should be stored. */
+        A photon packet is born when it is emitted by either the primary or the secondary source
+        system. Immediately after birth, peel-off photon packets are created and launched towards
+        the instruments (one for each instrument). If the simulation contains one or more media,
+        the photon packet now enters a cycle which consists of different steps. First, all details
+        of the path of the photon packet through the medium are calculated and stored. Based on
+        this information, the contribution of the photon packet to the radiation field in each
+        spatial cell can be stored. The packet is then propagated to a new (random) scattering
+        position, and its weight (luminosity) is adjusted for the escape fraction and the absorbed
+        energy. If the photon packet is still sufficiently luminous, scattering peel-off photon
+        packets are created and launched towards each instrument, and the actual scattering event
+        is simulated. Finally, the loop repeats itself. It is terminated only when the photon
+        packet has lost a substantial part of its original luminosity (and hence becomes
+        irrelevant).
+
+        The first two arguments of this function specify the range of photon packet history indices
+        to be handled. The \em primary flag is true to launch from primary sources, false for
+        secondary sources. The \em peel flag indicates whether peeloff photon packets should be
+        sent towards the instruments. The \em store flag indicates whether the contribution to the
+        radiation field should be stored. */
     void performLifeCycle(size_t firstIndex, size_t numIndices, bool primary, bool peel, bool store);
 
     /** This function launches the specified chunk of photon packets from primary sources. It
