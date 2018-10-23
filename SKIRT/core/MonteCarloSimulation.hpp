@@ -178,6 +178,19 @@ private:
         of photon packets processed. */
     void logProgress(size_t numDone);
 
+    /** This function launches the specified chunk of photon packets from primary or secondary
+        sources, and it implements the complete life-cycle for each of these photon packets. This
+        includes emission and multiple forced scattering events, and, if requested, the
+        corresponding peel-off towards the instruments, and registration of the contribution to the
+        radiation field in each spatial cell crossed.
+
+        The first two arguments specify the range of photon packet history indices to be handled.
+        The \em primary flag is true to launch from primary sources, false for secondary sources.
+        The \em peel flag indicates whether peeloff photon packets should be sent towards the
+        instruments. The \em store flag indicates whether the contribution to the radiation field
+        should be stored. */
+    void performLifeCycle(size_t firstIndex, size_t numIndices, bool primary, bool peel, bool store);
+
     /** This function launches the specified chunk of photon packets from primary sources. It
         implements the complete photon packet life-cycle, including emission and multiple forced
         scattering events, as well as the corresponding peel-off photon packets towards the

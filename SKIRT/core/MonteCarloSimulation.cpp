@@ -99,12 +99,14 @@ void MonteCarloSimulation::runSimulation()
     {
         TimeLogger logger(log(), "the run");
 
+        auto parallel = find<ParallelFactory>()->parallelDistributed();
+
         // ------ primary emission segment ------
         {
             TimeLogger logger(log(), "primary emission");
 
             // clear the radiation field
-            if (_config->hasRadiationField()) mediumSystem()->clearRadiationField();
+            if (_config->hasRadiationField()) mediumSystem()->clearRadiationField(true);
 
             // shoot photons from primary sources, if needed
             size_t Npp = _config->numPrimaryPackets();
@@ -120,14 +122,14 @@ void MonteCarloSimulation::runSimulation()
             {
                 initProgress("primary emission", Npp);
                 sourceSystem()->prepareForlaunch(Npp);
-                auto parallel = find<ParallelFactory>()->parallelDistributed();
-                parallel->call(Npp, [this](size_t i ,size_t n) { doPrimaryEmissionChunk(i, n); });
+                parallel->call(Npp, [this](size_t i ,size_t n)
+                                    { performLifeCycle(i, n, true, true, _config->hasRadiationField()); });
                 instrumentSystem()->flush();
             }
 
             // wait for all processes to finish and synchronize the radiation field
             wait("primary emission");
-            if (_config->hasRadiationField()) mediumSystem()->communicateRadiationField();
+            if (_config->hasRadiationField()) mediumSystem()->communicateRadiationField(true);
         }
 
         // ------ secondary emission segment ------
@@ -149,8 +151,7 @@ void MonteCarloSimulation::runSimulation()
             else
             {
                 initProgress("secondary emission", Npp);
-                auto parallel = find<ParallelFactory>()->parallelDistributed();
-                parallel->call(Npp, [this](size_t i ,size_t n) { doSecondaryEmissionChunk(i, n); });
+                parallel->call(Npp, [this](size_t i ,size_t n) { performLifeCycle(i, n, false, true, false); });
                 instrumentSystem()->flush();
             }
 
@@ -212,51 +213,7 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-void MonteCarloSimulation::doPrimaryEmissionChunk(size_t firstIndex, size_t numIndices)
-{
-    // actually shoot the photon packets
-    {
-        PhotonPacket pp,ppp;
-
-        // loop over the history indices, with interruptions for progress logging
-        while (numIndices)
-        {
-            size_t currentChunkSize = min(logProgressChunkSize, numIndices);
-            for (size_t historyIndex=firstIndex; historyIndex!=firstIndex+currentChunkSize; ++historyIndex)
-            {
-                // launch a photon packet
-                sourceSystem()->launch(&pp, historyIndex);
-                if (pp.luminosity()>0)
-                {
-                    peelOffEmission(&pp, &ppp);
-
-                    // trace the packet through the media
-                    double Lthreshold = pp.luminosity() / _config->minWeightReduction();
-                    int minScattEvents = _config->minScattEvents();
-                    if (_config->hasMedium()) while (true)
-                    {
-                        mediumSystem()->fillOpticalDepthInfo(&pp);
-                        if (_config->hasRadiationField()) storeRadiationField(&pp);
-                        simulatePropagation(&pp);
-                        if (pp.luminosity()<=0 || (pp.luminosity()<=Lthreshold && pp.numScatt()>=minScattEvents)) break;
-                        peelOffScattering(&pp,&ppp);
-                        simulateScattering(&pp);
-                    }
-                }
-
-            }
-
-            // log progress
-            logProgress(currentChunkSize);
-            firstIndex += currentChunkSize;
-            numIndices -= currentChunkSize;
-        }
-    }
-}
-
-////////////////////////////////////////////////////////////////////
-
-void MonteCarloSimulation::doSecondaryEmissionChunk(size_t firstIndex, size_t numIndices)
+void MonteCarloSimulation::performLifeCycle(size_t firstIndex, size_t numIndices, bool primary, bool peel, bool store)
 {
     PhotonPacket pp,ppp;
 
@@ -266,22 +223,27 @@ void MonteCarloSimulation::doSecondaryEmissionChunk(size_t firstIndex, size_t nu
         size_t currentChunkSize = min(logProgressChunkSize, numIndices);
         for (size_t historyIndex=firstIndex; historyIndex!=firstIndex+currentChunkSize; ++historyIndex)
         {
-            // launch a photon packet
-            _secondarySourceSystem->launch(&pp, historyIndex);
+            // launch a photon packet from the requested source
+            if (primary) sourceSystem()->launch(&pp, historyIndex);
+            else _secondarySourceSystem->launch(&pp, historyIndex);
             if (pp.luminosity()>0)
             {
-                peelOffEmission(&pp, &ppp);
+                if (peel) peelOffEmission(&pp, &ppp);
 
-                // trace the packet through the media
-                double Lthreshold = pp.luminosity() / _config->minWeightReduction();
-                int minScattEvents = _config->minScattEvents();
-                while (true)
+                // trace the packet through the media, if any
+                if (_config->hasMedium())
                 {
-                    mediumSystem()->fillOpticalDepthInfo(&pp);
-                    simulatePropagation(&pp);
-                    if (pp.luminosity()<=0 || (pp.luminosity()<=Lthreshold && pp.numScatt()>=minScattEvents)) break;
-                    peelOffScattering(&pp,&ppp);
-                    simulateScattering(&pp);
+                    double Lthreshold = pp.luminosity() / _config->minWeightReduction();
+                    int minScattEvents = _config->minScattEvents();
+                    while (true)
+                    {
+                        mediumSystem()->fillOpticalDepthInfo(&pp);
+                        if (store) storeRadiationField(&pp);
+                        simulatePropagation(&pp);
+                        if (pp.luminosity()<=0 || (pp.luminosity()<=Lthreshold && pp.numScatt()>=minScattEvents)) break;
+                        if (peel) peelOffScattering(&pp,&ppp);
+                        simulateScattering(&pp);
+                    }
                 }
             }
         }
@@ -318,7 +280,7 @@ void MonteCarloSimulation::storeRadiationField(const PhotonPacket* pp)
             double lambda = pp->perceivedWavelength(mediumSystem()->bulkVelocity(m));
             int ell = _config->radiationFieldWLG()->bin(lambda);
             double Lds = pp->perceivedLuminosity(lambda) * SpecialFunctions::lnmean(extBeg, extEnd) * segment.ds;
-            mediumSystem()->storeRadiationField(m, ell, Lds);
+            mediumSystem()->storeRadiationField(pp->hasPrimaryOrigin(), m, ell, Lds);
         }
         extBeg = extEnd;
     }
