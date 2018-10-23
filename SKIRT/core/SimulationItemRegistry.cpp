@@ -69,6 +69,7 @@
 #include "IsotropicAngularDistribution.hpp"
 #include "LaserAngularDistribution.hpp"
 #include "LaunchedPacketsProbe.hpp"
+#include "LinearDustTemperatureCutProbe.hpp"
 #include "LinMesh.hpp"
 #include "LinWavelengthDistribution.hpp"
 #include "ListBand.hpp"
@@ -432,6 +433,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<RadiationFieldPerCellProbe>();
     ItemRegistry::add<DefaultDustTemperatureCutsProbe>();
     ItemRegistry::add<DustTemperaturePerCellProbe>();
+    ItemRegistry::add<LinearDustTemperatureCutProbe>();
     ItemRegistry::add<DustAbsorptionPerCellProbe>();
     ItemRegistry::add<DustEmissivityProbe>();
 
