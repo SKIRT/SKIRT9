@@ -37,7 +37,7 @@
 class LinearDustTemperatureCutProbe : public Probe
 {
     ITEM_CONCRETE(LinearDustTemperatureCutProbe, Probe, "the indicative dust temperature along a given line segment")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(LinearDustTemperatureCutProbe, "Level3&Dust&SpatialGrid&RadiationField")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(LinearDustTemperatureCutProbe, "Level2&Dust&SpatialGrid&RadiationField")
 
     PROPERTY_INT(numSamples, "the number of samples along the line segment")
         ATTRIBUTE_MIN_VALUE(numSamples, "3")
