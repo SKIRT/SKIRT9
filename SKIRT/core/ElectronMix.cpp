@@ -75,7 +75,7 @@ double ElectronMix::sectionSca(double /*lambda*/) const
 
 ////////////////////////////////////////////////////////////////////
 
-double ElectronMix::sectionExt(double /*lambda*/) const
+double ElectronMix::sectionExtSelf(double /*lambda*/) const
 {
     return Constants::sigmaThomson();
 }

@@ -70,7 +70,7 @@ double MeanTabulatedDustMix::sectionSca(double lambda) const
 
 //////////////////////////////////////////////////////////////////////
 
-double MeanTabulatedDustMix::sectionExt(double lambda) const
+double MeanTabulatedDustMix::sectionExtSelf(double lambda) const
 {
     size_t i = std::lower_bound(begin(_lambdav), end(_lambdav), lambda) - begin(_lambdav);
     if (i==0) return _sectionExtv[0];

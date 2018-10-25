@@ -60,6 +60,15 @@ public:
         if (_min < range._min) _min = range._min;
         if (_max > range._max) _max = range._max;
     }
+
+    /** This function updates the range so that it represents the union of the original
+        range with the other range given as an argument. If the two ranges do not overlap, the
+        resulting range will include the interval between the input ranges.*/
+    void extend(const Range& range)
+    {
+        if (range._min < _min) _min = range._min;
+        if (range._max > _max) _max = range._max;
+    }
 };
 
 //////////////////////////////////////////////////////////////////////

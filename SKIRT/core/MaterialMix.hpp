@@ -162,7 +162,12 @@ public:
     /** This function returns the total extinction cross section per entity
         \f$\varsigma^{\text{ext}}_{\lambda} = \varsigma^{\text{abs}}_{\lambda} +
         \varsigma^{\text{sca}}_{\lambda}\f$ at wavelength \f$\lambda\f$. */
-    virtual double sectionExt(double lambda) const = 0;
+    double sectionExt(double lambda) const;
+
+    /** This function returns the total extinction cross section per entity
+        \f$\varsigma^{\text{ext}}_{\lambda} = \varsigma^{\text{abs}}_{\lambda} +
+        \varsigma^{\text{sca}}_{\lambda}\f$ at wavelength \f$\lambda\f$. */
+    virtual double sectionExtSelf(double lambda) const = 0;
 
     /** This function returns the scattering albedo \f$\varpi_\lambda =
         \varsigma_{\lambda}^{\text{sca}} / \varsigma_{\lambda}^{\text{ext}} =
@@ -253,7 +258,13 @@ private:
     // data member initialized in setupSelfBefore
     Random* _random{nullptr};
 
-    // information precalculated in setupSelfAfter()
+    // cross sections - precalculated in setupSelfAfter()
+    double _logLambdaOffset{0.};
+    double _logLambdaFactor{0.};
+    int _maxLogLambda{0};
+    Array _sectionExt;
+
+    // equilibrium temperature info - precalculated in setupSelfAfter()
     WavelengthGrid* _radiationFieldWLG{nullptr};  // the radiation field wavelength grid
     Array _sigmaabsv;   // absorption cross sections on the above wavelength grid
     Array _Tv;          // temperature grid for the Planck-integrated absorption cross sections

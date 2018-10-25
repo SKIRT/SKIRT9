@@ -114,7 +114,7 @@ double SingleGrainDustMix::sectionSca(double lambda) const
 
 ////////////////////////////////////////////////////////////////////
 
-double SingleGrainDustMix::sectionExt(double lambda) const
+double SingleGrainDustMix::sectionExtSelf(double lambda) const
 {
     return _sigmaabs[lambda] + _sigmasca[lambda];
 }

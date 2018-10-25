@@ -72,7 +72,7 @@ public:
         \f$\varsigma^{\text{ext}}_{\lambda} = \varsigma^{\text{abs}}_{\lambda} +
         \varsigma^{\text{sca}}_{\lambda}\f$ which is constant and equal to the Thomson cross
         section for all wavelengths \f$\lambda\f$.. */
-    double sectionExt(double lambda) const override;
+    double sectionExtSelf(double lambda) const override;
 
     /** This function returns the scattering albedo \f$\varpi_\lambda =
         \varsigma_{\lambda}^{\text{sca}} / \varsigma_{\lambda}^{\text{ext}} =

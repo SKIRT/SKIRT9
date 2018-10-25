@@ -26,6 +26,25 @@ void MaterialMix::setupSelfAfter()
 {
     SimulationItem::setupSelfAfter();
 
+    // precalculate cross sections on a fine grid covering the wavelength range of the simulation
+    {
+        // determine the number of wavelength points per dex (TO DO: based on the material type?)
+        _logLambdaFactor = 500.;
+
+        // get the wavelength range and the conversion scheme to indices in log space
+        Range range = find<Configuration>()->simulationWavelengthRange();
+        _logLambdaOffset = - log10(range.min());
+        _maxLogLambda = _logLambdaFactor * log10(range.max()/range.min());
+
+        // obtain the cross sections for all wavelength points in the grid
+        _sectionExt.resize(_maxLogLambda+1);
+        for (int ell=0; ell!=(_maxLogLambda+1); ++ell)
+        {
+            double lambda = pow(10., (ell+0.5)/_logLambdaFactor - _logLambdaOffset);
+            _sectionExt[ell] = sectionExtSelf(lambda);
+        }
+    }
+
     // precalculate information to accelerate solving the energy balance equation for the temperature;
     // this calculation is relevant only if the simulation tracks the radiation field
     if (find<Configuration>()->hasRadiationField())
@@ -76,6 +95,18 @@ void MaterialMix::setupSelfAfter()
             }
         }
     }
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MaterialMix::sectionExt(double lambda) const
+{
+    // convert wavelength to index in our precalculated array
+    int logLambda = (_logLambdaOffset + log10(lambda)) * _logLambdaFactor;
+    logLambda = max(0, min(logLambda, _maxLogLambda));
+
+    // retrieve value
+    return _sectionExt[logLambda];
 }
 
 ////////////////////////////////////////////////////////////////////

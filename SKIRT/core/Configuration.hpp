@@ -95,6 +95,12 @@ public:
         simulation, which are also user-configured in the source system. */
     Range sourceWavelengthRange() const { return _sourceWavelengthRange; }
 
+    /** Returns a wavelength range that covers all wavelengths possibly emitted or transported by
+        the simulation. This range includes the primary and secondary source wavelength ranges
+        extended on both sides to accommodate a redshift or blueshift caused by kinematics
+        corresponding to \f$v/c=1/3\f$. */
+    Range simulationWavelengthRange() const;
+
     /** Returns the number of photon packets launched per primary emission simulation segment. */
     double numPrimaryPackets() const { return _numPrimaryPackets; }
 

@@ -73,7 +73,7 @@ public:
     /** This function returns the total extinction cross section per hydrogen atom
         \f$\varsigma^{\text{ext}}_{\lambda} = \varsigma^{\text{abs}}_{\lambda} +
         \varsigma^{\text{sca}}_{\lambda}\f$ of the dust mix at wavelength \f$\lambda\f$. */
-    double sectionExt(double lambda) const override;
+    double sectionExtSelf(double lambda) const override;
 
     /** This function returns the scattering albedo \f$\varpi_\lambda =
         \varsigma_{\lambda}^{\text{sca}} / \varsigma_{\lambda}^{\text{ext}} =

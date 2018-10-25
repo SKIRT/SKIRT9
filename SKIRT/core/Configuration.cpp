@@ -35,6 +35,7 @@ void Configuration::setupSelfBefore()
     if (!sim) throw FATALERROR("Cannot locate a MonteCarloSimulation object in the simulation hierarchy");
     auto ss = find<SourceSystem>(false);
     if (!ss) throw FATALERROR("Cannot locate a SourceSystem object in the simulation hierarchy");
+    auto is = find<InstrumentSystem>(false);
 
     // retrieve wavelength-related options
     _oligochromatic = sim->simulationMode() == MonteCarloSimulation::SimulationMode::OligoNoMedium ||
@@ -48,7 +49,6 @@ void Configuration::setupSelfBefore()
     }
     else
     {
-        auto is = find<InstrumentSystem>(false);
         if (is) _defaultWavelengthGrid = is->defaultWavelengthGrid();
         _sourceWavelengthRange.set(ss->minWavelength(), ss->maxWavelength());
     }
@@ -146,6 +146,23 @@ WavelengthGrid* Configuration::wavelengthGrid(WavelengthGrid* localWavelengthGri
     auto result = localWavelengthGrid && !_oligochromatic ? localWavelengthGrid : _defaultWavelengthGrid;
     if (!result) throw FATALERROR("Cannot find a wavelength grid for instrument or probe");
     return result;
+}
+
+////////////////////////////////////////////////////////////////////
+
+Range Configuration::simulationWavelengthRange() const
+{
+    // include primary and secondary source ranges
+    Range range = _sourceWavelengthRange;
+    if (_dustEmissionWLG)
+    {
+        _dustEmissionWLG->setup();      // ensure setup because this function may be called early during setup
+        range.extend(_dustEmissionWLG->wavelengthRange());
+    }
+
+    // extend the range with a wide margin for kinematics
+    double z = 1./3.;
+    return Range( range.min()/(1.+z), range.max()*(1.+z) );
 }
 
 ////////////////////////////////////////////////////////////////////
