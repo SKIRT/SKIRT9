@@ -406,8 +406,11 @@ void MonteCarloSimulation::storeRadiationField(const PhotonPacket* pp)
         {
             double lambda = pp->perceivedWavelength(mediumSystem()->bulkVelocity(m));
             int ell = _config->radiationFieldWLG()->bin(lambda);
-            double Lds = pp->perceivedLuminosity(lambda) * SpecialFunctions::lnmean(extBeg, extEnd) * segment.ds;
-            mediumSystem()->storeRadiationField(pp->hasPrimaryOrigin(), m, ell, Lds);
+            if (ell >= 0)
+            {
+                double Lds = pp->perceivedLuminosity(lambda) * SpecialFunctions::lnmean(extBeg, extEnd) * segment.ds;
+                mediumSystem()->storeRadiationField(pp->hasPrimaryOrigin(), m, ell, Lds);
+            }
         }
         extBeg = extEnd;
     }
