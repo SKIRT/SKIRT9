@@ -64,22 +64,11 @@ public:
 
     /** This function returns the absorption cross section per hydrogen atom
         \f$\varsigma^{\text{abs}}_{\lambda}\f$ of the dust mix at wavelength \f$\lambda\f$. */
-    double sectionAbs(double lambda) const override;
+    double sectionAbsSelf(double lambda) const override;
 
     /** This function returns the scattering cross section per hydrogen atom
         \f$\varsigma^{\text{sca}}_{\lambda}\f$ of the dust mix at wavelength \f$\lambda\f$. */
-    double sectionSca(double lambda) const override;
-
-    /** This function returns the total extinction cross section per hydrogen atom
-        \f$\varsigma^{\text{ext}}_{\lambda} = \varsigma^{\text{abs}}_{\lambda} +
-        \varsigma^{\text{sca}}_{\lambda}\f$ of the dust mix at wavelength \f$\lambda\f$. */
-    double sectionExtSelf(double lambda) const override;
-
-    /** This function returns the scattering albedo \f$\varpi_\lambda =
-        \varsigma_{\lambda}^{\text{sca}} / \varsigma_{\lambda}^{\text{ext}} =
-        \kappa_{\lambda}^{\text{sca}} / \kappa_{\lambda}^{\text{ext}}\f$ of the dust mix at
-        wavelength \f$\lambda\f$. */
-    double albedo(double lambda) const override;
+    double sectionScaSelf(double lambda) const override;
 
     /** This function returns the scattering asymmetry parameter \f$g_\lambda =
         \left<\cos\theta\right>\f$ at wavelength \f$\lambda\f$, or if this value is unkown, it
@@ -94,8 +83,6 @@ private:
     Array _lambdav;
     Array _sectionAbsv;
     Array _sectionScav;
-    Array _sectionExtv;
-    Array _albedov;
     Array _asymmparv;
     double _mu{0.};
 };

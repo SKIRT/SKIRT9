@@ -37,11 +37,17 @@ void MaterialMix::setupSelfAfter()
         _maxLogLambda = _logLambdaFactor * log10(range.max()/range.min());
 
         // obtain the cross sections for all wavelength points in the grid
+        _sectionAbs.resize(_maxLogLambda+1);
+        _sectionSca.resize(_maxLogLambda+1);
         _sectionExt.resize(_maxLogLambda+1);
+        _albedo.resize(_maxLogLambda+1);
         for (int ell=0; ell!=(_maxLogLambda+1); ++ell)
         {
             double lambda = pow(10., (ell+0.5)/_logLambdaFactor - _logLambdaOffset);
-            _sectionExt[ell] = sectionExtSelf(lambda);
+            _sectionAbs[ell] = sectionAbsSelf(lambda);
+            _sectionSca[ell] = sectionScaSelf(lambda);
+            _sectionExt[ell] = _sectionAbs[ell] + _sectionSca[ell];
+            _albedo[ell] = _sectionExt[ell] > 0. ? _sectionSca[ell]/_sectionExt[ell] : 0.;
         }
     }
 
@@ -99,6 +105,30 @@ void MaterialMix::setupSelfAfter()
 
 ////////////////////////////////////////////////////////////////////
 
+double MaterialMix::sectionAbs(double lambda) const
+{
+    // convert wavelength to index in our precalculated array
+    int logLambda = (_logLambdaOffset + log10(lambda)) * _logLambdaFactor;
+    logLambda = max(0, min(logLambda, _maxLogLambda));
+
+    // retrieve value
+    return _sectionAbs[logLambda];
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MaterialMix::sectionSca(double lambda) const
+{
+    // convert wavelength to index in our precalculated array
+    int logLambda = (_logLambdaOffset + log10(lambda)) * _logLambdaFactor;
+    logLambda = max(0, min(logLambda, _maxLogLambda));
+
+    // retrieve value
+    return _sectionSca[logLambda];
+}
+
+////////////////////////////////////////////////////////////////////
+
 double MaterialMix::sectionExt(double lambda) const
 {
     // convert wavelength to index in our precalculated array
@@ -107,6 +137,18 @@ double MaterialMix::sectionExt(double lambda) const
 
     // retrieve value
     return _sectionExt[logLambda];
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MaterialMix::albedo(double lambda) const
+{
+    // convert wavelength to index in our precalculated array
+    int logLambda = (_logLambdaOffset + log10(lambda)) * _logLambdaFactor;
+    logLambda = max(0, min(logLambda, _maxLogLambda));
+
+    // retrieve value
+    return _albedo[logLambda];
 }
 
 ////////////////////////////////////////////////////////////////////

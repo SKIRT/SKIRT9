@@ -100,33 +100,16 @@ double SingleGrainDustMix::mass() const
 
 ////////////////////////////////////////////////////////////////////
 
-double SingleGrainDustMix::sectionAbs(double lambda) const
+double SingleGrainDustMix::sectionAbsSelf(double lambda) const
 {
     return _sigmaabs[lambda];
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double SingleGrainDustMix::sectionSca(double lambda) const
+double SingleGrainDustMix::sectionScaSelf(double lambda) const
 {
     return _sigmasca[lambda];
-}
-
-////////////////////////////////////////////////////////////////////
-
-double SingleGrainDustMix::sectionExtSelf(double lambda) const
-{
-    return _sigmaabs[lambda] + _sigmasca[lambda];
-}
-
-////////////////////////////////////////////////////////////////////
-
-double SingleGrainDustMix::albedo(double lambda) const
-{
-    double sigmaabs = _sigmaabs[lambda];
-    double sigmasca = _sigmasca[lambda];
-    double sigmaext = sigmaabs + sigmasca;
-    return sigmaext > 0. ? sigmasca/sigmaext : 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
