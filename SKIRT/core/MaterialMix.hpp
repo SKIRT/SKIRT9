@@ -74,11 +74,6 @@ protected:
     /** This function caches the simulation's random generator for use by subclasses. */
     void setupSelfBefore() override;
 
-    /** This function precalculates information used to accelerate certain operations, such as
-        retrieving cross sections and obtaining the equilibrium temperature of the material mix in
-        a given embedding radiation field. */
-    void setupSelfAfter() override;
-
     //======== Material type =======
 
 public:
@@ -152,27 +147,23 @@ public:
     virtual double mass() const = 0;
 
     /** This function returns the absorption cross section per entity
-        \f$\varsigma^{\text{abs}}_{\lambda}\f$ at wavelength \f$\lambda\f$. It retrieves the
-        requested value from a data array that was pre-computed during setup. */
-    double sectionAbs(double lambda) const;
+        \f$\varsigma^{\text{abs}}_{\lambda}\f$ at wavelength \f$\lambda\f$. */
+    virtual double sectionAbs(double lambda) const = 0;
 
     /** This function returns the scattering cross section per entity
-        \f$\varsigma^{\text{sca}}_{\lambda}\f$ at wavelength \f$\lambda\f$. It retrieves the
-        requested value from a data array that was pre-computed during setup. */
-    double sectionSca(double lambda) const;
+        \f$\varsigma^{\text{sca}}_{\lambda}\f$ at wavelength \f$\lambda\f$. */
+    virtual double sectionSca(double lambda) const = 0;
 
     /** This function returns the total extinction cross section per entity
         \f$\varsigma^{\text{ext}}_{\lambda} = \varsigma^{\text{abs}}_{\lambda} +
-        \varsigma^{\text{sca}}_{\lambda}\f$ at wavelength \f$\lambda\f$. It retrieves the requested
-        value from a data array that was pre-computed during setup. */
-    double sectionExt(double lambda) const;
+        \varsigma^{\text{sca}}_{\lambda}\f$ at wavelength \f$\lambda\f$. */
+    virtual double sectionExt(double lambda) const = 0;
 
     /** This function returns the scattering albedo \f$\varpi_\lambda =
         \varsigma_{\lambda}^{\text{sca}} / \varsigma_{\lambda}^{\text{ext}} =
-        \kappa_{\lambda}^{\text{sca}} / \kappa_{\lambda}^{\text{ext}}\f$ at wavelength
-        \f$\lambda\f$. It retrieves the requested value from a data array that was pre-computed
-        during setup. */
-    double albedo(double lambda) const;
+        \kappa_{\lambda}^{\text{sca}} / \kappa_{\lambda}^{\text{ext}}\f$ at
+        wavelength \f$\lambda\f$. */
+    virtual double albedo(double lambda) const = 0;
 
     /** This function is used only with the HenyeyGreenstein scattering mode. It returns the
         scattering asymmetry parameter \f$g_\lambda = \left<\cos\theta\right>\f$ at wavelength
@@ -180,19 +171,6 @@ public:
         For a value of \f$g=0\f$, isotropic scattering is implemented directly. The default
         implementation in this base class returns 0. */
     virtual double asymmpar(double lambda) const;
-
-protected:
-    /** This function determines and returns the absorption cross section per entity
-        \f$\varsigma^{\text{abs}}_{\lambda}\f$ at wavelength \f$\lambda\f$. It must be implemented
-        in each subclass and is invoked during the setup procedure of this abstract class to
-        precompute the cross sections on an appropriate wavelength grid. */
-    virtual double sectionAbsSelf(double lambda) const = 0;
-
-    /** This function determines and returns the scattering cross section per entity
-        \f$\varsigma^{\text{sca}}_{\lambda}\f$ at wavelength \f$\lambda\f$. It must be implemented
-        in each subclass and is invoked during the setup procedure of this abstract class to
-        precompute the cross sections on an appropriate wavelength grid. */
-    virtual double sectionScaSelf(double lambda) const = 0;
 
     //======== Scattering with material phase function =======
 
@@ -241,22 +219,13 @@ public:
 
     //======== Equilibrium Temperature =======
 
-    /** This function returns the equilibrium temperature \f$T_{\text{eq}}\f$ of the material mix
-        when it would be embedded in the radiation field specified by the mean intensities
-        \f$(J_\lambda)_\ell\f$, which must be discretized on the simulation's radiation field
-        wavelength grid as returned by the Configuration::radiationFieldWLG() function.
-
-        The equilibrium temperature is obtained from the energy balance equation, \f[ \int_0^\infty
-        \varsigma^\text{abs}(\lambda) \,J_\lambda(\lambda) \,\text{d}\lambda = \int_0^\infty
-        \varsigma^\text{abs}(\lambda) \,B_\lambda(T_\text{eq},\lambda) \,\text{d}\lambda, \f] where
-        the left-hand side is integrated over the radiation field wavelength grid, and the
-        right-hand side is precalculated during setup for a range of temperatures through
-        integration over a built-in wavelength grid.
-
-        The behavior of this function is undefined if the simulation does not track the radiation
-        field, because in that case setup does not calcalate the info on which this function
-        relies. */
-    double equilibriumTemperature(const Array& Jv) const;
+    /** This function returns the equilibrium temperature \f$T_{\text{eq}}\f$ (assuming LTE
+        conditions) of the material mix when it would be embedded in the radiation field specified
+        by the mean intensities \f$(J_\lambda)_\ell\f$, which must be discretized on the
+        simulation's radiation field wavelength grid as returned by the
+        Configuration::radiationFieldWLG() function. The default implementation in this base class
+        returns zero. */
+    virtual double equilibriumTemperature(const Array& Jv) const;
 
     //======================== Other Functions =======================
 
@@ -269,21 +238,6 @@ protected:
 private:
     // data member initialized in setupSelfBefore
     Random* _random{nullptr};
-
-    // cross sections - precalculated in setupSelfAfter()
-    double _logLambdaOffset{0.};
-    double _logLambdaFactor{0.};
-    int _maxLogLambda{0};
-    Array _sectionAbs;
-    Array _sectionSca;
-    Array _sectionExt;
-    Array _albedo;
-
-    // equilibrium temperature info - precalculated in setupSelfAfter()
-    WavelengthGrid* _radiationFieldWLG{nullptr};  // the radiation field wavelength grid
-    Array _sigmaabsv;   // absorption cross sections on the above wavelength grid
-    Array _Tv;          // temperature grid for the Planck-integrated absorption cross sections
-    Array _planckabsv;  // Planck-integrated absorption cross sections for each of the temperatures in the above grid
 };
 
 ////////////////////////////////////////////////////////////////////

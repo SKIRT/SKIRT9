@@ -373,6 +373,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
 
     // material mixes
     ItemRegistry::add<MaterialMix>();
+    ItemRegistry::add<DustMix>();
     ItemRegistry::add<SingleGrainDustMix>();
     ItemRegistry::add<MeanInterstellarDustMix>();
     ItemRegistry::add<MeanDraineLiDustMix>();

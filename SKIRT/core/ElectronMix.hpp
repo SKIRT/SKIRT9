@@ -61,12 +61,24 @@ public:
     /** This function returns the absorption cross section per electron
         \f$\varsigma^{\text{abs}}_{\lambda}\f$, which is trivially zero for all wavelengths
         \f$\lambda\f$. */
-    double sectionAbsSelf(double lambda) const override;
+    double sectionAbs(double lambda) const override;
 
     /** This function returns the scattering cross section per electron
         \f$\varsigma^{\text{sca}}_{\lambda}\f$ which is constant and equal to the Thomson cross
         section for all wavelengths \f$\lambda\f$. */
-    double sectionScaSelf(double lambda) const override;
+    double sectionSca(double lambda) const override;
+
+    /** This function returns the total extinction cross section per electron
+        \f$\varsigma^{\text{ext}}_{\lambda} = \varsigma^{\text{abs}}_{\lambda} +
+        \varsigma^{\text{sca}}_{\lambda}\f$ which is constant and equal to the Thomson cross
+        section for all wavelengths \f$\lambda\f$.. */
+    double sectionExt(double lambda) const override;
+
+    /** This function returns the scattering albedo \f$\varpi_\lambda =
+        \varsigma_{\lambda}^{\text{sca}} / \varsigma_{\lambda}^{\text{ext}} =
+        \kappa_{\lambda}^{\text{sca}} / \kappa_{\lambda}^{\text{ext}}\f$ for the electron
+        population, which is trivially equal to one for all wavelengths \f$\lambda\f$. */
+    double albedo(double lambda) const override;
 
     //======== Scattering with material phase function =======
 

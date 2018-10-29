@@ -11,7 +11,7 @@
 
 void MeanTabulatedDustMix::setupSelfBefore()
 {
-    MaterialMix::setupSelfBefore();
+    DustMix::setupSelfBefore();
 
     // obtain the wavelengths and properties
     Array kappaextv, albedov;
@@ -24,13 +24,6 @@ void MeanTabulatedDustMix::setupSelfBefore()
     // calculate the cross sections
     _sectionScav = _mu * kappaextv * albedov;
     _sectionAbsv = _mu * kappaextv * (1.-albedov);
-}
-
-////////////////////////////////////////////////////////////////////
-
-MaterialMix::MaterialType MeanTabulatedDustMix::materialType() const
-{
-    return MaterialType::Dust;
 }
 
 ////////////////////////////////////////////////////////////////////

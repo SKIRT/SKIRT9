@@ -6,7 +6,7 @@
 #ifndef SINGLEGRAINDUSTMIX_HPP
 #define SINGLEGRAINDUSTMIX_HPP
 
-#include "MaterialMix.hpp"
+#include "DustMix.hpp"
 #include "StoredTable.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -19,10 +19,9 @@
 
     The implementation of this class is based on the analysis presented by Peest at al. 2017 (A&A,
     601, A92). */
-class SingleGrainDustMix : public MaterialMix
+class SingleGrainDustMix : public DustMix
 {
-    ITEM_ABSTRACT(SingleGrainDustMix, MaterialMix, "a dust mix described by a single representative grain")
-        ATTRIBUTE_TYPE_INSERT(SingleGrainDustMix, "Dust")
+    ITEM_ABSTRACT(SingleGrainDustMix, DustMix, "a dust mix described by a single representative grain")
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============
@@ -47,14 +46,6 @@ protected:
         \f$S_{xx}\f$ coefficients). The default implementation in this base class returns the empty
         string, which is acceptable only with the HenyeyGreenstein scattering mode. */
     virtual string resourceNameForMuellerMatrix() const;
-
-    //======== Functionality levels =======
-
-public:
-    /** This function returns the fundamental material type represented by this material mix, in
-        other words it returns MaterialType::Dust. See the documentation of the MaterialMix class
-        for more information. */
-    MaterialType materialType() const override;
 
     //======== Basic material properties =======
 

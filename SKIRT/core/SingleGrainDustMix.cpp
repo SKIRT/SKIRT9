@@ -23,7 +23,7 @@ namespace
 
 void SingleGrainDustMix::setupSelfBefore()
 {
-    MaterialMix::setupSelfBefore();
+    DustMix::setupSelfBefore();
 
     // get the basic optical properties
     string name = resourceNameForOpticalProps();
@@ -82,13 +82,6 @@ void SingleGrainDustMix::setupSelfBefore()
 string SingleGrainDustMix::resourceNameForMuellerMatrix() const
 {
     return string();
-}
-
-////////////////////////////////////////////////////////////////////
-
-MaterialMix::MaterialType SingleGrainDustMix::materialType() const
-{
-    return MaterialType::Dust;
 }
 
 ////////////////////////////////////////////////////////////////////

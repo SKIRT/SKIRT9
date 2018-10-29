@@ -61,16 +61,30 @@ double ElectronMix::mass() const
 
 ////////////////////////////////////////////////////////////////////
 
-double ElectronMix::sectionAbsSelf(double /*lambda*/) const
+double ElectronMix::sectionAbs(double /*lambda*/) const
 {
     return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double ElectronMix::sectionScaSelf(double /*lambda*/) const
+double ElectronMix::sectionSca(double /*lambda*/) const
 {
     return Constants::sigmaThomson();
+}
+
+////////////////////////////////////////////////////////////////////
+
+double ElectronMix::sectionExt(double /*lambda*/) const
+{
+    return Constants::sigmaThomson();
+}
+
+////////////////////////////////////////////////////////////////////
+
+double ElectronMix::albedo(double /*lambda*/) const
+{
+    return 1.;
 }
 
 ////////////////////////////////////////////////////////////////////

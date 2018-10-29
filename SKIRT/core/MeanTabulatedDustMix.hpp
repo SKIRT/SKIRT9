@@ -6,7 +6,7 @@
 #ifndef MEANTABULATEDDUSTMIX_HPP
 #define MEANTABULATEDDUSTMIX_HPP
 
-#include "MaterialMix.hpp"
+#include "DustMix.hpp"
 #include "Array.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -29,11 +29,10 @@
     are considered to be constant for all wavelengths.
 
     The subclass must load the tabulated data, and this abstract class handles everything else. */
-class MeanTabulatedDustMix : public MaterialMix
+class MeanTabulatedDustMix : public DustMix
 {
     ITEM_ABSTRACT(MeanTabulatedDustMix, MaterialMix, "a basic dust mix with properties tabulated by the user")
         ATTRIBUTE_TYPE_DISPLAYED_IF(MeanTabulatedDustMix, "Level2")
-        ATTRIBUTE_TYPE_INSERT(MeanTabulatedDustMix, "Dust")
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============
@@ -50,11 +49,6 @@ protected:
     //======================== Other Functions =======================
 
 public:
-    /** This function returns the fundamental material type represented by this material mix. For
-        this class, it returns MaterialType::Dust. See the documentation of the MaterialMix class
-        for more information. */
-    MaterialType materialType() const override;
-
     /** This function returns the scattering mode supported by this material mix. For this class,
         it returns the HenyeyGreenstein mode. */
     ScatteringMode scatteringMode() const override;
