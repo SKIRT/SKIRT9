@@ -38,6 +38,13 @@ const MaterialMix*GeometricMedium::mix(Position /*bfr*/) const
 
 ////////////////////////////////////////////////////////////////////
 
+bool GeometricMedium::hasVelocity() const
+{
+    return velocityX() || velocityY() || velocityZ();
+}
+
+////////////////////////////////////////////////////////////////////
+
 Vec GeometricMedium::bulkVelocity(Position /*bfr*/) const
 {
     return Vec(velocityX(), velocityY(), velocityZ());

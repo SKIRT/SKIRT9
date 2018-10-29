@@ -113,9 +113,6 @@ public:
     /** Returns true if there is at least one medium component in the simulation. */
     bool hasMedium() const { return _hasMedium; }
 
-    /** Returns true if the media in the simulation support polarization. */
-    bool hasPolarization() const { return _hasPolarization; }
-
     /** Returns the minimum weight reduction factor before a photon packet is terminated. */
     double minWeightReduction() const { return _minWeightReduction; }
 
@@ -184,6 +181,22 @@ public:
         this fraction compared to the previous iteration. */
     double maxFractionOfPrevious() const { return _maxFractionOfPrevious; }
 
+    /** Returns true if all media in the simulation support polarization, and false if none of the
+        media do. A mixture of support and no support for polarization is not allowed and will
+        cause a fatal error during setup. */
+    bool hasPolarization() const { return _hasPolarization; }
+
+    /** Returns true if at least one medium component in the simulation can have a nonzero velocity
+        for some positions, causing Doppler shifts in the perceived, scattered and emitted
+        wavelengths. If the function returns false, none of the media has a velocity. */
+    bool hasMovingMedia() const { return _hasMovingMedia; }
+
+    /** Returns true if the material mix for at least one medium component in the simulation may
+        vary depending on spatial position. If the function returns false, the material mixes and
+        thus the material properties for all media are constant throughout the complete spatial
+        domain of the simulation. */
+    bool hasVariableMedia() const { return _hasVariableMedia; }
+
     //======================== Data Members ========================
 
 private:
@@ -204,7 +217,6 @@ private:
 
     // extinction
     bool _hasMedium{false};
-    bool _hasPolarization{false};
     double _minWeightReduction{1e4};
     int _minScattEvents{0};
     double _pathLengthBias{0.5};
@@ -226,6 +238,11 @@ private:
     int _maxIterations{10};
     double _maxFractionOfPrimary{0.01};
     double _maxFractionOfPrevious{0.03};
+
+    // properties derived from the configuration at large
+    bool _hasPolarization{false};
+    bool _hasMovingMedia{false};
+    bool _hasVariableMedia{false};
 };
 
 ////////////////////////////////////////////////////////////////////

@@ -35,7 +35,7 @@ void MediumSystem::setupSelfAfter()
     SimulationItem::setupSelfAfter();
     auto log = find<Log>();
     auto parfac = find<ParallelFactory>();
-    auto config = find<Configuration>();
+    _config = find<Configuration>();
 
     // ----- allocate memory -----
 
@@ -51,13 +51,13 @@ void MediumSystem::setupSelfAfter()
     allocatedBytes += _state2vv.size()*sizeof(State2);
 
     // radiation field
-    if (config->hasRadiationField())
+    if (_config->hasRadiationField())
     {
-        _wavelengthGrid = config->radiationFieldWLG();
+        _wavelengthGrid = _config->radiationFieldWLG();
         _rf1.resize(_numCells, _wavelengthGrid->numBins());
         allocatedBytes += _rf1.size()*sizeof(double);
 
-        if (config->hasSecondaryRadiationField())
+        if (_config->hasSecondaryRadiationField())
         {
             _rf2.resize(_numCells, _wavelengthGrid->numBins());
             _rf2c.resize(_numCells, _wavelengthGrid->numBins());
@@ -72,8 +72,8 @@ void MediumSystem::setupSelfAfter()
 
     log->info("Calculating densities for " + std::to_string(_numCells) + " cells...");
     auto dic = _grid->interface<DensityInCellInterface>(0, false);  // optional fast-track interface for densities
-    int numSamples = config->numDensitySamples();
-    bool oligo = config->oligochromatic();
+    int numSamples = _config->numDensitySamples();
+    bool oligo = _config->oligochromatic();
     log->infoSetElapsed(_numCells);
     parfac->parallelDistributed()->call(_numCells,
                                         [this, log, dic, numSamples, oligo](size_t firstIndex, size_t numIndices)
@@ -365,12 +365,28 @@ double MediumSystem::extinctionFactor(PhotonPacket* pp, double distance)
     // determine the geometric details of the path
     _grid->path(pp);
 
-    // calculate the optical depth
+    // calculate the optical depth;
+    // use a faster version in case there are no kinematics and all material properties are spatially constant
     double tau = 0.;
-    for (const auto& segment : pp->segments())
+    if (!_config->hasMovingMedia() && !_config->hasVariableMedia())
     {
-        if (segment.m >= 0) tau += opacityExt(pp->perceivedWavelength(state(segment.m).v), segment.m) * segment.ds;
-        if (segment.s > distance) break;
+        ShortArray<8> sectionv(_numMedia);
+        for (int h=0; h!=_numMedia; ++h) sectionv[h] = state(0,h).mix->sectionExt(pp->wavelength());
+        for (const auto& segment : pp->segments())
+        {
+            if (segment.m >= 0)
+                for (int h=0; h!=_numMedia; ++h) tau += sectionv[h] * state(segment.m,h).n * segment.ds;
+            if (segment.s > distance) break;
+        }
+    }
+    else
+    {
+        for (const auto& segment : pp->segments())
+        {
+            if (segment.m >= 0)
+                tau += opacityExt(pp->perceivedWavelength(state(segment.m).v), segment.m) * segment.ds;
+            if (segment.s > distance) break;
+        }
     }
 
     // return the corresponding extinction factor
@@ -385,12 +401,29 @@ void MediumSystem::fillOpticalDepthInfo(PhotonPacket* pp)
     _grid->path(pp);
 
     // calculate the cumulative optical depth and store the corresponding extinction factors in the photon package
-    double tau = 0.;
-    int i = 0;
-    for (auto& segment : pp->segments())
+    // use a faster version in case there are no kinematics and all material properties are spatially constant
+    if (!_config->hasMovingMedia() && !_config->hasVariableMedia())
     {
-        if (segment.m >= 0) tau += opacityExt(pp->perceivedWavelength(state(segment.m).v), segment.m) * segment.ds;
-        pp->setOpticalDepth(i++, tau);
+        ShortArray<8> sectionv(_numMedia);
+        for (int h=0; h!=_numMedia; ++h) sectionv[h] = state(0,h).mix->sectionExt(pp->wavelength());
+        double tau = 0.;
+        int i = 0;
+        for (auto& segment : pp->segments())
+        {
+            if (segment.m >= 0)
+                for (int h=0; h!=_numMedia; ++h) tau += sectionv[h] * state(segment.m,h).n * segment.ds;
+            pp->setOpticalDepth(i++, tau);
+        }
+    }
+    else
+    {
+        double tau = 0.;
+        int i = 0;
+        for (auto& segment : pp->segments())
+        {
+            if (segment.m >= 0) tau += opacityExt(pp->perceivedWavelength(state(segment.m).v), segment.m) * segment.ds;
+            pp->setOpticalDepth(i++, tau);
+        }
     }
 }
 

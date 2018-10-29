@@ -84,6 +84,9 @@ public:
         returned regardless of position. This may change in the future. */
     const MaterialMix* mix(Position bfr = Position()) const override;
 
+    /** This function returns true if the \em importVelocity flag is enabled for the medium. */
+    bool hasVelocity() const override;
+
     /** This function returns the bulk velocity of the medium at the specified position. If the \em
         importVelocity flag is enabled, it simply calls the corresponding function in the snapshot
         object; otherwise is returns zero velocity. */

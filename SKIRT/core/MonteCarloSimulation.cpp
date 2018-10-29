@@ -397,22 +397,45 @@ void MonteCarloSimulation::peelOffEmission(const PhotonPacket* pp, PhotonPacket*
 
 void MonteCarloSimulation::storeRadiationField(const PhotonPacket* pp)
 {
-    double extBeg = 1.;                         // extinction factor at begin of current segment
-    for (const auto& segment : pp->segments())
+    // use a faster version in case there are no kinematics
+    if (!_config->hasMovingMedia())
     {
-        double extEnd = exp(-segment.tau);      // extinction factor at end of current segment
-        int m = segment.m;
-        if (m >= 0)
+        int ell = _config->radiationFieldWLG()->bin(pp->wavelength());
+        if (ell >= 0)
         {
-            double lambda = pp->perceivedWavelength(mediumSystem()->bulkVelocity(m));
-            int ell = _config->radiationFieldWLG()->bin(lambda);
-            if (ell >= 0)
+            double extBeg = 1.;                         // extinction factor at begin of current segment
+            for (const auto& segment : pp->segments())
             {
-                double Lds = pp->perceivedLuminosity(lambda) * SpecialFunctions::lnmean(extBeg, extEnd) * segment.ds;
-                mediumSystem()->storeRadiationField(pp->hasPrimaryOrigin(), m, ell, Lds);
+                double extEnd = exp(-segment.tau);      // extinction factor at end of current segment
+                int m = segment.m;
+                if (m >= 0)
+                {
+                    double Lds = pp->luminosity() * SpecialFunctions::lnmean(extBeg, extEnd) * segment.ds;
+                    mediumSystem()->storeRadiationField(pp->hasPrimaryOrigin(), m, ell, Lds);
+                }
+                extBeg = extEnd;
             }
         }
-        extBeg = extEnd;
+    }
+    else
+    {
+        double extBeg = 1.;                         // extinction factor at begin of current segment
+        for (const auto& segment : pp->segments())
+        {
+            double extEnd = exp(-segment.tau);      // extinction factor at end of current segment
+            int m = segment.m;
+            if (m >= 0)
+            {
+                double lambda = pp->perceivedWavelength(mediumSystem()->bulkVelocity(m));
+                int ell = _config->radiationFieldWLG()->bin(lambda);
+                if (ell >= 0)
+                {
+                    double Lds = pp->perceivedLuminosity(lambda) * SpecialFunctions::lnmean(extBeg, extEnd) * segment.ds;
+                    mediumSystem()->storeRadiationField(pp->hasPrimaryOrigin(), m, ell, Lds);
+                }
+            }
+            extBeg = extEnd;
+        }
     }
 }
 
@@ -452,8 +475,17 @@ void MonteCarloSimulation::simulatePropagation(PhotonPacket* pp)
     if (m<0) throw FATALERROR("Cannot locate photon packet interaction point");
 
     // calculate the albedo for the cell containing the interaction point
-    Vec bfv = mediumSystem()->bulkVelocity(m);
-    double albedo = mediumSystem()->albedo(pp->perceivedWavelength(bfv), m);
+    // use a faster version in case there are no kinematics
+    double albedo;
+    if (!_config->hasMovingMedia())
+    {
+        albedo = mediumSystem()->albedo(pp->wavelength(), m);
+    }
+    else
+    {
+        Vec bfv = mediumSystem()->bulkVelocity(m);
+        albedo = mediumSystem()->albedo(pp->perceivedWavelength(bfv), m);
+    }
 
     // adjust the weight by the scattered fraction
     pp->applyBias( -expm1(-taupath) * albedo );
@@ -489,11 +521,20 @@ void MonteCarloSimulation::peelOffScattering(const PhotonPacket* pp, PhotonPacke
     // get the cell hosting the scattering event
     int m = pp->interactionCellIndex();
 
-    // get the bulk velocity of the material in that cell
-    Vec bfv = mediumSystem()->bulkVelocity(m);
-
-    // determine the perceived wavelength, Doppler-shifted from the incoming wavelength according to the bulk velocity
-    double lambda = pp->perceivedWavelength(bfv);
+    // get the bulk velocity of the material in that cell and determine the perceived wavelength,
+    // Doppler-shifted from the incoming wavelength according to the bulk velocity;
+    // use a faster version in case there are no kinematics
+    Vec bfv;
+    double lambda;
+    if (!_config->hasMovingMedia())
+    {
+        lambda = pp->wavelength();
+    }
+    else
+    {
+        bfv = mediumSystem()->bulkVelocity(m);
+        lambda = pp->perceivedWavelength(bfv);
+    }
 
     // determine the weighting factor for each medium component as its scattering opacity (n * sigma_sca)
     int numMedia = mediumSystem()->numMedia();
@@ -596,11 +637,20 @@ void MonteCarloSimulation::simulateScattering(PhotonPacket* pp)
     // locate the cell hosting the scattering event
     int m = pp->interactionCellIndex();
 
-    // get the bulk velocity of the material in that cell
-    Vec bfv = mediumSystem()->bulkVelocity(m);
-
-    // determine the perceived wavelength, Doppler-shifted from the incoming wavelength according to the bulk velocity
-    double lambda = pp->perceivedWavelength(bfv);
+    // get the bulk velocity of the material in that cell and determine the perceived wavelength,
+    // Doppler-shifted from the incoming wavelength according to the bulk velocity;
+    // use a faster version in case there are no kinematics
+    Vec bfv;
+    double lambda;
+    if (!_config->hasMovingMedia())
+    {
+        lambda = pp->wavelength();
+    }
+    else
+    {
+        bfv = mediumSystem()->bulkVelocity(m);
+        lambda = pp->perceivedWavelength(bfv);
+    }
 
     // randomly select a material mix; the probability of each component is weighted by the scattering opacity
     auto mix = mediumSystem()->randomMixForScattering(random(), lambda, m);

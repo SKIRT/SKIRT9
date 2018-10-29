@@ -123,6 +123,12 @@ void Configuration::setupSelfBefore()
         _hasPolarization = numPolarization!=0;
     }
 
+    // check for velocities in media
+    if (_hasMedium) for (auto medium : ms->media()) if (medium->hasVelocity()) _hasMovingMedia = true;
+
+    // check for variable material mixes
+    // TO DO: implement this check once variable material mixes have been actually implemented
+
     // in case emulation mode has been set before our setup() was called, perform the emulation overrides again
     if (emulationMode()) setEmulationMode();
 }

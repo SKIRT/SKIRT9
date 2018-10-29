@@ -54,10 +54,9 @@ class BulkVelocityInterface;
     some trivial functions are implemented inline in the header. */
 class PhotonPacket : public SpatialGridPath, public StokesVector
 {
-public:
-
     // ------- Construction, launch and lifecycle events -------
 
+public:
     /** The constructor initializes an empty photon packet object. After construction, the photon
         packet is ready to be launched through one of the launch() functions. The other functions
         in this class should be invoked only after the photon packet has been launched. The same
@@ -151,6 +150,7 @@ public:
 
     // ------- Getting trivial properties -------
 
+public:
     /** This function returns the wavelength \f$\lambda_0\f$ of the photon packet when it was
         launched, relative to the rest frame of the original source. */
     double sourceRestFrameWavelength() const { return _lambda0; }
@@ -184,6 +184,7 @@ public:
 
     // ------- Calculating Doppler shifts -------
 
+private:
     /** This function returns the Doppler-shifted wavelength that should be assigned to a photon
         packet (i.e. the wavelength relative to the model coordinate frame) when the packet is
         emitted from a moving source (with non-relativistic velocity). The arguments specify the
@@ -206,6 +207,7 @@ public:
         */
     static double shiftedReceptionWavelength(double photonWavelength, Direction photonDirection, Vec receiverVelocity);
 
+public:
     /** This function returns the Doppler-shifted wavelength perceived for this photon packet by a
         moving receiver (with non-relativistic velocity). The argument specifies the velocity of
         the receiver \f${\bf{v}}_\text{rec}\f$ relative to the model coordinate frame. See the

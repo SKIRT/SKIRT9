@@ -16,6 +16,7 @@
 #include "SimulationItem.hpp"
 #include "SpatialGrid.hpp"
 #include "Table.hpp"
+class Configuration;
 class PhotonPacket;
 class Random;
 class WavelengthGrid;
@@ -382,6 +383,8 @@ private:
     //======================== Data Members ========================
 
 private:
+    Configuration* _config;
+
     // relevant for any simulation mode that includes a medium
     int _numCells{0};           // index m
     int _numMedia{0};           // index h

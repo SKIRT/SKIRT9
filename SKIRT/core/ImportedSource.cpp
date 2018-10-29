@@ -93,6 +93,13 @@ int ImportedSource::dimension() const
 
 ////////////////////////////////////////////////////////////////////
 
+bool ImportedSource::hasVelocity() const
+{
+    return _importVelocity;
+}
+
+////////////////////////////////////////////////////////////////////
+
 Range ImportedSource::wavelengthRange() const
 {
     return _wavelengthRange;
