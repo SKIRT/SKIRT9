@@ -370,13 +370,25 @@ double MediumSystem::extinctionFactor(PhotonPacket* pp, double distance)
     double tau = 0.;
     if (!_config->hasMovingMedia() && !_config->hasVariableMedia())
     {
-        ShortArray<8> sectionv(_numMedia);
-        for (int h=0; h!=_numMedia; ++h) sectionv[h] = state(0,h).mix->sectionExt(pp->wavelength());
-        for (const auto& segment : pp->segments())
+        if (_numMedia==1)
         {
-            if (segment.m >= 0)
-                for (int h=0; h!=_numMedia; ++h) tau += sectionv[h] * state(segment.m,h).n * segment.ds;
-            if (segment.s > distance) break;
+            double section = state(0,0).mix->sectionExt(pp->wavelength());
+            for (const auto& segment : pp->segments())
+            {
+                if (segment.m >= 0) tau += section * state(segment.m,0).n * segment.ds;
+                if (segment.s > distance) break;
+            }
+        }
+        else
+        {
+            ShortArray<8> sectionv(_numMedia);
+            for (int h=0; h!=_numMedia; ++h) sectionv[h] = state(0,h).mix->sectionExt(pp->wavelength());
+            for (const auto& segment : pp->segments())
+            {
+                if (segment.m >= 0)
+                    for (int h=0; h!=_numMedia; ++h) tau += sectionv[h] * state(segment.m,h).n * segment.ds;
+                if (segment.s > distance) break;
+            }
         }
     }
     else
@@ -404,15 +416,29 @@ void MediumSystem::fillOpticalDepthInfo(PhotonPacket* pp)
     // use a faster version in case there are no kinematics and all material properties are spatially constant
     if (!_config->hasMovingMedia() && !_config->hasVariableMedia())
     {
-        ShortArray<8> sectionv(_numMedia);
-        for (int h=0; h!=_numMedia; ++h) sectionv[h] = state(0,h).mix->sectionExt(pp->wavelength());
-        double tau = 0.;
-        int i = 0;
-        for (auto& segment : pp->segments())
+        if (_numMedia==1)
         {
-            if (segment.m >= 0)
-                for (int h=0; h!=_numMedia; ++h) tau += sectionv[h] * state(segment.m,h).n * segment.ds;
-            pp->setOpticalDepth(i++, tau);
+            double section = state(0,0).mix->sectionExt(pp->wavelength());
+            double tau = 0.;
+            int i = 0;
+            for (auto& segment : pp->segments())
+            {
+                if (segment.m >= 0) tau += section * state(segment.m,0).n * segment.ds;
+                pp->setOpticalDepth(i++, tau);
+            }
+        }
+        else
+        {
+            ShortArray<8> sectionv(_numMedia);
+            for (int h=0; h!=_numMedia; ++h) sectionv[h] = state(0,h).mix->sectionExt(pp->wavelength());
+            double tau = 0.;
+            int i = 0;
+            for (auto& segment : pp->segments())
+            {
+                if (segment.m >= 0)
+                    for (int h=0; h!=_numMedia; ++h) tau += sectionv[h] * state(segment.m,h).n * segment.ds;
+                pp->setOpticalDepth(i++, tau);
+            }
         }
     }
     else
