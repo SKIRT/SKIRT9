@@ -17,12 +17,13 @@ void DustMix::setupSelfAfter()
 
     // precalculate cross sections on a fine grid covering the wavelength range of the simulation
     {
-        // determine the number of wavelength points per dex
-        _logLambdaFactor = 500.;
+        // the number of wavelength points per dex
+        const int numWavelengthsPerDex = 500;
 
         // get the wavelength range and the conversion scheme to indices in log space
         Range range = find<Configuration>()->simulationWavelengthRange();
         _logLambdaOffset = - log10(range.min());
+        _logLambdaFactor = numWavelengthsPerDex;
         _maxLogLambda = _logLambdaFactor * log10(range.max()/range.min());
 
         // obtain the cross sections for all wavelength points in the grid
