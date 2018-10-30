@@ -172,7 +172,7 @@ void FluxRecorder::detect(PhotonPacket* pp, int l, double distance)
 
         // apply the extinction along the path to the recorder
         double Lext = L;
-        if (_hasMedium) Lext *= _ms->extinctionFactor(pp, distance);
+        if (_hasMedium) Lext *= exp(-_ms->opticalDepth(pp, distance));
 
         // get number of scatterings (because we use it a lot)
         int numScatt = pp->numScatt();

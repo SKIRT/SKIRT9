@@ -364,7 +364,7 @@ void MonteCarloSimulation::performLifeCycle(size_t firstIndex, size_t numIndices
                     int minScattEvents = _config->minScattEvents();
                     while (true)
                     {
-                        mediumSystem()->fillOpticalDepthInfo(&pp);
+                        mediumSystem()->opticalDepth(&pp);
                         if (store) storeRadiationField(&pp);
                         simulatePropagation(&pp);
                         if (pp.luminosity()<=0 || (pp.luminosity()<=Lthreshold && pp.numScatt()>=minScattEvents)) break;

@@ -220,29 +220,9 @@ public:
         medium components with the specified material type. */
     double opticalDepth(SpatialGridPath* path, double lambda, MaterialMix::MaterialType type);
 
-    /** This function returns the extinction factor along a path through the medium system, taking
-        into account all medium components. The wavelength, the starting position and the direction
-        of the path are taken from the specified PhotonPacket object. The path length is limited to
-        the specified distance, if this is smaller than the distance to the edge of the spatial
-        grid.
-
-        The function first calls the SpatialGrid::path() function to store the geometrical
-        information on the path through the spatial grid into the PhotonPacket object. It then
-        calculates the optical depth at the specified distance as as \f[
-        \tau_\text{path}(\lambda,{\boldsymbol{r}},{\boldsymbol{k},d}) = \sum_m^{s_m<d} (\Delta s)_m
-        \sum_h \varsigma_{\lambda_m,h}^{\text{ext}}\, n_m, \f] where
-        \f$\varsigma_{\lambda_m,h}^{\text{abs}}\f$ is the extinction cross section corresponding to
-        the \f$h\f$'th medium component at wavelength \f$\lambda_m\f$ and \f$n_{m,h}\f$ the number
-        density in the cell with index \f$m\f$ corresponding to the \f$h\f$'th medium component.
-        The wavelength \f$\lambda_m\f$ is the wavelength perceived by the medium in cell \f$m\f$
-        taking into account the bulk velocity in that cell. The sum over the cells is limited to
-        the cells that fall inside the specified distance. Finally, the function calculates the
-        exinction factor from the optical depth through \f$\exp(-\tau)\f$. */
-    double extinctionFactor(PhotonPacket* pp, double distance);
-
-    /** This function calculates the extinction along a path through the media system defined by
-        the specified PhotonPacket object, and stores the results of the calculation into the same
-        PhotonPacket object.
+    /** This function calculates the optical depth along a path through the medium system defined
+        by the specified PhotonPacket object, and stores the results of the calculation into the
+        same PhotonPacket object.
 
         The function first calls the SpatialGrid::path() function to store the geometrical
         information on the path through the spatial grid into the photon packet object, using the
@@ -254,14 +234,23 @@ public:
         s)_m \sum_h \varsigma_{\lambda_m,h}^{\text{ext}}\, n_m, \f] where
         \f$\varsigma_{\lambda_m,h}^{\text{abs}}\f$ is the extinction cross section corresponding to
         the \f$h\f$'th medium component at wavelength \f$\lambda_m\f$ and \f$n_{m,h}\f$ the number
-        density in the cell with index \f$m\f$ corresponding to the \f$h\f$'th medium component.
-        The wavelength \f$\lambda_m\f$ is the wavelength perceived by the medium in cell \f$m\f$
-        taking into account the bulk velocity in that cell.
+        density in the cell with index \f$m\f$ corresponding to the \f$h\f$'th medium component,
+        and where the sum runs over all medium components. The wavelength \f$\lambda_m\f$ is the
+        wavelength perceived by the medium in cell \f$m\f$ taking into account the bulk velocity in
+        that cell.
 
-        Subsequently, the function calculates the cumulative optical depth values at the segment
-        exit boundaries and stores them into the specified photon packet object. Note that the
-        optical depth at entry of the initial segment is equal to zero by definition. */
-    void fillOpticalDepthInfo(PhotonPacket* pp);
+        Using these optical depth values per segment, the function determines the cumulative
+        optical depth at the segment exit boundaries and stores them into the specified photon
+        packet object. Note that the optical depth at entry of the initial segment is equal to zero
+        by definition. Finally, the function returns the total optical depth of the path (ending at
+        the boundary of the simulation's spatial grid).
+
+        If the optional \em distance argument is present, the calculation is limited to the
+        specified distance along the path. More precisely, all path segments with an entry boundary
+        at a cumulative distance along the path smaller than the specified distance are included in
+        the calculation, and any remaining segments are skipped. Note that the function also does
+        not store optical depth information in the photon packet for skipped path segments. */
+    double opticalDepth(PhotonPacket* pp, double distance=std::numeric_limits<double>::infinity());
 
     /** This function initializes all values of the primary and/or secondary radiation field info
         tables to zero. In simulation modes that record the radiation field, the function should be

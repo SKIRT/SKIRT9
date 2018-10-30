@@ -360,97 +360,59 @@ double MediumSystem::opticalDepth(SpatialGridPath* path, double lambda, Material
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::extinctionFactor(PhotonPacket* pp, double distance)
+
+double MediumSystem::opticalDepth(PhotonPacket* pp, double distance)
 {
     // determine the geometric details of the path
     _grid->path(pp);
 
-    // calculate the optical depth;
-    // use a faster version in case there are no kinematics and all material properties are spatially constant
+    // calculate the cumulative optical depth and store the corresponding extinction factors in the photon package;
+    // because this function is the heart of the photon life cycle, we implement optimized versions for special cases
     double tau = 0.;
+
+    // no kinematics and material properties are spatially constant
     if (!_config->hasMovingMedia() && !_config->hasVariableMedia())
     {
+        // single medium (no kinematics, spatially constant)
         if (_numMedia==1)
         {
             double section = state(0,0).mix->sectionExt(pp->wavelength());
-            for (const auto& segment : pp->segments())
-            {
-                if (segment.m >= 0) tau += section * state(segment.m,0).n * segment.ds;
-                if (segment.s > distance) break;
-            }
-        }
-        else
-        {
-            ShortArray<8> sectionv(_numMedia);
-            for (int h=0; h!=_numMedia; ++h) sectionv[h] = state(0,h).mix->sectionExt(pp->wavelength());
-            for (const auto& segment : pp->segments())
-            {
-                if (segment.m >= 0)
-                    for (int h=0; h!=_numMedia; ++h) tau += sectionv[h] * state(segment.m,h).n * segment.ds;
-                if (segment.s > distance) break;
-            }
-        }
-    }
-    else
-    {
-        for (const auto& segment : pp->segments())
-        {
-            if (segment.m >= 0)
-                tau += opacityExt(pp->perceivedWavelength(state(segment.m).v), segment.m) * segment.ds;
-            if (segment.s > distance) break;
-        }
-    }
-
-    // return the corresponding extinction factor
-    return exp(-tau);
-}
-
-////////////////////////////////////////////////////////////////////
-
-void MediumSystem::fillOpticalDepthInfo(PhotonPacket* pp)
-{
-    // determine the geometric details of the path
-    _grid->path(pp);
-
-    // calculate the cumulative optical depth and store the corresponding extinction factors in the photon package
-    // use a faster version in case there are no kinematics and all material properties are spatially constant
-    if (!_config->hasMovingMedia() && !_config->hasVariableMedia())
-    {
-        if (_numMedia==1)
-        {
-            double section = state(0,0).mix->sectionExt(pp->wavelength());
-            double tau = 0.;
             int i = 0;
             for (auto& segment : pp->segments())
             {
                 if (segment.m >= 0) tau += section * state(segment.m,0).n * segment.ds;
                 pp->setOpticalDepth(i++, tau);
+                if (segment.s > distance) break;
             }
         }
+        // multiple media (no kinematics, spatially constant)
         else
         {
             ShortArray<8> sectionv(_numMedia);
             for (int h=0; h!=_numMedia; ++h) sectionv[h] = state(0,h).mix->sectionExt(pp->wavelength());
-            double tau = 0.;
             int i = 0;
             for (auto& segment : pp->segments())
             {
                 if (segment.m >= 0)
                     for (int h=0; h!=_numMedia; ++h) tau += sectionv[h] * state(segment.m,h).n * segment.ds;
                 pp->setOpticalDepth(i++, tau);
+                if (segment.s > distance) break;
             }
         }
     }
+    // with kinematics and/or spatially variable material properties
     else
     {
-        double tau = 0.;
         int i = 0;
         for (auto& segment : pp->segments())
         {
             if (segment.m >= 0) tau += opacityExt(pp->perceivedWavelength(state(segment.m).v), segment.m) * segment.ds;
             pp->setOpticalDepth(i++, tau);
+            if (segment.s > distance) break;
         }
     }
+
+    return tau;
 }
 
 ////////////////////////////////////////////////////////////////////
