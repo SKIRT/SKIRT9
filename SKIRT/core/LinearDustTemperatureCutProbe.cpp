@@ -21,11 +21,10 @@ void LinearDustTemperatureCutProbe::probeRun()
     {
         // locate the medium system
         auto ms = find<MediumSystem>();
-        auto grid = ms->grid();
         auto units = find<Units>();
 
         // get a characteristic size of the spatial grid
-        double size = grid->boundingBox().diagonal();
+        double size = ms->grid()->boundingBox().diagonal();
 
         // get the line segment parameters
         Position p1(_startX, _startY, _startZ);
@@ -49,34 +48,8 @@ void LinearDustTemperatureCutProbe::probeRun()
             Position p(p1 + fraction*(p2-p1));
             double distance = (p-p1).norm();
 
-            // determine the cell containing the sample position
-            int m = grid->cellIndex(p);
-
-            // calculate the indicative dust temperature in that cell
-            double Tout = 0.;
-            if (m>=0)
-            {
-                const Array& Jv = ms->meanIntensity(m);
-                double sumRhoT = 0.;
-                double sumRho = 0.;
-                for (int h=0; h!=ms->numMedia(); ++h)
-                {
-                    if (ms->isDust(h))
-                    {
-                        double rho = ms->massDensity(m,h);
-                        if (rho > 0.)
-                        {
-                            double T = ms->mix(m,h)->equilibriumTemperature(Jv);
-                            sumRhoT += rho*T;
-                            sumRho += rho;
-                        }
-                    }
-                }
-                if (sumRho > 0.) Tout = sumRhoT / sumRho;
-            }
-
-            // write the row
-            file.writeRow(units->olength(distance), units->otemperature(Tout));
+            // calculate the corresponding indicative dust temperature and write the row
+            file.writeRow(units->olength(distance), units->otemperature(ms->indicativeDustTemperature(p)));
         }
     }
 }

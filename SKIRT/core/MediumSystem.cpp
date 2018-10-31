@@ -494,6 +494,39 @@ Array MediumSystem::meanIntensity(int m) const
 
 ////////////////////////////////////////////////////////////////////
 
+double MediumSystem::indicativeDustTemperature(int m) const
+{
+    const Array& Jv = meanIntensity(m);
+    double sumRhoT = 0.;
+    double sumRho = 0.;
+    for (int h=0; h!=_numMedia; ++h)
+    {
+        if (isDust(h))
+        {
+            double rho = massDensity(m,h);
+            if (rho > 0.)
+            {
+                double T = mix(m,h)->equilibriumTemperature(Jv);
+                sumRhoT += rho*T;
+                sumRho += rho;
+            }
+        }
+    }
+    if (sumRho > 0.) return sumRhoT / sumRho;
+    else return 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::indicativeDustTemperature(Position bfr) const
+{
+    int m = _grid->cellIndex(bfr);
+    if (m>=0) return indicativeDustTemperature(m);
+    else return 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
 double MediumSystem::absorbedLuminosity(int m, MaterialMix::MaterialType type) const
 {
     double Labs = 0.;

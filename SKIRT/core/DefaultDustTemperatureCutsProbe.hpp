@@ -25,8 +25,8 @@
     equilibrium temperature that would be reached when the dust is embedded in the radiation field
     tracked by the simulation for the cell. This is achieved by solving the energy balance equation
     under LTE (local thermal equilibrium) assumptions. The resulting temperatures are finally
-    averaged over the dust populations in each mix (weighed by the relative mass in the mix) over
-    and all dust components present in the spatial cell (weighed by relative mass in the cell).
+    averaged over the dust populations in each mix (weighed by the relative mass in the mix) and
+    over all dust components present in the spatial cell (weighed by relative mass in the cell).
 
     Note that the indicative dust temperature does not correspond to a physical temperature. The
     LTE assumption is almost certainly unjustified for a relevant portion of the dust grains

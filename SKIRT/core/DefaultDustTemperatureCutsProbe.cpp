@@ -30,7 +30,6 @@ namespace
         // cached values initialized in constructor
         Probe* item;
         MediumSystem* ms;
-        SpatialGrid* grid;
         WavelengthGrid* wavelengthGrid;
         Units* units;
         double xbase, ybase, zbase, xpsize, ypsize, zpsize, xcenter, ycenter, zcenter;
@@ -39,17 +38,17 @@ namespace
         bool xd, yd, zd;  // direction of coordinate plane (110, 101, 011)
         string plane;    // name of the coordinate plane (xy, xz, yz)
 
-        // results vector, properly sized in constructor and initialized to zero in setup()
+        // results vector, properly resized in constructor
         Array Tv;
 
     public:
         // constructor
         WriteTemperatureCut(Probe* item_, MediumSystem* ms_)
-            : item(item_), ms(ms_), grid(ms_->grid()),
+            : item(item_), ms(ms_),
               wavelengthGrid(ms_->find<Configuration>()->radiationFieldWLG()), units(ms_->find<Units>())
         {
             double xmin, ymin, zmin, xmax, ymax, zmax;
-            grid->boundingBox().extent(xmin,ymin,zmin,xmax,ymax,zmax);
+            ms->grid()->boundingBox().extent(xmin,ymin,zmin,xmax,ymax,zmax);
             xpsize = (xmax-xmin)/Np;
             ypsize = (ymax-ymin)/Np;
             zpsize = (zmax-zmin)/Np;
@@ -73,11 +72,9 @@ namespace
             if (xd) plane += "x";
             if (yd) plane += "y";
             if (zd) plane += "z";
-
-            Tv = 0.;  // initialize all values to zero to facilitate the code in body()
         }
 
-        // the parallelized loop body; calculates the results for a single line in the images
+        // the parallelized loop body; calculates the results for a set of lines in the images
         void body(size_t firstIndex, size_t numIndices)
         {
             for (size_t j = firstIndex; j != firstIndex+numIndices; ++j)
@@ -87,33 +84,8 @@ namespace
                 {
                     double x = xd ? (xbase + i*xpsize) : 0.;
                     double y = yd ? (ybase + (zd ? i : j)*ypsize) : 0.;
-                    Position bfr(x,y,z);
-                    int m = grid->cellIndex(bfr);
-                    if (m>=0)
-                    {
-                        const Array& Jv = ms->meanIntensity(m);
-                        double sumRhoT = 0.;
-                        double sumRho = 0.;
-                        for (int h=0; h!=ms->numMedia(); ++h)
-                        {
-                            if (ms->isDust(h))
-                            {
-                                double rho = ms->massDensity(m,h);
-                                if (rho > 0.)
-                                {
-                                    double T = ms->mix(m,h)->equilibriumTemperature(Jv);
-                                    sumRhoT += rho*T;
-                                    sumRho += rho;
-                                }
-                            }
-                        }
-                        if (sumRho > 0.)
-                        {
-                            int l = i + Np*j;
-                            double T = sumRhoT / sumRho;
-                            Tv[l] = units->otemperature(T);
-                        }
-                    }
+                    int l = i + Np*j;
+                    Tv[l] = units->otemperature(ms->indicativeDustTemperature(Position(x,y,z)));
                 }
             }
         }

@@ -315,6 +315,31 @@ public:
         area, per unit of wavelength, and per unit of solid angle. */
     Array meanIntensity(int m) const;
 
+    /** This function returns an indicative dust temperature for the spatial cell with index
+        \f$m\f$. For each material mix of type dust present in the specified cell, or if
+        applicable, for each dust population in these mixes, the function calculates the
+        equilibrium temperature that would be reached when the dust is embedded in the radiation
+        field tracked by the simulation for the cell. This is achieved by solving the energy
+        balance equation under LTE (local thermal equilibrium) assumptions. The resulting
+        temperatures are finally averaged over the dust populations in each mix (weighed by the
+        relative mass in the mix) and over all dust components present in the spatial cell (weighed
+        by relative mass in the cell). If the cell does not contain any dust, the function returns
+        zero.
+
+        Note that the indicative dust temperature does not correspond to a physical temperature.
+        The LTE assumption is almost certainly unjustified for a relevant portion of the dust
+        grains (depending on the embedding radiation field), and even when ignoring this problem,
+        averaging temperatures over dust populations and dust mixes has no clear-cut physical
+        interpretation. */
+    double indicativeDustTemperature(int m) const;
+
+    /** This function returns an indicative dust temperature for the spatial cell containing the
+        specified position, or zero if the position lies outside the spatial grid. The function
+        asks the spatial grid for the index of the cell containing the specified position, and then
+        calls the indicativeDustTemperature(int) function to calculate the indicative dust
+        temperature for that cell. */
+    double indicativeDustTemperature(Position bfr) const;
+
     /** This function returns the bolometric luminosity \f$L^\text{abs}_{\text{bol},m}\f$ that has
         been absorbed by media of the specified type in the spatial cell with index \f$m\f$.
 

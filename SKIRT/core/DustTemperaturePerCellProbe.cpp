@@ -20,7 +20,6 @@ void DustTemperaturePerCellProbe::probeRun()
     {
         // locate the medium system
         auto ms = find<MediumSystem>();
-        auto grid = ms->grid();
         auto units = find<Units>();
 
         // create a text file
@@ -32,27 +31,10 @@ void DustTemperaturePerCellProbe::probeRun()
         file.addColumn("indicative dust temperature", units->utemperature(), 'g');
 
         // write a line for each cell
-        int numCells = grid->numCells();
+        int numCells = ms->grid()->numCells();
         for (int m=0; m!=numCells; ++m)
         {
-            const Array& Jv = ms->meanIntensity(m);
-            double sumRhoT = 0.;
-            double sumRho = 0.;
-            for (int h=0; h!=ms->numMedia(); ++h)
-            {
-                if (ms->isDust(h))
-                {
-                    double rho = ms->massDensity(m,h);
-                    if (rho > 0.)
-                    {
-                        double T = ms->mix(m,h)->equilibriumTemperature(Jv);
-                        sumRhoT += rho*T;
-                        sumRho += rho;
-                    }
-                }
-            }
-            double T = sumRho > 0. ? sumRhoT / sumRho : 0.;
-            file.writeRow(m, units->otemperature(T));
+            file.writeRow(m, units->otemperature(ms->indicativeDustTemperature(m)));
         }
     }
 }
