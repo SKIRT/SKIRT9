@@ -96,6 +96,7 @@
 #include "MeanTrustBenchmarkDustMix.hpp"
 #include "MeanZubkoDustMix.hpp"
 #include "MediumSystem.hpp"
+#include "MeridionalDustTemperatureCutProbe.hpp"
 #include "MollweideProjection.hpp"
 #include "MonteCarloSimulation.hpp"
 #include "MultiGaussianExpansionGeometry.hpp"
@@ -435,6 +436,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<DefaultDustTemperatureCutsProbe>();
     ItemRegistry::add<DustTemperaturePerCellProbe>();
     ItemRegistry::add<LinearDustTemperatureCutProbe>();
+    ItemRegistry::add<MeridionalDustTemperatureCutProbe>();
     ItemRegistry::add<DustAbsorptionPerCellProbe>();
     ItemRegistry::add<DustEmissivityProbe>();
 
