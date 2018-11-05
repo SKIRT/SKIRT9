@@ -77,9 +77,6 @@ public:
         bulk velocity. */
     int dimension() const override;
 
-    /** This function returns true if the bulk velocity of the source is nonzero. */
-    bool hasVelocity() const override;
-
     /** This function returns the wavelength range for this source. Outside this range, all
         luminosities are zero. This source's wavelength range is determined as the intersection of the
         simulation's source wavelength range (obtained from the simulation configuration) and the

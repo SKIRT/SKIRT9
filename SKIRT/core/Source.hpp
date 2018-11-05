@@ -94,10 +94,6 @@ public:
         none of these symmetries. */
     virtual int dimension() const = 0;
 
-    /** This function returns true if the bulk velocity for this source may be nonzero for some
-        positions. */
-    virtual bool hasVelocity() const = 0;
-
     /** This function returns the luminosity \f$L\f$ (i.e. radiative power) of the source
         integrated over the wavelength range of primary sources (configured for the source system
         as a whole) and across its complete spatial domain. */
