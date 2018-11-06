@@ -18,11 +18,16 @@ void NormalizedSource::setupSelfBefore()
     auto config = find<Configuration>();
     _oligochromatic = config->oligochromatic();
 
+    // cache wavelength information depending on whether this is an oligo- or panchromatic simulation
     if (_oligochromatic)
     {
-        // cache the oligochromatic wavelengths
-        _oligoWavelengths = config->oligoWavelengths();
-        _oligoTotalBinWidth = config->oligoBinWidth() * _oligoWavelengths.size();
+        _xi = 1.;       // always use bias distribution for oligochromatic simulations
+        _biasDistribution = config->oligoWavelengthBiasDistribution();
+    }
+    else
+    {
+        _xi = wavelengthBias();
+        _biasDistribution = wavelengthBiasDistribution();
     }
 
     // if we have a nonzero bulk velocity, set the interface object to ourselves; otherwise leave it at null pointer
@@ -75,48 +80,34 @@ Vec NormalizedSource::bulkVelocity() const
 
 void NormalizedSource::launch(PhotonPacket* pp, size_t historyIndex, double L) const
 {
+    // generate a random wavelength from the SED and/or from the bias distribution
     double lambda, w;
-
-    if (_oligochromatic)
+    if (!_xi)
     {
-        // generate one of the oligochromatic wavelengths with equal probability
-        size_t index = static_cast<size_t>(random()->uniform() * _oligoWavelengths.size());
-        lambda = _oligoWavelengths[index];
-
-        // bias the weight for the actual luminosity at this wavelength
-        w = _oligoTotalBinWidth * sed()->specificLuminosity(lambda);
+        // no biasing -- simply use the intrinsic spectral distribution
+        lambda = _sed->generateWavelength();
+        w = 1.;
     }
     else
     {
-        // generate a random wavelength from the SED and/or from the bias distribution
-        double xi = wavelengthBias();
-        if (!xi)
+        // biasing -- use one or the other distribution
+        if (random()->uniform() > _xi) lambda = sed()->generateWavelength();
+        else lambda = _biasDistribution->generateWavelength();
+
+        // calculate the compensating weight factor
+        double s = sed()->specificLuminosity(lambda);
+        if (!s)
         {
-            // no biasing -- simply use the intrinsic spectral distribution
-            lambda = _sed->generateWavelength();
-            w = 1.;
+            // if the wavelength can't occur in the intrinsic distribution,
+            // the weight factor is zero regardless of the probability in the bias distribution
+            // (handling this separately also avoids NaNs in the pathological case s=b=0)
+            w = 0.;
         }
         else
         {
-            // biasing -- use one or the other distribution
-            if (random()->uniform() > xi) lambda = sed()->generateWavelength();
-            else lambda = wavelengthBiasDistribution()->generateWavelength();
-
-            // calculate the compensating weight factor
-            double s = sed()->specificLuminosity(lambda);
-            if (!s)
-            {
-                // if the wavelength can't occur in the intrinsic distribution,
-                // the weight factor is zero regardless of the probability in the bias distribution
-                // (handling this separately also avoids NaNs in the pathological case s=b=0)
-                w = 0.;
-            }
-            else
-            {
-                // regular composite bias weight
-                double b = wavelengthBiasDistribution()->probability(lambda);
-                w = s / ((1-xi)*s + xi*b);
-            }
+            // regular composite bias weight
+            double b = _biasDistribution->probability(lambda);
+            w = s / ((1-_xi)*s + _xi*b);
         }
     }
 

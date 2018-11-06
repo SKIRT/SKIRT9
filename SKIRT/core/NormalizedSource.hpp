@@ -124,10 +124,10 @@ public:
     //======================== Data Members ========================
 
 private:
-    // true if the simulation is oligochromatic
-    bool _oligochromatic{false};
-    Array _oligoWavelengths;
-    double _oligoTotalBinWidth{0.};
+    // wavelength information initialized during setup
+    bool _oligochromatic{false};    // true if the simulation is oligochromatic
+    double _xi{0.};                 // the wavelength bias fraction
+    WavelengthDistribution* _biasDistribution{nullptr}; // the wavelength bias distribution
 
     // pointer to an object offering the redshift interface; either "this" or null pointer if the bulk velocity is zero
     BulkVelocityInterface* _bvi{nullptr};

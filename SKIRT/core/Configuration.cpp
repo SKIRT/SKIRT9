@@ -11,6 +11,7 @@
 #include "MaterialMix.hpp"
 #include "MonteCarloSimulation.hpp"
 #include "NR.hpp"
+#include "OligoWavelengthDistribution.hpp"
 #include "OligoWavelengthGrid.hpp"
 #include "PhotonPacketOptions.hpp"
 
@@ -42,15 +43,15 @@ void Configuration::setupSelfBefore()
                       sim->simulationMode() == MonteCarloSimulation::SimulationMode::OligoExtinctionOnly;
     if (_oligochromatic)
     {
-        NR::assign(_oligoWavelengths, ss->wavelengths());
-        _defaultWavelengthGrid = new OligoWavelengthGrid(this, ss->wavelengths());
-        _oligoBinWidth = _defaultWavelengthGrid->effectiveWidth(0);
-        _sourceWavelengthRange = _defaultWavelengthGrid->wavelengthRange();
+        auto oligoWavelengthGrid = new OligoWavelengthGrid(this, ss->wavelengths());
+        _sourceWavelengthRange = oligoWavelengthGrid->wavelengthRange();
+        _defaultWavelengthGrid = oligoWavelengthGrid;
+        _oligoWavelengthBiasDistribution = new OligoWavelengthDistribution(oligoWavelengthGrid);
     }
     else
     {
-        if (is) _defaultWavelengthGrid = is->defaultWavelengthGrid();
         _sourceWavelengthRange.set(ss->minWavelength(), ss->maxWavelength());
+        if (is) _defaultWavelengthGrid = is->defaultWavelengthGrid();
     }
 
     // determine the number of media in the simulation hierarchy
@@ -147,15 +148,6 @@ void Configuration::setEmulationMode()
 
 ////////////////////////////////////////////////////////////////////
 
-WavelengthGrid* Configuration::wavelengthGrid(WavelengthGrid* localWavelengthGrid) const
-{
-    auto result = localWavelengthGrid && !_oligochromatic ? localWavelengthGrid : _defaultWavelengthGrid;
-    if (!result) throw FATALERROR("Cannot find a wavelength grid for instrument or probe");
-    return result;
-}
-
-////////////////////////////////////////////////////////////////////
-
 Range Configuration::simulationWavelengthRange() const
 {
     // include primary and secondary source ranges
@@ -169,6 +161,15 @@ Range Configuration::simulationWavelengthRange() const
     // extend the range with a wide margin for kinematics
     double z = 1./3.;
     return Range( range.min()/(1.+z), range.max()*(1.+z) );
+}
+
+////////////////////////////////////////////////////////////////////
+
+WavelengthGrid* Configuration::wavelengthGrid(WavelengthGrid* localWavelengthGrid) const
+{
+    auto result = localWavelengthGrid && !_oligochromatic ? localWavelengthGrid : _defaultWavelengthGrid;
+    if (!result) throw FATALERROR("Cannot find a wavelength grid for instrument or probe");
+    return result;
 }
 
 ////////////////////////////////////////////////////////////////////

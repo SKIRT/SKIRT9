@@ -68,15 +68,17 @@ public:
     /** Returns true if the wavelength regime of the simulation is oligochromatic. */
     bool oligochromatic() const { return _oligochromatic; }
 
-    /** For oligochromatic simulations, this function returns the list of oligochromatic
-        wavelengths (sorted in ascending order). For panchromatic simulations, this function
-        returns the empty list. */
-    const Array& oligoWavelengths() const { return _oligoWavelengths; }
+    /** Returns the total wavelength range of the primary sources in the simulation. For
+        panchromatic simulations, this range is configured by the user in the source system. For
+        oligochromatic simulations, the range includes the discrete source wavelengths used in the
+        simulation, which are also user-configured in the source system. */
+    Range sourceWavelengthRange() const { return _sourceWavelengthRange; }
 
-    /** For oligochromatic simulations, this function returns the width of the wavelength bins on
-        the wavelength grid (all bins have the same width). For panchromatic simulations, this
-        function returns zero. */
-    double oligoBinWidth() const { return _oligoBinWidth; }
+    /** Returns a wavelength range that covers all wavelengths possibly emitted or transported by
+        the simulation. This range includes the primary and secondary source wavelength ranges
+        extended on both sides to accommodate a redshift or blueshift caused by kinematics
+        corresponding to \f$v/c=1/3\f$. */
+    Range simulationWavelengthRange() const;
 
     /** Returns the wavelength grid to be used for an instrument or probe, given the wavelength
         grid configured locally for the calling instrument or probe (which may the null pointer to
@@ -89,17 +91,10 @@ public:
         function throws a fatal error. */
     WavelengthGrid* wavelengthGrid(WavelengthGrid* localWavelengthGrid) const;
 
-    /** Returns the total wavelength range of the primary sources in the simulation. For
-        panchromatic simulations, this range is configured by the user in the source system. For
-        oligochromatic simulations, the range includes the discrete source wavelengths used in the
-        simulation, which are also user-configured in the source system. */
-    Range sourceWavelengthRange() const { return _sourceWavelengthRange; }
-
-    /** Returns a wavelength range that covers all wavelengths possibly emitted or transported by
-        the simulation. This range includes the primary and secondary source wavelength ranges
-        extended on both sides to accommodate a redshift or blueshift caused by kinematics
-        corresponding to \f$v/c=1/3\f$. */
-    Range simulationWavelengthRange() const;
+    /** For oligochromatic simulations, this function returns the wavelength bias distribution to
+        be used by all primary sources. For panchromatic simulations, the function returns the null
+        pointer. */
+    WavelengthDistribution* oligoWavelengthBiasDistribution() { return _oligoWavelengthBiasDistribution; }
 
     /** Returns the number of photon packets launched per primary emission simulation segment. */
     double numPrimaryPackets() const { return _numPrimaryPackets; }
@@ -203,12 +198,11 @@ private:
     // general
     bool _emulationMode{false};
 
-    // wavelengths
+    // primary source wavelengths
     bool _oligochromatic{false};
-    Array _oligoWavelengths;
-    double _oligoBinWidth{0.};
-    WavelengthGrid* _defaultWavelengthGrid{nullptr};
     Range _sourceWavelengthRange;
+    WavelengthGrid* _defaultWavelengthGrid{nullptr};
+    WavelengthDistribution* _oligoWavelengthBiasDistribution{nullptr};
 
     // launch
     double _numPrimaryPackets{0.};

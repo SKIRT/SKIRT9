@@ -11,14 +11,13 @@
 //////////////////////////////////////////////////////////////////////
 
 /** OligoWavelengthGrid is a subclass of the DisjointWavelengthGrid class representing the
-    wavelength grid in an oliogochromatic simulation. The list of wavelengths is specified through
-    the constructor, because the oligo wavelength grid is created programmatically rather than
-    directly configured by the user.
+    wavelength grid in an oligochromatic simulation. The class constructs a set of distinct
+    nonadjacent wavelength bins with a half bin width given by 1/1000 of the shortest wavelength in
+    the list. Refer to the DisjointWavelengthGrid class for more details.
 
-    The order of the specified wavelengths is not important; they will be sorted anyway. The class
-    constructs a set of distinct nonadjacent wavelength bins with a relative half bin width given
-    by \em relativeHalfWidth = 1/1000. Refer to the DisjointWavelengthGrid class for more details.
-    */
+    The list of wavelengths is specified through the constructor, because the oligo wavelength grid
+    is created programmatically rather than directly configured by the user. The order of the
+    specified wavelengths is not important; they will be sorted anyway. */
 class OligoWavelengthGrid : public DisjointWavelengthGrid
 {
 
