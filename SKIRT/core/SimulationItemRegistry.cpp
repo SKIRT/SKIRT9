@@ -50,6 +50,7 @@
 #include "ExtinctionOnlyOptions.hpp"
 #include "ExtragalacticUnits.hpp"
 #include "FileBand.hpp"
+#include "FileDiscreteWavelengthDistribution.hpp"
 #include "FileMesh.hpp"
 #include "FileSED.hpp"
 #include "FileTreeSpatialGrid.hpp"
@@ -73,6 +74,7 @@
 #include "LinMesh.hpp"
 #include "LinWavelengthDistribution.hpp"
 #include "ListBand.hpp"
+#include "ListDiscreteWavelengthDistribution.hpp"
 #include "ListSED.hpp"
 #include "ListWavelengthDistribution.hpp"
 #include "ListWavelengthGrid.hpp"
@@ -247,6 +249,9 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<TabulatedWavelengthDistribution>();
     ItemRegistry::add<FileWavelengthDistribution>();
     ItemRegistry::add<ListWavelengthDistribution>();
+    ItemRegistry::add<DiscreteWavelengthDistribution>();
+    ItemRegistry::add<FileDiscreteWavelengthDistribution>();
+    ItemRegistry::add<ListDiscreteWavelengthDistribution>();
 
     // bands
     ItemRegistry::add<Band>();

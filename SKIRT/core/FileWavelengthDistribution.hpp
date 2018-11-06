@@ -13,8 +13,9 @@
 /** A FileWavelengthDistribution object represents a wavelength probability distribution that is
     loaded from an input file. The floating point numbers in the first two columns of the text file
     specify respectively the wavelength and the corresponding probability value. Any additional
-    columns in the file are ignored. Probability values outside the range indicated by the first
-    and the last wavelength in the file are considered to be zero.
+    columns in the file are ignored. The probability distribution function is defined segment-wise
+    by the tabulated values, using logarithmic interpolation. Probability values outside the range
+    indicated by the first and the last wavelength in the file are considered to be zero.
 
     The wavelengths are by default given in micron (the units can be overridden by column header
     info in the file) and must listed be in increasing order. The probability values are in fact
@@ -24,8 +25,8 @@
     being loaded. However, the input procedure still insists on knowing the precise units. */
 class FileWavelengthDistribution : public TabulatedWavelengthDistribution
 {
-    ITEM_CONCRETE(FileWavelengthDistribution, WavelengthDistribution,
-                  "a wavelength probability distribution loaded from a text file")
+    ITEM_CONCRETE(FileWavelengthDistribution, TabulatedWavelengthDistribution,
+                  "a continuous wavelength probability distribution loaded from a text file")
 
     PROPERTY_STRING(filename, "the name of the file with the wavelength probability distribution")
 

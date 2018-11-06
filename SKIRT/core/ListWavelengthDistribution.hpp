@@ -10,17 +10,19 @@
 
 ////////////////////////////////////////////////////////////////////
 
-/** A ListWavelengthDistribution object represents a wavelength probability distribution that is
-    fully specified inside the configuration file (i.e. without referring to an input file). It is
-    intended for use in cases where there are just a few wavelength/probability pairs, but nothing
-    keeps the user from specifying a long list. The probability outside the range indicated by the
-    first and the last wavelength in the list is considered to be zero.
+/** A ListWavelengthDistribution object represents a continuous wavelength probability distribution
+    that is fully specified inside the configuration file (i.e. without referring to an input file)
+    by tabulated wavelength/probability pairs. The probability distribution function is defined
+    segment-wise by the tabulated values, using logarithmic interpolation. This class is intended
+    for use in cases where there are just a few wavelength/probability pairs, but nothing keeps the
+    user from specifying a long list. The probability outside the range indicated by the first and
+    the last wavelength in the list is considered to be zero.
 
-    The wavelengths are by default given in micron and must listed be in increasing order. The
-    probability values are in fact given in luminosity units. The default is to use per-wavelength
-    units, but the user can opt to use per-frequency or neutral units. Other than this, the scaling
-    of the values is arbitrary because the distribution will be normalized after being loaded.
-    However, the input procedure still insists on knowing the precise units. */
+    The wavelengths must listed be in increasing order. The probability values are in fact given in
+    luminosity units. The default is to use per-wavelength units, but the user can opt to use
+    per-frequency or neutral units. Other than this, the scaling of the values is arbitrary because
+    the distribution will be normalized after being loaded. However, the input procedure still
+    insists on knowing the precise units. */
 class ListWavelengthDistribution : public TabulatedWavelengthDistribution
 {
     /** The enumeration type indicating the specific probability unit style, e.g. whether to use
@@ -31,8 +33,8 @@ class ListWavelengthDistribution : public TabulatedWavelengthDistribution
     ENUM_VAL(UnitStyle, neutralmonluminosity, "neutral: λ p_λ = ν p_ν")
     ENUM_END()
 
-    ITEM_CONCRETE(ListWavelengthDistribution, WavelengthDistribution,
-                  "a wavelength probability distribution specified inside the configuration file")
+    ITEM_CONCRETE(ListWavelengthDistribution, TabulatedWavelengthDistribution,
+                  "a continuous wavelength probability distribution specified inside the configuration file")
 
     PROPERTY_DOUBLE_LIST(wavelengths, "the wavelengths at which to specify the probability")
         ATTRIBUTE_QUANTITY(wavelengths, "wavelength")
@@ -51,7 +53,7 @@ class ListWavelengthDistribution : public TabulatedWavelengthDistribution
     //============= Construction - Setup - Destruction =============
 
 protected:
-    /** This function loads the input file into the specified arrays. */
+    /** This function loads the configured data into the specified arrays. */
     void getWavelengthsAndProbabilities(Array& lambdav, Array& pv) const override;
 };
 
