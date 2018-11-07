@@ -38,6 +38,7 @@
 #include "DefaultMediaDensityCutsProbe.hpp"
 #include "DefaultRadiationFieldCutsProbe.hpp"
 #include "DensityTreePolicy.hpp"
+#include "DiscreteWavelengthDistribution.hpp"
 #include "DustAbsorptionPerCellProbe.hpp"
 #include "DustEmissionOptions.hpp"
 #include "DustEmissivityProbe.hpp"
@@ -50,7 +51,6 @@
 #include "ExtinctionOnlyOptions.hpp"
 #include "ExtragalacticUnits.hpp"
 #include "FileBand.hpp"
-#include "FileDiscreteWavelengthDistribution.hpp"
 #include "FileMesh.hpp"
 #include "FileSED.hpp"
 #include "FileTreeSpatialGrid.hpp"
@@ -74,7 +74,6 @@
 #include "LinMesh.hpp"
 #include "LinWavelengthDistribution.hpp"
 #include "ListBand.hpp"
-#include "ListDiscreteWavelengthDistribution.hpp"
 #include "ListSED.hpp"
 #include "ListWavelengthDistribution.hpp"
 #include "ListWavelengthGrid.hpp"
@@ -250,8 +249,6 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<FileWavelengthDistribution>();
     ItemRegistry::add<ListWavelengthDistribution>();
     ItemRegistry::add<DiscreteWavelengthDistribution>();
-    ItemRegistry::add<FileDiscreteWavelengthDistribution>();
-    ItemRegistry::add<ListDiscreteWavelengthDistribution>();
 
     // bands
     ItemRegistry::add<Band>();

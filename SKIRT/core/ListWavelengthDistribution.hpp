@@ -10,9 +10,9 @@
 
 ////////////////////////////////////////////////////////////////////
 
-/** A ListWavelengthDistribution object represents a continuous wavelength probability distribution
-    that is fully specified inside the configuration file (i.e. without referring to an input file)
-    by tabulated wavelength/probability pairs. The probability distribution function is defined
+/** A ListWavelengthDistribution object represents a wavelength probability distribution that is
+    fully specified inside the configuration file (i.e. without referring to an input file) by
+    tabulated wavelength/probability pairs. The probability distribution function is defined
     segment-wise by the tabulated values, using logarithmic interpolation. This class is intended
     for use in cases where there are just a few wavelength/probability pairs, but nothing keeps the
     user from specifying a long list. The probability outside the range indicated by the first and
@@ -34,7 +34,7 @@ class ListWavelengthDistribution : public TabulatedWavelengthDistribution
     ENUM_END()
 
     ITEM_CONCRETE(ListWavelengthDistribution, TabulatedWavelengthDistribution,
-                  "a continuous wavelength probability distribution specified inside the configuration file")
+                  "a wavelength probability distribution specified inside the configuration file")
 
     PROPERTY_DOUBLE_LIST(wavelengths, "the wavelengths at which to specify the probability")
         ATTRIBUTE_QUANTITY(wavelengths, "wavelength")

@@ -26,7 +26,7 @@
 class FileWavelengthDistribution : public TabulatedWavelengthDistribution
 {
     ITEM_CONCRETE(FileWavelengthDistribution, TabulatedWavelengthDistribution,
-                  "a continuous wavelength probability distribution loaded from a text file")
+                  "a wavelength probability distribution loaded from a text file")
 
     PROPERTY_STRING(filename, "the name of the file with the wavelength probability distribution")
 

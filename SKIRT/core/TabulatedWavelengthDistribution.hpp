@@ -11,19 +11,19 @@
 
 ////////////////////////////////////////////////////////////////////
 
-/** TabulatedWavelengthDistribution is an abstract class for representing continuous wavelength
-    probability distributions that are tabulated by the user in the form of wavelength/probability
-    pairs. The probability distribution function is defined segment-wise by the tabulated values,
-    using logarithmic interpolation. Probability values outside the range indicated by the first
-    and the last tabulated wavelength are considered to be zero. In addition, this range is
-    intersected with wavelength range of the associated source (obtained through the
+/** TabulatedWavelengthDistribution is an abstract class for representing wavelength probability
+    distributions that are tabulated by the user in the form of wavelength/probability pairs. The
+    probability distribution function is defined segment-wise by the tabulated values, using
+    logarithmic interpolation. Probability values outside the range indicated by the first and the
+    last tabulated wavelength are considered to be zero. In addition, this range is intersected
+    with the wavelength range of the associated source (obtained through the
     WavelengthRangeInterface) before the distribution is normalized.
 
     The subclass must load the tabulated data, and this abstract class handles everything else. */
 class TabulatedWavelengthDistribution : public WavelengthDistribution
 {
     ITEM_ABSTRACT(TabulatedWavelengthDistribution, WavelengthDistribution,
-                  "a continuous wavelength probability distribution tabulated by the user")
+                  "a wavelength probability distribution tabulated by the user")
 
     ITEM_END()
 
