@@ -57,7 +57,7 @@ void DustMix::setupSelfAfter()
             int numWavelengths = _radiationFieldWLG->numBins();
             _sigmaabsv.resize(numWavelengths);
             for (int ell=0; ell!=numWavelengths; ++ell)
-                _sigmaabsv[ell] = sectionAbs(_radiationFieldWLG->wavelength(ell));
+                _sigmaabsv[ell] = sectionAbsSelf(_radiationFieldWLG->wavelength(ell));
         }
 
         // energy output side
@@ -73,7 +73,7 @@ void DustMix::setupSelfAfter()
 
             // the absorption cross sections of this material on the above wavelength grid
             Array sigmaabsv(numWavelengths);
-            for (int ell=0; ell!=numWavelengths; ++ell) sigmaabsv[ell] = sectionAbs(lambdav[ell]);
+            for (int ell=0; ell!=numWavelengths; ++ell) sigmaabsv[ell] = sectionAbsSelf(lambdav[ell]);
 
             // the Planck-integrated absorption cross sections on the above temperature grid
             _planckabsv.resize(numTemperatures);
