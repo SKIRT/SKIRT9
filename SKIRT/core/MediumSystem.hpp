@@ -316,20 +316,26 @@ public:
     Array meanIntensity(int m) const;
 
     /** This function returns an indicative dust temperature for the spatial cell with index
-        \f$m\f$. For each material mix of type dust present in the specified cell, or if
-        applicable, for each dust population in these mixes, the function calculates the
-        equilibrium temperature that would be reached when the dust is embedded in the radiation
-        field tracked by the simulation for the cell. This is achieved by solving the energy
-        balance equation under LTE (local thermal equilibrium) assumptions. The resulting
-        temperatures are finally averaged over the dust populations in each mix (weighed by the
-        relative mass in the mix) and over all dust components present in the spatial cell (weighed
-        by relative mass in the cell). If the cell does not contain any dust, the function returns
-        zero.
+        \f$m\f$. For each material mix of type dust present in the specified cell, the function
+        calculates the equilibrium temperature that would be reached when the dust is embedded in
+        the radiation field tracked by the simulation for the cell. This is achieved by solving the
+        energy balance equation under LTE (local thermal equilibrium) assumptions, and using a
+        single representative grain for the complete dust mix. The resulting temperatures are
+        averaged over the dust components present in the spatial cell (weighed by relative mass in
+        the cell). If the cell does not contain any dust, the function returns zero.
+
+        In formula form, for a dust cell \f$m\f$ with dust components \f$h\f$, the indicative dust
+        temperature is defined as \f[{\bar{T}}_m = \frac{\sum_h \rho_{m,h}\,{\bar{T}}_{m,h}}
+        {\sum_h \rho_{m,h}} \f] where \f${\bar{T}}_{m,h}\f$ is the LTE equilibrium temperature for
+        dust component \f$h\f$, obtained through the balance equation \f[ \int_0^\infty
+        \varsigma_{h,\lambda}^{\text{abs}}\, J_{m,\lambda}\, {\text{d}}\lambda = \int_0^\infty
+        \varsigma_{h,\lambda}^{\text{abs}}\, B_\lambda({\bar{T}}_{m,h})\, {\text{d}}\lambda. \f]
 
         Note that the indicative dust temperature does not correspond to a physical temperature.
         The LTE assumption is almost certainly unjustified for a relevant portion of the dust
         grains (depending on the embedding radiation field), and even when ignoring this problem,
-        averaging temperatures over dust populations and dust mixes has no clear-cut physical
+        averaging temperatures over the dust components and over the various grain material types
+        and grain sizes within a particular dust mix has no clear-cut physical justification nor
         interpretation. */
     double indicativeDustTemperature(int m) const;
 

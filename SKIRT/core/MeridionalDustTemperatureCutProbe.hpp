@@ -24,19 +24,12 @@
     temperature.
 
     The indicative dust temperature for a particular sample position is obtained as follows. First
-    the probe determines the cell in the simulation's spatial grid containing the position. For
-    each material mix of type dust present in the cell, or if applicable, for each dust population
-    in these mixes, the probe calculates the equilibrium temperature that would be reached when the
-    dust is embedded in the radiation field tracked by the simulation for the cell. This is
-    achieved by solving the energy balance equation under LTE (local thermal equilibrium)
-    assumptions. The resulting temperatures are finally averaged over the dust populations in each
-    mix (weighed by the relative mass in the mix) and over all dust components present in the
-    spatial cell (weighed by relative mass in the cell).
-
-    Note that the indicative dust temperature does not correspond to a physical temperature. The
-    LTE assumption is almost certainly unjustified for a relevant portion of the dust grains
-    (depending on the embedding radiation field), and even when ignoring this problem, averaging
-    temperatures over dust populations and dust mixes has no clear-cut physical interpretation. */
+    the probe determines the cell in the simulation's spatial grid containing the position. The
+    probe then calculates the indicative dust temperature for that cell by averaging the LTE
+    equilibrium temperatures for the various dust mixes present in the cell. Note that the
+    indicative dust temperature does not really correspond to a physical temperature. For more
+    information about the indicative dust temperature, refer to the
+    MediumSystem::indicativeDustTemperature() function. */
 class MeridionalDustTemperatureCutProbe : public Probe
 {
     ITEM_CONCRETE(MeridionalDustTemperatureCutProbe, Probe, "the indicative dust temperature along a meridian line")
