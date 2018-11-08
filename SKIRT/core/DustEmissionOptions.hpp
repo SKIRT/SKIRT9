@@ -9,6 +9,7 @@
 #include "SimulationItem.hpp"
 #include "DisjointWavelengthGrid.hpp"
 #include "DustEmissivity.hpp"
+#include "SpatialCellLibrary.hpp"
 #include "WavelengthDistribution.hpp"
 #include "WavelengthRangeInterface.hpp"
 
@@ -25,8 +26,10 @@ class DustEmissionOptions : public SimulationItem, public WavelengthRangeInterfa
     PROPERTY_ITEM(dustEmissivity, DustEmissivity, "the dust emissivity calculator")
         ATTRIBUTE_DEFAULT_VALUE(dustEmissivity, "EquilibriumDustEmissivity")
 
-//    PROPERTY_ITEM(cellLibrary, CellLibrary, "the library mechanism for combining spatial cells")
-//        ATTRIBUTE_DEFAULT_VALUE(cellLibrary, "AllCellsLibrary")
+    PROPERTY_ITEM(cellLibrary, SpatialCellLibrary, "the spatial cell grouping scheme for calculating dust emission")
+        ATTRIBUTE_DEFAULT_VALUE(cellLibrary, "AllCellsLibrary")
+        ATTRIBUTE_REQUIRED_IF(cellLibrary, "false")
+        ATTRIBUTE_DISPLAYED_IF(cellLibrary, "Level2")
 
     PROPERTY_ITEM(radiationFieldWLG, DisjointWavelengthGrid, "the wavelength grid for storing the radiation field")
         ATTRIBUTE_DEFAULT_VALUE(radiationFieldWLG, "LogWavelengthGrid")

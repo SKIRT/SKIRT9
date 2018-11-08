@@ -82,13 +82,22 @@ bool SecondarySourceSystem::prepareForlaunch(size_t numPackets)
     double xi = _config->secondarySpatialBias();
     _Wv = (1-xi)*_Lv + xi*wv;
 
-    // determine the first history index for each cell
+    // obtain the mapping from cells to library entries
+    _nv = _config->cellLibrary()->mapping();
+
+    // construct a list of spatial cell indices sorted so that cells belonging to the same entry are consecutive
+    _mv.resize(numCells);
+    for (int m=0; m!=numCells; ++m) _mv[m] = m;
+    std::sort(begin(_mv), end(_mv), [this](int m1, int m2) { return _nv[m1] < _nv[m2]; });
+
+    // determine the first history index for each cell, using the adjusted cell ordering so that
+    // all photon packets for a given library entry are launched consecutively
     _Iv.resize(numCells+1);
     _Iv[0] = 0;
-    for (int m=1; m!=numCells; ++m)
+    for (int p=1; p!=numCells; ++p)
     {
         // limit first index to numPackets to avoid run-over due to rounding errors
-        _Iv[m] = min(numPackets, _Iv[m-1] + static_cast<size_t>(std::round(_Wv[m-1] * numPackets)));
+        _Iv[p] = min(numPackets, _Iv[p-1] + static_cast<size_t>(std::round(_Wv[_mv[p-1]] * numPackets)));
     }
     _Iv[numCells] = numPackets;
 
@@ -108,43 +117,122 @@ namespace
     class DustCellEmission : public BulkVelocityInterface
     {
     private:
-        int _m{-1};                         // spatial cell index
+        // information initialized once, during the first call to calculateIfNeeded()
+        MediumSystem* _ms{nullptr};         // the medium system
+        DisjointWavelengthGrid* _wavelengthGrid{nullptr}; // the radiation field wavelength grid
+        DustEmissivity* _emissivity{nullptr}; // the dust emissivity calculator
+        vector<int> _hv;                    // a list of the media indices for the media containing dust
+        int _numMedia{0};                   // the number of dust media in the system (and thus the size of hv)
+        int _numCells{0};                   // the number of cells in the spatial grid (and thus the size of mv and nv)
+        int _numWavelengths{0};             // the number of wavelengths in the radiation field wavelength grid
+
+        // information on a particular spatial cell, initialized by calculateIfNeeded()
+        int _p{-1};                         // spatial cell launch-order index
+        int _n{-1};                         // library entry index
         Array _lambdav, _pv, _Pv;           // normalized emission spectrum
         Vec _bfv;                           // bulk velocity
 
     public:
         DustCellEmission() { }
 
-        // calculates the emission information for the given cell if it is a different cell of what's already stored
-        void calculateIfNeeded(int m, MediumSystem* ms, Configuration* config)
+        // calculates the emission information for the given cell if it is different from what's already stored
+        //   p:  launch-order cell index (cells mapped to a given library entry have consecutive p indices)
+        //   mv: map from launch-order cell index p to regular cell index m
+        //   nv: map from regular cell index m to library entry index n
+        //   ms: medium system
+        //   config: configuration object
+        void calculateIfNeeded(int p, const vector<int>& mv, const vector<int>& nv,
+                               MediumSystem* ms, Configuration* config)
         {
-            if (m!=_m)
+            // if this photon packet is launched from the same cell as the previous one, we don't need to do anything
+            if (p == _p) return;
+
+            // when called for the first time, construct a list of dust media and cache some other info
+            if (_p == -1)
             {
-                _m=m;
+                _ms = ms;
+                _wavelengthGrid = config->dustEmissionWLG();
+                _emissivity = config->dustEmissivity();
+                for (int h=0; h!=ms->numMedia(); ++h) if (ms->isDust(h)) _hv.push_back(h);
+                _numMedia = _hv.size();
+                _numCells = ms->grid()->numCells();
+                _numWavelengths = _wavelengthGrid->numBins();
+            }
 
-                // get the mean intensities of the radiation field in the cell
-                Array Jv = ms->meanIntensity(m);
+            // remember the new cell index and map to the other indices
+            _p = p;
+            int m = mv[p];
+            int n = nv[m];
 
-                // get the configured emission wavelength grid
-                auto wavelengthGrid = config->dustEmissionWLG();
-                int numWavelengths = wavelengthGrid->numBins();
+            // if this new cell maps to a new library entry, we need to process the library entry
+            if (n != _n)
+            {
+                // remember the new library entry index
+                _n = n;
 
-                // accumulate the emmissivity spectrum for all dust medium components in the cell, weighed by density
-                Array ev(numWavelengths);
-                for (int h=0; h!=ms->numMedia(); ++h) if (ms->isDust(h))
+                // determine the number of cells mapped to this library entry (they are consecutive in p)
+                int pp = p+1;
+                for (; pp!=_numCells; ++pp) if (nv[mv[pp]] != n) break;
+                int numMappedCells = pp - p;
+
+                // if only a single cell is mapped to the library entry, we can simply calculate its emission
+                if (numMappedCells == 1)
                 {
-                    ev += ms->massDensity(m,h) * config->dustEmissivity()->emissivity(ms->mix(m,h), Jv);
+                    calculateSingleSpectrum(_ms->meanIntensity(m), m);
                 }
 
-                // calculate the normalized plain and cumulative distributions
-                NR::cdf<NR::interpolateLogLog>(_lambdav, _pv, _Pv, wavelengthGrid->lambdav(), ev,
-                                               wavelengthGrid->wavelengthRange());
+                // if there is a single dust medium (and assuming that there are no variable dust mixes),
+                // we can use a single emission spectrum for all cells mapped to the library entry, calculated
+                // using an averaged radiation field, because the cells differ only in dust density, which is
+                // irrelevant because the emission spectrum is normalized anyway
+                else if (_numMedia == 1)
+                {
+                    Array Jv = _ms->meanIntensity(m);
+                    for (int i=1; i!=numMappedCells; ++i) Jv += _ms->meanIntensity(mv[p+i]);
+                    Jv /= numMappedCells;
+                    calculateSingleSpectrum(Jv, m);
+                }
 
-                // remember the average bulk velocity
-                _bfv = ms->bulkVelocity(m);
+                // otherwise, we need to calculate and remember the emission spectrum for each medium component
+                // (still using an averaged radiation field) so that we can apply the relative density weights
+                // for each cell later on
+                else
+                {
+                    // TO DO  XXXXXXXXX
+                }
             }
+
+            // if this new cell maps to the same library entry, we can use its cached info
+            else
+            {
+                // if there is a single dust medium we can use the already calculated emission spectrum;
+                // otherwise, we need to apply the relative density weights for this cell to the calculated
+                // emission spectra for each dust medium, and renormalize the resulting spectrum
+                if (_numMedia != 1)
+                {
+                    // TO DO  XXXXXXXXX
+                }
+            }
+
+            // remember the average bulk velocity for this cell
+            _bfv = ms->bulkVelocity(m);
         }
 
+    private:
+        // calculate the emission spectrum for the specified radiation field and the dust mixes of the specified cell,
+        // and store the result in the data members _lambdav, _pv, _Pv
+        void calculateSingleSpectrum(const Array& Jv, int m)
+        {
+            // accumulate the emmissivity spectrum for all dust medium components in the cell, weighed by density
+            Array ev(_numWavelengths);
+            for (int h : _hv) ev += _ms->massDensity(m,h) * _emissivity->emissivity(_ms->mix(m,h), Jv);
+
+            // calculate the normalized plain and cumulative distributions
+            NR::cdf<NR::interpolateLogLog>(_lambdav, _pv, _Pv, _wavelengthGrid->lambdav(), ev,
+                                           _wavelengthGrid->wavelengthRange());
+        }
+
+    public:
         // returns a random wavelength generated from the spectral distribution
         double generateWavelength(Random* random) const
         {
@@ -170,11 +258,11 @@ namespace
 void SecondarySourceSystem::launch(PhotonPacket* pp, size_t historyIndex) const
 {
     // select the spatial cell from which to launch based on the history index of this photon packet
-    auto m = std::upper_bound(_Iv.cbegin(), _Iv.cend(), historyIndex) - _Iv.cbegin() - 1;
-    double L = _Lpp * _Lv[m] / _Wv[m];
+    auto p = std::upper_bound(_Iv.cbegin(), _Iv.cend(), historyIndex) - _Iv.cbegin() - 1;
+    auto m = _mv[p];
 
     // calculate the emission spectrum and bulk velocity for this cell, if not already available
-    t_dustcell.calculateIfNeeded(m, _ms, _config);
+    t_dustcell.calculateIfNeeded(p, _mv, _nv, _ms, _config);
 
     // generate a random wavelength from the emission spectrum for the cell and/or from the bias distribution
     double lambda, w;
@@ -209,6 +297,9 @@ void SecondarySourceSystem::launch(PhotonPacket* pp, size_t historyIndex) const
             }
         }
     }
+
+    // get the weighted luminosity corresponding to this cell
+    double L = _Lpp * _Lv[m] / _Wv[m];
 
     // generate a random position in this spatial cell
     Position bfr = _ms->grid()->randomPositionInCell(m);

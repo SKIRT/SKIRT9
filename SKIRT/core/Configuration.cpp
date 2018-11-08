@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "Configuration.hpp"
+#include "AllCellsLibrary.hpp"
 #include "DustEmissionOptions.hpp"
 #include "DustSelfAbsorptionOptions.hpp"
 #include "ExtinctionOnlyOptions.hpp"
@@ -95,6 +96,8 @@ void Configuration::setupSelfBefore()
         _hasRadiationField = true;
         _hasDustEmission = true;
         _dustEmissivity = ms->dustEmissionOptions()->dustEmissivity();
+        _cellLibrary = ms->dustEmissionOptions()->cellLibrary();
+        if (!_cellLibrary) _cellLibrary = new AllCellsLibrary(this);
         _radiationFieldWLG = ms->dustEmissionOptions()->radiationFieldWLG();
         _dustEmissionWLG = ms->dustEmissionOptions()->dustEmissionWLG();
         _numSecondaryPackets = sim->numPackets() * ms->dustEmissionOptions()->secondaryPacketsMultiplier();
@@ -129,6 +132,7 @@ void Configuration::setupSelfBefore()
 
     // check for variable material mixes
     // TO DO: implement this check once variable material mixes have been actually implemented
+    // TO DO: warn when using cell libraries in combination with variable material mixes
 
     // in case emulation mode has been set before our setup() was called, perform the emulation overrides again
     if (emulationMode()) setEmulationMode();

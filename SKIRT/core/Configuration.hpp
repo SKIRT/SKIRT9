@@ -10,9 +10,10 @@
 #include "Array.hpp"
 #include "Range.hpp"
 class DisjointWavelengthGrid;
+class DustEmissivity;
+class SpatialCellLibrary;
 class WavelengthDistribution;
 class WavelengthGrid;
-class DustEmissivity;
 
 ////////////////////////////////////////////////////////////////////
 
@@ -149,6 +150,10 @@ public:
         spectrum. */
     DustEmissivity* dustEmissivity() const { return _dustEmissivity; }
 
+    /** Returns the dust emissivity calculator to be used for calculating the dust emission
+        spectrum. */
+    SpatialCellLibrary* cellLibrary() const { return _cellLibrary; }
+
     /** Returns the fraction of secondary photon packets distributed uniformly across spatial
         cells. */
     double secondarySpatialBias() const { return _secondarySpatialBias; }
@@ -225,6 +230,7 @@ private:
     bool _hasDustSelfAbsorption{false};
     DisjointWavelengthGrid* _dustEmissionWLG{nullptr};
     DustEmissivity* _dustEmissivity{nullptr};
+    SpatialCellLibrary* _cellLibrary{nullptr};
     double _secondarySpatialBias{0.5};
     double _secondaryWavelengthBias{0.5};
     WavelengthDistribution* _secondaryWavelengthBiasDistribution{nullptr};

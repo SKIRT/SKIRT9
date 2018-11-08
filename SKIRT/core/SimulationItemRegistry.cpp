@@ -13,6 +13,7 @@
 #include "AdaptiveMeshMedium.hpp"
 #include "AdaptiveMeshSource.hpp"
 #include "AdaptiveMeshSpatialGrid.hpp"
+#include "AllCellsLibrary.hpp"
 #include "AllSkyInstrument.hpp"
 #include "BandLuminosityNormalization.hpp"
 #include "BandWavelengthGrid.hpp"
@@ -50,6 +51,7 @@
 #include "ExpDiskGeometry.hpp"
 #include "ExtinctionOnlyOptions.hpp"
 #include "ExtragalacticUnits.hpp"
+#include "FieldStrengthCellLibrary.hpp"
 #include "FileBand.hpp"
 #include "FileMesh.hpp"
 #include "FileSED.hpp"
@@ -393,6 +395,11 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // dust emissivity calculators
     ItemRegistry::add<DustEmissivity>();
     ItemRegistry::add<EquilibriumDustEmissivity>();
+
+    // spatial cell libraries
+    ItemRegistry::add<SpatialCellLibrary>();
+    ItemRegistry::add<AllCellsLibrary>();
+    ItemRegistry::add<FieldStrengthCellLibrary>();
 
     // wavelength grids
     ItemRegistry::add<WavelengthGrid>();
