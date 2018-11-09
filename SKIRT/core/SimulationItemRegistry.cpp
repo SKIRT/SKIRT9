@@ -156,6 +156,7 @@
 #include "StellarUnits.hpp"
 #include "SunSED.hpp"
 #include "SymPowMesh.hpp"
+#include "TemperatureWavelengthCellLibrary.hpp"
 #include "TTauriDiskGeometry.hpp"
 #include "TorusGeometry.hpp"
 #include "TreePolicy.hpp"
@@ -400,6 +401,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<SpatialCellLibrary>();
     ItemRegistry::add<AllCellsLibrary>();
     ItemRegistry::add<FieldStrengthCellLibrary>();
+    ItemRegistry::add<TemperatureWavelengthCellLibrary>();
 
     // wavelength grids
     ItemRegistry::add<WavelengthGrid>();

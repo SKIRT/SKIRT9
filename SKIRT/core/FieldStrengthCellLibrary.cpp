@@ -51,8 +51,8 @@ vector<int> FieldStrengthCellLibrary::mapping(const Array& bv) const
     }
 
     // log the field strength range
-    find<Log>()->info("Radiation field strengths vary from U = " + StringUtils::toString(Umin,'e',4)
-                                                    + " to U = " + StringUtils::toString(Umax,'e',4));
+    find<Log>()->info("  Radiation field strengths vary from U = " + StringUtils::toString(Umin,'e',4)
+                                                      + " to U = " + StringUtils::toString(Umax,'e',4));
 
     // determine for every dust cell m the corresponding library entry n
     double logUmin = log10(Umin);
