@@ -28,7 +28,7 @@ class FieldStrengthCellLibrary : public SpatialCellLibrary
     PROPERTY_INT(numFieldStrengths, "the number of field strength bins")
         ATTRIBUTE_MIN_VALUE(numFieldStrengths, "10")
         ATTRIBUTE_MAX_VALUE(numFieldStrengths, "10000000")
-        ATTRIBUTE_DEFAULT_VALUE(numFieldStrengths, "5000")
+        ATTRIBUTE_DEFAULT_VALUE(numFieldStrengths, "1000")
 
     ITEM_END()
 
@@ -48,7 +48,7 @@ protected:
         \f$U_{\text{min}}\f$ and \f$U_{\text{max}}\f$ represent the smallest and largest values of
         the field strength found among all cells. Then the function determines for each cell
         \f$m\f$ the corresponding library entry \f$n\f$. */
-    vector<int> mapping() const override;
+    vector<int> mapping(const Array& bv) const override;
 };
 
 ////////////////////////////////////////////////////////////////////

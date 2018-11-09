@@ -7,6 +7,7 @@
 #define SPATIALCELLLIBRARY_HPP
 
 #include "SimulationItem.hpp"
+#include "Array.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -44,9 +45,18 @@ public:
     /** This function returns a vector \em nv with length \f$N_\text{cells}\f$ that maps each cell
         index \f$m\f$ to the corresponding library entry index \f$n_m\f$. The indices in the
         returned vector are in the range \f$[-1,N_\text{entries}-1]\f$. An index value of -1
-        indicates that the cell produces a negligible amount of emission (or no emission at all).
+        indicates that the cell is not included in the mapping and should not be used (for example,
+        because the cell will produce a negligible amount of emission or no emission at all).
+
+        The argument array \em bv with length \f$N_\text{cells}\f$ provides a value passed from the
+        caller for each cell in the spatial grid. If the value is zero, the cell will not be used
+        by the caller regardless of the returned mapping index, and thus it can safely be omitted
+        from the mapping (i.e. given an index of -1). If the \em bv value for the cell is nonzero,
+        the caller plans to use the cell, but it will still refrain from doing so if the library
+        decides not to map the cell (i.e. give it an index of -1).
+
         This function must be implemented by each subclass. */
-    virtual vector<int> mapping() const = 0;
+    virtual vector<int> mapping(const Array& bv) const = 0;
 };
 
 ////////////////////////////////////////////////////////////////////

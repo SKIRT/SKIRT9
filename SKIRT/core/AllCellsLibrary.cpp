@@ -23,10 +23,12 @@ int AllCellsLibrary::numEntries() const
 
 ////////////////////////////////////////////////////////////////////
 
-vector<int> AllCellsLibrary::mapping() const
+vector<int> AllCellsLibrary::mapping(const Array& /*bv*/) const
 {
     int numCells = numEntries();
     vector<int> nv(numCells);
     for (int m=0; m!=numCells; ++m) nv[m] = m;
     return nv;
 }
+
+////////////////////////////////////////////////////////////////////

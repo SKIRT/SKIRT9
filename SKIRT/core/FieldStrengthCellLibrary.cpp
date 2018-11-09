@@ -19,7 +19,7 @@ int FieldStrengthCellLibrary::numEntries() const
 
 ////////////////////////////////////////////////////////////////////
 
-vector<int> FieldStrengthCellLibrary::mapping() const
+vector<int> FieldStrengthCellLibrary::mapping(const Array& bv) const
 {
     // get the radiation field wavelength grid and the medium system
     auto wavelengthGrid = find<Configuration>()->radiationFieldWLG();
@@ -35,14 +35,18 @@ vector<int> FieldStrengthCellLibrary::mapping() const
     Array Uv(numCells);
     for (int m=0; m!=numCells; ++m)
     {
-        double U = ( ms->meanIntensity(m) * wavelengthGrid->dlambdav() ).sum() / JtotMW;
-        // ignore cells with extremely small radiation fields (compared to the average in the Milky Way)
-        // to avoid wasting library grid points on fields that won't change simulation results anyway
-        if (U > 1e-6)
+        // ignore cells that won't be used by the caller
+        if (bv[m])
         {
-            Uv[m] = U;
-            Umin = min(Umin,U);
-            Umax = max(Umax,U);
+            double U = ( ms->meanIntensity(m) * wavelengthGrid->dlambdav() ).sum() / JtotMW;
+            // ignore cells with extremely small radiation fields (compared to the average in the Milky Way)
+            // to avoid wasting library grid points on fields that won't change simulation results anyway
+            if (U > 1e-6)
+            {
+                Uv[m] = U;
+                Umin = min(Umin,U);
+                Umax = max(Umax,U);
+            }
         }
     }
 

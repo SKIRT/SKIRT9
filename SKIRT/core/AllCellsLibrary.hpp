@@ -39,7 +39,7 @@ protected:
     /** This function returns a vector \em nv with length \f$N_{\text{cells}}\f$ that maps each
         cell index \f$m\f$ to the corresponding library entry index \f$n_m\f$. In this class the
         function returns the identity mapping. */
-    vector<int> mapping() const override;
+    vector<int> mapping(const Array& bv) const override;
 };
 
 ////////////////////////////////////////////////////////////////////
