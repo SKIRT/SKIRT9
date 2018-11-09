@@ -9,6 +9,7 @@
 #include "DisjointWavelengthGrid.hpp"
 #include "DustEmissivity.hpp"
 #include "FatalError.hpp"
+#include "Log.hpp"
 #include "MediumSystem.hpp"
 #include "NR.hpp"
 #include "Parallel.hpp"
@@ -17,6 +18,7 @@
 #include "ProbePhotonPacketInterface.hpp"
 #include "ProcessManager.hpp"
 #include "Random.hpp"
+#include "StringUtils.hpp"
 #include "WavelengthDistribution.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -50,9 +52,52 @@ void SecondarySourceSystem::installLaunchCallBack(ProbePhotonPacketInterface* ca
 
 bool SecondarySourceSystem::prepareForlaunch(size_t numPackets)
 {
+    int numCells = _ms->numCells();
+
+    // --------- library mapping ---------
+
+    // obtain the spatial cell library mapping (from cell indices to library entry indices)
+    _nv = _config->cellLibrary()->mapping();
+
+    _mv.resize(numCells);
+    for (int m=0; m!=numCells; ++m) _mv[m] = m;
+    std::sort(begin(_mv), end(_mv), [this](int m1, int m2) { return _nv[m1] < _nv[m2]; });
+
+    // log usage statistics on library entries
+    {
+        int numEntries = _config->cellLibrary()->numEntries();
+        vector<int> mapped(numEntries); // number of cells mapped to each library entry
+        for (int m=0; m!=numCells; ++m) if (_nv[m] >= 0) mapped[_nv[m]]++;
+
+        int usedEntries = 0;            // number of library entries that have at least one mapped cell
+        int maxMappedCells = 0;         // largest number of cells mapped to a library entry
+        int totMappedCells = 0;         // total number of cells mapped to a library entry
+        for (int n=0; n!=numEntries; ++n)
+        {
+            if (mapped[n] > 0)
+            {
+                usedEntries++;
+                maxMappedCells = max(mapped[n], maxMappedCells);
+                totMappedCells += mapped[n];
+            }
+        }
+
+        auto log = find<Log>();
+        log->info("Emitting from " + std::to_string(numCells) + " spatial cells");
+        if (numEntries != numCells || numEntries != usedEntries || maxMappedCells!=1)
+        {
+            log->info("  Using " + std::to_string(usedEntries) +
+                      " out of " + std::to_string(numEntries) + " library entries");
+            log->info("  Largest number of cells per library entry: " + std::to_string(maxMappedCells));
+            log->info("  Average number of cells per (used) library entry: "
+                        + StringUtils::toString(static_cast<double>(totMappedCells) / usedEntries,'f',1));
+       }
+    }
+
+    // --------- luminosities ---------
+
     // calculate the absorbed (and thus to be emitted) dust luminosity for each spatial cell
     // this can be somewhat time-consuming, so we do this in parallel
-    int numCells = _ms->numCells();
     _Lv.resize(numCells);
     find<ParallelFactory>()->parallelDistributed()->call(numCells, [this](size_t firstIndex, size_t numIndices)
     {
@@ -62,6 +107,10 @@ bool SecondarySourceSystem::prepareForlaunch(size_t numPackets)
         }
     });
     ProcessManager::sumToAll(_Lv);
+
+    // force cells that have negligable emission according to the library mapping to zero luminosity
+    // so that we won't launch photon packets for these cells
+    for (int m=0; m!=numCells; ++m) if (_nv[m] < 0) _Lv[m] = 0.;
 
     // calculate the total luminosity; if it is zero, report failure
     _L = _Lv.sum();
@@ -73,7 +122,9 @@ bool SecondarySourceSystem::prepareForlaunch(size_t numPackets)
     // normalize the individual luminosities to unity
     _Lv /= _L;
 
-    // determine a uniform weight for each cell, skipping zero-luminosity cells, and normalize to unity
+    // --------- weights ---------
+
+    // determine a uniform weight for each cell with non-negligable emission, and normalize to unity
     Array wv(numCells);
     for (int m=0; m!=numCells; ++m) wv[m] = _Lv[m] > 0 ? 1. : 0.;
     wv /= wv.sum();
@@ -81,14 +132,6 @@ bool SecondarySourceSystem::prepareForlaunch(size_t numPackets)
     // calculate the final, composite-biased launch weight for each cell, normalized to unity
     double xi = _config->secondarySpatialBias();
     _Wv = (1-xi)*_Lv + xi*wv;
-
-    // obtain the mapping from cells to library entries
-    _nv = _config->cellLibrary()->mapping();
-
-    // construct a list of spatial cell indices sorted so that cells belonging to the same entry are consecutive
-    _mv.resize(numCells);
-    for (int m=0; m!=numCells; ++m) _mv[m] = m;
-    std::sort(begin(_mv), end(_mv), [this](int m1, int m2) { return _nv[m1] < _nv[m2]; });
 
     // determine the first history index for each cell, using the adjusted cell ordering so that
     // all photon packets for a given library entry are launched consecutively

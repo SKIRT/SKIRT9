@@ -44,8 +44,8 @@ public:
     /** This function returns a vector \em nv with length \f$N_\text{cells}\f$ that maps each cell
         index \f$m\f$ to the corresponding library entry index \f$n_m\f$. The indices in the
         returned vector are in the range \f$[-1,N_\text{entries}-1]\f$. An index value of -1
-        indicates that the cell produces no emission. This function must be implemented by each
-        subclass. */
+        indicates that the cell produces a negligible amount of emission (or no emission at all).
+        This function must be implemented by each subclass. */
     virtual vector<int> mapping() const = 0;
 };
 
