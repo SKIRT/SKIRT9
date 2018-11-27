@@ -73,7 +73,7 @@ double SourceSystem::luminosity() const
 
 //////////////////////////////////////////////////////////////////////
 
-void SourceSystem::prepareForlaunch(size_t numPackets)
+void SourceSystem::prepareForLaunch(size_t numPackets)
 {
     if (!_L ) throw FATALERROR("Cannot launch primary source photon packets when total luminosity is zero");
 

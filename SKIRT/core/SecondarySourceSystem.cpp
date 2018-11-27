@@ -50,7 +50,7 @@ void SecondarySourceSystem::installLaunchCallBack(ProbePhotonPacketInterface* ca
 
 ////////////////////////////////////////////////////////////////////
 
-bool SecondarySourceSystem::prepareForlaunch(size_t numPackets)
+bool SecondarySourceSystem::prepareForLaunch(size_t numPackets)
 {
     int numCells = _ms->numCells();
 
@@ -185,6 +185,7 @@ namespace
         // information on a particular spatial cell, initialized by calculateIfNeeded()
         int _p{-1};                         // spatial cell launch-order index
         int _n{-1};                         // library entry index
+        vector<Array> _evv;                 // emissivity spectrum for each medium component, if applicable
         Array _lambdav, _pv, _Pv;           // normalized emission spectrum
         Vec _bfv;                           // bulk velocity
 
@@ -213,6 +214,7 @@ namespace
                 _numMedia = _hv.size();
                 _numCells = ms->grid()->numCells();
                 _numWavelengths = _wavelengthGrid->numBins();
+                _evv.resize(_numMedia);
             }
 
             // remember the new cell index and map to the other indices
@@ -231,30 +233,35 @@ namespace
                 for (; pp!=_numCells; ++pp) if (nv[mv[pp]] != n) break;
                 int numMappedCells = pp - p;
 
-                // if only a single cell is mapped to the library entry, we can simply calculate its emission
+                // if only a single cell maps to the library entry, we can simply calculate its emission
                 if (numMappedCells == 1)
                 {
                     calculateSingleSpectrum(_ms->meanIntensity(m), m);
                 }
 
-                // if there is a single dust medium (and assuming that there are no variable dust mixes),
-                // we can use a single emission spectrum for all cells mapped to the library entry, calculated
-                // using an averaged radiation field, because the cells differ only in dust density, which is
-                // irrelevant because the emission spectrum is normalized anyway
-                else if (_numMedia == 1)
+                // if multiple cells map to the library entry, we use the average radiation field for these cells
+                else
                 {
                     Array Jv = _ms->meanIntensity(m);
                     for (int i=1; i!=numMappedCells; ++i) Jv += _ms->meanIntensity(mv[p+i]);
                     Jv /= numMappedCells;
-                    calculateSingleSpectrum(Jv, m);
-                }
 
-                // otherwise, we need to calculate and remember the emission spectrum for each medium component
-                // (still using an averaged radiation field) so that we can apply the relative density weights
-                // for each cell later on
-                else
-                {
-                    // TO DO  XXXXXXXXX
+                    // if there is a single dust medium (and assuming that there are no variable dust mixes),
+                    // we can use a single emission spectrum for all cells mapped to the library entry, calculated
+                    // using the average radiation field, because the cells differ only in dust density, which is
+                    // irrelevant because the emission spectrum is normalized anyway
+                    if (_numMedia == 1)
+                    {
+                        calculateSingleSpectrum(Jv, m);
+                    }
+
+                    // otherwise, we need to calculate and remember the emission spectrum for each medium component
+                    // (still using the average radiation field and assuming that there are no variable dust mixes)
+                    // so that we can apply the relative density weights for each cell later on
+                    else
+                    {
+                        calculateEmissivityPerMedium(Jv, m);
+                    }
                 }
             }
 
@@ -266,7 +273,7 @@ namespace
                 // emission spectra for each dust medium, and renormalize the resulting spectrum
                 if (_numMedia != 1)
                 {
-                    // TO DO  XXXXXXXXX
+                    calculateWeightedSpectrum(m);
                 }
             }
 
@@ -279,9 +286,30 @@ namespace
         // and store the result in the data members _lambdav, _pv, _Pv
         void calculateSingleSpectrum(const Array& Jv, int m)
         {
-            // accumulate the emmissivity spectrum for all dust medium components in the cell, weighed by density
+            // accumulate the emmissivity spectrum for all dust medium components in the cell, weighted by density
             Array ev(_numWavelengths);
             for (int h : _hv) ev += _ms->massDensity(m,h) * _emissivity->emissivity(_ms->mix(m,h), Jv);
+
+            // calculate the normalized plain and cumulative distributions
+            NR::cdf<NR::interpolateLogLog>(_lambdav, _pv, _Pv, _wavelengthGrid->lambdav(), ev,
+                                           _wavelengthGrid->wavelengthRange());
+        }
+
+        // calculate the emmissivity spectra for the specified radiation field and the dust mixes of the specified cell,
+        // and store the individual spectra in the data members _evv
+        void calculateEmissivityPerMedium(const Array& Jv, int m)
+        {
+            for (int h : _hv) _evv[h] = _emissivity->emissivity(_ms->mix(m,h), Jv);
+        }
+
+        // calculate the emission spectrum for the specified cell, weighted across multiple media by density,
+        // given the precalculated emissivity spectra _evv for each medium,
+        // and store the result in the data members _lambdav, _pv, _Pv
+        void calculateWeightedSpectrum(int m)
+        {
+            // accumulate the emmissivity spectrum for all dust medium components in the cell, weighed by density
+            Array ev(_numWavelengths);
+            for (int h : _hv) ev += _ms->massDensity(m,h) * _evv[h];
 
             // calculate the normalized plain and cumulative distributions
             NR::cdf<NR::interpolateLogLog>(_lambdav, _pv, _Pv, _wavelengthGrid->lambdav(), ev,

@@ -145,7 +145,7 @@ void MonteCarloSimulation::runPrimaryEmission()
     else
     {
         initProgress(segment, Npp);
-        sourceSystem()->prepareForlaunch(Npp);
+        sourceSystem()->prepareForLaunch(Npp);
         auto parallel = find<ParallelFactory>()->parallelDistributed();
         parallel->call(Npp, [this](size_t i ,size_t n)
                             { performLifeCycle(i, n, true, true, _config->hasRadiationField()); });
@@ -195,7 +195,7 @@ void MonteCarloSimulation::runDustSelfAbsorptionPhase()
             mediumSystem()->clearRadiationField(false);
 
             // prepare the source system; terminate if the dust has zero luminosity (which should never happen)
-            if (!_secondarySourceSystem->prepareForlaunch(Npp))
+            if (!_secondarySourceSystem->prepareForLaunch(Npp))
             {
                 log()->warning("Terminating dust self-absorption phase because the total dust luminosity is zero");
                 return;
@@ -284,7 +284,7 @@ void MonteCarloSimulation::runSecondaryEmission()
     {
         log()->warning("Skipping secondary emission because no photon packets were requested");
     }
-    else if (!_secondarySourceSystem->prepareForlaunch(Npp))
+    else if (!_secondarySourceSystem->prepareForLaunch(Npp))
     {
         log()->warning("Skipping secondary emission because the total luminosity of secondary sources is zero");
     }

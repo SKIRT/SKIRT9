@@ -33,6 +33,16 @@ class Random;
     configuration, which actually holds the media representing the secondary sources, in addition
     to the radiation field obtained by tracing photon packets through these media.
 
+    The functions in this class other than those for constructing and setting up assume that a set
+    of photon packets have already been launched for a prior simulation segment, and that radiation
+    field information has been accumulated during the life cycles of these packets by calling the
+    MediumSystem::storeRadiationField() function. Furthermore, the
+    MediumSystem::communicateRadiationField() function must have been called. If this is not the
+    case, the behavior of the functions in this class is undefined.
+
+    Distributing photon packets
+    ---------------------------
+
     One key task of the SecondarySourceSystem object is to distribute photon packet launches across
     the spatial grid used to discretize the media in the simulation. In principle, this
     should/could be achieved by randomly selecting a spatial cell for each launch through sampling
@@ -70,12 +80,48 @@ class Random;
     luminosity of cell \f$m\f$, \f$M\f$ is the total number of spatial cells, and \f$\xi\f$ is the
     \em emissionBias property value of the emission simulation mode.
 
-    The functions in this class other than those for constructing and setting up assume that a set
-    of photon packets have been launched for a particular simulation segment, and that radiation
-    field information has been accumulated during their life cycles by calling the
-    storeRadiationField() function. Furthermore, the communicateRadiationField() function must have
-    been called. If this is not the case, the behavior of the functions in this class is undefined.
-    */
+    Spatial cell libraries
+    ----------------------
+
+    To accelerate processing in cases where the calculation of the secondary emission spectra is
+    overly resource intensive, the SecondarySourceSystem class optionally supports a library
+    mechanism as described by Baes et al. (2011, ApJS, 196, 22). If so configured by the user,
+    instead of calculating the emission spectrum individually for every spatial cell in the system,
+    a library is constructed and template spectra from this library are used. Obviously, the
+    templates in the library should be chosen/constructed in such a way that they can reasonably
+    approximate the whole range of actual secondary emission spectra encountered in the simulation.
+    Different subclasses of the SpatialCellLibrary class achieve this goal to different degrees of
+    sophistication. Specifically, a SpatialCellLibrary subclass calculates a mapping from each
+    spatial cell \f$m\f$ to the corresponding library entry \f$n\f$ using a particular heuristic,
+    given the current state of the simulation (i.e. the stored radiation field and/or media state).
+
+    \em Important \em note: The calculation of the template spectrum for each library entry assumes
+    that all cells mapped to the entry have the same material mix (for each medium component). As a
+    result, employing a library scheme other than the AllCellsLibrary (which implements the
+    identity mapping and hence essentially no library) does not make much sense in simulations with
+    spatially varying material mixes.
+
+    Supporting the library mechanism complicates the procedure describe above for distributing
+    photon packets. After obtaining the mapping from spatial cells to library entries, the
+    prepareForLaunch() function sorts the cells so that all cells mapped to the same library entry
+    are consecutive. This allows the launch() function, in turn, to calculate and cache information
+    relevant for each library entry and reuse that information for subsequent cells as long as they
+    map to the same library entry.
+
+    The launch() function allocates a private DustCellEmission object for each execution thread.
+    When presented with a new library entry, this object first determines the average radiation
+    field for all spatial cells mapped to the entry. Then, it calls on the DustEmissivity object
+    held by the media system to actually calculate the emissivities corresponding to the library
+    entry. If the medium system contains multiple dust components \f$h\f$, each with its own
+    material mix, the emissivity \f$\varepsilon_{n,h,\ell}\f$ is calculated for each medium
+    component \f$h\f$ seperately, and the results are combined into the complete emission spectrum
+    for a spatial cell \f$m\f$ through \f[ j_{m,\ell} = \sum_{h=0}^{N_{\text{comp}}-1} \rho_{m,h}
+    \, \varepsilon_{n,h,\ell} \f] where \f$\ell\f$ is the wavelength index. Finally, this spectrum
+    is normalized to unity. Since the densities \f$\rho_{m,h}\f$ differ for each spatial cell, the
+    result must be calculated and stored for each cell separately. If the medium system has only a
+    single dust component, the above formula reduces to \f$j_{m,\ell} =\rho_m\,
+    \varepsilon_{n,\ell}\f$, so that the normalized emission spectrum is identical for all spatial
+    cells that map to a certain library entry. */
 class SecondarySourceSystem : public SimulationItem
 {
     //============= Construction - Setup - Destruction =============
@@ -106,7 +152,7 @@ public:
         the class header for more information. The function returns false if the total bolometric
         luminosity of the secondary sources is zero (which means no photon packets can be
         launched), and true otherwise. */
-    bool prepareForlaunch(size_t numPackets);
+    bool prepareForLaunch(size_t numPackets);
 
     /** This function causes the photon packet \em pp to be launched from one of the cells in the
         spatial grid using the given history index; see the description in the class header for

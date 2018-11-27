@@ -16,10 +16,11 @@
     The library contains a one-dimensional set of entries corresponding to different strengths of
     the stored radiation field, parameterized by the quantity \f[ U = \frac{ \int_0^\infty
     J_\lambda\, {\text{d}}\lambda }{ \int_0^\infty J_\lambda^{\text{MW}}\, {\text{d}}\lambda }, \f]
-    where \f$J_\lambda^{\text{MW}}\f$ is the interstellar radiation field in the Milky Way. The
-    mapping from spatial cells to library entries is built dynamically from binning the
-    \f$N_{\text{cells}}\f$ values of \f$U\f$ as calculated from the medium system onto a
-    one-dimensional grid with a user-configurable number of field strength bins bins. */
+    where \f$J_\lambda^{\text{MW}}\f$ is the the local interstellar radiation field in the Milky
+    Way according to Mathis et al. (1983). The mapping from spatial cells to library entries is
+    built dynamically from binning the \f$N_{\text{cells}}\f$ values of \f$U\f$ as calculated from
+    the medium system onto a one-dimensional grid with a user-configurable number of field strength
+    bins. */
 class FieldStrengthCellLibrary : public SpatialCellLibrary
 {
     ITEM_CONCRETE(FieldStrengthCellLibrary, SpatialCellLibrary,

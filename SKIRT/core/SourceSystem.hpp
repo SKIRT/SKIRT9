@@ -126,7 +126,7 @@ public:
 
     /** This function prepares the mapping of history indices to sources; see the description in
         the class header for more information. */
-    void prepareForlaunch(size_t numPackets);
+    void prepareForLaunch(size_t numPackets);
 
     /** This function causes the photon packet \em pp to be launched from one of the sources in the
         source system using the given history index. The photon packet's contents is fully

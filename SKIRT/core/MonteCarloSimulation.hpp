@@ -19,13 +19,20 @@ class SecondarySourceSystem;
 
 /** The MonteCarloSimulation class is the top-level class describing a SKIRT simulation. Running a
     Monte Carlo simulation with SKIRT essentially comes down to constructing an instance of the
-    MonteCarloSimulation class and invoking the setupAndRun() function on it.
+    MonteCarloSimulation class and invoking the setupAndRun() function on it. The
+    MonteCarloSimulation class holds the source, media, instrument and probe systems, implements
+    the core aspects of the photon packet life-cycle, and manages the iterative processes in the
+    simulation (including phases, iterations and segments).
 
-    The MonteCarloSimulation class holds the source, media, instrument and probe systems,
-    implements the core aspects of the photon packet life-cycle, and manages the iterative
-    processes in the simulation (including phases, iterations and segments).
-
-    TO DO: more documentation ...
+    The user-configurable \em SimulationMode enumeration sets the overall simulation mode. It
+    determines the simulation's wavelength regime (oligochromatic or panchromatic) and the required
+    simulation segments (e.g., extinction only or including secondary emission). The
+    runSimulation() function performs all segments of the simulation, calling the
+    runPrimaryEmission(), runDustSelfAbsorptionPhase(), and runSecondaryEmission() functions as
+    required. These functions in turn invoke the performLifeCycle() function to trace photon
+    packets through their complete life cycle, including emission, multiple forced scattering
+    events, peel-off towards the instruments, and registration of the contribution to the radiation
+    field in each spatial cell crossed.
 
     The MonteCarloSimulation class also holds the non-discoverable \em config property, which is
     automatically set to an instance of the Configuration class. The setup() function of the config
@@ -235,21 +242,6 @@ private:
         sent towards the instruments. The \em store flag indicates whether the contribution to the
         radiation field should be stored. */
     void performLifeCycle(size_t firstIndex, size_t numIndices, bool primary, bool peel, bool store);
-
-    /** This function launches the specified chunk of photon packets from primary sources. It
-        implements the complete photon packet life-cycle, including emission and multiple forced
-        scattering events, as well as the corresponding peel-off photon packets towards the
-        instruments. If required for the configuration of the simulation, the function also
-        registers the contribution of the photon packet to the radiation field in each spatial
-        cell crossed by its path. */
-    void doPrimaryEmissionChunk(size_t firstIndex, size_t numIndices);
-
-    /** This function launches the specified chunk of photon packets from secondary sources. It
-        implements the complete photon packet life-cycle, including emission and multiple forced
-        scattering events, as well as the corresponding peel-off photon packets towards the
-        instruments. Because this function operates in the final simulation segment, it makes no
-        changes to the stored radiation field. */
-    void doSecondaryEmissionChunk(size_t firstIndex, size_t numIndices);
 
     /** This function implements the peel-off of a photon packet after an emission event. This
         means that we create a peel-off photon packet for every instrument in the instrument
