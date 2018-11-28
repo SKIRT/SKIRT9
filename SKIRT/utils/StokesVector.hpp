@@ -10,7 +10,7 @@
 
 //////////////////////////////////////////////////////////////////////
 
-/** An object of the StokesVector class describes the polarization state of a photon (package), and
+/** An object of the StokesVector class describes the polarization state of a photon packet, and
     offers functions to apply certain transformations to it. Specifically, a Stokes vector contains
     the four Stokes parameters \f$I\f$, \f$Q\f$, \f$U\f$, and \f$V\f$ that are defined with respect
     to a reference direction. For efficiency reasons we store the normal to the propagation

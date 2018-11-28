@@ -121,7 +121,7 @@ Position TreeSpatialGrid::randomPositionInCell(int m) const
 
 void TreeSpatialGrid::path(SpatialGridPath* path) const
 {
-    // if the photon package starts outside the dust grid, move it into the first grid cell that it will pass
+    // if the photon packet starts outside the dust grid, move it into the first grid cell that it will pass
     Position bfr = path->moveInside(extent(), _eps);
 
     // get the node containing the current location;
@@ -179,7 +179,7 @@ void TreeSpatialGrid::path(SpatialGridPath* path) const
         if (node==oldnode)
         {
             // try to escape by advancing the position to the next representable coordinates
-            find<Log>()->warning("Photon package seems stuck in spatial cell "
+            find<Log>()->warning("Photon packet seems stuck in spatial cell "
                                  + std::to_string(node->id()) + " -- escaping");
             x = std::nextafter(x, (kx<0.0) ? -DBL_MAX : DBL_MAX);
             y = std::nextafter(y, (ky<0.0) ? -DBL_MAX : DBL_MAX);
@@ -189,7 +189,7 @@ void TreeSpatialGrid::path(SpatialGridPath* path) const
             // if that didn't work, terminate the path
             if (node==oldnode)
             {
-                find<Log>()->warning("Photon package is stuck in spatial cell "
+                find<Log>()->warning("Photon packet is stuck in spatial cell "
                                      + std::to_string(node->id()) + " -- terminating this path");
                 break;
             }

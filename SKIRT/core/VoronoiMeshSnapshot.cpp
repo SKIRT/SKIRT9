@@ -859,7 +859,7 @@ void VoronoiMeshSnapshot::path(SpatialGridPath* path) const
     // Initialize the path
     Direction bfk = path->direction();
 
-    // If the photon package starts outside the dust grid, move it into the first grid cell that it will pass
+    // If the photon packet starts outside the dust grid, move it into the first grid cell that it will pass
     Position r = path->moveInside(_extent, _eps);
 
     // Get the index of the cell containing the current position;

@@ -90,22 +90,22 @@ protected:
     //======================== Other Functions =======================
 
 public:
-    /** Returns the direction towards the observer from the given photon package launching
+    /** Returns the direction towards the observer from the given photon packet launching
         position, expressed in model coordinates. */
     Direction bfkobs(const Position& bfr) const override;
 
     /** Returns the direction along the positive x-axis in a plane normal to the vector towards the
-        observer from the given photon package launching position, expressed in model coordinates.
+        observer from the given photon packet launching position, expressed in model coordinates.
         */
     Direction bfkx(const Position& bfr) const override;
 
     /** Returns the direction along the positive y-axis in a plane normal to the vector towards the
-        observer from the given photon package launching position, expressed in model coordinates.
+        observer from the given photon packet launching position, expressed in model coordinates.
         */
     Direction bfky(const Position& bfr) const override;
 
 protected:
-    /** This function simulates the detection of a photon package by the instrument. */
+    /** This function simulates the detection of a photon packet by the instrument. */
     void detect(PhotonPacket* pp) override;
 
     //======================== Data Members ========================

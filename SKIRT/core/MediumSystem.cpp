@@ -366,7 +366,7 @@ double MediumSystem::opticalDepth(PhotonPacket* pp, double distance)
     // determine the geometric details of the path
     _grid->path(pp);
 
-    // calculate the cumulative optical depth and store the corresponding extinction factors in the photon package;
+    // calculate the cumulative optical depth and store the corresponding extinction factors in the photon packet;
     // because this function is the heart of the photon life cycle, we implement optimized versions for special cases
     double tau = 0.;
 

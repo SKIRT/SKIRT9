@@ -403,7 +403,7 @@ private:
         rotates the Stokes vector from the reference direction in the previous scattering plane
         into the peel-off scattering plane, applies the Mueller matrix on the Stokes vector, and
         further rotates the Stokes vector from the reference direction in the peel-off scattering
-        plane to the x-axis of the instrument to which the peel-off photon package is headed. If
+        plane to the x-axis of the instrument to which the peel-off photon packet is headed. If
         there are multiple medium components (all supporting polarization), the weight factors
         described above are used not just for the luminosity but also for the components of the
         Stokes vector.

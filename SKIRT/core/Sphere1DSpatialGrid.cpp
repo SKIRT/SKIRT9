@@ -91,7 +91,7 @@ void Sphere1DSpatialGrid::path(SpatialGridPath* path) const
     path->direction().cartesian(kx,ky,kz);
     double rmax = maxRadius();
 
-    // Move the photon package to the first grid cell that it will pass.
+    // Move the photon packet to the first grid cell that it will pass.
     // If it does not pass any grid cell, return an empty path.
 
     double r = path->position().radius();

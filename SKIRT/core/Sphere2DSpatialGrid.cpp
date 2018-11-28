@@ -209,7 +209,7 @@ void Sphere2DSpatialGrid::path(SpatialGridPath* path) const
     Position bfr = path->position();
     Direction bfk = path->direction();
 
-    // Move the photon package to the first grid cell that it will pass.
+    // Move the photon packet to the first grid cell that it will pass.
     // If it does not pass any grid cell, return an empty path.
     // Otherwise calculate the distance covered and add a segment to the path.
     double r2 = bfr.norm2();

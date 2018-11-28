@@ -318,7 +318,7 @@ void MonteCarloSimulation::initProgress(string segment, size_t numTotal)
     _segment = segment;
 
     log()->info("Launching " + StringUtils::toString(static_cast<double>(numTotal))
-                + " " + _segment + " photon packages");
+                + " " + _segment + " photon packets");
     log()->infoSetElapsed(numTotal);
 }
 
@@ -327,7 +327,7 @@ void MonteCarloSimulation::initProgress(string segment, size_t numTotal)
 void MonteCarloSimulation::logProgress(size_t numDone)
 {
     // log message if the minimum time has elapsed
-    log()->infoIfElapsed("Launched " + _segment + " photon packages: ", numDone);
+    log()->infoIfElapsed("Launched " + _segment + " photon packets: ", numDone);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -500,7 +500,7 @@ namespace
 {
     // This helper function returns the angle phi between the previous and current scattering planes
     // given the normal to the previous scattering plane and the current and new propagation directions
-    // of the photon package. The function returns a zero angle if the light is unpolarized or when the
+    // of the photon packet. The function returns a zero angle if the light is unpolarized or when the
     // current scattering event is completely forward or backward.
     double angleBetweenScatteringPlanes(Direction np, Direction kc, Direction kn)
     {

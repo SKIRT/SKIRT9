@@ -110,7 +110,7 @@ void Cylinder2DSpatialGrid::path(SpatialGridPath* path) const
     double zmin = minZ();
     double zmax = maxZ();
 
-    // Move the photon package to the first grid cell that it will pass.
+    // Move the photon packet to the first grid cell that it will pass.
     // If it does not pass any grid cell, return an empty path.
     // Otherwise calculate the distance covered and add a segment to the path.
 
