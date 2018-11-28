@@ -51,6 +51,9 @@ protected:
         error. */
     void setupSelfBefore() override;
 
+    /** This function logs some aspects of the configuration as information to the user. */
+    void setupSelfAfter() override;
+
     //======== Setters that override the user configuration =======
 
 public:
@@ -181,6 +184,16 @@ public:
         this fraction compared to the previous iteration. */
     double maxFractionOfPrevious() const { return _maxFractionOfPrevious; }
 
+    /** Returns the symmetry dimension of the input model, including sources and media, if present.
+        A value of 1 means spherical symmetry, 2 means axial symmetry and 3 means none of these
+        symmetries. */
+    int modelDimension() const { return _modelDimension; }
+
+    /** Returns the symmetry dimension of the spatial grid, if present, or 0 if there is no spatial
+        grid (which can only happen if the simulation does not include any media). A value of 1
+        means spherical symmetry, 2 means axial symmetry and 3 means none of these symmetries. */
+    int gridDimension() const { return _gridDimension; }
+
     /** Returns true if all media in the simulation support polarization, and false if none of the
         media do. A mixture of support and no support for polarization is not allowed and will
         cause a fatal error during setup. */
@@ -240,6 +253,8 @@ private:
     double _maxFractionOfPrevious{0.03};
 
     // properties derived from the configuration at large
+    int _modelDimension{0};
+    int _gridDimension{0};
     bool _hasPolarization{false};
     bool _hasMovingMedia{false};
     bool _hasVariableMedia{false};

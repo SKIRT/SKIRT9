@@ -52,40 +52,6 @@ void MonteCarloSimulation::setupSelfBefore()
 
 ////////////////////////////////////////////////////////////////////
 
-void MonteCarloSimulation::setupSelfAfter()
-{
-    Simulation::setupSelfAfter();
-
-    // if there are no media, simply log the source model symmetry
-    if (!_config->hasMedium())
-    {
-        log()->info("Model symmetry is " + std::to_string(sourceSystem()->dimension()) + "D");
-    }
-
-    // if there are media, compare the model symmetry to the grid symmetry
-    else
-    {
-        int modelDimension = max(sourceSystem()->dimension(), mediumSystem()->dimension());
-        int gridDimension = mediumSystem()->gridDimension();
-
-        if (modelDimension == gridDimension)
-        {
-            log()->info("Model and grid symmetry: " + std::to_string(modelDimension) + "D");
-        }
-        else
-        {
-            log()->info("Model symmetry: " + std::to_string(modelDimension) + "D; "
-                        "Spatial grid symmetry: " + std::to_string(gridDimension) + "D");
-             if (modelDimension > gridDimension)
-                 throw FATALERROR("This grid symmetry does not support the model symmetry");
-             else
-                 log()->warning("Selecting a grid with the model symmetry might be more efficient");
-        }
-    }
-}
-
-////////////////////////////////////////////////////////////////////
-
 Configuration* MonteCarloSimulation::config() const
 {
     return _config;

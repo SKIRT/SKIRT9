@@ -144,10 +144,6 @@ protected:
         secondary emission. */
     void setupSelfBefore() override;
 
-    /** This function performs final setup for the MonteCarloSimulation object; it logs the
-        dimension of the simulation. */
-    void setupSelfAfter() override;
-
     //======== Getters for Non-Discoverable Properties =======
 
 public:
