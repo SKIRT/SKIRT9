@@ -214,7 +214,7 @@ namespace
                 _numMedia = _hv.size();
                 _numCells = ms->grid()->numCells();
                 _numWavelengths = _wavelengthGrid->numBins();
-                _evv.resize(_numMedia);
+                _evv.resize(ms->numMedia());
             }
 
             // remember the new cell index and map to the other indices
@@ -261,6 +261,7 @@ namespace
                     else
                     {
                         calculateEmissivityPerMedium(Jv, m);
+                        calculateWeightedSpectrum(m);
                     }
                 }
             }
