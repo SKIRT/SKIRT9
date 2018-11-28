@@ -80,10 +80,13 @@ void SourceSystem::prepareForLaunch(size_t numPackets)
     // determine the first history index for each source
     int Ns = _sources.size();
     _Iv[0] = 0;
+    double W = 0.;
     for (int h=1; h!=Ns; ++h)
     {
-        // limit first index to numPackets to avoid run-over due to rounding errors
-        _Iv[h] = min(numPackets, _Iv[h-1] + static_cast<size_t>(std::round(_Wv[h-1] * numPackets)));
+        // track the cumulative normalized weight as a floating point number
+        // and limit the index to numPackets to avoid issues with rounding errors
+        W += _Wv[h-1];
+        _Iv[h] = min(numPackets, static_cast<size_t>(std::round(W * numPackets)));
     }
     _Iv[Ns] = numPackets;
 

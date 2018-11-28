@@ -144,10 +144,13 @@ void ImportedSource::prepareForLaunch(double sourceBias, size_t firstIndex, size
     // determine the first history index for each entity
     _Iv.resize(M+1);
     _Iv[0] = firstIndex;
+    double W = 0.;
     for (int m=1; m!=M; ++m)
     {
-        // limit first index to last index to avoid run-over due to rounding errors
-        _Iv[m] = min(firstIndex+numIndices, _Iv[m-1] + static_cast<size_t>(std::round(_Wv[m-1] * numIndices)));
+        // track the cumulative normalized weight as a floating point number
+        // and limit the index to firstIndex+numIndices to avoid issues with rounding errors
+        W += _Wv[m-1];
+        _Iv[m] = firstIndex + min(numIndices, static_cast<size_t>(std::round(W * numIndices)));
     }
     _Iv[M] = firstIndex+numIndices;
 }
