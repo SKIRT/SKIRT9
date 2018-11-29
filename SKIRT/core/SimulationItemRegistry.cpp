@@ -40,6 +40,10 @@
 #include "DefaultRadiationFieldCutsProbe.hpp"
 #include "DensityTreePolicy.hpp"
 #include "DiscreteWavelengthDistribution.hpp"
+#include "DraineGraphiteGrainComposition.hpp"
+#include "DraineIonizedPAHGrainComposition.hpp"
+#include "DraineNeutralPAHGrainComposition.hpp"
+#include "DraineSilicateGrainComposition.hpp"
 #include "DustAbsorptionPerCellProbe.hpp"
 #include "DustEmissionOptions.hpp"
 #include "DustEmissivityProbe.hpp"
@@ -100,6 +104,7 @@
 #include "MeanZubkoDustMix.hpp"
 #include "MediumSystem.hpp"
 #include "MeridionalDustTemperatureCutProbe.hpp"
+#include "MieSilicateGrainComposition.hpp"
 #include "ModifiedLogNormalGrainSizeDistribution.hpp"
 #include "ModifiedPowerLawGrainSizeDistribution.hpp"
 #include "MollweideProjection.hpp"
@@ -122,6 +127,8 @@
 #include "PhotonPacketOptions.hpp"
 #include "PlummerGeometry.hpp"
 #include "PointSource.hpp"
+#include "PolarizedGraphiteGrainComposition.hpp"
+#include "PolarizedSilicateGrainComposition.hpp"
 #include "PolicyTreeSpatialGrid.hpp"
 #include "PowMesh.hpp"
 #include "PowerLawGrainSizeDistribution.hpp"
@@ -167,6 +174,9 @@
 #include "TreeSpatialGrid.hpp"
 #include "TreeSpatialGridTopologyProbe.hpp"
 #include "TriaxialGeometryDecorator.hpp"
+#include "TrustGraphiteGrainComposition.hpp"
+#include "TrustNeutralPAHGrainComposition.hpp"
+#include "TrustSilicateGrainComposition.hpp"
 #include "UniformBoxGeometry.hpp"
 #include "UniformSmoothingKernel.hpp"
 #include "VoronoiMeshGeometry.hpp"
@@ -411,6 +421,19 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ZubkoSilicateGrainSizeDistribution>();
     ItemRegistry::add<ZubkoGraphiteGrainSizeDistribution>();
     ItemRegistry::add<ZubkoPAHGrainSizeDistribution>();
+
+    // grain compositions
+    ItemRegistry::add<GrainComposition>();
+    ItemRegistry::add<DraineSilicateGrainComposition>();
+    ItemRegistry::add<DraineGraphiteGrainComposition>();
+    ItemRegistry::add<DraineNeutralPAHGrainComposition>();
+    ItemRegistry::add<DraineIonizedPAHGrainComposition>();
+    ItemRegistry::add<MieSilicateGrainComposition>();
+    ItemRegistry::add<PolarizedSilicateGrainComposition>();
+    ItemRegistry::add<PolarizedGraphiteGrainComposition>();
+    ItemRegistry::add<TrustSilicateGrainComposition>();
+    ItemRegistry::add<TrustGraphiteGrainComposition>();
+    ItemRegistry::add<TrustNeutralPAHGrainComposition>();
 
     // dust emissivity calculators
     ItemRegistry::add<DustEmissivity>();
