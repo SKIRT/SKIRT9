@@ -162,28 +162,37 @@ void Configuration::setupSelfAfter()
     //                      on any simulation item in the hierarchy except for the logger.
     auto log = find<Log>();
 
+    // --- log wavelength regime, simulation mode, and media characteristics  ---
+
+    string regime = _oligochromatic ? "Oligo" : "Pan";
+    log->info("  " + regime + "chromatic wavelength regime");
+    string medium = _hasMedium ? "With" : "No";
+    log->info("  " + medium + " transfer medium");
+    if (_hasDustSelfAbsorption)
+        log->info("  Including dust emission with iterative calculation of dust self-absorption ");
+    else if (_hasDustEmission)
+        log->info("  Including dust emission");
+    if (_hasPolarization) log->info("  Medium requires support for polarization");
+    if (_hasMovingMedia) log->info("  Medium requires support for kinematics");
+
     // --- log model symmetries ---
 
     // if there are no media, simply log the source model symmetry
-    if (!_hasMedium)
-    {
-        log->info("Model symmetry: " + std::to_string(_modelDimension) + "D");
-    }
-
     // if there are media, compare the model symmetry to the grid symmetry
     // (the case where the grid has insufficient dimension causes a fatal error in setupSelfBefore)
+    if (!_hasMedium)
+    {
+        log->info("  Model symmetry: " + std::to_string(_modelDimension) + "D");
+    }
+    else if (_modelDimension == _gridDimension)
+    {
+        log->info("  Model and grid symmetry: " + std::to_string(_modelDimension) + "D");
+    }
     else
     {
-        if (_modelDimension == _gridDimension)
-        {
-            log->info("Model and grid symmetry: " + std::to_string(_modelDimension) + "D");
-        }
-        else
-        {
-            log->info("Model symmetry: " + std::to_string(_modelDimension) + "D; "
-                      "Spatial grid symmetry: " + std::to_string(_gridDimension) + "D");
-            log->warning("Selecting a grid with the model symmetry might be more efficient");
-        }
+        log->info("  Model symmetry: " + std::to_string(_modelDimension) + "D; "
+                  "Spatial grid symmetry: " + std::to_string(_gridDimension) + "D");
+        log->warning("  Selecting a grid with the model symmetry might be more efficient");
     }
 }
 
