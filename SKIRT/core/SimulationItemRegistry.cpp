@@ -72,9 +72,9 @@
 #include "IsotropicAngularDistribution.hpp"
 #include "LaserAngularDistribution.hpp"
 #include "LaunchedPacketsProbe.hpp"
-#include "LinearDustTemperatureCutProbe.hpp"
 #include "LinMesh.hpp"
 #include "LinWavelengthDistribution.hpp"
+#include "LinearDustTemperatureCutProbe.hpp"
 #include "ListBand.hpp"
 #include "ListSED.hpp"
 #include "ListWavelengthDistribution.hpp"
@@ -100,6 +100,8 @@
 #include "MeanZubkoDustMix.hpp"
 #include "MediumSystem.hpp"
 #include "MeridionalDustTemperatureCutProbe.hpp"
+#include "ModifiedLogNormalGrainSizeDistribution.hpp"
+#include "ModifiedPowerLawGrainSizeDistribution.hpp"
 #include "MollweideProjection.hpp"
 #include "MonteCarloSimulation.hpp"
 #include "MultiGaussianExpansionGeometry.hpp"
@@ -122,6 +124,7 @@
 #include "PointSource.hpp"
 #include "PolicyTreeSpatialGrid.hpp"
 #include "PowMesh.hpp"
+#include "PowerLawGrainSizeDistribution.hpp"
 #include "ProbeSystem.hpp"
 #include "PseudoSersicGeometry.hpp"
 #include "QuasarSED.hpp"
@@ -136,6 +139,7 @@
 #include "SersicGeometry.hpp"
 #include "ShellGeometry.hpp"
 #include "SineSquarePolarizationProfile.hpp"
+#include "SingleGrainSizeDistribution.hpp"
 #include "SiteListTreePolicy.hpp"
 #include "SourceSystem.hpp"
 #include "SpatialCellPropertiesProbe.hpp"
@@ -156,8 +160,8 @@
 #include "StellarUnits.hpp"
 #include "SunSED.hpp"
 #include "SymPowMesh.hpp"
-#include "TemperatureWavelengthCellLibrary.hpp"
 #include "TTauriDiskGeometry.hpp"
+#include "TemperatureWavelengthCellLibrary.hpp"
 #include "TorusGeometry.hpp"
 #include "TreePolicy.hpp"
 #include "TreeSpatialGrid.hpp"
@@ -170,6 +174,9 @@
 #include "VoronoiMeshSource.hpp"
 #include "VoronoiMeshSpatialGrid.hpp"
 #include "WavelengthGridProbe.hpp"
+#include "ZubkoGraphiteGrainSizeDistribution.hpp"
+#include "ZubkoPAHGrainSizeDistribution.hpp"
+#include "ZubkoSilicateGrainSizeDistribution.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -392,6 +399,18 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<MeanPascucciBenchmarkDustMix>();
     ItemRegistry::add<MeanIvezicBenchmarkDustMix>();
     ItemRegistry::add<ElectronMix>();
+
+    // grain size distributions
+    ItemRegistry::add<GrainSizeDistribution>();
+    ItemRegistry::add<RangeGrainSizeDistribution>();
+    ItemRegistry::add<PowerLawGrainSizeDistribution>();
+    ItemRegistry::add<ModifiedPowerLawGrainSizeDistribution>();
+    ItemRegistry::add<LogNormalGrainSizeDistribution>();
+    ItemRegistry::add<ModifiedLogNormalGrainSizeDistribution>();
+    ItemRegistry::add<SingleGrainSizeDistribution>();
+    ItemRegistry::add<ZubkoSilicateGrainSizeDistribution>();
+    ItemRegistry::add<ZubkoGraphiteGrainSizeDistribution>();
+    ItemRegistry::add<ZubkoPAHGrainSizeDistribution>();
 
     // dust emissivity calculators
     ItemRegistry::add<DustEmissivity>();
