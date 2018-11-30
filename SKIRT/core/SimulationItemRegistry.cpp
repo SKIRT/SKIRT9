@@ -31,6 +31,8 @@
 #include "CombineGeometryDecorator.hpp"
 #include "ConicalAngularDistribution.hpp"
 #include "ConicalShellGeometry.hpp"
+#include "CrystalEnstatiteGrainComposition.hpp"
+#include "CrystalForsteriteGrainComposition.hpp"
 #include "CubicSplineSmoothingKernel.hpp"
 #include "CubicalBackgroundSource.hpp"
 #include "Cylinder2DSpatialGrid.hpp"
@@ -45,6 +47,7 @@
 #include "DraineNeutralPAHGrainComposition.hpp"
 #include "DraineSilicateGrainComposition.hpp"
 #include "DustAbsorptionPerCellProbe.hpp"
+#include "DustEmGrainComposition.hpp"
 #include "DustEmissionOptions.hpp"
 #include "DustEmissivityProbe.hpp"
 #include "DustSelfAbsorptionOptions.hpp"
@@ -105,6 +108,7 @@
 #include "MediumSystem.hpp"
 #include "MeridionalDustTemperatureCutProbe.hpp"
 #include "MieSilicateGrainComposition.hpp"
+#include "MinSilicateGrainComposition.hpp"
 #include "ModifiedLogNormalGrainSizeDistribution.hpp"
 #include "ModifiedPowerLawGrainSizeDistribution.hpp"
 #include "MollweideProjection.hpp"
@@ -429,8 +433,12 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<DraineNeutralPAHGrainComposition>();
     ItemRegistry::add<DraineIonizedPAHGrainComposition>();
     ItemRegistry::add<MieSilicateGrainComposition>();
+    ItemRegistry::add<MinSilicateGrainComposition>();
     ItemRegistry::add<PolarizedSilicateGrainComposition>();
     ItemRegistry::add<PolarizedGraphiteGrainComposition>();
+    ItemRegistry::add<CrystalEnstatiteGrainComposition>();
+    ItemRegistry::add<CrystalForsteriteGrainComposition>();
+    ItemRegistry::add<DustEmGrainComposition>();
     ItemRegistry::add<TrustSilicateGrainComposition>();
     ItemRegistry::add<TrustGraphiteGrainComposition>();
     ItemRegistry::add<TrustNeutralPAHGrainComposition>();
