@@ -71,6 +71,7 @@
 #include "GaussianGeometry.hpp"
 #include "GeometricMedium.hpp"
 #include "GeometricSource.hpp"
+#include "GrainPopulation.hpp"
 #include "HammerAitoffProjection.hpp"
 #include "HyperboloidGeometry.hpp"
 #include "HyperboloidShellGeometry.hpp"
@@ -413,6 +414,9 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<MeanPascucciBenchmarkDustMix>();
     ItemRegistry::add<MeanIvezicBenchmarkDustMix>();
     ItemRegistry::add<ElectronMix>();
+
+    // grain population
+    ItemRegistry::add<GrainPopulation>();
 
     // grain size distributions
     ItemRegistry::add<GrainSizeDistribution>();
