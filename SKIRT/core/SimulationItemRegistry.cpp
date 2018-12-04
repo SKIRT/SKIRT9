@@ -92,6 +92,7 @@
 #include "LogWavelengthDistribution.hpp"
 #include "LogWavelengthGrid.hpp"
 #include "LuminosityProbe.hpp"
+#include "MRNDustMix.hpp"
 #include "MappingsSED.hpp"
 #include "MappingsSEDFamily.hpp"
 #include "MarastonSED.hpp"
@@ -175,11 +176,13 @@
 #include "SymPowMesh.hpp"
 #include "TTauriDiskGeometry.hpp"
 #include "TemperatureWavelengthCellLibrary.hpp"
+#include "ThemisDustMix.hpp"
 #include "TorusGeometry.hpp"
 #include "TreePolicy.hpp"
 #include "TreeSpatialGrid.hpp"
 #include "TreeSpatialGridTopologyProbe.hpp"
 #include "TriaxialGeometryDecorator.hpp"
+#include "TrustBenchmarkDustMix.hpp"
 #include "TrustGraphiteGrainComposition.hpp"
 #include "TrustNeutralPAHGrainComposition.hpp"
 #include "TrustSilicateGrainComposition.hpp"
@@ -190,6 +193,7 @@
 #include "VoronoiMeshSource.hpp"
 #include "VoronoiMeshSpatialGrid.hpp"
 #include "WavelengthGridProbe.hpp"
+#include "WeingartnerDraineDustMix.hpp"
 #include "ZubkoDustMix.hpp"
 #include "ZubkoGraphiteGrainSizeDistribution.hpp"
 #include "ZubkoPAHGrainSizeDistribution.hpp"
@@ -418,7 +422,11 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<MeanIvezicBenchmarkDustMix>();
 
     ItemRegistry::add<MultiGrainDustMix>();
+    ItemRegistry::add<ThemisDustMix>();
     ItemRegistry::add<ZubkoDustMix>();
+    ItemRegistry::add<MRNDustMix>();
+    ItemRegistry::add<WeingartnerDraineDustMix>();
+    ItemRegistry::add<TrustBenchmarkDustMix>();
     ItemRegistry::add<ConfigurableDustMix>();
 
     ItemRegistry::add<ElectronMix>();
