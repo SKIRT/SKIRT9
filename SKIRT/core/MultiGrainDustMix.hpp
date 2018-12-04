@@ -7,12 +7,14 @@
 #define MULTIGRAINDUSTMIX_HPP
 
 #include "DustMix.hpp"
-class GrainPopulation;
+#include "GrainPopulation.hpp"
+class GrainComposition;
+class GrainSizeDistribution;
 
 ////////////////////////////////////////////////////////////////////
 
 /** MultiGrainDustMix is an abstract class implementing a dust mix described by one or more grain
-    populations, each with their own grain composition and size distribiution, and with or without
+    populations, each with their own grain composition and size distribution, and with or without
     support for polarization by scattering.
 
     TO DO: add further documentation.
@@ -21,7 +23,7 @@ class GrainPopulation;
     601, A92). */
 class MultiGrainDustMix : public DustMix
 {
-    ITEM_ABSTRACT(MultiGrainDustMix, DustMix, "a dust mix described by one or more grain populations")
+    ITEM_ABSTRACT(MultiGrainDustMix, DustMix, "a dust mix with one or more grain populations")
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============
@@ -30,6 +32,17 @@ protected:
     /** This function adds the specified grain population to the dust mix. TO DO: add further
         documentation. */
     void addPopulation(const GrainPopulation* population);
+
+    /** This function adds the specified grain population to the dust mix. TO DO: add further
+        documentation. */
+    void addPopulation(GrainComposition* composition, GrainSizeDistribution* sizeDistribution,
+                       int numSizes, GrainPopulation::NormalizationType normType, double normValue);
+
+    //======== Functionality levels =======
+
+    /** This function returns the scattering mode supported by this material mix as configured by
+        the user XXX . */
+    ScatteringMode scatteringMode() const override;
 
     //======== Basic material properties =======
 

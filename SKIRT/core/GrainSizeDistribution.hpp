@@ -14,9 +14,16 @@
     dust grains in a particular dust population. Specifically, it represents a function
     \f$\text{dnda}(a)\f$ that specifies the relative number of dust grains with size \f$a\f$ in the
     population, \f[ \text{dnda}(a) \propto \frac{\text{d}n_\text{D}}{\text{d}a} \qquad
-    \text{for}\quad a_\text{min} \leq a \leq a_\text{max}. \f] The function is scaled arbitrarily;
-    an appropriate proportionality factor is determined elsewhere by specifying a normalization for
-    the amount of dust in the population.
+    \text{for}\quad a_\text{min} \leq a \leq a_\text{max}. \f]
+
+    An appropriate proportionality factor for the size distribution function is determined through
+    a normalization mechanism provided externally to this class. Some GrainSizeDistribution
+    subclasses implement a size distribution function with a well-defined proportionality factor,
+    documented in the class header, while other subclasses have arbitrary scaling (i.e. the
+    proportionality factor is unspecified). In the first case, the normalization can be done by
+    specifying a multiplication factor on the size distribution (often just a factor of one). In
+    both cases, the normalization can be done by specifying the amount of dust in the population,
+    for example as a dust mass per hydrogen atom or per hydrogen mass.
 
     The GrainSizeDistribution class offers access to the size distribution range and the size
     distribution value within that range. It expects each subclass to implement the functions

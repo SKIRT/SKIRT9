@@ -20,7 +20,7 @@
     The size range of the distribution can be configured in the RangeGrainSizeDistribution base
     class. The centroid \f$a_0\f$ and the width \f$\sigma\f$ can be configured in the
     LogNormalGrainSizeDistribution base class. The remaining two parameters \f$y_0\f$ and \f$y_1\f$
-    can be configured as attributes in this class.
+    can be configured as attributes in this class. The function is scaled arbitrarily.
 
     The functional form for the grain size distribution implemented by this class is inspired by
     the DustEM code, which is described in Compiègne et al. 2011 (AA, 525, A103) and can be

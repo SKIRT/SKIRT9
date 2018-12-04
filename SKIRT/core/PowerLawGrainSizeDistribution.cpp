@@ -7,9 +7,19 @@
 
 ////////////////////////////////////////////////////////////////////
 
+PowerLawGrainSizeDistribution::PowerLawGrainSizeDistribution(SimulationItem* parent,
+                                                             double minSize, double maxSize, double exponent)
+    : RangeGrainSizeDistribution(minSize, maxSize), _exponent(exponent)
+{
+    parent->addChild(this);
+    setup();
+}
+
+////////////////////////////////////////////////////////////////////
+
 double PowerLawGrainSizeDistribution::dnda(double a) const
 {
-    return pow(a,-_exponent);
+    return pow(a, -_exponent);
 }
 
 ////////////////////////////////////////////////////////////////////

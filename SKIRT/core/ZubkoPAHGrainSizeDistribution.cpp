@@ -73,7 +73,6 @@ double ZubkoPAHGrainSizeDistribution::amax() const
     return amax_pah;
 }
 
-
 ////////////////////////////////////////////////////////////////////
 
 double ZubkoPAHGrainSizeDistribution::dnda(double a) const

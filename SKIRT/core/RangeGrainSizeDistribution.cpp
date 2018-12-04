@@ -8,6 +8,13 @@
 
 ////////////////////////////////////////////////////////////////////
 
+RangeGrainSizeDistribution::RangeGrainSizeDistribution(double minSize, double maxSize)
+    : _minSize(minSize), _maxSize(maxSize)
+{
+}
+
+////////////////////////////////////////////////////////////////////
+
 void RangeGrainSizeDistribution::setupSelfBefore()
 {
     GrainSizeDistribution::setupSelfBefore();

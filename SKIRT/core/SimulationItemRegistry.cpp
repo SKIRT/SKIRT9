@@ -29,6 +29,7 @@
 #include "CastelliKuruczSEDFamily.hpp"
 #include "ClumpyGeometryDecorator.hpp"
 #include "CombineGeometryDecorator.hpp"
+#include "ConfigurableDustMix.hpp"
 #include "ConicalAngularDistribution.hpp"
 #include "ConicalShellGeometry.hpp"
 #include "CrystalEnstatiteGrainComposition.hpp"
@@ -189,6 +190,7 @@
 #include "VoronoiMeshSource.hpp"
 #include "VoronoiMeshSpatialGrid.hpp"
 #include "WavelengthGridProbe.hpp"
+#include "ZubkoDustMix.hpp"
 #include "ZubkoGraphiteGrainSizeDistribution.hpp"
 #include "ZubkoPAHGrainSizeDistribution.hpp"
 #include "ZubkoSilicateGrainSizeDistribution.hpp"
@@ -402,6 +404,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // material mixes
     ItemRegistry::add<MaterialMix>();
     ItemRegistry::add<DustMix>();
+
     ItemRegistry::add<SingleGrainDustMix>();
     ItemRegistry::add<MeanInterstellarDustMix>();
     ItemRegistry::add<MeanDraineLiDustMix>();
@@ -413,6 +416,11 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<MeanPinteBenchmarkDustMix>();
     ItemRegistry::add<MeanPascucciBenchmarkDustMix>();
     ItemRegistry::add<MeanIvezicBenchmarkDustMix>();
+
+    ItemRegistry::add<MultiGrainDustMix>();
+    ItemRegistry::add<ZubkoDustMix>();
+    ItemRegistry::add<ConfigurableDustMix>();
+
     ItemRegistry::add<ElectronMix>();
 
     // grain population

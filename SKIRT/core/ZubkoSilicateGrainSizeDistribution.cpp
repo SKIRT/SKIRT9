@@ -73,7 +73,6 @@ double ZubkoSilicateGrainSizeDistribution::amax() const
     return amax_sil;
 }
 
-
 ////////////////////////////////////////////////////////////////////
 
 double ZubkoSilicateGrainSizeDistribution::dnda(double a) const

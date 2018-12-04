@@ -14,7 +14,7 @@
     at some specific grain size. The single grain size is configured through an attribute managed
     by this class. The amin() and amax() functions in this class return a very narrow range of
     width \f$\Delta a=a_\text{s}/1000\f$ centered on the specified size \f$a_\text{s}\f$, and the
-    function dnda() returns a constant distribution function value (arbitrarily set to one). */
+    function dnda() returns a constant distribution function value (arbitrarily scaled). */
 class SingleGrainSizeDistribution: public GrainSizeDistribution
 {
     ITEM_CONCRETE(SingleGrainSizeDistribution, GrainSizeDistribution, "a single-size dust grain size distribution")

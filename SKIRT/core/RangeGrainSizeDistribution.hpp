@@ -36,6 +36,11 @@ class RangeGrainSizeDistribution: public GrainSizeDistribution
     //============= Construction - Setup - Destruction =============
 
 protected:
+    /** This constructor simply initializes \f$a_\text{min}\f$ and \f$a_\text{max}\f$ with the
+        specified values. It can be invoked from subclass constructors to set the values of these
+        properties programmatically. */
+    explicit RangeGrainSizeDistribution(double minSize, double maxSize);
+
     /** This function verifies the property values. */
     void setupSelfBefore() override;
 

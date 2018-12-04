@@ -12,7 +12,8 @@
 
 /** ZubkoGraphiteGrainSizeDistribution represents the dust grain size distribution and grain size
     range for the graphite population in model BARE_GR_S of Zubko, Dwek & Arendt (2004, ApJS, 152,
-    211). */
+    211). The size distribution function is scaled to obtain the appropriate dust mass per hydrogen
+    atom for the graphite grain population. */
 class ZubkoGraphiteGrainSizeDistribution: public GrainSizeDistribution
 {
     ITEM_CONCRETE(ZubkoGraphiteGrainSizeDistribution, GrainSizeDistribution,
@@ -22,11 +23,11 @@ class ZubkoGraphiteGrainSizeDistribution: public GrainSizeDistribution
     //============= Construction - Setup - Destruction =============
 
 public:
-    /** This constructor can be invoked by dust mix classes that wish to hard-code the creation of
-        a new grain size distribution object of this type (as opposed to creation through the ski
-        file). Before the constructor returns, the newly created object is hooked up as a child to
-        the specified parent in the simulation hierarchy (so it will automatically be deleted), and
-        its setup() function has been called. */
+    /** This constructor can be invoked by classes that wish to hard-code the creation of a new
+        grain size distribution object of this type (as opposed to creation through the ski file).
+        Before the constructor returns, the newly created object is hooked up as a child to the
+        specified parent in the simulation hierarchy (so it will automatically be deleted), and its
+        setup() function has been called. */
     explicit ZubkoGraphiteGrainSizeDistribution(SimulationItem* parent);
 
     //======================== Other Functions =======================

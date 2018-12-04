@@ -14,6 +14,21 @@ void MultiGrainDustMix::addPopulation(const GrainPopulation* population)
 
 ////////////////////////////////////////////////////////////////////
 
+void MultiGrainDustMix::addPopulation(GrainComposition* composition, GrainSizeDistribution* sizeDistribution,
+                                      int numSizes, GrainPopulation::NormalizationType normType, double normValue)
+{
+    addPopulation(new GrainPopulation(this, composition, sizeDistribution, numSizes, normType, normValue));
+}
+
+////////////////////////////////////////////////////////////////////
+
+MaterialMix::ScatteringMode MultiGrainDustMix::scatteringMode() const
+{
+    return MaterialMix::ScatteringMode::HenyeyGreenstein;
+}
+
+////////////////////////////////////////////////////////////////////
+
 double MultiGrainDustMix::mass() const
 {
     return 0.;
@@ -59,6 +74,13 @@ double MultiGrainDustMix::generateCosineFromPhaseFunction(double lambda) const
 double MultiGrainDustMix::phaseFunctionValue(double lambda, double theta, double phi, const StokesVector* sv) const
 {
     return 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+std::pair<double,double> MultiGrainDustMix::generateAnglesFromPhaseFunction(double lambda, const StokesVector* sv) const
+{
+    return std::make_pair(0.,0.);
 }
 
 ////////////////////////////////////////////////////////////////////
