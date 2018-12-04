@@ -71,6 +71,21 @@ class ModifiedPowerLawGrainSizeDistribution: public RangeGrainSizeDistribution
 
     ITEM_END()
 
+
+    //============= Construction - Setup - Destruction =============
+
+public:
+    /** This constructor can be invoked by classes that wish to hard-code the creation of a new
+        grain size distribution object of this type (as opposed to creation through the ski file).
+        Before the constructor returns, the newly created object is hooked up as a child to the
+        specified parent in the simulation hierarchy (so it will automatically be deleted), its
+        properties have been initialized to the specified values, and its setup() function has been
+        called. */
+    explicit ModifiedPowerLawGrainSizeDistribution(SimulationItem* parent,
+                        double minSize, double maxSize, double powerLawIndex,
+                        double turnOffPoint, double scaleExponentialDecay, double exponentExponentialDecay,
+                        double scaleCurvature, double strengthCurvature, double exponentCurvature);
+
     //======================== Other Functions =======================
 
 public:

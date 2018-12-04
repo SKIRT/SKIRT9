@@ -7,6 +7,16 @@
 
 ////////////////////////////////////////////////////////////////////
 
+LogNormalGrainSizeDistribution::LogNormalGrainSizeDistribution(SimulationItem* parent, double minSize, double maxSize,
+                                                                                       double centroid, double width)
+    : RangeGrainSizeDistribution(minSize, maxSize), _centroid(centroid), _width(width)
+{
+    parent->addChild(this);
+    setup();
+}
+
+////////////////////////////////////////////////////////////////////
+
 double LogNormalGrainSizeDistribution::dnda(double a) const
 {
     double x = log(a/_centroid) / _width;

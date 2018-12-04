@@ -28,7 +28,7 @@
     PowerLawGrainSizeDistribution class. */
 class MRNDustMix : public MultiGrainDustMix
 {
-    ITEM_CONCRETE(MRNDustMix, MultiGrainDustMix, "an MRN multi-component dust mix")
+    ITEM_CONCRETE(MRNDustMix, MultiGrainDustMix, "an MRN (1997) dust mix")
 
     PROPERTY_INT(numSilicateSizes, "the number of silicate grain size bins")
         ATTRIBUTE_MIN_VALUE(numSilicateSizes, "1")

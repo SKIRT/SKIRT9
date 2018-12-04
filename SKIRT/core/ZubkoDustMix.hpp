@@ -23,7 +23,7 @@
     The class uses the grain compositions defined in the DraineSilicateGrainComposition,
     DraineGraphiteGrainComposition, DraineNeutralPAHGrainComposition, and
     DraineIonizedPAHGrainComposition classes, and the size distributions defined in
-    theZubkoSilicateGrainSizeDistribution, ZubkoGraphiteGrainSizeDistribution, and
+    the ZubkoSilicateGrainSizeDistribution, ZubkoGraphiteGrainSizeDistribution, and
     ZubkoPAHGrainSizeDistribution classes. */
 class ZubkoDustMix : public MultiGrainDustMix
 {

@@ -32,7 +32,7 @@ class MeanTrustBenchmarkDustMix : public SingleGrainDustMix
     ENUM_END()
 
     ITEM_CONCRETE(MeanTrustBenchmarkDustMix, SingleGrainDustMix,
-                  "a dust mix from the TRUST benchmark (mean properties, optionally with polarization)")
+                  "a TRUST benchmark dust mix (mean properties, optionally with polarization)")
         ATTRIBUTE_TYPE_DISPLAYED_IF(MeanTrustBenchmarkDustMix, "Level2")
 
     PROPERTY_ENUM(scatteringType, ScatteringType, "the type of scattering to be implemented")
