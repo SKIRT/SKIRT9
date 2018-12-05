@@ -5,10 +5,11 @@
 
 #include "MultiGrainDustMix.hpp"
 #include "GrainPopulation.hpp"
+#include "NR.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-void MultiGrainDustMix::addPopulation(const GrainPopulation* population)
+void MultiGrainDustMix::addPopulation(const GrainPopulation* /*population*/)
 {
 }
 
@@ -38,54 +39,54 @@ double MultiGrainDustMix::mass() const
 
 double MultiGrainDustMix::sectionAbsSelf(double lambda) const
 {
-    return 0.;
+    return NR::loadClamped<NR::interpolateLogLog>(lambda, _lambdav, _sigmaabsv);
 }
 
 ////////////////////////////////////////////////////////////////////
 
 double MultiGrainDustMix::sectionScaSelf(double lambda) const
 {
-    return 0.;
+    return NR::loadClamped<NR::interpolateLogLog>(lambda, _lambdav, _sigmascav);
 }
 
 ////////////////////////////////////////////////////////////////////
 
 double MultiGrainDustMix::asymmpar(double lambda) const
 {
-    return 0.;
+    return NR::loadClamped<NR::interpolateLogLin>(lambda, _lambdav, _asymmparv);
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double MultiGrainDustMix::phaseFunctionValueForCosine(double lambda, double costheta) const
+double MultiGrainDustMix::phaseFunctionValueForCosine(double /*lambda*/, double /*costheta*/) const
 {
     return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double MultiGrainDustMix::generateCosineFromPhaseFunction(double lambda) const
+double MultiGrainDustMix::generateCosineFromPhaseFunction(double /*lambda*/) const
 {
     return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double MultiGrainDustMix::phaseFunctionValue(double lambda, double theta, double phi, const StokesVector* sv) const
+double MultiGrainDustMix::phaseFunctionValue(double /*lambda*/, double /*theta*/, double /*phi*/, const StokesVector* /*sv*/) const
 {
     return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-std::pair<double,double> MultiGrainDustMix::generateAnglesFromPhaseFunction(double lambda, const StokesVector* sv) const
+std::pair<double,double> MultiGrainDustMix::generateAnglesFromPhaseFunction(double /*lambda*/, const StokesVector* /*sv*/) const
 {
     return std::make_pair(0.,0.);
 }
 
 ////////////////////////////////////////////////////////////////////
 
-void MultiGrainDustMix::applyMueller(double lambda, double theta, StokesVector* sv) const
+void MultiGrainDustMix::applyMueller(double /*lambda*/, double /*theta*/, StokesVector* /*sv*/) const
 {
 }
 

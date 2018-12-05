@@ -343,6 +343,49 @@ public:
         return f1 * exp( log(x/x1)/log(x2/x1)*(log(f2/f1)) );
     }
 
+    /** This template function returns the interpolated function value \f$y(x)\f$ given a value
+        \f$x\f$ and a tabulated version of the function \f$y_k\f$ defined on a grid \f$x_k\f$ (both
+        specified as arrays of the same length). If \f$x\f$ falls inside the grid, the \f$y(x)\f$
+        value is interpolated between the neighboring grid points using the function specified as
+        template argument. The interpolation functions provided by this namespace can be passed as
+        a template argument for this purpose.
+
+        If \f$x\f$ falls outside of the \f$x_k\f$ grid, zero is returned as the result.
+
+        The function assumes that the specified arrays contain the same number of elements, that
+        they each contain at least two elements, and that \f$x_k\f$ elements are sorted in
+        ascending order. If this is not the case, the result is undefined. */
+    template < double interpolateFunction(double, double, double, double, double) >
+    static inline double load(double x, const Array& xv, const Array& yv)
+    {
+        int i = NR::locateFail(xv, x);
+        if (i < 0) return 0.;
+        return interpolateFunction(x, xv[i], xv[i+1], yv[i], yv[i+1]);
+    }
+
+    /** This template function returns the interpolated function value \f$y(x)\f$ given a value
+        \f$x\f$ and a tabulated version of the function \f$y_k\f$ defined on a grid \f$x_k\f$ (both
+        specified as arrays of the same length). If \f$x\f$ falls inside the grid, the \f$y(x)\f$
+        value is interpolated between the neighboring grid points using the function specified as
+        template argument. The interpolation functions provided by this namespace can be passed as
+        a template argument for this purpose.
+
+        If \f$x\f$ falls outside of the \f$x_k\f$ grid, the \f$y_k\f$ value at the corresponding
+        outer grid point, i.e. \f$y_0\f$ or \f$y_{n-1}\f$ is returned as the result.
+
+        The function assumes that the specified arrays contain the same number of elements, that
+        they each contain at least two elements, and that \f$x_k\f$ elements are sorted in
+        ascending order. If this is not the case, the result is undefined. */
+    template < double interpolateFunction(double, double, double, double, double) >
+    static inline double loadClamped(double x, const Array& xv, const Array& yv)
+    {
+        int n = xv.size();
+        int i = NR::locate(xv, x);
+        if (i < 0) return yv[0];
+        if (i >= n-1) return yv[n-1];
+        return interpolateFunction(x, xv[i], xv[i+1], yv[i], yv[i+1]);
+    }
+
     /** This template function resamples the function values \f$y_k\f$ defined on a grid \f$x_k\f$
         (both specified as arrays of the same length) onto an new grid \f$x_l^*\f$. The result is
         returned as an array of function values \f$y_l^*\f$ with the same length as the target

@@ -148,6 +148,12 @@ public:
     //======================== Data Members ========================
 
 private:
+    // cached info initialized in setupSelfBefore()
+    Array _lambdav;    // indexed on ell
+    Array _sigmaabsv;  // indexed on ell
+    Array _sigmascav;  // indexed on ell
+    Array _asymmparv;  // indexed on ell
+    double _mu{0.};
 };
 
 ////////////////////////////////////////////////////////////////////
