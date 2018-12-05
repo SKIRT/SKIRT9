@@ -45,6 +45,7 @@
 #include "DiscreteWavelengthDistribution.hpp"
 #include "DraineGraphiteGrainComposition.hpp"
 #include "DraineIonizedPAHGrainComposition.hpp"
+#include "DraineLiDustMix.hpp"
 #include "DraineNeutralPAHGrainComposition.hpp"
 #include "DraineSilicateGrainComposition.hpp"
 #include "DustAbsorptionPerCellProbe.hpp"
@@ -424,6 +425,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<MultiGrainDustMix>();
     ItemRegistry::add<ThemisDustMix>();
     ItemRegistry::add<ZubkoDustMix>();
+    ItemRegistry::add<DraineLiDustMix>();
     ItemRegistry::add<MRNDustMix>();
     ItemRegistry::add<WeingartnerDraineDustMix>();
     ItemRegistry::add<TrustBenchmarkDustMix>();
