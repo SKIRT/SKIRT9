@@ -16,6 +16,7 @@ GrainPopulation::GrainPopulation(SimulationItem* parent,
     _composition = composition;
     _sizeDistribution = sizeDistribution;
     _numSizes = numSizes;
+    _normalizationType = normType;
 
     switch (normType)
     {

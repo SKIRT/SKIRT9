@@ -31,8 +31,6 @@ void MultiGrainDustMix::addPopulation(GrainComposition* composition, GrainSizeDi
 
 void MultiGrainDustMix::setupSelfAfter()
 {
-    DustMix::setupSelfAfter();
-
     // get the number of grain populations
     int numPops = _populations.size();
     if (!numPops) throw FATALERROR("Dust mix must have at least one grain population");
@@ -89,22 +87,25 @@ void MultiGrainDustMix::setupSelfAfter()
         }
         baremu *= population->composition()->bulkDensity();
 
-        // determine the actual mass per hydrogen atom for this population after applying normalization
+        // determine the actual mass per hydrogen atom for this population after applying normalization,
+        // and add it to the global total
+        double mu = 0.;
         switch (population->normalizationType())
         {
         case GrainPopulation::NormalizationType::DustMassPerHydrogenAtom:
-            _mu = population->dustMassPerHydrogenAtom();
+            mu = population->dustMassPerHydrogenAtom();
             break;
         case GrainPopulation::NormalizationType::DustMassPerHydrogenMass:
-            _mu = population->dustMassPerHydrogenMass() * Constants::Mproton();
+            mu = population->dustMassPerHydrogenMass() * Constants::Mproton();
             break;
         case GrainPopulation::NormalizationType::FactorOnSizeDistribution:
-            _mu = baremu * population->factorOnSizeDistribution();
+            mu = baremu * population->factorOnSizeDistribution();
             break;
         }
+        _mu += mu;
 
         // adjust the integration weight for further calculations by the normalization factor
-        weightv *= _mu/baremu;
+        weightv *= mu/baremu;
 
         // calculate the optical properties for each wavelength, and add them to the global total
         for (int ell=0; ell!=numWavelengths; ++ell)
@@ -136,6 +137,9 @@ void MultiGrainDustMix::setupSelfAfter()
     {
         _asymmparv[ell] = _sigmascav[ell] ? _asymmparv[ell]/_sigmascav[ell] : 0.;
     }
+
+    // TO DO
+    DustMix::setupSelfAfter();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -149,7 +153,7 @@ MaterialMix::ScatteringMode MultiGrainDustMix::scatteringMode() const
 
 double MultiGrainDustMix::mass() const
 {
-    return 0.;
+    return _mu;
 }
 
 ////////////////////////////////////////////////////////////////////
