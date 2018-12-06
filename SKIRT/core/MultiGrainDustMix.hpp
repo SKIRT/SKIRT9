@@ -38,6 +38,10 @@ protected:
     void addPopulation(GrainComposition* composition, GrainSizeDistribution* sizeDistribution,
                        int numSizes, GrainPopulation::NormalizationType normType, double normValue);
 
+    /** This function uses the information about populations added by a subclass to precompute
+        various values for later use. TO DO: add further documentation. */
+    void setupSelfAfter() override;
+
     //======== Functionality levels =======
 
     /** This function returns the scattering mode supported by this material mix as configured by
@@ -148,7 +152,10 @@ public:
     //======================== Data Members ========================
 
 private:
-    // cached info initialized in setupSelfBefore()
+    // list created by addPopulation()
+    vector<const GrainPopulation*> _populations;
+
+    // cached info initialized in setupSelfAfter()
     Array _lambdav;    // indexed on ell
     Array _sigmaabsv;  // indexed on ell
     Array _sigmascav;  // indexed on ell
