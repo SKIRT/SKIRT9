@@ -356,7 +356,7 @@ public:
         they each contain at least two elements, and that \f$x_k\f$ elements are sorted in
         ascending order. If this is not the case, the result is undefined. */
     template < double interpolateFunction(double, double, double, double, double) >
-    static inline double load(double x, const Array& xv, const Array& yv)
+    static inline double value(double x, const Array& xv, const Array& yv)
     {
         int i = NR::locateFail(xv, x);
         if (i < 0) return 0.;
@@ -377,7 +377,7 @@ public:
         they each contain at least two elements, and that \f$x_k\f$ elements are sorted in
         ascending order. If this is not the case, the result is undefined. */
     template < double interpolateFunction(double, double, double, double, double) >
-    static inline double loadClamped(double x, const Array& xv, const Array& yv)
+    static inline double clampedValue(double x, const Array& xv, const Array& yv)
     {
         int n = xv.size();
         int i = NR::locate(xv, x);
@@ -396,26 +396,9 @@ public:
     template < double interpolateFunction(double, double, double, double, double) >
     static inline Array resample(const Array& xresv, const Array& xoriv, const Array& yoriv)
     {
-        int Nori = xoriv.size();
-        double xmin = xoriv[0];
-        double xmax = xoriv[Nori-1];
-        int Nres = xresv.size();
-        Array yresv(Nres);
-        for (int l=0; l<Nres; l++)
-        {
-            double x = xresv[l];
-            if (fabs(1.0-x/xmin)<1e-5)
-                yresv[l] = yoriv[0];
-            else if (fabs(1.0-x/xmax)<1e-5)
-                yresv[l] = yoriv[Nori-1];
-            else if (x<xmin || x>xmax)
-                yresv[l] = 0.0;
-            else
-            {
-                int k = NR::locate(xoriv,x);
-                yresv[l] = interpolateFunction(x, xoriv[k], xoriv[k+1], yoriv[k], yoriv[k+1]);
-            }
-        }
+        int n = xresv.size();
+        Array yresv(n);
+        for (int l=0; l<n; l++) yresv[l] = value<interpolateFunction>(xresv[l], xoriv, yoriv);
         return yresv;
     }
 

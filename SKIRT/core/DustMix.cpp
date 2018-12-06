@@ -162,9 +162,7 @@ double DustMix::equilibriumTemperature(const Array& Jv) const
     }
 
     // find the temperature corresponding to this amount of emission on the output side of the equation
-    int p = NR::locateClip(_planckabsv, inputabs);
-    return NR::interpolateLinLin(inputabs, _planckabsv[p], _planckabsv[p+1], _Tv[p], _Tv[p+1]);
-
+    return NR::clampedValue<NR::interpolateLinLin>(inputabs, _planckabsv, _Tv);
 }
 
 ////////////////////////////////////////////////////////////////////

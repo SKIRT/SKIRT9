@@ -327,8 +327,7 @@ namespace
         // returns the normalized specific luminosity for the given wavelength
         double specificLuminosity(double lambda) const
         {
-            int i = NR::locateClip(_lambdav, lambda);
-            return NR::interpolateLogLog(lambda, _lambdav[i], _lambdav[i+1], _pv[i], _pv[i+1]);
+            return NR::value<NR::interpolateLogLog>(lambda, _lambdav, _pv);
         }
 
         Vec bulkVelocity() const override { return _bfv; }

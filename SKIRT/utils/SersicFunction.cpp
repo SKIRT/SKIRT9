@@ -75,48 +75,21 @@ SersicFunction::SersicFunction(double n)
 
 double SersicFunction::operator() (const double s) const
 {
-    int Ns = _sv.size();
-    if (s <= _sv[0])
-        return _Sv[0];
-    else if (s >= _sv[Ns-1])
-        return _Sv[Ns-1];
-    else
-    {
-        int i = NR::locateClip(_sv,s);
-        return NR::interpolateLogLog(s, _sv[i], _sv[i+1], _Sv[i], _Sv[i+1]);
-    }
+    return NR::clampedValue<NR::interpolateLogLog>(s, _sv, _Sv);
 }
 
 //////////////////////////////////////////////////////////////////////
 
 double SersicFunction::mass(const double s) const
 {
-    int Ns = _sv.size();
-    if (s <= _sv[0])
-        return _Mv[0];
-    else if (s >= _sv[Ns-1])
-        return _Mv[Ns-1];
-    else
-    {
-        int i = NR::locateClip(_sv,s);
-        return NR::interpolateLogLog(s, _sv[i], _sv[i+1], _Mv[i], _Mv[i+1]);
-    }
+    return NR::clampedValue<NR::interpolateLogLog>(s, _sv, _Mv);
 }
 
 //////////////////////////////////////////////////////////////////////
 
 double SersicFunction::inverseMass(const double M) const
 {
-    int Ns = _sv.size();
-    if (M <= _Mv[0])
-        return _sv[0];
-    else if (M >= _Mv[Ns-1])
-        return _sv[Ns-1];
-    else
-    {
-        int i = NR::locateClip(_Mv,M);
-        return NR::interpolateLogLog(M, _Mv[i], _Mv[i+1], _sv[i], _sv[i+1]);
-    }
+    return NR::clampedValue<NR::interpolateLogLog>(M, _Mv, _sv);
 }
 
 //////////////////////////////////////////////////////////////////////

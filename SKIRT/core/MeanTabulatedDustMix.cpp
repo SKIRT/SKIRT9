@@ -44,30 +44,21 @@ double MeanTabulatedDustMix::mass() const
 
 double MeanTabulatedDustMix::sectionAbsSelf(double lambda) const
 {
-    size_t i = std::lower_bound(begin(_lambdav), end(_lambdav), lambda) - begin(_lambdav);
-    if (i==0) return _sectionAbsv[0];
-    if (i==_num) return _sectionAbsv[_num-1];
-    return NR::interpolateLogLog(lambda, _lambdav[i-1], _lambdav[i], _sectionAbsv[i-1], _sectionAbsv[i]);
+    return NR::clampedValue<NR::interpolateLogLog>(lambda, _lambdav, _sectionAbsv);
 }
 
 //////////////////////////////////////////////////////////////////////
 
 double MeanTabulatedDustMix::sectionScaSelf(double lambda) const
 {
-    size_t i = std::lower_bound(begin(_lambdav), end(_lambdav), lambda) - begin(_lambdav);
-    if (i==0) return _sectionScav[0];
-    if (i==_num) return _sectionScav[_num-1];
-    return NR::interpolateLogLog(lambda, _lambdav[i-1], _lambdav[i], _sectionScav[i-1], _sectionScav[i]);
+    return NR::clampedValue<NR::interpolateLogLog>(lambda, _lambdav, _sectionScav);
 }
 
 //////////////////////////////////////////////////////////////////////
 
 double MeanTabulatedDustMix::asymmpar(double lambda) const
 {
-    size_t i = std::lower_bound(begin(_lambdav), end(_lambdav), lambda) - begin(_lambdav);
-    if (i==0) return _asymmparv[0];
-    if (i==_num) return _asymmparv[_num-1];
-    return NR::interpolateLinLin(lambda, _lambdav[i-1], _lambdav[i], _asymmparv[i-1], _asymmparv[i]);
+    return NR::clampedValue<NR::interpolateLogLin>(lambda, _lambdav, _asymmparv);
 }
 
 //////////////////////////////////////////////////////////////////////

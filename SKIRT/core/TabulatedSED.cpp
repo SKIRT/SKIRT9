@@ -38,9 +38,7 @@ Range TabulatedSED::intrinsicWavelengthRange() const
 
 double TabulatedSED::specificLuminosity(double wavelength) const
 {
-    int i = NR::locateFail(_inlambdav, wavelength);
-    if (i < 0) return 0.;
-    return NR::interpolateLogLog(wavelength, _inlambdav[i], _inlambdav[i+1], _inpv[i], _inpv[i+1]);
+    return NR::value<NR::interpolateLogLog>(wavelength, _inlambdav, _inpv);
 }
 
 //////////////////////////////////////////////////////////////////////

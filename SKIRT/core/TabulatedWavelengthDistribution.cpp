@@ -32,9 +32,7 @@ void TabulatedWavelengthDistribution::setupSelfBefore()
 
 double TabulatedWavelengthDistribution::probability(double wavelength) const
 {
-    int i = NR::locateFail(_lambdav, wavelength);
-    if (i < 0) return 0.;
-    return NR::interpolateLogLog(wavelength, _lambdav[i], _lambdav[i+1], _pv[i], _pv[i+1]);
+    return NR::value<NR::interpolateLogLog>(wavelength, _lambdav, _pv);
 }
 
 //////////////////////////////////////////////////////////////////////

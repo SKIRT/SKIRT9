@@ -39,21 +39,21 @@ double MultiGrainDustMix::mass() const
 
 double MultiGrainDustMix::sectionAbsSelf(double lambda) const
 {
-    return NR::loadClamped<NR::interpolateLogLog>(lambda, _lambdav, _sigmaabsv);
+    return NR::clampedValue<NR::interpolateLogLog>(lambda, _lambdav, _sigmaabsv);
 }
 
 ////////////////////////////////////////////////////////////////////
 
 double MultiGrainDustMix::sectionScaSelf(double lambda) const
 {
-    return NR::loadClamped<NR::interpolateLogLog>(lambda, _lambdav, _sigmascav);
+    return NR::clampedValue<NR::interpolateLogLog>(lambda, _lambdav, _sigmascav);
 }
 
 ////////////////////////////////////////////////////////////////////
 
 double MultiGrainDustMix::asymmpar(double lambda) const
 {
-    return NR::loadClamped<NR::interpolateLogLin>(lambda, _lambdav, _asymmparv);
+    return NR::clampedValue<NR::interpolateLogLin>(lambda, _lambdav, _asymmparv);
 }
 
 ////////////////////////////////////////////////////////////////////
