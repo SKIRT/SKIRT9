@@ -81,7 +81,8 @@ public:
     /** Returns a wavelength range that covers all wavelengths possibly emitted or transported by
         the simulation. This range includes the primary and secondary source wavelength ranges
         extended on both sides to accommodate a redshift or blueshift caused by kinematics
-        corresponding to \f$v/c=1/3\f$. */
+        corresponding to \f$v/c=1/3\f$. It also includes the range of the default instrument
+        wavelength grid. */
     Range simulationWavelengthRange() const;
 
     /** Returns the wavelength grid to be used for an instrument or probe, given the wavelength
@@ -256,6 +257,7 @@ private:
     int _modelDimension{0};
     int _gridDimension{0};
     bool _hasPolarization{false};
+    bool _hasMovingSources{false};
     bool _hasMovingMedia{false};
     bool _hasVariableMedia{false};
 };

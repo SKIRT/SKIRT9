@@ -141,7 +141,8 @@ void Configuration::setupSelfBefore()
         _hasPolarization = numPolarization!=0;
     }
 
-    // check for velocities in media
+    // check for velocities in sources and media
+    for (auto source : ss->sources()) if (source->hasVelocity()) _hasMovingSources = true;
     if (_hasMedium) for (auto medium : ms->media()) if (medium->hasVelocity()) _hasMovingMedia = true;
 
     // check for variable material mixes
@@ -216,13 +217,23 @@ Range Configuration::simulationWavelengthRange() const
     Range range = _sourceWavelengthRange;
     if (_dustEmissionWLG)
     {
-        _dustEmissionWLG->setup();      // ensure setup because this function may be called early during setup
+        _dustEmissionWLG->setup();  // ensure setup because this function may be called early during setup
         range.extend(_dustEmissionWLG->wavelengthRange());
     }
 
-    // extend the range with a wide margin for kinematics
-    double z = 1./3.;
-    return Range( range.min()/(1.+z), range.max()*(1.+z) );
+    // extend this range with a wide margin for kinematics if needed
+    if (_hasMovingSources || _hasMovingMedia) range.extend(1./3.);
+
+    // include default instrument wavelength grid
+    if (_defaultWavelengthGrid)
+    {
+        _defaultWavelengthGrid->setup();  // ensure setup because this function may be called early during setup
+        range.extend(_defaultWavelengthGrid->wavelengthRange());
+    }
+
+    // extend the final range with a narrow margin for round-offs
+    range.extend(1./100.);
+    return range;
 }
 
 ////////////////////////////////////////////////////////////////////

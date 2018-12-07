@@ -49,6 +49,13 @@ int NormalizedSource::dimension() const
 
 //////////////////////////////////////////////////////////////////////
 
+bool NormalizedSource::hasVelocity() const
+{
+    return velocityX() || velocityY() || velocityZ();
+}
+
+//////////////////////////////////////////////////////////////////////
+
 Range NormalizedSource::wavelengthRange() const
 {
     return sed()->wavelengthRange();

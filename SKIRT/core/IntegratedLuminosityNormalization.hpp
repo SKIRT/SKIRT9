@@ -41,7 +41,7 @@ class IntegratedLuminosityNormalization : public LuminosityNormalization
         ATTRIBUTE_QUANTITY(maxWavelength, "wavelength")
         ATTRIBUTE_MIN_VALUE(maxWavelength, "1 A")
         ATTRIBUTE_MAX_VALUE(maxWavelength, "1 m")
-        ATTRIBUTE_DEFAULT_VALUE(maxWavelength, "20 micron")
+        ATTRIBUTE_DEFAULT_VALUE(maxWavelength, "100 micron")
         ATTRIBUTE_RELEVANT_IF(maxWavelength, "wavelengthRangeCustom")
 
     PROPERTY_DOUBLE(integratedLuminosity, "the integrated luminosity for the given wavelength range")
