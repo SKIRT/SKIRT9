@@ -102,6 +102,8 @@ void MultiGrainDustMix::setupSelfAfter()
             mu = baremu * population->factorOnSizeDistribution();
             break;
         }
+        if (!mu) throw FATALERROR("Dust grain population of type " + population->composition()->name()
+                                  + " has zero dust mass");
         _mu += mu;
 
         // adjust the integration weight for further calculations by the normalization factor
