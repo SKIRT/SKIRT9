@@ -24,7 +24,7 @@ void ThemisDustMix::setupSelfBefore()
 
     addPopulation(new DustEmGrainComposition(this, DustEmGrainComposition::GrainType::CM20, 1510.),
                   new LogNormalGrainSizeDistribution(this, 0.5e-9, 4900e-9, 7e-9, 1.),
-                  _numHydrocarbonSizes, GrainPopulation::NormalizationType::DustMassPerHydrogenMass, 0.600e-02);
+                  _numHydrocarbonSizes, GrainPopulation::NormalizationType::DustMassPerHydrogenMass, 0.600e-03);
 
     addPopulation(new DustEmGrainComposition(this, DustEmGrainComposition::GrainType::CM20, 1600.),
                   new ModifiedPowerLawGrainSizeDistribution(this, 0.4e-9, 4900e-9, -5.,
