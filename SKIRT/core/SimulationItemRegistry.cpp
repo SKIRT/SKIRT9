@@ -100,7 +100,6 @@
 #include "MarastonSEDFamily.hpp"
 #include "MassColumnMaterialNormalization.hpp"
 #include "MassMaterialNormalization.hpp"
-#include "MeanDraineLiDustMix.hpp"
 #include "MeanFileDustMix.hpp"
 #include "MeanInterstellarDustMix.hpp"
 #include "MeanIvezicBenchmarkDustMix.hpp"
@@ -108,7 +107,6 @@
 #include "MeanPascucciBenchmarkDustMix.hpp"
 #include "MeanPinteBenchmarkDustMix.hpp"
 #include "MeanTrustBenchmarkDustMix.hpp"
-#include "MeanZubkoDustMix.hpp"
 #include "MediumSystem.hpp"
 #include "MeridionalDustTemperatureCutProbe.hpp"
 #include "MieSilicateGrainComposition.hpp"
@@ -412,8 +410,6 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
 
     ItemRegistry::add<SingleGrainDustMix>();
     ItemRegistry::add<MeanInterstellarDustMix>();
-    ItemRegistry::add<MeanDraineLiDustMix>();
-    ItemRegistry::add<MeanZubkoDustMix>();
     ItemRegistry::add<MeanTabulatedDustMix>();
     ItemRegistry::add<MeanFileDustMix>();
     ItemRegistry::add<MeanListDustMix>();
