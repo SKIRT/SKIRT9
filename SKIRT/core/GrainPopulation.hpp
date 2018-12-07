@@ -56,16 +56,16 @@ class GrainPopulation : public SimulationItem
 
     PROPERTY_DOUBLE(dustMassPerHydrogenAtom, "the dust mass per hydrogen atom")
         ATTRIBUTE_QUANTITY(dustMassPerHydrogenAtom, "mass")
-        ATTRIBUTE_MIN_VALUE(dustMassPerHydrogenAtom, "]0")
+        ATTRIBUTE_MIN_VALUE(dustMassPerHydrogenAtom, "[0")
         ATTRIBUTE_RELEVANT_IF(dustMassPerHydrogenAtom, "normalizationTypeDustMassPerHydrogenAtom")
 
     PROPERTY_DOUBLE(dustMassPerHydrogenMass, "the dust mass per hydrogen mass")
-        ATTRIBUTE_MIN_VALUE(dustMassPerHydrogenMass, "]0")
+        ATTRIBUTE_MIN_VALUE(dustMassPerHydrogenMass, "[0")
         ATTRIBUTE_MAX_VALUE(dustMassPerHydrogenMass, "1[")
         ATTRIBUTE_RELEVANT_IF(dustMassPerHydrogenMass, "normalizationTypeDustMassPerHydrogenMass")
 
     PROPERTY_DOUBLE(factorOnSizeDistribution, "the proportionality factor on the size distribution")
-        ATTRIBUTE_MIN_VALUE(factorOnSizeDistribution, "]0")
+        ATTRIBUTE_MIN_VALUE(factorOnSizeDistribution, "[0")
         ATTRIBUTE_DEFAULT_VALUE(factorOnSizeDistribution, "1")
         ATTRIBUTE_RELEVANT_IF(factorOnSizeDistribution, "normalizationTypeFactorOnSizeDistribution")
 
