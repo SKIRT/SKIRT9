@@ -31,6 +31,7 @@
 class TrustBenchmarkDustMix : public MultiGrainDustMix
 {
     ITEM_CONCRETE(TrustBenchmarkDustMix, MultiGrainDustMix, "a TRUST benchmark dust mix")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(TrustBenchmarkDustMix, "Level2")
 
     PROPERTY_INT(numSilicateSizes, "the number of silicate grain size bins")
         ATTRIBUTE_MIN_VALUE(numSilicateSizes, "1")

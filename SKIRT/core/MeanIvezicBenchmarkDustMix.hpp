@@ -26,8 +26,7 @@
     a reasonable order of magnitude. */
 class MeanIvezicBenchmarkDustMix : public SingleGrainDustMix
 {
-    ITEM_CONCRETE(MeanIvezicBenchmarkDustMix, SingleGrainDustMix,
-                  "a dust mix from the Ivezic 1D benchmark (mean properties)")
+    ITEM_CONCRETE(MeanIvezicBenchmarkDustMix, SingleGrainDustMix, "an Ivezic 1D benchmark dust mix (mean properties)")
         ATTRIBUTE_TYPE_DISPLAYED_IF(MeanIvezicBenchmarkDustMix, "Level2")
     ITEM_END()
 

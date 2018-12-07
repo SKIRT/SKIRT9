@@ -410,20 +410,20 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
 
     ItemRegistry::add<SingleGrainDustMix>();
     ItemRegistry::add<MeanInterstellarDustMix>();
-    ItemRegistry::add<MeanTabulatedDustMix>();
-    ItemRegistry::add<MeanFileDustMix>();
-    ItemRegistry::add<MeanListDustMix>();
     ItemRegistry::add<MeanTrustBenchmarkDustMix>();
     ItemRegistry::add<MeanPinteBenchmarkDustMix>();
     ItemRegistry::add<MeanPascucciBenchmarkDustMix>();
     ItemRegistry::add<MeanIvezicBenchmarkDustMix>();
+    ItemRegistry::add<MeanTabulatedDustMix>();
+    ItemRegistry::add<MeanFileDustMix>();
+    ItemRegistry::add<MeanListDustMix>();
 
     ItemRegistry::add<MultiGrainDustMix>();
     ItemRegistry::add<ThemisDustMix>();
-    ItemRegistry::add<ZubkoDustMix>();
     ItemRegistry::add<DraineLiDustMix>();
-    ItemRegistry::add<MRNDustMix>();
+    ItemRegistry::add<ZubkoDustMix>();
     ItemRegistry::add<WeingartnerDraineDustMix>();
+    ItemRegistry::add<MRNDustMix>();
     ItemRegistry::add<TrustBenchmarkDustMix>();
     ItemRegistry::add<ConfigurableDustMix>();
 

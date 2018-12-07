@@ -37,7 +37,7 @@
     the ModifiedPowerLawGrainSizeDistribution and LogNormalGrainSizeDistribution classes. */
 class DraineLiDustMix : public MultiGrainDustMix
 {
-    ITEM_CONCRETE(DraineLiDustMix, MultiGrainDustMix, "a Draine & Li 2007 dust mix")
+    ITEM_CONCRETE(DraineLiDustMix, MultiGrainDustMix, "a Draine and Li (2007) dust mix")
 
     PROPERTY_INT(numSilicateSizes, "the number of silicate grain size bins")
         ATTRIBUTE_MIN_VALUE(numSilicateSizes, "1")

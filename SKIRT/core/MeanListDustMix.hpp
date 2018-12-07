@@ -32,7 +32,7 @@
 class MeanListDustMix : public MeanTabulatedDustMix
 {
     ITEM_CONCRETE(MeanListDustMix, MeanTabulatedDustMix,
-                  "a basic dust mix with properties specified inside the configuration file")
+                  "a dust mix with mean properties specified inside the configuration file")
 
     PROPERTY_DOUBLE_LIST(wavelengths, "the wavelengths at which to specify the optical properties")
         ATTRIBUTE_QUANTITY(wavelengths, "wavelength")

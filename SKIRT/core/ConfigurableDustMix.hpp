@@ -19,6 +19,7 @@
 class ConfigurableDustMix : public MultiGrainDustMix
 {
     ITEM_CONCRETE(ConfigurableDustMix, MultiGrainDustMix, "a configurable dust mix with one or more grain populations")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(ConfigurableDustMix, "Level2")
 
     PROPERTY_ITEM_LIST(populations, GrainPopulation, "the grain populations")
         ATTRIBUTE_DEFAULT_VALUE(populations, "GrainPopulation")

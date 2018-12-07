@@ -22,7 +22,7 @@
 class MeanPascucciBenchmarkDustMix : public SingleGrainDustMix
 {
     ITEM_CONCRETE(MeanPascucciBenchmarkDustMix, SingleGrainDustMix,
-                  "a dust mix from the Pascucci 2D benchmark (mean properties)")
+                  "a Pascucci 2D benchmark dust mix (mean properties)")
         ATTRIBUTE_TYPE_DISPLAYED_IF(MeanPascucciBenchmarkDustMix, "Level2")
     ITEM_END()
 

@@ -33,7 +33,7 @@
     coefficients. */
 class MeanFileDustMix : public MeanTabulatedDustMix
 {
-    ITEM_CONCRETE(MeanFileDustMix, MeanTabulatedDustMix, "a basic dust mix with properties loaded from a text file")
+    ITEM_CONCRETE(MeanFileDustMix, MeanTabulatedDustMix, "a dust mix with mean properties loaded from a text file")
 
     PROPERTY_STRING(filename, "the name of the file with the optical properties for the dust mix")
 

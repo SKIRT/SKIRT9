@@ -43,7 +43,7 @@ class WeingartnerDraineDustMix : public MultiGrainDustMix
     ENUM_VAL(Environment, SMC, "the Small Magellanic Cloud")
     ENUM_END()
 
-    ITEM_CONCRETE(WeingartnerDraineDustMix, MultiGrainDustMix, "a Weingartner & Draine dust mix")
+    ITEM_CONCRETE(WeingartnerDraineDustMix, MultiGrainDustMix, "a Weingartner and Draine (2001) dust mix")
 
     PROPERTY_ENUM(environment, Environment, "the environment determining the dust model")
         ATTRIBUTE_DEFAULT_VALUE(environment, "MilkyWay")

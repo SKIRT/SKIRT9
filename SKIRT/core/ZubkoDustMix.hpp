@@ -27,7 +27,7 @@
     ZubkoPAHGrainSizeDistribution classes. */
 class ZubkoDustMix : public MultiGrainDustMix
 {
-    ITEM_CONCRETE(ZubkoDustMix, MultiGrainDustMix, "a Zubko et al. 2004 dust mix")
+    ITEM_CONCRETE(ZubkoDustMix, MultiGrainDustMix, "a Zubko et al. (2004) dust mix")
 
     PROPERTY_INT(numSilicateSizes, "the number of silicate grain size bins")
         ATTRIBUTE_MIN_VALUE(numSilicateSizes, "1")
