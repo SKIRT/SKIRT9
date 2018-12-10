@@ -414,7 +414,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<MeanPinteBenchmarkDustMix>();
     ItemRegistry::add<MeanPascucciBenchmarkDustMix>();
     ItemRegistry::add<MeanIvezicBenchmarkDustMix>();
-    ItemRegistry::add<MeanTabulatedDustMix>();
+    ItemRegistry::add<TabulatedDustMix>();
     ItemRegistry::add<MeanFileDustMix>();
     ItemRegistry::add<MeanListDustMix>();
 

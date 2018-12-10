@@ -3,17 +3,16 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef MEANTABULATEDDUSTMIX_HPP
-#define MEANTABULATEDDUSTMIX_HPP
+#ifndef TABULATEDDUSTMIX_HPP
+#define TABULATEDDUSTMIX_HPP
 
 #include "DustMix.hpp"
 #include "Array.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-/** MeanTabulatedDustMix is an abstract class for representing basic dust mixes described by
-    tabulated properties for a single representative grain using the Henyey-Greenstein scattering
-    mode.
+/** TabulatedDustMix is an abstract class for representing basic dust mixes described by tabulated
+    properties for a single representative grain using the Henyey-Greenstein scattering mode.
 
     Specifically, the tabulated properties include the extinction mass coefficient
     \f$\kappa^\text{ext}_\lambda\f$, the scattering albedo \f$\varpi_\lambda\f$ and the scattering
@@ -29,10 +28,10 @@
     are considered to be constant for all wavelengths.
 
     The subclass must load the tabulated data, and this abstract class handles everything else. */
-class MeanTabulatedDustMix : public DustMix
+class TabulatedDustMix : public DustMix
 {
-    ITEM_ABSTRACT(MeanTabulatedDustMix, MaterialMix, "a basic dust mix with properties tabulated by the user")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(MeanTabulatedDustMix, "Level2")
+    ITEM_ABSTRACT(TabulatedDustMix, MaterialMix, "a basic dust mix with properties tabulated by the user")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(TabulatedDustMix, "Level2")
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============

@@ -6,7 +6,7 @@
 #ifndef MEANFILEDUSTMIX_HPP
 #define MEANFILEDUSTMIX_HPP
 
-#include "MeanTabulatedDustMix.hpp"
+#include "TabulatedDustMix.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -31,9 +31,9 @@
     the dust mass per hydrogen atom, \f$\mu=1.5\times 10^{-29} \text{kg}\,\text{H}^{-1}\f$ to set
     the absolute scale of the cross sections listed by some of the probes in relation to the mass
     coefficients. */
-class MeanFileDustMix : public MeanTabulatedDustMix
+class MeanFileDustMix : public TabulatedDustMix
 {
-    ITEM_CONCRETE(MeanFileDustMix, MeanTabulatedDustMix, "a dust mix with mean properties loaded from a text file")
+    ITEM_CONCRETE(MeanFileDustMix, TabulatedDustMix, "a dust mix with mean properties loaded from a text file")
 
     PROPERTY_STRING(filename, "the name of the file with the optical properties for the dust mix")
 

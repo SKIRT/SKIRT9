@@ -6,7 +6,7 @@
 #ifndef MEANLISTDUSTMIX_HPP
 #define MEANLISTDUSTMIX_HPP
 
-#include "MeanTabulatedDustMix.hpp"
+#include "TabulatedDustMix.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -29,9 +29,9 @@
     the dust mass per hydrogen atom, \f$\mu=1.5\times 10^{-29} \text{kg}\,\text{H}^{-1}\f$ to set
     the absolute scale of the cross sections listed by some of the probes in relation to the mass
     coefficients. */
-class MeanListDustMix : public MeanTabulatedDustMix
+class MeanListDustMix : public TabulatedDustMix
 {
-    ITEM_CONCRETE(MeanListDustMix, MeanTabulatedDustMix,
+    ITEM_CONCRETE(MeanListDustMix, TabulatedDustMix,
                   "a dust mix with mean properties specified inside the configuration file")
 
     PROPERTY_DOUBLE_LIST(wavelengths, "the wavelengths at which to specify the optical properties")

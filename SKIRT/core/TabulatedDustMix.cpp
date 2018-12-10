@@ -3,13 +3,13 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "MeanTabulatedDustMix.hpp"
+#include "TabulatedDustMix.hpp"
 #include "FatalError.hpp"
 #include "NR.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
-void MeanTabulatedDustMix::setupSelfBefore()
+void TabulatedDustMix::setupSelfBefore()
 {
     DustMix::setupSelfBefore();
 
@@ -28,35 +28,35 @@ void MeanTabulatedDustMix::setupSelfBefore()
 
 ////////////////////////////////////////////////////////////////////
 
-MaterialMix::ScatteringMode MeanTabulatedDustMix::scatteringMode() const
+MaterialMix::ScatteringMode TabulatedDustMix::scatteringMode() const
 {
     return ScatteringMode::HenyeyGreenstein;
 }
 
 //////////////////////////////////////////////////////////////////////
 
-double MeanTabulatedDustMix::mass() const
+double TabulatedDustMix::mass() const
 {
     return _mu;
 }
 
 //////////////////////////////////////////////////////////////////////
 
-double MeanTabulatedDustMix::sectionAbsSelf(double lambda) const
+double TabulatedDustMix::sectionAbsSelf(double lambda) const
 {
     return NR::clampedValue<NR::interpolateLogLog>(lambda, _lambdav, _sectionAbsv);
 }
 
 //////////////////////////////////////////////////////////////////////
 
-double MeanTabulatedDustMix::sectionScaSelf(double lambda) const
+double TabulatedDustMix::sectionScaSelf(double lambda) const
 {
     return NR::clampedValue<NR::interpolateLogLog>(lambda, _lambdav, _sectionScav);
 }
 
 //////////////////////////////////////////////////////////////////////
 
-double MeanTabulatedDustMix::asymmpar(double lambda) const
+double TabulatedDustMix::asymmpar(double lambda) const
 {
     return NR::clampedValue<NR::interpolateLogLin>(lambda, _lambdav, _asymmparv);
 }
