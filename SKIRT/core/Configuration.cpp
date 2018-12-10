@@ -224,6 +224,14 @@ Range Configuration::simulationWavelengthRange() const
     // extend this range with a wide margin for kinematics if needed
     if (_hasMovingSources || _hasMovingMedia) range.extend(1./3.);
 
+    // include radiation field wavelength grid (because dust properties are pre-calculated on these wavelengths)
+    if (_hasRadiationField)
+    {
+        _radiationFieldWLG->setup();  // ensure setup because this function may be called early during setup
+        range.extend(_radiationFieldWLG->wavelengthRange());
+        range.extend(Range(0.09e-6, 2000e-6));   // (see DustMix::setupSelfAfter())
+    }
+
     // include default instrument wavelength grid
     if (_defaultWavelengthGrid)
     {
