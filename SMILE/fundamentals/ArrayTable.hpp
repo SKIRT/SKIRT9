@@ -73,6 +73,11 @@ public:
         empty. */
     size_t rowSize() const { return !_rows.empty() ? _rows[0].size() : 0; }
 
+    /** This function returns an estimate for the total number of items in the table, obtained by
+        multiplying the total number of rows in the table by the size of the first row. In other
+        words, the estimate assumes that all rows have the same size. */
+    size_t size() const { return _rows.size() * rowSize(); }
+
     /** This function returns a writable reference to the value at the specified N indices. There
         is no range checking. Out-of-range index values cause unpredictable behavior. */
     template <typename... Indices, typename = std::enable_if_t<CompileTimeUtils::isIntegralArgList<N, Indices...>()>>

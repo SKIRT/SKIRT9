@@ -6,8 +6,28 @@
 #include "DustMix.hpp"
 #include "Configuration.hpp"
 #include "DisjointWavelengthGrid.hpp"
+#include "Log.hpp"
 #include "NR.hpp"
 #include "PlanckFunction.hpp"
+#include "Random.hpp"
+#include "StokesVector.hpp"
+#include "StringUtils.hpp"
+
+////////////////////////////////////////////////////////////////////
+
+// built-in constants determining the resolution for discretizing the scattering angles
+namespace
+{
+    // theta from 0 to pi, index t
+    constexpr int numTheta = 361;
+    constexpr int maxTheta = numTheta-1;
+    constexpr double deltaTheta = M_PI/maxTheta;
+
+    // phi from 0 to 2 pi, index f
+    constexpr int numPhi = 361;
+    constexpr int maxPhi = numPhi-1;
+    constexpr double deltaPhi = 2*M_PI/(maxPhi-1);
+}
 
 ////////////////////////////////////////////////////////////////////
 
@@ -15,29 +35,92 @@ void DustMix::setupSelfAfter()
 {
     MaterialMix::setupSelfAfter();
 
-    // precalculate cross sections on a fine grid covering the wavelength range of the simulation
+    // get the scattering mode advertised by the subclass
+    auto mode = scatteringMode();
+
+    // determine the parameters for a fine grid covering the wavelength range of the simulation in log space
+    const int numWavelengthsPerDex = 500;
+    Range range = find<Configuration>()->simulationWavelengthRange();
+    _logLambdaOffset = - log10(range.min());
+    _logLambdaFactor = numWavelengthsPerDex;
+    _maxLogLambda = _logLambdaFactor * log10(range.max()/range.min());
+    int numLambda = _maxLogLambda+1;
+
+    // build a temporary wavelength grid corresponding to this scheme
+    Array lambdav(numLambda);
+    for (int ell=0; ell!=numLambda; ++ell) lambdav[ell] = pow(10., (ell+0.5)/_logLambdaFactor - _logLambdaOffset);
+
+    // if needed, build a scattering angle grid
+    if (mode == ScatteringMode::MaterialPhaseFunction || mode == ScatteringMode::SphericalPolarization)
     {
-        // the number of wavelength points per dex
-        const int numWavelengthsPerDex = 500;
+        _thetav.resize(numTheta);
+        for (int t=0; t!=numTheta; ++t) _thetav[t] = t * deltaTheta;
+    }
 
-        // get the wavelength range and the conversion scheme to indices in log space
-        Range range = find<Configuration>()->simulationWavelengthRange();
-        _logLambdaOffset = - log10(range.min());
-        _logLambdaFactor = numWavelengthsPerDex;
-        _maxLogLambda = _logLambdaFactor * log10(range.max()/range.min());
-
-        // obtain the cross sections for all wavelength points in the grid
-        _sectionAbs.resize(_maxLogLambda+1);
-        _sectionSca.resize(_maxLogLambda+1);
-        _sectionExt.resize(_maxLogLambda+1);
-        _albedo.resize(_maxLogLambda+1);
-        for (int ell=0; ell!=(_maxLogLambda+1); ++ell)
+    // resize the optical property arrays and tables as needed
+    _sigmaabsv.resize(numLambda);
+    _sigmascav.resize(numLambda);
+    _sigmaextv.resize(numLambda);
+    _albedov.resize(numLambda);
+    _asymmparv.resize(numLambda);
+    if (mode == ScatteringMode::MaterialPhaseFunction || mode == ScatteringMode::SphericalPolarization)
+    {
+        _S11vv.resize(numLambda, numTheta);
+        if (mode == ScatteringMode::SphericalPolarization)
         {
-            double lambda = pow(10., (ell+0.5)/_logLambdaFactor - _logLambdaOffset);
-            _sectionAbs[ell] = sectionAbsSelf(lambda);
-            _sectionSca[ell] = sectionScaSelf(lambda);
-            _sectionExt[ell] = _sectionAbs[ell] + _sectionSca[ell];
-            _albedo[ell] = _sectionExt[ell] > 0. ? _sectionSca[ell]/_sectionExt[ell] : 0.;
+            _S12vv.resize(numLambda, numTheta);
+            _S33vv.resize(numLambda, numTheta);
+            _S34vv.resize(numLambda, numTheta);
+        }
+    }
+
+    // obtain the optical properties from the subclass
+    getOpticalProperties(lambdav, _thetav, _sigmaabsv, _sigmascav, _asymmparv, _S11vv, _S12vv, _S33vv, _S34vv);
+
+    // calculate some derived basic optical properties
+    for (int ell=0; ell!=numLambda; ++ell)
+    {
+        _sigmaextv[ell] = _sigmaabsv[ell] + _sigmascav[ell];
+        _albedov[ell] = _sigmaextv[ell] > 0. ? _sigmascav[ell]/_sigmaextv[ell] : 0.;
+    }
+
+    // precalculate discretizations related to the scattering angles as needed
+    if (mode == ScatteringMode::MaterialPhaseFunction || mode == ScatteringMode::SphericalPolarization)
+    {
+        // create a table with the normalized cumulative distribution of theta for each wavelength
+        _thetaXvv.resize(numLambda,0);
+        for (int ell=0; ell!=numLambda; ++ell)
+        {
+            NR::cdf(_thetaXvv[ell], maxTheta, [this,ell](int t){ return _S11vv(ell,t+1)*sin(_thetav[t+1]); });
+        }
+
+        // create a table with the phase function normalization factor for each wavelength
+        _pfnormv.resize(numLambda);
+        for (int ell=0; ell!=numLambda; ++ell)
+        {
+            double sum = 0.;
+            for (int t=0; t!=numTheta; ++t)
+            {
+                sum += _S11vv(ell,t)*sin(_thetav[t])*deltaTheta;
+            }
+            _pfnormv[ell] = 2.0/sum;
+        }
+
+        // create tables listing phi, phi/(2 pi), sin(2 phi) and 1-cos(2 phi) for each phi index
+        if (mode == ScatteringMode::SphericalPolarization)
+        {
+            _phiv.resize(numPhi);
+            _phi1v.resize(numPhi);
+            _phisv.resize(numPhi);
+            _phicv.resize(numPhi);
+            for (int f=0; f!=numPhi; ++f)
+            {
+                double phi = f * deltaPhi;
+                _phiv[f] = phi;
+                _phi1v[f] = phi/(2*M_PI);
+                _phisv[f] = sin(2*phi);
+                _phicv[f] = 1-cos(2*phi);
+            }
         }
     }
 
@@ -55,9 +138,9 @@ void DustMix::setupSelfAfter()
 
             // cache the absorption cross sections on the above wavelength grid
             int numWavelengths = _radiationFieldWLG->numBins();
-            _sigmaabsv.resize(numWavelengths);
+            _rfsigmaabsv.resize(numWavelengths);
             for (int ell=0; ell!=numWavelengths; ++ell)
-                _sigmaabsv[ell] = sectionAbsSelf(_radiationFieldWLG->wavelength(ell));
+                _rfsigmaabsv[ell] = sectionAbs(_radiationFieldWLG->wavelength(ell));
         }
 
         // energy output side
@@ -66,33 +149,63 @@ void DustMix::setupSelfAfter()
             const int numTemperatures = 1001;
             NR::buildPowerLawGrid(_Tv, 0., 5000., numTemperatures-1, 500.);
 
-            // the wavelength grid over which to perform the integration
-            const int numWavelengths = 3001;
-            Array lambdav;
-            NR::buildLogGrid(lambdav, 0.1e-6, 10000e-6, numWavelengths-1);
-
-            // the absorption cross sections of this material on the above wavelength grid
-            Array sigmaabsv(numWavelengths);
-            for (int ell=0; ell!=numWavelengths; ++ell) sigmaabsv[ell] = sectionAbsSelf(lambdav[ell]);
-
             // the Planck-integrated absorption cross sections on the above temperature grid
             _planckabsv.resize(numTemperatures);
             for (int p=1; p!=numTemperatures; ++p)   // leave value for p==0 at zero
             {
                 PlanckFunction B(_Tv[p]);
                 double planckabs = 0.;
-                for (int ell=1; ell!=numWavelengths; ++ell) // skip the first wavelength so we can determine a bin width
+                for (int ell=1; ell!=numLambda; ++ell) // skip the first wavelength so we can determine a bin width
                 {
                     double lambda = lambdav[ell];
                     double dlambda = lambdav[ell] - lambdav[ell-1];
-                    planckabs += sigmaabsv[ell] * B(lambda) * dlambda;
+                    planckabs += _sigmaabsv[ell] * B(lambda) * dlambda;
                 }
                 _planckabsv[p] = planckabs;
             }
         }
     }
+
+    // calculate and log allocated memory size
+    size_t allocatedSize = 0;
+    allocatedSize += _thetav.size();
+    allocatedSize += _sigmaabsv.size();
+    allocatedSize += _sigmascav.size();
+    allocatedSize += _sigmaextv.size();
+    allocatedSize += _albedov.size();
+    allocatedSize += _asymmparv.size();
+    allocatedSize += _S11vv.size();
+    allocatedSize += _S12vv.size();
+    allocatedSize += _S33vv.size();
+    allocatedSize += _S34vv.size();
+    allocatedSize += _thetaXvv.size();
+    allocatedSize += _pfnormv.size();
+    allocatedSize += _phiv.size();
+    allocatedSize += _phi1v.size();
+    allocatedSize += _phisv.size();
+    allocatedSize += _phicv.size();
+    allocatedSize += _rfsigmaabsv.size();
+    allocatedSize += _Tv.size();
+    allocatedSize += _planckabsv.size();
+    find<Log>()->info("DustMix allocated " +
+                      StringUtils::toMemSizeString(allocatedSize*sizeof(double)) + " of memory");
 }
 
+////////////////////////////////////////////////////////////////////
+
+int DustMix::indexForLambda(double lambda) const
+{
+    int logLambda = (_logLambdaOffset + log10(lambda)) * _logLambdaFactor;
+    return max(0, min(logLambda, _maxLogLambda));
+}
+
+////////////////////////////////////////////////////////////////////
+
+int DustMix::indexForTheta(double theta) const
+{
+    int t = 0.5 + theta / deltaTheta;
+    return max(0, min(t, maxTheta));
+}
 
 ////////////////////////////////////////////////////////////////////
 
@@ -103,50 +216,102 @@ MaterialMix::MaterialType DustMix::materialType() const
 
 ////////////////////////////////////////////////////////////////////
 
+double DustMix::mass() const
+{
+    return _mu;
+}
+
+////////////////////////////////////////////////////////////////////
+
 double DustMix::sectionAbs(double lambda) const
 {
-    // convert wavelength to index in our precalculated array
-    int logLambda = (_logLambdaOffset + log10(lambda)) * _logLambdaFactor;
-    logLambda = max(0, min(logLambda, _maxLogLambda));
-
-    // retrieve value
-    return _sectionAbs[logLambda];
+    return _sigmaabsv[indexForLambda(lambda)];
 }
 
 ////////////////////////////////////////////////////////////////////
 
 double DustMix::sectionSca(double lambda) const
 {
-    // convert wavelength to index in our precalculated array
-    int logLambda = (_logLambdaOffset + log10(lambda)) * _logLambdaFactor;
-    logLambda = max(0, min(logLambda, _maxLogLambda));
-
-    // retrieve value
-    return _sectionSca[logLambda];
+    return _sigmascav[indexForLambda(lambda)];
 }
 
 ////////////////////////////////////////////////////////////////////
 
 double DustMix::sectionExt(double lambda) const
 {
-    // convert wavelength to index in our precalculated array
-    int logLambda = (_logLambdaOffset + log10(lambda)) * _logLambdaFactor;
-    logLambda = max(0, min(logLambda, _maxLogLambda));
-
-    // retrieve value
-    return _sectionExt[logLambda];
+    return _sigmaextv[indexForLambda(lambda)];
 }
 
 ////////////////////////////////////////////////////////////////////
 
 double DustMix::albedo(double lambda) const
 {
-    // convert wavelength to index in our precalculated array
-    int logLambda = (_logLambdaOffset + log10(lambda)) * _logLambdaFactor;
-    logLambda = max(0, min(logLambda, _maxLogLambda));
+    return _albedov[indexForLambda(lambda)];
+}
 
-    // retrieve value
-    return _albedo[logLambda];
+////////////////////////////////////////////////////////////////////
+
+double DustMix::asymmpar(double lambda) const
+{
+    return _asymmparv[indexForLambda(lambda)];
+}
+
+////////////////////////////////////////////////////////////////////
+
+double DustMix::phaseFunctionValueForCosine(double lambda, double costheta) const
+{
+    int ell = indexForLambda(lambda);
+    int t = indexForTheta(acos(costheta));
+    return _pfnormv[ell] * _S11vv(ell,t);
+}
+
+////////////////////////////////////////////////////////////////////
+
+double DustMix::generateCosineFromPhaseFunction(double lambda) const
+{
+    return cos(random()->cdfLinLin(_thetav, _thetaXvv[indexForLambda(lambda)]));
+}
+
+////////////////////////////////////////////////////////////////////
+
+double DustMix::phaseFunctionValue(double lambda, double theta, double phi, const StokesVector* sv) const
+{
+    int ell = indexForLambda(lambda);
+    int t = indexForTheta(theta);
+    double polDegree = sv->linearPolarizationDegree();
+    double polAngle = sv->polarizationAngle();
+    return _pfnormv[ell] * (_S11vv(ell,t) + polDegree*_S12vv(ell,t)*cos(2.*(phi-polAngle)));
+}
+
+////////////////////////////////////////////////////////////////////
+
+std::pair<double,double> DustMix::generateAnglesFromPhaseFunction(double lambda, const StokesVector* sv) const
+{
+    int ell = indexForLambda(lambda);
+
+    // sample from the normalized cumulative distribution of theta for this wavelength
+    double theta = random()->cdfLinLin(_thetav, _thetaXvv[ell]);
+    int t = indexForTheta(theta);
+
+    // construct and sample from the normalized cumulative distribution of phi for this wavelength and theta angle
+    double polDegree = sv->linearPolarizationDegree();
+    double polAngle = sv->polarizationAngle();
+    double PF = polDegree * _S12vv(ell,t)/_S11vv(ell,t) / (4*M_PI);
+    double cos2polAngle = cos(2*polAngle) * PF;
+    double sin2polAngle = sin(2*polAngle) * PF;
+    double phi = random()->cdfLinLin(_phiv, _phi1v + cos2polAngle*_phisv + sin2polAngle*_phicv);
+
+    // return the result
+    return std::make_pair(theta, phi);
+}
+
+////////////////////////////////////////////////////////////////////
+
+void DustMix::applyMueller(double lambda, double theta, StokesVector* sv) const
+{
+    int ell = indexForLambda(lambda);
+    int t = indexForTheta(theta);
+    sv->applyMueller(_S11vv(ell,t), _S12vv(ell,t), _S33vv(ell,t), _S34vv(ell,t));
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -158,7 +323,7 @@ double DustMix::equilibriumTemperature(const Array& Jv) const
     double inputabs = 0.;
     for (int ell=0; ell!=numWavelengths; ++ell)
     {
-        inputabs += _sigmaabsv[ell] * Jv[ell] * _radiationFieldWLG->effectiveWidth(ell);
+        inputabs += _rfsigmaabsv[ell] * Jv[ell] * _radiationFieldWLG->effectiveWidth(ell);
     }
 
     // find the temperature corresponding to this amount of emission on the output side of the equation

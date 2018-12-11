@@ -29,32 +29,23 @@ void MultiGrainDustMix::addPopulation(GrainComposition* composition, GrainSizeDi
 
 ////////////////////////////////////////////////////////////////////
 
-void MultiGrainDustMix::setupSelfAfter()
+double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array& thetav,
+                                               Array& sigmaabsv, Array& sigmascav, Array& asymmparv,
+                                               Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv) const
 {
-    // get the number of grain populations
-    int numPops = _populations.size();
-    if (!numPops) throw FATALERROR("Dust mix must have at least one grain population");
+    // get the scattering mode advertised by the subclass
+    auto mode = scatteringMode();
 
-    // construct a wavelength grid with an appropriate range and 300 wavelengths per decade;
-    // this might be optimized by varying the wavelength resolution depending on the subrange
-    auto range = find<Configuration>()->simulationWavelengthRange();
-    int numWavelengths = max(3., 300 * log10(range.max()/range.min()));
-    NR::buildLogGrid(_lambdav, range.min(), range.max(), numWavelengths);
+    // get the number of requested grid points
+    int numLambda = lambdav.size();
+    int numTheta = thetav.size();
 
-    // resize the arrays for properties tabulated on wavelength
-    _sigmaabsv.resize(numWavelengths);
-    _sigmascav.resize(numWavelengths);
-    _asymmparv.resize(numWavelengths);
+    // dust mass per hydrogen atom accumulated over all populations
+    double mu = 0.;
 
     // accumulate the relevant properties over all populations
     for (auto population : _populations)
     {
-        // open the stored tables
-        string opticalPropsName = population->composition()->resourceNameForOpticalProps();
-        StoredTable<2> Qabs(this, opticalPropsName, "lambda(m),a(m)", "Qabs(1)");
-        StoredTable<2> Qsca(this, opticalPropsName, "lambda(m),a(m)", "Qsca(1)");
-        StoredTable<2> g(this, opticalPropsName, "lambda(m),a(m)", "g(1)");
-
         // construct a grain size integration grid for this population
         double amin = population->sizeDistribution()->amin();
         double amax = population->sizeDistribution()->amax();
@@ -62,7 +53,7 @@ void MultiGrainDustMix::setupSelfAfter()
         Array av(numSizes);      // "a" for each point
         Array dav(numSizes);     // "da" for each point
         Array dndav(numSizes);   // "dnda" for each point
-        Array weightv(numSizes); // integration weight for each point (1/2 or 1)
+        Array weightv(numSizes); // integration weight for each point (1/2 or 1 in addition to normalization)
         {
             double logamin = log10(amin);
             double logamax = log10(amax);
@@ -79,40 +70,46 @@ void MultiGrainDustMix::setupSelfAfter()
 
         // calculate the mass per hydrogen atom for this population according to the bare size distribution
         // (i.e. without applying any normalization)
-        double baremu = 0.;
+        double baremupop = 0.;
         for (int i=0; i!=numSizes; ++i)
         {
             double volume = 4.0*M_PI/3.0 * av[i] * av[i] * av[i];
-            baremu += weightv[i] * dndav[i] * volume * dav[i];
+            baremupop += weightv[i] * dndav[i] * volume * dav[i];
         }
-        baremu *= population->composition()->bulkDensity();
+        baremupop *= population->composition()->bulkDensity();
 
         // determine the actual mass per hydrogen atom for this population after applying normalization,
         // and add it to the global total
-        double mu = 0.;
+        double mupop = 0.;
         switch (population->normalizationType())
         {
         case GrainPopulation::NormalizationType::DustMassPerHydrogenAtom:
-            mu = population->dustMassPerHydrogenAtom();
+            mupop = population->dustMassPerHydrogenAtom();
             break;
         case GrainPopulation::NormalizationType::DustMassPerHydrogenMass:
-            mu = population->dustMassPerHydrogenMass() * Constants::Mproton();
+            mupop = population->dustMassPerHydrogenMass() * Constants::Mproton();
             break;
         case GrainPopulation::NormalizationType::FactorOnSizeDistribution:
-            mu = baremu * population->factorOnSizeDistribution();
+            mupop = baremupop * population->factorOnSizeDistribution();
             break;
         }
-        if (!mu) throw FATALERROR("Dust grain population of type " + population->composition()->name()
+        if (!mupop) throw FATALERROR("Dust grain population of type " + population->composition()->name()
                                   + " has zero dust mass");
-        _mu += mu;
+        mu += mupop;
 
         // adjust the integration weight for further calculations by the normalization factor
-        weightv *= mu/baremu;
+        weightv *= mupop/baremupop;
+
+        // open the stored tables for the basic optical properties
+        string opticalPropsName = population->composition()->resourceNameForOpticalProps();
+        StoredTable<2> Qabs(this, opticalPropsName, "lambda(m),a(m)", "Qabs(1)");
+        StoredTable<2> Qsca(this, opticalPropsName, "lambda(m),a(m)", "Qsca(1)");
+        StoredTable<2> g(this, opticalPropsName, "lambda(m),a(m)", "g(1)");
 
         // calculate the optical properties for each wavelength, and add them to the global total
-        for (int ell=0; ell!=numWavelengths; ++ell)
+        for (int ell=0; ell!=numLambda; ++ell)
         {
-            double lamdba = _lambdav[ell];
+            double lamdba = lambdav[ell];
 
             double sumsigmaabs = 0.;
             double sumsigmasca = 0.;
@@ -128,89 +125,92 @@ void MultiGrainDustMix::setupSelfAfter()
                 sumsigmasca += sigmasca;
                 sumgsigmasca += gsigmasca;
             }
-            _sigmaabsv[ell] += sumsigmaabs;
-            _sigmascav[ell] += sumsigmasca;
-            _asymmparv[ell] += sumgsigmasca;  // need to divide by sigmasca after accumulation for all populations
+            sigmaabsv[ell] += sumsigmaabs;
+            sigmascav[ell] += sumsigmasca;
+            asymmparv[ell] += sumgsigmasca;  // need to divide by sigmasca after accumulation for all populations
+        }
+
+        // handle Mueller matrix coefficients if needed
+        if (mode == ScatteringMode::MaterialPhaseFunction || mode == ScatteringMode::SphericalPolarization)
+        {
+            // open the stored tables for the Mueller matrix coefficients
+            string muellerName = population->composition()->resourceNameForMuellerMatrix();
+            StoredTable<3> S11, S12, S33, S34;
+            S11.open(this, muellerName, "lambda(m),a(m),theta(rad)", "S11(1)");
+            if (mode == ScatteringMode::SphericalPolarization)
+            {
+                S12.open(this, muellerName, "lambda(m),a(m),theta(rad)", "S12(1)");
+                S33.open(this, muellerName, "lambda(m),a(m),theta(rad)", "S33(1)");
+                S34.open(this, muellerName, "lambda(m),a(m),theta(rad)", "S34(1)");
+            }
+
+            // calculate the Mueller matrix coefficients on the requested wavelength and scattering angle grid
+            for (int ell=0; ell!=numLambda; ++ell)
+            {
+                double lambda = lambdav[ell];
+                for (int t=0; t!=numTheta; ++t)
+                {
+                    double theta = thetav[t];
+
+                    // integrate over the size distribution
+                    double sumS11 = 0.;
+                    double sumS12 = 0.;
+                    double sumS33 = 0.;
+                    double sumS34 = 0.;
+                    for (int i=0; i!=numSizes; ++i)
+                    {
+                        double factor = weightv[i] * dndav[i] * dav[i];
+                        sumS11 += factor * S11(lambda,av[i],theta);
+                        if (mode == ScatteringMode::SphericalPolarization)
+                        {
+                            sumS12 += factor * S12(lambda,av[i],theta);
+                            sumS33 += factor * S33(lambda,av[i],theta);
+                            sumS34 += factor * S34(lambda,av[i],theta);
+                        }
+                    }
+
+                    // accumulate for all populations
+                    S11vv(ell,t) += sumS11;
+                    if (mode == ScatteringMode::SphericalPolarization)
+                    {
+                        S12vv(ell,t) += sumS12;
+                        S33vv(ell,t) += sumS33;
+                        S34vv(ell,t) += sumS34;
+                    }
+                }
+            }
         }
     }
 
     // calculate g = gsigmasca / sigmasca
-    for (int ell=0; ell!=numWavelengths; ++ell)
+    for (int ell=0; ell!=numLambda; ++ell)
     {
-        _asymmparv[ell] = _sigmascav[ell] ? _asymmparv[ell]/_sigmascav[ell] : 0.;
+        asymmparv[ell] = sigmascav[ell] ? asymmparv[ell]/sigmascav[ell] : 0.;
     }
 
-    // TO DO
-    DustMix::setupSelfAfter();
+    return mu;
 }
 
 ////////////////////////////////////////////////////////////////////
 
 MaterialMix::ScatteringMode MultiGrainDustMix::scatteringMode() const
 {
-    return MaterialMix::ScatteringMode::HenyeyGreenstein;
-}
+    // get the number of grain populations
+    int numPops = _populations.size();
+    if (!numPops) throw FATALERROR("Dust mix must have at least one grain population");
 
-////////////////////////////////////////////////////////////////////
+    // count the number of populations that offer a Mueller matrix
+    int numMueller = 0;
+    for (auto population : _populations)
+        if (!population->composition()->resourceNameForMuellerMatrix().empty()) numMueller++;
 
-double MultiGrainDustMix::mass() const
-{
-    return _mu;
-}
+    // !! because there is no configuration option to choose between MaterialPhaseFunction or SphericalPolarization,
+    // !! the current implementation never returns the MaterialPhaseFunction scattering mode
+    if (numMueller == 0) return ScatteringMode::HenyeyGreenstein;
+    if (numMueller == numPops) return ScatteringMode::SphericalPolarization;
 
-////////////////////////////////////////////////////////////////////
-
-double MultiGrainDustMix::sectionAbsSelf(double lambda) const
-{
-    return NR::clampedValue<NR::interpolateLogLog>(lambda, _lambdav, _sigmaabsv);
-}
-
-////////////////////////////////////////////////////////////////////
-
-double MultiGrainDustMix::sectionScaSelf(double lambda) const
-{
-    return NR::clampedValue<NR::interpolateLogLog>(lambda, _lambdav, _sigmascav);
-}
-
-////////////////////////////////////////////////////////////////////
-
-double MultiGrainDustMix::asymmpar(double lambda) const
-{
-    return NR::clampedValue<NR::interpolateLogLin>(lambda, _lambdav, _asymmparv);
-}
-
-////////////////////////////////////////////////////////////////////
-
-double MultiGrainDustMix::phaseFunctionValueForCosine(double /*lambda*/, double /*costheta*/) const
-{
-    return 0.;
-}
-
-////////////////////////////////////////////////////////////////////
-
-double MultiGrainDustMix::generateCosineFromPhaseFunction(double /*lambda*/) const
-{
-    return 0.;
-}
-
-////////////////////////////////////////////////////////////////////
-
-double MultiGrainDustMix::phaseFunctionValue(double /*lambda*/, double /*theta*/, double /*phi*/, const StokesVector* /*sv*/) const
-{
-    return 0.;
-}
-
-////////////////////////////////////////////////////////////////////
-
-std::pair<double,double> MultiGrainDustMix::generateAnglesFromPhaseFunction(double /*lambda*/, const StokesVector* /*sv*/) const
-{
-    return std::make_pair(0.,0.);
-}
-
-////////////////////////////////////////////////////////////////////
-
-void MultiGrainDustMix::applyMueller(double /*lambda*/, double /*theta*/, StokesVector* /*sv*/) const
-{
+    // all populations should have the same level of support, so if we get here we throw an error
+    throw FATALERROR("Dust mix has some grain populations that offer a Mueller matrix, and some that don't");
 }
 
 ////////////////////////////////////////////////////////////////////

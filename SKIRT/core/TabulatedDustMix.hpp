@@ -23,9 +23,7 @@
     set the absolute scale of the property, so that the cross sections listed by some of the probes
     have an appropriately scaled value.
 
-    Property values outside of the tabulated wavelength range are clamped to the nearest border
-    value. As a special-case consequence, if only a single wavelength is tabulated, the properties
-    are considered to be constant for all wavelengths.
+    Property values outside of the tabulated wavelength range are considered to be zero.
 
     The subclass must load the tabulated data, and this abstract class handles everything else. */
 class TabulatedDustMix : public DustMix
@@ -37,8 +35,20 @@ class TabulatedDustMix : public DustMix
     //============= Construction - Setup - Destruction =============
 
 protected:
-    /** This function asks the subclass to load the tabulated data. */
-    void setupSelfBefore() override;
+    /** This function is invoked by the DustMix base class to obtain the representative grain
+        optical properties for this dust mix. The first argument specifies the wavelength grid on
+        which the absorption and scattering cross sections and the asymmetry parameter must be
+        tabulated. The second argument is not used. The function store these tabulated properties
+        into the three subsequent output arrays, which will already have the same length as the
+        input wavelength grid when the function gets called. The Mueller matrix tables remain
+        untouched. Finally, the function returns the dust mass per hydrogen atom for the dust mix.
+
+        This function in turn invokes the getDustProperties() function that must be implemented by
+        each TabulatedDustMix subclass, and it subsequently resamples the returned properties on
+        the requested wavelength grid. */
+        double getOpticalProperties(const Array& lambdav, const Array& thetav,
+                                    Array& sigmaabsv, Array& sigmascav, Array& asymmparv,
+                                    Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv) const override;
 
     /** This function must be implemented in each subclass to store the wavelengths and the
         corresponding tabulated properties in the array arguments, and to return the dust mass per
@@ -51,33 +61,6 @@ public:
     /** This function returns the scattering mode supported by this material mix. For this class,
         it returns the HenyeyGreenstein mode. */
     ScatteringMode scatteringMode() const override;
-
-    /** This function returns the dust mass per hydrogen atom \f$\mu\f$ for this dust mix. */
-    double mass() const override;
-
-    /** This function returns the absorption cross section per hydrogen atom
-        \f$\varsigma^{\text{abs}}_{\lambda}\f$ of the dust mix at wavelength \f$\lambda\f$. */
-    double sectionAbsSelf(double lambda) const override;
-
-    /** This function returns the scattering cross section per hydrogen atom
-        \f$\varsigma^{\text{sca}}_{\lambda}\f$ of the dust mix at wavelength \f$\lambda\f$. */
-    double sectionScaSelf(double lambda) const override;
-
-    /** This function returns the scattering asymmetry parameter \f$g_\lambda =
-        \left<\cos\theta\right>\f$ at wavelength \f$\lambda\f$, or if this value is unkown, it
-        returns zero (corresponding to isotropic scattering). */
-    double asymmpar(double lambda) const override;
-
-    //======================== Data Members ========================
-
-private:
-    // data members initialized during setup
-    size_t _num{0};
-    Array _lambdav;
-    Array _sectionAbsv;
-    Array _sectionScav;
-    Array _asymmparv;
-    double _mu{0.};
 };
 
 ////////////////////////////////////////////////////////////////////
