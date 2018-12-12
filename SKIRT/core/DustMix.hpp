@@ -13,15 +13,7 @@
 ////////////////////////////////////////////////////////////////////
 
 /** DustMix is the abstract base class for all classes representing the material properties of a
-    dust medium. Its responsibilities are twofold: (1) implementing the functions required by the
-    MaterialMix base class for all dust mixes, and (2) expanding on this interface for dust mixes
-    that support additional functionality, such as providing the information needed for calculating
-    emission from stochastically heated dust grain populations.
-
-    MaterialMix base class interface
-    --------------------------------
-
-    The DustMix class implements the complete abstract interface defined by the MaterialMix base
+    dust medium. It implements the complete abstract interface defined by the MaterialMix base
     class, with the sole exception of the scatteringMode() function, which must be provided by each
     DustMix subclass. Depending on the scattering mode returned by this function (e.g., whether it
     announces support for polarization by scattering or not), the DustMix setup machinery requests
@@ -31,11 +23,11 @@
 
     In all cases, the properties served through the MaterialMix base class interface correspond to
     the properties of a single grain population that is representative for the complete dust mix.
-    For dust mixes described by multiple grain populations, the optical properties are integrated
+    For dust mixes described by multiple grain populations, the optical properties should be integrated
     over the grain size distribution and accumulated across all grain populations. In the context
     of tracking photon paths through a dusty medium, using these integrated absorption and
     scattering cross sections and Mueller matrix coefficients is mathematically exact. In other
-    words, for scattering modes MaterialPhaseFunction and SphericalPolarization the representative
+    words, for scattering modes MaterialPhaseFunction and SphericalPolarization, the representative
     grain approach does not involve an approximation. However, the calculation of a representative
     scattering asymmetry parameter \f$g\f$ for use with the Henyey-Greenstein scattering mode does
     involve a non-exact averaging procedure. Because the Henyey-Greenstein scattering phase
@@ -45,14 +37,7 @@
     MultiGrainDustMix class.
 
     The implementation of polarization by scattering in this class is based on the analysis
-    presented by Peest at al. 2017 (A&A, 601, A92).
-
-    Supporting more accurate emission calculations
-    ----------------------------------------------
-
-    TO DO.
-
-    */
+    presented by Peest at al. 2017 (A&A, 601, A92). */
 class DustMix : public MaterialMix
 {
     ITEM_ABSTRACT(DustMix, MaterialMix, "a dust mix")
@@ -109,12 +94,12 @@ protected:
 private:
     /** This function returns the index in the private wavelength grid corresponding to the
         specified wavelength. The parameters for converting a wavelength to the appropriate index
-        are stored in data members by the setupSelfAfter() function. */
+        are stored in data members during setup. */
     int indexForLambda(double lambda) const;
 
     /** This function returns the index in the private scattering angle grid corresponding to the
         specified scattering angle. The parameters for converting a scattering angle to the
-        appropriate index are stored in data members by the setupSelfAfter() function. */
+        appropriate index are built-in constants. */
     int indexForTheta(double theta) const;
 
     //======== Material type =======
@@ -201,7 +186,7 @@ public:
         \f] where \f$P_\text{L}\f$ is the linear polarization degree and \f$\gamma\f$ the
         polarization angle of the incoming photon, and where the Mueller matrix coefficients
         \f$S_{xx}\f$ depend on both the photon wavelength \f$\lambda\f$ and the scattering angle
-        \f$\theta\f$. As a result, the normalization constant cannot be pre-calculated. */
+        \f$\theta\f$. */
    double phaseFunctionValue(double lambda, double theta, double phi, const StokesVector* sv) const override;
 
     /** This function generates random scattering angles \f$\theta\f$ and \f$\phi\f$ sampled from
@@ -239,8 +224,7 @@ public:
         For scattering by spherical grains, the Mueller matrix has only four independent
         coefficients, namely \f$S_{11}\f$, \f$S_{12}\f$, \f$S_{33}\f$, and \f$S_{34}\f$, which
         depend on both the photon wavelength \f$\lambda\f$ and the scattering angle \f$\theta\f$.
-        These coefficients are obtained from the tables loaded during setup (and specified by name
-        in each subclass. */
+        These coefficients are obtained from the tables pre-computed during setup. */
     void applyMueller(double lambda, double theta, StokesVector* sv) const override;
 
     //======== Equilibrium Temperature =======

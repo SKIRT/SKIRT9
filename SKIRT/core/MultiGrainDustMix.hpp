@@ -15,10 +15,60 @@ class GrainSizeDistribution;
 
 /** MultiGrainDustMix is an abstract class implementing a dust mix described by one or more grain
     populations, each with their own grain composition and size distribution, and with or without
-    support for polarization by scattering.
+    support for polarization by scattering. The class offers facilities to its subclasses to add
+    dust grain populations to the dust mix during initial setup. Subsequently, the class uses this
+    list of grain populations to calculate the optical properties requested by the DustMix base
+    class, and to implement the additional functionality offered by multi-grain-population dust
+    mixes, such as providing the information needed for calculating emission from stochastically
+    heated dust grains.
+
+    <b>Calculating representative grain properties</b>
+
+    The getOpticalProperties() function calculates the basic representative grain properties
+    expected by the DustMix base class from the following information obtained from the dust grain
+    populations added by the subclass: the absorption efficiencies \f$Q^{\text{abs}}(\lambda,a)\f$,
+    the scattering efficiencies \f$Q^{\text{sca}}(\lambda,a)\f$, the scattering phase function
+    asymmetry parameter \f$g(\lambda,a)\f$, the Mueller matrix coefficients
+    \f$S^\text{xx}(\lambda,a,\theta)\f$, the bulk density \f$\rho_{\text{bulk}}\f$ of the grain
+    material, and the properly normalized grain size distribution per hydrogen atom
+    \f$\Omega(a)=(\frac{\text{d}n_\text{D}}{\text{d}a})/n_\text{H}\f$ in the range
+    \f$[a_\text{min},a_\text{max}]\f$.
+
+    The properties are calculated for each wavelength \f$\lambda_\ell\f$ in the wavelength grid
+    specified by the DustMix class. The values are obtained by integrating over the grain size
+    distribution \f$\Omega(a)\f$ using a builtin logarithmic grid and accumulating over all grain
+    populations \f$c\f$, using the formulas listed below.
+
+    The absorption and scattering cross sections per hydrogen atom
+    \f$\varsigma_{\ell}^{\text{abs}}\f$ and \f$\varsigma_{\ell}^{\text{abs}}\f$ for the
+    \f$\ell\f$'th wavelength are calculated using \f[ \varsigma_{\ell}^{\text{abs}} = \sum_c
+    \int_{a_{\text{min},c}}^{a_{\text{max},c}} \Omega_c(a)\, Q^{\text{abs}}_c(\lambda_\ell,a)\, \pi
+    a^2\, {\text{d}}a \f] and \f[ \varsigma_{\ell}^{\text{sca}} = \sum_c
+    \int_{a_{\text{min},c}}^{a_{\text{max},c}} \Omega_c(a)\, Q^{\text{sca}}_c(\lambda_\ell,a)\, \pi
+    a^2\, {\text{d}}a. \f]
+
+    The Mueller matrix coefficients provided by the grain population are assumed to be expressed as
+    a cross section (in arbitrary units). They are thus integrated over the size distribution
+    without again multiplying by the grain cross section, i.e. using \f[
+    S^\text{xx}_{\ell,\text{t}} = \sum_c \int_{a_{\text{min},c}}^{a_{\text{max},c}} \Omega_c(a)\,
+    S^\text{xx}_c(\lambda_\ell,a,\theta_\text{t})\, {\text{d}}a \f]
+
+    The representative asymmetry parameter \f$g_{\ell}\f$ is averaged over the scattering cross
+    section and thus calculated using \f[ g_{\ell} = \frac{1}{\varsigma_{\ell}^{\text{sca}}} \sum_c
+    \int_{a_{\text{min},c}}^{a_{\text{max},c}} \Omega_c(a)\, g_c(\lambda_\ell,a)\,
+    Q^{\text{sca}}_c(\lambda_\ell,a)\, \pi a^2\, {\text{d}}a. \f]
+
+    The dust mass per hydrogen atom \f$\mu\f$ is calculated by integrating the bulk density over
+    the size distribution, \f[ \mu = \sum_c \int_{a_{\text{min},c}}^{a_{\text{max},c}} \Omega_c(a)\,
+    \rho_{\text{bulk},c}\, \frac{4\pi}{3}\, a^3\, {\text{d}}a. \f]
+
+    <b>Exposing multiple grain populations</b>
 
     TO DO: add further documentation.
- */
+
+    <b>Supporting stochastic heating</b>
+
+    TO DO: add further documentation. */
 class MultiGrainDustMix : public DustMix
 {
     ITEM_ABSTRACT(MultiGrainDustMix, DustMix, "a dust mix with one or more grain populations")
@@ -58,9 +108,9 @@ protected:
         (corresponding to the input wavelength grids) when the function gets called.
 
         For this class, this function integrates the optical properties over the grain size
-        distribution for each of the grain populations added by a subclass, and stores the results
-        into the corresponding output arrays. Also, the function returns the dust mass per hydrogen
-        atom for the dust mix.
+        distribution for each of the grain populations added by a subclass as described in the
+        class header, and stores the results into the corresponding output arrays. Also, the
+        function returns the dust mass per hydrogen atom for the dust mix.
 
         For the HenyeyGreenstein scattering mode, the Mueller matric tables remain untouched. For
         the MaterialPhaseFunction scattering mode, the function fills only the first table and

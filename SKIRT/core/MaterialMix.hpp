@@ -62,6 +62,23 @@ class WavelengthGrid;
     <TR><TD>\f$k=n\varsigma\f$</TD>  <TD>\f$\text{m}^{-1}\f$</TD>  <TD>Opacity</TD></TR>
     <TR><TD>\f$\tau=n\varsigma\Delta s\f$</TD>  <TD>\f$1\f$</TD>  <TD>Optical depth</TD></TR>
     </TABLE>
+
+    This class offers an interface to obtain the following basic material properties:
+    - the mass per entity \f$\mu\f$
+    - the absorption cross section per entity \f$\varsigma^{\text{abs}}_{\lambda}\f$
+    - the scattering cross section per entity \f$\varsigma^{\text{sca}}_{\lambda}\f$
+    - the total extinction cross section per entity \f$\varsigma^{\text{ext}}_{\lambda}
+         = \varsigma^{\text{abs}}_{\lambda} + \varsigma^{\text{sca}}_{\lambda}\f$
+    - the scattering albedo \f$\varpi_\lambda
+         = \varsigma_{\lambda}^{\text{sca}} / \varsigma_{\lambda}^{\text{ext}}\f$
+    - scattering phase function properties; depending on the supported scattering mode this may be:
+      - the assymmetry parameter \f$g\f$ for the Henyey-Greenstein phase function
+      - a custom phase function \f$\Phi_\lambda(\cos\theta)\f$ that depends only on the cosine of
+        the scattering angle \f$\theta\f$
+      - a custom phase function \f$\Phi_\lambda(\theta,\phi)\f$ that depends on both scattering angles
+        \f$\theta\f$ and \f$\phi\f$, and on the polarization state of the incoming radiation
+    - the equilibrium temperature \f$T_{\text{eq}}\f$ for a given embedding radiation field,
+      using average material properties and assuming local thermal equilibrium conditions
 */
 class MaterialMix : public SimulationItem
 {
