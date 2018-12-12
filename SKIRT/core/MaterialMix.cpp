@@ -17,6 +17,11 @@ void MaterialMix::setupSelfBefore()
 
 ////////////////////////////////////////////////////////////////////
 
+MaterialMix::ScatteringMode MaterialMix::scatteringMode() const
+{
+    return ScatteringMode::HenyeyGreenstein;
+}
+
 ////////////////////////////////////////////////////////////////////
 
 double MaterialMix::asymmpar(double /*lambda*/) const

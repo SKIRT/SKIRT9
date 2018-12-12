@@ -33,10 +33,6 @@ class MeanInterstellarDustMix : public SingleGrainDustMix
 
     //======================== Other Functions =======================
 
-    /** This function returns the scattering mode supported by this material mix. For this dust
-        mix, it always returns the basic HenyeyGreenstein scattering mode. */
-    ScatteringMode scatteringMode() const override;
-
     /** This function returns the name of the stored table resource tabulating the basic optical
         properties for this dust mix. */
     string resourceNameForOpticalProps() const override;

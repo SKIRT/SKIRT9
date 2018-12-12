@@ -35,7 +35,7 @@ void DustMix::setupSelfAfter()
 {
     MaterialMix::setupSelfAfter();
 
-    // get the scattering mode advertised by the subclass
+    // get the scattering mode advertised by this dust mix
     auto mode = scatteringMode();
 
     // determine the parameters for a fine grid covering the wavelength range of the simulation in log space
@@ -75,7 +75,7 @@ void DustMix::setupSelfAfter()
     }
 
     // obtain the optical properties from the subclass
-    getOpticalProperties(lambdav, _thetav, _sigmaabsv, _sigmascav, _asymmparv, _S11vv, _S12vv, _S33vv, _S34vv);
+    _mu = getOpticalProperties(lambdav, _thetav, _sigmaabsv, _sigmascav, _asymmparv, _S11vv, _S12vv, _S33vv, _S34vv);
 
     // calculate some derived basic optical properties
     for (int ell=0; ell!=numLambda; ++ell)

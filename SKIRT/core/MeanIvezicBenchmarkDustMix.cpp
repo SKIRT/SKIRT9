@@ -5,13 +5,6 @@
 
 #include "MeanIvezicBenchmarkDustMix.hpp"
 
-////////////////////////////////////////////////////////////////////
-
-MaterialMix::ScatteringMode MeanIvezicBenchmarkDustMix::scatteringMode() const
-{
-    return ScatteringMode::HenyeyGreenstein;
-}
-
 //////////////////////////////////////////////////////////////////////
 
 string MeanIvezicBenchmarkDustMix::resourceNameForOpticalProps() const

@@ -32,11 +32,4 @@ double TabulatedDustMix::getOpticalProperties(const Array& lambdav, const Array&
     return mu;
 }
 
-////////////////////////////////////////////////////////////////////
-
-MaterialMix::ScatteringMode TabulatedDustMix::scatteringMode() const
-{
-    return ScatteringMode::HenyeyGreenstein;
-}
-
 //////////////////////////////////////////////////////////////////////

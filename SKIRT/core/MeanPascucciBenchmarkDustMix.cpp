@@ -5,13 +5,6 @@
 
 #include "MeanPascucciBenchmarkDustMix.hpp"
 
-////////////////////////////////////////////////////////////////////
-
-MaterialMix::ScatteringMode MeanPascucciBenchmarkDustMix::scatteringMode() const
-{
-    return ScatteringMode::HenyeyGreenstein;
-}
-
 //////////////////////////////////////////////////////////////////////
 
 string MeanPascucciBenchmarkDustMix::resourceNameForOpticalProps() const

@@ -33,8 +33,23 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
                                                Array& sigmaabsv, Array& sigmascav, Array& asymmparv,
                                                Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv) const
 {
-    // get the scattering mode advertised by the subclass
+    // get the scattering mode advertised by this dust mix
     auto mode = scatteringMode();
+
+    // get the number of grain populations
+    int numPops = _populations.size();
+    if (!numPops) throw FATALERROR("Dust mix must have at least one grain population");
+
+    // count the number of populations that offer a Mueller matrix
+    int numMueller = 0;
+    for (auto population : _populations)
+        if (!population->composition()->resourceNameForMuellerMatrix().empty()) numMueller++;
+
+    // verify the Mueller matrix support by all grain populations
+    if (mode == ScatteringMode::HenyeyGreenstein && numMueller!=0)
+        throw FATALERROR("HenyeyGreenstein scattering mode prohibits grain populations to offer a Mueller matrix");
+    if (mode != ScatteringMode::HenyeyGreenstein && numMueller!=numPops)
+        throw FATALERROR("None-HenyeyGreenstein scattering mode requires grain populations to offer a Mueller matrix");
 
     // get the number of requested grid points
     int numLambda = lambdav.size();
@@ -189,28 +204,6 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
     }
 
     return mu;
-}
-
-////////////////////////////////////////////////////////////////////
-
-MaterialMix::ScatteringMode MultiGrainDustMix::scatteringMode() const
-{
-    // get the number of grain populations
-    int numPops = _populations.size();
-    if (!numPops) throw FATALERROR("Dust mix must have at least one grain population");
-
-    // count the number of populations that offer a Mueller matrix
-    int numMueller = 0;
-    for (auto population : _populations)
-        if (!population->composition()->resourceNameForMuellerMatrix().empty()) numMueller++;
-
-    // !! because there is no configuration option to choose between MaterialPhaseFunction or SphericalPolarization,
-    // !! the current implementation never returns the MaterialPhaseFunction scattering mode
-    if (numMueller == 0) return ScatteringMode::HenyeyGreenstein;
-    if (numMueller == numPops) return ScatteringMode::SphericalPolarization;
-
-    // all populations should have the same level of support, so if we get here we throw an error
-    throw FATALERROR("Dust mix has some grain populations that offer a Mueller matrix, and some that don't");
 }
 
 ////////////////////////////////////////////////////////////////////

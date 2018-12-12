@@ -125,23 +125,26 @@ public:
         implementation, this can be one of the following modes:
 
         - HenyeyGreenstein: the value returned by the asymmpar() function serves as the assymmetry
-          parameter \f$g\f$ for the Henyey-Greenstein phase function. For a value of \f$g=0\f$,
-          isotropic scattering is implemented directly (rather than subsituting zero into the
-          Henyey-Greenstein phase function).
+        parameter \f$g\f$ for the Henyey-Greenstein phase function. For a value of \f$g=0\f$,
+        isotropic scattering is implemented directly (rather than subsituting zero into the
+        Henyey-Greenstein phase function).
 
         - MaterialPhaseFunction: this material type implements a custom phase function that depends
-          only on the cosine of the scattering angle, for unpolarized radiation. Specifically, the
-          phaseFunctionValueForCosine() and generateCosineFromPhaseFunction() functions are used to
-          obtain the value of the phase function and to sample a scattering angle from it.
+        only on the cosine of the scattering angle, for unpolarized radiation. Specifically, the
+        phaseFunctionValueForCosine() and generateCosineFromPhaseFunction() functions are used to
+        obtain the value of the phase function and to sample a scattering angle from it.
 
         - SphericalPolarization: this material type supports polarization through scattering by
-          spherical particles. In this mode, the phase function depends on the polarization state
-          of the incoming radiation, and the polarization state of the outgoing radiation must be
-          updated appropriately. The phaseFunctionValue() and generateAnglesFromPhaseFunction()
-          functions are used to obtain the value of the phase function and to sample a scattering
-          angle from it, and the applyMueller() function is used to updated the polarization state.
-    */
-    virtual ScatteringMode scatteringMode() const = 0;
+        spherical particles. In this mode, the phase function depends on the polarization state of
+        the incoming radiation, and the polarization state of the outgoing radiation must be
+        updated appropriately. The phaseFunctionValue() and generateAnglesFromPhaseFunction()
+        functions are used to obtain the value of the phase function and to sample a scattering
+        angle from it, and the applyMueller() function is used to updated the polarization state.
+
+        The implementation of this function in this base class returns the HenyeyGreenstein
+        scattering mode as a default value. Subclasses that support another scattering mode must
+        override this function and return the appropriate value. */
+    virtual ScatteringMode scatteringMode() const;
 
     /** This convenience function returns true if this material mix uses and supports polarized
         radiation, and false otherwise. In the current implementation, the function returns true

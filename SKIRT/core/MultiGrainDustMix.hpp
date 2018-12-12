@@ -22,6 +22,13 @@ class GrainSizeDistribution;
     mixes, such as providing the information needed for calculating emission from stochastically
     heated dust grains.
 
+    All grain populations must have a level of Mueller matrix support that matches the value
+    returned by the scatteringMode() function (which may be overridden in a subclass).
+    Specifically, for the HenyeyGreenstein scattering mode, \em none of the grain populations
+    should offer a Mueller matrix. For the MaterialPhaseFunction and SphericalPolarization
+    scattering modes, \em all of the grain populations should offer a Mueller matrix. If this is
+    not the case, a fatal error will result.
+
     <b>Calculating representative grain properties</b>
 
     The getOpticalProperties() function calculates the basic representative grain properties
@@ -59,8 +66,8 @@ class GrainSizeDistribution;
     Q^{\text{sca}}_c(\lambda_\ell,a)\, \pi a^2\, {\text{d}}a. \f]
 
     The dust mass per hydrogen atom \f$\mu\f$ is calculated by integrating the bulk density over
-    the size distribution, \f[ \mu = \sum_c \int_{a_{\text{min},c}}^{a_{\text{max},c}} \Omega_c(a)\,
-    \rho_{\text{bulk},c}\, \frac{4\pi}{3}\, a^3\, {\text{d}}a. \f]
+    the size distribution, \f[ \mu = \sum_c \int_{a_{\text{min},c}}^{a_{\text{max},c}}
+    \Omega_c(a)\, \rho_{\text{bulk},c}\, \frac{4\pi}{3}\, a^3\, {\text{d}}a. \f]
 
     <b>Exposing multiple grain populations</b>
 
@@ -119,18 +126,6 @@ protected:
     double getOpticalProperties(const Array& lambdav, const Array& thetav,
                                 Array& sigmaabsv, Array& sigmascav, Array& asymmparv,
                                 Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv) const override;
-
-    /** This function returns the scattering mode supported by this material mix as determined by
-        the grain populations added by a subclass. If none of the populations offer Mueller matrix
-        coefficients, the function returns the HenyeyGreenstein scattering mode. If all populations
-        offer Mueller matrix coefficients, the function returns the SphericalPolarization
-        scattering mode. Because there is no configuration option to choose between
-        MaterialPhaseFunction or SphericalPolarization in this case, the current implementation
-        never returns the MaterialPhaseFunction scattering mode.
-
-        All grain populations should have the same level of Mueller matrix support. If this is not
-        the case, this function throws a fatal error. */
-    ScatteringMode scatteringMode() const override;
 
     //======================== Data Members ========================
 

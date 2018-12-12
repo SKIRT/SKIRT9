@@ -31,7 +31,7 @@ double SingleGrainDustMix::getOpticalProperties(const Array& lambdav, const Arra
     // get mu value for some arbitrary wavelength
     double mu = StoredTable<1>(this, opticalPropsName, "lambda(m)", "mu(kg/H)")[1.];
 
-    // get the scattering mode advertised by the subclass
+    // get the scattering mode advertised by this dust mix
     auto mode = scatteringMode();
     if (mode == ScatteringMode::MaterialPhaseFunction || mode == ScatteringMode::SphericalPolarization)
     {

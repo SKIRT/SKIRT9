@@ -14,19 +14,19 @@
 
 /** DustMix is the abstract base class for all classes representing the material properties of a
     dust medium. It implements the complete abstract interface defined by the MaterialMix base
-    class, with the sole exception of the scatteringMode() function, which must be provided by each
-    DustMix subclass. Depending on the scattering mode returned by this function (e.g., whether it
-    announces support for polarization by scattering or not), the DustMix setup machinery requests
-    the relevant optical dust properties from the subclass, and caches this information (possibly
-    with some additional precalculated data) for later use. During the simulation, these properties
-    can then be served up without further access to the subclass.
+    class for obtaining optical material properties. Depending on the scattering mode returned by
+    the scatteringMode() function (which must be overridden by subclasses that support a scattering
+    mode other than HenyeyGreenstein), the DustMix setup machinery requests the relevant optical
+    dust properties from the subclass, and caches this information (possibly with some additional
+    precalculated data) for later use. During the simulation, these properties can then be served
+    up without further access to the subclass.
 
     In all cases, the properties served through the MaterialMix base class interface correspond to
     the properties of a single grain population that is representative for the complete dust mix.
-    For dust mixes described by multiple grain populations, the optical properties should be integrated
-    over the grain size distribution and accumulated across all grain populations. In the context
-    of tracking photon paths through a dusty medium, using these integrated absorption and
-    scattering cross sections and Mueller matrix coefficients is mathematically exact. In other
+    For dust mixes described by multiple grain populations, the optical properties should be
+    integrated over the grain size distribution and accumulated across all grain populations. In
+    the context of tracking photon paths through a dusty medium, using these integrated absorption
+    and scattering cross sections and Mueller matrix coefficients is mathematically exact. In other
     words, for scattering modes MaterialPhaseFunction and SphericalPolarization, the representative
     grain approach does not involve an approximation. However, the calculation of a representative
     scattering asymmetry parameter \f$g\f$ for use with the Henyey-Greenstein scattering mode does
@@ -65,8 +65,7 @@ protected:
     /** This function must be implemented in each subclass to obtain the representative grain
         optical properties for the dust mix. Although the function arguments provide for all
         properties that may be required, the list of actually required properties for a particular
-        subclass depends on the scattering mode advertised by the scatteringMode() function
-        implemented by the subclass.
+        subclass depends on the scattering mode advertised by the scatteringMode() function.
 
         The first two arguments respectively specify the wavelength grid and (if applicable) the
         scattering angle grid on which the properties must be tabulated. The function must store

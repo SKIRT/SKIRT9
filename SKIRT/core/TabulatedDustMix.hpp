@@ -54,13 +54,6 @@ protected:
         corresponding tabulated properties in the array arguments, and to return the dust mass per
         hydrogen atom. The function must guarantee that all arrays have the same size. */
     virtual double getDustProperties(Array& lambdav, Array& kappaextv, Array& albedov, Array& asymmparv) const = 0;
-
-    //======================== Other Functions =======================
-
-public:
-    /** This function returns the scattering mode supported by this material mix. For this class,
-        it returns the HenyeyGreenstein mode. */
-    ScatteringMode scatteringMode() const override;
 };
 
 ////////////////////////////////////////////////////////////////////

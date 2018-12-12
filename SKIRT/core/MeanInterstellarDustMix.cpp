@@ -5,13 +5,6 @@
 
 #include "MeanInterstellarDustMix.hpp"
 
-////////////////////////////////////////////////////////////////////
-
-MaterialMix::ScatteringMode MeanInterstellarDustMix::scatteringMode() const
-{
-    return ScatteringMode::HenyeyGreenstein;
-}
-
 //////////////////////////////////////////////////////////////////////
 
 string MeanInterstellarDustMix::resourceNameForOpticalProps() const

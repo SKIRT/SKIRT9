@@ -14,7 +14,8 @@
     representative grain, with or without support for polarization by scattering. This base class
     includes the implementations of the required functions to retrieve the optical properties from
     stored table resources. Subclasses must merely provide the names of the relevant resource files
-    and implement the scatteringMode() function. */
+    and implement the scatteringMode() function if they support a scattering mode other than
+    Henyey-Greenstein. */
 class SingleGrainDustMix : public DustMix
 {
     ITEM_ABSTRACT(SingleGrainDustMix, DustMix, "a dust mix described by a single representative grain")
