@@ -9,7 +9,10 @@
 #include "FatalError.hpp"
 #include "GrainComposition.hpp"
 #include "GrainSizeDistribution.hpp"
+#include "Log.hpp"
 #include "NR.hpp"
+#include "Parallel.hpp"
+#include "ParallelFactory.hpp"
 #include "StoredTable.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -55,7 +58,6 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
 
     // get the number of requested grid points
     int numLambda = lambdav.size();
-    int numTheta = thetav.size();
 
     // dust mass per hydrogen atom accumulated over all populations
     double mu = 0.;
@@ -66,7 +68,7 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
         // construct a grain size integration grid for this population
         double amin = population->sizeDistribution()->amin();
         double amax = population->sizeDistribution()->amax();
-        int numSizes = max(3., 200 * log10(amax/amin));
+        int numSizes = max(3., 100 * log10(amax/amin));
         Array av(numSizes);      // "a" for each point
         Array dav(numSizes);     // "da" for each point
         Array dndav(numSizes);   // "dnda" for each point
@@ -162,40 +164,60 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
             }
 
             // calculate the Mueller matrix coefficients on the requested wavelength and scattering angle grid
-            for (int ell=0; ell!=numLambda; ++ell)
+            // this is fairly time-consuming, so we do this in parallel
+            auto log = find<Log>();
+            log->info("Integrating Mueller matrix coefficients over the grain size distribution...");
+            log->infoSetElapsed(numLambda);
+            find<ParallelFactory>()->parallelDistributed()->call(numLambda,
+                [&lambdav,&thetav,&av,&dav,&dndav,&weightv,&S11,&S12,&S33,&S34,&S11vv,&S12vv,&S33vv,&S34vv,mode,log]
+                (size_t firstIndex, size_t numIndices)
             {
-                double lambda = lambdav[ell];
-                for (int t=0; t!=numTheta; ++t)
-                {
-                    double theta = thetav[t];
+                int numTheta = thetav.size();
+                int numSizes = av.size();
 
-                    // integrate over the size distribution
-                    double sumS11 = 0.;
-                    double sumS12 = 0.;
-                    double sumS33 = 0.;
-                    double sumS34 = 0.;
-                    for (int i=0; i!=numSizes; ++i)
+                const size_t logProgressChunkSize = 50;
+                while (numIndices)
+                {
+                    size_t currentChunkSize = min(logProgressChunkSize, numIndices);
+                    for (size_t ell=firstIndex; ell!=firstIndex+currentChunkSize; ++ell)
                     {
-                        double factor = weightv[i] * dndav[i] * dav[i];
-                        sumS11 += factor * S11(av[i],lambda,theta);
-                        if (mode == ScatteringMode::SphericalPolarization)
+                        double lambda = lambdav[ell];
+                        for (int t=0; t!=numTheta; ++t)
                         {
-                            sumS12 += factor * S12(av[i],lambda,theta);
-                            sumS33 += factor * S33(av[i],lambda,theta);
-                            sumS34 += factor * S34(av[i],lambda,theta);
+                            double theta = thetav[t];
+
+                            // integrate over the size distribution
+                            double sumS11 = 0.;
+                            double sumS12 = 0.;
+                            double sumS33 = 0.;
+                            double sumS34 = 0.;
+                            for (int i=0; i!=numSizes; ++i)
+                            {
+                                double factor = weightv[i] * dndav[i] * dav[i];
+                                sumS11 += factor * S11(av[i],lambda,theta);
+                                if (mode == ScatteringMode::SphericalPolarization)
+                                {
+                                    sumS12 += factor * S12(av[i],lambda,theta);
+                                    sumS33 += factor * S33(av[i],lambda,theta);
+                                    sumS34 += factor * S34(av[i],lambda,theta);
+                                }
+                            }
+
+                            // accumulate for all populations
+                            S11vv(ell,t) += sumS11;
+                            if (mode == ScatteringMode::SphericalPolarization)
+                            {
+                                S12vv(ell,t) += sumS12;
+                                S33vv(ell,t) += sumS33;
+                                S34vv(ell,t) += sumS34;
+                            }
                         }
                     }
-
-                    // accumulate for all populations
-                    S11vv(ell,t) += sumS11;
-                    if (mode == ScatteringMode::SphericalPolarization)
-                    {
-                        S12vv(ell,t) += sumS12;
-                        S33vv(ell,t) += sumS33;
-                        S34vv(ell,t) += sumS34;
-                    }
+                    log->infoIfElapsed("Calculated Mueller matrix coefficients: ", currentChunkSize);
+                    firstIndex += currentChunkSize;
+                    numIndices -= currentChunkSize;
                 }
-            }
+            });
         }
     }
 
