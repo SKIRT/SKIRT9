@@ -11,7 +11,7 @@
 
 double TabulatedDustMix::getOpticalProperties(const Array& lambdav, const Array& /*thetav*/,
                             Array& sigmaabsv, Array& sigmascav, Array& asymmparv,
-                            Table<2>& /*S11vv*/, Table<2>& /*S12vv*/, Table<2>& /*S33vv*/, Table<2>& /*S34vv*/) const
+                            Table<2>& /*S11vv*/, Table<2>& /*S12vv*/, Table<2>& /*S33vv*/, Table<2>& /*S34vv*/)
 {
     // obtain the basic properties from the subclass on a wavelength grid chosen by the subclass
     Array inlambdav, inkappaextv, inalbedov, inasymmparv;

@@ -44,7 +44,7 @@ protected:
         Finally, the function returns the dust mass per hydrogen atom for the dust mix. */
     double getOpticalProperties(const Array& lambdav, const Array& thetav,
                                 Array& sigmaabsv, Array& sigmascav, Array& asymmparv,
-                                Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv) const override;
+                                Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv) override;
 
     /** This function must be implemented in a subclass to return the name of the stored table
         resource tabulating the basic optical properties (cross sections and asymmetry parameter)

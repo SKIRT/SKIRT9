@@ -34,7 +34,7 @@ void MultiGrainDustMix::addPopulation(GrainComposition* composition, GrainSizeDi
 
 double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array& thetav,
                                                Array& sigmaabsv, Array& sigmascav, Array& asymmparv,
-                                               Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv) const
+                                               Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv)
 {
     // get the scattering mode advertised by this dust mix
     auto mode = scatteringMode();
@@ -114,6 +114,7 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
         }
         if (!mupop) throw FATALERROR("Dust grain population of type " + population->composition()->name()
                                   + " has zero dust mass");
+        _mupopv.push_back(mupop);
         mu += mupop;
 
         // adjust the integration weight for further calculations by the normalization factor
@@ -228,6 +229,35 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
     }
 
     return mu;
+}
+
+////////////////////////////////////////////////////////////////////
+
+int MultiGrainDustMix::numPopulations() const
+{
+    return _populations.size();
+}
+
+////////////////////////////////////////////////////////////////////
+
+string MultiGrainDustMix::populationGrainType(int c) const
+{
+    return _populations[c]->composition()->name();
+}
+
+////////////////////////////////////////////////////////////////////
+
+Range MultiGrainDustMix::populationSizeRange(int c) const
+{
+    auto sd = _populations[c]->sizeDistribution();
+    return Range(sd->amin(), sd->amax());
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MultiGrainDustMix::populationMass(int c) const
+{
+    return _mupopv[c];
 }
 
 ////////////////////////////////////////////////////////////////////

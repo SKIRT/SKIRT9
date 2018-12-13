@@ -36,6 +36,12 @@
     calculation of representative grain properties in SKIRT, refer to the description of the
     MultiGrainDustMix class.
 
+    The representative grain properties offered by this class are insufficient to accurately
+    calculate dust emission spectra for the dust mixture. This is so because the emission spectrum
+    is a nonlinear function of (among many other things) the grain size, and thus a single grain
+    cannot accurately represent a population with a (potentialy large) range of grain sizes. Agai,
+    refer to the description of the MultiGrainDustMix class for more information.
+
     The implementation of polarization by scattering in this class is based on the analysis
     presented by Peest at al. 2017 (A&A, 601, A92). */
 class DustMix : public MaterialMix
@@ -86,7 +92,7 @@ protected:
         must leave the other tables untouched. */
     virtual double getOpticalProperties(const Array& lambdav, const Array& thetav,
                                         Array& sigmaabsv, Array& sigmascav, Array& asymmparv,
-                                        Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv) const = 0;
+                                        Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv) = 0;
 
     //======== Private support functions =======
 

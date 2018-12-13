@@ -8,6 +8,7 @@
 
 #include "DustMix.hpp"
 #include "GrainPopulation.hpp"
+#include "Range.hpp"
 class GrainComposition;
 class GrainSizeDistribution;
 
@@ -69,13 +70,47 @@ class GrainSizeDistribution;
     the size distribution, \f[ \mu = \sum_c \int_{a_{\text{min},c}}^{a_{\text{max},c}}
     \Omega_c(a)\, \rho_{\text{bulk},c}\, \frac{4\pi}{3}\, a^3\, {\text{d}}a. \f]
 
-    <b>Exposing multiple grain populations</b>
+    <b>Supporting dust emission calculations</b>
 
-    TO DO: add further documentation.
+    The representative grain properties described above and offered by the public MaterialMix
+    interface supported by this class are insufficient to accurately calculate dust emission
+    spectra for the dust mixture. This is so because the emission spectrum is a nonlinear function
+    of (among many other things) the grain size, and thus a single grain cannot accurately
+    represent a population with a (potentialy large) range of grain sizes. Furthermore, smaller
+    dust grains are often not in local thermal equilibrium, and instead are heated stochastically
+    by individual photon absorption events. Modeling emission for these grains involves a
+    temperature probability distribution rather than just an equilibrium temperature. The
+    calculation needs calorimetric properties of the grain material in addition to optical
+    properties.
 
-    <b>Supporting stochastic heating</b>
+    It is numerically intractable to handle every possible grain size seperately. Instead, the
+    MultiGrainDustMix class discretizes the grain size distribution for each type of grain material
+    into a number of consecutive size bins (on a logarithmic scale), and calculates the optical and
+    calorimetric properties of a representative grain for each of these bins. The number of bins
+    for each type of grain material can be configured by the user. A larger number of bins improves
+    the accuracy of the dust emission spectra. On the other hand, the calculation time scales
+    roughly linearly with the number of bins.
 
-    TO DO: add further documentation. */
+    The MultiGrainDustMix class offers a set of public functions on top of the regular MaterialMix
+    public interface to expose information about the individual grain populations \f$c\f$ and the
+    size-discretized bins \f$b\f$ as described above. For now, these functions are declared and
+    implemented here. Over time they might be declared as part of a seperate interface, so that
+    they might also be implemented by other MaterialMix subclasses (such as perhaps a material mix
+    including both hydrogen gas and dust).
+
+    As a result, the MultiGrainDustMix class supports the folowing methods for calculating dust
+    emissivity with varying levels of accuracy:
+
+    - using a single representative grain and assuming local thermal equilibrium
+
+    - using multiple representative grains, one for each composition/size bin, still assuming local
+    thermal equilibrium for each bin
+
+    - using multiple representative grains without assuming local thermal equilibrium, i.e.
+    calculating a temperature probability distribution to take into account stochastically heated
+    grains.
+
+ */
 class MultiGrainDustMix : public DustMix
 {
     ITEM_ABSTRACT(MultiGrainDustMix, DustMix, "a dust mix with one or more grain populations")
@@ -125,13 +160,38 @@ protected:
         function fills all four tables. */
     double getOpticalProperties(const Array& lambdav, const Array& thetav,
                                 Array& sigmaabsv, Array& sigmascav, Array& asymmparv,
-                                Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv) const override;
+                                Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv) override;
+
+    //=============== Exposing multiple grain populations ==============
+
+    /** This function returns the number of dust grain populations added to this dust mix by the
+        subclass. Each grain population represents the combination of a grain composition,
+        providing the optical and calorimetric properties of the grain material, and a grain size
+        distribution with some normalization to specify the the amount of dust contained in the
+        population. No grain size discretization has been applied to these populations. */
+    int numPopulations() const;
+
+    /** This function returns a brief human-readable identifier for the type of grain material
+        represented by the population with index \f$c\f$. The identifier does not contain white
+        space. */
+    string populationGrainType(int c) const;
+
+    /** This function returns the minimum and maximum grain sizes for the population with index
+        \f$c\f$. */
+    Range populationSizeRange(int c) const;
+
+    /** This function returns the dust mass \f$\mu\f$ per hydrogen atom for the population with
+        index \f$c\f$. */
+    double populationMass(int c) const;
 
     //======================== Data Members ========================
 
 private:
     // list created by addPopulation()
     vector<const GrainPopulation*> _populations;
+
+    // data members initialized by getOpticalProperties()
+    vector<double> _mupopv;
 };
 
 ////////////////////////////////////////////////////////////////////
