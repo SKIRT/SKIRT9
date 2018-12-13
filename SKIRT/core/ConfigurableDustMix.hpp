@@ -42,6 +42,12 @@ class ConfigurableDustMix : public MultiGrainDustMix
 protected:
     /** This function adds the configured grain populations to the dust mix. */
     void setupSelfBefore() override;
+
+    //======================== Other Functions =======================
+
+    /** This function returns the scattering mode supported by this material mix as configured by
+        the user through the scatteringType property. */
+    ScatteringMode scatteringMode() const override;
 };
 
 ////////////////////////////////////////////////////////////////////

@@ -187,7 +187,7 @@ void DustMix::setupSelfAfter()
     allocatedSize += _rfsigmaabsv.size();
     allocatedSize += _Tv.size();
     allocatedSize += _planckabsv.size();
-    find<Log>()->info("DustMix allocated " +
+    find<Log>()->info(type() + " allocated " +
                       StringUtils::toMemSizeString(allocatedSize*sizeof(double)) + " of memory");
 }
 

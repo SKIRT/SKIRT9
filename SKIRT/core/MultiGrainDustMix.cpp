@@ -48,8 +48,10 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
     // verify the Mueller matrix support by all grain populations
     if (mode == ScatteringMode::HenyeyGreenstein && numMueller!=0)
         throw FATALERROR("HenyeyGreenstein scattering mode prohibits grain populations to offer a Mueller matrix");
-    if (mode != ScatteringMode::HenyeyGreenstein && numMueller!=numPops)
-        throw FATALERROR("None-HenyeyGreenstein scattering mode requires grain populations to offer a Mueller matrix");
+    if (mode == ScatteringMode::MaterialPhaseFunction && numMueller!=numPops)
+        throw FATALERROR("MaterialPhaseFunction scattering mode requires grain populations to offer a Mueller matrix");
+    if (mode == ScatteringMode::SphericalPolarization && numMueller!=numPops)
+        throw FATALERROR("SphericalPolarization scattering mode requires grain populations to offer a Mueller matrix");
 
     // get the number of requested grid points
     int numLambda = lambdav.size();
