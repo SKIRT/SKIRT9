@@ -119,9 +119,9 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
 
         // open the stored tables for the basic optical properties
         string opticalPropsName = population->composition()->resourceNameForOpticalProps();
-        StoredTable<2> Qabs(this, opticalPropsName, "lambda(m),a(m)", "Qabs(1)");
-        StoredTable<2> Qsca(this, opticalPropsName, "lambda(m),a(m)", "Qsca(1)");
-        StoredTable<2> g(this, opticalPropsName, "lambda(m),a(m)", "g(1)");
+        StoredTable<2> Qabs(this, opticalPropsName, "a(m),lambda(m)", "Qabs(1)");
+        StoredTable<2> Qsca(this, opticalPropsName, "a(m),lambda(m)", "Qsca(1)");
+        StoredTable<2> g(this, opticalPropsName, "a(m),lambda(m)", "g(1)");
 
         // calculate the optical properties for each wavelength, and add them to the global total
         for (int ell=0; ell!=numLambda; ++ell)
@@ -135,9 +135,9 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
             {
                 double area = M_PI * av[i] * av[i];
                 double factor = weightv[i] * dndav[i] * area * dav[i];
-                double sigmaabs = factor * Qabs(lamdba ,av[i]);
-                double sigmasca = factor * Qsca(lamdba, av[i]);
-                double gsigmasca = sigmasca * g(lamdba, av[i]);
+                double sigmaabs = factor * Qabs(av[i], lamdba);
+                double sigmasca = factor * Qsca(av[i], lamdba);
+                double gsigmasca = sigmasca * g(av[i], lamdba);
                 sumsigmaabs += sigmaabs;
                 sumsigmasca += sigmasca;
                 sumgsigmasca += gsigmasca;
@@ -153,12 +153,12 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
             // open the stored tables for the Mueller matrix coefficients
             string muellerName = population->composition()->resourceNameForMuellerMatrix();
             StoredTable<3> S11, S12, S33, S34;
-            S11.open(this, muellerName, "lambda(m),a(m),theta(rad)", "S11(1)");
+            S11.open(this, muellerName, "a(m),lambda(m),theta(rad)", "S11(1)");
             if (mode == ScatteringMode::SphericalPolarization)
             {
-                S12.open(this, muellerName, "lambda(m),a(m),theta(rad)", "S12(1)");
-                S33.open(this, muellerName, "lambda(m),a(m),theta(rad)", "S33(1)");
-                S34.open(this, muellerName, "lambda(m),a(m),theta(rad)", "S34(1)");
+                S12.open(this, muellerName, "a(m),lambda(m),theta(rad)", "S12(1)");
+                S33.open(this, muellerName, "a(m),lambda(m),theta(rad)", "S33(1)");
+                S34.open(this, muellerName, "a(m),lambda(m),theta(rad)", "S34(1)");
             }
 
             // calculate the Mueller matrix coefficients on the requested wavelength and scattering angle grid
@@ -177,12 +177,12 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
                     for (int i=0; i!=numSizes; ++i)
                     {
                         double factor = weightv[i] * dndav[i] * dav[i];
-                        sumS11 += factor * S11(lambda,av[i],theta);
+                        sumS11 += factor * S11(av[i],lambda,theta);
                         if (mode == ScatteringMode::SphericalPolarization)
                         {
-                            sumS12 += factor * S12(lambda,av[i],theta);
-                            sumS33 += factor * S33(lambda,av[i],theta);
-                            sumS34 += factor * S34(lambda,av[i],theta);
+                            sumS12 += factor * S12(av[i],lambda,theta);
+                            sumS33 += factor * S33(av[i],lambda,theta);
+                            sumS34 += factor * S34(av[i],lambda,theta);
                         }
                     }
 
