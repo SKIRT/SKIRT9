@@ -156,8 +156,15 @@ void StoredTable_Impl::open(size_t numAxes, const SimulationItem* item, string f
     *qtyBeg = &currentItem->doubleType + qtyIndex;
     *qtyStep = numQties;
 
-    // log success
-    item->find<Log>()->info(item->type() + " opened stored table " + filePath);
+    // log success, unless the same thread already successfully opened the same file for the same item
+    thread_local const SimulationItem* previousItem = nullptr;
+    thread_local string previousFilePath;
+    if (item != previousItem || filePath != previousFilePath)
+    {
+        item->find<Log>()->info(item->type() + " opened stored table " + filePath);
+        previousItem = item;
+        previousFilePath = filePath;
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
