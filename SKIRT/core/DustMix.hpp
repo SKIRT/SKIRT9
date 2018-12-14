@@ -96,7 +96,7 @@ protected:
 
     //======== Private support functions =======
 
-private:
+protected:
     /** This function returns the index in the private wavelength grid corresponding to the
         specified wavelength. The parameters for converting a wavelength to the appropriate index
         are stored in data members during setup. */

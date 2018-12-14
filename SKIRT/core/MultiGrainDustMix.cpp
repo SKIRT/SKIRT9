@@ -13,7 +13,9 @@
 #include "NR.hpp"
 #include "Parallel.hpp"
 #include "ParallelFactory.hpp"
+#include "ProcessManager.hpp"
 #include "StoredTable.hpp"
+#include "WavelengthGrid.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -164,8 +166,9 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
                 S34.open(this, muellerName, "a(m),lambda(m),theta(rad)", "S34(1)");
             }
 
-            // calculate the Mueller matrix coefficients on the requested wavelength and scattering angle grid
-            // this is fairly time-consuming, so we do this in parallel
+            // calculate the Mueller matrix coefficients on the requested wavelength and scattering angle grid;
+            // this is time-consuming, so we do this in parallel,
+            // which means we need to synchronize the resulting tables after accumulation for all populations
             auto log = find<Log>();
             log->info("Integrating Mueller matrix coefficients over the grain size distribution...");
             log->infoSetElapsed(numLambda);
@@ -220,6 +223,10 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
                 }
             });
         }
+
+        // open the enthalpy stored table for this population
+        string enthalpyName = population->composition()->resourceNameForEnthalpies();
+        _enthalpyv.push_back(new StoredTable<1>(this, enthalpyName, "T(K)", "h(J/kg)"));
     }
 
     // calculate g = gsigmasca / sigmasca
@@ -228,7 +235,20 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
         asymmparv[ell] = sigmascav[ell] ? asymmparv[ell]/sigmascav[ell] : 0.;
     }
 
+    // synchronize the Mueller matrix coefficients between processes, if applicable
+    ProcessManager::sumToAll(S11vv.data());
+    ProcessManager::sumToAll(S12vv.data());
+    ProcessManager::sumToAll(S33vv.data());
+    ProcessManager::sumToAll(S34vv.data());
+
     return mu;
+}
+
+////////////////////////////////////////////////////////////////////
+
+MultiGrainDustMix::~MultiGrainDustMix()
+{
+    for (auto enthalpy : _enthalpyv) delete enthalpy;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -258,6 +278,51 @@ Range MultiGrainDustMix::populationSizeRange(int c) const
 double MultiGrainDustMix::populationMass(int c) const
 {
     return _mupopv[c];
+}
+
+////////////////////////////////////////////////////////////////////
+
+int MultiGrainDustMix::numBins() const
+{
+    return _numBins;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MultiGrainDustMix::binMeanMass(int b) const
+{
+    return _massv[b];
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MultiGrainDustMix::binSectionAbs(int b, double lambda) const
+{
+    return _sigmaabsvv(b, indexForLambda(lambda));
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MultiGrainDustMix::binEquilibriumTemperature(int /*b*/, const Array& /*Jv*/) const
+{
+    return 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MultiGrainDustMix::binEnthalpy(int b, double T) const
+{
+    int c = _btocv[b];
+    return _massv[b] * _enthalpyv[c]->operator()(T);
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MultiGrainDustMix::maxEnthalpyTemperature() const
+{
+    Range range(0., 3.);
+    for (auto enthalpy : _enthalpyv) range.extend(enthalpy->axisRange<0>());
+    return range.max();
 }
 
 ////////////////////////////////////////////////////////////////////

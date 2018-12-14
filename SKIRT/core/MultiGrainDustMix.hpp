@@ -9,6 +9,7 @@
 #include "DustMix.hpp"
 #include "GrainPopulation.hpp"
 #include "Range.hpp"
+#include "StoredTable.hpp"
 class GrainComposition;
 class GrainSizeDistribution;
 
@@ -162,14 +163,20 @@ protected:
                                 Array& sigmaabsv, Array& sigmascav, Array& asymmparv,
                                 Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv) override;
 
+    //------------- Cleanup ------------
+
+public:
+    /** The destructor destructs any enthalpy stored tables that were opened during setup. */
+    ~MultiGrainDustMix();
+
     //=============== Exposing multiple grain populations ==============
 
 public:
-    /** This function returns the number of dust grain populations added to this dust mix by the
-        subclass. Each grain population represents the combination of a grain composition,
-        providing the optical and calorimetric properties of the grain material, and a grain size
-        distribution with some normalization to specify the the amount of dust contained in the
-        population. No grain size discretization has been applied to these populations. */
+    /** This function returns the number of dust grain populations (with indices \f$c\f$) added to
+        this dust mix by the subclass. Each grain population represents the combination of a grain
+        composition, providing the optical and calorimetric properties of the grain material, and a
+        grain size distribution with some normalization to specify the the amount of dust contained
+        in the population. No grain size discretization has been applied to these populations. */
     int numPopulations() const;
 
     /** This function returns a brief human-readable identifier for the type of grain material
@@ -177,13 +184,55 @@ public:
         space. */
     string populationGrainType(int c) const;
 
-    /** This function returns the minimum and maximum grain sizes for the population with index
-        \f$c\f$. */
+    /** This function returns the minimum and maximum grain sizes \f$a_{\text{min},c},
+        a_{\text{max},c}\f$ for the population with index \f$c\f$. */
     Range populationSizeRange(int c) const;
 
-    /** This function returns the dust mass \f$\mu\f$ per hydrogen atom for the population with
+    /** This function returns the dust mass \f$\mu_c\f$ per hydrogen atom for the population with
         index \f$c\f$. */
     double populationMass(int c) const;
+
+    /** This function returns the number of dust grain size bins (with indices \f$b\f$) in this
+        dust mix. During setup, the MultiGrainDustMix class discretizes the grain size distribution
+        for each grain population added to this dust mix into a number of consecutive size bins (on
+        a logarithmic scale), and calculates the relevant optical and calorimetric properties of a
+        representative grain for each of these bins. The number of bins for each type of grain
+        material can be configured by the user.
+
+        The bins for the various populations in the dust mix are placed in a single sequence, in
+        the same overall order as the populations addressed by the \f$c\f$ indices. Within each
+        population, the bins are listed in order of increasing grain size. For example, a dust mix
+        with a silicate population discretized into 7 grain size bins, a graphite population with 6
+        size bins, and a PAH population with 5 bins, will have a total of 18 bins, consecutively
+        addressed by the \f$b\f$ indices. */
+    int numBins() const;
+
+    /** This function returns the mean mass of a dust grain for the bin with index \f$b\f$. */
+    double binMeanMass(int b) const;
+
+    /** This function returns the absorption cross section per hydrogen atom
+        \f$\varsigma^{\text{abs}}_{\lambda,b}\f$ at wavelength \f$\lambda\f$ for the representative
+        grain of the bin with index \f$b\f$. */
+    double binSectionAbs(int b, double lambda) const;
+
+    /** This function returns the equilibrium temperature \f$T_{\text{eq},b}\f$ (assuming LTE
+        conditions) for the representative grain of the bin with index \f$b\f$ when it would be
+        embedded in the radiation field specified by the mean intensities \f$(J_\lambda)_\ell\f$,
+        which must be discretized on the simulation's radiation field wavelength grid as returned
+        by the Configuration::radiationFieldWLG() function. */
+    double binEquilibriumTemperature(int b, const Array& Jv) const;
+
+    /** This function returns the enthalpy at temperature \f$T\f$ for the representative grain of
+        the bin with index \f$b\f$. The enthalpy is equivalent to the internal energy of the dust
+        grain, using an arbitrary zero point. It is obtained by multiplying the specific enthalpy
+        of the appropriate grain composition (at the specified temperature) by the mean mass of a
+        dust grain in the requested bin. If the specified temperature lies outside of the
+        internally defined grid, the enthalpy value at the nearest border is used instead. */
+    double binEnthalpy(int b, double T) const;
+
+    /** This function returns the largest temperature for which this dust mix can provide
+        meaningful enthalpy data, for any of the dust grain populations in the mix. */
+    double maxEnthalpyTemperature() const;
 
     //======================== Data Members ========================
 
@@ -191,8 +240,16 @@ private:
     // list created by addPopulation()
     vector<const GrainPopulation*> _populations;
 
-    // data members initialized by getOpticalProperties()
-    vector<double> _mupopv;
+    // data members with information per population -- initialized by getOpticalProperties()
+    vector<double> _mupopv;             // mass per hydrogen atom for population - indexed on c
+    vector<StoredTable<1>*> _enthalpyv; // enthalpy stored table for population - indexed on c
+
+    // data members with information per size bin -- initialized by getOpticalProperties()
+    int _numBins{0};        // number of bins; range of b index
+    vector<int> _btocv;     // mapping from b index (bins) to c index (corresponding population)
+    Array _massv;           // mean mass of a grain - indexed on b
+    Table<2> _sigmaabsvv;   // absorption cross sections - indexed on b,ell
+    ArrayTable<2> _planckabsvv; // Planck-integrated absorption cross sections - indexed on b,ell
 };
 
 ////////////////////////////////////////////////////////////////////
