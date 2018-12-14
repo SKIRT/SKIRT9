@@ -3,16 +3,16 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef OPTICALPROPERTIESPROBE_HPP
-#define OPTICALPROPERTIESPROBE_HPP
+#ifndef OPTICALMATERIALPROPERTIESPROBE_HPP
+#define OPTICALMATERIALPROPERTIESPROBE_HPP
 
 #include "Probe.hpp"
 #include "WavelengthGrid.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-/** OpticalPropertiesProbe outputs column text files listing the key optical properties for the
-    media configured in the simulation, discretized on a specified wavelength grid or on the
+/** OpticalMaterialPropertiesProbe outputs column text files listing the key optical properties for
+    the media configured in the simulation, discretized on a specified wavelength grid or on the
     default instrument wavelength grid. For each medium component, the probe retrieves a
     representative material mix (the mix at the origin of the model coordinate system) and creates
     a file with the key optical properties for that mix. The files are named
@@ -24,7 +24,7 @@
     used to convert the cross sections to mass coefficients.
 
     The columns list the key aggregate properties for the material mix as a function of wavelength.
-    In order from left ot right, the wavelength \f$\lambda\f$; the total extinction, absorption,
+    In order from left to right, the wavelength \f$\lambda\f$; the total extinction, absorption,
     and scattering cross sections per hydrogen atom (or electron) \f$\varsigma_\lambda^\text{ext},
     \varsigma_\lambda^\text{abs}, \varsigma_\lambda^\text{sca}\f$; the total extinction,
     absorption, and scattering mass coefficients \f$\kappa_\lambda^\text{ext},

@@ -164,6 +164,7 @@ protected:
 
     //=============== Exposing multiple grain populations ==============
 
+public:
     /** This function returns the number of dust grain populations added to this dust mix by the
         subclass. Each grain population represents the combination of a grain composition,
         providing the optical and calorimetric properties of the grain material, and a grain size
