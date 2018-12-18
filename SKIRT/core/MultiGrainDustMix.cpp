@@ -119,7 +119,9 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
         _mupopv.push_back(mupop);
         mu += mupop;
 
-        // adjust the integration weight for further calculations by the normalization factor
+        // remember the size distribution normalization factor for this population
+        // and adjust the integration weight for further calculations
+        _normv.push_back(mupop/baremupop);
         weightv *= mupop/baremupop;
 
         // open the stored tables for the basic optical properties
@@ -223,10 +225,6 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
                 }
             });
         }
-
-        // open the enthalpy stored table for this population
-        string enthalpyName = population->composition()->resourceNameForEnthalpies();
-        _enthalpyv.push_back(new StoredTable<1>(this, enthalpyName, "T(K)", "h(J/kg)"));
     }
 
     // calculate g = gsigmasca / sigmasca
@@ -242,6 +240,140 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
     ProcessManager::sumToAll(S34vv.data());
 
     return mu;
+}
+
+////////////////////////////////////////////////////////////////////
+
+size_t MultiGrainDustMix::initializeExtraProperties(const Array& lambdav)
+{
+    // determine which type(s) of emission we need to support
+    auto config = find<Configuration>();
+    bool multigrain = config->hasDustEmission();
+    bool stochastic = config->hasDustEmission();  // TO DO -> hasStochasticDustEmission
+
+    // perform only if extra properties are required
+    if (multigrain)
+    {
+        // get the number of wavelength grid points and allocate temporary memory for the cross sections
+        int numLambda = lambdav.size();
+        Array sigmaabsv(numLambda);
+
+        // resize the arrays needed for stochastic emissivity
+        // (the equilibrium temperature calculator does not need to know the number of bins in advance)
+        if (stochastic)
+        {
+            int numBins = 0;
+            for (auto population : _populations) numBins += population->numSizes();
+            _btocv.resize(numBins);
+            _massv.resize(numBins);
+            _sigmaabsvv.resize(numBins, numLambda);
+            _enthalpyv.resize(_populations.size());
+        }
+
+        // loop over all populations and process size bins for each
+        int c = 0;      // population index
+        int b = 0;      // running size bin index
+        for (auto population : _populations)
+        {
+            // open the stored table for the absorption cross sections
+            string opticalPropsName = population->composition()->resourceNameForOpticalProps();
+            StoredTable<2> Qabs(this, opticalPropsName, "a(m),lambda(m)", "Qabs(1)");
+
+            // construct the size bins (i.e. the bin border points) for this population
+            int numPopBins = population->numSizes();
+            double amin = population->sizeDistribution()->amin();
+            double amax = population->sizeDistribution()->amax();
+            Array aborderv;
+            NR::buildLogGrid(aborderv, amin, amax, numPopBins);
+
+            // loop over the size bins for this population
+            for (int bb = 0; bb!=numPopBins; ++bb)
+            {
+                // create an integration grid over grain size within this bin
+                int numSizes = max(3., 100 * log10(amax/amin));
+                Array av(numSizes);      // "a" for each point
+                Array dav(numSizes);     // "da" for each point
+                Array dndav(numSizes);   // "dnda" for each point
+                Array weightv(numSizes); // integration weight for each point (1/2 or 1 in addition to normalization)
+                {
+                    double logamin = log10(aborderv[bb]);
+                    double logamax = log10(aborderv[bb+1]);
+                    double dloga = (logamax-logamin)/(numSizes-1);
+                    for (int i=0; i!=numSizes; ++i)
+                    {
+                        av[i] = pow(10, logamin + i*dloga);
+                        dav[i] = av[i] * M_LN10 * dloga;
+                        dndav[i] = population->sizeDistribution()->dnda(av[i]);
+                        weightv[i] = _normv[c];
+                    }
+                    weightv[0] *= 0.5;
+                    weightv[numSizes-1] *= 0.5;
+                }
+
+                // size-integrate the absorption cross sections for this bin
+                for (int ell=0; ell!=numLambda; ++ell)
+                {
+                    double lamdba = lambdav[ell];
+                    double sum = 0.;
+                    for (int i=0; i!=numSizes; ++i)
+                    {
+                        double area = M_PI * av[i] * av[i];
+                        sum += weightv[i] * dndav[i] * area * Qabs(av[i], lamdba) * dav[i];
+                    }
+                    sigmaabsv[ell] = sum;
+                }
+
+                // setup the equilibrium temperature calculator for this bin
+                _tempCalcv.precalculate(this, lambdav, sigmaabsv);
+
+                // if needed, also precalculate the info for stochastic emissivity calculations
+                if (stochastic)
+                {
+                    // remember the mapping from bins to populations
+                    _btocv[b] = c;
+
+                    // calculate the mean grain mass for this bin
+                    double sum1 = 0.;
+                    double sum2 = 0.;
+                    for (int i=0; i!=numSizes; ++i)
+                    {
+                        double volume = 4.0*M_PI/3.0 * av[i] * av[i] * av[i];
+                        sum1 += weightv[i] * dndav[i] * volume * dav[i];
+                        sum2 += weightv[i] * dndav[i] * dav[i];
+                    }
+                    _massv[b] = population->composition()->bulkDensity() * sum1/sum2;
+
+                    // remember the absorption coefficients
+                    for (int ell=0; ell!=numLambda; ++ell) _sigmaabsvv(b,ell) = sigmaabsv[ell];
+                }
+
+                // increment the running bin index
+                b++;
+            }
+
+            if (stochastic)
+            {
+                // open the enthalpy stored table for this population
+                string enthalpyName = population->composition()->resourceNameForEnthalpies();
+                _enthalpyv[c] = new StoredTable<1>(this, enthalpyName, "T(K)", "h(J/kg)");
+            }
+
+            // increment the population index
+            c++;
+        }
+    }
+
+    // determine the allocated number of bytes
+    size_t allocatedBytes = 0;
+    allocatedBytes += _populations.size() * sizeof(_populations[0]);
+    allocatedBytes += _mupopv.size() * sizeof(_mupopv[0]);
+    allocatedBytes += _normv.size() * sizeof(_normv[0]);
+    allocatedBytes += _tempCalcv.allocatedBytes();
+    allocatedBytes += _btocv.size() * sizeof(_btocv[0]);
+    allocatedBytes += _massv.size() * sizeof(_massv[0]);
+    allocatedBytes += _sigmaabsvv.size() * sizeof(double);
+    allocatedBytes += _enthalpyv.size() * sizeof(_enthalpyv[0]);
+    return allocatedBytes;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -284,7 +416,14 @@ double MultiGrainDustMix::populationMass(int c) const
 
 int MultiGrainDustMix::numBins() const
 {
-    return _numBins;
+    return _tempCalcv.numBins();
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MultiGrainDustMix::binEquilibriumTemperature(int b, const Array& Jv) const
+{
+    return _tempCalcv.equilibriumTemperature(b, Jv);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -299,13 +438,6 @@ double MultiGrainDustMix::binMeanMass(int b) const
 double MultiGrainDustMix::binSectionAbs(int b, double lambda) const
 {
     return _sigmaabsvv(b, indexForLambda(lambda));
-}
-
-////////////////////////////////////////////////////////////////////
-
-double MultiGrainDustMix::binEquilibriumTemperature(int /*b*/, const Array& /*Jv*/) const
-{
-    return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////

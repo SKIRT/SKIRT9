@@ -8,6 +8,7 @@
 
 #include "MaterialMix.hpp"
 #include "ArrayTable.hpp"
+#include "EquilibriumDustTemperatureCalculator.hpp"
 #include "Table.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -93,6 +94,18 @@ protected:
     virtual double getOpticalProperties(const Array& lambdav, const Array& thetav,
                                         Array& sigmaabsv, Array& sigmascav, Array& asymmparv,
                                         Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv) = 0;
+
+    /** This function can be implemented in a subclass to initialize dust properties that are
+        offered through some additional functions outside of the DustMix interface defined here.
+        The argument specifies the wavelength grid on which the properties must be tabulated (i.e.
+        the same grid as passed to the getOpticalProperties() function.
+
+        The function is called by the DustMix class during setup after the getOpticalProperties()
+        function has been called and its results have been processed. The function returns the
+        number of bytes allocated by the subclass to support the extra features (this number is
+        used for logging purposes). The default implementation of this function does nothing and
+        returns zero. */
+    virtual size_t initializeExtraProperties(const Array& lambdav);
 
     //======== Private support functions =======
 
@@ -289,10 +302,7 @@ private:
     Array _phicv;               // indexed on f
 
     // equilibrium temperature info
-    WavelengthGrid* _radiationFieldWLG{nullptr};  // the radiation field wavelength grid
-    Array _rfsigmaabsv; // absorption cross sections on the above wavelength grid
-    Array _Tv;          // temperature grid for the Planck-integrated absorption cross sections
-    Array _planckabsv;  // Planck-integrated absorption cross sections for each of the temperatures in the above grid
+    EquilibriumDustTemperatureCalculator _tempCalc;
 };
 
 ////////////////////////////////////////////////////////////////////

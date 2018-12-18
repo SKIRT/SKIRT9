@@ -125,46 +125,14 @@ void DustMix::setupSelfAfter()
     }
 
     // precalculate information to accelerate solving the energy balance equation for the temperature;
-    // this calculation is relevant only if the simulation tracks the radiation field
+    // this is relevant only if the simulation tracks the radiation field
     if (find<Configuration>()->hasRadiationField())
     {
-        // energy input side
-        {
-            // cache the simulation's radiation field wavelength grid
-            _radiationFieldWLG = find<Configuration>()->radiationFieldWLG();
-
-            // prepare it for immediate use
-            _radiationFieldWLG->setup();
-
-            // cache the absorption cross sections on the above wavelength grid
-            int numWavelengths = _radiationFieldWLG->numBins();
-            _rfsigmaabsv.resize(numWavelengths);
-            for (int ell=0; ell!=numWavelengths; ++ell)
-                _rfsigmaabsv[ell] = sectionAbs(_radiationFieldWLG->wavelength(ell));
-        }
-
-        // energy output side
-        {
-            // the temperature grid on which we store the Planck-integrated absorption cross sections
-            const int numTemperatures = 1001;
-            NR::buildPowerLawGrid(_Tv, 0., 5000., numTemperatures-1, 500.);
-
-            // the Planck-integrated absorption cross sections on the above temperature grid
-            _planckabsv.resize(numTemperatures);
-            for (int p=1; p!=numTemperatures; ++p)   // leave value for p==0 at zero
-            {
-                PlanckFunction B(_Tv[p]);
-                double planckabs = 0.;
-                for (int ell=1; ell!=numLambda; ++ell) // skip the first wavelength so we can determine a bin width
-                {
-                    double lambda = lambdav[ell];
-                    double dlambda = lambdav[ell] - lambdav[ell-1];
-                    planckabs += _sigmaabsv[ell] * B(lambda) * dlambda;
-                }
-                _planckabsv[p] = planckabs;
-            }
-        }
+        _tempCalc.precalculate(this, lambdav, _sigmaabsv);
     }
+
+    // give the subclass a chance to obtain additional precalculated information
+    size_t allocatedBytes = initializeExtraProperties(lambdav);
 
     // calculate and log allocated memory size
     size_t allocatedSize = 0;
@@ -184,11 +152,16 @@ void DustMix::setupSelfAfter()
     allocatedSize += _phi1v.size();
     allocatedSize += _phisv.size();
     allocatedSize += _phicv.size();
-    allocatedSize += _rfsigmaabsv.size();
-    allocatedSize += _Tv.size();
-    allocatedSize += _planckabsv.size();
-    find<Log>()->info(type() + " allocated " +
-                      StringUtils::toMemSizeString(allocatedSize*sizeof(double)) + " of memory");
+
+    allocatedBytes += allocatedSize*sizeof(double) + _tempCalc.allocatedBytes();
+    find<Log>()->info(type() + " allocated " + StringUtils::toMemSizeString(allocatedBytes) + " of memory");
+}
+
+////////////////////////////////////////////////////////////////////
+
+size_t DustMix::initializeExtraProperties(const Array& /*lambdav*/)
+{
+    return 0;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -318,16 +291,7 @@ void DustMix::applyMueller(double lambda, double theta, StokesVector* sv) const
 
 double DustMix::equilibriumTemperature(const Array& Jv) const
 {
-    // integrate the input side of the energy balance equation
-    int numWavelengths = _radiationFieldWLG->numBins();
-    double inputabs = 0.;
-    for (int ell=0; ell!=numWavelengths; ++ell)
-    {
-        inputabs += _rfsigmaabsv[ell] * Jv[ell] * _radiationFieldWLG->effectiveWidth(ell);
-    }
-
-    // find the temperature corresponding to this amount of emission on the output side of the equation
-    return NR::clampedValue<NR::interpolateLinLin>(inputabs, _planckabsv, _Tv);
+    return _tempCalc.equilibriumTemperature(0, Jv);
 }
 
 ////////////////////////////////////////////////////////////////////

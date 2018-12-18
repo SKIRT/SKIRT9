@@ -163,6 +163,23 @@ protected:
                                 Array& sigmaabsv, Array& sigmascav, Array& asymmparv,
                                 Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv) override;
 
+    /** This function is invoked by the DustMix base class to precalculate additional dust
+        properties that are offered through functions outside of the DustMix interface. The
+        argument specifies the wavelength grid on which the properties must be tabulated (i.e. the
+        same grid as passed to the getOpticalProperties() function. The function returns the
+        number of memory bytes allocated to store extra propertries.
+
+        The function discretizes the grain size distribution for each grain population added to
+        this dust mix into a number of consecutive size bins (on a logarithmic scale), and
+        calculates the relevant optical and calorimetric properties of a representative grain for
+        each of these bins. The number of bins for each type of grain material can be configured by
+        the user.
+
+        The bins for the various populations in the dust mix are placed in a single sequence, in
+        the same overall order as the populations addressed by the \f$c\f$ indices. Within each
+        population, the bins are listed in order of increasing grain size. */
+    size_t initializeExtraProperties(const Array& lambdav) override;
+
     //------------- Cleanup ------------
 
 public:
@@ -207,6 +224,13 @@ public:
         addressed by the \f$b\f$ indices. */
     int numBins() const;
 
+    /** This function returns the equilibrium temperature \f$T_{\text{eq},b}\f$ (assuming LTE
+        conditions) for the representative grain of the bin with index \f$b\f$ when it would be
+        embedded in the radiation field specified by the mean intensities \f$(J_\lambda)_\ell\f$,
+        which must be discretized on the simulation's radiation field wavelength grid as returned
+        by the Configuration::radiationFieldWLG() function. */
+    double binEquilibriumTemperature(int b, const Array& Jv) const;
+
     /** This function returns the mean mass of a dust grain for the bin with index \f$b\f$. */
     double binMeanMass(int b) const;
 
@@ -214,13 +238,6 @@ public:
         \f$\varsigma^{\text{abs}}_{\lambda,b}\f$ at wavelength \f$\lambda\f$ for the representative
         grain of the bin with index \f$b\f$. */
     double binSectionAbs(int b, double lambda) const;
-
-    /** This function returns the equilibrium temperature \f$T_{\text{eq},b}\f$ (assuming LTE
-        conditions) for the representative grain of the bin with index \f$b\f$ when it would be
-        embedded in the radiation field specified by the mean intensities \f$(J_\lambda)_\ell\f$,
-        which must be discretized on the simulation's radiation field wavelength grid as returned
-        by the Configuration::radiationFieldWLG() function. */
-    double binEquilibriumTemperature(int b, const Array& Jv) const;
 
     /** This function returns the enthalpy at temperature \f$T\f$ for the representative grain of
         the bin with index \f$b\f$. The enthalpy is equivalent to the internal energy of the dust
@@ -242,14 +259,16 @@ private:
 
     // data members with information per population -- initialized by getOpticalProperties()
     vector<double> _mupopv;             // mass per hydrogen atom for population - indexed on c
-    vector<StoredTable<1>*> _enthalpyv; // enthalpy stored table for population - indexed on c
+    vector<double> _normv;              // size distribution normalization for population - indexed on c
 
-    // data members with information per size bin -- initialized by getOpticalProperties()
-    int _numBins{0};        // number of bins; range of b index
+    // data members with info per size bin for multigrain emissivity -- initialized by initializeExtraProperties()
+    EquilibriumDustTemperatureCalculator _tempCalcv; // equilibrium temperature info - indexed on b
+
+    // data members with info per size bin for stochastic emissivity -- initialized by initializeExtraProperties()
     vector<int> _btocv;     // mapping from b index (bins) to c index (corresponding population)
     Array _massv;           // mean mass of a grain - indexed on b
     Table<2> _sigmaabsvv;   // absorption cross sections - indexed on b,ell
-    ArrayTable<2> _planckabsvv; // Planck-integrated absorption cross sections - indexed on b,ell
+    vector<StoredTable<1>*> _enthalpyv; // enthalpy stored table for population - indexed on c
 };
 
 ////////////////////////////////////////////////////////////////////
