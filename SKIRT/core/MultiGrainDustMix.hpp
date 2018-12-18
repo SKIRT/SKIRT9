@@ -7,6 +7,7 @@
 #define MULTIGRAINDUSTMIX_HPP
 
 #include "DustMix.hpp"
+#include "ArrayTable.hpp"
 #include "GrainPopulation.hpp"
 #include "Range.hpp"
 #include "StoredTable.hpp"
@@ -231,13 +232,13 @@ public:
         by the Configuration::radiationFieldWLG() function. */
     double binEquilibriumTemperature(int b, const Array& Jv) const;
 
-    /** This function returns the mean mass of a dust grain for the bin with index \f$b\f$. */
-    double binMeanMass(int b) const;
-
     /** This function returns the absorption cross section per hydrogen atom
         \f$\varsigma^{\text{abs}}_{\lambda,b}\f$ at wavelength \f$\lambda\f$ for the representative
         grain of the bin with index \f$b\f$. */
     double binSectionAbs(int b, double lambda) const;
+
+    /** This function returns the mean mass of a dust grain for the bin with index \f$b\f$. */
+    double binMeanMass(int b) const;
 
     /** This function returns the enthalpy at temperature \f$T\f$ for the representative grain of
         the bin with index \f$b\f$. The enthalpy is equivalent to the internal energy of the dust
@@ -257,17 +258,17 @@ private:
     // list created by addPopulation()
     vector<const GrainPopulation*> _populations;
 
-    // data members with information per population -- initialized by getOpticalProperties()
-    vector<double> _mupopv;             // mass per hydrogen atom for population - indexed on c
-    vector<double> _normv;              // size distribution normalization for population - indexed on c
+    // info per population -- initialized by getOpticalProperties()
+    vector<double> _mupopv;         // mass per hydrogen atom for population - indexed on c
+    vector<double> _normv;          // size distribution normalization for population - indexed on c
 
-    // data members with info per size bin for multigrain emissivity -- initialized by initializeExtraProperties()
+    // info per size bin for multi-grain equilibrium emissivity -- initialized by initializeExtraProperties()
     EquilibriumDustTemperatureCalculator _tempCalcv; // equilibrium temperature info - indexed on b
+    ArrayTable<2> _sigmaabsvv;      // absorption cross sections - indexed on b,ell
 
-    // data members with info per size bin for stochastic emissivity -- initialized by initializeExtraProperties()
-    vector<int> _btocv;     // mapping from b index (bins) to c index (corresponding population)
-    Array _massv;           // mean mass of a grain - indexed on b
-    Table<2> _sigmaabsvv;   // absorption cross sections - indexed on b,ell
+    // info per size bin for stochastic emissivity -- initialized by initializeExtraProperties()
+    vector<int> _btocv;             // mapping from b index (bins) to c index (corresponding population)
+    Array _massv;                   // mean mass of a grain - indexed on b
     vector<StoredTable<1>*> _enthalpyv; // enthalpy stored table for population - indexed on c
 };
 
