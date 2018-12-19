@@ -353,7 +353,7 @@ size_t MultiGrainDustMix::initializeExtraProperties(const Array& lambdav)
             {
                 // open the enthalpy stored table for this population
                 string enthalpyName = population->composition()->resourceNameForEnthalpies();
-                _enthalpyv[c] = new StoredTable<1>(this, enthalpyName, "T(K)", "h(J/kg)");
+                _enthalpyv[c] = new StoredTable<1>(this, enthalpyName, "T(K)", "h(J/m3)");
             }
 
             // increment the population index
@@ -443,7 +443,7 @@ double MultiGrainDustMix::binMeanMass(int b) const
 double MultiGrainDustMix::binEnthalpy(int b, double T) const
 {
     int c = _btocv[b];
-    return _massv[b] * _enthalpyv[c]->operator()(T);
+    return _massv[b] * _enthalpyv[c]->operator()(T) / _populations[c]->composition()->bulkDensity();
 }
 
 ////////////////////////////////////////////////////////////////////
