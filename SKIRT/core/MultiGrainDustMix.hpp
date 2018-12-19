@@ -237,6 +237,11 @@ public:
         grain of the bin with index \f$b\f$. */
     double binSectionAbs(int b, double lambda) const;
 
+    /** This function returns a brief human-readable identifier for the type of grain material
+        represented by the bin with index \f$b\f$. The identifier does not contain white
+        space. */
+    string binGrainType(int b) const;
+
     /** This function returns the mean mass of a dust grain for the bin with index \f$b\f$. */
     double binMeanMass(int b) const;
 

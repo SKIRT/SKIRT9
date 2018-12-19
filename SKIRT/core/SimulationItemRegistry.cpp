@@ -172,6 +172,7 @@
 #include "Starburst99SEDFamily.hpp"
 #include "StellarSurfaceSource.hpp"
 #include "StellarUnits.hpp"
+#include "StochasticDustEmissivity.hpp"
 #include "SunSED.hpp"
 #include "SymPowMesh.hpp"
 #include "TTauriDiskGeometry.hpp"
@@ -465,6 +466,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // dust emissivity calculators
     ItemRegistry::add<DustEmissivity>();
     ItemRegistry::add<EquilibriumDustEmissivity>();
+    ItemRegistry::add<StochasticDustEmissivity>();
 
     // spatial cell libraries
     ItemRegistry::add<SpatialCellLibrary>();

@@ -433,6 +433,14 @@ double MultiGrainDustMix::binSectionAbs(int b, double lambda) const
 
 ////////////////////////////////////////////////////////////////////
 
+string MultiGrainDustMix::binGrainType(int b) const
+{
+    int c = _btocv[b];
+    return _populations[c]->composition()->name();
+}
+
+////////////////////////////////////////////////////////////////////
+
 double MultiGrainDustMix::binMeanMass(int b) const
 {
     return _massv[b];

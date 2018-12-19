@@ -30,7 +30,7 @@ public:
         \f$J_\ell\f$. The input radation field is assumed to be discretized on the radiation field
         wavelength grid as returned by the Configuration::radiationFieldWLG() function. The output
         emission spectrum is discretized on the emission spectrum wavelength grid as returned by
-        the Configuration::emissionSpectrumWLG() function. */
+        the Configuration::dustEmissionWLG() function. */
     virtual Array emissivity(const MaterialMix* mix, const Array& Jv) const = 0;
 };
 

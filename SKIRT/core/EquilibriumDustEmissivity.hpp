@@ -48,8 +48,8 @@ public:
     /** This function returns the dust emissivity spectrum \f$\varepsilon_{\ell'}\f$ for the
         specified dust mix residing in a radiation field with the specified mean intensities
         \f$J_\ell\f$. The input and output arrays are discretized on the wavelength grids returned
-        by the Configuration::radiationFieldWLG() and Configuration::emissionSpectrumWLG()
-        functions, repectively. */
+        by the Configuration::radiationFieldWLG() and Configuration::dustEmissionWLG() functions,
+        repectively. */
     Array emissivity(const MaterialMix* mix, const Array& Jv) const override;
 };
 
