@@ -77,12 +77,12 @@ public:
     ArrayTable<2> _Bvv;
 
     // constructor
-    SDE_Grid(const WavelengthGrid* emissionWLG, double Tmin, double Tmax, int NT, double ratio)
+    SDE_Grid(const WavelengthGrid* outputWLG, double Tmin, double Tmax, int NT, double ratio)
     {
         // copy output wavelength grid
-        _NoutLambda = emissionWLG->numBins();
+        _NoutLambda = outputWLG->numBins();
         _outLambdav.resize(_NoutLambda);
-        for (int ell=0; ell!=_NoutLambda; ++ell) _outLambdav[ell] = emissionWLG->wavelength(ell);
+        for (int ell=0; ell!=_NoutLambda; ++ell) _outLambdav[ell] = outputWLG->wavelength(ell);
 
         // build temperature grid (linear if ratio==1)
         _NT = NT;
@@ -108,64 +108,70 @@ class SDE_Calculator
 private:
     const SDE_Grid* _grid;      // temperature grid with corresponding black body discretization
     Triangle<double> _HRm;      // heating rates (indexed on f,i)
-    Triangle<short> _ELLm;      // radiation field wavelength index (indexed on f,i)
+    Triangle<short> _Km;        // radiation field wavelength index k (indexed on f,i)
     Array _CRv;                 // cooling rates (indexed on i)
-    Array _sigmaabsv;           // cross sections on the output wavelength grid (indexed on ell)
+    Array _sigmaabsv;           // cross sections on output wavelength grid (indexed on ell)
 
 public:
-    SDE_Calculator(const SDE_Grid* grid, const MultiGrainDustMix* mgmix, int c)
-        : _grid(grid), _HRm(grid->_NT), _ELLm(grid->_NT), _CRv(grid->_NT)
+    SDE_Calculator(const SDE_Grid* grid, const WavelengthGrid* inputWLG, const MultiGrainDustMix* mgmix, int b)
+        : _grid(grid), _HRm(grid->_NT), _Km(grid->_NT), _CRv(grid->_NT), _sigmaabsv(grid->_outLambdav)
     {
-        /*
-        // get info from grid
-        double hc = grid->_hc;
+        // get shortcuts to the temperature grid
         const Array& Tv = grid->_Tv;
         int NT = grid->_NT;
-        int Nlambda = grid->_Nlambda;
-
-        // precalculate heating and cooling rates for this population
-        Array Hv(NT);
-        Array dHv(NT);
 
         // calculate the enthalpy of a single dust grain in this population across the temperature grid
-        for (int i=0; i<NT; i++) Hv[i] = _mix->enthalpy(Tv[i],c);
+        Array Hv(NT);
+        for (int i=0; i<NT; i++) Hv[i] = mgmix->binEnthalpy(b,Tv[i]);
 
         // calculate the enthalpy bin widths
+        Array dHv(NT);
         dHv[0] = Hv[1]-Hv[0];
         for (int i=1; i<NT-1; i++)
         {
             double Tmin = (Tv[i-1]+Tv[i])/2.;
             double Tmax = (Tv[i+1]+Tv[i])/2.;
-            dHv[i] = _mix->enthalpy(Tmax,c) - _mix->enthalpy(Tmin,c);
+            dHv[i] = mgmix->binEnthalpy(b,Tmax) - mgmix->binEnthalpy(b,Tmin);
         }
         dHv[NT-1] = Hv[NT-1]-Hv[NT-2];
 
         // calculate the heating rates, barring the dependency on the radiation field
+        double hc = Constants::h() * Constants::c();
         for (int f=1; f<NT; f++)
         {
             for (int i=0; i<f; i++)
             {
                 double Hdiff = Hv[f] - Hv[i];
                 double lambda = hc / Hdiff;
-                int ell = grid->_lambdagrid->nearest(lambda);
-                if (ell>=0) _HRm(f,i) = hc * _sigmaabsv[ell] * dHv[f] / (Hdiff*Hdiff*Hdiff);
-                _ELLm(f,i) = ell;
+                int k = inputWLG->bin(lambda);
+                if (k>=0) _HRm(f,i) = hc * mgmix->sectionAbs(lambda) * dHv[f] / (Hdiff*Hdiff*Hdiff);
+                _Km(f,i) = k;
             }
         }
 
         // calculate the cooling rates
+        const Array& lambdav = mgmix->finelambdav();
+        const Array& sigmaabsv = mgmix->finesigmaabsv();
+        int Nlambda = lambdav.size();
         for (int i=1; i<NT; i++)
         {
-            double Hdiff = Hv[i] - Hv[i-1];
-            double sum = 0.;
-            const Array& Bv = _grid->_Bvv[i];
-            for (int ell = 0; ell<Nlambda; ell++)
+            PlanckFunction B(Tv[i]);
+            double planckabs = 0.;
+            for (int ell = 1; ell<Nlambda; ell++) // skip the first wavelength so we can determine a bin width
             {
-                sum += _sigmaabsv[ell] * Bv[ell] * grid->_dlambdav[ell];
+                double lambda = lambdav[ell];
+                double dlambda = lambdav[ell] - lambdav[ell-1];
+                planckabs += sigmaabsv[ell] * B(lambda) * dlambda;
             }
-            _CRv[i] = sum / Hdiff;
+            double Hdiff = Hv[i] - Hv[i-1];
+            _CRv[i] = planckabs / Hdiff;
         }
-        */
+
+        // obtain the cross sections on the output wavelength grid
+        for (int ell=0; ell!=grid->_NoutLambda; ++ell)
+        {
+            _sigmaabsv[ell] = mgmix->binSectionAbs(b, grid->_outLambdav[ell]);
+        }
     }
 
     // calculate the probabilities
@@ -174,7 +180,7 @@ public:
     // Am: scratch memory for the calculation (internal only)
     // Tmin/Tmax: temperature range in which to perform the calculation (in), and
     //            temperature range where the calculated probabilities are above a certain fraction of maximum (out)
-    // Jv: the radiation field (in)
+    // Jv: the radiation field discretized on the input wavelength grid (in)
     void calcProbs(Array& Pv, int& ioff, Square<double>& Am, double& Tmin, double& Tmax, const Array& Jv) const
     {
         ioff = NR::locateClip(_grid->_Tv, Tmin);
@@ -184,12 +190,12 @@ public:
         Am.resize(NT);
         for (int f=1; f<NT; f++)
         {
-            const short* ELLv = &_ELLm(f+ioff,ioff);
+            const short* Kv = &_Km(f+ioff,ioff);
             const double* HRv = &_HRm(f+ioff,ioff);
             for (int i=0; i<f; i++)
             {
-                int ell = ELLv[i];
-                Am(f,i) = ell>=0 ? HRv[i] * Jv[ell] : 0.;
+                int k = Kv[i];
+                Am(f,i) = k>=0 ? HRv[i] * Jv[k] : 0.;
             }
         }
         for (int i=1; i<NT; i++)
@@ -299,9 +305,12 @@ void StochasticDustEmissivity::setupSelfBefore()
 {
     DustEmissivity::setupSelfBefore();
 
-    // get the output wavelength grid
-    auto emissionWLG = find<Configuration>()->dustEmissionWLG();
-    _numOutWavelengths = emissionWLG->numBins();
+    // get the input and output wavelength grids
+    auto inputWLG = find<Configuration>()->radiationFieldWLG();
+    auto outputWLG = find<Configuration>()->dustEmissionWLG();
+    inputWLG->setup();
+    outputWLG->setup();
+    _numOutWavelengths = outputWLG->numBins();
 
     // construct the appropriate grids and calculators for each MultiGrainDustMix dust mix
     find<Log>()->info("Precalculating cached values for transient dust emissivity computations...");
@@ -311,11 +320,13 @@ void StochasticDustEmissivity::setupSelfBefore()
         auto mgmix = dynamic_cast<const MultiGrainDustMix*>(medium->mix());
         if (mgmix)
         {
+            const_cast<MultiGrainDustMix*>(mgmix)->setup();  // TO DO: temporary hack
+
             // create grids
             double Tupper = min(Tuppermax, mgmix->maxEnthalpyTemperature());
-            const SDE_Grid* gridA = new SDE_Grid(emissionWLG, 2., Tupper, NTA, ratioA);
-            const SDE_Grid* gridB = new SDE_Grid(emissionWLG, 2., Tupper, static_cast<int>(Tupper/widthB), ratioB);
-            const SDE_Grid* gridC = new SDE_Grid(emissionWLG, 2., Tupper, static_cast<int>(Tupper/widthC), ratioC);
+            const SDE_Grid* gridA = new SDE_Grid(outputWLG, 2., Tupper, NTA, ratioA);
+            const SDE_Grid* gridB = new SDE_Grid(outputWLG, 2., Tupper, static_cast<int>(Tupper/widthB), ratioB);
+            const SDE_Grid* gridC = new SDE_Grid(outputWLG, 2., Tupper, static_cast<int>(Tupper/widthC), ratioC);
             _grids.push_back(gridA);
             _grids.push_back(gridB);
             _grids.push_back(gridC);
@@ -324,9 +335,9 @@ void StochasticDustEmissivity::setupSelfBefore()
             int numBins = mgmix->numBins();
             for (int b=0; b!=numBins; ++b)
             {
-                _calculatorsA.emplace(std::make_pair(mgmix,b), new SDE_Calculator(gridA, mgmix, b));
-                _calculatorsB.emplace(std::make_pair(mgmix,b), new SDE_Calculator(gridB, mgmix, b));
-                _calculatorsC.emplace(std::make_pair(mgmix,b), new SDE_Calculator(gridC, mgmix, b));
+                _calculatorsA.emplace(std::make_pair(mgmix,b), new SDE_Calculator(gridA, inputWLG, mgmix, b));
+                _calculatorsB.emplace(std::make_pair(mgmix,b), new SDE_Calculator(gridB, inputWLG, mgmix, b));
+                _calculatorsC.emplace(std::make_pair(mgmix,b), new SDE_Calculator(gridC, inputWLG, mgmix, b));
             }
         }
     }

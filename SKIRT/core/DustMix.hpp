@@ -266,6 +266,11 @@ public:
         relies. */
     double equilibriumTemperature(const Array& Jv) const override;
 
+    //======================== Temporary exposure ========================
+
+    const Array& finelambdav() const { return _lambdav; }
+    const Array& finesigmaabsv() const { return _sigmaabsv; }
+
     //======================== Data Members ========================
 
 private:
@@ -281,6 +286,7 @@ private:
 
     // basic optical properties
     double _mu{0.};
+    Array _lambdav;     // indexed on ell
     Array _sigmaabsv;   // indexed on ell
     Array _sigmascav;   // indexed on ell
     Array _sigmaextv;   // indexed on ell

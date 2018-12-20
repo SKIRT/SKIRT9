@@ -47,8 +47,8 @@ void DustMix::setupSelfAfter()
     int numLambda = _maxLogLambda+1;
 
     // build a temporary wavelength grid corresponding to this scheme
-    Array lambdav(numLambda);
-    for (int ell=0; ell!=numLambda; ++ell) lambdav[ell] = pow(10., (ell+0.5)/_logLambdaFactor - _logLambdaOffset);
+    _lambdav.resize(numLambda);
+    for (int ell=0; ell!=numLambda; ++ell) _lambdav[ell] = pow(10., (ell+0.5)/_logLambdaFactor - _logLambdaOffset);
 
     // if needed, build a scattering angle grid
     if (mode == ScatteringMode::MaterialPhaseFunction || mode == ScatteringMode::SphericalPolarization)
@@ -75,7 +75,7 @@ void DustMix::setupSelfAfter()
     }
 
     // obtain the optical properties from the subclass
-    _mu = getOpticalProperties(lambdav, _thetav, _sigmaabsv, _sigmascav, _asymmparv, _S11vv, _S12vv, _S33vv, _S34vv);
+    _mu = getOpticalProperties(_lambdav, _thetav, _sigmaabsv, _sigmascav, _asymmparv, _S11vv, _S12vv, _S33vv, _S34vv);
 
     // calculate some derived basic optical properties
     for (int ell=0; ell!=numLambda; ++ell)
@@ -128,15 +128,16 @@ void DustMix::setupSelfAfter()
     // this is relevant only if the simulation tracks the radiation field
     if (find<Configuration>()->hasRadiationField())
     {
-        _tempCalc.precalculate(this, lambdav, _sigmaabsv);
+        _tempCalc.precalculate(this, _lambdav, _sigmaabsv);
     }
 
     // give the subclass a chance to obtain additional precalculated information
-    size_t allocatedBytes = initializeExtraProperties(lambdav);
+    size_t allocatedBytes = initializeExtraProperties(_lambdav);
 
     // calculate and log allocated memory size
     size_t allocatedSize = 0;
     allocatedSize += _thetav.size();
+    allocatedSize += _lambdav.size();
     allocatedSize += _sigmaabsv.size();
     allocatedSize += _sigmascav.size();
     allocatedSize += _sigmaextv.size();
