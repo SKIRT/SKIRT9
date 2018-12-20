@@ -6,6 +6,7 @@
 #include "MultiGrainDustMix.hpp"
 #include "Configuration.hpp"
 #include "Constants.hpp"
+#include "DisjointWavelengthGrid.hpp"
 #include "FatalError.hpp"
 #include "GrainComposition.hpp"
 #include "GrainSizeDistribution.hpp"
@@ -13,6 +14,7 @@
 #include "NR.hpp"
 #include "Parallel.hpp"
 #include "ParallelFactory.hpp"
+#include "PlanckFunction.hpp"
 #include "ProcessManager.hpp"
 #include "StoredTable.hpp"
 #include "WavelengthGrid.hpp"
@@ -249,7 +251,7 @@ size_t MultiGrainDustMix::initializeExtraProperties(const Array& lambdav)
     // determine which type(s) of emission we need to support
     auto config = find<Configuration>();
     bool multigrain = config->hasDustEmission();
-    bool stochastic = config->hasDustEmission();  // TO DO -> hasStochasticDustEmission
+    bool stochastic = config->hasStochasticDustEmission();
 
     // perform only if extra properties are required
     if (multigrain)
@@ -383,6 +385,30 @@ MultiGrainDustMix::~MultiGrainDustMix()
 
 ////////////////////////////////////////////////////////////////////
 
+Array MultiGrainDustMix::emissivity(const Array& Jv) const
+{
+    // get the output wavelength grid
+    auto wavelengthGrid = find<Configuration>()->dustEmissionWLG();
+    int numWavelengths = wavelengthGrid->numBins();
+
+    // calculate the black-body emissivity spectrum
+    Array ev(numWavelengths);
+    int numBins = _tempCalcv.numBins();
+    for (int b=0; b!=numBins; ++b)
+    {
+        double T = _tempCalcv.equilibriumTemperature(b, Jv);
+        PlanckFunction B(T);
+        for (int ell=0; ell<numWavelengths; ell++)
+        {
+            double lambda = wavelengthGrid->wavelength(ell);
+            ev[ell] += _sigmaabsvv(b, indexForLambda(lambda)) * B(lambda);
+        }
+    }
+    return ev;
+}
+
+////////////////////////////////////////////////////////////////////
+
 int MultiGrainDustMix::numPopulations() const
 {
     return _populations.size();
@@ -410,6 +436,7 @@ double MultiGrainDustMix::populationMass(int c) const
     return _mupopv[c];
 }
 
+/*
 ////////////////////////////////////////////////////////////////////
 
 int MultiGrainDustMix::numBins() const
@@ -462,5 +489,5 @@ double MultiGrainDustMix::maxEnthalpyTemperature() const
     for (auto enthalpy : _enthalpyv) range.extend(enthalpy->axisRange<0>());
     return range.max();
 }
-
+*/
 ////////////////////////////////////////////////////////////////////

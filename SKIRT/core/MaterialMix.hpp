@@ -237,15 +237,23 @@ public:
         for the function). The default implementation in this base class does nothing. */
     virtual void applyMueller(double lambda, double theta, StokesVector* sv) const;
 
-    //======== Equilibrium Temperature =======
+    //======== Temperature and emission =======
 
     /** This function returns the equilibrium temperature \f$T_{\text{eq}}\f$ (assuming LTE
         conditions) of the material mix when it would be embedded in the radiation field specified
         by the mean intensities \f$(J_\lambda)_\ell\f$, which must be discretized on the
         simulation's radiation field wavelength grid as returned by the
-        Configuration::radiationFieldWLG() function. The default implementation in this base class
-        returns zero. */
-    virtual double equilibriumTemperature(const Array& Jv) const;
+        Configuration::radiationFieldWLG() function. */
+    virtual double equilibriumTemperature(const Array& Jv) const = 0;
+
+    /** This function returns the emissivity spectrum \f$\varepsilon_{\ell'}\f$ of the material mix
+        when it would be embedded in the radiation field specified by the mean intensities
+        \f$(J_\lambda)_\ell\f$. The input radiation field must be discretized on the simulation's
+        radiation field wavelength grid as returned by the Configuration::radiationFieldWLG()
+        function. The output emissivity spectrum is discretized on a wavelength grid that depends
+        on the material type. For more information, refer to the documentation of this function for
+        each material type. */
+    virtual Array emissivity(const Array& Jv) const = 0;
 
     //======================== Other Functions =======================
 

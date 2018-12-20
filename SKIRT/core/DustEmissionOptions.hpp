@@ -8,7 +8,6 @@
 
 #include "SimulationItem.hpp"
 #include "DisjointWavelengthGrid.hpp"
-#include "DustEmissivity.hpp"
 #include "SpatialCellLibrary.hpp"
 #include "WavelengthDistribution.hpp"
 #include "WavelengthRangeInterface.hpp"
@@ -21,10 +20,16 @@
     emission spectrum. */
 class DustEmissionOptions : public SimulationItem, public WavelengthRangeInterface
 {
+    /** The enumeration type indicating the method used for dust emission calculations. */
+    ENUM_DEF(EmissionType, Equilibrium, Stochastic)
+    ENUM_VAL(EmissionType, Equilibrium, "assume local thermal equilibrium (LTE)")
+    ENUM_VAL(EmissionType, Stochastic, "handle stochastically heated grains (non-LTE)")
+    ENUM_END()
+
     ITEM_CONCRETE(DustEmissionOptions, SimulationItem, "a set of options related to secondary emission from dust")
 
-    PROPERTY_ITEM(dustEmissivity, DustEmissivity, "the dust emissivity calculator")
-        ATTRIBUTE_DEFAULT_VALUE(dustEmissivity, "EquilibriumDustEmissivity")
+    PROPERTY_ENUM(dustEmissionType, EmissionType, "the method used for dust emission calculations")
+        ATTRIBUTE_DEFAULT_VALUE(dustEmissionType, "Equilibrium")
 
     PROPERTY_ITEM(cellLibrary, SpatialCellLibrary, "the spatial cell grouping scheme for calculating dust emission")
         ATTRIBUTE_DEFAULT_VALUE(cellLibrary, "AllCellsLibrary")

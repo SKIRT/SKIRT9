@@ -158,6 +158,20 @@ public:
         and } S_{34}=0,\f] i.e. without dependence on wavelength. */
     void applyMueller(double lambda, double theta, StokesVector* sv) const override;
 
+    //======== Temperature and emission =======
+
+    /** This function returns the equilibrium temperature \f$T_{\text{eq}}\f$ of the material mix
+        when it would be embedded in a given radiation field. Because electrons don't absorb nor
+        emit (within the range of physics supported here), the implementation in this class ignores
+        the input radiation field and always returns zero. */
+    double equilibriumTemperature(const Array& Jv) const override;
+
+    /** This function returns the emissivity spectrum \f$\varepsilon_{\ell'}\f$ of the material mix
+        when it would be embedded in a given radiation field. Because electrons don't absorb nor
+        emit (within the range of physics supported here), the implementation in this class ignores
+        the input radiation field and always returns an empty array. */
+    Array emissivity(const Array& Jv) const override;
+
     //======================== Data Members ========================
 
 private:

@@ -187,6 +187,36 @@ public:
     /** The destructor destructs any enthalpy stored tables that were opened during setup. */
     ~MultiGrainDustMix();
 
+    //======== Emission =======
+
+public:
+    /** This function returns the emissivity spectrum per hydrogen atom \f$\varepsilon_{\ell'}\f$
+        of the dust mix (or rather of the corresponding mixture of representative grain
+        populations) when it would be embedded in a given radiation field, assuming that the dust
+        grains are in local thermal equilibrium. The input and output arrays are discretized on the
+        wavelength grids returned by the Configuration::radiationFieldWLG() and
+        Configuration::dustEmissionWLG() functions, repectively.
+
+        Because a MultiGrainDustMix is described by multiple representative grains (for various
+        material compositions and grain size bins), the class accumulates the emissivities at the
+        equilibrium temperature for each of these representative grains. This produces a more
+        accurate result than using a single representative grain for the complete dust mix, but
+        still limited by the assumption of local thermal equilibrium.
+
+        In formula form, the equilibrium emissivity of a dust mix in an embedding radiation field
+        \f$J_\lambda\f$ can be calculated as \f[ \varepsilon_\lambda =
+        \sum_{b=0}^{N_{\text{bins}}-1} \varsigma_{\lambda,b}^{\text{abs}}\, B_\lambda(T_b) \f] with
+        \f$\mu\f$ the total dust mass of the dust mix, \f$\varsigma_{\lambda,b}^{\text{abs}}\f$ the
+        absorption cross section of the \f$b\f$'th representative grain, and \f$T_b\f$ the
+        equilibrium temperature of that grain, defined by the balance equation \f[ \int_0^\infty
+        \varsigma_{\lambda,b}^{\text{abs}}\, J_\lambda\, {\text{d}}\lambda = \int_0^\infty
+        \varsigma_{\lambda,b}^{\text{abs}}\, B_\lambda(T_b)\, {\text{d}}\lambda. \f]
+
+        The behavior of this function is undefined if the simulation does not track the radiation
+        field, because in that case setup does not calculate the information on which this function
+        relies. */
+    Array emissivity(const Array& Jv) const override;
+
     //=============== Exposing multiple grain populations ==============
 
 public:
@@ -223,27 +253,27 @@ public:
         with a silicate population discretized into 7 grain size bins, a graphite population with 6
         size bins, and a PAH population with 5 bins, will have a total of 18 bins, consecutively
         addressed by the \f$b\f$ indices. */
-    int numBins() const;
+//    int numBins() const;
 
     /** This function returns the equilibrium temperature \f$T_{\text{eq},b}\f$ (assuming LTE
         conditions) for the representative grain of the bin with index \f$b\f$ when it would be
         embedded in the radiation field specified by the mean intensities \f$(J_\lambda)_\ell\f$,
         which must be discretized on the simulation's radiation field wavelength grid as returned
         by the Configuration::radiationFieldWLG() function. */
-    double binEquilibriumTemperature(int b, const Array& Jv) const;
+//    double binEquilibriumTemperature(int b, const Array& Jv) const;
 
     /** This function returns the absorption cross section per hydrogen atom
         \f$\varsigma^{\text{abs}}_{\lambda,b}\f$ at wavelength \f$\lambda\f$ for the representative
         grain of the bin with index \f$b\f$. */
-    double binSectionAbs(int b, double lambda) const;
+//    double binSectionAbs(int b, double lambda) const;
 
     /** This function returns a brief human-readable identifier for the type of grain material
         represented by the bin with index \f$b\f$. The identifier does not contain white
         space. */
-    string binGrainType(int b) const;
+//    string binGrainType(int b) const;
 
     /** This function returns the mean mass of a dust grain for the bin with index \f$b\f$. */
-    double binMeanMass(int b) const;
+//    double binMeanMass(int b) const;
 
     /** This function returns the enthalpy at temperature \f$T\f$ for the representative grain of
         the bin with index \f$b\f$. The enthalpy is equivalent to the internal energy of the dust
@@ -251,11 +281,11 @@ public:
         of the appropriate grain composition (at the specified temperature) by the mean mass of a
         dust grain in the requested bin. If the specified temperature lies outside of the
         internally defined grid, the enthalpy value at the nearest border is used instead. */
-    double binEnthalpy(int b, double T) const;
+//    double binEnthalpy(int b, double T) const;
 
     /** This function returns the largest temperature for which this dust mix can provide
         meaningful enthalpy data, for any of the dust grain populations in the mix. */
-    double maxEnthalpyTemperature() const;
+//    double maxEnthalpyTemperature() const;
 
     //======================== Data Members ========================
 

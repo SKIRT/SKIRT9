@@ -40,7 +40,7 @@
     The representative grain properties offered by this class are insufficient to accurately
     calculate dust emission spectra for the dust mixture. This is so because the emission spectrum
     is a nonlinear function of (among many other things) the grain size, and thus a single grain
-    cannot accurately represent a population with a (potentialy large) range of grain sizes. Agai,
+    cannot accurately represent a population with a (potentialy large) range of grain sizes. Again,
     refer to the description of the MultiGrainDustMix class for more information.
 
     The implementation of polarization by scattering in this class is based on the analysis
@@ -245,7 +245,7 @@ public:
         These coefficients are obtained from the tables pre-computed during setup. */
     void applyMueller(double lambda, double theta, StokesVector* sv) const override;
 
-    //======== Equilibrium Temperature =======
+    //======== Temperature and emission =======
 
 public:
     /** This function returns the equilibrium temperature \f$T_{\text{eq}}\f$ of the dust mix (or
@@ -262,13 +262,29 @@ public:
         integration over a built-in wavelength grid.
 
         The behavior of this function is undefined if the simulation does not track the radiation
-        field, because in that case setup does not calcalate the information on which this function
+        field, because in that case setup does not calculate the information on which this function
         relies. */
     double equilibriumTemperature(const Array& Jv) const override;
 
-    //======================== Temporary exposure ========================
+    /** This function returns the emissivity spectrum per hydrogen atom \f$\varepsilon_{\ell'}\f$
+        of the dust mix (or rather of the representative grain population corresponding to the dust
+        mix) when it would be embedded in a given radiation field, assuming that the dust grains
+        are in local thermal equilibrium. The input and output arrays are discretized on the
+        wavelength grids returned by the Configuration::radiationFieldWLG() and
+        Configuration::dustEmissionWLG() functions, repectively.
 
-    const Array& finelambdav() const { return _lambdav; }
+        The equilibrium emissivity of a representative grain population in an embedding radiation
+        field \f$J_\lambda\f$ can be calculated as \f[ \varepsilon_\lambda =
+        \varsigma_{\lambda,b}^{\text{abs}}\, B_\lambda(T_\text{eq}) \f] with \f$\mu\f$ the total
+        dust mass of the dust mix, \f$\varsigma_{\lambda}^{\text{abs}}\f$ the absorption cross
+        section of the representative grain, and \f$T_\text{eq}\f$ the equilibrium temperature of
+        that grain, obtained from the energy balance equation as described for the
+        equilibriumTemperature() function.
+
+        The behavior of this function is undefined if the simulation does not track the radiation
+        field, because in that case setup does not calculate the information on which this function
+        relies. */
+    Array emissivity(const Array& Jv) const override;
 
     //======================== Data Members ========================
 

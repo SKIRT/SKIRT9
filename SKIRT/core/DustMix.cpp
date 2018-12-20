@@ -296,3 +296,22 @@ double DustMix::equilibriumTemperature(const Array& Jv) const
 }
 
 ////////////////////////////////////////////////////////////////////
+
+Array DustMix::emissivity(const Array& Jv) const
+{
+    // get the output wavelength grid
+    auto wavelengthGrid = find<Configuration>()->dustEmissionWLG();
+    int numWavelengths = wavelengthGrid->numBins();
+
+    // calculate the black-body emissivity spectrum
+    Array ev(numWavelengths);
+    PlanckFunction B(equilibriumTemperature(Jv));
+    for (int ell=0; ell<numWavelengths; ell++)
+    {
+        double lambda = wavelengthGrid->wavelength(ell);
+        ev[ell] += sectionAbs(lambda) * B(lambda);
+    }
+    return ev;
+}
+
+////////////////////////////////////////////////////////////////////

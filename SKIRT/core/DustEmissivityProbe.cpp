@@ -6,7 +6,6 @@
 #include "DustEmissivityProbe.hpp"
 #include "ArrayTable.hpp"
 #include "DisjointWavelengthGrid.hpp"
-#include "DustEmissivity.hpp"
 #include "Configuration.hpp"
 #include "MediumSystem.hpp"
 #include "PlanckFunction.hpp"
@@ -76,7 +75,6 @@ namespace
         auto ms = probe->find<MediumSystem>();
         auto units = probe->find<Units>();
         auto wavelengthGrid = probe->find<Configuration>()->dustEmissionWLG();
-        auto dustEmissivity = probe->find<Configuration>()->dustEmissivity();
 
         // construct a list of indices and material mixes for medium components that actually contain dust
         vector<int> hv;
@@ -89,7 +87,7 @@ namespace
 
         // calculate the emissivity for each representative dust mix
         ArrayTable<2> evv(hv.size(), 0);
-        for (size_t i=0; i!=hv.size(); ++i) evv(i) = dustEmissivity->emissivity(mixv[i], Jv);
+        for (size_t i=0; i!=hv.size(); ++i) evv(i) = mixv[i]->emissivity(Jv);
 
         // create an output text file
         TextOutFile file(probe, probe->itemName() +"_" + name, "dust emissivities for " + title);
@@ -104,7 +102,7 @@ namespace
         {
             double lambda = wavelengthGrid->wavelength(ell);
             vector<double> values({ units->owavelength(lambda) });
-            for (size_t i=0; i!=hv.size(); ++i) values.push_back(mixv[i]->mass()*lambda*evv(i,ell));
+            for (size_t i=0; i!=hv.size(); ++i) values.push_back(lambda*evv(i,ell));
             file.writeRow(values);
         }
     }

@@ -66,10 +66,3 @@ void MaterialMix::applyMueller(double /*lambda*/, double /*theta*/, StokesVector
 }
 
 ////////////////////////////////////////////////////////////////////
-
-double MaterialMix::equilibriumTemperature(const Array& /*Jv*/) const
-{
-    return 0.;
-}
-
-////////////////////////////////////////////////////////////////////

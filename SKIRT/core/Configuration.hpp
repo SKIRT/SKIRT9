@@ -10,7 +10,6 @@
 #include "Array.hpp"
 #include "Range.hpp"
 class DisjointWavelengthGrid;
-class DustEmissivity;
 class SpatialCellLibrary;
 class WavelengthDistribution;
 class WavelengthGrid;
@@ -140,6 +139,10 @@ public:
     /** Returns true if secondary dust emission must be calculated, and false otherwise. */
     bool hasDustEmission() const { return _hasDustEmission; }
 
+    /** Returns true if secondary dust emission must be calculated by taking stochastically heated
+        grains into account, and false otherwise. */
+    bool hasStochasticDustEmission() const { return _hasStochasticDustEmission; }
+
     /** Returns true if dust self-absorption must be self-consistently calculated through
         iteration, and false otherwise. */
     bool hasDustSelfAbsorption() const { return _hasDustSelfAbsorption; }
@@ -150,12 +153,7 @@ public:
     /** Returns the wavelength grid to be used for calculating the dust emission spectrum. */
     DisjointWavelengthGrid* dustEmissionWLG() const { return _dustEmissionWLG; }
 
-    /** Returns the dust emissivity calculator to be used for calculating the dust emission
-        spectrum. */
-    DustEmissivity* dustEmissivity() const { return _dustEmissivity; }
-
-    /** Returns the dust emissivity calculator to be used for calculating the dust emission
-        spectrum. */
+    /** Returns the cell library mapping to be used for calculating the dust emission spectra. */
     SpatialCellLibrary* cellLibrary() const { return _cellLibrary; }
 
     /** Returns the fraction of secondary photon packets distributed uniformly across spatial
@@ -241,9 +239,9 @@ private:
 
     // emission
     bool _hasDustEmission{false};
+    bool _hasStochasticDustEmission{false};
     bool _hasDustSelfAbsorption{false};
     DisjointWavelengthGrid* _dustEmissionWLG{nullptr};
-    DustEmissivity* _dustEmissivity{nullptr};
     SpatialCellLibrary* _cellLibrary{nullptr};
     double _secondarySpatialBias{0.5};
     double _secondaryWavelengthBias{0.5};

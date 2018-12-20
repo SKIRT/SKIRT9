@@ -57,7 +57,6 @@
 #include "DustTemperaturePerCellProbe.hpp"
 #include "EinastoGeometry.hpp"
 #include "ElectronMix.hpp"
-#include "EquilibriumDustEmissivity.hpp"
 #include "ExpDiskGeometry.hpp"
 #include "ExtinctionOnlyOptions.hpp"
 #include "ExtragalacticUnits.hpp"
@@ -172,7 +171,6 @@
 #include "Starburst99SEDFamily.hpp"
 #include "StellarSurfaceSource.hpp"
 #include "StellarUnits.hpp"
-#include "StochasticDustEmissivity.hpp"
 #include "SunSED.hpp"
 #include "SymPowMesh.hpp"
 #include "TTauriDiskGeometry.hpp"
@@ -462,11 +460,6 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<TrustSilicateGrainComposition>();
     ItemRegistry::add<TrustGraphiteGrainComposition>();
     ItemRegistry::add<TrustNeutralPAHGrainComposition>();
-
-    // dust emissivity calculators
-    ItemRegistry::add<DustEmissivity>();
-    ItemRegistry::add<EquilibriumDustEmissivity>();
-    ItemRegistry::add<StochasticDustEmissivity>();
 
     // spatial cell libraries
     ItemRegistry::add<SpatialCellLibrary>();

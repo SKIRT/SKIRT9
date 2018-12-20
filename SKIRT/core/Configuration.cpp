@@ -95,7 +95,8 @@ void Configuration::setupSelfBefore()
     {
         _hasRadiationField = true;
         _hasDustEmission = true;
-        _dustEmissivity = ms->dustEmissionOptions()->dustEmissivity();
+        if (ms->dustEmissionOptions()->dustEmissionType() == DustEmissionOptions::EmissionType::Stochastic)
+            _hasStochasticDustEmission = true;
         _cellLibrary = ms->dustEmissionOptions()->cellLibrary();
         if (!_cellLibrary) _cellLibrary = new AllCellsLibrary(this);
         _radiationFieldWLG = ms->dustEmissionOptions()->radiationFieldWLG();

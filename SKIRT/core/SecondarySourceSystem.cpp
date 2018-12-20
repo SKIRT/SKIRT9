@@ -7,7 +7,6 @@
 #include "BulkVelocityInterface.hpp"
 #include "Configuration.hpp"
 #include "DisjointWavelengthGrid.hpp"
-#include "DustEmissivity.hpp"
 #include "FatalError.hpp"
 #include "Log.hpp"
 #include "MediumSystem.hpp"
@@ -176,7 +175,6 @@ namespace
         // information initialized once, during the first call to calculateIfNeeded()
         MediumSystem* _ms{nullptr};         // the medium system
         DisjointWavelengthGrid* _wavelengthGrid{nullptr}; // the radiation field wavelength grid
-        DustEmissivity* _emissivity{nullptr}; // the dust emissivity calculator
         vector<int> _hv;                    // a list of the media indices for the media containing dust
         int _numMedia{0};                   // the number of dust media in the system (and thus the size of hv)
         int _numCells{0};                   // the number of cells in the spatial grid (and thus the size of mv and nv)
@@ -209,7 +207,6 @@ namespace
             {
                 _ms = ms;
                 _wavelengthGrid = config->dustEmissionWLG();
-                _emissivity = config->dustEmissivity();
                 for (int h=0; h!=ms->numMedia(); ++h) if (ms->isDust(h)) _hv.push_back(h);
                 _numMedia = _hv.size();
                 _numCells = ms->grid()->numCells();
@@ -289,7 +286,7 @@ namespace
         {
             // accumulate the emmissivity spectrum for all dust medium components in the cell, weighted by density
             Array ev(_numWavelengths);
-            for (int h : _hv) ev += _ms->massDensity(m,h) * _emissivity->emissivity(_ms->mix(m,h), Jv);
+            for (int h : _hv) ev += _ms->numberDensity(m,h) * _ms->mix(m,h)->emissivity(Jv);
 
             // calculate the normalized plain and cumulative distributions
             NR::cdf<NR::interpolateLogLog>(_lambdav, _pv, _Pv, _wavelengthGrid->lambdav(), ev,
@@ -300,7 +297,7 @@ namespace
         // and store the individual spectra in the data members _evv
         void calculateEmissivityPerMedium(const Array& Jv, int m)
         {
-            for (int h : _hv) _evv[h] = _emissivity->emissivity(_ms->mix(m,h), Jv);
+            for (int h : _hv) _evv[h] = _ms->mix(m,h)->emissivity(Jv);
         }
 
         // calculate the emission spectrum for the specified cell, weighted across multiple media by density,
@@ -310,7 +307,7 @@ namespace
         {
             // accumulate the emmissivity spectrum for all dust medium components in the cell, weighed by density
             Array ev(_numWavelengths);
-            for (int h : _hv) ev += _ms->massDensity(m,h) * _evv[h];
+            for (int h : _hv) ev += _ms->numberDensity(m,h) * _evv[h];
 
             // calculate the normalized plain and cumulative distributions
             NR::cdf<NR::interpolateLogLog>(_lambdav, _pv, _Pv, _wavelengthGrid->lambdav(), ev,
