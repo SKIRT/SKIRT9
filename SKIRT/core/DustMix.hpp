@@ -269,7 +269,6 @@ public:
     //======================== Temporary exposure ========================
 
     const Array& finelambdav() const { return _lambdav; }
-    const Array& finesigmaabsv() const { return _sigmaabsv; }
 
     //======================== Data Members ========================
 

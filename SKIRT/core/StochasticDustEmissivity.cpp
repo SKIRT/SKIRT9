@@ -144,14 +144,13 @@ public:
                 double Hdiff = Hv[f] - Hv[i];
                 double lambda = hc / Hdiff;
                 int k = inputWLG->bin(lambda);
-                if (k>=0) _HRm(f,i) = hc * mgmix->sectionAbs(lambda) * dHv[f] / (Hdiff*Hdiff*Hdiff);
+                if (k>=0) _HRm(f,i) = hc * mgmix->binSectionAbs(b, lambda) * dHv[f] / (Hdiff*Hdiff*Hdiff);
                 _Km(f,i) = k;
             }
         }
 
         // calculate the cooling rates
         const Array& lambdav = mgmix->finelambdav();
-        const Array& sigmaabsv = mgmix->finesigmaabsv();
         int Nlambda = lambdav.size();
         for (int i=1; i<NT; i++)
         {
@@ -161,7 +160,7 @@ public:
             {
                 double lambda = lambdav[ell];
                 double dlambda = lambdav[ell] - lambdav[ell-1];
-                planckabs += sigmaabsv[ell] * B(lambda) * dlambda;
+                planckabs += mgmix->binSectionAbs(b, lambda) * B(lambda) * dlambda;
             }
             double Hdiff = Hv[i] - Hv[i-1];
             _CRv[i] = planckabs / Hdiff;
