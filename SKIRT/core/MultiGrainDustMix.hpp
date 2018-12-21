@@ -22,15 +22,14 @@ class GrainSizeDistribution;
     dust grain populations to the dust mix during initial setup. Subsequently, the class uses this
     list of grain populations to calculate the optical properties requested by the DustMix base
     class, and to implement the additional functionality offered by multi-grain-population dust
-    mixes, such as providing the information needed for calculating emission from stochastically
-    heated dust grains.
+    mixes, such as calculating emission from stochastically heated dust grains.
 
-    All grain populations must have a level of Mueller matrix support that matches the value
-    returned by the scatteringMode() function (which may be overridden in a subclass).
-    Specifically, for the HenyeyGreenstein scattering mode, \em none of the grain populations
-    should offer a Mueller matrix. For the MaterialPhaseFunction and SphericalPolarization
-    scattering modes, \em all of the grain populations should offer a Mueller matrix. If this is
-    not the case, a fatal error will result.
+    All grain populations added by the subclass must have a level of Mueller matrix support that
+    matches the value returned by the scatteringMode() function (which may be overridden in the
+    subclass). Specifically, for the HenyeyGreenstein scattering mode, \em none of the grain
+    populations should offer a Mueller matrix. For the MaterialPhaseFunction and
+    SphericalPolarization scattering modes, \em all of the grain populations should offer a Mueller
+    matrix. If this is not the case, a fatal error will result.
 
     <b>Calculating representative grain properties</b>
 
@@ -72,7 +71,7 @@ class GrainSizeDistribution;
     the size distribution, \f[ \mu = \sum_c \int_{a_{\text{min},c}}^{a_{\text{max},c}}
     \Omega_c(a)\, \rho_{\text{bulk},c}\, \frac{4\pi}{3}\, a^3\, {\text{d}}a. \f]
 
-    <b>Supporting dust emission calculations</b>
+    <b>Calculating dust emission</b>
 
     The representative grain properties described above and offered by the public MaterialMix
     interface supported by this class are insufficient to accurately calculate dust emission
@@ -93,26 +92,19 @@ class GrainSizeDistribution;
     the accuracy of the dust emission spectra. On the other hand, the calculation time scales
     roughly linearly with the number of bins.
 
-    The MultiGrainDustMix class offers a set of public functions on top of the regular MaterialMix
-    public interface to expose information about the individual grain populations \f$c\f$ and the
-    size-discretized bins \f$b\f$ as described above. For now, these functions are declared and
-    implemented here. Over time they might be declared as part of a seperate interface, so that
-    they might also be implemented by other MaterialMix subclasses (such as perhaps a material mix
-    including both hydrogen gas and dust).
+    The MultiGrainDustMix class uses one of two methods to calculate the emissivity of the dust
+    mix:
 
-    As a result, the MultiGrainDustMix class supports the folowing methods for calculating dust
-    emissivity with varying levels of accuracy:
+    - Assuming local thermal equilibrium for each representative grain (size bin): this method is
+    fast but inaccurate because the equilibrium assumption is usually not justified. See the
+    EquilibriumDustEmissionCalculator class for more information.
 
-    - using a single representative grain and assuming local thermal equilibrium
+    - Calculating a temperature probability distribution for each representative grain (size bin)
+    to take into account stochastically heated grains: this second method is substantially more
+    accurate but also much slower. See the StochasticDustEmissionCalculator class for more
+    information.
 
-    - using multiple representative grains, one for each composition/size bin, still assuming local
-    thermal equilibrium for each bin
-
-    - using multiple representative grains without assuming local thermal equilibrium, i.e.
-    calculating a temperature probability distribution to take into account stochastically heated
-    grains.
-
- */
+    */
 class MultiGrainDustMix : public DustMix
 {
     ITEM_ABSTRACT(MultiGrainDustMix, DustMix, "a dust mix with one or more grain populations")
@@ -165,56 +157,40 @@ protected:
                                 Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv) override;
 
     /** This function is invoked by the DustMix base class to precalculate additional dust
-        properties that are offered through functions outside of the DustMix interface. The
-        argument specifies the wavelength grid on which the properties must be tabulated (i.e. the
-        same grid as passed to the getOpticalProperties() function. The function returns the
-        number of memory bytes allocated to store extra propertries.
+        properties required by this class. The argument specifies the wavelength grid on which the
+        properties may be tabulated (i.e. the same grid as passed to the getOpticalProperties()
+        function. The function returns the number of memory bytes allocated to store extra
+        propertries.
 
         The function discretizes the grain size distribution for each grain population added to
-        this dust mix into a number of consecutive size bins (on a logarithmic scale), and
-        calculates the relevant optical and calorimetric properties of a representative grain for
-        each of these bins. The number of bins for each type of grain material can be configured by
-        the user.
+        this dust mix into a number of consecutive size bins (on a logarithmic scale), and obtains
+        the relevant optical and calorimetric properties of a representative grain for each of
+        these bins. The number of bins for each type of grain material can be configured by the
+        user.
 
-        The bins for the various populations in the dust mix are placed in a single sequence, in
-        the same overall order as the populations addressed by the \f$c\f$ indices. Within each
-        population, the bins are listed in order of increasing grain size. */
+        Depending on the type of emission calculation configured by the user, this function creates
+        an instance of the EquilibriumDustEmissionCalculator or StochasticDustEmissionCalculator to
+        store the relevant properties (and to actually calculate the emission spectra when
+        requested). */
     size_t initializeExtraProperties(const Array& lambdav) override;
-
-    //------------- Cleanup ------------
-
-public:
-    /** The destructor destructs any enthalpy stored tables that were opened during setup. */
-    ~MultiGrainDustMix();
 
     //======== Emission =======
 
 public:
-    /** This function returns the emissivity spectrum per hydrogen atom \f$\varepsilon_{\ell'}\f$
-        of the dust mix (or rather of the corresponding mixture of representative grain
-        populations) when it would be embedded in a given radiation field, assuming that the dust
-        grains are in local thermal equilibrium. The input and output arrays are discretized on the
+    /** This function returns the emissivity spectrum per hydrogen atom
+        \f$(\varepsilon_\lambda)_\ell\f$ of the dust mix (or rather of the corresponding mixture of
+        representative grain populations) when embedded in the radiation field specified by the
+        mean intensities \f$(J_\lambda)_k\f$. The input and output arrays are discretized on the
         wavelength grids returned by the Configuration::radiationFieldWLG() and
         Configuration::dustEmissionWLG() functions, repectively.
 
-        Because a MultiGrainDustMix is described by multiple representative grains (for various
-        material compositions and grain size bins), the class accumulates the emissivities at the
-        equilibrium temperature for each of these representative grains. This produces a more
-        accurate result than using a single representative grain for the complete dust mix, but
-        still limited by the assumption of local thermal equilibrium.
-
-        In formula form, the equilibrium emissivity of a dust mix in an embedding radiation field
-        \f$J_\lambda\f$ can be calculated as \f[ \varepsilon_\lambda =
-        \sum_{b=0}^{N_{\text{bins}}-1} \varsigma_{\lambda,b}^{\text{abs}}\, B_\lambda(T_b) \f] with
-        \f$\mu\f$ the total dust mass of the dust mix, \f$\varsigma_{\lambda,b}^{\text{abs}}\f$ the
-        absorption cross section of the \f$b\f$'th representative grain, and \f$T_b\f$ the
-        equilibrium temperature of that grain, defined by the balance equation \f[ \int_0^\infty
-        \varsigma_{\lambda,b}^{\text{abs}}\, J_\lambda\, {\text{d}}\lambda = \int_0^\infty
-        \varsigma_{\lambda,b}^{\text{abs}}\, B_\lambda(T_b)\, {\text{d}}\lambda. \f]
+        Depending on the type of emission calculation configured by the user, this function uses an
+        instance of the EquilibriumDustEmissionCalculator or StochasticDustEmissionCalculator to to
+        calculate the emission spectrum. Refer to these classes for more information.
 
         The behavior of this function is undefined if the simulation does not track the radiation
-        field, because in that case setup does not calculate the information on which this function
-        relies. */
+        field, because in that case setup does not precalculate the information on which this
+        function relies. */
     Array emissivity(const Array& Jv) const override;
 
     //=============== Exposing multiple grain populations ==============
@@ -240,53 +216,6 @@ public:
         index \f$c\f$. */
     double populationMass(int c) const;
 
-    /** This function returns the number of dust grain size bins (with indices \f$b\f$) in this
-        dust mix. During setup, the MultiGrainDustMix class discretizes the grain size distribution
-        for each grain population added to this dust mix into a number of consecutive size bins (on
-        a logarithmic scale), and calculates the relevant optical and calorimetric properties of a
-        representative grain for each of these bins. The number of bins for each type of grain
-        material can be configured by the user.
-
-        The bins for the various populations in the dust mix are placed in a single sequence, in
-        the same overall order as the populations addressed by the \f$c\f$ indices. Within each
-        population, the bins are listed in order of increasing grain size. For example, a dust mix
-        with a silicate population discretized into 7 grain size bins, a graphite population with 6
-        size bins, and a PAH population with 5 bins, will have a total of 18 bins, consecutively
-        addressed by the \f$b\f$ indices. */
-//    int numBins() const;
-
-    /** This function returns the equilibrium temperature \f$T_{\text{eq},b}\f$ (assuming LTE
-        conditions) for the representative grain of the bin with index \f$b\f$ when it would be
-        embedded in the radiation field specified by the mean intensities \f$(J_\lambda)_\ell\f$,
-        which must be discretized on the simulation's radiation field wavelength grid as returned
-        by the Configuration::radiationFieldWLG() function. */
-//    double binEquilibriumTemperature(int b, const Array& Jv) const;
-
-    /** This function returns the absorption cross section per hydrogen atom
-        \f$\varsigma^{\text{abs}}_{\lambda,b}\f$ at wavelength \f$\lambda\f$ for the representative
-        grain of the bin with index \f$b\f$. */
-//    double binSectionAbs(int b, double lambda) const;
-
-    /** This function returns a brief human-readable identifier for the type of grain material
-        represented by the bin with index \f$b\f$. The identifier does not contain white
-        space. */
-//    string binGrainType(int b) const;
-
-    /** This function returns the mean mass of a dust grain for the bin with index \f$b\f$. */
-//    double binMeanMass(int b) const;
-
-    /** This function returns the enthalpy at temperature \f$T\f$ for the representative grain of
-        the bin with index \f$b\f$. The enthalpy is equivalent to the internal energy of the dust
-        grain, using an arbitrary zero point. It is obtained by multiplying the specific enthalpy
-        of the appropriate grain composition (at the specified temperature) by the mean mass of a
-        dust grain in the requested bin. If the specified temperature lies outside of the
-        internally defined grid, the enthalpy value at the nearest border is used instead. */
-//    double binEnthalpy(int b, double T) const;
-
-    /** This function returns the largest temperature for which this dust mix can provide
-        meaningful enthalpy data, for any of the dust grain populations in the mix. */
-//    double maxEnthalpyTemperature() const;
-
     //======================== Data Members ========================
 
 private:
@@ -297,14 +226,8 @@ private:
     vector<double> _mupopv;         // mass per hydrogen atom for population - indexed on c
     vector<double> _normv;          // size distribution normalization for population - indexed on c
 
-    // info per size bin for multi-grain equilibrium emissivity -- initialized by initializeExtraProperties()
-    EquilibriumDustTemperatureCalculator _tempCalcv; // equilibrium temperature info - indexed on b
-    ArrayTable<2> _sigmaabsvv;      // absorption cross sections - indexed on b,ell
-
-    // info per size bin for stochastic emissivity -- initialized by initializeExtraProperties()
-    vector<int> _btocv;             // mapping from b index (bins) to c index (corresponding population)
-    Array _massv;                   // mean mass of a grain - indexed on b
-    vector<StoredTable<1>*> _enthalpyv; // enthalpy stored table for population - indexed on c
+    // multi-grain emission calculator -- initialized by initializeExtraProperties()
+    EquilibriumDustEmissionCalculator _calc;
 };
 
 ////////////////////////////////////////////////////////////////////

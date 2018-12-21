@@ -5,10 +5,8 @@
 
 #include "DustMix.hpp"
 #include "Configuration.hpp"
-#include "DisjointWavelengthGrid.hpp"
 #include "Log.hpp"
 #include "NR.hpp"
-#include "PlanckFunction.hpp"
 #include "Random.hpp"
 #include "StokesVector.hpp"
 #include "StringUtils.hpp"
@@ -47,8 +45,8 @@ void DustMix::setupSelfAfter()
     int numLambda = _maxLogLambda+1;
 
     // build a temporary wavelength grid corresponding to this scheme
-    _lambdav.resize(numLambda);
-    for (int ell=0; ell!=numLambda; ++ell) _lambdav[ell] = pow(10., (ell+0.5)/_logLambdaFactor - _logLambdaOffset);
+    Array lambdav(numLambda);
+    for (int ell=0; ell!=numLambda; ++ell) lambdav[ell] = pow(10., (ell+0.5)/_logLambdaFactor - _logLambdaOffset);
 
     // if needed, build a scattering angle grid
     if (mode == ScatteringMode::MaterialPhaseFunction || mode == ScatteringMode::SphericalPolarization)
@@ -75,7 +73,7 @@ void DustMix::setupSelfAfter()
     }
 
     // obtain the optical properties from the subclass
-    _mu = getOpticalProperties(_lambdav, _thetav, _sigmaabsv, _sigmascav, _asymmparv, _S11vv, _S12vv, _S33vv, _S34vv);
+    _mu = getOpticalProperties(lambdav, _thetav, _sigmaabsv, _sigmascav, _asymmparv, _S11vv, _S12vv, _S33vv, _S34vv);
 
     // calculate some derived basic optical properties
     for (int ell=0; ell!=numLambda; ++ell)
@@ -128,16 +126,15 @@ void DustMix::setupSelfAfter()
     // this is relevant only if the simulation tracks the radiation field
     if (find<Configuration>()->hasRadiationField())
     {
-        _tempCalc.precalculate(this, _lambdav, _sigmaabsv);
+        _calc.precalculate(this, lambdav, _sigmaabsv);
     }
 
     // give the subclass a chance to obtain additional precalculated information
-    size_t allocatedBytes = initializeExtraProperties(_lambdav);
+    size_t allocatedBytes = initializeExtraProperties(lambdav);
 
     // calculate and log allocated memory size
     size_t allocatedSize = 0;
     allocatedSize += _thetav.size();
-    allocatedSize += _lambdav.size();
     allocatedSize += _sigmaabsv.size();
     allocatedSize += _sigmascav.size();
     allocatedSize += _sigmaextv.size();
@@ -154,7 +151,7 @@ void DustMix::setupSelfAfter()
     allocatedSize += _phisv.size();
     allocatedSize += _phicv.size();
 
-    allocatedBytes += allocatedSize*sizeof(double) + _tempCalc.allocatedBytes();
+    allocatedBytes += allocatedSize*sizeof(double) + _calc.allocatedBytes();
     find<Log>()->info(type() + " allocated " + StringUtils::toMemSizeString(allocatedBytes) + " of memory");
 }
 
@@ -292,26 +289,14 @@ void DustMix::applyMueller(double lambda, double theta, StokesVector* sv) const
 
 double DustMix::equilibriumTemperature(const Array& Jv) const
 {
-    return _tempCalc.equilibriumTemperature(0, Jv);
+    return _calc.equilibriumTemperature(0, Jv);
 }
 
 ////////////////////////////////////////////////////////////////////
 
 Array DustMix::emissivity(const Array& Jv) const
 {
-    // get the output wavelength grid
-    auto wavelengthGrid = find<Configuration>()->dustEmissionWLG();
-    int numWavelengths = wavelengthGrid->numBins();
-
-    // calculate the black-body emissivity spectrum
-    Array ev(numWavelengths);
-    PlanckFunction B(equilibriumTemperature(Jv));
-    for (int ell=0; ell<numWavelengths; ell++)
-    {
-        double lambda = wavelengthGrid->wavelength(ell);
-        ev[ell] += sectionAbs(lambda) * B(lambda);
-    }
-    return ev;
+    return _calc.emissivity(Jv);
 }
 
 ////////////////////////////////////////////////////////////////////

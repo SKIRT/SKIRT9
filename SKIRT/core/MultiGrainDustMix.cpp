@@ -6,7 +6,6 @@
 #include "MultiGrainDustMix.hpp"
 #include "Configuration.hpp"
 #include "Constants.hpp"
-#include "DisjointWavelengthGrid.hpp"
 #include "FatalError.hpp"
 #include "GrainComposition.hpp"
 #include "GrainSizeDistribution.hpp"
@@ -14,7 +13,6 @@
 #include "NR.hpp"
 #include "Parallel.hpp"
 #include "ParallelFactory.hpp"
-#include "PlanckFunction.hpp"
 #include "ProcessManager.hpp"
 #include "StoredTable.hpp"
 #include "WavelengthGrid.hpp"
@@ -264,14 +262,12 @@ size_t MultiGrainDustMix::initializeExtraProperties(const Array& lambdav)
         for (auto population : _populations) numBins += population->numSizes();
 
         // resize the arrays needed for stochastic emissivity
-        // (the equilibrium temperature calculator does not need to know the number of bins in advance)
-        _sigmaabsvv.resize(numBins, numLambda);
         if (stochastic)
         {
-            _btocv.resize(numBins);
-            _massv.resize(numBins);
-            _enthalpyv.resize(_populations.size());
         }
+
+        // allocate temporary array for size-bin-integrated absorption cross sections
+        Array sigmaabsv(lambdav.size());
 
         // loop over all populations and process size bins for each
         int c = 0;      // population index
@@ -323,28 +319,15 @@ size_t MultiGrainDustMix::initializeExtraProperties(const Array& lambdav)
                         double area = M_PI * av[i] * av[i];
                         sum += weightv[i] * dndav[i] * area * Qabs(av[i], lamdba) * dav[i];
                     }
-                    _sigmaabsvv(b,ell) = sum;
+                    sigmaabsv[ell] = sum;
                 }
 
                 // setup the equilibrium temperature calculator for this bin
-                _tempCalcv.precalculate(this, lambdav, _sigmaabsvv[b]);
+                _calc.precalculate(this, lambdav, sigmaabsv);
 
                 // if needed, also precalculate the info for stochastic emissivity calculations
                 if (stochastic)
                 {
-                    // remember the mapping from bins to populations
-                    _btocv[b] = c;
-
-                    // calculate the mean grain mass for this bin
-                    double sum1 = 0.;
-                    double sum2 = 0.;
-                    for (int i=0; i!=numSizes; ++i)
-                    {
-                        double volume = 4.0*M_PI/3.0 * av[i] * av[i] * av[i];
-                        sum1 += weightv[i] * dndav[i] * volume * dav[i];
-                        sum2 += weightv[i] * dndav[i] * dav[i];
-                    }
-                    _massv[b] = population->composition()->bulkDensity() * sum1/sum2;
                 }
 
                 // increment the running bin index
@@ -353,9 +336,6 @@ size_t MultiGrainDustMix::initializeExtraProperties(const Array& lambdav)
 
             if (stochastic)
             {
-                // open the enthalpy stored table for this population
-                string enthalpyName = population->composition()->resourceNameForEnthalpies();
-                _enthalpyv[c] = new StoredTable<1>(this, enthalpyName, "T(K)", "h(J/m3)");
             }
 
             // increment the population index
@@ -368,43 +348,15 @@ size_t MultiGrainDustMix::initializeExtraProperties(const Array& lambdav)
     allocatedBytes += _populations.size() * sizeof(_populations[0]);
     allocatedBytes += _mupopv.size() * sizeof(_mupopv[0]);
     allocatedBytes += _normv.size() * sizeof(_normv[0]);
-    allocatedBytes += _tempCalcv.allocatedBytes();
-    allocatedBytes += _sigmaabsvv.size() * sizeof(double);
-    allocatedBytes += _btocv.size() * sizeof(_btocv[0]);
-    allocatedBytes += _massv.size() * sizeof(_massv[0]);
-    allocatedBytes += _enthalpyv.size() * sizeof(_enthalpyv[0]);
+    allocatedBytes += _calc.allocatedBytes();
     return allocatedBytes;
-}
-
-////////////////////////////////////////////////////////////////////
-
-MultiGrainDustMix::~MultiGrainDustMix()
-{
-    for (auto enthalpy : _enthalpyv) delete enthalpy;
 }
 
 ////////////////////////////////////////////////////////////////////
 
 Array MultiGrainDustMix::emissivity(const Array& Jv) const
 {
-    // get the output wavelength grid
-    auto wavelengthGrid = find<Configuration>()->dustEmissionWLG();
-    int numWavelengths = wavelengthGrid->numBins();
-
-    // calculate the black-body emissivity spectrum
-    Array ev(numWavelengths);
-    int numBins = _tempCalcv.numBins();
-    for (int b=0; b!=numBins; ++b)
-    {
-        double T = _tempCalcv.equilibriumTemperature(b, Jv);
-        PlanckFunction B(T);
-        for (int ell=0; ell<numWavelengths; ell++)
-        {
-            double lambda = wavelengthGrid->wavelength(ell);
-            ev[ell] += _sigmaabsvv(b, indexForLambda(lambda)) * B(lambda);
-        }
-    }
-    return ev;
+    return _calc.emissivity(Jv);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -436,58 +388,4 @@ double MultiGrainDustMix::populationMass(int c) const
     return _mupopv[c];
 }
 
-/*
-////////////////////////////////////////////////////////////////////
-
-int MultiGrainDustMix::numBins() const
-{
-    return _tempCalcv.numBins();
-}
-
-////////////////////////////////////////////////////////////////////
-
-double MultiGrainDustMix::binEquilibriumTemperature(int b, const Array& Jv) const
-{
-    return _tempCalcv.equilibriumTemperature(b, Jv);
-}
-
-////////////////////////////////////////////////////////////////////
-
-double MultiGrainDustMix::binSectionAbs(int b, double lambda) const
-{
-    return _sigmaabsvv(b, indexForLambda(lambda));
-}
-
-////////////////////////////////////////////////////////////////////
-
-string MultiGrainDustMix::binGrainType(int b) const
-{
-    int c = _btocv[b];
-    return _populations[c]->composition()->name();
-}
-
-////////////////////////////////////////////////////////////////////
-
-double MultiGrainDustMix::binMeanMass(int b) const
-{
-    return _massv[b];
-}
-
-////////////////////////////////////////////////////////////////////
-
-double MultiGrainDustMix::binEnthalpy(int b, double T) const
-{
-    int c = _btocv[b];
-    return _massv[b] * _enthalpyv[c]->operator()(T) / _populations[c]->composition()->bulkDensity();
-}
-
-////////////////////////////////////////////////////////////////////
-
-double MultiGrainDustMix::maxEnthalpyTemperature() const
-{
-    Range range(0., 3.);
-    for (auto enthalpy : _enthalpyv) range.extend(enthalpy->axisRange<0>());
-    return range.max();
-}
-*/
 ////////////////////////////////////////////////////////////////////

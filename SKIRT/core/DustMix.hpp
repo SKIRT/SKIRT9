@@ -8,7 +8,7 @@
 
 #include "MaterialMix.hpp"
 #include "ArrayTable.hpp"
-#include "EquilibriumDustTemperatureCalculator.hpp"
+#include "EquilibriumDustEmissionCalculator.hpp"
 #include "Table.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -96,9 +96,9 @@ protected:
                                         Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv) = 0;
 
     /** This function can be implemented in a subclass to initialize dust properties that are
-        offered through some additional functions outside of the DustMix interface defined here.
-        The argument specifies the wavelength grid on which the properties must be tabulated (i.e.
-        the same grid as passed to the getOpticalProperties() function.
+        required to offer additional functionality. The argument specifies the wavelength grid on
+        which the properties may be tabulated (i.e. the same grid as passed to the
+        getOpticalProperties() function.
 
         The function is called by the DustMix class during setup after the getOpticalProperties()
         function has been called and its results have been processed. The function returns the
@@ -301,7 +301,6 @@ private:
 
     // basic optical properties
     double _mu{0.};
-    Array _lambdav;     // indexed on ell
     Array _sigmaabsv;   // indexed on ell
     Array _sigmascav;   // indexed on ell
     Array _sigmaextv;   // indexed on ell
@@ -322,8 +321,8 @@ private:
     Array _phisv;               // indexed on f
     Array _phicv;               // indexed on f
 
-    // equilibrium temperature info
-    EquilibriumDustTemperatureCalculator _tempCalc;
+    // equilibrium temperature and emission calculator
+    EquilibriumDustEmissionCalculator _calc;
 };
 
 ////////////////////////////////////////////////////////////////////
