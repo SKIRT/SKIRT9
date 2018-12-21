@@ -53,9 +53,9 @@ class EquilibriumDustEmissionCalculator
 {
 public:
     /** This function precalculates and stores information used to calculate the equilibrium
-        temperature for a particular bin (i.e. representative grain) to be handled by the
-        calculator. It must be called once for each bin; the order of the calls establishes the
-        order of the bin index \f$b\f$.
+        temperature and emissivity spectrum for a particular bin (i.e. representative grain) to be
+        handled by the calculator. It must be called once for each bin; the order of the calls
+        establishes the order of the bin index \f$b\f$.
 
         When it is first called, the function obtains (a pointer to) the simulation's radiation
         field wavelength grid, and builds a temperature grid for use in the calculator. The first
@@ -73,7 +73,7 @@ public:
     void precalculate(SimulationItem* item, const Array& lambdav, const Array& sigmaabsv);
 
     /** This function returns the size of the memory, in bytes, allocated by the precalculate()
-        function so far. This information can be used for logging puroposes. */
+        function so far. This information can be used for logging purposes. */
     size_t allocatedBytes() const;
 
     /** This function returns the number of bins (i.e. representative grains) added by the

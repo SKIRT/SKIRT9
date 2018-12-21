@@ -10,6 +10,7 @@
 #include "ArrayTable.hpp"
 #include "GrainPopulation.hpp"
 #include "Range.hpp"
+#include "StochasticDustEmissionCalculator.hpp"
 #include "StoredTable.hpp"
 class GrainComposition;
 class GrainSizeDistribution;
@@ -226,8 +227,11 @@ private:
     vector<double> _mupopv;         // mass per hydrogen atom for population - indexed on c
     vector<double> _normv;          // size distribution normalization for population - indexed on c
 
-    // multi-grain emission calculator -- initialized by initializeExtraProperties()
-    EquilibriumDustEmissionCalculator _calc;
+    // multi-grain emission calculators -- initialized by initializeExtraProperties()
+    bool _multigrain{false};        // true if one of the calculators is intialized, false if not
+    bool _stochastic{false};        // true for stochastic; false for equilibrium
+    EquilibriumDustEmissionCalculator _calcEq;
+    StochasticDustEmissionCalculator _calcSt;
 };
 
 ////////////////////////////////////////////////////////////////////

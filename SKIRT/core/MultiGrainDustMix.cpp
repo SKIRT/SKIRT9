@@ -15,7 +15,6 @@
 #include "ParallelFactory.hpp"
 #include "ProcessManager.hpp"
 #include "StoredTable.hpp"
-#include "WavelengthGrid.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -248,23 +247,14 @@ size_t MultiGrainDustMix::initializeExtraProperties(const Array& lambdav)
 {
     // determine which type(s) of emission we need to support
     auto config = find<Configuration>();
-    bool multigrain = config->hasDustEmission();
-    bool stochastic = config->hasStochasticDustEmission();
+    _multigrain = config->hasDustEmission();
+    _stochastic = config->hasStochasticDustEmission();
 
     // perform only if extra properties are required
-    if (multigrain)
+    if (_multigrain)
     {
         // get the number of wavelength grid points
         int numLambda = lambdav.size();
-
-        // determine the total number of size bins
-        int numBins = 0;
-        for (auto population : _populations) numBins += population->numSizes();
-
-        // resize the arrays needed for stochastic emissivity
-        if (stochastic)
-        {
-        }
 
         // allocate temporary array for size-bin-integrated absorption cross sections
         Array sigmaabsv(lambdav.size());
@@ -274,9 +264,17 @@ size_t MultiGrainDustMix::initializeExtraProperties(const Array& lambdav)
         int b = 0;      // running size bin index
         for (auto population : _populations)
         {
-            // open the stored table for the absorption cross sections
+            // open the absorption cross section stored table for this population
             string opticalPropsName = population->composition()->resourceNameForOpticalProps();
             StoredTable<2> Qabs(this, opticalPropsName, "a(m),lambda(m)", "Qabs(1)");
+
+            // if applicable, open the enthalpy stored table for this population
+            StoredTable<1> enthalpy;
+            if (_stochastic)
+            {
+                string enthalpyName = population->composition()->resourceNameForEnthalpies();
+                enthalpy.open(this, enthalpyName, "T(K)", "h(J/m3)");
+            }
 
             // construct the size bins (i.e. the bin border points) for this population
             int numPopBins = population->numSizes();
@@ -322,20 +320,33 @@ size_t MultiGrainDustMix::initializeExtraProperties(const Array& lambdav)
                     sigmaabsv[ell] = sum;
                 }
 
-                // setup the equilibrium temperature calculator for this bin
-                _calc.precalculate(this, lambdav, sigmaabsv);
-
-                // if needed, also precalculate the info for stochastic emissivity calculations
-                if (stochastic)
+                // setup the appropriate emissivity calculator for this bin
+                if (_stochastic)
                 {
+                    // calculate the mean grain mass for this bin
+                    double sum1 = 0.;
+                    double sum2 = 0.;
+                    for (int i=0; i!=numSizes; ++i)
+                    {
+                        double volume = 4.0*M_PI/3.0 * av[i] * av[i] * av[i];
+                        sum1 += weightv[i] * dndav[i] * volume * dav[i];
+                        sum2 += weightv[i] * dndav[i] * dav[i];
+                    }
+                    double meanmass = population->composition()->bulkDensity() * sum1/sum2;
+
+                    // get the grain type for this population
+                    string grainType = population->composition()->name();
+
+                    // setup the calculator for this bin
+                    _calcSt.precalculate(this, lambdav, sigmaabsv, meanmass, grainType, enthalpy);
+                }
+                else
+                {
+                    _calcEq.precalculate(this, lambdav, sigmaabsv);
                 }
 
                 // increment the running bin index
                 b++;
-            }
-
-            if (stochastic)
-            {
             }
 
             // increment the population index
@@ -348,7 +359,8 @@ size_t MultiGrainDustMix::initializeExtraProperties(const Array& lambdav)
     allocatedBytes += _populations.size() * sizeof(_populations[0]);
     allocatedBytes += _mupopv.size() * sizeof(_mupopv[0]);
     allocatedBytes += _normv.size() * sizeof(_normv[0]);
-    allocatedBytes += _calc.allocatedBytes();
+    allocatedBytes += _calcEq.allocatedBytes();
+    allocatedBytes += _calcSt.allocatedBytes();
     return allocatedBytes;
 }
 
@@ -356,7 +368,9 @@ size_t MultiGrainDustMix::initializeExtraProperties(const Array& lambdav)
 
 Array MultiGrainDustMix::emissivity(const Array& Jv) const
 {
-    return _calc.emissivity(Jv);
+    // use the appropriate emissivity calculator
+    if (_stochastic) return _calcSt.emissivity(Jv);
+    else             return _calcEq.emissivity(Jv);
 }
 
 ////////////////////////////////////////////////////////////////////
