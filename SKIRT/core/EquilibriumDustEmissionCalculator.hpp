@@ -8,7 +8,6 @@
 
 #include "Array.hpp"
 class SimulationItem;
-class WavelengthGrid;
 
 ////////////////////////////////////////////////////////////////////
 
@@ -43,12 +42,9 @@ class WavelengthGrid;
 
     The equilibrium emissivity spectrum of all bins combined embedded in a radiation field
     \f$J_\lambda\f$ can then be written as \f[ \varepsilon_\lambda = \sum_{b=0}^{N_{\text{bins}}-1}
-    \varsigma_{\lambda,b}^{\text{abs}}\, B_\lambda(T_{\text{eq},b})) \f] with \f$\mu\f$ the total
-    dust mass of the dust mix, \f$\varsigma_{\lambda,b}^{\text{abs}}\f$ the absorption cross
-    section of the \f$b\f$'th representative grain, and \f$T_{\text{eq},b})\f$ the equilibrium
-    temperature of that grain.
-
-    */
+    \varsigma_{\lambda,b}^{\text{abs}}\, B_\lambda(T_{\text{eq},b}) \f] with
+    \f$\varsigma_{\lambda,b}^{\text{abs}}\f$ the absorption cross section of the \f$b\f$'th
+    representative grain and \f$T_{\text{eq},b}\f$ the equilibrium temperature of that grain. */
 class EquilibriumDustEmissionCalculator
 {
 public:
@@ -57,19 +53,16 @@ public:
         handled by the calculator. It must be called once for each bin; the order of the calls
         establishes the order of the bin index \f$b\f$.
 
-        When it is first called, the function obtains (a pointer to) the simulation's radiation
-        field wavelength grid, and builds a temperature grid for use in the calculator. The first
-        argument is used to retrieve the radiation field wavelength grid from the simulation's
-        configuration.
+        When it is first called, the function uses its first argument to obtain the simulation's
+        radiation field and dust emission wavelength grids, and it builds a temperature grid for
+        use in the calculator.
 
-        The second and third arguments specify the absorption cross sections
+        The second and third function arguments specify the absorption cross sections
         \f$\varsigma^\text{abs}_i\f$ for the representative grain corresponding to the current bin
         on some fine wavelength grid \f$\lambda_i\f$. The function stores the absorption cross
-        sections interpolated on the radiation field wavelength grid (to facilitate the calculation
-        of the input side of the energy balance equation) and it precalculates Planck-integrated
-        absorption cross sections on an appropriate temperature grid (corresponding to the output
-        side of the energy balance equation) through integration over the fine wavelength grid
-        specified as an argument. */
+        sections interpolated on the radiation field and dust emission wavelength grids and it
+        precalculates Planck-integrated absorption cross sections on an appropriate temperature
+        grid through integration over the fine wavelength grid specified as an argument. */
     void precalculate(SimulationItem* item, const Array& lambdav, const Array& sigmaabsv);
 
     /** This function returns the size of the memory, in bytes, allocated by the precalculate()

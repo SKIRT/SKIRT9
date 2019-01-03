@@ -58,11 +58,11 @@ void EquilibriumDustEmissionCalculator::precalculate(SimulationItem* item,
     {
         PlanckFunction B(_Tv[p]);
         double planckabs = 0.;
-        for (int i=1; i!=numLambda; ++i) // skip the first wavelength so we can determine a bin width
+        for (int j=1; j!=numLambda; ++j) // skip the first wavelength so we can determine a bin width
         {
-            double lambda = lambdav[i];
-            double dlambda = lambdav[i] - lambdav[i-1];
-            planckabs += sigmaabsv[i] * B(lambda) * dlambda;
+            double lambda = lambdav[j];
+            double dlambda = lambdav[j] - lambdav[j-1];
+            planckabs += sigmaabsv[j] * B(lambda) * dlambda;
         }
         _planckabsvv[b][p] = planckabs;
     }

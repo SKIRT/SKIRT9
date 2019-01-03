@@ -9,7 +9,8 @@
 #include "Array.hpp"
 #include "StoredTable.hpp"
 class SimulationItem;
-class WavelengthGrid;
+class SDE_Calculator;
+class SDE_TemperatureGrid;
 
 ////////////////////////////////////////////////////////////////////
 
@@ -27,7 +28,7 @@ class WavelengthGrid;
 
     A client of the class must first call the precalculate() function for each bin to supply the
     absorption cross sections and enthalpy data for the representative grain population
-    corresponding to that bin. The emissivity() function can be used to obtain the combined
+    corresponding to that bin. The emissivity() function can then be used to obtain the combined
     emissivity spectrum for the representative grains in all bins. The embedding radiation field is
     specified by the mean intensities \f$(J_\lambda)_k\f$, which must be discretized on the
     simulation's radiation field wavelength grid as returned by the
@@ -38,12 +39,12 @@ class WavelengthGrid;
     Using the discretization of the dust composition and size distribution into a range of
     representative grains (size bins) and the output wavelength grid described above, in addition
     to a specialized temperature grid constructed by this class, the emissivity in an interstellar
-    radiation field \f$J_\lambda\f$ can be written as \f[ \varepsilon_\lambda = \frac{1}{\mu}
+    radiation field \f$J_\lambda\f$ can be written as \f[ \varepsilon_\lambda =
     \sum_{b=0}^{N_{\text{size}}-1} \varsigma_{\lambda,b}^{\text{abs}}\,
-    \sum_{i=0}^{N_{\text{temp}}-1} P_{b,i}\, B_\lambda(T_i) \f] with \f$\mu\f$ the total dust mass
-    of the dust mix, \f$\varsigma_{\lambda,b}^{\text{abs}}\f$ the absorption cross section of the
-    \f$b\f$'th size bin, \f$T_i\f$ the \f$i\f$'th temperature grid point, and \f$P_{b,i}\f$ the
-    probability of finding a grain of the \f$b\f$'th size bin in the \f$i\f$'th temperature bin.
+    \sum_{i=0}^{N_{\text{temp}}-1} P_{b,i}\, B_\lambda(T_i) \f] with
+    \f$\varsigma_{\lambda,b}^{\text{abs}}\f$ the absorption cross section of the \f$b\f$'th size
+    bin, \f$T_i\f$ the \f$i\f$'th temperature grid point, and \f$P_{b,i}\f$ the probability of
+    finding a grain of the \f$b\f$'th size bin in the \f$i\f$'th temperature bin.
 
     The probabilities \f$P_{b,i}\f$ are calculated following a scheme based on Guhathakurta &
     Draine (ApJ 1989), Draine & Li (ApJ 2001), Kruegel (book, 2003), and Misselt et al. (arXiv,
@@ -83,27 +84,34 @@ class WavelengthGrid;
 class StochasticDustEmissionCalculator
 {
 public:
+    /** The destructor destructs the data structures allocated by the precalculate() function. */
+    ~StochasticDustEmissionCalculator();
+
     /** This function precalculates and stores information used to calculate the emissivity
         spectrum for a particular bin (i.e. representative grain) to be handled by the calculator.
         It must be called once for each bin.
 
-        When it is first called, the function obtains (a pointer to) the simulation's radiation
-        field wavelength grid, and builds a temperature grid for use in the calculator. The first
-        argument is used to retrieve the radiation field wavelength grid from the simulation's
-        configuration.
+        When it is first called, the function uses its first argument to obtain the simulation's
+        radiation field and dust emission wavelength grids, and it builds a set of temperature
+        grids for use in the calculator: a coarse grid for quickly determining the appropriate
+        temperature range, and medium and fine grids for performing the actual probability
+        calculations.
 
-        The second and third arguments specify the absorption cross sections
+        The second and third function arguments specify the absorption cross sections
         \f$\varsigma^\text{abs}_i\f$ for the representative grain corresponding to the current bin
-        on some fine wavelength grid \f$\lambda_i\f$. The function stores the absorption cross
-        sections interpolated on the radiation field wavelength grid (to facilitate the calculation
-        of the input side of the energy balance equation) and it precalculates Planck-integrated
-        absorption cross sections on an appropriate temperature grid (corresponding to the output
-        side of the energy balance equation) through integration over the fine wavelength grid
-        specified as an argument.
+        on some fine wavelength grid \f$\lambda_i\f$. The remaining arguments specify the average
+        mass of a dust grain in the current bin, an identifier for the type of grain material in
+        the bin, and a stored table containing the specific enthalpy (per unit volume) for the
+        grain material as a function of temperature.
 
-        TO DO: document extra arguments and describe the other precalculated information. */
+        The function stores the absorption cross sections interpolated on the radiation field and
+        dust emission wavelength grids and it precalculates Planck-integrated absorption cross
+        sections on each of the constructed temperature grids through integration over the fine
+        wavelength grid specified as an argument. Furthermore, the function precalculates the
+        heating and cooling rates used for the stochastic probability calculations, barring the
+        input radiation field dependency, again on each of the constructed temperature grids. */
     void precalculate(SimulationItem* item, const Array& lambdav, const Array& sigmaabsv,
-                      double meanmass, string grainType, const StoredTable<1>& enthalpy);
+                      double meanMass, string grainType, const StoredTable<1>& enthalpy);
 
     /** This function returns the size of the memory, in bytes, allocated by the precalculate()
         function so far. This information can be used for logging purposes. */
@@ -119,27 +127,28 @@ public:
         not been called for at least one bin, the behavior of this function is undefined. */
     Array emissivity(const Array& Jv) const;
 
-    //======================== Private functions ========================
-
-private:
-    /** This function returns the equilibrium temperature \f$T_{\text{eq},b}\f$ of the
-        representative grain corresponding to the bin with specified index \f$b\f$ when embedded in
-        the radiation field specified by the mean intensities \f$(J_\lambda)_k\f$, which must be
-        discretized on the simulation's radiation field wavelength grid as returned by the
-        Configuration::radiationFieldWLG() function. */
-    double equilibriumTemperature(int b, const Array& Jv) const;
-
     //======================== Data Members ========================
 
 private:
+    // wavelength grids
     Array _rflambdav;            // radiation field wavelength grid (RFWLG) -- indexed on k
     Array _rfdlambdav;           // radiation field wavelength grid bin widths -- indexed on k
     Array _emlambdav;            // dust emission wavelength grid (EMWLG) -- indexed on ell
-    Array _Tv;                   // temperature grid for the integrated absorption cross sections -- indexed on p
 
-    vector<Array> _rfsigmaabsvv; // absorption cross sections on the RFWLG for each bin -- indexed on b,k
-    vector<Array> _emsigmaabsvv; // absorption cross sections on the EMWLG for each bin -- indexed on b,ell
-    vector<Array> _planckabsvv;  // Planck-integrated absorption cross sections for each bin -- indexed on b,p
+    // temperature grids
+    const SDE_TemperatureGrid* _gridA;    // coarse grid
+    const SDE_TemperatureGrid* _gridB;    // medium grid
+    const SDE_TemperatureGrid* _gridC;    // fine grid
+
+    // calculators for each representative dust grain (size bin) -- indexed on b
+    vector<const SDE_Calculator*> _calculatorsA;     // coarse grid
+    vector<const SDE_Calculator*> _calculatorsB;     // medium grid
+    vector<const SDE_Calculator*> _calculatorsC;     // fine grid
+
+    // other porperties for each representative dust grain (size bin) -- indexed on b
+    vector<double> _meanMasses;        // mean mass of a grain
+    vector<size_t> _grainTypes;        // hash value for the grain type (instead of a string)
+    vector<double> _maxEnthalpyTemps;  // maximum temperature for the enthalpy data
 };
 
 ////////////////////////////////////////////////////////////////////
