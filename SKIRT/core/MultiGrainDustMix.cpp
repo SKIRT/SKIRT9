@@ -332,13 +332,14 @@ size_t MultiGrainDustMix::initializeExtraProperties(const Array& lambdav)
                         sum1 += weightv[i] * dndav[i] * volume * dav[i];
                         sum2 += weightv[i] * dndav[i] * dav[i];
                     }
-                    double meanmass = population->composition()->bulkDensity() * sum1/sum2;
+                    double bulkDensity = population->composition()->bulkDensity();
+                    double meanMass =  bulkDensity * sum1/sum2;
 
                     // get the grain type for this population
                     string grainType = population->composition()->name();
 
                     // setup the calculator for this bin
-                    _calcSt.precalculate(this, lambdav, sigmaabsv, meanmass, grainType, enthalpy);
+                    _calcSt.precalculate(this, lambdav, sigmaabsv, grainType, bulkDensity, meanMass, enthalpy);
                 }
                 else
                 {

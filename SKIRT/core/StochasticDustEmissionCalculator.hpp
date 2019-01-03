@@ -99,10 +99,10 @@ public:
 
         The second and third function arguments specify the absorption cross sections
         \f$\varsigma^\text{abs}_i\f$ for the representative grain corresponding to the current bin
-        on some fine wavelength grid \f$\lambda_i\f$. The remaining arguments specify the average
-        mass of a dust grain in the current bin, an identifier for the type of grain material in
-        the bin, and a stored table containing the specific enthalpy (per unit volume) for the
-        grain material as a function of temperature.
+        on some fine wavelength grid \f$\lambda_i\f$. The remaining arguments specify an identifier
+        for the type of grain material in the bin, the bulk density of the grain material, the
+        average mass of a dust grain in the current bin, and a stored table containing the specific
+        enthalpy (per unit volume) for the grain material as a function of temperature.
 
         The function stores the absorption cross sections interpolated on the radiation field and
         dust emission wavelength grids and it precalculates Planck-integrated absorption cross
@@ -111,7 +111,7 @@ public:
         heating and cooling rates used for the stochastic probability calculations, barring the
         input radiation field dependency, again on each of the constructed temperature grids. */
     void precalculate(SimulationItem* item, const Array& lambdav, const Array& sigmaabsv,
-                      double meanMass, string grainType, const StoredTable<1>& enthalpy);
+                      string grainType, double bulkDensity, double meanMass, const StoredTable<1>& enthalpy);
 
     /** This function returns the size of the memory, in bytes, allocated by the precalculate()
         function so far. This information can be used for logging purposes. */
@@ -146,8 +146,8 @@ private:
     vector<const SDE_Calculator*> _calculatorsC;     // fine grid
 
     // other porperties for each representative dust grain (size bin) -- indexed on b
-    vector<double> _meanMasses;        // mean mass of a grain
     vector<size_t> _grainTypes;        // hash value for the grain type (instead of a string)
+    vector<double> _meanMasses;        // mean mass of a grain
     vector<double> _maxEnthalpyTemps;  // maximum temperature for the enthalpy data
 };
 

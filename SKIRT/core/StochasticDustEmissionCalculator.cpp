@@ -115,7 +115,7 @@ public:
     SDE_Calculator(const SDE_TemperatureGrid* grid, const WavelengthGrid* rfWLG,
                    const Array& rflambdav, const Array& rfdlambdav, const Array& emlambdav,
                    const Array& lambdav, const Array& sigmaabsv,
-                   const StoredTable<1>& enthalpy)
+                   double bulkDensity, double meanMass, const StoredTable<1>& enthalpy)
         : _grid(grid), _HRm(grid->_Tv.size()), _Km(grid->_Tv.size()), _CRv(grid->_Tv.size()),
           _planckabsv(grid->_Tv.size()), _rfdlambdav(rfdlambdav), _emlambdav(emlambdav)
     {
@@ -125,7 +125,7 @@ public:
 
         // calculate the enthalpy of a single dust grain in this population across the temperature grid
         Array Hv(NT);
-        for (int p=0; p<NT; p++) Hv[p] = enthalpy(Tv[p]);
+        for (int p=0; p<NT; p++) Hv[p] = enthalpy(Tv[p]) * meanMass/bulkDensity;
 
         // calculate the enthalpy bin widths
         Array dHv(NT);
@@ -134,7 +134,7 @@ public:
         {
             double Tmin = (Tv[p-1]+Tv[p])/2.;
             double Tmax = (Tv[p+1]+Tv[p])/2.;
-            dHv[p] = enthalpy(Tmax) - enthalpy(Tmin);
+            dHv[p] = (enthalpy(Tmax) - enthalpy(Tmin)) * meanMass/bulkDensity;
         }
         dHv[NT-1] = Hv[NT-1]-Hv[NT-2];
 
@@ -335,7 +335,7 @@ StochasticDustEmissionCalculator::~StochasticDustEmissionCalculator()
 
 void StochasticDustEmissionCalculator::precalculate(SimulationItem* item,
                                                     const Array& lambdav, const Array& sigmaabsv,
-                                                    double meanMass, string grainType,
+                                                    string grainType, double bulkDensity, double meanMass,
                                                     const StoredTable<1>& enthalpy)
 {
     // get the index of the bin being added
@@ -374,11 +374,11 @@ void StochasticDustEmissionCalculator::precalculate(SimulationItem* item,
 
     // build the three calculators for this bin and add them to the corresponding lists
     _calculatorsA.push_back(new SDE_Calculator(_gridA, radiationFieldWLG, _rflambdav, _rfdlambdav, _emlambdav,
-                                               lambdav, sigmaabsv, enthalpy));
+                                               lambdav, sigmaabsv, bulkDensity, meanMass, enthalpy));
     _calculatorsB.push_back(new SDE_Calculator(_gridB, radiationFieldWLG, _rflambdav, _rfdlambdav, _emlambdav,
-                                               lambdav, sigmaabsv, enthalpy));
+                                               lambdav, sigmaabsv, bulkDensity, meanMass, enthalpy));
     _calculatorsC.push_back(new SDE_Calculator(_gridC, radiationFieldWLG, _rflambdav, _rfdlambdav, _emlambdav,
-                                               lambdav, sigmaabsv, enthalpy));
+                                               lambdav, sigmaabsv, bulkDensity, meanMass, enthalpy));
 
     // remember some other properties for this bin
     _meanMasses.push_back(meanMass);
