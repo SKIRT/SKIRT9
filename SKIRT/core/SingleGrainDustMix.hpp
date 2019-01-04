@@ -19,6 +19,7 @@
 class SingleGrainDustMix : public DustMix
 {
     ITEM_ABSTRACT(SingleGrainDustMix, DustMix, "a dust mix described by a single representative grain")
+        ATTRIBUTE_TYPE_ALLOWED_IF(SingleGrainDustMix, "!StochasticDustEmission")
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============

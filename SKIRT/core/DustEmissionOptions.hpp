@@ -30,6 +30,7 @@ class DustEmissionOptions : public SimulationItem, public WavelengthRangeInterfa
 
     PROPERTY_ENUM(dustEmissionType, EmissionType, "the method used for dust emission calculations")
         ATTRIBUTE_DEFAULT_VALUE(dustEmissionType, "Equilibrium")
+        ATTRIBUTE_INSERT(dustEmissionType, "dustEmissionTypeStochastic:StochasticDustEmission")
 
     PROPERTY_ITEM(cellLibrary, SpatialCellLibrary, "the spatial cell grouping scheme for calculating dust emission")
         ATTRIBUTE_DEFAULT_VALUE(cellLibrary, "AllCellsLibrary")

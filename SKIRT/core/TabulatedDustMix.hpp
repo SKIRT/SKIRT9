@@ -29,6 +29,7 @@
 class TabulatedDustMix : public DustMix
 {
     ITEM_ABSTRACT(TabulatedDustMix, MaterialMix, "a basic dust mix with properties tabulated by the user")
+        ATTRIBUTE_TYPE_ALLOWED_IF(TabulatedDustMix, "!StochasticDustEmission")
         ATTRIBUTE_TYPE_DISPLAYED_IF(TabulatedDustMix, "Level2")
     ITEM_END()
 
