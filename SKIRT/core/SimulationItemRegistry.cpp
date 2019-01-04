@@ -149,6 +149,7 @@
 #include "SEDInstrument.hpp"
 #include "SIUnits.hpp"
 #include "ScaledGaussianSmoothingKernel.hpp"
+#include "SelectDustMixFamily.hpp"
 #include "SersicGeometry.hpp"
 #include "ShellGeometry.hpp"
 #include "SineSquarePolarizationProfile.hpp"
@@ -428,6 +429,10 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ConfigurableDustMix>();
 
     ItemRegistry::add<ElectronMix>();
+
+    // material mix families
+    ItemRegistry::add<MaterialMixFamily>();
+    ItemRegistry::add<SelectDustMixFamily>();
 
     // grain population
     ItemRegistry::add<GrainPopulation>();
