@@ -145,8 +145,8 @@ private:
     vector<const SDE_Calculator*> _calculatorsB;     // medium grid
     vector<const SDE_Calculator*> _calculatorsC;     // fine grid
 
-    // other porperties for each representative dust grain (size bin) -- indexed on b
-    vector<size_t> _grainTypes;        // hash value for the grain type (instead of a string)
+    // other properties for each representative dust grain (size bin) -- indexed on b
+    vector<string> _grainTypes;        // the grain type identifier
     vector<double> _meanMasses;        // mean mass of a grain
     vector<double> _maxEnthalpyTemps;  // maximum temperature for the enthalpy data
 };

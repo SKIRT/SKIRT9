@@ -382,7 +382,7 @@ void StochasticDustEmissionCalculator::precalculate(SimulationItem* item,
 
     // remember some other properties for this bin
     _meanMasses.push_back(meanMass);
-    _grainTypes.push_back(std::hash<std::string>{}(grainType));
+    _grainTypes.push_back(grainType);
     _maxEnthalpyTemps.push_back(enthalpy.axisRange<0>().max());
 }
 
@@ -418,7 +418,7 @@ Array StochasticDustEmissionCalculator::emissivity(const Array& Jv) const
     // this dictionary is updated as the loop over all bins in the mix proceeds;
     // for each type of grain composition, it keeps track of the grain mass above which
     // the representative grain is most certainly in equilibrium
-    std::unordered_map<size_t,double> eqMass;
+    std::unordered_map<string,double> eqMass;
 
     // provide room for the probabilities calculated over each of the temperature grids
     Array Pv;
@@ -432,7 +432,7 @@ Array StochasticDustEmissionCalculator::emissivity(const Array& Jv) const
         double Teq = _calculatorsC[b]->equilibriumTemperature(Jv);
 
         // consider stochastic calculation only if the mean mass for this bin is below the cutoff mass
-        size_t grainType = _grainTypes[b];
+        string grainType = _grainTypes[b];
         double meanmass = _meanMasses[b];
         if (!eqMass.count(grainType) || meanmass < eqMass.at(grainType))
         {
