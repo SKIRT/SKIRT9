@@ -833,6 +833,15 @@ Vec VoronoiMeshSnapshot::velocity(Position bfr) const
 
 ////////////////////////////////////////////////////////////////////
 
+void VoronoiMeshSnapshot::parameters(Position bfr, Array& params) const
+{
+    int m = cellIndex(bfr);
+    if (m>=0) parameters(m, params);
+    else params.resize(numParameters());
+}
+
+////////////////////////////////////////////////////////////////////
+
 double VoronoiMeshSnapshot::density(Position bfr) const
 {
     int m = cellIndex(bfr);

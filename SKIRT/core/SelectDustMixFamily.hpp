@@ -21,7 +21,7 @@ class SelectDustMixFamily : public MaterialMixFamily
 {
     ITEM_CONCRETE(SelectDustMixFamily, MaterialMixFamily, "a family of dust mixes specified in the configuration")
 
-    PROPERTY_ITEM_LIST(dustMixes, DustMix, "the dust mixes in the family")
+    PROPERTY_ITEM_LIST(dustMixes, DustMix, "the family of dust mixes")
         ATTRIBUTE_DEFAULT_VALUE(dustMixes, "ConfigurableDustMix")
 
     ITEM_END()

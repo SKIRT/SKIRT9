@@ -154,8 +154,11 @@ void Configuration::setupSelfBefore()
     if (_hasMedium) for (auto medium : ms->media()) if (medium->hasVelocity()) _hasMovingMedia = true;
 
     // check for variable material mixes
-    // TO DO: implement this check once variable material mixes have been actually implemented
-    // TO DO: warn when using cell libraries in combination with variable material mixes
+    if (_hasMedium) for (auto medium : ms->media()) if (medium->hasVariableMix()) _hasVariableMedia = true;
+
+    // prohibit non-identity-mapping cell libraries in combination with variable material mixes
+    if (_hasVariableMedia && _cellLibrary && !dynamic_cast<AllCellsLibrary*>(_cellLibrary))
+        throw FATALERROR("Cannot use spatial cell library in combination with spatially varying material mixes");
 
     // in case emulation mode has been set before our setup() was called, perform the emulation overrides again
     if (emulationMode()) setEmulationMode();

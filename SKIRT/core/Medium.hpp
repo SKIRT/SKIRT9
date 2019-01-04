@@ -77,6 +77,11 @@ public:
         object with a type and level of support representative for this medium. */
     virtual const MaterialMix* mix(Position bfr = Position()) const = 0;
 
+    /** This function returns true if the mix() function for this medium may return a different
+        MaterialMix object depending on the specified position, or false when the same object is
+        always returned. */
+    virtual bool hasVariableMix() const = 0;
+
     /** This function returns true if the bulkVelocity() function for this medium may return a
         nonzero vector for some positions. */
     virtual bool hasVelocity() const = 0;

@@ -193,18 +193,17 @@ void ParticleSnapshot::parameters(int m, Array& params) const
 
 Vec ParticleSnapshot::velocity(Position bfr) const
 {
-    const SmoothedParticle* nearestParticle = nullptr;
-    double nearestSquaredDistance = std::numeric_limits<double>::infinity();
-    if (_grid) for (const SmoothedParticle* p : _grid->particlesFor(bfr))
-    {
-        double d2 = (bfr - p->center()).norm2();
-        if (d2 < nearestSquaredDistance)
-        {
-            nearestParticle = p;
-            nearestSquaredDistance = d2;
-        }
-    }
+    const SmoothedParticle* nearestParticle = _grid ? _grid->nearestParticle(bfr) : nullptr;
     return nearestParticle ? velocity(nearestParticle->index()) : Vec();
+}
+
+////////////////////////////////////////////////////////////////////
+
+void ParticleSnapshot::parameters(Position bfr, Array& params) const
+{
+    const SmoothedParticle* nearestParticle = _grid ? _grid->nearestParticle(bfr) : nullptr;
+    if (nearestParticle) parameters(nearestParticle->index(), params);
+    else params.resize(numParameters());
 }
 
 ////////////////////////////////////////////////////////////////////

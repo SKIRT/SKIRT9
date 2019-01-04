@@ -77,6 +77,10 @@ protected:
         medium. The same object is returned regardless of position. */
     const MaterialMix* mix(Position bfr) const override;
 
+    /** This function always returns false because a geometric medium has the same dust mix
+        throughout its spatial domain. */
+    bool hasVariableMix() const override;
+
     /** This function returns true if the bulk velocity of the medium is nonzero. */
     bool hasVelocity() const override;
 

@@ -25,6 +25,7 @@ class FieldStrengthCellLibrary : public SpatialCellLibrary
 {
     ITEM_CONCRETE(FieldStrengthCellLibrary, SpatialCellLibrary,
                   "a library scheme for grouping spatial cells based on radiation field strength")
+        ATTRIBUTE_TYPE_INSERT(FieldStrengthCellLibrary, "NonIdentitySpatialCellLibrary")
 
     PROPERTY_INT(numFieldStrengths, "the number of field strength bins")
         ATTRIBUTE_MIN_VALUE(numFieldStrengths, "10")

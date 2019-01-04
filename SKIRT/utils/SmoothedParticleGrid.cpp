@@ -204,3 +204,21 @@ vector<const SmoothedParticle*> SmoothedParticleGrid::particlesFor(const Box& bo
 }
 
 ////////////////////////////////////////////////////////////////////
+
+const SmoothedParticle* SmoothedParticleGrid::nearestParticle(Vec r) const
+{
+    const SmoothedParticle* nearestParticle = nullptr;
+    double nearestSquaredDistance = std::numeric_limits<double>::infinity();
+    for (const SmoothedParticle* p : particlesFor(r))
+    {
+        double d2 = (r - p->center()).norm2();
+        if (d2 < nearestSquaredDistance)
+        {
+            nearestParticle = p;
+            nearestSquaredDistance = d2;
+        }
+    }
+    return nearestParticle;
+}
+
+////////////////////////////////////////////////////////////////////

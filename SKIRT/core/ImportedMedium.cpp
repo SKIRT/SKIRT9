@@ -19,6 +19,7 @@ void ImportedMedium::setupSelfAfter()
     if (_importMetallicity) _snapshot->importMetallicity();
     if (_importTemperature) _snapshot->importTemperature();
     if (_importVelocity) _snapshot->importVelocity();
+    if (_importVariableMixParams) _snapshot->importParameters(_materialMixFamily->parameterInfo());
 
     // set the density policy
     _snapshot->setMassDensityPolicy(_massFraction, _importTemperature ? _maxTemperature : 0.);
@@ -43,9 +44,25 @@ int ImportedMedium::dimension() const
 
 //////////////////////////////////////////////////////////////////////
 
-const MaterialMix* ImportedMedium::mix(Position /*bfr*/) const
+const MaterialMix* ImportedMedium::mix(Position bfr) const
 {
-    return _materialMix;
+    if (_importVariableMixParams)
+    {
+        Array params;
+        // this function is called by the Configuration object before setup() has been performed on the medium;
+        // so if the snapshot has not yet been created, just return a default material mix
+        if (_snapshot) _snapshot->parameters(bfr, params);
+        else params.resize(_materialMixFamily->parameterInfo().size());
+        return _materialMixFamily->mix(params);
+    }
+    else return _materialMix;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+bool ImportedMedium::hasVariableMix() const
+{
+    return _importVariableMixParams;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -67,7 +84,7 @@ Vec ImportedMedium::bulkVelocity(Position bfr) const
 double ImportedMedium::numberDensity(Position bfr) const
 {
     double result = _snapshot->density(bfr);
-    if (!_snapshot->holdsNumber()) result /= _materialMix->mass();
+    if (!_snapshot->holdsNumber()) result /= mix(bfr)->mass();
     return result;
 }
 
@@ -76,7 +93,7 @@ double ImportedMedium::numberDensity(Position bfr) const
 double ImportedMedium::number() const
 {
     double result = _snapshot->mass();
-    if (!_snapshot->holdsNumber()) result /= _materialMix->mass();
+    if (!_snapshot->holdsNumber()) result /= mix()->mass();
     return result;
 }
 
@@ -85,7 +102,7 @@ double ImportedMedium::number() const
 double ImportedMedium::massDensity(Position bfr) const
 {
     double result = _snapshot->density(bfr);
-    if (_snapshot->holdsNumber()) result *= _materialMix->mass();
+    if (_snapshot->holdsNumber()) result *= mix(bfr)->mass();
     return result;
 }
 
@@ -94,7 +111,7 @@ double ImportedMedium::massDensity(Position bfr) const
 double ImportedMedium::mass() const
 {
     double result = _snapshot->mass();
-    if (_snapshot->holdsNumber()) result *= _materialMix->mass();
+    if (_snapshot->holdsNumber()) result *= mix()->mass();
     return result;
 }
 
@@ -102,8 +119,8 @@ double ImportedMedium::mass() const
 
 double ImportedMedium::opticalDepthX(double lambda) const
 {
-    double result = _snapshot->SigmaX() * _materialMix->sectionExt(lambda);
-    if (!_snapshot->holdsNumber()) result /= _materialMix->mass();
+    double result = _snapshot->SigmaX() * mix()->sectionExt(lambda);
+    if (!_snapshot->holdsNumber()) result /= mix()->mass();
     return result;
 }
 
@@ -111,8 +128,8 @@ double ImportedMedium::opticalDepthX(double lambda) const
 
 double ImportedMedium::opticalDepthY(double lambda) const
 {
-    double result = _snapshot->SigmaY() * _materialMix->sectionExt(lambda);
-    if (!_snapshot->holdsNumber()) result /= _materialMix->mass();
+    double result = _snapshot->SigmaY() * mix()->sectionExt(lambda);
+    if (!_snapshot->holdsNumber()) result /= mix()->mass();
     return result;
 }
 
@@ -120,8 +137,8 @@ double ImportedMedium::opticalDepthY(double lambda) const
 
 double ImportedMedium::opticalDepthZ(double lambda) const
 {
-    double result = _snapshot->SigmaZ() * _materialMix->sectionExt(lambda);
-    if (!_snapshot->holdsNumber()) result /= _materialMix->mass();
+    double result = _snapshot->SigmaZ() * mix()->sectionExt(lambda);
+    if (!_snapshot->holdsNumber()) result /= mix()->mass();
     return result;
 }
 

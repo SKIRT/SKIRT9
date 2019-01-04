@@ -8,6 +8,7 @@
 
 #include "Medium.hpp"
 #include "MaterialMix.hpp"
+#include "MaterialMixFamily.hpp"
 #include "SiteListInterface.hpp"
 class Snapshot;
 
@@ -49,8 +50,18 @@ class ImportedMedium : public Medium, public SiteListInterface
         ATTRIBUTE_DEFAULT_VALUE(importVelocity, "false")
         ATTRIBUTE_DISPLAYED_IF(importVelocity, "(Panchromatic&Level2)|Level3")
 
+    PROPERTY_BOOL(importVariableMixParams, "import parameter(s) to select a spatially varying material mix")
+        ATTRIBUTE_DEFAULT_VALUE(importVariableMixParams, "false")
+        ATTRIBUTE_DISPLAYED_IF(importVariableMixParams, "(!NonIdentitySpatialCellLibrary)&Level2")
+
     PROPERTY_ITEM(materialMix, MaterialMix, "the material type and properties throughout the medium")
         ATTRIBUTE_DEFAULT_VALUE(materialMix, "MeanInterstellarDustMix")
+        ATTRIBUTE_RELEVANT_IF(materialMix, "!importVariableMixParams")
+
+    PROPERTY_ITEM(materialMixFamily, MaterialMixFamily,
+                  "the material mix family addressed by the imported parameter(s)")
+        ATTRIBUTE_DEFAULT_VALUE(materialMixFamily, "SelectDustMixFamily")
+        ATTRIBUTE_RELEVANT_IF(materialMixFamily, "importVariableMixParams")
 
     ITEM_END()
 
@@ -80,9 +91,19 @@ public:
     int dimension() const override;
 
     /** This function returns the MaterialMix object defining the material properties for the
-        medium at the specified position. In the current implementation, the same object is
-        returned regardless of position. This may change in the future. */
+        medium at the specified position. If the position argument is omitted, the function returns
+        the material mix for the model coordinate origin as a default value.
+
+        If the \em importVariableMixParams flag is enabled, the appropriate material mix is
+        selected from the configured material mix family based on the value of the imported
+        parameters for the specified position. If the flag is disabled, the fixed configured
+        material mix is returned regardless of position. */
     const MaterialMix* mix(Position bfr = Position()) const override;
+
+    /** This function returns the configured value of the \em importVariableMixParams flag. If
+        true, this medium may return a different MaterialMix object depending on the specified
+        position. If false, the same object is always returned. */
+    bool hasVariableMix() const override;
 
     /** This function returns true if the \em importVelocity flag is enabled for the medium. */
     bool hasVelocity() const override;
@@ -95,25 +116,35 @@ public:
     /** This function returns the number density of the medium at the specified position. */
     double numberDensity(Position bfr) const override;
 
-    /** This function returns the total number of material entities in the medium. */
+    /** This function returns the total number of material entities in the medium. The function
+        uses the default material mix (the one at the origin) throughout the complete spatial
+        domain; if the \em importVelocity flag is enabled, this is an approximation. */
     double number() const override;
 
     /** This function returns the mass density of the medium at the specified position. */
     double massDensity(Position bfr) const override;
 
-    /** This function returns the total mass in the medium. */
+    /** This function returns the total mass in the medium. The function uses the default material
+        mix (the one at the origin) throughout the complete spatial domain; if the \em
+        importVelocity flag is enabled, this is an approximation. */
     double mass() const override;
 
-    /** This function returns the optical depth of the medium at wavelength \f$\lambda\f$
-        along the full X axis of the model coordinate system. */
+    /** This function returns the optical depth of the medium at wavelength \f$\lambda\f$ along the
+        full X axis of the model coordinate system. The function uses the default material mix (the
+        one at the origin) throughout the complete spatial domain; if the \em importVelocity flag
+        is enabled, this is an approximation. */
     double opticalDepthX(double lambda) const override;
 
-    /** This function returns the optical depth of the medium at wavelength \f$\lambda\f$
-        along the full Y axis of the model coordinate system. */
+    /** This function returns the optical depth of the medium at wavelength \f$\lambda\f$ along the
+        full Y axis of the model coordinate system. The function uses the default material mix (the
+        one at the origin) throughout the complete spatial domain; if the \em importVelocity flag
+        is enabled, this is an approximation. */
     double opticalDepthY(double lambda) const override;
 
-    /** This function returns the optical depth of the medium at wavelength \f$\lambda\f$
-        along the full Z axis of the model coordinate system. */
+    /** This function returns the optical depth of the medium at wavelength \f$\lambda\f$ along the
+        full Z axis of the model coordinate system. The function uses the default material mix (the
+        one at the origin) throughout the complete spatial domain; if the \em importVelocity flag
+        is enabled, this is an approximation. */
     double opticalDepthZ(double lambda) const override;
 
     /** This function generates a random position sampled from the medium's spatial density

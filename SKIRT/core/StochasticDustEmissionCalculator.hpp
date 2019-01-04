@@ -136,9 +136,9 @@ private:
     Array _emlambdav;            // dust emission wavelength grid (EMWLG) -- indexed on ell
 
     // temperature grids
-    const SDE_TemperatureGrid* _gridA;    // coarse grid
-    const SDE_TemperatureGrid* _gridB;    // medium grid
-    const SDE_TemperatureGrid* _gridC;    // fine grid
+    const SDE_TemperatureGrid* _gridA{nullptr};      // coarse grid
+    const SDE_TemperatureGrid* _gridB{nullptr};      // medium grid
+    const SDE_TemperatureGrid* _gridC{nullptr};      // fine grid
 
     // calculators for each representative dust grain (size bin) -- indexed on b
     vector<const SDE_Calculator*> _calculatorsA;     // coarse grid

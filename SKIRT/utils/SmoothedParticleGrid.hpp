@@ -51,6 +51,10 @@ public:
         (i.e. removing any duplicates). */
     vector<const SmoothedParticle*> particlesFor(const Box& box) const;
 
+    /** This function returns a pointer to the particle centered nearest to the specified position,
+        or the null pointer if the specified position is outside of the grid. */
+    const SmoothedParticle* nearestParticle(Vec r) const;
+
 private:
     int _m;  // number of grid cells in each spatial direction
     Array _xgrid, _ygrid, _zgrid;  // the m+1 grid separation points for each spatial direction

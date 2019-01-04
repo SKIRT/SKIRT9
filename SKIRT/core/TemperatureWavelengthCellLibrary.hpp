@@ -34,6 +34,7 @@ class TemperatureWavelengthCellLibrary : public SpatialCellLibrary
 {
     ITEM_CONCRETE(TemperatureWavelengthCellLibrary, SpatialCellLibrary,
                   "a library scheme for grouping spatial cells based on indicative temperature and wavelength")
+        ATTRIBUTE_TYPE_INSERT(TemperatureWavelengthCellLibrary, "NonIdentitySpatialCellLibrary")
 
     PROPERTY_INT(numTemperatures, "the number of temperature bins")
         ATTRIBUTE_MIN_VALUE(numTemperatures, "5")

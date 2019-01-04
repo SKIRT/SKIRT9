@@ -262,6 +262,12 @@ public:
         index is out of range, the behavior is undefined. */
     virtual void parameters(int m, Array& params) const = 0;
 
+    /** This function stores the parameters of the entity nearest to (or at) the specified point
+        \f${\bf{r}}\f$ into the given array. If the point is outside the domain, the function
+        returns the appropriate number of zero parameter values. If parameters are not being
+        imported, the behavior is undefined. */
+    virtual void parameters(Position bfr, Array& params) const = 0;
+
     /** This function returns the mass density represented by the snapshot at a given point
         \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If no
         density policy has been set or no mass/density information is being imported, the behavior
