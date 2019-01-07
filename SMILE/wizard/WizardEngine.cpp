@@ -377,14 +377,21 @@ void WizardEngine::advance(bool state, bool descend)
                 }
 
                 // if the property is an item list, and we're editing one of its subitems,
-                // and the subitem has properties, then descend the hierarchy into that subitem
+                // and the subitem has properties, then descend the hierarchy into that subitem;
+                // if the subitem has no properties, fake a descend from which we will back out right away
                 auto itemlisthdlr = dynamic_cast<ItemListPropertyHandler*>(handler.get());
-                if (itemlisthdlr && _subItemIndex>=0 &&
-                    _schema->properties(itemlisthdlr->value()[_subItemIndex]->type()).size()>0)
+                if (itemlisthdlr && _subItemIndex>=0)
                 {
                     _current = itemlisthdlr->value()[_subItemIndex];
-                    _firstPropertyIndex = 0;
-                    break;
+                    if (_schema->properties(_current->type()).size()>0)
+                    {
+                        _firstPropertyIndex = 0;
+                        break;
+                    }
+                    else
+                    {
+                        _lastPropertyIndex = 0;
+                    }
                 }
             }
 
@@ -393,7 +400,7 @@ void WizardEngine::advance(bool state, bool descend)
 
             // if we handled the last property at this level, move up the hierarchy to a level where
             // there are properties to advance to; if we encounter the root item, then move to the SaveHierarchy stage
-            while (static_cast<size_t>(_firstPropertyIndex) == _schema->properties(_current->type()).size())
+            while (static_cast<size_t>(_firstPropertyIndex) >= _schema->properties(_current->type()).size())
             {
                 // indicate that the item we're backing out of is "complete"
                 ItemUtils::setItemComplete(_current);
