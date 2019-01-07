@@ -19,12 +19,13 @@
     Refer to the description of the TextInFile class for information on overall formatting and on
     how to include header lines specifying the units for each column in the input file. In case the
     input file has no unit specifications, the default units mentioned below are used instead. The
-    input file should contain 5 to 10 columns, depending on the options configured by the user for
+    number of columns expected in the input file depends on the options configured by the user for
     this ParticleMedium instance:
 
     \f[ x\,(\mathrm{pc}) \quad y\,(\mathrm{pc}) \quad z\,(\mathrm{pc}) \quad h\,(\mathrm{pc}) \quad
     M\,(\mathrm{M}_\odot) \quad [Z\,(1)] \quad [T\,(\mathrm{K})] \quad [ v_x\,(\mathrm{km/s}) \quad
-    v_y\,(\mathrm{km/s}) \quad v_z\,(\mathrm{km/s}) ] \f]
+    v_y\,(\mathrm{km/s}) \quad v_z\,(\mathrm{km/s}) ] \quad [ \dots\text{mix family params}\dots ]
+    \f]
 
     The first three columns are the \f$x\f$, \f$y\f$ and \f$z\f$ coordinates of the particle, the
     fourth column is the particle smoothing length \f$h\f$.
@@ -43,9 +44,13 @@
     \f[ M_\mathrm{imported} = \begin{cases} f_\mathrm{mass}\,Z\,M & \mathrm{if}\; T<T_\mathrm{max}
     \;\mathrm{or}\; T_\mathrm{max}=0 \\ 0 & \mathrm{otherwise} \end{cases} \f]
 
-    If the \em importVelocity option is enabled, the final three columns specify the \f$v_x\f$,
-    \f$v_y\f$, \f$v_z\f$ velocity components of the particle (considered as the bulk velocity for
-    the mass represented by the particle). */
+    If the \em importVelocity option is enabled, the subsequent three columns specify the
+    \f$v_x\f$, \f$v_y\f$, \f$v_z\f$ velocity components of the particle (considered as the bulk
+    velocity for the mass represented by the particle).
+
+    Finally, if the \em importVariableMixParams option is enabled, the remaining columns specify
+    the parameters used by the configured material mix family to select a particular material mix
+    for the particle. */
 class ParticleMedium : public ImportedMedium
 {
     ITEM_CONCRETE(ParticleMedium, ImportedMedium, "a transfer medium imported from smoothed particle data")

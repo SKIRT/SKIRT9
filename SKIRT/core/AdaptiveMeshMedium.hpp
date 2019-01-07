@@ -20,13 +20,14 @@
     an adaptive mesh and on how to represent it in text column file format. Refer to the
     description of the TextInFile class for information on overall formatting and on how to include
     header lines specifying the units for each column in the input file. In case the input file has
-    no unit specifications, the default units mentioned below are used instead. The input file
-    should contain 1 to 6 columns, depending on the options configured by the user for this
+    no unit specifications, the default units mentioned below are used instead. The number of
+    columns expected in the input file depends on the options configured by the user for this
     AdaptiveMeshMedium instance:
 
     \f[ \{\, \rho\,(\text{M}_\odot\,\text{pc}^{-3}) \;\;|\;\; M\,(\text{M}_\odot) \;\;|\;\;
     n\,(\text{cm}^{-3}) \;\;|\;\; N\,(1) \,\} \quad [Z\,(1)] \quad [T\,(\mathrm{K})] \quad [
-    v_x\,(\mathrm{km/s}) \quad v_y\,(\mathrm{km/s}) \quad v_z\,(\mathrm{km/s}) ] \f]
+    v_x\,(\mathrm{km/s}) \quad v_y\,(\mathrm{km/s}) \quad v_z\,(\mathrm{km/s}) ] \quad [
+    \dots\text{mix family params}\dots ] \f]
 
     Depending on the value of the \em massType option, the first column lists the average mass
     density \f$\rho\f$, the integrated mass \f$M\f$, the average number density \f$n\f$, or the
@@ -48,9 +49,13 @@
     \f[ \rho_\mathrm{imported} = \begin{cases} f_\mathrm{mass}\,Z\,\rho & \mathrm{if}\;
     T<T_\mathrm{max} \;\mathrm{or}\; T_\mathrm{max}=0 \\ 0 & \mathrm{otherwise} \end{cases} \f]
 
-    If the \em importVelocity option is enabled, the final three columns specify the \f$v_x\f$,
-    \f$v_y\f$, \f$v_z\f$ velocity components of the cell (considered as the average bulk velocity
-    for the mass in the cell). */
+    If the \em importVelocity option is enabled, the subsequent three columns specify the
+    \f$v_x\f$, \f$v_y\f$, \f$v_z\f$ velocity components of the cell (considered as the average bulk
+    velocity for the mass in the cell).
+
+    Finally, if the \em importVariableMixParams option is enabled, the remaining columns specify
+    the parameters used by the configured material mix family to select a particular material mix
+    for the cell. */
 class AdaptiveMeshMedium : public MeshMedium, public AdaptiveMeshInterface
 {
     ITEM_CONCRETE(AdaptiveMeshMedium, MeshMedium,
