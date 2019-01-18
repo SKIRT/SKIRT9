@@ -51,7 +51,7 @@ int NormalizedSource::dimension() const
 
 bool NormalizedSource::hasVelocity() const
 {
-    return velocityX() || velocityY() || velocityZ();
+    return !_oligochromatic && (velocityX() || velocityY() || velocityZ());
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -103,7 +103,7 @@ int ImportedSource::dimension() const
 
 bool ImportedSource::hasVelocity() const
 {
-    return _importVelocity;
+    return !_oligochromatic && _importVelocity;
 }
 
 ////////////////////////////////////////////////////////////////////
