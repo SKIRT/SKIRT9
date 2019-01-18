@@ -16,7 +16,8 @@ int main(int argc, char** argv)
 {
     // Construct application object
     QApplication app(argc, argv);
-    app.setOrganizationName("Astronomical Observatory, Ghent University");
+    app.setOrganizationName("Ghent University, Astronomical Observatory, SKIRT research team");
+    app.setOrganizationDomain("skirt.ugent.be");
     app.setApplicationName("MakeUp");
     app.setApplicationVersion(QString::fromStdString(
         BuildInfo::projectVersion() + " (" + BuildInfo::codeVersion() + " " + BuildInfo::timestamp() + ")"));

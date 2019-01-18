@@ -23,7 +23,7 @@ int main(int argc, char** argv)
 
     // Add all simulation items to the item registry
     string version = BuildInfo::projectVersion();
-    SimulationItemRegistry registry(version, "X.0");
+    SimulationItemRegistry registry(version, "9");
 
     // handle the command line arguments
     SkirtCommandLineHandler handler;
