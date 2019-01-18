@@ -33,9 +33,24 @@ class WavelengthGrid;
     tessellates the spatial domain of the simulation into cells, and manages the medium state and
     the radiation field for each spatial cell in this grid.
 
-    TO DO: add more info on managing the medium state and the radiation field.
+    The current implementation focuses on electrons and dust (i.e. there are no provisions for gas)
+    and assumes that the density distribution and material mix remain constant after setup (i.e.
+    there are no iterations for dust destruction). This will change as additional features are
+    added.
 
-    */
+    The medium state includes the following information for each cell in the spatial grid: the
+    number density in the cell per medium component; (a pointer to) the corresponding material mix
+    for each medium component; the aggregate bulk velocity of the material in the cell; and the
+    volume of the cell.
+
+    The contribution to the radation field for each spatial cell and for each wavelength in the
+    simulation's radiation field wavelength grid is traced separately for primary and secondary
+    sources. This avoids the need for repeating primary emission during dust-temperature
+    convergence iterations. At all times, the sum of the primary and secondary contributions
+    represents the radiation field to be used as input for calculations. There is a third,
+    temporary table that serves as a target for storing the secondary radiation field so that the
+    "stable" primary and secondary tables remain available for calculating secondary emission
+    spectra while shooting secondary photons through the grid. */
 class MediumSystem : public SimulationItem
 {
     ITEM_CONCRETE(MediumSystem, SimulationItem, "a medium system")
