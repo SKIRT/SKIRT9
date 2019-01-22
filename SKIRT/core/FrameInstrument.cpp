@@ -22,8 +22,8 @@ void FrameInstrument::setupSelfBefore()
     _sintheta = sin(inclination());
     _cosphi = cos(azimuth());
     _sinphi = sin(azimuth());
-    _cosomega = cos(rollAngle());
-    _sinomega = sin(rollAngle());
+    _cosomega = cos(roll());
+    _sinomega = sin(roll());
     _Nxp = numPixelsX();
     _Nyp = numPixelsY();
     _xpmin = centerX() - 0.5*fieldOfViewX();

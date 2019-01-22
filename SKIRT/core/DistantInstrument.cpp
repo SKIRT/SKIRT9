@@ -16,8 +16,8 @@ void DistantInstrument::setupSelfBefore()
     double sintheta = sin(_inclination);
     double cosphi = cos(_azimuth);
     double sinphi = sin(_azimuth);
-    double cosomega = cos(_rollAngle);
-    double sinomega = sin(_rollAngle);
+    double cosomega = cos(_roll);
+    double sinomega = sin(_roll);
 
     // calculate relevant directions
     _bfkobs = Direction(_inclination,_azimuth);
