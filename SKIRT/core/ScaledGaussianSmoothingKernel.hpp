@@ -50,15 +50,16 @@ protected:
 
 public:
     /** This function returns the density \f$W(u)\f$ of the smoothing kernel as a function of the
-        normalized radius \f$u\f$. Just implements the analytical formula listed in the header for this class. */
+        normalized radius \f$u\f$. Just implements the analytical formula listed in the header for
+        this class. */
     double density(double u) const override;
 
     /** This function generates a random normalized radius \f$u\f$ from the smoothing kernel, by
         drawing a number from the one-dimensional probability density \f$p(u)\,{\text{d}}u =
         4\pi\,W(u)\,u^2\, {\text{d}}u\f$. This is accomplished by generating a uniform deviate
-        \f${\cal{X}}\f$, and solving the equation \f[ {\cal{X}} = 4\pi\,W(u)\,u^2\, {\text{d}}u \f]
-        for \f$u\f$. For the scaled gaussian smoothing kernel, we use a precomputed grid with
-        values on which we interpolate to solve this equation. */
+        \f${\cal{X}}\f$, and solving the equation \f[ {\cal{X}} = \int_0^u 4\pi\,W(u')\,u'^2\,
+        {\text{d}}u' \f] for \f$u\f$. For the scaled gaussian smoothing kernel, we use a
+        precomputed grid with values on which we interpolate to solve this equation. */
     double generateRadius() const override;
 
     //======================== Data Members ========================
