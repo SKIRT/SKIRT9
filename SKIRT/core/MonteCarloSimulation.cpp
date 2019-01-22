@@ -244,6 +244,9 @@ void MonteCarloSimulation::runSecondaryEmission()
     string segment = "secondary emission";
     TimeLogger logger(log(), segment);
 
+    // determine whether we need to store the radiation field during secondary emission
+    bool storeRF = _config->storeEmissionRadiationField();
+
     // shoot photons from secondary sources, if needed
     size_t Npp = _config->numSecondaryPackets();
     if (!Npp)
@@ -258,12 +261,13 @@ void MonteCarloSimulation::runSecondaryEmission()
     {
         initProgress(segment, Npp);
         auto parallel = find<ParallelFactory>()->parallelDistributed();
-        parallel->call(Npp, [this](size_t i ,size_t n) { performLifeCycle(i, n, false, true, false); });
+        parallel->call(Npp, [this, storeRF](size_t i, size_t n) { performLifeCycle(i, n, false, true, storeRF); });
         instrumentSystem()->flush();
     }
 
-    // wait for all processes to finish
+    // wait for all processes to finish and synchronize the radiation field if needed
     wait(segment);
+    if (storeRF) mediumSystem()->communicateRadiationField(false);
 }
 
 ////////////////////////////////////////////////////////////////////

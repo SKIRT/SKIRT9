@@ -44,6 +44,11 @@ class DustEmissionOptions : public SimulationItem, public WavelengthRangeInterfa
     PROPERTY_ITEM(dustEmissionWLG, DisjointWavelengthGrid, "the wavelength grid for calculating the dust emission spectrum")
         ATTRIBUTE_DEFAULT_VALUE(dustEmissionWLG, "LogWavelengthGrid")
 
+    PROPERTY_BOOL(storeEmissionRadiationField,
+                  "store the radiation field during emission so that it can be probed for output")
+        ATTRIBUTE_DEFAULT_VALUE(storeEmissionRadiationField, "false")
+        ATTRIBUTE_DISPLAYED_IF(storeEmissionRadiationField, "Level3")
+
     PROPERTY_DOUBLE(secondaryPacketsMultiplier,
                     "the multiplier on the number of photon packets launched for secondary emission from dust")
         ATTRIBUTE_MIN_VALUE(secondaryPacketsMultiplier, "]0")

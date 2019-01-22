@@ -131,7 +131,7 @@ public:
 
     /** Returns true if the radiation field for emission from secondary sources must be stored
         (in a separate data structure), and false otherwise. */
-    bool hasSecondaryRadiationField() const { return _hasDustSelfAbsorption; }
+    bool hasSecondaryRadiationField() const { return _hasSecondaryRadiationField; }
 
     /** Returns true if secondary emission must be calculated for any media type, and false otherwise. */
     bool hasSecondaryEmission() const { return _hasDustEmission; }
@@ -153,6 +153,10 @@ public:
     /** Returns the wavelength grid to be used for calculating the dust emission spectrum. */
     DisjointWavelengthGrid* dustEmissionWLG() const { return _dustEmissionWLG; }
 
+    /** Returns true if the radiation field must be stored during emission (for probing), and false
+        otherwise. */
+    bool storeEmissionRadiationField() const { return _storeEmissionRadiationField; }
+
     /** Returns the cell library mapping to be used for calculating the dust emission spectra. */
     SpatialCellLibrary* cellLibrary() const { return _cellLibrary; }
 
@@ -160,7 +164,7 @@ public:
         cells. */
     double secondarySpatialBias() const { return _secondarySpatialBias; }
 
-    /** Returns the the fraction of secondary photon packet wavelengths sampled from a bias
+    /** Returns the fraction of secondary photon packet wavelengths sampled from a bias
         distribution. */
     double secondaryWavelengthBias() const { return _secondaryWavelengthBias; }
 
@@ -235,6 +239,7 @@ private:
 
     // radiation field
     bool _hasRadiationField{false};
+    bool _hasSecondaryRadiationField{false};
     DisjointWavelengthGrid* _radiationFieldWLG{nullptr};
 
     // emission
@@ -243,6 +248,7 @@ private:
     bool _hasDustSelfAbsorption{false};
     DisjointWavelengthGrid* _dustEmissionWLG{nullptr};
     SpatialCellLibrary* _cellLibrary{nullptr};
+    bool _storeEmissionRadiationField{false};
     double _secondarySpatialBias{0.5};
     double _secondaryWavelengthBias{0.5};
     WavelengthDistribution* _secondaryWavelengthBiasDistribution{nullptr};

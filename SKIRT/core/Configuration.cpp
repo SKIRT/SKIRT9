@@ -108,6 +108,11 @@ void Configuration::setupSelfBefore()
         if (!_cellLibrary) _cellLibrary = new AllCellsLibrary(this);
         _radiationFieldWLG = ms->dustEmissionOptions()->radiationFieldWLG();
         _dustEmissionWLG = ms->dustEmissionOptions()->dustEmissionWLG();
+        if (ms->dustEmissionOptions()->storeEmissionRadiationField())
+        {
+            _storeEmissionRadiationField = true;
+            _hasSecondaryRadiationField = true;
+        }
         _numSecondaryPackets = sim->numPackets() * ms->dustEmissionOptions()->secondaryPacketsMultiplier();
         _secondarySpatialBias = ms->dustEmissionOptions()->spatialBias();
         _secondaryWavelengthBias = ms->dustEmissionOptions()->wavelengthBias();
@@ -118,6 +123,7 @@ void Configuration::setupSelfBefore()
     if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustEmissionWithSelfAbsorption)
     {
         _hasDustSelfAbsorption = true;
+        _hasSecondaryRadiationField = true;
         _minIterations = ms->dustSelfAbsorptionOptions()->minIterations();
         _maxIterations = ms->dustSelfAbsorptionOptions()->maxIterations();
         _maxFractionOfPrimary = ms->dustSelfAbsorptionOptions()->maxFractionOfPrimary();
