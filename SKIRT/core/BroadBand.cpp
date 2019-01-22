@@ -10,6 +10,15 @@
 
 ////////////////////////////////////////////////////////////////////
 
+BroadBand::BroadBand(SimulationItem* parent, string bandName)
+{
+    parent->addChild(this);
+    _bandName = bandName;
+    setup();
+}
+
+////////////////////////////////////////////////////////////////////
+
 void BroadBand::setupSelfBefore()
 {
     Band::setupSelfBefore();

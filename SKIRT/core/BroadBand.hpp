@@ -106,6 +106,15 @@ class BroadBand : public Band
 
     //============= Construction - Setup - Destruction =============
 
+public:
+    /** This constructor can be invoked by classes that wish to hard-code the creation of a new
+        BroadBand object (as opposed to creation through the ski file). Before the constructor
+        returns, the newly created object is hooked up as a child to the specified parent in the
+        simulation hierarchy (so it will automatically be deleted), and its setup() function has
+        been called. The second argument specifies the name of a standard built-in broadband in the
+        same format as it would be entered by a user in the configurable bandName property. */
+    explicit BroadBand(SimulationItem* parent, string bandName);
+
 protected:
     /** This function locates and opens the resource file corresponding to the configured band
         name. */

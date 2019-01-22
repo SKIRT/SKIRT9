@@ -8,9 +8,12 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void BandWavelengthGrid::setupSelfBefore()
+void BandWavelengthGrid::setupSelfAfter()
 {
-    WavelengthGrid::setupSelfBefore();
+    WavelengthGrid::setupSelfAfter();
+
+    // obtain list of bands from subclass
+    _bands = bandList();
 
     // sort the bands in order of pivot wavelength
     std::sort(_bands.begin(), _bands.end(),

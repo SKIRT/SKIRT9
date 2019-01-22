@@ -16,7 +16,6 @@
 #include "AllCellsLibrary.hpp"
 #include "AllSkyInstrument.hpp"
 #include "BandLuminosityNormalization.hpp"
-#include "BandWavelengthGrid.hpp"
 #include "BlackBodySED.hpp"
 #include "BlackBodySEDFamily.hpp"
 #include "BoxClipGeometryDecorator.hpp"
@@ -29,6 +28,7 @@
 #include "CastelliKuruczSEDFamily.hpp"
 #include "ClumpyGeometryDecorator.hpp"
 #include "CombineGeometryDecorator.hpp"
+#include "ConfigurableBandWavelengthGrid.hpp"
 #include "ConfigurableDustMix.hpp"
 #include "ConicalAngularDistribution.hpp"
 #include "ConicalShellGeometry.hpp"
@@ -138,6 +138,7 @@
 #include "PolicyTreeSpatialGrid.hpp"
 #include "PowMesh.hpp"
 #include "PowerLawGrainSizeDistribution.hpp"
+#include "PredefinedBandWavelengthGrid.hpp"
 #include "ProbeSystem.hpp"
 #include "PseudoSersicGeometry.hpp"
 #include "QuasarSED.hpp"
@@ -478,6 +479,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<LogWavelengthGrid>();
     ItemRegistry::add<NestedLogWavelengthGrid>();
     ItemRegistry::add<BandWavelengthGrid>();
+    ItemRegistry::add<PredefinedBandWavelengthGrid>();
+    ItemRegistry::add<ConfigurableBandWavelengthGrid>();
     ItemRegistry::add<FileWavelengthGrid>();
     ItemRegistry::add<ListWavelengthGrid>();
 
