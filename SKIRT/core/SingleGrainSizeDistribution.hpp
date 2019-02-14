@@ -21,7 +21,7 @@ class SingleGrainSizeDistribution: public GrainSizeDistribution
 
     PROPERTY_DOUBLE(size, "the single grain size for this distribution")
         ATTRIBUTE_QUANTITY(size, "grainsize")
-        ATTRIBUTE_MIN_VALUE(size, "[1 A")
+        ATTRIBUTE_MIN_VALUE(size, "[1 Angstrom")
         ATTRIBUTE_MAX_VALUE(size, "1 mm]")
 
     ITEM_END()

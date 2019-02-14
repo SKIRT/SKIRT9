@@ -54,7 +54,7 @@ SkirtUnitDef::SkirtUnitDef()
     addUnit("grainsize", "mm", 1e-3);
     addUnit("grainsize", "micron", 1e-6);
     addUnit("grainsize", "nm", 1e-9);
-    addUnit("grainsize", "A", 1e-10);
+    addUnit("grainsize", "Angstrom", 1e-10);
 
     // cross section
     addUnit("section", "m2", 1.);

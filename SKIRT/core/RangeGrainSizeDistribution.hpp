@@ -23,12 +23,12 @@ class RangeGrainSizeDistribution: public GrainSizeDistribution
 
     PROPERTY_DOUBLE(minSize, "the minimum grain size for this distribution")
         ATTRIBUTE_QUANTITY(minSize, "grainsize")
-        ATTRIBUTE_MIN_VALUE(minSize, "[1 A")
+        ATTRIBUTE_MIN_VALUE(minSize, "[1 Angstrom")
         ATTRIBUTE_MAX_VALUE(minSize, "1 mm]")
 
     PROPERTY_DOUBLE(maxSize, "the maximum grain size for this distribution")
         ATTRIBUTE_QUANTITY(maxSize, "grainsize")
-        ATTRIBUTE_MIN_VALUE(maxSize, "[1 A")
+        ATTRIBUTE_MIN_VALUE(maxSize, "[1 Angstrom")
         ATTRIBUTE_MAX_VALUE(maxSize, "1 mm]")
 
     ITEM_END()

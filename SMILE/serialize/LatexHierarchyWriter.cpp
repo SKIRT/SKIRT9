@@ -55,7 +55,7 @@ namespace
         // replacement pairs for unit tokens
         const std::unordered_map <string,string> _replUnit =
         {
-            {"micron","\\mu\\textrm{m}"},{"A","\\textrm{\\r{A}}"},
+            {"micron","\\mu\\textrm{m}"},{"Angstrom","\\textrm{\\r{A}}"},
             {"Lsun","\\textrm{L}_{\\odot}"},{"Msun","\\textrm{M}_{\\odot}"},
             {"deg","^{\\circ}"},{"arcsec","^{\\prime\\prime}"},{"arcsec2","(^{\\prime\\prime})^{2}"}
         };

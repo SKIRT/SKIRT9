@@ -19,7 +19,7 @@ class OpticalDepthMaterialNormalization : public AxisMaterialNormalization
 
     PROPERTY_DOUBLE(wavelength, "the wavelength at which to specify the optical depth")
         ATTRIBUTE_QUANTITY(wavelength, "wavelength")
-        ATTRIBUTE_MIN_VALUE(wavelength, "1 A")
+        ATTRIBUTE_MIN_VALUE(wavelength, "1 Angstrom")
         ATTRIBUTE_MAX_VALUE(wavelength, "1 m")
 
     PROPERTY_DOUBLE(opticalDepth, "the optical depth along this axis at this wavelength")

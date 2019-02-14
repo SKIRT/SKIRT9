@@ -24,7 +24,7 @@ class SpatialCellPropertiesProbe : public Probe
     PROPERTY_DOUBLE(wavelength, "the wavelength at which to list the optical depth")
         ATTRIBUTE_QUANTITY(wavelength, "wavelength")
         ATTRIBUTE_DEFAULT_VALUE(wavelength, "0.55 micron")
-        ATTRIBUTE_MIN_VALUE(wavelength, "1 A")
+        ATTRIBUTE_MIN_VALUE(wavelength, "1 Angstrom")
         ATTRIBUTE_MAX_VALUE(wavelength, "1 m")
 
     ITEM_END()

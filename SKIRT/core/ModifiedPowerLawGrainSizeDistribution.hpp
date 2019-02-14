@@ -44,7 +44,7 @@ class ModifiedPowerLawGrainSizeDistribution: public RangeGrainSizeDistribution
 
     PROPERTY_DOUBLE(scaleExponentialDecay, "the scale a_c in the exponential decay term")
         ATTRIBUTE_QUANTITY(scaleExponentialDecay, "grainsize")
-        ATTRIBUTE_MIN_VALUE(scaleExponentialDecay, "[1 A")
+        ATTRIBUTE_MIN_VALUE(scaleExponentialDecay, "[1 Angstrom")
         ATTRIBUTE_MAX_VALUE(scaleExponentialDecay, "1 mm]")
         ATTRIBUTE_DEFAULT_VALUE(scaleExponentialDecay, "0.1 micron")
 
@@ -55,7 +55,7 @@ class ModifiedPowerLawGrainSizeDistribution: public RangeGrainSizeDistribution
 
     PROPERTY_DOUBLE(scaleCurvature, "the scale a_u in the curvature term")
         ATTRIBUTE_QUANTITY(scaleCurvature, "grainsize")
-        ATTRIBUTE_MIN_VALUE(scaleCurvature, "[1 A")
+        ATTRIBUTE_MIN_VALUE(scaleCurvature, "[1 Angstrom")
         ATTRIBUTE_MAX_VALUE(scaleCurvature, "1 mm]")
         ATTRIBUTE_DEFAULT_VALUE(scaleCurvature, "0.1 micron")
 

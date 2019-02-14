@@ -50,7 +50,7 @@
     \verbatim
     addUnit("wavelength", "m", 1.);
     addUnit("wavelength", "micron", 1e-6);
-    addUnit("wavelength", "A", 1e-10);
+    addUnit("wavelength", "Angstrom", 1e-10);
     addUnit("temperature", "K", 1.);
     addUnit("temperature", "C", 1., 273.15);
 

@@ -15,7 +15,7 @@ void MRNDustMix::setupSelfBefore()
     MultiGrainDustMix::setupSelfBefore();
 
     // MRN grain size distribution coefficients taken from Weingartner & Draine (2001, ApJ, 548, 296) page 296
-    const double amin = 5e-9;   // 50 Armstrong
+    const double amin = 5e-9;   // 50 Angstrom
     const double amax = 250e-9; // 0.25 micron
     const double gamma = 3.5;   // power-law exponent
     const double Cs = pow(10,-25.11) * 1e-5;  // front factor for silicate converted from cm^2.5 to m^2.5
