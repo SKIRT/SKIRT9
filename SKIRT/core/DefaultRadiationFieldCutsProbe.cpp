@@ -108,10 +108,13 @@ namespace
         {
             string description = "mean intensity in the " + plane + " plane";
             string filename = item->itemName() + "_J_" + plane;
-            FITSInOut::write(item, description, filename, Jvv, Np, Np, wavelengthGrid->numBins(),
+            Array wavegrid(wavelengthGrid->numBins());
+            for (int ell=0; ell!=wavelengthGrid->numBins(); ++ell)
+                wavegrid[ell] = units->owavelength(wavelengthGrid->wavelength(ell));
+            FITSInOut::write(item, description, filename, Jvv, units->umeanintensity(), Np, Np,
                              units->olength(xd?xpsize:ypsize), units->olength(zd?zpsize:ypsize),
                              units->olength(xd?xcenter:ycenter), units->olength(zd?zcenter:ycenter),
-                             units->umeanintensity(), units->ulength());
+                             units->ulength(), wavegrid, units->uwavelength());
         }
     };
 }

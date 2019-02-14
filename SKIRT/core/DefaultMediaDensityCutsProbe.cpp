@@ -135,10 +135,10 @@ namespace
 
                 // write file
                 string filename = item->itemName() + "_" + prefix + "_" + plane;
-                FITSInOut::write(item, label + " in the " + plane + " plane", filename, v, Np, Np, 1,
+                FITSInOut::write(item, label + " in the " + plane + " plane", filename, v, densityUnits, Np, Np,
                                  units->olength(xd?xpsize:ypsize), units->olength(zd?zpsize:ypsize),
                                  units->olength(xd?xcenter:ycenter), units->olength(zd?zcenter:ycenter),
-                                 densityUnits, units->ulength());
+                                 units->ulength());
             }
         }
     };

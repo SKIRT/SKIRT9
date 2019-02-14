@@ -103,9 +103,9 @@ namespace
             string description = "optical depth map at λ = "
                                   + StringUtils::toString(units->owavelength(probe->wavelength()))
                                   + " " + units->uwavelength();
-            FITSInOut::write(probe, description, filename, tauv, Nx, Ny, 1,
+            FITSInOut::write(probe, description, filename, tauv, "", Nx, Ny,
                              units->oposangle(2*M_PI/Nx), units->oposangle(M_PI/Ny), 0., 0.,
-                             "", units->uposangle());
+                             units->uposangle());
         }
     };
 

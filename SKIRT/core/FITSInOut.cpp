@@ -32,8 +32,9 @@ void FITSInOut::read(const SimulationItem* item, string filename, Array& data, i
 ////////////////////////////////////////////////////////////////////
 
 void FITSInOut::write(const SimulationItem* item, string description, string filename,
-                      const Array& data, int nx, int ny, int nz,
-                      double incx, double incy, double xc, double yc, string dataUnits, string xyUnits)
+                      const Array& data, string dataUnits,
+                      int nx, int ny, double incx, double incy, double xc, double yc, string xyUnits,
+                      const Array& z, string zUnits)
 {
     // Only write the FITS file if this process is the root
     if (ProcessManager::isRoot())
@@ -42,7 +43,7 @@ void FITSInOut::write(const SimulationItem* item, string description, string fil
         string filepath = item->find<FilePaths>()->output(filename + ".fits");
 
         // Write the FITS file
-        FITSInOut::write(filepath, data, nx, ny, nz, incx, incy, xc, yc, dataUnits, xyUnits);
+        FITSInOut::write(filepath, data, dataUnits, nx, ny, incx, incy, xc, yc, xyUnits, z, zUnits);
 
         // Log the file path
         item->find<Log>()->info(item->typeAndName() + " wrote " + description + " to FITS file " + filepath);
@@ -104,9 +105,14 @@ void FITSInOut::read(string filepath, Array& data, int& nx, int& ny, int& nz)
 
 ////////////////////////////////////////////////////////////////////
 
-void FITSInOut::write(string filepath, const Array& data, int nx, int ny, int nz,
-                    double incx, double incy, double xc, double yc, string dataUnits, string xyUnits)
+void FITSInOut::write(string filepath, const Array& data, string dataUnits,
+                      int nx, int ny, double incx, double incy, double xc, double yc, string xyUnits,
+                      const Array& z, string zUnits)
 {
+    // Get the z-axis size
+    int nz = z.size();
+    if (nz < 1) nz = 1;
+
     // Verify the data size
     size_t nelements = data.size();
     if (nelements != static_cast<size_t>(nx)*static_cast<size_t>(ny)*static_cast<size_t>(nz))
@@ -145,18 +151,35 @@ void FITSInOut::write(string filepath, const Array& data, int nx, int ny, int nz
     ffpkys(fptr, "ORIGIN", const_cast<char*>("SKIRT simulation"), "Astronomical Observatory, Ghent University", &status);
     ffpkys(fptr, "BUNIT" , const_cast<char*>(dataUnits.c_str()), "Physical unit of the array values", &status);
     ffpky(fptr, TDOUBLE, "CRPIX1", &xref, "X-axis coordinate system reference pixel", &status);
-    ffpky(fptr, TDOUBLE, "CRVAL1", &xc, "Coordinate system value at X-axis reference pixel", &status);
+    ffpky(fptr, TDOUBLE, "CRVAL1", &xc, "Coordinate value at X-axis reference pixel", &status);
     ffpky(fptr, TDOUBLE, "CDELT1", &incx, "Coordinate increment along X-axis", &status);
-    ffpkys(fptr, "CTYPE1", const_cast<char*>(xyUnits.c_str()), "Physical units of the X-axis increment", &status);
+    ffpkys(fptr, "CUNIT1", const_cast<char*>(xyUnits.c_str()), "Physical units of the X-axis", &status);
     ffpky(fptr, TDOUBLE, "CRPIX2", &yref, "Y-axis coordinate system reference pixel", &status);
-    ffpky(fptr, TDOUBLE, "CRVAL2", &yc, "Coordinate system value at Y-axis reference pixel", &status);
+    ffpky(fptr, TDOUBLE, "CRVAL2", &yc, "Coordinate value at Y-axis reference pixel", &status);
     ffpky(fptr, TDOUBLE, "CDELT2", &incy, "Coordinate increment along Y-axis", &status);
-    ffpkys(fptr, "CTYPE2", const_cast<char*>(xyUnits.c_str()), "Physical units of the Y-axis increment", &status);
+    ffpkys(fptr, "CUNIT2", const_cast<char*>(xyUnits.c_str()), "Physical units of the Y-axis", &status);
+    if (nz > 1) ffpkys(fptr, "CUNIT3", const_cast<char*>(zUnits.c_str()), "Physical units of the Z-axis", &status);
     if (status) report_error(filepath, "writing", status);
 
     // Write the array of pixels to the image
     ffpprd(fptr, 0, 1, nelements, const_cast<double*>(&data[0]), &status);
     if (status) report_error(filepath, "writing", status);
+
+    // If the data has 3 dimensions, write a FITS table extension with the values of the third axis
+    if (nz > 1)
+    {
+        // Create the table
+        char* ttypev[] = { const_cast<char*>("GRID_POINTS") };
+        char* tformv[] = { const_cast<char*>("D") };
+        char* tunitv[] = { const_cast<char*>(zUnits.c_str()) };
+        ffcrtb(fptr, BINARY_TBL, 0, 1, ttypev, tformv, tunitv, "Z-axis coordinate values", &status);
+        if (status) report_error(filepath, "writing", status);
+
+        // Write the single column
+        void* gridpoints = const_cast<void*>(static_cast<const void*>(begin(z)));
+        ffpcl(fptr, TDOUBLE, 1, 1, 1, nz, gridpoints, &status);
+        if (status) report_error(filepath, "writing", status);
+    }
 
     // Close the file
     ffclos(fptr, &status);

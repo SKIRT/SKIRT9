@@ -95,10 +95,10 @@ namespace
         {
             string description = "dust temperatures in the " + plane + " plane";
             string filename = item->itemName() + "_dust_T_" + plane;
-            FITSInOut::write(item, description, filename, Tv, Np, Np, 1,
+            FITSInOut::write(item, description, filename, Tv, units->utemperature(), Np, Np,
                              units->olength(xd?xpsize:ypsize), units->olength(zd?zpsize:ypsize),
                              units->olength(xd?xcenter:ycenter), units->olength(zd?zcenter:ycenter),
-                             units->utemperature(), units->ulength());
+                             units->ulength());
         }
     };
 }

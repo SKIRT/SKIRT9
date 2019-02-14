@@ -458,17 +458,22 @@ void FluxRecorder::calibrateAndWrite()
             ifuArrays.push_back(&_ifu[PrimaryScatteredLevel+i]);
         }
 
+        // copy the wavelength grid in output units
+        Array wavegrid(numWavelengths);
+        for (int ell=0; ell!=numWavelengths; ++ell)
+            wavegrid[ell] = units->owavelength(_lambdagrid->wavelength(ell));
+
         // output the files (ignoring empty arrays)
         int numFiles = ifuNames.size();
         for (int q=0; q!=numFiles; ++q) if (ifuArrays[q]->size())
         {
             string filename = _instrumentName + "_" + ifuNames[q];
             string description = ifuNames[q] + " flux";
-            FITSInOut::write(_parentItem, description, filename, *(ifuArrays[q]),
-                             _numPixelsX, _numPixelsY, numWavelengths,
+            FITSInOut::write(_parentItem, description, filename, *(ifuArrays[q]), units->usurfacebrightness(),
+                             _numPixelsX, _numPixelsY,
                              units->olength(_pixelSizeX), units->olength(_pixelSizeY),
                              units->olength(_centerX), units->olength(_centerY),
-                             units->usurfacebrightness(), units->ulength());
+                             units->ulength(), wavegrid, units->uwavelength());
         }
 
         // output statistics to additional files
@@ -483,11 +488,11 @@ void FluxRecorder::calibrateAndWrite()
                 string filename = _instrumentName + "_stats" + std::to_string(k);
                 string description = "sum of contributions to the power of " + std::to_string(k);
                 _wifu[k] *= cn;
-                FITSInOut::write(_parentItem, description, filename, _wifu[k],
-                                 _numPixelsX, _numPixelsY, numWavelengths,
+                FITSInOut::write(_parentItem, description, filename, _wifu[k], "",
+                                 _numPixelsX, _numPixelsY,
                                  units->olength(_pixelSizeX), units->olength(_pixelSizeY),
                                  units->olength(_centerX), units->olength(_centerY),
-                                 "", units->ulength());
+                                 units->ulength(), wavegrid, units->uwavelength());
                 cn *= c;
             }
         }
