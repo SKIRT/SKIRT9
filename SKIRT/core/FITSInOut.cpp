@@ -110,12 +110,14 @@ void FITSInOut::write(string filepath, const Array& data, string dataUnits,
                       const Array& z, string zUnits)
 {
     // Get the z-axis size
+    //   0:  a single frame that is not part of a datacube
+    //   1:  a datacube with just a single frame, i.e. there is a z-axis with a single grid point
+    //  >1:  a datacube with multiple frames, i.e. there is a z-axis with multiple grid points
     int nz = z.size();
-    if (nz < 1) nz = 1;
 
     // Verify the data size
     size_t nelements = data.size();
-    if (nelements != static_cast<size_t>(nx)*static_cast<size_t>(ny)*static_cast<size_t>(nz))
+    if (nelements != static_cast<size_t>(nx)*static_cast<size_t>(ny)*static_cast<size_t>(nz?nz:1))
         throw FATALERROR("Inconsistent data size when creating FITS file " + filepath);
     long naxes[3] = {nx, ny, nz};
 
@@ -141,7 +143,7 @@ void FITSInOut::write(string filepath, const Array& data, string dataUnits,
     if (status) report_error(filepath, "creating", status);
 
     // Create the primary image (32-bit floating point pixels)
-    ffcrim(fptr, FLOAT_IMG, (nz==1 ? 2 : 3), naxes, &status);
+    ffcrim(fptr, FLOAT_IMG, (nz ? 3 : 2), naxes, &status);
     if (status) report_error(filepath, "creating", status);
 
     // Add the relevant keywords
@@ -158,7 +160,7 @@ void FITSInOut::write(string filepath, const Array& data, string dataUnits,
     ffpky(fptr, TDOUBLE, "CRVAL2", &yc, "Coordinate value at Y-axis reference pixel", &status);
     ffpky(fptr, TDOUBLE, "CDELT2", &incy, "Coordinate increment along Y-axis", &status);
     ffpkys(fptr, "CUNIT2", const_cast<char*>(xyUnits.c_str()), "Physical units of the Y-axis", &status);
-    if (nz > 1) ffpkys(fptr, "CUNIT3", const_cast<char*>(zUnits.c_str()), "Physical units of the Z-axis", &status);
+    if (nz) ffpkys(fptr, "CUNIT3", const_cast<char*>(zUnits.c_str()), "Physical units of the Z-axis", &status);
     if (status) report_error(filepath, "writing", status);
 
     // Write the array of pixels to the image
@@ -166,7 +168,7 @@ void FITSInOut::write(string filepath, const Array& data, string dataUnits,
     if (status) report_error(filepath, "writing", status);
 
     // If the data has 3 dimensions, write a FITS table extension with the values of the third axis
-    if (nz > 1)
+    if (nz)
     {
         // Create the table
         char* ttypev[] = { const_cast<char*>("GRID_POINTS") };
