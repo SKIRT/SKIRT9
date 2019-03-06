@@ -17,7 +17,11 @@
     slope \f$\gamma\f$, which should assume values between 0 and 3. The gamma models were
     introduced by Dehnen (1993, MNRAS, 265, 250) and Tremaine et al. (1994, AJ, 107, 634). Special
     cases are the Hernquist (1990, ApJ, 356, 359) model, corresponding to \f$\gamma=1\f$, and the
-    Jaffe (1983, MNRAS, 202, 995) model, corresponding to \f$\gamma=2\f$. */
+    Jaffe (1983, MNRAS, 202, 995) model, corresponding to \f$\gamma=2\f$.
+
+    Because the radial surface density \f$\Sigma_r\f$ becomes infinite for \f$\gamma\ge 1\f$,
+    this geometry cannot be used to define a spatial medium distribution for \f$\gamma\ge 1\f$.
+*/
 class GammaGeometry : public SpheGeometry
 {
     ITEM_CONCRETE(GammaGeometry, SpheGeometry, "a gamma geometry")
@@ -55,11 +59,10 @@ public:
         {\cal{X}}^{1/(3-\gamma)} }{ 1- {\cal{X}}^{1/(3-\gamma)} }. \f] */
     double randomRadius() const override;
 
-    /** This function returns the radial surface density, i.e. the integration of
-        the density along a line starting at the centre of the coordinate
-        system, \f[ \Sigma_r = \int_0^\infty \rho(r)\,{\text{d}}r. \f] For the gamma
-        geometry, this integral is
-        infinity if \f$\gamma>1\f$, otherwise it is equal to \f[ \Sigma_r =
+    /** This function returns the radial surface density, i.e. the integration of the density along
+        a line starting at the centre of the coordinate system, \f[ \Sigma_r = \int_0^\infty
+        \rho(r)\,{\text{d}}r. \f] For the gamma geometry, this integral does not converge if
+        \f$\gamma\ge 1\f$, otherwise it is equal to \f[ \Sigma_r =
         \frac{1}{2\pi\,b^2\,(1-\gamma)\,(2-\gamma)}. \f] */
     double Sigmar() const override;
 
