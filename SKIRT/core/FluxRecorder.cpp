@@ -397,7 +397,7 @@ void FluxRecorder::calibrateAndWrite()
             {
                 statFile.addColumn("Sum[w_i**" + std::to_string(k) + "]");
             }
-            statFile.writeLine("# --> w_i is luminosity contribution (in W/Hz) from i_th launched photon");
+            statFile.writeLine("# --> w_i is luminosity contribution (in W) from i_th launched photon");
 
             // write the column data
             for (int ell=0; ell!=numWavelengths; ++ell)
@@ -479,9 +479,15 @@ void FluxRecorder::calibrateAndWrite()
         // output statistics to additional files
         if (_recordStatistics)
         {
-            // the output files have single-precision floating point numbers with range of only 10^+-38
-            // --> scale the values to a range that includes unity to avoid too many overflows or underflows
-            double c = 1. / _wifu[1].max();
+            // the output files have single-precision floating point numbers with range of only about 10^+-38
+            // --> scale the values to a range that has a maximum of 10^+-38 to minimize the number of underflows
+            const double WMAX = 1e38;
+            Array cs(maxContributionPower);
+            for (int k=1; k<=maxContributionPower; ++k)
+            {
+                cs[k-1] = pow(WMAX/_wifu[k].max(), 1./k);  // inverse of WMAX == c**k w[k].max()
+            }
+            double c = cs.min();
             double cn = 1.;
             for (int k=0; k<=maxContributionPower; ++k)
             {
