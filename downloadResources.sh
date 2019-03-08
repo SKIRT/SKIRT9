@@ -14,10 +14,10 @@ FILELIST=( StoredTables.tar.gz )
 # download using wget (Linux) or curl (Mac OS X)
 if which wget >/dev/null
 then
-    DOWNLOAD=wget
+    DOWNLOAD="wget --no-check-certificate"
 elif which curl >/dev/null
 then
-    DOWNLOAD="curl -O"
+    DOWNLOAD="curl --insecure -O"
 else
     echo error: no wget or curl available to download files
     exit
@@ -32,7 +32,7 @@ do
     echo downloading $FILENAME ...
     mkdir -p ../resources
     cd ../resources
-    $DOWNLOAD http://sciences.ugent.be/skirtextdat/SKIRT9/Resources/$FILENAME
+    $DOWNLOAD https://sciences.ugent.be/skirtextdat/SKIRT9/Resources/$FILENAME
     tar -xvf $FILENAME
     rm $FILENAME
     cd ../git
