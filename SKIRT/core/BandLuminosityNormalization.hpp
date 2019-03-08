@@ -34,7 +34,7 @@ class BandLuminosityNormalization : public LuminosityNormalization
     PROPERTY_ENUM(unitStyle, UnitStyle, "the luminosity unit style")
         ATTRIBUTE_DEFAULT_VALUE(unitStyle, "wavelengthmonluminosity")
 
-    PROPERTY_DOUBLE(specificLuminosity, "the specific luminosity at the given wavelength")
+    PROPERTY_DOUBLE(specificLuminosity, "the specific luminosity for the given band")
         ATTRIBUTE_QUANTITY(specificLuminosity, "@unitStyle")
         ATTRIBUTE_MIN_VALUE(specificLuminosity, "]0")
 

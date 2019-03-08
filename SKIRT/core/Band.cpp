@@ -74,7 +74,7 @@ double Band::meanSpecificLuminosity(const Array& lambdav, const Array& pv) const
     Array newtransv(newsize);
     for (size_t k=0; k!=newsize; ++k) newtransv[k] = transmission(newlambdav[k]);
 
-    // perform the convolution, assuming a normalized transmission curve
+    // perform the convolution
     double integral = 0.;
     for (size_t k=1; k!=newsize; ++k)
     {
@@ -83,7 +83,9 @@ double Band::meanSpecificLuminosity(const Array& lambdav, const Array& pv) const
         double trans =  0.5*(newtransv[k-1]+newtransv[k]);
         integral += Llambda*trans*dlambda;
     }
-    return integral;
+
+    // scale back to normalized transmission
+    return integral / _width;
 }
 
 ////////////////////////////////////////////////////////////////////

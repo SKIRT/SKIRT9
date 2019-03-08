@@ -365,7 +365,7 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("StellarUnits", "wavelengthfluxdensity", "W/m2/micron");
     addDefaultUnit("StellarUnits", "wavelengthsurfacebrightness", "W/m2/micron/arcsec2");
     addDefaultUnit("StellarUnits", "wavelengthmeanintensity", "W/m2/micron/sr");
-    addDefaultUnit("StellarUnits", "frequencymonluminosity", "Lsun/Hz");
+    addDefaultUnit("StellarUnits", "frequencymonluminosity", "W/Hz");
     addDefaultUnit("StellarUnits", "frequencyfluxdensity", "Jy");
     addDefaultUnit("StellarUnits", "frequencysurfacebrightness", "MJy/sr");
     addDefaultUnit("StellarUnits", "frequencymeanintensity", "W/m2/Hz/sr");
@@ -404,7 +404,7 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("ExtragalacticUnits", "wavelengthfluxdensity", "W/m2/micron");
     addDefaultUnit("ExtragalacticUnits", "wavelengthsurfacebrightness", "W/m2/micron/arcsec2");
     addDefaultUnit("ExtragalacticUnits", "wavelengthmeanintensity", "W/m2/micron/sr");
-    addDefaultUnit("ExtragalacticUnits", "frequencymonluminosity", "Lsun/Hz");
+    addDefaultUnit("ExtragalacticUnits", "frequencymonluminosity", "W/Hz");
     addDefaultUnit("ExtragalacticUnits", "frequencyfluxdensity", "Jy");
     addDefaultUnit("ExtragalacticUnits", "frequencysurfacebrightness", "MJy/sr");
     addDefaultUnit("ExtragalacticUnits", "frequencymeanintensity", "W/m2/Hz/sr");
