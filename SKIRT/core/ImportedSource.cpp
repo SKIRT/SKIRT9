@@ -110,7 +110,12 @@ bool ImportedSource::hasVelocity() const
 
 Range ImportedSource::wavelengthRange() const
 {
-    return _wavelengthRange;
+    // don't rely on the cached _wavelengthRange because this function may be called during setup
+    // *before* setupSelfAfter() has been executed (which initializes _wavelengthRange)
+    auto config = find<Configuration>();
+    auto wavelengthRange = config->sourceWavelengthRange();
+    wavelengthRange.intersect(_sedFamily->intrinsicWavelengthRange());
+    return wavelengthRange;
 }
 
 ////////////////////////////////////////////////////////////////////
