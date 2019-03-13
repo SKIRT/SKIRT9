@@ -20,8 +20,10 @@ void EquilibriumDustEmissionCalculator::precalculate(SimulationItem* item,
     // perform initialization that needs to happen only once
     if (!b)
     {
+        auto config = item->find<Configuration>();
+
         // obtain the simulation's radiation field wavelength grid
-        auto radiationFieldWLG = item->find<Configuration>()->radiationFieldWLG();
+        auto radiationFieldWLG = config->radiationFieldWLG();
         radiationFieldWLG->setup();
         _rflambdav.resize(radiationFieldWLG->numBins());
         _rfdlambdav.resize(radiationFieldWLG->numBins());
@@ -31,13 +33,16 @@ void EquilibriumDustEmissionCalculator::precalculate(SimulationItem* item,
             _rfdlambdav[k] = radiationFieldWLG->effectiveWidth(k);
         }
 
-        // obtain the simulation's dust emission wavelength grid
-        auto dustEmissionWLG = item->find<Configuration>()->dustEmissionWLG();
-        dustEmissionWLG->setup();
-        _emlambdav.resize(dustEmissionWLG->numBins());
-        for (int ell=0; ell!=dustEmissionWLG->numBins(); ++ell)
+        // obtain the simulation's dust emission wavelength grid, if there is one
+        if (config->hasDustEmission())
         {
-            _emlambdav[ell] = dustEmissionWLG->wavelength(ell);
+            auto dustEmissionWLG = config->dustEmissionWLG();
+            dustEmissionWLG->setup();
+            _emlambdav.resize(dustEmissionWLG->numBins());
+            for (int ell=0; ell!=dustEmissionWLG->numBins(); ++ell)
+            {
+                _emlambdav[ell] = dustEmissionWLG->wavelength(ell);
+            }
         }
 
         // build the temperature grid on which we store the Planck-integrated absorption cross sections
@@ -47,8 +52,11 @@ void EquilibriumDustEmissionCalculator::precalculate(SimulationItem* item,
     // interpolate the absorption cross sections on the radiation field wavelength grid
     _rfsigmaabsvv.emplace_back(NR::resample<NR::interpolateLogLog>(_rflambdav, lambdav, sigmaabsv));
 
-    // interpolate the absorption cross sections on the dust emission field wavelength grid
-    _emsigmaabsvv.emplace_back(NR::resample<NR::interpolateLogLog>(_emlambdav, lambdav, sigmaabsv));
+    // interpolate the absorption cross sections on the dust emission field wavelength grid, if there is one
+    if (_emlambdav.size())
+    {
+        _emsigmaabsvv.emplace_back(NR::resample<NR::interpolateLogLog>(_emlambdav, lambdav, sigmaabsv));
+    }
 
     // calculate the Planck-integrated absorption cross sections on the temperature grid
     int numLambda = lambdav.size();
