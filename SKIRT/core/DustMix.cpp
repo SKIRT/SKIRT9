@@ -124,7 +124,7 @@ void DustMix::setupSelfAfter()
 
     // precalculate information to accelerate solving the energy balance equation for the temperature;
     // this is relevant only if the simulation tracks the radiation field
-    if (find<Configuration>()->hasRadiationField())
+    if (find<Configuration>()->hasPanRadiationField())
     {
         _calc.precalculate(this, lambdav, _sigmaabsv);
     }

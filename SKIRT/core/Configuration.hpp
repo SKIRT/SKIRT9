@@ -129,6 +129,10 @@ public:
     /** Returns true if the radiation field must be stored during the photon cycle, and false otherwise. */
     bool hasRadiationField() const { return _hasRadiationField; }
 
+    /** Returns true if a panchromatic radiation field (from which a temperature can be calculated)
+        is being stored during the photon cycle, and false otherwise. */
+    bool hasPanRadiationField() const { return _hasPanRadiationField; }
+
     /** Returns true if the radiation field for emission from secondary sources must be stored
         (in a separate data structure), and false otherwise. */
     bool hasSecondaryRadiationField() const { return _hasSecondaryRadiationField; }
@@ -239,6 +243,7 @@ private:
 
     // radiation field
     bool _hasRadiationField{false};
+    bool _hasPanRadiationField{false};
     bool _hasSecondaryRadiationField{false};
     DisjointWavelengthGrid* _radiationFieldWLG{nullptr};
 

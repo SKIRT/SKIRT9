@@ -29,7 +29,8 @@ class DefaultDustTemperatureCutsProbe : public Probe
 {
     ITEM_CONCRETE(DefaultDustTemperatureCutsProbe, Probe,
                   "cuts of the indicative dust temperature along the coordinate axes")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(DefaultDustTemperatureCutsProbe, "Dust&SpatialGrid&RadiationField")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(DefaultDustTemperatureCutsProbe,
+                                    "Dust&SpatialGrid&RadiationField&Panchromatic")
     ITEM_END()
 
     //======================== Other Functions =======================

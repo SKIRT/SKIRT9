@@ -86,8 +86,11 @@ void Configuration::setupSelfBefore()
     {
         _hasRadiationField = ms->extinctionOnlyOptions()->storeRadiationField();
         if (_hasRadiationField)
+        {
             _radiationFieldWLG = _oligochromatic ? dynamic_cast<OligoWavelengthGrid*>(_defaultWavelengthGrid)
                                                  : ms->extinctionOnlyOptions()->radiationFieldWLG();
+            _hasPanRadiationField = !_oligochromatic;
+        }
     }
 
     // retrieve dust emission options
@@ -95,6 +98,7 @@ void Configuration::setupSelfBefore()
         sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustEmissionWithSelfAbsorption)
     {
         _hasRadiationField = true;
+        _hasPanRadiationField = true;
         _hasDustEmission = true;
         if (ms->dustEmissionOptions()->dustEmissionType() == DustEmissionOptions::EmissionType::Stochastic)
         {

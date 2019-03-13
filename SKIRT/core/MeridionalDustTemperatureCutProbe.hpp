@@ -33,7 +33,8 @@
 class MeridionalDustTemperatureCutProbe : public Probe
 {
     ITEM_CONCRETE(MeridionalDustTemperatureCutProbe, Probe, "the indicative dust temperature along a meridian line")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(MeridionalDustTemperatureCutProbe, "Level2&Dust&SpatialGrid&RadiationField")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(MeridionalDustTemperatureCutProbe,
+                                    "Level2&Dust&SpatialGrid&RadiationField&Panchromatic")
 
     PROPERTY_INT(numSamples, "the number of samples along the meridian")
         ATTRIBUTE_MIN_VALUE(numSamples, "3")

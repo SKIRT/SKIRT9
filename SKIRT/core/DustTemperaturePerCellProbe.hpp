@@ -24,7 +24,8 @@
 class DustTemperaturePerCellProbe : public Probe
 {
     ITEM_CONCRETE(DustTemperaturePerCellProbe, Probe, "the indicative dust temperature for each spatial cell")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(DustTemperaturePerCellProbe, "Level2&Dust&SpatialGrid&RadiationField")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(DustTemperaturePerCellProbe,
+                                    "Level2&Dust&SpatialGrid&RadiationField&Panchromatic")
     ITEM_END()
 
     //======================== Other Functions =======================

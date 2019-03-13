@@ -17,7 +17,7 @@
 
 void LinearDustTemperatureCutProbe::probeRun()
 {
-    if (find<Configuration>()->hasRadiationField() && find<MediumSystem>()->hasDust())
+    if (find<Configuration>()->hasPanRadiationField() && find<MediumSystem>()->hasDust())
     {
         // locate the medium system
         auto ms = find<MediumSystem>();
