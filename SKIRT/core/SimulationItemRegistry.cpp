@@ -87,6 +87,7 @@
 #include "LinWavelengthGrid.hpp"
 #include "LinearDustTemperatureCutProbe.hpp"
 #include "ListBand.hpp"
+#include "ListMesh.hpp"
 #include "ListSED.hpp"
 #include "ListWavelengthDistribution.hpp"
 #include "ListWavelengthGrid.hpp"
@@ -381,7 +382,9 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<PowMesh>();
     ItemRegistry::add<SymPowMesh>();
     ItemRegistry::add<LogMesh>();
+    ItemRegistry::add<TabulatedMesh>();
     ItemRegistry::add<FileMesh>();
+    ItemRegistry::add<ListMesh>();
 
     // medium system and media
     ItemRegistry::add<MediumSystem>();

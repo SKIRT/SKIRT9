@@ -6,7 +6,7 @@
 #ifndef FILEMESH_HPP
 #define FILEMESH_HPP
 
-#include "MoveableMesh.hpp"
+#include "TabulatedMesh.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -16,12 +16,11 @@
 
     The input text file contains the mesh points (i.e. the border points separating the mesh bins),
     one point per line, in arbitrary order. The points may be given in arbitary units. If the
-    lowest point is not zero, an extra zero mesh point is inserted. The mesh is scaled so that the
-    last point in the file is mapped to unity. */
-class FileMesh : public MoveableMesh
+    smallest point is not zero, an extra zero mesh point is inserted. The mesh is scaled so that
+    the largest point in the file is mapped to unity. */
+class FileMesh : public TabulatedMesh
 {
-    ITEM_CONCRETE(FileMesh, MoveableMesh, "a mesh read from a file")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(FileMesh, "Level2")
+    ITEM_CONCRETE(FileMesh, TabulatedMesh, "a mesh read from a file")
 
     PROPERTY_STRING(filename, "the name of the file with the mesh border points")
 
@@ -29,20 +28,9 @@ class FileMesh : public MoveableMesh
 
     //============= Construction - Setup - Destruction =============
 
-protected:
-    /** This function reads the mesh points from the specified file. */
-    void setupSelfBefore() override;
-
-    //======================== Other Functions =======================
-
-public:
-    /** This function returns an array containing the mesh points. */
-    Array mesh() const override;
-
-    //======================== Data Members ========================
-
-private:
-    Array _mesh;
+    /** This function loads the mesh border points from the configured file and returns them, in
+        arbitrary order and with arbitrary scaling. */
+    vector<double> getMeshBorderPoints() const override;
 };
 
 ////////////////////////////////////////////////////////////////////
