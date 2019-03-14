@@ -84,6 +84,7 @@
 #include "LaunchedPacketsProbe.hpp"
 #include "LinMesh.hpp"
 #include "LinWavelengthDistribution.hpp"
+#include "LinWavelengthGrid.hpp"
 #include "LinearDustTemperatureCutProbe.hpp"
 #include "ListBand.hpp"
 #include "ListSED.hpp"
@@ -478,6 +479,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<DisjointWavelengthGrid>();
     ItemRegistry::add<LogWavelengthGrid>();
     ItemRegistry::add<NestedLogWavelengthGrid>();
+    ItemRegistry::add<LinWavelengthGrid>();
     ItemRegistry::add<BandWavelengthGrid>();
     ItemRegistry::add<PredefinedBandWavelengthGrid>();
     ItemRegistry::add<ConfigurableBandWavelengthGrid>();
