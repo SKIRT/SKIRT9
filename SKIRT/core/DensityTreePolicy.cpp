@@ -86,11 +86,11 @@ void DensityTreePolicy::setupSelfBefore()
 bool DensityTreePolicy::needsSubdivide(TreeNode* node)
 {
     // results for the sampled mass or number densities, if applicable
-    double rho = 0.;        // dust mass density
-    double rhomin = 0.;     // smallest sample for dust mass density
-    double rhomax = 0.;     // largest sample for dust mass density
-    double ne = 0;          // electron number density
-    double ng = 0.;         // gas number density
+    double rho = 0.;         // dust mass density
+    double rhomin = DBL_MAX; // smallest sample for dust mass density
+    double rhomax = 0.;      // largest sample for dust mass density
+    double ne = 0;           // electron number density
+    double ng = 0.;          // gas number density
 
     // sample densities in node
     if (_hasAny)
