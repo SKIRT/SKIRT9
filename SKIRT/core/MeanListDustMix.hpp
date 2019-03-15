@@ -50,7 +50,6 @@ class MeanListDustMix : public TabulatedDustMix
     PROPERTY_DOUBLE_LIST(asymmetryParameters, "the scattering asymmetry parameters at each of the given wavelengths")
         ATTRIBUTE_MIN_VALUE(asymmetryParameters, "[-1")
         ATTRIBUTE_MAX_VALUE(asymmetryParameters, "1]")
-        ATTRIBUTE_DEFAULT_VALUE(asymmetryParameters, "0")
 
     ITEM_END()
 
