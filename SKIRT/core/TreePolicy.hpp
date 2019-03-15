@@ -27,12 +27,12 @@ class TreePolicy : public SimulationItem
     PROPERTY_INT(minLevel, "the minimum level of grid refinement")
         ATTRIBUTE_MIN_VALUE(minLevel, "0")
         ATTRIBUTE_MAX_VALUE(minLevel, "99")
-        ATTRIBUTE_DEFAULT_VALUE(minLevel, "3")
+        ATTRIBUTE_DEFAULT_VALUE(minLevel, "OctTreeGrid:3;BinTreeGrid:9")
 
     PROPERTY_INT(maxLevel, "the maximum level of grid refinement")
         ATTRIBUTE_MIN_VALUE(maxLevel, "0")
         ATTRIBUTE_MAX_VALUE(maxLevel, "99")
-        ATTRIBUTE_DEFAULT_VALUE(maxLevel, "7")
+        ATTRIBUTE_DEFAULT_VALUE(maxLevel, "OctTreeGrid:7;BinTreeGrid:21")
 
     ITEM_END()
 
