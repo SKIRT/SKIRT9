@@ -125,13 +125,9 @@ void FITSInOut::write(string filepath, const Array& data, string dataUnits,
     // (only when it is built with ./configure --enable-reentrant; make)
     std::unique_lock<std::mutex> lock(_mutex);
 
-    // Generate time stamp and temporaries
+    // Generate time stamp
     string stamp = System::timestamp(true);
     stamp.erase(19); // remove milliseconds
-    double zero = 0.;
-    double one = 1.;
-    double xref = (nx+1.0)/2.0;
-    double yref = (ny+1.0)/2.0;
 
     // Remove any existing file with the same name
     remove(filepath.c_str());
@@ -147,18 +143,18 @@ void FITSInOut::write(string filepath, const Array& data, string dataUnits,
     if (status) report_error(filepath, "creating", status);
 
     // Add the relevant keywords
-    ffpky(fptr, TDOUBLE, "BSCALE", &one, "", &status);
-    ffpky(fptr, TDOUBLE, "BZERO", &zero, "", &status);
+    ffpkyg(fptr, "BSCALE", 1., 0, "Array value scale", &status);
+    ffpkyg(fptr, "BZERO", 0., 0, "Array value offset", &status);
     ffpkys(fptr, "DATE"  , const_cast<char*>(stamp.c_str()), "Date and time of creation (UTC)", &status);
     ffpkys(fptr, "ORIGIN", const_cast<char*>("SKIRT simulation"), "Astronomical Observatory, Ghent University", &status);
     ffpkys(fptr, "BUNIT" , const_cast<char*>(dataUnits.c_str()), "Physical unit of the array values", &status);
-    ffpky(fptr, TDOUBLE, "CRPIX1", &xref, "X-axis coordinate system reference pixel", &status);
-    ffpky(fptr, TDOUBLE, "CRVAL1", &xc, "Coordinate value at X-axis reference pixel", &status);
-    ffpky(fptr, TDOUBLE, "CDELT1", &incx, "Coordinate increment along X-axis", &status);
+    ffpkyd(fptr, "CRPIX1", (nx+1)/2., 9, "X-axis coordinate system reference pixel", &status);
+    ffpkyd(fptr, "CRVAL1", xc, 9, "Coordinate value at X-axis reference pixel", &status);
+    ffpkyd(fptr, "CDELT1", incx, 9, "Coordinate increment along X-axis", &status);
     ffpkys(fptr, "CUNIT1", const_cast<char*>(xyUnits.c_str()), "Physical units of the X-axis", &status);
-    ffpky(fptr, TDOUBLE, "CRPIX2", &yref, "Y-axis coordinate system reference pixel", &status);
-    ffpky(fptr, TDOUBLE, "CRVAL2", &yc, "Coordinate value at Y-axis reference pixel", &status);
-    ffpky(fptr, TDOUBLE, "CDELT2", &incy, "Coordinate increment along Y-axis", &status);
+    ffpkyd(fptr, "CRPIX2", (ny+1)/2., 9, "Y-axis coordinate system reference pixel", &status);
+    ffpkyd(fptr, "CRVAL2", yc, 9, "Coordinate value at Y-axis reference pixel", &status);
+    ffpkyd(fptr, "CDELT2", incy, 9, "Coordinate increment along Y-axis", &status);
     ffpkys(fptr, "CUNIT2", const_cast<char*>(xyUnits.c_str()), "Physical units of the Y-axis", &status);
     if (nz) ffpkys(fptr, "CUNIT3", const_cast<char*>(zUnits.c_str()), "Physical units of the Z-axis", &status);
     if (status) report_error(filepath, "writing", status);
@@ -172,9 +168,9 @@ void FITSInOut::write(string filepath, const Array& data, string dataUnits,
     {
         // Create the table
         char* ttypev[] = { const_cast<char*>("GRID_POINTS") };
-        char* tformv[] = { const_cast<char*>("D") };
+        char* tformv[] = { const_cast<char*>("E16.9") };
         char* tunitv[] = { const_cast<char*>(zUnits.c_str()) };
-        ffcrtb(fptr, BINARY_TBL, 0, 1, ttypev, tformv, tunitv, "Z-axis coordinate values", &status);
+        ffcrtb(fptr, ASCII_TBL, 0, 1, ttypev, tformv, tunitv, "Z-axis coordinate values", &status);
         if (status) report_error(filepath, "writing", status);
 
         // Write the single column
