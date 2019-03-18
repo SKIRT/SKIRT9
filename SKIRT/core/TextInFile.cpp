@@ -102,7 +102,7 @@ namespace
             getline(in, line);
 
             // if the line conforms to the required syntax, return the extracted information
-            static const std::regex syntax("#\\s*column\\s*(\\d+)\\s*:[^()]*\\(\\s*([a-z0-9/]*)\\s*\\)\\s*",
+            static const std::regex syntax("#\\s*column\\s*(\\d+)\\s*:[^()]*\\(\\s*([a-zA-Z0-9/]*)\\s*\\)\\s*",
                                            std::regex::icase);
             std::smatch matches;
             if (std::regex_match(line, matches, syntax) && matches.size()==3)
