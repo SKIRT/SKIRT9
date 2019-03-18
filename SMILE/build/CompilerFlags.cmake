@@ -30,7 +30,7 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES "Intel")
         target_compile_options(${TARGET} PRIVATE -Wno-deprecated)
     endif()
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    target_compile_options(${TARGET} PRIVATE /wd4267)  # ignore size_t to/from int conversions
+    target_compile_options(${TARGET} PRIVATE /wd4267 /wd4244)  # ignore size_t to/from int conversions
     if (NO_EXTRA_WARNINGS)
         target_compile_options(${TARGET} PRIVATE /wd4996)  # ignore unsafe C-style std functions
     endif()

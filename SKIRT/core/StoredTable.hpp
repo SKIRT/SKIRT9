@@ -175,8 +175,8 @@ public:
     void open(const SimulationItem* item, string filename, string axes, string quantity, bool clampFirstAxis=true)
     {
         StoredTable_Impl::open(N, item, filename, axes, quantity,
-                               _filePath, _axBeg.begin(), &_qtyBeg, _axLen.begin(), &_qtyStep,
-                               _axLog.begin(), &_qtyLog);
+                               _filePath, &_axBeg[0], &_qtyBeg, &_axLen[0], &_qtyStep,
+                               &_axLog[0], &_qtyLog);
         _clamp = clampFirstAxis;
     }
 

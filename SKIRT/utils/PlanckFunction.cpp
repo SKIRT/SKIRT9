@@ -32,7 +32,8 @@ double PlanckFunction::value(double lambda) const
 double PlanckFunction::cdf(Array& lambdav, Array& pv, Array& Pv, Range lambdaRange) const
 {
     // build an appropriate grid
-    size_t n = max(100ul, static_cast<size_t>(1000. * log10(lambdaRange.max() / lambdaRange.min())));
+    size_t n = max(static_cast<size_t>(100),
+                   static_cast<size_t>(1000. * log10(lambdaRange.max() / lambdaRange.min())));
     NR::buildLogGrid(lambdav, lambdaRange.min(), lambdaRange.max(), n);
 
     // calculate the tabulated probability densities

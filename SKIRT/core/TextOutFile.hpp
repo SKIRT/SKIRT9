@@ -78,7 +78,7 @@ public:
     void writeRow(Values... values)
     {
         std::array<double, sizeof...(values)> list = {{ static_cast<double>(values)... }};
-        writeRowPrivate(sizeof...(values), list.cbegin());
+        writeRowPrivate(sizeof...(values), &list[0]);
     }
 
 private:
