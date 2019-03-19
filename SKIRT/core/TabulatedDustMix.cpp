@@ -27,7 +27,7 @@ double TabulatedDustMix::getOpticalProperties(const Array& lambdav, const Array&
     // resample to wavelength grid required by caller
     sigmaabsv = NR::resample<NR::interpolateLogLog>(lambdav, inlambdav, insigmaabsv);
     sigmascav = NR::resample<NR::interpolateLogLog>(lambdav, inlambdav, insigmascav);
-    asymmparv = NR::resample<NR::interpolateLogLog>(lambdav, inlambdav, inasymmparv);
+    asymmparv = NR::resample<NR::interpolateLogLin>(lambdav, inlambdav, inasymmparv);
 
     return mu;
 }
