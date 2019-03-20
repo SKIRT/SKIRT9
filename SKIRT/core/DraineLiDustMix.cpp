@@ -28,11 +28,11 @@ void DraineLiDustMix::setupSelfBefore()
                   new LogNormalGrainSizeDistribution(this, 3.1e-10, 4.0e-8, 2.0e-9, 0.55),
                   _numGraphiteSizes, GrainPopulation::NormalizationType::DustMassPerHydrogenMass, 1.66e-4);
 
-    addPopulation(new DustEmGrainComposition(this, DustEmGrainComposition::GrainType::PAH0_DL07, 2240.),
+    addPopulation(new DustEmGrainComposition(this, DustEmGrainComposition::GrainType::PAH0DL07, 2240.),
                   new LogNormalGrainSizeDistribution(this, 3.1e-10, 1.2e-9, 4.0e-10, 0.4),
                   _numPAHSizes, GrainPopulation::NormalizationType::DustMassPerHydrogenMass, 0.5 * 4.97e-4);
 
-    addPopulation(new DustEmGrainComposition(this, DustEmGrainComposition::GrainType::PAH1_DL07, 2240.),
+    addPopulation(new DustEmGrainComposition(this, DustEmGrainComposition::GrainType::PAH1DL07, 2240.),
                   new LogNormalGrainSizeDistribution(this, 3.1e-10, 1.2e-9, 4.0e-10, 0.4),
                   _numPAHSizes, GrainPopulation::NormalizationType::DustMassPerHydrogenMass, 0.5 * 4.97e-4);
 }
