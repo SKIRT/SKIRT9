@@ -53,6 +53,7 @@
 #include "DustEmissionOptions.hpp"
 #include "DustEmissivityProbe.hpp"
 #include "DustGrainPopulationsProbe.hpp"
+#include "DustGrainSizeDistributionProbe.hpp"
 #include "DustSelfAbsorptionOptions.hpp"
 #include "DustTemperaturePerCellProbe.hpp"
 #include "EinastoGeometry.hpp"
@@ -519,6 +520,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<SpatialGridSourceDensityProbe>();
     ItemRegistry::add<OpticalMaterialPropertiesProbe>();
     ItemRegistry::add<DustGrainPopulationsProbe>();
+    ItemRegistry::add<DustGrainSizeDistributionProbe>();
 
     ItemRegistry::add<DefaultRadiationFieldCutsProbe>();
     ItemRegistry::add<RadiationFieldPerCellProbe>();

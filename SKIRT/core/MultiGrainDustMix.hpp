@@ -213,6 +213,10 @@ public:
         a_{\text{max},c}\f$ for the population with index \f$c\f$. */
     Range populationSizeRange(int c) const;
 
+    /** This function returns the grain size distribution object for the population with index
+        \f$c\f$. */
+    const GrainSizeDistribution* populationSizeDistribution(int c) const;
+
     /** This function returns the dust mass \f$\mu_c\f$ per hydrogen atom for the population with
         index \f$c\f$. */
     double populationMass(int c) const;

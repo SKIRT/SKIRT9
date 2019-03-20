@@ -398,6 +398,13 @@ Range MultiGrainDustMix::populationSizeRange(int c) const
 
 ////////////////////////////////////////////////////////////////////
 
+const GrainSizeDistribution* MultiGrainDustMix::populationSizeDistribution(int c) const
+{
+    return _populations[c]->sizeDistribution();
+}
+
+////////////////////////////////////////////////////////////////////
+
 double MultiGrainDustMix::populationMass(int c) const
 {
     return _mupopv[c];
