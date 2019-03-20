@@ -6,7 +6,7 @@
 #ifndef OPTICALDEPTHMAPPROBE_HPP
 #define OPTICALDEPTHMAPPROBE_HPP
 
-#include "Probe.hpp"
+#include "AbstractWavelengthProbe.hpp"
 #include "AllSkyProjection.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -17,19 +17,14 @@
     project the complete sky on the rectangular image. Pixels outside of the mapped region are set
     to zero. The files are named <tt>prefix_probe_MM_tau.fits</tt> where MM is replaced by the
     material type. */
-class OpticalDepthMapProbe : public Probe
+class OpticalDepthMapProbe : public AbstractWavelengthProbe
 {
-    ITEM_CONCRETE(OpticalDepthMapProbe, Probe, "all-sky optical depth map as seen from given location")
+    ITEM_CONCRETE(OpticalDepthMapProbe, AbstractWavelengthProbe,
+                  "all-sky optical depth map as seen from given location")
         ATTRIBUTE_TYPE_DISPLAYED_IF(OpticalDepthMapProbe, "Level2&Medium&SpatialGrid")
 
     PROPERTY_ITEM(projection, AllSkyProjection, "the projection used for mapping the sky to a rectangle")
         ATTRIBUTE_DEFAULT_VALUE(projection, "HammerAitoffProjection")
-
-    PROPERTY_DOUBLE(wavelength, "the wavelength at which to map the optical depth")
-        ATTRIBUTE_QUANTITY(wavelength, "wavelength")
-        ATTRIBUTE_DEFAULT_VALUE(wavelength, "0.55 micron")
-        ATTRIBUTE_MIN_VALUE(wavelength, "1 Angstrom")
-        ATTRIBUTE_MAX_VALUE(wavelength, "1 m")
 
     PROPERTY_INT(numPixelsY, "the number of image pixels in the vertical (shortest) direction")
         ATTRIBUTE_MIN_VALUE(numPixelsY, "25")

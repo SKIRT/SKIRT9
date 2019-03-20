@@ -508,6 +508,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // probe system and probes
     ItemRegistry::add<ProbeSystem>();
     ItemRegistry::add<Probe>();
+    ItemRegistry::add<AbstractWavelengthProbe>();
+    ItemRegistry::add<AbstractWavelengthGridProbe>();
     ItemRegistry::add<InstrumentWavelengthGridProbe>();
     ItemRegistry::add<LuminosityProbe>();
     ItemRegistry::add<LaunchedPacketsProbe>();

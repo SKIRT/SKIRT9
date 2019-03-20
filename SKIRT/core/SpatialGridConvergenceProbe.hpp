@@ -6,7 +6,7 @@
 #ifndef SPATIALGRIDCONVERGENCEPROBE_HPP
 #define SPATIALGRIDCONVERGENCEPROBE_HPP
 
-#include "Probe.hpp"
+#include "AbstractWavelengthProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -27,17 +27,10 @@
 
     Finally, the file includes some basic statistics on the diagonal optical depths of the spatial
     grid cells: the largest and average diagonal optical depth, and the 90% percentile. */
-class SpatialGridConvergenceProbe : public Probe
+class SpatialGridConvergenceProbe : public AbstractWavelengthProbe
 {
-    ITEM_CONCRETE(SpatialGridConvergenceProbe, Probe, "convergence information on the spatial grid")
+    ITEM_CONCRETE(SpatialGridConvergenceProbe, AbstractWavelengthProbe, "convergence information on the spatial grid")
         ATTRIBUTE_TYPE_DISPLAYED_IF(SpatialGridConvergenceProbe, "Medium&SpatialGrid")
-
-    PROPERTY_DOUBLE(wavelength, "the wavelength at which to list the optical depth")
-        ATTRIBUTE_QUANTITY(wavelength, "wavelength")
-        ATTRIBUTE_MIN_VALUE(wavelength, "1 Angstrom")
-        ATTRIBUTE_MAX_VALUE(wavelength, "1 m")
-        ATTRIBUTE_DEFAULT_VALUE(wavelength, "0.55 micron")
-        ATTRIBUTE_DISPLAYED_IF(wavelength, "Level2")
 
     ITEM_END()
 

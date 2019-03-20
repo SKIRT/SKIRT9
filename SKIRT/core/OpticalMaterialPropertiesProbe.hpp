@@ -6,8 +6,7 @@
 #ifndef OPTICALMATERIALPROPERTIESPROBE_HPP
 #define OPTICALMATERIALPROPERTIESPROBE_HPP
 
-#include "Probe.hpp"
-#include "WavelengthGrid.hpp"
+#include "AbstractWavelengthGridProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -31,15 +30,11 @@
     \kappa_\lambda^\text{abs}, \kappa_\lambda^\text{sca}\f$; the corresponding scattering albedo
     \f$\varpi_\lambda\f$; and the mean asymmetry parameter \f$g_\lambda\f$ (or zero if not
     available). See the MaterialMix class for more information. */
-class OpticalMaterialPropertiesProbe : public Probe
+class OpticalMaterialPropertiesProbe : public AbstractWavelengthGridProbe
 {
-    ITEM_CONCRETE(OpticalMaterialPropertiesProbe, Probe, "aggregate optical material properties for each medium")
+    ITEM_CONCRETE(OpticalMaterialPropertiesProbe, AbstractWavelengthGridProbe,
+                  "aggregate optical material properties for each medium")
         ATTRIBUTE_TYPE_DISPLAYED_IF(OpticalMaterialPropertiesProbe, "Medium")
-
-    PROPERTY_ITEM(wavelengthGrid, WavelengthGrid, "the wavelength grid for the optical properties")
-        ATTRIBUTE_RELEVANT_IF(wavelengthGrid, "Panchromatic")
-        ATTRIBUTE_REQUIRED_IF(wavelengthGrid, "!DefaultInstrumentWavelengthGrid")
-        ATTRIBUTE_DISPLAYED_IF(wavelengthGrid, "Level2")
 
     ITEM_END()
 

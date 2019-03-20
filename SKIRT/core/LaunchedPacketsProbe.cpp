@@ -15,7 +15,7 @@
 
 void LaunchedPacketsProbe::setupSelfAfter()
 {
-    Probe::setupSelfAfter();
+    AbstractWavelengthGridProbe::setupSelfAfter();
 
     // install ourselves as the launch call-back with the source system
     find<SourceSystem>()->installLaunchCallBack(this);

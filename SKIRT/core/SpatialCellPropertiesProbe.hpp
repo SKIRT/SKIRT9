@@ -6,7 +6,7 @@
 #ifndef SPATIALCELLPROPERTIESPROBE_HPP
 #define SPATIALCELLPROPERTIESPROBE_HPP
 
-#include "Probe.hpp"
+#include "AbstractWavelengthProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -16,16 +16,10 @@
     cell index, x,y,z coordinates of the cell center, volume, total optical depth of the cell
     diagonal at a user-configured wavelength (for all material types combined), dust mass density,
     electron number density, and (gas) hydrogen number density. */
-class SpatialCellPropertiesProbe : public Probe
+class SpatialCellPropertiesProbe : public AbstractWavelengthProbe
 {
     ITEM_CONCRETE(SpatialCellPropertiesProbe, Probe, "relevant properties for all spatial cells")
         ATTRIBUTE_TYPE_DISPLAYED_IF(SpatialCellPropertiesProbe, "Level2&SpatialGrid")
-
-    PROPERTY_DOUBLE(wavelength, "the wavelength at which to list the optical depth")
-        ATTRIBUTE_QUANTITY(wavelength, "wavelength")
-        ATTRIBUTE_DEFAULT_VALUE(wavelength, "0.55 micron")
-        ATTRIBUTE_MIN_VALUE(wavelength, "1 Angstrom")
-        ATTRIBUTE_MAX_VALUE(wavelength, "1 m")
 
     ITEM_END()
 

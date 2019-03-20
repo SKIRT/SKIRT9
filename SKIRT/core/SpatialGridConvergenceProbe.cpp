@@ -161,12 +161,12 @@ void SpatialGridConvergenceProbe::probeSetup()
 
         // write info for each material type, if present
         using Type = MaterialMix::MaterialType;
-        if (ms->hasDust()) writeConvergenceForMaterialType(out, ms, _wavelength, Type::Dust, "Dust");
-        if (ms->hasElectrons()) writeConvergenceForMaterialType(out, ms, _wavelength, Type::Electrons, "Electrons");
-        if (ms->hasGas()) writeConvergenceForMaterialType(out, ms, _wavelength, Type::Gas, "Gas");
+        if (ms->hasDust()) writeConvergenceForMaterialType(out, ms, wavelength(), Type::Dust, "Dust");
+        if (ms->hasElectrons()) writeConvergenceForMaterialType(out, ms, wavelength(), Type::Electrons, "Electrons");
+        if (ms->hasGas()) writeConvergenceForMaterialType(out, ms, wavelength(), Type::Gas, "Gas");
 
         // write statistics on optical depth
-        writeOpticalDepthStatistics(out, ms, _wavelength);
+        writeOpticalDepthStatistics(out, ms, wavelength());
 
         // write footer
         out.writeLine("");
