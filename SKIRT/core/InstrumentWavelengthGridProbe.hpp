@@ -16,10 +16,10 @@ class WavelengthGrid;
     the files written by the corresponding instrument. For each wavelength bin, the file lists the
     characteristic wavelength, the wavelength bin width, and the left and right borders of the bin.
     */
-class WavelengthGridProbe : public Probe
+class InstrumentWavelengthGridProbe : public Probe
 {
-    ITEM_CONCRETE(WavelengthGridProbe, Probe, "the instrument wavelength grids")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(WavelengthGridProbe, "Instrument")
+    ITEM_CONCRETE(InstrumentWavelengthGridProbe, Probe, "the instrument wavelength grids")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(InstrumentWavelengthGridProbe, "Instrument")
     ITEM_END()
 
     //======================== Other Functions =======================

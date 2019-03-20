@@ -3,7 +3,7 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "WavelengthGridProbe.hpp"
+#include "InstrumentWavelengthGridProbe.hpp"
 #include "Instrument.hpp"
 #include "InstrumentSystem.hpp"
 #include "TextOutFile.hpp"
@@ -12,7 +12,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void WavelengthGridProbe::probeSetup()
+void InstrumentWavelengthGridProbe::probeSetup()
 {
     // loop over instruments
     for (auto instrument : find<InstrumentSystem>()->instruments())
@@ -25,7 +25,7 @@ void WavelengthGridProbe::probeSetup()
 
 ////////////////////////////////////////////////////////////////////
 
-void WavelengthGridProbe::writeWavelengthGrid(Probe* item, const WavelengthGrid* wavelengthGrid,
+void InstrumentWavelengthGridProbe::writeWavelengthGrid(Probe* item, const WavelengthGrid* wavelengthGrid,
                                               string filename, string description)
 {
     auto units = item->find<Units>();

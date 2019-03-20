@@ -196,7 +196,7 @@
 #include "VoronoiMeshMedium.hpp"
 #include "VoronoiMeshSource.hpp"
 #include "VoronoiMeshSpatialGrid.hpp"
-#include "WavelengthGridProbe.hpp"
+#include "InstrumentWavelengthGridProbe.hpp"
 #include "WeingartnerDraineDustMix.hpp"
 #include "ZubkoDustMix.hpp"
 #include "ZubkoGraphiteGrainSizeDistribution.hpp"
@@ -508,7 +508,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // probe system and probes
     ItemRegistry::add<ProbeSystem>();
     ItemRegistry::add<Probe>();
-    ItemRegistry::add<WavelengthGridProbe>();
+    ItemRegistry::add<InstrumentWavelengthGridProbe>();
     ItemRegistry::add<LuminosityProbe>();
     ItemRegistry::add<LaunchedPacketsProbe>();
     ItemRegistry::add<SpatialGridPlotProbe>();

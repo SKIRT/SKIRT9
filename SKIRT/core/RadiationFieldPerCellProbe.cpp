@@ -11,7 +11,7 @@
 #include "StringUtils.hpp"
 #include "TextOutFile.hpp"
 #include "Units.hpp"
-#include "WavelengthGridProbe.hpp"
+#include "InstrumentWavelengthGridProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -54,7 +54,7 @@ void RadiationFieldPerCellProbe::probeRun()
         // if requested, also output the wavelength grid
         if (writeWavelengthGrid())
         {
-            WavelengthGridProbe::writeWavelengthGrid(this, find<Configuration>()->radiationFieldWLG(),
+            InstrumentWavelengthGridProbe::writeWavelengthGrid(this, find<Configuration>()->radiationFieldWLG(),
                                                      itemName() + "_wavelengths", "wavelengths for mean intensity");
         }
     }

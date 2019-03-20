@@ -12,7 +12,7 @@
 #include "StringUtils.hpp"
 #include "TextOutFile.hpp"
 #include "Units.hpp"
-#include "WavelengthGridProbe.hpp"
+#include "InstrumentWavelengthGridProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -140,7 +140,7 @@ void DustEmissivityProbe::probeSetup()
         // if requested, also output the wavelength grid
         if (writeWavelengthGrid())
         {
-            WavelengthGridProbe::writeWavelengthGrid(this, find<Configuration>()->dustEmissionWLG(),
+            InstrumentWavelengthGridProbe::writeWavelengthGrid(this, find<Configuration>()->dustEmissionWLG(),
                                                      itemName() + "_wavelengths", "emission spectrum wavelengths");
         }
     }
