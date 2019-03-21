@@ -292,9 +292,9 @@ private:
     // all data members are precalculated in setupSelfAfter()
 
     // wavelength grid parameters
-    double _logLambdaOffset{0.};
     double _logLambdaFactor{0.};
-    int _maxLogLambda{0};
+    int _logLambdaOffset{0};
+    int _maxLambdaIndex{0};
 
     // scattering angle grid
     Array _thetav;      // indexed on t

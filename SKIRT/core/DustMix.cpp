@@ -36,17 +36,20 @@ void DustMix::setupSelfAfter()
     // get the scattering mode advertised by this dust mix
     auto mode = scatteringMode();
 
-    // determine the parameters for a fine grid covering the wavelength range of the simulation in log space
-    const int numWavelengthsPerDex = 500;
+    // determine the parameters for a fine grid covering the wavelength range of the simulation in log space;
+    // use integer multiples as logarithmic grid points so that the grid is stable for changing wavelength ranges
+    const int numWavelengthsPerDex = 512;
     Range range = find<Configuration>()->simulationWavelengthRange();
-    _logLambdaOffset = - log10(range.min());
+    int minLambdaSerial = std::floor(numWavelengthsPerDex*log10(range.min()));
+    int maxLambdaSerial = std::ceil(numWavelengthsPerDex*log10(range.max()));
     _logLambdaFactor = numWavelengthsPerDex;
-    _maxLogLambda = _logLambdaFactor * log10(range.max()/range.min());
-    int numLambda = _maxLogLambda+1;
+    _logLambdaOffset = minLambdaSerial;
+    _maxLambdaIndex = maxLambdaSerial - minLambdaSerial;
+    int numLambda = _maxLambdaIndex+1;
 
     // build a temporary wavelength grid corresponding to this scheme
     Array lambdav(numLambda);
-    for (int ell=0; ell!=numLambda; ++ell) lambdav[ell] = pow(10., (ell+0.5)/_logLambdaFactor - _logLambdaOffset);
+    for (int ell=0; ell!=numLambda; ++ell) lambdav[ell] = pow(10., (ell+_logLambdaOffset+0.5)/_logLambdaFactor);
 
     // if needed, build a scattering angle grid
     if (mode == ScatteringMode::MaterialPhaseFunction || mode == ScatteringMode::SphericalPolarization)
@@ -166,8 +169,8 @@ size_t DustMix::initializeExtraProperties(const Array& /*lambdav*/)
 
 int DustMix::indexForLambda(double lambda) const
 {
-    int logLambda = (_logLambdaOffset + log10(lambda)) * _logLambdaFactor;
-    return max(0, min(logLambda, _maxLogLambda));
+    int ell = static_cast<int>(log10(lambda) * _logLambdaFactor) - _logLambdaOffset;
+    return max(0, min(ell, _maxLambdaIndex));
 }
 
 ////////////////////////////////////////////////////////////////////
