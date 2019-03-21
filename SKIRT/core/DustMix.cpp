@@ -38,7 +38,7 @@ void DustMix::setupSelfAfter()
 
     // determine the parameters for a fine grid covering the wavelength range of the simulation in log space;
     // use integer multiples as logarithmic grid points so that the grid is stable for changing wavelength ranges
-    const int numWavelengthsPerDex = 512;
+    const int numWavelengthsPerDex = 1024;
     Range range = find<Configuration>()->simulationWavelengthRange();
     int minLambdaSerial = std::floor(numWavelengthsPerDex*log10(range.min()));
     int maxLambdaSerial = std::ceil(numWavelengthsPerDex*log10(range.max()));
