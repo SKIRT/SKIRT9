@@ -7,13 +7,14 @@
 #define ABSTRACTWAVELENGTHPROBE_HPP
 
 #include "Probe.hpp"
+#include "MaterialWavelengthRangeInterface.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
 /** AbstractWavelengthProbe is a base class for probes that require a configurable wavelength
-    property. Deriving such probes from a common base class allows accessing the wavelength value
-    through the base class interface. */
-class AbstractWavelengthProbe : public Probe
+    property. It implements the MaterialWavelengthRangeInterface to indicate that
+    wavelength-dependent material properties may be required for the configured wavelength. */
+class AbstractWavelengthProbe : public Probe, public MaterialWavelengthRangeInterface
 {
     ITEM_CONCRETE(AbstractWavelengthProbe, Probe, "a probe requiring a wavelength value")
         ATTRIBUTE_TYPE_DISPLAYED_IF(SpatialGridConvergenceProbe, "Medium&SpatialGrid")
@@ -26,6 +27,14 @@ class AbstractWavelengthProbe : public Probe
         ATTRIBUTE_DISPLAYED_IF(wavelength, "Level2")
 
     ITEM_END()
+
+    //======================== Other Functions =======================
+
+public:
+    /** This function returns a wavelength range corresponding to the user-configured wavelength,
+        indicating that wavelength-dependent material properties may be required for this
+        wavelength. */
+    Range wavelengthRange() const override;
 };
 
 ////////////////////////////////////////////////////////////////////

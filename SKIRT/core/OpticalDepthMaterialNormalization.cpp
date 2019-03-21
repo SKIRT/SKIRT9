@@ -16,8 +16,17 @@ std::pair<double, double> OpticalDepthMaterialNormalization::numberAndMass(const
     double geomColumnDensity = geometryColumnDensity(geom);
 
     // calculate the requested number and mass column densities from the configured optical depth
-    double reqNumberColumnDensity = _opticalDepth / mix->sectionExt(_wavelength);
+    double reqNumberColumnDensity = opticalDepth() / mix->sectionExt(wavelength());
     double reqMassColumnDensity = reqNumberColumnDensity * mix->mass();
 
     return std::make_pair(reqNumberColumnDensity/geomColumnDensity, reqMassColumnDensity/geomColumnDensity);
 }
+
+//////////////////////////////////////////////////////////////////////
+
+Range OpticalDepthMaterialNormalization::wavelengthRange() const
+{
+    return Range(wavelength(), wavelength());
+}
+
+//////////////////////////////////////////////////////////////////////

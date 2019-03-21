@@ -10,6 +10,7 @@
 #include "ExtinctionOnlyOptions.hpp"
 #include "FatalError.hpp"
 #include "MaterialMix.hpp"
+#include "MaterialWavelengthRangeInterface.hpp"
 #include "MonteCarloSimulation.hpp"
 #include "MultiGrainDustMix.hpp"
 #include "NR.hpp"
@@ -232,6 +233,25 @@ void Configuration::setEmulationMode()
 
 ////////////////////////////////////////////////////////////////////
 
+namespace
+{
+    // This function extends the specified wavelength range with the ranges requested by simulation items
+    // in the specified hierarchy that implement the MaterialWavelengthRangeInterface.
+    // The function calls itself recursively.
+    void extendWavelengthRange(Range& range, Item* item)
+    {
+        auto interface = dynamic_cast<MaterialWavelengthRangeInterface*>(item);
+        if (interface)
+        {
+            Range requested = interface->wavelengthRange();
+            if (requested.min() > 0) range.extend(requested);
+        }
+        for (auto child : item->children()) extendWavelengthRange(range, child);
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
 Range Configuration::simulationWavelengthRange() const
 {
     // implementation note: we explicitly call setup() on wavelength grids before accessing them
@@ -262,6 +282,21 @@ Range Configuration::simulationWavelengthRange() const
         _defaultWavelengthGrid->setup();
         range.extend(_defaultWavelengthGrid->wavelengthRange());
     }
+
+    // include instrument-specific wavelength grids
+    auto is = find<InstrumentSystem>(false);
+    for (auto ins : is->instruments())
+    {
+        if (ins->wavelengthGrid())
+        {
+            ins->wavelengthGrid()->setup();
+            range.extend(ins->wavelengthGrid()->wavelengthRange());
+        }
+    }
+
+    // include wavelength ranges requested by simulation items that implement the MaterialWavelengthRangeInterface
+    auto sim = find<MonteCarloSimulation>(false);
+    extendWavelengthRange(range, sim);
 
     // extend the final range with a narrow margin for round-offs
     range.extendWithRedshift(1./100.);

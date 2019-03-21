@@ -7,12 +7,15 @@
 #define OPTICALDEPTHMATERIALNORMALIZATION_HPP
 
 #include "AxisMaterialNormalization.hpp"
+#include "MaterialWavelengthRangeInterface.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
 /** A OpticalDepthMaterialNormalization object normalizes the amount of material in a geometric
-    medium by specifying the optical depth along one of the coordinate axes at a given wavelength. */
-class OpticalDepthMaterialNormalization : public AxisMaterialNormalization
+    medium by specifying the optical depth along one of the coordinate axes at a given wavelength.
+    It implements the MaterialWavelengthRangeInterface to indicate that wavelength-dependent
+    material properties will be required for the configured wavelength. */
+class OpticalDepthMaterialNormalization : public AxisMaterialNormalization, public MaterialWavelengthRangeInterface
 {
     ITEM_CONCRETE(OpticalDepthMaterialNormalization, AxisMaterialNormalization,
                   "normalization by defining the optical depth along a coordinate axis")
@@ -34,6 +37,11 @@ public:
         order, given a geometry and material mix in addition to the user configuration options offered
         by this class. */
     std::pair<double,double> numberAndMass(const Geometry* geom, const MaterialMix* mix) const override;
+
+    /** This function returns a wavelength range corresponding to the user-configured wavelength,
+        indicating that wavelength-dependent material properties will be required for this
+        wavelength. */
+    Range wavelengthRange() const override;
 };
 
 //////////////////////////////////////////////////////////////////////

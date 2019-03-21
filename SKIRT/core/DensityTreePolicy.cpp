@@ -249,3 +249,11 @@ vector<TreeNode*> DensityTreePolicy::constructTree(TreeNode* root)
 }
 
 ////////////////////////////////////////////////////////////////////
+
+Range DensityTreePolicy::wavelengthRange() const
+{
+    if (maxDustOpticalDepth() > 0) return Range(wavelength(), wavelength());
+    else return Range();
+}
+
+////////////////////////////////////////////////////////////////////

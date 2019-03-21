@@ -7,6 +7,7 @@
 #define DENSITYTREEPOLICY_HPP
 
 #include "TreePolicy.hpp"
+#include "MaterialWavelengthRangeInterface.hpp"
 class Medium;
 class Random;
 
@@ -67,8 +68,11 @@ class Random;
     For electrons and for gas, only the maximum mass fraction criterion is offered. For these
     material types, the number \f$\mathcal{N}\f$ and number density \f$n\f$ are used instead of the
     mass \f$M\f$ and mass density \f$\rho\f$. Other than this, the procedure is the same as the one
-    described for dust. */
-class DensityTreePolicy : public TreePolicy
+    described for dust.
+
+    This class implements the MaterialWavelengthRangeInterface to indicate that wavelength-dependent
+    material properties will be required in case the optical depth criterion is enabled. */
+class DensityTreePolicy : public TreePolicy, public MaterialWavelengthRangeInterface
 {
     ITEM_CONCRETE(DensityTreePolicy, TreePolicy,
                   "a tree grid construction policy using the medium density distribution")
@@ -138,6 +142,15 @@ public:
         determining whether a node needs subdivision can be resource-intensive (for example, it may
         require sampling densities in the source distribution). */
     vector<TreeNode*> constructTree(TreeNode* root) override;
+
+    //======================== Other Functions =======================
+
+public:
+    /** If the optical depth criterion is enabled, this function returns a wavelength range
+        corresponding to the related user-configured wavelength, indicating that
+        wavelength-dependent material properties will be required for this wavelength. Otherwise,
+        the function returns a null range. */
+    Range wavelengthRange() const override;
 
     //======================== Data Members ========================
 
