@@ -17,7 +17,7 @@
     logarithmic interpolation. Probability values outside the range indicated by the first and the
     last tabulated wavelength are considered to be zero. In addition, this range is intersected
     with the wavelength range of the associated source (obtained through the
-    WavelengthRangeInterface) before the distribution is normalized.
+    SourceWavelengthRangeInterface) before the distribution is normalized.
 
     The subclass must load the tabulated data, and this abstract class handles everything else. */
 class TabulatedWavelengthDistribution : public WavelengthDistribution

@@ -7,7 +7,7 @@
 #include "FatalError.hpp"
 #include "NR.hpp"
 #include "Random.hpp"
-#include "WavelengthRangeInterface.hpp"
+#include "SourceWavelengthRangeInterface.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -21,7 +21,7 @@ void TabulatedWavelengthDistribution::setupSelfBefore()
 
     // determine the intersected wavelength range
     Range range(inlambdav[0], inlambdav[inlambdav.size()-1]);
-    range.intersect(interface<WavelengthRangeInterface>()->wavelengthRange());
+    range.intersect(interface<SourceWavelengthRangeInterface>()->wavelengthRange());
     if (range.empty()) throw FATALERROR("Wavelength distribution range does not overlap source wavelength range");
 
     // construct the regular and cumulative distributions in the intersected range

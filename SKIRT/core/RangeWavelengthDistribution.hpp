@@ -17,7 +17,7 @@
     logarithmic) has no natural wavelength range of its own.
 
     The range configured by the user for a RangeWavelengthDistribution object is intersected with
-    the wavelength range of the associated source (obtained through the WavelengthRangeInterface).
+    the wavelength range of the associated source (obtained through the SourceWavelengthRangeInterface).
     As a result, the configured minimum and maximum wavelength values can usually be left to their
     default values (defining a very wide wavelength range). */
 class RangeWavelengthDistribution : public WavelengthDistribution

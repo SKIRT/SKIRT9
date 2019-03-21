@@ -6,7 +6,7 @@
 #include "DiscreteWavelengthDistribution.hpp"
 #include "FatalError.hpp"
 #include "Random.hpp"
-#include "WavelengthRangeInterface.hpp"
+#include "SourceWavelengthRangeInterface.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -15,7 +15,7 @@ void DiscreteWavelengthDistribution::setupSelfAfter()
     WavelengthDistribution::setupSelfAfter();
 
     // get the source wavelength range
-    Range range = interface<WavelengthRangeInterface>()->wavelengthRange();
+    Range range = interface<SourceWavelengthRangeInterface>()->wavelengthRange();
 
     // determine the wavelengths that fall inside the source range
     int numBins = wavelengthGrid()->numBins();

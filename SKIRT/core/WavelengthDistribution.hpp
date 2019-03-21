@@ -19,7 +19,7 @@ class Random;
     wavelength.
 
     The wavelength probability distribution is automatically normalized to unity over the
-    wavelength range of the associated source (obtained through the WavelengthRangeInterface),
+    wavelength range of the associated source (obtained through the SourceWavelengthRangeInterface),
     intersected with the intrinsic wavelength range of the distribution. Consequently, the random
     wavelengths returned by the generateWavelength() function will always fall inside the
     intersected range, and the value returned by the probability() function can be nonzero only

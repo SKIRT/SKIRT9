@@ -77,11 +77,12 @@ public:
         simulation, which are also user-configured in the source system. */
     Range sourceWavelengthRange() const { return _sourceWavelengthRange; }
 
-    /** Returns a wavelength range that covers all wavelengths possibly emitted or transported by
-        the simulation. This range includes the primary and secondary source wavelength ranges
-        extended on both sides to accommodate a redshift or blueshift caused by kinematics
-        corresponding to \f$v/c=1/3\f$. It also includes the range of the default instrument
-        wavelength grid. */
+    /** Returns a wavelength range that covers all wavelengths possibly used in the simulation for
+        photon transport or for otherwise probing material properties (e.g. optical depth). This
+        range includes the primary and secondary source wavelength ranges extended on both sides to
+        accommodate a redshift or blueshift caused by kinematics corresponding to \f$v/c=1/3\f$. It
+        also includes the range of the instrument wavelength grids and the wavelengths used for
+        material normalization and material property probes. */
     Range simulationWavelengthRange() const;
 
     /** Returns the wavelength grid to be used for an instrument or probe, given the wavelength

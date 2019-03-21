@@ -10,9 +10,9 @@
 
 ////////////////////////////////////////////////////////////////////
 
-/** WavelengthRangeInterface is a pure interface. It is implemented by primary or secondary sources
-    so that the source wavelength range can be obtained by other simulation items without requiring
-    a dependence on the originating object. */
+/** WavelengthRangeInterface is an abstract base class for pure interfaces that can be implemented
+    by simulation items wishing to communicate a wavelength range to other simulation items without
+    requiring a compile-time dependence on the originating object's type. */
 class WavelengthRangeInterface
 {
 protected:

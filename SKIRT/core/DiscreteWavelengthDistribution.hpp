@@ -25,8 +25,8 @@
     with equal probability among those wavelengths. More precisely, the
     DiscreteWavelengthDistribution instance uses only the characteristic wavelengths of the
     configured grid that fall inside the wavelength range of the associated source (obtained
-    through the WavelengthRangeInterface). If none of the characteristic wavelengths fall inside
-    the source range, a fatal error is issued.
+    through the SourceWavelengthRangeInterface). If none of the characteristic wavelengths fall
+    inside the source range, a fatal error is issued.
 
     When sending photon packets at a particular grid of discrete wavelengths, it makes little sense
     to configure wavelength grids with different bins for detecting photon packets in other areas

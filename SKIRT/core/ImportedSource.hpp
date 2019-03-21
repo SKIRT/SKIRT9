@@ -92,7 +92,7 @@ public:
         simulation's source wavelength range (obtained from the simulation configuration) and the
         intrinsic wavelength range of the %SED family associated with the source.
 
-        This function implements the WavelengthRangeInterface interface. */
+        This function implements the SourceWavelengthRangeInterface interface. */
     Range wavelengthRange() const override;
 
     /** This function returns the luminosity \f$L\f$ (i.e. radiative power) of the source

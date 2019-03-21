@@ -234,21 +234,24 @@ void Configuration::setEmulationMode()
 
 Range Configuration::simulationWavelengthRange() const
 {
+    // implementation note: we explicitly call setup() on wavelength grids before accessing them
+    //                      because this function may be called early during simulation setup
+
     // include primary and secondary source ranges
     Range range = _sourceWavelengthRange;
     if (_dustEmissionWLG)
     {
-        _dustEmissionWLG->setup();  // ensure setup because this function may be called early during setup
+        _dustEmissionWLG->setup();
         range.extend(_dustEmissionWLG->wavelengthRange());
     }
 
     // extend this range with a wide margin for kinematics if needed
-    if (_hasMovingSources || _hasMovingMedia) range.extend(1./3.);
+    if (_hasMovingSources || _hasMovingMedia) range.extendWithRedshift(1./3.);
 
     // include radiation field wavelength grid (because dust properties are pre-calculated on these wavelengths)
     if (_hasRadiationField)
     {
-        _radiationFieldWLG->setup();  // ensure setup because this function may be called early during setup
+        _radiationFieldWLG->setup();
         range.extend(_radiationFieldWLG->wavelengthRange());
         range.extend(Range(0.09e-6, 2000e-6));   // (see DustMix::setupSelfAfter())
     }
@@ -256,12 +259,12 @@ Range Configuration::simulationWavelengthRange() const
     // include default instrument wavelength grid
     if (_defaultWavelengthGrid)
     {
-        _defaultWavelengthGrid->setup();  // ensure setup because this function may be called early during setup
+        _defaultWavelengthGrid->setup();
         range.extend(_defaultWavelengthGrid->wavelengthRange());
     }
 
     // extend the final range with a narrow margin for round-offs
-    range.extend(1./100.);
+    range.extendWithRedshift(1./100.);
     return range;
 }
 

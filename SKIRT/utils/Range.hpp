@@ -70,8 +70,15 @@ public:
         if (range._max > _max) _max = range._max;
     }
 
+    /** This function updates the range so that it includes the specified value. */
+    void extend(double x)
+    {
+        if (x < _min) _min = x;
+        if (x > _max) _max = x;
+    }
+
     /** This function extends the range with a factor of (1+z) on each side. */
-    void extend(double z)
+    void extendWithRedshift(double z)
     {
         _min /= (1.+z);
         _max *= (1.+z);
