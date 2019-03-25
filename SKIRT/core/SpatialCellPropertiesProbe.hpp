@@ -18,7 +18,7 @@
     electron number density, and (gas) hydrogen number density. */
 class SpatialCellPropertiesProbe : public AbstractWavelengthProbe
 {
-    ITEM_CONCRETE(SpatialCellPropertiesProbe, Probe, "relevant properties for all spatial cells")
+    ITEM_CONCRETE(SpatialCellPropertiesProbe, AbstractWavelengthProbe, "relevant properties for all spatial cells")
         ATTRIBUTE_TYPE_DISPLAYED_IF(SpatialCellPropertiesProbe, "Level2&SpatialGrid")
 
     ITEM_END()
