@@ -200,7 +200,8 @@ public:
         double inputabs = (_rfsigmaabsv * Jv * _rfdlambdav).sum();
 
         // find the temperature corresponding to this amount of emission on the output side of the equation
-        return NR::clampedValue<NR::interpolateLinLin>(inputabs, _planckabsv, _grid->_Tv);
+        if (inputabs > 0.) return NR::clampedValue<NR::interpolateLinLin>(inputabs, _planckabsv, _grid->_Tv);
+        else return 0.;
     }
 
     // add the equilibrium emissivity of the population

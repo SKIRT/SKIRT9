@@ -106,7 +106,8 @@ double EquilibriumDustEmissionCalculator::equilibriumTemperature(int b, const Ar
     double inputabs = (_rfsigmaabsvv[b] * Jv * _rfdlambdav).sum();
 
     // find the temperature corresponding to this amount of emission on the output side of the equation
-    return NR::clampedValue<NR::interpolateLinLin>(inputabs, _planckabsvv[b], _Tv);
+    if (inputabs > 0.) return NR::clampedValue<NR::interpolateLinLin>(inputabs, _planckabsvv[b], _Tv);
+    else return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
