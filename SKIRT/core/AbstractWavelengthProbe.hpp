@@ -16,7 +16,7 @@
     wavelength-dependent material properties may be required for the configured wavelength. */
 class AbstractWavelengthProbe : public Probe, public MaterialWavelengthRangeInterface
 {
-    ITEM_CONCRETE(AbstractWavelengthProbe, Probe, "a probe requiring a wavelength value")
+    ITEM_ABSTRACT(AbstractWavelengthProbe, Probe, "a probe requiring a wavelength value")
         ATTRIBUTE_TYPE_DISPLAYED_IF(SpatialGridConvergenceProbe, "Medium&SpatialGrid")
 
     PROPERTY_DOUBLE(wavelength, "the wavelength at which to determine the optical depth")

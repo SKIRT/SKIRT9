@@ -18,7 +18,7 @@
     range. */
 class AbstractWavelengthGridProbe : public Probe, public MaterialWavelengthRangeInterface
 {
-    ITEM_CONCRETE(AbstractWavelengthGridProbe, Probe, "a probe requiring a wavelength grid")
+    ITEM_ABSTRACT(AbstractWavelengthGridProbe, Probe, "a probe requiring a wavelength grid")
 
     PROPERTY_ITEM(wavelengthGrid, WavelengthGrid, "the wavelength grid for this probe")
         ATTRIBUTE_RELEVANT_IF(wavelengthGrid, "Panchromatic")
