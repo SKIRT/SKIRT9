@@ -9,6 +9,8 @@
 
 #ifdef BUILD_WITH_MPI
 #include <mpi.h>
+#include <chrono>
+#include <thread>
 #endif
 
 ////////////////////////////////////////////////////////////////////
@@ -110,6 +112,15 @@ int ProcessManager::waitForChunkRequest()
 {
 #ifdef BUILD_WITH_MPI
     if (!isMultiProc() || !isRoot()) throwInvalidChunkInvocation();
+
+    // avoid using CPU while waiting for a message
+    while (true)
+    {
+        int flag;
+        MPI_Iprobe(MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &flag, MPI_STATUS_IGNORE);
+        if (flag) break;
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    }
 
     std::array<int,1> recvbuf{{0}};
     MPI_Recv(recvbuf.begin(), recvbuf.size(), MPI_INT, MPI_ANY_SOURCE, 1,
