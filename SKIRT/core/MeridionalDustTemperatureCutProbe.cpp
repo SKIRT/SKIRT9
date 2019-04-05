@@ -23,7 +23,7 @@ void MeridionalDustTemperatureCutProbe::probeRun()
         auto units = find<Units>();
 
         // create a text file
-        TextOutFile file(this, itemName() + "_T", "dust temperature along a line segment");
+        TextOutFile file(this, itemName() + "_T", "dust temperature along a meridional");
 
         // write the header
         file.writeLine("# Indicative dust temperature along a meridian");
