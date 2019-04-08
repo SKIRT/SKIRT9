@@ -273,7 +273,9 @@ Range Configuration::simulationWavelengthRange() const
     {
         _radiationFieldWLG->setup();
         range.extend(_radiationFieldWLG->wavelengthRange());
-        range.extend(Range(0.09e-6, 2000e-6));   // (see DustMix::setupSelfAfter())
+        // the calculation of the Planck-integrated absorption cross sections needs this wavelength range;
+        // see the precalculate() function in EquilibriumDustEmissionCalculator and StochasticDustEmissionCalculator
+        range.extend(Range(0.09e-6, 2000e-6));
     }
 
     // include default instrument wavelength grid
