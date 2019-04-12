@@ -28,7 +28,7 @@ if (CMAKE_HOST_WIN32)
     set(SOURCES ${SOURCES} mirror.ico MakeUp.rc)
 endif()
 
-# if SKIRT and/or FitSKIRT are available, have them generate a SMILE schema file
+# if SKIRT is available, have it generate a SMILE schema file
 set(SMILE_SCHEMA_DIR ${CMAKE_CURRENT_BINARY_DIR}/../schemas)
 file(MAKE_DIRECTORY ${SMILE_SCHEMA_DIR})
 if (BUILD_SKIRT)
@@ -37,13 +37,6 @@ if (BUILD_SKIRT)
                        DEPENDS skirtcore
                        WORKING_DIRECTORY ${SMILE_SCHEMA_DIR})
     set(SOURCES ${SOURCES} ${SMILE_SCHEMA_DIR}/skirt.smile)
-endif()
-if (BUILD_FIT_SKIRT)
-    add_custom_command(OUTPUT ${SMILE_SCHEMA_DIR}/fitskirt.smile
-                       COMMAND fitskirt -x
-                       DEPENDS fitskirtcore
-                       WORKING_DIRECTORY ${SMILE_SCHEMA_DIR})
-    set(SOURCES ${SOURCES} ${SMILE_SCHEMA_DIR}/fitskirt.smile)
 endif()
 
 # create the executable target
