@@ -11,12 +11,10 @@
 # select download command: wget (Linux) or curl (Mac OS X)
 if which wget >/dev/null
 then
-    #DOWNLOAD="wget --no-check-certificate https://sciences.ugent.be/skirtextdat/SKIRT9/"
-    DOWNLOAD="wget http://www.skirt.ugent.be/skirtextdat/SKIRT9/"
+    DOWNLOAD="wget --no-check-certificate https://sciences.ugent.be/skirtextdat/SKIRT9/Resources/"
 elif which curl >/dev/null
 then
-    #DOWNLOAD="curl --insecure -O https://sciences.ugent.be/skirtextdat/SKIRT9/"
-    DOWNLOAD="curl -O http://www.skirt.ugent.be/skirtextdat/SKIRT9/"
+    DOWNLOAD="curl --insecure -O https://sciences.ugent.be/skirtextdat/SKIRT9/Resources/"
 else
     echo error: no wget or curl available to download files
     exit 1
