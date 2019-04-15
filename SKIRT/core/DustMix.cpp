@@ -38,7 +38,8 @@ void DustMix::setupSelfAfter()
 
     // determine the parameters for a fine grid covering the wavelength range of the simulation in log space;
     // use integer multiples as logarithmic grid points so that the grid is stable for changing wavelength ranges
-    const int numWavelengthsPerDex = 1024;
+    // HACK: use multiple of 11 so that the points of the TRUST SLAB basic wavelength grid are included exactly
+    const int numWavelengthsPerDex = 1023;
     Range range = find<Configuration>()->simulationWavelengthRange();
     int minLambdaSerial = std::floor(numWavelengthsPerDex*log10(range.min()));
     int maxLambdaSerial = std::ceil(numWavelengthsPerDex*log10(range.max()));
@@ -49,7 +50,7 @@ void DustMix::setupSelfAfter()
 
     // build a temporary wavelength grid corresponding to this scheme
     Array lambdav(numLambda);
-    for (int ell=0; ell!=numLambda; ++ell) lambdav[ell] = pow(10., (ell+_logLambdaOffset+0.5)/_logLambdaFactor);
+    for (int ell=0; ell!=numLambda; ++ell) lambdav[ell] = pow(10., (ell+_logLambdaOffset)/_logLambdaFactor);
 
     // if needed, build a scattering angle grid
     if (mode == ScatteringMode::MaterialPhaseFunction || mode == ScatteringMode::SphericalPolarization)
@@ -169,7 +170,7 @@ size_t DustMix::initializeExtraProperties(const Array& /*lambdav*/)
 
 int DustMix::indexForLambda(double lambda) const
 {
-    int ell = static_cast<int>(log10(lambda) * _logLambdaFactor) - _logLambdaOffset;
+    int ell = static_cast<int>(std::round(log10(lambda) * _logLambdaFactor)) - _logLambdaOffset;
     return max(0, min(ell, _maxLambdaIndex));
 }
 
