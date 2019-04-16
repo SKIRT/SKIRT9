@@ -339,7 +339,12 @@ public:
         values are not verified. */
     static inline double interpolateLogLog(double x, double x1, double x2, double f1, double f2)
     {
-        if (f1<=0 || f2<=0) return 0;
+        if (f1<=0 || f2<=0)
+        {
+            if (x==x1) return f1;
+            if (x==x2) return f2;
+            return 0;
+        }
         return f1 * exp( log(x/x1)/log(x2/x1)*(log(f2/f1)) );
     }
 
