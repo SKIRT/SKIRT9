@@ -174,11 +174,11 @@ namespace
     private:
         // information initialized once, during the first call to calculateIfNeeded()
         MediumSystem* _ms{nullptr};         // the medium system
-        DisjointWavelengthGrid* _wavelengthGrid{nullptr}; // the radiation field wavelength grid
+        DisjointWavelengthGrid* _wavelengthGrid{nullptr}; // the dust emission wavelength grid
         vector<int> _hv;                    // a list of the media indices for the media containing dust
         int _numMedia{0};                   // the number of dust media in the system (and thus the size of hv)
         int _numCells{0};                   // the number of cells in the spatial grid (and thus the size of mv and nv)
-        int _numWavelengths{0};             // the number of wavelengths in the radiation field wavelength grid
+        int _numWavelengths{0};             // the number of wavelengths in the dust emission wavelength grid
 
         // information on a particular spatial cell, initialized by calculateIfNeeded()
         int _p{-1};                         // spatial cell launch-order index
@@ -367,7 +367,7 @@ void SecondarySourceSystem::launch(PhotonPacket* pp, size_t historyIndex) const
             {
                 // if the wavelength can't occur in the intrinsic distribution,
                 // the weight factor is zero regardless of the probability in the bias distribution
-                // (handling this separately also avoids NaNs in the pathological case s=d=0)
+                // (handling this separately also avoids NaNs in the pathological case s=b=0)
                 w = 0.;
             }
             else
