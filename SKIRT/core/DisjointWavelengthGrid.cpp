@@ -18,7 +18,7 @@ void DisjointWavelengthGrid::setupSelfAfter()
 
 ////////////////////////////////////////////////////////////////////
 
-void DisjointWavelengthGrid::setWavelengthRange(const Array& lambdav)
+void DisjointWavelengthGrid::setWavelengthRange(const Array& lambdav, bool logScale)
 {
     // copy and sort the specified characteristic wavelengths
     _lambdav = lambdav;
@@ -37,13 +37,33 @@ void DisjointWavelengthGrid::setWavelengthRange(const Array& lambdav)
     _lambdaleftv.resize(n);
     _lambdarightv.resize(n);
     _borderv.resize(n+1);
-
-    _lambdaleftv[0] = _borderv[0] = _lambdav[0] * 0.999;
-    for (size_t ell=1; ell!=n; ++ell)
+    if (n==1)
     {
-        _lambdarightv[ell-1] = _lambdaleftv[ell] = _borderv[ell] = sqrt(_lambdav[ell-1]*_lambdav[ell]);
+        // just a single wavelength -> form narrow bin
+        _lambdaleftv[0] = _borderv[0] = _lambdav[0] * 0.999;
+        _lambdarightv[0] = _borderv[1] = _lambdav[0] * 1.001;
     }
-    _lambdarightv[n-1] = _borderv[n] = _lambdav[n-1] * 1.001;
+    else
+    {
+        if (logScale)
+        {
+            _lambdaleftv[0] = _borderv[0] = sqrt(_lambdav[0]*_lambdav[0]*_lambdav[0]/_lambdav[1]);
+            for (size_t ell=1; ell!=n; ++ell)
+            {
+                _lambdarightv[ell-1] = _lambdaleftv[ell] = _borderv[ell] = sqrt(_lambdav[ell-1]*_lambdav[ell]);
+            }
+            _lambdarightv[n-1] = _borderv[n] = sqrt(_lambdav[n-1]*_lambdav[n-1]*_lambdav[n-1]/_lambdav[n-2]);
+        }
+        else
+        {
+            _lambdaleftv[0] = _borderv[0] = (3.*_lambdav[0]-_lambdav[1])/2.;
+            for (size_t ell=1; ell!=n; ++ell)
+            {
+                _lambdarightv[ell-1] = _lambdaleftv[ell] = _borderv[ell] = (_lambdav[ell-1]+_lambdav[ell])/2.;
+            }
+            _lambdarightv[n-1] = _borderv[n] = (3.*_lambdav[n-1]-_lambdav[n-2])/2.;
+        }
+    }
 
     // calculate the bin widths
     _dlambdav = _lambdarightv - _lambdaleftv;

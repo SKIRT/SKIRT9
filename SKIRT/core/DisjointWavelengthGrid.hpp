@@ -49,16 +49,31 @@ protected:
         function. If the specified wavelength list is empty, or if there are duplicate values
         (which would lead to empty bins), the function throws a fatal error.
 
-        Specifically, the function first sorts the specified characteristic wavelengths in
-        ascending order and then calculates the bin borders as follows. The inner border between
-        two consecutive characteristic wavelengths is placed at the geometric mean of those two
-        wavelengths, i.e. \f$\lambda^\mathrm{right}_{\ell-1} = \lambda^\mathrm{left}_\ell =
-        \sqrt{\lambda^\mathrm{c}_{\ell-1}\lambda^\mathrm{c}_\ell}\;, \ell=1\dots N-1\f$. The outer
-        borders at the very left and right of the wavelength range are placed just outside of the
-        range, i.e. \f$\lambda^\mathrm{left}_0 = \lambda^\mathrm{c}_0(1-1/1000)\f$ and
-        \f$\lambda^\mathrm{right}_{N-1} = \lambda^\mathrm{c}_{N-1}(1+1/1000)\f$. Finally the
-        function trivially calculates the wavelength bin widths from the bin borders. */
-    void setWavelengthRange(const Array& lambdav);
+        The function first sorts the specified characteristic wavelengths in ascending order and
+        then calculates the bin borders assuming linear or logarithmic scaling depending on the
+        value of the \em logScale flag. The inner border between two consecutive characteristic
+        wavelengths is placed at the mid-point of those two wavelengths (in linear or logarithmic
+        space), and the outer borders at the edges of the wavelength range are placed such that the
+        outer bins have the same width as the respective adjacent bins (in linear or logarithmic
+        space). If the wavelength grid has just a single wavelength, the borders are placed just
+        next to the wavelength to form a narrow bin. Finally, the function trivially calculates the
+        wavelength bin widths from the bin borders.
+
+        For linear scaling, the corresponding formulas are trivial. For logarithmic scaling (the
+        default), the formalas in logarithmic space translate easily to equivalent but more
+        efficient formulas in real space. For the inner borders this yields the geometric mean of
+        the two adjacent characteristic wavelengths, i.e. \f$\lambda^\mathrm{right}_{\ell-1} =
+        \lambda^\mathrm{left}_\ell = \sqrt{\lambda^\mathrm{c}_{\ell-1}\lambda^\mathrm{c}_\ell}\;,
+        \ell=1\dots N-1\f$. The leftmost outer border is placed at \f$\lambda^\mathrm{left}_0 =
+        \sqrt{(\lambda^\mathrm{c}_{0})^3/\lambda^\mathrm{c}_1}\f$, and the rightmost outer border
+        is placed at \f$\lambda^\mathrm{right}_{N-1} =
+        \sqrt{(\lambda^\mathrm{c}_{N-1})^3/\lambda^\mathrm{c}_{N-2}}\f$.
+
+        If there is just a single wavelength in the grid, the outer borders are placed (for both
+        linear and logarithmic scaling) according to \f$\lambda^\mathrm{left}_0 =
+        \lambda^\mathrm{c}_{0}(1-1/1000)\f$ and \f$\lambda^\mathrm{right}_0 =
+        \lambda^\mathrm{c}_{0}(1+1/1000)\f$.  */
+    void setWavelengthRange(const Array& lambdav, bool logScale = true);
 
     /** This function initializes the wavelength grid to a set of distinct, nonadjacent wavelength
         bins given a list of characteric wavelengths and a relative half bin width. This function
