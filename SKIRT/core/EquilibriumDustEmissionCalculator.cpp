@@ -38,11 +38,7 @@ void EquilibriumDustEmissionCalculator::precalculate(SimulationItem* item,
         {
             auto dustEmissionWLG = config->dustEmissionWLG();
             dustEmissionWLG->setup();
-            _emlambdav.resize(dustEmissionWLG->numBins());
-            for (int ell=0; ell!=dustEmissionWLG->numBins(); ++ell)
-            {
-                _emlambdav[ell] = dustEmissionWLG->wavelength(ell);
-            }
+            _emlambdav = dustEmissionWLG->extlambdav();
         }
 
         // build the temperature grid on which we store the Planck-integrated absorption cross sections

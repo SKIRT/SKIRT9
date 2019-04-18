@@ -199,3 +199,17 @@ int DisjointWavelengthGrid::bin(double lambda) const
 }
 
 ////////////////////////////////////////////////////////////////////
+
+Array DisjointWavelengthGrid::extlambdav() const
+{
+    int n = _lambdav.size();
+    Array extv(n+2);
+
+    extv[0] = _lambdaleftv[0];
+    for (int ell=0; ell!=n; ++ell) extv[ell+1] = _lambdav[ell];
+    extv[n+1] = _lambdarightv[n-1];
+
+    return extv;
+}
+
+////////////////////////////////////////////////////////////////////

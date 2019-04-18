@@ -361,11 +361,7 @@ void StochasticDustEmissionCalculator::precalculate(SimulationItem* item,
         // copy the simulation's dust emission wavelength grid
         auto dustEmissionWLG = item->find<Configuration>()->dustEmissionWLG();
         dustEmissionWLG->setup();
-        _emlambdav.resize(dustEmissionWLG->numBins());
-        for (int ell=0; ell!=dustEmissionWLG->numBins(); ++ell)
-        {
-            _emlambdav[ell] = dustEmissionWLG->wavelength(ell);
-        }
+        _emlambdav = dustEmissionWLG->extlambdav();
 
         // build the three temperature grids
         _gridA = new SDE_TemperatureGrid(_emlambdav, 2., Tuppermax, NTA, ratioA);

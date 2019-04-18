@@ -102,7 +102,8 @@ namespace
         {
             double lambda = wavelengthGrid->wavelength(ell);
             vector<double> values({ units->owavelength(lambda) });
-            for (size_t i=0; i!=hv.size(); ++i) values.push_back(lambda*evv(i,ell));
+            for (size_t i=0; i!=hv.size(); ++i) values.push_back(lambda*evv(i,ell+1));
+                                // (add 1 to ell to skip leftmost wavelength grid border point included in evv)
             file.writeRow(values);
         }
     }

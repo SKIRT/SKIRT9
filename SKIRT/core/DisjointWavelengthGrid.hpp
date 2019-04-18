@@ -146,6 +146,14 @@ public:
         consecutive wavelength grids. */
     const Array& dlambdav() const { return _dlambdav; }
 
+    /** This function returns a list of the characteristic wavelengths in this wavelength grid
+        extended with the outermost bin border point on each side. The list has thus two additional
+        points, one on each side, and as a result covers the complete wavelength range of the grid,
+        including the widths of the outer bins. This extended wavelength list can be used in
+        situations where one needs to calculate/interpolate some function over the complete range
+        of the wavelength grid and not just up to the outermost characteristic wavelengths. */
+    Array extlambdav() const;
+
     //======================== Data Members ========================
 
 private:

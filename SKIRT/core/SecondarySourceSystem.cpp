@@ -174,11 +174,12 @@ namespace
     private:
         // information initialized once, during the first call to calculateIfNeeded()
         MediumSystem* _ms{nullptr};         // the medium system
-        DisjointWavelengthGrid* _wavelengthGrid{nullptr}; // the dust emission wavelength grid
+        Array _wavelengthGrid;              // the dust emission wavelength grid
+        Range _wavelengthRange;             // the range of the dust emission wavelength grid
+        int _numWavelengths{0};             // the number of wavelengths in the dust emission wavelength grid
         vector<int> _hv;                    // a list of the media indices for the media containing dust
         int _numMedia{0};                   // the number of dust media in the system (and thus the size of hv)
         int _numCells{0};                   // the number of cells in the spatial grid (and thus the size of mv and nv)
-        int _numWavelengths{0};             // the number of wavelengths in the dust emission wavelength grid
 
         // information on a particular spatial cell, initialized by calculateIfNeeded()
         int _p{-1};                         // spatial cell launch-order index
@@ -206,11 +207,13 @@ namespace
             if (_p == -1)
             {
                 _ms = ms;
-                _wavelengthGrid = config->dustEmissionWLG();
+                auto wavelengthGrid = config->dustEmissionWLG();
+                _wavelengthGrid = wavelengthGrid->extlambdav();
+                _wavelengthRange = wavelengthGrid->wavelengthRange();
+                _numWavelengths = _wavelengthGrid.size();
                 for (int h=0; h!=ms->numMedia(); ++h) if (ms->isDust(h)) _hv.push_back(h);
                 _numMedia = _hv.size();
                 _numCells = ms->grid()->numCells();
-                _numWavelengths = _wavelengthGrid->numBins();
                 _evv.resize(ms->numMedia());
             }
 
@@ -289,8 +292,7 @@ namespace
             for (int h : _hv) ev += _ms->numberDensity(m,h) * _ms->mix(m,h)->emissivity(Jv);
 
             // calculate the normalized plain and cumulative distributions
-            NR::cdf<NR::interpolateLogLog>(_lambdav, _pv, _Pv, _wavelengthGrid->lambdav(), ev,
-                                           _wavelengthGrid->wavelengthRange());
+            NR::cdf<NR::interpolateLogLog>(_lambdav, _pv, _Pv, _wavelengthGrid, ev, _wavelengthRange);
         }
 
         // calculate the emmissivity spectra for the specified radiation field and the dust mixes of the specified cell,
@@ -310,8 +312,7 @@ namespace
             for (int h : _hv) ev += _ms->numberDensity(m,h) * _evv[h];
 
             // calculate the normalized plain and cumulative distributions
-            NR::cdf<NR::interpolateLogLog>(_lambdav, _pv, _Pv, _wavelengthGrid->lambdav(), ev,
-                                           _wavelengthGrid->wavelengthRange());
+            NR::cdf<NR::interpolateLogLog>(_lambdav, _pv, _Pv, _wavelengthGrid, ev, _wavelengthRange);
         }
 
     public:
