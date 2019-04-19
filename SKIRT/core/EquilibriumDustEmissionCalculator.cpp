@@ -7,7 +7,10 @@
 #include "Configuration.hpp"
 #include "DisjointWavelengthGrid.hpp"
 #include "NR.hpp"
+#include "Parallel.hpp"
+#include "ParallelFactory.hpp"
 #include "PlanckFunction.hpp"
+#include "ProcessManager.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -55,21 +58,29 @@ void EquilibriumDustEmissionCalculator::precalculate(SimulationItem* item,
     }
 
     // calculate the Planck-integrated absorption cross sections on the temperature grid
-    int numLambda = lambdav.size();
+    // this can take a few seconds for all populations/size bins combined,
+    // so we parallelize the loop but there is no reason to log progress
     int numT = _Tv.size();
     _planckabsvv.emplace_back(numT);
-    for (int p=1; p!=numT; ++p)   // leave value for p==0 at zero
+    item->find<ParallelFactory>()->parallelDistributed()->call(numT,
+        [this,&lambdav,&sigmaabsv,&b] (size_t firstIndex, size_t numIndices)
     {
-        PlanckFunction B(_Tv[p]);
-        double planckabs = 0.;
-        for (int j=1; j!=numLambda; ++j) // skip the first wavelength so we can determine a bin width
+        size_t numLambda = lambdav.size();
+        if (firstIndex==0) firstIndex++; // skip p=0, leaving its value at zero, because B(0) is not defined
+        for (size_t p=firstIndex; p!=firstIndex+numIndices; ++p)
         {
-            double lambda = lambdav[j];
-            double dlambda = lambdav[j] - lambdav[j-1];
-            planckabs += sigmaabsv[j] * B(lambda) * dlambda;
+            PlanckFunction B(_Tv[p]);
+            double planckabs = 0.;
+            for (size_t j=1; j!=numLambda; ++j) // skip the first wavelength so we can determine a bin width
+            {
+                double lambda = lambdav[j];
+                double dlambda = lambdav[j] - lambdav[j-1];
+                planckabs += sigmaabsv[j] * B(lambda) * dlambda;
+            }
+            _planckabsvv[b][p] = planckabs;
         }
-        _planckabsvv[b][p] = planckabs;
-    }
+    });
+    ProcessManager::sumToAll(_planckabsvv[b]);
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -308,17 +308,25 @@ size_t MultiGrainDustMix::initializeExtraProperties(const Array& lambdav)
                 }
 
                 // size-integrate the absorption cross sections for this bin
-                for (int ell=0; ell!=numLambda; ++ell)
+                // this can take a few seconds for all populations/size bins combined,
+                // so we parallelize the loop but there is no reason to log progress
+                find<ParallelFactory>()->parallelDistributed()->call(numLambda,
+                    [&lambdav,&av,&dav,&dndav,&weightv,&Qabs,&sigmaabsv] (size_t firstIndex, size_t numIndices)
                 {
-                    double lamdba = lambdav[ell];
-                    double sum = 0.;
-                    for (int i=0; i!=numSizes; ++i)
+                    size_t numSizes = av.size();
+                    for (size_t ell=firstIndex; ell!=firstIndex+numIndices; ++ell)
                     {
-                        double area = M_PI * av[i] * av[i];
-                        sum += weightv[i] * dndav[i] * area * Qabs(av[i], lamdba) * dav[i];
+                        double lamdba = lambdav[ell];
+                        double sum = 0.;
+                        for (size_t i=0; i!=numSizes; ++i)
+                        {
+                            double area = M_PI * av[i] * av[i];
+                            sum += weightv[i] * dndav[i] * area * Qabs(av[i], lamdba) * dav[i];
+                        }
+                        sigmaabsv[ell] = sum;
                     }
-                    sigmaabsv[ell] = sum;
-                }
+                });
+                ProcessManager::sumToAll(sigmaabsv);
 
                 // setup the appropriate emissivity calculator for this bin
                 if (_stochastic)
