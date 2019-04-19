@@ -32,25 +32,46 @@ namespace
 void DustMix::setupSelfAfter()
 {
     MaterialMix::setupSelfAfter();
+    auto config = find<Configuration>();
+
+    // construct a wavelength grid for sampling dust properties containing two (merged) sets of grid points:
+    //  - a fine grid (in log space) covering the entire wavelength range of the simulation
+    //  - all specific wavelengths mentioned in the configuration of the simulation (grids, normalizations, ...)
+    //    ensuring that the dust properties are interpolated at exactly these wavelengths (e.g. for benchmarks)
+    // we first gather all the wavelength points, in arbitrary order, and then sort them
+    vector<double> wavelengths;
+    wavelengths.reserve(10000);
+
+    // add a fine grid covering the wavelength range of the simulation in log space;
+    // use integer multiples as logarithmic grid points so that the grid is stable for changing wavelength ranges
+    const double numWavelengthsPerDex = 1000;  // declared as double to avoid casting, but should be an integer
+    Range range = config->simulationWavelengthRange();
+    int minLambdaSerial = std::floor(numWavelengthsPerDex*log10(range.min()));
+    int maxLambdaSerial = std::ceil(numWavelengthsPerDex*log10(range.max()));
+    for (int k=minLambdaSerial; k<=maxLambdaSerial; ++k) wavelengths.push_back(pow(10., k/numWavelengthsPerDex));
+
+    // add the wavelengths mentioned in the configuration of the simulation
+    for (double lambda : config->simulationWavelengths()) wavelengths.push_back(lambda);
+
+    // sort the wavelengths and remove duplicates
+    std::sort(wavelengths.begin(), wavelengths.end());
+    int numLambda = std::unique(wavelengths.begin(), wavelengths.end()) - wavelengths.begin();
+
+    // copy the wavelengths into a temporary (local) array that will be used to sample the dust properties
+    Array lambdav(numLambda);
+    for (int ell=0; ell!=numLambda; ++ell) lambdav[ell] = wavelengths[ell];
+
+    // derive a wavelength grid that will be used for converting a wavelength to an index in the above array;
+    // the grid points are shifted to the left of the actual sample points to approximate rounding
+    _lambdav.resize(numLambda);
+    _lambdav[0] = lambdav[0];
+    for (int ell=1; ell!=numLambda; ++ell)
+    {
+        _lambdav[ell] = sqrt(lambdav[ell]*lambdav[ell-1]);
+    }
 
     // get the scattering mode advertised by this dust mix
     auto mode = scatteringMode();
-
-    // determine the parameters for a fine grid covering the wavelength range of the simulation in log space;
-    // use integer multiples as logarithmic grid points so that the grid is stable for changing wavelength ranges
-    // HACK: use multiple of 11 so that the points of the TRUST SLAB basic wavelength grid are included exactly
-    const int numWavelengthsPerDex = 1023;
-    Range range = find<Configuration>()->simulationWavelengthRange();
-    int minLambdaSerial = std::floor(numWavelengthsPerDex*log10(range.min()));
-    int maxLambdaSerial = std::ceil(numWavelengthsPerDex*log10(range.max()));
-    _logLambdaFactor = numWavelengthsPerDex;
-    _logLambdaOffset = minLambdaSerial;
-    _maxLambdaIndex = maxLambdaSerial - minLambdaSerial;
-    int numLambda = _maxLambdaIndex+1;
-
-    // build a temporary wavelength grid corresponding to this scheme
-    Array lambdav(numLambda);
-    for (int ell=0; ell!=numLambda; ++ell) lambdav[ell] = pow(10., (ell+_logLambdaOffset)/_logLambdaFactor);
 
     // if needed, build a scattering angle grid
     if (mode == ScatteringMode::MaterialPhaseFunction || mode == ScatteringMode::SphericalPolarization)
@@ -128,7 +149,7 @@ void DustMix::setupSelfAfter()
 
     // precalculate information to accelerate solving the energy balance equation for the temperature;
     // this is relevant only if the simulation tracks the radiation field
-    if (find<Configuration>()->hasPanRadiationField())
+    if (config->hasPanRadiationField())
     {
         _calc.precalculate(this, lambdav, _sigmaabsv);
     }
@@ -170,8 +191,7 @@ size_t DustMix::initializeExtraProperties(const Array& /*lambdav*/)
 
 int DustMix::indexForLambda(double lambda) const
 {
-    int ell = static_cast<int>(std::round(log10(lambda) * _logLambdaFactor)) - _logLambdaOffset;
-    return max(0, min(ell, _maxLambdaIndex));
+    return NR::locateClip(_lambdav, lambda);
 }
 
 ////////////////////////////////////////////////////////////////////

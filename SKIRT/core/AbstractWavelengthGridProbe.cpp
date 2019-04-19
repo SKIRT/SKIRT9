@@ -18,3 +18,10 @@ Range AbstractWavelengthGridProbe::wavelengthRange() const
 }
 
 ////////////////////////////////////////////////////////////////////
+
+WavelengthGrid* AbstractWavelengthGridProbe::materialWavelengthGrid() const
+{
+    return wavelengthGrid();
+}
+
+////////////////////////////////////////////////////////////////////

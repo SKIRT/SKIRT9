@@ -17,6 +17,7 @@
 #include "OligoWavelengthDistribution.hpp"
 #include "OligoWavelengthGrid.hpp"
 #include "PhotonPacketOptions.hpp"
+#include <set>
 
 ////////////////////////////////////////////////////////////////////
 
@@ -235,10 +236,19 @@ void Configuration::setEmulationMode()
 
 namespace
 {
+    // This function extends the specified wavelength range with the range of the specified wavelength grid
+    void extendForWavelengthGrid(Range& range, WavelengthGrid* wavelengthGrid)
+    {
+        // we explicitly call setup() on wavelength grids before accessing them
+        // because this function may be called early during simulation setup
+        wavelengthGrid->setup();
+        range.extend(wavelengthGrid->wavelengthRange());
+    }
+
     // This function extends the specified wavelength range with the ranges requested by simulation items
     // in the specified hierarchy that implement the MaterialWavelengthRangeInterface.
     // The function calls itself recursively.
-    void extendWavelengthRange(Range& range, Item* item)
+    void extendForMaterialWavelengthRange(Range& range, Item* item)
     {
         auto interface = dynamic_cast<MaterialWavelengthRangeInterface*>(item);
         if (interface)
@@ -246,7 +256,7 @@ namespace
             Range requested = interface->wavelengthRange();
             if (requested.min() > 0) range.extend(requested);
         }
-        for (auto child : item->children()) extendWavelengthRange(range, child);
+        for (auto child : item->children()) extendForMaterialWavelengthRange(range, child);
     }
 }
 
@@ -254,16 +264,9 @@ namespace
 
 Range Configuration::simulationWavelengthRange() const
 {
-    // implementation note: we explicitly call setup() on wavelength grids before accessing them
-    //                      because this function may be called early during simulation setup
-
     // include primary and secondary source ranges
     Range range = _sourceWavelengthRange;
-    if (_dustEmissionWLG)
-    {
-        _dustEmissionWLG->setup();
-        range.extend(_dustEmissionWLG->wavelengthRange());
-    }
+    if (_dustEmissionWLG) extendForWavelengthGrid(range, _dustEmissionWLG);
 
     // extend this range with a wide margin for kinematics if needed
     if (_hasMovingSources || _hasMovingMedia) range.extendWithRedshift(1./3.);
@@ -271,38 +274,91 @@ Range Configuration::simulationWavelengthRange() const
     // include radiation field wavelength grid (because dust properties are pre-calculated on these wavelengths)
     if (_hasRadiationField)
     {
-        _radiationFieldWLG->setup();
-        range.extend(_radiationFieldWLG->wavelengthRange());
+        extendForWavelengthGrid(range, _radiationFieldWLG);
         // the calculation of the Planck-integrated absorption cross sections needs this wavelength range;
         // see the precalculate() function in EquilibriumDustEmissionCalculator and StochasticDustEmissionCalculator
         range.extend(Range(0.09e-6, 2000e-6));
     }
 
     // include default instrument wavelength grid
-    if (_defaultWavelengthGrid)
-    {
-        _defaultWavelengthGrid->setup();
-        range.extend(_defaultWavelengthGrid->wavelengthRange());
-    }
+    if (_defaultWavelengthGrid) extendForWavelengthGrid(range, _defaultWavelengthGrid);
 
     // include instrument-specific wavelength grids
     auto is = find<InstrumentSystem>(false);
     for (auto ins : is->instruments())
     {
-        if (ins->wavelengthGrid())
-        {
-            ins->wavelengthGrid()->setup();
-            range.extend(ins->wavelengthGrid()->wavelengthRange());
-        }
+        if (ins->wavelengthGrid()) extendForWavelengthGrid(range, ins->wavelengthGrid());
     }
 
     // include wavelength ranges requested by simulation items that implement the MaterialWavelengthRangeInterface
     auto sim = find<MonteCarloSimulation>(false);
-    extendWavelengthRange(range, sim);
+    extendForMaterialWavelengthRange(range, sim);
 
     // extend the final range with a narrow margin for round-offs
     range.extendWithRedshift(1./100.);
     return range;
+}
+
+////////////////////////////////////////////////////////////////////
+
+namespace
+{
+    // This function adds the characteristic wavelengths of the specified grid to the specified set of wavelengths
+    void addForWavelengthGrid(std::set<double>& wavelengths, WavelengthGrid* wavelengthGrid)
+    {
+        // we explicitly call setup() on wavelength grids before accessing them
+        // because this function may be called early during simulation setup
+        wavelengthGrid->setup();
+        int n = wavelengthGrid->numBins();
+        for (int ell=0; ell!=n; ++ell) wavelengths.insert(wavelengthGrid->wavelength(ell));
+    }
+
+    // This function adds to the specified set of wavelengths any wavelengths requested by simulation items
+    // in the specified hierarchy that implement the MaterialWavelengthRangeInterface.
+    // The function calls itself recursively.
+    void addForMaterialWavelengthRange(std::set<double>& wavelengths, Item* item)
+    {
+        auto interface = dynamic_cast<MaterialWavelengthRangeInterface*>(item);
+        if (interface)
+        {
+            // if the range indicates a single nonzero wavelength, then add that wavelength
+            Range range = interface->wavelengthRange();
+            if (range.min() > 0 && range.min()==range.max()) wavelengths.insert(range.min());
+
+            // if there is a wavelength grid, add it as well
+            auto grid = interface->materialWavelengthGrid();
+            if (grid) addForWavelengthGrid(wavelengths, grid);
+        }
+        for (auto child : item->children()) addForMaterialWavelengthRange(wavelengths, child);
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
+
+vector<double> Configuration::simulationWavelengths() const
+{
+    std::set<double> wavelengths;
+
+    // include radiation field and dust emission wavelength grids
+    if (_hasRadiationField) addForWavelengthGrid(wavelengths, _radiationFieldWLG);
+    if (_dustEmissionWLG) addForWavelengthGrid(wavelengths, _dustEmissionWLG);
+
+    // include default instrument wavelength grid
+    if (_defaultWavelengthGrid) addForWavelengthGrid(wavelengths, _defaultWavelengthGrid);
+
+    // include instrument-specific wavelength grids
+    auto is = find<InstrumentSystem>(false);
+    for (auto ins : is->instruments())
+    {
+        if (ins->wavelengthGrid()) addForWavelengthGrid(wavelengths, ins->wavelengthGrid());
+    }
+
+    // include wavelength ranges requested by simulation items that implement the MaterialWavelengthRangeInterface
+    auto sim = find<MonteCarloSimulation>(false);
+    addForMaterialWavelengthRange(wavelengths, sim);
+
+    return vector<double>(wavelengths.begin(), wavelengths.end());
 }
 
 ////////////////////////////////////////////////////////////////////

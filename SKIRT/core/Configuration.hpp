@@ -85,6 +85,12 @@ public:
         material normalization and material property probes. */
     Range simulationWavelengthRange() const;
 
+    /** Returns a list of wavelengths that are explicitly or indirectly mentioned by the simulation
+        configuration. This includes the characteristic wavelengths of all configured wavelength
+        grids (for instruments, probes, radiation field or dust emission) and specific wavelengths
+        used for normalization or probing. */
+    vector<double> simulationWavelengths() const;
+
     /** Returns the wavelength grid to be used for an instrument or probe, given the wavelength
         grid configured locally for the calling instrument or probe (which may the null pointer to
         indicate that no local grid was configured). For oligochromatic simulations, the function

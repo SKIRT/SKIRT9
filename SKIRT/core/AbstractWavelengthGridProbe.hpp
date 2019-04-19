@@ -14,8 +14,7 @@
 
 /** AbstractWavelengthGridProbe is a base class for probes that require a configurable wavelength
     grid property. It implements the MaterialWavelengthRangeInterface to indicate that
-    wavelength-dependent material properties may be required for the configured wavelength grid's
-    range. */
+    wavelength-dependent material properties may be required for the configured wavelength grid. */
 class AbstractWavelengthGridProbe : public Probe, public MaterialWavelengthRangeInterface
 {
     ITEM_ABSTRACT(AbstractWavelengthGridProbe, Probe, "a probe requiring a wavelength grid")
@@ -31,9 +30,14 @@ class AbstractWavelengthGridProbe : public Probe, public MaterialWavelengthRange
 
 public:
     /** This function returns a wavelength range corresponding to the user-configured wavelength
-        grid, if any, indicating that wavelength-dependent material properties may be required for
+        grid for this probe, if any, indicating that wavelength-dependent material properties may be required for
         this wavelength range. */
     Range wavelengthRange() const override;
+
+    /** This function returns a pointer to the user-configured wavelength grid for this probe, if
+        any, indicating that wavelength-dependent material properties may be required for these
+        wavelengths. */
+    WavelengthGrid* materialWavelengthGrid() const override;
 };
 
 ////////////////////////////////////////////////////////////////////
