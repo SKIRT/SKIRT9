@@ -9,7 +9,10 @@
 #include "Constants.hpp"
 #include "DisjointWavelengthGrid.hpp"
 #include "NR.hpp"
+#include "Parallel.hpp"
+#include "ParallelFactory.hpp"
 #include "PlanckFunction.hpp"
+#include "ProcessManager.hpp"
 #include <unordered_map>
 
 ////////////////////////////////////////////////////////////////////
@@ -112,7 +115,7 @@ private:
     Array _emsigmaabsv;         // cross sections on dust emission wavelength grid (indexed on ell)
 
 public:
-    SDE_Calculator(const SDE_TemperatureGrid* grid, const WavelengthGrid* rfWLG,
+    SDE_Calculator(SimulationItem* item, const SDE_TemperatureGrid* grid, const WavelengthGrid* rfWLG,
                    const Array& rflambdav, const Array& rfdlambdav, const Array& emlambdav,
                    const Array& lambdav, const Array& sigmaabsv,
                    double bulkDensity, double meanMass, const StoredTable<1>& enthalpy)
@@ -157,21 +160,31 @@ public:
         }
 
         // calculate the cooling rates
-        int numLambda = lambdav.size();
-        for (int p=1; p!=NT; ++p)
+        // this can take a few seconds for all populations/size bins combined,
+        // so we parallelize the loop but there is no reason to log progress
+        item->find<ParallelFactory>()->parallelDistributed()->call(NT,
+            [this,&lambdav,&sigmaabsv,&Tv,&Hv] (size_t firstIndex, size_t numIndices)
         {
-            PlanckFunction B(Tv[p]);
-            double planckabs = 0.;
-            for (int j=1; j!=numLambda; ++j) // skip the first wavelength so we can determine a bin width
+            size_t numLambda = lambdav.size();
+            size_t endIndex = firstIndex+numIndices;
+            if (firstIndex==0) firstIndex++; // skip p=0, leaving its value at zero
+            for (size_t p=firstIndex; p!=endIndex; ++p)
             {
-                double lambda = lambdav[j];
-                double dlambda = lambdav[j] - lambdav[j-1];
-                planckabs += sigmaabsv[j] * B(lambda) * dlambda;
+                PlanckFunction B(Tv[p]);
+                double planckabs = 0.;
+                for (size_t j=1; j!=numLambda; ++j) // skip the first wavelength so we can determine a bin width
+                {
+                    double lambda = lambdav[j];
+                    double dlambda = lambdav[j] - lambdav[j-1];
+                    planckabs += sigmaabsv[j] * B(lambda) * dlambda;
+                }
+                _planckabsv[p] = planckabs;
+                double Hdiff = Hv[p] - Hv[p-1];
+                _CRv[p] = planckabs / Hdiff;
             }
-            _planckabsv[p] = planckabs;
-            double Hdiff = Hv[p] - Hv[p-1];
-            _CRv[p] = planckabs / Hdiff;
-        }
+        });
+        ProcessManager::sumToAll(_planckabsv);
+        ProcessManager::sumToAll(_CRv);
 
         // obtain the cross sections on the input and output wavelength grids
         _rfsigmaabsv = NR::resample<NR::interpolateLogLog>(rflambdav, lambdav, sigmaabsv);
@@ -370,11 +383,11 @@ void StochasticDustEmissionCalculator::precalculate(SimulationItem* item,
     }
 
     // build the three calculators for this bin and add them to the corresponding lists
-    _calculatorsA.push_back(new SDE_Calculator(_gridA, radiationFieldWLG, _rflambdav, _rfdlambdav, _emlambdav,
+    _calculatorsA.push_back(new SDE_Calculator(item, _gridA, radiationFieldWLG, _rflambdav, _rfdlambdav, _emlambdav,
                                                lambdav, sigmaabsv, bulkDensity, meanMass, enthalpy));
-    _calculatorsB.push_back(new SDE_Calculator(_gridB, radiationFieldWLG, _rflambdav, _rfdlambdav, _emlambdav,
+    _calculatorsB.push_back(new SDE_Calculator(item, _gridB, radiationFieldWLG, _rflambdav, _rfdlambdav, _emlambdav,
                                                lambdav, sigmaabsv, bulkDensity, meanMass, enthalpy));
-    _calculatorsC.push_back(new SDE_Calculator(_gridC, radiationFieldWLG, _rflambdav, _rfdlambdav, _emlambdav,
+    _calculatorsC.push_back(new SDE_Calculator(item, _gridC, radiationFieldWLG, _rflambdav, _rfdlambdav, _emlambdav,
                                                lambdav, sigmaabsv, bulkDensity, meanMass, enthalpy));
 
     // remember some other properties for this bin

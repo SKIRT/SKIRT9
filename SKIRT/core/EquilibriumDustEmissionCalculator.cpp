@@ -66,8 +66,9 @@ void EquilibriumDustEmissionCalculator::precalculate(SimulationItem* item,
         [this,&lambdav,&sigmaabsv,&b] (size_t firstIndex, size_t numIndices)
     {
         size_t numLambda = lambdav.size();
-        if (firstIndex==0) firstIndex++; // skip p=0, leaving its value at zero, because B(0) is not defined
-        for (size_t p=firstIndex; p!=firstIndex+numIndices; ++p)
+        size_t endIndex = firstIndex+numIndices;
+        if (firstIndex==0) firstIndex++; // skip p=0, leaving its value at zero
+        for (size_t p=firstIndex; p!=endIndex; ++p)
         {
             PlanckFunction B(_Tv[p]);
             double planckabs = 0.;
