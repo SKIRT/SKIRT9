@@ -152,10 +152,12 @@ void FITSInOut::write(string filepath, const Array& data, string dataUnits,
     ffpkyd(fptr, "CRVAL1", xc, 9, "Coordinate value at X-axis reference pixel", &status);
     ffpkyd(fptr, "CDELT1", incx, 9, "Coordinate increment along X-axis", &status);
     ffpkys(fptr, "CUNIT1", const_cast<char*>(xyUnits.c_str()), "Physical units of the X-axis", &status);
+    ffpkys(fptr, "CTYPE1", " ", "Linear X coordinates", &status);
     ffpkyd(fptr, "CRPIX2", (ny+1)/2., 9, "Y-axis coordinate system reference pixel", &status);
     ffpkyd(fptr, "CRVAL2", yc, 9, "Coordinate value at Y-axis reference pixel", &status);
     ffpkyd(fptr, "CDELT2", incy, 9, "Coordinate increment along Y-axis", &status);
     ffpkys(fptr, "CUNIT2", const_cast<char*>(xyUnits.c_str()), "Physical units of the Y-axis", &status);
+    ffpkys(fptr, "CTYPE2", " ", "Linear Y coordinates", &status);
     if (nz) ffpkys(fptr, "CUNIT3", const_cast<char*>(zUnits.c_str()), "Physical units of the Z-axis", &status);
     if (status) report_error(filepath, "writing", status);
 
