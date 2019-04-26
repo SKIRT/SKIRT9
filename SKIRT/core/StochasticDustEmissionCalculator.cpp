@@ -166,21 +166,22 @@ public:
             [this,&lambdav,&sigmaabsv,&Tv,&Hv] (size_t firstIndex, size_t numIndices)
         {
             size_t numLambda = lambdav.size();
-            size_t endIndex = firstIndex+numIndices;
-            if (firstIndex==0) firstIndex++; // skip p=0, leaving its value at zero
-            for (size_t p=firstIndex; p!=endIndex; ++p)
+            for (size_t p=firstIndex; p!=firstIndex+numIndices; ++p)
             {
-                PlanckFunction B(Tv[p]);
-                double planckabs = 0.;
-                for (size_t j=1; j!=numLambda; ++j) // skip the first wavelength so we can determine a bin width
+                if (p)  // skip p=0, leaving the corresponding value at zero
                 {
-                    double lambda = lambdav[j];
-                    double dlambda = lambdav[j] - lambdav[j-1];
-                    planckabs += sigmaabsv[j] * B(lambda) * dlambda;
+                    PlanckFunction B(Tv[p]);
+                    double planckabs = 0.;
+                    for (size_t j=1; j!=numLambda; ++j) // skip the first wavelength so we can determine a bin width
+                    {
+                        double lambda = lambdav[j];
+                        double dlambda = lambdav[j] - lambdav[j-1];
+                        planckabs += sigmaabsv[j] * B(lambda) * dlambda;
+                    }
+                    _planckabsv[p] = planckabs;
+                    double Hdiff = Hv[p] - Hv[p-1];
+                    _CRv[p] = planckabs / Hdiff;
                 }
-                _planckabsv[p] = planckabs;
-                double Hdiff = Hv[p] - Hv[p-1];
-                _CRv[p] = planckabs / Hdiff;
             }
         });
         ProcessManager::sumToAll(_planckabsv);

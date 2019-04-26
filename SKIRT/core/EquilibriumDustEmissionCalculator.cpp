@@ -17,11 +17,8 @@
 void EquilibriumDustEmissionCalculator::precalculate(SimulationItem* item,
                                                      const Array& lambdav, const Array& sigmaabsv)
 {
-    // get the index of the bin being added
-    int b = _rfsigmaabsvv.size();
-
     // perform initialization that needs to happen only once
-    if (!b)
+    if (_rfsigmaabsvv.empty())
     {
         auto config = item->find<Configuration>();
 
@@ -60,28 +57,30 @@ void EquilibriumDustEmissionCalculator::precalculate(SimulationItem* item,
     // calculate the Planck-integrated absorption cross sections on the temperature grid
     // this can take a few seconds for all populations/size bins combined,
     // so we parallelize the loop but there is no reason to log progress
-    int numT = _Tv.size();
-    _planckabsvv.emplace_back(numT);
+    size_t numT = _Tv.size();
+    Array planckabsv(numT);
     item->find<ParallelFactory>()->parallelDistributed()->call(numT,
-        [this,&lambdav,&sigmaabsv,&b] (size_t firstIndex, size_t numIndices)
+        [this,&lambdav,&sigmaabsv,&planckabsv] (size_t firstIndex, size_t numIndices)
     {
         size_t numLambda = lambdav.size();
-        size_t endIndex = firstIndex+numIndices;
-        if (firstIndex==0) firstIndex++; // skip p=0, leaving its value at zero
-        for (size_t p=firstIndex; p!=endIndex; ++p)
+        for (size_t p=firstIndex; p!=firstIndex+numIndices; ++p)
         {
-            PlanckFunction B(_Tv[p]);
-            double planckabs = 0.;
-            for (size_t j=1; j!=numLambda; ++j) // skip the first wavelength so we can determine a bin width
+            if (p) // skip p=0, leaving the corresponding value at zero
             {
-                double lambda = lambdav[j];
-                double dlambda = lambdav[j] - lambdav[j-1];
-                planckabs += sigmaabsv[j] * B(lambda) * dlambda;
+                PlanckFunction B(_Tv[p]);
+                double planckabs = 0.;
+                for (size_t j=1; j!=numLambda; ++j) // skip the first wavelength so we can determine a bin width
+                {
+                    double lambda = lambdav[j];
+                    double dlambda = lambdav[j] - lambdav[j-1];
+                    planckabs += sigmaabsv[j] * B(lambda) * dlambda;
+                }
+                planckabsv[p] = planckabs;
             }
-            _planckabsvv[b][p] = planckabs;
         }
     });
-    ProcessManager::sumToAll(_planckabsvv[b]);
+    ProcessManager::sumToAll(planckabsv);
+    _planckabsvv.emplace_back(std::move(planckabsv));
 }
 
 ////////////////////////////////////////////////////////////////////
