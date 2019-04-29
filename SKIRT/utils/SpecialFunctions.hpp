@@ -172,8 +172,8 @@ namespace SpecialFunctions
         details on this function, see the help facility in Maple on the command <tt>LambertW</tt>
         or in Mathematica on the command <tt>ProductLog</tt>. The adopted implementation for the
         function \f$W_0(z)\f$ is a combination of the C-code available from the homepage of <a
-        href="http://members.lycos.co.uk/keithmbriggs">Keith Briggs</a> and the code from the GNU
-        scientific library <a href="http://sources.redhat.com/gsl">GSL</a>. */
+        href="http://keithbriggs.info">Keith Briggs</a> and the code from the GNU scientific
+        library <a href="https://www.gnu.org/software/gsl/">GSL</a>. */
     double LambertW(double z);
 
     /** This function is the Lambert \f$W\f$ function, also known as the product log function, for
