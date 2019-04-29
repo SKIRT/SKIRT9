@@ -1,23 +1,34 @@
-The SKIRT project -- advanced radiative transfer
+The SKIRT project -- advanced radiative transfer in dusty systems
 © Astronomical Observatory, Ghent University
 
-For more information, please visit the official SKIRT home page at
-<http://www.skirt.ugent.be>.
+Welcome to the SKIRT 9 code repository. For more information on the SKIRT
+project as a whole and on the contents of this repository specifically, please
+visit the SKIRT project web site at <http://www.skirt.ugent.be>.
 
-Licensing
----------
-This program is free software: you can redistribute it and/or modify it under
-the terms of the GNU Affero General Public License version 3, as published by
-the Free Software Foundation. A copy of this license can be found in the file
-LICENSE.txt provided with the program, or at <http://www.gnu.org/licenses/>.
+The code and documentation in the SKIRT project is open source and freely
+available to the worldwide scientific community (see the file LICENSE.txt in
+this repository and the "Legal" section of the SKIRT project web site). We
+invite you to use the SKIRT code or other portions of this project in your
+work. If you do so, we kindly ask that you cite some of the relevant papers
+listed in the "Publications" section of the SKIRT project web site.
 
-This program is distributed in the hope that it will be useful, but WITHOUT ANY
-WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+We also explicitly welcome your contributions to the project. A contribution
+can take many forms: asking a question, reporting a bug, suggesting a new
+feature, correcting or improving the documentation, writing a tutorial, fixing
+a bug, implementing a new class or a new module, and so on. Information on how
+to contribute can be found in the "Contributing" section of the SKIRT project
+web site.
+
+While we encourage interaction through the online mechanisms provided alongside
+this GitHub repository, you can also find our direct contact information in the
+"Contact" section of the SKIRT project web site.
+
+The core SKIRT team.
+
 
 Third-party libraries
 ---------------------
-This program includes source code from the following third-party libraries:
+This repository includes source code from the following third-party libraries:
  - CFITSIO developed by NASA's HEASARC;
    see <http://heasarc.gsfc.nasa.gov/docs/software/fitsio/fitsio.html>.
  - Voro++ described in Rycroft (2009, Chaos, 19);
@@ -25,14 +36,3 @@ This program includes source code from the following third-party libraries:
 
 Please refer to the original licensing conditions for each of these third party
 software libraries.
-
-Citations
----------
-If you use (portions of) this program in your work, please cite one or more of
-the relevant papers listed on the SKIRT web site <http://www.skirt.ugent.be>.
-
-Contact
--------
-We invite you to use this program under the terms described above.
-We're also open to cooperation on selected projects. Please find our contact
-information on the SKIRT web site <http://www.skirt.ugent.be>.
