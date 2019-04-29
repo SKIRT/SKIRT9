@@ -210,7 +210,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // start a new schema
     ItemRegistry::beginSchema("SKIRT", "a SKIRT parameter file", version, "ski",
                               "skirt-simulation-hierarchy", "MonteCarloSimulation", format,
-                              "http://www.skirt.ugent.be/skirt");
+                              "http://www.skirt.ugent.be");
 
     // add the SKIRT unit definitions
     ItemRegistry::addUnitDef<SkirtUnitDef>();
