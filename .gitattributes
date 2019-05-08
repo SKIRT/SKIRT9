@@ -33,3 +33,10 @@
 *.save binary
 *.fits binary
 *.gz binary
+
+# Ignore third-part C code and shell scripts for determining the main project language
+*.c linguist-vendored
+*.h linguist-vendored
+*.cc linguist-vendored
+*.hh linguist-vendored
+*.sh linguist-vendored
