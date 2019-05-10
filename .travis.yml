@@ -4,4 +4,5 @@ compiler:
     - gcc
     - clang
 
-script: ./makeSKIRT.sh 2
+script: mkdir -p ~/SKIRT/release && cd ~/SKIRT/release && cmake -DCMAKE_BUILD_TYPE:STRING=Release -L ../SKIRT9 && make -j 2
+
