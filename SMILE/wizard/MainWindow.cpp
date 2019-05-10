@@ -265,7 +265,7 @@ void MainWindow::contextMenuEvent(QContextMenuEvent* event)
     }
 
     // in any case, add help item for MakeUp itself
-    menu.addAction("About MakeUp...", this, SLOT(browseUrl()))->setProperty("URL", "http://www.skirt.ugent.be/smile");
+    menu.addAction("About MakeUp...", this, SLOT(browseUrl()))->setProperty("URL", "http://www.skirt.ugent.be/makeup9");
     menu.exec(event->globalPos());
 }
 
