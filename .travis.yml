@@ -1,8 +1,19 @@
-dist: xenial
+matrix:
+  include:
+  - dist: xenial
+    compiler: gcc
+  - dist: xenial
+    compiler: clang
+  - os: osx
+    osx_image: xcode10.2
+    compiler: clang
+
 language: cpp
-compiler:
-    - gcc
-    - clang
 
-script: mkdir -p ~/build/SKIRT/release && cd ~/build/SKIRT/release && cmake -DCMAKE_BUILD_TYPE:STRING=Release -L ../SKIRT9 && make -j 2
+git:
+  depth: 3
 
+script:
+  - mkdir -p $TRAVIS_BUILD_DIR/../release && cd $TRAVIS_BUILD_DIR/../release
+  - cmake -DCMAKE_BUILD_TYPE:STRING=Release -DBUILD_DOX_STYLE:BOOL=ON -DBUILD_SMILE_SHAPES:BOOL=ON -DBUILD_SMILE_TOOL:BOOL=ON -L ../SKIRT9
+  - make -j 2
