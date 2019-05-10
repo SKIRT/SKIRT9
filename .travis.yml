@@ -1,0 +1,7 @@
+dist: xenial
+language: cpp
+compiler:
+    - gcc
+    - clang
+
+script: ./makeSKIRT.sh 2
