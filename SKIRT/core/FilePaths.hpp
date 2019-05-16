@@ -85,6 +85,11 @@ public:
         resource, a fatal error is thrown. */
     static string resource(string name);
 
+    /** This function returns true if a resource with the specified filename is found, and false if
+        not. This function operates just like the resource() function, except that it does not
+        throw an error if the requested resource is not found. */
+    static bool hasResource(string name);
+
     /** This function returns the filename (without directory segments) for a resource with the
         specified type and with a filename including the specified segments. The list of resources
         scanned by this function is the same as that described for the resource() function.

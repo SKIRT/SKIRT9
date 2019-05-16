@@ -79,9 +79,13 @@ int SkirtCommandLineHandler::perform()
 int SkirtCommandLineHandler::doInteractive()
 {
     if (ProcessManager::isMultiProc()) throw FATALERROR("Interactive mode cannot be run with multiple processes");
-    Console::info("Interactively constructing a simulation...");
+
+    // alert the user if no resource packs have been installed
+    if (!FilePaths::hasResource("version.txt"))
+        Console::warning("Resource files have not been installed: refer to installation guide on www.skirt.ugent.be");
 
     // ask for the name of the ski file in which to save the result
+    Console::info("Interactively constructing a simulation...");
     string filename;
     while (true)
     {

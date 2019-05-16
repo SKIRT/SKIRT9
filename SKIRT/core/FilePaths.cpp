@@ -166,6 +166,16 @@ string FilePaths::resource(string name)
 
 ////////////////////////////////////////////////////////////////////
 
+bool FilePaths::hasResource(std::string name)
+{
+    // initialize the resource paths if needed
+    std::call_once(_initialized, findResourcePaths);
+
+    return _resourcePaths.count(name) > 0;
+}
+
+////////////////////////////////////////////////////////////////////
+
 namespace
 {
     // returns true if the resource filename matches the requirements, false otherwise;
