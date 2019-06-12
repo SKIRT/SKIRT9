@@ -20,7 +20,7 @@ class IntegratedLuminosityNormalization : public LuminosityNormalization
     ENUM_DEF(WavelengthRange, Source, All, Custom)
     ENUM_VAL(WavelengthRange, Source, "the wavelength range of the primary sources")
     ENUM_VAL(WavelengthRange, All,    "all wavelengths (i.e. over the full SED)")
-    ENUM_VAL(WavelengthRange, Custom, "a custom wavelengh range specified here")
+    ENUM_VAL(WavelengthRange, Custom, "a custom wavelength range specified here")
     ENUM_END()
 
     ITEM_CONCRETE(IntegratedLuminosityNormalization, LuminosityNormalization,
