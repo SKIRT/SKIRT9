@@ -60,15 +60,15 @@ class MediumSystem : public SimulationItem
         ATTRIBUTE_DEFAULT_VALUE(photonPacketOptions, "PhotonPacketOptions")
         ATTRIBUTE_RELEVANT_IF(media, "!NoMedium")
 
-    PROPERTY_ITEM(extinctionOnlyOptions, ExtinctionOnlyOptions, "the photon packet options")
+    PROPERTY_ITEM(extinctionOnlyOptions, ExtinctionOnlyOptions, "the extinction-only options")
         ATTRIBUTE_DEFAULT_VALUE(extinctionOnlyOptions, "ExtinctionOnlyOptions")
         ATTRIBUTE_RELEVANT_IF(extinctionOnlyOptions, "ExtinctionOnly")
 
-    PROPERTY_ITEM(dustEmissionOptions, DustEmissionOptions, "the photon packet options")
+    PROPERTY_ITEM(dustEmissionOptions, DustEmissionOptions, "the dust emission options")
         ATTRIBUTE_DEFAULT_VALUE(dustEmissionOptions, "DustEmissionOptions")
         ATTRIBUTE_RELEVANT_IF(dustEmissionOptions, "DustEmission")
 
-    PROPERTY_ITEM(dustSelfAbsorptionOptions, DustSelfAbsorptionOptions, "the photon packet options")
+    PROPERTY_ITEM(dustSelfAbsorptionOptions, DustSelfAbsorptionOptions, "the dust self-absorption options")
         ATTRIBUTE_DEFAULT_VALUE(dustSelfAbsorptionOptions, "DustSelfAbsorptionOptions")
         ATTRIBUTE_RELEVANT_IF(dustSelfAbsorptionOptions, "DustSelfAbsorption")
 
