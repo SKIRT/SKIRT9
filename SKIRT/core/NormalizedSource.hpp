@@ -28,7 +28,7 @@ class NormalizedSource : public Source, public BulkVelocityInterface
     ATTRIBUTE_SUB_PROPERTIES_HERE(NormalizedSource)
 
     PROPERTY_ITEM(sed, SED, "the spectral energy distribution for the source")
-        ATTRIBUTE_DEFAULT_VALUE(sed, "SunSED")
+        ATTRIBUTE_DEFAULT_VALUE(sed, "BlackBodySED")
 
     PROPERTY_ITEM(normalization, LuminosityNormalization, "the type of luminosity normalization for the source")
         ATTRIBUTE_DEFAULT_VALUE(normalization, "IntegratedLuminosityNormalization")
