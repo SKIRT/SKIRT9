@@ -19,7 +19,7 @@
 class SpatialCellPropertiesProbe : public AbstractWavelengthProbe
 {
     ITEM_CONCRETE(SpatialCellPropertiesProbe, AbstractWavelengthProbe, "relevant properties for all spatial cells")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(SpatialCellPropertiesProbe, "Level2&SpatialGrid")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(SpatialCellPropertiesProbe, "Level2&Medium&SpatialGrid")
 
     ITEM_END()
 
