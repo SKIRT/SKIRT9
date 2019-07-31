@@ -146,27 +146,38 @@ int SkirtCommandLineHandler::doBatch()
     }
 
     // if there is only one ski file, simply perform the single simulation
-    if (_skifiles.size() == 1)
+    size_t numSkiFiles = _skifiles.size();
+    if (numSkiFiles == 1)
     {
         _parallelSims = 1;
-        doSimulation(0); // memory statistics are reported in doSimulation()
+        doSimulation(0);
     }
     else
     {
         // determine the number of parallel simulations
         _parallelSims = max(_args.intValue("-s"), 1);
 
-        // prevent different simulations to be launched at once while MPI parallelization is used
-        if (ProcessManager::isMultiProc() && _parallelSims > 1)
-            throw FATALERROR("Cannot run multiple simulations in parallel when there are multiple MPI processes");
+        // handle the serial case separately to avoid using MPI nested within a Parallel instance
+        if (_parallelSims == 1)
+        {
+            // perform a simulation for each ski file
+            TimeLogger logger(&_console, "a set of " + std::to_string(numSkiFiles) + " simulations");
+            for (size_t i=0; i!=numSkiFiles; ++i) doSimulation(i);
+        }
+        else
+        {
+            // prevent multiple simulations to be launched in parallel while MPI parallelization is used
+            if (ProcessManager::isMultiProc())
+                throw FATALERROR("Cannot run multiple simulations in parallel when there are multiple MPI processes");
 
-        // perform a simulation for each ski file
-        TimeLogger logger(&_console, "a set of " + std::to_string(_skifiles.size()) + " simulations"
-                          + (_parallelSims > 1 ? ", " + std::to_string(_parallelSims) + " in parallel" : ""));
-        ParallelFactory factory;
-        factory.setMaxThreadCount(_parallelSims);
-        factory.parallelRootOnly()->call(_skifiles.size(), [this](size_t first, size_t size)
-                                         { for (size_t i=0; i!=size; ++i) doSimulation(first+i); } );
+            // perform a simulation for each ski file
+            TimeLogger logger(&_console, "a set of " + std::to_string(numSkiFiles) + " simulations, "
+                              +  std::to_string(_parallelSims) + " in parallel");
+            ParallelFactory factory;
+            factory.setMaxThreadCount(_parallelSims);
+            factory.parallelRootOnly()->call(numSkiFiles, [this](size_t first, size_t size)
+                                             { for (size_t i=0; i!=size; ++i) doSimulation(first+i); } );
+        }
     }
 
     // report memory statistics for the complete run
