@@ -76,7 +76,7 @@ class DustEmGrainComposition : public GrainComposition
         ATTRIBUTE_MIN_VALUE(bulkMassDensity, "[100 kg/m3")
         ATTRIBUTE_MAX_VALUE(bulkMassDensity, "10000 kg/m3]")
         ATTRIBUTE_DEFAULT_VALUE(bulkMassDensity,
-            "GrainTypeaSil:3500 kg/m3;GrainTypeCM20:1600 kg/m3;GrainTypeaOlM5|GrainTypeaPyM5:2190 kg/m3;2240 kg/m3")
+            "grainTypeaSil:3500 kg/m3;grainTypeCM20:1600 kg/m3;grainTypeaOlM5|grainTypeaPyM5:2190 kg/m3;2240 kg/m3")
 
     ITEM_END()
 
