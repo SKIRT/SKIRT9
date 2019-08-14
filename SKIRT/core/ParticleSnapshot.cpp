@@ -34,30 +34,32 @@ void ParticleSnapshot::open(const SimulationItem* item, string filename, string 
 void ParticleSnapshot::readAndClose()
 {
     // read the particle info into memory
-    // if the user configured a temperature cutoff, we need to skip the "hot" particles
-    int numIgnored = 0;
-    if (!hasTemperatureCutoff()) _propv = infile()->readAllRows();
-    else
+    // if the user configured a temperature cutoff, we skip high-temperature particles
+    // if the user configured a mass-density policy, we skip zero-mass particles
+    int numTempIgnored = 0;
+    int numMassIgnored = 0;
+    Array row;
+    while (infile()->readRow(row))
     {
-        Array row;
-        while (infile()->readRow(row))
-        {
-            if (row[temperatureIndex()] > maxTemperature()) numIgnored++;
-            else _propv.push_back(row);
-        }
+        if (hasTemperatureCutoff() && row[temperatureIndex()] > maxTemperature()) numTempIgnored++;
+        else if (hasMassDensityPolicy() && row[massIndex()] == 0) numMassIgnored++;
+        else _propv.push_back(row);
     }
 
     // close the file
     Snapshot::readAndClose();
 
     // log the number of particles
-    if (!numIgnored)
+    if (!numTempIgnored && !numMassIgnored)
     {
         log()->info("  Number of particles: " + std::to_string(_propv.size()));
     }
     else
     {
-        log()->info("  Number of high-temperature particles ignored: " + std::to_string(numIgnored));
+        if (numTempIgnored)
+            log()->info("  Number of high-temperature particles ignored: " + std::to_string(numTempIgnored));
+        if (numMassIgnored)
+            log()->info("  Number of zero-mass particles ignored: " + std::to_string(numMassIgnored));
         log()->info("  Number of particles retained: " + std::to_string(_propv.size()));
     }
 
