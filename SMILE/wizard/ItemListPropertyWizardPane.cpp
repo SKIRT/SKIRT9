@@ -93,7 +93,7 @@ ItemListPropertyWizardPane::ItemListPropertyWizardPane(std::unique_ptr<PropertyH
     if (!hdlr->isConfigured())
     {
         hdlr->setToEmpty();
-        hdlr->setConfigured();
+        hdlr->setConfiguredToDefault();
     }
 
     // iterate over all items in the item list

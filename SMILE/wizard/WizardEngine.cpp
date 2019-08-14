@@ -147,9 +147,13 @@ namespace
                 if (handler->hasDefaultValue())
                 {
                     handler->setValue(handler->defaultValue());
-                    handler->setConfigured();
+                    handler->setConfiguredToDefault();
                 }
-                else handler->setValue(string());
+                else
+                {
+                    handler->setValue(string());
+                    handler->setNotConfigured();
+                }
             }
         }
 
@@ -160,9 +164,13 @@ namespace
                 if (handler->hasDefaultValue())
                 {
                     handler->setValue(handler->defaultValue());
-                    handler->setConfigured();
+                    handler->setConfiguredToDefault();
                 }
-                else handler->setValue(false);
+                else
+                {
+                    handler->setValue(false);
+                    handler->setNotConfigured();
+                }
             }
         }
 
@@ -173,9 +181,13 @@ namespace
                 if (handler->hasDefaultValue())
                 {
                     handler->setValue(handler->defaultValue());
-                    handler->setConfigured();
+                    handler->setConfiguredToDefault();
                 }
-                else handler->setValue(0);
+                else
+                {
+                    handler->setValue(0);
+                    handler->setNotConfigured();
+                }
             }
         }
 
@@ -186,9 +198,13 @@ namespace
                 if (handler->hasDefaultValue())
                 {
                     handler->setValue(handler->defaultValue());
-                    handler->setConfigured();
+                    handler->setConfiguredToDefault();
                 }
-                else handler->setValue(handler->values()[0]);
+                else
+                {
+                    handler->setValue(handler->values()[0]);
+                    handler->setNotConfigured();
+                }
             }
         }
 
@@ -199,9 +215,13 @@ namespace
                 if (handler->hasDefaultValue())
                 {
                     handler->setValue(handler->defaultValue());
-                    handler->setConfigured();
+                    handler->setConfiguredToDefault();
                 }
-                else handler->setValue(0.);
+                else
+                {
+                    handler->setValue(0.);
+                    handler->setNotConfigured();
+                }
             }
         }
 
@@ -212,9 +232,13 @@ namespace
                 if (handler->hasDefaultValue())
                 {
                     handler->setValue(handler->defaultValue());
-                    handler->setConfigured();
+                    handler->setConfiguredToDefault();
                 }
-                else handler->setValue(vector<double>());
+                else
+                {
+                    handler->setValue(vector<double>());
+                    handler->setNotConfigured();
+                }
             }
         }
 
@@ -229,15 +253,19 @@ namespace
                     {
                         // recursively default-construct the properties of the new item
                         setPropertiesToDefaults(handler->value(), handler->schema(), handler->nameManager());
-                        handler->setConfigured();
+                        handler->setConfiguredToDefault();
                     }
-                    else handler->setToNull();
+                    else
+                    {
+                        handler->setToNull();
+                        handler->setNotConfigured();
+                    }
                 }
             }
             else
             {
                 handler->setToNull();
-                handler->setConfigured(false);
+                handler->setNotConfigured();
             }
         }
 
@@ -252,15 +280,19 @@ namespace
                     {
                         // recursively default-construct the properties of the new item
                         setPropertiesToDefaults(handler->value().back(), handler->schema(), handler->nameManager());
-                        handler->setConfigured();
+                        handler->setConfiguredToDefault();
                     }
-                    else handler->setToEmpty();
+                    else
+                    {
+                        handler->setToEmpty();
+                        handler->setNotConfigured();
+                    }
                 }
             }
             else
             {
                 handler->setToEmpty();
-                handler->setConfigured(false);
+                handler->setNotConfigured();
             }
         }
     };
@@ -301,7 +333,7 @@ namespace
             if (choices.empty() && !itemhdlr->isRequired())
             {
                 itemhdlr->setToNull();
-                itemhdlr->setConfigured();
+                itemhdlr->setConfiguredToDefault();
                 return true;
             }
 
@@ -315,7 +347,7 @@ namespace
                 bool success = itemhdlr->setToNewItemOfType(choices[0]);
                 if (success)
                 {
-                    itemhdlr->setConfigured();
+                    itemhdlr->setConfiguredToDefault();
                     return true;
                 }
             }

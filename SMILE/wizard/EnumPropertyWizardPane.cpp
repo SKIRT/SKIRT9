@@ -23,7 +23,7 @@ EnumPropertyWizardPane::EnumPropertyWizardPane(std::unique_ptr<PropertyHandler> 
     if (!hdlr->isConfigured() && hdlr->hasDefaultValue())
     {
         hdlr->setValue(hdlr->defaultValue());
-        hdlr->setConfigured();
+        hdlr->setConfiguredToDefault();
     }
 
     // determine the current and default values for use in the loop below
@@ -83,7 +83,7 @@ void EnumPropertyWizardPane::updateValueFor(QAbstractButton* button)
         hdlr->setValue(newValue);
         emit propertyValueChanged();
     }
-    hdlr->setConfigured();
+    hdlr->setConfiguredByUser();
     emit propertyValidChanged(true);
 }
 

@@ -21,7 +21,7 @@ BoolPropertyWizardPane::BoolPropertyWizardPane(std::unique_ptr<PropertyHandler> 
     if (!hdlr->isConfigured() && hdlr->hasDefaultValue())
     {
         hdlr->setValue(hdlr->defaultValue());
-        hdlr->setConfigured();
+        hdlr->setConfiguredToDefault();
     }
 
     // create the layout so that we can add stuff one by one
@@ -91,7 +91,7 @@ void BoolPropertyWizardPane::updateValueFor(int buttonID)
         hdlr->setValue(newValue);
         emit propertyValueChanged();
     }
-    hdlr->setConfigured();
+    hdlr->setConfiguredByUser();
     emit propertyValidChanged(true);
 }
 

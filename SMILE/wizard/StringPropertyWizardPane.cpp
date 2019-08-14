@@ -50,7 +50,7 @@ StringPropertyWizardPane::StringPropertyWizardPane(std::unique_ptr<PropertyHandl
         {
             field->setText(QString::fromStdString(hdlr->defaultValue()));
             hdlr->setValue(hdlr->defaultValue());
-            hdlr->setConfigured();
+            hdlr->setConfiguredToDefault();
         }
         else
         {
@@ -76,7 +76,7 @@ void StringPropertyWizardPane::updateValue(const QString& text)
         hdlr->setValue(value);
         emit propertyValueChanged();
     }
-    hdlr->setConfigured(valid);
+    hdlr->setConfiguredByUser(valid);
     emit propertyValidChanged(valid);
 }
 

@@ -35,19 +35,19 @@ ItemPropertyWizardPane::ItemPropertyWizardPane(std::unique_ptr<PropertyHandler> 
         if (!forcedType.empty())
         {
             hdlr->setToNewItemOfType(forcedType);
-            hdlr->setConfigured();
+            hdlr->setConfiguredToDefault();
         }
         // otherwise, if there is a default type, update the property value to the default type
         else if (!defaultType.empty())
         {
             hdlr->setToNewItemOfType(defaultType);
-            hdlr->setConfigured();
+            hdlr->setConfiguredToDefault();
         }
         // otherwise, if the property is optional, set the property value to null
         else if (!hdlr->isRequired())
         {
             hdlr->setToNull();
-            hdlr->setConfigured();
+            hdlr->setConfiguredToDefault();
         }
         // otherwise, leave things alone (the user will be required to select a new value anyway)
     }
@@ -136,7 +136,7 @@ void ItemPropertyWizardPane::selectTypeFor(QAbstractButton* button)
     }
 
     // make the target item remember that this property was configured by the user
-    hdlr->setConfigured();
+    hdlr->setConfiguredByUser();
 
     // signal the change
     emit propertyValidChanged(true);

@@ -167,15 +167,26 @@ public:
     // ================== Utilities for editing ==================
 
 public:
-    /** This function stores a flag in the target dataset item to indicate whether the user has
-        configured the property being handled during this session, depending on the value of the
-        specified argument. If the argument is omitted, the default value of true is used. */
-    void setConfigured(bool configured=true);
+    /** This function sets the configured state for the target property to "Not configured". This
+        corresponds to the automatic initial state at the start of the editing session. */
+    void setNotConfigured();
 
-    /** This function returns true if the setPropertyConfigured() function was last called with a
-        true argument during this session for this combination of target dataset item and property,
-        and false otherwise. In other words, it returns true if the property being handled has been
-        configured by the user for the target dataset item. */
+    /** This function sets the configured state for the target property to "Configured to default".
+        */
+    void setConfiguredToDefault();
+
+    /** This function sets the configured state for the target property to "Configured by the user
+        with a valid value" or "Configured by the user with an invalid value", depending on the
+        value of the \em valid argument. If the argument is omitted, it default to true. */
+    void setConfiguredByUser(bool valid = true);
+
+    /** This function returns true if the configured state for the target property is "Configured
+        by user", regardless whether the value is valid or invalid, and false otherwise. */
+    bool isConfiguredByUser();
+
+    /** This function returns true if the configured state for the target property indicates
+        configuration with a valid value, i.e. if it is "Configured to default" or "Configured by
+        the user with a valid value". Otherwise the function returns false. */
     bool isConfigured();
 
     // ================== Data members ==================

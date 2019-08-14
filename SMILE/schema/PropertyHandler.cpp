@@ -159,16 +159,37 @@ void PropertyHandler::rebuildNames()
 
 ////////////////////////////////////////////////////////////////////
 
-void PropertyHandler::setConfigured(bool configured)
+void PropertyHandler::setNotConfigured()
 {
-    ItemUtils::setPropertyConfigured(target(), name(), configured);
+    ItemUtils::setPropertyConfiguredState(target(), name(), 0);
+}
+
+////////////////////////////////////////////////////////////////////
+
+void PropertyHandler::setConfiguredToDefault()
+{
+    ItemUtils::setPropertyConfiguredState(target(), name(), 2);
+}
+
+////////////////////////////////////////////////////////////////////
+
+void PropertyHandler::setConfiguredByUser(bool valid)
+{
+    ItemUtils::setPropertyConfiguredState(target(), name(), valid ? 1 : -1);
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool PropertyHandler::isConfiguredByUser()
+{
+    return abs(ItemUtils::propertyConfiguredState(target(), name())) == 1;
 }
 
 ////////////////////////////////////////////////////////////////////
 
 bool PropertyHandler::isConfigured()
 {
-    return ItemUtils::isPropertyConfigured(target(), name());
+    return ItemUtils::propertyConfiguredState(target(), name()) > 0;
 }
 
 ////////////////////////////////////////////////////////////////////

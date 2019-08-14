@@ -10,7 +10,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void ItemUtils::setPropertyConfigured(Item* item, string property, bool configured)
+void ItemUtils::setPropertyConfiguredState(Item* item, string property, int configured)
 {
     item->setUtilityProperty(property+"@configured", configured);
 }
@@ -20,7 +20,7 @@ void ItemUtils::setPropertyConfigured(Item* item, string property, bool configur
 void ItemUtils::setHierarchyConfigured(const SchemaDef* schema, Item* root)
 {
     // process all immediate properties of the specified root item
-    for (auto property : schema->properties(root->type())) setPropertyConfigured(root, property, true);
+    for (auto property : schema->properties(root->type())) setPropertyConfiguredState(root, property, 1);
 
     // process all children of the specified root item
     for (auto child : root->children()) setHierarchyConfigured(schema, child);
@@ -28,11 +28,11 @@ void ItemUtils::setHierarchyConfigured(const SchemaDef* schema, Item* root)
 
 ////////////////////////////////////////////////////////////////////
 
-bool ItemUtils::isPropertyConfigured(Item* item, string property)
+int ItemUtils::propertyConfiguredState(Item* item, string property)
 {
-    try { return item->getUtilityProperty(property+"@configured") ? true : false; }
+    try { return item->getUtilityProperty(property+"@configured"); }
     catch (const FatalError&) { }
-    return false;
+    return 0;
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -18,19 +18,19 @@ class ItemUtils final
 {
 public:
     /** This function sets the \em configured state for the specified property in the specified
-        item to the specified boolean value. A newly created item has a \em configured state of
-        false. */
-    static void setPropertyConfigured(Item* item, string property, bool configured);
+        item to the specified integer value. A newly created item has a \em configured state of
+        zero. */
+    static void setPropertyConfiguredState(Item* item, string property, int configured);
 
     /** This function sets the \em configured state of all properties in the specified dataset
-        hierarchy to true. The function calls itself recursively to process the children of the
+        hierarchy to one. The function calls itself recursively to process the children of the
         specified root item. */
     static void setHierarchyConfigured(const SchemaDef* schema, Item* root);
 
     /** This function returns the \em configured state for the specified property in the specified
         item. If the \em configured state has never been set for this property and item, the
-        function returns false. */
-    static bool isPropertyConfigured(Item* item, string property);
+        function returns zero. */
+    static int propertyConfiguredState(Item* item, string property);
 
     /** This function sets the \em complete state for the specified item to true. A newly created
         item has a \em complete state of false. */

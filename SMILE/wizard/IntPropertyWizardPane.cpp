@@ -65,7 +65,7 @@ IntPropertyWizardPane::IntPropertyWizardPane(std::unique_ptr<PropertyHandler> ha
         {
             field->setText(QString::fromStdString(StringUtils::toString(hdlr->defaultValue())));
             hdlr->setValue(hdlr->defaultValue());
-            hdlr->setConfigured();
+            hdlr->setConfiguredToDefault();
         }
         else
         {
@@ -91,7 +91,7 @@ void IntPropertyWizardPane::updateValue(const QString& text)
         hdlr->setValue(value);
         emit propertyValueChanged();
     }
-    hdlr->setConfigured(valid);
+    hdlr->setConfiguredByUser(valid);
     emit propertyValidChanged(valid);
 }
 

@@ -28,6 +28,23 @@ namespace
         message += ":";
         return message;
     }
+
+    // sets the default value for this property, if there is one
+    void setDefaultValue(DoubleListPropertyHandler* hdlr, QLineEdit* field)
+    {
+        if (hdlr->hasDefaultValue())
+        {
+            field->setText(QString::fromStdString(hdlr->toString(hdlr->defaultValue())));
+            hdlr->setValue(hdlr->defaultValue());
+            hdlr->setConfiguredToDefault();
+        }
+        else
+        {
+            field->setText("");
+            hdlr->setValue(vector<double>());
+            hdlr->setNotConfigured();
+        }
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -59,23 +76,8 @@ DoubleListPropertyWizardPane::DoubleListPropertyWizardPane(std::unique_ptr<Prope
     // if the property has been configured, put its value in the text field
     // otherwise, if there is a default value, put that in both the text field and the property value
     // otherwise, just empty the text field (an invalid value that will have to be updated by the user)
-    if (hdlr->isConfigured())
-    {
-        _field->setText(QString::fromStdString(hdlr->toString(hdlr->value())));
-    }
-    else
-    {
-        if (hdlr->hasDefaultValue())
-        {
-            _field->setText(QString::fromStdString(hdlr->toString(hdlr->defaultValue())));
-            hdlr->setValue(hdlr->defaultValue());
-            hdlr->setConfigured();
-        }
-        else
-        {
-            _field->setText("");
-        }
-    }
+    if (hdlr->isConfigured()) _field->setText(QString::fromStdString(hdlr->toString(hdlr->value())));
+    else setDefaultValue(hdlr, _field);
 
     // ensure proper validity state
     emit propertyValidChanged(isValidAndInRange(hdlr, _field->text().toStdString()));
@@ -95,11 +97,11 @@ void DoubleListPropertyWizardPane::updateInterface()
         _header->setText(QString::fromStdString(newMessage));
         _message = newMessage;
 
-        // update the field value if it still contains the default value
-        // ***** TO DO
-
-        // verify field value (updated or not) against possibly adjusted requirements
-        updateValue(_field->text());
+        // if the property has already been configured by the user,
+        // verify the field value against possibly adjusted requirements (min/max value, units);
+        // otherwise, (re)insert the (possibly adjusted) default value
+        if (hdlr->isConfiguredByUser()) updateValue(_field->text());
+        else setDefaultValue(hdlr, _field);
     }
 }
 
@@ -117,7 +119,7 @@ void DoubleListPropertyWizardPane::updateValue(const QString& text)
         hdlr->setValue(value);
         emit propertyValueChanged();
     }
-    hdlr->setConfigured(valid);
+    hdlr->setConfiguredByUser(valid);
     emit propertyValidChanged(valid);
 }
 
