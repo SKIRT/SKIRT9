@@ -19,6 +19,15 @@ namespace
         if (!hdlr->isValidDouble(text)) return false;
         return hdlr->isInRange(hdlr->toDouble(text));
     }
+
+    // returns the text of the header message for this property
+    string headerMessage(DoublePropertyHandler* hdlr)
+    {
+        string message = "Enter " + hdlr->title() + " " + hdlr->rangeDescription();
+        if (hdlr->hasDefaultValue()) message += " (" + hdlr->toString(hdlr->defaultValue()) + ")";
+        message += ":";
+        return message;
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -31,8 +40,9 @@ DoublePropertyWizardPane::DoublePropertyWizardPane(std::unique_ptr<PropertyHandl
     // create the layout so that we can add stuff one by one
     auto layout = new QVBoxLayout;
 
-    // add the header with a placeholder message
-    _header = createHeader("");
+    // add the header
+    _message = headerMessage(hdlr);
+    _header = createHeader(_message);
     layout->addWidget(_header);
 
     // add the edit field
@@ -46,8 +56,26 @@ DoublePropertyWizardPane::DoublePropertyWizardPane(std::unique_ptr<PropertyHandl
     layout->addStretch();
     setLayout(layout);
 
-    // set the header and field contents
-    updateInterface();
+    // if the property has been configured, put its value in the text field
+    // otherwise, if there is a default value, put that in both the text field and the property value
+    // otherwise, just empty the text field (an invalid value that will have to be updated by the user)
+    if (hdlr->isConfigured())
+    {
+        _field->setText(QString::fromStdString(hdlr->toString(hdlr->value())));
+    }
+    else
+    {
+        if (hdlr->hasDefaultValue())
+        {
+            _field->setText(QString::fromStdString(hdlr->toString(hdlr->defaultValue())));
+            hdlr->setValue(hdlr->defaultValue());
+            hdlr->setConfigured();
+        }
+        else
+        {
+            _field->setText("");
+        }
+    }
 
     // ensure proper validity state
     emit propertyValidChanged(isValidAndInRange(hdlr, _field->text().toStdString()));
@@ -58,37 +86,20 @@ DoublePropertyWizardPane::DoublePropertyWizardPane(std::unique_ptr<PropertyHandl
 void DoublePropertyWizardPane::updateInterface()
 {
     auto hdlr = handlerCast<DoublePropertyHandler>();
-    if (hdlr->quantity() != _quantity)
+
+    // if the header message differs, this means the min/max/default values or the quantity have changed
+    string newMessage = headerMessage(hdlr);
+    if (newMessage != _message)
     {
-        // set the header message
-        string message = "Enter " + hdlr->title() + " " + hdlr->rangeDescription();
-        if (hdlr->hasDefaultValue()) message += " (" + hdlr->toString(hdlr->defaultValue()) + ")";
-        message += ":";
-        _header->setText(QString::fromStdString(message));
+        // update the header message
+        _header->setText(QString::fromStdString(newMessage));
+        _message = newMessage;
 
-        // if the property has been configured, put its value in the text field
-        // otherwise, if there is a default value, put that in both the text field and the property value
-        // otherwise, just empty the text field (an invalid value that will have to be updated by the user)
-        if (hdlr->isConfigured())
-        {
-            _field->setText(QString::fromStdString(hdlr->toString(hdlr->value())));
-        }
-        else
-        {
-            if (hdlr->hasDefaultValue())
-            {
-                _field->setText(QString::fromStdString(hdlr->toString(hdlr->defaultValue())));
-                hdlr->setValue(hdlr->defaultValue());
-                hdlr->setConfigured();
-            }
-            else
-            {
-                _field->setText("");
-            }
-        }
+        // update the field value if it still contains the default value
+        // ***** TO DO
 
-        // remember the quantity currently in use (so we can update our interface when it changes)
-        _quantity = hdlr->quantity();
+        // verify field value (updated or not) against possibly adjusted requirements
+        updateValue(_field->text());
     }
 }
 

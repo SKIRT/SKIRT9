@@ -29,9 +29,12 @@ public:
     // ==================== Event Handling ====================
 
 protected:
-    /** This function updates the interface of the wizard pane if the quantity of the handled
-        property (and thus its units) have changed since construction or since the previous
-        invocation of this function. */
+    /** This function updates the user interface of the pane if needed to adjust to changes to the
+        values of other properties displayed inside the same MultiPropertyWizardPane instance.
+        Specifically, if the quantity units and/or the minimum, maximum or default values have
+        changed, the header message is updated and the field value is updated if the quantity units
+        and/or the default value have changed and the field has not yet been edited by the user
+        (i.e. it still contains a programmatically inserted default value). */
     void updateInterface() override;
 
 public slots:
@@ -42,9 +45,9 @@ public slots:
     // ==================== Data Members ====================
 
 private:
+    string _message;   // the current header message, remembered to detect changes in the environment
     QLabel* _header;
     QLineEdit* _field;
-    string _quantity{"*"};   // the quantity currently in use, initialized to an impossible value
 };
 
 ////////////////////////////////////////////////////////////////////

@@ -43,10 +43,12 @@ public:
     // ==================== Event Handling ====================
 
 public:
-    /** This function can be implemented by subclasses that may need to update their interface when
-        values of other properties have changed (e.g., when the units of a double property are
-        determined by the value of another enumeration property). The implementation in this
-        abstract base class does nothing. */
+    /** This function updates the user interface of the pane if needed to adjust to changes to the
+        values of other properties displayed inside the same MultiPropertyWizardPane instance.
+        Examples include a minimum, maximum or default value based on a conditional expression, and
+        quantity units determined by the value of a preceding enumeration property. The function
+        should be implemented by all subclasses that may be managed by a MultiPropertyWizardPane.
+        The implementation in this abstract base class does nothing. */
     virtual void updateInterface();
 
 protected:
