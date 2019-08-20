@@ -240,6 +240,12 @@ namespace SpecialFunctions
         \frac{x}{\ln(1+x)} = \dfrac{x_1}{1 - \dfrac{x}{2} + \dfrac{x^2}{3} - \dfrac{x^3}{4} + ...}
         \f] */
     double lnmean(double x1, double x2);
+
+    /** This function returns the logarithmic mean of two values as described for the two-argument
+        lnmean() function in this class, given also the natural logarithm of these two values. In
+        cases where these logarithms are available at the call site anyway, this function is more
+        efficient than its two-argument equivalent. */
+    double lnmean(double x1, double x2, double lnx1, double lnx2);
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -373,26 +373,36 @@ void MonteCarloSimulation::storeRadiationField(const PhotonPacket* pp)
         int ell = _config->radiationFieldWLG()->bin(pp->wavelength());
         if (ell >= 0)
         {
-            double extBeg = 1.;                         // extinction factor at begin of current segment
+            double luminosity = pp->luminosity();
+            bool hasPrimaryOrigin = pp->hasPrimaryOrigin();
+
+            double lnExtBeg = 0.;                 // extinction factor and its logarithm at begin of current segment
+            double extBeg = 1.;
             for (const auto& segment : pp->segments())
             {
-                double extEnd = exp(-segment.tau);      // extinction factor at end of current segment
+                double lnExtEnd = -segment.tau;   // extinction factor and its logarithm at end of current segment
+                double extEnd = exp(lnExtEnd);
                 int m = segment.m;
                 if (m >= 0)
                 {
-                    double Lds = pp->luminosity() * SpecialFunctions::lnmean(extBeg, extEnd) * segment.ds;
-                    mediumSystem()->storeRadiationField(pp->hasPrimaryOrigin(), m, ell, Lds);
+                    // use this flavor of the lnmean function to avoid recalculating the logarithm of the extinction
+                    double extMean = SpecialFunctions::lnmean(extEnd, extBeg, lnExtEnd, lnExtBeg);
+                    double Lds = luminosity * extMean * segment.ds;
+                    mediumSystem()->storeRadiationField(hasPrimaryOrigin, m, ell, Lds);
                 }
+                lnExtBeg = lnExtEnd;
                 extBeg = extEnd;
             }
         }
     }
     else
     {
-        double extBeg = 1.;                         // extinction factor at begin of current segment
+        double lnExtBeg = 0.;                 // extinction factor and its logarithm at begin of current segment
+        double extBeg = 1.;
         for (const auto& segment : pp->segments())
         {
-            double extEnd = exp(-segment.tau);      // extinction factor at end of current segment
+            double lnExtEnd = -segment.tau;   // extinction factor and its logarithm at end of current segment
+            double extEnd = exp(lnExtEnd);
             int m = segment.m;
             if (m >= 0)
             {
@@ -400,10 +410,13 @@ void MonteCarloSimulation::storeRadiationField(const PhotonPacket* pp)
                 int ell = _config->radiationFieldWLG()->bin(lambda);
                 if (ell >= 0)
                 {
-                    double Lds = pp->perceivedLuminosity(lambda) * SpecialFunctions::lnmean(extBeg, extEnd) * segment.ds;
+                    // use this flavor of the lnmean function to avoid recalculating the logarithm of the extinction
+                    double extMean = SpecialFunctions::lnmean(extEnd, extBeg, lnExtEnd, lnExtBeg);
+                    double Lds = pp->perceivedLuminosity(lambda) * extMean * segment.ds;
                     mediumSystem()->storeRadiationField(pp->hasPrimaryOrigin(), m, ell, Lds);
                 }
             }
+            lnExtBeg = lnExtEnd;
             extBeg = extEnd;
         }
     }
