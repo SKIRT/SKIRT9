@@ -304,6 +304,153 @@ public:
         return operator()(value);
     }
 
+    /** This function returns a sequence of values of the quantity represented by this stored table
+        (in the \em yv argument) corresponding to the specified sequence of first-axis values (the
+        \em xv argument), using given fixed values for the other axes, if any (the arguments at the
+        end of the list). The function behaves as if it would call the operator()() function for
+        each element in the specified input sequence, but it is more efficient. */
+    template <typename... Values, typename = std::enable_if_t<CompileTimeUtils::isFloatArgList<N-1, Values...>()>>
+    void valueArray(Array& yv, const Array& xv, Values... values) const
+    {
+        // storage for each axis
+        std::array<double, N> value = {{ 0., static_cast<double>(values)... }};
+        std::array<size_t, N> i2;           // upper grid bin boundary index
+        std::array<double, N> f;            // fraction of axis value in bin
+        std::array<size_t, N> indices;      // indices of the current term
+
+        // storage for each term in the interpolation
+        constexpr size_t numTerms = 1 << N; // there are 2^N terms
+        std::array<double, numTerms> ff;    // front factor
+        std::array<double, numTerms> yy;    // tabulated value
+
+        // resize output array
+        size_t n = xv.size();               // number of values to calculate
+        yv.resize(n);
+
+        // precompute grid index and fraction for all but the first axis
+        for (size_t k = 1; k!=N; ++k)
+        {
+            // get the index of the upper border of the axis grid bin containing the specified axis value
+            double x = value[k];
+            size_t right = std::lower_bound(_axBeg[k], _axBeg[k]+_axLen[k], x) - _axBeg[k];
+
+            // if the value is beyond the grid borders, adjust both the bin border and the value
+            if (right == 0)
+            {
+                right++;
+                x = _axBeg[k][0];
+            }
+            else if (right == _axLen[k])
+            {
+                right--;
+                x = _axBeg[k][right];
+            }
+            i2[k] = right;
+
+            // get the axis values at the grid borders
+            double x1 = _axBeg[k][right-1];
+            double x2 = _axBeg[k][right];
+
+            // if requested, compute logarithm of coordinate values
+            if (_axLog[k])
+            {
+                x = log(x);
+                x1 = log(x1);
+                x2 = log(x2);
+            }
+
+            // calculate the fraction of the requested axis value in the bin
+            f[k] = (x-x1)/(x2-x1);
+        }
+
+        // calculate each value in the array
+        for (size_t i = 0; i!=n; ++i)
+        {
+            value[0] = xv[i];
+
+            // compute grid index and fraction for the first axis
+            {
+                // get the index of the upper border of the axis grid bin containing the specified axis value
+                double x = value[0];
+                size_t right = std::lower_bound(_axBeg[0], _axBeg[0]+_axLen[0], x) - _axBeg[0];
+
+                // if the value is beyond the grid borders:
+                //    - if we're not clamping, simply return zero
+                //    - if we're clamping, adjust both the bin border and the value
+                if (right == 0)
+                {
+                    if (!_clamp && x != _axBeg[0][0]) { yv[i] = 0.; continue; };
+                    right++;
+                    x = _axBeg[0][0];
+                }
+                else if (right == _axLen[0])
+                {
+                    if (!_clamp) { yv[i] = 0.; continue; };
+                    right--;
+                    x = _axBeg[0][right];
+                }
+                i2[0] = right;
+
+                // get the axis values at the grid borders
+                double x1 = _axBeg[0][right-1];
+                double x2 = _axBeg[0][right];
+
+                // if requested, compute logarithm of coordinate values
+                if (_axLog[0])
+                {
+                    x = log(x);
+                    x1 = log(x1);
+                    x2 = log(x2);
+                }
+
+                // calculate the fraction of the requested axis value in the bin
+                f[0] = (x-x1)/(x2-x1);
+            }
+
+            // determine front factor and tabulated value for each term of the interpolation
+            for (size_t t = 0; t!=numTerms; ++t)
+            {
+                // use the binary representation of the term index to determine left/right for each axis
+                size_t term = t;    // temporary version of term index that will be bit-shifted
+                double front = 1.;
+                for (size_t k = 0; k!=N; ++k)
+                {
+                    size_t left = term & 1;    // lowest significant digit = 1 means lower border
+                    indices[k] = i2[k] - left;
+                    front *= left ? (1-f[k]) : f[k];
+                    term >>= 1;
+                }
+                if (front)
+                {
+                    ff[t] = front;
+                    yy[t] = valueAtIndices(indices);
+
+                    // if logarithmic interpolation of y value is requested and not all bordering values are positive,
+                    // we can't comply with the request, so return zero
+                    if (_qtyLog && yy[t]<=0) { yv[i] = 0.; continue; };
+                }
+                else
+                {
+                    ff[t] = 0.;
+                    yy[t] = 0.;
+                }
+            }
+
+            // calculate sum
+            double y = 0.;
+            if (_qtyLog)
+            {
+                for (size_t t = 0; t!=numTerms; ++t) if (ff[t]) y += ff[t] * log(yy[t]);
+                y = exp(y);
+            }
+            else
+            {
+                for (size_t t = 0; t!=numTerms; ++t) y += ff[t] * yy[t];
+            }
+            yv[i] = y;
+        }
+    }
+
     // ------------------------------------------
 
     /** This function constructs both the normalized probability density function (pdf) and the
@@ -331,16 +478,14 @@ public:
         // copy the relevant portion of the internal axis grid
         size_t minRight = std::upper_bound(_axBeg[0], _axBeg[0]+_axLen[0], xrange.min()) - _axBeg[0];
         size_t maxRight = std::lower_bound(_axBeg[0], _axBeg[0]+_axLen[0], xrange.max()) - _axBeg[0];
-        size_t n = 1 + maxRight - minRight; // n = number of bins
-        xv.resize(n+1);                     // n+1 = number of border points
+        xv.resize(2 + maxRight - minRight); // number of internal grid points plus two external points
         size_t i = 0;                       // i = index in target array
         xv[i++] = xrange.min();             // j = index in internal grid array
         for (size_t j = minRight; j < maxRight; ) xv[i++] = _axBeg[0][j++];
         xv[i++] = xrange.max();
 
         // interpolate or copy the corresponding probability density values
-        pv.resize(n+1);
-        for (size_t i = 0; i<=n; ++i) pv[i] = operator()(xv[i], values...);
+        valueArray(pv, xv, values...);
 
         // perform the rest of the operation in a non-templated function
         return NR::cdf2(_axLog[0] && _qtyLog, xv, pv, Pv);
