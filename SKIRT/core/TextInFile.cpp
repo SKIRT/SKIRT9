@@ -21,57 +21,14 @@ namespace TextInFile_Private
     class ColumnInfo
     {
     public:
-        ColumnInfo(string description_, string quantity_, string unit_, bool isGhost_, double ghostValue_)
-        : description(description_), quantity(quantity_), unit(unit_), isGhost(isGhost_), ghostValue(ghostValue_) { }
+        ColumnInfo() { }
         string description;
         string quantity;
         string unit;
-        bool isGhost{false};
-        double ghostValue{0.};
         double convFactor{1.};    // unit conversion factor from input to internal
         int waveExponent{0};      // wavelength exponent for converting "specific" quantities
         size_t waveIndex{0};      // index of wavelength column for converting "specific" quantities
     };
-}
-
-////////////////////////////////////////////////////////////////////
-
-TextInFile::TextInFile(const SimulationItem* item, string filename, string description)
-{
-    // open the file
-    string filepath = item->find<FilePaths>()->input(filename);
-    _in = System::ifstream(filepath);
-    if (!_in) throw FATALERROR("Could not open the " + description + " text file " + filepath);
-
-    // remember the units system and the logger
-    _units = item->find<Units>();
-    _log = item->find<Log>();
-
-    // log "reading file" message
-    _log->info( item->typeAndName() + " reads " + description + " from text file " + filepath + "...");
-}
-
-////////////////////////////////////////////////////////////////////
-
-void TextInFile::close()
-{
-    if (_in.is_open())
-    {
-        _in.close();
-
-        // log "done" message, except if an exception has been thrown
-        if (!std::uncaught_exception()) _log->info("Done reading");
-    }
-}
-
-////////////////////////////////////////////////////////////////////
-
-TextInFile::~TextInFile()
-{
-    close();
-
-    // delete column info structures
-    for (auto col : _colv) delete col;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -151,65 +108,111 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-void TextInFile::addColumn(string description, string quantity, string defaultUnit,
-                           bool isGhostColumn, double ghostValue)
+TextInFile::TextInFile(const SimulationItem* item, string filename, string description)
 {
-    // store the column info provided by the program
-    auto col = new TextInFile_Private::ColumnInfo(description, quantity, defaultUnit, isGhostColumn, ghostValue);
-    _colv.push_back(col);
-    auto colIndex = _colv.size();
+    // open the file
+    string filepath = item->find<FilePaths>()->input(filename);
+    _in = System::ifstream(filepath);
+    if (!_in) throw FATALERROR("Could not open the " + description + " text file " + filepath);
 
-    // if this is a ghost column, we're done
-    if (isGhostColumn) return;
+    // remember the units system and the logger
+    _units = item->find<Units>();
+    _log = item->find<Log>();
 
-    // if this is the first column, or we know from previous columns that the file has header info,
-    // look for the next structured header line and, if present, process it
-    if (_hasHeaderInfo)
+    // log "reading file" message
+    _log->info( item->typeAndName() + " reads " + description + " from text file " + filepath + "...");
+
+    // read any structured header lines into a list of ColumnInfo records
+    size_t index;
+    string unit;
+    while (getNextInfoLine(_in, index, unit))
     {
-        size_t index;
-        string unit;
-        if (getNextInfoLine(_in, index, unit))
-        {
-            if (index != colIndex)
-                throw FATALERROR("Incorrect column index in file header for column " + std::to_string(colIndex));
-            col->unit = unit;
-        }
-        else
-        {
-            if (colIndex > 1)
-                throw FATALERROR("No column info in file header for column " + std::to_string(colIndex));
-            _hasHeaderInfo = false;
-        }
+        // add a default-constructed ColumnInfo record to the list
+        _colv.emplace_back(new TextInFile_Private::ColumnInfo);
+        if (index != _colv.size())
+            throw FATALERROR("Incorrect column index in file header for column " + std::to_string(_colv.size()));
+
+        // remember the units specified in the file
+        _colv.back()->unit = unit;
     }
+    _numFileCols = _colv.size();
+}
+
+////////////////////////////////////////////////////////////////////
+
+void TextInFile::close()
+{
+    if (_in.is_open())
+    {
+        _in.close();
+
+        // log "done" message, except if an exception has been thrown
+        if (!std::uncaught_exception()) _log->info("Done reading");
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
+TextInFile::~TextInFile()
+{
+    close();
+
+    // delete column info structures
+    for (auto col : _colv) delete col;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void TextInFile::addColumn(string description, string quantity, string defaultUnit)
+{
+    // if the file has no header info at all, add a default record for this column
+    if (!_numFileCols)
+    {
+        _colv.emplace_back(new TextInFile_Private::ColumnInfo);
+        _colv.back()->unit = defaultUnit;
+    }
+    // otherwise verify that there is a column specification to match this program column index
+    else
+    {
+        if (_programColIndex+1 > _numFileCols)
+            throw FATALERROR("No column info in file header for column " + std::to_string(_programColIndex+1));
+    }
+
+    // get a pointer to the column record being handled, and increment the program column index
+    auto col = _colv[_programColIndex++];
+
+    // store the programmatically provided information in the record (unit is already stored)
+    col->description = description;
+    col->quantity = quantity;
 
     // verify units and determine conversion factor for this column
     if (col->quantity.empty())       // dimensionless quantity
     {
         if (!col->unit.empty() && col->unit != "1")
-            throw FATALERROR("Invalid units for dimensionless quantity in column " + std::to_string(colIndex));
+            throw FATALERROR("Invalid units for dimensionless quantity in column " + std::to_string(_programColIndex));
         col->unit = "1";
     }
     else if (col->quantity == "specific")    // arbitrarily scaled value per wavelength or per frequency
     {
         col->waveExponent = waveExponentForSpecificQuantity(_units, col->unit);
         if (col->waveExponent == 99)
-            throw FATALERROR("Invalid units for specific quantity in column " + std::to_string(colIndex));
+            throw FATALERROR("Invalid units for specific quantity in column " + std::to_string(_programColIndex));
         if (col->waveExponent)
         {
             col->waveIndex = waveIndexForSpecificQuantity(_colv);
             if (col->waveIndex == 99) throw FATALERROR("No preceding wavelength column for specific quantity in column "
-                                                       + std::to_string(colIndex));
+                                                       + std::to_string(_programColIndex));
         }
     }
     else
     {
         if (!_units->has(col->quantity, col->unit))
-            throw FATALERROR("Invalid units for quantity in column " + std::to_string(colIndex));
+            throw FATALERROR("Invalid units for quantity in column " + std::to_string(_programColIndex));
         col->convFactor = _units->in(col->quantity, col->unit, 1.);
     }
 
     // log column information
-    _log->info("  Column " + std::to_string(colIndex) + ": " + col->description + " (" + col->unit + ")");
+    _log->info("  Column " + std::to_string(_programColIndex) + ": " + col->description + " (" + col->unit + ")");
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -236,20 +239,15 @@ bool TextInFile::readRow(Array& values)
             {
                 auto col = _colv[i];
 
-                // substitute ghost value if requested for this column
-                if (col->isGhost) values[i] = col->ghostValue;
-                else
-                {
-                    // convert the value to floating point
-                    if (linestream.eof()) throw FATALERROR("One or more required value(s) on text line are missing");
-                    double value;
-                    linestream >> value;
-                    if (linestream.fail()) throw FATALERROR("Input text is not formatted as a floating point number");
+                // convert the value to floating point
+                if (linestream.eof()) throw FATALERROR("One or more required value(s) on text line are missing");
+                double value;
+                linestream >> value;
+                if (linestream.fail()) throw FATALERROR("Input text is not formatted as a floating point number");
 
-                    // convert from input units to internal units
-                    values[i] = value * (col->waveExponent ? pow(values[col->waveIndex],col->waveExponent)
-                                                           : col->convFactor);
-                }
+                // convert from input units to internal units
+                values[i] = value * (col->waveExponent ? pow(values[col->waveIndex],col->waveExponent)
+                                                       : col->convFactor);
             }
             return true;
         }

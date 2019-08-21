@@ -98,19 +98,11 @@ public:
              preceding column described as "wavelength". However, the values will remain scaled
              with some arbitary wavelength-independent constant.
 
-        For a regular column, the \em isGhostColumn flag must be omitted or set to false. In this
-        case, this function looks for and, if present, reads the header information line
-        corresponding to this column. The unit information from the header is stored with the
-        information provided by the function arguments for later use.
-
-        On the other hand, if the \em isGhostColumn flag is set to true, the function constructs a
-        \em ghost \em column that has no counterpart in the input file. Rather than reading a value
-        from the file, the value specified as the \em ghostValue argument is copied into the output
-        array instead. This capability is useful to keep the number of values obtained by readRow()
-        constant even if some of the columns are sometimes missing from the input file.
+        The function looks for and, if present, reads the header information line corresponding to
+        this column. The unit information from the header is stored with the information provided
+        by the function arguments for later use.
     */
-    void addColumn(string description, string quantity = string(), string defaultUnit = string(),
-                   bool isGhostColumn = false, double ghostValue = 0.);
+    void addColumn(string description, string quantity = string(), string defaultUnit = string());
 
     /** This function reads the next row from a column text file and stores the resulting values in
         the array passed to the function by reference. The function first skips empty lines and
@@ -213,14 +205,13 @@ private:
     //======================== Data Members ========================
 
 private:
-    // data members initialized in the constructor
     std::ifstream _in;      // the input stream
     Units* _units{nullptr}; // the units system
     Log* _log{nullptr};     // the logger
 
-    // data members initialized by repeated calls to addColumn()
     vector<TextInFile_Private::ColumnInfo*> _colv;  // info for each column
-    bool _hasHeaderInfo{true};   // true if the input file has structured column info in header
+    size_t _numFileCols{0};                         // number of columns specified in the file
+    size_t _programColIndex{0};                     // zero-based index of the next program column being added
 };
 
 ////////////////////////////////////////////////////////////////////
