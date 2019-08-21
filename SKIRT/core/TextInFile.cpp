@@ -22,9 +22,10 @@ namespace TextInFile_Private
     {
     public:
         ColumnInfo() { }
-        string description;
-        string quantity;
-        string unit;
+        string title;             // description specified in the file, used to remap columns
+        string description;       // official description provided by the program
+        string quantity;          // quantity, provided by the program
+        string unit;              // unit, provided by the program or specified in the file
         double convFactor{1.};    // unit conversion factor from input to internal
         int waveExponent{0};      // wavelength exponent for converting "specific" quantities
         size_t waveIndex{0};      // index of wavelength column for converting "specific" quantities
@@ -35,10 +36,10 @@ namespace TextInFile_Private
 
 namespace
 {
-    // This function looks for the next header line that conforms to the required structured syntax.
-    // If such a line is found, the column index and the unit string are stored in the arguments and true is returned.
+    // This function looks for the next header line that conforms to the required structured syntax. If such a line
+    // is found, the column index, description and unit string are stored in the arguments and true is returned.
     // If no such header line is found, the function consumes the complete header and returns false.
-    bool getNextInfoLine(std::ifstream& in, size_t& colIndex, string& unit)
+    bool getNextInfoLine(std::ifstream& in, size_t& colIndex, string& description, string& unit)
     {
         // continue reading until a conforming header line is found or until the complete header has been consumed
         while (true)
@@ -59,13 +60,14 @@ namespace
             getline(in, line);
 
             // if the line conforms to the required syntax, return the extracted information
-            static const std::regex syntax("#\\s*column\\s*(\\d+)\\s*:[^()]*\\(\\s*([a-zA-Z0-9/]*)\\s*\\)\\s*",
+            static const std::regex syntax("#\\s*column\\s*(\\d+)\\s*:\\s*([^()]*)\\(\\s*([a-zA-Z0-9/]*)\\s*\\)\\s*",
                                            std::regex::icase);
             std::smatch matches;
-            if (std::regex_match(line, matches, syntax) && matches.size()==3)
+            if (std::regex_match(line, matches, syntax) && matches.size()==4)
             {
                 colIndex = std::stoul(matches[1].str());
-                unit = matches[2].str();
+                description = matches[2].str();
+                unit = matches[3].str();
                 return true;
             }
         }
@@ -124,16 +126,18 @@ TextInFile::TextInFile(const SimulationItem* item, string filename, string descr
 
     // read any structured header lines into a list of ColumnInfo records
     size_t index;
+    string title;
     string unit;
-    while (getNextInfoLine(_in, index, unit))
+    while (getNextInfoLine(_in, index, title, unit))
     {
         // add a default-constructed ColumnInfo record to the list
         _colv.emplace_back(new TextInFile_Private::ColumnInfo);
         if (index != _colv.size())
             throw FATALERROR("Incorrect column index in file header for column " + std::to_string(_colv.size()));
 
-        // remember the units specified in the file
+        // remember the description and the units specified in the file
         _colv.back()->unit = unit;
+        _colv.back()->title = title;
     }
     _numFileCols = _colv.size();
 }
@@ -212,7 +216,9 @@ void TextInFile::addColumn(string description, string quantity, string defaultUn
     }
 
     // log column information
-    _log->info("  Column " + std::to_string(_programColIndex) + ": " + col->description + " (" + col->unit + ")");
+    string message = "  Column " + std::to_string(_programColIndex) + ": " + col->description + " (" + col->unit + ")";
+    if (!col->title.empty()) message += " <-- " + col->title;
+    _log->info(message);
 }
 
 ////////////////////////////////////////////////////////////////////
