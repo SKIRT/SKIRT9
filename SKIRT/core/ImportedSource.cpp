@@ -21,6 +21,14 @@
 
 ////////////////////////////////////////////////////////////////////
 
+namespace
+{
+    // maximum number of luminosity calculations between two invocations of infoIfElapsed()
+    const size_t logProgressChunkSize = 10000;
+}
+
+////////////////////////////////////////////////////////////////////
+
 void ImportedSource::setupSelfAfter()
 {
     Source::setupSelfAfter();
@@ -62,19 +70,27 @@ void ImportedSource::setupSelfAfter()
     int M = _snapshot->numEntities();
     if (M)
     {
-        find<Log>()->info("Calculating luminosities from imported properties");
-        _Lv.resize(M);
-
         // integrating over the SED for each entity can be time-consuming, so we do this in parallel
-        find<ParallelFactory>()->parallelDistributed()->call(M, [this](size_t firstIndex, size_t numIndices)
+        _Lv.resize(M);
+        auto log = find<Log>();
+        log->info("Calculating luminosities for " + std::to_string(M) + " imported entities...");
+        log->infoSetElapsed(M);
+        find<ParallelFactory>()->parallelDistributed()->call(M, [this, log](size_t firstIndex, size_t numIndices)
         {
             Array lambdav, pv, Pv;  // the contents of these arrays is not used, so this could be optimized if needed
             Array params;
 
-            for (size_t m=firstIndex; m!=firstIndex+numIndices; ++m)
+            while (numIndices)
             {
-                _snapshot->parameters(m, params);
-                _Lv[m] = _sedFamily->cdf(lambdav, pv, Pv, _wavelengthRange, params);
+                size_t currentChunkSize = min(logProgressChunkSize, numIndices);
+                for (size_t m=firstIndex; m!=firstIndex+currentChunkSize; ++m)
+                {
+                    _snapshot->parameters(m, params);
+                    _Lv[m] = _sedFamily->cdf(lambdav, pv, Pv, _wavelengthRange, params);
+                }
+                log->infoIfElapsed("Calculated luminosities: ", currentChunkSize);
+                firstIndex += currentChunkSize;
+                numIndices -= currentChunkSize;
             }
         });
         ProcessManager::sumToAll(_Lv);
