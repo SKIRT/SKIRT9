@@ -96,8 +96,8 @@ public:
         - The number of logical column names must match (or exceed) the number of subsequent
         invocations of the addColumn() function.
 
-        - Each logical column name must be contained in exactly one of the file column
-        descriptions, unambiguously identifying a particular physical column.
+        - Each logical column name must be equal to exactly one of the file column descriptions,
+        unambiguously identifying a particular physical column.
 
         - Two logical columns cannot identify the same physical column, i.e. a physical column can
         map to at most one logical column.
@@ -220,7 +220,7 @@ public:
 
 private:
     /** This function returns the zero-based index of the column that has a file info description
-        containing the given name, or an error value if there is no such column or if there are
+        equal to the given name, or an error value if there is no such column or if there are
         multiple such columns. */
     size_t indexForName(string name) const;
 

@@ -48,7 +48,7 @@ namespace
             if (std::regex_match(line, matches, syntax) && matches.size()==4)
             {
                 colIndex = std::stoul(matches[1].str());
-                description = matches[2].str();
+                description = StringUtils::squeeze(matches[2].str());
                 unit = matches[3].str();
                 return true;
             }
@@ -150,7 +150,7 @@ size_t TextInFile::indexForName(std::string name) const
     size_t index = 0;
     for (const ColumnInfo& col : _colv)
     {
-        if (StringUtils::contains(col.title, name))
+        if (col.title == name)
         {
             if (result != ERROR_NO_INDEX) return ERROR_AM_INDEX;
             result = index;
@@ -196,9 +196,9 @@ void TextInFile::useColumns(string columns)
         string sname = StringUtils::squeeze(name);
         size_t index = indexForName(sname);
         if (index == ERROR_NO_INDEX)
-            throw FATALERROR("No column description in file header contains logical name '" + sname + "'");
+            throw FATALERROR("No column description in file header matches logical name '" + sname + "'");
         if (index == ERROR_AM_INDEX)
-            throw FATALERROR("Multiple column descriptions in file header contain logical name '" + sname + "'");
+            throw FATALERROR("Multiple column descriptions in file header match logical name '" + sname + "'");
 
         newcolv.emplace_back(_colv[index]);
     }
