@@ -12,7 +12,6 @@
 class Log;
 class SimulationItem;
 class Units;
-namespace TextInFile_Private { class ColumnInfo; }
 
 ////////////////////////////////////////////////////////////////////
 
@@ -77,6 +76,40 @@ public:
     ~TextInFile();
 
     //====================== Other functions =======================
+
+    /** This function specifies a mapping (defined by the \em columns argument, as described below)
+        between the "physical" columns in the file (defined by the column information in the file
+        header) and the "logical" columns requested by the program (defined by repeated calls to
+        the addColumn() function). This function can be called with a non-empty \em columns string
+        at most once for each file, and such invocation should occur \em before the first
+        invocation of the addColumn() function. Calling the function with an empty \em columns
+        string is equivalent to not calling it al all.
+
+        If the \em columns string is non-empty, it is interpreted as a comma-separated sequence of
+        logical column names. Within each column name, consecutive white space characters are
+        replaced by a single space, and white space at the start and at the end is removed. The
+        following rules then apply:
+
+        - The input file must contain valid column information in the file header, as described in
+        the header of this class.
+
+        - The number of logical column names must match (or exceed) the number of subsequent
+        invocations of the addColumn() function.
+
+        - Each logical column name must be contained in exactly one of the file column
+        descriptions, unambiguously identifying a particular physical column.
+
+        - Two logical columns cannot identify the same physical column, i.e. a physical column can
+        map to at most one logical column.
+
+        - It is allowed for a file to contain physical columns that do not map to a logical column.
+
+        These rules define a mapping between the physical file column ordering and the logical
+        column ordering defined by the \em columns string. Once this mapping has been established,
+        the program only sees the logical ordering. In other words, the subsequent calls to the
+        addColumn() function are matched to the corresponding logical columns, and the readXxx()
+        functions retrieve logical columns only. */
+    void useColumns(string columns);
 
     /** This function (virtually) adds a new column to the text file, characterized by the given
         description and unit information. The \em description argument is used only for
@@ -183,6 +216,20 @@ public:
         assignColumns(0, result, columns...);
     }
 
+    //======================== Private helpers for column info handling ========================
+
+private:
+    /** This function returns the zero-based index of the column that has a file info description
+        containing the given name, or an error value if there is no such column or if there are
+        multiple such columns. */
+    size_t indexForName(string name) const;
+
+    /** This function returns the index of the first column that is described as "wavelength", or
+        the error value if there is no such column. */
+    size_t waveIndexForSpecificQuantity() const;
+
+    //======================== Private helpers for reading ========================
+
 private:
     // recursively assign values from Array to double& arguments; used in variadic readRow()
     template <typename... Values>
@@ -209,9 +256,27 @@ private:
     Units* _units{nullptr}; // the units system
     Log* _log{nullptr};     // the logger
 
-    vector<TextInFile_Private::ColumnInfo*> _colv;  // info for each column
-    size_t _numFileCols{0};                         // number of columns specified in the file
-    size_t _programColIndex{0};                     // zero-based index of the next program column being added
+    // private type to store column info
+    class ColumnInfo
+    {
+    public:
+        size_t physColIndex{0}; // one-based physical index of this column in the file
+        string title;           // description specified in the file, used to remap columns
+        string description;     // official description provided by the program
+        string quantity;        // quantity, provided by the program
+        string unit;            // unit, provided by the program or specified in the file
+        double convFactor{1.};  // unit conversion factor from input to internal
+        int waveExponent{0};    // wavelength exponent for converting "specific" quantities
+        size_t waveIndex{0};    // zero-based logical index of wavelength column for converting "specific" quantities
+    };
+
+    bool _hasFileInfo{false};   // becomes true if the file has column header info
+    bool _hasProgInfo{false};   // becomes true if the program has added at least one column
+
+    vector<ColumnInfo> _colv;   // info for each column, derived from file info and/or program info
+    size_t _numLogCols{0};      // number of logical columns, or number of program columns added so far
+
+    vector<size_t> _logColIndices; // zero-based index into _colv for each physical column to be read
 };
 
 ////////////////////////////////////////////////////////////////////
