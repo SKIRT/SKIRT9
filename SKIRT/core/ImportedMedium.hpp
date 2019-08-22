@@ -54,6 +54,11 @@ class ImportedMedium : public Medium, public SiteListInterface
         ATTRIBUTE_DEFAULT_VALUE(importVariableMixParams, "false")
         ATTRIBUTE_DISPLAYED_IF(importVariableMixParams, "(!NonIdentitySpatialCellLibrary)&Level2")
 
+    PROPERTY_STRING(useColumns, "a list of names corresponding to columns in the file to be imported")
+        ATTRIBUTE_DEFAULT_VALUE(useColumns, "")
+        ATTRIBUTE_REQUIRED_IF(useColumns, "false")
+        ATTRIBUTE_DISPLAYED_IF(useColumns, "Level3")
+
     PROPERTY_ITEM(materialMix, MaterialMix, "the material type and properties throughout the medium")
         ATTRIBUTE_DEFAULT_VALUE(materialMix, "MeanInterstellarDustMix")
         ATTRIBUTE_RELEVANT_IF(materialMix, "!importVariableMixParams")

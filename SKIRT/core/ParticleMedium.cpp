@@ -14,7 +14,12 @@ Snapshot* ParticleMedium::createAndOpenSnapshot()
     auto snapshot = new ParticleSnapshot;
     snapshot->open(this, filename(), "smoothed particles");
 
-    // configure the mass column (position and size columns are configured by the snapshot itself)
+    // honor custom column reordering
+    snapshot->useColumns(useColumns());
+
+    // configure the position, size and mass columns
+    snapshot->importPosition();
+    snapshot->importSize();
     snapshot->importMass();
 
     // set the smoothing kernel

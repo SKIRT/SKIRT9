@@ -66,11 +66,8 @@ public:
         the caller itself) used to retrieve context such as an appropriate logger; (2) \em
         filename specifies the name of the file, including filename extension but excluding path
         and simulation prefix; (3) \em description describes the contents of the file for use in
-        the log message issued after the file is successfully opened.
-
-        The function is virtual so that subclasses can override it, for example to perform some
-        initial configuration after opening but before client configuration occurs. */
-    virtual void open(const SimulationItem* item, string filename, string description);
+        the log message issued after the file is successfully opened. */
+    void open(const SimulationItem* item, string filename, string description);
 
     /** This function reads the snapshot data from the input file, honoring the options set through
         the configuration functions, stores the data for later use, and closes the file.
@@ -105,6 +102,18 @@ protected:
     //========== Configuration ==========
 
 public:
+    /** This function specifies a mapping (defined by the \em columns argument) between the
+        "physical" columns in the file being imported (defined by the column information in the
+        file header) and the required "logical" columns (defined by calling the other configuration
+        functions). For information on the syntax and semantics of the \em columns string contents,
+        refer to the description of the TextInFile::useColumns() function.
+
+        This function can be called with a non-empty \em columns string at most once for each
+        snapshot, and such invocation should occur \em before the first invocation of any other
+        configuration function. Calling this function with an empty \em columns string is
+        equivalent to not calling it at all. */
+    void useColumns(string columns);
+
     /** This function configures the snapshot to import a spatial position with three components
         (x,y,z). The default unit is pc. */
     void importPosition();

@@ -60,18 +60,6 @@ public:
     //========== Reading ==========
 
 public:
-    /** This function creates an input file object corresponding to the specified file and opens it
-        for reading, as described for the Snapshot::open() function in the base class. It is
-        overridden here to configure the import of the site position columns before a client starts
-        configuring any optional columns.
-
-        The \em item argument specifies a simulation item in the hierarchy of the caller (usually
-        the caller itself) used to retrieve context such as an appropriate logger. The \em filename
-        argument specifies the name of the file, including filename extension but excluding path
-        and simulation prefix. The \em description argument describes the contents of the file for
-        use in the log message issued after the file is successfully opened. */
-    void open(const SimulationItem* item, string filename, string description) override;
-
     /** This function reads the snapshot data from the input file, honoring the options set through
         the configuration functions, stores the data for later use, and closes the file by calling
         the base class Snapshot::readAndClose() function. Sites located outside of the domain and

@@ -14,6 +14,9 @@ Snapshot* AdaptiveMeshMedium::createAndOpenSnapshot()
     _adaptiveMeshSnapshot = new AdaptiveMeshSnapshot;
     _adaptiveMeshSnapshot->open(this, filename(), "adaptive mesh cells");
 
+    // honor custom column reordering
+    _adaptiveMeshSnapshot->useColumns(useColumns());
+
     // configure the mass or density column
     switch (massType())
     {

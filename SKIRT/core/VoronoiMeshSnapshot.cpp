@@ -279,14 +279,6 @@ VoronoiMeshSnapshot::~VoronoiMeshSnapshot()
 
 ////////////////////////////////////////////////////////////////////
 
-void VoronoiMeshSnapshot::open(const SimulationItem* item, string filename, string description)
-{
-    Snapshot::open(item, filename, description);
-    importPosition();
-}
-
-////////////////////////////////////////////////////////////////////
-
 void VoronoiMeshSnapshot::readAndClose()
 {
     // read the site info into memory

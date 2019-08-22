@@ -50,6 +50,11 @@ class ImportedSource : public Source
         ATTRIBUTE_DEFAULT_VALUE(importVelocity, "false")
         ATTRIBUTE_DISPLAYED_IF(importVelocity, "(Panchromatic&Level2)|Level3")
 
+    PROPERTY_STRING(useColumns, "a list of names corresponding to columns in the file to be imported")
+        ATTRIBUTE_DEFAULT_VALUE(useColumns, "")
+        ATTRIBUTE_REQUIRED_IF(useColumns, "false")
+        ATTRIBUTE_DISPLAYED_IF(useColumns, "Level3")
+
     PROPERTY_ITEM(sedFamily, SEDFamily, "the SED family for assigning spectra to the imported sources")
         ATTRIBUTE_DEFAULT_VALUE(sedFamily, "BlackBodySEDFamily")
 

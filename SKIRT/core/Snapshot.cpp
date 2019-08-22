@@ -49,6 +49,13 @@ void Snapshot::setContext(const SimulationItem* item)
 
 ////////////////////////////////////////////////////////////////////
 
+void Snapshot::useColumns(string columns)
+{
+    _infile->useColumns(columns);
+}
+
+////////////////////////////////////////////////////////////////////
+
 void Snapshot::importPosition()
 {
     _positionIndex = _nextIndex;

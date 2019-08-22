@@ -14,6 +14,13 @@ Snapshot* ParticleSource::createAndOpenSnapshot()
     auto snapshot = new ParticleSnapshot;
     snapshot->open(this, filename(), "smoothed source particles");
 
+    // honor custom column reordering
+    snapshot->useColumns(useColumns());
+
+    // configure the position and size columns
+    snapshot->importPosition();
+    snapshot->importSize();
+
     // set the smoothing kernel
     snapshot->setSmoothingKernel(smoothingKernel());
     return snapshot;

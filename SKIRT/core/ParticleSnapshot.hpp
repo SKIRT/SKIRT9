@@ -35,12 +35,6 @@ public:
     //========== Reading ==========
 
 public:
-    /** This function creates an input file object corresponding to the specified file and opens it
-        for reading, as described for the Snapshot::open() function in the base class. It is
-        overridden here to configure the import of the position and smoothing length columns before
-        a client starts configuring any optional columns. */
-    void open(const SimulationItem* item, string filename, string description) override;
-
     /** This function reads the snapshot data from the input file, honoring the options set through
         the configuration functions, stores the data for later use, and finally closes the file by
         calling the base class Snapshot::readAndClose() function. The function also logs some

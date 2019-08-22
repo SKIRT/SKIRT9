@@ -82,8 +82,8 @@ public:
         header) and the "logical" columns requested by the program (defined by repeated calls to
         the addColumn() function). This function can be called with a non-empty \em columns string
         at most once for each file, and such invocation should occur \em before the first
-        invocation of the addColumn() function. Calling the function with an empty \em columns
-        string is equivalent to not calling it al all.
+        invocation of the addColumn() function. Calling this function with an empty \em columns
+        string is equivalent to not calling it at all.
 
         If the \em columns string is non-empty, it is interpreted as a comma-separated sequence of
         logical column names. Within each column name, consecutive white space characters are

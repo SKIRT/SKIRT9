@@ -38,6 +38,11 @@ class ImportedGeometry : public GenGeometry, public SiteListInterface
         ATTRIBUTE_DEFAULT_VALUE(maxTemperature, "0 K")
         ATTRIBUTE_RELEVANT_IF(maxTemperature, "importTemperature")
 
+    PROPERTY_STRING(useColumns, "a list of names corresponding to columns in the file to be imported")
+        ATTRIBUTE_DEFAULT_VALUE(useColumns, "")
+        ATTRIBUTE_REQUIRED_IF(useColumns, "false")
+        ATTRIBUTE_DISPLAYED_IF(useColumns, "Level3")
+
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============

@@ -14,7 +14,13 @@ Snapshot* VoronoiMeshGeometry::createAndOpenSnapshot()
     _voronoiMeshSnapshot = new VoronoiMeshSnapshot;
     _voronoiMeshSnapshot->open(this, filename(), "Voronoi sites");
 
-    // configure the mass or density column (position columns are configured by the snapshot itself)
+    // honor custom column reordering
+    _voronoiMeshSnapshot->useColumns(useColumns());
+
+    // configure the position columns
+    _voronoiMeshSnapshot->importPosition();
+
+    // configure the mass or density column
     switch (massType())
     {
     case MassType::MassDensity: _voronoiMeshSnapshot->importMassDensity(); break;

@@ -22,15 +22,6 @@ ParticleSnapshot::~ParticleSnapshot()
 
 ////////////////////////////////////////////////////////////////////
 
-void ParticleSnapshot::open(const SimulationItem* item, string filename, string description)
-{
-    Snapshot::open(item, filename, description);
-    importPosition();
-    importSize();
-}
-
-////////////////////////////////////////////////////////////////////
-
 void ParticleSnapshot::readAndClose()
 {
     // read the particle info into memory

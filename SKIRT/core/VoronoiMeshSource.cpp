@@ -14,6 +14,12 @@ Snapshot* VoronoiMeshSource::createAndOpenSnapshot()
     auto snapshot = new VoronoiMeshSnapshot;
     snapshot->open(this, filename(), "Voronoi source sites");
 
+    // honor custom column reordering
+    snapshot->useColumns(useColumns());
+
+    // configure the position columns
+    snapshot->importPosition();
+
     // set the domain extent
     snapshot->setExtent(domain());
     return snapshot;
