@@ -218,6 +218,23 @@ public:
         from its current weight and the specified perceived wavelength. */
     double perceivedLuminosity(double lambda) const { return _W / lambda; }
 
+    // ------- Caching observed optical depth -------
+
+    /** This function stores the most recently "observed" optical depth, calculated externally, in
+        a data member. This capability is offered so that consecutive instruments with the same
+        observer type, position and viewing direction can avoid recalculating the optical depth. */
+    void setObservedOpticalDepth(double tau) { _observedOpticalDepth = tau; _hasObservedOpticalDepth = true; }
+
+    /** This function returns true if an "observed" optical depth value has been stored and the
+        packet has not since been relaunched. Otherwise the function returns false. */
+    bool hasObservedOpticalDepth() const { return _hasObservedOpticalDepth; }
+
+    /** If hasObservedOpticalDepth() returns true, this function returns the most recently stored
+        "observed" optical depth. Otherwise, it returns some meaningless value. This capability is
+        offered so that consecutive instruments with the same observer type, position and viewing
+        direction can avoid recalculating the optical depth. */
+    double observedOpticalDepth() const { return _observedOpticalDepth; }
+
     // ------- Data members -------
 
 private:
@@ -238,6 +255,10 @@ private:
 
     // information on life cycle
     int _nscatt{0};          // number of experienced scattering events
+
+    // observed optical depth
+    double _observedOpticalDepth{0.};      // optical depth calculated for peel-off to an instrument
+    bool _hasObservedOpticalDepth{false};  // true if the above field holds a valid value for this packet
 };
 
 ////////////////////////////////////////////////////////////////////

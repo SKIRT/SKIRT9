@@ -91,6 +91,21 @@ void PerspectiveInstrument::setupSelfBefore()
 
 ////////////////////////////////////////////////////////////////////
 
+void PerspectiveInstrument::determineSameObserverAsPreceding(const Instrument* precedingInstrument)
+{
+    auto other = dynamic_cast<const PerspectiveInstrument*>(precedingInstrument);
+    if (other && width()==other->width()
+         && viewX()==other->viewX() && viewY()==other->viewY() && viewZ()==other->viewZ()
+         && crossX()==other->crossX() && crossY()==other->crossY() && crossZ()==other->crossZ()
+         && upX()==other->upX() && upY()==other->upY() && upZ()==other->upZ()
+         && focal()==other->focal())
+    {
+        setSameObserverAsPreceding();
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
 Direction PerspectiveInstrument::bfkobs(const Position& bfr) const
 {
     // distance from launch to eye

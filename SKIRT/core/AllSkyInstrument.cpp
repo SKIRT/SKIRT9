@@ -75,6 +75,20 @@ void AllSkyInstrument::setupSelfBefore()
 
 ////////////////////////////////////////////////////////////////////
 
+void AllSkyInstrument::determineSameObserverAsPreceding(const Instrument* precedingInstrument)
+{
+    auto other = dynamic_cast<const AllSkyInstrument*>(precedingInstrument);
+    if (other && projection()->type()==other->projection()->type() && radius()==other->radius()
+         && observerX()==other->observerX() && observerY()==other->observerY() && observerZ()==other->observerZ()
+         && crossX()==other->crossX() && crossY()==other->crossY() && crossZ()==other->crossZ()
+         && upX()==other->upX() && upY()==other->upY() && upZ()==other->upZ())
+    {
+        setSameObserverAsPreceding();
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
 Direction AllSkyInstrument::bfkobs(const Position& bfr) const
 {
     // vector and distance from launch to observer

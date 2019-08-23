@@ -172,7 +172,23 @@ void FluxRecorder::detect(PhotonPacket* pp, int l, double distance)
 
         // apply the extinction along the path to the recorder
         double Lext = L;
-        if (_hasMedium) Lext *= exp(-_ms->opticalDepth(pp, distance));
+        if (_hasMedium)
+        {
+            // if this photon packet has already been launched towards an instrument with the same observer type,
+            // position and viewing direction, simply recover the stored optical depth from the photon packet;
+            // otherwise calculate the optical depth and store it in the photon packet for the next instrument
+            double tau;
+            if (pp->hasObservedOpticalDepth())
+            {
+                tau = pp->observedOpticalDepth();
+            }
+            else
+            {
+                tau = _ms->opticalDepth(pp, distance);
+                pp->setObservedOpticalDepth(tau);
+            }
+            Lext *= exp(-tau);
+        }
 
         // get number of scatterings (because we use it a lot)
         int numScatt = pp->numScatt();

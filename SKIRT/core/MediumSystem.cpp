@@ -360,7 +360,6 @@ double MediumSystem::opticalDepth(SpatialGridPath* path, double lambda, Material
 
 ////////////////////////////////////////////////////////////////////
 
-
 double MediumSystem::opticalDepth(PhotonPacket* pp, double distance)
 {
     // determine the geometric details of the path

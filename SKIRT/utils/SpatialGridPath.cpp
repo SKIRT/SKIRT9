@@ -149,7 +149,7 @@ Position SpatialGridPath::moveInside(const Box& box, double eps)
 
 ////////////////////////////////////////////////////////////////////
 
-double SpatialGridPath::totalOpticalDepth()
+double SpatialGridPath::totalOpticalDepth() const
 {
     return !_segments.empty() ? _segments.back().tau : 0.;
 }

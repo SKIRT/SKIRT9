@@ -358,7 +358,8 @@ void MonteCarloSimulation::peelOffEmission(const PhotonPacket* pp, PhotonPacket*
 {
     for (Instrument* instrument : _instrumentSystem->instruments())
     {
-        ppp->launchEmissionPeelOff(pp, instrument->bfkobs(pp->position()));
+        if (!instrument->isSameObserverAsPreceding())
+            ppp->launchEmissionPeelOff(pp, instrument->bfkobs(pp->position()));
         instrument->detect(ppp);
     }
 }
@@ -541,74 +542,77 @@ void MonteCarloSimulation::peelOffScattering(const PhotonPacket* pp, PhotonPacke
     // now do the actual peel-off for each instrument
     for (Instrument* instr : _instrumentSystem->instruments())
     {
-        // get the instrument direction
-        Direction bfkobs = instr->bfkobs(pp->position());
-
-        // calculate the weighted sum of the effects on the Stokes vector for all media
-        double I = 0., Q = 0., U = 0., V = 0.;
-        for (int h=0; h!=numMedia; ++h)
+        if (!instr->isSameObserverAsPreceding())
         {
-            // use the appropriate algorithm for each mix
-            // (all mixes must either support polarization or not; combining these support levels is not allowed)
-            auto mix = mediumSystem()->mix(m,h);
-            switch (mix->scatteringMode())
+            // get the instrument direction
+            Direction bfkobs = instr->bfkobs(pp->position());
+
+            // calculate the weighted sum of the effects on the Stokes vector for all media
+            double I = 0., Q = 0., U = 0., V = 0.;
+            for (int h=0; h!=numMedia; ++h)
             {
-            case MaterialMix::ScatteringMode::HenyeyGreenstein:
+                // use the appropriate algorithm for each mix
+                // (all mixes must either support polarization or not; combining these support levels is not allowed)
+                auto mix = mediumSystem()->mix(m,h);
+                switch (mix->scatteringMode())
                 {
-                    // calculate the value of the Henyey-Greenstein phase function
-                    double costheta = Vec::dot(pp->direction(), bfkobs);
-                    double g = mix->asymmpar(lambda);
-                    double t = 1.0+g*g-2*g*costheta;
-                    double value = (1.0-g)*(1.0+g)/sqrt(t*t*t);
+                case MaterialMix::ScatteringMode::HenyeyGreenstein:
+                    {
+                        // calculate the value of the Henyey-Greenstein phase function
+                        double costheta = Vec::dot(pp->direction(), bfkobs);
+                        double g = mix->asymmpar(lambda);
+                        double t = 1.0+g*g-2*g*costheta;
+                        double value = (1.0-g)*(1.0+g)/sqrt(t*t*t);
 
-                    // accumulate the weighted sum in the intensity (there is no support for polarization in this case)
-                    I += wv[h] * value;
-                    break;
-                }
-            case MaterialMix::ScatteringMode::MaterialPhaseFunction:
-                {
-                    // calculate the value of the material-specific phase function
-                    double costheta = Vec::dot(pp->direction(), bfkobs);
-                    double value = mix->phaseFunctionValueForCosine(lambda, costheta);
+                        // accumulate the weighted sum in the intensity (no support for polarization in this case)
+                        I += wv[h] * value;
+                        break;
+                    }
+                case MaterialMix::ScatteringMode::MaterialPhaseFunction:
+                    {
+                        // calculate the value of the material-specific phase function
+                        double costheta = Vec::dot(pp->direction(), bfkobs);
+                        double value = mix->phaseFunctionValueForCosine(lambda, costheta);
 
-                    // accumulate the weighted sum in the intensity (there is no support for polarization in this case)
-                    I += wv[h] * value;
-                    break;
-                }
-            case MaterialMix::ScatteringMode::SphericalPolarization:
-                {
-                    // calculate the value of the material-specific phase function
-                    double theta = acos(Vec::dot(pp->direction(),bfkobs));
-                    double phi = angleBetweenScatteringPlanes(pp->normal(), pp->direction(), bfkobs);
-                    double value = mix->phaseFunctionValue(lambda, theta, phi, pp);
+                        // accumulate the weighted sum in the intensity (no support for polarization in this case)
+                        I += wv[h] * value;
+                        break;
+                    }
+                case MaterialMix::ScatteringMode::SphericalPolarization:
+                    {
+                        // calculate the value of the material-specific phase function
+                        double theta = acos(Vec::dot(pp->direction(),bfkobs));
+                        double phi = angleBetweenScatteringPlanes(pp->normal(), pp->direction(), bfkobs);
+                        double value = mix->phaseFunctionValue(lambda, theta, phi, pp);
 
-                    // copy the polarization state so we can change it without affecting the incoming photon packet
-                    StokesVector sv = *pp;
+                        // copy the polarization state so we can change it without affecting the incoming photon packet
+                        StokesVector sv = *pp;
 
-                    // rotate the Stokes vector reference direction into the scattering plane
-                    sv.rotateIntoPlane(pp->direction(), bfkobs);
+                        // rotate the Stokes vector reference direction into the scattering plane
+                        sv.rotateIntoPlane(pp->direction(), bfkobs);
 
-                    // apply the Mueller matrix
-                    mix->applyMueller(lambda, theta, &sv);
+                        // apply the Mueller matrix
+                        mix->applyMueller(lambda, theta, &sv);
 
-                    // rotate the Stokes vector reference direction parallel to the instrument frame y-axis
-                    // it is given bfkobs because the photon is at this point aimed towards the observer
-                    sv.rotateIntoPlane(bfkobs, instr->bfky(pp->position()));
+                        // rotate the Stokes vector reference direction parallel to the instrument frame y-axis
+                        // it is given bfkobs because the photon is at this point aimed towards the observer
+                        sv.rotateIntoPlane(bfkobs, instr->bfky(pp->position()));
 
-                    // acumulate the weighted sum of all Stokes components to support polarization
-                    double w = wv[h] * value;
-                    I += w * sv.stokesI();
-                    Q += w * sv.stokesQ();
-                    U += w * sv.stokesU();
-                    V += w * sv.stokesV();
-                    break;
+                        // acumulate the weighted sum of all Stokes components to support polarization
+                        double w = wv[h] * value;
+                        I += w * sv.stokesI();
+                        Q += w * sv.stokesQ();
+                        U += w * sv.stokesU();
+                        V += w * sv.stokesV();
+                        break;
+                    }
                 }
             }
-        }
 
-        // pass the result to the peel-off photon packet and have it detected
-        ppp->launchScatteringPeelOff(pp, bfkobs, bfv, I);
-        if (_config->hasPolarization()) ppp->setPolarized(I, Q, U, V, pp->normal());
+            // pass the result to the peel-off photon packet and have it detected
+            ppp->launchScatteringPeelOff(pp, bfkobs, bfv, I);
+            if (_config->hasPolarization()) ppp->setPolarized(I, Q, U, V, pp->normal());
+        }
         instr->detect(ppp);
     }
 }

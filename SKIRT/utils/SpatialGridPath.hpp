@@ -115,7 +115,7 @@ public:
         in the path, or zero if the path has no segments. The function assumes that both the
         geometric and optical depth information for the path have been set; if this is not the
         case, the behavior is undefined. */
-    double totalOpticalDepth();
+    double totalOpticalDepth() const;
 
     /** This function determines the interaction point along the path corresponding to the
         specified optical depth, and stores relevant information about it in data members for later

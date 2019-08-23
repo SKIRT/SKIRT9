@@ -36,6 +36,7 @@ void PhotonPacket::launch(size_t historyIndex, double lambda, double L, Position
     if (bvi) _lambda = shiftedEmissionWavelength(lambda, bfk, bvi->bulkVelocity());
     if (ppi) setPolarized(ppi->polarizationForDirection(bfk));
     else setUnpolarized();
+    _hasObservedOpticalDepth = false;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -68,6 +69,7 @@ void PhotonPacket::launchEmissionPeelOff(const PhotonPacket* pp, Direction bfk)
     if (pp->_adi) applyBias(pp->_adi->probabilityForDirection(bfk));
     if (pp->_ppi) setPolarized(pp->_ppi->polarizationForDirection(bfk));
     else setUnpolarized();
+    _hasObservedOpticalDepth = false;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -84,6 +86,7 @@ void PhotonPacket::launchScatteringPeelOff(const PhotonPacket* pp, Direction bfk
     setPosition(pp->position());
     setDirection(bfk);
     setUnpolarized();
+    _hasObservedOpticalDepth = false;
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -82,6 +82,11 @@ protected:
     //======================== Other Functions =======================
 
 public:
+    /** This function determines whether the specified instrument has the same observer type,
+        position and viewing direction as the receiving instrument, and if so, calls the
+        setSameObserverAsPreceding() function to remember the fact. */
+    void determineSameObserverAsPreceding(const Instrument* precedingInstrument) override;
+
     /** Returns the direction towards the eye from the given photon packet launching position. */
     Direction bfkobs(const Position& bfr) const override;
 

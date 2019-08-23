@@ -31,6 +31,14 @@ class InstrumentSystem : public SimulationItem
 
     ITEM_END()
 
+    //============= Construction - Setup - Destruction =============
+
+protected:
+    /** This function calls the determineSameObserverAsPreceding() function for all instruments in
+        the instrument system except for the first one (because it doesn't have a preceding
+        instrument). */
+    void setupSelfAfter() override;
+
     //======================== Other Functions =======================
 
 public:

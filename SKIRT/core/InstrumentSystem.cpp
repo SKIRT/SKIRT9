@@ -7,6 +7,20 @@
 
 ////////////////////////////////////////////////////////////////////
 
+void InstrumentSystem::setupSelfAfter()
+{
+    SimulationItem::setupSelfAfter();
+
+    Instrument* preceding = nullptr;
+    for (Instrument* instrument : _instruments)
+    {
+        if (!preceding) preceding = instrument;
+        else instrument->determineSameObserverAsPreceding(preceding);
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
 void InstrumentSystem::flush()
 {
     for (Instrument* instrument : _instruments) instrument->flush();
