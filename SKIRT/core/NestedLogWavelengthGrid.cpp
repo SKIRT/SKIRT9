@@ -14,23 +14,24 @@ void NestedLogWavelengthGrid::setupSelfBefore()
     DisjointWavelengthGrid::setupSelfBefore();
 
     // verify property values
-    if (_minWavelengthSubGrid <= _minWavelengthBaseGrid ||
+    if (_minWavelengthSubGrid < _minWavelengthBaseGrid ||
         _maxWavelengthSubGrid <= _minWavelengthSubGrid ||
-        _maxWavelengthBaseGrid <= _maxWavelengthSubGrid)
+        _maxWavelengthBaseGrid < _maxWavelengthSubGrid)
         throw FATALERROR("the high-resolution subgrid should be properly nested in the low-resolution grid");
 
     // build the high- and low-resolution grids, independently
-    Array lambdalowv, lambdazoomv;
-    NR::buildLogGrid(lambdalowv, _minWavelengthBaseGrid, _maxWavelengthBaseGrid, _numWavelengthsBaseGrid-1);
-    NR::buildLogGrid(lambdazoomv, _minWavelengthSubGrid, _maxWavelengthSubGrid, _numWavelengthsSubGrid-1);
+    Array lambdabasev, lambdasubv;
+    NR::buildLogGrid(lambdabasev, _minWavelengthBaseGrid, _maxWavelengthBaseGrid, _numWavelengthsBaseGrid-1);
+    NR::buildLogGrid(lambdasubv, _minWavelengthSubGrid, _maxWavelengthSubGrid, _numWavelengthsSubGrid-1);
 
     // merge the two grids (don't worry about order because wavelengths will be sorted later anyway)
     vector<double> lambdav;
-    for (double lambda : lambdalowv)
+    for (double lambda : lambdabasev)
     {
-        if (lambda<_minWavelengthSubGrid || lambda>_maxWavelengthSubGrid) lambdav.push_back(lambda);
+        // use the actual grid limits because they might slightly differ from the specified limits
+        if (lambda<lambdasubv[0] || lambda>lambdasubv[_numWavelengthsSubGrid-1]) lambdav.push_back(lambda);
     }
-    for (double lambda : lambdazoomv) lambdav.push_back(lambda);
+    for (double lambda : lambdasubv) lambdav.push_back(lambda);
 
     // store the result
     setWavelengthRange(NR::array(lambdav));
