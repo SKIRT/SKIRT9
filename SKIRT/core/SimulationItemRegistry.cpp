@@ -52,6 +52,7 @@
 #include "DustEmGrainComposition.hpp"
 #include "DustEmissionOptions.hpp"
 #include "DustEmissivityProbe.hpp"
+#include "DustEmissionWavelengthGridProbe.hpp"
 #include "DustGrainPopulationsProbe.hpp"
 #include "DustGrainSizeDistributionProbe.hpp"
 #include "DustSelfAbsorptionOptions.hpp"
@@ -145,6 +146,7 @@
 #include "ProbeSystem.hpp"
 #include "PseudoSersicGeometry.hpp"
 #include "QuasarSED.hpp"
+#include "RadiationFieldWavelengthGridProbe.hpp"
 #include "RadiationFieldPerCellProbe.hpp"
 #include "Random.hpp"
 #include "ReadFitsGeometry.hpp"
@@ -526,12 +528,14 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
 
     ItemRegistry::add<DefaultRadiationFieldCutsProbe>();
     ItemRegistry::add<RadiationFieldPerCellProbe>();
+    ItemRegistry::add<RadiationFieldWavelengthGridProbe>();
     ItemRegistry::add<DefaultDustTemperatureCutsProbe>();
     ItemRegistry::add<DustTemperaturePerCellProbe>();
     ItemRegistry::add<LinearDustTemperatureCutProbe>();
     ItemRegistry::add<MeridionalDustTemperatureCutProbe>();
     ItemRegistry::add<DustAbsorptionPerCellProbe>();
     ItemRegistry::add<DustEmissivityProbe>();
+    ItemRegistry::add<DustEmissionWavelengthGridProbe>();
 
     // Monte Carlo simulations
     ItemRegistry::add<MonteCarloSimulation>();
