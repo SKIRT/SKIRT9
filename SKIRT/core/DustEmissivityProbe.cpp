@@ -5,14 +5,14 @@
 
 #include "DustEmissivityProbe.hpp"
 #include "ArrayTable.hpp"
-#include "DisjointWavelengthGrid.hpp"
 #include "Configuration.hpp"
+#include "DisjointWavelengthGrid.hpp"
+#include "InstrumentWavelengthGridProbe.hpp"
 #include "MediumSystem.hpp"
 #include "PlanckFunction.hpp"
 #include "StringUtils.hpp"
 #include "TextOutFile.hpp"
 #include "Units.hpp"
-#include "InstrumentWavelengthGridProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 

@@ -16,7 +16,7 @@
     assuming the dust would be embedded in a range of predefined input fields.
 
     The output emissivity spectra are discretized on the emission spectrum wavelength grid as
-    returned by the Configuration::emissionSpectrumWLG() function. The input radiation fields used
+    returned by the Configuration::dustEmissionWLG() function. The input radiation fields used
     for the calculations are discretized on the radiation field wavelength grid as returned by the
     Configuration::radiationFieldWLG() function. As a result, this probe requires the configuration
     of the simulation to include dust emission, so that a dust emissivity calculator, a radiation
