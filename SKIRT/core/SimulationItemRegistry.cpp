@@ -135,6 +135,7 @@
 #include "ParticleSource.hpp"
 #include "PerspectiveInstrument.hpp"
 #include "PhotonPacketOptions.hpp"
+#include "PlanarMediaDensityCutsProbe.hpp"
 #include "PlummerGeometry.hpp"
 #include "PointSource.hpp"
 #include "PolarizedGraphiteGrainComposition.hpp"
@@ -519,6 +520,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<SpatialGridConvergenceProbe>();
     ItemRegistry::add<TreeSpatialGridTopologyProbe>();
     ItemRegistry::add<DefaultMediaDensityCutsProbe>();
+    ItemRegistry::add<PlanarMediaDensityCutsProbe>();
     ItemRegistry::add<OpticalDepthMapProbe>();
     ItemRegistry::add<SpatialCellPropertiesProbe>();
     ItemRegistry::add<SpatialGridSourceDensityProbe>();
