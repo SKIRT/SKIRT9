@@ -12,7 +12,7 @@ void FileSSPSEDFamily::setupSelfBefore()
 {
     SEDFamily::setupSelfBefore();
 
-    _table.open(this, filename(), "lambda(m),Z(1),t(yr)", "Llambda(W/m)", false);
+    _table.open(this, filename(), "lambda(m),Z(1),t(yr)", "Llambda(W/m)", false, false);
 }
 
 ////////////////////////////////////////////////////////////////////

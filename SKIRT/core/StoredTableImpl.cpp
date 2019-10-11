@@ -80,7 +80,7 @@ void StoredTable_Impl::open(size_t numAxes, const SimulationItem* item, string f
     else
     {
         // retrieve the full path for the input file
-        filePath = item->find<FilePaths>()->output(filename);
+        filePath = item->find<FilePaths>()->input(filename);
     }
 
     // acquire a memory map for the file; the function returns zeros if the memory map cannot be created
