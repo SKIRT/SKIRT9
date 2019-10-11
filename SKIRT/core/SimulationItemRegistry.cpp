@@ -66,10 +66,13 @@
 #include "FileBand.hpp"
 #include "FileMesh.hpp"
 #include "FileSED.hpp"
+#include "FileSSPSEDFamily.hpp"
 #include "FileTreeSpatialGrid.hpp"
 #include "FileWavelengthDistribution.hpp"
 #include "FileWavelengthGrid.hpp"
 #include "FrameInstrument.hpp"
+#include "FSPSSED.hpp"
+#include "FSPSSEDFamily.hpp"
 #include "FullInstrument.hpp"
 #include "GammaGeometry.hpp"
 #include "GaussianGeometry.hpp"
@@ -264,6 +267,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<BruzualCharlotSED>();
     ItemRegistry::add<MarastonSED>();
     ItemRegistry::add<Starburst99SED>();
+    ItemRegistry::add<FSPSSED>();
     ItemRegistry::add<MappingsSED>();
     ItemRegistry::add<TabulatedSED>();
     ItemRegistry::add<FileSED>();
@@ -276,6 +280,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<BruzualCharlotSEDFamily>();
     ItemRegistry::add<MarastonSEDFamily>();
     ItemRegistry::add<Starburst99SEDFamily>();
+    ItemRegistry::add<FSPSSEDFamily>();
+    ItemRegistry::add<FileSSPSEDFamily>();
     ItemRegistry::add<MappingsSEDFamily>();
 
     // wavelength distributions

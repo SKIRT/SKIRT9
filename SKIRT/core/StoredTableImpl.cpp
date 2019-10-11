@@ -62,7 +62,7 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-void StoredTable_Impl::open(size_t numAxes, const SimulationItem* item, string filename,
+void StoredTable_Impl::open(size_t numAxes, const SimulationItem* item, string filename, bool resource,
                             string axes, string quantity,
                             string& filePath,
                             const double** axBeg, const double** qtyBeg,
@@ -72,17 +72,25 @@ void StoredTable_Impl::open(size_t numAxes, const SimulationItem* item, string f
     // add the mandatory filename extension if needed
     if (!StringUtils::endsWith(filename, ".stab")) filename += ".stab";
 
-    // retrieve the canonical path for the resource; the function throws a fatal error if the resource cannot be found
-    filePath = FilePaths::resource(filename);
+    if (resource)
+    {
+        // retrieve the full path for the resource; the function throws a fatal error if the resource cannot be found
+        filePath = FilePaths::resource(filename);
+    }
+    else
+    {
+        // retrieve the full path for the input file
+        filePath = item->find<FilePaths>()->input(filename);
+    }
 
-    // acquire a memory map for the resource; the function returns zeros if the memory map cannot be created
+    // acquire a memory map for the file; the function returns zeros if the memory map cannot be created
     auto map = System::acquireMemoryMap(filePath);
-    if (!map.first) throw FATALERROR("Cannot acquire memory map for resource file: " + filePath);
+    if (!map.first) throw FATALERROR("Cannot acquire memory map for file: " + filePath);
     const StabItem* currentItem = static_cast<const StabItem*>(map.first);
 
     // verify the name tag and the Endianness tag
     if (memcmp("SKIRT X\n", currentItem++->stringType, itemSize) || currentItem++->sizeType != 0x010203040A0BFEFF)
-        throw FATALERROR("Resource file does not have stored table format: " + filePath);
+        throw FATALERROR("File does not have stored table format: " + filePath);
 
     // verify the number of axes
     if (currentItem++->sizeType != numAxes)

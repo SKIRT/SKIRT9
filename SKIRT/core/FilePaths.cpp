@@ -139,6 +139,7 @@ string FilePaths::outputPrefix() const
 
 string FilePaths::input(string name) const
 {
+    if (StringUtils::isAbsolutePath(name)) return name;
     return _inputPath + name;
 }
 
