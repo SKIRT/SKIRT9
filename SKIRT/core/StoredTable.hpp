@@ -130,18 +130,25 @@ public:
     /** This alternate constructor constructs a stored table instance and immediately associates a
         given stored table resource file with it by calling the open() function. Refer to the
         open() function for a description of the arguments and of its operation. */
-    StoredTable(const SimulationItem* item, string filename, string axes, string quantity, bool clampFirstAxis=true)
+    StoredTable(const SimulationItem* item, string filename, string axes, string quantity,
+                bool clampFirstAxis=true, bool resource=true)
     {
-        open(item, filename, axes, quantity, clampFirstAxis);
+        open(item, filename, axes, quantity, clampFirstAxis, resource);
     }
 
-    /** This function associates a given stored table resource file with the stored table instance.
-        If such an association already exists, this function throws a fatal error. Conversely,
-        calling any of the other functions before an association exists results in undefined
-        behavior (usually a crash).
+    /** This function associates a given stored table resource or input file with the stored table
+        instance. If such an association already exists, this function throws a fatal error.
+        Conversely, calling any of the other functions before an association exists results in
+        undefined behavior (usually a crash).
 
         The \em item argument specifies a simulation item in the hierarchy of the caller (usually
         the caller itself) used to retrieve an appropriate logger.
+
+        If the \em resource flag is true (the default value), the \em filename argument specifies
+        the filename of the built-in resource, without any directory segments. If the \em resource
+        flag is false, the \em filename argument specifies the file path of the stored table input
+        file relative to the input path of the simulation. In both cases, the file must have the
+        ".stab" filename extension, which will be added to the specified filename if needed.
 
         The \em filename argument specifies the filename of the resource, without any directory
         segments. The resource file must have the ".stab" filename extension, which will be added
@@ -172,9 +179,10 @@ public:
         acquires a memory map on the file, (3) verifies that the stored table matches all
         requirements, and (4) stores relevant information in data members. If any of these steps
         fail, the function throws a fatal error. */
-    void open(const SimulationItem* item, string filename, string axes, string quantity, bool clampFirstAxis=true)
+    void open(const SimulationItem* item, string filename, string axes, string quantity,
+              bool clampFirstAxis=true, bool resource=true)
     {
-        StoredTable_Impl::open(N, item, filename, axes, quantity,
+        StoredTable_Impl::open(N, item, filename, resource, axes, quantity,
                                _filePath, &_axBeg[0], &_qtyBeg, &_axLen[0], &_qtyStep,
                                &_axLog[0], &_qtyLog);
         _clamp = clampFirstAxis;

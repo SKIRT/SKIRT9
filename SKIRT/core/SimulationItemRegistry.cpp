@@ -66,6 +66,7 @@
 #include "FileBand.hpp"
 #include "FileMesh.hpp"
 #include "FileSED.hpp"
+#include "FileSSPSEDFamily.hpp"
 #include "FileTreeSpatialGrid.hpp"
 #include "FileWavelengthDistribution.hpp"
 #include "FileWavelengthGrid.hpp"
@@ -280,6 +281,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<MarastonSEDFamily>();
     ItemRegistry::add<Starburst99SEDFamily>();
     ItemRegistry::add<FSPSSEDFamily>();
+    ItemRegistry::add<FileSSPSEDFamily>();
     ItemRegistry::add<MappingsSEDFamily>();
 
     // wavelength distributions
