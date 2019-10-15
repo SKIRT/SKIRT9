@@ -23,6 +23,11 @@
     These six metallicity values correspond to \f$Z \approx 0.00011247, 0.00089337, 0.0093547,
     0.02, 0.04477442, 0.09354703\f$.
 
+    The SEDs are tabulated over a wavelength range from 0.009 \f$\mu\mathrm{m}\f$ to 160
+    \f$\mu\mathrm{m}\f$ with the spectral resolution shown in the figure below.
+
+    \image html MarastonSEDFamily.png
+
     The data were downloaded from
     http://www.icg.port.ac.uk/~maraston/Claudia's_Stellar_Population_Model.html and converted to
     SKIRT stored table format for inclusion as a resource file. The stored table is opened during

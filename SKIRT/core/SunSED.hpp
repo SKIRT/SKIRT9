@@ -11,8 +11,11 @@
 ////////////////////////////////////////////////////////////////////
 
 /** SunSED represents the spectral energy distribution of the Sun. The %SED is tabulated over a
-    wavelength range from 0.0915 \f$\mu\f$m to 160 \f$\mu\f$m. The source of the data is unknown.
-    */
+    wavelength range from 0.0915 \f$\mu\mathrm{m}\f$ to 160 \f$\mu\mathrm{m}\f$ with the spectral
+    resolution shown in the figure below. The source of the data is unknown.
+
+    \image html SunSed.png
+*/
 class SunSED : public ResourceSED
 {
     ITEM_CONCRETE(SunSED, ResourceSED, "the spectral energy distribution of the Sun")

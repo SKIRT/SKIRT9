@@ -25,6 +25,11 @@
     excluded dust attenuation and emission, as well as nebular emission. Otherwise, the default
     values are used for all parameters.
 
+    The SEDs are tabulated over a wavelength range from 0.009 \f$\mu\mathrm{m}\f$ to 10000
+    \f$\mu\mathrm{m}\f$ with the spectral resolution shown in the figure below.
+
+    \image html FSPSSEDFamily.png
+
     When imported from a text column file, the parameters for this %SED family must appear in the
     following order in the specified default units (unless these units are overridden by column
     header info): \f[ M_\mathrm{init}\,(\mathrm{M}_\odot) \quad Z\,(\mathrm{dimensionless}) \quad

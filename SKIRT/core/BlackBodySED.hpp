@@ -14,7 +14,10 @@ class PlanckFunction;
 
 /** BlackBodySED is a class that describes black-body spectral energy distributions, i.e. the
     emission spectra of perfect absorbers which are in thermal equilibrium. Such an %SED is
-    characterized by the temperature of the object, and its spectrum is the Planck spectrum. */
+    characterized by the temperature of the object, and its spectrum is the Planck spectrum.
+
+    Whenever a tabular form of the black body %SED is requested, this class uses a spectral
+    resolution of \f$R\triangleq\lambda/\Delta\lambda\geq 1000\f$ (see PlanckFunction::cdf()). */
 class BlackBodySED : public SED
 {
     ITEM_CONCRETE(BlackBodySED, SED, "a black-body spectral energy distribution")
