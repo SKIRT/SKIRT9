@@ -18,6 +18,9 @@
     4\pi\,R^2\;\pi\;B_\lambda(\lambda,T) \f] where \f$B_\lambda(\lambda,T)\f$ is the Planck
     function.
 
+    Whenever a tabular form of a black body %SED is requested, this class uses a spectral
+    resolution of \f$R\triangleq\lambda/\Delta\lambda\geq 1000\f$ (see PlanckFunction::cdf()).
+
     When imported from a text column file, the parameters for this %SED family must appear in the
     following order in the specified default units (unless these units are overridden by column
     header info): \f[ R\,(\mathrm{km}) \quad T\,(\mathrm{K}) \f] */

@@ -17,6 +17,11 @@
     by the initial mass of the SSP. The library data was prepared and bundled into a FITS file by
     Patrik Jonsson for use by the \c Sunrise code (<tt>2013ascl.soft03030J</tt>).
 
+    The SEDs are tabulated over a wavelength range from 0.009 \f$\mu\mathrm{m}\f$ to 160
+    \f$\mu\mathrm{m}\f$ with the spectral resolution shown in the figure below.
+
+    \image html Starburst99SEDFamily.png
+
     The data were downloaded from
     <tt>https://bitbucket.org/lutorm/sunrise/downloads/Patrik-imfKroupa-Zmulti-ml.fits.gz</tt> and
     converted to SKIRT stored table format for inclusion as a resource file. The stored table is

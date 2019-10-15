@@ -101,6 +101,11 @@
     |  M0I    |   3650 |    -0.10
     |  M2I    |   3600 |    -0.10
 
+    The SEDs are tabulated over a wavelength range from 0.009 \f$\mu\mathrm{m}\f$ to 160
+    \f$\mu\mathrm{m}\f$ with the spectral resolution shown in the figure below.
+
+    \image html CastelliKuruczSEDFamily.png
+
     The data for the models were downloaded from
     http://www.stsci.edu/hst/observatory/crds/castelli_kurucz_atlas.html and converted to SKIRT
     stored table format for inclusion as a resource file. The stored table is opened during setup,

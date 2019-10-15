@@ -17,6 +17,11 @@
     The model spectra have 1800 wavelength bins and cover 5 metallicities, 6 compactness
     parameters, 5 pressure values, and 2 covering factors (0 for pure HII and 1 for 100% PDR).
 
+    The SEDs are tabulated over a wavelength range from 1 Angstrom to almost 1 meter
+    with the spectral resolution shown in the figure below.
+
+    \image html MappingsSEDFamily.png
+
     The data were downloaded from http://www.mpia-hd.mpg.de/~brent/starburst.html ->
     Cparam_models.save, however it seems that this page/download is no longer available. The
     contents of the IDL save file were converted to SKIRT stored table format for inclusion as a

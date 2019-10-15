@@ -17,9 +17,13 @@
     original 2003 Padova1994/Chabrier and Padova1994/Salpeter models, the two recommended models.
     In other words, the %SED family is available for two assumed initial mass functions (Chabrier
     and Salpeter). Each of those families can be loaded in two wavelength resolution versions, with
-    respectively 1221 and 6900 wavelength points. The low-resolution version uses less resources
-    and is sufficient for most purposes. However, if the model under study zooms in on narrow
-    wavelength ranges, the high-resolution version may be required.
+    respectively 1221 and 6900 wavelength points over a wavelength range from 0.009
+    \f$\mu\mathrm{m}\f$ to 160 \f$\mu\mathrm{m}\f$. The spectral resolution for each version is
+    shown in the figure below. The low-resolution version uses less resources and is sufficient for
+    most purposes. However, if the model under study zooms in on narrow wavelength ranges in the
+    optical regime, the high-resolution version may be preferable.
+
+    \image html BruzualCharlotSEDFamily.png
 
     The data were downloaded from http://www.bruzual.org/~gbruzual/bc03/ and converted to SKIRT
     stored table format for inclusion as a resource file. The stored table is opened during setup,
