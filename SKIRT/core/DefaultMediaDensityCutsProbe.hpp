@@ -42,6 +42,13 @@ class DefaultMediaDensityCutsProbe : public Probe
 public:
     /** This function performs probing after setup. */
     void probeSetup() override;
+
+protected:
+    /** This function outputs FITS files with the theoretical and grid density for each material
+        type in the coordinate planes (xy, xz, or yz) indicated by the boolean "direction"
+        arguments \em xd, \em yd, and \em zd, exactly two of which must be true. The arguments \em
+        Nx, \em Ny, and \em Nz specify the number of pixels in the respective cut directions. */
+    void writeMediaDensityCuts(bool xd, bool yd, bool zd, int Nx, int Ny, int Nz);
 };
 
 ////////////////////////////////////////////////////////////////////
