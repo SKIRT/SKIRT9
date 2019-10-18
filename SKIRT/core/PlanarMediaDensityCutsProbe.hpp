@@ -34,7 +34,7 @@ class PlanarMediaDensityCutsProbe : public AbstractPlanarCutsProbe
 {
     ITEM_CONCRETE(PlanarMediaDensityCutsProbe, AbstractPlanarCutsProbe,
                   "cuts of the media densities along planes parallel to the coordinate planes")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(PlanarMediaDensityCutsProbe, "Medium&SpatialGrid")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(PlanarMediaDensityCutsProbe, "Level2&Medium&SpatialGrid")
     ITEM_END()
 
     //======================== Other Functions =======================
@@ -44,7 +44,7 @@ public:
     void probeSetup() override;
 
     /** This function outputs FITS files with the theoretical and grid density for each material
-        type in the coordinate planes (xy, xz, or yz) indicated by the boolean "direction"
+        type in a plane parallel to the coordinate plane indicated by the boolean "direction"
         arguments \em xd, \em yd, and \em zd, exactly two of which must be true. The arguments \em
         xc, \em yc, and \em zc specify the position of the cuts, and the arguments \em Nx, \em Ny,
         and \em Nz specify the number of pixels in each direction. */

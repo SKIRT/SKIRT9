@@ -53,7 +53,7 @@ void PlanarMediaDensityCutsProbe::writeMediaDensityCuts(Probe* probe, bool xd, b
     auto parallel = probe->find<ParallelFactory>()->parallelRootOnly();
     parallel->call(Nj, [&dust_tv,&dust_gv,&elec_tv,&elec_gv,&gas_tv,&gas_gv,
                             ms,grid,xpsize,ypsize,zpsize,xbase,ybase,zbase,
-                            xd,yd,zd,xc,yc,zc,Ni](size_t firstIndex ,size_t numIndices)
+                            xd,yd,zd,xc,yc,zc,Ni](size_t firstIndex, size_t numIndices)
     {
         int numMedia = ms->numMedia();
         for (size_t j = firstIndex; j != firstIndex+numIndices; ++j)
@@ -129,7 +129,6 @@ void PlanarMediaDensityCutsProbe::probeSetup()
 {
     if (find<Configuration>()->hasMedium())
     {
-        // output planes depending on the dimension of the medium system
         writeMediaDensityCuts(this, 1,1,0, positionX(),positionY(),positionZ(), numPixelsX(),numPixelsY(),numPixelsZ());
         writeMediaDensityCuts(this, 1,0,1, positionX(),positionY(),positionZ(), numPixelsX(),numPixelsY(),numPixelsZ());
         writeMediaDensityCuts(this, 0,1,1, positionX(),positionY(),positionZ(), numPixelsX(),numPixelsY(),numPixelsZ());

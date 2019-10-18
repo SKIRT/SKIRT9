@@ -138,6 +138,7 @@
 #include "ParticleSource.hpp"
 #include "PerspectiveInstrument.hpp"
 #include "PhotonPacketOptions.hpp"
+#include "PlanarDustTemperatureCutsProbe.hpp"
 #include "PlanarMediaDensityCutsProbe.hpp"
 #include "PlummerGeometry.hpp"
 #include "PointSource.hpp"
@@ -539,6 +540,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<RadiationFieldPerCellProbe>();
     ItemRegistry::add<RadiationFieldWavelengthGridProbe>();
     ItemRegistry::add<DefaultDustTemperatureCutsProbe>();
+    ItemRegistry::add<PlanarDustTemperatureCutsProbe>();
     ItemRegistry::add<DustTemperaturePerCellProbe>();
     ItemRegistry::add<LinearDustTemperatureCutProbe>();
     ItemRegistry::add<MeridionalDustTemperatureCutProbe>();
