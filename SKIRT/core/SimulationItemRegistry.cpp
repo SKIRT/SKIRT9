@@ -519,6 +519,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<Probe>();
     ItemRegistry::add<AbstractWavelengthProbe>();
     ItemRegistry::add<AbstractWavelengthGridProbe>();
+    ItemRegistry::add<AbstractPlanarCutsProbe>();
     ItemRegistry::add<InstrumentWavelengthGridProbe>();
     ItemRegistry::add<LuminosityProbe>();
     ItemRegistry::add<LaunchedPacketsProbe>();
