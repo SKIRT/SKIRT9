@@ -45,7 +45,6 @@ public:
         number of pixels in each direction. */
     static void writeDustTemperatureCut(Probe* probe, bool xd, bool yd, bool zd,
                                         double xc, double yc, double zc, int Nx, int Ny, int Nz);
-
 };
 
 ////////////////////////////////////////////////////////////////////

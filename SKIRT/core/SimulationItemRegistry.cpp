@@ -140,6 +140,7 @@
 #include "PhotonPacketOptions.hpp"
 #include "PlanarDustTemperatureCutsProbe.hpp"
 #include "PlanarMediaDensityCutsProbe.hpp"
+#include "PlanarRadiationFieldCutsProbe.hpp"
 #include "PlummerGeometry.hpp"
 #include "PointSource.hpp"
 #include "PolarizedGraphiteGrainComposition.hpp"
@@ -537,6 +538,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<DustGrainSizeDistributionProbe>();
 
     ItemRegistry::add<DefaultRadiationFieldCutsProbe>();
+    ItemRegistry::add<PlanarRadiationFieldCutsProbe>();
     ItemRegistry::add<RadiationFieldPerCellProbe>();
     ItemRegistry::add<RadiationFieldWavelengthGridProbe>();
     ItemRegistry::add<DefaultDustTemperatureCutsProbe>();

@@ -44,7 +44,7 @@ void PlanarMediaDensityCutsProbe::writeMediaDensityCuts(Probe* probe, bool xd, b
     Array dust_tv, dust_gv;
     Array elec_tv, elec_gv;
     Array gas_tv, gas_gv;
-    int size = (xd ? Nx : 1) * (yd ? Ny : 1) * (zd ? Nz : 1);
+    int size = Ni * Nj;
     if (ms->hasDust()) { dust_tv.resize(size), dust_gv.resize(size); }
     if (ms->hasElectrons()) { elec_tv.resize(size), elec_gv.resize(size); }
     if (ms->hasGas()) { gas_tv.resize(size), gas_gv.resize(size); }

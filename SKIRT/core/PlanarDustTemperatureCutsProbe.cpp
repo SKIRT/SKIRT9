@@ -39,8 +39,7 @@ void PlanarDustTemperatureCutsProbe::writeDustTemperatureCut(Probe* probe, bool 
     int Nj = zd ? Nz : Ny;
 
     // allocate result array with the appropriate size
-    int size = (xd ? Nx : 1) * (yd ? Ny : 1) * (zd ? Nz : 1);
-    Array Tv(size);
+    Array Tv(Ni * Nj);
 
     // calculate the results in parallel; perform only at the root processs
     auto parallel = probe->find<ParallelFactory>()->parallelRootOnly();
