@@ -138,7 +138,9 @@
 #include "ParticleSource.hpp"
 #include "PerspectiveInstrument.hpp"
 #include "PhotonPacketOptions.hpp"
+#include "PlanarDustTemperatureCutsProbe.hpp"
 #include "PlanarMediaDensityCutsProbe.hpp"
+#include "PlanarRadiationFieldCutsProbe.hpp"
 #include "PlummerGeometry.hpp"
 #include "PointSource.hpp"
 #include "PolarizedGraphiteGrainComposition.hpp"
@@ -519,6 +521,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<Probe>();
     ItemRegistry::add<AbstractWavelengthProbe>();
     ItemRegistry::add<AbstractWavelengthGridProbe>();
+    ItemRegistry::add<AbstractPlanarCutsProbe>();
     ItemRegistry::add<InstrumentWavelengthGridProbe>();
     ItemRegistry::add<LuminosityProbe>();
     ItemRegistry::add<LaunchedPacketsProbe>();
@@ -535,9 +538,11 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<DustGrainSizeDistributionProbe>();
 
     ItemRegistry::add<DefaultRadiationFieldCutsProbe>();
+    ItemRegistry::add<PlanarRadiationFieldCutsProbe>();
     ItemRegistry::add<RadiationFieldPerCellProbe>();
     ItemRegistry::add<RadiationFieldWavelengthGridProbe>();
     ItemRegistry::add<DefaultDustTemperatureCutsProbe>();
+    ItemRegistry::add<PlanarDustTemperatureCutsProbe>();
     ItemRegistry::add<DustTemperaturePerCellProbe>();
     ItemRegistry::add<LinearDustTemperatureCutProbe>();
     ItemRegistry::add<MeridionalDustTemperatureCutProbe>();

@@ -16,7 +16,7 @@
     spherical symmetry only the intersection with the xy plane is written, for axial symmetry the
     intersections with the xy and xz planes are written, and for general geometries all three
     intersections are written. Each of the output files contains a map with 1024 x 1024 pixels, and
-    covers a field of view equal to the total extension of the spatial grid in the simulation.
+    covers a field of view equal to the total extent of the spatial grid in the simulation.
 
     The indicative dust temperature assigned to each output pixel is obtained as follows. First the
     probe determines the cell in the simulation's spatial grid "containing" the pixel according to

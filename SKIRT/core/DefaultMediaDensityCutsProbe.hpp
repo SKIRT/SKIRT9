@@ -11,9 +11,9 @@
 ////////////////////////////////////////////////////////////////////
 
 /** DefaultMediaDensityCutsProbe outputs FITS files with cuts through the true input media density
-    and the grid-discretized media density along the coordinate planes. Each of these maps contains
-    1024 x 1024 pixels, and covers as a field of view the total extension of the spatial grid in
-    the simulation.
+    and the grid-discretized media density along the coordinate planes. The field of view of each
+    cut covers the extent of the spatial grid in the simulation in the relevant directions. Each
+    cut has 1024 x 1024 pixels.
 
     The number of data files written depends on the geometry and material contents of the media
     system. For spherical symmetry only the intersection with the xy plane is written, for axial
