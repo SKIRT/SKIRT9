@@ -16,7 +16,7 @@
     The spectral distribution is characterized by an SED object, and the bolometric output is
     characterized by a LuminosityNormalization object. The emitted radiation can be anisotropic
     (configured through an AngularDistribution object) and/or be polarized (configured through a
-    PolarizationState object). The point source can also have a bulk velocity. */
+    PolarizationState object). The point source can also have a velocity. */
 class PointSource : public NormalizedSource
 {
     ITEM_CONCRETE(PointSource, NormalizedSource, "a primary point source")
@@ -52,7 +52,7 @@ class PointSource : public NormalizedSource
 
 public:
     /** This function returns the dimension of the point source, taking into account anisotropic
-        emission or polarization, if present, but ignoring the bulk velocity (because this is
+        emission or polarization, if present, but ignoring the velocity (because this is
         handled in the base class). */
     int geometryDimension() const override;
 
@@ -62,7 +62,7 @@ public:
         source. The emission is unpolarized and isotropic; the emission direction is simply sampled
         from a uniform distribution on the unit sphere. */
     void launchNormalized(PhotonPacket* pp, size_t historyIndex, double lambda, double Lw,
-                          BulkVelocityInterface* bvi) const override;
+                          VelocityInterface* bvi) const override;
 };
 
 //////////////////////////////////////////////////////////////////////

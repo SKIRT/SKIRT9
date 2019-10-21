@@ -94,7 +94,7 @@ namespace
 ////////////////////////////////////////////////////////////////////
 
 void CubicalBackgroundSource::launchNormalized(PhotonPacket* pp, size_t historyIndex, double lambda, double Lw,
-                                               BulkVelocityInterface* bvi) const
+                                               VelocityInterface* bvi) const
 {
     // generate a random launch wall
     Direction bfu = generateLaunchWall(random());

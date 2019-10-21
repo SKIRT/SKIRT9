@@ -4,7 +4,6 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "SecondarySourceSystem.hpp"
-#include "BulkVelocityInterface.hpp"
 #include "Configuration.hpp"
 #include "DisjointWavelengthGrid.hpp"
 #include "FatalError.hpp"
@@ -18,6 +17,7 @@
 #include "ProcessManager.hpp"
 #include "Random.hpp"
 #include "StringUtils.hpp"
+#include "VelocityInterface.hpp"
 #include "WavelengthDistribution.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -169,7 +169,7 @@ namespace
     // This information includes the normalized regular and cumulative dust emission spectra, calculated from
     // the stored radiation field and the dust properties using the configured emission calculator, and
     // the average bulk velocity of the material in the cell, obtained from the medium system.
-    class DustCellEmission : public BulkVelocityInterface
+    class DustCellEmission : public VelocityInterface
     {
     private:
         // information initialized once, during the first call to calculateIfNeeded()
@@ -328,7 +328,7 @@ namespace
             return NR::value<NR::interpolateLogLog>(lambda, _lambdav, _pv);
         }
 
-        Vec bulkVelocity() const override { return _bfv; }
+        Vec velocity() const override { return _bfv; }
     };
 
     // setup a DustCellEmission instance for each parallel execution thread to cache dust emission information
@@ -387,7 +387,7 @@ void SecondarySourceSystem::launch(PhotonPacket* pp, size_t historyIndex) const
     Position bfr = _ms->grid()->randomPositionInCell(m);
 
     // provide a redshift interface for the appropriate velocity, if it is nonzero
-    BulkVelocityInterface* bvi = t_dustcell.bulkVelocity().isNull() ? nullptr : &t_dustcell;
+    VelocityInterface* bvi = t_dustcell.velocity().isNull() ? nullptr : &t_dustcell;
 
     // launch the photon packet with isotropic direction
     pp->launch(historyIndex, lambda, L*w, bfr, _random->direction(), bvi);

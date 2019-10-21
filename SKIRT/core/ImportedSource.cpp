@@ -5,7 +5,6 @@
 
 #include "ImportedSource.hpp"
 #include "Configuration.hpp"
-#include "BulkVelocityInterface.hpp"
 #include "Constants.hpp"
 #include "FatalError.hpp"
 #include "Log.hpp"
@@ -17,6 +16,7 @@
 #include "Random.hpp"
 #include "SEDFamily.hpp"
 #include "Snapshot.hpp"
+#include "VelocityInterface.hpp"
 #include "WavelengthGrid.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -60,7 +60,11 @@ void ImportedSource::setupSelfAfter()
     _snapshot = createAndOpenSnapshot();
 
     // add optional columns if applicable
-    if (_importVelocity) _snapshot->importVelocity();
+    if (!_oligochromatic && _importVelocity)
+    {
+        _snapshot->importVelocity();
+        if (_importVelocityDispersion) _snapshot->importVelocityDispersion();
+    }
     _snapshot->importParameters(_sedFamily->parameterInfo());
 
     // read the data from file
@@ -232,15 +236,19 @@ namespace
 
 namespace
 {
-    // an instance of this class offers the bulk velocity interface for an imported entity
-    class EntityVelocity : public BulkVelocityInterface
+    // an instance of this class offers the velocity interface for an imported entity
+    class EntityVelocity : public VelocityInterface
     {
     private:
         Vec _bfv;
     public:
         EntityVelocity() { }
         void setBulkVelocity(Vec bfv) { _bfv = bfv; }
-        Vec bulkVelocity() const override { return _bfv; }
+        void applyVelocityDispersion(Random* random, double sigma)
+        {
+            _bfv += sigma * random->gauss() * random->direction();
+        }
+        Vec velocity() const override { return _bfv; }
     };
 
     // setup a velocity instance (with the redshift interface) for each parallel execution thread; this works even if
@@ -304,10 +312,11 @@ void ImportedSource::launch(PhotonPacket* pp, size_t historyIndex, double L) con
     Position bfr = _snapshot->generatePosition(m);
 
     // provide a redshift interface for the appropriate velocity, if enabled
-    BulkVelocityInterface* bvi = nullptr;
-    if (!_oligochromatic && importVelocity())
+    VelocityInterface* bvi = nullptr;
+    if (!_oligochromatic && _importVelocity)
     {
         t_velocity.setBulkVelocity(_snapshot->velocity(m));
+        if (_importVelocityDispersion) t_velocity.applyVelocityDispersion(random(), _snapshot->velocityDispersion(m));
         bvi = &t_velocity;
     }
 

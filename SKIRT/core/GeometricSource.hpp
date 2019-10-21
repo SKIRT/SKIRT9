@@ -38,7 +38,7 @@ public:
         source. The emission is unpolarized and isotropic; the emission direction is simply sampled
         from a uniform distribution on the unit sphere. */
     void launchNormalized(PhotonPacket* pp, size_t historyIndex, double lambda, double Lw,
-                          BulkVelocityInterface* bvi) const override;
+                          VelocityInterface* bvi) const override;
 };
 
 //////////////////////////////////////////////////////////////////////

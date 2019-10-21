@@ -727,6 +727,14 @@ Vec VoronoiMeshSnapshot::velocity(int m) const
 
 ////////////////////////////////////////////////////////////////////
 
+double VoronoiMeshSnapshot::velocityDispersion(int m) const
+{
+    const Array& prop = _cells[m]->properties();
+    return prop[velocityDispersionIndex()];
+}
+
+////////////////////////////////////////////////////////////////////
+
 void VoronoiMeshSnapshot::parameters(int m, Array& params) const
 {
     int n = numParameters();
@@ -821,6 +829,14 @@ Vec VoronoiMeshSnapshot::velocity(Position bfr) const
 {
     int m = cellIndex(bfr);
     return m>=0 ? velocity(m) : Vec();
+}
+
+////////////////////////////////////////////////////////////////////
+
+double VoronoiMeshSnapshot::velocityDispersion(Position bfr) const
+{
+    int m = cellIndex(bfr);
+    return m>=0 ? velocityDispersion(m) : 0.;
 }
 
 ////////////////////////////////////////////////////////////////////

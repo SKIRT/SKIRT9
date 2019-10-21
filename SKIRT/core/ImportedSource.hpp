@@ -33,10 +33,11 @@ class Snapshot;
     spatial and spectral information for an entity yields its contribution to the imported
     radiation source.
 
-    The input file may also include a seperate (bulk) velocity vector for each entity. When this
-    option is enabled, the appropriate Doppler shift is taken into account when launching photon
-    packets. Apart from the anisotropy resulting from this optional Doppler shift, the radiation
-    emitted by this primary source is always isotropic. It is also always unpolarized. */
+    The input file may also include a bulk velocity vector with an optional velocity dispersion
+    for each entity. When this option is enabled, the appropriate Doppler shift is taken into
+    account when launching photon packets. Apart from the anisotropy resulting from this optional
+    Doppler shift, the radiation emitted by this primary source is always isotropic. It is also
+    always unpolarized. */
 class ImportedSource : public Source
 {
     ITEM_ABSTRACT(ImportedSource, Source, "a primary source imported from snapshot data")
@@ -48,7 +49,13 @@ class ImportedSource : public Source
 
     PROPERTY_BOOL(importVelocity, "import velocity components (3 columns)")
         ATTRIBUTE_DEFAULT_VALUE(importVelocity, "false")
-        ATTRIBUTE_DISPLAYED_IF(importVelocity, "(Panchromatic&Level2)|Level3")
+        ATTRIBUTE_RELEVANT_IF(importVelocity, "Panchromatic")
+        ATTRIBUTE_DISPLAYED_IF(importVelocity, "Level2")
+
+    PROPERTY_BOOL(importVelocityDispersion, "import velocity dispersion (spherically symmetric)")
+        ATTRIBUTE_DEFAULT_VALUE(importVelocityDispersion, "false")
+        ATTRIBUTE_RELEVANT_IF(importVelocityDispersion, "Panchromatic&importVelocity")
+        ATTRIBUTE_DISPLAYED_IF(importVelocityDispersion, "Level2")
 
     PROPERTY_STRING(useColumns, "a list of names corresponding to columns in the file to be imported")
         ATTRIBUTE_DEFAULT_VALUE(useColumns, "")

@@ -319,6 +319,14 @@ Vec AdaptiveMeshSnapshot::velocity(int m) const
 
 ////////////////////////////////////////////////////////////////////
 
+double AdaptiveMeshSnapshot::velocityDispersion(int m) const
+{
+    const Array& prop = _cells[m]->properties();
+    return prop[velocityDispersionIndex()];
+}
+
+////////////////////////////////////////////////////////////////////
+
 void AdaptiveMeshSnapshot::parameters(int m, Array& params) const
 {
     int n = numParameters();
@@ -362,6 +370,14 @@ Vec AdaptiveMeshSnapshot::velocity(Position bfr) const
 {
     int m = cellIndex(bfr);
     return m>=0 ? velocity(m) : Vec();
+}
+
+////////////////////////////////////////////////////////////////////
+
+double AdaptiveMeshSnapshot::velocityDispersion(Position bfr) const
+{
+    int m = cellIndex(bfr);
+    return m>=0 ? velocityDispersion(m) : 0.;
 }
 
 ////////////////////////////////////////////////////////////////////

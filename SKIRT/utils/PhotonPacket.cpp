@@ -4,10 +4,10 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "PhotonPacket.hpp"
-#include "Constants.hpp"
 #include "AngularDistributionInterface.hpp"
+#include "Constants.hpp"
 #include "PolarizationProfileInterface.hpp"
-#include "BulkVelocityInterface.hpp"
+#include "VelocityInterface.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -18,7 +18,7 @@ PhotonPacket::PhotonPacket()
 ////////////////////////////////////////////////////////////////////
 
 void PhotonPacket::launch(size_t historyIndex, double lambda, double L, Position bfr, Direction bfk,
-                          BulkVelocityInterface* bvi,
+                          VelocityInterface* bvi,
                           AngularDistributionInterface* adi,
                           PolarizationProfileInterface* ppi)
 {
@@ -33,7 +33,7 @@ void PhotonPacket::launch(size_t historyIndex, double lambda, double L, Position
     _nscatt = 0;
     setPosition(bfr);
     setDirection(bfk);
-    if (bvi) _lambda = shiftedEmissionWavelength(lambda, bfk, bvi->bulkVelocity());
+    if (bvi) _lambda = shiftedEmissionWavelength(lambda, bfk, bvi->velocity());
     if (ppi) setPolarized(ppi->polarizationForDirection(bfk));
     else setUnpolarized();
     _hasObservedOpticalDepth = false;
@@ -65,7 +65,7 @@ void PhotonPacket::launchEmissionPeelOff(const PhotonPacket* pp, Direction bfk)
     _nscatt = 0;
     setPosition(pp->position());
     setDirection(bfk);
-    if (pp->_bvi) _lambda = shiftedEmissionWavelength(_lambda0, bfk, pp->_bvi->bulkVelocity());
+    if (pp->_bvi) _lambda = shiftedEmissionWavelength(_lambda0, bfk, pp->_bvi->velocity());
     if (pp->_adi) applyBias(pp->_adi->probabilityForDirection(bfk));
     if (pp->_ppi) setPolarized(pp->_ppi->polarizationForDirection(bfk));
     else setUnpolarized();

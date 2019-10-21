@@ -7,7 +7,7 @@
 #define NORMALIZEDSOURCE_HPP
 
 #include "Source.hpp"
-#include "BulkVelocityInterface.hpp"
+#include "VelocityInterface.hpp"
 #include "LuminosityNormalization.hpp"
 #include "SED.hpp"
 
@@ -21,7 +21,7 @@
 
     Subclasses must handle the spatial distribution of the source, and can optionally add
     anisotropy and/or polarization. */
-class NormalizedSource : public Source, public BulkVelocityInterface
+class NormalizedSource : public Source, public VelocityInterface
 {
     ITEM_ABSTRACT(NormalizedSource, Source, "a primary source with a single SED")
 
@@ -65,7 +65,7 @@ class NormalizedSource : public Source, public BulkVelocityInterface
     //============= Construction - Setup - Destruction =============
 
 protected:
-    /** This function creates a private object offering the redshift interface if the bulk velocity
+    /** This function creates a private object offering the velocity interface if the bulk velocity
         is nonzero. */
     void setupSelfBefore() override;
 
@@ -77,7 +77,7 @@ public:
         bulk velocity. */
     int dimension() const override;
 
-    /** This function returns true if the bulk velocity of the source is nonzero. */
+    /** This function returns true if the velocity of the source is nonzero. */
     bool hasVelocity() const override;
 
     /** This function returns the wavelength range for this source. Outside this range, all
@@ -99,9 +99,9 @@ public:
          whole) or if the source simply does not emit at the wavelength. */
      double specificLuminosity(double wavelength) const override;
 
-     /** This function implements the BulkVelocityInterface interface. It returns the bulk velocity
+     /** This function implements the VelocityInterface interface. It returns the bulk velocity
          of this source, as configured by the user. */
-     Vec bulkVelocity() const override;
+     Vec velocity() const override;
 
      /** This function causes the photon packet \em pp to be launched from the source using the
          given history index and luminosity contribution. In this abstract class, the function
@@ -122,7 +122,7 @@ public:
         handle the spatial distribution of the source, optionally adding anisotropy and/or
         polarization. */
     virtual void launchNormalized(PhotonPacket* pp, size_t historyIndex, double lambda, double Lw,
-                                  BulkVelocityInterface* bvi) const = 0;
+                                  VelocityInterface* bvi) const = 0;
 
     //======================== Data Members ========================
 
@@ -133,7 +133,7 @@ private:
     WavelengthDistribution* _biasDistribution{nullptr}; // the wavelength bias distribution
 
     // pointer to an object offering the redshift interface; either "this" or null pointer if the bulk velocity is zero
-    BulkVelocityInterface* _bvi{nullptr};
+    VelocityInterface* _bvi{nullptr};
 };
 
 //////////////////////////////////////////////////////////////////////
