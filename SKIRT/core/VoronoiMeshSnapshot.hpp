@@ -10,7 +10,6 @@
 #include "Array.hpp"
 class SiteListInterface;
 class SpatialGridPath;
-namespace VoronoiMesh_Private { class VoronoiCell; class Node; }
 
 ////////////////////////////////////////////////////////////////////
 
@@ -135,7 +134,15 @@ public:
     //=========== Private construction ==========
 
 private:
-    /** Given a list of generating sites (represented as partially initialized VoronoiCell
+    /** Private class to hold the information about a Voronoi cell that is relevant for calculating
+        paths and densities; see the buildMesh() function. */
+    class Cell;
+
+    /** Private class to hold a node in the internal binary search tree; see the buildTree()
+        and buildSearch() functions. */
+    class Node;
+
+    /** Given a list of generating sites (represented as partially initialized Cell
         objects), this private function builds the Voronoi tessellation and stores the
         corresponding cell information, including any properties relevant for supporting the
         interrogation capabilities offered by this class. All other data (such as Voronoi cell
@@ -145,7 +152,7 @@ private:
         its own.
 
         Before actually starting to build the Voronoi tessellation, the function discards sites
-        (represented as VoronoiCell objects) outside of the domain and sites that are too close to
+        (represented as Cell objects) outside of the domain and sites that are too close to
         another site.
 
         If the \em relax argument is true, the function performs a single relaxation step on the
@@ -157,6 +164,10 @@ private:
         thereby avoiding overly elongated cells in the Voronoi tessellation. Relaxation can be
         quite time-consuming because the Voronoi tessellation must be constructed twice. */
     void buildMesh(bool relax);
+
+    /** Private function to recursively build a binary search tree (see
+        en.wikipedia.org/wiki/Kd-tree) */
+    Node* buildTree(vector<int>::iterator first, vector<int>::iterator last, int depth) const;
 
     /** This private function builds data structures that allow accelerating the operation of the
         cellIndex() function.
@@ -174,6 +185,10 @@ private:
         the function builds a binary search tree on the cell sites for those blocks (see for example
         <a href="http://en.wikipedia.org/wiki/Kd-tree">en.wikipedia.org/wiki/Kd-tree</a>). */
     void buildSearch();
+
+    /** This private function returns true if the given point is closer to the site with index m
+        than to the sites with indices ids. */
+    bool isPointClosestTo(Vec r, int m, const vector<int>& ids) const;
 
     //====================== Output =====================
 
@@ -379,12 +394,13 @@ public:
     //======================== Data Members ========================
 
 private:
+
     // data members initialized during configuration
     Box _extent;                    // the spatial domain of the mesh
     double _eps{0.};                // small fraction of extent
 
     // data members initialized when processing snapshot input and further completed by BuildMesh()
-    vector<VoronoiMesh_Private::VoronoiCell*> _cells;   // cell objects, indexed on m
+    vector<Cell*> _cells;           // cell objects, indexed on m
 
     // data members initialized when processing snapshot input, but only if a density policy has been set
     Array _rhov;                    // density for each cell (not normalized)
@@ -392,12 +408,11 @@ private:
     double _mass{0.};               // total effective mass
 
     // data members initialized by BuildSearch()
-    int _nb{0};                                     // number of blocks in each dimension (limit for indices i,j,k)
-    int _nb2{0};                                    // nb*nb
-    int _nb3{0};                                    // nb*nb*nb
-    vector<vector<int>> _blocklists;                // list of cell indices per block, indexed on i*_nb2+j*_nb+k
-    vector<VoronoiMesh_Private::Node*> _blocktrees; // root node of search tree or null for each block,
-                                                    //      indexed on i*_nb2+j*_nb+k
+    int _nb{0};                     // number of blocks in each dimension (limit for indices i,j,k)
+    int _nb2{0};                    // nb*nb
+    int _nb3{0};                    // nb*nb*nb
+    vector<vector<int>> _blocklists;// list of cell indices per block, indexed on i*_nb2+j*_nb+k
+    vector<Node*> _blocktrees;      // root node of search tree or null for each block, indexed on i*_nb2+j*_nb+k
 };
 
 ////////////////////////////////////////////////////////////////////
