@@ -17,7 +17,7 @@ int GeometricSource::geometryDimension() const
 //////////////////////////////////////////////////////////////////////
 
 void GeometricSource::launchNormalized(PhotonPacket* pp, size_t historyIndex, double lambda, double Lw,
-                                       BulkVelocityInterface* bvi) const
+                                       VelocityInterface* bvi) const
 {
     // generate a random position from the geometry
     Position bfr = _geometry->generatePosition();

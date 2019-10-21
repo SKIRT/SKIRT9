@@ -5,7 +5,6 @@
 
 #include "ImportedSource.hpp"
 #include "Configuration.hpp"
-#include "BulkVelocityInterface.hpp"
 #include "Constants.hpp"
 #include "FatalError.hpp"
 #include "Log.hpp"
@@ -17,6 +16,7 @@
 #include "Random.hpp"
 #include "SEDFamily.hpp"
 #include "Snapshot.hpp"
+#include "VelocityInterface.hpp"
 #include "WavelengthGrid.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -236,8 +236,8 @@ namespace
 
 namespace
 {
-    // an instance of this class offers the bulk velocity interface for an imported entity
-    class EntityVelocity : public BulkVelocityInterface
+    // an instance of this class offers the velocity interface for an imported entity
+    class EntityVelocity : public VelocityInterface
     {
     private:
         Vec _bfv;
@@ -248,7 +248,7 @@ namespace
         {
             _bfv += sigma * random->gauss() * random->direction();
         }
-        Vec bulkVelocity() const override { return _bfv; }
+        Vec velocity() const override { return _bfv; }
     };
 
     // setup a velocity instance (with the redshift interface) for each parallel execution thread; this works even if
@@ -312,7 +312,7 @@ void ImportedSource::launch(PhotonPacket* pp, size_t historyIndex, double L) con
     Position bfr = _snapshot->generatePosition(m);
 
     // provide a redshift interface for the appropriate velocity, if enabled
-    BulkVelocityInterface* bvi = nullptr;
+    VelocityInterface* bvi = nullptr;
     if (!_oligochromatic && _importVelocity)
     {
         t_velocity.setBulkVelocity(_snapshot->velocity(m));

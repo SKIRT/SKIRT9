@@ -78,7 +78,7 @@ double NormalizedSource::specificLuminosity(double wavelength) const
 
 //////////////////////////////////////////////////////////////////////
 
-Vec NormalizedSource::bulkVelocity() const
+Vec NormalizedSource::velocity() const
 {
     return Vec(velocityX(), velocityY(), velocityZ());
 }

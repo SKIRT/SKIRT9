@@ -250,7 +250,7 @@ private:
         direction of the observer \f${\bf{k}}_{\text{obs}}\f$. For anisotropic emission, a weight
         factor is applied to the luminosity to compensate for the fact that the probability that a
         photon packet would have been emitted towards the observer is not the same as the
-        probability that it is emitted in any other direction. If the source has a bulk velocity,
+        probability that it is emitted in any other direction. If the source has a nonzero velocity,
         the wavelength of the peel-off photon packet is Doppler-shifted for the new direction.
 
         The first argument specifies the photon packet that was just emitted; the second argument
@@ -267,7 +267,7 @@ private:
         the Configuration::radiationFieldWLG() function for more information). Locating the
         appropriate spatial bin is trivial because each segment in the photon packet's path stores
         the index of the cell being crossed. The wavelength bin is derived from the photon packet's
-        perceived wavelength in the cell under consideration, taking into account the bulk velocity
+        perceived wavelength in the cell under consideration, taking into account the velocity
         of the medium in that cell.
 
         For each segment \f$n\f$ in the photon packet's path, this function first determines the

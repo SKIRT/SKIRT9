@@ -33,7 +33,7 @@ class Snapshot;
     spatial and spectral information for an entity yields its contribution to the imported
     radiation source.
 
-    The input file may also include a bulk velocity vector (with an optional velocity dispersion)
+    The input file may also include a bulk velocity vector with an optional velocity dispersion
     for each entity. When this option is enabled, the appropriate Doppler shift is taken into
     account when launching photon packets. Apart from the anisotropy resulting from this optional
     Doppler shift, the radiation emitted by this primary source is always isotropic. It is also

@@ -22,7 +22,7 @@ class Random;
       - Some normalization for the luminosity (e.g., bolometric, at a given wavelength, ...).
       - If the emission is anisotropic, the rest-frame angular distribution of the emission.
       - If the emission is polarized, the polarization state of the emission in each direction.
-      - The bulk velocity of the source relative to the model coordinate frame.
+      - The velocity of the source relative to the model coordinate frame.
 
     Furthermore, each source has a function for launching a photon packet that proceeds roughly
     as follows:
@@ -35,7 +35,7 @@ class Random;
       - Determine the polarization state of the emission at that location and at that wavelength,
         i.e. an object offering the PolarizationState interface (function to return a Stokes vector
         for a given direction)
-      - Determine the bulk velocity of the source at that location
+      - Determine the velocity of the source at that location
       - Pass the items listed above to the photon packet launch procedure
 
     Wavelengths for new photon packets can be sampled from the intrinsic spectral distribution of
@@ -94,8 +94,8 @@ public:
         none of these symmetries. */
     virtual int dimension() const = 0;
 
-    /** This function returns true if this source may have a nonzero bulk velocity for some
-        positions. */
+    /** This function returns true if this source may have a nonzero velocity for some positions.
+        */
     virtual bool hasVelocity() const = 0;
 
     /** This function returns the luminosity \f$L\f$ (i.e. radiative power) of the source

@@ -3,27 +3,26 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef BULKVELOCITYINTERFACE_HPP
-#define BULKVELOCITYINTERFACE_HPP
+#ifndef VELOCITYINTERFACE_HPP
+#define VELOCITYINTERFACE_HPP
 
 #include "Vec.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-/** BulkVelocityInterface is a pure interface to obtain the bulk velocity of a radiation source or
-    receiver. */
-class BulkVelocityInterface
+/** VelocityInterface is a pure interface to obtain the velocity of a radiation source. */
+class VelocityInterface
 {
 protected:
     /** The empty constructor for the interface. */
-    BulkVelocityInterface() { }
+    VelocityInterface() { }
 
 public:
     /** The empty destructor for the interface. */
-    virtual ~BulkVelocityInterface() { }
+    virtual ~VelocityInterface() { }
 
-    /** This function returns the bulk velocity of the radiation source or receiver. */
-    virtual Vec bulkVelocity() const = 0;
+    /** This function returns the velocity of the radiation source. */
+    virtual Vec velocity() const = 0;
 };
 
 ////////////////////////////////////////////////////////////////////
