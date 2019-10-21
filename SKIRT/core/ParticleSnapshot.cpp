@@ -175,6 +175,13 @@ Vec ParticleSnapshot::velocity(int m) const
 
 ////////////////////////////////////////////////////////////////////
 
+double ParticleSnapshot::velocityDispersion(int m) const
+{
+    return _propv[m][velocityDispersionIndex()];
+}
+
+////////////////////////////////////////////////////////////////////
+
 void ParticleSnapshot::parameters(int m, Array& params) const
 {
     int n = numParameters();
@@ -188,6 +195,14 @@ Vec ParticleSnapshot::velocity(Position bfr) const
 {
     const SmoothedParticle* nearestParticle = _grid ? _grid->nearestParticle(bfr) : nullptr;
     return nearestParticle ? velocity(nearestParticle->index()) : Vec();
+}
+
+////////////////////////////////////////////////////////////////////
+
+double ParticleSnapshot::velocityDispersion(Position bfr) const
+{
+    const SmoothedParticle* nearestParticle = _grid ? _grid->nearestParticle(bfr) : nullptr;
+    return nearestParticle ? velocityDispersion(nearestParticle->index()) : 0.;
 }
 
 ////////////////////////////////////////////////////////////////////

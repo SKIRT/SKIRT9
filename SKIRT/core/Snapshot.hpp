@@ -156,6 +156,11 @@ public:
         The default unit is km/s. */
     void importVelocity();
 
+    /** This function configures the snapshot to import a single velocity dispersion value,
+        specifying a random offset to the bulk velocity with a spherically symmetric Gaussian
+        distribution. The default unit is km/s. */
+    void importVelocityDispersion();
+
     /** This function configures the snapshot to import alignment characteristics including
         orientation and fraction of alignment. TO DO: provide details and implement. */
     void importAlignment();
@@ -214,6 +219,10 @@ protected:
         being imported, for use by subclasses. */
     int velocityIndex() const { return _velocityIndex; }
 
+    /** This function returns the column index of the velocity dispersion field, or -1 if this is
+        not being imported, for use by subclasses. */
+    int velocityDispersionIndex() const { return _velocityDispersionIndex; }
+
     /** This function returns the column index of the first field in the parameter list, or -1 if
         this is not being imported, for use by subclasses. */
     int parametersIndex() const { return _parametersIndex; }
@@ -265,6 +274,17 @@ public:
         \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero velocity. If
         the velocity is not being imported, the behavior is undefined. */
     virtual Vec velocity(Position bfr) const = 0;
+
+    /** This function returns the velocity dispersion of the entity with index \f$0\le m \le
+        N_\mathrm{ent}-1\f$. If the velocity dispersion is not being imported, or the index is out
+        of range, the behavior is undefined. */
+    virtual double velocityDispersion(int m) const = 0;
+
+    /** This function returns the velocity dispersion of the entity nearest to (or at) the
+        specified point \f${\bf{r}}\f$. If the point is outside the domain, the function returns
+        zero dispersion. If the velocity dispersion is not being imported, the behavior is
+        undefined. */
+    virtual double velocityDispersion(Position bfr) const = 0;
 
     /** This function stores the parameters of the entity with index \f$0\le m \le
         N_\mathrm{ent}-1\f$ into the given array. If parameters are not being imported, or the
@@ -344,6 +364,7 @@ private:
     int _metallicityIndex{-1};
     int _temperatureIndex{-1};
     int _velocityIndex{-1};
+    int _velocityDispersionIndex{-1};
     int _parametersIndex{-1};
     int _numParameters{0};
 

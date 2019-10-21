@@ -60,7 +60,11 @@ void ImportedSource::setupSelfAfter()
     _snapshot = createAndOpenSnapshot();
 
     // add optional columns if applicable
-    if (_importVelocity) _snapshot->importVelocity();
+    if (!_oligochromatic && _importVelocity)
+    {
+        _snapshot->importVelocity();
+        if (_importVelocityDispersion) _snapshot->importVelocityDispersion();
+    }
     _snapshot->importParameters(_sedFamily->parameterInfo());
 
     // read the data from file
@@ -240,6 +244,10 @@ namespace
     public:
         EntityVelocity() { }
         void setBulkVelocity(Vec bfv) { _bfv = bfv; }
+        void applyVelocityDispersion(Random* random, double sigma)
+        {
+            _bfv += sigma * random->gauss() * random->direction();
+        }
         Vec bulkVelocity() const override { return _bfv; }
     };
 
@@ -305,9 +313,10 @@ void ImportedSource::launch(PhotonPacket* pp, size_t historyIndex, double L) con
 
     // provide a redshift interface for the appropriate velocity, if enabled
     BulkVelocityInterface* bvi = nullptr;
-    if (!_oligochromatic && importVelocity())
+    if (!_oligochromatic && _importVelocity)
     {
         t_velocity.setBulkVelocity(_snapshot->velocity(m));
+        if (_importVelocityDispersion) t_velocity.applyVelocityDispersion(random(), _snapshot->velocityDispersion(m));
         bvi = &t_velocity;
     }
 

@@ -134,6 +134,12 @@ void Snapshot::importVelocity()
     _infile->addColumn("velocity z", "velocity", "km/s");
 }
 
+void Snapshot::importVelocityDispersion()
+{
+    _velocityDispersionIndex = _nextIndex++;
+    _infile->addColumn("velocity dispersion", "velocity", "km/s");
+}
+
 ////////////////////////////////////////////////////////////////////
 
 void Snapshot::importParameters(const vector<SnapshotParameter>& parameters)
