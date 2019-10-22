@@ -498,7 +498,7 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
     //   - store the cell object in the vector indexed on cell number
     log()->info("Constructing Voronoi tessellation with " + std::to_string(numCells) + " cells");
     log()->infoSetElapsed(numCells);
-    auto parallel = log()->find<ParallelFactory>()->parallelDuplicated();  // !! parallel calculation does not work
+    auto parallel = log()->find<ParallelFactory>()->parallelDuplicated();
     parallel->call(numCells, [this, &con](size_t firstIndex, size_t numIndices)
     {
         int numDone = 0;
