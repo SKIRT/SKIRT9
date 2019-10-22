@@ -266,8 +266,8 @@ inline void voro_compute<c_class>::scan_bits_mask_add(unsigned int q,unsigned in
 
 /** This routine computes a Voronoi cell for a single particle in the
  * container. It can be called by the user, but is also forms the core part of
- * several of the main functions, such as store_cell_volumes(), print_all(),
- * and the drawing routines. The algorithm constructs the cell by testing over
+ * several of the main functions, such as store_cell_volumes().
+ * The algorithm constructs the cell by testing over
  * the neighbors of the particle, working outwards until it reaches those
  * particles which could not possibly intersect the cell. For maximum
  * efficiency, this algorithm is divided into three parts. In the first
@@ -969,9 +969,6 @@ template<class c_class>
 inline void voro_compute<c_class>::add_list_memory(int*& qu_s,int*& qu_e) {
     qu_size<<=1;
     int *qu_n=new int[qu_size],*qu_c=qu_n;
-#if VOROPP_VERBOSE >=2
-    fprintf(stderr,"List memory scaled up to %d\n",qu_size);
-#endif
     if(qu_s<=qu_e) {
         while(qu_s<qu_e) *(qu_c++)=*(qu_s++);
     } else {

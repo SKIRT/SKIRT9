@@ -62,17 +62,6 @@ const int max_chunk_size=65536;
 /** The chunk size in the pre_container classes. */
 const int pre_container_chunk_size=1024;
 
-#ifndef VOROPP_VERBOSE
-/** Voro++ can print a number of different status and debugging messages to
- * notify the user of special behavior, and this macro sets the amount which
- * are displayed. At level 0, no messages are printed. At level 1, messages
- * about unusual cases during cell construction are printed, such as when the
- * plane routine bails out due to floating point problems. At level 2, general
- * messages about memory expansion are printed. At level 3, technical details
- * about memory management are printed. */
-#define VOROPP_VERBOSE 0
-#endif
-
 /** If a point is within this distance of a cutting plane, then the code
  * assumes that point exactly lies on the plane. */
 const double tolerance=1e-11;
@@ -100,14 +89,6 @@ const int max_unit_voro_shells=10;
  * container grid. */
 const double optimal_particles=5.6;
 
-/** If this is set to 1, then the code reports any instances of particles being
- * put outside of the container geometry. */
-#define VOROPP_REPORT_OUT_OF_BOUNDS 0
-
-/** Voro++ returns this status code if there is a file-related error, such as
- * not being able to open file. */
-#define VOROPP_FILE_ERROR 1
-
 /** Voro++ returns this status code if there is a memory allocation error, if
  * one of the safe memory limits is exceeded. */
 #define VOROPP_MEMORY_ERROR 2
@@ -117,10 +98,6 @@ const double optimal_particles=5.6;
  * status code will generally indicate a bug, and the developer should be
  * contacted. */
 #define VOROPP_INTERNAL_ERROR 3
-
-/** Voro++ returns this status code if it could not interpret the command line
- * arguments passed to the command line utility. */
-#define VOROPP_CMD_LINE_ERROR 4
 
 }
 

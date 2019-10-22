@@ -107,9 +107,6 @@ inline bool container_base::put_locate_block(int &ijk,double &x,double &y,double
         if(co[ijk]==mem[ijk]) add_particle_memory(ijk);
         return true;
     }
-#if VOROPP_REPORT_OUT_OF_BOUNDS ==1
-    fprintf(stderr,"Out of bounds: (x,y,z)=(%g,%g,%g)\n",x,y,z);
-#endif
     return false;
 }
 
@@ -218,13 +215,9 @@ bool container::find_voronoi_cell(double x,double y,double z,double &rx,double &
 void container_base::add_particle_memory(int i) {
     int l,nmem=mem[i]<<1;
 
-    // Carry out a check on the memory allocation size, and
-    // print a status message if requested
+    // Carry out a check on the memory allocation size
     if(nmem>max_particle_memory)
         voro_fatal_error("Absolute maximum memory allocation exceeded",VOROPP_MEMORY_ERROR);
-#if VOROPP_VERBOSE >=3
-    fprintf(stderr,"Particle memory in region %d scaled up to %d\n",i,nmem);
-#endif
 
     // Allocate new memory and copy in the contents of the old arrays
     int *idp=new int[nmem];
@@ -238,59 +231,9 @@ void container_base::add_particle_memory(int i) {
     delete [] p[i];p[i]=pp;
 }
 
-/** Import a list of particles from an open file stream into the container.
- * Entries of four numbers (Particle ID, x position, y position, z position)
- * are searched for. If the file cannot be successfully read, then the routine
- * causes a fatal error.
- * \param[in] fp the file handle to read from. */
-void container::import(FILE *fp) {
-    int i,j;
-    double x,y,z;
-    while((j=fscanf(fp,"%d %lg %lg %lg",&i,&x,&y,&z))==4) put(i,x,y,z);
-    if(j!=EOF) voro_fatal_error("File import error",VOROPP_FILE_ERROR);
-}
-
-/** Import a list of particles from an open file stream, also storing the order
- * of that the particles are read. Entries of four numbers (Particle ID, x
- * position, y position, z position) are searched for. If the file cannot be
- * successfully read, then the routine causes a fatal error.
- * \param[in,out] vo a reference to an ordering class to use.
- * \param[in] fp the file handle to read from. */
-void container::import(particle_order &vo,FILE *fp) {
-    int i,j;
-    double x,y,z;
-    while((j=fscanf(fp,"%d %lg %lg %lg",&i,&x,&y,&z))==4) put(vo,i,x,y,z);
-    if(j!=EOF) voro_fatal_error("File import error",VOROPP_FILE_ERROR);
-}
-
-/** Outputs the a list of all the container regions along with the number of
- * particles stored within each. */
-void container_base::region_count() {
-    int i,j,k,*cop=co;
-    for(k=0;k<nz;k++) for(j=0;j<ny;j++) for(i=0;i<nx;i++)
-        printf("Region (%d,%d,%d): %d particles\n",i,j,k,*(cop++));
-}
-
 /** Clears a container of particles. */
 void container::clear() {
     for(int *cop=co;cop<co+nxyz;cop++) *cop=0;
-}
-
-/** Computes all the Voronoi cells and saves customized information about them.
- * \param[in] format the custom output string to use.
- * \param[in] fp a file handle to write to. */
-void container::print_custom(const char *format,FILE *fp) {
-    c_loop_all vl(*this);
-    print_custom(vl,format,fp);
-}
-
-/** Computes all the Voronoi cells and saves customized information about them.
- * \param[in] format the custom output string to use.
- * \param[in] filename the name of the file to write to. */
-void container::print_custom(const char *format,const char *filename) {
-    FILE *fp=safe_fopen(filename,"w");
-    print_custom(format,fp);
-    fclose(fp);
 }
 
 /** Computes all of the Voronoi cells in the container, but does nothing
@@ -325,37 +268,6 @@ bool container_base::point_inside(double x,double y,double z) {
     if(x<ax||x>bx||y<ay||y>by||z<az||z>bz) return false;
     return point_inside_walls(x,y,z);
 }
-
-/** Draws an outline of the domain in gnuplot format.
- * \param[in] fp the file handle to write to. */
-void container_base::draw_domain_gnuplot(FILE *fp) {
-    fprintf(fp,"%g %g %g\n%g %g %g\n%g %g %g\n%g %g %g\n",ax,ay,az,bx,ay,az,bx,by,az,ax,by,az);
-    fprintf(fp,"%g %g %g\n%g %g %g\n%g %g %g\n%g %g %g\n",ax,by,bz,bx,by,bz,bx,ay,bz,ax,ay,bz);
-    fprintf(fp,"%g %g %g\n\n%g %g %g\n%g %g %g\n\n",ax,by,bz,ax,ay,az,ax,ay,bz);
-    fprintf(fp,"%g %g %g\n%g %g %g\n\n%g %g %g\n%g %g %g\n\n",bx,ay,az,bx,ay,bz,bx,by,az,bx,by,bz);
-}
-
-/** Draws an outline of the domain in POV-Ray format.
- * \param[in] fp the file handle to write to. */
-void container_base::draw_domain_pov(FILE *fp) {
-    fprintf(fp,"cylinder{<%g,%g,%g>,<%g,%g,%g>,rr}\n"
-           "cylinder{<%g,%g,%g>,<%g,%g,%g>,rr}\n",ax,ay,az,bx,ay,az,ax,by,az,bx,by,az);
-    fprintf(fp,"cylinder{<%g,%g,%g>,<%g,%g,%g>,rr}\n"
-           "cylinder{<%g,%g,%g>,<%g,%g,%g>,rr}\n",ax,by,bz,bx,by,bz,ax,ay,bz,bx,ay,bz);
-    fprintf(fp,"cylinder{<%g,%g,%g>,<%g,%g,%g>,rr}\n"
-           "cylinder{<%g,%g,%g>,<%g,%g,%g>,rr}\n",ax,ay,az,ax,by,az,bx,ay,az,bx,by,az);
-    fprintf(fp,"cylinder{<%g,%g,%g>,<%g,%g,%g>,rr}\n"
-           "cylinder{<%g,%g,%g>,<%g,%g,%g>,rr}\n",bx,ay,bz,bx,by,bz,ax,ay,bz,ax,by,bz);
-    fprintf(fp,"cylinder{<%g,%g,%g>,<%g,%g,%g>,rr}\n"
-           "cylinder{<%g,%g,%g>,<%g,%g,%g>,rr}\n",ax,ay,az,ax,ay,bz,bx,ay,az,bx,ay,bz);
-    fprintf(fp,"cylinder{<%g,%g,%g>,<%g,%g,%g>,rr}\n"
-           "cylinder{<%g,%g,%g>,<%g,%g,%g>,rr}\n",bx,by,az,bx,by,bz,ax,by,az,ax,by,bz);
-    fprintf(fp,"sphere{<%g,%g,%g>,rr}\nsphere{<%g,%g,%g>,rr}\n"
-           "sphere{<%g,%g,%g>,rr}\nsphere{<%g,%g,%g>,rr}\n",ax,ay,az,bx,ay,az,ax,by,az,bx,by,az);
-    fprintf(fp,"sphere{<%g,%g,%g>,rr}\nsphere{<%g,%g,%g>,rr}\n"
-           "sphere{<%g,%g,%g>,rr}\nsphere{<%g,%g,%g>,rr}\n",ax,ay,bz,bx,ay,bz,ax,by,bz,bx,by,bz);
-}
-
 
 /** The wall_list constructor sets up an array of pointers to wall classes. */
 wall_list::wall_list() : walls(new wall*[init_wall_size]), wep(walls), wel(walls+init_wall_size),
