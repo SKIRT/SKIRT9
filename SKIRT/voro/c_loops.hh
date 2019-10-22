@@ -73,7 +73,7 @@ class c_loop_base {
         /** Returns the position vector of the particle currently being
          * considered by the loop.
          * \param[out] (x,y,z) the position vector of the particle. */
-        inline void pos(double &x,double &y,double &z) {
+        void pos(double &x,double &y,double &z) {
             double *pp=p[ijk]+ps*q;
             x=*(pp++);y=*(pp++);z=*pp;
         }
@@ -84,7 +84,7 @@ class c_loop_base {
          * \param[out] r the radius of the particle. If no radius
          * 		 information is available the default radius
          * 		 value is returned. */
-        inline void pos(int &pid,double &x,double &y,double &z,double &r) {
+        void pos(int &pid,double &x,double &y,double &z,double &r) {
             pid=id[ijk][q];
             double *pp=p[ijk]+ps*q;
             x=*(pp++);y=*(pp++);z=*pp;
@@ -92,16 +92,16 @@ class c_loop_base {
         }
         /** Returns the x position of the particle currently being
          * considered by the loop. */
-        inline double x() {return p[ijk][ps*q];}
+        double x() {return p[ijk][ps*q];}
         /** Returns the y position of the particle currently being
          * considered by the loop. */
-        inline double y() {return p[ijk][ps*q+1];}
+        double y() {return p[ijk][ps*q+1];}
         /** Returns the z position of the particle currently being
          * considered by the loop. */
-        inline double z() {return p[ijk][ps*q+2];}
+        double z() {return p[ijk][ps*q+2];}
         /** Returns the ID of the particle currently being considered
          * by the loop. */
-        inline int pid() {return id[ijk][q];}
+        int pid() {return id[ijk][q];}
 };
 
 /** \brief Class for looping over all of the particles in a container.
@@ -118,7 +118,7 @@ class c_loop_all : public c_loop_base {
         /** Sets the class to consider the first particle.
          * \return True if there is any particle to consider, false
          * otherwise. */
-        inline bool start() {
+        bool start() {
             i=j=k=ijk=q=0;
             while(co[ijk]==0) if(!next_block()) return false;
             return true;
@@ -126,7 +126,7 @@ class c_loop_all : public c_loop_base {
         /** Finds the next particle to test.
          * \return True if there is another particle, false if no more
          * particles are available. */
-        inline bool inc() {
+        bool inc() {
             q++;
             if(q>=co[ijk]) {
                 q=0;
@@ -141,7 +141,7 @@ class c_loop_all : public c_loop_base {
          * computational block with any particles.
          * \return True if another block is found, false if there are
          * no more blocks. */
-        inline bool next_block() {
+        bool next_block() {
             ijk++;
             i++;
             if(i==nx) {

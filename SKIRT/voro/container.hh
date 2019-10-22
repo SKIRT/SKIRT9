@@ -122,7 +122,7 @@ class container_base : public voro_base {
          * 		       coordinate system.
          * \param[out] disp a block displacement used internally by the
          *		    find_voronoi_cell routine. */
-        inline void initialize_search(int ci,int cj,int ck,int ijk,int &i,int &j,int &k,int &disp) {
+        void initialize_search(int ci,int cj,int ck,int ijk,int &i,int &j,int &k,int &disp) {
             i=xperiodic?nx:ci;
             j=yperiodic?ny:cj;
             k=zperiodic?nz:ck;
@@ -135,7 +135,7 @@ class container_base : public voro_base {
          * \param[in] (ci,cj,ck) the block that the particle is within.
          * \param[out] (fx,fy,fz) the position relative to the block.
          */
-        inline void frac_pos(double x,double y,double z,double ci,double cj,double ck,
+        void frac_pos(double x,double y,double z,double ci,double cj,double ck,
                 double &fx,double &fy,double &fz) {
             fx=x-ax-boxx*ci;
             fy=y-ay-boxy*cj;
@@ -154,7 +154,7 @@ class container_base : public voro_base {
          * \param[in] disp a block displacement used internally by the
          * 		    find_voronoi_cell and compute_cell routines.
          * \return The block index. */
-        inline int region_index(int ci,int cj,int ck,int ei,int ej,int ek,double &qx,double &qy,double &qz,int &disp) {
+        int region_index(int ci,int cj,int ck,int ei,int ej,int ek,double &qx,double &qy,double &qz,int &disp) {
             if(xperiodic) {if(ci+ei<nx) {ei+=nx;qx=-(bx-ax);} else if(ci+ei>=(nx<<1)) {ei-=nx;qx=bx-ax;} else qx=0;}
             if(yperiodic) {if(cj+ej<ny) {ej+=ny;qy=-(by-ay);} else if(cj+ej>=(ny<<1)) {ej-=ny;qy=by-ay;} else qy=0;}
             if(zperiodic) {if(ck+ek<nz) {ek+=nz;qz=-(bz-az);} else if(ck+ek>=(nz<<1)) {ek-=nz;qz=bz-az;} else qz=0;}
@@ -162,16 +162,16 @@ class container_base : public voro_base {
         }
         /** Sums up the total number of stored particles.
          * \return The number of particles. */
-        inline int total_particles() {
+        int total_particles() {
             int tp=*co;
             for(int *cop=co+1;cop<co+nxyz;cop++) tp+=*cop;
             return tp;
         }
     protected:
         void add_particle_memory(int i);
-        inline bool put_locate_block(int &ijk,double &x,double &y,double &z);
-        inline bool put_remap(int &ijk,double &x,double &y,double &z);
-        inline bool remap(int &ai,int &aj,int &ak,int &ci,int &cj,int &ck,double &x,double &y,double &z,int &ijk);
+        bool put_locate_block(int &ijk,double &x,double &y,double &z);
+        bool put_remap(int &ijk,double &x,double &y,double &z);
+        bool remap(int &ai,int &aj,int &ak,int &ci,int &cj,int &ck,double &x,double &y,double &z,int &ijk);
 };
 
 /** \brief Class containing all of the routines that are specific to computing
@@ -186,12 +186,12 @@ class radius_mono {
          * given particle to initialize any required constants.
          * \param[in] ijk the block that the particle is within.
          * \param[in] s the index of the particle within the block. */
-        inline void r_init(int ijk,int s) {
+        void r_init(int ijk,int s) {
             (void)ijk; (void)s;
         }
         /** Sets a required constant to be used when carrying out a
          * plane bounds check. */
-        inline void r_prime(double rv) {
+        void r_prime(double rv) {
             (void)rv;
         }
         /** Carries out a radius bounds check.
@@ -200,22 +200,22 @@ class radius_mono {
          *                vertex multiplied by two.
          * \return True if particles at this radius could not possibly
          * cut the cell, false otherwise. */
-        inline bool r_ctest(double crs,double mrs) {return crs>mrs;}
+        bool r_ctest(double crs,double mrs) {return crs>mrs;}
         /** Scales a plane displacement during a plane bounds check.
          * \param[in] lrs the plane displacement.
          * \return The scaled value. */
-        inline double r_cutoff(double lrs) {return lrs;}
+        double r_cutoff(double lrs) {return lrs;}
         /** Adds the maximum radius squared to a given value.
          * \param[in] rs the value to consider.
          * \return The value with the radius squared added. */
-        inline double r_max_add(double rs) {return rs;}
+        double r_max_add(double rs) {return rs;}
         /** Subtracts the radius squared of a particle from a given
          * value.
          * \param[in] rs the value to consider.
          * \param[in] ijk the block that the particle is within.
          * \param[in] q the index of the particle within the block.
          * \return The value with the radius squared subtracted. */
-        inline double r_current_sub(double rs,int ijk,int q) {
+        double r_current_sub(double rs,int ijk,int q) {
             (void)ijk; (void)q;
             return rs;
         }
@@ -225,7 +225,7 @@ class radius_mono {
          * \param[in] ijk the block that the particle is within.
          * \param[in] q the index of the particle within the block.
          * \return The scaled plane displacement. */
-        inline double r_scale(double rs,int ijk,int q) {
+        double r_scale(double rs,int ijk,int q) {
             (void)ijk; (void)q;
             return rs;
         }
@@ -239,7 +239,7 @@ class radius_mono {
          * \param[in] q the index of the particle within the block.
          * \return True if the cell could possibly cut the cell, false
          * otherwise. */
-        inline bool r_scale_check(double &rs,double mrs,int ijk,int q) {
+        bool r_scale_check(double &rs,double mrs,int ijk,int q) {
             (void)ijk; (void)q;
             return rs<mrs;
         }

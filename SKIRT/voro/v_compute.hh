@@ -5,7 +5,7 @@
 // Date     : August 30th 2011
 
 /* \file v_compute.hh
- * \brief Header file for the voro_compute template and related classes. */
+ * \brief Header file for the voro_compute class and related classes. */
 
 #ifndef VOROPP_V_COMPUTE_HH
 #define VOROPP_V_COMPUTE_HH
@@ -18,7 +18,7 @@ namespace voro {
 /** \brief Structure for holding information about a particle.
  *
  * This small structure holds information about a single particle, and is used
- * by several of the routines in the voro_compute template for passing
+ * by several of the routines in the voro_compute class for passing
  * information by reference between functions. */
 struct particle_record {
     /** The index of the block that the particle is within. */
@@ -90,8 +90,7 @@ class voro_compute {
             delete [] qu;
             delete [] mask;
         }
-        template<class v_cell>
-        bool compute_cell(v_cell &c,int ijk,int s,int ci,int cj,int ck);
+        bool compute_cell(voronoicell &c,int ijk,int s,int ci,int cj,int ck);
         void find_voronoi_cell(double x,double y,double z,int ci,int cj,int ck,int ijk,particle_record &w,double &mrs);
     private:
         /** A constant set to boxx*boxx+boxy*boxy+boxz*boxz, which is
@@ -116,29 +115,22 @@ class voro_compute {
         /** A pointer to the end of the queue array, used to determine
          * when the queue is full. */
         int *qu_l;
-        template<class v_cell>
-        bool corner_test(v_cell &c,double xl,double yl,double zl,double xh,double yh,double zh);
-        template<class v_cell>
-        inline bool edge_x_test(v_cell &c,double x0,double yl,double zl,double x1,double yh,double zh);
-        template<class v_cell>
-        inline bool edge_y_test(v_cell &c,double xl,double y0,double zl,double xh,double y1,double zh);
-        template<class v_cell>
-        inline bool edge_z_test(v_cell &c,double xl,double yl,double z0,double xh,double yh,double z1);
-        template<class v_cell>
-        inline bool face_x_test(v_cell &c,double xl,double y0,double z0,double y1,double z1);
-        template<class v_cell>
-        inline bool face_y_test(v_cell &c,double x0,double yl,double z0,double x1,double z1);
-        template<class v_cell>
-        inline bool face_z_test(v_cell &c,double x0,double y0,double zl,double x1,double y1);
+        bool corner_test(voronoicell &c,double xl,double yl,double zl,double xh,double yh,double zh);
+        bool edge_x_test(voronoicell &c,double x0,double yl,double zl,double x1,double yh,double zh);
+        bool edge_y_test(voronoicell &c,double xl,double y0,double zl,double xh,double y1,double zh);
+        bool edge_z_test(voronoicell &c,double xl,double yl,double z0,double xh,double yh,double z1);
+        bool face_x_test(voronoicell &c,double xl,double y0,double z0,double y1,double z1);
+        bool face_y_test(voronoicell &c,double x0,double yl,double z0,double x1,double z1);
+        bool face_z_test(voronoicell &c,double x0,double y0,double zl,double x1,double y1);
         bool compute_min_max_radius(int di,int dj,int dk,double fx,double fy,double fz,double gx,double gy,double gz,double& crs,double mrs);
         bool compute_min_radius(int di,int dj,int dk,double fx,double fy,double fz,double mrs);
-        inline void add_to_mask(int ei,int ej,int ek,int *&qu_e);
-        inline void scan_bits_mask_add(unsigned int q,unsigned int *mijk,int ei,int ej,int ek,int *&qu_e);
-        inline void scan_all(int ijk,double x,double y,double z,int di,int dj,int dk,particle_record &w,double &mrs);
+        void add_to_mask(int ei,int ej,int ek,int *&qu_e);
+        void scan_bits_mask_add(unsigned int q,unsigned int *mijk,int ei,int ej,int ek,int *&qu_e);
+        void scan_all(int ijk,double x,double y,double z,int di,int dj,int dk,particle_record &w,double &mrs);
         void add_list_memory(int*& qu_s,int*& qu_e);
         /** Resets the mask in cases where the mask counter wraps
          * around. */
-        inline void reset_mask() {
+        void reset_mask() {
             for(unsigned int *mp(mask);mp<mask+hxyz;mp++) *mp=0;
         }
 };
