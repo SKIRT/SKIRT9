@@ -7,7 +7,6 @@
 /* \file v_compute.cc
  * \brief Function implementantions for the voro_compute template. */
 
-#include "worklist.hh"
 #include "v_compute.hh"
 #include "container.hh"
 
@@ -983,7 +982,6 @@ inline void voro_compute<c_class>::add_list_memory(int*& qu_s,int*& qu_e) {
 
 // Explicit template instantiation
 template voro_compute<container>::voro_compute(container&,int,int,int);
-template bool voro_compute<container>::compute_cell(voronoicell&,int,int,int,int,int);
 template bool voro_compute<container>::compute_cell(voronoicell_neighbor&,int,int,int,int,int);
 template void voro_compute<container>::find_voronoi_cell(double,double,double,int,int,int,int,particle_record&,double&);
 

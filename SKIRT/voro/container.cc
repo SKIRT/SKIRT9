@@ -158,7 +158,7 @@ inline bool container_base::remap(int &ai,int &aj,int &ak,int &ci,int &cj,int &c
 
 /** Takes a vector and finds the particle whose Voronoi cell contains that
  * vector. This is equivalent to finding the particle which is nearest to the
- * vector. Additional wall classes are not considered by this routine.
+ * vector.
  * \param[in] (x,y,z) the vector to test.
  * \param[out] (rx,ry,rz) the position of the particle whose Voronoi cell
  *                        contains the vector. If the container is periodic,
@@ -214,76 +214,6 @@ void container_base::add_particle_memory(int i) {
     mem[i]=nmem;
     delete [] id[i];id[i]=idp;
     delete [] p[i];p[i]=pp;
-}
-
-/** Clears a container of particles. */
-void container::clear() {
-    for(int *cop=co;cop<co+nxyz;cop++) *cop=0;
-}
-
-/** Computes all of the Voronoi cells in the container, but does nothing
- * with the output. It is useful for measuring the pure computation time
- * of the Voronoi algorithm, without any additional calculations such as
- * volume evaluation or cell output. */
-void container::compute_all_cells() {
-    voronoicell c;
-    c_loop_all vl(*this);
-    if(vl.start()) do compute_cell(c,vl);
-    while(vl.inc());
-}
-
-/** Calculates all of the Voronoi cells and sums their volumes. In most cases
- * without walls, the sum of the Voronoi cell volumes should equal the volume
- * of the container to numerical precision.
- * \return The sum of all of the computed Voronoi volumes. */
-double container::sum_cell_volumes() {
-    voronoicell c;
-    double vol=0;
-    c_loop_all vl(*this);
-    if(vl.start()) do if(compute_cell(c,vl)) vol+=c.volume();while(vl.inc());
-    return vol;
-}
-
-/** This function tests to see if a given vector lies within the container
- * bounds and any walls.
- * \param[in] (x,y,z) the position vector to be tested.
- * \return True if the point is inside the container, false if the point is
- *         outside. */
-bool container_base::point_inside(double x,double y,double z) {
-    if(x<ax||x>bx||y<ay||y>by||z<az||z>bz) return false;
-    return point_inside_walls(x,y,z);
-}
-
-/** The wall_list constructor sets up an array of pointers to wall classes. */
-wall_list::wall_list() : walls(new wall*[init_wall_size]), wep(walls), wel(walls+init_wall_size),
-    current_wall_size(init_wall_size) {}
-
-/** The wall_list destructor frees the array of pointers to the wall classes.
- */
-wall_list::~wall_list() {
-    delete [] walls;
-}
-
-/** Adds all of the walls on another wall_list to this class.
- * \param[in] wl a reference to the wall class. */
-void wall_list::add_wall(wall_list &wl) {
-    for(wall **wp=wl.walls;wp<wl.wep;wp++) add_wall(*wp);
-}
-
-/** Deallocates all of the wall classes pointed to by the wall_list. */
-void wall_list::deallocate() {
-    for(wall **wp=walls;wp<wep;wp++) delete *wp;
-}
-
-/** Increases the memory allocation for the walls array. */
-void wall_list::increase_wall_memory() {
-    current_wall_size<<=1;
-    if(current_wall_size>max_wall_size)
-        voro_fatal_error("Wall memory allocation exceeded absolute maximum",VOROPP_MEMORY_ERROR);
-    wall **nwalls=new wall*[current_wall_size],**nwp=nwalls,**wp=walls;
-    while(wp<wep) *(nwp++)=*(wp++);
-    delete [] walls;
-    walls=nwalls;wel=walls+current_wall_size;wep=nwp;
 }
 
 }

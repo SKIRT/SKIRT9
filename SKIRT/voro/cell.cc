@@ -69,19 +69,6 @@ void voronoicell_base::copy(voronoicell_base* vb) {
     for(i=0;i<3*p;i++) pts[i]=vb->pts[i];
 }
 
-/** Copies the information from another voronoicell class into this
- * class, extending memory allocation if necessary.
- * \param[in] c the class to copy. */
-void voronoicell_neighbor::operator=(voronoicell &c) {
-    voronoicell_base *vb=(&c);
-    check_memory_for_copy(*this,vb);copy(vb);
-    int i,j;
-    for(i=0;i<c.current_vertex_order;i++) {
-        for(j=0;j<c.mec[i]*i;j++) mne[i][j]=0;
-        for(j=0;j<c.mec[i];j++) ne[c.mep[i][(2*i+1)*j+2*i]]=mne[i]+(j*i);
-    }
-}
-
 /** Copies the information from another voronoicell_neighbor class into this
  * class, extending memory allocation if necessary.
  * \param[in] c the class to copy. */
@@ -1944,9 +1931,7 @@ void voronoicell_neighbor::neighbors(std::vector<int> &v) {
 }
 
 // Explicit instantiation
-template bool voronoicell_base::nplane(voronoicell&,double,double,double,double,int);
 template bool voronoicell_base::nplane(voronoicell_neighbor&,double,double,double,double,int);
-template void voronoicell_base::check_memory_for_copy(voronoicell&,voronoicell_base*);
 template void voronoicell_base::check_memory_for_copy(voronoicell_neighbor&,voronoicell_base*);
 
 }

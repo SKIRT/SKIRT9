@@ -29,8 +29,6 @@ const int init_marginal=64;
 const int init_delete_size=256;
 /** The initial size for the auxiliary delete stack. */
 const int init_delete2_size=256;
-/** The initial size for the wall pointer array. */
-const int init_wall_size=32;
 /** The default initial size for the ordering class. */
 const int init_ordering_size=4096;
 /** The initial size of the pre_container chunk index. */
@@ -52,8 +50,6 @@ const int max_delete_size=16777216;
 const int max_delete2_size=16777216;
 /** The maximum amount of particle memory allocated for a single region. */
 const int max_particle_memory=16777216;
-/** The maximum size for the wall pointer array. */
-const int max_wall_size=2048;
 /** The maximum size for the ordering class. */
 const int max_ordering_size=67108864;
 /** The maximum size for the pre_container chunk index. */

@@ -18,80 +18,6 @@
 
 namespace voro {
 
-/** \brief Pure virtual class from which wall objects are derived.
- *
- * This is a pure virtual class for a generic wall object. A wall object
- * can be specified by deriving a new class from this and specifying the
- * functions.*/
-class wall {
-    public:
-        virtual ~wall() {}
-        /** A pure virtual function for testing whether a point is
-         * inside the wall object. */
-        virtual bool point_inside(double x,double y,double z) = 0;
-        /** A pure virtual function for cutting a cell without
-         * neighbor-tracking with a wall. */
-        virtual bool cut_cell(voronoicell &c,double x,double y,double z) = 0;
-        /** A pure virtual function for cutting a cell with
-         * neighbor-tracking enabled with a wall. */
-        virtual bool cut_cell(voronoicell_neighbor &c,double x,double y,double z) = 0;
-};
-
-/** \brief A class for storing a list of pointers to walls.
- *
- * This class stores a list of pointers to wall classes. It contains several
- * simple routines that make use of the wall classes (such as telling whether a
- * given position is inside all of the walls or not). It can be used by itself,
- * but also forms part of container_base, for associating walls with this
- * class. */
-class wall_list {
-    public:
-        /** An array holding pointers to wall objects. */
-        wall **walls;
-        /** A pointer to the next free position to add a wall pointer.
-         */
-        wall **wep;
-        wall_list();
-        ~wall_list();
-        /** Adds a wall to the list.
-         * \param[in] w the wall to add. */
-        inline void add_wall(wall *w) {
-            if(wep==wel) increase_wall_memory();
-            *(wep++)=w;
-        }
-        /** Adds a wall to the list.
-         * \param[in] w a reference to the wall to add. */
-        inline void add_wall(wall &w) {add_wall(&w);}
-        void add_wall(wall_list &wl);
-        /** Determines whether a given position is inside all of the
-         * walls on the list.
-         * \param[in] (x,y,z) the position to test.
-         * \return True if it is inside, false if it is outside. */
-        inline bool point_inside_walls(double x,double y,double z) {
-            for(wall **wp=walls;wp<wep;wp++) if(!((*wp)->point_inside(x,y,z))) return false;
-            return true;
-        }
-        /** Cuts a Voronoi cell by all of the walls currently on
-         * the list.
-         * \param[in] c a reference to the Voronoi cell class.
-         * \param[in] (x,y,z) the position of the cell.
-         * \return True if the cell still exists, false if the cell is
-         * deleted. */
-        template<class c_class>
-        bool apply_walls(c_class &c,double x,double y,double z) {
-            for(wall **wp=walls;wp<wep;wp++) if(!((*wp)->cut_cell(c,x,y,z))) return false;
-            return true;
-        }
-        void deallocate();
-    protected:
-        void increase_wall_memory();
-        /** A pointer to the limit of the walls array, used to
-         * determine when array is full. */
-        wall **wel;
-        /** The current amount of memory allocated for walls. */
-        int current_wall_size;
-};
-
 /** \brief Class for representing a particle system in a three-dimensional
  * rectangular box.
  *
@@ -103,11 +29,8 @@ class wall_list {
  * regular and radical Voronoi tessellations respectively. It contains routines
  * that are commonly between these two classes, such as those for
  * placing particles within the internal data structure.
- *
- * The class is derived from the wall_list class, which encapsulates routines
- * for associating walls with the container, and the voro_base class, which
- * encapsulates routines about the underlying computational grid. */
-class container_base : public voro_base, public wall_list {
+ */
+class container_base : public voro_base {
     public:
         /** The minimum x coordinate of the container. */
         const double ax;
@@ -157,16 +80,14 @@ class container_base : public voro_base, public wall_list {
                 int nx_,int ny_,int nz_,bool xperiodic_,bool yperiodic_,bool zperiodic_,
                 int init_mem,int ps_);
         ~container_base();
-        bool point_inside(double x,double y,double z);
         void region_count();
         /** Initializes the Voronoi cell prior to a compute_cell
          * operation for a specific particle being carried out by a
          * voro_compute class. The cell is initialized to fill the
          * entire container. For non-periodic coordinates, this is set
-         * by the position of the walls. For periodic coordinates, the
+         * by the container boundaries. For periodic coordinates, the
          * space is equally divided in either direction from the
-         * particle's initial position. Plane cuts made by any walls
-         * that have been added are then applied to the cell.
+         * particle's initial position.
          * \param[in,out] c a reference to a voronoicell object.
          * \param[in] ijk the block that the particle is within.
          * \param[in] q the index of the particle within its block.
@@ -178,8 +99,7 @@ class container_base : public voro_base, public wall_list {
          * \param[out] (x,y,z) the position of the particle.
          * \param[out] disp a block displacement used internally by the
          *		    compute_cell routine.
-         * \return False if the plane cuts applied by walls completely
-         * removed the cell, true otherwise. */
+         * \return true. */
         template<class v_cell>
         inline bool initialize_voronoicell(v_cell &c,int ijk,int q,int ci,int cj,int ck,
                 int &i,int &j,int &k,double &x,double &y,double &z,int &disp) {
@@ -189,7 +109,6 @@ class container_base : public voro_base, public wall_list {
             if(yperiodic) {y1=-(y2=0.5*(by-ay));j=ny;} else {y1=ay-y;y2=by-y;j=cj;}
             if(zperiodic) {z1=-(z2=0.5*(bz-az));k=nz;} else {z1=az-z;z2=bz-z;k=ck;}
             c.init(x1,x2,y1,y2,z1,z2);
-            if(!apply_walls(c,x,y,z)) return false;
             disp=ijk-i-nx*(j+ny*k);
             return true;
         }
@@ -336,10 +255,7 @@ class container : public container_base, public radius_mono {
     public:
         container(double ax_,double bx_,double ay_,double by_,double az_,double bz_,
                 int nx_,int ny_,int nz_,bool xperiodic_,bool yperiodic_,bool zperiodic_,int init_mem);
-        void clear();
         void put(int n,double x,double y,double z);
-        void compute_all_cells();
-        double sum_cell_volumes();
         bool find_voronoi_cell(double x,double y,double z,double &rx,double &ry,double &rz,int &pid);
         /** Computes the Voronoi cell for a particle currently being
          * referenced by a loop class.
@@ -347,8 +263,7 @@ class container : public container_base, public radius_mono {
          * 		 computed cell.
          * \param[in] vl the loop class to use.
          * \return True if the cell was computed. If the cell cannot be
-         * computed, if it is removed entirely by a wall or boundary
-         * condition, then the routine returns false. */
+         * computed, then the routine returns false. */
         template<class v_cell,class c_loop>
         inline bool compute_cell(v_cell &c,c_loop &vl) {
             return vc.compute_cell(c,vl.ijk,vl.q,vl.i,vl.j,vl.k);
@@ -359,8 +274,7 @@ class container : public container_base, public radius_mono {
          * \param[in] ijk the block that the particle is within.
          * \param[in] q the index of the particle within the block.
          * \return True if the cell was computed. If the cell cannot be
-         * computed, if it is removed entirely by a wall or boundary
-         * condition, then the routine returns false. */
+         * computed, then the routine returns false. */
         template<class v_cell>
         inline bool compute_cell(v_cell &c,int ijk,int q) {
             int k=ijk/nxy,ijkt=ijk-nxy*k,j=ijkt/nx,i=ijkt-j*nx;
