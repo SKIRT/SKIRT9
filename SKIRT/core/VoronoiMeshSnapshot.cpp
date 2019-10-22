@@ -39,7 +39,7 @@ public:
     Cell(const Array& prop) : _r(prop[0],prop[1],prop[2]), _properties{prop} { }
 
     // adjusts the site position to the centroid position of the specified fully computed Voronoi cell
-    void relax(voro::voronoicell_neighbor& cell)
+    void relax(voro::voronoicell& cell)
     {
         double cx, cy, cz;
         cell.centroid(cx,cy,cz);
@@ -47,7 +47,7 @@ public:
     }
 
     // initializes the receiver with information taken from the specified fully computed Voronoi cell
-    void init(voro::voronoicell_neighbor& cell)
+    void init(voro::voronoicell& cell)
     {
         // copy basic geometric info
         double cx, cy, cz;
@@ -468,7 +468,7 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
         if (loop.start()) do
         {
             // compute the cell
-            voro::voronoicell_neighbor fullcell;
+            voro::voronoicell fullcell;
             bool ok = con.compute_cell(fullcell, loop);
             if (!ok) throw FATALERROR("Can't compute Voronoi cell");
 
@@ -508,7 +508,7 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
             if (m >= firstIndex && m < firstIndex+numIndices)
             {
                 // compute the cell
-                voro::voronoicell_neighbor fullcell;
+                voro::voronoicell fullcell;
                 bool ok = con.compute_cell(fullcell, loop);
                 if (!ok) throw FATALERROR("Can't compute Voronoi cell");
 
@@ -665,7 +665,7 @@ void VoronoiMeshSnapshot::writeGridPlotFiles(const SimulationItem* probe) const
     if (loop.start()) do
     {
         // compute the cell
-        voro::voronoicell_neighbor fullcell;
+        voro::voronoicell fullcell;
         con.compute_cell(fullcell, loop);
 
         // get the edges of the cell
