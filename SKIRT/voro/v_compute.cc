@@ -9,7 +9,6 @@
 
 #include "worklist.hh"
 #include "v_compute.hh"
-#include "rad_option.hh"
 #include "container.hh"
 
 namespace voro {

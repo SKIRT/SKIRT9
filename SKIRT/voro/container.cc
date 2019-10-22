@@ -78,21 +78,6 @@ void container::put(int n,double x,double y,double z) {
     }
 }
 
-/** Put a particle into the correct region of the container, also recording
- * into which region it was stored.
- * \param[in] vo the ordering class in which to record the region.
- * \param[in] n the numerical ID of the inserted particle.
- * \param[in] (x,y,z) the position vector of the inserted particle. */
-void container::put(particle_order &vo,int n,double x,double y,double z) {
-    int ijk;
-    if(put_locate_block(ijk,x,y,z)) {
-        id[ijk][co[ijk]]=n;
-        vo.add(ijk,co[ijk]);
-        double *pp=p[ijk]+3*co[ijk]++;
-        *(pp++)=x;*(pp++)=y;*pp=z;
-    }
-}
-
 /** This routine takes a particle position vector, tries to remap it into the
  * primary domain. If successful, it computes the region into which it can be
  * stored and checks that there is enough memory within this region to store
