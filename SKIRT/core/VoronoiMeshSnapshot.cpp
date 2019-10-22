@@ -7,6 +7,8 @@
 #include "FatalError.hpp"
 #include "Log.hpp"
 #include "NR.hpp"
+#include "Parallel.hpp"
+#include "ParallelFactory.hpp"
 #include "Random.hpp"
 #include "SiteListInterface.hpp"
 #include "SpatialGridPath.hpp"
@@ -495,23 +497,31 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
     //   - store the cell object in the vector indexed on cell number
     log()->info("Constructing Voronoi tessellation with " + std::to_string(numCells) + " cells");
     log()->infoSetElapsed(numCells);
-    int numDone = 0;
-    voro::c_loop_all loop(con);
-    if (loop.start()) do
+    auto parallel = log()->find<ParallelFactory>()->parallelDuplicated(1);  // !! parallel calculation does not work
+    parallel->call(numCells, [this, &con](size_t firstIndex, size_t numIndices)
     {
-        // compute the cell
-        voro::voronoicell_neighbor fullcell;
-        bool ok = con.compute_cell(fullcell, loop);
-        if (!ok) throw FATALERROR("Can't compute Voronoi cell");
+        int numDone = 0;
+        voro::c_loop_all loop(con);
+        if (loop.start()) do
+        {
+            size_t m = loop.pid();
+            if (m >= firstIndex && m < firstIndex+numIndices)
+            {
+                // compute the cell
+                voro::voronoicell_neighbor fullcell;
+                bool ok = con.compute_cell(fullcell, loop);
+                if (!ok) throw FATALERROR("Can't compute Voronoi cell");
 
-        // copy all relevant information to the cell object that will stay around
-        _cells[loop.pid()]->init(fullcell);
+                // copy all relevant information to the cell object that will stay around
+                _cells[m]->init(fullcell);
 
-        // log message if the minimum time has elapsed
-        numDone++;
-        if (numDone%2000==0) log()->infoIfElapsed("Computed Voronoi cells: ", 2000);
-    }
-    while (loop.inc());
+                // log message if the minimum time has elapsed
+                numDone++;
+                if (numDone%2000==0) log()->infoIfElapsed("Computed Voronoi cells: ", 2000);
+            }
+        }
+        while (loop.inc());
+    });
 
     // compile neighbor statistics
     int minNeighbors = INT_MAX;
