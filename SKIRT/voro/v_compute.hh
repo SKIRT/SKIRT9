@@ -12,6 +12,7 @@
 
 #include "common.hh"
 #include "cell.hh"
+#include "container.hh"
 
 namespace voro {
 
@@ -33,12 +34,11 @@ struct particle_record {
     int dk;
 };
 
-/** \brief Template for carrying out Voronoi cell computations. */
-template <class c_class>
+/** \brief Class for carrying out Voronoi cell computations. */
 class voro_compute {
     public:
         /** A reference to the container class on which to carry out*/
-        c_class &con;
+        container &con;
         /** The size of an internal computational block in the x
          * direction. */
         const double boxx;
@@ -83,7 +83,7 @@ class voro_compute {
         /** An array holding the number of particles within each
          * computational box of the container. */
         int *co;
-        voro_compute(c_class &con_,int hx_,int hy_,int hz_);
+        voro_compute(container &con_,int hx_,int hy_,int hz_);
         /** The class destructor frees the dynamically allocated memory
          * for the mask and queue. */
         ~voro_compute() {

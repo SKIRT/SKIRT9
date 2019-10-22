@@ -14,7 +14,6 @@
 #include "v_base.hh"
 #include "cell.hh"
 #include "c_loops.hh"
-#include "v_compute.hh"
 
 namespace voro {
 
@@ -100,8 +99,7 @@ class container_base : public voro_base {
          * \param[out] disp a block displacement used internally by the
          *		    compute_cell routine.
          * \return true. */
-        template<class v_cell>
-        inline bool initialize_voronoicell(v_cell &c,int ijk,int q,int ci,int cj,int ck,
+        inline bool initialize_voronoicell(voronoicell &c,int ijk,int q,int ci,int cj,int ck,
                 int &i,int &j,int &k,double &x,double &y,double &z,int &disp) {
             double x1,x2,y1,y2,z1,z2,*pp=p[ijk]+ps*q;
             x=*(pp++);y=*(pp++);z=*pp;
@@ -111,22 +109,6 @@ class container_base : public voro_base {
             c.init(x1,x2,y1,y2,z1,z2);
             disp=ijk-i-nx*(j+ny*k);
             return true;
-        }
-        /** Initializes parameters for a find_voronoi_cell call within
-         * the voro_compute template.
-         * \param[in] (ci,cj,ck) the coordinates of the test block in
-         * 			 the container coordinate system.
-         * \param[in] ijk the index of the test block
-         * \param[out] (i,j,k) the coordinates of the test block
-         * 		       relative to the voro_compute
-         * 		       coordinate system.
-         * \param[out] disp a block displacement used internally by the
-         *		    find_voronoi_cell routine. */
-        void initialize_search(int ci,int cj,int ck,int ijk,int &i,int &j,int &k,int &disp) {
-            i=xperiodic?nx:ci;
-            j=yperiodic?ny:cj;
-            k=zperiodic?nz:ck;
-            disp=ijk-i-nx*(j+ny*k);
         }
         /** Returns the position of a particle currently being computed
          * relative to the computational block that it is within. It is
@@ -256,33 +238,7 @@ class container : public container_base, public radius_mono {
         container(double ax_,double bx_,double ay_,double by_,double az_,double bz_,
                 int nx_,int ny_,int nz_,bool xperiodic_,bool yperiodic_,bool zperiodic_,int init_mem);
         void put(int n,double x,double y,double z);
-        bool find_voronoi_cell(double x,double y,double z,double &rx,double &ry,double &rz,int &pid);
-        /** Computes the Voronoi cell for a particle currently being
-         * referenced by a loop class.
-         * \param[out] c a Voronoi cell class in which to store the
-         * 		 computed cell.
-         * \param[in] vl the loop class to use.
-         * \return True if the cell was computed. If the cell cannot be
-         * computed, then the routine returns false. */
-        template<class v_cell,class c_loop>
-        inline bool compute_cell(v_cell &c,c_loop &vl) {
-            return vc.compute_cell(c,vl.ijk,vl.q,vl.i,vl.j,vl.k);
-        }
-        /** Computes the Voronoi cell for given particle.
-         * \param[out] c a Voronoi cell class in which to store the
-         * 		 computed cell.
-         * \param[in] ijk the block that the particle is within.
-         * \param[in] q the index of the particle within the block.
-         * \return True if the cell was computed. If the cell cannot be
-         * computed, then the routine returns false. */
-        template<class v_cell>
-        inline bool compute_cell(v_cell &c,int ijk,int q) {
-            int k=ijk/nxy,ijkt=ijk-nxy*k,j=ijkt/nx,i=ijkt-j*nx;
-            return vc.compute_cell(c,ijk,q,i,j,k);
-        }
-    private:
-        voro_compute<container> vc;
-        friend class voro_compute<container>;
+        friend class voro_compute;
 };
 
 }

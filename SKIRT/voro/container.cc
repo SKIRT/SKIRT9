@@ -63,8 +63,7 @@ container_base::~container_base() {
  * \param[in] init_mem the initial memory allocation for each block. */
 container::container(double ax_,double bx_,double ay_,double by_,double az_,double bz_,
     int nx_,int ny_,int nz_,bool xperiodic_,bool yperiodic_,bool zperiodic_,int init_mem)
-    : container_base(ax_,bx_,ay_,by_,az_,bz_,nx_,ny_,nz_,xperiodic_,yperiodic_,zperiodic_,init_mem,3),
-    vc(*this,xperiodic_?2*nx_+1:nx_,yperiodic_?2*ny_+1:ny_,zperiodic_?2*nz_+1:nz_) {}
+    : container_base(ax_,bx_,ay_,by_,az_,bz_,nx_,ny_,nz_,xperiodic_,yperiodic_,zperiodic_,init_mem,3) {}
 
 /** Put a particle into the correct region of the container.
  * \param[in] n the numerical ID of the inserted particle.
@@ -154,45 +153,6 @@ inline bool container_base::remap(int &ai,int &aj,int &ak,int &ci,int &cj,int &c
 
     ijk=ci+nx*cj+nxy*ck;
     return true;
-}
-
-/** Takes a vector and finds the particle whose Voronoi cell contains that
- * vector. This is equivalent to finding the particle which is nearest to the
- * vector.
- * \param[in] (x,y,z) the vector to test.
- * \param[out] (rx,ry,rz) the position of the particle whose Voronoi cell
- *                        contains the vector. If the container is periodic,
- *                        this may point to a particle in a periodic image of
- *                        the primary domain.
- * \param[out] pid the ID of the particle.
- * \return True if a particle was found. If the container has no particles,
- * then the search will not find a Voronoi cell and false is returned. */
-bool container::find_voronoi_cell(double x,double y,double z,double &rx,double &ry,double &rz,int &pid) {
-    int ai,aj,ak,ci,cj,ck,ijk;
-    particle_record w;
-    double mrs;
-
-    // If the given vector lies outside the domain, but the container
-    // is periodic, then remap it back into the domain
-    if(!remap(ai,aj,ak,ci,cj,ck,x,y,z,ijk)) return false;
-    vc.find_voronoi_cell(x,y,z,ci,cj,ck,ijk,w,mrs);
-
-    if(w.ijk!=-1) {
-
-        // Assemble the position vector of the particle to be returned,
-        // applying a periodic remapping if necessary
-        if(xperiodic) {ci+=w.di;if(ci<0||ci>=nx) ai+=step_div(ci,nx);}
-        if(yperiodic) {cj+=w.dj;if(cj<0||cj>=ny) aj+=step_div(cj,ny);}
-        if(zperiodic) {ck+=w.dk;if(ck<0||ck>=nz) ak+=step_div(ck,nz);}
-        rx=p[w.ijk][3*w.l]+ai*(bx-ax);
-        ry=p[w.ijk][3*w.l+1]+aj*(by-ay);
-        rz=p[w.ijk][3*w.l+2]+ak*(bz-az);
-        pid=id[w.ijk][w.l];
-        return true;
-    }
-
-    // If no particle if found then just return false
-    return false;
 }
 
 /** Increase memory for a particular region.
