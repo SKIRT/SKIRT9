@@ -4,13 +4,13 @@
 // Email    : chr@alum.mit.edu
 // Date     : August 30th 2011
 
-/* \file cell.hh
- * \brief Header file for the voronoicell and related classes. */
+/* \file voro_cell.hh
+ * \brief Header file for the Voronoi cell class. */
 
-#ifndef VOROPP_CELL_HH
-#define VOROPP_CELL_HH
+#ifndef VORO_CELL_HH
+#define VORO_CELL_HH
 
-#include "common.hh"
+#include "voro_common.hh"
 
 namespace voro {
 
@@ -23,7 +23,7 @@ namespace voro {
  * by a plane, which forms the key routine for the Voronoi cell computation.
  * It contains numerous routine for computing statistics about the Voronoi cell.
  */
-class voronoicell {
+class cell {
 public:
     /** This holds the current size of the arrays ed and nu, which
      * hold the vertex information. If more vertices are created
@@ -76,8 +76,8 @@ public:
     /** This in an array with size 3*current_vertices for holding
      * the positions of the vertices. */
     double *pts;
-    voronoicell();
-    ~voronoicell();
+    cell();
+    ~cell();
     void init_base(double xmin,double xmax,double ymin,double ymax,double zmin,double zmax);
     void init_octahedron_base(double l);
     void init_tetrahedron_base(double x0,double y0,double z0,double x1,double y1,double z1,double x2,double y2,double z2,double x3,double y3,double z3);
@@ -98,7 +98,7 @@ public:
     void face_vertices(std::vector<int> &v);
     void face_perimeters(std::vector<double> &v);
     void normals(std::vector<double> &v);
-    bool nplane(voronoicell &vc,double x,double y,double z,double rsq,int p_id);
+    bool nplane(cell &vc,double x,double y,double z,double rsq,int p_id);
     bool plane_intersects(double x,double y,double z,double rsq);
     bool plane_intersects_guess(double x,double y,double z,double rsq);
     void construct_relations();
@@ -158,16 +158,16 @@ private:
     double pz;
     /** The magnitude of the normal vector to the test plane. */
     double prsq;
-    void add_memory(voronoicell &vc,int i,int *stackp2);
-    void add_memory_vertices(voronoicell &vc);
-    void add_memory_vorder(voronoicell &vc);
+    void add_memory(cell &vc,int i,int *stackp2);
+    void add_memory_vertices(cell &vc);
+    void add_memory_vorder(cell &vc);
     void add_memory_ds(int *&stackp);
     void add_memory_ds2(int *&stackp2);
-    bool collapse_order1(voronoicell &vc);
-    bool collapse_order2(voronoicell &vc);
-    bool delete_connection(voronoicell &vc,int j,int k,bool hand);
-    bool search_for_outside_edge(voronoicell &vc,int &up);
-    void add_to_stack(voronoicell &vc,int lp,int *&stackp2);
+    bool collapse_order1(cell &vc);
+    bool collapse_order2(cell &vc);
+    bool delete_connection(cell &vc,int j,int k,bool hand);
+    bool search_for_outside_edge(cell &vc,int &up);
+    void add_to_stack(cell &vc,int lp,int *&stackp2);
     bool plane_intersects_track(double x,double y,double z,double rs,double g);
     void normals_search(std::vector<double> &v,int i,int j,int k);
     bool search_edge(int l,int &m,int &k);
@@ -187,7 +187,7 @@ public:
          * i. It is set to the ID number of the plane that made the
          * face that is clockwise from the jth edge. */
         int **ne;
-        void operator=(voronoicell &c) = delete;
+        void operator=(cell &c) = delete;
         /** Cuts the Voronoi cell by a particle whose center is at a
          * separation of (x,y,z) from the cell center. The value of rsq
          * should be initially set to \f$x^2+y^2+z^2\f$.

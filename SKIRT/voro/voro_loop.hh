@@ -4,13 +4,13 @@
 // Email    : chr@alum.mit.edu
 // Date     : August 30th 2011
 
-/* \file c_loops.hh
- * \brief Header file for the loop classes. */
+/* \file voro_loop.hh
+ * \brief Header file for the Voronoi loop class. */
 
-#ifndef VOROPP_C_LOOPS_HH
-#define VOROPP_C_LOOPS_HH
+#ifndef VORO_LOOP_HH
+#define VORO_LOOP_HH
 
-#include "common.hh"
+#include "voro_container.hh"
 
 namespace voro {
 
@@ -66,8 +66,7 @@ class c_loop_base {
         /** The constructor copies several necessary constants from the
          * base container class.
          * \param[in] con the container class to use. */
-        template<class c_class>
-        c_loop_base(c_class &con) : nx(con.nx), ny(con.ny), nz(con.nz),
+        c_loop_base(container &con) : nx(con.nx), ny(con.ny), nz(con.nz),
                         nxy(con.nxy), nxyz(con.nxyz), ps(con.ps),
                         p(con.p), id(con.id), co(con.co) {}
         /** Returns the position vector of the particle currently being
@@ -108,13 +107,12 @@ class c_loop_base {
  *
  * This is one of the simplest loop classes, that scans the computational
  * blocks in order, and scans all the particles within each block in order. */
-class c_loop_all : public c_loop_base {
+class loop : public c_loop_base {
     public:
         /** The constructor copies several necessary constants from the
          * base container class.
          * \param[in] con the container class to use. */
-        template<class c_class>
-        c_loop_all(c_class &con) : c_loop_base(con) {}
+        loop(container &con) : c_loop_base(con) {}
         /** Sets the class to consider the first particle.
          * \return True if there is any particle to consider, false
          * otherwise. */

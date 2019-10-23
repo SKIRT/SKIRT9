@@ -4,11 +4,11 @@
 // Email    : chr@alum.mit.edu
 // Date     : August 30th 2011
 
-/* \file common.hh
- * \brief Header file for the small helper functions. */
+/* \file voro_common.hh
+ * \brief Header file with standard library includes, configuration constants, and small helper functions. */
 
-#ifndef VOROPP_COMMON_HH
-#define VOROPP_COMMON_HH
+#ifndef VORO_COMMON_HH
+#define VORO_COMMON_HH
 
 // Define this macro before including the system headers to silence warnings on Windows
 // about the C library functions that could cause buffer overruns, such as sprintf()
@@ -20,7 +20,7 @@
 #include <cstring>
 #include <vector>
 
-#include "config.hh"
+#include "voro_config.hh"
 
 namespace voro {
 

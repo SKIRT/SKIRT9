@@ -16,7 +16,7 @@
 #include "StringUtils.hpp"
 #include "TextInFile.hpp"
 #include "Units.hpp"
-#include "v_compute.hh"
+#include "voro_compute.hh"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -39,7 +39,7 @@ public:
     Cell(const Array& prop) : _r(prop[0],prop[1],prop[2]), _properties{prop} { }
 
     // adjusts the site position to the centroid position of the specified fully computed Voronoi cell
-    void relax(voro::voronoicell& cell)
+    void relax(voro::cell& cell)
     {
         double cx, cy, cz;
         cell.centroid(cx,cy,cz);
@@ -47,7 +47,7 @@ public:
     }
 
     // initializes the receiver with information taken from the specified fully computed Voronoi cell
-    void init(voro::voronoicell& cell)
+    void init(voro::cell& cell)
     {
         // copy basic geometric info
         double cx, cy, cz;
@@ -450,12 +450,12 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
     if (relax)
     {
         // add the retained original sites to a temporary Voronoi container, using the cell index m as ID
-        voro::container con(_extent.xmin(), _extent.xmax(), _extent.ymin(), _extent.ymax(), _extent.zmin(), _extent.zmax(),
+        voro::container vcon(_extent.xmin(), _extent.xmax(), _extent.ymin(), _extent.ymax(), _extent.zmin(), _extent.zmax(),
                             _nb, _nb, _nb, false,false,false, 8);
         for (int m=0; m!=numCells; ++m)
         {
             Vec r = _cells[m]->position();
-            con.put(m, r.x(),r.y(),r.z());
+            vcon.put(m, r.x(),r.y(),r.z());
         }
 
         // for each site:
@@ -463,66 +463,81 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
         //   - replace the site position by the cell centroid position
         log()->info("Relaxing Voronoi tessellation with " + std::to_string(numCells) + " cells");
         log()->infoSetElapsed(numCells);
-        int numDone = 0;
-        voro::c_loop_all vl(con);
-        if (vl.start()) do
+        auto parallel = log()->find<ParallelFactory>()->parallelDuplicated();
+        parallel->call(numCells, [this, &vcon](size_t firstIndex, size_t numIndices)
         {
-            // compute the cell
-            voro::voronoicell fullcell;
-            voro::voro_compute vc(con, con.nx, con.ny, con.nz);
-            bool ok = vc.compute_cell(fullcell, vl.ijk, vl.q, vl.i, vl.j, vl.k);
-            if (!ok) throw FATALERROR("Can't compute Voronoi cell");
+            // allocate space for the cell calculator object and for the resulting cell info
+            voro::compute vcompute(vcon);
+            voro::cell vcell;
 
-            // replace the site position
-            _cells[vl.pid()]->relax(fullcell);
+            // loop over all cells and work on the ones that have a particle index in our dedicated range
+            // (we cannot access cells in the container based on cell index m without building an extra data structure)
+            int numDone = 0;
+            voro::loop vloop(vcon);
+            if (vloop.start()) do
+            {
+                size_t m = vloop.pid();
+                if (m >= firstIndex && m < firstIndex+numIndices)
+                {
+                    // compute the cell
+                    bool ok = vcompute.compute_cell(vcell, vloop);
+                    if (!ok) throw FATALERROR("Can't compute Voronoi cell");
 
-            // log message if the minimum time has elapsed
-            numDone++;
-            if (numDone%2000==0) log()->infoIfElapsed("Computed Voronoi cells: ", 2000);
-        }
-        while (vl.inc());
+                    // replace the site position
+                    _cells[m]->relax(vcell);
+
+                    // log message if the minimum time has elapsed
+                    numDone++;
+                    if (numDone%2000==0) log()->infoIfElapsed("Computed Voronoi cells: ", 2000);
+                }
+            }
+            while (vloop.inc());
+        });
     }
 
     // add the final sites to a temporary Voronoi container, using the cell index m as ID
-    voro::container con(_extent.xmin(), _extent.xmax(), _extent.ymin(), _extent.ymax(), _extent.zmin(), _extent.zmax(),
+    voro::container vcon(_extent.xmin(), _extent.xmax(), _extent.ymin(), _extent.ymax(), _extent.zmin(), _extent.zmax(),
                         _nb, _nb, _nb, false,false,false, 8);
     for (int m=0; m!=numCells; ++m)
     {
         Vec r = _cells[m]->position();
-        con.put(m, r.x(),r.y(),r.z());
+        vcon.put(m, r.x(),r.y(),r.z());
     }
 
     // for each site:
     //   - compute the corresponding cell in the Voronoi tesselation
-    //   - extract and copy the relevant information to one of our own cell objects
-    //   - store the cell object in the vector indexed on cell number
+    //   - extract and copy the relevant information to the cell object with the corresponding index in our vector
     log()->info("Constructing Voronoi tessellation with " + std::to_string(numCells) + " cells");
     log()->infoSetElapsed(numCells);
     auto parallel = log()->find<ParallelFactory>()->parallelDuplicated();
-    parallel->call(numCells, [this, &con](size_t firstIndex, size_t numIndices)
+    parallel->call(numCells, [this, &vcon](size_t firstIndex, size_t numIndices)
     {
+        // allocate space for the cell calculator object and for the resulting cell info
+        voro::compute vcompute(vcon);
+        voro::cell vcell;
+
+        // loop over all cells and work on the ones that have a particle index in our dedicated range
+        // (we cannot access cells in the container based on cell index m without building an extra data structure)
         int numDone = 0;
-        voro::c_loop_all vl(con);
-        if (vl.start()) do
+        voro::loop vloop(vcon);
+        if (vloop.start()) do
         {
-            size_t m = vl.pid();
+            size_t m = vloop.pid();
             if (m >= firstIndex && m < firstIndex+numIndices)
             {
                 // compute the cell
-                voro::voronoicell fullcell;
-                voro::voro_compute vc(con, con.nx, con.ny, con.nz);
-                bool ok = vc.compute_cell(fullcell, vl.ijk, vl.q, vl.i, vl.j, vl.k);
+                bool ok = vcompute.compute_cell(vcell, vloop);
                 if (!ok) throw FATALERROR("Can't compute Voronoi cell");
 
                 // copy all relevant information to the cell object that will stay around
-                _cells[m]->init(fullcell);
+                _cells[m]->init(vcell);
 
                 // log message if the minimum time has elapsed
                 numDone++;
                 if (numDone%2000==0) log()->infoIfElapsed("Computed Voronoi cells: ", 2000);
             }
         }
-        while (vl.inc());
+        while (vloop.inc());
     });
 
     // compile neighbor statistics
@@ -651,46 +666,46 @@ void VoronoiMeshSnapshot::writeGridPlotFiles(const SimulationItem* probe) const
 
     // load all sites in a Voro container
     int numCells = _cells.size();
-    voro::container con(_extent.xmin(), _extent.xmax(), _extent.ymin(), _extent.ymax(), _extent.zmin(), _extent.zmax(),
+    voro::container vcon(_extent.xmin(), _extent.xmax(), _extent.ymin(), _extent.ymax(), _extent.zmin(), _extent.zmax(),
                         _nb, _nb, _nb, false,false,false, 8);
     for (int m=0; m!=numCells; ++m)
     {
         Vec r = _cells[m]->position();
-        con.put(m, r.x(),r.y(),r.z());
+        vcon.put(m, r.x(),r.y(),r.z());
     }
 
     // for each site, compute the corresponding cell and output its edges
     log()->info("Writing plot files for Voronoi tessellation with " + std::to_string(numCells) + " cells");
     log()->infoSetElapsed(numCells);
+    voro::compute vcompute(vcon);
+    voro::cell vcell;
     int numDone = 0;
-    voro::c_loop_all vl(con);
-    if (vl.start()) do
+    voro::loop vloop(vcon);
+    if (vloop.start()) do
     {
         // compute the cell
-        voro::voronoicell fullcell;
-        voro::voro_compute vc(con, con.nx, con.ny, con.nz);
-        vc.compute_cell(fullcell, vl.ijk, vl.q, vl.i, vl.j, vl.k);
+        vcompute.compute_cell(vcell, vloop);
 
         // get the edges of the cell
         double x,y,z;
-        vl.pos(x,y,z);
+        vloop.pos(x,y,z);
         vector<double> coords;
-        fullcell.vertices(x,y,z, coords);
+        vcell.vertices(x,y,z, coords);
         vector<int> indices;
-        fullcell.face_vertices(indices);
+        vcell.face_vertices(indices);
 
         // write the edges of the cell to the plot files
-        Box bounds = _cells[vl.pid()]->extent();
+        Box bounds = _cells[vloop.pid()]->extent();
         if (bounds.zmin()<=0 && bounds.zmax()>=0) plotxy.writePolyhedron(coords, indices);
         if (bounds.ymin()<=0 && bounds.ymax()>=0) plotxz.writePolyhedron(coords, indices);
         if (bounds.xmin()<=0 && bounds.xmax()>=0) plotyz.writePolyhedron(coords, indices);
-        if (vl.pid() <= 1000) plotxyz.writePolyhedron(coords, indices);
+        if (vloop.pid() <= 1000) plotxyz.writePolyhedron(coords, indices);
 
         // log message if the minimum time has elapsed
         numDone++;
         if (numDone%2000==0) log()->infoIfElapsed("Computed Voronoi cells: ", 2000);
     }
-    while (vl.inc());
+    while (vloop.inc());
 }
 
 ////////////////////////////////////////////////////////////////////

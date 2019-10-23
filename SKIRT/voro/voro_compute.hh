@@ -4,15 +4,13 @@
 // Email    : chr@alum.mit.edu
 // Date     : August 30th 2011
 
-/* \file v_compute.hh
- * \brief Header file for the voro_compute class and related classes. */
+/* \file voro_compute.hh
+ * \brief Header file for the Voronoi compute class. */
 
-#ifndef VOROPP_V_COMPUTE_HH
-#define VOROPP_V_COMPUTE_HH
+#ifndef VORO_COMPUTE_HH
+#define VORO_COMPUTE_HH
 
-#include "common.hh"
-#include "cell.hh"
-#include "container.hh"
+#include "voro_loop.hh"
 
 namespace voro {
 
@@ -35,7 +33,7 @@ struct particle_record {
 };
 
 /** \brief Class for carrying out Voronoi cell computations. */
-class voro_compute {
+class compute {
     public:
         /** A reference to the container class on which to carry out*/
         container &con;
@@ -83,15 +81,16 @@ class voro_compute {
         /** An array holding the number of particles within each
          * computational box of the container. */
         int *co;
-        voro_compute(container &con_,int hx_,int hy_,int hz_);
+        compute(container &con_,int hx_,int hy_,int hz_);
+        compute(container &con_) : compute(con_, con_.nx, con_.ny, con_.nz) { }
         /** The class destructor frees the dynamically allocated memory
          * for the mask and queue. */
-        ~voro_compute() {
+        ~compute() {
             delete [] qu;
             delete [] mask;
         }
-        bool compute_cell(voronoicell &c,int ijk,int s,int ci,int cj,int ck);
-        void find_voronoi_cell(double x,double y,double z,int ci,int cj,int ck,int ijk,particle_record &w,double &mrs);
+        bool compute_cell(cell &c,int ijk,int s,int ci,int cj,int ck);
+        bool compute_cell(cell &c,loop &vl) { return compute_cell(c,vl.ijk,vl.q,vl.i,vl.j,vl.k); }
     private:
         /** A constant set to boxx*boxx+boxy*boxy+boxz*boxz, which is
          * frequently used in the computation. */
@@ -115,13 +114,13 @@ class voro_compute {
         /** A pointer to the end of the queue array, used to determine
          * when the queue is full. */
         int *qu_l;
-        bool corner_test(voronoicell &c,double xl,double yl,double zl,double xh,double yh,double zh);
-        bool edge_x_test(voronoicell &c,double x0,double yl,double zl,double x1,double yh,double zh);
-        bool edge_y_test(voronoicell &c,double xl,double y0,double zl,double xh,double y1,double zh);
-        bool edge_z_test(voronoicell &c,double xl,double yl,double z0,double xh,double yh,double z1);
-        bool face_x_test(voronoicell &c,double xl,double y0,double z0,double y1,double z1);
-        bool face_y_test(voronoicell &c,double x0,double yl,double z0,double x1,double z1);
-        bool face_z_test(voronoicell &c,double x0,double y0,double zl,double x1,double y1);
+        bool corner_test(cell &c,double xl,double yl,double zl,double xh,double yh,double zh);
+        bool edge_x_test(cell &c,double x0,double yl,double zl,double x1,double yh,double zh);
+        bool edge_y_test(cell &c,double xl,double y0,double zl,double xh,double y1,double zh);
+        bool edge_z_test(cell &c,double xl,double yl,double z0,double xh,double yh,double z1);
+        bool face_x_test(cell &c,double xl,double y0,double z0,double y1,double z1);
+        bool face_y_test(cell &c,double x0,double yl,double z0,double x1,double z1);
+        bool face_z_test(cell &c,double x0,double y0,double zl,double x1,double y1);
         bool compute_min_max_radius(int di,int dj,int dk,double fx,double fy,double fz,double gx,double gy,double gz,double& crs,double mrs);
         bool compute_min_radius(int di,int dj,int dk,double fx,double fy,double fz,double mrs);
         void add_to_mask(int ei,int ej,int ek,int *&qu_e);
