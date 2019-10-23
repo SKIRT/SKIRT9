@@ -11,7 +11,6 @@
 
 namespace voro {
 
-/** Constructs a Voronoi cell and sets up the initial memory. */
 cell::cell() :
     current_vertices(init_vertices), current_vertex_order(init_vertex_order),
     current_delete_size(init_delete_size), current_delete2_size(init_delete2_size),
@@ -40,7 +39,6 @@ cell::cell() :
     for(i=4;i<current_vertex_order;i++) mne[i]=new int[init_n_vertices*i];
 }
 
-/** The voronoicell destructor deallocates all the dynamic memory. */
 cell::~cell() {
     for(int i=current_vertex_order-1;i>=0;i--) if(mem[i]>0) delete [] mep[i];
     delete [] marg;
@@ -54,15 +52,178 @@ cell::~cell() {
     delete [] ne;
 }
 
-/** Translates the vertices of the Voronoi cell by a given vector.
- * \param[in] (x,y,z) the coordinates of the vector. */
-void cell::translate(double x,double y,double z) {
-    x*=2;y*=2;z*=2;
+void cell::init(double xmin,double xmax,double ymin,double ymax,double zmin,double zmax) {
+    for(int i=0;i<current_vertex_order;i++) mec[i]=0;
+    up=0;
+    mec[3]=p=8;xmin*=2;xmax*=2;ymin*=2;ymax*=2;zmin*=2;zmax*=2;
+    *pts=xmin;pts[1]=ymin;pts[2]=zmin;
+    pts[3]=xmax;pts[4]=ymin;pts[5]=zmin;
+    pts[6]=xmin;pts[7]=ymax;pts[8]=zmin;
+    pts[9]=xmax;pts[10]=ymax;pts[11]=zmin;
+    pts[12]=xmin;pts[13]=ymin;pts[14]=zmax;
+    pts[15]=xmax;pts[16]=ymin;pts[17]=zmax;
+    pts[18]=xmin;pts[19]=ymax;pts[20]=zmax;
+    pts[21]=xmax;pts[22]=ymax;pts[23]=zmax;
+    int *q=mep[3];
+    *q=1;q[1]=4;q[2]=2;q[3]=2;q[4]=1;q[5]=0;q[6]=0;
+    q[7]=3;q[8]=5;q[9]=0;q[10]=2;q[11]=1;q[12]=0;q[13]=1;
+    q[14]=0;q[15]=6;q[16]=3;q[17]=2;q[18]=1;q[19]=0;q[20]=2;
+    q[21]=2;q[22]=7;q[23]=1;q[24]=2;q[25]=1;q[26]=0;q[27]=3;
+    q[28]=6;q[29]=0;q[30]=5;q[31]=2;q[32]=1;q[33]=0;q[34]=4;
+    q[35]=4;q[36]=1;q[37]=7;q[38]=2;q[39]=1;q[40]=0;q[41]=5;
+    q[42]=7;q[43]=2;q[44]=4;q[45]=2;q[46]=1;q[47]=0;q[48]=6;
+    q[49]=5;q[50]=3;q[51]=6;q[52]=2;q[53]=1;q[54]=0;q[55]=7;
+    *ed=q;ed[1]=q+7;ed[2]=q+14;ed[3]=q+21;
+    ed[4]=q+28;ed[5]=q+35;ed[6]=q+42;ed[7]=q+49;
+    *nu=nu[1]=nu[2]=nu[3]=nu[4]=nu[5]=nu[6]=nu[7]=3;
+
+    q=mne[3];
+    *q=-5;q[1]=-3;q[2]=-1;
+    q[3]=-5;q[4]=-2;q[5]=-3;
+    q[6]=-5;q[7]=-1;q[8]=-4;
+    q[9]=-5;q[10]=-4;q[11]=-2;
+    q[12]=-6;q[13]=-1;q[14]=-3;
+    q[15]=-6;q[16]=-3;q[17]=-2;
+    q[18]=-6;q[19]=-4;q[20]=-1;
+    q[21]=-6;q[22]=-2;q[23]=-4;
+    *ne=q;ne[1]=q+3;ne[2]=q+6;ne[3]=q+9;
+    ne[4]=q+12;ne[5]=q+15;ne[6]=q+18;ne[7]=q+21;
+}
+
+double cell::volume() {
+    const double fe=1/48.0;
+    double vol=0;
+    int i,j,k,l,m,n;
+    double ux,uy,uz,vx,vy,vz,wx,wy,wz;
+    for(i=1;i<p;i++) {
+        ux=*pts-pts[3*i];
+        uy=pts[1]-pts[3*i+1];
+        uz=pts[2]-pts[3*i+2];
+        for(j=0;j<nu[i];j++) {
+            k=ed[i][j];
+            if(k>=0) {
+                ed[i][j]=-1-k;
+                l=cycle_up(ed[i][nu[i]+j],k);
+                vx=pts[3*k]-*pts;
+                vy=pts[3*k+1]-pts[1];
+                vz=pts[3*k+2]-pts[2];
+                m=ed[k][l];ed[k][l]=-1-m;
+                while(m!=i) {
+                    n=cycle_up(ed[k][nu[k]+l],m);
+                    wx=pts[3*m]-*pts;
+                    wy=pts[3*m+1]-pts[1];
+                    wz=pts[3*m+2]-pts[2];
+                    vol+=ux*vy*wz+uy*vz*wx+uz*vx*wy-uz*vy*wx-uy*vx*wz-ux*vz*wy;
+                    k=m;l=n;vx=wx;vy=wy;vz=wz;
+                    m=ed[k][l];ed[k][l]=-1-m;
+                }
+            }
+        }
+    }
+    reset_edges();
+    return vol*fe;
+}
+
+double cell::max_radius_squared() {
+    double r,s,*ptsp=pts+3,*ptse=pts+3*p;
+    r=*pts*(*pts)+pts[1]*pts[1]+pts[2]*pts[2];
+    while(ptsp<ptse) {
+        s=*ptsp*(*ptsp);ptsp++;
+        s+=*ptsp*(*ptsp);ptsp++;
+        s+=*ptsp*(*ptsp);ptsp++;
+        if(s>r) r=s;
+    }
+    return r;
+}
+
+void cell::centroid(double &cx,double &cy,double &cz) {
+    double tvol,vol=0;cx=cy=cz=0;
+    int i,j,k,l,m,n;
+    double ux,uy,uz,vx,vy,vz,wx,wy,wz;
+    for(i=1;i<p;i++) {
+        ux=*pts-pts[3*i];
+        uy=pts[1]-pts[3*i+1];
+        uz=pts[2]-pts[3*i+2];
+        for(j=0;j<nu[i];j++) {
+            k=ed[i][j];
+            if(k>=0) {
+                ed[i][j]=-1-k;
+                l=cycle_up(ed[i][nu[i]+j],k);
+                vx=pts[3*k]-*pts;
+                vy=pts[3*k+1]-pts[1];
+                vz=pts[3*k+2]-pts[2];
+                m=ed[k][l];ed[k][l]=-1-m;
+                while(m!=i) {
+                    n=cycle_up(ed[k][nu[k]+l],m);
+                    wx=pts[3*m]-*pts;
+                    wy=pts[3*m+1]-pts[1];
+                    wz=pts[3*m+2]-pts[2];
+                    tvol=ux*vy*wz+uy*vz*wx+uz*vx*wy-uz*vy*wx-uy*vx*wz-ux*vz*wy;
+                    vol+=tvol;
+                    cx+=(wx+vx-ux)*tvol;
+                    cy+=(wy+vy-uy)*tvol;
+                    cz+=(wz+vz-uz)*tvol;
+                    k=m;l=n;vx=wx;vy=wy;vz=wz;
+                    m=ed[k][l];ed[k][l]=-1-m;
+                }
+            }
+        }
+    }
+    reset_edges();
+    if(vol>tolerance_sq) {
+        vol=0.125/vol;
+        cx=cx*vol+0.5*(*pts);
+        cy=cy*vol+0.5*pts[1];
+        cz=cz*vol+0.5*pts[2];
+    } else cx=cy=cz=0;
+}
+
+void cell::vertices(std::vector<double> &v) {
+    v.resize(3*p);
     double *ptsp=pts;
-    while(ptsp<pts+3*p) {
-        *(ptsp++)=x;*(ptsp++)=y;*(ptsp++)=z;
+    for(int i=0;i<3*p;i+=3) {
+        v[i]=*(ptsp++)*0.5;
+        v[i+1]=*(ptsp++)*0.5;
+        v[i+2]=*(ptsp++)*0.5;
     }
 }
+
+void cell::vertices(double x,double y,double z,std::vector<double> &v) {
+    v.resize(3*p);
+    double *ptsp=pts;
+    for(int i=0;i<3*p;i+=3) {
+        v[i]=x+*(ptsp++)*0.5;
+        v[i+1]=y+*(ptsp++)*0.5;
+        v[i+2]=z+*(ptsp++)*0.5;
+    }
+}
+
+void cell::face_vertices(std::vector<int> &v) {
+    int i,j,k,l,m,vp(0),vn;
+    v.clear();
+    for(i=1;i<p;i++) for(j=0;j<nu[i];j++) {
+        k=ed[i][j];
+        if(k>=0) {
+            v.push_back(0);
+            v.push_back(i);
+            ed[i][j]=-1-k;
+            l=cycle_up(ed[i][nu[i]+j],k);
+            do {
+                v.push_back(k);
+                m=ed[k][l];
+                ed[k][l]=-1-m;
+                l=cycle_up(ed[k][nu[k]+l],m);
+                k=m;
+            } while (k!=i);
+            vn=v.size();
+            v[vp]=vn-vp-1;
+            vp=vn;
+        }
+    }
+    reset_edges();
+}
+
+
 
 /** Increases the memory storage for a particular vertex order, by increasing
  * the size of the of the corresponding mep array. If the arrays already exist,
@@ -181,84 +342,6 @@ void cell::add_memory_ds2(int *&stackp2) {
     while(dsp<stackp2) *(dsnp++)=*(dsp++);
     delete [] ds2;ds2=dsn;stackp2=dsnp;
     stacke2=ds2+current_delete2_size;
-}
-
-/** Initializes a Voronoi cell as a rectangular box with the given dimensions.
- * \param[in] (xmin,xmax) the minimum and maximum x coordinates.
- * \param[in] (ymin,ymax) the minimum and maximum y coordinates.
- * \param[in] (zmin,zmax) the minimum and maximum z coordinates. */
-void cell::init_base(double xmin,double xmax,double ymin,double ymax,double zmin,double zmax) {
-    for(int i=0;i<current_vertex_order;i++) mec[i]=0;
-    up=0;
-    mec[3]=p=8;xmin*=2;xmax*=2;ymin*=2;ymax*=2;zmin*=2;zmax*=2;
-    *pts=xmin;pts[1]=ymin;pts[2]=zmin;
-    pts[3]=xmax;pts[4]=ymin;pts[5]=zmin;
-    pts[6]=xmin;pts[7]=ymax;pts[8]=zmin;
-    pts[9]=xmax;pts[10]=ymax;pts[11]=zmin;
-    pts[12]=xmin;pts[13]=ymin;pts[14]=zmax;
-    pts[15]=xmax;pts[16]=ymin;pts[17]=zmax;
-    pts[18]=xmin;pts[19]=ymax;pts[20]=zmax;
-    pts[21]=xmax;pts[22]=ymax;pts[23]=zmax;
-    int *q=mep[3];
-    *q=1;q[1]=4;q[2]=2;q[3]=2;q[4]=1;q[5]=0;q[6]=0;
-    q[7]=3;q[8]=5;q[9]=0;q[10]=2;q[11]=1;q[12]=0;q[13]=1;
-    q[14]=0;q[15]=6;q[16]=3;q[17]=2;q[18]=1;q[19]=0;q[20]=2;
-    q[21]=2;q[22]=7;q[23]=1;q[24]=2;q[25]=1;q[26]=0;q[27]=3;
-    q[28]=6;q[29]=0;q[30]=5;q[31]=2;q[32]=1;q[33]=0;q[34]=4;
-    q[35]=4;q[36]=1;q[37]=7;q[38]=2;q[39]=1;q[40]=0;q[41]=5;
-    q[42]=7;q[43]=2;q[44]=4;q[45]=2;q[46]=1;q[47]=0;q[48]=6;
-    q[49]=5;q[50]=3;q[51]=6;q[52]=2;q[53]=1;q[54]=0;q[55]=7;
-    *ed=q;ed[1]=q+7;ed[2]=q+14;ed[3]=q+21;
-    ed[4]=q+28;ed[5]=q+35;ed[6]=q+42;ed[7]=q+49;
-    *nu=nu[1]=nu[2]=nu[3]=nu[4]=nu[5]=nu[6]=nu[7]=3;
-}
-
-/** Initializes a Voronoi cell as a regular octahedron.
- * \param[in] l The distance from the octahedron center to a vertex. Six
- *              vertices are initialized at (-l,0,0), (l,0,0), (0,-l,0),
- *              (0,l,0), (0,0,-l), and (0,0,l). */
-void cell::init_octahedron_base(double l) {
-    for(int i=0;i<current_vertex_order;i++) mec[i]=0;
-    up=0;
-    mec[4]=p=6;l*=2;
-    *pts=-l;pts[1]=0;pts[2]=0;
-    pts[3]=l;pts[4]=0;pts[5]=0;
-    pts[6]=0;pts[7]=-l;pts[8]=0;
-    pts[9]=0;pts[10]=l;pts[11]=0;
-    pts[12]=0;pts[13]=0;pts[14]=-l;
-    pts[15]=0;pts[16]=0;pts[17]=l;
-    int *q=mep[4];
-    *q=2;q[1]=5;q[2]=3;q[3]=4;q[4]=0;q[5]=0;q[6]=0;q[7]=0;q[8]=0;
-    q[9]=2;q[10]=4;q[11]=3;q[12]=5;q[13]=2;q[14]=2;q[15]=2;q[16]=2;q[17]=1;
-    q[18]=0;q[19]=4;q[20]=1;q[21]=5;q[22]=0;q[23]=3;q[24]=0;q[25]=1;q[26]=2;
-    q[27]=0;q[28]=5;q[29]=1;q[30]=4;q[31]=2;q[32]=3;q[33]=2;q[34]=1;q[35]=3;
-    q[36]=0;q[37]=3;q[38]=1;q[39]=2;q[40]=3;q[41]=3;q[42]=1;q[43]=1;q[44]=4;
-    q[45]=0;q[46]=2;q[47]=1;q[48]=3;q[49]=1;q[50]=3;q[51]=3;q[52]=1;q[53]=5;
-    *ed=q;ed[1]=q+9;ed[2]=q+18;ed[3]=q+27;ed[4]=q+36;ed[5]=q+45;
-    *nu=nu[1]=nu[2]=nu[3]=nu[4]=nu[5]=4;
-}
-
-/** Initializes a Voronoi cell as a tetrahedron. It assumes that the normal to
- * the face for the first three vertices points inside.
- * \param (x0,y0,z0) a position vector for the first vertex.
- * \param (x1,y1,z1) a position vector for the second vertex.
- * \param (x2,y2,z2) a position vector for the third vertex.
- * \param (x3,y3,z3) a position vector for the fourth vertex. */
-void cell::init_tetrahedron_base(double x0,double y0,double z0,double x1,double y1,double z1,double x2,double y2,double z2,double x3,double y3,double z3) {
-    for(int i=0;i<current_vertex_order;i++) mec[i]=0;
-    up=0;
-    mec[3]=p=4;
-    *pts=x0*2;pts[1]=y0*2;pts[2]=z0*2;
-    pts[3]=x1*2;pts[4]=y1*2;pts[5]=z1*2;
-    pts[6]=x2*2;pts[7]=y2*2;pts[8]=z2*2;
-    pts[9]=x3*2;pts[10]=y3*2;pts[11]=z3*2;
-    int *q=mep[3];
-    *q=1;q[1]=3;q[2]=2;q[3]=0;q[4]=0;q[5]=0;q[6]=0;
-    q[7]=0;q[8]=2;q[9]=3;q[10]=0;q[11]=2;q[12]=1;q[13]=1;
-    q[14]=0;q[15]=3;q[16]=1;q[17]=2;q[18]=2;q[19]=1;q[20]=2;
-    q[21]=0;q[22]=1;q[23]=2;q[24]=1;q[25]=2;q[26]=1;q[27]=3;
-    *ed=q;ed[1]=q+7;ed[2]=q+14;ed[3]=q+21;
-    *nu=nu[1]=nu[2]=nu[3]=3;
 }
 
 /** Constructs the relational table if the edges have been specified. */
@@ -1187,193 +1270,6 @@ bool cell::delete_connection(cell &vc,int j,int k,bool hand) {
     return true;
 }
 
-/** Calculates the volume of the Voronoi cell, by decomposing the cell into
- * tetrahedra extending outward from the zeroth vertex, whose volumes are
- * evaluated using a scalar triple product.
- * \return A floating point number holding the calculated volume. */
-double cell::volume() {
-    const double fe=1/48.0;
-    double vol=0;
-    int i,j,k,l,m,n;
-    double ux,uy,uz,vx,vy,vz,wx,wy,wz;
-    for(i=1;i<p;i++) {
-        ux=*pts-pts[3*i];
-        uy=pts[1]-pts[3*i+1];
-        uz=pts[2]-pts[3*i+2];
-        for(j=0;j<nu[i];j++) {
-            k=ed[i][j];
-            if(k>=0) {
-                ed[i][j]=-1-k;
-                l=cycle_up(ed[i][nu[i]+j],k);
-                vx=pts[3*k]-*pts;
-                vy=pts[3*k+1]-pts[1];
-                vz=pts[3*k+2]-pts[2];
-                m=ed[k][l];ed[k][l]=-1-m;
-                while(m!=i) {
-                    n=cycle_up(ed[k][nu[k]+l],m);
-                    wx=pts[3*m]-*pts;
-                    wy=pts[3*m+1]-pts[1];
-                    wz=pts[3*m+2]-pts[2];
-                    vol+=ux*vy*wz+uy*vz*wx+uz*vx*wy-uz*vy*wx-uy*vx*wz-ux*vz*wy;
-                    k=m;l=n;vx=wx;vy=wy;vz=wz;
-                    m=ed[k][l];ed[k][l]=-1-m;
-                }
-            }
-        }
-    }
-    reset_edges();
-    return vol*fe;
-}
-
-/** Calculates the areas of each face of the Voronoi cell and pushes the
- * results to an output vector.
- * \param[out] v the vector to store the results in. */
-void cell::face_areas(std::vector<double> &v) {
-    double area;
-    v.clear();
-    int i,j,k,l,m,n;
-    double ux,uy,uz,vx,vy,vz,wx,wy,wz;
-    for(i=1;i<p;i++) for(j=0;j<nu[i];j++) {
-        k=ed[i][j];
-        if(k>=0) {
-            area=0;
-            ed[i][j]=-1-k;
-            l=cycle_up(ed[i][nu[i]+j],k);
-            m=ed[k][l];ed[k][l]=-1-m;
-            while(m!=i) {
-                n=cycle_up(ed[k][nu[k]+l],m);
-                ux=pts[3*k]-pts[3*i];
-                uy=pts[3*k+1]-pts[3*i+1];
-                uz=pts[3*k+2]-pts[3*i+2];
-                vx=pts[3*m]-pts[3*i];
-                vy=pts[3*m+1]-pts[3*i+1];
-                vz=pts[3*m+2]-pts[3*i+2];
-                wx=uy*vz-uz*vy;
-                wy=uz*vx-ux*vz;
-                wz=ux*vy-uy*vx;
-                area+=sqrt(wx*wx+wy*wy+wz*wz);
-                k=m;l=n;
-                m=ed[k][l];ed[k][l]=-1-m;
-            }
-            v.push_back(0.125*area);
-        }
-    }
-    reset_edges();
-}
-
-/** Calculates the total surface area of the Voronoi cell.
- * \return The computed area. */
-double cell::surface_area() {
-    double area=0;
-    int i,j,k,l,m,n;
-    double ux,uy,uz,vx,vy,vz,wx,wy,wz;
-    for(i=1;i<p;i++) for(j=0;j<nu[i];j++) {
-        k=ed[i][j];
-        if(k>=0) {
-            ed[i][j]=-1-k;
-            l=cycle_up(ed[i][nu[i]+j],k);
-            m=ed[k][l];ed[k][l]=-1-m;
-            while(m!=i) {
-                n=cycle_up(ed[k][nu[k]+l],m);
-                ux=pts[3*k]-pts[3*i];
-                uy=pts[3*k+1]-pts[3*i+1];
-                uz=pts[3*k+2]-pts[3*i+2];
-                vx=pts[3*m]-pts[3*i];
-                vy=pts[3*m+1]-pts[3*i+1];
-                vz=pts[3*m+2]-pts[3*i+2];
-                wx=uy*vz-uz*vy;
-                wy=uz*vx-ux*vz;
-                wz=ux*vy-uy*vx;
-                area+=sqrt(wx*wx+wy*wy+wz*wz);
-                k=m;l=n;
-                m=ed[k][l];ed[k][l]=-1-m;
-            }
-        }
-    }
-    reset_edges();
-    return 0.125*area;
-}
-
-
-/** Calculates the centroid of the Voronoi cell, by decomposing the cell into
- * tetrahedra extending outward from the zeroth vertex.
- * \param[out] (cx,cy,cz) references to floating point numbers in which to
- *                        pass back the centroid vector. */
-void cell::centroid(double &cx,double &cy,double &cz) {
-    double tvol,vol=0;cx=cy=cz=0;
-    int i,j,k,l,m,n;
-    double ux,uy,uz,vx,vy,vz,wx,wy,wz;
-    for(i=1;i<p;i++) {
-        ux=*pts-pts[3*i];
-        uy=pts[1]-pts[3*i+1];
-        uz=pts[2]-pts[3*i+2];
-        for(j=0;j<nu[i];j++) {
-            k=ed[i][j];
-            if(k>=0) {
-                ed[i][j]=-1-k;
-                l=cycle_up(ed[i][nu[i]+j],k);
-                vx=pts[3*k]-*pts;
-                vy=pts[3*k+1]-pts[1];
-                vz=pts[3*k+2]-pts[2];
-                m=ed[k][l];ed[k][l]=-1-m;
-                while(m!=i) {
-                    n=cycle_up(ed[k][nu[k]+l],m);
-                    wx=pts[3*m]-*pts;
-                    wy=pts[3*m+1]-pts[1];
-                    wz=pts[3*m+2]-pts[2];
-                    tvol=ux*vy*wz+uy*vz*wx+uz*vx*wy-uz*vy*wx-uy*vx*wz-ux*vz*wy;
-                    vol+=tvol;
-                    cx+=(wx+vx-ux)*tvol;
-                    cy+=(wy+vy-uy)*tvol;
-                    cz+=(wz+vz-uz)*tvol;
-                    k=m;l=n;vx=wx;vy=wy;vz=wz;
-                    m=ed[k][l];ed[k][l]=-1-m;
-                }
-            }
-        }
-    }
-    reset_edges();
-    if(vol>tolerance_sq) {
-        vol=0.125/vol;
-        cx=cx*vol+0.5*(*pts);
-        cy=cy*vol+0.5*pts[1];
-        cz=cz*vol+0.5*pts[2];
-    } else cx=cy=cz=0;
-}
-
-/** Computes the maximum radius squared of a vertex from the center of the
- * cell. It can be used to determine when enough particles have been testing an
- * all planes that could cut the cell have been considered.
- * \return The maximum radius squared of a vertex.*/
-double cell::max_radius_squared() {
-    double r,s,*ptsp=pts+3,*ptse=pts+3*p;
-    r=*pts*(*pts)+pts[1]*pts[1]+pts[2]*pts[2];
-    while(ptsp<ptse) {
-        s=*ptsp*(*ptsp);ptsp++;
-        s+=*ptsp*(*ptsp);ptsp++;
-        s+=*ptsp*(*ptsp);ptsp++;
-        if(s>r) r=s;
-    }
-    return r;
-}
-
-/** Calculates the total edge distance of the Voronoi cell.
- * \return A floating point number holding the calculated distance. */
-double cell::total_edge_distance() {
-    int i,j,k;
-    double dis=0,dx,dy,dz;
-    for(i=0;i<p-1;i++) for(j=0;j<nu[i];j++) {
-        k=ed[i][j];
-        if(k>i) {
-            dx=pts[3*k]-pts[3*i];
-            dy=pts[3*k+1]-pts[3*i+1];
-            dz=pts[3*k+2]-pts[3*i+2];
-            dis+=sqrt(dx*dx+dy*dy+dz*dz);
-        }
-    }
-    return 0.5*dis;
-}
-
 bool cell::search_edge(int l,int &m,int &k) {
     for(m=0;m<nu[l];m++) {
         k=ed[l][m];
@@ -1446,256 +1342,6 @@ int cell::check_marginal(int n,double &ans) {
     marg[n_marg++]=n;
     marg[n_marg++]=ans>tolerance?1:(ans<-tolerance?-1:0);
     return marg[n_marg-1];
-}
-
-/** For each face of the Voronoi cell, this routine stores the normal
- * vector of the face, and scales it to the distance from the cell center to
- * that plane.
- * \param[out] v the vector to store the results in. */
-void cell::normals(std::vector<double> &v) {
-    int i,j,k;
-    v.clear();
-    for(i=1;i<p;i++) for(j=0;j<nu[i];j++) {
-        k=ed[i][j];
-        if(k>=0) normals_search(v,i,j,k);
-    }
-    reset_edges();
-}
-
-/** This routine is called by normals(). It attempts to construct a
- * single normal vector that is associated with a particular face. It first
- * traces around the face, trying to find two vectors along the face edges
- * whose vector product is above the numerical tolerance. It then constructs
- * the normal vector using this product. If the face is too small, and none of
- * the vector products are large enough, the routine may return (0,0,0) as the
- * normal vector.
- * \param[in] v the vector to store the results in.
- * \param[in] i the initial vertex of the face to test.
- * \param[in] j the index of an edge of the vertex.
- * \param[in] k the neighboring vertex of i, set to ed[i][j]. */
-void cell::normals_search(std::vector<double> &v,int i,int j,int k) {
-    ed[i][j]=-1-k;
-    int l=cycle_up(ed[i][nu[i]+j],k),m;
-    double ux,uy,uz,vx,vy,vz,wx,wy,wz,wmag;
-    do {
-        m=ed[k][l];ed[k][l]=-1-m;
-        ux=pts[3*m]-pts[3*k];
-        uy=pts[3*m+1]-pts[3*k+1];
-        uz=pts[3*m+2]-pts[3*k+2];
-
-        // Test to see if the length of this edge is above the tolerance
-        if(ux*ux+uy*uy+uz*uz>tolerance_sq) {
-            while(m!=i) {
-                l=cycle_up(ed[k][nu[k]+l],m);
-                k=m;m=ed[k][l];ed[k][l]=-1-m;
-                vx=pts[3*m]-pts[3*k];
-                vy=pts[3*m+1]-pts[3*k+1];
-                vz=pts[3*m+2]-pts[3*k+2];
-
-                // Construct the vector product of this edge with
-                // the previous one
-                wx=uz*vy-uy*vz;
-                wy=ux*vz-uz*vx;
-                wz=uy*vx-ux*vy;
-                wmag=wx*wx+wy*wy+wz*wz;
-
-                // Test to see if this vector product of the
-                // two edges is above the tolerance
-                if(wmag>tolerance_sq) {
-
-                    // Construct the normal vector and output it
-                    wmag=1/sqrt(wmag);
-                    v.push_back(wx*wmag);
-                    v.push_back(wy*wmag);
-                    v.push_back(wz*wmag);
-
-                    // Mark all of the remaining edges of this
-                    // face and exit
-                    while(m!=i) {
-                        l=cycle_up(ed[k][nu[k]+l],m);
-                        k=m;m=ed[k][l];ed[k][l]=-1-m;
-                    }
-                    return;
-                }
-            }
-            v.push_back(0);
-            v.push_back(0);
-            v.push_back(0);
-            return;
-        }
-        l=cycle_up(ed[k][nu[k]+l],m);
-        k=m;
-    } while (k!=i);
-    v.push_back(0);
-    v.push_back(0);
-    v.push_back(0);
-}
-
-
-/** Returns the number of faces of a computed Voronoi cell.
- * \return The number of faces. */
-int cell::number_of_faces() {
-    int i,j,k,l,m,s=0;
-    for(i=1;i<p;i++) for(j=0;j<nu[i];j++) {
-        k=ed[i][j];
-        if(k>=0) {
-            s++;
-            ed[i][j]=-1-k;
-            l=cycle_up(ed[i][nu[i]+j],k);
-            do {
-                m=ed[k][l];
-                ed[k][l]=-1-m;
-                l=cycle_up(ed[k][nu[k]+l],m);
-                k=m;
-            } while (k!=i);
-
-        }
-    }
-    reset_edges();
-    return s;
-}
-
-/** Returns a vector of the vertex orders.
- * \param[out] v the vector to store the results in. */
-void cell::vertex_orders(std::vector<int> &v) {
-    v.resize(p);
-    for(int i=0;i<p;i++) v[i]=nu[i];
-}
-
-/** Returns a vector of the vertex vectors using the local coordinate system.
- * \param[out] v the vector to store the results in. */
-void cell::vertices(std::vector<double> &v) {
-    v.resize(3*p);
-    double *ptsp=pts;
-    for(int i=0;i<3*p;i+=3) {
-        v[i]=*(ptsp++)*0.5;
-        v[i+1]=*(ptsp++)*0.5;
-        v[i+2]=*(ptsp++)*0.5;
-    }
-}
-
-
-/** Returns a vector of the vertex vectors in the global coordinate system.
- * \param[out] v the vector to store the results in.
- * \param[in] (x,y,z) the position vector of the particle in the global
- *                    coordinate system. */
-void cell::vertices(double x,double y,double z,std::vector<double> &v) {
-    v.resize(3*p);
-    double *ptsp=pts;
-    for(int i=0;i<3*p;i+=3) {
-        v[i]=x+*(ptsp++)*0.5;
-        v[i+1]=y+*(ptsp++)*0.5;
-        v[i+2]=z+*(ptsp++)*0.5;
-    }
-}
-
-/** This routine returns the perimeters of each face.
- * \param[out] v the vector to store the results in. */
-void cell::face_perimeters(std::vector<double> &v) {
-    v.clear();
-    int i,j,k,l,m;
-    double dx,dy,dz,perim;
-    for(i=1;i<p;i++) for(j=0;j<nu[i];j++) {
-        k=ed[i][j];
-        if(k>=0) {
-            dx=pts[3*k]-pts[3*i];
-            dy=pts[3*k+1]-pts[3*i+1];
-            dz=pts[3*k+2]-pts[3*i+2];
-            perim=sqrt(dx*dx+dy*dy+dz*dz);
-            ed[i][j]=-1-k;
-            l=cycle_up(ed[i][nu[i]+j],k);
-            do {
-                m=ed[k][l];
-                dx=pts[3*m]-pts[3*k];
-                dy=pts[3*m+1]-pts[3*k+1];
-                dz=pts[3*m+2]-pts[3*k+2];
-                perim+=sqrt(dx*dx+dy*dy+dz*dz);
-                ed[k][l]=-1-m;
-                l=cycle_up(ed[k][nu[k]+l],m);
-                k=m;
-            } while (k!=i);
-            v.push_back(0.5*perim);
-        }
-    }
-    reset_edges();
-}
-
-/** For each face, this routine outputs a bracketed sequence of numbers
- * containing a list of all the vertices that make up that face.
- * \param[out] v the vector to store the results in. */
-void cell::face_vertices(std::vector<int> &v) {
-    int i,j,k,l,m,vp(0),vn;
-    v.clear();
-    for(i=1;i<p;i++) for(j=0;j<nu[i];j++) {
-        k=ed[i][j];
-        if(k>=0) {
-            v.push_back(0);
-            v.push_back(i);
-            ed[i][j]=-1-k;
-            l=cycle_up(ed[i][nu[i]+j],k);
-            do {
-                v.push_back(k);
-                m=ed[k][l];
-                ed[k][l]=-1-m;
-                l=cycle_up(ed[k][nu[k]+l],m);
-                k=m;
-            } while (k!=i);
-            vn=v.size();
-            v[vp]=vn-vp-1;
-            vp=vn;
-        }
-    }
-    reset_edges();
-}
-
-/** Outputs a list of the number of edges in each face.
- * \param[out] v the vector to store the results in. */
-void cell::face_orders(std::vector<int> &v) {
-    int i,j,k,l,m,q;
-    v.clear();
-    for(i=1;i<p;i++) for(j=0;j<nu[i];j++) {
-        k=ed[i][j];
-        if(k>=0) {
-            q=1;
-            ed[i][j]=-1-k;
-            l=cycle_up(ed[i][nu[i]+j],k);
-            do {
-                q++;
-                m=ed[k][l];
-                ed[k][l]=-1-m;
-                l=cycle_up(ed[k][nu[k]+l],m);
-                k=m;
-            } while (k!=i);
-            v.push_back(q);;
-        }
-    }
-    reset_edges();
-}
-
-/** Computes the number of edges that each face has and outputs a frequency
- * table of the results.
- * \param[out] v the vector to store the results in. */
-void cell::face_freq_table(std::vector<int> &v) {
-    int i,j,k,l,m,q;
-    v.clear();
-    for(i=1;i<p;i++) for(j=0;j<nu[i];j++) {
-        k=ed[i][j];
-        if(k>=0) {
-            q=1;
-            ed[i][j]=-1-k;
-            l=cycle_up(ed[i][nu[i]+j],k);
-            do {
-                q++;
-                m=ed[k][l];
-                ed[k][l]=-1-m;
-                l=cycle_up(ed[k][nu[k]+l],m);
-                k=m;
-            } while (k!=i);
-            if(static_cast<size_t>(q)>=v.size()) v.resize(q+1,0);
-            v[q]++;
-        }
-    }
-    reset_edges();
 }
 
 /** This routine tests to see whether the cell intersects a plane by starting
@@ -1784,73 +1430,6 @@ bool cell::plane_intersects_track(double x,double y,double z,double rsq,double g
         }
     }
     return false;
-}
-
-/** Counts the number of edges of the Voronoi cell.
- * \return the number of edges. */
-int cell::number_of_edges() {
-    int edges=0,*nup=nu;
-    while(nup<nu+p) edges+=*(nup++);
-    return edges>>1;
-}
-
-/** This initializes the class to be a rectangular box. It calls the base class
- * initialization routine to set up the edge and vertex information, and then
- * sets up the neighbor information, with initial faces being assigned ID
- * numbers from -1 to -6.
- * \param[in] (xmin,xmax) the minimum and maximum x coordinates.
- * \param[in] (ymin,ymax) the minimum and maximum y coordinates.
- * \param[in] (zmin,zmax) the minimum and maximum z coordinates. */
-void cell::init(double xmin,double xmax,double ymin,double ymax,double zmin,double zmax) {
-    init_base(xmin,xmax,ymin,ymax,zmin,zmax);
-    int *q=mne[3];
-    *q=-5;q[1]=-3;q[2]=-1;
-    q[3]=-5;q[4]=-2;q[5]=-3;
-    q[6]=-5;q[7]=-1;q[8]=-4;
-    q[9]=-5;q[10]=-4;q[11]=-2;
-    q[12]=-6;q[13]=-1;q[14]=-3;
-    q[15]=-6;q[16]=-3;q[17]=-2;
-    q[18]=-6;q[19]=-4;q[20]=-1;
-    q[21]=-6;q[22]=-2;q[23]=-4;
-    *ne=q;ne[1]=q+3;ne[2]=q+6;ne[3]=q+9;
-    ne[4]=q+12;ne[5]=q+15;ne[6]=q+18;ne[7]=q+21;
-}
-
-/** This initializes the class to be an octahedron. It calls the base class
- * initialization routine to set up the edge and vertex information, and then
- * sets up the neighbor information, with the initial faces being assigned ID
- * numbers from -1 to -8.
- * \param[in] l The distance from the octahedron center to a vertex. Six
- *              vertices are initialized at (-l,0,0), (l,0,0), (0,-l,0),
- *              (0,l,0), (0,0,-l), and (0,0,l). */
-void cell::init_octahedron(double l) {
-    init_octahedron_base(l);
-    int *q=mne[4];
-    *q=-5;q[1]=-6;q[2]=-7;q[3]=-8;
-    q[4]=-1;q[5]=-2;q[6]=-3;q[7]=-4;
-    q[8]=-6;q[9]=-5;q[10]=-2;q[11]=-1;
-    q[12]=-8;q[13]=-7;q[14]=-4;q[15]=-3;
-    q[16]=-5;q[17]=-8;q[18]=-3;q[19]=-2;
-    q[20]=-7;q[21]=-6;q[22]=-1;q[23]=-4;
-    *ne=q;ne[1]=q+4;ne[2]=q+8;ne[3]=q+12;ne[4]=q+16;ne[5]=q+20;
-}
-
-/** This initializes the class to be a tetrahedron. It calls the base class
- * initialization routine to set up the edge and vertex information, and then
- * sets up the neighbor information, with the initial faces being assigned ID
- * numbers from -1 to -4.
- * \param (x0,y0,z0) a position vector for the first vertex.
- * \param (x1,y1,z1) a position vector for the second vertex.
- * \param (x2,y2,z2) a position vector for the third vertex.
- * \param (x3,y3,z3) a position vector for the fourth vertex. */
-void cell::init_tetrahedron(double x0,double y0,double z0,double x1,double y1,double z1,double x2,double y2,double z2,double x3,double y3,double z3) {
-    init_tetrahedron_base(x0,y0,z0,x1,y1,z1,x2,y2,z2,x3,y3,z3);
-    int *q=mne[3];
-    *q=-4;q[1]=-3;q[2]=-2;
-    q[3]=-3;q[4]=-4;q[5]=-1;
-    q[6]=-4;q[7]=-2;q[8]=-1;
-    q[9]=-2;q[10]=-3;q[11]=-1;
-    *ne=q;ne[1]=q+3;ne[2]=q+6;ne[3]=q+9;
 }
 
 /** Computes a vector list of neighbors. */

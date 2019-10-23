@@ -24,7 +24,10 @@ namespace voro {
  * It contains numerous routine for computing statistics about the Voronoi cell.
  */
 class cell {
-public:
+
+    // ---- data members ----
+
+private:
     /** This holds the current size of the arrays ed and nu, which
      * hold the vertex information. If more vertices are created
      * than can fit in this array, then it is dynamically extended
@@ -76,47 +79,7 @@ public:
     /** This in an array with size 3*current_vertices for holding
      * the positions of the vertices. */
     double *pts;
-    cell();
-    ~cell();
-    void init_base(double xmin,double xmax,double ymin,double ymax,double zmin,double zmax);
-    void init_octahedron_base(double l);
-    void init_tetrahedron_base(double x0,double y0,double z0,double x1,double y1,double z1,double x2,double y2,double z2,double x3,double y3,double z3);
-    void translate(double x,double y,double z);
-    double volume();
-    double max_radius_squared();
-    double total_edge_distance();
-    double surface_area();
-    void centroid(double &cx,double &cy,double &cz);
-    int number_of_faces();
-    int number_of_edges();
-    void vertex_orders(std::vector<int> &v);
-    void vertices(std::vector<double> &v);
-    void vertices(double x,double y,double z,std::vector<double> &v);
-    void face_areas(std::vector<double> &v);
-    void face_orders(std::vector<int> &v);
-    void face_freq_table(std::vector<int> &v);
-    void face_vertices(std::vector<int> &v);
-    void face_perimeters(std::vector<double> &v);
-    void normals(std::vector<double> &v);
-    bool nplane(cell &vc,double x,double y,double z,double rsq,int p_id);
-    bool plane_intersects(double x,double y,double z,double rsq);
-    bool plane_intersects_guess(double x,double y,double z,double rsq);
-    void construct_relations();
-    void check_relations();
-    void check_duplicates();
-    /** This is a simple function for picking out the index
-     * of the next edge counterclockwise at the current vertex.
-     * \param[in] a the index of an edge of the current vertex.
-     * \param[in] p the number of the vertex.
-     * \return 0 if a=nu[p]-1, or a+1 otherwise. */
-    int cycle_up(int a,int p) {return a==nu[p]-1?0:a+1;}
-    /** This is a simple function for picking out the index
-     * of the next edge clockwise from the current vertex.
-     * \param[in] a the index of an edge of the current vertex.
-     * \param[in] p the number of the vertex.
-     * \return nu[p]-1 if a=0, or a-1 otherwise. */
-    int cycle_down(int a,int p) {return a==0?nu[p]-1:a-1;}
-private:
+
     /** This a one dimensional array that holds the current sizes
      * of the memory allocations for them mep array.*/
     int *mem;
@@ -132,8 +95,7 @@ private:
      * on mep[p] is stored in mem[p]. If the space runs out, the
      * code allocates more using the add_memory() routine. */
     int **mep;
-    void reset_edges();
-private:
+
     /** This is the delete stack, used to store the vertices which
      * are going to be deleted during the plane cutting procedure.
      */
@@ -158,6 +120,87 @@ private:
     double pz;
     /** The magnitude of the normal vector to the test plane. */
     double prsq;
+
+    /** This two dimensional array holds the neighbor information
+     * associated with each vertex. mne[p] is a one dimensional
+     * array which holds all of the neighbor information for
+     * vertices of order p. */
+    int **mne;
+    /** This is a two dimensional array that holds the neighbor
+     * information associated with each vertex. ne[i] points to a
+     * one-dimensional array in mne[nu[i]]. ne[i][j] holds the
+     * neighbor information associated with the jth edge of vertex
+     * i. It is set to the ID number of the plane that made the
+     * face that is clockwise from the jth edge. */
+    int **ne;
+
+    int *paux1;
+    int *paux2;
+
+    // ---- methods ----
+
+public:
+    /** Constructs a Voronoi cell and sets up the initial memory. */
+    cell();
+    /** The destructor deallocates all the dynamic memory. */
+    ~cell();
+    /** Initializes a Voronoi cell as a rectangular box with the given dimensions.
+     * It sets up the edge and vertex information, and then
+     * sets up the neighbor information, with initial faces being assigned ID
+     * numbers from -1 to -6.
+     * \param[in] (xmin,xmax) the minimum and maximum x coordinates.
+     * \param[in] (ymin,ymax) the minimum and maximum y coordinates.
+     * \param[in] (zmin,zmax) the minimum and maximum z coordinates. */
+    void init(double xmin,double xmax,double ymin,double ymax,double zmin,double zmax);
+    /** Calculates the volume of the Voronoi cell, by decomposing the cell into
+     * tetrahedra extending outward from the zeroth vertex, whose volumes are
+     * evaluated using a scalar triple product.
+     * \return A floating point number holding the calculated volume. */
+    double volume();
+    /** Computes the maximum radius squared of a vertex from the center of the
+     * cell. It can be used to determine when enough particles have been testing an
+     * all planes that could cut the cell have been considered.
+     * \return The maximum radius squared of a vertex.*/
+    double max_radius_squared();
+    /** Calculates the centroid of the Voronoi cell, by decomposing the cell into
+     * tetrahedra extending outward from the zeroth vertex.
+     * \param[out] (cx,cy,cz) references to floating point numbers in which to
+     *                        pass back the centroid vector. */
+    void centroid(double &cx,double &cy,double &cz);
+    /** Returns a vector of the vertex vectors using the local coordinate system.
+     * \param[out] v the vector to store the results in. */
+    void vertices(std::vector<double> &v);
+    /** Returns a vector of the vertex vectors in the global coordinate system.
+     * \param[out] v the vector to store the results in.
+     * \param[in] (x,y,z) the position vector of the particle in the global
+     *                    coordinate system. */
+    void vertices(double x,double y,double z,std::vector<double> &v);
+    /** For each face, this routine outputs a bracketed sequence of numbers
+     * containing a list of all the vertices that make up that face.
+     * \param[out] v the vector to store the results in. */
+    void face_vertices(std::vector<int> &v);
+
+    bool nplane(cell &vc,double x,double y,double z,double rsq,int p_id);
+    bool plane_intersects(double x,double y,double z,double rsq);
+    bool plane_intersects_guess(double x,double y,double z,double rsq);
+    void construct_relations();
+    void check_relations();
+    void check_duplicates();
+    /** This is a simple function for picking out the index
+     * of the next edge counterclockwise at the current vertex.
+     * \param[in] a the index of an edge of the current vertex.
+     * \param[in] p the number of the vertex.
+     * \return 0 if a=nu[p]-1, or a+1 otherwise. */
+    int cycle_up(int a,int p) {return a==nu[p]-1?0:a+1;}
+    /** This is a simple function for picking out the index
+     * of the next edge clockwise from the current vertex.
+     * \param[in] a the index of an edge of the current vertex.
+     * \param[in] p the number of the vertex.
+     * \return nu[p]-1 if a=0, or a-1 otherwise. */
+    int cycle_down(int a,int p) {return a==0?nu[p]-1:a-1;}
+
+private:
+    void reset_edges();
     void add_memory(cell &vc,int i,int *stackp2);
     void add_memory_vertices(cell &vc);
     void add_memory_vorder(cell &vc);
@@ -169,112 +212,94 @@ private:
     bool search_for_outside_edge(cell &vc,int &up);
     void add_to_stack(cell &vc,int lp,int *&stackp2);
     bool plane_intersects_track(double x,double y,double z,double rs,double g);
-    void normals_search(std::vector<double> &v,int i,int j,int k);
     bool search_edge(int l,int &m,int &k);
     int m_test(int n,double &ans);
     int check_marginal(int n,double &ans);
 
 public:
-        /** This two dimensional array holds the neighbor information
-         * associated with each vertex. mne[p] is a one dimensional
-         * array which holds all of the neighbor information for
-         * vertices of order p. */
-        int **mne;
-        /** This is a two dimensional array that holds the neighbor
-         * information associated with each vertex. ne[i] points to a
-         * one-dimensional array in mne[nu[i]]. ne[i][j] holds the
-         * neighbor information associated with the jth edge of vertex
-         * i. It is set to the ID number of the plane that made the
-         * face that is clockwise from the jth edge. */
-        int **ne;
-        void operator=(cell &c) = delete;
-        /** Cuts the Voronoi cell by a particle whose center is at a
-         * separation of (x,y,z) from the cell center. The value of rsq
-         * should be initially set to \f$x^2+y^2+z^2\f$.
-         * \param[in] (x,y,z) the normal vector to the plane.
-         * \param[in] rsq the distance along this vector of the plane.
-         * \param[in] p_id the plane ID (for neighbor tracking only).
-         * \return False if the plane cut deleted the cell entirely,
-         * true otherwise. */
-        bool nplane(double x,double y,double z,double rsq,int p_id) {
-            return nplane(*this,x,y,z,rsq,p_id);
-        }
-        /** This routine calculates the modulus squared of the vector
-         * before passing it to the main nplane() routine with full
-         * arguments.
-         * \param[in] (x,y,z) the vector to cut the cell by.
-         * \param[in] p_id the plane ID (for neighbor tracking only).
-         * \return False if the plane cut deleted the cell entirely,
-         *         true otherwise. */
-        bool nplane(double x,double y,double z,int p_id) {
-            double rsq=x*x+y*y+z*z;
-            return nplane(*this,x,y,z,rsq,p_id);
-        }
-        /** This version of the plane routine just makes up the plane
-         * ID to be zero. It will only be referenced if neighbor
-         * tracking is enabled.
-         * \param[in] (x,y,z) the vector to cut the cell by.
-         * \param[in] rsq the modulus squared of the vector.
-         * \return False if the plane cut deleted the cell entirely,
-         *         true otherwise. */
-        bool plane(double x,double y,double z,double rsq) {
-            return nplane(*this,x,y,z,rsq,0);
-        }
-        /** Cuts a Voronoi cell using the influence of a particle at
-         * (x,y,z), first calculating the modulus squared of this
-         * vector before passing it to the main nplane() routine. Zero
-         * is supplied as the plane ID, which will be ignored unless
-         * neighbor tracking is enabled.
-         * \param[in] (x,y,z) the vector to cut the cell by.
-         * \return False if the plane cut deleted the cell entirely,
-         *         true otherwise. */
-        bool plane(double x,double y,double z) {
-            double rsq=x*x+y*y+z*z;
-            return nplane(*this,x,y,z,rsq,0);
-        }
-        void init(double xmin,double xmax,double ymin,double ymax,double zmin,double zmax);
-        void init_octahedron(double l);
-        void init_tetrahedron(double x0,double y0,double z0,double x1,double y1,double z1,double x2,double y2,double z2,double x3,double y3,double z3);
-        void check_facets();
-        /** Returns a list of IDs of neighboring particles
-         * corresponding to each face.
-         * \param[out] v a reference to a vector in which to return the
-         *               results. If no neighbor information is
-         *               available, a blank vector is returned. */
-        void neighbors(std::vector<int> &v);
-    private:
-        int *paux1;
-        int *paux2;
-        void n_allocate(int i,int m) {mne[i]=new int[m*i];}
-        void n_add_memory_vertices(int i) {
-            int **pp=new int*[i];
-            for(int j=0;j<current_vertices;j++) pp[j]=ne[j];
-            delete [] ne;ne=pp;
-        }
-        void n_add_memory_vorder(int i) {
-            int **p2=new int*[i];
-            for(int j=0;j<current_vertex_order;j++) p2[j]=mne[j];
-            delete [] mne;mne=p2;
-        }
-        void n_set_pointer(int p,int n) {
-            ne[p]=mne[n]+n*mec[n];
-        }
-        void n_copy(int a,int b,int c,int d) {ne[a][b]=ne[c][d];}
-        void n_set(int a,int b,int c) {ne[a][b]=c;}
-        void n_set_aux1(int k) {paux1=mne[k]+k*mec[k];}
-        void n_copy_aux1(int a,int b) {paux1[b]=ne[a][b];}
-        void n_copy_aux1_shift(int a,int b) {paux1[b]=ne[a][b+1];}
-        void n_set_aux2_copy(int a,int b) {
-            paux2=mne[b]+b*mec[b];
-            for(int i=0;i<b;i++) ne[a][i]=paux2[i];
-        }
-        void n_copy_pointer(int a,int b) {ne[a]=ne[b];}
-        void n_set_to_aux1(int j) {ne[j]=paux1;}
-        void n_set_to_aux2(int j) {ne[j]=paux2;}
-        void n_allocate_aux1(int i) {paux1=new int[i*mem[i]];}
-        void n_switch_to_aux1(int i) {delete [] mne[i];mne[i]=paux1;}
-        void n_copy_to_aux1(int i,int m) {paux1[m]=mne[i][m];}
-        void n_set_to_aux1_offset(int k,int m) {ne[k]=paux1+m;}
+    /** Cuts the Voronoi cell by a particle whose center is at a
+     * separation of (x,y,z) from the cell center. The value of rsq
+     * should be initially set to \f$x^2+y^2+z^2\f$.
+     * \param[in] (x,y,z) the normal vector to the plane.
+     * \param[in] rsq the distance along this vector of the plane.
+     * \param[in] p_id the plane ID (for neighbor tracking only).
+     * \return False if the plane cut deleted the cell entirely,
+     * true otherwise. */
+    bool nplane(double x,double y,double z,double rsq,int p_id) {
+        return nplane(*this,x,y,z,rsq,p_id);
+    }
+    /** This routine calculates the modulus squared of the vector
+     * before passing it to the main nplane() routine with full
+     * arguments.
+     * \param[in] (x,y,z) the vector to cut the cell by.
+     * \param[in] p_id the plane ID (for neighbor tracking only).
+     * \return False if the plane cut deleted the cell entirely,
+     *         true otherwise. */
+    bool nplane(double x,double y,double z,int p_id) {
+        double rsq=x*x+y*y+z*z;
+        return nplane(*this,x,y,z,rsq,p_id);
+    }
+    /** This version of the plane routine just makes up the plane
+     * ID to be zero. It will only be referenced if neighbor
+     * tracking is enabled.
+     * \param[in] (x,y,z) the vector to cut the cell by.
+     * \param[in] rsq the modulus squared of the vector.
+     * \return False if the plane cut deleted the cell entirely,
+     *         true otherwise. */
+    bool plane(double x,double y,double z,double rsq) {
+        return nplane(*this,x,y,z,rsq,0);
+    }
+    /** Cuts a Voronoi cell using the influence of a particle at
+     * (x,y,z), first calculating the modulus squared of this
+     * vector before passing it to the main nplane() routine. Zero
+     * is supplied as the plane ID, which will be ignored unless
+     * neighbor tracking is enabled.
+     * \param[in] (x,y,z) the vector to cut the cell by.
+     * \return False if the plane cut deleted the cell entirely,
+     *         true otherwise. */
+    bool plane(double x,double y,double z) {
+        double rsq=x*x+y*y+z*z;
+        return nplane(*this,x,y,z,rsq,0);
+    }
+    void check_facets();
+    /** Returns a list of IDs of neighboring particles
+     * corresponding to each face.
+     * \param[out] v a reference to a vector in which to return the
+     *               results. If no neighbor information is
+     *               available, a blank vector is returned. */
+    void neighbors(std::vector<int> &v);
+
+private:
+    void n_allocate(int i,int m) {mne[i]=new int[m*i];}
+    void n_add_memory_vertices(int i) {
+        int **pp=new int*[i];
+        for(int j=0;j<current_vertices;j++) pp[j]=ne[j];
+        delete [] ne;ne=pp;
+    }
+    void n_add_memory_vorder(int i) {
+        int **p2=new int*[i];
+        for(int j=0;j<current_vertex_order;j++) p2[j]=mne[j];
+        delete [] mne;mne=p2;
+    }
+    void n_set_pointer(int p,int n) {
+        ne[p]=mne[n]+n*mec[n];
+    }
+    void n_copy(int a,int b,int c,int d) {ne[a][b]=ne[c][d];}
+    void n_set(int a,int b,int c) {ne[a][b]=c;}
+    void n_set_aux1(int k) {paux1=mne[k]+k*mec[k];}
+    void n_copy_aux1(int a,int b) {paux1[b]=ne[a][b];}
+    void n_copy_aux1_shift(int a,int b) {paux1[b]=ne[a][b+1];}
+    void n_set_aux2_copy(int a,int b) {
+        paux2=mne[b]+b*mec[b];
+        for(int i=0;i<b;i++) ne[a][i]=paux2[i];
+    }
+    void n_copy_pointer(int a,int b) {ne[a]=ne[b];}
+    void n_set_to_aux1(int j) {ne[j]=paux1;}
+    void n_set_to_aux2(int j) {ne[j]=paux2;}
+    void n_allocate_aux1(int i) {paux1=new int[i*mem[i]];}
+    void n_switch_to_aux1(int i) {delete [] mne[i];mne[i]=paux1;}
+    void n_copy_to_aux1(int i,int m) {paux1[m]=mne[i][m];}
+    void n_set_to_aux1_offset(int k,int m) {ne[k]=paux1+m;}
 };
 
 }
