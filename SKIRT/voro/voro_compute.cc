@@ -11,10 +11,6 @@
 
 namespace voro {
 
-/** The class constructor initializes constants from the container class, and
- * sets up the mask and queue used for Voronoi computations.
- * \param[in] con_ a reference to the container class to use.
- * \param[in] (hx_,hy_,hz_) the size of the mask to use. */
 compute::compute(container &con_,int hx_,int hy_,int hz_) :
     con(con_), boxx(con_.boxx), boxy(con_.boxy), boxz(con_.boxz),
     xsp(con_.xsp), ysp(con_.ysp), zsp(con_.zsp),
@@ -25,91 +21,6 @@ compute::compute(container &con_,int hx_,int hy_,int hz_) :
     reset_mask();
 }
 
-/** Scans all of the particles within a block to see if any of them have a
- * smaller distance to the given test vector. If one is found, the routine
- * updates the minimum distance and store information about this particle.
- * \param[in] ijk the index of the block.
- * \param[in] (x,y,z) the test vector to consider (which may have already had a
- *                    periodic displacement applied to it).
- * \param[in] (di,dj,dk) the coordinates of the current block, to store if the
- *			 particle record is updated.
- * \param[in,out] w a reference to a particle record in which to store
- *		    information about the particle whose Voronoi cell the
- *		    vector is within.
- * \param[in,out] mrs the current minimum distance, that may be updated if a
- * 		      closer particle is found. */
-void compute::scan_all(int ijk,double x,double y,double z,int di,int dj,int dk,particle_record &w,double &mrs) {
-    double x1,y1,z1,rs;bool in_block=false;
-    for(int l=0;l<co[ijk];l++) {
-        x1=p[ijk][ps*l]-x;
-        y1=p[ijk][ps*l+1]-y;
-        z1=p[ijk][ps*l+2]-z;
-        rs=con.r_current_sub(x1*x1+y1*y1+z1*z1,ijk,l);
-        if(rs<mrs) {mrs=rs;w.l=l;in_block=true;}
-    }
-    if(in_block) {w.ijk=ijk;w.di=di;w.dj=dj,w.dk=dk;}
-}
-
-
-/** Scans the six orthogonal neighbors of a given block and adds them to the
- * queue if they haven't been considered already. It assumes that the queue
- * will definitely have enough memory to add six entries at the end.
- * \param[in] (ei,ej,ek) the block to consider.
- * \param[in,out] qu_e a pointer to the end of the queue. */
-void compute::add_to_mask(int ei,int ej,int ek,int *&qu_e) {
-    unsigned int *mijk=mask+ei+hx*(ej+hy*ek);
-    if(ek>0) if(*(mijk-hxy)!=mv) {if(qu_e==qu_l) qu_e=qu;*(mijk-hxy)=mv;*(qu_e++)=ei;*(qu_e++)=ej;*(qu_e++)=ek-1;}
-    if(ej>0) if(*(mijk-hx)!=mv) {if(qu_e==qu_l) qu_e=qu;*(mijk-hx)=mv;*(qu_e++)=ei;*(qu_e++)=ej-1;*(qu_e++)=ek;}
-    if(ei>0) if(*(mijk-1)!=mv) {if(qu_e==qu_l) qu_e=qu;*(mijk-1)=mv;*(qu_e++)=ei-1;*(qu_e++)=ej;*(qu_e++)=ek;}
-    if(ei<hx-1) if(*(mijk+1)!=mv) {if(qu_e==qu_l) qu_e=qu;*(mijk+1)=mv;*(qu_e++)=ei+1;*(qu_e++)=ej;*(qu_e++)=ek;}
-    if(ej<hy-1) if(*(mijk+hx)!=mv) {if(qu_e==qu_l) qu_e=qu;*(mijk+hx)=mv;*(qu_e++)=ei;*(qu_e++)=ej+1;*(qu_e++)=ek;}
-    if(ek<hz-1) if(*(mijk+hxy)!=mv) {if(qu_e==qu_l) qu_e=qu;*(mijk+hxy)=mv;*(qu_e++)=ei;*(qu_e++)=ej;*(qu_e++)=ek+1;}
-}
-
-/** Scans a worklist entry and adds any blocks to the queue
- * \param (q) ?
- * \param (mijk) ?
- * \param[in] (ei,ej,ek) the block to consider.
- * \param[in,out] qu_e a pointer to the end of the queue. */
-void compute::scan_bits_mask_add(unsigned int q,unsigned int *mijk,int ei,int ej,int ek,int *&qu_e) {
-    const unsigned int b1=1<<21,b2=1<<22,b3=1<<24,b4=1<<25,b5=1<<27,b6=1<<28;
-    if((q&b2)==b2) {
-        if(ei>0) {*(mijk-1)=mv;*(qu_e++)=ei-1;*(qu_e++)=ej;*(qu_e++)=ek;}
-        if((q&b1)==0&&ei<hx-1) {*(mijk+1)=mv;*(qu_e++)=ei+1;*(qu_e++)=ej;*(qu_e++)=ek;}
-    } else if((q&b1)==b1&&ei<hx-1) {*(mijk+1)=mv;*(qu_e++)=ei+1;*(qu_e++)=ej;*(qu_e++)=ek;}
-    if((q&b4)==b4) {
-        if(ej>0) {*(mijk-hx)=mv;*(qu_e++)=ei;*(qu_e++)=ej-1;*(qu_e++)=ek;}
-        if((q&b3)==0&&ej<hy-1) {*(mijk+hx)=mv;*(qu_e++)=ei;*(qu_e++)=ej+1;*(qu_e++)=ek;}
-    } else if((q&b3)==b3&&ej<hy-1) {*(mijk+hx)=mv;*(qu_e++)=ei;*(qu_e++)=ej+1;*(qu_e++)=ek;}
-    if((q&b6)==b6) {
-        if(ek>0) {*(mijk-hxy)=mv;*(qu_e++)=ei;*(qu_e++)=ej;*(qu_e++)=ek-1;}
-        if((q&b5)==0&&ek<hz-1) {*(mijk+hxy)=mv;*(qu_e++)=ei;*(qu_e++)=ej;*(qu_e++)=ek+1;}
-    } else if((q&b5)==b5&&ek<hz-1) {*(mijk+hxy)=mv;*(qu_e++)=ei;*(qu_e++)=ej;*(qu_e++)=ek+1;}
-}
-
-/** This routine computes a Voronoi cell for a single particle in the
- * container. It can be called by the user, but is also forms the core part of
- * several of the main functions, such as store_cell_volumes().
- * The algorithm constructs the cell by testing over
- * the neighbors of the particle, working outwards until it reaches those
- * particles which could not possibly intersect the cell. For maximum
- * efficiency, this algorithm is divided into three parts. In the first
- * section, the algorithm tests over the blocks which are in the immediate
- * vicinity of the particle, by making use of one of the precomputed worklists.
- * The code then continues to test blocks on the worklist, but also begins to
- * construct a list of neighboring blocks outside the worklist which may need
- * to be test. In the third section, the routine starts testing these
- * neighboring blocks, evaluating whether or not a particle in them could
- * possibly intersect the cell. For blocks that intersect the cell, it tests
- * the particles in that block, and then adds the block neighbors to the list
- * of potential places to consider.
- * \param[in,out] c a reference to a voronoicell object.
- * \param[in] ijk the index of the block that the test particle is in.
- * \param[in] s the index of the particle within the test block.
- * \param[in] (ci,cj,ck) the coordinates of the block that the test particle is
- *                       in relative to the container data structure.
- * \return False if the Voronoi cell was completely removed during the
- *         computation and has zero volume, true otherwise. */
 bool compute::compute_cell(cell &c,int ijk,int s,int ci,int cj,int ck) {
     static const int count_list[8]={7,11,15,19,26,35,45,59},*count_e=count_list+8;
     double x,y,z,x1,y1,z1,qx=0,qy=0,qz=0;
@@ -118,7 +29,7 @@ bool compute::compute_cell(cell &c,int ijk,int s,int ci,int cj,int ck) {
     double fx,fy,fz,gxs,gys,gzs,*radp;
     unsigned int q,*e,*mijk;
 
-    if(!con.initialize_voronoicell(c,ijk,s,ci,cj,ck,i,j,k,x,y,z,disp)) return false;
+    if(!con.initialize_cell(c,ijk,s,ci,cj,ck,i,j,k,x,y,z,disp)) return false;
     con.r_init(ijk,s);
 
     // Initialize the Voronoi cell to fill the entire container
@@ -442,15 +353,6 @@ bool compute::compute_cell(cell &c,int ijk,int s,int ci,int cj,int ck) {
     return true;
 }
 
-/** This function checks to see whether a particular block can possibly have
- * any intersection with a Voronoi cell, for the case when the closest point
- * from the cell center to the block is at a corner.
- * \param[in,out] c a reference to a Voronoi cell.
- * \param[in] (xl,yl,zl) the relative coordinates of the corner of the block
- *                       closest to the cell center.
- * \param[in] (xh,yh,zh) the relative coordinates of the corner of the block
- *                       furthest away from the cell center.
- * \return False if the block may intersect, true if does not. */
 bool compute::corner_test(cell &c,double xl,double yl,double zl,double xh,double yh,double zh) {
     con.r_prime(xl*xl+yl*yl+zl*zl);
     if(c.plane_intersects_guess(xh,yl,zl,con.r_cutoff(xl*xh+yl*yl+zl*zl))) return false;
@@ -462,18 +364,6 @@ bool compute::corner_test(cell &c,double xl,double yl,double zl,double xh,double
     return true;
 }
 
-/** This function checks to see whether a particular block can possibly have
- * any intersection with a Voronoi cell, for the case when the closest point
- * from the cell center to the block is on an edge which points along the x
- * direction.
- * \param[in,out] c a reference to a Voronoi cell.
- * \param[in] (x0,x1) the minimum and maximum relative x coordinates of the
- *                    block.
- * \param[in] (yl,zl) the relative y and z coordinates of the corner of the
- *                    block closest to the cell center.
- * \param[in] (yh,zh) the relative y and z coordinates of the corner of the
- *                    block furthest away from the cell center.
- * \return False if the block may intersect, true if does not. */
 bool compute::edge_x_test(cell &c,double x0,double yl,double zl,double x1,double yh,double zh) {
     con.r_prime(yl*yl+zl*zl);
     if(c.plane_intersects_guess(x0,yl,zh,con.r_cutoff(yl*yl+zl*zh))) return false;
@@ -485,18 +375,6 @@ bool compute::edge_x_test(cell &c,double x0,double yl,double zl,double x1,double
     return true;
 }
 
-/** This function checks to see whether a particular block can possibly have
- * any intersection with a Voronoi cell, for the case when the closest point
- * from the cell center to the block is on an edge which points along the y
- * direction.
- * \param[in,out] c a reference to a Voronoi cell.
- * \param[in] (y0,y1) the minimum and maximum relative y coordinates of the
- *                    block.
- * \param[in] (xl,zl) the relative x and z coordinates of the corner of the
- *                    block closest to the cell center.
- * \param[in] (xh,zh) the relative x and z coordinates of the corner of the
- *                    block furthest away from the cell center.
- * \return False if the block may intersect, true if does not. */
 bool compute::edge_y_test(cell &c,double xl,double y0,double zl,double xh,double y1,double zh) {
     con.r_prime(xl*xl+zl*zl);
     if(c.plane_intersects_guess(xl,y0,zh,con.r_cutoff(xl*xl+zl*zh))) return false;
@@ -508,17 +386,6 @@ bool compute::edge_y_test(cell &c,double xl,double y0,double zl,double xh,double
     return true;
 }
 
-/** This function checks to see whether a particular block can possibly have
- * any intersection with a Voronoi cell, for the case when the closest point
- * from the cell center to the block is on an edge which points along the z
- * direction.
- * \param[in,out] c a reference to a Voronoi cell.
- * \param[in] (z0,z1) the minimum and maximum relative z coordinates of the block.
- * \param[in] (xl,yl) the relative x and y coordinates of the corner of the
- *                    block closest to the cell center.
- * \param[in] (xh,yh) the relative x and y coordinates of the corner of the
- *                    block furthest away from the cell center.
- * \return False if the block may intersect, true if does not. */
 bool compute::edge_z_test(cell &c,double xl,double yl,double z0,double xh,double yh,double z1) {
     con.r_prime(xl*xl+yl*yl);
     if(c.plane_intersects_guess(xl,yh,z0,con.r_cutoff(xl*xl+yl*yh))) return false;
@@ -530,16 +397,6 @@ bool compute::edge_z_test(cell &c,double xl,double yl,double z0,double xh,double
     return true;
 }
 
-/** This function checks to see whether a particular block can possibly have
- * any intersection with a Voronoi cell, for the case when the closest point
- * from the cell center to the block is on a face aligned with the x direction.
- * \param[in,out] c a reference to a Voronoi cell.
- * \param[in] xl the minimum distance from the cell center to the face.
- * \param[in] (y0,y1) the minimum and maximum relative y coordinates of the
- *                    block.
- * \param[in] (z0,z1) the minimum and maximum relative z coordinates of the
- *                    block.
- * \return False if the block may intersect, true if does not. */
 bool compute::face_x_test(cell &c,double xl,double y0,double z0,double y1,double z1) {
     con.r_prime(xl*xl);
     if(c.plane_intersects_guess(xl,y0,z0,con.r_cutoff(xl*xl))) return false;
@@ -549,16 +406,6 @@ bool compute::face_x_test(cell &c,double xl,double y0,double z0,double y1,double
     return true;
 }
 
-/** This function checks to see whether a particular block can possibly have
- * any intersection with a Voronoi cell, for the case when the closest point
- * from the cell center to the block is on a face aligned with the y direction.
- * \param[in,out] c a reference to a Voronoi cell.
- * \param[in] yl the minimum distance from the cell center to the face.
- * \param[in] (x0,x1) the minimum and maximum relative x coordinates of the
- *                    block.
- * \param[in] (z0,z1) the minimum and maximum relative z coordinates of the
- *                    block.
- * \return False if the block may intersect, true if does not. */
 bool compute::face_y_test(cell &c,double x0,double yl,double z0,double x1,double z1) {
     con.r_prime(yl*yl);
     if(c.plane_intersects_guess(x0,yl,z0,con.r_cutoff(yl*yl))) return false;
@@ -568,16 +415,6 @@ bool compute::face_y_test(cell &c,double x0,double yl,double z0,double x1,double
     return true;
 }
 
-/** This function checks to see whether a particular block can possibly have
- * any intersection with a Voronoi cell, for the case when the closest point
- * from the cell center to the block is on a face aligned with the z direction.
- * \param[in,out] c a reference to a Voronoi cell.
- * \param[in] zl the minimum distance from the cell center to the face.
- * \param[in] (x0,x1) the minimum and maximum relative x coordinates of the
- *                    block.
- * \param[in] (y0,y1) the minimum and maximum relative y coordinates of the
- *                    block.
- * \return False if the block may intersect, true if does not. */
 bool compute::face_z_test(cell &c,double x0,double y0,double zl,double x1,double y1) {
     con.r_prime(zl*zl);
     if(c.plane_intersects_guess(x0,y0,zl,con.r_cutoff(zl*zl))) return false;
@@ -587,20 +424,6 @@ bool compute::face_z_test(cell &c,double x0,double y0,double zl,double x1,double
     return true;
 }
 
-/** This routine checks to see whether a point is within a particular distance
- * of a nearby region. If the point is within the distance of the region, then
- * the routine returns true, and computes the maximum distance from the point
- * to the region. Otherwise, the routine returns false.
- * \param[in] (di,dj,dk) the position of the nearby region to be tested,
- *                       relative to the region that the point is in.
- * \param[in] (fx,fy,fz) the displacement of the point within its region.
- * \param[in] (gxs,gys,gzs) the maximum squared distances from the point to the
- *                          sides of its region.
- * \param[out] crs a reference in which to return the maximum distance to the
- *                 region (only computed if the routine returns false).
- * \param[in] mrs the distance to be tested.
- * \return True if the region is further away than mrs, false if the region in
- *         within mrs. */
 bool compute::compute_min_max_radius(int di,int dj,int dk,double fx,double fy,double fz,double gxs,double gys,double gzs,double &crs,double mrs) {
     double xlo,ylo,zlo;
     if(di>0) {
@@ -750,25 +573,32 @@ bool compute::compute_min_max_radius(int di,int dj,int dk,double fx,double fy,do
     return false;
 }
 
-bool compute::compute_min_radius(int di,int dj,int dk,double fx,double fy,double fz,double mrs) {
-    double t,crs;
-
-    if(di>0) {t=di*boxx-fx;crs=t*t;}
-    else if(di<0) {t=(di+1)*boxx-fx;crs=t*t;}
-    else crs=0;
-
-    if(dj>0) {t=dj*boxy-fy;crs+=t*t;}
-    else if(dj<0) {t=(dj+1)*boxy-fy;crs+=t*t;}
-
-    if(dk>0) {t=dk*boxz-fz;crs+=t*t;}
-    else if(dk<0) {t=(dk+1)*boxz-fz;crs+=t*t;}
-
-    return crs>con.r_max_add(mrs);
+void compute::add_to_mask(int ei,int ej,int ek,int *&qu_e) {
+    unsigned int *mijk=mask+ei+hx*(ej+hy*ek);
+    if(ek>0) if(*(mijk-hxy)!=mv) {if(qu_e==qu_l) qu_e=qu;*(mijk-hxy)=mv;*(qu_e++)=ei;*(qu_e++)=ej;*(qu_e++)=ek-1;}
+    if(ej>0) if(*(mijk-hx)!=mv) {if(qu_e==qu_l) qu_e=qu;*(mijk-hx)=mv;*(qu_e++)=ei;*(qu_e++)=ej-1;*(qu_e++)=ek;}
+    if(ei>0) if(*(mijk-1)!=mv) {if(qu_e==qu_l) qu_e=qu;*(mijk-1)=mv;*(qu_e++)=ei-1;*(qu_e++)=ej;*(qu_e++)=ek;}
+    if(ei<hx-1) if(*(mijk+1)!=mv) {if(qu_e==qu_l) qu_e=qu;*(mijk+1)=mv;*(qu_e++)=ei+1;*(qu_e++)=ej;*(qu_e++)=ek;}
+    if(ej<hy-1) if(*(mijk+hx)!=mv) {if(qu_e==qu_l) qu_e=qu;*(mijk+hx)=mv;*(qu_e++)=ei;*(qu_e++)=ej+1;*(qu_e++)=ek;}
+    if(ek<hz-1) if(*(mijk+hxy)!=mv) {if(qu_e==qu_l) qu_e=qu;*(mijk+hxy)=mv;*(qu_e++)=ei;*(qu_e++)=ej;*(qu_e++)=ek+1;}
 }
 
-/** Adds memory to the queue.
- * \param[in,out] qu_s a reference to the queue start pointer.
- * \param[in,out] qu_e a reference to the queue end pointer. */
+void compute::scan_bits_mask_add(unsigned int q,unsigned int *mijk,int ei,int ej,int ek,int *&qu_e) {
+    const unsigned int b1=1<<21,b2=1<<22,b3=1<<24,b4=1<<25,b5=1<<27,b6=1<<28;
+    if((q&b2)==b2) {
+        if(ei>0) {*(mijk-1)=mv;*(qu_e++)=ei-1;*(qu_e++)=ej;*(qu_e++)=ek;}
+        if((q&b1)==0&&ei<hx-1) {*(mijk+1)=mv;*(qu_e++)=ei+1;*(qu_e++)=ej;*(qu_e++)=ek;}
+    } else if((q&b1)==b1&&ei<hx-1) {*(mijk+1)=mv;*(qu_e++)=ei+1;*(qu_e++)=ej;*(qu_e++)=ek;}
+    if((q&b4)==b4) {
+        if(ej>0) {*(mijk-hx)=mv;*(qu_e++)=ei;*(qu_e++)=ej-1;*(qu_e++)=ek;}
+        if((q&b3)==0&&ej<hy-1) {*(mijk+hx)=mv;*(qu_e++)=ei;*(qu_e++)=ej+1;*(qu_e++)=ek;}
+    } else if((q&b3)==b3&&ej<hy-1) {*(mijk+hx)=mv;*(qu_e++)=ei;*(qu_e++)=ej+1;*(qu_e++)=ek;}
+    if((q&b6)==b6) {
+        if(ek>0) {*(mijk-hxy)=mv;*(qu_e++)=ei;*(qu_e++)=ej;*(qu_e++)=ek-1;}
+        if((q&b5)==0&&ek<hz-1) {*(mijk+hxy)=mv;*(qu_e++)=ei;*(qu_e++)=ej;*(qu_e++)=ek+1;}
+    } else if((q&b5)==b5&&ek<hz-1) {*(mijk+hxy)=mv;*(qu_e++)=ei;*(qu_e++)=ej;*(qu_e++)=ek+1;}
+}
+
 void compute::add_list_memory(int*& qu_s,int*& qu_e) {
     qu_size<<=1;
     int *qu_n=new int[qu_size],*qu_c=qu_n;

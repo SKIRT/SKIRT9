@@ -450,8 +450,8 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
     if (relax)
     {
         // add the retained original sites to a temporary Voronoi container, using the cell index m as ID
-        voro::container vcon(_extent.xmin(), _extent.xmax(), _extent.ymin(), _extent.ymax(), _extent.zmin(), _extent.zmax(),
-                            _nb, _nb, _nb, false,false,false, 8);
+        voro::container vcon(_extent.xmin(), _extent.xmax(), _extent.ymin(), _extent.ymax(),
+                             _extent.zmin(), _extent.zmax(), _nb, _nb, _nb);
         for (int m=0; m!=numCells; ++m)
         {
             Vec r = _cells[m]->position();
@@ -496,8 +496,8 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
     }
 
     // add the final sites to a temporary Voronoi container, using the cell index m as ID
-    voro::container vcon(_extent.xmin(), _extent.xmax(), _extent.ymin(), _extent.ymax(), _extent.zmin(), _extent.zmax(),
-                        _nb, _nb, _nb, false,false,false, 8);
+    voro::container vcon(_extent.xmin(), _extent.xmax(), _extent.ymin(), _extent.ymax(),
+                         _extent.zmin(), _extent.zmax(), _nb, _nb, _nb);
     for (int m=0; m!=numCells; ++m)
     {
         Vec r = _cells[m]->position();
@@ -666,8 +666,8 @@ void VoronoiMeshSnapshot::writeGridPlotFiles(const SimulationItem* probe) const
 
     // load all sites in a Voro container
     int numCells = _cells.size();
-    voro::container vcon(_extent.xmin(), _extent.xmax(), _extent.ymin(), _extent.ymax(), _extent.zmin(), _extent.zmax(),
-                        _nb, _nb, _nb, false,false,false, 8);
+    voro::container vcon(_extent.xmin(), _extent.xmax(), _extent.ymin(), _extent.ymax(),
+                         _extent.zmin(), _extent.zmax(), _nb, _nb, _nb);
     for (int m=0; m!=numCells; ++m)
     {
         Vec r = _cells[m]->position();
