@@ -230,7 +230,7 @@ private:
      * \param[in] rsq the distance along this vector of the plane.
      * \param[in] g the distance of up from the plane.
      * \return False if the plane does not intersect the plane, true if it does. */
-    bool plane_intersects_track(double x,double y,double z,double rs,double g);
+    bool plane_intersects_track(double x,double y,double z,double rsq,double g);
 
     /** This is a simple function for picking out the index
      * of the next edge counterclockwise at the current vertex.

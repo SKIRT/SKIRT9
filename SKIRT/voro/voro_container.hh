@@ -104,8 +104,7 @@ public:
      * \param[in] (ay_,by_) the minimum and maximum y coordinates.
      * \param[in] (az_,bz_) the minimum and maximum z coordinates.
      * \param[in] (nx_,ny_,nz_) the number of grid blocks in each of the three
-     *                       coordinate directions.
-     * \param[in] init_mem the initial memory allocation for each block. */
+     *                       coordinate directions. */
     container(double ax_,double bx_,double ay_,double by_,double az_,double bz_,int nx_,int ny_,int nz_);
 
     /** The destructor frees the dynamically allocated memory. */
@@ -208,16 +207,17 @@ public:
      * corresponding to given coordinates.
      * \param[in] (ci,cj,ck) the coordinates of the original block
      * 			 in the current computation, relative
-     * 			 to the container coordinate system.
+     * 			 to the container coordinate system (not used).
      * \param[in] (ei,ej,ek) the displacement of the current block
      * 			 from the original block.
      * \param[in,out] (qx,qy,qz) the periodic displacement that
      * 			     must be added to the particles
-     * 			     within the computed block (not used)
+     * 			     within the computed block (not used).
      * \param[in] disp a block displacement used internally by the
      * 		    find_voronoi_cell and compute_cell routines.
      * \return The block index. */
-    int region_index(int /*ci*/,int /*cj*/,int /*ck*/,int ei,int ej,int ek,double &/*qx*/,double &/*qy*/,double &/*qz*/,int &disp) {
+    int region_index(int ci,int cj,int ck,int ei,int ej,int ek,double &qx,double &qy,double &qz,int &disp) {
+        (void)ci; (void)cj; (void)ck; (void)qx; (void)qy; (void)qz;
         return disp+ei+nx*(ej+ny*ek);
     }
 

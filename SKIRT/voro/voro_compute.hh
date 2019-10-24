@@ -259,7 +259,7 @@ private:
      * \param[in] mrs the distance to be tested.
      * \return True if the region is further away than mrs, false if the region in
      *         within mrs. */
-    bool compute_min_max_radius(int di,int dj,int dk,double fx,double fy,double fz,double gx,double gy,double gz,double& crs,double mrs);
+    bool compute_min_max_radius(int di,int dj,int dk,double fx,double fy,double fz,double gxs,double gys,double gzs,double& crs,double mrs);
 
     /** Scans the six orthogonal neighbors of a given block and adds them to the
      * queue if they haven't been considered already. It assumes that the queue
