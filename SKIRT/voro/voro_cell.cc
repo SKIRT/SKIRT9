@@ -223,181 +223,27 @@ void cell::face_vertices(std::vector<int> &v) {
     reset_edges();
 }
 
-
-
-/** Increases the memory storage for a particular vertex order, by increasing
- * the size of the of the corresponding mep array. If the arrays already exist,
- * their size is doubled; if they don't exist, then new ones of size
- * init_n_vertices are allocated. The routine also ensures that the pointers in
- * the ed array are updated, by making use of the back pointers. For the cases
- * where the back pointer has been temporarily overwritten in the marginal
- * vertex code, the auxiliary delete stack is scanned to find out how to update
- * the ed value. If neighbor
- * tracking is turned on, then the routine also reallocates the corresponding mne
- * array.
- * \param (vc) ?
- * \param[in] i the order of the vertex memory to be increased.
- * \param (stackp2) ?  */
-void cell::add_memory(cell &vc,int i,int *stackp2) {
-    int s=(i<<1)+1;
-    if(mem[i]==0) {
-        vc.n_allocate(i,init_n_vertices);
-        mep[i]=new int[init_n_vertices*s];
-        mem[i]=init_n_vertices;
-    } else {
-        int j=0,k,*l;
-        mem[i]<<=1;
-        if(mem[i]>max_n_vertices) voro_fatal_error("Point memory allocation exceeded absolute maximum",VOROPP_MEMORY_ERROR);
-        l=new int[s*mem[i]];
-        int m=0;
-        vc.n_allocate_aux1(i);
-        while(j<s*mec[i]) {
-            k=mep[i][j+(i<<1)];
-            if(k>=0) {
-                ed[k]=l+j;
-                vc.n_set_to_aux1_offset(k,m);
-            } else {
-                int *dsp;
-                for(dsp=ds2;dsp<stackp2;dsp++) {
-                    if(ed[*dsp]==mep[i]+j) {
-                        ed[*dsp]=l+j;
-                        vc.n_set_to_aux1_offset(*dsp,m);
-                        break;
-                    }
-                }
-                if(dsp==stackp2) voro_fatal_error("Couldn't relocate dangling pointer",VOROPP_INTERNAL_ERROR);
-            }
-            for(k=0;k<s;k++,j++) l[j]=mep[i][j];
-            for(k=0;k<i;k++,m++) vc.n_copy_to_aux1(i,m);
-        }
-        delete [] mep[i];
-        mep[i]=l;
-        vc.n_switch_to_aux1(i);
-    }
-}
-
-/** Doubles the maximum number of vertices allowed, by reallocating the ed, nu,
- * and pts arrays. If the allocation exceeds the absolute maximum set in
- * max_vertices, then the routine exits with a fatal error. If neighbor tracking
- * is turned on, then the routine
- * also reallocates the ne array. */
-void cell::add_memory_vertices(cell &vc) {
-    int i=(current_vertices<<1),j,**pp,*pnu;
-    if(i>max_vertices) voro_fatal_error("Vertex memory allocation exceeded absolute maximum",VOROPP_MEMORY_ERROR);
-    double *ppts;
-    pp=new int*[i];
-    for(j=0;j<current_vertices;j++) pp[j]=ed[j];
-    delete [] ed;ed=pp;
-    vc.n_add_memory_vertices(i);
-    pnu=new int[i];
-    for(j=0;j<current_vertices;j++) pnu[j]=nu[j];
-    delete [] nu;nu=pnu;
-    ppts=new double[3*i];
-    for(j=0;j<3*current_vertices;j++) ppts[j]=pts[j];
-    delete [] pts;pts=ppts;
-    current_vertices=i;
-}
-
-/** Doubles the maximum allowed vertex order, by reallocating mem, mep, and mec
- * arrays. If the allocation exceeds the absolute maximum set in
- * max_vertex_order, then the routine causes a fatal error. If neighbor tracking
- * is turned on, then the routine also reallocates the mne array. */
-void cell::add_memory_vorder(cell &vc) {
-    int i=(current_vertex_order<<1),j,*p1,**p2;
-    if(i>max_vertex_order) voro_fatal_error("Vertex order memory allocation exceeded absolute maximum",VOROPP_MEMORY_ERROR);
-    p1=new int[i];
-    for(j=0;j<current_vertex_order;j++) p1[j]=mem[j];
-    while(j<i) p1[j++]=0;
-    delete [] mem;mem=p1;
-    p2=new int*[i];
-    for(j=0;j<current_vertex_order;j++) p2[j]=mep[j];
-    delete [] mep;mep=p2;
-    p1=new int[i];
-    for(j=0;j<current_vertex_order;j++) p1[j]=mec[j];
-    while(j<i) p1[j++]=0;
-    delete [] mec;mec=p1;
-    vc.n_add_memory_vorder(i);
-    current_vertex_order=i;
-}
-
-/** Doubles the size allocation of the main delete stack. If the allocation
- * exceeds the absolute maximum set in max_delete_size, then routine causes a
- * fatal error. */
-void cell::add_memory_ds(int *&stackp) {
-    current_delete_size<<=1;
-    if(current_delete_size>max_delete_size) voro_fatal_error("Delete stack 1 memory allocation exceeded absolute maximum",VOROPP_MEMORY_ERROR);
-    int *dsn=new int[current_delete_size],*dsnp=dsn,*dsp=ds;
-    while(dsp<stackp) *(dsnp++)=*(dsp++);
-    delete [] ds;ds=dsn;stackp=dsnp;
-    stacke=ds+current_delete_size;
-}
-
-/** Doubles the size allocation of the auxiliary delete stack. If the
- * allocation exceeds the absolute maximum set in max_delete2_size, then the
- * routine causes a fatal error. */
-void cell::add_memory_ds2(int *&stackp2) {
-    current_delete2_size<<=1;
-    if(current_delete2_size>max_delete2_size) voro_fatal_error("Delete stack 2 memory allocation exceeded absolute maximum",VOROPP_MEMORY_ERROR);
-    int *dsn=new int[current_delete2_size],*dsnp=dsn,*dsp=ds2;
-    while(dsp<stackp2) *(dsnp++)=*(dsp++);
-    delete [] ds2;ds2=dsn;stackp2=dsnp;
-    stacke2=ds2+current_delete2_size;
-}
-
-/** Constructs the relational table if the edges have been specified. */
-void cell::construct_relations() {
-    int i,j,k,l;
-    for(i=0;i<p;i++) for(j=0;j<nu[i];j++) {
+void cell::neighbors(std::vector<int> &v) {
+    v.clear();
+    int i,j,k,l,m;
+    for(i=1;i<p;i++) for(j=0;j<nu[i];j++) {
         k=ed[i][j];
-        l=0;
-        while(ed[k][l]!=i) {
-            l++;
-            if(l==nu[k]) voro_fatal_error("Relation table construction failed",VOROPP_INTERNAL_ERROR);
-        }
-        ed[i][nu[i]+j]=l;
-    }
-}
-
-/** Starting from a point within the current cutting plane, this routine attempts
- * to find an edge to a point outside the cutting plane. This prevents the plane
- * routine from .
- * \param[in] vc a reference to the specialized version of the calling class.
- * \param[in,out] up */
-bool cell::search_for_outside_edge(cell &vc,int &up) {
-    int i,lp,lw,*j(ds2),*stackp2(ds2);
-    double l;
-    *(stackp2++)=up;
-    while(j<stackp2) {
-        up=*(j++);
-        for(i=0;i<nu[up];i++) {
-            lp=ed[up][i];
-            lw=m_test(lp,l);
-            if(lw==-1) return true;
-            else if(lw==0) add_to_stack(vc,lp,stackp2);
+        if(k>=0) {
+            v.push_back(ne[i][j]);
+            ed[i][j]=-1-k;
+            l=cycle_up(ed[i][nu[i]+j],k);
+            do {
+                m=ed[k][l];
+                ed[k][l]=-1-m;
+                l=cycle_up(ed[k][nu[k]+l],m);
+                k=m;
+            } while (k!=i);
         }
     }
-    return false;
+    reset_edges();
 }
 
-/** Adds a point to the auxiliary delete stack if it is not already there.
- * \param[in] vc a reference to the specialized version of the calling class.
- * \param[in] lp the index of the point to add.
- * \param[in,out] stackp2 a pointer to the end of the stack entries. */
-void cell::add_to_stack(cell &/*vc*/,int lp,int *&stackp2) {
-    for(int *k(ds2);k<stackp2;k++) if(*k==lp) return;
-    if(stackp2==stacke2) add_memory_ds2(stackp2);
-    *(stackp2++)=lp;
-}
-
-/** Cuts the Voronoi cell by a particle whose center is at a separation of
- * (x,y,z) from the cell center. The value of rsq should be initially set to
- * \f$x^2+y^2+z^2\f$.
- * \param[in] vc a reference to the specialized version of the calling class.
- * \param[in] (x,y,z) the normal vector to the plane.
- * \param[in] rsq the distance along this vector of the plane.
- * \param[in] p_id the plane ID (for neighbor tracking only).
- * \return False if the plane cut deleted the cell entirely, true otherwise. */
-bool cell::nplane(cell &vc,double x,double y,double z,double rsq,int p_id) {
+bool cell::nplane(double x,double y,double z,double rsq,int p_id) {
     int count=0,i,j,k,lp=up,cp,qp,rp,*stackp(ds),*stackp2(ds2),*dsp;
     int us=0,ls=0,qs,iqs,cs,uw,qw,lw;
     int *edp,*edd;
@@ -573,7 +419,7 @@ bool cell::nplane(cell &vc,double x,double y,double z,double rsq,int p_id) {
     // We're about to add the first point of the new facet. In either
     // routine, we have to add a point, so first check there's space for
     // it.
-    if(p==current_vertices) add_memory_vertices(vc);
+    if(p==current_vertices) add_memory_vertices();
 
     if(complicated_setup) {
 
@@ -582,7 +428,7 @@ bool cell::nplane(cell &vc,double x,double y,double z,double rsq,int p_id) {
         // to find a vertex that has edges which are all inside or on
         // the plane. If the vertex has neighbors that are also on the
         // plane, we should check those too.
-        if(!search_for_outside_edge(vc,up)) return false;
+        if(!search_for_outside_edge(up)) return false;
 
         // The search algorithm found a point which is on the cutting
         // plane. We leave that point in place, and create a new one at
@@ -641,9 +487,9 @@ bool cell::nplane(cell &vc,double x,double y,double z,double rsq,int p_id) {
 
             // Add memory for the new vertex if needed, and
             // initialize
-            while (nu[p]>=current_vertex_order) add_memory_vorder(vc);
-            if(mec[nu[p]]==mem[nu[p]]) add_memory(vc,nu[p],stackp2);
-            vc.n_set_pointer(p,nu[p]);
+            while (nu[p]>=current_vertex_order) add_memory_vorder();
+            if(mec[nu[p]]==mem[nu[p]]) add_memory(nu[p],stackp2);
+            n_set_pointer(p,nu[p]);
             ed[p]=mep[nu[p]]+((nu[p]<<1)+1)*mec[nu[p]]++;
             ed[p][nu[p]<<1]=p;
 
@@ -654,7 +500,7 @@ bool cell::nplane(cell &vc,double x,double y,double z,double rsq,int p_id) {
             while(i<j) {
                 qp=ed[up][i];
                 qs=ed[up][nu[up]+i];
-                vc.n_copy(p,k,up,i);
+                n_copy(p,k,up,i);
                 ed[p][k]=qp;
                 ed[p][nu[p]+k]=qs;
                 ed[qp][qs]=p;
@@ -709,20 +555,20 @@ bool cell::nplane(cell &vc,double x,double y,double z,double rsq,int p_id) {
             // Add memory to store the vertex if it doesn't exist
             // already
             k=1;
-            while(nu[p]>=current_vertex_order) add_memory_vorder(vc);
-            if(mec[nu[p]]==mem[nu[p]]) add_memory(vc,nu[p],stackp2);
+            while(nu[p]>=current_vertex_order) add_memory_vorder();
+            if(mec[nu[p]]==mem[nu[p]]) add_memory(nu[p],stackp2);
 
             // Copy the edges of the original vertex into the new
             // one. Delete the edges of the original vertex, and
             // update the relational table.
-            vc.n_set_pointer(p,nu[p]);
+            n_set_pointer(p,nu[p]);
             ed[p]=mep[nu[p]]+((nu[p]<<1)+1)*mec[nu[p]]++;
             ed[p][nu[p]<<1]=p;
             us=i++;
             while(i<nu[up]) {
                 qp=ed[up][i];
                 qs=ed[up][nu[up]+i];
-                vc.n_copy(p,k,up,i);
+                n_copy(p,k,up,i);
                 ed[p][k]=qp;
                 ed[p][nu[p]+k]=qs;
                 ed[qp][qs]=p;
@@ -734,7 +580,7 @@ bool cell::nplane(cell &vc,double x,double y,double z,double rsq,int p_id) {
             while(i<j) {
                 qp=ed[up][i];
                 qs=ed[up][nu[up]+i];
-                vc.n_copy(p,k,up,i);
+                n_copy(p,k,up,i);
                 ed[p][k]=qp;
                 ed[p][nu[p]+k]=qs;
                 ed[qp][qs]=p;
@@ -745,9 +591,9 @@ bool cell::nplane(cell &vc,double x,double y,double z,double rsq,int p_id) {
             qs=j;
         }
         if(!double_edge) {
-            vc.n_copy(p,k,up,qs);
-            vc.n_set(p,0,p_id);
-        } else vc.n_copy(p,0,up,qs);
+            n_copy(p,k,up,qs);
+            n_set(p,0,p_id);
+        } else n_copy(p,0,up,qs);
 
         // Add this point to the auxiliary delete stack
         if(stackp2==stacke2) add_memory_ds2(stackp2);
@@ -780,11 +626,11 @@ bool cell::nplane(cell &vc,double x,double y,double z,double rsq,int p_id) {
         // This point will always have three edges. Connect one of them
         // to lp.
         nu[p]=3;
-        if(mec[3]==mem[3]) add_memory(vc,3,stackp2);
-        vc.n_set_pointer(p,3);
-        vc.n_set(p,0,p_id);
-        vc.n_copy(p,1,up,us);
-        vc.n_copy(p,2,lp,ls);
+        if(mec[3]==mem[3]) add_memory(3,stackp2);
+        n_set_pointer(p,3);
+        n_set(p,0,p_id);
+        n_copy(p,1,up,us);
+        n_copy(p,2,lp,ls);
         ed[p]=mep[3]+7*mec[3]++;
         ed[p][6]=p;
         ed[up][us]=-1;
@@ -827,18 +673,18 @@ bool cell::nplane(cell &vc,double x,double y,double z,double rsq,int p_id) {
             // at the point of intersection. Connect it to the
             // point we just tested. Also connect it to the previous
             // new point in the facet we're constructing.
-            if(p==current_vertices) add_memory_vertices(vc);
+            if(p==current_vertices) add_memory_vertices();
             r=q/(q-l);l=1-r;
             pts[3*p]=pts[3*lp]*r+pts[3*qp]*l;
             pts[3*p+1]=pts[3*lp+1]*r+pts[3*qp+1]*l;
             pts[3*p+2]=pts[3*lp+2]*r+pts[3*qp+2]*l;
             nu[p]=3;
-            if(mec[3]==mem[3]) add_memory(vc,3,stackp2);
+            if(mec[3]==mem[3]) add_memory(3,stackp2);
             ls=ed[qp][qs+nu[qp]];
-            vc.n_set_pointer(p,3);
-            vc.n_set(p,0,p_id);
-            vc.n_copy(p,1,qp,qs);
-            vc.n_copy(p,2,lp,ls);
+            n_set_pointer(p,3);
+            n_set(p,0,p_id);
+            n_copy(p,1,qp,qs);
+            n_copy(p,2,lp,ls);
             ed[p]=mep[3]+7*mec[3]++;
             *ed[p]=cp;
             ed[p][1]=lp;
@@ -859,7 +705,7 @@ bool cell::nplane(cell &vc,double x,double y,double z,double rsq,int p_id) {
             // We're going to introduce a new point right here, but
             // first we need to figure out the number of edges it
             // has.
-            if(p==current_vertices) add_memory_vertices(vc);
+            if(p==current_vertices) add_memory_vertices();
 
             // If the previous vertex detected a double edge, our
             // new vertex will have one less edge.
@@ -955,8 +801,8 @@ bool cell::nplane(cell &vc,double x,double y,double z,double rsq,int p_id) {
             // k now holds the number of edges of the new vertex
             // we are forming. Add memory for it if it doesn't exist
             // already.
-            while(k>=current_vertex_order) add_memory_vorder(vc);
-            if(mec[k]==mem[k]) add_memory(vc,k,stackp2);
+            while(k>=current_vertex_order) add_memory_vorder();
+            if(mec[k]==mem[k]) add_memory(k,stackp2);
 
             // Now create a new vertex with order k, or augment
             // the existing one
@@ -968,11 +814,11 @@ bool cell::nplane(cell &vc,double x,double y,double z,double rsq,int p_id) {
                 if(nu[j]!=k) {
                     // Allocate memory and copy the edges
                     // of the previous instance into it
-                    vc.n_set_aux1(k);
+                    n_set_aux1(k);
                     edp=mep[k]+((k<<1)+1)*mec[k]++;
                     i=0;
                     while(i<nu[j]) {
-                        vc.n_copy_aux1(j,i);
+                        n_copy_aux1(j,i);
                         edp[i]=ed[j][i];
                         edp[k+i]=ed[j][nu[j]+i];
                         i++;
@@ -985,17 +831,17 @@ bool cell::nplane(cell &vc,double x,double y,double z,double rsq,int p_id) {
                     edd=mep[nu[j]]+((nu[j]<<1)+1)*--mec[nu[j]];
                     if(edd!=ed[j]) {
                         for(lw=0;lw<=(nu[j]<<1);lw++) ed[j][lw]=edd[lw];
-                        vc.n_set_aux2_copy(j,nu[j]);
-                        vc.n_copy_pointer(edd[nu[j]<<1],j);
+                        n_set_aux2_copy(j,nu[j]);
+                        n_copy_pointer(edd[nu[j]<<1],j);
                         ed[edd[nu[j]<<1]]=ed[j];
                     }
-                    vc.n_set_to_aux1(j);
+                    n_set_to_aux1(j);
                     ed[j]=edp;
                 } else i=nu[j];
             } else {
 
                 // Allocate a new vertex of order k
-                vc.n_set_pointer(p,k);
+                n_set_pointer(p,k);
                 ed[p]=mep[k]+((k<<1)+1)*mec[k]++;
                 ed[p][k<<1]=p;
                 if(stackp2==stacke2) add_memory_ds2(stackp2);
@@ -1015,7 +861,7 @@ bool cell::nplane(cell &vc,double x,double y,double z,double rsq,int p_id) {
             if(!double_edge) {
                 ed[j][i]=cp;
                 ed[j][nu[j]+i]=cs;
-                vc.n_set(j,i,p_id);
+                n_set(j,i,p_id);
                 ed[cp][cs]=j;
                 ed[cp][nu[cp]+cs]=i;
                 i++;
@@ -1027,7 +873,7 @@ bool cell::nplane(cell &vc,double x,double y,double z,double rsq,int p_id) {
             while(i<(new_double_edge?k:k-1)) {
                 qs=cycle_up(qs,qp);
                 lp=ed[qp][qs];ls=ed[qp][nu[qp]+qs];
-                vc.n_copy(j,i,qp,qs);
+                n_copy(j,i,qp,qs);
                 ed[j][i]=lp;
                 ed[j][nu[j]+i]=ls;
                 ed[lp][ls]=j;
@@ -1038,7 +884,7 @@ bool cell::nplane(cell &vc,double x,double y,double z,double rsq,int p_id) {
             qs=cycle_up(qs,qp);
             cs=i;
             cp=j;
-            vc.n_copy(j,new_double_edge?0:cs,qp,qs);
+            n_copy(j,new_double_edge?0:cs,qp,qs);
 
             // Update the double_edge flag, to pass it
             // to the next instance of this routine
@@ -1099,8 +945,8 @@ bool cell::nplane(cell &vc,double x,double y,double z,double rsq,int p_id) {
             j=nu[p];
             edp=ed[p];edd=(mep[j]+((j<<1)+1)*--mec[j]);
             while(edp<ed[p]+(j<<1)+1) *(edp++)=*(edd++);
-            vc.n_set_aux2_copy(p,j);
-            vc.n_copy_pointer(ed[p][(j<<1)],p);
+            n_set_aux2_copy(p,j);
+            n_copy_pointer(ed[p][(j<<1)],p);
             ed[ed[p][(j<<1)]]=ed[p];
             --p;
         }
@@ -1116,9 +962,9 @@ bool cell::nplane(cell &vc,double x,double y,double z,double rsq,int p_id) {
             j=nu[up];
             edp=ed[up];edd=(mep[j]+((j<<1)+1)*--mec[j]);
             while(edp<ed[up]+(j<<1)+1) *(edp++)=*(edd++);
-            vc.n_set_aux2_copy(up,j);
-            vc.n_copy_pointer(ed[up][j<<1],up);
-            vc.n_copy_pointer(up,p);
+            n_set_aux2_copy(up,j);
+            n_copy_pointer(ed[up][j<<1],up);
+            n_copy_pointer(up,p);
             ed[ed[up][j<<1]]=ed[up];
 
             // Edge management
@@ -1133,236 +979,15 @@ bool cell::nplane(cell &vc,double x,double y,double z,double rsq,int p_id) {
     if(*mec>0) voro_fatal_error("Zero order vertex formed",VOROPP_INTERNAL_ERROR);
 
     // Collapse any order 2 vertices and exit
-    return collapse_order2(vc);
+    return collapse_order2();
 }
 
-/** During the creation of a new facet in the plane routine, it is possible
- * that some order two vertices may arise. This routine removes them.
- * Suppose an order two vertex joins c and d. If there's a edge between
- * c and d already, then the order two vertex is just removed; otherwise,
- * the order two vertex is removed and c and d are joined together directly.
- * It is possible this process will create order two or order one vertices,
- * and the routine is continually run until all of them are removed.
- * \return False if the vertex removal was unsuccessful, indicative of the cell
- *         reducing to zero volume and disappearing; true if the vertex removal
- *         was successful. */
-bool cell::collapse_order2(cell &vc) {
-    if(!collapse_order1(vc)) return false;
-    int a,b,i,j,k,l;
-    while(mec[2]>0) {
-
-        // Pick a order 2 vertex and read in its edges
-        i=--mec[2];
-        j=mep[2][5*i];k=mep[2][5*i+1];
-        if(j==k) {
-            return false;
-        }
-
-        // Scan the edges of j to see if joins k
-        for(l=0;l<nu[j];l++) {
-            if(ed[j][l]==k) break;
-        }
-
-        // If j doesn't already join k, join them together.
-        // Otherwise delete the connection to the current
-        // vertex from j and k.
-        a=mep[2][5*i+2];b=mep[2][5*i+3];i=mep[2][5*i+4];
-        if(l==nu[j]) {
-            ed[j][a]=k;
-            ed[k][b]=j;
-            ed[j][nu[j]+a]=b;
-            ed[k][nu[k]+b]=a;
-        } else {
-            if(!delete_connection(vc,j,a,false)) return false;
-            if(!delete_connection(vc,k,b,true)) return false;
-        }
-
-        // Compact the memory
-        --p;
-        if(up==i) up=0;
-        if(p!=i) {
-            if(up==p) up=i;
-            pts[3*i]=pts[3*p];
-            pts[3*i+1]=pts[3*p+1];
-            pts[3*i+2]=pts[3*p+2];
-            for(k=0;k<nu[p];k++) ed[ed[p][k]][ed[p][nu[p]+k]]=i;
-            vc.n_copy_pointer(i,p);
-            ed[i]=ed[p];
-            nu[i]=nu[p];
-            ed[i][nu[i]<<1]=i;
-        }
-
-        // Collapse any order 1 vertices if they were created
-        if(!collapse_order1(vc)) return false;
-    }
-    return true;
-}
-
-/** Order one vertices can potentially be created during the order two collapse
- * routine. This routine keeps removing them until there are none left.
- * \return False if the vertex removal was unsuccessful, indicative of the cell
- *         having zero volume and disappearing; true if the vertex removal was
- *         successful. */
-bool cell::collapse_order1(cell &vc) {
-    int i,j,k;
-    while(mec[1]>0) {
-        up=0;
-        i=--mec[1];
-        j=mep[1][3*i];k=mep[1][3*i+1];
-        i=mep[1][3*i+2];
-        if(!delete_connection(vc,j,k,false)) return false;
-        --p;
-        if(up==i) up=0;
-        if(p!=i) {
-            if(up==p) up=i;
-            pts[3*i]=pts[3*p];
-            pts[3*i+1]=pts[3*p+1];
-            pts[3*i+2]=pts[3*p+2];
-            for(k=0;k<nu[p];k++) ed[ed[p][k]][ed[p][nu[p]+k]]=i;
-            vc.n_copy_pointer(i,p);
-            ed[i]=ed[p];
-            nu[i]=nu[p];
-            ed[i][nu[i]<<1]=i;
-        }
-    }
-    return true;
-}
-
-/** This routine deletes the kth edge of vertex j and reorganizes the memory.
- * If the neighbor computation is enabled, we also have to supply an handedness
- * flag to decide whether to preserve the plane on the left or right of the
- * connection.
- * \return False if a zero order vertex was formed, indicative of the cell
- *         disappearing; true if the vertex removal was successful. */
-bool cell::delete_connection(cell &vc,int j,int k,bool hand) {
-    int q=hand?k:cycle_up(k,j);
-    int i=nu[j]-1,l,*edp,*edd,m;
-    if(mec[i]==mem[i]) add_memory(vc,i,ds2);
-    vc.n_set_aux1(i);
-    for(l=0;l<q;l++) vc.n_copy_aux1(j,l);
-    while(l<i) {
-        vc.n_copy_aux1_shift(j,l);
-        l++;
-    }
-    edp=mep[i]+((i<<1)+1)*mec[i]++;
-    edp[i<<1]=j;
-    for(l=0;l<k;l++) {
-        edp[l]=ed[j][l];
-        edp[l+i]=ed[j][l+nu[j]];
-    }
-    while(l<i) {
-        m=ed[j][l+1];
-        edp[l]=m;
-        k=ed[j][l+nu[j]+1];
-        edp[l+i]=k;
-        ed[m][nu[m]+k]--;
-        l++;
-    }
-
-    edd=mep[nu[j]]+((nu[j]<<1)+1)*--mec[nu[j]];
-    for(l=0;l<=(nu[j]<<1);l++) ed[j][l]=edd[l];
-    vc.n_set_aux2_copy(j,nu[j]);
-    vc.n_set_to_aux2(edd[nu[j]<<1]);
-    vc.n_set_to_aux1(j);
-    ed[edd[nu[j]<<1]]=edd;
-    ed[j]=edp;
-    nu[j]=i;
-    return true;
-}
-
-bool cell::search_edge(int l,int &m,int &k) {
-    for(m=0;m<nu[l];m++) {
-        k=ed[l][m];
-        if(k>=0) return true;
-    }
-    return false;
-}
-
-/** Several routines in the class that gather cell-based statistics internally
- * track their progress by flipping edges to negative so that they know what
- * parts of the cell have already been tested. This function resets them back
- * to positive. When it is called, it assumes that every edge in the routine
- * should have already been flipped to negative, and it bails out with an
- * internal error if it encounters a positive edge. */
-void cell::reset_edges() {
-    int i,j;
-    for(i=0;i<p;i++) for(j=0;j<nu[i];j++) {
-        if(ed[i][j]>=0) voro_fatal_error("Edge reset routine found a previously untested edge",VOROPP_INTERNAL_ERROR);
-        ed[i][j]=-1-ed[i][j];
-    }
-}
-
-/** Checks to see if a given vertex is inside, outside or within the test
- * plane. If the point is far away from the test plane, the routine immediately
- * returns whether it is inside or outside. If the routine is close the the
- * plane and within the specified tolerance, then the special check_marginal()
- * routine is called.
- * \param[in] n the vertex to test.
- * \param[out] ans the result of the scalar product used in evaluating the
- *                 location of the point.
- * \return -1 if the point is inside the plane, 1 if the point is outside the
- *         plane, or 0 if the point is within the plane. */
-int cell::m_test(int n,double &ans) {
-    double *pp=pts+n+(n<<1);
-    ans=*(pp++)*px;
-    ans+=*(pp++)*py;
-    ans+=*pp*pz-prsq;
-    if(ans<-tolerance2) {
-        return -1;
-    } else if(ans>tolerance2) {
-        return 1;
-    }
-    return check_marginal(n,ans);
-}
-
-/** Checks to see if a given vertex is inside, outside or within the test
- * plane, for the case when the point has been detected to be very close to the
- * plane. The routine ensures that the returned results are always consistent
- * with previous tests, by keeping a table of any marginal results. The routine
- * first sees if the vertex is in the table, and if it finds a previously
- * computed result it uses that. Otherwise, it computes a result for this
- * vertex and adds it the table.
- * \param[in] n the vertex to test.
- * \param[in] ans the result of the scalar product used in evaluating
- *                the location of the point.
- * \return -1 if the point is inside the plane, 1 if the point is outside the
- *         plane, or 0 if the point is within the plane. */
-int cell::check_marginal(int n,double &ans) {
-    int i;
-    for(i=0;i<n_marg;i+=2) if(marg[i]==n) return marg[i+1];
-    if(n_marg==current_marginal) {
-        current_marginal<<=1;
-        if(current_marginal>max_marginal)
-            voro_fatal_error("Marginal case buffer allocation exceeded absolute maximum",VOROPP_MEMORY_ERROR);
-        int *pmarg=new int[current_marginal];
-        for(int j=0;j<n_marg;j++) pmarg[j]=marg[j];
-        delete [] marg;
-        marg=pmarg;
-    }
-    marg[n_marg++]=n;
-    marg[n_marg++]=ans>tolerance?1:(ans<-tolerance?-1:0);
-    return marg[n_marg-1];
-}
-
-/** This routine tests to see whether the cell intersects a plane by starting
- * from the guess point up. If up intersects, then it immediately returns true.
- * Otherwise, it calls the plane_intersects_track() routine.
- * \param[in] (x,y,z) the normal vector to the plane.
- * \param[in] rsq the distance along this vector of the plane.
- * \return False if the plane does not intersect the plane, true if it does. */
 bool cell::plane_intersects(double x,double y,double z,double rsq) {
     double g=x*pts[3*up]+y*pts[3*up+1]+z*pts[3*up+2];
     if(g<rsq) return plane_intersects_track(x,y,z,rsq,g);
     return true;
 }
 
-/** This routine tests to see if a cell intersects a plane. It first tests a
- * random sample of approximately sqrt(p)/4 points. If any of those are
- * intersect, then it immediately returns true. Otherwise, it takes the closest
- * point and passes that to plane_intersect_track() routine.
- * \param[in] (x,y,z) the normal vector to the plane.
- * \param[in] rsq the distance along this vector of the plane.
- * \return False if the plane does not intersect the plane, true if it does. */
 bool cell::plane_intersects_guess(double x,double y,double z,double rsq) {
     up=0;
     double g=x*pts[3*up]+y*pts[3*up+1]+z*pts[3*up+2];
@@ -1382,13 +1007,6 @@ bool cell::plane_intersects_guess(double x,double y,double z,double rsq) {
     return true;
 }
 
-/* This routine tests to see if a cell intersects a plane, by tracing over the cell from
- * vertex to vertex, starting at up. It is meant to be called either by plane_intersects()
- * or plane_intersects_track(), when those routines cannot immediately resolve the case.
- * \param[in] (x,y,z) the normal vector to the plane.
- * \param[in] rsq the distance along this vector of the plane.
- * \param[in] g the distance of up from the plane.
- * \return False if the plane does not intersect the plane, true if it does. */
 bool cell::plane_intersects_track(double x,double y,double z,double rsq,double g) {
     int count=0,ls,us,tp;
     double t;
@@ -1432,25 +1050,268 @@ bool cell::plane_intersects_track(double x,double y,double z,double rsq,double g
     return false;
 }
 
-/** Computes a vector list of neighbors. */
-void cell::neighbors(std::vector<int> &v) {
-    v.clear();
-    int i,j,k,l,m;
-    for(i=1;i<p;i++) for(j=0;j<nu[i];j++) {
-        k=ed[i][j];
-        if(k>=0) {
-            v.push_back(ne[i][j]);
-            ed[i][j]=-1-k;
-            l=cycle_up(ed[i][nu[i]+j],k);
-            do {
-                m=ed[k][l];
-                ed[k][l]=-1-m;
-                l=cycle_up(ed[k][nu[k]+l],m);
-                k=m;
-            } while (k!=i);
+void cell::reset_edges() {
+    int i,j;
+    for(i=0;i<p;i++) for(j=0;j<nu[i];j++) {
+        if(ed[i][j]>=0) voro_fatal_error("Edge reset routine found a previously untested edge",VOROPP_INTERNAL_ERROR);
+        ed[i][j]=-1-ed[i][j];
+    }
+}
+
+void cell::add_memory(int i,int *stackp2) {
+    int s=(i<<1)+1;
+    if(mem[i]==0) {
+        n_allocate(i,init_n_vertices);
+        mep[i]=new int[init_n_vertices*s];
+        mem[i]=init_n_vertices;
+    } else {
+        int j=0,k,*l;
+        mem[i]<<=1;
+        if(mem[i]>max_n_vertices) voro_fatal_error("Point memory allocation exceeded absolute maximum",VOROPP_MEMORY_ERROR);
+        l=new int[s*mem[i]];
+        int m=0;
+        n_allocate_aux1(i);
+        while(j<s*mec[i]) {
+            k=mep[i][j+(i<<1)];
+            if(k>=0) {
+                ed[k]=l+j;
+                n_set_to_aux1_offset(k,m);
+            } else {
+                int *dsp;
+                for(dsp=ds2;dsp<stackp2;dsp++) {
+                    if(ed[*dsp]==mep[i]+j) {
+                        ed[*dsp]=l+j;
+                        n_set_to_aux1_offset(*dsp,m);
+                        break;
+                    }
+                }
+                if(dsp==stackp2) voro_fatal_error("Couldn't relocate dangling pointer",VOROPP_INTERNAL_ERROR);
+            }
+            for(k=0;k<s;k++,j++) l[j]=mep[i][j];
+            for(k=0;k<i;k++,m++) n_copy_to_aux1(i,m);
+        }
+        delete [] mep[i];
+        mep[i]=l;
+        n_switch_to_aux1(i);
+    }
+}
+
+void cell::add_memory_vertices() {
+    int i=(current_vertices<<1),j,**pp,*pnu;
+    if(i>max_vertices) voro_fatal_error("Vertex memory allocation exceeded absolute maximum",VOROPP_MEMORY_ERROR);
+    double *ppts;
+    pp=new int*[i];
+    for(j=0;j<current_vertices;j++) pp[j]=ed[j];
+    delete [] ed;ed=pp;
+    n_add_memory_vertices(i);
+    pnu=new int[i];
+    for(j=0;j<current_vertices;j++) pnu[j]=nu[j];
+    delete [] nu;nu=pnu;
+    ppts=new double[3*i];
+    for(j=0;j<3*current_vertices;j++) ppts[j]=pts[j];
+    delete [] pts;pts=ppts;
+    current_vertices=i;
+}
+
+void cell::add_memory_vorder() {
+    int i=(current_vertex_order<<1),j,*p1,**p2;
+    if(i>max_vertex_order) voro_fatal_error("Vertex order memory allocation exceeded absolute maximum",VOROPP_MEMORY_ERROR);
+    p1=new int[i];
+    for(j=0;j<current_vertex_order;j++) p1[j]=mem[j];
+    while(j<i) p1[j++]=0;
+    delete [] mem;mem=p1;
+    p2=new int*[i];
+    for(j=0;j<current_vertex_order;j++) p2[j]=mep[j];
+    delete [] mep;mep=p2;
+    p1=new int[i];
+    for(j=0;j<current_vertex_order;j++) p1[j]=mec[j];
+    while(j<i) p1[j++]=0;
+    delete [] mec;mec=p1;
+    n_add_memory_vorder(i);
+    current_vertex_order=i;
+}
+
+void cell::add_memory_ds(int *&stackp) {
+    current_delete_size<<=1;
+    if(current_delete_size>max_delete_size) voro_fatal_error("Delete stack 1 memory allocation exceeded absolute maximum",VOROPP_MEMORY_ERROR);
+    int *dsn=new int[current_delete_size],*dsnp=dsn,*dsp=ds;
+    while(dsp<stackp) *(dsnp++)=*(dsp++);
+    delete [] ds;ds=dsn;stackp=dsnp;
+    stacke=ds+current_delete_size;
+}
+
+void cell::add_memory_ds2(int *&stackp2) {
+    current_delete2_size<<=1;
+    if(current_delete2_size>max_delete2_size) voro_fatal_error("Delete stack 2 memory allocation exceeded absolute maximum",VOROPP_MEMORY_ERROR);
+    int *dsn=new int[current_delete2_size],*dsnp=dsn,*dsp=ds2;
+    while(dsp<stackp2) *(dsnp++)=*(dsp++);
+    delete [] ds2;ds2=dsn;stackp2=dsnp;
+    stacke2=ds2+current_delete2_size;
+}
+
+bool cell::collapse_order1() {
+    int i,j,k;
+    while(mec[1]>0) {
+        up=0;
+        i=--mec[1];
+        j=mep[1][3*i];k=mep[1][3*i+1];
+        i=mep[1][3*i+2];
+        if(!delete_connection(j,k,false)) return false;
+        --p;
+        if(up==i) up=0;
+        if(p!=i) {
+            if(up==p) up=i;
+            pts[3*i]=pts[3*p];
+            pts[3*i+1]=pts[3*p+1];
+            pts[3*i+2]=pts[3*p+2];
+            for(k=0;k<nu[p];k++) ed[ed[p][k]][ed[p][nu[p]+k]]=i;
+            n_copy_pointer(i,p);
+            ed[i]=ed[p];
+            nu[i]=nu[p];
+            ed[i][nu[i]<<1]=i;
         }
     }
-    reset_edges();
+    return true;
+}
+
+bool cell::collapse_order2() {
+    if(!collapse_order1()) return false;
+    int a,b,i,j,k,l;
+    while(mec[2]>0) {
+
+        // Pick a order 2 vertex and read in its edges
+        i=--mec[2];
+        j=mep[2][5*i];k=mep[2][5*i+1];
+        if(j==k) {
+            return false;
+        }
+
+        // Scan the edges of j to see if joins k
+        for(l=0;l<nu[j];l++) {
+            if(ed[j][l]==k) break;
+        }
+
+        // If j doesn't already join k, join them together.
+        // Otherwise delete the connection to the current
+        // vertex from j and k.
+        a=mep[2][5*i+2];b=mep[2][5*i+3];i=mep[2][5*i+4];
+        if(l==nu[j]) {
+            ed[j][a]=k;
+            ed[k][b]=j;
+            ed[j][nu[j]+a]=b;
+            ed[k][nu[k]+b]=a;
+        } else {
+            if(!delete_connection(j,a,false)) return false;
+            if(!delete_connection(k,b,true)) return false;
+        }
+
+        // Compact the memory
+        --p;
+        if(up==i) up=0;
+        if(p!=i) {
+            if(up==p) up=i;
+            pts[3*i]=pts[3*p];
+            pts[3*i+1]=pts[3*p+1];
+            pts[3*i+2]=pts[3*p+2];
+            for(k=0;k<nu[p];k++) ed[ed[p][k]][ed[p][nu[p]+k]]=i;
+            n_copy_pointer(i,p);
+            ed[i]=ed[p];
+            nu[i]=nu[p];
+            ed[i][nu[i]<<1]=i;
+        }
+
+        // Collapse any order 1 vertices if they were created
+        if(!collapse_order1()) return false;
+    }
+    return true;
+}
+
+bool cell::delete_connection(int j,int k,bool hand) {
+    int q=hand?k:cycle_up(k,j);
+    int i=nu[j]-1,l,*edp,*edd,m;
+    if(mec[i]==mem[i]) add_memory(i,ds2);
+    n_set_aux1(i);
+    for(l=0;l<q;l++) n_copy_aux1(j,l);
+    while(l<i) {
+        n_copy_aux1_shift(j,l);
+        l++;
+    }
+    edp=mep[i]+((i<<1)+1)*mec[i]++;
+    edp[i<<1]=j;
+    for(l=0;l<k;l++) {
+        edp[l]=ed[j][l];
+        edp[l+i]=ed[j][l+nu[j]];
+    }
+    while(l<i) {
+        m=ed[j][l+1];
+        edp[l]=m;
+        k=ed[j][l+nu[j]+1];
+        edp[l+i]=k;
+        ed[m][nu[m]+k]--;
+        l++;
+    }
+
+    edd=mep[nu[j]]+((nu[j]<<1)+1)*--mec[nu[j]];
+    for(l=0;l<=(nu[j]<<1);l++) ed[j][l]=edd[l];
+    n_set_aux2_copy(j,nu[j]);
+    n_set_to_aux2(edd[nu[j]<<1]);
+    n_set_to_aux1(j);
+    ed[edd[nu[j]<<1]]=edd;
+    ed[j]=edp;
+    nu[j]=i;
+    return true;
+}
+
+bool cell::search_for_outside_edge(int &up) {
+    int i,lp,lw,*j(ds2),*stackp2(ds2);
+    double l;
+    *(stackp2++)=up;
+    while(j<stackp2) {
+        up=*(j++);
+        for(i=0;i<nu[up];i++) {
+            lp=ed[up][i];
+            lw=m_test(lp,l);
+            if(lw==-1) return true;
+            else if(lw==0) add_to_stack(lp,stackp2);
+        }
+    }
+    return false;
+}
+
+void cell::add_to_stack(int lp,int *&stackp2) {
+    for(int *k(ds2);k<stackp2;k++) if(*k==lp) return;
+    if(stackp2==stacke2) add_memory_ds2(stackp2);
+    *(stackp2++)=lp;
+}
+
+int cell::m_test(int n,double &ans) {
+    double *pp=pts+n+(n<<1);
+    ans=*(pp++)*px;
+    ans+=*(pp++)*py;
+    ans+=*pp*pz-prsq;
+    if(ans<-tolerance2) {
+        return -1;
+    } else if(ans>tolerance2) {
+        return 1;
+    }
+    return check_marginal(n,ans);
+}
+
+int cell::check_marginal(int n,double &ans) {
+    int i;
+    for(i=0;i<n_marg;i+=2) if(marg[i]==n) return marg[i+1];
+    if(n_marg==current_marginal) {
+        current_marginal<<=1;
+        if(current_marginal>max_marginal)
+            voro_fatal_error("Marginal case buffer allocation exceeded absolute maximum",VOROPP_MEMORY_ERROR);
+        int *pmarg=new int[current_marginal];
+        for(int j=0;j<n_marg;j++) pmarg[j]=marg[j];
+        delete [] marg;
+        marg=pmarg;
+    }
+    marg[n_marg++]=n;
+    marg[n_marg++]=ans>tolerance?1:(ans<-tolerance?-1:0);
+    return marg[n_marg-1];
 }
 
 }

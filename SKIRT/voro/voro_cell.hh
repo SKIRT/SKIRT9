@@ -142,8 +142,10 @@ private:
 public:
     /** Constructs a Voronoi cell and sets up the initial memory. */
     cell();
+
     /** The destructor deallocates all the dynamic memory. */
     ~cell();
+
     /** Initializes a Voronoi cell as a rectangular box with the given dimensions.
      * It sets up the edge and vertex information, and then
      * sets up the neighbor information, with initial faces being assigned ID
@@ -152,71 +154,47 @@ public:
      * \param[in] (ymin,ymax) the minimum and maximum y coordinates.
      * \param[in] (zmin,zmax) the minimum and maximum z coordinates. */
     void init(double xmin,double xmax,double ymin,double ymax,double zmin,double zmax);
+
     /** Calculates the volume of the Voronoi cell, by decomposing the cell into
      * tetrahedra extending outward from the zeroth vertex, whose volumes are
      * evaluated using a scalar triple product.
      * \return A floating point number holding the calculated volume. */
     double volume();
+
     /** Computes the maximum radius squared of a vertex from the center of the
      * cell. It can be used to determine when enough particles have been testing an
      * all planes that could cut the cell have been considered.
      * \return The maximum radius squared of a vertex.*/
     double max_radius_squared();
+
     /** Calculates the centroid of the Voronoi cell, by decomposing the cell into
      * tetrahedra extending outward from the zeroth vertex.
      * \param[out] (cx,cy,cz) references to floating point numbers in which to
      *                        pass back the centroid vector. */
     void centroid(double &cx,double &cy,double &cz);
+
     /** Returns a vector of the vertex vectors using the local coordinate system.
      * \param[out] v the vector to store the results in. */
     void vertices(std::vector<double> &v);
+
     /** Returns a vector of the vertex vectors in the global coordinate system.
      * \param[out] v the vector to store the results in.
      * \param[in] (x,y,z) the position vector of the particle in the global
      *                    coordinate system. */
     void vertices(double x,double y,double z,std::vector<double> &v);
+
     /** For each face, this routine outputs a bracketed sequence of numbers
      * containing a list of all the vertices that make up that face.
      * \param[out] v the vector to store the results in. */
     void face_vertices(std::vector<int> &v);
 
-    bool nplane(cell &vc,double x,double y,double z,double rsq,int p_id);
-    bool plane_intersects(double x,double y,double z,double rsq);
-    bool plane_intersects_guess(double x,double y,double z,double rsq);
-    void construct_relations();
-    void check_relations();
-    void check_duplicates();
-    /** This is a simple function for picking out the index
-     * of the next edge counterclockwise at the current vertex.
-     * \param[in] a the index of an edge of the current vertex.
-     * \param[in] p the number of the vertex.
-     * \return 0 if a=nu[p]-1, or a+1 otherwise. */
-    int cycle_up(int a,int p) {return a==nu[p]-1?0:a+1;}
-    /** This is a simple function for picking out the index
-     * of the next edge clockwise from the current vertex.
-     * \param[in] a the index of an edge of the current vertex.
-     * \param[in] p the number of the vertex.
-     * \return nu[p]-1 if a=0, or a-1 otherwise. */
-    int cycle_down(int a,int p) {return a==0?nu[p]-1:a-1;}
+    /** Returns a list of IDs of neighboring particles
+     * corresponding to each face.
+     * \param[out] v a reference to a vector in which to return the
+     *               results. If no neighbor information is
+     *               available, a blank vector is returned. */
+    void neighbors(std::vector<int> &v);
 
-private:
-    void reset_edges();
-    void add_memory(cell &vc,int i,int *stackp2);
-    void add_memory_vertices(cell &vc);
-    void add_memory_vorder(cell &vc);
-    void add_memory_ds(int *&stackp);
-    void add_memory_ds2(int *&stackp2);
-    bool collapse_order1(cell &vc);
-    bool collapse_order2(cell &vc);
-    bool delete_connection(cell &vc,int j,int k,bool hand);
-    bool search_for_outside_edge(cell &vc,int &up);
-    void add_to_stack(cell &vc,int lp,int *&stackp2);
-    bool plane_intersects_track(double x,double y,double z,double rs,double g);
-    bool search_edge(int l,int &m,int &k);
-    int m_test(int n,double &ans);
-    int check_marginal(int n,double &ans);
-
-public:
     /** Cuts the Voronoi cell by a particle whose center is at a
      * separation of (x,y,z) from the cell center. The value of rsq
      * should be initially set to \f$x^2+y^2+z^2\f$.
@@ -225,51 +203,158 @@ public:
      * \param[in] p_id the plane ID (for neighbor tracking only).
      * \return False if the plane cut deleted the cell entirely,
      * true otherwise. */
-    bool nplane(double x,double y,double z,double rsq,int p_id) {
-        return nplane(*this,x,y,z,rsq,p_id);
-    }
-    /** This routine calculates the modulus squared of the vector
-     * before passing it to the main nplane() routine with full
-     * arguments.
-     * \param[in] (x,y,z) the vector to cut the cell by.
-     * \param[in] p_id the plane ID (for neighbor tracking only).
-     * \return False if the plane cut deleted the cell entirely,
-     *         true otherwise. */
-    bool nplane(double x,double y,double z,int p_id) {
-        double rsq=x*x+y*y+z*z;
-        return nplane(*this,x,y,z,rsq,p_id);
-    }
-    /** This version of the plane routine just makes up the plane
-     * ID to be zero. It will only be referenced if neighbor
-     * tracking is enabled.
-     * \param[in] (x,y,z) the vector to cut the cell by.
-     * \param[in] rsq the modulus squared of the vector.
-     * \return False if the plane cut deleted the cell entirely,
-     *         true otherwise. */
-    bool plane(double x,double y,double z,double rsq) {
-        return nplane(*this,x,y,z,rsq,0);
-    }
-    /** Cuts a Voronoi cell using the influence of a particle at
-     * (x,y,z), first calculating the modulus squared of this
-     * vector before passing it to the main nplane() routine. Zero
-     * is supplied as the plane ID, which will be ignored unless
-     * neighbor tracking is enabled.
-     * \param[in] (x,y,z) the vector to cut the cell by.
-     * \return False if the plane cut deleted the cell entirely,
-     *         true otherwise. */
-    bool plane(double x,double y,double z) {
-        double rsq=x*x+y*y+z*z;
-        return nplane(*this,x,y,z,rsq,0);
-    }
-    void check_facets();
-    /** Returns a list of IDs of neighboring particles
-     * corresponding to each face.
-     * \param[out] v a reference to a vector in which to return the
-     *               results. If no neighbor information is
-     *               available, a blank vector is returned. */
-    void neighbors(std::vector<int> &v);
+    bool nplane(double x,double y,double z,double rsq,int p_id);
+
+    /** This routine tests to see whether the cell intersects a plane by starting
+     * from the guess point up. If up intersects, then it immediately returns true.
+     * Otherwise, it calls the plane_intersects_track() routine.
+     * \param[in] (x,y,z) the normal vector to the plane.
+     * \param[in] rsq the distance along this vector of the plane.
+     * \return False if the plane does not intersect the plane, true if it does. */
+    bool plane_intersects(double x,double y,double z,double rsq);
+
+    /** This routine tests to see if a cell intersects a plane. It first tests a
+     * random sample of approximately sqrt(p)/4 points. If any of those are
+     * intersect, then it immediately returns true. Otherwise, it takes the closest
+     * point and passes that to plane_intersect_track() routine.
+     * \param[in] (x,y,z) the normal vector to the plane.
+     * \param[in] rsq the distance along this vector of the plane.
+     * \return False if the plane does not intersect the plane, true if it does. */
+    bool plane_intersects_guess(double x,double y,double z,double rsq);
 
 private:
+    /** This routine tests to see if a cell intersects a plane, by tracing over the cell from
+     * vertex to vertex, starting at up. It is meant to be called either by plane_intersects()
+     * or plane_intersects_track(), when those routines cannot immediately resolve the case.
+     * \param[in] (x,y,z) the normal vector to the plane.
+     * \param[in] rsq the distance along this vector of the plane.
+     * \param[in] g the distance of up from the plane.
+     * \return False if the plane does not intersect the plane, true if it does. */
+    bool plane_intersects_track(double x,double y,double z,double rs,double g);
+
+    /** This is a simple function for picking out the index
+     * of the next edge counterclockwise at the current vertex.
+     * \param[in] a the index of an edge of the current vertex.
+     * \param[in] p the number of the vertex.
+     * \return 0 if a=nu[p]-1, or a+1 otherwise. */
+    int cycle_up(int a,int p) {return a==nu[p]-1?0:a+1;}
+
+    /** This is a simple function for picking out the index
+     * of the next edge clockwise from the current vertex.
+     * \param[in] a the index of an edge of the current vertex.
+     * \param[in] p the number of the vertex.
+     * \return nu[p]-1 if a=0, or a-1 otherwise. */
+    int cycle_down(int a,int p) {return a==0?nu[p]-1:a-1;}
+
+    /** Several routines in the class that gather cell-based statistics internally
+     * track their progress by flipping edges to negative so that they know what
+     * parts of the cell have already been tested. This function resets them back
+     * to positive. When it is called, it assumes that every edge in the routine
+     * should have already been flipped to negative, and it bails out with an
+     * internal error if it encounters a positive edge. */
+    void reset_edges();
+
+    /** Increases the memory storage for a particular vertex order, by increasing
+     * the size of the of the corresponding mep array. If the arrays already exist,
+     * their size is doubled; if they don't exist, then new ones of size
+     * init_n_vertices are allocated. The routine also ensures that the pointers in
+     * the ed array are updated, by making use of the back pointers. For the cases
+     * where the back pointer has been temporarily overwritten in the marginal
+     * vertex code, the auxiliary delete stack is scanned to find out how to update
+     * the ed value. If neighbor
+     * tracking is turned on, then the routine also reallocates the corresponding mne
+     * array.
+     * \param[in] i the order of the vertex memory to be increased.
+     * \param (stackp2) ?  */
+    void add_memory(int i,int *stackp2);
+
+    /** Doubles the maximum number of vertices allowed, by reallocating the ed, nu,
+     * and pts arrays. If the allocation exceeds the absolute maximum set in
+     * max_vertices, then the routine exits with a fatal error. If neighbor tracking
+     * is turned on, then the routine
+     * also reallocates the ne array. */
+    void add_memory_vertices();
+
+    /** Doubles the maximum allowed vertex order, by reallocating mem, mep, and mec
+     * arrays. If the allocation exceeds the absolute maximum set in
+     * max_vertex_order, then the routine causes a fatal error. If neighbor tracking
+     * is turned on, then the routine also reallocates the mne array. */
+    void add_memory_vorder();
+
+    /** Doubles the size allocation of the main delete stack. If the allocation
+     * exceeds the absolute maximum set in max_delete_size, then routine causes a
+     * fatal error. */
+    void add_memory_ds(int *&stackp);
+
+    /** Doubles the size allocation of the auxiliary delete stack. If the
+     * allocation exceeds the absolute maximum set in max_delete2_size, then the
+     * routine causes a fatal error. */
+    void add_memory_ds2(int *&stackp2);
+
+    /** Order one vertices can potentially be created during the order two collapse
+     * routine. This routine keeps removing them until there are none left.
+     * \return False if the vertex removal was unsuccessful, indicative of the cell
+     *         having zero volume and disappearing; true if the vertex removal was
+     *         successful. */
+    bool collapse_order1();
+
+    /** During the creation of a new facet in the plane routine, it is possible
+     * that some order two vertices may arise. This routine removes them.
+     * Suppose an order two vertex joins c and d. If there's a edge between
+     * c and d already, then the order two vertex is just removed; otherwise,
+     * the order two vertex is removed and c and d are joined together directly.
+     * It is possible this process will create order two or order one vertices,
+     * and the routine is continually run until all of them are removed.
+     * \return False if the vertex removal was unsuccessful, indicative of the cell
+     *         reducing to zero volume and disappearing; true if the vertex removal
+     *         was successful. */
+    bool collapse_order2();
+
+    /** This routine deletes the kth edge of vertex j and reorganizes the memory.
+     * If the neighbor computation is enabled, we also have to supply an handedness
+     * flag to decide whether to preserve the plane on the left or right of the
+     * connection.
+     * \return False if a zero order vertex was formed, indicative of the cell
+     *         disappearing; true if the vertex removal was successful. */
+    bool delete_connection(int j,int k,bool hand);
+
+    /** Starting from a point within the current cutting plane, this routine attempts
+     * to find an edge to a point outside the cutting plane. This prevents the plane
+     * routine from .
+     * \param[in,out] up */
+    bool search_for_outside_edge(int &up);
+
+    /** Adds a point to the auxiliary delete stack if it is not already there.
+     * \param[in] lp the index of the point to add.
+     * \param[in,out] stackp2 a pointer to the end of the stack entries. */
+    void add_to_stack(int lp,int *&stackp2);
+
+    /** Checks to see if a given vertex is inside, outside or within the test
+     * plane. If the point is far away from the test plane, the routine immediately
+     * returns whether it is inside or outside. If the routine is close the the
+     * plane and within the specified tolerance, then the special check_marginal()
+     * routine is called.
+     * \param[in] n the vertex to test.
+     * \param[out] ans the result of the scalar product used in evaluating the
+     *                 location of the point.
+     * \return -1 if the point is inside the plane, 1 if the point is outside the
+     *         plane, or 0 if the point is within the plane. */
+    int m_test(int n,double &ans);
+
+    /** Checks to see if a given vertex is inside, outside or within the test
+     * plane, for the case when the point has been detected to be very close to the
+     * plane. The routine ensures that the returned results are always consistent
+     * with previous tests, by keeping a table of any marginal results. The routine
+     * first sees if the vertex is in the table, and if it finds a previously
+     * computed result it uses that. Otherwise, it computes a result for this
+     * vertex and adds it the table.
+     * \param[in] n the vertex to test.
+     * \param[in] ans the result of the scalar product used in evaluating
+     *                the location of the point.
+     * \return -1 if the point is inside the plane, 1 if the point is outside the
+     *         plane, or 0 if the point is within the plane. */
+    int check_marginal(int n,double &ans);
+
     void n_allocate(int i,int m) {mne[i]=new int[m*i];}
     void n_add_memory_vertices(int i) {
         int **pp=new int*[i];
