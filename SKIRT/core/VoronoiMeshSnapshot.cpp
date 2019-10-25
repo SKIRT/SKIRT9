@@ -394,6 +394,9 @@ VoronoiMeshSnapshot::VoronoiMeshSnapshot(const SimulationItem* item, const Box& 
 
 void VoronoiMeshSnapshot::buildMesh(bool relax)
 {
+    // maximum number of Voronoi sites processed between two invocations of infoIfElapsed()
+    const int logProgressChunkSize = 1000;
+
     // remove sites that lie outside of the domain
     int numOutside = 0;
     for (int m = _cells.size()-1; m >= 0; --m)
@@ -490,11 +493,12 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
                     vcell.centroid(offsets(m,0), offsets(m,1), offsets(m,2));
 
                     // log message if the minimum time has elapsed
-                    numDone++;
-                    if (numDone%2000==0) log()->infoIfElapsed("Computed Voronoi cells: ", 2000);
+                    numDone = (numDone+1)%logProgressChunkSize;
+                    if (numDone==0) log()->infoIfElapsed("Computed Voronoi cells: ", logProgressChunkSize);
                 }
             }
             while (vloop.inc());
+            if (numDone>0) log()->infoIfElapsed("Computed Voronoi cells: ", numDone);
         });
 
         // communicate the calculated offsets between parallel processes, if needed, and apply them to the cells
@@ -540,11 +544,12 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
                 _cells[m]->init(vcell);
 
                 // log message if the minimum time has elapsed
-                numDone++;
-                if (numDone%2000==0) log()->infoIfElapsed("Computed Voronoi cells: ", 2000);
+                numDone = (numDone+1)%logProgressChunkSize;
+                if (numDone==0) log()->infoIfElapsed("Computed Voronoi cells: ", logProgressChunkSize);
             }
         }
         while (vloop.inc());
+        if (numDone>0) log()->infoIfElapsed("Computed Voronoi cells: ", numDone);
     });
 
     // compile neighbor statistics
