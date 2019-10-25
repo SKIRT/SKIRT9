@@ -9,11 +9,13 @@
 #include "NR.hpp"
 #include "Parallel.hpp"
 #include "ParallelFactory.hpp"
+#include "ProcessManager.hpp"
 #include "Random.hpp"
 #include "SiteListInterface.hpp"
 #include "SpatialGridPath.hpp"
 #include "SpatialGridPlotFile.hpp"
 #include "StringUtils.hpp"
+#include "Table.hpp"
 #include "TextInFile.hpp"
 #include "Units.hpp"
 #include "voro_compute.hh"
@@ -38,11 +40,9 @@ public:
     // the other data members are set to zero or empty
     Cell(const Array& prop) : _r(prop[0],prop[1],prop[2]), _properties{prop} { }
 
-    // adjusts the site position to the centroid position of the specified fully computed Voronoi cell
-    void relax(voro::cell& cell)
+    // adjusts the site position with the specified offset
+    void relax(double cx, double cy, double cz)
     {
-        double cx, cy, cz;
-        cell.centroid(cx,cy,cz);
         _r += Vec(cx,cy,cz);
     }
 
@@ -449,6 +449,10 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
     // if requested, perform a single relaxation step
     if (relax)
     {
+        // table to hold the calculate relaxation offset for each site
+        // (initialized to zero so we can communicate the result between parallel processes using sumAll)
+        Table<2> offsets(numCells, 3);
+
         // add the retained original sites to a temporary Voronoi container, using the cell index m as ID
         voro::container vcon(_extent.xmin(), _extent.xmax(), _extent.ymin(), _extent.ymax(),
                              _extent.zmin(), _extent.zmax(), _nb, _nb, _nb);
@@ -458,13 +462,12 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
             vcon.put(m, r.x(),r.y(),r.z());
         }
 
-        // for each site:
-        //   - compute the corresponding cell in the Voronoi tesselation
-        //   - replace the site position by the cell centroid position
+        // compute the cell in the Voronoi tesselation corresponding to each site
+        // and store the cell's centroid (relative to the site position) as the relaxation offset
         log()->info("Relaxing Voronoi tessellation with " + std::to_string(numCells) + " cells");
         log()->infoSetElapsed(numCells);
-        auto parallel = log()->find<ParallelFactory>()->parallelDuplicated();
-        parallel->call(numCells, [this, &vcon](size_t firstIndex, size_t numIndices)
+        auto parallel = log()->find<ParallelFactory>()->parallelDistributed();
+        parallel->call(numCells, [this, &vcon, &offsets](size_t firstIndex, size_t numIndices)
         {
             // allocate space for the cell calculator object and for the resulting cell info
             voro::compute vcompute(vcon);
@@ -483,8 +486,8 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
                     bool ok = vcompute.compute_cell(vcell, vloop);
                     if (!ok) throw FATALERROR("Can't compute Voronoi cell");
 
-                    // replace the site position
-                    _cells[m]->relax(vcell);
+                    // store the cell's centroid as relaxation offset
+                    vcell.centroid(offsets(m,0), offsets(m,1), offsets(m,2));
 
                     // log message if the minimum time has elapsed
                     numDone++;
@@ -493,6 +496,10 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
             }
             while (vloop.inc());
         });
+
+        // communicate the calculated offsets between parallel processes, if needed, and apply them to the cells
+        ProcessManager::sumToAll(offsets.data());
+        for (int m=0; m!=numCells; ++m) _cells[m]->relax(offsets(m,0), offsets(m,1), offsets(m,2));
     }
 
     // add the final sites to a temporary Voronoi container, using the cell index m as ID
