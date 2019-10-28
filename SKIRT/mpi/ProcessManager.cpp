@@ -216,3 +216,57 @@ void ProcessManager::sumToRoot(Array& arr)
 }
 
 //////////////////////////////////////////////////////////////////////
+
+void ProcessManager::broadcastAllToAll(std::function<void (vector<double>&)> producer,
+                                       std::function<void (const vector<double>&)> consumer)
+{
+#ifdef BUILD_WITH_MPI
+    if (isMultiProc())
+    {
+        // allocate room for data to be sent and received
+        vector<double> data;
+        size_t datasize = 0;
+
+        // iterate over all processes
+        for (int k = 0; k != size(); ++k)
+        {
+            // if it is our turn to send, produce the data
+            if (k == rank())
+            {
+                data.clear();
+                producer(data);
+                datasize = data.size();
+            }
+
+            // communicate the size of the data
+            MPI_Bcast(&datasize, 1, MPI_UNSIGNED_LONG, k, MPI_COMM_WORLD);
+            data.resize(datasize);
+
+            // communicate the data itself, splitting it in maxMessageSize chunks if needed
+            double* curdata = data.data();
+            size_t remaining = datasize;
+            while (remaining > maxMessageSize)
+            {
+                MPI_Bcast(curdata, maxMessageSize, MPI_DOUBLE, k, MPI_COMM_WORLD);
+                remaining -= maxMessageSize;
+                curdata += maxMessageSize;
+            }
+            if (remaining)
+            {
+                MPI_Bcast(curdata, remaining, MPI_DOUBLE, k, MPI_COMM_WORLD);
+            }
+
+            // unless it was our turn to send, consume the data
+            if (k != rank())
+            {
+                consumer(data);
+            }
+        }
+    }
+#else
+    (void)producer; (void)consumer;
+#endif
+
+}
+
+//////////////////////////////////////////////////////////////////////

@@ -7,6 +7,7 @@
 #define PROCESSMANAGER_HPP
 
 #include "Array.hpp"
+#include <functional>
 
 ////////////////////////////////////////////////////////////////////
 
@@ -124,6 +125,34 @@ public:
         call this function for the communication to proceed. If there is only one process, or if
         the array has zero size, the function does nothing. */
     static void sumToRoot(Array& arr);
+
+    /** This function broadcasts a separate sequence of floating point values from each process to
+        the other processes. The chunk of data to be sent by the calling process must be generated
+        by the provided call-back function \em producer. Similarly, the chunks of data reveived by
+        the calling process from the other processes must be processed by the provided call-back
+        function \em consumer. The chunks of data sent by each process may have different sizes.
+        Using call-back functions (as apposed to passing the data directly) avoids the need for
+        holding all data in memory at the same time, which can be a significant benefit in some
+        cases. The following table lists the number of times each function is invoked.
+
+        | nr of processes | \em producer invocations | \em consumer invocations |
+        |--|--|--|
+        | N=1 | 0 | 0   |
+        | N>1 | 1 | N-1 |
+
+        The \em producer function must store the data to be sent into the vector specified as its
+        argument. The vector is guaranteed to be empty when the function is called (but it may have
+        a nonzero memory allocation). Similarly, the \em consumer function can retrieve the
+        received data from the vector specified as its argument.
+
+        Within each process, the calls to the \em producer and \em consumer functions are
+        serialized (i.e. they never occur in parallel threads). However, there is no ordering
+        guarantee within or across processes other than that consuming data can happen only after
+        it has been produced. This freedom allows a future implementation to use non-blocking
+        communication primitives. */
+    static void broadcastAllToAll(std::function<void(vector<double>& data)> producer,
+                                  std::function<void(const vector<double>& data)> consumer);
+
 
     //======== Data members  ===========
 
