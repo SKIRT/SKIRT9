@@ -9,14 +9,63 @@
 #include "NR.hpp"
 #include "Parallel.hpp"
 #include "ParallelFactory.hpp"
+#include "ProcessManager.hpp"
 #include "Random.hpp"
 #include "SiteListInterface.hpp"
 #include "SpatialGridPath.hpp"
 #include "SpatialGridPlotFile.hpp"
 #include "StringUtils.hpp"
+#include "Table.hpp"
 #include "TextInFile.hpp"
 #include "Units.hpp"
 #include "voro_compute.hh"
+
+////////////////////////////////////////////////////////////////////
+
+namespace
+{
+    // classes used for serializing/deserializing Voronoi cell geometry when communicating the results of
+    // grid construction between multiple processes with the ProcessManager::broadcastAllToAll() function
+
+    // decorates a std::vector with functions to write serialized versions of various data types
+    class SerializedWrite
+    {
+    private:
+        vector<double>& _data;
+    public:
+        SerializedWrite(vector<double>& data) : _data(data) { _data.clear(); }
+        void write(double v) { _data.push_back(v); }
+        void write(Vec v) { _data.insert(_data.end(), {v.x(), v.y(), v.z()}); }
+        void write(Box v) { _data.insert(_data.end(), {v.xmin(), v.ymin(), v.zmin(), v.xmax(), v.ymax(), v.zmax()}); }
+        void write(const vector<int>& v)
+        {
+            _data.push_back(v.size());
+            _data.insert(_data.end(), v.begin(), v.end());
+        }
+    };
+
+    // decorates a std::vector with functions to read serialized versions of various data types
+    class SerializedRead
+    {
+    private:
+        const double* _data;
+        const double* _end;
+    public:
+        SerializedRead(const vector<double>& data) : _data(data.data()), _end(data.data()+data.size()) {}
+        bool empty() { return _data == _end; }
+        int readInt() { return *_data++; }
+        void read(double& v) { v = *_data++; }
+        void read(Vec& v) { v.set(*_data, *(_data+1), *(_data+2)); _data += 3; }
+        void read(Box& v) { v = Box(*_data, *(_data+1), *(_data+2), *(_data+3), *(_data+4), *(_data+5)); _data += 6; }
+        void read(vector<int>& v)
+        {
+            int n = *_data++;
+            v.clear();
+            v.reserve(n);
+            for (int i=0; i!=n; ++i) v.push_back(*_data++);
+        }
+    };
+}
 
 ////////////////////////////////////////////////////////////////////
 
@@ -38,11 +87,9 @@ public:
     // the other data members are set to zero or empty
     Cell(const Array& prop) : _r(prop[0],prop[1],prop[2]), _properties{prop} { }
 
-    // adjusts the site position to the centroid position of the specified fully computed Voronoi cell
-    void relax(voro::cell& cell)
+    // adjusts the site position with the specified offset
+    void relax(double cx, double cy, double cz)
     {
-        double cx, cy, cz;
-        cell.centroid(cx,cy,cz);
         _r += Vec(cx,cy,cz);
     }
 
@@ -94,6 +141,29 @@ public:
 
     // returns the cell/site user properties, if any
     const Array& properties() { return _properties; }
+
+    // writes the Voronoi cell geometry to the serialized data buffer, preceded by the specified cell index,
+    // if the cell geometry has been calculated for this cell; otherwise does nothing
+    void writeGeometryIfPresent(SerializedWrite& wdata, int m)
+    {
+        if (!_neighbors.empty())
+        {
+            wdata.write(m);
+            wdata.write(extent());
+            wdata.write(_c);
+            wdata.write(_volume);
+            wdata.write(_neighbors);
+        }
+    }
+
+    // reads the Voronoi cell geometry from the serialized data buffer
+    void readGeometry(SerializedRead& rdata)
+    {
+        rdata.read(*this); // extent
+        rdata.read(_c);
+        rdata.read(_volume);
+        rdata.read(_neighbors);
+    }
 };
 
 ////////////////////////////////////////////////////////////////////
@@ -394,6 +464,9 @@ VoronoiMeshSnapshot::VoronoiMeshSnapshot(const SimulationItem* item, const Box& 
 
 void VoronoiMeshSnapshot::buildMesh(bool relax)
 {
+    // maximum number of Voronoi sites processed between two invocations of infoIfElapsed()
+    const int logProgressChunkSize = 1000;
+
     // remove sites that lie outside of the domain
     int numOutside = 0;
     for (int m = _cells.size()-1; m >= 0; --m)
@@ -449,6 +522,10 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
     // if requested, perform a single relaxation step
     if (relax)
     {
+        // table to hold the calculate relaxation offset for each site
+        // (initialized to zero so we can communicate the result between parallel processes using sumAll)
+        Table<2> offsets(numCells, 3);
+
         // add the retained original sites to a temporary Voronoi container, using the cell index m as ID
         voro::container vcon(_extent.xmin(), _extent.xmax(), _extent.ymin(), _extent.ymax(),
                              _extent.zmin(), _extent.zmax(), _nb, _nb, _nb);
@@ -458,13 +535,12 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
             vcon.put(m, r.x(),r.y(),r.z());
         }
 
-        // for each site:
-        //   - compute the corresponding cell in the Voronoi tesselation
-        //   - replace the site position by the cell centroid position
+        // compute the cell in the Voronoi tesselation corresponding to each site
+        // and store the cell's centroid (relative to the site position) as the relaxation offset
         log()->info("Relaxing Voronoi tessellation with " + std::to_string(numCells) + " cells");
         log()->infoSetElapsed(numCells);
-        auto parallel = log()->find<ParallelFactory>()->parallelDuplicated();
-        parallel->call(numCells, [this, &vcon](size_t firstIndex, size_t numIndices)
+        auto parallel = log()->find<ParallelFactory>()->parallelDistributed();
+        parallel->call(numCells, [this, &vcon, &offsets](size_t firstIndex, size_t numIndices)
         {
             // allocate space for the cell calculator object and for the resulting cell info
             voro::compute vcompute(vcon);
@@ -483,16 +559,21 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
                     bool ok = vcompute.compute_cell(vcell, vloop);
                     if (!ok) throw FATALERROR("Can't compute Voronoi cell");
 
-                    // replace the site position
-                    _cells[m]->relax(vcell);
+                    // store the cell's centroid as relaxation offset
+                    vcell.centroid(offsets(m,0), offsets(m,1), offsets(m,2));
 
                     // log message if the minimum time has elapsed
-                    numDone++;
-                    if (numDone%2000==0) log()->infoIfElapsed("Computed Voronoi cells: ", 2000);
+                    numDone = (numDone+1)%logProgressChunkSize;
+                    if (numDone==0) log()->infoIfElapsed("Computed Voronoi cells: ", logProgressChunkSize);
                 }
             }
             while (vloop.inc());
+            if (numDone>0) log()->infoIfElapsed("Computed Voronoi cells: ", numDone);
         });
+
+        // communicate the calculated offsets between parallel processes, if needed, and apply them to the cells
+        ProcessManager::sumToAll(offsets.data());
+        for (int m=0; m!=numCells; ++m) _cells[m]->relax(offsets(m,0), offsets(m,1), offsets(m,2));
     }
 
     // add the final sites to a temporary Voronoi container, using the cell index m as ID
@@ -509,7 +590,7 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
     //   - extract and copy the relevant information to the cell object with the corresponding index in our vector
     log()->info("Constructing Voronoi tessellation with " + std::to_string(numCells) + " cells");
     log()->infoSetElapsed(numCells);
-    auto parallel = log()->find<ParallelFactory>()->parallelDuplicated();
+    auto parallel = log()->find<ParallelFactory>()->parallelDistributed();
     parallel->call(numCells, [this, &vcon](size_t firstIndex, size_t numIndices)
     {
         // allocate space for the cell calculator object and for the resulting cell info
@@ -533,12 +614,30 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
                 _cells[m]->init(vcell);
 
                 // log message if the minimum time has elapsed
-                numDone++;
-                if (numDone%2000==0) log()->infoIfElapsed("Computed Voronoi cells: ", 2000);
+                numDone = (numDone+1)%logProgressChunkSize;
+                if (numDone==0) log()->infoIfElapsed("Computed Voronoi cells: ", logProgressChunkSize);
             }
         }
         while (vloop.inc());
+        if (numDone>0) log()->infoIfElapsed("Computed Voronoi cells: ", numDone);
     });
+
+    // communicate the calculated cell information between parallel processes, if needed
+    if (ProcessManager::isMultiProc())
+    {
+        auto producer = [this](vector<double>& data)
+        {
+            SerializedWrite wdata(data);
+            int numCells = _cells.size();
+            for (int m=0; m!=numCells; ++m) _cells[m]->writeGeometryIfPresent(wdata, m);
+        };
+        auto consumer = [this](const vector<double>& data)
+        {
+            SerializedRead rdata(data);
+            while (!rdata.empty()) _cells[rdata.readInt()]->readGeometry(rdata);
+        };
+        ProcessManager::broadcastAllToAll(producer, consumer);
+    }
 
     // compile neighbor statistics
     int minNeighbors = INT_MAX;
