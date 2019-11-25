@@ -27,6 +27,7 @@
     \f[ \{\, \rho\,(\text{M}_\odot\,\text{pc}^{-3}) \;\;|\;\; M\,(\text{M}_\odot) \;\;|\;\;
     n\,(\text{cm}^{-3}) \;\;|\;\; N\,(1) \,\} \quad [Z\,(1)] \quad [T\,(\mathrm{K})] \quad [
     v_x\,(\mathrm{km/s}) \quad v_y\,(\mathrm{km/s}) \quad v_z\,(\mathrm{km/s}) ] \quad [
+    B_x\,(\mu\mathrm{G}) \quad B_y\,(\mu\mathrm{G}) \quad B_z\,(\mu\mathrm{G}) ] \quad [
     \dots\text{mix family params}\dots ] \f]
 
     Depending on the value of the \em massType option, the first column lists the average mass
@@ -52,6 +53,9 @@
     If the \em importVelocity option is enabled, the subsequent three columns specify the
     \f$v_x\f$, \f$v_y\f$, \f$v_z\f$ velocity components of the cell (considered as the average bulk
     velocity for the mass in the cell).
+
+    If the \em importMagneticField option is enabled, the subsequent three columns specify the
+    \f$B_x\f$, \f$B_y\f$, \f$B_z\f$ magnetic field vector components for the cell.
 
     Finally, if the \em importVariableMixParams option is enabled, the remaining columns specify
     the parameters used by the configured material mix family to select a particular material mix

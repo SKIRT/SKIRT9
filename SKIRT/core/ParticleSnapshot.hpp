@@ -71,26 +71,37 @@ public:
         being imported, or the index is out of range, the behavior is undefined. */
     Vec velocity(int m) const override;
 
-    /** This function returns the velocity dispersion of the entity with index \f$0\le m \le
-        N_\mathrm{ent}-1\f$. If the velocity dispersion is not being imported, or the index is out
-        of range, the behavior is undefined. */
-    double velocityDispersion(int m) const override;
-
-    /** This function stores the parameters of the particle with index \em m into the given array.
-        If parameters are not being imported, or the index is out of range, the behavior is
-        undefined. */
-    void parameters(int m, Array& params) const override;
-
     /** This function returns the velocity of the particle centered nearest to the specified point
         \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero velocity. If
         the velocity is not being imported, the behavior is undefined. */
     Vec velocity(Position bfr) const override;
+
+    /** This function returns the velocity dispersion of the entity with index \f$0\le m \le
+        N_\mathrm{ent}-1\f$. If the velocity dispersion is not being imported, or the index is out
+        of range, the behavior is undefined. */
+    double velocityDispersion(int m) const override;
 
     /** This function returns the velocity dispersion of the entity nearest to (or at) the
         specified point \f${\bf{r}}\f$. If the point is outside the domain, the function returns
         zero dispersion. If the velocity dispersion is not being imported, the behavior is
         undefined. */
     double velocityDispersion(Position bfr) const override;
+
+    /** This function returns the magnetic field vector of the particle with index \em m. If the
+        magnetic field is not being imported, or the index is out of range, the behavior is
+        undefined. */
+    Vec magneticField(int m) const override;
+
+    /** This function returns the magnetic field vector of the particle centered nearest to the
+        specified point \f${\bf{r}}\f$. If the point is outside the domain, the function returns a
+        zero magnetic field. If the magnetic field is not being imported, the behavior is
+        undefined. */
+    Vec magneticField(Position bfr) const override;
+
+    /** This function stores the parameters of the particle with index \em m into the given array.
+        If parameters are not being imported, or the index is out of range, the behavior is
+        undefined. */
+    void parameters(int m, Array& params) const override;
 
     /** This function stores the parameters of the particle centered nearest to the specified point
         \f${\bf{r}}\f$ into the given array. If the point is outside the domain, the function

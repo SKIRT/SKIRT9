@@ -144,9 +144,11 @@ SkirtUnitDef::SkirtUnitDef()
     addUnit("magneticfield", "T", 1.);
     addUnit("magneticfield", "mT", 1e-3);
     addUnit("magneticfield", "uT", 1e-6);
+    addUnit("magneticfield", "nT", 1e-9);
     addUnit("magneticfield", "G", 1e-4);
     addUnit("magneticfield", "mG", 1e-7);
     addUnit("magneticfield", "uG", 1e-10);
+    addUnit("magneticfield", "nG", 1e-13);
 
     // pressure
     addUnit("pressure", "Pa", 1.);
