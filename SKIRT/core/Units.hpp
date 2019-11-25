@@ -199,6 +199,14 @@ public:
         program's output units. */
     double oenergy(double E) const;
 
+    /** This function returns a string containing the name of the unit of magnetic field adopted by
+        the program for output. */
+    string umagneticfield() const;
+
+    /** This function converts the magnetic field strength \f$B\f$ from the internally used SI
+        units (T) to the program's output units. */
+    double omagneticfield(double B) const;
+
     /** This function returns a string containing the name of the unit of bolometric luminosity
         adopted by the program for output. */
     string ubolluminosity() const;

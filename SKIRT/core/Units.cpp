@@ -261,6 +261,20 @@ double Units::oenergy(double E) const
 
 ////////////////////////////////////////////////////////////////////
 
+std::string Units::umagneticfield() const
+{
+    return unit("magneticfield");
+}
+
+////////////////////////////////////////////////////////////////////
+
+double Units::omagneticfield(double B) const
+{
+    return out("magneticfield", B);
+}
+
+////////////////////////////////////////////////////////////////////
+
 string Units::ubolluminosity() const
 {
     return unit("bolluminosity");

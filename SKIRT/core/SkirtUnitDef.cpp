@@ -140,6 +140,14 @@ SkirtUnitDef::SkirtUnitDef()
     addUnit("energy", "J", 1.);
     addUnit("energy", "erg", 1e-7);
 
+    // magnetic field
+    addUnit("magneticfield", "T", 1.);
+    addUnit("magneticfield", "mT", 1e-3);
+    addUnit("magneticfield", "uT", 1e-6);
+    addUnit("magneticfield", "G", 1e-4);
+    addUnit("magneticfield", "mG", 1e-7);
+    addUnit("magneticfield", "uG", 1e-10);
+
     // pressure
     addUnit("pressure", "Pa", 1.);
     addUnit("pressure", "N/m2", 1.);
@@ -316,6 +324,7 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("SIUnits", "time", "s");
     addDefaultUnit("SIUnits", "temperature", "K");
     addDefaultUnit("SIUnits", "energy", "J");
+    addDefaultUnit("SIUnits", "magneticfield", "T");
     addDefaultUnit("SIUnits", "pressure", "Pa");
     addDefaultUnit("SIUnits", "bolluminosity", "W");
     addDefaultUnit("SIUnits", "neutralmonluminosity", "W");
@@ -355,6 +364,7 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("StellarUnits", "time", "Gyr");
     addDefaultUnit("StellarUnits", "temperature", "K");
     addDefaultUnit("StellarUnits", "energy", "J");
+    addDefaultUnit("StellarUnits", "magneticfield", "uG");
     addDefaultUnit("StellarUnits", "pressure", "K/m3");
     addDefaultUnit("StellarUnits", "bolluminosity", "Lsun");
     addDefaultUnit("StellarUnits", "neutralmonluminosity", "Lsun");
@@ -394,6 +404,7 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("ExtragalacticUnits", "time", "Gyr");
     addDefaultUnit("ExtragalacticUnits", "temperature", "K");
     addDefaultUnit("ExtragalacticUnits", "energy", "J");
+    addDefaultUnit("ExtragalacticUnits", "magneticfield", "uG");
     addDefaultUnit("ExtragalacticUnits", "pressure", "K/m3");
     addDefaultUnit("ExtragalacticUnits", "bolluminosity", "Lsun");
     addDefaultUnit("ExtragalacticUnits", "neutralmonluminosity", "Lsun");
