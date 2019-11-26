@@ -59,6 +59,20 @@ Vec GeometricMedium::bulkVelocity(Position /*bfr*/) const
 
 ////////////////////////////////////////////////////////////////////
 
+bool GeometricMedium::hasMagneticField() const
+{
+    return magneticFieldDistribution() && magneticFieldStrength();
+}
+
+////////////////////////////////////////////////////////////////////
+
+Vec GeometricMedium::magneticField(Position bfr) const
+{
+    return hasMagneticField() ? magneticFieldStrength() * magneticFieldDistribution()->vector(bfr) : Vec();
+}
+
+////////////////////////////////////////////////////////////////////
+
 double GeometricMedium::numberDensity(Position bfr) const
 {
     return _number * geometry()->density(bfr);

@@ -123,12 +123,12 @@ public:
     Vec bulkVelocity(Position bfr) const override;
 
     /** This function returns true if the \em importMagneticField flag is enabled for the medium. */
-    bool hasMagneticField() const; // override
+    bool hasMagneticField() const override;
 
     /** This function returns the magnetic field vector of the medium at the specified position. If
         the \em importMagneticField flag is enabled, it simply calls the corresponding function in
         the snapshot object; otherwise it returns a zero magnetic field. */
-    Vec magneticField(Position bfr) const; // override
+    Vec magneticField(Position bfr) const override;
 
     /** This function returns the number density of the medium at the specified position. */
     double numberDensity(Position bfr) const override;

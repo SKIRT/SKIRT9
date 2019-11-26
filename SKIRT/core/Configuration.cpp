@@ -168,6 +168,13 @@ void Configuration::setupSelfBefore()
     // check for variable material mixes
     if (_hasMedium) for (auto medium : ms->media()) if (medium->hasVariableMix()) _hasVariableMedia = true;
 
+    // check for magnetic fields
+    int numMagneticFields = 0;
+    if (_hasMedium) for (auto medium : ms->media()) if (medium->hasMagneticField()) numMagneticFields++;
+    if (numMagneticFields > 1)
+        throw FATALERROR("It is not allowed for more than one medium component to define a magnetic field");
+    if (numMagneticFields == 1) _hasMagneticField = true;
+
     // prohibit non-identity-mapping cell libraries in combination with variable material mixes
     if (_hasVariableMedia && _cellLibrary && !dynamic_cast<AllCellsLibrary*>(_cellLibrary))
         throw FATALERROR("Cannot use spatial cell library in combination with spatially varying material mixes");

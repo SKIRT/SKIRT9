@@ -10,6 +10,7 @@
 #include "Geometry.hpp"
 #include "MaterialNormalization.hpp"
 #include "MaterialMix.hpp"
+#include "VectorField.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -53,9 +54,19 @@ class GeometricMedium : public Medium
         ATTRIBUTE_MIN_VALUE(velocityZ, "[0")
         ATTRIBUTE_MAX_VALUE(velocityZ, "100000 km/s]")
         ATTRIBUTE_DEFAULT_VALUE(velocityZ, "0")
-        ATTRIBUTE_RELEVANT_IF(velocityZ, "Panchromatic")
         ATTRIBUTE_DISPLAYED_IF(velocityZ, "Level2")
         ATTRIBUTE_INSERT(velocityZ, "Panchromatic&velocityZ:Dimension2")
+
+    PROPERTY_ITEM(magneticFieldDistribution, VectorField, "the spatial distribution of the magnetic field, if any")
+        ATTRIBUTE_REQUIRED_IF(magneticFieldDistribution, "false")
+        ATTRIBUTE_DISPLAYED_IF(magneticFieldDistribution, "Level3")
+
+    PROPERTY_DOUBLE(magneticFieldStrength, "the strength of the magnetic field  (multiplier)")
+        ATTRIBUTE_QUANTITY(magneticFieldStrength, "magneticfield")
+        ATTRIBUTE_MIN_VALUE(magneticFieldStrength, "[-1 T")
+        ATTRIBUTE_MAX_VALUE(magneticFieldStrength, "1 T]")
+        ATTRIBUTE_RELEVANT_IF(magneticFieldStrength, "magneticFieldDistribution")
+        ATTRIBUTE_DISPLAYED_IF(magneticFieldStrength, "Level3")
 
     ITEM_END()
 
@@ -87,6 +98,16 @@ protected:
     /** This function returns the bulk velocity of the medium. The same velocity is returned
         regardless of position. */
     Vec bulkVelocity(Position bfr) const override;
+
+    /** This function returns true if the medium has a nonempty \em magneticFieldDistribution and a
+        nonzero \em magneticFieldStrength. */
+    bool hasMagneticField() const override;
+
+    /** This function returns the magnetic field vector of the medium at the specified position. If
+        hasMagneticField() returns true, this function returns the product of the configured
+        magnetic field strength and the vector retrieved from the configured normalized vector
+        field for the given position; otherwise it returns a zero magnetic field. */
+    Vec magneticField(Position bfr) const override;
 
     /** This function returns the number density of the medium at the specified position. */
     double numberDensity(Position bfr) const override;

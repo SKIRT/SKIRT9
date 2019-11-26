@@ -224,6 +224,12 @@ public:
         domain of the simulation. */
     bool hasVariableMedia() const { return _hasVariableMedia; }
 
+    /** Returns true if a medium component in the simulation defines a spatial magnetic field
+        distribution that may have nonzero strength for some positions, or false if none of the
+        media define a magnetic field. It is not allowed for multiple medium components to define
+        a magnetic field (a fatal error is raised during setup when this happens). */
+    bool hasMagneticField() const { return _hasMagneticField; }
+
     //======================== Data Members ========================
 
 private:
@@ -276,6 +282,7 @@ private:
     bool _hasMovingSources{false};
     bool _hasMovingMedia{false};
     bool _hasVariableMedia{false};
+    bool _hasMagneticField{false};
 };
 
 ////////////////////////////////////////////////////////////////////

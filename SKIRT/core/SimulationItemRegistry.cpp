@@ -38,6 +38,7 @@
 #include "CubicalBackgroundSource.hpp"
 #include "Cylinder2DSpatialGrid.hpp"
 #include "CylindricalClipGeometryDecorator.hpp"
+#include "CylindricalVectorField.hpp"
 #include "DefaultDustTemperatureCutsProbe.hpp"
 #include "DefaultMediaDensityCutsProbe.hpp"
 #include "DefaultRadiationFieldCutsProbe.hpp"
@@ -51,8 +52,8 @@
 #include "DustAbsorptionPerCellProbe.hpp"
 #include "DustEmGrainComposition.hpp"
 #include "DustEmissionOptions.hpp"
-#include "DustEmissivityProbe.hpp"
 #include "DustEmissionWavelengthGridProbe.hpp"
+#include "DustEmissivityProbe.hpp"
 #include "DustGrainPopulationsProbe.hpp"
 #include "DustGrainSizeDistributionProbe.hpp"
 #include "DustSelfAbsorptionOptions.hpp"
@@ -62,6 +63,8 @@
 #include "ExpDiskGeometry.hpp"
 #include "ExtinctionOnlyOptions.hpp"
 #include "ExtragalacticUnits.hpp"
+#include "FSPSSED.hpp"
+#include "FSPSSEDFamily.hpp"
 #include "FieldStrengthCellLibrary.hpp"
 #include "FileBand.hpp"
 #include "FileMesh.hpp"
@@ -71,8 +74,6 @@
 #include "FileWavelengthDistribution.hpp"
 #include "FileWavelengthGrid.hpp"
 #include "FrameInstrument.hpp"
-#include "FSPSSED.hpp"
-#include "FSPSSEDFamily.hpp"
 #include "FullInstrument.hpp"
 #include "GammaGeometry.hpp"
 #include "GaussianGeometry.hpp"
@@ -83,6 +84,7 @@
 #include "HyperboloidGeometry.hpp"
 #include "HyperboloidShellGeometry.hpp"
 #include "InstrumentSystem.hpp"
+#include "InstrumentWavelengthGridProbe.hpp"
 #include "IntegratedLuminosityNormalization.hpp"
 #include "IsotropicAngularDistribution.hpp"
 #include "LaserAngularDistribution.hpp"
@@ -128,6 +130,7 @@
 #include "NoPolarizationProfile.hpp"
 #include "NumberColumnMaterialNormalization.hpp"
 #include "OffsetGeometryDecorator.hpp"
+#include "OffsetVectorFieldDecorator.hpp"
 #include "OpticalDepthMapProbe.hpp"
 #include "OpticalDepthMaterialNormalization.hpp"
 #include "OpticalMaterialPropertiesProbe.hpp"
@@ -152,12 +155,14 @@
 #include "ProbeSystem.hpp"
 #include "PseudoSersicGeometry.hpp"
 #include "QuasarSED.hpp"
-#include "RadiationFieldWavelengthGridProbe.hpp"
+#include "RadialVectorField.hpp"
 #include "RadiationFieldPerCellProbe.hpp"
+#include "RadiationFieldWavelengthGridProbe.hpp"
 #include "Random.hpp"
 #include "ReadFitsGeometry.hpp"
 #include "RingGeometry.hpp"
 #include "RotateGeometryDecorator.hpp"
+#include "RotateVectorFieldDecorator.hpp"
 #include "SEDInstrument.hpp"
 #include "SIUnits.hpp"
 #include "ScaledGaussianSmoothingKernel.hpp"
@@ -198,13 +203,13 @@
 #include "TrustGraphiteGrainComposition.hpp"
 #include "TrustNeutralPAHGrainComposition.hpp"
 #include "TrustSilicateGrainComposition.hpp"
+#include "UnidirectionalVectorField.hpp"
 #include "UniformBoxGeometry.hpp"
 #include "UniformSmoothingKernel.hpp"
 #include "VoronoiMeshGeometry.hpp"
 #include "VoronoiMeshMedium.hpp"
 #include "VoronoiMeshSource.hpp"
 #include "VoronoiMeshSpatialGrid.hpp"
-#include "InstrumentWavelengthGridProbe.hpp"
 #include "WeingartnerDraineDustMix.hpp"
 #include "ZubkoDustMix.hpp"
 #include "ZubkoGraphiteGrainSizeDistribution.hpp"
@@ -365,6 +370,14 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<CubicSplineSmoothingKernel>();
     ItemRegistry::add<ScaledGaussianSmoothingKernel>();
     ItemRegistry::add<UniformSmoothingKernel>();
+
+    // vector fields
+    ItemRegistry::add<VectorField>();
+    ItemRegistry::add<RadialVectorField>();
+    ItemRegistry::add<CylindricalVectorField>();
+    ItemRegistry::add<UnidirectionalVectorField>();
+    ItemRegistry::add<OffsetVectorFieldDecorator>();
+    ItemRegistry::add<RotateVectorFieldDecorator>();
 
     // spatial grids
     ItemRegistry::add<SpatialGrid>();
