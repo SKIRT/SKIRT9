@@ -67,6 +67,7 @@ class GeometricMedium : public Medium
         ATTRIBUTE_MAX_VALUE(magneticFieldStrength, "1 T]")
         ATTRIBUTE_RELEVANT_IF(magneticFieldStrength, "magneticFieldDistribution")
         ATTRIBUTE_DISPLAYED_IF(magneticFieldStrength, "Level3")
+        ATTRIBUTE_INSERT(magneticFieldStrength, "magneticFieldDistribution&magneticFieldStrength:MagneticField")
 
     ITEM_END()
 

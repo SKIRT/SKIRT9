@@ -40,6 +40,7 @@
 #include "CylindricalClipGeometryDecorator.hpp"
 #include "CylindricalVectorField.hpp"
 #include "DefaultDustTemperatureCutsProbe.hpp"
+#include "DefaultMagneticFieldCutsProbe.hpp"
 #include "DefaultMediaDensityCutsProbe.hpp"
 #include "DefaultRadiationFieldCutsProbe.hpp"
 #include "DensityTreePolicy.hpp"
@@ -142,6 +143,7 @@
 #include "PerspectiveInstrument.hpp"
 #include "PhotonPacketOptions.hpp"
 #include "PlanarDustTemperatureCutsProbe.hpp"
+#include "PlanarMagneticFieldCutsProbe.hpp"
 #include "PlanarMediaDensityCutsProbe.hpp"
 #include "PlanarRadiationFieldCutsProbe.hpp"
 #include "PlummerGeometry.hpp"
@@ -549,6 +551,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<OpticalMaterialPropertiesProbe>();
     ItemRegistry::add<DustGrainPopulationsProbe>();
     ItemRegistry::add<DustGrainSizeDistributionProbe>();
+    ItemRegistry::add<DefaultMagneticFieldCutsProbe>();
+    ItemRegistry::add<PlanarMagneticFieldCutsProbe>();
 
     ItemRegistry::add<DefaultRadiationFieldCutsProbe>();
     ItemRegistry::add<PlanarRadiationFieldCutsProbe>();

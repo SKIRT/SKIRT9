@@ -53,6 +53,7 @@ class ImportedMedium : public Medium, public SiteListInterface
     PROPERTY_BOOL(importMagneticField, "import magnetic field components (3 columns)")
         ATTRIBUTE_DEFAULT_VALUE(importMagneticField, "false")
         ATTRIBUTE_DISPLAYED_IF(importMagneticField, "Level3")
+        ATTRIBUTE_INSERT(importMagneticField, "importMagneticField:MagneticField")
 
     PROPERTY_BOOL(importVariableMixParams, "import parameter(s) to select a spatially varying material mix")
         ATTRIBUTE_DEFAULT_VALUE(importVariableMixParams, "false")
