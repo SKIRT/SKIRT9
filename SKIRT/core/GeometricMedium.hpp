@@ -54,6 +54,7 @@ class GeometricMedium : public Medium
         ATTRIBUTE_MIN_VALUE(velocityZ, "[0")
         ATTRIBUTE_MAX_VALUE(velocityZ, "100000 km/s]")
         ATTRIBUTE_DEFAULT_VALUE(velocityZ, "0")
+        ATTRIBUTE_RELEVANT_IF(velocityZ, "Panchromatic")
         ATTRIBUTE_DISPLAYED_IF(velocityZ, "Level2")
         ATTRIBUTE_INSERT(velocityZ, "Panchromatic&velocityZ:Dimension2")
 
