@@ -26,7 +26,8 @@ int GeometricMedium::dimension() const
         if (velocityZ()) velocityDimension = 2;
         if (velocityX() || velocityY()) velocityDimension = 3;
     }
-    return max(geometry()->dimension(), velocityDimension);
+    int magneticFieldDimension = magneticFieldDistribution() ? magneticFieldDistribution()->dimension() : 1;
+    return max({geometry()->dimension(), velocityDimension, magneticFieldDimension});
 }
 
 ////////////////////////////////////////////////////////////////////
