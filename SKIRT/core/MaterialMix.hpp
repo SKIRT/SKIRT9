@@ -119,7 +119,8 @@ public:
 public:
     /** This enumeration lists the possible scattering modes offered by the public material mix
         interface. */
-    enum class ScatteringMode { HenyeyGreenstein, MaterialPhaseFunction, SphericalPolarization };
+    enum class ScatteringMode { HenyeyGreenstein, MaterialPhaseFunction,
+                                SphericalPolarization, SpheroidalPolarization };
 
     /** This function returns the scattering mode supported by this material mix. In the current
         implementation, this can be one of the following modes:
@@ -141,6 +142,11 @@ public:
         functions are used to obtain the value of the phase function and to sample a scattering
         angle from it, and the applyMueller() function is used to updated the polarization state.
 
+        - SpheroidalPolarization: this material type supports polarization through scattering,
+        absorption and emission by nonspherical, spheroidal particles. Currently, only \em emission
+        is implemented and all other areas of the code treat spheroidal particles as if they were
+        spherical.
+
         The implementation of this function in this base class returns the HenyeyGreenstein
         scattering mode as a default value. Subclasses that support another scattering mode must
         override this function and return the appropriate value. */
@@ -148,8 +154,9 @@ public:
 
     /** This convenience function returns true if this material mix uses and supports polarized
         radiation, and false otherwise. In the current implementation, the function returns true
-        only if the scattering mode is SphericalPolarization. */
-    bool hasPolarization() const { return scatteringMode() == ScatteringMode::SphericalPolarization; }
+        if the scattering mode is SphericalPolarization or SpheroidalPolarization. */
+    bool hasPolarization() const { return scatteringMode() == ScatteringMode::SphericalPolarization
+                                       || scatteringMode() == ScatteringMode::SpheroidalPolarization; }
 
     //======== Basic material properties =======
 

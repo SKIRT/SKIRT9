@@ -54,7 +54,8 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
         throw FATALERROR("HenyeyGreenstein scattering mode prohibits grain populations to offer a Mueller matrix");
     if (mode == ScatteringMode::MaterialPhaseFunction && numMueller!=numPops)
         throw FATALERROR("MaterialPhaseFunction scattering mode requires grain populations to offer a Mueller matrix");
-    if (mode == ScatteringMode::SphericalPolarization && numMueller!=numPops)
+    if ((mode == ScatteringMode::SphericalPolarization || mode == ScatteringMode::SpheroidalPolarization)
+        && numMueller!=numPops)
         throw FATALERROR("SphericalPolarization scattering mode requires grain populations to offer a Mueller matrix");
 
     // get the number of requested grid points
@@ -154,13 +155,14 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
         }
 
         // handle Mueller matrix coefficients if needed
-        if (mode == ScatteringMode::MaterialPhaseFunction || mode == ScatteringMode::SphericalPolarization)
+        if (mode == ScatteringMode::MaterialPhaseFunction || mode == ScatteringMode::SphericalPolarization
+                                                          || mode == ScatteringMode::SpheroidalPolarization)
         {
             // open the stored tables for the Mueller matrix coefficients
             string muellerName = population->composition()->resourceNameForMuellerMatrix();
             StoredTable<3> S11, S12, S33, S34;
             S11.open(this, muellerName, "a(m),lambda(m),theta(rad)", "S11(1)");
-            if (mode == ScatteringMode::SphericalPolarization)
+            if (mode == ScatteringMode::SphericalPolarization || mode == ScatteringMode::SpheroidalPolarization)
             {
                 S12.open(this, muellerName, "a(m),lambda(m),theta(rad)", "S12(1)");
                 S33.open(this, muellerName, "a(m),lambda(m),theta(rad)", "S33(1)");
@@ -200,7 +202,8 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
                             {
                                 double factor = weightv[i] * dndav[i] * dav[i];
                                 sumS11 += factor * S11(av[i],lambda,theta);
-                                if (mode == ScatteringMode::SphericalPolarization)
+                                if (mode == ScatteringMode::SphericalPolarization
+                                    || mode == ScatteringMode::SpheroidalPolarization)
                                 {
                                     sumS12 += factor * S12(av[i],lambda,theta);
                                     sumS33 += factor * S33(av[i],lambda,theta);
@@ -210,7 +213,8 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
 
                             // accumulate for all populations
                             S11vv(ell,t) += sumS11;
-                            if (mode == ScatteringMode::SphericalPolarization)
+                            if (mode == ScatteringMode::SphericalPolarization
+                                || mode == ScatteringMode::SpheroidalPolarization)
                             {
                                 S12vv(ell,t) += sumS12;
                                 S33vv(ell,t) += sumS33;

@@ -74,7 +74,8 @@ void DustMix::setupSelfAfter()
     auto mode = scatteringMode();
 
     // if needed, build a scattering angle grid
-    if (mode == ScatteringMode::MaterialPhaseFunction || mode == ScatteringMode::SphericalPolarization)
+    if (mode == ScatteringMode::MaterialPhaseFunction || mode == ScatteringMode::SphericalPolarization
+                                                      || mode == ScatteringMode::SpheroidalPolarization)
     {
         _thetav.resize(numTheta);
         for (int t=0; t!=numTheta; ++t) _thetav[t] = t * deltaTheta;
@@ -86,10 +87,11 @@ void DustMix::setupSelfAfter()
     _sigmaextv.resize(numLambda);
     _albedov.resize(numLambda);
     _asymmparv.resize(numLambda);
-    if (mode == ScatteringMode::MaterialPhaseFunction || mode == ScatteringMode::SphericalPolarization)
+    if (mode == ScatteringMode::MaterialPhaseFunction || mode == ScatteringMode::SphericalPolarization
+                                                      || mode == ScatteringMode::SpheroidalPolarization)
     {
         _S11vv.resize(numLambda, numTheta);
-        if (mode == ScatteringMode::SphericalPolarization)
+        if (mode == ScatteringMode::SphericalPolarization || mode == ScatteringMode::SpheroidalPolarization)
         {
             _S12vv.resize(numLambda, numTheta);
             _S33vv.resize(numLambda, numTheta);
@@ -108,7 +110,8 @@ void DustMix::setupSelfAfter()
     }
 
     // precalculate discretizations related to the scattering angles as needed
-    if (mode == ScatteringMode::MaterialPhaseFunction || mode == ScatteringMode::SphericalPolarization)
+    if (mode == ScatteringMode::MaterialPhaseFunction || mode == ScatteringMode::SphericalPolarization
+                                                      || mode == ScatteringMode::SpheroidalPolarization)
     {
         // create a table with the normalized cumulative distribution of theta for each wavelength
         _thetaXvv.resize(numLambda,0);
@@ -130,7 +133,7 @@ void DustMix::setupSelfAfter()
         }
 
         // create tables listing phi, phi/(2 pi), sin(2 phi) and 1-cos(2 phi) for each phi index
-        if (mode == ScatteringMode::SphericalPolarization)
+        if (mode == ScatteringMode::SphericalPolarization || mode == ScatteringMode::SpheroidalPolarization)
         {
             _phiv.resize(numPhi);
             _phi1v.resize(numPhi);
