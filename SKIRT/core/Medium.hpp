@@ -22,8 +22,8 @@ class MaterialMix;
         secondary emission (for dust, calorimetric properties; for gas, kinetic temperature).
       - The number density and mass density of the material (implying a total number and mass).
       - The bulk velocity of the medium relative to the model coordinate frame.
-      - If the material consists of non-spherical (spheroidal) particles, the direction and
-        degree of alignment.
+      - If the material consists of non-spherical (spheroidal) particles, the magnetic field
+        vector, which will be used to determine the direction and degree of alignment.
 
     The material properties at a particular spatial position in a medium are defined by an instance
     of a MaterialMix subclass. While the specific properties (such as, e.g., the scattering albedo)

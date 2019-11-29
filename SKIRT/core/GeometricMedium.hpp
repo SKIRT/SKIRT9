@@ -82,8 +82,9 @@ protected:
 
     //======================== Functions implemented by subclasses =======================
 
-    /** This function returns the dimension of the medium, which is the same as the dimension of
-        its spatial distribution, except if there is a nonzero bulk velocity. */
+    /** This function returns the dimension of the medium, which is determined by the symmetries of
+        the spatial distribution of its density, bulk velocity (if any) and magnetic field (if
+        any). */
     int dimension() const override;
 
     /** This function returns the MaterialMix object defining the material properties for the
