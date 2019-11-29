@@ -74,9 +74,11 @@ void MediumSystem::setupSelfAfter()
     auto dic = _grid->interface<DensityInCellInterface>(0, false);  // optional fast-track interface for densities
     int numSamples = _config->numDensitySamples();
     bool oligo = _config->oligochromatic();
+    int magneticindex = -1;
+    for (int h=0; h!=_numMedia; ++h) if (_media[h]->hasMagneticField()) magneticindex = h;
     log->infoSetElapsed(_numCells);
     parfac->parallelDistributed()->call(_numCells,
-                                        [this, log, dic, numSamples, oligo](size_t firstIndex, size_t numIndices)
+                    [this, log, dic, numSamples, oligo, magneticindex](size_t firstIndex, size_t numIndices)
     {
         ShortArray<8> nsumv(_numMedia);
 
@@ -102,10 +104,10 @@ void MediumSystem::setupSelfAfter()
                     for (int h=0; h!=_numMedia; ++h) state(m,h).n = nsumv[h]/numSamples;
                 }
 
-                // for oligochromatic simulations, leave bulk velocity at zero
+                // bulk velocity: weighted average at cell center; assumes densities have been calculated
+                //                for oligochromatic simulations, leave at zero
                 if (!oligo)
                 {
-                    // bulk velocity: weighted average at cell center; assumes densities have been calculated
                     Position bfr = _grid->centralPositionInCell(m);
                     double n = 0.;
                     Vec v;
@@ -115,6 +117,13 @@ void MediumSystem::setupSelfAfter()
                         v += state(m,h).n * _media[h]->bulkVelocity(bfr);
                     }
                     if (n > 0.) state(m).v = v / n;  // leave bulk velocity at zero if cell has no material
+                }
+
+                // magnetic field: retrieve from medium component that specifies it, if any
+                if (magneticindex >= 0)
+                {
+                    Position bfr = _grid->centralPositionInCell(m);
+                    state(m).B = _media[magneticindex]->magneticField(bfr);
                 }
 
                 // volume
@@ -150,20 +159,24 @@ void MediumSystem::communicateStates()
     //       in the meantime, we copy the data into a temporary table so we can use the standard sumToAll procedure
     Table<2> data;
 
-    // volumes and bulk velocities
-    data.resize(_numCells,4);
+    // volumes, bulk velocities, and magnetic fields
+    data.resize(_numCells,7);
     for (int m=0; m!=_numCells; ++m)
     {
         data(m,0) = state(m).V;
         data(m,1) = state(m).v.x();
         data(m,2) = state(m).v.y();
         data(m,3) = state(m).v.z();
+        data(m,4) = state(m).B.x();
+        data(m,5) = state(m).B.y();
+        data(m,6) = state(m).B.z();
     }
     ProcessManager::sumToAll(data.data());
     for (int m=0; m!=_numCells; ++m)
     {
         state(m).V = data(m,0);
-        state(m).v = Vec(data(m,1), data(m,3), data(m,3));
+        state(m).v = Vec(data(m,1), data(m,2), data(m,3));
+        state(m).B = Vec(data(m,4), data(m,5), data(m,6));
     }
 
     // densities
@@ -215,6 +228,13 @@ double MediumSystem::volume(int m) const
 Vec MediumSystem::bulkVelocity(int m)
 {
     return state(m).v;
+}
+
+////////////////////////////////////////////////////////////////////
+
+Vec MediumSystem::magneticField(int m)
+{
+    return state(m).B;
 }
 
 ////////////////////////////////////////////////////////////////////

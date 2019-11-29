@@ -208,11 +208,6 @@ public:
         means spherical symmetry, 2 means axial symmetry and 3 means none of these symmetries. */
     int gridDimension() const { return _gridDimension; }
 
-    /** Returns true if all media in the simulation support polarization, and false if none of the
-        media do. A mixture of support and no support for polarization is not allowed and will
-        cause a fatal error during setup. */
-    bool hasPolarization() const { return _hasPolarization; }
-
     /** Returns true if at least one medium component in the simulation can have a nonzero velocity
         for some positions, causing Doppler shifts in the perceived, scattered and emitted
         wavelengths. If the function returns false, none of the media has a velocity. */
@@ -223,6 +218,17 @@ public:
         thus the material properties for all media are constant throughout the complete spatial
         domain of the simulation. */
     bool hasVariableMedia() const { return _hasVariableMedia; }
+
+    /** Returns true if all media in the simulation support polarization, and false if none of the
+        media do. A mixture of support and no support for polarization is not allowed and will
+        cause a fatal error during setup. */
+    bool hasPolarization() const { return _hasPolarization; }
+
+    /** Returns true if some of the media in the simulation represent spheroidal (i.e.
+        non-spherical) particles and require the corresponding treatment of polarization for
+        scattering, absorption and emission, or false otherwise. If this function returns true, the
+        hasPolarization() and hasMagneticField() functions return true as well. */
+    bool hasSpheroidalPolarization() const { return _hasSpheroidalPolarization; }
 
     /** Returns true if a medium component in the simulation defines a spatial magnetic field
         distribution that may have nonzero strength for some positions, or false if none of the
@@ -278,10 +284,11 @@ private:
     // properties derived from the configuration at large
     int _modelDimension{0};
     int _gridDimension{0};
-    bool _hasPolarization{false};
     bool _hasMovingSources{false};
     bool _hasMovingMedia{false};
     bool _hasVariableMedia{false};
+    bool _hasPolarization{false};
+    bool _hasSpheroidalPolarization{false};
     bool _hasMagneticField{false};
 };
 
