@@ -35,6 +35,13 @@ string PolarizedGraphiteGrainComposition::resourceNameForMuellerMatrix() const
 
 //////////////////////////////////////////////////////////////////////
 
+std::string PolarizedGraphiteGrainComposition::resourceNameForSpheroidalEmission() const
+{
+    return _spheroidalEmissionTable;
+}
+
+//////////////////////////////////////////////////////////////////////
+
 string PolarizedGraphiteGrainComposition::resourceNameForEnthalpies() const
 {
     return "DraineGraphiteEnthalpies";

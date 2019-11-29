@@ -36,6 +36,13 @@ string PolarizedSilicateGrainComposition::resourceNameForMuellerMatrix() const
 
 //////////////////////////////////////////////////////////////////////
 
+std::string PolarizedSilicateGrainComposition::resourceNameForSpheroidalEmission() const
+{
+    return _spheroidalEmissionTable;
+}
+
+//////////////////////////////////////////////////////////////////////
+
 string PolarizedSilicateGrainComposition::resourceNameForEnthalpies() const
 {
     return "DraineSilicateEnthalpies";

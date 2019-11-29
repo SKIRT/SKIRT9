@@ -27,6 +27,15 @@
     HenyeyGreenstein scattering mode (see the MaterialMix class for more information on scattering
     modes).
 
+    Furthermore, a grain composition may optionally provide additional properties relevant for
+    calculating the polarization effects of scattering, absorption and emission by spheroidal
+    grains. The current implementation supports only the properties relevant for polarized
+    emission, i.e the absorption efficiencies \f$Q^\mathrm{abs}(a,\lambda,\theta)\f$ and the
+    corresponding linear polarization efficiencies \f$Q^\mathrm{abspol}(a,\lambda,\theta)\f$ as a
+    function of grain size \f$a\f$, wavelength \f$\lambda\f$ and emission angle \f$\theta\f$. For
+    consistency, the \f$Q^\mathrm{abs}\f$ values given here, when averaged over the emission angle,
+    should match the basic $Q^\mathrm{abs}$ mentioned above.
+
     The calorimetric properties consist of the specific enthalpy (internal energy) per unit volume,
     given in J/m3, at arbitrary temperature. The specific enthalpy is obtained by integrating the
     specific heat capacity of the material over the temperature range, using an arbitrary zero
@@ -69,6 +78,15 @@ public:
         coefficients). The default implementation in this base class returns the empty string,
         indicating that only the HenyeyGreenstein scattering mode can be used. */
     virtual string resourceNameForMuellerMatrix() const;
+
+    /** This function returns the name of the stored table resource tabulating the absorption
+        efficiencies \f$Q^\mathrm{abs}(a,\lambda,\theta)\f$ and the corresponding linear
+        polarization efficiencies \f$Q^\mathrm{abspol}(a,\lambda,\theta)\f$ as a function of grain
+        size \f$a\f$, wavelength \f$\lambda\f$ and emission angle \f$\theta\f$. This function is
+        invoked for the SpheroidalPolarization scattering mode. The default implementation in this
+        base class returns the empty string, indicating that there is no support for spheroidal
+        grains. */
+    virtual string resourceNameForSpheroidalEmission() const;
 
     /** This function returns the name of the stored table resource tabulating the specific
         enthalpies per unit volume as a function of temperature. */
