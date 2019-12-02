@@ -19,11 +19,14 @@
 class ConfigurableDustMix : public MultiGrainDustMix
 {
     /** The enumeration type indicating the scattering mode. */
-    ENUM_DEF(ScatteringType, HenyeyGreenstein, MaterialPhaseFunction, SphericalPolarization)
+    ENUM_DEF(ScatteringType, HenyeyGreenstein, MaterialPhaseFunction, SphericalPolarization, SpheroidalPolarization)
     ENUM_VAL(ScatteringType, HenyeyGreenstein, "use the Henyey-Greenstein phase function (unpolarized)")
     ENUM_VAL(ScatteringType, MaterialPhaseFunction,
-                                      "use the phase function derived from actual material properties (unpolarized)")
-    ENUM_VAL(ScatteringType, SphericalPolarization, "support polarization through scattering by spherical grains")
+                                "use the phase function derived from actual material properties (unpolarized)")
+    ENUM_VAL(ScatteringType, SphericalPolarization,
+                                "support polarization through scattering by spherical grains")
+    ENUM_VAL(ScatteringType, SpheroidalPolarization,
+                                "support polarization through scattering, absorption and emission by spheroidal grains")
     ENUM_END()
 
     ITEM_CONCRETE(ConfigurableDustMix, MultiGrainDustMix, "a configurable dust mix with one or more grain populations")

@@ -24,7 +24,8 @@
 
     \f[ x\,(\mathrm{pc}) \quad y\,(\mathrm{pc}) \quad z\,(\mathrm{pc}) \quad h\,(\mathrm{pc}) \quad
     M\,(\mathrm{M}_\odot) \quad [Z\,(1)] \quad [T\,(\mathrm{K})] \quad [ v_x\,(\mathrm{km/s}) \quad
-    v_y\,(\mathrm{km/s}) \quad v_z\,(\mathrm{km/s}) ] \quad [ \dots\text{mix family params}\dots ]
+    v_y\,(\mathrm{km/s}) \quad v_z\,(\mathrm{km/s}) ] \quad [ B_x\,(\mu\mathrm{G}) \quad
+    B_y\,(\mu\mathrm{G}) \quad B_z\,(\mu\mathrm{G}) ] \quad [ \dots\text{mix family params}\dots ]
     \f]
 
     The first three columns are the \f$x\f$, \f$y\f$ and \f$z\f$ coordinates of the particle, the
@@ -47,6 +48,9 @@
     If the \em importVelocity option is enabled, the subsequent three columns specify the
     \f$v_x\f$, \f$v_y\f$, \f$v_z\f$ velocity components of the particle (considered as the bulk
     velocity for the mass represented by the particle).
+
+    If the \em importMagneticField option is enabled, the subsequent three columns specify the
+    \f$B_x\f$, \f$B_y\f$, \f$B_z\f$ magnetic field vector components for the cell.
 
     Finally, if the \em importVariableMixParams option is enabled, the remaining columns specify
     the parameters used by the configured material mix family to select a particular material mix

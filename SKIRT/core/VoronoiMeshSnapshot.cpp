@@ -859,10 +859,42 @@ Vec VoronoiMeshSnapshot::velocity(int m) const
 
 ////////////////////////////////////////////////////////////////////
 
+Vec VoronoiMeshSnapshot::velocity(Position bfr) const
+{
+    int m = cellIndex(bfr);
+    return m>=0 ? velocity(m) : Vec();
+}
+
+////////////////////////////////////////////////////////////////////
+
 double VoronoiMeshSnapshot::velocityDispersion(int m) const
 {
     const Array& prop = _cells[m]->properties();
     return prop[velocityDispersionIndex()];
+}
+
+////////////////////////////////////////////////////////////////////
+
+double VoronoiMeshSnapshot::velocityDispersion(Position bfr) const
+{
+    int m = cellIndex(bfr);
+    return m>=0 ? velocityDispersion(m) : 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+Vec VoronoiMeshSnapshot::magneticField(int m) const
+{
+    const Array& prop = _cells[m]->properties();
+    return Vec(prop[magneticFieldIndex()+0], prop[magneticFieldIndex()+1], prop[magneticFieldIndex()+2]);
+}
+
+////////////////////////////////////////////////////////////////////
+
+Vec VoronoiMeshSnapshot::magneticField(Position bfr) const
+{
+    int m = cellIndex(bfr);
+    return m>=0 ? magneticField(m) : Vec();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -873,6 +905,37 @@ void VoronoiMeshSnapshot::parameters(int m, Array& params) const
     params.resize(n);
     const Array& prop = _cells[m]->properties();
     for (int i=0; i!=n; ++i) params[i] = prop[parametersIndex()+i];
+}
+
+////////////////////////////////////////////////////////////////////
+
+void VoronoiMeshSnapshot::parameters(Position bfr, Array& params) const
+{
+    int m = cellIndex(bfr);
+    if (m>=0) parameters(m, params);
+    else params.resize(numParameters());
+}
+
+////////////////////////////////////////////////////////////////////
+
+double VoronoiMeshSnapshot::density(int m) const
+{
+    return _rhov[m];
+}
+
+////////////////////////////////////////////////////////////////////
+
+double VoronoiMeshSnapshot::density(Position bfr) const
+{
+    int m = cellIndex(bfr);
+    return m>=0 ? _rhov[m] : 0;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double VoronoiMeshSnapshot::mass() const
+{
+    return _mass;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -894,16 +957,15 @@ Position VoronoiMeshSnapshot::generatePosition(int m) const
 
 ////////////////////////////////////////////////////////////////////
 
-double VoronoiMeshSnapshot::density(int m) const
+Position VoronoiMeshSnapshot::generatePosition() const
 {
-    return _rhov[m];
-}
+    // if there are no sites, return the origin
+    if (_cells.empty()) return Position();
 
-////////////////////////////////////////////////////////////////////
+    // select a site according to its mass contribution
+    int m = NR::locateClip(_cumrhov, random()->uniform());
 
-double VoronoiMeshSnapshot::mass() const
-{
-    return _mass;
+    return generatePosition(m);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -937,52 +999,6 @@ int VoronoiMeshSnapshot::cellIndex(Position bfr) const
         }
     }
     return m;
-}
-
-////////////////////////////////////////////////////////////////////
-
-Vec VoronoiMeshSnapshot::velocity(Position bfr) const
-{
-    int m = cellIndex(bfr);
-    return m>=0 ? velocity(m) : Vec();
-}
-
-////////////////////////////////////////////////////////////////////
-
-double VoronoiMeshSnapshot::velocityDispersion(Position bfr) const
-{
-    int m = cellIndex(bfr);
-    return m>=0 ? velocityDispersion(m) : 0.;
-}
-
-////////////////////////////////////////////////////////////////////
-
-void VoronoiMeshSnapshot::parameters(Position bfr, Array& params) const
-{
-    int m = cellIndex(bfr);
-    if (m>=0) parameters(m, params);
-    else params.resize(numParameters());
-}
-
-////////////////////////////////////////////////////////////////////
-
-double VoronoiMeshSnapshot::density(Position bfr) const
-{
-    int m = cellIndex(bfr);
-    return m>=0 ? _rhov[m] : 0;
-}
-
-////////////////////////////////////////////////////////////////////
-
-Position VoronoiMeshSnapshot::generatePosition() const
-{
-    // if there are no sites, return the origin
-    if (_cells.empty()) return Position();
-
-    // select a site according to its mass contribution
-    int m = NR::locateClip(_cumrhov, random()->uniform());
-
-    return generatePosition(m);
 }
 
 ////////////////////////////////////////////////////////////////////

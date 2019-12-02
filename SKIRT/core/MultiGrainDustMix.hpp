@@ -155,7 +155,8 @@ protected:
         function fills all four tables. */
     double getOpticalProperties(const Array& lambdav, const Array& thetav,
                                 Array& sigmaabsv, Array& sigmascav, Array& asymmparv,
-                                Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv) override;
+                                Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv,
+                                ArrayTable<2>& sigmaabsvv, ArrayTable<2>& sigmaabspolvv) override;
 
     /** This function is invoked by the DustMix base class to precalculate additional dust
         properties required by this class. The argument specifies the wavelength grid on which the

@@ -151,6 +151,13 @@ void Configuration::setupSelfBefore()
         _modelDimension = ss->dimension();
     }
 
+    // check for velocities in sources and media
+    for (auto source : ss->sources()) if (source->hasVelocity()) _hasMovingSources = true;
+    if (_hasMedium) for (auto medium : ms->media()) if (medium->hasVelocity()) _hasMovingMedia = true;
+
+    // check for variable material mixes
+    if (_hasMedium) for (auto medium : ms->media()) if (medium->hasVariableMix()) _hasVariableMedia = true;
+
     // check for polarization
     if (_hasMedium)
     {
@@ -161,12 +168,24 @@ void Configuration::setupSelfBefore()
         _hasPolarization = numPolarization!=0;
     }
 
-    // check for velocities in sources and media
-    for (auto source : ss->sources()) if (source->hasVelocity()) _hasMovingSources = true;
-    if (_hasMedium) for (auto medium : ms->media()) if (medium->hasVelocity()) _hasMovingMedia = true;
+    // check for polarization by spheroidal particles
+    if (_hasPolarization)
+    {
+        for (auto medium : ms->media())
+            if (medium->mix()->scatteringMode()==MaterialMix::ScatteringMode::SpheroidalPolarization)
+                _hasSpheroidalPolarization = true;
+    }
 
-    // check for variable material mixes
-    if (_hasMedium) for (auto medium : ms->media()) if (medium->hasVariableMix()) _hasVariableMedia = true;
+    // check for magnetic fields
+    int numMagneticFields = 0;
+    if (_hasMedium) for (auto medium : ms->media()) if (medium->hasMagneticField()) numMagneticFields++;
+    if (numMagneticFields > 1)
+        throw FATALERROR("It is not allowed for more than one medium component to define a magnetic field");
+    if (numMagneticFields == 1) _hasMagneticField = true;
+
+    // spheroidal particles require a magnetic field
+    if (_hasSpheroidalPolarization && !_hasMagneticField)
+        throw FATALERROR("Polarization by spheroidal particles requires a magnetic field to determine alignment");
 
     // prohibit non-identity-mapping cell libraries in combination with variable material mixes
     if (_hasVariableMedia && _cellLibrary && !dynamic_cast<AllCellsLibrary*>(_cellLibrary))
@@ -218,6 +237,10 @@ void Configuration::setupSelfAfter()
                   "Spatial grid symmetry: " + std::to_string(_gridDimension) + "D");
         log->warning("  Selecting a grid with the model symmetry might be more efficient");
     }
+
+    // if there is a magnetic field, there usually should be spheroidal particles
+    if (_hasMagneticField && !_hasSpheroidalPolarization)
+        log->warning("  No media have spheroidal particles that could align with the specified magnetic field");
 }
 
 ////////////////////////////////////////////////////////////////////

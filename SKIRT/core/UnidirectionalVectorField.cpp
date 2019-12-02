@@ -1,0 +1,33 @@
+/*//////////////////////////////////////////////////////////////////
+////     The SKIRT project -- advanced radiative transfer       ////
+////       © Astronomical Observatory, Ghent University         ////
+///////////////////////////////////////////////////////////////// */
+
+#include "UnidirectionalVectorField.hpp"
+#include "FatalError.hpp"
+
+//////////////////////////////////////////////////////////////////////
+
+void UnidirectionalVectorField::setupSelfBefore()
+{
+    _d.set(_fieldX, _fieldY, _fieldZ);
+    double norm = _d.norm();
+    if (norm == 0.) throw FATALERROR("Field direction cannot be null vector");
+    _d /= norm;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+int UnidirectionalVectorField::dimension() const
+{
+    return _fieldX || _fieldY ? 3 : 2;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+Vec UnidirectionalVectorField::vector(Position /*bfr*/) const
+{
+    return _d;
+}
+
+//////////////////////////////////////////////////////////////////////

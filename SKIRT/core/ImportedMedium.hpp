@@ -50,6 +50,11 @@ class ImportedMedium : public Medium, public SiteListInterface
         ATTRIBUTE_DEFAULT_VALUE(importVelocity, "false")
         ATTRIBUTE_DISPLAYED_IF(importVelocity, "(Panchromatic&Level2)|Level3")
 
+    PROPERTY_BOOL(importMagneticField, "import magnetic field components (3 columns)")
+        ATTRIBUTE_DEFAULT_VALUE(importMagneticField, "false")
+        ATTRIBUTE_DISPLAYED_IF(importMagneticField, "Level3")
+        ATTRIBUTE_INSERT(importMagneticField, "importMagneticField:MagneticField")
+
     PROPERTY_BOOL(importVariableMixParams, "import parameter(s) to select a spatially varying material mix")
         ATTRIBUTE_DEFAULT_VALUE(importVariableMixParams, "false")
         ATTRIBUTE_DISPLAYED_IF(importVariableMixParams, "(!NonIdentitySpatialCellLibrary)&Level2")
@@ -115,15 +120,23 @@ public:
 
     /** This function returns the bulk velocity of the medium at the specified position. If the \em
         importVelocity flag is enabled, it simply calls the corresponding function in the snapshot
-        object; otherwise is returns zero velocity. */
+        object; otherwise it returns zero velocity. */
     Vec bulkVelocity(Position bfr) const override;
+
+    /** This function returns true if the \em importMagneticField flag is enabled for the medium. */
+    bool hasMagneticField() const override;
+
+    /** This function returns the magnetic field vector of the medium at the specified position. If
+        the \em importMagneticField flag is enabled, it simply calls the corresponding function in
+        the snapshot object; otherwise it returns a zero magnetic field. */
+    Vec magneticField(Position bfr) const override;
 
     /** This function returns the number density of the medium at the specified position. */
     double numberDensity(Position bfr) const override;
 
     /** This function returns the total number of material entities in the medium. The function
         uses the default material mix (the one at the origin) throughout the complete spatial
-        domain; if the \em importVelocity flag is enabled, this is an approximation. */
+        domain; if the \em importVariableMixParams flag is enabled, this is an approximation. */
     double number() const override;
 
     /** This function returns the mass density of the medium at the specified position. */
@@ -131,25 +144,25 @@ public:
 
     /** This function returns the total mass in the medium. The function uses the default material
         mix (the one at the origin) throughout the complete spatial domain; if the \em
-        importVelocity flag is enabled, this is an approximation. */
+        importVariableMixParams flag is enabled, this is an approximation. */
     double mass() const override;
 
     /** This function returns the optical depth of the medium at wavelength \f$\lambda\f$ along the
         full X axis of the model coordinate system. The function uses the default material mix (the
-        one at the origin) throughout the complete spatial domain; if the \em importVelocity flag
-        is enabled, this is an approximation. */
+        one at the origin) throughout the complete spatial domain; if the \em
+        importVariableMixParams flag is enabled, this is an approximation. */
     double opticalDepthX(double lambda) const override;
 
     /** This function returns the optical depth of the medium at wavelength \f$\lambda\f$ along the
         full Y axis of the model coordinate system. The function uses the default material mix (the
-        one at the origin) throughout the complete spatial domain; if the \em importVelocity flag
-        is enabled, this is an approximation. */
+        one at the origin) throughout the complete spatial domain; if the \em
+        importVariableMixParams flag is enabled, this is an approximation. */
     double opticalDepthY(double lambda) const override;
 
     /** This function returns the optical depth of the medium at wavelength \f$\lambda\f$ along the
         full Z axis of the model coordinate system. The function uses the default material mix (the
-        one at the origin) throughout the complete spatial domain; if the \em importVelocity flag
-        is enabled, this is an approximation. */
+        one at the origin) throughout the complete spatial domain; if the \em
+        importVariableMixParams flag is enabled, this is an approximation. */
     double opticalDepthZ(double lambda) const override;
 
     /** This function generates a random position sampled from the medium's spatial density

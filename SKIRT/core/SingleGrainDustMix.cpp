@@ -10,7 +10,8 @@
 
 double SingleGrainDustMix::getOpticalProperties(const Array& lambdav, const Array& thetav,
                                             Array& sigmaabsv, Array& sigmascav, Array& asymmparv,
-                                            Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv)
+                                            Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv,
+                                            ArrayTable<2>& /*sigmaabsvv*/, ArrayTable<2>& /*sigmaabspolvv*/)
 {
     // open the stored table file containing the basic optical properties
     string opticalPropsName = resourceNameForOpticalProps();
@@ -33,13 +34,14 @@ double SingleGrainDustMix::getOpticalProperties(const Array& lambdav, const Arra
 
     // get the scattering mode advertised by this dust mix
     auto mode = scatteringMode();
-    if (mode == ScatteringMode::MaterialPhaseFunction || mode == ScatteringMode::SphericalPolarization)
+    if (mode == ScatteringMode::MaterialPhaseFunction || mode == ScatteringMode::SphericalPolarization
+                                                      || mode == ScatteringMode::SpheroidalPolarization)
     {
         // open the stored table file containing the Mueller matrix coefficients
         string muellerName = resourceNameForMuellerMatrix();
         StoredTable<2> S11, S12, S33, S34;
         S11.open(this, muellerName, "lambda(m),theta(rad)", "S11(1)");
-        if (mode == ScatteringMode::SphericalPolarization)
+        if (mode == ScatteringMode::SphericalPolarization || mode == ScatteringMode::SpheroidalPolarization)
         {
             S12.open(this, muellerName, "lambda(m),theta(rad)", "S12(1)");
             S33.open(this, muellerName, "lambda(m),theta(rad)", "S33(1)");
@@ -55,7 +57,7 @@ double SingleGrainDustMix::getOpticalProperties(const Array& lambdav, const Arra
             {
                 double theta = thetav[t];
                 S11vv(ell,t) = S11(lambda,theta);
-                if (mode == ScatteringMode::SphericalPolarization)
+                if (mode == ScatteringMode::SphericalPolarization || mode == ScatteringMode::SpheroidalPolarization)
                 {
                     S12vv(ell,t) = S12(lambda,theta);
                     S33vv(ell,t) = S33(lambda,theta);

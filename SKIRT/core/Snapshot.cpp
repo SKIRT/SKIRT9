@@ -140,6 +140,15 @@ void Snapshot::importVelocityDispersion()
     _infile->addColumn("velocity dispersion", "velocity", "km/s");
 }
 
+void Snapshot::importMagneticField()
+{
+    _magneticFieldIndex = _nextIndex;
+    _nextIndex += 3;
+    _infile->addColumn("magnetic field x", "magneticfield", "uG");
+    _infile->addColumn("magnetic field y", "magneticfield", "uG");
+    _infile->addColumn("magnetic field z", "magneticfield", "uG");
+}
+
 ////////////////////////////////////////////////////////////////////
 
 void Snapshot::importParameters(const vector<SnapshotParameter>& parameters)

@@ -175,9 +175,40 @@ Vec ParticleSnapshot::velocity(int m) const
 
 ////////////////////////////////////////////////////////////////////
 
+Vec ParticleSnapshot::velocity(Position bfr) const
+{
+    const SmoothedParticle* nearestParticle = _grid ? _grid->nearestParticle(bfr) : nullptr;
+    return nearestParticle ? velocity(nearestParticle->index()) : Vec();
+}
+
+////////////////////////////////////////////////////////////////////
+
 double ParticleSnapshot::velocityDispersion(int m) const
 {
     return _propv[m][velocityDispersionIndex()];
+}
+
+////////////////////////////////////////////////////////////////////
+
+double ParticleSnapshot::velocityDispersion(Position bfr) const
+{
+    const SmoothedParticle* nearestParticle = _grid ? _grid->nearestParticle(bfr) : nullptr;
+    return nearestParticle ? velocityDispersion(nearestParticle->index()) : 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+Vec ParticleSnapshot::magneticField(int m) const
+{
+    return Vec(_propv[m][magneticFieldIndex()+0], _propv[m][magneticFieldIndex()+1], _propv[m][magneticFieldIndex()+2]);
+}
+
+////////////////////////////////////////////////////////////////////
+
+Vec ParticleSnapshot::magneticField(Position bfr) const
+{
+    const SmoothedParticle* nearestParticle = _grid ? _grid->nearestParticle(bfr) : nullptr;
+    return nearestParticle ? magneticField(nearestParticle->index()) : Vec();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -187,22 +218,6 @@ void ParticleSnapshot::parameters(int m, Array& params) const
     int n = numParameters();
     params.resize(n);
     for (int i=0; i!=n; ++i) params[i] = _propv[m][parametersIndex()+i];
-}
-
-////////////////////////////////////////////////////////////////////
-
-Vec ParticleSnapshot::velocity(Position bfr) const
-{
-    const SmoothedParticle* nearestParticle = _grid ? _grid->nearestParticle(bfr) : nullptr;
-    return nearestParticle ? velocity(nearestParticle->index()) : Vec();
-}
-
-////////////////////////////////////////////////////////////////////
-
-double ParticleSnapshot::velocityDispersion(Position bfr) const
-{
-    const SmoothedParticle* nearestParticle = _grid ? _grid->nearestParticle(bfr) : nullptr;
-    return nearestParticle ? velocityDispersion(nearestParticle->index()) : 0.;
 }
 
 ////////////////////////////////////////////////////////////////////

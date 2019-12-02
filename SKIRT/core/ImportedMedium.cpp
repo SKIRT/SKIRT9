@@ -19,6 +19,7 @@ void ImportedMedium::setupSelfAfter()
     if (_importMetallicity) _snapshot->importMetallicity();
     if (_importTemperature) _snapshot->importTemperature();
     if (_importVelocity) _snapshot->importVelocity();
+    if (_importMagneticField) _snapshot->importMagneticField();
     if (_importVariableMixParams) _snapshot->importParameters(_materialMixFamily->parameterInfo());
 
     // set the density policy
@@ -77,6 +78,20 @@ bool ImportedMedium::hasVelocity() const
 Vec ImportedMedium::bulkVelocity(Position bfr) const
 {
     return _importVelocity ? _snapshot->velocity(bfr) : Vec();
+}
+
+//////////////////////////////////////////////////////////////////////
+
+bool ImportedMedium::hasMagneticField() const
+{
+    return _importMagneticField;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+Vec ImportedMedium::magneticField(Position bfr) const
+{
+    return _importMagneticField ? _snapshot->magneticField(bfr) : Vec();
 }
 
 ////////////////////////////////////////////////////////////////////

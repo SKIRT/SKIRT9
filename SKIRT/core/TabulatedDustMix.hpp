@@ -49,7 +49,8 @@ protected:
         the requested wavelength grid. */
         double getOpticalProperties(const Array& lambdav, const Array& thetav,
                                     Array& sigmaabsv, Array& sigmascav, Array& asymmparv,
-                                    Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv) override;
+                                    Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv,
+                                    ArrayTable<2>& sigmaabsvv, ArrayTable<2>& sigmaabspolvv) override;
 
     /** This function must be implemented in each subclass to store the wavelengths and the
         corresponding tabulated properties in the array arguments, and to return the dust mass per

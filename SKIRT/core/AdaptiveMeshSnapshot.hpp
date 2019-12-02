@@ -191,40 +191,15 @@ public:
         not being imported, or the index is out of range, the behavior is undefined. */
     Vec velocity(int m) const override;
 
-    /** This function returns the velocity dispersion of the entity with index \f$0\le m \le
-        N_\mathrm{ent}-1\f$. If the velocity dispersion is not being imported, or the index is out
-        of range, the behavior is undefined. */
-    double velocityDispersion(int m) const override;
-
-    /** This function stores the parameters of the leaf cell with index \em m into the given array.
-        If parameters are not being imported, or the index is out of range, the behavior is
-        undefined. */
-    void parameters(int m, Array& params) const override;
-
-    /** This function returns a random position drawn uniformly from the (cuboidal) extent of the
-        leaf cell with index \em m. If the index is out of range, the behavior is undefined. */
-    Position generatePosition(int m) const override;
-
-    /** This function returns the mass density associated with the leaf cell with index \em m. If
-        no density policy has been set or no mass information is being imported, or if the index is
-        out of range, the behavior is undefined. */
-    double density(int m) const;
-
-    /** This function returns the total mass represented by the snapshot, in other words the sum of
-        the masses of all leaf cells. If no density policy has been set or no mass information is
-        being imported, the behavior is undefined. */
-    double mass() const override;
-
-    /** This function returns the leaf cell index \f$0\le m \le N_{cells}-1\f$ for the cell
-        containing the specified point \f${\bf{r}}\f$. If the point is outside the domain, the
-        function returns -1. The function recursively searches the adaptive mesh tree until it
-        finds the appropriate leaf cell. */
-    int cellIndex(Position bfr) const;
-
     /** This function returns the velocity associated with the leaf cell containing the specified
         point \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero
         velocity. If the velocity is not being imported, the behavior is undefined. */
     Vec velocity(Position bfr) const override;
+
+    /** This function returns the velocity dispersion of the entity with index \f$0\le m \le
+        N_\mathrm{ent}-1\f$. If the velocity dispersion is not being imported, or the index is out
+        of range, the behavior is undefined. */
+    double velocityDispersion(int m) const override;
 
     /** This function returns the velocity dispersion of the entity nearest to (or at) the
         specified point \f${\bf{r}}\f$. If the point is outside the domain, the function returns
@@ -232,11 +207,32 @@ public:
         undefined. */
     double velocityDispersion(Position bfr) const override;
 
+    /** This function returns the magnetic field vector of the leaf cell with index \em m. If the
+        magnetic field is not being imported, or the index is out of range, the behavior is
+        undefined. */
+    Vec magneticField(int m) const override;
+
+    /** This function returns the magnetic field vector associated with the leaf cell containing
+        the specified point \f${\bf{r}}\f$. If the point is outside the domain, the function
+        returns a zero magnetic field. If the magnetic field is not being imported, the behavior is
+        undefined. */
+    Vec magneticField(Position bfr) const override;
+
+    /** This function stores the parameters of the leaf cell with index \em m into the given array.
+        If parameters are not being imported, or the index is out of range, the behavior is
+        undefined. */
+    void parameters(int m, Array& params) const override;
+
     /** This function stores the parameters of the leaf cell containing the specified point
         \f${\bf{r}}\f$ into the given array. If the point is outside the domain, the function
         returns the appropriate number of zero parameter values. If parameters are not being
         imported, the behavior is undefined. */
     void parameters(Position bfr, Array& params) const override;
+
+    /** This function returns the mass density associated with the leaf cell with index \em m. If
+        no density policy has been set or no mass information is being imported, or if the index is
+        out of range, the behavior is undefined. */
+    double density(int m) const;
 
     /** This function returns the mass density represented by the snapshot at a given point
         \f${\bf{r}}\f$, or equivalently, the mass density associated with the leaf cell containing
@@ -245,6 +241,15 @@ public:
         undefined. */
     double density(Position bfr) const override;
 
+    /** This function returns the total mass represented by the snapshot, in other words the sum of
+        the masses of all leaf cells. If no density policy has been set or no mass information is
+        being imported, the behavior is undefined. */
+    double mass() const override;
+
+    /** This function returns a random position drawn uniformly from the (cuboidal) extent of the
+        leaf cell with index \em m. If the index is out of range, the behavior is undefined. */
+    Position generatePosition(int m) const override;
+
     /** This function returns a random position within the spatial domain of the snapshot, drawn
         from the mass density distribution represented by the snapshot. The function first selects
         a random leaf cell from the discrete probability distribution formed by the respective cell
@@ -252,6 +257,12 @@ public:
         density policy has been set or no mass information is being imported, the behavior is
         undefined. */
     Position generatePosition() const override;
+
+    /** This function returns the leaf cell index \f$0\le m \le N_{cells}-1\f$ for the cell
+        containing the specified point \f${\bf{r}}\f$. If the point is outside the domain, the
+        function returns -1. The function recursively searches the adaptive mesh tree until it
+        finds the appropriate leaf cell. */
+    int cellIndex(Position bfr) const;
 
     //====================== Path construction =====================
 

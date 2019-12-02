@@ -90,10 +90,14 @@ protected:
         through a Probe), or it may be left untouched. For the SphericalPolarization scattering
         mode, the function must fill all four Mueller coeficient tables. For the
         MaterialPhaseFunction scattering mode, the function must fill only the first table and it
-        must leave the other tables untouched. */
+        must leave the other tables untouched.
+
+        For the SpheroidalPolarization mode, the function must also fill the sigmaabsvv and
+        sigmaabspolvv tables. */
     virtual double getOpticalProperties(const Array& lambdav, const Array& thetav,
                                         Array& sigmaabsv, Array& sigmascav, Array& asymmparv,
-                                        Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv) = 0;
+                                        Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv,
+                                        ArrayTable<2>& sigmaabsvv, ArrayTable<2>& sigmaabspolvv) = 0;
 
     /** This function can be implemented in a subclass to initialize dust properties that are
         required to offer additional functionality. The argument specifies the wavelength grid on
@@ -245,6 +249,27 @@ public:
         These coefficients are obtained from the tables pre-computed during setup. */
     void applyMueller(double lambda, double theta, StokesVector* sv) const override;
 
+    //======== Polarization through scattering, absorption and emission by spheroidal particles =======
+
+public:
+    /** This function is intended for use with the SpheroidalPolarization mode. It returns the grid
+        used for discretizing quantities that are a function of the scattering/emission angle
+        \f$\theta\f$. The same grid is returned by all material mixes that have
+        SpheroidalPolarization mode. */
+    const Array& thetaGrid() const override;
+
+    /** This function is intended for use with the SpheroidalPolarization mode. It returns the
+        absorption cross sections per entity \f$\varsigma ^{\text{abs}} _{\lambda} (\theta)\f$ at
+        wavelength \f$\lambda\f$ as a function of the emission angle \f$\theta\f$, discretized on
+        the grid returned by the thetaGrid() function. */
+    const Array& sectionsAbs(double lambda) const override;
+
+    /** This function is intended for use with the SpheroidalPolarization mode. It returns the
+        linear polarization absorption cross sections per entity \f$\varsigma ^{\text{abspol}}
+        _{\lambda} (\theta)\f$ at wavelength \f$\lambda\f$ as a function of the emission angle
+        \f$\theta\f$, discretized on the grid returned by the thetaGrid() function. */
+    const Array& sectionsAbspol(double lambda) const override;
+
     //======== Temperature and emission =======
 
 public:
@@ -318,6 +343,10 @@ private:
     Array _phi1v;               // indexed on f
     Array _phisv;               // indexed on f
     Array _phicv;               // indexed on f
+
+    // precalculated discretizations for spheroidal grains as a function of the emission angle
+    ArrayTable<2> _sigmaabsvv;      // indexed on ell and t
+    ArrayTable<2> _sigmaabspolvv;   // indexed on ell and t
 
     // equilibrium temperature and emission calculator
     EquilibriumDustEmissionCalculator _calc;

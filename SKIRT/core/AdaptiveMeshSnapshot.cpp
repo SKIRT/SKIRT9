@@ -319,10 +319,42 @@ Vec AdaptiveMeshSnapshot::velocity(int m) const
 
 ////////////////////////////////////////////////////////////////////
 
+Vec AdaptiveMeshSnapshot::velocity(Position bfr) const
+{
+    int m = cellIndex(bfr);
+    return m>=0 ? velocity(m) : Vec();
+}
+
+////////////////////////////////////////////////////////////////////
+
 double AdaptiveMeshSnapshot::velocityDispersion(int m) const
 {
     const Array& prop = _cells[m]->properties();
     return prop[velocityDispersionIndex()];
+}
+
+////////////////////////////////////////////////////////////////////
+
+double AdaptiveMeshSnapshot::velocityDispersion(Position bfr) const
+{
+    int m = cellIndex(bfr);
+    return m>=0 ? velocityDispersion(m) : 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+Vec AdaptiveMeshSnapshot::magneticField(int m) const
+{
+    const Array& prop = _cells[m]->properties();
+    return Vec(prop[magneticFieldIndex()+0], prop[magneticFieldIndex()+1], prop[magneticFieldIndex()+2]);
+}
+
+////////////////////////////////////////////////////////////////////
+
+Vec AdaptiveMeshSnapshot::magneticField(Position bfr) const
+{
+    int m = cellIndex(bfr);
+    return m>=0 ? magneticField(m) : Vec();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -337,9 +369,11 @@ void AdaptiveMeshSnapshot::parameters(int m, Array& params) const
 
 ////////////////////////////////////////////////////////////////////
 
-Position AdaptiveMeshSnapshot::generatePosition(int m) const
+void AdaptiveMeshSnapshot::parameters(Position bfr, Array& params) const
 {
-    return random()->position(_cells[m]->extent());
+    int m = cellIndex(bfr);
+    if (m>=0) parameters(m, params);
+    else params.resize(numParameters());
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -351,6 +385,14 @@ double AdaptiveMeshSnapshot::density(int m) const
 
 ////////////////////////////////////////////////////////////////////
 
+double AdaptiveMeshSnapshot::density(Position bfr) const
+{
+    int m = cellIndex(bfr);
+    return m>=0 ? _rhov[m] : 0;
+}
+
+////////////////////////////////////////////////////////////////////
+
 double AdaptiveMeshSnapshot::mass() const
 {
     return _mass;
@@ -358,43 +400,9 @@ double AdaptiveMeshSnapshot::mass() const
 
 ////////////////////////////////////////////////////////////////////
 
-int AdaptiveMeshSnapshot::cellIndex(Position bfr) const
+Position AdaptiveMeshSnapshot::generatePosition(int m) const
 {
-    const Node* cell = _root->leaf(bfr);
-    return cell ? cell->cellIndex() : -1;
-}
-
-////////////////////////////////////////////////////////////////////
-
-Vec AdaptiveMeshSnapshot::velocity(Position bfr) const
-{
-    int m = cellIndex(bfr);
-    return m>=0 ? velocity(m) : Vec();
-}
-
-////////////////////////////////////////////////////////////////////
-
-double AdaptiveMeshSnapshot::velocityDispersion(Position bfr) const
-{
-    int m = cellIndex(bfr);
-    return m>=0 ? velocityDispersion(m) : 0.;
-}
-
-////////////////////////////////////////////////////////////////////
-
-void AdaptiveMeshSnapshot::parameters(Position bfr, Array& params) const
-{
-    int m = cellIndex(bfr);
-    if (m>=0) parameters(m, params);
-    else params.resize(numParameters());
-}
-
-////////////////////////////////////////////////////////////////////
-
-double AdaptiveMeshSnapshot::density(Position bfr) const
-{
-    int m = cellIndex(bfr);
-    return m>=0 ? _rhov[m] : 0;
+    return random()->position(_cells[m]->extent());
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -408,6 +416,14 @@ Position AdaptiveMeshSnapshot::generatePosition() const
     int m = NR::locateClip(_cumrhov, random()->uniform());
 
     return generatePosition(m);
+}
+
+////////////////////////////////////////////////////////////////////
+
+int AdaptiveMeshSnapshot::cellIndex(Position bfr) const
+{
+    const Node* cell = _root->leaf(bfr);
+    return cell ? cell->cellIndex() : -1;
 }
 
 ////////////////////////////////////////////////////////////////////

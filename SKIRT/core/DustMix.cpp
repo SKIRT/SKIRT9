@@ -74,7 +74,8 @@ void DustMix::setupSelfAfter()
     auto mode = scatteringMode();
 
     // if needed, build a scattering angle grid
-    if (mode == ScatteringMode::MaterialPhaseFunction || mode == ScatteringMode::SphericalPolarization)
+    if (mode == ScatteringMode::MaterialPhaseFunction || mode == ScatteringMode::SphericalPolarization
+                                                      || mode == ScatteringMode::SpheroidalPolarization)
     {
         _thetav.resize(numTheta);
         for (int t=0; t!=numTheta; ++t) _thetav[t] = t * deltaTheta;
@@ -86,19 +87,26 @@ void DustMix::setupSelfAfter()
     _sigmaextv.resize(numLambda);
     _albedov.resize(numLambda);
     _asymmparv.resize(numLambda);
-    if (mode == ScatteringMode::MaterialPhaseFunction || mode == ScatteringMode::SphericalPolarization)
+    if (mode == ScatteringMode::MaterialPhaseFunction || mode == ScatteringMode::SphericalPolarization
+                                                      || mode == ScatteringMode::SpheroidalPolarization)
     {
         _S11vv.resize(numLambda, numTheta);
-        if (mode == ScatteringMode::SphericalPolarization)
+        if (mode == ScatteringMode::SphericalPolarization || mode == ScatteringMode::SpheroidalPolarization)
         {
             _S12vv.resize(numLambda, numTheta);
             _S33vv.resize(numLambda, numTheta);
             _S34vv.resize(numLambda, numTheta);
         }
+        if (mode == ScatteringMode::SpheroidalPolarization)
+        {
+            _sigmaabsvv.resize(numLambda, numTheta);
+            _sigmaabspolvv.resize(numLambda, numTheta);
+        }
     }
 
     // obtain the optical properties from the subclass
-    _mu = getOpticalProperties(lambdav, _thetav, _sigmaabsv, _sigmascav, _asymmparv, _S11vv, _S12vv, _S33vv, _S34vv);
+    _mu = getOpticalProperties(lambdav, _thetav, _sigmaabsv, _sigmascav, _asymmparv, _S11vv, _S12vv, _S33vv, _S34vv,
+                               _sigmaabsvv, _sigmaabspolvv);
 
     // calculate some derived basic optical properties
     for (int ell=0; ell!=numLambda; ++ell)
@@ -108,7 +116,8 @@ void DustMix::setupSelfAfter()
     }
 
     // precalculate discretizations related to the scattering angles as needed
-    if (mode == ScatteringMode::MaterialPhaseFunction || mode == ScatteringMode::SphericalPolarization)
+    if (mode == ScatteringMode::MaterialPhaseFunction || mode == ScatteringMode::SphericalPolarization
+                                                      || mode == ScatteringMode::SpheroidalPolarization)
     {
         // create a table with the normalized cumulative distribution of theta for each wavelength
         _thetaXvv.resize(numLambda,0);
@@ -130,7 +139,7 @@ void DustMix::setupSelfAfter()
         }
 
         // create tables listing phi, phi/(2 pi), sin(2 phi) and 1-cos(2 phi) for each phi index
-        if (mode == ScatteringMode::SphericalPolarization)
+        if (mode == ScatteringMode::SphericalPolarization || mode == ScatteringMode::SpheroidalPolarization)
         {
             _phiv.resize(numPhi);
             _phi1v.resize(numPhi);
@@ -175,6 +184,8 @@ void DustMix::setupSelfAfter()
     allocatedSize += _phi1v.size();
     allocatedSize += _phisv.size();
     allocatedSize += _phicv.size();
+    allocatedSize += _sigmaabsvv.size();
+    allocatedSize += _sigmaabspolvv.size();
 
     allocatedBytes += allocatedSize*sizeof(double) + _calc.allocatedBytes();
     find<Log>()->info(type() + " allocated " + StringUtils::toMemSizeString(allocatedBytes) + " of memory");
@@ -307,6 +318,29 @@ void DustMix::applyMueller(double lambda, double theta, StokesVector* sv) const
     int ell = indexForLambda(lambda);
     int t = indexForTheta(theta);
     sv->applyMueller(_S11vv(ell,t), _S12vv(ell,t), _S33vv(ell,t), _S34vv(ell,t));
+}
+
+////////////////////////////////////////////////////////////////////
+
+const Array& DustMix::thetaGrid() const
+{
+    return _thetav;
+}
+
+////////////////////////////////////////////////////////////////////
+
+const Array& DustMix::sectionsAbs(double lambda) const
+{
+    int ell = indexForLambda(lambda);
+    return _sigmaabsvv[ell];
+}
+
+////////////////////////////////////////////////////////////////////
+
+const Array& DustMix::sectionsAbspol(double lambda) const
+{
+    int ell = indexForLambda(lambda);
+    return _sigmaabspolvv[ell];
 }
 
 ////////////////////////////////////////////////////////////////////

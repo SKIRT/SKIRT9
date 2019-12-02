@@ -35,7 +35,8 @@ void MultiGrainDustMix::addPopulation(GrainComposition* composition, GrainSizeDi
 
 double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array& thetav,
                                                Array& sigmaabsv, Array& sigmascav, Array& asymmparv,
-                                               Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv)
+                                               Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv,
+                                               ArrayTable<2>& sigmaabsvv, ArrayTable<2>& sigmaabspolvv)
 {
     // get the scattering mode advertised by this dust mix
     auto mode = scatteringMode();
@@ -54,8 +55,14 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
         throw FATALERROR("HenyeyGreenstein scattering mode prohibits grain populations to offer a Mueller matrix");
     if (mode == ScatteringMode::MaterialPhaseFunction && numMueller!=numPops)
         throw FATALERROR("MaterialPhaseFunction scattering mode requires grain populations to offer a Mueller matrix");
-    if (mode == ScatteringMode::SphericalPolarization && numMueller!=numPops)
+    if ((mode == ScatteringMode::SphericalPolarization || mode == ScatteringMode::SpheroidalPolarization)
+        && numMueller!=numPops)
         throw FATALERROR("SphericalPolarization scattering mode requires grain populations to offer a Mueller matrix");
+
+    // define shortcuts for various mode checks
+    bool needSpheroidalPolarization = (mode == ScatteringMode::SpheroidalPolarization);
+    bool needSphericalPolarization = needSpheroidalPolarization || (mode == ScatteringMode::SphericalPolarization);
+    bool needMaterialPhaseFunction = needSphericalPolarization || (mode == ScatteringMode::MaterialPhaseFunction);
 
     // get the number of requested grid points
     int numLambda = lambdav.size();
@@ -153,28 +160,40 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
             asymmparv[ell] += sumgsigmasca;  // need to divide by sigmasca after accumulation for all populations
         }
 
-        // handle Mueller matrix coefficients if needed
-        if (mode == ScatteringMode::MaterialPhaseFunction || mode == ScatteringMode::SphericalPolarization)
+        // handle Mueller matrix coefficients and spheroidal grain properties if needed
+        if (needMaterialPhaseFunction)
         {
             // open the stored tables for the Mueller matrix coefficients
-            string muellerName = population->composition()->resourceNameForMuellerMatrix();
             StoredTable<3> S11, S12, S33, S34;
+            string muellerName = population->composition()->resourceNameForMuellerMatrix();
             S11.open(this, muellerName, "a(m),lambda(m),theta(rad)", "S11(1)");
-            if (mode == ScatteringMode::SphericalPolarization)
+            if (needSphericalPolarization)
             {
                 S12.open(this, muellerName, "a(m),lambda(m),theta(rad)", "S12(1)");
                 S33.open(this, muellerName, "a(m),lambda(m),theta(rad)", "S33(1)");
                 S34.open(this, muellerName, "a(m),lambda(m),theta(rad)", "S34(1)");
             }
 
-            // calculate the Mueller matrix coefficients on the requested wavelength and scattering angle grid;
+            // open the stored tables for the spheroidal grain efficiencies, if present for this population
+            StoredTable<3> sQabs, sQabspol;
+            string spheroidalPropsName = population->composition()->resourceNameForSpheroidalEmission();
+            bool hasSpheroidalPolarization = needSpheroidalPolarization && !spheroidalPropsName.empty();
+            if (hasSpheroidalPolarization)
+            {
+                sQabs.open(this, spheroidalPropsName, "a(m),lambda(m),theta(rad)", "Qabs(1)", true, false);
+                sQabspol.open(this, spheroidalPropsName, "a(m),lambda(m),theta(rad)", "Qabspol(1)", true, false);
+            }
+
+            // calculate the required grain properties on the requested wavelength and scattering angle grid;
             // this is time-consuming, so we do this in parallel,
             // which means we need to synchronize the resulting tables after accumulation for all populations
             auto log = find<Log>();
-            log->info("Integrating Mueller matrix coefficients over the grain size distribution...");
+            log->info("Integrating grain properties over the grain size distribution...");
             log->infoSetElapsed(numLambda);
             find<ParallelFactory>()->parallelDistributed()->call(numLambda,
-                [&lambdav,&thetav,&av,&dav,&dndav,&weightv,&S11,&S12,&S33,&S34,&S11vv,&S12vv,&S33vv,&S34vv,mode,log]
+                [log,needSphericalPolarization,needSpheroidalPolarization,hasSpheroidalPolarization,
+                 &lambdav,&thetav,&av,&dav,&dndav,&weightv,
+                 &S11,&S12,&S33,&S34,&S11vv,&S12vv,&S33vv,&S34vv,&Qabs,&sQabs,&sQabspol,&sigmaabsvv,&sigmaabspolvv]
                 (size_t firstIndex, size_t numIndices)
             {
                 int numTheta = thetav.size();
@@ -196,29 +215,53 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
                             double sumS12 = 0.;
                             double sumS33 = 0.;
                             double sumS34 = 0.;
+                            double sumabs = 0.;
+                            double sumabspol = 0.;
                             for (int i=0; i!=numSizes; ++i)
                             {
+                                double a = av[i];
                                 double factor = weightv[i] * dndav[i] * dav[i];
                                 sumS11 += factor * S11(av[i],lambda,theta);
-                                if (mode == ScatteringMode::SphericalPolarization)
+                                if (needSphericalPolarization)
                                 {
-                                    sumS12 += factor * S12(av[i],lambda,theta);
-                                    sumS33 += factor * S33(av[i],lambda,theta);
-                                    sumS34 += factor * S34(av[i],lambda,theta);
+                                    sumS12 += factor * S12(a,lambda,theta);
+                                    sumS33 += factor * S33(a,lambda,theta);
+                                    sumS34 += factor * S34(a,lambda,theta);
+                                }
+                                if (needSpheroidalPolarization)
+                                {
+                                    factor *= M_PI * a * a;
+                                    if (hasSpheroidalPolarization)
+                                    {
+                                        sumabs += factor * sQabs(a,lambda,theta);
+                                        sumabspol += factor * sQabspol(a,lambda,theta);
+                                    }
+                                    else
+                                    {
+                                        // for spherical grains:
+                                        //    Qabs(a,lambda,theta) = Qabs(a,lambda)
+                                        //    Qabspol(a,lambda,theta) = 0
+                                        sumabs += factor * Qabs(a,lambda);
+                                    }
                                 }
                             }
 
                             // accumulate for all populations
                             S11vv(ell,t) += sumS11;
-                            if (mode == ScatteringMode::SphericalPolarization)
+                            if (needSphericalPolarization)
                             {
                                 S12vv(ell,t) += sumS12;
                                 S33vv(ell,t) += sumS33;
                                 S34vv(ell,t) += sumS34;
                             }
+                            if (needSpheroidalPolarization)
+                            {
+                                sigmaabsvv(ell,t) += sumabs;
+                                sigmaabspolvv(ell,t) += sumabspol;
+                            }
                         }
                     }
-                    log->infoIfElapsed("Calculated Mueller matrix coefficients: ", currentChunkSize);
+                    log->infoIfElapsed("Calculated grain properties: ", currentChunkSize);
                     firstIndex += currentChunkSize;
                     numIndices -= currentChunkSize;
                 }
@@ -233,11 +276,26 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
     }
 
     // synchronize the Mueller matrix coefficients between processes, if applicable
-    ProcessManager::sumToAll(S11vv.data());
-    ProcessManager::sumToAll(S12vv.data());
-    ProcessManager::sumToAll(S33vv.data());
-    ProcessManager::sumToAll(S34vv.data());
+    if (needMaterialPhaseFunction)
+    {
+        ProcessManager::sumToAll(S11vv.data());
+        if (needSphericalPolarization)
+        {
+            ProcessManager::sumToAll(S12vv.data());
+            ProcessManager::sumToAll(S33vv.data());
+            ProcessManager::sumToAll(S34vv.data());
+        }
+    }
 
+    // synchronize the spheroidal grain cross sections between processes, if applicable
+    if (needSpheroidalPolarization)
+    {
+        for (int ell=0; ell!=numLambda; ++ell)
+        {
+            ProcessManager::sumToAll(sigmaabsvv[ell]);
+            ProcessManager::sumToAll(sigmaabspolvv[ell]);
+        }
+    }
     return mu;
 }
 

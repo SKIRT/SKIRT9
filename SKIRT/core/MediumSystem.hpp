@@ -40,8 +40,8 @@ class WavelengthGrid;
 
     The medium state includes the following information for each cell in the spatial grid: the
     number density in the cell per medium component; (a pointer to) the corresponding material mix
-    for each medium component; the aggregate bulk velocity of the material in the cell; and the
-    volume of the cell.
+    for each medium component; the aggregate bulk velocity of the material in the cell; the
+    magnetic field vector in the cell, and the volume of the cell.
 
     The contribution to the radation field for each spatial cell and for each wavelength in the
     simulation's radiation field wavelength grid is traced separately for primary and secondary
@@ -130,6 +130,11 @@ public:
         over the corresponding number densities, \f[{\boldsymbol{v}} = \frac{\sum_h n_h
         {\boldsymbol{v}}_h} {\sum_h n_h}.\f] */
     Vec bulkVelocity(int m);
+
+    /** This function returns the magnetic field \f${\boldsymbol{B}}\f$ in the spatial cell with
+        index \f$m\f$. At most one medium component is allowed to specify a magnetic field. If no
+        medium component specifies a magnetic field, this function returns the null vector. */
+    Vec magneticField(int m);
 
     /** This function returns true if at least one of the media in the medium system has the
         specified fundamental material type (i.e. dust, electrons, or gas). */
@@ -386,6 +391,7 @@ private:
     {
         double V;                   // volume
         Vec v;                      // bulk velocity
+        Vec B;                      // magnetic field
     };
 
     /** This data structure holds the information maintained per cell and per medium. */

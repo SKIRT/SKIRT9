@@ -579,6 +579,7 @@ void MonteCarloSimulation::peelOffScattering(const PhotonPacket* pp, PhotonPacke
                         break;
                     }
                 case MaterialMix::ScatteringMode::SphericalPolarization:
+                case MaterialMix::ScatteringMode::SpheroidalPolarization:
                     {
                         // calculate the value of the material-specific phase function
                         double theta = acos(Vec::dot(pp->direction(),bfkobs));
@@ -673,6 +674,7 @@ void MonteCarloSimulation::simulateScattering(PhotonPacket* pp)
             break;
         }
     case MaterialMix::ScatteringMode::SphericalPolarization:
+    case MaterialMix::ScatteringMode::SpheroidalPolarization:
         {
             // sample the angles between the previous and new direction from the material-specific phase function,
             // given the incoming polarization state

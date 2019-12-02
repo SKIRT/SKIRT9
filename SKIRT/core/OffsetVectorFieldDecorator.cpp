@@ -3,20 +3,22 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "GrainComposition.hpp"
+#include "OffsetVectorFieldDecorator.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-string GrainComposition::resourceNameForMuellerMatrix() const
+int OffsetVectorFieldDecorator::dimension() const
 {
-    return string();
+    return (_offsetX || _offsetY || _vectorField->dimension()==3) ? 3 : 2;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-std::string GrainComposition::resourceNameForSpheroidalEmission() const
+Vec OffsetVectorFieldDecorator::vector(Position bfr) const
 {
-    return string();
+    double x,y,z;
+    bfr.cartesian(x,y,z);
+    return _vectorField->vector(Position(x-_offsetX, y-_offsetY, z-_offsetZ));
 }
 
 ////////////////////////////////////////////////////////////////////
