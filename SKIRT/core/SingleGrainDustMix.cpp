@@ -10,7 +10,8 @@
 
 double SingleGrainDustMix::getOpticalProperties(const Array& lambdav, const Array& thetav,
                                             Array& sigmaabsv, Array& sigmascav, Array& asymmparv,
-                                            Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv)
+                                            Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv,
+                                            ArrayTable<2>& /*sigmaabsvv*/, ArrayTable<2>& /*sigmaabspolvv*/)
 {
     // open the stored table file containing the basic optical properties
     string opticalPropsName = resourceNameForOpticalProps();

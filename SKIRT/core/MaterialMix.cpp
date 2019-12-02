@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "MaterialMix.hpp"
+#include "FatalError.hpp"
 #include "Random.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -48,7 +49,7 @@ double MaterialMix::generateCosineFromPhaseFunction(double /*lambda*/) const
 double MaterialMix::phaseFunctionValue(double /*lambda*/, double /*theta*/, double /*phi*/,
                                        const StokesVector* /*sv*/) const
 {
-    return 1.;
+    throw FATALERROR("This function implementation should never be called");
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -56,13 +57,35 @@ double MaterialMix::phaseFunctionValue(double /*lambda*/, double /*theta*/, doub
 std::pair<double, double> MaterialMix::generateAnglesFromPhaseFunction(double /*lambda*/,
                                                                        const StokesVector* /*sv*/) const
 {
-    return std::make_pair(0.,0.);
+    throw FATALERROR("This function implementation should never be called");
 }
 
 ////////////////////////////////////////////////////////////////////
 
 void MaterialMix::applyMueller(double /*lambda*/, double /*theta*/, StokesVector* /*sv*/) const
 {
+    throw FATALERROR("This function implementation should never be called");
+}
+
+////////////////////////////////////////////////////////////////////
+
+const Array& MaterialMix::thetaGrid() const
+{
+    throw FATALERROR("This function implementation should never be called");
+}
+
+////////////////////////////////////////////////////////////////////
+
+const Array& MaterialMix::sectionsAbs(double /*lambda*/) const
+{
+    throw FATALERROR("This function implementation should never be called");
+}
+
+////////////////////////////////////////////////////////////////////
+
+const Array& MaterialMix::sectionsAbspol(double /*lambda*/) const
+{
+    throw FATALERROR("This function implementation should never be called");
 }
 
 ////////////////////////////////////////////////////////////////////

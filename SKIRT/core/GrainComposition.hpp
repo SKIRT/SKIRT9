@@ -34,7 +34,7 @@
     corresponding linear polarization efficiencies \f$Q^\mathrm{abspol}(a,\lambda,\theta)\f$ as a
     function of grain size \f$a\f$, wavelength \f$\lambda\f$ and emission angle \f$\theta\f$. For
     consistency, the \f$Q^\mathrm{abs}\f$ values given here, when averaged over the emission angle,
-    should match the basic $Q^\mathrm{abs}$ mentioned above.
+    should match the basic \f$Q^\mathrm{abs}\f$ mentioned above.
 
     The calorimetric properties consist of the specific enthalpy (internal energy) per unit volume,
     given in J/m3, at arbitrary temperature. The specific enthalpy is obtained by integrating the

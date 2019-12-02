@@ -227,22 +227,45 @@ public:
         \f$\lambda\f$ for the specified scattering angles \f$\theta\f$ and \f$\phi\f$, and for the
         specified incoming polarization state. The phase function is normalized as
         \f[\int\Phi_\lambda(\theta,\phi) \,\mathrm{d}\Omega =4\pi.\f] The default implementation in
-        this base class returns one, corresponding to isotropic scattering. */
+        this base class throws a fatal error. */
    virtual double phaseFunctionValue(double lambda, double theta, double phi, const StokesVector* sv) const;
 
     /** This function is used with the SphericalPolarization scattering mode. It generates random
         scattering angles \f$\theta\f$ and \f$\phi\f$ sampled from the phase function
         \f$\Phi_\lambda(\theta,\phi)\f$ at wavelength \f$\lambda\f$, and for the specified incoming
         polarization state. The results are returned as a pair of numbers in the order \f$\theta\f$
-        and \f$\phi\f$. The default implementation in this base class arbitrarily returns two zero
-        values. */
+        and \f$\phi\f$. The default implementation in this base class throws a fatal error. */
     virtual std::pair<double,double> generateAnglesFromPhaseFunction(double lambda, const StokesVector* sv) const;
 
     /** This function is used with the SphericalPolarization scattering mode. It applies the
         Mueller matrix transformation for the specified wavelength \f$\lambda\f$ and scattering
         angle \f$\theta\f$ to the given polarization state (which serves as both input and output
-        for the function). The default implementation in this base class does nothing. */
+        for the function). The default implementation in this base class throws a fatal error. */
     virtual void applyMueller(double lambda, double theta, StokesVector* sv) const;
+
+    //======== Polarization through scattering, absorption and emission by spheroidal particles =======
+
+public:
+    /** This function is intended for use with the SpheroidalPolarization mode. It returns the grid
+        used for discretizing quantities that are a function of the scattering/emission angle
+        \f$\theta\f$. The same grid is returned by all material mixes that have
+        SpheroidalPolarization mode. The default implementation in this base class throws a fatal
+        error. */
+    virtual const Array& thetaGrid() const;
+
+    /** This function is intended for use with the SpheroidalPolarization mode. It returns the
+        absorption cross sections per entity \f$\varsigma ^{\text{abs}} _{\lambda} (\theta)\f$ at
+        wavelength \f$\lambda\f$ as a function of the emission angle \f$\theta\f$, discretized on
+        the grid returned by the thetaGrid() function. The default implementation in this base
+        class throws a fatal error. */
+    virtual const Array& sectionsAbs(double lambda) const;
+
+    /** This function is intended for use with the SpheroidalPolarization mode. It returns the
+        linear polarization absorption cross sections per entity \f$\varsigma ^{\text{abspol}}
+        _{\lambda} (\theta)\f$ at wavelength \f$\lambda\f$ as a function of the emission angle
+        \f$\theta\f$, discretized on the grid returned by the thetaGrid() function. The default
+        implementation in this base class throws a fatal error. */
+    virtual const Array& sectionsAbspol(double lambda) const;
 
     //======== Temperature and emission =======
 
