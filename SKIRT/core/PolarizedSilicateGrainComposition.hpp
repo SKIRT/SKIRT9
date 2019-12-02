@@ -32,6 +32,7 @@ class PolarizedSilicateGrainComposition : public GrainComposition
 
     PROPERTY_STRING(spheroidalEmissionTable,
                     "the name of the file tabulating properties for polarized emission by spheroidal grains")
+        ATTRIBUTE_REQUIRED_IF(spheroidalEmissionTable, "false")
         ATTRIBUTE_DISPLAYED_IF(spheroidalEmissionTable, "Level3")
 
     ITEM_END()
