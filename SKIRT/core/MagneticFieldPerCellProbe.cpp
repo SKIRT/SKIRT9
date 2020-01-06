@@ -34,12 +34,11 @@ void MagneticFieldPerCellProbe::probeRun()
 
         // write a line for each cell
         int numCells = ms->grid()->numCells();
-        for (int m=0; m!=numCells; ++m)
+        for (int m = 0; m != numCells; ++m)
         {
             Vec magneticField = ms->magneticField(m);
-            file.writeRow(m, units->omagneticfield(magneticField.x()),
-                             units->omagneticfield(magneticField.y()),
-                             units->omagneticfield(magneticField.z()));
+            file.writeRow(m, units->omagneticfield(magneticField.x()), units->omagneticfield(magneticField.y()),
+                          units->omagneticfield(magneticField.z()));
         }
     }
 }
