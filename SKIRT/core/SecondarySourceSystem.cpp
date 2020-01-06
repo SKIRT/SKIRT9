@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "SecondarySourceSystem.hpp"
+#include "AngularDistributionInterface.hpp"
 #include "Configuration.hpp"
 #include "DisjointWavelengthGrid.hpp"
 #include "FatalError.hpp"
@@ -13,6 +14,7 @@
 #include "Parallel.hpp"
 #include "ParallelFactory.hpp"
 #include "PhotonPacket.hpp"
+#include "PolarizationProfileInterface.hpp"
 #include "ProbePhotonPacketInterface.hpp"
 #include "ProcessManager.hpp"
 #include "Random.hpp"
@@ -333,6 +335,91 @@ namespace
 
     // setup a DustCellEmission instance for each parallel execution thread to cache dust emission information
     thread_local DustCellEmission t_dustcell;
+    
+    // An instance of this class obtains the information needed to determine
+    // angular distribution probabilities and polarization components for 
+    // photon packets emitted from the dust in a given cell in the spatial grid,
+    // and remembers some information for fast retrieval.
+    class DustCellPolarisedEmission : public AngularDistributionInterface, public PolarizationProfileInterface
+    {
+    private:
+        // information initialized once, during the first call to calculateIfNeeded()
+        MediumSystem* _ms{nullptr};         // the medium system
+        vector<int> _hv;                    // a list of the media indices for the media containing dust
+        int _numMedia{0};                   // the number of dust media in the system (and thus the size of hv)
+        
+        // information on a particular spatial cell, initialized by calculateIfNeeded()
+        int _m{-1};                         // spatial cell index
+        Vec _B_direction;             // direction of the magnetic field
+        
+        // information on a particular photon packet, initialized by calculate()
+        double _lambda{-1.};            // wavelength of the last photon packet
+    
+    public:
+        DustCellPolarisedEmission() { }
+
+        // calculates the emission information for the given cell if it is different from what's already stored
+        //   m:  cell index
+        //   ms: medium system
+        //   config: configuration object
+        void calculateIfNeeded(int m, MediumSystem* ms, Configuration* config)
+        {
+            // if this photon packet is launched from the same cell as the previous one, we don't need to do anything
+            if (!_config->hasSpheroidalPolarization() || m == _m) return;
+
+            // when called for the first time, construct a list of dust media and cache some other info
+            if (_m == -1)
+            {
+                _ms = ms;
+                for (int h=0; h!=ms->numMedia(); ++h) if (ms->isDust(h)) _hv.push_back(h);
+                _numMedia = _hv.size();
+            }
+
+            // remember the new cell index and map to the other indices
+            _m = m;
+            
+            // normalise the magnetic field direction
+            _B_direction = _ms->magneticField(_m);
+            _B_direction /= _B_direction.norm();
+        }
+        
+        void calculate(double lambda)
+        {
+            _lambda = lambda;
+        }
+
+        /** This function returns the probability \f$P(\Omega)\f$ for the given direction
+            \f$(\theta,\phi)\f$. For an isotropic distribution, this function would return 1 for any
+            direction. */
+        virtual double probabilityForDirection(Direction bfk) const override
+        {
+            return 1.;
+        }
+        
+        /** This function returns the Stokes vector defining the polarization state of the radiation
+            emitted into the given direction \f$(\theta,\phi)\f$. For unpolarized emission, this
+            function would return a default-constructed StokesVector instance. */
+        StokesVector polarizationForDirection(Direction bfk) const override
+        {
+        
+            const double theta = std::acos(Vec::dot(_B_direction, bfk));
+        
+            double Qabsval = 0.;
+            double Qabspolval = 0.;
+            for (int h : _hv)
+            {
+                const Array &thetas = _ms->mix(_m,h)->thetaGrid();
+                const Array &Qabs = _ms->mix(_m,h)->sectionsAbs(_lambda);
+                const Array &Qabspol = _ms->mix(_m,h)->sectionsAbspol(_lambda);
+                Qabsval += _ms->numberDensity(_m,h) * NR::value<NR::interpolateLinLin>(theta, thetas, Qabs);
+                Qabspolval += _ms->numberDensity(_m,h) * NR::value<NR::interpolateLinLin>(theta, thetas, Qabspol);
+            }
+            return StokesVector(Qabsval, Qabspolval, 0., 0., Direction(_B_direction));
+        }
+    };
+
+    // setup a DustCellPolarisedEmission instance for each parallel execution thread to cache dust emission information
+    thread_local DustCellPolarisedEmission t_dustcellpol;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -345,6 +432,7 @@ void SecondarySourceSystem::launch(PhotonPacket* pp, size_t historyIndex) const
 
     // calculate the emission spectrum and bulk velocity for this cell, if not already available
     t_dustcell.calculateIfNeeded(p, _mv, _nv, _ms, _config);
+    t_dustcellpol.calculateIfNeeded(m, _ms, _config);
 
     // generate a random wavelength from the emission spectrum for the cell and/or from the bias distribution
     double lambda, w;
@@ -388,9 +476,16 @@ void SecondarySourceSystem::launch(PhotonPacket* pp, size_t historyIndex) const
 
     // provide a redshift interface for the appropriate velocity, if it is nonzero
     VelocityInterface* bvi = t_dustcell.velocity().isNull() ? nullptr : &t_dustcell;
+    
+    DustCellPolarisedEmission *dpe = nullptr;
+    if(_config->hasSpheroidalPolarization())
+    {
+        t_dustcellpol.calculate(lambda);
+        dpe = &t_dustcellpol;
+    }
 
     // launch the photon packet with isotropic direction
-    pp->launch(historyIndex, lambda, L*w, bfr, _random->direction(), bvi);
+    pp->launch(historyIndex, lambda, L*w, bfr, _random->direction(), bvi, dpe, dpe);
 
     // add origin info (we combine all medium components, so we cannot differentiate them here)
     pp->setSecondaryOrigin(0);

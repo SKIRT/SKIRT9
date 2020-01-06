@@ -104,6 +104,7 @@
 #include "LogWavelengthGrid.hpp"
 #include "LuminosityProbe.hpp"
 #include "MRNDustMix.hpp"
+#include "MagneticFieldPerCellProbe.hpp"
 #include "MappingsSED.hpp"
 #include "MappingsSEDFamily.hpp"
 #include "MarastonSED.hpp"
@@ -553,6 +554,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<DustGrainSizeDistributionProbe>();
     ItemRegistry::add<DefaultMagneticFieldCutsProbe>();
     ItemRegistry::add<PlanarMagneticFieldCutsProbe>();
+    ItemRegistry::add<MagneticFieldPerCellProbe>();
 
     ItemRegistry::add<DefaultRadiationFieldCutsProbe>();
     ItemRegistry::add<PlanarRadiationFieldCutsProbe>();
