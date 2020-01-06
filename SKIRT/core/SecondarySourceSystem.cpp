@@ -194,8 +194,7 @@ namespace
 
     public:
         DustCellEmission()
-        {
-        }
+        {}
 
         // calculates the emission information for the given cell if it is different from what's already stored
         //   p:  launch-order cell index (cells mapped to a given library entry have consecutive p indices)
@@ -366,8 +365,7 @@ namespace
 
     public:
         DustCellPolarisedEmission()
-        {
-        }
+        {}
 
         // calculates the emission information for the given cell if it is different from what's already stored
         //   m:  cell index
@@ -376,7 +374,7 @@ namespace
         void calculateIfNeeded(int m, MediumSystem* ms, Configuration* config)
         {
             // if this photon packet is launched from the same cell as the previous one, we don't need to do anything
-            if (!_config->hasSpheroidalPolarization() || m == _m) return;
+            if (!config->hasSpheroidalPolarization() || m == _m) return;
 
             // when called for the first time, construct a list of dust media and cache some other info
             if (_m == -1)
@@ -405,7 +403,18 @@ namespace
             direction. */
         virtual double probabilityForDirection(Direction bfk) const override
         {
-            return 1.;
+            const double theta = std::acos(Vec::dot(_B_direction, bfk));
+
+            double Qabstheta = 0.;
+            double Qabstot = 0.;
+            for (int h : _hv)
+            {
+                const Array& thetas = _ms->mix(_m, h)->thetaGrid();
+                const Array& Qabs = _ms->mix(_m, h)->sectionsAbs(_lambda);
+                Qabstheta += _ms->numberDensity(_m, h) * NR::value<NR::interpolateLinLin>(theta, thetas, Qabs);
+                Qabstot += _ms->numberDensity(_m, h) * _ms->mix(_m, h)->sectionAbs(_lambda);
+            }
+            return Qabstheta / Qabstot;
         }
 
         /** This function returns the Stokes vector defining the polarization state of the radiation
@@ -413,7 +422,6 @@ namespace
             function would return a default-constructed StokesVector instance. */
         StokesVector polarizationForDirection(Direction bfk) const override
         {
-
             const double theta = std::acos(Vec::dot(_B_direction, bfk));
 
             double Qabsval = 0.;
@@ -426,7 +434,7 @@ namespace
                 Qabsval += _ms->numberDensity(_m, h) * NR::value<NR::interpolateLinLin>(theta, thetas, Qabs);
                 Qabspolval += _ms->numberDensity(_m, h) * NR::value<NR::interpolateLinLin>(theta, thetas, Qabspol);
             }
-            return StokesVector(Qabsval, Qabspolval, 0., 0., Direction(_B_direction));
+            return StokesVector(Qabsval, Qabspolval, 0., 0., Direction(Vec::cross(bfk, _B_direction)));
         }
     };
 
