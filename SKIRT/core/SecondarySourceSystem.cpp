@@ -401,7 +401,7 @@ namespace
         /** This function returns the probability \f$P(\Omega)\f$ for the given direction
             \f$(\theta,\phi)\f$. For an isotropic distribution, this function would return 1 for any
             direction. */
-        virtual double probabilityForDirection(Direction bfk) const override
+        double probabilityForDirection(Direction bfk) const override
         {
             const double theta = std::acos(Vec::dot(_B_direction, bfk));
 
@@ -415,6 +415,46 @@ namespace
                 Qabstot += _ms->numberDensity(_m, h) * _ms->mix(_m, h)->sectionAbs(_lambda);
             }
             return Qabstheta / Qabstot;
+        }
+
+        /** This function generates a random direction for a photon based on the distribution function of the
+            absorption coefficient Qabs as a function of the zenith angle. */
+        Direction generateDirection(Random *random) const
+        {
+            // first generate a random azimuth angle
+            const double phi = 2. * M_PI * random->uniform();
+            // compute its sine and cosine
+            const double cosphi = cos(phi);
+            const double sinphi = sin(phi);
+
+            // now generate a random zenith angle
+            // first, compute the cumulative distribution for a photon at the given wavelength
+            // create an empty array with the same size as the zenith angle grid
+            const Array& thetas = _ms->mix(_m, _hv[0])->thetaGrid();
+            Array cdf(thetas.size());
+            // add the distributions for the different components
+            for (int h : _hv)
+            {
+                const Array& Qabs = _ms->mix(_m, h)->sectionsAbs(_lambda);
+                cdf += _ms->numberDensity(_m, h) * Qabs;
+            }
+            // convert to a cumulative distribution
+            for(size_t i = 1; i < thetas.size(); ++i){
+                cdf[i] += cdf[i-1];
+            }
+            // normalise the distribution
+            for(size_t i = 0; i < thetas.size(); ++i){
+                cdf[i] /= cdf[thetas.size()-1];
+            }
+            // draw a random uniform deviate
+            // get the corresponding zenith angle
+            const double theta = random->cdfLinLin(thetas, cdf);
+            // compute the sine and cosine
+            const double costheta = cos(theta);
+            const double sintheta = sin(theta);
+
+            // generate a random direction
+            return Direction(sintheta * cosphi, sintheta * sinphi, costheta);
         }
 
         /** This function returns the Stokes vector defining the polarization state of the radiation
@@ -500,14 +540,20 @@ void SecondarySourceSystem::launch(PhotonPacket* pp, size_t historyIndex) const
     VelocityInterface* bvi = t_dustcell.velocity().isNull() ? nullptr : &t_dustcell;
 
     DustCellPolarisedEmission* dpe = nullptr;
+    Direction bfk;
     if (_config->hasSpheroidalPolarization())
     {
         t_dustcellpol.calculate(lambda);
         dpe = &t_dustcellpol;
+        bfk = t_dustcellpol.generateDirection(_random);
+    }
+    else
+    {
+        bfk = _random->direction();
     }
 
     // launch the photon packet with isotropic direction
-    pp->launch(historyIndex, lambda, L * w, bfr, _random->direction(), bvi, dpe, dpe);
+    pp->launch(historyIndex, lambda, L * w, bfr, bfk, bvi, dpe, dpe);
 
     // add origin info (we combine all medium components, so we cannot differentiate them here)
     pp->setSecondaryOrigin(0);

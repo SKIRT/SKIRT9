@@ -359,7 +359,16 @@ void MonteCarloSimulation::peelOffEmission(const PhotonPacket* pp, PhotonPacket*
     for (Instrument* instrument : _instrumentSystem->instruments())
     {
         if (!instrument->isSameObserverAsPreceding())
-            ppp->launchEmissionPeelOff(pp, instrument->bfkobs(pp->position()));
+        {
+            const Direction bfkobs = instrument->bfkobs(pp->position());
+            ppp->launchEmissionPeelOff(pp, bfkobs);
+
+            // if the photon packet is polarised, we have to rotate the Stokes vector into the frame of the instrument
+            if(ppp->isPolarized())
+            {
+                ppp->rotateIntoPlane(bfkobs, instrument->bfky(pp->position()));
+            }
+        }
         instrument->detect(ppp);
     }
 }
