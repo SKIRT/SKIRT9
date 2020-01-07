@@ -16,7 +16,7 @@
 
 void MagneticFieldPerCellProbe::probeRun()
 {
-    if (find<Configuration>()->hasPanRadiationField() && find<MediumSystem>()->hasDust())
+    if (find<Configuration>()->hasMagneticField())
     {
         // locate the medium system
         auto ms = find<MediumSystem>();
@@ -28,9 +28,9 @@ void MagneticFieldPerCellProbe::probeRun()
         // write the header
         file.writeLine("# Magnetic field per spatial cell");
         file.addColumn("spatial cell index", "", 'd');
-        file.addColumn("x component of magnetic field", units->umagneticfield(), 'g');
-        file.addColumn("y component of magnetic field", units->umagneticfield(), 'g');
-        file.addColumn("z component of magnetic field", units->umagneticfield(), 'g');
+        file.addColumn("x component of magnetic field", units->umagneticfield());
+        file.addColumn("y component of magnetic field", units->umagneticfield());
+        file.addColumn("z component of magnetic field", units->umagneticfield());
 
         // write a line for each cell
         int numCells = ms->grid()->numCells();

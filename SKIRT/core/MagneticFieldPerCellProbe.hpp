@@ -18,7 +18,7 @@
 class MagneticFieldPerCellProbe : public Probe
 {
     ITEM_CONCRETE(MagneticFieldPerCellProbe, Probe, "the magnetic field for each spatial cell")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(MagneticFieldPerCellProbe, "Level2&Dust&SpatialGrid&RadiationField&Panchromatic")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(MagneticFieldPerCellProbe, "Level3&Medium&SpatialGrid&MagneticField")
     ITEM_END()
 
     //======================== Other Functions =======================
