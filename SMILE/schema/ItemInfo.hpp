@@ -154,6 +154,9 @@
     complete contents of a macro expansion on a single line.
 */
 
+// Disable auto-formatting because scope blocks are split over multiple macro definitions, confusing the algorithm
+// clang-format off
+
 // ================== ENUMERATIONS ==================
 
 /** This macro declares a scoped enumeration type (\c enum \c class) that can be used as the data
