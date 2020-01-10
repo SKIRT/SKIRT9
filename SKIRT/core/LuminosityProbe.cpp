@@ -29,16 +29,15 @@ void LuminosityProbe::probeSetup()
 
     // calculate the luminosities in parallel because this can take a while for imported sources with many entities
     Table<2> Llambdavv(numWavelengths, numSources);
-    find<ParallelFactory>()->parallelDistributed()->call(numWavelengths,
-                                [&Llambdavv, probeWavelengthGrid, sources](size_t firstIndex, size_t numIndices)
-    {
-        int numSources = sources.size();
-        for (size_t ell=firstIndex; ell!=firstIndex+numIndices; ++ell)
-        {
-            double lambda = probeWavelengthGrid->wavelength(ell);
-            for (int i=0; i!=numSources; ++i) Llambdavv(ell,i) = sources[i]->specificLuminosity(lambda);
-        }
-    });
+    find<ParallelFactory>()->parallelDistributed()->call(
+        numWavelengths, [&Llambdavv, probeWavelengthGrid, sources](size_t firstIndex, size_t numIndices) {
+            int numSources = sources.size();
+            for (size_t ell = firstIndex; ell != firstIndex + numIndices; ++ell)
+            {
+                double lambda = probeWavelengthGrid->wavelength(ell);
+                for (int i = 0; i != numSources; ++i) Llambdavv(ell, i) = sources[i]->specificLuminosity(lambda);
+            }
+        });
     ProcessManager::sumToAll(Llambdavv.data());
 
     // create a text file and add the columns
@@ -46,22 +45,20 @@ void LuminosityProbe::probeSetup()
     file.addColumn("wavelength", units->uwavelength());
     file.addColumn("specific luminosity", units->umonluminosity());
     file.addColumn("luminosity in bin", units->ubolluminosity());
-    for (int i=0; i!=numSources; ++i)
-        file.addColumn("luminosity fraction for source " + std::to_string(i+1));
+    for (int i = 0; i != numSources; ++i) file.addColumn("luminosity fraction for source " + std::to_string(i + 1));
 
     // write the rows
-    for (int ell=0; ell!=numWavelengths; ++ell)
+    for (int ell = 0; ell != numWavelengths; ++ell)
     {
         double lambda = probeWavelengthGrid->wavelength(ell);
         double dlambda = probeWavelengthGrid->effectiveWidth(ell);
         double Llambdatot = 0.;
-        for (int i=0; i!=numSources; ++i) Llambdatot += Llambdavv(ell,i);
+        for (int i = 0; i != numSources; ++i) Llambdatot += Llambdavv(ell, i);
         double Ltot = Llambdatot * dlambda;
 
-        std::vector<double> row({units->owavelength(lambda),
-                                 units->omonluminosityWavelength(lambda, Llambdatot),
+        std::vector<double> row({units->owavelength(lambda), units->omonluminosityWavelength(lambda, Llambdatot),
                                  units->obolluminosity(Ltot)});
-        for (int i=0; i!=numSources; ++i) row.push_back(Llambdatot > 0 ? Llambdavv(ell,i)/Llambdatot : 0);
+        for (int i = 0; i != numSources; ++i) row.push_back(Llambdatot > 0 ? Llambdavv(ell, i) / Llambdatot : 0);
         file.writeRow(row);
     }
 }

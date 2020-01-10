@@ -25,7 +25,8 @@ public:
         argument specifies the default unit string, which is used in case the input file does not
         contain unit information for the parameter. */
     SnapshotParameter(string description, string quantity = string(), string defaultUnit = string())
-        : _description(description), _quantity(quantity), _defaultUnit(defaultUnit) { }
+        : _description(description), _quantity(quantity), _defaultUnit(defaultUnit)
+    {}
 
     /** This function returns the parameter description. */
     const string& description() const { return _description; }

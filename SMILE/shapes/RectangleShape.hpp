@@ -16,11 +16,11 @@
 class RectangleShape : public CenterShape
 {
     ITEM_CONCRETE(RectangleShape, CenterShape, "a rectangular shape")
-    PROPERTY_DOUBLE(width, "the width of the rectangle")
+        PROPERTY_DOUBLE(width, "the width of the rectangle")
         ATTRIBUTE_QUANTITY(width, "length")
         ATTRIBUTE_MIN_VALUE(width, "0 m")
         ATTRIBUTE_MAX_VALUE(width, "1 m")
-    PROPERTY_DOUBLE(height, "the height of the rectangle")
+        PROPERTY_DOUBLE(height, "the height of the rectangle")
         ATTRIBUTE_QUANTITY(height, "length")
         ATTRIBUTE_MIN_VALUE(height, "0 m")
         ATTRIBUTE_MAX_VALUE(height, "1 m")

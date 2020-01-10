@@ -9,10 +9,10 @@
 
 //////////////////////////////////////////////////////////////////////
 
-double TabulatedDustMix::getOpticalProperties(const Array& lambdav, const Array& /*thetav*/,
-                            Array& sigmaabsv, Array& sigmascav, Array& asymmparv,
-                            Table<2>& /*S11vv*/, Table<2>& /*S12vv*/, Table<2>& /*S33vv*/, Table<2>& /*S34vv*/,
-                            ArrayTable<2>& /*sigmaabsvv*/, ArrayTable<2>& /*sigmaabspolvv*/)
+double TabulatedDustMix::getOpticalProperties(const Array& lambdav, const Array& /*thetav*/, Array& sigmaabsv,
+                                              Array& sigmascav, Array& asymmparv, Table<2>& /*S11vv*/,
+                                              Table<2>& /*S12vv*/, Table<2>& /*S33vv*/, Table<2>& /*S34vv*/,
+                                              ArrayTable<2>& /*sigmaabsvv*/, ArrayTable<2>& /*sigmaabspolvv*/)
 {
     // obtain the basic properties from the subclass on a wavelength grid chosen by the subclass
     Array inlambdav, inkappaextv, inalbedov, inasymmparv;
@@ -22,7 +22,7 @@ double TabulatedDustMix::getOpticalProperties(const Array& lambdav, const Array&
     if (inlambdav.size() < 1) throw FATALERROR("Dust properties must be tabulated for at least one wavelength");
 
     // convert to properties required by caller
-    Array insigmaabsv = mu * inkappaextv * (1.-inalbedov);
+    Array insigmaabsv = mu * inkappaextv * (1. - inalbedov);
     Array insigmascav = mu * inkappaextv * inalbedov;
 
     // resample to wavelength grid required by caller

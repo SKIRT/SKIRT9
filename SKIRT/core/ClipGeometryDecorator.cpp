@@ -15,15 +15,15 @@ void ClipGeometryDecorator::setupSelfAfter()
     // estimate the original geometry's mass in the removed region
     int Nsamples = 10000;
     int Ninside = 0;
-    for (int k=0; k<Nsamples; k++)
+    for (int k = 0; k < Nsamples; k++)
     {
         Position bfr = _geometry->generatePosition();
         if (inside(bfr)) Ninside++;
     }
-    double chi = Ninside/(1.0*Nsamples);
-    if (_remove==Remove::Outside) chi = 1.0-chi;
+    double chi = Ninside / (1.0 * Nsamples);
+    if (_remove == Remove::Outside) chi = 1.0 - chi;
     if (chi > 0.9) throw FATALERROR("Clip decorator removes more than 90% of the original mass");
-    _norm = 1.0/(1.0-chi);
+    _norm = 1.0 / (1.0 - chi);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -31,7 +31,7 @@ void ClipGeometryDecorator::setupSelfAfter()
 double ClipGeometryDecorator::density(Position bfr) const
 {
     bool removed = inside(bfr);
-    if (_remove==Remove::Outside) removed = !removed;
+    if (_remove == Remove::Outside) removed = !removed;
     return removed ? 0.0 : _geometry->density(bfr) * _norm;
 }
 
@@ -43,7 +43,7 @@ Position ClipGeometryDecorator::generatePosition() const
     {
         Position bfr = _geometry->generatePosition();
         bool removed = inside(bfr);
-        if (_remove==Remove::Outside) removed = !removed;
+        if (_remove == Remove::Outside) removed = !removed;
         if (!removed) return bfr;
     }
 }

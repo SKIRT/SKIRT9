@@ -45,7 +45,7 @@ public slots:
     // ==================== Data Members ====================
 
 private:
-    string _message;   // the current header message, remembered to detect changes in the environment
+    string _message;  // the current header message, remembered to detect changes in the environment
     QLabel* _header;
     QLineEdit* _field;
 };

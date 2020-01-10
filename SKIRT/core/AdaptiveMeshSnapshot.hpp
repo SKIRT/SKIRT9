@@ -6,10 +6,13 @@
 #ifndef ADAPTIVEMESHSNAPSHOT_HPP
 #define ADAPTIVEMESHSNAPSHOT_HPP
 
-#include "Snapshot.hpp"
 #include "Array.hpp"
+#include "Snapshot.hpp"
 class SpatialGridPath;
-namespace AdaptiveMesh_Private { class Node; }
+namespace AdaptiveMesh_Private
+{
+    class Node;
+}
 
 ////////////////////////////////////////////////////////////////////
 
@@ -281,17 +284,17 @@ public:
 
 private:
     // data members initialized during configuration
-    Box _extent;                    // the spatial domain of the mesh
-    double _eps{0.};                // small fraction of extent
+    Box _extent;      // the spatial domain of the mesh
+    double _eps{0.};  // small fraction of extent
 
     // data members initialized when processing snapshot input
     AdaptiveMesh_Private::Node* _root{nullptr};  // root node representing the complete domain
     vector<AdaptiveMesh_Private::Node*> _cells;  // leaf nodes indexed on m
 
     // data members initialized when processing snapshot input, but only if a density policy has been set
-    Array _rhov;                    // density for each cell (not normalized)
-    Array _cumrhov;                 // normalized cumulative density distribution for cells
-    double _mass{0.};               // total effective mass
+    Array _rhov;       // density for each cell (not normalized)
+    Array _cumrhov;    // normalized cumulative density distribution for cells
+    double _mass{0.};  // total effective mass
 };
 
 ////////////////////////////////////////////////////////////////////

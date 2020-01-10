@@ -30,7 +30,7 @@ public:
     /** This function initializes the ChunkMaker object to the specified range (from zero to
         \f$N-1\f$), using the specified number of threads and processes to help determine an
         appropriate chunk size. */
-    void initialize(size_t maxIndex, int numThreads, int numProcs=1);
+    void initialize(size_t maxIndex, int numThreads, int numProcs = 1);
 
     /** This function gets the next chunk, in the form of the first index and the number of indices
         in the chunk. If a chunk is still available, the function places a chunk index range in its

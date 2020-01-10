@@ -65,7 +65,7 @@ bool Console::promptForBool(string message, bool hasDef, bool def)
 int Console::promptForInt(string message, int min, int max, bool hasDef, int def)
 {
     // verify that default is in range
-    if (hasDef && (def<min || def>max)) throw FATALERROR("Default value out of range");
+    if (hasDef && (def < min || def > max)) throw FATALERROR("Default value out of range");
 
     // add hints on min, max and default values to the message
     message += " [" + StringUtils::toString(min) + "," + StringUtils::toString(max) + "]";
@@ -87,11 +87,11 @@ int Console::promptForInt(string message, int min, int max, bool hasDef, int def
         }
 
         // reject out-of-range values
-        else if (result<min)
+        else if (result < min)
         {
             error("Enter a number larger than or equal to " + StringUtils::toString(min));
         }
-        else if (result>max)
+        else if (result > max)
         {
             error("Enter a number smaller than or equal to " + StringUtils::toString(max));
         }
@@ -138,10 +138,10 @@ int Console::promptForChoice(string message, const vector<string>& choices, bool
     for (size_t index = 0; index < choices.size(); index++)
     {
         string choice = StringUtils::toUpperFirst(choices[index]);
-        info(string(index<9 ? "   ":"  ") + std::to_string(index+1) + ". " + choice);
+        info(string(index < 9 ? "   " : "  ") + std::to_string(index + 1) + ". " + choice);
     }
 
-    if (choices.size()==1 && !allowNoChoice)
+    if (choices.size() == 1 && !allowNoChoice)
     {
         info("Automatically selected the only choice: 1");
         return 0;
@@ -152,8 +152,9 @@ int Console::promptForChoice(string message, const vector<string>& choices, bool
         return -1;
     }
     return promptForInt("Enter one of these numbers" + (allowNoChoice ? " " + noChoiceMessage : ""),
-                        (allowNoChoice ? 0 : 1), static_cast<int>(choices.size()),
-                        true, (hasDef ? defIndex+1 : (allowNoChoice ? 0 : 1)) ) - 1;
+                        (allowNoChoice ? 0 : 1), static_cast<int>(choices.size()), true,
+                        (hasDef ? defIndex + 1 : (allowNoChoice ? 0 : 1)))
+           - 1;
 }
 
 ////////////////////////////////////////////////////////////////////

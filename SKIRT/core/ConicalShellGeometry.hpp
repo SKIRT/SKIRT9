@@ -49,34 +49,34 @@ class ConicalShellGeometry : public AxGeometry
     ITEM_CONCRETE(ConicalShellGeometry, AxGeometry, "a conical shell geometry")
         ATTRIBUTE_TYPE_DISPLAYED_IF(ConicalShellGeometry, "Level2")
 
-    PROPERTY_DOUBLE(exponent, "the radial powerlaw exponent p of the conical shell")
+        PROPERTY_DOUBLE(exponent, "the radial powerlaw exponent p of the conical shell")
         ATTRIBUTE_MIN_VALUE(exponent, "[0")
 
-    PROPERTY_DOUBLE(index, "the polar index q of the conical shell")
+        PROPERTY_DOUBLE(index, "the polar index q of the conical shell")
         ATTRIBUTE_MIN_VALUE(index, "[0")
 
-    PROPERTY_DOUBLE(minAngle, "the inner angle of the conical shell")
+        PROPERTY_DOUBLE(minAngle, "the inner angle of the conical shell")
         ATTRIBUTE_QUANTITY(minAngle, "posangle")
         ATTRIBUTE_MIN_VALUE(minAngle, "[0 deg")
         ATTRIBUTE_MAX_VALUE(minAngle, "90 deg]")
 
-    PROPERTY_DOUBLE(maxAngle, "the outer angle of the conical shell")
+        PROPERTY_DOUBLE(maxAngle, "the outer angle of the conical shell")
         ATTRIBUTE_QUANTITY(maxAngle, "posangle")
         ATTRIBUTE_MIN_VALUE(maxAngle, "[0 deg")
         ATTRIBUTE_MAX_VALUE(maxAngle, "90 deg]")
 
-    PROPERTY_DOUBLE(minRadius, "the minimum radius of the conical shell")
+        PROPERTY_DOUBLE(minRadius, "the minimum radius of the conical shell")
         ATTRIBUTE_QUANTITY(minRadius, "length")
         ATTRIBUTE_MIN_VALUE(minRadius, "]0")
 
-    PROPERTY_DOUBLE(maxRadius, "the maximum radius of the conical shell")
+        PROPERTY_DOUBLE(maxRadius, "the maximum radius of the conical shell")
         ATTRIBUTE_QUANTITY(maxRadius, "length")
         ATTRIBUTE_MIN_VALUE(maxRadius, "]0")
 
-    PROPERTY_BOOL(reshapeInnerRadius, "reshape the inner radius according to the Netzer luminosity profile")
+        PROPERTY_BOOL(reshapeInnerRadius, "reshape the inner radius according to the Netzer luminosity profile")
         ATTRIBUTE_DEFAULT_VALUE(reshapeInnerRadius, "false")
 
-    PROPERTY_DOUBLE(cutoffRadius, "the inner cutoff radius of the conical shell")
+        PROPERTY_DOUBLE(cutoffRadius, "the inner cutoff radius of the conical shell")
         ATTRIBUTE_QUANTITY(cutoffRadius, "length")
         ATTRIBUTE_MIN_VALUE(cutoffRadius, "[0")
         ATTRIBUTE_DEFAULT_VALUE(cutoffRadius, "0")

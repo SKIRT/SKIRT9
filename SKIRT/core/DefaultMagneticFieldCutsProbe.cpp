@@ -21,9 +21,11 @@ void DefaultMagneticFieldCutsProbe::probeSetup()
         int dimension = find<MediumSystem>()->dimension();
 
         // output cuts depending on the dimension of the medium system
-        PlanarMagneticFieldCutsProbe::writeMagneticFieldCut(this, 1,1,0, 0.,0.,0., Np,Np,Np);                     // xy
-        if (dimension >= 2) PlanarMagneticFieldCutsProbe::writeMagneticFieldCut(this, 1,0,1, 0.,0.,0., Np,Np,Np); // xz
-        if (dimension == 3) PlanarMagneticFieldCutsProbe::writeMagneticFieldCut(this, 0,1,1, 0.,0.,0., Np,Np,Np); // yz
+        PlanarMagneticFieldCutsProbe::writeMagneticFieldCut(this, 1, 1, 0, 0., 0., 0., Np, Np, Np);  // xy
+        if (dimension >= 2)
+            PlanarMagneticFieldCutsProbe::writeMagneticFieldCut(this, 1, 0, 1, 0., 0., 0., Np, Np, Np);  // xz
+        if (dimension == 3)
+            PlanarMagneticFieldCutsProbe::writeMagneticFieldCut(this, 0, 1, 1, 0., 0., 0., Np, Np, Np);  // yz
     }
 }
 

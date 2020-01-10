@@ -24,7 +24,7 @@
 class System final
 {
 
-// ================== Initialization ==================
+    // ================== Initialization ==================
 
 private:
     /** This function performs initialization for all system-specific facilities used by a client
@@ -34,7 +34,7 @@ private:
         writing. This function is \em not thread-safe; it should be invoked exactly once at program
         startup, before starting any parallel threads and before using any of the facilities
         offered by this class. */
-    static void initialize(int argc, char **argv);
+    static void initialize(int argc, char** argv);
 
     /** This function performs clean-up for all system-specific facilities offered by this class.
         Specifically, it releases any resources and restores any external changes allocated or
@@ -47,7 +47,7 @@ public:
     /** This constructor performs initialization for all system-specific facilities used by a
         client of this class. For more information, refer to the description of the initialize()
         function. */
-    System(int argc, char **argv) { initialize(argc, argv); }
+    System(int argc, char** argv) { initialize(argc, argv); }
 
     /** The destructor performs clean-up for all system-specific facilities offered by this class.
         For more information, refer to the description of the finalize() function. */
@@ -111,7 +111,7 @@ public:
         already exists at the specified path, by default it is overwritten. However, if the \em
         append flag is specified and is true, new output will be appended to the existing file. On
         Windows the function replaces forward slashes in the file path by backward slashes. */
-    static std::ofstream ofstream(string path, bool append=false);
+    static std::ofstream ofstream(string path, bool append = false);
 
     /** This function returns true if the specified path refers to an existing regular file. On
         Windows the function replaces forward slashes in the path by backward slashes. */
@@ -169,7 +169,7 @@ public:
         It is allowed to acquire a memory map on the same file more than once (in the same or in
         different execution threads). As long as the previous memory map on the file has not been
         released, the same memory map is returned for subsequent acquisitions. */
-    static std::pair<void*,size_t> acquireMemoryMap(string path);
+    static std::pair<void*, size_t> acquireMemoryMap(string path);
 
     /** This function releases a previously acquired memory map on the specified file. Releasing a
         memory map invalidates any and all pointers into the memory range previously occupied by

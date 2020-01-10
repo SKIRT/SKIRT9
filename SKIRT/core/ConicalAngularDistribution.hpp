@@ -19,10 +19,10 @@ class ConicalAngularDistribution : public AxAngularDistribution
 {
     ITEM_CONCRETE(ConicalAngularDistribution, AxAngularDistribution, "an anisotropic conical emission profile")
 
-    PROPERTY_DOUBLE(openingAngle, "the (half) opening angle of the cone")
-    ATTRIBUTE_QUANTITY(openingAngle, "posangle")
-    ATTRIBUTE_MIN_VALUE(openingAngle, "]0 deg")
-    ATTRIBUTE_MAX_VALUE(openingAngle, "90 deg]")
+        PROPERTY_DOUBLE(openingAngle, "the (half) opening angle of the cone")
+        ATTRIBUTE_QUANTITY(openingAngle, "posangle")
+        ATTRIBUTE_MIN_VALUE(openingAngle, "]0 deg")
+        ATTRIBUTE_MAX_VALUE(openingAngle, "90 deg]")
 
     ITEM_END()
 

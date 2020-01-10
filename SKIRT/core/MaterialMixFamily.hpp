@@ -6,8 +6,8 @@
 #ifndef MATERIALMIXFAMILY_HPP
 #define MATERIALMIXFAMILY_HPP
 
-#include "SimulationItem.hpp"
 #include "Array.hpp"
+#include "SimulationItem.hpp"
 #include "SnapshotParameter.hpp"
 class MaterialMix;
 

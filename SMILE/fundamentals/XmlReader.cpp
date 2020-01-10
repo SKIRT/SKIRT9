@@ -10,11 +10,10 @@
 
 ////////////////////////////////////////////////////////////////////
 
-XmlReader::XmlReader(std::istream& inputStream, string streamName)
-    : _in(inputStream), _streamName(streamName)
+XmlReader::XmlReader(std::istream& inputStream, string streamName) : _in(inputStream), _streamName(streamName)
 {
     // Verify that the stream is operational
-    if (_in.peek()==EOF) throw FATALERROR("Can't read from XML input stream or stream is empty: " + _streamName);
+    if (_in.peek() == EOF) throw FATALERROR("Can't read from XML input stream or stream is empty: " + _streamName);
 
     // Skip the UTF-8 BOM, if present
     skipBOM();
@@ -22,12 +21,11 @@ XmlReader::XmlReader(std::istream& inputStream, string streamName)
 
 ////////////////////////////////////////////////////////////////////
 
-XmlReader::XmlReader(string filePath)
-    : _in(_infile), _streamName(filePath)
+XmlReader::XmlReader(string filePath) : _in(_infile), _streamName(filePath)
 {
     // Open input file and verify that it is operational
     _infile = System::ifstream(filePath);
-    if (_in.peek()==EOF) throw FATALERROR("Can't open XML input file or file is empty: " + _streamName);
+    if (_in.peek() == EOF) throw FATALERROR("Can't open XML input file or file is empty: " + _streamName);
 
     // Skip the UTF-8 BOM, if present
     skipBOM();
@@ -42,7 +40,7 @@ bool XmlReader::readNextStartElement()
     {
         _elementIsEmpty = false;
         _elementStack.pop_back();
-        return false;                                 // >>>>>>>>>>>>>>>>>>> exit point <<<<<<<<<<<<<<<<<
+        return false;  // >>>>>>>>>>>>>>>>>>> exit point <<<<<<<<<<<<<<<<<
     }
 
     // Loop to allow skipping comments and processing instructions
@@ -57,7 +55,7 @@ bool XmlReader::readNextStartElement()
 
         // The character(s) after the '<" determine what we're looking at
         char c = peek();
-        if (c == '?')                           // *** processing instruction -> ignore
+        if (c == '?')  // *** processing instruction -> ignore
         {
             skip();
             skipUpTo("?>");
@@ -65,16 +63,16 @@ bool XmlReader::readNextStartElement()
         else if (c == '!')
         {
             skip();
-            if (get() == '-' && get() == '-')   // *** comments -> ignore
+            if (get() == '-' && get() == '-')  // *** comments -> ignore
             {
                 skipUpTo("-->");
             }
-            else                                // *** something unsupported or plain wrong
+            else  // *** something unsupported or plain wrong
             {
                 throwError("Encountered unsupported construct (DOCTYPE or CDATA?) while looking for next element");
             }
         }
-        else if (c == '/')                      // *** end tag
+        else if (c == '/')  // *** end tag
         {
             // Parse element name and closing bracket
             skip();
@@ -91,9 +89,9 @@ bool XmlReader::readNextStartElement()
                 throwError("Element end tag '" + elemName + "' does not match start tag '" + elementName() + "'");
             }
             _elementStack.pop_back();
-            return false;                                // >>>>>>>>>>>>>>>>>>> exit point <<<<<<<<<<<<<<<<<
+            return false;  // >>>>>>>>>>>>>>>>>>> exit point <<<<<<<<<<<<<<<<<
         }
-        else                                    // *** start tag, empty-element tag, or error (caught later)
+        else  // *** start tag, empty-element tag, or error (caught later)
         {
             // Parse and store the element name
             ElementInfo info;
@@ -105,12 +103,12 @@ bool XmlReader::readNextStartElement()
             {
                 // Check for closing bracket, possibly preceded by slash
                 skipWhiteSpace();
-                if (peek()=='/')
+                if (peek() == '/')
                 {
                     skip();
                     _elementIsEmpty = true;
                 }
-                if (peek()=='>')
+                if (peek() == '>')
                 {
                     skip();
                     break;
@@ -119,16 +117,16 @@ bool XmlReader::readNextStartElement()
                 // Parse and store attribute key and value
                 string name = getName();
                 skipWhiteSpace();
-                if (get()!='=') throwError("Expected equal sign after attribute name");
+                if (get() != '=') throwError("Expected equal sign after attribute name");
                 skipWhiteSpace();
                 string value = getValue();
                 info.attributeNames.push_back(name);
-                info.attributeValues.emplace(name,value);
+                info.attributeValues.emplace(name, value);
             }
 
             // Push this new element onto the stack
             _elementStack.emplace_back(std::move(info));
-            return true;                                // >>>>>>>>>>>>>>>>>>> exit point <<<<<<<<<<<<<<<<<
+            return true;  // >>>>>>>>>>>>>>>>>>> exit point <<<<<<<<<<<<<<<<<
         }
     }
 
@@ -143,8 +141,10 @@ void XmlReader::skipCurrentElement()
     size_t depth = 1;
     while (depth)
     {
-        if (readNextStartElement()) ++depth;
-        else --depth;
+        if (readNextStartElement())
+            ++depth;
+        else
+            --depth;
     }
 }
 
@@ -198,7 +198,7 @@ char XmlReader::peek()
 char XmlReader::get()
 {
     int c = _in.get();
-    if (c==EOF) throwError("Reached end of input stream unexpectedly");
+    if (c == EOF) throwError("Reached end of input stream unexpectedly");
     return static_cast<char>(c);
 }
 
@@ -207,7 +207,7 @@ char XmlReader::get()
 void XmlReader::skip()
 {
     int c = _in.get();
-    if (c==EOF) throwError("Reached end of input stream unexpectedly");
+    if (c == EOF) throwError("Reached end of input stream unexpectedly");
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -238,23 +238,20 @@ void XmlReader::skipWhiteSpace()
     {
         switch (peek())
         {
-        case ' ':
-        case '\t':
-            previousCR = false;
-            break;
+            case ' ':
+            case '\t': previousCR = false; break;
 
-        case 0x0D:  // carriage return
-            _lineNumber++;
-            previousCR = true;
-            break;
+            case 0x0D:  // carriage return
+                _lineNumber++;
+                previousCR = true;
+                break;
 
-        case 0x0A:  // line feed
-            if (!previousCR) _lineNumber++;
-            previousCR = false;
-            break;
+            case 0x0A:  // line feed
+                if (!previousCR) _lineNumber++;
+                previousCR = false;
+                break;
 
-        default:
-            return;
+            default: return;
         }
         skip();
     }
@@ -274,19 +271,19 @@ void XmlReader::skipUpTo(string match)
     while (true)
     {
         char c = get();
-        if (c == 0x0D)          // carriage return
+        if (c == 0x0D)  // carriage return
         {
             _lineNumber++;
             previousCR = true;
             matched = 0;
         }
-        else if (c==0x0A)       // line feed
+        else if (c == 0x0A)  // line feed
         {
             if (!previousCR) _lineNumber++;
             previousCR = false;
             matched = 0;
         }
-        else if (c==match[matched])
+        else if (c == match[matched])
         {
             matched++;
             if (matched == match.length()) return;
@@ -304,14 +301,11 @@ void XmlReader::skipUpTo(string match)
 
 namespace
 {
-    bool isLetter(char c)
-    {
-        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
-    }
+    bool isLetter(char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); }
 
     bool isLetterOrDigitOrDash(char c)
     {
-        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')  || (c >= '0' && c <= '9') || c == '-';
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '-';
     }
 
     bool isNameTerminator(char c)
@@ -364,15 +358,15 @@ string XmlReader::getValue()
     while (true)
     {
         char c = get();
-        if (c == quote)     // check for terminator
+        if (c == quote)  // check for terminator
         {
             break;
         }
-        if (c == '\t')      // replace tab by space
+        if (c == '\t')  // replace tab by space
         {
             c = ' ';
         }
-        if (isControlCharacter(c))   // disallow control characters
+        if (isControlCharacter(c))  // disallow control characters
         {
             throwError("Newline and control characters are not allowed within an attribute value");
         }
@@ -384,7 +378,7 @@ string XmlReader::getValue()
     value = StringUtils::replace(value, "&quot;", "\"");
     value = StringUtils::replace(value, "&lt;", "<");
     value = StringUtils::replace(value, "&gt;", ">");
-    value = StringUtils::replace(value, "&amp;", "&");   // do this one last to avoid introducing new escape sequences
+    value = StringUtils::replace(value, "&amp;", "&");  // do this one last to avoid introducing new escape sequences
 
     return value;
 }

@@ -6,8 +6,8 @@
 #ifndef ABSTRACTWAVELENGTHGRIDPROBE_HPP
 #define ABSTRACTWAVELENGTHGRIDPROBE_HPP
 
-#include "Probe.hpp"
 #include "MaterialWavelengthRangeInterface.hpp"
+#include "Probe.hpp"
 #include "WavelengthGrid.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -19,7 +19,7 @@ class AbstractWavelengthGridProbe : public Probe, public MaterialWavelengthRange
 {
     ITEM_ABSTRACT(AbstractWavelengthGridProbe, Probe, "a probe requiring a wavelength grid")
 
-    PROPERTY_ITEM(wavelengthGrid, WavelengthGrid, "the wavelength grid for this probe")
+        PROPERTY_ITEM(wavelengthGrid, WavelengthGrid, "the wavelength grid for this probe")
         ATTRIBUTE_RELEVANT_IF(wavelengthGrid, "Panchromatic")
         ATTRIBUTE_REQUIRED_IF(wavelengthGrid, "!DefaultInstrumentWavelengthGrid")
         ATTRIBUTE_DISPLAYED_IF(wavelengthGrid, "Level2")

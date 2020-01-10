@@ -24,25 +24,25 @@ void BinTreeNode::createChildren(int id)
 {
     switch (level() % 3)
     {
-    case XDIR:
+        case XDIR:
         {
             double xc = center().x();
-            addChild(new BinTreeNode(this, id++, Box(xmin(), ymin(), zmin(),     xc, ymax(), zmax())));
-            addChild(new BinTreeNode(this, id++, Box(    xc, ymin(), zmin(), xmax(), ymax(), zmax())));
+            addChild(new BinTreeNode(this, id++, Box(xmin(), ymin(), zmin(), xc, ymax(), zmax())));
+            addChild(new BinTreeNode(this, id++, Box(xc, ymin(), zmin(), xmax(), ymax(), zmax())));
         }
         break;
-    case YDIR:
+        case YDIR:
         {
             double yc = center().y();
-            addChild(new BinTreeNode(this, id++, Box(xmin(), ymin(), zmin(), xmax(),     yc, zmax())));
-            addChild(new BinTreeNode(this, id++, Box(xmin(),     yc, zmin(), xmax(), ymax(), zmax())));
+            addChild(new BinTreeNode(this, id++, Box(xmin(), ymin(), zmin(), xmax(), yc, zmax())));
+            addChild(new BinTreeNode(this, id++, Box(xmin(), yc, zmin(), xmax(), ymax(), zmax())));
         }
         break;
-    case ZDIR:
+        case ZDIR:
         {
             double zc = center().z();
-            addChild(new BinTreeNode(this, id++, Box(xmin(), ymin(), zmin(), xmax(), ymax(),     zc)));
-            addChild(new BinTreeNode(this, id++, Box(xmin(), ymin(),     zc, xmax(), ymax(), zmax())));
+            addChild(new BinTreeNode(this, id++, Box(xmin(), ymin(), zmin(), xmax(), ymax(), zc)));
+            addChild(new BinTreeNode(this, id++, Box(xmin(), ymin(), zc, xmax(), ymax(), zmax())));
         }
         break;
     }
@@ -54,9 +54,9 @@ TreeNode* BinTreeNode::child(Vec r)
 {
     switch (level() % 3)
     {
-    case XDIR:  return  r.x() < CHILD_0->xmax()  ?  CHILD_0 : CHILD_1;
-    case YDIR:  return  r.y() < CHILD_0->ymax()  ?  CHILD_0 : CHILD_1;
-    case ZDIR:  return  r.z() < CHILD_0->zmax()  ?  CHILD_0 : CHILD_1;
+        case XDIR: return r.x() < CHILD_0->xmax() ? CHILD_0 : CHILD_1;
+        case YDIR: return r.y() < CHILD_0->ymax() ? CHILD_0 : CHILD_1;
+        case ZDIR: return r.z() < CHILD_0->zmax() ? CHILD_0 : CHILD_1;
     }
     return nullptr;
 }
@@ -70,7 +70,7 @@ void BinTreeNode::addNeighbors()
 
     switch (level() % 3)
     {
-    case XDIR:
+        case XDIR:
         {
             double xc = CHILD_0->xmax();
 
@@ -131,7 +131,7 @@ void BinTreeNode::addNeighbors()
             }
         }
         break;
-    case YDIR:
+        case YDIR:
         {
             double yc = CHILD_0->ymax();
 
@@ -192,7 +192,7 @@ void BinTreeNode::addNeighbors()
             }
         }
         break;
-    case ZDIR:
+        case ZDIR:
         {
             double zc = CHILD_0->zmax();
 

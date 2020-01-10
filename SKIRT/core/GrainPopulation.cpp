@@ -7,9 +7,9 @@
 
 ////////////////////////////////////////////////////////////////////
 
-GrainPopulation::GrainPopulation(SimulationItem* parent,
-                                 GrainComposition* composition, GrainSizeDistribution* sizeDistribution,
-                                 int numSizes, NormalizationType normType, double normValue)
+GrainPopulation::GrainPopulation(SimulationItem* parent, GrainComposition* composition,
+                                 GrainSizeDistribution* sizeDistribution, int numSizes, NormalizationType normType,
+                                 double normValue)
 {
     parent->addChild(this);
 
@@ -20,15 +20,9 @@ GrainPopulation::GrainPopulation(SimulationItem* parent,
 
     switch (normType)
     {
-    case NormalizationType::DustMassPerHydrogenAtom:
-        _dustMassPerHydrogenAtom = normValue;
-        break;
-    case NormalizationType::DustMassPerHydrogenMass:
-        _dustMassPerHydrogenMass = normValue;
-        break;
-    case NormalizationType::FactorOnSizeDistribution:
-        _factorOnSizeDistribution = normValue;
-        break;
+        case NormalizationType::DustMassPerHydrogenAtom: _dustMassPerHydrogenAtom = normValue; break;
+        case NormalizationType::DustMassPerHydrogenMass: _dustMassPerHydrogenMass = normValue; break;
+        case NormalizationType::FactorOnSizeDistribution: _factorOnSizeDistribution = normValue; break;
     }
 
     setup();

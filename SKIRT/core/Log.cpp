@@ -11,9 +11,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-Log::Log()
-{
-}
+Log::Log() {}
 
 ////////////////////////////////////////////////////////////////////
 
@@ -32,7 +30,7 @@ void Log::setRank(int rank)
     if (_link) _link->setRank(rank);
 
     string rankName = std::to_string(rank);
-    if (rankName.length() < 3) rankName.insert(0, 3-rankName.length(), '0');
+    if (rankName.length() < 3) rankName.insert(0, 3 - rankName.length(), '0');
     _procNameShort = "P" + rankName;
     _procNameLong = "[" + _procNameShort + "] ";
 }
@@ -57,7 +55,7 @@ void Log::setLinkedLog(Log* log)
 {
     destroyChild(_link);
     _link = log;
-    addChild(_link) ;
+    addChild(_link);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -156,7 +154,7 @@ void Log::infoIfElapsed(string message, size_t numDone)
             if (_numTotal)
             {
                 double completed = 100. * _numDone / _numTotal;
-                message += StringUtils::toString(completed,'f',1) + "%";
+                message += StringUtils::toString(completed, 'f', 1) + "%";
             }
             info(message);
             return;

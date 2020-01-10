@@ -11,8 +11,8 @@
 #include <QButtonGroup>
 #include <QLabel>
 #include <QRadioButton>
-#include <QVariant>
 #include <QVBoxLayout>
+#include <QVariant>
 
 ////////////////////////////////////////////////////////////////////
 
@@ -23,7 +23,7 @@ ItemPropertyWizardPane::ItemPropertyWizardPane(std::unique_ptr<PropertyHandler> 
 
     // if there is exactly one choice, make it the forced type
     auto choiceList = hdlr->allowedAndDisplayedDescendants();
-    string forcedType = (choiceList.size()==1 && hdlr->isRequired()) ? choiceList[0] : "";
+    string forcedType = (choiceList.size() == 1 && hdlr->isRequired()) ? choiceList[0] : "";
 
     // determine the default type, if there is one
     string defaultType = hdlr->hasDefaultValue() ? hdlr->defaultType() : "";
@@ -84,7 +84,7 @@ ItemPropertyWizardPane::ItemPropertyWizardPane(std::unique_ptr<PropertyHandler> 
     for (auto choiceType : choiceList)
     {
         string choiceTitle = StringUtils::toUpperFirst(hdlr->schema()->title(choiceType));
-        if (choiceType==defaultType) choiceTitle += "  [default]";
+        if (choiceType == defaultType) choiceTitle += "  [default]";
         auto choiceButton = new QRadioButton(QString::fromStdString(choiceTitle));
         choiceButton->setFocusPolicy(Qt::NoFocus);
         buttonGroup->addButton(choiceButton);
@@ -95,7 +95,7 @@ ItemPropertyWizardPane::ItemPropertyWizardPane(std::unique_ptr<PropertyHandler> 
         choiceButton->setStatusTip(QString::fromStdString(choiceType));
 
         // if this button corresponds to the current type, select it
-        if (choiceType==currentType)
+        if (choiceType == currentType)
         {
             choiceButton->setChecked(true);
             emit propertyValidChanged(true);

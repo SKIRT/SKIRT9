@@ -26,22 +26,22 @@ class ListSED : public TabulatedSED
     /** The enumeration type indicating the specific luminosity unit style, e.g. whether to use
         specific luminosity per unit of wavelength or per unit of frequency. */
     ENUM_DEF(UnitStyle, wavelengthmonluminosity, frequencymonluminosity, neutralmonluminosity)
-    ENUM_VAL(UnitStyle, wavelengthmonluminosity, "per unit of wavelength: L_λ")
-    ENUM_VAL(UnitStyle, frequencymonluminosity, "per unit of frequency: L_ν")
-    ENUM_VAL(UnitStyle, neutralmonluminosity, "neutral: λ L_λ = ν L_ν")
+        ENUM_VAL(UnitStyle, wavelengthmonluminosity, "per unit of wavelength: L_λ")
+        ENUM_VAL(UnitStyle, frequencymonluminosity, "per unit of frequency: L_ν")
+        ENUM_VAL(UnitStyle, neutralmonluminosity, "neutral: λ L_λ = ν L_ν")
     ENUM_END()
 
     ITEM_CONCRETE(ListSED, TabulatedSED, "a spectral energy distribution specified inside the configuration file")
 
-    PROPERTY_DOUBLE_LIST(wavelengths, "the wavelengths at which to specify the specific luminosity")
+        PROPERTY_DOUBLE_LIST(wavelengths, "the wavelengths at which to specify the specific luminosity")
         ATTRIBUTE_QUANTITY(wavelengths, "wavelength")
         ATTRIBUTE_MIN_VALUE(wavelengths, "1 Angstrom")
         ATTRIBUTE_MAX_VALUE(wavelengths, "1 m")
 
-    PROPERTY_ENUM(unitStyle, UnitStyle, "the luminosity unit style")
+        PROPERTY_ENUM(unitStyle, UnitStyle, "the luminosity unit style")
         ATTRIBUTE_DEFAULT_VALUE(unitStyle, "wavelengthmonluminosity")
 
-    PROPERTY_DOUBLE_LIST(specificLuminosities, "the specific luminosities at each of the given wavelengths")
+        PROPERTY_DOUBLE_LIST(specificLuminosities, "the specific luminosities at each of the given wavelengths")
         ATTRIBUTE_QUANTITY(specificLuminosities, "@unitStyle")
         ATTRIBUTE_MIN_VALUE(specificLuminosities, "]0")
 

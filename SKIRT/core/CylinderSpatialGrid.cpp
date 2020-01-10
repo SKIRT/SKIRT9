@@ -18,7 +18,7 @@ void CylinderSpatialGrid::setupSelfBefore()
 
 Box CylinderSpatialGrid::boundingBox() const
 {
-    return Box(-_maxRadius,-_maxRadius,_minZ, _maxRadius,_maxRadius,_maxZ);
+    return Box(-_maxRadius, -_maxRadius, _minZ, _maxRadius, _maxRadius, _maxZ);
 }
 
 //////////////////////////////////////////////////////////////////////

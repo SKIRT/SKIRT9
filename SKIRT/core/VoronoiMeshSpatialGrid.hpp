@@ -27,32 +27,32 @@ class VoronoiMeshSpatialGrid : public BoxSpatialGrid, public DensityInCellInterf
 {
     /** The enumeration type indicating the policy for determining the positions of the sites. */
     ENUM_DEF(Policy, Uniform, CentralPeak, DustDensity, ElectronDensity, GasDensity, File, ImportedSites, ImportedMesh)
-    ENUM_VAL(Policy, Uniform, "random from uniform distribution")
-    ENUM_VAL(Policy, CentralPeak, "random from distribution with a steep central peak")
-    ENUM_VAL(Policy, DustDensity, "random from dust density distribution")
-    ENUM_VAL(Policy, ElectronDensity, "random from electron density distribution")
-    ENUM_VAL(Policy, GasDensity, "random from gas density distribution")
-    ENUM_VAL(Policy, File, "loaded from text column data file")
-    ENUM_VAL(Policy, ImportedSites, "positions of particles, sites or cells in imported distribution")
-    ENUM_VAL(Policy, ImportedMesh, "employ imported Voronoi mesh in medium system")
+        ENUM_VAL(Policy, Uniform, "random from uniform distribution")
+        ENUM_VAL(Policy, CentralPeak, "random from distribution with a steep central peak")
+        ENUM_VAL(Policy, DustDensity, "random from dust density distribution")
+        ENUM_VAL(Policy, ElectronDensity, "random from electron density distribution")
+        ENUM_VAL(Policy, GasDensity, "random from gas density distribution")
+        ENUM_VAL(Policy, File, "loaded from text column data file")
+        ENUM_VAL(Policy, ImportedSites, "positions of particles, sites or cells in imported distribution")
+        ENUM_VAL(Policy, ImportedMesh, "employ imported Voronoi mesh in medium system")
     ENUM_END()
 
     ITEM_CONCRETE(VoronoiMeshSpatialGrid, BoxSpatialGrid, "a Voronoi tessellation-based spatial grid")
         ATTRIBUTE_TYPE_DISPLAYED_IF(VoronoiMeshSpatialGrid, "Level2")
 
-    PROPERTY_ENUM(policy, Policy, "the policy for determining the positions of the sites")
+        PROPERTY_ENUM(policy, Policy, "the policy for determining the positions of the sites")
         ATTRIBUTE_DEFAULT_VALUE(policy, "DustDensity")
 
-    PROPERTY_INT(numSites, "the number of random sites (or cells in the grid)")
+        PROPERTY_INT(numSites, "the number of random sites (or cells in the grid)")
         ATTRIBUTE_MIN_VALUE(numSites, "5")
         ATTRIBUTE_DEFAULT_VALUE(numSites, "500")
         ATTRIBUTE_RELEVANT_IF(numSites, "policyUniform|policyCentralPeak|policyDustDensity|"
                                         "policyElectronDensity|policyGasDensity")
 
-    PROPERTY_STRING(filename, "the name of the file containing the site positions")
+        PROPERTY_STRING(filename, "the name of the file containing the site positions")
         ATTRIBUTE_RELEVANT_IF(filename, "policyFile")
 
-    PROPERTY_BOOL(relaxSites, "perform site relaxation to avoid overly elongated cells")
+        PROPERTY_BOOL(relaxSites, "perform site relaxation to avoid overly elongated cells")
         ATTRIBUTE_DEFAULT_VALUE(relaxSites, "false")
         ATTRIBUTE_RELEVANT_IF(relaxSites, "!policyImportedMesh")
 
@@ -121,8 +121,8 @@ protected:
 
 private:
     // data members initialized during setup
-    VoronoiMeshSnapshot* _mesh{nullptr};   // Voronoi mesh snapshot created here or obtained from medium component
-    double _norm{0.};                      // in the latter case, normalization factor obtained from medium component
+    VoronoiMeshSnapshot* _mesh{nullptr};  // Voronoi mesh snapshot created here or obtained from medium component
+    double _norm{0.};                     // in the latter case, normalization factor obtained from medium component
 };
 
 //////////////////////////////////////////////////////////////////////

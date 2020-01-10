@@ -16,15 +16,15 @@ class AxisMaterialNormalization : public MaterialNormalization
 {
     /** The enumeration type indicating the coordinate axis for normalization. */
     ENUM_DEF(Axis, X, Y, Z)
-    ENUM_VAL(Axis, X, "the X axis of the model coordinate sytem")
-    ENUM_VAL(Axis, Y, "the Y axis of the model coordinate sytem")
-    ENUM_VAL(Axis, Z, "the Z axis of the model coordinate sytem")
+        ENUM_VAL(Axis, X, "the X axis of the model coordinate sytem")
+        ENUM_VAL(Axis, Y, "the Y axis of the model coordinate sytem")
+        ENUM_VAL(Axis, Z, "the Z axis of the model coordinate sytem")
     ENUM_END()
 
     ITEM_ABSTRACT(AxisMaterialNormalization, MaterialNormalization,
                   "normalization by defining some quantity along a coordinate axis")
 
-    PROPERTY_ENUM(axis, Axis, "the axis along which to specify the normalization")
+        PROPERTY_ENUM(axis, Axis, "the axis along which to specify the normalization")
         ATTRIBUTE_DEFAULT_VALUE(axis, "Z")
 
     ITEM_END()

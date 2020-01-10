@@ -23,15 +23,11 @@ double BandLuminosityNormalization::luminosity(SED* sed) const
     double LlambdaUser = 0.;
     switch (_unitStyle)
     {
-    case UnitStyle::wavelengthmonluminosity:
-        LlambdaUser = _specificLuminosity;
-        break;
-    case UnitStyle::frequencymonluminosity:
-        LlambdaUser = _specificLuminosity * Constants::c() / lambda / lambda;
-        break;
-    case UnitStyle::neutralmonluminosity:
-        LlambdaUser = _specificLuminosity / lambda;
-        break;
+        case UnitStyle::wavelengthmonluminosity: LlambdaUser = _specificLuminosity; break;
+        case UnitStyle::frequencymonluminosity:
+            LlambdaUser = _specificLuminosity * Constants::c() / lambda / lambda;
+            break;
+        case UnitStyle::neutralmonluminosity: LlambdaUser = _specificLuminosity / lambda; break;
     }
 
     // return the ratio

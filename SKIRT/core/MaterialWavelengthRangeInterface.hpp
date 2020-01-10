@@ -40,7 +40,7 @@ class MaterialWavelengthRangeInterface : public WavelengthRangeInterface
 {
 protected:
     /** The empty constructor for the interface. */
-    MaterialWavelengthRangeInterface() { }
+    MaterialWavelengthRangeInterface() {}
 
 public:
     /** If the receiving simulation item requires material properties at the characteristic

@@ -19,7 +19,7 @@ class LogMesh : public AnchoredMesh
 {
     ITEM_CONCRETE(LogMesh, AnchoredMesh, "a logarithmic mesh")
 
-    PROPERTY_DOUBLE(centralBinFraction, "the central bin width fraction")
+        PROPERTY_DOUBLE(centralBinFraction, "the central bin width fraction")
         ATTRIBUTE_MIN_VALUE(centralBinFraction, "]0")
         ATTRIBUTE_MAX_VALUE(centralBinFraction, "1[")
         ATTRIBUTE_DEFAULT_VALUE(centralBinFraction, "1e-3")

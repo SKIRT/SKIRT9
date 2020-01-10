@@ -18,7 +18,7 @@ Vec CylindricalVectorField::vector(Position bfr) const
 {
     Vec result(-bfr.y(), bfr.x(), 0.);
     double norm = result.norm();
-    return norm > 0. ? result/norm : Vec();
+    return norm > 0. ? result / norm : Vec();
 }
 
 //////////////////////////////////////////////////////////////////////

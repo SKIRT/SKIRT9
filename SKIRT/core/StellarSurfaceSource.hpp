@@ -20,7 +20,7 @@ class StellarSurfaceSource : public CenteredSource
     ITEM_CONCRETE(StellarSurfaceSource, CenteredSource,
                   "a stellar surface source with an anisotropic outward radiation field")
 
-    PROPERTY_DOUBLE(stellarRadius, "the stellar radius")
+        PROPERTY_DOUBLE(stellarRadius, "the stellar radius")
         ATTRIBUTE_QUANTITY(stellarRadius, "length")
         ATTRIBUTE_MIN_VALUE(stellarRadius, "]0")
 

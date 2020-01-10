@@ -7,9 +7,9 @@
 #include "PropertyHandler.hpp"
 #include "PropertyWizardPane.hpp"
 #include <QHash>
-#include <QVBoxLayout>
 #include <QScrollArea>
 #include <QSpacerItem>
+#include <QVBoxLayout>
 
 ////////////////////////////////////////////////////////////////////
 
@@ -21,7 +21,7 @@ MultiPropertyWizardPane::MultiPropertyWizardPane(QObject* target)
 
     // create a layout and assign it to ourselves
     _multiLayout = new QVBoxLayout;
-    _multiLayout->setContentsMargins(0,0,0,0);
+    _multiLayout->setContentsMargins(0, 0, 0, 0);
     _multiLayout->setSpacing(0);
     _multiLayout->addStretch();
     setLayout(_multiLayout);
@@ -36,7 +36,7 @@ void MultiPropertyWizardPane::addPane(PropertyWizardPane* pane)
     auto count = layout->count();
     if (count > 0)
     {
-        auto item = layout->itemAt(count-1);
+        auto item = layout->itemAt(count - 1);
         if (item->spacerItem()) layout->removeItem(item);
     }
 
@@ -84,8 +84,7 @@ void MultiPropertyWizardPane::emitValidity()
 {
     // calculate and emit the aggregate state
     auto states = _subPaneState.values();
-    bool multivalid = std::all_of(_subPanes.cbegin(), _subPanes.cend(), [this](PropertyWizardPane* subPane)
-    {
+    bool multivalid = std::all_of(_subPanes.cbegin(), _subPanes.cend(), [this](PropertyWizardPane* subPane) {
         return !subPane->isVisible() || _subPaneState[subPane];
     });
     emit multiPropertyValidChanged(multivalid);
@@ -109,7 +108,7 @@ void MultiPropertyWizardPane::showEvent(QShowEvent* event)
         auto area = dynamic_cast<QScrollArea*>(current);
         if (area)
         {
-            area->ensureVisible(0,0,0,0);
+            area->ensureVisible(0, 0, 0, 0);
             break;
         }
     }

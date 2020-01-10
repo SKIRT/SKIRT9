@@ -29,7 +29,7 @@ class ProcessManager final
 private:
     /** This static function initializes the MPI library used for remote communication, if present.
         The function is called from the constructor of this class. */
-    static void initialize(int *argc, char ***argv);
+    static void initialize(int* argc, char*** argv);
 
     /** This static function finalizes the MPI library used for remote communication, if present.
         The function is called from the destructor of this class. */
@@ -39,7 +39,7 @@ public:
     /** The constructor initializes the MPI library used for remote communication, if present. It
         is passed a reference to the command line arguments to provide the MPI library with the
         opportunity to use and/or adjust them (e.g. to remove any MPI related arguments). */
-    ProcessManager(int *argc, char ***argv) { initialize(argc, argv); }
+    ProcessManager(int* argc, char*** argv) { initialize(argc, argv); }
 
     /** The destructor finalizes the MPI library used for remote communication, if present. */
     ~ProcessManager() { finalize(); }
@@ -80,7 +80,7 @@ public:
     /** This function returns true if the calling process is considered to be the root process,
         i.e. its rank is zero. If the MPI library is not present, or the program was invoked
         without MPI, the function always returns true. */
-    static bool isRoot() { return _rank==0; }
+    static bool isRoot() { return _rank == 0; }
 
     //======== Master-slave communication  ===========
 
@@ -153,12 +153,11 @@ public:
     static void broadcastAllToAll(std::function<void(vector<double>& data)> producer,
                                   std::function<void(const vector<double>& data)> consumer);
 
-
     //======== Data members  ===========
 
 private:
-    static int _size;    // the number of processes in the run-time environment
-    static int _rank;    // the rank of this process in the run-time environment
+    static int _size;  // the number of processes in the run-time environment
+    static int _rank;  // the rank of this process in the run-time environment
 };
 
 #endif

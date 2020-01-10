@@ -6,8 +6,8 @@
 #ifndef ADAPTIVEMESHMEDIUM_HPP
 #define ADAPTIVEMESHMEDIUM_HPP
 
-#include "MeshMedium.hpp"
 #include "AdaptiveMeshInterface.hpp"
+#include "MeshMedium.hpp"
 
 ////////////////////////////////////////////////////////////////////
 

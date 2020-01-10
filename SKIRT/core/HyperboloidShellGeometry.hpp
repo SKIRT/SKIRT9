@@ -33,25 +33,25 @@ class HyperboloidShellGeometry : public AxGeometry
     ITEM_CONCRETE(HyperboloidShellGeometry, AxGeometry, "a hyperboloid shell geometry")
         ATTRIBUTE_TYPE_DISPLAYED_IF(HyperboloidShellGeometry, "Level2")
 
-    PROPERTY_DOUBLE(outerRadialExtent, "the radial extent of the hyperboloid outer wall")
+        PROPERTY_DOUBLE(outerRadialExtent, "the radial extent of the hyperboloid outer wall")
         ATTRIBUTE_QUANTITY(outerRadialExtent, "length")
         ATTRIBUTE_MIN_VALUE(outerRadialExtent, "]0")
 
-    PROPERTY_DOUBLE(outerOpeningAngle, "the half opening angle of the hyperboloid outer wall")
+        PROPERTY_DOUBLE(outerOpeningAngle, "the half opening angle of the hyperboloid outer wall")
         ATTRIBUTE_QUANTITY(outerOpeningAngle, "posangle")
         ATTRIBUTE_MIN_VALUE(outerOpeningAngle, "]0 deg")
         ATTRIBUTE_MAX_VALUE(outerOpeningAngle, "90 deg[")
 
-    PROPERTY_DOUBLE(outerRealAxis, "the real axis of the hyperboloid outer wall")
+        PROPERTY_DOUBLE(outerRealAxis, "the real axis of the hyperboloid outer wall")
         ATTRIBUTE_QUANTITY(outerRealAxis, "length")
         ATTRIBUTE_MIN_VALUE(outerRealAxis, "]0")
 
-    PROPERTY_DOUBLE(innerOpeningAngle, "the half opening angle of the hyperboloid inner wall")
+        PROPERTY_DOUBLE(innerOpeningAngle, "the half opening angle of the hyperboloid inner wall")
         ATTRIBUTE_QUANTITY(innerOpeningAngle, "posangle")
         ATTRIBUTE_MIN_VALUE(innerOpeningAngle, "]0 deg")
         ATTRIBUTE_MAX_VALUE(innerOpeningAngle, "90 deg[")
 
-    PROPERTY_DOUBLE(innerRealAxis, "the real axis of the hyperboloid inner wall")
+        PROPERTY_DOUBLE(innerRealAxis, "the real axis of the hyperboloid inner wall")
         ATTRIBUTE_QUANTITY(innerRealAxis, "length")
         ATTRIBUTE_MIN_VALUE(innerRealAxis, "]0")
 

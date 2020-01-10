@@ -6,9 +6,9 @@
 #ifndef GRAINPOPULATION_HPP
 #define GRAINPOPULATION_HPP
 
-#include "SimulationItem.hpp"
 #include "GrainComposition.hpp"
 #include "GrainSizeDistribution.hpp"
+#include "SimulationItem.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -32,39 +32,39 @@ class GrainPopulation : public SimulationItem
     /** The enumeration type indicating the mechanism for specifying the amount of dust in the
         population. */
     ENUM_DEF(NormalizationType, DustMassPerHydrogenAtom, DustMassPerHydrogenMass, FactorOnSizeDistribution)
-    ENUM_VAL(NormalizationType, DustMassPerHydrogenAtom, "an absolute dust mass per hydrogen atom")
-    ENUM_VAL(NormalizationType, DustMassPerHydrogenMass, "a ratio of dust mass per hydrogen mass")
-    ENUM_VAL(NormalizationType, FactorOnSizeDistribution, "a proportionality factor on the size distribution")
+        ENUM_VAL(NormalizationType, DustMassPerHydrogenAtom, "an absolute dust mass per hydrogen atom")
+        ENUM_VAL(NormalizationType, DustMassPerHydrogenMass, "a ratio of dust mass per hydrogen mass")
+        ENUM_VAL(NormalizationType, FactorOnSizeDistribution, "a proportionality factor on the size distribution")
     ENUM_END()
 
     ITEM_CONCRETE(GrainPopulation, SimulationItem, "a dust grain population")
 
-    PROPERTY_ITEM(composition, GrainComposition, "the dust grain composition")
+        PROPERTY_ITEM(composition, GrainComposition, "the dust grain composition")
         ATTRIBUTE_DEFAULT_VALUE(composition, "DraineGraphiteGrainComposition")
 
-    PROPERTY_ITEM(sizeDistribution, GrainSizeDistribution, "the dust grain size distribution")
+        PROPERTY_ITEM(sizeDistribution, GrainSizeDistribution, "the dust grain size distribution")
         ATTRIBUTE_DEFAULT_VALUE(sizeDistribution, "PowerLawGrainSizeDistribution")
 
-    PROPERTY_INT(numSizes, "the number of grain size bins")
+        PROPERTY_INT(numSizes, "the number of grain size bins")
         ATTRIBUTE_MIN_VALUE(numSizes, "1")
         ATTRIBUTE_MAX_VALUE(numSizes, "1000")
         ATTRIBUTE_DEFAULT_VALUE(numSizes, "8")
 
-    PROPERTY_ENUM(normalizationType, NormalizationType,
-                  "the mechanism for specifying the amount of dust in the population")
+        PROPERTY_ENUM(normalizationType, NormalizationType,
+                      "the mechanism for specifying the amount of dust in the population")
         ATTRIBUTE_DEFAULT_VALUE(normalizationType, "DustMassPerHydrogenMass")
 
-    PROPERTY_DOUBLE(dustMassPerHydrogenAtom, "the dust mass per hydrogen atom")
+        PROPERTY_DOUBLE(dustMassPerHydrogenAtom, "the dust mass per hydrogen atom")
         ATTRIBUTE_QUANTITY(dustMassPerHydrogenAtom, "mass")
         ATTRIBUTE_MIN_VALUE(dustMassPerHydrogenAtom, "[0")
         ATTRIBUTE_RELEVANT_IF(dustMassPerHydrogenAtom, "normalizationTypeDustMassPerHydrogenAtom")
 
-    PROPERTY_DOUBLE(dustMassPerHydrogenMass, "the dust mass per hydrogen mass")
+        PROPERTY_DOUBLE(dustMassPerHydrogenMass, "the dust mass per hydrogen mass")
         ATTRIBUTE_MIN_VALUE(dustMassPerHydrogenMass, "[0")
         ATTRIBUTE_MAX_VALUE(dustMassPerHydrogenMass, "1[")
         ATTRIBUTE_RELEVANT_IF(dustMassPerHydrogenMass, "normalizationTypeDustMassPerHydrogenMass")
 
-    PROPERTY_DOUBLE(factorOnSizeDistribution, "the proportionality factor on the size distribution")
+        PROPERTY_DOUBLE(factorOnSizeDistribution, "the proportionality factor on the size distribution")
         ATTRIBUTE_MIN_VALUE(factorOnSizeDistribution, "[0")
         ATTRIBUTE_DEFAULT_VALUE(factorOnSizeDistribution, "1")
         ATTRIBUTE_RELEVANT_IF(factorOnSizeDistribution, "normalizationTypeFactorOnSizeDistribution")
@@ -86,9 +86,9 @@ public:
         The \em normValue argument specifies the normalization value corresponding to the specified
         normalization type, i.e. dustMassPerHydrogenAtom (in kg), dustMassPerHydrogenMass
         (dimensionless ratio), or factorOnSizeDistribution (dimensionless factor). */
-    explicit GrainPopulation(SimulationItem* parent,
-                             GrainComposition* composition, GrainSizeDistribution* sizeDistribution,
-                             int numSizes, NormalizationType normType, double normValue);
+    explicit GrainPopulation(SimulationItem* parent, GrainComposition* composition,
+                             GrainSizeDistribution* sizeDistribution, int numSizes, NormalizationType normType,
+                             double normValue);
 };
 
 ////////////////////////////////////////////////////////////////////

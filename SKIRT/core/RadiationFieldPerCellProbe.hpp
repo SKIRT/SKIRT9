@@ -26,7 +26,7 @@ class RadiationFieldPerCellProbe : public Probe
     ITEM_CONCRETE(RadiationFieldPerCellProbe, Probe, "the mean radiation field intensity for each spatial cell")
         ATTRIBUTE_TYPE_DISPLAYED_IF(RadiationFieldPerCellProbe, "Level2&Medium&SpatialGrid&RadiationField")
 
-    PROPERTY_BOOL(writeWavelengthGrid, "output a text file with the radiation field wavelength grid")
+        PROPERTY_BOOL(writeWavelengthGrid, "output a text file with the radiation field wavelength grid")
         ATTRIBUTE_DEFAULT_VALUE(writeWavelengthGrid, "false")
 
     ITEM_END()

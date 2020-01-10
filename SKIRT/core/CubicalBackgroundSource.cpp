@@ -24,19 +24,19 @@ namespace
     Direction generateLaunchWall(Random* random)
     {
         double X = random->uniform();
-        if (X < 1./6.) return Direction(-1., 0., 0.);
-        if (X < 2./6.) return Direction( 1., 0., 0.);
-        if (X < 3./6.) return Direction( 0.,-1., 0.);
-        if (X < 4./6.) return Direction( 0., 1., 0.);
-        if (X < 5./6.) return Direction( 0., 0.,-1.);
-        return Direction( 0., 0., 1.);
+        if (X < 1. / 6.) return Direction(-1., 0., 0.);
+        if (X < 2. / 6.) return Direction(1., 0., 0.);
+        if (X < 3. / 6.) return Direction(0., -1., 0.);
+        if (X < 4. / 6.) return Direction(0., 1., 0.);
+        if (X < 5. / 6.) return Direction(0., 0., -1.);
+        return Direction(0., 0., 1.);
     }
 
     // this function generates a random launch position on the wall specified by its outward normal
     Position generateLaunchPositionOnLaunchWall(Random* random, Direction bfu)
     {
-        double t1 = 2.*random->uniform()-1.;
-        double t2 = 2.*random->uniform()-1.;
+        double t1 = 2. * random->uniform() - 1.;
+        double t2 = 2. * random->uniform() - 1.;
         if (bfu.x()) return Position(bfu.x(), t1, t2);
         if (bfu.y()) return Position(t1, bfu.y(), t2);
         return Position(t1, t2, bfu.z());
@@ -47,26 +47,26 @@ namespace
     Direction generateDirectionForLaunchWall(Random* random, Direction bfu)
     {
         // picking a random (theta',phi')
-        double thetap = M_PI-acos(sqrt(random->uniform()));
-        double phip = 2.0*M_PI*random->uniform();
-        Direction bfkp(thetap,phip);
+        double thetap = M_PI - acos(sqrt(random->uniform()));
+        double phip = 2.0 * M_PI * random->uniform();
+        Direction bfkp(thetap, phip);
         double kpx, kpy, kpz;
-        bfkp.cartesian(kpx,kpy,kpz);
+        bfkp.cartesian(kpx, kpy, kpz);
 
         // conversion to the regular coordinate system
-        if (bfu.x() == -1.) return Direction(-kpz,-kpy,-kpx);
-        if (bfu.x() ==  1.) return Direction(kpz,kpy,-kpx);
-        if (bfu.y() == -1.) return Direction(kpy,-kpz,-kpx);
-        if (bfu.y() ==  1.) return Direction(-kpy,kpz,-kpx);
-        if (bfu.z() == -1.) return Direction(-kpx,kpy,-kpz);
-        return Direction(kpx,kpy,kpz);
+        if (bfu.x() == -1.) return Direction(-kpz, -kpy, -kpx);
+        if (bfu.x() == 1.) return Direction(kpz, kpy, -kpx);
+        if (bfu.y() == -1.) return Direction(kpy, -kpz, -kpx);
+        if (bfu.y() == 1.) return Direction(-kpy, kpz, -kpx);
+        if (bfu.z() == -1.) return Direction(-kpx, kpy, -kpz);
+        return Direction(kpx, kpy, kpz);
     }
 
     // this function returns the normalized probability of launching in a certain direction
     // for a given launch wall (which is specified by its outward normal)
     double probabilityOfDirectionForLaunchWall(Direction bfk, Direction bfu)
     {
-        double costhetap = Vec::dot(bfk,bfu);
+        double costhetap = Vec::dot(bfk, bfu);
         if (costhetap < 0.)
             return -4. * costhetap;
         else
@@ -81,7 +81,10 @@ namespace
     public:
         void setLaunchWall(Direction bfu) { _bfu = bfu; }
         double probabilityForDirection(Direction bfk) const override
-                        { return probabilityOfDirectionForLaunchWall(bfk, _bfu); }
+        {
+            return probabilityOfDirectionForLaunchWall(bfk, _bfu);
+        }
+
     private:
         Direction _bfu;
     };

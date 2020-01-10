@@ -38,8 +38,7 @@ void LaunchedPacketsProbe::probePhotonPacket(const PhotonPacket* pp)
     int h = pp->compIndex();
 
     // count the packet for each wavelength bin index
-    for (int ell : _probeWavelengthGrid->bins(pp->sourceRestFrameWavelength()))
-        LockFree::add(_counts(h,ell), 1);
+    for (int ell : _probeWavelengthGrid->bins(pp->sourceRestFrameWavelength())) LockFree::add(_counts(h, ell), 1);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -54,19 +53,19 @@ void LaunchedPacketsProbe::probeRun()
     TextOutFile file(this, itemName() + "_launchedpackets", "photon packets launched by primary sources");
     file.addColumn("wavelength", units->uwavelength());
     file.addColumn("total nr of photon packets launched in bin");
-    for (int h=0; h!=numSources; ++h)
-        file.addColumn("nr of photon packets launched in bin by source " + std::to_string(h+1));
+    for (int h = 0; h != numSources; ++h)
+        file.addColumn("nr of photon packets launched in bin by source " + std::to_string(h + 1));
 
     // write the rows
-    for (int ell=0; ell!=numWavelengths; ++ell)
+    for (int ell = 0; ell != numWavelengths; ++ell)
     {
         double lambda = _probeWavelengthGrid->wavelength(ell);
 
         std::vector<double> row({units->owavelength(lambda), 0.});
-        for (int h=0; h!=numSources; ++h)
+        for (int h = 0; h != numSources; ++h)
         {
-            row.push_back(_counts(h,ell));
-            row[1] += _counts(h,ell);
+            row.push_back(_counts(h, ell));
+            row[1] += _counts(h, ell);
         }
         file.writeRow(row);
     }

@@ -24,15 +24,11 @@ void SimulationItem::setup()
 
 ////////////////////////////////////////////////////////////////////
 
-void SimulationItem::setupSelfBefore()
-{
-}
+void SimulationItem::setupSelfBefore() {}
 
 ////////////////////////////////////////////////////////////////////
 
-void SimulationItem::setupSelfAfter()
-{
-}
+void SimulationItem::setupSelfAfter() {}
 
 ////////////////////////////////////////////////////////////////////
 
@@ -118,7 +114,7 @@ SimulationItem* SimulationItem::interface(int levels, bool setup, bool offersReq
     {
         for (Item* child : candidate->children())
         {
-            auto result = dynamic_cast<SimulationItem*>(child)->interface(levels-1, false, offersRequestedInterface);
+            auto result = dynamic_cast<SimulationItem*>(child)->interface(levels - 1, false, offersRequestedInterface);
             if (result)
             {
                 if (setup) result->setup();

@@ -28,7 +28,7 @@ class FileWavelengthDistribution : public TabulatedWavelengthDistribution
     ITEM_CONCRETE(FileWavelengthDistribution, TabulatedWavelengthDistribution,
                   "a wavelength probability distribution loaded from a text file")
 
-    PROPERTY_STRING(filename, "the name of the file with the wavelength probability distribution")
+        PROPERTY_STRING(filename, "the name of the file with the wavelength probability distribution")
 
     ITEM_END()
 

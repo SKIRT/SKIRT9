@@ -6,8 +6,8 @@
 #ifndef PSEUDOSERSICGEOMETRY_HPP
 #define PSEUDOSERSICGEOMETRY_HPP
 
-#include "SpheGeometry.hpp"
 #include "Array.hpp"
+#include "SpheGeometry.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -28,11 +28,11 @@ class PseudoSersicGeometry : public SpheGeometry
     ITEM_CONCRETE(PseudoSersicGeometry, SpheGeometry, "a pseudo-Sérsic geometry")
         ATTRIBUTE_TYPE_DISPLAYED_IF(PseudoSersicGeometry, "Level2")
 
-    PROPERTY_DOUBLE(effectiveRadius, "the effective radius")
+        PROPERTY_DOUBLE(effectiveRadius, "the effective radius")
         ATTRIBUTE_QUANTITY(effectiveRadius, "length")
         ATTRIBUTE_MIN_VALUE(effectiveRadius, "]0")
 
-    PROPERTY_DOUBLE(index, "the Sérsic index n")
+        PROPERTY_DOUBLE(index, "the Sérsic index n")
         ATTRIBUTE_MIN_VALUE(index, "]0.5")
         ATTRIBUTE_MAX_VALUE(index, "10]")
         ATTRIBUTE_DEFAULT_VALUE(index, "1")

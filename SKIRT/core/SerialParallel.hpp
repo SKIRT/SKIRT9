@@ -16,7 +16,7 @@
     any exceptions thrown by the target function are simply passed through. */
 class SerialParallel : public Parallel
 {
-    friend class ParallelFactory;       // so ParallelFactory can access our private constructor
+    friend class ParallelFactory;  // so ParallelFactory can access our private constructor
 
     //============= Construction - Destruction =============
 

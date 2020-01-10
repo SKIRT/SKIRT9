@@ -25,12 +25,12 @@ class ListBand : public Band
     ITEM_CONCRETE(ListBand, Band, "a wavelength band (transmission curve) specified inside the configuration file")
         ATTRIBUTE_TYPE_DISPLAYED_IF(ListBand, "Level2")
 
-    PROPERTY_DOUBLE_LIST(wavelengths, "the wavelengths at which to specify the transmission")
+        PROPERTY_DOUBLE_LIST(wavelengths, "the wavelengths at which to specify the transmission")
         ATTRIBUTE_QUANTITY(wavelengths, "wavelength")
         ATTRIBUTE_MIN_VALUE(wavelengths, "1 Angstrom")
         ATTRIBUTE_MAX_VALUE(wavelengths, "1 m")
 
-    PROPERTY_DOUBLE_LIST(transmissionValues, "the transmission at each of the given wavelengths")
+        PROPERTY_DOUBLE_LIST(transmissionValues, "the transmission at each of the given wavelengths")
         ATTRIBUTE_MIN_VALUE(transmissionValues, "]0")
 
     ITEM_END()

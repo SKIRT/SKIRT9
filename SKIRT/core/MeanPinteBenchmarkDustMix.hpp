@@ -28,17 +28,17 @@ class MeanPinteBenchmarkDustMix : public SingleGrainDustMix
 {
     /** The enumeration type indicating the scattering mode. */
     ENUM_DEF(ScatteringType, HenyeyGreenstein, MaterialPhaseFunction, SphericalPolarization)
-    ENUM_VAL(ScatteringType, HenyeyGreenstein, "use the Henyey-Greenstein phase function (unpolarized)")
-    ENUM_VAL(ScatteringType, MaterialPhaseFunction,
-                                      "use the phase function derived from actual material properties (unpolarized)")
-    ENUM_VAL(ScatteringType, SphericalPolarization, "support polarization through scattering by spherical grains")
+        ENUM_VAL(ScatteringType, HenyeyGreenstein, "use the Henyey-Greenstein phase function (unpolarized)")
+        ENUM_VAL(ScatteringType, MaterialPhaseFunction,
+                 "use the phase function derived from actual material properties (unpolarized)")
+        ENUM_VAL(ScatteringType, SphericalPolarization, "support polarization through scattering by spherical grains")
     ENUM_END()
 
     ITEM_CONCRETE(MeanPinteBenchmarkDustMix, SingleGrainDustMix,
                   "a Pinte 2D benchmark dust mix (mean properties, optionally with polarization at 1 micron)")
         ATTRIBUTE_TYPE_DISPLAYED_IF(MeanPinteBenchmarkDustMix, "Level2")
 
-    PROPERTY_ENUM(scatteringType, ScatteringType, "the type of scattering to be implemented")
+        PROPERTY_ENUM(scatteringType, ScatteringType, "the type of scattering to be implemented")
         ATTRIBUTE_DEFAULT_VALUE(scatteringType, "HenyeyGreenstein")
 
     ITEM_END()

@@ -25,15 +25,14 @@ void FITSInOut::read(const SimulationItem* item, string filename, Array& data, i
     // Log the file path and the data dimensions
     Log* log = item->find<Log>();
     log->info(item->typeAndName() + " read FITS file " + filepath);
-    if (nz>1) log->info("  Data cube has " + std::to_string(nz) + " frames");
+    if (nz > 1) log->info("  Data cube has " + std::to_string(nz) + " frames");
     log->info("  Frame dimensions are " + std::to_string(nx) + " x " + std::to_string(ny));
 }
 
 ////////////////////////////////////////////////////////////////////
 
-void FITSInOut::write(const SimulationItem* item, string description, string filename,
-                      const Array& data, string dataUnits,
-                      int nx, int ny, double incx, double incy, double xc, double yc, string xyUnits,
+void FITSInOut::write(const SimulationItem* item, string description, string filename, const Array& data,
+                      string dataUnits, int nx, int ny, double incx, double incy, double xc, double yc, string xyUnits,
                       const Array& z, string zUnits)
 {
     // Only write the FITS file if this process is the root
@@ -75,7 +74,7 @@ void FITSInOut::read(string filepath, Array& data, int& nx, int& ny, int& nz)
 
     // Open the FITS file
     int status = 0;
-    fitsfile *fptr;
+    fitsfile* fptr;
     ffdopn(&fptr, filepath.c_str(), READONLY, &status);
     if (status) report_error(filepath, "opening", status);
 
@@ -90,7 +89,7 @@ void FITSInOut::read(string filepath, Array& data, int& nx, int& ny, int& nz)
     nz = naxis > 2 ? naxes[2] : 1;
 
     // Resize the data container
-    size_t nelements = static_cast<size_t>(nx)*static_cast<size_t>(ny)*static_cast<size_t>(nz);
+    size_t nelements = static_cast<size_t>(nx) * static_cast<size_t>(ny) * static_cast<size_t>(nz);
     data.resize(nelements);
 
     // Read the array of pixels from the file
@@ -105,9 +104,8 @@ void FITSInOut::read(string filepath, Array& data, int& nx, int& ny, int& nz)
 
 ////////////////////////////////////////////////////////////////////
 
-void FITSInOut::write(string filepath, const Array& data, string dataUnits,
-                      int nx, int ny, double incx, double incy, double xc, double yc, string xyUnits,
-                      const Array& z, string zUnits)
+void FITSInOut::write(string filepath, const Array& data, string dataUnits, int nx, int ny, double incx, double incy,
+                      double xc, double yc, string xyUnits, const Array& z, string zUnits)
 {
     // Get the z-axis size
     //   0:  a single frame that is not part of a datacube
@@ -117,7 +115,7 @@ void FITSInOut::write(string filepath, const Array& data, string dataUnits,
 
     // Verify the data size
     size_t nelements = data.size();
-    if (nelements != static_cast<size_t>(nx)*static_cast<size_t>(ny)*static_cast<size_t>(nz?nz:1))
+    if (nelements != static_cast<size_t>(nx) * static_cast<size_t>(ny) * static_cast<size_t>(nz ? nz : 1))
         throw FATALERROR("Inconsistent data size when creating FITS file " + filepath);
     long naxes[3] = {nx, ny, nz};
 
@@ -127,14 +125,14 @@ void FITSInOut::write(string filepath, const Array& data, string dataUnits,
 
     // Generate time stamp
     string stamp = System::timestamp(true);
-    stamp.erase(19); // remove milliseconds
+    stamp.erase(19);  // remove milliseconds
 
     // Remove any existing file with the same name
     remove(filepath.c_str());
 
     // Create the fits file
     int status = 0;
-    fitsfile *fptr;
+    fitsfile* fptr;
     ffdkinit(&fptr, filepath.c_str(), &status);
     if (status) report_error(filepath, "creating", status);
 
@@ -145,15 +143,16 @@ void FITSInOut::write(string filepath, const Array& data, string dataUnits,
     // Add the relevant keywords
     ffpkyg(fptr, "BSCALE", 1., 0, "Array value scale", &status);
     ffpkyg(fptr, "BZERO", 0., 0, "Array value offset", &status);
-    ffpkys(fptr, "DATE"  , const_cast<char*>(stamp.c_str()), "Date and time of creation (UTC)", &status);
-    ffpkys(fptr, "ORIGIN", const_cast<char*>("SKIRT simulation"), "Astronomical Observatory, Ghent University", &status);
-    ffpkys(fptr, "BUNIT" , const_cast<char*>(dataUnits.c_str()), "Physical unit of the array values", &status);
-    ffpkyd(fptr, "CRPIX1", (nx+1)/2., 9, "X-axis coordinate system reference pixel", &status);
+    ffpkys(fptr, "DATE", const_cast<char*>(stamp.c_str()), "Date and time of creation (UTC)", &status);
+    ffpkys(fptr, "ORIGIN", const_cast<char*>("SKIRT simulation"), "Astronomical Observatory, Ghent University",
+           &status);
+    ffpkys(fptr, "BUNIT", const_cast<char*>(dataUnits.c_str()), "Physical unit of the array values", &status);
+    ffpkyd(fptr, "CRPIX1", (nx + 1) / 2., 9, "X-axis coordinate system reference pixel", &status);
     ffpkyd(fptr, "CRVAL1", xc, 9, "Coordinate value at X-axis reference pixel", &status);
     ffpkyd(fptr, "CDELT1", incx, 9, "Coordinate increment along X-axis", &status);
     ffpkys(fptr, "CUNIT1", const_cast<char*>(xyUnits.c_str()), "Physical units of the X-axis", &status);
     ffpkys(fptr, "CTYPE1", " ", "Linear X coordinates", &status);
-    ffpkyd(fptr, "CRPIX2", (ny+1)/2., 9, "Y-axis coordinate system reference pixel", &status);
+    ffpkyd(fptr, "CRPIX2", (ny + 1) / 2., 9, "Y-axis coordinate system reference pixel", &status);
     ffpkyd(fptr, "CRVAL2", yc, 9, "Coordinate value at Y-axis reference pixel", &status);
     ffpkyd(fptr, "CDELT2", incy, 9, "Coordinate increment along Y-axis", &status);
     ffpkys(fptr, "CUNIT2", const_cast<char*>(xyUnits.c_str()), "Physical units of the Y-axis", &status);
@@ -169,9 +168,9 @@ void FITSInOut::write(string filepath, const Array& data, string dataUnits,
     if (nz)
     {
         // Create the table
-        char* ttypev[] = { const_cast<char*>("GRID_POINTS") };
-        char* tformv[] = { const_cast<char*>("E16.9") };
-        char* tunitv[] = { const_cast<char*>(zUnits.c_str()) };
+        char* ttypev[] = {const_cast<char*>("GRID_POINTS")};
+        char* tformv[] = {const_cast<char*>("E16.9")};
+        char* tunitv[] = {const_cast<char*>(zUnits.c_str())};
         ffcrtb(fptr, ASCII_TBL, 0, 1, ttypev, tformv, tunitv, "Z-axis coordinate values", &status);
         if (status) report_error(filepath, "writing", status);
 
@@ -195,7 +194,7 @@ void FITSInOut::readColumn(string filepath, Array& data, int n)
 
     // Open the FITS file
     int status = 0;
-    fitsfile *fptr;
+    fitsfile* fptr;
     fftopn(&fptr, filepath.c_str(), READONLY, &status);
     if (status) report_error(filepath, "opening", status);
 
@@ -206,7 +205,7 @@ void FITSInOut::readColumn(string filepath, Array& data, int n)
     long nrows = 0;
     ffgnrw(fptr, &nrows, &status);
     if (status) report_error(filepath, "reading", status);
-    if (ncols<=0 || nrows<n) throw FATALERROR("Not enough table data in FITS file " + filepath);
+    if (ncols <= 0 || nrows < n) throw FATALERROR("Not enough table data in FITS file " + filepath);
 
     // Resize the data container
     data.resize(n);

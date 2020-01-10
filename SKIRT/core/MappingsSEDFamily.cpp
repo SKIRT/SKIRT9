@@ -27,13 +27,12 @@ void MappingsSEDFamily::setupSelfBefore()
 
 vector<SnapshotParameter> MappingsSEDFamily::parameterInfo() const
 {
-    return vector<SnapshotParameter>
-    {
-        { "star formation rate", "massrate", "Msun/yr" },
-        { "metallicity" },
-        { "compactness" },
-        { "pressure", "pressure", "Pa" },
-        { "covering factor" },
+    return vector<SnapshotParameter>{
+        {"star formation rate", "massrate", "Msun/yr"},
+        {"metallicity"},
+        {"compactness"},
+        {"pressure", "pressure", "Pa"},
+        {"covering factor"},
     };
 }
 
@@ -48,10 +47,10 @@ Range MappingsSEDFamily::intrinsicWavelengthRange() const
 
 double MappingsSEDFamily::specificLuminosity(double wavelength, const Array& parameters) const
 {
-    double SFR  = parameters[0] / Constants::Msun() * Constants::year();
-    double Z    = parameters[1];
+    double SFR = parameters[0] / Constants::Msun() * Constants::year();
+    double Z = parameters[1];
     double logC = parameters[2];
-    double p    = parameters[3];
+    double p = parameters[3];
     double fPDR = parameters[4];
 
     return SFR * _table(wavelength, Z, logC, p, fPDR);
@@ -59,13 +58,13 @@ double MappingsSEDFamily::specificLuminosity(double wavelength, const Array& par
 
 ////////////////////////////////////////////////////////////////////
 
-double MappingsSEDFamily::cdf(Array& lambdav, Array& pv, Array& Pv,
-                              const Range& wavelengthRange, const Array& parameters) const
+double MappingsSEDFamily::cdf(Array& lambdav, Array& pv, Array& Pv, const Range& wavelengthRange,
+                              const Array& parameters) const
 {
-    double SFR  = parameters[0] / Constants::Msun() * Constants::year();
-    double Z    = parameters[1];
+    double SFR = parameters[0] / Constants::Msun() * Constants::year();
+    double Z = parameters[1];
     double logC = parameters[2];
-    double p    = parameters[3];
+    double p = parameters[3];
     double fPDR = parameters[4];
 
     return SFR * _table.cdf(lambdav, pv, Pv, wavelengthRange, Z, logC, p, fPDR);

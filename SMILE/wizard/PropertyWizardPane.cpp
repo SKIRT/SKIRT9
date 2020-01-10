@@ -21,15 +21,11 @@ PropertyWizardPane::PropertyWizardPane(std::unique_ptr<PropertyHandler> handler,
 
 ////////////////////////////////////////////////////////////////////
 
-PropertyWizardPane::~PropertyWizardPane()
-{
-}
+PropertyWizardPane::~PropertyWizardPane() {}
 
 ////////////////////////////////////////////////////////////////////
 
-void PropertyWizardPane::updateInterface()
-{
-}
+void PropertyWizardPane::updateInterface() {}
 
 ////////////////////////////////////////////////////////////////////
 

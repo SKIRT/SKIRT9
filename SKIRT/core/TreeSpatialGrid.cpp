@@ -38,7 +38,7 @@ void TreeSpatialGrid::setupSelfAfter()
     int numNodes = _nodev.size();
     int m = 0;
     _cellindexv.resize(numNodes, -1);
-    for (int l=0; l!=numNodes; ++l)
+    for (int l = 0; l != numNodes; ++l)
     {
         if (_nodev[l]->isChildless())
         {
@@ -51,10 +51,10 @@ void TreeSpatialGrid::setupSelfAfter()
     // determine the number of cells at each level in the tree hierarchy
     vector<int> countv;
     int numCells = _idv.size();
-    for (int m=0; m!=numCells; ++m)
+    for (int m = 0; m != numCells; ++m)
     {
         int level = nodeForCellIndex(m)->level();
-        if (level+1 > static_cast<int>(countv.size())) countv.resize(level+1);
+        if (level + 1 > static_cast<int>(countv.size())) countv.resize(level + 1);
         countv[level]++;
     }
 
@@ -63,13 +63,13 @@ void TreeSpatialGrid::setupSelfAfter()
     log->info("Number of cells at each level in the tree hierarchy:");
     int numLevels = countv.size();
     int maxCount = *std::max_element(countv.cbegin(), countv.cend());
-    for (int level=0; level!=numLevels; ++level)
+    for (int level = 0; level != numLevels; ++level)
     {
-        size_t numStars = std::round(20.*countv[level]/maxCount);
+        size_t numStars = std::round(20. * countv[level] / maxCount);
         log->info("  Level " + StringUtils::toString(level, 'd', 0, 2) + ":"
-                             + StringUtils::toString(countv[level], 'd', 0, 9) + " ("
-                             + StringUtils::toString(100.*countv[level]/numCells, 'f', 1, 5) + "%)  |"
-                             + string(numStars,'*'));
+                  + StringUtils::toString(countv[level], 'd', 0, 9) + " ("
+                  + StringUtils::toString(100. * countv[level] / numCells, 'f', 1, 5) + "%)  |"
+                  + string(numStars, '*'));
     }
     log->info("  TOTAL   :" + StringUtils::toString(numCells, 'd', 0, 9) + " (100.0%)");
 }
@@ -130,67 +130,67 @@ void TreeSpatialGrid::path(SpatialGridPath* path) const
     if (!node) return path->clear();
 
     // get the starting point and direction
-    double x,y,z;
-    bfr.cartesian(x,y,z);
-    double kx,ky,kz;
-    path->direction().cartesian(kx,ky,kz);
+    double x, y, z;
+    bfr.cartesian(x, y, z);
+    double kx, ky, kz;
+    path->direction().cartesian(kx, ky, kz);
 
     // loop over nodes/path segments until we leave the grid
     while (node)
     {
-        double xnext = (kx<0.0) ? node->xmin() : node->xmax();
-        double ynext = (ky<0.0) ? node->ymin() : node->ymax();
-        double znext = (kz<0.0) ? node->zmin() : node->zmax();
-        double dsx = (fabs(kx)>1e-15) ? (xnext-x)/kx : DBL_MAX;
-        double dsy = (fabs(ky)>1e-15) ? (ynext-y)/ky : DBL_MAX;
-        double dsz = (fabs(kz)>1e-15) ? (znext-z)/kz : DBL_MAX;
+        double xnext = (kx < 0.0) ? node->xmin() : node->xmax();
+        double ynext = (ky < 0.0) ? node->ymin() : node->ymax();
+        double znext = (kz < 0.0) ? node->zmin() : node->zmax();
+        double dsx = (fabs(kx) > 1e-15) ? (xnext - x) / kx : DBL_MAX;
+        double dsy = (fabs(ky) > 1e-15) ? (ynext - y) / ky : DBL_MAX;
+        double dsz = (fabs(kz) > 1e-15) ? (znext - z) / kz : DBL_MAX;
 
         double ds;
         TreeNode::Wall wall;
-        if (dsx<=dsy && dsx<=dsz)
+        if (dsx <= dsy && dsx <= dsz)
         {
             ds = dsx;
-            wall = (kx<0.0) ? TreeNode::BACK : TreeNode::FRONT;
+            wall = (kx < 0.0) ? TreeNode::BACK : TreeNode::FRONT;
         }
-        else if (dsy<=dsx && dsy<=dsz)
+        else if (dsy <= dsx && dsy <= dsz)
         {
             ds = dsy;
-            wall = (ky<0.0) ? TreeNode::LEFT : TreeNode::RIGHT;
+            wall = (ky < 0.0) ? TreeNode::LEFT : TreeNode::RIGHT;
         }
         else
         {
             ds = dsz;
-            wall = (kz<0.0) ? TreeNode::BOTTOM : TreeNode::TOP;
+            wall = (kz < 0.0) ? TreeNode::BOTTOM : TreeNode::TOP;
         }
         path->addSegment(cellIndexForNode(node), ds);
-        x += (ds+_eps)*kx;
-        y += (ds+_eps)*ky;
-        z += (ds+_eps)*kz;
+        x += (ds + _eps) * kx;
+        y += (ds + _eps) * ky;
+        z += (ds + _eps) * kz;
 
         // attempt to find the new node among the neighbors of the current node;
         // this should not fail unless the new location is outside the grid,
         // however on rare occasions it fails due to rounding errors (e.g. in a corner),
         // thus we use top-down search as a fall-back
         const TreeNode* oldnode = node;
-        node = node->neighbor(wall, Vec(x,y,z));
-        if (!node) node = root()->leafChild(Vec(x,y,z));
+        node = node->neighbor(wall, Vec(x, y, z));
+        if (!node) node = root()->leafChild(Vec(x, y, z));
 
         // if we're stuck in the same node...
-        if (node==oldnode)
+        if (node == oldnode)
         {
             // try to escape by advancing the position to the next representable coordinates
-            find<Log>()->warning("Photon packet seems stuck in spatial cell "
-                                 + std::to_string(node->id()) + " -- escaping");
-            x = std::nextafter(x, (kx<0.0) ? -DBL_MAX : DBL_MAX);
-            y = std::nextafter(y, (ky<0.0) ? -DBL_MAX : DBL_MAX);
-            z = std::nextafter(z, (kz<0.0) ? -DBL_MAX : DBL_MAX);
-            node = root()->leafChild(Vec(x,y,z));
+            find<Log>()->warning("Photon packet seems stuck in spatial cell " + std::to_string(node->id())
+                                 + " -- escaping");
+            x = std::nextafter(x, (kx < 0.0) ? -DBL_MAX : DBL_MAX);
+            y = std::nextafter(y, (ky < 0.0) ? -DBL_MAX : DBL_MAX);
+            z = std::nextafter(z, (kz < 0.0) ? -DBL_MAX : DBL_MAX);
+            node = root()->leafChild(Vec(x, y, z));
 
             // if that didn't work, terminate the path
-            if (node==oldnode)
+            if (node == oldnode)
             {
-                find<Log>()->warning("Photon packet is stuck in spatial cell "
-                                     + std::to_string(node->id()) + " -- terminating this path");
+                find<Log>()->warning("Photon packet is stuck in spatial cell " + std::to_string(node->id())
+                                     + " -- terminating this path");
                 break;
             }
         }
@@ -205,7 +205,8 @@ namespace
     // followed by the recursive topological representation of its children
     void writeTopologyForNode(TreeNode* node, TextOutFile* outfile)
     {
-        if (node->isChildless()) outfile->writeLine("0");
+        if (node->isChildless())
+            outfile->writeLine("0");
         else
         {
             outfile->writeLine("1");
@@ -230,10 +231,10 @@ void TreeSpatialGrid::write_xy(SpatialGridPlotFile* outfile) const
     // Output the root cell and all leaf cells that are close to the section plane
     outfile->writeRectangle(xmin(), ymin(), xmax(), ymax());
     int nCells = numCells();
-    for (int m=0; m!=nCells; ++m)
+    for (int m = 0; m != nCells; ++m)
     {
         TreeNode* node = nodeForCellIndex(m);
-        if (fabs(node->zmin()) < 1e-8*extent().zwidth())
+        if (fabs(node->zmin()) < 1e-8 * extent().zwidth())
         {
             outfile->writeRectangle(node->xmin(), node->ymin(), node->xmax(), node->ymax());
         }
@@ -247,10 +248,10 @@ void TreeSpatialGrid::write_xz(SpatialGridPlotFile* outfile) const
     // Output the root cell and all leaf cells that are close to the section plane
     outfile->writeRectangle(xmin(), zmin(), xmax(), zmax());
     int nCells = numCells();
-    for (int m=0; m!=nCells; ++m)
+    for (int m = 0; m != nCells; ++m)
     {
         TreeNode* node = nodeForCellIndex(m);
-        if (fabs(node->ymin()) < 1e-8*extent().ywidth())
+        if (fabs(node->ymin()) < 1e-8 * extent().ywidth())
         {
             outfile->writeRectangle(node->xmin(), node->zmin(), node->xmax(), node->zmax());
         }
@@ -264,10 +265,10 @@ void TreeSpatialGrid::write_yz(SpatialGridPlotFile* outfile) const
     // Output the root cell and all leaf cells that are close to the section plane
     outfile->writeRectangle(ymin(), zmin(), ymax(), zmax());
     int nCells = numCells();
-    for (int m=0; m!=nCells; ++m)
+    for (int m = 0; m != nCells; ++m)
     {
         TreeNode* node = nodeForCellIndex(m);
-        if (fabs(node->xmin()) < 1e-8*extent().xwidth())
+        if (fabs(node->xmin()) < 1e-8 * extent().xwidth())
         {
             outfile->writeRectangle(node->ymin(), node->zmin(), node->ymax(), node->zmax());
         }
@@ -281,10 +282,10 @@ void TreeSpatialGrid::write_xyz(SpatialGridPlotFile* outfile) const
     // determine the number of cells at each level in the tree hierarchy
     vector<int> countv;
     int nCells = numCells();
-    for (int m=0; m!=nCells; ++m)
+    for (int m = 0; m != nCells; ++m)
     {
         int level = nodeForCellIndex(m)->level();
-        if (level+1 > static_cast<int>(countv.size())) countv.resize(level+1);
+        if (level + 1 > static_cast<int>(countv.size())) countv.resize(level + 1);
         countv[level]++;
     }
 
@@ -292,19 +293,19 @@ void TreeSpatialGrid::write_xyz(SpatialGridPlotFile* outfile) const
     int maxLevel = static_cast<int>(countv.size()) - 1;
     int highestWriteLevel = 0;
     int cumulativeCells = 0;
-    for (; highestWriteLevel<=maxLevel; ++highestWriteLevel)
+    for (; highestWriteLevel <= maxLevel; ++highestWriteLevel)
     {
         cumulativeCells += countv[highestWriteLevel];
-        if (cumulativeCells > 2500) break;          // empirical number
+        if (cumulativeCells > 2500) break;  // empirical number
     }
 
     // inform the user if we are limiting output
     if (highestWriteLevel < maxLevel)
-        find<Log>()->info("Limiting 3D grid plot output tree to level " + std::to_string(highestWriteLevel) +
-                  ", i.e. " + std::to_string(cumulativeCells) + " cells.");
+        find<Log>()->info("Limiting 3D grid plot output tree to level " + std::to_string(highestWriteLevel) + ", i.e. "
+                          + std::to_string(cumulativeCells) + " cells.");
 
     // output all leaf cells up to a certain level
-    for (int m=0; m!=nCells; ++m)
+    for (int m = 0; m != nCells; ++m)
     {
         TreeNode* node = nodeForCellIndex(m);
         if (node->level() <= highestWriteLevel)

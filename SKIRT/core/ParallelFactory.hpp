@@ -116,31 +116,31 @@ public:
 
         The first argument specifies the task mode. The second argument, if present, limits the
         maximum number of threads to the specified number. */
-    Parallel* parallel(TaskMode mode, int maxThreadCount=0);
+    Parallel* parallel(TaskMode mode, int maxThreadCount = 0);
 
     /** This function calls the parallel() function for the Distributed task allocation mode. */
-    Parallel* parallelDistributed(int maxThreadCount=0) { return parallel(TaskMode::Distributed, maxThreadCount); }
+    Parallel* parallelDistributed(int maxThreadCount = 0) { return parallel(TaskMode::Distributed, maxThreadCount); }
 
     /** This function calls the parallel() function for the Duplicated task allocation mode. */
-    Parallel* parallelDuplicated(int maxThreadCount=0) { return parallel(TaskMode::Duplicated, maxThreadCount); }
+    Parallel* parallelDuplicated(int maxThreadCount = 0) { return parallel(TaskMode::Duplicated, maxThreadCount); }
 
     /** This function calls the parallel() function for the RootOnly task allocation mode. */
-    Parallel* parallelRootOnly(int maxThreadCount=0) { return parallel(TaskMode::RootOnly, maxThreadCount); }
+    Parallel* parallelRootOnly(int maxThreadCount = 0) { return parallel(TaskMode::RootOnly, maxThreadCount); }
 
     //======================== Data Members ========================
 
 private:
     // The maximum thread count for the factory, initialized to the default maximum number of threads
-    int _maxThreadCount{ defaultThreadCount() };
+    int _maxThreadCount{defaultThreadCount()};
 
     // The thread that invoked our constructor, initialized - obviously - upon construction
-    std::thread::id _parentThread{ std::this_thread::get_id() };
+    std::thread::id _parentThread{std::this_thread::get_id()};
 
     // Private enumeration of the supported Parallel subclasses
-    enum class ParallelType { Null=0, Serial, MultiThread, MultiProcess, MultiHybrid };
+    enum class ParallelType { Null = 0, Serial, MultiThread, MultiProcess, MultiHybrid };
 
     // The collection of our children, keyed on Parallel subclass type and number of threads; initially empty
-    std::map<std::pair<ParallelType,int>, std::unique_ptr<Parallel>> _children;
+    std::map<std::pair<ParallelType, int>, std::unique_ptr<Parallel>> _children;
 };
 
 #endif

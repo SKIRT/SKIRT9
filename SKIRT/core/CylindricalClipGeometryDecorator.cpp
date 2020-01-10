@@ -37,8 +37,10 @@ double CylindricalClipGeometryDecorator::SigmaY() const
 
 double CylindricalClipGeometryDecorator::SigmaZ() const
 {
-    if (remove()==Remove::Inside) return 0.0;
-    else return geometry()->SigmaZ();
+    if (remove() == Remove::Inside)
+        return 0.0;
+    else
+        return geometry()->SigmaZ();
 }
 
 ////////////////////////////////////////////////////////////////////

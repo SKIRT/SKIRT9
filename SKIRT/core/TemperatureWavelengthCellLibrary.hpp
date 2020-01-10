@@ -36,12 +36,12 @@ class TemperatureWavelengthCellLibrary : public SpatialCellLibrary
                   "a library scheme for grouping spatial cells based on indicative temperature and wavelength")
         ATTRIBUTE_TYPE_INSERT(TemperatureWavelengthCellLibrary, "NonIdentitySpatialCellLibrary")
 
-    PROPERTY_INT(numTemperatures, "the number of temperature bins")
+        PROPERTY_INT(numTemperatures, "the number of temperature bins")
         ATTRIBUTE_MIN_VALUE(numTemperatures, "5")
         ATTRIBUTE_MAX_VALUE(numTemperatures, "10000")
         ATTRIBUTE_DEFAULT_VALUE(numTemperatures, "40")
 
-    PROPERTY_INT(numWavelengths, "the number of wavelength bins")
+        PROPERTY_INT(numWavelengths, "the number of wavelength bins")
         ATTRIBUTE_MIN_VALUE(numWavelengths, "5")
         ATTRIBUTE_MAX_VALUE(numWavelengths, "10000")
         ATTRIBUTE_DEFAULT_VALUE(numWavelengths, "25")

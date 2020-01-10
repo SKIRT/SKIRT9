@@ -32,6 +32,7 @@ namespace
     {
     private:
         vector<double>& _data;
+
     public:
         SerializedWrite(vector<double>& data) : _data(data) { _data.clear(); }
         void write(double v) { _data.push_back(v); }
@@ -50,19 +51,28 @@ namespace
     private:
         const double* _data;
         const double* _end;
+
     public:
-        SerializedRead(const vector<double>& data) : _data(data.data()), _end(data.data()+data.size()) {}
+        SerializedRead(const vector<double>& data) : _data(data.data()), _end(data.data() + data.size()) {}
         bool empty() { return _data == _end; }
         int readInt() { return *_data++; }
         void read(double& v) { v = *_data++; }
-        void read(Vec& v) { v.set(*_data, *(_data+1), *(_data+2)); _data += 3; }
-        void read(Box& v) { v = Box(*_data, *(_data+1), *(_data+2), *(_data+3), *(_data+4), *(_data+5)); _data += 6; }
+        void read(Vec& v)
+        {
+            v.set(*_data, *(_data + 1), *(_data + 2));
+            _data += 3;
+        }
+        void read(Box& v)
+        {
+            v = Box(*_data, *(_data + 1), *(_data + 2), *(_data + 3), *(_data + 4), *(_data + 5));
+            _data += 6;
+        }
         void read(vector<int>& v)
         {
             int n = *_data++;
             v.clear();
             v.reserve(n);
-            for (int i=0; i!=n; ++i) v.push_back(*_data++);
+            for (int i = 0; i != n; ++i) v.push_back(*_data++);
         }
     };
 }
@@ -73,45 +83,50 @@ namespace
 class VoronoiMeshSnapshot::Cell : public Box  // enclosing box
 {
 private:
-    Vec _r;                     // site position
-    Vec _c;                     // centroid position
-    double _volume{0.};         // volume
-    vector<int> _neighbors;     // list of neighbor indices in _cells vector
-    Array _properties;          // user-defined properties, if any
+    Vec _r;                  // site position
+    Vec _c;                  // centroid position
+    double _volume{0.};      // volume
+    vector<int> _neighbors;  // list of neighbor indices in _cells vector
+    Array _properties;       // user-defined properties, if any
 
 public:
     // constructor stores the specified site position; the other data members are set to zero or empty
-    Cell(Vec r) : _r(r) { }
+    Cell(Vec r) : _r(r) {}
 
     // constructor derives the site position from the first three property values and stores the user properties;
     // the other data members are set to zero or empty
-    Cell(const Array& prop) : _r(prop[0],prop[1],prop[2]), _properties{prop} { }
+    Cell(const Array& prop) : _r(prop[0], prop[1], prop[2]), _properties{prop} {}
 
     // adjusts the site position with the specified offset
-    void relax(double cx, double cy, double cz)
-    {
-        _r += Vec(cx,cy,cz);
-    }
+    void relax(double cx, double cy, double cz) { _r += Vec(cx, cy, cz); }
 
     // initializes the receiver with information taken from the specified fully computed Voronoi cell
     void init(voro::cell& cell)
     {
         // copy basic geometric info
         double cx, cy, cz;
-        cell.centroid(cx,cy,cz);
-        _c = Vec(cx,cy,cz) + _r;
+        cell.centroid(cx, cy, cz);
+        _c = Vec(cx, cy, cz) + _r;
         _volume = cell.volume();
 
         // get the minimal and maximal coordinates of the box enclosing the cell
         vector<double> coords;
-        cell.vertices(_r.x(),_r.y(),_r.z(), coords);
-        double xmin = DBL_MAX;  double ymin = DBL_MAX;  double zmin = DBL_MAX;
-        double xmax = -DBL_MAX; double ymax = -DBL_MAX; double zmax = -DBL_MAX;
+        cell.vertices(_r.x(), _r.y(), _r.z(), coords);
+        double xmin = DBL_MAX;
+        double ymin = DBL_MAX;
+        double zmin = DBL_MAX;
+        double xmax = -DBL_MAX;
+        double ymax = -DBL_MAX;
+        double zmax = -DBL_MAX;
         int n = coords.size();
-        for (int i=0; i<n; i+=3)
+        for (int i = 0; i < n; i += 3)
         {
-            xmin = min(xmin,coords[i]); ymin = min(ymin,coords[i+1]); zmin = min(zmin,coords[i+2]);
-            xmax = max(xmax,coords[i]); ymax = max(ymax,coords[i+1]); zmax = max(zmax,coords[i+2]);
+            xmin = min(xmin, coords[i]);
+            ymin = min(ymin, coords[i + 1]);
+            zmin = min(zmin, coords[i + 2]);
+            xmax = max(xmax, coords[i]);
+            ymax = max(ymax, coords[i + 1]);
+            zmax = max(zmax, coords[i + 2]);
         }
 
         // set our inherited Box to this bounding box
@@ -128,7 +143,7 @@ public:
     double x() const { return _r.x(); }
 
     // returns the squared distance from the cell's site to the specified point
-    double squaredDistanceTo(Vec r) const { return (r-_r).norm2(); }
+    double squaredDistanceTo(Vec r) const { return (r - _r).norm2(); }
 
     // returns the central position in the cell
     Vec centroid() const { return _c; }
@@ -159,7 +174,7 @@ public:
     // reads the Voronoi cell geometry from the serialized data buffer
     void readGeometry(SerializedRead& rdata)
     {
-        rdata.read(*this); // extent
+        rdata.read(*this);  // extent
         rdata.read(_c);
         rdata.read(_volume);
         rdata.read(_neighbors);
@@ -175,29 +190,29 @@ namespace
     {
         switch (axis)
         {
-        case 0:  // split on x
-            if (p1.x()<p2.x()) return true;
-            if (p1.x()>p2.x()) return false;
-            if (p1.y()<p2.y()) return true;
-            if (p1.y()>p2.y()) return false;
-            if (p1.z()<p2.z()) return true;
-            return false;
-        case 1:  // split on y
-            if (p1.y()<p2.y()) return true;
-            if (p1.y()>p2.y()) return false;
-            if (p1.z()<p2.z()) return true;
-            if (p1.z()>p2.z()) return false;
-            if (p1.x()<p2.x()) return true;
-            return false;
-        case 2:  // split on z
-            if (p1.z()<p2.z()) return true;
-            if (p1.z()>p2.z()) return false;
-            if (p1.x()<p2.x()) return true;
-            if (p1.x()>p2.x()) return false;
-            if (p1.y()<p2.y()) return true;
-            return false;
-        default: // this should never happen
-            return false;
+            case 0:  // split on x
+                if (p1.x() < p2.x()) return true;
+                if (p1.x() > p2.x()) return false;
+                if (p1.y() < p2.y()) return true;
+                if (p1.y() > p2.y()) return false;
+                if (p1.z() < p2.z()) return true;
+                return false;
+            case 1:  // split on y
+                if (p1.y() < p2.y()) return true;
+                if (p1.y() > p2.y()) return false;
+                if (p1.z() < p2.z()) return true;
+                if (p1.z() > p2.z()) return false;
+                if (p1.x() < p2.x()) return true;
+                return false;
+            case 2:  // split on z
+                if (p1.z() < p2.z()) return true;
+                if (p1.z() > p2.z()) return false;
+                if (p1.x() < p2.x()) return true;
+                if (p1.x() > p2.x()) return false;
+                if (p1.y() < p2.y()) return true;
+                return false;
+            default:  // this should never happen
+                return false;
         }
     }
 }
@@ -208,25 +223,29 @@ namespace
 class VoronoiMeshSnapshot::Node
 {
 private:
-    int _m;         // index in _cells to the site defining the split at this node
-    int _axis;      // split axis for this node (0,1,2)
-    Node* _up;      // ptr to the parent node
-    Node* _left;    // ptr to the left child node
-    Node* _right;   // ptr to the right child node
+    int _m;        // index in _cells to the site defining the split at this node
+    int _axis;     // split axis for this node (0,1,2)
+    Node* _up;     // ptr to the parent node
+    Node* _left;   // ptr to the left child node
+    Node* _right;  // ptr to the right child node
 
     // returns the square of its argument
-    static double sqr(double x) { return x*x; }
+    static double sqr(double x) { return x * x; }
 
 public:
     // constructor stores the specified site index and child pointers (which may be null)
-    Node(int m, int depth, Node* left, Node* right) : _m(m), _axis(depth%3), _up(0), _left(left), _right(right)
+    Node(int m, int depth, Node* left, Node* right) : _m(m), _axis(depth % 3), _up(0), _left(left), _right(right)
     {
         if (_left) _left->setParent(this);
         if (_right) _right->setParent(this);
     }
 
     // destructor destroys the children
-    ~Node() { delete _left; delete _right; }
+    ~Node()
+    {
+        delete _left;
+        delete _right;
+    }
 
     // sets parent pointer (called from parent's constructor)
     void setParent(Node* up) { _up = up; }
@@ -239,25 +258,29 @@ public:
 
     // returns the apropriate child for the specified query point
     Node* child(Vec bfr, const vector<Cell*>& cells) const
-        { return lessthan(bfr, cells[_m]->position(), _axis) ? _left : _right; }
+    {
+        return lessthan(bfr, cells[_m]->position(), _axis) ? _left : _right;
+    }
 
     // returns the other child than the one that would be apropriate for the specified query point
     Node* otherChild(Vec bfr, const vector<Cell*>& cells) const
-        { return lessthan(bfr, cells[_m]->position(), _axis) ? _right : _left; }
+    {
+        return lessthan(bfr, cells[_m]->position(), _axis) ? _right : _left;
+    }
 
     // returns the squared distance from the query point to the split plane
     double squaredDistanceToSplitPlane(Vec bfr, const vector<Cell*>& cells) const
     {
         switch (_axis)
         {
-        case 0:  // split on x
-            return sqr(cells[_m]->position().x() - bfr.x());
-        case 1:  // split on y
-            return sqr(cells[_m]->position().y() - bfr.y());
-        case 2:  // split on z
-            return sqr(cells[_m]->position().z() - bfr.z());
-        default: // this should never happen
-            return 0;
+            case 0:  // split on x
+                return sqr(cells[_m]->position().x() - bfr.x());
+            case 1:  // split on y
+                return sqr(cells[_m]->position().y() - bfr.y());
+            case 2:  // split on z
+                return sqr(cells[_m]->position().z() - bfr.z());
+            default:  // this should never happen
+                return 0;
         }
     }
 
@@ -303,7 +326,7 @@ public:
             }
 
             // move up to the parent until we meet the top node
-            if (current==this) break;
+            if (current == this) break;
             current = current->up();
         }
         return best;
@@ -312,9 +335,7 @@ public:
 
 ////////////////////////////////////////////////////////////////////
 
-VoronoiMeshSnapshot::VoronoiMeshSnapshot()
-{
-}
+VoronoiMeshSnapshot::VoronoiMeshSnapshot() {}
 
 ////////////////////////////////////////////////////////////////////
 
@@ -356,16 +377,19 @@ void VoronoiMeshSnapshot::readAndClose()
 
         // loop over all sites/cells
         int numIgnored = 0;
-        for (size_t m=0; m!=n; ++m)
+        for (size_t m = 0; m != n; ++m)
         {
             const Array& prop = _cells[m]->properties();
 
             // original mass is zero if temperature is above cutoff or if imported mass/density is not positive
             double originalMass = 0.;
-            if (maxT && prop[temperatureIndex()] > maxT) numIgnored++;
-            else originalMass = max(0., massIndex()>=0 ? prop[massIndex()] : prop[densityIndex()]*_cells[m]->volume());
+            if (maxT && prop[temperatureIndex()] > maxT)
+                numIgnored++;
+            else
+                originalMass =
+                    max(0., massIndex() >= 0 ? prop[massIndex()] : prop[densityIndex()] * _cells[m]->volume());
 
-            double metallicMass = originalMass * (metallicityIndex()>=0 ? prop[metallicityIndex()] : 1.);
+            double metallicMass = originalMass * (metallicityIndex() >= 0 ? prop[metallicityIndex()] : 1.);
             double effectiveMass = metallicMass * multiplier();
 
             Mv[m] = effectiveMass;
@@ -377,14 +401,13 @@ void VoronoiMeshSnapshot::readAndClose()
         }
 
         // log mass statistics
-        if (numIgnored)
-            log()->info("  Ignored mass in " + std::to_string(numIgnored) + " high-temperature cells" );
-        log()->info("  Total original mass : " +
-                    StringUtils::toString(units()->omass(totalOriginalMass),'e',4) + " " + units()->umass());
-        log()->info("  Total metallic mass : "
-                    + StringUtils::toString(units()->omass(totalMetallicMass),'e',4) + " " + units()->umass());
-        log()->info("  Total effective mass: "
-                    + StringUtils::toString(units()->omass(totalEffectiveMass),'e',4) + " " + units()->umass());
+        if (numIgnored) log()->info("  Ignored mass in " + std::to_string(numIgnored) + " high-temperature cells");
+        log()->info("  Total original mass : " + StringUtils::toString(units()->omass(totalOriginalMass), 'e', 4) + " "
+                    + units()->umass());
+        log()->info("  Total metallic mass : " + StringUtils::toString(units()->omass(totalMetallicMass), 'e', 4) + " "
+                    + units()->umass());
+        log()->info("  Total effective mass: " + StringUtils::toString(units()->omass(totalEffectiveMass), 'e', 4) + " "
+                    + units()->umass());
 
         // remember the effective mass
         _mass = totalEffectiveMass;
@@ -407,8 +430,7 @@ void VoronoiMeshSnapshot::setExtent(const Box& extent)
 
 ////////////////////////////////////////////////////////////////////
 
-VoronoiMeshSnapshot::VoronoiMeshSnapshot(const SimulationItem* item, const Box& extent,
-                                         string filename, bool relax)
+VoronoiMeshSnapshot::VoronoiMeshSnapshot(const SimulationItem* item, const Box& extent, string filename, bool relax)
 {
     // read the input file
     TextInFile in(item, filename, "Voronoi sites");
@@ -428,13 +450,13 @@ VoronoiMeshSnapshot::VoronoiMeshSnapshot(const SimulationItem* item, const Box& 
 
 ////////////////////////////////////////////////////////////////////
 
-VoronoiMeshSnapshot::VoronoiMeshSnapshot(const SimulationItem* item, const Box& extent,
-                                         SiteListInterface* sli, bool relax)
+VoronoiMeshSnapshot::VoronoiMeshSnapshot(const SimulationItem* item, const Box& extent, SiteListInterface* sli,
+                                         bool relax)
 {
     // prepare the data
     int n = sli->numSites();
     _cells.resize(n);
-    for (int m=0; m!=n; ++m) _cells[m] = new Cell(sli->sitePosition(m));
+    for (int m = 0; m != n; ++m) _cells[m] = new Cell(sli->sitePosition(m));
 
     // calculate the Voronoi cells
     setContext(item);
@@ -445,13 +467,13 @@ VoronoiMeshSnapshot::VoronoiMeshSnapshot(const SimulationItem* item, const Box& 
 
 ////////////////////////////////////////////////////////////////////
 
-VoronoiMeshSnapshot::VoronoiMeshSnapshot(const SimulationItem* item, const Box& extent,
-                                         const vector<Vec>& sites, bool relax)
+VoronoiMeshSnapshot::VoronoiMeshSnapshot(const SimulationItem* item, const Box& extent, const vector<Vec>& sites,
+                                         bool relax)
 {
     // prepare the data
     int n = sites.size();
     _cells.resize(n);
-    for (int m=0; m!=n; ++m) _cells[m] = new Cell(sites[m]);
+    for (int m = 0; m != n; ++m) _cells[m] = new Cell(sites[m]);
 
     // calculate the Voronoi cells
     setContext(item);
@@ -469,12 +491,12 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
 
     // remove sites that lie outside of the domain
     int numOutside = 0;
-    for (int m = _cells.size()-1; m >= 0; --m)
+    for (int m = _cells.size() - 1; m >= 0; --m)
     {
         if (!_extent.contains(_cells[m]->position()))
         {
             delete _cells[m];
-            _cells.erase(_cells.cbegin()+m);
+            _cells.erase(_cells.cbegin() + m);
             numOutside++;
         }
     }
@@ -484,14 +506,14 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
 
     // remove sites that lie too nearby another site
     int numNearby = 0;
-    for (int m = _cells.size()-1; m >= 0; --m)
+    for (int m = _cells.size() - 1; m >= 0; --m)
     {
-        for (int j = m-1; j >= 0 && _cells[m]->x() - _cells[j]->x() < _eps; --j)
+        for (int j = m - 1; j >= 0 && _cells[m]->x() - _cells[j]->x() < _eps; --j)
         {
-            if ((_cells[m]->position() - _cells[j]->position()).norm2() < _eps*_eps)
+            if ((_cells[m]->position() - _cells[j]->position()).norm2() < _eps * _eps)
             {
                 delete _cells[m];
-                _cells.erase(_cells.cbegin()+m);
+                _cells.erase(_cells.cbegin() + m);
                 numNearby++;
                 break;
             }
@@ -516,8 +538,8 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
 
     // calculate number of blocks in each direction based on number of cells
     _nb = max(3, min(250, static_cast<int>(cbrt(numCells))));
-    _nb2 = _nb*_nb;
-    _nb3 = _nb*_nb*_nb;
+    _nb2 = _nb * _nb;
+    _nb3 = _nb * _nb * _nb;
 
     // if requested, perform a single relaxation step
     if (relax)
@@ -527,12 +549,12 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
         Table<2> offsets(numCells, 3);
 
         // add the retained original sites to a temporary Voronoi container, using the cell index m as ID
-        voro::container vcon(_extent.xmin(), _extent.xmax(), _extent.ymin(), _extent.ymax(),
-                             _extent.zmin(), _extent.zmax(), _nb, _nb, _nb);
-        for (int m=0; m!=numCells; ++m)
+        voro::container vcon(_extent.xmin(), _extent.xmax(), _extent.ymin(), _extent.ymax(), _extent.zmin(),
+                             _extent.zmax(), _nb, _nb, _nb);
+        for (int m = 0; m != numCells; ++m)
         {
             Vec r = _cells[m]->position();
-            vcon.put(m, r.x(),r.y(),r.z());
+            vcon.put(m, r.x(), r.y(), r.z());
         }
 
         // compute the cell in the Voronoi tesselation corresponding to each site
@@ -540,8 +562,7 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
         log()->info("Relaxing Voronoi tessellation with " + std::to_string(numCells) + " cells");
         log()->infoSetElapsed(numCells);
         auto parallel = log()->find<ParallelFactory>()->parallelDistributed();
-        parallel->call(numCells, [this, &vcon, &offsets](size_t firstIndex, size_t numIndices)
-        {
+        parallel->call(numCells, [this, &vcon, &offsets](size_t firstIndex, size_t numIndices) {
             // allocate space for the cell calculator object and for the resulting cell info
             voro::compute vcompute(vcon);
             voro::cell vcell;
@@ -551,38 +572,37 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
             int numDone = 0;
             voro::loop vloop(vcon);
             if (vloop.start()) do
-            {
-                size_t m = vloop.pid();
-                if (m >= firstIndex && m < firstIndex+numIndices)
                 {
-                    // compute the cell
-                    bool ok = vcompute.compute_cell(vcell, vloop);
-                    if (!ok) throw FATALERROR("Can't compute Voronoi cell");
+                    size_t m = vloop.pid();
+                    if (m >= firstIndex && m < firstIndex + numIndices)
+                    {
+                        // compute the cell
+                        bool ok = vcompute.compute_cell(vcell, vloop);
+                        if (!ok) throw FATALERROR("Can't compute Voronoi cell");
 
-                    // store the cell's centroid as relaxation offset
-                    vcell.centroid(offsets(m,0), offsets(m,1), offsets(m,2));
+                        // store the cell's centroid as relaxation offset
+                        vcell.centroid(offsets(m, 0), offsets(m, 1), offsets(m, 2));
 
-                    // log message if the minimum time has elapsed
-                    numDone = (numDone+1)%logProgressChunkSize;
-                    if (numDone==0) log()->infoIfElapsed("Computed Voronoi cells: ", logProgressChunkSize);
-                }
-            }
-            while (vloop.inc());
-            if (numDone>0) log()->infoIfElapsed("Computed Voronoi cells: ", numDone);
+                        // log message if the minimum time has elapsed
+                        numDone = (numDone + 1) % logProgressChunkSize;
+                        if (numDone == 0) log()->infoIfElapsed("Computed Voronoi cells: ", logProgressChunkSize);
+                    }
+                } while (vloop.inc());
+            if (numDone > 0) log()->infoIfElapsed("Computed Voronoi cells: ", numDone);
         });
 
         // communicate the calculated offsets between parallel processes, if needed, and apply them to the cells
         ProcessManager::sumToAll(offsets.data());
-        for (int m=0; m!=numCells; ++m) _cells[m]->relax(offsets(m,0), offsets(m,1), offsets(m,2));
+        for (int m = 0; m != numCells; ++m) _cells[m]->relax(offsets(m, 0), offsets(m, 1), offsets(m, 2));
     }
 
     // add the final sites to a temporary Voronoi container, using the cell index m as ID
-    voro::container vcon(_extent.xmin(), _extent.xmax(), _extent.ymin(), _extent.ymax(),
-                         _extent.zmin(), _extent.zmax(), _nb, _nb, _nb);
-    for (int m=0; m!=numCells; ++m)
+    voro::container vcon(_extent.xmin(), _extent.xmax(), _extent.ymin(), _extent.ymax(), _extent.zmin(), _extent.zmax(),
+                         _nb, _nb, _nb);
+    for (int m = 0; m != numCells; ++m)
     {
         Vec r = _cells[m]->position();
-        vcon.put(m, r.x(),r.y(),r.z());
+        vcon.put(m, r.x(), r.y(), r.z());
     }
 
     // for each site:
@@ -591,8 +611,7 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
     log()->info("Constructing Voronoi tessellation with " + std::to_string(numCells) + " cells");
     log()->infoSetElapsed(numCells);
     auto parallel = log()->find<ParallelFactory>()->parallelDistributed();
-    parallel->call(numCells, [this, &vcon](size_t firstIndex, size_t numIndices)
-    {
+    parallel->call(numCells, [this, &vcon](size_t firstIndex, size_t numIndices) {
         // allocate space for the cell calculator object and for the resulting cell info
         voro::compute vcompute(vcon);
         voro::cell vcell;
@@ -602,37 +621,34 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
         int numDone = 0;
         voro::loop vloop(vcon);
         if (vloop.start()) do
-        {
-            size_t m = vloop.pid();
-            if (m >= firstIndex && m < firstIndex+numIndices)
             {
-                // compute the cell
-                bool ok = vcompute.compute_cell(vcell, vloop);
-                if (!ok) throw FATALERROR("Can't compute Voronoi cell");
+                size_t m = vloop.pid();
+                if (m >= firstIndex && m < firstIndex + numIndices)
+                {
+                    // compute the cell
+                    bool ok = vcompute.compute_cell(vcell, vloop);
+                    if (!ok) throw FATALERROR("Can't compute Voronoi cell");
 
-                // copy all relevant information to the cell object that will stay around
-                _cells[m]->init(vcell);
+                    // copy all relevant information to the cell object that will stay around
+                    _cells[m]->init(vcell);
 
-                // log message if the minimum time has elapsed
-                numDone = (numDone+1)%logProgressChunkSize;
-                if (numDone==0) log()->infoIfElapsed("Computed Voronoi cells: ", logProgressChunkSize);
-            }
-        }
-        while (vloop.inc());
-        if (numDone>0) log()->infoIfElapsed("Computed Voronoi cells: ", numDone);
+                    // log message if the minimum time has elapsed
+                    numDone = (numDone + 1) % logProgressChunkSize;
+                    if (numDone == 0) log()->infoIfElapsed("Computed Voronoi cells: ", logProgressChunkSize);
+                }
+            } while (vloop.inc());
+        if (numDone > 0) log()->infoIfElapsed("Computed Voronoi cells: ", numDone);
     });
 
     // communicate the calculated cell information between parallel processes, if needed
     if (ProcessManager::isMultiProc())
     {
-        auto producer = [this](vector<double>& data)
-        {
+        auto producer = [this](vector<double>& data) {
             SerializedWrite wdata(data);
             int numCells = _cells.size();
-            for (int m=0; m!=numCells; ++m) _cells[m]->writeGeometryIfPresent(wdata, m);
+            for (int m = 0; m != numCells; ++m) _cells[m]->writeGeometryIfPresent(wdata, m);
         };
-        auto consumer = [this](const vector<double>& data)
-        {
+        auto consumer = [this](const vector<double>& data) {
             SerializedRead rdata(data);
             while (!rdata.empty()) _cells[rdata.readInt()]->readGeometry(rdata);
         };
@@ -643,36 +659,36 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
     int minNeighbors = INT_MAX;
     int maxNeighbors = 0;
     int64_t totNeighbors = 0;
-    for (int m=0; m<numCells; m++)
+    for (int m = 0; m < numCells; m++)
     {
         int ns = _cells[m]->neighbors().size();
         totNeighbors += ns;
         minNeighbors = min(minNeighbors, ns);
         maxNeighbors = max(maxNeighbors, ns);
     }
-    double avgNeighbors = double(totNeighbors)/numCells;
+    double avgNeighbors = double(totNeighbors) / numCells;
 
     // log neighbor statistics
     log()->info("Done computing Voronoi tessellation with " + std::to_string(numCells) + " cells");
-    log()->info("  Average number of neighbors per cell: " + StringUtils::toString(avgNeighbors,'f',1));
+    log()->info("  Average number of neighbors per cell: " + StringUtils::toString(avgNeighbors, 'f', 1));
     log()->info("  Minimum number of neighbors per cell: " + std::to_string(minNeighbors));
     log()->info("  Maximum number of neighbors per cell: " + std::to_string(maxNeighbors));
 }
 
 ////////////////////////////////////////////////////////////////////
 
-VoronoiMeshSnapshot::Node* VoronoiMeshSnapshot::buildTree(vector<int>::iterator first,
-                                                          vector<int>::iterator last, int depth) const
+VoronoiMeshSnapshot::Node* VoronoiMeshSnapshot::buildTree(vector<int>::iterator first, vector<int>::iterator last,
+                                                          int depth) const
 {
-    auto length = last-first;
-    if (length>0)
+    auto length = last - first;
+    if (length > 0)
     {
         auto median = length >> 1;
-        std::nth_element(first, first+median, last, [this, depth] (int m1, int m2)
-                        { return m1!=m2 && lessthan(_cells[m1]->position(), _cells[m2]->position(), depth%3); });
-        return new VoronoiMeshSnapshot::Node(*(first+median), depth,
-                        buildTree(first, first+median, depth+1),
-                        buildTree(first+median+1, last, depth+1));
+        std::nth_element(first, first + median, last, [this, depth](int m1, int m2) {
+            return m1 != m2 && lessthan(_cells[m1]->position(), _cells[m2]->position(), depth % 3);
+        });
+        return new VoronoiMeshSnapshot::Node(*(first + median), depth, buildTree(first, first + median, depth + 1),
+                                             buildTree(first + median + 1, last, depth + 1));
     }
     return nullptr;
 }
@@ -693,33 +709,32 @@ void VoronoiMeshSnapshot::buildSearch()
     _blocklists.resize(_nb3);
 
     // add the cell object to the lists for all blocks it may overlap
-    int i1,j1,k1, i2,j2,k2;
-    for (int m=0; m!=numCells; ++m)
+    int i1, j1, k1, i2, j2, k2;
+    for (int m = 0; m != numCells; ++m)
     {
-        _extent.cellIndices(i1,j1,k1, _cells[m]->rmin()-Vec(_eps,_eps,_eps), _nb,_nb,_nb);
-        _extent.cellIndices(i2,j2,k2, _cells[m]->rmax()+Vec(_eps,_eps,_eps), _nb,_nb,_nb);
-        for (int i=i1; i<=i2; i++)
-            for (int j=j1; j<=j2; j++)
-                for (int k=k1; k<=k2; k++)
-                    _blocklists[i*_nb2+j*_nb+k].push_back(m);
+        _extent.cellIndices(i1, j1, k1, _cells[m]->rmin() - Vec(_eps, _eps, _eps), _nb, _nb, _nb);
+        _extent.cellIndices(i2, j2, k2, _cells[m]->rmax() + Vec(_eps, _eps, _eps), _nb, _nb, _nb);
+        for (int i = i1; i <= i2; i++)
+            for (int j = j1; j <= j2; j++)
+                for (int k = k1; k <= k2; k++) _blocklists[i * _nb2 + j * _nb + k].push_back(m);
     }
 
     // compile block list statistics
     int minRefsPerBlock = INT_MAX;
     int maxRefsPerBlock = 0;
     int64_t totalBlockRefs = 0;
-    for (int b = 0; b<_nb3; b++)
+    for (int b = 0; b < _nb3; b++)
     {
         int refs = _blocklists[b].size();
         totalBlockRefs += refs;
         minRefsPerBlock = min(minRefsPerBlock, refs);
         maxRefsPerBlock = max(maxRefsPerBlock, refs);
     }
-    double avgRefsPerBlock = double(totalBlockRefs)/_nb3;
+    double avgRefsPerBlock = double(totalBlockRefs) / _nb3;
 
     // log block list statistics
     log()->info("  Number of blocks in search grid: " + std::to_string(_nb3) + " (" + std::to_string(_nb) + "^3)");
-    log()->info("  Average number of cells per block: " + StringUtils::toString(avgRefsPerBlock,'f',1));
+    log()->info("  Average number of cells per block: " + StringUtils::toString(avgRefsPerBlock, 'f', 1));
     log()->info("  Minimum number of cells per block: " + std::to_string(minRefsPerBlock));
     log()->info("  Maximum number of cells per block: " + std::to_string(maxRefsPerBlock));
 
@@ -728,7 +743,7 @@ void VoronoiMeshSnapshot::buildSearch()
     // for each block that contains more than a predefined number of cells,
     // construct a search tree on the site locations of the cells
     _blocktrees.resize(_nb3);
-    for (int b = 0; b<_nb3; b++)
+    for (int b = 0; b < _nb3; b++)
     {
         vector<int>& ids = _blocklists[b];
         if (ids.size() > 9) _blocktrees[b] = buildTree(ids.begin(), ids.end(), 0);
@@ -736,9 +751,10 @@ void VoronoiMeshSnapshot::buildSearch()
 
     // compile and log search tree statistics
     int numTrees = 0;
-    for (int b = 0; b<_nb3; b++) if (_blocktrees[b]) numTrees++;
-    log()->info("  Number of search trees: " + std::to_string(numTrees) +
-              " (" + StringUtils::toString(100.*numTrees/_nb3,'f',1) + "% of blocks)");
+    for (int b = 0; b < _nb3; b++)
+        if (_blocktrees[b]) numTrees++;
+    log()->info("  Number of search trees: " + std::to_string(numTrees) + " ("
+                + StringUtils::toString(100. * numTrees / _nb3, 'f', 1) + "% of blocks)");
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -748,7 +764,7 @@ bool VoronoiMeshSnapshot::isPointClosestTo(Vec r, int m, const vector<int>& ids)
     double target = _cells[m]->squaredDistanceTo(r);
     for (int id : ids)
     {
-        if (id>=0 && _cells[id]->squaredDistanceTo(r) < target) return false;
+        if (id >= 0 && _cells[id]->squaredDistanceTo(r) < target) return false;
     }
     return true;
 }
@@ -765,12 +781,12 @@ void VoronoiMeshSnapshot::writeGridPlotFiles(const SimulationItem* probe) const
 
     // load all sites in a Voro container
     int numCells = _cells.size();
-    voro::container vcon(_extent.xmin(), _extent.xmax(), _extent.ymin(), _extent.ymax(),
-                         _extent.zmin(), _extent.zmax(), _nb, _nb, _nb);
-    for (int m=0; m!=numCells; ++m)
+    voro::container vcon(_extent.xmin(), _extent.xmax(), _extent.ymin(), _extent.ymax(), _extent.zmin(), _extent.zmax(),
+                         _nb, _nb, _nb);
+    for (int m = 0; m != numCells; ++m)
     {
         Vec r = _cells[m]->position();
-        vcon.put(m, r.x(),r.y(),r.z());
+        vcon.put(m, r.x(), r.y(), r.z());
     }
 
     // for each site, compute the corresponding cell and output its edges
@@ -781,30 +797,29 @@ void VoronoiMeshSnapshot::writeGridPlotFiles(const SimulationItem* probe) const
     int numDone = 0;
     voro::loop vloop(vcon);
     if (vloop.start()) do
-    {
-        // compute the cell
-        vcompute.compute_cell(vcell, vloop);
+        {
+            // compute the cell
+            vcompute.compute_cell(vcell, vloop);
 
-        // get the edges of the cell
-        double x,y,z;
-        vloop.pos(x,y,z);
-        vector<double> coords;
-        vcell.vertices(x,y,z, coords);
-        vector<int> indices;
-        vcell.face_vertices(indices);
+            // get the edges of the cell
+            double x, y, z;
+            vloop.pos(x, y, z);
+            vector<double> coords;
+            vcell.vertices(x, y, z, coords);
+            vector<int> indices;
+            vcell.face_vertices(indices);
 
-        // write the edges of the cell to the plot files
-        Box bounds = _cells[vloop.pid()]->extent();
-        if (bounds.zmin()<=0 && bounds.zmax()>=0) plotxy.writePolyhedron(coords, indices);
-        if (bounds.ymin()<=0 && bounds.ymax()>=0) plotxz.writePolyhedron(coords, indices);
-        if (bounds.xmin()<=0 && bounds.xmax()>=0) plotyz.writePolyhedron(coords, indices);
-        if (vloop.pid() <= 1000) plotxyz.writePolyhedron(coords, indices);
+            // write the edges of the cell to the plot files
+            Box bounds = _cells[vloop.pid()]->extent();
+            if (bounds.zmin() <= 0 && bounds.zmax() >= 0) plotxy.writePolyhedron(coords, indices);
+            if (bounds.ymin() <= 0 && bounds.ymax() >= 0) plotxz.writePolyhedron(coords, indices);
+            if (bounds.xmin() <= 0 && bounds.xmax() >= 0) plotyz.writePolyhedron(coords, indices);
+            if (vloop.pid() <= 1000) plotxyz.writePolyhedron(coords, indices);
 
-        // log message if the minimum time has elapsed
-        numDone++;
-        if (numDone%2000==0) log()->infoIfElapsed("Computed Voronoi cells: ", 2000);
-    }
-    while (vloop.inc());
+            // log message if the minimum time has elapsed
+            numDone++;
+            if (numDone % 2000 == 0) log()->infoIfElapsed("Computed Voronoi cells: ", 2000);
+        } while (vloop.inc());
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -854,7 +869,7 @@ Box VoronoiMeshSnapshot::extent(int m) const
 Vec VoronoiMeshSnapshot::velocity(int m) const
 {
     const Array& prop = _cells[m]->properties();
-    return Vec(prop[velocityIndex()+0], prop[velocityIndex()+1], prop[velocityIndex()+2]);
+    return Vec(prop[velocityIndex() + 0], prop[velocityIndex() + 1], prop[velocityIndex() + 2]);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -862,7 +877,7 @@ Vec VoronoiMeshSnapshot::velocity(int m) const
 Vec VoronoiMeshSnapshot::velocity(Position bfr) const
 {
     int m = cellIndex(bfr);
-    return m>=0 ? velocity(m) : Vec();
+    return m >= 0 ? velocity(m) : Vec();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -878,7 +893,7 @@ double VoronoiMeshSnapshot::velocityDispersion(int m) const
 double VoronoiMeshSnapshot::velocityDispersion(Position bfr) const
 {
     int m = cellIndex(bfr);
-    return m>=0 ? velocityDispersion(m) : 0.;
+    return m >= 0 ? velocityDispersion(m) : 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -886,7 +901,7 @@ double VoronoiMeshSnapshot::velocityDispersion(Position bfr) const
 Vec VoronoiMeshSnapshot::magneticField(int m) const
 {
     const Array& prop = _cells[m]->properties();
-    return Vec(prop[magneticFieldIndex()+0], prop[magneticFieldIndex()+1], prop[magneticFieldIndex()+2]);
+    return Vec(prop[magneticFieldIndex() + 0], prop[magneticFieldIndex() + 1], prop[magneticFieldIndex() + 2]);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -894,7 +909,7 @@ Vec VoronoiMeshSnapshot::magneticField(int m) const
 Vec VoronoiMeshSnapshot::magneticField(Position bfr) const
 {
     int m = cellIndex(bfr);
-    return m>=0 ? magneticField(m) : Vec();
+    return m >= 0 ? magneticField(m) : Vec();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -904,7 +919,7 @@ void VoronoiMeshSnapshot::parameters(int m, Array& params) const
     int n = numParameters();
     params.resize(n);
     const Array& prop = _cells[m]->properties();
-    for (int i=0; i!=n; ++i) params[i] = prop[parametersIndex()+i];
+    for (int i = 0; i != n; ++i) params[i] = prop[parametersIndex() + i];
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -912,8 +927,10 @@ void VoronoiMeshSnapshot::parameters(int m, Array& params) const
 void VoronoiMeshSnapshot::parameters(Position bfr, Array& params) const
 {
     int m = cellIndex(bfr);
-    if (m>=0) parameters(m, params);
-    else params.resize(numParameters());
+    if (m >= 0)
+        parameters(m, params);
+    else
+        params.resize(numParameters());
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -928,7 +945,7 @@ double VoronoiMeshSnapshot::density(int m) const
 double VoronoiMeshSnapshot::density(Position bfr) const
 {
     int m = cellIndex(bfr);
-    return m>=0 ? _rhov[m] : 0;
+    return m >= 0 ? _rhov[m] : 0;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -947,7 +964,7 @@ Position VoronoiMeshSnapshot::generatePosition(int m) const
     const vector<int>& neighbors = _cells[m]->neighbors();
 
     // generate random points in the enclosing box until one happens to be inside the cell
-    for (int i=0; i<10000; i++)
+    for (int i = 0; i < 10000; i++)
     {
         Position r = random()->position(box);
         if (isPointClosestTo(r, m, neighbors)) return r;
@@ -976,20 +993,20 @@ int VoronoiMeshSnapshot::cellIndex(Position bfr) const
     if (!_extent.contains(bfr)) return -1;
 
     // determine the block in which the point falls
-    int i,j,k;
-    _extent.cellIndices(i,j,k, bfr, _nb,_nb,_nb);
-    int b = i*_nb2+j*_nb+k;
+    int i, j, k;
+    _extent.cellIndices(i, j, k, bfr, _nb, _nb, _nb);
+    int b = i * _nb2 + j * _nb + k;
 
     // look for the closest site in this block, using the search tree if there is one
     Node* tree = _blocktrees[b];
-    if (tree) return tree->nearest(bfr,_cells)->m();
+    if (tree) return tree->nearest(bfr, _cells)->m();
 
     // if there is no search tree, simply loop over the index list
     const vector<int>& ids = _blocklists[b];
     int m = -1;
     double mdist = DBL_MAX;
     int n = ids.size();
-    for (int i=0; i<n; i++)
+    for (int i = 0; i < n; i++)
     {
         double idist = _cells[ids[i]]->squaredDistanceTo(bfr);
         if (idist < mdist)
@@ -1014,23 +1031,23 @@ void VoronoiMeshSnapshot::path(SpatialGridPath* path) const
     // Get the index of the cell containing the current position;
     // if the position is not inside the grid, return an empty path
     int mr = cellIndex(r);
-    if (mr<0) return path->clear();
+    if (mr < 0) return path->clear();
 
     // Start the loop over cells/path segments until we leave the grid
-    while (mr>=0)
+    while (mr >= 0)
     {
         // get the site position for this cell
         Vec pr = _cells[mr]->position();
 
         // initialize the smallest nonnegative intersection distance and corresponding index
-        double sq = DBL_MAX;          // very large, but not infinity (so that infinite si values are discarded)
-        const int NO_INDEX = -99;     // meaningless cell index
+        double sq = DBL_MAX;       // very large, but not infinity (so that infinite si values are discarded)
+        const int NO_INDEX = -99;  // meaningless cell index
         int mq = NO_INDEX;
 
         // loop over the list of neighbor indices
         const vector<int>& mv = _cells[mr]->neighbors();
         int n = mv.size();
-        for (int i=0; i<n; i++)
+        for (int i = 0; i < n; i++)
         {
             int mi = mv[i];
 
@@ -1038,7 +1055,7 @@ void VoronoiMeshSnapshot::path(SpatialGridPath* path) const
             double si = 0;
 
             // --- intersection with neighboring cell
-            if (mi>=0)
+            if (mi >= 0)
             {
                 // get the site position for this neighbor
                 Vec pi = _cells[mi]->position();
@@ -1047,7 +1064,7 @@ void VoronoiMeshSnapshot::path(SpatialGridPath* path) const
                 Vec n = pi - pr;
 
                 // calculate the denominator of the intersection quotient
-                double ndotk = Vec::dot(n,bfk);
+                double ndotk = Vec::dot(n, bfk);
 
                 // if the denominator is negative the intersection distance is negative, so don't calculate it
                 if (ndotk > 0)
@@ -1056,7 +1073,7 @@ void VoronoiMeshSnapshot::path(SpatialGridPath* path) const
                     Vec p = 0.5 * (pi + pr);
 
                     // calculate the intersection distance
-                    si = Vec::dot(n,p-r) / ndotk;
+                    si = Vec::dot(n, p - r) / ndotk;
                 }
             }
 
@@ -1065,13 +1082,13 @@ void VoronoiMeshSnapshot::path(SpatialGridPath* path) const
             {
                 switch (mi)
                 {
-                case -1: si = (extent().xmin()-r.x())/bfk.x(); break;
-                case -2: si = (extent().xmax()-r.x())/bfk.x(); break;
-                case -3: si = (extent().ymin()-r.y())/bfk.y(); break;
-                case -4: si = (extent().ymax()-r.y())/bfk.y(); break;
-                case -5: si = (extent().zmin()-r.z())/bfk.z(); break;
-                case -6: si = (extent().zmax()-r.z())/bfk.z(); break;
-                default: throw FATALERROR("Invalid neighbor ID");
+                    case -1: si = (extent().xmin() - r.x()) / bfk.x(); break;
+                    case -2: si = (extent().xmax() - r.x()) / bfk.x(); break;
+                    case -3: si = (extent().ymin() - r.y()) / bfk.y(); break;
+                    case -4: si = (extent().ymax() - r.y()) / bfk.y(); break;
+                    case -5: si = (extent().zmin() - r.z()) / bfk.z(); break;
+                    case -6: si = (extent().zmax() - r.z()) / bfk.z(); break;
+                    default: throw FATALERROR("Invalid neighbor ID");
                 }
             }
 
@@ -1086,14 +1103,14 @@ void VoronoiMeshSnapshot::path(SpatialGridPath* path) const
         // if no exit point was found, advance the current point by small distance and recalculate cell index
         if (mq == NO_INDEX)
         {
-            r += bfk*_eps;
+            r += bfk * _eps;
             mr = cellIndex(r);
         }
         // otherwise add a path segment and set the current point to the exit point
         else
         {
             path->addSegment(mr, sq);
-            r += (sq+_eps)*bfk;
+            r += (sq + _eps) * bfk;
             mr = mq;
         }
     }

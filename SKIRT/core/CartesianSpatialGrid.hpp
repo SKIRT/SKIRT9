@@ -6,8 +6,8 @@
 #ifndef CARTESIANSPATIALGRID_HPP
 #define CARTESIANSPATIALGRID_HPP
 
-#include "BoxSpatialGrid.hpp"
 #include "Array.hpp"
+#include "BoxSpatialGrid.hpp"
 #include "MoveableMesh.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -19,13 +19,13 @@ class CartesianSpatialGrid : public BoxSpatialGrid
 {
     ITEM_CONCRETE(CartesianSpatialGrid, BoxSpatialGrid, "a Cartesian spatial grid")
 
-    PROPERTY_ITEM(meshX, MoveableMesh, "the bin distribution in the X direction")
+        PROPERTY_ITEM(meshX, MoveableMesh, "the bin distribution in the X direction")
         ATTRIBUTE_DEFAULT_VALUE(meshX, "LinMesh")
 
-    PROPERTY_ITEM(meshY, MoveableMesh, "the bin distribution in the Y direction")
+        PROPERTY_ITEM(meshY, MoveableMesh, "the bin distribution in the Y direction")
         ATTRIBUTE_DEFAULT_VALUE(meshY, "LinMesh")
 
-    PROPERTY_ITEM(meshZ, MoveableMesh, "the bin distribution in the Z direction")
+        PROPERTY_ITEM(meshZ, MoveableMesh, "the bin distribution in the Z direction")
         ATTRIBUTE_DEFAULT_VALUE(meshZ, "LinMesh")
 
     ITEM_END()
@@ -100,7 +100,7 @@ protected:
     void write_xyz(SpatialGridPlotFile* outfile) const override;
 
 private:
-   /** This function returns the index \f$m\f$ corresponding to the three bin indices \f$i\f$,
+    /** This function returns the index \f$m\f$ corresponding to the three bin indices \f$i\f$,
        \f$j\f$ and \f$k\f$. The correspondence is \f$m=k+j\,N_z+i\,N_y\,N_z\f$. */
     int index(int i, int j, int k) const;
 

@@ -10,8 +10,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-XmlWriter::XmlWriter(std::ostream& outputStream, string streamName)
-    : _out(outputStream), _streamName(streamName)
+XmlWriter::XmlWriter(std::ostream& outputStream, string streamName) : _out(outputStream), _streamName(streamName)
 {
     // Verify that the stream is operational
     if (!_out) throw FATALERROR("Can't write to XML output stream: " + _streamName);
@@ -19,8 +18,7 @@ XmlWriter::XmlWriter(std::ostream& outputStream, string streamName)
 
 ////////////////////////////////////////////////////////////////////
 
-XmlWriter::XmlWriter(string filePath)
-    : _out(_outfile), _streamName(filePath)
+XmlWriter::XmlWriter(string filePath) : _out(_outfile), _streamName(filePath)
 {
     // Open output file and verify that it is operational
     _outfile = System::ofstream(filePath);
@@ -31,14 +29,11 @@ XmlWriter::XmlWriter(string filePath)
 
 namespace
 {
-    bool isLetter(char c)
-    {
-        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
-    }
+    bool isLetter(char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); }
 
     bool isLetterOrDigitOrDash(char c)
     {
-        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')  || (c >= '0' && c <= '9') || c == '-';
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '-';
     }
 
     bool isControlCharacter(char c)  // including newline characters
@@ -49,14 +44,11 @@ namespace
     // a valid element/attribute name starts with a letter and contains letters, digits and dashes
     bool isValidName(string name)
     {
-        return !name.empty() && isLetter(name[0]) && std::all_of(name.cbegin()+1, name.cend(), isLetterOrDigitOrDash);
+        return !name.empty() && isLetter(name[0]) && std::all_of(name.cbegin() + 1, name.cend(), isLetterOrDigitOrDash);
     }
 
     // a valid attribute value does not contain control characters
-    bool isValidValue(string value)
-    {
-        return std::none_of(value.cbegin(), value.cend(), isControlCharacter);
-    }
+    bool isValidValue(string value) { return std::none_of(value.cbegin(), value.cend(), isControlCharacter); }
 
     // a valid comment does not contain control characters or the sequence "--", and does not end in "-"
     bool isValidComment(string text)
@@ -66,7 +58,7 @@ namespace
 
     string escapeSpecialChars(string text)
     {
-        text = StringUtils::replace(text, "&", "&amp;");   // do this one first to avoid escaping escape sequences
+        text = StringUtils::replace(text, "&", "&amp;");  // do this one first to avoid escaping escape sequences
         text = StringUtils::replace(text, "\'", "&apos;");
         text = StringUtils::replace(text, "\"", "&quot;");
         text = StringUtils::replace(text, "<", "&lt;");
@@ -96,8 +88,7 @@ void XmlWriter::writeComment(string text)
         _starting = false;
     }
 
-    if (!isValidComment(text))
-        throw FATALERROR("Invalid comment text for XML output stream: " + _streamName);
+    if (!isValidComment(text)) throw FATALERROR("Invalid comment text for XML output stream: " + _streamName);
 
     // write comment line with indentation prefix
     writeIndentation();
@@ -171,8 +162,7 @@ void XmlWriter::writeEndElement()
 
 void XmlWriter::writeEndDocument()
 {
-    if (!_out)
-        throw FATALERROR("An error ocurred while writing to XML output stream: " + _streamName);
+    if (!_out) throw FATALERROR("An error ocurred while writing to XML output stream: " + _streamName);
     if (!_elementNames.empty())
         throw FATALERROR("The number of start and end elements does not match for XML output stream: " + _streamName);
 }

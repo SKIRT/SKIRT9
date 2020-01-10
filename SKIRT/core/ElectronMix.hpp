@@ -6,8 +6,8 @@
 #ifndef ELECTRONMIX_HPP
 #define ELECTRONMIX_HPP
 
-#include "MaterialMix.hpp"
 #include "Array.hpp"
+#include "MaterialMix.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -27,7 +27,7 @@ class ElectronMix : public MaterialMix
 {
     ITEM_CONCRETE(ElectronMix, MaterialMix, "a population of electrons")
 
-    PROPERTY_BOOL(includePolarization, "include support for polarization")
+        PROPERTY_BOOL(includePolarization, "include support for polarization")
         ATTRIBUTE_DEFAULT_VALUE(includePolarization, "false")
         ATTRIBUTE_DISPLAYED_IF(includePolarization, "Level2")
 
@@ -118,7 +118,7 @@ public:
         \frac{3}{4}\,\left[(\cos^2\theta+1) + P_{\text{L}}\,(\cos^2\theta-1)\cos2(\phi - \gamma)
         \right], \f] where \f$P_\text{L}\f$ is the linear polarization degree and \f$\gamma\f$ the
         polarization angle of the incoming photon, and there is no wavelength dependence. */
-   double phaseFunctionValue(double lambda, double theta, double phi, const StokesVector* sv) const override;
+    double phaseFunctionValue(double lambda, double theta, double phi, const StokesVector* sv) const override;
 
     /** This function generates random scattering angles \f$\theta\f$ and \f$\phi\f$ sampled from
         the phase function \f$\Phi_\lambda(\theta,\phi)\f$ at wavelength \f$\lambda\f$, and for the
@@ -146,7 +146,7 @@ public:
         =\int_{0}^{\phi}\Phi_{\theta}(\phi')\,\text{d}\phi' =\frac{1}{2\pi} \left( \phi +
         P_{\text{L}}\,\frac{\cos^2\theta-1}{\cos^2\theta+1} \sin\phi \cos(\phi - 2\gamma)\right)
         \f] for \f$\phi\f$, with \f${\cal{X}}\f$ being a new uniform deviate. */
-    std::pair<double,double> generateAnglesFromPhaseFunction(double lambda, const StokesVector* sv) const override;
+    std::pair<double, double> generateAnglesFromPhaseFunction(double lambda, const StokesVector* sv) const override;
 
     /** This function applies the Mueller matrix transformation for the specified wavelength
         \f$\lambda\f$ and scattering angle \f$\theta\f$ to the given polarization state (which
@@ -176,10 +176,10 @@ public:
 
 private:
     // precalculated discretizations - initialized during setup
-    Array _phiv;                    // indexed on f
-    Array _phi1v;                   // indexed on f
-    Array _phisv;                   // indexed on f
-    Array _phicv;                   // indexed on f
+    Array _phiv;   // indexed on f
+    Array _phi1v;  // indexed on f
+    Array _phisv;  // indexed on f
+    Array _phicv;  // indexed on f
 };
 
 ////////////////////////////////////////////////////////////////////

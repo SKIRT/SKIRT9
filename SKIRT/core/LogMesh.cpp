@@ -11,8 +11,10 @@
 Array LogMesh::mesh() const
 {
     Array tv;
-    if (numBins()>1) NR::buildZeroLogGrid(tv, _centralBinFraction, 1.0, numBins());
-    else NR::buildLinearGrid(tv, 0.0, 1.0, 1);
+    if (numBins() > 1)
+        NR::buildZeroLogGrid(tv, _centralBinFraction, 1.0, numBins());
+    else
+        NR::buildLinearGrid(tv, 0.0, 1.0, 1);
     return tv;
 }
 

@@ -6,11 +6,11 @@
 #ifndef MONTECARLOSIMULATION_HPP
 #define MONTECARLOSIMULATION_HPP
 
-#include "Simulation.hpp"
 #include "Configuration.hpp"
 #include "InstrumentSystem.hpp"
 #include "MediumSystem.hpp"
 #include "ProbeSystem.hpp"
+#include "Simulation.hpp"
 #include "SourceSystem.hpp"
 #include <atomic>
 class SecondarySourceSystem;
@@ -74,52 +74,46 @@ class MonteCarloSimulation : public Simulation
         to the effects of absorption and scattering. In these modes, the simulation keeps track of
         the radation field (to calculate the dust emission) and optionally performs iterations to
         self-consistently calculate the effects of dust self-absorption. */
-    ENUM_DEF(SimulationMode, OligoNoMedium, OligoExtinctionOnly, NoMedium, ExtinctionOnly,
-             DustEmission, DustEmissionWithSelfAbsorption)
-    ENUM_VAL(SimulationMode, OligoNoMedium,
-                "No medium - oligochromatic regime (a few discrete wavelengths)")
-    ENUM_VAL(SimulationMode, OligoExtinctionOnly,
-                "Extinction only - oligochromatic regime (a few discrete wavelengths)")
-    ENUM_VAL(SimulationMode, NoMedium,
-                "No medium (primary sources only)")
-    ENUM_VAL(SimulationMode, ExtinctionOnly,
-                "Extinction-only (no secondary emission)")
-    ENUM_VAL(SimulationMode, DustEmission,
-                "With secondary emission from dust")
-    ENUM_VAL(SimulationMode, DustEmissionWithSelfAbsorption,
-                "With secondary emission from dust and iterations for dust self-absorption")
+    ENUM_DEF(SimulationMode, OligoNoMedium, OligoExtinctionOnly, NoMedium, ExtinctionOnly, DustEmission,
+             DustEmissionWithSelfAbsorption)
+        ENUM_VAL(SimulationMode, OligoNoMedium, "No medium - oligochromatic regime (a few discrete wavelengths)")
+        ENUM_VAL(SimulationMode, OligoExtinctionOnly,
+                 "Extinction only - oligochromatic regime (a few discrete wavelengths)")
+        ENUM_VAL(SimulationMode, NoMedium, "No medium (primary sources only)")
+        ENUM_VAL(SimulationMode, ExtinctionOnly, "Extinction-only (no secondary emission)")
+        ENUM_VAL(SimulationMode, DustEmission, "With secondary emission from dust")
+        ENUM_VAL(SimulationMode, DustEmissionWithSelfAbsorption,
+                 "With secondary emission from dust and iterations for dust self-absorption")
     ENUM_END()
-
 
     ITEM_CONCRETE(MonteCarloSimulation, Simulation, "a Monte Carlo simulation")
 
-    PROPERTY_ENUM(simulationMode, SimulationMode, "the overall simulation mode")
+        PROPERTY_ENUM(simulationMode, SimulationMode, "the overall simulation mode")
         ATTRIBUTE_DEFAULT_VALUE(simulationMode, "ExtinctionOnly")
-        ATTRIBUTE_INSERT(simulationMode,
-                         "simulationModeOligoNoMedium:Oligochromatic,NoMedium;"
-                         "simulationModeOligoExtinctionOnly:Oligochromatic,ExtinctionOnly;"
-                         "simulationModeNoMedium:Panchromatic,NoMedium;"
-                         "simulationModeExtinctionOnly:Panchromatic,ExtinctionOnly;"
-                         "simulationModeDustEmission:Panchromatic,DustEmission,Emission,RadiationField;"
-                         "simulationModeDustEmissionWithSelfAbsorption:"
-                                    "Panchromatic,DustEmission,Emission,RadiationField,DustSelfAbsorption")
+        ATTRIBUTE_INSERT(simulationMode, "simulationModeOligoNoMedium:Oligochromatic,NoMedium;"
+                                         "simulationModeOligoExtinctionOnly:Oligochromatic,ExtinctionOnly;"
+                                         "simulationModeNoMedium:Panchromatic,NoMedium;"
+                                         "simulationModeExtinctionOnly:Panchromatic,ExtinctionOnly;"
+                                         "simulationModeDustEmission:Panchromatic,DustEmission,Emission,RadiationField;"
+                                         "simulationModeDustEmissionWithSelfAbsorption:"
+                                         "Panchromatic,DustEmission,Emission,RadiationField,DustSelfAbsorption")
 
-    PROPERTY_DOUBLE(numPackets, "the default number of photon packets launched per simulation segment")
+        PROPERTY_DOUBLE(numPackets, "the default number of photon packets launched per simulation segment")
         ATTRIBUTE_MIN_VALUE(numPackets, "[0")
         ATTRIBUTE_MAX_VALUE(numPackets, "1e19]")
         ATTRIBUTE_DEFAULT_VALUE(numPackets, "1e6")
 
-    PROPERTY_ITEM(sourceSystem, SourceSystem, "the source system")
+        PROPERTY_ITEM(sourceSystem, SourceSystem, "the source system")
         ATTRIBUTE_DEFAULT_VALUE(sourceSystem, "SourceSystem")
 
-    PROPERTY_ITEM(mediumSystem, MediumSystem, "the medium system")
+        PROPERTY_ITEM(mediumSystem, MediumSystem, "the medium system")
         ATTRIBUTE_DEFAULT_VALUE(mediumSystem, "!NoMedium:MediumSystem;")
         ATTRIBUTE_REQUIRED_IF(mediumSystem, "!NoMedium")
 
-    PROPERTY_ITEM(instrumentSystem, InstrumentSystem, "the instrument system")
+        PROPERTY_ITEM(instrumentSystem, InstrumentSystem, "the instrument system")
         ATTRIBUTE_DEFAULT_VALUE(instrumentSystem, "InstrumentSystem")
 
-    PROPERTY_ITEM(probeSystem, ProbeSystem, "the probe system")
+        PROPERTY_ITEM(probeSystem, ProbeSystem, "the probe system")
         ATTRIBUTE_DEFAULT_VALUE(probeSystem, "ProbeSystem")
 
     ITEM_END()
@@ -459,11 +453,11 @@ private:
 
 private:
     // non-discoverable simulation items
-    Configuration* _config{ new Configuration(this) };
+    Configuration* _config{new Configuration(this)};
     SecondarySourceSystem* _secondarySourceSystem{nullptr};  // constructed only when there is secondary emission
 
     // data members used by the XXXprogress() functions in this class
-    string _segment;               // a string identifying the photon shooting segment for use in the log message
+    string _segment;  // a string identifying the photon shooting segment for use in the log message
 };
 
 ////////////////////////////////////////////////////////////////////

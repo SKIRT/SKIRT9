@@ -23,7 +23,7 @@ namespace LockFree
     inline void add(double& target, double value)
     {
         // construct an atom over the target location without initialization (this produces no assembly code)
-        std::atomic<double>* atom = new(&target) std::atomic<double>;
+        std::atomic<double>* atom = new (&target) std::atomic<double>;
 
         // make a local copy of the target location's value
         double old = *atom;
@@ -31,7 +31,9 @@ namespace LockFree
         // perform the compare and swap (CAS) loop:
         // - if the value of the target location didn't change since we copied it, move the incremented value into it
         // - if the value of the target location did change, make a new local copy and try again
-        while( !atom->compare_exchange_weak(old, old+value) ) { }
+        while (!atom->compare_exchange_weak(old, old + value))
+        {
+        }
     }
 }
 

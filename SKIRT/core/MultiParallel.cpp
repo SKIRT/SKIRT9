@@ -39,7 +39,7 @@ void MultiParallel::destroyThreads()
     }
 
     // Wait for them to do so
-    for (auto& thread: _threads) thread.join();
+    for (auto& thread : _threads) thread.join();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -102,7 +102,8 @@ void MultiParallel::run(int threadIndex)
         // Do work as long as some is available for this cycle, and handle exceptions
         try
         {
-            while (!_terminate && doSomeWork());
+            while (!_terminate && doSomeWork())
+                ;
         }
         catch (FatalError& error)
         {
@@ -122,7 +123,7 @@ void MultiParallel::run(int threadIndex)
 bool MultiParallel::threadsActive()
 {
     // Check for active threads
-    return std::any_of(_active.begin(), _active.end(), [](bool flag){return flag;});
+    return std::any_of(_active.begin(), _active.end(), [](bool flag) { return flag; });
 }
 
 ////////////////////////////////////////////////////////////////////

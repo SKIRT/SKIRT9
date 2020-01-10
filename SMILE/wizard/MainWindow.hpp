@@ -62,12 +62,12 @@ public slots:
 protected:
     /** This function is invoked for key presses that aren't handled in a sub-pane. It handles the
         keyboard shortcuts for the advance and retreat actions. */
-    void keyPressEvent(QKeyEvent *event) override;
+    void keyPressEvent(QKeyEvent* event) override;
 
     /** This function is invoked when the user ctrl-clicks or right-clicks in the window. It
         creates and shows a context menu with help options opening a relevant URL in the default
         browser. */
-    void contextMenuEvent(QContextMenuEvent *event) override;
+    void contextMenuEvent(QContextMenuEvent* event) override;
 
     /** This function is invoked when the user attempts to close the main window or to quit the
         application. If there are any unsaved changes, the function offers the user a chance to

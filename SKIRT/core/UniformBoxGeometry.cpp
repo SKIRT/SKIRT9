@@ -17,9 +17,9 @@ void UniformBoxGeometry::setupSelfBefore()
     _box = Box(_minX, _minY, _minZ, _maxX, _maxY, _maxZ);
 
     // verify the volume of the box
-    if (_box.xwidth()<=0) throw FATALERROR("The extent of the box should be positive in the X direction");
-    if (_box.ywidth()<=0) throw FATALERROR("The extent of the box should be positive in the Y direction");
-    if (_box.zwidth()<=0) throw FATALERROR("The extent of the box should be positive in the Z direction");
+    if (_box.xwidth() <= 0) throw FATALERROR("The extent of the box should be positive in the X direction");
+    if (_box.ywidth() <= 0) throw FATALERROR("The extent of the box should be positive in the Y direction");
+    if (_box.zwidth() <= 0) throw FATALERROR("The extent of the box should be positive in the Z direction");
 
     // compute the average density
     _rho = 1. / _box.volume();

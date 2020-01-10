@@ -25,12 +25,11 @@ void CastelliKuruczSEDFamily::setupSelfBefore()
 
 vector<SnapshotParameter> CastelliKuruczSEDFamily::parameterInfo() const
 {
-    return vector<SnapshotParameter>
-    {
-        { "radius", "length", "km" },
-        { "metallicity" },
-        { "effective temperature", "temperature", "K" },
-        { "surface gravity", "acceleration", "m/s2" },
+    return vector<SnapshotParameter>{
+        {"radius", "length", "km"},
+        {"metallicity"},
+        {"effective temperature", "temperature", "K"},
+        {"surface gravity", "acceleration", "m/s2"},
     };
 }
 
@@ -49,12 +48,12 @@ namespace
     void clampParameterValues(double& T, double& g)
     {
         // cutoff values for temperature and gravity (see table in class documentation)
-        static Array Tv = { 49000, 39000, 31000, 26000, 19000, 11750, 9000, 8250, 7500, 6000 };
-        static Array gv = pow(10., Array({ 5, 4.5, 4, 3.5, 3, 2.5, 2, 1.5, 1, 0.5 })-2.);
+        static Array Tv = {49000, 39000, 31000, 26000, 19000, 11750, 9000, 8250, 7500, 6000};
+        static Array gv = pow(10., Array({5, 4.5, 4, 3.5, 3, 2.5, 2, 1.5, 1, 0.5}) - 2.);
         static size_t n = Tv.size();
 
         // clamp the gravity value if needed
-        for (size_t i=0; i!=n; ++i)
+        for (size_t i = 0; i != n; ++i)
         {
             if (T > Tv[i] && g < gv[i])
             {
@@ -77,13 +76,13 @@ double CastelliKuruczSEDFamily::specificLuminosity(double wavelength, const Arra
     // if needed, force the parameter values inside the valid portion of the grid
     clampParameterValues(T, g);
 
-    return 4.*M_PI * R*R * _table(wavelength, Z, T, g);
+    return 4. * M_PI * R * R * _table(wavelength, Z, T, g);
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double CastelliKuruczSEDFamily::cdf(Array& lambdav, Array& pv, Array& Pv,
-                                    const Range& wavelengthRange, const Array& parameters) const
+double CastelliKuruczSEDFamily::cdf(Array& lambdav, Array& pv, Array& Pv, const Range& wavelengthRange,
+                                    const Array& parameters) const
 {
     double R = parameters[0];
     double Z = parameters[1];
@@ -93,7 +92,7 @@ double CastelliKuruczSEDFamily::cdf(Array& lambdav, Array& pv, Array& Pv,
     // if needed, force the parameter values inside the valid portion of the grid
     clampParameterValues(T, g);
 
-    return 4.*M_PI * R*R * _table.cdf(lambdav, pv, Pv, wavelengthRange, Z, T, g);
+    return 4. * M_PI * R * R * _table.cdf(lambdav, pv, Pv, wavelengthRange, Z, T, g);
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -8,8 +8,8 @@
 #include <QButtonGroup>
 #include <QLabel>
 #include <QRadioButton>
-#include <QVariant>
 #include <QVBoxLayout>
+#include <QVariant>
 
 ////////////////////////////////////////////////////////////////////
 
@@ -48,7 +48,7 @@ CreateRootWizardPane::CreateRootWizardPane(const SchemaDef* schema, string initi
         choiceButton->setStatusTip(QString::fromStdString(choiceType));
 
         // select the button corresponding to the initial choice
-        if (choiceType==initialType) choiceButton->setChecked(true);
+        if (choiceType == initialType) choiceButton->setChecked(true);
     }
 
     // connect the button group to ourselves
@@ -67,4 +67,3 @@ void CreateRootWizardPane::selectTypeFor(QAbstractButton* button)
 }
 
 ////////////////////////////////////////////////////////////////////
-

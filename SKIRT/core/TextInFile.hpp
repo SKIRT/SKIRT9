@@ -185,7 +185,7 @@ public:
 
         This function behaves just like the readRow(Array&) version. The number of arguments
         must match the number of columns in the file. */
-    template <typename... Values, typename = std::enable_if_t<CompileTimeUtils::isFloatArgList<Values...>()>>
+    template<typename... Values, typename = std::enable_if_t<CompileTimeUtils::isFloatArgList<Values...>()>>
     bool readRow(Values&... values)
     {
         Array result;
@@ -209,7 +209,7 @@ public:
         end of the file), transposes the data repesentation from rows into columns, and stores the
         resulting column arrays in the variables passed to the function by reference. For each row,
         this function behaves just like readRow(Array&). */
-    template <typename... Columns, typename = std::enable_if_t<sizeof...(Columns)!=0>>
+    template<typename... Columns, typename = std::enable_if_t<sizeof...(Columns) != 0>>
     void readAllColumns(Columns&... columns)
     {
         auto result = readAllColumns();
@@ -232,51 +232,51 @@ private:
 
 private:
     // recursively assign values from Array to double& arguments; used in variadic readRow()
-    template <typename... Values>
+    template<typename... Values>
     static inline void assignValues(size_t index, const Array& result, double& value, Values&... values)
     {
         value = result[index];
-        assignValues(index+1, result, values...);
+        assignValues(index + 1, result, values...);
     }
-    static inline void assignValues(size_t /*index*/, const Array& /*result*/) { }
+    static inline void assignValues(size_t /*index*/, const Array& /*result*/) {}
 
     // recursively assign columns from vector to Array& arguments; used in variadic readAllColumns()
-    template <typename... Columns>
+    template<typename... Columns>
     static inline void assignColumns(size_t index, vector<Array>& result, Array& column, Columns&... columns)
     {
         column = std::move(result[index]);
-        assignColumns(index+1, result, columns...);
+        assignColumns(index + 1, result, columns...);
     }
-    static inline void assignColumns(size_t /*index*/, vector<Array>& /*result*/) { }
+    static inline void assignColumns(size_t /*index*/, vector<Array>& /*result*/) {}
 
     //======================== Data Members ========================
 
 private:
-    std::ifstream _in;      // the input stream
-    Units* _units{nullptr}; // the units system
-    Log* _log{nullptr};     // the logger
+    std::ifstream _in;       // the input stream
+    Units* _units{nullptr};  // the units system
+    Log* _log{nullptr};      // the logger
 
     // private type to store column info
     class ColumnInfo
     {
     public:
-        size_t physColIndex{0}; // one-based physical index of this column in the file
-        string title;           // description specified in the file, used to remap columns
-        string description;     // official description provided by the program
-        string quantity;        // quantity, provided by the program
-        string unit;            // unit, provided by the program or specified in the file
-        double convFactor{1.};  // unit conversion factor from input to internal
-        int waveExponent{0};    // wavelength exponent for converting "specific" quantities
-        size_t waveIndex{0};    // zero-based logical index of wavelength column for converting "specific" quantities
+        size_t physColIndex{0};  // one-based physical index of this column in the file
+        string title;            // description specified in the file, used to remap columns
+        string description;      // official description provided by the program
+        string quantity;         // quantity, provided by the program
+        string unit;             // unit, provided by the program or specified in the file
+        double convFactor{1.};   // unit conversion factor from input to internal
+        int waveExponent{0};     // wavelength exponent for converting "specific" quantities
+        size_t waveIndex{0};     // zero-based logical index of wavelength column for converting "specific" quantities
     };
 
-    bool _hasFileInfo{false};   // becomes true if the file has column header info
-    bool _hasProgInfo{false};   // becomes true if the program has added at least one column
+    bool _hasFileInfo{false};  // becomes true if the file has column header info
+    bool _hasProgInfo{false};  // becomes true if the program has added at least one column
 
-    vector<ColumnInfo> _colv;   // info for each column, derived from file info and/or program info
-    size_t _numLogCols{0};      // number of logical columns, or number of program columns added so far
+    vector<ColumnInfo> _colv;  // info for each column, derived from file info and/or program info
+    size_t _numLogCols{0};     // number of logical columns, or number of program columns added so far
 
-    vector<size_t> _logColIndices; // zero-based index into _colv for each physical column to be read
+    vector<size_t> _logColIndices;  // zero-based index into _colv for each physical column to be read
 };
 
 ////////////////////////////////////////////////////////////////////

@@ -20,8 +20,10 @@ void FileWavelengthGrid::setupSelfBefore()
     infile.close();
 
     // set the wavelength grid
-    if (_relativeHalfWidth) setWavelengthBins(wavelengths, _relativeHalfWidth);
-    else setWavelengthRange(wavelengths);
+    if (_relativeHalfWidth)
+        setWavelengthBins(wavelengths, _relativeHalfWidth);
+    else
+        setWavelengthRange(wavelengths);
 }
 
 //////////////////////////////////////////////////////////////////////

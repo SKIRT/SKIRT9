@@ -196,7 +196,7 @@ private:
     const PropertyDef* _property{nullptr};  // the property definition for the property being handled
     const SchemaDef* _schema{nullptr};      // the schema definition for the dataset in which the item resides
     NameManager* _nameMgr{nullptr};         // the name manager for the dataset in which the item resides
-    bool _changed{false};           // becomes true if the target property has been modified by this handler
+    bool _changed{false};                   // becomes true if the target property has been modified by this handler
 };
 
 ////////////////////////////////////////////////////////////////////

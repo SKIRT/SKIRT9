@@ -26,11 +26,11 @@ void FileBand::setupSelfBefore()
     // calculate the normalization factor for the transmission values
     size_t size = _transv.size();
     double norm = 0.;
-    for (size_t i=1; i!=size; ++i)
+    for (size_t i = 1; i != size; ++i)
     {
-        double dlambda = _lambdav[i]-_lambdav[i-1];
-        double trans =  0.5*(_transv[i-1]+_transv[i]);
-        norm += trans*dlambda;
+        double dlambda = _lambdav[i] - _lambdav[i - 1];
+        double trans = 0.5 * (_transv[i - 1] + _transv[i]);
+        norm += trans * dlambda;
     }
 
     // normalize the transmission values

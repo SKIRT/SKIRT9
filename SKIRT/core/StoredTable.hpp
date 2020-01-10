@@ -125,13 +125,13 @@ public:
         open() function to associate the stored table instance with a particular stored table
         resource file. Calling any of the other functions before calling open() results in
         undefined behavior (usually a crash). */
-    StoredTable() { }
+    StoredTable() {}
 
     /** This alternate constructor constructs a stored table instance and immediately associates a
         given stored table resource file with it by calling the open() function. Refer to the
         open() function for a description of the arguments and of its operation. */
-    StoredTable(const SimulationItem* item, string filename, string axes, string quantity,
-                bool clampFirstAxis=true, bool resource=true)
+    StoredTable(const SimulationItem* item, string filename, string axes, string quantity, bool clampFirstAxis = true,
+                bool resource = true)
     {
         open(item, filename, axes, quantity, clampFirstAxis, resource);
     }
@@ -179,12 +179,11 @@ public:
         acquires a memory map on the file, (3) verifies that the stored table matches all
         requirements, and (4) stores relevant information in data members. If any of these steps
         fail, the function throws a fatal error. */
-    void open(const SimulationItem* item, string filename, string axes, string quantity,
-              bool clampFirstAxis=true, bool resource=true)
+    void open(const SimulationItem* item, string filename, string axes, string quantity, bool clampFirstAxis = true,
+              bool resource = true)
     {
-        StoredTable_Impl::open(N, item, filename, resource, axes, quantity,
-                               _filePath, &_axBeg[0], &_qtyBeg, &_axLen[0], &_qtyStep,
-                               &_axLog[0], &_qtyLog);
+        StoredTable_Impl::open(N, item, filename, resource, axes, quantity, _filePath, &_axBeg[0], &_qtyBeg, &_axLen[0],
+                               &_qtyStep, &_axLog[0], &_qtyLog);
         _clamp = clampFirstAxis;
     }
 
@@ -196,47 +195,46 @@ public:
     // ================== Accessing values ==================
 
 public:
-
     /** This function returns the value of the quantity represented by this stored table for the
         specified axes values, interpolated over the grid points of the actual tabulated values in
         all dimensions. The function uses linear or logarithmic interpolation for the axes and
         quantity values according to the flags specified in the stored table. Out-of-range axes
         values are handled according to the policy set by the \em clampFirstAxis flag in the open()
         function. */
-    template <typename... Values, typename = std::enable_if_t<CompileTimeUtils::isFloatArgList<N, Values...>()>>
+    template<typename... Values, typename = std::enable_if_t<CompileTimeUtils::isFloatArgList<N, Values...>()>>
     double operator()(Values... values) const
     {
         // storage for each axis
-        std::array<double, N> value = {{ static_cast<double>(values)... }};
+        std::array<double, N> value = {{static_cast<double>(values)...}};
         std::array<size_t, N> i2;  // upper grid bin boundary index
-        std::array<double, N> f;  // fraction of axis value in bin
+        std::array<double, N> f;   // fraction of axis value in bin
 
         // precompute for each axis
-        for (size_t k = 0; k!=N; ++k)
+        for (size_t k = 0; k != N; ++k)
         {
             // get the index of the upper border of the axis grid bin containing the specified axis value
             double x = value[k];
-            size_t right = std::lower_bound(_axBeg[k], _axBeg[k]+_axLen[k], x) - _axBeg[k];
+            size_t right = std::lower_bound(_axBeg[k], _axBeg[k] + _axLen[k], x) - _axBeg[k];
 
             // if the value is beyond the grid borders:
             //    - if we're not clamping, simply return zero
             //    - if we're clamping, adjust both the bin border and the value
             if (right == 0)
             {
-                if (!_clamp && k==0 && x != _axBeg[k][0]) return 0.;
+                if (!_clamp && k == 0 && x != _axBeg[k][0]) return 0.;
                 right++;
                 x = _axBeg[k][0];
             }
             else if (right == _axLen[k])
             {
-                if (!_clamp && k==0) return 0.;
+                if (!_clamp && k == 0) return 0.;
                 right--;
                 x = _axBeg[k][right];
             }
             i2[k] = right;
 
             // get the axis values at the grid borders
-            double x1 = _axBeg[k][right-1];
+            double x1 = _axBeg[k][right - 1];
             double x2 = _axBeg[k][right];
 
             // if requested, compute logarithm of coordinate values
@@ -248,26 +246,26 @@ public:
             }
 
             // calculate the fraction of the requested axis value in the bin
-            f[k] = (x-x1)/(x2-x1);
+            f[k] = (x - x1) / (x2 - x1);
         }
 
         // storage for each term in the interpolation
-        constexpr size_t numTerms = 1 << N;    // there are 2^N terms
-        std::array<double, numTerms> ff;       // front factor
-        std::array<double, numTerms> yy;       // tabulated value
+        constexpr size_t numTerms = 1 << N;  // there are 2^N terms
+        std::array<double, numTerms> ff;     // front factor
+        std::array<double, numTerms> yy;     // tabulated value
 
         // determine front factor and tabulated value for each term of the interpolation
-        std::array<size_t, N> indices;         // storage for indices of the current term
-        for (size_t t = 0; t!=numTerms; ++t)
+        std::array<size_t, N> indices;  // storage for indices of the current term
+        for (size_t t = 0; t != numTerms; ++t)
         {
             // use the binary representation of the term index to determine left/right for each axis
-            size_t term = t;    // temporary version of term index that will be bit-shifted
+            size_t term = t;  // temporary version of term index that will be bit-shifted
             double front = 1.;
-            for (size_t k = 0; k!=N; ++k)
+            for (size_t k = 0; k != N; ++k)
             {
-                size_t left = term & 1;    // lowest significant digit = 1 means lower border
+                size_t left = term & 1;  // lowest significant digit = 1 means lower border
                 indices[k] = i2[k] - left;
-                front *= left ? (1-f[k]) : f[k];
+                front *= left ? (1 - f[k]) : f[k];
                 term >>= 1;
             }
             if (front)
@@ -277,7 +275,7 @@ public:
 
                 // if logarithmic interpolation of y value is requested and not all bordering values are positive,
                 // we can't comply with the request, so return zero
-                if (_qtyLog && yy[t]<=0) return 0.;
+                if (_qtyLog && yy[t] <= 0) return 0.;
             }
             else
             {
@@ -290,12 +288,13 @@ public:
         double y = 0.;
         if (_qtyLog)
         {
-            for (size_t t = 0; t!=numTerms; ++t) if (ff[t]) y += ff[t] * log(yy[t]);
+            for (size_t t = 0; t != numTerms; ++t)
+                if (ff[t]) y += ff[t] * log(yy[t]);
             y = exp(y);
         }
         else
         {
-            for (size_t t = 0; t!=numTerms; ++t) y += ff[t] * yy[t];
+            for (size_t t = 0; t != numTerms; ++t) y += ff[t] * yy[t];
         }
         return y;
     }
@@ -306,7 +305,7 @@ public:
         interpolation for the axis and quantity values according to the flags specified in the
         stored table. Out-of-range axes values are handled according to the policy set by the \em
         clampFirstAxis flag in the open() function. */
-    template <typename Value, typename = std::enable_if_t<N==1 && CompileTimeUtils::isFloatArgList<1, Value>()>>
+    template<typename Value, typename = std::enable_if_t<N == 1 && CompileTimeUtils::isFloatArgList<1, Value>()>>
     double operator[](Value value) const
     {
         return operator()(value);
@@ -317,30 +316,30 @@ public:
         \em xv argument), using given fixed values for the other axes, if any (the arguments at the
         end of the list). The function behaves as if it would call the operator()() function for
         each element in the specified input sequence, but it is more efficient. */
-    template <typename... Values, typename = std::enable_if_t<CompileTimeUtils::isFloatArgList<N-1, Values...>()>>
+    template<typename... Values, typename = std::enable_if_t<CompileTimeUtils::isFloatArgList<N - 1, Values...>()>>
     void valueArray(Array& yv, const Array& xv, Values... values) const
     {
         // storage for each axis
-        std::array<double, N> value = {{ 0., static_cast<double>(values)... }};
-        std::array<size_t, N> i2;           // upper grid bin boundary index
-        std::array<double, N> f;            // fraction of axis value in bin
-        std::array<size_t, N> indices;      // indices of the current term
+        std::array<double, N> value = {{0., static_cast<double>(values)...}};
+        std::array<size_t, N> i2;       // upper grid bin boundary index
+        std::array<double, N> f;        // fraction of axis value in bin
+        std::array<size_t, N> indices;  // indices of the current term
 
         // storage for each term in the interpolation
-        constexpr size_t numTerms = 1 << N; // there are 2^N terms
-        std::array<double, numTerms> ff;    // front factor
-        std::array<double, numTerms> yy;    // tabulated value
+        constexpr size_t numTerms = 1 << N;  // there are 2^N terms
+        std::array<double, numTerms> ff;     // front factor
+        std::array<double, numTerms> yy;     // tabulated value
 
         // resize output array
-        size_t n = xv.size();               // number of values to calculate
+        size_t n = xv.size();  // number of values to calculate
         yv.resize(n);
 
         // precompute grid index and fraction for all but the first axis
-        for (size_t k = 1; k!=N; ++k)
+        for (size_t k = 1; k != N; ++k)
         {
             // get the index of the upper border of the axis grid bin containing the specified axis value
             double x = value[k];
-            size_t right = std::lower_bound(_axBeg[k], _axBeg[k]+_axLen[k], x) - _axBeg[k];
+            size_t right = std::lower_bound(_axBeg[k], _axBeg[k] + _axLen[k], x) - _axBeg[k];
 
             // if the value is beyond the grid borders, adjust both the bin border and the value
             if (right == 0)
@@ -356,7 +355,7 @@ public:
             i2[k] = right;
 
             // get the axis values at the grid borders
-            double x1 = _axBeg[k][right-1];
+            double x1 = _axBeg[k][right - 1];
             double x2 = _axBeg[k][right];
 
             // if requested, compute logarithm of coordinate values
@@ -368,11 +367,11 @@ public:
             }
 
             // calculate the fraction of the requested axis value in the bin
-            f[k] = (x-x1)/(x2-x1);
+            f[k] = (x - x1) / (x2 - x1);
         }
 
         // calculate each value in the array
-        for (size_t i = 0; i!=n; ++i)
+        for (size_t i = 0; i != n; ++i)
         {
             value[0] = xv[i];
 
@@ -380,27 +379,35 @@ public:
             {
                 // get the index of the upper border of the axis grid bin containing the specified axis value
                 double x = value[0];
-                size_t right = std::lower_bound(_axBeg[0], _axBeg[0]+_axLen[0], x) - _axBeg[0];
+                size_t right = std::lower_bound(_axBeg[0], _axBeg[0] + _axLen[0], x) - _axBeg[0];
 
                 // if the value is beyond the grid borders:
                 //    - if we're not clamping, simply return zero
                 //    - if we're clamping, adjust both the bin border and the value
                 if (right == 0)
                 {
-                    if (!_clamp && x != _axBeg[0][0]) { yv[i] = 0.; continue; };
+                    if (!_clamp && x != _axBeg[0][0])
+                    {
+                        yv[i] = 0.;
+                        continue;
+                    };
                     right++;
                     x = _axBeg[0][0];
                 }
                 else if (right == _axLen[0])
                 {
-                    if (!_clamp) { yv[i] = 0.; continue; };
+                    if (!_clamp)
+                    {
+                        yv[i] = 0.;
+                        continue;
+                    };
                     right--;
                     x = _axBeg[0][right];
                 }
                 i2[0] = right;
 
                 // get the axis values at the grid borders
-                double x1 = _axBeg[0][right-1];
+                double x1 = _axBeg[0][right - 1];
                 double x2 = _axBeg[0][right];
 
                 // if requested, compute logarithm of coordinate values
@@ -412,20 +419,20 @@ public:
                 }
 
                 // calculate the fraction of the requested axis value in the bin
-                f[0] = (x-x1)/(x2-x1);
+                f[0] = (x - x1) / (x2 - x1);
             }
 
             // determine front factor and tabulated value for each term of the interpolation
-            for (size_t t = 0; t!=numTerms; ++t)
+            for (size_t t = 0; t != numTerms; ++t)
             {
                 // use the binary representation of the term index to determine left/right for each axis
-                size_t term = t;    // temporary version of term index that will be bit-shifted
+                size_t term = t;  // temporary version of term index that will be bit-shifted
                 double front = 1.;
-                for (size_t k = 0; k!=N; ++k)
+                for (size_t k = 0; k != N; ++k)
                 {
-                    size_t left = term & 1;    // lowest significant digit = 1 means lower border
+                    size_t left = term & 1;  // lowest significant digit = 1 means lower border
                     indices[k] = i2[k] - left;
-                    front *= left ? (1-f[k]) : f[k];
+                    front *= left ? (1 - f[k]) : f[k];
                     term >>= 1;
                 }
                 if (front)
@@ -435,7 +442,11 @@ public:
 
                     // if logarithmic interpolation of y value is requested and not all bordering values are positive,
                     // we can't comply with the request, so return zero
-                    if (_qtyLog && yy[t]<=0) { yv[i] = 0.; continue; };
+                    if (_qtyLog && yy[t] <= 0)
+                    {
+                        yv[i] = 0.;
+                        continue;
+                    };
                 }
                 else
                 {
@@ -448,12 +459,13 @@ public:
             double y = 0.;
             if (_qtyLog)
             {
-                for (size_t t = 0; t!=numTerms; ++t) if (ff[t]) y += ff[t] * log(yy[t]);
+                for (size_t t = 0; t != numTerms; ++t)
+                    if (ff[t]) y += ff[t] * log(yy[t]);
                 y = exp(y);
             }
             else
             {
-                for (size_t t = 0; t!=numTerms; ++t) y += ff[t] * yy[t];
+                for (size_t t = 0; t != numTerms; ++t) y += ff[t] * yy[t];
             }
             yv[i] = y;
         }
@@ -480,16 +492,16 @@ public:
         that the pdf behaves as a power-law between any two grid points, and the integration to
         determine the cdf is performed accordingly. In all other cases, piece-wise linear behavior
         is assumed and regular trapezium-rule integration is used. */
-    template <typename... Values, typename = std::enable_if_t<CompileTimeUtils::isFloatArgList<N-1, Values...>()>>
+    template<typename... Values, typename = std::enable_if_t<CompileTimeUtils::isFloatArgList<N - 1, Values...>()>>
     double cdf(Array& xv, Array& pv, Array& Pv, Range xrange, Values... values) const
     {
         // copy the relevant portion of the internal axis grid
-        size_t minRight = std::upper_bound(_axBeg[0], _axBeg[0]+_axLen[0], xrange.min()) - _axBeg[0];
-        size_t maxRight = std::lower_bound(_axBeg[0], _axBeg[0]+_axLen[0], xrange.max()) - _axBeg[0];
-        xv.resize(2 + maxRight - minRight); // number of internal grid points plus two external points
-        size_t i = 0;                       // i = index in target array
-        xv[i++] = xrange.min();             // j = index in internal grid array
-        for (size_t j = minRight; j < maxRight; ) xv[i++] = _axBeg[0][j++];
+        size_t minRight = std::upper_bound(_axBeg[0], _axBeg[0] + _axLen[0], xrange.min()) - _axBeg[0];
+        size_t maxRight = std::lower_bound(_axBeg[0], _axBeg[0] + _axLen[0], xrange.max()) - _axBeg[0];
+        xv.resize(2 + maxRight - minRight);  // number of internal grid points plus two external points
+        size_t i = 0;                        // i = index in target array
+        xv[i++] = xrange.min();              // j = index in internal grid array
+        for (size_t j = minRight; j < maxRight;) xv[i++] = _axBeg[0][j++];
         xv[i++] = xrange.max();
 
         // interpolate or copy the corresponding probability density values
@@ -503,8 +515,10 @@ public:
 
     /** This function returns the range of the table axis indicated by the zero-based index in the
         template argument. */
-    template <size_t axisIndex, typename = std::enable_if_t< axisIndex<=N >>
-    Range axisRange() const { return Range(_axBeg[axisIndex][0], _axBeg[axisIndex][_axLen[axisIndex]-1]); }
+    template<size_t axisIndex, typename = std::enable_if_t<axisIndex <= N>> Range axisRange() const
+    {
+        return Range(_axBeg[axisIndex][0], _axBeg[axisIndex][_axLen[axisIndex] - 1]);
+    }
 
     // ================== Accessing the raw data in a 1D table ==================
 
@@ -514,7 +528,7 @@ public:
         corresponding quantity values. */
     size_t size() const
     {
-        static_assert (N==1, "This function is available only for one-dimensional tables");
+        static_assert(N == 1, "This function is available only for one-dimensional tables");
         return _axLen[0];
     }
 
@@ -523,7 +537,7 @@ public:
         through the size() function. */
     const double* axisData() const
     {
-        static_assert (N==1, "This function is available only for one-dimensional tables");
+        static_assert(N == 1, "This function is available only for one-dimensional tables");
         return _axBeg[0];
     }
 
@@ -532,7 +546,7 @@ public:
         obtained through the size() function. */
     const double* quantityData() const
     {
-        static_assert (N==1, "This function is available only for one-dimensional tables");
+        static_assert(N == 1, "This function is available only for one-dimensional tables");
         return _qtyBeg;
     }
 
@@ -541,39 +555,36 @@ public:
 private:
     /** This template function returns a copy of the value at the specified N indices. There is no
         range checking. Out-of-range index values cause unpredictable behavior. */
-    template <typename... Indices, typename = std::enable_if_t<CompileTimeUtils::isFloatArgList<N, Indices...>()>>
+    template<typename... Indices, typename = std::enable_if_t<CompileTimeUtils::isFloatArgList<N, Indices...>()>>
     double valueAtIndices(Indices... indices) const
     {
-        return _qtyBeg[flattenedIndex(std::array<size_t, N>({{ static_cast<size_t>(indices)... }}))];
+        return _qtyBeg[flattenedIndex(std::array<size_t, N>({{static_cast<size_t>(indices)...}}))];
     }
 
     /** This function returns a copy of the value at the specified N indices. There is no range
         checking. Out-of-range index values cause unpredictable behavior. */
-    double valueAtIndices(const std::array<size_t, N>& indices) const
-    {
-        return _qtyBeg[flattenedIndex(indices)];
-    }
+    double valueAtIndices(const std::array<size_t, N>& indices) const { return _qtyBeg[flattenedIndex(indices)]; }
 
     /** This function returns the flattened index in the underlying data array for the specified N
         indices. */
     size_t flattenedIndex(const std::array<size_t, N>& indices) const
     {
-        size_t result = indices[N-1];
-        for (size_t k = N-2; k<N; --k) result = result * _axLen[k] + indices[k];
+        size_t result = indices[N - 1];
+        for (size_t k = N - 2; k < N; --k) result = result * _axLen[k] + indices[k];
         return result * _qtyStep;
     }
 
     // ================== Data members ==================
 
 private:
-    string _filePath;                       // the canonical path to the associated stored table file
-    std::array<const double*, N> _axBeg;    // pointer to first grid point for each axis
-    const double* _qtyBeg;                  // pointer to first quantity value
-    std::array<size_t, N> _axLen;           // number of grid points for each axis
-    size_t _qtyStep;                        // step size from one quantity value to the next (1=adjacent)
-    std::array<bool, N> _axLog;             // interpolation type (true=log, false=linear) for each axis
-    bool _qtyLog;                           // interpolation type (true=log, false=linear) for quantity
-    bool _clamp;                            // value for out-of-range first-axis indices: true=clamped, false=zero
+    string _filePath;                     // the canonical path to the associated stored table file
+    std::array<const double*, N> _axBeg;  // pointer to first grid point for each axis
+    const double* _qtyBeg;                // pointer to first quantity value
+    std::array<size_t, N> _axLen;         // number of grid points for each axis
+    size_t _qtyStep;                      // step size from one quantity value to the next (1=adjacent)
+    std::array<bool, N> _axLog;           // interpolation type (true=log, false=linear) for each axis
+    bool _qtyLog;                         // interpolation type (true=log, false=linear) for quantity
+    bool _clamp;                          // value for out-of-range first-axis indices: true=clamped, false=zero
 };
 
 ////////////////////////////////////////////////////////////////////

@@ -36,8 +36,8 @@ void DisjointWavelengthGrid::setWavelengthRange(const Array& lambdav, bool logSc
     // calculate the bin borders
     _lambdaleftv.resize(n);
     _lambdarightv.resize(n);
-    _borderv.resize(n+1);
-    if (n==1)
+    _borderv.resize(n + 1);
+    if (n == 1)
     {
         // just a single wavelength -> form narrow bin
         _lambdaleftv[0] = _borderv[0] = _lambdav[0] * 0.999;
@@ -47,21 +47,22 @@ void DisjointWavelengthGrid::setWavelengthRange(const Array& lambdav, bool logSc
     {
         if (logScale)
         {
-            _lambdaleftv[0] = _borderv[0] = sqrt(_lambdav[0]*_lambdav[0]*_lambdav[0]/_lambdav[1]);
-            for (size_t ell=1; ell!=n; ++ell)
+            _lambdaleftv[0] = _borderv[0] = sqrt(_lambdav[0] * _lambdav[0] * _lambdav[0] / _lambdav[1]);
+            for (size_t ell = 1; ell != n; ++ell)
             {
-                _lambdarightv[ell-1] = _lambdaleftv[ell] = _borderv[ell] = sqrt(_lambdav[ell-1]*_lambdav[ell]);
+                _lambdarightv[ell - 1] = _lambdaleftv[ell] = _borderv[ell] = sqrt(_lambdav[ell - 1] * _lambdav[ell]);
             }
-            _lambdarightv[n-1] = _borderv[n] = sqrt(_lambdav[n-1]*_lambdav[n-1]*_lambdav[n-1]/_lambdav[n-2]);
+            _lambdarightv[n - 1] = _borderv[n] =
+                sqrt(_lambdav[n - 1] * _lambdav[n - 1] * _lambdav[n - 1] / _lambdav[n - 2]);
         }
         else
         {
-            _lambdaleftv[0] = _borderv[0] = (3.*_lambdav[0]-_lambdav[1])/2.;
-            for (size_t ell=1; ell!=n; ++ell)
+            _lambdaleftv[0] = _borderv[0] = (3. * _lambdav[0] - _lambdav[1]) / 2.;
+            for (size_t ell = 1; ell != n; ++ell)
             {
-                _lambdarightv[ell-1] = _lambdaleftv[ell] = _borderv[ell] = (_lambdav[ell-1]+_lambdav[ell])/2.;
+                _lambdarightv[ell - 1] = _lambdaleftv[ell] = _borderv[ell] = (_lambdav[ell - 1] + _lambdav[ell]) / 2.;
             }
-            _lambdarightv[n-1] = _borderv[n] = (3.*_lambdav[n-1]-_lambdav[n-2])/2.;
+            _lambdarightv[n - 1] = _borderv[n] = (3. * _lambdav[n - 1] - _lambdav[n - 2]) / 2.;
         }
     }
 
@@ -69,10 +70,10 @@ void DisjointWavelengthGrid::setWavelengthRange(const Array& lambdav, bool logSc
     _dlambdav = _lambdarightv - _lambdaleftv;
 
     // setup the mapping from border bin indices to actual wavelength bin indices (see ell() function)
-    _ellv.resize(n+2);
+    _ellv.resize(n + 2);
     _ellv[0] = -1;
-    for (size_t ell=0; ell!=n; ++ell) _ellv[ell+1] = ell;
-    _ellv[n+1] = -1;
+    for (size_t ell = 0; ell != n; ++ell) _ellv[ell + 1] = ell;
+    _ellv[n + 1] = -1;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -94,22 +95,22 @@ void DisjointWavelengthGrid::setWavelengthBins(const Array& lambdav, double rela
     // calculate the bin borders
     _lambdaleftv.resize(n);
     _lambdarightv.resize(n);
-    _borderv.resize(2*n);
+    _borderv.resize(2 * n);
     if (!constantWidth)
     {
-        for (size_t ell=0; ell!=n; ++ell)
+        for (size_t ell = 0; ell != n; ++ell)
         {
-            _borderv[2*ell] = _lambdaleftv[ell] = _lambdav[ell] * (1.-relativeHalfWidth);
-            _borderv[2*ell+1] = _lambdarightv[ell] = _lambdav[ell] * (1.+relativeHalfWidth);
+            _borderv[2 * ell] = _lambdaleftv[ell] = _lambdav[ell] * (1. - relativeHalfWidth);
+            _borderv[2 * ell + 1] = _lambdarightv[ell] = _lambdav[ell] * (1. + relativeHalfWidth);
         }
     }
     else
     {
         double delta = _lambdav[0] * relativeHalfWidth;
-        for (size_t ell=0; ell!=n; ++ell)
+        for (size_t ell = 0; ell != n; ++ell)
         {
-            _borderv[2*ell] = _lambdaleftv[ell] = _lambdav[ell] - delta;
-            _borderv[2*ell+1] = _lambdarightv[ell] = _lambdav[ell] + delta;
+            _borderv[2 * ell] = _lambdaleftv[ell] = _lambdav[ell] - delta;
+            _borderv[2 * ell + 1] = _lambdarightv[ell] = _lambdav[ell] + delta;
         }
     }
 
@@ -121,12 +122,12 @@ void DisjointWavelengthGrid::setWavelengthBins(const Array& lambdav, double rela
     _dlambdav = _lambdarightv - _lambdaleftv;
 
     // setup the mapping from border bin indices to actual wavelength bin indices (see ell() function)
-    _ellv.resize(2*n+1);
+    _ellv.resize(2 * n + 1);
     _ellv[0] = -1;
-    for (size_t ell=0; ell!=n; ++ell)
+    for (size_t ell = 0; ell != n; ++ell)
     {
-        _ellv[2*ell+1] = ell;
-        _ellv[2*ell+2] = -1;        // regions between the bins are considered out of range
+        _ellv[2 * ell + 1] = ell;
+        _ellv[2 * ell + 2] = -1;  // regions between the bins are considered out of range
     }
 }
 
@@ -203,11 +204,11 @@ int DisjointWavelengthGrid::bin(double lambda) const
 Array DisjointWavelengthGrid::extlambdav() const
 {
     int n = _lambdav.size();
-    Array extv(n+2);
+    Array extv(n + 2);
 
     extv[0] = _lambdaleftv[0];
-    for (int ell=0; ell!=n; ++ell) extv[ell+1] = _lambdav[ell];
-    extv[n+1] = _lambdarightv[n-1];
+    for (int ell = 0; ell != n; ++ell) extv[ell + 1] = _lambdav[ell];
+    extv[n + 1] = _lambdarightv[n - 1];
 
     return extv;
 }

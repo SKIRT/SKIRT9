@@ -19,19 +19,19 @@ class PredefinedBandWavelengthGrid : public BandWavelengthGrid
     ITEM_CONCRETE(PredefinedBandWavelengthGrid, BandWavelengthGrid,
                   "a wavelength grid including a predefined list of (broad)bands")
 
-    PROPERTY_BOOL(includeGALEX, "include GALEX FUV and NUV bands")
+        PROPERTY_BOOL(includeGALEX, "include GALEX FUV and NUV bands")
         ATTRIBUTE_DEFAULT_VALUE(includeGALEX, "true")
 
-    PROPERTY_BOOL(includeSDSS, "include SDSS ugriz bands")
+        PROPERTY_BOOL(includeSDSS, "include SDSS ugriz bands")
         ATTRIBUTE_DEFAULT_VALUE(includeSDSS, "true")
 
-    PROPERTY_BOOL(include2MASS, "include 2MASS J, H and Ks bands")
+        PROPERTY_BOOL(include2MASS, "include 2MASS J, H and Ks bands")
         ATTRIBUTE_DEFAULT_VALUE(include2MASS, "true")
 
-    PROPERTY_BOOL(includeWISE, "include WISE W1, W2, W3 and W4 bands")
+        PROPERTY_BOOL(includeWISE, "include WISE W1, W2, W3 and W4 bands")
         ATTRIBUTE_DEFAULT_VALUE(includeWISE, "DustEmission:true;false")
 
-    PROPERTY_BOOL(includeHERSCHEL, "include HERSCHEL PACS 70,100,160 and SPIRE 250,350,500 bands")
+        PROPERTY_BOOL(includeHERSCHEL, "include HERSCHEL PACS 70,100,160 and SPIRE 250,350,500 bands")
         ATTRIBUTE_DEFAULT_VALUE(includeHERSCHEL, "DustEmission:true;false")
 
     ITEM_END()

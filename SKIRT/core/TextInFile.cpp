@@ -45,7 +45,7 @@ namespace
             static const std::regex syntax("#\\s*column\\s*(\\d+)\\s*:\\s*([^()]*)\\(\\s*([a-zA-Z0-9/]*)\\s*\\)\\s*",
                                            std::regex::icase);
             std::smatch matches;
-            if (std::regex_match(line, matches, syntax) && matches.size()==4)
+            if (std::regex_match(line, matches, syntax) && matches.size() == 4)
             {
                 colIndex = std::stoul(matches[1].str());
                 description = StringUtils::squeeze(matches[2].str());
@@ -70,10 +70,10 @@ TextInFile::TextInFile(const SimulationItem* item, string filename, string descr
     _log = item->find<Log>();
 
     // log "reading file" message
-    _log->info( item->typeAndName() + " reads " + description + " from text file " + filepath + "...");
+    _log->info(item->typeAndName() + " reads " + description + " from text file " + filepath + "...");
 
     // read any structured header lines into a list of ColumnInfo records
-    size_t index;       // one-based column index obtained from file info
+    size_t index;  // one-based column index obtained from file info
     string title;
     string unit;
     while (getNextInfoLine(_in, index, title, unit))
@@ -126,14 +126,14 @@ namespace
     int waveExponentForSpecificQuantity(Units* unitSystem, string unitString)
     {
         // a list of known per wavelength / per frequency quantities and the corresponding exponents
-        static const vector<string> specificQuantities({
-                           "wavelengthmonluminosity", "wavelengthfluxdensity", "wavelengthsurfacebrightness",
-                           "neutralmonluminosity", "neutralfluxdensity", "neutralsurfacebrightness",
-                           "frequencymonluminosity", "frequencyfluxdensity", "frequencysurfacebrightness"});
-        static const vector<int> specificExponents({0,0,0, -1,-1,-1, -2,-2,-2});
+        static const vector<string> specificQuantities(
+            {"wavelengthmonluminosity", "wavelengthfluxdensity", "wavelengthsurfacebrightness", "neutralmonluminosity",
+             "neutralfluxdensity", "neutralsurfacebrightness", "frequencymonluminosity", "frequencyfluxdensity",
+             "frequencysurfacebrightness"});
+        static const vector<int> specificExponents({0, 0, 0, -1, -1, -1, -2, -2, -2});
 
         // loop over the list
-        for (size_t q=0; q!=specificQuantities.size(); ++q)
+        for (size_t q = 0; q != specificQuantities.size(); ++q)
         {
             // if this quantity supports the given unit, return the corresponding exponent
             if (unitSystem->has(specificQuantities[q], unitString)) return specificExponents[q];
@@ -165,7 +165,7 @@ size_t TextInFile::indexForName(std::string name) const
 size_t TextInFile::waveIndexForSpecificQuantity() const
 {
     size_t index = 0;
-    for (const ColumnInfo& col :_colv)
+    for (const ColumnInfo& col : _colv)
     {
         if (col.description == "wavelength") return index;
         index++;
@@ -182,12 +182,10 @@ void TextInFile::useColumns(string columns)
     if (columns.empty()) return;
 
     // verify that program columns have not yet been added
-    if (_hasProgInfo)
-        throw FATALERROR("Program columns were declared before requesting column remapping");
+    if (_hasProgInfo) throw FATALERROR("Program columns were declared before requesting column remapping");
 
     // verify that file contains column info
-    if (!_hasFileInfo)
-        throw FATALERROR("Requesting logical columns but there is no column info in file header");
+    if (!_hasFileInfo) throw FATALERROR("Requesting logical columns but there is no column info in file header");
 
     // establish the logical column info list
     vector<ColumnInfo> newcolv;
@@ -215,14 +213,14 @@ void TextInFile::addColumn(string description, string quantity, string defaultUn
     if (!_hasFileInfo)
     {
         _colv.emplace_back();
-        _colv.back().physColIndex = _numLogCols+1;
+        _colv.back().physColIndex = _numLogCols + 1;
         _colv.back().unit = defaultUnit;
     }
     // otherwise verify that there is a column specification to match this program column
     else
     {
-        if (_numLogCols+1 > _colv.size())
-            throw FATALERROR("No column info in file header for column " + std::to_string(_numLogCols+1));
+        if (_numLogCols + 1 > _colv.size())
+            throw FATALERROR("No column info in file header for column " + std::to_string(_numLogCols + 1));
     }
     _hasProgInfo = true;
 
@@ -234,13 +232,13 @@ void TextInFile::addColumn(string description, string quantity, string defaultUn
     col.quantity = quantity;
 
     // verify units and determine conversion factor for this column
-    if (col.quantity.empty())       // dimensionless quantity
+    if (col.quantity.empty())  // dimensionless quantity
     {
         if (!col.unit.empty() && col.unit != "1")
             throw FATALERROR("Invalid units for dimensionless quantity in column " + std::to_string(_numLogCols));
         col.unit = "1";
     }
-    else if (col.quantity == "specific")    // arbitrarily scaled value per wavelength or per frequency
+    else if (col.quantity == "specific")  // arbitrarily scaled value per wavelength or per frequency
     {
         col.waveExponent = waveExponentForSpecificQuantity(_units, col.unit);
         if (col.waveExponent == ERROR_NO_EXPON)
@@ -250,7 +248,7 @@ void TextInFile::addColumn(string description, string quantity, string defaultUn
             col.waveIndex = waveIndexForSpecificQuantity();
             if (col.waveIndex == ERROR_NO_INDEX)
                 throw FATALERROR("No preceding wavelength column for specific quantity in column "
-                                                       + std::to_string(_numLogCols));
+                                 + std::to_string(_numLogCols));
         }
     }
     else
@@ -262,11 +260,11 @@ void TextInFile::addColumn(string description, string quantity, string defaultUn
 
     // add the physical to logical column mapping for this column
     if (_logColIndices.size() < col.physColIndex) _logColIndices.resize(col.physColIndex, ERROR_NO_INDEX);
-    if (_logColIndices[col.physColIndex-1] != ERROR_NO_INDEX)
-        throw FATALERROR("Multiple logical columns (" + std::to_string(_logColIndices[col.physColIndex-1]+1)
-                            + "," + std::to_string(_numLogCols) + ") map to the same physical column ("
+    if (_logColIndices[col.physColIndex - 1] != ERROR_NO_INDEX)
+        throw FATALERROR("Multiple logical columns (" + std::to_string(_logColIndices[col.physColIndex - 1] + 1) + ","
+                         + std::to_string(_numLogCols) + ") map to the same physical column ("
                          + std::to_string(col.physColIndex) + ")");
-    _logColIndices[col.physColIndex-1] = _numLogCols-1;
+    _logColIndices[col.physColIndex - 1] = _numLogCols - 1;
 
     // log column information
     string message = "  Column " + std::to_string(_numLogCols) + ": " + col.description + " (" + col.unit + ")";
@@ -289,16 +287,16 @@ bool TextInFile::readRow(Array& values)
     string line;
     while (_in.good())
     {
-        getline(_in,line);
+        getline(_in, line);
         auto pos = line.find_first_not_of(" \t");
-        if (pos!=string::npos && line[pos]!='#')
+        if (pos != string::npos && line[pos] != '#')
         {
             // resize result array if needed (we don't need it to be cleared)
             if (values.size() != _numLogCols) values.resize(_numLogCols);
 
             // convert values from line and store them in result array
             std::stringstream linestream(line);
-            for (size_t i : _logColIndices)         // i: zero-based logical index
+            for (size_t i : _logColIndices)  // i: zero-based logical index
             {
                 if (linestream.eof()) throw FATALERROR("One or more required value(s) on text line are missing");
 
@@ -311,8 +309,8 @@ bool TextInFile::readRow(Array& values)
                 if (i != ERROR_NO_INDEX)
                 {
                     const ColumnInfo& col = _colv[i];
-                    values[i] = value * (col.waveExponent ? pow(values[col.waveIndex],col.waveExponent)
-                                                          : col.convFactor);
+                    values[i] =
+                        value * (col.waveExponent ? pow(values[col.waveIndex], col.waveExponent) : col.convFactor);
                 }
             }
             return true;
@@ -334,16 +332,16 @@ bool TextInFile::readNonLeaf(int& nx, int& ny, int& nz)
         int c = _in.peek();
 
         // skip comments line
-        if (c=='#')
+        if (c == '#')
         {
-            getline(_in,line);
+            getline(_in, line);
         }
 
         // process nonleaf line
-        else if (c=='!')
+        else if (c == '!')
         {
-            _in.get();              // skip exclamation mark
-            getline(_in,line);
+            _in.get();  // skip exclamation mark
+            getline(_in, line);
 
             // convert nx,ny,nz values from line and store them in output arguments
             std::stringstream linestream(line);
@@ -355,7 +353,7 @@ bool TextInFile::readNonLeaf(int& nx, int& ny, int& nz)
         }
 
         // eat leading white space and empty lines
-        else if (c==' ' || c=='\t' || c=='\n' || c=='\r')
+        else if (c == ' ' || c == '\t' || c == '\n' || c == '\r')
         {
             _in.get();
         }
@@ -378,7 +376,7 @@ vector<Array> TextInFile::readAllRows()
         rows.emplace_back();        // add a default-constructed array to the vector
         if (!readRow(rows.back()))  // read next line's values into that array
         {
-            rows.pop_back();        // at the end, remove the extraneous array
+            rows.pop_back();  // at the end, remove the extraneous array
             break;
         }
     }
@@ -396,9 +394,8 @@ vector<Array> TextInFile::readAllColumns()
 
     // transpose the result into columns
     vector<Array> columns(ncols, Array(nrows));
-    for (size_t c=0; c!=ncols; ++c)
-        for (size_t r=0; r!=nrows; ++r)
-            columns[c][r] = rows[r][c];
+    for (size_t c = 0; c != ncols; ++c)
+        for (size_t r = 0; r != nrows; ++r) columns[c][r] = rows[r][c];
 
     return columns;
 }

@@ -12,10 +12,10 @@
 #include "ParallelFactory.hpp"
 #include "PhotonPacket.hpp"
 #include "ProcessManager.hpp"
+#include "SecondarySourceSystem.hpp"
 #include "ShortArray.hpp"
 #include "SpatialGrid.hpp"
 #include "SpecialFunctions.hpp"
-#include "SecondarySourceSystem.hpp"
 #include "StringUtils.hpp"
 #include "TimeLogger.hpp"
 
@@ -26,7 +26,7 @@ void MonteCarloSimulation::setupSimulation()
     // perform regular setup for the hierarchy and wait for all processes to finish
     {
         TimeLogger logger(log(), "setup");
-        _config->setup();           // first of all perform setup for the configuration object
+        _config->setup();  // first of all perform setup for the configuration object
         SimulationItem::setup();
         wait("setup");
     }
@@ -113,8 +113,8 @@ void MonteCarloSimulation::runPrimaryEmission()
         initProgress(segment, Npp);
         sourceSystem()->prepareForLaunch(Npp);
         auto parallel = find<ParallelFactory>()->parallelDistributed();
-        parallel->call(Npp, [this](size_t i ,size_t n)
-                            { performLifeCycle(i, n, true, true, _config->hasRadiationField()); });
+        parallel->call(
+            Npp, [this](size_t i, size_t n) { performLifeCycle(i, n, true, true, _config->hasRadiationField()); });
         instrumentSystem()->flush();
     }
 
@@ -151,7 +151,7 @@ void MonteCarloSimulation::runDustSelfAbsorptionPhase()
 
     // iterate over the maximum number of iterations; the loop body returns from the function
     // when convergence is reached after the minimum number of iterations have been completed
-    for (int iter = 1; iter<=maxIters; iter++)
+    for (int iter = 1; iter <= maxIters; iter++)
     {
         string segment = "dust self-absorption iteration " + std::to_string(iter);
         {
@@ -169,7 +169,7 @@ void MonteCarloSimulation::runDustSelfAbsorptionPhase()
 
             // launch photon packets
             initProgress(segment, Npp);
-            parallel->call(Npp, [this](size_t i ,size_t n) { performLifeCycle(i, n, false, false, true); });
+            parallel->call(Npp, [this](size_t i, size_t n) { performLifeCycle(i, n, false, false, true); });
             instrumentSystem()->flush();
 
             // wait for all processes to finish and synchronize the radiation field
@@ -181,11 +181,9 @@ void MonteCarloSimulation::runDustSelfAbsorptionPhase()
         double Labsprim = mediumSystem()->totalAbsorbedLuminosity(true, MaterialMix::MaterialType::Dust);
         double Labsdust = mediumSystem()->totalAbsorbedLuminosity(false, MaterialMix::MaterialType::Dust);
         log()->info("The total dust-absorbed primary luminosity is "
-                   + StringUtils::toString(units()->obolluminosity(Labsprim), 'g') + " "
-                   + units()->ubolluminosity() );
+                    + StringUtils::toString(units()->obolluminosity(Labsprim), 'g') + " " + units()->ubolluminosity());
         log()->info("The total dust-absorbed dust luminosity in iteration " + std::to_string(iter) + " is "
-                   + StringUtils::toString(units()->obolluminosity(Labsdust), 'g') + " "
-                   + units()->ubolluminosity() );
+                    + StringUtils::toString(units()->obolluminosity(Labsdust), 'g') + " " + units()->ubolluminosity());
 
         // log the current performance and corresponding convergence criteria
         if (Labsprim > 0. && Labsdust > 0.)
@@ -193,16 +191,16 @@ void MonteCarloSimulation::runDustSelfAbsorptionPhase()
             if (iter == 1)
             {
                 log()->info("--> absorbed dust luminosity is "
-                            + StringUtils::toString(Labsdust/Labsprim*100., 'f', 2)
+                            + StringUtils::toString(Labsdust / Labsprim * 100., 'f', 2)
                             + "% of absorbed stellar luminosity (convergence criterion is "
-                            + StringUtils::toString(fractionOfPrimary*100., 'f', 2) + "%)");
+                            + StringUtils::toString(fractionOfPrimary * 100., 'f', 2) + "%)");
             }
             else
             {
                 log()->info("--> absorbed dust luminosity changed by "
-                            + StringUtils::toString(abs((Labsdust-prevLabsdust)/Labsdust)*100., 'f', 2)
+                            + StringUtils::toString(abs((Labsdust - prevLabsdust) / Labsdust) * 100., 'f', 2)
                             + "% compared to previous iteration (convergence criterion is "
-                            + StringUtils::toString(fractionOfPrevious*100., 'f', 2) + "%)");
+                            + StringUtils::toString(fractionOfPrevious * 100., 'f', 2) + "%)");
             }
         }
 
@@ -218,12 +216,11 @@ void MonteCarloSimulation::runDustSelfAbsorptionPhase()
             // - the absorbed dust luminosity is zero
             // - the absorbed dust luminosity is less than a given fraction of the absorbed stellar luminosity
             // - the absorbed dust luminosity has changed by less than a given fraction compared to the previous iter
-            if (Labsprim <= 0. || Labsdust <= 0.
-                || Labsdust/Labsprim < fractionOfPrimary
-                || abs((Labsdust-prevLabsdust)/Labsdust) < fractionOfPrevious)
+            if (Labsprim <= 0. || Labsdust <= 0. || Labsdust / Labsprim < fractionOfPrimary
+                || abs((Labsdust - prevLabsdust) / Labsdust) < fractionOfPrevious)
             {
                 log()->info("Convergence reached after " + std::to_string(iter) + " iterations");
-                return; // end the iteration by returning from the function
+                return;  // end the iteration by returning from the function
             }
             else
             {
@@ -287,8 +284,8 @@ void MonteCarloSimulation::initProgress(string segment, size_t numTotal)
 {
     _segment = segment;
 
-    log()->info("Launching " + StringUtils::toString(static_cast<double>(numTotal))
-                + " " + _segment + " photon packets");
+    log()->info("Launching " + StringUtils::toString(static_cast<double>(numTotal)) + " " + _segment
+                + " photon packets");
     log()->infoSetElapsed(numTotal);
 }
 
@@ -312,18 +309,20 @@ namespace
 
 void MonteCarloSimulation::performLifeCycle(size_t firstIndex, size_t numIndices, bool primary, bool peel, bool store)
 {
-    PhotonPacket pp,ppp;
+    PhotonPacket pp, ppp;
 
     // loop over the history indices, with interruptions for progress logging
     while (numIndices)
     {
         size_t currentChunkSize = min(logProgressChunkSize, numIndices);
-        for (size_t historyIndex=firstIndex; historyIndex!=firstIndex+currentChunkSize; ++historyIndex)
+        for (size_t historyIndex = firstIndex; historyIndex != firstIndex + currentChunkSize; ++historyIndex)
         {
             // launch a photon packet from the requested source
-            if (primary) sourceSystem()->launch(&pp, historyIndex);
-            else _secondarySourceSystem->launch(&pp, historyIndex);
-            if (pp.luminosity()>0)
+            if (primary)
+                sourceSystem()->launch(&pp, historyIndex);
+            else
+                _secondarySourceSystem->launch(&pp, historyIndex);
+            if (pp.luminosity() > 0)
             {
                 if (peel) peelOffEmission(&pp, &ppp);
 
@@ -337,8 +336,9 @@ void MonteCarloSimulation::performLifeCycle(size_t firstIndex, size_t numIndices
                         mediumSystem()->opticalDepth(&pp);
                         if (store) storeRadiationField(&pp);
                         simulatePropagation(&pp);
-                        if (pp.luminosity()<=0 || (pp.luminosity()<=Lthreshold && pp.numScatt()>=minScattEvents)) break;
-                        if (peel) peelOffScattering(&pp,&ppp);
+                        if (pp.luminosity() <= 0 || (pp.luminosity() <= Lthreshold && pp.numScatt() >= minScattEvents))
+                            break;
+                        if (peel) peelOffScattering(&pp, &ppp);
                         simulateScattering(&pp);
                     }
                 }
@@ -377,11 +377,11 @@ void MonteCarloSimulation::storeRadiationField(const PhotonPacket* pp)
             double luminosity = pp->luminosity();
             bool hasPrimaryOrigin = pp->hasPrimaryOrigin();
 
-            double lnExtBeg = 0.;                 // extinction factor and its logarithm at begin of current segment
+            double lnExtBeg = 0.;  // extinction factor and its logarithm at begin of current segment
             double extBeg = 1.;
             for (const auto& segment : pp->segments())
             {
-                double lnExtEnd = -segment.tau;   // extinction factor and its logarithm at end of current segment
+                double lnExtEnd = -segment.tau;  // extinction factor and its logarithm at end of current segment
                 double extEnd = exp(lnExtEnd);
                 int m = segment.m;
                 if (m >= 0)
@@ -398,11 +398,11 @@ void MonteCarloSimulation::storeRadiationField(const PhotonPacket* pp)
     }
     else
     {
-        double lnExtBeg = 0.;                 // extinction factor and its logarithm at begin of current segment
+        double lnExtBeg = 0.;  // extinction factor and its logarithm at begin of current segment
         double extBeg = 1.;
         for (const auto& segment : pp->segments())
         {
-            double lnExtEnd = -segment.tau;   // extinction factor and its logarithm at end of current segment
+            double lnExtEnd = -segment.tau;  // extinction factor and its logarithm at end of current segment
             double extEnd = exp(lnExtEnd);
             int m = segment.m;
             if (m >= 0)
@@ -440,23 +440,23 @@ void MonteCarloSimulation::simulatePropagation(PhotonPacket* pp)
     // generate a random optical depth
     double xi = _config->pathLengthBias();
     double tau = 0.;
-    if (xi==0.)
+    if (xi == 0.)
     {
         tau = random()->exponCutoff(taupath);
     }
     else
     {
-        tau = random()->uniform()<xi ? random()->uniform()*taupath : random()->exponCutoff(taupath);
-        double p = -exp(-tau)/expm1(-taupath);
-        double q = (1.0-xi)*p + xi/taupath;
-        double weight = p/q;
+        tau = random()->uniform() < xi ? random()->uniform() * taupath : random()->exponCutoff(taupath);
+        double p = -exp(-tau) / expm1(-taupath);
+        double q = (1.0 - xi) * p + xi / taupath;
+        double weight = p / q;
         pp->applyBias(weight);
     }
 
     // determine the physical position of the interaction point
     pp->findInteractionPoint(tau);
     int m = pp->interactionCellIndex();
-    if (m<0) throw FATALERROR("Cannot locate photon packet interaction point");
+    if (m < 0) throw FATALERROR("Cannot locate photon packet interaction point");
 
     // calculate the albedo for the cell containing the interaction point
     // use a faster version in case there are no kinematics
@@ -472,7 +472,7 @@ void MonteCarloSimulation::simulatePropagation(PhotonPacket* pp)
     }
 
     // adjust the weight by the scattered fraction
-    pp->applyBias( -expm1(-taupath) * albedo );
+    pp->applyBias(-expm1(-taupath) * albedo);
 
     // advance the position
     pp->propagate(pp->interactionDistance());
@@ -488,11 +488,11 @@ namespace
     // current scattering event is completely forward or backward.
     double angleBetweenScatteringPlanes(Direction np, Direction kc, Direction kn)
     {
-        Vec nc = Vec::cross(kc,kn);
+        Vec nc = Vec::cross(kc, kn);
         nc /= nc.norm();
-        double cosphi = Vec::dot(np,nc);
-        double sinphi = Vec::dot(Vec::cross(np,nc), kc);
-        double phi = atan2(sinphi,cosphi);
+        double cosphi = Vec::dot(np, nc);
+        double sinphi = Vec::dot(Vec::cross(np, nc), kc);
+        double phi = atan2(sinphi, cosphi);
         if (std::isfinite(phi)) return phi;
         return 0.;
     }
@@ -523,20 +523,20 @@ void MonteCarloSimulation::peelOffScattering(const PhotonPacket* pp, PhotonPacke
     // determine the weighting factor for each medium component as its scattering opacity (n * sigma_sca)
     int numMedia = mediumSystem()->numMedia();
     ShortArray<8> wv(numMedia);
-    if (numMedia==1)
+    if (numMedia == 1)
     {
         wv[0] = 1.;
     }
     else
     {
         double sum = 0.;
-        for (int h=0; h!=numMedia; ++h)
+        for (int h = 0; h != numMedia; ++h)
         {
             wv[h] = mediumSystem()->opacitySca(lambda, m, h);
             sum += wv[h];
         }
-        if (sum<=0) return; // abort peel-off if none of the media scatters
-        for (int h=0; h!=numMedia; ++h) wv[h] /= sum;
+        if (sum <= 0) return;  // abort peel-off if none of the media scatters
+        for (int h = 0; h != numMedia; ++h) wv[h] /= sum;
     }
 
     // now do the actual peel-off for each instrument
@@ -549,26 +549,26 @@ void MonteCarloSimulation::peelOffScattering(const PhotonPacket* pp, PhotonPacke
 
             // calculate the weighted sum of the effects on the Stokes vector for all media
             double I = 0., Q = 0., U = 0., V = 0.;
-            for (int h=0; h!=numMedia; ++h)
+            for (int h = 0; h != numMedia; ++h)
             {
                 // use the appropriate algorithm for each mix
                 // (all mixes must either support polarization or not; combining these support levels is not allowed)
-                auto mix = mediumSystem()->mix(m,h);
+                auto mix = mediumSystem()->mix(m, h);
                 switch (mix->scatteringMode())
                 {
-                case MaterialMix::ScatteringMode::HenyeyGreenstein:
+                    case MaterialMix::ScatteringMode::HenyeyGreenstein:
                     {
                         // calculate the value of the Henyey-Greenstein phase function
                         double costheta = Vec::dot(pp->direction(), bfkobs);
                         double g = mix->asymmpar(lambda);
-                        double t = 1.0+g*g-2*g*costheta;
-                        double value = (1.0-g)*(1.0+g)/sqrt(t*t*t);
+                        double t = 1.0 + g * g - 2 * g * costheta;
+                        double value = (1.0 - g) * (1.0 + g) / sqrt(t * t * t);
 
                         // accumulate the weighted sum in the intensity (no support for polarization in this case)
                         I += wv[h] * value;
                         break;
                     }
-                case MaterialMix::ScatteringMode::MaterialPhaseFunction:
+                    case MaterialMix::ScatteringMode::MaterialPhaseFunction:
                     {
                         // calculate the value of the material-specific phase function
                         double costheta = Vec::dot(pp->direction(), bfkobs);
@@ -578,11 +578,11 @@ void MonteCarloSimulation::peelOffScattering(const PhotonPacket* pp, PhotonPacke
                         I += wv[h] * value;
                         break;
                     }
-                case MaterialMix::ScatteringMode::SphericalPolarization:
-                case MaterialMix::ScatteringMode::SpheroidalPolarization:
+                    case MaterialMix::ScatteringMode::SphericalPolarization:
+                    case MaterialMix::ScatteringMode::SpheroidalPolarization:
                     {
                         // calculate the value of the material-specific phase function
-                        double theta = acos(Vec::dot(pp->direction(),bfkobs));
+                        double theta = acos(Vec::dot(pp->direction(), bfkobs));
                         double phi = angleBetweenScatteringPlanes(pp->normal(), pp->direction(), bfkobs);
                         double value = mix->phaseFunctionValue(lambda, theta, phi, pp);
 
@@ -649,7 +649,7 @@ void MonteCarloSimulation::simulateScattering(PhotonPacket* pp)
     Direction bfknew;
     switch (mix->scatteringMode())
     {
-    case MaterialMix::ScatteringMode::HenyeyGreenstein:
+        case MaterialMix::ScatteringMode::HenyeyGreenstein:
         {
             // sample a scattering angle from the Henyey-Greenstein phase function
             // handle isotropic scattering separately because the HG sampling procedure breaks down in this case
@@ -660,21 +660,21 @@ void MonteCarloSimulation::simulateScattering(PhotonPacket* pp)
             }
             else
             {
-                double f = ((1.0-g)*(1.0+g))/(1.0-g+2.0*g*random()->uniform());
-                double costheta = (1.0+g*g-f*f)/(2.0*g);
+                double f = ((1.0 - g) * (1.0 + g)) / (1.0 - g + 2.0 * g * random()->uniform());
+                double costheta = (1.0 + g * g - f * f) / (2.0 * g);
                 bfknew = random()->direction(pp->direction(), costheta);
             }
             break;
         }
-    case MaterialMix::ScatteringMode::MaterialPhaseFunction:
+        case MaterialMix::ScatteringMode::MaterialPhaseFunction:
         {
             // sample a scattering angle from the material-specific phase function
             double costheta = mix->generateCosineFromPhaseFunction(lambda);
             bfknew = random()->direction(pp->direction(), costheta);
             break;
         }
-    case MaterialMix::ScatteringMode::SphericalPolarization:
-    case MaterialMix::ScatteringMode::SpheroidalPolarization:
+        case MaterialMix::ScatteringMode::SphericalPolarization:
+        case MaterialMix::ScatteringMode::SpheroidalPolarization:
         {
             // sample the angles between the previous and new direction from the material-specific phase function,
             // given the incoming polarization state
@@ -688,10 +688,10 @@ void MonteCarloSimulation::simulateScattering(PhotonPacket* pp)
             mix->applyMueller(lambda, theta, pp);
 
             // rotate the propagation direction in the scattering plane
-            Vec newdir = pp->direction()*cos(theta) + Vec::cross(pp->normal(), pp->direction())*sin(theta);
+            Vec newdir = pp->direction() * cos(theta) + Vec::cross(pp->normal(), pp->direction()) * sin(theta);
 
             // normalize the new direction to prevent degradation
-            bfknew = Direction(newdir/newdir.norm());
+            bfknew = Direction(newdir / newdir.norm());
             break;
         }
     }

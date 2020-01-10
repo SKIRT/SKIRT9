@@ -56,26 +56,27 @@ class DustEmGrainComposition : public GrainComposition
 {
     /** The enumeration type indicating the DustEM grain type represented by this class instance. */
     ENUM_DEF(GrainType, aSil, Gra, PAH0DL07, PAH1DL07, PAH0MC10, PAH1MC10, CM20, aOlM5, aPyM5)
-    ENUM_VAL(GrainType, aSil, "astronomical silicate grains (Draine & Li 2007)")
-    ENUM_VAL(GrainType, Gra, "graphite grains (Draine & Li 2001; Li & Draine 2001)")
-    ENUM_VAL(GrainType, PAH0DL07, "neutral PAHs (Draine & Li 2007)")
-    ENUM_VAL(GrainType, PAH1DL07, "ionized PAHs (Draine & Li 2007)")
-    ENUM_VAL(GrainType, PAH0MC10, "neutral PAHs (Compiègne et al. 2011)")
-    ENUM_VAL(GrainType, PAH1MC10, "ionized PAHs (Compiègne et al. 2011)")
-    ENUM_VAL(GrainType, CM20, "amorphous hydro-carbon grains (Jones et al. 2013)")
-    ENUM_VAL(GrainType, aOlM5, "amorphous olivine/forsterite grains (Koehler et al. 2014)")
-    ENUM_VAL(GrainType, aPyM5, "amorphous pyroxene/enstatite grains (Koehler et al. 2014)")
+        ENUM_VAL(GrainType, aSil, "astronomical silicate grains (Draine & Li 2007)")
+        ENUM_VAL(GrainType, Gra, "graphite grains (Draine & Li 2001; Li & Draine 2001)")
+        ENUM_VAL(GrainType, PAH0DL07, "neutral PAHs (Draine & Li 2007)")
+        ENUM_VAL(GrainType, PAH1DL07, "ionized PAHs (Draine & Li 2007)")
+        ENUM_VAL(GrainType, PAH0MC10, "neutral PAHs (Compiègne et al. 2011)")
+        ENUM_VAL(GrainType, PAH1MC10, "ionized PAHs (Compiègne et al. 2011)")
+        ENUM_VAL(GrainType, CM20, "amorphous hydro-carbon grains (Jones et al. 2013)")
+        ENUM_VAL(GrainType, aOlM5, "amorphous olivine/forsterite grains (Koehler et al. 2014)")
+        ENUM_VAL(GrainType, aPyM5, "amorphous pyroxene/enstatite grains (Koehler et al. 2014)")
     ENUM_END()
 
     ITEM_CONCRETE(DustEmGrainComposition, GrainComposition, "a dust grain composition based on DustEM data")
 
-    PROPERTY_ENUM(grainType, GrainType, "the DustEM grain type")
+        PROPERTY_ENUM(grainType, GrainType, "the DustEM grain type")
 
-    PROPERTY_DOUBLE(bulkMassDensity, "the bulk mass density for this grain material")
+        PROPERTY_DOUBLE(bulkMassDensity, "the bulk mass density for this grain material")
         ATTRIBUTE_QUANTITY(bulkMassDensity, "bulkmassdensity")
         ATTRIBUTE_MIN_VALUE(bulkMassDensity, "[100 kg/m3")
         ATTRIBUTE_MAX_VALUE(bulkMassDensity, "10000 kg/m3]")
-        ATTRIBUTE_DEFAULT_VALUE(bulkMassDensity,
+        ATTRIBUTE_DEFAULT_VALUE(
+            bulkMassDensity,
             "grainTypeaSil:3500 kg/m3;grainTypeCM20:1600 kg/m3;grainTypeaOlM5|grainTypeaPyM5:2190 kg/m3;2240 kg/m3")
 
     ITEM_END()

@@ -15,11 +15,11 @@ class VelocityInterface
 {
 protected:
     /** The empty constructor for the interface. */
-    VelocityInterface() { }
+    VelocityInterface() {}
 
 public:
     /** The empty destructor for the interface. */
-    virtual ~VelocityInterface() { }
+    virtual ~VelocityInterface() {}
 
     /** This function returns the velocity of the radiation source. */
     virtual Vec velocity() const = 0;

@@ -25,17 +25,17 @@
     The functional form for the grain size distribution implemented by this class is inspired by
     the DustEM code, which is described in Compiègne et al. 2011 (AA, 525, A103) and can be
     downloaded from http://www.ias.u-psud.fr/DUSTEM/. */
-class ModifiedLogNormalGrainSizeDistribution: public LogNormalGrainSizeDistribution
+class ModifiedLogNormalGrainSizeDistribution : public LogNormalGrainSizeDistribution
 {
     ITEM_CONCRETE(ModifiedLogNormalGrainSizeDistribution, LogNormalGrainSizeDistribution,
                   "a modified log-normal dust grain size distribution")
 
-    PROPERTY_DOUBLE(firstMixingParameter, "the first mixing parameter y0")
+        PROPERTY_DOUBLE(firstMixingParameter, "the first mixing parameter y0")
         ATTRIBUTE_MIN_VALUE(firstMixingParameter, "[0")
         ATTRIBUTE_MAX_VALUE(firstMixingParameter, "1]")
         ATTRIBUTE_DEFAULT_VALUE(firstMixingParameter, "1")
 
-    PROPERTY_DOUBLE(secondMixingParameter, "the second mixing parameter y1")
+        PROPERTY_DOUBLE(secondMixingParameter, "the second mixing parameter y1")
         ATTRIBUTE_MIN_VALUE(secondMixingParameter, "[0")
         ATTRIBUTE_MAX_VALUE(secondMixingParameter, "1]")
         ATTRIBUTE_DEFAULT_VALUE(secondMixingParameter, "1")

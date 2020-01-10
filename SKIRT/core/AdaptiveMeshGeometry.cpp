@@ -20,10 +20,10 @@ Snapshot* AdaptiveMeshGeometry::createAndOpenSnapshot()
     // configure the mass or density column
     switch (massType())
     {
-    case MassType::MassDensity: _adaptiveMeshSnapshot->importMassDensity(); break;
-    case MassType::Mass: _adaptiveMeshSnapshot->importMass(); break;
-    case MassType::NumberDensity: _adaptiveMeshSnapshot->importNumberDensity(); break;
-    case MassType::Number: _adaptiveMeshSnapshot->importNumber(); break;
+        case MassType::MassDensity: _adaptiveMeshSnapshot->importMassDensity(); break;
+        case MassType::Mass: _adaptiveMeshSnapshot->importMass(); break;
+        case MassType::NumberDensity: _adaptiveMeshSnapshot->importNumberDensity(); break;
+        case MassType::Number: _adaptiveMeshSnapshot->importNumber(); break;
     }
 
     // set the domain extent

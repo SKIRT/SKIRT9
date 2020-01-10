@@ -74,10 +74,10 @@ public:
         row where adjacent values are seperated by a space. The values are formatted according to
         the 'format' and 'precision' specified by the addColumn function. If the number of values
         in the list does not match the number of columns, a FatalError is thrown. */
-    template <typename... Values, typename = std::enable_if_t<CompileTimeUtils::isNumericArgList<Values...>()>>
+    template<typename... Values, typename = std::enable_if_t<CompileTimeUtils::isNumericArgList<Values...>()>>
     void writeRow(Values... values)
     {
-        std::array<double, sizeof...(values)> list = {{ static_cast<double>(values)... }};
+        std::array<double, sizeof...(values)> list = {{static_cast<double>(values)...}};
         writeRowPrivate(sizeof...(values), &list[0]);
     }
 
@@ -87,13 +87,12 @@ private:
         template writeRow() functions. */
     void writeRowPrivate(size_t n, const double* values);
 
-
     //======================== Data Members ========================
 
 protected:
     // can be used by subclasses
-    Units* _units{nullptr};     // for conversion to output units
-    std::ofstream _out;         // the output stream
+    Units* _units{nullptr};  // for conversion to output units
+    std::ofstream _out;      // the output stream
 
 private:
     // used for column formatting
@@ -102,8 +101,8 @@ private:
     vector<int> _precisions;
 
     // used when closing
-    Log* _log{nullptr};         // the logger
-    string _message;            // the message
+    Log* _log{nullptr};  // the logger
+    string _message;     // the message
 };
 
 ////////////////////////////////////////////////////////////////////

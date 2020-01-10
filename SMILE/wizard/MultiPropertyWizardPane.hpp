@@ -7,8 +7,8 @@
 #define MULTIPROPERTYWIZARDPANE_HPP
 
 #include "Basics.hpp"
-#include <QWidget>
 #include <QHash>
+#include <QWidget>
 class PropertyWizardPane;
 class QVBoxLayout;
 

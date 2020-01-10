@@ -94,14 +94,14 @@ public:
     //======================== Data Members ========================
 
 private:
-    Array _rflambdav;            // radiation field wavelength grid (RFWLG) -- indexed on k
-    Array _rfdlambdav;           // radiation field wavelength grid bin widths -- indexed on k
-    Array _emlambdav;            // dust emission wavelength grid (EMWLG) -- indexed on ell
-    Array _Tv;                   // temperature grid for the integrated absorption cross sections -- indexed on p
+    Array _rflambdav;   // radiation field wavelength grid (RFWLG) -- indexed on k
+    Array _rfdlambdav;  // radiation field wavelength grid bin widths -- indexed on k
+    Array _emlambdav;   // dust emission wavelength grid (EMWLG) -- indexed on ell
+    Array _Tv;          // temperature grid for the integrated absorption cross sections -- indexed on p
 
-    vector<Array> _rfsigmaabsvv; // absorption cross sections on the RFWLG for each bin -- indexed on b,k
-    vector<Array> _emsigmaabsvv; // absorption cross sections on the EMWLG for each bin -- indexed on b,ell
-    vector<Array> _planckabsvv;  // Planck-integrated absorption cross sections for each bin -- indexed on b,p
+    vector<Array> _rfsigmaabsvv;  // absorption cross sections on the RFWLG for each bin -- indexed on b,k
+    vector<Array> _emsigmaabsvv;  // absorption cross sections on the EMWLG for each bin -- indexed on b,ell
+    vector<Array> _planckabsvv;   // Planck-integrated absorption cross sections for each bin -- indexed on b,p
 };
 
 ////////////////////////////////////////////////////////////////////

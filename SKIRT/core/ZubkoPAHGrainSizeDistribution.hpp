@@ -14,7 +14,7 @@
     for the PAH population in model BARE_GR_S of Zubko, Dwek & Arendt (2004, ApJS, 152, 211). The
     size distribution function is scaled to obtain the appropriate dust mass per hydrogen atom for
     the total PAH grain population (including both neutral and ionized PAHs). */
-class ZubkoPAHGrainSizeDistribution: public GrainSizeDistribution
+class ZubkoPAHGrainSizeDistribution : public GrainSizeDistribution
 {
     ITEM_CONCRETE(ZubkoPAHGrainSizeDistribution, GrainSizeDistribution,
                   "a Zubko, Dwek & Arendt size distribution for PAH molecules")

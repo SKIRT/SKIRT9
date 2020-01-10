@@ -6,8 +6,8 @@
 #ifndef RINGGEOMETRY_HPP
 #define RINGGEOMETRY_HPP
 
-#include "SepAxGeometry.hpp"
 #include "Array.hpp"
+#include "SepAxGeometry.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -22,15 +22,15 @@ class RingGeometry : public SepAxGeometry
 {
     ITEM_CONCRETE(RingGeometry, SepAxGeometry, "a ring geometry")
 
-    PROPERTY_DOUBLE(ringRadius, "the radius of the ring")
+        PROPERTY_DOUBLE(ringRadius, "the radius of the ring")
         ATTRIBUTE_QUANTITY(ringRadius, "length")
         ATTRIBUTE_MIN_VALUE(ringRadius, "]0")
 
-    PROPERTY_DOUBLE(width, "the radial width of the ring")
+        PROPERTY_DOUBLE(width, "the radial width of the ring")
         ATTRIBUTE_QUANTITY(width, "length")
         ATTRIBUTE_MIN_VALUE(width, "]0")
 
-    PROPERTY_DOUBLE(height, "the scale height of the ring")
+        PROPERTY_DOUBLE(height, "the scale height of the ring")
         ATTRIBUTE_QUANTITY(height, "length")
         ATTRIBUTE_MIN_VALUE(height, "]0")
 

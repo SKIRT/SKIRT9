@@ -4,16 +4,14 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "Snapshot.hpp"
-#include "TextInFile.hpp"
 #include "Log.hpp"
 #include "Random.hpp"
+#include "TextInFile.hpp"
 #include "Units.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-Snapshot::Snapshot()
-{
-}
+Snapshot::Snapshot() {}
 
 ////////////////////////////////////////////////////////////////////
 
@@ -156,8 +154,7 @@ void Snapshot::importParameters(const vector<SnapshotParameter>& parameters)
     _parametersIndex = _nextIndex;
     _numParameters = parameters.size();
     _nextIndex += _numParameters;
-    for (const auto& p : parameters)
-        _infile->addColumn(p.description(), p.quantity(), p.defaultUnit());
+    for (const auto& p : parameters) _infile->addColumn(p.description(), p.quantity(), p.defaultUnit());
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -197,9 +194,9 @@ double Snapshot::SigmaX() const
     double xmax = extent().xmax();
     for (int k = 0; k < NSAMPLES; k++)
     {
-        sum += density(Position(xmin + k*(xmax-xmin)/NSAMPLES, eps, eps));
+        sum += density(Position(xmin + k * (xmax - xmin) / NSAMPLES, eps, eps));
     }
-    return (sum/NSAMPLES)*(xmax-xmin);
+    return (sum / NSAMPLES) * (xmax - xmin);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -215,9 +212,9 @@ double Snapshot::SigmaY() const
     double ymax = extent().ymax();
     for (int k = 0; k < NSAMPLES; k++)
     {
-        sum += density(Position(eps, ymin + k*(ymax-ymin)/NSAMPLES, eps));
+        sum += density(Position(eps, ymin + k * (ymax - ymin) / NSAMPLES, eps));
     }
-    return (sum/NSAMPLES)*(ymax-ymin);
+    return (sum / NSAMPLES) * (ymax - ymin);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -233,9 +230,9 @@ double Snapshot::SigmaZ() const
     double zmax = extent().zmax();
     for (int k = 0; k < NSAMPLES; k++)
     {
-        sum += density(Position(eps, eps, zmin + k*(zmax-zmin)/NSAMPLES));
+        sum += density(Position(eps, eps, zmin + k * (zmax - zmin) / NSAMPLES));
     }
-    return (sum/NSAMPLES)*(zmax-zmin);
+    return (sum / NSAMPLES) * (zmax - zmin);
 }
 
 ////////////////////////////////////////////////////////////////////

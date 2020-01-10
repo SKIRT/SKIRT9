@@ -17,7 +17,7 @@ class SphereSpatialGrid : public SpatialGrid
 {
     ITEM_ABSTRACT(SphereSpatialGrid, SpatialGrid, "a spatial grid bounded by a sphere")
 
-    PROPERTY_DOUBLE(maxRadius, "the outer radius of the grid")
+        PROPERTY_DOUBLE(maxRadius, "the outer radius of the grid")
         ATTRIBUTE_QUANTITY(maxRadius, "length")
         ATTRIBUTE_MIN_VALUE(maxRadius, "]0")
 

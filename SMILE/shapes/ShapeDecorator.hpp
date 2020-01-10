@@ -16,7 +16,7 @@
 class ShapeDecorator : public Shape
 {
     ITEM_ABSTRACT(ShapeDecorator, Shape, "a shape decorator adjusting a shape or group of shapes")
-    PROPERTY_ITEM(shape, Shape, "the shape or group of shapes being decorated")
+        PROPERTY_ITEM(shape, Shape, "the shape or group of shapes being decorated")
     ITEM_END()
 };
 

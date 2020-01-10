@@ -16,11 +16,11 @@ const SEDFamily* FSPSSED::getFamilyAndParameters(Array& parameters)
 
     // translate IMF enum
     FSPSSEDFamily::IMF imf = FSPSSEDFamily::IMF::Chabrier;
-    switch(_imf)
+    switch (_imf)
     {
-    case IMF::Chabrier: imf = FSPSSEDFamily::IMF::Chabrier; break;
-    case IMF::Kroupa: imf = FSPSSEDFamily::IMF::Kroupa; break;
-    case IMF::Salpeter: imf = FSPSSEDFamily::IMF::Salpeter; break;
+        case IMF::Chabrier: imf = FSPSSEDFamily::IMF::Chabrier; break;
+        case IMF::Kroupa: imf = FSPSSEDFamily::IMF::Kroupa; break;
+        case IMF::Salpeter: imf = FSPSSEDFamily::IMF::Salpeter; break;
     }
 
     // construct the library of SED models

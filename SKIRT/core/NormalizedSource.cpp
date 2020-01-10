@@ -21,7 +21,7 @@ void NormalizedSource::setupSelfBefore()
     // cache wavelength information depending on whether this is an oligo- or panchromatic simulation
     if (_oligochromatic)
     {
-        _xi = 1.;       // always use bias distribution for oligochromatic simulations
+        _xi = 1.;  // always use bias distribution for oligochromatic simulations
         _biasDistribution = config->oligoWavelengthBiasDistribution();
     }
     else
@@ -98,8 +98,10 @@ void NormalizedSource::launch(PhotonPacket* pp, size_t historyIndex, double L) c
     else
     {
         // biasing -- use one or the other distribution
-        if (random()->uniform() > _xi) lambda = sed()->generateWavelength();
-        else lambda = _biasDistribution->generateWavelength();
+        if (random()->uniform() > _xi)
+            lambda = sed()->generateWavelength();
+        else
+            lambda = _biasDistribution->generateWavelength();
 
         // calculate the compensating weight factor
         double s = sed()->specificLuminosity(lambda);
@@ -114,12 +116,12 @@ void NormalizedSource::launch(PhotonPacket* pp, size_t historyIndex, double L) c
         {
             // regular composite bias weight
             double b = _biasDistribution->probability(lambda);
-            w = s / ((1-_xi)*s + _xi*b);
+            w = s / ((1 - _xi) * s + _xi * b);
         }
     }
 
     // cause the subclass to launch the photon packet
-    launchNormalized(pp, historyIndex, lambda, L*w, _bvi);
+    launchNormalized(pp, historyIndex, lambda, L * w, _bvi);
 }
 
 //////////////////////////////////////////////////////////////////////

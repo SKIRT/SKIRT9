@@ -6,8 +6,8 @@
 #ifndef SMOOTHEDPARTICLEGRID_HPP
 #define SMOOTHEDPARTICLEGRID_HPP
 
-#include "Box.hpp"
 #include "Array.hpp"
+#include "Box.hpp"
 class SmoothedParticle;
 
 ////////////////////////////////////////////////////////////////////
@@ -56,8 +56,8 @@ public:
     const SmoothedParticle* nearestParticle(Vec r) const;
 
 private:
-    int _m;  // number of grid cells in each spatial direction
-    Array _xgrid, _ygrid, _zgrid;  // the m+1 grid separation points for each spatial direction
+    int _m;                                          // number of grid cells in each spatial direction
+    Array _xgrid, _ygrid, _zgrid;                    // the m+1 grid separation points for each spatial direction
     vector<vector<const SmoothedParticle*>> _listv;  // the m*m*m lists of particles overlapping each grid cell
     int _pmin, _pmax, _ptotal;  // minimum, maximum nr of particles in list; total nr of particles in listv
 };

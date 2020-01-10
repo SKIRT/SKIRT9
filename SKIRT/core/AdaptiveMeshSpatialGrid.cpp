@@ -28,7 +28,7 @@ void AdaptiveMeshSpatialGrid::setupSelfBefore()
 
     // if there is a single medium component, calculate the normalization factor imposed by it;
     // we need this to directly compute cell densities for the DensityInCellInterface
-    if (ms->media().size() == 1)  _norm = ms->media()[0]->number() / _mesh->mass();
+    if (ms->media().size() == 1) _norm = ms->media()[0]->number() / _mesh->mass();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -104,8 +104,8 @@ void AdaptiveMeshSpatialGrid::write_xy(SpatialGridPlotFile* outfile) const
     outfile->writeRectangle(xmin, ymin, xmax, ymax);
 
     // Output all leaf cells that intersect the coordinate plane
-    double eps = 1e-8*(zmax-zmin);
-    for (int m=0; m<numCells(); m++)
+    double eps = 1e-8 * (zmax - zmin);
+    for (int m = 0; m < numCells(); m++)
     {
         _mesh->extent(m).extent(xmin, ymin, zmin, xmax, ymax, zmax);
         if (zmin < eps && zmax > -eps)
@@ -125,8 +125,8 @@ void AdaptiveMeshSpatialGrid::write_xz(SpatialGridPlotFile* outfile) const
     outfile->writeRectangle(xmin, zmin, xmax, zmax);
 
     // Output all leaf cells that intersect the coordinate plane
-    double eps = 1e-8*(ymax-ymin);
-    for (int m=0; m<numCells(); m++)
+    double eps = 1e-8 * (ymax - ymin);
+    for (int m = 0; m < numCells(); m++)
     {
         _mesh->extent(m).extent(xmin, ymin, zmin, xmax, ymax, zmax);
         if (ymin < eps && ymax > -eps)
@@ -146,8 +146,8 @@ void AdaptiveMeshSpatialGrid::write_yz(SpatialGridPlotFile* outfile) const
     outfile->writeRectangle(ymin, zmin, ymax, zmax);
 
     // Output all leaf cells that intersect the coordinate plane
-    double eps = 1e-8*(xmax-xmin);
-    for (int m=0; m<numCells(); m++)
+    double eps = 1e-8 * (xmax - xmin);
+    for (int m = 0; m < numCells(); m++)
     {
         _mesh->extent(m).extent(xmin, ymin, zmin, xmax, ymax, zmax);
         if (xmin < eps && xmax > -eps)
@@ -162,7 +162,7 @@ void AdaptiveMeshSpatialGrid::write_yz(SpatialGridPlotFile* outfile) const
 void AdaptiveMeshSpatialGrid::write_xyz(SpatialGridPlotFile* outfile) const
 {
     // Output all leaf cells (should we limit this somehow?)
-    for (int m=0; m<numCells(); m++)
+    for (int m = 0; m < numCells(); m++)
     {
         double xmin, ymin, zmin, xmax, ymax, zmax;
         _mesh->extent(m).extent(xmin, ymin, zmin, xmax, ymax, zmax);

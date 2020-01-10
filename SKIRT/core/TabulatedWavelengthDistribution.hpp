@@ -6,8 +6,8 @@
 #ifndef TABULATEDWAVELENGTHDISTRIBUTION_HPP
 #define TABULATEDWAVELENGTHDISTRIBUTION_HPP
 
-#include "WavelengthDistribution.hpp"
 #include "Array.hpp"
+#include "WavelengthDistribution.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -53,9 +53,9 @@ public:
 
 private:
     // data members initialized during setup
-    Array _lambdav;     // wavelengths
-    Array _pv;          // probability distribution, normalized to unity
-    Array _Pv;          // cumulative probability distribution
+    Array _lambdav;  // wavelengths
+    Array _pv;       // probability distribution, normalized to unity
+    Array _Pv;       // cumulative probability distribution
 };
 
 ////////////////////////////////////////////////////////////////////

@@ -6,12 +6,12 @@
 #include "RadiationFieldPerCellProbe.hpp"
 #include "Configuration.hpp"
 #include "DisjointWavelengthGrid.hpp"
+#include "InstrumentWavelengthGridProbe.hpp"
 #include "MediumSystem.hpp"
 #include "SpatialGrid.hpp"
 #include "StringUtils.hpp"
 #include "TextOutFile.hpp"
 #include "Units.hpp"
-#include "InstrumentWavelengthGridProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -32,20 +32,21 @@ void RadiationFieldPerCellProbe::probeRun()
             // write the header
             file.writeLine("# Mean radiation field intensities per spatial cell");
             file.addColumn("spatial cell index", "", 'd');
-            for (int ell=0; ell!=wavelengthGrid->numBins(); ++ell)
+            for (int ell = 0; ell != wavelengthGrid->numBins(); ++ell)
                 file.addColumn(units->smeanintensity() + " at lambda = "
-                               + StringUtils::toString(units->owavelength(wavelengthGrid->wavelength(ell)), 'g')
-                               + " " + units->uwavelength(), units->umeanintensity());
+                                   + StringUtils::toString(units->owavelength(wavelengthGrid->wavelength(ell)), 'g')
+                                   + " " + units->uwavelength(),
+                               units->umeanintensity());
 
             // write a line for each cell
             int numCells = grid->numCells();
-            for (int m=0; m!=numCells; ++m)
+            for (int m = 0; m != numCells; ++m)
             {
-                vector<double> values({ static_cast<double>(m) });
+                vector<double> values({static_cast<double>(m)});
                 const Array& Jv = ms->meanIntensity(m);
-                for (int ell=0; ell!=wavelengthGrid->numBins(); ++ell)
+                for (int ell = 0; ell != wavelengthGrid->numBins(); ++ell)
                 {
-                    values.push_back( units->omeanintensityWavelength(wavelengthGrid->wavelength(ell), Jv[ell]) );
+                    values.push_back(units->omeanintensityWavelength(wavelengthGrid->wavelength(ell), Jv[ell]));
                 }
                 file.writeRow(values);
             }
@@ -55,7 +56,8 @@ void RadiationFieldPerCellProbe::probeRun()
         if (writeWavelengthGrid())
         {
             InstrumentWavelengthGridProbe::writeWavelengthGrid(this, find<Configuration>()->radiationFieldWLG(),
-                                                     itemName() + "_wavelengths", "wavelengths for mean intensity");
+                                                               itemName() + "_wavelengths",
+                                                               "wavelengths for mean intensity");
         }
     }
 }

@@ -30,7 +30,7 @@ public:
     /** Destructs the property handler visitor. This virtual destructor is declared here because
         PropertyHandlerVisitor is the top-level class in the hierarchy of property handler
         visitors. */
-    virtual ~PropertyHandlerVisitor() { }
+    virtual ~PropertyHandlerVisitor() {}
 
     /** Visits the specified property handler using the acceptVisitor() function specialization
         corresponding to the specified type. This function must be implemented in each subclass. */

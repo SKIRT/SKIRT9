@@ -21,8 +21,7 @@ class SmoothedParticle
 public:
     /** The constructor arguments specify the particle attributes: particle index, coordinates of
         the center, smoothing length, and effective mass. */
-    SmoothedParticle(int m, double x, double y, double z, double h, double M)
-        : _r{x,y,z}, _h(h), _M(M), _m(m)  { }
+    SmoothedParticle(int m, double x, double y, double z, double h, double M) : _r{x, y, z}, _h(h), _M(M), _m(m) {}
 
     /** This function returns the index of the particle. */
     int index() const { return _m; }
@@ -33,7 +32,7 @@ public:
     /** This function returns the x, y, or z-coordinate of the center of the particle, depending on
         the value of \em dir: 1->x, 2->y, 3->z. For any other value of \em dir the behavior is
         undefined. */
-    double center(int dir) const { return _r[dir-1]; }
+    double center(int dir) const { return _r[dir - 1]; }
 
     /** This function returns the smoothing length of the particle. */
     double radius() const { return _h; }
@@ -43,10 +42,10 @@ public:
 
 private:
     // data members received as constructor arguments
-    double _r[3];   // center coordinates
-    double _h;      // smoothing length
-    double _M;      // total mass
-    int _m;         // index
+    double _r[3];  // center coordinates
+    double _h;     // smoothing length
+    double _M;     // total mass
+    int _m;        // index
 };
 
 ////////////////////////////////////////////////////////////////////

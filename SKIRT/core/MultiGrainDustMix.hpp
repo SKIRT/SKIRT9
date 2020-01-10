@@ -6,8 +6,8 @@
 #ifndef MULTIGRAINDUSTMIX_HPP
 #define MULTIGRAINDUSTMIX_HPP
 
-#include "DustMix.hpp"
 #include "ArrayTable.hpp"
+#include "DustMix.hpp"
 #include "GrainPopulation.hpp"
 #include "Range.hpp"
 #include "StochasticDustEmissionCalculator.hpp"
@@ -132,8 +132,8 @@ protected:
 
         Refer to the description of the GrainPopulation constructor for more information on the
         arguments of this function. */
-    void addPopulation(GrainComposition* composition, GrainSizeDistribution* sizeDistribution,
-                       int numSizes, GrainPopulation::NormalizationType normType, double normValue);
+    void addPopulation(GrainComposition* composition, GrainSizeDistribution* sizeDistribution, int numSizes,
+                       GrainPopulation::NormalizationType normType, double normValue);
 
     //------------- Invoked by the DustMix base class ------------
 
@@ -153,9 +153,8 @@ protected:
         the MaterialPhaseFunction scattering mode, the function fills only the first table and
         leaves the other tables untouched. For the SphericalPolarization scattering mode, the
         function fills all four tables. */
-    double getOpticalProperties(const Array& lambdav, const Array& thetav,
-                                Array& sigmaabsv, Array& sigmascav, Array& asymmparv,
-                                Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv,
+    double getOpticalProperties(const Array& lambdav, const Array& thetav, Array& sigmaabsv, Array& sigmascav,
+                                Array& asymmparv, Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv,
                                 ArrayTable<2>& sigmaabsvv, ArrayTable<2>& sigmaabspolvv) override;
 
     /** This function is invoked by the DustMix base class to precalculate additional dust
@@ -229,12 +228,12 @@ private:
     vector<const GrainPopulation*> _populations;
 
     // info per population -- initialized by getOpticalProperties()
-    vector<double> _mupopv;         // mass per hydrogen atom for population - indexed on c
-    vector<double> _normv;          // size distribution normalization for population - indexed on c
+    vector<double> _mupopv;  // mass per hydrogen atom for population - indexed on c
+    vector<double> _normv;   // size distribution normalization for population - indexed on c
 
     // multi-grain emission calculators -- initialized by initializeExtraProperties()
-    bool _multigrain{false};        // true if one of the calculators is intialized, false if not
-    bool _stochastic{false};        // true for stochastic; false for equilibrium
+    bool _multigrain{false};  // true if one of the calculators is intialized, false if not
+    bool _stochastic{false};  // true for stochastic; false for equilibrium
     EquilibriumDustEmissionCalculator _calcEq;
     StochasticDustEmissionCalculator _calcSt;
 };

@@ -38,8 +38,7 @@ namespace
         XmlWriter& _writer;
 
     public:
-        PropertyWriter(const SchemaDef* schema, XmlWriter& writer)
-            : _schema(schema), _writer(writer) { }
+        PropertyWriter(const SchemaDef* schema, XmlWriter& writer) : _schema(schema), _writer(writer) {}
 
         void visitPropertyHandler(StringPropertyHandler* handler) override
         {
@@ -149,8 +148,8 @@ void XmlHierarchyWriter::write(Item* item, const SchemaDef* schema, string fileP
 
     // verify the type of the top-level item
     if (!schema->inherits(item->type(), schema->schemaType()))
-        throw FATALERROR("Top-level item type " + item->type() +
-                         " does not derive from schema type " + schema->schemaType());
+        throw FATALERROR("Top-level item type " + item->type() + " does not derive from schema type "
+                         + schema->schemaType());
 
     // write document header and start root element
     writer.writeStartDocument();

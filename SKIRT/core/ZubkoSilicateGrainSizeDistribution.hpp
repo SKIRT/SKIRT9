@@ -14,7 +14,7 @@
     range for the silicate population in model BARE_GR_S of Zubko, Dwek & Arendt (2004, ApJS, 152,
     211). The size distribution function is scaled to obtain the appropriate dust mass per hydrogen
     atom for the silicate grain population. */
-class ZubkoSilicateGrainSizeDistribution: public GrainSizeDistribution
+class ZubkoSilicateGrainSizeDistribution : public GrainSizeDistribution
 {
     ITEM_CONCRETE(ZubkoSilicateGrainSizeDistribution, GrainSizeDistribution,
                   "a Zubko, Dwek & Arendt size distribution for silicate dust grains")

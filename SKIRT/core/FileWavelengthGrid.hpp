@@ -24,9 +24,9 @@ class FileWavelengthGrid : public DisjointWavelengthGrid
     ITEM_CONCRETE(FileWavelengthGrid, DisjointWavelengthGrid, "a wavelength grid loaded from a text file")
         ATTRIBUTE_TYPE_DISPLAYED_IF(FileWavelengthGrid, "Level2")
 
-    PROPERTY_STRING(filename, "the name of the file with the characteristic wavelengths")
+        PROPERTY_STRING(filename, "the name of the file with the characteristic wavelengths")
 
-    PROPERTY_DOUBLE(relativeHalfWidth, "the relative half width for discrete bins, or zero for a consecutive range")
+        PROPERTY_DOUBLE(relativeHalfWidth, "the relative half width for discrete bins, or zero for a consecutive range")
         ATTRIBUTE_MIN_VALUE(relativeHalfWidth, "[0")
         ATTRIBUTE_MAX_VALUE(relativeHalfWidth, "1[")
         ATTRIBUTE_DEFAULT_VALUE(relativeHalfWidth, "0")

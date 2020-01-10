@@ -19,34 +19,35 @@ class DustSelfAbsorptionOptions : public SimulationItem
     ITEM_CONCRETE(DustSelfAbsorptionOptions, SimulationItem,
                   "a set of options related to calculating dust self-absorption")
 
-    PROPERTY_INT(minIterations, "the minimum number of dust self-absorption iterations")
+        PROPERTY_INT(minIterations, "the minimum number of dust self-absorption iterations")
         ATTRIBUTE_MIN_VALUE(minIterations, "1")
         ATTRIBUTE_MAX_VALUE(minIterations, "1000")
         ATTRIBUTE_DEFAULT_VALUE(minIterations, "1")
         ATTRIBUTE_DISPLAYED_IF(minIterations, "Level3")
 
-    PROPERTY_INT(maxIterations, "the maximum number of dust self-absorption iterations")
+        PROPERTY_INT(maxIterations, "the maximum number of dust self-absorption iterations")
         ATTRIBUTE_MIN_VALUE(maxIterations, "1")
         ATTRIBUTE_MAX_VALUE(maxIterations, "1000")
         ATTRIBUTE_DEFAULT_VALUE(maxIterations, "10")
         ATTRIBUTE_DISPLAYED_IF(maxIterations, "Level3")
 
-    PROPERTY_DOUBLE(maxFractionOfPrimary, "convergence is reached when the total absorbed dust luminosity "
-                                          "is less than this fraction of the total absorbed primary luminosity")
+        PROPERTY_DOUBLE(maxFractionOfPrimary, "convergence is reached when the total absorbed dust luminosity "
+                                              "is less than this fraction of the total absorbed primary luminosity")
         ATTRIBUTE_MIN_VALUE(maxFractionOfPrimary, "]0")
         ATTRIBUTE_MAX_VALUE(maxFractionOfPrimary, "1[")
         ATTRIBUTE_DEFAULT_VALUE(maxFractionOfPrimary, "0.01")
         ATTRIBUTE_DISPLAYED_IF(maxFractionOfPrimary, "Level2")
 
-    PROPERTY_DOUBLE(maxFractionOfPrevious, "convergence is reached when the total absorbed dust luminosity "
-                                           "has changed by less than this fraction compared to the previous iteration")
+        PROPERTY_DOUBLE(maxFractionOfPrevious,
+                        "convergence is reached when the total absorbed dust luminosity "
+                        "has changed by less than this fraction compared to the previous iteration")
         ATTRIBUTE_MIN_VALUE(maxFractionOfPrevious, "]0")
         ATTRIBUTE_MAX_VALUE(maxFractionOfPrevious, "1[")
         ATTRIBUTE_DEFAULT_VALUE(maxFractionOfPrevious, "0.03")
         ATTRIBUTE_DISPLAYED_IF(maxFractionOfPrevious, "Level2")
 
-    PROPERTY_DOUBLE(iterationPacketsMultiplier,
-                    "the multiplier on the number of photon packets launched for each self-absorption iteration")
+        PROPERTY_DOUBLE(iterationPacketsMultiplier,
+                        "the multiplier on the number of photon packets launched for each self-absorption iteration")
         ATTRIBUTE_MIN_VALUE(iterationPacketsMultiplier, "]0")
         ATTRIBUTE_MAX_VALUE(iterationPacketsMultiplier, "1000]")
         ATTRIBUTE_DEFAULT_VALUE(iterationPacketsMultiplier, "1")

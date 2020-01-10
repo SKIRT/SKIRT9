@@ -21,13 +21,17 @@ protected:
 
 public:
     /** This is the default constructor; the minimum and maximum values are initialized to zero. */
-    Range() : _min(0), _max(0) { }
+    Range() : _min(0), _max(0) {}
 
     /** This constructor initializes the range to the minimum and maximum values provided as arguments. */
-    Range(double min, double max) : _min(min), _max(max) { }
+    Range(double min, double max) : _min(min), _max(max) {}
 
     /** This function sets the range to the minimum and maximum values provided as arguments. */
-    void set(double min, double max) { _min = min; _max = max; }
+    void set(double min, double max)
+    {
+        _min = min;
+        _max = max;
+    }
 
     /** This function returns the minimum value of the range. */
     double min() const { return _min; }
@@ -46,7 +50,7 @@ public:
 
     /** This function returns true if the given value is inside the range, with the given fuzzyness
         factor, and false otherwise. */
-    bool containsFuzzy(double x, double eps=1e-14) const { return x >= _min*(1-eps) && x <= _max*(1+eps); }
+    bool containsFuzzy(double x, double eps = 1e-14) const { return x >= _min * (1 - eps) && x <= _max * (1 + eps); }
 
     /** This function returns true if the range is empty (its minimum is larger than or equal to
         its maximum), and false otherwise. */
@@ -80,8 +84,8 @@ public:
     /** This function extends the range with a factor of (1+z) on each side. */
     void extendWithRedshift(double z)
     {
-        _min /= (1.+z);
-        _max *= (1.+z);
+        _min /= (1. + z);
+        _max *= (1. + z);
     }
 };
 

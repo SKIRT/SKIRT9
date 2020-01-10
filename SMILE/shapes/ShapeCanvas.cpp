@@ -27,11 +27,8 @@ class ShapeCanvas::GraphicsStateCanvas
     GraphicsState _cgs;             // current graphics state
     vector<GraphicsState> _gstack;  // graphics state stack
 public:
-    GraphicsStateCanvas(size_t numPixels) : _canvas(numPixels) { }
-    void pushState()
-    {
-        _gstack.push_back(_cgs);
-    }
+    GraphicsStateCanvas(size_t numPixels) : _canvas(numPixels) {}
+    void pushState() { _gstack.push_back(_cgs); }
     void popState()
     {
         _cgs = _gstack.back();
@@ -51,14 +48,8 @@ public:
         _canvas.setWidth(w);
         _cgs.w = w;
     }
-    void drawLine(double x1, double y1, double x2, double y2)
-    {
-        _canvas.drawLine(x1, y1, x2, y2);
-    }
-    void saveToTiff(string outPath)
-    {
-        _canvas.saveToTiff(outPath);
-    }
+    void drawLine(double x1, double y1, double x2, double y2) { _canvas.drawLine(x1, y1, x2, y2); }
+    void saveToTiff(string outPath) { _canvas.saveToTiff(outPath); }
 };
 
 ////////////////////////////////////////////////////////////////////

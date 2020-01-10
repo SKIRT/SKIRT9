@@ -6,8 +6,8 @@
 #ifndef SPATIALCELLLIBRARY_HPP
 #define SPATIALCELLLIBRARY_HPP
 
-#include "SimulationItem.hpp"
 #include "Array.hpp"
+#include "SimulationItem.hpp"
 
 //////////////////////////////////////////////////////////////////////
 

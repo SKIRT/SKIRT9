@@ -6,8 +6,8 @@
 #ifndef OLIGOWAVELENGTHDISTRIBUTION_HPP
 #define OLIGOWAVELENGTHDISTRIBUTION_HPP
 
-#include "WavelengthDistribution.hpp"
 #include "Array.hpp"
+#include "WavelengthDistribution.hpp"
 class OligoWavelengthGrid;
 
 //////////////////////////////////////////////////////////////////////

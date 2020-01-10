@@ -32,7 +32,7 @@ class SiteListTreePolicy : public TreePolicy
         ATTRIBUTE_TYPE_ALLOWED_IF(SiteListTreePolicy, "SiteListInterface")
         ATTRIBUTE_TYPE_DISPLAYED_IF(SiteListTreePolicy, "Level2")
 
-    PROPERTY_INT(numExtraLevels, "the number of additional subdivision levels")
+        PROPERTY_INT(numExtraLevels, "the number of additional subdivision levels")
         ATTRIBUTE_MIN_VALUE(numExtraLevels, "0")
         ATTRIBUTE_MAX_VALUE(numExtraLevels, "30")
         ATTRIBUTE_DEFAULT_VALUE(numExtraLevels, "0")

@@ -25,18 +25,18 @@ void DensityTreePolicy::setupSelfBefore()
     _numSamples = find<Configuration>()->numDensitySamples();
 
     // build lists of media components per material type
-    auto ms = find<MediumSystem>(false);    // don't setup the medium system because we are part of it
+    auto ms = find<MediumSystem>(false);  // don't setup the medium system because we are part of it
     int numMedia = ms ? ms->media().size() : 0;
-    for (int h=0; h!=numMedia; ++h)
+    for (int h = 0; h != numMedia; ++h)
     {
         auto medium = ms->media()[h];
-        medium->setup();                    // however, we do require each medium component to be setup
+        medium->setup();  // however, we do require each medium component to be setup
 
         switch (medium->mix()->materialType())
         {
-        case MaterialMix::MaterialType::Dust:       _dustMedia.push_back(medium); break;
-        case MaterialMix::MaterialType::Electrons:  _electronMedia.push_back(medium); break;
-        case MaterialMix::MaterialType::Gas:        _gasMedia.push_back(medium); break;
+            case MaterialMix::MaterialType::Dust: _dustMedia.push_back(medium); break;
+            case MaterialMix::MaterialType::Electrons: _electronMedia.push_back(medium); break;
+            case MaterialMix::MaterialType::Gas: _gasMedia.push_back(medium); break;
         }
     }
 
@@ -86,11 +86,11 @@ void DensityTreePolicy::setupSelfBefore()
 bool DensityTreePolicy::needsSubdivide(TreeNode* node)
 {
     // results for the sampled mass or number densities, if applicable
-    double rho = 0.;         // dust mass density
-    double rhomin = DBL_MAX; // smallest sample for dust mass density
-    double rhomax = 0.;      // largest sample for dust mass density
-    double ne = 0;           // electron number density
-    double ng = 0.;          // gas number density
+    double rho = 0.;          // dust mass density
+    double rhomin = DBL_MAX;  // smallest sample for dust mass density
+    double rhomax = 0.;       // largest sample for dust mass density
+    double ne = 0;            // electron number density
+    double ng = 0.;           // gas number density
 
     // sample densities in node
     if (_hasAny)
@@ -98,7 +98,7 @@ bool DensityTreePolicy::needsSubdivide(TreeNode* node)
         double rhosum = 0;
         double nesum = 0;
         double ngsum = 0;
-        for (int i = 0; i!=_numSamples; ++i)
+        for (int i = 0; i != _numSamples; ++i)
         {
             Position bfr = _random->position(node->extent());
             if (_hasDustAny)
@@ -109,8 +109,10 @@ bool DensityTreePolicy::needsSubdivide(TreeNode* node)
                 if (rhoi < rhomin) rhomin = rhoi;
                 if (rhoi > rhomax) rhomax = rhoi;
             }
-            if (_hasElectronFraction) for (auto medium : _electronMedia) nesum += medium->numberDensity(bfr);
-            if (_hasGasFraction) for (auto medium : _gasMedia) ngsum += medium->numberDensity(bfr);
+            if (_hasElectronFraction)
+                for (auto medium : _electronMedia) nesum += medium->numberDensity(bfr);
+            if (_hasGasFraction)
+                for (auto medium : _gasMedia) ngsum += medium->numberDensity(bfr);
         }
         rho = rhosum / _numSamples;
         ne = nesum / _numSamples;
@@ -134,7 +136,7 @@ bool DensityTreePolicy::needsSubdivide(TreeNode* node)
     // handle maximum dust density dispersion
     if (_hasDustDensityDispersion)
     {
-        double q = rhomax > 0 ? (rhomax-rhomin)/rhomax : 0.;
+        double q = rhomax > 0 ? (rhomax - rhomin) / rhomax : 0.;
         if (q > maxDustDensityDispersion()) return true;
     }
 
@@ -178,17 +180,17 @@ vector<TreeNode*> DensityTreePolicy::constructTree(TreeNode* root)
     vector<TreeNode*> nodev{root};
 
     // recursively subdivide the root node until the minimum level has been reached
-    int level = 0;      // current level
-    size_t lbeg = 0;    // node index range for the current level;
-    size_t lend = 1;    // at level 0, the node list contains just the root node
-    while (level!=minLevel())
+    int level = 0;    // current level
+    size_t lbeg = 0;  // node index range for the current level;
+    size_t lend = 1;  // at level 0, the node list contains just the root node
+    while (level != minLevel())
     {
-        log->info("Subdividing level " + std::to_string(level) + ": " + std::to_string(lend-lbeg) + " nodes");
-        log->infoSetElapsed(lend-lbeg);
-        for (size_t l=lbeg; l!=lend; ++l)
+        log->info("Subdividing level " + std::to_string(level) + ": " + std::to_string(lend - lbeg) + " nodes");
+        log->infoSetElapsed(lend - lbeg);
+        for (size_t l = lbeg; l != lend; ++l)
         {
             nodev[l]->subdivide(nodev);
-            if ((l+1)%logDivideChunkSize == 0)
+            if ((l + 1) % logDivideChunkSize == 0)
                 log->infoIfElapsed("Subdividing level " + std::to_string(level) + ": ", logDivideChunkSize);
         }
         // update iteration variables to the next level
@@ -198,23 +200,22 @@ vector<TreeNode*> DensityTreePolicy::constructTree(TreeNode* root)
     }
 
     // recursively subdivide the nodes beyond the minimum level until all nodes satisfy the configured criteria
-    while (level!=maxLevel() && lend!=lbeg)
+    while (level != maxLevel() && lend != lbeg)
     {
-        size_t numEvalNodes = lend-lbeg;
+        size_t numEvalNodes = lend - lbeg;
         log->info("Subdividing level " + std::to_string(level) + ": " + std::to_string(numEvalNodes) + " nodes");
         log->infoSetElapsed(numEvalNodes);
 
         // evaluate nodes at this level: value in the array becomes one for nodes that need to be subdivided
         // we parallelize this operation because it might be resource intensive (e.g. sampling densities)
         Array divide(numEvalNodes);
-        parallel->call(numEvalNodes, [this, log, level, lbeg, &nodev, &divide](size_t firstIndex, size_t numIndices)
-        {
+        parallel->call(numEvalNodes, [this, log, level, lbeg, &nodev, &divide](size_t firstIndex, size_t numIndices) {
             while (numIndices)
             {
                 size_t currentChunkSize = min(logEvalChunkSize, numIndices);
-                for (size_t l=firstIndex; l!=firstIndex+currentChunkSize; ++l)
+                for (size_t l = firstIndex; l != firstIndex + currentChunkSize; ++l)
                 {
-                    if (needsSubdivide(nodev[lbeg+l])) divide[l] = 1.;
+                    if (needsSubdivide(nodev[lbeg + l])) divide[l] = 1.;
                 }
                 log->infoIfElapsed("Evaluation for level " + std::to_string(level) + ": ", currentChunkSize);
                 firstIndex += currentChunkSize;
@@ -227,13 +228,13 @@ vector<TreeNode*> DensityTreePolicy::constructTree(TreeNode* root)
         size_t numDivideNodes = divide.sum();
         log->infoSetElapsed(numDivideNodes);
         size_t numDone = 0;
-        for (size_t l=0; l!=numEvalNodes; ++l)
+        for (size_t l = 0; l != numEvalNodes; ++l)
         {
             if (divide[l])
             {
-                nodev[lbeg+l]->subdivide(nodev);
+                nodev[lbeg + l]->subdivide(nodev);
                 numDone++;
-                if (numDone%logDivideChunkSize == 0)
+                if (numDone % logDivideChunkSize == 0)
                     log->infoIfElapsed("Subdivision for level " + std::to_string(level) + ": ", logDivideChunkSize);
             }
         }
@@ -252,8 +253,10 @@ vector<TreeNode*> DensityTreePolicy::constructTree(TreeNode* root)
 
 Range DensityTreePolicy::wavelengthRange() const
 {
-    if (maxDustOpticalDepth() > 0) return Range(wavelength(), wavelength());
-    else return Range();
+    if (maxDustOpticalDepth() > 0)
+        return Range(wavelength(), wavelength());
+    else
+        return Range();
 }
 
 ////////////////////////////////////////////////////////////////////

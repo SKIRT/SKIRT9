@@ -6,9 +6,9 @@
 #ifndef SNAPSHOT_HPP
 #define SNAPSHOT_HPP
 
-#include "Position.hpp"
 #include "Array.hpp"
 #include "Box.hpp"
+#include "Position.hpp"
 #include "SnapshotParameter.hpp"
 class Log;
 class Random;
@@ -251,7 +251,7 @@ protected:
     /** This function returns true if the user configured the mass or mass density policy with a
         nonzero temperature and the temperature field is being imported. Returns false otherwise.
         For use by subclasses. */
-    bool hasTemperatureCutoff() const { return _hasDensityPolicy && _maxTemperature>0 && _temperatureIndex>=0; }
+    bool hasTemperatureCutoff() const { return _hasDensityPolicy && _maxTemperature > 0 && _temperatureIndex >= 0; }
 
     //============== Interrogation (to be implemented in subclass) =============
 
@@ -388,7 +388,7 @@ private:
     double _multiplier{0.};
     double _maxTemperature{0.};
     bool _hasDensityPolicy{false};
-    bool _holdsNumber{false};   // true if snapshot holds number (density); false if it holds mass (density)
+    bool _holdsNumber{false};  // true if snapshot holds number (density); false if it holds mass (density)
 };
 
 ////////////////////////////////////////////////////////////////////

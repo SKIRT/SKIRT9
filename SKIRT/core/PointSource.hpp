@@ -6,8 +6,8 @@
 #ifndef POINTSOURCE_HPP
 #define POINTSOURCE_HPP
 
-#include "NormalizedSource.hpp"
 #include "AngularDistribution.hpp"
+#include "NormalizedSource.hpp"
 #include "PolarizationProfile.hpp"
 
 //////////////////////////////////////////////////////////////////////
@@ -21,27 +21,27 @@ class PointSource : public NormalizedSource
 {
     ITEM_CONCRETE(PointSource, NormalizedSource, "a primary point source")
 
-    PROPERTY_DOUBLE(positionX, "the position of the point source, x component")
+        PROPERTY_DOUBLE(positionX, "the position of the point source, x component")
         ATTRIBUTE_QUANTITY(positionX, "length")
         ATTRIBUTE_DEFAULT_VALUE(positionX, "0")
         ATTRIBUTE_INSERT(positionX, "positionX:Dimension3")
 
-    PROPERTY_DOUBLE(positionY, "the position of the point source, y component")
+        PROPERTY_DOUBLE(positionY, "the position of the point source, y component")
         ATTRIBUTE_QUANTITY(positionY, "length")
         ATTRIBUTE_DEFAULT_VALUE(positionY, "0")
         ATTRIBUTE_INSERT(positionY, "positionY:Dimension3")
 
-    PROPERTY_DOUBLE(positionZ, "the position of the point source, z component")
+        PROPERTY_DOUBLE(positionZ, "the position of the point source, z component")
         ATTRIBUTE_QUANTITY(positionZ, "length")
         ATTRIBUTE_DEFAULT_VALUE(positionZ, "0")
         ATTRIBUTE_INSERT(positionZ, "positionZ:Dimension2")
 
-    PROPERTY_ITEM(angularDistribution, AngularDistribution, "the angular luminosity distribution of the emission")
+        PROPERTY_ITEM(angularDistribution, AngularDistribution, "the angular luminosity distribution of the emission")
         ATTRIBUTE_DEFAULT_VALUE(angularDistribution, "IsotropicAngularDistribution")
         ATTRIBUTE_REQUIRED_IF(angularDistribution, "false")
         ATTRIBUTE_DISPLAYED_IF(angularDistribution, "Level2")
 
-    PROPERTY_ITEM(polarizationProfile, PolarizationProfile, "the polarization profile of the emission")
+        PROPERTY_ITEM(polarizationProfile, PolarizationProfile, "the polarization profile of the emission")
         ATTRIBUTE_DEFAULT_VALUE(polarizationProfile, "NoPolarizationProfile")
         ATTRIBUTE_REQUIRED_IF(polarizationProfile, "false")
         ATTRIBUTE_DISPLAYED_IF(polarizationProfile, "Level2")

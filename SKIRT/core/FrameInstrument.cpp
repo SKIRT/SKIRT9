@@ -15,7 +15,8 @@ void FrameInstrument::setupSelfBefore()
 
     // configure flux recorder
     instrumentFluxRecorder()->includeSurfaceBrightness(distance(), numPixelsX(), numPixelsY(),
-                fieldOfViewX()/numPixelsX(), fieldOfViewY()/numPixelsY(), centerX(), centerY());
+                                                       fieldOfViewX() / numPixelsX(), fieldOfViewY() / numPixelsY(),
+                                                       centerX(), centerY());
 
     // precalculate information needed by pixelOnDetector() function
     _costheta = cos(inclination());
@@ -26,10 +27,10 @@ void FrameInstrument::setupSelfBefore()
     _sinomega = sin(roll());
     _Nxp = numPixelsX();
     _Nyp = numPixelsY();
-    _xpmin = centerX() - 0.5*fieldOfViewX();
-    _xpsiz = fieldOfViewX()/numPixelsX();
-    _ypmin = centerY() - 0.5*fieldOfViewY();
-    _ypsiz = fieldOfViewY()/numPixelsY();
+    _xpmin = centerX() - 0.5 * fieldOfViewX();
+    _xpsiz = fieldOfViewX() / numPixelsX();
+    _ypmin = centerY() - 0.5 * fieldOfViewY();
+    _ypsiz = fieldOfViewY() / numPixelsY();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -46,19 +47,21 @@ int FrameInstrument::pixelOnDetector(const PhotonPacket* pp) const
 {
     // get the position
     double x, y, z;
-    pp->position().cartesian(x,y,z);
+    pp->position().cartesian(x, y, z);
 
     // transform to detector coordinates using inclination, azimuth, and position angle
-    double xpp = - _sinphi*x + _cosphi*y;
-    double ypp = - _cosphi*_costheta*x - _sinphi*_costheta*y + _sintheta*z;
+    double xpp = -_sinphi * x + _cosphi * y;
+    double ypp = -_cosphi * _costheta * x - _sinphi * _costheta * y + _sintheta * z;
     double xp = _cosomega * xpp - _sinomega * ypp;
     double yp = _sinomega * xpp + _cosomega * ypp;
 
     // scale and round to pixel index
-    int i = static_cast<int>(floor((xp-_xpmin)/_xpsiz));
-    int j = static_cast<int>(floor((yp-_ypmin)/_ypsiz));
-    if (i<0 || i>=_Nxp || j<0 || j>=_Nyp) return -1;
-    else return i + _Nxp*j;
+    int i = static_cast<int>(floor((xp - _xpmin) / _xpsiz));
+    int j = static_cast<int>(floor((yp - _ypmin) / _ypsiz));
+    if (i < 0 || i >= _Nxp || j < 0 || j >= _Nyp)
+        return -1;
+    else
+        return i + _Nxp * j;
 }
 
 ////////////////////////////////////////////////////////////////////

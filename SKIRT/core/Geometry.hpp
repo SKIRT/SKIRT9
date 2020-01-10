@@ -6,8 +6,8 @@
 #ifndef GEOMETRY_HPP
 #define GEOMETRY_HPP
 
-#include "SimulationItem.hpp"
 #include "Position.hpp"
+#include "SimulationItem.hpp"
 class Random;
 
 //////////////////////////////////////////////////////////////////////

@@ -29,16 +29,16 @@ class ParaboloidGeometry : public AxGeometry
     ITEM_CONCRETE(ParaboloidGeometry, AxGeometry, "a paraboloid geometry")
         ATTRIBUTE_TYPE_DISPLAYED_IF(ParaboloidGeometry, "Level2")
 
-    PROPERTY_DOUBLE(radialExtent, "the radial extent of the paraboloid")
+        PROPERTY_DOUBLE(radialExtent, "the radial extent of the paraboloid")
         ATTRIBUTE_QUANTITY(radialExtent, "length")
         ATTRIBUTE_MIN_VALUE(radialExtent, "]0")
 
-    PROPERTY_DOUBLE(openingAngle, "the half opening angle of the paraboloid")
+        PROPERTY_DOUBLE(openingAngle, "the half opening angle of the paraboloid")
         ATTRIBUTE_QUANTITY(openingAngle, "posangle")
         ATTRIBUTE_MIN_VALUE(openingAngle, "]0 deg")
         ATTRIBUTE_MAX_VALUE(openingAngle, "90 deg[")
 
-    PROPERTY_DOUBLE(offsetZ, "the offset of the paraboloid vertices in the z direction")
+        PROPERTY_DOUBLE(offsetZ, "the offset of the paraboloid vertices in the z direction")
         ATTRIBUTE_QUANTITY(offsetZ, "length")
         ATTRIBUTE_MIN_VALUE(offsetZ, "[0")
         ATTRIBUTE_DEFAULT_VALUE(offsetZ, "0")

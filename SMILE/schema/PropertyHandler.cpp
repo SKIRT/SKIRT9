@@ -13,11 +13,10 @@
 
 ////////////////////////////////////////////////////////////////////
 
-PropertyHandler::PropertyHandler(Item* target, const PropertyDef* property,
-                                 const SchemaDef* schema, NameManager* nameMgr)
+PropertyHandler::PropertyHandler(Item* target, const PropertyDef* property, const SchemaDef* schema,
+                                 NameManager* nameMgr)
     : _target(target), _property(property), _schema(schema), _nameMgr(nameMgr)
-{
-}
+{}
 
 ////////////////////////////////////////////////////////////////////
 
@@ -119,8 +118,8 @@ namespace
 {
     // This function is used by rebuildNames() to recursively insert the names
     // starting at the specified item and ending just before the specified target item/property
-    bool insertNamesRecursively(Item* item, const SchemaDef* schema, NameManager* nameMgr,
-                                Item* targetItem, string targetProperty)
+    bool insertNamesRecursively(Item* item, const SchemaDef* schema, NameManager* nameMgr, Item* targetItem,
+                                string targetProperty)
     {
         nameMgr->pushLocal();
 

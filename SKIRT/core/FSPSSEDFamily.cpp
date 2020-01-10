@@ -22,11 +22,11 @@ void FSPSSEDFamily::setupSelfBefore()
     SEDFamily::setupSelfBefore();
 
     string name = "FSPSSEDFamily_";
-    switch(_imf)
+    switch (_imf)
     {
-    case IMF::Chabrier: name += "Chabrier"; break;
-    case IMF::Kroupa: name += "Kroupa"; break;
-    case IMF::Salpeter: name += "Salpeter"; break;
+        case IMF::Chabrier: name += "Chabrier"; break;
+        case IMF::Kroupa: name += "Kroupa"; break;
+        case IMF::Salpeter: name += "Salpeter"; break;
     }
 
     _table.open(this, name, "lambda(m),Z(1),t(yr)", "Llambda(W/m)", false);
@@ -36,11 +36,10 @@ void FSPSSEDFamily::setupSelfBefore()
 
 vector<SnapshotParameter> FSPSSEDFamily::parameterInfo() const
 {
-    return vector<SnapshotParameter>
-    {
-        { "initial mass", "mass", "Msun" },
-        { "metallicity" },
-        { "age", "time", "yr" },
+    return vector<SnapshotParameter>{
+        {"initial mass", "mass", "Msun"},
+        {"metallicity"},
+        {"age", "time", "yr"},
     };
 }
 
@@ -64,8 +63,8 @@ double FSPSSEDFamily::specificLuminosity(double wavelength, const Array& paramet
 
 ////////////////////////////////////////////////////////////////////
 
-double FSPSSEDFamily::cdf(Array& lambdav, Array& pv, Array& Pv,
-                                    const Range& wavelengthRange, const Array& parameters) const
+double FSPSSEDFamily::cdf(Array& lambdav, Array& pv, Array& Pv, const Range& wavelengthRange,
+                          const Array& parameters) const
 {
     double M = parameters[0] / Constants::Msun();
     double Z = parameters[1];

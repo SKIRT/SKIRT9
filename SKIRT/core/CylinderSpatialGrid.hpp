@@ -17,14 +17,14 @@ class CylinderSpatialGrid : public SpatialGrid
 {
     ITEM_ABSTRACT(CylinderSpatialGrid, SpatialGrid, "a spatial grid bounded by a cylinder")
 
-    PROPERTY_DOUBLE(maxRadius, "the cylindrical radius of the grid")
+        PROPERTY_DOUBLE(maxRadius, "the cylindrical radius of the grid")
         ATTRIBUTE_QUANTITY(maxRadius, "length")
         ATTRIBUTE_MIN_VALUE(maxRadius, "]0")
 
-    PROPERTY_DOUBLE(minZ, "the start point of the cylinder in the Z direction")
+        PROPERTY_DOUBLE(minZ, "the start point of the cylinder in the Z direction")
         ATTRIBUTE_QUANTITY(minZ, "length")
 
-    PROPERTY_DOUBLE(maxZ, "the end point of the cylinder in the Z direction")
+        PROPERTY_DOUBLE(maxZ, "the end point of the cylinder in the Z direction")
         ATTRIBUTE_QUANTITY(maxZ, "length")
 
     ITEM_END()

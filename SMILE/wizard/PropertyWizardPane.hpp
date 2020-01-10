@@ -73,7 +73,7 @@ protected:
     /** This template function dynamically casts the handler retained by this wizard pane to the
         specified template type, and returns the result. If the handler is not of the specified
         type, the function returns null. */
-    template <class T> T* handlerCast() { return dynamic_cast<T*>(_handler.get()); }
+    template<class T> T* handlerCast() { return dynamic_cast<T*>(_handler.get()); }
 
     /** This function creates a QLabel widget with the given text and with a status tip that is
         appropriate for the property being handled by this property wizard pane. */

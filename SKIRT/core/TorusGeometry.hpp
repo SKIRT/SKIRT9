@@ -45,30 +45,30 @@ class TorusGeometry : public AxGeometry
 {
     ITEM_CONCRETE(TorusGeometry, AxGeometry, "a torus geometry")
 
-    PROPERTY_DOUBLE(exponent, "the radial powerlaw exponent p of the torus")
+        PROPERTY_DOUBLE(exponent, "the radial powerlaw exponent p of the torus")
         ATTRIBUTE_MIN_VALUE(exponent, "[0")
 
-    PROPERTY_DOUBLE(index, "the polar index q of the torus")
+        PROPERTY_DOUBLE(index, "the polar index q of the torus")
         ATTRIBUTE_MIN_VALUE(index, "[0")
 
-    PROPERTY_DOUBLE(openingAngle, "the half opening angle of the torus")
+        PROPERTY_DOUBLE(openingAngle, "the half opening angle of the torus")
         ATTRIBUTE_QUANTITY(openingAngle, "posangle")
         ATTRIBUTE_MIN_VALUE(openingAngle, "[0 deg")
         ATTRIBUTE_MAX_VALUE(openingAngle, "90 deg]")
 
-    PROPERTY_DOUBLE(minRadius, "the minimum radius of the torus")
+        PROPERTY_DOUBLE(minRadius, "the minimum radius of the torus")
         ATTRIBUTE_QUANTITY(minRadius, "length")
         ATTRIBUTE_MIN_VALUE(minRadius, "]0")
 
-    PROPERTY_DOUBLE(maxRadius, "the maximum radius of the torus")
+        PROPERTY_DOUBLE(maxRadius, "the maximum radius of the torus")
         ATTRIBUTE_QUANTITY(maxRadius, "length")
         ATTRIBUTE_MIN_VALUE(maxRadius, "]0")
 
-    PROPERTY_BOOL(reshapeInnerRadius, "reshape the inner radius according to the Netzer luminosity profile")
+        PROPERTY_BOOL(reshapeInnerRadius, "reshape the inner radius according to the Netzer luminosity profile")
         ATTRIBUTE_DEFAULT_VALUE(reshapeInnerRadius, "false")
         ATTRIBUTE_DISPLAYED_IF(reshapeInnerRadius, "Level2")
 
-    PROPERTY_DOUBLE(cutoffRadius, "the inner cutoff radius of the torus")
+        PROPERTY_DOUBLE(cutoffRadius, "the inner cutoff radius of the torus")
         ATTRIBUTE_QUANTITY(cutoffRadius, "length")
         ATTRIBUTE_MIN_VALUE(cutoffRadius, "[0")
         ATTRIBUTE_DEFAULT_VALUE(cutoffRadius, "0")

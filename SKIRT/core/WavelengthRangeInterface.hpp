@@ -17,11 +17,11 @@ class WavelengthRangeInterface
 {
 protected:
     /** The empty constructor for the interface. */
-    WavelengthRangeInterface() { }
+    WavelengthRangeInterface() {}
 
 public:
     /** The empty destructor for the interface. */
-    virtual ~WavelengthRangeInterface() { }
+    virtual ~WavelengthRangeInterface() {}
 
     /** This function returns the wavelength range represented by the object implementing the interface. */
     virtual Range wavelengthRange() const = 0;

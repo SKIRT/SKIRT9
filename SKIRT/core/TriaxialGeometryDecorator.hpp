@@ -24,13 +24,13 @@ class TriaxialGeometryDecorator : public GenGeometry
     ITEM_CONCRETE(TriaxialGeometryDecorator, GenGeometry,
                   "a decorator that constructs a triaxial variant of any spherical geometry")
 
-    PROPERTY_ITEM(geometry, SpheGeometry, "the spherical geometry to be made triaxial")
+        PROPERTY_ITEM(geometry, SpheGeometry, "the spherical geometry to be made triaxial")
 
-    PROPERTY_DOUBLE(flatteningY, "the flattening parameter p (along the y-axis)")
+        PROPERTY_DOUBLE(flatteningY, "the flattening parameter p (along the y-axis)")
         ATTRIBUTE_MIN_VALUE(flatteningY, "]0")
         ATTRIBUTE_DEFAULT_VALUE(flatteningY, "1")
 
-    PROPERTY_DOUBLE(flatteningZ, "the flattening parameter q (along the z-axis)")
+        PROPERTY_DOUBLE(flatteningZ, "the flattening parameter q (along the z-axis)")
         ATTRIBUTE_MIN_VALUE(flatteningZ, "]0")
         ATTRIBUTE_DEFAULT_VALUE(flatteningZ, "1")
 

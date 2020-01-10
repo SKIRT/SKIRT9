@@ -30,7 +30,7 @@ void DiscreteWavelengthDistribution::setupSelfAfter()
     _numWavelengths = _endWavelengthIndex - _beginWavelengthIndex;
 
     // verify that there is at least one wavelength and that the smallest one is positive
-    if (_numWavelengths <= 0 ) throw FATALERROR("None of the grid wavelengths are in the source wavelength range");
+    if (_numWavelengths <= 0) throw FATALERROR("None of the grid wavelengths are in the source wavelength range");
 }
 
 //////////////////////////////////////////////////////////////////////

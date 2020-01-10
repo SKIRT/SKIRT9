@@ -17,10 +17,11 @@ class VoronoiMeshInterface
 {
 protected:
     /** The empty constructor for the interface. */
-    VoronoiMeshInterface() { }
+    VoronoiMeshInterface() {}
+
 public:
     /** The empty destructor for the interface. */
-    virtual ~VoronoiMeshInterface() { }
+    virtual ~VoronoiMeshInterface() {}
 
     /** This function must be implemented in a derived class. It returns a pointer to the Voronoi
         mesh snapshot maintained by the object that implements the interface. */

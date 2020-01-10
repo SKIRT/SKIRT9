@@ -25,11 +25,11 @@ void ZubkoDustMix::setupSelfBefore()
     addPopulation(new DraineGraphiteGrainComposition(this), new ZubkoGraphiteGrainSizeDistribution(this),
                   _numGraphiteSizes, GrainPopulation::NormalizationType::FactorOnSizeDistribution, 1.);
 
-    addPopulation(new DraineNeutralPAHGrainComposition(this), new ZubkoPAHGrainSizeDistribution(this),
-                  _numPAHSizes, GrainPopulation::NormalizationType::FactorOnSizeDistribution, 0.5);
+    addPopulation(new DraineNeutralPAHGrainComposition(this), new ZubkoPAHGrainSizeDistribution(this), _numPAHSizes,
+                  GrainPopulation::NormalizationType::FactorOnSizeDistribution, 0.5);
 
-    addPopulation(new DraineIonizedPAHGrainComposition(this), new ZubkoPAHGrainSizeDistribution(this),
-                  _numPAHSizes, GrainPopulation::NormalizationType::FactorOnSizeDistribution, 0.5);
+    addPopulation(new DraineIonizedPAHGrainComposition(this), new ZubkoPAHGrainSizeDistribution(this), _numPAHSizes,
+                  GrainPopulation::NormalizationType::FactorOnSizeDistribution, 0.5);
 }
 
 ////////////////////////////////////////////////////////////////////

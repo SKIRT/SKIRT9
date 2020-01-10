@@ -6,8 +6,8 @@
 #ifndef BANDWAVELENGTHGRID_HPP
 #define BANDWAVELENGTHGRID_HPP
 
-#include "WavelengthGrid.hpp"
 #include "Band.hpp"
+#include "WavelengthGrid.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -46,7 +46,7 @@ public:
         bins). Bands are always sorted in order of increasing pivot wavelength. */
     int numBins() const override;
 
-   /** This function returns the pivot wavelength for the band corresponding to the index
+    /** This function returns the pivot wavelength for the band corresponding to the index
        \f$\ell\f$. Refer to the Band class for the relevant formulas. Bands are always sorted in
        order of increasing pivot wavelength. */
     double wavelength(int ell) const override;

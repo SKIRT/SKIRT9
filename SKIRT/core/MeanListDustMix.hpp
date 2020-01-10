@@ -34,20 +34,22 @@ class MeanListDustMix : public TabulatedDustMix
     ITEM_CONCRETE(MeanListDustMix, TabulatedDustMix,
                   "a dust mix with mean properties specified inside the configuration file")
 
-    PROPERTY_DOUBLE_LIST(wavelengths, "the wavelengths at which to specify the optical properties")
+        PROPERTY_DOUBLE_LIST(wavelengths, "the wavelengths at which to specify the optical properties")
         ATTRIBUTE_QUANTITY(wavelengths, "wavelength")
         ATTRIBUTE_MIN_VALUE(wavelengths, "1 Angstrom")
         ATTRIBUTE_MAX_VALUE(wavelengths, "1 m")
 
-    PROPERTY_DOUBLE_LIST(extinctionCoefficients, "the extinction mass coefficients at each of the given wavelengths")
+        PROPERTY_DOUBLE_LIST(extinctionCoefficients,
+                             "the extinction mass coefficients at each of the given wavelengths")
         ATTRIBUTE_QUANTITY(extinctionCoefficients, "masscoefficient")
         ATTRIBUTE_MIN_VALUE(extinctionCoefficients, "[0")
 
-    PROPERTY_DOUBLE_LIST(albedos, "the scattering albedos at each of the given wavelengths")
+        PROPERTY_DOUBLE_LIST(albedos, "the scattering albedos at each of the given wavelengths")
         ATTRIBUTE_MIN_VALUE(albedos, "[0")
         ATTRIBUTE_MAX_VALUE(albedos, "1]")
 
-    PROPERTY_DOUBLE_LIST(asymmetryParameters, "the scattering asymmetry parameters at each of the given wavelengths")
+        PROPERTY_DOUBLE_LIST(asymmetryParameters,
+                             "the scattering asymmetry parameters at each of the given wavelengths")
         ATTRIBUTE_MIN_VALUE(asymmetryParameters, "[-1")
         ATTRIBUTE_MAX_VALUE(asymmetryParameters, "1]")
 

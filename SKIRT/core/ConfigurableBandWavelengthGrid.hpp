@@ -25,7 +25,7 @@ class ConfigurableBandWavelengthGrid : public BandWavelengthGrid
                   "a wavelength grid including a configurable list of (broad)bands")
         ATTRIBUTE_TYPE_DISPLAYED_IF(ConfigurableBandWavelengthGrid, "Level2")
 
-    PROPERTY_ITEM_LIST(bands, Band, "the (broad)bands defining this wavelength grid")
+        PROPERTY_ITEM_LIST(bands, Band, "the (broad)bands defining this wavelength grid")
         ATTRIBUTE_DEFAULT_VALUE(bands, "BroadBand")
 
     ITEM_END()

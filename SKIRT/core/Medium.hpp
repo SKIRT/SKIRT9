@@ -6,8 +6,8 @@
 #ifndef MEDIUM_HPP
 #define MEDIUM_HPP
 
-#include "SimulationItem.hpp"
 #include "Position.hpp"
+#include "SimulationItem.hpp"
 class MaterialMix;
 
 ////////////////////////////////////////////////////////////////////

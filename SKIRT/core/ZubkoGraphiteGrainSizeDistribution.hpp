@@ -14,7 +14,7 @@
     range for the graphite population in model BARE_GR_S of Zubko, Dwek & Arendt (2004, ApJS, 152,
     211). The size distribution function is scaled to obtain the appropriate dust mass per hydrogen
     atom for the graphite grain population. */
-class ZubkoGraphiteGrainSizeDistribution: public GrainSizeDistribution
+class ZubkoGraphiteGrainSizeDistribution : public GrainSizeDistribution
 {
     ITEM_CONCRETE(ZubkoGraphiteGrainSizeDistribution, GrainSizeDistribution,
                   "a Zubko, Dwek & Arendt size distribution for graphite dust grains")

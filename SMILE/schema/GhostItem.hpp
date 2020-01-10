@@ -29,7 +29,7 @@ public:
         later on by handing the item to an item or item list property of another item (which calls
         the private setParent() function). The constructor further initializes the item's state so
         that no properties have been setup, which also implies that the item has no children. */
-    GhostItem(string type) : _type(type) { }
+    GhostItem(string type) : _type(type) {}
 
     // ================== Property Setters ==================
 
@@ -114,14 +114,14 @@ public:
     // ================== Data members ==================
 
 private:
-    string _type;           // item type
+    string _type;  // item type
 
     // containers for properties of each supported type:  <property-name, property-value>
-    std::unordered_map<string, string>  _stringProperties;
-    std::unordered_map<string, bool>    _boolProperties;
-    std::unordered_map<string, int>     _intProperties;
-    std::unordered_map<string, string>  _enumProperties;
-    std::unordered_map<string, double>  _doubleProperties;
+    std::unordered_map<string, string> _stringProperties;
+    std::unordered_map<string, bool> _boolProperties;
+    std::unordered_map<string, int> _intProperties;
+    std::unordered_map<string, string> _enumProperties;
+    std::unordered_map<string, double> _doubleProperties;
     std::unordered_map<string, vector<double>> _doubleListProperties;
     std::unordered_map<string, Item*> _itemProperties;
     std::unordered_map<string, vector<Item*>> _itemListProperties;

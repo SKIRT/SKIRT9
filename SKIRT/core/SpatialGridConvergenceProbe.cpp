@@ -23,9 +23,9 @@ namespace
         // determine a small value relative to the domain extent;
         // we integrate along a small offset from the axes to avoid cell borders
         double eps = 1e-12 * ms->grid()->boundingBox().widths().norm();
-        SpatialGridPath path(Position(eps,eps,eps), axis);
+        SpatialGridPath path(Position(eps, eps, eps), axis);
         double tau = ms->opticalDepth(&path, lambda, type);
-        path.setDirection(Direction(-axis.x(),-axis.y(),-axis.z()));
+        path.setDirection(Direction(-axis.x(), -axis.y(), -axis.z()));
         tau += ms->opticalDepth(&path, lambda, type);
         return tau;
     }
@@ -35,9 +35,9 @@ namespace
     {
         string tail;
         if (!unit.empty()) tail += " " + unit;
-        out.writeLine("  Input:   " + StringUtils::toString(t*factor, 'g', 6) + tail);
-        if (t > 0) tail += " (" + StringUtils::toString(100.*(g-t)/t,'f',2) + " %)";
-        out.writeLine("  Gridded: " + StringUtils::toString(g*factor, 'g', 6) + tail);
+        out.writeLine("  Input:   " + StringUtils::toString(t * factor, 'g', 6) + tail);
+        if (t > 0) tail += " (" + StringUtils::toString(100. * (g - t) / t, 'f', 2) + " %)";
+        out.writeLine("  Gridded: " + StringUtils::toString(g * factor, 'g', 6) + tail);
     }
 
     // outputs the convergence info for the given material type
@@ -55,12 +55,12 @@ namespace
         // calculate the true and gridded total mass
         double mass_t = 0.;
         double mass_g = 0.;
-        for (int h=0; h!=numMedia; ++h)
+        for (int h = 0; h != numMedia; ++h)
         {
-            if (ms->isMaterialType(type,h))
+            if (ms->isMaterialType(type, h))
             {
                 mass_t += ms->media()[h]->mass();
-                for (int m=0; m!=numCells; ++m) mass_g += ms->massDensity(m,h)*ms->volume(m);
+                for (int m = 0; m != numCells; ++m) mass_g += ms->massDensity(m, h) * ms->volume(m);
             }
         }
 
@@ -73,9 +73,9 @@ namespace
         double tau_X_t = 0.;
         double tau_Y_t = 0.;
         double tau_Z_t = 0.;
-        for (int h=0; h!=numMedia; ++h)
+        for (int h = 0; h != numMedia; ++h)
         {
-            if (ms->isMaterialType(type,h))
+            if (ms->isMaterialType(type, h))
             {
                 tau_X_t += ms->media()[h]->opticalDepthX(lambda);
                 tau_Y_t += ms->media()[h]->opticalDepthY(lambda);
@@ -84,22 +84,22 @@ namespace
         }
 
         // calculate the gridded optical depth along each of the coordinate axes
-        double tau_X_g = griddedOpticalDepth(ms, lambda, type, Direction(1.,0.,0.));
-        double tau_Y_g = griddedOpticalDepth(ms, lambda, type, Direction(0.,1.,0.));
-        double tau_Z_g = griddedOpticalDepth(ms, lambda, type, Direction(0.,0.,1.));
+        double tau_X_g = griddedOpticalDepth(ms, lambda, type, Direction(1., 0., 0.));
+        double tau_Y_g = griddedOpticalDepth(ms, lambda, type, Direction(0., 1., 0.));
+        double tau_Z_g = griddedOpticalDepth(ms, lambda, type, Direction(0., 0., 1.));
 
         // output the optical depth along each of the coordinate axes
         out.writeLine("");
-        out.writeLine("Optical depth at " + StringUtils::toString(units->owavelength(lambda), 'g')
-                                + " " + units->uwavelength() + " along full X-axis");
+        out.writeLine("Optical depth at " + StringUtils::toString(units->owavelength(lambda), 'g') + " "
+                      + units->uwavelength() + " along full X-axis");
         writeValues(out, tau_X_t, tau_X_g, 1., "");
         out.writeLine("");
-        out.writeLine("Optical depth at " + StringUtils::toString(units->owavelength(lambda), 'g')
-                                + " " + units->uwavelength() + " along full Y-axis");
+        out.writeLine("Optical depth at " + StringUtils::toString(units->owavelength(lambda), 'g') + " "
+                      + units->uwavelength() + " along full Y-axis");
         writeValues(out, tau_Y_t, tau_Y_g, 1., "");
         out.writeLine("");
-        out.writeLine("Optical depth at " + StringUtils::toString(units->owavelength(lambda), 'g')
-                                + " " + units->uwavelength() + " along full Z-axis");
+        out.writeLine("Optical depth at " + StringUtils::toString(units->owavelength(lambda), 'g') + " "
+                      + units->uwavelength() + " along full Z-axis");
         writeValues(out, tau_Z_t, tau_Z_g, 1., "");
     }
 
@@ -111,34 +111,34 @@ namespace
         // calculate diagonal optical depth for all spatial cells
         int numCells = ms->numCells();
         Array tauV(numCells);
-        for (int m=0; m!=numCells; ++m) tauV[m] = ms->grid()->diagonal(m) * ms->opacityExt(lambda, m);
+        for (int m = 0; m != numCells; ++m) tauV[m] = ms->grid()->diagonal(m) * ms->opacityExt(lambda, m);
 
         // calculate statistics on optical depth
-        double tauavg = tauV.sum()/numCells;
+        double tauavg = tauV.sum() / numCells;
         double taumin = tauV.min();
         double taumax = tauV.max();
         const int numBins = 500;
-        vector<int> countV(numBins+1);
+        vector<int> countV(numBins + 1);
         for (double tau : tauV)
         {
-            int index = max(0,min(numBins, static_cast<int>((tau-taumin)/(taumax-taumin)*numBins)));
+            int index = max(0, min(numBins, static_cast<int>((tau - taumin) / (taumax - taumin) * numBins)));
             countV[index]++;
         }
         int count = 0;
         int index = 0;
-        for (; index<numBins; index++)
+        for (; index < numBins; index++)
         {
             count += countV[index];
-            if (count > 0.9*numCells) break;
+            if (count > 0.9 * numCells) break;
         }
-        double tau90 = taumin + index*(taumax-taumin)/numBins;
+        double tau90 = taumin + index * (taumax - taumin) / numBins;
 
         // write the statistics on optical depth to the file
         out.writeLine("");
         out.writeLine("------ Cell statistics ------");
         out.writeLine("");
         out.writeLine("Optical depth of cell diagonal at " + StringUtils::toString(units->owavelength(lambda), 'g')
-                                + " " + units->uwavelength());
+                      + " " + units->uwavelength());
         out.writeLine("  Largest: " + StringUtils::toString(taumax, 'g'));
         out.writeLine("  Average: " + StringUtils::toString(tauavg, 'g'));
         out.writeLine("  90% <  : " + StringUtils::toString(tau90, 'g'));

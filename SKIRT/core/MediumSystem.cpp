@@ -40,28 +40,28 @@ void MediumSystem::setupSelfAfter()
     // ----- allocate memory -----
 
     _numCells = _grid->numCells();
-    if (_numCells<1) throw FATALERROR("The spatial grid must have at least one cell");
+    if (_numCells < 1) throw FATALERROR("The spatial grid must have at least one cell");
     _numMedia = _media.size();
 
     // initial state
     size_t allocatedBytes = 0;
     _state1v.resize(_numCells);
-    allocatedBytes += _state1v.size()*sizeof(State1);
-    _state2vv.resize(_numCells*_numMedia);
-    allocatedBytes += _state2vv.size()*sizeof(State2);
+    allocatedBytes += _state1v.size() * sizeof(State1);
+    _state2vv.resize(_numCells * _numMedia);
+    allocatedBytes += _state2vv.size() * sizeof(State2);
 
     // radiation field
     if (_config->hasRadiationField())
     {
         _wavelengthGrid = _config->radiationFieldWLG();
         _rf1.resize(_numCells, _wavelengthGrid->numBins());
-        allocatedBytes += _rf1.size()*sizeof(double);
+        allocatedBytes += _rf1.size() * sizeof(double);
 
         if (_config->hasSecondaryRadiationField())
         {
             _rf2.resize(_numCells, _wavelengthGrid->numBins());
             _rf2c.resize(_numCells, _wavelengthGrid->numBins());
-            allocatedBytes += 2*_rf2.size()*sizeof(double);
+            allocatedBytes += 2 * _rf2.size() * sizeof(double);
         }
     }
 
@@ -75,65 +75,65 @@ void MediumSystem::setupSelfAfter()
     int numSamples = _config->numDensitySamples();
     bool oligo = _config->oligochromatic();
     int magneticindex = -1;
-    for (int h=0; h!=_numMedia; ++h) if (_media[h]->hasMagneticField()) magneticindex = h;
+    for (int h = 0; h != _numMedia; ++h)
+        if (_media[h]->hasMagneticField()) magneticindex = h;
     log->infoSetElapsed(_numCells);
-    parfac->parallelDistributed()->call(_numCells,
-                    [this, log, dic, numSamples, oligo, magneticindex](size_t firstIndex, size_t numIndices)
-    {
-        ShortArray<8> nsumv(_numMedia);
+    parfac->parallelDistributed()->call(
+        _numCells, [this, log, dic, numSamples, oligo, magneticindex](size_t firstIndex, size_t numIndices) {
+            ShortArray<8> nsumv(_numMedia);
 
-        while (numIndices)
-        {
-            size_t currentChunkSize = min(logProgressChunkSize, numIndices);
-            for (size_t m=firstIndex; m!=firstIndex+currentChunkSize; ++m)
+            while (numIndices)
             {
+                size_t currentChunkSize = min(logProgressChunkSize, numIndices);
+                for (size_t m = firstIndex; m != firstIndex + currentChunkSize; ++m)
+                {
 
-                // density: use optional fast-track interface or sample 100 random positions within the cell
-                if (dic)
-                {
-                    for (int h=0; h!=_numMedia; ++h) state(m,h).n = dic->numberDensity(h,m);
-                }
-                else
-                {
-                    nsumv.clear();
-                    for (int n=0; n<numSamples; n++)
+                    // density: use optional fast-track interface or sample 100 random positions within the cell
+                    if (dic)
                     {
-                        Position bfr = _grid->randomPositionInCell(m);
-                        for (int h=0; h!=_numMedia; ++h) nsumv[h] += _media[h]->numberDensity(bfr);
+                        for (int h = 0; h != _numMedia; ++h) state(m, h).n = dic->numberDensity(h, m);
                     }
-                    for (int h=0; h!=_numMedia; ++h) state(m,h).n = nsumv[h]/numSamples;
-                }
-
-                // bulk velocity: weighted average at cell center; assumes densities have been calculated
-                //                for oligochromatic simulations, leave at zero
-                if (!oligo)
-                {
-                    Position bfr = _grid->centralPositionInCell(m);
-                    double n = 0.;
-                    Vec v;
-                    for (int h=0; h!=_numMedia; ++h)
+                    else
                     {
-                        n += state(m,h).n;
-                        v += state(m,h).n * _media[h]->bulkVelocity(bfr);
+                        nsumv.clear();
+                        for (int n = 0; n < numSamples; n++)
+                        {
+                            Position bfr = _grid->randomPositionInCell(m);
+                            for (int h = 0; h != _numMedia; ++h) nsumv[h] += _media[h]->numberDensity(bfr);
+                        }
+                        for (int h = 0; h != _numMedia; ++h) state(m, h).n = nsumv[h] / numSamples;
                     }
-                    if (n > 0.) state(m).v = v / n;  // leave bulk velocity at zero if cell has no material
-                }
 
-                // magnetic field: retrieve from medium component that specifies it, if any
-                if (magneticindex >= 0)
-                {
-                    Position bfr = _grid->centralPositionInCell(m);
-                    state(m).B = _media[magneticindex]->magneticField(bfr);
-                }
+                    // bulk velocity: weighted average at cell center; assumes densities have been calculated
+                    //                for oligochromatic simulations, leave at zero
+                    if (!oligo)
+                    {
+                        Position bfr = _grid->centralPositionInCell(m);
+                        double n = 0.;
+                        Vec v;
+                        for (int h = 0; h != _numMedia; ++h)
+                        {
+                            n += state(m, h).n;
+                            v += state(m, h).n * _media[h]->bulkVelocity(bfr);
+                        }
+                        if (n > 0.) state(m).v = v / n;  // leave bulk velocity at zero if cell has no material
+                    }
 
-                // volume
-                state(m).V = _grid->volume(m);
+                    // magnetic field: retrieve from medium component that specifies it, if any
+                    if (magneticindex >= 0)
+                    {
+                        Position bfr = _grid->centralPositionInCell(m);
+                        state(m).B = _media[magneticindex]->magneticField(bfr);
+                    }
+
+                    // volume
+                    state(m).V = _grid->volume(m);
+                }
+                log->infoIfElapsed("Calculated cell densities: ", currentChunkSize);
+                firstIndex += currentChunkSize;
+                numIndices -= currentChunkSize;
             }
-            log->infoIfElapsed("Calculated cell densities: ", currentChunkSize);
-            firstIndex += currentChunkSize;
-            numIndices -= currentChunkSize;
-        }
-    });
+        });
 
     // communicate the calculated states across multiple processes, if needed
     communicateStates();
@@ -142,10 +142,10 @@ void MediumSystem::setupSelfAfter()
 
     // ----- obtain the material mix pointers -----
 
-    for (int m=0; m!=_numCells; ++m)
+    for (int m = 0; m != _numCells; ++m)
     {
         Position bfr = _grid->centralPositionInCell(m);
-        for (int h=0; h!=_numMedia; ++h) state(m,h).mix = _media[h]->mix(bfr);
+        for (int h = 0; h != _numMedia; ++h) state(m, h).mix = _media[h]->mix(bfr);
     }
 }
 
@@ -160,30 +160,32 @@ void MediumSystem::communicateStates()
     Table<2> data;
 
     // volumes, bulk velocities, and magnetic fields
-    data.resize(_numCells,7);
-    for (int m=0; m!=_numCells; ++m)
+    data.resize(_numCells, 7);
+    for (int m = 0; m != _numCells; ++m)
     {
-        data(m,0) = state(m).V;
-        data(m,1) = state(m).v.x();
-        data(m,2) = state(m).v.y();
-        data(m,3) = state(m).v.z();
-        data(m,4) = state(m).B.x();
-        data(m,5) = state(m).B.y();
-        data(m,6) = state(m).B.z();
+        data(m, 0) = state(m).V;
+        data(m, 1) = state(m).v.x();
+        data(m, 2) = state(m).v.y();
+        data(m, 3) = state(m).v.z();
+        data(m, 4) = state(m).B.x();
+        data(m, 5) = state(m).B.y();
+        data(m, 6) = state(m).B.z();
     }
     ProcessManager::sumToAll(data.data());
-    for (int m=0; m!=_numCells; ++m)
+    for (int m = 0; m != _numCells; ++m)
     {
-        state(m).V = data(m,0);
-        state(m).v = Vec(data(m,1), data(m,2), data(m,3));
-        state(m).B = Vec(data(m,4), data(m,5), data(m,6));
+        state(m).V = data(m, 0);
+        state(m).v = Vec(data(m, 1), data(m, 2), data(m, 3));
+        state(m).B = Vec(data(m, 4), data(m, 5), data(m, 6));
     }
 
     // densities
-    data.resize(_numCells,_numMedia);
-    for (int m=0; m!=_numCells; ++m) for (int h=0; h!=_numMedia; ++h) data(m,h) = state(m,h).n;
+    data.resize(_numCells, _numMedia);
+    for (int m = 0; m != _numCells; ++m)
+        for (int h = 0; h != _numMedia; ++h) data(m, h) = state(m, h).n;
     ProcessManager::sumToAll(data.data());
-    for (int m=0; m!=_numCells; ++m) for (int h=0; h!=_numMedia; ++h) state(m,h).n = data(m,h);
+    for (int m = 0; m != _numCells; ++m)
+        for (int h = 0; h != _numMedia; ++h) state(m, h).n = data(m, h);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -241,7 +243,8 @@ Vec MediumSystem::magneticField(int m)
 
 bool MediumSystem::hasMaterialType(MaterialMix::MaterialType type) const
 {
-    for (int h=0; h!=_numMedia; ++h) if (state(0,h).mix->materialType() == type) return true;
+    for (int h = 0; h != _numMedia; ++h)
+        if (state(0, h).mix->materialType() == type) return true;
     return false;
 }
 
@@ -249,28 +252,28 @@ bool MediumSystem::hasMaterialType(MaterialMix::MaterialType type) const
 
 bool MediumSystem::isMaterialType(MaterialMix::MaterialType type, int h) const
 {
-    return state(0,h).mix->materialType() == type;
+    return state(0, h).mix->materialType() == type;
 }
 
 ////////////////////////////////////////////////////////////////////
 
 double MediumSystem::numberDensity(int m, int h) const
 {
-    return state(m,h).n;
+    return state(m, h).n;
 }
 
 ////////////////////////////////////////////////////////////////////
 
 double MediumSystem::massDensity(int m, int h) const
 {
-    return state(m,h).n * state(m,h).mix->mass();
+    return state(m, h).n * state(m, h).mix->mass();
 }
 
 ////////////////////////////////////////////////////////////////////
 
 const MaterialMix* MediumSystem::mix(int m, int h) const
 {
-    return state(m,h).mix;
+    return state(m, h).mix;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -278,20 +281,21 @@ const MaterialMix* MediumSystem::mix(int m, int h) const
 const MaterialMix* MediumSystem::randomMixForScattering(Random* random, double lambda, int m) const
 {
     int h = 0;
-    if (_numMedia>1)
+    if (_numMedia > 1)
     {
         Array Xv;
-        NR::cdf(Xv, _numMedia, [this,lambda,m](int h){ return state(m,h).n * state(m,h).mix->sectionSca(lambda); });
+        NR::cdf(Xv, _numMedia,
+                [this, lambda, m](int h) { return state(m, h).n * state(m, h).mix->sectionSca(lambda); });
         h = NR::locateClip(Xv, random->uniform());
     }
-    return state(m,h).mix;
+    return state(m, h).mix;
 }
 
 ////////////////////////////////////////////////////////////////////
 
 double MediumSystem::opacitySca(double lambda, int m, int h) const
 {
-    return state(m,h).n * state(m,h).mix->sectionSca(lambda);
+    return state(m, h).n * state(m, h).mix->sectionSca(lambda);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -299,7 +303,7 @@ double MediumSystem::opacitySca(double lambda, int m, int h) const
 double MediumSystem::opacitySca(double lambda, int m) const
 {
     double result = 0.;
-    for (int h=0; h!=_numMedia; ++h) result += state(m,h).n * state(m,h).mix->sectionSca(lambda);
+    for (int h = 0; h != _numMedia; ++h) result += state(m, h).n * state(m, h).mix->sectionSca(lambda);
     return result;
 }
 
@@ -308,8 +312,8 @@ double MediumSystem::opacitySca(double lambda, int m) const
 double MediumSystem::opacityAbs(double lambda, int m, MaterialMix::MaterialType type) const
 {
     double result = 0.;
-    for (int h=0; h!=_numMedia; ++h)
-        if (state(0,h).mix->materialType() == type) result += state(m,h).n * state(m,h).mix->sectionAbs(lambda);
+    for (int h = 0; h != _numMedia; ++h)
+        if (state(0, h).mix->materialType() == type) result += state(m, h).n * state(m, h).mix->sectionAbs(lambda);
     return result;
 }
 
@@ -317,7 +321,7 @@ double MediumSystem::opacityAbs(double lambda, int m, MaterialMix::MaterialType 
 
 double MediumSystem::opacityExt(double lambda, int m, int h) const
 {
-    return state(m,h).n * state(m,h).mix->sectionExt(lambda);
+    return state(m, h).n * state(m, h).mix->sectionExt(lambda);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -325,7 +329,7 @@ double MediumSystem::opacityExt(double lambda, int m, int h) const
 double MediumSystem::opacityExt(double lambda, int m) const
 {
     double result = 0.;
-    for (int h=0; h!=_numMedia; ++h) result += state(m,h).n * state(m,h).mix->sectionExt(lambda);
+    for (int h = 0; h != _numMedia; ++h) result += state(m, h).n * state(m, h).mix->sectionExt(lambda);
     return result;
 }
 
@@ -334,8 +338,8 @@ double MediumSystem::opacityExt(double lambda, int m) const
 double MediumSystem::opacityExt(double lambda, int m, MaterialMix::MaterialType type) const
 {
     double result = 0.;
-    for (int h=0; h!=_numMedia; ++h)
-        if (state(0,h).mix->materialType() == type) result += state(m,h).n * state(m,h).mix->sectionExt(lambda);
+    for (int h = 0; h != _numMedia; ++h)
+        if (state(0, h).mix->materialType() == type) result += state(m, h).n * state(m, h).mix->sectionExt(lambda);
     return result;
 }
 
@@ -343,7 +347,7 @@ double MediumSystem::opacityExt(double lambda, int m, MaterialMix::MaterialType 
 
 double MediumSystem::albedo(double lambda, int m, int h) const
 {
-    return state(m,h).mix->albedo(lambda);
+    return state(m, h).mix->albedo(lambda);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -352,14 +356,14 @@ double MediumSystem::albedo(double lambda, int m) const
 {
     double ksca = 0.;
     double kext = 0.;
-    for (int h=0; h!=_numMedia; ++h)
+    for (int h = 0; h != _numMedia; ++h)
     {
-        double n = state(m,h).n;
-        auto mix = state(m,h).mix;
+        double n = state(m, h).n;
+        auto mix = state(m, h).mix;
         ksca += n * mix->sectionSca(lambda);
         kext += n * mix->sectionExt(lambda);
     }
-    return kext>0. ? ksca/kext : 0.;
+    return kext > 0. ? ksca / kext : 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -393,13 +397,13 @@ double MediumSystem::opticalDepth(PhotonPacket* pp, double distance)
     if (!_config->hasMovingMedia() && !_config->hasVariableMedia())
     {
         // single medium (no kinematics, spatially constant)
-        if (_numMedia==1)
+        if (_numMedia == 1)
         {
-            double section = state(0,0).mix->sectionExt(pp->wavelength());
+            double section = state(0, 0).mix->sectionExt(pp->wavelength());
             int i = 0;
             for (auto& segment : pp->segments())
             {
-                if (segment.m >= 0) tau += section * state(segment.m,0).n * segment.ds;
+                if (segment.m >= 0) tau += section * state(segment.m, 0).n * segment.ds;
                 pp->setOpticalDepth(i++, tau);
                 if (segment.s > distance) break;
             }
@@ -408,12 +412,12 @@ double MediumSystem::opticalDepth(PhotonPacket* pp, double distance)
         else
         {
             ShortArray<8> sectionv(_numMedia);
-            for (int h=0; h!=_numMedia; ++h) sectionv[h] = state(0,h).mix->sectionExt(pp->wavelength());
+            for (int h = 0; h != _numMedia; ++h) sectionv[h] = state(0, h).mix->sectionExt(pp->wavelength());
             int i = 0;
             for (auto& segment : pp->segments())
             {
                 if (segment.m >= 0)
-                    for (int h=0; h!=_numMedia; ++h) tau += sectionv[h] * state(segment.m,h).n * segment.ds;
+                    for (int h = 0; h != _numMedia; ++h) tau += sectionv[h] * state(segment.m, h).n * segment.ds;
                 pp->setOpticalDepth(i++, tau);
                 if (segment.s > distance) break;
             }
@@ -453,15 +457,18 @@ void MediumSystem::clearRadiationField(bool primary)
 
 void MediumSystem::storeRadiationField(bool primary, int m, int ell, double Lds)
 {
-    if (primary) LockFree::add(_rf1(m,ell), Lds);
-    else LockFree::add(_rf2c(m,ell), Lds);
+    if (primary)
+        LockFree::add(_rf1(m, ell), Lds);
+    else
+        LockFree::add(_rf2c(m, ell), Lds);
 }
 
 ////////////////////////////////////////////////////////////////////
 
 void MediumSystem::communicateRadiationField(bool primary)
 {
-    if (primary) ProcessManager::sumToAll(_rf1.data());
+    if (primary)
+        ProcessManager::sumToAll(_rf1.data());
     else
     {
         ProcessManager::sumToAll(_rf2c.data());
@@ -474,8 +481,8 @@ void MediumSystem::communicateRadiationField(bool primary)
 double MediumSystem::radiationField(int m, int ell) const
 {
     double rf = 0.;
-    if (_rf1.size()) rf += _rf1(m,ell);
-    if (_rf2.size()) rf += _rf2(m,ell);
+    if (_rf1.size()) rf += _rf1(m, ell);
+    if (_rf2.size()) rf += _rf2(m, ell);
     return rf;
 }
 
@@ -485,12 +492,12 @@ double MediumSystem::totalAbsorbedLuminosity(bool primary, MaterialMix::Material
 {
     double Labs = 0.;
     int numWavelengths = _wavelengthGrid->numBins();
-    for (int ell=0; ell!=numWavelengths; ++ell)
+    for (int ell = 0; ell != numWavelengths; ++ell)
     {
         double lambda = _wavelengthGrid->wavelength(ell);
-        for (int m=0; m!=_numCells; ++m)
+        for (int m = 0; m != _numCells; ++m)
         {
-            double rf = primary ? _rf1(m,ell) : _rf2(m,ell);
+            double rf = primary ? _rf1(m, ell) : _rf2(m, ell);
             Labs += opacityAbs(lambda, m, type) * rf;
         }
     }
@@ -503,10 +510,10 @@ Array MediumSystem::meanIntensity(int m) const
 {
     int numWavelengths = _wavelengthGrid->numBins();
     Array Jv(numWavelengths);
-    double factor = 1. / (4.*M_PI*volume(m));
-    for (int ell=0; ell<numWavelengths; ell++)
+    double factor = 1. / (4. * M_PI * volume(m));
+    for (int ell = 0; ell < numWavelengths; ell++)
     {
-        Jv[ell] = radiationField(m,ell) * factor / _wavelengthGrid->effectiveWidth(ell);
+        Jv[ell] = radiationField(m, ell) * factor / _wavelengthGrid->effectiveWidth(ell);
     }
     return Jv;
 }
@@ -518,21 +525,23 @@ double MediumSystem::indicativeDustTemperature(int m) const
     const Array& Jv = meanIntensity(m);
     double sumRhoT = 0.;
     double sumRho = 0.;
-    for (int h=0; h!=_numMedia; ++h)
+    for (int h = 0; h != _numMedia; ++h)
     {
         if (isDust(h))
         {
-            double rho = massDensity(m,h);
+            double rho = massDensity(m, h);
             if (rho > 0.)
             {
-                double T = mix(m,h)->equilibriumTemperature(Jv);
-                sumRhoT += rho*T;
+                double T = mix(m, h)->equilibriumTemperature(Jv);
+                sumRhoT += rho * T;
                 sumRho += rho;
             }
         }
     }
-    if (sumRho > 0.) return sumRhoT / sumRho;
-    else return 0.;
+    if (sumRho > 0.)
+        return sumRhoT / sumRho;
+    else
+        return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -540,8 +549,10 @@ double MediumSystem::indicativeDustTemperature(int m) const
 double MediumSystem::indicativeDustTemperature(Position bfr) const
 {
     int m = _grid->cellIndex(bfr);
-    if (m>=0) return indicativeDustTemperature(m);
-    else return 0.;
+    if (m >= 0)
+        return indicativeDustTemperature(m);
+    else
+        return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -550,9 +561,9 @@ double MediumSystem::absorbedLuminosity(int m, MaterialMix::MaterialType type) c
 {
     double Labs = 0.;
     int numWavelengths = _wavelengthGrid->numBins();
-    for (int ell=0; ell<numWavelengths; ell++)
+    for (int ell = 0; ell < numWavelengths; ell++)
     {
-        Labs += opacityAbs(_wavelengthGrid->wavelength(ell), m, type) * radiationField(m,ell);
+        Labs += opacityAbs(_wavelengthGrid->wavelength(ell), m, type) * radiationField(m, ell);
     }
     return Labs;
 }

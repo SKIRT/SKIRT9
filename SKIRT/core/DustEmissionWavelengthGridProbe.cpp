@@ -16,7 +16,8 @@ void DustEmissionWavelengthGridProbe::probeSetup()
     if (find<Configuration>()->hasDustEmission() && find<MediumSystem>()->hasDust())
     {
         InstrumentWavelengthGridProbe::writeWavelengthGrid(this, find<Configuration>()->dustEmissionWLG(),
-                                                itemName() + "_wavelengths", "emission spectrum wavelengths");
+                                                           itemName() + "_wavelengths",
+                                                           "emission spectrum wavelengths");
     }
 }
 

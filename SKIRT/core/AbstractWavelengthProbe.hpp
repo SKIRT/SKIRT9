@@ -6,8 +6,8 @@
 #ifndef ABSTRACTWAVELENGTHPROBE_HPP
 #define ABSTRACTWAVELENGTHPROBE_HPP
 
-#include "Probe.hpp"
 #include "MaterialWavelengthRangeInterface.hpp"
+#include "Probe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -18,7 +18,7 @@ class AbstractWavelengthProbe : public Probe, public MaterialWavelengthRangeInte
 {
     ITEM_ABSTRACT(AbstractWavelengthProbe, Probe, "a probe requiring a wavelength value")
 
-    PROPERTY_DOUBLE(wavelength, "the wavelength at which to determine the optical depth")
+        PROPERTY_DOUBLE(wavelength, "the wavelength at which to determine the optical depth")
         ATTRIBUTE_QUANTITY(wavelength, "wavelength")
         ATTRIBUTE_MIN_VALUE(wavelength, "1 Angstrom")
         ATTRIBUTE_MAX_VALUE(wavelength, "1 m")

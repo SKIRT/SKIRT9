@@ -6,8 +6,8 @@
 #ifndef GAUSSIANGEOMETRY_HPP
 #define GAUSSIANGEOMETRY_HPP
 
-#include "SpheGeometry.hpp"
 #include "Array.hpp"
+#include "SpheGeometry.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -19,7 +19,7 @@ class GaussianGeometry : public SpheGeometry
 {
     ITEM_CONCRETE(GaussianGeometry, SpheGeometry, "a Gaussian geometry")
 
-    PROPERTY_DOUBLE(dispersion, "the scale length (dispersion) σ")
+        PROPERTY_DOUBLE(dispersion, "the scale length (dispersion) σ")
         ATTRIBUTE_QUANTITY(dispersion, "length")
         ATTRIBUTE_MIN_VALUE(dispersion, "]0")
 

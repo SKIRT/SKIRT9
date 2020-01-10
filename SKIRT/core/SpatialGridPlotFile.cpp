@@ -58,10 +58,10 @@ void SpatialGridPlotFile::writeCircle(double radius)
 
     radius = _units->olength(radius);
 
-    for (int l=0; l<=360; l++)
+    for (int l = 0; l <= 360; l++)
     {
-        double phi = l*M_PI/180;
-        _out << radius*cos(phi) << '\t' << radius*sin(phi) << '\n';
+        double phi = l * M_PI / 180;
+        _out << radius * cos(phi) << '\t' << radius * sin(phi) << '\n';
     }
     _out << '\n';
 }
@@ -78,8 +78,7 @@ void SpatialGridPlotFile::writeLine(double x1, double y1, double z1, double x2, 
     x2 = _units->olength(x2);
     y2 = _units->olength(y2);
     z2 = _units->olength(z2);
-    _out << x1 << '\t' << y1 << '\t' << z1 << '\n'
-         << x2 << '\t' << y2 << '\t' << z2 << '\n' << '\n';
+    _out << x1 << '\t' << y1 << '\t' << z1 << '\n' << x2 << '\t' << y2 << '\t' << z2 << '\n' << '\n';
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -106,14 +105,10 @@ void SpatialGridPlotFile::writeCube(double x1, double y1, double z1, double x2, 
     _out << x1 << '\t' << y2 << '\t' << z2 << '\n';
     _out << x1 << '\t' << y1 << '\t' << z2 << '\n' << '\n';
 
-    _out << x1 << '\t' << y1 << '\t' << z1 << '\n'
-         << x1 << '\t' << y1 << '\t' << z2 << '\n' << '\n';
-    _out << x2 << '\t' << y1 << '\t' << z1 << '\n'
-         << x2 << '\t' << y1 << '\t' << z2 << '\n' << '\n';
-    _out << x2 << '\t' << y2 << '\t' << z1 << '\n'
-         << x2 << '\t' << y2 << '\t' << z2 << '\n' << '\n';
-    _out << x1 << '\t' << y2 << '\t' << z1 << '\n'
-         << x1 << '\t' << y2 << '\t' << z2 << '\n' << '\n';
+    _out << x1 << '\t' << y1 << '\t' << z1 << '\n' << x1 << '\t' << y1 << '\t' << z2 << '\n' << '\n';
+    _out << x2 << '\t' << y1 << '\t' << z1 << '\n' << x2 << '\t' << y1 << '\t' << z2 << '\n' << '\n';
+    _out << x2 << '\t' << y2 << '\t' << z1 << '\n' << x2 << '\t' << y2 << '\t' << z2 << '\n' << '\n';
+    _out << x1 << '\t' << y2 << '\t' << z1 << '\n' << x1 << '\t' << y2 << '\t' << z2 << '\n' << '\n';
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -127,17 +122,17 @@ void SpatialGridPlotFile::writePolyhedron(const vector<double>& coords, const ve
     {
         int numvertices = indices[k++];
         int firstindex = indices[k];
-        for (int i=0; i<numvertices; i++)
+        for (int i = 0; i < numvertices; i++)
         {
             int currentindex = indices[k++];
-            double x = _units->olength(coords[3*currentindex]);
-            double y = _units->olength(coords[3*currentindex+1]);
-            double z = _units->olength(coords[3*currentindex+2]);
+            double x = _units->olength(coords[3 * currentindex]);
+            double y = _units->olength(coords[3 * currentindex + 1]);
+            double z = _units->olength(coords[3 * currentindex + 2]);
             _out << x << '\t' << y << '\t' << z << '\n';
         }
-        double x = _units->olength(coords[3*firstindex]);
-        double y = _units->olength(coords[3*firstindex+1]);
-        double z = _units->olength(coords[3*firstindex+2]);
+        double x = _units->olength(coords[3 * firstindex]);
+        double y = _units->olength(coords[3 * firstindex + 1]);
+        double z = _units->olength(coords[3 * firstindex + 2]);
         _out << x << '\t' << y << '\t' << z << '\n' << '\n';
     }
 }

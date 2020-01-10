@@ -52,8 +52,8 @@ int ShapesCommandLineHandler::perform()
     // Catch and properly report any exceptions
     try
     {
-        Console::warning("Welcome to 'shapes', a SMILE example "
-                         + BuildInfo::projectVersion() + " " + BuildInfo::timestamp());
+        Console::warning("Welcome to 'shapes', a SMILE example " + BuildInfo::projectVersion() + " "
+                         + BuildInfo::timestamp());
         Console::info("Running on host " + System::hostname() + " for " + System::username());
         Console::info("Executable path " + System::executablePath());
 
@@ -62,7 +62,7 @@ int ShapesCommandLineHandler::perform()
         CommandLineArguments args2(System::arguments(), "-x*");
 
         // First form: generate an image from a parameter file
-        if (args1.isValid() && args1.filepaths().size()==1)
+        if (args1.isValid() && args1.filepaths().size() == 1)
         {
             // Get input file path; verify that the file exists; add filename extension if needed
             string inPath = args1.filepaths()[0];
@@ -82,7 +82,7 @@ int ShapesCommandLineHandler::perform()
             {
                 outPath = inPath;
                 if (StringUtils::endsWith(StringUtils::toLower(outPath), ".shapes"))
-                    outPath.erase(outPath.length()-7);
+                    outPath.erase(outPath.length() - 7);
             }
             outPath = StringUtils::addExtension(outPath, "tiff");
 
@@ -112,9 +112,9 @@ int ShapesCommandLineHandler::perform()
         size_t avail = System::availableMemory();
         size_t peak = System::peakMemoryUsage();
         double peakPerCent = 100. * static_cast<double>(peak) / static_cast<double>(avail);
-        Console::info("Peak memory usage: " + StringUtils::toMemSizeString(peak)
-                      + " (" + StringUtils::toString(peakPerCent, 'f', 1)
-                      + "% of " + StringUtils::toMemSizeString(avail) + ")");
+        Console::info("Peak memory usage: " + StringUtils::toMemSizeString(peak) + " ("
+                      + StringUtils::toString(peakPerCent, 'f', 1) + "% of " + StringUtils::toMemSizeString(avail)
+                      + ")");
         return EXIT_SUCCESS;
     }
     catch (const FatalError& error)

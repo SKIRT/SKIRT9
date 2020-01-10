@@ -31,10 +31,10 @@ namespace
     // This is useful so that external mechanisms can use this syntax to tag attribute values.
     string removeBrackets(string value)
     {
-        if (value.length()>=3 && value.front() == '[' && value.back() == ']' && value.find(':') != string::npos)
+        if (value.length() >= 3 && value.front() == '[' && value.back() == ']' && value.find(':') != string::npos)
         {
-            value.erase(value.length()-1);
-            value.erase(0, value.find(':')+1);
+            value.erase(value.length() - 1);
+            value.erase(0, value.find(':') + 1);
         }
         return value;
     }
@@ -55,8 +55,7 @@ namespace
         XmlReader& _reader;
 
     public:
-        ReaderPropertySetter(XmlReader& reader)
-            : _reader(reader) { }
+        ReaderPropertySetter(XmlReader& reader) : _reader(reader) {}
 
         void visitPropertyHandler(StringPropertyHandler* handler) override
         {
@@ -71,8 +70,9 @@ namespace
             {
                 handler->setValue(StringUtils::toBool(value));
             }
-            else _reader.throwError("Value '" + value + "' for property '" + handler->name()
-                                    + "' can't be converted to bool");
+            else
+                _reader.throwError("Value '" + value + "' for property '" + handler->name()
+                                   + "' can't be converted to bool");
         }
 
         void visitPropertyHandler(IntPropertyHandler* handler) override
@@ -85,11 +85,12 @@ namespace
                 {
                     handler->setValue(ivalue);
                 }
-                else _reader.throwError("Value '" + value + "' for property '" + handler->name()
-                                       + "' is out of range");
+                else
+                    _reader.throwError("Value '" + value + "' for property '" + handler->name() + "' is out of range");
             }
-            else _reader.throwError("Value '" + value + "' for property '" + handler->name()
-                                    + "' can't be converted to integer");
+            else
+                _reader.throwError("Value '" + value + "' for property '" + handler->name()
+                                   + "' can't be converted to integer");
         }
 
         void visitPropertyHandler(EnumPropertyHandler* handler) override
@@ -99,8 +100,9 @@ namespace
             {
                 handler->setValue(value);
             }
-            else _reader.throwError("Value '" + value + "' for property '" + handler->name()
-                                    + "' is an invalid enumeration key");
+            else
+                _reader.throwError("Value '" + value + "' for property '" + handler->name()
+                                   + "' is an invalid enumeration key");
         }
 
         void visitPropertyHandler(DoublePropertyHandler* handler) override
@@ -113,11 +115,13 @@ namespace
                 {
                     handler->setValue(dvalue);
                 }
-                else _reader.throwError("Value '" + value + "' for property '" + handler->name()
-                                       + "' is out of range " + handler->rangeDescription());
+                else
+                    _reader.throwError("Value '" + value + "' for property '" + handler->name() + "' is out of range "
+                                       + handler->rangeDescription());
             }
-            else _reader.throwError("Value '" + value + "' for property '" + handler->name()
-                                    + "' can't be converted to double");
+            else
+                _reader.throwError("Value '" + value + "' for property '" + handler->name()
+                                   + "' can't be converted to double");
         }
 
         void visitPropertyHandler(DoubleListPropertyHandler* handler) override
@@ -130,11 +134,13 @@ namespace
                 {
                     handler->setValue(lvalue);
                 }
-                else _reader.throwError("Value(s) '" + value + "' for property '" + handler->name()
+                else
+                    _reader.throwError("Value(s) '" + value + "' for property '" + handler->name()
                                        + "' is (are) out of range " + handler->rangeDescription());
             }
-            else _reader.throwError("Value '" + value + "' for property '" + handler->name()
-                                    + "' can't be converted to list of doubles");
+            else
+                _reader.throwError("Value '" + value + "' for property '" + handler->name()
+                                   + "' can't be converted to list of doubles");
         }
 
         void visitPropertyHandler(ItemPropertyHandler* handler) override
@@ -143,7 +149,7 @@ namespace
             string baseType = _reader.attributeValue("type");
             if (baseType != handler->baseType())
                 _reader.throwError("Type '" + baseType + "' does not match base type '" + handler->baseType()
-                                        + "' for property '" + handler->name() + "'");
+                                   + "' for property '" + handler->name() + "'");
 
             // read the element for the item and verify its actual type
             if (!_reader.readNextStartElement())
@@ -172,7 +178,7 @@ namespace
             string baseType = _reader.attributeValue("type");
             if (baseType != handler->baseType())
                 _reader.throwError("Type '" + baseType + "' does not match base type '" + handler->baseType()
-                                        + "' for property '" + handler->name() + "'");
+                                   + "' for property '" + handler->name() + "'");
 
             // initialize the property value
             handler->setToEmpty();
@@ -207,28 +213,18 @@ namespace
         XmlReader& _reader;
 
     public:
-        DefaultPropertySetter(XmlReader& reader)
-            : _reader(reader) { }
+        DefaultPropertySetter(XmlReader& reader) : _reader(reader) {}
 
         void visitPropertyHandler(StringPropertyHandler* handler) override
         {
             handler->setValue(handler->defaultValue());
         }
 
-        void visitPropertyHandler(BoolPropertyHandler* handler) override
-        {
-            handler->setValue(handler->defaultValue());
-        }
+        void visitPropertyHandler(BoolPropertyHandler* handler) override { handler->setValue(handler->defaultValue()); }
 
-        void visitPropertyHandler(IntPropertyHandler* handler) override
-        {
-            handler->setValue(handler->defaultValue());
-        }
+        void visitPropertyHandler(IntPropertyHandler* handler) override { handler->setValue(handler->defaultValue()); }
 
-        void visitPropertyHandler(EnumPropertyHandler* handler) override
-        {
-            handler->setValue(handler->defaultValue());
-        }
+        void visitPropertyHandler(EnumPropertyHandler* handler) override { handler->setValue(handler->defaultValue()); }
 
         void visitPropertyHandler(DoublePropertyHandler* handler) override
         {
@@ -251,7 +247,8 @@ namespace
                 // recursively default-construct the properties of the new item
                 setPropertiesToDefaults(handler->value(), handler->schema(), handler->nameManager(), _reader);
             }
-            else handler->setToNull();
+            else
+                handler->setToNull();
         }
 
         void visitPropertyHandler(ItemListPropertyHandler* handler) override
@@ -312,7 +309,7 @@ namespace
         nameMgr->pushLocal();
 
         // build a dictionary of handlers for all defined properties
-        std::unordered_map<string,std::unique_ptr<PropertyHandler>> handlers;
+        std::unordered_map<string, std::unique_ptr<PropertyHandler>> handlers;
         for (const string& name : schema->properties(item->type()))
         {
             handlers[name] = schema->createPropertyHandler(item, name, nameMgr);
@@ -325,8 +322,8 @@ namespace
                 reader.throwError("Item of type '" + item->type() + "' has no property named '" + name + "'");
             auto& handler = handlers[name];
             if (handler->isCompound())
-                reader.throwError("Property '" + handler->name() +
-                                  "' has a non-compound data type and is given as an xml element");
+                reader.throwError("Property '" + handler->name()
+                                  + "' has a non-compound data type and is given as an xml element");
             handler->acceptVisitor(&readerSetter);
         }
 
@@ -338,8 +335,8 @@ namespace
                 reader.throwError("Item of type '" + item->type() + "' has no property named '" + name + "'");
             auto& handler = handlers[name];
             if (!handler->isCompound())
-                reader.throwError("Property '" + handler->name() +
-                                   "' has a compund data type and is given as an xml attribute");
+                reader.throwError("Property '" + handler->name()
+                                  + "' has a compund data type and is given as an xml attribute");
             handler->acceptVisitor(&readerSetter);
         }
 
@@ -368,14 +365,14 @@ namespace
     std::unique_ptr<Item> read(const SchemaDef* schema, XmlReader& reader)
     {
         // read the root element and verify the top-level base type
-        if (!reader.readNextStartElement())
-            reader.throwError("Can't find XML root element");
+        if (!reader.readNextStartElement()) reader.throwError("Can't find XML root element");
         if (reader.elementName() != schema->schemaRoot())
-            reader.throwError("Root element is '" + reader.elementName() + "' rather than '" + schema->schemaRoot() + "'");
+            reader.throwError("Root element is '" + reader.elementName() + "' rather than '" + schema->schemaRoot()
+                              + "'");
         string rootBaseType = schema->schemaType();
         if (reader.attributeValue("type") != rootBaseType)
-            reader.throwError("Top-level base type '" + reader.attributeValue("type") +
-                              "' does not match '" + rootBaseType + "'");
+            reader.throwError("Top-level base type '" + reader.attributeValue("type") + "' does not match '"
+                              + rootBaseType + "'");
 
         // read the element for the top-level item and verify its actual type
         if (!reader.readNextStartElement())
@@ -396,8 +393,7 @@ namespace
         setupProperties(rootItem.get(), schema, &nameMgr, reader);
 
         // process the end of the root element
-        if (reader.readNextStartElement())
-            reader.throwError("Unexpected element '" + reader.elementName() + "'");
+        if (reader.readNextStartElement()) reader.throwError("Unexpected element '" + reader.elementName() + "'");
 
         return rootItem;
     }

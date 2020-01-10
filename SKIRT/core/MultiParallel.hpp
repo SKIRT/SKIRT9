@@ -81,20 +81,20 @@ private:
 
 private:
     // the threads
-    int _numThreads{0};                         // the number of child threads (not including the parent thread)
-    std::vector<std::thread> _threads;          // the child threads
+    int _numThreads{0};                 // the number of child threads (not including the parent thread)
+    std::vector<std::thread> _threads;  // the child threads
 
     // synchronization
-    std::mutex _mutex;                          // the mutex to synchronize the threads
-    std::condition_variable _conditionChildren; // the wait condition used by the child threads
-    std::condition_variable _conditionParent;   // the wait condition used by the parent thread
+    std::mutex _mutex;                           // the mutex to synchronize the threads
+    std::condition_variable _conditionChildren;  // the wait condition used by the child threads
+    std::condition_variable _conditionParent;    // the wait condition used by the parent thread
 
     // data members shared by all threads; changes are protected by a mutex
-    std::vector<bool> _active;                  // flag for each child thread
-                                                // ... that indicates whether the thread is currently active
-    FatalError* _exception{nullptr};            // a pointer to a heap-allocated copy of the exception thrown
-                                                // ...  by a child thread or null if no exception was thrown
-    std::atomic<bool> _terminate{false};        // becomes true when the child threads must exit
+    std::vector<bool> _active;            // flag for each child thread
+                                          // ... that indicates whether the thread is currently active
+    FatalError* _exception{nullptr};      // a pointer to a heap-allocated copy of the exception thrown
+                                          // ...  by a child thread or null if no exception was thrown
+    std::atomic<bool> _terminate{false};  // becomes true when the child threads must exit
 };
 
 ////////////////////////////////////////////////////////////////////

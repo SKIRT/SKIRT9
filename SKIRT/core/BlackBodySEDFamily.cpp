@@ -10,10 +10,9 @@
 
 vector<SnapshotParameter> BlackBodySEDFamily::parameterInfo() const
 {
-    return vector<SnapshotParameter>
-    {
-        { "radius", "length", "km" },
-        { "temperature", "temperature", "K" },
+    return vector<SnapshotParameter>{
+        {"radius", "length", "km"},
+        {"temperature", "temperature", "K"},
     };
 }
 
@@ -32,19 +31,19 @@ double BlackBodySEDFamily::specificLuminosity(double wavelength, const Array& pa
     double T = parameters[1];
 
     PlanckFunction B(T);
-    return 4.*M_PI*M_PI * R*R * B(wavelength) ;
+    return 4. * M_PI * M_PI * R * R * B(wavelength);
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double BlackBodySEDFamily::cdf(Array& lambdav, Array& pv, Array& Pv,
-                               const Range& wavelengthRange, const Array& parameters) const
+double BlackBodySEDFamily::cdf(Array& lambdav, Array& pv, Array& Pv, const Range& wavelengthRange,
+                               const Array& parameters) const
 {
     double R = parameters[0];
     double T = parameters[1];
 
     PlanckFunction B(T);
-    return 4.*M_PI*M_PI * R*R * B.cdf(lambdav, pv, Pv, wavelengthRange);
+    return 4. * M_PI * M_PI * R * R * B.cdf(lambdav, pv, Pv, wavelengthRange);
 }
 
 ////////////////////////////////////////////////////////////////////

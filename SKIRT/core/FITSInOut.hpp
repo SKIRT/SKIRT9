@@ -24,7 +24,7 @@ public:
         the simulation's input path. The input filename should include the filename extension. The
         remaining arguments of this function are the same as those described for the basic read()
         function in this class. */
-    static void read(const SimulationItem *item, string filename, Array& data, int& nx, int& ny, int& nz);
+    static void read(const SimulationItem* item, string filename, Array& data, int& nx, int& ny, int& nz);
 
     /** This function writes a 2D data frame or a 3D data cube to a FITS file in the context of the
         simulation item hierarchy specified through the first argument. This allows the function to
@@ -35,9 +35,8 @@ public:
         extension nor the simulation prefix. The remaining arguments of this function are the same
         as those described for the basic write() function in this class. Note that the arguments
         describing the z-axis may be omitted when writing a 2D data frame. */
-    static void write(const SimulationItem *item, string description, string filename,
-                      const Array& data, string dataUnits,
-                      int nx, int ny, double incx, double incy, double xc, double yc, string xyUnits,
+    static void write(const SimulationItem* item, string description, string filename, const Array& data,
+                      string dataUnits, int nx, int ny, double incx, double incy, double xc, double yc, string xyUnits,
                       const Array& z = Array(), string zUnits = string());
 
     // ================== Basic read/write ==================
@@ -90,9 +89,8 @@ private:
         specify the center of the frame(s), and \em xyUnits describes the units of the xy-grid
         increments. Finally, \em z contains the z-axis grid points (often wavelengths), and \em
         zUnits describes the units of these grid points. */
-    static void write(string filepath, const Array& data, string dataUnits,
-                      int nx, int ny, double incx, double incy, double xc, double yc, string xyUnits,
-                      const Array& z, string zUnits);
+    static void write(string filepath, const Array& data, string dataUnits, int nx, int ny, double incx, double incy,
+                      double xc, double yc, string xyUnits, const Array& z, string zUnits);
 };
 
 ////////////////////////////////////////////////////////////////////

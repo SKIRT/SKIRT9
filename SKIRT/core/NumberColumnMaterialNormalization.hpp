@@ -17,9 +17,9 @@ class NumberColumnMaterialNormalization : public AxisMaterialNormalization
     ITEM_CONCRETE(NumberColumnMaterialNormalization, AxisMaterialNormalization,
                   "normalization by defining the number column density along a coordinate axis")
 
-    PROPERTY_DOUBLE(numberColumnDensity, "the number column density along this axis")
-    ATTRIBUTE_QUANTITY(numberColumnDensity, "numbersurfacedensity")
-    ATTRIBUTE_MIN_VALUE(numberColumnDensity, "]0")
+        PROPERTY_DOUBLE(numberColumnDensity, "the number column density along this axis")
+        ATTRIBUTE_QUANTITY(numberColumnDensity, "numbersurfacedensity")
+        ATTRIBUTE_MIN_VALUE(numberColumnDensity, "]0")
 
     ITEM_END()
 
@@ -29,7 +29,7 @@ public:
     /** This function returns the total number of entities and total mass in the medium, in that
         order, given a geometry and material mix in addition to the user configuration options offered
         by this class. */
-    std::pair<double,double> numberAndMass(const Geometry* geom, const MaterialMix* mix) const override;
+    std::pair<double, double> numberAndMass(const Geometry* geom, const MaterialMix* mix) const override;
 };
 
 //////////////////////////////////////////////////////////////////////

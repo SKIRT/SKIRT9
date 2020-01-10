@@ -25,12 +25,12 @@ class ListWavelengthGrid : public DisjointWavelengthGrid
     ITEM_CONCRETE(ListWavelengthGrid, DisjointWavelengthGrid, "a list of one or more wavelengths")
         ATTRIBUTE_TYPE_DISPLAYED_IF(ListWavelengthGrid, "Level2")
 
-    PROPERTY_DOUBLE_LIST(wavelengths, "the characteristic wavelength for each bin")
+        PROPERTY_DOUBLE_LIST(wavelengths, "the characteristic wavelength for each bin")
         ATTRIBUTE_QUANTITY(wavelengths, "wavelength")
         ATTRIBUTE_MIN_VALUE(wavelengths, "1 Angstrom")
         ATTRIBUTE_MAX_VALUE(wavelengths, "1 m")
 
-    PROPERTY_DOUBLE(relativeHalfWidth, "the relative half width for discrete bins, or zero for a consecutive range")
+        PROPERTY_DOUBLE(relativeHalfWidth, "the relative half width for discrete bins, or zero for a consecutive range")
         ATTRIBUTE_MIN_VALUE(relativeHalfWidth, "[0")
         ATTRIBUTE_MAX_VALUE(relativeHalfWidth, "1[")
         ATTRIBUTE_DEFAULT_VALUE(relativeHalfWidth, "0")

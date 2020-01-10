@@ -20,13 +20,11 @@ void DistantInstrument::setupSelfBefore()
     double sinomega = sin(_roll);
 
     // calculate relevant directions
-    _bfkobs = Direction(_inclination,_azimuth);
-    _bfkx = Direction( + cosphi*costheta*sinomega - sinphi*cosomega,
-                       + sinphi*costheta*sinomega + cosphi*cosomega,
-                       - sintheta*sinomega );
-    _bfky = Direction( - cosphi*costheta*cosomega - sinphi*sinomega,
-                       - sinphi*costheta*cosomega + cosphi*sinomega,
-                       + sintheta*cosomega );
+    _bfkobs = Direction(_inclination, _azimuth);
+    _bfkx = Direction(+cosphi * costheta * sinomega - sinphi * cosomega,
+                      +sinphi * costheta * sinomega + cosphi * cosomega, -sintheta * sinomega);
+    _bfky = Direction(-cosphi * costheta * cosomega - sinphi * sinomega,
+                      -sinphi * costheta * cosomega + cosphi * sinomega, +sintheta * cosomega);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -34,8 +32,8 @@ void DistantInstrument::setupSelfBefore()
 void DistantInstrument::determineSameObserverAsPreceding(const Instrument* precedingInstrument)
 {
     auto other = dynamic_cast<const DistantInstrument*>(precedingInstrument);
-    if (other && distance()==other->distance()
-         && inclination()==other->inclination() && azimuth()==other->azimuth() && roll()==other->roll())
+    if (other && distance() == other->distance() && inclination() == other->inclination()
+        && azimuth() == other->azimuth() && roll() == other->roll())
     {
         setSameObserverAsPreceding();
     }

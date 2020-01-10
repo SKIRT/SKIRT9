@@ -91,11 +91,11 @@ class Item
 
 private:
     // provide the metadata that for client Item subclasses is defined through the macro's provided in ItemInfo.hpp
-    friend class ItemRegistry;              // give registry access to ii_* functions
-    using ItemType = Item;                  // type of this class
-    using BaseType = Item;                  // type of the base class; Item has no base class
-    virtual const char* ii_type() const;    // type of this class as a C string
-    static void ii_loadItemInfo();          // load metadata for this class
+    friend class ItemRegistry;            // give registry access to ii_* functions
+    using ItemType = Item;                // type of this class
+    using BaseType = Item;                // type of the base class; Item has no base class
+    virtual const char* ii_type() const;  // type of this class as a C string
+    static void ii_loadItemInfo();        // load metadata for this class
 
     // ================== Constructing, copying and moving ==================
 
@@ -105,7 +105,7 @@ protected:
         other than the root node, the parent is set later on by handing the item to an item or item
         list property of another item (which calls the addChild() function, which in turn calls the
         setParent() function). */
-    Item() { }
+    Item() {}
 
 public:
     /** The copy constructor is deleted. Item instances can't be copied or moved because they are
@@ -242,10 +242,10 @@ public:
     // ================== Data members ==================
 
 private:
-    Item* _parent{nullptr};         // pointer to parent
-    vector<Item*> _children;        // list of pointers to children, tracking ownership
-    class UtilityData;              // use a custom class to avoid including extra std headers in this header
-    UtilityData* _utility{nullptr}; // pointer to utility data; allocated only when actually used
+    Item* _parent{nullptr};          // pointer to parent
+    vector<Item*> _children;         // list of pointers to children, tracking ownership
+    class UtilityData;               // use a custom class to avoid including extra std headers in this header
+    UtilityData* _utility{nullptr};  // pointer to utility data; allocated only when actually used
 };
 
 ////////////////////////////////////////////////////////////////////

@@ -6,9 +6,9 @@
 #ifndef SPATIALGRID_HPP
 #define SPATIALGRID_HPP
 
-#include "SimulationItem.hpp"
 #include "Box.hpp"
 #include "Position.hpp"
+#include "SimulationItem.hpp"
 class Random;
 class SpatialGridPath;
 class SpatialGridPlotFile;

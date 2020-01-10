@@ -28,7 +28,7 @@ void TabulatedMesh::setupSelfBefore()
     _mesh /= points.back();
 
     // set correct number of bins
-    setNumBins(_mesh.size()-1);
+    setNumBins(_mesh.size() - 1);
 }
 
 //////////////////////////////////////////////////////////////////////

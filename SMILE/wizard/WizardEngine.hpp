@@ -76,7 +76,7 @@ public slots:
         canAdvance() returns true. Th optional flags are used for recursive calls. If \em state is
         set to false, the current advance state is not saved. If \em descend is set to false, the
         function will not descend into the current compound property. */
-    void advance(bool state=true, bool descend=true);
+    void advance(bool state = true, bool descend = true);
 
     /** This function advances the wizard to a state that starts editing the specified item in the
         current item list property. */
@@ -207,11 +207,21 @@ private:
     {
     public:
         State(Stage stage, Item* current, int firstIndex, int lastIndex, int subIndex)
-            : _stage(stage), _current(current), _firstIndex(firstIndex), _lastIndex(lastIndex), _subIndex(subIndex) { }
+            : _stage(stage), _current(current), _firstIndex(firstIndex), _lastIndex(lastIndex), _subIndex(subIndex)
+        {}
         void getState(Stage& stage, Item*& current, int& firstIndex, int& lastIndex, int& subIndex)
-            { stage=_stage; current=_current; firstIndex=_firstIndex; lastIndex=_lastIndex; subIndex=_subIndex; }
+        {
+            stage = _stage;
+            current = _current;
+            firstIndex = _firstIndex;
+            lastIndex = _lastIndex;
+            subIndex = _subIndex;
+        }
+
     private:
-        Stage _stage; Item* _current; int _firstIndex, _lastIndex, _subIndex;
+        Stage _stage;
+        Item* _current;
+        int _firstIndex, _lastIndex, _subIndex;
     };
 
     // stack on which the state is pushed before each advance, and popped after each retreat (with some complications)

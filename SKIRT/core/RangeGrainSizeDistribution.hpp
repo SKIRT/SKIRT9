@@ -16,17 +16,17 @@
     RangeGrainSizeDistribution class consequently implements the functions amin() and amax(), while
     it still expects each subclass to provide the actual distribution function by implementing the
     dnda() function. */
-class RangeGrainSizeDistribution: public GrainSizeDistribution
+class RangeGrainSizeDistribution : public GrainSizeDistribution
 {
     ITEM_ABSTRACT(RangeGrainSizeDistribution, GrainSizeDistribution,
                   "a dust grain size distribution with a configurable size range")
 
-    PROPERTY_DOUBLE(minSize, "the minimum grain size for this distribution")
+        PROPERTY_DOUBLE(minSize, "the minimum grain size for this distribution")
         ATTRIBUTE_QUANTITY(minSize, "grainsize")
         ATTRIBUTE_MIN_VALUE(minSize, "[1 Angstrom")
         ATTRIBUTE_MAX_VALUE(minSize, "1 mm]")
 
-    PROPERTY_DOUBLE(maxSize, "the maximum grain size for this distribution")
+        PROPERTY_DOUBLE(maxSize, "the maximum grain size for this distribution")
         ATTRIBUTE_QUANTITY(maxSize, "grainsize")
         ATTRIBUTE_MIN_VALUE(maxSize, "[1 Angstrom")
         ATTRIBUTE_MAX_VALUE(maxSize, "1 mm]")

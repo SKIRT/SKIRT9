@@ -45,11 +45,11 @@ class ThemisDustMix : public MultiGrainDustMix
 {
     ITEM_CONCRETE(ThemisDustMix, MultiGrainDustMix, "a THEMIS (Jones et al. 2017) dust mix")
 
-    PROPERTY_INT(numSilicateSizes, "the number of grain size bins for each of the silicate populations")
+        PROPERTY_INT(numSilicateSizes, "the number of grain size bins for each of the silicate populations")
         ATTRIBUTE_MIN_VALUE(numSilicateSizes, "1")
         ATTRIBUTE_DEFAULT_VALUE(numSilicateSizes, "5")
 
-    PROPERTY_INT(numHydrocarbonSizes, "the number of grain size bins for each of the hydrocarbon populations")
+        PROPERTY_INT(numHydrocarbonSizes, "the number of grain size bins for each of the hydrocarbon populations")
         ATTRIBUTE_MIN_VALUE(numHydrocarbonSizes, "1")
         ATTRIBUTE_DEFAULT_VALUE(numHydrocarbonSizes, "5")
 
@@ -58,11 +58,10 @@ class ThemisDustMix : public MultiGrainDustMix
     //============= Construction - Setup - Destruction =============
 
 protected:
-        /** This function adds the relevant grain populations to the dust mix */
+    /** This function adds the relevant grain populations to the dust mix */
     void setupSelfBefore() override;
 };
 
 ////////////////////////////////////////////////////////////////////
 
 #endif
-

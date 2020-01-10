@@ -16,11 +16,11 @@ class PolarizationProfileInterface
 {
 protected:
     /** The empty constructor for the interface. */
-    PolarizationProfileInterface() { }
+    PolarizationProfileInterface() {}
 
 public:
     /** The empty destructor for the interface. */
-    virtual ~PolarizationProfileInterface() { }
+    virtual ~PolarizationProfileInterface() {}
 
     /** This function returns the Stokes vector defining the polarization state of the radiation
         emitted into the given direction \f$(\theta,\phi)\f$. For unpolarized emission, this

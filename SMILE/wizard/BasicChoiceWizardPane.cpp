@@ -21,8 +21,8 @@
 
 ////////////////////////////////////////////////////////////////////
 
-BasicChoiceWizardPane::BasicChoiceWizardPane(bool initialOpenExisting, string initialSchemaName,
-                                             bool dirty, QObject* target)
+BasicChoiceWizardPane::BasicChoiceWizardPane(bool initialOpenExisting, string initialSchemaName, bool dirty,
+                                             QObject* target)
     : _openExisting(initialOpenExisting), _schemaName(initialSchemaName), _dirty(dirty)
 {
     // create the overall layout and add a title
@@ -36,8 +36,8 @@ BasicChoiceWizardPane::BasicChoiceWizardPane(bool initialOpenExisting, string in
 
     // connect the button group to ourselves, and ourselves to the target
     connect(_buttonGroup, SIGNAL(buttonClicked(int)), this, SLOT(setBasicChoice(int)));
-    connect(this, SIGNAL(basicChoiceWasChanged(bool,string,string)),
-            target, SLOT(setBasicChoice(bool,string,string)));
+    connect(this, SIGNAL(basicChoiceWasChanged(bool, string, string)), target,
+            SLOT(setBasicChoice(bool, string, string)));
 
     // add white space and a horizontal line
     layout->addStretch();
@@ -90,7 +90,7 @@ BasicChoiceWizardPane::BasicChoiceWizardPane(bool initialOpenExisting, string in
 void BasicChoiceWizardPane::setBasicChoice(int buttonIndex)
 {
     bool openExisting = (buttonIndex % 2) != 0;
-    string schemaName = _schemaNames[buttonIndex>>1];
+    string schemaName = _schemaNames[buttonIndex >> 1];
 
     if (_openExisting != openExisting || _schemaName != schemaName)
     {
@@ -99,9 +99,9 @@ void BasicChoiceWizardPane::setBasicChoice(int buttonIndex)
         // if the current hierarchy is dirty, give the user a chance to cancel the change
         if (_dirty)
         {
-            auto ret = QMessageBox::warning(this, qApp->applicationName(),
-                                            "Do you want to discard your unsaved changes?",
-                                            QMessageBox::Discard | QMessageBox::Cancel, QMessageBox::Cancel);
+            auto ret =
+                QMessageBox::warning(this, qApp->applicationName(), "Do you want to discard your unsaved changes?",
+                                     QMessageBox::Discard | QMessageBox::Cancel, QMessageBox::Cancel);
             update = (ret == QMessageBox::Discard);
         }
 
@@ -116,7 +116,7 @@ void BasicChoiceWizardPane::setBasicChoice(int buttonIndex)
         // otherwise, revert the selected radio button
         else
         {
-            int buttonIndex = (StringUtils::indexOf(_schemaNames,_schemaName)<<1) + (_openExisting ? 1 : 0);
+            int buttonIndex = (StringUtils::indexOf(_schemaNames, _schemaName) << 1) + (_openExisting ? 1 : 0);
             auto selected = _buttonGroup->button(buttonIndex);
             if (selected) selected->setChecked(true);
         }
@@ -168,7 +168,7 @@ void BasicChoiceWizardPane::findDefaultLibraryPath()
     QString appPath = qApp->applicationDirPath();
 
     // iterate over the relative paths
-    for (auto path : { "schemas", "../schemas", "../../schemas", "../../../schemas", "../../../../schemas" })
+    for (auto path : {"schemas", "../schemas", "../../schemas", "../../../schemas", "../../../../schemas"})
     {
         QFileInfo test(appPath + "/" + path);
         if (test.isDir())
@@ -229,7 +229,11 @@ void BasicChoiceWizardPane::updateChoiceInterface()
 
     // remove any basic choice labels and buttons currently in the layout
     for (auto label : _labels) delete label;
-    for (auto button : _buttons) { _buttonGroup->removeButton(button); delete button; }
+    for (auto button : _buttons)
+    {
+        _buttonGroup->removeButton(button);
+        delete button;
+    }
     _labels.clear();
     _buttons.clear();
 
@@ -264,7 +268,7 @@ void BasicChoiceWizardPane::updateChoiceInterface()
         }
 
         // select the initial choice
-        int buttonIndex = (StringUtils::indexOf(_schemaNames,_schemaName)<<1) + (_openExisting ? 1 : 0);
+        int buttonIndex = (StringUtils::indexOf(_schemaNames, _schemaName) << 1) + (_openExisting ? 1 : 0);
         auto selected = _buttonGroup->button(buttonIndex);
         if (selected) selected->setChecked(true);
     }

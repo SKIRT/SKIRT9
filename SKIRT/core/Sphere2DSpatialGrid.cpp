@@ -4,12 +4,12 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "Sphere2DSpatialGrid.hpp"
-#include "SpatialGridPath.hpp"
-#include "SpatialGridPlotFile.hpp"
 #include "FatalError.hpp"
 #include "Log.hpp"
 #include "NR.hpp"
 #include "Random.hpp"
+#include "SpatialGridPath.hpp"
+#include "SpatialGridPlotFile.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -32,7 +32,7 @@ void Sphere2DSpatialGrid::setupSelfAfter()
 
     // If there is a cosine value close to zero, make it exactly zero so that the test in path() succeeds
     int numzeroes = 0;
-    for (int k=1; k<_Ntheta; k++)
+    for (int k = 1; k < _Ntheta; k++)
     {
         if (fabs(_cv[k]) < 1e-9)
         {
@@ -51,16 +51,16 @@ void Sphere2DSpatialGrid::setupSelfAfter()
 
         // Resize the grid to contain one extra bin; this clears all values
         _Ntheta++;
-        _thetav.resize(_Ntheta+1);
-        _cv.resize(_Ntheta+1);
+        _thetav.resize(_Ntheta + 1);
+        _cv.resize(_Ntheta + 1);
 
         // Initialize the new grid with values corresponding to the xy-plane so we can skip that index while copying
         _thetav = M_PI_2;
 
         // Copy the values from the original to the new grid, skipping the xy-plane
-        for (int k=0; k<_Ntheta; k++)
+        for (int k = 0; k < _Ntheta; k++)
         {
-            int target = (or_cv[k] > 0) ? k : k+1;
+            int target = (or_cv[k] > 0) ? k : k + 1;
             _thetav[target] = or_thetav[k];
             _cv[target] = or_cv[k];
         }
@@ -81,7 +81,7 @@ int Sphere2DSpatialGrid::dimension() const
 
 int Sphere2DSpatialGrid::numCells() const
 {
-    return _Nr*_Ntheta;
+    return _Nr * _Ntheta;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -89,11 +89,11 @@ int Sphere2DSpatialGrid::numCells() const
 double Sphere2DSpatialGrid::volume(int m) const
 {
     int i, k;
-    invertIndex(m,i,k);
-    if (i<0 || i>=_Nr || k<0 || k>=_Ntheta)
+    invertIndex(m, i, k);
+    if (i < 0 || i >= _Nr || k < 0 || k >= _Ntheta)
         return 0.0;
     else
-        return (2.0/3.0)*M_PI * (pow(_rv[i+1],3)-pow(_rv[i],3)) * (cos(_thetav[k])-cos(_thetav[k+1]));
+        return (2.0 / 3.0) * M_PI * (pow(_rv[i + 1], 3) - pow(_rv[i], 3)) * (cos(_thetav[k]) - cos(_thetav[k + 1]));
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -103,9 +103,9 @@ int Sphere2DSpatialGrid::cellIndex(Position bfr) const
     double r, theta, phi;
     bfr.spherical(r, theta, phi);
     int i = NR::locateFail(_rv, r);
-    if (i<0) return -1;
+    if (i < 0) return -1;
     int k = NR::locateClip(_thetav, theta);
-    return index(i,k);
+    return index(i, k);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -113,11 +113,11 @@ int Sphere2DSpatialGrid::cellIndex(Position bfr) const
 Position Sphere2DSpatialGrid::centralPositionInCell(int m) const
 {
     int i, k;
-    invertIndex(m,i,k);
-    double r = (_rv[i]+_rv[i+1])/2.0;
-    double theta = (_thetav[k]+_thetav[k+1])/2.0;
+    invertIndex(m, i, k);
+    double r = (_rv[i] + _rv[i + 1]) / 2.0;
+    double theta = (_thetav[k] + _thetav[k + 1]) / 2.0;
     double phi = 0.0;
-    return Position(r,theta,phi,Position::CoordinateSystem::SPHERICAL);
+    return Position(r, theta, phi, Position::CoordinateSystem::SPHERICAL);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -125,13 +125,13 @@ Position Sphere2DSpatialGrid::centralPositionInCell(int m) const
 Position Sphere2DSpatialGrid::randomPositionInCell(int m) const
 {
     int i, k;
-    invertIndex(m,i,k);
-    double ris = _rv[i]*_rv[i];
-    double ri1s = _rv[i+1]*_rv[i+1];
-    double r = sqrt( ris + (ri1s-ris)*random()->uniform() );
-    double theta = _thetav[k] + (_thetav[k+1]-_thetav[k])*random()->uniform();
-    double phi = 2.0*M_PI*random()->uniform();
-    return Position(r,theta,phi,Position::CoordinateSystem::SPHERICAL);
+    invertIndex(m, i, k);
+    double ris = _rv[i] * _rv[i];
+    double ri1s = _rv[i + 1] * _rv[i + 1];
+    double r = sqrt(ris + (ri1s - ris) * random()->uniform());
+    double theta = _thetav[k] + (_thetav[k + 1] - _thetav[k]) * random()->uniform();
+    double phi = 2.0 * M_PI * random()->uniform();
+    return Position(r, theta, phi, Position::CoordinateSystem::SPHERICAL);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -145,19 +145,19 @@ namespace
         // x2 == -b + sqrt(b*b-c)
         // x1*x2 == c
 
-        if (b*b > c)            // if discriminant is negative, there are no real solutions
+        if (b * b > c)  // if discriminant is negative, there are no real solutions
         {
-            if (b > 0)          // x1 is always negative; x2 is positive only if c<0
+            if (b > 0)  // x1 is always negative; x2 is positive only if c<0
             {
                 if (c < 0)
                 {
-                    double x1 = -b - sqrt(b*b-c);
+                    double x1 = -b - sqrt(b * b - c);
                     return c / x1;
                 }
             }
-            else                // x2 is always positive; x1 is positive only if c>0
+            else  // x2 is always positive; x1 is positive only if c>0
             {
-                double x2 = -b + sqrt(b*b-c);
+                double x2 = -b + sqrt(b * b - c);
                 if (c > 0)
                 {
                     double x1 = c / x2;
@@ -172,7 +172,7 @@ namespace
     // returns the smallest positive solution of a*x^2 + 2*b*x + c = 0, or 0 if there is no positive solution
     double smallestPositiveSolution(double a, double b, double c)
     {
-        if (fabs(a) > 1e-9) return smallestPositiveSolution(b/a, c/a);
+        if (fabs(a) > 1e-9) return smallestPositiveSolution(b / a, c / a);
         double x = -0.5 * c / b;
         if (x > 0) return x;
         return 0;
@@ -182,17 +182,16 @@ namespace
     // or 0 if there is no intersection
     double firstIntersectionSphere(Vec bfr, Vec bfk, double r)
     {
-        return smallestPositiveSolution(Vec::dot(bfr,bfk), bfr.norm2()-r*r);
+        return smallestPositiveSolution(Vec::dot(bfr, bfk), bfr.norm2() - r * r);
     }
 
     // returns the distance to the first intersection between the ray (bfr,bfk) and the cone with given cos(theta),
     // or 0 if there is no intersection (the degenarate cone with zero cosine is treated separately)
     double firstIntersectionCone(Vec bfr, Vec bfk, double c)
     {
-        return c ? smallestPositiveSolution( c*c                   - bfk.z()*bfk.z(),
-                                             c*c*Vec::dot(bfr,bfk) - bfr.z()*bfk.z(),
-                                             c*c*bfr.norm2()       - bfr.z()*bfr.z() )
-                 : -bfr.z()/bfk.z();  // degenerate cone identical to xy-plane
+        return c ? smallestPositiveSolution(c * c - bfk.z() * bfk.z(), c * c * Vec::dot(bfr, bfk) - bfr.z() * bfk.z(),
+                                            c * c * bfr.norm2() - bfr.z() * bfr.z())
+                 : -bfr.z() / bfk.z();  // degenerate cone identical to xy-plane
     }
 }
 
@@ -213,17 +212,17 @@ void Sphere2DSpatialGrid::path(SpatialGridPath* path) const
     // If it does not pass any grid cell, return an empty path.
     // Otherwise calculate the distance covered and add a segment to the path.
     double r2 = bfr.norm2();
-    if (r2 > rmax*rmax)
+    if (r2 > rmax * rmax)
     {
         double ds = firstIntersectionSphere(bfr, bfk, rmax);
         if (!ds) return path->clear();
         path->addSegment(-1, ds);
-        bfr += bfk*(ds+eps);
+        bfr += bfk * (ds + eps);
     }
     // Move the position a bit away from the origin so that it has a meaningful cell number
-    else if (r2==0)
+    else if (r2 == 0)
     {
-        bfr += bfk*eps;
+        bfr += bfk * eps;
     }
 
     // Determine the indices of the cell containing the starting point.
@@ -240,7 +239,7 @@ void Sphere2DSpatialGrid::path(SpatialGridPath* path) const
         // Calculate the distance travelled inside the cell by considering
         // the potential exit points for each of the four cell boundaries;
         // the smallest positive intersection "distance" wins.
-        double ds = DBL_MAX;    // very large, but not infinity (so that infinite values are discarded)
+        double ds = DBL_MAX;  // very large, but not infinity (so that infinite values are discarded)
 
         // inner radial boundary (not applicable to innermost cell)
         if (i > 0)
@@ -249,18 +248,18 @@ void Sphere2DSpatialGrid::path(SpatialGridPath* path) const
             if (s > 0 && s < ds)
             {
                 ds = s;
-                inext = i-1;
+                inext = i - 1;
                 knext = k;
             }
         }
 
         // outer radial boundary (always applicable)
         {
-            double s = firstIntersectionSphere(bfr, bfk, _rv[i+1]);
+            double s = firstIntersectionSphere(bfr, bfk, _rv[i + 1]);
             if (s > 0 && s < ds)
             {
                 ds = s;
-                inext = i+1;  // this will cause the loop to terminate if incremented beyond the outermost boundary
+                inext = i + 1;  // this will cause the loop to terminate if incremented beyond the outermost boundary
                 knext = k;
             }
         }
@@ -273,28 +272,28 @@ void Sphere2DSpatialGrid::path(SpatialGridPath* path) const
             {
                 ds = s;
                 inext = i;
-                knext = k-1;
+                knext = k - 1;
             }
         }
 
         // lower angular boundary (not applicable to lowest cell)
-        if (k < _Ntheta-1)
+        if (k < _Ntheta - 1)
         {
-            double s = firstIntersectionCone(bfr, bfk, _cv[k+1]);
+            double s = firstIntersectionCone(bfr, bfk, _cv[k + 1]);
             if (s > 0 && s < ds)
             {
                 ds = s;
                 inext = i;
-                knext = k+1;
+                knext = k + 1;
             }
         }
 
         // If an exit point was found, add a segment to the path,
         // move to the next current point, and update the cell indices
-        if (inext!=i || knext!=k)
+        if (inext != i || knext != k)
         {
-            path->addSegment(index(i,k), ds);
-            bfr += bfk*(ds+eps);
+            path->addSegment(index(i, k), ds);
+            bfr += bfk * (ds + eps);
             i = inext;
             k = knext;
         }
@@ -302,7 +301,7 @@ void Sphere2DSpatialGrid::path(SpatialGridPath* path) const
         else
         {
             find<Log>()->warning("No exit point found from Spatial grid cell");
-            bfr += bfk*eps;
+            bfr += bfk * eps;
             double r, theta, phi;
             bfr.spherical(r, theta, phi);
             i = NR::locateFail(_rv, r);
@@ -315,7 +314,7 @@ void Sphere2DSpatialGrid::path(SpatialGridPath* path) const
 
 void Sphere2DSpatialGrid::write_xy(SpatialGridPlotFile* outfile) const
 {
-    for (int i=0; i<=_Nr; i++) outfile->writeCircle(_rv[i]);
+    for (int i = 0; i <= _Nr; i++) outfile->writeCircle(_rv[i]);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -323,11 +322,11 @@ void Sphere2DSpatialGrid::write_xy(SpatialGridPlotFile* outfile) const
 void Sphere2DSpatialGrid::write_xz(SpatialGridPlotFile* outfile) const
 {
     double rmax = maxRadius();
-    for (int i=0; i<=_Nr; i++)
+    for (int i = 0; i <= _Nr; i++)
     {
         outfile->writeCircle(_rv[i]);
     }
-    for (int k=0; k<=_Ntheta; k++)
+    for (int k = 0; k <= _Ntheta; k++)
     {
         double x = rmax * sin(_thetav[k]);
         double z = rmax * cos(_thetav[k]);
@@ -339,7 +338,7 @@ void Sphere2DSpatialGrid::write_xz(SpatialGridPlotFile* outfile) const
 
 int Sphere2DSpatialGrid::index(int i, int k) const
 {
-    return k+_Ntheta*i;
+    return k + _Ntheta * i;
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -33,7 +33,7 @@ class DustGrainSizeDistributionProbe : public Probe
     ITEM_CONCRETE(DustGrainSizeDistributionProbe, Probe, "dust grain size distribution")
         ATTRIBUTE_TYPE_DISPLAYED_IF(DustGrainSizeDistributionProbe, "Medium&MultiGrainDustMix")
 
-    PROPERTY_INT(numSamples, "the number of samples in the size distribution table")
+        PROPERTY_INT(numSamples, "the number of samples in the size distribution table")
         ATTRIBUTE_MIN_VALUE(numSamples, "3")
         ATTRIBUTE_MAX_VALUE(numSamples, "100000")
         ATTRIBUTE_DEFAULT_VALUE(numSamples, "250")

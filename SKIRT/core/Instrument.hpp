@@ -6,9 +6,9 @@
 #ifndef INSTRUMENT_HPP
 #define INSTRUMENT_HPP
 
-#include "SimulationItem.hpp"
 #include "Direction.hpp"
 #include "Position.hpp"
+#include "SimulationItem.hpp"
 #include "WavelengthGrid.hpp"
 class FluxRecorder;
 class PhotonPacket;
@@ -27,30 +27,30 @@ class Instrument : public SimulationItem
 {
     ITEM_ABSTRACT(Instrument, SimulationItem, "an instrument")
 
-    PROPERTY_STRING(instrumentName, "the name for this instrument")
+        PROPERTY_STRING(instrumentName, "the name for this instrument")
 
-    PROPERTY_ITEM(wavelengthGrid, WavelengthGrid, "the wavelength grid for this instrument")
+        PROPERTY_ITEM(wavelengthGrid, WavelengthGrid, "the wavelength grid for this instrument")
         ATTRIBUTE_RELEVANT_IF(wavelengthGrid, "Panchromatic")
         ATTRIBUTE_REQUIRED_IF(wavelengthGrid, "!DefaultInstrumentWavelengthGrid")
         ATTRIBUTE_DISPLAYED_IF(wavelengthGrid, "Level2")
 
-    ATTRIBUTE_SUB_PROPERTIES_HERE(Instrument)
+        ATTRIBUTE_SUB_PROPERTIES_HERE(Instrument)
 
-    PROPERTY_BOOL(recordComponents, "record flux components separately")
+        PROPERTY_BOOL(recordComponents, "record flux components separately")
         ATTRIBUTE_DEFAULT_VALUE(recordComponents, "false")
 
-    PROPERTY_INT(numScatteringLevels, "the number of individually recorded scattering levels")
+        PROPERTY_INT(numScatteringLevels, "the number of individually recorded scattering levels")
         ATTRIBUTE_MIN_VALUE(numScatteringLevels, "0")
         ATTRIBUTE_MAX_VALUE(numScatteringLevels, "99")
         ATTRIBUTE_DEFAULT_VALUE(numScatteringLevels, "0")
         ATTRIBUTE_RELEVANT_IF(numScatteringLevels, "recordComponents")
         ATTRIBUTE_DISPLAYED_IF(numScatteringLevels, "Level2")
 
-    PROPERTY_BOOL(recordPolarization, "record polarization (Stokes vector elements)")
+        PROPERTY_BOOL(recordPolarization, "record polarization (Stokes vector elements)")
         ATTRIBUTE_DEFAULT_VALUE(recordPolarization, "false")
         ATTRIBUTE_DISPLAYED_IF(recordPolarization, "Level2")
 
-    PROPERTY_BOOL(recordStatistics, "record information for calculating statistical properties")
+        PROPERTY_BOOL(recordStatistics, "record information for calculating statistical properties")
         ATTRIBUTE_DEFAULT_VALUE(recordStatistics, "false")
         ATTRIBUTE_DISPLAYED_IF(recordStatistics, "Level2")
 

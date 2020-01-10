@@ -33,10 +33,10 @@ void MultiGrainDustMix::addPopulation(GrainComposition* composition, GrainSizeDi
 
 ////////////////////////////////////////////////////////////////////
 
-double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array& thetav,
-                                               Array& sigmaabsv, Array& sigmascav, Array& asymmparv,
-                                               Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv,
-                                               ArrayTable<2>& sigmaabsvv, ArrayTable<2>& sigmaabspolvv)
+double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array& thetav, Array& sigmaabsv,
+                                               Array& sigmascav, Array& asymmparv, Table<2>& S11vv, Table<2>& S12vv,
+                                               Table<2>& S33vv, Table<2>& S34vv, ArrayTable<2>& sigmaabsvv,
+                                               ArrayTable<2>& sigmaabspolvv)
 {
     // get the scattering mode advertised by this dust mix
     auto mode = scatteringMode();
@@ -51,12 +51,12 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
         if (!population->composition()->resourceNameForMuellerMatrix().empty()) numMueller++;
 
     // verify the Mueller matrix support by all grain populations
-    if (mode == ScatteringMode::HenyeyGreenstein && numMueller!=0)
+    if (mode == ScatteringMode::HenyeyGreenstein && numMueller != 0)
         throw FATALERROR("HenyeyGreenstein scattering mode prohibits grain populations to offer a Mueller matrix");
-    if (mode == ScatteringMode::MaterialPhaseFunction && numMueller!=numPops)
+    if (mode == ScatteringMode::MaterialPhaseFunction && numMueller != numPops)
         throw FATALERROR("MaterialPhaseFunction scattering mode requires grain populations to offer a Mueller matrix");
     if ((mode == ScatteringMode::SphericalPolarization || mode == ScatteringMode::SpheroidalPolarization)
-        && numMueller!=numPops)
+        && numMueller != numPops)
         throw FATALERROR("SphericalPolarization scattering mode requires grain populations to offer a Mueller matrix");
 
     // define shortcuts for various mode checks
@@ -76,31 +76,31 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
         // construct a grain size integration grid for this population
         double amin = population->sizeDistribution()->amin();
         double amax = population->sizeDistribution()->amax();
-        int numSizes = max(3., 100 * log10(amax/amin));
-        Array av(numSizes);      // "a" for each point
-        Array dav(numSizes);     // "da" for each point
-        Array dndav(numSizes);   // "dnda" for each point
-        Array weightv(numSizes); // integration weight for each point (1/2 or 1 in addition to normalization)
+        int numSizes = max(3., 100 * log10(amax / amin));
+        Array av(numSizes);       // "a" for each point
+        Array dav(numSizes);      // "da" for each point
+        Array dndav(numSizes);    // "dnda" for each point
+        Array weightv(numSizes);  // integration weight for each point (1/2 or 1 in addition to normalization)
         {
             double logamin = log10(amin);
             double logamax = log10(amax);
-            double dloga = (logamax-logamin)/(numSizes-1);
-            for (int i=0; i!=numSizes; ++i)
+            double dloga = (logamax - logamin) / (numSizes - 1);
+            for (int i = 0; i != numSizes; ++i)
             {
-                av[i] = pow(10, logamin + i*dloga);
+                av[i] = pow(10, logamin + i * dloga);
                 dav[i] = av[i] * M_LN10 * dloga;
                 dndav[i] = population->sizeDistribution()->dnda(av[i]);
                 weightv[i] = 1.;
             }
-            weightv[0] = weightv[numSizes-1] = 0.5;
+            weightv[0] = weightv[numSizes - 1] = 0.5;
         }
 
         // calculate the mass per hydrogen atom for this population according to the bare size distribution
         // (i.e. without applying any normalization)
         double baremupop = 0.;
-        for (int i=0; i!=numSizes; ++i)
+        for (int i = 0; i != numSizes; ++i)
         {
-            double volume = 4.0*M_PI/3.0 * av[i] * av[i] * av[i];
+            double volume = 4.0 * M_PI / 3.0 * av[i] * av[i] * av[i];
             baremupop += weightv[i] * dndav[i] * volume * dav[i];
         }
         baremupop *= population->composition()->bulkDensity();
@@ -110,25 +110,26 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
         double mupop = 0.;
         switch (population->normalizationType())
         {
-        case GrainPopulation::NormalizationType::DustMassPerHydrogenAtom:
-            mupop = population->dustMassPerHydrogenAtom();
-            break;
-        case GrainPopulation::NormalizationType::DustMassPerHydrogenMass:
-            mupop = population->dustMassPerHydrogenMass() * Constants::Mproton();
-            break;
-        case GrainPopulation::NormalizationType::FactorOnSizeDistribution:
-            mupop = baremupop * population->factorOnSizeDistribution();
-            break;
+            case GrainPopulation::NormalizationType::DustMassPerHydrogenAtom:
+                mupop = population->dustMassPerHydrogenAtom();
+                break;
+            case GrainPopulation::NormalizationType::DustMassPerHydrogenMass:
+                mupop = population->dustMassPerHydrogenMass() * Constants::Mproton();
+                break;
+            case GrainPopulation::NormalizationType::FactorOnSizeDistribution:
+                mupop = baremupop * population->factorOnSizeDistribution();
+                break;
         }
-        if (!mupop) throw FATALERROR("Dust grain population of type " + population->composition()->name()
-                                  + " has zero dust mass");
+        if (!mupop)
+            throw FATALERROR("Dust grain population of type " + population->composition()->name()
+                             + " has zero dust mass");
         _mupopv.push_back(mupop);
         mu += mupop;
 
         // remember the size distribution normalization factor for this population
         // and adjust the integration weight for further calculations
-        _normv.push_back(mupop/baremupop);
-        weightv *= mupop/baremupop;
+        _normv.push_back(mupop / baremupop);
+        weightv *= mupop / baremupop;
 
         // open the stored tables for the basic optical properties
         string opticalPropsName = population->composition()->resourceNameForOpticalProps();
@@ -137,14 +138,14 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
         StoredTable<2> g(this, opticalPropsName, "a(m),lambda(m)", "g(1)");
 
         // calculate the optical properties for each wavelength, and add them to the global total
-        for (int ell=0; ell!=numLambda; ++ell)
+        for (int ell = 0; ell != numLambda; ++ell)
         {
             double lamdba = lambdav[ell];
 
             double sumsigmaabs = 0.;
             double sumsigmasca = 0.;
             double sumgsigmasca = 0.;
-            for (int i=0; i!=numSizes; ++i)
+            for (int i = 0; i != numSizes; ++i)
             {
                 double area = M_PI * av[i] * av[i];
                 double factor = weightv[i] * dndav[i] * area * dav[i];
@@ -190,89 +191,88 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
             auto log = find<Log>();
             log->info("Integrating grain properties over the grain size distribution...");
             log->infoSetElapsed(numLambda);
-            find<ParallelFactory>()->parallelDistributed()->call(numLambda,
-                [log,needSphericalPolarization,needSpheroidalPolarization,hasSpheroidalPolarization,
-                 &lambdav,&thetav,&av,&dav,&dndav,&weightv,
-                 &S11,&S12,&S33,&S34,&S11vv,&S12vv,&S33vv,&S34vv,&Qabs,&sQabs,&sQabspol,&sigmaabsvv,&sigmaabspolvv]
-                (size_t firstIndex, size_t numIndices)
-            {
-                int numTheta = thetav.size();
-                int numSizes = av.size();
+            find<ParallelFactory>()->parallelDistributed()->call(
+                numLambda,
+                [log, needSphericalPolarization, needSpheroidalPolarization, hasSpheroidalPolarization, &lambdav,
+                 &thetav, &av, &dav, &dndav, &weightv, &S11, &S12, &S33, &S34, &S11vv, &S12vv, &S33vv, &S34vv, &Qabs,
+                 &sQabs, &sQabspol, &sigmaabsvv, &sigmaabspolvv](size_t firstIndex, size_t numIndices) {
+                    int numTheta = thetav.size();
+                    int numSizes = av.size();
 
-                const size_t logProgressChunkSize = 50;
-                while (numIndices)
-                {
-                    size_t currentChunkSize = min(logProgressChunkSize, numIndices);
-                    for (size_t ell=firstIndex; ell!=firstIndex+currentChunkSize; ++ell)
+                    const size_t logProgressChunkSize = 50;
+                    while (numIndices)
                     {
-                        double lambda = lambdav[ell];
-                        for (int t=0; t!=numTheta; ++t)
+                        size_t currentChunkSize = min(logProgressChunkSize, numIndices);
+                        for (size_t ell = firstIndex; ell != firstIndex + currentChunkSize; ++ell)
                         {
-                            double theta = thetav[t];
-
-                            // integrate over the size distribution
-                            double sumS11 = 0.;
-                            double sumS12 = 0.;
-                            double sumS33 = 0.;
-                            double sumS34 = 0.;
-                            double sumabs = 0.;
-                            double sumabspol = 0.;
-                            for (int i=0; i!=numSizes; ++i)
+                            double lambda = lambdav[ell];
+                            for (int t = 0; t != numTheta; ++t)
                             {
-                                double a = av[i];
-                                double factor = weightv[i] * dndav[i] * dav[i];
-                                sumS11 += factor * S11(av[i],lambda,theta);
+                                double theta = thetav[t];
+
+                                // integrate over the size distribution
+                                double sumS11 = 0.;
+                                double sumS12 = 0.;
+                                double sumS33 = 0.;
+                                double sumS34 = 0.;
+                                double sumabs = 0.;
+                                double sumabspol = 0.;
+                                for (int i = 0; i != numSizes; ++i)
+                                {
+                                    double a = av[i];
+                                    double factor = weightv[i] * dndav[i] * dav[i];
+                                    sumS11 += factor * S11(av[i], lambda, theta);
+                                    if (needSphericalPolarization)
+                                    {
+                                        sumS12 += factor * S12(a, lambda, theta);
+                                        sumS33 += factor * S33(a, lambda, theta);
+                                        sumS34 += factor * S34(a, lambda, theta);
+                                    }
+                                    if (needSpheroidalPolarization)
+                                    {
+                                        factor *= M_PI * a * a;
+                                        if (hasSpheroidalPolarization)
+                                        {
+                                            sumabs += factor * sQabs(a, lambda, theta);
+                                            sumabspol += factor * sQabspol(a, lambda, theta);
+                                        }
+                                        else
+                                        {
+                                            // for spherical grains:
+                                            //    Qabs(a,lambda,theta) = Qabs(a,lambda)
+                                            //    Qabspol(a,lambda,theta) = 0
+                                            sumabs += factor * Qabs(a, lambda);
+                                        }
+                                    }
+                                }
+
+                                // accumulate for all populations
+                                S11vv(ell, t) += sumS11;
                                 if (needSphericalPolarization)
                                 {
-                                    sumS12 += factor * S12(a,lambda,theta);
-                                    sumS33 += factor * S33(a,lambda,theta);
-                                    sumS34 += factor * S34(a,lambda,theta);
+                                    S12vv(ell, t) += sumS12;
+                                    S33vv(ell, t) += sumS33;
+                                    S34vv(ell, t) += sumS34;
                                 }
                                 if (needSpheroidalPolarization)
                                 {
-                                    factor *= M_PI * a * a;
-                                    if (hasSpheroidalPolarization)
-                                    {
-                                        sumabs += factor * sQabs(a,lambda,theta);
-                                        sumabspol += factor * sQabspol(a,lambda,theta);
-                                    }
-                                    else
-                                    {
-                                        // for spherical grains:
-                                        //    Qabs(a,lambda,theta) = Qabs(a,lambda)
-                                        //    Qabspol(a,lambda,theta) = 0
-                                        sumabs += factor * Qabs(a,lambda);
-                                    }
+                                    sigmaabsvv(ell, t) += sumabs;
+                                    sigmaabspolvv(ell, t) += sumabspol;
                                 }
                             }
-
-                            // accumulate for all populations
-                            S11vv(ell,t) += sumS11;
-                            if (needSphericalPolarization)
-                            {
-                                S12vv(ell,t) += sumS12;
-                                S33vv(ell,t) += sumS33;
-                                S34vv(ell,t) += sumS34;
-                            }
-                            if (needSpheroidalPolarization)
-                            {
-                                sigmaabsvv(ell,t) += sumabs;
-                                sigmaabspolvv(ell,t) += sumabspol;
-                            }
                         }
+                        log->infoIfElapsed("Calculated grain properties: ", currentChunkSize);
+                        firstIndex += currentChunkSize;
+                        numIndices -= currentChunkSize;
                     }
-                    log->infoIfElapsed("Calculated grain properties: ", currentChunkSize);
-                    firstIndex += currentChunkSize;
-                    numIndices -= currentChunkSize;
-                }
-            });
+                });
         }
     }
 
     // calculate g = gsigmasca / sigmasca
-    for (int ell=0; ell!=numLambda; ++ell)
+    for (int ell = 0; ell != numLambda; ++ell)
     {
-        asymmparv[ell] = sigmascav[ell] ? asymmparv[ell]/sigmascav[ell] : 0.;
+        asymmparv[ell] = sigmascav[ell] ? asymmparv[ell] / sigmascav[ell] : 0.;
     }
 
     // synchronize the Mueller matrix coefficients between processes, if applicable
@@ -290,7 +290,7 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
     // synchronize the spheroidal grain cross sections between processes, if applicable
     if (needSpheroidalPolarization)
     {
-        for (int ell=0; ell!=numLambda; ++ell)
+        for (int ell = 0; ell != numLambda; ++ell)
         {
             ProcessManager::sumToAll(sigmaabsvv[ell]);
             ProcessManager::sumToAll(sigmaabspolvv[ell]);
@@ -318,8 +318,8 @@ size_t MultiGrainDustMix::initializeExtraProperties(const Array& lambdav)
         Array sigmaabsv(numLambda);
 
         // loop over all populations and process size bins for each
-        int c = 0;      // population index
-        int b = 0;      // running size bin index
+        int c = 0;  // population index
+        int b = 0;  // running size bin index
         for (auto population : _populations)
         {
             // open the absorption cross section stored table for this population
@@ -342,48 +342,48 @@ size_t MultiGrainDustMix::initializeExtraProperties(const Array& lambdav)
             NR::buildLogGrid(aborderv, amin, amax, numPopBins);
 
             // loop over the size bins for this population
-            for (int bb = 0; bb!=numPopBins; ++bb)
+            for (int bb = 0; bb != numPopBins; ++bb)
             {
                 // create an integration grid over grain size within this bin
-                int numSizes = max(3., 100 * log10(amax/amin));
-                Array av(numSizes);      // "a" for each point
-                Array dav(numSizes);     // "da" for each point
-                Array dndav(numSizes);   // "dnda" for each point
-                Array weightv(numSizes); // integration weight for each point (1/2 or 1 in addition to normalization)
+                int numSizes = max(3., 100 * log10(amax / amin));
+                Array av(numSizes);       // "a" for each point
+                Array dav(numSizes);      // "da" for each point
+                Array dndav(numSizes);    // "dnda" for each point
+                Array weightv(numSizes);  // integration weight for each point (1/2 or 1 in addition to normalization)
                 {
                     double logamin = log10(aborderv[bb]);
-                    double logamax = log10(aborderv[bb+1]);
-                    double dloga = (logamax-logamin)/(numSizes-1);
-                    for (int i=0; i!=numSizes; ++i)
+                    double logamax = log10(aborderv[bb + 1]);
+                    double dloga = (logamax - logamin) / (numSizes - 1);
+                    for (int i = 0; i != numSizes; ++i)
                     {
-                        av[i] = pow(10, logamin + i*dloga);
+                        av[i] = pow(10, logamin + i * dloga);
                         dav[i] = av[i] * M_LN10 * dloga;
                         dndav[i] = population->sizeDistribution()->dnda(av[i]);
                         weightv[i] = _normv[c];
                     }
                     weightv[0] *= 0.5;
-                    weightv[numSizes-1] *= 0.5;
+                    weightv[numSizes - 1] *= 0.5;
                 }
 
                 // size-integrate the absorption cross sections for this bin
                 // this can take a few seconds for all populations/size bins combined,
                 // so we parallelize the loop but there is no reason to log progress
                 sigmaabsv = 0;  // clear array in case calculation is distributed over multiple processes
-                find<ParallelFactory>()->parallelDistributed()->call(numLambda,
-                    [&lambdav,&av,&dav,&dndav,&weightv,&Qabs,&sigmaabsv] (size_t firstIndex, size_t numIndices)
-                {
-                    size_t numSizes = av.size();
-                    for (size_t ell=firstIndex; ell!=firstIndex+numIndices; ++ell)
-                    {
-                        double sum = 0.;
-                        for (size_t i=0; i!=numSizes; ++i)
+                find<ParallelFactory>()->parallelDistributed()->call(
+                    numLambda,
+                    [&lambdav, &av, &dav, &dndav, &weightv, &Qabs, &sigmaabsv](size_t firstIndex, size_t numIndices) {
+                        size_t numSizes = av.size();
+                        for (size_t ell = firstIndex; ell != firstIndex + numIndices; ++ell)
                         {
-                            double area = M_PI * av[i] * av[i];
-                            sum += weightv[i] * dndav[i] * area * Qabs(av[i], lambdav[ell]) * dav[i];
+                            double sum = 0.;
+                            for (size_t i = 0; i != numSizes; ++i)
+                            {
+                                double area = M_PI * av[i] * av[i];
+                                sum += weightv[i] * dndav[i] * area * Qabs(av[i], lambdav[ell]) * dav[i];
+                            }
+                            sigmaabsv[ell] = sum;
                         }
-                        sigmaabsv[ell] = sum;
-                    }
-                });
+                    });
                 ProcessManager::sumToAll(sigmaabsv);
 
                 // setup the appropriate emissivity calculator for this bin
@@ -392,14 +392,14 @@ size_t MultiGrainDustMix::initializeExtraProperties(const Array& lambdav)
                     // calculate the mean grain mass for this bin
                     double sum1 = 0.;
                     double sum2 = 0.;
-                    for (int i=0; i!=numSizes; ++i)
+                    for (int i = 0; i != numSizes; ++i)
                     {
-                        double volume = 4.0*M_PI/3.0 * av[i] * av[i] * av[i];
+                        double volume = 4.0 * M_PI / 3.0 * av[i] * av[i] * av[i];
                         sum1 += weightv[i] * dndav[i] * volume * dav[i];
                         sum2 += weightv[i] * dndav[i] * dav[i];
                     }
                     double bulkDensity = population->composition()->bulkDensity();
-                    double meanMass =  bulkDensity * sum1/sum2;
+                    double meanMass = bulkDensity * sum1 / sum2;
 
                     // get the grain type for this population
                     string grainType = population->composition()->name();
@@ -436,8 +436,10 @@ size_t MultiGrainDustMix::initializeExtraProperties(const Array& lambdav)
 Array MultiGrainDustMix::emissivity(const Array& Jv) const
 {
     // use the appropriate emissivity calculator
-    if (_stochastic) return _calcSt.emissivity(Jv);
-    else             return _calcEq.emissivity(Jv);
+    if (_stochastic)
+        return _calcSt.emissivity(Jv);
+    else
+        return _calcEq.emissivity(Jv);
 }
 
 ////////////////////////////////////////////////////////////////////

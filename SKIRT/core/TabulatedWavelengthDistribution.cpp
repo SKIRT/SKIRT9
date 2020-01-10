@@ -20,7 +20,7 @@ void TabulatedWavelengthDistribution::setupSelfBefore()
     getWavelengthsAndProbabilities(inlambdav, inpv);
 
     // determine the intersected wavelength range
-    Range range(inlambdav[0], inlambdav[inlambdav.size()-1]);
+    Range range(inlambdav[0], inlambdav[inlambdav.size() - 1]);
     range.intersect(interface<SourceWavelengthRangeInterface>()->wavelengthRange());
     if (range.empty()) throw FATALERROR("Wavelength distribution range does not overlap source wavelength range");
 

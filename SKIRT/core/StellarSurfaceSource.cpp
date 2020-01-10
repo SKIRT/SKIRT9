@@ -26,29 +26,29 @@ namespace
     {
         // picking a random (theta',phi')
         double thetap = asin(sqrt(random->uniform()));
-        double phip = 2.0*M_PI*random->uniform();
-        Direction bfkp(thetap,phip);
+        double phip = 2.0 * M_PI * random->uniform();
+        Direction bfkp(thetap, phip);
         double kpx, kpy, kpz;
-        bfkp.cartesian(kpx,kpy,kpz);
+        bfkp.cartesian(kpx, kpy, kpz);
 
         // conversion to the regular coordinate system
         double theta, phi;
-        bfu.spherical(theta,phi);
+        bfu.spherical(theta, phi);
         double costheta = cos(theta);
         double sintheta = sin(theta);
         double cosphi = cos(phi);
         double sinphi = sin(phi);
-        double kx = costheta*cosphi*kpx - sinphi*kpy + sintheta*cosphi*kpz;
-        double ky = costheta*sinphi*kpx + cosphi*kpy + sintheta*sinphi*kpz;
-        double kz = -sintheta*kpx + costheta*kpz;
-        return Direction(kx,ky,kz);
+        double kx = costheta * cosphi * kpx - sinphi * kpy + sintheta * cosphi * kpz;
+        double ky = costheta * sinphi * kpx + cosphi * kpy + sintheta * sinphi * kpz;
+        double kz = -sintheta * kpx + costheta * kpz;
+        return Direction(kx, ky, kz);
     }
 
     // this function returns the normalized probability of launching in a certain direction
     // for a given launch position on the unit sphere (which is actually specified as a direction)
     double probabilityOfDirectionForLaunchPosition(Direction bfk, Direction bfu)
     {
-        double costhetap = Vec::dot(bfk,bfu);
+        double costhetap = Vec::dot(bfk, bfu);
         if (costhetap > 0.)
             return 4. * costhetap;
         else
@@ -63,7 +63,10 @@ namespace
     public:
         void setLaunchPosition(Direction bfu) { _bfu = bfu; }
         double probabilityForDirection(Direction bfk) const override
-                        { return probabilityOfDirectionForLaunchPosition(bfk, _bfu); }
+        {
+            return probabilityOfDirectionForLaunchPosition(bfk, _bfu);
+        }
+
     private:
         Direction _bfu;
     };

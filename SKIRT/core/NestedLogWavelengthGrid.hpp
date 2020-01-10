@@ -18,31 +18,31 @@ class NestedLogWavelengthGrid : public DisjointWavelengthGrid
 {
     ITEM_CONCRETE(NestedLogWavelengthGrid, DisjointWavelengthGrid, "a nested logarithmic wavelength grid")
 
-    PROPERTY_DOUBLE(minWavelengthBaseGrid, "the shortest wavelength of the low-resolution grid")
+        PROPERTY_DOUBLE(minWavelengthBaseGrid, "the shortest wavelength of the low-resolution grid")
         ATTRIBUTE_QUANTITY(minWavelengthBaseGrid, "wavelength")
         ATTRIBUTE_MIN_VALUE(minWavelengthBaseGrid, "1 Angstrom")
         ATTRIBUTE_MAX_VALUE(minWavelengthBaseGrid, "1 m")
 
-    PROPERTY_DOUBLE(maxWavelengthBaseGrid, "the longest wavelength of the low-resolution grid")
+        PROPERTY_DOUBLE(maxWavelengthBaseGrid, "the longest wavelength of the low-resolution grid")
         ATTRIBUTE_QUANTITY(maxWavelengthBaseGrid, "wavelength")
         ATTRIBUTE_MIN_VALUE(maxWavelengthBaseGrid, "1 Angstrom")
         ATTRIBUTE_MAX_VALUE(maxWavelengthBaseGrid, "1 m")
 
-    PROPERTY_INT(numWavelengthsBaseGrid, "the number of wavelength grid points in the low-resolution grid")
+        PROPERTY_INT(numWavelengthsBaseGrid, "the number of wavelength grid points in the low-resolution grid")
         ATTRIBUTE_MIN_VALUE(numWavelengthsBaseGrid, "3")
         ATTRIBUTE_DEFAULT_VALUE(numWavelengthsBaseGrid, "25")
 
-    PROPERTY_DOUBLE(minWavelengthSubGrid, "the shortest wavelength of the high-resolution subgrid")
+        PROPERTY_DOUBLE(minWavelengthSubGrid, "the shortest wavelength of the high-resolution subgrid")
         ATTRIBUTE_QUANTITY(minWavelengthSubGrid, "wavelength")
         ATTRIBUTE_MIN_VALUE(minWavelengthSubGrid, "1 Angstrom")
         ATTRIBUTE_MAX_VALUE(minWavelengthSubGrid, "1 m")
 
-    PROPERTY_DOUBLE(maxWavelengthSubGrid, "the longest wavelength of the high-resolution subgrid")
+        PROPERTY_DOUBLE(maxWavelengthSubGrid, "the longest wavelength of the high-resolution subgrid")
         ATTRIBUTE_QUANTITY(maxWavelengthSubGrid, "wavelength")
         ATTRIBUTE_MIN_VALUE(maxWavelengthSubGrid, "1 Angstrom")
         ATTRIBUTE_MAX_VALUE(maxWavelengthSubGrid, "1 m")
 
-    PROPERTY_INT(numWavelengthsSubGrid, "the number of wavelength grid points in the high-resolution subgrid")
+        PROPERTY_INT(numWavelengthsSubGrid, "the number of wavelength grid points in the high-resolution subgrid")
         ATTRIBUTE_MIN_VALUE(numWavelengthsSubGrid, "3")
         ATTRIBUTE_DEFAULT_VALUE(numWavelengthsSubGrid, "25")
 

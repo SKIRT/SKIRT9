@@ -10,8 +10,8 @@
 
 double UniformSmoothingKernel::density(double u) const
 {
-    if (u<0.0 || u>1.0) return 0.0;
-    return 0.75/M_PI;
+    if (u < 0.0 || u > 1.0) return 0.0;
+    return 0.75 / M_PI;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -19,7 +19,7 @@ double UniformSmoothingKernel::density(double u) const
 double UniformSmoothingKernel::generateRadius() const
 {
     double X = random()->uniform();
-    return pow(X,1.0/3.0);
+    return pow(X, 1.0 / 3.0);
 }
 
 //////////////////////////////////////////////////////////////////////

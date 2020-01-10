@@ -12,10 +12,7 @@
 
 namespace
 {
-    bool isLetterOrDigit(int c)
-    {
-        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9');
-    }
+    bool isLetterOrDigit(int c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9'); }
 
     class BooleanExpressionParser final
     {
@@ -25,7 +22,8 @@ namespace
 
     public:
         BooleanExpressionParser(string expression, std::function<bool(string)> isIdentifierTrue)
-            :_in(expression), _isTrue(isIdentifierTrue) { }
+            : _in(expression), _isTrue(isIdentifierTrue)
+        {}
 
         bool evaluate()
         {
@@ -43,8 +41,10 @@ namespace
             while (_in.peek() == '&' || _in.peek() == '|')
             {
                 // get the operator and process the subsequent term accordingly
-                if (_in.get() == '&') result &= term();
-                else result |= term();
+                if (_in.get() == '&')
+                    result &= term();
+                else
+                    result |= term();
             }
             return result;
         }
@@ -82,7 +82,8 @@ namespace
             }
 
             // unsupported character
-            else throw FATALERROR("Invalid Boolean expression");
+            else
+                throw FATALERROR("Invalid Boolean expression");
 
             return result;
         }

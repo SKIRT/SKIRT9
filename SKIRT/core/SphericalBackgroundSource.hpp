@@ -20,7 +20,7 @@ class SphericalBackgroundSource : public CenteredSource
     ITEM_CONCRETE(SphericalBackgroundSource, CenteredSource,
                   "a spherical background source with an anisotropic inward radiation field")
 
-    PROPERTY_DOUBLE(backgroundRadius, "the radius of the background sphere")
+        PROPERTY_DOUBLE(backgroundRadius, "the radius of the background sphere")
         ATTRIBUTE_QUANTITY(backgroundRadius, "length")
         ATTRIBUTE_MIN_VALUE(backgroundRadius, "]0")
 

@@ -110,8 +110,8 @@ public:
         wavelength grid specified as an argument. Furthermore, the function precalculates the
         heating and cooling rates used for the stochastic probability calculations, barring the
         input radiation field dependency, again on each of the constructed temperature grids. */
-    void precalculate(SimulationItem* item, const Array& lambdav, const Array& sigmaabsv,
-                      string grainType, double bulkDensity, double meanMass, const StoredTable<1>& enthalpy);
+    void precalculate(SimulationItem* item, const Array& lambdav, const Array& sigmaabsv, string grainType,
+                      double bulkDensity, double meanMass, const StoredTable<1>& enthalpy);
 
     /** This function returns the size of the memory, in bytes, allocated by the precalculate()
         function so far. This information can be used for logging purposes. */
@@ -131,19 +131,19 @@ public:
 
 private:
     // wavelength grids
-    Array _rflambdav;            // radiation field wavelength grid (RFWLG) -- indexed on k
-    Array _rfdlambdav;           // radiation field wavelength grid bin widths -- indexed on k
-    Array _emlambdav;            // dust emission wavelength grid (EMWLG) -- indexed on ell
+    Array _rflambdav;   // radiation field wavelength grid (RFWLG) -- indexed on k
+    Array _rfdlambdav;  // radiation field wavelength grid bin widths -- indexed on k
+    Array _emlambdav;   // dust emission wavelength grid (EMWLG) -- indexed on ell
 
     // temperature grids
-    const SDE_TemperatureGrid* _gridA{nullptr};      // coarse grid
-    const SDE_TemperatureGrid* _gridB{nullptr};      // medium grid
-    const SDE_TemperatureGrid* _gridC{nullptr};      // fine grid
+    const SDE_TemperatureGrid* _gridA{nullptr};  // coarse grid
+    const SDE_TemperatureGrid* _gridB{nullptr};  // medium grid
+    const SDE_TemperatureGrid* _gridC{nullptr};  // fine grid
 
     // calculators for each representative dust grain (size bin) -- indexed on b
-    vector<const SDE_Calculator*> _calculatorsA;     // coarse grid
-    vector<const SDE_Calculator*> _calculatorsB;     // medium grid
-    vector<const SDE_Calculator*> _calculatorsC;     // fine grid
+    vector<const SDE_Calculator*> _calculatorsA;  // coarse grid
+    vector<const SDE_Calculator*> _calculatorsB;  // medium grid
+    vector<const SDE_Calculator*> _calculatorsC;  // fine grid
 
     // other properties for each representative dust grain (size bin) -- indexed on b
     vector<string> _grainTypes;        // the grain type identifier

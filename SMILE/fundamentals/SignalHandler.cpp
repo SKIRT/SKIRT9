@@ -18,18 +18,13 @@ static void my__signal__handler(int sig)
     haveDoneThis = true;
 
     // throw an error with an appropriate message
-    switch(sig)
+    switch (sig)
     {
-    case SIGABRT:
-        throw FATALERROR("SIGNAL: Abort");
-    case SIGFPE:
-        throw FATALERROR("SIGNAL: Floating Point Exception");
-    case SIGILL:
-        throw FATALERROR("SIGNAL: Illegal Instruction");
-    case SIGSEGV:
-        throw FATALERROR("SIGNAL: Segmentation Violation");
-    default:
-        throw FATALERROR("SIGNAL: Unknown");
+        case SIGABRT: throw FATALERROR("SIGNAL: Abort");
+        case SIGFPE: throw FATALERROR("SIGNAL: Floating Point Exception");
+        case SIGILL: throw FATALERROR("SIGNAL: Illegal Instruction");
+        case SIGSEGV: throw FATALERROR("SIGNAL: Segmentation Violation");
+        default: throw FATALERROR("SIGNAL: Unknown");
     }
 }
 
@@ -38,8 +33,8 @@ static void my__signal__handler(int sig)
 void SignalHandler::InstallSignalHandlers()
 {
     signal(SIGABRT, my__signal__handler);
-    signal(SIGFPE,  my__signal__handler);
-    signal(SIGILL,  my__signal__handler);
+    signal(SIGFPE, my__signal__handler);
+    signal(SIGILL, my__signal__handler);
     signal(SIGSEGV, my__signal__handler);
 }
 

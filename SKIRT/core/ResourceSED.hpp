@@ -6,8 +6,8 @@
 #ifndef RESOURCESED_HPP
 #define RESOURCESED_HPP
 
-#include "SED.hpp"
 #include "Array.hpp"
+#include "SED.hpp"
 #include "StoredTable.hpp"
 
 ////////////////////////////////////////////////////////////////////

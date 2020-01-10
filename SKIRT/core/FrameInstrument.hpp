@@ -18,30 +18,30 @@ class FrameInstrument : public DistantInstrument
     ITEM_CONCRETE(FrameInstrument, DistantInstrument,
                   "a distant instrument that outputs the surface brightness in every pixel as a data cube")
 
-    PROPERTY_DOUBLE(fieldOfViewX, "the total field of view in the horizontal direction")
+        PROPERTY_DOUBLE(fieldOfViewX, "the total field of view in the horizontal direction")
         ATTRIBUTE_QUANTITY(fieldOfViewX, "length")
         ATTRIBUTE_MIN_VALUE(fieldOfViewX, "]0")
 
-    PROPERTY_INT(numPixelsX, "the number of pixels in the horizontal direction")
+        PROPERTY_INT(numPixelsX, "the number of pixels in the horizontal direction")
         ATTRIBUTE_MIN_VALUE(numPixelsX, "1")
         ATTRIBUTE_MAX_VALUE(numPixelsX, "10000")
         ATTRIBUTE_DEFAULT_VALUE(numPixelsX, "250")
 
-    PROPERTY_DOUBLE(centerX, "the center of the frame in the horizontal direction")
+        PROPERTY_DOUBLE(centerX, "the center of the frame in the horizontal direction")
         ATTRIBUTE_QUANTITY(centerX, "length")
         ATTRIBUTE_DEFAULT_VALUE(centerX, "0")
         ATTRIBUTE_DISPLAYED_IF(centerX, "Level2")
 
-    PROPERTY_DOUBLE(fieldOfViewY, "the total field of view in the vertical direction")
+        PROPERTY_DOUBLE(fieldOfViewY, "the total field of view in the vertical direction")
         ATTRIBUTE_QUANTITY(fieldOfViewY, "length")
         ATTRIBUTE_MIN_VALUE(fieldOfViewY, "]0")
 
-    PROPERTY_INT(numPixelsY, "the number of pixels in the vertical direction")
+        PROPERTY_INT(numPixelsY, "the number of pixels in the vertical direction")
         ATTRIBUTE_MIN_VALUE(numPixelsY, "1")
         ATTRIBUTE_MAX_VALUE(numPixelsY, "10000")
         ATTRIBUTE_DEFAULT_VALUE(numPixelsY, "250")
 
-    PROPERTY_DOUBLE(centerY, "the center of the frame in the vertical direction")
+        PROPERTY_DOUBLE(centerY, "the center of the frame in the vertical direction")
         ATTRIBUTE_QUANTITY(centerY, "length")
         ATTRIBUTE_DEFAULT_VALUE(centerY, "0")
         ATTRIBUTE_DISPLAYED_IF(centerY, "Level2")

@@ -36,16 +36,16 @@ class MeridionalDustTemperatureCutProbe : public Probe
         ATTRIBUTE_TYPE_DISPLAYED_IF(MeridionalDustTemperatureCutProbe,
                                     "Level2&Dust&SpatialGrid&RadiationField&Panchromatic")
 
-    PROPERTY_INT(numSamples, "the number of samples along the meridian")
+        PROPERTY_INT(numSamples, "the number of samples along the meridian")
         ATTRIBUTE_MIN_VALUE(numSamples, "3")
         ATTRIBUTE_MAX_VALUE(numSamples, "100000")
         ATTRIBUTE_DEFAULT_VALUE(numSamples, "250")
 
-    PROPERTY_DOUBLE(radius, "the radius of the circle containing the meridian")
+        PROPERTY_DOUBLE(radius, "the radius of the circle containing the meridian")
         ATTRIBUTE_QUANTITY(radius, "length")
         ATTRIBUTE_MIN_VALUE(radius, "]0")
 
-    PROPERTY_DOUBLE(azimuth, "the azimuth angle φ of the meridian")
+        PROPERTY_DOUBLE(azimuth, "the azimuth angle φ of the meridian")
         ATTRIBUTE_QUANTITY(azimuth, "posangle")
         ATTRIBUTE_MIN_VALUE(azimuth, "-360 deg")
         ATTRIBUTE_MAX_VALUE(azimuth, "360 deg")

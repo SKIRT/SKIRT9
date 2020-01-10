@@ -24,8 +24,8 @@ double AbstractDoublePropertyHandler::minValue() const
 
     // convert to double
     if (isValidDouble(value)) return toDouble(value);
-    throw FATALERROR("Invalid minimum value '" + value +
-                     "' for property '" + property()->name() + "' of type '" + target()->type() + "'");
+    throw FATALERROR("Invalid minimum value '" + value + "' for property '" + property()->name() + "' of type '"
+                     + target()->type() + "'");
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -41,8 +41,8 @@ double AbstractDoublePropertyHandler::maxValue() const
 
     // convert to double
     if (isValidDouble(value)) return toDouble(value);
-    throw FATALERROR("Invalid maximum value '" + value +
-                     "' for property '" + property()->name() + "' of type '" + target()->type() + "'");
+    throw FATALERROR("Invalid maximum value '" + value + "' for property '" + property()->name() + "' of type '"
+                     + target()->type() + "'");
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -99,7 +99,7 @@ bool AbstractDoublePropertyHandler::isInRange(double value) const
 
 bool AbstractDoublePropertyHandler::isInRange(const vector<double>& value) const
 {
-    return std::all_of(value.cbegin(), value.cend(), [this] (double x) { return isInRange(x); });
+    return std::all_of(value.cbegin(), value.cend(), [this](double x) { return isInRange(x); });
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -108,7 +108,7 @@ bool AbstractDoublePropertyHandler::isValidDouble(string value) const
 {
     // split into segments; must have exactly one or two segments
     vector<string> segments = StringUtils::split(StringUtils::squeeze(value), " ");
-    if (segments.empty() || segments.size()>2) return false;
+    if (segments.empty() || segments.size() > 2) return false;
 
     // verify that the first segment is a valid number
     if (!StringUtils::isValidDouble(segments[0])) return false;
@@ -118,12 +118,12 @@ bool AbstractDoublePropertyHandler::isValidDouble(string value) const
     if (qty.empty())
     {
         // a dimensionless quantity may have no unit spec
-        return segments.size()==1;
+        return segments.size() == 1;
     }
     else
     {
         // use the unit spec in the input value if there is one; otherwise use the unit system to get a default unit
-        string unit = segments.size()==2 ? segments[1] : unitSystem();
+        string unit = segments.size() == 2 ? segments[1] : unitSystem();
 
         // verify that the combination works
         // since this is probably an input error rather than a programming error, we don't throw an exception
@@ -149,7 +149,7 @@ double AbstractDoublePropertyHandler::toDouble(string value) const
     if (!qty.empty())
     {
         // use the unit spec in the input value if there is one; otherwise use the unit system to get a default unit
-        string unit = segments.size()==2 ? segments[1] : unitSystem();
+        string unit = segments.size() == 2 ? segments[1] : unitSystem();
         result = schema()->in(qty, unit, result);
     }
 
@@ -166,8 +166,8 @@ string AbstractDoublePropertyHandler::toString(double value) const
     if (!qty.empty())
     {
         string system = unitSystem();
-        value = schema()->out(qty, system, value);    // overwrite incoming value
-        unit = " " + schema()->unit(qty, system);     // include separating space
+        value = schema()->out(qty, system, value);  // overwrite incoming value
+        unit = " " + schema()->unit(qty, system);   // include separating space
     }
 
     return StringUtils::toString(value) + unit;
@@ -182,7 +182,8 @@ bool AbstractDoublePropertyHandler::isValidDoubleList(string value) const
     if (segments.empty()) return false;
 
     // validate each segment
-    for (string segment : segments) if (!isValidDouble(segment)) return false;
+    for (string segment : segments)
+        if (!isValidDouble(segment)) return false;
     return true;
 }
 
@@ -228,8 +229,10 @@ string AbstractDoublePropertyHandler::quantity() const
 
         // if the property has the wrong type, or its value is an unknown quantity,
         // return the empty string, which means "dimensionless"
-        if (enumHandler && schema()->has(enumHandler->value())) result = enumHandler->value();
-        else result.clear();
+        if (enumHandler && schema()->has(enumHandler->value()))
+            result = enumHandler->value();
+        else
+            result.clear();
     }
     return result;
 }

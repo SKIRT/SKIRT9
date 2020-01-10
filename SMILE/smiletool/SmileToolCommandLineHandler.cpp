@@ -24,8 +24,8 @@ int SmileToolCommandLineHandler::perform()
     // Catch and properly report any exceptions
     try
     {
-        Console::warning("Welcome to the SMILE console tool "
-                         + BuildInfo::projectVersion() + " " + BuildInfo::timestamp());
+        Console::warning("Welcome to the SMILE console tool " + BuildInfo::projectVersion() + " "
+                         + BuildInfo::timestamp());
 
         // Process and validate the command line arguments
         CommandLineArguments args(System::arguments(), "-i* -o* -t* -l* -s*");
@@ -69,12 +69,12 @@ int SmileToolCommandLineHandler::perform()
         {
             if (StringUtils::indexOf(schemaNames, schemaName) < 0)
             {
-                Console::error("The specified SMILE schema file '" + schemaName +
-                               "' is not found in the library directory '" + libraryPath + "'");
+                Console::error("The specified SMILE schema file '" + schemaName
+                               + "' is not found in the library directory '" + libraryPath + "'");
                 return EXIT_FAILURE;
             }
         }
-        else if (!infilename.empty())       // loading existing dataset
+        else if (!infilename.empty())  // loading existing dataset
         {
             // search for compatible schema in the libary
             for (const auto& name : schemaNames)
@@ -94,10 +94,10 @@ int SmileToolCommandLineHandler::perform()
                 return EXIT_FAILURE;
             }
         }
-        else                                // constructing new dataset
+        else  // constructing new dataset
         {
-            auto schemaIndex = Console::promptForChoice("the file type to be created", schemaTitles,
-                                                        false, 0, true, "or zero to exit");
+            auto schemaIndex = Console::promptForChoice("the file type to be created", schemaTitles, false, 0, true,
+                                                        "or zero to exit");
             if (schemaIndex < 0)
             {
                 Console::warning("Session aborted by user");
@@ -139,14 +139,15 @@ int SmileToolCommandLineHandler::perform()
             while (true)
             {
                 // get a file name
-                outfilename = Console::promptForString("Enter the name of the " + schema.schemaExtension()
-                                                       + " file to be saved", false, string());
+                outfilename = Console::promptForString(
+                    "Enter the name of the " + schema.schemaExtension() + " file to be saved", false, string());
                 outfilename = StringUtils::addExtension(outfilename, schema.schemaExtension());
                 // verify that the file does not yet exists
                 // (we test whether the file can be opened, which is the best we can do in standard C++14)
                 if (System::ifstream(outfilename))
                     Console::error("File '" + outfilename + "' already exists; enter another name");
-                else break;
+                else
+                    break;
             }
         }
 

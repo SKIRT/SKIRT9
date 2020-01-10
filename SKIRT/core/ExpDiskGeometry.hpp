@@ -24,26 +24,26 @@ class ExpDiskGeometry : public SepAxGeometry
 {
     ITEM_CONCRETE(ExpDiskGeometry, SepAxGeometry, "an exponential disk geometry")
 
-    PROPERTY_DOUBLE(scaleLength, "the scale length")
+        PROPERTY_DOUBLE(scaleLength, "the scale length")
         ATTRIBUTE_QUANTITY(scaleLength, "length")
         ATTRIBUTE_MIN_VALUE(scaleLength, "]0")
 
-    PROPERTY_DOUBLE(scaleHeight, "the scale height")
+        PROPERTY_DOUBLE(scaleHeight, "the scale height")
         ATTRIBUTE_QUANTITY(scaleHeight, "length")
         ATTRIBUTE_MIN_VALUE(scaleHeight, "]0")
 
-    PROPERTY_DOUBLE(minRadius, "the radius of the central cavity")
+        PROPERTY_DOUBLE(minRadius, "the radius of the central cavity")
         ATTRIBUTE_QUANTITY(minRadius, "length")
         ATTRIBUTE_MIN_VALUE(minRadius, "[0")
         ATTRIBUTE_DEFAULT_VALUE(minRadius, "0")
 
-    PROPERTY_DOUBLE(maxRadius, "the truncation radius (zero means no truncation)")
+        PROPERTY_DOUBLE(maxRadius, "the truncation radius (zero means no truncation)")
         ATTRIBUTE_QUANTITY(maxRadius, "length")
         ATTRIBUTE_MIN_VALUE(maxRadius, "[0")
         ATTRIBUTE_DEFAULT_VALUE(maxRadius, "0")
         ATTRIBUTE_DISPLAYED_IF(maxRadius, "Level2")
 
-    PROPERTY_DOUBLE(maxZ, "the truncation height (zero means no truncation)")
+        PROPERTY_DOUBLE(maxZ, "the truncation height (zero means no truncation)")
         ATTRIBUTE_QUANTITY(maxZ, "length")
         ATTRIBUTE_MIN_VALUE(maxZ, "[0")
         ATTRIBUTE_DEFAULT_VALUE(maxZ, "0")

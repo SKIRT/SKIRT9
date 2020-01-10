@@ -28,7 +28,7 @@ namespace
         double sumtop = 0.;
         double sumbot = 0.;
         int numWavelengths = wavelengthGrid->numBins();
-        for (int ell=0; ell!=numWavelengths; ++ell)
+        for (int ell = 0; ell != numWavelengths; ++ell)
         {
             double lambda = wavelengthGrid->wavelength(ell);
             double dlambda = wavelengthGrid->effectiveWidth(ell);
@@ -37,8 +37,10 @@ namespace
             sumtop += product * lambda;
             sumbot += product;
         }
-        if (sumbot > 0.) return sumtop / sumbot;
-        else return 0.;
+        if (sumbot > 0.)
+            return sumtop / sumbot;
+        else
+            return 0.;
     }
 }
 
@@ -59,7 +61,7 @@ vector<int> TemperatureWavelengthCellLibrary::mapping(const Array& bv) const
     double lambdamax = 0.0;
     Array Tv(numCells);
     Array lambdav(numCells);
-    for (int m=0; m!=numCells; ++m)
+    for (int m = 0; m != numCells; ++m)
     {
         // ignore cells that won't be used by the caller
         if (bv[m])
@@ -73,10 +75,10 @@ vector<int> TemperatureWavelengthCellLibrary::mapping(const Array& bv) const
                 Tv[m] = T;
                 lambdav[m] = lambda;
 
-                Tmin = min(Tmin,T);
-                Tmax = max(Tmax,T);
-                lambdamin = min(lambdamin,lambda);
-                lambdamax = max(lambdamax,lambda);
+                Tmin = min(Tmin, T);
+                Tmax = max(Tmax, T);
+                lambdamin = min(lambdamin, lambda);
+                lambdamax = max(lambdamax, lambda);
             }
         }
     }
@@ -85,30 +87,32 @@ vector<int> TemperatureWavelengthCellLibrary::mapping(const Array& bv) const
     auto log = find<Log>();
     auto units = find<Units>();
     log->info("  Indicative temperatures vary"
-              " from T = " + StringUtils::toString(units->otemperature(Tmin),'g',5) + " " + units->utemperature() +
-              " to T = " + StringUtils::toString(units->otemperature(Tmax),'g',5) + " " + units->utemperature());
+              " from T = "
+              + StringUtils::toString(units->otemperature(Tmin), 'g', 5) + " " + units->utemperature()
+              + " to T = " + StringUtils::toString(units->otemperature(Tmax), 'g', 5) + " " + units->utemperature());
     log->info("  Indicative wavelengths vary"
-              " from λ = " + StringUtils::toString(units->owavelength(lambdamin),'g',5) + " " + units->uwavelength() +
-              " to λ = " + StringUtils::toString(units->owavelength(lambdamax),'g',5) + " " + units->uwavelength());
+              " from λ = "
+              + StringUtils::toString(units->owavelength(lambdamin), 'g', 5) + " " + units->uwavelength()
+              + " to λ = " + StringUtils::toString(units->owavelength(lambdamax), 'g', 5) + " " + units->uwavelength());
 
     // determine for every dust cell m the corresponding library entry n
-    double dT = (Tmax-Tmin)/_numTemperatures;
+    double dT = (Tmax - Tmin) / _numTemperatures;
     double loglambdamin = log10(lambdamin);
     double loglambdamax = log10(lambdamax);
-    double dloglambda = (loglambdamax-loglambdamin)/_numWavelengths;
+    double dloglambda = (loglambdamax - loglambdamin) / _numWavelengths;
     vector<int> nv(numCells);
-    for (int m=0; m!=numCells; ++m)
+    for (int m = 0; m != numCells; ++m)
     {
         if (Tv[m] > 0. && lambdav[m] > 0.)
         {
             double T = Tv[m];
-            int i = max(0, min(_numTemperatures-1, static_cast<int>((T-Tmin)/dT) ));
+            int i = max(0, min(_numTemperatures - 1, static_cast<int>((T - Tmin) / dT)));
 
             double lambda = lambdav[m];
             double loglambda = log10(lambda);
-            int j = max(0, min(_numWavelengths-1, static_cast<int>((loglambda-loglambdamin)/dloglambda) ));
+            int j = max(0, min(_numWavelengths - 1, static_cast<int>((loglambda - loglambdamin) / dloglambda)));
 
-            nv[m] = i + _numTemperatures*j;
+            nv[m] = i + _numTemperatures * j;
         }
         else
         {

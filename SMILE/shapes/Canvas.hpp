@@ -86,12 +86,12 @@ private:
     // ================== Data members ==================
 
 private:
-    Table<3> _pixels;   // the pixel values (3 RGB components for each pixel)
-    size_t _n = 0;      // the number of pixels
-    double _r = 1.;     // current color
+    Table<3> _pixels;  // the pixel values (3 RGB components for each pixel)
+    size_t _n = 0;     // the number of pixels
+    double _r = 1.;    // current color
     double _g = 1.;
     double _b = 1.;
-    double _w2 = 0.005; // half of the current width
+    double _w2 = 0.005;  // half of the current width
 };
 
 ////////////////////////////////////////////////////////////////////

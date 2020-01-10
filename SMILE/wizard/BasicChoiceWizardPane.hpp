@@ -34,8 +34,7 @@ public:
         be selected. The third argument indicates the dirty state of the current simulation item
         hierarchy. The last argument specifies the object that will be notified of changes in the
         selection through invocation of the object's setBasicChoice() slot. */
-    explicit BasicChoiceWizardPane(bool initialOpenExisting, string initialSchemaName,
-                                   bool dirty, QObject* target);
+    explicit BasicChoiceWizardPane(bool initialOpenExisting, string initialSchemaName, bool dirty, QObject* target);
 
     // ==================== Event Handling ====================
 
@@ -94,16 +93,16 @@ signals:
 
 private:
     // copy of constructor arguments
-    bool _openExisting;             // open existing dataset or create new one
-    string _schemaName;             // name of schema file
-    bool _dirty;                    // current dataset needs saving
+    bool _openExisting;  // open existing dataset or create new one
+    string _schemaName;  // name of schema file
+    bool _dirty;         // current dataset needs saving
 
     // schema library info
-    string _defaultLibraryPath;     // directory path to the default schema library
-    string _libraryPath;            // directory path to the schema library
-    string _error;                  // error message: non-empty if an error occurred while loading schema library info
-    vector<string> _schemaNames;    // names of the schema files in the library
-    vector<string> _schemaTitles;   // corresponding user-friendly descriptions
+    string _defaultLibraryPath;    // directory path to the default schema library
+    string _libraryPath;           // directory path to the schema library
+    string _error;                 // error message: non-empty if an error occurred while loading schema library info
+    vector<string> _schemaNames;   // names of the schema files in the library
+    vector<string> _schemaTitles;  // corresponding user-friendly descriptions
 
     // GUI widgets
     QLayout* _choiceLayout;         // the layout containing the basic choice radio buttons

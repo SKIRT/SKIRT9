@@ -32,8 +32,7 @@ void SpatialCellPropertiesProbe::probeSetup()
         out.addColumn("z coordinate of cell center", units->ulength());
         out.addColumn("cell volume", units->uvolume());
         out.addColumn("optical depth of cell diagonal at "
-                      + StringUtils::toString(units->owavelength(wavelength()), 'g')
-                      + " " + units->uwavelength() );
+                      + StringUtils::toString(units->owavelength(wavelength()), 'g') + " " + units->uwavelength());
         out.addColumn("dust mass density in cell", units->umassvolumedensity());
         out.addColumn("electron number density in cell", units->unumbervolumedensity());
         out.addColumn("hydrogen number density in cell", units->unumbervolumedensity());
@@ -41,7 +40,7 @@ void SpatialCellPropertiesProbe::probeSetup()
         // write a line for each cell
         int numMedia = ms->numMedia();
         int numCells = grid->numCells();
-        for (int m=0; m!=numCells; ++m)
+        for (int m = 0; m != numCells; ++m)
         {
             Position p = grid->centralPositionInCell(m);
             double V = ms->volume(m);
@@ -49,18 +48,15 @@ void SpatialCellPropertiesProbe::probeSetup()
             double dust = 0.;
             double elec = 0.;
             double gas = 0.;
-            for (int h=0; h!=numMedia; ++h)
+            for (int h = 0; h != numMedia; ++h)
             {
                 if (ms->isDust(h)) dust += ms->massDensity(m, h);
                 if (ms->isElectrons(h)) elec += ms->numberDensity(m, h);
                 if (ms->isGas(h)) gas += ms->numberDensity(m, h);
             }
-            out.writeRow(vector<double>({ static_cast<double>(m),
-                                          units->olength(p.x()), units->olength(p.y()), units->olength(p.z()),
-                                          units->ovolume(V), tau,
-                                          units->omassvolumedensity(dust),
-                                          units->onumbervolumedensity(elec),
-                                          units->onumbervolumedensity(gas) }));
+            out.writeRow(vector<double>({static_cast<double>(m), units->olength(p.x()), units->olength(p.y()),
+                                         units->olength(p.z()), units->ovolume(V), tau, units->omassvolumedensity(dust),
+                                         units->onumbervolumedensity(elec), units->onumbervolumedensity(gas)}));
         }
     }
 }

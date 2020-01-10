@@ -23,7 +23,7 @@ MultiHybridParallel::~MultiHybridParallel()
 
 ////////////////////////////////////////////////////////////////////
 
-void MultiHybridParallel::call(size_t maxIndex, std::function<void(size_t,size_t)> target)
+void MultiHybridParallel::call(size_t maxIndex, std::function<void(size_t, size_t)> target)
 {
     // Copy the target function so it can be invoked from the child threads
     _target = target;
@@ -49,7 +49,7 @@ void MultiHybridParallel::call(size_t maxIndex, std::function<void(size_t,size_t
 
         // Serve each non-root process an empty chunk as a terminating signal
         ProcessManager::serveChunkRequest(rank, 0, 0);
-        for (int i = 2; i!=ProcessManager::size(); ++i)
+        for (int i = 2; i != ProcessManager::size(); ++i)
         {
             rank = ProcessManager::waitForChunkRequest();
             ProcessManager::serveChunkRequest(rank, 0, 0);
@@ -89,8 +89,10 @@ void MultiHybridParallel::call(size_t maxIndex, std::function<void(size_t,size_t
                 std::unique_lock<std::mutex> lock(_mutex);
                 _firstIndex = firstIndex;
                 _numIndices = numIndices;
-                if (success) _ready = true;
-                else _done = true;
+                if (success)
+                    _ready = true;
+                else
+                    _done = true;
             }
             _conditionChildren.notify_all();
         }
@@ -116,7 +118,7 @@ bool MultiHybridParallel::doSomeWork()
         // Request a new chunk
         {
             std::unique_lock<std::mutex> lock(_mutex);
-            if (_done) return false;        // exit if there are no more chunks
+            if (_done) return false;  // exit if there are no more chunks
             _requests++;
         }
         _conditionParent.notify_all();
@@ -127,7 +129,7 @@ bool MultiHybridParallel::doSomeWork()
             std::unique_lock<std::mutex> lock(_mutex);
             while (!_ready && !_done) _conditionChildren.wait(lock);
 
-            if (_done) return false;        // exit if there are no more chunks
+            if (_done) return false;  // exit if there are no more chunks
             firstIndex = _firstIndex;
             numIndices = _numIndices;
             _ready = false;

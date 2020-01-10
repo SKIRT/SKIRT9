@@ -18,8 +18,7 @@
     bulk mass density is set to the value of 3090 kg/m3 specified by Min for silicate grains. */
 class MinSilicateGrainComposition : public GrainComposition
 {
-    ITEM_CONCRETE(MinSilicateGrainComposition, GrainComposition,
-                  "a Min 2007 amorphous silicate dust grain composition")
+    ITEM_CONCRETE(MinSilicateGrainComposition, GrainComposition, "a Min 2007 amorphous silicate dust grain composition")
     ITEM_END()
 
 public:

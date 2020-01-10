@@ -25,7 +25,7 @@ public:
     /** This function returns the total number of entities and total mass in the medium, in that
         order, given a geometry and material mix in addition to user configuration options offered
         by the subclass implementing the function. */
-    virtual std::pair<double,double> numberAndMass(const Geometry* geom, const MaterialMix* mix) const = 0;
+    virtual std::pair<double, double> numberAndMass(const Geometry* geom, const MaterialMix* mix) const = 0;
 };
 
 //////////////////////////////////////////////////////////////////////

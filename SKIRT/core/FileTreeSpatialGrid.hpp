@@ -37,7 +37,7 @@ class FileTreeSpatialGrid : public TreeSpatialGrid
     ITEM_CONCRETE(FileTreeSpatialGrid, TreeSpatialGrid, "a tree-based spatial grid loaded from a topology data file")
         ATTRIBUTE_TYPE_DISPLAYED_IF(FileTreeSpatialGrid, "Level2")
 
-    PROPERTY_STRING(filename, "the name of the file with the tree topology data")
+        PROPERTY_STRING(filename, "the name of the file with the tree topology data")
 
     ITEM_END()
 

@@ -100,7 +100,7 @@ class BroadBand : public Band
 {
     ITEM_CONCRETE(BroadBand, Band, "a standard built-in broadband (transmission curve)")
 
-    PROPERTY_STRING(bandName, "the name of the standard broadband (e.g. 'Johnson V' or 'PACS 100')")
+        PROPERTY_STRING(bandName, "the name of the standard broadband (e.g. 'Johnson V' or 'PACS 100')")
 
     ITEM_END()
 

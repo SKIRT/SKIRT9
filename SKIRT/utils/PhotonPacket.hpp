@@ -82,9 +82,8 @@ public:
         set to zero. The current path is invalidated, and all information about the previous life
         cycle is lost. */
     void launch(size_t historyIndex, double lambda, double L, Position bfr, Direction bfk,
-                VelocityInterface* bvi=nullptr,
-                AngularDistributionInterface* adi=nullptr,
-                PolarizationProfileInterface* ppi=nullptr);
+                VelocityInterface* bvi = nullptr, AngularDistributionInterface* adi = nullptr,
+                PolarizationProfileInterface* ppi = nullptr);
 
     /** This function establishes that the photon packet has been emitted by a primary source and
         registers the index of the emitting source component. This information is used by some
@@ -173,7 +172,7 @@ public:
 
     /** This function returns the index of the source or medium component that originally emitted
         the photon packet. */
-    int compIndex() const { return abs(_compIndex)-1; }
+    int compIndex() const { return abs(_compIndex) - 1; }
 
     /** This function returns the index of the source or medium component that originally emitted
         the photon packet. */
@@ -223,7 +222,11 @@ public:
     /** This function stores the most recently "observed" optical depth, calculated externally, in
         a data member. This capability is offered so that consecutive instruments with the same
         observer type, position and viewing direction can avoid recalculating the optical depth. */
-    void setObservedOpticalDepth(double tau) { _observedOpticalDepth = tau; _hasObservedOpticalDepth = true; }
+    void setObservedOpticalDepth(double tau)
+    {
+        _observedOpticalDepth = tau;
+        _hasObservedOpticalDepth = true;
+    }
 
     /** This function returns true if an "observed" optical depth value has been stored and the
         packet has not since been relaunched. Otherwise the function returns false. */
@@ -239,22 +242,22 @@ public:
 
 private:
     // current physical properties (in addition to inherited data members)
-    double _lambda{0};       // current wavelength relative to the model coordinate system
-    double _W{0};            // current weight, defined as L*lambda to avoid division and multiplication by hc
+    double _lambda{0};  // current wavelength relative to the model coordinate system
+    double _W{0};       // current weight, defined as L*lambda to avoid division and multiplication by hc
 
     // physical information on radiation source; the interfaces are not used in peel-off photon packets
-    double _lambda0{0};      // original wavelength in the rest-frame of the source
+    double _lambda0{0};  // original wavelength in the rest-frame of the source
     VelocityInterface* _bvi{nullptr};
     AngularDistributionInterface* _adi{nullptr};
     PolarizationProfileInterface* _ppi{nullptr};
 
     // administrative information on origin
-    int _compIndex{0};       // sign * (index of the originating source or medium component + 1)
-                             //  0: uninitialized   >0: primary   <0: secondary
-    size_t _historyIndex{0}; // index of the photon packet's history in the current emission segment
+    int _compIndex{0};        // sign * (index of the originating source or medium component + 1)
+                              //  0: uninitialized   >0: primary   <0: secondary
+    size_t _historyIndex{0};  // index of the photon packet's history in the current emission segment
 
     // information on life cycle
-    int _nscatt{0};          // number of experienced scattering events
+    int _nscatt{0};  // number of experienced scattering events
 
     // observed optical depth
     double _observedOpticalDepth{0.};      // optical depth calculated for peel-off to an instrument

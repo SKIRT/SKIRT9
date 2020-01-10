@@ -6,9 +6,9 @@
 #ifndef SPHERE2DSPATIALGRID_HPP
 #define SPHERE2DSPATIALGRID_HPP
 
-#include "SphereSpatialGrid.hpp"
 #include "Array.hpp"
 #include "Mesh.hpp"
+#include "SphereSpatialGrid.hpp"
 class Random;
 
 //////////////////////////////////////////////////////////////////////
@@ -25,10 +25,10 @@ class Sphere2DSpatialGrid : public SphereSpatialGrid
         ATTRIBUTE_TYPE_ALLOWED_IF(Sphere2DSpatialGrid, "!Dimension3")
         ATTRIBUTE_TYPE_DISPLAYED_IF(Sphere2DSpatialGrid, "Level2")
 
-    PROPERTY_ITEM(meshRadial, Mesh, "the bin distribution in the radial direction")
+        PROPERTY_ITEM(meshRadial, Mesh, "the bin distribution in the radial direction")
         ATTRIBUTE_DEFAULT_VALUE(meshRadial, "LinMesh")
 
-    PROPERTY_ITEM(meshPolar, Mesh, "the bin distribution in the polar direction")
+        PROPERTY_ITEM(meshPolar, Mesh, "the bin distribution in the polar direction")
         ATTRIBUTE_DEFAULT_VALUE(meshPolar, "LinMesh")
 
     ITEM_END()

@@ -20,10 +20,10 @@ MaterialMix::ScatteringMode ConfigurableDustMix::scatteringMode() const
 {
     switch (scatteringType())
     {
-    case ScatteringType::HenyeyGreenstein: return ScatteringMode::HenyeyGreenstein;
-    case ScatteringType::MaterialPhaseFunction: return ScatteringMode::MaterialPhaseFunction;
-    case ScatteringType::SphericalPolarization: return ScatteringMode::SphericalPolarization;
-    case ScatteringType::SpheroidalPolarization: return ScatteringMode::SpheroidalPolarization;
+        case ScatteringType::HenyeyGreenstein: return ScatteringMode::HenyeyGreenstein;
+        case ScatteringType::MaterialPhaseFunction: return ScatteringMode::MaterialPhaseFunction;
+        case ScatteringType::SphericalPolarization: return ScatteringMode::SphericalPolarization;
+        case ScatteringType::SpheroidalPolarization: return ScatteringMode::SpheroidalPolarization;
     }
     return ScatteringMode::HenyeyGreenstein;  // to satisfy gcc compiler
 }

@@ -4,8 +4,8 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "BlackBodySED.hpp"
-#include "Random.hpp"
 #include "PlanckFunction.hpp"
+#include "Random.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -44,7 +44,7 @@ void BlackBodySED::specificLuminosityArray(Array& lambdav, Array& pv, const Rang
 {
     Array Pv;  // the contents of this array is not used, so this could be optimized if needed
     double Ltot = _planck->cdf(lambdav, pv, Pv, wavelengthRange);
-    pv *= (Ltot/_Ltot);
+    pv *= (Ltot / _Ltot);
 }
 
 //////////////////////////////////////////////////////////////////////

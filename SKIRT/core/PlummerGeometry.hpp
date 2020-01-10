@@ -18,7 +18,7 @@ class PlummerGeometry : public SpheGeometry
 {
     ITEM_CONCRETE(PlummerGeometry, SpheGeometry, "a Plummer geometry")
 
-    PROPERTY_DOUBLE(scaleLength, "the scale length")
+        PROPERTY_DOUBLE(scaleLength, "the scale length")
         ATTRIBUTE_QUANTITY(scaleLength, "length")
         ATTRIBUTE_MIN_VALUE(scaleLength, "]0")
 

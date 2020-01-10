@@ -6,9 +6,9 @@
 #ifndef PARTICLESNAPSHOT_HPP
 #define PARTICLESNAPSHOT_HPP
 
-#include "Snapshot.hpp"
 #include "Array.hpp"
 #include "SmoothedParticle.hpp"
+#include "Snapshot.hpp"
 class SmoothedParticleGrid;
 class SmoothingKernel;
 
@@ -107,7 +107,7 @@ public:
         \f${\bf{r}}\f$ into the given array. If the point is outside the domain, the function
         returns the appropriate number of zero parameter values. If parameters are not being
         imported, the behavior is undefined. */
-    void parameters(Position bfr, Array& params) const  override;
+    void parameters(Position bfr, Array& params) const override;
 
     /** This function returns the mass density represented by the snapshot at a given point
         \f${\bf{r}}\f$, determined by interpolating (conceptually) over all smoothed particles. If
@@ -139,13 +139,13 @@ private:
     const SmoothingKernel* _kernel{nullptr};
 
     // data members initialized when reading the input file
-    vector<Array> _propv;           // particle properties as imported
+    vector<Array> _propv;  // particle properties as imported
 
     // data members initialized when reading the input file, but only if a density policy has been set
-    vector<SmoothedParticle> _pv;   // compact particle objects in the same order
+    vector<SmoothedParticle> _pv;          // compact particle objects in the same order
     SmoothedParticleGrid* _grid{nullptr};  // smart grid for locating smoothed particles
-    Array _cumrhov;                 // cumulative density distribution for particles
-    double _mass{0.};               // total effective mass
+    Array _cumrhov;                        // cumulative density distribution for particles
+    double _mass{0.};                      // total effective mass
 };
 
 ////////////////////////////////////////////////////////////////////

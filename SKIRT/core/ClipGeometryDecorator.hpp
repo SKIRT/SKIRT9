@@ -20,16 +20,16 @@ class ClipGeometryDecorator : public Geometry
 {
     /** The enumeration type indicating which region to remove (Inside or Outside). */
     ENUM_DEF(Remove, Inside, Outside)
-    ENUM_VAL(Remove, Inside, "the inner region (creating a cavity)")
-    ENUM_VAL(Remove, Outside, "the outer region (cropping)")
+        ENUM_VAL(Remove, Inside, "the inner region (creating a cavity)")
+        ENUM_VAL(Remove, Outside, "the outer region (cropping)")
     ENUM_END()
 
     ITEM_ABSTRACT(ClipGeometryDecorator, Geometry, "a decorator that clips another geometry")
         ATTRIBUTE_TYPE_DISPLAYED_IF(ClipGeometryDecorator, "Level2")
 
-    PROPERTY_ITEM(geometry, Geometry, "the geometry to be clipped")
+        PROPERTY_ITEM(geometry, Geometry, "the geometry to be clipped")
 
-    PROPERTY_ENUM(remove, Remove, "the region to be removed")
+        PROPERTY_ENUM(remove, Remove, "the region to be removed")
 
     ITEM_END()
 

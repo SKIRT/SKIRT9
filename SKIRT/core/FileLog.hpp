@@ -54,7 +54,7 @@ protected:
     //======================== Data Members ========================
 
 private:
-    std::mutex _mutex;   // mutex to guard the input/output operations
+    std::mutex _mutex;  // mutex to guard the input/output operations
     std::ofstream _out;
 };
 

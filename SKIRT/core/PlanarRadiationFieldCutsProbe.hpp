@@ -31,7 +31,7 @@ class PlanarRadiationFieldCutsProbe : public AbstractPlanarCutsProbe
                   "cuts of the mean radiation field intensity along planes parallel to the coordinate planes")
         ATTRIBUTE_TYPE_DISPLAYED_IF(PlanarRadiationFieldCutsProbe, "Level2&Medium&SpatialGrid&RadiationField")
 
-    PROPERTY_BOOL(writeWavelengthGrid, "output a text file with the radiation field wavelength grid")
+        PROPERTY_BOOL(writeWavelengthGrid, "output a text file with the radiation field wavelength grid")
         ATTRIBUTE_DEFAULT_VALUE(writeWavelengthGrid, "false")
 
     ITEM_END()
@@ -47,8 +47,8 @@ public:
         yd, and \em zd, exactly two of which must be true. The arguments \em xc, \em yc, and \em zc
         specify the position of the cuts, and the arguments \em Nx, \em Ny, and \em Nz specify the
         number of pixels in each direction. */
-    static void writeRadiationFieldCut(Probe* probe, bool xd, bool yd, bool zd,
-                                        double xc, double yc, double zc, int Nx, int Ny, int Nz);
+    static void writeRadiationFieldCut(Probe* probe, bool xd, bool yd, bool zd, double xc, double yc, double zc, int Nx,
+                                       int Ny, int Nz);
 };
 
 ////////////////////////////////////////////////////////////////////

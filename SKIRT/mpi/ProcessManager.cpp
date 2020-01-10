@@ -8,15 +8,15 @@
 #include <array>
 
 #ifdef BUILD_WITH_MPI
-#include <mpi.h>
-#include <chrono>
-#include <thread>
+    #include <chrono>
+    #include <mpi.h>
+    #include <thread>
 #endif
 
 ////////////////////////////////////////////////////////////////////
 
-int ProcessManager::_size{1};    // the number of processes: initialize to non-MPI default value
-int ProcessManager::_rank{0};    // the rank of this process: initialize to non-MPI default value
+int ProcessManager::_size{1};  // the number of processes: initialize to non-MPI default value
+int ProcessManager::_rank{0};  // the rank of this process: initialize to non-MPI default value
 
 ////////////////////////////////////////////////////////////////////
 
@@ -26,13 +26,13 @@ namespace
     // Large messages will be broken up into pieces of the following size
     // (slightly under 2GB when data type is double)
     // because some MPI implementations dislike larger messages
-    const size_t maxMessageSize = 250*1000*1000;
+    const size_t maxMessageSize = 250 * 1000 * 1000;
 }
 #endif
 
 //////////////////////////////////////////////////////////////////////
 
-void ProcessManager::initialize(int *argc, char ***argv)
+void ProcessManager::initialize(int* argc, char*** argv)
 {
 #ifdef BUILD_WITH_MPI
     int initialized;
@@ -43,8 +43,7 @@ void ProcessManager::initialize(int *argc, char ***argv)
         // as we're calling MPI only from the main thread; this should avoid busy waits when blocking
         int provided = 0;
         MPI_Init_thread(argc, argv, MPI_THREAD_FUNNELED, &provided);
-        if (provided < MPI_THREAD_FUNNELED)
-            throw FATALERROR("MPI implementation does not support funneled threads");
+        if (provided < MPI_THREAD_FUNNELED) throw FATALERROR("MPI implementation does not support funneled threads");
 
         // get the process group size and our rank
         MPI_Comm_size(MPI_COMM_WORLD, &_size);
@@ -52,7 +51,8 @@ void ProcessManager::initialize(int *argc, char ***argv)
     }
 #else
     // the size and rank are statically initialized to the appropriate values
-    (void)argc; (void)argv;
+    (void)argc;
+    (void)argv;
 #endif
 }
 
@@ -91,16 +91,16 @@ bool ProcessManager::requestChunk(size_t& firstIndex, size_t& numIndices)
 #ifdef BUILD_WITH_MPI
     if (isRoot()) throwInvalidChunkInvocation();
 
-    std::array<int,1> sendbuf{{_rank}};  // we pass our rank so that the receiver can ignore MPI status
-    std::array<size_t,2> recvbuf{{0,0}};
-    MPI_Sendrecv(sendbuf.begin(), sendbuf.size(), MPI_INT, 0, 1,
-                 recvbuf.begin(), recvbuf.size(), MPI_UNSIGNED_LONG, 0, 1,
-                 MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    std::array<int, 1> sendbuf{{_rank}};  // we pass our rank so that the receiver can ignore MPI status
+    std::array<size_t, 2> recvbuf{{0, 0}};
+    MPI_Sendrecv(sendbuf.begin(), sendbuf.size(), MPI_INT, 0, 1, recvbuf.begin(), recvbuf.size(), MPI_UNSIGNED_LONG, 0,
+                 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     firstIndex = recvbuf[0];
     numIndices = recvbuf[1];
     return numIndices > 0;
 #else
-    (void)firstIndex; (void)numIndices;
+    (void)firstIndex;
+    (void)numIndices;
     throwInvalidChunkInvocation();
     return false;
 #endif
@@ -122,9 +122,8 @@ int ProcessManager::waitForChunkRequest()
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
     }
 
-    std::array<int,1> recvbuf{{0}};
-    MPI_Recv(recvbuf.begin(), recvbuf.size(), MPI_INT, MPI_ANY_SOURCE, 1,
-             MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    std::array<int, 1> recvbuf{{0}};
+    MPI_Recv(recvbuf.begin(), recvbuf.size(), MPI_INT, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     return recvbuf[0];
 #else
     throwInvalidChunkInvocation();
@@ -139,11 +138,12 @@ void ProcessManager::serveChunkRequest(int rank, size_t firstIndex, size_t numIn
 #ifdef BUILD_WITH_MPI
     if (!isMultiProc() || !isRoot()) throwInvalidChunkInvocation();
 
-    std::array<size_t,2> sendbuf{{firstIndex,numIndices}};
-    MPI_Send(sendbuf.begin(), sendbuf.size(), MPI_UNSIGNED_LONG, rank, 1,
-             MPI_COMM_WORLD);
+    std::array<size_t, 2> sendbuf{{firstIndex, numIndices}};
+    MPI_Send(sendbuf.begin(), sendbuf.size(), MPI_UNSIGNED_LONG, rank, 1, MPI_COMM_WORLD);
 #else
-    (void)rank; (void)firstIndex; (void)numIndices;
+    (void)rank;
+    (void)firstIndex;
+    (void)numIndices;
     throwInvalidChunkInvocation();
 #endif
 }
@@ -217,8 +217,8 @@ void ProcessManager::sumToRoot(Array& arr)
 
 //////////////////////////////////////////////////////////////////////
 
-void ProcessManager::broadcastAllToAll(std::function<void (vector<double>&)> producer,
-                                       std::function<void (const vector<double>&)> consumer)
+void ProcessManager::broadcastAllToAll(std::function<void(vector<double>&)> producer,
+                                       std::function<void(const vector<double>&)> consumer)
 {
 #ifdef BUILD_WITH_MPI
     if (isMultiProc())
@@ -264,9 +264,9 @@ void ProcessManager::broadcastAllToAll(std::function<void (vector<double>&)> pro
         }
     }
 #else
-    (void)producer; (void)consumer;
+    (void)producer;
+    (void)consumer;
 #endif
-
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -31,10 +31,10 @@ void MeridionalDustTemperatureCutProbe::probeRun()
         file.addColumn("indicative dust temperature", units->utemperature(), 'g');
 
         // write a line for each sample
-        for (int i=0; i!=_numSamples; ++i)
+        for (int i = 0; i != _numSamples; ++i)
         {
             // determine the sample inclination and position
-            double fraction = static_cast<double>(i) / static_cast<double>(_numSamples-1);
+            double fraction = static_cast<double>(i) / static_cast<double>(_numSamples - 1);
             double inclination = fraction * M_PI;
             Position p(_radius * Direction(inclination, _azimuth));
 

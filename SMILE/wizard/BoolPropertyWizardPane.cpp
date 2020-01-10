@@ -35,8 +35,8 @@ BoolPropertyWizardPane::BoolPropertyWizardPane(std::unique_ptr<PropertyHandler> 
 
     // add the "No" choice
     {
-        bool isDefault = hdlr->hasDefaultValue() && hdlr->defaultValue()==false;
-        bool isCurrent = hdlr->isConfigured() && hdlr->value()==false;
+        bool isDefault = hdlr->hasDefaultValue() && hdlr->defaultValue() == false;
+        bool isCurrent = hdlr->isConfigured() && hdlr->value() == false;
 
         // add the choice button the group and to the layout
         auto choiceButton = new QRadioButton(QString("No") + (isDefault ? "  [default]" : ""));
@@ -54,8 +54,8 @@ BoolPropertyWizardPane::BoolPropertyWizardPane(std::unique_ptr<PropertyHandler> 
 
     // add the "Yes" choice
     {
-        bool isDefault = hdlr->hasDefaultValue() && hdlr->defaultValue()==true;
-        bool isCurrent = hdlr->isConfigured() && hdlr->value()==true;
+        bool isDefault = hdlr->hasDefaultValue() && hdlr->defaultValue() == true;
+        bool isCurrent = hdlr->isConfigured() && hdlr->value() == true;
 
         // add the choice button the group and to the layout
         auto choiceButton = new QRadioButton(QString("Yes") + (isDefault ? "  [default]" : ""));
@@ -86,7 +86,7 @@ void BoolPropertyWizardPane::updateValueFor(int buttonID)
     auto hdlr = handlerCast<BoolPropertyHandler>();
 
     bool newValue = buttonID ? true : false;
-    if (!hdlr->isConfigured() || hdlr->value()!=newValue)
+    if (!hdlr->isConfigured() || hdlr->value() != newValue)
     {
         hdlr->setValue(newValue);
         emit propertyValueChanged();

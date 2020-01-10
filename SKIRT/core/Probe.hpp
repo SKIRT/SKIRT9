@@ -29,7 +29,7 @@
 class Probe : public SimulationItem
 {
     ITEM_ABSTRACT(Probe, SimulationItem, "a probe")
-    PROPERTY_STRING(probeName, "the name for this probe")
+        PROPERTY_STRING(probeName, "the name for this probe")
     ITEM_END()
 
     //======================== Other Functions =======================

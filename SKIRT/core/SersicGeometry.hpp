@@ -24,11 +24,11 @@ class SersicGeometry : public SpheGeometry
 {
     ITEM_CONCRETE(SersicGeometry, SpheGeometry, "a Sérsic geometry")
 
-    PROPERTY_DOUBLE(effectiveRadius, "the effective radius")
+        PROPERTY_DOUBLE(effectiveRadius, "the effective radius")
         ATTRIBUTE_QUANTITY(effectiveRadius, "length")
         ATTRIBUTE_MIN_VALUE(effectiveRadius, "]0")
 
-    PROPERTY_DOUBLE(index, "the Sérsic index n")
+        PROPERTY_DOUBLE(index, "the Sérsic index n")
         ATTRIBUTE_MIN_VALUE(index, "]0.5")
         ATTRIBUTE_MAX_VALUE(index, "10]")
         ATTRIBUTE_DEFAULT_VALUE(index, "1")

@@ -40,24 +40,28 @@ public:
         dimensions. If the last dimension in the list is nonzero, the arrays holding the data are
         resized correspondingly and all values are set to zero. If the last dimension is zero, the
         arrays remain empty and should be appropriately resized by the client code. */
-    template <typename... Sizes> explicit ArrayTable(Sizes... sizes) { resize(sizes...); }
+    template<typename... Sizes> explicit ArrayTable(Sizes... sizes) { resize(sizes...); }
 
     /** This function resizes the table so that it holds the specified number of items in each of
         the N dimensions. If the last dimension in the list is nonzero, the arrays holding the data
         are resized correspondingly and all values are set to zero. If the last dimension is zero,
         the arrays are emptied and should be appropriately resized by the client code. In any case,
         any values that were previously in the table are lost. */
-    template <typename... Sizes, typename = std::enable_if_t<CompileTimeUtils::isIntegralArgList<N, Sizes...>()>>
+    template<typename... Sizes, typename = std::enable_if_t<CompileTimeUtils::isIntegralArgList<N, Sizes...>()>>
     void resize(Sizes... sizes)
     {
-        _sizes = {{ static_cast<size_t>(sizes)... }};
-        _rows.resize(std::accumulate(_sizes.begin(), _sizes.end()-1, static_cast<size_t>(1), std::multiplies<size_t>()));
-        for (auto& row : _rows) row.resize(_sizes[N-1]);
+        _sizes = {{static_cast<size_t>(sizes)...}};
+        _rows.resize(
+            std::accumulate(_sizes.begin(), _sizes.end() - 1, static_cast<size_t>(1), std::multiplies<size_t>()));
+        for (auto& row : _rows) row.resize(_sizes[N - 1]);
     }
 
     /** This function sets all values in the table to zero, without changing the number of items.
         */
-    void setToZero() { for (auto& row : _rows) std::fill(begin(row), end(row), 0.); }
+    void setToZero()
+    {
+        for (auto& row : _rows) std::fill(begin(row), end(row), 0.);
+    }
 
     // ================== Accessing sizes and values ==================
 
@@ -80,61 +84,67 @@ public:
 
     /** This function returns a writable reference to the value at the specified N indices. There
         is no range checking. Out-of-range index values cause unpredictable behavior. */
-    template <typename... Indices, typename = std::enable_if_t<CompileTimeUtils::isIntegralArgList<N, Indices...>()>>
+    template<typename... Indices, typename = std::enable_if_t<CompileTimeUtils::isIntegralArgList<N, Indices...>()>>
     double& operator()(Indices... indices)
     {
-        std::array<size_t, N> indexes = {{ static_cast<size_t>(indices)... }};
+        std::array<size_t, N> indexes = {{static_cast<size_t>(indices)...}};
         size_t rowIndex = indexes[0];
-        for (size_t k = 1; k!=N-1; ++k) rowIndex = rowIndex * _sizes[k] + indexes[k];
-        size_t columnIndex = indexes[N-1];
+        for (size_t k = 1; k != N - 1; ++k) rowIndex = rowIndex * _sizes[k] + indexes[k];
+        size_t columnIndex = indexes[N - 1];
         return _rows[rowIndex][columnIndex];
     }
 
     /** This function returns a copy of the value at the specified N indices. There is no range
         checking. Out-of-range index values cause unpredictable behavior. */
-    template <typename... Indices, typename = std::enable_if_t<CompileTimeUtils::isIntegralArgList<N, Indices...>()>>
+    template<typename... Indices, typename = std::enable_if_t<CompileTimeUtils::isIntegralArgList<N, Indices...>()>>
     double operator()(Indices... indices) const
     {
-        std::array<size_t, N> indexes = {{ static_cast<size_t>(indices)... }};
+        std::array<size_t, N> indexes = {{static_cast<size_t>(indices)...}};
         size_t rowIndex = indexes[0];
-        for (size_t k = 1; k!=N-1; ++k) rowIndex = rowIndex * _sizes[k] + indexes[k];
-        size_t columnIndex = indexes[N-1];
+        for (size_t k = 1; k != N - 1; ++k) rowIndex = rowIndex * _sizes[k] + indexes[k];
+        size_t columnIndex = indexes[N - 1];
         return _rows[rowIndex][columnIndex];
     }
 
     /** This function returns a writable reference to the row at the specified N-1 indices. There
         is no range checking. Out-of-range index values cause unpredictable behavior. */
-    template <typename... Indices, typename = std::enable_if_t<CompileTimeUtils::isIntegralArgList<N-1, Indices...>()>>
+    template<typename... Indices, typename = std::enable_if_t<CompileTimeUtils::isIntegralArgList<N - 1, Indices...>()>>
     Array& operator()(Indices... indices)
     {
-        std::array<size_t, N-1> indexes = {{ static_cast<size_t>(indices)... }};
+        std::array<size_t, N - 1> indexes = {{static_cast<size_t>(indices)...}};
         size_t rowIndex = indexes[0];
-        for (size_t k = 1; k!=N-1; ++k) rowIndex = rowIndex * _sizes[k] + indexes[k];
+        for (size_t k = 1; k != N - 1; ++k) rowIndex = rowIndex * _sizes[k] + indexes[k];
         return _rows[rowIndex];
     }
 
     /** This function returns a read-only reference to the row at the specified N-1 indices. There
         is no range checking. Out-of-range index values cause unpredictable behavior. */
-    template <typename... Indices, typename = std::enable_if_t<CompileTimeUtils::isIntegralArgList<N-1, Indices...>()>>
+    template<typename... Indices, typename = std::enable_if_t<CompileTimeUtils::isIntegralArgList<N - 1, Indices...>()>>
     const Array& operator()(Indices... indices) const
     {
-        std::array<size_t, N-1> indexes = {{ static_cast<size_t>(indices)... }};
+        std::array<size_t, N - 1> indexes = {{static_cast<size_t>(indices)...}};
         size_t rowIndex = indexes[0];
-        for (size_t k = 1; k!=N-1; ++k) rowIndex = rowIndex * _sizes[k] + indexes[k];
+        for (size_t k = 1; k != N - 1; ++k) rowIndex = rowIndex * _sizes[k] + indexes[k];
         return _rows[rowIndex];
     }
 
     /** This function returns a writable reference to the row at the specified index (for a
         2-dimensional table only). There is no range checking. Out-of-range index values cause
         unpredictable behavior. */
-    template <typename Index, typename = std::enable_if_t<N==2 && CompileTimeUtils::isIntegralArgList<1, Index>()>>
-    Array& operator[](Index index) { return _rows[index]; }
+    template<typename Index, typename = std::enable_if_t<N == 2 && CompileTimeUtils::isIntegralArgList<1, Index>()>>
+    Array& operator[](Index index)
+    {
+        return _rows[index];
+    }
 
     /** This function returns a read-only reference to the row at the specified index (for a
         2-dimensional table only). There is no range checking. Out-of-range index values cause
         unpredictable behavior. */
-    template <typename Index, typename = std::enable_if_t<N==2 && CompileTimeUtils::isIntegralArgList<1, Index>()>>
-    const Array& operator[](Index index) const { return _rows[index]; }
+    template<typename Index, typename = std::enable_if_t<N == 2 && CompileTimeUtils::isIntegralArgList<1, Index>()>>
+    const Array& operator[](Index index) const
+    {
+        return _rows[index];
+    }
 
     // ================== Data members ==================
 

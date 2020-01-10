@@ -20,11 +20,11 @@ class AngularDistributionInterface
 {
 protected:
     /** The empty constructor for the interface. */
-    AngularDistributionInterface() { }
+    AngularDistributionInterface() {}
 
 public:
     /** The empty destructor for the interface. */
-    virtual ~AngularDistributionInterface() { }
+    virtual ~AngularDistributionInterface() {}
 
     /** This function returns the probability \f$P(\Omega)\f$ for the given direction
         \f$(\theta,\phi)\f$. For an isotropic distribution, this function would return 1 for any

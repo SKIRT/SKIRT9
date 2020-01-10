@@ -14,7 +14,7 @@ FatalError::FatalError(string message, const char* file, int line, const char* f
     // split the message in lines if needed, and store the result
     std::stringstream ss(message);
     string msgline;
-    while (getline(ss,msgline))
+    while (getline(ss, msgline))
     {
         if (!msgline.empty()) _message.push_back(msgline);
     }

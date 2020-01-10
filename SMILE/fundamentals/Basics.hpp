@@ -35,12 +35,12 @@
 #include <vector>
 
 // Copy selected symbols to the global namespace
+using std::abs;
+using std::max;
+using std::min;
 using std::size_t;
 using std::string;
 using std::vector;
-using std::abs;
-using std::min;
-using std::max;
 
 ////////////////////////////////////////////////////////////////////
 
@@ -75,7 +75,8 @@ using std::max;
     so that the proper overloaded form is always used rather than the old C-style form. This is
     especially important for std::abs because the old C-style form converts doubles to integers.
 */
-class Basics final{};
+class Basics final
+{};
 
 ////////////////////////////////////////////////////////////////////
 

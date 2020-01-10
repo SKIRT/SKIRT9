@@ -20,7 +20,7 @@ void SpatialGrid::setupSelfBefore()
 
 double SpatialGrid::diagonal(int m) const
 {
-    return cbrt(3.*volume(m));
+    return cbrt(3. * volume(m));
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -57,26 +57,18 @@ void SpatialGrid::writeGridPlotFiles(const SimulationItem* probe) const
 
 //////////////////////////////////////////////////////////////////////
 
-void SpatialGrid::write_xy(SpatialGridPlotFile* /*outfile*/) const
-{
-}
+void SpatialGrid::write_xy(SpatialGridPlotFile* /*outfile*/) const {}
 
 //////////////////////////////////////////////////////////////////////
 
-void SpatialGrid::write_xz(SpatialGridPlotFile* /*outfile*/) const
-{
-}
+void SpatialGrid::write_xz(SpatialGridPlotFile* /*outfile*/) const {}
 
 //////////////////////////////////////////////////////////////////////
 
-void SpatialGrid::write_yz(SpatialGridPlotFile* /*outfile*/) const
-{
-}
+void SpatialGrid::write_yz(SpatialGridPlotFile* /*outfile*/) const {}
 
 //////////////////////////////////////////////////////////////////////
 
-void SpatialGrid::write_xyz(SpatialGridPlotFile* /*outfile*/) const
-{
-}
+void SpatialGrid::write_xyz(SpatialGridPlotFile* /*outfile*/) const {}
 
 //////////////////////////////////////////////////////////////////////

@@ -6,8 +6,8 @@
 #ifndef VECTORFIELD_HPP
 #define VECTORFIELD_HPP
 
-#include "SimulationItem.hpp"
 #include "Position.hpp"
+#include "SimulationItem.hpp"
 
 //////////////////////////////////////////////////////////////////////
 

@@ -100,7 +100,7 @@ public:
         of characteristic wavelengths). */
     int numBins() const override;
 
-   /** This function returns the characteristic wavelength \f$\lambda^\mathrm{c}_\ell\f$
+    /** This function returns the characteristic wavelength \f$\lambda^\mathrm{c}_\ell\f$
        corresponding to the index \f$\ell\f$. */
     double wavelength(int ell) const override;
 
@@ -158,12 +158,12 @@ public:
 
 private:
     // subclasses should call setWavelengthXXX() in their setupSelfBefore() to initialize these tables
-    Array _lambdav;      // N characteristic wavelengths
-    Array _dlambdav;     // N wavelength bin widths
-    Array _lambdaleftv;  // N left wavelength bin borders
-    Array _lambdarightv; // N right wavelength bin widths
-    Array _borderv;      // K=N+1 or K=N*2 ordered border points (depending on whether bins are adjacent)
-    vector<int> _ellv;   // K+1 indices of the wavelength bins defined by the border points, or -1 if out of range
+    Array _lambdav;       // N characteristic wavelengths
+    Array _dlambdav;      // N wavelength bin widths
+    Array _lambdaleftv;   // N left wavelength bin borders
+    Array _lambdarightv;  // N right wavelength bin widths
+    Array _borderv;       // K=N+1 or K=N*2 ordered border points (depending on whether bins are adjacent)
+    vector<int> _ellv;    // K+1 indices of the wavelength bins defined by the border points, or -1 if out of range
     bool _isConsecutive{false};
 };
 

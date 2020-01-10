@@ -15,36 +15,36 @@ void TorusGeometry::setupSelfBefore()
 
     // cache frequently used values
     _sinDelta = sin(_Delta);
-    _smin = SpecialFunctions::gln(_p-2.0,_rmin);
-    _sdiff = SpecialFunctions::gln2(_p-2.0,_rmax,_rmin);
+    _smin = SpecialFunctions::gln(_p - 2.0, _rmin);
+    _sdiff = SpecialFunctions::gln2(_p - 2.0, _rmax, _rmin);
 
     // determine the normalization factor
-    if (_q>1e-3)
-        _A = _q * 0.25/M_PI / _sdiff / (1.0-exp(-_q*_sinDelta));
+    if (_q > 1e-3)
+        _A = _q * 0.25 / M_PI / _sdiff / (1.0 - exp(-_q * _sinDelta));
     else
-        _A = 0.25/M_PI / _sdiff / _sinDelta;
+        _A = 0.25 / M_PI / _sdiff / _sinDelta;
 }
 
 //////////////////////////////////////////////////////////////////////
 
 double TorusGeometry::density(double R, double z) const
 {
-    double r = sqrt(R*R+z*z);
-    double costheta = z/r;
+    double r = sqrt(R * R + z * z);
+    double costheta = z / r;
 
-    if (r>=_rmax) return 0.0;
+    if (r >= _rmax) return 0.0;
     if (_rani)
     {
-        double rminani = _rmin*sqrt(6./7.*fabs(costheta)*(2.*fabs(costheta)+1));
-        if (r<=rminani || r<_rcut) return 0.0;
+        double rminani = _rmin * sqrt(6. / 7. * fabs(costheta) * (2. * fabs(costheta) + 1));
+        if (r <= rminani || r < _rcut) return 0.0;
     }
     else
     {
-        if (r<=_rmin) return 0.0;
+        if (r <= _rmin) return 0.0;
     }
 
-    if (fabs(costheta) >=_sinDelta) return 0.0;
-    return _A * pow(r,-_p) * exp(-_q*fabs(costheta));
+    if (fabs(costheta) >= _sinDelta) return 0.0;
+    return _A * pow(r, -_p) * exp(-_q * fabs(costheta));
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -54,22 +54,22 @@ Position TorusGeometry::generatePosition() const
     while (true)
     {
         double X = random()->uniform();
-        double s = _smin + X*_sdiff;
-        double r = SpecialFunctions::gexp(_p-2.0,s);
+        double s = _smin + X * _sdiff;
+        double r = SpecialFunctions::gexp(_p - 2.0, s);
         X = random()->uniform();
         double costheta = 0.0;
-        if (_q<1e-3)
-            costheta = (1.0-2.0*X)*_sinDelta;
+        if (_q < 1e-3)
+            costheta = (1.0 - 2.0 * X) * _sinDelta;
         else
         {
-            double B = 1.0-exp(-_q*_sinDelta);
-            costheta = (X<0.5) ? -log(1.0-B*(1.0-2.0*X))/_q : log(1.0-B*(2.0*X-1.0))/_q;
+            double B = 1.0 - exp(-_q * _sinDelta);
+            costheta = (X < 0.5) ? -log(1.0 - B * (1.0 - 2.0 * X)) / _q : log(1.0 - B * (2.0 * X - 1.0)) / _q;
         }
         double theta = acos(costheta);
         X = random()->uniform();
         double phi = 2.0 * M_PI * X;
-        Position bfr(r,theta,phi,Position::CoordinateSystem::SPHERICAL);
-        if (density(bfr.cylRadius(),bfr.height())) return bfr;
+        Position bfr(r, theta, phi, Position::CoordinateSystem::SPHERICAL);
+        if (density(bfr.cylRadius(), bfr.height())) return bfr;
     }
 }
 
@@ -77,7 +77,7 @@ Position TorusGeometry::generatePosition() const
 
 double TorusGeometry::SigmaR() const
 {
-    return _A * SpecialFunctions::gln2(_p,_rmax,_rmin);
+    return _A * SpecialFunctions::gln2(_p, _rmax, _rmin);
 }
 
 //////////////////////////////////////////////////////////////////////

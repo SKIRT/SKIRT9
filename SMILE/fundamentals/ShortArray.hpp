@@ -17,13 +17,13 @@
     cost of erasing all previously stored values: the resize operation sets all values to zero,
     just as if the array was freshly constructed. ShortArray<N> instances cannot be copied or
     moved. */
-template <size_t N> class ShortArray
+template<size_t N> class ShortArray
 {
 public:
     // ================== Constructing and assigning ==================
 
     /** The default constructor creates an empty array. */
-    ShortArray() { }
+    ShortArray() {}
 
     /** This constructor creates an empty array with the specified number of values, all
         initialized to zero. */
@@ -44,7 +44,10 @@ public:
     ShortArray& operator=(const ShortArray&) = delete;
 
     /** The destructor releases the memory buffer if it was allocated on the heap. */
-    ~ShortArray() { if (_c) delete[] _p; }
+    ~ShortArray()
+    {
+        if (_c) delete[] _p;
+    }
 
     // ================== Sizing and clearing ==================
 
@@ -66,7 +69,7 @@ public:
     }
 
     /** This function clears all values held by the array to zero. */
-    void clear() { std::fill(_p, _p+_n, 0.); }
+    void clear() { std::fill(_p, _p + _n, 0.); }
 
     /** This function returns the number of values held by the array. */
     size_t size() const { return _n; }
@@ -82,25 +85,37 @@ public:
 private:
     // ================== Data members ==================
 
-    double* _p{_a};     // points to the inside buffer if _c==0; to the heap-allocated buffer if _c>0
-    size_t _n{0};       // the number of values held by the array
-    size_t _c{0};       // the capacity of the heap-allocated buffer, or zero if there is none
-    double _a[N];       // the inside buffer
+    double* _p{_a};  // points to the inside buffer if _c==0; to the heap-allocated buffer if _c>0
+    size_t _n{0};    // the number of values held by the array
+    size_t _c{0};    // the capacity of the heap-allocated buffer, or zero if there is none
+    double _a[N];    // the inside buffer
 };
 
 // ================== Iterating ==================
 
 /** This function returns an iterator to the first array element. */
-template <size_t N> double* begin(ShortArray<N>& a) { return &a[0]; }
+template<size_t N> double* begin(ShortArray<N>& a)
+{
+    return &a[0];
+}
 
 /** This function returns an iterator to the first array element. */
-template <size_t N> const double* begin(const ShortArray<N>& a) { return &a[0]; }
+template<size_t N> const double* begin(const ShortArray<N>& a)
+{
+    return &a[0];
+}
 
 /** This function returns an iterator just beyond the last array element. */
-template <size_t N> double* end(ShortArray<N>& a) { return &a[a.size()]; }
+template<size_t N> double* end(ShortArray<N>& a)
+{
+    return &a[a.size()];
+}
 
 /** This function returns an iterator just beyond the last array element. */
-template <size_t N> const double* end(const ShortArray<N>& a) { return &a[a.size()]; }
+template<size_t N> const double* end(const ShortArray<N>& a)
+{
+    return &a[a.size()];
+}
 
 ////////////////////////////////////////////////////////////////////
 

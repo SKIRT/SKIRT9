@@ -6,9 +6,9 @@
 #ifndef IMPORTEDMEDIUM_HPP
 #define IMPORTEDMEDIUM_HPP
 
-#include "Medium.hpp"
 #include "MaterialMix.hpp"
 #include "MaterialMixFamily.hpp"
+#include "Medium.hpp"
 #include "SiteListInterface.hpp"
 class Snapshot;
 
@@ -24,52 +24,52 @@ class ImportedMedium : public Medium, public SiteListInterface
     ITEM_ABSTRACT(ImportedMedium, Medium, "a transfer medium imported from snapshot data")
         ATTRIBUTE_TYPE_INSERT(ImportedMedium, "Dimension3,SiteListInterface")
 
-    PROPERTY_STRING(filename, "the name of the file to be imported")
+        PROPERTY_STRING(filename, "the name of the file to be imported")
 
-    ATTRIBUTE_SUB_PROPERTIES_HERE(ImportedMedium)
+        ATTRIBUTE_SUB_PROPERTIES_HERE(ImportedMedium)
 
-    PROPERTY_DOUBLE(massFraction, "the fraction of the mass to be included (or one to include all)")
+        PROPERTY_DOUBLE(massFraction, "the fraction of the mass to be included (or one to include all)")
         ATTRIBUTE_MIN_VALUE(massFraction, "[0")
         ATTRIBUTE_MAX_VALUE(massFraction, "1]")
         ATTRIBUTE_DEFAULT_VALUE(massFraction, "1")
 
-    PROPERTY_BOOL(importMetallicity, "import a metallicity column")
+        PROPERTY_BOOL(importMetallicity, "import a metallicity column")
         ATTRIBUTE_DEFAULT_VALUE(importMetallicity, "false")
 
-    PROPERTY_BOOL(importTemperature, "import a temperature column")
+        PROPERTY_BOOL(importTemperature, "import a temperature column")
         ATTRIBUTE_DEFAULT_VALUE(importTemperature, "false")
 
-    PROPERTY_DOUBLE(maxTemperature, "the maximum temperature for included mass (or zero to include all)")
+        PROPERTY_DOUBLE(maxTemperature, "the maximum temperature for included mass (or zero to include all)")
         ATTRIBUTE_QUANTITY(maxTemperature, "temperature")
         ATTRIBUTE_MIN_VALUE(maxTemperature, "[0 K")
         ATTRIBUTE_MAX_VALUE(maxTemperature, "1000000 K]")
         ATTRIBUTE_DEFAULT_VALUE(maxTemperature, "0 K")
         ATTRIBUTE_RELEVANT_IF(maxTemperature, "importTemperature")
 
-    PROPERTY_BOOL(importVelocity, "import velocity components (3 columns)")
+        PROPERTY_BOOL(importVelocity, "import velocity components (3 columns)")
         ATTRIBUTE_DEFAULT_VALUE(importVelocity, "false")
         ATTRIBUTE_DISPLAYED_IF(importVelocity, "(Panchromatic&Level2)|Level3")
 
-    PROPERTY_BOOL(importMagneticField, "import magnetic field components (3 columns)")
+        PROPERTY_BOOL(importMagneticField, "import magnetic field components (3 columns)")
         ATTRIBUTE_DEFAULT_VALUE(importMagneticField, "false")
         ATTRIBUTE_DISPLAYED_IF(importMagneticField, "Level3")
         ATTRIBUTE_INSERT(importMagneticField, "importMagneticField:MagneticField")
 
-    PROPERTY_BOOL(importVariableMixParams, "import parameter(s) to select a spatially varying material mix")
+        PROPERTY_BOOL(importVariableMixParams, "import parameter(s) to select a spatially varying material mix")
         ATTRIBUTE_DEFAULT_VALUE(importVariableMixParams, "false")
         ATTRIBUTE_DISPLAYED_IF(importVariableMixParams, "(!NonIdentitySpatialCellLibrary)&Level2")
 
-    PROPERTY_STRING(useColumns, "a list of names corresponding to columns in the file to be imported")
+        PROPERTY_STRING(useColumns, "a list of names corresponding to columns in the file to be imported")
         ATTRIBUTE_DEFAULT_VALUE(useColumns, "")
         ATTRIBUTE_REQUIRED_IF(useColumns, "false")
         ATTRIBUTE_DISPLAYED_IF(useColumns, "Level3")
 
-    PROPERTY_ITEM(materialMix, MaterialMix, "the material type and properties throughout the medium")
+        PROPERTY_ITEM(materialMix, MaterialMix, "the material type and properties throughout the medium")
         ATTRIBUTE_DEFAULT_VALUE(materialMix, "MeanInterstellarDustMix")
         ATTRIBUTE_RELEVANT_IF(materialMix, "!importVariableMixParams")
 
-    PROPERTY_ITEM(materialMixFamily, MaterialMixFamily,
-                  "the material mix family addressed by the imported parameter(s)")
+        PROPERTY_ITEM(materialMixFamily, MaterialMixFamily,
+                      "the material mix family addressed by the imported parameter(s)")
         ATTRIBUTE_DEFAULT_VALUE(materialMixFamily, "SelectDustMixFamily")
         ATTRIBUTE_RELEVANT_IF(materialMixFamily, "importVariableMixParams")
 

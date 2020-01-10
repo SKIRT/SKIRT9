@@ -10,8 +10,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-TimeLogger::TimeLogger(Log *log, string scope)
-    :_log(log), _scope(scope), _started(std::chrono::steady_clock::now())
+TimeLogger::TimeLogger(Log* log, string scope) : _log(log), _scope(scope), _started(std::chrono::steady_clock::now())
 {
     if (log) log->info("Starting " + scope + "...");
 }
@@ -23,8 +22,8 @@ namespace
     // local constants
     const int64_t msecsInSecond = 1000;
     const int64_t msecsInMinute = 60 * msecsInSecond;
-    const int64_t msecsInHour   = 60 * msecsInMinute;
-    const int64_t msecsInDay    = 24 * msecsInHour;
+    const int64_t msecsInHour = 60 * msecsInMinute;
+    const int64_t msecsInDay = 24 * msecsInHour;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -45,19 +44,20 @@ TimeLogger::~TimeLogger()
     bool moreThanMinute = msecs >= msecsInMinute;
 
     // always include the elapsed time in seconds
-    string elapsed = StringUtils::toString(static_cast<double>(msecs)/static_cast<double>(msecsInSecond),
-                                           'f', moreThanMinute ? 0 : 1) + " s";
+    string elapsed = StringUtils::toString(static_cast<double>(msecs) / static_cast<double>(msecsInSecond), 'f',
+                                           moreThanMinute ? 0 : 1)
+                     + " s";
 
     // if the elapsed time is over a minute, also include a "0d 0h 0m 0s" format
     if (moreThanMinute)
     {
-        int64_t days = msecs/msecsInDay;
-        msecs -= days*msecsInDay;
-        int64_t hours = msecs/msecsInHour;
-        msecs -= hours*msecsInHour;
-        int64_t minutes = msecs/msecsInMinute;
-        msecs -= minutes*msecsInMinute;
-        int64_t seconds = (msecs + msecsInSecond/2) /msecsInSecond;
+        int64_t days = msecs / msecsInDay;
+        msecs -= days * msecsInDay;
+        int64_t hours = msecs / msecsInHour;
+        msecs -= hours * msecsInHour;
+        int64_t minutes = msecs / msecsInMinute;
+        msecs -= minutes * msecsInMinute;
+        int64_t seconds = (msecs + msecsInSecond / 2) / msecsInSecond;
 
         elapsed += " (";
         if (days) elapsed += std::to_string(days) + "d ";

@@ -6,11 +6,11 @@
 #ifndef SIMULATION_HPP
 #define SIMULATION_HPP
 
-#include "SimulationItem.hpp"
 #include "ConsoleLog.hpp"
 #include "FilePaths.hpp"
 #include "ParallelFactory.hpp"
 #include "Random.hpp"
+#include "SimulationItem.hpp"
 #include "Units.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -37,23 +37,23 @@ class Simulation : public SimulationItem
         - Level 1: Basic
     */
     ENUM_DEF(UserLevel, Basic, Regular, Expert)
-    ENUM_VAL(UserLevel, Basic, "Basic: for beginning users (hides many options)")
-    ENUM_VAL(UserLevel, Regular, "Regular: for regular users (hides esoteric options)")
-    ENUM_VAL(UserLevel, Expert, "Expert: for expert users (hides no options)")
+        ENUM_VAL(UserLevel, Basic, "Basic: for beginning users (hides many options)")
+        ENUM_VAL(UserLevel, Regular, "Regular: for regular users (hides esoteric options)")
+        ENUM_VAL(UserLevel, Expert, "Expert: for expert users (hides no options)")
     ENUM_END()
 
     ITEM_ABSTRACT(Simulation, SimulationItem, "the simulation")
 
-    PROPERTY_ENUM(userLevel, UserLevel, "the user experience level")
+        PROPERTY_ENUM(userLevel, UserLevel, "the user experience level")
         ATTRIBUTE_DEFAULT_VALUE(userLevel, "Regular")
         ATTRIBUTE_INSERT(userLevel,
                          "userLevelBasic:Level1;userLevelRegular:Level1,Level2;userLevelExpert:Level1,Level2,Level3")
 
-    PROPERTY_ITEM(random, Random, "the random number generator")
+        PROPERTY_ITEM(random, Random, "the random number generator")
         ATTRIBUTE_DEFAULT_VALUE(random, "Random")
         ATTRIBUTE_DISPLAYED_IF(random, "Level3")
 
-    PROPERTY_ITEM(units, Units, "the units system")
+        PROPERTY_ITEM(units, Units, "the units system")
         ATTRIBUTE_DEFAULT_VALUE(units, "ExtragalacticUnits")
 
     ITEM_END()
@@ -96,9 +96,9 @@ public:
 
 private:
     // data members
-    Log* _log{ new ConsoleLog(this) };
-    FilePaths* _paths{ new FilePaths(this) };
-    ParallelFactory* _factory{ new ParallelFactory(this) };
+    Log* _log{new ConsoleLog(this)};
+    FilePaths* _paths{new FilePaths(this)};
+    ParallelFactory* _factory{new ParallelFactory(this)};
 };
 
 ////////////////////////////////////////////////////////////////////

@@ -31,7 +31,7 @@ class DefaultRadiationFieldCutsProbe : public Probe
                   "cuts of the mean radiation field intensity along the coordinate planes")
         ATTRIBUTE_TYPE_DISPLAYED_IF(DefaultRadiationFieldCutsProbe, "Medium&SpatialGrid&RadiationField")
 
-    PROPERTY_BOOL(writeWavelengthGrid, "output a text file with the radiation field wavelength grid")
+        PROPERTY_BOOL(writeWavelengthGrid, "output a text file with the radiation field wavelength grid")
         ATTRIBUTE_DEFAULT_VALUE(writeWavelengthGrid, "false")
 
     ITEM_END()
