@@ -30,6 +30,8 @@ FatalError::FatalError(string message, const char* file, int line, const char* f
     for (auto msgline : System::stacktrace()) _message.push_back(msgline);
 }
 
+////////////////////////////////////////////////////////////////////
+
 vector<string> FatalError::message() const
 {
     return _message;

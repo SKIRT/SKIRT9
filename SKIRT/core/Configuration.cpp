@@ -67,7 +67,6 @@ void Configuration::setupSelfBefore()
     // verify this with the requirements set by the simulation mode
     bool mustHaveMedium = sim->simulationMode() != MonteCarloSimulation::SimulationMode::OligoNoMedium
                           && sim->simulationMode() != MonteCarloSimulation::SimulationMode::NoMedium;
-    ;
     if (!mustHaveMedium && _hasMedium) throw FATALERROR("This simulation mode does not allow media to be configured");
     if (mustHaveMedium && !_hasMedium)
         throw FATALERROR("This simulation mode requires at least one medium to be configured");
@@ -144,9 +143,7 @@ void Configuration::setupSelfBefore()
         _gridDimension = ms->gridDimension();
         if (_modelDimension > _gridDimension)
             throw FATALERROR("The grid symmetry (" + std::to_string(_gridDimension)
-                             + "D)"
-                               "does not support the model symmetry ("
-                             + std::to_string(_modelDimension) + "D)");
+                             + "D) does not support the model symmetry (" + std::to_string(_modelDimension) + "D)");
     }
     else
     {
@@ -244,9 +241,7 @@ void Configuration::setupSelfAfter()
     else
     {
         log->info("  Model symmetry: " + std::to_string(_modelDimension)
-                  + "D; "
-                    "Spatial grid symmetry: "
-                  + std::to_string(_gridDimension) + "D");
+                  + "D; Spatial grid symmetry: " + std::to_string(_gridDimension) + "D");
         log->warning("  Selecting a grid with the model symmetry might be more efficient");
     }
 

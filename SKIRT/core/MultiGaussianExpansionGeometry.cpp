@@ -36,8 +36,7 @@ void MultiGaussianExpansionGeometry::setupSelfBefore()
     {
         if (_qv[i] < cosi)
             throw FATALERROR("MGE component with index " + std::to_string(i)
-                             + " can't be deprojected: "
-                               "apparent flattening is smaller than cosine of inclination ("
+                             + " can't be deprojected: apparent flattening is smaller than cosine of inclination ("
                              + StringUtils::toString(_qv[i], 'f') + " < " + StringUtils::toString(cosi, 'f') + ")");
         _qv[i] = sqrt((_qv[i] - cosi) * (_qv[i] + cosi)) / sini;
     }
