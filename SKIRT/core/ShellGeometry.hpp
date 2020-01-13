@@ -22,15 +22,15 @@ class ShellGeometry : public SpheGeometry
 {
     ITEM_CONCRETE(ShellGeometry, SpheGeometry, "a shell geometry")
 
-    PROPERTY_DOUBLE(minRadius, "the inner radius of the shell")
+        PROPERTY_DOUBLE(minRadius, "the inner radius of the shell")
         ATTRIBUTE_QUANTITY(minRadius, "length")
         ATTRIBUTE_MIN_VALUE(minRadius, "]0")
 
-    PROPERTY_DOUBLE(maxRadius, "the outer radius of the shell")
+        PROPERTY_DOUBLE(maxRadius, "the outer radius of the shell")
         ATTRIBUTE_QUANTITY(maxRadius, "length")
         ATTRIBUTE_MIN_VALUE(maxRadius, "]0")
 
-    PROPERTY_DOUBLE(exponent, "the power law exponent")
+        PROPERTY_DOUBLE(exponent, "the power law exponent")
         ATTRIBUTE_MIN_VALUE(exponent, "[0")
 
     ITEM_END()

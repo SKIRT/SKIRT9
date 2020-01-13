@@ -131,15 +131,14 @@ public:
         In order of appearance, the arguments specify the name of the associated instrument, the
         wavelength grid of the instrument, whether the simulation includes at least some media, and
         whether the simulation includes emission from those media. */
-    void setSimulationInfo(string instrumentName, const WavelengthGrid* lambdagrid,
-                           bool hasMedium, bool hasMediumEmission);
+    void setSimulationInfo(string instrumentName, const WavelengthGrid* lambdagrid, bool hasMedium,
+                           bool hasMediumEmission);
 
     /** This function configures the user requirements for recording, respectively, flux
         components, individual scattering level contributions, polarization, and information for
         calculating statistics. See the documentation in the header of this class for more
         information. */
-    void setUserFlags(bool recordComponents, int numScatteringLevels,
-                      bool recordPolarization, bool recordStatistics);
+    void setUserFlags(bool recordComponents, int numScatteringLevels, bool recordPolarization, bool recordStatistics);
 
     /** This function enables recording of spatially integrated flux densities, i.e. an %SED,
         assuming parallel projection at the specified instrument distance from the model. If both
@@ -153,8 +152,8 @@ public:
         of pixels, and the pixel sizes are used to calibrate the surface brightness; the center
         coordinates are used only for the metadata in the output file. If both includeFluxDensity()
         and includeSurfaceBrightness() are called, the specified distances must be the same. */
-    void includeSurfaceBrightness(double distance, int numPixelsX, int numPixelsY,
-                                  double pixelSizeX, double pixelSizeY, double centerX, double centerY);
+    void includeSurfaceBrightness(double distance, int numPixelsX, int numPixelsY, double pixelSizeX, double pixelSizeY,
+                                  double centerX, double centerY);
 
     /** This function completes the configuration of the recorder. It must be called after any of
         the configuration functions, and before the first invocation of the detect() function. */
@@ -208,15 +207,16 @@ private:
     class Contribution
     {
     public:
-        Contribution(int ell, int l, double w) : _ell(ell), _l(l), _w(w) { }
+        Contribution(int ell, int l, double w) : _ell(ell), _l(l), _w(w) {}
         bool operator<(const Contribution& c) const { return std::tie(_ell, _l) < std::tie(c._ell, c._l); }
         int ell() const { return _ell; }
         int l() const { return _l; }
         double w() const { return _w; }
+
     private:
-        int _ell{0};     // wavelength index
-        int _l{0};       // pixel index (relevant only for IFUs)
-        double _w{0};    // contribution
+        int _ell{0};   // wavelength index
+        int _l{0};     // pixel index (relevant only for IFUs)
+        double _w{0};  // contribution
     };
 
     /** Private data structure to remember a list of contributions for a given photon packet
@@ -231,6 +231,7 @@ private:
         void reset(size_t historyIndex = 0) { _historyIndex = historyIndex, _contributions.clear(); }
         void sort() { std::sort(_contributions.begin(), _contributions.end()); }
         const vector<Contribution>& contributions() const { return _contributions; }
+
     private:
         size_t _historyIndex{0};
         vector<Contribution> _contributions;
@@ -248,11 +249,11 @@ private:
     string _instrumentName;
     const WavelengthGrid* _lambdagrid{nullptr};
     bool _hasMedium{false};
-    bool _hasMediumEmission{false};     // relevant only when hasMedium is true
+    bool _hasMediumEmission{false};  // relevant only when hasMedium is true
 
     // recorder configuration, received from client during configuration
     bool _recordComponents{false};
-    int _numScatteringLevels{false};    // honored only when recordComponents is true
+    int _numScatteringLevels{false};  // honored only when recordComponents is true
     bool _recordPolarization{false};
     bool _recordStatistics{false};
     bool _includeFluxDensity{false};
@@ -271,9 +272,9 @@ private:
     double _centerY{0};
 
     // cached info, initialized when configuration is finalized
-    MediumSystem* _ms{nullptr};         // pointer to medium system, if present (used only if hasMedium is true)
-    bool _recordTotalOnly{true};        // becomes false if recordComponents and hasMedium are both true
-    size_t _numPixelsInFrame{0};        // number of pixels in a single IFU frame
+    MediumSystem* _ms{nullptr};   // pointer to medium system, if present (used only if hasMedium is true)
+    bool _recordTotalOnly{true};  // becomes false if recordComponents and hasMedium are both true
+    size_t _numPixelsInFrame{0};  // number of pixels in a single IFU frame
 
     // detector arrays that need to be calibrated, initialized when configuration is finalized
     vector<Array> _sed;

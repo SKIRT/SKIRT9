@@ -6,8 +6,8 @@
 #ifndef NETZERANGULARDISTRIBUTION_HPP
 #define NETZERANGULARDISTRIBUTION_HPP
 
-#include "AxAngularDistribution.hpp"
 #include "Array.hpp"
+#include "AxAngularDistribution.hpp"
 
 ////////////////////////////////////////////////////////////////////
 

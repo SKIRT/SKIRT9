@@ -24,12 +24,11 @@
     \frac{\text{d}n_\text{D}}{\text{d}a} / n_\text{H}= C\, a^{-\gamma} \qquad \text{for}\quad
     a_\text{min} \leq a \leq a_\text{max}, \f] where \f$C\f$ has units of
     \f$\text{m}^{\gamma-1}\f$. */
-class PowerLawGrainSizeDistribution: public RangeGrainSizeDistribution
+class PowerLawGrainSizeDistribution : public RangeGrainSizeDistribution
 {
-    ITEM_CONCRETE(PowerLawGrainSizeDistribution, RangeGrainSizeDistribution,
-                  "a power-law dust grain size distribution")
+    ITEM_CONCRETE(PowerLawGrainSizeDistribution, RangeGrainSizeDistribution, "a power-law dust grain size distribution")
 
-    PROPERTY_DOUBLE(exponent, "the (absolute value of the) exponent in the power-law distribution function")
+        PROPERTY_DOUBLE(exponent, "the (absolute value of the) exponent in the power-law distribution function")
         ATTRIBUTE_MIN_VALUE(exponent, "]0")
         ATTRIBUTE_MAX_VALUE(exponent, "10]")
         ATTRIBUTE_DEFAULT_VALUE(exponent, "3.5")

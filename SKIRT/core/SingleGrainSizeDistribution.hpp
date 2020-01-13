@@ -15,11 +15,11 @@
     by this class. The amin() and amax() functions in this class return a very narrow range of
     width \f$\Delta a=a_\text{s}/1000\f$ centered on the specified size \f$a_\text{s}\f$, and the
     function dnda() returns a constant distribution function value (arbitrarily scaled). */
-class SingleGrainSizeDistribution: public GrainSizeDistribution
+class SingleGrainSizeDistribution : public GrainSizeDistribution
 {
     ITEM_CONCRETE(SingleGrainSizeDistribution, GrainSizeDistribution, "a single-size dust grain size distribution")
 
-    PROPERTY_DOUBLE(size, "the single grain size for this distribution")
+        PROPERTY_DOUBLE(size, "the single grain size for this distribution")
         ATTRIBUTE_QUANTITY(size, "grainsize")
         ATTRIBUTE_MIN_VALUE(size, "[1 Angstrom")
         ATTRIBUTE_MAX_VALUE(size, "1 mm]")

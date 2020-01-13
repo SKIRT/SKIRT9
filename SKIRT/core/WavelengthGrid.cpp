@@ -9,7 +9,7 @@
 
 Range WavelengthGrid::wavelengthRange() const
 {
-    return Range(leftBorder(0), rightBorder(numBins()-1));
+    return Range(leftBorder(0), rightBorder(numBins() - 1));
 }
 
 //////////////////////////////////////////////////////////////////////

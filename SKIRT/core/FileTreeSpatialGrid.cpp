@@ -25,15 +25,13 @@ namespace
         infile >> needsSubdivision;
         switch (needsSubdivision)
         {
-        case 0:
-            break;
-        case 1:
-            log->infoIfElapsed("Subdiving node " + std::to_string(node->id()), 0);
-            node->subdivide(nodev);
-            for (auto child : node->children()) subdivideNodeIfNeeded(child, infile, nodev, log);
-            break;
-        default:
-            throw FATALERROR("Topology input file has improper format and/or missing data");
+            case 0: break;
+            case 1:
+                log->infoIfElapsed("Subdiving node " + std::to_string(node->id()), 0);
+                node->subdivide(nodev);
+                for (auto child : node->children()) subdivideNodeIfNeeded(child, infile, nodev, log);
+                break;
+            default: throw FATALERROR("Topology input file has improper format and/or missing data");
         }
     }
 }
@@ -61,15 +59,10 @@ vector<TreeNode*> FileTreeSpatialGrid::constructTree()
     infile >> numChildren;
     switch (numChildren)
     {
-    case 8:
-    case 0:
-        root = new OctTreeNode(extent());
-        break;
-    case 2:
-        root = new BinTreeNode(extent());
-        break;
-    default:
-        throw FATALERROR("Topology input file specifies unsupported number of children in node subdivision");
+        case 8:
+        case 0: root = new OctTreeNode(extent()); break;
+        case 2: root = new BinTreeNode(extent()); break;
+        default: throw FATALERROR("Topology input file specifies unsupported number of children in node subdivision");
     }
 
     // initialize the tree node list with the root node as the first item
@@ -85,4 +78,3 @@ vector<TreeNode*> FileTreeSpatialGrid::constructTree()
 }
 
 ////////////////////////////////////////////////////////////////////
-

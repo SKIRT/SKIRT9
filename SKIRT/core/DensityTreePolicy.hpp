@@ -6,8 +6,8 @@
 #ifndef DENSITYTREEPOLICY_HPP
 #define DENSITYTREEPOLICY_HPP
 
-#include "TreePolicy.hpp"
 #include "MaterialWavelengthRangeInterface.hpp"
+#include "TreePolicy.hpp"
 class Medium;
 class Random;
 
@@ -77,36 +77,36 @@ class DensityTreePolicy : public TreePolicy, public MaterialWavelengthRangeInter
     ITEM_CONCRETE(DensityTreePolicy, TreePolicy,
                   "a tree grid construction policy using the medium density distribution")
 
-    PROPERTY_DOUBLE(maxDustFraction, "the maximum fraction of dust contained in each cell")
+        PROPERTY_DOUBLE(maxDustFraction, "the maximum fraction of dust contained in each cell")
         ATTRIBUTE_MIN_VALUE(maxDustFraction, "[0")
         ATTRIBUTE_MAX_VALUE(maxDustFraction, "1e-2]")
         ATTRIBUTE_DEFAULT_VALUE(maxDustFraction, "1e-6")
 
-    PROPERTY_DOUBLE(maxDustOpticalDepth, "the maximum diagonal dust optical depth for each cell")
+        PROPERTY_DOUBLE(maxDustOpticalDepth, "the maximum diagonal dust optical depth for each cell")
         ATTRIBUTE_MIN_VALUE(maxDustOpticalDepth, "[0")
         ATTRIBUTE_MAX_VALUE(maxDustOpticalDepth, "100]")
         ATTRIBUTE_DEFAULT_VALUE(maxDustOpticalDepth, "0")
         ATTRIBUTE_DISPLAYED_IF(maxDustOpticalDepth, "Level2")
 
-    PROPERTY_DOUBLE(wavelength, "the wavelength at which to evaluate the optical depth")
+        PROPERTY_DOUBLE(wavelength, "the wavelength at which to evaluate the optical depth")
         ATTRIBUTE_QUANTITY(wavelength, "wavelength")
         ATTRIBUTE_MIN_VALUE(wavelength, "1 Angstrom")
         ATTRIBUTE_MAX_VALUE(wavelength, "1 m")
         ATTRIBUTE_DEFAULT_VALUE(wavelength, "0.55 micron")
         ATTRIBUTE_RELEVANT_IF(wavelength, "maxDustOpticalDepth")
 
-    PROPERTY_DOUBLE(maxDustDensityDispersion, "the maximum dust density dispersion in each cell")
+        PROPERTY_DOUBLE(maxDustDensityDispersion, "the maximum dust density dispersion in each cell")
         ATTRIBUTE_MIN_VALUE(maxDustDensityDispersion, "[0")
         ATTRIBUTE_MAX_VALUE(maxDustDensityDispersion, "1]")
         ATTRIBUTE_DEFAULT_VALUE(maxDustDensityDispersion, "0")
         ATTRIBUTE_DISPLAYED_IF(maxDustDensityDispersion, "Level2")
 
-    PROPERTY_DOUBLE(maxElectronFraction, "the maximum fraction of electrons contained in each cell")
+        PROPERTY_DOUBLE(maxElectronFraction, "the maximum fraction of electrons contained in each cell")
         ATTRIBUTE_MIN_VALUE(maxElectronFraction, "[0")
         ATTRIBUTE_MAX_VALUE(maxElectronFraction, "1e-2]")
         ATTRIBUTE_DEFAULT_VALUE(maxElectronFraction, "1e-6")
 
-    PROPERTY_DOUBLE(maxGasFraction, "the maximum fraction of gas contained in each cell")
+        PROPERTY_DOUBLE(maxGasFraction, "the maximum fraction of gas contained in each cell")
         ATTRIBUTE_MIN_VALUE(maxGasFraction, "[0")
         ATTRIBUTE_MAX_VALUE(maxGasFraction, "1e-2]")
         ATTRIBUTE_DEFAULT_VALUE(maxGasFraction, "1e-6")

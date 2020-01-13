@@ -16,10 +16,10 @@
 class ShapeCanvas : public ShapeItem
 {
     ITEM_CONCRETE(ShapeCanvas, ShapeItem, "the root of a shape hierarchy, managing the canvas")
-    PROPERTY_STRING(savePath, "the path of the output file when saving this canvas")
+        PROPERTY_STRING(savePath, "the path of the output file when saving this canvas")
         ATTRIBUTE_REQUIRED_IF(savePath, "false")
         ATTRIBUTE_DISPLAYED_IF(savePath, "false")
-    PROPERTY_ITEM(shape, Shape, "the top-level shape in this hierarchy")
+        PROPERTY_ITEM(shape, Shape, "the top-level shape in this hierarchy")
         ATTRIBUTE_DEFAULT_VALUE(shape, "ShapeGroup")
     ITEM_END()
 

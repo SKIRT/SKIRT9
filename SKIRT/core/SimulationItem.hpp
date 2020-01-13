@@ -82,7 +82,7 @@ public:
     {
         static_assert(std::is_base_of<SimulationItem, T>::value,
                       "Requested type in find() does not inherit SimulationItem");
-        return dynamic_cast<T*>(find(setup, [] (Item* item) ->SimulationItem* { return dynamic_cast<T*>(item); } ));
+        return dynamic_cast<T*>(find(setup, [](Item* item) -> SimulationItem* { return dynamic_cast<T*>(item); }));
     }
 
     /** This template function looks for a simulation item that offers the interface specified as
@@ -114,10 +114,11 @@ public:
         function on the item before it is returned; if no appropriate item is found, a FatalError
         is thrown. If the \em setup flag is false, the function does not perform setup on the item,
         and if no appropriate item is found, the function returns a null pointer. */
-    template<class T> T* interface(int levels=-999999, bool setup = true) const
+    template<class T> T* interface(int levels = -999999, bool setup = true) const
     {
-        return dynamic_cast<T*>(interface(levels, setup, [] (SimulationItem* item)
-                { return dynamic_cast<T*>(item) != nullptr && item->offersInterface(typeid(T)); } ));
+        return dynamic_cast<T*>(interface(levels, setup, [](SimulationItem* item) {
+            return dynamic_cast<T*>(item) != nullptr && item->offersInterface(typeid(T));
+        }));
     }
 
 private:

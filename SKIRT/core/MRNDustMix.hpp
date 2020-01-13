@@ -30,11 +30,11 @@ class MRNDustMix : public MultiGrainDustMix
 {
     ITEM_CONCRETE(MRNDustMix, MultiGrainDustMix, "an MRN (1997) dust mix")
 
-    PROPERTY_INT(numSilicateSizes, "the number of silicate grain size bins")
+        PROPERTY_INT(numSilicateSizes, "the number of silicate grain size bins")
         ATTRIBUTE_MIN_VALUE(numSilicateSizes, "1")
         ATTRIBUTE_DEFAULT_VALUE(numSilicateSizes, "5")
 
-    PROPERTY_INT(numGraphiteSizes, "the number of graphite grain size bins")
+        PROPERTY_INT(numGraphiteSizes, "the number of graphite grain size bins")
         ATTRIBUTE_MIN_VALUE(numGraphiteSizes, "1")
         ATTRIBUTE_DEFAULT_VALUE(numGraphiteSizes, "5")
     ITEM_END()
@@ -42,7 +42,7 @@ class MRNDustMix : public MultiGrainDustMix
     //============= Construction - Setup - Destruction =============
 
 protected:
-        /** This function adds the relevant grain populations to the dust mix */
+    /** This function adds the relevant grain populations to the dust mix */
     void setupSelfBefore() override;
 };
 

@@ -11,14 +11,16 @@
 CommandLineArguments::CommandLineArguments(const vector<string>& cmdlineargs, string options)
 {
     // parse the option list into a dictionary with a value of true if the option takes a value
-    std::unordered_map<string,bool> takesValue;
+    std::unordered_map<string, bool> takesValue;
     for (string option : StringUtils::split(StringUtils::squeeze(options), " "))
     {
         // ignore options that don't start with a dash
         if (StringUtils::startsWith(option, "-"))
         {
-            if (StringUtils::endsWith(option, "*")) takesValue[option.substr(0, option.length()-1)] = true;
-            else takesValue[option] = false;
+            if (StringUtils::endsWith(option, "*"))
+                takesValue[option.substr(0, option.length() - 1)] = true;
+            else
+                takesValue[option] = false;
         }
     }
 
@@ -34,12 +36,13 @@ CommandLineArguments::CommandLineArguments(const vector<string>& cmdlineargs, st
             if (!takesValue.count(arg)) return;
             if (takesValue[arg])
             {
-                if (index+1 >= cmdlineargs.size()) return;
+                if (index + 1 >= cmdlineargs.size()) return;
                 string value = cmdlineargs[++index];
                 if (StringUtils::startsWith(value, "-")) return;
                 _options[arg] = value;
             }
-            else _options[arg] = "";
+            else
+                _options[arg] = "";
         }
 
         // process a filepath

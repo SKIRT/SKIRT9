@@ -16,17 +16,16 @@ void ListBand::setupSelfBefore()
     // verify number of configured parameters
     if (_wavelengths.size() != _transmissionValues.size())
         throw FATALERROR("Number of listed luminosities does not match number of listed transmission values");
-    if (_transmissionValues.size() < 2)
-        throw FATALERROR("Number of listed transmission values is less than 2");
+    if (_transmissionValues.size() < 2) throw FATALERROR("Number of listed transmission values is less than 2");
 
     // calculate the normalization factor for the transmission values
     size_t size = _transmissionValues.size();
     double norm = 0.;
-    for (size_t i=1; i!=size; ++i)
+    for (size_t i = 1; i != size; ++i)
     {
-        double dlambda = _wavelengths[i]-_wavelengths[i-1];
-        double trans =  0.5*(_transmissionValues[i-1]+_transmissionValues[i]);
-        norm += trans*dlambda;
+        double dlambda = _wavelengths[i] - _wavelengths[i - 1];
+        double trans = 0.5 * (_transmissionValues[i - 1] + _transmissionValues[i]);
+        norm += trans * dlambda;
     }
 
     // copy the transmission values from the configuration and normalize them

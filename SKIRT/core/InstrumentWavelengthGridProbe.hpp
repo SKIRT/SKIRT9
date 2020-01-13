@@ -31,8 +31,8 @@ public:
     /** This function outputs a column text file for the specified wavelength grid in the format as
         described in the header of this class. It can be used from other probes to output
         wavelength grid details. */
-    static void writeWavelengthGrid(Probe* item, const WavelengthGrid* wavelengthGrid,
-                                    string filename, string description);
+    static void writeWavelengthGrid(Probe* item, const WavelengthGrid* wavelengthGrid, string filename,
+                                    string description);
 };
 
 ////////////////////////////////////////////////////////////////////

@@ -6,8 +6,8 @@
 #ifndef ADAPTIVEMESHSPATIALGRID_HPP
 #define ADAPTIVEMESHSPATIALGRID_HPP
 
-#include "SpatialGrid.hpp"
 #include "DensityInCellInterface.hpp"
+#include "SpatialGrid.hpp"
 class AdaptiveMeshSnapshot;
 
 ////////////////////////////////////////////////////////////////////
@@ -103,8 +103,8 @@ protected:
     //======================== Data Members ========================
 
 private:
-    AdaptiveMeshSnapshot* _mesh{nullptr};   // adaptive mesh snapshot obtained from medium component
-    double _norm{0.};                       // normalization factor obtained from medium component
+    AdaptiveMeshSnapshot* _mesh{nullptr};  // adaptive mesh snapshot obtained from medium component
+    double _norm{0.};                      // normalization factor obtained from medium component
 };
 
 ////////////////////////////////////////////////////////////////////

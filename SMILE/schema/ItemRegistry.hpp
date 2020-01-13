@@ -50,8 +50,8 @@ public:
 
         This function is \em not thread-safe and may be called only during program startup
         from a single thread. */
-    static void beginSchema(string name, string title, string version, string extension,
-                            string root, string type, string format, string url);
+    static void beginSchema(string name, string title, string version, string extension, string root, string type,
+                            string format, string url);
 
     /** This function adds the Item subclass specified as template argument to the current \em
         target schema definition in the registry. The function causes the metadata about
@@ -61,9 +61,9 @@ public:
     template<class ItemClass> static void add()
     {
         static_assert(std::is_base_of<typename ItemClass::BaseType, typename ItemClass::ItemType>::value,
-                        "Item subclass does not inherit its advertised base class");
+                      "Item subclass does not inherit its advertised base class");
         static_assert(std::is_base_of<Item, typename ItemClass::BaseType>::value,
-                        "Item base class does not inherit Item");
+                      "Item base class does not inherit Item");
         ItemClass::ii_loadItemInfo();
     }
 
@@ -85,7 +85,6 @@ private:
     static void addUnitDefImpl(const UnitDef& unitDef);
 
 public:
-
     /** This function releases the global memory structure representing the registry. This function
         is \em not thread-safe; it should be invoked at least once at program termination, after
         closing down any parallel threads and after the last use of the facilities offered by this
@@ -124,8 +123,7 @@ public:
     /** This function creates a new property definition and initializes its basic properties as
         specified by the function arguments. The new property definition becomes the \em target for
         subsequent calls to the registry. */
-    static void beginProperty(const char* type, const char* name, const char* title,
-                              const PropertyAccessor* accessor);
+    static void beginProperty(const char* type, const char* name, const char* title, const PropertyAccessor* accessor);
 
     /** This function begins the addition of enumeration information to the current target
         property. The argument specifies the number of elements in the enumeration type. If this

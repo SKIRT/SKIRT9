@@ -26,9 +26,9 @@ class SpheroidalGeometryDecorator : public AxGeometry
     ITEM_CONCRETE(SpheroidalGeometryDecorator, AxGeometry,
                   "a decorator that constructs a spheroidal variant of any spherical geometry")
 
-    PROPERTY_ITEM(geometry, SpheGeometry, "the spherical geometry to be made spheroidal")
+        PROPERTY_ITEM(geometry, SpheGeometry, "the spherical geometry to be made spheroidal")
 
-    PROPERTY_DOUBLE(flattening, "the flattening parameter q")
+        PROPERTY_DOUBLE(flattening, "the flattening parameter q")
         ATTRIBUTE_MIN_VALUE(flattening, "]0")
         ATTRIBUTE_DEFAULT_VALUE(flattening, "1")
 

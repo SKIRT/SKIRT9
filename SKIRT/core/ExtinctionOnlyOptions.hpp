@@ -6,8 +6,8 @@
 #ifndef EXTINCTIONONLYOPTIONS_HPP
 #define EXTINCTIONONLYOPTIONS_HPP
 
-#include "SimulationItem.hpp"
 #include "DisjointWavelengthGrid.hpp"
+#include "SimulationItem.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -20,12 +20,12 @@ class ExtinctionOnlyOptions : public SimulationItem
 {
     ITEM_CONCRETE(ExtinctionOnlyOptions, SimulationItem, "a set of options related to extinction-only simulation modes")
 
-    PROPERTY_BOOL(storeRadiationField, "store the radiation field so that it can be probed for output")
+        PROPERTY_BOOL(storeRadiationField, "store the radiation field so that it can be probed for output")
         ATTRIBUTE_DEFAULT_VALUE(storeRadiationField, "false")
         ATTRIBUTE_DISPLAYED_IF(storeRadiationField, "Level3")
         ATTRIBUTE_INSERT(storeRadiationField, "storeRadiationField:RadiationField")
 
-    PROPERTY_ITEM(radiationFieldWLG, DisjointWavelengthGrid, "the wavelength grid for storing the radiation field")
+        PROPERTY_ITEM(radiationFieldWLG, DisjointWavelengthGrid, "the wavelength grid for storing the radiation field")
         ATTRIBUTE_RELEVANT_IF(radiationFieldWLG, "storeRadiationField&Panchromatic")
 
     ITEM_END()

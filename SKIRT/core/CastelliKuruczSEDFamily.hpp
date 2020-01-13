@@ -164,8 +164,8 @@ public:
         specified parameters over the specified wavelength range. The function returns the
         normalization factor. The number and type of parameters must match the information returned
         by the parameterInfo() function; if not the behavior is undefined. */
-    double cdf(Array& lambdav, Array& pv, Array& Pv,
-               const Range& wavelengthRange, const Array& parameters) const override;
+    double cdf(Array& lambdav, Array& pv, Array& Pv, const Range& wavelengthRange,
+               const Array& parameters) const override;
 
     //====================== Data members =====================
 

@@ -6,8 +6,8 @@
 #ifndef CUBICSPLINESMOOTHINGKERNEL_HPP
 #define CUBICSPLINESMOOTHINGKERNEL_HPP
 
-#include "SmoothingKernel.hpp"
 #include "Array.hpp"
+#include "SmoothingKernel.hpp"
 
 ////////////////////////////////////////////////////////////////////
 

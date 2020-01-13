@@ -6,8 +6,8 @@
 #ifndef FAMILYSED_HPP
 #define FAMILYSED_HPP
 
-#include "SED.hpp"
 #include "Array.hpp"
+#include "SED.hpp"
 class SEDFamily;
 
 ////////////////////////////////////////////////////////////////////

@@ -12,10 +12,7 @@
 
 namespace
 {
-    double norm(double x, double y, double z)
-    {
-        return sqrt(x*x + y*y + z*z);
-    }
+    double norm(double x, double y, double z) { return sqrt(x * x + y * y + z * z); }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -35,7 +32,7 @@ void PerspectiveInstrument::setupSelfBefore()
     double c = (_Vz - _Cz) / G;
 
     // pixel width and height (assuming square pixels)
-    _s = _Sx/_Nx;
+    _s = _Sx / _Nx;
 
     // eye position
     _Ex = _Vx + _Fe * a;
@@ -43,36 +40,36 @@ void PerspectiveInstrument::setupSelfBefore()
     _Ez = _Vz + _Fe * c;
 
     // unit vectors along viewport's x and y axes
-    Vec kn(_Vx-_Cx, _Vy-_Cy, _Vz-_Cz);
+    Vec kn(_Vx - _Cx, _Vy - _Cy, _Vz - _Cz);
     Vec ku(_Ux, _Uy, _Uz);
-    Vec ky = Vec::cross(kn,Vec::cross(ku,kn));
-    Vec kx = Vec::cross(ky,kn);
-    _bfkx = Direction(kx/kx.norm());
-    _bfky = Direction(ky/ky.norm());
+    Vec ky = Vec::cross(kn, Vec::cross(ku, kn));
+    Vec kx = Vec::cross(ky, kn);
+    _bfkx = Direction(kx / kx.norm());
+    _bfky = Direction(ky / ky.norm());
 
     // the perspective transformation
 
     // from world to eye coordinates
     _transform.translate(-_Ex, -_Ey, -_Ez);
-    double v = sqrt(b*b+c*c);
+    double v = sqrt(b * b + c * c);
     if (v > 0.3)
     {
-        _transform.rotateX(c/v, -b/v);
+        _transform.rotateX(c / v, -b / v);
         _transform.rotateY(v, -a);
-        double k = (b*b+c*c)*_Ux - a*b*_Uy - a*c*_Uz;
-        double l = c*_Uy - b*_Uz;
-        double u = sqrt(k*k+l*l);
-        _transform.rotateZ(l/u, -k/u);
+        double k = (b * b + c * c) * _Ux - a * b * _Uy - a * c * _Uz;
+        double l = c * _Uy - b * _Uz;
+        double u = sqrt(k * k + l * l);
+        _transform.rotateZ(l / u, -k / u);
     }
     else
     {
-        v = sqrt(a*a+c*c);
-        _transform.rotateY(c/v, -a/v);
+        v = sqrt(a * a + c * c);
+        _transform.rotateY(c / v, -a / v);
         _transform.rotateX(v, -b);
-        double k = c*_Ux - a*_Uz;
-        double l = (a*a+c*c)*_Uy - a*b*_Ux - b*c*_Uz;
-        double u = sqrt(k*k+l*l);
-        _transform.rotateZ(l/u, -k/u);
+        double k = c * _Ux - a * _Uz;
+        double l = (a * a + c * c) * _Uy - a * b * _Ux - b * c * _Uz;
+        double u = sqrt(k * k + l * l);
+        _transform.rotateZ(l / u, -k / u);
     }
     _transform.scale(1., 1., -1.);
 
@@ -80,8 +77,8 @@ void PerspectiveInstrument::setupSelfBefore()
     _transform.perspectiveZ(_Fe);
 
     // from viewport to pixel coordinates
-    _transform.scale(1./_s, 1./_s, 1.);
-    _transform.translate(_Nx/2., _Ny/2., 0);
+    _transform.scale(1. / _s, 1. / _s, 1.);
+    _transform.translate(_Nx / 2., _Ny / 2., 0);
 
     // configure flux recorder with a large distance relative to the pixel size so that atan(s/2d) = s/2d
     // and the default calibration can be easily corrected when detecting each individual phoon packet
@@ -94,11 +91,10 @@ void PerspectiveInstrument::setupSelfBefore()
 void PerspectiveInstrument::determineSameObserverAsPreceding(const Instrument* precedingInstrument)
 {
     auto other = dynamic_cast<const PerspectiveInstrument*>(precedingInstrument);
-    if (other && width()==other->width()
-         && viewX()==other->viewX() && viewY()==other->viewY() && viewZ()==other->viewZ()
-         && crossX()==other->crossX() && crossY()==other->crossY() && crossZ()==other->crossZ()
-         && upX()==other->upX() && upY()==other->upY() && upZ()==other->upZ()
-         && focal()==other->focal())
+    if (other && width() == other->width() && viewX() == other->viewX() && viewY() == other->viewY()
+        && viewZ() == other->viewZ() && crossX() == other->crossX() && crossY() == other->crossY()
+        && crossZ() == other->crossZ() && upX() == other->upX() && upY() == other->upY() && upZ() == other->upZ()
+        && focal() == other->focal())
     {
         setSameObserverAsPreceding();
     }
@@ -117,7 +113,7 @@ Direction PerspectiveInstrument::bfkobs(const Position& bfr) const
     if (D < 1e-20) return Direction();
 
     // otherwise return a unit vector in the direction from launch to eye
-    return Direction((_Ex - Px)/D, (_Ey - Py)/D, (_Ez - Pz)/D);
+    return Direction((_Ex - Px) / D, (_Ey - Py) / D, (_Ez - Pz) / D);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -140,20 +136,20 @@ void PerspectiveInstrument::detect(PhotonPacket* pp)
 {
     // get the position
     double x, y, z;
-    pp->position().cartesian(x,y,z);
+    pp->position().cartesian(x, y, z);
 
     // transform from world to pixel coordinates
     double xp, yp, zp, wp;
-    _transform.transform(x, y, z, 1.,  xp, yp, zp, wp);
-    int i = static_cast<int>(xp/wp);
-    int j = static_cast<int>(yp/wp);
+    _transform.transform(x, y, z, 1., xp, yp, zp, wp);
+    int i = static_cast<int>(xp / wp);
+    int j = static_cast<int>(yp / wp);
 
     // ignore photon packets arriving outside the viewport, originating from behind the viewport,
     // or originating from very close to the viewport
-    if (i>=0 && i<_Nx && j>=0 && j<_Ny && zp > _s/10.)
+    if (i >= 0 && i < _Nx && j >= 0 && j < _Ny && zp > _s / 10.)
     {
         // detect the photon packet in the appropriate pixel of the data cube and at the appropriate distance
-        int l = i + _Nx*j;
+        int l = i + _Nx * j;
         instrumentFluxRecorder()->detect(pp, l, zp);
     }
 }

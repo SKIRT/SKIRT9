@@ -6,9 +6,9 @@
 #ifndef BAND_HPP
 #define BAND_HPP
 
-#include "SimulationItem.hpp"
 #include "Array.hpp"
 #include "Range.hpp"
+#include "SimulationItem.hpp"
 
 ////////////////////////////////////////////////////////////////////
 

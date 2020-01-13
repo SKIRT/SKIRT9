@@ -49,9 +49,8 @@ public:
         returns the user's response. The function returns a zero-based index into the \em choices
         list. If \em allowNoChoice is true, the function returns -1 to indicate that no choice was
         made. */
-    static int promptForChoice(string message, const vector<string>& choices,
-                               bool hasDef=false, int defIndex=-1,
-                               bool allowNoChoice=false, string noChoiceMessage=string());
+    static int promptForChoice(string message, const vector<string>& choices, bool hasDef = false, int defIndex = -1,
+                               bool allowNoChoice = false, string noChoiceMessage = string());
 };
 
 ////////////////////////////////////////////////////////////////////

@@ -39,32 +39,32 @@ namespace
     public:
         void visitPropertyHandler(StringPropertyHandler* handler) override
         {
-            string value = Console::promptForString("Enter " + handler->title(),
-                                                    handler->hasDefaultValue() || !handler->isRequired(),
-                                                    handler->defaultValue());
+            string value =
+                Console::promptForString("Enter " + handler->title(),
+                                         handler->hasDefaultValue() || !handler->isRequired(), handler->defaultValue());
             handler->setValue(value);
         }
 
         void visitPropertyHandler(BoolPropertyHandler* handler) override
         {
-            bool value = Console::promptForBool("Do you want to " + handler->title() + "?",
-                                                handler->hasDefaultValue(), handler->defaultValue() );
+            bool value = Console::promptForBool("Do you want to " + handler->title() + "?", handler->hasDefaultValue(),
+                                                handler->defaultValue());
             handler->setValue(value);
         }
 
         void visitPropertyHandler(IntPropertyHandler* handler) override
         {
             int value = Console::promptForInt("Enter " + handler->title(), handler->minValue(), handler->maxValue(),
-                                              handler->hasDefaultValue(), handler->defaultValue() );
+                                              handler->hasDefaultValue(), handler->defaultValue());
             handler->setValue(value);
         }
 
         void visitPropertyHandler(EnumPropertyHandler* handler) override
         {
             vector<string> names = handler->values();
-            int choice = Console::promptForChoice(handler->title(), handler->titlesForValues(),
-                                                  handler->hasDefaultValue(),
-                                                  StringUtils::indexOf(names, handler->defaultValue()));
+            int choice =
+                Console::promptForChoice(handler->title(), handler->titlesForValues(), handler->hasDefaultValue(),
+                                         StringUtils::indexOf(names, handler->defaultValue()));
             handler->setValue(names[choice]);
         }
 
@@ -112,14 +112,14 @@ namespace
             handler->setToEmpty();
 
             // loop to create list of new items
-            for (int count = 1; ; count++)
+            for (int count = 1;; count++)
             {
                 // make the user select the appropriate subclass for this item
-                int choice = Console::promptForChoice(
-                                        "item #" + std::to_string(count) + " in " + handler->title() + " list",
-                                        handler->schema()->titles(choices), handler->hasDefaultValue(),
-                                        StringUtils::indexOf(choices, handler->defaultType()),
-                                        count != 1  || !handler->isRequired(), "or zero to terminate the list");
+                int choice =
+                    Console::promptForChoice("item #" + std::to_string(count) + " in " + handler->title() + " list",
+                                             handler->schema()->titles(choices), handler->hasDefaultValue(),
+                                             StringUtils::indexOf(choices, handler->defaultType()),
+                                             count != 1 || !handler->isRequired(), "or zero to terminate the list");
 
                 // terminate the list if requested
                 if (choice < 0) return;
@@ -146,20 +146,11 @@ namespace
             handler->setValue(handler->defaultValue());
         }
 
-        void visitPropertyHandler(BoolPropertyHandler* handler) override
-        {
-            handler->setValue(handler->defaultValue());
-        }
+        void visitPropertyHandler(BoolPropertyHandler* handler) override { handler->setValue(handler->defaultValue()); }
 
-        void visitPropertyHandler(IntPropertyHandler* handler) override
-        {
-            handler->setValue(handler->defaultValue());
-        }
+        void visitPropertyHandler(IntPropertyHandler* handler) override { handler->setValue(handler->defaultValue()); }
 
-        void visitPropertyHandler(EnumPropertyHandler* handler) override
-        {
-            handler->setValue(handler->defaultValue());
-        }
+        void visitPropertyHandler(EnumPropertyHandler* handler) override { handler->setValue(handler->defaultValue()); }
 
         void visitPropertyHandler(DoublePropertyHandler* handler) override
         {
@@ -182,7 +173,8 @@ namespace
                 // recursively default-construct the properties of the new item
                 setPropertiesToDefaults(handler->value(), handler->schema(), handler->nameManager());
             }
-            else handler->setToNull();
+            else
+                handler->setToNull();
         }
 
         void visitPropertyHandler(ItemListPropertyHandler* handler) override
@@ -215,7 +207,7 @@ namespace
             auto handler = schema->createPropertyHandler(item, name, nameMgr);
             if (handler->isRelevant() && handler->isRequired() && !handler->hasDefaultValue())
                 throw FATALERROR("Value for required property '" + handler->name() + "' in item of type '"
-                                  + item->type() + "' is not specified and has no default value");
+                                 + item->type() + "' is not specified and has no default value");
             handler->acceptVisitor(&defaultSetter);
         }
     }
@@ -238,8 +230,10 @@ namespace
             auto handler = schema->createPropertyHandler(item, property, nameMgr);
 
             // distribute to setup methods depending on property type (using visitor pattern)
-            if (handler->isSilent()) handler->acceptVisitor(&defaultSetter);
-            else handler->acceptVisitor(&consoleSetter);
+            if (handler->isSilent())
+                handler->acceptVisitor(&defaultSetter);
+            else
+                handler->acceptVisitor(&consoleSetter);
         }
         nameMgr->popLocal();
     }

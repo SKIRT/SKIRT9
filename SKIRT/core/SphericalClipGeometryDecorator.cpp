@@ -12,8 +12,8 @@ void SphericalClipGeometryDecorator::setupSelfBefore()
     ClipGeometryDecorator::setupSelfBefore();
 
     // calculate some frequently used values
-    _center = Position(_centerX,_centerY,_centerZ);
-    _clipRadiusSquared = _clipRadius*_clipRadius;
+    _center = Position(_centerX, _centerY, _centerZ);
+    _clipRadiusSquared = _clipRadius * _clipRadius;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -30,7 +30,7 @@ int SphericalClipGeometryDecorator::dimension() const
 
 bool SphericalClipGeometryDecorator::inside(Position bfr) const
 {
-    return (bfr-_center).norm2() <= _clipRadiusSquared;
+    return (bfr - _center).norm2() <= _clipRadiusSquared;
 }
 
 ////////////////////////////////////////////////////////////////////

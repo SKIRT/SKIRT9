@@ -7,9 +7,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-ConvexPolygon::ConvexPolygon()
-{
-}
+ConvexPolygon::ConvexPolygon() {}
 
 ////////////////////////////////////////////////////////////////////
 
@@ -33,7 +31,7 @@ namespace
     // with the line through the specified points p1 and p2
     double intersect(double y, double x1, double y1, double x2, double y2)
     {
-        return x1 + (x2-x1) * (y-y1) / (y2-y1);
+        return x1 + (x2 - x1) * (y - y1) / (y2 - y1);
     }
 }
 
@@ -45,11 +43,11 @@ double ConvexPolygon::leftFor(double y) const
 
     // loop through points in clockwise order starting at bottom point
     // and identify the point ending the intersection segment
-    size_t i = _botIndex+1;
-    while (y > _yv[i%_n]) ++i;
+    size_t i = _botIndex + 1;
+    while (y > _yv[i % _n]) ++i;
 
     // return the intersection point with that segment
-    size_t i1 = (i-1) % _n;
+    size_t i1 = (i - 1) % _n;
     size_t i2 = i % _n;
     return intersect(y, _xv[i1], _yv[i1], _xv[i2], _yv[i2]);
 }
@@ -64,11 +62,11 @@ double ConvexPolygon::rightFor(double y) const
 
     // loop through points in clockwise order starting at top point
     // and identify the point ending the intersection segment
-    size_t i = _topIndex+1;
-    while (y < _yv[i%_n]) ++i;
+    size_t i = _topIndex + 1;
+    while (y < _yv[i % _n]) ++i;
 
     // return the intersection point with that segment
-    size_t i1 = (i-1) % _n;
+    size_t i1 = (i - 1) % _n;
     size_t i2 = i % _n;
     return intersect(y, _xv[i1], _yv[i1], _xv[i2], _yv[i2]);
 }

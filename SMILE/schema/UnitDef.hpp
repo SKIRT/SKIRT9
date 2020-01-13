@@ -62,7 +62,7 @@
 */
 class UnitDef
 {
-    friend class SchemaDef;     // so that schema definition can load and extract info at will
+    friend class SchemaDef;  // so that schema definition can load and extract info at will
 
     // ================== Constructing and assigning ==================
 
@@ -90,7 +90,7 @@ protected:
         this unit to a value in the corresponding internal program unit. The conversion is
         performed using \f[ v_\mathrm{program} = (v_\mathrm{this}\times f) + o.\f] The offset
         defaults to zero if it is not specified. */
-    void addUnit(string quantity, string unit, double factor, double offset=0.);
+    void addUnit(string quantity, string unit, double factor, double offset = 0.);
 
     /** This function specifies the default unit for a particular quantity in a given unit system.
         It can be called from the constructor of a subclass to load the appropriate information
@@ -138,10 +138,10 @@ private:
     // (the implementation of the UnitDef class does not depend on the maps being ordered)
 
     // a list of all physical quantities with corresponding units: <quantity-name, <unit-name, (factor, offset)>>
-    std::map<string, std::map<string,std::pair<double,double>>> _quantities;
+    std::map<string, std::map<string, std::pair<double, double>>> _quantities;
 
     // a list of all units systems with corresponding default units: <unitsystem-name, <quantity-name, unit-name>>
-    std::map<string, std::map<string,string>> _unitSystems;
+    std::map<string, std::map<string, string>> _unitSystems;
 };
 
 ////////////////////////////////////////////////////////////////////

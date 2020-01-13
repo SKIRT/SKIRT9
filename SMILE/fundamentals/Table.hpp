@@ -28,15 +28,15 @@ public:
 
     /** This constructor constructs a table holding the specified number of items in each of the N
         dimensions. All values are set to zero. */
-    template <typename... Sizes> explicit Table(Sizes... sizes) { resize(sizes...); }
+    template<typename... Sizes> explicit Table(Sizes... sizes) { resize(sizes...); }
 
     /** This function resizes the table so that it holds the specified number of items in each of
         the N dimensions. All values are set to zero, i.e. any values that were previously in the
         table are lost. */
-    template <typename... Sizes, typename = std::enable_if_t<CompileTimeUtils::isIntegralArgList<N, Sizes...>()>>
+    template<typename... Sizes, typename = std::enable_if_t<CompileTimeUtils::isIntegralArgList<N, Sizes...>()>>
     void resize(Sizes... sizes)
     {
-        _sizes = {{ static_cast<size_t>(sizes)... }};
+        _sizes = {{static_cast<size_t>(sizes)...}};
         _data.resize(std::accumulate(_sizes.begin(), _sizes.end(), static_cast<size_t>(1), std::multiplies<size_t>()));
     }
 
@@ -56,7 +56,7 @@ public:
 
     /** This function returns a writable reference to the value at the specified N indices. There
         is no range checking. Out-of-range index values cause unpredictable behavior. */
-    template <typename... Indices, typename = std::enable_if_t<CompileTimeUtils::isIntegralArgList<N, Indices...>()>>
+    template<typename... Indices, typename = std::enable_if_t<CompileTimeUtils::isIntegralArgList<N, Indices...>()>>
     double& operator()(Indices... indices)
     {
         return _data[flattenedIndex(indices...)];
@@ -64,7 +64,7 @@ public:
 
     /** This function returns a copy of the value at the specified N indices. There is no range
         checking. Out-of-range index values cause unpredictable behavior. */
-    template <typename... Indices, typename = std::enable_if_t<CompileTimeUtils::isIntegralArgList<N, Indices...>()>>
+    template<typename... Indices, typename = std::enable_if_t<CompileTimeUtils::isIntegralArgList<N, Indices...>()>>
     double operator()(Indices... indices) const
     {
         return _data[flattenedIndex(indices...)];
@@ -73,25 +73,31 @@ public:
     /** This function returns a writable reference to the value at the specified index (for a
         one-dimensional table only). There is no range checking. Out-of-range index values cause
         unpredictable behavior. */
-    template <typename Index, typename = std::enable_if_t<N==1 && CompileTimeUtils::isIntegralArgList<1, Index>()>>
-    double& operator[](Index index) { return _data[index]; }
+    template<typename Index, typename = std::enable_if_t<N == 1 && CompileTimeUtils::isIntegralArgList<1, Index>()>>
+    double& operator[](Index index)
+    {
+        return _data[index];
+    }
 
     /** This function returns a copy of the value at the specified index (for a one-dimensional
         table only). There is no range checking. Out-of-range index values cause unpredictable
         behavior. */
-    template <typename Index, typename = std::enable_if_t<N==1 && CompileTimeUtils::isIntegralArgList<1, Index>()>>
-    double operator[](Index index) const { return _data[index]; }
+    template<typename Index, typename = std::enable_if_t<N == 1 && CompileTimeUtils::isIntegralArgList<1, Index>()>>
+    double operator[](Index index) const
+    {
+        return _data[index];
+    }
 
     // ================== Accessing the raw data ==================
 
     /** This template function returns the flattened index in the underlying data array for the
         specified N indices. */
-    template <typename... Indices, typename = std::enable_if_t<CompileTimeUtils::isIntegralArgList<N, Indices...>()>>
+    template<typename... Indices, typename = std::enable_if_t<CompileTimeUtils::isIntegralArgList<N, Indices...>()>>
     size_t flattenedIndex(Indices... indices) const
     {
-        std::array<size_t, N> indexes = {{ static_cast<size_t>(indices)... }};
+        std::array<size_t, N> indexes = {{static_cast<size_t>(indices)...}};
         size_t result = indexes[0];
-        for (size_t k = 1; k!=N; ++k) result = result * _sizes[k] + indexes[k];
+        for (size_t k = 1; k != N; ++k) result = result * _sizes[k] + indexes[k];
         return result;
     }
 

@@ -6,9 +6,9 @@
 #ifndef DISCRETEWAVELENGTHDISTRIBUTION_HPP
 #define DISCRETEWAVELENGTHDISTRIBUTION_HPP
 
-#include "WavelengthDistribution.hpp"
-#include "DisjointWavelengthGrid.hpp"
 #include "Array.hpp"
+#include "DisjointWavelengthGrid.hpp"
+#include "WavelengthDistribution.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -57,7 +57,7 @@ class DiscreteWavelengthDistribution : public WavelengthDistribution
     ITEM_CONCRETE(DiscreteWavelengthDistribution, WavelengthDistribution,
                   "a discrete wavelength probability distribution derived from a wavelength grid")
 
-    PROPERTY_ITEM(wavelengthGrid, DisjointWavelengthGrid, "the wavelength grid defining the discrete distribution")
+        PROPERTY_ITEM(wavelengthGrid, DisjointWavelengthGrid, "the wavelength grid defining the discrete distribution")
         ATTRIBUTE_DEFAULT_VALUE(wavelengthGrid, "FileWavelengthGrid")
 
     ITEM_END()

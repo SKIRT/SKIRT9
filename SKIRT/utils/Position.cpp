@@ -7,28 +7,27 @@
 
 //////////////////////////////////////////////////////////////////////
 
-Position::Position(double u, double v, double w, CoordinateSystem coordtype)
-    : Vec()
+Position::Position(double u, double v, double w, CoordinateSystem coordtype) : Vec()
 {
-    switch(coordtype)
+    switch (coordtype)
     {
-    case CoordinateSystem::CARTESIAN:
+        case CoordinateSystem::CARTESIAN:
         {
             _x = u;
             _y = v;
             _z = w;
             break;
         }
-    case CoordinateSystem::CYLINDRICAL:
+        case CoordinateSystem::CYLINDRICAL:
         {
             double R = u;
             double phi = v;
-            _x = R*cos(phi);
-            _y = R*sin(phi);
+            _x = R * cos(phi);
+            _y = R * sin(phi);
             _z = w;
             break;
         }
-    case CoordinateSystem::SPHERICAL:
+        case CoordinateSystem::SPHERICAL:
         {
             double r = u;
             double theta = v;
@@ -37,9 +36,9 @@ Position::Position(double u, double v, double w, CoordinateSystem coordtype)
             double sintheta = sin(theta);
             double cosphi = cos(phi);
             double sinphi = sin(phi);
-            _x = r*sintheta*cosphi;
-            _y = r*sintheta*sinphi;
-            _z = r*costheta;
+            _x = r * sintheta * cosphi;
+            _y = r * sintheta * sinphi;
+            _z = r * costheta;
             break;
         }
     }
@@ -47,17 +46,11 @@ Position::Position(double u, double v, double w, CoordinateSystem coordtype)
 
 //////////////////////////////////////////////////////////////////////
 
-Position::Position(double r, Direction bfk)
-    : Vec(r*bfk)
-{
-}
+Position::Position(double r, Direction bfk) : Vec(r * bfk) {}
 
 //////////////////////////////////////////////////////////////////////
 
-Position::Position(Direction bfk)
-    : Vec(bfk)
-{
-}
+Position::Position(Direction bfk) : Vec(bfk) {}
 
 //////////////////////////////////////////////////////////////////////
 
@@ -70,7 +63,7 @@ double Position::radius() const
 
 double Position::cylRadius() const
 {
-    return sqrt(_x*_x + _y*_y);
+    return sqrt(_x * _x + _y * _y);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -94,15 +87,15 @@ void Position::cartesian(double& x, double& y, double& z) const
 void Position::spherical(double& r, double& theta, double& phi) const
 {
     r = radius();
-    if (r==0)
+    if (r == 0)
     {
         theta = 0;
         phi = 0;
     }
     else
     {
-        theta = acos(_z/r);
-        phi = atan2(_y,_x);
+        theta = acos(_z / r);
+        phi = atan2(_y, _x);
     }
 }
 
@@ -111,7 +104,7 @@ void Position::spherical(double& r, double& theta, double& phi) const
 void Position::cylindrical(double& R, double& phi, double& z) const
 {
     R = cylRadius();
-    phi = atan2(_y,_x);
+    phi = atan2(_y, _x);
     z = _z;
 }
 

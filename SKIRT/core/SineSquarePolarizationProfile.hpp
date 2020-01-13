@@ -38,26 +38,26 @@ class SineSquarePolarizationProfile : public PolarizationProfile
                   "an axysimmetric sine-square polarization emission profile")
         ATTRIBUTE_TYPE_INSERT(SineSquarePolarizationProfile, "Dimension2")
 
-    PROPERTY_DOUBLE(symmetryX, "the direction of the positive symmetry axis, x component")
+        PROPERTY_DOUBLE(symmetryX, "the direction of the positive symmetry axis, x component")
         ATTRIBUTE_QUANTITY(symmetryX, "length")
         ATTRIBUTE_DEFAULT_VALUE(symmetryX, "0")
         ATTRIBUTE_INSERT(symmetryX, "symmetryX:Dimension3")
 
-    PROPERTY_DOUBLE(symmetryY, "the direction of the positive symmetry axis, y component")
+        PROPERTY_DOUBLE(symmetryY, "the direction of the positive symmetry axis, y component")
         ATTRIBUTE_QUANTITY(symmetryY, "length")
         ATTRIBUTE_DEFAULT_VALUE(symmetryY, "0")
         ATTRIBUTE_INSERT(symmetryY, "symmetryY:Dimension3")
 
-    PROPERTY_DOUBLE(symmetryZ, "the direction of the positive symmetry axis, z component")
+        PROPERTY_DOUBLE(symmetryZ, "the direction of the positive symmetry axis, z component")
         ATTRIBUTE_QUANTITY(symmetryZ, "length")
         ATTRIBUTE_DEFAULT_VALUE(symmetryZ, "1")
 
-    PROPERTY_DOUBLE(maxPolarizationDegree, "the maximum linear polarization degree")
+        PROPERTY_DOUBLE(maxPolarizationDegree, "the maximum linear polarization degree")
         ATTRIBUTE_MIN_VALUE(maxPolarizationDegree, "[0")
         ATTRIBUTE_MAX_VALUE(maxPolarizationDegree, "1]")
         ATTRIBUTE_DEFAULT_VALUE(maxPolarizationDegree, "0.1")
 
-    PROPERTY_DOUBLE(polarizationAngle, "the linear polarization angle")
+        PROPERTY_DOUBLE(polarizationAngle, "the linear polarization angle")
         ATTRIBUTE_QUANTITY(polarizationAngle, "posangle")
         ATTRIBUTE_MIN_VALUE(polarizationAngle, "[0 deg")
         ATTRIBUTE_MAX_VALUE(polarizationAngle, "180 deg]")

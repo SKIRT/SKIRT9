@@ -17,18 +17,18 @@ class CastelliKuruczSED : public FamilySED
 {
     ITEM_CONCRETE(CastelliKuruczSED, FamilySED, "a Castelli-Kurucz stellar atmosphere SED")
 
-    PROPERTY_DOUBLE(metallicity, "the stellar metallicity")
+        PROPERTY_DOUBLE(metallicity, "the stellar metallicity")
         ATTRIBUTE_MIN_VALUE(metallicity, "[0.00006")
         ATTRIBUTE_MAX_VALUE(metallicity, "0.06]")
         ATTRIBUTE_DEFAULT_VALUE(metallicity, "0.02")
 
-    PROPERTY_DOUBLE(temperature, "the effective surface temperature")
+        PROPERTY_DOUBLE(temperature, "the effective surface temperature")
         ATTRIBUTE_QUANTITY(temperature, "temperature")
         ATTRIBUTE_MIN_VALUE(temperature, "]3500 K")
         ATTRIBUTE_MAX_VALUE(temperature, "50000 K]")
         ATTRIBUTE_DEFAULT_VALUE(temperature, "5000 K")
 
-    PROPERTY_DOUBLE(gravity, "the surface gravity")
+        PROPERTY_DOUBLE(gravity, "the surface gravity")
         ATTRIBUTE_QUANTITY(gravity, "acceleration")
         ATTRIBUTE_MIN_VALUE(gravity, "[0.01 m/s2")
         ATTRIBUTE_MAX_VALUE(gravity, "1000 m/s2]")

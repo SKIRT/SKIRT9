@@ -56,35 +56,35 @@ class MediumSystem : public SimulationItem
     ITEM_CONCRETE(MediumSystem, SimulationItem, "a medium system")
         ATTRIBUTE_TYPE_ALLOWED_IF(MediumSystem, "!NoMedium")
 
-    PROPERTY_ITEM(photonPacketOptions, PhotonPacketOptions, "the photon packet options")
+        PROPERTY_ITEM(photonPacketOptions, PhotonPacketOptions, "the photon packet options")
         ATTRIBUTE_DEFAULT_VALUE(photonPacketOptions, "PhotonPacketOptions")
         ATTRIBUTE_RELEVANT_IF(media, "!NoMedium")
 
-    PROPERTY_ITEM(extinctionOnlyOptions, ExtinctionOnlyOptions, "the extinction-only options")
+        PROPERTY_ITEM(extinctionOnlyOptions, ExtinctionOnlyOptions, "the extinction-only options")
         ATTRIBUTE_DEFAULT_VALUE(extinctionOnlyOptions, "ExtinctionOnlyOptions")
         ATTRIBUTE_RELEVANT_IF(extinctionOnlyOptions, "ExtinctionOnly")
 
-    PROPERTY_ITEM(dustEmissionOptions, DustEmissionOptions, "the dust emission options")
+        PROPERTY_ITEM(dustEmissionOptions, DustEmissionOptions, "the dust emission options")
         ATTRIBUTE_DEFAULT_VALUE(dustEmissionOptions, "DustEmissionOptions")
         ATTRIBUTE_RELEVANT_IF(dustEmissionOptions, "DustEmission")
 
-    PROPERTY_ITEM(dustSelfAbsorptionOptions, DustSelfAbsorptionOptions, "the dust self-absorption options")
+        PROPERTY_ITEM(dustSelfAbsorptionOptions, DustSelfAbsorptionOptions, "the dust self-absorption options")
         ATTRIBUTE_DEFAULT_VALUE(dustSelfAbsorptionOptions, "DustSelfAbsorptionOptions")
         ATTRIBUTE_RELEVANT_IF(dustSelfAbsorptionOptions, "DustSelfAbsorption")
 
-    PROPERTY_INT(numDensitySamples, "the number of random density samples for determining spatial cell mass")
+        PROPERTY_INT(numDensitySamples, "the number of random density samples for determining spatial cell mass")
         ATTRIBUTE_MIN_VALUE(numDensitySamples, "10")
         ATTRIBUTE_MAX_VALUE(numDensitySamples, "1000")
         ATTRIBUTE_DEFAULT_VALUE(numDensitySamples, "100")
         ATTRIBUTE_DISPLAYED_IF(numDensitySamples, "Level2")
 
-    PROPERTY_ITEM_LIST(media, Medium, "the transfer media")
+        PROPERTY_ITEM_LIST(media, Medium, "the transfer media")
         ATTRIBUTE_DEFAULT_VALUE(media, "GeometricMedium")
         ATTRIBUTE_REQUIRED_IF(media, "!NoMedium")
 
-    PROPERTY_ITEM(grid, SpatialGrid, "the spatial grid")
+        PROPERTY_ITEM(grid, SpatialGrid, "the spatial grid")
         ATTRIBUTE_DEFAULT_VALUE(grid,
-                            "Dimension3:PolicyTreeSpatialGrid;Dimension2:Cylinder2DSpatialGrid;Sphere1DSpatialGrid")
+                                "Dimension3:PolicyTreeSpatialGrid;Dimension2:Cylinder2DSpatialGrid;Sphere1DSpatialGrid")
 
     ITEM_END()
 
@@ -270,7 +270,7 @@ public:
         at a cumulative distance along the path smaller than the specified distance are included in
         the calculation, and any remaining segments are skipped. Note that the function also does
         not store optical depth information in the photon packet for skipped path segments. */
-    double opticalDepth(PhotonPacket* pp, double distance=std::numeric_limits<double>::infinity());
+    double opticalDepth(PhotonPacket* pp, double distance = std::numeric_limits<double>::infinity());
 
     /** This function initializes all values of the primary and/or secondary radiation field info
         tables to zero. In simulation modes that record the radiation field, the function should be
@@ -389,16 +389,16 @@ private:
     /** This data structure holds the information maintained per cell. */
     struct State1
     {
-        double V;                   // volume
-        Vec v;                      // bulk velocity
-        Vec B;                      // magnetic field
+        double V;  // volume
+        Vec v;     // bulk velocity
+        Vec B;     // magnetic field
     };
 
     /** This data structure holds the information maintained per cell and per medium. */
     struct State2
     {
-        double n;                   // the number density
-        const MaterialMix* mix;     // pointer to the material mix
+        double n;                // the number density
+        const MaterialMix* mix;  // pointer to the material mix
     };
 
     /** This function returns a writable reference to the state data structure for the given cell
@@ -411,11 +411,11 @@ private:
 
     /** This function returns a writable reference to the state data structure for the given cell
         and medium indices. */
-    State2& state(int m, int h) { return _state2vv[m*_numMedia+h]; }
+    State2& state(int m, int h) { return _state2vv[m * _numMedia + h]; }
 
     /** This function returns a read-only reference to the state data structure for the given cell
         and medium indices. */
-    const State2& state(int m, int h) const { return _state2vv[m*_numMedia+h]; }
+    const State2& state(int m, int h) const { return _state2vv[m * _numMedia + h]; }
 
     /** This function communicates the cell states between multiple processes after the states have
         been initialized in parallel (i.e. each process initialized a subset of the states). */
@@ -427,10 +427,10 @@ private:
     Configuration* _config;
 
     // relevant for any simulation mode that includes a medium
-    int _numCells{0};           // index m
-    int _numMedia{0};           // index h
-    vector<State1> _state1v;    // state info for each cell (indexed on m)
-    vector<State2> _state2vv;   // state info for each cell and each medium (indexed on m,h)
+    int _numCells{0};          // index m
+    int _numMedia{0};          // index h
+    vector<State1> _state1v;   // state info for each cell (indexed on m)
+    vector<State2> _state2vv;  // state info for each cell and each medium (indexed on m,h)
 
     // relevant for any simulation mode that stores the radiation field
     WavelengthGrid* _wavelengthGrid{0};  // index ell
@@ -438,9 +438,9 @@ private:
     // - the sum of rf1 and rf2 represents the stable radiation field to be used as input for regular calculations
     // - rf2c serves as a target for storing the secondary radiation field so that rf1+rf2 remain available for
     //   calculating secondary emission spectra while already shooting photons through the grid
-    Table<2> _rf1;  // radiation field from primary sources
-    Table<2> _rf2;  // radiation field from secondary sources (copied from _rf2c at the appropriate time)
-    Table<2> _rf2c; // radiation field currently being accumulated from secondary sources
+    Table<2> _rf1;   // radiation field from primary sources
+    Table<2> _rf2;   // radiation field from secondary sources (copied from _rf2c at the appropriate time)
+    Table<2> _rf2c;  // radiation field currently being accumulated from secondary sources
 };
 
 ////////////////////////////////////////////////////////////////

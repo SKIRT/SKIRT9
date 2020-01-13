@@ -18,13 +18,13 @@ namespace
 {
     // theta from 0 to pi, index t
     constexpr int numTheta = 361;
-    constexpr int maxTheta = numTheta-1;
-    constexpr double deltaTheta = M_PI/maxTheta;
+    constexpr int maxTheta = numTheta - 1;
+    constexpr double deltaTheta = M_PI / maxTheta;
 
     // phi from 0 to 2 pi, index f
     constexpr int numPhi = 361;
-    constexpr int maxPhi = numPhi-1;
-    constexpr double deltaPhi = 2*M_PI/(maxPhi-1);
+    constexpr int maxPhi = numPhi - 1;
+    constexpr double deltaPhi = 2 * M_PI / (maxPhi - 1);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -46,9 +46,9 @@ void DustMix::setupSelfAfter()
     // use integer multiples as logarithmic grid points so that the grid is stable for changing wavelength ranges
     const double numWavelengthsPerDex = 1000;  // declared as double to avoid casting, but should be an integer
     Range range = config->simulationWavelengthRange();
-    int minLambdaSerial = std::floor(numWavelengthsPerDex*log10(range.min()));
-    int maxLambdaSerial = std::ceil(numWavelengthsPerDex*log10(range.max()));
-    for (int k=minLambdaSerial; k<=maxLambdaSerial; ++k) wavelengths.push_back(pow(10., k/numWavelengthsPerDex));
+    int minLambdaSerial = std::floor(numWavelengthsPerDex * log10(range.min()));
+    int maxLambdaSerial = std::ceil(numWavelengthsPerDex * log10(range.max()));
+    for (int k = minLambdaSerial; k <= maxLambdaSerial; ++k) wavelengths.push_back(pow(10., k / numWavelengthsPerDex));
 
     // add the wavelengths mentioned in the configuration of the simulation
     for (double lambda : config->simulationWavelengths()) wavelengths.push_back(lambda);
@@ -59,15 +59,15 @@ void DustMix::setupSelfAfter()
 
     // copy the wavelengths into a temporary (local) array that will be used to sample the dust properties
     Array lambdav(numLambda);
-    for (int ell=0; ell!=numLambda; ++ell) lambdav[ell] = wavelengths[ell];
+    for (int ell = 0; ell != numLambda; ++ell) lambdav[ell] = wavelengths[ell];
 
     // derive a wavelength grid that will be used for converting a wavelength to an index in the above array;
     // the grid points are shifted to the left of the actual sample points to approximate rounding
     _lambdav.resize(numLambda);
     _lambdav[0] = lambdav[0];
-    for (int ell=1; ell!=numLambda; ++ell)
+    for (int ell = 1; ell != numLambda; ++ell)
     {
-        _lambdav[ell] = sqrt(lambdav[ell]*lambdav[ell-1]);
+        _lambdav[ell] = sqrt(lambdav[ell] * lambdav[ell - 1]);
     }
 
     // get the scattering mode advertised by this dust mix
@@ -75,10 +75,10 @@ void DustMix::setupSelfAfter()
 
     // if needed, build a scattering angle grid
     if (mode == ScatteringMode::MaterialPhaseFunction || mode == ScatteringMode::SphericalPolarization
-                                                      || mode == ScatteringMode::SpheroidalPolarization)
+        || mode == ScatteringMode::SpheroidalPolarization)
     {
         _thetav.resize(numTheta);
-        for (int t=0; t!=numTheta; ++t) _thetav[t] = t * deltaTheta;
+        for (int t = 0; t != numTheta; ++t) _thetav[t] = t * deltaTheta;
     }
 
     // resize the optical property arrays and tables as needed
@@ -88,7 +88,7 @@ void DustMix::setupSelfAfter()
     _albedov.resize(numLambda);
     _asymmparv.resize(numLambda);
     if (mode == ScatteringMode::MaterialPhaseFunction || mode == ScatteringMode::SphericalPolarization
-                                                      || mode == ScatteringMode::SpheroidalPolarization)
+        || mode == ScatteringMode::SpheroidalPolarization)
     {
         _S11vv.resize(numLambda, numTheta);
         if (mode == ScatteringMode::SphericalPolarization || mode == ScatteringMode::SpheroidalPolarization)
@@ -109,33 +109,33 @@ void DustMix::setupSelfAfter()
                                _sigmaabsvv, _sigmaabspolvv);
 
     // calculate some derived basic optical properties
-    for (int ell=0; ell!=numLambda; ++ell)
+    for (int ell = 0; ell != numLambda; ++ell)
     {
         _sigmaextv[ell] = _sigmaabsv[ell] + _sigmascav[ell];
-        _albedov[ell] = _sigmaextv[ell] > 0. ? _sigmascav[ell]/_sigmaextv[ell] : 0.;
+        _albedov[ell] = _sigmaextv[ell] > 0. ? _sigmascav[ell] / _sigmaextv[ell] : 0.;
     }
 
     // precalculate discretizations related to the scattering angles as needed
     if (mode == ScatteringMode::MaterialPhaseFunction || mode == ScatteringMode::SphericalPolarization
-                                                      || mode == ScatteringMode::SpheroidalPolarization)
+        || mode == ScatteringMode::SpheroidalPolarization)
     {
         // create a table with the normalized cumulative distribution of theta for each wavelength
-        _thetaXvv.resize(numLambda,0);
-        for (int ell=0; ell!=numLambda; ++ell)
+        _thetaXvv.resize(numLambda, 0);
+        for (int ell = 0; ell != numLambda; ++ell)
         {
-            NR::cdf(_thetaXvv[ell], maxTheta, [this,ell](int t){ return _S11vv(ell,t+1)*sin(_thetav[t+1]); });
+            NR::cdf(_thetaXvv[ell], maxTheta, [this, ell](int t) { return _S11vv(ell, t + 1) * sin(_thetav[t + 1]); });
         }
 
         // create a table with the phase function normalization factor for each wavelength
         _pfnormv.resize(numLambda);
-        for (int ell=0; ell!=numLambda; ++ell)
+        for (int ell = 0; ell != numLambda; ++ell)
         {
             double sum = 0.;
-            for (int t=0; t!=numTheta; ++t)
+            for (int t = 0; t != numTheta; ++t)
             {
-                sum += _S11vv(ell,t)*sin(_thetav[t])*deltaTheta;
+                sum += _S11vv(ell, t) * sin(_thetav[t]) * deltaTheta;
             }
-            _pfnormv[ell] = 2.0/sum;
+            _pfnormv[ell] = 2.0 / sum;
         }
 
         // create tables listing phi, phi/(2 pi), sin(2 phi) and 1-cos(2 phi) for each phi index
@@ -145,13 +145,13 @@ void DustMix::setupSelfAfter()
             _phi1v.resize(numPhi);
             _phisv.resize(numPhi);
             _phicv.resize(numPhi);
-            for (int f=0; f!=numPhi; ++f)
+            for (int f = 0; f != numPhi; ++f)
             {
                 double phi = f * deltaPhi;
                 _phiv[f] = phi;
-                _phi1v[f] = phi/(2*M_PI);
-                _phisv[f] = sin(2*phi);
-                _phicv[f] = 1-cos(2*phi);
+                _phi1v[f] = phi / (2 * M_PI);
+                _phisv[f] = sin(2 * phi);
+                _phicv[f] = 1 - cos(2 * phi);
             }
         }
     }
@@ -187,7 +187,7 @@ void DustMix::setupSelfAfter()
     allocatedSize += _sigmaabsvv.size();
     allocatedSize += _sigmaabspolvv.size();
 
-    allocatedBytes += allocatedSize*sizeof(double) + _calc.allocatedBytes();
+    allocatedBytes += allocatedSize * sizeof(double) + _calc.allocatedBytes();
     find<Log>()->info(type() + " allocated " + StringUtils::toMemSizeString(allocatedBytes) + " of memory");
 }
 
@@ -268,7 +268,7 @@ double DustMix::phaseFunctionValueForCosine(double lambda, double costheta) cons
 {
     int ell = indexForLambda(lambda);
     int t = indexForTheta(acos(costheta));
-    return _pfnormv[ell] * _S11vv(ell,t);
+    return _pfnormv[ell] * _S11vv(ell, t);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -286,12 +286,12 @@ double DustMix::phaseFunctionValue(double lambda, double theta, double phi, cons
     int t = indexForTheta(theta);
     double polDegree = sv->linearPolarizationDegree();
     double polAngle = sv->polarizationAngle();
-    return _pfnormv[ell] * (_S11vv(ell,t) + polDegree*_S12vv(ell,t)*cos(2.*(phi-polAngle)));
+    return _pfnormv[ell] * (_S11vv(ell, t) + polDegree * _S12vv(ell, t) * cos(2. * (phi - polAngle)));
 }
 
 ////////////////////////////////////////////////////////////////////
 
-std::pair<double,double> DustMix::generateAnglesFromPhaseFunction(double lambda, const StokesVector* sv) const
+std::pair<double, double> DustMix::generateAnglesFromPhaseFunction(double lambda, const StokesVector* sv) const
 {
     int ell = indexForLambda(lambda);
 
@@ -302,10 +302,10 @@ std::pair<double,double> DustMix::generateAnglesFromPhaseFunction(double lambda,
     // construct and sample from the normalized cumulative distribution of phi for this wavelength and theta angle
     double polDegree = sv->linearPolarizationDegree();
     double polAngle = sv->polarizationAngle();
-    double PF = polDegree * _S12vv(ell,t)/_S11vv(ell,t) / (4*M_PI);
-    double cos2polAngle = cos(2*polAngle) * PF;
-    double sin2polAngle = sin(2*polAngle) * PF;
-    double phi = random()->cdfLinLin(_phiv, _phi1v + cos2polAngle*_phisv + sin2polAngle*_phicv);
+    double PF = polDegree * _S12vv(ell, t) / _S11vv(ell, t) / (4 * M_PI);
+    double cos2polAngle = cos(2 * polAngle) * PF;
+    double sin2polAngle = sin(2 * polAngle) * PF;
+    double phi = random()->cdfLinLin(_phiv, _phi1v + cos2polAngle * _phisv + sin2polAngle * _phicv);
 
     // return the result
     return std::make_pair(theta, phi);
@@ -317,7 +317,7 @@ void DustMix::applyMueller(double lambda, double theta, StokesVector* sv) const
 {
     int ell = indexForLambda(lambda);
     int t = indexForTheta(theta);
-    sv->applyMueller(_S11vv(ell,t), _S12vv(ell,t), _S33vv(ell,t), _S34vv(ell,t));
+    sv->applyMueller(_S11vv(ell, t), _S12vv(ell, t), _S33vv(ell, t), _S34vv(ell, t));
 }
 
 ////////////////////////////////////////////////////////////////////

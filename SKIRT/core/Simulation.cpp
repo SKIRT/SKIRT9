@@ -16,12 +16,16 @@ void Simulation::setupAndRun()
 
     _factory->setup();
     auto threads = _factory->maxThreadCount();
-    if (threads > 1) processInfo += " using " + std::to_string(threads) + " threads";
-    else processInfo += " using a single thread";
+    if (threads > 1)
+        processInfo += " using " + std::to_string(threads) + " threads";
+    else
+        processInfo += " using a single thread";
 
     auto procs = ProcessManager::size();
-    if (procs > 1) processInfo += " for each of " + std::to_string(procs) + " processes";
-    else processInfo += " and a single process";
+    if (procs > 1)
+        processInfo += " for each of " + std::to_string(procs) + " processes";
+    else
+        processInfo += " and a single process";
 
     // log a start/finish message (ensure that the logger is initialized)
     _log->setup();

@@ -24,7 +24,7 @@ class ListMesh : public TabulatedMesh
 {
     ITEM_CONCRETE(ListMesh, TabulatedMesh, "a mesh specified inside the configuration file")
 
-    PROPERTY_DOUBLE_LIST(points, "the mesh border points")
+        PROPERTY_DOUBLE_LIST(points, "the mesh border points")
         ATTRIBUTE_MIN_VALUE(points, "[0")
 
     ITEM_END()

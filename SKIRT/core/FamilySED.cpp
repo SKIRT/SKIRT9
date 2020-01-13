@@ -37,7 +37,7 @@ void FamilySED::specificLuminosityArray(Array& lambdav, Array& pv, const Range& 
 {
     Array Pv;  // the contents of this array is not used, so this could be optimized if needed
     double Ltot = _family->cdf(lambdav, pv, Pv, wavelengthRange, _parameters);
-    pv *= (Ltot/_Ltot);
+    pv *= (Ltot / _Ltot);
 }
 
 //////////////////////////////////////////////////////////////////////

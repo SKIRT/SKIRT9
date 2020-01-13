@@ -3,6 +3,7 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
+#include "SkirtCommandLineHandler.hpp"
 #include "BuildInfo.hpp"
 #include "Console.hpp"
 #include "ConsoleHierarchyCreator.hpp"
@@ -15,7 +16,6 @@
 #include "ProcessManager.hpp"
 #include "SchemaDef.hpp"
 #include "SimulationItemRegistry.hpp"
-#include "SkirtCommandLineHandler.hpp"
 #include "StopWatch.hpp"
 #include "StringUtils.hpp"
 #include "System.hpp"
@@ -33,12 +33,11 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-SkirtCommandLineHandler::SkirtCommandLineHandler()
-    : _args(System::arguments(), allowedOptions)
+SkirtCommandLineHandler::SkirtCommandLineHandler() : _args(System::arguments(), allowedOptions)
 {
     // issue welcome message
-    _producerInfo = "SKIRT " + BuildInfo::projectVersion()
-                    + " (" + BuildInfo::codeVersion() + " " + BuildInfo::timestamp() + ")";
+    _producerInfo =
+        "SKIRT " + BuildInfo::projectVersion() + " (" + BuildInfo::codeVersion() + " " + BuildInfo::timestamp() + ")";
     _hostUserInfo = "Running on " + System::hostname() + " for " + System::username();
     _console.info("Welcome to " + _producerInfo);
     _console.info(_hostUserInfo);
@@ -95,8 +94,10 @@ int SkirtCommandLineHandler::doInteractive()
 
         // verify that the file does not yet exist
         // (we test whether the file can be opened, which is the best we can do in standard C++14)
-        if (System::ifstream(filename)) Console::error("This file already exists; enter another name");
-        else break;
+        if (System::ifstream(filename))
+            Console::error("This file already exists; enter another name");
+        else
+            break;
     }
 
     // interactively construct the simulation item hierarchy
@@ -108,7 +109,7 @@ int SkirtCommandLineHandler::doInteractive()
 
     // report success
     Console::info("Successfully created ski file '" + filename + "'.");
-    Console::info("To run the simulation use the command: skirt " + filename.substr(0, filename.length()-4));
+    Console::info("To run the simulation use the command: skirt " + filename.substr(0, filename.length() - 4));
     return EXIT_SUCCESS;
 }
 
@@ -123,10 +124,9 @@ namespace
         size_t peak = System::peakMemoryUsage();
         double peakPerCent = 100. * static_cast<double>(peak) / static_cast<double>(avail);
 
-        log->info("Available memory: " + StringUtils::toMemSizeString(avail)
-                  + " -- Peak memory usage: " + StringUtils::toMemSizeString(peak)
-                  + " (" + StringUtils::toString(peakPerCent, 'f', 1) + "%)");
-   }
+        log->info("Available memory: " + StringUtils::toMemSizeString(avail) + " -- Peak memory usage: "
+                  + StringUtils::toMemSizeString(peak) + " (" + StringUtils::toString(peakPerCent, 'f', 1) + "%)");
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -162,7 +162,7 @@ int SkirtCommandLineHandler::doBatch()
         {
             // perform a simulation for each ski file
             TimeLogger logger(&_console, "a set of " + std::to_string(numSkiFiles) + " simulations");
-            for (size_t i=0; i!=numSkiFiles; ++i) doSimulation(i);
+            for (size_t i = 0; i != numSkiFiles; ++i) doSimulation(i);
         }
         else
         {
@@ -172,11 +172,12 @@ int SkirtCommandLineHandler::doBatch()
 
             // perform a simulation for each ski file
             TimeLogger logger(&_console, "a set of " + std::to_string(numSkiFiles) + " simulations, "
-                              +  std::to_string(_parallelSims) + " in parallel");
+                                             + std::to_string(_parallelSims) + " in parallel");
             ParallelFactory factory;
             factory.setMaxThreadCount(_parallelSims);
-            factory.parallelRootOnly()->call(numSkiFiles, [this](size_t first, size_t size)
-                                             { for (size_t i=0; i!=size; ++i) doSimulation(first+i); } );
+            factory.parallelRootOnly()->call(numSkiFiles, [this](size_t first, size_t size) {
+                for (size_t i = 0; i != size; ++i) doSimulation(first + i);
+            });
         }
     }
 
@@ -229,7 +230,7 @@ void SkirtCommandLineHandler::addSkiFilesFor(string filepath)
         auto oldSize = _skifiles.size();
         addSkiFilesFor(StringUtils::dirPath(filepath), name);
         auto newSize = _skifiles.size();
-        if (newSize==oldSize)
+        if (newSize == oldSize)
         {
             _hasError = true;
             _console.error("No ski file matches the pattern: " + filepath);
@@ -244,8 +245,7 @@ void SkirtCommandLineHandler::addSkiFilesFor(string dirpath, string name)
     // add matching files at the current directory level
     for (string candidate : System::filesInDirectory(dirpath))
     {
-        if (StringUtils::matches(candidate, name))
-            _skifiles.push_back(StringUtils::joinPaths(dirpath, candidate));
+        if (StringUtils::matches(candidate, name)) _skifiles.push_back(StringUtils::joinPaths(dirpath, candidate));
     }
 
     // if recursion is requested, call ourselves for all directories at this level
@@ -262,8 +262,9 @@ void SkirtCommandLineHandler::addSkiFilesFor(string dirpath, string name)
 
 void SkirtCommandLineHandler::doSimulation(size_t index)
 {
-    if (_skifiles.size() > 1) _console.warning("Performing simulation #" + std::to_string(index+1) +
-                                               " of " + std::to_string(_skifiles.size()));
+    if (_skifiles.size() > 1)
+        _console.warning("Performing simulation #" + std::to_string(index + 1) + " of "
+                         + std::to_string(_skifiles.size()));
     string skipath = _skifiles[index];
     _console.info("Constructing a simulation from ski file '" + skipath + "'...");
 
@@ -309,7 +310,8 @@ void SkirtCommandLineHandler::doSimulation(size_t index)
         if (ProcessManager::isRoot())
         {
             auto schema = SimulationItemRegistry::getSchemaDef();
-            XmlHierarchyWriter::write(simulation, schema, simulation->filePaths()->output("parameters.xml"), _producerInfo);
+            XmlHierarchyWriter::write(simulation, schema, simulation->filePaths()->output("parameters.xml"),
+                                      _producerInfo);
         }
 
         // put the simulation in emulation mode if requested
@@ -342,7 +344,7 @@ void SkirtCommandLineHandler::doSimulation(size_t index)
         }
 
         // if this is the only or first simulation in the run, report memory statistics in the simulation's log file
-        if (_parallelSims==1 && index==0) reportPeakMemory(_args.isPresent("-v") ? simulation->log() : log);
+        if (_parallelSims == 1 && index == 0) reportPeakMemory(_args.isPresent("-v") ? simulation->log() : log);
     }
     catch (FatalError& error)
     {

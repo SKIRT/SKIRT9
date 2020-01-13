@@ -26,11 +26,11 @@ class GammaGeometry : public SpheGeometry
 {
     ITEM_CONCRETE(GammaGeometry, SpheGeometry, "a gamma geometry")
 
-    PROPERTY_DOUBLE(scaleLength, "the scale length")
+        PROPERTY_DOUBLE(scaleLength, "the scale length")
         ATTRIBUTE_QUANTITY(scaleLength, "length")
         ATTRIBUTE_MIN_VALUE(scaleLength, "]0")
 
-    PROPERTY_DOUBLE(gamma, "the central density slope γ")
+        PROPERTY_DOUBLE(gamma, "the central density slope γ")
         ATTRIBUTE_MIN_VALUE(gamma, "[0")
         ATTRIBUTE_MAX_VALUE(gamma, "3[")
         ATTRIBUTE_DEFAULT_VALUE(gamma, "1")

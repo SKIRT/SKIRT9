@@ -26,13 +26,13 @@ void DustGrainSizeDistributionProbe::probeSetup()
 
         // loop over each medium and each population
         // skipping mixes that don't offer multiple dust grain populations
-        for (int h=0; h!=numMedia; ++h)
+        for (int h = 0; h != numMedia; ++h)
         {
             auto mix = dynamic_cast<const MultiGrainDustMix*>(ms->media()[h]->mix());
             if (mix)
             {
                 int numPops = mix->numPopulations();
-                for (int c=0; c!=numPops; ++c)
+                for (int c = 0; c != numPops; ++c)
                 {
                     // get the size distribution
                     auto sd = mix->populationSizeDistribution(c);
@@ -48,10 +48,10 @@ void DustGrainSizeDistributionProbe::probeSetup()
 
                     // construct a grain size grid
                     Array av;
-                    NR::buildLogGrid(av, sd->amin(), sd->amax(), _numSamples-1);
+                    NR::buildLogGrid(av, sd->amin(), sd->amax(), _numSamples - 1);
 
                     // write the columns
-                    for (int i=0; i!=_numSamples; ++i)
+                    for (int i = 0; i != _numSamples; ++i)
                     {
                         out.writeRow(units->ograinsize(av[i]), sd->dnda(av[i]));
                     }

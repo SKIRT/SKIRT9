@@ -7,7 +7,7 @@
 
 //////////////////////////////////////////////////////////////////////
 
-MieSilicateGrainComposition::MieSilicateGrainComposition(SimulationItem *parent)
+MieSilicateGrainComposition::MieSilicateGrainComposition(SimulationItem* parent)
 {
     parent->addChild(this);
     setup();

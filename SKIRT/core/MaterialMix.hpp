@@ -6,8 +6,8 @@
 #ifndef MATERIALMIX_HPP
 #define MATERIALMIX_HPP
 
-#include "SimulationItem.hpp"
 #include "Array.hpp"
+#include "SimulationItem.hpp"
 class Random;
 class StokesVector;
 class WavelengthGrid;
@@ -119,8 +119,12 @@ public:
 public:
     /** This enumeration lists the possible scattering modes offered by the public material mix
         interface. */
-    enum class ScatteringMode { HenyeyGreenstein, MaterialPhaseFunction,
-                                SphericalPolarization, SpheroidalPolarization };
+    enum class ScatteringMode {
+        HenyeyGreenstein,
+        MaterialPhaseFunction,
+        SphericalPolarization,
+        SpheroidalPolarization
+    };
 
     /** This function returns the scattering mode supported by this material mix. In the current
         implementation, this can be one of the following modes:
@@ -155,8 +159,11 @@ public:
     /** This convenience function returns true if this material mix uses and supports polarized
         radiation, and false otherwise. In the current implementation, the function returns true
         if the scattering mode is SphericalPolarization or SpheroidalPolarization. */
-    bool hasPolarization() const { return scatteringMode() == ScatteringMode::SphericalPolarization
-                                       || scatteringMode() == ScatteringMode::SpheroidalPolarization; }
+    bool hasPolarization() const
+    {
+        return scatteringMode() == ScatteringMode::SphericalPolarization
+               || scatteringMode() == ScatteringMode::SpheroidalPolarization;
+    }
 
     //======== Basic material properties =======
 
@@ -228,14 +235,14 @@ public:
         specified incoming polarization state. The phase function is normalized as
         \f[\int\Phi_\lambda(\theta,\phi) \,\mathrm{d}\Omega =4\pi.\f] The default implementation in
         this base class throws a fatal error. */
-   virtual double phaseFunctionValue(double lambda, double theta, double phi, const StokesVector* sv) const;
+    virtual double phaseFunctionValue(double lambda, double theta, double phi, const StokesVector* sv) const;
 
     /** This function is used with the SphericalPolarization scattering mode. It generates random
         scattering angles \f$\theta\f$ and \f$\phi\f$ sampled from the phase function
         \f$\Phi_\lambda(\theta,\phi)\f$ at wavelength \f$\lambda\f$, and for the specified incoming
         polarization state. The results are returned as a pair of numbers in the order \f$\theta\f$
         and \f$\phi\f$. The default implementation in this base class throws a fatal error. */
-    virtual std::pair<double,double> generateAnglesFromPhaseFunction(double lambda, const StokesVector* sv) const;
+    virtual std::pair<double, double> generateAnglesFromPhaseFunction(double lambda, const StokesVector* sv) const;
 
     /** This function is used with the SphericalPolarization scattering mode. It applies the
         Mueller matrix transformation for the specified wavelength \f$\lambda\f$ and scattering

@@ -9,7 +9,7 @@
 
 double LaserAngularDistribution::probabilityForInclinationCosine(double costheta) const
 {
-    return costheta>0.99999 ? std::numeric_limits<double>::infinity() : 0.;
+    return costheta > 0.99999 ? std::numeric_limits<double>::infinity() : 0.;
 }
 
 //////////////////////////////////////////////////////////////////////

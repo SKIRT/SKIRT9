@@ -46,7 +46,7 @@ public:
     /** The function returns the Sersic function \f${\cal{S}}_n(s)\f$ for the dimensionless radius
         \f$s\f$. Its value is determined by logarithmic interpolation on the internally stored
         grid. */
-    double operator() (const double s) const;
+    double operator()(const double s) const;
 
     /** The function returns the cumulative mass function \f[ {\cal{M}}_n(s) = 4\pi \int_0^s
         {\cal{S}}_n(s')\, s'^2\, {\text{d}}s' \f] at the dimensionless radius \f$s\f$. Its value is

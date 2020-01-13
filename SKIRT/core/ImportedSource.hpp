@@ -6,10 +6,10 @@
 #ifndef IMPORTEDSOURCE_HPP
 #define IMPORTEDSOURCE_HPP
 
-#include "Source.hpp"
 #include "Array.hpp"
 #include "Range.hpp"
 #include "SEDFamily.hpp"
+#include "Source.hpp"
 class Snapshot;
 
 //////////////////////////////////////////////////////////////////////
@@ -43,26 +43,26 @@ class ImportedSource : public Source
     ITEM_ABSTRACT(ImportedSource, Source, "a primary source imported from snapshot data")
         ATTRIBUTE_TYPE_INSERT(ImportedSource, "Dimension3")
 
-    PROPERTY_STRING(filename, "the name of the file to be imported")
+        PROPERTY_STRING(filename, "the name of the file to be imported")
 
-    ATTRIBUTE_SUB_PROPERTIES_HERE(ImportedSource)
+        ATTRIBUTE_SUB_PROPERTIES_HERE(ImportedSource)
 
-    PROPERTY_BOOL(importVelocity, "import velocity components (3 columns)")
+        PROPERTY_BOOL(importVelocity, "import velocity components (3 columns)")
         ATTRIBUTE_DEFAULT_VALUE(importVelocity, "false")
         ATTRIBUTE_RELEVANT_IF(importVelocity, "Panchromatic")
         ATTRIBUTE_DISPLAYED_IF(importVelocity, "Level2")
 
-    PROPERTY_BOOL(importVelocityDispersion, "import velocity dispersion (spherically symmetric)")
+        PROPERTY_BOOL(importVelocityDispersion, "import velocity dispersion (spherically symmetric)")
         ATTRIBUTE_DEFAULT_VALUE(importVelocityDispersion, "false")
         ATTRIBUTE_RELEVANT_IF(importVelocityDispersion, "Panchromatic&importVelocity")
         ATTRIBUTE_DISPLAYED_IF(importVelocityDispersion, "Level2")
 
-    PROPERTY_STRING(useColumns, "a list of names corresponding to columns in the file to be imported")
+        PROPERTY_STRING(useColumns, "a list of names corresponding to columns in the file to be imported")
         ATTRIBUTE_DEFAULT_VALUE(useColumns, "")
         ATTRIBUTE_REQUIRED_IF(useColumns, "false")
         ATTRIBUTE_DISPLAYED_IF(useColumns, "Level3")
 
-    PROPERTY_ITEM(sedFamily, SEDFamily, "the SED family for assigning spectra to the imported sources")
+        PROPERTY_ITEM(sedFamily, SEDFamily, "the SED family for assigning spectra to the imported sources")
         ATTRIBUTE_DEFAULT_VALUE(sedFamily, "BlackBodySEDFamily")
 
     ITEM_END()
@@ -110,15 +110,15 @@ public:
     /** This function returns the luminosity \f$L\f$ (i.e. radiative power) of the source
         integrated over the wavelength range of primary sources (configured for the source system
         as a whole) and across its complete spatial domain. */
-     double luminosity() const override;
+    double luminosity() const override;
 
-     /** This function returns the specific luminosity \f$L_\lambda\f$ (i.e. radiative power per
+    /** This function returns the specific luminosity \f$L_\lambda\f$ (i.e. radiative power per
          unit of wavelength) of the source at the specified wavelength, or zero if the wavelength is
          outside the wavelength range of primary sources (configured for the source system as a
          whole) or if the source simply does not emit at the wavelength. */
-     double specificLuminosity(double wavelength) const override;
+    double specificLuminosity(double wavelength) const override;
 
-     /** This function performs some preparations for launching photon packets. It is called in
+    /** This function performs some preparations for launching photon packets. It is called in
          serial mode before each segment of photon packet launches, providing the history indices
          mapped by the source system to this particular source. See the description of the
          SourceSystem class for more background information.
@@ -135,9 +135,9 @@ public:
          the luminosity of source \f$m\f$, \f$L\f$ is the total luminosity for this source, \f$M\f$
          is the number of entities in this source, and \f$\xi\f$ is the \em emissionBias property
          value of the source system. */
-     void prepareForLaunch(double sourceBias, size_t firstIndex, size_t numIndices) override;
+    void prepareForLaunch(double sourceBias, size_t firstIndex, size_t numIndices) override;
 
-     /** This function causes the photon packet \em pp to be launched from the source using the
+    /** This function causes the photon packet \em pp to be launched from the source using the
          given history index and luminosity contribution. It proceeds as follows.
 
          First, the function finds the entity index that corresponding to the history index using
@@ -163,20 +163,20 @@ public:
 
 private:
     // wavelength information initialized during setup
-    bool _oligochromatic{false};    // true if the simulation is oligochromatic
-    Range _wavelengthRange;         // the wavelength range configured for all primary sources
-    double _arbitaryWavelength{0.}; // an arbitarily chosen wavelength within the source range
-    double _xi{0.};                 // the wavelength bias fraction
-    WavelengthDistribution* _biasDistribution{nullptr}; // the wavelength bias distribution
+    bool _oligochromatic{false};                         // true if the simulation is oligochromatic
+    Range _wavelengthRange;                              // the wavelength range configured for all primary sources
+    double _arbitaryWavelength{0.};                      // an arbitarily chosen wavelength within the source range
+    double _xi{0.};                                      // the wavelength bias fraction
+    WavelengthDistribution* _biasDistribution{nullptr};  // the wavelength bias distribution
 
     // snapshot information initialized during setup
     Snapshot* _snapshot{nullptr};
-    double _L{0};       // the total bolometric luminosity of all entities (absolute number)
-    Array _Lv;          // the relative bolometric luminosity of each entity (normalized to unity)
+    double _L{0};  // the total bolometric luminosity of all entities (absolute number)
+    Array _Lv;     // the relative bolometric luminosity of each entity (normalized to unity)
 
     // intialized by prepareForLaunch()
-    Array _Wv;          // the relative launch weight for each entity (normalized to unity)
-    vector<size_t> _Iv; // first history index allocated to each entity (with extra entry at the end)
+    Array _Wv;           // the relative launch weight for each entity (normalized to unity)
+    vector<size_t> _Iv;  // first history index allocated to each entity (with extra entry at the end)
 };
 
 //////////////////////////////////////////////////////////////////////

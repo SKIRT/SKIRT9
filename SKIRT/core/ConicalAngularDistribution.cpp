@@ -18,17 +18,21 @@ void ConicalAngularDistribution::setupSelfBefore()
 
 double ConicalAngularDistribution::probabilityForInclinationCosine(double costheta) const
 {
-    if (abs(costheta) > _cosDelta) return 1.0/(1.0-_cosDelta);
-    else return 0.;
+    if (abs(costheta) > _cosDelta)
+        return 1.0 / (1.0 - _cosDelta);
+    else
+        return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double ConicalAngularDistribution::generateInclinationCosine()  const
+double ConicalAngularDistribution::generateInclinationCosine() const
 {
     double X = random()->uniform();
-    if (X<0.5) return 1.0-2.0*X*(1.0-_cosDelta);
-    else return 1.0-2.0*_cosDelta-2.0*X*(1.0-_cosDelta);
+    if (X < 0.5)
+        return 1.0 - 2.0 * X * (1.0 - _cosDelta);
+    else
+        return 1.0 - 2.0 * _cosDelta - 2.0 * X * (1.0 - _cosDelta);
 }
 
 ////////////////////////////////////////////////////////////////////

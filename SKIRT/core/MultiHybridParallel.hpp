@@ -6,8 +6,8 @@
 #ifndef MULTIHYBRIDPARALLEL_HPP
 #define MULTIHYBRIDPARALLEL_HPP
 
-#include "MultiParallel.hpp"
 #include "ChunkMaker.hpp"
+#include "MultiParallel.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -23,7 +23,7 @@
     This class uses the facilities offered by the MultiParallel base class. */
 class MultiHybridParallel : public MultiParallel
 {
-    friend class ParallelFactory;       // so ParallelFactory can access our private constructor
+    friend class ParallelFactory;  // so ParallelFactory can access our private constructor
 
     //============= Construction - Destruction =============
 
@@ -54,20 +54,20 @@ private:
 
 private:
     // used in all processes
-    std::function<void(size_t,size_t)> _target; // the target function to be called
+    std::function<void(size_t, size_t)> _target;  // the target function to be called
 
     // used only in the root process; shared between threads
-    ChunkMaker _chunkMaker;                     // the chunk maker
+    ChunkMaker _chunkMaker;  // the chunk maker
 
     // used only in non-root processes; shared between threads
-    std::mutex _mutex;                          // the mutex to synchronize the threads
-    std::condition_variable _conditionChildren; // the wait condition used by the child threads
-    std::condition_variable _conditionParent;   // the wait condition used by the parent thread
-    int _requests{0};           // the number of outstanding chunk requests from child threads
-    bool _ready{false};         // true if firstIndex/numIndices represent a valid, unconsumed chunk
-    bool _done{false};          // true if there are no more chunks to be served
-    size_t _firstIndex{0};      // the first index of the new chunk being served
-    size_t _numIndices{0};      // the number of indices of the new chunk being served
+    std::mutex _mutex;                           // the mutex to synchronize the threads
+    std::condition_variable _conditionChildren;  // the wait condition used by the child threads
+    std::condition_variable _conditionParent;    // the wait condition used by the parent thread
+    int _requests{0};                            // the number of outstanding chunk requests from child threads
+    bool _ready{false};                          // true if firstIndex/numIndices represent a valid, unconsumed chunk
+    bool _done{false};                           // true if there are no more chunks to be served
+    size_t _firstIndex{0};                       // the first index of the new chunk being served
+    size_t _numIndices{0};                       // the number of indices of the new chunk being served
 };
 
 ////////////////////////////////////////////////////////////////////

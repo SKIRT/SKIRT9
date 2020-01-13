@@ -43,7 +43,7 @@ class ParticleSource : public ImportedSource
 {
     ITEM_CONCRETE(ParticleSource, ImportedSource, "a primary source imported from smoothed particle data")
 
-    PROPERTY_ITEM(smoothingKernel, SmoothingKernel, "the kernel for interpolating the smoothed particles")
+        PROPERTY_ITEM(smoothingKernel, SmoothingKernel, "the kernel for interpolating the smoothed particles")
         ATTRIBUTE_DEFAULT_VALUE(smoothingKernel, "CubicSplineSmoothingKernel")
         ATTRIBUTE_DISPLAYED_IF(smoothingKernel, "Level2")
 

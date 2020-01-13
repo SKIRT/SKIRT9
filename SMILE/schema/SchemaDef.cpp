@@ -31,8 +31,8 @@ string SchemaDef::getSchemaTitle(string filePath)
         XmlReader reader(filePath);
 
         // read and verify the first and second elements
-        if (reader.readNextStartElement() && reader.elementName() == "smile-schema" &&
-            reader.readNextStartElement() && reader.elementName() == "Schema")
+        if (reader.readNextStartElement() && reader.elementName() == "smile-schema" && reader.readNextStartElement()
+            && reader.elementName() == "Schema")
         {
             // get the value of the title attribute (or empty string if there is no such attribute)
             return reader.attributeValue("title");
@@ -41,7 +41,7 @@ string SchemaDef::getSchemaTitle(string filePath)
 
     // catch XML-reader errors and return an empty string
     catch (const FatalError&)
-    { }
+    {}
     return string();
 }
 
@@ -59,8 +59,8 @@ bool SchemaDef::isCompatible(string schemaFilePath, string dataFilePath)
         // get the value of these fields from the schema file
         {
             XmlReader reader(schemaFilePath);
-            if (reader.readNextStartElement() && reader.elementName() == "smile-schema" &&
-                reader.readNextStartElement() && reader.elementName() == "Schema")
+            if (reader.readNextStartElement() && reader.elementName() == "smile-schema" && reader.readNextStartElement()
+                && reader.elementName() == "Schema")
             {
                 root1 = reader.attributeValue("root");
                 type1 = reader.attributeValue("type");
@@ -81,13 +81,13 @@ bool SchemaDef::isCompatible(string schemaFilePath, string dataFilePath)
 
         // return compatible if these fields are nonempty and equal
         // (should be extended some time with more subtle format version matching)
-        return !root1.empty() && !type1.empty() && !format1.empty()
-                && root1 == root2 && type1 == type2 && format1 == format2;
+        return !root1.empty() && !type1.empty() && !format1.empty() && root1 == root2 && type1 == type2
+               && format1 == format2;
     }
 
     // catch XML-reader errors and return "incompatible"
     catch (const FatalError&)
-    { }
+    {}
     return false;
 }
 
@@ -206,15 +206,14 @@ SchemaDef::SchemaDef(string filePath)
                 // read the units element
                 if (reader.readNextStartElement())
                 {
-                    if (reader.elementName() != "units")
-                        reader.throwError("Expected a 'units' element");
+                    if (reader.elementName() != "units") reader.throwError("Expected a 'units' element");
 
                     // read any Unit elements
                     while (reader.readNextStartElement())
                     {
                         string unit = reader.attributeValue("name");
                         double factor = StringUtils::toDouble(reader.attributeValue("factor"));
-                        if (!factor) factor = 1;   // default factor of 1
+                        if (!factor) factor = 1;  // default factor of 1
                         double offset = StringUtils::toDouble(reader.attributeValue("offset"));
                         _unitDef.addUnit(qty, unit, factor, offset);
                         reader.skipCurrentElement();
@@ -236,8 +235,7 @@ SchemaDef::SchemaDef(string filePath)
                 // read the defaultUnits element
                 if (reader.readNextStartElement())
                 {
-                    if (reader.elementName() != "defaultUnits")
-                        reader.throwError("Expected a 'defaultUnits' element");
+                    if (reader.elementName() != "defaultUnits") reader.throwError("Expected a 'defaultUnits' element");
 
                     // read any DefaultUnit elements
                     while (reader.readNextStartElement())
@@ -253,22 +251,21 @@ SchemaDef::SchemaDef(string filePath)
                 reader.skipCurrentElement();
             }
         }
-        else reader.throwError("Expected a 'types', 'quantities', or 'unitSystems' element");
+        else
+            reader.throwError("Expected a 'types', 'quantities', or 'unitSystems' element");
     }
 
     // verify the end tag of the top-level element
-    if (reader.elementName() != "smile-schema")
-        reader.throwError("Expected a 'smile-schema' element end-tag");
+    if (reader.elementName() != "smile-schema") reader.throwError("Expected a 'smile-schema' element end-tag");
 }
 
 ////////////////////////////////////////////////////////////////////
 
-SchemaDef::SchemaDef(string name, string title, string version, string extension,
-                     string root, string type, string format, string url)
-    : _name(name), _title(title), _version(version), _extension(extension),
-      _root(root), _type(type), _format(format), _url(url)
-{
-}
+SchemaDef::SchemaDef(string name, string title, string version, string extension, string root, string type,
+                     string format, string url)
+    : _name(name), _title(title), _version(version), _extension(extension), _root(root), _type(type), _format(format),
+      _url(url)
+{}
 
 ////////////////////////////////////////////////////////////////////
 
@@ -352,7 +349,7 @@ namespace
 
                     // loop over all property definitions
                     size_t n = pdef.enumNames().size();
-                    for (size_t i = 0; i!=n; ++i)
+                    for (size_t i = 0; i != n; ++i)
                     {
                         writer.writeStartElement("EnumValue");
                         writer.writeAttribute("name", pdef.enumNames()[i]);
@@ -651,8 +648,10 @@ vector<string> SchemaDef::properties(string type) const
         int currentIndex = 0;
         for (auto& propDef : def.propertyDefs())
         {
-            if (currentIndex < insertIndex) result.insert(result.cbegin()+currentIndex, propDef.name());
-            else result.push_back(propDef.name());
+            if (currentIndex < insertIndex)
+                result.insert(result.cbegin() + currentIndex, propDef.name());
+            else
+                result.push_back(propDef.name());
             currentIndex++;
         }
 
@@ -756,13 +755,16 @@ std::unique_ptr<Item> SchemaDef::createItem(string type) const
 
     // instantiate real or ghost item
     auto instantiator = def.instantiator();
-    if (instantiator) return std::unique_ptr<Item>(instantiator());
-    else return std::make_unique<GhostItem>(type);
+    if (instantiator)
+        return std::unique_ptr<Item>(instantiator());
+    else
+        return std::make_unique<GhostItem>(type);
 }
 
 ////////////////////////////////////////////////////////////////////
 
-std::unique_ptr<PropertyHandler> SchemaDef::createPropertyHandler(Item* item, string property, NameManager* nameMgr) const
+std::unique_ptr<PropertyHandler> SchemaDef::createPropertyHandler(Item* item, string property,
+                                                                  NameManager* nameMgr) const
 {
     // get the property definition (throws if not found)
     auto& propDef = propertyDef(item->type(), property);
@@ -832,7 +834,8 @@ namespace
     bool sameStringSets(const vector<string>& va, const vector<string>& vb)
     {
         if (va.size() != vb.size()) return false;
-        for (const auto& a : va) if (!StringUtils::contains(vb, a)) return false;
+        for (const auto& a : va)
+            if (!StringUtils::contains(vb, a)) return false;
         return true;
     }
 }
@@ -841,8 +844,8 @@ namespace
 
 string SchemaDef::unitSystemBase() const
 {
-    if (_unitDef._unitSystems.size()==0) throw FATALERROR("No unit system provided in the schema");
-    if (_unitDef._unitSystems.size()==1) return _unitDef._unitSystems.cbegin()->first;
+    if (_unitDef._unitSystems.size() == 0) throw FATALERROR("No unit system provided in the schema");
+    if (_unitDef._unitSystems.size() == 1) return _unitDef._unitSystems.cbegin()->first;
 
     // build a list of unit system names (there are at least two)
     vector<string> unitSystems;

@@ -24,7 +24,7 @@ class SymPowMesh : public MoveableMesh
 {
     ITEM_CONCRETE(SymPowMesh, MoveableMesh, "a symmetric power-law mesh")
 
-    PROPERTY_DOUBLE(ratio, "the bin width ratio between the outermost and the innermost bins")
+        PROPERTY_DOUBLE(ratio, "the bin width ratio between the outermost and the innermost bins")
         ATTRIBUTE_MIN_VALUE(ratio, "]0")
         ATTRIBUTE_DEFAULT_VALUE(ratio, "1")
 

@@ -23,15 +23,18 @@ void DefaultRadiationFieldCutsProbe::probeRun()
         int dimension = find<MediumSystem>()->dimension();
 
         // output cuts depending on the dimension of the medium system
-        PlanarRadiationFieldCutsProbe::writeRadiationFieldCut(this, 1,1,0, 0.,0.,0., Np,Np,Np);
-        if (dimension >= 2) PlanarRadiationFieldCutsProbe::writeRadiationFieldCut(this, 1,0,1, 0.,0.,0., Np,Np,Np);
-        if (dimension == 3) PlanarRadiationFieldCutsProbe::writeRadiationFieldCut(this, 0,1,1, 0.,0.,0., Np,Np,Np);
+        PlanarRadiationFieldCutsProbe::writeRadiationFieldCut(this, 1, 1, 0, 0., 0., 0., Np, Np, Np);
+        if (dimension >= 2)
+            PlanarRadiationFieldCutsProbe::writeRadiationFieldCut(this, 1, 0, 1, 0., 0., 0., Np, Np, Np);
+        if (dimension == 3)
+            PlanarRadiationFieldCutsProbe::writeRadiationFieldCut(this, 0, 1, 1, 0., 0., 0., Np, Np, Np);
 
         // if requested, also output the wavelength grid
         if (writeWavelengthGrid())
         {
             InstrumentWavelengthGridProbe::writeWavelengthGrid(this, find<Configuration>()->radiationFieldWLG(),
-                                                     itemName() + "_wavelengths", "wavelengths for mean intensity");
+                                                               itemName() + "_wavelengths",
+                                                               "wavelengths for mean intensity");
         }
     }
 }

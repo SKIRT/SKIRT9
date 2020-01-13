@@ -30,26 +30,26 @@ class ParaboloidShellGeometry : public AxGeometry
     ITEM_CONCRETE(ParaboloidShellGeometry, AxGeometry, "a paraboloid shell geometry")
         ATTRIBUTE_TYPE_DISPLAYED_IF(ParaboloidShellGeometry, "Level2")
 
-    PROPERTY_DOUBLE(innerRadialExtent, "the radial extent of the inner paraboloid wall")
+        PROPERTY_DOUBLE(innerRadialExtent, "the radial extent of the inner paraboloid wall")
         ATTRIBUTE_QUANTITY(innerRadialExtent, "length")
         ATTRIBUTE_MIN_VALUE(innerRadialExtent, "]0")
 
-    PROPERTY_DOUBLE(innerOpeningAngle, "the half opening angle of the inner paraboloid wall")
+        PROPERTY_DOUBLE(innerOpeningAngle, "the half opening angle of the inner paraboloid wall")
         ATTRIBUTE_QUANTITY(innerOpeningAngle, "posangle")
         ATTRIBUTE_MIN_VALUE(innerOpeningAngle, "]0 deg")
         ATTRIBUTE_MAX_VALUE(innerOpeningAngle, "90 deg[")
 
-    PROPERTY_DOUBLE(outerOpeningAngle, "the half opening angle of the outer paraboloid wall")
+        PROPERTY_DOUBLE(outerOpeningAngle, "the half opening angle of the outer paraboloid wall")
         ATTRIBUTE_QUANTITY(outerOpeningAngle, "posangle")
         ATTRIBUTE_MIN_VALUE(outerOpeningAngle, "]0 deg")
         ATTRIBUTE_MAX_VALUE(outerOpeningAngle, "90 deg[")
 
-    PROPERTY_DOUBLE(innerOffsetZ, "the offset of the inner paraboloid vertices in the z direction")
+        PROPERTY_DOUBLE(innerOffsetZ, "the offset of the inner paraboloid vertices in the z direction")
         ATTRIBUTE_QUANTITY(innerOffsetZ, "length")
         ATTRIBUTE_MIN_VALUE(innerOffsetZ, "[0")
         ATTRIBUTE_DEFAULT_VALUE(innerOffsetZ, "0")
 
-    PROPERTY_DOUBLE(outerOffsetZ, "the offset of the outer paraboloid vertices in the z direction")
+        PROPERTY_DOUBLE(outerOffsetZ, "the offset of the outer paraboloid vertices in the z direction")
         ATTRIBUTE_QUANTITY(outerOffsetZ, "length")
         ATTRIBUTE_MIN_VALUE(outerOffsetZ, "[0")
         ATTRIBUTE_DEFAULT_VALUE(outerOffsetZ, "0")

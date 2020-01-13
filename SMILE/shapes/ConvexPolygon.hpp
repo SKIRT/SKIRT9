@@ -22,7 +22,6 @@ class ConvexPolygon
 {
     // ================== Constants ==================
 public:
-
     /** The maximum number of points that can be held by a polygon object. */
     constexpr static size_t maxPoints = 8;
 
@@ -68,11 +67,11 @@ public:
     // ================== Data members ==================
 
 private:
-    std::array<double,maxPoints> _xv;   // the x coordinates of the points in the polygon
-    std::array<double,maxPoints> _yv;   // the y coordinates of the points in the polygon
+    std::array<double, maxPoints> _xv;  // the x coordinates of the points in the polygon
+    std::array<double, maxPoints> _yv;  // the y coordinates of the points in the polygon
     size_t _n = 0;                      // the number of points in the polygon
-    size_t _topIndex = 0;    // the index of the top-most point (right-most if there is more than one)
-    size_t _botIndex = 0;    // the index of the bottom-most point (left-most if there is more than one)
+    size_t _topIndex = 0;               // the index of the top-most point (right-most if there is more than one)
+    size_t _botIndex = 0;               // the index of the bottom-most point (left-most if there is more than one)
 };
 
 ////////////////////////////////////////////////////////////////////

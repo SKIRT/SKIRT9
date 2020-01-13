@@ -15,7 +15,7 @@
     example, to skip a certain body of work on all processeses except for the root process. */
 class NullParallel : public Parallel
 {
-    friend class ParallelFactory;       // so ParallelFactory can access our private constructor
+    friend class ParallelFactory;  // so ParallelFactory can access our private constructor
 
     //============= Construction - Destruction =============
 

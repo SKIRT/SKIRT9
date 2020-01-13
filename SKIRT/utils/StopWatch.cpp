@@ -12,13 +12,13 @@
 
 namespace
 {
-    const int N = 5;    // the number of timers exposed to the user
-    int _level = -1;    // the current level == index in timer arrays
+    const int N = 5;  // the number of timers exposed to the user
+    int _level = -1;  // the current level == index in timer arrays
 
     // these arrays have an element for each timer
-    uint64_t _count[N] = { 0 };  // total number of calls to stop()
-    uint64_t _total[N] = { 0 };  // accumulated elapsed time between start/stop (in system ticks)
-    uint64_t _start[N] = { 0 };  // absolute time at most recent start (in system ticks)
+    uint64_t _count[N] = {0};  // total number of calls to stop()
+    uint64_t _total[N] = {0};  // accumulated elapsed time between start/stop (in system ticks)
+    uint64_t _start[N] = {0};  // absolute time at most recent start (in system ticks)
 
     // returns the current time as the number of system ticks gone by since some fixed reference time point
     uint64_t now()
@@ -32,7 +32,7 @@ namespace
     {
         using namespace std::chrono;
         return static_cast<double>(high_resolution_clock::period::num)
-                / static_cast<double>(high_resolution_clock::period::den);
+               / static_cast<double>(high_resolution_clock::period::den);
     }
 }
 
@@ -97,25 +97,29 @@ vector<string> StopWatch::report()
             if (_count[i])
             {
                 double total = conv * _total[i];
-                result.push_back("Timer " + StringUtils::toString(i+1)
-                                 + ":" + StringUtils::toString(total,'f',3,10)
-                                 + " s  " + StringUtils::toString(100*total/total0,'f',1,5) + " %");
+                result.push_back("Timer " + StringUtils::toString(i + 1) + ":"
+                                 + StringUtils::toString(total, 'f', 3, 10) + " s  "
+                                 + StringUtils::toString(100 * total / total0, 'f', 1, 5) + " %");
                 totalcount += _count[i];
                 maxcount = max(maxcount, _count[i]);
             }
         }
 
         // estimate the start/stop time using the first timer
-        const int K = 5000; // number of start/stop sequences in the test
+        const int K = 5000;  // number of start/stop sequences in the test
         _total[0] = 0;
-        for (int k=0; k<K; k++) { start(); stop(); }
+        for (int k = 0; k < K; k++)
+        {
+            start();
+            stop();
+        }
         double startstop = conv * _total[0] / K;
 
         // add a line with error information
         // estimate the total error: start/stop time accumulates across timers, measurement resolution doesn't
-        double error = startstop*totalcount + conv*maxcount;
-        result.push_back("Error ±:" + StringUtils::toString(error,'f',3,10)
-                         + " s  " + StringUtils::toString(100*error/total0,'f',1,5) + " %");
+        double error = startstop * totalcount + conv * maxcount;
+        result.push_back("Error ±:" + StringUtils::toString(error, 'f', 3, 10) + " s  "
+                         + StringUtils::toString(100 * error / total0, 'f', 1, 5) + " %");
     }
     return result;
 }

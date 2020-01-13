@@ -20,11 +20,11 @@ namespace
     // returns a human readable string describing the specified material type
     string materialForType(MaterialMix::MaterialType type)
     {
-        switch(type)
+        switch (type)
         {
-        case MaterialMix::MaterialType::Dust: return "dust";
-        case MaterialMix::MaterialType::Electrons: return "electron";
-        case MaterialMix::MaterialType::Gas: return "gas";
+            case MaterialMix::MaterialType::Dust: return "dust";
+            case MaterialMix::MaterialType::Electrons: return "electron";
+            case MaterialMix::MaterialType::Gas: return "gas";
         }
         return string();  // to satisfy gcc compiler
     }
@@ -32,11 +32,11 @@ namespace
     // returns a human readable string describing a single entity in the specified material type
     string entityForType(MaterialMix::MaterialType type)
     {
-        switch(type)
+        switch (type)
         {
-        case MaterialMix::MaterialType::Dust: return "hydrogen atom";
-        case MaterialMix::MaterialType::Electrons: return "electron";
-        case MaterialMix::MaterialType::Gas: return "hydrogen atom";
+            case MaterialMix::MaterialType::Dust: return "hydrogen atom";
+            case MaterialMix::MaterialType::Electrons: return "electron";
+            case MaterialMix::MaterialType::Gas: return "hydrogen atom";
         }
         return string();  // to satisfy gcc compiler
     }
@@ -59,7 +59,7 @@ void OpticalMaterialPropertiesProbe::probeSetup()
         int numWavelengths = probeWavelengthGrid->numBins();
 
         // create a seperate file for each medium
-        for (int h=0; h!=numMedia; ++h)
+        for (int h = 0; h != numMedia; ++h)
         {
             // get the mix
             auto mix = ms->media()[h]->mix();
@@ -70,7 +70,7 @@ void OpticalMaterialPropertiesProbe::probeSetup()
             // write the header
             out.writeLine("# Medium component " + std::to_string(h) + " -- " + materialForType(mix->materialType())
                           + " mass per " + entityForType(mix->materialType()) + ": "
-                          + StringUtils::toString(units->obulkmass(mix->mass()),'e',9) + " " + units->ubulkmass());
+                          + StringUtils::toString(units->obulkmass(mix->mass()), 'e', 9) + " " + units->ubulkmass());
             out.addColumn("wavelength", units->uwavelength());
             out.addColumn("extinction cross section per " + entityForType(mix->materialType()), units->usection());
             out.addColumn("absorption cross section per " + entityForType(mix->materialType()), units->usection());
@@ -82,19 +82,17 @@ void OpticalMaterialPropertiesProbe::probeSetup()
             out.addColumn("scattering asymmetry parameter");
 
             // write the columns
-            for (int ell=0; ell!=numWavelengths; ++ell)
+            for (int ell = 0; ell != numWavelengths; ++ell)
             {
                 double lambda = probeWavelengthGrid->wavelength(ell);
 
-                out.writeRow(vector<double>({ units->owavelength(lambda),
-                                              units->osection(mix->sectionExt(lambda)),
-                                              units->osection(mix->sectionAbs(lambda)),
-                                              units->osection(mix->sectionSca(lambda)),
-                                              units->omasscoefficient(mix->sectionExt(lambda)/mix->mass()),
-                                              units->omasscoefficient(mix->sectionAbs(lambda)/mix->mass()),
-                                              units->omasscoefficient(mix->sectionSca(lambda)/mix->mass()),
-                                              mix->albedo(lambda),
-                                              mix->asymmpar(lambda) }));
+                out.writeRow(
+                    vector<double>({units->owavelength(lambda), units->osection(mix->sectionExt(lambda)),
+                                    units->osection(mix->sectionAbs(lambda)), units->osection(mix->sectionSca(lambda)),
+                                    units->omasscoefficient(mix->sectionExt(lambda) / mix->mass()),
+                                    units->omasscoefficient(mix->sectionAbs(lambda) / mix->mass()),
+                                    units->omasscoefficient(mix->sectionSca(lambda) / mix->mass()), mix->albedo(lambda),
+                                    mix->asymmpar(lambda)}));
             }
         }
     }

@@ -21,7 +21,7 @@ class CubicalBackgroundSource : public CenteredSource
                   "a cubical background source with an anisotropic inward radiation field")
         ATTRIBUTE_TYPE_INSERT(CubicalBackgroundSource, "Dimension3")
 
-    PROPERTY_DOUBLE(edgeLength, "the edge length of the background cube")
+        PROPERTY_DOUBLE(edgeLength, "the edge length of the background cube")
         ATTRIBUTE_QUANTITY(edgeLength, "length")
         ATTRIBUTE_MIN_VALUE(edgeLength, "]0")
 

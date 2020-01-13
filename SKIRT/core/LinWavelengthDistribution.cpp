@@ -10,8 +10,10 @@
 
 double LinWavelengthDistribution::probability(double wavelength) const
 {
-    if (range().containsFuzzy(wavelength)) return 1. / range().width();
-    else return 0.;
+    if (range().containsFuzzy(wavelength))
+        return 1. / range().width();
+    else
+        return 0.;
 }
 
 //////////////////////////////////////////////////////////////////////

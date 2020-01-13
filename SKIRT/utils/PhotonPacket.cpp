@@ -11,16 +11,12 @@
 
 ////////////////////////////////////////////////////////////////////
 
-PhotonPacket::PhotonPacket()
-{
-}
+PhotonPacket::PhotonPacket() {}
 
 ////////////////////////////////////////////////////////////////////
 
 void PhotonPacket::launch(size_t historyIndex, double lambda, double L, Position bfr, Direction bfk,
-                          VelocityInterface* bvi,
-                          AngularDistributionInterface* adi,
-                          PolarizationProfileInterface* ppi)
+                          VelocityInterface* bvi, AngularDistributionInterface* adi, PolarizationProfileInterface* ppi)
 {
     _lambda = lambda;
     _W = L * lambda;
@@ -34,8 +30,10 @@ void PhotonPacket::launch(size_t historyIndex, double lambda, double L, Position
     setPosition(bfr);
     setDirection(bfk);
     if (bvi) _lambda = shiftedEmissionWavelength(lambda, bfk, bvi->velocity());
-    if (ppi) setPolarized(ppi->polarizationForDirection(bfk));
-    else setUnpolarized();
+    if (ppi)
+        setPolarized(ppi->polarizationForDirection(bfk));
+    else
+        setUnpolarized();
     _hasObservedOpticalDepth = false;
 }
 
@@ -50,7 +48,7 @@ void PhotonPacket::setPrimaryOrigin(int sourceCompIndex)
 
 void PhotonPacket::setSecondaryOrigin(int mediumCompIndex)
 {
-    _compIndex = - (mediumCompIndex + 1);
+    _compIndex = -(mediumCompIndex + 1);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -67,8 +65,10 @@ void PhotonPacket::launchEmissionPeelOff(const PhotonPacket* pp, Direction bfk)
     setDirection(bfk);
     if (pp->_bvi) _lambda = shiftedEmissionWavelength(_lambda0, bfk, pp->_bvi->velocity());
     if (pp->_adi) applyBias(pp->_adi->probabilityForDirection(bfk));
-    if (pp->_ppi) setPolarized(pp->_ppi->polarizationForDirection(bfk));
-    else setUnpolarized();
+    if (pp->_ppi)
+        setPolarized(pp->_ppi->polarizationForDirection(bfk));
+    else
+        setUnpolarized();
     _hasObservedOpticalDepth = false;
 }
 
@@ -76,8 +76,10 @@ void PhotonPacket::launchEmissionPeelOff(const PhotonPacket* pp, Direction bfk)
 
 void PhotonPacket::launchScatteringPeelOff(const PhotonPacket* pp, Direction bfk, Vec bfv, double w)
 {
-    if (bfv.isNull()) _lambda = pp->_lambda;
-    else _lambda = shiftedEmissionWavelength(shiftedReceptionWavelength(pp->_lambda, pp->direction(), bfv), bfk, bfv);
+    if (bfv.isNull())
+        _lambda = pp->_lambda;
+    else
+        _lambda = shiftedEmissionWavelength(shiftedReceptionWavelength(pp->_lambda, pp->direction(), bfv), bfk, bfv);
     _W = pp->_W * w;
     _lambda0 = pp->_lambda0;
     _compIndex = pp->_compIndex;
@@ -117,14 +119,15 @@ void PhotonPacket::applyBias(double w)
 
 double PhotonPacket::shiftedEmissionWavelength(double sourceWavelength, Direction photonDirection, Vec sourceVelocity)
 {
-    return sourceWavelength * (1 - Vec::dot(photonDirection,sourceVelocity)/Constants::c());
+    return sourceWavelength * (1 - Vec::dot(photonDirection, sourceVelocity) / Constants::c());
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double PhotonPacket::shiftedReceptionWavelength(double photonWavelength, Direction photonDirection, Vec receiverVelocity)
+double PhotonPacket::shiftedReceptionWavelength(double photonWavelength, Direction photonDirection,
+                                                Vec receiverVelocity)
 {
-    return photonWavelength / (1 - Vec::dot(photonDirection,receiverVelocity)/Constants::c());
+    return photonWavelength / (1 - Vec::dot(photonDirection, receiverVelocity) / Constants::c());
 }
 
 ////////////////////////////////////////////////////////////////////

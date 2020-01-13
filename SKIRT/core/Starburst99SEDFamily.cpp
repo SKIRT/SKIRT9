@@ -27,11 +27,10 @@ void Starburst99SEDFamily::setupSelfBefore()
 
 vector<SnapshotParameter> Starburst99SEDFamily::parameterInfo() const
 {
-    return vector<SnapshotParameter>
-    {
-        { "initial mass", "mass", "Msun" },
-        { "metallicity" },
-        { "age", "time", "yr" },
+    return vector<SnapshotParameter>{
+        {"initial mass", "mass", "Msun"},
+        {"metallicity"},
+        {"age", "time", "yr"},
     };
 }
 
@@ -55,8 +54,8 @@ double Starburst99SEDFamily::specificLuminosity(double wavelength, const Array& 
 
 ////////////////////////////////////////////////////////////////////
 
-double Starburst99SEDFamily::cdf(Array& lambdav, Array& pv, Array& Pv,
-                                 const Range& wavelengthRange, const Array& parameters) const
+double Starburst99SEDFamily::cdf(Array& lambdav, Array& pv, Array& Pv, const Range& wavelengthRange,
+                                 const Array& parameters) const
 {
     double M = parameters[0] / Constants::Msun();
     double Z = parameters[1];

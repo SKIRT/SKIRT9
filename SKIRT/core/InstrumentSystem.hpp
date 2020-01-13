@@ -19,13 +19,13 @@ class InstrumentSystem : public SimulationItem
 {
     ITEM_CONCRETE(InstrumentSystem, SimulationItem, "an instrument system")
 
-    PROPERTY_ITEM(defaultWavelengthGrid, WavelengthGrid, "the default instrument wavelength grid")
+        PROPERTY_ITEM(defaultWavelengthGrid, WavelengthGrid, "the default instrument wavelength grid")
         ATTRIBUTE_DEFAULT_VALUE(defaultWavelengthGrid, "LogWavelengthGrid")
         ATTRIBUTE_RELEVANT_IF(defaultWavelengthGrid, "Panchromatic")
         ATTRIBUTE_REQUIRED_IF(defaultWavelengthGrid, "!Level2")
         ATTRIBUTE_INSERT(defaultWavelengthGrid, "defaultWavelengthGrid:DefaultInstrumentWavelengthGrid")
 
-    PROPERTY_ITEM_LIST(instruments, Instrument, "the instruments")
+        PROPERTY_ITEM_LIST(instruments, Instrument, "the instruments")
         ATTRIBUTE_DEFAULT_VALUE(instruments, "SEDInstrument")
         ATTRIBUTE_REQUIRED_IF(instruments, "false")
 

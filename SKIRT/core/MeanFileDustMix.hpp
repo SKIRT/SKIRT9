@@ -35,7 +35,7 @@ class MeanFileDustMix : public TabulatedDustMix
 {
     ITEM_CONCRETE(MeanFileDustMix, TabulatedDustMix, "a dust mix with mean properties loaded from a text file")
 
-    PROPERTY_STRING(filename, "the name of the file with the optical properties for the dust mix")
+        PROPERTY_STRING(filename, "the name of the file with the optical properties for the dust mix")
 
     ITEM_END()
 

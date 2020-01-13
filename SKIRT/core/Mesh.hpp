@@ -6,8 +6,8 @@
 #ifndef MESH_HPP
 #define MESH_HPP
 
-#include "SimulationItem.hpp"
 #include "Array.hpp"
+#include "SimulationItem.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -21,7 +21,7 @@ class Mesh : public SimulationItem
 {
     ITEM_ABSTRACT(Mesh, SimulationItem, "a mesh")
 
-    PROPERTY_INT(numBins, "the number of bins in the mesh")
+        PROPERTY_INT(numBins, "the number of bins in the mesh")
         ATTRIBUTE_MIN_VALUE(numBins, "1")
         ATTRIBUTE_MAX_VALUE(numBins, "100000")
         ATTRIBUTE_DEFAULT_VALUE(numBins, "100")

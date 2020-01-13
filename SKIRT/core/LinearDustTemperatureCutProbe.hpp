@@ -33,27 +33,27 @@ class LinearDustTemperatureCutProbe : public Probe
         ATTRIBUTE_TYPE_DISPLAYED_IF(LinearDustTemperatureCutProbe,
                                     "Level2&Dust&SpatialGrid&RadiationField&Panchromatic")
 
-    PROPERTY_INT(numSamples, "the number of samples along the line segment")
+        PROPERTY_INT(numSamples, "the number of samples along the line segment")
         ATTRIBUTE_MIN_VALUE(numSamples, "3")
         ATTRIBUTE_MAX_VALUE(numSamples, "100000")
         ATTRIBUTE_DEFAULT_VALUE(numSamples, "250")
 
-    PROPERTY_DOUBLE(startX, "the position of the starting point, x component")
+        PROPERTY_DOUBLE(startX, "the position of the starting point, x component")
         ATTRIBUTE_QUANTITY(startX, "length")
 
-    PROPERTY_DOUBLE(startY, "the position of the starting point, y component")
+        PROPERTY_DOUBLE(startY, "the position of the starting point, y component")
         ATTRIBUTE_QUANTITY(startY, "length")
 
-    PROPERTY_DOUBLE(startZ, "the position of the starting point, z component")
+        PROPERTY_DOUBLE(startZ, "the position of the starting point, z component")
         ATTRIBUTE_QUANTITY(startZ, "length")
 
-    PROPERTY_DOUBLE(endX, "the position of the ending point, x component")
+        PROPERTY_DOUBLE(endX, "the position of the ending point, x component")
         ATTRIBUTE_QUANTITY(endX, "length")
 
-    PROPERTY_DOUBLE(endY, "the position of the ending point, y component")
+        PROPERTY_DOUBLE(endY, "the position of the ending point, y component")
         ATTRIBUTE_QUANTITY(endY, "length")
 
-    PROPERTY_DOUBLE(endZ, "the position of the ending point, z component")
+        PROPERTY_DOUBLE(endZ, "the position of the ending point, z component")
         ATTRIBUTE_QUANTITY(endZ, "length")
 
     ITEM_END()

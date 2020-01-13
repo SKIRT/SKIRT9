@@ -17,14 +17,14 @@
 class PolygonShape : public CenterShape
 {
     ITEM_CONCRETE(PolygonShape, CenterShape, "a regular polygon")
-    PROPERTY_DOUBLE(radius, "the radius, i.e. the distance from each corner to the center")
+        PROPERTY_DOUBLE(radius, "the radius, i.e. the distance from each corner to the center")
         ATTRIBUTE_QUANTITY(radius, "length")
         ATTRIBUTE_MIN_VALUE(radius, "0 m")
         ATTRIBUTE_MAX_VALUE(radius, "1 m")
-    PROPERTY_INT(numSides, "the number of sides (or corners)")
+        PROPERTY_INT(numSides, "the number of sides (or corners)")
         ATTRIBUTE_MIN_VALUE(numSides, "3")
         ATTRIBUTE_MAX_VALUE(numSides, "99")
-    PROPERTY_BOOL(align, "align the first corner with the vertical line through the center")
+        PROPERTY_BOOL(align, "align the first corner with the vertical line through the center")
         ATTRIBUTE_DEFAULT_VALUE(align, "false")
     ITEM_END()
 

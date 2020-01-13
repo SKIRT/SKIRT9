@@ -16,11 +16,11 @@
 class CenterShape : public Shape
 {
     ITEM_ABSTRACT(CenterShape, Shape, "a shape with a central position")
-    PROPERTY_DOUBLE(x, "the horizontal coordinate of the shape center")
+        PROPERTY_DOUBLE(x, "the horizontal coordinate of the shape center")
         ATTRIBUTE_QUANTITY(x, "length")
         ATTRIBUTE_MIN_VALUE(x, "0 m")
         ATTRIBUTE_MAX_VALUE(x, "1 m")
-    PROPERTY_DOUBLE(y, "the vertical coordinate of the shape center")
+        PROPERTY_DOUBLE(y, "the vertical coordinate of the shape center")
         ATTRIBUTE_QUANTITY(y, "length")
         ATTRIBUTE_MIN_VALUE(y, "0 m")
         ATTRIBUTE_MAX_VALUE(y, "1 m")

@@ -21,9 +21,11 @@ void DefaultMediaDensityCutsProbe::probeSetup()
         int dimension = find<MediumSystem>()->dimension();
 
         // output cuts depending on the dimension of the medium system
-        PlanarMediaDensityCutsProbe::writeMediaDensityCuts(this, 1,1,0, 0.,0.,0., Np,Np,Np);                     // xy
-        if (dimension >= 2) PlanarMediaDensityCutsProbe::writeMediaDensityCuts(this, 1,0,1, 0.,0.,0., Np,Np,Np); // xz
-        if (dimension == 3) PlanarMediaDensityCutsProbe::writeMediaDensityCuts(this, 0,1,1, 0.,0.,0., Np,Np,Np); // yz
+        PlanarMediaDensityCutsProbe::writeMediaDensityCuts(this, 1, 1, 0, 0., 0., 0., Np, Np, Np);  // xy
+        if (dimension >= 2)
+            PlanarMediaDensityCutsProbe::writeMediaDensityCuts(this, 1, 0, 1, 0., 0., 0., Np, Np, Np);  // xz
+        if (dimension == 3)
+            PlanarMediaDensityCutsProbe::writeMediaDensityCuts(this, 0, 1, 1, 0., 0., 0., Np, Np, Np);  // yz
     }
 }
 

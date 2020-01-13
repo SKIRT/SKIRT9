@@ -19,11 +19,11 @@ class ProbePhotonPacketInterface
 {
 protected:
     /** The empty constructor for the interface. */
-    ProbePhotonPacketInterface() { }
+    ProbePhotonPacketInterface() {}
 
 public:
     /** The empty destructor for the interface. */
-    virtual ~ProbePhotonPacketInterface() { }
+    virtual ~ProbePhotonPacketInterface() {}
 
     /** This function probes the given photon packet. After a Probe subclass installs this
         interface as a call-back with its target object, this function gets invoked at predefined

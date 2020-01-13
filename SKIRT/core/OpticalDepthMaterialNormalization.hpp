@@ -20,13 +20,13 @@ class OpticalDepthMaterialNormalization : public AxisMaterialNormalization, publ
     ITEM_CONCRETE(OpticalDepthMaterialNormalization, AxisMaterialNormalization,
                   "normalization by defining the optical depth along a coordinate axis")
 
-    PROPERTY_DOUBLE(wavelength, "the wavelength at which to specify the optical depth")
+        PROPERTY_DOUBLE(wavelength, "the wavelength at which to specify the optical depth")
         ATTRIBUTE_QUANTITY(wavelength, "wavelength")
         ATTRIBUTE_MIN_VALUE(wavelength, "1 Angstrom")
         ATTRIBUTE_MAX_VALUE(wavelength, "1 m")
 
-    PROPERTY_DOUBLE(opticalDepth, "the optical depth along this axis at this wavelength")
-    ATTRIBUTE_MIN_VALUE(opticalDepth, "]0")
+        PROPERTY_DOUBLE(opticalDepth, "the optical depth along this axis at this wavelength")
+        ATTRIBUTE_MIN_VALUE(opticalDepth, "]0")
 
     ITEM_END()
 
@@ -36,7 +36,7 @@ public:
     /** This function returns the total number of entities and total mass in the medium, in that
         order, given a geometry and material mix in addition to the user configuration options offered
         by this class. */
-    std::pair<double,double> numberAndMass(const Geometry* geom, const MaterialMix* mix) const override;
+    std::pair<double, double> numberAndMass(const Geometry* geom, const MaterialMix* mix) const override;
 
     /** This function returns a wavelength range corresponding to the user-configured wavelength,
         indicating that wavelength-dependent material properties will be required for this

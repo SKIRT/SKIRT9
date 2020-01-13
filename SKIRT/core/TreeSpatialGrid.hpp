@@ -169,11 +169,11 @@ private:
 
 private:
     // data members initialized during setup
-    double _eps{0.};            // a small fraction relative to the spatial extent of the grid
-    vector<TreeNode*> _nodev;   // list of all nodes in the tree; holds ownership; first item is root node
-                                // node id in each node corresponds to index in this vector
-    vector<int> _cellindexv;    // cell index m corresponding to each node in nodev; -1 for nonleaf nodes
-    vector<int> _idv;           // node id (or equivalently, index in nodev) for each cell (i.e. leaf node)
+    double _eps{0.};           // a small fraction relative to the spatial extent of the grid
+    vector<TreeNode*> _nodev;  // list of all nodes in the tree; holds ownership; first item is root node
+                               // node id in each node corresponds to index in this vector
+    vector<int> _cellindexv;   // cell index m corresponding to each node in nodev; -1 for nonleaf nodes
+    vector<int> _idv;          // node id (or equivalently, index in nodev) for each cell (i.e. leaf node)
 };
 
 //////////////////////////////////////////////////////////////////////

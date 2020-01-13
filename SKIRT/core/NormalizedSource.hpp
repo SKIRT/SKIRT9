@@ -6,10 +6,10 @@
 #ifndef NORMALIZEDSOURCE_HPP
 #define NORMALIZEDSOURCE_HPP
 
-#include "Source.hpp"
-#include "VelocityInterface.hpp"
 #include "LuminosityNormalization.hpp"
 #include "SED.hpp"
+#include "Source.hpp"
+#include "VelocityInterface.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -25,15 +25,15 @@ class NormalizedSource : public Source, public VelocityInterface
 {
     ITEM_ABSTRACT(NormalizedSource, Source, "a primary source with a single SED")
 
-    ATTRIBUTE_SUB_PROPERTIES_HERE(NormalizedSource)
+        ATTRIBUTE_SUB_PROPERTIES_HERE(NormalizedSource)
 
-    PROPERTY_ITEM(sed, SED, "the spectral energy distribution for the source")
+        PROPERTY_ITEM(sed, SED, "the spectral energy distribution for the source")
         ATTRIBUTE_DEFAULT_VALUE(sed, "BlackBodySED")
 
-    PROPERTY_ITEM(normalization, LuminosityNormalization, "the type of luminosity normalization for the source")
+        PROPERTY_ITEM(normalization, LuminosityNormalization, "the type of luminosity normalization for the source")
         ATTRIBUTE_DEFAULT_VALUE(normalization, "IntegratedLuminosityNormalization")
 
-    PROPERTY_DOUBLE(velocityX, "the bulk velocity of the source, x component")
+        PROPERTY_DOUBLE(velocityX, "the bulk velocity of the source, x component")
         ATTRIBUTE_QUANTITY(velocityX, "velocity")
         ATTRIBUTE_MIN_VALUE(velocityX, "[0")
         ATTRIBUTE_MAX_VALUE(velocityX, "100000 km/s]")
@@ -42,7 +42,7 @@ class NormalizedSource : public Source, public VelocityInterface
         ATTRIBUTE_DISPLAYED_IF(velocityX, "Level2")
         ATTRIBUTE_INSERT(velocityX, "Panchromatic&velocityX:Dimension3")
 
-    PROPERTY_DOUBLE(velocityY, "the bulk velocity of the source, y component")
+        PROPERTY_DOUBLE(velocityY, "the bulk velocity of the source, y component")
         ATTRIBUTE_QUANTITY(velocityY, "velocity")
         ATTRIBUTE_MIN_VALUE(velocityY, "[0")
         ATTRIBUTE_MAX_VALUE(velocityY, "100000 km/s]")
@@ -51,7 +51,7 @@ class NormalizedSource : public Source, public VelocityInterface
         ATTRIBUTE_DISPLAYED_IF(velocityY, "Level2")
         ATTRIBUTE_INSERT(velocityY, "Panchromatic&velocityY:Dimension3")
 
-    PROPERTY_DOUBLE(velocityZ, "the bulk velocity of the source, z component")
+        PROPERTY_DOUBLE(velocityZ, "the bulk velocity of the source, z component")
         ATTRIBUTE_QUANTITY(velocityZ, "velocity")
         ATTRIBUTE_MIN_VALUE(velocityZ, "[0")
         ATTRIBUTE_MAX_VALUE(velocityZ, "100000 km/s]")
@@ -91,19 +91,19 @@ public:
     /** This function returns the luminosity \f$L\f$ (i.e. radiative power) of the source
         integrated over the wavelength range of primary sources (configured for the source system
         as a whole) and across its complete spatial domain. */
-     double luminosity() const override;
+    double luminosity() const override;
 
-     /** This function returns the specific luminosity \f$L_\lambda\f$ (i.e. radiative power per
+    /** This function returns the specific luminosity \f$L_\lambda\f$ (i.e. radiative power per
          unit of wavelength) of the source at the specified wavelength, or zero if the wavelength is
          outside the wavelength range of primary sources (configured for the source system as a
          whole) or if the source simply does not emit at the wavelength. */
-     double specificLuminosity(double wavelength) const override;
+    double specificLuminosity(double wavelength) const override;
 
-     /** This function implements the VelocityInterface interface. It returns the bulk velocity
+    /** This function implements the VelocityInterface interface. It returns the bulk velocity
          of this source, as configured by the user. */
-     Vec velocity() const override;
+    Vec velocity() const override;
 
-     /** This function causes the photon packet \em pp to be launched from the source using the
+    /** This function causes the photon packet \em pp to be launched from the source using the
          given history index and luminosity contribution. In this abstract class, the function
          handles the wavelength sampling and normalization, relying on the subclass to determine
          the position and propagation direction of the emission from the geometry of the source. */
@@ -128,9 +128,9 @@ public:
 
 private:
     // wavelength information initialized during setup
-    bool _oligochromatic{false};    // true if the simulation is oligochromatic
-    double _xi{0.};                 // the wavelength bias fraction
-    WavelengthDistribution* _biasDistribution{nullptr}; // the wavelength bias distribution
+    bool _oligochromatic{false};                         // true if the simulation is oligochromatic
+    double _xi{0.};                                      // the wavelength bias fraction
+    WavelengthDistribution* _biasDistribution{nullptr};  // the wavelength bias distribution
 
     // pointer to an object offering the redshift interface; either "this" or null pointer if the bulk velocity is zero
     VelocityInterface* _bvi{nullptr};

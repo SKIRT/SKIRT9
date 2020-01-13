@@ -24,7 +24,7 @@ void ParaboloidShellGeometry::setupSelfBefore()
     _Rin = _Din * sin(_DeltaIn);
 
     // determine the curvature level of the inner paraboloid wall
-    _aIn = sqrt( tan(_DeltaIn) * _Rin );
+    _aIn = sqrt(tan(_DeltaIn) * _Rin);
 
     // determine the outer paraboloid height
     _zmaxOut = _zmaxIn + _zIn - _zOut;
@@ -33,22 +33,22 @@ void ParaboloidShellGeometry::setupSelfBefore()
     _Rout = _zmaxOut * tan(_DeltaOut);
 
     // determine the curvature level of the outer paraboloid wall
-    _aOut = sqrt( tan(_DeltaOut) * _Rout );
+    _aOut = sqrt(tan(_DeltaOut) * _Rout);
 
     // determine the normalization factor
-    _A = 1. / M_PI / (_Rout*_Rout*_zmaxOut - _Rin*_Rin*_zmaxIn);
+    _A = 1. / M_PI / (_Rout * _Rout * _zmaxOut - _Rin * _Rin * _zmaxIn);
 }
 
 ////////////////////////////////////////////////////////////////////
 
 double ParaboloidShellGeometry::density(double R, double z) const
 {
-    if (z >  (_zmaxIn+_zIn)) return 0.;
-    if (z < -(_zmaxIn+_zIn)) return 0.;
-    if ( (z >= 0.) && (z <  ((R*R) / (_aOut*_aOut) + _zOut) ) ) return 0.;
-    if ( (z >= 0.) && (z >  ((R*R) / (_aIn*_aIn)   + _zIn)  ) ) return 0.;
-    if ( (z < 0.)  && (z > -((R*R) / (_aOut*_aOut) + _zOut) ) ) return 0.;
-    if ( (z < 0.)  && (z < -((R*R) / (_aIn*_aIn)   + _zIn)  ) ) return 0.;
+    if (z > (_zmaxIn + _zIn)) return 0.;
+    if (z < -(_zmaxIn + _zIn)) return 0.;
+    if ((z >= 0.) && (z < ((R * R) / (_aOut * _aOut) + _zOut))) return 0.;
+    if ((z >= 0.) && (z > ((R * R) / (_aIn * _aIn) + _zIn))) return 0.;
+    if ((z < 0.) && (z > -((R * R) / (_aOut * _aOut) + _zOut))) return 0.;
+    if ((z < 0.) && (z < -((R * R) / (_aIn * _aIn) + _zIn))) return 0.;
     return _A;
 }
 
@@ -59,11 +59,11 @@ Position ParaboloidShellGeometry::generatePosition() const
     while (true)
     {
         double R = _Rout * sqrt(random()->uniform());
-        double z = (_zmaxIn+_zIn) * (2.*random()->uniform() - 1.);
-        if (density(R,z))
+        double z = (_zmaxIn + _zIn) * (2. * random()->uniform() - 1.);
+        if (density(R, z))
         {
             double phi = 2. * M_PI * random()->uniform();
-            return Position(R,phi,z,Position::CoordinateSystem::CYLINDRICAL);
+            return Position(R, phi, z, Position::CoordinateSystem::CYLINDRICAL);
         }
     }
 }
@@ -79,7 +79,7 @@ double ParaboloidShellGeometry::SigmaR() const
 
 double ParaboloidShellGeometry::SigmaZ() const
 {
-    return 2.*_A*(_zIn-_zOut);
+    return 2. * _A * (_zIn - _zOut);
 }
 
 //////////////////////////////////////////////////////////////////////

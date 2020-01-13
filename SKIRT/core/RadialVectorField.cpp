@@ -17,7 +17,7 @@ int RadialVectorField::dimension() const
 Vec RadialVectorField::vector(Position bfr) const
 {
     double norm = bfr.norm();
-    return norm > 0. ? bfr/norm : Vec();
+    return norm > 0. ? bfr / norm : Vec();
 }
 
 //////////////////////////////////////////////////////////////////////

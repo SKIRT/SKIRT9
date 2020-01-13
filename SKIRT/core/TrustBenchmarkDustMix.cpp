@@ -23,8 +23,8 @@ void TrustBenchmarkDustMix::setupSelfBefore()
     addPopulation(new TrustGraphiteGrainComposition(this), new ZubkoGraphiteGrainSizeDistribution(this),
                   _numGraphiteSizes, GrainPopulation::NormalizationType::FactorOnSizeDistribution, 1.);
 
-    addPopulation(new TrustNeutralPAHGrainComposition(this), new ZubkoPAHGrainSizeDistribution(this),
-                  _numPAHSizes, GrainPopulation::NormalizationType::FactorOnSizeDistribution, 1.);
+    addPopulation(new TrustNeutralPAHGrainComposition(this), new ZubkoPAHGrainSizeDistribution(this), _numPAHSizes,
+                  GrainPopulation::NormalizationType::FactorOnSizeDistribution, 1.);
 }
 
 ////////////////////////////////////////////////////////////////////

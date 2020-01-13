@@ -43,8 +43,8 @@ void Configuration::setupSelfBefore()
     auto is = find<InstrumentSystem>(false);
 
     // retrieve wavelength-related options
-    _oligochromatic = sim->simulationMode() == MonteCarloSimulation::SimulationMode::OligoNoMedium ||
-                      sim->simulationMode() == MonteCarloSimulation::SimulationMode::OligoExtinctionOnly;
+    _oligochromatic = sim->simulationMode() == MonteCarloSimulation::SimulationMode::OligoNoMedium
+                      || sim->simulationMode() == MonteCarloSimulation::SimulationMode::OligoExtinctionOnly;
     if (_oligochromatic)
     {
         auto oligoWavelengthGrid = new OligoWavelengthGrid(this, ss->wavelengths());
@@ -62,13 +62,12 @@ void Configuration::setupSelfBefore()
     int numMedia = 0;
     auto ms = find<MediumSystem>(false);
     if (ms) numMedia = ms->media().size();  // may be zero
-    _hasMedium = (numMedia!=0);
+    _hasMedium = (numMedia != 0);
 
     // verify this with the requirements set by the simulation mode
-    bool mustHaveMedium = sim->simulationMode() != MonteCarloSimulation::SimulationMode::OligoNoMedium &&
-                          sim->simulationMode() != MonteCarloSimulation::SimulationMode::NoMedium;;
-    if (!mustHaveMedium && _hasMedium)
-        throw FATALERROR("This simulation mode does not allow media to be configured");
+    bool mustHaveMedium = sim->simulationMode() != MonteCarloSimulation::SimulationMode::OligoNoMedium
+                          && sim->simulationMode() != MonteCarloSimulation::SimulationMode::NoMedium;
+    if (!mustHaveMedium && _hasMedium) throw FATALERROR("This simulation mode does not allow media to be configured");
     if (mustHaveMedium && !_hasMedium)
         throw FATALERROR("This simulation mode requires at least one medium to be configured");
 
@@ -83,8 +82,8 @@ void Configuration::setupSelfBefore()
     }
 
     // retrieve extinction-only options
-    if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::OligoExtinctionOnly ||
-        sim->simulationMode() == MonteCarloSimulation::SimulationMode::ExtinctionOnly)
+    if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::OligoExtinctionOnly
+        || sim->simulationMode() == MonteCarloSimulation::SimulationMode::ExtinctionOnly)
     {
         _hasRadiationField = ms->extinctionOnlyOptions()->storeRadiationField();
         if (_hasRadiationField)
@@ -96,8 +95,8 @@ void Configuration::setupSelfBefore()
     }
 
     // retrieve dust emission options
-    if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustEmission ||
-        sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustEmissionWithSelfAbsorption)
+    if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustEmission
+        || sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustEmissionWithSelfAbsorption)
     {
         _hasRadiationField = true;
         _hasPanRadiationField = true;
@@ -143,8 +142,8 @@ void Configuration::setupSelfBefore()
         _modelDimension = max(ss->dimension(), ms->dimension());
         _gridDimension = ms->gridDimension();
         if (_modelDimension > _gridDimension)
-            throw FATALERROR("The grid symmetry (" + std::to_string(_gridDimension) + "D)"
-                             "does not support the model symmetry (" + std::to_string(_modelDimension) + "D)");
+            throw FATALERROR("The grid symmetry (" + std::to_string(_gridDimension)
+                             + "D) does not support the model symmetry (" + std::to_string(_modelDimension) + "D)");
     }
     else
     {
@@ -152,33 +151,41 @@ void Configuration::setupSelfBefore()
     }
 
     // check for velocities in sources and media
-    for (auto source : ss->sources()) if (source->hasVelocity()) _hasMovingSources = true;
-    if (_hasMedium) for (auto medium : ms->media()) if (medium->hasVelocity()) _hasMovingMedia = true;
+    for (auto source : ss->sources())
+        if (source->hasVelocity()) _hasMovingSources = true;
+    if (_hasMedium)
+        for (auto medium : ms->media())
+            if (medium->hasVelocity()) _hasMovingMedia = true;
 
     // check for variable material mixes
-    if (_hasMedium) for (auto medium : ms->media()) if (medium->hasVariableMix()) _hasVariableMedia = true;
+    if (_hasMedium)
+        for (auto medium : ms->media())
+            if (medium->hasVariableMix()) _hasVariableMedia = true;
 
     // check for polarization
     if (_hasMedium)
     {
         int numPolarization = 0;
-        for (auto medium : ms->media()) if (medium->mix()->hasPolarization()) numPolarization++;
-        if (numPolarization!=0 && numPolarization!=numMedia)
+        for (auto medium : ms->media())
+            if (medium->mix()->hasPolarization()) numPolarization++;
+        if (numPolarization != 0 && numPolarization != numMedia)
             throw FATALERROR("All media must consistenly support polarization, or not support polarization");
-        _hasPolarization = numPolarization!=0;
+        _hasPolarization = numPolarization != 0;
     }
 
     // check for polarization by spheroidal particles
     if (_hasPolarization)
     {
         for (auto medium : ms->media())
-            if (medium->mix()->scatteringMode()==MaterialMix::ScatteringMode::SpheroidalPolarization)
+            if (medium->mix()->scatteringMode() == MaterialMix::ScatteringMode::SpheroidalPolarization)
                 _hasSpheroidalPolarization = true;
     }
 
     // check for magnetic fields
     int numMagneticFields = 0;
-    if (_hasMedium) for (auto medium : ms->media()) if (medium->hasMagneticField()) numMagneticFields++;
+    if (_hasMedium)
+        for (auto medium : ms->media())
+            if (medium->hasMagneticField()) numMagneticFields++;
     if (numMagneticFields > 1)
         throw FATALERROR("It is not allowed for more than one medium component to define a magnetic field");
     if (numMagneticFields == 1) _hasMagneticField = true;
@@ -233,8 +240,8 @@ void Configuration::setupSelfAfter()
     }
     else
     {
-        log->info("  Model symmetry: " + std::to_string(_modelDimension) + "D; "
-                  "Spatial grid symmetry: " + std::to_string(_gridDimension) + "D");
+        log->info("  Model symmetry: " + std::to_string(_modelDimension)
+                  + "D; Spatial grid symmetry: " + std::to_string(_gridDimension) + "D");
         log->warning("  Selecting a grid with the model symmetry might be more efficient");
     }
 
@@ -292,7 +299,7 @@ Range Configuration::simulationWavelengthRange() const
     if (_dustEmissionWLG) extendForWavelengthGrid(range, _dustEmissionWLG);
 
     // extend this range with a wide margin for kinematics if needed
-    if (_hasMovingSources || _hasMovingMedia) range.extendWithRedshift(1./3.);
+    if (_hasMovingSources || _hasMovingMedia) range.extendWithRedshift(1. / 3.);
 
     // include radiation field wavelength grid (because dust properties are pre-calculated on these wavelengths)
     if (_hasRadiationField)
@@ -318,7 +325,7 @@ Range Configuration::simulationWavelengthRange() const
     extendForMaterialWavelengthRange(range, sim);
 
     // extend the final range with a narrow margin for round-offs
-    range.extendWithRedshift(1./100.);
+    range.extendWithRedshift(1. / 100.);
     return range;
 }
 
@@ -333,7 +340,7 @@ namespace
         // because this function may be called early during simulation setup
         wavelengthGrid->setup();
         int n = wavelengthGrid->numBins();
-        for (int ell=0; ell!=n; ++ell) wavelengths.insert(wavelengthGrid->wavelength(ell));
+        for (int ell = 0; ell != n; ++ell) wavelengths.insert(wavelengthGrid->wavelength(ell));
     }
 
     // This function adds to the specified set of wavelengths any wavelengths requested by simulation items
@@ -346,7 +353,7 @@ namespace
         {
             // if the range indicates a single nonzero wavelength, then add that wavelength
             Range range = interface->wavelengthRange();
-            if (range.min() > 0 && range.min()==range.max()) wavelengths.insert(range.min());
+            if (range.min() > 0 && range.min() == range.max()) wavelengths.insert(range.min());
 
             // if there is a wavelength grid, add it as well
             auto grid = interface->materialWavelengthGrid();
@@ -357,7 +364,6 @@ namespace
 }
 
 ////////////////////////////////////////////////////////////////////
-
 
 vector<double> Configuration::simulationWavelengths() const
 {

@@ -16,8 +16,8 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void PlanarMagneticFieldCutsProbe::writeMagneticFieldCut(Probe* probe, bool xd, bool yd, bool zd,
-                                                         double xc, double yc, double zc, int Nx, int Ny, int Nz)
+void PlanarMagneticFieldCutsProbe::writeMagneticFieldCut(Probe* probe, bool xd, bool yd, bool zd, double xc, double yc,
+                                                         double zc, int Nx, int Ny, int Nz)
 {
     // get info on units
     auto units = probe->find<Units>();
@@ -27,16 +27,17 @@ void PlanarMagneticFieldCutsProbe::writeMagneticFieldCut(Probe* probe, bool xd, 
     // locate the medium component that defines the magnetic field
     auto ms = probe->find<MediumSystem>();
     Medium* medium = nullptr;
-    for (auto med : ms->media()) if (med->hasMagneticField()) medium = med;
+    for (auto med : ms->media())
+        if (med->hasMagneticField()) medium = med;
 
     // determine spatial configuration (regardless of cut direction)
     Box box = ms->grid()->boundingBox();
-    double xpsize = box.xwidth()/Nx;
-    double ypsize = box.ywidth()/Ny;
-    double zpsize = box.zwidth()/Nz;
-    double xbase = box.xmin() + 0.5*xpsize;
-    double ybase = box.ymin() + 0.5*ypsize;
-    double zbase = box.zmin() + 0.5*zpsize;
+    double xpsize = box.xwidth() / Nx;
+    double ypsize = box.ywidth() / Ny;
+    double zpsize = box.zwidth() / Nz;
+    double xbase = box.xmin() + 0.5 * xpsize;
+    double ybase = box.ymin() + 0.5 * ypsize;
+    double zbase = box.zmin() + 0.5 * zpsize;
     double xcenter = box.center().x();
     double ycenter = box.center().y();
     double zcenter = box.center().z();
@@ -46,25 +47,24 @@ void PlanarMagneticFieldCutsProbe::writeMagneticFieldCut(Probe* probe, bool xd, 
     int Nj = zd ? Nz : Ny;
 
     // allocate result array with the appropriate size and initialize contents to zero
-    Table<3> Bvv(3, Nj, Ni); // reverse index order to get proper data value ordering for FITSInOut::write()
+    Table<3> Bvv(3, Nj, Ni);  // reverse index order to get proper data value ordering for FITSInOut::write()
 
     // calculate the results in parallel; perform only at the root process
     auto parallel = probe->find<ParallelFactory>()->parallelRootOnly();
-    parallel->call(Nj, [&Bvv,unitfactor,medium,xpsize,ypsize,zpsize,xbase,ybase,zbase,
-                             xd,yd,zd,xc,yc,zc,Ni](size_t firstIndex, size_t numIndices)
-    {
-        for (size_t j = firstIndex; j != firstIndex+numIndices; ++j)
+    parallel->call(Nj, [&Bvv, unitfactor, medium, xpsize, ypsize, zpsize, xbase, ybase, zbase, xd, yd, zd, xc, yc, zc,
+                        Ni](size_t firstIndex, size_t numIndices) {
+        for (size_t j = firstIndex; j != firstIndex + numIndices; ++j)
         {
-            double z = zd ? (zbase + j*zpsize) : zc;
-            for (int i=0; i<Ni; i++)
+            double z = zd ? (zbase + j * zpsize) : zc;
+            for (int i = 0; i < Ni; i++)
             {
-                double x = xd ? (xbase + i*xpsize) : xc;
-                double y = yd ? (ybase + (zd ? i : j)*ypsize) : yc;
-                Position bfr(x,y,z);
+                double x = xd ? (xbase + i * xpsize) : xc;
+                double y = yd ? (ybase + (zd ? i : j) * ypsize) : yc;
+                Position bfr(x, y, z);
                 Vec B = medium->magneticField(bfr);
-                Bvv(0,j,i) = (xd ? B.x() : B.y()) * unitfactor;
-                Bvv(1,j,i) = (zd ? B.z() : B.y()) * unitfactor;
-                Bvv(2,j,i) = (xd ? (yd ? -B.z() : B.y()) : -B.x()) * unitfactor;
+                Bvv(0, j, i) = (xd ? B.x() : B.y()) * unitfactor;
+                Bvv(1, j, i) = (zd ? B.z() : B.y()) * unitfactor;
+                Bvv(2, j, i) = (xd ? (yd ? -B.z() : B.y()) : -B.x()) * unitfactor;
             }
         }
     });
@@ -76,11 +76,10 @@ void PlanarMagneticFieldCutsProbe::writeMagneticFieldCut(Probe* probe, bool xd, 
     if (zd) plane += "z";
 
     // write file
-    FITSInOut::write(probe, "magnetic field in the " + plane + " plane", probe->itemName() + "_B_" + plane,
-                     Bvv.data(), unitstring, Ni, Nj,
-                     units->olength(xd?xpsize:ypsize), units->olength(zd?zpsize:ypsize),
-                     units->olength(xd?xcenter:ycenter), units->olength(zd?zcenter:ycenter),
-                     units->ulength(), NR::array(std::vector<double>({1.,2.,3.})), "1");
+    FITSInOut::write(probe, "magnetic field in the " + plane + " plane", probe->itemName() + "_B_" + plane, Bvv.data(),
+                     unitstring, Ni, Nj, units->olength(xd ? xpsize : ypsize), units->olength(zd ? zpsize : ypsize),
+                     units->olength(xd ? xcenter : ycenter), units->olength(zd ? zcenter : ycenter), units->ulength(),
+                     NR::array(std::vector<double>({1., 2., 3.})), "1");
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -89,9 +88,12 @@ void PlanarMagneticFieldCutsProbe::probeSetup()
 {
     if (find<Configuration>()->hasMagneticField())
     {
-        writeMagneticFieldCut(this, 1,1,0, positionX(),positionY(),positionZ(), numPixelsX(),numPixelsY(),numPixelsZ());
-        writeMagneticFieldCut(this, 1,0,1, positionX(),positionY(),positionZ(), numPixelsX(),numPixelsY(),numPixelsZ());
-        writeMagneticFieldCut(this, 0,1,1, positionX(),positionY(),positionZ(), numPixelsX(),numPixelsY(),numPixelsZ());
+        writeMagneticFieldCut(this, 1, 1, 0, positionX(), positionY(), positionZ(), numPixelsX(), numPixelsY(),
+                              numPixelsZ());
+        writeMagneticFieldCut(this, 1, 0, 1, positionX(), positionY(), positionZ(), numPixelsX(), numPixelsY(),
+                              numPixelsZ());
+        writeMagneticFieldCut(this, 0, 1, 1, positionX(), positionY(), positionZ(), numPixelsX(), numPixelsY(),
+                              numPixelsZ());
     }
 }
 

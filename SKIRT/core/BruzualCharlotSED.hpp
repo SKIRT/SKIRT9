@@ -18,21 +18,21 @@ class BruzualCharlotSED : public FamilySED
 {
     /** The enumeration type indicating the assumed initial mass function (IMF). */
     ENUM_DEF(IMF, Chabrier, Salpeter)
-    ENUM_VAL(IMF, Chabrier, "Chabrier IMF")
-    ENUM_VAL(IMF, Salpeter, "Salpeter IMF")
+        ENUM_VAL(IMF, Chabrier, "Chabrier IMF")
+        ENUM_VAL(IMF, Salpeter, "Salpeter IMF")
     ENUM_END()
 
     ITEM_CONCRETE(BruzualCharlotSED, FamilySED, "a Bruzual-Charlot simple stellar population SED")
 
-    PROPERTY_ENUM(imf, IMF, "the assumed initial mass function")
+        PROPERTY_ENUM(imf, IMF, "the assumed initial mass function")
         ATTRIBUTE_DEFAULT_VALUE(imf, "Chabrier")
 
-    PROPERTY_DOUBLE(metallicity, "the metallicity of the SSP")
+        PROPERTY_DOUBLE(metallicity, "the metallicity of the SSP")
         ATTRIBUTE_MIN_VALUE(metallicity, "[0.0001")
         ATTRIBUTE_MAX_VALUE(metallicity, "0.05]")
         ATTRIBUTE_DEFAULT_VALUE(metallicity, "0.02")
 
-    PROPERTY_DOUBLE(age, "the age of the SSP")
+        PROPERTY_DOUBLE(age, "the age of the SSP")
         ATTRIBUTE_QUANTITY(age, "time")
         ATTRIBUTE_MIN_VALUE(age, "[0 Gyr")
         ATTRIBUTE_MAX_VALUE(age, "20 Gyr]")

@@ -114,8 +114,10 @@ SaveWizardPane::SaveWizardPane(const SchemaDef* schema, Item* root, QString file
 void SaveWizardPane::save()
 {
     // if the previous path is known, save again; otherwise ask anyway
-    if (!_filepath.isEmpty()) saveToFile(_filepath);
-    else saveAs();
+    if (!_filepath.isEmpty())
+        saveToFile(_filepath);
+    else
+        saveAs();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -123,8 +125,8 @@ void SaveWizardPane::save()
 void SaveWizardPane::saveAs()
 {
     // get a file path from the user
-    QString directory = !_filepath.isEmpty() ? _filepath
-                                             : QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
+    QString directory =
+        !_filepath.isEmpty() ? _filepath : QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
     QString caption = qApp->applicationName() + " - Save " + QString::fromStdString(_schema->schemaTitle());
     QString extension = QString::fromStdString(_schema->schemaExtension());
     QString filter = extension + " files (*." + extension + ")";
@@ -145,8 +147,7 @@ void SaveWizardPane::restart()
 {
     if (_dirty)
     {
-        auto ret = QMessageBox::warning(this, qApp->applicationName(),
-                                        "Do you want to discard your unsaved changes?",
+        auto ret = QMessageBox::warning(this, qApp->applicationName(), "Do you want to discard your unsaved changes?",
                                         QMessageBox::Discard | QMessageBox::Cancel, QMessageBox::Cancel);
         if (ret == QMessageBox::Cancel) return;
     }

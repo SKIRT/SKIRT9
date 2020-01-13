@@ -6,8 +6,8 @@
 #ifndef TABULATEDSED_HPP
 #define TABULATEDSED_HPP
 
-#include "SED.hpp"
 #include "Array.hpp"
+#include "SED.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -63,12 +63,12 @@ public:
 
 private:
     // data members initialized during setup
-    Array _inlambdav;   // intrinsic wavelengths (i.e. as read from file)
-    Array _inpv;        // intrinsic normalized specific luminosities (i.e. as read from file,
-                        //                      but normalized with source range normalization)
-    Array _lambdav;     // wavelengths within source range
-    Array _pv;          // normalized specific luminosities within source range
-    Array _Pv;          // normalized cumulative distribution within source range
+    Array _inlambdav;  // intrinsic wavelengths (i.e. as read from file)
+    Array _inpv;       // intrinsic normalized specific luminosities (i.e. as read from file,
+                       //                      but normalized with source range normalization)
+    Array _lambdav;    // wavelengths within source range
+    Array _pv;         // normalized specific luminosities within source range
+    Array _Pv;         // normalized cumulative distribution within source range
 };
 
 ////////////////////////////////////////////////////////////////////

@@ -31,7 +31,7 @@
 class FileSSPSEDFamily : public SEDFamily
 {
     ITEM_CONCRETE(FileSSPSEDFamily, SEDFamily, "a user-provided SED family for single stellar populations")
-    PROPERTY_STRING(filename, "the name of the stored table file defining the SED templates")
+        PROPERTY_STRING(filename, "the name of the stored table file defining the SED templates")
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============
@@ -64,8 +64,8 @@ public:
         specified parameters over the specified wavelength range. The function returns the
         normalization factor. The number and type of parameters must match the information returned
         by the parameterInfo() function; if not the behavior is undefined. */
-    double cdf(Array& lambdav, Array& pv, Array& Pv,
-               const Range& wavelengthRange, const Array& parameters) const override;
+    double cdf(Array& lambdav, Array& pv, Array& Pv, const Range& wavelengthRange,
+               const Array& parameters) const override;
 
     //====================== Data members =====================
 

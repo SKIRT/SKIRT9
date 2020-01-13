@@ -6,8 +6,8 @@
 #ifndef POSITION_HPP
 #define POSITION_HPP
 
-#include "Vec.hpp"
 #include "Direction.hpp"
+#include "Vec.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -22,16 +22,16 @@ class Position : public Vec
 public:
     /** The default constructor for the class Position creates a point in the origin of the
         reference system, with cartesian coordinates \f$(x,y,z)=(0,0,0)\f$. */
-    inline Position() : Vec() { }
+    inline Position() : Vec() {}
 
     /** Constructor for a position with given cartesian coordinates \f$x\f$, \f$y\f$ and \f$z\f$.
         */
-    inline Position(double x, double y, double z) : Vec(x,y,z) { }
+    inline Position(double x, double y, double z) : Vec(x, y, z) {}
 
     /** Constructor for a position with given cartesian coordinates \f${\bf{r}}_x\f$,
         \f${\bf{r}}_y\f$ and \f${\bf{r}}_z\f$. It is declared <tt>explicit</tt> to avoid implicit
         type conversions. */
-    explicit inline Position(Vec r) : Vec(r) { }
+    explicit inline Position(Vec r) : Vec(r) {}
 
     /** This enum has a constant for each of the supported coordinate systems. */
     enum class CoordinateSystem { CARTESIAN, CYLINDRICAL, SPHERICAL };

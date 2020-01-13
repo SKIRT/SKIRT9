@@ -26,7 +26,7 @@ SubItemPropertyWizardPane::SubItemPropertyWizardPane(std::unique_ptr<PropertyHan
 
     // add the question
     layout->addWidget(createHeader("Select one of the following options for item #"
-                                 + std::to_string(selectedIndex()+1) + " in " + hdlr->title() + " list:"));
+                                   + std::to_string(selectedIndex() + 1) + " in " + hdlr->title() + " list:"));
 
     // determine the current and default item types
     string currentType = (hdlr->value()[selectedIndex()])->type();
@@ -39,7 +39,7 @@ SubItemPropertyWizardPane::SubItemPropertyWizardPane(std::unique_ptr<PropertyHan
     for (auto choiceType : hdlr->allowedAndDisplayedDescendants())
     {
         string choiceTitle = StringUtils::toUpperFirst(hdlr->schema()->title(choiceType));
-        if (hdlr->schema()->inherits(choiceType,defaultType)) choiceTitle += "  [default]";
+        if (hdlr->schema()->inherits(choiceType, defaultType)) choiceTitle += "  [default]";
         auto choiceButton = new QRadioButton(QString::fromStdString(choiceTitle));
         choiceButton->setFocusPolicy(Qt::NoFocus);
         buttonGroup->addButton(choiceButton);
@@ -50,7 +50,7 @@ SubItemPropertyWizardPane::SubItemPropertyWizardPane(std::unique_ptr<PropertyHan
         choiceButton->setStatusTip(QString::fromStdString(choiceType));
 
         // if this button corresponds to the current type, select it
-        if (choiceType==currentType)
+        if (choiceType == currentType)
         {
             choiceButton->setChecked(true);
             emit propertyValidChanged(true);

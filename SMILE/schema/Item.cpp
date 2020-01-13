@@ -5,20 +5,21 @@
 
 #include "Item.hpp"
 #include "FatalError.hpp"
+#include "ItemRegistry.hpp"
 #include "PropertyAccessor.hpp"
 #include "PropertyDef.hpp"
-#include "ItemRegistry.hpp"
 #include "StringUtils.hpp"
 #include <unordered_map>
 
 ////////////////////////////////////////////////////////////////////
 
 // use a custom class to avoid including std::unordered_map in the Item.hpp header
-class Item::UtilityData : public std::unordered_map<string, int> { };
+class Item::UtilityData : public std::unordered_map<string, int>
+{};
 
 ////////////////////////////////////////////////////////////////////
 
-const char*Item::ii_type() const
+const char* Item::ii_type() const
 {
     return "Item";
 }
@@ -248,8 +249,10 @@ void Item::setUtilityProperty(string name, int value)
 
 int Item::getUtilityProperty(string name) const
 {
-    if (_utility && _utility->count(name)) return _utility->at(name);
-    else throw FATALERROR("Unknow ghost property " + name);
+    if (_utility && _utility->count(name))
+        return _utility->at(name);
+    else
+        throw FATALERROR("Unknow ghost property " + name);
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -8,10 +8,10 @@
 
 ////////////////////////////////////////////////////////////////////
 
-double SingleGrainDustMix::getOpticalProperties(const Array& lambdav, const Array& thetav,
-                                            Array& sigmaabsv, Array& sigmascav, Array& asymmparv,
-                                            Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv,
-                                            ArrayTable<2>& /*sigmaabsvv*/, ArrayTable<2>& /*sigmaabspolvv*/)
+double SingleGrainDustMix::getOpticalProperties(const Array& lambdav, const Array& thetav, Array& sigmaabsv,
+                                                Array& sigmascav, Array& asymmparv, Table<2>& S11vv, Table<2>& S12vv,
+                                                Table<2>& S33vv, Table<2>& S34vv, ArrayTable<2>& /*sigmaabsvv*/,
+                                                ArrayTable<2>& /*sigmaabspolvv*/)
 {
     // open the stored table file containing the basic optical properties
     string opticalPropsName = resourceNameForOpticalProps();
@@ -21,7 +21,7 @@ double SingleGrainDustMix::getOpticalProperties(const Array& lambdav, const Arra
 
     // retrieve the optical properties on the requested wavelength grid
     int numLambda = lambdav.size();
-    for (int ell=0; ell!=numLambda; ++ell)
+    for (int ell = 0; ell != numLambda; ++ell)
     {
         double lambda = lambdav[ell];
         sigmaabsv[ell] = sigmaabs(lambda);
@@ -35,7 +35,7 @@ double SingleGrainDustMix::getOpticalProperties(const Array& lambdav, const Arra
     // get the scattering mode advertised by this dust mix
     auto mode = scatteringMode();
     if (mode == ScatteringMode::MaterialPhaseFunction || mode == ScatteringMode::SphericalPolarization
-                                                      || mode == ScatteringMode::SpheroidalPolarization)
+        || mode == ScatteringMode::SpheroidalPolarization)
     {
         // open the stored table file containing the Mueller matrix coefficients
         string muellerName = resourceNameForMuellerMatrix();
@@ -50,18 +50,18 @@ double SingleGrainDustMix::getOpticalProperties(const Array& lambdav, const Arra
 
         // retrieve the Mueller matrix coefficients on the requested wavelength and scattering angle grid
         int numTheta = thetav.size();
-        for (int ell=0; ell!=numLambda; ++ell)
+        for (int ell = 0; ell != numLambda; ++ell)
         {
             double lambda = lambdav[ell];
-            for (int t=0; t!=numTheta; ++t)
+            for (int t = 0; t != numTheta; ++t)
             {
                 double theta = thetav[t];
-                S11vv(ell,t) = S11(lambda,theta);
+                S11vv(ell, t) = S11(lambda, theta);
                 if (mode == ScatteringMode::SphericalPolarization || mode == ScatteringMode::SpheroidalPolarization)
                 {
-                    S12vv(ell,t) = S12(lambda,theta);
-                    S33vv(ell,t) = S33(lambda,theta);
-                    S34vv(ell,t) = S34(lambda,theta);
+                    S12vv(ell, t) = S12(lambda, theta);
+                    S33vv(ell, t) = S33(lambda, theta);
+                    S34vv(ell, t) = S34(lambda, theta);
                 }
             }
         }

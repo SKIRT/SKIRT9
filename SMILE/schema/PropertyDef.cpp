@@ -8,16 +8,11 @@
 
 ////////////////////////////////////////////////////////////////////
 
-PropertyDef::PropertyDef(string type, string name, string title)
-    : _type(type), _name(name), _title(title)
-{
-}
+PropertyDef::PropertyDef(string type, string name, string title) : _type(type), _name(name), _title(title) {}
 
 ////////////////////////////////////////////////////////////////////
 
-PropertyDef::~PropertyDef()
-{
-}
+PropertyDef::~PropertyDef() {}
 
 ////////////////////////////////////////////////////////////////////
 
@@ -39,9 +34,8 @@ void PropertyDef::setAccessor(const PropertyAccessor* accessor)
 string PropertyDef::enumTitle(string enumName) const
 {
     auto it = std::find(_enumNames.cbegin(), _enumNames.cend(), enumName);
-    if (it != _enumNames.cend()) return _enumTitles[it-_enumNames.cbegin()];
+    if (it != _enumNames.cend()) return _enumTitles[it - _enumNames.cbegin()];
     return string();
 }
 
 ////////////////////////////////////////////////////////////////////
-

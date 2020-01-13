@@ -7,7 +7,7 @@
 
 //////////////////////////////////////////////////////////////////////
 
-TrustSilicateGrainComposition::TrustSilicateGrainComposition(SimulationItem *parent)
+TrustSilicateGrainComposition::TrustSilicateGrainComposition(SimulationItem* parent)
 {
     parent->addChild(this);
     setup();

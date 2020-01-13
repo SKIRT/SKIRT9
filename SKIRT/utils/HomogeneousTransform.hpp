@@ -81,8 +81,8 @@ public:
 
     /** This function applies the current transform to the specified homogeneous coordinates
         and stores the result in homogeneous coordinates in the output variables. */
-    void transform(double x, double y, double z, double w,
-                   double& outx, double& outy, double& outz, double& outw) const;
+    void transform(double x, double y, double z, double w, double& outx, double& outy, double& outz,
+                   double& outw) const;
 
     /** This function applies the current transform to a position vector specified in regular
         coordinates and returns the transformed position vector in regular coordinates. If the

@@ -75,7 +75,6 @@ public:
         the density along a line starting at the centre of the coordinate
         system, \f[ \Sigma_r = \int_0^\infty \rho(r)\,{\text{d}}r. \f] */
     virtual double Sigmar() const = 0;
-
 };
 
 ////////////////////////////////////////////////////////////////////

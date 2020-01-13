@@ -53,12 +53,12 @@ vector<string> Block::streamlined()
 
         // remove the leading /** on the first line and the optional * on subsequent lines (including the space)
         if (index == 0) inputline.erase(0, 2);
-        if (StringUtils::startsWith(inputline,"* ")) inputline.erase(0, 2);
-        if (StringUtils::startsWith(inputline,"*") && !StringUtils::startsWith(inputline,"*/")) inputline.erase(0, 1);
+        if (StringUtils::startsWith(inputline, "* ")) inputline.erase(0, 2);
+        if (StringUtils::startsWith(inputline, "*") && !StringUtils::startsWith(inputline, "*/")) inputline.erase(0, 1);
 
         // if needed, insert a space before the trailing */
-        if (index == _block.size()-1 && inputline.size() > 2 && inputline[inputline.size()-3] != ' ')
-            inputline.insert(inputline.size()-2, 1, ' ');
+        if (index == _block.size() - 1 && inputline.size() > 2 && inputline[inputline.size() - 3] != ' ')
+            inputline.insert(inputline.size() - 2, 1, ' ');
 
         // the first empty input line in a sequence triggers a single empty output line
         if (inputline.empty())
@@ -79,7 +79,7 @@ vector<string> Block::streamlined()
             for (const string& word : StringUtils::split(inputline, " "))
             {
                 // if the output line is full (with one space to spare), flush the line and start a new one
-                if (outputline.size() + word.size() > MARGIN-2)
+                if (outputline.size() + word.size() > MARGIN - 2)
                 {
                     result.push_back(outputline);
                     outputline = prefix + "   ";

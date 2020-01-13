@@ -76,8 +76,10 @@ DoublePropertyWizardPane::DoublePropertyWizardPane(std::unique_ptr<PropertyHandl
     // if the property has been configured, put its value in the text field
     // otherwise, if there is a default value, put that in both the text field and the property value
     // otherwise, just empty the text field (an invalid value that will have to be updated by the user)
-    if (hdlr->isConfigured()) _field->setText(QString::fromStdString(hdlr->toString(hdlr->value())));
-    else setDefaultValue(hdlr, _field);
+    if (hdlr->isConfigured())
+        _field->setText(QString::fromStdString(hdlr->toString(hdlr->value())));
+    else
+        setDefaultValue(hdlr, _field);
 
     // ensure proper validity state
     emit propertyValidChanged(isValidAndInRange(hdlr, _field->text().toStdString()));
@@ -100,8 +102,10 @@ void DoublePropertyWizardPane::updateInterface()
         // if the property has already been configured by the user,
         // verify the field value against possibly adjusted requirements (min/max value, units);
         // otherwise, (re)insert the (possibly adjusted) default value
-        if (hdlr->isConfiguredByUser()) updateValue(_field->text());
-        else setDefaultValue(hdlr, _field);
+        if (hdlr->isConfiguredByUser())
+            updateValue(_field->text());
+        else
+            setDefaultValue(hdlr, _field);
     }
 }
 
@@ -114,7 +118,7 @@ void DoublePropertyWizardPane::updateValue(const QString& text)
     // verify that value is valid and within range before setting it
     double value = hdlr->toDouble(text.toStdString());
     bool valid = isValidAndInRange(hdlr, text.toStdString());
-    if (valid && (!hdlr->isConfigured() || value!=hdlr->value()))
+    if (valid && (!hdlr->isConfigured() || value != hdlr->value()))
     {
         hdlr->setValue(value);
         emit propertyValueChanged();

@@ -19,7 +19,7 @@ double MeanFileDustMix::getDustProperties(Array& lambdav, Array& kappaextv, Arra
     infile.readAllColumns(lambdav, kappaextv, albedov, asymmparv);
     infile.close();
 
-    return 1.5e-29;   // in kg/H
+    return 1.5e-29;  // in kg/H
 }
 
 //////////////////////////////////////////////////////////////////////

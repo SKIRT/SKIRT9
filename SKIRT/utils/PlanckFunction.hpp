@@ -24,12 +24,12 @@ public:
     /** This function returns the value of the Planck function \f$B_\lambda(\lambda,T)\f$ for a
         given wavelength \f$\lambda\f$ and for the temperature \f$T\f$ specified in the
         constructor. */
-    double value (double lambda) const;
+    double value(double lambda) const;
 
     /** This function call operator returns the value of the Planck function
         \f$B_\lambda(\lambda,T)\f$ for a given wavelength \f$\lambda\f$ and for the temperature
         \f$T\f$ specified in the constructor. It is equivalent to the value() function. */
-    double operator() (double lambda) const { return value(lambda); }
+    double operator()(double lambda) const { return value(lambda); }
 
     /** This function constructs a tabulated normalized probability density function (pdf) and the
         corresponding normalized cumulative distribution function (cdf) for the Planck function

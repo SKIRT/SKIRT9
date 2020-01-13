@@ -26,7 +26,7 @@ class FileSED : public TabulatedSED
 {
     ITEM_CONCRETE(FileSED, TabulatedSED, "a spectral energy distribution loaded from a text file")
 
-    PROPERTY_STRING(filename, "the name of the file with the spectral energy distribution")
+        PROPERTY_STRING(filename, "the name of the file with the spectral energy distribution")
 
     ITEM_END()
 

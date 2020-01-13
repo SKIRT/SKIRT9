@@ -16,8 +16,8 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void PlanarMediaDensityCutsProbe::writeMediaDensityCuts(Probe* probe, bool xd, bool yd, bool zd,
-                                                        double xc, double yc, double zc, int Nx, int Ny, int Nz)
+void PlanarMediaDensityCutsProbe::writeMediaDensityCuts(Probe* probe, bool xd, bool yd, bool zd, double xc, double yc,
+                                                        double zc, int Nx, int Ny, int Nz)
 {
     // locate relevant simulation items
     auto units = probe->find<Units>();
@@ -26,12 +26,12 @@ void PlanarMediaDensityCutsProbe::writeMediaDensityCuts(Probe* probe, bool xd, b
 
     // determine spatial configuration (regardless of cut direction)
     Box box = grid->boundingBox();
-    double xpsize = box.xwidth()/Nx;
-    double ypsize = box.ywidth()/Ny;
-    double zpsize = box.zwidth()/Nz;
-    double xbase = box.xmin() + 0.5*xpsize;
-    double ybase = box.ymin() + 0.5*ypsize;
-    double zbase = box.zmin() + 0.5*zpsize;
+    double xpsize = box.xwidth() / Nx;
+    double ypsize = box.ywidth() / Ny;
+    double zpsize = box.zwidth() / Nz;
+    double xbase = box.xmin() + 0.5 * xpsize;
+    double ybase = box.ymin() + 0.5 * ypsize;
+    double zbase = box.zmin() + 0.5 * zpsize;
     double xcenter = box.center().x();
     double ycenter = box.center().y();
     double zcenter = box.center().z();
@@ -45,44 +45,51 @@ void PlanarMediaDensityCutsProbe::writeMediaDensityCuts(Probe* probe, bool xd, b
     Array elec_tv, elec_gv;
     Array gas_tv, gas_gv;
     int size = Ni * Nj;
-    if (ms->hasDust()) { dust_tv.resize(size), dust_gv.resize(size); }
-    if (ms->hasElectrons()) { elec_tv.resize(size), elec_gv.resize(size); }
-    if (ms->hasGas()) { gas_tv.resize(size), gas_gv.resize(size); }
+    if (ms->hasDust())
+    {
+        dust_tv.resize(size), dust_gv.resize(size);
+    }
+    if (ms->hasElectrons())
+    {
+        elec_tv.resize(size), elec_gv.resize(size);
+    }
+    if (ms->hasGas())
+    {
+        gas_tv.resize(size), gas_gv.resize(size);
+    }
 
     // calculate the results in parallel; perform only at the root processs
     auto parallel = probe->find<ParallelFactory>()->parallelRootOnly();
-    parallel->call(Nj, [&dust_tv,&dust_gv,&elec_tv,&elec_gv,&gas_tv,&gas_gv,
-                            ms,grid,xpsize,ypsize,zpsize,xbase,ybase,zbase,
-                            xd,yd,zd,xc,yc,zc,Ni](size_t firstIndex, size_t numIndices)
-    {
+    parallel->call(Nj, [&dust_tv, &dust_gv, &elec_tv, &elec_gv, &gas_tv, &gas_gv, ms, grid, xpsize, ypsize, zpsize,
+                        xbase, ybase, zbase, xd, yd, zd, xc, yc, zc, Ni](size_t firstIndex, size_t numIndices) {
         int numMedia = ms->numMedia();
-        for (size_t j = firstIndex; j != firstIndex+numIndices; ++j)
+        for (size_t j = firstIndex; j != firstIndex + numIndices; ++j)
         {
-            double z = zd ? (zbase + j*zpsize) : zc;
-            for (int i=0; i<Ni; i++)
+            double z = zd ? (zbase + j * zpsize) : zc;
+            for (int i = 0; i < Ni; i++)
             {
-                int l = i + Ni*j;
-                double x = xd ? (xbase + i*xpsize) : xc;
-                double y = yd ? (ybase + (zd ? i : j)*ypsize) : yc;
-                Position bfr(x,y,z);
+                int l = i + Ni * j;
+                double x = xd ? (xbase + i * xpsize) : xc;
+                double y = yd ? (ybase + (zd ? i : j) * ypsize) : yc;
+                Position bfr(x, y, z);
                 int m = grid->cellIndex(bfr);
 
-                for (int h=0; h!=numMedia; ++h)
+                for (int h = 0; h != numMedia; ++h)
                 {
                     if (ms->isDust(h))
                     {
                         dust_tv[l] += ms->media()[h]->massDensity(bfr);
-                        if (m>=0) dust_gv[l] += ms->massDensity(m,h);
+                        if (m >= 0) dust_gv[l] += ms->massDensity(m, h);
                     }
                     else if (ms->isElectrons(h))
                     {
                         elec_tv[l] += ms->media()[h]->numberDensity(bfr);
-                        if (m>=0) elec_gv[l] += ms->numberDensity(m,h);
+                        if (m >= 0) elec_gv[l] += ms->numberDensity(m, h);
                     }
                     else if (ms->isGas(h))
                     {
                         gas_tv[l] += ms->media()[h]->numberDensity(bfr);
-                        if (m>=0) gas_gv[l] += ms->numberDensity(m,h);
+                        if (m >= 0) gas_gv[l] += ms->numberDensity(m, h);
                     }
                 }
             }
@@ -90,9 +97,8 @@ void PlanarMediaDensityCutsProbe::writeMediaDensityCuts(Probe* probe, bool xd, b
     });
 
     // define a function to write a result array to a FITS file
-    auto write = [probe,units,xpsize,ypsize,zpsize,xcenter,ycenter,zcenter,
-                        xd,yd,zd,Ni,Nj](Array& v, string label, string prefix, bool massDensity)
-    {
+    auto write = [probe, units, xpsize, ypsize, zpsize, xcenter, ycenter, zcenter, xd, yd, zd, Ni,
+                  Nj](Array& v, string label, string prefix, bool massDensity) {
         if (v.size())
         {
             // get the name of the coordinate plane (xy, xz, or yz)
@@ -108,8 +114,8 @@ void PlanarMediaDensityCutsProbe::writeMediaDensityCuts(Probe* probe, bool xd, b
             // write file
             string filename = probe->itemName() + "_" + prefix + "_" + plane;
             FITSInOut::write(probe, label + " in the " + plane + " plane", filename, v, densityUnits, Ni, Nj,
-                             units->olength(xd?xpsize:ypsize), units->olength(zd?zpsize:ypsize),
-                             units->olength(xd?xcenter:ycenter), units->olength(zd?zcenter:ycenter),
+                             units->olength(xd ? xpsize : ypsize), units->olength(zd ? zpsize : ypsize),
+                             units->olength(xd ? xcenter : ycenter), units->olength(zd ? zcenter : ycenter),
                              units->ulength());
         }
     };
@@ -129,9 +135,12 @@ void PlanarMediaDensityCutsProbe::probeSetup()
 {
     if (find<Configuration>()->hasMedium())
     {
-        writeMediaDensityCuts(this, 1,1,0, positionX(),positionY(),positionZ(), numPixelsX(),numPixelsY(),numPixelsZ());
-        writeMediaDensityCuts(this, 1,0,1, positionX(),positionY(),positionZ(), numPixelsX(),numPixelsY(),numPixelsZ());
-        writeMediaDensityCuts(this, 0,1,1, positionX(),positionY(),positionZ(), numPixelsX(),numPixelsY(),numPixelsZ());
+        writeMediaDensityCuts(this, 1, 1, 0, positionX(), positionY(), positionZ(), numPixelsX(), numPixelsY(),
+                              numPixelsZ());
+        writeMediaDensityCuts(this, 1, 0, 1, positionX(), positionY(), positionZ(), numPixelsX(), numPixelsY(),
+                              numPixelsZ());
+        writeMediaDensityCuts(this, 0, 1, 1, positionX(), positionY(), positionZ(), numPixelsX(), numPixelsY(),
+                              numPixelsZ());
     }
 }
 

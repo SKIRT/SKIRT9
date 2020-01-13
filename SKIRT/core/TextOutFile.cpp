@@ -43,7 +43,8 @@ void TextOutFile::close()
         _out.close();
 
         // log success message, except if an exception has been thrown
-        if (!std::uncaught_exception()) _log->info(_message);;
+        if (!std::uncaught_exception()) _log->info(_message);
+        ;
     }
 }
 
@@ -89,7 +90,7 @@ void TextOutFile::writeRowPrivate(size_t n, const double* values)
     if (n != _ncolumns) throw FATALERROR("Number of values in row does not match the number of columns");
 
     string line;
-    for (size_t i=0; i<_ncolumns; i++)
+    for (size_t i = 0; i < _ncolumns; i++)
     {
         line += (i ? " " : "") + StringUtils::toString(values[i], _formats[i], _precisions[i]);
     }

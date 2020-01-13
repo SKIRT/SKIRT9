@@ -175,21 +175,21 @@ public:
     // ================== Data members ==================
 
 private:
-    string _type;           // property type
-    string _name;           // name of the property
-    string _title;          // description of the property
-    string _relevantIf;     // Boolean expression indicating whether this property is relevant
-    string _displayedIf;    // Boolean expression indicating whether the property should be displayed
-    string _requiredIf;     // Boolean expression indicating whether the property is required
-    string _insert;         // conditional value expression providing a list of extra names to be inserted
-    string _default;        // default value of the property (as a conditional value expression)
-    string _min;            // minimum value of the property
-    string _max;            // maximum value of the property
-    string _quantity;       // name of the physical quantity represented by this property
-    string _base;           // name of the base type for the instances of this property
-    vector<string> _enumNames;  // list of names for the enumeration values of this property
-    vector<string> _enumTitles; // list of titles for the enumeration values of this property, in the same order
-    std::unique_ptr<const PropertyAccessor> _accessor; // accessor block for the property's getters and setters
+    string _type;                // property type
+    string _name;                // name of the property
+    string _title;               // description of the property
+    string _relevantIf;          // Boolean expression indicating whether this property is relevant
+    string _displayedIf;         // Boolean expression indicating whether the property should be displayed
+    string _requiredIf;          // Boolean expression indicating whether the property is required
+    string _insert;              // conditional value expression providing a list of extra names to be inserted
+    string _default;             // default value of the property (as a conditional value expression)
+    string _min;                 // minimum value of the property
+    string _max;                 // maximum value of the property
+    string _quantity;            // name of the physical quantity represented by this property
+    string _base;                // name of the base type for the instances of this property
+    vector<string> _enumNames;   // list of names for the enumeration values of this property
+    vector<string> _enumTitles;  // list of titles for the enumeration values of this property, in the same order
+    std::unique_ptr<const PropertyAccessor> _accessor;  // accessor block for the property's getters and setters
 };
 
 ////////////////////////////////////////////////////////////////////

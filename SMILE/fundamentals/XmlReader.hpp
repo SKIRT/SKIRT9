@@ -133,17 +133,17 @@ private:
     // ================== Data members ==================
 
 private:
-    std::ifstream _infile;          // the input file, if it is opened in our constructor
-    std::istream& _in;              // reference to the input stream (which may be our inout file)
-    string _streamName;             // human readable name for use in error messages
-    uint64_t _lineNumber{1};        // current line number
-    bool _elementIsEmpty{false};    // true if the current element is empty (i.e. there is no separate end-tag)
+    std::ifstream _infile;        // the input file, if it is opened in our constructor
+    std::istream& _in;            // reference to the input stream (which may be our inout file)
+    string _streamName;           // human readable name for use in error messages
+    uint64_t _lineNumber{1};      // current line number
+    bool _elementIsEmpty{false};  // true if the current element is empty (i.e. there is no separate end-tag)
 
     struct ElementInfo
     {
-        string elementName;             // name of the element
-        vector<string> attributeNames;  // attribute names for the element, in order of appearance
-        std::unordered_map<string,string> attributeValues;  // attribute key-value pairs for the element
+        string elementName;                                  // name of the element
+        vector<string> attributeNames;                       // attribute names for the element, in order of appearance
+        std::unordered_map<string, string> attributeValues;  // attribute key-value pairs for the element
     };
     vector<ElementInfo> _elementStack;  // information for the ancestors of the current element, including itself
 };

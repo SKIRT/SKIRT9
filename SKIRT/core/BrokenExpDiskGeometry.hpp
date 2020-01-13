@@ -6,8 +6,8 @@
 #ifndef BROKENEXPDISKGEOMETRY_HPP
 #define BROKENEXPDISKGEOMETRY_HPP
 
-#include "SepAxGeometry.hpp"
 #include "Array.hpp"
+#include "SepAxGeometry.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -40,23 +40,23 @@ class BrokenExpDiskGeometry : public SepAxGeometry
     ITEM_CONCRETE(BrokenExpDiskGeometry, SepAxGeometry, "a broken exponential disk geometry")
         ATTRIBUTE_TYPE_DISPLAYED_IF(BrokenExpDiskGeometry, "Level2")
 
-    PROPERTY_DOUBLE(scaleLengthInner, "the scale length of the inner disk")
+        PROPERTY_DOUBLE(scaleLengthInner, "the scale length of the inner disk")
         ATTRIBUTE_QUANTITY(scaleLengthInner, "length")
         ATTRIBUTE_MIN_VALUE(scaleLengthInner, "]0")
 
-    PROPERTY_DOUBLE(scaleLengthOuter, "the scale length of the outer disk")
+        PROPERTY_DOUBLE(scaleLengthOuter, "the scale length of the outer disk")
         ATTRIBUTE_QUANTITY(scaleLengthOuter, "length")
         ATTRIBUTE_MIN_VALUE(scaleLengthOuter, "]0")
 
-    PROPERTY_DOUBLE(scaleHeight, "the scale height")
+        PROPERTY_DOUBLE(scaleHeight, "the scale height")
         ATTRIBUTE_QUANTITY(scaleHeight, "length")
         ATTRIBUTE_MIN_VALUE(scaleHeight, "]0")
 
-    PROPERTY_DOUBLE(breakRadius, "the break radius")
+        PROPERTY_DOUBLE(breakRadius, "the break radius")
         ATTRIBUTE_QUANTITY(breakRadius, "length")
         ATTRIBUTE_MIN_VALUE(breakRadius, "]0")
 
-    PROPERTY_DOUBLE(sharpness, "the sharpness of the break")
+        PROPERTY_DOUBLE(sharpness, "the sharpness of the break")
         ATTRIBUTE_MIN_VALUE(sharpness, "]0")
         ATTRIBUTE_DEFAULT_VALUE(sharpness, "3")
 
@@ -138,5 +138,3 @@ private:
 ////////////////////////////////////////////////////////////////////
 
 #endif
-
-

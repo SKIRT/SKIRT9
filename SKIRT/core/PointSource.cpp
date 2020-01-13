@@ -37,8 +37,8 @@ void PointSource::launchNormalized(PhotonPacket* pp, size_t historyIndex, double
 
     // launch the photon packet with the appropriate angular distribution and polarization profile
     pp->launch(historyIndex, lambda, Lw, bfr,
-               angularDistribution() ? angularDistribution()->generateDirection() : random()->direction(),
-               bvi, angularDistribution(), polarizationProfile());
+               angularDistribution() ? angularDistribution()->generateDirection() : random()->direction(), bvi,
+               angularDistribution(), polarizationProfile());
 }
 
 //////////////////////////////////////////////////////////////////////

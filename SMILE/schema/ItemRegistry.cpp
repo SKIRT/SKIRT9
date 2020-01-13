@@ -25,15 +25,14 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-void ItemRegistry::beginSchema(string name, string title, string version, string extension,
-                               string root, string type, string format, string url)
+void ItemRegistry::beginSchema(string name, string title, string version, string extension, string root, string type,
+                               string format, string url)
 {
     // verify that the schema name is not in use
     if (_schemas.count(name)) throw FATALERROR("Schema '" + name + "' is already defined in the registry");
 
     // create a schema with the specified basic attributes
-    _schemas.emplace(std::piecewise_construct,
-                     std::forward_as_tuple(name),
+    _schemas.emplace(std::piecewise_construct, std::forward_as_tuple(name),
                      std::forward_as_tuple(name, title, version, extension, root, type, format, url));
 
     // remember the new schema as the current target
@@ -65,8 +64,7 @@ void ItemRegistry::finalize()
 
 ////////////////////////////////////////////////////////////////////
 
-void ItemRegistry::beginType(const char* type, const char* baseType, const char* title,
-                             Instantiator instantiator)
+void ItemRegistry::beginType(const char* type, const char* baseType, const char* title, Instantiator instantiator)
 {
     if (!_targetSchema) throw FATALERROR("Adding type without target schema");
     _targetType = &_targetSchema->addTypeDef(type, baseType, title, instantiator);
@@ -114,7 +112,7 @@ void ItemRegistry::beginProperty(const char* type, const char* name, const char*
 
 void ItemRegistry::beginEnum(int enumCount)
 {
-    if (enumCount<=0) throw FATALERROR("Enumeration type has no enumeration elements");
+    if (enumCount <= 0) throw FATALERROR("Enumeration type has no enumeration elements");
     _enumIndex = 0;
     _enumCount = enumCount;
 }
@@ -204,8 +202,10 @@ void ItemRegistry::setBase(const char* type)
 
 const SchemaDef* ItemRegistry::getSchemaDef(string name)
 {
-    if (_schemas.count(name)) return &_schemas.at(name);
-    else throw FATALERROR("Unknow schema definition " + name);
+    if (_schemas.count(name))
+        return &_schemas.at(name);
+    else
+        throw FATALERROR("Unknow schema definition " + name);
 }
 
 ////////////////////////////////////////////////////////////////////

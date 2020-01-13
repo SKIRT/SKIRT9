@@ -6,8 +6,8 @@
 #ifndef SCALEDGAUSSIANSMOOTHINGKERNEL_HPP
 #define SCALEDGAUSSIANSMOOTHINGKERNEL_HPP
 
-#include "SmoothingKernel.hpp"
 #include "Array.hpp"
+#include "SmoothingKernel.hpp"
 
 ////////////////////////////////////////////////////////////////////
 

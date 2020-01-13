@@ -15,7 +15,7 @@
 namespace
 {
     // use a nice "round" maximum close to 2**31
-    constexpr int MAXINT = 2*1000*1000*1000;
+    constexpr int MAXINT = 2 * 1000 * 1000 * 1000;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -52,8 +52,10 @@ int IntPropertyHandler::defaultValue() const
 int IntPropertyHandler::minValue() const
 {
     string value = property()->minValue();
-    if (StringUtils::isValidInt(value)) return StringUtils::toInt(value);
-    else return -MAXINT;
+    if (StringUtils::isValidInt(value))
+        return StringUtils::toInt(value);
+    else
+        return -MAXINT;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -61,8 +63,10 @@ int IntPropertyHandler::minValue() const
 int IntPropertyHandler::maxValue() const
 {
     string value = property()->maxValue();
-    if (StringUtils::isValidInt(value)) return StringUtils::toInt(value);
-    else return MAXINT;
+    if (StringUtils::isValidInt(value))
+        return StringUtils::toInt(value);
+    else
+        return MAXINT;
 }
 
 ////////////////////////////////////////////////////////////////////

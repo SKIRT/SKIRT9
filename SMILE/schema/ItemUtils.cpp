@@ -12,7 +12,7 @@
 
 void ItemUtils::setPropertyConfiguredState(Item* item, string property, int configured)
 {
-    item->setUtilityProperty(property+"@configured", configured);
+    item->setUtilityProperty(property + "@configured", configured);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -30,8 +30,12 @@ void ItemUtils::setHierarchyConfigured(const SchemaDef* schema, Item* root)
 
 int ItemUtils::propertyConfiguredState(Item* item, string property)
 {
-    try { return item->getUtilityProperty(property+"@configured"); }
-    catch (const FatalError&) { }
+    try
+    {
+        return item->getUtilityProperty(property + "@configured");
+    }
+    catch (const FatalError&)
+    {}
     return 0;
 }
 
@@ -68,8 +72,12 @@ void ItemUtils::setItemIncomplete(Item* item)
 
 bool ItemUtils::isItemComplete(Item* item)
 {
-    try { return item->getUtilityProperty("item@complete") ? true : false; }
-    catch (const FatalError&) { }
+    try
+    {
+        return item->getUtilityProperty("item@complete") ? true : false;
+    }
+    catch (const FatalError&)
+    {}
     return false;
 }
 
@@ -77,15 +85,19 @@ bool ItemUtils::isItemComplete(Item* item)
 
 void ItemUtils::storeSelectedRow(Item* item, string property, int row)
 {
-    item->setUtilityProperty(property+"@row", row);
+    item->setUtilityProperty(property + "@row", row);
 }
 
 ////////////////////////////////////////////////////////////////////
 
 int ItemUtils::retrieveSelectedRow(Item* item, string property)
 {
-    try { return item->getUtilityProperty(property+"@row"); }
-    catch (const FatalError&) { }
+    try
+    {
+        return item->getUtilityProperty(property + "@row");
+    }
+    catch (const FatalError&)
+    {}
     return 0;
 }
 

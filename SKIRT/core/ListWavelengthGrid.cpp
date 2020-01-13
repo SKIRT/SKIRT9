@@ -13,8 +13,10 @@ void ListWavelengthGrid::setupSelfBefore()
     DisjointWavelengthGrid::setupSelfBefore();
 
     // set the wavelength grid from the list of property values
-    if (_relativeHalfWidth) setWavelengthBins(NR::array(_wavelengths), _relativeHalfWidth);
-    else setWavelengthRange(NR::array(_wavelengths));
+    if (_relativeHalfWidth)
+        setWavelengthBins(NR::array(_wavelengths), _relativeHalfWidth);
+    else
+        setWavelengthRange(NR::array(_wavelengths));
 }
 
 //////////////////////////////////////////////////////////////////////

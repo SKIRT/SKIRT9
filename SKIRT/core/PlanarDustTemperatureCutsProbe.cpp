@@ -15,8 +15,8 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void PlanarDustTemperatureCutsProbe::writeDustTemperatureCut(Probe* probe, bool xd, bool yd, bool zd,
-                                                             double xc, double yc, double zc, int Nx, int Ny, int Nz)
+void PlanarDustTemperatureCutsProbe::writeDustTemperatureCut(Probe* probe, bool xd, bool yd, bool zd, double xc,
+                                                             double yc, double zc, int Nx, int Ny, int Nz)
 {
     // locate relevant simulation items
     auto units = probe->find<Units>();
@@ -24,12 +24,12 @@ void PlanarDustTemperatureCutsProbe::writeDustTemperatureCut(Probe* probe, bool 
 
     // determine spatial configuration (regardless of cut direction)
     Box box = ms->grid()->boundingBox();
-    double xpsize = box.xwidth()/Nx;
-    double ypsize = box.ywidth()/Ny;
-    double zpsize = box.zwidth()/Nz;
-    double xbase = box.xmin() + 0.5*xpsize;
-    double ybase = box.ymin() + 0.5*ypsize;
-    double zbase = box.zmin() + 0.5*zpsize;
+    double xpsize = box.xwidth() / Nx;
+    double ypsize = box.ywidth() / Ny;
+    double zpsize = box.zwidth() / Nz;
+    double xbase = box.xmin() + 0.5 * xpsize;
+    double ybase = box.ymin() + 0.5 * ypsize;
+    double zbase = box.zmin() + 0.5 * zpsize;
     double xcenter = box.center().x();
     double ycenter = box.center().y();
     double zcenter = box.center().z();
@@ -43,18 +43,17 @@ void PlanarDustTemperatureCutsProbe::writeDustTemperatureCut(Probe* probe, bool 
 
     // calculate the results in parallel; perform only at the root processs
     auto parallel = probe->find<ParallelFactory>()->parallelRootOnly();
-    parallel->call(Nj, [&Tv,ms,units,xpsize,ypsize,zpsize,xbase,ybase,zbase,
-                            xd,yd,zd,xc,yc,zc,Ni](size_t firstIndex, size_t numIndices)
-    {
-        for (size_t j = firstIndex; j != firstIndex+numIndices; ++j)
+    parallel->call(Nj, [&Tv, ms, units, xpsize, ypsize, zpsize, xbase, ybase, zbase, xd, yd, zd, xc, yc, zc,
+                        Ni](size_t firstIndex, size_t numIndices) {
+        for (size_t j = firstIndex; j != firstIndex + numIndices; ++j)
         {
-            double z = zd ? (zbase + j*zpsize) : zc;
-            for (int i=0; i<Ni; i++)
+            double z = zd ? (zbase + j * zpsize) : zc;
+            for (int i = 0; i < Ni; i++)
             {
-                double x = xd ? (xbase + i*xpsize) : xc;
-                double y = yd ? (ybase + (zd ? i : j)*ypsize) : yc;
-                int l = i + Ni*j;
-                Tv[l] = units->otemperature(ms->indicativeDustTemperature(Position(x,y,z)));
+                double x = xd ? (xbase + i * xpsize) : xc;
+                double y = yd ? (ybase + (zd ? i : j) * ypsize) : yc;
+                int l = i + Ni * j;
+                Tv[l] = units->otemperature(ms->indicativeDustTemperature(Position(x, y, z)));
             }
         }
     });
@@ -69,9 +68,8 @@ void PlanarDustTemperatureCutsProbe::writeDustTemperatureCut(Probe* probe, bool 
     string description = "dust temperatures in the " + plane + " plane";
     string filename = probe->itemName() + "_dust_T_" + plane;
     FITSInOut::write(probe, description, filename, Tv, units->utemperature(), Ni, Nj,
-                     units->olength(xd?xpsize:ypsize), units->olength(zd?zpsize:ypsize),
-                     units->olength(xd?xcenter:ycenter), units->olength(zd?zcenter:ycenter),
-                     units->ulength());
+                     units->olength(xd ? xpsize : ypsize), units->olength(zd ? zpsize : ypsize),
+                     units->olength(xd ? xcenter : ycenter), units->olength(zd ? zcenter : ycenter), units->ulength());
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -80,9 +78,12 @@ void PlanarDustTemperatureCutsProbe::probeRun()
 {
     if (find<Configuration>()->hasPanRadiationField() && find<MediumSystem>()->hasDust())
     {
-        writeDustTemperatureCut(this, 1,1,0, positionX(),positionY(),positionZ(), numPixelsX(),numPixelsY(),numPixelsZ());
-        writeDustTemperatureCut(this, 1,0,1, positionX(),positionY(),positionZ(), numPixelsX(),numPixelsY(),numPixelsZ());
-        writeDustTemperatureCut(this, 0,1,1, positionX(),positionY(),positionZ(), numPixelsX(),numPixelsY(),numPixelsZ());
+        writeDustTemperatureCut(this, 1, 1, 0, positionX(), positionY(), positionZ(), numPixelsX(), numPixelsY(),
+                                numPixelsZ());
+        writeDustTemperatureCut(this, 1, 0, 1, positionX(), positionY(), positionZ(), numPixelsX(), numPixelsY(),
+                                numPixelsZ());
+        writeDustTemperatureCut(this, 0, 1, 1, positionX(), positionY(), positionZ(), numPixelsX(), numPixelsY(),
+                                numPixelsZ());
     }
 }
 

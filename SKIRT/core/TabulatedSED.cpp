@@ -31,7 +31,7 @@ void TabulatedSED::setupSelfBefore()
 
 Range TabulatedSED::intrinsicWavelengthRange() const
 {
-    return Range(_inlambdav[0], _inlambdav[_inlambdav.size()-1]);
+    return Range(_inlambdav[0], _inlambdav[_inlambdav.size() - 1]);
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -42,11 +42,11 @@ EnumPropertyWizardPane::EnumPropertyWizardPane(std::unique_ptr<PropertyHandler> 
     // add the choices
     auto choiceKeys = hdlr->values();
     auto choiceTitles = hdlr->titlesForValues();
-    for (size_t index=0; index!=choiceKeys.size(); ++index)
+    for (size_t index = 0; index != choiceKeys.size(); ++index)
     {
         auto choiceKey = choiceKeys[index];
         auto choiceTitle = StringUtils::toUpperFirst(choiceTitles[index]);
-        if (choiceKey==defaultKey) choiceTitle += "  [default]";
+        if (choiceKey == defaultKey) choiceTitle += "  [default]";
         auto choiceButton = new QRadioButton(QString::fromStdString(choiceTitle));
         choiceButton->setFocusPolicy(Qt::NoFocus);
         buttonGroup->addButton(choiceButton);
@@ -56,7 +56,7 @@ EnumPropertyWizardPane::EnumPropertyWizardPane(std::unique_ptr<PropertyHandler> 
         choiceButton->setProperty("choiceKey", QString::fromStdString(choiceKey));
 
         // if this button corresponds to the current value, select it
-        if (choiceKey==currentKey)
+        if (choiceKey == currentKey)
         {
             choiceButton->setChecked(true);
             emit propertyValidChanged(true);
@@ -78,7 +78,7 @@ void EnumPropertyWizardPane::updateValueFor(QAbstractButton* button)
     auto hdlr = handlerCast<EnumPropertyHandler>();
 
     string newValue = button->property("choiceKey").toString().toStdString();
-    if (!hdlr->isConfigured() || hdlr->value()!=newValue)
+    if (!hdlr->isConfigured() || hdlr->value() != newValue)
     {
         hdlr->setValue(newValue);
         emit propertyValueChanged();

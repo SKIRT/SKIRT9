@@ -22,7 +22,7 @@ class PowMesh : public MoveableMesh
 {
     ITEM_CONCRETE(PowMesh, MoveableMesh, "a power-law mesh")
 
-    PROPERTY_DOUBLE(ratio, "the bin width ratio between the last and the first bin")
+        PROPERTY_DOUBLE(ratio, "the bin width ratio between the last and the first bin")
         ATTRIBUTE_MIN_VALUE(ratio, "]0")
         ATTRIBUTE_DEFAULT_VALUE(ratio, "1")
 

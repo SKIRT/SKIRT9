@@ -13,30 +13,30 @@ void PlummerGeometry::setupSelfBefore()
     SpheGeometry::setupSelfBefore();
 
     // calculate cached values
-    _rho0 = 0.75/pow(_c,3)/M_PI;
+    _rho0 = 0.75 / pow(_c, 3) / M_PI;
 }
 
 //////////////////////////////////////////////////////////////////////
 
 double PlummerGeometry::density(double r) const
 {
-    double s = r/_c;
-    return _rho0 * pow(1.0+s*s,-2.5);
+    double s = r / _c;
+    return _rho0 * pow(1.0 + s * s, -2.5);
 }
 
 //////////////////////////////////////////////////////////////////////
 
 double PlummerGeometry::randomRadius() const
 {
-    double t = pow(random()->uniform(),1.0/3.0);
-    return _c * t/sqrt((1.0-t)*(1.0+t));
+    double t = pow(random()->uniform(), 1.0 / 3.0);
+    return _c * t / sqrt((1.0 - t) * (1.0 + t));
 }
 
 //////////////////////////////////////////////////////////////////////
 
 double PlummerGeometry::Sigmar() const
 {
-    return 0.5/(M_PI*_c*_c);
+    return 0.5 / (M_PI * _c * _c);
 }
 
 //////////////////////////////////////////////////////////////////////

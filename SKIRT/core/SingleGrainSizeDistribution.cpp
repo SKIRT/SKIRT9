@@ -9,14 +9,14 @@
 
 double SingleGrainSizeDistribution::amin() const
 {
-    return _size-_size/2000.;
+    return _size - _size / 2000.;
 }
 
 ////////////////////////////////////////////////////////////////////
 
 double SingleGrainSizeDistribution::amax() const
 {
-    return _size+_size/2000.;
+    return _size + _size / 2000.;
 }
 
 ////////////////////////////////////////////////////////////////////

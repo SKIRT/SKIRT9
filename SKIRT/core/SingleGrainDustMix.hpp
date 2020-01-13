@@ -43,9 +43,8 @@ protected:
         the function fills only the first table and leaves the other tables untouched.
 
         Finally, the function returns the dust mass per hydrogen atom for the dust mix. */
-    double getOpticalProperties(const Array& lambdav, const Array& thetav,
-                                Array& sigmaabsv, Array& sigmascav, Array& asymmparv,
-                                Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv,
+    double getOpticalProperties(const Array& lambdav, const Array& thetav, Array& sigmaabsv, Array& sigmascav,
+                                Array& asymmparv, Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv,
                                 ArrayTable<2>& sigmaabsvv, ArrayTable<2>& sigmaabspolvv) override;
 
     /** This function must be implemented in a subclass to return the name of the stored table

@@ -6,8 +6,8 @@
 #ifndef GEOMETRICSOURCE_HPP
 #define GEOMETRICSOURCE_HPP
 
-#include "NormalizedSource.hpp"
 #include "Geometry.hpp"
+#include "NormalizedSource.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -21,7 +21,7 @@ class GeometricSource : public NormalizedSource
 {
     ITEM_CONCRETE(GeometricSource, NormalizedSource, "a primary source with a built-in geometry")
 
-    PROPERTY_ITEM(geometry, Geometry, "the geometry of the spatial luminosity distribution for the source")
+        PROPERTY_ITEM(geometry, Geometry, "the geometry of the spatial luminosity distribution for the source")
         ATTRIBUTE_DEFAULT_VALUE(geometry, "PlummerGeometry")
 
     ITEM_END()

@@ -37,22 +37,22 @@ class BruzualCharlotSEDFamily : public SEDFamily
 {
     /** The enumeration type indicating the assumed initial mass function (IMF). */
     ENUM_DEF(IMF, Chabrier, Salpeter)
-    ENUM_VAL(IMF, Chabrier, "Chabrier IMF")
-    ENUM_VAL(IMF, Salpeter, "Salpeter IMF")
+        ENUM_VAL(IMF, Chabrier, "Chabrier IMF")
+        ENUM_VAL(IMF, Salpeter, "Salpeter IMF")
     ENUM_END()
 
     /** The enumeration type indicating the wavelength resolution. */
     ENUM_DEF(Resolution, Low, High)
-    ENUM_VAL(Resolution, Low, "Low wavelength resolution (1221 points)")
-    ENUM_VAL(Resolution, High, "High wavelength resolution (6900 points)")
+        ENUM_VAL(Resolution, Low, "Low wavelength resolution (1221 points)")
+        ENUM_VAL(Resolution, High, "High wavelength resolution (6900 points)")
     ENUM_END()
 
     ITEM_CONCRETE(BruzualCharlotSEDFamily, SEDFamily, "a Bruzual-Charlot SED family for single stellar populations")
 
-    PROPERTY_ENUM(imf, IMF, "the assumed initial mass function")
+        PROPERTY_ENUM(imf, IMF, "the assumed initial mass function")
         ATTRIBUTE_DEFAULT_VALUE(imf, "Chabrier")
 
-    PROPERTY_ENUM(resolution, Resolution, "the wavelength resolution")
+        PROPERTY_ENUM(resolution, Resolution, "the wavelength resolution")
         ATTRIBUTE_DEFAULT_VALUE(resolution, "Low")
 
     ITEM_END()
@@ -95,8 +95,8 @@ public:
         specified parameters over the specified wavelength range. The function returns the
         normalization factor. The number and type of parameters must match the information returned
         by the parameterInfo() function; if not the behavior is undefined. */
-    double cdf(Array& lambdav, Array& pv, Array& Pv,
-               const Range& wavelengthRange, const Array& parameters) const override;
+    double cdf(Array& lambdav, Array& pv, Array& Pv, const Range& wavelengthRange,
+               const Array& parameters) const override;
 
     //====================== Data members =====================
 

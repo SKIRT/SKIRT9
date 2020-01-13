@@ -26,20 +26,20 @@ public:
     /** The default constructor for the class Direction creates a direction parallel to the
         \f$z\f$-axis of the reference frame. The cartesian coordinates of this direction are
         \f$(k_x,k_y,k_z)=(0,0,1)\f$. */
-    inline Direction() : Vec(0,0,1) { }
+    inline Direction() : Vec(0, 0, 1) {}
 
     /** Constructor for a direction with given cartesian coordinates \f$k_x\f$, \f$k_y\f$ and
         \f$k_z\f$. In order to avoid abundant calculations, it is not checked whether the three
         cartesian coordinates satisfy the condition \f[ k_x^2+k_y^2+k_z^2=1. \f] It is the user's
         responsibility to provide valid coordinates. */
-    inline Direction(double kx, double ky, double kz) : Vec(kx,ky,kz) { }
+    inline Direction(double kx, double ky, double kz) : Vec(kx, ky, kz) {}
 
     /** Constructor for a direction with given cartesian coordinates \f${\bf{k}}_x\f$,
         \f${\bf{k}}_y\f$ and \f${\bf{k}}_z\f$. It is declared <tt>explicit</tt> to avoid implicit
         type conversions. In order to avoid abundant calculations, it is not checked whether the
         three cartesian coordinates satisfy the condition \f[ k_x^2+k_y^2+k_z^2=1. \f] It is the
         user's responsibility to provide valid coordinates. */
-    explicit inline Direction(Vec k) : Vec(k) { }
+    explicit inline Direction(Vec k) : Vec(k) {}
 
     /** Constructor for a direction with a given azimuth and polar angle. The cartesian coordinates
         are calculated as \f[ \begin{split} k_x &= \sin\theta\,\cos\varphi, \\ k_y &=

@@ -12,8 +12,8 @@
 #include <QFileOpenEvent>
 #include <QHBoxLayout>
 #include <QLabel>
-#include <QMessageBox>
 #include <QMenu>
+#include <QMessageBox>
 #include <QPushButton>
 #include <QScrollArea>
 #include <QSettings>
@@ -154,18 +154,17 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
 {
     switch (event->key())
     {
-    case Qt::Key_Left:
-    case Qt::Key_PageUp:
-        if(_wizard->canRetreat()) _wizard->retreat();
-        break;
-    case Qt::Key_Right:
-    case Qt::Key_PageDown:
-    case Qt::Key_Enter:
-    case Qt::Key_Return:
-        if(_wizard->canAdvance()) _wizard->advance();
-        break;
-    default:
-        QMainWindow::keyPressEvent(event);
+        case Qt::Key_Left:
+        case Qt::Key_PageUp:
+            if (_wizard->canRetreat()) _wizard->retreat();
+            break;
+        case Qt::Key_Right:
+        case Qt::Key_PageDown:
+        case Qt::Key_Enter:
+        case Qt::Key_Return:
+            if (_wizard->canAdvance()) _wizard->advance();
+            break;
+        default: QMainWindow::keyPressEvent(event);
     }
 }
 
@@ -213,25 +212,24 @@ void MainWindow::contextMenuEvent(QContextMenuEvent* event)
         {
             QStringList segments = _wizard->hierarchyPath().split(" ");
             int n = segments.size();
-            if (n > 2 && n%2 == 1)
+            if (n > 2 && n % 2 == 1)
             {
                 // add help item for the property represented by the last segments
-                string property = segments[n-1].toStdString();
-                string type = segments[n-3].toStdString();
+                string property = segments[n - 1].toStdString();
+                string type = segments[n - 3].toStdString();
                 QString propertyTitle = QString::fromStdString(schema->propertyTitle(type, property));
                 QString definingType = QString::fromStdString(schema->definingType(type, property));
                 QString propertyUrl = schemaUrl + "/" + "class" + uncapitalize(definingType) + ".html";
-                menu.addAction("About " + propertyTitle + "...",
-                               this, SLOT(browseUrl()))->setProperty("URL", propertyUrl);
+                menu.addAction("About " + propertyTitle + "...", this, SLOT(browseUrl()))
+                    ->setProperty("URL", propertyUrl);
 
                 // add help items for all of the types in the hierarchy
-                for (int i=n-3; i>=0; i-=2)
+                for (int i = n - 3; i >= 0; i -= 2)
                 {
                     string type = segments[i].toStdString();
                     QString typeTitle = QString::fromStdString(schema->title(type));
                     QString typeUrl = schemaUrl + "/" + "class" + uncapitalize(QString::fromStdString(type)) + ".html";
-                    menu.addAction("About " + typeTitle + "...",
-                                   this, SLOT(browseUrl()))->setProperty("URL", typeUrl);
+                    menu.addAction("About " + typeTitle + "...", this, SLOT(browseUrl()))->setProperty("URL", typeUrl);
                 }
             }
         }
@@ -248,20 +246,19 @@ void MainWindow::contextMenuEvent(QContextMenuEvent* event)
                 QString propertyTitle = QString::fromStdString(schema->propertyTitle(type, property));
                 QString definingType = QString::fromStdString(schema->definingType(type, property));
                 QString propertyUrl = schemaUrl + "/" + "class" + uncapitalize(definingType) + ".html";
-                menu.addAction("About " + propertyTitle + "...",
-                               this, SLOT(browseUrl()))->setProperty("URL", propertyUrl);
+                menu.addAction("About " + propertyTitle + "...", this, SLOT(browseUrl()))
+                    ->setProperty("URL", propertyUrl);
             }
 
             // add help item for the type represented by the current widget
             QString typeTitle = QString::fromStdString(schema->title(type));
             QString typeUrl = schemaUrl + "/" + "class" + uncapitalize(QString::fromStdString(type)) + ".html";
-            menu.addAction("About " + typeTitle + "...",
-                           this, SLOT(browseUrl()))->setProperty("URL", typeUrl);
+            menu.addAction("About " + typeTitle + "...", this, SLOT(browseUrl()))->setProperty("URL", typeUrl);
         }
 
         // add help item for the current data set
-        menu.addAction("About " + QString::fromStdString(schema->schemaName()) + "...",
-                       this, SLOT(browseUrl()))->setProperty("URL", schemaUrl);
+        menu.addAction("About " + QString::fromStdString(schema->schemaName()) + "...", this, SLOT(browseUrl()))
+            ->setProperty("URL", schemaUrl);
     }
 
     // in any case, add help item for MakeUp itself
@@ -271,12 +268,11 @@ void MainWindow::contextMenuEvent(QContextMenuEvent* event)
 
 ////////////////////////////////////////////////////////////////////
 
-void MainWindow::closeEvent(QCloseEvent *event)
+void MainWindow::closeEvent(QCloseEvent* event)
 {
     if (_wizard->isDirty() && !_acceptedCloseEvent)
     {
-        auto ret = QMessageBox::warning(this, qApp->applicationName(),
-                                        "Do you want to discard your unsaved changes?",
+        auto ret = QMessageBox::warning(this, qApp->applicationName(), "Do you want to discard your unsaved changes?",
                                         QMessageBox::Discard | QMessageBox::Cancel, QMessageBox::Cancel);
         if (ret == QMessageBox::Cancel)
         {

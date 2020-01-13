@@ -56,7 +56,7 @@ private:
     // ==================== Data members ======================
 
 private:
-    QListWidget* _listWidget;    // the widget holding the items that represent the contents of this property
+    QListWidget* _listWidget;  // the widget holding the items that represent the contents of this property
     QPushButton* _addButton;
     QPushButton* _editButton;
     QPushButton* _removeButton;

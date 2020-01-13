@@ -22,7 +22,7 @@ class FileMesh : public TabulatedMesh
 {
     ITEM_CONCRETE(FileMesh, TabulatedMesh, "a mesh read from a file")
 
-    PROPERTY_STRING(filename, "the name of the file with the mesh border points")
+        PROPERTY_STRING(filename, "the name of the file with the mesh border points")
 
     ITEM_END()
 

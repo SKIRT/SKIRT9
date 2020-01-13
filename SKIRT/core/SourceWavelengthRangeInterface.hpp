@@ -22,7 +22,7 @@ class SourceWavelengthRangeInterface : public WavelengthRangeInterface
 {
 protected:
     /** The empty constructor for the interface. */
-    SourceWavelengthRangeInterface() { }
+    SourceWavelengthRangeInterface() {}
 };
 
 /////////////////////////////////////////////////////////////////////////////

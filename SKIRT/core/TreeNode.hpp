@@ -101,7 +101,7 @@ public:
     /** This enum contains a constant for each of the six walls in a node. The x-coordinate
         increases from BACK to FRONT, the y-coordinate increases from LEFT to RIGHT, and the
         z-coordinate increases from BOTTOM to TOP. */
-    enum Wall { BACK=0, FRONT, LEFT, RIGHT, BOTTOM, TOP };
+    enum Wall { BACK = 0, FRONT, LEFT, RIGHT, BOTTOM, TOP };
 
     /** This function returns a list of pointers to the node's neighbors at the given wall. The
         list may be empty, for example because neighbors are still being added. */
@@ -145,7 +145,7 @@ private:
     int _level{0};
     TreeNode* _parent{nullptr};
     vector<TreeNode*> _children;
-    std::array<vector<TreeNode*>,6> _neighbors;    // one empty neighbor list for each wall
+    std::array<vector<TreeNode*>, 6> _neighbors;  // one empty neighbor list for each wall
 };
 
 ////////////////////////////////////////////////////////////////////

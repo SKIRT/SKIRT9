@@ -16,15 +16,15 @@ class CombineGeometryDecorator : public Geometry
 {
     ITEM_CONCRETE(CombineGeometryDecorator, Geometry, "a decorator that combines two different geometries")
 
-    PROPERTY_ITEM(firstGeometry, Geometry, "the first geometry")
+        PROPERTY_ITEM(firstGeometry, Geometry, "the first geometry")
 
-    PROPERTY_DOUBLE(firstWeight, "the weight of the first geometry")
+        PROPERTY_DOUBLE(firstWeight, "the weight of the first geometry")
         ATTRIBUTE_MIN_VALUE(firstWeight, "]0")
         ATTRIBUTE_DEFAULT_VALUE(firstWeight, "1")
 
-    PROPERTY_ITEM(secondGeometry, Geometry, "the second geometry")
+        PROPERTY_ITEM(secondGeometry, Geometry, "the second geometry")
 
-    PROPERTY_DOUBLE(secondWeight, "the weight of the second geometry")
+        PROPERTY_DOUBLE(secondWeight, "the weight of the second geometry")
         ATTRIBUTE_MIN_VALUE(secondWeight, "]0")
         ATTRIBUTE_DEFAULT_VALUE(secondWeight, "1")
 
@@ -76,7 +76,7 @@ public:
     //======================== Data Members ========================
 
 private:
-    double _w1{0}, _w2{0};     // the normalized weights
+    double _w1{0}, _w2{0};  // the normalized weights
 };
 
 ////////////////////////////////////////////////////////////////

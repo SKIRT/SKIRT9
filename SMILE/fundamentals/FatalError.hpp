@@ -44,7 +44,7 @@ private:
 
 /** Constructs a fatal error with the specified error message, and automatically includes the
     relevant information about the call site. */
-#define FATALERROR(message) FatalError((message),__FILE__,__LINE__,__func__)
+#define FATALERROR(message) FatalError((message), __FILE__, __LINE__, __func__)
 
 ////////////////////////////////////////////////////////////////////
 

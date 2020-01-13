@@ -10,8 +10,7 @@
 
 RangeGrainSizeDistribution::RangeGrainSizeDistribution(double minSize, double maxSize)
     : _minSize(minSize), _maxSize(maxSize)
-{
-}
+{}
 
 ////////////////////////////////////////////////////////////////////
 

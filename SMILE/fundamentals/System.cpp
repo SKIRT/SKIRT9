@@ -7,33 +7,32 @@
 
 ////////////////////////////////////////////////////////////////////
 
-#include <clocale>
 #include <chrono>
+#include <clocale>
 #include <ctime>
 #include <locale>
 #include <mutex>
 #include <unordered_map>
 
 #ifdef _WIN64
-#include <Windows.h>
-#include <Lmcons.h>     // for getting user name
-#include <Pathcch.h>    // for getting canonical path
-#ifdef _DEBUG
-#include <Dbghelp.h>    // for stack trace
-#endif
-
+#    include <Windows.h>
+#    include <Lmcons.h>   // for getting user name
+#    include <Pathcch.h>  // for getting canonical path
+#    ifdef _DEBUG
+#        include <Dbghelp.h>  // for stack trace
+#    endif
 #else
-#include <dirent.h>     // for reading directories
-#include <execinfo.h>   // for stack trace
-#include <fcntl.h>      // for opening files (low-level)
-#include <sys/stat.h>   // for reading file status
-#include <sys/mman.h>   // for memory mapped files
-#include <unistd.h>     // for gethostname
-#include <iostream>
+#    include <dirent.h>    // for reading directories
+#    include <execinfo.h>  // for stack trace
+#    include <fcntl.h>     // for opening files (low-level)
+#    include <sys/mman.h>  // for memory mapped files
+#    include <sys/stat.h>  // for reading file status
+#    include <unistd.h>    // for gethostname
+#    include <iostream>
 #endif
 
 #if defined(__APPLE__) && defined(__MACH__)
-#include <CoreFoundation/CoreFoundation.h>
+#    include <CoreFoundation/CoreFoundation.h>
 #endif
 
 ////////////////////////////////////////////////////////////////////
@@ -49,8 +48,8 @@ namespace
 
     // The strings beginning and ending a message, indexed by level (Info, Warning, Success, Error, Prompt=Error+1)
     // NOTE: this depends on the order in the Level enum --> rather dirty
-    const char* _messageBegin[] = { "   ", " ! ", " - ", " * ", " ? " };
-    const char* _messageEnd[]   = { "\n", "\n",  "\n",  "\n",  ": "  };
+    const char* _messageBegin[] = {"   ", " ! ", " - ", " * ", " ? "};
+    const char* _messageEnd[] = {"\n", "\n", "\n", "\n", ": "};
 
 #ifdef _WIN64
     // The console output code page saved in initialize() and restored in finalize()
@@ -61,8 +60,8 @@ namespace
     const WORD MY_WHITE = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
     const WORD MY_CYAN = FOREGROUND_GREEN | FOREGROUND_BLUE;
     const WORD MY_MAGENTA = FOREGROUND_RED | FOREGROUND_BLUE;
-    WORD _colorBegin[] = { MY_WHITE, MY_MAGENTA, FOREGROUND_GREEN, FOREGROUND_RED | FOREGROUND_INTENSITY, MY_CYAN };
-    WORD _colorEnd[] = { MY_WHITE, MY_WHITE, MY_WHITE, MY_WHITE, MY_WHITE };
+    WORD _colorBegin[] = {MY_WHITE, MY_MAGENTA, FOREGROUND_GREEN, FOREGROUND_RED | FOREGROUND_INTENSITY, MY_CYAN};
+    WORD _colorEnd[] = {MY_WHITE, MY_WHITE, MY_WHITE, MY_WHITE, MY_WHITE};
 
     // The current directory retrieved at program startup (Windows only) and converted to UTF-8 string
     // (because getting the current directory or using relative paths is not thread-safe under Windows)
@@ -73,8 +72,8 @@ namespace
 
     // ANSI escape sequences for coloring, indexed by level (Info, Warning, Success, Error, Prompt=Error+1)
     // NOTE: this depends on the order in the Level enum --> rather dirty
-    const char* _colorBegin[] = { "", "\033[35m", "\033[32m", "\033[31m", "\033[34m" };
-    const char* _colorEnd[]   = { "", "\033[0m",  "\033[0m",  "\033[0m",  "\033[0m"  };
+    const char* _colorBegin[] = {"", "\033[35m", "\033[32m", "\033[31m", "\033[34m"};
+    const char* _colorEnd[] = {"", "\033[0m", "\033[0m", "\033[0m", "\033[0m"};
 #endif
 
     // Arbitrary maximum path length; functions may fail or even crash if paths exceed this length
@@ -86,9 +85,9 @@ namespace
     // Data type for storing information on a currently acquired file memory map
     struct MapRecord
     {
-        void* start{nullptr};   // pointer to start of memory map
-        size_t length{0};       // length of memory map
-        int count{0};           // current number of acquisitions for this map
+        void* start{nullptr};  // pointer to start of memory map
+        size_t length{0};      // length of memory map
+        int count{0};          // current number of acquisitions for this map
 #ifdef _WIN64
         HANDLE filehandle{INVALID_HANDLE_VALUE};
         HANDLE maphandle{NULL};
@@ -98,7 +97,7 @@ namespace
     };
 
     // Dictionary keeping track of all currently acquired file memory maps: <canonical_path, map_record>
-    std::unordered_map<string,MapRecord> _maps;
+    std::unordered_map<string, MapRecord> _maps;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -127,12 +126,14 @@ namespace
         // if we have a current directory, convert a relative path to an absolute path
         if (!currentDir.empty())
         {
-            if (path.empty()) path = currentDir;
-            else if (path.front() != '\\' && path.find(':') == string::npos) path = currentDir + '\\' + path;
+            if (path.empty())
+                path = currentDir;
+            else if (path.front() != '\\' && path.find(':') == string::npos)
+                path = currentDir + '\\' + path;
         }
 
         // convert UTF-8 to UTF-16
-        auto pathLength = path.length() + 1; // include terminating zero
+        auto pathLength = path.length() + 1;  // include terminating zero
         auto widePath = std::make_unique<wchar_t[]>(pathLength);
         MultiByteToWideChar(CP_UTF8, 0, path.c_str(), -1, widePath.get(), static_cast<int>(pathLength));
         return widePath;
@@ -142,7 +143,7 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-void System::initialize(int argc, char **argv)
+void System::initialize(int argc, char** argv)
 {
     // Force standard locale so that sprintf and stream formatting always produces the same result
     std::locale::global(std::locale::classic());  // this may or may not affect C locale so do this first
@@ -161,12 +162,12 @@ void System::initialize(int argc, char **argv)
         int maxLength = 0;
 
         // Test successful conversion of each argument to UTF-8, and keep track of max length
-        for (int i = 1; i<nArgs; i++)
+        for (int i = 1; i < nArgs; i++)
         {
             int thisLength = WideCharToMultiByte(CP_UTF8, 0, argList[i], -1, 0, 0, 0, 0);
             if (thisLength <= 0)
             {
-                maxLength = -1; // error -> do not retrieve Unicode arguments
+                maxLength = -1;  // error -> do not retrieve Unicode arguments
                 break;
             }
             maxLength = max(thisLength, maxLength);
@@ -175,7 +176,7 @@ void System::initialize(int argc, char **argv)
         // Convert each argument to UTF-8 and store the result
         if (maxLength >= 0)
         {
-            auto utfArg = std::make_unique<char[]>(maxLength+1); // avoid constructing a zero-length array
+            auto utfArg = std::make_unique<char[]>(maxLength + 1);  // avoid constructing a zero-length array
             for (int i = 1; i < nArgs; i++)
             {
                 WideCharToMultiByte(CP_UTF8, 0, argList[i], -1, utfArg.get(), maxLength, 0, 0);
@@ -252,7 +253,7 @@ string System::executablePath()
     return string();
 
 #else  // not windows
-#if defined(__APPLE__) && defined(__MACH__)
+#    if defined(__APPLE__) && defined(__MACH__)
     // Try Mac OS X Core Foundation functions
     char buffer1[MAXPATHLEN];
     buffer1[0] = 0;
@@ -269,19 +270,19 @@ string System::executablePath()
     }
     char buffer2[MAXPATHLEN];
     if (realpath(buffer1, buffer2)) return buffer2;
-#elif defined(__linux__) || defined(__linux) || defined(linux) || defined(__gnu_linux__)
+#    elif defined(__linux__) || defined(__linux) || defined(linux) || defined(__gnu_linux__)
     // Try Linux /proc/<pid>/exe symlink that points to the absolute path of the executable
     char buffer[MAXPATHLEN];
     buffer[0] = 0;
     string symlink = "/proc/" + std::to_string(getpid()) + "/exe";
     if (realpath(symlink.c_str(), buffer)) return buffer;
-# endif  // not Mac or Linux
+#    endif  // not Mac or Linux
 
     // If the Mac or Linux platform attempts failed, or if we're on another platform,
     // return the zeroth command line argument if it happens to be an absolute path
     if (argument0.size() && argument0[0] == '/') return argument0;
     return string();
-# endif
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -296,8 +297,10 @@ string System::hostname()
 
     // Get the hostname; this function is strangely cross-platform!
     char buffer[256];
-    if (gethostname(buffer, sizeof(buffer)) == 0) buffer[sizeof(buffer) - 1] = 0;
-    else buffer[0] = 0;
+    if (gethostname(buffer, sizeof(buffer)) == 0)
+        buffer[sizeof(buffer) - 1] = 0;
+    else
+        buffer[0] = 0;
 
 #ifdef _WIN64
     // Release any winsock library resources
@@ -332,9 +335,9 @@ string System::username()
 // The thread-safe version of localtime is called differently on Unix and Windows,
 // and the arguments are in reverse order. So define a macro...
 #ifdef _WIN64
-    #define TO_LOCAL_TIME(from, to) localtime_s(to,from)
+#    define TO_LOCAL_TIME(from, to) localtime_s(to, from)
 #else
-    #define TO_LOCAL_TIME(from, to) localtime_r(from,to)
+#    define TO_LOCAL_TIME(from, to) localtime_r(from, to)
 #endif
 
 string System::timestamp(bool iso8601)
@@ -345,7 +348,7 @@ string System::timestamp(bool iso8601)
     const char* format = iso8601 ? "%Y-%m-%dT%H:%M:%S.xxx" : "%d/%m/%Y %H:%M:%S.xxx";
     const size_t resultLength = 23;
     const size_t milliOffset = 20;
-    char resultBuf[resultLength+2];  // add 2 rather than 1 to avoid warning by GCC v8.1
+    char resultBuf[resultLength + 2];  // add 2 rather than 1 to avoid warning by GCC v8.1
 
     // get the current wall time
     system_clock::time_point now_tp = system_clock::now();
@@ -360,7 +363,7 @@ string System::timestamp(bool iso8601)
     system_clock::duration since_epoch = now_tp.time_since_epoch();
     since_epoch -= duration_cast<seconds>(since_epoch);
     milliseconds millis = duration_cast<milliseconds>(since_epoch);
-    sprintf(resultBuf+milliOffset, "%03d", static_cast<int>(millis.count()));
+    sprintf(resultBuf + milliOffset, "%03d", static_cast<int>(millis.count()));
 
     return resultBuf;
 }
@@ -374,7 +377,7 @@ namespace
     // Thus: call this function only within the critical section setup for the console I/O.
     void outputMessage(string message, size_t level)
     {
-    #ifdef _WIN64
+#ifdef _WIN64
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), _colorBegin[level]);
         fputs(System::timestamp().c_str(), stdout);
         fputs(_messageBegin[level], stdout);
@@ -382,15 +385,10 @@ namespace
         fputs(_messageEnd[level], stdout);
         fflush(stdout);
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), _colorEnd[level]);
-    #else
-        std::cout << (_colored ? _colorBegin[level] : "")
-                  << System::timestamp()
-                  << _messageBegin[level]
-                  << message
-                  << _messageEnd[level]
-                  << (_colored ? _colorEnd[level] : "")
-                  << std::flush;
-    #endif
+#else
+        std::cout << (_colored ? _colorBegin[level] : "") << System::timestamp() << _messageBegin[level] << message
+                  << _messageEnd[level] << (_colored ? _colorEnd[level] : "") << std::flush;
+#endif
     }
 }
 
@@ -407,7 +405,7 @@ void System::log(string message, LogLevel level)
 string System::prompt(string message)
 {
     std::unique_lock<std::mutex> lock(_consoleMutex);
-    outputMessage(message, static_cast<size_t>(LogLevel::Error)+1);  // dirty cast
+    outputMessage(message, static_cast<size_t>(LogLevel::Error) + 1);  // dirty cast
 
 #ifdef _WIN64
     // Get user input and convert it from UTF-16 to UTF-8
@@ -415,8 +413,8 @@ string System::prompt(string message)
     WCHAR input[MAXLEN];
     DWORD numRead = 0;
     BOOL success = ReadConsoleW(GetStdHandle(STD_INPUT_HANDLE), input, MAXLEN, &numRead, 0);
-    if (!success || numRead<2) return "";
-    input[numRead-2] = 0;
+    if (!success || numRead < 2) return "";
+    input[numRead - 2] = 0;
     return toUTF8(input);
 #else
     string input;
@@ -453,7 +451,7 @@ bool System::isFile(string path)
 {
 #ifdef _WIN64
     DWORD attrs = GetFileAttributesW(toUTF16(path).get());
-    if (attrs!=INVALID_FILE_ATTRIBUTES && !(attrs & FILE_ATTRIBUTE_DIRECTORY)) return true;
+    if (attrs != INVALID_FILE_ATTRIBUTES && !(attrs & FILE_ATTRIBUTE_DIRECTORY)) return true;
 #else
     struct stat st;
     if (!stat(path.c_str(), &st) && S_ISREG(st.st_mode)) return true;
@@ -470,7 +468,7 @@ bool System::isDir(string path)
 
 #ifdef _WIN64
     DWORD attrs = GetFileAttributesW(toUTF16(path).get());
-    if (attrs!=INVALID_FILE_ATTRIBUTES && (attrs & FILE_ATTRIBUTE_DIRECTORY)) return true;
+    if (attrs != INVALID_FILE_ATTRIBUTES && (attrs & FILE_ATTRIBUTE_DIRECTORY)) return true;
 #else
     struct stat st;
     if (!stat(path.c_str(), &st) && S_ISDIR(st.st_mode)) return true;
@@ -519,29 +517,29 @@ namespace
         // lock although functions are probably thread-safe in modern library implementations
         std::unique_lock<std::mutex> lock(_consoleMutex);
 
-    #ifdef _WIN64
+#ifdef _WIN64
         // open directory stream
         HANDLE dir;
         WIN32_FIND_DATAW filedata;
         if ((dir = FindFirstFileW(toUTF16(directory + "\\*").get(), &filedata)) != INVALID_HANDLE_VALUE)
         {
-             // read entries
-             do {
-                 // skip anything that is not a regular file or directory
-                 if (!(filedata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == files)
-                 {
-                     string candidate = toUTF8(filedata.cFileName);
-                     // skip special directories
-                     if (!candidate.empty() && candidate[0]!='.')
-                        result.push_back(toUTF8(filedata.cFileName));
-                 }
-             } while (FindNextFileW(dir, &filedata));
+            // read entries
+            do
+            {
+                // skip anything that is not a regular file or directory
+                if (!(filedata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == files)
+                {
+                    string candidate = toUTF8(filedata.cFileName);
+                    // skip special directories
+                    if (!candidate.empty() && candidate[0] != '.') result.push_back(toUTF8(filedata.cFileName));
+                }
+            } while (FindNextFileW(dir, &filedata));
 
             FindClose(dir);
         }
-    #else
+#else
         // open directory stream
-        DIR *dir = opendir(directory.c_str());
+        DIR* dir = opendir(directory.c_str());
         if (dir)
         {
             // read the next entry
@@ -564,7 +562,7 @@ namespace
             }
             closedir(dir);
         }
-    #endif
+#endif
 
         // sort the list alphabetically
         std::sort(result.begin(), result.end());
@@ -602,7 +600,7 @@ string System::canonicalPath(string path)
 #else
     char buffer[MAXPATHLEN];
     if (realpath(path.c_str(), buffer)) return buffer;
-# endif
+#endif
     return path;
 }
 
@@ -629,8 +627,8 @@ std::pair<void*, size_t> System::acquireMemoryMap(string path)
 
 #if defined(_WIN64)
         // open the file
-        record.filehandle = CreateFileW(toUTF16(path).get(), GENERIC_READ, FILE_SHARE_READ, 0,
-                                       OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+        record.filehandle =
+            CreateFileW(toUTF16(path).get(), GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
         if (record.filehandle != INVALID_HANDLE_VALUE)
         {
             // get the file size
@@ -680,8 +678,10 @@ std::pair<void*, size_t> System::acquireMemoryMap(string path)
 #endif
 
         // if successful, add the map to our dictionary; otherwise return "failure"
-        if (record.start) _maps.emplace(path, record);
-        else return std::make_pair(nullptr, 0);
+        if (record.start)
+            _maps.emplace(path, record);
+        else
+            return std::make_pair(nullptr, 0);
     }
 
     // retrieve and return the new or existing map
@@ -731,7 +731,7 @@ vector<string> System::stacktrace()
     result.emplace_back("Call stack:");
 
 #ifdef _WIN64
-#ifdef _DEBUG
+#    ifdef _DEBUG
     void* stack[62];
     USHORT frames = CaptureStackBackTrace(0, 62, stack, NULL);
     HANDLE process = GetCurrentProcess();
@@ -747,9 +747,9 @@ vector<string> System::stacktrace()
         result.push_back(std::to_string(frames - i - 1) + " " + symbolName);
     }
     free(symbol);
-#else
+#    else
     result.push_back("Sorry, stack trace is implemented only in DEBUG mode");
-#endif // DEBUG
+#    endif  // DEBUG
 #else
     // Get the strack trace as a list of C-style strings
     const int max_depth = 100;
@@ -761,7 +761,7 @@ vector<string> System::stacktrace()
     for (int i = 1; i < stack_depth; i++)
     {
         string line(stack_strings[i]);
-        auto new_end = std::unique(line.begin(), line.end(), [](char a, char b) { return a == ' ' && b == ' '; } );
+        auto new_end = std::unique(line.begin(), line.end(), [](char a, char b) { return a == ' ' && b == ' '; });
         line.erase(new_end, line.end());
         result.push_back(line);
     }
@@ -778,7 +778,7 @@ vector<string> System::stacktrace()
 namespace
 {
 
-/*
+    /*
  * Author:  David Robert Nadeau
  * Site:    http://NadeauSoftware.com/
  * License: Creative Commons Attribution 3.0 Unported License
@@ -786,87 +786,85 @@ namespace
  */
 
 #if defined(_WIN32)
-#include <Windows.h>
+#    include <Windows.h>
 #elif defined(__unix__) || defined(__unix) || defined(unix) || (defined(__APPLE__) && defined(__MACH__))
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/param.h>
-#if defined(BSD)
-#include <sys/sysctl.h>
-#endif
+#    include <sys/param.h>
+#    include <sys/types.h>
+#    include <unistd.h>
+#    if defined(BSD)
+#        include <sys/sysctl.h>
+#    endif
 #endif
 
-/**
+    /**
  * Returns the size of physical memory (RAM) in bytes.
  */
-size_t getMemorySize( )
-{
+    size_t getMemorySize()
+    {
 #if defined(_WIN32) && (defined(__CYGWIN__) || defined(__CYGWIN32__))
-    /* Cygwin under Windows. ------------------------------------ */
-    /* New 64-bit MEMORYSTATUSEX isn't available.  Use old 32.bit */
-    MEMORYSTATUS status;
-    status.dwLength = sizeof(status);
-    GlobalMemoryStatus( &status );
-    return static_cast<size_t>(status.dwTotalPhys);
+        /* Cygwin under Windows. ------------------------------------ */
+        /* New 64-bit MEMORYSTATUSEX isn't available.  Use old 32.bit */
+        MEMORYSTATUS status;
+        status.dwLength = sizeof(status);
+        GlobalMemoryStatus(&status);
+        return static_cast<size_t>(status.dwTotalPhys);
 
 #elif defined(_WIN32)
-    /* Windows. ------------------------------------------------- */
-    /* Use new 64-bit MEMORYSTATUSEX, not old 32-bit MEMORYSTATUS */
-    MEMORYSTATUSEX status;
-    status.dwLength = sizeof(status);
-    GlobalMemoryStatusEx( &status );
-    return static_cast<size_t>(status.ullTotalPhys);
+        /* Windows. ------------------------------------------------- */
+        /* Use new 64-bit MEMORYSTATUSEX, not old 32-bit MEMORYSTATUS */
+        MEMORYSTATUSEX status;
+        status.dwLength = sizeof(status);
+        GlobalMemoryStatusEx(&status);
+        return static_cast<size_t>(status.ullTotalPhys);
 
 #elif defined(__unix__) || defined(__unix) || defined(unix) || (defined(__APPLE__) && defined(__MACH__))
-    /* UNIX variants. ------------------------------------------- */
-    /* Prefer sysctl() over sysconf() except sysctl() HW_REALMEM and HW_PHYSMEM */
+        /* UNIX variants. ------------------------------------------- */
+        /* Prefer sysctl() over sysconf() except sysctl() HW_REALMEM and HW_PHYSMEM */
 
-#if defined(CTL_HW) && (defined(HW_MEMSIZE) || defined(HW_PHYSMEM64))
-    int mib[2];
-    mib[0] = CTL_HW;
-#if defined(HW_MEMSIZE)
-    mib[1] = HW_MEMSIZE;		/* OSX. --------------------- */
-#elif defined(HW_PHYSMEM64)
-    mib[1] = HW_PHYSMEM64;		/* NetBSD, OpenBSD. --------- */
-#endif
-    int64_t size = 0;		/* 64-bit */
-    size_t len = sizeof( size );
-    if ( sysctl( mib, 2, &size, &len, NULL, 0 ) == 0 )
-        return static_cast<size_t>(size);
-    return 0L;			/* Failed? */
+#    if defined(CTL_HW) && (defined(HW_MEMSIZE) || defined(HW_PHYSMEM64))
+        int mib[2];
+        mib[0] = CTL_HW;
+#        if defined(HW_MEMSIZE)
+        mib[1] = HW_MEMSIZE; /* OSX. --------------------- */
+#        elif defined(HW_PHYSMEM64)
+        mib[1] = HW_PHYSMEM64; /* NetBSD, OpenBSD. --------- */
+#        endif
+        int64_t size = 0;    /* 64-bit */
+        size_t len = sizeof(size);
+        if (sysctl(mib, 2, &size, &len, NULL, 0) == 0) return static_cast<size_t>(size);
+        return 0L; /* Failed? */
 
-#elif defined(_SC_AIX_REALMEM)
-    /* AIX. ----------------------------------------------------- */
-    return static_cast<size_t>(sysconf(_SC_AIX_REALMEM)) * static_cast<size_t>(1024);
+#    elif defined(_SC_AIX_REALMEM)
+        /* AIX. ----------------------------------------------------- */
+        return static_cast<size_t>(sysconf(_SC_AIX_REALMEM)) * static_cast<size_t>(1024);
 
-#elif defined(_SC_PHYS_PAGES) && defined(_SC_PAGESIZE)
-    /* FreeBSD, Linux, OpenBSD, and Solaris. -------------------- */
-    return static_cast<size_t>(sysconf(_SC_PHYS_PAGES)) * static_cast<size_t>(sysconf(_SC_PAGESIZE));
+#    elif defined(_SC_PHYS_PAGES) && defined(_SC_PAGESIZE)
+        /* FreeBSD, Linux, OpenBSD, and Solaris. -------------------- */
+        return static_cast<size_t>(sysconf(_SC_PHYS_PAGES)) * static_cast<size_t>(sysconf(_SC_PAGESIZE));
 
-#elif defined(_SC_PHYS_PAGES) && defined(_SC_PAGE_SIZE)
-    /* Legacy. -------------------------------------------------- */
-    return static_cast<size_t>(sysconf(_SC_PHYS_PAGES)) * static_cast<size_t>(sysconf(_SC_PAGE_SIZE));
+#    elif defined(_SC_PHYS_PAGES) && defined(_SC_PAGE_SIZE)
+        /* Legacy. -------------------------------------------------- */
+        return static_cast<size_t>(sysconf(_SC_PHYS_PAGES)) * static_cast<size_t>(sysconf(_SC_PAGE_SIZE));
 
-#elif defined(CTL_HW) && (defined(HW_PHYSMEM) || defined(HW_REALMEM))
-    /* DragonFly BSD, FreeBSD, NetBSD, OpenBSD, and OSX. -------- */
-    int mib[2];
-    mib[0] = CTL_HW;
-#if defined(HW_REALMEM)
-    mib[1] = HW_REALMEM;		/* FreeBSD. ----------------- */
-#elif defined(HW_PYSMEM)
-    mib[1] = HW_PHYSMEM;		/* Others. ------------------ */
-#endif
-    unsigned int size = 0;		/* 32-bit */
-    size_t len = sizeof( size );
-    if ( sysctl( mib, 2, &size, &len, NULL, 0 ) == 0 )
-        return static_cast<size_t>(size);
-    return 0L;			/* Failed? */
-#endif /* sysctl and sysconf variants */
+#    elif defined(CTL_HW) && (defined(HW_PHYSMEM) || defined(HW_REALMEM))
+        /* DragonFly BSD, FreeBSD, NetBSD, OpenBSD, and OSX. -------- */
+        int mib[2];
+        mib[0] = CTL_HW;
+#        if defined(HW_REALMEM)
+        mib[1] = HW_REALMEM;   /* FreeBSD. ----------------- */
+#        elif defined(HW_PYSMEM)
+        mib[1] = HW_PHYSMEM; /* Others. ------------------ */
+#        endif
+        unsigned int size = 0; /* 32-bit */
+        size_t len = sizeof(size);
+        if (sysctl(mib, 2, &size, &len, NULL, 0) == 0) return static_cast<size_t>(size);
+        return 0L; /* Failed? */
+#    endif /* sysctl and sysconf variants */
 
 #else
-    return 0L;			/* Unknown OS. */
+        return 0L; /* Unknown OS. */
 #endif
-}
+    }
 
 }  // end anonymous namespace
 
@@ -875,112 +873,112 @@ size_t getMemorySize( )
 namespace
 {
 
-/*
- * Author:  David Robert Nadeau
- * Site:    http://NadeauSoftware.com/
- * License: Creative Commons Attribution 3.0 Unported License
- *          http://creativecommons.org/licenses/by/3.0/deed.en_US
- */
+    /*
+     * Author:  David Robert Nadeau
+     * Site:    http://NadeauSoftware.com/
+     * License: Creative Commons Attribution 3.0 Unported License
+     *          http://creativecommons.org/licenses/by/3.0/deed.en_US
+     */
 
 #if defined(_WIN32)
-#include <windows.h>
-#include <psapi.h>
+#    include <windows.h>
+#    include <psapi.h>
 #elif defined(__unix__) || defined(__unix) || defined(unix) || (defined(__APPLE__) && defined(__MACH__))
-#include <unistd.h>
-#include <sys/resource.h>
-#if defined(__APPLE__) && defined(__MACH__)
-#include <mach/mach.h>
-#elif (defined(_AIX) || defined(__TOS__AIX__)) || (defined(__sun__) || defined(__sun) || defined(sun) && (defined(__SVR4) || defined(__svr4__)))
-#include <fcntl.h>
-#include <procfs.h>
-#elif defined(__linux__) || defined(__linux) || defined(linux) || defined(__gnu_linux__)
-#include <stdio.h>
-#endif
+#    include <sys/resource.h>
+#    include <unistd.h>
+#    if defined(__APPLE__) && defined(__MACH__)
+#        include <mach/mach.h>
+#    elif (defined(_AIX) || defined(__TOS__AIX__)) \
+        || (defined(__sun__) || defined(__sun) || defined(sun) && (defined(__SVR4) || defined(__svr4__)))
+#        include <fcntl.h>
+#        include <procfs.h>
+#    elif defined(__linux__) || defined(__linux) || defined(linux) || defined(__gnu_linux__)
+#        include <stdio.h>
+#    endif
 #endif
 
-/**
- * Returns the peak (maximum so far) resident set size (physical
- * memory use) measured in bytes, or zero if the value cannot be
- * determined on this OS.
- */
-size_t getPeakRSS( )
-{
-#if defined(_WIN32)
-    /* Windows -------------------------------------------------- */
-    PROCESS_MEMORY_COUNTERS info;
-    GetProcessMemoryInfo( GetCurrentProcess( ), &info, sizeof(info) );
-    return static_cast<size_t>(info.PeakWorkingSetSize);
-
-#elif (defined(_AIX) || defined(__TOS__AIX__)) || (defined(__sun__) || defined(__sun) || defined(sun) && (defined(__SVR4) || defined(__svr4__)))
-    /* AIX and Solaris ------------------------------------------ */
-    struct psinfo psinfo;
-    int fd = -1;
-    if ( (fd = open( "/proc/self/psinfo", O_RDONLY )) == -1 )
-        return static_cast<size_t>(0);		/* Can't open? */
-    if ( read( fd, &psinfo, sizeof(psinfo) ) != sizeof(psinfo) )
+    /**
+     * Returns the peak (maximum so far) resident set size (physical
+     * memory use) measured in bytes, or zero if the value cannot be
+     * determined on this OS.
+     */
+    size_t getPeakRSS()
     {
-        close( fd );
-        return static_cast<size_t>(0);		/* Can't read? */
-    }
-    close( fd );
-    return static_cast<size_t>(psinfo.pr_rssize) * static_cast<size_t>(1024);
+#if defined(_WIN32)
+        /* Windows -------------------------------------------------- */
+        PROCESS_MEMORY_COUNTERS info;
+        GetProcessMemoryInfo(GetCurrentProcess(), &info, sizeof(info));
+        return static_cast<size_t>(info.PeakWorkingSetSize);
+
+#elif (defined(_AIX) || defined(__TOS__AIX__)) \
+    || (defined(__sun__) || defined(__sun) || defined(sun) && (defined(__SVR4) || defined(__svr4__)))
+        /* AIX and Solaris ------------------------------------------ */
+        struct psinfo psinfo;
+        int fd = -1;
+        if ((fd = open("/proc/self/psinfo", O_RDONLY)) == -1) return static_cast<size_t>(0); /* Can't open? */
+        if (read(fd, &psinfo, sizeof(psinfo)) != sizeof(psinfo))
+        {
+            close(fd);
+            return static_cast<size_t>(0); /* Can't read? */
+        }
+        close(fd);
+        return static_cast<size_t>(psinfo.pr_rssize) * static_cast<size_t>(1024);
 
 #elif defined(__unix__) || defined(__unix) || defined(unix) || (defined(__APPLE__) && defined(__MACH__))
-    /* BSD, Linux, and OSX -------------------------------------- */
-    struct rusage rusage;
-    getrusage( RUSAGE_SELF, &rusage );
-#if defined(__APPLE__) && defined(__MACH__)
-    return static_cast<size_t>(rusage.ru_maxrss);
-#else
-    return static_cast<size_t>(rusage.ru_maxrss) * static_cast<size_t>(1024);
-#endif
+        /* BSD, Linux, and OSX -------------------------------------- */
+        struct rusage rusage;
+        getrusage(RUSAGE_SELF, &rusage);
+#    if defined(__APPLE__) && defined(__MACH__)
+        return static_cast<size_t>(rusage.ru_maxrss);
+#    else
+        return static_cast<size_t>(rusage.ru_maxrss) * static_cast<size_t>(1024);
+#    endif
 
 #else
-    /* Unknown OS ----------------------------------------------- */
-    return static_cast<size_t>(0);			/* Unsupported. */
+        /* Unknown OS ----------------------------------------------- */
+        return static_cast<size_t>(0); /* Unsupported. */
 #endif
-}
+    }
 
-/**
- * Returns the current resident set size (physical memory use) measured
- * in bytes, or zero if the value cannot be determined on this OS.
- */
-size_t getCurrentRSS( )
-{
+    /**
+     * Returns the current resident set size (physical memory use) measured
+     * in bytes, or zero if the value cannot be determined on this OS.
+     */
+    size_t getCurrentRSS()
+    {
 #if defined(_WIN32)
-    /* Windows -------------------------------------------------- */
-    PROCESS_MEMORY_COUNTERS info;
-    GetProcessMemoryInfo( GetCurrentProcess( ), &info, sizeof(info) );
-    return static_cast<size_t>(info.WorkingSetSize);
+        /* Windows -------------------------------------------------- */
+        PROCESS_MEMORY_COUNTERS info;
+        GetProcessMemoryInfo(GetCurrentProcess(), &info, sizeof(info));
+        return static_cast<size_t>(info.WorkingSetSize);
 
 #elif defined(__APPLE__) && defined(__MACH__)
-    /* OSX ------------------------------------------------------ */
-    struct mach_task_basic_info info;
-    mach_msg_type_number_t infoCount = MACH_TASK_BASIC_INFO_COUNT;
-    if ( task_info( mach_task_self( ), MACH_TASK_BASIC_INFO,
-        reinterpret_cast<task_info_t>(&info), &infoCount ) != KERN_SUCCESS )
-        return static_cast<size_t>(0);		/* Can't access? */
-    return static_cast<size_t>(info.resident_size);
+        /* OSX ------------------------------------------------------ */
+        struct mach_task_basic_info info;
+        mach_msg_type_number_t infoCount = MACH_TASK_BASIC_INFO_COUNT;
+        if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO, reinterpret_cast<task_info_t>(&info), &infoCount)
+            != KERN_SUCCESS)
+            return static_cast<size_t>(0); /* Can't access? */
+        return static_cast<size_t>(info.resident_size);
 
 #elif defined(__linux__) || defined(__linux) || defined(linux) || defined(__gnu_linux__)
-    /* Linux ---------------------------------------------------- */
-    long rss = 0L;
-    FILE* fp = NULL;
-    if ( (fp = fopen( "/proc/self/statm", "r" )) == NULL )
-        return static_cast<size_t>(0);		/* Can't open? */
-    if ( fscanf( fp, "%*s%ld", &rss ) != 1 )
-    {
-        fclose( fp );
-        return static_cast<size_t>(0);		/* Can't read? */
-    }
-    fclose( fp );
-    return static_cast<size_t>(rss) * static_cast<size_t>(sysconf(_SC_PAGESIZE));
+        /* Linux ---------------------------------------------------- */
+        long rss = 0L;
+        FILE* fp = NULL;
+        if ((fp = fopen("/proc/self/statm", "r")) == NULL) return static_cast<size_t>(0); /* Can't open? */
+        if (fscanf(fp, "%*s%ld", &rss) != 1)
+        {
+            fclose(fp);
+            return static_cast<size_t>(0); /* Can't read? */
+        }
+        fclose(fp);
+        return static_cast<size_t>(rss) * static_cast<size_t>(sysconf(_SC_PAGESIZE));
 
 #else
-    /* AIX, BSD, Solaris, and Unknown OS ------------------------ */
-    return static_cast<size_t>(0);			/* Unsupported. */
+        /* AIX, BSD, Solaris, and Unknown OS ------------------------ */
+        return static_cast<size_t>(0); /* Unsupported. */
 #endif
-}
+    }
 
 }  // end anonymous namespace
 

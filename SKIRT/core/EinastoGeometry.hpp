@@ -6,8 +6,8 @@
 #ifndef EINASTOGEOMETRY_HPP
 #define EINASTOGEOMETRY_HPP
 
-#include "SpheGeometry.hpp"
 #include "Array.hpp"
+#include "SpheGeometry.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -24,11 +24,11 @@ class EinastoGeometry : public SpheGeometry
 {
     ITEM_CONCRETE(EinastoGeometry, SpheGeometry, "an Einasto geometry")
 
-    PROPERTY_DOUBLE(halfMassRadius, "the half-mass radius")
+        PROPERTY_DOUBLE(halfMassRadius, "the half-mass radius")
         ATTRIBUTE_QUANTITY(halfMassRadius, "length")
         ATTRIBUTE_MIN_VALUE(halfMassRadius, "]0")
 
-    PROPERTY_DOUBLE(index, "the Einasto index n")
+        PROPERTY_DOUBLE(index, "the Einasto index n")
         ATTRIBUTE_MIN_VALUE(index, "]0")
 
     ITEM_END()

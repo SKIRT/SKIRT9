@@ -48,17 +48,17 @@ class Parallel
 protected:
     /** The constructor is declared protected because this is an abstract class. At the level of
         this abstract class, the constructor does not do anything. */
-    Parallel() { }
+    Parallel() {}
 
 public:
     /** Destructs the instance and releases all resources. At the level of this abstract class, the
         destructor does not do anything. */
-   virtual ~Parallel() { }
+    virtual ~Parallel() {}
 
     //======================== Other Functions =======================
 
 public:
-     /** This function calls the specified target function repeatedly for index chunks that, taken
+    /** This function calls the specified target function repeatedly for index chunks that, taken
          together, will exactly cover the index range from zero to \em maxIndex-1. Each index chunk
          is specified to the target function through its two arguments, \em firstIndex and \em
          numIndices. The invocations of the target function will be distributed over the parallel

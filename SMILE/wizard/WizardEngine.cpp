@@ -34,16 +34,11 @@
 
 ////////////////////////////////////////////////////////////////////
 
-WizardEngine::WizardEngine(QObject* parent)
-    : QObject(parent)
-{
-}
+WizardEngine::WizardEngine(QObject* parent) : QObject(parent) {}
 
 ////////////////////////////////////////////////////////////////////
 
-WizardEngine::~WizardEngine()
-{
-}
+WizardEngine::~WizardEngine() {}
 
 ////////////////////////////////////////////////////////////////////
 
@@ -51,18 +46,14 @@ bool WizardEngine::canAdvance()
 {
     switch (_stage)
     {
-    case Stage::BasicChoice:
-        return _schema != nullptr;
-    case Stage::CreateRoot:
-        return (_schema && _root) ? _schema->inherits(_root->type(), _schema->schemaType()) : false;
-    case Stage::OpenHierarchy:
-        return !_filepath.isEmpty();
-    case Stage::ConstructHierarchy:
-        return _propertyValid;
-    case Stage::SaveHierarchy:
-        return false;
+        case Stage::BasicChoice: return _schema != nullptr;
+        case Stage::CreateRoot:
+            return (_schema && _root) ? _schema->inherits(_root->type(), _schema->schemaType()) : false;
+        case Stage::OpenHierarchy: return !_filepath.isEmpty();
+        case Stage::ConstructHierarchy: return _propertyValid;
+        case Stage::SaveHierarchy: return false;
     }
-    return false;   // to satisfy some compilers
+    return false;  // to satisfy some compilers
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -106,23 +97,25 @@ int WizardEngine::propertyIndexForChild(Item* child)
 {
     int index = 0;
     Item* parent = child->parent();
-    if (parent) for (auto property : _schema->properties(parent->type()))
-    {
-        auto handler = _schema->createPropertyHandler(parent, property, &_nameMgr);
-
-        // check the value of item properties
-        auto itemhandler = dynamic_cast<ItemPropertyHandler*>(handler.get());
-        if (itemhandler && itemhandler->value() == child) return index;
-
-        // check the values of item list properties
-        auto itemlisthandler = dynamic_cast<ItemListPropertyHandler*>(handler.get());
-        if (itemlisthandler)
+    if (parent)
+        for (auto property : _schema->properties(parent->type()))
         {
-            for (auto item : itemlisthandler->value()) if (item == child) return index;
-        }
+            auto handler = _schema->createPropertyHandler(parent, property, &_nameMgr);
 
-        index++;
-    }
+            // check the value of item properties
+            auto itemhandler = dynamic_cast<ItemPropertyHandler*>(handler.get());
+            if (itemhandler && itemhandler->value() == child) return index;
+
+            // check the values of item list properties
+            auto itemlisthandler = dynamic_cast<ItemListPropertyHandler*>(handler.get());
+            if (itemlisthandler)
+            {
+                for (auto item : itemlisthandler->value())
+                    if (item == child) return index;
+            }
+
+            index++;
+        }
     return -1;  // this should never happen
 }
 
@@ -248,8 +241,8 @@ namespace
             {
                 if (!handler->isConfigured())
                 {
-                    if ( handler->isRequired() && handler->hasDefaultValue()
-                         && handler->setToNewItemOfType(handler->defaultType()) )
+                    if (handler->isRequired() && handler->hasDefaultValue()
+                        && handler->setToNewItemOfType(handler->defaultType()))
                     {
                         // recursively default-construct the properties of the new item
                         setPropertiesToDefaults(handler->value(), handler->schema(), handler->nameManager());
@@ -275,8 +268,8 @@ namespace
             {
                 if (!handler->isConfigured())
                 {
-                    if ( handler->isRequired() && handler->hasDefaultValue()
-                         && handler->addNewItemOfType(handler->defaultType()) )
+                    if (handler->isRequired() && handler->hasDefaultValue()
+                        && handler->addNewItemOfType(handler->defaultType()))
                     {
                         // recursively default-construct the properties of the new item
                         setPropertiesToDefaults(handler->value().back(), handler->schema(), handler->nameManager());
@@ -341,7 +334,8 @@ namespace
             if (choices.size() == 1 && itemhdlr->isRequired())
             {
                 // if an item of the correct type is already configured, leave it alone
-                if (itemhdlr->isConfigured() && itemhdlr->value() && itemhdlr->value()->type()==choices[0]) return true;
+                if (itemhdlr->isConfigured() && itemhdlr->value() && itemhdlr->value()->type() == choices[0])
+                    return true;
 
                 // otherwise, configure an item of the correct type
                 bool success = itemhdlr->setToNewItemOfType(choices[0]);
@@ -375,24 +369,24 @@ void WizardEngine::advance(bool state, bool descend)
     // advance the state depending on the current stage and details within the stage
     switch (_stage)
     {
-    case Stage::BasicChoice:
+        case Stage::BasicChoice:
         {
             _stage = _openExisting ? Stage::OpenHierarchy : Stage::CreateRoot;
             break;
         }
-    case Stage::OpenHierarchy:
+        case Stage::OpenHierarchy:
         {
             _stage = Stage::CreateRoot;
             break;
         }
-    case Stage::CreateRoot:
+        case Stage::CreateRoot:
         {
             _stage = Stage::ConstructHierarchy;
             _current = _root.get();
-            _firstPropertyIndex = 0; // assumes that the root has at least one property
+            _firstPropertyIndex = 0;  // assumes that the root has at least one property
             break;
         }
-    case Stage::ConstructHierarchy:
+        case Stage::ConstructHierarchy:
         {
             // if the (single) property being handled is an item or an item list, we may need to descend the hierarchy
             if (descend && _lastPropertyIndex == _firstPropertyIndex)
@@ -401,7 +395,7 @@ void WizardEngine::advance(bool state, bool descend)
 
                 // if the property is an item, and the item has properties, then descend the hierarchy
                 auto itemhdlr = dynamic_cast<ItemPropertyHandler*>(handler.get());
-                if (itemhdlr && itemhdlr->value() && _schema->properties(itemhdlr->value()->type()).size()>0)
+                if (itemhdlr && itemhdlr->value() && _schema->properties(itemhdlr->value()->type()).size() > 0)
                 {
                     _current = itemhdlr->value();
                     _firstPropertyIndex = 0;
@@ -412,10 +406,10 @@ void WizardEngine::advance(bool state, bool descend)
                 // and the subitem has properties, then descend the hierarchy into that subitem;
                 // if the subitem has no properties, fake a descend from which we will back out right away
                 auto itemlisthdlr = dynamic_cast<ItemListPropertyHandler*>(handler.get());
-                if (itemlisthdlr && _subItemIndex>=0)
+                if (itemlisthdlr && _subItemIndex >= 0)
                 {
                     _current = itemlisthdlr->value()[_subItemIndex];
-                    if (_schema->properties(_current->type()).size()>0)
+                    if (_schema->properties(_current->type()).size() > 0)
                     {
                         _firstPropertyIndex = 0;
                         break;
@@ -428,7 +422,7 @@ void WizardEngine::advance(bool state, bool descend)
             }
 
             // if we did not descend the hierarchy, attempt to advance to the next property
-            _firstPropertyIndex = _lastPropertyIndex+1;
+            _firstPropertyIndex = _lastPropertyIndex + 1;
 
             // if we handled the last property at this level, move up the hierarchy to a level where
             // there are properties to advance to; if we encounter the root item, then move to the SaveHierarchy stage
@@ -456,11 +450,12 @@ void WizardEngine::advance(bool state, bool descend)
                     _stateIndexStack.pop();
                 }
                 // otherwise go to the next property
-                else _firstPropertyIndex++;
+                else
+                    _firstPropertyIndex++;
             }
             break;
         }
-    case Stage::SaveHierarchy:
+        case Stage::SaveHierarchy:
         {
             break;
         }
@@ -518,10 +513,10 @@ void WizardEngine::advance(bool state, bool descend)
 
             // determine the range of properties that can be combined onto a single multi-pane;
             // meanwhile also handle each property
-            while (static_cast<size_t>(_lastPropertyIndex+1) != _schema->properties(_current->type()).size())
+            while (static_cast<size_t>(_lastPropertyIndex + 1) != _schema->properties(_current->type()).size())
             {
                 // break if the next property is compound
-                handler = createPropertyHandler(_lastPropertyIndex+1);
+                handler = createPropertyHandler(_lastPropertyIndex + 1);
                 if (handler->isCompound()) break;
 
                 // keep track of silent-ness
@@ -610,7 +605,7 @@ void WizardEngine::setBasicChoice(bool openExisting, string libraryPath, string 
 
 void WizardEngine::setRootType(string newRootType)
 {
-    if (_root && _root->type()==newRootType) return;
+    if (_root && _root->type() == newRootType) return;
     _root = _schema->createItem(newRootType);
     emit canAdvanceChangedTo(canAdvance());
     _dirty = true;
@@ -682,20 +677,20 @@ QWidget* WizardEngine::createPane()
 {
     switch (_stage)
     {
-    case Stage::BasicChoice:
+        case Stage::BasicChoice:
         {
             return new BasicChoiceWizardPane(_openExisting, _schemaName, _dirty, this);
         }
-    case Stage::CreateRoot:
+        case Stage::CreateRoot:
         {
             string currentType = _root ? _root->type() : "";
             return new CreateRootWizardPane(_schema.get(), currentType, this);
         }
-    case Stage::OpenHierarchy:
+        case Stage::OpenHierarchy:
         {
             return new OpenWizardPane(_schema.get(), _filepath, _dirty, this);
         }
-    case Stage::ConstructHierarchy:
+        case Stage::ConstructHierarchy:
         {
             // single pane
             if (_lastPropertyIndex == _firstPropertyIndex)
@@ -718,8 +713,10 @@ QWidget* WizardEngine::createPane()
                     return new ItemPropertyWizardPane(std::move(handler), this);
                 if (dynamic_cast<ItemListPropertyHandler*>(handler.get()))
                 {
-                    if (_subItemIndex<0) return new ItemListPropertyWizardPane(std::move(handler), this);
-                    else                 return new SubItemPropertyWizardPane(std::move(handler), this);
+                    if (_subItemIndex < 0)
+                        return new ItemListPropertyWizardPane(std::move(handler), this);
+                    else
+                        return new SubItemPropertyWizardPane(std::move(handler), this);
                 }
             }
 
@@ -727,7 +724,7 @@ QWidget* WizardEngine::createPane()
             else
             {
                 auto multipane = new MultiPropertyWizardPane(this);
-                for (int propertyIndex=_firstPropertyIndex; propertyIndex<=_lastPropertyIndex; ++propertyIndex)
+                for (int propertyIndex = _firstPropertyIndex; propertyIndex <= _lastPropertyIndex; ++propertyIndex)
                 {
                     auto handler = createPropertyHandler(propertyIndex);
 
@@ -748,7 +745,7 @@ QWidget* WizardEngine::createPane()
             }
             break;  // to satisfy gcc compiler
         }
-    case Stage::SaveHierarchy:
+        case Stage::SaveHierarchy:
         {
             return new SaveWizardPane(_schema.get(), _root.get(), _filepath, _dirty, this);
         }

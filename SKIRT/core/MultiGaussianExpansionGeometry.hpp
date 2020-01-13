@@ -6,8 +6,8 @@
 #ifndef MULTIGAUSSIANEXPANSIONGEOMETRY_HPP
 #define MULTIGAUSSIANEXPANSIONGEOMETRY_HPP
 
-#include "AxGeometry.hpp"
 #include "Array.hpp"
+#include "AxGeometry.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -23,13 +23,13 @@ class MultiGaussianExpansionGeometry : public AxGeometry
     ITEM_CONCRETE(MultiGaussianExpansionGeometry, AxGeometry, "a multi-gaussian expansion geometry")
         ATTRIBUTE_TYPE_DISPLAYED_IF(MultiGaussianExpansionGeometry, "Level2")
 
-    PROPERTY_STRING(filename, "the name of the file with the multi-gaussian expansion parameters")
+        PROPERTY_STRING(filename, "the name of the file with the multi-gaussian expansion parameters")
 
-    PROPERTY_DOUBLE(pixelscale, "the scale of the multi-gaussian-expanded image (length per pixel)")
+        PROPERTY_DOUBLE(pixelscale, "the scale of the multi-gaussian-expanded image (length per pixel)")
         ATTRIBUTE_QUANTITY(pixelscale, "length")
         ATTRIBUTE_MIN_VALUE(pixelscale, "]0")
 
-    PROPERTY_DOUBLE(inclination, "the inclination of the system")
+        PROPERTY_DOUBLE(inclination, "the inclination of the system")
         ATTRIBUTE_QUANTITY(inclination, "posangle")
         ATTRIBUTE_MIN_VALUE(inclination, "[0")
         ATTRIBUTE_MAX_VALUE(inclination, "90 deg]")

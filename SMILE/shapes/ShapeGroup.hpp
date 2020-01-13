@@ -16,7 +16,7 @@
 class ShapeGroup : public Shape
 {
     ITEM_CONCRETE(ShapeGroup, Shape, "a compound shape that groups other shapes")
-    PROPERTY_ITEM_LIST(shapes, Shape, "the shapes in this group")
+        PROPERTY_ITEM_LIST(shapes, Shape, "the shapes in this group")
     ITEM_END()
 };
 

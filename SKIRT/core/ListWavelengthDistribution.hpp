@@ -28,23 +28,23 @@ class ListWavelengthDistribution : public TabulatedWavelengthDistribution
     /** The enumeration type indicating the specific probability unit style, e.g. whether to use
         probability per unit of wavelength or per unit of frequency. */
     ENUM_DEF(UnitStyle, wavelengthmonluminosity, frequencymonluminosity, neutralmonluminosity)
-    ENUM_VAL(UnitStyle, wavelengthmonluminosity, "per unit of wavelength: p_λ")
-    ENUM_VAL(UnitStyle, frequencymonluminosity, "per unit of frequency: p_ν")
-    ENUM_VAL(UnitStyle, neutralmonluminosity, "neutral: λ p_λ = ν p_ν")
+        ENUM_VAL(UnitStyle, wavelengthmonluminosity, "per unit of wavelength: p_λ")
+        ENUM_VAL(UnitStyle, frequencymonluminosity, "per unit of frequency: p_ν")
+        ENUM_VAL(UnitStyle, neutralmonluminosity, "neutral: λ p_λ = ν p_ν")
     ENUM_END()
 
     ITEM_CONCRETE(ListWavelengthDistribution, TabulatedWavelengthDistribution,
                   "a wavelength probability distribution specified inside the configuration file")
 
-    PROPERTY_DOUBLE_LIST(wavelengths, "the wavelengths at which to specify the probability")
+        PROPERTY_DOUBLE_LIST(wavelengths, "the wavelengths at which to specify the probability")
         ATTRIBUTE_QUANTITY(wavelengths, "wavelength")
         ATTRIBUTE_MIN_VALUE(wavelengths, "1 Angstrom")
         ATTRIBUTE_MAX_VALUE(wavelengths, "1 m")
 
-    PROPERTY_ENUM(unitStyle, UnitStyle, "the probability unit style")
+        PROPERTY_ENUM(unitStyle, UnitStyle, "the probability unit style")
         ATTRIBUTE_DEFAULT_VALUE(unitStyle, "wavelengthmonluminosity")
 
-    PROPERTY_DOUBLE_LIST(probabilities, "the probabilities at each of the given wavelengths")
+        PROPERTY_DOUBLE_LIST(probabilities, "the probabilities at each of the given wavelengths")
         ATTRIBUTE_QUANTITY(probabilities, "@unitStyle")
         ATTRIBUTE_MIN_VALUE(probabilities, "]0")
 

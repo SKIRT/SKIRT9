@@ -31,14 +31,14 @@ class Units : public SimulationItem
         Neutral indicates \f$\lambda F_\lambda = \nu F_\nu\f$; Wavelength indicates
         \f$F_\lambda\f$; and Frequency indicates \f$F_\nu\f$. */
     ENUM_DEF(FluxOutputStyle, Neutral, Wavelength, Frequency)
-    ENUM_VAL(FluxOutputStyle, Neutral, "neutral: λ F_λ = ν F_ν")
-    ENUM_VAL(FluxOutputStyle, Wavelength, "per unit of wavelength: F_λ")
-    ENUM_VAL(FluxOutputStyle, Frequency, "per unit of frequency: F_ν")
+        ENUM_VAL(FluxOutputStyle, Neutral, "neutral: λ F_λ = ν F_ν")
+        ENUM_VAL(FluxOutputStyle, Wavelength, "per unit of wavelength: F_λ")
+        ENUM_VAL(FluxOutputStyle, Frequency, "per unit of frequency: F_ν")
     ENUM_END()
 
     ITEM_ABSTRACT(Units, SimulationItem, "a units system")
 
-    PROPERTY_ENUM(fluxOutputStyle, FluxOutputStyle, "the output style for flux density and surface brightness")
+        PROPERTY_ENUM(fluxOutputStyle, FluxOutputStyle, "the output style for flux density and surface brightness")
         ATTRIBUTE_DEFAULT_VALUE(fluxOutputStyle, "Frequency")
 
     ITEM_END()

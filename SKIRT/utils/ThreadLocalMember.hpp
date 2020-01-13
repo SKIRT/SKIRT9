@@ -49,7 +49,8 @@ public:
     {
         vector<T*> list;
         std::unique_lock<std::mutex> lock(mutex);
-        for (auto repo : allRepositories) if (repo->map.count(this)) list.push_back(&repo->map.at(this));
+        for (auto repo : allRepositories)
+            if (repo->map.count(this)) list.push_back(&repo->map.at(this));
         return list;
     }
 
@@ -58,8 +59,16 @@ private:
     // and automatically registers itself to the global repository registry
     struct Repository
     {
-        Repository() { std::unique_lock<std::mutex> lock(mutex); allRepositories.insert(this); }
-        ~Repository() { std::unique_lock<std::mutex> lock(mutex); allRepositories.erase(this); }
+        Repository()
+        {
+            std::unique_lock<std::mutex> lock(mutex);
+            allRepositories.insert(this);
+        }
+        ~Repository()
+        {
+            std::unique_lock<std::mutex> lock(mutex);
+            allRepositories.erase(this);
+        }
         std::unordered_map<ThreadLocalMember<T>*, T> map;
     };
     static thread_local Repository repository;
@@ -70,9 +79,9 @@ private:
     static std::mutex mutex;
 };
 
-template <class T> thread_local typename ThreadLocalMember<T>::Repository ThreadLocalMember<T>::repository;
-template <class T> typename ThreadLocalMember<T>::RepositoryRegistry ThreadLocalMember<T>::allRepositories;
-template <class T> std::mutex ThreadLocalMember<T>::mutex;
+template<class T> thread_local typename ThreadLocalMember<T>::Repository ThreadLocalMember<T>::repository;
+template<class T> typename ThreadLocalMember<T>::RepositoryRegistry ThreadLocalMember<T>::allRepositories;
+template<class T> std::mutex ThreadLocalMember<T>::mutex;
 
 ////////////////////////////////////////////////////////////////////
 

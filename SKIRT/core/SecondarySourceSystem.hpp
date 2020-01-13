@@ -6,8 +6,8 @@
 #ifndef SECONDARYSOURCESYSTEM_HPP
 #define SECONDARYSOURCESYSTEM_HPP
 
-#include "SimulationItem.hpp"
 #include "Array.hpp"
+#include "SimulationItem.hpp"
 class Configuration;
 class MediumSystem;
 class PhotonPacket;
@@ -192,16 +192,16 @@ private:
     Random* _random{nullptr};
 
     // initialized by installLaunchCallBack()
-    ProbePhotonPacketInterface* _callback{nullptr}; // interface to be invoked for each packet launch if nonzero
+    ProbePhotonPacketInterface* _callback{nullptr};  // interface to be invoked for each packet launch if nonzero
 
     // initialized by prepareForLaunch()
-    double _L{0};       // the total bolometric luminosity of all spatial cells
-    double _Lpp{0};     // the average luminosity contribution for each packet
-    Array _Lv;          // the relative bolometric luminosity of each spatial cell (normalized to unity)
-    Array _Wv;          // the relative launch weight for each spatial cell (normalized to unity)
-    vector<int> _nv;    // the library entry index corresponding to each spatial cell (i.e. map from cells to entries)
-    vector<int> _mv;    // the spatial cell indices sorted so that cells belonging to the same entry are consecutive
-    vector<size_t> _Iv; // first history index allocated to each spatial cell (with extra entry at the end)
+    double _L{0};        // the total bolometric luminosity of all spatial cells
+    double _Lpp{0};      // the average luminosity contribution for each packet
+    Array _Lv;           // the relative bolometric luminosity of each spatial cell (normalized to unity)
+    Array _Wv;           // the relative launch weight for each spatial cell (normalized to unity)
+    vector<int> _nv;     // the library entry index corresponding to each spatial cell (i.e. map from cells to entries)
+    vector<int> _mv;     // the spatial cell indices sorted so that cells belonging to the same entry are consecutive
+    vector<size_t> _Iv;  // first history index allocated to each spatial cell (with extra entry at the end)
 };
 
 ////////////////////////////////////////////////////////////////

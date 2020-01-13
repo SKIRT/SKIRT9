@@ -38,14 +38,14 @@ class FSPSSEDFamily : public SEDFamily
 {
     /** The enumeration type indicating the assumed initial mass function (IMF). */
     ENUM_DEF(IMF, Chabrier, Kroupa, Salpeter)
-    ENUM_VAL(IMF, Chabrier, "Chabrier IMF")
-    ENUM_VAL(IMF, Kroupa, "Kroupa IMF")
-    ENUM_VAL(IMF, Salpeter, "Salpeter IMF")
+        ENUM_VAL(IMF, Chabrier, "Chabrier IMF")
+        ENUM_VAL(IMF, Kroupa, "Kroupa IMF")
+        ENUM_VAL(IMF, Salpeter, "Salpeter IMF")
     ENUM_END()
 
     ITEM_CONCRETE(FSPSSEDFamily, SEDFamily, "an FSPS SED family for single stellar populations")
 
-    PROPERTY_ENUM(imf, IMF, "the assumed initial mass function")
+        PROPERTY_ENUM(imf, IMF, "the assumed initial mass function")
         ATTRIBUTE_DEFAULT_VALUE(imf, "Chabrier")
 
     ITEM_END()
@@ -88,8 +88,8 @@ public:
         specified parameters over the specified wavelength range. The function returns the
         normalization factor. The number and type of parameters must match the information returned
         by the parameterInfo() function; if not the behavior is undefined. */
-    double cdf(Array& lambdav, Array& pv, Array& Pv,
-               const Range& wavelengthRange, const Array& parameters) const override;
+    double cdf(Array& lambdav, Array& pv, Array& Pv, const Range& wavelengthRange,
+               const Array& parameters) const override;
 
     //====================== Data members =====================
 

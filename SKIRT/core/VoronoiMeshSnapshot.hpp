@@ -6,8 +6,8 @@
 #ifndef VORONOIMESHSNAPSHOT_HPP
 #define VORONOIMESHSNAPSHOT_HPP
 
-#include "Snapshot.hpp"
 #include "Array.hpp"
+#include "Snapshot.hpp"
 class SiteListInterface;
 class SpatialGridPath;
 
@@ -404,25 +404,24 @@ public:
     //======================== Data Members ========================
 
 private:
-
     // data members initialized during configuration
-    Box _extent;                    // the spatial domain of the mesh
-    double _eps{0.};                // small fraction of extent
+    Box _extent;      // the spatial domain of the mesh
+    double _eps{0.};  // small fraction of extent
 
     // data members initialized when processing snapshot input and further completed by BuildMesh()
-    vector<Cell*> _cells;           // cell objects, indexed on m
+    vector<Cell*> _cells;  // cell objects, indexed on m
 
     // data members initialized when processing snapshot input, but only if a density policy has been set
-    Array _rhov;                    // density for each cell (not normalized)
-    Array _cumrhov;                 // normalized cumulative density distribution for cells
-    double _mass{0.};               // total effective mass
+    Array _rhov;       // density for each cell (not normalized)
+    Array _cumrhov;    // normalized cumulative density distribution for cells
+    double _mass{0.};  // total effective mass
 
     // data members initialized by BuildSearch()
-    int _nb{0};                     // number of blocks in each dimension (limit for indices i,j,k)
-    int _nb2{0};                    // nb*nb
-    int _nb3{0};                    // nb*nb*nb
-    vector<vector<int>> _blocklists;// list of cell indices per block, indexed on i*_nb2+j*_nb+k
-    vector<Node*> _blocktrees;      // root node of search tree or null for each block, indexed on i*_nb2+j*_nb+k
+    int _nb{0};                       // number of blocks in each dimension (limit for indices i,j,k)
+    int _nb2{0};                      // nb*nb
+    int _nb3{0};                      // nb*nb*nb
+    vector<vector<int>> _blocklists;  // list of cell indices per block, indexed on i*_nb2+j*_nb+k
+    vector<Node*> _blocktrees;        // root node of search tree or null for each block, indexed on i*_nb2+j*_nb+k
 };
 
 ////////////////////////////////////////////////////////////////////

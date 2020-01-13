@@ -19,5 +19,5 @@ std::pair<double, double> NumberColumnMaterialNormalization::numberAndMass(const
     double reqNumberColumnDensity = _numberColumnDensity;
     double reqMassColumnDensity = _numberColumnDensity * mix->mass();
 
-    return std::make_pair(reqNumberColumnDensity/geomColumnDensity, reqMassColumnDensity/geomColumnDensity);
+    return std::make_pair(reqNumberColumnDensity / geomColumnDensity, reqMassColumnDensity / geomColumnDensity);
 }

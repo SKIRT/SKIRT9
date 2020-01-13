@@ -17,11 +17,12 @@ void BandWavelengthGrid::setupSelfAfter()
 
     // sort the bands in order of pivot wavelength
     std::sort(_bands.begin(), _bands.end(),
-              [] (Band* b1, Band* b2) { return b1->pivotWavelength() < b2->pivotWavelength(); });
+              [](Band* b1, Band* b2) { return b1->pivotWavelength() < b2->pivotWavelength(); });
 
     // verify that no two pivot wavelengths are equal (or very close)
-    if (_bands.end() != std::unique(_bands.begin(), _bands.end(),
-              [] (Band* b1, Band* b2) { return abs(1 - (b1->pivotWavelength()/b2->pivotWavelength())) < 1e-8; }))
+    if (_bands.end() != std::unique(_bands.begin(), _bands.end(), [](Band* b1, Band* b2) {
+            return abs(1 - (b1->pivotWavelength() / b2->pivotWavelength())) < 1e-8;
+        }))
         throw FATALERROR("Two or more bands have the same pivot wavelength to within 1e-8");
 }
 
@@ -73,7 +74,7 @@ vector<int> BandWavelengthGrid::bins(double lambda) const
 {
     vector<int> result;
     int n = _bands.size();
-    for (int ell=0; ell!=n; ++ell)
+    for (int ell = 0; ell != n; ++ell)
     {
         if (_bands[ell]->wavelengthRange().contains(lambda)) result.push_back(ell);
     }
@@ -85,7 +86,7 @@ vector<int> BandWavelengthGrid::bins(double lambda) const
 int BandWavelengthGrid::bin(double lambda) const
 {
     int n = _bands.size();
-    for (int ell=0; ell!=n; ++ell)
+    for (int ell = 0; ell != n; ++ell)
     {
         if (_bands[ell]->wavelengthRange().contains(lambda)) return ell;
     }

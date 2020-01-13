@@ -29,7 +29,7 @@ MultiProcessParallel::~MultiProcessParallel()
 
 ////////////////////////////////////////////////////////////////////
 
-void MultiProcessParallel::call(size_t maxIndex, std::function<void(size_t,size_t)> target)
+void MultiProcessParallel::call(size_t maxIndex, std::function<void(size_t, size_t)> target)
 {
     // In the root process, the child thread performs work, and the parent thread serves other processes
     if (ProcessManager::isRoot())
@@ -55,7 +55,7 @@ void MultiProcessParallel::call(size_t maxIndex, std::function<void(size_t,size_
 
         // Serve each non-root process an empty chunk as a terminating signal
         ProcessManager::serveChunkRequest(rank, 0, 0);
-        for (int i = 2; i!=ProcessManager::size(); ++i)
+        for (int i = 2; i != ProcessManager::size(); ++i)
         {
             rank = ProcessManager::waitForChunkRequest();
             ProcessManager::serveChunkRequest(rank, 0, 0);

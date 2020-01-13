@@ -6,9 +6,9 @@
 #ifndef ALLSKYINSTRUMENT_HPP
 #define ALLSKYINSTRUMENT_HPP
 
-#include "Instrument.hpp"
 #include "AllSkyProjection.hpp"
 #include "HomogeneousTransform.hpp"
+#include "Instrument.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -32,48 +32,48 @@ class AllSkyInstrument : public Instrument
     ITEM_CONCRETE(AllSkyInstrument, Instrument, "an all-sky instrument (for observing inside a model)")
         ATTRIBUTE_TYPE_DISPLAYED_IF(AllSkyInstrument, "Level2")
 
-    PROPERTY_ITEM(projection, AllSkyProjection, "the projection used for mapping the sky to a rectangle")
+        PROPERTY_ITEM(projection, AllSkyProjection, "the projection used for mapping the sky to a rectangle")
         ATTRIBUTE_DEFAULT_VALUE(projection, "HammerAitoffProjection")
 
-    PROPERTY_INT(numPixelsY, "the number of image pixels in the vertical (shortest) direction")
+        PROPERTY_INT(numPixelsY, "the number of image pixels in the vertical (shortest) direction")
         ATTRIBUTE_MIN_VALUE(numPixelsY, "25")
         ATTRIBUTE_MAX_VALUE(numPixelsY, "10000")
         ATTRIBUTE_DEFAULT_VALUE(numPixelsY, "250")
 
-    PROPERTY_DOUBLE(radius, "the radius of the observer's all-sky sphere")
+        PROPERTY_DOUBLE(radius, "the radius of the observer's all-sky sphere")
         ATTRIBUTE_QUANTITY(radius, "length")
         ATTRIBUTE_MIN_VALUE(radius, "]0")
 
-    PROPERTY_DOUBLE(observerX, "the position of the observer, x component")
+        PROPERTY_DOUBLE(observerX, "the position of the observer, x component")
         ATTRIBUTE_QUANTITY(observerX, "length")
 
-    PROPERTY_DOUBLE(observerY, "the position of the observer, y component")
+        PROPERTY_DOUBLE(observerY, "the position of the observer, y component")
         ATTRIBUTE_QUANTITY(observerY, "length")
 
-    PROPERTY_DOUBLE(observerZ, "the position of the observer, z component")
+        PROPERTY_DOUBLE(observerZ, "the position of the observer, z component")
         ATTRIBUTE_QUANTITY(observerZ, "length")
 
-    PROPERTY_DOUBLE(crossX, "the position of the crosshair, x component")
+        PROPERTY_DOUBLE(crossX, "the position of the crosshair, x component")
         ATTRIBUTE_QUANTITY(crossX, "length")
         ATTRIBUTE_DEFAULT_VALUE(crossX, "0")
 
-    PROPERTY_DOUBLE(crossY, "the position of the crosshair, y component")
+        PROPERTY_DOUBLE(crossY, "the position of the crosshair, y component")
         ATTRIBUTE_QUANTITY(crossY, "length")
         ATTRIBUTE_DEFAULT_VALUE(crossY, "0")
 
-    PROPERTY_DOUBLE(crossZ, "the position of the crosshair, z component")
+        PROPERTY_DOUBLE(crossZ, "the position of the crosshair, z component")
         ATTRIBUTE_QUANTITY(crossZ, "length")
         ATTRIBUTE_DEFAULT_VALUE(crossZ, "0")
 
-    PROPERTY_DOUBLE(upX, "the upwards direction, x component")
+        PROPERTY_DOUBLE(upX, "the upwards direction, x component")
         ATTRIBUTE_QUANTITY(upX, "length")
         ATTRIBUTE_DEFAULT_VALUE(upX, "0")
 
-    PROPERTY_DOUBLE(upY, "the upwards direction, y component")
+        PROPERTY_DOUBLE(upY, "the upwards direction, y component")
         ATTRIBUTE_QUANTITY(upY, "length")
         ATTRIBUTE_DEFAULT_VALUE(upY, "0")
 
-    PROPERTY_DOUBLE(upZ, "the upwards direction, z component")
+        PROPERTY_DOUBLE(upZ, "the upwards direction, z component")
         ATTRIBUTE_QUANTITY(upZ, "length")
         ATTRIBUTE_DEFAULT_VALUE(upZ, "1")
 
@@ -128,12 +128,12 @@ private:
     const double& _Uz{_upZ};
 
     // data members derived from the published attributes during setup
-    int _Nx{0};             // number of pixels in the x direction
-    int _Ny{0};             // number of pixels in the y direction
-    double _s{0.};          // estimated linear size of a pixel
-    Direction _bfkx;        // unit vector along the viewport's x-axis
-    Direction _bfky;        // unit vector along the viewport's y-axis
-    HomogeneousTransform _transform;   // transform from world to observer coordinates
+    int _Nx{0};                       // number of pixels in the x direction
+    int _Ny{0};                       // number of pixels in the y direction
+    double _s{0.};                    // estimated linear size of a pixel
+    Direction _bfkx;                  // unit vector along the viewport's x-axis
+    Direction _bfky;                  // unit vector along the viewport's y-axis
+    HomogeneousTransform _transform;  // transform from world to observer coordinates
 };
 
 ////////////////////////////////////////////////////////////////////

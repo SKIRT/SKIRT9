@@ -23,47 +23,47 @@ class OpticalDepthMapProbe : public AbstractWavelengthProbe
                   "all-sky optical depth map as seen from given location")
         ATTRIBUTE_TYPE_DISPLAYED_IF(OpticalDepthMapProbe, "Level2&Medium&SpatialGrid")
 
-    PROPERTY_ITEM(projection, AllSkyProjection, "the projection used for mapping the sky to a rectangle")
+        PROPERTY_ITEM(projection, AllSkyProjection, "the projection used for mapping the sky to a rectangle")
         ATTRIBUTE_DEFAULT_VALUE(projection, "HammerAitoffProjection")
 
-    PROPERTY_INT(numPixelsY, "the number of image pixels in the vertical (shortest) direction")
+        PROPERTY_INT(numPixelsY, "the number of image pixels in the vertical (shortest) direction")
         ATTRIBUTE_MIN_VALUE(numPixelsY, "25")
         ATTRIBUTE_MAX_VALUE(numPixelsY, "10000")
         ATTRIBUTE_DEFAULT_VALUE(numPixelsY, "250")
 
-    PROPERTY_DOUBLE(observerX, "the position of the observer, x component")
+        PROPERTY_DOUBLE(observerX, "the position of the observer, x component")
         ATTRIBUTE_QUANTITY(observerX, "length")
         ATTRIBUTE_DEFAULT_VALUE(observerX, "0")
 
-    PROPERTY_DOUBLE(observerY, "the position of the observer, y component")
+        PROPERTY_DOUBLE(observerY, "the position of the observer, y component")
         ATTRIBUTE_QUANTITY(observerY, "length")
         ATTRIBUTE_DEFAULT_VALUE(observerY, "0")
 
-    PROPERTY_DOUBLE(observerZ, "the position of the observer, z component")
+        PROPERTY_DOUBLE(observerZ, "the position of the observer, z component")
         ATTRIBUTE_QUANTITY(observerZ, "length")
         ATTRIBUTE_DEFAULT_VALUE(observerZ, "0")
 
-    PROPERTY_DOUBLE(crossX, "the position of the crosshair, x component")
+        PROPERTY_DOUBLE(crossX, "the position of the crosshair, x component")
         ATTRIBUTE_QUANTITY(crossX, "length")
         ATTRIBUTE_DEFAULT_VALUE(crossX, "1")
 
-    PROPERTY_DOUBLE(crossY, "the position of the crosshair, y component")
+        PROPERTY_DOUBLE(crossY, "the position of the crosshair, y component")
         ATTRIBUTE_QUANTITY(crossY, "length")
         ATTRIBUTE_DEFAULT_VALUE(crossY, "0")
 
-    PROPERTY_DOUBLE(crossZ, "the position of the crosshair, z component")
+        PROPERTY_DOUBLE(crossZ, "the position of the crosshair, z component")
         ATTRIBUTE_QUANTITY(crossZ, "length")
         ATTRIBUTE_DEFAULT_VALUE(crossZ, "0")
 
-    PROPERTY_DOUBLE(upX, "the upwards direction, x component")
+        PROPERTY_DOUBLE(upX, "the upwards direction, x component")
         ATTRIBUTE_QUANTITY(upX, "length")
         ATTRIBUTE_DEFAULT_VALUE(upX, "0")
 
-    PROPERTY_DOUBLE(upY, "the upwards direction, y component")
+        PROPERTY_DOUBLE(upY, "the upwards direction, y component")
         ATTRIBUTE_QUANTITY(upY, "length")
         ATTRIBUTE_DEFAULT_VALUE(upY, "0")
 
-    PROPERTY_DOUBLE(upZ, "the upwards direction, z component")
+        PROPERTY_DOUBLE(upZ, "the upwards direction, z component")
         ATTRIBUTE_QUANTITY(upZ, "length")
         ATTRIBUTE_DEFAULT_VALUE(upZ, "1")
 

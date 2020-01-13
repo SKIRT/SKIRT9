@@ -26,11 +26,10 @@
 class StokesVector
 {
 public:
-
     // -------- constructors and setters ----------
 
     /** The default constructor initializes the Stokes vector to an unpolarized state. */
-    StokesVector() : _polarized(false), _Q(0), _U(0), _V(0), _normal(0,0,0) { }
+    StokesVector() : _polarized(false), _Q(0), _U(0), _V(0), _normal(0, 0, 0) {}
 
     /** This constructor initializes the Stokes vector to the specified parameter values, after
         normalizing them through division by \f$I\f$. If \f$I=0\f$, the Stokes vector is set to an
@@ -38,7 +37,14 @@ public:
     StokesVector(double I, double Q, double U, double V, Direction n);
 
     /** This function sets the Stokes vector to an unpolarized state. */
-    void setUnpolarized() { _polarized = false; _Q = 0; _U = 0; _V = 0; _normal.set(0, 0, 0); }
+    void setUnpolarized()
+    {
+        _polarized = false;
+        _Q = 0;
+        _U = 0;
+        _V = 0;
+        _normal.set(0, 0, 0);
+    }
 
     /** This function sets the Stokes vector to the specified parameter values, after normalizing
         them through division by \f$I\f$. If \f$I=0\f$, the Stokes vector is set to an unpolarized
@@ -63,7 +69,13 @@ public:
     double stokesV() const { return _V; }
 
     /** This function returns the Stokes parameters in the provided arguments. */
-    void stokes(double& I, double& Q, double& U, double& V) { I = 1.; Q = _Q; U = _U; V = _V; }
+    void stokes(double& I, double& Q, double& U, double& V)
+    {
+        I = 1.;
+        Q = _Q;
+        U = _U;
+        V = _V;
+    }
 
     /** This function returns the normal to the propagation direction of the photon and the
         reference direction in which the Stokes vector is defined. If the Stokes vector is in an
@@ -73,10 +85,10 @@ public:
     // -------- calculated properties -------
 
     /** This function returns the total polarization degree for the Stokes vector. */
-   double totalPolarizationDegree() const;
+    double totalPolarizationDegree() const;
 
     /** This function returns the linear polarization degree for the Stokes vector. */
-   double linearPolarizationDegree() const;
+    double linearPolarizationDegree() const;
 
     /** This function returns the polarization position angle in radians for the Stokes vector. */
     double polarizationAngle() const;

@@ -6,8 +6,8 @@
 #ifndef READFITSGEOMETRY_HPP
 #define READFITSGEOMETRY_HPP
 
-#include "GenGeometry.hpp"
 #include "Array.hpp"
+#include "GenGeometry.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -21,42 +21,42 @@
     filename, the pixel scale \f$pix\f$, the position angle \f$pa\f$, the inclination \f$incl\f$,
     the number of pixels in x and y direction \f$n_x\f$ and \f$n_y\f$, the center of galaxy in
     (x,y) image coordinates \f$x_c\f$ and \f$y_c\f$ and the vertical scale height \f$h_z\f$. */
-class ReadFitsGeometry: public GenGeometry
+class ReadFitsGeometry : public GenGeometry
 {
     ITEM_CONCRETE(ReadFitsGeometry, GenGeometry, "a geometry read from a FITS file")
         ATTRIBUTE_TYPE_DISPLAYED_IF(ReadFitsGeometry, "Level2")
 
-    PROPERTY_STRING(filename, "the name of the input image file")
+        PROPERTY_STRING(filename, "the name of the input image file")
 
-    PROPERTY_DOUBLE(pixelScale, "the physical scale of the image (length per pixel)")
+        PROPERTY_DOUBLE(pixelScale, "the physical scale of the image (length per pixel)")
         ATTRIBUTE_QUANTITY(pixelScale, "length")
         ATTRIBUTE_MIN_VALUE(pixelScale, "]0")
 
-    PROPERTY_DOUBLE(positionAngle, "the position angle ω of the system")
+        PROPERTY_DOUBLE(positionAngle, "the position angle ω of the system")
         ATTRIBUTE_QUANTITY(positionAngle, "posangle")
         ATTRIBUTE_MIN_VALUE(positionAngle, "-360 deg")
         ATTRIBUTE_MAX_VALUE(positionAngle, "360 deg")
         ATTRIBUTE_DEFAULT_VALUE(positionAngle, "0 deg")
 
-    PROPERTY_DOUBLE(inclination, "the inclination angle θ of the system")
+        PROPERTY_DOUBLE(inclination, "the inclination angle θ of the system")
         ATTRIBUTE_QUANTITY(inclination, "posangle")
         ATTRIBUTE_MIN_VALUE(inclination, "[0 deg")
         ATTRIBUTE_MAX_VALUE(inclination, "90 deg[")
         ATTRIBUTE_DEFAULT_VALUE(inclination, "0 deg")
 
-    PROPERTY_INT(numPixelsX, "number of pixels in the x direction")
+        PROPERTY_INT(numPixelsX, "number of pixels in the x direction")
         ATTRIBUTE_MIN_VALUE(numPixelsX, "1")
 
-    PROPERTY_DOUBLE(centerX, "x coordinate of the center (in pixels)")
+        PROPERTY_DOUBLE(centerX, "x coordinate of the center (in pixels)")
         ATTRIBUTE_MIN_VALUE(centerX, "]0")
 
-    PROPERTY_INT(numPixelsY, "number of pixels in the y direction")
+        PROPERTY_INT(numPixelsY, "number of pixels in the y direction")
         ATTRIBUTE_MIN_VALUE(numPixelsY, "1")
 
-    PROPERTY_DOUBLE(centerY, "y coordinate of the center (in pixels)")
+        PROPERTY_DOUBLE(centerY, "y coordinate of the center (in pixels)")
         ATTRIBUTE_MIN_VALUE(centerY, "]0")
 
-    PROPERTY_DOUBLE(scaleHeight, "the scale height")
+        PROPERTY_DOUBLE(scaleHeight, "the scale height")
         ATTRIBUTE_QUANTITY(scaleHeight, "length")
         ATTRIBUTE_MIN_VALUE(scaleHeight, "]0")
 
@@ -111,24 +111,24 @@ private:
         \f]
         where \f$\omega\f$ is the position angle.
     */
-    void rotate(double &x, double &y) const;
+    void rotate(double& x, double& y) const;
 
     /** This function transforms a set of x and y coordinates in the plane of the image into the x and
         y coordinates in the (derotated) inclined plane. The transformation matrix is the inverse of
         the matrix used for the rotate function. */
-    void derotate(double &x, double &y) const;
+    void derotate(double& x, double& y) const;
 
     /** This function projects the x coordinate of a point in the world coordinate system into the x
         coordinate of that point in the inclined plane. The following operation is applied:
         \f[x'=x\cdot \cos{\theta}\f]
         where \f$\theta\f$ is the inclination. */
-    void project(double &x) const;
+    void project(double& x) const;
 
     /** This function deprojects the x coordinate of a point in the inclined plane into the x
         coordinate of that point in the world coordinate system. The following operation is applied:
         \f[x=\frac{x'}{\cos{\theta}}\f]
         where \f$\theta\f$ is the inclination. */
-    void deproject(double &x) const;
+    void deproject(double& x) const;
 
     //======================== Data Members ========================
 

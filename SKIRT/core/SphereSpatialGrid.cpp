@@ -9,7 +9,7 @@
 
 Box SphereSpatialGrid::boundingBox() const
 {
-    return Box(-_maxRadius,-_maxRadius,-_maxRadius, _maxRadius,_maxRadius,_maxRadius);
+    return Box(-_maxRadius, -_maxRadius, -_maxRadius, _maxRadius, _maxRadius, _maxRadius);
 }
 
 //////////////////////////////////////////////////////////////////////

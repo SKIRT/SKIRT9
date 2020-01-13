@@ -24,19 +24,19 @@ class OffsetGeometryDecorator : public Geometry
 {
     ITEM_CONCRETE(OffsetGeometryDecorator, Geometry, "a decorator that adds an offset to any geometry")
 
-    PROPERTY_ITEM(geometry, Geometry, "the geometry to be offset")
+        PROPERTY_ITEM(geometry, Geometry, "the geometry to be offset")
 
-    PROPERTY_DOUBLE(offsetX, "the offset in the x direction")
+        PROPERTY_DOUBLE(offsetX, "the offset in the x direction")
         ATTRIBUTE_QUANTITY(offsetX, "length")
         ATTRIBUTE_DEFAULT_VALUE(offsetX, "0")
         ATTRIBUTE_INSERT(offsetX, "offsetX:Dimension3")
 
-    PROPERTY_DOUBLE(offsetY, "the offset in the y direction")
+        PROPERTY_DOUBLE(offsetY, "the offset in the y direction")
         ATTRIBUTE_QUANTITY(offsetY, "length")
         ATTRIBUTE_DEFAULT_VALUE(offsetY, "0")
         ATTRIBUTE_INSERT(offsetY, "offsetY:Dimension3")
 
-    PROPERTY_DOUBLE(offsetZ, "the offset in the z direction")
+        PROPERTY_DOUBLE(offsetZ, "the offset in the z direction")
         ATTRIBUTE_QUANTITY(offsetZ, "length")
         ATTRIBUTE_DEFAULT_VALUE(offsetZ, "0")
         ATTRIBUTE_INSERT(offsetZ, "offsetZ:Dimension2")

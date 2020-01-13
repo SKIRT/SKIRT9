@@ -14,9 +14,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-ParallelFactory::ParallelFactory()
-{
-}
+ParallelFactory::ParallelFactory() {}
 
 ////////////////////////////////////////////////////////////////////
 
@@ -27,9 +25,7 @@ ParallelFactory::ParallelFactory(SimulationItem* parent)
 
 ////////////////////////////////////////////////////////////////////
 
-ParallelFactory::~ParallelFactory()
-{
-}
+ParallelFactory::~ParallelFactory() {}
 
 ////////////////////////////////////////////////////////////////////
 
@@ -66,7 +62,7 @@ Parallel* ParallelFactory::parallel(TaskMode mode, int maxThreadCount)
     // Determine the number of threads
     //  - limited by both the factory maximum and the maximum specified here as an argument
     //  - reduced to one for Duplicated mode in multiprocessing environment
-    int numThreads = maxThreadCount>0 ? std::min(maxThreadCount, _maxThreadCount) : _maxThreadCount;
+    int numThreads = maxThreadCount > 0 ? std::min(maxThreadCount, _maxThreadCount) : _maxThreadCount;
     if (mode == TaskMode::Duplicated && ProcessManager::isMultiProc()) numThreads = 1;
 
     // Determine the Parallel subclass type (see class documentation for details)
@@ -86,13 +82,13 @@ Parallel* ParallelFactory::parallel(TaskMode mode, int maxThreadCount)
     {
         switch (type)
         {
-        case ParallelType::Null:         child.reset( new NullParallel(numThreads) );         break;
-        case ParallelType::Serial:       child.reset( new SerialParallel(numThreads) );       break;
-        case ParallelType::MultiThread:  child.reset( new MultiThreadParallel(numThreads) );  break;
-        case ParallelType::MultiProcess: child.reset( new MultiProcessParallel(numThreads) ); break;
-        case ParallelType::MultiHybrid:  child.reset( new MultiHybridParallel(numThreads) );  break;
+            case ParallelType::Null: child.reset(new NullParallel(numThreads)); break;
+            case ParallelType::Serial: child.reset(new SerialParallel(numThreads)); break;
+            case ParallelType::MultiThread: child.reset(new MultiThreadParallel(numThreads)); break;
+            case ParallelType::MultiProcess: child.reset(new MultiProcessParallel(numThreads)); break;
+            case ParallelType::MultiHybrid: child.reset(new MultiHybridParallel(numThreads)); break;
         }
-     }
+    }
     return child.get();
 }
 

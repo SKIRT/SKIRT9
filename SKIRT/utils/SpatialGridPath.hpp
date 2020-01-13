@@ -33,7 +33,6 @@ class Box;
 class SpatialGridPath
 {
 public:
-
     // ------- Constructors; handling position and directions -------
 
     /** This constructor creates an empty path with the specified initial position and propagation
@@ -53,7 +52,7 @@ public:
 
     /** This function propagates the initial position of the path over a distance \f$s\f$. In other
         words, it updates the position from \f${\bf{r}}\f$ to \f${\bf{r}}+s\,{\bf{k}}\f$. */
-    void propagatePosition(double s) { _bfr += s*_bfk; }
+    void propagatePosition(double s) { _bfr += s * _bfk; }
 
     /** This function returns the initial position of the path. */
     Position position() const { return _bfr; }
@@ -79,7 +78,7 @@ public:
         no segments are added. If the half-ray formed by the initial position and the propagation
         direction does not intersect the box, the function returns some arbitrary position outside
         the box. */
-    Position moveInside(const Box &box, double eps);
+    Position moveInside(const Box& box, double eps);
 
     // ------- Retrieving path segments -------
 

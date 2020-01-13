@@ -6,8 +6,8 @@
 #ifndef RANDOM_HPP
 #define RANDOM_HPP
 
-#include "SimulationItem.hpp"
 #include "Array.hpp"
+#include "SimulationItem.hpp"
 class Box;
 class Direction;
 class Position;
@@ -65,7 +65,7 @@ class Random : public SimulationItem
 {
     ITEM_CONCRETE(Random, SimulationItem, "the default random generator")
 
-    PROPERTY_INT(seed, "the seed for the random generator")
+        PROPERTY_INT(seed, "the seed for the random generator")
         ATTRIBUTE_MIN_VALUE(seed, "0")
         ATTRIBUTE_MAX_VALUE(seed, "1000000")
         ATTRIBUTE_DEFAULT_VALUE(seed, "0")

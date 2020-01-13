@@ -77,11 +77,11 @@ private:
     // ================== Data members ==================
 
 private:
-    std::ofstream _outfile;         // the output file, if it is opened in our constructor
-    std::ostream& _out;             // reference to the output stream (which may be our output file)
-    string _streamName;             // human readable name for use in error messages
-    vector<string> _elementNames;   // names of the ancestors of the current element, including itself
-    bool _starting{false};          // becomes true while a start element tag is being written and needs closing
+    std::ofstream _outfile;        // the output file, if it is opened in our constructor
+    std::ostream& _out;            // reference to the output stream (which may be our output file)
+    string _streamName;            // human readable name for use in error messages
+    vector<string> _elementNames;  // names of the ancestors of the current element, including itself
+    bool _starting{false};         // becomes true while a start element tag is being written and needs closing
 };
 
 ////////////////////////////////////////////////////////////////////

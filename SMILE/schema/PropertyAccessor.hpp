@@ -45,6 +45,7 @@ class PropertyAccessor
 {
 protected:
     PropertyAccessor() {}
+
 public:
     PropertyAccessor(const PropertyAccessor&) = delete;
     PropertyAccessor& operator=(const PropertyAccessor&) = delete;
@@ -58,8 +59,7 @@ public:
     type V, given as template parameter. The template is specialized for a value type representing
     a list of items, because this type requires a different set of setters to manage individual
     items in the list. Refer to the PropertyAccessor class for more information. */
-template <typename V>
-class TypedPropertyAccessor : public PropertyAccessor
+template<typename V> class TypedPropertyAccessor : public PropertyAccessor
 {
 protected:
     TypedPropertyAccessor() {}
@@ -73,8 +73,7 @@ public:
 /// \cond
 
 // Specialization for item list properties
-template <>
-class TypedPropertyAccessor<vector<Item*>> : public PropertyAccessor
+template<> class TypedPropertyAccessor<vector<Item*>> : public PropertyAccessor
 {
 protected:
     TypedPropertyAccessor() {}
@@ -98,8 +97,7 @@ public:
     template is specialized for several value types to allow special processing, such as casting
     pointers between Item and one of its subclasses, or translating an enumeration value to an
     integer and vice versa. Refer to the PropertyAccessor class for more information. */
-template <typename V, class T, typename = void>
-class TargetTypedPropertyAccessor : public TypedPropertyAccessor<V>
+template<typename V, class T, typename = void> class TargetTypedPropertyAccessor : public TypedPropertyAccessor<V>
 {
     using Getter = V (T::*)() const;
     using Setter = void (T::*)(V);
@@ -107,7 +105,11 @@ class TargetTypedPropertyAccessor : public TypedPropertyAccessor<V>
     Setter _setter;
 
 public:
-    TargetTypedPropertyAccessor(Getter getter, Setter setter) { _getter = getter; _setter = setter; }
+    TargetTypedPropertyAccessor(Getter getter, Setter setter)
+    {
+        _getter = getter;
+        _setter = setter;
+    }
 
     V targetValue(const Item* target) const override
     {
@@ -126,7 +128,7 @@ public:
 
 // Specialization for enumeration properties, so that we can translate enumeration values to integers, and vice versa
 // The third template argument ensures that this specialization is selected only for enumeration types
-template <typename V, class T>
+template<typename V, class T>
 class TargetTypedPropertyAccessor<V, T, std::enable_if_t<std::is_enum<V>::value>> : public TypedPropertyAccessor<int>
 {
     using Getter = V (T::*)() const;
@@ -135,7 +137,11 @@ class TargetTypedPropertyAccessor<V, T, std::enable_if_t<std::is_enum<V>::value>
     Setter _setter;
 
 public:
-    TargetTypedPropertyAccessor(Getter getter, Setter setter) { _getter = getter; _setter = setter; }
+    TargetTypedPropertyAccessor(Getter getter, Setter setter)
+    {
+        _getter = getter;
+        _setter = setter;
+    }
 
     int targetValue(const Item* target) const override
     {
@@ -150,8 +156,7 @@ public:
 };
 
 // Specialization for value list types, which use a const reference in the getter return type
-template <typename V, class T>
-class TargetTypedPropertyAccessor<vector<V>, T> : public TypedPropertyAccessor<vector<V>>
+template<typename V, class T> class TargetTypedPropertyAccessor<vector<V>, T> : public TypedPropertyAccessor<vector<V>>
 {
     using Getter = const vector<V>& (T::*)() const;
     using Setter = void (T::*)(vector<V>);
@@ -159,7 +164,11 @@ class TargetTypedPropertyAccessor<vector<V>, T> : public TypedPropertyAccessor<v
     Setter _setter;
 
 public:
-    TargetTypedPropertyAccessor(Getter getter, Setter setter) { _getter = getter; _setter = setter; }
+    TargetTypedPropertyAccessor(Getter getter, Setter setter)
+    {
+        _getter = getter;
+        _setter = setter;
+    }
 
     vector<V> targetValue(const Item* target) const override
     {
@@ -174,8 +183,7 @@ public:
 };
 
 // Specialization for item properties, so that we can cast the Item subclass instances to Item, and vice versa
-template <typename V, class T>
-class TargetTypedPropertyAccessor<V*,T> : public TypedPropertyAccessor<Item*>
+template<typename V, class T> class TargetTypedPropertyAccessor<V*, T> : public TypedPropertyAccessor<Item*>
 {
     using Getter = V* (T::*)() const;
     using Setter = void (T::*)(V*);
@@ -183,7 +191,11 @@ class TargetTypedPropertyAccessor<V*,T> : public TypedPropertyAccessor<Item*>
     Setter _setter;
 
 public:
-    TargetTypedPropertyAccessor(Getter getter, Setter setter) { _getter = getter; _setter = setter; }
+    TargetTypedPropertyAccessor(Getter getter, Setter setter)
+    {
+        _getter = getter;
+        _setter = setter;
+    }
 
     Item* targetValue(const Item* target) const override
     {
@@ -200,8 +212,8 @@ public:
 
 // Specialization for item list properties, to implement the special setters,
 // and so that we can cast the Item subclass instances to Item, and vice versa
-template <typename V, class T>
-class TargetTypedPropertyAccessor<vector<V*>,T> : public TypedPropertyAccessor<vector<Item*>>
+template<typename V, class T>
+class TargetTypedPropertyAccessor<vector<V*>, T> : public TypedPropertyAccessor<vector<Item*>>
 {
     using Getter = const vector<V*>& (T::*)() const;
     using Clearer = void (T::*)();
@@ -214,13 +226,20 @@ class TargetTypedPropertyAccessor<vector<V*>,T> : public TypedPropertyAccessor<v
 
 public:
     TargetTypedPropertyAccessor(Getter getter, Clearer clearer, Inserter inserter, Remover remover)
-                            { _getter = getter; _clearer = clearer; _inserter = inserter; _remover = remover; }
+    {
+        _getter = getter;
+        _clearer = clearer;
+        _inserter = inserter;
+        _remover = remover;
+    }
 
     vector<Item*> targetValue(const Item* target) const override
     {
         vector<Item*> result;
         auto tg = dynamic_cast<const T*>(target);
-        if (tg) for (const auto& it : (tg->*_getter)()) if (it) result.push_back(it);
+        if (tg)
+            for (const auto& it : (tg->*_getter)())
+                if (it) result.push_back(it);
         return result;
     }
     virtual void clearTargetValue(Item* target) const override
@@ -233,12 +252,12 @@ public:
         auto val = dynamic_cast<V*>(value);
         auto tg = dynamic_cast<T*>(target);
         if (val && tg) (tg->*_inserter)(index, val);
-
     }
     virtual void removeFromTargetValue(Item* target, int index) const override
     {
         auto tg = dynamic_cast<T*>(target);
-        if (tg) (tg->*_remover)(index);    }
+        if (tg) (tg->*_remover)(index);
+    }
 };
 
 /// \endcond

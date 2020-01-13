@@ -15,7 +15,7 @@ void AxAngularDistribution::setupSelfBefore()
 
     Vec sym(symmetryX(), symmetryY(), symmetryZ());
     if (sym.norm() == 0) throw FATALERROR("Symmetry axis direction cannot be null vector");
-    _sym = Direction(sym/sym.norm());
+    _sym = Direction(sym / sym.norm());
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -37,7 +37,7 @@ void OctTreeNode::createChildren(int id)
 TreeNode* OctTreeNode::child(Vec r)
 {
     Vec rc = CHILD_0->rmax();
-    int l = (r.x()<rc.x() ? 0 : 1) + (r.y()<rc.y() ? 0 : 2) + (r.z()<rc.z() ? 0 : 4);
+    int l = (r.x() < rc.x() ? 0 : 1) + (r.y() < rc.y() ? 0 : 2) + (r.z() < rc.z() ? 0 : 4);
     return children()[l];
 }
 
@@ -51,12 +51,12 @@ void OctTreeNode::addNeighbors()
     // Internal neighbors: each of the 8 new children has 3 neighbors among its siblings
     makeNeighbors(FRONT, CHILD_0, CHILD_1);
     makeNeighbors(RIGHT, CHILD_0, CHILD_2);
-    makeNeighbors(TOP  , CHILD_0, CHILD_4);
+    makeNeighbors(TOP, CHILD_0, CHILD_4);
     makeNeighbors(RIGHT, CHILD_1, CHILD_3);
-    makeNeighbors(TOP  , CHILD_1, CHILD_5);
+    makeNeighbors(TOP, CHILD_1, CHILD_5);
     makeNeighbors(FRONT, CHILD_2, CHILD_3);
-    makeNeighbors(TOP  , CHILD_2, CHILD_6);
-    makeNeighbors(TOP  , CHILD_3, CHILD_7);
+    makeNeighbors(TOP, CHILD_2, CHILD_6);
+    makeNeighbors(TOP, CHILD_3, CHILD_7);
     makeNeighbors(FRONT, CHILD_4, CHILD_5);
     makeNeighbors(RIGHT, CHILD_4, CHILD_6);
     makeNeighbors(RIGHT, CHILD_5, CHILD_7);
@@ -72,10 +72,10 @@ void OctTreeNode::addNeighbors()
         for (auto neighbor : neighbors(BACK))
         {
             neighbor->deleteNeighbor(FRONT, this);
-            if (neighbor->ymin() <= yc  &&  neighbor->zmin() <= zc) makeNeighbors(FRONT, neighbor, CHILD_0);
-            if (neighbor->ymax() >= yc  &&  neighbor->zmin() <= zc) makeNeighbors(FRONT, neighbor, CHILD_2);
-            if (neighbor->ymin() <= yc  &&  neighbor->zmax() >= zc) makeNeighbors(FRONT, neighbor, CHILD_4);
-            if (neighbor->ymax() >= yc  &&  neighbor->zmax() >= zc) makeNeighbors(FRONT, neighbor, CHILD_6);
+            if (neighbor->ymin() <= yc && neighbor->zmin() <= zc) makeNeighbors(FRONT, neighbor, CHILD_0);
+            if (neighbor->ymax() >= yc && neighbor->zmin() <= zc) makeNeighbors(FRONT, neighbor, CHILD_2);
+            if (neighbor->ymin() <= yc && neighbor->zmax() >= zc) makeNeighbors(FRONT, neighbor, CHILD_4);
+            if (neighbor->ymax() >= yc && neighbor->zmax() >= zc) makeNeighbors(FRONT, neighbor, CHILD_6);
         }
     }
     // The FRONT neighbors of this node
@@ -83,10 +83,10 @@ void OctTreeNode::addNeighbors()
         for (auto neighbor : neighbors(FRONT))
         {
             neighbor->deleteNeighbor(BACK, this);
-            if (neighbor->ymin() <= yc  &&  neighbor->zmin() <= zc) makeNeighbors(BACK, neighbor, CHILD_1);
-            if (neighbor->ymax() >= yc  &&  neighbor->zmin() <= zc) makeNeighbors(BACK, neighbor, CHILD_3);
-            if (neighbor->ymin() <= yc  &&  neighbor->zmax() >= zc) makeNeighbors(BACK, neighbor, CHILD_5);
-            if (neighbor->ymax() >= yc  &&  neighbor->zmax() >= zc) makeNeighbors(BACK, neighbor, CHILD_7);
+            if (neighbor->ymin() <= yc && neighbor->zmin() <= zc) makeNeighbors(BACK, neighbor, CHILD_1);
+            if (neighbor->ymax() >= yc && neighbor->zmin() <= zc) makeNeighbors(BACK, neighbor, CHILD_3);
+            if (neighbor->ymin() <= yc && neighbor->zmax() >= zc) makeNeighbors(BACK, neighbor, CHILD_5);
+            if (neighbor->ymax() >= yc && neighbor->zmax() >= zc) makeNeighbors(BACK, neighbor, CHILD_7);
         }
     }
     // The LEFT neighbors of this node
@@ -94,10 +94,10 @@ void OctTreeNode::addNeighbors()
         for (auto neighbor : neighbors(LEFT))
         {
             neighbor->deleteNeighbor(RIGHT, this);
-            if (neighbor->xmin() <= xc  &&  neighbor->zmin() <= zc) makeNeighbors(RIGHT, neighbor, CHILD_0);
-            if (neighbor->xmax() >= xc  &&  neighbor->zmin() <= zc) makeNeighbors(RIGHT, neighbor, CHILD_1);
-            if (neighbor->xmin() <= xc  &&  neighbor->zmax() >= zc) makeNeighbors(RIGHT, neighbor, CHILD_4);
-            if (neighbor->xmax() >= xc  &&  neighbor->zmax() >= zc) makeNeighbors(RIGHT, neighbor, CHILD_5);
+            if (neighbor->xmin() <= xc && neighbor->zmin() <= zc) makeNeighbors(RIGHT, neighbor, CHILD_0);
+            if (neighbor->xmax() >= xc && neighbor->zmin() <= zc) makeNeighbors(RIGHT, neighbor, CHILD_1);
+            if (neighbor->xmin() <= xc && neighbor->zmax() >= zc) makeNeighbors(RIGHT, neighbor, CHILD_4);
+            if (neighbor->xmax() >= xc && neighbor->zmax() >= zc) makeNeighbors(RIGHT, neighbor, CHILD_5);
         }
     }
     // The RIGHT neighbors of this node
@@ -105,10 +105,10 @@ void OctTreeNode::addNeighbors()
         for (auto neighbor : neighbors(RIGHT))
         {
             neighbor->deleteNeighbor(LEFT, this);
-            if (neighbor->xmin() <= xc  &&  neighbor->zmin() <= zc) makeNeighbors(LEFT, neighbor, CHILD_2);
-            if (neighbor->xmax() >= xc  &&  neighbor->zmin() <= zc) makeNeighbors(LEFT, neighbor, CHILD_3);
-            if (neighbor->xmin() <= xc  &&  neighbor->zmax() >= zc) makeNeighbors(LEFT, neighbor, CHILD_6);
-            if (neighbor->xmax() >= xc  &&  neighbor->zmax() >= zc) makeNeighbors(LEFT, neighbor, CHILD_7);
+            if (neighbor->xmin() <= xc && neighbor->zmin() <= zc) makeNeighbors(LEFT, neighbor, CHILD_2);
+            if (neighbor->xmax() >= xc && neighbor->zmin() <= zc) makeNeighbors(LEFT, neighbor, CHILD_3);
+            if (neighbor->xmin() <= xc && neighbor->zmax() >= zc) makeNeighbors(LEFT, neighbor, CHILD_6);
+            if (neighbor->xmax() >= xc && neighbor->zmax() >= zc) makeNeighbors(LEFT, neighbor, CHILD_7);
         }
     }
     // The BOTTOM neighbors of this node
@@ -116,10 +116,10 @@ void OctTreeNode::addNeighbors()
         for (auto neighbor : neighbors(BOTTOM))
         {
             neighbor->deleteNeighbor(TOP, this);
-            if (neighbor->xmin() <= xc  &&  neighbor->ymin() <= yc) makeNeighbors(TOP, neighbor, CHILD_0);
-            if (neighbor->xmax() >= xc  &&  neighbor->ymin() <= yc) makeNeighbors(TOP, neighbor, CHILD_1);
-            if (neighbor->xmin() <= xc  &&  neighbor->ymax() >= yc) makeNeighbors(TOP, neighbor, CHILD_2);
-            if (neighbor->xmax() >= xc  &&  neighbor->ymax() >= yc) makeNeighbors(TOP, neighbor, CHILD_3);
+            if (neighbor->xmin() <= xc && neighbor->ymin() <= yc) makeNeighbors(TOP, neighbor, CHILD_0);
+            if (neighbor->xmax() >= xc && neighbor->ymin() <= yc) makeNeighbors(TOP, neighbor, CHILD_1);
+            if (neighbor->xmin() <= xc && neighbor->ymax() >= yc) makeNeighbors(TOP, neighbor, CHILD_2);
+            if (neighbor->xmax() >= xc && neighbor->ymax() >= yc) makeNeighbors(TOP, neighbor, CHILD_3);
         }
     }
     // The TOP neighbors of this node
@@ -127,10 +127,10 @@ void OctTreeNode::addNeighbors()
         for (auto neighbor : neighbors(TOP))
         {
             neighbor->deleteNeighbor(BOTTOM, this);
-            if (neighbor->xmin() <= xc  &&  neighbor->ymin() <= yc) makeNeighbors(BOTTOM, neighbor, CHILD_4);
-            if (neighbor->xmax() >= xc  &&  neighbor->ymin() <= yc) makeNeighbors(BOTTOM, neighbor, CHILD_5);
-            if (neighbor->xmin() <= xc  &&  neighbor->ymax() >= yc) makeNeighbors(BOTTOM, neighbor, CHILD_6);
-            if (neighbor->xmax() >= xc  &&  neighbor->ymax() >= yc) makeNeighbors(BOTTOM, neighbor, CHILD_7);
+            if (neighbor->xmin() <= xc && neighbor->ymin() <= yc) makeNeighbors(BOTTOM, neighbor, CHILD_4);
+            if (neighbor->xmax() >= xc && neighbor->ymin() <= yc) makeNeighbors(BOTTOM, neighbor, CHILD_5);
+            if (neighbor->xmin() <= xc && neighbor->ymax() >= yc) makeNeighbors(BOTTOM, neighbor, CHILD_6);
+            if (neighbor->xmax() >= xc && neighbor->ymax() >= yc) makeNeighbors(BOTTOM, neighbor, CHILD_7);
         }
     }
 }

@@ -6,9 +6,9 @@
 #ifndef DUSTMIX_HPP
 #define DUSTMIX_HPP
 
-#include "MaterialMix.hpp"
 #include "ArrayTable.hpp"
 #include "EquilibriumDustEmissionCalculator.hpp"
+#include "MaterialMix.hpp"
 #include "Table.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -94,10 +94,9 @@ protected:
 
         For the SpheroidalPolarization mode, the function must also fill the sigmaabsvv and
         sigmaabspolvv tables. */
-    virtual double getOpticalProperties(const Array& lambdav, const Array& thetav,
-                                        Array& sigmaabsv, Array& sigmascav, Array& asymmparv,
-                                        Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv,
-                                        ArrayTable<2>& sigmaabsvv, ArrayTable<2>& sigmaabspolvv) = 0;
+    virtual double getOpticalProperties(const Array& lambdav, const Array& thetav, Array& sigmaabsv, Array& sigmascav,
+                                        Array& asymmparv, Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv,
+                                        Table<2>& S34vv, ArrayTable<2>& sigmaabsvv, ArrayTable<2>& sigmaabspolvv) = 0;
 
     /** This function can be implemented in a subclass to initialize dust properties that are
         required to offer additional functionality. The argument specifies the wavelength grid on
@@ -209,7 +208,7 @@ public:
         polarization angle of the incoming photon, and where the Mueller matrix coefficients
         \f$S_{xx}\f$ depend on both the photon wavelength \f$\lambda\f$ and the scattering angle
         \f$\theta\f$. */
-   double phaseFunctionValue(double lambda, double theta, double phi, const StokesVector* sv) const override;
+    double phaseFunctionValue(double lambda, double theta, double phi, const StokesVector* sv) const override;
 
     /** This function generates random scattering angles \f$\theta\f$ and \f$\phi\f$ sampled from
         the phase function \f$\Phi_\lambda(\theta,\phi)\f$ at wavelength \f$\lambda\f$, and for the
@@ -237,7 +236,7 @@ public:
         =\int_{0}^{\phi}\Phi_{\theta}(\phi')\,\text{d}\phi' =\frac{1}{2\pi} \left( \phi +
         P_{\text{L}}\,\frac{S_{12}}{S_{11}} \sin\phi \cos(\phi - 2\gamma)\right) \f] for
         \f$\phi\f$, with \f${\cal{X}}\f$ being a new uniform deviate. */
-    std::pair<double,double> generateAnglesFromPhaseFunction(double lambda, const StokesVector* sv) const override;
+    std::pair<double, double> generateAnglesFromPhaseFunction(double lambda, const StokesVector* sv) const override;
 
     /** This function applies the Mueller matrix transformation for the specified wavelength
         \f$\lambda\f$ and scattering angle \f$\theta\f$ to the given polarization state (which
@@ -317,36 +316,36 @@ private:
     // all data members are precalculated in setupSelfAfter()
 
     // wavelength grid (shifted to the left of the actually sampled points to approximate rounding)
-    Array _lambdav;     // indexed on ell
+    Array _lambdav;  // indexed on ell
 
     // scattering angle grid
-    Array _thetav;      // indexed on t
+    Array _thetav;  // indexed on t
 
     // basic optical properties
     double _mu{0.};
-    Array _sigmaabsv;   // indexed on ell
-    Array _sigmascav;   // indexed on ell
-    Array _sigmaextv;   // indexed on ell
-    Array _albedov;     // indexed on ell
-    Array _asymmparv;   // indexed on ell
+    Array _sigmaabsv;  // indexed on ell
+    Array _sigmascav;  // indexed on ell
+    Array _sigmaextv;  // indexed on ell
+    Array _albedov;    // indexed on ell
+    Array _asymmparv;  // indexed on ell
 
     // Mueller matrix coefficients
-    Table<2> _S11vv;    // indexed on ell,t
-    Table<2> _S12vv;    // indexed on ell,t
-    Table<2> _S33vv;    // indexed on ell,t
-    Table<2> _S34vv;    // indexed on ell,t
+    Table<2> _S11vv;  // indexed on ell,t
+    Table<2> _S12vv;  // indexed on ell,t
+    Table<2> _S33vv;  // indexed on ell,t
+    Table<2> _S34vv;  // indexed on ell,t
 
     // precalculated discretizations of (functions of) the scattering angles
-    ArrayTable<2> _thetaXvv;    // indexed on ell and t
-    Array _pfnormv;             // indexed on ell
-    Array _phiv;                // indexed on f
-    Array _phi1v;               // indexed on f
-    Array _phisv;               // indexed on f
-    Array _phicv;               // indexed on f
+    ArrayTable<2> _thetaXvv;  // indexed on ell and t
+    Array _pfnormv;           // indexed on ell
+    Array _phiv;              // indexed on f
+    Array _phi1v;             // indexed on f
+    Array _phisv;             // indexed on f
+    Array _phicv;             // indexed on f
 
     // precalculated discretizations for spheroidal grains as a function of the emission angle
-    ArrayTable<2> _sigmaabsvv;      // indexed on ell and t
-    ArrayTable<2> _sigmaabspolvv;   // indexed on ell and t
+    ArrayTable<2> _sigmaabsvv;     // indexed on ell and t
+    ArrayTable<2> _sigmaabspolvv;  // indexed on ell and t
 
     // equilibrium temperature and emission calculator
     EquilibriumDustEmissionCalculator _calc;

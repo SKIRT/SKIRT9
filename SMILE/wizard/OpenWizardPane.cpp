@@ -4,7 +4,6 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "OpenWizardPane.hpp"
-
 #include "FatalError.hpp"
 #include "Item.hpp"
 #include "ItemUtils.hpp"
@@ -24,8 +23,7 @@ OpenWizardPane::OpenWizardPane(const SchemaDef* schema, QString filepath, bool d
     : _schema(schema), _filepath(filepath), _dirty(dirty)
 {
     // connect ourselves to the target
-    connect(this, SIGNAL(hierarchyWasLoaded(Item*, QString)),
-            target, SLOT(hierarchyWasLoaded(Item*, QString)));
+    connect(this, SIGNAL(hierarchyWasLoaded(Item*, QString)), target, SLOT(hierarchyWasLoaded(Item*, QString)));
 
     // create the layout so that we can add stuff one by one
     auto layout = new QVBoxLayout;
@@ -60,15 +58,14 @@ void OpenWizardPane::open()
     // if the current hierarchy is dirty, give the user a chance to opt out
     if (_dirty)
     {
-        auto ret = QMessageBox::warning(this, qApp->applicationName(),
-                                        "Do you want to discard your unsaved changes?",
+        auto ret = QMessageBox::warning(this, qApp->applicationName(), "Do you want to discard your unsaved changes?",
                                         QMessageBox::Discard | QMessageBox::Cancel, QMessageBox::Cancel);
         if (ret == QMessageBox::Cancel) return;
     }
 
     // get a file path from the user
-    QString directory = !_filepath.isEmpty() ? _filepath
-                                             : QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
+    QString directory =
+        !_filepath.isEmpty() ? _filepath : QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
     QString caption = qApp->applicationName() + " - Open " + QString::fromStdString(_schema->schemaTitle());
     QString extension = QString::fromStdString(_schema->schemaExtension());
     QString filter = extension + " files (*." + extension + ")";
@@ -115,7 +112,7 @@ void OpenWizardPane::open()
         {
             QString message = "An error occurred while opening or loading the file:";
             if (messageLines.size() > 0) message += "\n" + QString::fromStdString(messageLines[0]);
-            if (messageLines.size() > 1) message += "\n" +QString::fromStdString( messageLines[1]);
+            if (messageLines.size() > 1) message += "\n" + QString::fromStdString(messageLines[1]);
             QMessageBox::critical(this, qApp->applicationName(), message, QMessageBox::Ok);
         }
     }

@@ -9,7 +9,7 @@
 
 double ModifiedLogNormalGrainSizeDistribution::dnda(double a) const
 {
-    double M = _y0 + (_y1-_y0) * log(a/amin()) / log(amax()/amin());
+    double M = _y0 + (_y1 - _y0) * log(a / amin()) / log(amax() / amin());
     return LogNormalGrainSizeDistribution::dnda(a) * M;
 }
 

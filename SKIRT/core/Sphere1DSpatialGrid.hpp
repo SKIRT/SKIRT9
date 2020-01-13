@@ -6,9 +6,9 @@
 #ifndef SPHERE1DSPATIALGRID_HPP
 #define SPHERE1DSPATIALGRID_HPP
 
-#include "SphereSpatialGrid.hpp"
 #include "Array.hpp"
 #include "Mesh.hpp"
+#include "SphereSpatialGrid.hpp"
 class Random;
 
 ////////////////////////////////////////////////////////////////////
@@ -22,7 +22,7 @@ class Sphere1DSpatialGrid : public SphereSpatialGrid
     ITEM_CONCRETE(Sphere1DSpatialGrid, SphereSpatialGrid, "a spherically symmetric spatial grid")
         ATTRIBUTE_TYPE_ALLOWED_IF(Sphere1DSpatialGrid, "!Dimension2&!Dimension3")
 
-    PROPERTY_ITEM(meshRadial, Mesh, "the bin distribution in the radial direction")
+        PROPERTY_ITEM(meshRadial, Mesh, "the bin distribution in the radial direction")
         ATTRIBUTE_DEFAULT_VALUE(meshRadial, "LinMesh")
 
     ITEM_END()

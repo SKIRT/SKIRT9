@@ -6,10 +6,10 @@
 #ifndef GEOMETRICMEDIUM_HPP
 #define GEOMETRICMEDIUM_HPP
 
-#include "Medium.hpp"
 #include "Geometry.hpp"
-#include "MaterialNormalization.hpp"
 #include "MaterialMix.hpp"
+#include "MaterialNormalization.hpp"
+#include "Medium.hpp"
 #include "VectorField.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -22,16 +22,16 @@ class GeometricMedium : public Medium
 {
     ITEM_CONCRETE(GeometricMedium, Medium, "a transfer medium with a built-in geometry")
 
-    PROPERTY_ITEM(geometry, Geometry, "the geometry of the spatial density distribution for the medium")
+        PROPERTY_ITEM(geometry, Geometry, "the geometry of the spatial density distribution for the medium")
         ATTRIBUTE_DEFAULT_VALUE(geometry, "PlummerGeometry")
 
-    PROPERTY_ITEM(materialMix, MaterialMix, "the material type and properties throughout the medium")
+        PROPERTY_ITEM(materialMix, MaterialMix, "the material type and properties throughout the medium")
         ATTRIBUTE_DEFAULT_VALUE(materialMix, "MeanInterstellarDustMix")
 
-    PROPERTY_ITEM(normalization, MaterialNormalization, "the type of normalization for the amount of material")
+        PROPERTY_ITEM(normalization, MaterialNormalization, "the type of normalization for the amount of material")
         ATTRIBUTE_DEFAULT_VALUE(normalization, "OpticalDepthMaterialNormalization")
 
-    PROPERTY_DOUBLE(velocityX, "the bulk velocity of the medium, x component")
+        PROPERTY_DOUBLE(velocityX, "the bulk velocity of the medium, x component")
         ATTRIBUTE_QUANTITY(velocityX, "velocity")
         ATTRIBUTE_MIN_VALUE(velocityX, "[0")
         ATTRIBUTE_MAX_VALUE(velocityX, "100000 km/s]")
@@ -40,7 +40,7 @@ class GeometricMedium : public Medium
         ATTRIBUTE_DISPLAYED_IF(velocityX, "Level2")
         ATTRIBUTE_INSERT(velocityX, "Panchromatic&velocityX:Dimension3")
 
-    PROPERTY_DOUBLE(velocityY, "the bulk velocity of the medium, y component")
+        PROPERTY_DOUBLE(velocityY, "the bulk velocity of the medium, y component")
         ATTRIBUTE_QUANTITY(velocityY, "velocity")
         ATTRIBUTE_MIN_VALUE(velocityY, "[0")
         ATTRIBUTE_MAX_VALUE(velocityY, "100000 km/s]")
@@ -49,7 +49,7 @@ class GeometricMedium : public Medium
         ATTRIBUTE_DISPLAYED_IF(velocityY, "Level2")
         ATTRIBUTE_INSERT(velocityY, "Panchromatic&velocityY:Dimension3")
 
-    PROPERTY_DOUBLE(velocityZ, "the bulk velocity of the medium, z component")
+        PROPERTY_DOUBLE(velocityZ, "the bulk velocity of the medium, z component")
         ATTRIBUTE_QUANTITY(velocityZ, "velocity")
         ATTRIBUTE_MIN_VALUE(velocityZ, "[0")
         ATTRIBUTE_MAX_VALUE(velocityZ, "100000 km/s]")
@@ -58,11 +58,11 @@ class GeometricMedium : public Medium
         ATTRIBUTE_DISPLAYED_IF(velocityZ, "Level2")
         ATTRIBUTE_INSERT(velocityZ, "Panchromatic&velocityZ:Dimension2")
 
-    PROPERTY_ITEM(magneticFieldDistribution, VectorField, "the spatial distribution of the magnetic field, if any")
+        PROPERTY_ITEM(magneticFieldDistribution, VectorField, "the spatial distribution of the magnetic field, if any")
         ATTRIBUTE_REQUIRED_IF(magneticFieldDistribution, "false")
         ATTRIBUTE_DISPLAYED_IF(magneticFieldDistribution, "Level3")
 
-    PROPERTY_DOUBLE(magneticFieldStrength, "the strength of the magnetic field  (multiplier)")
+        PROPERTY_DOUBLE(magneticFieldStrength, "the strength of the magnetic field  (multiplier)")
         ATTRIBUTE_QUANTITY(magneticFieldStrength, "magneticfield")
         ATTRIBUTE_MIN_VALUE(magneticFieldStrength, "[-1 T")
         ATTRIBUTE_MAX_VALUE(magneticFieldStrength, "1 T]")
@@ -146,8 +146,8 @@ protected:
 
 private:
     // data members initialized during setup
-    double _number{0.};     // the total number of entities in the medium
-    double _mass{0.};       // the total mass in the medium
+    double _number{0.};  // the total number of entities in the medium
+    double _mass{0.};    // the total mass in the medium
 };
 
 ////////////////////////////////////////////////////////////////////

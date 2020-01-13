@@ -23,10 +23,10 @@ Snapshot* VoronoiMeshGeometry::createAndOpenSnapshot()
     // configure the mass or density column
     switch (massType())
     {
-    case MassType::MassDensity: _voronoiMeshSnapshot->importMassDensity(); break;
-    case MassType::Mass: _voronoiMeshSnapshot->importMass(); break;
-    case MassType::NumberDensity: _voronoiMeshSnapshot->importNumberDensity(); break;
-    case MassType::Number: _voronoiMeshSnapshot->importNumber(); break;
+        case MassType::MassDensity: _voronoiMeshSnapshot->importMassDensity(); break;
+        case MassType::Mass: _voronoiMeshSnapshot->importMass(); break;
+        case MassType::NumberDensity: _voronoiMeshSnapshot->importNumberDensity(); break;
+        case MassType::Number: _voronoiMeshSnapshot->importNumber(); break;
     }
 
     // set the domain extent

@@ -8,9 +8,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-UnitDef::UnitDef()
-{
-}
+UnitDef::UnitDef() {}
 
 ////////////////////////////////////////////////////////////////////
 
@@ -38,8 +36,7 @@ bool UnitDef::has(string qty) const
 bool UnitDef::has(string qty, string unit) const
 {
     // if the unit argument represents a unit system, replace it by the default unit for the quantity
-    if (_unitSystems.count(unit) && _unitSystems.at(unit).count(qty))
-        unit = _unitSystems.at(unit).at(qty);
+    if (_unitSystems.count(unit) && _unitSystems.at(unit).count(qty)) unit = _unitSystems.at(unit).at(qty);
 
     // check whether the unit is defined for the quantity
     return _quantities.count(qty) && _quantities.at(qty).count(unit);
@@ -50,8 +47,7 @@ bool UnitDef::has(string qty, string unit) const
 double UnitDef::in(string qty, string unit, double value) const
 {
     // if the unit argument represents a unit system, replace it by the default unit for the quantity
-    if (_unitSystems.count(unit) && _unitSystems.at(unit).count(qty))
-        unit = _unitSystems.at(unit).at(qty);
+    if (_unitSystems.count(unit) && _unitSystems.at(unit).count(qty)) unit = _unitSystems.at(unit).at(qty);
 
     // if the unit is defined for the quantity, perform the conversion
     if (_quantities.count(qty) && _quantities.at(qty).count(unit))
@@ -69,8 +65,7 @@ double UnitDef::in(string qty, string unit, double value) const
 double UnitDef::out(string qty, string unit, double value) const
 {
     // if the unit argument represents a unit system, replace it by the default unit for the quantity
-    if (_unitSystems.count(unit) && _unitSystems.at(unit).count(qty))
-        unit = _unitSystems.at(unit).at(qty);
+    if (_unitSystems.count(unit) && _unitSystems.at(unit).count(qty)) unit = _unitSystems.at(unit).at(qty);
 
     // if the unit is defined for the quantity, perform the conversion
     if (_quantities.count(qty) && _quantities.at(qty).count(unit))

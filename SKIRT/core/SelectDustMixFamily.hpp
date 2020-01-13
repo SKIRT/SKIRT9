@@ -6,8 +6,8 @@
 #ifndef SELECTDUSTMIXFAMILY_HPP
 #define SELECTDUSTMIXFAMILY_HPP
 
-#include "MaterialMixFamily.hpp"
 #include "DustMix.hpp"
+#include "MaterialMixFamily.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -21,7 +21,7 @@ class SelectDustMixFamily : public MaterialMixFamily
 {
     ITEM_CONCRETE(SelectDustMixFamily, MaterialMixFamily, "a family of dust mixes specified in the configuration")
 
-    PROPERTY_ITEM_LIST(dustMixes, DustMix, "the family of dust mixes")
+        PROPERTY_ITEM_LIST(dustMixes, DustMix, "the family of dust mixes")
         ATTRIBUTE_DEFAULT_VALUE(dustMixes, "ConfigurableDustMix")
 
     ITEM_END()

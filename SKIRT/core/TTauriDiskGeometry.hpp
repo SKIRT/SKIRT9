@@ -33,27 +33,27 @@ class TTauriDiskGeometry : public AxGeometry
     ITEM_CONCRETE(TTauriDiskGeometry, AxGeometry, "a T Tauri disk geometry")
         ATTRIBUTE_TYPE_DISPLAYED_IF(TTauriDiskGeometry, "Level2")
 
-    PROPERTY_DOUBLE(scaleLength, "the scale length")
+        PROPERTY_DOUBLE(scaleLength, "the scale length")
         ATTRIBUTE_QUANTITY(scaleLength, "length")
         ATTRIBUTE_MIN_VALUE(scaleLength, "]0")
 
-    PROPERTY_DOUBLE(scaleHeight, "the scale height")
+        PROPERTY_DOUBLE(scaleHeight, "the scale height")
         ATTRIBUTE_QUANTITY(scaleHeight, "length")
         ATTRIBUTE_MIN_VALUE(scaleHeight, "]0")
 
-    PROPERTY_DOUBLE(minRadius, "the inner radius of the disk")
+        PROPERTY_DOUBLE(minRadius, "the inner radius of the disk")
         ATTRIBUTE_QUANTITY(minRadius, "length")
         ATTRIBUTE_MIN_VALUE(minRadius, "]0")
 
-    PROPERTY_DOUBLE(maxRadius, "the outer radius of the disk")
+        PROPERTY_DOUBLE(maxRadius, "the outer radius of the disk")
         ATTRIBUTE_QUANTITY(maxRadius, "length")
         ATTRIBUTE_MIN_VALUE(maxRadius, "]0")
 
-    PROPERTY_DOUBLE(radialIndex, "the radial exponent index α")
-    ATTRIBUTE_MIN_VALUE(radialIndex, "]0")
-    ATTRIBUTE_DEFAULT_VALUE(radialIndex, "2.5")
+        PROPERTY_DOUBLE(radialIndex, "the radial exponent index α")
+        ATTRIBUTE_MIN_VALUE(radialIndex, "]0")
+        ATTRIBUTE_DEFAULT_VALUE(radialIndex, "2.5")
 
-    PROPERTY_DOUBLE(verticalIndex, "the vertical exponent index b")
+        PROPERTY_DOUBLE(verticalIndex, "the vertical exponent index b")
         ATTRIBUTE_MIN_VALUE(verticalIndex, "]0")
         ATTRIBUTE_DEFAULT_VALUE(verticalIndex, "0.5")
 

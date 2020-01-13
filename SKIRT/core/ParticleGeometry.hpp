@@ -42,7 +42,7 @@ class ParticleGeometry : public ImportedGeometry
 {
     ITEM_CONCRETE(ParticleGeometry, ImportedGeometry, "a geometry imported from smoothed particle data")
 
-    PROPERTY_ITEM(smoothingKernel, SmoothingKernel, "the kernel for interpolating the smoothed particles")
+        PROPERTY_ITEM(smoothingKernel, SmoothingKernel, "the kernel for interpolating the smoothed particles")
         ATTRIBUTE_DEFAULT_VALUE(smoothingKernel, "CubicSplineSmoothingKernel")
         ATTRIBUTE_DISPLAYED_IF(smoothingKernel, "Level2")
 

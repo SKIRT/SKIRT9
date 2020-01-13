@@ -20,15 +20,17 @@ void LogWavelengthDistribution::setupSelfBefore()
 
 double LogWavelengthDistribution::probability(double wavelength) const
 {
-    if (range().containsFuzzy(wavelength)) return 1. / (_logWidth * wavelength);
-    else return 0.;
+    if (range().containsFuzzy(wavelength))
+        return 1. / (_logWidth * wavelength);
+    else
+        return 0.;
 }
 
 //////////////////////////////////////////////////////////////////////
 
 double LogWavelengthDistribution::generateWavelength() const
 {
-    return exp(_logMin + _logWidth*random()->uniform());
+    return exp(_logMin + _logWidth * random()->uniform());
 }
 
 //////////////////////////////////////////////////////////////////////

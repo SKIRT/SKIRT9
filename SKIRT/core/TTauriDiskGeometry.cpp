@@ -18,20 +18,20 @@ void TTauriDiskGeometry::setupSelfBefore()
     if (_Rout <= _Rinn) throw FATALERROR("the outer radius of the disk must be larger than the inner radius");
 
     // calculate cached values
-    _a178 = _a - 17./8.;
-    _glnInn = SpecialFunctions::gln(_a178, _Rinn/_Rd);
-    _glnInnOut = SpecialFunctions::gln2(_a178, _Rout/_Rd, _Rinn/_Rd);
-    _rho0 = 1. / ( 2. * pow(M_PI,1.5) * pow(_b,-0.5) * (_Rd*_Rd*_zd) * _glnInnOut );
-    _s0 = _zd / sqrt(2.*_b);
+    _a178 = _a - 17. / 8.;
+    _glnInn = SpecialFunctions::gln(_a178, _Rinn / _Rd);
+    _glnInnOut = SpecialFunctions::gln2(_a178, _Rout / _Rd, _Rinn / _Rd);
+    _rho0 = 1. / (2. * pow(M_PI, 1.5) * pow(_b, -0.5) * (_Rd * _Rd * _zd) * _glnInnOut);
+    _s0 = _zd / sqrt(2. * _b);
 }
 
 //////////////////////////////////////////////////////////////////////
 
 double TTauriDiskGeometry::density(double R, double z) const
 {
-    if (R<_Rinn || R>_Rout) return 0.;
-    double x = (z/_zd) * pow(R/_Rd,-9./8.);
-    return _rho0 * pow(R/_Rd,-_a) * exp(-_b*x*x);
+    if (R < _Rinn || R > _Rout) return 0.;
+    double x = (z / _zd) * pow(R / _Rd, -9. / 8.);
+    return _rho0 * pow(R / _Rd, -_a) * exp(-_b * x * x);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -39,9 +39,9 @@ double TTauriDiskGeometry::density(double R, double z) const
 Position TTauriDiskGeometry::generatePosition() const
 {
     double R = _Rd * SpecialFunctions::gexp(_a178, _glnInn + random()->uniform() * _glnInnOut);
-    double sigma = _s0 * pow(R/_Rd,9./8.);
+    double sigma = _s0 * pow(R / _Rd, 9. / 8.);
     double z = random()->gauss() * sigma;
-    double phi = 2.*M_PI * random()->uniform();
+    double phi = 2. * M_PI * random()->uniform();
     return Position(R, phi, z, Position::CoordinateSystem::CYLINDRICAL);
 }
 
@@ -49,7 +49,7 @@ Position TTauriDiskGeometry::generatePosition() const
 
 double TTauriDiskGeometry::SigmaR() const
 {
-    return _rho0 * _Rd * SpecialFunctions::gln2(_a, _Rout/_Rd, _Rinn/_Rd);
+    return _rho0 * _Rd * SpecialFunctions::gln2(_a, _Rout / _Rd, _Rinn / _Rd);
 }
 
 //////////////////////////////////////////////////////////////////////

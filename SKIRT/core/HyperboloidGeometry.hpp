@@ -54,27 +54,27 @@ class HyperboloidGeometry : public AxGeometry
     ITEM_CONCRETE(HyperboloidGeometry, AxGeometry, "a hyperboloid geometry")
         ATTRIBUTE_TYPE_DISPLAYED_IF(HyperboloidGeometry, "Level2")
 
-    PROPERTY_DOUBLE(radialExtent, "the radial extent of the hyperboloid")
+        PROPERTY_DOUBLE(radialExtent, "the radial extent of the hyperboloid")
         ATTRIBUTE_QUANTITY(radialExtent, "length")
         ATTRIBUTE_MIN_VALUE(radialExtent, "]0")
 
-    PROPERTY_DOUBLE(openingAngle, "the half opening angle of the hyperboloid")
+        PROPERTY_DOUBLE(openingAngle, "the half opening angle of the hyperboloid")
         ATTRIBUTE_QUANTITY(openingAngle, "posangle")
         ATTRIBUTE_MIN_VALUE(openingAngle, "]0 deg")
         ATTRIBUTE_MAX_VALUE(openingAngle, "90 deg[")
 
-    PROPERTY_DOUBLE(realAxis, "the real axis of the hyperboloid")
+        PROPERTY_DOUBLE(realAxis, "the real axis of the hyperboloid")
         ATTRIBUTE_QUANTITY(realAxis, "length")
         ATTRIBUTE_MIN_VALUE(realAxis, "]0")
 
-    PROPERTY_DOUBLE(minRadius, "the radius of the central cavity")
+        PROPERTY_DOUBLE(minRadius, "the radius of the central cavity")
         ATTRIBUTE_QUANTITY(minRadius, "length")
         ATTRIBUTE_MIN_VALUE(minRadius, "]0")
 
-    PROPERTY_BOOL(reshapeInnerRadius, "reshape the inner radius according to the Netzer luminosity profile")
+        PROPERTY_BOOL(reshapeInnerRadius, "reshape the inner radius according to the Netzer luminosity profile")
         ATTRIBUTE_DEFAULT_VALUE(reshapeInnerRadius, "false")
 
-    PROPERTY_DOUBLE(cutoffRadius, "the inner cutoff radius of the hyperboloid")
+        PROPERTY_DOUBLE(cutoffRadius, "the inner cutoff radius of the hyperboloid")
         ATTRIBUTE_QUANTITY(cutoffRadius, "length")
         ATTRIBUTE_MIN_VALUE(cutoffRadius, "[0")
         ATTRIBUTE_DEFAULT_VALUE(cutoffRadius, "0")

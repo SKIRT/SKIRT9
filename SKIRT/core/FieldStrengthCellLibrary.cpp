@@ -33,39 +33,39 @@ vector<int> FieldStrengthCellLibrary::mapping(const Array& bv) const
     double Umin = DBL_MAX;
     double Umax = 0.0;
     Array Uv(numCells);
-    for (int m=0; m!=numCells; ++m)
+    for (int m = 0; m != numCells; ++m)
     {
         // ignore cells that won't be used by the caller
         if (bv[m])
         {
-            double U = ( ms->meanIntensity(m) * wavelengthGrid->dlambdav() ).sum() / JtotMW;
+            double U = (ms->meanIntensity(m) * wavelengthGrid->dlambdav()).sum() / JtotMW;
             // ignore cells with extremely small radiation fields (compared to the average in the Milky Way)
             // to avoid wasting library grid points on fields that won't change simulation results anyway
             if (U > 1e-6)
             {
                 Uv[m] = U;
-                Umin = min(Umin,U);
-                Umax = max(Umax,U);
+                Umin = min(Umin, U);
+                Umax = max(Umax, U);
             }
         }
     }
 
     // log the field strength range
-    find<Log>()->info("  Radiation field strengths vary from U = " + StringUtils::toString(Umin,'e',4)
-                                                      + " to U = " + StringUtils::toString(Umax,'e',4));
+    find<Log>()->info("  Radiation field strengths vary from U = " + StringUtils::toString(Umin, 'e', 4)
+                      + " to U = " + StringUtils::toString(Umax, 'e', 4));
 
     // determine for every dust cell m the corresponding library entry n
     double logUmin = log10(Umin);
     double logUmax = log10(Umax);
-    double dlogU = (logUmax-logUmin)/_numFieldStrengths;
+    double dlogU = (logUmax - logUmin) / _numFieldStrengths;
     vector<int> nv(numCells);
-    for (int m=0; m!=numCells; ++m)
+    for (int m = 0; m != numCells; ++m)
     {
         double U = Uv[m];
         if (U > 0.)
         {
             double logU = log10(U);
-            nv[m] = max(0, min(_numFieldStrengths-1, static_cast<int>((logU-logUmin)/dlogU) ));
+            nv[m] = max(0, min(_numFieldStrengths - 1, static_cast<int>((logU - logUmin) / dlogU)));
         }
         else
         {

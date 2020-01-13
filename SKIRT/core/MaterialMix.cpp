@@ -41,7 +41,7 @@ double MaterialMix::phaseFunctionValueForCosine(double /*lambda*/, double /*cost
 
 double MaterialMix::generateCosineFromPhaseFunction(double /*lambda*/) const
 {
-    return 2.*random()->uniform() - 1.;
+    return 2. * random()->uniform() - 1.;
 }
 
 ////////////////////////////////////////////////////////////////////

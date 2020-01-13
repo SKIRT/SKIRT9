@@ -60,21 +60,21 @@ class RotateVectorFieldDecorator : public VectorField
     ITEM_CONCRETE(RotateVectorFieldDecorator, VectorField, "a decorator that adds a rotation to any vector field")
         ATTRIBUTE_TYPE_INSERT(RotateVectorFieldDecorator, "Dimension3")
 
-    PROPERTY_ITEM(vectorField, VectorField, "the vector field to be rotated")
+        PROPERTY_ITEM(vectorField, VectorField, "the vector field to be rotated")
 
-    PROPERTY_DOUBLE(eulerAlpha, "the first Euler angle α")
+        PROPERTY_DOUBLE(eulerAlpha, "the first Euler angle α")
         ATTRIBUTE_QUANTITY(eulerAlpha, "posangle")
         ATTRIBUTE_MIN_VALUE(eulerAlpha, "0 deg")
         ATTRIBUTE_MAX_VALUE(eulerAlpha, "360 deg")
         ATTRIBUTE_DEFAULT_VALUE(eulerAlpha, "0 deg")
 
-    PROPERTY_DOUBLE(eulerBeta, "the second Euler angle β")
+        PROPERTY_DOUBLE(eulerBeta, "the second Euler angle β")
         ATTRIBUTE_QUANTITY(eulerBeta, "posangle")
         ATTRIBUTE_MIN_VALUE(eulerBeta, "0 deg")
         ATTRIBUTE_MAX_VALUE(eulerBeta, "180 deg")
         ATTRIBUTE_DEFAULT_VALUE(eulerBeta, "0 deg")
 
-    PROPERTY_DOUBLE(eulerGamma, "the third Euler angle γ")
+        PROPERTY_DOUBLE(eulerGamma, "the third Euler angle γ")
         ATTRIBUTE_QUANTITY(eulerGamma, "posangle")
         ATTRIBUTE_MIN_VALUE(eulerGamma, "0 deg")
         ATTRIBUTE_MAX_VALUE(eulerGamma, "360 deg")

@@ -46,7 +46,7 @@ void ImportedSource::setupSelfAfter()
     if (_oligochromatic)
     {
         _arbitaryWavelength = config->wavelengthGrid(nullptr)->wavelength(0);
-        _xi = 1.;       // always use bias distribution for oligochromatic simulations
+        _xi = 1.;  // always use bias distribution for oligochromatic simulations
         _biasDistribution = config->oligoWavelengthBiasDistribution();
     }
     else
@@ -79,15 +79,14 @@ void ImportedSource::setupSelfAfter()
         auto log = find<Log>();
         log->info("Calculating luminosities for " + std::to_string(M) + " imported entities...");
         log->infoSetElapsed(M);
-        find<ParallelFactory>()->parallelDistributed()->call(M, [this, log](size_t firstIndex, size_t numIndices)
-        {
+        find<ParallelFactory>()->parallelDistributed()->call(M, [this, log](size_t firstIndex, size_t numIndices) {
             Array lambdav, pv, Pv;  // the contents of these arrays is not used, so this could be optimized if needed
             Array params;
 
             while (numIndices)
             {
                 size_t currentChunkSize = min(logProgressChunkSize, numIndices);
-                for (size_t m=firstIndex; m!=firstIndex+currentChunkSize; ++m)
+                for (size_t m = firstIndex; m != firstIndex + currentChunkSize; ++m)
                 {
                     _snapshot->parameters(m, params);
                     _Lv[m] = _sedFamily->cdf(lambdav, pv, Pv, _wavelengthRange, params);
@@ -142,7 +141,7 @@ Range ImportedSource::wavelengthRange() const
 
 double ImportedSource::luminosity() const
 {
-   return _L;
+    return _L;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -154,7 +153,7 @@ double ImportedSource::specificLuminosity(double wavelength) const
     Array params;
     double sum = 0.;
     int M = _snapshot->numEntities();
-    for (int m=0; m!=M; ++m)
+    for (int m = 0; m != M; ++m)
     {
         _snapshot->parameters(m, params);
         sum += _sedFamily->specificLuminosity(wavelength, params);
@@ -171,20 +170,20 @@ void ImportedSource::prepareForLaunch(double sourceBias, size_t firstIndex, size
     if (!M) return;
 
     // calculate the launch weight for each entity, normalized to unity
-    _Wv = (1-sourceBias)*_Lv + sourceBias/M;
+    _Wv = (1 - sourceBias) * _Lv + sourceBias / M;
 
     // determine the first history index for each entity
-    _Iv.resize(M+1);
+    _Iv.resize(M + 1);
     _Iv[0] = firstIndex;
     double W = 0.;
-    for (int m=1; m!=M; ++m)
+    for (int m = 1; m != M; ++m)
     {
         // track the cumulative normalized weight as a floating point number
         // and limit the index to firstIndex+numIndices to avoid issues with rounding errors
-        W += _Wv[m-1];
+        W += _Wv[m - 1];
         _Iv[m] = firstIndex + min(numIndices, static_cast<size_t>(std::round(W * numIndices)));
     }
-    _Iv[M] = firstIndex+numIndices;
+    _Iv[M] = firstIndex + numIndices;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -197,30 +196,28 @@ namespace
     {
     private:
         // these two variables unambiguously identify a particular entity, even with multiple imported sources
-        int _m{-1};                         // entity index
-        const Snapshot* _snapshot{nullptr}; // snapshot
-        Array _lambdav, _pv, _Pv;           // normalized distributions
+        int _m{-1};                          // entity index
+        const Snapshot* _snapshot{nullptr};  // snapshot
+        Array _lambdav, _pv, _Pv;            // normalized distributions
 
     public:
-        EntitySED() { }
+        EntitySED() {}
 
         // sets the normalized distributions from the SED family if this is a different entity or snapshot
         void setIfNeeded(int m, const Snapshot* snapshot, const SEDFamily* family, Range range)
         {
-            if (m!=_m || snapshot!=_snapshot)
+            if (m != _m || snapshot != _snapshot)
             {
                 Array params;
                 snapshot->parameters(m, params);
                 family->cdf(_lambdav, _pv, _Pv, range, params);
-                _snapshot=snapshot; _m=m;
+                _snapshot = snapshot;
+                _m = m;
             }
         }
 
         // returns a random wavelength generated from the distribution
-        double generateWavelength(Random* random) const
-        {
-            return random->cdfLogLog(_lambdav, _pv, _Pv);
-        }
+        double generateWavelength(Random* random) const { return random->cdfLogLog(_lambdav, _pv, _Pv); }
 
         // returns the normalized specific luminosity for the given wavelength
         double specificLuminosity(double lambda) const
@@ -241,8 +238,9 @@ namespace
     {
     private:
         Vec _bfv;
+
     public:
-        EntityVelocity() { }
+        EntityVelocity() {}
         void setBulkVelocity(Vec bfv) { _bfv = bfv; }
         void applyVelocityDispersion(Random* random, double sigma)
         {
@@ -288,8 +286,10 @@ void ImportedSource::launch(PhotonPacket* pp, size_t historyIndex, double L) con
     else
     {
         // biasing -- use one or the other distribution
-        if (random()->uniform() > _xi) lambda = t_sed.generateWavelength(random());
-        else lambda = _biasDistribution->generateWavelength();
+        if (random()->uniform() > _xi)
+            lambda = t_sed.generateWavelength(random());
+        else
+            lambda = _biasDistribution->generateWavelength();
 
         // calculate the compensating weight factor
         double s = t_sed.specificLuminosity(lambda);
@@ -304,7 +304,7 @@ void ImportedSource::launch(PhotonPacket* pp, size_t historyIndex, double L) con
         {
             // regular composite bias weight
             double b = _biasDistribution->probability(lambda);
-            w = s / ((1-_xi)*s + _xi*b);
+            w = s / ((1 - _xi) * s + _xi * b);
         }
     }
 
@@ -321,7 +321,7 @@ void ImportedSource::launch(PhotonPacket* pp, size_t historyIndex, double L) con
     }
 
     // launch the photon packet with isotropic direction
-    pp->launch(historyIndex, lambda, L*w*ws, bfr, random()->direction(), bvi);
+    pp->launch(historyIndex, lambda, L * w * ws, bfr, random()->direction(), bvi);
 }
 
 ////////////////////////////////////////////////////////////////////

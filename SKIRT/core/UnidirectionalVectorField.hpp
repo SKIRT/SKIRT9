@@ -17,15 +17,15 @@ class UnidirectionalVectorField : public VectorField
 {
     ITEM_CONCRETE(UnidirectionalVectorField, VectorField, "a vector field uniformly pointing in a given direction")
 
-    PROPERTY_DOUBLE(fieldX, "the field direction, x component")
+        PROPERTY_DOUBLE(fieldX, "the field direction, x component")
         ATTRIBUTE_DEFAULT_VALUE(fieldX, "0")
         ATTRIBUTE_INSERT(fieldX, "fieldX:Dimension3")
 
-    PROPERTY_DOUBLE(fieldY, "the field direction, y component")
+        PROPERTY_DOUBLE(fieldY, "the field direction, y component")
         ATTRIBUTE_DEFAULT_VALUE(fieldY, "0")
         ATTRIBUTE_INSERT(fieldY, "fieldY:Dimension3")
 
-    PROPERTY_DOUBLE(fieldZ, "the field direction, z component")
+        PROPERTY_DOUBLE(fieldZ, "the field direction, z component")
         ATTRIBUTE_DEFAULT_VALUE(fieldZ, "1")
         ATTRIBUTE_INSERT(fieldZ, "fieldZ:Dimension2")
 

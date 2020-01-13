@@ -6,8 +6,8 @@
 #ifndef PERSPECTIVEINSTRUMENT_HPP
 #define PERSPECTIVEINSTRUMENT_HPP
 
-#include "Instrument.hpp"
 #include "HomogeneousTransform.hpp"
+#include "Instrument.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -24,48 +24,48 @@ class PerspectiveInstrument : public Instrument
     ITEM_CONCRETE(PerspectiveInstrument, Instrument, "a perspective instrument (mostly for making movies)")
         ATTRIBUTE_TYPE_DISPLAYED_IF(PerspectiveInstrument, "Level2")
 
-    PROPERTY_INT(numPixelsX, "the number of viewport pixels in the horizontal direction")
+        PROPERTY_INT(numPixelsX, "the number of viewport pixels in the horizontal direction")
         ATTRIBUTE_MIN_VALUE(numPixelsX, "25")
         ATTRIBUTE_MAX_VALUE(numPixelsX, "10000")
         ATTRIBUTE_DEFAULT_VALUE(numPixelsX, "250")
 
-    PROPERTY_INT(numPixelsY, "the number of viewport pixels in the vertical direction")
+        PROPERTY_INT(numPixelsY, "the number of viewport pixels in the vertical direction")
         ATTRIBUTE_MIN_VALUE(numPixelsY, "25")
         ATTRIBUTE_MAX_VALUE(numPixelsY, "10000")
         ATTRIBUTE_DEFAULT_VALUE(numPixelsY, "250")
 
-    PROPERTY_DOUBLE(width, "the width of the viewport")
+        PROPERTY_DOUBLE(width, "the width of the viewport")
         ATTRIBUTE_QUANTITY(width, "length")
         ATTRIBUTE_MIN_VALUE(width, "]0")
 
-    PROPERTY_DOUBLE(viewX, "the position of the viewport origin, x component")
+        PROPERTY_DOUBLE(viewX, "the position of the viewport origin, x component")
         ATTRIBUTE_QUANTITY(viewX, "length")
 
-    PROPERTY_DOUBLE(viewY, "the position of the viewport origin, y component")
+        PROPERTY_DOUBLE(viewY, "the position of the viewport origin, y component")
         ATTRIBUTE_QUANTITY(viewY, "length")
 
-    PROPERTY_DOUBLE(viewZ, "the position of the viewport origin, z component")
+        PROPERTY_DOUBLE(viewZ, "the position of the viewport origin, z component")
         ATTRIBUTE_QUANTITY(viewZ, "length")
 
-    PROPERTY_DOUBLE(crossX, "the position of the crosshair, x component")
+        PROPERTY_DOUBLE(crossX, "the position of the crosshair, x component")
         ATTRIBUTE_QUANTITY(crossX, "length")
 
-    PROPERTY_DOUBLE(crossY, "the position of the crosshair, y component")
+        PROPERTY_DOUBLE(crossY, "the position of the crosshair, y component")
         ATTRIBUTE_QUANTITY(crossY, "length")
 
-    PROPERTY_DOUBLE(crossZ, "the position of the crosshair, z component")
+        PROPERTY_DOUBLE(crossZ, "the position of the crosshair, z component")
         ATTRIBUTE_QUANTITY(crossZ, "length")
 
-    PROPERTY_DOUBLE(upX, "the upwards direction, x component")
+        PROPERTY_DOUBLE(upX, "the upwards direction, x component")
         ATTRIBUTE_QUANTITY(upX, "length")
 
-    PROPERTY_DOUBLE(upY, "the upwards direction, y component")
+        PROPERTY_DOUBLE(upY, "the upwards direction, y component")
         ATTRIBUTE_QUANTITY(upY, "length")
 
-    PROPERTY_DOUBLE(upZ, "the upwards direction, z component")
+        PROPERTY_DOUBLE(upZ, "the upwards direction, z component")
         ATTRIBUTE_QUANTITY(upZ, "length")
 
-    PROPERTY_DOUBLE(focal, "the distance from the eye to the viewport origin")
+        PROPERTY_DOUBLE(focal, "the distance from the eye to the viewport origin")
         ATTRIBUTE_QUANTITY(focal, "length")
         ATTRIBUTE_MIN_VALUE(focal, "]0")
 
@@ -123,11 +123,11 @@ private:
     const double& _Fe{_focal};
 
     // data members derived from the published attributes during setup
-    double _s{0.};                      // width and height of a pixel
-    double _Ex{0.}, _Ey{0.}, _Ez{0.};   // eye position
-    Direction _bfkx;                    // unit vector along the viewport's x-axis
-    Direction _bfky;                    // unit vector along the viewport's y-axis
-    HomogeneousTransform _transform;    // transform from world to pixel coordinates
+    double _s{0.};                     // width and height of a pixel
+    double _Ex{0.}, _Ey{0.}, _Ez{0.};  // eye position
+    Direction _bfkx;                   // unit vector along the viewport's x-axis
+    Direction _bfky;                   // unit vector along the viewport's y-axis
+    HomogeneousTransform _transform;   // transform from world to pixel coordinates
 };
 
 ////////////////////////////////////////////////////////////////////

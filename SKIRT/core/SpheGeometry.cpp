@@ -28,28 +28,28 @@ Position SpheGeometry::generatePosition() const
     // (function arguments are evaluated in different order depending on the compiler)
     double r = randomRadius();
     Direction bfk = random()->direction();
-    return Position(r,bfk);
+    return Position(r, bfk);
 }
 
 //////////////////////////////////////////////////////////////////////
 
 double SpheGeometry::SigmaX() const
 {
-    return 2.0*Sigmar();
+    return 2.0 * Sigmar();
 }
 
 //////////////////////////////////////////////////////////////////////
 
 double SpheGeometry::SigmaY() const
 {
-    return 2.0*Sigmar();
+    return 2.0 * Sigmar();
 }
 
 //////////////////////////////////////////////////////////////////////
 
 double SpheGeometry::SigmaZ() const
 {
-    return 2.0*Sigmar();
+    return 2.0 * Sigmar();
 }
 
 //////////////////////////////////////////////////////////////////////

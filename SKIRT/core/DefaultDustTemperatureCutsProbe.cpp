@@ -21,9 +21,11 @@ void DefaultDustTemperatureCutsProbe::probeRun()
         int dimension = find<MediumSystem>()->dimension();
 
         // output cuts depending on the dimension of the medium system
-        PlanarDustTemperatureCutsProbe::writeDustTemperatureCut(this, 1,1,0, 0.,0.,0., Np,Np,Np);
-        if (dimension >= 2) PlanarDustTemperatureCutsProbe::writeDustTemperatureCut(this, 1,0,1, 0.,0.,0., Np,Np,Np);
-        if (dimension == 3) PlanarDustTemperatureCutsProbe::writeDustTemperatureCut(this, 0,1,1, 0.,0.,0., Np,Np,Np);
+        PlanarDustTemperatureCutsProbe::writeDustTemperatureCut(this, 1, 1, 0, 0., 0., 0., Np, Np, Np);
+        if (dimension >= 2)
+            PlanarDustTemperatureCutsProbe::writeDustTemperatureCut(this, 1, 0, 1, 0., 0., 0., Np, Np, Np);
+        if (dimension == 3)
+            PlanarDustTemperatureCutsProbe::writeDustTemperatureCut(this, 0, 1, 1, 0., 0., 0., Np, Np, Np);
     }
 }
 

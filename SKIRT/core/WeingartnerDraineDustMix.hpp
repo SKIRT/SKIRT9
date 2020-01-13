@@ -38,25 +38,25 @@ class WeingartnerDraineDustMix : public MultiGrainDustMix
 {
     /** The enumeration type indicating the environment for the Weingartner-Draine dust. */
     ENUM_DEF(Environment, MilkyWay, LMC, SMC)
-    ENUM_VAL(Environment, MilkyWay, "the Milky Way")
-    ENUM_VAL(Environment, LMC, "the Large Magellanic Cloud")
-    ENUM_VAL(Environment, SMC, "the Small Magellanic Cloud")
+        ENUM_VAL(Environment, MilkyWay, "the Milky Way")
+        ENUM_VAL(Environment, LMC, "the Large Magellanic Cloud")
+        ENUM_VAL(Environment, SMC, "the Small Magellanic Cloud")
     ENUM_END()
 
     ITEM_CONCRETE(WeingartnerDraineDustMix, MultiGrainDustMix, "a Weingartner and Draine (2001) dust mix")
 
-    PROPERTY_ENUM(environment, Environment, "the environment determining the dust model")
+        PROPERTY_ENUM(environment, Environment, "the environment determining the dust model")
         ATTRIBUTE_DEFAULT_VALUE(environment, "MilkyWay")
 
-    PROPERTY_INT(numSilicateSizes, "the number of silicate grain size bins")
+        PROPERTY_INT(numSilicateSizes, "the number of silicate grain size bins")
         ATTRIBUTE_MIN_VALUE(numSilicateSizes, "1")
         ATTRIBUTE_DEFAULT_VALUE(numSilicateSizes, "5")
 
-    PROPERTY_INT(numGraphiteSizes, "the number of graphite grain size bins")
+        PROPERTY_INT(numGraphiteSizes, "the number of graphite grain size bins")
         ATTRIBUTE_MIN_VALUE(numGraphiteSizes, "1")
         ATTRIBUTE_DEFAULT_VALUE(numGraphiteSizes, "5")
 
-    PROPERTY_INT(numPAHSizes, "the number of neutral and ionized PAH size bins (each)")
+        PROPERTY_INT(numPAHSizes, "the number of neutral and ionized PAH size bins (each)")
         ATTRIBUTE_MIN_VALUE(numPAHSizes, "1")
         ATTRIBUTE_DEFAULT_VALUE(numPAHSizes, "5")
 
@@ -65,7 +65,7 @@ class WeingartnerDraineDustMix : public MultiGrainDustMix
     //============= Construction - Setup - Destruction =============
 
 protected:
-        /** This function adds the relevant grain populations to the dust mix */
+    /** This function adds the relevant grain populations to the dust mix */
     void setupSelfBefore() override;
 };
 

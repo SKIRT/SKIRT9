@@ -7,8 +7,8 @@
 
 ////////////////////////////////////////////////////////////////////
 
-PowerLawGrainSizeDistribution::PowerLawGrainSizeDistribution(SimulationItem* parent,
-                                                             double minSize, double maxSize, double exponent)
+PowerLawGrainSizeDistribution::PowerLawGrainSizeDistribution(SimulationItem* parent, double minSize, double maxSize,
+                                                             double exponent)
     : RangeGrainSizeDistribution(minSize, maxSize), _exponent(exponent)
 {
     parent->addChild(this);

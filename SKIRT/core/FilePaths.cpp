@@ -18,14 +18,14 @@ namespace
     std::once_flag _initialized;
 
     // the resource paths:  <filename, complete_path>
-    std::unordered_map<string,string> _resourcePaths;
+    std::unordered_map<string, string> _resourcePaths;
 
     // relative paths to check for presence of built-in resources
-    const char* _intpaths[] = { "../../../git/SKIRT/resources", "../../../../git/SKIRT/resources" };
+    const char* _intpaths[] = {"../../../git/SKIRT/resources", "../../../../git/SKIRT/resources"};
     const int _Nintpaths = sizeof(_intpaths) / sizeof(const char*);
 
     // relative paths to check for presence of external resources
-    const char* _extpaths[] = {"../../../resources", "../../../../resources" };
+    const char* _extpaths[] = {"../../../resources", "../../../../resources"};
     const int _Nextpaths = sizeof(_extpaths) / sizeof(const char*);
 
     // recursively searches the given directory and its subdirectories for any files
@@ -57,7 +57,7 @@ namespace
         string executableDirPath = StringUtils::dirPath(executableFilePath);
 
         // iterate over the relative paths for built-in resources
-        for (int i=0; i<_Nintpaths; i++)
+        for (int i = 0; i < _Nintpaths; i++)
         {
             string test = StringUtils::joinPaths(executableDirPath, _intpaths[i]);
             if (System::isDir(test)) findResourcePathsIn(test);
@@ -68,7 +68,7 @@ namespace
             throw FATALERROR("Could not locate built-in resources relative to '" + executableDirPath + "'");
 
         // iterate over the relative paths for external resources
-        for (int i=0; i<_Nextpaths; i++)
+        for (int i = 0; i < _Nextpaths; i++)
         {
             string test = StringUtils::joinPaths(executableDirPath, _extpaths[i]);
             if (System::isDir(test)) findResourcePathsIn(test);
@@ -159,8 +159,9 @@ string FilePaths::resource(string name)
 
     if (!_resourcePaths.count(name))
     {
-        throw FATALERROR("Could not locate resource '" + name + "'"
-                         "\nDownload additional resources from www.skirt.ugent.be");
+        throw FATALERROR("Could not locate resource '" + name
+                         + "'"
+                           "\nDownload additional resources from www.skirt.ugent.be");
     }
     return _resourcePaths.at(name);
 }
@@ -195,12 +196,12 @@ namespace
     // see documentation of the resourceName() function for more details
     string message(string type, const vector<string>& segments)
     {
-        string msg = "type '" + type +"'";
+        string msg = "type '" + type + "'";
         if (!segments.empty())
         {
             msg += " with filename containing";
             for (string segment : segments) msg += " '" + segment + "',";
-            msg.erase(msg.size()-1, 1);
+            msg.erase(msg.size() - 1, 1);
         }
         return msg;
     }

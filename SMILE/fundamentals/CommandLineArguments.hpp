@@ -75,7 +75,7 @@ public:
 private:
     // data members
     bool _valid;
-    std::unordered_map<string,string> _options;
+    std::unordered_map<string, string> _options;
     vector<string> _filepaths;
 };
 

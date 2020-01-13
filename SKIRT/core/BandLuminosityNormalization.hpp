@@ -6,8 +6,8 @@
 #ifndef BANDLUMINOSITYNORMALIZATION_HPP
 #define BANDLUMINOSITYNORMALIZATION_HPP
 
-#include "LuminosityNormalization.hpp"
 #include "Band.hpp"
+#include "LuminosityNormalization.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -20,21 +20,21 @@ class BandLuminosityNormalization : public LuminosityNormalization
     /** The enumeration type indicating the specific luminosity unit style, e.g. whether to use
         specific luminosity per unit of wavelength or per unit of frequency. */
     ENUM_DEF(UnitStyle, wavelengthmonluminosity, frequencymonluminosity, neutralmonluminosity)
-    ENUM_VAL(UnitStyle, wavelengthmonluminosity, "per unit of wavelength: L_λ")
-    ENUM_VAL(UnitStyle, frequencymonluminosity, "per unit of frequency: L_ν")
-    ENUM_VAL(UnitStyle, neutralmonluminosity, "neutral: λ L_λ = ν L_ν")
+        ENUM_VAL(UnitStyle, wavelengthmonluminosity, "per unit of wavelength: L_λ")
+        ENUM_VAL(UnitStyle, frequencymonluminosity, "per unit of frequency: L_ν")
+        ENUM_VAL(UnitStyle, neutralmonluminosity, "neutral: λ L_λ = ν L_ν")
     ENUM_END()
 
     ITEM_CONCRETE(BandLuminosityNormalization, LuminosityNormalization,
                   "source normalization through the specific luminosity for a given wavelength band")
 
-    PROPERTY_ITEM(band, Band, "the wavelength band for which to provide the specific luminosity")
+        PROPERTY_ITEM(band, Band, "the wavelength band for which to provide the specific luminosity")
         ATTRIBUTE_DEFAULT_VALUE(band, "BroadBand")
 
-    PROPERTY_ENUM(unitStyle, UnitStyle, "the luminosity unit style")
+        PROPERTY_ENUM(unitStyle, UnitStyle, "the luminosity unit style")
         ATTRIBUTE_DEFAULT_VALUE(unitStyle, "wavelengthmonluminosity")
 
-    PROPERTY_DOUBLE(specificLuminosity, "the specific luminosity for the given band")
+        PROPERTY_DOUBLE(specificLuminosity, "the specific luminosity for the given band")
         ATTRIBUTE_QUANTITY(specificLuminosity, "@unitStyle")
         ATTRIBUTE_MIN_VALUE(specificLuminosity, "]0")
 

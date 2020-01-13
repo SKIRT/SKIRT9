@@ -6,8 +6,8 @@
 #include "SiteListTreePolicy.hpp"
 #include "Log.hpp"
 #include "MediumSystem.hpp"
-#include "TreeNode.hpp"
 #include "SiteListInterface.hpp"
+#include "TreeNode.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -25,8 +25,8 @@ namespace
 namespace
 {
     // private function to insert a site into the tree, performing recursive subdivision if needed
-    void insertSite(const SiteListInterface* sli, int newSite, TreeNode* parent, int maxLevel,
-                    vector<int>& sitev, vector<TreeNode*>& nodev)
+    void insertSite(const SiteListInterface* sli, int newSite, TreeNode* parent, int maxLevel, vector<int>& sitev,
+                    vector<TreeNode*>& nodev)
     {
         // find the leaf node that contains this site's position
         TreeNode* node = parent->leafChild(sli->sitePosition(newSite));
@@ -66,16 +66,16 @@ vector<TreeNode*> SiteListTreePolicy::constructTree(TreeNode* root)
     vector<TreeNode*> nodev{root};
 
     // recursively subdivide the root node until the minimum level has been reached
-    size_t lbeg = 0;    // node index range for the current level;
-    size_t lend = 1;    // at level 0, the node list contains just the root node
-    for (int level=0; level!=minLevel(); ++level)
+    size_t lbeg = 0;  // node index range for the current level;
+    size_t lend = 1;  // at level 0, the node list contains just the root node
+    for (int level = 0; level != minLevel(); ++level)
     {
-        log->info("Subdividing level " + std::to_string(level) + ": " + std::to_string(lend-lbeg) + " nodes");
-        log->infoSetElapsed(lend-lbeg);
-        for (size_t l=lbeg; l!=lend; ++l)
+        log->info("Subdividing level " + std::to_string(level) + ": " + std::to_string(lend - lbeg) + " nodes");
+        log->infoSetElapsed(lend - lbeg);
+        for (size_t l = lbeg; l != lend; ++l)
         {
             nodev[l]->subdivide(nodev);
-            if ((l+1)%logDivideChunkSize == 0)
+            if ((l + 1) % logDivideChunkSize == 0)
                 log->infoIfElapsed("Subdividing level " + std::to_string(level) + ": ", logDivideChunkSize);
         }
         // update iteration variables to the next level
@@ -94,23 +94,23 @@ vector<TreeNode*> SiteListTreePolicy::constructTree(TreeNode* root)
     int numSites = sli->numSites();
     log->info("Subdividing tree to insert " + std::to_string(numSites) + " sites");
     log->infoSetElapsed(numSites);
-    for (int i=0; i<numSites; i++)
+    for (int i = 0; i < numSites; i++)
     {
         insertSite(sli, i, root, maxLevel(), sitev, nodev);
-        if ((i+1)%logInsertChunkSize == 0)
+        if ((i + 1) % logInsertChunkSize == 0)
             log->infoIfElapsed("Inserting site " + std::to_string(i) + ": ", logInsertChunkSize);
     }
 
     // perform additional subdivisions as requested
     lbeg = 0;
     lend = nodev.size();
-    for (int extra=0; extra!=numExtraLevels(); ++extra)
+    for (int extra = 0; extra != numExtraLevels(); ++extra)
     {
-        log->info("Subdividing extra level " + std::to_string(extra) + ": " + std::to_string(lend-lbeg) + " nodes");
-        for (size_t l=lbeg; l!=lend; ++l)
+        log->info("Subdividing extra level " + std::to_string(extra) + ": " + std::to_string(lend - lbeg) + " nodes");
+        for (size_t l = lbeg; l != lend; ++l)
         {
-            if (nodev[l]->isChildless() && nodev[l]->level()<maxLevel()) nodev[l]->subdivide(nodev);
-            if ((l+1)%logDivideChunkSize == 0)
+            if (nodev[l]->isChildless() && nodev[l]->level() < maxLevel()) nodev[l]->subdivide(nodev);
+            if ((l + 1) % logDivideChunkSize == 0)
                 log->infoIfElapsed("Subdividing extra level " + std::to_string(extra) + ": ", logDivideChunkSize);
         }
         // update iteration variables to the next level

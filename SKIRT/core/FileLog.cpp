@@ -11,9 +11,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-FileLog::FileLog()
-{
-}
+FileLog::FileLog() {}
 
 ////////////////////////////////////////////////////////////////////
 
@@ -48,7 +46,7 @@ void FileLog::open()
     }
     else
     {
-        filepath = find<FilePaths>()->output( "log" + processName() + ".txt");
+        filepath = find<FilePaths>()->output("log" + processName() + ".txt");
     }
 
     _out = System::ofstream(filepath);
@@ -61,7 +59,7 @@ namespace
 {
     // The strings beginning a message, indexed by level (Info, Warning, Success, Error)
     // NOTE: this depends on the order in the Level enum --> rather dirty
-    const char* _messageBegin[] = { "   ", " ! ", " - ", " * " };
+    const char* _messageBegin[] = {"   ", " ! ", " - ", " * "};
 }
 
 void FileLog::output(string message, Log::Level level)

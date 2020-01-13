@@ -12,9 +12,8 @@
 double MeanListDustMix::getDustProperties(Array& lambdav, Array& kappaextv, Array& albedov, Array& asymmparv) const
 {
     // verify number of configured properties
-    if (_wavelengths.size() != _extinctionCoefficients.size() ||
-        _wavelengths.size() != _albedos.size() ||
-        _wavelengths.size() != _asymmetryParameters.size() )
+    if (_wavelengths.size() != _extinctionCoefficients.size() || _wavelengths.size() != _albedos.size()
+        || _wavelengths.size() != _asymmetryParameters.size())
         throw FATALERROR("Number of listed properties does not match number of listed wavelengths");
 
     // copy the wavelengths and properties from the configuration
@@ -23,7 +22,7 @@ double MeanListDustMix::getDustProperties(Array& lambdav, Array& kappaextv, Arra
     NR::assign(albedov, _albedos);
     NR::assign(asymmparv, _asymmetryParameters);
 
-    return 1.5e-29;   // in kg/H
+    return 1.5e-29;  // in kg/H
 }
 
 //////////////////////////////////////////////////////////////////////

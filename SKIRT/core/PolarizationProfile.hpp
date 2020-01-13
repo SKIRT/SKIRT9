@@ -6,8 +6,8 @@
 #ifndef POLARIZATIONPROFILE_HPP
 #define POLARIZATIONPROFILE_HPP
 
-#include "SimulationItem.hpp"
 #include "PolarizationProfileInterface.hpp"
+#include "SimulationItem.hpp"
 
 ////////////////////////////////////////////////////////////////////
 

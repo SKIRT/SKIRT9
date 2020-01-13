@@ -9,7 +9,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     // Initialize the system
     System system(argc, argv);

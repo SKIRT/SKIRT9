@@ -6,8 +6,8 @@
 #ifndef ADAPTIVEMESHGEOMETRY_HPP
 #define ADAPTIVEMESHGEOMETRY_HPP
 
-#include "MeshGeometry.hpp"
 #include "AdaptiveMeshInterface.hpp"
+#include "MeshGeometry.hpp"
 
 ////////////////////////////////////////////////////////////////////
 

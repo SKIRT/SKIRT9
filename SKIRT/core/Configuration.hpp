@@ -6,9 +6,9 @@
 #ifndef CONFIGURATION_HPP
 #define CONFIGURATION_HPP
 
-#include "SimulationItem.hpp"
 #include "Array.hpp"
 #include "Range.hpp"
+#include "SimulationItem.hpp"
 class DisjointWavelengthGrid;
 class SpatialCellLibrary;
 class WavelengthDistribution;

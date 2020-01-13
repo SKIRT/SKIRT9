@@ -21,11 +21,11 @@ class DensityInCellInterface
 {
 protected:
     /** The empty constructor for the interface. */
-    DensityInCellInterface() { }
+    DensityInCellInterface() {}
 
 public:
     /** The empty destructor for the interface. */
-    virtual ~DensityInCellInterface() { }
+    virtual ~DensityInCellInterface() {}
 
     /** This function returns the number density for medium component \em h in the spatial grid
         cell with index \em m. */

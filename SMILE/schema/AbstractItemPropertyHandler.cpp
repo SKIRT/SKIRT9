@@ -15,7 +15,7 @@
 bool AbstractItemPropertyHandler::isValidValue(string value) const
 {
     return !value.empty() && schema()->inherits(value, baseType())
-            && nameManager()->evaluateBoolean(schema()->allowed(value));
+           && nameManager()->evaluateBoolean(schema()->allowed(value));
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -46,8 +46,7 @@ vector<string> AbstractItemPropertyHandler::allowedAndDisplayedDescendants()
     vector<string> descendants;
     for (auto candidate : schema()->descendants(property()->base()))
     {
-        if (nameManager()->evaluateBoolean(schema()->allowedAndDisplayed(candidate)))
-            descendants.push_back(candidate);
+        if (nameManager()->evaluateBoolean(schema()->allowedAndDisplayed(candidate))) descendants.push_back(candidate);
     }
     return descendants;
 }

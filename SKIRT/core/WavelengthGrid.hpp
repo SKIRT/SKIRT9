@@ -6,9 +6,9 @@
 #ifndef WAVELENGTHGRID_HPP
 #define WAVELENGTHGRID_HPP
 
-#include "SimulationItem.hpp"
 #include "Array.hpp"
 #include "Range.hpp"
+#include "SimulationItem.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -53,7 +53,7 @@ public:
         wavelength. */
     virtual int numBins() const = 0;
 
-   /** This function returns the characteristic wavelength \f$\lambda^\mathrm{c}_\ell\f$
+    /** This function returns the characteristic wavelength \f$\lambda^\mathrm{c}_\ell\f$
        corresponding to the index \f$\ell\f$. The characteristic wavelength of a bin is always
        inside the bin, i.e. \f$\lambda^\mathrm{left}_\ell \le \lambda^\mathrm{c}_\ell \le
        \lambda^\mathrm{right}_\ell\f$. It can be used to convert mean specific luminosities in the

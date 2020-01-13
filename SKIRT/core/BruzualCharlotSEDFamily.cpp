@@ -23,9 +23,9 @@ void BruzualCharlotSEDFamily::setupSelfBefore()
     SEDFamily::setupSelfBefore();
 
     string name = "BruzualCharlotSEDFamily_";
-    name += _imf==IMF::Chabrier ? "Chabrier" : "Salpeter";
+    name += _imf == IMF::Chabrier ? "Chabrier" : "Salpeter";
     name += "_";
-    name += _resolution==Resolution::Low ? "lr" : "hr";
+    name += _resolution == Resolution::Low ? "lr" : "hr";
 
     _table.open(this, name, "lambda(m),Z(1),t(yr)", "Llambda(W/m)", false);
 }
@@ -34,11 +34,10 @@ void BruzualCharlotSEDFamily::setupSelfBefore()
 
 vector<SnapshotParameter> BruzualCharlotSEDFamily::parameterInfo() const
 {
-    return vector<SnapshotParameter>
-    {
-        { "initial mass", "mass", "Msun" },
-        { "metallicity" },
-        { "age", "time", "yr" },
+    return vector<SnapshotParameter>{
+        {"initial mass", "mass", "Msun"},
+        {"metallicity"},
+        {"age", "time", "yr"},
     };
 }
 
@@ -62,8 +61,8 @@ double BruzualCharlotSEDFamily::specificLuminosity(double wavelength, const Arra
 
 ////////////////////////////////////////////////////////////////////
 
-double BruzualCharlotSEDFamily::cdf(Array& lambdav, Array& pv, Array& Pv,
-                                    const Range& wavelengthRange, const Array& parameters) const
+double BruzualCharlotSEDFamily::cdf(Array& lambdav, Array& pv, Array& Pv, const Range& wavelengthRange,
+                                    const Array& parameters) const
 {
     double M = parameters[0] / Constants::Msun();
     double Z = parameters[1];

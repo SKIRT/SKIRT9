@@ -11,9 +11,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-Chunk::Chunk()
-{
-}
+Chunk::Chunk() {}
 
 ////////////////////////////////////////////////////////////////////
 
@@ -80,13 +78,13 @@ void Chunk::streamline()
         vector<string> block = styler.streamlined();
 
         // replace the block in the source code
-        _chunk.erase(_chunk.begin()+index, _chunk.begin()+end+1);
-        _chunk.insert(_chunk.begin()+index, block.begin(), block.end());
+        _chunk.erase(_chunk.begin() + index, _chunk.begin() + end + 1);
+        _chunk.insert(_chunk.begin() + index, block.begin(), block.end());
         index += block.size();
 
         // remove any empty lines following the block in the source code
         while (index < _chunk.size() && StringUtils::squeeze(_chunk[index]).empty())
-            _chunk.erase(_chunk.begin()+index);
+            _chunk.erase(_chunk.begin() + index);
     }
 }
 

@@ -30,7 +30,7 @@
     declared in this interface, i.e. the functions amin() and amax() to specify the grain size
     range, and the function dnda() to specify the grain size distribution function within that
     range. */
-class GrainSizeDistribution: public SimulationItem
+class GrainSizeDistribution : public SimulationItem
 {
     ITEM_ABSTRACT(GrainSizeDistribution, SimulationItem, "a dust grain size distribution")
     ITEM_END()

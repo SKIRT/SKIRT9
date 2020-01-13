@@ -3,14 +3,14 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "SignalHandler.hpp"
-#include "ShapesCommandLineHandler.hpp"
 #include "ShapeRegistry.hpp"
+#include "ShapesCommandLineHandler.hpp"
+#include "SignalHandler.hpp"
 #include "System.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     // Initialize the system
     System system(argc, argv);

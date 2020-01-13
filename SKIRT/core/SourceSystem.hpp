@@ -6,8 +6,8 @@
 #ifndef SOURCESYSTEM_HPP
 #define SOURCESYSTEM_HPP
 
-#include "SimulationItem.hpp"
 #include "Array.hpp"
+#include "SimulationItem.hpp"
 #include "Source.hpp"
 class PhotonPacket;
 class ProbePhotonPacketInterface;
@@ -62,34 +62,34 @@ class SourceSystem : public SimulationItem
 {
     ITEM_CONCRETE(SourceSystem, SimulationItem, "a primary source system")
 
-    PROPERTY_DOUBLE(minWavelength, "the shortest wavelength of photon packets launched from primary sources")
+        PROPERTY_DOUBLE(minWavelength, "the shortest wavelength of photon packets launched from primary sources")
         ATTRIBUTE_QUANTITY(minWavelength, "wavelength")
         ATTRIBUTE_MIN_VALUE(minWavelength, "1 Angstrom")
         ATTRIBUTE_MAX_VALUE(minWavelength, "1 m")
         ATTRIBUTE_DEFAULT_VALUE(minWavelength, "0.09 micron")
         ATTRIBUTE_RELEVANT_IF(minWavelength, "Panchromatic")
 
-    PROPERTY_DOUBLE(maxWavelength, "the longest wavelength of photon packets launched from primary sources")
+        PROPERTY_DOUBLE(maxWavelength, "the longest wavelength of photon packets launched from primary sources")
         ATTRIBUTE_QUANTITY(maxWavelength, "wavelength")
         ATTRIBUTE_MIN_VALUE(maxWavelength, "1 Angstrom")
         ATTRIBUTE_MAX_VALUE(maxWavelength, "1 m")
         ATTRIBUTE_DEFAULT_VALUE(maxWavelength, "100 micron")
         ATTRIBUTE_RELEVANT_IF(maxWavelength, "Panchromatic")
 
-    PROPERTY_DOUBLE_LIST(wavelengths, "the discrete wavelengths of photon packets launched from primary sources")
+        PROPERTY_DOUBLE_LIST(wavelengths, "the discrete wavelengths of photon packets launched from primary sources")
         ATTRIBUTE_QUANTITY(wavelengths, "wavelength")
         ATTRIBUTE_MIN_VALUE(wavelengths, "1 Angstrom")
         ATTRIBUTE_MAX_VALUE(wavelengths, "1 m")
         ATTRIBUTE_DEFAULT_VALUE(wavelengths, "0.55 micron")
         ATTRIBUTE_RELEVANT_IF(wavelengths, "Oligochromatic")
 
-    PROPERTY_DOUBLE(sourceBias, "the fraction of photon packets distributed uniformly across primary sources")
+        PROPERTY_DOUBLE(sourceBias, "the fraction of photon packets distributed uniformly across primary sources")
         ATTRIBUTE_MIN_VALUE(sourceBias, "[0")
         ATTRIBUTE_MAX_VALUE(sourceBias, "1]")
         ATTRIBUTE_DEFAULT_VALUE(sourceBias, "0.5")
         ATTRIBUTE_DISPLAYED_IF(sourceBias, "Level3")
 
-    PROPERTY_ITEM_LIST(sources, Source, "the primary sources")
+        PROPERTY_ITEM_LIST(sources, Source, "the primary sources")
         ATTRIBUTE_DEFAULT_VALUE(sources, "GeometricSource")
         ATTRIBUTE_REQUIRED_IF(sources, "false")
 
@@ -137,14 +137,14 @@ public:
 
 private:
     // intialized during setup
-    double _L{0};   // the total bolometric luminosity of all sources (absolute number)
-    Array _Lv;      // the relative bolometric luminosity of each source (normalized to unity)
-    Array _Wv;      // the relative launch weight for each source (normalized to unity)
-    ProbePhotonPacketInterface* _callback{nullptr}; // interface to be invoked for each packet launch if nonzero
+    double _L{0};  // the total bolometric luminosity of all sources (absolute number)
+    Array _Lv;     // the relative bolometric luminosity of each source (normalized to unity)
+    Array _Wv;     // the relative launch weight for each source (normalized to unity)
+    ProbePhotonPacketInterface* _callback{nullptr};  // interface to be invoked for each packet launch if nonzero
 
     // intialized by prepareForLaunch()
-    double _Lpp{0};     // the average luminosity contribution for each packet
-    vector<size_t> _Iv; // first history index allocated to each source (with extra entry at the end)
+    double _Lpp{0};      // the average luminosity contribution for each packet
+    vector<size_t> _Iv;  // first history index allocated to each source (with extra entry at the end)
 };
 
 ////////////////////////////////////////////////////////////////

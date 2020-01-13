@@ -14,8 +14,8 @@
 #include <QLabel>
 #include <QListWidget>
 #include <QPushButton>
-#include <QVariant>
 #include <QVBoxLayout>
+#include <QVariant>
 
 ////////////////////////////////////////////////////////////////////
 
@@ -122,14 +122,14 @@ void ItemListPropertyWizardPane::addItem()
 
     // select a new item type that inherits from the default, or if none is found, use the first type in the list
     auto choiceList = hdlr->allowedAndDisplayedDescendants();
-    if (choiceList.empty()) return;   // can we do something more informative to the user in case of failure?
+    if (choiceList.empty()) return;  // can we do something more informative to the user in case of failure?
     auto newType = choiceList[0];
     if (hdlr->hasDefaultValue())
     {
         auto defaultType = hdlr->defaultType();
         for (auto choiceType : choiceList)
         {
-            if (hdlr->schema()->inherits(choiceType,defaultType))
+            if (hdlr->schema()->inherits(choiceType, defaultType))
             {
                 newType = choiceType;
                 break;
@@ -139,12 +139,12 @@ void ItemListPropertyWizardPane::addItem()
 
     // add a new item of the selected type to the property's list
     bool success = hdlr->addNewItemOfType(newType);
-    if (!success) return;   // can we do something more informative to the user in case of failure?
+    if (!success) return;  // can we do something more informative to the user in case of failure?
     emit propertyValueChanged();
 
     // add a corresponding line to the list widget
     int count = _listWidget->count();
-    _listWidget->addItem(new QListWidgetItem(QString::fromStdString(std::to_string(count+1) + ": " + newType)));
+    _listWidget->addItem(new QListWidgetItem(QString::fromStdString(std::to_string(count + 1) + ": " + newType)));
     _listWidget->setCurrentRow(count);
 
     // start the item edit wizard for the current row
@@ -200,12 +200,13 @@ void ItemListPropertyWizardPane::setButtonsEnabled()
     // check whether all items are completed
     auto hdlr = handlerCast<ItemListPropertyHandler>();
     bool complete = true;
-    for (auto item : hdlr->value()) if (!ItemUtils::isItemComplete(item)) complete = false;
+    for (auto item : hdlr->value())
+        if (!ItemUtils::isItemComplete(item)) complete = false;
 
     // enable/disable buttons
     _removeButton->setEnabled(hasItems);
     _editButton->setEnabled(hasItems);
-    _addButton->setEnabled(complete);   // block new editing because the name manager dislikes incomplete items
+    _addButton->setEnabled(complete);  // block new editing because the name manager dislikes incomplete items
 
     // emit validate/invalidate signal
     emit propertyValidChanged(complete && (hasItems || !hdlr->isRequired()));

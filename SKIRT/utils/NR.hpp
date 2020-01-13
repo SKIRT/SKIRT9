@@ -28,7 +28,7 @@ public:
     {
         size_t n = sourcev.size();
         Array resultv(n);
-        for (size_t i=0; i<n; i++) resultv[i] = sourcev[i];
+        for (size_t i = 0; i < n; i++) resultv[i] = sourcev[i];
         return resultv;
     }
 
@@ -40,13 +40,13 @@ public:
     {
         size_t n = sourcev.size();
         targetv.resize(n);
-        for (size_t i=0; i<n; i++) targetv[i] = sourcev[i];
+        for (size_t i = 0; i < n; i++) targetv[i] = sourcev[i];
     }
 
     /** This template function assigns the floating point values specified as its arguments to the
         destination array, resizing the destination array if necessary. */
-    template <typename... Values,
-              typename = std::enable_if_t<sizeof...(Values) != 0 && CompileTimeUtils::isFloatArgList<Values...>()>>
+    template<typename... Values,
+             typename = std::enable_if_t<sizeof...(Values) != 0 && CompileTimeUtils::isFloatArgList<Values...>()>>
     static inline void assign(Array& targetv, Values... values)
     {
         targetv.resize(sizeof...(Values));
@@ -55,12 +55,12 @@ public:
 
 private:
     // recursively assign values from double arguments to Array
-    static inline void assignValues(size_t /*index*/, Array& /*target*/) { }
-    template <typename... Values>
+    static inline void assignValues(size_t /*index*/, Array& /*target*/) {}
+    template<typename... Values>
     static inline void assignValues(size_t index, Array& target, double value, Values... values)
     {
         target[index] = value;
-        assignValues(index+1, target, values...);
+        assignValues(index + 1, target, values...);
     }
 
     //======================== Sorting =======================
@@ -69,16 +69,10 @@ public:
     /** This template function sorts a sequence of items given as a std::vector<T> where T is any
         built-in or user-defined type that implements the less-than operator (including the
         standard numeric types). */
-    template<typename T> static inline void sort(std::vector<T>& xv)
-    {
-        std::sort(xv.begin(),xv.end());
-    }
+    template<typename T> static inline void sort(std::vector<T>& xv) { std::sort(xv.begin(), xv.end()); }
 
     /** This function sorts the values in the specified array. */
-    static inline void sort(Array& xv)
-    {
-        std::sort(begin(xv), end(xv));
-    }
+    static inline void sort(Array& xv) { std::sort(begin(xv), end(xv)); }
 
     //======================== Searching =======================
 
@@ -98,20 +92,20 @@ public:
     {
         int n = xv.size();
         if (x < xv[0]) return -1;
-        if (xv[n-1] < x) return n-1;
+        if (xv[n - 1] < x) return n - 1;
 
         int jl = -1;
         int ju = n;
-        while (ju-jl>1)
+        while (ju - jl > 1)
         {
-            int jm = (ju+jl) >> 1;
+            int jm = (ju + jl) >> 1;
             if (x < xv[jm])
                 ju = jm;
             else
                 jl = jm;
         }
-        if (jl<=0) return 0;
-        if (jl>=n-2) return n-2;
+        if (jl <= 0) return 0;
+        if (jl >= n - 2) return n - 2;
         return jl;
     }
 
@@ -121,9 +115,9 @@ public:
     {
         int jl = -1;
         int ju = n;
-        while (ju-jl>1)
+        while (ju - jl > 1)
         {
-            int jm = (ju+jl) >> 1;
+            int jm = (ju + jl) >> 1;
             if (x < xv[jm])
                 ju = jm;
             else
@@ -158,7 +152,7 @@ public:
     static inline int locate(const Array& xv, double x)
     {
         int n = xv.size();
-        if (x==xv[n-1]) return n-2;
+        if (x == xv[n - 1]) return n - 2;
         return locateBasicImpl(xv, x, n);
     }
 
@@ -167,8 +161,8 @@ public:
     static inline int locateClip(const Array& xv, double x)
     {
         int n = xv.size();
-        if (x<xv[0]) return 0;
-        return locateBasicImpl(xv, x, n-1);
+        if (x < xv[0]) return 0;
+        return locateBasicImpl(xv, x, n - 1);
     }
 
     /** This function performs a binary search on the ordered sequence of double values in an
@@ -176,8 +170,8 @@ public:
     static inline int locateFail(const Array& xv, double x)
     {
         int n = xv.size();
-        if (x>xv[n-1]) return -1;
-        return locateBasicImpl(xv, x, n-1);
+        if (x > xv[n - 1]) return -1;
+        return locateBasicImpl(xv, x, n - 1);
     }
 
     //======================== Constructing grids =======================
@@ -192,9 +186,9 @@ public:
         by \f$(x_{\text{max}}-x_{\text{min}})/N\f$. */
     static inline double buildLinearGrid(Array& xv, double xmin, double xmax, int n)
     {
-        xv.resize(n+1);
-        double dx = (xmax-xmin)/n;
-        for (int i=0; i<=n; i++) xv[i] = xmin + i*dx;
+        xv.resize(n + 1);
+        double dx = (xmax - xmin) / n;
+        for (int i = 0; i <= n; i++) xv[i] = xmin + i * dx;
         return dx;
     }
 
@@ -210,18 +204,17 @@ public:
         q^{N-1} - q^N }{ 1-q } = q^{N-1} = {\cal{R}}. \f] */
     static inline void buildPowerLawGrid(Array& xv, double xmin, double xmax, int n, double ratio)
     {
-        if (fabs(ratio-1.)<1e-3)
+        if (fabs(ratio - 1.) < 1e-3)
         {
             buildLinearGrid(xv, xmin, xmax, n);
         }
         else
         {
-            xv.resize(n+1);
-            double range = xmax-xmin;
-            double q = pow(ratio,1./(n-1));
-            double qn = pow(q,n);
-            for (int i=0; i<=n; ++i)
-                xv[i] = xmin + (1.-pow(q,i))/(1.-qn) * range;
+            xv.resize(n + 1);
+            double range = xmax - xmin;
+            double q = pow(ratio, 1. / (n - 1));
+            double qn = pow(q, n);
+            for (int i = 0; i <= n; ++i) xv[i] = xmin + (1. - pow(q, i)) / (1. - qn) * range;
         }
     }
 
@@ -246,37 +239,37 @@ public:
         }{ 1-q } = q^{M-1} = {\cal{R}}. \f] */
     static inline void buildSymmetricPowerLawGrid(Array& xv, double xmin, double xmax, int n, double ratio)
     {
-        if (fabs(ratio-1.)<1e-3)
+        if (fabs(ratio - 1.) < 1e-3)
         {
             buildLinearGrid(xv, xmin, xmax, n);
         }
         else
         {
-            xv.resize(n+1);
-            double xc = 0.5*(xmin+xmax);
-            if (n%2==0)
+            xv.resize(n + 1);
+            double xc = 0.5 * (xmin + xmax);
+            if (n % 2 == 0)
             {
-                int M = n/2;
-                double q = pow(ratio,1.0/(M-1.0));
-                double qM = pow(q,M);
+                int M = n / 2;
+                double q = pow(ratio, 1.0 / (M - 1.0));
+                double qM = pow(q, M);
                 xv[M] = xc;
-                for (int i=1; i<=M; ++i)
+                for (int i = 1; i <= M; ++i)
                 {
-                    double dxi = (1.0-pow(q,i)) / (1.0-qM) * 0.5*(xmax-xmin);
-                    xv[M+i] = xc+dxi;
-                    xv[M-i] = xc-dxi;
+                    double dxi = (1.0 - pow(q, i)) / (1.0 - qM) * 0.5 * (xmax - xmin);
+                    xv[M + i] = xc + dxi;
+                    xv[M - i] = xc - dxi;
                 }
             }
             else
             {
-                int M = (n+1)/2;
-                double q = pow(ratio,1.0/(M-1.0));
-                double qM = pow(q,M);
-                for (int i=1; i<=M; ++i)
+                int M = (n + 1) / 2;
+                double q = pow(ratio, 1.0 / (M - 1.0));
+                double qM = pow(q, M);
+                for (int i = 1; i <= M; ++i)
                 {
-                    double dxi = (0.5+0.5*q-pow(q,i)) / (0.5+0.5*q-qM) * 0.5*(xmax-xmin);
-                    xv[M-1+i] = xc+dxi;
-                    xv[M-i] = xc-dxi;
+                    double dxi = (0.5 + 0.5 * q - pow(q, i)) / (0.5 + 0.5 * q - qM) * 0.5 * (xmax - xmin);
+                    xv[M - 1 + i] = xc + dxi;
+                    xv[M - i] = xc - dxi;
                 }
             }
         }
@@ -290,10 +283,10 @@ public:
         i=0,\ldots,N. \f] */
     static inline void buildLogGrid(Array& xv, double xmin, double xmax, int n)
     {
-        xv.resize(n+1);
+        xv.resize(n + 1);
         double logxmin = log(xmin);
-        double dlogx = log(xmax/xmin)/n;
-        for (int i=0; i<=n; i++) xv[i] = exp(logxmin + i*dlogx);
+        double dlogx = log(xmax / xmin) / n;
+        for (int i = 0; i <= n; i++) xv[i] = exp(logxmin + i * dlogx);
     }
 
     /** This function builds a grid with its first bin starting at zero, and subsequent logarithmic
@@ -304,10 +297,10 @@ public:
         \frac{x_{\text{max}}}{x_{\text{min}}} \right)^{(i-1)/(N-1)} \qquad i=1,\ldots,N. \f] */
     static inline void buildZeroLogGrid(Array& xv, double xmin, double xmax, int n)
     {
-        xv.resize(n+1);  // this also initializes xv[0] to zero
+        xv.resize(n + 1);  // this also initializes xv[0] to zero
         double logxmin = log(xmin);
-        double dlogx = log(xmax/xmin)/(n-1);
-        for (int i=0; i<n; i++) xv[i+1] = exp(logxmin + i*dlogx);
+        double dlogx = log(xmax / xmin) / (n - 1);
+        for (int i = 0; i < n; i++) xv[i + 1] = exp(logxmin + i * dlogx);
     }
 
     //=================== Interpolating and resampling ===================
@@ -318,7 +311,7 @@ public:
         \f$f(x)\f$ are interpolated linearly. */
     static inline double interpolateLinLin(double x, double x1, double x2, double f1, double f2)
     {
-        return f1 + ((x-x1)/(x2-x1))*(f2-f1);
+        return f1 + ((x - x1) / (x2 - x1)) * (f2 - f1);
     }
 
     /** This function computes the interpolated value of a one-dimensional function, given its
@@ -328,8 +321,8 @@ public:
         linearly. */
     static inline double interpolateLogLin(double x, double x1, double x2, double f1, double f2)
     {
-        if (x1<=0 || x2<=0) return 0;
-        return f1 + log(x/x1)/log(x2/x1)*(f2-f1);
+        if (x1 <= 0 || x2 <= 0) return 0;
+        return f1 + log(x / x1) / log(x2 / x1) * (f2 - f1);
     }
 
     /** This function computes the interpolated value of a one-dimensional function, given its
@@ -339,13 +332,13 @@ public:
         values are not verified. */
     static inline double interpolateLogLog(double x, double x1, double x2, double f1, double f2)
     {
-        if (f1<=0 || f2<=0)
+        if (f1 <= 0 || f2 <= 0)
         {
-            if (x==x1) return f1;
-            if (x==x2) return f2;
+            if (x == x1) return f1;
+            if (x == x2) return f2;
             return 0;
         }
-        return f1 * exp( log(x/x1)/log(x2/x1)*(log(f2/f1)) );
+        return f1 * exp(log(x / x1) / log(x2 / x1) * (log(f2 / f1)));
     }
 
     /** This template function returns the interpolated function value \f$y(x)\f$ given a value
@@ -360,12 +353,12 @@ public:
         The function assumes that the specified arrays contain the same number of elements, that
         they each contain at least two elements, and that \f$x_k\f$ elements are sorted in
         ascending order. If this is not the case, the result is undefined. */
-    template < double interpolateFunction(double, double, double, double, double) >
+    template<double interpolateFunction(double, double, double, double, double)>
     static inline double value(double x, const Array& xv, const Array& yv)
     {
         int i = NR::locateFail(xv, x);
         if (i < 0) return 0.;
-        return interpolateFunction(x, xv[i], xv[i+1], yv[i], yv[i+1]);
+        return interpolateFunction(x, xv[i], xv[i + 1], yv[i], yv[i + 1]);
     }
 
     /** This template function returns the interpolated function value \f$y(x)\f$ given a value
@@ -381,14 +374,14 @@ public:
         The function assumes that the specified arrays contain the same number of elements, that
         they each contain at least two elements, and that \f$x_k\f$ elements are sorted in
         ascending order. If this is not the case, the result is undefined. */
-    template < double interpolateFunction(double, double, double, double, double) >
+    template<double interpolateFunction(double, double, double, double, double)>
     static inline double clampedValue(double x, const Array& xv, const Array& yv)
     {
         int n = xv.size();
         int i = NR::locate(xv, x);
         if (i < 0) return yv[0];
-        if (i >= n-1) return yv[n-1];
-        return interpolateFunction(x, xv[i], xv[i+1], yv[i], yv[i+1]);
+        if (i >= n - 1) return yv[n - 1];
+        return interpolateFunction(x, xv[i], xv[i + 1], yv[i], yv[i + 1]);
     }
 
     /** This template function resamples the function values \f$y_k\f$ defined on a grid \f$x_k\f$
@@ -398,12 +391,12 @@ public:
         zero. For new grid points inside the original grid, the function value is interpolated
         using the function specified as template argument. The interpolation functions provided by
         this namespace can be passed as a template argument for this purpose. */
-    template < double interpolateFunction(double, double, double, double, double) >
+    template<double interpolateFunction(double, double, double, double, double)>
     static inline Array resample(const Array& xresv, const Array& xoriv, const Array& yoriv)
     {
         int n = xresv.size();
         Array yresv(n);
-        for (int l=0; l<n; l++) yresv[l] = value<interpolateFunction>(xresv[l], xoriv, yoriv);
+        for (int l = 0; l < n; l++) yresv[l] = value<interpolateFunction>(xresv[l], xoriv, yoriv);
         return yresv;
     }
 
@@ -420,8 +413,8 @@ public:
     static inline double cdf(Array& Pv, const Array& pv)
     {
         int n = pv.size();
-        Pv.resize(n+1);  // also sets Pv[0] to zero
-        for (int i=0; i<n; i++) Pv[i+1] = Pv[i] + pv[i];
+        Pv.resize(n + 1);  // also sets Pv[0] to zero
+        for (int i = 0; i < n; i++) Pv[i + 1] = Pv[i] + pv[i];
         double norm = Pv[n];
         Pv /= norm;
         return norm;
@@ -438,8 +431,8 @@ public:
         cumulative distribution. */
     template<typename Functor> static inline double cdf(Array& Pv, int n, Functor pv)
     {
-        Pv.resize(n+1);  // also sets Pv[0] to zero
-        for (int i=0; i<n; i++) Pv[i+1] = Pv[i] + pv(i);
+        Pv.resize(n + 1);  // also sets Pv[0] to zero
+        for (int i = 0; i < n; i++) Pv[i + 1] = Pv[i] + pv(i);
         double norm = Pv[n];
         Pv /= norm;
         return norm;
@@ -464,26 +457,28 @@ public:
         it is assumed that the pdf behaves as a power-law between any two grid points, and the
         integration is performed accordingly. In all other cases, piece-wise linear behavior is
         assumed and regular trapezium-rule integration is used. */
-    template < double interpolateFunction(double, double, double, double, double) >
+    template<double interpolateFunction(double, double, double, double, double)>
     static inline double cdf(Array& xv, Array& pv, Array& Pv, const Array& inxv, const Array& inpv, Range xrange)
     {
         // copy the relevant portion of the axis grid
         size_t minRight = std::upper_bound(begin(inxv), end(inxv), xrange.min()) - begin(inxv);
         size_t maxRight = std::lower_bound(begin(inxv), end(inxv), xrange.max()) - begin(inxv);
         size_t n = 1 + maxRight - minRight;  // n = number of bins
-        xv.resize(n+1);                      // n+1 = number of border points
+        xv.resize(n + 1);                    // n+1 = number of border points
         size_t i = 0;                        // i = index in target array
         xv[i++] = xrange.min();              // j = index in input array
-        for (size_t j = minRight; j < maxRight; ) xv[i++] = inxv[j++];
+        for (size_t j = minRight; j < maxRight;) xv[i++] = inxv[j++];
         xv[i++] = xrange.max();
 
         // interpolate or copy the corresponding probability density values
-        pv.resize(n+1);
-        pv[0] = minRight == 0 ? 0. :
-                interpolateFunction(xv[0], inxv[minRight-1], inxv[minRight], inpv[minRight-1], inpv[minRight]);
-        for (size_t i = 1; i < n; ++i) pv[i] = inpv[minRight+i-1];
-        pv[n] = maxRight == inxv.size() ? 0. :
-                interpolateFunction(xv[n], inxv[maxRight-1], inxv[maxRight], inpv[maxRight-1], inpv[maxRight]);
+        pv.resize(n + 1);
+        pv[0] = minRight == 0 ? 0.
+                              : interpolateFunction(xv[0], inxv[minRight - 1], inxv[minRight], inpv[minRight - 1],
+                                                    inpv[minRight]);
+        for (size_t i = 1; i < n; ++i) pv[i] = inpv[minRight + i - 1];
+        pv[n] = maxRight == inxv.size() ? 0.
+                                        : interpolateFunction(xv[n], inxv[maxRight - 1], inxv[maxRight],
+                                                              inpv[maxRight - 1], inpv[maxRight]);
 
         // perform the rest of the operation in a non-templated function
         // assume log-log behavior for the cdf integration if the template parameter is NR::interpolateLogLog
@@ -512,7 +507,7 @@ public:
         \;\mathrm{gln}\left(-\alpha_i, \frac{x_{i+1}}{x_i}\right) \f] where \f$\mathrm{gln}(a,x)\f$
         is the generalized logarithm defined in the description of the SpecialFunctions::gln()
         function. */
-        static double cdf2(bool loglog, const Array& xv, Array& pv, Array& Pv);
+    static double cdf2(bool loglog, const Array& xv, Array& pv, Array& Pv);
 };
 
 ////////////////////////////////////////////////////////////////////

@@ -140,10 +140,10 @@ private:
     bool _logmemory{false};
     string _procNameShort;
     string _procNameLong;
-    std::atomic<uint64_t> _interval{0};     // counts in interval between messages
-    std::atomic<uint64_t> _started{0};      // counts since epoch when timer started
-    std::atomic<size_t> _numTotal{0};       // total number of tasks to be completed
-    std::atomic<size_t> _numDone{0};        // number of tasks completed so far
+    std::atomic<uint64_t> _interval{0};  // counts in interval between messages
+    std::atomic<uint64_t> _started{0};   // counts since epoch when timer started
+    std::atomic<size_t> _numTotal{0};    // total number of tasks to be completed
+    std::atomic<size_t> _numDone{0};     // number of tasks completed so far
 };
 
 ////////////////////////////////////////////////////////////////////

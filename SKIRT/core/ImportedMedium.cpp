@@ -52,11 +52,14 @@ const MaterialMix* ImportedMedium::mix(Position bfr) const
         Array params;
         // this function is called by the Configuration object before setup() has been performed on the medium;
         // so if the snapshot has not yet been created, just return a default material mix
-        if (_snapshot) _snapshot->parameters(bfr, params);
-        else params.resize(_materialMixFamily->parameterInfo().size());
+        if (_snapshot)
+            _snapshot->parameters(bfr, params);
+        else
+            params.resize(_materialMixFamily->parameterInfo().size());
         return _materialMixFamily->mix(params);
     }
-    else return _materialMix;
+    else
+        return _materialMix;
 }
 
 //////////////////////////////////////////////////////////////////////

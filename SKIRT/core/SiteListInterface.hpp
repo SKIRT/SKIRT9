@@ -18,11 +18,11 @@ class SiteListInterface
 {
 protected:
     /** The empty constructor for the interface. */
-    SiteListInterface() { }
+    SiteListInterface() {}
 
 public:
     /** The empty destructor for the interface. */
-    virtual ~SiteListInterface() { }
+    virtual ~SiteListInterface() {}
 
     /** This function returns the number of sites in the list. */
     virtual int numSites() const = 0;

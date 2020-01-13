@@ -6,8 +6,8 @@
 #ifndef MESHGEOMETRY_HPP
 #define MESHGEOMETRY_HPP
 
-#include "ImportedGeometry.hpp"
 #include "Box.hpp"
+#include "ImportedGeometry.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -22,33 +22,33 @@ class MeshGeometry : public ImportedGeometry
 {
     /** The enumeration type indicating the type of mass quantity to be imported. */
     ENUM_DEF(MassType, MassDensity, Mass, NumberDensity, Number)
-    ENUM_VAL(MassType, MassDensity,   "mass density")
-    ENUM_VAL(MassType, Mass,          "mass (volume-integrated mass density)")
-    ENUM_VAL(MassType, NumberDensity, "number density")
-    ENUM_VAL(MassType, Number,        "number (volume-integrated number density)")
+        ENUM_VAL(MassType, MassDensity, "mass density")
+        ENUM_VAL(MassType, Mass, "mass (volume-integrated mass density)")
+        ENUM_VAL(MassType, NumberDensity, "number density")
+        ENUM_VAL(MassType, Number, "number (volume-integrated number density)")
     ENUM_END()
 
     ITEM_ABSTRACT(MeshGeometry, ImportedGeometry, "a geometry imported from mesh-based data")
 
-    PROPERTY_DOUBLE(minX, "the start point of the domain in the X direction")
+        PROPERTY_DOUBLE(minX, "the start point of the domain in the X direction")
         ATTRIBUTE_QUANTITY(minX, "length")
 
-    PROPERTY_DOUBLE(maxX, "the end point of the domain in the X direction")
+        PROPERTY_DOUBLE(maxX, "the end point of the domain in the X direction")
         ATTRIBUTE_QUANTITY(maxX, "length")
 
-    PROPERTY_DOUBLE(minY, "the start point of the domain in the Y direction")
+        PROPERTY_DOUBLE(minY, "the start point of the domain in the Y direction")
         ATTRIBUTE_QUANTITY(minY, "length")
 
-    PROPERTY_DOUBLE(maxY, "the end point of the domain in the Y direction")
+        PROPERTY_DOUBLE(maxY, "the end point of the domain in the Y direction")
         ATTRIBUTE_QUANTITY(maxY, "length")
 
-    PROPERTY_DOUBLE(minZ, "the start point of the domain in the Z direction")
+        PROPERTY_DOUBLE(minZ, "the start point of the domain in the Z direction")
         ATTRIBUTE_QUANTITY(minZ, "length")
 
-    PROPERTY_DOUBLE(maxZ, "the end point of the domain in the Z direction")
+        PROPERTY_DOUBLE(maxZ, "the end point of the domain in the Z direction")
         ATTRIBUTE_QUANTITY(maxZ, "length")
 
-    PROPERTY_ENUM(massType, MassType, "the type of mass quantity to be imported")
+        PROPERTY_ENUM(massType, MassType, "the type of mass quantity to be imported")
         ATTRIBUTE_DEFAULT_VALUE(massType, "MassDensity")
 
     ITEM_END()

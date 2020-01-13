@@ -19,7 +19,7 @@ std::pair<double, double> OpticalDepthMaterialNormalization::numberAndMass(const
     double reqNumberColumnDensity = opticalDepth() / mix->sectionExt(wavelength());
     double reqMassColumnDensity = reqNumberColumnDensity * mix->mass();
 
-    return std::make_pair(reqNumberColumnDensity/geomColumnDensity, reqMassColumnDensity/geomColumnDensity);
+    return std::make_pair(reqNumberColumnDensity / geomColumnDensity, reqMassColumnDensity / geomColumnDensity);
 }
 
 //////////////////////////////////////////////////////////////////////

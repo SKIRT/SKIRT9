@@ -14,8 +14,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void EquilibriumDustEmissionCalculator::precalculate(SimulationItem* item,
-                                                     const Array& lambdav, const Array& sigmaabsv)
+void EquilibriumDustEmissionCalculator::precalculate(SimulationItem* item, const Array& lambdav, const Array& sigmaabsv)
 {
     // perform initialization that needs to happen only once
     if (_rfsigmaabsvv.empty())
@@ -27,7 +26,7 @@ void EquilibriumDustEmissionCalculator::precalculate(SimulationItem* item,
         radiationFieldWLG->setup();
         _rflambdav.resize(radiationFieldWLG->numBins());
         _rfdlambdav.resize(radiationFieldWLG->numBins());
-        for (int k=0; k!=radiationFieldWLG->numBins(); ++k)
+        for (int k = 0; k != radiationFieldWLG->numBins(); ++k)
         {
             _rflambdav[k] = radiationFieldWLG->wavelength(k);
             _rfdlambdav[k] = radiationFieldWLG->effectiveWidth(k);
@@ -59,20 +58,19 @@ void EquilibriumDustEmissionCalculator::precalculate(SimulationItem* item,
     // so we parallelize the loop but there is no reason to log progress
     size_t numT = _Tv.size();
     Array planckabsv(numT);
-    item->find<ParallelFactory>()->parallelDistributed()->call(numT,
-        [this,&lambdav,&sigmaabsv,&planckabsv] (size_t firstIndex, size_t numIndices)
-    {
+    item->find<ParallelFactory>()->parallelDistributed()->call(numT, [this, &lambdav, &sigmaabsv, &planckabsv](
+                                                                         size_t firstIndex, size_t numIndices) {
         size_t numLambda = lambdav.size();
-        for (size_t p=firstIndex; p!=firstIndex+numIndices; ++p)
+        for (size_t p = firstIndex; p != firstIndex + numIndices; ++p)
         {
-            if (p) // skip p=0, leaving the corresponding value at zero
+            if (p)  // skip p=0, leaving the corresponding value at zero
             {
                 PlanckFunction B(_Tv[p]);
                 double planckabs = 0.;
-                for (size_t j=1; j!=numLambda; ++j) // skip the first wavelength so we can determine a bin width
+                for (size_t j = 1; j != numLambda; ++j)  // skip the first wavelength so we can determine a bin width
                 {
                     double lambda = lambdav[j];
-                    double dlambda = lambdav[j] - lambdav[j-1];
+                    double dlambda = lambdav[j] - lambdav[j - 1];
                     planckabs += sigmaabsv[j] * B(lambda) * dlambda;
                 }
                 planckabsv[p] = planckabs;
@@ -113,8 +111,10 @@ double EquilibriumDustEmissionCalculator::equilibriumTemperature(int b, const Ar
     double inputabs = (_rfsigmaabsvv[b] * Jv * _rfdlambdav).sum();
 
     // find the temperature corresponding to this amount of emission on the output side of the equation
-    if (inputabs > 0.) return NR::clampedValue<NR::interpolateLinLin>(inputabs, _planckabsvv[b], _Tv);
-    else return 0.;
+    if (inputabs > 0.)
+        return NR::clampedValue<NR::interpolateLinLin>(inputabs, _planckabsvv[b], _Tv);
+    else
+        return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -125,11 +125,11 @@ Array EquilibriumDustEmissionCalculator::emissivity(const Array& Jv) const
     int numBins = _rfsigmaabsvv.size();
 
     Array ev(numWavelengths);
-    for (int b=0; b!=numBins; ++b)
+    for (int b = 0; b != numBins; ++b)
     {
         double T = equilibriumTemperature(b, Jv);
         PlanckFunction B(T);
-        for (int ell=0; ell<numWavelengths; ell++)
+        for (int ell = 0; ell < numWavelengths; ell++)
         {
             ev[ell] += _emsigmaabsvv[b][ell] * B(_emlambdav[ell]);
         }

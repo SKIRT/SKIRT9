@@ -24,7 +24,7 @@ public:
         state. All string fields are empty, there are no property definitions, and the type is
         considered to be abstract (i.e. not concrete). Use the setters to further initialize all
         relevant data members. */
-    TypeDef() { }
+    TypeDef() {}
 
     // ================== Copying and moving ==================
 
@@ -147,18 +147,18 @@ public:
     // ================== Data members ==================
 
 private:
-    string _name;           // the name of the type
-    string _title;          // a description for display to a user
-    string _base;           // the name of the immediate base type, or the empty string for the root type
-    string _allowedIf;      // a Boolean expression indicating whether items of this type are allowed
-    string _displayedIf;    // a Boolean expression indicating whether this type is displayed
-    string _insert;         // a conditional value expression providing a list of extra names to be inserted
-    bool _concrete{false};  // true if this is a concrete type
-    int _subPropertyIndex{-1};            // if nonnegative, subproperties are inserted before the property
-                                          // with the specified index rather than added at the end of the list
-    std::list<PropertyDef> _propertyDefs; // the definitions of the type's properties
-                                          // (we use std::list because it can handle items that aren't copyable)
-    Instantiator _instantiator{nullptr};  // function to create Item subclass of this type
+    string _name;               // the name of the type
+    string _title;              // a description for display to a user
+    string _base;               // the name of the immediate base type, or the empty string for the root type
+    string _allowedIf;          // a Boolean expression indicating whether items of this type are allowed
+    string _displayedIf;        // a Boolean expression indicating whether this type is displayed
+    string _insert;             // a conditional value expression providing a list of extra names to be inserted
+    bool _concrete{false};      // true if this is a concrete type
+    int _subPropertyIndex{-1};  // if nonnegative, subproperties are inserted before the property
+                                // with the specified index rather than added at the end of the list
+    std::list<PropertyDef> _propertyDefs;  // the definitions of the type's properties
+                                           // (we use std::list because it can handle items that aren't copyable)
+    Instantiator _instantiator{nullptr};   // function to create Item subclass of this type
 };
 
 ////////////////////////////////////////////////////////////////////

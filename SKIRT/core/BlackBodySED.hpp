@@ -6,8 +6,8 @@
 #ifndef BLACKBODYSED_HPP
 #define BLACKBODYSED_HPP
 
-#include "SED.hpp"
 #include "Array.hpp"
+#include "SED.hpp"
 class PlanckFunction;
 
 ////////////////////////////////////////////////////////////////////
@@ -22,7 +22,7 @@ class BlackBodySED : public SED
 {
     ITEM_CONCRETE(BlackBodySED, SED, "a black-body spectral energy distribution")
 
-    PROPERTY_DOUBLE(temperature, "the black body temperature")
+        PROPERTY_DOUBLE(temperature, "the black body temperature")
         ATTRIBUTE_QUANTITY(temperature, "temperature")
         ATTRIBUTE_MIN_VALUE(temperature, "]0 K")
         ATTRIBUTE_DEFAULT_VALUE(temperature, "5000 K")

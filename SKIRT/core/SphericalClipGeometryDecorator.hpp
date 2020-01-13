@@ -19,23 +19,23 @@ class SphericalClipGeometryDecorator : public ClipGeometryDecorator
     ITEM_CONCRETE(SphericalClipGeometryDecorator, ClipGeometryDecorator,
                   "a decorator that clips another geometry using a sphere")
 
-    PROPERTY_DOUBLE(clipRadius, "the radius of the clipping sphere")
+        PROPERTY_DOUBLE(clipRadius, "the radius of the clipping sphere")
         ATTRIBUTE_QUANTITY(clipRadius, "length")
         ATTRIBUTE_MIN_VALUE(clipRadius, "[0")
 
-    PROPERTY_DOUBLE(centerX, "the x coordinate of the sphere's center")
+        PROPERTY_DOUBLE(centerX, "the x coordinate of the sphere's center")
         ATTRIBUTE_QUANTITY(centerX, "length")
         ATTRIBUTE_DEFAULT_VALUE(centerX, "0")
         ATTRIBUTE_DISPLAYED_IF(centerX, "Level2")
         ATTRIBUTE_INSERT(centerX, "centerX:Dimension3")
 
-    PROPERTY_DOUBLE(centerY, "the y coordinate of the sphere's center")
+        PROPERTY_DOUBLE(centerY, "the y coordinate of the sphere's center")
         ATTRIBUTE_QUANTITY(centerY, "length")
         ATTRIBUTE_DEFAULT_VALUE(centerY, "0")
         ATTRIBUTE_DISPLAYED_IF(centerY, "Level2")
         ATTRIBUTE_INSERT(centerY, "centerY:Dimension3")
 
-    PROPERTY_DOUBLE(centerZ, "the z coordinate of the sphere's center")
+        PROPERTY_DOUBLE(centerZ, "the z coordinate of the sphere's center")
         ATTRIBUTE_QUANTITY(centerZ, "length")
         ATTRIBUTE_DEFAULT_VALUE(centerZ, "0")
         ATTRIBUTE_DISPLAYED_IF(centerZ, "Level2")

@@ -6,8 +6,8 @@
 #ifndef MULTITHREADPARALLEL_HPP
 #define MULTITHREADPARALLEL_HPP
 
-#include "MultiParallel.hpp"
 #include "ChunkMaker.hpp"
+#include "MultiParallel.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -15,7 +15,7 @@
     single process. It uses the facilities offered by the MultiParallel base class. */
 class MultiThreadParallel : public MultiParallel
 {
-    friend class ParallelFactory;       // so ParallelFactory can access our private constructor
+    friend class ParallelFactory;  // so ParallelFactory can access our private constructor
 
     //============= Construction - Destruction =============
 
@@ -42,8 +42,8 @@ protected:
     //======================== Data Members ========================
 
 private:
-    std::function<void(size_t,size_t)> _target; // the target function to be called
-    ChunkMaker _chunkMaker;                     // the chunk maker
+    std::function<void(size_t, size_t)> _target;  // the target function to be called
+    ChunkMaker _chunkMaker;                       // the chunk maker
 };
 
 ////////////////////////////////////////////////////////////////////

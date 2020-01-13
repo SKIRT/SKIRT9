@@ -17,10 +17,11 @@ class AdaptiveMeshInterface
 {
 protected:
     /** The empty constructor for the interface. */
-    AdaptiveMeshInterface() { }
+    AdaptiveMeshInterface() {}
+
 public:
     /** The empty destructor for the interface. */
-    virtual ~AdaptiveMeshInterface() { }
+    virtual ~AdaptiveMeshInterface() {}
 
     /** This function must be implemented in a derived class. It returns a pointer to the adaptive
         mesh snapshot maintained by the object that implements the interface. */

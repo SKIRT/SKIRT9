@@ -6,9 +6,9 @@
 #ifndef SED_HPP
 #define SED_HPP
 
-#include "SimulationItem.hpp"
 #include "Array.hpp"
 #include "Range.hpp"
+#include "SimulationItem.hpp"
 class Random;
 
 ////////////////////////////////////////////////////////////////////

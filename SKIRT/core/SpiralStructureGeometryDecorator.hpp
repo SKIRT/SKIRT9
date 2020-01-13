@@ -6,8 +6,8 @@
 #ifndef SPIRALSTRUCTUREGEOMETRYDECORATOR_HPP
 #define SPIRALSTRUCTUREGEOMETRYDECORATOR_HPP
 
-#include "GenGeometry.hpp"
 #include "AxGeometry.hpp"
+#include "GenGeometry.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -42,35 +42,35 @@ class SpiralStructureGeometryDecorator : public GenGeometry
     ITEM_CONCRETE(SpiralStructureGeometryDecorator, GenGeometry,
                   "a decorator that adds spiral structure to any axisymmetric geometry")
 
-    PROPERTY_ITEM(geometry, AxGeometry, "the axisymmetric geometry to be decorated with spiral structure")
+        PROPERTY_ITEM(geometry, AxGeometry, "the axisymmetric geometry to be decorated with spiral structure")
 
-    PROPERTY_INT(numArms, "the number of spiral arms")
+        PROPERTY_INT(numArms, "the number of spiral arms")
         ATTRIBUTE_MIN_VALUE(numArms, "1")
         ATTRIBUTE_MAX_VALUE(numArms, "100")
         ATTRIBUTE_DEFAULT_VALUE(numArms, "1")
 
-    PROPERTY_DOUBLE(pitchAngle, "the pitch angle")
+        PROPERTY_DOUBLE(pitchAngle, "the pitch angle")
         ATTRIBUTE_QUANTITY(pitchAngle, "posangle")
         ATTRIBUTE_MIN_VALUE(pitchAngle, "]0 deg")
         ATTRIBUTE_MAX_VALUE(pitchAngle, "90 deg[")
         ATTRIBUTE_DEFAULT_VALUE(pitchAngle, "10 deg")
 
-    PROPERTY_DOUBLE(radiusZeroPoint, "the radius zero-point")
+        PROPERTY_DOUBLE(radiusZeroPoint, "the radius zero-point")
         ATTRIBUTE_QUANTITY(radiusZeroPoint, "length")
         ATTRIBUTE_MIN_VALUE(radiusZeroPoint, "]0")
 
-    PROPERTY_DOUBLE(phaseZeroPoint, "the phase zero-point")
+        PROPERTY_DOUBLE(phaseZeroPoint, "the phase zero-point")
         ATTRIBUTE_QUANTITY(phaseZeroPoint, "posangle")
         ATTRIBUTE_MIN_VALUE(phaseZeroPoint, "[0 deg")
         ATTRIBUTE_MAX_VALUE(phaseZeroPoint, "360 deg]")
         ATTRIBUTE_DEFAULT_VALUE(phaseZeroPoint, "0 deg")
         ATTRIBUTE_DISPLAYED_IF(phaseZeroPoint, "Level2")
 
-    PROPERTY_DOUBLE(perturbationWeight, "the weight of the spiral perturbation")
+        PROPERTY_DOUBLE(perturbationWeight, "the weight of the spiral perturbation")
         ATTRIBUTE_MIN_VALUE(perturbationWeight, "]0")
         ATTRIBUTE_MAX_VALUE(perturbationWeight, "1]")
 
-    PROPERTY_INT(index, "the arm-interarm size ratio index")
+        PROPERTY_INT(index, "the arm-interarm size ratio index")
         ATTRIBUTE_MIN_VALUE(index, "0")
         ATTRIBUTE_MAX_VALUE(index, "10")
         ATTRIBUTE_DEFAULT_VALUE(index, "1")

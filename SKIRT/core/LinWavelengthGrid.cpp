@@ -18,7 +18,7 @@ void LinWavelengthGrid::setupSelfBefore()
 
     // construct the grid
     Array lambdav;
-    NR::buildLinearGrid(lambdav, _minWavelength, _maxWavelength, _numWavelengths-1);
+    NR::buildLinearGrid(lambdav, _minWavelength, _maxWavelength, _numWavelengths - 1);
     setWavelengthRange(lambdav, false);
 }
 

@@ -29,24 +29,25 @@ class ClumpyGeometryDecorator : public GenGeometry
 {
     ITEM_CONCRETE(ClumpyGeometryDecorator, GenGeometry, "a decorator that adds clumpiness to any geometry")
 
-    PROPERTY_ITEM(geometry, Geometry, "the geometry to be made clumpy")
+        PROPERTY_ITEM(geometry, Geometry, "the geometry to be made clumpy")
 
-    PROPERTY_DOUBLE(clumpFraction, "the fraction of the mass locked up in clumps")
+        PROPERTY_DOUBLE(clumpFraction, "the fraction of the mass locked up in clumps")
         ATTRIBUTE_MIN_VALUE(clumpFraction, "[0")
         ATTRIBUTE_MAX_VALUE(clumpFraction, "1]")
 
-    PROPERTY_INT(numClumps, "the total number of clumps")
+        PROPERTY_INT(numClumps, "the total number of clumps")
         ATTRIBUTE_MIN_VALUE(numClumps, "1")
 
-    PROPERTY_DOUBLE(clumpRadius, "the scale radius of a single clump")
+        PROPERTY_DOUBLE(clumpRadius, "the scale radius of a single clump")
         ATTRIBUTE_QUANTITY(clumpRadius, "length")
         ATTRIBUTE_MIN_VALUE(clumpRadius, "]0")
 
-    PROPERTY_BOOL(cutoffClumps, "cut off clumps at the boundary of the underlying geometry")
+        PROPERTY_BOOL(cutoffClumps, "cut off clumps at the boundary of the underlying geometry")
         ATTRIBUTE_DEFAULT_VALUE(cutoffClumps, "false")
         ATTRIBUTE_DISPLAYED_IF(cutoffClumps, "Level2")
 
-    PROPERTY_ITEM(smoothingKernel, SmoothingKernel, "the smoothing kernel that describes the density of a single clump")
+        PROPERTY_ITEM(smoothingKernel, SmoothingKernel,
+                      "the smoothing kernel that describes the density of a single clump")
         ATTRIBUTE_DEFAULT_VALUE(smoothingKernel, "CubicSplineSmoothingKernel")
         ATTRIBUTE_DISPLAYED_IF(smoothingKernel, "Level2")
 

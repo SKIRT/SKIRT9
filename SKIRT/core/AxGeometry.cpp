@@ -16,7 +16,7 @@ int AxGeometry::dimension() const
 
 double AxGeometry::density(Position bfr) const
 {
-    return density(bfr.cylRadius(),bfr.height());
+    return density(bfr.cylRadius(), bfr.height());
 }
 
 //////////////////////////////////////////////////////////////////////

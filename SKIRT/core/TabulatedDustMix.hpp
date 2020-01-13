@@ -6,8 +6,8 @@
 #ifndef TABULATEDDUSTMIX_HPP
 #define TABULATEDDUSTMIX_HPP
 
-#include "DustMix.hpp"
 #include "Array.hpp"
+#include "DustMix.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -47,10 +47,9 @@ protected:
         This function in turn invokes the getDustProperties() function that must be implemented by
         each TabulatedDustMix subclass, and it subsequently resamples the returned properties on
         the requested wavelength grid. */
-        double getOpticalProperties(const Array& lambdav, const Array& thetav,
-                                    Array& sigmaabsv, Array& sigmascav, Array& asymmparv,
-                                    Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv,
-                                    ArrayTable<2>& sigmaabsvv, ArrayTable<2>& sigmaabspolvv) override;
+    double getOpticalProperties(const Array& lambdav, const Array& thetav, Array& sigmaabsv, Array& sigmascav,
+                                Array& asymmparv, Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv,
+                                ArrayTable<2>& sigmaabsvv, ArrayTable<2>& sigmaabspolvv) override;
 
     /** This function must be implemented in each subclass to store the wavelengths and the
         corresponding tabulated properties in the array arguments, and to return the dust mass per

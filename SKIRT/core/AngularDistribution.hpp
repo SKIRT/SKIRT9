@@ -6,8 +6,8 @@
 #ifndef ANGULARDISTRIBUTION_HPP
 #define ANGULARDISTRIBUTION_HPP
 
-#include "SimulationItem.hpp"
 #include "AngularDistributionInterface.hpp"
+#include "SimulationItem.hpp"
 class Random;
 
 ////////////////////////////////////////////////////////////////////

@@ -19,8 +19,8 @@
 ShapeRegistry::ShapeRegistry()
 {
     string version = BuildInfo::projectVersion();
-    ItemRegistry::beginSchema("Shapes", "a Shapes parameter file", version, "shapes",
-                              "shapes-definition", "ShapeCanvas", version, "");
+    ItemRegistry::beginSchema("Shapes", "a Shapes parameter file", version, "shapes", "shapes-definition",
+                              "ShapeCanvas", version, "");
 
     ItemRegistry::add<ShapeItem>();
     ItemRegistry::add<ShapeCanvas>();
@@ -51,4 +51,3 @@ ShapeRegistry::~ShapeRegistry()
 }
 
 ////////////////////////////////////////////////////////////////////
-

@@ -6,8 +6,8 @@
 #ifndef RANGEWAVELENGTHDISTRIBUTION_HPP
 #define RANGEWAVELENGTHDISTRIBUTION_HPP
 
-#include "WavelengthDistribution.hpp"
 #include "Range.hpp"
+#include "WavelengthDistribution.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -25,13 +25,13 @@ class RangeWavelengthDistribution : public WavelengthDistribution
     ITEM_ABSTRACT(RangeWavelengthDistribution, WavelengthDistribution,
                   "a wavelength probability distribution with a configured wavelength range")
 
-    PROPERTY_DOUBLE(minWavelength, "the shortest wavelength of the wavelength probability distribution")
+        PROPERTY_DOUBLE(minWavelength, "the shortest wavelength of the wavelength probability distribution")
         ATTRIBUTE_QUANTITY(minWavelength, "wavelength")
         ATTRIBUTE_MIN_VALUE(minWavelength, "1 Angstrom")
         ATTRIBUTE_MAX_VALUE(minWavelength, "1 m")
         ATTRIBUTE_DEFAULT_VALUE(minWavelength, "1 Angstrom")
 
-    PROPERTY_DOUBLE(maxWavelength, "the longest wavelength of the wavelength probability distribution")
+        PROPERTY_DOUBLE(maxWavelength, "the longest wavelength of the wavelength probability distribution")
         ATTRIBUTE_QUANTITY(maxWavelength, "wavelength")
         ATTRIBUTE_MIN_VALUE(maxWavelength, "1 Angstrom")
         ATTRIBUTE_MAX_VALUE(maxWavelength, "1 m")
