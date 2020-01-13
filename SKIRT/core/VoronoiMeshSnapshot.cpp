@@ -484,11 +484,16 @@ VoronoiMeshSnapshot::VoronoiMeshSnapshot(const SimulationItem* item, const Box& 
 
 ////////////////////////////////////////////////////////////////////
 
-void VoronoiMeshSnapshot::buildMesh(bool relax)
+namespace
 {
     // maximum number of Voronoi sites processed between two invocations of infoIfElapsed()
     const int logProgressChunkSize = 1000;
+}
 
+////////////////////////////////////////////////////////////////////
+
+void VoronoiMeshSnapshot::buildMesh(bool relax)
+{
     // remove sites that lie outside of the domain
     int numOutside = 0;
     for (int m = _cells.size() - 1; m >= 0; --m)
