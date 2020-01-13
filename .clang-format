@@ -1,3 +1,6 @@
+# clang-format version 9.0.0 style options for SKIRT C++ code
+# see https://releases.llvm.org/9.0.0/tools/clang/docs/ClangFormat.html
+
 BasedOnStyle: LLVM
 Language: Cpp
 
