@@ -10,10 +10,23 @@
 
 //////////////////////////////////////////////////////////////////////
 
-/** RadialVectorField represents a vector field with unit vectors pointing away from the origin. */
+/** RadialVectorField represents a vector field with vectors pointing away from the origin with
+    lengths that depend on the spatial location and on a scale radius \f$r_1\f$ specified by the
+    user as a property. Specifically, the magnitude \f$v\f$ of the vectors is given by \f[ v =
+    \begin{cases} r/r_1 & \mathrm{for}\;0\le r<r_1 \\ 1 & \mathrm{for}\;r\ge r_1 \end{cases} \f] or
+    by \f$v=1\f$ if \f$r_1=0\f$ (the default value). In other words, for the default transition
+    radius of zero, the field consists of unit vectors. For other transition radii, the vector
+    magnitude scales from zero at \f$r=0\f$ to unity at \f$r=r_1\f$, and stays at unity for
+    \f$r>r_1\f$. */
 class RadialVectorField : public VectorField
 {
     ITEM_CONCRETE(RadialVectorField, VectorField, "a vector field pointing away from the origin")
+
+        PROPERTY_DOUBLE(unityRadius, "the radius where the magnitude of the vectors is unity")
+        ATTRIBUTE_QUANTITY(unityRadius, "length")
+        ATTRIBUTE_MIN_VALUE(unityRadius, "]0")
+        ATTRIBUTE_DEFAULT_VALUE(unityRadius, "0")
+
     ITEM_END()
 
     //======================== Other Functions =======================
