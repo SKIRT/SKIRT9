@@ -48,8 +48,19 @@ ContinuationIndentWidth: 4
 Cpp11BracedListStyle: true
 FixNamespaceComments: false
 IncludeBlocks: Merge
+IncludeCategories:
+  - Regex:           '^".*\.hpp"'
+    Priority:        1
+  - Regex:           '^".*\.h"'
+    Priority:        1
+  - Regex:           '^<Windows.h>'
+    Priority:        2
+  - Regex:           '^<.*\.h>'
+    Priority:        3
+  - Regex:           '^<.*>'
+    Priority:        4
 IndentCaseLabels: true
-IndentPPDirectives: BeforeHash
+IndentPPDirectives: AfterHash
 IndentWidth: 4
 IndentWrappedFunctionNames: false
 KeepEmptyLinesAtTheStartOfBlocks: true

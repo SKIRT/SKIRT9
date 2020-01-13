@@ -15,25 +15,24 @@
 #include <unordered_map>
 
 #ifdef _WIN64
-    #include <Lmcons.h>   // for getting user name
-    #include <Pathcch.h>  // for getting canonical path
-    #include <Windows.h>
-    #ifdef _DEBUG
-        #include <Dbghelp.h>  // for stack trace
-    #endif
-
+#    include <Windows.h>
+#    include <Lmcons.h>   // for getting user name
+#    include <Pathcch.h>  // for getting canonical path
+#    ifdef _DEBUG
+#        include <Dbghelp.h>  // for stack trace
+#    endif
 #else
-    #include <dirent.h>    // for reading directories
-    #include <execinfo.h>  // for stack trace
-    #include <fcntl.h>     // for opening files (low-level)
-    #include <iostream>
-    #include <sys/mman.h>  // for memory mapped files
-    #include <sys/stat.h>  // for reading file status
-    #include <unistd.h>    // for gethostname
+#    include <dirent.h>    // for reading directories
+#    include <execinfo.h>  // for stack trace
+#    include <fcntl.h>     // for opening files (low-level)
+#    include <sys/mman.h>  // for memory mapped files
+#    include <sys/stat.h>  // for reading file status
+#    include <unistd.h>    // for gethostname
+#    include <iostream>
 #endif
 
 #if defined(__APPLE__) && defined(__MACH__)
-    #include <CoreFoundation/CoreFoundation.h>
+#    include <CoreFoundation/CoreFoundation.h>
 #endif
 
 ////////////////////////////////////////////////////////////////////
@@ -254,7 +253,7 @@ string System::executablePath()
     return string();
 
 #else  // not windows
-    #if defined(__APPLE__) && defined(__MACH__)
+#    if defined(__APPLE__) && defined(__MACH__)
     // Try Mac OS X Core Foundation functions
     char buffer1[MAXPATHLEN];
     buffer1[0] = 0;
@@ -271,13 +270,13 @@ string System::executablePath()
     }
     char buffer2[MAXPATHLEN];
     if (realpath(buffer1, buffer2)) return buffer2;
-    #elif defined(__linux__) || defined(__linux) || defined(linux) || defined(__gnu_linux__)
+#    elif defined(__linux__) || defined(__linux) || defined(linux) || defined(__gnu_linux__)
     // Try Linux /proc/<pid>/exe symlink that points to the absolute path of the executable
     char buffer[MAXPATHLEN];
     buffer[0] = 0;
     string symlink = "/proc/" + std::to_string(getpid()) + "/exe";
     if (realpath(symlink.c_str(), buffer)) return buffer;
-    #endif  // not Mac or Linux
+#    endif  // not Mac or Linux
 
     // If the Mac or Linux platform attempts failed, or if we're on another platform,
     // return the zeroth command line argument if it happens to be an absolute path
@@ -336,9 +335,9 @@ string System::username()
 // The thread-safe version of localtime is called differently on Unix and Windows,
 // and the arguments are in reverse order. So define a macro...
 #ifdef _WIN64
-    #define TO_LOCAL_TIME(from, to) localtime_s(to, from)
+#    define TO_LOCAL_TIME(from, to) localtime_s(to, from)
 #else
-    #define TO_LOCAL_TIME(from, to) localtime_r(from, to)
+#    define TO_LOCAL_TIME(from, to) localtime_r(from, to)
 #endif
 
 string System::timestamp(bool iso8601)
@@ -732,7 +731,7 @@ vector<string> System::stacktrace()
     result.emplace_back("Call stack:");
 
 #ifdef _WIN64
-    #ifdef _DEBUG
+#    ifdef _DEBUG
     void* stack[62];
     USHORT frames = CaptureStackBackTrace(0, 62, stack, NULL);
     HANDLE process = GetCurrentProcess();
@@ -748,9 +747,9 @@ vector<string> System::stacktrace()
         result.push_back(std::to_string(frames - i - 1) + " " + symbolName);
     }
     free(symbol);
-    #else
+#    else
     result.push_back("Sorry, stack trace is implemented only in DEBUG mode");
-    #endif  // DEBUG
+#    endif  // DEBUG
 #else
     // Get the strack trace as a list of C-style strings
     const int max_depth = 100;
@@ -787,14 +786,14 @@ namespace
  */
 
 #if defined(_WIN32)
-    #include <Windows.h>
+#    include <Windows.h>
 #elif defined(__unix__) || defined(__unix) || defined(unix) || (defined(__APPLE__) && defined(__MACH__))
-    #include <sys/param.h>
-    #include <sys/types.h>
-    #include <unistd.h>
-    #if defined(BSD)
-        #include <sys/sysctl.h>
-    #endif
+#    include <sys/param.h>
+#    include <sys/types.h>
+#    include <unistd.h>
+#    if defined(BSD)
+#        include <sys/sysctl.h>
+#    endif
 #endif
 
     /**
@@ -822,45 +821,45 @@ namespace
         /* UNIX variants. ------------------------------------------- */
         /* Prefer sysctl() over sysconf() except sysctl() HW_REALMEM and HW_PHYSMEM */
 
-    #if defined(CTL_HW) && (defined(HW_MEMSIZE) || defined(HW_PHYSMEM64))
+#    if defined(CTL_HW) && (defined(HW_MEMSIZE) || defined(HW_PHYSMEM64))
         int mib[2];
         mib[0] = CTL_HW;
-        #if defined(HW_MEMSIZE)
+#        if defined(HW_MEMSIZE)
         mib[1] = HW_MEMSIZE; /* OSX. --------------------- */
-        #elif defined(HW_PHYSMEM64)
+#        elif defined(HW_PHYSMEM64)
         mib[1] = HW_PHYSMEM64; /* NetBSD, OpenBSD. --------- */
-        #endif
+#        endif
         int64_t size = 0;    /* 64-bit */
         size_t len = sizeof(size);
         if (sysctl(mib, 2, &size, &len, NULL, 0) == 0) return static_cast<size_t>(size);
         return 0L; /* Failed? */
 
-    #elif defined(_SC_AIX_REALMEM)
+#    elif defined(_SC_AIX_REALMEM)
         /* AIX. ----------------------------------------------------- */
         return static_cast<size_t>(sysconf(_SC_AIX_REALMEM)) * static_cast<size_t>(1024);
 
-    #elif defined(_SC_PHYS_PAGES) && defined(_SC_PAGESIZE)
+#    elif defined(_SC_PHYS_PAGES) && defined(_SC_PAGESIZE)
         /* FreeBSD, Linux, OpenBSD, and Solaris. -------------------- */
         return static_cast<size_t>(sysconf(_SC_PHYS_PAGES)) * static_cast<size_t>(sysconf(_SC_PAGESIZE));
 
-    #elif defined(_SC_PHYS_PAGES) && defined(_SC_PAGE_SIZE)
+#    elif defined(_SC_PHYS_PAGES) && defined(_SC_PAGE_SIZE)
         /* Legacy. -------------------------------------------------- */
         return static_cast<size_t>(sysconf(_SC_PHYS_PAGES)) * static_cast<size_t>(sysconf(_SC_PAGE_SIZE));
 
-    #elif defined(CTL_HW) && (defined(HW_PHYSMEM) || defined(HW_REALMEM))
+#    elif defined(CTL_HW) && (defined(HW_PHYSMEM) || defined(HW_REALMEM))
         /* DragonFly BSD, FreeBSD, NetBSD, OpenBSD, and OSX. -------- */
         int mib[2];
         mib[0] = CTL_HW;
-        #if defined(HW_REALMEM)
+#        if defined(HW_REALMEM)
         mib[1] = HW_REALMEM;   /* FreeBSD. ----------------- */
-        #elif defined(HW_PYSMEM)
+#        elif defined(HW_PYSMEM)
         mib[1] = HW_PHYSMEM; /* Others. ------------------ */
-        #endif
+#        endif
         unsigned int size = 0; /* 32-bit */
         size_t len = sizeof(size);
         if (sysctl(mib, 2, &size, &len, NULL, 0) == 0) return static_cast<size_t>(size);
         return 0L; /* Failed? */
-    #endif /* sysctl and sysconf variants */
+#    endif /* sysctl and sysconf variants */
 
 #else
         return 0L; /* Unknown OS. */
@@ -875,34 +874,34 @@ namespace
 {
 
     /*
- * Author:  David Robert Nadeau
- * Site:    http://NadeauSoftware.com/
- * License: Creative Commons Attribution 3.0 Unported License
- *          http://creativecommons.org/licenses/by/3.0/deed.en_US
- */
+     * Author:  David Robert Nadeau
+     * Site:    http://NadeauSoftware.com/
+     * License: Creative Commons Attribution 3.0 Unported License
+     *          http://creativecommons.org/licenses/by/3.0/deed.en_US
+     */
 
 #if defined(_WIN32)
-    #include <psapi.h>
-    #include <windows.h>
+#    include <windows.h>
+#    include <psapi.h>
 #elif defined(__unix__) || defined(__unix) || defined(unix) || (defined(__APPLE__) && defined(__MACH__))
-    #include <sys/resource.h>
-    #include <unistd.h>
-    #if defined(__APPLE__) && defined(__MACH__)
-        #include <mach/mach.h>
-    #elif (defined(_AIX) || defined(__TOS__AIX__)) \
+#    include <sys/resource.h>
+#    include <unistd.h>
+#    if defined(__APPLE__) && defined(__MACH__)
+#        include <mach/mach.h>
+#    elif (defined(_AIX) || defined(__TOS__AIX__)) \
         || (defined(__sun__) || defined(__sun) || defined(sun) && (defined(__SVR4) || defined(__svr4__)))
-        #include <fcntl.h>
-        #include <procfs.h>
-    #elif defined(__linux__) || defined(__linux) || defined(linux) || defined(__gnu_linux__)
-        #include <stdio.h>
-    #endif
+#        include <fcntl.h>
+#        include <procfs.h>
+#    elif defined(__linux__) || defined(__linux) || defined(linux) || defined(__gnu_linux__)
+#        include <stdio.h>
+#    endif
 #endif
 
     /**
- * Returns the peak (maximum so far) resident set size (physical
- * memory use) measured in bytes, or zero if the value cannot be
- * determined on this OS.
- */
+     * Returns the peak (maximum so far) resident set size (physical
+     * memory use) measured in bytes, or zero if the value cannot be
+     * determined on this OS.
+     */
     size_t getPeakRSS()
     {
 #if defined(_WIN32)
@@ -929,11 +928,11 @@ namespace
         /* BSD, Linux, and OSX -------------------------------------- */
         struct rusage rusage;
         getrusage(RUSAGE_SELF, &rusage);
-    #if defined(__APPLE__) && defined(__MACH__)
+#    if defined(__APPLE__) && defined(__MACH__)
         return static_cast<size_t>(rusage.ru_maxrss);
-    #else
+#    else
         return static_cast<size_t>(rusage.ru_maxrss) * static_cast<size_t>(1024);
-    #endif
+#    endif
 
 #else
         /* Unknown OS ----------------------------------------------- */
@@ -942,9 +941,9 @@ namespace
     }
 
     /**
- * Returns the current resident set size (physical memory use) measured
- * in bytes, or zero if the value cannot be determined on this OS.
- */
+     * Returns the current resident set size (physical memory use) measured
+     * in bytes, or zero if the value cannot be determined on this OS.
+     */
     size_t getCurrentRSS()
     {
 #if defined(_WIN32)

@@ -8,9 +8,9 @@
 #include <array>
 
 #ifdef BUILD_WITH_MPI
-    #include <chrono>
-    #include <mpi.h>
-    #include <thread>
+#    include <mpi.h>
+#    include <chrono>
+#    include <thread>
 #endif
 
 ////////////////////////////////////////////////////////////////////
