@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "ImportedMedium.hpp"
+#include "Configuration.hpp"
 #include "Snapshot.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -18,7 +19,7 @@ void ImportedMedium::setupSelfAfter()
     // add optional columns if applicable
     if (_importMetallicity) _snapshot->importMetallicity();
     if (_importTemperature) _snapshot->importTemperature();
-    if (_importVelocity) _snapshot->importVelocity();
+    if (hasVelocity()) _snapshot->importVelocity();
     if (_importMagneticField) _snapshot->importMagneticField();
     if (_importVariableMixParams) _snapshot->importParameters(_materialMixFamily->parameterInfo());
 
@@ -73,14 +74,21 @@ bool ImportedMedium::hasVariableMix() const
 
 bool ImportedMedium::hasVelocity() const
 {
-    return _importVelocity;
+    if (_importVelocity)
+    {
+        // refuse velocity for oligochromatic simulations
+        // (this function is called from Configure so we cannot precompute this during setup)
+        auto config = find<Configuration>();
+        if (!config->oligochromatic()) return true;
+    }
+    return false;
 }
 
 //////////////////////////////////////////////////////////////////////
 
 Vec ImportedMedium::bulkVelocity(Position bfr) const
 {
-    return _importVelocity ? _snapshot->velocity(bfr) : Vec();
+    return hasVelocity() ? _snapshot->velocity(bfr) : Vec();
 }
 
 //////////////////////////////////////////////////////////////////////

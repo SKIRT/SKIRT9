@@ -43,7 +43,14 @@ bool GeometricMedium::hasVariableMix() const
 
 bool GeometricMedium::hasVelocity() const
 {
-    return velocityDistribution() && velocityMagnitude();
+    if (velocityDistribution() && velocityMagnitude())
+    {
+        // refuse velocity for oligochromatic simulations
+        // (this function is called from Configure so we cannot precompute this during setup)
+        auto config = find<Configuration>();
+        if (!config->oligochromatic()) return true;
+    }
+    return false;
 }
 
 ////////////////////////////////////////////////////////////////////
