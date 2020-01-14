@@ -3,14 +3,12 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "GeometricSource.hpp"
-#include "PhotonPacket.hpp"
+#include "SpecialtySource.hpp"
 #include "Configuration.hpp"
-#include "Random.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
-void GeometricSource::setupSelfBefore()
+void SpecialtySource::setupSelfBefore()
 {
     NormalizedSource::setupSelfBefore();
 
@@ -20,7 +18,7 @@ void GeometricSource::setupSelfBefore()
 
 //////////////////////////////////////////////////////////////////////
 
-int GeometricSource::dimension() const
+int SpecialtySource::dimension() const
 {
     int velocityDimension = 1;
     if (hasVelocity())
@@ -28,12 +26,12 @@ int GeometricSource::dimension() const
         if (velocityZ()) velocityDimension = 2;
         if (velocityX() || velocityY()) velocityDimension = 3;
     }
-    return max(geometry()->dimension(), velocityDimension);
+    return max(geometryDimension(), velocityDimension);
 }
 
 //////////////////////////////////////////////////////////////////////
 
-bool GeometricSource::hasVelocity() const
+bool SpecialtySource::hasVelocity() const
 {
     if (velocityX() || velocityY() || velocityZ())
     {
@@ -47,20 +45,17 @@ bool GeometricSource::hasVelocity() const
 
 //////////////////////////////////////////////////////////////////////
 
-Vec GeometricSource::velocity() const
+Vec SpecialtySource::velocity() const
 {
     return Vec(velocityX(), velocityY(), velocityZ());
 }
 
 //////////////////////////////////////////////////////////////////////
 
-void GeometricSource::launchNormalized(PhotonPacket* pp, size_t historyIndex, double lambda, double Lw) const
+void SpecialtySource::launchNormalized(PhotonPacket* pp, size_t historyIndex, double lambda, double Lw) const
 {
-    // generate a random position from the geometry
-    Position bfr = _geometry->generatePosition();
-
-    // launch the photon packet with isotropic direction
-    pp->launch(historyIndex, lambda, Lw, bfr, random()->direction(), _bvi);
+    launchSpecialty(pp, historyIndex, lambda, Lw, _bvi);
 }
 
 //////////////////////////////////////////////////////////////////////
+

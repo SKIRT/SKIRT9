@@ -7,7 +7,7 @@
 #define POINTSOURCE_HPP
 
 #include "AngularDistribution.hpp"
-#include "NormalizedSource.hpp"
+#include "SpecialtySource.hpp"
 #include "PolarizationProfile.hpp"
 
 //////////////////////////////////////////////////////////////////////
@@ -17,9 +17,9 @@
     characterized by a LuminosityNormalization object. The emitted radiation can be anisotropic
     (configured through an AngularDistribution object) and/or be polarized (configured through a
     PolarizationState object). The point source can also have a velocity. */
-class PointSource : public NormalizedSource
+class PointSource : public SpecialtySource
 {
-    ITEM_CONCRETE(PointSource, NormalizedSource, "a primary point source")
+    ITEM_CONCRETE(PointSource, SpecialtySource, "a primary point source")
 
         PROPERTY_DOUBLE(positionX, "the position of the point source, x component")
         ATTRIBUTE_QUANTITY(positionX, "length")
@@ -61,7 +61,7 @@ public:
         The position of the emission is determined randomly from the geometry configured for the
         source. The emission is unpolarized and isotropic; the emission direction is simply sampled
         from a uniform distribution on the unit sphere. */
-    void launchNormalized(PhotonPacket* pp, size_t historyIndex, double lambda, double Lw,
+    void launchSpecialty(PhotonPacket* pp, size_t historyIndex, double lambda, double Lw,
                           VelocityInterface* bvi) const override;
 };
 

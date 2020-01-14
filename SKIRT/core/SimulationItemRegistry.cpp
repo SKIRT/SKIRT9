@@ -246,6 +246,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<SourceSystem>();
     ItemRegistry::add<Source>();
     ItemRegistry::add<NormalizedSource>();
+    ItemRegistry::add<SpecialtySource>();
     ItemRegistry::add<PointSource>();
     ItemRegistry::add<GeometricSource>();
     ItemRegistry::add<ImportedSource>();

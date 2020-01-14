@@ -29,7 +29,7 @@ int PointSource::geometryDimension() const
 
 //////////////////////////////////////////////////////////////////////
 
-void PointSource::launchNormalized(PhotonPacket* pp, size_t historyIndex, double lambda, double Lw,
+void PointSource::launchSpecialty(PhotonPacket* pp, size_t historyIndex, double lambda, double Lw,
                                    VelocityInterface* bvi) const
 {
     // get the source position

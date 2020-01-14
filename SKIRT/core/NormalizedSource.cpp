@@ -5,7 +5,6 @@
 
 #include "NormalizedSource.hpp"
 #include "Configuration.hpp"
-#include "Constants.hpp"
 #include "PhotonPacket.hpp"
 #include "Random.hpp"
 
@@ -29,36 +28,6 @@ void NormalizedSource::setupSelfBefore()
         _xi = wavelengthBias();
         _biasDistribution = wavelengthBiasDistribution();
     }
-
-    // if we have a nonzero bulk velocity, set the interface object to ourselves; otherwise leave it at null pointer
-    if (!_oligochromatic && (velocityX() || velocityY() || velocityZ())) _bvi = this;
-}
-
-//////////////////////////////////////////////////////////////////////
-
-int NormalizedSource::dimension() const
-{
-    int velocityDimension = 1;
-    if (!find<Configuration>()->oligochromatic())
-    {
-        if (velocityZ()) velocityDimension = 2;
-        if (velocityX() || velocityY()) velocityDimension = 3;
-    }
-    return max(geometryDimension(), velocityDimension);
-}
-
-//////////////////////////////////////////////////////////////////////
-
-bool NormalizedSource::hasVelocity() const
-{
-    if (velocityX() || velocityY() || velocityZ())
-    {
-        // refuse velocity for oligochromatic simulations
-        // (this function is called from Configure so we cannot precompute this during setup)
-        auto config = find<Configuration>();
-        if (!config->oligochromatic()) return true;
-    }
-    return false;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -81,13 +50,6 @@ double NormalizedSource::specificLuminosity(double wavelength) const
 {
     if (!sed()->wavelengthRange().containsFuzzy(wavelength)) return 0.;
     return _sed->specificLuminosity(wavelength) * luminosity();
-}
-
-//////////////////////////////////////////////////////////////////////
-
-Vec NormalizedSource::velocity() const
-{
-    return Vec(velocityX(), velocityY(), velocityZ());
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -128,7 +90,7 @@ void NormalizedSource::launch(PhotonPacket* pp, size_t historyIndex, double L) c
     }
 
     // cause the subclass to launch the photon packet
-    launchNormalized(pp, historyIndex, lambda, L * w, _bvi);
+    launchNormalized(pp, historyIndex, lambda, L * w);
 }
 
 //////////////////////////////////////////////////////////////////////
