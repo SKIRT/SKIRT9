@@ -51,7 +51,14 @@ int NormalizedSource::dimension() const
 
 bool NormalizedSource::hasVelocity() const
 {
-    return !_oligochromatic && (velocityX() || velocityY() || velocityZ());
+    if (velocityX() || velocityY() || velocityZ())
+    {
+        // refuse velocity for oligochromatic simulations
+        // (this function is called from Configure so we cannot precompute this during setup)
+        auto config = find<Configuration>();
+        if (!config->oligochromatic()) return true;
+    }
+    return false;
 }
 
 //////////////////////////////////////////////////////////////////////
