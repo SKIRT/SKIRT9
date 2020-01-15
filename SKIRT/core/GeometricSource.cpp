@@ -7,6 +7,7 @@
 #include "PhotonPacket.hpp"
 #include "Configuration.hpp"
 #include "Random.hpp"
+#include "VelocityInterface.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -14,20 +15,14 @@ void GeometricSource::setupSelfBefore()
 {
     NormalizedSource::setupSelfBefore();
 
-    // if we have a nonzero bulk velocity, set the interface object to ourselves; otherwise leave it at null pointer
-    if (hasVelocity()) _bvi = this;
+    _hasVelocity = hasVelocity();
 }
 
 //////////////////////////////////////////////////////////////////////
 
 int GeometricSource::dimension() const
 {
-    int velocityDimension = 1;
-    if (hasVelocity())
-    {
-        if (velocityZ()) velocityDimension = 2;
-        if (velocityX() || velocityY()) velocityDimension = 3;
-    }
+    int velocityDimension = hasVelocity() ? velocityDistribution()->dimension() : 1;
     return max(geometry()->dimension(), velocityDimension);
 }
 
@@ -35,7 +30,7 @@ int GeometricSource::dimension() const
 
 bool GeometricSource::hasVelocity() const
 {
-    if (velocityX() || velocityY() || velocityZ())
+    if (velocityDistribution() && velocityMagnitude())
     {
         // refuse velocity for oligochromatic simulations
         // (this function is called from Configure so we cannot precompute this during setup)
@@ -47,9 +42,23 @@ bool GeometricSource::hasVelocity() const
 
 //////////////////////////////////////////////////////////////////////
 
-Vec GeometricSource::velocity() const
+namespace
 {
-    return Vec(velocityX(), velocityY(), velocityZ());
+    // an instance of this class offers the velocity interface for a given position
+    class LaunchVelocity : public VelocityInterface
+    {
+    private:
+        Vec _bfv;
+
+    public:
+        LaunchVelocity() {}
+        void setBulkVelocity(Vec bfv) { _bfv = bfv; }
+        Vec velocity() const override { return _bfv; }
+    };
+
+    // setup a velocity instance (with the redshift interface) for each parallel execution thread; this works even if
+    // there are multiple sources of this type because each thread handles a single photon packet at a time
+    thread_local LaunchVelocity t_velocity;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -59,8 +68,17 @@ void GeometricSource::launchNormalized(PhotonPacket* pp, size_t historyIndex, do
     // generate a random position from the geometry
     Position bfr = _geometry->generatePosition();
 
+    // provide a redshift interface for the appropriate velocity, if applicable
+    VelocityInterface* bvi = nullptr;
+    if (_hasVelocity)
+    {
+        Vec bfv = velocityMagnitude() * velocityDistribution()->vector(bfr);
+        t_velocity.setBulkVelocity(bfv);
+        bvi = &t_velocity;
+    }
+
     // launch the photon packet with isotropic direction
-    pp->launch(historyIndex, lambda, Lw, bfr, random()->direction(), _bvi);
+    pp->launch(historyIndex, lambda, Lw, bfr, random()->direction(), bvi);
 }
 
 //////////////////////////////////////////////////////////////////////
