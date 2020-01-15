@@ -22,32 +22,34 @@ class SpecialtySource : public NormalizedSource, public VelocityInterface
 {
     ITEM_ABSTRACT(SpecialtySource, NormalizedSource, "a primary source with a single bulk velocity")
 
-    PROPERTY_DOUBLE(velocityX, "the bulk velocity of the source, x component")
-    ATTRIBUTE_QUANTITY(velocityX, "velocity")
-    ATTRIBUTE_MIN_VALUE(velocityX, "[0")
-    ATTRIBUTE_MAX_VALUE(velocityX, "100000 km/s]")
-    ATTRIBUTE_DEFAULT_VALUE(velocityX, "0")
-    ATTRIBUTE_RELEVANT_IF(velocityX, "Panchromatic")
-    ATTRIBUTE_DISPLAYED_IF(velocityX, "Level2")
-    ATTRIBUTE_INSERT(velocityX, "Panchromatic&velocityX:Dimension3")
+        ATTRIBUTE_SUB_PROPERTIES_HERE(SpecialtySource)
 
-    PROPERTY_DOUBLE(velocityY, "the bulk velocity of the source, y component")
-    ATTRIBUTE_QUANTITY(velocityY, "velocity")
-    ATTRIBUTE_MIN_VALUE(velocityY, "[0")
-    ATTRIBUTE_MAX_VALUE(velocityY, "100000 km/s]")
-    ATTRIBUTE_DEFAULT_VALUE(velocityY, "0")
-    ATTRIBUTE_RELEVANT_IF(velocityY, "Panchromatic")
-    ATTRIBUTE_DISPLAYED_IF(velocityY, "Level2")
-    ATTRIBUTE_INSERT(velocityY, "Panchromatic&velocityY:Dimension3")
+        PROPERTY_DOUBLE(velocityX, "the bulk velocity of the source, x component")
+        ATTRIBUTE_QUANTITY(velocityX, "velocity")
+        ATTRIBUTE_MIN_VALUE(velocityX, "[0")
+        ATTRIBUTE_MAX_VALUE(velocityX, "100000 km/s]")
+        ATTRIBUTE_DEFAULT_VALUE(velocityX, "0")
+        ATTRIBUTE_RELEVANT_IF(velocityX, "Panchromatic")
+        ATTRIBUTE_DISPLAYED_IF(velocityX, "Level2")
+        ATTRIBUTE_INSERT(velocityX, "Panchromatic&velocityX:Dimension3")
 
-    PROPERTY_DOUBLE(velocityZ, "the bulk velocity of the source, z component")
-    ATTRIBUTE_QUANTITY(velocityZ, "velocity")
-    ATTRIBUTE_MIN_VALUE(velocityZ, "[0")
-    ATTRIBUTE_MAX_VALUE(velocityZ, "100000 km/s]")
-    ATTRIBUTE_DEFAULT_VALUE(velocityZ, "0")
-    ATTRIBUTE_RELEVANT_IF(velocityZ, "Panchromatic")
-    ATTRIBUTE_DISPLAYED_IF(velocityZ, "Level2")
-    ATTRIBUTE_INSERT(velocityZ, "Panchromatic&velocityZ:Dimension2")
+        PROPERTY_DOUBLE(velocityY, "the bulk velocity of the source, y component")
+        ATTRIBUTE_QUANTITY(velocityY, "velocity")
+        ATTRIBUTE_MIN_VALUE(velocityY, "[0")
+        ATTRIBUTE_MAX_VALUE(velocityY, "100000 km/s]")
+        ATTRIBUTE_DEFAULT_VALUE(velocityY, "0")
+        ATTRIBUTE_RELEVANT_IF(velocityY, "Panchromatic")
+        ATTRIBUTE_DISPLAYED_IF(velocityY, "Level2")
+        ATTRIBUTE_INSERT(velocityY, "Panchromatic&velocityY:Dimension3")
+
+        PROPERTY_DOUBLE(velocityZ, "the bulk velocity of the source, z component")
+        ATTRIBUTE_QUANTITY(velocityZ, "velocity")
+        ATTRIBUTE_MIN_VALUE(velocityZ, "[0")
+        ATTRIBUTE_MAX_VALUE(velocityZ, "100000 km/s]")
+        ATTRIBUTE_DEFAULT_VALUE(velocityZ, "0")
+        ATTRIBUTE_RELEVANT_IF(velocityZ, "Panchromatic")
+        ATTRIBUTE_DISPLAYED_IF(velocityZ, "Level2")
+        ATTRIBUTE_INSERT(velocityZ, "Panchromatic&velocityZ:Dimension2")
 
     ITEM_END()
 
@@ -91,7 +93,7 @@ public:
         handle the spatial distribution of the source, optionally adding anisotropy and/or
         polarization. */
     virtual void launchSpecialty(PhotonPacket* pp, size_t historyIndex, double lambda, double Lw,
-                                  VelocityInterface* bvi) const = 0;
+                                 VelocityInterface* bvi) const = 0;
 
     //======================== Data Members ========================
 

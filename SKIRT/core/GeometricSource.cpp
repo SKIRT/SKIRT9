@@ -4,8 +4,8 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "GeometricSource.hpp"
-#include "PhotonPacket.hpp"
 #include "Configuration.hpp"
+#include "PhotonPacket.hpp"
 #include "Random.hpp"
 #include "VelocityInterface.hpp"
 

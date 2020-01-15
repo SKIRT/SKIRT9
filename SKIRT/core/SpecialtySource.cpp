@@ -58,4 +58,3 @@ void SpecialtySource::launchNormalized(PhotonPacket* pp, size_t historyIndex, do
 }
 
 //////////////////////////////////////////////////////////////////////
-

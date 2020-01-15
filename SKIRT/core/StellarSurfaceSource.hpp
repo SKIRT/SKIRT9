@@ -91,7 +91,7 @@ public:
         Finally, the function launches the photon packet, passing it all of the above information.
         */
     void launchSpecialty(PhotonPacket* pp, size_t historyIndex, double lambda, double Lw,
-                          VelocityInterface* bvi) const override;
+                         VelocityInterface* bvi) const override;
 };
 
 ////////////////////////////////////////////////////////////////////

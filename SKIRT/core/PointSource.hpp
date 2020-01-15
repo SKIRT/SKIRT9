@@ -7,8 +7,8 @@
 #define POINTSOURCE_HPP
 
 #include "AngularDistribution.hpp"
-#include "SpecialtySource.hpp"
 #include "PolarizationProfile.hpp"
+#include "SpecialtySource.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -62,7 +62,7 @@ public:
         source. The emission is unpolarized and isotropic; the emission direction is simply sampled
         from a uniform distribution on the unit sphere. */
     void launchSpecialty(PhotonPacket* pp, size_t historyIndex, double lambda, double Lw,
-                          VelocityInterface* bvi) const override;
+                         VelocityInterface* bvi) const override;
 };
 
 //////////////////////////////////////////////////////////////////////
