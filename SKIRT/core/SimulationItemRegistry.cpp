@@ -104,6 +104,7 @@
 #include "LogWavelengthGrid.hpp"
 #include "LuminosityProbe.hpp"
 #include "MRNDustMix.hpp"
+#include "MagneticFieldPerCellProbe.hpp"
 #include "MappingsSED.hpp"
 #include "MappingsSEDFamily.hpp"
 #include "MarastonSED.hpp"
@@ -217,7 +218,6 @@
 #include "ZubkoGraphiteGrainSizeDistribution.hpp"
 #include "ZubkoPAHGrainSizeDistribution.hpp"
 #include "ZubkoSilicateGrainSizeDistribution.hpp"
-#include "MagneticFieldPerCellProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
