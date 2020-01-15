@@ -42,6 +42,7 @@ class GeometricMedium : public Medium
         ATTRIBUTE_MAX_VALUE(velocityMagnitude, "100000 km/s]")
         ATTRIBUTE_RELEVANT_IF(velocityMagnitude, "Panchromatic&velocityDistribution")
         ATTRIBUTE_DISPLAYED_IF(velocityMagnitude, "Level2")
+        ATTRIBUTE_INSERT(velocityMagnitude, "velocityDistribution&velocityMagnitude:MediumVelocity")
 
         PROPERTY_ITEM(magneticFieldDistribution, VectorField, "the spatial distribution of the magnetic field, if any")
         ATTRIBUTE_REQUIRED_IF(magneticFieldDistribution, "false")

@@ -42,6 +42,7 @@
 #include "DefaultDustTemperatureCutsProbe.hpp"
 #include "DefaultMagneticFieldCutsProbe.hpp"
 #include "DefaultMediaDensityCutsProbe.hpp"
+#include "DefaultMediumVelocityCutsProbe.hpp"
 #include "DefaultRadiationFieldCutsProbe.hpp"
 #include "DensityTreePolicy.hpp"
 #include "DiscreteWavelengthDistribution.hpp"
@@ -119,6 +120,7 @@
 #include "MeanPinteBenchmarkDustMix.hpp"
 #include "MeanTrustBenchmarkDustMix.hpp"
 #include "MediumSystem.hpp"
+#include "MediumVelocityPerCellProbe.hpp"
 #include "MeridionalDustTemperatureCutProbe.hpp"
 #include "MieSilicateGrainComposition.hpp"
 #include "MinSilicateGrainComposition.hpp"
@@ -146,6 +148,7 @@
 #include "PlanarDustTemperatureCutsProbe.hpp"
 #include "PlanarMagneticFieldCutsProbe.hpp"
 #include "PlanarMediaDensityCutsProbe.hpp"
+#include "PlanarMediumVelocityCutsProbe.hpp"
 #include "PlanarRadiationFieldCutsProbe.hpp"
 #include "PlummerGeometry.hpp"
 #include "PointSource.hpp"
@@ -552,6 +555,10 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<OpticalMaterialPropertiesProbe>();
     ItemRegistry::add<DustGrainPopulationsProbe>();
     ItemRegistry::add<DustGrainSizeDistributionProbe>();
+
+    ItemRegistry::add<DefaultMediumVelocityCutsProbe>();
+    ItemRegistry::add<PlanarMediumVelocityCutsProbe>();
+    ItemRegistry::add<MediumVelocityPerCellProbe>();
     ItemRegistry::add<DefaultMagneticFieldCutsProbe>();
     ItemRegistry::add<PlanarMagneticFieldCutsProbe>();
     ItemRegistry::add<MagneticFieldPerCellProbe>();

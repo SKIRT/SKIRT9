@@ -50,6 +50,7 @@ class ImportedMedium : public Medium, public SiteListInterface
         ATTRIBUTE_DEFAULT_VALUE(importVelocity, "false")
         ATTRIBUTE_RELEVANT_IF(importVelocity, "Panchromatic")
         ATTRIBUTE_DISPLAYED_IF(importVelocity, "Level2")
+        ATTRIBUTE_INSERT(importVelocity, "importVelocity:MediumVelocity")
 
         PROPERTY_BOOL(importMagneticField, "import magnetic field components (3 columns)")
         ATTRIBUTE_DEFAULT_VALUE(importMagneticField, "false")
