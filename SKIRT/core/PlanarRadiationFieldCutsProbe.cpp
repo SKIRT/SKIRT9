@@ -12,7 +12,6 @@
 #include "MediumSystem.hpp"
 #include "Parallel.hpp"
 #include "ParallelFactory.hpp"
-#include "SpatialGrid.hpp"
 #include "Units.hpp"
 
 ////////////////////////////////////////////////////////////////////

@@ -24,14 +24,12 @@ void PlanarMagneticFieldCutsProbe::writeMagneticFieldCut(Probe* probe, bool xd, 
     double unitfactor = units->omagneticfield(1.);
     string unitstring = units->umagneticfield();
 
-    // locate the medium component that defines the magnetic field
+    // locate the medium system
     auto ms = probe->find<MediumSystem>();
-    Medium* medium = nullptr;
-    for (auto med : ms->media())
-        if (med->hasMagneticField()) medium = med;
+    auto grid = ms->grid();
 
     // determine spatial configuration (regardless of cut direction)
-    Box box = ms->grid()->boundingBox();
+    Box box = grid->boundingBox();
     double xpsize = box.xwidth() / Nx;
     double ypsize = box.ywidth() / Ny;
     double zpsize = box.zwidth() / Nz;
@@ -51,7 +49,7 @@ void PlanarMagneticFieldCutsProbe::writeMagneticFieldCut(Probe* probe, bool xd, 
 
     // calculate the results in parallel; perform only at the root process
     auto parallel = probe->find<ParallelFactory>()->parallelRootOnly();
-    parallel->call(Nj, [&Bvv, unitfactor, medium, xpsize, ypsize, zpsize, xbase, ybase, zbase, xd, yd, zd, xc, yc, zc,
+    parallel->call(Nj, [&Bvv, unitfactor, ms, grid, xpsize, ypsize, zpsize, xbase, ybase, zbase, xd, yd, zd, xc, yc, zc,
                         Ni](size_t firstIndex, size_t numIndices) {
         for (size_t j = firstIndex; j != firstIndex + numIndices; ++j)
         {
@@ -60,11 +58,15 @@ void PlanarMagneticFieldCutsProbe::writeMagneticFieldCut(Probe* probe, bool xd, 
             {
                 double x = xd ? (xbase + i * xpsize) : xc;
                 double y = yd ? (ybase + (zd ? i : j) * ypsize) : yc;
-                Position bfr(x, y, z);
-                Vec B = medium->magneticField(bfr);
-                Bvv(0, j, i) = (xd ? B.x() : B.y()) * unitfactor;
-                Bvv(1, j, i) = (zd ? B.z() : B.y()) * unitfactor;
-                Bvv(2, j, i) = (xd ? (yd ? -B.z() : B.y()) : -B.x()) * unitfactor;
+
+                int m = grid->cellIndex(Position(x, y, z));
+                if (m >= 0)
+                {
+                    Vec B = ms->magneticField(m);
+                    Bvv(0, j, i) = (xd ? B.x() : B.y()) * unitfactor;
+                    Bvv(1, j, i) = (zd ? B.z() : B.y()) * unitfactor;
+                    Bvv(2, j, i) = (xd ? (yd ? -B.z() : B.y()) : -B.x()) * unitfactor;
+                }
             }
         }
     });

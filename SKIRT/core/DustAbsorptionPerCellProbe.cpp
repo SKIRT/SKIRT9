@@ -8,7 +8,6 @@
 #include "DisjointWavelengthGrid.hpp"
 #include "InstrumentWavelengthGridProbe.hpp"
 #include "MediumSystem.hpp"
-#include "SpatialGrid.hpp"
 #include "StringUtils.hpp"
 #include "TextOutFile.hpp"
 #include "Units.hpp"
