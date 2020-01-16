@@ -33,7 +33,7 @@ void MagneticFieldPerCellProbe::probeSetup()
         file.addColumn("z component of magnetic field", units->umagneticfield());
 
         // write a line for each cell
-        int numCells = ms->grid()->numCells();
+        int numCells = ms->numCells();
         for (int m = 0; m != numCells; ++m)
         {
             Vec magneticField = ms->magneticField(m);

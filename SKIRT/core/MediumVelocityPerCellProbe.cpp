@@ -33,7 +33,7 @@ void MediumVelocityPerCellProbe::probeSetup()
         file.addColumn("z component of velocity", units->uvelocity());
 
         // write a line for each cell
-        int numCells = ms->grid()->numCells();
+        int numCells = ms->numCells();
         for (int m = 0; m != numCells; ++m)
         {
             Vec v = ms->bulkVelocity(m);

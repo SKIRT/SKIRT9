@@ -546,17 +546,6 @@ double MediumSystem::indicativeDustTemperature(int m) const
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::indicativeDustTemperature(Position bfr) const
-{
-    int m = _grid->cellIndex(bfr);
-    if (m >= 0)
-        return indicativeDustTemperature(m);
-    else
-        return 0.;
-}
-
-////////////////////////////////////////////////////////////////////
-
 double MediumSystem::absorbedLuminosity(int m, MaterialMix::MaterialType type) const
 {
     double Labs = 0.;

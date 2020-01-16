@@ -31,7 +31,7 @@ void DustTemperaturePerCellProbe::probeRun()
         file.addColumn("indicative dust temperature", units->utemperature(), 'g');
 
         // write a line for each cell
-        int numCells = ms->grid()->numCells();
+        int numCells = ms->numCells();
         for (int m = 0; m != numCells; ++m)
         {
             file.writeRow(m, units->otemperature(ms->indicativeDustTemperature(m)));

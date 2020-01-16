@@ -27,7 +27,7 @@ void PlanarRadiationFieldCutsProbe::writeRadiationFieldCut(Probe* probe, bool xd
     auto wavelengthGrid = probe->find<Configuration>()->radiationFieldWLG();
 
     // determine spatial configuration (regardless of cut direction)
-    Box box = ms->grid()->boundingBox();
+    Box box = grid->boundingBox();
     double xpsize = box.xwidth() / Nx;
     double ypsize = box.ywidth() / Ny;
     double zpsize = box.zwidth() / Nz;

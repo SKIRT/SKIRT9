@@ -19,12 +19,13 @@ void LinearDustTemperatureCutProbe::probeRun()
 {
     if (find<Configuration>()->hasPanRadiationField() && find<MediumSystem>()->hasDust())
     {
-        // locate the medium system
+        // locate the relevant simulation items
         auto ms = find<MediumSystem>();
+        auto grid = ms->grid();
         auto units = find<Units>();
 
         // get a characteristic size of the spatial grid
-        double size = ms->grid()->boundingBox().diagonal();
+        double size = grid->boundingBox().diagonal();
 
         // get the line segment parameters
         Position p1(_startX, _startY, _startZ);
@@ -49,7 +50,9 @@ void LinearDustTemperatureCutProbe::probeRun()
             double distance = (p - p1).norm();
 
             // calculate the corresponding indicative dust temperature and write the row
-            file.writeRow(units->olength(distance), units->otemperature(ms->indicativeDustTemperature(p)));
+            int m = grid->cellIndex(p);
+            double T = m >= 0 ? ms->indicativeDustTemperature(m) : 0.;
+            file.writeRow(units->olength(distance), units->otemperature(T));
         }
     }
 }

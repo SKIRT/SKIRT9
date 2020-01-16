@@ -216,7 +216,7 @@ namespace
                 for (int h = 0; h != ms->numMedia(); ++h)
                     if (ms->isDust(h)) _hv.push_back(h);
                 _numMedia = _hv.size();
-                _numCells = ms->grid()->numCells();
+                _numCells = ms->numCells();
                 _evv.resize(ms->numMedia());
             }
 

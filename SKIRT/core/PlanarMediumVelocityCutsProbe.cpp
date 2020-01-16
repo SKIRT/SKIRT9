@@ -29,7 +29,7 @@ void PlanarMediumVelocityCutsProbe::writeMediumVelocityCut(Probe* probe, bool xd
     auto grid = ms->grid();
 
     // determine spatial configuration (regardless of cut direction)
-    Box box = ms->grid()->boundingBox();
+    Box box = grid->boundingBox();
     double xpsize = box.xwidth() / Nx;
     double ypsize = box.ywidth() / Ny;
     double zpsize = box.zwidth() / Nz;
