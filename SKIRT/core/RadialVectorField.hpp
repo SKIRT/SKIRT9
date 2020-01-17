@@ -21,6 +21,7 @@
 class RadialVectorField : public VectorField
 {
     ITEM_CONCRETE(RadialVectorField, VectorField, "a vector field pointing away from the origin")
+        ATTRIBUTE_TYPE_INSERT(CylindricalVectorField, "Dimension3")
 
         PROPERTY_DOUBLE(unityRadius, "the radius where the magnitude of the vectors is unity")
         ATTRIBUTE_QUANTITY(unityRadius, "length")
@@ -32,8 +33,8 @@ class RadialVectorField : public VectorField
     //======================== Other Functions =======================
 
 public:
-    /** This function returns the dimension of the vector field, which is 1 for this class,
-        indicating spherical symmetry. */
+    /** This function returns the dimension of the vector field, which is 3 for this class,
+        indicating no symmetries (the vectors point in a different direction at each position). */
     int dimension() const override;
 
     /** This function returns a unit vector pointing away from the origin at the given position

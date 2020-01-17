@@ -9,7 +9,7 @@
 
 int CylindricalVectorField::dimension() const
 {
-    return 2;
+    return 3;
 }
 
 //////////////////////////////////////////////////////////////////////
