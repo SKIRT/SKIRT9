@@ -359,13 +359,6 @@ public:
         interpretation. */
     double indicativeDustTemperature(int m) const;
 
-    /** This function returns an indicative dust temperature for the spatial cell containing the
-        specified position, or zero if the position lies outside the spatial grid. The function
-        asks the spatial grid for the index of the cell containing the specified position, and then
-        calls the indicativeDustTemperature(int) function to calculate the indicative dust
-        temperature for that cell. */
-    double indicativeDustTemperature(Position bfr) const;
-
     /** This function returns the bolometric luminosity \f$L^\text{abs}_{\text{bol},m}\f$ that has
         been absorbed by media of the specified type in the spatial cell with index \f$m\f$.
 

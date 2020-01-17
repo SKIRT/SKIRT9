@@ -3,7 +3,7 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "PlanarMagneticFieldCutsProbe.hpp"
+#include "PlanarMediumVelocityCutsProbe.hpp"
 #include "Configuration.hpp"
 #include "FITSInOut.hpp"
 #include "Medium.hpp"
@@ -16,15 +16,15 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void PlanarMagneticFieldCutsProbe::writeMagneticFieldCut(Probe* probe, bool xd, bool yd, bool zd, double xc, double yc,
-                                                         double zc, int Nx, int Ny, int Nz)
+void PlanarMediumVelocityCutsProbe::writeMediumVelocityCut(Probe* probe, bool xd, bool yd, bool zd, double xc,
+                                                           double yc, double zc, int Nx, int Ny, int Nz)
 {
     // get info on units
     auto units = probe->find<Units>();
-    double unitfactor = units->omagneticfield(1.);
-    string unitstring = units->umagneticfield();
+    double unitfactor = units->ovelocity(1.);
+    string unitstring = units->uvelocity();
 
-    // locate the medium system
+    // find the medium system and the grid
     auto ms = probe->find<MediumSystem>();
     auto grid = ms->grid();
 
@@ -45,11 +45,11 @@ void PlanarMagneticFieldCutsProbe::writeMagneticFieldCut(Probe* probe, bool xd, 
     int Nj = zd ? Nz : Ny;
 
     // allocate result array with the appropriate size and initialize contents to zero
-    Table<3> Bvv(3, Nj, Ni);  // reverse index order to get proper data value ordering for FITSInOut::write()
+    Table<3> vvv(3, Nj, Ni);  // reverse index order to get proper data value ordering for FITSInOut::write()
 
     // calculate the results in parallel; perform only at the root process
     auto parallel = probe->find<ParallelFactory>()->parallelRootOnly();
-    parallel->call(Nj, [&Bvv, unitfactor, ms, grid, xpsize, ypsize, zpsize, xbase, ybase, zbase, xd, yd, zd, xc, yc, zc,
+    parallel->call(Nj, [&vvv, unitfactor, ms, grid, xpsize, ypsize, zpsize, xbase, ybase, zbase, xd, yd, zd, xc, yc, zc,
                         Ni](size_t firstIndex, size_t numIndices) {
         for (size_t j = firstIndex; j != firstIndex + numIndices; ++j)
         {
@@ -58,14 +58,14 @@ void PlanarMagneticFieldCutsProbe::writeMagneticFieldCut(Probe* probe, bool xd, 
             {
                 double x = xd ? (xbase + i * xpsize) : xc;
                 double y = yd ? (ybase + (zd ? i : j) * ypsize) : yc;
-
-                int m = grid->cellIndex(Position(x, y, z));
+                Position bfr(x, y, z);
+                int m = grid->cellIndex(bfr);
                 if (m >= 0)
                 {
-                    Vec B = ms->magneticField(m);
-                    Bvv(0, j, i) = (xd ? B.x() : B.y()) * unitfactor;
-                    Bvv(1, j, i) = (zd ? B.z() : B.y()) * unitfactor;
-                    Bvv(2, j, i) = (xd ? (yd ? -B.z() : B.y()) : -B.x()) * unitfactor;
+                    Vec v = ms->bulkVelocity(m);
+                    vvv(0, j, i) = (xd ? v.x() : v.y()) * unitfactor;
+                    vvv(1, j, i) = (zd ? v.z() : v.y()) * unitfactor;
+                    vvv(2, j, i) = (xd ? (yd ? -v.z() : v.y()) : -v.x()) * unitfactor;
                 }
             }
         }
@@ -78,7 +78,7 @@ void PlanarMagneticFieldCutsProbe::writeMagneticFieldCut(Probe* probe, bool xd, 
     if (zd) plane += "z";
 
     // write file
-    FITSInOut::write(probe, "magnetic field in the " + plane + " plane", probe->itemName() + "_B_" + plane, Bvv.data(),
+    FITSInOut::write(probe, "medium velocity in the " + plane + " plane", probe->itemName() + "_v_" + plane, vvv.data(),
                      unitstring, Ni, Nj, units->olength(xd ? xpsize : ypsize), units->olength(zd ? zpsize : ypsize),
                      units->olength(xd ? xcenter : ycenter), units->olength(zd ? zcenter : ycenter), units->ulength(),
                      NR::array(std::vector<double>({1., 2., 3.})), "1");
@@ -86,16 +86,16 @@ void PlanarMagneticFieldCutsProbe::writeMagneticFieldCut(Probe* probe, bool xd, 
 
 ////////////////////////////////////////////////////////////////////
 
-void PlanarMagneticFieldCutsProbe::probeSetup()
+void PlanarMediumVelocityCutsProbe::probeSetup()
 {
-    if (find<Configuration>()->hasMagneticField())
+    if (find<Configuration>()->hasMovingMedia())
     {
-        writeMagneticFieldCut(this, 1, 1, 0, positionX(), positionY(), positionZ(), numPixelsX(), numPixelsY(),
-                              numPixelsZ());
-        writeMagneticFieldCut(this, 1, 0, 1, positionX(), positionY(), positionZ(), numPixelsX(), numPixelsY(),
-                              numPixelsZ());
-        writeMagneticFieldCut(this, 0, 1, 1, positionX(), positionY(), positionZ(), numPixelsX(), numPixelsY(),
-                              numPixelsZ());
+        writeMediumVelocityCut(this, 1, 1, 0, positionX(), positionY(), positionZ(), numPixelsX(), numPixelsY(),
+                               numPixelsZ());
+        writeMediumVelocityCut(this, 1, 0, 1, positionX(), positionY(), positionZ(), numPixelsX(), numPixelsY(),
+                               numPixelsZ());
+        writeMediumVelocityCut(this, 0, 1, 1, positionX(), positionY(), positionZ(), numPixelsX(), numPixelsY(),
+                               numPixelsZ());
     }
 }
 

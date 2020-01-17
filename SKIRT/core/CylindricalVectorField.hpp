@@ -17,14 +17,14 @@
 class CylindricalVectorField : public VectorField
 {
     ITEM_CONCRETE(CylindricalVectorField, VectorField, "a vector field rotating clockwise around the z-axis")
-        ATTRIBUTE_TYPE_INSERT(CylindricalVectorField, "Dimension2")
+        ATTRIBUTE_TYPE_INSERT(CylindricalVectorField, "Dimension3")
     ITEM_END()
 
     //======================== Other Functions =======================
 
 public:
-    /** This function returns the dimension of the vector field, which is 2 for this class,
-        indicating axial symmetry. */
+    /** This function returns the dimension of the vector field, which is 3 for this class,
+        indicating no symmetries (the vectors point in a different direction at each position). */
     int dimension() const override;
 
     /** This function returns a unit vector that is parallel with the xy-plane and orthogonal to

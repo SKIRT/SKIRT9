@@ -6,7 +6,7 @@
 #ifndef CENTEREDSOURCE_HPP
 #define CENTEREDSOURCE_HPP
 
-#include "NormalizedSource.hpp"
+#include "SpecialtySource.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -18,9 +18,9 @@
     This class allows the user to configure the central location, and through its base class, it
     offer user configuration of the %SED and luminosity normalization, and possibly a bulk
     velocity. */
-class CenteredSource : public NormalizedSource
+class CenteredSource : public SpecialtySource
 {
-    ITEM_ABSTRACT(CenteredSource, NormalizedSource, "a centered primary source")
+    ITEM_ABSTRACT(CenteredSource, SpecialtySource, "a centered primary source")
         ATTRIBUTE_TYPE_DISPLAYED_IF(CenteredSource, "Level2")
 
         PROPERTY_DOUBLE(centerX, "the center of the source, x component")

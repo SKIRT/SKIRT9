@@ -122,7 +122,14 @@ int ImportedSource::dimension() const
 
 bool ImportedSource::hasVelocity() const
 {
-    return !_oligochromatic && _importVelocity;
+    if (_importVelocity)
+    {
+        // refuse velocity for oligochromatic simulations
+        // (this function is called from Configure so we cannot precompute this during setup)
+        auto config = find<Configuration>();
+        if (!config->oligochromatic()) return true;
+    }
+    return false;
 }
 
 ////////////////////////////////////////////////////////////////////

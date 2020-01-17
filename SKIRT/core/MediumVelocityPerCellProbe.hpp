@@ -3,22 +3,22 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef MAGNETICFIELDPERCELLPROBE_HPP
-#define MAGNETICFIELDPERCELLPROBE_HPP
+#ifndef MEDIUMVELOCITYPERCELLPROBE_HPP
+#define MEDIUMVELOCITYPERCELLPROBE_HPP
 
 #include "Probe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-/** MagneticFieldPerCellProbe outputs a column text file (named <tt>prefix_probe_B.dat</tt>)
-    listing the magnetic field for each cell in the spatial grid of the simulation.
+/** MediumVelocityPerCellProbe outputs a column text file (named <tt>prefix_probe_v.dat</tt>)
+    listing the bulk velocity of the medium for each cell in the spatial grid of the simulation.
     Specifically, the output file contains a line for each cell in the spatial grid of the
     simulation. The first column specifies the cell index, and the second, third and fourth
-    column list the magnetic field components. */
-class MagneticFieldPerCellProbe : public Probe
+    column list the mvelocity components. */
+class MediumVelocityPerCellProbe : public Probe
 {
-    ITEM_CONCRETE(MagneticFieldPerCellProbe, Probe, "the magnetic field for each spatial cell")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(MagneticFieldPerCellProbe, "Level3&Medium&SpatialGrid&MagneticField")
+    ITEM_CONCRETE(MediumVelocityPerCellProbe, Probe, "the medium velocity for each spatial cell")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(MediumVelocityPerCellProbe, "Level2&Medium&SpatialGrid&MediumVelocity")
     ITEM_END()
 
     //======================== Other Functions =======================

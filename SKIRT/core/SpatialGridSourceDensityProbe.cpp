@@ -7,7 +7,6 @@
 #include "GeometricSource.hpp"
 #include "MediumSystem.hpp"
 #include "SourceSystem.hpp"
-#include "SpatialGrid.hpp"
 #include "TextOutFile.hpp"
 #include "Units.hpp"
 

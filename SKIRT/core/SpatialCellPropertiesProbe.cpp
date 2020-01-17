@@ -4,9 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "SpatialCellPropertiesProbe.hpp"
-#include "Medium.hpp"
 #include "MediumSystem.hpp"
-#include "SpatialGrid.hpp"
 #include "StringUtils.hpp"
 #include "TextOutFile.hpp"
 #include "Units.hpp"

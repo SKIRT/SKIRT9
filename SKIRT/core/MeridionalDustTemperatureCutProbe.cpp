@@ -21,6 +21,7 @@ void MeridionalDustTemperatureCutProbe::probeRun()
         // locate the medium system
         auto ms = find<MediumSystem>();
         auto units = find<Units>();
+        auto grid = ms->grid();
 
         // create a text file
         TextOutFile file(this, itemName() + "_T", "dust temperature along a meridional");
@@ -39,7 +40,9 @@ void MeridionalDustTemperatureCutProbe::probeRun()
             Position p(_radius * Direction(inclination, _azimuth));
 
             // calculate the corresponding indicative dust temperature and write the row
-            file.writeRow(units->oposangle(inclination), units->otemperature(ms->indicativeDustTemperature(p)));
+            int m = grid->cellIndex(p);
+            double T = m >= 0 ? ms->indicativeDustTemperature(m) : 0.;
+            file.writeRow(units->oposangle(inclination), units->otemperature(T));
         }
     }
 }

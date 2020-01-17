@@ -6,7 +6,6 @@
 #include "DustTemperaturePerCellProbe.hpp"
 #include "Configuration.hpp"
 #include "MediumSystem.hpp"
-#include "SpatialGrid.hpp"
 #include "StringUtils.hpp"
 #include "TextOutFile.hpp"
 #include "Units.hpp"
@@ -31,7 +30,7 @@ void DustTemperaturePerCellProbe::probeRun()
         file.addColumn("indicative dust temperature", units->utemperature(), 'g');
 
         // write a line for each cell
-        int numCells = ms->grid()->numCells();
+        int numCells = ms->numCells();
         for (int m = 0; m != numCells; ++m)
         {
             file.writeRow(m, units->otemperature(ms->indicativeDustTemperature(m)));

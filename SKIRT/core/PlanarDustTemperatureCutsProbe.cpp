@@ -10,7 +10,6 @@
 #include "MediumSystem.hpp"
 #include "Parallel.hpp"
 #include "ParallelFactory.hpp"
-#include "SpatialGrid.hpp"
 #include "Units.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -21,9 +20,10 @@ void PlanarDustTemperatureCutsProbe::writeDustTemperatureCut(Probe* probe, bool 
     // locate relevant simulation items
     auto units = probe->find<Units>();
     auto ms = probe->find<MediumSystem>();
+    auto grid = ms->grid();
 
     // determine spatial configuration (regardless of cut direction)
-    Box box = ms->grid()->boundingBox();
+    Box box = grid->boundingBox();
     double xpsize = box.xwidth() / Nx;
     double ypsize = box.ywidth() / Ny;
     double zpsize = box.zwidth() / Nz;
@@ -43,7 +43,7 @@ void PlanarDustTemperatureCutsProbe::writeDustTemperatureCut(Probe* probe, bool 
 
     // calculate the results in parallel; perform only at the root processs
     auto parallel = probe->find<ParallelFactory>()->parallelRootOnly();
-    parallel->call(Nj, [&Tv, ms, units, xpsize, ypsize, zpsize, xbase, ybase, zbase, xd, yd, zd, xc, yc, zc,
+    parallel->call(Nj, [&Tv, ms, grid, units, xpsize, ypsize, zpsize, xbase, ybase, zbase, xd, yd, zd, xc, yc, zc,
                         Ni](size_t firstIndex, size_t numIndices) {
         for (size_t j = firstIndex; j != firstIndex + numIndices; ++j)
         {
@@ -53,7 +53,9 @@ void PlanarDustTemperatureCutsProbe::writeDustTemperatureCut(Probe* probe, bool 
                 double x = xd ? (xbase + i * xpsize) : xc;
                 double y = yd ? (ybase + (zd ? i : j) * ypsize) : yc;
                 int l = i + Ni * j;
-                Tv[l] = units->otemperature(ms->indicativeDustTemperature(Position(x, y, z)));
+
+                int m = grid->cellIndex(Position(x, y, z));
+                if (m >= 0) Tv[l] = units->otemperature(ms->indicativeDustTemperature(m));
             }
         }
     });

@@ -20,13 +20,8 @@ void GeometricMedium::setupSelfAfter()
 
 int GeometricMedium::dimension() const
 {
-    int velocityDimension = 1;
-    if (!find<Configuration>()->oligochromatic())
-    {
-        if (velocityZ()) velocityDimension = 2;
-        if (velocityX() || velocityY()) velocityDimension = 3;
-    }
-    int magneticFieldDimension = magneticFieldDistribution() ? magneticFieldDistribution()->dimension() : 1;
+    int velocityDimension = hasVelocity() ? velocityDistribution()->dimension() : 1;
+    int magneticFieldDimension = hasMagneticField() ? magneticFieldDistribution()->dimension() : 1;
     return max({geometry()->dimension(), velocityDimension, magneticFieldDimension});
 }
 
@@ -48,14 +43,21 @@ bool GeometricMedium::hasVariableMix() const
 
 bool GeometricMedium::hasVelocity() const
 {
-    return velocityX() || velocityY() || velocityZ();
+    if (velocityDistribution() && velocityMagnitude())
+    {
+        // refuse velocity for oligochromatic simulations
+        // (this function is called from Configure so we cannot precompute this during setup)
+        auto config = find<Configuration>();
+        if (!config->oligochromatic()) return true;
+    }
+    return false;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-Vec GeometricMedium::bulkVelocity(Position /*bfr*/) const
+Vec GeometricMedium::bulkVelocity(Position bfr) const
 {
-    return Vec(velocityX(), velocityY(), velocityZ());
+    return hasVelocity() ? velocityMagnitude() * velocityDistribution()->vector(bfr) : Vec();
 }
 
 ////////////////////////////////////////////////////////////////////

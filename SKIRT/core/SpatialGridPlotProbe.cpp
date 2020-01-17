@@ -5,7 +5,6 @@
 
 #include "SpatialGridPlotProbe.hpp"
 #include "MediumSystem.hpp"
-#include "SpatialGrid.hpp"
 
 ////////////////////////////////////////////////////////////////////
 

@@ -11,10 +11,10 @@
 
 //////////////////////////////////////////////////////////////////////
 
-/** VectorField is an abstract base for describing vector fields. Specifically, an instance of a
-    VectorField subclass describes a normalized vector field, i.e. a spatial distribution of 3D
-    vector values. The field is normalized so that the maximum length (norm) of the vectors in the
-    field is equal to one. This also implies that the vector components are dimensionless. As a
+/** VectorField is an abstract base class for describing vector fields. Specifically, an instance
+    of a VectorField subclass describes a normalized vector field, i.e. a spatial distribution of
+    3D vector values. The field is normalized so that the maximum length (norm) of the vectors in
+    the field is equal to one. This also implies that the vector components are dimensionless. As a
     result, vector fields can be used for various purposes, including the specification of magnetic
     fields and velocity fields.
 
