@@ -104,6 +104,7 @@
 #include "LogWavelengthDistribution.hpp"
 #include "LogWavelengthGrid.hpp"
 #include "LuminosityProbe.hpp"
+#include "LyaGaussianSED.hpp"
 #include "MRNDustMix.hpp"
 #include "MagneticFieldPerCellProbe.hpp"
 #include "MappingsSED.hpp"
@@ -275,6 +276,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ResourceSED>();
     ItemRegistry::add<SunSED>();
     ItemRegistry::add<QuasarSED>();
+    ItemRegistry::add<LyaGaussianSED>();
     ItemRegistry::add<FamilySED>();
     ItemRegistry::add<CastelliKuruczSED>();
     ItemRegistry::add<BruzualCharlotSED>();
