@@ -6,6 +6,7 @@
 #include "MonteCarloSimulation.hpp"
 #include "DisjointWavelengthGrid.hpp"
 #include "FatalError.hpp"
+#include "Gas.hpp"
 #include "Log.hpp"
 #include "MaterialMix.hpp"
 #include "Parallel.hpp"
@@ -18,8 +19,6 @@
 #include "SpecialFunctions.hpp"
 #include "StringUtils.hpp"
 #include "TimeLogger.hpp"
-
-#include "GasInterface.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -40,13 +39,7 @@ void MonteCarloSimulation::setupSimulation()
         // notify the probe system
         probeSystem()->probeSetup();
     }
-
-    Array frequencyv;
-    GasModule::GasInterface gi(frequencyv, frequencyv, frequencyv);
-    // Do something, will probably crash
-    GasModule::GasState gs;
-    GasModule::GrainInterface gr;
-    gi.updateGasState(gs, 1000., frequencyv, gr, nullptr);
+    Gas g;
 }
 
 ////////////////////////////////////////////////////////////////////

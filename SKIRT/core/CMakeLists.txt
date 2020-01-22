@@ -22,8 +22,8 @@ target_link_libraries(${TARGET} schema fundamentals)
 include_directories(../../SMILE/schema ../../SMILE/fundamentals)
 
 # add SKIRT library dependencies
-target_link_libraries(${TARGET} fitsio voro mpi utils)
-include_directories(../fitsio ../voro ../mpi ../utils)
+target_link_libraries(${TARGET} fitsio voro mpi utils gas)
+include_directories(../fitsio ../voro ../mpi ../utils ../gas)
 
 # add gasmodule dependency
 set(GASMODULE_INSTALL_DIR "/Users/drvdputt/Repositories/gasmodule/cmake_release")

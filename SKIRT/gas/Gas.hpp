@@ -1,0 +1,15 @@
+/*//////////////////////////////////////////////////////////////////
+////     The SKIRT project -- advanced radiative transfer       ////
+////       © Astronomical Observatory, Ghent University         ////
+///////////////////////////////////////////////////////////////// */
+
+#ifndef GAS_HPP
+#define GAS_HPP
+
+class Gas
+{
+public:
+    Gas();
+};
+
+#endif
