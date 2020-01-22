@@ -25,5 +25,18 @@ include_directories(../../SMILE/schema ../../SMILE/fundamentals)
 target_link_libraries(${TARGET} fitsio voro mpi utils)
 include_directories(../fitsio ../voro ../mpi ../utils)
 
+# add gasmodule dependency
+set(GASMODULE_INSTALL_DIR "/Users/drvdputt/Repositories/gasmodule/cmake_release")
+include_directories("${GASMODULE_INSTALL_DIR}/include")
+find_library(GASMODULE_LIB
+  NAMES libgasmodule.a
+  PATHS "${GASMODULE_INSTALL_DIR}/lib"
+  NO_DEFAULT_PATH)
+target_link_libraries(${TARGET} ${GASMODULE_LIB})
+
+# add GSL dependencies
+find_package(GSL REQUIRED)
+target_link_libraries(${TARGET} GSL::gsl GSL::gslcblas)
+
 # adjust C++ compiler flags to our needs
 include("../../SMILE/build/CompilerFlags.cmake")
