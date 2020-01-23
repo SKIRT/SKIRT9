@@ -25,7 +25,11 @@
     Gaussian deviate. To simplify some numerical operations, such as tabulating the %SED, we limit
     the intrinsic range of the %SED to \f$\pm 9s\f$ from the center. We have \f$L_v(9s)/L_v(0) <
     3\times10^{-18}\f$ so that values outside this range will never contribute to the results
-    anyway. */
+    anyway.
+
+    To simplify normalization of this %SED, the source wavelength range configured by the user must
+    fully contain the intrinsic wavelength range defined by \f[ \lambda_\alpha \left(1 \pm
+    \frac{9\,s}{c}\right) \f] */
 class LyaGaussianSED : public SED
 {
     ITEM_CONCRETE(LyaGaussianSED, SED, "a Gaussian spectrum around the central Lyman-alpha wavelength")

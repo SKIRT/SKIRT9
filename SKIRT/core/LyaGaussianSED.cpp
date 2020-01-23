@@ -5,6 +5,7 @@
 
 #include "LyaGaussianSED.hpp"
 #include "Constants.hpp"
+#include "FatalError.hpp"
 #include "NR.hpp"
 #include "Random.hpp"
 
@@ -35,6 +36,10 @@ void LyaGaussianSED::setupSelfBefore()
     _wavelengthDispersion = _wavelengthCenter * dispersion() / Constants::c();
     _wavelengthRange.set(_wavelengthCenter - intrinsicRange * _wavelengthDispersion,
                          _wavelengthCenter + intrinsicRange * _wavelengthDispersion);
+
+    // verify that the source wavelength range contains the intrinsic range so we can normalize to the intrinsic range
+    if (!wavelengthRange().contains(_wavelengthRange))
+        throw FATALERROR("The source wavelength range must fully contain the intrinsic range of this SED");
 }
 
 //////////////////////////////////////////////////////////////////////

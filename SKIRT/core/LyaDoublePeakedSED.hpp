@@ -29,7 +29,11 @@
     To simplify some numerical operations, such as tabulating the %SED, we limit the intrinsic
     range of the %SED to \f$\pm 3.6s\f$ from the center. We have \f$L_v(3.6s)/L_v(v_*) <
     4\times10^{-19}\f$ so that values outside this range will never contribute to the results
-    anyway. */
+    anyway.
+
+    To simplify normalization of this %SED, the source wavelength range configured by the user must
+    fully contain the intrinsic wavelength range defined by \f[ \lambda_\alpha \left(1 \pm
+    \frac{3.6\,s}{c}\right) \f] */
 class LyaDoublePeakedSED : public SED
 {
     ITEM_CONCRETE(LyaDoublePeakedSED, SED, "a double-peaked spectrum around the central Lyman-alpha wavelength")

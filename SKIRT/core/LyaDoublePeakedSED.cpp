@@ -5,6 +5,7 @@
 
 #include "LyaDoublePeakedSED.hpp"
 #include "Constants.hpp"
+#include "FatalError.hpp"
 #include "NR.hpp"
 #include "Random.hpp"
 
@@ -38,6 +39,10 @@ void LyaDoublePeakedSED::setupSelfBefore()
     _wavelengthScale = _wavelengthCenter * scale() / Constants::c();
     _wavelengthRange.set(_wavelengthCenter - intrinsicRange * _wavelengthScale,
                          _wavelengthCenter + intrinsicRange * _wavelengthScale);
+
+    // verify that the source wavelength range contains the intrinsic range so we can normalize to the intrinsic range
+    if (!wavelengthRange().contains(_wavelengthRange))
+        throw FATALERROR("The source wavelength range must fully contain the intrinsic range of this SED");
 }
 
 //////////////////////////////////////////////////////////////////////
