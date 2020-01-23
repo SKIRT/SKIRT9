@@ -69,12 +69,11 @@ void LyaDoublePeakedSED::specificLuminosityArray(Array& lambdav, Array& pv, cons
     Range intersection = _wavelengthRange;
     intersection.intersect(wavelengthRange);
 
-    // if the intersection is empty, return some reasonable (but nonsensical) result
+    // if the intersection is empty, return an empty result
     if (intersection.empty())
     {
-        lambdav.resize(1);
-        lambdav[0] = _wavelengthCenter;
-        pv.resize(1);  // value is initialized to zero
+        lambdav.resize(0);
+        pv.resize(0);
     }
     // otherwise, return a table with appropriate resolution
     else

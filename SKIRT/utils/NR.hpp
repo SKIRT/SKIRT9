@@ -66,13 +66,23 @@ private:
     //======================== Sorting =======================
 
 public:
+    /** This function sorts the values in the specified array. */
+    static inline void sort(Array& xv) { std::sort(begin(xv), end(xv)); }
+
     /** This template function sorts a sequence of items given as a std::vector<T> where T is any
         built-in or user-defined type that implements the less-than operator (including the
         standard numeric types). */
     template<typename T> static inline void sort(std::vector<T>& xv) { std::sort(xv.begin(), xv.end()); }
 
-    /** This function sorts the values in the specified array. */
-    static inline void sort(Array& xv) { std::sort(begin(xv), end(xv)); }
+    /** This template function sorts and removes duplicates from a sequence of items given as a
+        std::vector<T> where T is any built-in or user-defined type that implements the less-than
+        operator (including the standard numeric types). */
+    template<typename T> static inline void unique(std::vector<T>& xv)
+    {
+        std::sort(xv.begin(), xv.end());
+        size_t n = std::unique(xv.begin(), xv.end()) - xv.begin();
+        xv.resize(n);
+    }
 
     //======================== Searching =======================
 

@@ -68,7 +68,7 @@ double Band::meanSpecificLuminosity(const Array& lambdav, const Array& pv) const
         if (range.contains(_lambdav[i])) newlambdav.push_back(_lambdav[i]);
     for (double lambda : lambdav)
         if (range.contains(lambda)) newlambdav.push_back(lambda);
-    NR::sort(newlambdav);
+    NR::unique(newlambdav);
     size_t newsize = newlambdav.size();
     if (newsize < 2) return 0.;
 

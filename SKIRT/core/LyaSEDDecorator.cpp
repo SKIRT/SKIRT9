@@ -47,7 +47,19 @@ double LyaSEDDecorator::specificLuminosity(double wavelength) const
 
 void LyaSEDDecorator::specificLuminosityArray(Array& lambdav, Array& pv, const Range& wavelengthRange) const
 {
-    throw FATALERROR("not yet implemented");
+    // build a wavelength grid in the specified range containing all grid points from both SEDs
+    vector<double> newlambdav;
+    sedOriginal()->specificLuminosityArray(lambdav, pv, wavelengthRange);
+    for (double w : lambdav) newlambdav.push_back(w);
+    sedLymanAlpha()->specificLuminosityArray(lambdav, pv, wavelengthRange);
+    for (double w : lambdav) newlambdav.push_back(w);
+    NR::unique(newlambdav);
+    NR::assign(lambdav, newlambdav);
+
+    // calculate the specific luminosity at each of these grid points
+    size_t n = lambdav.size();
+    pv.resize(n);
+    for (size_t i = 0; i != n; ++i) pv[i] = specificLuminosity(lambdav[i]);
 }
 
 //////////////////////////////////////////////////////////////////////
