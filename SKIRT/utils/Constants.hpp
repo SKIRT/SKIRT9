@@ -47,6 +47,9 @@ public:
     /** This function returns the solar bolometric luminosity without neutrino radiation. */
     static double Lsun();
 
+    /** This function returns the ionization wavelength of atomic hydrogen. */
+    static double lambdaIon();
+
     /** This function returns the central wavelength of the hydrogen Lyα transition. */
     static double lambdaLya();
 

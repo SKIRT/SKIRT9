@@ -106,6 +106,7 @@
 #include "LuminosityProbe.hpp"
 #include "LyaDoublePeakedSED.hpp"
 #include "LyaGaussianSED.hpp"
+#include "LyaSEDDecorator.hpp"
 #include "MRNDustMix.hpp"
 #include "MagneticFieldPerCellProbe.hpp"
 #include "MappingsSED.hpp"
@@ -277,8 +278,6 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ResourceSED>();
     ItemRegistry::add<SunSED>();
     ItemRegistry::add<QuasarSED>();
-    ItemRegistry::add<LyaGaussianSED>();
-    ItemRegistry::add<LyaDoublePeakedSED>();
     ItemRegistry::add<FamilySED>();
     ItemRegistry::add<CastelliKuruczSED>();
     ItemRegistry::add<BruzualCharlotSED>();
@@ -289,6 +288,9 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<TabulatedSED>();
     ItemRegistry::add<FileSED>();
     ItemRegistry::add<ListSED>();
+    ItemRegistry::add<LyaGaussianSED>();
+    ItemRegistry::add<LyaDoublePeakedSED>();
+    ItemRegistry::add<LyaSEDDecorator>();
 
     // SED families
     ItemRegistry::add<SEDFamily>();
