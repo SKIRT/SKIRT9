@@ -21,7 +21,7 @@ void TabulatedSED::setupSelfBefore()
     if (_inlambdav.size() < 2) throw FATALERROR("SED must have at least two wavelength/luminosity pairs");
 
     // construct the regular and cumulative distributions
-    double norm = NR::cdf<NR::interpolateLogLog>(_lambdav, _pv, _Pv, _inlambdav, _inpv, wavelengthRange());
+    double norm = NR::cdf<NR::interpolateLogLog>(_lambdav, _pv, _Pv, _inlambdav, _inpv, normalizationWavelengthRange());
 
     // also normalize the intrinsic distribution
     _inpv /= norm;

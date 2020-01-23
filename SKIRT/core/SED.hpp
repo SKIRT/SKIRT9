@@ -22,9 +22,8 @@ class Random;
     Each SED subclass must ensure that the implemented spectral energy distribution is normalized
     to unity over the normalization wavelength range, which is defined as the intersection of the
     source wavelength range (determined by the SourceSystem) and the intrinsic wavelength range of
-    the implemented distribution (determined by the SED subclass). The wavelengthRange()
-    convenience function offered by this abstract base class returns this normalization wavelength
-    range.
+    the implemented distribution (determined by the SED subclass). A convenience function offered
+    by this abstract base class returns this normalization wavelength range.
 
     Specifically, this means that the random wavelengths returned by the generateWavelength()
     function will always fall inside the normalization range. On the other hand, while the
@@ -81,7 +80,7 @@ public:
         the intersection of the simulation's source wavelength range (obtained from the simulation
         configuration) and the intrinsic wavelength range of the %SED (obtained through the abtract
         intrinsicWavelengthRange() function which must be impemented in each subclass. */
-    Range wavelengthRange() const;
+    Range normalizationWavelengthRange() const;
 
 protected:
     /** This function returns the simulation's random generator as a service to subclasses. */

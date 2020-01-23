@@ -14,7 +14,7 @@ void FamilySED::setupSelfBefore()
     SED::setupSelfBefore();
 
     _family = getFamilyAndParameters(_parameters);
-    _Ltot = _family->cdf(_lambdav, _pv, _Pv, wavelengthRange(), _parameters);
+    _Ltot = _family->cdf(_lambdav, _pv, _Pv, normalizationWavelengthRange(), _parameters);
 }
 
 //////////////////////////////////////////////////////////////////////

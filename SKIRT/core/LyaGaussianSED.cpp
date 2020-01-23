@@ -38,7 +38,7 @@ void LyaGaussianSED::setupSelfBefore()
                          _wavelengthCenter + intrinsicRange * _wavelengthDispersion);
 
     // verify that the source wavelength range contains the intrinsic range so we can normalize to the intrinsic range
-    if (!wavelengthRange().contains(_wavelengthRange))
+    if (!normalizationWavelengthRange().contains(_wavelengthRange))
         throw FATALERROR("The source wavelength range must fully contain the intrinsic range of this SED");
 }
 
