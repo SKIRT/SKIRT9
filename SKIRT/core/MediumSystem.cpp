@@ -5,6 +5,7 @@
 
 #include "MediumSystem.hpp"
 #include "Configuration.hpp"
+#include "Constants.hpp"
 #include "DensityInCellInterface.hpp"
 #include "DisjointWavelengthGrid.hpp"
 #include "FatalError.hpp"
@@ -19,6 +20,7 @@
 #include "Random.hpp"
 #include "ShortArray.hpp"
 #include "StringUtils.hpp"
+#include <iostream>
 
 ////////////////////////////////////////////////////////////////////
 
@@ -146,6 +148,17 @@ void MediumSystem::setupSelfAfter()
     {
         Position bfr = _grid->centralPositionInCell(m);
         for (int h = 0; h != _numMedia; ++h) state(m, h).mix = _media[h]->mix(bfr);
+    }
+
+    if (_config->hasRadiationField())
+    {
+        size_t numFreq = _wavelengthGrid->numBins();
+        Array frequencyv(numFreq);
+        for (size_t i = 0; i < numFreq; i++)
+            frequencyv[i] = Constants::c() / _wavelengthGrid->wavelength(numFreq - 1 - i);
+        _gas.setup(frequencyv);
+        // allocate 1 gas state as a test
+        _gas.allocateGasStates(_numCells);
     }
 }
 
@@ -558,3 +571,18 @@ double MediumSystem::absorbedLuminosity(int m, MaterialMix::MaterialType type) c
 }
 
 ////////////////////////////////////////////////////////////////////
+
+void MediumSystem::gasTest()
+{
+    if (_config->hasRadiationField())
+    {
+        auto parfac = find<ParallelFactory>();
+        parfac->parallelRootOnly()->call(_numCells, [&](size_t firstIndex, size_t numIndices) {
+            for (size_t m = firstIndex; m < firstIndex + numIndices; m++)
+            {
+                _gas.updateGasState(m, meanIntensity(m));
+                std::cout << "gas temp " << _gas.gasTemperature(m) << '\n';
+            }
+        });
+    }
+}

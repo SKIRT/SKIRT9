@@ -6,7 +6,6 @@
 #include "MonteCarloSimulation.hpp"
 #include "DisjointWavelengthGrid.hpp"
 #include "FatalError.hpp"
-#include "Gas.hpp"
 #include "Log.hpp"
 #include "MaterialMix.hpp"
 #include "Parallel.hpp"
@@ -39,7 +38,6 @@ void MonteCarloSimulation::setupSimulation()
         // notify the probe system
         probeSystem()->probeSetup();
     }
-    Gas g;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -75,6 +73,8 @@ void MonteCarloSimulation::runSimulation()
 
         // secondary emission segment
         if (_config->hasSecondaryEmission()) runSecondaryEmission();
+
+        _mediumSystem->gasTest();
     }
 
     // write final output

@@ -19,7 +19,11 @@ file(GLOB HEADERS "*.hpp")
 # create the library target
 add_library(${TARGET} STATIC ${SOURCES} ${HEADERS})
 
-# add SMILE library dependencies (needed for Array.hpp)
+# add SKIRT library dependencies
+target_link_libraries(${TARGET} utils)
+include_directories(../utils)
+
+# add SMILE library dependencies
 target_link_libraries(${TARGET} fundamentals)
 include_directories(../../SMILE/fundamentals)
 

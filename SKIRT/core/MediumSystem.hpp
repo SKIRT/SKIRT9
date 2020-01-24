@@ -10,6 +10,7 @@
 #include "DustEmissionOptions.hpp"
 #include "DustSelfAbsorptionOptions.hpp"
 #include "ExtinctionOnlyOptions.hpp"
+#include "Gas.hpp"
 #include "MaterialMix.hpp"
 #include "Medium.hpp"
 #include "PhotonPacketOptions.hpp"
@@ -376,6 +377,8 @@ public:
         over all photon packets contributing to the bin. */
     double absorbedLuminosity(int m, MaterialMix::MaterialType type) const;
 
+    void gasTest();
+
     //================== Private Types and Functions ====================
 
 private:
@@ -434,6 +437,8 @@ private:
     Table<2> _rf1;   // radiation field from primary sources
     Table<2> _rf2;   // radiation field from secondary sources (copied from _rf2c at the appropriate time)
     Table<2> _rf2c;  // radiation field currently being accumulated from secondary sources
+
+    Gas _gas;
 };
 
 ////////////////////////////////////////////////////////////////
