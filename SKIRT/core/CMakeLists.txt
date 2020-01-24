@@ -26,7 +26,7 @@ target_link_libraries(${TARGET} fitsio voro mpi utils gas)
 include_directories(../fitsio ../voro ../mpi ../utils ../gas)
 
 # add gasmodule dependency
-set(GASMODULE_INSTALL_DIR "/Users/drvdputt/Repositories/gasmodule/cmake_release")
+set(GASMODULE_INSTALL_DIR "$ENV{HOME}/Repositories/gasmodule/cmake_release")
 include_directories("${GASMODULE_INSTALL_DIR}/include")
 find_library(GASMODULE_LIB
   NAMES libgasmodule.a

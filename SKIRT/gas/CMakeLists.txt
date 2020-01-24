@@ -34,7 +34,7 @@ option(BUILD_WITH_GAS "build with gas support - requires gas module installed at
 # if requested, find gas module installation and configure accordingly
 if (BUILD_WITH_GAS)
   # find and configure gas module.
-  set(GASMODULE_INSTALL_DIR "/Users/drvdputt/Repositories/gasmodule/cmake_release")
+  set(GASMODULE_INSTALL_DIR "$ENV{HOME}/Repositories/gasmodule/cmake_release")
   find_library(GASMODULE_LIBRARIES libgasmodule.a "${GASMODULE_INSTALL_DIR}/lib" NO_DEFAULT_PATH)
   message(${GASMODULE_LIBRARIES})
   find_path(GASMODULE_INCLUDE_PATH "GasInterface.hpp" "${GASMODULE_INSTALL_DIR}/include" NO_DEFAULT_PATH)
