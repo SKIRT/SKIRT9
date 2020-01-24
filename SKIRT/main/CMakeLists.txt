@@ -27,7 +27,7 @@ include_directories(../../SMILE/serialize ../../SMILE/schema ../../SMILE/fundame
 
 # add SKIRT library dependencies
 target_link_libraries(${TARGET} skirtcore)
-include_directories(../core ../mpi ../utils)
+include_directories(../core ../mpi ../utils ../gas)
 
 # adjust C++ compiler flags to our needs
 include("../../SMILE/build/CompilerFlags.cmake")
