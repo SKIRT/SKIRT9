@@ -105,6 +105,7 @@
 #include "LogWavelengthGrid.hpp"
 #include "LuminosityProbe.hpp"
 #include "LyaDoublePeakedSED.hpp"
+#include "LyaDoublePeakedSEDFamily.hpp"
 #include "LyaGaussianSED.hpp"
 #include "LyaGaussianSEDFamily.hpp"
 #include "LyaSEDDecorator.hpp"
@@ -304,6 +305,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<FileSSPSEDFamily>();
     ItemRegistry::add<MappingsSEDFamily>();
     ItemRegistry::add<LyaGaussianSEDFamily>();
+    ItemRegistry::add<LyaDoublePeakedSEDFamily>();
 
     // wavelength distributions
     ItemRegistry::add<WavelengthDistribution>();
