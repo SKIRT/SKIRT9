@@ -21,6 +21,8 @@ void Gas::setup(const Array& frequencyv)
 {
 #ifdef BUILD_WITH_GAS
     _gi = std::make_unique<GasModule::GasInterface>(frequencyv, frequencyv, frequencyv);
+#else
+    (void)frequencyv;
 #endif
 }
 
@@ -28,6 +30,8 @@ void Gas::allocateGasStates(size_t num)
 {
 #ifdef BUILD_WITH_GAS
     _statev.resize(num);
+#else
+    (void)num;
 #endif
 }
 
@@ -67,6 +71,9 @@ void Gas::updateGasState(int m, const Array& meanIntensityv)
     // No grains for now
     GasModule::GrainInterface gr;
     _gi->updateGasState(_statev[m], 1000., jnu, gr);
+#else
+    (void)m;
+    (void)meanIntensityv;
 #endif
 }
 
@@ -74,5 +81,8 @@ double Gas::gasTemperature(int m) const
 {
 #ifdef BUILD_WITH_GAS
     return _statev[m].temperature();
+#else
+    (void)m;
+    return 0;
 #endif
 }
