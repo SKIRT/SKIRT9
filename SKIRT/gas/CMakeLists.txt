@@ -34,11 +34,16 @@ option(BUILD_WITH_GAS "build with gas support - requires gas module installed at
 # if requested, find gas module installation and configure accordingly
 if (BUILD_WITH_GAS)
   # find and configure gas module.
-  set(GASMODULE_INSTALL_DIR "$ENV{HOME}/Repositories/gasmodule/cmake_release")
-  find_library(GASMODULE_LIBRARIES libgasmodule.a "${GASMODULE_INSTALL_DIR}/lib" NO_DEFAULT_PATH)
-  message(${GASMODULE_LIBRARIES})
-  find_path(GASMODULE_INCLUDE_PATH "GasInterface.hpp" "${GASMODULE_INSTALL_DIR}/include" NO_DEFAULT_PATH)
-  message(${GASMODULE_INCLUDE_PATH})
+  if (NOT DEFINED GASMODULE_INSTALL_DIR)
+    message("Please set GASMODULE_INSTALL_DIR - trying /usr/local/ by default")
+    set(GASMODULE_INSTALL_DIR "/usr/local")
+  endif()
+  find_library(GASMODULE_LIBRARIES
+    NAMES libgasmodule.a
+    PATHS "${GASMODULE_INSTALL_DIR}/lib")
+  find_path(GASMODULE_INCLUDE_PATH
+    NAMES "GasInterface.hpp"
+    PATHS "${GASMODULE_INSTALL_DIR}/include")
   target_link_libraries(${TARGET} ${GASMODULE_LIBRARIES})
   include_directories(${GASMODULE_INCLUDE_PATH})
   # add the C++ preprocessor symbol that triggers compilation with gas
