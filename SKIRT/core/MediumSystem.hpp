@@ -99,6 +99,11 @@ protected:
         in the wavelength grid returned by the Configuration::radiationFieldWLG() function. */
     void setupSelfAfter() override;
 
+public:
+    /** The destructor for this class calls \c Gas::finalize() at destruction, if it was called
+        during \c setupSelfAfter(). This cleans up any memory allocated for the gas module. */
+    ~MediumSystem();
+
     //======================== Other Functions =======================
 
 public:
@@ -437,8 +442,6 @@ private:
     Table<2> _rf1;   // radiation field from primary sources
     Table<2> _rf2;   // radiation field from secondary sources (copied from _rf2c at the appropriate time)
     Table<2> _rf2c;  // radiation field currently being accumulated from secondary sources
-
-    Gas _gas;
 };
 
 ////////////////////////////////////////////////////////////////

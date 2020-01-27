@@ -3,26 +3,35 @@
 #include "Constants.hpp"
 #include "FatalError.hpp"
 
+#define BUILD_WITH_GAS
+
 #ifdef BUILD_WITH_GAS
 #    include "GasInterface.hpp"
 #    include <iostream>
+#    include <vector>
 #endif
 
-Gas::Gas()
+namespace
 {
-#ifndef BUILD_WITH_GAS
-    FATALERROR("SKIRT was built using BUILD_WITH_GAS=OFF, gas is not supported");
+    GasModule::GasInterface* _gi;
+    std::vector<GasModule::GasState> _statev;
+}
+
+void Gas::initialize(const Array& frequencyv)
+{
+#ifdef BUILD_WITH_GAS
+    if (_gi) FATALERROR("Gas module should be initialized exactly once");
+    _gi = new GasModule::GasInterface(frequencyv, frequencyv, frequencyv);
+#else
+    (void)frequencyv;
 #endif
 }
 
-Gas::~Gas() = default;
-
-void Gas::setup(const Array& frequencyv)
+void Gas::finalize()
 {
 #ifdef BUILD_WITH_GAS
-    _gi = std::make_unique<GasModule::GasInterface>(frequencyv, frequencyv, frequencyv);
-#else
-    (void)frequencyv;
+    delete _gi;
+    _gi = nullptr;
 #endif
 }
 
@@ -77,7 +86,7 @@ void Gas::updateGasState(int m, const Array& meanIntensityv)
 #endif
 }
 
-double Gas::gasTemperature(int m) const
+double Gas::gasTemperature(int m)
 {
 #ifdef BUILD_WITH_GAS
     return _statev[m].temperature();

@@ -156,10 +156,16 @@ void MediumSystem::setupSelfAfter()
         Array frequencyv(numFreq);
         for (size_t i = 0; i < numFreq; i++)
             frequencyv[i] = Constants::c() / _wavelengthGrid->wavelength(numFreq - 1 - i);
-        _gas.setup(frequencyv);
-        // allocate 1 gas state as a test
-        _gas.allocateGasStates(_numCells);
+        Gas::initialize(frequencyv);
+        Gas::allocateGasStates(_numCells);
     }
+}
+
+////////////////////////////////////////////////////////////////////
+
+MediumSystem::~MediumSystem()
+{
+    Gas::finalize();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -580,8 +586,8 @@ void MediumSystem::gasTest()
         parfac->parallelRootOnly()->call(_numCells, [&](size_t firstIndex, size_t numIndices) {
             for (size_t m = firstIndex; m < firstIndex + numIndices; m++)
             {
-                _gas.updateGasState(m, meanIntensity(m));
-                std::cout << "gas temp " << _gas.gasTemperature(m) << '\n';
+                Gas::updateGasState(m, meanIntensity(m));
+                std::cout << "gas temp " << Gas::gasTemperature(m) << '\n';
             }
         });
     }
