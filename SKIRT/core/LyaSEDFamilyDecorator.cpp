@@ -21,8 +21,6 @@ void LyaSEDFamilyDecorator::setupSelfAfter()
     if (range.empty()) throw FATALERROR("Source wavelength range must overlap intrinsic SED family wavelength range");
     if (range.min() >= Constants::lambdaIon())
         throw FATALERROR("Source wavelength range must include ionizing radiation");
-
-    _totalRange = range;
     _ionizingRange.set(range.min(), Constants::lambdaIon());
 }
 
@@ -53,13 +51,11 @@ double LyaSEDFamilyDecorator::specificLuminosity(double wavelength, const Array&
     else
     {
         double luminosityLya = conversionFraction() * sedLymanAlpha()->specificLuminosity(wavelength);
-        // calculating the ionizing fraction is expensive, so we do this only when necessary
+        // calculating the ionizing luminosity is expensive, so we do this only when necessary
         if (luminosityLya > 0.)
         {
             Array lambdav, pv, Pv;  // the contents of these arrays is not used here
-            double ionizingFraction = sedFamilyOriginal()->cdf(lambdav, pv, Pv, _ionizingRange, parameters)
-                                      / sedFamilyOriginal()->cdf(lambdav, pv, Pv, _totalRange, parameters);
-            luminosityLya *= ionizingFraction;
+            luminosityLya *= sedFamilyOriginal()->cdf(lambdav, pv, Pv, _ionizingRange, parameters);
         }
         return sedFamilyOriginal()->specificLuminosity(wavelength, parameters) + luminosityLya;
     }
@@ -70,9 +66,8 @@ double LyaSEDFamilyDecorator::specificLuminosity(double wavelength, const Array&
 double LyaSEDFamilyDecorator::cdf(Array& lambdav, Array& pv, Array& Pv, const Range& wavelengthRange,
                                   const Array& parameters) const
 {
-    // determine the ionizing fraction; the argument arrays lambdav, pv, Pv are used for temporary storage
-    double ionizingFraction = sedFamilyOriginal()->cdf(lambdav, pv, Pv, _ionizingRange, parameters)
-                              / sedFamilyOriginal()->cdf(lambdav, pv, Pv, _totalRange, parameters);
+    // determine the ionizing luminosity; the argument arrays lambdav, pv, Pv are used for temporary storage
+    double ionizingLuminosity = sedFamilyOriginal()->cdf(lambdav, pv, Pv, _ionizingRange, parameters);
 
     // build a wavelength grid that includes wavelengths from both SEDs; the argument arrays are temporary storage
     vector<double> newlambdav;  // combined list of wavelengths
@@ -92,7 +87,7 @@ double LyaSEDFamilyDecorator::cdf(Array& lambdav, Array& pv, Array& Pv, const Ra
             pv[i] = (1. - conversionFraction()) * sedFamilyOriginal()->specificLuminosity(lambdav[i], parameters);
         else
             pv[i] = sedFamilyOriginal()->specificLuminosity(lambdav[i], parameters)
-                    + ionizingFraction * conversionFraction() * sedLymanAlpha()->specificLuminosity(lambdav[i]);
+                    + ionizingLuminosity * conversionFraction() * sedLymanAlpha()->specificLuminosity(lambdav[i]);
     }
 
     // calculate the cumulative distribution and normalization

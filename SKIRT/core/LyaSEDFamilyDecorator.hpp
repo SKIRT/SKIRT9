@@ -85,7 +85,6 @@ public:
     //======================== Data Members ========================
 
 private:
-    Range _totalRange;     // the total wavelength range to be considered
     Range _ionizingRange;  // the wavelength range representing ionizing radiation
 };
 
