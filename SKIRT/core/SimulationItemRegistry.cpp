@@ -109,6 +109,7 @@
 #include "LyaGaussianSED.hpp"
 #include "LyaGaussianSEDFamily.hpp"
 #include "LyaSEDDecorator.hpp"
+#include "LyaSEDFamilyDecorator.hpp"
 #include "MRNDustMix.hpp"
 #include "MagneticFieldPerCellProbe.hpp"
 #include "MappingsSED.hpp"
@@ -306,6 +307,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<MappingsSEDFamily>();
     ItemRegistry::add<LyaGaussianSEDFamily>();
     ItemRegistry::add<LyaDoublePeakedSEDFamily>();
+    ItemRegistry::add<LyaSEDFamilyDecorator>();
 
     // wavelength distributions
     ItemRegistry::add<WavelengthDistribution>();
