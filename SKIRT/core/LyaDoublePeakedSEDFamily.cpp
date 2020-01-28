@@ -32,7 +32,7 @@ vector<SnapshotParameter> LyaDoublePeakedSEDFamily::parameterInfo() const
 
 Range LyaDoublePeakedSEDFamily::intrinsicWavelengthRange() const
 {
-    return Range(1201-10, 1231-10);
+    return Range(1201e-10, 1231e-10);
 }
 
 ////////////////////////////////////////////////////////////////////
