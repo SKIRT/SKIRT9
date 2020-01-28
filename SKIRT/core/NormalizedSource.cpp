@@ -34,7 +34,7 @@ void NormalizedSource::setupSelfBefore()
 
 Range NormalizedSource::wavelengthRange() const
 {
-    return sed()->wavelengthRange();
+    return sed()->normalizationWavelengthRange();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -48,7 +48,7 @@ double NormalizedSource::luminosity() const
 
 double NormalizedSource::specificLuminosity(double wavelength) const
 {
-    if (!sed()->wavelengthRange().containsFuzzy(wavelength)) return 0.;
+    if (!sed()->normalizationWavelengthRange().containsFuzzy(wavelength)) return 0.;
     return _sed->specificLuminosity(wavelength) * luminosity();
 }
 

@@ -14,7 +14,7 @@ void BlackBodySED::setupSelfBefore()
     SED::setupSelfBefore();
 
     _planck = new PlanckFunction(temperature());
-    _Ltot = _planck->cdf(_lambdav, _pv, _Pv, wavelengthRange());
+    _Ltot = _planck->cdf(_lambdav, _pv, _Pv, normalizationWavelengthRange());
 }
 
 //////////////////////////////////////////////////////////////////////

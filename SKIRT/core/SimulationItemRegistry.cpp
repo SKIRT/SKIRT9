@@ -104,6 +104,12 @@
 #include "LogWavelengthDistribution.hpp"
 #include "LogWavelengthGrid.hpp"
 #include "LuminosityProbe.hpp"
+#include "LyaDoublePeakedSED.hpp"
+#include "LyaDoublePeakedSEDFamily.hpp"
+#include "LyaGaussianSED.hpp"
+#include "LyaGaussianSEDFamily.hpp"
+#include "LyaSEDDecorator.hpp"
+#include "LyaSEDFamilyDecorator.hpp"
 #include "MRNDustMix.hpp"
 #include "MagneticFieldPerCellProbe.hpp"
 #include "MappingsSED.hpp"
@@ -285,6 +291,9 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<TabulatedSED>();
     ItemRegistry::add<FileSED>();
     ItemRegistry::add<ListSED>();
+    ItemRegistry::add<LyaGaussianSED>();
+    ItemRegistry::add<LyaDoublePeakedSED>();
+    ItemRegistry::add<LyaSEDDecorator>();
 
     // SED families
     ItemRegistry::add<SEDFamily>();
@@ -296,6 +305,9 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<FSPSSEDFamily>();
     ItemRegistry::add<FileSSPSEDFamily>();
     ItemRegistry::add<MappingsSEDFamily>();
+    ItemRegistry::add<LyaGaussianSEDFamily>();
+    ItemRegistry::add<LyaDoublePeakedSEDFamily>();
+    ItemRegistry::add<LyaSEDFamilyDecorator>();
 
     // wavelength distributions
     ItemRegistry::add<WavelengthDistribution>();

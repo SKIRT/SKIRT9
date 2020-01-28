@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "IntegratedLuminosityNormalization.hpp"
+#include "FatalError.hpp"
 #include "SED.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -17,8 +18,15 @@ double IntegratedLuminosityNormalization::luminosity(SED* sed) const
     double minWavelength = _wavelengthRange == WavelengthRange::Custom ? _minWavelength : 1e-10;
     double maxWavelength = _wavelengthRange == WavelengthRange::Custom ? _maxWavelength : 1;
 
+    // refuse an emnpty wavelength range
+    if (minWavelength >= maxWavelength) throw FATALERROR("the normalization wavelength range is empty");
+
     // get the normalized integrated luminosity from the sed
     double L = sed->integratedLuminosity(Range(minWavelength, maxWavelength));
+
+    // refuse zero luminosity
+    if (L <= 0) throw FATALERROR("the normalization luminosity is zero");
+
     return _integratedLuminosity / L;
 }
 

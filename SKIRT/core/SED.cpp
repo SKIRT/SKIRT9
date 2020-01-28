@@ -19,7 +19,7 @@ void SED::setupSelfBefore()
 
 //////////////////////////////////////////////////////////////////////
 
-Range SED::wavelengthRange() const
+Range SED::normalizationWavelengthRange() const
 {
     Range range = find<Configuration>()->sourceWavelengthRange();
     range.intersect(intrinsicWavelengthRange());
