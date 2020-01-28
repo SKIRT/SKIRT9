@@ -12,19 +12,19 @@
 ////////////////////////////////////////////////////////////////////
 
 /** The LyaSEDFamilyDecorator class implements a \em decorator that adjusts another, arbitrary %SED
-    family by converting a fraction of the ionizing part of the %SEDs to Lyman-Alpha emission.
+    family by converting a fraction of the ionizing part of the %SEDs to Lyman-alpha emission.
 
     There are three configuration options: the %SED family to be adjusted, called the 'original
-    %SED family'; the %SED representing the Lyman-Alpha emission, called the 'Lyman-Alpha %SED';
+    %SED family'; the %SED representing the Lyman-alpha emission, called the 'Lyman-alpha %SED';
     and the fraction of the ionizing radiation to be converted. The template parameters passed to
     the decorator are passed on to the original %SED family without change. In the 'decorated %SED'
     templates produced by the decorator, the specified fraction of the luminosity in any original
     %SED short of \f$\lambda_\mathrm{ion} =911.75\,\text{\AA}\f$ is replaced by emission following
-    the specified Lyman-Alpha %SED. The remaining fraction of ionizing radiation and all
+    the specified Lyman-alpha %SED. The remaining fraction of ionizing radiation and all
     non-ionizing radiation in the original %SED is emitted as usual.
 
     The source wavelength range must include the ionizing portion of the spectrum to be considered,
-    even if all ionizing radiation is being converted to Lyman-Alpha emission. */
+    even if all ionizing radiation is being converted to Lyman-alpha emission. */
 class LyaSEDFamilyDecorator : public SEDFamily
 {
     ITEM_CONCRETE(LyaSEDFamilyDecorator, SEDFamily,
@@ -61,7 +61,7 @@ public:
 
     /** This function returns the intrinsic wavelength range of the %SED family. For this
         decorator, it returns the union of the intrinsic ranges of the original %SED family and the
-        Lyman-Alpha %SED configured by the user, even if the configured conversion fraction is
+        Lyman-alpha %SED configured by the user, even if the configured conversion fraction is
         equal to one. */
     Range intrinsicWavelengthRange() const override;
 
