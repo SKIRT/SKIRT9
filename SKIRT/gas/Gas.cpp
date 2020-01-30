@@ -3,25 +3,24 @@
 #include "Constants.hpp"
 #include "FatalError.hpp"
 
-#define BUILD_WITH_GAS
-
 #ifdef BUILD_WITH_GAS
 #    include "GasInterface.hpp"
 #    include <iostream>
 #    include <vector>
-#endif
-
 namespace
 {
     GasModule::GasInterface* _gi;
     std::vector<GasModule::GasState> _statev;
+    std::vector<Gas::DustInfo> _dustinfov;
 }
+#endif
 
-void Gas::initialize(const Array& frequencyv)
+void Gas::initialize(const Array& frequencyv, const std::vector<DustInfo>& dustinfov)
 {
 #ifdef BUILD_WITH_GAS
     if (_gi) FATALERROR("Gas module should be initialized exactly once");
     _gi = new GasModule::GasInterface(frequencyv, frequencyv, frequencyv);
+    _dustinfov = dustinfov;
 #else
     (void)frequencyv;
 #endif
@@ -44,7 +43,7 @@ void Gas::allocateGasStates(size_t num)
 #endif
 }
 
-void Gas::updateGasState(int m, const Array& meanIntensityv)
+void Gas::updateGasState(int m, const Array& meanIntensityv, const Array& dustMassDensv)
 {
 #ifdef BUILD_WITH_GAS
     const Array& iFrequencyv = _gi->iFrequencyv();
@@ -77,8 +76,31 @@ void Gas::updateGasState(int m, const Array& meanIntensityv)
     }
     std::cout << countzeros << " zeros in cell " << m << '\n';
 
-    // No grains for now
+    // Make grain interface object
     GasModule::GrainInterface gr;
+    for (size_t i = 0; i < _dustinfov.size(); i++)
+    {
+        GasModule::GrainTypeLabel type;
+        if (_dustinfov[i].type == 1)
+        {
+            type = GasModule::GrainTypeLabel::SIL;
+        }
+        else if (_dustinfov[i].type == 2)
+        {
+            type = GasModule::GrainTypeLabel::CAR;
+        }
+        else
+        {
+            type = GasModule::GrainTypeLabel::OTHER;
+            FATALERROR("Unsupported grain type for gas");
+        }
+
+        Array temperaturev(_dustinfov[i].sizev.size());
+        Array densityv = _dustinfov[i].nPerMassUnitv * dustMassDensv[i];
+
+        gr.addPopulation(type, _dustinfov[i].sizev, densityv, temperaturev, _gi->iFrequencyv(), _dustinfov[i].qabsvv);
+    }
+
     _gi->updateGasState(_statev[m], 1000., jnu, gr);
 #else
     (void)m;

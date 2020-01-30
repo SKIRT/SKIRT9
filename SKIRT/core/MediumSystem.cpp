@@ -12,6 +12,7 @@
 #include "LockFree.hpp"
 #include "Log.hpp"
 #include "MaterialMix.hpp"
+#include "MultiGrainDustMix.hpp"
 #include "NR.hpp"
 #include "Parallel.hpp"
 #include "ParallelFactory.hpp"
@@ -150,13 +151,54 @@ void MediumSystem::setupSelfAfter()
         for (int h = 0; h != _numMedia; ++h) state(m, h).mix = _media[h]->mix(bfr);
     }
 
+    // initialize the gas
     if (_config->hasRadiationField())
     {
+        // Calculate the frequency grid
         size_t numFreq = _wavelengthGrid->numBins();
         Array frequencyv(numFreq);
         for (size_t i = 0; i < numFreq; i++)
             frequencyv[i] = Constants::c() / _wavelengthGrid->wavelength(numFreq - 1 - i);
-        Gas::initialize(frequencyv);
+
+        // Gather dust properties that the gas module needs (not compatible with the 'possibly
+        // separate dust mix per cell' concept)
+        std::vector<Gas::DustInfo> dustinfov;
+        for (int h = 0; h != _numMedia; ++h)
+        {
+            if (_media[h]->mix()->isDust())
+            {
+                const MultiGrainDustMix* mgdm = dynamic_cast<const MultiGrainDustMix*>(_media[h]->mix());
+                if (!mgdm) throw FATALERROR("When using gas, all dust mixes must be multi-grain");
+
+                // for each population of each multigraindustmix in the system, create one of these structs
+                for (int c = 0; c != mgdm->numPopulations(); ++c)
+                {
+                    // Determine graphite or silicate
+                    int type;
+                    if (mgdm->populationGrainType(c) == "Draine_Silicate")
+                        type = 1;
+                    else if (mgdm->populationGrainType(c) == "Draine_Graphite")
+                        type = 2;
+                    else
+                        continue;
+
+                    // these are not correct yet v
+                    int numSizes = 1; 
+                    Array sizev(numSizes);
+                    Array nPerMassUnitv(numSizes);
+                    std::vector<Array> qabsvv(numSizes, Array(numFreq));
+                    sizev[0] = mgdm->populationSizeRange(c).mid(); 
+                    nPerMassUnitv[0] = mgdm->populationMass(c);
+                    // these are not correct yet ^
+                    
+                    Gas::DustInfo dustinfo = {type, sizev, nPerMassUnitv, qabsvv};
+                    dustinfov.push_back(dustinfo);
+                }
+            }
+        }
+        // for now, still pass empty vector to see if the code runs
+        std::vector<Gas::DustInfo> emptyDustinfov;
+        Gas::initialize(frequencyv, emptyDustinfov);
         Gas::allocateGasStates(_numCells);
     }
 }
@@ -586,8 +628,10 @@ void MediumSystem::gasTest()
         parfac->parallelRootOnly()->call(_numCells, [&](size_t firstIndex, size_t numIndices) {
             for (size_t m = firstIndex; m < firstIndex + numIndices; m++)
             {
-                Gas::updateGasState(m, meanIntensity(m));
-                std::cout << "gas temp " << Gas::gasTemperature(m) << '\n';
+                // Get the dust mass for every population of every multigraindustmix, in the same
+                // order as the dust info vector given to Gas::initialize
+                Gas::updateGasState(m, meanIntensity(m), Array());
+                if (!(m % 1000)) std::cout << "gas temp " << Gas::gasTemperature(m) << '\n';
             }
         });
     }
