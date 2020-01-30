@@ -433,6 +433,12 @@ private:
     vector<State1> _state1v;   // state info for each cell (indexed on m)
     vector<State2> _state2vv;  // state info for each cell and each medium (indexed on m,h)
 
+    // Dust components/populations that were compatible with the gas. The length of this vector
+    // should be the number of dust components that was given to Gas. The h and c for each
+    // MultigrainDustMix/GrainPopulation given to Gas is stored here, so we can use them to pass
+    // the relevant dust densities in each cell.
+    vector<std::array<int, 2>> _hCompatibleWithGasv;
+
     // relevant for any simulation mode that stores the radiation field
     WavelengthGrid* _wavelengthGrid{0};  // index ell
     // each radiation field table has an entry for each cell and each wavelength (indexed on m,ell)

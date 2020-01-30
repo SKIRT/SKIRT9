@@ -43,7 +43,7 @@ void Gas::allocateGasStates(size_t num)
 #endif
 }
 
-void Gas::updateGasState(int m, const Array& meanIntensityv, const Array& dustMassDensv)
+void Gas::updateGasState(int m, const Array& meanIntensityv, const Array& mixNumberDensv)
 {
 #ifdef BUILD_WITH_GAS
     const Array& iFrequencyv = _gi->iFrequencyv();
@@ -96,7 +96,7 @@ void Gas::updateGasState(int m, const Array& meanIntensityv, const Array& dustMa
         }
 
         Array temperaturev(_dustinfov[i].sizev.size());
-        Array densityv = _dustinfov[i].nPerMassUnitv * dustMassDensv[i];
+        Array densityv = _dustinfov[i].numberDensRatiov * mixNumberDensv[i];
 
         gr.addPopulation(type, _dustinfov[i].sizev, densityv, temperaturev, _gi->iFrequencyv(), _dustinfov[i].qabsvv);
     }

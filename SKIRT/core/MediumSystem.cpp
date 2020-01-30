@@ -183,22 +183,21 @@ void MediumSystem::setupSelfAfter()
                         continue;
 
                     // these are not correct yet v
-                    int numSizes = 1; 
+                    int numSizes = 1;
                     Array sizev(numSizes);
                     Array nPerMassUnitv(numSizes);
                     std::vector<Array> qabsvv(numSizes, Array(numFreq));
-                    sizev[0] = mgdm->populationSizeRange(c).mid(); 
+                    sizev[0] = mgdm->populationSizeRange(c).mid();
                     nPerMassUnitv[0] = mgdm->populationMass(c);
                     // these are not correct yet ^
-                    
+
                     Gas::DustInfo dustinfo = {type, sizev, nPerMassUnitv, qabsvv};
                     dustinfov.push_back(dustinfo);
+                    _hCompatibleWithGasv.push_back(std::array<int, 2>{h, c});
                 }
             }
         }
-        // for now, still pass empty vector to see if the code runs
-        std::vector<Gas::DustInfo> emptyDustinfov;
-        Gas::initialize(frequencyv, emptyDustinfov);
+        Gas::initialize(frequencyv, dustinfov);
         Gas::allocateGasStates(_numCells);
     }
 }
@@ -630,8 +629,11 @@ void MediumSystem::gasTest()
             {
                 // Get the dust mass for every population of every multigraindustmix, in the same
                 // order as the dust info vector given to Gas::initialize
-                Gas::updateGasState(m, meanIntensity(m), Array());
-                if (!(m % 1000)) std::cout << "gas temp " << Gas::gasTemperature(m) << '\n';
+                Array nv(_hCompatibleWithGasv.size());
+                for (size_t i = 0; i < _hCompatibleWithGasv.size(); i++) nv[i] = state(m, _hCompatibleWithGasv[i][0]).n;
+
+                Gas::updateGasState(m, meanIntensity(m), nv);
+                if (!(m % 100)) std::cout << "gas temp " << Gas::gasTemperature(m) << '\n';
             }
         });
     }
