@@ -301,6 +301,104 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
 
 ////////////////////////////////////////////////////////////////////
 
+void MultiGrainDustMix::getSizeBinProperties(const Array& lambdav, std::vector<Array>& sizevv,
+                                             std::vector<Array>& numberDensityFractionvv,
+                                             std::vector<std::vector<Array>>& qabsvvv)
+{
+    // get the number of grain populations
+    int numPops = _populations.size();
+    if (!numPops) throw FATALERROR("Dust mix must have at least one grain population");
+
+    // get the number of requested grid points
+    int numLambda = lambdav.size();
+
+    // total number density over all populations
+    double mixnumberdens = 0;
+
+    // loop over all populations and process size bins for each (this was copy-pasted from
+    // initializeExtraProperties(), and then edited down)
+    int c = 0;  // population index
+    int b = 0;  // size bin index
+    for (auto population : _populations)
+    {
+        // open the absorption cross section stored table for this population
+        string opticalPropsName = population->composition()->resourceNameForOpticalProps();
+        StoredTable<2> Qabs(this, opticalPropsName, "a(m),lambda(m)", "Qabs(1)");
+
+        // construct the size bins (i.e. the bin border points) for this population
+        int numPopBins = population->numSizes();
+        double amin = population->sizeDistribution()->amin();
+        double amax = population->sizeDistribution()->amax();
+        Array aborderv;
+        NR::buildLogGrid(aborderv, amin, amax, numPopBins);
+
+        // Allocate space for the results
+        sizevv.push_back(Array(numPopBins));                                  // indexed on [c][b]
+        numberDensityFractionvv.push_back(Array(numPopBins));                 // indexed on [c][b]
+        qabsvvv.push_back(std::vector<Array>(numPopBins, Array(numLambda)));  // indexed on [c][b][ell]
+
+        // loop over the size bins for this population
+        for (int bb = 0; bb != numPopBins; ++bb)
+        {
+            // create an integration grid over grain size within this bin
+            int numSizes = max(3., 100 * log10(amax / amin));
+            Array av(numSizes);       // "a" for each point
+            Array dav(numSizes);      // "da" for each point
+            Array dndav(numSizes);    // "dnda" for each point
+            Array weightv(numSizes);  // integration weight for each point (1/2 or 1 in addition to normalization)
+            {
+                double logamin = log10(aborderv[bb]);
+                double logamax = log10(aborderv[bb + 1]);
+                double dloga = (logamax - logamin) / (numSizes - 1);
+                for (int i = 0; i != numSizes; ++i)
+                {
+                    av[i] = pow(10, logamin + i * dloga);
+                    dav[i] = av[i] * M_LN10 * dloga;
+                    dndav[i] = population->sizeDistribution()->dnda(av[i]);
+                    weightv[i] = _normv[c];
+                }
+                weightv[0] *= 0.5;
+                weightv[numSizes - 1] *= 0.5;
+            }
+
+            // Integrate the average size and the total number density for this bin.
+            double aSum = 0.;
+            double n = 0.;
+            for (int i = 0; i != numSizes; ++i)
+            {
+                aSum += weightv[i] * dndav[i] * av[i] * dav[i];
+                n += weightv[i] * dndav[i] * dav[i];
+            }
+            sizevv[c][b] = aSum / n;
+            numberDensityFractionvv[c][b] = n;
+            mixnumberdens += n;
+
+            // Integrate Qabs for this bin. TODO: parallelize as shown in
+            // initializeExtraProperties if slow.
+            for (int ell = 0; ell != numLambda; ++ell)
+            {
+                double sum = 0.;
+                for (int i = 0; i != numSizes; ++i)
+                {
+                    sum += weightv[i] * dndav[i] * Qabs(av[i], lambdav[ell]) * dav[i];
+                }
+                qabsvvv[c][b][ell] = sum;
+            }
+
+            // increment the running bin index
+            b++;
+        }
+
+        // increment the population index
+        c++;
+    }
+
+    // convert the stored number densities to number density fractions relative to the entire mix
+    for (Array& numberDensityFractionv : numberDensityFractionvv) numberDensityFractionv /= mixnumberdens;
+}
+
+////////////////////////////////////////////////////////////////////
+
 size_t MultiGrainDustMix::initializeExtraProperties(const Array& lambdav)
 {
     // determine which type(s) of emission we need to support

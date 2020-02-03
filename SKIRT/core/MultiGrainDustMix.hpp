@@ -157,6 +157,23 @@ protected:
                                 Array& asymmparv, Table<2>& S11vv, Table<2>& S12vv, Table<2>& S33vv, Table<2>& S34vv,
                                 ArrayTable<2>& sigmaabsvv, ArrayTable<2>& sigmaabspolvv) override;
 
+    /** This function can be called if some grain properties are needed in a discrete way.
+
+        The function discretizes the grain size distribution for each grain population added to
+        this dust mix into a number of consective size bins (on a logarithmic scale), and
+        obtains the average size, fractional number density (compared to the total number
+        density of the dust mix), and absorption efficiency (Qabs) of a representative grain for
+        each of these bins. The results are stored into the corresponding output vectors. The
+        sizes and number density fractions are stored using one array per grain population,
+        indexed on the bin. Each of these arrays can have a different size. The Qabs is stored
+        as a collection of Arrays over the wavelengths, per size, per population, i.e. it is
+        indexed on [c][b][ell].
+
+        It makes use of the normalization that was set in getOpticalProperties, and hence should
+        be called after the latter. */
+    void getSizeBinProperties(const Array& lambdav, std::vector<Array>& sizevv,
+                              std::vector<Array>& numberDensityFractionvv, std::vector<std::vector<Array>>& qabsvvv);
+
     /** This function is invoked by the DustMix base class to precalculate additional dust
         properties required by this class. The argument specifies the wavelength grid on which the
         properties may be tabulated (i.e. the same grid as passed to the getOpticalProperties()
