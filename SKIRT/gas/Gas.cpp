@@ -15,12 +15,30 @@ namespace
 }
 #endif
 
-void Gas::initialize(const Array& frequencyv, const std::vector<DustInfo>& dustinfov)
+void Gas::initialize(const Array& lambdav, const std::vector<DustInfo>& dustinfov)
 {
 #ifdef BUILD_WITH_GAS
     if (_gi) FATALERROR("Gas module should be initialized exactly once");
+
+    // Calculate the frequency grid
+    size_t numFreq = lambdav.size();
+    Array frequencyv(numFreq);
+    for (size_t i = 0; i < numFreq; i++) frequencyv[i] = Constants::c() / lambdav[numFreq - 1 - i];
+
+    // Initialize the gas module using this frequency grid
     _gi = new GasModule::GasInterface(frequencyv, frequencyv, frequencyv);
+
+    // Copy the dust properties
     _dustinfov = dustinfov;
+
+    // Change the units of the dust properties from SI to cgs
+    for (Gas::DustInfo& d : _dustinfov)
+    {
+        // Change size unit m to cm
+        d.sizev *= 100.;
+        // Flip the qabs arrays, because frequencies. This happens in-place.
+        for (size_t b = 0; b < d.qabsvv.size(); b++) std::reverse(std::begin(d.qabsvv[b]), std::end(d.qabsvv[b]));
+    }
 #else
     (void)frequencyv;
 #endif
@@ -70,9 +88,6 @@ void Gas::updateGasState(int m, const Array& meanIntensityv, const Array& mixNum
             jnu[i] = 1e-99;
             countzeros++;
         }
-
-        // std::cout << "freq " << nu << " wav " << Constants::c() / nu << " jnu(erg cm-2) " << jnu[i]
-        //           << " jlambda(J m-2) " << meanIntensityv[meanIntensityv.size() - 1 - i] << '\n';
     }
     std::cout << countzeros << " zeros in cell " << m << '\n';
 
@@ -96,8 +111,8 @@ void Gas::updateGasState(int m, const Array& meanIntensityv, const Array& mixNum
         }
 
         Array temperaturev(_dustinfov[i].sizev.size());
-        Array densityv = _dustinfov[i].numberDensRatiov * mixNumberDensv[i];
-
+        // Set the grain number densities using the total number density of the mix, and change unit from m-3 to cm-3
+        Array densityv = _dustinfov[i].numberDensRatiov * mixNumberDensv[i] * 1.e-6;
         gr.addPopulation(type, _dustinfov[i].sizev, densityv, temperaturev, _gi->iFrequencyv(), _dustinfov[i].qabsvv);
     }
 

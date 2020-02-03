@@ -154,21 +154,9 @@ void MediumSystem::setupSelfAfter()
     // initialize the gas
     if (_config->hasRadiationField())
     {
-        // TODO: move everthing related to wavelength-frequency conversion, flipping Qabs, units
-        // etc. to Gas.cpp
-
-        // Calculate the frequency grid
-        size_t numFreq = _wavelengthGrid->numBins();
-        Array frequencyv(numFreq);
-
-        // Get the wavelengths here too, we need them for getSizeBinProperties (see below)
-        Array lambdav(numFreq);
-
-        for (size_t i = 0; i < numFreq; i++)
-        {
-            lambdav[i] = _wavelengthGrid->wavelength(i);
-            frequencyv[i] = Constants::c() / _wavelengthGrid->wavelength(numFreq - 1 - i);
-        }
+        // Get the wavelengths here, for getSizeBinProperties (see below)
+        Array lambdav(_wavelengthGrid->numBins());
+        for (size_t i = 0; i < lambdav.size(); i++) lambdav[i] = _wavelengthGrid->wavelength(i);
 
         // Gather dust properties that the gas module needs (not compatible with the 'possibly
         // separate dust mix per cell' concept)
@@ -189,8 +177,6 @@ void MediumSystem::setupSelfAfter()
                 // for each population of each multigraindustmix in the system, create one of these structs
                 for (int c = 0; c != mgdm->numPopulations(); ++c)
                 {
-                    int numSizes = sizevv[c].size();
-
                     // Determine graphite or silicate
                     int type = 0;
                     string name = mgdm->populationGrainType(c);
@@ -201,17 +187,13 @@ void MediumSystem::setupSelfAfter()
                     else
                         continue;
 
-                    // Flip the qabs arrays so that it is in the correct order for frequencies. Just do
-                    // this in place, as this variable isn't used for anything else anyway.
-                    for (int b = 0; b < numSizes; b++) std::reverse(std::begin(qabsvvv[c][b]), std::end(qabsvvv[c][b]));
-
                     Gas::DustInfo dustinfo = {type, sizevv[c], numberDensityFractionvv[c], qabsvvv[c]};
                     dustinfov.push_back(dustinfo);
                     _hCompatibleWithGasv.push_back(std::array<int, 2>{h, c});
                 }
             }
         }
-        Gas::initialize(frequencyv, dustinfov);
+        Gas::initialize(lambdav, dustinfov);
         Gas::allocateGasStates(_numCells);
     }
 }

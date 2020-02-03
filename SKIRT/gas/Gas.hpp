@@ -30,7 +30,7 @@ public:
     };
 
     /** The wavelength grid passed here should be the grid used for meanIntensityv. */
-    static void initialize(const Array& frequencyv, const std::vector<DustInfo>&);
+    static void initialize(const Array& lambdav, const std::vector<DustInfo>&);
 
     /** Function which should be called exactly one, before the code finishes. After calling
         finalize(), all info about the gas will be lost. */
