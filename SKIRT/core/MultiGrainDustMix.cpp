@@ -480,9 +480,9 @@ double MultiGrainDustMix::populationMass(int c) const
 
 ////////////////////////////////////////////////////////////////////
 
-void MultiGrainDustMix::getSizeBinProperties(const Array& lambdav, std::vector<Array>& sizevv,
-                                             std::vector<Array>& numberDensityFractionvv,
-                                             std::vector<std::vector<Array>>& qabsvvv)
+void MultiGrainDustMix::getSizeBinProperties(const Array& lambdav, vector<Array>& sizevv,
+                                             vector<Array>& numberDensityFractionvv,
+                                             vector<vector<Array>>& qabsvvv) const
 {
     // get the number of grain populations
     int numPops = _populations.size();

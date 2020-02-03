@@ -234,9 +234,12 @@ public:
         indexed on [c][b][ell].
 
         It makes use of the normalization that was set in getOpticalProperties, and hence should
-        be called after the latter. */
-    void getSizeBinProperties(const Array& lambdav, std::vector<Array>& sizevv,
-                              std::vector<Array>& numberDensityFractionvv, std::vector<std::vector<Array>>& qabsvvv);
+        be called after the latter.
+
+        NOTE: this function reads stored tables from disk, so it is not very clean that it is
+        public. Preferably, it should be limited to some protected setup context. */
+    void getSizeBinProperties(const Array& lambdav, vector<Array>& sizevv, vector<Array>& numberDensityFractionvv,
+                              vector<vector<Array>>& qabsvvv) const;
 
     //======================== Data Members ========================
 

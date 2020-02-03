@@ -154,11 +154,21 @@ void MediumSystem::setupSelfAfter()
     // initialize the gas
     if (_config->hasRadiationField())
     {
+        // TODO: move everthing related to wavelength-frequency conversion, flipping Qabs, units
+        // etc. to Gas.cpp
+
         // Calculate the frequency grid
         size_t numFreq = _wavelengthGrid->numBins();
         Array frequencyv(numFreq);
+
+        // Get the wavelengths here too, we need them for getSizeBinProperties (see below)
+        Array lambdav(numFreq);
+
         for (size_t i = 0; i < numFreq; i++)
+        {
+            lambdav[i] = _wavelengthGrid->wavelength(i);
             frequencyv[i] = Constants::c() / _wavelengthGrid->wavelength(numFreq - 1 - i);
+        }
 
         // Gather dust properties that the gas module needs (not compatible with the 'possibly
         // separate dust mix per cell' concept)
@@ -170,28 +180,32 @@ void MediumSystem::setupSelfAfter()
                 const MultiGrainDustMix* mgdm = dynamic_cast<const MultiGrainDustMix*>(_media[h]->mix());
                 if (!mgdm) throw FATALERROR("When using gas, all dust mixes must be multi-grain");
 
+                // collect the discretized properties for the different populations
+                vector<Array> sizevv;
+                vector<Array> numberDensityFractionvv;
+                vector<vector<Array>> qabsvvv;
+                mgdm->getSizeBinProperties(lambdav, sizevv, numberDensityFractionvv, qabsvvv);
+
                 // for each population of each multigraindustmix in the system, create one of these structs
                 for (int c = 0; c != mgdm->numPopulations(); ++c)
                 {
+                    int numSizes = sizevv[c].size();
+
                     // Determine graphite or silicate
-                    int type;
-                    if (mgdm->populationGrainType(c) == "Draine_Silicate")
-                        type = 1;
-                    else if (mgdm->populationGrainType(c) == "Draine_Graphite")
-                        type = 2;
+                    int type = 0;
+                    string name = mgdm->populationGrainType(c);
+                    if (StringUtils::contains(name, "Silicate"))
+                        type = 1;  // magic number for silicate
+                    else if (StringUtils::contains(name, "Graphite") || StringUtils::contains(name, "PAH"))
+                        type = 2;  // magic number for carbon
                     else
                         continue;
 
-                    // these are not correct yet v
-                    int numSizes = 1;
-                    Array sizev(numSizes);
-                    Array nPerMassUnitv(numSizes);
-                    std::vector<Array> qabsvv(numSizes, Array(numFreq));
-                    sizev[0] = mgdm->populationSizeRange(c).mid();
-                    nPerMassUnitv[0] = mgdm->populationMass(c);
-                    // these are not correct yet ^
+                    // Flip the qabs arrays so that it is in the correct order for frequencies. Just do
+                    // this in place, as this variable isn't used for anything else anyway.
+                    for (int b = 0; b < numSizes; b++) std::reverse(std::begin(qabsvvv[c][b]), std::end(qabsvvv[c][b]));
 
-                    Gas::DustInfo dustinfo = {type, sizev, nPerMassUnitv, qabsvv};
+                    Gas::DustInfo dustinfo = {type, sizevv[c], numberDensityFractionvv[c], qabsvvv[c]};
                     dustinfov.push_back(dustinfo);
                     _hCompatibleWithGasv.push_back(std::array<int, 2>{h, c});
                 }
