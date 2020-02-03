@@ -497,7 +497,6 @@ void MultiGrainDustMix::getSizeBinProperties(const Array& lambdav, vector<Array>
     // loop over all populations and process size bins for each (this was copy-pasted from
     // initializeExtraProperties(), and then edited down)
     int c = 0;  // population index
-    int b = 0;  // size bin index
     for (auto population : _populations)
     {
         // open the absorption cross section stored table for this population
@@ -548,8 +547,8 @@ void MultiGrainDustMix::getSizeBinProperties(const Array& lambdav, vector<Array>
                 aSum += weightv[i] * dndav[i] * av[i] * dav[i];
                 n += weightv[i] * dndav[i] * dav[i];
             }
-            sizevv[c][b] = aSum / n;
-            numberDensityFractionvv[c][b] = n;
+            sizevv[c][bb] = aSum / n;
+            numberDensityFractionvv[c][bb] = n;
             mixnumberdens += n;
 
             // Integrate Qabs for this bin. TODO: parallelize as shown in
@@ -561,11 +560,8 @@ void MultiGrainDustMix::getSizeBinProperties(const Array& lambdav, vector<Array>
                 {
                     sum += weightv[i] * dndav[i] * Qabs(av[i], lambdav[ell]) * dav[i];
                 }
-                qabsvvv[c][b][ell] = sum;
+                qabsvvv[c][bb][ell] = sum;
             }
-
-            // increment the running bin index
-            b++;
         }
 
         // increment the population index
