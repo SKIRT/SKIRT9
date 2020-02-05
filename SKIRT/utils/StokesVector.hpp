@@ -82,6 +82,9 @@ public:
         unpolarized state, the zero vector is returned. */
     Direction normal() const { return _normal; }
 
+    /** This function can be used to check if the Stokes vector contains polarised radiation. */
+    bool isPolarized() const { return _polarized; }
+
     // -------- calculated properties -------
 
     /** This function returns the total polarization degree for the Stokes vector. */

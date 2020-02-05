@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "SecondarySourceSystem.hpp"
+#include "AngularDistributionInterface.hpp"
 #include "Configuration.hpp"
 #include "DisjointWavelengthGrid.hpp"
 #include "FatalError.hpp"
@@ -13,6 +14,7 @@
 #include "Parallel.hpp"
 #include "ParallelFactory.hpp"
 #include "PhotonPacket.hpp"
+#include "PolarizationProfileInterface.hpp"
 #include "ProbePhotonPacketInterface.hpp"
 #include "ProcessManager.hpp"
 #include "Random.hpp"
@@ -334,6 +336,155 @@ namespace
 
     // setup a DustCellEmission instance for each parallel execution thread to cache dust emission information
     thread_local DustCellEmission t_dustcell;
+
+    // An instance of this class obtains the information needed to determine
+    // angular distribution probabilities and polarization components for
+    // photon packets emitted from the dust in a given cell in the spatial grid,
+    // and remembers some information for fast retrieval.
+    class DustCellPolarisedEmission : public AngularDistributionInterface, public PolarizationProfileInterface
+    {
+    private:
+        // information initialized once, during the first call to calculateIfNeeded()
+        MediumSystem* _ms{nullptr};  // the medium system
+        vector<int> _hv;             // a list of the media indices for the media containing dust
+        int _numMedia{0};            // the number of dust media in the system (and thus the size of hv)
+
+        // information on a particular spatial cell, initialized by calculateIfNeeded()
+        int _m{-1};        // spatial cell index
+        Vec _B_direction;  // direction of the magnetic field
+
+        // information on a particular photon packet, initialized by calculate()
+        double _lambda{-1.};  // wavelength of the last photon packet
+
+    public:
+        DustCellPolarisedEmission() {}
+
+        // calculates the emission information for the given cell if it is different from what's already stored
+        //   m:  cell index
+        //   ms: medium system
+        //   config: configuration object
+        void calculateIfNeeded(int m, MediumSystem* ms, Configuration* config)
+        {
+            // if this photon packet is launched from the same cell as the previous one, we don't need to do anything
+            if (!config->hasSpheroidalPolarization() || m == _m) return;
+
+            // when called for the first time, construct a list of dust media and cache some other info
+            if (_m == -1)
+            {
+                _ms = ms;
+                for (int h = 0; h != ms->numMedia(); ++h)
+                    if (ms->isDust(h)) _hv.push_back(h);
+                _numMedia = _hv.size();
+            }
+
+            // remember the new cell index and map to the other indices
+            _m = m;
+
+            // normalise the magnetic field direction
+            _B_direction = _ms->magneticField(_m);
+            _B_direction /= _B_direction.norm();
+        }
+
+        // calculate the emission information that is always out of date
+        // in practice, we use this function to set the wavelength of the emission
+        //   lambda: wavelength
+        void calculate(double lambda) { _lambda = lambda; }
+
+        // this AngularDistributionInterface implementation returns the probability for the given direction
+        //   bfk: direction
+        double probabilityForDirection(Direction bfk) const override
+        {
+            // get the zenith angle of the direction
+            // this is the angle between the magnetic field direction (z axis of the reference frame)
+            // and the direction
+            const double theta = std::acos(Vec::dot(_B_direction, bfk));
+
+            // compute
+            //   - Qabstheta: the absorption coefficient for the direction
+            //   - Qabstot: the agnular averaged absorption coefficient
+            double Qabstheta = 0.;
+            double Qabstot = 0.;
+            // we need to sum over all dust species
+            for (int h : _hv)
+            {
+                const Array& thetas = _ms->mix(_m, h)->thetaGrid();
+                const Array& Qabs = _ms->mix(_m, h)->sectionsAbs(_lambda);
+                Qabstheta += _ms->numberDensity(_m, h) * NR::value<NR::interpolateLinLin>(theta, thetas, Qabs);
+                Qabstot += _ms->numberDensity(_m, h) * _ms->mix(_m, h)->sectionAbs(_lambda);
+            }
+            // the probability for this direction is the ratio of the two values
+            return Qabstheta / Qabstot;
+        }
+
+        // generate a random direction based on the anisotropic emission profile
+        Direction generateDirection(Random* random) const
+        {
+            // first generate a random azimuth angle
+            const double phi = 2. * M_PI * random->uniform();
+            // compute its sine and cosine
+            const double cosphi = cos(phi);
+            const double sinphi = sin(phi);
+
+            // now generate a random zenith angle
+            // first, compute the cumulative distribution for a photon at the given wavelength
+            // create an empty array with the same size as the zenith angle grid
+            const Array& thetas = _ms->mix(_m, _hv[0])->thetaGrid();
+            Array cdf(thetas.size());
+            // add the distributions for the different components
+            for (int h : _hv)
+            {
+                const Array& Qabs = _ms->mix(_m, h)->sectionsAbs(_lambda);
+                cdf += _ms->numberDensity(_m, h) * Qabs;
+            }
+            // convert to a cumulative distribution
+            for (size_t i = 1; i < thetas.size(); ++i)
+            {
+                cdf[i] += cdf[i - 1];
+            }
+            // normalise the distribution
+            for (size_t i = 0; i < thetas.size(); ++i)
+            {
+                cdf[i] /= cdf[thetas.size() - 1];
+            }
+            // draw a random uniform deviate
+            // get the corresponding zenith angle
+            const double theta = random->cdfLinLin(thetas, cdf);
+            // compute the sine and cosine
+            const double costheta = cos(theta);
+            const double sintheta = sin(theta);
+
+            // generate a random direction
+            return Direction(sintheta * cosphi, sintheta * sinphi, costheta);
+        }
+
+        // this PolarizationProfileInterface implementation returns the Stokes vector for the given emission direction
+        //   bfk: emission direction
+        StokesVector polarizationForDirection(Direction bfk) const override
+        {
+            // get the zenith angle of the direction
+            // this is the angle between the magnetic field direction (z axis of the reference frame)
+            // and the direction
+            const double theta = std::acos(Vec::dot(_B_direction, bfk));
+
+            // we sum over all dust species
+            double Qabsval = 0.;
+            double Qabspolval = 0.;
+            for (int h : _hv)
+            {
+                const Array& thetas = _ms->mix(_m, h)->thetaGrid();
+                const Array& Qabs = _ms->mix(_m, h)->sectionsAbs(_lambda);
+                const Array& Qabspol = _ms->mix(_m, h)->sectionsAbspol(_lambda);
+                Qabsval += _ms->numberDensity(_m, h) * NR::value<NR::interpolateLinLin>(theta, thetas, Qabs);
+                Qabspolval += _ms->numberDensity(_m, h) * NR::value<NR::interpolateLinLin>(theta, thetas, Qabspol);
+            }
+            // the reference direction is any direction perpendicular to the
+            // propagation direction and the magnetic field direction
+            return StokesVector(Qabsval, Qabspolval, 0., 0., Direction(Vec::cross(bfk, _B_direction)));
+        }
+    };
+
+    // setup a DustCellPolarisedEmission instance for each parallel execution thread to cache dust emission information
+    thread_local DustCellPolarisedEmission t_dustcellpol;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -346,6 +497,7 @@ void SecondarySourceSystem::launch(PhotonPacket* pp, size_t historyIndex) const
 
     // calculate the emission spectrum and bulk velocity for this cell, if not already available
     t_dustcell.calculateIfNeeded(p, _mv, _nv, _ms, _config);
+    t_dustcellpol.calculateIfNeeded(m, _ms, _config);
 
     // generate a random wavelength from the emission spectrum for the cell and/or from the bias distribution
     double lambda, w;
@@ -392,8 +544,22 @@ void SecondarySourceSystem::launch(PhotonPacket* pp, size_t historyIndex) const
     // provide a redshift interface for the appropriate velocity, if it is nonzero
     VelocityInterface* bvi = t_dustcell.velocity().isNull() ? nullptr : &t_dustcell;
 
-    // launch the photon packet with isotropic direction
-    pp->launch(historyIndex, lambda, L * w, bfr, _random->direction(), bvi);
+    // provide a polarisation interface for polarised emission, if applicable
+    // generate a random emission direction
+    DustCellPolarisedEmission* dpe = nullptr;
+    Direction bfk;
+    if (_config->hasSpheroidalPolarization())
+    {
+        t_dustcellpol.calculate(lambda);
+        dpe = &t_dustcellpol;
+        bfk = t_dustcellpol.generateDirection(_random);
+    }
+    else
+    {
+        bfk = _random->direction();
+    }
+
+    pp->launch(historyIndex, lambda, L * w, bfr, bfk, bvi, dpe, dpe);
 
     // add origin info (we combine all medium components, so we cannot differentiate them here)
     pp->setSecondaryOrigin(0);
