@@ -494,8 +494,7 @@ void MultiGrainDustMix::getSizeBinProperties(const Array& lambdav, vector<Array>
     // total number density over all populations
     double mixnumberdens = 0;
 
-    // loop over all populations and process size bins for each (this was copy-pasted from
-    // initializeExtraProperties(), and then edited down)
+    // loop over all populations and process size bins for each
     int c = 0;  // population index
     for (auto population : _populations)
     {
@@ -547,9 +546,12 @@ void MultiGrainDustMix::getSizeBinProperties(const Array& lambdav, vector<Array>
                 aSum += weightv[i] * dndav[i] * av[i] * dav[i];
                 n += weightv[i] * dndav[i] * dav[i];
             }
-            sizevv[c][bb] = aSum / n;
             numberDensityFractionvv[c][bb] = n;
             mixnumberdens += n;
+            if (n) // n can be zero in some cases...
+                sizevv[c][bb] = aSum / n;
+            else
+                sizevv[c][bb] = .5 * (av[0] + av[av.size() - 1]); // do this for now, for safety
 
             // Integrate Qabs for this bin. TODO: parallelize as shown in
             // initializeExtraProperties if slow.
