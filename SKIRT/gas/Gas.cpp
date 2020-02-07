@@ -20,6 +20,9 @@ void Gas::initialize(const Array& lambdav, const std::vector<DustInfo>& dustinfo
 #ifdef BUILD_WITH_GAS
     if (_gi) FATALERROR("Gas module should be initialized exactly once");
 
+    // Turn off error handling (otherwise, gas module can call abort)
+    GasModule::GasInterface::errorHandlersOff();
+
     // Calculate the frequency grid
     size_t numFreq = lambdav.size();
     Array frequencyv(numFreq);
