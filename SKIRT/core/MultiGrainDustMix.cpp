@@ -543,26 +543,29 @@ void MultiGrainDustMix::getSizeBinProperties(const Array& lambdav, vector<Array>
             double n = 0.;
             for (int i = 0; i != numSizes; ++i)
             {
-                aSum += weightv[i] * dndav[i] * av[i] * dav[i];
-                n += weightv[i] * dndav[i] * dav[i];
+                double factor = weightv[i] * dndav[i] * dav[i];
+                aSum += factor * av[i];
+                n += factor;
             }
             numberDensityFractionvv[c][bb] = n;
             mixnumberdens += n;
-            if (n) // n can be zero in some cases...
-                sizevv[c][bb] = aSum / n;
-            else
-                sizevv[c][bb] = .5 * (av[0] + av[av.size() - 1]); // do this for now, for safety
+            // n can be zero in some cases... do this for now, for safety
+            sizevv[c][bb] = n ? aSum / n : .5 * (av[0] + av[numSizes - 1]);
 
             // Integrate Qabs for this bin. TODO: parallelize as shown in
             // initializeExtraProperties if slow.
             for (int ell = 0; ell != numLambda; ++ell)
             {
                 double sum = 0.;
+                double n = 0;
                 for (int i = 0; i != numSizes; ++i)
                 {
-                    sum += weightv[i] * dndav[i] * Qabs(av[i], lambdav[ell]) * dav[i];
+                    double factor = weightv[i] * dndav[i] * dav[i];
+                    sum += factor * Qabs(av[i], lambdav[ell]);
+                    n += factor;
                 }
-                qabsvvv[c][bb][ell] = sum;
+                // n can be zero again here... use Qabs at the center of the interval for safety
+                qabsvvv[c][bb][ell] = n ? sum / n : Qabs(sizevv[c][bb], lambdav[ell]);
             }
         }
 
