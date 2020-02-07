@@ -620,16 +620,26 @@ void MediumSystem::gasTest()
     if (_config->hasRadiationField())
     {
         auto parfac = find<ParallelFactory>();
-        parfac->parallelRootOnly()->call(_numCells, [&](size_t firstIndex, size_t numIndices) {
+        parfac->parallelRootOnly(1)->call(_numCells, [&](size_t firstIndex, size_t numIndices) {
             for (size_t m = firstIndex; m < firstIndex + numIndices; m++)
             {
                 // Get the dust mass for every population of every multigraindustmix, in the same
                 // order as the dust info vector given to Gas::initialize
                 Array nv(_hCompatibleWithGasv.size());
-                for (size_t i = 0; i < _hCompatibleWithGasv.size(); i++) nv[i] = state(m, _hCompatibleWithGasv[i][0]).n;
-
+                for (size_t i = 0; i < _hCompatibleWithGasv.size(); i++)
+                {
+                    int h = _hCompatibleWithGasv[i][0];
+                    nv[i] = state(m, h).n;
+                }
+                // For now, skip if no dust
+                if (nv.sum() == 0)
+                    continue;
+                // Write out the grain equilibrium temperatures here, so we can check if the ones
+                // calculated by the gas module are ok. Start with the averaged one. Figure out
+                // later how to do it for separate populations / sizes.
+                std::cout << "SKIRT grain temp " << indicativeDustTemperature(m) << '\n';
                 Gas::updateGasState(m, meanIntensity(m), nv);
-                if (!(m % 100)) std::cout << "gas temp " << Gas::gasTemperature(m) << '\n';
+                std::cout << "gas temp " << Gas::gasTemperature(m) << '\n';
             }
         });
     }
