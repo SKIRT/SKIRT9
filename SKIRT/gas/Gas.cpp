@@ -85,12 +85,7 @@ void Gas::updateGasState(int m, const Array& meanIntensityv, const Array& mixNum
         // for skirt     : J   s-1 m-2  sr-1 Hz-1
         //                 7   0   -4
         jnu[i] *= 1e3;
-
-        if (jnu[i] <= 0)
-        {
-            jnu[i] = 1e-99;
-            countzeros++;
-        }
+        if (jnu[i] <= 0) countzeros++;
     }
     std::cout << countzeros << " zeros in cell " << m << '\n';
 
@@ -112,17 +107,14 @@ void Gas::updateGasState(int m, const Array& meanIntensityv, const Array& mixNum
             type = GasModule::GrainTypeLabel::OTHER;
             FATALERROR("Unsupported grain type for gas");
         }
-
         // Just use 30 as the initial guess for the dust temperature, since SKIRT doesn't really
         // support calculating the dust temperature for individual sizes.
         Array temperaturev(30., _dustinfov[i].sizev.size());
-
         // Set the grain number densities using the total number density of the mix, and change
         // unit from m-3 to cm-3
         Array densityv = _dustinfov[i].numberDensRatiov * mixNumberDensv[i] * 1.e-6;
         gr.addPopulation(type, _dustinfov[i].sizev, densityv, temperaturev, _gi->iFrequencyv(), _dustinfov[i].qabsvv);
     }
-
     _gi->updateGasState(_statev[m], 1000., jnu, gr);
 #else
     (void)m;
