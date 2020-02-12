@@ -21,6 +21,7 @@
 #include "Random.hpp"
 #include "ShortArray.hpp"
 #include "StringUtils.hpp"
+#include "TextOutFile.hpp"
 #include <iostream>
 
 ////////////////////////////////////////////////////////////////////
@@ -619,8 +620,12 @@ void MediumSystem::gasTest()
 {
     if (_config->hasRadiationField())
     {
+        auto log = find<Log>();
+        TextOutFile file(this, "gastemps", "gas temperature per cell");
+        for (auto s : {"index", "x", "y", "z", "T"}) file.addColumn(s, "", 'd');
+
         auto parfac = find<ParallelFactory>();
-        parfac->parallelRootOnly(1)->call(_numCells, [&](size_t firstIndex, size_t numIndices) {
+        parfac->parallelRootOnly()->call(_numCells, [&](size_t firstIndex, size_t numIndices) {
             for (size_t m = firstIndex; m < firstIndex + numIndices; m++)
             {
                 // Get the dust mass for every population of every multigraindustmix, in the same
@@ -632,15 +637,18 @@ void MediumSystem::gasTest()
                     nv[i] = state(m, h).n;
                 }
                 // For now, skip if no dust
-                if (nv.sum() == 0)
-                    continue;
-                // Write out the grain equilibrium temperatures here, so we can check if the ones
-                // calculated by the gas module are ok. Start with the averaged one. Figure out
-                // later how to do it for separate populations / sizes.
-                std::cout << "SKIRT grain temp " << indicativeDustTemperature(m) << '\n';
+                if (nv.sum() == 0) continue;
                 Gas::updateGasState(m, meanIntensity(m), nv);
-                std::cout << "gas temp " << Gas::gasTemperature(m) << '\n';
+                if (!(m % 500)) log->info("doing gas for cell " + StringUtils::toString((int)m));
             }
         });
+
+        for (int m = 0; m < _numCells; m++)
+        {
+            Position p = _grid->centralPositionInCell(m);
+            double T = Gas::gasTemperature(m);
+            file.writeRow({static_cast<double>(m), p.x(), p.y(), p.z(), T});
+        }
+        file.close();
     }
 }
