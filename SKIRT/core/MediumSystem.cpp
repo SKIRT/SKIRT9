@@ -620,7 +620,6 @@ void MediumSystem::gasTest()
 {
     if (_config->hasRadiationField())
     {
-        auto log = find<Log>();
         TextOutFile file(this, "gastemps", "gas temperature per cell");
         for (auto s : {"index", "x", "y", "z", "T"}) file.addColumn(s, "", 'd');
 
@@ -639,7 +638,6 @@ void MediumSystem::gasTest()
                 // For now, skip if no dust
                 if (nv.sum() == 0) continue;
                 Gas::updateGasState(m, meanIntensity(m), nv);
-                if (!(m % 500)) log->info("doing gas for cell " + StringUtils::toString((int)m));
             }
         });
 
@@ -647,7 +645,7 @@ void MediumSystem::gasTest()
         {
             Position p = _grid->centralPositionInCell(m);
             double T = Gas::gasTemperature(m);
-            file.writeRow({static_cast<double>(m), p.x(), p.y(), p.z(), T});
+            file.writeRow(vector<double>{static_cast<double>(m), p.x(), p.y(), p.z(), T});
         }
         file.close();
     }
