@@ -38,7 +38,7 @@ public:
 
     /** The dust number densities for each size (the info that was passed during initialize) will
         be rescaled using the total number density of the mix. The latter depends on the cell. */
-    static void updateGasState(int m, const Array& meanIntensityv, const Array& mixNumberDensv);
+    static void updateGasState(int m, double n, const Array& meanIntensityv, const Array& mixNumberDensv);
 
     static double gasTemperature(int m);
 };

@@ -65,7 +65,7 @@ void Gas::allocateGasStates(size_t num)
 #endif
 }
 
-void Gas::updateGasState(int m, const Array& meanIntensityv, const Array& mixNumberDensv)
+void Gas::updateGasState(int m, double n, const Array& meanIntensityv, const Array& mixNumberDensv)
 {
 #ifdef BUILD_WITH_GAS
     auto start = std::chrono::high_resolution_clock::now();

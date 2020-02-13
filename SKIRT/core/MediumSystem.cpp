@@ -618,7 +618,7 @@ double MediumSystem::absorbedLuminosity(int m, MaterialMix::MaterialType type) c
 
 void MediumSystem::gasTest()
 {
-    if (_config->hasRadiationField())
+    if (hasGas() && _config->hasRadiationField())
     {
         TextOutFile file(this, "gastemps", "gas temperature per cell");
         for (auto s : {"index", "x", "y", "z", "T"}) file.addColumn(s, "", 'd');
@@ -627,6 +627,13 @@ void MediumSystem::gasTest()
         parfac->parallelRootOnly()->call(_numCells, [&](size_t firstIndex, size_t numIndices) {
             for (size_t m = firstIndex; m < firstIndex + numIndices; m++)
             {
+                // Get the number density of the gas
+                double n = 0.;
+                for (int h = 0; h != _numMedia; ++h)
+                {
+                    if (isGas(h)) n += numberDensity(m, h);
+                }
+
                 // Get the dust mass for every population of every multigraindustmix, in the same
                 // order as the dust info vector given to Gas::initialize
                 Array nv(_hCompatibleWithGasv.size());
@@ -635,9 +642,8 @@ void MediumSystem::gasTest()
                     int h = _hCompatibleWithGasv[i][0];
                     nv[i] = state(m, h).n;
                 }
-                // For now, skip if no dust
-                if (nv.sum() == 0) continue;
-                Gas::updateGasState(m, meanIntensity(m), nv);
+                // skip if no gas
+                if (n) Gas::updateGasState(m, n, meanIntensity(m), nv);
             }
         });
 
@@ -650,3 +656,5 @@ void MediumSystem::gasTest()
         file.close();
     }
 }
+
+////////////////////////////////////////////////////////////////////
