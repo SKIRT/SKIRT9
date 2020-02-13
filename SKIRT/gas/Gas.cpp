@@ -2,6 +2,7 @@
 #include "Array.hpp"
 #include "Constants.hpp"
 #include "FatalError.hpp"
+#include <chrono>
 
 #ifdef BUILD_WITH_GAS
 #    include "GasInterface.hpp"
@@ -67,13 +68,14 @@ void Gas::allocateGasStates(size_t num)
 void Gas::updateGasState(int m, const Array& meanIntensityv, const Array& mixNumberDensv)
 {
 #ifdef BUILD_WITH_GAS
+    auto start = std::chrono::high_resolution_clock::now();
     const Array& iFrequencyv = _gi->iFrequencyv();
     Array jnu(meanIntensityv.size());
 
     if (iFrequencyv.size() != meanIntensityv.size())
         throw FATALERROR("Something went wrong with the wavelength/frequency grids");
 
-    int countzeros = 0;
+    size_t countzeros = 0;
     for (size_t i = 0; i < iFrequencyv.size(); i++)
     {
         double nu = iFrequencyv[i];
@@ -87,7 +89,8 @@ void Gas::updateGasState(int m, const Array& meanIntensityv, const Array& mixNum
         jnu[i] *= 1e3;
         if (jnu[i] <= 0) countzeros++;
     }
-    std::cout << countzeros << " zeros in cell " << m << '\n';
+    bool verbose = !(m % 500);
+    if (verbose && countzeros > jnu.size()) std::cout << countzeros << " zeros in cell " << m << '\n';
 
     // Make grain interface object
     GasModule::GrainInterface gr;
@@ -116,6 +119,12 @@ void Gas::updateGasState(int m, const Array& meanIntensityv, const Array& mixNum
         gr.addPopulation(type, _dustinfov[i].sizev, densityv, temperaturev, _gi->iFrequencyv(), _dustinfov[i].qabsvv);
     }
     _gi->updateGasState(_statev[m], 1000., jnu, gr);
+    if (verbose)
+    {
+        auto end = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        std::cout << m << " gas time sample " << duration.count() << " ms.\n";
+    }
 #else
     (void)m;
     (void)meanIntensityv;
