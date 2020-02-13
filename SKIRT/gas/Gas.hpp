@@ -6,7 +6,6 @@
 #define GAS_HPP
 
 #include "Array.hpp"
-#include "Table.hpp"
 
 /** The stuff directly interfacing with the gas module should go into one or multiple classes of
     this subproject, so that the code can easily be built without the gas module. */
