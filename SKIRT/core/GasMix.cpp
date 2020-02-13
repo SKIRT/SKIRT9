@@ -23,7 +23,7 @@ double GasMix::mass() const
 
 double GasMix::sectionAbs(double lambda) const
 {
-    return 1.;
+    return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -37,7 +37,7 @@ double GasMix::sectionSca(double lambda) const
 
 double GasMix::sectionExt(double lambda) const
 {
-    return 1.;
+    return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
