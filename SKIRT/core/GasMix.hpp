@@ -6,6 +6,8 @@
 #ifndef GASMIX_HPP
 #define GASMIX_HPP
 
+#include "MaterialMix.hpp"
+
 ////////////////////////////////////////////////////////////////////
 
 /** This class ties the gas to the MaterialMix framework, so that its optical properties can be
