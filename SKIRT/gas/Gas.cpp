@@ -44,7 +44,8 @@ void Gas::initialize(const Array& lambdav, const std::vector<DustInfo>& dustinfo
         for (size_t b = 0; b < d.qabsvv.size(); b++) std::reverse(std::begin(d.qabsvv[b]), std::end(d.qabsvv[b]));
     }
 #else
-    (void)frequencyv;
+    (void)lambdav;
+    (void)dustinfov;
 #endif
 }
 
@@ -126,8 +127,10 @@ void Gas::updateGasState(int m, double n, const Array& meanIntensityv, const Arr
         std::cout << m << " gas time sample " << duration.count() << " ms.\n";
     }
 #else
+    (void)n;
     (void)m;
     (void)meanIntensityv;
+    (void)mixNumberDensv;
 #endif
 }
 
