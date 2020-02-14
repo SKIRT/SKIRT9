@@ -118,7 +118,7 @@ void Gas::updateGasState(int m, double n, const Array& meanIntensityv, const Arr
         Array densityv = _dustinfov[i].numberDensRatiov * mixNumberDensv[i] * 1.e-6;
         gr.addPopulation(type, _dustinfov[i].sizev, densityv, temperaturev, _gi->iFrequencyv(), _dustinfov[i].qabsvv);
     }
-    _gi->updateGasState(_statev[m], 1000., jnu, gr);
+    _gi->updateGasState(_statev[m], n, jnu, gr);
     if (verbose)
     {
         auto end = std::chrono::high_resolution_clock::now();
