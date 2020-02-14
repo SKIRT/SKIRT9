@@ -16,7 +16,7 @@ void Sphere1DSpatialGrid::setupSelfAfter()
 {
     // Set up the grid properties
     _Nr = _meshRadial->numBins();
-    _rv = _meshRadial->mesh() * maxRadius();
+    _rv = minRadius() + _meshRadial->mesh() * (maxRadius() - minRadius());
 
     // base class setupSelfAfter() depends on initialization performed above
     SphereSpatialGrid::setupSelfAfter();
@@ -90,6 +90,7 @@ void Sphere1DSpatialGrid::path(SpatialGridPath* path) const
     double kx, ky, kz;
     path->direction().cartesian(kx, ky, kz);
     double rmax = maxRadius();
+    double rmin = minRadius();
 
     // Move the photon packet to the first grid cell that it will pass.
     // If it does not pass any grid cell, return an empty path.
@@ -109,6 +110,15 @@ void Sphere1DSpatialGrid::path(SpatialGridPath* path) const
             path->addSegment(-1, ds);
             q = qmax;
         }
+    }
+    else if (r < rmin)
+    {
+        // Same math, but ray inside shell will always intersect
+        r = rmin + 1e-8 * (_rv[1] - _rv[0]);
+        double qmin = sqrt((rmin - p) * (rmin + p));
+        double ds = (qmin - q);
+        path->addSegment(-1, ds);
+        q = qmin;
     }
 
     // Determination of the initial grid cell

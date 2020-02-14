@@ -25,6 +25,10 @@ class Sphere1DSpatialGrid : public SphereSpatialGrid
         PROPERTY_ITEM(meshRadial, Mesh, "the bin distribution in the radial direction")
         ATTRIBUTE_DEFAULT_VALUE(meshRadial, "LinMesh")
 
+        PROPERTY_DOUBLE(minRadius, "the inner radius of the grid")
+        ATTRIBUTE_QUANTITY(minRadius, "length")
+        ATTRIBUTE_MIN_VALUE(minRadius, "[0")
+
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============
