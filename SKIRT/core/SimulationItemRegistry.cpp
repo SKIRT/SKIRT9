@@ -79,6 +79,7 @@
 #include "FrameInstrument.hpp"
 #include "FullInstrument.hpp"
 #include "GammaGeometry.hpp"
+#include "GasMix.hpp"
 #include "GaussianGeometry.hpp"
 #include "GeometricMedium.hpp"
 #include "GeometricSource.hpp"
@@ -482,6 +483,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ConfigurableDustMix>();
 
     ItemRegistry::add<ElectronMix>();
+
+    ItemRegistry::add<GasMix>();
 
     // material mix families
     ItemRegistry::add<MaterialMixFamily>();
