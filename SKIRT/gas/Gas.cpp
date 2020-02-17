@@ -117,6 +117,12 @@ void Gas::updateGasState(int m, double n, const Array& meanIntensityv, const Arr
         // Set the grain number densities using the number density of the mix (fictional H
         // density), and change unit from m-3 to cm-3
         Array densityv = _dustinfov[i].numberDensRatiov * mixNumberDensv[i] * 1.e-6;
+        if (verbose)
+        {
+            std::cout << "grain dens:";
+            for (double d : densityv) std::cout << ' ' << d;
+            std::cout << '\n';
+        }
         gr.addPopulation(type, _dustinfov[i].sizev, densityv, temperaturev, _gi->iFrequencyv(), _dustinfov[i].qabsvv);
     }
     _gi->updateGasState(_statev[m], n, jnu, gr);
@@ -124,7 +130,8 @@ void Gas::updateGasState(int m, double n, const Array& meanIntensityv, const Arr
     {
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-        std::cout << m << " gas time sample " << duration.count() << " ms.\n";
+        std::cout << "gas sample " << m << " n " << n * 1.e-6 << " t " << gasTemperature(m)
+                  << " time " << duration.count() << " ms.\n ";
     }
 #else
     (void)n;
