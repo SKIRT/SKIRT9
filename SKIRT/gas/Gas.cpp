@@ -114,8 +114,8 @@ void Gas::updateGasState(int m, double n, const Array& meanIntensityv, const Arr
         // Just use 30 as the initial guess for the dust temperature, since SKIRT doesn't really
         // support calculating the dust temperature for individual sizes.
         Array temperaturev(30., _dustinfov[i].sizev.size());
-        // Set the grain number densities using the total number density of the mix, and change
-        // unit from m-3 to cm-3
+        // Set the grain number densities using the number density of the mix (fictional H
+        // density), and change unit from m-3 to cm-3
         Array densityv = _dustinfov[i].numberDensRatiov * mixNumberDensv[i] * 1.e-6;
         gr.addPopulation(type, _dustinfov[i].sizev, densityv, temperaturev, _gi->iFrequencyv(), _dustinfov[i].qabsvv);
     }

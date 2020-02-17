@@ -481,8 +481,7 @@ double MultiGrainDustMix::populationMass(int c) const
 ////////////////////////////////////////////////////////////////////
 
 void MultiGrainDustMix::getSizeBinProperties(const Array& lambdav, vector<Array>& sizevv,
-                                             vector<Array>& numberDensityFractionvv,
-                                             vector<vector<Array>>& qabsvvv) const
+                                             vector<Array>& numberDensityvv, vector<vector<Array>>& qabsvvv) const
 {
     // get the number of grain populations
     int numPops = _populations.size();
@@ -490,9 +489,6 @@ void MultiGrainDustMix::getSizeBinProperties(const Array& lambdav, vector<Array>
 
     // get the number of requested grid points
     int numLambda = lambdav.size();
-
-    // total number density over all populations
-    double mixnumberdens = 0;
 
     // loop over all populations and process size bins for each
     int c = 0;  // population index
@@ -511,7 +507,7 @@ void MultiGrainDustMix::getSizeBinProperties(const Array& lambdav, vector<Array>
 
         // Allocate space for the results
         sizevv.push_back(Array(numPopBins));                                  // indexed on [c][b]
-        numberDensityFractionvv.push_back(Array(numPopBins));                 // indexed on [c][b]
+        numberDensityvv.push_back(Array(numPopBins));                         // indexed on [c][b]
         qabsvvv.push_back(std::vector<Array>(numPopBins, Array(numLambda)));  // indexed on [c][b][ell]
 
         // loop over the size bins for this population
@@ -547,13 +543,12 @@ void MultiGrainDustMix::getSizeBinProperties(const Array& lambdav, vector<Array>
                 aSum += factor * av[i];
                 n += factor;
             }
-            numberDensityFractionvv[c][bb] = n;
-            mixnumberdens += n;
-            // n can be zero in some cases... do this for now, for safety
+            numberDensityvv[c][bb] = n;
+            // n can be zero in some cases
             sizevv[c][bb] = n ? aSum / n : .5 * (av[0] + av[numSizes - 1]);
 
-            // Integrate Qabs for this bin. TODO: parallelize as shown in
-            // initializeExtraProperties if slow.
+            // Integrate Qabs for this bin. TODO: parallelize as shown in initializeExtraProperties
+            // if slow.
             for (int ell = 0; ell != numLambda; ++ell)
             {
                 double sum = 0.;
@@ -568,13 +563,9 @@ void MultiGrainDustMix::getSizeBinProperties(const Array& lambdav, vector<Array>
                 qabsvvv[c][bb][ell] = n ? sum / n : Qabs(sizevv[c][bb], lambdav[ell]);
             }
         }
-
         // increment the population index
         c++;
     }
-
-    // convert the stored number densities to number density fractions relative to the entire mix
-    for (Array& numberDensityFractionv : numberDensityFractionvv) numberDensityFractionv /= mixnumberdens;
 }
 
 ////////////////////////////////////////////////////////////////////

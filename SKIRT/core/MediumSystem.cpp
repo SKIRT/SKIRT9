@@ -171,9 +171,9 @@ void MediumSystem::setupSelfAfter()
 
                 // collect the discretized properties for the different populations
                 vector<Array> sizevv;
-                vector<Array> numberDensityFractionvv;
+                vector<Array> numberDensityvv;
                 vector<vector<Array>> qabsvvv;
-                mgdm->getSizeBinProperties(lambdav, sizevv, numberDensityFractionvv, qabsvvv);
+                mgdm->getSizeBinProperties(lambdav, sizevv, numberDensityvv, qabsvvv);
 
                 // for each population of each multigraindustmix in the system, create one of these structs
                 for (int c = 0; c != mgdm->numPopulations(); ++c)
@@ -188,7 +188,7 @@ void MediumSystem::setupSelfAfter()
                     else
                         continue;
 
-                    Gas::DustInfo dustinfo = {type, sizevv[c], numberDensityFractionvv[c], qabsvvv[c]};
+                    Gas::DustInfo dustinfo = {type, sizevv[c], numberDensityvv[c], qabsvvv[c]};
                     dustinfov.push_back(dustinfo);
                     _hCompatibleWithGasv.push_back(std::array<int, 2>{h, c});
                 }
@@ -630,12 +630,12 @@ void MediumSystem::gasTest()
                 // Get the number density of the gas
                 double n = 0.;
                 for (int h = 0; h != _numMedia; ++h)
-                {
                     if (isGas(h)) n += numberDensity(m, h);
-                }
 
-                // Get the dust mass for every population of every multigraindustmix, in the same
-                // order as the dust info vector given to Gas::initialize
+                // Get the total number density for every population of every multigraindustmix,
+                // in the same order as the dust info vector given to Gas::initialize. We do
+                // this by first calculating the total dust mass, and then dividing by the mean
+                // grain mass.
                 Array nv(_hCompatibleWithGasv.size());
                 for (size_t i = 0; i < _hCompatibleWithGasv.size(); i++)
                 {

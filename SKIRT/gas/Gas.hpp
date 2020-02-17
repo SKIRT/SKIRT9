@@ -20,9 +20,7 @@ public:
         // separately for each size given here, and then summed). Integrating everything over the
         // grain size distribution is not doable for most processes in the gas code.
         Array sizev;
-        // Multiplying these numbers with the total number density of the medium (h) this dust
-        // component (c) originates from, should yield the number density for each representative
-        // size (a).
+        // Number of grains 'per hydrogen atom' for each size
         Array numberDensRatiov;
         // Q_abs(a, nu), indexed on (size, frequency)
         std::vector<Array> qabsvv;
@@ -36,8 +34,13 @@ public:
     static void finalize();
     static void allocateGasStates(size_t num);
 
-    /** The dust number densities for each size (the info that was passed during initialize) will
-        be rescaled using the total number density of the mix. The latter depends on the cell. */
+    /** This function prepares the arguments for \c GasInterface::updateGasState() and calls it.
+        The \c m argument indicates which of the allocated gas states should be updated. The number
+        density of the gas medium and the radiation field (mean intensity) should be given as
+        arguments, as well as the number densities for the dust media. The dust number densities
+        for each size will be calculated by multiplying the numbers in \c mixNumberDensv with the
+        \c numberDensRatiov of each \c DustInfo. This argument should contain the hydrogen number
+        density factor \c n for medium \c h of cell \c m. */
     static void updateGasState(int m, double n, const Array& meanIntensityv, const Array& mixNumberDensv);
 
     static double gasTemperature(int m);

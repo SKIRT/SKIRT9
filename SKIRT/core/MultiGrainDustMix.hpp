@@ -224,21 +224,20 @@ public:
     /** This function can be called if some grain properties are needed in a discrete way.
 
         The function discretizes the grain size distribution for each grain population added to
-        this dust mix into a number of consective size bins (on a logarithmic scale), and
-        obtains the average size, fractional number density (compared to the total number
-        density of the dust mix), and absorption efficiency (Qabs) of a representative grain for
-        each of these bins. The results are stored into the corresponding output vectors. The
-        sizes and number density fractions are stored using one array per grain population,
-        indexed on the bin. Each of these arrays can have a different size. The Qabs is stored
-        as a collection of Arrays over the wavelengths, per size, per population, i.e. it is
-        indexed on [c][b][ell].
+        this dust mix into a number of consective size bins (on a logarithmic scale), and obtains
+        the average size, fractional number density (grains per H atom), and absorption efficiency
+        (Qabs) of a representative grain for each of these bins. The results are stored into the
+        corresponding output vectors. The sizes and number density fractions are stored using one
+        array per grain population, indexed on the bin. Each of these arrays can have a different
+        size. The Qabs is stored as a collection of Arrays over the wavelengths, per size, per
+        population, i.e. it is indexed on [c][b][ell].
 
         It makes use of the normalization that was set in getOpticalProperties, and hence should
         be called after the latter.
 
         NOTE: this function reads stored tables from disk, so it is not very clean that it is
         public. Preferably, it should be limited to some protected setup context. */
-    void getSizeBinProperties(const Array& lambdav, vector<Array>& sizevv, vector<Array>& numberDensityFractionvv,
+    void getSizeBinProperties(const Array& lambdav, vector<Array>& sizevv, vector<Array>& numberDensityvv,
                               vector<vector<Array>>& qabsvvv) const;
 
     //======================== Data Members ========================
