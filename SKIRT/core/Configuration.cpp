@@ -5,6 +5,7 @@
 
 #include "Configuration.hpp"
 #include "AllCellsLibrary.hpp"
+#include "Constants.hpp"
 #include "DustEmissionOptions.hpp"
 #include "DustSelfAbsorptionOptions.hpp"
 #include "ExtinctionOnlyOptions.hpp"
@@ -17,6 +18,7 @@
 #include "OligoWavelengthDistribution.hpp"
 #include "OligoWavelengthGrid.hpp"
 #include "PhotonPacketOptions.hpp"
+#include "StringUtils.hpp"
 #include <set>
 
 ////////////////////////////////////////////////////////////////////
@@ -41,6 +43,11 @@ void Configuration::setupSelfBefore()
     auto ss = find<SourceSystem>(false);
     if (!ss) throw FATALERROR("Cannot locate a SourceSystem object in the simulation hierarchy");
     auto is = find<InstrumentSystem>(false);
+
+    // retrieve cosmology parameters
+    _redshift = sim->cosmology()->modelRedshift();
+    _angularDiameterDistance = sim->cosmology()->angularDiameterDistance();
+    _luminosityDistance = sim->cosmology()->luminosityDistance();
 
     // retrieve wavelength-related options
     _oligochromatic = sim->simulationMode() == MonteCarloSimulation::SimulationMode::OligoNoMedium
@@ -244,6 +251,17 @@ void Configuration::setupSelfAfter()
                   + "D; Spatial grid symmetry: " + std::to_string(_gridDimension) + "D");
         log->warning("  Selecting a grid with the model symmetry might be more efficient");
     }
+
+    // --- log cosmology ---
+
+    if (_redshift)
+    {
+        log->info("  Redshift: " + StringUtils::toString(_redshift, 'g', 6));
+        double dL = _luminosityDistance / Constants::pc() / 1e6;
+        log->info("  Luminosity distance: " + StringUtils::toString(dL, 'g', 6) + " Mpc");
+    }
+
+    // --- other ---
 
     // if there is a magnetic field, there usually should be spheroidal particles
     if (_hasMagneticField && !_hasSpheroidalPolarization)

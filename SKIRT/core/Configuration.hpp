@@ -242,6 +242,11 @@ private:
     // general
     bool _emulationMode{false};
 
+    // cosmology parameters
+    double _redshift{0.};
+    double _angularDiameterDistance{0.};
+    double _luminosityDistance{0.};
+
     // primary source wavelengths
     bool _oligochromatic{false};
     Range _sourceWavelengthRange;

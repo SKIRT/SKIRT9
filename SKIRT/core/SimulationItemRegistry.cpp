@@ -75,6 +75,7 @@
 #include "FileTreeSpatialGrid.hpp"
 #include "FileWavelengthDistribution.hpp"
 #include "FileWavelengthGrid.hpp"
+#include "FlatUniverseCosmology.hpp"
 #include "FrameInstrument.hpp"
 #include "FullInstrument.hpp"
 #include "GammaGeometry.hpp"
@@ -100,6 +101,7 @@
 #include "ListSED.hpp"
 #include "ListWavelengthDistribution.hpp"
 #include "ListWavelengthGrid.hpp"
+#include "LocalUniverseCosmology.hpp"
 #include "LogMesh.hpp"
 #include "LogWavelengthDistribution.hpp"
 #include "LogWavelengthGrid.hpp"
@@ -251,6 +253,9 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<SIUnits>();
     ItemRegistry::add<StellarUnits>();
     ItemRegistry::add<ExtragalacticUnits>();
+    ItemRegistry::add<Cosmology>();
+    ItemRegistry::add<LocalUniverseCosmology>();
+    ItemRegistry::add<FlatUniverseCosmology>();
 
     // source system and sources
     ItemRegistry::add<SourceSystem>();
