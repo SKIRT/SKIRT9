@@ -14,18 +14,35 @@
 
 # --------------------------------------------------------------------
 
-# Look for clang-format in the default path; exit with an error if we don't find it
-CLANGFORMATPATH="$(which clang-format)"
+# Look for clang-format or clang-format-9 in the default path or in the home directory;
+# exit with an error if we don't find it
+CLANGFORMATPATH="$(which clang-format-9)"
 if [ "$CLANGFORMATPATH" == "" ]
 then
-    CLANGFORMATPATH="$HOME/clang/bin/clang-format"
-    if ! [[ -x $CLANGFORMATPATH ]]
+    CLANGFORMATPATH="$(which clang-format)"
+fi
+if [ "$CLANGFORMATPATH" == "" ]
+then
+    CANDIDATEPATH="$HOME/clang/bin/clang-format-9"
+    if [[ -x $CANDIDATEPATH ]]
     then
-        echo
-        echo Fatal error: there is no clang-format in the default path or in ~/clang/bin/
-        echo
-        exit
+        CLANGFORMATPATH=$CANDIDATEPATH
     fi
+fi
+if [ "$CLANGFORMATPATH" == "" ]
+then
+    CANDIDATEPATH="$HOME/clang/bin/clang-format"
+    if [[ -x $CANDIDATEPATH ]]
+    then
+        CLANGFORMATPATH=$CANDIDATEPATH
+    fi
+fi
+if [ "$CLANGFORMATPATH" == "" ]
+then
+    echo
+    echo Fatal error: there is no clang-format in the default path or in ~/clang/bin/
+    echo
+    exit
 fi
 
 # Verify the clang-format version
