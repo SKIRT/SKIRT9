@@ -189,12 +189,15 @@ void FluxRecorder::detect(PhotonPacket* pp, int l, double distance)
     // abort if we're not recording integrated fluxes and the photon packet arrives outside of the frame
     if (!_includeFluxDensity && l < 0) return;
 
+    // get the photon packet's redshifted wavelength
+    double wavelength = pp->wavelength() * (1. + _redshift);
+
     // get the wavelength bin indices that overlap the photon packet wavelength and perform recording for each
-    for (int ell : _lambdagrid->bins(pp->wavelength()))
+    for (int ell : _lambdagrid->bins(wavelength))
     {
         // get the luminosity contribution from the photon packet,
         // taking into account the transmission for the detector bin at this wavelength
-        double L = pp->luminosity() * _lambdagrid->transmission(ell, pp->wavelength());
+        double L = pp->luminosity() * _lambdagrid->transmission(ell, wavelength);
 
         // adjust the luminosity for near distance if needed
         if (distance < _luminosityDistance)
