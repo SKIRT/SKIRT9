@@ -11,8 +11,9 @@
 ////////////////////////////////////////////////////////////////////
 
 /** An instance of the FlatUniverseCosmology class represents a cosmology where the simulated model
-    resides at a nonzero redshift \f$z\f$ in a standard spatially-flat \f$\Lambda\mathrm{CDM}\f$
-    universe. The allowed redshift range is \f$0<z\le15\f$, including the epoch of reionization.
+    resides at a given redshift \f$z\f$ in a standard spatially-flat \f$\Lambda\mathrm{CDM}\f$
+    universe. The allowed redshift range is \f$0\le z\le 15\f$, i.e. including the epoch of
+    reionization. If \f$z=0\f$, the behavior is the same as that of a LocalUniverseCosmology.
 
     In addition to the redshift, this cosmology has two parameters, namely the reduced Hubble
     constant \f$h=H_0/(100\,\mathrm{km}\,\mathrm{s}^{-1}\,\mathrm{Mpc}^{-1})\f$ and the matter
@@ -34,30 +35,32 @@
     d_\mathrm{M}(z) \f] and \f[ d_\mathrm{L}(z) = (1+z) \, d_\mathrm{M}(z). \f] */
 class FlatUniverseCosmology : public Cosmology
 {
-    ITEM_CONCRETE(FlatUniverseCosmology, Cosmology, "the model is at a nonzero redshift in a flat universe")
-        ATTRIBUTE_TYPE_INSERT(FlatUniverseCosmology, "NonZeroRedshift")
+    ITEM_CONCRETE(FlatUniverseCosmology, Cosmology, "the model is at a given redshift in a flat universe")
 
         PROPERTY_DOUBLE(redshift, "the redshift z of the model coordinate frame")
-        ATTRIBUTE_MIN_VALUE(redshift, "]0")
+        ATTRIBUTE_MIN_VALUE(redshift, "[0")
         ATTRIBUTE_MAX_VALUE(redshift, "15]")
         ATTRIBUTE_DEFAULT_VALUE(redshift, "1")
+        ATTRIBUTE_INSERT(FlatUniverseCosmology, "redshift:NonZeroRedshift")
 
         PROPERTY_DOUBLE(reducedHubbleConstant, "the reduced Hubble constant h")
         ATTRIBUTE_MIN_VALUE(reducedHubbleConstant, "0.3")
         ATTRIBUTE_MAX_VALUE(reducedHubbleConstant, "1")
         ATTRIBUTE_DEFAULT_VALUE(reducedHubbleConstant, "0.675")
+        ATTRIBUTE_RELEVANT_IF(reducedHubbleConstant, "redshift")
 
         PROPERTY_DOUBLE(matterDensityFraction, "the cosmological matter density fraction Ω_m")
         ATTRIBUTE_MIN_VALUE(matterDensityFraction, "0.1")
         ATTRIBUTE_MAX_VALUE(matterDensityFraction, "0.9")
         ATTRIBUTE_DEFAULT_VALUE(matterDensityFraction, "0.310")
+        ATTRIBUTE_RELEVANT_IF(matterDensityFraction, "redshift")
 
     ITEM_END()
 
     //============== Functions overridden from base class ============
 
 public:
-    /** This function returns the nonzero redshift at which the model resides. */
+    /** This function returns the redshift at which the model resides. */
     double modelRedshift() const override;
 
     /** This function returns the angular-diameter distance \f$d_\mathrm{A}(z)\f$, calculated from

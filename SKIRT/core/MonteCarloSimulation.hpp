@@ -101,6 +101,7 @@ class MonteCarloSimulation : public Simulation
 
         PROPERTY_ITEM(cosmology, Cosmology, "the cosmology parameters")
         ATTRIBUTE_DEFAULT_VALUE(cosmology, "LocalUniverseCosmology")
+        ATTRIBUTE_DISPLAYED_IF(cosmology, "Level2")
 
         PROPERTY_DOUBLE(numPackets, "the default number of photon packets launched per simulation segment")
         ATTRIBUTE_MIN_VALUE(numPackets, "[0")
