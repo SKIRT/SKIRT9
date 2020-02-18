@@ -98,9 +98,10 @@ class WavelengthGrid;
 
     A FluxRecorder instance expects a rigourous calling sequence. During setup, the instrument
     configures the FluxRecorder's operation, specifying the wavelength grid, the items to be
-    recorded (SED, IFU, individual flux components, statistics) and some additional information on
-    the simulation in which the instrument is embedded (e.g., is there any secondary emission). The
-    configuration must be completed by calling the finalizeConfiguration() function.
+    recorded (SED, IFU, individual flux components, statistics), the distance and/or redshift, and
+    some additional information on the simulation in which the instrument is embedded (e.g., is
+    there any secondary emission). The configuration must be completed by calling the
+    finalizeConfiguration() function.
 
     To record the effects of detecting a photon packet, the instrument invokes the detect()
     function. This function is thread-safe, so it may be (and often is) called from multiple
@@ -140,20 +141,27 @@ public:
         information. */
     void setUserFlags(bool recordComponents, int numScatteringLevels, bool recordPolarization, bool recordStatistics);
 
+    /** This function configures the distance of the recorder in the model's rest frame. The
+        specified distance must be nonzero. The client must call either the setRestFrameDistance()
+        or setObserverFrameRedshift() functions, not both. */
+    void setRestFrameDistance(double distance);
+
+    /** This function configures the redshift and relativistic distances of the recorder's observer
+        frame. The specified redshift and distances must be nonzero. The client must call either
+        the setRestFrameDistance() or setObserverFrameRedshift() functions, noth both. */
+    void setObserverFrameRedshift(double redshift, double angularDiameterDistance, double luminosityDistance);
+
     /** This function enables recording of spatially integrated flux densities, i.e. an %SED,
-        assuming parallel projection at the specified instrument distance from the model. If both
-        includeFluxDensity() and includeSurfaceBrightness() are called, the specified distances
-        must be the same. */
-    void includeFluxDensity(double distance);
+        assuming parallel projection at the configured distance from the model. */
+    void includeFluxDensity();
 
     /** This function enables recording of IFU data cubes, i.e. a surface brightness image frame
-        for each wavelength. The recorder assumes parallel projection at the specified instrument
-        distance from the model and using the specified frame properties. The distance, the number
-        of pixels, and the pixel sizes are used to calibrate the surface brightness; the center
-        coordinates are used only for the metadata in the output file. If both includeFluxDensity()
-        and includeSurfaceBrightness() are called, the specified distances must be the same. */
-    void includeSurfaceBrightness(double distance, int numPixelsX, int numPixelsY, double pixelSizeX, double pixelSizeY,
-                                  double centerX, double centerY);
+        for each wavelength. The recorder assumes parallel projection at the specified distance
+        from the model and using the specified frame properties. The number of pixels, and the
+        pixel sizes are used to calibrate the surface brightness; the center coordinates are used
+        only for the metadata in the output file. */
+    void includeSurfaceBrightness(int numPixelsX, int numPixelsY, double pixelSizeX, double pixelSizeY, double centerX,
+                                  double centerY);
 
     /** This function completes the configuration of the recorder. It must be called after any of
         the configuration functions, and before the first invocation of the detect() function. */
@@ -259,8 +267,10 @@ private:
     bool _includeFluxDensity{false};
     bool _includeSurfaceBrightness{false};
 
-    // recorder configuration for SEDs and/or IFUs, received from client during configuration
-    double _distance{0};
+    // recorder configuration on distance and redshift, received from client during configuration
+    double _redshift{0};
+    double _angularDiameterDistance{0};
+    double _luminosityDistance{0};
 
     // recorder configuration for IFUs, received from client during configuration
     int _numPixelsX{0};

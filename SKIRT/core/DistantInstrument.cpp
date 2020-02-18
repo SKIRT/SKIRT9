@@ -4,12 +4,34 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "DistantInstrument.hpp"
+#include "Configuration.hpp"
+#include "FatalError.hpp"
+#include "FluxRecorder.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
 void DistantInstrument::setupSelfBefore()
 {
     Instrument::setupSelfBefore();
+
+    // configure the flux recorder with the appropriate frame and distances
+    if (distance() > 0.)
+    {
+        instrumentFluxRecorder()->setRestFrameDistance(distance());
+    }
+    else
+    {
+        auto config = find<Configuration>();
+        if (config->redshift() > 0.)
+        {
+            instrumentFluxRecorder()->setObserverFrameRedshift(config->redshift(), config->angularDiameterDistance(),
+                                                               config->luminosityDistance());
+        }
+        else
+        {
+            throw FATALERROR("Instrument distance and model redshift are both zero");
+        }
+    }
 
     // calculate sine and cosine for our angles
     double costheta = cos(_inclination);

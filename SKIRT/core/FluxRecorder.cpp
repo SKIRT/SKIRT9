@@ -68,19 +68,35 @@ void FluxRecorder::setUserFlags(bool recordComponents, int numScatteringLevels, 
 
 ////////////////////////////////////////////////////////////////////
 
-void FluxRecorder::includeFluxDensity(double distance)
+void FluxRecorder::setRestFrameDistance(double distance)
 {
-    _includeFluxDensity = true;
-    _distance = distance;
+    _redshift = 0.;
+    _angularDiameterDistance = distance;
+    _luminosityDistance = distance;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-void FluxRecorder::includeSurfaceBrightness(double distance, int numPixelsX, int numPixelsY, double pixelSizeX,
-                                            double pixelSizeY, double centerX, double centerY)
+void FluxRecorder::setObserverFrameRedshift(double redshift, double angularDiameterDistance, double luminosityDistance)
+{
+    _redshift = redshift;
+    _angularDiameterDistance = angularDiameterDistance;
+    _luminosityDistance = luminosityDistance;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void FluxRecorder::includeFluxDensity()
+{
+    _includeFluxDensity = true;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void FluxRecorder::includeSurfaceBrightness(int numPixelsX, int numPixelsY, double pixelSizeX, double pixelSizeY,
+                                            double centerX, double centerY)
 {
     _includeSurfaceBrightness = true;
-    _distance = distance;
     _numPixelsX = numPixelsX;
     _numPixelsY = numPixelsY;
     _pixelSizeX = pixelSizeX;
@@ -181,7 +197,7 @@ void FluxRecorder::detect(PhotonPacket* pp, int l, double distance)
         double L = pp->luminosity() * _lambdagrid->transmission(ell, pp->wavelength());
 
         // adjust the luminosity for near distance if needed
-        if (distance < _distance)
+        if (distance < _luminosityDistance)
         {
             double r = _pixelSizeAverage / (2. * distance);
             double rar = r / atan(r);
@@ -331,8 +347,9 @@ void FluxRecorder::calibrateAndWrite()
     if (!ProcessManager::isRoot()) return;
 
     // calculate front factors for converting from recorded quantities to output quantities:
-    double fourpid2 = 4. * M_PI * _distance * _distance;
-    double omega = 4. * atan(0.5 * _pixelSizeX / _distance) * atan(0.5 * _pixelSizeY / _distance);
+    double fourpid2 = 4. * M_PI * _luminosityDistance * _luminosityDistance;
+    double omega =
+        4. * atan(0.5 * _pixelSizeX / _angularDiameterDistance) * atan(0.5 * _pixelSizeY / _angularDiameterDistance);
 
     // convert from recorded quantities to output quantities and from internal units to user-selected output units
     // (for performance reasons, determine the units scaling factor only once for each wavelength)

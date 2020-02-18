@@ -68,6 +68,20 @@ public:
     /** Returns true if the simulation has been put in emulation mode. */
     bool emulationMode() const { return _emulationMode; }
 
+    /** Returns the redshift at which the model resides, or zero if the model resides in the Local
+        Universe. */
+    double redshift() const { return _redshift; }
+
+    /** Returns the angular-diameter distance corresponding to the redshift at which the model
+        resides, or zero if the model resides in the Local Universe. Refer to the Cosmology class
+        description for more information. */
+    double angularDiameterDistance() const { return _angularDiameterDistance; }
+
+    /** Returns the luminosity distance corresponding to the redshift at which the model resides,
+        or zero if the model resides in the Local Universe. Refer to the Cosmology class
+        description for more information. */
+    double luminosityDistance() const { return _luminosityDistance; }
+
     /** Returns true if the wavelength regime of the simulation is oligochromatic. */
     bool oligochromatic() const { return _oligochromatic; }
 
