@@ -165,3 +165,14 @@ double Gas::gasTemperature(int m)
     return 0;
 #endif
 }
+
+double Gas::opacityAbs(double lambda, int m)
+{
+#ifdef BUILD_WITH_GAS
+    return 0;
+#else
+    (void)lambda;
+    (void)m;
+    return 0;
+#endif
+}

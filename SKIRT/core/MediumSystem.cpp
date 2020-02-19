@@ -159,8 +159,8 @@ void MediumSystem::setupSelfAfter()
         Array lambdav(_wavelengthGrid->numBins());
         for (size_t i = 0; i < lambdav.size(); i++) lambdav[i] = _wavelengthGrid->wavelength(i);
 
-        // Gather dust properties that the gas module needs (not compatible with the 'possibly
-        // separate dust mix per cell' concept)
+        // Gather dust properties that the gas module needs (not compatible with the 'separate dust
+        // mix per cell' concept)
         std::vector<Gas::DustInfo> dustinfov;
         for (int h = 0; h != _numMedia; ++h)
         {
@@ -363,6 +363,9 @@ double MediumSystem::opacitySca(double lambda, int m) const
 
 double MediumSystem::opacityAbs(double lambda, int m, MaterialMix::MaterialType type) const
 {
+    if (type == MaterialMix::MaterialType::Gas)
+        return Gas::opacityAbs(lambda, m);
+
     double result = 0.;
     for (int h = 0; h != _numMedia; ++h)
         if (state(0, h).mix->materialType() == type) result += state(m, h).n * state(m, h).mix->sectionAbs(lambda);
@@ -373,6 +376,9 @@ double MediumSystem::opacityAbs(double lambda, int m, MaterialMix::MaterialType 
 
 double MediumSystem::opacityExt(double lambda, int m, int h) const
 {
+    if (isGas(h))
+        return Gas::opacityAbs(lambda, m);
+
     return state(m, h).n * state(m, h).mix->sectionExt(lambda);
 }
 
@@ -381,6 +387,7 @@ double MediumSystem::opacityExt(double lambda, int m, int h) const
 double MediumSystem::opacityExt(double lambda, int m) const
 {
     double result = 0.;
+    result += Gas::opacityAbs(lambda, m);
     for (int h = 0; h != _numMedia; ++h) result += state(m, h).n * state(m, h).mix->sectionExt(lambda);
     return result;
 }
@@ -389,6 +396,9 @@ double MediumSystem::opacityExt(double lambda, int m) const
 
 double MediumSystem::opacityExt(double lambda, int m, MaterialMix::MaterialType type) const
 {
+    if (type == MaterialMix::MaterialType::Gas)
+        return Gas::opacityAbs(lambda, m);
+
     double result = 0.;
     for (int h = 0; h != _numMedia; ++h)
         if (state(0, h).mix->materialType() == type) result += state(m, h).n * state(m, h).mix->sectionExt(lambda);
@@ -408,6 +418,7 @@ double MediumSystem::albedo(double lambda, int m) const
 {
     double ksca = 0.;
     double kext = 0.;
+    kext += Gas::opacityAbs(lambda, m);
     for (int h = 0; h != _numMedia; ++h)
     {
         double n = state(m, h).n;

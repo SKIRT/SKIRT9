@@ -47,6 +47,15 @@ public:
     static void updateGasState(int m, double n, const Array& meanIntensityv, const Array& mixNumberDensv);
 
     static double gasTemperature(int m);
+
+    /** This function calculates the opacity of the gas at a given wavelength for state \c m. It is
+        called opacity because the density factor is already included, i.e. it is n * sectionAbs.
+        Should only be called when the internal calculation of the opacities is ready for all
+        cells. The details of how this is implementend still need to be decided, but we will
+        probably do it by asking the gas module for the opacities at the end of updateGasState, and
+        writing them into one big table. The latter can be easily communicated in the case of
+        multiprocessing. */
+    static double opacityAbs(double lambda, int m);
 };
 
 #endif
