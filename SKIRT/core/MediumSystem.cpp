@@ -363,8 +363,7 @@ double MediumSystem::opacitySca(double lambda, int m) const
 
 double MediumSystem::opacityAbs(double lambda, int m, MaterialMix::MaterialType type) const
 {
-    if (type == MaterialMix::MaterialType::Gas)
-        return Gas::opacityAbs(lambda, m);
+    if (type == MaterialMix::MaterialType::Gas) return Gas::opacityAbs(lambda, m);
 
     double result = 0.;
     for (int h = 0; h != _numMedia; ++h)
@@ -376,8 +375,7 @@ double MediumSystem::opacityAbs(double lambda, int m, MaterialMix::MaterialType 
 
 double MediumSystem::opacityExt(double lambda, int m, int h) const
 {
-    if (isGas(h))
-        return Gas::opacityAbs(lambda, m);
+    if (isGas(h)) return Gas::opacityAbs(lambda, m);
 
     return state(m, h).n * state(m, h).mix->sectionExt(lambda);
 }
@@ -396,8 +394,7 @@ double MediumSystem::opacityExt(double lambda, int m) const
 
 double MediumSystem::opacityExt(double lambda, int m, MaterialMix::MaterialType type) const
 {
-    if (type == MaterialMix::MaterialType::Gas)
-        return Gas::opacityAbs(lambda, m);
+    if (type == MaterialMix::MaterialType::Gas) return Gas::opacityAbs(lambda, m);
 
     double result = 0.;
     for (int h = 0; h != _numMedia; ++h)
@@ -650,6 +647,16 @@ void MediumSystem::gasTest()
                 }
                 // skip if no gas
                 if (n) Gas::updateGasState(m, n, meanIntensity(m), nv);
+
+                if (m == 300)
+                {
+                    for (int ell = 0; ell < _wavelengthGrid->numBins(); ell++)
+                    {
+                        double lambda = _wavelengthGrid->wavelength(ell);
+                        std::cout << lambda * 1.e6 << ' ' << opacityExt(lambda, m) << ' ' << Gas::opacityAbs(lambda, m)
+                                  << '\n';
+                    }
+                }
             }
         });
 

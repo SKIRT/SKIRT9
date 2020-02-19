@@ -170,13 +170,7 @@ void Gas::updateGasState(int m, double n, const Array& meanIntensityv, const Arr
                          _gi->iFrequencyv(), _dustinfov[i].qabsvv);
     }
     _gi->updateGasState(_statev[m], n, jnu, gr);
-    if (verbose)
-    {
-        auto end = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-        std::cout << "gas sample " << m << " n " << n * 1.e-6 << " t " << gasTemperature(m) << " time "
-                  << duration.count() << " ms.\n ";
-    }
+
     // if (m == 0)
     // {
     //     // write out nu Jnu for first cell
@@ -185,6 +179,19 @@ void Gas::updateGasState(int m, double n, const Array& meanIntensityv, const Arr
     //     for (size_t i = 0; i < lambda_um.size(); i++)
     //         std::cout << lambda_um[i] << " " << _gi->iFrequencyv()[i] * jnu[i] << '\n';
     // }
+
+    // calculate and store the opacity
+    const Array& opacity_nu = _gi->opacity_SI(_statev[m]);
+    // the opacity table is indexed on wavelength, so we need to flip the result around
+    for (size_t ell = 0; ell < opacity_nu.size(); ell++) _opacityvv(m, ell) = opacity_nu[opacity_nu.size() - 1 - ell];
+
+    if (verbose)
+    {
+        auto end = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        std::cout << "gas sample " << m << " n " << n * 1.e-6 << " t " << gasTemperature(m) << " time "
+                  << duration.count() << " ms.\n ";
+    }
 #else
     (void)n;
     (void)m;
