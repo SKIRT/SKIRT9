@@ -21,35 +21,35 @@ double GasMix::mass() const
 
 ////////////////////////////////////////////////////////////////////
 
-double GasMix::sectionAbs(double lambda) const
+double GasMix::sectionAbs(double) const
 {
     return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double GasMix::sectionSca(double lambda) const
+double GasMix::sectionSca(double) const
 {
     return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double GasMix::sectionExt(double lambda) const
+double GasMix::sectionExt(double) const
 {
     return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double GasMix::albedo(double lambda) const
+double GasMix::albedo(double) const
 {
     return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double GasMix::equilibriumTemperature(const Array& Jv) const
+double GasMix::equilibriumTemperature(const Array&) const
 {
     return 1.;
 }
