@@ -108,8 +108,8 @@ void Gas::updateGasState(int m, double n, const Array& meanIntensityv, const Arr
         jnu[i] *= 1e3;
         if (jnu[i] <= 0) countzeros++;
     }
-    bool verbose = !(m % 500);
-    if (verbose && countzeros > jnu.size()) std::cout << countzeros << " zeros in cell " << m << '\n';
+    bool verbose = !(m % 300);
+    if (verbose && countzeros) std::cout << countzeros << " zeros in cell " << m << '\n';
 
     // Make grain interface object
     GasModule::GrainInterface gr;
@@ -123,7 +123,9 @@ void Gas::updateGasState(int m, double n, const Array& meanIntensityv, const Arr
         Array densityv = _dustinfov[i].numberDensRatiov * mixNumberDensv[i] * 1.e-6;
         if (verbose)
         {
-            std::cout << "grain dens:";
+            std::cout << "grain size:";
+            for (double d : _dustinfov[i].sizev) std::cout << ' ' << d;
+            std::cout << "\ngrain dens:";
             for (double d : densityv) std::cout << ' ' << d;
             std::cout << '\n';
         }
@@ -135,9 +137,17 @@ void Gas::updateGasState(int m, double n, const Array& meanIntensityv, const Arr
     {
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-        std::cout << "gas sample " << m << " n " << n * 1.e-6 << " t " << gasTemperature(m)
-                  << " time " << duration.count() << " ms.\n ";
+        std::cout << "gas sample " << m << " n " << n * 1.e-6 << " t " << gasTemperature(m) << " time "
+                  << duration.count() << " ms.\n ";
     }
+    // if (m == 0)
+    // {
+    //     // write out nu Jnu for first cell
+    //     double c_um = 2.99792458e14;
+    //     Array lambda_um = c_um / _gi->iFrequencyv();
+    //     for (size_t i = 0; i < lambda_um.size(); i++)
+    //         std::cout << lambda_um[i] << " " << _gi->iFrequencyv()[i] * jnu[i] << '\n';
+    // }
 #else
     (void)n;
     (void)m;
