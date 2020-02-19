@@ -46,6 +46,8 @@ namespace
 }
 #endif
 
+////////////////////////////////////////////////////////////////////
+
 void Gas::initialize(const Array& lambdav, const std::vector<DustInfo>& dustinfov)
 {
 #ifdef BUILD_WITH_GAS
@@ -88,6 +90,8 @@ void Gas::initialize(const Array& lambdav, const std::vector<DustInfo>& dustinfo
 #endif
 }
 
+////////////////////////////////////////////////////////////////////
+
 void Gas::finalize()
 {
 #ifdef BUILD_WITH_GAS
@@ -95,6 +99,8 @@ void Gas::finalize()
     _gi = nullptr;
 #endif
 }
+
+////////////////////////////////////////////////////////////////////
 
 void Gas::allocateGasStates(size_t num)
 {
@@ -106,10 +112,14 @@ void Gas::allocateGasStates(size_t num)
 #endif
 }
 
+////////////////////////////////////////////////////////////////////
+
 bool Gas::hasGrainTypeSupport(const string& populationGrainType)
 {
     return stringToGrainTypeLabel(populationGrainType) != GasModule::GrainTypeLabel::OTHER;
 }
+
+////////////////////////////////////////////////////////////////////
 
 void Gas::updateGasState(int m, double n, const Array& meanIntensityv, const Array& mixNumberDensv)
 {
@@ -183,6 +193,8 @@ void Gas::updateGasState(int m, double n, const Array& meanIntensityv, const Arr
 #endif
 }
 
+////////////////////////////////////////////////////////////////////
+
 double Gas::gasTemperature(int m)
 {
 #ifdef BUILD_WITH_GAS
@@ -192,6 +204,8 @@ double Gas::gasTemperature(int m)
     return 0;
 #endif
 }
+
+////////////////////////////////////////////////////////////////////
 
 double Gas::opacityAbs(double lambda, int m)
 {
@@ -204,3 +218,5 @@ double Gas::opacityAbs(double lambda, int m)
     return 0;
 #endif
 }
+
+////////////////////////////////////////////////////////////////////
