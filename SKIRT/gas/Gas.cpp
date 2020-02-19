@@ -3,7 +3,9 @@
 #include "Constants.hpp"
 #include "FatalError.hpp"
 #include "GrainInterface.hpp"
+#include "NR.hpp"
 #include "StringUtils.hpp"
+#include "Table.hpp"
 #include <chrono>
 
 #ifdef BUILD_WITH_GAS
@@ -12,10 +14,18 @@
 #    include <vector>
 namespace
 {
+    // Single instance of GasInterface managed by initialize and finalize
     GasModule::GasInterface* _gi;
+
+    // Stores some minimal info about the gas equilibrium for each cell. Can be used to
+    // (re-)calculate the opacity and emissivity of the gas.
     std::vector<GasModule::GasState> _statev;
+
+    // Information about the dust populations in the simulation. Set by initialize, should not be
+    // modified afterwards.
     std::vector<Gas::DustInfo> _dustinfov;
 
+    // Translate a SKIRT grain type into one of the built-in grain types
     GasModule::GrainTypeLabel stringToGrainTypeLabel(const string& populationGrainType)
     {
         if (StringUtils::contains(populationGrainType, "Silicate"))
@@ -26,6 +36,13 @@ namespace
         else
             return GasModule::GrainTypeLabel::OTHER;
     }
+
+    // Wavelengths for the opacities
+    Array _olambdav;
+
+    // Store the opacity in each cell in one big table, for easy communication between processes.
+    // Indexed on m, ell.
+    Table<2> _opacityvv;
 }
 #endif
 
@@ -38,9 +55,9 @@ void Gas::initialize(const Array& lambdav, const std::vector<DustInfo>& dustinfo
     GasModule::GasInterface::errorHandlersOff();
 
     // Calculate the frequency grid
-    size_t numFreq = lambdav.size();
+    int numFreq = lambdav.size();
     Array frequencyv(numFreq);
-    for (size_t i = 0; i < numFreq; i++) frequencyv[i] = Constants::c() / lambdav[numFreq - 1 - i];
+    for (int i = 0; i < numFreq; i++) frequencyv[i] = Constants::c() / lambdav[numFreq - 1 - i];
 
     // Initialize the gas module using this frequency grid
     _gi = new GasModule::GasInterface(frequencyv, frequencyv, frequencyv);
@@ -55,6 +72,15 @@ void Gas::initialize(const Array& lambdav, const std::vector<DustInfo>& dustinfo
         d.sizev *= 100.;
         // Flip the qabs arrays, because frequencies. This happens in-place.
         for (size_t b = 0; b < d.qabsvv.size(); b++) std::reverse(std::begin(d.qabsvv[b]), std::end(d.qabsvv[b]));
+    }
+
+    // derive a wavelength grid that will be used for converting a wavelength to an index in the
+    // opacity table. copied from DustMix
+    _olambdav.resize(numFreq);
+    _olambdav[0] = lambdav[0];
+    for (int ell = 1; ell != numFreq; ++ell)
+    {
+        _olambdav[ell] = sqrt(lambdav[ell] * lambdav[ell - 1]);
     }
 #else
     (void)lambdav;
@@ -74,6 +100,7 @@ void Gas::allocateGasStates(size_t num)
 {
 #ifdef BUILD_WITH_GAS
     _statev.resize(num);
+    _opacityvv.resize(num, _gi->oFrequencyv().size());
 #else
     (void)num;
 #endif
@@ -169,7 +196,8 @@ double Gas::gasTemperature(int m)
 double Gas::opacityAbs(double lambda, int m)
 {
 #ifdef BUILD_WITH_GAS
-    return 0;
+    int indexForLambda = NR::locateClip(_olambdav, lambda);
+    return _opacityvv(m, indexForLambda);
 #else
     (void)lambda;
     (void)m;
