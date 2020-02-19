@@ -179,12 +179,12 @@ void MediumSystem::setupSelfAfter()
                 for (int c = 0; c != mgdm->numPopulations(); ++c)
                 {
                     // Determine graphite or silicate
-                    int type = 0;
+                    Gas::SupportedDust type = Gas::SupportedDust::Other;
                     string name = mgdm->populationGrainType(c);
                     if (StringUtils::contains(name, "Silicate"))
-                        type = 1;  // magic number for silicate
+                        type = Gas::SupportedDust::Silicate;
                     else if (StringUtils::contains(name, "Graphite") || StringUtils::contains(name, "PAH"))
-                        type = 2;  // magic number for carbon
+                        type = Gas::SupportedDust::Carbonaceous;
                     else
                         continue;
 

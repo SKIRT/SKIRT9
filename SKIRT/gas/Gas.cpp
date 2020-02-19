@@ -98,19 +98,13 @@ void Gas::updateGasState(int m, double n, const Array& meanIntensityv, const Arr
     for (size_t i = 0; i < _dustinfov.size(); i++)
     {
         GasModule::GrainTypeLabel type;
-        if (_dustinfov[i].type == 1)
-        {
+        if (_dustinfov[i].type == Gas::SupportedDust::Silicate)
             type = GasModule::GrainTypeLabel::SIL;
-        }
-        else if (_dustinfov[i].type == 2)
-        {
+        else if (_dustinfov[i].type == Gas::SupportedDust::Carbonaceous)
             type = GasModule::GrainTypeLabel::CAR;
-        }
         else
-        {
             type = GasModule::GrainTypeLabel::OTHER;
-            FATALERROR("Unsupported grain type for gas");
-        }
+
         // Just use 30 as the initial guess for the dust temperature, since SKIRT doesn't really
         // support calculating the dust temperature for individual sizes.
         Array temperaturev(30., _dustinfov[i].sizev.size());

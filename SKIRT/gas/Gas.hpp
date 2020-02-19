@@ -12,10 +12,11 @@
 class Gas
 {
 public:
+    enum class SupportedDust {Carbonaceous, Silicate, Other};
     struct DustInfo
     {
         // change to proper enum later. Now use 1 for silicate, 2 for graphite
-        int type;
+        Gas::SupportedDust type;
         // Representative sizes. Will be used naively in the gas code (processes are calculated
         // separately for each size given here, and then summed). Integrating everything over the
         // grain size distribution is not doable for most processes in the gas code.
