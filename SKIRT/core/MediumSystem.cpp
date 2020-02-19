@@ -178,19 +178,14 @@ void MediumSystem::setupSelfAfter()
                 // for each population of each multigraindustmix in the system, create one of these structs
                 for (int c = 0; c != mgdm->numPopulations(); ++c)
                 {
-                    // Determine graphite or silicate
-                    Gas::SupportedDust type = Gas::SupportedDust::Other;
-                    string name = mgdm->populationGrainType(c);
-                    if (StringUtils::contains(name, "Silicate"))
-                        type = Gas::SupportedDust::Silicate;
-                    else if (StringUtils::contains(name, "Graphite") || StringUtils::contains(name, "PAH"))
-                        type = Gas::SupportedDust::Carbonaceous;
-                    else
-                        continue;
-
-                    Gas::DustInfo dustinfo = {type, sizevv[c], numberDensityvv[c], qabsvvv[c]};
-                    dustinfov.push_back(dustinfo);
-                    _hCompatibleWithGasv.push_back(std::array<int, 2>{h, c});
+                    // Only add graphite or silicate
+                    const string& name = mgdm->populationGrainType(c);
+                    if (Gas::hasGrainTypeSupport(name))
+                    {
+                        Gas::DustInfo dustinfo = {name, sizevv[c], numberDensityvv[c], qabsvvv[c]};
+                        dustinfov.push_back(dustinfo);
+                        _hCompatibleWithGasv.push_back(std::array<int, 2>{h, c});
+                    }
                 }
             }
         }

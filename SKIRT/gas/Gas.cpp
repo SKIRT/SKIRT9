@@ -2,6 +2,8 @@
 #include "Array.hpp"
 #include "Constants.hpp"
 #include "FatalError.hpp"
+#include "GrainInterface.hpp"
+#include "StringUtils.hpp"
 #include <chrono>
 
 #ifdef BUILD_WITH_GAS
@@ -13,6 +15,17 @@ namespace
     GasModule::GasInterface* _gi;
     std::vector<GasModule::GasState> _statev;
     std::vector<Gas::DustInfo> _dustinfov;
+
+    GasModule::GrainTypeLabel stringToGrainTypeLabel(const string& populationGrainType)
+    {
+        if (StringUtils::contains(populationGrainType, "Silicate"))
+            return GasModule::GrainTypeLabel::SIL;
+        else if (StringUtils::contains(populationGrainType, "Graphite")
+                 || StringUtils::contains(populationGrainType, "PAH"))
+            return GasModule::GrainTypeLabel::CAR;
+        else
+            return GasModule::GrainTypeLabel::OTHER;
+    }
 }
 #endif
 
@@ -66,6 +79,11 @@ void Gas::allocateGasStates(size_t num)
 #endif
 }
 
+bool Gas::hasGrainTypeSupport(const string& populationGrainType)
+{
+    return stringToGrainTypeLabel(populationGrainType) != GasModule::GrainTypeLabel::OTHER;
+}
+
 void Gas::updateGasState(int m, double n, const Array& meanIntensityv, const Array& mixNumberDensv)
 {
 #ifdef BUILD_WITH_GAS
@@ -97,14 +115,6 @@ void Gas::updateGasState(int m, double n, const Array& meanIntensityv, const Arr
     GasModule::GrainInterface gr;
     for (size_t i = 0; i < _dustinfov.size(); i++)
     {
-        GasModule::GrainTypeLabel type;
-        if (_dustinfov[i].type == Gas::SupportedDust::Silicate)
-            type = GasModule::GrainTypeLabel::SIL;
-        else if (_dustinfov[i].type == Gas::SupportedDust::Carbonaceous)
-            type = GasModule::GrainTypeLabel::CAR;
-        else
-            type = GasModule::GrainTypeLabel::OTHER;
-
         // Just use 30 as the initial guess for the dust temperature, since SKIRT doesn't really
         // support calculating the dust temperature for individual sizes.
         Array temperaturev(30., _dustinfov[i].sizev.size());
@@ -117,7 +127,8 @@ void Gas::updateGasState(int m, double n, const Array& meanIntensityv, const Arr
             for (double d : densityv) std::cout << ' ' << d;
             std::cout << '\n';
         }
-        gr.addPopulation(type, _dustinfov[i].sizev, densityv, temperaturev, _gi->iFrequencyv(), _dustinfov[i].qabsvv);
+        gr.addPopulation(stringToGrainTypeLabel(_dustinfov[i].grainType), _dustinfov[i].sizev, densityv, temperaturev,
+                         _gi->iFrequencyv(), _dustinfov[i].qabsvv);
     }
     _gi->updateGasState(_statev[m], n, jnu, gr);
     if (verbose)
