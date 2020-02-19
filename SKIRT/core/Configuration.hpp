@@ -168,6 +168,10 @@ public:
         grains into account, and false otherwise. */
     bool hasStochasticDustEmission() const { return _hasStochasticDustEmission; }
 
+    /** Returns true if the cosmic microwave background (CMB) must be added as a source term for
+        dust heating, and false otherwise. */
+    bool includeHeatingByCMB() const { return _includeHeatingByCMB; }
+
     /** Returns true if dust self-absorption must be self-consistently calculated through
         iteration, and false otherwise. */
     bool hasDustSelfAbsorption() const { return _hasDustSelfAbsorption; }
@@ -288,6 +292,7 @@ private:
     // emission
     bool _hasDustEmission{false};
     bool _hasStochasticDustEmission{false};
+    bool _includeHeatingByCMB{false};
     bool _hasDustSelfAbsorption{false};
     DisjointWavelengthGrid* _dustEmissionWLG{nullptr};
     SpatialCellLibrary* _cellLibrary{nullptr};

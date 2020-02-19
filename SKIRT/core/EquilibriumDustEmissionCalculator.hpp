@@ -35,10 +35,17 @@ class SimulationItem;
     The equilibrium temperature \f$T_{\text{eq},b}\f$ for bin with index \f$b\f$ is obtained from
     the energy balance equation, \f[ \int_0^\infty \varsigma_{\lambda,b}^{\text{abs}}\, J_\lambda\,
     {\text{d}}\lambda = \int_0^\infty \varsigma_{\lambda,b}^{\text{abs}}\,
-    B_\lambda(T_{\text{eq},b})\, {\text{d}}\lambda. \f] The left-hand side is integrated over the
-    radiation field wavelength grid, and the right-hand side is precalculated for a range of
-    temperatures through integration over the wavelength grid and cross sections passed to the
-    precalculate() function.
+    B_\lambda(T_{\text{eq},b})\, {\text{d}}\lambda \f] where \f$B_\lambda(T)\f$ is the Planck
+    function. The left-hand side is integrated over the radiation field wavelength grid, and the
+    right-hand side is precalculated for a range of temperatures through integration over the
+    wavelength grid and cross sections passed to the precalculate() function. If the simulation's
+    configuration requests the inclusion of the cosmic microwave background (CMB) as an additional
+    source for dust heating, the corresponding term is added to the left-hand side of the energy
+    balance equation: \f[ \int_0^\infty \varsigma_{\lambda,b}^{\text{abs}}\, \left[
+    B_\lambda\left((1+z) T_\mathrm{CMB}^{z=0}\right) + J_\lambda\right] \, {\text{d}}\lambda =
+    \int_0^\infty \varsigma_{\lambda,b}^{\text{abs}}\, B_\lambda(T_{\text{eq},b})\,
+    {\text{d}}\lambda \f] where \f$z\f$ is the redshift at which the simulated model resides and
+    \f$T_\mathrm{CMB}^{z=0} = 2.725\,\mathrm{K}\f$.
 
     The equilibrium emissivity spectrum of all bins combined embedded in a radiation field
     \f$J_\lambda\f$ can then be written as \f[ \varepsilon_\lambda = \sum_{b=0}^{N_{\text{bins}}-1}
@@ -96,6 +103,7 @@ public:
 private:
     Array _rflambdav;   // radiation field wavelength grid (RFWLG) -- indexed on k
     Array _rfdlambdav;  // radiation field wavelength grid bin widths -- indexed on k
+    Array _Bcmb;        // cosmic microwave background radiation field, or zeroes -- indexed on k
     Array _emlambdav;   // dust emission wavelength grid (EMWLG) -- indexed on ell
     Array _Tv;          // temperature grid for the integrated absorption cross sections -- indexed on p
 

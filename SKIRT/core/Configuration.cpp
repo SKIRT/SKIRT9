@@ -116,6 +116,7 @@ void Configuration::setupSelfBefore()
                     throw FATALERROR("When requesting stochastic heating, all dust mixes must be multi-grain");
             _hasStochasticDustEmission = true;
         }
+        _includeHeatingByCMB = ms->dustEmissionOptions()->includeHeatingByCMB();
         _cellLibrary = ms->dustEmissionOptions()->cellLibrary();
         if (!_cellLibrary) _cellLibrary = new AllCellsLibrary(this);
         _radiationFieldWLG = ms->dustEmissionOptions()->radiationFieldWLG();

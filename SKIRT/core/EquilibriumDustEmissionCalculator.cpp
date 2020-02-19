@@ -5,6 +5,7 @@
 
 #include "EquilibriumDustEmissionCalculator.hpp"
 #include "Configuration.hpp"
+#include "Constants.hpp"
 #include "DisjointWavelengthGrid.hpp"
 #include "NR.hpp"
 #include "Parallel.hpp"
@@ -24,12 +25,22 @@ void EquilibriumDustEmissionCalculator::precalculate(SimulationItem* item, const
         // obtain the simulation's radiation field wavelength grid
         auto radiationFieldWLG = config->radiationFieldWLG();
         radiationFieldWLG->setup();
-        _rflambdav.resize(radiationFieldWLG->numBins());
-        _rfdlambdav.resize(radiationFieldWLG->numBins());
-        for (int k = 0; k != radiationFieldWLG->numBins(); ++k)
+        int n = radiationFieldWLG->numBins();
+        _rflambdav.resize(n);
+        _rfdlambdav.resize(n);
+        for (int k = 0; k != n; ++k)
         {
             _rflambdav[k] = radiationFieldWLG->wavelength(k);
             _rfdlambdav[k] = radiationFieldWLG->effectiveWidth(k);
+        }
+
+        // if requested by the configuration, precalculate the CMB source term;
+        // if not, the array remains initialized to all zeroes so including it has no effect
+        _Bcmb.resize(n);
+        if (config->includeHeatingByCMB())
+        {
+            PlanckFunction B(Constants::Tcmb() * (1. + config->redshift()));
+            for (int k = 0; k != n; ++k) _Bcmb[k] = B(_rflambdav[k]);
         }
 
         // obtain the simulation's dust emission wavelength grid, if there is one
@@ -88,6 +99,7 @@ size_t EquilibriumDustEmissionCalculator::allocatedBytes() const
     size_t allocatedSize = 0;
     allocatedSize += _rflambdav.size();
     allocatedSize += _rfdlambdav.size();
+    allocatedSize += _Bcmb.size();
     allocatedSize += _emlambdav.size();
     allocatedSize += _Tv.size();
     if (!_rfsigmaabsvv.empty()) allocatedSize += _rfsigmaabsvv.size() * _rfsigmaabsvv[0].size();
@@ -108,7 +120,7 @@ int EquilibriumDustEmissionCalculator::numBins() const
 double EquilibriumDustEmissionCalculator::equilibriumTemperature(int b, const Array& Jv) const
 {
     // integrate the input side of the energy balance equation
-    double inputabs = (_rfsigmaabsvv[b] * Jv * _rfdlambdav).sum();
+    double inputabs = (_rfsigmaabsvv[b] * (Jv + _Bcmb) * _rfdlambdav).sum();
 
     // find the temperature corresponding to this amount of emission on the output side of the equation
     if (inputabs > 0.)
