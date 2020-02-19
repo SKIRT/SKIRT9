@@ -103,7 +103,7 @@ public:
 private:
     Array _rflambdav;   // radiation field wavelength grid (RFWLG) -- indexed on k
     Array _rfdlambdav;  // radiation field wavelength grid bin widths -- indexed on k
-    Array _Bcmb;        // cosmic microwave background radiation field, or zeroes -- indexed on k
+    Array _Bcmbv;       // cosmic microwave background radiation field, or zeroes -- indexed on k
     Array _emlambdav;   // dust emission wavelength grid (EMWLG) -- indexed on ell
     Array _Tv;          // temperature grid for the integrated absorption cross sections -- indexed on p
 

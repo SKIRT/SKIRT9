@@ -59,12 +59,15 @@ class SDE_TemperatureGrid;
     \varsigma_{\lambda_{fi}}^{\text{abs}}\,J_{\lambda_{fi}}\, \frac{hc\,\Delta H_f}{(H_f-H_i)^3}
     \f] where \f$H_f\f$ and \f$H_i\f$ are the enthalpies of the final and initial temperature bins,
     \f$\Delta H_f\f$ is the width of the final temperature bin, and \f$\lambda_{fi}\f$ is the
-    transition wavelength which can be obtained from \f[ \lambda_{fi}=\frac{hc}{H_f-H_i}. \f] We
-    assume that cooling transitions occur only to the next lower level, so that \f$A_{f,i}=0\f$ for
-    \f$f<i-1\f$ and \f[ A_{i-1,i} = \frac{4\pi}{H_i-H_{i-1}}\, \int_0^\infty
-    \varsigma_{\lambda}^{\text{abs}}\, B_{\lambda}(T_i)\, {\text{d}}\lambda. \f] The diagonal
-    matrix elements are defined as \f[ A_{i,i} = -\sum_{f\ne i} A_{f,i}\f] however as we will see
-    below there is no need to explicitly calculate these values.
+    transition wavelength which can be obtained from \f[ \lambda_{fi}=\frac{hc}{H_f-H_i}. \f] If
+    the simulation's configuration requests the inclusion of the cosmic microwave background (CMB)
+    as an additional source for dust heating, the corresponding term is added to the heating matrix
+    element, similar to the treatment of the energy balance equation in the
+    EquilibriumDustEmissionCalculator class. We assume that cooling transitions occur only to the
+    next lower level, so that \f$A_{f,i}=0\f$ for \f$f<i-1\f$ and \f[ A_{i-1,i} =
+    \frac{4\pi}{H_i-H_{i-1}}\, \int_0^\infty \varsigma_{\lambda}^{\text{abs}}\, B_{\lambda}(T_i)\,
+    {\text{d}}\lambda. \f] The diagonal matrix elements are defined as \f[ A_{i,i} = -\sum_{f\ne i}
+    A_{f,i}\f] however as we will see below there is no need to explicitly calculate these values.
 
     Assuming a steady state situation, the probabilities \f$P_{i}\f$ can be obtained from the
     transition matrix by solving the set of \f$N\f$ linear equations \f[ \sum_{i=0}^{N-1} A_{f,i}
@@ -130,9 +133,10 @@ public:
     //======================== Data Members ========================
 
 private:
-    // wavelength grids
+    // wavelength grids and CMB
     Array _rflambdav;   // radiation field wavelength grid (RFWLG) -- indexed on k
     Array _rfdlambdav;  // radiation field wavelength grid bin widths -- indexed on k
+    Array _Bcmbv;       // cosmic microwave background radiation field, if needed -- indexed on k
     Array _emlambdav;   // dust emission wavelength grid (EMWLG) -- indexed on ell
 
     // temperature grids

@@ -353,27 +353,38 @@ void StochasticDustEmissionCalculator::precalculate(SimulationItem* item, const 
                                                     string grainType, double bulkDensity, double meanMass,
                                                     const StoredTable<1>& enthalpy)
 {
-    // get the index of the bin being added
-    int b = _calculatorsA.size();
+    auto config = item->find<Configuration>();
 
     // obtain the simulation's radiation field wavelength grid
-    auto radiationFieldWLG = item->find<Configuration>()->radiationFieldWLG();
+    auto radiationFieldWLG = config->radiationFieldWLG();
     radiationFieldWLG->setup();
+
+    // get the index of the bin being added
+    int b = _calculatorsA.size();
 
     // perform initialization that needs to happen only once
     if (!b)
     {
         // copy the simulation's radiation field wavelength grid
-        _rflambdav.resize(radiationFieldWLG->numBins());
-        _rfdlambdav.resize(radiationFieldWLG->numBins());
-        for (int k = 0; k != radiationFieldWLG->numBins(); ++k)
+        int n = radiationFieldWLG->numBins();
+        _rflambdav.resize(n);
+        _rfdlambdav.resize(n);
+        for (int k = 0; k != n; ++k)
         {
             _rflambdav[k] = radiationFieldWLG->wavelength(k);
             _rfdlambdav[k] = radiationFieldWLG->effectiveWidth(k);
         }
 
+        // if requested by the configuration, precalculate the CMB source term; otherwise the array remains empty
+        if (config->includeHeatingByCMB())
+        {
+            PlanckFunction B(Constants::Tcmb() * (1. + config->redshift()));
+            _Bcmbv.resize(n);
+            for (int k = 0; k != n; ++k) _Bcmbv[k] = B(_rflambdav[k]);
+        }
+
         // copy the simulation's dust emission wavelength grid
-        auto dustEmissionWLG = item->find<Configuration>()->dustEmissionWLG();
+        auto dustEmissionWLG = config->dustEmissionWLG();
         dustEmissionWLG->setup();
         _emlambdav = dustEmissionWLG->extlambdav();
 
@@ -404,6 +415,7 @@ size_t StochasticDustEmissionCalculator::allocatedBytes() const
     size_t allocatedBytes = 0;
     allocatedBytes += _rflambdav.size() * sizeof(_rflambdav[0]);
     allocatedBytes += _rfdlambdav.size() * sizeof(_rfdlambdav[0]);
+    allocatedBytes += _Bcmbv.size() * sizeof(_Bcmbv[0]);
     allocatedBytes += _emlambdav.size() * sizeof(_emlambdav[0]);
 
     if (_gridA) allocatedBytes += _gridA->allocatedBytes();
@@ -423,6 +435,12 @@ size_t StochasticDustEmissionCalculator::allocatedBytes() const
 
 Array StochasticDustEmissionCalculator::emissivity(const Array& Jv) const
 {
+    // if requested, create a local copy of the input radiation field that includes the CMB;
+    // constructing a reference to either the input or this local copy avoids copying the input if there is no CMB
+    Array Jcmbv;
+    if (_Bcmbv.size()) Jcmbv = Jv + _Bcmbv;
+    const Array& myJv = _Bcmbv.size() ? Jcmbv : Jv;
+
     // accumulate the emissivities in this array
     Array ev(_emlambdav.size());
 
@@ -440,7 +458,7 @@ Array StochasticDustEmissionCalculator::emissivity(const Array& Jv) const
     for (int b = 0; b != numBins; ++b)
     {
         // determine the equilibrium temperature for this bin using the calculator with a fine temperature grid
-        double Teq = _calculatorsC[b]->equilibriumTemperature(Jv);
+        double Teq = _calculatorsC[b]->equilibriumTemperature(myJv);
 
         // consider stochastic calculation only if the mean mass for this bin is below the cutoff mass
         string grainType = _grainTypes[b];
@@ -452,7 +470,7 @@ Array StochasticDustEmissionCalculator::emissivity(const Array& Jv) const
             double Tmax = min(Tuppermax, _maxEnthalpyTemps[b]);
 
             int ioff = 0;
-            _calculatorsA[b]->calcProbs(Pv, ioff, Am, Tmin, Tmax, Jv);
+            _calculatorsA[b]->calcProbs(Pv, ioff, Am, Tmin, Tmax, myJv);
 
             // if the population might be stochastic...
             if (Tmax - Tmin > deltaTeq && Teq < Tmax)
@@ -461,7 +479,7 @@ Array StochasticDustEmissionCalculator::emissivity(const Array& Jv) const
                 const SDE_Calculator* calculator = (Tmax - Tmin > deltaTmedium) ? _calculatorsB[b] : _calculatorsC[b];
 
                 // calculate the probabilities over this grid, in the range determined by the coarse calculation
-                calculator->calcProbs(Pv, ioff, Am, Tmin, Tmax, Jv);
+                calculator->calcProbs(Pv, ioff, Am, Tmin, Tmax, myJv);
 
                 // if the population indeed is stochastic...
                 if (Tmax - Tmin > deltaTeq && Teq < Tmax)
