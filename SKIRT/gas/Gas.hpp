@@ -12,11 +12,9 @@
 class Gas
 {
 public:
-    enum class SupportedDust {Carbonaceous, Silicate, Other};
     struct DustInfo
     {
-        // change to proper enum later. Now use 1 for silicate, 2 for graphite
-        Gas::SupportedDust type;
+        string grainType;
         // Representative sizes. Will be used naively in the gas code (processes are calculated
         // separately for each size given here, and then summed). Integrating everything over the
         // grain size distribution is not doable for most processes in the gas code.
@@ -34,6 +32,10 @@ public:
         finalize(), all info about the gas will be lost. */
     static void finalize();
     static void allocateGasStates(size_t num);
+
+    /** This function returns \c true if the grain type described by the given string (get it from
+        MultiGrainDustMic::populationGrainType(c)), is supported by the gas module. */
+    static bool hasGrainTypeSupport(const string& populationGrainType);
 
     /** This function prepares the arguments for \c GasInterface::updateGasState() and calls it.
         The \c m argument indicates which of the allocated gas states should be updated. The number
