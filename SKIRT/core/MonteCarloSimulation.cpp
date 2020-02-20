@@ -138,7 +138,7 @@ void MonteCarloSimulation::runPrimaryEmission()
 
 ////////////////////////////////////////////////////////////////////
 
-void MonteCarloSimulation::runSelfConsistentOpacityPhase(bool)
+void MonteCarloSimulation::runSelfConsistentOpacityPhase(bool /* ARGUMENT NOT YET IMPLEMENTED */)
 {
     TimeLogger logger(log(), "the self consistent opacity phase");
     size_t Npp = _config->numPrimaryPackets();
@@ -174,9 +174,11 @@ void MonteCarloSimulation::runSelfConsistentOpacityPhase(bool)
         double Labsprimgas = mediumSystem()->totalAbsorbedLuminosity(true, MaterialMix::MaterialType::Gas);
         double Labsprimdust = mediumSystem()->totalAbsorbedLuminosity(true, MaterialMix::MaterialType::Dust);
         log()->info("The total gas-absorbed primary luminosity is "
-                    + StringUtils::toString(units()->obolluminosity(Labsprimgas), 'g') + " " + units()->ubolluminosity());
+                    + StringUtils::toString(units()->obolluminosity(Labsprimgas), 'g') + " "
+                    + units()->ubolluminosity());
         log()->info("The total dust-absorbed primary luminosity is "
-                    + StringUtils::toString(units()->obolluminosity(Labsprimdust), 'g') + " " + units()->ubolluminosity());
+                    + StringUtils::toString(units()->obolluminosity(Labsprimdust), 'g') + " "
+                    + units()->ubolluminosity());
 
         mediumSystem()->updateGas();
     }
