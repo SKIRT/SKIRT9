@@ -141,7 +141,6 @@ void MonteCarloSimulation::runPrimaryEmission()
 void MonteCarloSimulation::runSelfConsistentOpacityPhase(bool)
 {
     TimeLogger logger(log(), "the self consistent opacity phase");
-
     size_t Npp = _config->numPrimaryPackets();
     if (!Npp)
     {
@@ -154,28 +153,22 @@ void MonteCarloSimulation::runSelfConsistentOpacityPhase(bool)
         return;
     }
 
+    sourceSystem()->prepareForLaunch(Npp);
     auto parallel = find<ParallelFactory>()->parallelDistributed();
 
-    int maxIters = 10;
-
     // initialize some convergence criteria here
-
+    int maxIters = 10;
     for (int iter = 1; iter <= maxIters; iter++)
     {
         string segment = "self consistent opacity iteration " + std::to_string(iter);
         {
             TimeLogger logger(log(), segment);
-
             mediumSystem()->clearRadiationField(true);
-
             initProgress(segment, Npp);
-            sourceSystem()->prepareForLaunch(Npp);
             parallel->call(Npp, [this](size_t i, size_t n) { performLifeCycle(i, n, true, false, true); });
             instrumentSystem()->flush();
             wait(segment);
             mediumSystem()->communicateRadiationField(true);
-
-            // initialize or update the gas opacities using the stored radiation field
             mediumSystem()->updateGas();
         }
         // check convergence here
