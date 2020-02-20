@@ -169,7 +169,7 @@ void Gas::updateGasState(int m, double n, const Array& meanIntensityv, const Arr
         gr.addPopulation(stringToGrainTypeLabel(_dustinfov[i].grainType), _dustinfov[i].sizev, densityv, temperaturev,
                          _gi->iFrequencyv(), _dustinfov[i].qabsvv);
     }
-    _gi->updateGasState(_statev[m], n, jnu, gr);
+    _gi->updateGasState(_statev[m], n * 1.e-6, jnu, gr);
 
     // if (m == 0)
     // {
