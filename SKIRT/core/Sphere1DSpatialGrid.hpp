@@ -22,12 +22,13 @@ class Sphere1DSpatialGrid : public SphereSpatialGrid
     ITEM_CONCRETE(Sphere1DSpatialGrid, SphereSpatialGrid, "a spherically symmetric spatial grid")
         ATTRIBUTE_TYPE_ALLOWED_IF(Sphere1DSpatialGrid, "!Dimension2&!Dimension3")
 
-        PROPERTY_ITEM(meshRadial, Mesh, "the bin distribution in the radial direction")
-        ATTRIBUTE_DEFAULT_VALUE(meshRadial, "LinMesh")
-
         PROPERTY_DOUBLE(minRadius, "the inner radius of the grid")
         ATTRIBUTE_QUANTITY(minRadius, "length")
         ATTRIBUTE_MIN_VALUE(minRadius, "[0")
+        ATTRIBUTE_DEFAULT_VALUE(minRadius, "0")
+
+        PROPERTY_ITEM(meshRadial, Mesh, "the bin distribution in the radial direction")
+        ATTRIBUTE_DEFAULT_VALUE(meshRadial, "LinMesh")
 
     ITEM_END()
 
