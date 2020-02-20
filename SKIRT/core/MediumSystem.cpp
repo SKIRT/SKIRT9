@@ -619,6 +619,33 @@ double MediumSystem::absorbedLuminosity(int m, MaterialMix::MaterialType type) c
 
 ////////////////////////////////////////////////////////////////////
 
+void MediumSystem::updateGas()
+{
+    // Does not work with multiprocessing yet
+    find<ParallelFactory>()->parallelDistributed()->call(_numCells, [&](size_t firstIndex, size_t numIndices) {
+        for (size_t m = firstIndex; m < firstIndex + numIndices; m++)
+        {
+            // gas density
+            double n = 0;
+            for (int h = 0; h != _numMedia; ++h)
+                if (isGas(h)) n += numberDensity(m, h);
+
+            // skip cells without gas
+            if (!n) continue;
+
+            // relevant dust density in correct format
+            int numCompatibleGrainPops = _hCompatibleWithGasv.size();
+            Array nv(numCompatibleGrainPops);
+            for (int i = 0; i < numCompatibleGrainPops; i++) nv[i] = state(m, _hCompatibleWithGasv[i][0]).n;
+
+            // call update
+            Gas::updateGasState(m, n, meanIntensity(m), nv);
+        }
+    });
+}
+
+////////////////////////////////////////////////////////////////////
+
 void MediumSystem::gasTest()
 {
     if (hasGas() && _config->hasRadiationField())

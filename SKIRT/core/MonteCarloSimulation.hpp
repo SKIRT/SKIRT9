@@ -172,6 +172,12 @@ private:
         information.) */
     void runPrimaryEmission();
 
+    /** This function repeatedly runs the primary (+ secondary) emission and the opacity update
+        until convergence. For updating the opacity at each iteration, the radiation field is
+        recorded. There is no peel-off towards the instruments, so runPrimaryEmission() still has
+        to run after convergence. */
+    void runSelfConsistentOpacityPhase(bool withSecondary);
+
     /** This function runs the dust self-absorption phase. This phase includes a series of
         intermediate secondary source emission segments in an iteration to self-consistently
         calculate the radiation field, taking into account the fraction of dust emission absorbed

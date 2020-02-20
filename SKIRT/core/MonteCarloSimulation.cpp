@@ -65,11 +65,22 @@ void MonteCarloSimulation::runSimulation()
     {
         TimeLogger logger(log(), "the run");
 
+        // opacity iteration. TODO: enforce requirements in Configuration once we make up our minds
+        bool withSecondary = false;
+        if (mediumSystem()->hasGas() && _config->hasRadiationField())
+        {
+            // Iteration without secondary emission (big changes)
+            runSelfConsistentOpacityPhase(false);
+            // Iteration with secondary emission (smaller changes)
+            if (withSecondary) runSelfConsistentOpacityPhase(true);
+        }
+
         // primary emission segment
         runPrimaryEmission();
 
-        // dust self-absorption iteration segments
-        if (_config->hasDustSelfAbsorption()) runDustSelfAbsorptionPhase();
+        // dust self-absorption iteration segments (still needs to run if opacity iteration did not
+        // treat secondary emission)
+        if (_config->hasDustSelfAbsorption() && !withSecondary) runDustSelfAbsorptionPhase();
 
         // secondary emission segment
         if (_config->hasSecondaryEmission()) runSecondaryEmission();
@@ -123,6 +134,52 @@ void MonteCarloSimulation::runPrimaryEmission()
     // wait for all processes to finish and synchronize the radiation field
     wait(segment);
     if (_config->hasRadiationField()) mediumSystem()->communicateRadiationField(true);
+}
+
+////////////////////////////////////////////////////////////////////
+
+void MonteCarloSimulation::runSelfConsistentOpacityPhase(bool)
+{
+    TimeLogger logger(log(), "the self consistent opacity phase");
+
+    size_t Npp = _config->numPrimaryPackets();
+    if (!Npp)
+    {
+        log()->warning("Skipping primary emission because no photon packets were requested");
+        return;
+    }
+    else if (!sourceSystem()->luminosity())
+    {
+        log()->warning("Skipping primary emission because the total luminosity of primary sources is zero");
+        return;
+    }
+
+    auto parallel = find<ParallelFactory>()->parallelDistributed();
+
+    int maxIters = 10;
+
+    // initialize some convergence criteria here
+
+    for (int iter = 1; iter <= maxIters; iter++)
+    {
+        string segment = "self consistent opacity iteration " + std::to_string(iter);
+        {
+            TimeLogger logger(log(), segment);
+
+            mediumSystem()->clearRadiationField(true);
+
+            initProgress(segment, Npp);
+            sourceSystem()->prepareForLaunch(Npp);
+            parallel->call(Npp, [this](size_t i, size_t n) { performLifeCycle(i, n, true, false, true); });
+            instrumentSystem()->flush();
+            wait(segment);
+            mediumSystem()->communicateRadiationField(true);
+
+            // initialize or update the gas opacities using the stored radiation field
+            mediumSystem()->updateGas();
+        }
+        // check convergence here
+    }
 }
 
 ////////////////////////////////////////////////////////////////////

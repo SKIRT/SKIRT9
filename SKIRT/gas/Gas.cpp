@@ -158,7 +158,7 @@ void Gas::updateGasState(int m, double n, const Array& meanIntensityv, const Arr
         // Set the grain number densities using the number density of the mix (fictional H
         // density), and change unit from m-3 to cm-3
         Array densityv = _dustinfov[i].numberDensRatiov * mixNumberDensv[i] * 1.e-6;
-        if (verbose)
+        if (false && verbose)
         {
             std::cout << "grain size:";
             for (double d : _dustinfov[i].sizev) std::cout << ' ' << d;

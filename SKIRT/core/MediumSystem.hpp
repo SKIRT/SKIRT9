@@ -382,6 +382,10 @@ public:
         over all photon packets contributing to the bin. */
     double absorbedLuminosity(int m, MaterialMix::MaterialType type) const;
 
+    /** This function calls the update function of the gas for each cell, using the stored
+        radiation field. This changes the total absorption and exctinction opacity throughout the
+        medium. */
+    void updateGas();
     void gasTest();
 
     //================== Private Types and Functions ====================
