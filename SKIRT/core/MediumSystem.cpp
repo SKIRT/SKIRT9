@@ -459,13 +459,28 @@ double MediumSystem::opticalDepth(PhotonPacket* pp, double distance)
         // single medium (no kinematics, spatially constant)
         if (_numMedia == 1)
         {
-            double section = state(0, 0).mix->sectionExt(pp->wavelength());
-            int i = 0;
-            for (auto& segment : pp->segments())
+            if (!state(0, 0).mix->isGas())
             {
-                if (segment.m >= 0) tau += section * state(segment.m, 0).n * segment.ds;
-                pp->setOpticalDepth(i++, tau);
-                if (segment.s > distance) break;
+                double section = state(0, 0).mix->sectionExt(pp->wavelength());
+                int i = 0;
+                for (auto& segment : pp->segments())
+                {
+                    if (segment.m >= 0) tau += section * state(segment.m, 0).n * segment.ds;
+                    pp->setOpticalDepth(i++, tau);
+                    if (segment.s > distance) break;
+                }
+            }
+            // gas only
+            else
+            {
+                int gasEll = Gas::indexForLambda(pp->wavelength());
+                int i = 0;
+                for (auto& segment : pp->segments())
+                {
+                    if (segment.m >= 0) tau += Gas::opacityAbs(gasEll, segment.m) * segment.ds;
+                    pp->setOpticalDepth(i++, tau);
+                    if (segment.s > distance) break;
+                }
             }
         }
         // multiple media (no kinematics, spatially constant)
@@ -473,11 +488,16 @@ double MediumSystem::opticalDepth(PhotonPacket* pp, double distance)
         {
             ShortArray<8> sectionv(_numMedia);
             for (int h = 0; h != _numMedia; ++h) sectionv[h] = state(0, h).mix->sectionExt(pp->wavelength());
+            int gasEll = -1;
+            if (hasGas()) gasEll = Gas::indexForLambda(pp->wavelength());
             int i = 0;
             for (auto& segment : pp->segments())
             {
                 if (segment.m >= 0)
+                {
                     for (int h = 0; h != _numMedia; ++h) tau += sectionv[h] * state(segment.m, h).n * segment.ds;
+                    if (gasEll != -1) tau += Gas::opacityAbs(gasEll, segment.m) * segment.ds;
+                }
                 pp->setOpticalDepth(i++, tau);
                 if (segment.s > distance) break;
             }
@@ -489,6 +509,7 @@ double MediumSystem::opticalDepth(PhotonPacket* pp, double distance)
         int i = 0;
         for (auto& segment : pp->segments())
         {
+            // this already includes gas, so we don't need explicit calls to Gas like above
             if (segment.m >= 0) tau += opacityExt(pp->perceivedWavelength(state(segment.m).v), segment.m) * segment.ds;
             pp->setOpticalDepth(i++, tau);
             if (segment.s > distance) break;

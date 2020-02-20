@@ -63,6 +63,15 @@ public:
         the scenes, the opacity is implemented using a table, of which the rows are filled when \c
         updateGasState is called. */
     static double opacityAbs(double lambda, int m);
+
+    /** This function returns the index in the internal opacity table for the given wavelength, so
+        that the overload of \c opacityAbs() below can be used. */
+    static int indexForLambda(double lambda);
+
+    /** This function is the same as \c opacityAbs(double, int), but with a known wavelength index
+        (which can be calculated using \c indexForLambda(). This provides a more efficient way of
+        calculating the opacity for many cells at the same wavelength. */
+    static double opacityAbs(int ell, int m);
 };
 
 #endif

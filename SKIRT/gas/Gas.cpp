@@ -217,11 +217,35 @@ double Gas::gasTemperature(int m)
 double Gas::opacityAbs(double lambda, int m)
 {
 #ifdef BUILD_WITH_GAS
-    int indexForLambda = NR::locateClip(_olambdav, lambda);
-    return _opacityvv(m, indexForLambda);
+    return _opacityvv(m, indexForLambda(lambda));
 #else
     (void)lambda;
     (void)m;
+    return 0;
+#endif
+}
+
+////////////////////////////////////////////////////////////////////
+
+double Gas::opacityAbs(int ell, int m)
+{
+#ifdef BUILD_WITH_GAS
+    return _opacityvv(m, ell);
+#else
+    (void)ell;
+    (void)m;
+    return 0;
+#endif
+}
+
+////////////////////////////////////////////////////////////////////
+
+int Gas::indexForLambda(double lambda)
+{
+#ifdef BUILD_WITH_GAS
+    return NR::locateClip(_olambdav, lambda);
+#else
+    (void)lambda;
     return 0;
 #endif
 }
