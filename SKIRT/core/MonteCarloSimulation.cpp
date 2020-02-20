@@ -169,9 +169,16 @@ void MonteCarloSimulation::runSelfConsistentOpacityPhase(bool)
             instrumentSystem()->flush();
             wait(segment);
             mediumSystem()->communicateRadiationField(true);
-            mediumSystem()->updateGas();
         }
         // check convergence here
+        double Labsprimgas = mediumSystem()->totalAbsorbedLuminosity(true, MaterialMix::MaterialType::Gas);
+        double Labsprimdust = mediumSystem()->totalAbsorbedLuminosity(true, MaterialMix::MaterialType::Dust);
+        log()->info("The total gas-absorbed primary luminosity is "
+                    + StringUtils::toString(units()->obolluminosity(Labsprimgas), 'g') + " " + units()->ubolluminosity());
+        log()->info("The total dust-absorbed primary luminosity is "
+                    + StringUtils::toString(units()->obolluminosity(Labsprimdust), 'g') + " " + units()->ubolluminosity());
+
+        mediumSystem()->updateGas();
     }
 }
 
