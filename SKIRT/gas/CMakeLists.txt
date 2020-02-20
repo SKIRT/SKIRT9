@@ -38,6 +38,7 @@ if (BUILD_WITH_GAS)
     message("Please set GASMODULE_INSTALL_DIR - trying /usr/local/ by default")
     set(GASMODULE_INSTALL_DIR "/usr/local")
   endif()
+  message("Looking for gas module in ${GASMODULE_INSTALL_DIR}")
   find_library(GASMODULE_LIBRARIES
     NAMES libgasmodule.a
     PATHS "${GASMODULE_INSTALL_DIR}/lib")
