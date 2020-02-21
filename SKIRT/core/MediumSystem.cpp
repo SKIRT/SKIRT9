@@ -22,6 +22,7 @@
 #include "ShortArray.hpp"
 #include "StringUtils.hpp"
 #include "TextOutFile.hpp"
+#include "TimeLogger.hpp"
 #include <iostream>
 
 ////////////////////////////////////////////////////////////////////
@@ -642,6 +643,7 @@ double MediumSystem::absorbedLuminosity(int m, MaterialMix::MaterialType type) c
 
 void MediumSystem::updateGas()
 {
+    TimeLogger logger(find<Log>(), "updating gas states");
     // Does not work with multiprocessing yet
     find<ParallelFactory>()->parallelDistributed()->call(_numCells, [&](size_t firstIndex, size_t numIndices) {
         for (size_t m = firstIndex; m < firstIndex + numIndices; m++)
