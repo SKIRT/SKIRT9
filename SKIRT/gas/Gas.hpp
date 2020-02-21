@@ -77,6 +77,13 @@ public:
         should be called by each process after they have finished working on updateGasState in
         parallel. */
     static void communicateResults();
+
+    /** This function initializes all values of the gas properties to zero. The function should be
+        called before updateGasState() is called using multiprocessing. By starting from a clean
+        slate each time, the communicatin in \c communicateResults() can simply be done using a
+        sum. If some of the current results are needed to calculate the new state, they be copied
+        over to a different variable; something like that should be implemented here. */
+    static void clearResults();
 };
 
 #endif

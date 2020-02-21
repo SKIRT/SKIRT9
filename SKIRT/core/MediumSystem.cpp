@@ -644,7 +644,7 @@ double MediumSystem::absorbedLuminosity(int m, MaterialMix::MaterialType type) c
 void MediumSystem::updateGas()
 {
     TimeLogger logger(find<Log>(), "updating gas states");
-    // Does not work with multiprocessing yet
+    Gas::clearResults();
     find<ParallelFactory>()->parallelDistributed()->call(_numCells, [&](size_t firstIndex, size_t numIndices) {
         for (size_t m = firstIndex; m < firstIndex + numIndices; m++)
         {
@@ -665,6 +665,7 @@ void MediumSystem::updateGas()
             Gas::updateGasState(m, n, meanIntensity(m), nv);
         }
     });
+    Gas::communicateResults();
 }
 
 ////////////////////////////////////////////////////////////////////
