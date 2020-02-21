@@ -157,7 +157,7 @@ void MonteCarloSimulation::runSelfConsistentOpacityPhase(bool /* ARGUMENT NOT YE
     auto parallel = find<ParallelFactory>()->parallelDistributed();
 
     // initialize some convergence criteria here
-    int maxIters = 10;
+    int maxIters = 3;
     for (int iter = 1; iter <= maxIters; iter++)
     {
         string segment = "self consistent opacity iteration " + std::to_string(iter);
