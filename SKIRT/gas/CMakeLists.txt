@@ -20,8 +20,8 @@ file(GLOB HEADERS "*.hpp")
 add_library(${TARGET} STATIC ${SOURCES} ${HEADERS})
 
 # add SKIRT library dependencies
-target_link_libraries(${TARGET} utils)
-include_directories(../utils)
+target_link_libraries(${TARGET} utils mpi)
+include_directories(../utils ../mpi)
 
 # add SMILE library dependencies
 target_link_libraries(${TARGET} fundamentals)

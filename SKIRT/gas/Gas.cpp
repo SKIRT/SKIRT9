@@ -4,12 +4,13 @@
 #include "FatalError.hpp"
 #include "GrainInterface.hpp"
 #include "NR.hpp"
+#include "ProcessManager.hpp"
 #include "StringUtils.hpp"
 #include "Table.hpp"
-#include <chrono>
 
 #ifdef BUILD_WITH_GAS
 #    include "GasInterface.hpp"
+#    include <chrono>
 #    include <iostream>
 #    include <vector>
 namespace
@@ -247,6 +248,15 @@ int Gas::indexForLambda(double lambda)
 #else
     (void)lambda;
     return 0;
+#endif
+}
+
+////////////////////////////////////////////////////////////////////
+
+void Gas::communicateResults()
+{
+#ifdef BUILD_WITH_GAS
+    ProcessManager::sumToAll(_opacityvv.data());
 #endif
 }
 

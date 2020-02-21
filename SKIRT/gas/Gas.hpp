@@ -72,6 +72,11 @@ public:
         (which can be calculated using \c indexForLambda(). This provides a more efficient way of
         calculating the opacity for many cells at the same wavelength. */
     static double opacityAbs(int ell, int m);
+
+    /** This function synchronizes the gas properties that need to be present at each process. It
+        should be called by each process after they have finished working on updateGasState in
+        parallel. */
+    static void communicateResults();
 };
 
 #endif
