@@ -156,8 +156,12 @@ void MonteCarloSimulation::runSelfConsistentOpacityPhase(bool /* ARGUMENT NOT YE
     sourceSystem()->prepareForLaunch(Npp);
     auto parallel = find<ParallelFactory>()->parallelDistributed();
 
+    double prevLabsprimgas = 0;
+    double prevLabsprimdust = 0;
+
     // initialize some convergence criteria here
-    int maxIters = 3;
+    int minIters = 3;
+    int maxIters = 10;
     for (int iter = 1; iter <= maxIters; iter++)
     {
         string segment = "self consistent opacity iteration " + std::to_string(iter);
@@ -170,7 +174,7 @@ void MonteCarloSimulation::runSelfConsistentOpacityPhase(bool /* ARGUMENT NOT YE
             wait(segment);
             mediumSystem()->communicateRadiationField(true);
         }
-        // check convergence here
+
         double Labsprimgas = mediumSystem()->totalAbsorbedLuminosity(true, MaterialMix::MaterialType::Gas);
         double Labsprimdust = mediumSystem()->totalAbsorbedLuminosity(true, MaterialMix::MaterialType::Dust);
         log()->info("The total gas-absorbed primary luminosity is "
@@ -180,8 +184,29 @@ void MonteCarloSimulation::runSelfConsistentOpacityPhase(bool /* ARGUMENT NOT YE
                     + StringUtils::toString(units()->obolluminosity(Labsprimdust), 'g') + " "
                     + units()->ubolluminosity());
 
+        if (iter < minIters)
+        {
+            log()->info("Continuing until " + std::to_string(minIters) + " iterations have been performed");
+        }
+        else
+        {
+            bool bothZero = Labsprimgas <= 0. && Labsprimdust <= 0.;
+            bool bothConverged = abs((Labsprimdust - prevLabsprimdust) / Labsprimdust) < 0.01
+                                 && abs((Labsprimgas - prevLabsprimgas) / Labsprimgas) < 0.01;
+            if (bothZero || bothConverged)
+            {
+                log()->info("Convergence reached after " + std::to_string(iter) + " iterations");
+                return;  // end the iteration by returning from the function
+            }
+        }
+        prevLabsprimdust = Labsprimdust;
+        prevLabsprimgas = Labsprimgas;
+
+        // Now update the opacities
         mediumSystem()->updateGas();
     }
+    // if the loop runs out, convergence was not reached even after the maximum number of iterations
+    log()->error("Convergence not yet reached after " + std::to_string(maxIters) + " iterations");
 }
 
 ////////////////////////////////////////////////////////////////////
