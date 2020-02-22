@@ -157,9 +157,10 @@ void MonteCarloSimulation::runSelfConsistentOpacityPhase(bool /* ARGUMENT NOT YE
     auto parallel = find<ParallelFactory>()->parallelDistributed();
 
     double prevLabsprimgas = 0;
-    double prevLabsprimdust = 0;
+    double epsgas = 0.05;
+    double prevLabsprimdust = 0;\
+    double epsdust = 0.01;
 
-    // initialize some convergence criteria here
     int minIters = 3;
     int maxIters = 10;
     for (int iter = 1; iter <= maxIters; iter++)
@@ -191,8 +192,8 @@ void MonteCarloSimulation::runSelfConsistentOpacityPhase(bool /* ARGUMENT NOT YE
         else
         {
             bool bothZero = Labsprimgas <= 0. && Labsprimdust <= 0.;
-            bool bothConverged = abs((Labsprimdust - prevLabsprimdust) / Labsprimdust) < 0.01
-                                 && abs((Labsprimgas - prevLabsprimgas) / Labsprimgas) < 0.01;
+            bool bothConverged = abs((Labsprimdust - prevLabsprimdust) / Labsprimdust) < epsdust
+                                 && abs((Labsprimgas - prevLabsprimgas) / Labsprimgas) < epsgas;
             if (bothZero || bothConverged)
             {
                 log()->info("Convergence reached after " + std::to_string(iter) + " iterations");
