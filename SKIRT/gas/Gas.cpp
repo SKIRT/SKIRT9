@@ -190,8 +190,9 @@ void Gas::updateGasState(int m, double n, const Array& meanIntensityv, const Arr
     {
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-        std::cout << "gas sample " << m << " n " << n * 1.e-6 << " t " << gasTemperature(m) << " time "
-                  << duration.count() << " ms.\n ";
+        std::cout << "gas sample " << m << " n " << n * 1.e-6 << " time "
+                  << duration.count() << " ms.\n";
+        std::cout << _gi->quickInfo(_statev[m], jnu) << '\n';
     }
 #else
     (void)n;
