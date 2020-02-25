@@ -182,7 +182,7 @@ void Gas::updateGasState(int m, double n, const Array& meanIntensityv, const Arr
     // }
 
     // calculate and store the opacity
-    const Array& opacity_nu = _gi->opacity_SI(_statev[m]);
+    const Array& opacity_nu = _gi->opacity(_statev[m], true);
     // the opacity table is indexed on wavelength, so we need to flip the result around
     for (size_t ell = 0; ell < opacity_nu.size(); ell++) _opacityvv(m, ell) = opacity_nu[opacity_nu.size() - 1 - ell];
 
