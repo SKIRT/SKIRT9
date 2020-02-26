@@ -9,6 +9,7 @@
 #include "DisjointWavelengthGrid.hpp"
 #include "FatalError.hpp"
 #include "Log.hpp"
+#include "MaterialMix.hpp"
 #include "MediumSystem.hpp"
 #include "NR.hpp"
 #include "Parallel.hpp"
@@ -53,26 +54,33 @@ void SecondarySourceSystem::installLaunchCallBack(ProbePhotonPacketInterface* ca
 
 bool SecondarySourceSystem::prepareForLaunch(size_t numPackets)
 {
+    size_t Nppdust = numPackets / 2;
+    size_t Nppgas = numPackets / 2;
+    // TODO: implement option to do only dust or only gas, and variable ratio
+
     int numCells = _ms->numCells();
 
     // --------- luminosities 1 ---------
 
-    // calculate the absorbed (and thus to be emitted) dust luminosity for each spatial cell
-    // this can be somewhat time-consuming, so we do this in parallel
-    _Lv.resize(numCells);
+    // calculate the absorbed (and thus to be emitted) dust and gas luminosity for each spatial
+    // cell this can be somewhat time-consuming, so we do this in parallel
+    _Ldustv.resize(numCells);
+    _Lgasv.resize(numCells);
     find<ParallelFactory>()->parallelDistributed()->call(numCells, [this](size_t firstIndex, size_t numIndices) {
         for (size_t m = firstIndex; m != firstIndex + numIndices; ++m)
         {
-            _Lv[m] = _ms->absorbedLuminosity(m, MaterialMix::MaterialType::Dust);
+            _Ldustv[m] = _ms->absorbedLuminosity(m, MaterialMix::MaterialType::Dust);
+            _Lgasv[m] = _ms->absorbedLuminosity(m, MaterialMix::MaterialType::Gas);
         }
     });
-    ProcessManager::sumToAll(_Lv);
+    ProcessManager::sumToAll(_Ldustv);
+    ProcessManager::sumToAll(_Lgasv);
 
     // --------- library mapping ---------
 
     // obtain the spatial cell library mapping (from cell indices to library entry indices);
     // pass the cell luminosities to the library so it can avoid mapping zero-luminosity cells
-    _nv = _config->cellLibrary()->mapping(_Lv);
+    _nv = _config->cellLibrary()->mapping(_Ldustv);
 
     // construct a list of spatial cell indices sorted so that cells belonging to the same entry are consecutive
     _mv.resize(numCells);
@@ -84,42 +92,63 @@ bool SecondarySourceSystem::prepareForLaunch(size_t numPackets)
     // force cells that have not been mapped by the library to zero luminosity
     // so that we won't launch photon packets for these cells
     for (int m = 0; m != numCells; ++m)
-        if (_nv[m] < 0) _Lv[m] = 0.;
+        if (_nv[m] < 0) _Ldustv[m] = 0.;
 
     // calculate the total luminosity; if it is zero, report failure
-    _L = _Lv.sum();
-    if (_L <= 0.) return false;
+    _Ldust = _Ldustv.sum();
+    _Lgas = _Ldustv.sum();
+    if (_Ldust <= 0. && _Lgas <= 0.) return false;
 
     // calculate the average luminosity contribution for each packet
-    _Lpp = _L / numPackets;
+    _Lppdust = _Ldust / Nppdust;
+    _Lppgas = _Lgas / Nppgas;
 
     // normalize the individual luminosities to unity
-    _Lv /= _L;
+    _Ldustv /= _Ldust;
+    _Lgasv /= _Lgas;
 
     // --------- weights ---------
 
     // determine a uniform weight for each cell with non-negligable emission, and normalize to unity
-    Array wv(numCells);
-    for (int m = 0; m != numCells; ++m) wv[m] = _Lv[m] > 0 ? 1. : 0.;
-    wv /= wv.sum();
+    Array wdustv(numCells);
+    Array wgasv(numCells);
+    for (int m = 0; m != numCells; ++m)
+    {
+        wdustv[m] = _Ldustv[m] > 0. ? 1. : 0.;
+        wgasv[m] = _Lgasv[m] > 0. ? 1. : 0.;
+    }
+    wdustv /= wdustv.sum();
+    wgasv /= wgasv.sum();
 
     // calculate the final, composite-biased launch weight for each cell, normalized to unity
     double xi = _config->secondarySpatialBias();
-    _Wv = (1 - xi) * _Lv + xi * wv;
+    _Wdustv = (1 - xi) * _Ldustv + xi * wdustv;
+    _Wgasv = (1 - xi) * _Lgasv + xi * wgasv;
 
     // determine the first history index for each cell, using the adjusted cell ordering so that
     // all photon packets for a given library entry are launched consecutively
-    _Iv.resize(numCells + 1);
-    _Iv[0] = 0;
+    _Idustv.resize(numCells + 1);
+    _Idustv[0] = 0;
     double W = 0.;
     for (int p = 1; p != numCells; ++p)
     {
         // track the cumulative normalized weight as a floating point number
         // and limit the index to numPackets to avoid issues with rounding errors
-        W += _Wv[_mv[p - 1]];
-        _Iv[p] = min(numPackets, static_cast<size_t>(std::round(W * numPackets)));
+        W += _Wdustv[_mv[p - 1]];
+        _Idustv[p] = min(Nppdust, static_cast<size_t>(std::round(W * Nppdust)));
     }
-    _Iv[numCells] = numPackets;
+    _Idustv[numCells] = Nppdust;
+
+    _startGasI = Nppdust + 1;
+    _Igasv.resize(numCells + 1);
+    _Igasv[0] = _startGasI;
+    W = 0.;
+    for (int p = 1; p != numCells; ++p)
+    {
+        W += _Wgasv[_mv[p - 1]];
+        _Igasv[p] = _startGasI + min(Nppgas, static_cast<size_t>(std::round(W * Nppgas)));
+    }
+    _Igasv[numCells] = numPackets;
 
     // --------- logging ---------
 
@@ -128,7 +157,7 @@ bool SecondarySourceSystem::prepareForLaunch(size_t numPackets)
     // spatial cells
     int emittingCells = 0;  // number of nonzero luminosity cells
     for (int m = 0; m != numCells; ++m)
-        if (_Lv[m] > 0.) emittingCells++;
+        if (_Ldustv[m] > 0. || _Lgasv[m] > 0.) emittingCells++;
     log->info("Emitting from " + std::to_string(emittingCells) + " out of " + std::to_string(numCells)
               + " spatial cells");
 
@@ -492,7 +521,7 @@ namespace
 void SecondarySourceSystem::launch(PhotonPacket* pp, size_t historyIndex) const
 {
     // select the spatial cell from which to launch based on the history index of this photon packet
-    auto p = std::upper_bound(_Iv.cbegin(), _Iv.cend(), historyIndex) - _Iv.cbegin() - 1;
+    auto p = std::upper_bound(_Idustv.cbegin(), _Idustv.cend(), historyIndex) - _Idustv.cbegin() - 1;
     auto m = _mv[p];
 
     // calculate the emission spectrum and bulk velocity for this cell, if not already available
@@ -536,7 +565,7 @@ void SecondarySourceSystem::launch(PhotonPacket* pp, size_t historyIndex) const
     }
 
     // get the weighted luminosity corresponding to this cell
-    double L = _Lpp * _Lv[m] / _Wv[m];
+    double L = _Lpp * _Ldustv[m] / _Wdustv[m];
 
     // generate a random position in this spatial cell
     Position bfr = _ms->grid()->randomPositionInCell(m);

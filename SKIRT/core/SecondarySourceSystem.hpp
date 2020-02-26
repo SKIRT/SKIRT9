@@ -209,13 +209,27 @@ private:
     ProbePhotonPacketInterface* _callback{nullptr};  // interface to be invoked for each packet launch if nonzero
 
     // initialized by prepareForLaunch()
-    double _L{0};        // the total bolometric luminosity of all spatial cells
-    double _Lpp{0};      // the average luminosity contribution for each packet
-    Array _Lv;           // the relative bolometric luminosity of each spatial cell (normalized to unity)
-    Array _Wv;           // the relative launch weight for each spatial cell (normalized to unity)
+    double _Ldust{0};    // the total bolometric luminosity of all spatial cells
+    double _Lgas{0};     // total bolometric luminosity absorbed by the gas
+    double _Lppdust{0};  // the average luminosity contribution for each packet
+    double _Lppgas{0};   // average luminosity for gas photon packets
+    Array _Ldustv;       // the relative bolometric luminosity of each spatial cell (normalized to unity)
+    Array _Lgasv;        // the relative bolometric luminosity of the gas in each spatial cell (normalized to unity)
+    Array _Wdustv;       // the relative launch weight for each spatial cell (normalized to unity)
+    Array _Wgasv;        // separate weight for the gas (it wouldn't make sense to weigh both gas
+                         // and dust photons using the bolometric (gas + dust) absorbed luminosity)
     vector<int> _nv;     // the library entry index corresponding to each spatial cell (i.e. map from cells to entries)
     vector<int> _mv;     // the spatial cell indices sorted so that cells belonging to the same entry are consecutive
-    vector<size_t> _Iv;  // first history index allocated to each spatial cell (with extra entry at the end)
+
+    // first history index allocated to each spatial cell (with extra entry at the end). Packages
+    // with history indices in this range will be launched from the dust.
+    vector<size_t> _Idustv;
+    // continues where _Idustv left off. Packages with history indices in this range will be
+    // launched from the gas.
+    vector<size_t> _Igasv;
+    // Any photon package with a history index greater than or equal to this number will be launched from the
+    // gas.
+    size_t _startGasI{0};
 };
 
 ////////////////////////////////////////////////////////////////
