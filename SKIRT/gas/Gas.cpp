@@ -109,7 +109,7 @@ void Gas::finalize()
 
 ////////////////////////////////////////////////////////////////////
 
-static const Array& lambdav()
+const Array& Gas::lambdav()
 {
     return _lambdav;
 }
@@ -203,8 +203,7 @@ void Gas::updateGasState(int m, double n, const Array& meanIntensityv, const Arr
     {
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-        std::cout << "gas sample " << m << " n " << n * 1.e-6 << " time "
-                  << duration.count() << " ms.\n";
+        std::cout << "gas sample " << m << " n " << n * 1.e-6 << " time " << duration.count() << " ms.\n";
         std::cout << _gi->quickInfo(_statev[m], jnu) << '\n';
     }
 #else
@@ -285,3 +284,13 @@ int Gas::indexForLambda(double lambda)
 
 ////////////////////////////////////////////////////////////////////
 
+Array Gas::emissivity(int m)
+{
+#ifdef BUILD_WITH_GAS
+    return Array(_gi->eFrequencyv().size());
+#else
+    (void)m;
+#endif
+}
+
+////////////////////////////////////////////////////////////////////

@@ -381,6 +381,8 @@ namespace
         Vec _bfv;
 
     public:
+        GasCellEmission() {}
+
         void calculateIfNeeded(int p, const vector<int>& mv, MediumSystem* ms, Configuration* config)
         {
             if (p == _p) return;
@@ -410,6 +412,7 @@ namespace
         {
             return NR::value<NR::interpolateLogLog>(lambda, _lambdav, _pv);
         }
+        Vec velocity() const override { return _bfv; }
     };
 
     thread_local GasCellEmission t_gascell;
@@ -569,12 +572,24 @@ namespace
 void SecondarySourceSystem::launch(PhotonPacket* pp, size_t historyIndex) const
 {
     // select the spatial cell from which to launch based on the history index of this photon packet
-    auto p = std::upper_bound(_Idustv.cbegin(), _Idustv.cend(), historyIndex) - _Idustv.cbegin() - 1;
+    bool isDust = historyIndex < _startGasI;
+    size_t p = 0;
+    if (isDust)
+        p = std::upper_bound(_Idustv.cbegin(), _Idustv.cend(), historyIndex) - _Idustv.cbegin() - 1;
+    else
+        p = std::upper_bound(_Igasv.cbegin(), _Igasv.cend(), historyIndex) - _Igasv.cbegin() - 1;
     auto m = _mv[p];
 
-    // calculate the emission spectrum and bulk velocity for this cell, if not already available
-    t_dustcell.calculateIfNeeded(p, _mv, _nv, _ms, _config);
-    t_dustcellpol.calculateIfNeeded(m, _ms, _config);
+    if (isDust)
+    {
+        // calculate the emission spectrum and bulk velocity for this cell, if not already available
+        t_dustcell.calculateIfNeeded(p, _mv, _nv, _ms, _config);
+        t_dustcellpol.calculateIfNeeded(m, _ms, _config);
+    }
+    else
+    {
+        t_gascell.calculateIfNeeded(p, _mv, _ms, _config);
+    }
 
     // generate a random wavelength from the emission spectrum for the cell and/or from the bias distribution
     double lambda, w;
@@ -583,19 +598,19 @@ void SecondarySourceSystem::launch(PhotonPacket* pp, size_t historyIndex) const
         if (!xi)
         {
             // no biasing -- simply use the intrinsic spectral distribution
-            lambda = t_dustcell.generateWavelength(_random);
+            lambda = isDust ? t_dustcell.generateWavelength(_random) : t_gascell.generateWavelength(_random);
             w = 1.;
         }
         else
         {
             // biasing -- use one or the other distribution
             if (_random->uniform() > xi)
-                lambda = t_dustcell.generateWavelength(_random);
+                lambda = isDust ? t_dustcell.generateWavelength(_random) : t_gascell.generateWavelength(_random);
             else
                 lambda = _config->secondaryWavelengthBiasDistribution()->generateWavelength();
 
             // calculate the compensating weight factor
-            double s = t_dustcell.specificLuminosity(lambda);
+            double s = isDust ? t_dustcell.specificLuminosity(lambda) : t_gascell.specificLuminosity(lambda);
             if (!s)
             {
                 // if the wavelength can't occur in the intrinsic distribution,
@@ -613,19 +628,23 @@ void SecondarySourceSystem::launch(PhotonPacket* pp, size_t historyIndex) const
     }
 
     // get the weighted luminosity corresponding to this cell
-    double L = _Lpp * _Ldustv[m] / _Wdustv[m];
+    double L = isDust ? _Lppdust * _Ldustv[m] / _Wdustv[m] : _Lppgas * _Lgasv[m] / _Wgasv[m];
 
     // generate a random position in this spatial cell
     Position bfr = _ms->grid()->randomPositionInCell(m);
 
     // provide a redshift interface for the appropriate velocity, if it is nonzero
-    VelocityInterface* bvi = t_dustcell.velocity().isNull() ? nullptr : &t_dustcell;
+    VelocityInterface* bvi = nullptr;
+    if (isDust && !t_dustcell.velocity().isNull())
+        bvi = &t_dustcell;
+    else if (!t_gascell.velocity().isNull())
+        bvi = &t_gascell;
 
     // provide a polarisation interface for polarised emission, if applicable
     // generate a random emission direction
     DustCellPolarisedEmission* dpe = nullptr;
     Direction bfk;
-    if (_config->hasSpheroidalPolarization())
+    if (isDust && _config->hasSpheroidalPolarization())
     {
         t_dustcellpol.calculate(lambda);
         dpe = &t_dustcellpol;
