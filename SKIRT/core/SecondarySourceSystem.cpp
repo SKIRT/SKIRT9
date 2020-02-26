@@ -8,6 +8,7 @@
 #include "Configuration.hpp"
 #include "DisjointWavelengthGrid.hpp"
 #include "FatalError.hpp"
+#include "Gas.hpp"
 #include "Log.hpp"
 #include "MaterialMix.hpp"
 #include "MediumSystem.hpp"
@@ -365,6 +366,53 @@ namespace
 
     // setup a DustCellEmission instance for each parallel execution thread to cache dust emission information
     thread_local DustCellEmission t_dustcell;
+
+    // Same as the above, but for gas. Some things are similar, others are not. Implement with some
+    // duplication for now.
+    class GasCellEmission : public VelocityInterface
+    {
+    private:
+        MediumSystem* _ms{nullptr};
+        Array _wavelengthGrid;
+        Range _wavelengthRange;
+
+        int _p{-1};
+        Array _lambdav, _pv, _Pv;
+        Vec _bfv;
+
+    public:
+        void calculateIfNeeded(int p, const vector<int>& mv, MediumSystem* ms, Configuration* config)
+        {
+            if (p == _p) return;
+            if (_p == -1)
+            {
+                // TODO: use config to get gasEmissionWLG(), once it exists
+                _ms = ms;
+                _wavelengthGrid = Gas::lambdav();
+                _wavelengthRange = Range(_wavelengthGrid[0], _wavelengthGrid[_wavelengthGrid.size() - 1]);
+            }
+            _p = p;
+            int m = mv[p];
+            calculateSingleSpectrum(m);
+            _bfv = ms->bulkVelocity(m);
+        }
+
+    private:
+        void calculateSingleSpectrum(int m)
+        {
+            Array ev = Gas::emissivity(m);
+            NR::cdf<NR::interpolateLogLog>(_lambdav, _pv, _Pv, _wavelengthGrid, ev, _wavelengthRange);
+        }
+
+    public:
+        double generateWavelength(Random* random) const { return random->cdfLogLog(_lambdav, _pv, _Pv); }
+        double specificLuminosity(double lambda) const
+        {
+            return NR::value<NR::interpolateLogLog>(lambda, _lambdav, _pv);
+        }
+    };
+
+    thread_local GasCellEmission t_gascell;
 
     // An instance of this class obtains the information needed to determine
     // angular distribution probabilities and polarization components for
