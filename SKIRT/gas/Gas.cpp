@@ -204,6 +204,24 @@ void Gas::updateGasState(int m, double n, const Array& meanIntensityv, const Arr
 
 ////////////////////////////////////////////////////////////////////
 
+void Gas::communicateResults()
+{
+#ifdef BUILD_WITH_GAS
+    ProcessManager::sumToAll(_opacityvv.data());
+#endif
+}
+
+////////////////////////////////////////////////////////////////////
+
+void Gas::clearResults()
+{
+#ifdef BUILD_WITH_GAS
+    _opacityvv.setToZero();
+#endif
+}
+
+////////////////////////////////////////////////////////////////////
+
 double Gas::gasTemperature(int m)
 {
 #ifdef BUILD_WITH_GAS
@@ -254,20 +272,3 @@ int Gas::indexForLambda(double lambda)
 
 ////////////////////////////////////////////////////////////////////
 
-void Gas::communicateResults()
-{
-#ifdef BUILD_WITH_GAS
-    ProcessManager::sumToAll(_opacityvv.data());
-#endif
-}
-
-////////////////////////////////////////////////////////////////////
-
-void Gas::clearResults()
-{
-#ifdef BUILD_WITH_GAS
-    _opacityvv.setToZero();
-#endif
-}
-
-////////////////////////////////////////////////////////////////////

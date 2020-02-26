@@ -53,25 +53,7 @@ public:
         \c numberDensRatiov of each \c DustInfo. This argument should contain the hydrogen number
         density factor \c n for medium \c h of cell \c m. This function is thread safe as long as
         each thread works on different \c m. */
-    static void updateGasState(int m, double n, const Array& meanIntensityv, const Array& mixNumberDensvcpa);
-
-    /** This function returns the gas temperature that resulted from \c updateGasState(). */
-    static double gasTemperature(int m);
-
-    /** This function calculates the opacity of the gas at a given wavelength for state \c m. If \c
-        updateGasState() has not yet been called for cell \c m, the return value will be 0. Behind
-        the scenes, the opacity is implemented using a table, of which the rows are filled when \c
-        updateGasState is called. */
-    static double opacityAbs(double lambda, int m);
-
-    /** This function returns the index in the internal opacity table for the given wavelength, so
-        that the overload of \c opacityAbs() below can be used. */
-    static int indexForLambda(double lambda);
-
-    /** This function is the same as \c opacityAbs(double, int), but with a known wavelength index
-        (which can be calculated using \c indexForLambda(). This provides a more efficient way of
-        calculating the opacity for many cells at the same wavelength. */
-    static double opacityAbs(int ell, int m);
+    static void updateGasState(int m, double n, const Array& meanIntensityv, const Array& mixNumberDensv);
 
     /** This function synchronizes the gas properties that need to be present at each process. It
         should be called by each process after they have finished working on updateGasState in
@@ -84,6 +66,24 @@ public:
         sum. If some of the current results are needed to calculate the new state, they be copied
         over to a different variable; something like that should be implemented here. */
     static void clearResults();
+
+    /** This function returns the gas temperature that resulted from \c updateGasState(). */
+    static double gasTemperature(int m);
+
+    /** This function calculates the opacity of the gas at a given wavelength for state \c m. If \c
+        updateGasState() has not yet been called for cell \c m, the return value will be 0. Behind
+        the scenes, the opacity is implemented using a table, of which the rows are filled when \c
+        updateGasState is called. */
+    static double opacityAbs(double lambda, int m);
+
+    /** This function is the same as \c opacityAbs(double, int), but with a known wavelength index
+        (which can be calculated using \c indexForLambda(). This provides a more efficient way of
+        calculating the opacity for many cells at the same wavelength. */
+    static double opacityAbs(int ell, int m);
+
+    /** This function returns the index in the internal opacity table for the given wavelength, so
+        that the overload of \c opacityAbs() below can be used. */
+    static int indexForLambda(double lambda);
 };
 
 #endif
