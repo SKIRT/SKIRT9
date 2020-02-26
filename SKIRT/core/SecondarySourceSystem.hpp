@@ -121,7 +121,21 @@ class Random;
     result must be calculated and stored for each cell separately. If the medium system has only a
     single dust component, the above formula reduces to \f$j_{m,\ell} =\rho_m\,
     \varepsilon_{n,\ell}\f$, so that the normalized emission spectrum is identical for all spatial
-    cells that map to a certain library entry. */
+    cells that map to a certain library entry.
+
+    Gas support
+    -----------
+
+    To support the continuum emission by gas, the following modifications have been made:
+
+    - prepareForLaunch takes an extra argument, to indicate wether only gas photons, only dust
+      photons, or both need to be launched. The ratio is 50/50 for now, but a more customizable
+      system might be added later.
+
+    - there is a certain threshold in the list of history indices. Above this threshold, photons
+      will be launched using the gas SED instead of the dust SED
+
+*/
 class SecondarySourceSystem : public SimulationItem
 {
     //============= Construction - Setup - Destruction =============
