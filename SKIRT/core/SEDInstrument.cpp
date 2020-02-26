@@ -13,7 +13,7 @@ void SEDInstrument::setupSelfBefore()
     DistantInstrument::setupSelfBefore();
 
     // configure flux recorder
-    instrumentFluxRecorder()->includeFluxDensity(distance());
+    instrumentFluxRecorder()->includeFluxDensity();
 }
 
 ////////////////////////////////////////////////////////////////////

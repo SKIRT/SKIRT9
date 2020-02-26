@@ -68,6 +68,20 @@ public:
     /** Returns true if the simulation has been put in emulation mode. */
     bool emulationMode() const { return _emulationMode; }
 
+    /** Returns the redshift at which the model resides, or zero if the model resides in the Local
+        Universe. */
+    double redshift() const { return _redshift; }
+
+    /** Returns the angular-diameter distance corresponding to the redshift at which the model
+        resides, or zero if the model resides in the Local Universe. Refer to the Cosmology class
+        description for more information. */
+    double angularDiameterDistance() const { return _angularDiameterDistance; }
+
+    /** Returns the luminosity distance corresponding to the redshift at which the model resides,
+        or zero if the model resides in the Local Universe. Refer to the Cosmology class
+        description for more information. */
+    double luminosityDistance() const { return _luminosityDistance; }
+
     /** Returns true if the wavelength regime of the simulation is oligochromatic. */
     bool oligochromatic() const { return _oligochromatic; }
 
@@ -153,6 +167,10 @@ public:
     /** Returns true if secondary dust emission must be calculated by taking stochastically heated
         grains into account, and false otherwise. */
     bool hasStochasticDustEmission() const { return _hasStochasticDustEmission; }
+
+    /** Returns true if the cosmic microwave background (CMB) must be added as a source term for
+        dust heating, and false otherwise. */
+    bool includeHeatingByCMB() const { return _includeHeatingByCMB; }
 
     /** Returns true if dust self-absorption must be self-consistently calculated through
         iteration, and false otherwise. */
@@ -242,6 +260,11 @@ private:
     // general
     bool _emulationMode{false};
 
+    // cosmology parameters
+    double _redshift{0.};
+    double _angularDiameterDistance{0.};
+    double _luminosityDistance{0.};
+
     // primary source wavelengths
     bool _oligochromatic{false};
     Range _sourceWavelengthRange;
@@ -269,6 +292,7 @@ private:
     // emission
     bool _hasDustEmission{false};
     bool _hasStochasticDustEmission{false};
+    bool _includeHeatingByCMB{false};
     bool _hasDustSelfAbsorption{false};
     DisjointWavelengthGrid* _dustEmissionWLG{nullptr};
     SpatialCellLibrary* _cellLibrary{nullptr};

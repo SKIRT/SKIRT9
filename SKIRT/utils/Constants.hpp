@@ -47,6 +47,10 @@ public:
     /** This function returns the solar bolometric luminosity without neutrino radiation. */
     static double Lsun();
 
+    /** This function returns the average temperature of the cosmic microwave background (CMB) in
+        the Local Universe. */
+    static double Tcmb();
+
     /** This function returns the ionization wavelength of atomic hydrogen. */
     static double lambdaIon();
 

@@ -33,6 +33,10 @@ class DustEmissionOptions : public SimulationItem, public SourceWavelengthRangeI
         ATTRIBUTE_INSERT(dustEmissionType, "dustEmissionTypeStochastic:StochasticDustEmission")
         ATTRIBUTE_DISPLAYED_IF(dustEmissionType, "Level2")
 
+        PROPERTY_BOOL(includeHeatingByCMB, "add the cosmic microwave background (CMB) as a dust heating source term")
+        ATTRIBUTE_DEFAULT_VALUE(includeHeatingByCMB, "false")
+        ATTRIBUTE_DISPLAYED_IF(includeHeatingByCMB, "NonZeroRedshift")
+
         PROPERTY_ITEM(cellLibrary, SpatialCellLibrary, "the spatial cell grouping scheme for calculating dust emission")
         ATTRIBUTE_DEFAULT_VALUE(cellLibrary, "AllCellsLibrary")
         ATTRIBUTE_REQUIRED_IF(cellLibrary, "false")

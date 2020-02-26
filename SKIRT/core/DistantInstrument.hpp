@@ -15,6 +15,8 @@
     perpendicular to the line of sight rather than a part of a sphere. Consequently
     parallel projection is used and the distance is only important for flux calibration.
 
+    __Viewing direction__
+
     The direction \f${\boldsymbol{k}}_{\text{obs}} = (\theta,\varphi)\f$ towards the instrument is
     specified through the inclination angle \f$\theta\f$ and the azimuth angle \f$\varphi\f$.
     Finally, the instrument can be rotated about the line of sight by specifying its roll angle
@@ -27,14 +29,38 @@
     <TR><TD>YZ-plane</TD>        <TD>90</TD>  <TD>0</TD>   <TD>0</TD>   </TR>
     <TR><TD>first octant</TD>    <TD>45</TD>  <TD>45</TD>  <TD>0</TD>   </TR>
     </TABLE>
-    */
+
+    __Nonzero redshift__
+
+    If the model redshift is non-zero (see the Cosmology class description for more information), a
+    distant instrument can be placed in either the \em rest-frame of the model or an \em observer
+    frame corresponding to the model's redshift. To allow this selection, the \em distance property
+    of distant instruments can have a zero value. Specifically,
+
+    - If \em distance is non-zero, the instrument is placed in the rest-frame of the model at the
+    given (non-relativistic) distance. Wavelengths are not shifted and fluxes are calibrated using
+    the given distance.
+
+    - If \em distance is zero, the instrument is placed in an observer frame corresponding to the
+    redshift specified for the model. The wavelength of each detected photon packet is shifted
+    accordingly before the packet's contribution is recorded in the instrument, and flux
+    calibration takes into account the relevant relativistic effects including the luminosity
+    distance.
+
+    - If \em distance is zero and the model redshift is zero as well, a fatal error is issued
+    during setup.
+
+    This approach allows the on-the-fly convolution for an instrument with a broadband-based
+    wavelength grid to occur in either the rest-frame or the observer frame depending on the
+    instrument's settings. A configuration might even include both type of instruments at the same
+    time. */
 class DistantInstrument : public Instrument
 {
     ITEM_ABSTRACT(DistantInstrument, Instrument, "a distant instrument")
 
         PROPERTY_DOUBLE(distance, "the distance to the system")
         ATTRIBUTE_QUANTITY(distance, "distance")
-        ATTRIBUTE_MIN_VALUE(distance, "]0")
+        ATTRIBUTE_MIN_VALUE(distance, "[0")
 
         PROPERTY_DOUBLE(inclination, "the inclination angle θ of the detector")
         ATTRIBUTE_QUANTITY(inclination, "posangle")

@@ -69,9 +69,9 @@ void AllSkyInstrument::setupSelfBefore()
     _transform.rotateZ(0., -1.);
 
     // configure flux recorder with a large distance relative to the pixel size so that atan(s/2d) = s/2d
-    // and the default calibration can be easily corrected when detecting each individual phoon packet
-    double distance = _s * 1e8;
-    instrumentFluxRecorder()->includeSurfaceBrightness(distance, _Nx, _Ny, _s, _s, 0, 0);
+    // and the default calibration can be easily corrected when detecting each individual photon packet
+    instrumentFluxRecorder()->setRestFrameDistance(_s * 1e8);
+    instrumentFluxRecorder()->includeSurfaceBrightness(_Nx, _Ny, _s, _s, 0, 0);
 }
 
 ////////////////////////////////////////////////////////////////////

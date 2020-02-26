@@ -14,9 +14,8 @@ void FrameInstrument::setupSelfBefore()
     DistantInstrument::setupSelfBefore();
 
     // configure flux recorder
-    instrumentFluxRecorder()->includeSurfaceBrightness(distance(), numPixelsX(), numPixelsY(),
-                                                       fieldOfViewX() / numPixelsX(), fieldOfViewY() / numPixelsY(),
-                                                       centerX(), centerY());
+    instrumentFluxRecorder()->includeSurfaceBrightness(numPixelsX(), numPixelsY(), fieldOfViewX() / numPixelsX(),
+                                                       fieldOfViewY() / numPixelsY(), centerX(), centerY());
 
     // precalculate information needed by pixelOnDetector() function
     _costheta = cos(inclination());

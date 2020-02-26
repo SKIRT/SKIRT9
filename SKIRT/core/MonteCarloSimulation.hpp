@@ -7,6 +7,7 @@
 #define MONTECARLOSIMULATION_HPP
 
 #include "Configuration.hpp"
+#include "Cosmology.hpp"
 #include "InstrumentSystem.hpp"
 #include "MediumSystem.hpp"
 #include "ProbeSystem.hpp"
@@ -97,6 +98,10 @@ class MonteCarloSimulation : public Simulation
                                          "simulationModeDustEmission:Panchromatic,DustEmission,Emission,RadiationField;"
                                          "simulationModeDustEmissionWithSelfAbsorption:"
                                          "Panchromatic,DustEmission,Emission,RadiationField,DustSelfAbsorption")
+
+        PROPERTY_ITEM(cosmology, Cosmology, "the cosmology parameters")
+        ATTRIBUTE_DEFAULT_VALUE(cosmology, "LocalUniverseCosmology")
+        ATTRIBUTE_DISPLAYED_IF(cosmology, "Level2")
 
         PROPERTY_DOUBLE(numPackets, "the default number of photon packets launched per simulation segment")
         ATTRIBUTE_MIN_VALUE(numPackets, "[0")

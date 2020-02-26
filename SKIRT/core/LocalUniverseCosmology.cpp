@@ -3,17 +3,27 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "FullInstrument.hpp"
-#include "FluxRecorder.hpp"
+#include "LocalUniverseCosmology.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-void FullInstrument::setupSelfBefore()
+double LocalUniverseCosmology::modelRedshift() const
 {
-    FrameInstrument::setupSelfBefore();
+    return 0.;
+}
 
-    // add SED to FrameInstrument's flux recorder's configuration
-    instrumentFluxRecorder()->includeFluxDensity();
+////////////////////////////////////////////////////////////////////
+
+double LocalUniverseCosmology::angularDiameterDistance() const
+{
+    return 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double LocalUniverseCosmology::luminosityDistance() const
+{
+    return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
