@@ -36,6 +36,9 @@ public:
         finalize(), all info about the gas will be lost. */
     static void finalize();
 
+    /** This utility function returns the wavelengths that were given to Gas at initialization */
+    static const Array& lambdav();
+
     /** This function allocates space for the resuls of updateGasState to be stored. The gas is
         initialized as transparent. If updateGasState has not yet been called for a certain \c m,
         the returned values will be zero. */
@@ -57,7 +60,7 @@ public:
 
     /** This function synchronizes the gas properties that need to be present at each process. It
         should be called by each process after they have finished working on updateGasState in
-        parallel. */
+        parallel. TODO: communicate gas state contents. */
     static void communicateResults();
 
     /** This function initializes all values of the gas properties to zero. The function should be
@@ -84,6 +87,11 @@ public:
     /** This function returns the index in the internal opacity table for the given wavelength, so
         that the overload of \c opacityAbs() below can be used. */
     static int indexForLambda(double lambda);
+
+    /** This function calculates the emissivity (W m-3 sr-1 m-1) on the wavelength grid that was
+        given at initialization, using the gas state stored at index m. TODO: use different
+        wavelength grid for opacity and emissivity. */
+    static Array emissivity(int m);
 };
 
 #endif

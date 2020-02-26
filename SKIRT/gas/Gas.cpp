@@ -38,6 +38,9 @@ namespace
             return GasModule::GrainTypeLabel::OTHER;
     }
 
+    // Wavlengths given at initialization
+    Array _lambdav;
+
     // Wavelengths for the opacities
     Array _olambdav;
 
@@ -77,6 +80,9 @@ void Gas::initialize(const Array& lambdav, const std::vector<DustInfo>& dustinfo
         for (size_t b = 0; b < d.qabsvv.size(); b++) std::reverse(std::begin(d.qabsvv[b]), std::end(d.qabsvv[b]));
     }
 
+    // store the original wavelength grid for convenience
+    _lambdav = lambdav;
+
     // derive a wavelength grid that will be used for converting a wavelength to an index in the
     // opacity table. copied from DustMix
     _olambdav.resize(numFreq);
@@ -99,6 +105,13 @@ void Gas::finalize()
     delete _gi;
     _gi = nullptr;
 #endif
+}
+
+////////////////////////////////////////////////////////////////////
+
+static const Array& lambdav()
+{
+    return _lambdav;
 }
 
 ////////////////////////////////////////////////////////////////////
