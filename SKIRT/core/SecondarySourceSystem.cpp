@@ -53,29 +53,57 @@ void SecondarySourceSystem::installLaunchCallBack(ProbePhotonPacketInterface* ca
 
 ////////////////////////////////////////////////////////////////////
 
+// common actions for gas and dust, but they need to fill in different members
+namespace
+{
+    // calculate the absorbed (and thus to be emitted) dust or gas luminosity for each spatial
+    // cell this can be somewhat time-consuming, so we do this in parallel
+    void calculateLv(Array& Lv, MaterialMix::MaterialType t, const MediumSystem* ms)
+    {
+        int numCells = ms->numCells();
+        Lv.resize(numCells);
+        ms->find<ParallelFactory>()->parallelDistributed()->call(numCells, [&](size_t firstIndex, size_t numIndices) {
+            for (size_t m = firstIndex; m != firstIndex + numIndices; ++m) Lv[m] = ms->absorbedLuminosity(m, t);
+        });
+        ProcessManager::sumToAll(Lv);
+    }
+
+    // calculate the launch weight for each cell, given their luminosities and a composite bias fraction
+    void calculateWv(Array& Wv, const Array& Lv, double xi, int numCells)
+    {
+        // determine a uniform weight for each cell with non-negligable emission, and normalize to unity
+        Array wv(numCells);
+        for (int m = 0; m != numCells; ++m) wv[m] = Lv[m] > 0. ? 1. : 0;
+
+        // calculate the final, composite-biased launch weight for each cell, normalized to unity
+        Wv = (1 - xi) * Lv + xi * wv;
+    }
+
+    // calculate the binning to translate a packet history index to a (sorted) cell index p, given
+    // the weight for each cell (Wv), the mapping from p to m (mv), and a number of photon packets
+    // (Npp). An offset can be given in case both dust and gas need an Iv array.
+    void calculateIv(vector<size_t>& Iv, const Array& Wv, const vector<int>& mv, size_t Npp, size_t offset,
+                     int numCells)
+    {
+        Iv.resize(numCells + 1);
+        Iv[0] = offset;
+        double W = 0.;
+        for (int p = 1; p != numCells; ++p)
+        {
+            // track the cumulative normalized weight as a floating point number and limit the
+            // index to numPackets to avoid issues with rounding errors
+            W += Wv[mv[p - 1]];
+            Iv[p] = offset + min(Npp, static_cast<size_t>(std::round(W * Npp)));
+        }
+        Iv[numCells] = offset + Npp;
+    }
+}
+
 bool SecondarySourceSystem::prepareForLaunch(size_t numPackets)
 {
-    size_t Nppdust = numPackets / 2;
-    size_t Nppgas = numPackets / 2;
-    // TODO: implement option to do only dust or only gas, and variable ratio
-
-    int numCells = _ms->numCells();
-
     // --------- luminosities 1 ---------
-
-    // calculate the absorbed (and thus to be emitted) dust and gas luminosity for each spatial
-    // cell this can be somewhat time-consuming, so we do this in parallel
-    _Ldustv.resize(numCells);
-    _Lgasv.resize(numCells);
-    find<ParallelFactory>()->parallelDistributed()->call(numCells, [this](size_t firstIndex, size_t numIndices) {
-        for (size_t m = firstIndex; m != firstIndex + numIndices; ++m)
-        {
-            _Ldustv[m] = _ms->absorbedLuminosity(m, MaterialMix::MaterialType::Dust);
-            _Lgasv[m] = _ms->absorbedLuminosity(m, MaterialMix::MaterialType::Gas);
-        }
-    });
-    ProcessManager::sumToAll(_Ldustv);
-    ProcessManager::sumToAll(_Lgasv);
+    calculateLv(_Ldustv, MaterialMix::MaterialType::Dust, _ms);
+    calculateLv(_Lgasv, MaterialMix::MaterialType::Gas, _ms);
 
     // --------- library mapping ---------
 
@@ -84,6 +112,7 @@ bool SecondarySourceSystem::prepareForLaunch(size_t numPackets)
     _nv = _config->cellLibrary()->mapping(_Ldustv);
 
     // construct a list of spatial cell indices sorted so that cells belonging to the same entry are consecutive
+    int numCells = _ms->numCells();
     _mv.resize(numCells);
     for (int m = 0; m != numCells; ++m) _mv[m] = m;
     std::sort(begin(_mv), end(_mv), [this](int m1, int m2) { return _nv[m1] < _nv[m2]; });
@@ -95,14 +124,41 @@ bool SecondarySourceSystem::prepareForLaunch(size_t numPackets)
     for (int m = 0; m != numCells; ++m)
         if (_nv[m] < 0) _Ldustv[m] = 0.;
 
-    // calculate the total luminosity; if it is zero, report failure
+    // calculate the total luminosity; if both are zero, report failure
     _Ldust = _Ldustv.sum();
     _Lgas = _Ldustv.sum();
-    if (_Ldust <= 0. && _Lgas <= 0.) return false;
+
+    // use these flags to deal with the special case that there is no dust or no gas
+    _launchDust = _Ldust > 0;
+    _launchGas = _Lgas > 0;
 
     // calculate the average luminosity contribution for each packet
-    _Lppdust = _Ldust / Nppdust;
-    _Lppgas = _Lgas / Nppgas;
+    // TODO: implement option to do only dust or only gas, and variable ratio
+    size_t Nppdust = 0;
+    size_t Nppgas = 0;
+    _Lppdust = 0.;
+    _Lppgas = 0.;
+    if (_launchDust && _launchGas)
+    {
+        Nppdust = numPackets / 2;
+        Nppgas = numPackets - Nppdust;
+        _Lppdust = _Ldust / Nppdust;
+        _Lppgas = _Lgas / Nppgas;
+    }
+    else if (_launchDust)
+    {
+        Nppdust = numPackets;
+        _Lppdust = _Ldust / Nppdust;
+    }
+    else if (_launchGas)
+    {
+        Nppgas = numPackets;
+        _Lppgas = _Lgas / Nppgas;
+    }
+    else
+    {
+        return false;
+    }
 
     // normalize the individual luminosities to unity
     _Ldustv /= _Ldust;
@@ -110,46 +166,26 @@ bool SecondarySourceSystem::prepareForLaunch(size_t numPackets)
 
     // --------- weights ---------
 
-    // determine a uniform weight for each cell with non-negligable emission, and normalize to unity
-    Array wdustv(numCells);
-    Array wgasv(numCells);
-    for (int m = 0; m != numCells; ++m)
-    {
-        wdustv[m] = _Ldustv[m] > 0. ? 1. : 0.;
-        wgasv[m] = _Lgasv[m] > 0. ? 1. : 0.;
-    }
-    wdustv /= wdustv.sum();
-    wgasv /= wgasv.sum();
-
-    // calculate the final, composite-biased launch weight for each cell, normalized to unity
     double xi = _config->secondarySpatialBias();
-    _Wdustv = (1 - xi) * _Ldustv + xi * wdustv;
-    _Wgasv = (1 - xi) * _Lgasv + xi * wgasv;
 
     // determine the first history index for each cell, using the adjusted cell ordering so that
     // all photon packets for a given library entry are launched consecutively
-    _Idustv.resize(numCells + 1);
-    _Idustv[0] = 0;
-    double W = 0.;
-    for (int p = 1; p != numCells; ++p)
+    if (_launchDust)
     {
-        // track the cumulative normalized weight as a floating point number
-        // and limit the index to numPackets to avoid issues with rounding errors
-        W += _Wdustv[_mv[p - 1]];
-        _Idustv[p] = min(Nppdust, static_cast<size_t>(std::round(W * Nppdust)));
+        calculateWv(_Wdustv, _Ldustv, xi, numCells);
+        calculateIv(_Idustv, _Wdustv, _mv, Nppdust, 0., numCells);
     }
-    _Idustv[numCells] = Nppdust;
 
-    _startGasI = Nppdust + 1;
-    _Igasv.resize(numCells + 1);
-    _Igasv[0] = _startGasI;
-    W = 0.;
-    for (int p = 1; p != numCells; ++p)
+    // if there were 0 dust packets, start from 0. if there was 1, start from index 1, etc. If not
+    // _launchGas, then this index == Nppdust == numPackets. The history index for the packets only
+    // goes up to numPackets, so no gas packets will be launched, as intended.
+    _startGasIndex = Nppdust;
+
+    if (_launchGas)
     {
-        W += _Wgasv[_mv[p - 1]];
-        _Igasv[p] = _startGasI + min(Nppgas, static_cast<size_t>(std::round(W * Nppgas)));
+        calculateWv(_Wgasv, _Lgasv, xi, numCells);
+        calculateIv(_Igasv, _Wgasv, _mv, Nppgas, _startGasIndex, numCells);
     }
-    _Igasv[numCells] = numPackets;
 
     // --------- logging ---------
 
@@ -572,7 +608,11 @@ namespace
 void SecondarySourceSystem::launch(PhotonPacket* pp, size_t historyIndex) const
 {
     // select the spatial cell from which to launch based on the history index of this photon packet
-    bool isDust = historyIndex < _startGasI;
+    bool isDust = historyIndex < _startGasIndex;
+
+    // TODO: remove this check once everything works
+    if ((isDust && !_launchDust) || (!isDust && !_launchGas)) FATALERROR("Something went wrong in prepareForLaunch");
+
     size_t p = 0;
     if (isDust)
         p = std::upper_bound(_Idustv.cbegin(), _Idustv.cend(), historyIndex) - _Idustv.cbegin() - 1;

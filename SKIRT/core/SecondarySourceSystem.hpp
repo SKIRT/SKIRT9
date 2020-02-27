@@ -168,6 +168,8 @@ public:
         launched), and true otherwise. */
     bool prepareForLaunch(size_t numPackets);
 
+public:
+
     /** This function causes the photon packet \em pp to be launched from one of the cells in the
         spatial grid using the given history index; see the description in the class header for
         more information. The photon packet's contents is fully (re-)initialized so that it is
@@ -209,6 +211,8 @@ private:
     ProbePhotonPacketInterface* _callback{nullptr};  // interface to be invoked for each packet launch if nonzero
 
     // initialized by prepareForLaunch()
+    bool _launchDust{false};
+    bool _launchGas{false};
     double _Ldust{0};    // the total bolometric luminosity of all spatial cells
     double _Lgas{0};     // total bolometric luminosity absorbed by the gas
     double _Lppdust{0};  // the average luminosity contribution for each packet
@@ -229,7 +233,7 @@ private:
     vector<size_t> _Igasv;
     // Any photon package with a history index greater than or equal to this number will be launched from the
     // gas.
-    size_t _startGasI{0};
+    size_t _startGasIndex{0};
 };
 
 ////////////////////////////////////////////////////////////////
