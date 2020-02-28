@@ -419,12 +419,11 @@ namespace
     public:
         GasCellEmission() {}
 
-        void calculateIfNeeded(int p, const vector<int>& mv, MediumSystem* ms, Configuration* config)
+        void calculateIfNeeded(int p, const vector<int>& mv, MediumSystem* ms)
         {
             if (p == _p) return;
             if (_p == -1)
             {
-                // TODO: use config to get gasEmissionWLG(), once it exists
                 _ms = ms;
                 _wavelengthGrid = Gas::emissivityLambdav();
                 _wavelengthRange = Range(_wavelengthGrid[0], _wavelengthGrid[_wavelengthGrid.size() - 1]);
@@ -613,11 +612,9 @@ void SecondarySourceSystem::launch(PhotonPacket* pp, size_t historyIndex) const
     // TODO: remove this check once everything works
     if ((isDust && !_launchDust) || (!isDust && !_launchGas)) FATALERROR("Something went wrong in prepareForLaunch");
 
-    size_t p = 0;
-    if (isDust)
-        p = std::upper_bound(_Idustv.cbegin(), _Idustv.cend(), historyIndex) - _Idustv.cbegin() - 1;
-    else
-        p = std::upper_bound(_Igasv.cbegin(), _Igasv.cend(), historyIndex) - _Igasv.cbegin() - 1;
+    size_t p = isDust ? std::upper_bound(_Idustv.cbegin(), _Idustv.cend(), historyIndex) - _Idustv.cbegin() - 1
+                      : std::upper_bound(_Igasv.cbegin(), _Igasv.cend(), historyIndex) - _Igasv.cbegin() - 1;
+
     auto m = _mv[p];
 
     if (isDust)
@@ -628,7 +625,7 @@ void SecondarySourceSystem::launch(PhotonPacket* pp, size_t historyIndex) const
     }
     else
     {
-        t_gascell.calculateIfNeeded(p, _mv, _ms, _config);
+        t_gascell.calculateIfNeeded(p, _mv, _ms);
     }
 
     // generate a random wavelength from the emission spectrum for the cell and/or from the bias distribution
