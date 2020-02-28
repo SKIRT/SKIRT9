@@ -15,18 +15,23 @@
 #    include <vector>
 namespace
 {
-    // Single instance of GasInterface managed by initialize and finalize
-    GasModule::GasInterface* _gi;
+    // set during initialize
+    // ---------------------
 
-    // Stores some minimal info about the gas equilibrium for each cell. Can be used to
-    // (re-)calculate the opacity and emissivity of the gas.
-    std::vector<GasModule::GasState> _statev;
+    Array _lambdav;                         // wavelengths given at initialization
+    Array _olambdav;                        // wavelengths for determining the index in the opacity table
+    GasModule::GasInterface* _gi;           // instance of GasInterface
+    std::vector<Gas::DustInfo> _dustinfov;  // information about the dust populations in the simulation
 
-    // Information about the dust populations in the simulation. Set by initialize, should not be
-    // modified afterwards.
-    std::vector<Gas::DustInfo> _dustinfov;
+    // set per cell during updateGasState
+    // ----------------------------------
+    std::vector<GasModule::GasState> _statev;  // result of the equilibrium calculation for each cell
+    Table<2> _opacityvv;                       // opacity(m, ell) for each cell m and wavelength ell
 
-    // Translate a SKIRT grain type into one of the built-in grain types
+    // utility functions
+    // -----------------
+
+    // translate a SKIRT grain type into one of the built-in grain types
     GasModule::GrainTypeLabel stringToGrainTypeLabel(const string& populationGrainType)
     {
         if (StringUtils::contains(populationGrainType, "Silicate"))
@@ -38,15 +43,33 @@ namespace
             return GasModule::GrainTypeLabel::OTHER;
     }
 
-    // Wavlengths given at initialization
-    Array _lambdav;
+    // dlambda = - (c / nu^2) dnu
+    // dnu = - (c / lambda^2) dlambda
+    //
+    // jnu dnu = jnu (- c / lambda^2) dlambda = jlambda dlambda
+    // --> jnu = lambda^2 / c * jlambda
+    // and conversion is involution (its own inverse)
 
-    // Wavelengths for the opacities
-    Array _olambdav;
+    // convert from a quantity per x to a quantity per (c x^-1)
+    Array x_to_cxm1(const Array& xv, const Array& quantity_xv)
+    {
+        int numx = xv.size();
+        Array quantity_cxm1v(numx);
+        for (int ix = 0; ix < numx; ix++)
+        {
+            double x = xv[ix];
+            int icxm1 = numx - 1 - ix;
+            quantity_cxm1v[icxm1] = x * x / Constants::c() * quantity_xv[ix];
+        }
+        return quantity_cxm1v;
+    }
 
-    // Store the opacity in each cell in one big table, for easy communication between processes.
-    // Indexed on m, ell.
-    Table<2> _opacityvv;
+    Array lambdaToNu(const Array& lambdav, const Array& quantityPerLambda)
+    {
+        return x_to_cxm1(lambdav, quantityPerLambda);
+    }
+
+    Array nuToLambda(const Array& nuv, const Array& quantityPerNu) { return x_to_cxm1(nuv, quantityPerNu); }
 }
 #endif
 
@@ -109,13 +132,6 @@ void Gas::finalize()
 
 ////////////////////////////////////////////////////////////////////
 
-const Array& Gas::lambdav()
-{
-    return _lambdav;
-}
-
-////////////////////////////////////////////////////////////////////
-
 void Gas::allocateGasStates(size_t num)
 {
 #ifdef BUILD_WITH_GAS
@@ -140,25 +156,21 @@ void Gas::updateGasState(int m, double n, const Array& meanIntensityv, const Arr
 #ifdef BUILD_WITH_GAS
     auto start = std::chrono::high_resolution_clock::now();
     const Array& iFrequencyv = _gi->iFrequencyv();
-    Array jnu(meanIntensityv.size());
 
     if (iFrequencyv.size() != meanIntensityv.size())
         throw FATALERROR("Something went wrong with the wavelength/frequency grids");
 
+    Array jnu = lambdaToNu(_lambdav, meanIntensityv);
+    // unit conversion:
+    // for gas module: erg s-1 cm-2 sr-1 Hz-1
+    // for skirt     : J   s-1 m-2  sr-1 Hz-1
+    //                 7   0   -4
+    jnu *= 1.e3;
+
     size_t countzeros = 0;
     for (size_t i = 0; i < iFrequencyv.size(); i++)
-    {
-        double nu = iFrequencyv[i];
-        // j_nu = lambda * lambda * j_lambda / c = c2 nu-2 j_lambda c-1 = c nu-2 j_lambda
-        jnu[i] = Constants::c() / nu / nu * meanIntensityv[meanIntensityv.size() - 1 - i];
-
-        // unit conversion:
-        // for gas module: erg s-1 cm-2 sr-1 Hz-1
-        // for skirt     : J   s-1 m-2  sr-1 Hz-1
-        //                 7   0   -4
-        jnu[i] *= 1e3;
         if (jnu[i] <= 0) countzeros++;
-    }
+
     bool verbose = !(m % 300);
     if (verbose && countzeros) std::cout << countzeros << " zeros in cell " << m << '\n';
 
@@ -287,10 +299,18 @@ int Gas::indexForLambda(double lambda)
 Array Gas::emissivity(int m)
 {
 #ifdef BUILD_WITH_GAS
-    return Array(_gi->eFrequencyv().size());
+    return nuToLambda(_gi->eFrequencyv(), _gi->emissivity(_statev[m], true));
 #else
     (void)m;
+    return Array;
 #endif
+}
+
+////////////////////////////////////////////////////////////////////
+
+const Array& Gas::emissivityLambdav()
+{
+    return _lambdav;
 }
 
 ////////////////////////////////////////////////////////////////////

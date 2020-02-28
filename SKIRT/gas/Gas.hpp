@@ -36,9 +36,6 @@ public:
         finalize(), all info about the gas will be lost. */
     static void finalize();
 
-    /** This utility function returns the wavelengths that were given to Gas at initialization */
-    static const Array& lambdav();
-
     /** This function allocates space for the resuls of updateGasState to be stored. The gas is
         initialized as transparent. If updateGasState has not yet been called for a certain \c m,
         the returned values will be zero. */
@@ -92,6 +89,10 @@ public:
         given at initialization, using the gas state stored at index m. TODO: use different
         wavelength grid for opacity and emissivity. */
     static Array emissivity(int m);
+
+    /** This function returns the wavelengths used to calculate the emissivity. TODO: move this to
+        Configuration? */
+    static const Array& emissivityLambdav();
 };
 
 #endif

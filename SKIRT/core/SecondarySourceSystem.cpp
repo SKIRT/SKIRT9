@@ -426,7 +426,7 @@ namespace
             {
                 // TODO: use config to get gasEmissionWLG(), once it exists
                 _ms = ms;
-                _wavelengthGrid = Gas::lambdav();
+                _wavelengthGrid = Gas::emissivityLambdav();
                 _wavelengthRange = Range(_wavelengthGrid[0], _wavelengthGrid[_wavelengthGrid.size() - 1]);
             }
             _p = p;
