@@ -103,7 +103,17 @@ void MonteCarloSimulation::runPrimaryEmission()
     TimeLogger logger(log(), segment);
 
     // clear the radiation field
-    if (_config->hasRadiationField()) mediumSystem()->clearRadiationField(true);
+    if (_config->hasRadiationField())
+    {
+        // TODO: find a better way to do this. The problem here is that I want to keep the
+        // secondary radiation field from the opacity iteration, while still calling this primary
+        // emission routine. Maybe something will go wrong if rf2 is not set to zero, so only do
+        // this in my case for now.
+        if (_config->hasOpacityIteration())
+            mediumSystem()->clearRadiationFieldsForNewOpacity();
+        else
+            mediumSystem()->clearRadiationField(true);
+    }
 
     // shoot photons from primary sources, if needed
     size_t Npp = _config->numPrimaryPackets();
@@ -361,6 +371,7 @@ void MonteCarloSimulation::runSecondaryEmission()
 
     // determine whether we need to store the radiation field during secondary emission
     bool storeRF = _config->storeEmissionRadiationField();
+    if (storeRF) mediumSystem()->clearRadiationField(false);
 
     // shoot photons from secondary sources, if needed
     size_t Npp = _config->numSecondaryPackets();
