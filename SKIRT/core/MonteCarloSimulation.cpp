@@ -161,21 +161,48 @@ void MonteCarloSimulation::runSelfConsistentOpacityPhase(bool withSecondary)
 
     int minIters = 3;
     int maxIters = 10;
-
     bool doSecondary = false;
-
     for (int iter = 1; iter <= maxIters; iter++)
     {
-        string segment = "self consistent opacity iteration " + std::to_string(iter);
+        string segment = "self consistent opacity iteration (primary)" + std::to_string(iter);
         {
             TimeLogger logger(log(), segment);
-            mediumSystem()->clearRadiationField(true);  // clear (TODO: ONLY) primary radiation field
+
+            // clear both radiation fields, but keep old secondary
+            mediumSystem()->clearRadiationFieldsForNewOpacity();
+
+            // re-run primary emission with new opacity
             initProgress(segment, Npp);
             parallel->call(Npp, [this](size_t i, size_t n) { performLifeCycle(i, n, true, false, true); });
             instrumentSystem()->flush();
             wait(segment);
+            // communicate primary radiation field
             mediumSystem()->communicateRadiationField(true);
         }
+
+        segment = "self consistent opacity iteration (secondary)" + std::to_string(iter);
+        if (doSecondary)
+        {
+            TimeLogger logger(log(), segment);
+
+            // re-run secondary emission with new opacity
+            if (_secondarySourceSystem->prepareForLaunch(Npp))
+            {
+                initProgress(segment, Npp);
+                parallel->call(Npp, [this](size_t i, size_t n) { performLifeCycle(i, n, false, false, true); });
+                instrumentSystem()->flush();
+                wait(segment);
+                // communicate secondary radiation field (and overwrite cached copy that was used for secondary emission)
+                mediumSystem()->communicateRadiationField(false);
+            }
+            else
+            {
+                log()->warning("Skipping secondary emission in self-consistent opacity because the total medium "
+                               "luminosity is zero");
+            }
+        }
+
+        // convergence check
 
         double LabsPrimgas = mediumSystem()->totalAbsorbedLuminosity(true, MaterialMix::MaterialType::Gas);
         double LabsPrimdust = mediumSystem()->totalAbsorbedLuminosity(true, MaterialMix::MaterialType::Dust);
@@ -206,6 +233,9 @@ void MonteCarloSimulation::runSelfConsistentOpacityPhase(bool withSecondary)
 
         // Now update the opacities
         mediumSystem()->updateGas();
+        // Set to true after the gas has been calculated for the first time, and the withSecondary
+        // option was given.
+        doSecondary = withSecondary;
     }
     // if the loop runs out, convergence was not reached even after the maximum number of iterations
     log()->error("Convergence not yet reached after " + std::to_string(maxIters) + " iterations");
