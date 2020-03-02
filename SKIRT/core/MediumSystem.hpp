@@ -289,6 +289,13 @@ public:
         spectra. */
     void clearRadiationField(bool primary);
 
+    /** This function sets all values of the primary and unstable secondary radiation field info
+        tables to zero, while keeping the contents of the stable secondary table available for
+        calculating secondary emission. In simulation modes where the opacity throughout the system
+        can change, this function needs to be called before each self-consistent opacity
+        iteration. */
+    void clearRadiationFieldsForNewOpacity();
+
     /** This function adds the specified value of \f$L\,\Delta s\f$ to the radiation field bin
         corresponding to the spatial cell index \f$m\f$ and the wavelength index\f$\ell\f$. If the
         \em primary flag is true, the value is added to the primary table; otherwise it is added to

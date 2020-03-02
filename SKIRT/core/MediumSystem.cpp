@@ -537,6 +537,14 @@ void MediumSystem::clearRadiationField(bool primary)
 
 ////////////////////////////////////////////////////////////////////
 
+void MediumSystem::clearRadiationFieldsForNewOpacity()
+{
+    _rf1.setToZero();
+    _rf2c.setToZero();
+}
+
+////////////////////////////////////////////////////////////////////
+
 void MediumSystem::storeRadiationField(bool primary, int m, int ell, double Lds)
 {
     if (primary)
