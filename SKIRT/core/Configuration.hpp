@@ -176,6 +176,10 @@ public:
         iteration, and false otherwise. */
     bool hasDustSelfAbsorption() const { return _hasDustSelfAbsorption; }
 
+    /** Return true if the opacity must be self-consistently calculated through iteration, and
+        false otherwise. */
+    bool hasOpacityIteration() const { return _hasOpacityIteration; }
+
     /** Returns the wavelength grid to be used for storing the radiation field. */
     DisjointWavelengthGrid* radiationFieldWLG() const { return _radiationFieldWLG; }
 
@@ -304,6 +308,9 @@ private:
     int _maxIterations{10};
     double _maxFractionOfPrimary{0.01};
     double _maxFractionOfPrevious{0.03};
+
+    // opacity iteration
+    bool _hasOpacityIteration{false};
 
     // properties derived from the configuration at large
     int _modelDimension{0};

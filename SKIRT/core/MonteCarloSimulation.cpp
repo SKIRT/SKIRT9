@@ -67,14 +67,14 @@ void MonteCarloSimulation::runSimulation()
 
         // opacity iteration. TODO: enforce requirements in Configuration once we make up our minds
         bool withSecondary = true;
-        if (mediumSystem()->hasGas() && _config->hasRadiationField()) runSelfConsistentOpacityPhase(withSecondary);
+        if (_config->hasOpacityIteration()) runSelfConsistentOpacityPhase(withSecondary);
 
         // primary emission segment
         runPrimaryEmission();
 
         // dust self-absorption iteration segments (still needs to run if opacity iteration did not
         // treat secondary emission)
-        if (_config->hasDustSelfAbsorption() && !withSecondary) runDustSelfAbsorptionPhase();
+        if (_config->hasDustSelfAbsorption() && !_config->hasOpacityIteration()) runDustSelfAbsorptionPhase();
 
         // secondary emission segment
         if (_config->hasSecondaryEmission()) runSecondaryEmission();

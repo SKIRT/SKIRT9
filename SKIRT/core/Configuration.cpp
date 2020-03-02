@@ -144,6 +144,17 @@ void Configuration::setupSelfBefore()
         _numIterationPackets = sim->numPackets() * ms->dustSelfAbsorptionOptions()->iterationPacketsMultiplier();
     }
 
+    // retrieve gas options
+    if (_hasMedium)
+    {
+        bool hasGas = ms->hasGas();
+        if (hasGas)
+        {
+            _hasOpacityIteration = true;
+            _hasRadiationField = true;
+        }
+    }
+
     // retrieve symmetry dimensions
     if (_hasMedium)
     {
