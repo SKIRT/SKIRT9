@@ -66,14 +66,8 @@ void MonteCarloSimulation::runSimulation()
         TimeLogger logger(log(), "the run");
 
         // opacity iteration. TODO: enforce requirements in Configuration once we make up our minds
-        bool withSecondary = false;
-        if (mediumSystem()->hasGas() && _config->hasRadiationField())
-        {
-            // Iteration without secondary emission (big changes)
-            runSelfConsistentOpacityPhase(false);
-            // Iteration with secondary emission (smaller changes)
-            if (withSecondary) runSelfConsistentOpacityPhase(true);
-        }
+        bool withSecondary = true;
+        if (mediumSystem()->hasGas() && _config->hasRadiationField()) runSelfConsistentOpacityPhase(withSecondary);
 
         // primary emission segment
         runPrimaryEmission();
@@ -138,7 +132,7 @@ void MonteCarloSimulation::runPrimaryEmission()
 
 ////////////////////////////////////////////////////////////////////
 
-void MonteCarloSimulation::runSelfConsistentOpacityPhase(bool /* ARGUMENT NOT YET IMPLEMENTED */)
+void MonteCarloSimulation::runSelfConsistentOpacityPhase(bool withSecondary)
 {
     TimeLogger logger(log(), "the self consistent opacity phase");
     size_t Npp = _config->numPrimaryPackets();
@@ -156,19 +150,26 @@ void MonteCarloSimulation::runSelfConsistentOpacityPhase(bool /* ARGUMENT NOT YE
     sourceSystem()->prepareForLaunch(Npp);
     auto parallel = find<ParallelFactory>()->parallelDistributed();
 
-    double prevLabsprimgas = 0;
-    double epsgas = 0.05;
-    double prevLabsprimdust = 0;\
+    double prevLabsPrimgas = 0;
+    double prevLabsPrimdust = 0;
+
+    double prevLabsSecgas = 0.;
+    double prevLabsSecdust = 0.;
+
+    double epsgas = 0.03;
     double epsdust = 0.01;
 
     int minIters = 3;
     int maxIters = 10;
+
+    bool doSecondary = false;
+
     for (int iter = 1; iter <= maxIters; iter++)
     {
         string segment = "self consistent opacity iteration " + std::to_string(iter);
         {
             TimeLogger logger(log(), segment);
-            mediumSystem()->clearRadiationField(true);
+            mediumSystem()->clearRadiationField(true);  // clear (TODO: ONLY) primary radiation field
             initProgress(segment, Npp);
             parallel->call(Npp, [this](size_t i, size_t n) { performLifeCycle(i, n, true, false, true); });
             instrumentSystem()->flush();
@@ -176,13 +177,13 @@ void MonteCarloSimulation::runSelfConsistentOpacityPhase(bool /* ARGUMENT NOT YE
             mediumSystem()->communicateRadiationField(true);
         }
 
-        double Labsprimgas = mediumSystem()->totalAbsorbedLuminosity(true, MaterialMix::MaterialType::Gas);
-        double Labsprimdust = mediumSystem()->totalAbsorbedLuminosity(true, MaterialMix::MaterialType::Dust);
+        double LabsPrimgas = mediumSystem()->totalAbsorbedLuminosity(true, MaterialMix::MaterialType::Gas);
+        double LabsPrimdust = mediumSystem()->totalAbsorbedLuminosity(true, MaterialMix::MaterialType::Dust);
         log()->info("The total gas-absorbed primary luminosity is "
-                    + StringUtils::toString(units()->obolluminosity(Labsprimgas), 'g') + " "
+                    + StringUtils::toString(units()->obolluminosity(LabsPrimgas), 'g') + " "
                     + units()->ubolluminosity());
         log()->info("The total dust-absorbed primary luminosity is "
-                    + StringUtils::toString(units()->obolluminosity(Labsprimdust), 'g') + " "
+                    + StringUtils::toString(units()->obolluminosity(LabsPrimdust), 'g') + " "
                     + units()->ubolluminosity());
 
         if (iter < minIters)
@@ -191,17 +192,17 @@ void MonteCarloSimulation::runSelfConsistentOpacityPhase(bool /* ARGUMENT NOT YE
         }
         else
         {
-            bool bothZero = Labsprimgas <= 0. && Labsprimdust <= 0.;
-            bool bothConverged = abs((Labsprimdust - prevLabsprimdust) / Labsprimdust) < epsdust
-                                 && abs((Labsprimgas - prevLabsprimgas) / Labsprimgas) < epsgas;
+            bool bothZero = LabsPrimgas <= 0. && LabsPrimdust <= 0.;
+            bool bothConverged = abs((LabsPrimdust - prevLabsPrimdust) / LabsPrimdust) < epsdust
+                                 && abs((LabsPrimgas - prevLabsPrimgas) / LabsPrimgas) < epsgas;
             if (bothZero || bothConverged)
             {
                 log()->info("Convergence reached after " + std::to_string(iter) + " iterations");
                 return;  // end the iteration by returning from the function
             }
         }
-        prevLabsprimdust = Labsprimdust;
-        prevLabsprimgas = Labsprimgas;
+        prevLabsPrimdust = LabsPrimdust;
+        prevLabsPrimgas = LabsPrimgas;
 
         // Now update the opacities
         mediumSystem()->updateGas();
