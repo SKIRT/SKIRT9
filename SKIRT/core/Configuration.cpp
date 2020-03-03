@@ -155,6 +155,7 @@ void Configuration::setupSelfBefore()
         {
             _hasOpacityIteration = true;
             _hasRadiationField = true;
+            _hasSecondaryRadiationField = true; // TODO: make self-consistent gas emission optional
         }
     }
 
