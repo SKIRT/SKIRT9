@@ -231,8 +231,8 @@ void MonteCarloSimulation::runSelfConsistentOpacityPhase(bool withSecondary)
         double LabsSecdust = 0;
         if (doSecondary)
         {
-            mediumSystem()->totalAbsorbedLuminosity(false, MaterialMix::MaterialType::Gas);
-            mediumSystem()->totalAbsorbedLuminosity(false, MaterialMix::MaterialType::Dust);
+            LabsSecgas = mediumSystem()->totalAbsorbedLuminosity(false, MaterialMix::MaterialType::Gas);
+            LabsSecdust = mediumSystem()->totalAbsorbedLuminosity(false, MaterialMix::MaterialType::Dust);
             log()->info("The total gas-absorbed secondary luminosity is "
                         + StringUtils::toString(units()->obolluminosity(LabsSecgas), 'g') + " "
                         + units()->ubolluminosity());
