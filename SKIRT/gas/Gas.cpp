@@ -70,6 +70,54 @@ namespace
     }
 
     Array nuToLambda(const Array& nuv, const Array& quantityPerNu) { return x_to_cxm1(nuv, quantityPerNu); }
+
+    // Get an array of grain number densities [cm-3] corresponding to dustInfo i with mix number
+    // density mixNumberDens [m-3] (n in MediumSystem)
+    Array mixNumberDensToGrainDensityv(int i, double mixNumberDens)
+    {
+        return _dustinfov[i].numberDensRatiov * mixNumberDens * 1.e-6;
+    }
+
+    // thread locals for efficiency
+    // ----------------------------
+
+    // properly initialized and modified by the first call to setThreadLocalGrainDensities
+    thread_local GasModule::GrainInterface t_gr;
+    thread_local bool t_gr_is_ready{false};
+    void setThreadLocalGrainDensities(const Array& mixNumberDensv)
+    {
+        // initialize when a thread meets this function for the first time (i.e. no populations are
+        // present yet)
+        if (!t_gr_is_ready)
+        {
+            for (size_t i = 0; i < _dustinfov.size(); i++)
+            {
+                // Just use 30 as the initial guess for the dust temperature, since SKIRT doesn't really
+                // support calculating the dust temperature for individual sizes.
+                Array temperaturev(30., _dustinfov[i].sizev.size());
+                // Set the grain number densities using the number density of the mix (fictional H
+                // density), and change unit from m-3 to cm-3
+                Array densityv = mixNumberDensToGrainDensityv(i, mixNumberDensv[i]);
+                if (false)
+                {
+                    std::cout << "grain size:";
+                    for (double d : _dustinfov[i].sizev) std::cout << ' ' << d;
+                    std::cout << "\ngrain dens:";
+                    for (double d : densityv) std::cout << ' ' << d;
+                    std::cout << '\n';
+                }
+                t_gr.addPopulation(stringToGrainTypeLabel(_dustinfov[i].grainType), _dustinfov[i].sizev, densityv,
+                                   temperaturev, _gi->iFrequencyv(), _dustinfov[i].qabsvv);
+                t_gr_is_ready = true;
+            }
+        }
+        else
+        {
+            // simply change the number densities of the populations added in the block above
+            for (size_t i = 0; i < _dustinfov.size(); i++)
+                t_gr.changePopulationDensityv(i, mixNumberDensToGrainDensityv(i, mixNumberDensv[i]));
+        }
+    }
 }
 #endif
 
@@ -174,28 +222,10 @@ void Gas::updateGasState(int m, double n, const Array& meanIntensityv, const Arr
     bool verbose = !(m % 300);
     if (verbose && countzeros) std::cout << countzeros << " zeros in cell " << m << '\n';
 
-    // Make grain interface object
-    GasModule::GrainInterface gr;
-    for (size_t i = 0; i < _dustinfov.size(); i++)
-    {
-        // Just use 30 as the initial guess for the dust temperature, since SKIRT doesn't really
-        // support calculating the dust temperature for individual sizes.
-        Array temperaturev(30., _dustinfov[i].sizev.size());
-        // Set the grain number densities using the number density of the mix (fictional H
-        // density), and change unit from m-3 to cm-3
-        Array densityv = _dustinfov[i].numberDensRatiov * mixNumberDensv[i] * 1.e-6;
-        if (false && verbose)
-        {
-            std::cout << "grain size:";
-            for (double d : _dustinfov[i].sizev) std::cout << ' ' << d;
-            std::cout << "\ngrain dens:";
-            for (double d : densityv) std::cout << ' ' << d;
-            std::cout << '\n';
-        }
-        gr.addPopulation(stringToGrainTypeLabel(_dustinfov[i].grainType), _dustinfov[i].sizev, densityv, temperaturev,
-                         _gi->iFrequencyv(), _dustinfov[i].qabsvv);
-    }
-    _gi->updateGasState(_statev[m], n * 1.e-6, jnu, gr);
+    // prepare grain info for this cell
+    setThreadLocalGrainDensities(mixNumberDensv);
+
+    _gi->updateGasState(_statev[m], n * 1.e-6, jnu, t_gr);
 
     // if (m == 0)
     // {
