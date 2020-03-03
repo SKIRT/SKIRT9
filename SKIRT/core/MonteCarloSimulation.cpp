@@ -162,15 +162,17 @@ void MonteCarloSimulation::runSelfConsistentOpacityPhase(bool withSecondary)
 
     double prevLabsPrimgas = 0;
     double prevLabsPrimdust = 0;
-
     double prevLabsSecgas = 0.;
     double prevLabsSecdust = 0.;
 
-    double epsgas = 0.03;
-    double epsdust = 0.01;
-
+    // TODO: these should be configuration options
+    double fractionOfPreviousgas = 0.03;
+    double fractionOfPreviousdust = 0.03;
+    double fractionOfPrimarygas = 0.;
+    double fractionOfPrimarydust = 0.01;
     int minIters = 3;
     int maxIters = 10;
+
     bool doSecondary = false;
     for (int iter = 1; iter <= maxIters; iter++)
     {
@@ -214,6 +216,7 @@ void MonteCarloSimulation::runSelfConsistentOpacityPhase(bool withSecondary)
 
         // convergence check
 
+        // primary radiation field
         double LabsPrimgas = mediumSystem()->totalAbsorbedLuminosity(true, MaterialMix::MaterialType::Gas);
         double LabsPrimdust = mediumSystem()->totalAbsorbedLuminosity(true, MaterialMix::MaterialType::Dust);
         log()->info("The total gas-absorbed primary luminosity is "
@@ -223,16 +226,51 @@ void MonteCarloSimulation::runSelfConsistentOpacityPhase(bool withSecondary)
                     + StringUtils::toString(units()->obolluminosity(LabsPrimdust), 'g') + " "
                     + units()->ubolluminosity());
 
+        // secondary radiation field
+        double LabsSecgas = 0;
+        double LabsSecdust = 0;
+        if (doSecondary)
+        {
+            mediumSystem()->totalAbsorbedLuminosity(false, MaterialMix::MaterialType::Gas);
+            mediumSystem()->totalAbsorbedLuminosity(false, MaterialMix::MaterialType::Dust);
+            log()->info("The total gas-absorbed secondary luminosity is "
+                        + StringUtils::toString(units()->obolluminosity(LabsSecgas), 'g') + " "
+                        + units()->ubolluminosity());
+            log()->info("The total dust-absorbed secondary luminosity is "
+                        + StringUtils::toString(units()->obolluminosity(LabsSecdust), 'g') + " "
+                        + units()->ubolluminosity());
+        }
+
         if (iter < minIters)
         {
             log()->info("Continuing until " + std::to_string(minIters) + " iterations have been performed");
         }
         else
         {
-            bool bothZero = LabsPrimgas <= 0. && LabsPrimdust <= 0.;
-            bool bothConverged = abs((LabsPrimdust - prevLabsPrimdust) / LabsPrimdust) < epsdust
-                                 && abs((LabsPrimgas - prevLabsPrimgas) / LabsPrimgas) < epsgas;
-            if (bothZero || bothConverged)
+            // convergence is considered to be reached if one or more of the following conditions
+            // hold:
+            // - all absorbed luminosities are 0
+            // - the absorbed primary luminosity by both dust and gas have changed by less than a
+            //   given fraction AND at least one of the following conditions holds:
+            //   + the absorbed secondary luminosity by both dust and gas have changed by less than
+            //     a given fraction
+            //   + the absorbed secondary luminosity by both dust and gas is less than a given
+            //     fraction of the absorbed primary luminosity for the respective components
+
+            bool allZero = LabsPrimgas <= 0. && LabsPrimdust <= 0. && LabsSecgas <= 0. && LabsSecdust <= 0.;
+
+            auto isSmallFraction = [](double value, double reference, double epsilon) {
+                return abs((value - reference) / reference) < epsilon;
+            };
+
+            bool primConverged = isSmallFraction(LabsPrimdust, prevLabsPrimdust, fractionOfPreviousdust)
+                                 && isSmallFraction(LabsPrimgas, prevLabsPrimgas, fractionOfPreviousgas);
+            bool secConverged = isSmallFraction(LabsSecdust, prevLabsSecdust, fractionOfPreviousdust)
+                                && isSmallFraction(LabsSecgas, prevLabsSecgas, fractionOfPreviousgas);
+            bool secSmall = isSmallFraction(LabsSecdust, LabsPrimdust, fractionOfPrimarydust)
+                            && isSmallFraction(LabsSecgas, LabsPrimgas, fractionOfPrimarygas);
+
+            if (allZero || (primConverged && secConverged) || (primConverged && secSmall))
             {
                 log()->info("Convergence reached after " + std::to_string(iter) + " iterations");
                 return;  // end the iteration by returning from the function
@@ -240,6 +278,8 @@ void MonteCarloSimulation::runSelfConsistentOpacityPhase(bool withSecondary)
         }
         prevLabsPrimdust = LabsPrimdust;
         prevLabsPrimgas = LabsPrimgas;
+        prevLabsSecdust = LabsSecdust;
+        prevLabsSecgas = LabsSecgas;
 
         // Now update the opacities
         mediumSystem()->updateGas();
