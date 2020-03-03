@@ -5,6 +5,7 @@
 
 #include "VoigtProfile.hpp"
 #include "FatalError.hpp"
+#include "Random.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -22,7 +23,7 @@ double VoigtProfile::value(double a, double x)
 
 ////////////////////////////////////////////////////////////////////
 
-double VoigtProfile::sample(double a, double x, std::function<double()> uniform)
+double VoigtProfile::sample(double a, double x, Random* random)
 {
     // make x positive and remember the orginal sign
     double sign = 1.;
@@ -32,28 +33,34 @@ double VoigtProfile::sample(double a, double x, std::function<double()> uniform)
         x = -x;
     }
 
-    // determine the core/wing transition corresponding to a
-    double loga = log10(a);
-    double xcw = 1.59 - 0.60 * loga - 0.03 * loga * loga;
+    // when x is large, the distribution is essentially a Gaussian centered on 1/x
+    if (x >= 8.) return sign / x + M_SQRT1_2 * random->gauss();
 
     // determine the comparison function separation corresponding to a and x
-    double u0 = 0.;
-    if (x >= xcw)
-        u0 = 4.5;
-    else if (x >= 0.2)
-        u0 = x - 0.01 * pow(a, 1. / 6.) * exp(1.2 * x);
+    double z = log10(a);
+    double z2 = z * z;
+    double u0 = 2.648963 + 2.014446 * z + 0.351479 * z2
+                + x
+                      * (-4.058673 - 3.675859 * z - 0.640003 * z2
+                         + x
+                               * (3.017395 + 2.117133 * z + 0.370294 * z2
+                                  + x
+                                        * (-0.869789 - 0.565886 * z - 0.096312 * z2
+                                           + x
+                                                 * (0.110987 + 0.070103 * z + 0.011557 * z2
+                                                    + x * (-0.005200 - 0.003240 * z - 0.000519 * z2)))));
 
     // calculate the cumulative separation point
     double theta0 = atan((u0 - x) / a);
     double p = (theta0 + M_PI_2) / ((1. - exp(-u0 * u0)) * theta0 + (1. + exp(-u0 * u0)) * M_PI_2);
 
-    // perform the rejection method loop for a finite number of times
-    int n = 1000000;
+    // perform the rejection method loop for a maximum number of attempts
+    int n = 10000;
     while (n--)
     {
         // determine which one of the two comparison functions to use
         double left, right;
-        if (uniform() <= p)
+        if (random->uniform() <= p)
         {
             left = -M_PI_2;
             right = theta0;
@@ -65,17 +72,17 @@ double VoigtProfile::sample(double a, double x, std::function<double()> uniform)
         }
 
         // generate a random sample from the selected comparison function
-        double u = x + a * tan((right - left) * uniform() + left);
+        double u = x + a * tan((right - left) * random->uniform() + left);
 
         // determine the acceptance/rejection fraction
         double fraction = exp(-u * u);
         if (u > u0) fraction /= exp(-u0 * u0);
 
         // accept or reject the sample
-        if (uniform() < fraction) return u * sign;
+        if (random->uniform() < fraction) return u * sign;
     }
 
-    // if the loop fails, abort
+    // if none of the attempts were accepted, abort
     throw FATALERROR("Sampling from Voigt profile has failed");
 }
 
