@@ -1,15 +1,15 @@
-# GitHub action workflow for performing automated code formatting
+# GitHub action workflow for performing automated code formatting check
 #
 # event trigger (possible options: push, pull_request)
 on: [pull_request]
 # jobs that run
 jobs:
-  # automatic formatting
+  # automatic formatting check
   autoformat_job:
     # run this job on a Github provided machine running Ubuntu 18.04
     runs-on: ubuntu-latest
     # job name, displayed in the action log
-    name: Automatic formatting
+    name: Automatic formatting check
     # steps that make up this job
     steps:
     # checkout using the default checkout, v2
@@ -22,16 +22,13 @@ jobs:
       # the format action has no official releases, so we simply use the
       # latest master branch
       uses: SKIRT/auto-format@master
-    # automatic commit
-    - name: Autocommit
+    # return an error message if code changed by automatic formatting
+    - name: Format check
       # this step depends on the status returned by the formatting action
       # we can access this status using the ID we introduced above
       if: steps.format.outputs.status == 'changed'
-      # these commands will run on the Github server, in the repository folder
-      # as set by the checkout action and using the credentials used by that
-      # action
+      # display an error message and return with a non-zero exit code
+      # this will make the workflow fail
       run: |
-        git config --global user.name 'auto-format'
-        git config --global user.email 'auto-format@auto.format'
-        git commit -am "Autoformat"
-        git push
+        echo "Code not correctly formatted!"
+        exit 1
