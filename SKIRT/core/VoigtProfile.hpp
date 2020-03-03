@@ -22,17 +22,13 @@ namespace VoigtProfile
         & \text{core} \\ \dfrac{a}{\sqrt{\pi}x^2} & \text{wings} \end{cases} \f] where \f$a\f$ is a
         parameter and the function is normalized so that \f$H(a,0) = 1\f$.
 
-        We use the approximation provided by Tasitsiomi 2006 (ApJ, 645, 792-813) and Laursen et al.
-        2009 (ApJ, 696, 853-869), which can be written as \f[ H(a,x) = q + \exp(-x^2) \f] where \f[
-        q = \begin{cases} 0 & \mathrm{for} \quad z \le 0 \\ \displaystyle
-        \frac{a}{\sqrt{\pi}(x^2+1)} \left(1+\frac{21}{x^2}\right) z \{ 0.1117 + z[4.421 + z(-9.207
-        + 5.674\,z)]\} & \mathrm{for}\quad z > 0 \end{cases} \f] with \f[ z = \frac{x^2 -
-        0.855}{x^2+3.42} \f]
-
-        This approximation is accurate to within 3 per cent for all \f$x\f$ as long as
-        \f$a<0.03\f$, which for the calculation of the Lyman-alpha cross section corresponds to a
-        gas temperature above the cosmic microwave background temperature, i.e.
-        \f$T_\mathrm{gas}>T_\mathrm{CMB}\f$. */
+        We use the approximation provided by Smith et al. 2015 (MNRAS, 449, 4336–4362) in their
+        Appendix A1 and Table A1. According to the authors and as confirmed in the analysis by
+        Michel-Dansac et al. 2020 (A\&A), this approximation is accurate to within 1 per cent for
+        all \f$x\f$ as long as \f$a<0.03\f$, which for the calculation of the Lyman-alpha cross
+        section corresponds to a gas temperature above the cosmic microwave background temperature,
+        i.e. \f$T_\mathrm{gas}>T_\mathrm{CMB}\f$. The accuracy improves substantially for lower
+        values of \f$a\f$, i.e. for higher gas temperatures. */
     double value(double a, double x);
 
     /** This function samples a random value from the probability distribution \f$P(u)\f$ defined

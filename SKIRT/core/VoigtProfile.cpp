@@ -11,14 +11,29 @@
 
 double VoigtProfile::value(double a, double x)
 {
-    double x2 = x * x;
-    double H = exp(-x2);
-    double z = (x2 - 0.855) / (x2 + 3.42);
-    if (z > 0.)
-    {
-        H += 0.5 * M_2_SQRTPI * a / (x2 + 1.) * (1. + 21. / x2) * z * (0.1117 + z * (4.421 + z * (-9.207 + 5.674 * z)));
-    }
-    return H;
+    // coefficients for the approximation function (Table A1, Smith+15)
+    constexpr double A0 = 15.75328153963877;
+    constexpr double A1 = 286.9341762324778;
+    constexpr double A2 = 19.05706700907019;
+    constexpr double A3 = 28.22644017233441;
+    constexpr double A4 = 9.526399802414186;
+    constexpr double A5 = 35.29217026286130;
+    constexpr double A6 = 0.8681020834678775;
+    constexpr double B0 = 0.0003300469163682737;
+    constexpr double B1 = 0.5403095364583999;
+    constexpr double B2 = 2.676724102580895;
+    constexpr double B3 = 12.82026082606220;
+    constexpr double B4 = 3.21166435627278;
+    constexpr double B5 = 32.032981933420;
+    constexpr double B6 = 9.0328158696;
+    constexpr double B7 = 23.7489999060;
+    constexpr double B8 = 1.82106170570;
+
+    // calculation of the approximation (Appendix A1, Smith+15)
+    double z = x * x;
+    if (z <= 3.0) return exp(-z) * (1.0 - a * (A0 + A1 / (z - A2 + A3 / (z - A4 + A5 / (z - A6)))));
+    if (z < 25.0) return exp(-z) + a * (B0 + B1 / (z - B2 + B3 / (z + B4 + B5 / (z - B6 + B7 / (z - B8)))));
+    return 0.5 * M_2_SQRTPI * a / (z - 1.5 - 1.5 / (z - 3.5 - 5.0 / (z - 5.5)));
 }
 
 ////////////////////////////////////////////////////////////////////
