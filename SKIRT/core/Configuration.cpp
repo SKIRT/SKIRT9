@@ -147,7 +147,10 @@ void Configuration::setupSelfBefore()
     // retrieve gas options
     if (_hasMedium)
     {
-        bool hasGas = ms->hasGas();
+        bool hasGas = false;
+        for (auto medium : ms->media())
+            if (medium->mix()->isGas()) hasGas = true;
+
         if (hasGas)
         {
             _hasOpacityIteration = true;
