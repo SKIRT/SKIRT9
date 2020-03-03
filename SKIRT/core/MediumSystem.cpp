@@ -153,9 +153,11 @@ void MediumSystem::setupSelfAfter()
         for (int h = 0; h != _numMedia; ++h) state(m, h).mix = _media[h]->mix(bfr);
     }
 
-    // initialize the gas
-    if (_config->hasRadiationField())
+    // ----- initialize the gas -----
+    if (hasGas())
     {
+        // this piece of needs to run after setting the material mix pointers above
+
         // Get the wavelengths here, for getSizeBinProperties (see below)
         Array lambdav(_wavelengthGrid->numBins());
         for (size_t i = 0; i < lambdav.size(); i++) lambdav[i] = _wavelengthGrid->wavelength(i);
