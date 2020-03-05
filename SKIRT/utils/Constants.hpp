@@ -41,6 +41,9 @@ public:
     /** This function returns the rest mass of the electron. */
     static double Melectron();
 
+    /** This function returns the mass of the hydrogen atom. */
+    static double MHatom();
+
     /** This function returns the solar mass. */
     static double Msun();
 

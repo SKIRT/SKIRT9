@@ -32,7 +32,7 @@ public:
     //======== Basic material properties =======
 
 public:
-    /** This function returns the gas mass per hydrogen atom i.e. 1. */
+    /** This function returns the gas mass per hydrogen atom i.e. the mass of H. */
     double mass() const override;
 
     /** This function returns the absorption cross section per entity
