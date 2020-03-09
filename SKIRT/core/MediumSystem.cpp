@@ -366,7 +366,7 @@ double MediumSystem::opacitySca(double lambda, int m) const
 
 double MediumSystem::opacityAbs(double lambda, int m, MaterialMix::MaterialType type) const
 {
-    if (type == MaterialMix::MaterialType::Gas) return Gas::opacityAbs(lambda, m);
+    if (type == MaterialMix::MaterialType::Gas) return hasGas() ? Gas::opacityAbs(lambda, m) : 0.;
 
     double result = 0.;
     for (int h = 0; h != _numMedia; ++h)
@@ -388,7 +388,7 @@ double MediumSystem::opacityExt(double lambda, int m, int h) const
 double MediumSystem::opacityExt(double lambda, int m) const
 {
     double result = 0.;
-    result += Gas::opacityAbs(lambda, m);
+    if (hasGas()) result += Gas::opacityAbs(lambda, m);
     for (int h = 0; h != _numMedia; ++h) result += state(m, h).n * state(m, h).mix->sectionExt(lambda);
     return result;
 }
@@ -397,7 +397,7 @@ double MediumSystem::opacityExt(double lambda, int m) const
 
 double MediumSystem::opacityExt(double lambda, int m, MaterialMix::MaterialType type) const
 {
-    if (type == MaterialMix::MaterialType::Gas) return Gas::opacityAbs(lambda, m);
+    if (type == MaterialMix::MaterialType::Gas) return hasGas() ? Gas::opacityAbs(lambda, m) : 0.;
 
     double result = 0.;
     for (int h = 0; h != _numMedia; ++h)
@@ -418,7 +418,7 @@ double MediumSystem::albedo(double lambda, int m) const
 {
     double ksca = 0.;
     double kext = 0.;
-    kext += Gas::opacityAbs(lambda, m);
+    if (hasGas()) kext += Gas::opacityAbs(lambda, m);
     for (int h = 0; h != _numMedia; ++h)
     {
         double n = state(m, h).n;
@@ -653,36 +653,40 @@ double MediumSystem::absorbedLuminosity(int m, MaterialMix::MaterialType type) c
 
 void MediumSystem::updateGas()
 {
-    TimeLogger logger(find<Log>(), "updating gas states");
-    Gas::clearResults();
-    find<ParallelFactory>()->parallelDistributed()->call(_numCells, [&](size_t firstIndex, size_t numIndices) {
-        for (size_t m = firstIndex; m < firstIndex + numIndices; m++)
-        {
-            // gas density
-            double n = 0;
-            for (int h = 0; h != _numMedia; ++h)
-                if (isGas(h)) n += numberDensity(m, h);
+    if (hasGas())
+    {
+        TimeLogger logger(find<Log>(), "updating gas states");
+        Gas::clearResults();
+        find<ParallelFactory>()->parallelDistributed()->call(_numCells, [&](size_t firstIndex, size_t numIndices) {
+            for (size_t m = firstIndex; m < firstIndex + numIndices; m++)
+            {
+                // gas density
+                double n = 0;
+                for (int h = 0; h != _numMedia; ++h)
+                    if (isGas(h)) n += numberDensity(m, h);
 
-            // skip cells without gas
-            if (!n) continue;
+                // skip cells without gas
+                if (!n) continue;
 
-            // relevant dust density in correct format
-            int numCompatibleGrainPops = _hCompatibleWithGasv.size();
-            Array nv(numCompatibleGrainPops);
-            for (int i = 0; i < numCompatibleGrainPops; i++) nv[i] = state(m, _hCompatibleWithGasv[i][0]).n;
+                // relevant dust density in correct format
+                int numCompatibleGrainPops = _hCompatibleWithGasv.size();
+                Array nv(numCompatibleGrainPops);
+                for (int i = 0; i < numCompatibleGrainPops; i++) nv[i] = state(m, _hCompatibleWithGasv[i][0]).n;
 
-            // call update
-            Gas::updateGasState(m, n, meanIntensity(m), nv);
-        }
-    });
-    Gas::communicateResults();
+                // call update
+                Gas::updateGasState(m, n, meanIntensity(m), nv);
+            }
+        });
+        Gas::communicateResults();
+    }
+    // dust destruction things can also go in this function
 }
 
 ////////////////////////////////////////////////////////////////////
 
 void MediumSystem::gasTest()
 {
-    if (hasGas() && _config->hasRadiationField())
+    if (hasGas())
     {
         TextOutFile file(this, "gastemps", "gas temperature per cell");
         for (auto s : {"index", "x", "y", "z", "T"}) file.addColumn(s, "", 'd');
