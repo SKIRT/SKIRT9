@@ -79,6 +79,7 @@
 #include "FrameInstrument.hpp"
 #include "FullInstrument.hpp"
 #include "GammaGeometry.hpp"
+#include "GasEmissionOptions.hpp"
 #include "GasMix.hpp"
 #include "GaussianGeometry.hpp"
 #include "GeometricMedium.hpp"
@@ -450,6 +451,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ExtinctionOnlyOptions>();
     ItemRegistry::add<DustEmissionOptions>();
     ItemRegistry::add<DustSelfAbsorptionOptions>();
+    ItemRegistry::add<GasEmissionOptions>();
 
     // material normalizations
     ItemRegistry::add<MaterialNormalization>();
