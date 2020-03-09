@@ -199,10 +199,26 @@ public:
 
     /** Returns the fraction of secondary photon packet wavelengths sampled from a bias
         distribution. */
-    double secondaryWavelengthBias() const { return _secondaryWavelengthBias; }
+    double dustEmissionWavelengthBias() const { return _dustEmissionWavelengthBias; }
 
-    /** Returns the bias distribution for sampling secondary photon packet wavelengths. */
-    WavelengthDistribution* secondaryWavelengthBiasDistribution() const { return _secondaryWavelengthBiasDistribution; }
+    /** Returns the bias distribution for sampling secondary dust photon packet wavelengths. */
+    WavelengthDistribution* dustEmissionWavelengthBiasDistribution() const
+    {
+        return _dustEmissionWavelengthBiasDistribution;
+    }
+
+    /** Returns the wavelength grid to be used for calculating the gas emission spectrum. */
+    DisjointWavelengthGrid* gasEmissionWLG() const { return _gasEmissionWLG; }
+
+    /** Returns the fraaction of secondary gas photon packet wavelengths sampled from a bias
+        distribution. */
+    double gasEmissionWavelengthBias() const { return _gasEmissionWavelengthBias; }
+
+    /** Return the bias distribution for sampling the secondary gas photon packet wavelengths */
+    WavelengthDistribution* gasEmissionWavelengthBiasDistribution() const
+    {
+        return _gasEmissionWavelengthBiasDistribution;
+    }
 
     /** Returns the minimum number of self-absorption iterations. */
     int minIterations() const { return _minIterations; }
@@ -293,7 +309,7 @@ private:
     bool _hasSecondaryRadiationField{false};
     DisjointWavelengthGrid* _radiationFieldWLG{nullptr};
 
-    // emission
+    // dust emission
     bool _hasDustEmission{false};
     bool _hasStochasticDustEmission{false};
     bool _includeHeatingByCMB{false};
@@ -302,12 +318,17 @@ private:
     SpatialCellLibrary* _cellLibrary{nullptr};
     bool _storeEmissionRadiationField{false};
     double _secondarySpatialBias{0.5};
-    double _secondaryWavelengthBias{0.5};
-    WavelengthDistribution* _secondaryWavelengthBiasDistribution{nullptr};
+    double _dustEmissionWavelengthBias{0.5};
+    WavelengthDistribution* _dustEmissionWavelengthBiasDistribution{nullptr};
     int _minIterations{1};
     int _maxIterations{10};
     double _maxFractionOfPrimary{0.01};
     double _maxFractionOfPrevious{0.03};
+
+    // gas emission
+    DisjointWavelengthGrid* _gasEmissionWLG{nullptr};
+    double _gasEmissionWavelengthBias{0.5};
+    WavelengthDistribution* _gasEmissionWavelengthBiasDistribution{nullptr};
 
     // opacity iteration
     bool _hasOpacityIteration{false};

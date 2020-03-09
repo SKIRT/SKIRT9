@@ -128,8 +128,8 @@ void Configuration::setupSelfBefore()
         }
         _numSecondaryPackets = sim->numPackets() * ms->dustEmissionOptions()->secondaryPacketsMultiplier();
         _secondarySpatialBias = ms->dustEmissionOptions()->spatialBias();
-        _secondaryWavelengthBias = ms->dustEmissionOptions()->wavelengthBias();
-        _secondaryWavelengthBiasDistribution = ms->dustEmissionOptions()->wavelengthBiasDistribution();
+        _dustEmissionWavelengthBias = ms->dustEmissionOptions()->wavelengthBias();
+        _dustEmissionWavelengthBiasDistribution = ms->dustEmissionOptions()->wavelengthBiasDistribution();
     }
 
     // retrieve dust self-absorption options
@@ -156,6 +156,9 @@ void Configuration::setupSelfBefore()
             _hasOpacityIteration = true;
             _hasRadiationField = true;
             _hasSecondaryRadiationField = true; // TODO: make self-consistent gas emission optional
+            _gasEmissionWLG = ms->gasEmissionOptions()->gasEmissionWLG();
+            _gasEmissionWavelengthBias = ms->gasEmissionOptions()->wavelengthBias();
+            _gasEmissionWavelengthBiasDistribution = ms->gasEmissionOptions()->wavelengthBiasDistribution();
         }
     }
 
