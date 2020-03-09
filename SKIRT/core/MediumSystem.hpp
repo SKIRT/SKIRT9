@@ -10,7 +10,7 @@
 #include "DustEmissionOptions.hpp"
 #include "DustSelfAbsorptionOptions.hpp"
 #include "ExtinctionOnlyOptions.hpp"
-#include "Gas.hpp"
+#include "GasEmissionOptions.hpp"
 #include "MaterialMix.hpp"
 #include "Medium.hpp"
 #include "PhotonPacketOptions.hpp"
@@ -72,6 +72,10 @@ class MediumSystem : public SimulationItem
         PROPERTY_ITEM(dustSelfAbsorptionOptions, DustSelfAbsorptionOptions, "the dust self-absorption options")
         ATTRIBUTE_DEFAULT_VALUE(dustSelfAbsorptionOptions, "DustSelfAbsorptionOptions")
         ATTRIBUTE_RELEVANT_IF(dustSelfAbsorptionOptions, "DustSelfAbsorption")
+
+        PROPERTY_ITEM(gasEmissionOptions, GasEmissionOptions, "the gas emission options")
+        ATTRIBUTE_DEFAULT_VALUE(gasEmissionOptions, "GasEmissionOptions")
+        ATTRIBUTE_RELEVANT_IF(gasEmissionOptions, "GasEmission")
 
         PROPERTY_INT(numDensitySamples, "the number of random density samples for determining spatial cell mass")
         ATTRIBUTE_MIN_VALUE(numDensitySamples, "10")

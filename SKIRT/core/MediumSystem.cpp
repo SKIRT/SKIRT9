@@ -9,6 +9,7 @@
 #include "DensityInCellInterface.hpp"
 #include "DisjointWavelengthGrid.hpp"
 #include "FatalError.hpp"
+#include "Gas.hpp"
 #include "LockFree.hpp"
 #include "Log.hpp"
 #include "MaterialMix.hpp"
