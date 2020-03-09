@@ -99,6 +99,8 @@ namespace
     }
 }
 
+////////////////////////////////////////////////////////////////////
+
 bool SecondarySourceSystem::prepareForLaunch(size_t numPackets)
 {
     // --------- luminosities 1 ---------
@@ -126,7 +128,7 @@ bool SecondarySourceSystem::prepareForLaunch(size_t numPackets)
 
     // calculate the total luminosity; if both are zero, report failure
     _Ldust = _Ldustv.sum();
-    _Lgas = _Ldustv.sum();
+    _Lgas = _Lgasv.sum();
 
     // use these flags to deal with the special case that there is no dust or no gas
     _launchDust = _Ldust > 0;
@@ -173,7 +175,7 @@ bool SecondarySourceSystem::prepareForLaunch(size_t numPackets)
     if (_launchDust)
     {
         calculateWv(_Wdustv, _Ldustv, xi, numCells);
-        calculateIv(_Idustv, _Wdustv, _mv, Nppdust, 0., numCells);
+        calculateIv(_Idustv, _Wdustv, _mv, Nppdust, 0, numCells);
     }
 
     // if there were 0 dust packets, start from 0. if there was 1, start from index 1, etc. If not
