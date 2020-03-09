@@ -73,7 +73,8 @@ namespace
     {
         // determine a uniform weight for each cell with non-negligable emission, and normalize to unity
         Array wv(numCells);
-        for (int m = 0; m != numCells; ++m) wv[m] = Lv[m] > 0. ? 1. : 0;
+        for (int m = 0; m != numCells; ++m) wv[m] = Lv[m] > 0 ? 1. : 0.;
+        wv /= wv.sum();
 
         // calculate the final, composite-biased launch weight for each cell, normalized to unity
         Wv = (1 - xi) * Lv + xi * wv;
