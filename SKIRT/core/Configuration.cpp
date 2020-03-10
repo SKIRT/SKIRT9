@@ -71,12 +71,22 @@ void Configuration::setupSelfBefore()
     if (ms) numMedia = ms->media().size();  // may be zero
     _hasMedium = (numMedia != 0);
 
+    // check if there is gas
+    bool hasGas = false;
+    if (_hasMedium)
+    {
+        for (auto medium : ms->media())
+            if (medium->mix()->isGas()) hasGas = true;
+    }
+
     // verify this with the requirements set by the simulation mode
     bool mustHaveMedium = sim->simulationMode() != MonteCarloSimulation::SimulationMode::OligoNoMedium
                           && sim->simulationMode() != MonteCarloSimulation::SimulationMode::NoMedium;
     if (!mustHaveMedium && _hasMedium) throw FATALERROR("This simulation mode does not allow media to be configured");
     if (mustHaveMedium && !_hasMedium)
         throw FATALERROR("This simulation mode requires at least one medium to be configured");
+    if (hasGas && sim->simulationMode() != MonteCarloSimulation::SimulationMode::DustGasConsistent)
+        throw FATALERROR("This simulation mode does not support gas");
 
     // retrieve photon life-cycle and basic medium-related options
     _numPrimaryPackets = sim->numPackets();
@@ -146,22 +156,13 @@ void Configuration::setupSelfBefore()
         _numIterationPackets = sim->numPackets() * ms->dustSelfAbsorptionOptions()->iterationPacketsMultiplier();
     }
 
-    // retrieve gas emission and opacity iteration options
+    // retrieve gas and opacity iteration options
     if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustGasConsistent)
     {
         _gasEmissionWLG = ms->gasEmissionOptions()->gasEmissionWLG();
         _gasEmissionWavelengthBias = ms->gasEmissionOptions()->wavelengthBias();
         _gasEmissionWavelengthBiasDistribution = ms->gasEmissionOptions()->wavelengthBiasDistribution();
-
-        // turn on iterations only if there's at least one gas component
-        if (_hasMedium)
-        {
-            bool hasGas = false;
-            for (auto medium : ms->media())
-                if (medium->mix()->isGas()) hasGas = true;
-
-            if (hasGas) _hasOpacityIteration = true;
-        }
+        _hasOpacityIteration = true;
     }
 
     // retrieve symmetry dimensions

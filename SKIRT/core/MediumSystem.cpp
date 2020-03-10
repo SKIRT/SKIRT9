@@ -157,7 +157,7 @@ void MediumSystem::setupSelfAfter()
     // ----- initialize the gas -----
     if (hasGas())
     {
-        // this piece of needs to run after setting the material mix pointers above
+        // needs to run after setting the material mix pointers above
 
         // Get the wavelengths here, for getSizeBinProperties (see below)
         Array lambdav(_wavelengthGrid->numBins());
