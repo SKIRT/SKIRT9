@@ -20,6 +20,7 @@ namespace
 
     Array _lambdav;                         // wavelengths given at initialization
     Array _olambdav;                        // wavelengths for determining the index in the opacity table
+    Array _elambdav;                        // wavelengths for calculating the emission
     GasModule::GasInterface* _gi;           // instance of GasInterface
     std::vector<Gas::DustInfo> _dustinfov;  // information about the dust populations in the simulation
 
@@ -70,6 +71,15 @@ namespace
     }
 
     Array nuToLambda(const Array& nuv, const Array& quantityPerNu) { return x_to_cxm1(nuv, quantityPerNu); }
+
+    /** Convert array of x to array of 1 / x, with the elements ordered the other way round */
+    Array invertAndFlip(const Array& xv)
+    {
+        int size = xv.size();
+        Array xv_inv_flip(size);
+        for (int i = 0; i < size; i++) xv_inv_flip[i] = 1. / xv[size - 1 - i];
+        return xv_inv_flip;
+    }
 
     // Get an array of grain number densities [cm-3] corresponding to dustInfo i with mix number
     // density mixNumberDens [m-3] (n in MediumSystem)
@@ -123,23 +133,13 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-void Gas::initialize(const Array& lambdav, const std::vector<DustInfo>& dustinfov)
+void Gas::initialize(const Array& lambdav, const std::vector<DustInfo>& dustinfov, const Array& emissionWLG)
 {
 #ifdef BUILD_WITH_GAS
     if (_gi) FATALERROR("Gas module should be initialized exactly once");
 
-    // Turn off error handling (otherwise, gas module can call abort)
-    GasModule::GasInterface::errorHandlersOff();
-
-    // Calculate the frequency grid
-    int numFreq = lambdav.size();
-    Array frequencyv(numFreq);
-    for (int i = 0; i < numFreq; i++) frequencyv[i] = Constants::c() / lambdav[numFreq - 1 - i];
-
-    // Initialize the gas module using this frequency grid
-    _gi = new GasModule::GasInterface(frequencyv, frequencyv, frequencyv);
-
-    // Copy the dust properties
+    _lambdav = lambdav;
+    _elambdav = emissionWLG;
     _dustinfov = dustinfov;
 
     // Change the units of the dust properties from SI to cgs
@@ -151,20 +151,27 @@ void Gas::initialize(const Array& lambdav, const std::vector<DustInfo>& dustinfo
         for (size_t b = 0; b < d.qabsvv.size(); b++) std::reverse(std::begin(d.qabsvv[b]), std::end(d.qabsvv[b]));
     }
 
-    // store the original wavelength grid for convenience
-    _lambdav = lambdav;
+    // Calculate the input radiation field / output opacity frequency grid
+    Array iFrequencyv = Constants::c() * invertAndFlip(_lambdav);
+
+    // Calculate the output emissivity frequency grid
+    Array eFrequencyv = Constants::c() * invertAndFlip(_elambdav);
 
     // derive a wavelength grid that will be used for converting a wavelength to an index in the
-    // opacity table. copied from DustMix
-    _olambdav.resize(numFreq);
+    // opacity table (copied from DustMix)
+    int numLambda = _lambdav.size();
+    _olambdav.resize(numLambda);
     _olambdav[0] = lambdav[0];
-    for (int ell = 1; ell != numFreq; ++ell)
-    {
-        _olambdav[ell] = sqrt(lambdav[ell] * lambdav[ell - 1]);
-    }
+    for (int ell = 1; ell != numLambda; ++ell) _olambdav[ell] = sqrt(lambdav[ell] * lambdav[ell - 1]);
+
+    // Turn off error handling (otherwise, gas module can call abort)
+    GasModule::GasInterface::errorHandlersOff();
+    // Initialize the gas module
+    _gi = new GasModule::GasInterface(iFrequencyv, iFrequencyv, eFrequencyv);
 #else
     (void)lambdav;
     (void)dustinfov;
+    (void)emissionWLG;
 #endif
 }
 
@@ -225,20 +232,12 @@ void Gas::updateGasState(int m, double n, const Array& meanIntensityv, const Arr
     // prepare grain info for this cell
     setThreadLocalGrainDensities(mixNumberDensv);
 
+    // calculate the equilibrium
     _gi->updateGasState(_statev[m], n * 1.e-6, jnu, t_gr);
 
-    // if (m == 0)
-    // {
-    //     // write out nu Jnu for first cell
-    //     double c_um = 2.99792458e14;
-    //     Array lambda_um = c_um / _gi->iFrequencyv();
-    //     for (size_t i = 0; i < lambda_um.size(); i++)
-    //         std::cout << lambda_um[i] << " " << _gi->iFrequencyv()[i] * jnu[i] << '\n';
-    // }
-
-    // calculate and store the opacity
+    // calculate and store the opacity; the opacity table is indexed on wavelength, so we need to
+    // flip the result around
     const Array& opacity_nu = _gi->opacity(_statev[m], true);
-    // the opacity table is indexed on wavelength, so we need to flip the result around
     for (size_t ell = 0; ell < opacity_nu.size(); ell++) _opacityvv(m, ell) = opacity_nu[opacity_nu.size() - 1 - ell];
 
     if (verbose)
@@ -338,9 +337,4 @@ Array Gas::emissivity(int m)
 
 ////////////////////////////////////////////////////////////////////
 
-const Array& Gas::emissivityLambdav()
-{
-    return _lambdav;
-}
 
-////////////////////////////////////////////////////////////////////

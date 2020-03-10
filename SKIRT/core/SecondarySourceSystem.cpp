@@ -422,14 +422,15 @@ namespace
     public:
         GasCellEmission() {}
 
-        void calculateIfNeeded(int p, const vector<int>& mv, MediumSystem* ms)
+        void calculateIfNeeded(int p, const vector<int>& mv, MediumSystem* ms, Configuration* config)
         {
             if (p == _p) return;
             if (_p == -1)
             {
                 _ms = ms;
-                _wavelengthGrid = Gas::emissivityLambdav();
-                _wavelengthRange = Range(_wavelengthGrid[0], _wavelengthGrid[_wavelengthGrid.size() - 1]);
+                auto wavelengthGrid = config->gasEmissionWLG();
+                _wavelengthGrid = wavelengthGrid->extlambdav();
+                _wavelengthRange = wavelengthGrid->wavelengthRange();
             }
             _p = p;
             int m = mv[p];
@@ -628,7 +629,7 @@ void SecondarySourceSystem::launch(PhotonPacket* pp, size_t historyIndex) const
     }
     else
     {
-        t_gascell.calculateIfNeeded(p, _mv, _ms);
+        t_gascell.calculateIfNeeded(p, _mv, _ms, _config);
     }
 
     // generate a random wavelength from the emission spectrum for the cell and/or from the bias distribution

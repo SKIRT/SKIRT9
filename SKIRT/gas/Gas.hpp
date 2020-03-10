@@ -28,9 +28,11 @@ public:
     };
 
     /** Initialize the gas module. Should be called exactly once, before any other functions of
-        this class are used. The wavelength grid passed here should be the grid used for
-        meanIntensityv, i.e. the radiantion field wavelength grid. */
-    static void initialize(const Array& lambdav, const std::vector<DustInfo>&);
+        this class are used. The first argument should be the grid used for meanIntensityv, i.e.
+        the radiation field wavelength grid. The second argument describes the dust population
+        properties. The wavelength grid given to the third argument will be used to calculate the
+        emission. */
+    static void initialize(const Array& lambdav, const std::vector<DustInfo>&, const Array& emissionWLG);
 
     /** Function which should be called exactly one, before the code finishes. After calling
         finalize(), all info about the gas will be lost. */
@@ -86,13 +88,9 @@ public:
     static int indexForLambda(double lambda);
 
     /** This function calculates the emissivity (W m-3 sr-1 m-1) on the wavelength grid that was
-        given at initialization, using the gas state stored at index m. TODO: use different
-        wavelength grid for opacity and emissivity. */
+        given at initialization, using the gas state stored at index m. This quantity is evaluated
+        for the wavelengths in the emissivity wavelength grid given at initialization. */
     static Array emissivity(int m);
-
-    /** This function returns the wavelengths used to calculate the emissivity. TODO: move this to
-        Configuration? */
-    static const Array& emissivityLambdav();
 };
 
 #endif

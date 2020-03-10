@@ -193,7 +193,7 @@ void MediumSystem::setupSelfAfter()
                 }
             }
         }
-        Gas::initialize(lambdav, dustinfov);
+        Gas::initialize(lambdav, dustinfov, _config->gasEmissionWLG()->extlambdav());
         Gas::allocateGasStates(_numCells);
     }
 }
