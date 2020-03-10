@@ -103,7 +103,8 @@ void Configuration::setupSelfBefore()
 
     // retrieve dust emission options
     if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustEmission
-        || sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustEmissionWithSelfAbsorption)
+        || sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustEmissionWithSelfAbsorption
+        || sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustGasConsistent)
     {
         _hasRadiationField = true;
         _hasPanRadiationField = true;
@@ -133,7 +134,8 @@ void Configuration::setupSelfBefore()
     }
 
     // retrieve dust self-absorption options
-    if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustEmissionWithSelfAbsorption)
+    if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustEmissionWithSelfAbsorption
+        || sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustGasConsistent)
     {
         _hasDustSelfAbsorption = true;
         _hasSecondaryRadiationField = true;
@@ -144,21 +146,21 @@ void Configuration::setupSelfBefore()
         _numIterationPackets = sim->numPackets() * ms->dustSelfAbsorptionOptions()->iterationPacketsMultiplier();
     }
 
-    // retrieve gas options
-    if (_hasMedium)
+    // retrieve gas emission and opacity iteration options
+    if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustGasConsistent)
     {
-        bool hasGas = false;
-        for (auto medium : ms->media())
-            if (medium->mix()->isGas()) hasGas = true;
+        _gasEmissionWLG = ms->gasEmissionOptions()->gasEmissionWLG();
+        _gasEmissionWavelengthBias = ms->gasEmissionOptions()->wavelengthBias();
+        _gasEmissionWavelengthBiasDistribution = ms->gasEmissionOptions()->wavelengthBiasDistribution();
 
-        if (hasGas)
+        // turn on iterations only if there's at least one gas component
+        if (_hasMedium)
         {
-            _hasOpacityIteration = true;
-            _hasRadiationField = true;
-            _hasSecondaryRadiationField = true; // TODO: make self-consistent gas emission optional
-            _gasEmissionWLG = ms->gasEmissionOptions()->gasEmissionWLG();
-            _gasEmissionWavelengthBias = ms->gasEmissionOptions()->wavelengthBias();
-            _gasEmissionWavelengthBiasDistribution = ms->gasEmissionOptions()->wavelengthBiasDistribution();
+            bool hasGas = false;
+            for (auto medium : ms->media())
+                if (medium->mix()->isGas()) hasGas = true;
+
+            if (hasGas) _hasOpacityIteration = true;
         }
     }
 
