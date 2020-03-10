@@ -613,9 +613,6 @@ void SecondarySourceSystem::launch(PhotonPacket* pp, size_t historyIndex) const
     // select the spatial cell from which to launch based on the history index of this photon packet
     bool isDust = historyIndex < _startGasIndex;
 
-    // TODO: remove this check once everything works
-    if ((isDust && !_launchDust) || (!isDust && !_launchGas)) FATALERROR("Something went wrong in prepareForLaunch");
-
     size_t p = isDust ? std::upper_bound(_Idustv.cbegin(), _Idustv.cend(), historyIndex) - _Idustv.cbegin() - 1
                       : std::upper_bound(_Igasv.cbegin(), _Igasv.cend(), historyIndex) - _Igasv.cbegin() - 1;
 

@@ -65,7 +65,6 @@ void MonteCarloSimulation::runSimulation()
     {
         TimeLogger logger(log(), "the run");
 
-        // opacity iteration. TODO: enforce requirements in Configuration once we make up our minds
         bool withSecondary = true;
         if (_config->hasOpacityIteration()) runSelfConsistentOpacityPhase(withSecondary);
 
@@ -165,11 +164,10 @@ void MonteCarloSimulation::runSelfConsistentOpacityPhase(bool withSecondary)
     double prevLabsSecgas = 0.;
     double prevLabsSecdust = 0.;
 
-    // TODO: these should be configuration options
     double fractionOfPreviousgas = 0.03;
-    double fractionOfPreviousdust = 0.03;
+    double fractionOfPreviousdust = _config->maxFractionOfPrevious();
     double fractionOfPrimarygas = 0.;
-    double fractionOfPrimarydust = 0.01;
+    double fractionOfPrimarydust = _config->maxFractionOfPrimary();
     int minIters = 3;
     int maxIters = 10;
 
