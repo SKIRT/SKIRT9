@@ -169,6 +169,7 @@ void Gas::initialize(const Array& lambdav, const std::vector<DustInfo>& dustinfo
     // Initialize the gas module
     _gi = new GasModule::GasInterface(iFrequencyv, iFrequencyv, eFrequencyv);
 #else
+    throw FATALERROR("SKIRT was built without gas support!")
     (void)lambdav;
     (void)dustinfov;
     (void)emissionWLG;
