@@ -616,6 +616,11 @@ void MonteCarloSimulation::peelOffScattering(const PhotonPacket* pp, PhotonPacke
                         V += w * sv.stokesV();
                         break;
                     }
+                    case MaterialMix::ScatteringMode::Lya:
+                    case MaterialMix::ScatteringMode::LyaPolarization:
+                    {
+                        throw FATALERROR("Lyman-alpha scattering not yet implemented");
+                    }
                 }
             }
 
@@ -702,6 +707,11 @@ void MonteCarloSimulation::simulateScattering(PhotonPacket* pp)
             // normalize the new direction to prevent degradation
             bfknew = Direction(newdir / newdir.norm());
             break;
+        }
+        case MaterialMix::ScatteringMode::Lya:
+        case MaterialMix::ScatteringMode::LyaPolarization:
+        {
+            throw FATALERROR("Lyman-alpha scattering not yet implemented");
         }
     }
     pp->scatter(bfknew, bfv);
