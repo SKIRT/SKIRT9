@@ -97,7 +97,9 @@ public:
     /** This function returns the equilibrium temperature \f$T_{\text{eq}}\f$ of the material mix
         when it would be embedded in a given radiation field. Because the hydrogen atoms absorb nor
         emit at the Lyman-alpha line (at least in our treatment), the implementation of this
-        function in this class ignores the input radiation field and always returns zero. */
+        function in this class ignores the input radiation field and always returns the default
+        temperature configured for this material mix. This is in fact a hack to allow retrieval of
+        this temperature without casting the material mix object. */
     double equilibriumTemperature(const Array& Jv) const override;
 
     /** This function returns the emissivity spectrum \f$\varepsilon_{\ell'}\f$ of the material mix

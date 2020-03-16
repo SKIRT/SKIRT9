@@ -62,7 +62,7 @@ double LyaNeutralHydrogenMaterialMix::albedo(double /*lambda*/) const
 
 double LyaNeutralHydrogenMaterialMix::equilibriumTemperature(const Array& /*Jv*/) const
 {
-    return 0.;
+    return defaultTemperature();
 }
 
 ////////////////////////////////////////////////////////////////////

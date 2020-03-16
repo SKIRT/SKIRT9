@@ -6,9 +6,6 @@
 #include "Configuration.hpp"
 #include "AllCellsLibrary.hpp"
 #include "Constants.hpp"
-#include "DustEmissionOptions.hpp"
-#include "DustSelfAbsorptionOptions.hpp"
-#include "ExtinctionOnlyOptions.hpp"
 #include "FatalError.hpp"
 #include "MaterialMix.hpp"
 #include "MaterialWavelengthRangeInterface.hpp"
@@ -90,7 +87,8 @@ void Configuration::setupSelfBefore()
 
     // retrieve extinction-only options
     if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::OligoExtinctionOnly
-        || sim->simulationMode() == MonteCarloSimulation::SimulationMode::ExtinctionOnly)
+        || sim->simulationMode() == MonteCarloSimulation::SimulationMode::ExtinctionOnly
+        || sim->simulationMode() == MonteCarloSimulation::SimulationMode::LyaWithDustExtinction)
     {
         _hasRadiationField = ms->extinctionOnlyOptions()->storeRadiationField();
         if (_hasRadiationField)
@@ -103,7 +101,9 @@ void Configuration::setupSelfBefore()
 
     // retrieve dust emission options
     if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustEmission
-        || sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustEmissionWithSelfAbsorption)
+        || sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustEmissionWithSelfAbsorption
+        || sim->simulationMode() == MonteCarloSimulation::SimulationMode::LyaWithDustEmission
+        || sim->simulationMode() == MonteCarloSimulation::SimulationMode::LyaWithDustSelfAbsorption)
     {
         _hasRadiationField = true;
         _hasPanRadiationField = true;
@@ -133,7 +133,8 @@ void Configuration::setupSelfBefore()
     }
 
     // retrieve dust self-absorption options
-    if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustEmissionWithSelfAbsorption)
+    if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustEmissionWithSelfAbsorption
+        || sim->simulationMode() == MonteCarloSimulation::SimulationMode::LyaWithDustSelfAbsorption)
     {
         _hasDustSelfAbsorption = true;
         _hasSecondaryRadiationField = true;
@@ -142,6 +143,42 @@ void Configuration::setupSelfBefore()
         _maxFractionOfPrimary = ms->dustSelfAbsorptionOptions()->maxFractionOfPrimary();
         _maxFractionOfPrevious = ms->dustSelfAbsorptionOptions()->maxFractionOfPrevious();
         _numIterationPackets = sim->numPackets() * ms->dustSelfAbsorptionOptions()->iterationPacketsMultiplier();
+    }
+
+    // retrieve Lyman-alpha options
+    if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::LyaWithDustExtinction
+        || sim->simulationMode() == MonteCarloSimulation::SimulationMode::LyaWithDustEmission
+        || sim->simulationMode() == MonteCarloSimulation::SimulationMode::LyaWithDustSelfAbsorption)
+    {
+        _hasLymanAlpha = true;
+        switch (ms->lyaOptions()->lyaAccelerationScheme())
+        {
+            case LyaOptions::LyaAccelerationScheme::None:
+                _lyaAccelerationScheme = Configuration::LyaAccelerationScheme::None;
+                break;
+            case LyaOptions::LyaAccelerationScheme::Constant:
+                _lyaAccelerationScheme = Configuration::LyaAccelerationScheme::Constant;
+                _lyaAccelerationCriticalValue = ms->lyaOptions()->lyaAccelerationCriticalValue();
+                break;
+            case LyaOptions::LyaAccelerationScheme::Laursen2009:
+                _lyaAccelerationScheme = Configuration::LyaAccelerationScheme::Laursen2009;
+                break;
+            case LyaOptions::LyaAccelerationScheme::Smith2015:
+                _lyaAccelerationScheme = Configuration::LyaAccelerationScheme::Smith2015;
+                break;
+        }
+
+        // verify that there is exactly one Lya medium component
+        int numLyaMedia = 0;
+        if (_hasMedium)
+            for (auto medium : ms->media())
+                if (medium->mix()->scatteringMode() == MaterialMix::ScatteringMode::Lya
+                    || medium->mix()->scatteringMode() == MaterialMix::ScatteringMode::LyaPolarization)
+                    numLyaMedia++;
+        if (numLyaMedia < 1)
+            throw FATALERROR("Lyman-alpha simulation mode requires a medium component with Lyman-alpha material mix");
+        if (numLyaMedia > 1)
+            throw FATALERROR("It is not allowed for more than one medium component to have a Lyman-alpha material mix");
     }
 
     // retrieve symmetry dimensions
@@ -226,8 +263,9 @@ void Configuration::setupSelfAfter()
     log->info("  " + regime + "chromatic wavelength regime");
     string medium = _hasMedium ? "With" : "No";
     log->info("  " + medium + " transfer medium");
+    if (_hasLymanAlpha) log->info("  Including Lyman-alpha line transfer");
     if (_hasDustSelfAbsorption)
-        log->info("  Including dust emission with iterative calculation of dust self-absorption ");
+        log->info("  Including dust emission with iterative calculation of dust self-absorption");
     else if (_hasDustEmission)
         log->info("  Including dust emission");
     if (_hasPolarization) log->info("  Medium requires support for polarization");

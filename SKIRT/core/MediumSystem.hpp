@@ -141,6 +141,11 @@ public:
         medium component specifies a magnetic field, this function returns the null vector. */
     Vec magneticField(int m);
 
+    /** This function returns the gas temperature \f$T\f$ in the spatial cell with index \f$m\f$.
+        At most one medium component is allowed to specify a gas temperature. If no medium
+        component specifies a gas temperature, this function returns zero. */
+    double gasTemperature(int m);
+
     /** This function returns true if at least one of the media in the medium system has the
         specified fundamental material type (i.e. dust, electrons, or gas). */
     bool hasMaterialType(MaterialMix::MaterialType type) const;
@@ -390,6 +395,7 @@ private:
         double V;  // volume
         Vec v;     // bulk velocity
         Vec B;     // magnetic field
+        double T;  // gas temperature
     };
 
     /** This data structure holds the information maintained per cell and per medium. */

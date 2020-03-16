@@ -216,6 +216,26 @@ public:
         this fraction compared to the previous iteration. */
     double maxFractionOfPrevious() const { return _maxFractionOfPrevious; }
 
+    /** Returns true if the simulation includes treatment of the hydrogen Lyman-alpha line during
+        the primary photon cycle, and false if not. This value also corresponds to the presence or
+        absence of a medium component that has a material mix with the \c Lya or \c LyaPolarization
+        scattering mode. In the current implementation, there can be only a single such Lyman-alpha
+        medium component. This restriction may be lifted in the future. */
+    bool hasLymanAlpha() const { return _hasLymanAlpha; }
+
+    /** This enumeration lists the supported Lyman-alpha acceleration schemes. */
+    enum class LyaAccelerationScheme { None, Constant, Laursen2009, Smith2015 };
+
+    /** Returns the enumeration value determining the accelaration scheme to be used for
+        Lyman-alpha line treatment. The value is relevant only when hasLymanAlpha() returns true.
+        */
+    LyaAccelerationScheme lyaAccelerationScheme() const { return _lyaAccelerationScheme; }
+
+    /** Returns the critical value \f$x_\mathrm{crit}\f$ to be employed by the \c Constant
+        Lyman-alpha acceleration scheme, should this scheme be selected. The value is relevant only
+        when hasLymanAlpha() returns true and lyaAccelerationScheme() returns \c Constant. */
+    double lyaAccelerationCriticalValue() const { return _lyaAccelerationCriticalValue; }
+
     /** Returns the symmetry dimension of the input model, including sources and media, if present.
         A value of 1 means spherical symmetry, 2 means axial symmetry and 3 means none of these
         symmetries. */
@@ -253,26 +273,6 @@ public:
         media define a magnetic field. It is not allowed for multiple medium components to define
         a magnetic field (a fatal error is raised during setup when this happens). */
     bool hasMagneticField() const { return _hasMagneticField; }
-
-    /** Returns true if the simulation includes treatment of the hydrogen Lyman-alpha line during
-        the primary photon cycle, and false if not. This value also corresponds to the presence or
-        absence of a medium component that has a material mix with the \c Lya or \c LyaPolarization
-        scattering mode. In the current implementation, there can be only a single such Lyman-alpha
-        medium component. This restriction may be lifted in the future. */
-    bool hasLymanAlpha() const { return _hasLymanAlpha; }
-
-    /** This enumeration lists the supported Lyman-alpha acceleration schemes. */
-    enum class LyaAccelerationScheme { None, Constant, Laursen2009, Smith2015 };
-
-    /** Returns the enumeration value determining the accelaration scheme to be used for
-        Lyman-alpha line treatment. The value is relevant only when hasLymanAlpha() returns true.
-        */
-    LyaAccelerationScheme lyaAccelerationScheme() const { return _lyaAccelerationScheme; }
-
-    /** Returns the critical value \f$x_\mathrm{crit}\f$ to be employed by the \c Constant
-        Lyman-alpha acceleration scheme, should this scheme be selected. The value is relevant only
-        when hasLymanAlpha() returns true and lyaAccelerationScheme() returns \c Constant. */
-    double lyaAccelerationCriticalValue() const { return _lyaAccelerationCriticalValue; }
 
     //======================== Data Members ========================
 
@@ -325,6 +325,11 @@ private:
     double _maxFractionOfPrimary{0.01};
     double _maxFractionOfPrevious{0.03};
 
+    // Lyman-alpha properties
+    bool _hasLymanAlpha{false};
+    LyaAccelerationScheme _lyaAccelerationScheme{LyaAccelerationScheme::None};
+    double _lyaAccelerationCriticalValue{3.};
+
     // properties derived from the configuration at large
     int _modelDimension{0};
     int _gridDimension{0};
@@ -334,11 +339,6 @@ private:
     bool _hasPolarization{false};
     bool _hasSpheroidalPolarization{false};
     bool _hasMagneticField{false};
-
-    // Lyman-alpha properties
-    bool _hasLymanAlpha{false};
-    LyaAccelerationScheme _lyaAccelerationScheme{LyaAccelerationScheme::None};
-    double _lyaAccelerationCriticalValue{3.};
 };
 
 ////////////////////////////////////////////////////////////////////

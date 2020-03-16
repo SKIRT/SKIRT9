@@ -147,6 +147,30 @@ void MediumSystem::setupSelfAfter()
         Position bfr = _grid->centralPositionInCell(m);
         for (int h = 0; h != _numMedia; ++h) state(m, h).mix = _media[h]->mix(bfr);
     }
+
+    // ----- if Lya is enabled, obtain the gas temperature -----
+
+    if (_config->hasLymanAlpha())
+    {
+        // get the Lya medium component index; Configuration has verified that there is exactly one of these
+        int lyaindex = -1;
+        for (int h = 0; h != _numMedia; ++h)
+        {
+            auto mode = _media[h]->mix()->scatteringMode();
+            if (mode == MaterialMix::ScatteringMode::Lya || mode == MaterialMix::ScatteringMode::LyaPolarization)
+            {
+                lyaindex = h;
+                break;
+            }
+        }
+
+        // get the default gas temperature from the appropriate material mix
+        Array dummyJv;
+        for (int m = 0; m != _numCells; ++m)
+        {
+            state(m).T = state(m, lyaindex).mix->equilibriumTemperature(dummyJv);
+        }
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -160,7 +184,7 @@ void MediumSystem::communicateStates()
     Table<2> data;
 
     // volumes, bulk velocities, and magnetic fields
-    data.resize(_numCells, 7);
+    data.resize(_numCells, 8);
     for (int m = 0; m != _numCells; ++m)
     {
         data(m, 0) = state(m).V;
@@ -170,6 +194,7 @@ void MediumSystem::communicateStates()
         data(m, 4) = state(m).B.x();
         data(m, 5) = state(m).B.y();
         data(m, 6) = state(m).B.z();
+        data(m, 7) = state(m).T;
     }
     ProcessManager::sumToAll(data.data());
     for (int m = 0; m != _numCells; ++m)
@@ -177,6 +202,7 @@ void MediumSystem::communicateStates()
         state(m).V = data(m, 0);
         state(m).v = Vec(data(m, 1), data(m, 2), data(m, 3));
         state(m).B = Vec(data(m, 4), data(m, 5), data(m, 6));
+        state(m).T = data(m, 7);
     }
 
     // densities
@@ -237,6 +263,13 @@ Vec MediumSystem::bulkVelocity(int m)
 Vec MediumSystem::magneticField(int m)
 {
     return state(m).B;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::gasTemperature(int m)
+{
+    return state(m).T;
 }
 
 ////////////////////////////////////////////////////////////////////
