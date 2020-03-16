@@ -23,7 +23,9 @@
     set the absolute scale of the property, so that the cross sections listed by some of the probes
     have an appropriately scaled value.
 
-    Property values outside of the tabulated wavelength range are considered to be zero.
+    Property values outside of the tabulated wavelength range are clamped to the nearest border
+    value. As a special-case consequence, if only a single wavelength is tabulated, the properties
+    are considered to be constant for all wavelengths.
 
     The subclass must load the tabulated data, and this abstract class handles everything else. */
 class TabulatedDustMix : public DustMix
