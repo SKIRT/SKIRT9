@@ -68,72 +68,88 @@ void MediumSystem::setupSelfAfter()
     // inform user
     log->info(typeAndName() + " allocated " + StringUtils::toMemSizeString(allocatedBytes) + " of memory");
 
+    //  ----- get special medium components, if present -----
+
+    Medium* magneticmedium = nullptr;
+    Medium* lyamedium = nullptr;
+    for (auto medium : _media)
+    {
+        if (medium->hasMagneticField()) magneticmedium = medium;
+        if (medium->mix()->scatteringMode() == MaterialMix::ScatteringMode::Lya
+            || medium->mix()->scatteringMode() == MaterialMix::ScatteringMode::LyaPolarization)
+            lyamedium = medium;
+    }
+
     // ----- calculate cell densities, bulk velocities, and volumes in parallel -----
 
     log->info("Calculating densities for " + std::to_string(_numCells) + " cells...");
     auto dic = _grid->interface<DensityInCellInterface>(0, false);  // optional fast-track interface for densities
     int numSamples = _config->numDensitySamples();
     bool oligo = _config->oligochromatic();
-    int magneticindex = -1;
-    for (int h = 0; h != _numMedia; ++h)
-        if (_media[h]->hasMagneticField()) magneticindex = h;
     log->infoSetElapsed(_numCells);
-    parfac->parallelDistributed()->call(
-        _numCells, [this, log, dic, numSamples, oligo, magneticindex](size_t firstIndex, size_t numIndices) {
-            ShortArray<8> nsumv(_numMedia);
+    parfac->parallelDistributed()->call(_numCells, [this, log, dic, numSamples, oligo, magneticmedium,
+                                                    lyamedium](size_t firstIndex, size_t numIndices) {
+        ShortArray<8> nsumv(_numMedia);
 
-            while (numIndices)
+        while (numIndices)
+        {
+            size_t currentChunkSize = min(logProgressChunkSize, numIndices);
+            for (size_t m = firstIndex; m != firstIndex + currentChunkSize; ++m)
             {
-                size_t currentChunkSize = min(logProgressChunkSize, numIndices);
-                for (size_t m = firstIndex; m != firstIndex + currentChunkSize; ++m)
+
+                // density: use optional fast-track interface or sample 100 random positions within the cell
+                if (dic)
                 {
-
-                    // density: use optional fast-track interface or sample 100 random positions within the cell
-                    if (dic)
-                    {
-                        for (int h = 0; h != _numMedia; ++h) state(m, h).n = dic->numberDensity(h, m);
-                    }
-                    else
-                    {
-                        nsumv.clear();
-                        for (int n = 0; n < numSamples; n++)
-                        {
-                            Position bfr = _grid->randomPositionInCell(m);
-                            for (int h = 0; h != _numMedia; ++h) nsumv[h] += _media[h]->numberDensity(bfr);
-                        }
-                        for (int h = 0; h != _numMedia; ++h) state(m, h).n = nsumv[h] / numSamples;
-                    }
-
-                    // bulk velocity: weighted average at cell center; assumes densities have been calculated
-                    //                for oligochromatic simulations, leave at zero
-                    if (!oligo)
-                    {
-                        Position bfr = _grid->centralPositionInCell(m);
-                        double n = 0.;
-                        Vec v;
-                        for (int h = 0; h != _numMedia; ++h)
-                        {
-                            n += state(m, h).n;
-                            v += state(m, h).n * _media[h]->bulkVelocity(bfr);
-                        }
-                        if (n > 0.) state(m).v = v / n;  // leave bulk velocity at zero if cell has no material
-                    }
-
-                    // magnetic field: retrieve from medium component that specifies it, if any
-                    if (magneticindex >= 0)
-                    {
-                        Position bfr = _grid->centralPositionInCell(m);
-                        state(m).B = _media[magneticindex]->magneticField(bfr);
-                    }
-
-                    // volume
-                    state(m).V = _grid->volume(m);
+                    for (int h = 0; h != _numMedia; ++h) state(m, h).n = dic->numberDensity(h, m);
                 }
-                log->infoIfElapsed("Calculated cell densities: ", currentChunkSize);
-                firstIndex += currentChunkSize;
-                numIndices -= currentChunkSize;
+                else
+                {
+                    nsumv.clear();
+                    for (int n = 0; n < numSamples; n++)
+                    {
+                        Position bfr = _grid->randomPositionInCell(m);
+                        for (int h = 0; h != _numMedia; ++h) nsumv[h] += _media[h]->numberDensity(bfr);
+                    }
+                    for (int h = 0; h != _numMedia; ++h) state(m, h).n = nsumv[h] / numSamples;
+                }
+
+                // bulk velocity: weighted average at cell center; assumes densities have been calculated
+                //                for oligochromatic simulations, leave at zero
+                if (!oligo)
+                {
+                    Position bfr = _grid->centralPositionInCell(m);
+                    double n = 0.;
+                    Vec v;
+                    for (int h = 0; h != _numMedia; ++h)
+                    {
+                        n += state(m, h).n;
+                        v += state(m, h).n * _media[h]->bulkVelocity(bfr);
+                    }
+                    if (n > 0.) state(m).v = v / n;  // leave bulk velocity at zero if cell has no material
+                }
+
+                // magnetic field: retrieve from medium component that specifies it, if any
+                if (magneticmedium)
+                {
+                    Position bfr = _grid->centralPositionInCell(m);
+                    state(m).B = magneticmedium->magneticField(bfr);
+                }
+
+                // gas temperature: retrieve from medium component that specifies it, if any
+                if (lyamedium)
+                {
+                    Position bfr = _grid->centralPositionInCell(m);
+                    state(m).T = lyamedium->temperature(bfr);
+                }
+
+                // volume
+                state(m).V = _grid->volume(m);
             }
-        });
+            log->infoIfElapsed("Calculated cell densities: ", currentChunkSize);
+            firstIndex += currentChunkSize;
+            numIndices -= currentChunkSize;
+        }
+    });
 
     // communicate the calculated states across multiple processes, if needed
     communicateStates();
@@ -146,30 +162,6 @@ void MediumSystem::setupSelfAfter()
     {
         Position bfr = _grid->centralPositionInCell(m);
         for (int h = 0; h != _numMedia; ++h) state(m, h).mix = _media[h]->mix(bfr);
-    }
-
-    // ----- if Lya is enabled, obtain the gas temperature -----
-
-    if (_config->hasLymanAlpha())
-    {
-        // get the Lya medium component index; Configuration has verified that there is exactly one of these
-        int lyaindex = -1;
-        for (int h = 0; h != _numMedia; ++h)
-        {
-            auto mode = _media[h]->mix()->scatteringMode();
-            if (mode == MaterialMix::ScatteringMode::Lya || mode == MaterialMix::ScatteringMode::LyaPolarization)
-            {
-                lyaindex = h;
-                break;
-            }
-        }
-
-        // get the default gas temperature from the appropriate material mix
-        Array dummyJv;
-        for (int m = 0; m != _numCells; ++m)
-        {
-            state(m).T = state(m, lyaindex).mix->equilibriumTemperature(dummyJv);
-        }
     }
 }
 

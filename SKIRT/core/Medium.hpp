@@ -97,6 +97,11 @@ public:
         */
     virtual Vec magneticField(Position bfr) const = 0;
 
+    /** This function returns the temperature of the medium at the specified position as defined in
+        the input model, or zero if the input model does not define a temperature for this medium
+        (at all, or at the given position). */
+    virtual double temperature(Position bfr) const = 0;
+
     /** This function returns the number density of the medium at the specified position. */
     virtual double numberDensity(Position bfr) const = 0;
 

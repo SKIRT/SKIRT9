@@ -23,8 +23,11 @@ void ImportedMedium::setupSelfAfter()
     if (_importMagneticField) _snapshot->importMagneticField();
     if (_importVariableMixParams) _snapshot->importParameters(_materialMixFamily->parameterInfo());
 
-    // set the density policy
-    _snapshot->setMassDensityPolicy(_massFraction, _importTemperature ? _maxTemperature : 0.);
+    // set the density policy -- use the metallicity and temperature cutoff only for dust
+    if (mix()->isDust())
+        _snapshot->setMassDensityPolicy(_massFraction, _importTemperature ? _maxTemperature : 0., true);
+    else
+        _snapshot->setMassDensityPolicy(_massFraction, 0., false);
 
     // read the data from file
     _snapshot->readAndClose();
@@ -103,6 +106,25 @@ bool ImportedMedium::hasMagneticField() const
 Vec ImportedMedium::magneticField(Position bfr) const
 {
     return _importMagneticField ? _snapshot->magneticField(bfr) : Vec();
+}
+
+////////////////////////////////////////////////////////////////////
+
+double ImportedMedium::temperature(Position bfr) const
+{
+    if (materialMix()->isGas())
+    {
+        if (_importTemperature)
+        {
+            return _snapshot->temperature(bfr);
+        }
+        else
+        {
+            Array dummyJv;
+            return materialMix()->equilibriumTemperature(dummyJv);
+        }
+    }
+    return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////

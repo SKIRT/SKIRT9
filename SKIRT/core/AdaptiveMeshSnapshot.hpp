@@ -190,6 +190,15 @@ public:
         undefined. */
     Box extent(int m) const;
 
+    /** This function returns the temperature of the leaf cell with index \em m. If the temperature is
+        not being imported, or the index is out of range, the behavior is undefined. */
+    double temperature(int m) const override;
+
+    /** This function returns the temperature associated with the leaf cell containing the specified
+        point \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero.
+        If the temperature is not being imported, the behavior is undefined. */
+    double temperature(Position bfr) const override;
+
     /** This function returns the velocity of the leaf cell with index \em m. If the velocity is
         not being imported, or the index is out of range, the behavior is undefined. */
     Vec velocity(int m) const override;

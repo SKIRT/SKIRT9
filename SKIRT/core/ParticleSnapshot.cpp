@@ -32,7 +32,7 @@ void ParticleSnapshot::readAndClose()
     Array row;
     while (infile()->readRow(row))
     {
-        if (hasTemperatureCutoff() && row[temperatureIndex()] > maxTemperature())
+        if (useTemperatureCutoff() && row[temperatureIndex()] > maxTemperature())
             numTempIgnored++;
         else if (hasMassDensityPolicy() && row[massIndex()] == 0)
             numMassIgnored++;
@@ -70,7 +70,7 @@ void ParticleSnapshot::readAndClose()
         const Array& prop = _propv[m];
 
         double originalMass = prop[massIndex()];
-        double metallicMass = originalMass * (metallicityIndex() >= 0 ? prop[metallicityIndex()] : 1.);
+        double metallicMass = originalMass * (useMetallicity() ? prop[metallicityIndex()] : 1.);
         double effectiveMass = metallicMass * multiplier();
 
         _pv.emplace_back(m, prop[positionIndex() + 0], prop[positionIndex() + 1], prop[positionIndex() + 2],
@@ -84,8 +84,9 @@ void ParticleSnapshot::readAndClose()
     // log mass statistics
     log()->info("  Total original mass : " + StringUtils::toString(units()->omass(totalOriginalMass), 'e', 4) + " "
                 + units()->umass());
-    log()->info("  Total metallic mass : " + StringUtils::toString(units()->omass(totalMetallicMass), 'e', 4) + " "
-                + units()->umass());
+    if (useMetallicity())
+        log()->info("  Total metallic mass : " + StringUtils::toString(units()->omass(totalMetallicMass), 'e', 4) + " "
+                    + units()->umass());
     log()->info("  Total effective mass: " + StringUtils::toString(units()->omass(totalEffectiveMass), 'e', 4) + " "
                 + units()->umass());
 
@@ -166,6 +167,21 @@ int ParticleSnapshot::numEntities() const
 Position ParticleSnapshot::position(int m) const
 {
     return Position(_propv[m][positionIndex() + 0], _propv[m][positionIndex() + 1], _propv[m][positionIndex() + 2]);
+}
+
+////////////////////////////////////////////////////////////////////
+
+double ParticleSnapshot::temperature(int m) const
+{
+    return _propv[m][temperatureIndex()];
+}
+
+////////////////////////////////////////////////////////////////////
+
+double ParticleSnapshot::temperature(Position bfr) const
+{
+    const SmoothedParticle* nearestParticle = _grid ? _grid->nearestParticle(bfr) : nullptr;
+    return nearestParticle ? temperature(nearestParticle->index()) : 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
