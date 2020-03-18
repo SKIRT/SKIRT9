@@ -27,7 +27,7 @@
 class LyaSEDDecorator : public SED
 {
     ITEM_CONCRETE(LyaSEDDecorator, SED, "an SED decorator replacing ionizing radiation with Lyman-alpha line emission")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(LyaSEDDecorator, "Level3")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(LyaSEDDecorator, "Lya|Level3")
 
         PROPERTY_ITEM(sedOriginal, SED, "the original SED being adjusted")
         ATTRIBUTE_DEFAULT_VALUE(sedOriginal, "BlackBodySED")

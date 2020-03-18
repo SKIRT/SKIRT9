@@ -32,9 +32,10 @@
 class LyaNeutralHydrogenMaterialMix : public MaterialMix
 {
     ITEM_CONCRETE(LyaNeutralHydrogenMaterialMix, MaterialMix, "neutral hydrogen for Lyman-alpha line transfer")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(LyaNeutralHydrogenMaterialMix, "Lya")
 
         PROPERTY_DOUBLE(defaultTemperature, "the default temperature of the neutral hydrogen gas")
-        ATTRIBUTE_MIN_VALUE(defaultTemperature, "[3")  // gas temperature must be above T_CMB
+        ATTRIBUTE_MIN_VALUE(defaultTemperature, "[3")  // gas temperature must be above local Universe T_CMB
         ATTRIBUTE_MAX_VALUE(defaultTemperature, "1e6]")
         ATTRIBUTE_DEFAULT_VALUE(defaultTemperature, "1e4")
         ATTRIBUTE_DISPLAYED_IF(defaultTemperature, "Level2")
@@ -44,12 +45,6 @@ class LyaNeutralHydrogenMaterialMix : public MaterialMix
         ATTRIBUTE_DISPLAYED_IF(includePolarization, "Level2")
 
     ITEM_END()
-
-    //============= Construction - Setup - Destruction =============
-
-protected:
-    /** This function caches some pre-calculated arrays. */
-    void setupSelfBefore() override;
 
     //======== Functionality levels =======
 

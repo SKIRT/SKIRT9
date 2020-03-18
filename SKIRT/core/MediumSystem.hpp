@@ -392,17 +392,17 @@ private:
     /** This data structure holds the information maintained per cell. */
     struct State1
     {
-        double V;  // volume
-        Vec v;     // bulk velocity
-        Vec B;     // magnetic field
-        double T;  // gas temperature
+        double V{0.};  // volume
+        Vec v;         // bulk velocity
+        Vec B;         // magnetic field
+        double T{0.};  // gas temperature
     };
 
     /** This data structure holds the information maintained per cell and per medium. */
     struct State2
     {
-        double n;                // the number density
-        const MaterialMix* mix;  // pointer to the material mix
+        double n{0.};                     // the number density
+        const MaterialMix* mix{nullptr};  // pointer to the material mix
     };
 
     /** This function returns a writable reference to the state data structure for the given cell

@@ -67,8 +67,8 @@ void PlanarGasTemperatureCutsProbe::writeGasTemperatureCut(Probe* probe, bool xd
     if (zd) plane += "z";
 
     // write the results to a FITS file with an appropriate name
-    string description = "dust temperatures in the " + plane + " plane";
-    string filename = probe->itemName() + "_dust_T_" + plane;
+    string description = "gas temperatures in the " + plane + " plane";
+    string filename = probe->itemName() + "_gas_T_" + plane;
     FITSInOut::write(probe, description, filename, Tv, units->utemperature(), Ni, Nj,
                      units->olength(xd ? xpsize : ypsize), units->olength(zd ? zpsize : ypsize),
                      units->olength(xd ? xcenter : ycenter), units->olength(zd ? zcenter : ycenter), units->ulength());

@@ -110,6 +110,8 @@
 #include "LyaDoublePeakedSEDFamily.hpp"
 #include "LyaGaussianSED.hpp"
 #include "LyaGaussianSEDFamily.hpp"
+#include "LyaNeutralHydrogenMaterialMix.hpp"
+#include "LyaOptions.hpp"
 #include "LyaSEDDecorator.hpp"
 #include "LyaSEDFamilyDecorator.hpp"
 #include "MRNDustMix.hpp"
@@ -229,6 +231,9 @@
 #include "ZubkoGraphiteGrainSizeDistribution.hpp"
 #include "ZubkoPAHGrainSizeDistribution.hpp"
 #include "ZubkoSilicateGrainSizeDistribution.hpp"
+#include "GasTemperaturePerCellProbe.hpp"
+#include "DefaultGasTemperatureCutsProbe.hpp"
+#include "PlanarGasTemperatureCutsProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -449,6 +454,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ExtinctionOnlyOptions>();
     ItemRegistry::add<DustEmissionOptions>();
     ItemRegistry::add<DustSelfAbsorptionOptions>();
+    ItemRegistry::add<LyaOptions>();
 
     // material normalizations
     ItemRegistry::add<MaterialNormalization>();
@@ -482,6 +488,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ConfigurableDustMix>();
 
     ItemRegistry::add<ElectronMix>();
+    ItemRegistry::add<LyaNeutralHydrogenMaterialMix>();
 
     // material mix families
     ItemRegistry::add<MaterialMixFamily>();
@@ -592,6 +599,10 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<DustAbsorptionPerCellProbe>();
     ItemRegistry::add<DustEmissivityProbe>();
     ItemRegistry::add<DustEmissionWavelengthGridProbe>();
+
+    ItemRegistry::add<DefaultGasTemperatureCutsProbe>();
+    ItemRegistry::add<PlanarGasTemperatureCutsProbe>();
+    ItemRegistry::add<GasTemperaturePerCellProbe>();
 
     // Monte Carlo simulations
     ItemRegistry::add<MonteCarloSimulation>();

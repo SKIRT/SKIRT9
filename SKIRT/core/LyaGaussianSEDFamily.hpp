@@ -33,7 +33,7 @@ class LyaGaussianSEDFamily : public SEDFamily
 {
     ITEM_CONCRETE(LyaGaussianSEDFamily, SEDFamily,
                   "a family of Gaussian spectra around the central Lyman-alpha wavelength")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(LyaGaussianSEDFamily, "Level3")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(LyaGaussianSEDFamily, "Lya|Level3")
 
     ITEM_END()
 
