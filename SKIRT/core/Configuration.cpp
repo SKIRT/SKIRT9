@@ -167,19 +167,21 @@ void Configuration::setupSelfBefore()
                 _lyaAccelerationScheme = Configuration::LyaAccelerationScheme::Smith2015;
                 break;
         }
-
-        // verify that there is exactly one Lya medium component
-        int numLyaMedia = 0;
-        if (_hasMedium)
-            for (auto medium : ms->media())
-                if (medium->mix()->scatteringMode() == MaterialMix::ScatteringMode::Lya
-                    || medium->mix()->scatteringMode() == MaterialMix::ScatteringMode::LyaPolarization)
-                    numLyaMedia++;
-        if (numLyaMedia < 1)
-            throw FATALERROR("Lyman-alpha simulation mode requires a medium component with Lyman-alpha material mix");
-        if (numLyaMedia > 1)
-            throw FATALERROR("It is not allowed for more than one medium component to have a Lyman-alpha material mix");
     }
+
+    // verify that there is exactly one Lya medium component if required, and none if not required
+    int numLyaMedia = 0;
+    if (_hasMedium)
+        for (auto medium : ms->media())
+            if (medium->mix()->scatteringMode() == MaterialMix::ScatteringMode::Lya
+                || medium->mix()->scatteringMode() == MaterialMix::ScatteringMode::LyaPolarization)
+                numLyaMedia++;
+    if (_hasLymanAlpha && numLyaMedia < 1)
+        throw FATALERROR("Lyman-alpha simulation mode requires a medium component with Lyman-alpha material mix");
+    if (_hasLymanAlpha && numLyaMedia > 1)
+        throw FATALERROR("It is not allowed for more than one medium component to have a Lyman-alpha material mix");
+    if (!_hasLymanAlpha && numLyaMedia > 0)
+        throw FATALERROR("Lyman-alpha material mix is allowed only with Lyman-alpha simulation mode");
 
     // retrieve symmetry dimensions
     if (_hasMedium)
