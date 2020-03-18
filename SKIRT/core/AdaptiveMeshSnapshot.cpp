@@ -254,8 +254,8 @@ void AdaptiveMeshSnapshot::readAndClose()
         log()->info("  Total original mass : " + StringUtils::toString(units()->omass(totalOriginalMass), 'e', 4) + " "
                     + units()->umass());
         if (useMetallicity())
-        log()->info("  Total metallic mass : " + StringUtils::toString(units()->omass(totalMetallicMass), 'e', 4) + " "
-                    + units()->umass());
+            log()->info("  Total metallic mass : " + StringUtils::toString(units()->omass(totalMetallicMass), 'e', 4)
+                        + " " + units()->umass());
         log()->info("  Total effective mass: " + StringUtils::toString(units()->omass(totalEffectiveMass), 'e', 4) + " "
                     + units()->umass());
 
