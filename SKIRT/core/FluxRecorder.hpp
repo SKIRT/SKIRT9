@@ -159,9 +159,12 @@ public:
         for each wavelength. The recorder assumes parallel projection at the specified distance
         from the model and using the specified frame properties. The number of pixels, and the
         pixel sizes are used to calibrate the surface brightness; the center coordinates are used
-        only for the metadata in the output file. */
+        only for the metadata in the output file. If the \em convertToAngularSize flag is true, the
+        coordinates and pixel sizes are converted to angular sizes before being written to the
+        metadata of the output file. If the flag is false, these values are left in distance units.
+        */
     void includeSurfaceBrightness(int numPixelsX, int numPixelsY, double pixelSizeX, double pixelSizeY, double centerX,
-                                  double centerY);
+                                  double centerY, bool convertToAngularSize);
 
     /** This function completes the configuration of the recorder. It must be called after any of
         the configuration functions, and before the first invocation of the detect() function. */
@@ -280,6 +283,7 @@ private:
     double _pixelSizeAverage{0};
     double _centerX{0};
     double _centerY{0};
+    bool _convertToAngularSize{false};
 
     // cached info, initialized when configuration is finalized
     MediumSystem* _ms{nullptr};   // pointer to medium system, if present (used only if hasMedium is true)
