@@ -7,6 +7,7 @@
 #include "DisjointWavelengthGrid.hpp"
 #include "FatalError.hpp"
 #include "Log.hpp"
+#include "LyaUtils.hpp"
 #include "MaterialMix.hpp"
 #include "Parallel.hpp"
 #include "ParallelFactory.hpp"
@@ -57,7 +58,7 @@ void MonteCarloSimulation::setupSelfAfter()
     // If the simulation configuration includes Lyman-alpha line transfer, determine
     // the emission wavelength range for which the photon packet life cycle should
     // handle Lyman-alpha-specific issues. The heuristic used is described in more
-    // detail in the LyaUtils class header.
+    // detail in the LyaUtils class.
     if (_config->hasLymanAlpha())
     {
         // collect the maximum velocities for sources and media
@@ -71,6 +72,17 @@ void MonteCarloSimulation::setupSelfAfter()
         int numCells = mediumSystem()->numCells();
         for (int m = 0; m != numCells; ++m)
             nmax = max(nmax, mediumSystem()->numberDensity(m, _config->lyaMediumIndex()));
+
+        // get the diagonal of the spatial domain
+        double dmax = mediumSystem()->grid()->boundingBox().diagonal();
+
+        // calculate the wavelength range
+        _lyaWavelengthRange = LyaUtils::relevantWavelengthRange(vsmax, vmmax, nmax, dmax);
+
+        // inform the user
+        log()->info("Lyman-alpha photon cycle enabled for emitted wavelengths from "
+                    + StringUtils::toString(1e10 * _lyaWavelengthRange.min(), 'f', 1) + " to "
+                    + StringUtils::toString(1e10 * _lyaWavelengthRange.max(), 'f', 1) + " Angstrom");
     }
 }
 

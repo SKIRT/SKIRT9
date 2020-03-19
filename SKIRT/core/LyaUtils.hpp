@@ -6,7 +6,7 @@
 #ifndef LYAUTILS_HPP
 #define LYAUTILS_HPP
 
-#include "Basics.hpp"
+#include "Range.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -63,6 +63,49 @@ namespace LyaUtils
     /** This function returns the Lyman-alpha scattering cross section per hydrogen atom
         \f$\sigma_\alpha(\lambda, T)\f$ at the given photon wavelength and gas temperature. */
     double sectionForWavelength(double lambda, double T);
+
+    /** This function returns the emission wavelength range for which the photon packet life cycle
+        should handle Lyman-alpha line transfer (if the simulation configuration includes
+        Lyman-alpha line transfer), or in other words, the wavelength range outside of which a
+        photon packet can never be Doppler shifted to a wavelength that is sufficiently near the
+        Lyman-alpha line center to experience a significant cross section. Photon packets with a
+        rest-frame emission wavelength outside of the range can be handled by the dust-only photon
+        cycle, avoiding the expensive calculation of the Lyman-alpha scattering cross section for
+        each cell crossed by the packet.
+
+        The relevant wavelength range, or equivalently, the photon packet velocity shift
+        \f$v_\mathrm{p}^*\f$ corresponding to this wavelength range, can be written as the sum of
+        two components, \f[ v_\mathrm{p}^* = v_\mathrm{p,bulk}^* + v_\mathrm{p,Voigt}^*. \f]
+
+        The first component represents the largest possible Doppler-shift from the emission
+        wavelength in the rest frame of the source to the perceived wavelength in the rest frame of
+        the gas caused by the bulk velocities of the sources and the media in the model. It can be
+        estimated from the input model through \f[ v_\mathrm{p,bulk}^* =
+        \max(||\bf{v}_\mathrm{source}||) + \max(||\bf{v}_\mathrm{medium}||). \f]
+
+        The second component represents the velocity shift corresponding to the point where the
+        Lyman-alpha scattering cross section profile (in the rest frame of the gas) dips below a
+        particular value that can be considered to be negligible. We determine this cross section
+        value by requiring that the optical depth of any path through the simulation domain at this
+        cross section is below a certain (arbitrarily chosen) optical depth \f$\tau^*\f$. Given the
+        maximum column density \f$\mathcal{N}^*\f$ through the simulation domain, which can be
+        estimated from the input model through the maximum hydrogen number density and the maximum
+        path length, we can write this requirement using the definition of the Lyman-alpha cross
+        section as \f[ \tau^* = \mathcal{N}^* \,\sigma_{\alpha,0}\,H(a_\mathrm{v},x^*) \f] where
+        \f$x^*\f$ is the dimensionless frequency shift to be calculated. Assuming that the required
+        maximum optical depth \f$\tau^*\f$ is sufficiently low for \f$x^*\f$ to be in the wings of
+        the Voigt profile, we can use the corresponding approximation of the Voigt profile. After
+        substituting the definitions of the other quantities, we obtain \f[ v_\mathrm{p,Voigt}^* =
+        \sqrt{\frac{3 A_\alpha^2 \lambda_\alpha^4}{64 \pi^3} \, \frac{\mathcal{N}^*}{\tau^*}}. \f]
+        Interestingly, the dependence on temperature (hidden in \f$\sigma_{\alpha,0}\f$,
+        \f$a_\mathrm{v}\f$ and \f$x^*\f$) has canceled out of this equation.
+
+        The current implemenation uses \f$\tau^*=10^{-3}\f$.
+
+        The function arguments are: the maximum source velocity magnitude, the maximum medium bulk
+        velocity magnitude, the maximum hydrogen number density, and the maximum photon packet path
+        length. */
+    Range relevantWavelengthRange(double vsmax, double vmmax, double nmax, double dmax);
 }
 
 ////////////////////////////////////////////////////////////////////
