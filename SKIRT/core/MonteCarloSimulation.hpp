@@ -148,9 +148,14 @@ protected:
     void setupSimulation() override;
 
     /** This function performs initial setup for the MonteCarloSimulation object. For example,
-        constructs a SecondarySourceSystem object if the simulation configuration requires
+        it constructs a SecondarySourceSystem object if the simulation configuration requires
         secondary emission. */
     void setupSelfBefore() override;
+
+    /** This function performs further setup for the MonteCarloSimulation object. For example, it
+        determines the emission wavelength range for which the photon packet life cycle should
+        handle Lyman-alpha line transfer if the simulation configuration requires this. */
+    void setupSelfAfter() override;
 
     //======== Getters for Non-Discoverable Properties =======
 
@@ -469,6 +474,9 @@ private:
     // non-discoverable simulation items
     Configuration* _config{new Configuration(this)};
     SecondarySourceSystem* _secondarySourceSystem{nullptr};  // constructed only when there is secondary emission
+
+    // Lyman-alpha-specific data members precomputed during setup
+    Range _lyaWavelengthRange;  // the wavelength range in which photon packets must handle Lyman-alpha transfer
 
     // data members used by the XXXprogress() functions in this class
     string _segment;  // a string identifying the photon shooting segment for use in the log message

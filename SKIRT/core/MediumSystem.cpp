@@ -69,23 +69,14 @@ void MediumSystem::setupSelfAfter()
     // inform user
     log->info(typeAndName() + " allocated " + StringUtils::toMemSizeString(allocatedBytes) + " of memory");
 
-    //  ----- discover special medium components, if present -----
-
-    int hMag = -1;
-    int hLya = -1;
-    for (int h = 0; h != _numMedia; ++h)
-    {
-        if (_media[h]->hasMagneticField()) hMag = h;
-        auto mode = _media[h]->mix()->scatteringMode();
-        if (mode == MaterialMix::ScatteringMode::Lya || mode == MaterialMix::ScatteringMode::LyaPolarization) hLya = h;
-    }
-
     // ----- calculate cell densities, bulk velocities, and volumes in parallel -----
 
     log->info("Calculating densities for " + std::to_string(_numCells) + " cells...");
     auto dic = _grid->interface<DensityInCellInterface>(0, false);  // optional fast-track interface for densities
     int numSamples = _config->numDensitySamples();
     bool oligo = _config->oligochromatic();
+    int hMag = _config->magneticFieldMediumIndex();
+    int hLya = _config->lyaMediumIndex();
     log->infoSetElapsed(_numCells);
     parfac->parallelDistributed()->call(
         _numCells, [this, log, dic, numSamples, oligo, hMag, hLya](size_t firstIndex, size_t numIndices) {

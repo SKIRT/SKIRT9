@@ -99,6 +99,11 @@ public:
     /** This function returns true if the \em importVelocity flag is enabled for the source. */
     bool hasVelocity() const override;
 
+    /** This function returns the largest velocity magnitude this source may have for any position,
+        taking into account velocity dispersion (one sigma) if applicable. By definition, the
+        function returns zero if hasVelocity() returns false. */
+    double maxVelocity() const override;
+
     /** This function returns the wavelength range for this source. Outside this range, all
         luminosities are zero. This source's wavelength range is determined as the intersection of the
         simulation's source wavelength range (obtained from the simulation configuration) and the

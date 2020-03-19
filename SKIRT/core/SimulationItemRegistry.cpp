@@ -40,6 +40,7 @@
 #include "CylindricalClipGeometryDecorator.hpp"
 #include "CylindricalVectorField.hpp"
 #include "DefaultDustTemperatureCutsProbe.hpp"
+#include "DefaultGasTemperatureCutsProbe.hpp"
 #include "DefaultMagneticFieldCutsProbe.hpp"
 #include "DefaultMediaDensityCutsProbe.hpp"
 #include "DefaultMediumVelocityCutsProbe.hpp"
@@ -79,6 +80,7 @@
 #include "FrameInstrument.hpp"
 #include "FullInstrument.hpp"
 #include "GammaGeometry.hpp"
+#include "GasTemperaturePerCellProbe.hpp"
 #include "GaussianGeometry.hpp"
 #include "GeometricMedium.hpp"
 #include "GeometricSource.hpp"
@@ -156,6 +158,7 @@
 #include "PerspectiveInstrument.hpp"
 #include "PhotonPacketOptions.hpp"
 #include "PlanarDustTemperatureCutsProbe.hpp"
+#include "PlanarGasTemperatureCutsProbe.hpp"
 #include "PlanarMagneticFieldCutsProbe.hpp"
 #include "PlanarMediaDensityCutsProbe.hpp"
 #include "PlanarMediumVelocityCutsProbe.hpp"
@@ -231,9 +234,6 @@
 #include "ZubkoGraphiteGrainSizeDistribution.hpp"
 #include "ZubkoPAHGrainSizeDistribution.hpp"
 #include "ZubkoSilicateGrainSizeDistribution.hpp"
-#include "GasTemperaturePerCellProbe.hpp"
-#include "DefaultGasTemperatureCutsProbe.hpp"
-#include "PlanarGasTemperatureCutsProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 

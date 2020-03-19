@@ -84,6 +84,10 @@ protected:
     /** This function returns true if the bulk velocity of the medium is nonzero. */
     bool hasVelocity() const override;
 
+    /** This function returns the largest bulk velocity magnitude this medium may have for any
+        position. By definition, the function returns zero if hasVelocity() returns false. */
+    double maxVelocity() const override;
+
     /** This function returns the bulk velocity of the medium. The same velocity is returned
         regardless of position. */
     Vec bulkVelocity(Position bfr) const override;

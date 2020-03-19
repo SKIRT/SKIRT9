@@ -42,6 +42,13 @@ bool GeometricSource::hasVelocity() const
 
 //////////////////////////////////////////////////////////////////////
 
+double GeometricSource::maxVelocity() const
+{
+    return _hasVelocity ? velocityMagnitude() : 0.;
+}
+
+//////////////////////////////////////////////////////////////////////
+
 namespace
 {
     // an instance of this class offers the velocity interface for a given position

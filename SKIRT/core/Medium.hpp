@@ -82,9 +82,15 @@ public:
         always returned. */
     virtual bool hasVariableMix() const = 0;
 
-    /** This function returns true if the bulkVelocity() function for this medium may return a
-        nonzero vector for some positions. */
+    /** This function returns true if this medium may have a nonzero bulk velocity for some
+        positions. It may be called before setup of the receiving medium has completed. */
     virtual bool hasVelocity() const = 0;
+
+    /** This function returns the largest bulk velocity magnitude this medium may have for any
+        position. By definition, the function returns zero if hasVelocity() returns false. In
+        contrast to the hasVelocity() function, though, the maxVelocity() should be called only
+        after setup of the receiving medium has completed. */
+    virtual double maxVelocity() const = 0;
 
     /** This function returns the bulk velocity of the medium at the specified position. */
     virtual Vec bulkVelocity(Position bfr) const = 0;

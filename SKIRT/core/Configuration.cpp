@@ -146,11 +146,12 @@ void Configuration::setupSelfBefore()
     }
 
     // retrieve Lyman-alpha options
+    bool hasLymanAlpha = false;
     if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::LyaWithDustExtinction
         || sim->simulationMode() == MonteCarloSimulation::SimulationMode::LyaWithDustEmission
         || sim->simulationMode() == MonteCarloSimulation::SimulationMode::LyaWithDustSelfAbsorption)
     {
-        _hasLymanAlpha = true;
+        hasLymanAlpha = true;
         switch (ms->lyaOptions()->lyaAccelerationScheme())
         {
             case LyaOptions::LyaAccelerationScheme::None:
@@ -171,16 +172,20 @@ void Configuration::setupSelfBefore()
 
     // verify that there is exactly one Lya medium component if required, and none if not required
     int numLyaMedia = 0;
-    if (_hasMedium)
-        for (auto medium : ms->media())
-            if (medium->mix()->scatteringMode() == MaterialMix::ScatteringMode::Lya
-                || medium->mix()->scatteringMode() == MaterialMix::ScatteringMode::LyaPolarization)
-                numLyaMedia++;
-    if (_hasLymanAlpha && numLyaMedia < 1)
+    for (int h = 0; h != numMedia; ++h)
+    {
+        auto mode = ms->media()[h]->mix()->scatteringMode();
+        if (mode == MaterialMix::ScatteringMode::Lya || mode == MaterialMix::ScatteringMode::LyaPolarization)
+        {
+            numLyaMedia++;
+            _lyaMediumIndex = h;
+        }
+    }
+    if (hasLymanAlpha && numLyaMedia < 1)
         throw FATALERROR("Lyman-alpha simulation mode requires a medium component with Lyman-alpha material mix");
-    if (_hasLymanAlpha && numLyaMedia > 1)
+    if (hasLymanAlpha && numLyaMedia > 1)
         throw FATALERROR("It is not allowed for more than one medium component to have a Lyman-alpha material mix");
-    if (!_hasLymanAlpha && numLyaMedia > 0)
+    if (!hasLymanAlpha && numLyaMedia > 0)
         throw FATALERROR("Lyman-alpha material mix is allowed only with Lyman-alpha simulation mode");
 
     // retrieve symmetry dimensions
@@ -230,15 +235,24 @@ void Configuration::setupSelfBefore()
 
     // check for magnetic fields
     int numMagneticFields = 0;
-    if (_hasMedium)
-        for (auto medium : ms->media())
-            if (medium->hasMagneticField()) numMagneticFields++;
+    int magneticFieldIndex = -1;
+    for (int h = 0; h != numMedia; ++h)
+    {
+        if (ms->media()[h]->hasMagneticField())
+        {
+            numMagneticFields++;
+            magneticFieldIndex = h;
+        }
+    }
     if (numMagneticFields > 1)
         throw FATALERROR("It is not allowed for more than one medium component to define a magnetic field");
-    if (numMagneticFields == 1) _hasMagneticField = true;
+    if (numMagneticFields == 1)
+    {
+        _magneticFieldMediumIndex = magneticFieldIndex;
+    }
 
     // spheroidal particles require a magnetic field
-    if (_hasSpheroidalPolarization && !_hasMagneticField)
+    if (_hasSpheroidalPolarization && numMagneticFields != 1)
         throw FATALERROR("Polarization by spheroidal particles requires a magnetic field to determine alignment");
 
     // prohibit non-identity-mapping cell libraries in combination with variable material mixes
@@ -265,7 +279,7 @@ void Configuration::setupSelfAfter()
     log->info("  " + regime + "chromatic wavelength regime");
     string medium = _hasMedium ? "With" : "No";
     log->info("  " + medium + " transfer medium");
-    if (_hasLymanAlpha) log->info("  Including Lyman-alpha line transfer");
+    if (_lyaMediumIndex >= 0) log->info("  Including Lyman-alpha line transfer");
     if (_hasDustSelfAbsorption)
         log->info("  Including dust emission with iterative calculation of dust self-absorption");
     else if (_hasDustEmission)
@@ -305,7 +319,7 @@ void Configuration::setupSelfAfter()
     // --- other ---
 
     // if there is a magnetic field, there usually should be spheroidal particles
-    if (_hasMagneticField && !_hasSpheroidalPolarization)
+    if (_magneticFieldMediumIndex >= 0 && !_hasSpheroidalPolarization)
         log->warning("  No media have spheroidal particles that could align with the specified magnetic field");
 }
 

@@ -52,6 +52,30 @@ void MonteCarloSimulation::setupSelfBefore()
 
 ////////////////////////////////////////////////////////////////////
 
+void MonteCarloSimulation::setupSelfAfter()
+{
+    // If the simulation configuration includes Lyman-alpha line transfer, determine
+    // the emission wavelength range for which the photon packet life cycle should
+    // handle Lyman-alpha-specific issues. The heuristic used is described in more
+    // detail in the LyaUtils class header.
+    if (_config->hasLymanAlpha())
+    {
+        // collect the maximum velocities for sources and media
+        double vsmax = 0.;
+        for (auto source : sourceSystem()->sources()) vsmax = max(vsmax, source->maxVelocity());
+        double vmmax = 0.;
+        for (auto medium : mediumSystem()->media()) vmmax = max(vmmax, medium->maxVelocity());
+
+        // determine the maximum hydrogen number density for the Lyman-alpha medium component
+        double nmax = 0.;
+        int numCells = mediumSystem()->numCells();
+        for (int m = 0; m != numCells; ++m)
+            nmax = max(nmax, mediumSystem()->numberDensity(m, _config->lyaMediumIndex()));
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
 Configuration* MonteCarloSimulation::config() const
 {
     return _config;

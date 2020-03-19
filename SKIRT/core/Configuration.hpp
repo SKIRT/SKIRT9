@@ -221,7 +221,11 @@ public:
         absence of a medium component that has a material mix with the \c Lya or \c LyaPolarization
         scattering mode. In the current implementation, there can be only a single such Lyman-alpha
         medium component. This restriction may be lifted in the future. */
-    bool hasLymanAlpha() const { return _hasLymanAlpha; }
+    bool hasLymanAlpha() const { return _lyaMediumIndex >= 0; }
+
+    /** Returns the index of the medium component defining the neutral hydrogen interacting with
+        Lyman-alpha line transfer, if any. */
+    int lyaMediumIndex() const { return _lyaMediumIndex; }
 
     /** This enumeration lists the supported Lyman-alpha acceleration schemes. */
     enum class LyaAccelerationScheme { None, Constant, Laursen2009, Smith2015 };
@@ -272,7 +276,10 @@ public:
         distribution that may have nonzero strength for some positions, or false if none of the
         media define a magnetic field. It is not allowed for multiple medium components to define
         a magnetic field (a fatal error is raised during setup when this happens). */
-    bool hasMagneticField() const { return _hasMagneticField; }
+    bool hasMagneticField() const { return _magneticFieldMediumIndex >= 0; }
+
+    /** Returns the index of the medium component defining the magnetic field, if any. */
+    int magneticFieldMediumIndex() const { return _magneticFieldMediumIndex; }
 
     //======================== Data Members ========================
 
@@ -326,7 +333,7 @@ private:
     double _maxFractionOfPrevious{0.03};
 
     // Lyman-alpha properties
-    bool _hasLymanAlpha{false};
+    int _lyaMediumIndex{-1};
     LyaAccelerationScheme _lyaAccelerationScheme{LyaAccelerationScheme::None};
     double _lyaAccelerationCriticalValue{3.};
 
@@ -338,7 +345,7 @@ private:
     bool _hasVariableMedia{false};
     bool _hasPolarization{false};
     bool _hasSpheroidalPolarization{false};
-    bool _hasMagneticField{false};
+    int _magneticFieldMediumIndex{-1};
 };
 
 ////////////////////////////////////////////////////////////////////
