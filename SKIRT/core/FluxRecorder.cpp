@@ -94,7 +94,7 @@ void FluxRecorder::includeFluxDensity()
 ////////////////////////////////////////////////////////////////////
 
 void FluxRecorder::includeSurfaceBrightness(int numPixelsX, int numPixelsY, double pixelSizeX, double pixelSizeY,
-                                            double centerX, double centerY)
+                                            double centerX, double centerY, bool convertToAngularSize)
 {
     _includeSurfaceBrightness = true;
     _numPixelsX = numPixelsX;
@@ -104,6 +104,7 @@ void FluxRecorder::includeSurfaceBrightness(int numPixelsX, int numPixelsY, doub
     _pixelSizeAverage = sqrt(pixelSizeX * pixelSizeY);
     _centerX = centerX;
     _centerY = centerY;
+    _convertToAngularSize = convertToAngularSize;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -527,6 +528,26 @@ void FluxRecorder::calibrateAndWrite()
         for (int ell = 0; ell != numWavelengths; ++ell)
             wavegrid[ell] = units->owavelength(_lambdagrid->wavelength(ell));
 
+        // determine coordinate axes values and units, converted to angular size if requested
+        double incx, incy, cx, cy;
+        string unitsxy;
+        if (_convertToAngularSize)
+        {
+            incx = units->oangle(2. * atan(0.5 * _pixelSizeX / _angularDiameterDistance));
+            incy = units->oangle(2. * atan(0.5 * _pixelSizeY / _angularDiameterDistance));
+            cx = units->oangle(2. * atan(0.5 * _centerX / _angularDiameterDistance));
+            cy = units->oangle(2. * atan(0.5 * _centerY / _angularDiameterDistance));
+            unitsxy = units->uangle();
+        }
+        else
+        {
+            incx = units->olength(_pixelSizeX);
+            incy = units->olength(_pixelSizeY);
+            cx = units->olength(_centerX);
+            cy = units->olength(_centerY);
+            unitsxy = units->ulength();
+        }
+
         // output the files (ignoring empty arrays)
         int numFiles = ifuNames.size();
         for (int q = 0; q != numFiles; ++q)
@@ -535,9 +556,7 @@ void FluxRecorder::calibrateAndWrite()
                 string filename = _instrumentName + "_" + ifuNames[q];
                 string description = ifuNames[q] + " flux";
                 FITSInOut::write(_parentItem, description, filename, *(ifuArrays[q]), units->usurfacebrightness(),
-                                 _numPixelsX, _numPixelsY, units->olength(_pixelSizeX), units->olength(_pixelSizeY),
-                                 units->olength(_centerX), units->olength(_centerY), units->ulength(), wavegrid,
-                                 units->uwavelength());
+                                 _numPixelsX, _numPixelsY, incx, incy, cx, cy, unitsxy, wavegrid, units->uwavelength());
             }
 
         // output statistics to additional files
@@ -558,9 +577,8 @@ void FluxRecorder::calibrateAndWrite()
                 string filename = _instrumentName + "_stats" + std::to_string(k);
                 string description = "sum of contributions to the power of " + std::to_string(k);
                 _wifu[k] *= cn;
-                FITSInOut::write(_parentItem, description, filename, _wifu[k], "", _numPixelsX, _numPixelsY,
-                                 units->olength(_pixelSizeX), units->olength(_pixelSizeY), units->olength(_centerX),
-                                 units->olength(_centerY), units->ulength(), wavegrid, units->uwavelength());
+                FITSInOut::write(_parentItem, description, filename, _wifu[k], "", _numPixelsX, _numPixelsY, incx, incy,
+                                 cx, cy, unitsxy, wavegrid, units->uwavelength());
                 cn *= c;
             }
         }
