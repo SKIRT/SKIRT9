@@ -32,11 +32,11 @@ class Position;
 
     At any one time, a particular thread in the process uses one of these two generators. Most
     threads employ the arbitrary generator at all times. As an exception, the \em parent thread of
-    a Random instance (i.e. the thread that called its setup() function) may sometimes use the
-    predictable generator. Specifically, the Random::setupSelfBefore() function (re-)initializes
-    the predictable random generator to its fixed initial state (depending on the value of the
-    user-configurable \em seed property), and causes the calling thread (i.e., its parent thread)
-    to use the predictable generator. The Random::switchToArbitrary() and
+    a Random instance (i.e. the thread that called its setup() function) is initialized by default
+    to use the predictable generator. Specifically, the Random::setupSelfBefore() function
+    (re-)initializes the predictable random generator to its fixed initial state (depending on the
+    value of the user-configurable \em seed property), and causes the calling thread (i.e., its
+    parent thread) to use the predictable generator. The Random::switchToArbitrary() and
     Random::switchToPredictable() functions can be used to switch the parent thread between both
     generators.
 
@@ -48,16 +48,12 @@ class Position;
       - With parallel threads, tasks are performed in unpredictable order and thus the random
         sequence is interrogated in an unpredictable order; the sequence can just as well be
         unpredictable to begin with.
-      - When distributing tasks over multiple processes, each of the threads requires a different
-        random sequence.
-      - When duplicating tasks in multiple processes, each of the processes must produce an
-        identical result (using a single thread in each process) and thus those threads require
-        the same random sequence.
+      - When distributing tasks over multiple processes, each of the threads in each of the
+        processes requires a different random sequence.
 
     The recommended use of the Random class is to include a single instance in each simulation
-    run-time hierarchy. The Parallel subclasses returned from a ParallelFactory in the same
-    run-time hierarchy will then call the switchToArbitrary() and switchToPredictable() functions
-    at the appropriate times.
+    run-time hierarchy, and to call the switchToArbitrary() function from the parent thread
+    when there are multiple processes.
 
     All rng's used in this class are based on the 64-bit Mersenne twister, which offers a
     sufficiently long period and acceptable spectral properties for most purposes. */

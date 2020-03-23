@@ -59,11 +59,9 @@ Parallel* ParallelFactory::parallel(TaskMode mode, int maxThreadCount)
     if (std::this_thread::get_id() != _parentThread)
         throw FATALERROR("Parallel not spawned from thread that constructed the factory");
 
-    // Determine the number of threads
-    //  - limited by both the factory maximum and the maximum specified here as an argument
-    //  - reduced to one for Duplicated mode in multiprocessing environment
+    // Determine the number of threads,
+    // limited by both the factory maximum and the maximum specified here as an argument
     int numThreads = maxThreadCount > 0 ? std::min(maxThreadCount, _maxThreadCount) : _maxThreadCount;
-    if (mode == TaskMode::Duplicated && ProcessManager::isMultiProc()) numThreads = 1;
 
     // Determine the Parallel subclass type (see class documentation for details)
     ParallelType type = numThreads == 1 ? ParallelType::Serial : ParallelType::MultiThread;

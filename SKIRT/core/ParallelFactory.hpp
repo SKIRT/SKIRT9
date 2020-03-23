@@ -30,13 +30,12 @@ class Parallel;
     have a single ParallelFactory instance per simulation, and to use yet another ParallelFactory
     instance to run multiple simulations at the same time.
 
-    ParallelFactory clients can request a Parallel instance for one of the three task allocation
+    ParallelFactory clients can request a Parallel instance for one of the two task allocation
     modes described in the table below.
 
     Task mode | Description
     ----------|------------
     Distributed | All threads in all processes perform the tasks in parallel
-    Duplicated | Each process performs all tasks; the results should be identical on all processes
     RootOnly | All threads in the root process perform the tasks in parallel; the other processes ignore the tasks
 
     In support of these task modes, the Parallel class has several subclasses, each implementing
@@ -56,17 +55,9 @@ class Parallel;
 
     Mode/Runtime | 1P 1T | 1P MT | MP 1T | MP MT |
     -------------|-------|-------|-------|-------|
-    Distributed  |  S    |  MT   |  MP#  |  MTP# |
-    Duplicated   |  S    |  MT   |  S    |  S*   |
+    Distributed  |  S    |  MT   |  MP   |  MTP  |
     RootOnly     |  S    |  MT   |  S/0  |  MT/0 |
 
-    (#) In Distributed mode with multiple processes, all threads require a different random number
-        sequences. Therefore, the MultiProcessParallel and MultiHybridParallel classes swith the Random
-        instance associated with the simulation to abitrary mode before performing tasks, and back to
-        predictable mode after performing the tasks.
-    (*) In Duplicated mode with multiple processes, all tasks are performed by a single thread
-        (in each process) because parallel threads executing tasks in an unpredictable order would
-        see different random number sequences, possibly causing differences in the calculated results.
 */
 class ParallelFactory : public SimulationItem
 {
@@ -105,7 +96,7 @@ public:
 
     /** This enumeration includes a constant for each task allocation mode supported by ParallelFactory
      * and the Parallel subclasses. */
-    enum class TaskMode { Distributed, Duplicated, RootOnly };
+    enum class TaskMode { Distributed, RootOnly };
 
     /** This function returns a Parallel subclass instance of the appropriate type and with an
         appropriate number of execution threads, depending on the requested task allocation mode,
@@ -120,9 +111,6 @@ public:
 
     /** This function calls the parallel() function for the Distributed task allocation mode. */
     Parallel* parallelDistributed(int maxThreadCount = 0) { return parallel(TaskMode::Distributed, maxThreadCount); }
-
-    /** This function calls the parallel() function for the Duplicated task allocation mode. */
-    Parallel* parallelDuplicated(int maxThreadCount = 0) { return parallel(TaskMode::Duplicated, maxThreadCount); }
 
     /** This function calls the parallel() function for the RootOnly task allocation mode. */
     Parallel* parallelRootOnly(int maxThreadCount = 0) { return parallel(TaskMode::RootOnly, maxThreadCount); }
