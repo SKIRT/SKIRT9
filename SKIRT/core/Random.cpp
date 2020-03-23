@@ -47,7 +47,7 @@ namespace
     };
 
     // allocate a random generator for each thread, constructed when the thread is created
-    thread_local Rand _rng ;
+    thread_local Rand _rng;
 }
 
 //////////////////////////////////////////////////////////////////////
