@@ -6,7 +6,6 @@
 #include "ParallelFactory.hpp"
 #include "FatalError.hpp"
 #include "MultiHybridParallel.hpp"
-#include "MultiProcessParallel.hpp"
 #include "MultiThreadParallel.hpp"
 #include "NullParallel.hpp"
 #include "ProcessManager.hpp"
@@ -83,7 +82,7 @@ Parallel* ParallelFactory::parallel(TaskMode mode, int maxThreadCount)
             case ParallelType::Null: child.reset(new NullParallel(numThreads)); break;
             case ParallelType::Serial: child.reset(new SerialParallel(numThreads)); break;
             case ParallelType::MultiThread: child.reset(new MultiThreadParallel(numThreads)); break;
-            case ParallelType::MultiProcess: child.reset(new MultiProcessParallel(numThreads)); break;
+            case ParallelType::MultiProcess: child.reset(new MultiHybridParallel(1)); break;
             case ParallelType::MultiHybrid: child.reset(new MultiHybridParallel(numThreads)); break;
         }
     }

@@ -46,11 +46,8 @@ namespace
         double get() { return _distribution(_generator); }
     };
 
-    // allocate two random generators for each thread, and a pointer to the current generator
-    // (these objects are constructed and initialized when the thread is created)
-    thread_local Rand _predictable;
-    thread_local Rand _arbitrary;
-    thread_local Rand* _rand = &_arbitrary;
+    // allocate a random generator for each thread, constructed when the thread is created
+    thread_local Rand _rng ;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -59,32 +56,15 @@ void Random::setupSelfBefore()
 {
     SimulationItem::setupSelfBefore();
 
-    // (re-)initialize the predictable generator for this thread
-    _predictable.setState(seed());
-
-    // switch to the predictable generator
-    switchToPredictable();
-}
-
-//////////////////////////////////////////////////////////////////////
-
-void Random::switchToArbitrary()
-{
-    _rand = &_arbitrary;
-}
-
-//////////////////////////////////////////////////////////////////////
-
-void Random::switchToPredictable()
-{
-    _rand = &_predictable;
+    // initialize the generator for this thread
+    _rng.setState(seed());
 }
 
 //////////////////////////////////////////////////////////////////////
 
 double Random::uniform()
 {
-    return _rand->get();
+    return _rng.get();
 }
 
 //////////////////////////////////////////////////////////////////////

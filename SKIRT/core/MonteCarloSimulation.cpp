@@ -46,9 +46,6 @@ void MonteCarloSimulation::setupSelfBefore()
 {
     Simulation::setupSelfBefore();
 
-    // with multiple processes, make sure that the parent thread of each process has its own random sequence
-    if (ProcessManager::isMultiProc()) random()->switchToArbitrary();
-
     // construct a secondary source system to help launch secondary photon packets if required
     if (_config->hasSecondaryEmission()) _secondarySourceSystem = new SecondarySourceSystem(this);
 }
