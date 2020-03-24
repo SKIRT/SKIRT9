@@ -168,6 +168,9 @@ void Configuration::setupSelfBefore()
                 _lyaAccelerationScheme = Configuration::LyaAccelerationScheme::Smith2015;
                 break;
         }
+        // force moving media even if there are no bulk velocities (which would be exceptional anyway);
+        // this automatically disables some optimizations that would not work for Lyman-alpha media
+        _hasMovingMedia = true;
     }
 
     // verify that there is exactly one Lya medium component if required, and none if not required
@@ -284,8 +287,8 @@ void Configuration::setupSelfAfter()
         log->info("  Including dust emission with iterative calculation of dust self-absorption");
     else if (_hasDustEmission)
         log->info("  Including dust emission");
-    if (_hasPolarization) log->info("  Medium requires support for polarization");
-    if (_hasMovingMedia) log->info("  Medium requires support for kinematics");
+    if (_hasPolarization) log->info("  Including support for polarization");
+    if (_hasMovingMedia) log->info("  Including support for kinematics");
 
     // --- log model symmetries ---
 

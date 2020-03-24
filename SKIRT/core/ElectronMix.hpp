@@ -74,12 +74,6 @@ public:
         section for all wavelengths \f$\lambda\f$.. */
     double sectionExt(double lambda) const override;
 
-    /** This function returns the scattering albedo \f$\varpi_\lambda =
-        \varsigma_{\lambda}^{\text{sca}} / \varsigma_{\lambda}^{\text{ext}} =
-        \kappa_{\lambda}^{\text{sca}} / \kappa_{\lambda}^{\text{ext}}\f$ for the electron
-        population, which is trivially equal to one for all wavelengths \f$\lambda\f$. */
-    double albedo(double lambda) const override;
-
     //======== Scattering with material phase function =======
 
 public:

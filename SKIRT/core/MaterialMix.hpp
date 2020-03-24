@@ -202,12 +202,6 @@ public:
         \varsigma^{\text{sca}}_{\lambda}\f$ at wavelength \f$\lambda\f$. */
     virtual double sectionExt(double lambda) const = 0;
 
-    /** This function returns the scattering albedo \f$\varpi_\lambda =
-        \varsigma_{\lambda}^{\text{sca}} / \varsigma_{\lambda}^{\text{ext}} =
-        \kappa_{\lambda}^{\text{sca}} / \kappa_{\lambda}^{\text{ext}}\f$ at
-        wavelength \f$\lambda\f$. */
-    virtual double albedo(double lambda) const = 0;
-
     /** This function is used only with the HenyeyGreenstein scattering mode. It returns the
         scattering asymmetry parameter \f$g_\lambda = \left<\cos\theta\right>\f$ at wavelength
         \f$\lambda\f$. This value serves as a parameter for the Henyey-Greenstein phase function.

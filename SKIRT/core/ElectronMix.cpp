@@ -82,13 +82,6 @@ double ElectronMix::sectionExt(double /*lambda*/) const
 
 ////////////////////////////////////////////////////////////////////
 
-double ElectronMix::albedo(double /*lambda*/) const
-{
-    return 1.;
-}
-
-////////////////////////////////////////////////////////////////////
-
 double ElectronMix::phaseFunctionValueForCosine(double /*lambda*/, double costheta) const
 {
     return 0.75 * (costheta * costheta + 1.);

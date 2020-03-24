@@ -301,7 +301,7 @@ const MaterialMix* MediumSystem::randomMixForScattering(Random* random, double l
     {
         Array Xv;
         NR::cdf(Xv, _numMedia,
-                [this, lambda, m](int h) { return state(m, h).n * state(m, h).mix->sectionSca(lambda); });
+                [this, lambda, m](int h) { return opacitySca(lambda, m, h); });
         h = NR::locateClip(Xv, random->uniform());
     }
     return state(m, h).mix;
@@ -316,11 +316,9 @@ double MediumSystem::opacitySca(double lambda, int m, int h) const
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::opacitySca(double lambda, int m) const
+double MediumSystem::opacityAbs(double lambda, int m, int h) const
 {
-    double result = 0.;
-    for (int h = 0; h != _numMedia; ++h) result += state(m, h).n * state(m, h).mix->sectionSca(lambda);
-    return result;
+    return state(m, h).n * state(m, h).mix->sectionAbs(lambda);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -329,7 +327,7 @@ double MediumSystem::opacityAbs(double lambda, int m, MaterialMix::MaterialType 
 {
     double result = 0.;
     for (int h = 0; h != _numMedia; ++h)
-        if (state(0, h).mix->materialType() == type) result += state(m, h).n * state(m, h).mix->sectionAbs(lambda);
+        if (state(0, h).mix->materialType() == type) result += opacityAbs(lambda, m, h);
     return result;
 }
 
@@ -345,7 +343,7 @@ double MediumSystem::opacityExt(double lambda, int m, int h) const
 double MediumSystem::opacityExt(double lambda, int m) const
 {
     double result = 0.;
-    for (int h = 0; h != _numMedia; ++h) result += state(m, h).n * state(m, h).mix->sectionExt(lambda);
+    for (int h = 0; h != _numMedia; ++h) result += opacityExt(lambda, m, h);
     return result;
 }
 
@@ -355,15 +353,8 @@ double MediumSystem::opacityExt(double lambda, int m, MaterialMix::MaterialType 
 {
     double result = 0.;
     for (int h = 0; h != _numMedia; ++h)
-        if (state(0, h).mix->materialType() == type) result += state(m, h).n * state(m, h).mix->sectionExt(lambda);
+        if (state(0, h).mix->materialType() == type) result += opacityExt(lambda, m, h);
     return result;
-}
-
-////////////////////////////////////////////////////////////////////
-
-double MediumSystem::albedo(double lambda, int m, int h) const
-{
-    return state(m, h).mix->albedo(lambda);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -374,10 +365,8 @@ double MediumSystem::albedo(double lambda, int m) const
     double kext = 0.;
     for (int h = 0; h != _numMedia; ++h)
     {
-        double n = state(m, h).n;
-        auto mix = state(m, h).mix;
-        ksca += n * mix->sectionSca(lambda);
-        kext += n * mix->sectionExt(lambda);
+        ksca += opacitySca(lambda, m, h);
+        kext += opacityExt(lambda, m, h);
     }
     return kext > 0. ? ksca / kext : 0.;
 }

@@ -199,10 +199,10 @@ public:
         \f$m\f$. */
     double opacitySca(double lambda, int m, int h) const;
 
-    /** This function returns the scattering opacity \f$k=\sum_h n_h\sigma_h^\text{sca}\f$ summed
-        over all medium components at wavelength \f$\lambda\f$ in spatial cell with index \f$m\f$.
-        */
-    double opacitySca(double lambda, int m) const;
+    /** This function returns the absorption opacity \f$k=n_h\sigma_h^\text{abs}\f$ at wavelength
+        \f$\lambda\f$ of the medium component with index \f$h\f$ in spatial cell with index
+        \f$m\f$. */
+    double opacityAbs(double lambda, int m, int h) const;
 
     /** This function returns the absorption opacity \f$k=\sum_h n_h\sigma_h^\text{abs}\f$ summed
         over all medium components with the specified material type at wavelength \f$\lambda\f$ in
@@ -223,11 +223,6 @@ public:
         over all medium components with the specified material type at wavelength \f$\lambda\f$ in
         spatial cell with index \f$m\f$. */
     double opacityExt(double lambda, int m, MaterialMix::MaterialType type) const;
-
-    /** This function returns the scattering albedo \f$\sigma_h^\text{sca}/\sigma_h^\text{ext}\f$
-        at wavelength \f$\lambda\f$ of the medium component with index \f$h\f$ in spatial cell with
-        index \f$m\f$. */
-    double albedo(double lambda, int m, int h) const;
 
     /** This function returns the weighted scattering albedo \f[\frac{\sum_h
         n_h\sigma_h^\text{sca}} {\sum_h n_h\sigma_h^\text{ext}}\f] over all medium components at

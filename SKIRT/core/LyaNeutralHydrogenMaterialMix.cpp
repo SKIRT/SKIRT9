@@ -53,13 +53,6 @@ double LyaNeutralHydrogenMaterialMix::sectionExt(double lambda) const
 
 ////////////////////////////////////////////////////////////////////
 
-double LyaNeutralHydrogenMaterialMix::albedo(double /*lambda*/) const
-{
-    return 1.;
-}
-
-////////////////////////////////////////////////////////////////////
-
 double LyaNeutralHydrogenMaterialMix::equilibriumTemperature(const Array& /*Jv*/) const
 {
     return defaultTemperature();

@@ -82,11 +82,6 @@ public:
         */
     double sectionExt(double lambda) const override;
 
-    /** This function returns the Lyman-alpha scattering albedo \f$\varpi_\alpha(\lambda,
-        T_\text{def})\f$ for the hydrogen population, which is trivially equal to one for all
-        wavelengths and temperatures. */
-    double albedo(double lambda) const override;
-
     //======== Temperature and emission =======
 
     /** This function returns the equilibrium temperature \f$T_{\text{eq}}\f$ of the material mix
