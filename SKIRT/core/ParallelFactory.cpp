@@ -6,7 +6,6 @@
 #include "ParallelFactory.hpp"
 #include "FatalError.hpp"
 #include "MultiHybridParallel.hpp"
-#include "MultiProcessParallel.hpp"
 #include "MultiThreadParallel.hpp"
 #include "NullParallel.hpp"
 #include "ProcessManager.hpp"
@@ -59,11 +58,9 @@ Parallel* ParallelFactory::parallel(TaskMode mode, int maxThreadCount)
     if (std::this_thread::get_id() != _parentThread)
         throw FATALERROR("Parallel not spawned from thread that constructed the factory");
 
-    // Determine the number of threads
-    //  - limited by both the factory maximum and the maximum specified here as an argument
-    //  - reduced to one for Duplicated mode in multiprocessing environment
+    // Determine the number of threads,
+    // limited by both the factory maximum and the maximum specified here as an argument
     int numThreads = maxThreadCount > 0 ? std::min(maxThreadCount, _maxThreadCount) : _maxThreadCount;
-    if (mode == TaskMode::Duplicated && ProcessManager::isMultiProc()) numThreads = 1;
 
     // Determine the Parallel subclass type (see class documentation for details)
     ParallelType type = numThreads == 1 ? ParallelType::Serial : ParallelType::MultiThread;
@@ -85,7 +82,7 @@ Parallel* ParallelFactory::parallel(TaskMode mode, int maxThreadCount)
             case ParallelType::Null: child.reset(new NullParallel(numThreads)); break;
             case ParallelType::Serial: child.reset(new SerialParallel(numThreads)); break;
             case ParallelType::MultiThread: child.reset(new MultiThreadParallel(numThreads)); break;
-            case ParallelType::MultiProcess: child.reset(new MultiProcessParallel(numThreads)); break;
+            case ParallelType::MultiProcess: child.reset(new MultiHybridParallel(1)); break;
             case ParallelType::MultiHybrid: child.reset(new MultiHybridParallel(numThreads)); break;
         }
     }

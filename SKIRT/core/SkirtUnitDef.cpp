@@ -360,7 +360,7 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("StellarUnits", "masssurfacedensity", "Msun/AU2");
     addDefaultUnit("StellarUnits", "massvolumedensity", "Msun/AU3");
     addDefaultUnit("StellarUnits", "massrate", "Msun/yr");
-    addDefaultUnit("StellarUnits", "numbersurfacedensity", "1/cm3");
+    addDefaultUnit("StellarUnits", "numbersurfacedensity", "1/cm2");
     addDefaultUnit("StellarUnits", "numbervolumedensity", "1/cm3");
     addDefaultUnit("StellarUnits", "masscoefficient", "m2/kg");
     addDefaultUnit("StellarUnits", "time", "Gyr");
