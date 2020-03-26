@@ -11,6 +11,7 @@
 #include "FatalError.hpp"
 #include "LockFree.hpp"
 #include "Log.hpp"
+#include "LyaUtils.hpp"
 #include "MaterialMix.hpp"
 #include "NR.hpp"
 #include "Parallel.hpp"
@@ -300,8 +301,7 @@ const MaterialMix* MediumSystem::randomMixForScattering(Random* random, double l
     if (_numMedia > 1)
     {
         Array Xv;
-        NR::cdf(Xv, _numMedia,
-                [this, lambda, m](int h) { return opacitySca(lambda, m, h); });
+        NR::cdf(Xv, _numMedia, [this, lambda, m](int h) { return opacitySca(lambda, m, h); });
         h = NR::locateClip(Xv, random->uniform());
     }
     return state(m, h).mix;
@@ -311,14 +311,25 @@ const MaterialMix* MediumSystem::randomMixForScattering(Random* random, double l
 
 double MediumSystem::opacitySca(double lambda, int m, int h) const
 {
-    return state(m, h).n * state(m, h).mix->sectionSca(lambda);
+    double n = state(m, h).n;
+    if (n <= 0.)
+        return 0.;
+    else if (h == _config->lyaMediumIndex())
+        return n * LyaUtils::sectionForWavelength(lambda, state(m).T);
+    else
+        return n * state(m, h).mix->sectionSca(lambda);
 }
 
 ////////////////////////////////////////////////////////////////////
 
 double MediumSystem::opacityAbs(double lambda, int m, int h) const
 {
-    return state(m, h).n * state(m, h).mix->sectionAbs(lambda);
+    // no need to check for Lyman-alpha because the material mix returns the correct zero value
+    double n = state(m, h).n;
+    if (n <= 0.)
+        return 0.;
+    else
+        return n * state(m, h).mix->sectionAbs(lambda);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -335,7 +346,13 @@ double MediumSystem::opacityAbs(double lambda, int m, MaterialMix::MaterialType 
 
 double MediumSystem::opacityExt(double lambda, int m, int h) const
 {
-    return state(m, h).n * state(m, h).mix->sectionExt(lambda);
+    double n = state(m, h).n;
+    if (n <= 0.)
+        return 0.;
+    else if (h == _config->lyaMediumIndex())
+        return n * LyaUtils::sectionForWavelength(lambda, state(m).T);
+    else
+        return n * state(m, h).mix->sectionExt(lambda);
 }
 
 ////////////////////////////////////////////////////////////////////
