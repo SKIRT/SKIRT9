@@ -22,7 +22,7 @@ namespace
 
 double LyaUtils::sectionForDimlessFreq(double x, double T)
 {
-    double vth = sqrt(2. * kB * T / mp);               // thermal velocity for T
+    double vth = sqrt(2 * kB * T / mp);                // thermal velocity for T
     double a = Aa * la / 4 / M_PI / vth;               // Voigt parameter
     double sigma0 = 3 * la * la * M_2_SQRTPI / 4 * a;  // cross section at line center
     return sigma0 * VoigtProfile::value(a, x);         // cross section at given x
@@ -32,8 +32,8 @@ double LyaUtils::sectionForDimlessFreq(double x, double T)
 
 double LyaUtils::sectionForWavelength(double lambda, double T)
 {
-    double vp = c * (lambda - la) / la;                // velocity shift for lambda
-    double vth = sqrt(2. * kB * T / mp);               // thermal velocity for T
+    double vp = c / la * (la - lambda);                // velocity shift for lambda
+    double vth = sqrt(2 * kB * T / mp);                // thermal velocity for T
     double a = Aa * la / 4 / M_PI / vth;               // Voigt parameter
     double sigma0 = 3 * la * la * M_2_SQRTPI / 4 * a;  // cross section at line center
     return sigma0 * VoigtProfile::value(a, vp / vth);  // cross section at given x

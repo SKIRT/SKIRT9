@@ -136,13 +136,12 @@ public:
         path. */
     void propagate(double s);
 
-    /** This function scatters the photon packet into the new direction \f${\bf{k}}\f$. It
-        increments the counter that keeps track of scattering events and updates the direction,
-        invalidating the current path. If the specified bulk velocity is nonzero, the wavelength is
-        adjusted for both the incoming and outgoing Doppler shifts during the scattering event. The
+    /** This function scatters the photon packet into the new direction \f${\bf{k}}\f$ with the new
+        wavelength \f$\lambda\f$. It increments the counter that keeps track of scattering events,
+        updates the direction, invalidating the current path, and updates the wavelength. The
         polarization remains unchanged; it should be properly updated through the StokesVector
         class functions. */
-    void scatter(Direction bfk, Vec bfv);
+    void scatter(Direction bfk, double lambda);
 
     /** This function applies the given weight bias given as a multiplication factor. */
     void applyBias(double w);
@@ -183,7 +182,7 @@ public:
 
     // ------- Calculating Doppler shifts -------
 
-private:
+public:
     /** This function returns the Doppler-shifted wavelength that should be assigned to a photon
         packet (i.e. the wavelength relative to the model coordinate frame) when the packet is
         emitted from a moving source (with non-relativistic velocity). The arguments specify the
@@ -206,7 +205,6 @@ private:
         */
     static double shiftedReceptionWavelength(double photonWavelength, Direction photonDirection, Vec receiverVelocity);
 
-public:
     /** This function returns the Doppler-shifted wavelength perceived for this photon packet by a
         moving receiver (with non-relativistic velocity). The argument specifies the velocity of
         the receiver \f${\bf{v}}_\text{rec}\f$ relative to the model coordinate frame. See the
@@ -219,6 +217,7 @@ public:
 
     // ------- Caching observed optical depth -------
 
+public:
     /** This function stores the most recently "observed" optical depth, calculated externally, in
         a data member. This capability is offered so that consecutive instruments with the same
         observer type, position and viewing direction can avoid recalculating the optical depth. */

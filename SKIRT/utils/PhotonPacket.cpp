@@ -100,12 +100,11 @@ void PhotonPacket::propagate(double s)
 
 ////////////////////////////////////////////////////////////////////
 
-void PhotonPacket::scatter(Direction bfk, Vec bfv)
+void PhotonPacket::scatter(Direction bfk, double lambda)
 {
-    if (!bfv.isNull())
-        _lambda = shiftedEmissionWavelength(shiftedReceptionWavelength(_lambda, direction(), bfv), bfk, bfv);
     _nscatt++;
     setDirection(bfk);
+    _lambda = lambda;
 }
 
 ////////////////////////////////////////////////////////////////////

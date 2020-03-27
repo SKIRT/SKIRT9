@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "MonteCarloSimulation.hpp"
+#include "Constants.hpp"
 #include "DisjointWavelengthGrid.hpp"
 #include "FatalError.hpp"
 #include "Log.hpp"
@@ -19,6 +20,7 @@
 #include "SpecialFunctions.hpp"
 #include "StringUtils.hpp"
 #include "TimeLogger.hpp"
+#include "VoigtProfile.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -747,10 +749,83 @@ void MonteCarloSimulation::simulateScattering(PhotonPacket* pp)
         case MaterialMix::ScatteringMode::Lya:
         case MaterialMix::ScatteringMode::LyaPolarization:
         {
-            throw FATALERROR("Lyman-alpha scattering not yet implemented");
+            constexpr double c = Constants::c();              // speed of light in vacuum
+            constexpr double kB = Constants::k();             // Boltzmann constant
+            constexpr double mp = Constants::Mproton();       // proton mass
+            constexpr double la = Constants::lambdaLya();     // central Lyman-alpha wavelength
+            constexpr double Aa = Constants::EinsteinALya();  // Einstein A coefficient for Lyman-alpha transition
+
+            // convert the wavelength perceived in the gas rest frame to the corresponding dimensionless frequency
+            double T = mediumSystem()->gasTemperature(m);  // hydrogen temperature
+            double vth = sqrt(2. * kB * T / mp);           // thermal velocity
+            double a = Aa * la / 4 / M_PI / vth;           // Voigt parameter
+            double x = c / la * (la - lambda) / vth;       // dimensionless frequency
+
+            // generate two directions that are orthogonal to each other and to the incoming photon packet direction
+            Direction kin = pp->direction();
+            Direction k1(1., 0., 0.);
+            if (kin.kx() != 0. || kin.ky() != 0.)
+            {
+                k1 = Direction(kin.ky(), -kin.kx(), 0.);
+                k1 /= k1.norm();
+            }
+            Direction k2(Vec::cross(k1, kin));
+
+            // select the critical value of the dimensionless frequency depending on the acceleration scheme
+            double xcrit = 0.;  // TO DO
+            switch (_config->lyaAccelerationScheme())
+            {
+                case Configuration::LyaAccelerationScheme::None: break;
+                case Configuration::LyaAccelerationScheme::Constant:
+                    xcrit = _config->lyaAccelerationCriticalValue();
+                    break;
+                case Configuration::LyaAccelerationScheme::Laursen2009: break;
+                case Configuration::LyaAccelerationScheme::Smith2015: break;
+            }
+
+            // draw values for the components of the dimensionless atom velocity
+            // parallel and orthogonal to the incoming photon packet
+            double upar = VoigtProfile::sample(a, x, random());
+            double radius = sqrt(xcrit * xcrit - std::log(random()->uniform()));
+            double angle = 2. * M_PI * random()->uniform();
+            double u1 = radius * cos(angle);
+            double u2 = radius * sin(angle);
+
+            // construct the dimensionless atom velocity from the direction vectors and the magnitudes
+            Vec u = kin * upar + k1 * u1 + k2 * u2;
+
+            // transform the dimensionless frequency into the rest frame of the atom
+            x -= Vec::dot(u, kin);
+
+            // draw the outgoing direction from the isotropic or the dipole phase function:
+            // all wing events and 1/3 of core events are dipole, and the remaining 2/3 core events are isotropic,
+            // where x=0.2 is used as cutoff between core and wing
+            if (x > 0.2 || random()->uniform() < 1. / 3.)
+            {
+                // dipole
+                double X = random()->uniform();
+                double p = cbrt(4. * X - 2. + sqrt(16. * X * (X - 1.) + 5.));
+                double costheta = p - 1. / p;
+                bfknew = random()->direction(kin, costheta);
+            }
+            else
+            {
+                // isotropic
+                bfknew = random()->direction();
+            }
+
+            // transform the dimensionless frequency out of the rest frame of the atom
+            x += Vec::dot(u, bfknew);
+
+            // convert the dimensionless frequency back to the adjusted wavelength perceived in the gas rest frame
+            lambda = la - (la / c * x * vth);
+            break;
         }
     }
-    pp->scatter(bfknew, bfv);
+
+    // if the material in the cell has a nonzero bulk velocity, determine the Doppler-shifted outgoing wavelength
+    if (!bfv.isNull()) lambda = PhotonPacket::shiftedEmissionWavelength(lambda, bfknew, bfv);
+    pp->scatter(bfknew, lambda);
 }
 
 ////////////////////////////////////////////////////////////////////
