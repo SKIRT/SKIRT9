@@ -105,7 +105,8 @@ void Sphere1DSpatialGrid::path(SpatialGridPath* path) const
         else
         {
             r = rmax - 1e-8 * (_rv[_Nr] - _rv[_Nr - 1]);
-            double qmax = sqrt((rmax - p) * (rmax + p));
+            // path intersects rmax boundary going inward, qmax is negative
+            double qmax = -sqrt((rmax - p) * (rmax + p));
             double ds = (qmax - q);
             path->addSegment(-1, ds);
             q = qmax;
@@ -113,8 +114,8 @@ void Sphere1DSpatialGrid::path(SpatialGridPath* path) const
     }
     else if (r < rmin)
     {
-        // Same math, but ray inside shell will always intersect
         r = rmin + 1e-8 * (_rv[1] - _rv[0]);
+        // path intersects rmin boundary going outward, qmin is positive
         double qmin = sqrt((rmin - p) * (rmin + p));
         double ds = (qmin - q);
         path->addSegment(-1, ds);
