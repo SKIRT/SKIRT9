@@ -118,17 +118,24 @@ public:
 
     /** This function determines the interaction point along the path corresponding to the
         specified optical depth, and stores relevant information about it in data members for later
-        retrieval through the interactionCellIndex() and interactionDistance() functions.
-        Specifically, the function first determines the path segment for which the exit optical
-        depth becomes smaller than the specified optical depth. It then stores the index of the
-        spatial cell corresponding to the interacting segment. Finally, it calculates and stores
-        the distance covered along the path until the specified optical depth has been reached by
-        linear interpolation within the interacting cell. Using linear interpolation is equivalent
-        to assuming exponential behavior of the extinction with distance within the cell.
+        retrieval through the interactionSegmentIndex(), interactionCellIndex() and
+        interactionDistance() functions. Specifically, the function first determines the path
+        segment for which the exit optical depth becomes smaller than the specified optical depth.
+        It then stores the index of the spatial cell corresponding to the interacting segment.
+        Finally, it calculates and stores the distance covered along the path until the specified
+        optical depth has been reached by linear interpolation within the interacting cell. Using
+        linear interpolation is equivalent to assuming exponential behavior of the extinction with
+        distance within the cell.
 
         The function assumes that both the geometric and optical depth information for the path
         have been set; if this is not the case, the behavior is undefined. */
     void findInteractionPoint(double tau);
+
+    /** This function returns the index \f$n\f$ of the path segment in the path corresponding to
+        the interaction point most recently calculated by the findInteractionPoint() function, or
+        -1 if this function has never been called or if there was no interaction point within the
+        path. */
+    int interactionSegmentIndex() const { return _interactionSegmentIndex; }
 
     /** This function returns the spatial cell index \f$m\f$ corresponding to the interaction point
         most recently calculated by the findInteractionPoint() function, or -1 if this function has
@@ -146,6 +153,7 @@ private:
     Position _bfr;
     Direction _bfk;
     vector<Segment> _segments;
+    int _interactionSegmentIndex{-1};
     int _interactionCellIndex{-1};
     double _interactionDistance{0.};
 };

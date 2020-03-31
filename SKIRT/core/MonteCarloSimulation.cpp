@@ -772,15 +772,37 @@ void MonteCarloSimulation::simulateScattering(PhotonPacket* pp)
             Direction k2(Vec::cross(k1, kin));
 
             // select the critical value of the dimensionless frequency depending on the acceleration scheme
-            double xcrit = 0.;  // TO DO
+            double xcrit = 0.;
             switch (_config->lyaAccelerationScheme())
             {
-                case Configuration::LyaAccelerationScheme::None: break;
+                case Configuration::LyaAccelerationScheme::None:
+                    // leaving the critical value at zero is equivalent to no acceleration
+                    break;
                 case Configuration::LyaAccelerationScheme::Constant:
                     xcrit = _config->lyaAccelerationCriticalValue();
                     break;
-                case Configuration::LyaAccelerationScheme::Laursen2009: break;
-                case Configuration::LyaAccelerationScheme::Smith2015: break;
+                case Configuration::LyaAccelerationScheme::Laursen2009:
+                case Configuration::LyaAccelerationScheme::Smith2015:
+                {
+                    // calculate a * tau0
+                    double sigma0 = 3 * la * la * M_2_SQRTPI / 4 * a;              // cross section at line center
+                    double ds = pp->segments()[pp->interactionSegmentIndex()].ds;  // length of photon path in cell
+                    double nH = _mediumSystem->numberDensity(m, _config->lyaMediumIndex());
+                    double atau = a * sigma0 * nH * ds;
+
+                    // determine x_crit based on the respective heuristic
+                    if (_config->lyaAccelerationScheme() == Configuration::LyaAccelerationScheme::Laursen2009)
+                    {
+                        if (atau > 60)
+                            xcrit = 0.02 * std::exp(1.4 * pow(std::log(atau), 0.6));
+                        else if (atau > 1)
+                            xcrit = 0.02 * std::exp(0.6 * pow(std::log(atau), 1.2));
+                    }
+                    else  // Configuration::LyaAccelerationScheme::Smith2015
+                    {
+                        if (atau >= 1) xcrit = 0.2 * std::cbrt(atau);
+                    }
+                }
             }
 
             // draw values for the components of the dimensionless atom velocity
