@@ -6,7 +6,10 @@
 #ifndef LYAUTILS_HPP
 #define LYAUTILS_HPP
 
+#include "Direction.hpp"
 #include "Range.hpp"
+class Configuration;
+class Random;
 
 ////////////////////////////////////////////////////////////////////
 
@@ -56,13 +59,20 @@
 namespace LyaUtils
 {
     /** This function returns the Lyman-alpha scattering cross section per hydrogen atom
-        \f$\sigma_\alpha(x, T)\f$ at the given dimensionless photon frequency and gas temperature.
-        */
-    double sectionForDimlessFreq(double x, double T);
-
-    /** This function returns the Lyman-alpha scattering cross section per hydrogen atom
         \f$\sigma_\alpha(\lambda, T)\f$ at the given photon wavelength and gas temperature. */
-    double sectionForWavelength(double lambda, double T);
+    double section(double lambda, double T);
+
+    /** This function draws a random hydrogen atom velocity as seen by an incoming photon from the
+        appropriate probability distributions, reflecting the preference for photons to be
+        scattered by atoms to which they appear close to resonance. In addition, it determines
+        whether the photon scatters through the isotropic or dipole phase function.
+
+        The first item in the returned pair is the atom velocity; the second item is true for the
+        dipole phase function and false for isotropic scattering.
+
+        TODO: describe all of this in much more detail. */
+    std::pair<Vec, bool> sampleAtomVelocity(double lambda, double T, double nH, double ds, Direction kin,
+                                            Configuration* config, Random* random);
 
     /** This function returns the emission wavelength range for which the photon packet life cycle
         should handle Lyman-alpha line transfer (if the simulation configuration includes

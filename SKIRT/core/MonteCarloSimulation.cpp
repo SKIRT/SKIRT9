@@ -4,7 +4,6 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "MonteCarloSimulation.hpp"
-#include "Constants.hpp"
 #include "DisjointWavelengthGrid.hpp"
 #include "FatalError.hpp"
 #include "Log.hpp"
@@ -547,7 +546,7 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-void MonteCarloSimulation::peelOffScattering(const PhotonPacket* pp, PhotonPacket* ppp)
+void MonteCarloSimulation::peelOffScattering(PhotonPacket* pp, PhotonPacket* ppp)
 {
     // get the cell hosting the scattering event
     int m = pp->interactionCellIndex();
@@ -657,7 +656,25 @@ void MonteCarloSimulation::peelOffScattering(const PhotonPacket* pp, PhotonPacke
                     case MaterialMix::ScatteringMode::Lya:
                     case MaterialMix::ScatteringMode::LyaPolarization:
                     {
-                        throw FATALERROR("Lyman-alpha scattering not yet implemented");
+                        // draw a random atom velocity & phase function, unless a previous peel-off stored this already
+                        if (!pp->hasLyaScatteringInfo())
+                        {
+                            double T = mediumSystem()->gasTemperature(m);
+                            double nH = _mediumSystem->numberDensity(m, _config->lyaMediumIndex());
+                            double ds = pp->segments()[pp->interactionSegmentIndex()].ds;
+                            pp->setLyaScatteringInfo(
+                                LyaUtils::sampleAtomVelocity(lambda, T, nH, ds, pp->direction(), _config, random()));
+                        }
+
+                        // calculate the value of the appropriate phase function (dipole or isotropic)
+                        double costheta = Vec::dot(pp->direction(), bfkobs);
+                        double value = pp->lyaDipole() ? 0.75 * (costheta * costheta + 1.) : 1.;
+
+                        // accumulate the weighted sum in the intensity (no support for polarization in this case)
+                        I += wv[h] * value;
+
+                        // TO DO: Doppler-shift the photon packet wavelength into and out of the atom frame
+                        break;
                     }
                 }
             }
@@ -749,98 +766,32 @@ void MonteCarloSimulation::simulateScattering(PhotonPacket* pp)
         case MaterialMix::ScatteringMode::Lya:
         case MaterialMix::ScatteringMode::LyaPolarization:
         {
-            constexpr double c = Constants::c();              // speed of light in vacuum
-            constexpr double kB = Constants::k();             // Boltzmann constant
-            constexpr double mp = Constants::Mproton();       // proton mass
-            constexpr double la = Constants::lambdaLya();     // central Lyman-alpha wavelength
-            constexpr double Aa = Constants::EinsteinALya();  // Einstein A coefficient for Lyman-alpha transition
-
-            // convert the wavelength perceived in the gas rest frame to the corresponding dimensionless frequency
-            double T = mediumSystem()->gasTemperature(m);  // hydrogen temperature
-            double vth = sqrt(2. * kB * T / mp);           // thermal velocity
-            double a = Aa * la / 4 / M_PI / vth;           // Voigt parameter
-            double x = c / la * (la - lambda) / vth;       // dimensionless frequency
-
-            // generate two directions that are orthogonal to each other and to the incoming photon packet direction
-            Direction kin = pp->direction();
-            Direction k1(1., 0., 0.);
-            if (kin.kx() != 0. || kin.ky() != 0.)
+            // draw a random atom velocity & phase function, unless a peel-off stored this already
+            if (!pp->hasLyaScatteringInfo())
             {
-                k1 = Direction(kin.ky(), -kin.kx(), 0.);
-                k1 /= k1.norm();
-            }
-            Direction k2(Vec::cross(k1, kin));
-
-            // select the critical value of the dimensionless frequency depending on the acceleration scheme
-            double xcrit = 0.;
-            switch (_config->lyaAccelerationScheme())
-            {
-                case Configuration::LyaAccelerationScheme::None:
-                    // leaving the critical value at zero is equivalent to no acceleration
-                    break;
-                case Configuration::LyaAccelerationScheme::Constant:
-                    xcrit = _config->lyaAccelerationCriticalValue();
-                    break;
-                case Configuration::LyaAccelerationScheme::Laursen2009:
-                case Configuration::LyaAccelerationScheme::Smith2015:
-                {
-                    // calculate a * tau0
-                    double sigma0 = 3 * la * la * M_2_SQRTPI / 4 * a;              // cross section at line center
-                    double ds = pp->segments()[pp->interactionSegmentIndex()].ds;  // length of photon path in cell
-                    double nH = _mediumSystem->numberDensity(m, _config->lyaMediumIndex());
-                    double atau = a * sigma0 * nH * ds;
-
-                    // determine x_crit based on the respective heuristic
-                    if (_config->lyaAccelerationScheme() == Configuration::LyaAccelerationScheme::Laursen2009)
-                    {
-                        if (atau > 60)
-                            xcrit = 0.02 * std::exp(1.4 * pow(std::log(atau), 0.6));
-                        else if (atau > 1)
-                            xcrit = 0.02 * std::exp(0.6 * pow(std::log(atau), 1.2));
-                    }
-                    else  // Configuration::LyaAccelerationScheme::Smith2015
-                    {
-                        if (atau >= 1) xcrit = 0.2 * std::cbrt(atau);
-                    }
-                }
+                double T = mediumSystem()->gasTemperature(m);
+                double nH = _mediumSystem->numberDensity(m, _config->lyaMediumIndex());
+                double ds = pp->segments()[pp->interactionSegmentIndex()].ds;
+                pp->setLyaScatteringInfo(
+                    LyaUtils::sampleAtomVelocity(lambda, T, nH, ds, pp->direction(), _config, random()));
             }
 
-            // draw values for the components of the dimensionless atom velocity
-            // parallel and orthogonal to the incoming photon packet
-            double upar = VoigtProfile::sample(a, x, random());
-            double radius = sqrt(xcrit * xcrit - std::log(random()->uniform()));
-            double angle = 2. * M_PI * random()->uniform();
-            double u1 = radius * cos(angle);
-            double u2 = radius * sin(angle);
-
-            // construct the dimensionless atom velocity from the direction vectors and the magnitudes
-            Vec u = kin * upar + k1 * u1 + k2 * u2;
-
-            // transform the dimensionless frequency into the rest frame of the atom
-            x -= Vec::dot(u, kin);
-
-            // draw the outgoing direction from the isotropic or the dipole phase function:
-            // all wing events and 1/3 of core events are dipole, and the remaining 2/3 core events are isotropic,
-            // where x=0.2 is used as cutoff between core and wing
-            if (x > 0.2 || random()->uniform() < 1. / 3.)
+            // draw the outgoing direction from the dipole or the isotropic phase function
+            if (pp->lyaDipole())
             {
-                // dipole
                 double X = random()->uniform();
                 double p = cbrt(4. * X - 2. + sqrt(16. * X * (X - 1.) + 5.));
                 double costheta = p - 1. / p;
-                bfknew = random()->direction(kin, costheta);
+                bfknew = random()->direction(pp->direction(), costheta);
             }
             else
             {
-                // isotropic
                 bfknew = random()->direction();
             }
 
-            // transform the dimensionless frequency out of the rest frame of the atom
-            x += Vec::dot(u, bfknew);
-
-            // convert the dimensionless frequency back to the adjusted wavelength perceived in the gas rest frame
-            lambda = la - (la / c * x * vth);
+            // Doppler-shift the photon packet wavelength into and out of the atom frame
+            lambda = PhotonPacket::shiftedReceptionWavelength(lambda, pp->direction(), pp->lyaAtomVelocity());
+            lambda = PhotonPacket::shiftedEmissionWavelength(lambda, bfknew, pp->lyaAtomVelocity());
             break;
         }
     }

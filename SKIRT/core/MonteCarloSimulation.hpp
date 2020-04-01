@@ -420,7 +420,7 @@ private:
         The first argument to this function specifies the photon packet that is about to be
         scattered; the second argument provides a placeholder peel off photon packet for use by the
         function. */
-    void peelOffScattering(const PhotonPacket* pp, PhotonPacket* ppp);
+    void peelOffScattering(PhotonPacket* pp, PhotonPacket* ppp);
 
     /** This function simulates a scattering event of a photon packet. Most of the properties of
         the photon packet remain unaltered, including the position and the luminosity. The

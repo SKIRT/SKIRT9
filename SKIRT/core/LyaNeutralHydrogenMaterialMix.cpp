@@ -41,14 +41,14 @@ double LyaNeutralHydrogenMaterialMix::sectionAbs(double /*lambda*/) const
 
 double LyaNeutralHydrogenMaterialMix::sectionSca(double lambda) const
 {
-    return LyaUtils::sectionForWavelength(lambda, defaultTemperature());
+    return LyaUtils::section(lambda, defaultTemperature());
 }
 
 ////////////////////////////////////////////////////////////////////
 
 double LyaNeutralHydrogenMaterialMix::sectionExt(double lambda) const
 {
-    return LyaUtils::sectionForWavelength(lambda, defaultTemperature());
+    return LyaUtils::section(lambda, defaultTemperature());
 }
 
 ////////////////////////////////////////////////////////////////////

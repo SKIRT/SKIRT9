@@ -237,6 +237,37 @@ public:
         direction can avoid recalculating the optical depth. */
     double observedOpticalDepth() const { return _observedOpticalDepth; }
 
+    // ------- Caching Lya scattering info -------
+
+public:
+    /** This function stores externally calculated information on the Lyman-alpha scattering event
+        currently being processed in data members. This capability is offered so that the actual
+        scattering event and all its peel-offs can use the same atom velocity and phase function.
+        */
+    void setLyaScatteringInfo(const std::pair<Vec, bool>& scattInfo)
+    {
+        std::tie(_lyaAtomVelocity, _lyaDipole) = scattInfo;
+        _hasLyaScatteringInfo = true;
+    }
+
+    /** This function returns true if valid Lyman-alpha scattering information has been stored
+        since the latest photon packet launch or scattering event. Otherwise the function returns
+        false. */
+    bool hasLyaScatteringInfo() const { return _hasLyaScatteringInfo; }
+
+    /** If hasLyaScatteringInfo() returns true, this function returns the most recently stored
+        velocity vector of the scattering atom relative to the local gas frame. Otherwise, it
+        returns some meaningless value. This capability is offered so that the actual Lyman-alpha
+        scattering event and all its peel-offs can use the same atom velocity. */
+    Vec lyaAtomVelocity() const { return _lyaAtomVelocity; }
+
+    /** If hasLyaScatteringInfo() returns true, this function returns the most recently stored
+        phase function choice, i.e., true if scattering as a dipole, false if scattering
+        isotropically. Otherwise, the function returns some meaningless value. This capability is
+        offered so that the actual Lyman-alpha scattering event and all its peel-offs can use the
+        same phase function. */
+    bool lyaDipole() const { return _lyaDipole; }
+
     // ------- Data members -------
 
 private:
@@ -261,6 +292,11 @@ private:
     // observed optical depth
     double _observedOpticalDepth{0.};      // optical depth calculated for peel-off to an instrument
     bool _hasObservedOpticalDepth{false};  // true if the above field holds a valid value for this packet
+
+    // Lyman-alpha scattering information
+    Vec _lyaAtomVelocity;               // the velocity vector of the scattering atom in the local gas frame
+    bool _lyaDipole{false};             // true if scattering as a dipole, false if scattering isotropically
+    bool _hasLyaScatteringInfo{false};  // true if the above field holds a valid value for this packet
 };
 
 ////////////////////////////////////////////////////////////////////

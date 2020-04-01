@@ -315,7 +315,7 @@ double MediumSystem::opacitySca(double lambda, int m, int h) const
     if (n <= 0.)
         return 0.;
     else if (h == _config->lyaMediumIndex())
-        return n * LyaUtils::sectionForWavelength(lambda, state(m).T);
+        return n * LyaUtils::section(lambda, state(m).T);
     else
         return n * state(m, h).mix->sectionSca(lambda);
 }
@@ -350,7 +350,7 @@ double MediumSystem::opacityExt(double lambda, int m, int h) const
     if (n <= 0.)
         return 0.;
     else if (h == _config->lyaMediumIndex())
-        return n * LyaUtils::sectionForWavelength(lambda, state(m).T);
+        return n * LyaUtils::section(lambda, state(m).T);
     else
         return n * state(m, h).mix->sectionExt(lambda);
 }
