@@ -588,6 +588,8 @@ void MonteCarloSimulation::peelOffScattering(PhotonPacket* pp, PhotonPacket* ppp
     // now do the actual peel-off for each instrument
     for (Instrument* instr : _instrumentSystem->instruments())
     {
+        double localLambda = lambda;
+
         if (!instr->isSameObserverAsPreceding())
         {
             // get the instrument direction
@@ -673,14 +675,22 @@ void MonteCarloSimulation::peelOffScattering(PhotonPacket* pp, PhotonPacket* ppp
                         // accumulate the weighted sum in the intensity (no support for polarization in this case)
                         I += wv[h] * value;
 
-                        // TO DO: Doppler-shift the photon packet wavelength into and out of the atom frame
+                        // Doppler-shift the photon packet wavelength into and out of the atom frame
+                        localLambda = PhotonPacket::shiftedReceptionWavelength(localLambda, pp->direction(),
+                                                                               pp->lyaAtomVelocity());
+                        localLambda =
+                            PhotonPacket::shiftedEmissionWavelength(localLambda, bfkobs, pp->lyaAtomVelocity());
                         break;
                     }
                 }
             }
 
+            // if the material in the cell has a nonzero bulk velocity, determine the Doppler-shifted wavelength
+            double emissionLambda =
+                bfv.isNull() ? localLambda : PhotonPacket::shiftedEmissionWavelength(localLambda, bfkobs, bfv);
+
             // pass the result to the peel-off photon packet and have it detected
-            ppp->launchScatteringPeelOff(pp, bfkobs, bfv, I);
+            ppp->launchScatteringPeelOff(pp, bfkobs, emissionLambda, I);
             if (_config->hasPolarization()) ppp->setPolarized(I, Q, U, V, pp->normal());
         }
         instr->detect(ppp);

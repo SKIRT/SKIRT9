@@ -117,18 +117,16 @@ public:
 
     /** This function initializes a peel off photon packet being sent to an instrument for a
         scattering event. The arguments specify the base photon packet from which the peel off
-        derives, the direction towards the instrument, the bulk velocity of the scatterer, and the
-        weight bias (as a multiplication factor). The function copies the relevant values from the
-        base photon packet to the peel off photon packet, updates the peel off direction and
-        weight, and increments the scattering counter. If the specified bulk velocity is nonzero,
-        the wavelength is adjusted for both the incoming and outgoing Doppler shifts during the
-        scattering event.
+        derives, the direction towards the instrument, the new wavelength, and the weight bias (as
+        a multiplication factor). The function copies the relevant values from the base photon
+        packet to the peel off photon packet, updates the peel off direction, the wavelength and
+        weight, and increments the scattering counter.
 
         The peel off photon packet is initialized to an unpolarized state; the polarization state
         should be properly updated after the launch through the StokesVector class functions. The
         current path of the peel off photon packet is invalidated, and all information about its
         previous life cycle is lost. The base photon packet remains unchanged. */
-    void launchScatteringPeelOff(const PhotonPacket* pp, Direction bfk, Vec bfv, double w);
+    void launchScatteringPeelOff(const PhotonPacket* pp, Direction bfk, double lambda, double w);
 
     /** This function causes the propagation of the photon packet over a physical distance \f$s\f$.
         It updates the position from \f${\bf{r}}\f$ to \f${\bf{r}}+s\,{\bf{k}}\f$, where

@@ -76,12 +76,9 @@ void PhotonPacket::launchEmissionPeelOff(const PhotonPacket* pp, Direction bfk)
 
 ////////////////////////////////////////////////////////////////////
 
-void PhotonPacket::launchScatteringPeelOff(const PhotonPacket* pp, Direction bfk, Vec bfv, double w)
+void PhotonPacket::launchScatteringPeelOff(const PhotonPacket* pp, Direction bfk, double lambda, double w)
 {
-    if (bfv.isNull())
-        _lambda = pp->_lambda;
-    else
-        _lambda = shiftedEmissionWavelength(shiftedReceptionWavelength(pp->_lambda, pp->direction(), bfv), bfk, bfv);
+    _lambda = lambda;
     _W = pp->_W * w;
     _lambda0 = pp->_lambda0;
     _compIndex = pp->_compIndex;
