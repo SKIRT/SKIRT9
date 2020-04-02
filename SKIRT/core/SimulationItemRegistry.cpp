@@ -190,6 +190,7 @@
 #include "ShellGeometry.hpp"
 #include "SineSquarePolarizationProfile.hpp"
 #include "SingleGrainSizeDistribution.hpp"
+#include "SingleWavelengthSED.hpp"
 #include "SiteListTreePolicy.hpp"
 #include "SourceSystem.hpp"
 #include "SpatialCellPropertiesProbe.hpp"
@@ -299,6 +300,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<FSPSSED>();
     ItemRegistry::add<MappingsSED>();
     ItemRegistry::add<TabulatedSED>();
+    ItemRegistry::add<SingleWavelengthSED>();
     ItemRegistry::add<FileSED>();
     ItemRegistry::add<ListSED>();
     ItemRegistry::add<LyaGaussianSED>();
