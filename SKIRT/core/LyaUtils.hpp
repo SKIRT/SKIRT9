@@ -145,6 +145,12 @@ namespace LyaUtils
     std::pair<Vec, bool> sampleAtomVelocity(double lambda, double T, double nH, double ds, Direction kin,
                                             Configuration* config, Random* random);
 
+    /** This function returns the Doppler-shifted wavelength in the gas bulk rest frame after a
+        Lyman-alpha scattering event, given the incoming wavelength in the gas bulk rest frame, the
+        velocity of the interacting atom, and the incoming and outgoing photon packet directions.
+        */
+    double shiftWavelength(double lambda, const Vec& vatom, const Direction& kin, const Direction& kout);
+
     /** This function returns the emission wavelength range for which the photon packet life cycle
         should handle Lyman-alpha line transfer (if the simulation configuration includes
         Lyman-alpha line transfer), or in other words, the wavelength range outside of which a

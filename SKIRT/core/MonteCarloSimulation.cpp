@@ -676,10 +676,8 @@ void MonteCarloSimulation::peelOffScattering(PhotonPacket* pp, PhotonPacket* ppp
                         I += wv[h] * value;
 
                         // Doppler-shift the photon packet wavelength into and out of the atom frame
-                        localLambda = PhotonPacket::shiftedReceptionWavelength(localLambda, pp->direction(),
-                                                                               pp->lyaAtomVelocity());
                         localLambda =
-                            PhotonPacket::shiftedEmissionWavelength(localLambda, bfkobs, pp->lyaAtomVelocity());
+                            LyaUtils::shiftWavelength(localLambda, pp->lyaAtomVelocity(), pp->direction(), bfkobs);
                         break;
                     }
                 }
@@ -800,8 +798,7 @@ void MonteCarloSimulation::simulateScattering(PhotonPacket* pp)
             }
 
             // Doppler-shift the photon packet wavelength into and out of the atom frame
-            lambda = PhotonPacket::shiftedReceptionWavelength(lambda, pp->direction(), pp->lyaAtomVelocity());
-            lambda = PhotonPacket::shiftedEmissionWavelength(lambda, bfknew, pp->lyaAtomVelocity());
+            lambda = LyaUtils::shiftWavelength(lambda, pp->lyaAtomVelocity(), pp->direction(), bfknew);
             break;
         }
     }

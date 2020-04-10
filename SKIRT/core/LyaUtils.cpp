@@ -26,7 +26,7 @@ double LyaUtils::section(double lambda, double T)
 {
     double vth = sqrt(2. * kB / mp * T);                 // thermal velocity for T
     double a = Aa * la / 4. / M_PI / vth;                // Voigt parameter
-    double x = c / la * (la - lambda) / vth;             // dimensionless frequency
+    double x = (la - lambda) / lambda * c / vth;         // dimensionless frequency
     double sigma0 = 3. * la * la * M_2_SQRTPI / 4. * a;  // cross section at line center
     return sigma0 * VoigtProfile::value(a, x);           // cross section at given x
 }
@@ -38,7 +38,7 @@ std::pair<Vec, bool> LyaUtils::sampleAtomVelocity(double lambda, double T, doubl
 {
     double vth = sqrt(2. * kB / mp * T);                 // thermal velocity for T
     double a = Aa * la / 4. / M_PI / vth;                // Voigt parameter
-    double x = c / la * (la - lambda) / vth;             // dimensionless frequency
+    double x = (la - lambda) / lambda * c / vth;         // dimensionless frequency
     double sigma0 = 3. * la * la * M_2_SQRTPI / 4. * a;  // cross section at line center
 
     // generate two directions that are orthogonal to each other and to the incoming photon packet direction
@@ -99,6 +99,15 @@ std::pair<Vec, bool> LyaUtils::sampleAtomVelocity(double lambda, double T, doubl
 
     // return the atom velocity and the phase function choice
     return std::make_pair(u, dipole);
+}
+
+////////////////////////////////////////////////////////////////////
+
+double LyaUtils::shiftWavelength(double lambda, const Vec& vatom, const Direction& kin, const Direction& kout)
+{
+    double vp = (la - lambda) / lambda * c;                  // incoming photon velocity shift
+    vp = vp - Vec::dot(vatom, kin) + Vec::dot(vatom, kout);  // outgoing photon velocity shift
+    return la / (1 + vp / c);
 }
 
 ////////////////////////////////////////////////////////////////////
