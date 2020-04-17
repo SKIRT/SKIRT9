@@ -640,10 +640,11 @@ void MonteCarloSimulation::peelOffScattering(PhotonPacket* pp, PhotonPacket* ppp
                         // accumulate the weighted sum in the intensity (no support for polarization in this case)
                         I += wv[h] * value;
 
+                        // for a random fraction of the events governed by the relative Lya contribution,
                         // Doppler-shift the photon packet wavelength into and out of the atom frame
-                        localLambda =
-                            LyaUtils::shiftWavelength(localLambda, pp->lyaAtomVelocity(), pp->direction(), bfkobs);
-                        break;
+                        if (random()->uniform() <= wv[h])
+                            localLambda =
+                                LyaUtils::shiftWavelength(localLambda, pp->lyaAtomVelocity(), pp->direction(), bfkobs);
                     }
                 }
             }
