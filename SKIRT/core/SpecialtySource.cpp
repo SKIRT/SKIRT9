@@ -45,13 +45,6 @@ bool SpecialtySource::hasVelocity() const
 
 //////////////////////////////////////////////////////////////////////
 
-double SpecialtySource::maxVelocity() const
-{
-    return _bvi ? velocity().norm() : 0.;
-}
-
-//////////////////////////////////////////////////////////////////////
-
 Vec SpecialtySource::velocity() const
 {
     return Vec(velocityX(), velocityY(), velocityZ());

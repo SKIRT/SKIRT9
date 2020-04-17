@@ -89,19 +89,6 @@ bool ImportedMedium::hasVelocity() const
 
 //////////////////////////////////////////////////////////////////////
 
-double ImportedMedium::maxVelocity() const
-{
-    double vmax = 0.;
-    if (hasVelocity())
-    {
-        int M = _snapshot->numEntities();
-        for (int m = 0; m != M; ++m) vmax = max(vmax, _snapshot->velocity(m).norm());
-    }
-    return vmax;
-}
-
-//////////////////////////////////////////////////////////////////////
-
 Vec ImportedMedium::bulkVelocity(Position bfr) const
 {
     return hasVelocity() ? _snapshot->velocity(bfr) : Vec();

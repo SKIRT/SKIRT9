@@ -71,10 +71,6 @@ public:
     /** This function returns true if the velocity of the source is nonzero. */
     bool hasVelocity() const override;
 
-    /** This function returns the largest velocity magnitude this source may have for any position.
-        By definition, the function returns zero if hasVelocity() returns false. */
-    double maxVelocity() const override;
-
     /** This function implements the VelocityInterface interface. It returns the bulk velocity
          of this source, as configured by the user. */
     Vec velocity() const override;

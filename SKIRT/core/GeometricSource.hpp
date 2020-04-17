@@ -55,10 +55,6 @@ public:
     /** This function returns true if the source has a nonzero velocity field. */
     bool hasVelocity() const override;
 
-    /** This function returns the largest velocity magnitude this source may have for any position.
-        By definition, the function returns zero if hasVelocity() returns false. */
-    double maxVelocity() const override;
-
     /** This function causes the photon packet \em pp to be launched from the source using the
         given history index, wavelength, weighted luminosity contribution, and redshift interface.
         The position of the emission is determined randomly from the geometry configured for the

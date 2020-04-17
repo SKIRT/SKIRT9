@@ -98,12 +98,6 @@ public:
         It may be called before setup of the receiving source has completed. */
     virtual bool hasVelocity() const = 0;
 
-    /** This function returns the largest velocity magnitude this source may have for any position.
-        By definition, the function returns zero if hasVelocity() returns false. In contrast to the
-        hasVelocity() function, though, the maxVelocity() should be called only after setup of the
-        receiving source has completed. */
-    virtual double maxVelocity() const = 0;
-
     /** This function returns the luminosity \f$L\f$ (i.e. radiative power) of the source
         integrated over the wavelength range of primary sources (configured for the source system
         as a whole) and across its complete spatial domain. */

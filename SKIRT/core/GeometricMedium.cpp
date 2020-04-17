@@ -55,13 +55,6 @@ bool GeometricMedium::hasVelocity() const
 
 ////////////////////////////////////////////////////////////////////
 
-double GeometricMedium::maxVelocity() const
-{
-    return hasVelocity() ? velocityMagnitude() : 0.;
-}
-
-////////////////////////////////////////////////////////////////////
-
 Vec GeometricMedium::bulkVelocity(Position bfr) const
 {
     return hasVelocity() ? velocityMagnitude() * velocityDistribution()->vector(bfr) : Vec();

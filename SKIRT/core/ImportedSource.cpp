@@ -134,24 +134,6 @@ bool ImportedSource::hasVelocity() const
 
 ////////////////////////////////////////////////////////////////////
 
-double ImportedSource::maxVelocity() const
-{
-    double vmax = 0.;
-    if (hasVelocity())
-    {
-        int M = _snapshot->numEntities();
-        for (int m = 0; m != M; ++m)
-        {
-            double v = _snapshot->velocity(m).norm();
-            if (_importVelocityDispersion) v += abs(_snapshot->velocityDispersion(m));
-            vmax = max(vmax, v);
-        }
-    }
-    return vmax;
-}
-
-////////////////////////////////////////////////////////////////////
-
 Range ImportedSource::wavelengthRange() const
 {
     // don't rely on the cached _wavelengthRange because this function may be called during setup

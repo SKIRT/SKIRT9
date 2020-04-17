@@ -111,16 +111,3 @@ double LyaUtils::shiftWavelength(double lambda, const Vec& vatom, const Directio
 }
 
 ////////////////////////////////////////////////////////////////////
-
-Range LyaUtils::relevantWavelengthRange(double vsmax, double vmmax, double nmax, double dmax)
-{
-    constexpr double tau = 1e-3;
-
-    double vp_bulk = vsmax + vmmax;
-    double vp_voigt = sqrt((3. * Aa * Aa * la * la * la * la) / (64. * M_PI * M_PI * M_PI * tau) * (nmax * dmax));
-    double vp = vp_bulk + vp_voigt;
-
-    return Range(la * (1 - vp / c), la * (1 + vp / c));
-}
-
-////////////////////////////////////////////////////////////////////
