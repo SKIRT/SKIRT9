@@ -290,6 +290,13 @@ void Configuration::setupSelfAfter()
     if (_hasPolarization) log->info("  Including support for polarization");
     if (_hasMovingMedia) log->info("  Including support for kinematics");
 
+    // disable path length stretching for moving media (the wavelength shifts would be incorrectly sampled)
+    if (_hasMovingMedia && _pathLengthBias > 0.)
+    {
+        log->warning("  Disabling path length stretching to allow Doppler shifts to be properly sampled");
+        _pathLengthBias = 0.;
+    }
+
     // --- log model symmetries ---
 
     // if there are no media, simply log the source model symmetry
