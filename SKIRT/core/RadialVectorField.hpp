@@ -25,7 +25,7 @@ class RadialVectorField : public VectorField
 
         PROPERTY_DOUBLE(unityRadius, "the radius where the magnitude of the vectors is unity")
         ATTRIBUTE_QUANTITY(unityRadius, "length")
-        ATTRIBUTE_MIN_VALUE(unityRadius, "]0")
+        ATTRIBUTE_MIN_VALUE(unityRadius, "[0")
         ATTRIBUTE_DEFAULT_VALUE(unityRadius, "0")
 
     ITEM_END()
