@@ -27,7 +27,7 @@ MaterialMix::ScatteringMode LyaNeutralHydrogenMaterialMix::scatteringMode() cons
 
 double LyaNeutralHydrogenMaterialMix::mass() const
 {
-    return Constants::MHatom();
+    return Constants::Mproton();
 }
 
 ////////////////////////////////////////////////////////////////////

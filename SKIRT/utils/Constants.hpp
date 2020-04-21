@@ -35,13 +35,10 @@ namespace Constants
     constexpr double pc() { return 3.08567758e16; }
 
     /** This function returns the rest mass of the proton. */
-    constexpr double Mproton() { return 1.672621923e-27; }
+    constexpr double Mproton() { return 1.67262178e-27; }
 
     /** This function returns the rest mass of the electron. */
-    constexpr double Melectron() { return 9.10938370e-31; }
-
-    /** This function returns the rest mass of a neutral hydrogen atom. */
-    constexpr double MHatom() { return 1.67353278e-27; }
+    constexpr double Melectron() { return 9.10938215e-31; }
 
     /** This function returns the solar mass. */
     constexpr double Msun() { return 1.9891e30; }
