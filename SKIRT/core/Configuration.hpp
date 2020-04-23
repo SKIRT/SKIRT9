@@ -228,7 +228,7 @@ public:
     int lyaMediumIndex() const { return _lyaMediumIndex; }
 
     /** This enumeration lists the supported Lyman-alpha acceleration schemes. */
-    enum class LyaAccelerationScheme { None, Constant, Laursen2009, Smith2015 };
+    enum class LyaAccelerationScheme { None, Constant, Laursen, Smith };
 
     /** Returns the enumeration value determining the accelaration scheme to be used for
         Lyman-alpha line treatment. The value is relevant only when hasLymanAlpha() returns true.

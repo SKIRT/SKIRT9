@@ -76,7 +76,7 @@ class MonteCarloSimulation : public Simulation
         the radation field (to calculate the dust emission) and optionally performs iterations to
         self-consistently calculate the effects of dust self-absorption. */
     ENUM_DEF(SimulationMode, OligoNoMedium, OligoExtinctionOnly, NoMedium, ExtinctionOnly, DustEmission,
-             DustEmissionWithSelfAbsorption, LyaWithDustExtinction, LyaWithDustEmission, LyaWithDustSelfAbsorption)
+             DustEmissionWithSelfAbsorption, LyaWithDustExtinction)
         ENUM_VAL(SimulationMode, OligoNoMedium, "No medium - oligochromatic regime (a few discrete wavelengths)")
         ENUM_VAL(SimulationMode, OligoExtinctionOnly,
                  "Dust extinction only - oligochromatic regime (a few discrete wavelengths)")
@@ -85,10 +85,7 @@ class MonteCarloSimulation : public Simulation
         ENUM_VAL(SimulationMode, DustEmission, "With secondary emission from dust")
         ENUM_VAL(SimulationMode, DustEmissionWithSelfAbsorption,
                  "With secondary emission from dust and iterations for dust self-absorption")
-        ENUM_VAL(SimulationMode, LyaWithDustExtinction, "Lyman-alpha line and dust extinction only")
-        ENUM_VAL(SimulationMode, LyaWithDustEmission, "Lyman-alpha line with secondary emission from dust")
-        ENUM_VAL(SimulationMode, LyaWithDustSelfAbsorption,
-                 "Lyman-alpha line with secondary emission from dust and dust self-absorption")
+        ENUM_VAL(SimulationMode, LyaWithDustExtinction, "Lyman-alpha line transfer and dust extinction")
     ENUM_END()
 
     ITEM_CONCRETE(MonteCarloSimulation, Simulation, "a Monte Carlo simulation")
@@ -103,10 +100,7 @@ class MonteCarloSimulation : public Simulation
                          "simulationModeDustEmission:Panchromatic,DustEmission,Emission,RadiationField;"
                          "simulationModeDustEmissionWithSelfAbsorption:"
                          "Panchromatic,DustEmission,Emission,RadiationField,DustSelfAbsorption;"
-                         "simulationModeLyaWithDustExtinction:Lya,Panchromatic,ExtinctionOnly;"
-                         "simulationModeLyaWithDustEmission:Lya,Panchromatic,DustEmission,Emission,RadiationField;"
-                         "simulationModeLyaWithDustSelfAbsorption:"
-                         "Lya,Panchromatic,DustEmission,Emission,RadiationField,DustSelfAbsorption")
+                         "simulationModeLyaWithDustExtinction:Lya,Panchromatic,ExtinctionOnly")
 
         PROPERTY_ITEM(cosmology, Cosmology, "the cosmology parameters")
         ATTRIBUTE_DEFAULT_VALUE(cosmology, "LocalUniverseCosmology")

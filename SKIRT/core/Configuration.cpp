@@ -101,9 +101,7 @@ void Configuration::setupSelfBefore()
 
     // retrieve dust emission options
     if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustEmission
-        || sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustEmissionWithSelfAbsorption
-        || sim->simulationMode() == MonteCarloSimulation::SimulationMode::LyaWithDustEmission
-        || sim->simulationMode() == MonteCarloSimulation::SimulationMode::LyaWithDustSelfAbsorption)
+        || sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustEmissionWithSelfAbsorption)
     {
         _hasRadiationField = true;
         _hasPanRadiationField = true;
@@ -133,8 +131,7 @@ void Configuration::setupSelfBefore()
     }
 
     // retrieve dust self-absorption options
-    if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustEmissionWithSelfAbsorption
-        || sim->simulationMode() == MonteCarloSimulation::SimulationMode::LyaWithDustSelfAbsorption)
+    if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustEmissionWithSelfAbsorption)
     {
         _hasDustSelfAbsorption = true;
         _hasSecondaryRadiationField = true;
@@ -147,9 +144,7 @@ void Configuration::setupSelfBefore()
 
     // retrieve Lyman-alpha options
     bool hasLymanAlpha = false;
-    if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::LyaWithDustExtinction
-        || sim->simulationMode() == MonteCarloSimulation::SimulationMode::LyaWithDustEmission
-        || sim->simulationMode() == MonteCarloSimulation::SimulationMode::LyaWithDustSelfAbsorption)
+    if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::LyaWithDustExtinction)
     {
         hasLymanAlpha = true;
         switch (ms->lyaOptions()->lyaAccelerationScheme())
@@ -161,11 +156,11 @@ void Configuration::setupSelfBefore()
                 _lyaAccelerationScheme = Configuration::LyaAccelerationScheme::Constant;
                 _lyaAccelerationCriticalValue = ms->lyaOptions()->lyaAccelerationCriticalValue();
                 break;
-            case LyaOptions::LyaAccelerationScheme::Laursen2009:
-                _lyaAccelerationScheme = Configuration::LyaAccelerationScheme::Laursen2009;
+            case LyaOptions::LyaAccelerationScheme::Laursen:
+                _lyaAccelerationScheme = Configuration::LyaAccelerationScheme::Laursen;
                 break;
-            case LyaOptions::LyaAccelerationScheme::Smith2015:
-                _lyaAccelerationScheme = Configuration::LyaAccelerationScheme::Smith2015;
+            case LyaOptions::LyaAccelerationScheme::Smith:
+                _lyaAccelerationScheme = Configuration::LyaAccelerationScheme::Smith;
                 break;
         }
         // force moving media even if there are no bulk velocities (which would be exceptional anyway);

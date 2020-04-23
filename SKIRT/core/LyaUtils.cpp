@@ -57,7 +57,7 @@ std::pair<Vec, bool> LyaUtils::sampleAtomVelocity(double lambda, double T, doubl
     {
         case Configuration::LyaAccelerationScheme::None: break;
         case Configuration::LyaAccelerationScheme::Constant: xcrit = config->lyaAccelerationCriticalValue(); break;
-        case Configuration::LyaAccelerationScheme::Laursen2009:
+        case Configuration::LyaAccelerationScheme::Laursen:
         {
             double atau = a * sigma0 * nH * ds;
             if (atau > 60)
@@ -65,7 +65,7 @@ std::pair<Vec, bool> LyaUtils::sampleAtomVelocity(double lambda, double T, doubl
             else if (atau > 1)
                 xcrit = 0.02 * std::exp(0.6 * pow(std::log(atau), 1.2));
         }
-        case Configuration::LyaAccelerationScheme::Smith2015:
+        case Configuration::LyaAccelerationScheme::Smith:
         {
             double atau = a * sigma0 * nH * ds;
             if (atau >= 1) xcrit = 0.2 * std::cbrt(atau);

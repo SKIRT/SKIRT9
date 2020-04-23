@@ -15,17 +15,17 @@
 class LyaOptions : public SimulationItem
 {
     /** The enumeration type indicating the supported Lyman-alpha acceleration schemes. */
-    ENUM_DEF(LyaAccelerationScheme, None, Constant, Laursen2009, Smith2015)
+    ENUM_DEF(LyaAccelerationScheme, None, Constant, Laursen, Smith)
         ENUM_VAL(LyaAccelerationScheme, None, "no acceleration")
         ENUM_VAL(LyaAccelerationScheme, Constant, "acceleration with a constant critical value")
-        ENUM_VAL(LyaAccelerationScheme, Laursen2009, "the Laursen 2009 acceleration scheme")
-        ENUM_VAL(LyaAccelerationScheme, Smith2015, "the Smith 2015 acceleration scheme")
+        ENUM_VAL(LyaAccelerationScheme, Laursen, "the Laursen 2009 acceleration scheme")
+        ENUM_VAL(LyaAccelerationScheme, Smith, "the Smith 2015 acceleration scheme")
     ENUM_END()
 
     ITEM_CONCRETE(LyaOptions, SimulationItem, "a set of options related to Lyman-alpha line transfer")
 
         PROPERTY_ENUM(lyaAccelerationScheme, LyaAccelerationScheme, "the Lyman-alpha line transfer acceleration scheme")
-        ATTRIBUTE_DEFAULT_VALUE(lyaAccelerationScheme, "Laursen2009")
+        ATTRIBUTE_DEFAULT_VALUE(lyaAccelerationScheme, "Constant")
         ATTRIBUTE_DISPLAYED_IF(lyaAccelerationScheme, "Level2")
 
         PROPERTY_DOUBLE(lyaAccelerationCriticalValue,
