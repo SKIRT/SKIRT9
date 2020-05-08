@@ -20,6 +20,9 @@ namespace
     // the resource paths:  <filename, complete_path>
     std::unordered_map<string, string> _resourcePaths;
 
+    // the resource pack version numbers:  <packname, version>
+    std::unordered_map<string, int> _packVersions;
+
     // relative paths to check for presence of built-in resources
     const char* _intpaths[] = {"../../../git/SKIRT/resources", "../../../../git/SKIRT/resources"};
     const int _Nintpaths = sizeof(_intpaths) / sizeof(const char*);
@@ -37,6 +40,26 @@ namespace
         {
             if (!_resourcePaths.count(filename))
                 _resourcePaths.emplace(filename, System::canonicalPath(StringUtils::joinPaths(directory, filename)));
+
+            // remember the version numbers for each resource pack
+            if (filename == "version.txt")
+            {
+                auto segments = StringUtils::split(directory, "_");
+                if (segments.size() > 1)
+                {
+                    string packname = segments[segments.size()-1];
+                    int version = 0;
+                    try
+                    {
+                        std::ifstream versionfile(StringUtils::joinPaths(directory, filename));
+                        versionfile >> version;
+                    }
+                    catch (...) {};
+
+                    if (!_packVersions.count(packname) && version > 0)
+                        _packVersions.emplace(packname, version);
+                }
+            }
         }
 
         // search the subdirectories
