@@ -21,46 +21,33 @@ class Position;
     distributions.
 
     To avoid the need for synchronization between multiple execution threads, each thread receives
-    its own pseudo-random number generator instance. In fact, for each execution thread in the
-    process, the class constructs two thread-local pseudo-random number generators. The \em
-    arbitrary generator is seeded with a truly random state obtained from the operating system, so
-    that it delivers a unique and unpredictable pseudo-random sequence for each thread, and for
-    each execution of the program. The \em predictable generator is always initialized with the
-    same fixed state (depending on the value of the user-configurable \em seed property), so that
-    it delivers exactly the same pseudo-random sequence for every thread and for every execution of
-    the program.
+    its own thread-local pseudo-random number generator instance. The parent thread in each process
+    (i.e. the thread that calls the setup() function) receives a \em predictable generator. This
+    generator is initialized with a fixed state depending only on the value of the
+    user-configurable \em seed property, so that it delivers exactly the same pseudo-random
+    sequence for every parent thread in every process and for every execution of the program. All
+    other (child) threads receive an \em arbitrary generator. These generators are seeded with a
+    truly random state obtained from the operating system, so that they deliver a unique and
+    unpredictable pseudo-random sequence for each thread, and for each execution of the program.
 
-    At any one time, a particular thread in the process uses one of these two generators. Most
-    threads employ the arbitrary generator at all times. As an exception, the \em parent thread of
-    a Random instance (i.e. the thread that called its setup() function) may sometimes use the
-    predictable generator. Specifically, the Random::setupSelfBefore() function (re-)initializes
-    the predictable random generator to its fixed initial state (depending on the value of the
-    user-configurable \em seed property), and causes the calling thread (i.e., its parent thread)
-    to use the predictable generator. The Random::switchToArbitrary() and
-    Random::switchToPredictable() functions can be used to switch the parent thread between both
-    generators.
-
-    This complicated mechanism is intended to support the following use cases:
-      - Repeated execution in single thread/single process mode (with the same \em seed value)
-        must produce identical results. This is important, for example, for automated testing.
-      - The user can force a different randomization, even in single thread/single process mode,
-        by specifying another \em seed value.
-      - With parallel threads, tasks are performed in unpredictable order and thus the random
-        sequence is interrogated in an unpredictable order; the sequence can just as well be
-        unpredictable to begin with.
-      - When distributing tasks over multiple processes, each of the threads requires a different
-        random sequence.
-      - When duplicating tasks in multiple processes, each of the processes must produce an
-        identical result (using a single thread in each process) and thus those threads require
-        the same random sequence.
+    This mechanism is intended to support the following use cases. In single thread/single process
+    mode, repeated execution (with the same \em seed value) must produce identical results. This is
+    important, for example, for automated testing. The user can force a different randomization by
+    specifying another \em seed value. In multi-threading and/or multi-processing mode, for tasks
+    employing parallelization, each of the threads in each of the processes requires a different
+    random sequence. On the other hand, in this mode, for serialized tasks, the (single) thread
+    employed in each of the processes must receive the same random sequence. This is important for
+    functions that rely on randomness but need to produce the dame result in every parallel
+    process.
 
     The recommended use of the Random class is to include a single instance in each simulation
-    run-time hierarchy. The Parallel subclasses returned from a ParallelFactory in the same
-    run-time hierarchy will then call the switchToArbitrary() and switchToPredictable() functions
-    at the appropriate times.
+    run-time hierarchy. The use cases discussed above can be achieved as follows. In single
+    thread/single process mode, perform all tasks in the parent thread. In multi-threading and/or
+    multi-processing mode, perform serial tasks in the parent thread of each process, and perform
+    all parallized tasks in a child thread.
 
-    All rng's used in this class are based on the 64-bit Mersenne twister, which offers a
-    sufficiently long period and acceptable spectral properties for most purposes. */
+    All random number generators used in this class are based on the 64-bit Mersenne twister, which
+    offers a sufficiently long period and acceptable spectral properties for most purposes. */
 class Random : public SimulationItem
 {
     ITEM_CONCRETE(Random, SimulationItem, "the default random generator")
@@ -76,21 +63,10 @@ class Random : public SimulationItem
     //============= Construction - Setup - Destruction =============
 
 protected:
-    /** This function (re-)initializes the predictable random generator to its fixed initial state
-        (depending on the value of the user-configurable \em seed property), and causes the calling
-        thread (i.e., the parent thread) to use the predictable generator as opposed to the default
-        arbitrary generator. The switchToArbitrary() and switchToPredictable() functions can be used
-        to switch the parent thread between both generators. */
+    /** This function initializes the random generator for the calling thread (deemed the \em
+        parent thread) to its fixed initial state depending on the value of the user-configurable
+        \em seed property. */
     void setupSelfBefore() override;
-
-public:
-    /** This function switches the calling thread to the arbitrary generator. It should be called
-        only from the parent thread, i.e. the thread that called setup() on this instance. */
-    void switchToArbitrary();
-
-    /** This function switches the calling thread to the predictable generator. It should be called
-        only from the parent thread, i.e. the thread that called setup() on this instance. */
-    void switchToPredictable();
 
     //======================== Other Functions =======================
 

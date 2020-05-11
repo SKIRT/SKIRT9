@@ -410,6 +410,23 @@ public:
         return yresv;
     }
 
+    /** This template function resamples the function values \f$y_k\f$ defined on a grid \f$x_k\f$
+        (both specified as arrays of the same length) onto an new grid \f$x_l^*\f$. The result is
+        returned as an array of function values \f$y_l^*\f$ with the same length as the target
+        grid. For new grid points that fall beyond the original grid, the function value is set to
+        the value at the corresponding outer grid point, i.e. \f$y_0\f$ or \f$y_{n-1}\f$. For new
+        grid points inside the original grid, the function value is interpolated using the function
+        specified as template argument. The interpolation functions provided by this namespace can
+        be passed as a template argument for this purpose. */
+    template<double interpolateFunction(double, double, double, double, double)>
+    static inline Array clampedResample(const Array& xresv, const Array& xoriv, const Array& yoriv)
+    {
+        int n = xresv.size();
+        Array yresv(n);
+        for (int l = 0; l < n; l++) yresv[l] = clampedValue<interpolateFunction>(xresv[l], xoriv, yoriv);
+        return yresv;
+    }
+
     //=============== Constructing cumulative distribution functions ==================
 
 public:

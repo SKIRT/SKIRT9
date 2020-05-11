@@ -14,10 +14,8 @@ void InstrumentSystem::setupSelfAfter()
     Instrument* preceding = nullptr;
     for (Instrument* instrument : _instruments)
     {
-        if (!preceding)
-            preceding = instrument;
-        else
-            instrument->determineSameObserverAsPreceding(preceding);
+        if (preceding) instrument->determineSameObserverAsPreceding(preceding);
+        preceding = instrument;
     }
 }
 

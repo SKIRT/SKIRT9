@@ -75,13 +75,62 @@ int SkirtCommandLineHandler::perform()
 
 ////////////////////////////////////////////////////////////////////
 
+namespace
+{
+    // issue a log warning message if the Core resource pack has not been installed
+    // or if the installed version of any resource pack does not match the expected version
+    // has an unexpected version
+    void reportResourceIssues(Log* log)
+    {
+        bool haveIssue = false;
+
+        if (FilePaths::installedPackVersion("Core") <= 0)
+        {
+            log->warning("Core resource files have not been installed");
+            haveIssue = true;
+        }
+
+        if (!haveIssue)
+            for (string packname : FilePaths::expectedPacks())
+            {
+                int expected = FilePaths::expectedPackVersion(packname);
+                int installed = FilePaths::installedPackVersion(packname);
+
+                if (expected && installed && expected != installed)
+                {
+                    log->warning("Version number does not match for resource pack " + packname + ": expected "
+                                 + std::to_string(expected) + ", installed " + std::to_string(installed));
+                    haveIssue = true;
+                }
+            }
+
+        if (haveIssue)
+        {
+            log->warning("  - run  './downloadResources.sh' from the ~/SKIRT/git directory");
+            log->warning("  - refer to installation guide on www.skirt.ugent.be for more info");
+        }
+    }
+
+    // issue a log info message reporting the peak memory usage so far
+    void reportPeakMemory(Log* log)
+    {
+        size_t avail = System::availableMemory();
+        size_t peak = System::peakMemoryUsage();
+        double peakPerCent = 100. * static_cast<double>(peak) / static_cast<double>(avail);
+
+        log->info("Available memory: " + StringUtils::toMemSizeString(avail) + " -- Peak memory usage: "
+                  + StringUtils::toMemSizeString(peak) + " (" + StringUtils::toString(peakPerCent, 'f', 1) + "%)");
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
 int SkirtCommandLineHandler::doInteractive()
 {
     if (ProcessManager::isMultiProc()) throw FATALERROR("Interactive mode cannot be run with multiple processes");
 
-    // alert the user if no resource packs have been installed
-    if (!FilePaths::hasResource("version.txt"))
-        Console::warning("Resource files have not been installed: refer to installation guide on www.skirt.ugent.be");
+    // alert the user about problems with the installed resource packs
+    reportResourceIssues(&_console);
 
     // ask for the name of the ski file in which to save the result
     Console::info("Interactively constructing a simulation...");
@@ -111,22 +160,6 @@ int SkirtCommandLineHandler::doInteractive()
     Console::info("Successfully created ski file '" + filename + "'.");
     Console::info("To run the simulation use the command: skirt " + filename.substr(0, filename.length() - 4));
     return EXIT_SUCCESS;
-}
-
-////////////////////////////////////////////////////////////////////
-
-namespace
-{
-    // issue a log message reporting the peak memory usage so far
-    void reportPeakMemory(Log* log)
-    {
-        size_t avail = System::availableMemory();
-        size_t peak = System::peakMemoryUsage();
-        double peakPerCent = 100. * static_cast<double>(peak) / static_cast<double>(avail);
-
-        log->info("Available memory: " + StringUtils::toMemSizeString(avail) + " -- Peak memory usage: "
-                  + StringUtils::toMemSizeString(peak) + " (" + StringUtils::toString(peakPerCent, 'f', 1) + "%)");
-    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -325,6 +358,9 @@ void SkirtCommandLineHandler::doSimulation(size_t index)
         log->setup();
         log->info(_producerInfo);
         log->info(_hostUserInfo);
+
+        // log a warning about problems with the installed resource packs
+        reportResourceIssues(simulation->log());
 
         // run the simulation and catch and properly report any exceptions to the similation log file
         try
