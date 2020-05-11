@@ -77,12 +77,35 @@ int SkirtCommandLineHandler::perform()
 
 namespace
 {
-    // issue a log warning message if the Core resource pack has not been installed or has an unexpected version
+    // issue a log warning message if the Core resource pack has not been installed
+    // or if the installed version of any resource pack does not match the expected version
+    // has an unexpected version
     void reportResourceIssues(Log* log)
     {
-        if (!FilePaths::hasResource("version.txt"))
+        bool haveIssue = false;
+
+        if (FilePaths::installedPackVersion("Core") <= 0)
         {
-            log->warning("Resource files have not been installed:");
+            log->warning("Core resource files have not been installed");
+            haveIssue = true;
+        }
+
+        if (!haveIssue)
+            for (string packname : FilePaths::expectedPacks())
+            {
+                int expected = FilePaths::expectedPackVersion(packname);
+                int installed = FilePaths::installedPackVersion(packname);
+
+                if (expected && installed && expected != installed)
+                {
+                    log->warning("Version number does not match for resource pack " + packname + ": expected "
+                                 + std::to_string(expected) + ", installed " + std::to_string(installed));
+                    haveIssue = true;
+                }
+            }
+
+        if (haveIssue)
+        {
             log->warning("  - run  './downloadResources.sh' from the ~/SKIRT/git directory");
             log->warning("  - refer to installation guide on www.skirt.ugent.be for more info");
         }
