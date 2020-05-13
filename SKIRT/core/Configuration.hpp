@@ -228,17 +228,17 @@ public:
     int lyaMediumIndex() const { return _lyaMediumIndex; }
 
     /** This enumeration lists the supported Lyman-alpha acceleration schemes. */
-    enum class LyaAccelerationScheme { None, Constant, Laursen, Smith };
+    enum class LyaAccelerationScheme { None, Constant, Variable };
 
     /** Returns the enumeration value determining the accelaration scheme to be used for
         Lyman-alpha line treatment. The value is relevant only when hasLymanAlpha() returns true.
         */
     LyaAccelerationScheme lyaAccelerationScheme() const { return _lyaAccelerationScheme; }
 
-    /** Returns the critical value \f$x_\mathrm{crit}\f$ to be employed by the \c Constant
-        Lyman-alpha acceleration scheme, should this scheme be selected. The value is relevant only
-        when hasLymanAlpha() returns true and lyaAccelerationScheme() returns \c Constant. */
-    double lyaAccelerationCriticalValue() const { return _lyaAccelerationCriticalValue; }
+    /** Returns the strength of the Lyman-alpha acceleration scheme to be applied. The value is
+        relevant only when hasLymanAlpha() returns true and lyaAccelerationScheme() returns \c
+        Constant or \c Variable. */
+    double lyaAccelerationStrength() const { return _lyaAccelerationStrength; }
 
     /** Returns the symmetry dimension of the input model, including sources and media, if present.
         A value of 1 means spherical symmetry, 2 means axial symmetry and 3 means none of these
@@ -334,8 +334,8 @@ private:
 
     // Lyman-alpha properties
     int _lyaMediumIndex{-1};
-    LyaAccelerationScheme _lyaAccelerationScheme{LyaAccelerationScheme::None};
-    double _lyaAccelerationCriticalValue{3.};
+    LyaAccelerationScheme _lyaAccelerationScheme{LyaAccelerationScheme::Variable};
+    double _lyaAccelerationStrength{1.};
 
     // properties derived from the configuration at large
     int _modelDimension{0};

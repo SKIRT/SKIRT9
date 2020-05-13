@@ -165,7 +165,6 @@ void SpatialGridPath::findInteractionPoint(double tau)
     // we can't handle an empty path
     if (_segments.empty())
     {
-        _interactionSegmentIndex = -1;
         _interactionCellIndex = -1;
         _interactionDistance = 0.;
     }
@@ -179,7 +178,6 @@ void SpatialGridPath::findInteractionPoint(double tau)
         // if we find the first segment, interpolate with the path's entry point
         if (seg == _segments.cbegin())
         {
-            _interactionSegmentIndex = 0;
             _interactionCellIndex = seg->m;
             _interactionDistance = NR::interpolateLinLin(tau, 0., seg->tau, 0., seg->s);
         }
@@ -187,7 +185,6 @@ void SpatialGridPath::findInteractionPoint(double tau)
         // if we find some other segment, interpolate with the previous segment
         else if (seg < _segments.cend())
         {
-            _interactionSegmentIndex = seg - _segments.cbegin();
             _interactionCellIndex = seg->m;
             _interactionDistance = NR::interpolateLinLin(tau, (seg - 1)->tau, seg->tau, (seg - 1)->s, seg->s);
         }
@@ -195,7 +192,6 @@ void SpatialGridPath::findInteractionPoint(double tau)
         // if we are beyond the last segment, just use the last segment (i.e. assume this is a numerical inaccuracy)
         else
         {
-            _interactionSegmentIndex = seg - 1 - _segments.cbegin();
             _interactionCellIndex = (seg - 1)->m;
             _interactionDistance = (seg - 1)->s;
         }

@@ -33,13 +33,12 @@ double LyaUtils::section(double lambda, double T)
 
 ////////////////////////////////////////////////////////////////////
 
-std::pair<Vec, bool> LyaUtils::sampleAtomVelocity(double lambda, double T, double nH, double ds, Direction kin,
+std::pair<Vec, bool> LyaUtils::sampleAtomVelocity(double lambda, double T, double nH, Direction kin,
                                                   Configuration* config, Random* random)
 {
-    double vth = sqrt(2. * kB / mp * T);                 // thermal velocity for T
-    double a = Aa * la / 4. / M_PI / vth;                // Voigt parameter
-    double x = (la - lambda) / lambda * c / vth;         // dimensionless frequency
-    double sigma0 = 3. * la * la * M_2_SQRTPI / 4. * a;  // cross section at line center
+    double vth = sqrt(2. * kB / mp * T);          // thermal velocity for T
+    double a = Aa * la / 4. / M_PI / vth;         // Voigt parameter
+    double x = (la - lambda) / lambda * c / vth;  // dimensionless frequency
 
     // generate two directions that are orthogonal to each other and to the incoming photon packet direction
     Direction k1(1., 0., 0.);
@@ -56,19 +55,15 @@ std::pair<Vec, bool> LyaUtils::sampleAtomVelocity(double lambda, double T, doubl
     switch (config->lyaAccelerationScheme())
     {
         case Configuration::LyaAccelerationScheme::None: break;
-        case Configuration::LyaAccelerationScheme::Constant: xcrit = config->lyaAccelerationCriticalValue(); break;
-        case Configuration::LyaAccelerationScheme::Laursen:
+        case Configuration::LyaAccelerationScheme::Constant:
         {
-            double atau = a * sigma0 * nH * ds;
-            if (atau > 60)
-                xcrit = 0.02 * std::exp(1.4 * pow(std::log(atau), 0.6));
-            else if (atau > 1)
-                xcrit = 0.02 * std::exp(0.6 * pow(std::log(atau), 1.2));
+            xcrit = config->lyaAccelerationStrength() * 3.;
+            break;
         }
-        case Configuration::LyaAccelerationScheme::Smith:
+        case Configuration::LyaAccelerationScheme::Variable:
         {
-            double atau = a * sigma0 * nH * ds;
-            if (atau >= 1) xcrit = 0.2 * std::cbrt(atau);
+            xcrit = config->lyaAccelerationStrength() * 0.8 * pow(nH / T, 1. / 6.);
+            break;
         }
     }
 

@@ -15,26 +15,24 @@
 class LyaOptions : public SimulationItem
 {
     /** The enumeration type indicating the supported Lyman-alpha acceleration schemes. */
-    ENUM_DEF(LyaAccelerationScheme, None, Constant, Laursen, Smith)
+    ENUM_DEF(LyaAccelerationScheme, None, Constant, Variable)
         ENUM_VAL(LyaAccelerationScheme, None, "no acceleration")
-        ENUM_VAL(LyaAccelerationScheme, Constant, "acceleration with a constant critical value")
-        ENUM_VAL(LyaAccelerationScheme, Laursen, "the Laursen 2009 acceleration scheme")
-        ENUM_VAL(LyaAccelerationScheme, Smith, "the Smith 2015 acceleration scheme")
+        ENUM_VAL(LyaAccelerationScheme, Constant, "acceleration scheme with a constant critical value")
+        ENUM_VAL(LyaAccelerationScheme, Variable, "acceleration scheme depending on local gas temperature and density")
     ENUM_END()
 
     ITEM_CONCRETE(LyaOptions, SimulationItem, "a set of options related to Lyman-alpha line transfer")
 
         PROPERTY_ENUM(lyaAccelerationScheme, LyaAccelerationScheme, "the Lyman-alpha line transfer acceleration scheme")
-        ATTRIBUTE_DEFAULT_VALUE(lyaAccelerationScheme, "Constant")
+        ATTRIBUTE_DEFAULT_VALUE(lyaAccelerationScheme, "Variable")
         ATTRIBUTE_DISPLAYED_IF(lyaAccelerationScheme, "Level2")
 
-        PROPERTY_DOUBLE(lyaAccelerationCriticalValue,
-                        "the critical value to be employed by the 'constant' acceleration scheme")
-        ATTRIBUTE_MIN_VALUE(lyaAccelerationCriticalValue, "]0")
-        ATTRIBUTE_MAX_VALUE(lyaAccelerationCriticalValue, "100]")
-        ATTRIBUTE_DEFAULT_VALUE(lyaAccelerationCriticalValue, "3")
-        ATTRIBUTE_RELEVANT_IF(lyaAccelerationCriticalValue, "lyaAccelerationSchemeConstant")
-        ATTRIBUTE_DISPLAYED_IF(lyaAccelerationCriticalValue, "Level2")
+        PROPERTY_DOUBLE(lyaAccelerationStrength, "the acceleration strength; higher is faster but less accurate")
+        ATTRIBUTE_MIN_VALUE(lyaAccelerationStrength, "]0")
+        ATTRIBUTE_MAX_VALUE(lyaAccelerationStrength, "10]")
+        ATTRIBUTE_DEFAULT_VALUE(lyaAccelerationStrength, "1")
+        ATTRIBUTE_RELEVANT_IF(lyaAccelerationStrength, "lyaAccelerationSchemeConstant|lyaAccelerationSchemeVariable")
+        ATTRIBUTE_DISPLAYED_IF(lyaAccelerationStrength, "Level2")
 
     ITEM_END()
 };

@@ -154,13 +154,11 @@ void Configuration::setupSelfBefore()
                 break;
             case LyaOptions::LyaAccelerationScheme::Constant:
                 _lyaAccelerationScheme = Configuration::LyaAccelerationScheme::Constant;
-                _lyaAccelerationCriticalValue = ms->lyaOptions()->lyaAccelerationCriticalValue();
+                _lyaAccelerationStrength = ms->lyaOptions()->lyaAccelerationStrength();
                 break;
-            case LyaOptions::LyaAccelerationScheme::Laursen:
-                _lyaAccelerationScheme = Configuration::LyaAccelerationScheme::Laursen;
-                break;
-            case LyaOptions::LyaAccelerationScheme::Smith:
-                _lyaAccelerationScheme = Configuration::LyaAccelerationScheme::Smith;
+            case LyaOptions::LyaAccelerationScheme::Variable:
+                _lyaAccelerationScheme = Configuration::LyaAccelerationScheme::Variable;
+                _lyaAccelerationStrength = ms->lyaOptions()->lyaAccelerationStrength();
                 break;
         }
         // force moving media even if there are no bulk velocities (which would be exceptional anyway);

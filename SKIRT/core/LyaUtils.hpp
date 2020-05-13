@@ -115,11 +115,10 @@ namespace LyaUtils
         whether the photon scatters through the isotropic or dipole phase function.
 
         The function arguments include the photon packet wavelength as it is perceived in the local
-        gas frame, the gas temperature, the hydrogen number density, and the length of the photon
-        packet path in the current spatial cell. The latter two values are used in some of the
-        acceleration schemes discussed below. The return value is a pair: the first item is the
-        atom velocity and the second item is true for the dipole phase function and false for
-        isotropic scattering.
+        gas frame and the hydrogen temperature and number density in the current spatial cell. The
+        latter two values are used in the variable acceleration scheme. The return value is a pair:
+        the first item is the atom velocity and the second item is true for the dipole phase
+        function and false for isotropic scattering.
 
         The function proceeds as follows:
 
@@ -142,8 +141,8 @@ namespace LyaUtils
         - Return the atom velocity and a flag indicating the selected phase function.
 
         */
-    std::pair<Vec, bool> sampleAtomVelocity(double lambda, double T, double nH, double ds, Direction kin,
-                                            Configuration* config, Random* random);
+    std::pair<Vec, bool> sampleAtomVelocity(double lambda, double T, double nH, Direction kin, Configuration* config,
+                                            Random* random);
 
     /** This function returns the Doppler-shifted wavelength in the gas bulk rest frame after a
         Lyman-alpha scattering event, given the incoming wavelength in the gas bulk rest frame, the

@@ -628,9 +628,8 @@ void MonteCarloSimulation::peelOffScattering(PhotonPacket* pp, PhotonPacket* ppp
                         {
                             double T = mediumSystem()->gasTemperature(m);
                             double nH = _mediumSystem->numberDensity(m, _config->lyaMediumIndex());
-                            double ds = pp->segments()[pp->interactionSegmentIndex()].ds;
                             pp->setLyaScatteringInfo(
-                                LyaUtils::sampleAtomVelocity(lambda, T, nH, ds, pp->direction(), _config, random()));
+                                LyaUtils::sampleAtomVelocity(lambda, T, nH, pp->direction(), _config, random()));
                         }
 
                         // calculate the value of the appropriate phase function (dipole or isotropic)
@@ -745,9 +744,8 @@ void MonteCarloSimulation::simulateScattering(PhotonPacket* pp)
             {
                 double T = mediumSystem()->gasTemperature(m);
                 double nH = _mediumSystem->numberDensity(m, _config->lyaMediumIndex());
-                double ds = pp->segments()[pp->interactionSegmentIndex()].ds;
                 pp->setLyaScatteringInfo(
-                    LyaUtils::sampleAtomVelocity(lambda, T, nH, ds, pp->direction(), _config, random()));
+                    LyaUtils::sampleAtomVelocity(lambda, T, nH, pp->direction(), _config, random()));
             }
 
             // draw the outgoing direction from the dipole or the isotropic phase function

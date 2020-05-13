@@ -92,15 +92,14 @@ class MonteCarloSimulation : public Simulation
 
         PROPERTY_ENUM(simulationMode, SimulationMode, "the overall simulation mode")
         ATTRIBUTE_DEFAULT_VALUE(simulationMode, "ExtinctionOnly")
-        ATTRIBUTE_INSERT(simulationMode,
-                         "simulationModeOligoNoMedium:Oligochromatic,NoMedium;"
-                         "simulationModeOligoExtinctionOnly:Oligochromatic,ExtinctionOnly;"
-                         "simulationModeNoMedium:Panchromatic,NoMedium;"
-                         "simulationModeExtinctionOnly:Panchromatic,ExtinctionOnly;"
-                         "simulationModeDustEmission:Panchromatic,DustEmission,Emission,RadiationField;"
-                         "simulationModeDustEmissionWithSelfAbsorption:"
-                         "Panchromatic,DustEmission,Emission,RadiationField,DustSelfAbsorption;"
-                         "simulationModeLyaWithDustExtinction:Lya,Panchromatic,ExtinctionOnly")
+        ATTRIBUTE_INSERT(simulationMode, "simulationModeOligoNoMedium:Oligochromatic,NoMedium;"
+                                         "simulationModeOligoExtinctionOnly:Oligochromatic,ExtinctionOnly;"
+                                         "simulationModeNoMedium:Panchromatic,NoMedium;"
+                                         "simulationModeExtinctionOnly:Panchromatic,ExtinctionOnly;"
+                                         "simulationModeDustEmission:Panchromatic,DustEmission,Emission,RadiationField;"
+                                         "simulationModeDustEmissionWithSelfAbsorption:"
+                                         "Panchromatic,DustEmission,Emission,RadiationField,DustSelfAbsorption;"
+                                         "simulationModeLyaWithDustExtinction:Lya,Panchromatic,ExtinctionOnly")
 
         PROPERTY_ITEM(cosmology, Cosmology, "the cosmology parameters")
         ATTRIBUTE_DEFAULT_VALUE(cosmology, "LocalUniverseCosmology")
