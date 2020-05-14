@@ -62,7 +62,7 @@ std::pair<Vec, bool> LyaUtils::sampleAtomVelocity(double lambda, double T, doubl
         }
         case Configuration::LyaAccelerationScheme::Variable:
         {
-            xcrit = config->lyaAccelerationStrength() * 0.8 * pow(nH / T, 1. / 6.);
+            xcrit = config->lyaAccelerationStrength() * pow(nH / T, 1. / 6.);
             break;
         }
     }

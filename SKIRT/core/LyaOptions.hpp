@@ -40,12 +40,12 @@ class LyaOptions : public SimulationItem
 
         - \em Variable: acceleration with a variable critical value that depends on the local gas
         temperature and density. Specifically, the critical value is determined as \f[
-        x_\mathrm{crit} = s\, \frac{4}{5} \left( \frac{n_\mathrm{H}}{T} \right)^{1/6}, \f] where
-        \f$s\f$ is the acceleration strength configured by the user and \f$n_\mathrm{H}\f$ is the
-        neutral hydrogen number density (in \f$\mathrm{m}^{-3}\f$) and \f$T\f$ the gas temperature
-        (in K) in the spatial cell hosting the scattering event. The rationale behind this formula
-        is discussed below. This variable mechanism is applicable for most models, and is preferred
-        for models with a broad dynamic range in optical depths.
+        x_\mathrm{crit} = s\, \left( \frac{n_\mathrm{H}}{T} \right)^{1/6}, \f] where \f$s\f$ is the
+        acceleration strength configured by the user and \f$n_\mathrm{H}\f$ is the neutral hydrogen
+        number density (in \f$\mathrm{m}^{-3}\f$) and \f$T\f$ the gas temperature (in K) in the
+        spatial cell hosting the scattering event. The rationale behind this formula is discussed
+        below. This variable mechanism is applicable for most models, and is preferred for models
+        with a broad dynamic range in optical depths.
 
         For both the constant and variable schemes, the user can configure the acceleration
         strength \f$s\f$, with a default value of unity. Larger values will decrease run time and
@@ -69,8 +69,9 @@ class LyaOptions : public SimulationItem
         (MNRAS, 449, 4336-4362) noted that one could use the Jeans length as a physically motivated
         length scale. Expressing the Jeans length as well as the other quantities in
         \f$(a\tau_0)^{1/3}\f$ as a function of the local gas properties leads to \f$x_\mathrm{crit}
-        \propto (n_\mathrm{H}/T)^{1/6}\f$. The proportionality factor can be determined by
-        experimentation with benchmark models. */
+        \propto (n_\mathrm{H}/T)^{1/6}\f$. With the gas properties expressed in SI units,
+        experiments with benchmark models show that a proportionality factor of order unity is
+        appropriate. */
     ENUM_DEF(LyaAccelerationScheme, None, Constant, Variable)
         ENUM_VAL(LyaAccelerationScheme, None, "no acceleration")
         ENUM_VAL(LyaAccelerationScheme, Constant, "acceleration scheme with a constant critical value")
