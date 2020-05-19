@@ -23,11 +23,17 @@ void ImportedMedium::setupSelfAfter()
     if (_importMagneticField) _snapshot->importMagneticField();
     if (_importVariableMixParams) _snapshot->importParameters(_materialMixFamily->parameterInfo());
 
-    // set the density policy -- use the metallicity and temperature cutoff only for dust
+    // set the density policy
     if (mix()->isDust())
+    {
+        // for dust, use metallicity and temperature cutoff
         _snapshot->setMassDensityPolicy(_massFraction, _importTemperature ? _maxTemperature : 0., true);
+    }
     else
-        _snapshot->setMassDensityPolicy(_massFraction, 0., false);
+    {
+        // for gas, do not use temperature cutoff and use metallicity as a multiplier
+        _snapshot->setMassDensityPolicy(_massFraction, 0., true);
+    }
 
     // read the data from file
     _snapshot->readAndClose();
