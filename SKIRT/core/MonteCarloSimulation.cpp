@@ -624,7 +624,6 @@ void MonteCarloSimulation::peelOffScattering(PhotonPacket* pp, PhotonPacket* ppp
                         break;
                     }
                     case MaterialMix::ScatteringMode::Lya:
-                    case MaterialMix::ScatteringMode::LyaPolarization:
                     {
                         // draw a random atom velocity & phase function, unless a previous peel-off stored this already
                         if (!pp->hasLyaScatteringInfo())
@@ -641,6 +640,59 @@ void MonteCarloSimulation::peelOffScattering(PhotonPacket* pp, PhotonPacket* ppp
 
                         // accumulate the weighted sum in the intensity (no support for polarization in this case)
                         I += wv[h] * value;
+
+                        // for a random fraction of the events governed by the relative Lya contribution,
+                        // Doppler-shift the photon packet wavelength into and out of the atom frame
+                        if (random()->uniform() <= wv[h])
+                            localLambda =
+                                LyaUtils::shiftWavelength(localLambda, pp->lyaAtomVelocity(), pp->direction(), bfkobs);
+                    }
+                    case MaterialMix::ScatteringMode::LyaPolarization:
+                    {
+                        // draw a random atom velocity & phase function, unless a previous peel-off stored this already
+                        if (!pp->hasLyaScatteringInfo())
+                        {
+                            double T = mediumSystem()->gasTemperature(m);
+                            double nH = _mediumSystem->numberDensity(m, _config->lyaMediumIndex());
+                            pp->setLyaScatteringInfo(
+                                LyaUtils::sampleAtomVelocity(lambda, T, nH, pp->direction(), _config, random()));
+                        }
+
+                        // copy the polarization state so we can change it without affecting the incoming photon packet
+                        StokesVector sv = *pp;
+
+                        // calculate the value of the appropriate phase function (dipole or isotropic)
+                        // and adjust the polarization state
+                        double value = 0.;
+                        if (pp->lyaDipole())
+                        {
+                            // calculate the value of the dipole phase function
+                            double theta = acos(Vec::dot(pp->direction(), bfkobs));
+                            double phi = angleBetweenScatteringPlanes(pp->normal(), pp->direction(), bfkobs);
+                            value = _dpf.phaseFunctionValue(theta, phi, pp);
+
+                            // rotate the Stokes vector reference direction into the scattering plane
+                            sv.rotateIntoPlane(pp->direction(), bfkobs);
+
+                            // apply the Mueller matrix
+                            mix->applyMueller(lambda, theta, &sv);
+
+                            // rotate the Stokes vector reference direction parallel to the instrument frame y-axis
+                            // it is given bfkobs because the photon is at this point aimed towards the observer
+                            sv.rotateIntoPlane(bfkobs, instr->bfky(pp->position()));
+                        }
+                        else
+                        {
+                            value = 1.;
+                            sv.setUnpolarized();
+                        }
+
+                        // acumulate the weighted sum of all Stokes components to support polarization
+                        double w = wv[h] * value;
+                        I += w * sv.stokesI();
+                        Q += w * sv.stokesQ();
+                        U += w * sv.stokesU();
+                        V += w * sv.stokesV();
 
                         // for a random fraction of the events governed by the relative Lya contribution,
                         // Doppler-shift the photon packet wavelength into and out of the atom frame
@@ -740,7 +792,6 @@ void MonteCarloSimulation::simulateScattering(PhotonPacket* pp)
             break;
         }
         case MaterialMix::ScatteringMode::Lya:
-        case MaterialMix::ScatteringMode::LyaPolarization:
         {
             // draw a random atom velocity & phase function, unless a peel-off stored this already
             if (!pp->hasLyaScatteringInfo())
@@ -760,6 +811,48 @@ void MonteCarloSimulation::simulateScattering(PhotonPacket* pp)
             else
             {
                 bfknew = random()->direction();
+            }
+
+            // Doppler-shift the photon packet wavelength into and out of the atom frame
+            lambda = LyaUtils::shiftWavelength(lambda, pp->lyaAtomVelocity(), pp->direction(), bfknew);
+            break;
+        }
+        case MaterialMix::ScatteringMode::LyaPolarization:
+        {
+            // draw a random atom velocity & phase function, unless a peel-off stored this already
+            if (!pp->hasLyaScatteringInfo())
+            {
+                double T = mediumSystem()->gasTemperature(m);
+                double nH = _mediumSystem->numberDensity(m, _config->lyaMediumIndex());
+                pp->setLyaScatteringInfo(
+                            LyaUtils::sampleAtomVelocity(lambda, T, nH, pp->direction(), _config, random()));
+            }
+
+            // draw the outgoing direction from the dipole or the isotropic phase function
+            // and update the polarization state of the photon packet accordingly
+            if (pp->lyaDipole())
+            {
+                // sample the angles between the previous and new direction from the dipole phase function,
+                // given the incoming polarization state
+                double theta, phi;
+                std::tie(theta, phi) = _dpf.generateAnglesFromPhaseFunction(pp);
+
+                // rotate the Stokes vector (and the scattering plane) of the photon packet
+                pp->rotateStokes(phi, pp->direction());
+
+                // apply Mueller matrix to the Stokes vector of the photon packet
+                _dpf.applyMueller(theta, pp);
+
+                // rotate the propagation direction in the scattering plane
+                Vec newdir = pp->direction() * cos(theta) + Vec::cross(pp->normal(), pp->direction()) * sin(theta);
+
+                // normalize the new direction to prevent degradation
+                bfknew = Direction(newdir / newdir.norm());
+            }
+            else
+            {
+                bfknew = random()->direction();
+                pp->setUnpolarized();
             }
 
             // Doppler-shift the photon packet wavelength into and out of the atom frame
