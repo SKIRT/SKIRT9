@@ -469,7 +469,6 @@ private:
 
     // the dipole phase function used for Lyman-alpha scattering - initialized during setup if needed
     DipolePhaseFunction _dpf;
-
 };
 
 ////////////////////////////////////////////////////////////////////

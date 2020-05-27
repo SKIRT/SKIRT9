@@ -827,7 +827,7 @@ void MonteCarloSimulation::simulateScattering(PhotonPacket* pp)
                 double T = mediumSystem()->gasTemperature(m);
                 double nH = _mediumSystem->numberDensity(m, _config->lyaMediumIndex());
                 pp->setLyaScatteringInfo(
-                            LyaUtils::sampleAtomVelocity(lambda, T, nH, pp->direction(), _config, random()));
+                    LyaUtils::sampleAtomVelocity(lambda, T, nH, pp->direction(), _config, random()));
             }
 
             // draw the outgoing direction from the dipole or the isotropic phase function
