@@ -48,6 +48,9 @@ void MonteCarloSimulation::setupSelfBefore()
 {
     Simulation::setupSelfBefore();
 
+    // initialize the dipole phase function helper if the configuration includes Lyman-alpha
+    if (_config->hasLymanAlpha()) _dpf.initialize(random(), _config->hasPolarization());
+
     // construct a secondary source system to help launch secondary photon packets if required
     if (_config->hasSecondaryEmission()) _secondarySourceSystem = new SecondarySourceSystem(this);
 }
@@ -634,7 +637,7 @@ void MonteCarloSimulation::peelOffScattering(PhotonPacket* pp, PhotonPacket* ppp
 
                         // calculate the value of the appropriate phase function (dipole or isotropic)
                         double costheta = Vec::dot(pp->direction(), bfkobs);
-                        double value = pp->lyaDipole() ? 0.75 * (costheta * costheta + 1.) : 1.;
+                        double value = pp->lyaDipole() ? _dpf.phaseFunctionValueForCosine(costheta) : 1.;
 
                         // accumulate the weighted sum in the intensity (no support for polarization in this case)
                         I += wv[h] * value;
@@ -751,9 +754,7 @@ void MonteCarloSimulation::simulateScattering(PhotonPacket* pp)
             // draw the outgoing direction from the dipole or the isotropic phase function
             if (pp->lyaDipole())
             {
-                double X = random()->uniform();
-                double p = cbrt(4. * X - 2. + sqrt(16. * X * (X - 1.) + 5.));
-                double costheta = p - 1. / p;
+                double costheta = _dpf.generateCosineFromPhaseFunction();
                 bfknew = random()->direction(pp->direction(), costheta);
             }
             else
