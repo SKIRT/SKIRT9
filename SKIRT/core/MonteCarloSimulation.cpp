@@ -646,6 +646,7 @@ void MonteCarloSimulation::peelOffScattering(PhotonPacket* pp, PhotonPacket* ppp
                         if (random()->uniform() <= wv[h])
                             localLambda =
                                 LyaUtils::shiftWavelength(localLambda, pp->lyaAtomVelocity(), pp->direction(), bfkobs);
+                        break;
                     }
                     case MaterialMix::ScatteringMode::LyaPolarization:
                     {
@@ -675,7 +676,7 @@ void MonteCarloSimulation::peelOffScattering(PhotonPacket* pp, PhotonPacket* ppp
                             sv.rotateIntoPlane(pp->direction(), bfkobs);
 
                             // apply the Mueller matrix
-                            mix->applyMueller(lambda, theta, &sv);
+                            _dpf.applyMueller(theta, &sv);
 
                             // rotate the Stokes vector reference direction parallel to the instrument frame y-axis
                             // it is given bfkobs because the photon is at this point aimed towards the observer
@@ -699,6 +700,7 @@ void MonteCarloSimulation::peelOffScattering(PhotonPacket* pp, PhotonPacket* ppp
                         if (random()->uniform() <= wv[h])
                             localLambda =
                                 LyaUtils::shiftWavelength(localLambda, pp->lyaAtomVelocity(), pp->direction(), bfkobs);
+                        break;
                     }
                 }
             }
