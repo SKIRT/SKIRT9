@@ -161,6 +161,8 @@ void Configuration::setupSelfBefore()
                 _lyaAccelerationStrength = ms->lyaOptions()->lyaAccelerationStrength();
                 break;
         }
+        if (ms->lyaOptions()->includeHubbleFlow()) _lyaExpansionRate = sim->cosmology()->relativeExpansionRate();
+
         // force moving media even if there are no bulk velocities (which would be exceptional anyway);
         // this automatically disables some optimizations that would not work for Lyman-alpha media
         _hasMovingMedia = true;

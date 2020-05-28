@@ -28,11 +28,17 @@
     \f$\Omega_\mathrm{m}\f$ and the Hubble constant \f$H_0=h \times
     100\,\mathrm{km}\,\mathrm{s}^{-1}\,\mathrm{Mpc}^{-1}\f$ using \f[ d_\mathrm{M}(z) =
     \frac{c}{H_0} \int_0^z \frac{\mathrm{d}z'}{\sqrt{\Omega_\mathrm{m}(1+z')^3 +
-    (1-\Omega_\mathrm{m})}} \f] where $c$ is the speed of light.
+    (1-\Omega_\mathrm{m})}} \f] where \f$c\f$ is the speed of light.
 
     The angular-diameter distance \f$d_\mathrm{A}(z)\f$ and the luminosity distance
     \f$d_\mathrm{L}(z)\f$ are then obtained from \f[ d_\mathrm{A}(z) = (1+z)^{-1} \,
-    d_\mathrm{M}(z) \f] and \f[ d_\mathrm{L}(z) = (1+z) \, d_\mathrm{M}(z). \f] */
+    d_\mathrm{M}(z) \f] and \f[ d_\mathrm{L}(z) = (1+z) \, d_\mathrm{M}(z). \f]
+
+    Finally, the relative expansion rate of the universe \f$H=\dot{a}/a\f$, usually called the
+    Hubble parameter, is given by \f[ H(z) = H_0 \sqrt{\Omega_\mathrm{m}(1+z')^3 +
+    (1-\Omega_\mathrm{m})}. \f]
+
+    */
 class FlatUniverseCosmology : public Cosmology
 {
     ITEM_CONCRETE(FlatUniverseCosmology, Cosmology, "the model is at a given redshift in a flat universe")
@@ -74,6 +80,11 @@ public:
         evaluated numerically. We don't worry about performance because this function is called
         just once during simulation setup. */
     double luminosityDistance() const override;
+
+    /** This function returns the relative expansion rate of the universe, \f$H=\dot{a}/a\f$, often
+        called the Hubble parameter. The function returns the value in SI units, i.e.
+        \f$\mathrm{s}^{-1}\f$. */
+    double relativeExpansionRate() const override;
 };
 
 ////////////////////////////////////////////////////////////////////

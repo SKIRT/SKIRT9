@@ -39,6 +39,11 @@ public:
         L_\lambda[\lambda]}{4\pi\,d_\mathrm{L}^2(z)} \f] where \f$\lambda\f$ is the emitted
         wavelength and \f$(1+z)\lambda\f$ is the observed wavelength. */
     virtual double luminosityDistance() const = 0;
+
+    /** This function returns the relative expansion rate of the universe, \f$\dot{a}/a\f$, where
+        \f$a\f$ is the dimensionless scale factor. The relative expansion rate has units of
+        \f$\mathrm{s}^{-1}\f$. */
+    virtual double relativeExpansionRate() const = 0;
 };
 
 ////////////////////////////////////////////////////////////////////

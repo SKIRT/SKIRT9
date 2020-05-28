@@ -240,6 +240,12 @@ public:
         Constant or \c Variable. */
     double lyaAccelerationStrength() const { return _lyaAccelerationStrength; }
 
+    /** If inclusion of the Hubble flow for Lyman-alpha transfer is enabled, this function returns
+        the relative expansion rate of the universe in which the model resides. If inclusion of the
+        Hubble flow is disabled, this function returns zero. The value is relevant only when
+        hasLymanAlpha() returns true. */
+    double lyaExpansionRate() const { return _lyaExpansionRate; }
+
     /** Returns the symmetry dimension of the input model, including sources and media, if present.
         A value of 1 means spherical symmetry, 2 means axial symmetry and 3 means none of these
         symmetries. */
@@ -336,6 +342,7 @@ private:
     int _lyaMediumIndex{-1};
     LyaAccelerationScheme _lyaAccelerationScheme{LyaAccelerationScheme::Variable};
     double _lyaAccelerationStrength{1.};
+    double _lyaExpansionRate{0.};
 
     // properties derived from the configuration at large
     int _modelDimension{0};

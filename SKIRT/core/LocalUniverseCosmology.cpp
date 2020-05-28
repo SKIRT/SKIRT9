@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "LocalUniverseCosmology.hpp"
+#include "Constants.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -24,6 +25,12 @@ double LocalUniverseCosmology::angularDiameterDistance() const
 double LocalUniverseCosmology::luminosityDistance() const
 {
     return 0.;
+}
+
+double LocalUniverseCosmology::relativeExpansionRate() const
+{
+    return 0.675 / (10. * Constants::pc());
+
 }
 
 ////////////////////////////////////////////////////////////////////

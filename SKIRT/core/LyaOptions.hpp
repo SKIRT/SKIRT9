@@ -91,6 +91,10 @@ class LyaOptions : public SimulationItem
         ATTRIBUTE_RELEVANT_IF(lyaAccelerationStrength, "lyaAccelerationSchemeConstant|lyaAccelerationSchemeVariable")
         ATTRIBUTE_DISPLAYED_IF(lyaAccelerationStrength, "Level2")
 
+        PROPERTY_BOOL(includeHubbleFlow, "include the Doppler shift caused by the expansion of the universe")
+        ATTRIBUTE_DEFAULT_VALUE(includeHubbleFlow, "false")
+        ATTRIBUTE_DISPLAYED_IF(includeHubbleFlow, "Level2")
+
     ITEM_END()
 };
 
