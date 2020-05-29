@@ -421,7 +421,8 @@ void MonteCarloSimulation::storeRadiationField(const PhotonPacket* pp)
             int m = segment.m;
             if (m >= 0)
             {
-                double lambda = pp->perceivedWavelength(mediumSystem()->bulkVelocity(m));
+                double lambda =
+                    pp->perceivedWavelength(mediumSystem()->bulkVelocity(m), _config->lyaExpansionRate() * segment.s);
                 int ell = _config->radiationFieldWLG()->bin(lambda);
                 if (ell >= 0)
                 {
@@ -481,8 +482,9 @@ void MonteCarloSimulation::simulatePropagation(PhotonPacket* pp)
     }
     else
     {
-        Vec bfv = mediumSystem()->bulkVelocity(m);
-        albedo = mediumSystem()->albedo(pp->perceivedWavelength(bfv), m);
+        double lambda = pp->perceivedWavelength(mediumSystem()->bulkVelocity(m),
+                                                _config->lyaExpansionRate() * pp->interactionDistance());
+        albedo = mediumSystem()->albedo(lambda, m);
     }
 
     // adjust the weight by the scattered fraction
@@ -531,7 +533,7 @@ void MonteCarloSimulation::peelOffScattering(PhotonPacket* pp, PhotonPacket* ppp
     else
     {
         bfv = mediumSystem()->bulkVelocity(m);
-        lambda = pp->perceivedWavelength(bfv);
+        lambda = pp->perceivedWavelength(bfv, _config->lyaExpansionRate() * pp->interactionDistance());
     }
 
     // determine the weighting factor for each medium component as its scattering opacity (n * sigma_sca)
@@ -736,7 +738,7 @@ void MonteCarloSimulation::simulateScattering(PhotonPacket* pp)
     else
     {
         bfv = mediumSystem()->bulkVelocity(m);
-        lambda = pp->perceivedWavelength(bfv);
+        lambda = pp->perceivedWavelength(bfv, _config->lyaExpansionRate() * pp->interactionDistance());
     }
 
     // randomly select a material mix; the probability of each component is weighted by the scattering opacity

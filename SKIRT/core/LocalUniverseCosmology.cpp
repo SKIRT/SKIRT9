@@ -30,7 +30,6 @@ double LocalUniverseCosmology::luminosityDistance() const
 double LocalUniverseCosmology::relativeExpansionRate() const
 {
     return 0.675 / (10. * Constants::pc());
-
 }
 
 ////////////////////////////////////////////////////////////////////

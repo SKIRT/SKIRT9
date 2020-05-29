@@ -242,8 +242,8 @@ public:
 
     /** If inclusion of the Hubble flow for Lyman-alpha transfer is enabled, this function returns
         the relative expansion rate of the universe in which the model resides. If inclusion of the
-        Hubble flow is disabled, this function returns zero. The value is relevant only when
-        hasLymanAlpha() returns true. */
+        Hubble flow is disabled, or if the simulation does not include treatment of the hydrogen
+        Lyman-alpha line, this function returns zero. */
     double lyaExpansionRate() const { return _lyaExpansionRate; }
 
     /** Returns the symmetry dimension of the input model, including sources and media, if present.

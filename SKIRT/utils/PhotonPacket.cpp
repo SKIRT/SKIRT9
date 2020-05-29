@@ -126,16 +126,16 @@ double PhotonPacket::shiftedEmissionWavelength(double sourceWavelength, Directio
 ////////////////////////////////////////////////////////////////////
 
 double PhotonPacket::shiftedReceptionWavelength(double photonWavelength, Direction photonDirection,
-                                                Vec receiverVelocity)
+                                                Vec receiverVelocity, double expansionVelocity)
 {
-    return photonWavelength / (1 - Vec::dot(photonDirection, receiverVelocity) / Constants::c());
+    return photonWavelength / (1 - (Vec::dot(photonDirection, receiverVelocity) + expansionVelocity) / Constants::c());
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double PhotonPacket::perceivedWavelength(Vec receiverVelocity) const
+double PhotonPacket::perceivedWavelength(Vec receiverVelocity, double expansionVelocity) const
 {
-    return shiftedReceptionWavelength(_lambda, direction(), receiverVelocity);
+    return shiftedReceptionWavelength(_lambda, direction(), receiverVelocity, expansionVelocity);
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -457,11 +457,15 @@ void MediumSystem::opticalDepth(PhotonPacket* pp)
     {
         for (auto& segment : pp->segments())
         {
-            if (segment.m >= 0) tau += opacityExt(pp->perceivedWavelength(state(segment.m).v), segment.m) * segment.ds;
-            if (tau >= TAU_MAX)
+            if (segment.m >= 0)
             {
-                pp->setTerminalOpticalDepth(i, tau);
-                break;
+                double lambda = pp->perceivedWavelength(state(segment.m).v, _config->lyaExpansionRate() * segment.s);
+                tau += opacityExt(lambda, segment.m) * segment.ds;
+                if (tau >= TAU_MAX)
+                {
+                    pp->setTerminalOpticalDepth(i, tau);
+                    break;
+                }
             }
             pp->setOpticalDepth(i++, tau);
         }
@@ -510,8 +514,13 @@ double MediumSystem::opticalDepth(PhotonPacket* pp, double distance)
     {
         for (auto& segment : pp->segments())
         {
-            if (segment.m >= 0) tau += opacityExt(pp->perceivedWavelength(state(segment.m).v), segment.m) * segment.ds;
-            if (segment.s > distance || tau >= TAU_MAX) break;
+            if (segment.m >= 0)
+            {
+                double lambda = pp->perceivedWavelength(state(segment.m).v, _config->lyaExpansionRate() * segment.s);
+                tau += opacityExt(lambda, segment.m) * segment.ds;
+                if (tau >= TAU_MAX) break;
+            }
+            if (segment.s > distance) break;
         }
     }
 

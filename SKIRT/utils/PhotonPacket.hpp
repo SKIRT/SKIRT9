@@ -195,19 +195,25 @@ public:
     /** This function returns the Doppler-shifted wavelength perceived by a moving receiver (with
         non-relativistic velocity) for an incoming photon packet. The arguments specify the photon
         packet wavelength \f$\lambda_\text{ph}\f$ in the model coordinate frame, the direction
-        \f${\bf{k}}_\text{ph}\f$ of the incoming photon packet, and the velocity of the receiver
-        \f${\bf{v}}_\text{rec}\f$ relative to the model coordinate frame. The wavelength
-        \f$\lambda_\text{rec}\f$ perceived by the receiver can then be written as \f[ \left.
-        \lambda_\text{rec} = \lambda_\text{ph} \middle/ \left(1 - \frac{{\bf{k}}_\text{ph} \cdot
-        {\bf{v}}_\text{rec}}{c} \right) \right. \f] where \f$c\f$ is the speed of light in vacuum.
-        */
-    static double shiftedReceptionWavelength(double photonWavelength, Direction photonDirection, Vec receiverVelocity);
+        \f${\bf{k}}_\text{ph}\f$ of the incoming photon packet, the velocity of the receiver
+        \f${\bf{v}}_\text{rec}\f$ relative to the model coordinate frame, and the expansion
+        velocity \f$\Delta v_\mathrm{h}\f$ of the universe relative to the starting position of the
+        photon packet's current path (or zero if cosmological expansion is not taken into account).
+
+        The wavelength \f$\lambda_\text{rec}\f$ perceived by the receiver can then be written as
+        \f[ \left. \lambda_\text{rec} = \lambda_\text{ph} \middle/ \left(1 -
+        \frac{{\bf{k}}_\text{ph} \cdot {\bf{v}}_\text{rec} + \Delta v_\mathrm{h}}{c} \right)
+        \right. \f] where \f$c\f$ is the speed of light in vacuum. */
+    static double shiftedReceptionWavelength(double photonWavelength, Direction photonDirection, Vec receiverVelocity,
+                                             double expansionVelocity);
 
     /** This function returns the Doppler-shifted wavelength perceived for this photon packet by a
-        moving receiver (with non-relativistic velocity). The argument specifies the velocity of
-        the receiver \f${\bf{v}}_\text{rec}\f$ relative to the model coordinate frame. See the
-        shiftedReceptionWavelength() function for more details. */
-    double perceivedWavelength(Vec receiverVelocity) const;
+        moving receiver (with non-relativistic velocity). The arguments specify the velocity of the
+        receiver \f${\bf{v}}_\text{rec}\f$ relative to the model coordinate frame and the expansion
+        velocity \f$\Delta v_\mathrm{h}\f$ of the universe relative to the starting position of the
+        photon packet's current path (or zero if cosmological expansion is not taken into account).
+        See the shiftedReceptionWavelength() function for more details. */
+    double perceivedWavelength(Vec receiverVelocity, double expansionVelocity) const;
 
     /** This function returns the luminosity \f$L\f$ represented by the photon packet, calculated
         from its current weight and the specified perceived wavelength. */
