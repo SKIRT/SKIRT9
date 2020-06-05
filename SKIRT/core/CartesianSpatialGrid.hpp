@@ -121,6 +121,10 @@ private:
     Array _xv;
     Array _yv;
     Array _zv;
+
+    // allow our path segment generator to access our private data members
+    class SegmentGenerator;
+    friend class SegmentGenerator;
 };
 
 ////////////////////////////////////////////////////////////////////

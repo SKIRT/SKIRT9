@@ -10,6 +10,7 @@
 #include "Random.hpp"
 #include "SpatialGridPath.hpp"
 #include "SpatialGridPlotFile.hpp"
+#include "SpatialGridSegmentGenerator.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -77,8 +78,104 @@ Position CartesianSpatialGrid::randomPositionInCell(int m) const
 
 //////////////////////////////////////////////////////////////////////
 
+class CartesianSpatialGrid::SegmentGenerator : public SpatialGridSegmentGenerator
+{
+    const CartesianSpatialGrid* _grid{nullptr};
+    int _i{-1}, _j{-1}, _k{-1};
+    enum class CurrentPosition { Unknown, Inside, Outside };
+    CurrentPosition _curpos{CurrentPosition::Unknown};
+
+public:
+    SegmentGenerator(const SpatialGridPath* path, const CartesianSpatialGrid* grid)
+        : SpatialGridSegmentGenerator(path), _grid(grid)
+    {}
+
+    bool next() override
+    {
+        switch (_curpos)
+        {
+            case CurrentPosition::Unknown:
+            {
+                // move the photon packet inside the grid; if this is impossible, return an empty path
+                moveInside(_grid->extent(), 1e-12 * _grid->extent().widths().norm());
+                if (!_grid->contains(r())) return false;
+
+                // determine which grid cell we are in
+                _i = NR::locateClip(_grid->_xv, rx());
+                _j = NR::locateClip(_grid->_yv, ry());
+                _k = NR::locateClip(_grid->_zv, rz());
+                _curpos = CurrentPosition::Inside;
+
+                // if the photon packet started outside the grid, return the corresponding nonzero-length segment;
+                // otherwise fall through to determine the first actual segment
+                if (ds() > 0.) return true;
+            }
+
+            case CurrentPosition::Inside:
+            {
+                // determine the segment from the current position to the first cell wall
+                // and adjust the position and cell indices accordingly
+                int m = _grid->index(_i, _j, _k);
+                double xE = (kx() < 0.0) ? _grid->_xv[_i] : _grid->_xv[_i + 1];
+                double yE = (ky() < 0.0) ? _grid->_yv[_j] : _grid->_yv[_j + 1];
+                double zE = (kz() < 0.0) ? _grid->_zv[_k] : _grid->_zv[_k + 1];
+                double dsx = (fabs(kx()) > 1e-15) ? (xE - rx()) / kx() : DBL_MAX;
+                double dsy = (fabs(ky()) > 1e-15) ? (yE - ry()) / ky() : DBL_MAX;
+                double dsz = (fabs(kz()) > 1e-15) ? (zE - rz()) / kz() : DBL_MAX;
+
+                if (dsx <= dsy && dsx <= dsz)
+                {
+                    setSegment(m, dsx);
+                    setrx(xE);
+                    propagatey();
+                    propagatez();
+                    _i += (kx() < 0.0) ? -1 : 1;
+                    if (_i >= _grid->_Nx || _i < 0) _curpos = CurrentPosition::Outside;
+                }
+                else if (dsy < dsx && dsy <= dsz)
+                {
+                    setSegment(m, dsy);
+                    setry(yE);
+                    propagatex();
+                    propagatez();
+                    _j += (ky() < 0.0) ? -1 : 1;
+                    if (_j >= _grid->_Ny || _j < 0) _curpos = CurrentPosition::Outside;
+                }
+                else if (dsz < dsx && dsz < dsy)
+                {
+                    setSegment(m, dsz);
+                    setrz(zE);
+                    propagatex();
+                    propagatey();
+                    _k += (kz() < 0.0) ? -1 : 1;
+                    if (_k >= _grid->_Nz || _k < 0) _curpos = CurrentPosition::Outside;
+                }
+                else
+                {
+                    throw FATALERROR("path segment error");
+                }
+                return true;
+            }
+
+            case CurrentPosition::Outside:
+            {
+            }
+        }
+        return false;
+    }
+};
+
+//////////////////////////////////////////////////////////////////////
+
 void CartesianSpatialGrid::path(SpatialGridPath* path) const
 {
+    CartesianSpatialGrid::SegmentGenerator generator(path, this);
+    while (generator.next())
+    {
+        path->addSegment(generator.m(), generator.ds());
+    }
+
+/*
     // If the photon packet starts outside the grid, move it inside;
     // if this is impossible, return an empty path
     double eps = 1e-12 * extent().widths().norm();
@@ -150,6 +247,7 @@ void CartesianSpatialGrid::path(SpatialGridPath* path) const
             }
         }
     }
+*/
 }
 
 //////////////////////////////////////////////////////////////////////
