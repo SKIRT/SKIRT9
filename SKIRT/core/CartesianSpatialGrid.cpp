@@ -170,6 +170,7 @@ public:
 void CartesianSpatialGrid::path(SpatialGridPath* path) const
 {
     CartesianSpatialGrid::SegmentGenerator generator(path, this);
+    path->clear();
     while (generator.next())
     {
         path->addSegment(generator.m(), generator.ds());
