@@ -157,6 +157,7 @@ private:
     Position _bfr;
     Direction _bfk;
     vector<Segment> _segments;
+    double _s{0.};
     int _interactionCellIndex{-1};
     double _interactionDistance{0.};
 };

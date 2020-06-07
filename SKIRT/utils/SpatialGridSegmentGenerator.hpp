@@ -54,8 +54,6 @@ protected:
     void setry(double ry) { _ry = ry; }
     void setrz(double rz) { _rz = rz; }
 
-    void setoutsidepos() { _rx = _ry = _rz = std::numeric_limits<double>::infinity(); }
-
     void propagatex() { _rx += _kx * _ds; }
     void propagatey() { _ry += _ky * _ds; }
     void propagatez() { _rz += _kz * _ds; }
@@ -72,8 +70,8 @@ protected:
         _ds = ds;
     }
 
-    /** sets the segment and adjusts the position */
-    void moveInside(const Box& box, double eps);
+    /** sets the segment and adjusts the position; returns true if position is now inside */
+    bool moveInside(const Box& box, double eps);
 
     // ------- Data members -------
 

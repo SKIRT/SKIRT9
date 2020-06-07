@@ -1,6 +1,6 @@
 /*//////////////////////////////////////////////////////////////////
 ////     The SKIRT project -- advanced radiative transfer       ////
-////       © Astronomical Observatory(), Ghent University         ////
+////       © Astronomical Observato_ry(), Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
 #include "SpatialGridSegmentGenerator.hpp"
@@ -8,100 +8,105 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void SpatialGridSegmentGenerator::moveInside(const Box& box, double eps)
+bool SpatialGridSegmentGenerator::moveInside(const Box& box, double eps)
 {
     // initialize to empty segment with zero length
     setEmptySegment();
 
+    // keep track of cumulative length of all subsegments
+    double cumds = 0.;
+
     // --> x direction
-    if (rx() <= box.xmin())
+    if (_rx <= box.xmin())
     {
-        if (kx() <= 0.0)
-        {
-            setoutsidepos();
-        }
+        if (_kx <= 0.0)
+            return false;
         else
         {
-            setEmptySegment((box.xmin() - rx()) / kx());
-            setrx(box.xmin() + eps);
-            propagatey();
-            propagatez();
+            double ds = (box.xmin() - _rx) / _kx;
+            _rx = box.xmin() + eps;
+            _ry += _ky * ds;
+            _rz += _kz * ds;
+            cumds += ds;
         }
     }
-    else if (rx() >= box.xmax())
+    else if (_rx >= box.xmax())
     {
-        if (kx() >= 0.0)
-        {
-            setoutsidepos();
-        }
+        if (_kx >= 0.0)
+            return false;
         else
         {
-            setEmptySegment((box.xmax() - rx()) / kx());
-            setrx(box.xmax() - eps);
-            propagatey();
-            propagatez();
+            double ds = (box.xmax() - _rx) / _kx;
+            _rx = box.xmax() - eps;
+            _ry += _ky * ds;
+            _rz += _kz * ds;
+            cumds += ds;
         }
     }
 
     // --> y direction
-    if (ry() <= box.ymin())
+    if (_ry <= box.ymin())
     {
-        if (ky() <= 0.0)
-        {
-            setoutsidepos();
-        }
+        if (_ky <= 0.0)
+            return false;
         else
         {
-            setEmptySegment((box.ymin() - ry()) / ky());
-            setry(box.ymin() + eps);
-            propagatex();
-            propagatez();
+            double ds = (box.ymin() - _ry) / _ky;
+            _rx += _kx * ds;
+            _ry = box.ymin() + eps;
+            _rz += _kz * ds;
+            cumds += ds;
         }
     }
-    else if (ry() >= box.ymax())
+    else if (_ry >= box.ymax())
     {
-        if (ky() >= 0.0)
-        {
-            setoutsidepos();
-        }
+        if (_ky >= 0.0)
+            return false;
         else
         {
-            setEmptySegment((box.ymax() - ry()) / ky());
-            setry(box.ymax() - eps);
-            propagatex();
-            propagatez();
+            double ds = (box.ymax() - _ry) / _ky;
+            _rx += _kx * ds;
+            _ry = box.ymax() - eps;
+            _rz += _kz * ds;
+            cumds += ds;
         }
     }
 
     // --> z direction
-    if (rz() <= box.zmin())
+    if (_rz <= box.zmin())
     {
-        if (kz() <= 0.0)
-        {
-            setoutsidepos();
-        }
+        if (_kz <= 0.0)
+            return false;
         else
         {
-            setEmptySegment((box.zmin() - rz()) / kz());
-            setrz(box.zmin() + eps);
-            propagatex();
-            propagatey();
+            double ds = (box.zmin() - _rz) / _kz;
+            _rx += _kx * ds;
+            _ry += _ky * ds;
+            _rz = box.zmin() + eps;
+            cumds += ds;
         }
     }
-    else if (rz() >= box.zmax())
+    else if (_rz >= box.zmax())
     {
-        if (kz() >= 0.0)
-        {
-            setoutsidepos();
-        }
+        if (_kz >= 0.0)
+            return false;
         else
         {
-            setEmptySegment((box.zmax() - rz()) / kz());
-            setrz(box.zmax() - eps);
-            propagatex();
-            propagatey();
+            double ds = (box.zmax() - _rz) / _kz;
+            _rx += _kx * ds;
+            _ry += _ky * ds;
+            _rz = box.zmax() - eps;
+            cumds += ds;
         }
     }
+
+    // in rare border cases, the position can still be outside of the box
+    if (!box.contains(r())) return false;
+
+    // return the empty segment with the cumulative length
+    // (which might be zero if the position was inside the box to begin with)
+    setEmptySegment(cumds);
+    return true;
 }
 
 ////////////////////////////////////////////////////////////////////

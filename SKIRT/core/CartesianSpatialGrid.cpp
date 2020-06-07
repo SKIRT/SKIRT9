@@ -96,9 +96,12 @@ public:
         {
             case CurrentPosition::Unknown:
             {
-                // move the photon packet inside the grid; if this is impossible, return an empty path
-                moveInside(_grid->extent(), 1e-12 * _grid->extent().widths().norm());
-                if (!_grid->contains(r())) return false;
+                // try moving the photon packet inside the grid; if this is impossible, return an empty path
+                if (!moveInside(_grid->extent(), 1e-12 * _grid->extent().widths().norm()))
+                {
+                    _curpos = CurrentPosition::Outside;
+                    return false;
+                }
 
                 // determine which grid cell we are in
                 _i = NR::locateClip(_grid->_xv, rx());
@@ -175,80 +178,6 @@ void CartesianSpatialGrid::path(SpatialGridPath* path) const
     {
         path->addSegment(generator.m(), generator.ds());
     }
-
-/*
-    // If the photon packet starts outside the grid, move it inside;
-    // if this is impossible, return an empty path
-    double eps = 1e-12 * extent().widths().norm();
-    Position bfr = path->moveInside(extent(), eps);
-    if (!contains(bfr)) return path->clear();
-
-    // Get the direction and the current position of the path
-    double kx, ky, kz;
-    path->direction().cartesian(kx, ky, kz);
-    double x, y, z;
-    bfr.cartesian(x, y, z);
-
-    // Determine which grid cell we are in
-    int i = NR::locateClip(_xv, x);
-    int j = NR::locateClip(_yv, y);
-    int k = NR::locateClip(_zv, z);
-
-    // There we go...
-    double ds, dsx, dsy, dsz;
-    while (true)
-    {
-        int m = index(i, j, k);
-        double xE = (kx < 0.0) ? _xv[i] : _xv[i + 1];
-        double yE = (ky < 0.0) ? _yv[j] : _yv[j + 1];
-        double zE = (kz < 0.0) ? _zv[k] : _zv[k + 1];
-        dsx = (fabs(kx) > 1e-15) ? (xE - x) / kx : DBL_MAX;
-        dsy = (fabs(ky) > 1e-15) ? (yE - y) / ky : DBL_MAX;
-        dsz = (fabs(kz) > 1e-15) ? (zE - z) / kz : DBL_MAX;
-        if (dsx <= dsy && dsx <= dsz)
-        {
-            ds = dsx;
-            path->addSegment(m, ds);
-            i += (kx < 0.0) ? -1 : 1;
-            if (i >= _Nx || i < 0)
-                return;
-            else
-            {
-                x = xE;
-                y += ky * ds;
-                z += kz * ds;
-            }
-        }
-        else if (dsy < dsx && dsy <= dsz)
-        {
-            ds = dsy;
-            path->addSegment(m, ds);
-            j += (ky < 0.0) ? -1 : 1;
-            if (j >= _Ny || j < 0)
-                return;
-            else
-            {
-                x += kx * ds;
-                y = yE;
-                z += kz * ds;
-            }
-        }
-        else if (dsz < dsx && dsz < dsy)
-        {
-            ds = dsz;
-            path->addSegment(m, ds);
-            k += (kz < 0.0) ? -1 : 1;
-            if (k >= _Nz || k < 0)
-                return;
-            else
-            {
-                x += kx * ds;
-                y += ky * ds;
-                z = zE;
-            }
-        }
-    }
-*/
 }
 
 //////////////////////////////////////////////////////////////////////
