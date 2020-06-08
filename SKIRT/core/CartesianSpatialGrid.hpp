@@ -123,8 +123,8 @@ private:
     Array _zv;
 
     // allow our path segment generator to access our private data members
-    class SegmentGenerator;
-    friend class SegmentGenerator;
+    class MySegmentGenerator;
+    friend class MySegmentGenerator;
 };
 
 ////////////////////////////////////////////////////////////////////

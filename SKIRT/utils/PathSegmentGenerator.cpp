@@ -3,12 +3,12 @@
 ////       © Astronomical Observato_ry(), Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "SpatialGridSegmentGenerator.hpp"
+#include "PathSegmentGenerator.hpp"
 #include "Box.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-bool SpatialGridSegmentGenerator::moveInside(const Box& box, double eps)
+bool PathSegmentGenerator::moveInside(const Box& box, double eps)
 {
     // initialize to empty segment with zero length
     setEmptySegment();

@@ -3,27 +3,27 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef SPATIALGRIDSEGMENTGENERATOR_HPP
-#define SPATIALGRIDSEGMENTGENERATOR_HPP
+#ifndef PATHSEGMENTGENERATOR_HPP
+#define PATHSEGMENTGENERATOR_HPP
 
 #include "SpatialGridPath.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
-/** A SpatialGridSegmentGenerator object -- TO DO. */
-class SpatialGridSegmentGenerator
+/** A PathSegmentGenerator object -- TO DO. */
+class PathSegmentGenerator
 {
     // ------- Constructing and destructing -------
 
 public:
     /** TO DO. */
-    SpatialGridSegmentGenerator(const SpatialGridPath* path)
+    PathSegmentGenerator(const SpatialGridPath* path)
         : _rx{path->position().x()}, _ry{path->position().y()}, _rz{path->position().z()}, _kx{path->direction().x()},
           _ky{path->direction().y()}, _kz{path->direction().z()}
     {}
 
     /** TO DO. */
-    virtual ~SpatialGridSegmentGenerator() {}
+    virtual ~PathSegmentGenerator() {}
 
     // ------- Generating and retrieving path segments -------
 
