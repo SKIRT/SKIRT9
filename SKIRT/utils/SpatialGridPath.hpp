@@ -20,16 +20,16 @@ class Box;
     together with the physical path length \f$\Delta s\f$ covered within the cell, and the path
     length \f$s\f$ covered along the entire path up to the end of the cell.
 
-    In addition, a SpatialGridPath object allows storing the cumulative optical depth \f$tau\f$ at
-    the end of each path segment. As a convenience to client classes, the SpatialGridPath class
-    offers some operations on this extra information, such as locating the interaction point along
-    the path corresponding to a given optical depth. The optical depth values for consecutive
-    segments must form a non-descending sequence, i.e. \f[ 0\leq\tau_0 \leq\tau_1 \leq\,\dots\,
-    \leq\tau_{N-1}\f] where \f$N\f$ is the number of segments in the path.
+    In addition, a SpatialGridPath object allows storing a (cumulative) optical depth \f$tau\f$
+    with each path segment. Before this non-geometric information is used, it must be set
+    explicitly by a client class after the segments of the path have been calculated. As a
+    convenience to client classes, the SpatialGridPath class offers some operations on this extra
+    information, such as locating the interaction point along the path corresponding to a given
+    optical depth.
 
     Updating the initial position and/or the direction of the path invalidates all segments in the
-    path, but the segments are not automatically cleared. One should call the clear() function to
-    do so. */
+    path, but the segments are not automatically cleared. One should call the clear() function or
+    the moveInside() function to do so. */
 class SpatialGridPath
 {
 public:
@@ -66,17 +66,19 @@ public:
         initial position and propagation direction. */
     void clear();
 
-    /** This function adds a segment in cell \f$m\f$ with length \f$\Delta s\f$ to the path, the
-        cumulative distance \f$s\f$ covered by the path from its initial position to the exit point
-        from the cell, and the cumulative optical depth \f$\tau\f$ at the exit point. If \f$\Delta
-        s\le 0\f$, the function does nothing. */
-    void addSegment(int m, double ds, double s, double tau);
+    /** This function adds a segment in cell \f$m\f$ with length \f$\Delta s\f$ to the path.
+        If \f$\Delta s\le 0\f$, the function does nothing. */
+    void addSegment(int m, double ds);
 
-    /** TO DO: remove this function. */
-    void addSegment(int /*m*/, double /*ds*/) { }
-
-    /** TO DO: remove this function. */
-    Position moveInside(const Box& /*box*/, double /*eps*/) { return Position(); }
+    /** This function clears the path, adds any segments needed to move the initial position along
+        the propagation direction (both specified in the constructor) inside a given box, and
+        finally returns the resulting position. The small value specified by \em eps is added to
+        the path length beyond the intersection point so that the final position is well inside the
+        box, guarding against rounding errors. If the initial position is already inside the box,
+        no segments are added. If the half-ray formed by the initial position and the propagation
+        direction does not intersect the box, the function returns some arbitrary position outside
+        the box. */
+    Position moveInside(const Box& box, double eps);
 
     // ------- Retrieving path segments -------
 
@@ -99,10 +101,30 @@ public:
 
     // ------- Handling optical depth -------
 
+    /** This function sets the optical depth corresponding to the end of the path segment with
+        zero-based index \f$i\f$ to the specified value. The optical depth values for consecutive
+        segments must form a non-descending sequence, i.e. \f[ 0\leq\tau_0 \leq\tau_1 \leq\,\dots\,
+        \leq\tau_{N-1}\f] where \f$N\f$ is the number of segments in the path.
+
+        This (non-geometric) information can be stored here as a convenience to client classes. If
+        the index is out of range, undefined behavior results. */
+    void setOpticalDepth(int i, double tau) { _segments[i].tau = tau; }
+
+    /** This function sets the optical depth corresponding to the end of the path segment with
+        zero-based index \f$i\f$ \em and all following path segments to the specified value. This
+        function can be used when the caller knows that the remaining path segments have no optical
+        depth, or that some maximum meaningful optical depth has been reached. If the index is out
+        of range, undefined behavior results. */
+    void setTerminalOpticalDepth(int i, double tau)
+    {
+        int n = _segments.size();
+        for (; i != n; ++i) _segments[i].tau = tau;
+    }
+
     /** This function returns the optical depth corresponding to the end of the last path segment
-        in the path, or zero if the path has no segments. The function assumes that the geometric
-        and optical depth information for the path have been set; if this is not the case, the
-        behavior is undefined. */
+        in the path, or zero if the path has no segments. The function assumes that both the
+        geometric and optical depth information for the path have been set; if this is not the
+        case, the behavior is undefined. */
     double totalOpticalDepth() const;
 
     /** This function determines the interaction point along the path corresponding to the
@@ -115,8 +137,8 @@ public:
         linear interpolation within the interacting cell. Using linear interpolation is equivalent
         to assuming exponential behavior of the extinction with distance within the cell.
 
-        The function assumes that the geometric and optical depth information for the path have
-        been set; if this is not the case, the behavior is undefined. */
+        The function assumes that both the geometric and optical depth information for the path
+        have been set; if this is not the case, the behavior is undefined. */
     void findInteractionPoint(double tau);
 
     /** This function returns the spatial cell index \f$m\f$ corresponding to the interaction point
@@ -125,9 +147,9 @@ public:
     int interactionCellIndex() const { return _interactionCellIndex; }
 
     /** This function returns the distance along the path from its initial position to the
-        interaction point most recently calculated by the findInteractionPoint() function, or zero
-        if this function has never been called or if there was no interaction point within the
-        path. */
+        interaction point most recently calculated by the findInteractionPoint() function, or zero if
+        this function has never been called or if there was no interaction point within the path.
+        */
     double interactionDistance() const { return _interactionDistance; }
 
     // ------- Data members -------
@@ -135,6 +157,7 @@ private:
     Position _bfr;
     Direction _bfk;
     vector<Segment> _segments;
+    double _s{0.};
     int _interactionCellIndex{-1};
     double _interactionDistance{0.};
 };

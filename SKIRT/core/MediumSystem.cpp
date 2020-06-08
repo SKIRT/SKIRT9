@@ -20,7 +20,6 @@
 #include "ProcessManager.hpp"
 #include "Random.hpp"
 #include "ShortArray.hpp"
-#include "SpatialGridPathSegmentGenerator.hpp"
 #include "StringUtils.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -391,14 +390,16 @@ double MediumSystem::albedo(double lambda, int m) const
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::opticalDepth(const SpatialGridPath* path, double lambda, MaterialMix::MaterialType type)
+double MediumSystem::opticalDepth(SpatialGridPath* path, double lambda, MaterialMix::MaterialType type)
 {
-    // determine the geometric details of the path and calculate the optical depth
-    SpatialGridPathSegmentGenerator segment(path, _grid);
+    // determine the geometric details of the path
+    _grid->path(path);
+
+    // calculate the optical depth
     double tau = 0.;
-    while (segment.next())
+    for (const auto& segment : path->segments())
     {
-        if (segment.m() >= 0) tau += opacityExt(lambda, segment.m(), type) * segment.ds();
+        if (segment.m >= 0) tau += opacityExt(lambda, segment.m, type) * segment.ds;
     }
     return tau;
 }
@@ -417,12 +418,13 @@ namespace
 
 void MediumSystem::opticalDepth(PhotonPacket* pp)
 {
-    // determine the geometric details of the path and calculate the optical depth
+    // determine the geometric details of the path
+    _grid->path(pp);
+
+    // calculate the cumulative optical depth and store it in the photon packet for each path segment;
     // because this function is at the heart of the photon life cycle, we implement various optimized versions
-    SpatialGridPathSegmentGenerator segment(pp, _grid);
-    pp->clear();
     double tau = 0.;
-    double s = 0.;
+    int i = 0;
 
     // no kinematics and material properties are spatially constant
     if (!_config->hasMovingMedia() && !_config->hasVariableMedia())
@@ -431,11 +433,10 @@ void MediumSystem::opticalDepth(PhotonPacket* pp)
         if (_numMedia == 1)
         {
             double section = state(0, 0).mix->sectionExt(pp->wavelength());
-            while (segment.next())
+            for (auto& segment : pp->segments())
             {
-                s += segment.ds();
-                if (segment.m() >= 0) tau += section * state(segment.m(), 0).n * segment.ds();
-                pp->addSegment(segment.m(), segment.ds(), s, tau);
+                if (segment.m >= 0) tau += section * state(segment.m, 0).n * segment.ds;
+                pp->setOpticalDepth(i++, tau);
             }
         }
         // multiple media (no kinematics, spatially constant)
@@ -443,41 +444,44 @@ void MediumSystem::opticalDepth(PhotonPacket* pp)
         {
             ShortArray<8> sectionv(_numMedia);
             for (int h = 0; h != _numMedia; ++h) sectionv[h] = state(0, h).mix->sectionExt(pp->wavelength());
-            while (segment.next())
+            for (auto& segment : pp->segments())
             {
-                s += segment.ds();
-                if (segment.m() >= 0)
-                    for (int h = 0; h != _numMedia; ++h) tau += sectionv[h] * state(segment.m(), h).n * segment.ds();
-                pp->addSegment(segment.m(), segment.ds(), s, tau);
+                if (segment.m >= 0)
+                    for (int h = 0; h != _numMedia; ++h) tau += sectionv[h] * state(segment.m, h).n * segment.ds;
+                pp->setOpticalDepth(i++, tau);
             }
         }
     }
     // with kinematics and/or spatially variable material properties
     else
     {
-        while (segment.next())
+        for (auto& segment : pp->segments())
         {
-            s += segment.ds();
-            if (segment.m() >= 0)
+            if (segment.m >= 0)
             {
-                double lambda = pp->perceivedWavelength(state(segment.m()).v, _config->lyaExpansionRate() * s);
-                tau += opacityExt(lambda, segment.m()) * segment.ds();
+                double lambda = pp->perceivedWavelength(state(segment.m).v, _config->lyaExpansionRate() * segment.s);
+                tau += opacityExt(lambda, segment.m) * segment.ds;
+                if (tau >= TAU_MAX)
+                {
+                    pp->setTerminalOpticalDepth(i, tau);
+                    break;
+                }
             }
-            pp->addSegment(segment.m(), segment.ds(), s, tau);
-            if (tau >= TAU_MAX) break;
+            pp->setOpticalDepth(i++, tau);
         }
     }
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::opticalDepth(const PhotonPacket* pp, double distance)
+double MediumSystem::opticalDepth(PhotonPacket* pp, double distance)
 {
-    // determine the geometric details of the path and calculate the optical depth
+    // determine the geometric details of the path
+    _grid->path(pp);
+
+    // calculate the cumulative optical depth
     // because this function is at the heart of the photon life cycle, we implement various optimized versions
-    SpatialGridPathSegmentGenerator segment(pp, _grid);
     double tau = 0.;
-    double s = 0.;
 
     // no kinematics and material properties are spatially constant
     if (!_config->hasMovingMedia() && !_config->hasVariableMedia())
@@ -486,11 +490,10 @@ double MediumSystem::opticalDepth(const PhotonPacket* pp, double distance)
         if (_numMedia == 1)
         {
             double section = state(0, 0).mix->sectionExt(pp->wavelength());
-            while (segment.next())
+            for (auto& segment : pp->segments())
             {
-                s += segment.ds();
-                if (segment.m() >= 0) tau += section * state(segment.m(), 0).n * segment.ds();
-                if (s > distance) break;
+                if (segment.m >= 0) tau += section * state(segment.m, 0).n * segment.ds;
+                if (segment.s > distance) break;
             }
         }
         // multiple media (no kinematics, spatially constant)
@@ -498,28 +501,26 @@ double MediumSystem::opticalDepth(const PhotonPacket* pp, double distance)
         {
             ShortArray<8> sectionv(_numMedia);
             for (int h = 0; h != _numMedia; ++h) sectionv[h] = state(0, h).mix->sectionExt(pp->wavelength());
-            while (segment.next())
+            for (auto& segment : pp->segments())
             {
-                s += segment.ds();
-                if (segment.m() >= 0)
-                    for (int h = 0; h != _numMedia; ++h) tau += sectionv[h] * state(segment.m(), h).n * segment.ds();
-                if (s > distance) break;
+                if (segment.m >= 0)
+                    for (int h = 0; h != _numMedia; ++h) tau += sectionv[h] * state(segment.m, h).n * segment.ds;
+                if (segment.s > distance) break;
             }
         }
     }
     // with kinematics and/or spatially variable material properties
     else
     {
-        while (segment.next())
+        for (auto& segment : pp->segments())
         {
-            s += segment.ds();
-            if (segment.m() >= 0)
+            if (segment.m >= 0)
             {
-                double lambda = pp->perceivedWavelength(state(segment.m()).v, _config->lyaExpansionRate() * s);
-                tau += opacityExt(lambda, segment.m()) * segment.ds();
+                double lambda = pp->perceivedWavelength(state(segment.m).v, _config->lyaExpansionRate() * segment.s);
+                tau += opacityExt(lambda, segment.m) * segment.ds;
                 if (tau >= TAU_MAX) break;
             }
-            if (s > distance) break;
+            if (segment.s > distance) break;
         }
     }
 

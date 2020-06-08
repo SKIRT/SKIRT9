@@ -77,8 +77,10 @@ public:
         uniform deviates. A position with these cartesian coordinates is returned. */
     Position randomPositionInCell(int m) const override;
 
-    /** TO DO. */
-    PathSegmentGenerator* createPathSegmentGenerator(const SpatialGridPath* path) const override;
+    /** This function calculates a path through the grid. The SpatialGridPath object passed as an
+        argument specifies the starting position \f${\bf{r}}\f$ and the direction \f${\bf{k}}\f$
+        for the path. The data on the calculated path are added back into the same object. */
+    void path(SpatialGridPath* path) const override;
 
 protected:
     /** This function writes the intersection of the grid structure with the xy plane to the
@@ -121,8 +123,8 @@ private:
     Array _zv;
 
     // allow our path segment generator to access our private data members
-    class MySegmentGenerator;
-    friend class MySegmentGenerator;
+    class SegmentGenerator;
+    friend class SegmentGenerator;
 };
 
 ////////////////////////////////////////////////////////////////////

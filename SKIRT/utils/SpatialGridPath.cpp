@@ -33,13 +33,123 @@ SpatialGridPath::SpatialGridPath()
 void SpatialGridPath::clear()
 {
     _segments.clear();
+    _s = 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-void SpatialGridPath::addSegment(int m, double ds, double s, double tau)
+void SpatialGridPath::addSegment(int m, double ds)
 {
-    if (ds > 0.) _segments.push_back(Segment{m, ds, s, tau});
+    if (ds > 0)
+    {
+        _s += ds;
+        _segments.push_back(Segment{m, ds, _s, 0.});
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
+Position SpatialGridPath::moveInside(const Box& box, double eps)
+{
+    // a position that is certainly not inside any box
+    static const Position OUTSIDE(std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity(),
+                                  std::numeric_limits<double>::infinity());
+
+    // clear the path
+    clear();
+
+    // initial position and direction
+    double kx, ky, kz;
+    _bfk.cartesian(kx, ky, kz);
+    double rx, ry, rz;
+    _bfr.cartesian(rx, ry, rz);
+
+    // --> x direction
+    if (rx <= box.xmin())
+    {
+        if (kx <= 0.0)
+            return OUTSIDE;
+        else
+        {
+            double ds = (box.xmin() - rx) / kx;
+            addSegment(-1, ds);
+            rx = box.xmin() + eps;
+            ry += ky * ds;
+            rz += kz * ds;
+        }
+    }
+    else if (rx >= box.xmax())
+    {
+        if (kx >= 0.0)
+            return OUTSIDE;
+        else
+        {
+            double ds = (box.xmax() - rx) / kx;
+            addSegment(-1, ds);
+            rx = box.xmax() - eps;
+            ry += ky * ds;
+            rz += kz * ds;
+        }
+    }
+
+    // --> y direction
+    if (ry <= box.ymin())
+    {
+        if (ky <= 0.0)
+            return OUTSIDE;
+        else
+        {
+            double ds = (box.ymin() - ry) / ky;
+            addSegment(-1, ds);
+            rx += kx * ds;
+            ry = box.ymin() + eps;
+            rz += kz * ds;
+        }
+    }
+    else if (ry >= box.ymax())
+    {
+        if (ky >= 0.0)
+            return OUTSIDE;
+        else
+        {
+            double ds = (box.ymax() - ry) / ky;
+            addSegment(-1, ds);
+            rx += kx * ds;
+            ry = box.ymax() - eps;
+            rz += kz * ds;
+        }
+    }
+
+    // --> z direction
+    if (rz <= box.zmin())
+    {
+        if (kz <= 0.0)
+            return OUTSIDE;
+        else
+        {
+            double ds = (box.zmin() - rz) / kz;
+            addSegment(-1, ds);
+            rx += kx * ds;
+            ry += ky * ds;
+            rz = box.zmin() + eps;
+        }
+    }
+    else if (rz >= box.zmax())
+    {
+        if (kz >= 0.0)
+            return OUTSIDE;
+        else
+        {
+            double ds = (box.zmax() - rz) / kz;
+            addSegment(-1, ds);
+            rx += kx * ds;
+            ry += ky * ds;
+            rz = box.zmax() - eps;
+        }
+    }
+
+    // the position should now be just inside the box; although in rare cases, it may be still be outside!
+    return Position(rx, ry, rz);
 }
 
 ////////////////////////////////////////////////////////////////////

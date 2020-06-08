@@ -6,7 +6,6 @@
 #include "SpatialGrid.hpp"
 #include "Random.hpp"
 #include "SpatialGridPlotFile.hpp"
-#include "FatalError.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -22,20 +21,6 @@ void SpatialGrid::setupSelfBefore()
 double SpatialGrid::diagonal(int m) const
 {
     return cbrt(3. * volume(m));
-}
-
-//////////////////////////////////////////////////////////////////////
-
-void SpatialGrid::path(SpatialGridPath* /*path*/) const
-{
-    throw FATALERROR("Path refactoring problem");
-}
-
-//////////////////////////////////////////////////////////////////////
-
-PathSegmentGenerator* SpatialGrid::createPathSegmentGenerator(const SpatialGridPath* /*path*/) const
-{
-    throw FATALERROR("Path refactoring problem");
 }
 
 //////////////////////////////////////////////////////////////////////

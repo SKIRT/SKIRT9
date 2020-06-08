@@ -27,4 +27,3 @@ include_directories(../fitsio ../voro ../mpi ../utils)
 
 # adjust C++ compiler flags to our needs
 include("../../SMILE/build/CompilerFlags.cmake")
-set_target_properties(${TARGET} PROPERTIES COMPILE_FLAGS "-save-temps")
