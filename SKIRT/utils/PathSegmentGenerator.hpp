@@ -3,27 +3,27 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef SPATIALGRIDSEGMENTGENERATOR_HPP
-#define SPATIALGRIDSEGMENTGENERATOR_HPP
+#ifndef PATHSEGMENTGENERATOR_HPP
+#define PATHSEGMENTGENERATOR_HPP
 
 #include "SpatialGridPath.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
-/** A SpatialGridSegmentGenerator object -- TO DO. */
-class SpatialGridSegmentGenerator
+/** A PathSegmentGenerator object -- TO DO. */
+class PathSegmentGenerator
 {
     // ------- Constructing and destructing -------
 
 public:
     /** TO DO. */
-    SpatialGridSegmentGenerator(const SpatialGridPath* path)
+    PathSegmentGenerator(const SpatialGridPath* path)
         : _rx{path->position().x()}, _ry{path->position().y()}, _rz{path->position().z()}, _kx{path->direction().x()},
           _ky{path->direction().y()}, _kz{path->direction().z()}
     {}
 
     /** TO DO. */
-    virtual ~SpatialGridSegmentGenerator() {}
+    virtual ~PathSegmentGenerator() {}
 
     // ------- Generating and retrieving path segments -------
 
@@ -32,23 +32,23 @@ public:
     virtual bool next() = 0;
 
     /** TO DO. */
-    int m() { return _m; }
+    int m() const { return _m; }
 
     /** TO DO. */
-    double ds() { return _ds; }
+    double ds() const { return _ds; }
 
     // ------- Accessing internal state - for use by subclasses -------
 
 protected:
     Position r() { return Position(_rx, _ry, _rz); }
 
-    double rx() { return _rx; }
-    double ry() { return _ry; }
-    double rz() { return _rz; }
+    double rx() const { return _rx; }
+    double ry() const { return _ry; }
+    double rz() const { return _rz; }
 
-    double kx() { return _kx; }
-    double ky() { return _ky; }
-    double kz() { return _kz; }
+    double kx() const { return _kx; }
+    double ky() const { return _ky; }
+    double kz() const { return _kz; }
 
     void setrx(double rx) { _rx = rx; }
     void setry(double ry) { _ry = ry; }
@@ -71,6 +71,14 @@ protected:
     }
 
     /** sets the segment and adjusts the position; returns true if position is now inside */
+    /** TO DO. This function clears the path, adds any segments needed to move the initial position along
+        the propagation direction (both specified in the constructor) inside a given box, and
+        finally returns the resulting position. The small value specified by \em eps is added to
+        the path length beyond the intersection point so that the final position is well inside the
+        box, guarding against rounding errors. If the initial position is already inside the box,
+        no segments are added. If the half-ray formed by the initial position and the propagation
+        direction does not intersect the box, the function returns some arbitrary position outside
+        the box. */
     bool moveInside(const Box& box, double eps);
 
     // ------- Data members -------

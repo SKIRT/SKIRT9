@@ -12,6 +12,7 @@
 class Random;
 class SpatialGridPath;
 class SpatialGridPlotFile;
+class PathSegmentGenerator;
 
 //////////////////////////////////////////////////////////////////////
 
@@ -71,7 +72,10 @@ public:
         crossed by the path, the second lists the path length \f$\Delta s\f$ covered in each of
         these cells, and the third lists the accumulated path length \f$s\f$ until the end of each
         cell is encountered. */
-    virtual void path(SpatialGridPath* path) const = 0;
+    virtual void path(SpatialGridPath* path) const;
+
+    /** TO DO. */
+    virtual PathSegmentGenerator* createPathSegmentGenerator(const SpatialGridPath* path) const;
 
     //================ Functions that may be implemented in subclasses ===============
 

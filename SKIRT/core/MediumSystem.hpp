@@ -234,29 +234,24 @@ public:
         type. The starting position and the direction of the path are taken from the specified
         SpatialGridPath object.
 
-        The function first calls the SpatialGrid::path() function to store the geometrical
-        information on the path through the spatial grid into the SpatialGridPath object. It then
-        calculates the optical depth along the path as \f[
+        The function determines the segments of the path as it crosses each of the cells in the
+        spatial grid and calculates the optical depth along the path as \f[
         \tau_\text{path}(\lambda,{\boldsymbol{r}},{\boldsymbol{k}}) = \sum_m (\Delta s)_m \sum_h
         \varsigma_{\lambda}^{\text{ext}}\, n_m, \f] where \f$\varsigma_{\lambda}^{\text{abs}}\f$ is
         the extinction cross section corresponding to the \f$h\f$'th medium component at wavelength
         \f$\lambda\f$ and \f$n_{m,h}\f$ the number density in the cell with index \f$m\f$
         corresponding to the \f$h\f$'th medium component, and where the sum runs only over the
         medium components with the specified material type. */
-    double opticalDepth(SpatialGridPath* path, double lambda, MaterialMix::MaterialType type);
+    double opticalDepth(const SpatialGridPath* path, double lambda, MaterialMix::MaterialType type);
 
     /** This function calculates the optical depth along a path through the medium system defined
-        by the specified PhotonPacket object, and stores the results of the calculation into the
-        same PhotonPacket object.
+        by the initial position and direction of the specified PhotonPacket object, and stores the
+        results of the calculation into the same PhotonPacket object.
 
-        The function first calls the SpatialGrid::path() function to store the geometrical
-        information on the path through the spatial grid into the photon packet object, using the
-        initial position \f${\boldsymbol{r}}\f$ and direction \f${\boldsymbol{k}}\f$ obtained from
-        the photon packet.
-
-        With this information given, the function calculates the optical depth for each path
-        segment (or equivalently, for each crossed cell \f$m\f$) as \f[ \tau_m(\lambda_m) = (\Delta
-        s)_m \sum_h \varsigma_{\lambda_m,h}^{\text{ext}}\, n_m, \f] where
+        The function determines the segments of the path as it crosses each of the cells in the
+        spatial grid and calculates the optical depth for each segment along the path (or
+        equivalently, for each crossed cell \f$m\f$) as \f[ \tau_m(\lambda_m) = (\Delta s)_m \sum_h
+        \varsigma_{\lambda_m,h}^{\text{ext}}\, n_m, \f] where
         \f$\varsigma_{\lambda_m,h}^{\text{abs}}\f$ is the extinction cross section corresponding to
         the \f$h\f$'th medium component at wavelength \f$\lambda_m\f$ and \f$n_{m,h}\f$ the number
         density in the cell with index \f$m\f$ corresponding to the \f$h\f$'th medium component,
@@ -265,41 +260,32 @@ public:
         that cell.
 
         Using these optical depth values per segment, the function determines the cumulative
-        optical depth at the segment exit boundaries and stores them into the specified photon
-        packet object. Note that the optical depth at entry of the initial segment is equal to zero
-        by definition. */
+        optical depth at the segment exit boundaries and stores them together with the geometric
+        path segment information into the specified photon packet object. Note that the optical
+        depth at entry of the initial segment is equal to zero by definition. */
     void opticalDepth(PhotonPacket* pp);
 
     /** This function calculates and returns the optical depth along a path through the medium
-        system defined by the specified PhotonPacket object and up to the specified distance.
+        system defined by the initial position and direction of the specified PhotonPacket object
+        and up to the specified distance.
 
-        The function first calls the SpatialGrid::path() function to store the geometrical
-        information on the path through the spatial grid into the photon packet object, using the
-        initial position \f${\boldsymbol{r}}\f$ and direction \f${\boldsymbol{k}}\f$ obtained from
-        the photon packet.
-
-        While the geometrical information is stored in the photon packet (because there is not
-        other obvious place for it to go), the optical depth information is not.
-
-        With this information given, the function calculates the optical depth for each path
-        segment (or equivalently, for each crossed cell \f$m\f$) as \f[ \tau_m(\lambda_m) = (\Delta
-        s)_m \sum_h \varsigma_{\lambda_m,h}^{\text{ext}}\, n_m, \f] where
+        The function determines the segments of the path as it crosses each of the cells in the
+        spatial grid and calculates the optical depth for each segment along the path (or
+        equivalently, for each crossed cell \f$m\f$) as \f[ \tau_m(\lambda_m) = (\Delta s)_m \sum_h
+        \varsigma_{\lambda_m,h}^{\text{ext}}\, n_m, \f] where
         \f$\varsigma_{\lambda_m,h}^{\text{abs}}\f$ is the extinction cross section corresponding to
         the \f$h\f$'th medium component at wavelength \f$\lambda_m\f$ and \f$n_{m,h}\f$ the number
         density in the cell with index \f$m\f$ corresponding to the \f$h\f$'th medium component,
         and where the sum runs over all medium components. The wavelength \f$\lambda_m\f$ is the
-        wavelength perceived by the medium in cell \f$m\f$ taking into account the bulk velocity in
-        that cell.
+        photon packet wavelength perceived by the medium in cell \f$m\f$ taking into account the
+        bulk velocity in that cell.
 
         Using these optical depth values per segment, the function determines the cumulative
         optical depth at the segment exit boundaries. The calculation is limited to the specified
         distance along the path. More precisely, all path segments with an entry boundary at a
         cumulative distance along the path smaller than the specified distance are included in the
-        calculation, and any remaining segments are skipped.
-
-        Note that, while the geometrical information is stored in the photon packet (because there
-        is not other obvious place for it to go), the optical depth information is not stored. */
-    double opticalDepth(PhotonPacket* pp, double distance);
+        calculation, and any remaining segments are skipped. */
+    double opticalDepth(const PhotonPacket* pp, double distance);
 
     /** This function initializes all values of the primary and/or secondary radiation field info
         tables to zero. In simulation modes that record the radiation field, the function should be

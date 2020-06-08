@@ -10,7 +10,7 @@
 #include "Random.hpp"
 #include "SpatialGridPath.hpp"
 #include "SpatialGridPlotFile.hpp"
-#include "SpatialGridSegmentGenerator.hpp"
+#include "PathSegmentGenerator.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -78,7 +78,7 @@ Position CartesianSpatialGrid::randomPositionInCell(int m) const
 
 //////////////////////////////////////////////////////////////////////
 
-class CartesianSpatialGrid::SegmentGenerator : public SpatialGridSegmentGenerator
+class CartesianSpatialGrid::MySegmentGenerator : public PathSegmentGenerator
 {
     const CartesianSpatialGrid* _grid{nullptr};
     int _i{-1}, _j{-1}, _k{-1};
@@ -86,8 +86,8 @@ class CartesianSpatialGrid::SegmentGenerator : public SpatialGridSegmentGenerato
     CurrentPosition _curpos{CurrentPosition::Unknown};
 
 public:
-    SegmentGenerator(const SpatialGridPath* path, const CartesianSpatialGrid* grid)
-        : SpatialGridSegmentGenerator(path), _grid(grid)
+    MySegmentGenerator(const SpatialGridPath* path, const CartesianSpatialGrid* grid)
+        : PathSegmentGenerator(path), _grid(grid)
     {}
 
     bool next() override
@@ -168,16 +168,11 @@ public:
     }
 };
 
-//////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////
 
-void CartesianSpatialGrid::path(SpatialGridPath* path) const
+PathSegmentGenerator* CartesianSpatialGrid::createPathSegmentGenerator(const SpatialGridPath* path) const
 {
-    CartesianSpatialGrid::SegmentGenerator generator(path, this);
-    path->clear();
-    while (generator.next())
-    {
-        path->addSegment(generator.m(), generator.ds());
-    }
+    return new MySegmentGenerator(path, this);
 }
 
 //////////////////////////////////////////////////////////////////////
