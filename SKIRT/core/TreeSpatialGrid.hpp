@@ -174,6 +174,10 @@ private:
                                // node id in each node corresponds to index in this vector
     vector<int> _cellindexv;   // cell index m corresponding to each node in nodev; -1 for nonleaf nodes
     vector<int> _idv;          // node id (or equivalently, index in nodev) for each cell (i.e. leaf node)
+
+    // allow our path segment generator to access our private data members
+    class MySegmentGenerator;
+    friend class MySegmentGenerator;
 };
 
 //////////////////////////////////////////////////////////////////////

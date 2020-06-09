@@ -5,6 +5,7 @@
 
 #include "TreeSpatialGrid.hpp"
 #include "Log.hpp"
+#include "PathSegmentGenerator.hpp"
 #include "Random.hpp"
 #include "SpatialGridPath.hpp"
 #include "SpatialGridPlotFile.hpp"
@@ -117,83 +118,106 @@ Position TreeSpatialGrid::randomPositionInCell(int m) const
     return random()->position(nodeForCellIndex(m)->extent());
 }
 
+//////////////////////////////////////////////////////////////////////
+
+class TreeSpatialGrid::MySegmentGenerator : public PathSegmentGenerator
+{
+    const TreeSpatialGrid* _grid{nullptr};
+    const TreeNode* _node{nullptr};
+    enum class CurrentPosition { Unknown, Inside, Outside };
+    CurrentPosition _curpos{CurrentPosition::Unknown};
+
+public:
+    MySegmentGenerator(const SpatialGridPath* path, const TreeSpatialGrid* grid)
+        : PathSegmentGenerator(path), _grid(grid)
+    {}
+
+    bool next() override
+    {
+        switch (_curpos)
+        {
+            case CurrentPosition::Unknown:
+            {
+                // try moving the photon packet inside the grid; if this is impossible, return an empty path
+                if (!moveInside(_grid->extent(), _grid->_eps))
+                {
+                    _curpos = CurrentPosition::Outside;
+                    return false;
+                }
+
+                // get the node containing the current location;
+                _node = _grid->root()->leafChild(r());
+                _curpos = CurrentPosition::Inside;
+
+                // if the photon packet started outside the grid, return the corresponding nonzero-length segment;
+                // otherwise fall through to determine the first actual segment
+                if (ds() > 0.) return true;
+            }
+
+            case CurrentPosition::Inside:
+            {
+                // determine the segment from the current position to the first cell wall
+                // and adjust the position and cell indices accordingly
+                double xnext = (kx() < 0.0) ? _node->xmin() : _node->xmax();
+                double ynext = (ky() < 0.0) ? _node->ymin() : _node->ymax();
+                double znext = (kz() < 0.0) ? _node->zmin() : _node->zmax();
+                double dsx = (fabs(kx()) > 1e-15) ? (xnext - rx()) / kx() : DBL_MAX;
+                double dsy = (fabs(ky()) > 1e-15) ? (ynext - ry()) / ky() : DBL_MAX;
+                double dsz = (fabs(kz()) > 1e-15) ? (znext - rz()) / kz() : DBL_MAX;
+
+                double ds;
+                TreeNode::Wall wall;
+                if (dsx <= dsy && dsx <= dsz)
+                {
+                    ds = dsx;
+                    wall = (kx() < 0.0) ? TreeNode::BACK : TreeNode::FRONT;
+                }
+                else if (dsy <= dsx && dsy <= dsz)
+                {
+                    ds = dsy;
+                    wall = (ky() < 0.0) ? TreeNode::LEFT : TreeNode::RIGHT;
+                }
+                else
+                {
+                    ds = dsz;
+                    wall = (kz() < 0.0) ? TreeNode::BOTTOM : TreeNode::TOP;
+                }
+                setSegment(-1, ds + _grid->_eps);  // fake info to propagate with extra epsilon
+                propagatex();
+                propagatey();
+                propagatez();
+                setSegment(_grid->cellIndexForNode(_node), ds);
+
+                // attempt to find the new node among the neighbors of the current node;
+                // this should not fail unless the new location is outside the grid,
+                // however on rare occasions it fails due to rounding errors (e.g. in a corner),
+                // thus we use top-down search as a fall-back
+                const TreeNode* oldnode = _node;
+                _node = _node->neighbor(wall, r());
+                if (!_node) _node = _grid->root()->leafChild(r());
+
+                // if we're outside the domain or stuck in the same node, terminate the path
+                if (!_node || _node == oldnode) _curpos = CurrentPosition::Outside;
+                return true;
+            }
+
+            case CurrentPosition::Outside:
+            {
+            }
+        }
+        return false;
+    }
+};
+
 ////////////////////////////////////////////////////////////////////
 
 void TreeSpatialGrid::path(SpatialGridPath* path) const
 {
-    // if the photon packet starts outside the dust grid, move it into the first grid cell that it will pass
-    Position bfr = path->moveInside(extent(), _eps);
-
-    // get the node containing the current location;
-    // if the position is not inside the grid, return an empty path
-    const TreeNode* node = root()->leafChild(bfr);
-    if (!node) return path->clear();
-
-    // get the starting point and direction
-    double x, y, z;
-    bfr.cartesian(x, y, z);
-    double kx, ky, kz;
-    path->direction().cartesian(kx, ky, kz);
-
-    // loop over nodes/path segments until we leave the grid
-    while (node)
+    MySegmentGenerator generator(path, this);
+    path->clear();
+    while (generator.next())
     {
-        double xnext = (kx < 0.0) ? node->xmin() : node->xmax();
-        double ynext = (ky < 0.0) ? node->ymin() : node->ymax();
-        double znext = (kz < 0.0) ? node->zmin() : node->zmax();
-        double dsx = (fabs(kx) > 1e-15) ? (xnext - x) / kx : DBL_MAX;
-        double dsy = (fabs(ky) > 1e-15) ? (ynext - y) / ky : DBL_MAX;
-        double dsz = (fabs(kz) > 1e-15) ? (znext - z) / kz : DBL_MAX;
-
-        double ds;
-        TreeNode::Wall wall;
-        if (dsx <= dsy && dsx <= dsz)
-        {
-            ds = dsx;
-            wall = (kx < 0.0) ? TreeNode::BACK : TreeNode::FRONT;
-        }
-        else if (dsy <= dsx && dsy <= dsz)
-        {
-            ds = dsy;
-            wall = (ky < 0.0) ? TreeNode::LEFT : TreeNode::RIGHT;
-        }
-        else
-        {
-            ds = dsz;
-            wall = (kz < 0.0) ? TreeNode::BOTTOM : TreeNode::TOP;
-        }
-        path->addSegment(cellIndexForNode(node), ds);
-        x += (ds + _eps) * kx;
-        y += (ds + _eps) * ky;
-        z += (ds + _eps) * kz;
-
-        // attempt to find the new node among the neighbors of the current node;
-        // this should not fail unless the new location is outside the grid,
-        // however on rare occasions it fails due to rounding errors (e.g. in a corner),
-        // thus we use top-down search as a fall-back
-        const TreeNode* oldnode = node;
-        node = node->neighbor(wall, Vec(x, y, z));
-        if (!node) node = root()->leafChild(Vec(x, y, z));
-
-        // if we're stuck in the same node...
-        if (node == oldnode)
-        {
-            // try to escape by advancing the position to the next representable coordinates
-            find<Log>()->warning("Photon packet seems stuck in spatial cell " + std::to_string(node->id())
-                                 + " -- escaping");
-            x = std::nextafter(x, (kx < 0.0) ? -DBL_MAX : DBL_MAX);
-            y = std::nextafter(y, (ky < 0.0) ? -DBL_MAX : DBL_MAX);
-            z = std::nextafter(z, (kz < 0.0) ? -DBL_MAX : DBL_MAX);
-            node = root()->leafChild(Vec(x, y, z));
-
-            // if that didn't work, terminate the path
-            if (node == oldnode)
-            {
-                find<Log>()->warning("Photon packet is stuck in spatial cell " + std::to_string(node->id())
-                                     + " -- terminating this path");
-                break;
-            }
-        }
+        path->addSegment(generator.m(), generator.ds());
     }
 }
 
