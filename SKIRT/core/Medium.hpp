@@ -82,8 +82,8 @@ public:
         always returned. */
     virtual bool hasVariableMix() const = 0;
 
-    /** This function returns true if the bulkVelocity() function for this medium may return a
-        nonzero vector for some positions. */
+    /** This function returns true if this medium may have a nonzero bulk velocity for some
+        positions. It may be called before setup of the receiving medium has completed. */
     virtual bool hasVelocity() const = 0;
 
     /** This function returns the bulk velocity of the medium at the specified position. */
@@ -96,6 +96,11 @@ public:
     /** This function returns the magnetic field vector for the medium at the specified position.
         */
     virtual Vec magneticField(Position bfr) const = 0;
+
+    /** This function returns the temperature of the medium at the specified position as defined in
+        the input model, or zero if the input model does not define a temperature for this medium
+        (at all, or at the given position). */
+    virtual double temperature(Position bfr) const = 0;
 
     /** This function returns the number density of the medium at the specified position. */
     virtual double numberDensity(Position bfr) const = 0;

@@ -154,13 +154,6 @@ public:
         value from a table that was pre-computed during setup. */
     double sectionExt(double lambda) const override;
 
-    /** This function returns the scattering albedo \f$\varpi_\lambda =
-        \varsigma_{\lambda}^{\text{sca}} / \varsigma_{\lambda}^{\text{ext}} =
-        \kappa_{\lambda}^{\text{sca}} / \kappa_{\lambda}^{\text{ext}}\f$ at wavelength
-        \f$\lambda\f$. It retrieves the requested value from a table that was pre-computed during
-        setup. */
-    double albedo(double lambda) const override;
-
     /** This function returns the scattering asymmetry parameter \f$g_\lambda =
         \left<\cos\theta\right>\f$ at wavelength \f$\lambda\f$, which is used with the
         HenyeyGreenstein scattering mode. It retrieves the requested value from a table that was
@@ -326,7 +319,6 @@ private:
     Array _sigmaabsv;  // indexed on ell
     Array _sigmascav;  // indexed on ell
     Array _sigmaextv;  // indexed on ell
-    Array _albedov;    // indexed on ell
     Array _asymmparv;  // indexed on ell
 
     // Mueller matrix coefficients

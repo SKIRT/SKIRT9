@@ -35,6 +35,7 @@ void PhotonPacket::launch(size_t historyIndex, double lambda, double L, Position
     else
         setUnpolarized();
     _hasObservedOpticalDepth = false;
+    _hasLyaScatteringInfo = false;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -70,16 +71,14 @@ void PhotonPacket::launchEmissionPeelOff(const PhotonPacket* pp, Direction bfk)
     else
         setUnpolarized();
     _hasObservedOpticalDepth = false;
+    _hasLyaScatteringInfo = false;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-void PhotonPacket::launchScatteringPeelOff(const PhotonPacket* pp, Direction bfk, Vec bfv, double w)
+void PhotonPacket::launchScatteringPeelOff(const PhotonPacket* pp, Direction bfk, double lambda, double w)
 {
-    if (bfv.isNull())
-        _lambda = pp->_lambda;
-    else
-        _lambda = shiftedEmissionWavelength(shiftedReceptionWavelength(pp->_lambda, pp->direction(), bfv), bfk, bfv);
+    _lambda = lambda;
     _W = pp->_W * w;
     _lambda0 = pp->_lambda0;
     _compIndex = pp->_compIndex;
@@ -89,6 +88,7 @@ void PhotonPacket::launchScatteringPeelOff(const PhotonPacket* pp, Direction bfk
     setDirection(bfk);
     setUnpolarized();
     _hasObservedOpticalDepth = false;
+    _hasLyaScatteringInfo = false;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -100,12 +100,13 @@ void PhotonPacket::propagate(double s)
 
 ////////////////////////////////////////////////////////////////////
 
-void PhotonPacket::scatter(Direction bfk, Vec bfv)
+void PhotonPacket::scatter(Direction bfk, double lambda)
 {
-    if (!bfv.isNull())
-        _lambda = shiftedEmissionWavelength(shiftedReceptionWavelength(_lambda, direction(), bfv), bfk, bfv);
     _nscatt++;
     setDirection(bfk);
+    _lambda = lambda;
+    _hasObservedOpticalDepth = false;
+    _hasLyaScatteringInfo = false;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -125,16 +126,16 @@ double PhotonPacket::shiftedEmissionWavelength(double sourceWavelength, Directio
 ////////////////////////////////////////////////////////////////////
 
 double PhotonPacket::shiftedReceptionWavelength(double photonWavelength, Direction photonDirection,
-                                                Vec receiverVelocity)
+                                                Vec receiverVelocity, double expansionVelocity)
 {
-    return photonWavelength / (1 - Vec::dot(photonDirection, receiverVelocity) / Constants::c());
+    return photonWavelength / (1 - (Vec::dot(photonDirection, receiverVelocity) + expansionVelocity) / Constants::c());
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double PhotonPacket::perceivedWavelength(Vec receiverVelocity) const
+double PhotonPacket::perceivedWavelength(Vec receiverVelocity, double expansionVelocity) const
 {
-    return shiftedReceptionWavelength(_lambda, direction(), receiverVelocity);
+    return shiftedReceptionWavelength(_lambda, direction(), receiverVelocity, expansionVelocity);
 }
 
 ////////////////////////////////////////////////////////////////////

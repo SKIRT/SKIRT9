@@ -159,10 +159,11 @@ void Snapshot::importParameters(const vector<SnapshotParameter>& parameters)
 
 ////////////////////////////////////////////////////////////////////
 
-void Snapshot::setMassDensityPolicy(double multiplier, double maxTemperature)
+void Snapshot::setMassDensityPolicy(double multiplier, double maxTemperature, bool useMetallicity)
 {
     _multiplier = multiplier;
     _maxTemperature = maxTemperature;
+    _useMetallicity = useMetallicity;
     _hasDensityPolicy = true;
 }
 

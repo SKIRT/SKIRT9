@@ -6,9 +6,6 @@
 #include "Configuration.hpp"
 #include "AllCellsLibrary.hpp"
 #include "Constants.hpp"
-#include "DustEmissionOptions.hpp"
-#include "DustSelfAbsorptionOptions.hpp"
-#include "ExtinctionOnlyOptions.hpp"
 #include "FatalError.hpp"
 #include "MaterialMix.hpp"
 #include "MaterialWavelengthRangeInterface.hpp"
@@ -90,7 +87,8 @@ void Configuration::setupSelfBefore()
 
     // retrieve extinction-only options
     if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::OligoExtinctionOnly
-        || sim->simulationMode() == MonteCarloSimulation::SimulationMode::ExtinctionOnly)
+        || sim->simulationMode() == MonteCarloSimulation::SimulationMode::ExtinctionOnly
+        || sim->simulationMode() == MonteCarloSimulation::SimulationMode::LyaWithDustExtinction)
     {
         _hasRadiationField = ms->extinctionOnlyOptions()->storeRadiationField();
         if (_hasRadiationField)
@@ -144,6 +142,50 @@ void Configuration::setupSelfBefore()
         _numIterationPackets = sim->numPackets() * ms->dustSelfAbsorptionOptions()->iterationPacketsMultiplier();
     }
 
+    // retrieve Lyman-alpha options
+    bool hasLymanAlpha = false;
+    if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::LyaWithDustExtinction)
+    {
+        hasLymanAlpha = true;
+        switch (ms->lyaOptions()->lyaAccelerationScheme())
+        {
+            case LyaOptions::LyaAccelerationScheme::None:
+                _lyaAccelerationScheme = Configuration::LyaAccelerationScheme::None;
+                break;
+            case LyaOptions::LyaAccelerationScheme::Constant:
+                _lyaAccelerationScheme = Configuration::LyaAccelerationScheme::Constant;
+                _lyaAccelerationStrength = ms->lyaOptions()->lyaAccelerationStrength();
+                break;
+            case LyaOptions::LyaAccelerationScheme::Variable:
+                _lyaAccelerationScheme = Configuration::LyaAccelerationScheme::Variable;
+                _lyaAccelerationStrength = ms->lyaOptions()->lyaAccelerationStrength();
+                break;
+        }
+        if (ms->lyaOptions()->includeHubbleFlow()) _lyaExpansionRate = sim->cosmology()->relativeExpansionRate();
+
+        // force moving media even if there are no bulk velocities (which would be exceptional anyway);
+        // this automatically disables some optimizations that would not work for Lyman-alpha media
+        _hasMovingMedia = true;
+    }
+
+    // verify that there is exactly one Lya medium component if required, and none if not required
+    int numLyaMedia = 0;
+    for (int h = 0; h != numMedia; ++h)
+    {
+        auto mode = ms->media()[h]->mix()->scatteringMode();
+        if (mode == MaterialMix::ScatteringMode::Lya || mode == MaterialMix::ScatteringMode::LyaPolarization)
+        {
+            numLyaMedia++;
+            _lyaMediumIndex = h;
+        }
+    }
+    if (hasLymanAlpha && numLyaMedia < 1)
+        throw FATALERROR("Lyman-alpha simulation mode requires a medium component with Lyman-alpha material mix");
+    if (hasLymanAlpha && numLyaMedia > 1)
+        throw FATALERROR("It is not allowed for more than one medium component to have a Lyman-alpha material mix");
+    if (!hasLymanAlpha && numLyaMedia > 0)
+        throw FATALERROR("Lyman-alpha material mix is allowed only with Lyman-alpha simulation mode");
+
     // retrieve symmetry dimensions
     if (_hasMedium)
     {
@@ -191,15 +233,24 @@ void Configuration::setupSelfBefore()
 
     // check for magnetic fields
     int numMagneticFields = 0;
-    if (_hasMedium)
-        for (auto medium : ms->media())
-            if (medium->hasMagneticField()) numMagneticFields++;
+    int magneticFieldIndex = -1;
+    for (int h = 0; h != numMedia; ++h)
+    {
+        if (ms->media()[h]->hasMagneticField())
+        {
+            numMagneticFields++;
+            magneticFieldIndex = h;
+        }
+    }
     if (numMagneticFields > 1)
         throw FATALERROR("It is not allowed for more than one medium component to define a magnetic field");
-    if (numMagneticFields == 1) _hasMagneticField = true;
+    if (numMagneticFields == 1)
+    {
+        _magneticFieldMediumIndex = magneticFieldIndex;
+    }
 
     // spheroidal particles require a magnetic field
-    if (_hasSpheroidalPolarization && !_hasMagneticField)
+    if (_hasSpheroidalPolarization && numMagneticFields != 1)
         throw FATALERROR("Polarization by spheroidal particles requires a magnetic field to determine alignment");
 
     // prohibit non-identity-mapping cell libraries in combination with variable material mixes
@@ -226,12 +277,20 @@ void Configuration::setupSelfAfter()
     log->info("  " + regime + "chromatic wavelength regime");
     string medium = _hasMedium ? "With" : "No";
     log->info("  " + medium + " transfer medium");
+    if (_lyaMediumIndex >= 0) log->info("  Including Lyman-alpha line transfer");
     if (_hasDustSelfAbsorption)
-        log->info("  Including dust emission with iterative calculation of dust self-absorption ");
+        log->info("  Including dust emission with iterative calculation of dust self-absorption");
     else if (_hasDustEmission)
         log->info("  Including dust emission");
-    if (_hasPolarization) log->info("  Medium requires support for polarization");
-    if (_hasMovingMedia) log->info("  Medium requires support for kinematics");
+    if (_hasPolarization) log->info("  Including support for polarization");
+    if (_hasMovingMedia) log->info("  Including support for kinematics");
+
+    // disable path length stretching for moving media (the wavelength shifts would be incorrectly sampled)
+    if (_hasMovingMedia && _pathLengthBias > 0.)
+    {
+        log->warning("  Disabling path length stretching to allow Doppler shifts to be properly sampled");
+        _pathLengthBias = 0.;
+    }
 
     // --- log model symmetries ---
 
@@ -265,7 +324,7 @@ void Configuration::setupSelfAfter()
     // --- other ---
 
     // if there is a magnetic field, there usually should be spheroidal particles
-    if (_hasMagneticField && !_hasSpheroidalPolarization)
+    if (_magneticFieldMediumIndex >= 0 && !_hasSpheroidalPolarization)
         log->warning("  No media have spheroidal particles that could align with the specified magnetic field");
 }
 

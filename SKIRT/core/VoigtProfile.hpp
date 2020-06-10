@@ -20,7 +20,15 @@ namespace VoigtProfile
         defined by \f[ H(a,x) = \frac{a}{\pi} \int_{-\infty}^\infty
         \frac{\mathrm{e}^{-y^2}\,\mathrm{d}y}{(y-x)^2+a^2} \approx \begin{cases} \mathrm{e}^{-x^2}
         & \text{core} \\ \dfrac{a}{\sqrt{\pi}x^2} & \text{wings} \end{cases} \f] where \f$a\f$ is a
-        parameter and the function is normalized so that \f$H(a,0) = 1\f$.
+        parameter and the function is normalized so that \f$H(a,0) \approx 1\f$ for \f$a\ll 1\f$.
+        For reference, the following table lists \f$H(a,0)\f$ for a few values of \f$a\f$.
+
+        | \f$a\f$ | \f$H(a,0)\f$ |
+        |---------|--------------|
+        | 0.03    | 0.967029     |
+        | 0.01    | 0.988815     |
+        ! 0.001   | 0.998873     |
+        ! 0.0001  | 0.999887     |
 
         We use the approximation provided by Smith et al. 2015 (MNRAS, 449, 4336–4362) in their
         Appendix A1 and Table A1. According to the authors and as confirmed in the analysis by

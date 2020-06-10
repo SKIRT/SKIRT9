@@ -36,7 +36,7 @@ class LyaDoublePeakedSEDFamily : public SEDFamily
 {
     ITEM_CONCRETE(LyaDoublePeakedSEDFamily, SEDFamily,
                   "a family of double-peaked spectra around the central Lyman-alpha wavelength")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(LyaDoublePeakedSEDFamily, "Level3")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(LyaDoublePeakedSEDFamily, "Lya|Level3")
 
     ITEM_END()
 

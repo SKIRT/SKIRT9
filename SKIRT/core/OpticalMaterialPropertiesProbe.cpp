@@ -85,14 +85,15 @@ void OpticalMaterialPropertiesProbe::probeSetup()
             for (int ell = 0; ell != numWavelengths; ++ell)
             {
                 double lambda = probeWavelengthGrid->wavelength(ell);
-
+                double sigmaExt = mix->sectionExt(lambda);
+                double sigmaAbs = mix->sectionAbs(lambda);
+                double sigmaSca = mix->sectionSca(lambda);
+                double albedo = sigmaExt ? sigmaSca / sigmaExt : 0.;
                 out.writeRow(
-                    vector<double>({units->owavelength(lambda), units->osection(mix->sectionExt(lambda)),
-                                    units->osection(mix->sectionAbs(lambda)), units->osection(mix->sectionSca(lambda)),
-                                    units->omasscoefficient(mix->sectionExt(lambda) / mix->mass()),
-                                    units->omasscoefficient(mix->sectionAbs(lambda) / mix->mass()),
-                                    units->omasscoefficient(mix->sectionSca(lambda) / mix->mass()), mix->albedo(lambda),
-                                    mix->asymmpar(lambda)}));
+                    vector<double>({units->owavelength(lambda), units->osection(sigmaExt), units->osection(sigmaAbs),
+                                    units->osection(sigmaSca), units->omasscoefficient(sigmaExt / mix->mass()),
+                                    units->omasscoefficient(sigmaAbs / mix->mass()),
+                                    units->omasscoefficient(sigmaSca / mix->mass()), albedo, mix->asymmpar(lambda)}));
             }
         }
     }

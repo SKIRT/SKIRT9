@@ -55,3 +55,13 @@ double FlatUniverseCosmology::luminosityDistance() const
 }
 
 ////////////////////////////////////////////////////////////////////
+
+double FlatUniverseCosmology::relativeExpansionRate() const
+{
+    double zp1 = redshift() + 1;
+    double H0 = reducedHubbleConstant() / (10. * Constants::pc());
+    double Om = matterDensityFraction();
+    return H0 * sqrt(Om * zp1 * zp1 * zp1 + (1. - Om));
+}
+
+////////////////////////////////////////////////////////////////////

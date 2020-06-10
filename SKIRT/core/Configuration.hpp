@@ -216,6 +216,36 @@ public:
         this fraction compared to the previous iteration. */
     double maxFractionOfPrevious() const { return _maxFractionOfPrevious; }
 
+    /** Returns true if the simulation includes treatment of the hydrogen Lyman-alpha line during
+        the primary photon cycle, and false if not. This value also corresponds to the presence or
+        absence of a medium component that has a material mix with the \c Lya or \c LyaPolarization
+        scattering mode. In the current implementation, there can be only a single such Lyman-alpha
+        medium component. This restriction may be lifted in the future. */
+    bool hasLymanAlpha() const { return _lyaMediumIndex >= 0; }
+
+    /** Returns the index of the medium component defining the neutral hydrogen interacting with
+        Lyman-alpha line transfer, if any. */
+    int lyaMediumIndex() const { return _lyaMediumIndex; }
+
+    /** This enumeration lists the supported Lyman-alpha acceleration schemes. */
+    enum class LyaAccelerationScheme { None, Constant, Variable };
+
+    /** Returns the enumeration value determining the accelaration scheme to be used for
+        Lyman-alpha line treatment. The value is relevant only when hasLymanAlpha() returns true.
+        */
+    LyaAccelerationScheme lyaAccelerationScheme() const { return _lyaAccelerationScheme; }
+
+    /** Returns the strength of the Lyman-alpha acceleration scheme to be applied. The value is
+        relevant only when hasLymanAlpha() returns true and lyaAccelerationScheme() returns \c
+        Constant or \c Variable. */
+    double lyaAccelerationStrength() const { return _lyaAccelerationStrength; }
+
+    /** If inclusion of the Hubble flow for Lyman-alpha transfer is enabled, this function returns
+        the relative expansion rate of the universe in which the model resides. If inclusion of the
+        Hubble flow is disabled, or if the simulation does not include treatment of the hydrogen
+        Lyman-alpha line, this function returns zero. */
+    double lyaExpansionRate() const { return _lyaExpansionRate; }
+
     /** Returns the symmetry dimension of the input model, including sources and media, if present.
         A value of 1 means spherical symmetry, 2 means axial symmetry and 3 means none of these
         symmetries. */
@@ -252,7 +282,10 @@ public:
         distribution that may have nonzero strength for some positions, or false if none of the
         media define a magnetic field. It is not allowed for multiple medium components to define
         a magnetic field (a fatal error is raised during setup when this happens). */
-    bool hasMagneticField() const { return _hasMagneticField; }
+    bool hasMagneticField() const { return _magneticFieldMediumIndex >= 0; }
+
+    /** Returns the index of the medium component defining the magnetic field, if any. */
+    int magneticFieldMediumIndex() const { return _magneticFieldMediumIndex; }
 
     //======================== Data Members ========================
 
@@ -305,6 +338,12 @@ private:
     double _maxFractionOfPrimary{0.01};
     double _maxFractionOfPrevious{0.03};
 
+    // Lyman-alpha properties
+    int _lyaMediumIndex{-1};
+    LyaAccelerationScheme _lyaAccelerationScheme{LyaAccelerationScheme::Variable};
+    double _lyaAccelerationStrength{1.};
+    double _lyaExpansionRate{0.};
+
     // properties derived from the configuration at large
     int _modelDimension{0};
     int _gridDimension{0};
@@ -313,7 +352,7 @@ private:
     bool _hasVariableMedia{false};
     bool _hasPolarization{false};
     bool _hasSpheroidalPolarization{false};
-    bool _hasMagneticField{false};
+    int _magneticFieldMediumIndex{-1};
 };
 
 ////////////////////////////////////////////////////////////////////

@@ -37,7 +37,7 @@ class Position;
     employing parallelization, each of the threads in each of the processes requires a different
     random sequence. On the other hand, in this mode, for serialized tasks, the (single) thread
     employed in each of the processes must receive the same random sequence. This is important for
-    functions that rely on randomness but need to produce the dame result in every parallel
+    functions that rely on randomness but need to produce the same result in every parallel
     process.
 
     The recommended use of the Random class is to include a single instance in each simulation

@@ -117,18 +117,16 @@ public:
 
     /** This function initializes a peel off photon packet being sent to an instrument for a
         scattering event. The arguments specify the base photon packet from which the peel off
-        derives, the direction towards the instrument, the bulk velocity of the scatterer, and the
-        weight bias (as a multiplication factor). The function copies the relevant values from the
-        base photon packet to the peel off photon packet, updates the peel off direction and
-        weight, and increments the scattering counter. If the specified bulk velocity is nonzero,
-        the wavelength is adjusted for both the incoming and outgoing Doppler shifts during the
-        scattering event.
+        derives, the direction towards the instrument, the new wavelength, and the weight bias (as
+        a multiplication factor). The function copies the relevant values from the base photon
+        packet to the peel off photon packet, updates the peel off direction, the wavelength and
+        weight, and increments the scattering counter.
 
         The peel off photon packet is initialized to an unpolarized state; the polarization state
         should be properly updated after the launch through the StokesVector class functions. The
         current path of the peel off photon packet is invalidated, and all information about its
         previous life cycle is lost. The base photon packet remains unchanged. */
-    void launchScatteringPeelOff(const PhotonPacket* pp, Direction bfk, Vec bfv, double w);
+    void launchScatteringPeelOff(const PhotonPacket* pp, Direction bfk, double lambda, double w);
 
     /** This function causes the propagation of the photon packet over a physical distance \f$s\f$.
         It updates the position from \f${\bf{r}}\f$ to \f${\bf{r}}+s\,{\bf{k}}\f$, where
@@ -136,13 +134,12 @@ public:
         path. */
     void propagate(double s);
 
-    /** This function scatters the photon packet into the new direction \f${\bf{k}}\f$. It
-        increments the counter that keeps track of scattering events and updates the direction,
-        invalidating the current path. If the specified bulk velocity is nonzero, the wavelength is
-        adjusted for both the incoming and outgoing Doppler shifts during the scattering event. The
+    /** This function scatters the photon packet into the new direction \f${\bf{k}}\f$ with the new
+        wavelength \f$\lambda\f$. It increments the counter that keeps track of scattering events,
+        updates the direction, invalidating the current path, and updates the wavelength. The
         polarization remains unchanged; it should be properly updated through the StokesVector
         class functions. */
-    void scatter(Direction bfk, Vec bfv);
+    void scatter(Direction bfk, double lambda);
 
     /** This function applies the given weight bias given as a multiplication factor. */
     void applyBias(double w);
@@ -183,7 +180,7 @@ public:
 
     // ------- Calculating Doppler shifts -------
 
-private:
+public:
     /** This function returns the Doppler-shifted wavelength that should be assigned to a photon
         packet (i.e. the wavelength relative to the model coordinate frame) when the packet is
         emitted from a moving source (with non-relativistic velocity). The arguments specify the
@@ -198,20 +195,25 @@ private:
     /** This function returns the Doppler-shifted wavelength perceived by a moving receiver (with
         non-relativistic velocity) for an incoming photon packet. The arguments specify the photon
         packet wavelength \f$\lambda_\text{ph}\f$ in the model coordinate frame, the direction
-        \f${\bf{k}}_\text{ph}\f$ of the incoming photon packet, and the velocity of the receiver
-        \f${\bf{v}}_\text{rec}\f$ relative to the model coordinate frame. The wavelength
-        \f$\lambda_\text{rec}\f$ perceived by the receiver can then be written as \f[ \left.
-        \lambda_\text{rec} = \lambda_\text{ph} \middle/ \left(1 - \frac{{\bf{k}}_\text{ph} \cdot
-        {\bf{v}}_\text{rec}}{c} \right) \right. \f] where \f$c\f$ is the speed of light in vacuum.
-        */
-    static double shiftedReceptionWavelength(double photonWavelength, Direction photonDirection, Vec receiverVelocity);
+        \f${\bf{k}}_\text{ph}\f$ of the incoming photon packet, the velocity of the receiver
+        \f${\bf{v}}_\text{rec}\f$ relative to the model coordinate frame, and the expansion
+        velocity \f$\Delta v_\mathrm{h}\f$ of the universe relative to the starting position of the
+        photon packet's current path (or zero if cosmological expansion is not taken into account).
 
-public:
+        The wavelength \f$\lambda_\text{rec}\f$ perceived by the receiver can then be written as
+        \f[ \left. \lambda_\text{rec} = \lambda_\text{ph} \middle/ \left(1 -
+        \frac{{\bf{k}}_\text{ph} \cdot {\bf{v}}_\text{rec} + \Delta v_\mathrm{h}}{c} \right)
+        \right. \f] where \f$c\f$ is the speed of light in vacuum. */
+    static double shiftedReceptionWavelength(double photonWavelength, Direction photonDirection, Vec receiverVelocity,
+                                             double expansionVelocity);
+
     /** This function returns the Doppler-shifted wavelength perceived for this photon packet by a
-        moving receiver (with non-relativistic velocity). The argument specifies the velocity of
-        the receiver \f${\bf{v}}_\text{rec}\f$ relative to the model coordinate frame. See the
-        shiftedReceptionWavelength() function for more details. */
-    double perceivedWavelength(Vec receiverVelocity) const;
+        moving receiver (with non-relativistic velocity). The arguments specify the velocity of the
+        receiver \f${\bf{v}}_\text{rec}\f$ relative to the model coordinate frame and the expansion
+        velocity \f$\Delta v_\mathrm{h}\f$ of the universe relative to the starting position of the
+        photon packet's current path (or zero if cosmological expansion is not taken into account).
+        See the shiftedReceptionWavelength() function for more details. */
+    double perceivedWavelength(Vec receiverVelocity, double expansionVelocity) const;
 
     /** This function returns the luminosity \f$L\f$ represented by the photon packet, calculated
         from its current weight and the specified perceived wavelength. */
@@ -219,6 +221,7 @@ public:
 
     // ------- Caching observed optical depth -------
 
+public:
     /** This function stores the most recently "observed" optical depth, calculated externally, in
         a data member. This capability is offered so that consecutive instruments with the same
         observer type, position and viewing direction can avoid recalculating the optical depth. */
@@ -237,6 +240,37 @@ public:
         offered so that consecutive instruments with the same observer type, position and viewing
         direction can avoid recalculating the optical depth. */
     double observedOpticalDepth() const { return _observedOpticalDepth; }
+
+    // ------- Caching Lya scattering info -------
+
+public:
+    /** This function stores externally calculated information on the Lyman-alpha scattering event
+        currently being processed in data members. This capability is offered so that the actual
+        scattering event and all its peel-offs can use the same atom velocity and phase function.
+        */
+    void setLyaScatteringInfo(const std::pair<Vec, bool>& scattInfo)
+    {
+        std::tie(_lyaAtomVelocity, _lyaDipole) = scattInfo;
+        _hasLyaScatteringInfo = true;
+    }
+
+    /** This function returns true if valid Lyman-alpha scattering information has been stored
+        since the latest photon packet launch or scattering event. Otherwise the function returns
+        false. */
+    bool hasLyaScatteringInfo() const { return _hasLyaScatteringInfo; }
+
+    /** If hasLyaScatteringInfo() returns true, this function returns the most recently stored
+        velocity vector of the scattering atom relative to the local gas frame. Otherwise, it
+        returns some meaningless value. This capability is offered so that the actual Lyman-alpha
+        scattering event and all its peel-offs can use the same atom velocity. */
+    Vec lyaAtomVelocity() const { return _lyaAtomVelocity; }
+
+    /** If hasLyaScatteringInfo() returns true, this function returns the most recently stored
+        phase function choice, i.e., true if scattering as a dipole, false if scattering
+        isotropically. Otherwise, the function returns some meaningless value. This capability is
+        offered so that the actual Lyman-alpha scattering event and all its peel-offs can use the
+        same phase function. */
+    bool lyaDipole() const { return _lyaDipole; }
 
     // ------- Data members -------
 
@@ -262,6 +296,11 @@ private:
     // observed optical depth
     double _observedOpticalDepth{0.};      // optical depth calculated for peel-off to an instrument
     bool _hasObservedOpticalDepth{false};  // true if the above field holds a valid value for this packet
+
+    // Lyman-alpha scattering information
+    Vec _lyaAtomVelocity;               // the velocity vector of the scattering atom in the local gas frame
+    bool _lyaDipole{false};             // true if scattering as a dipole, false if scattering isotropically
+    bool _hasLyaScatteringInfo{false};  // true if the above field holds a valid value for this packet
 };
 
 ////////////////////////////////////////////////////////////////////

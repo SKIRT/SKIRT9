@@ -76,6 +76,18 @@ Vec GeometricMedium::magneticField(Position bfr) const
 
 ////////////////////////////////////////////////////////////////////
 
+double GeometricMedium::temperature(Position /*bfr*/) const
+{
+    if (materialMix()->isGas())
+    {
+        Array dummyJv;
+        return materialMix()->equilibriumTemperature(dummyJv);
+    }
+    return 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
 double GeometricMedium::numberDensity(Position bfr) const
 {
     return _number * geometry()->density(bfr);

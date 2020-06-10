@@ -40,6 +40,7 @@
 #include "CylindricalClipGeometryDecorator.hpp"
 #include "CylindricalVectorField.hpp"
 #include "DefaultDustTemperatureCutsProbe.hpp"
+#include "DefaultGasTemperatureCutsProbe.hpp"
 #include "DefaultMagneticFieldCutsProbe.hpp"
 #include "DefaultMediaDensityCutsProbe.hpp"
 #include "DefaultMediumVelocityCutsProbe.hpp"
@@ -79,6 +80,7 @@
 #include "FrameInstrument.hpp"
 #include "FullInstrument.hpp"
 #include "GammaGeometry.hpp"
+#include "GasTemperaturePerCellProbe.hpp"
 #include "GaussianGeometry.hpp"
 #include "GeometricMedium.hpp"
 #include "GeometricSource.hpp"
@@ -110,6 +112,8 @@
 #include "LyaDoublePeakedSEDFamily.hpp"
 #include "LyaGaussianSED.hpp"
 #include "LyaGaussianSEDFamily.hpp"
+#include "LyaNeutralHydrogenMaterialMix.hpp"
+#include "LyaOptions.hpp"
 #include "LyaSEDDecorator.hpp"
 #include "LyaSEDFamilyDecorator.hpp"
 #include "MRNDustMix.hpp"
@@ -154,6 +158,7 @@
 #include "PerspectiveInstrument.hpp"
 #include "PhotonPacketOptions.hpp"
 #include "PlanarDustTemperatureCutsProbe.hpp"
+#include "PlanarGasTemperatureCutsProbe.hpp"
 #include "PlanarMagneticFieldCutsProbe.hpp"
 #include "PlanarMediaDensityCutsProbe.hpp"
 #include "PlanarMediumVelocityCutsProbe.hpp"
@@ -185,6 +190,7 @@
 #include "ShellGeometry.hpp"
 #include "SineSquarePolarizationProfile.hpp"
 #include "SingleGrainSizeDistribution.hpp"
+#include "SingleWavelengthSED.hpp"
 #include "SiteListTreePolicy.hpp"
 #include "SourceSystem.hpp"
 #include "SpatialCellPropertiesProbe.hpp"
@@ -294,6 +300,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<FSPSSED>();
     ItemRegistry::add<MappingsSED>();
     ItemRegistry::add<TabulatedSED>();
+    ItemRegistry::add<SingleWavelengthSED>();
     ItemRegistry::add<FileSED>();
     ItemRegistry::add<ListSED>();
     ItemRegistry::add<LyaGaussianSED>();
@@ -449,6 +456,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ExtinctionOnlyOptions>();
     ItemRegistry::add<DustEmissionOptions>();
     ItemRegistry::add<DustSelfAbsorptionOptions>();
+    ItemRegistry::add<LyaOptions>();
 
     // material normalizations
     ItemRegistry::add<MaterialNormalization>();
@@ -482,6 +490,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ConfigurableDustMix>();
 
     ItemRegistry::add<ElectronMix>();
+    ItemRegistry::add<LyaNeutralHydrogenMaterialMix>();
 
     // material mix families
     ItemRegistry::add<MaterialMixFamily>();
@@ -592,6 +601,10 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<DustAbsorptionPerCellProbe>();
     ItemRegistry::add<DustEmissivityProbe>();
     ItemRegistry::add<DustEmissionWavelengthGridProbe>();
+
+    ItemRegistry::add<DefaultGasTemperatureCutsProbe>();
+    ItemRegistry::add<PlanarGasTemperatureCutsProbe>();
+    ItemRegistry::add<GasTemperaturePerCellProbe>();
 
     // Monte Carlo simulations
     ItemRegistry::add<MonteCarloSimulation>();

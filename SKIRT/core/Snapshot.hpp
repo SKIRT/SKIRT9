@@ -174,17 +174,20 @@ public:
         the importMass() and importDensity() functions was invoked, attempting to obtain mass or
         mass density values results in undefined behavior.
 
-        Otherwise, if the \em maxTemperature argument is positive, and the temperature field is
-        being imported and its value for a given entity is positive as well, and the imported
-        temperature is above the maximum temperature, then the density corresponding to this entity
-        is considered to be zero.
+        If the policy is set during configuration, the argument values determine the heuristic for
+        calculating the mass or density for each entity:
 
-        Otherwise, the intrinsic mass or mass density is obtained from the mass or density fields
-        using a mechanism that depends on the snapshot type and possibly on the configuration.
-        Then, this value is multiplied by the metallicity fraction if this field has been imported,
-        and then it is multiplied by the value of the \em multiplier argument to obtain the final
-        result. */
-    void setMassDensityPolicy(double multiplier = 1., double maxTemperature = 0.);
+        - If the \em maxTemperature argument is positive, and the temperature field is being
+        imported and its value for a given entity is positive as well, and the imported temperature
+        is above the maximum temperature, then the mass or density corresponding to this entity is
+        considered to be zero.
+
+        - Otherwise, the intrinsic mass or mass density is obtained from the mass or density fields
+        using a mechanism that depends on the snapshot type and possibly on the configuration. If
+        the \em useMetallicity argument is true, and the metallicity field is being imported, this
+        intrinsic value is multiplied by the metallicity fraction. Finally, it is multiplied by the
+        value of the \em multiplier argument to obtain the final result. */
+    void setMassDensityPolicy(double multiplier, double maxTemperature, bool useMetallicity);
 
     /** This function returns true if the snapshot holds number (density) values, and false if it
         holds mass (density) values (or if no mass or density column is being imported). */
@@ -249,9 +252,14 @@ protected:
     bool hasMassDensityPolicy() const { return _hasDensityPolicy; }
 
     /** This function returns true if the user configured the mass or mass density policy with a
-        nonzero temperature and the temperature field is being imported. Returns false otherwise.
-        For use by subclasses. */
-    bool hasTemperatureCutoff() const { return _hasDensityPolicy && _maxTemperature > 0 && _temperatureIndex >= 0; }
+        request to use the metallicity, and the metallicity field is being imported. Returns false
+        otherwise. For use by subclasses. */
+    bool useMetallicity() const { return _hasDensityPolicy && _useMetallicity && _metallicityIndex >= 0; }
+
+    /** This function returns true if the user configured the mass or mass density policy with a
+        nonzero maximum temperature and the temperature field is being imported. Returns false
+        otherwise. For use by subclasses. */
+    bool useTemperatureCutoff() const { return _hasDensityPolicy && _maxTemperature > 0 && _temperatureIndex >= 0; }
 
     //============== Interrogation (to be implemented in subclass) =============
 
@@ -268,6 +276,16 @@ public:
         of whether a position is explicitly being imported or not. If the index is out of range,
         the behavior is undefined. */
     virtual Position position(int m) const = 0;
+
+    /** This function returns the temperature of the entity with index \f$0\le m \le
+        N_\mathrm{ent}-1\f$. If the temperature is not being imported, or the index is out of
+        range, the behavior is undefined. */
+    virtual double temperature(int m) const = 0;
+
+    /** This function returns the temperature of the entity nearest to (or at) the specified point
+        \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If the
+        temperature is not being imported, the behavior is undefined. */
+    virtual double temperature(Position bfr) const = 0;
 
     /** This function returns the velocity of the entity with index \f$0\le m \le
         N_\mathrm{ent}-1\f$. If the velocity is not being imported, or the index is out of range,
@@ -387,6 +405,7 @@ private:
     // mass and mass density policy
     double _multiplier{0.};
     double _maxTemperature{0.};
+    bool _useMetallicity{false};
     bool _hasDensityPolicy{false};
     bool _holdsNumber{false};  // true if snapshot holds number (density); false if it holds mass (density)
 };
