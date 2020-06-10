@@ -7,10 +7,10 @@
 #include "FatalError.hpp"
 #include "Log.hpp"
 #include "NR.hpp"
+#include "PathSegmentGenerator.hpp"
 #include "Random.hpp"
 #include "SpatialGridPath.hpp"
 #include "SpatialGridPlotFile.hpp"
-#include "PathSegmentGenerator.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -82,39 +82,30 @@ class CartesianSpatialGrid::MySegmentGenerator : public PathSegmentGenerator
 {
     const CartesianSpatialGrid* _grid{nullptr};
     int _i{-1}, _j{-1}, _k{-1};
-    enum class CurrentPosition { Unknown, Inside, Outside };
-    CurrentPosition _curpos{CurrentPosition::Unknown};
 
 public:
-    MySegmentGenerator(const SpatialGridPath* path, const CartesianSpatialGrid* grid)
-        : PathSegmentGenerator(path), _grid(grid)
-    {}
+    MySegmentGenerator(const CartesianSpatialGrid* grid) : _grid(grid) {}
 
     bool next() override
     {
-        switch (_curpos)
+        switch (state())
         {
-            case CurrentPosition::Unknown:
+            case State::Unknown:
             {
                 // try moving the photon packet inside the grid; if this is impossible, return an empty path
-                if (!moveInside(_grid->extent(), 1e-12 * _grid->extent().widths().norm()))
-                {
-                    _curpos = CurrentPosition::Outside;
-                    return false;
-                }
+                if (!moveInside(_grid->extent(), 1e-12 * _grid->extent().widths().norm())) return false;
 
                 // determine which grid cell we are in
                 _i = NR::locateClip(_grid->_xv, rx());
                 _j = NR::locateClip(_grid->_yv, ry());
                 _k = NR::locateClip(_grid->_zv, rz());
-                _curpos = CurrentPosition::Inside;
 
                 // if the photon packet started outside the grid, return the corresponding nonzero-length segment;
                 // otherwise fall through to determine the first actual segment
                 if (ds() > 0.) return true;
             }
 
-            case CurrentPosition::Inside:
+            case State::Inside:
             {
                 // determine the segment from the current position to the first cell wall
                 // and adjust the position and cell indices accordingly
@@ -133,7 +124,7 @@ public:
                     propagatey();
                     propagatez();
                     _i += (kx() < 0.0) ? -1 : 1;
-                    if (_i >= _grid->_Nx || _i < 0) _curpos = CurrentPosition::Outside;
+                    if (_i >= _grid->_Nx || _i < 0) setState(State::Outside);
                 }
                 else if (dsy < dsx && dsy <= dsz)
                 {
@@ -142,7 +133,7 @@ public:
                     propagatex();
                     propagatez();
                     _j += (ky() < 0.0) ? -1 : 1;
-                    if (_j >= _grid->_Ny || _j < 0) _curpos = CurrentPosition::Outside;
+                    if (_j >= _grid->_Ny || _j < 0) setState(State::Outside);
                 }
                 else if (dsz < dsx && dsz < dsy)
                 {
@@ -151,7 +142,7 @@ public:
                     propagatex();
                     propagatey();
                     _k += (kz() < 0.0) ? -1 : 1;
-                    if (_k >= _grid->_Nz || _k < 0) _curpos = CurrentPosition::Outside;
+                    if (_k >= _grid->_Nz || _k < 0) setState(State::Outside);
                 }
                 else
                 {
@@ -160,7 +151,7 @@ public:
                 return true;
             }
 
-            case CurrentPosition::Outside:
+            case State::Outside:
             {
             }
         }
@@ -168,16 +159,9 @@ public:
     }
 };
 
-//////////////////////////////////////////////////////////////////////
-
-void CartesianSpatialGrid::path(SpatialGridPath* path) const
+std::unique_ptr<PathSegmentGenerator> CartesianSpatialGrid::createPathSegmentGenerator() const
 {
-    MySegmentGenerator generator(path, this);
-    path->clear();
-    while (generator.next())
-    {
-        path->addSegment(generator.m(), generator.ds());
-    }
+    return std::make_unique<MySegmentGenerator>(this);
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -114,7 +114,7 @@ public:
         zero-based index \f$i\f$ \em and all following path segments to the specified value. This
         function can be used when the caller knows that the remaining path segments have no optical
         depth, or that some maximum meaningful optical depth has been reached. If the index is out
-        of range, undefined behavior results. */
+        of range, undefined behavior results. TO DO: remove this function. */
     void setTerminalOpticalDepth(int i, double tau)
     {
         int n = _segments.size();

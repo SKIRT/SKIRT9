@@ -17,10 +17,7 @@ class PathSegmentGenerator
 
 public:
     /** TO DO. */
-    PathSegmentGenerator(const SpatialGridPath* path)
-        : _rx{path->position().x()}, _ry{path->position().y()}, _rz{path->position().z()}, _kx{path->direction().x()},
-          _ky{path->direction().y()}, _kz{path->direction().z()}
-    {}
+    PathSegmentGenerator() {}
 
     /** TO DO. */
     virtual ~PathSegmentGenerator() {}
@@ -28,6 +25,14 @@ public:
     // ------- Generating and retrieving path segments -------
 
 public:
+    /** TO DO. */
+    void start(const SpatialGridPath* path)
+    {
+        _state = State::Unknown;
+        path->position().cartesian(_rx, _ry, _rz);
+        path->direction().cartesian(_kx, _ky, _kz);
+    }
+
     /** True if segment is available; false if no more segments. */
     virtual bool next() = 0;
 
@@ -40,15 +45,20 @@ public:
     // ------- Accessing internal state - for use by subclasses -------
 
 protected:
+    enum class State { Unknown, Inside, Outside };
+    State state() const { return _state; }
+    void setState(State state) { _state = state; }
+
     Position r() { return Position(_rx, _ry, _rz); }
 
-    double rx() { return _rx; }
-    double ry() { return _ry; }
-    double rz() { return _rz; }
+    /** TO DO: streamline these functions and their usage by the various grids) */
+    double rx() const { return _rx; }
+    double ry() const { return _ry; }
+    double rz() const { return _rz; }
 
-    double kx() { return _kx; }
-    double ky() { return _ky; }
-    double kz() { return _kz; }
+    double kx() const { return _kx; }
+    double ky() const { return _ky; }
+    double kz() const { return _kz; }
 
     void setrx(double rx) { _rx = rx; }
     void setry(double ry) { _ry = ry; }
@@ -70,12 +80,13 @@ protected:
         _ds = ds;
     }
 
-    /** sets the segment and adjusts the position; returns true if position is now inside */
+    /** sets the segment and adjusts the position and state; returns true if position is now inside */
     bool moveInside(const Box& box, double eps);
 
     // ------- Data members -------
 
 private:
+    State _state{State::Unknown};
     double _rx{0.};
     double _ry{0.};
     double _rz{0.};

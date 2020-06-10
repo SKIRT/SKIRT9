@@ -105,7 +105,8 @@ public:
         \f${\cal{X}}_3\f$ three uniform deviates. */
     Position randomPositionInCell(int m) const override;
 
-    /** This function calculates a path through the grid. The SpatialGridPath object passed as an
+    /** TO DO.
+        This function calculates a path through the grid. The SpatialGridPath object passed as an
         argument specifies the starting position \f${\bf{r}}\f$ and the direction \f${\bf{k}}\f$
         for the path. The data on the calculated path are added back into the same object.
 
@@ -122,7 +123,7 @@ public:
 
         To determine the cell index of the "next cell" in this algorithm, the function uses the
         neighbor lists constructed for each tree node during setup. */
-    void path(SpatialGridPath* path) const override;
+    std::unique_ptr<PathSegmentGenerator> createPathSegmentGenerator() const override;
 
     /** This function writes the topology of the tree to the specified text file in a simple,
         proprietary format. After a brief descriptive header, it writes lines that each contain

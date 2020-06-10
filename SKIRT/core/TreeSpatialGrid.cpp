@@ -124,37 +124,28 @@ class TreeSpatialGrid::MySegmentGenerator : public PathSegmentGenerator
 {
     const TreeSpatialGrid* _grid{nullptr};
     const TreeNode* _node{nullptr};
-    enum class CurrentPosition { Unknown, Inside, Outside };
-    CurrentPosition _curpos{CurrentPosition::Unknown};
 
 public:
-    MySegmentGenerator(const SpatialGridPath* path, const TreeSpatialGrid* grid)
-        : PathSegmentGenerator(path), _grid(grid)
-    {}
+    MySegmentGenerator(const TreeSpatialGrid* grid) : _grid(grid) {}
 
     bool next() override
     {
-        switch (_curpos)
+        switch (state())
         {
-            case CurrentPosition::Unknown:
+            case State::Unknown:
             {
                 // try moving the photon packet inside the grid; if this is impossible, return an empty path
-                if (!moveInside(_grid->extent(), _grid->_eps))
-                {
-                    _curpos = CurrentPosition::Outside;
-                    return false;
-                }
+                if (!moveInside(_grid->extent(), _grid->_eps)) return false;
 
                 // get the node containing the current location;
                 _node = _grid->root()->leafChild(r());
-                _curpos = CurrentPosition::Inside;
 
                 // if the photon packet started outside the grid, return the corresponding nonzero-length segment;
                 // otherwise fall through to determine the first actual segment
                 if (ds() > 0.) return true;
             }
 
-            case CurrentPosition::Inside:
+            case State::Inside:
             {
                 // determine the segment from the current position to the first cell wall
                 // and adjust the position and cell indices accordingly
@@ -196,12 +187,14 @@ public:
                 _node = _node->neighbor(wall, r());
                 if (!_node) _node = _grid->root()->leafChild(r());
 
+                // TO DO: add extra attempt to escape the node (advance to next representable double)
+
                 // if we're outside the domain or stuck in the same node, terminate the path
-                if (!_node || _node == oldnode) _curpos = CurrentPosition::Outside;
+                if (!_node || _node == oldnode) setState(State::Outside);
                 return true;
             }
 
-            case CurrentPosition::Outside:
+            case State::Outside:
             {
             }
         }
@@ -211,14 +204,9 @@ public:
 
 ////////////////////////////////////////////////////////////////////
 
-void TreeSpatialGrid::path(SpatialGridPath* path) const
+std::unique_ptr<PathSegmentGenerator> TreeSpatialGrid::createPathSegmentGenerator() const
 {
-    MySegmentGenerator generator(path, this);
-    path->clear();
-    while (generator.next())
-    {
-        path->addSegment(generator.m(), generator.ds());
-    }
+    return std::make_unique<MySegmentGenerator>(this);
 }
 
 ////////////////////////////////////////////////////////////////////
