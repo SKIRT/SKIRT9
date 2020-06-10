@@ -22,13 +22,14 @@ void HEALPixSkyInstrument::setupSelfBefore()
     if (Vec::cross(co, up).norm() < 1e-20)
         throw FATALERROR("Upwards direction cannot be parallel to viewing direction");
 
-    // set number of pixels using fixed aspect ratio
-    _Nx = 2 * _numPixelsY;
-    _Ny = _numPixelsY;
+    // we map the 12 * _Nside^2 HEALPix pixels to a square image with 16 * _Nside^2 pixels
+    _Nx = 4 * _Nside;
+    _Ny = 4 * _Nside;
 
     // determine linear size of a single pixel
-    // assume: square pixels; fraction of effective pixels pi/4; total area sphere with radius R
-    _s = sqrt(8) * _radius / _numPixelsY;
+    // each HEALPix pixel has the same spherical area pi/(3*_Nside^2)
+    // we assume that the pixels are squares with this surface area
+    _s = sqrt(M_PI / (3 * _Nside * _Nside));
 
     // setup the transformation from world to observer coordinates
 
@@ -79,10 +80,9 @@ void HEALPixSkyInstrument::setupSelfBefore()
 void HEALPixSkyInstrument::determineSameObserverAsPreceding(const Instrument* precedingInstrument)
 {
     auto other = dynamic_cast<const HEALPixSkyInstrument*>(precedingInstrument);
-    if (other && projection()->type() == other->projection()->type() && radius() == other->radius()
-        && observerX() == other->observerX() && observerY() == other->observerY() && observerZ() == other->observerZ()
-        && crossX() == other->crossX() && crossY() == other->crossY() && crossZ() == other->crossZ()
-        && upX() == other->upX() && upY() == other->upY() && upZ() == other->upZ())
+    if (other && radius() == other->radius() && observerX() == other->observerX() && observerY() == other->observerY()
+        && observerZ() == other->observerZ() && crossX() == other->crossX() && crossY() == other->crossY()
+        && crossZ() == other->crossZ() && upX() == other->upX() && upY() == other->upY() && upZ() == other->upZ())
     {
         setSameObserverAsPreceding();
     }
@@ -151,19 +151,41 @@ void HEALPixSkyInstrument::detect(PhotonPacket* pp)
     Position p(_transform.transform(pp->position()));
 
     // get the spherical coordinates of the launch position relative to the observer
-    double d, inc, azi;
-    p.spherical(d, inc, azi);
+    double d, theta, phi;
+    p.spherical(d, theta, phi);
 
     // if the radial distance is very small, ignore the photon packet
     if (d < _s) return;
 
-    // convert spherical coordinates to viewport coordinates:  -1 < x < 1  and -1 < y < 1
-    double x, y;
-    projection()->fromSphereToRectangle(inc, azi, x, y);
+    double z = cos(theta);
+    double za = abs(z);
+    double tt = 2. * phi / M_PI;
 
-    // convert viewport coordinates to pixel indices
-    int i = max(0, min(static_cast<int>((x + 1) * _Nx / 2.), _Nx - 1));
-    int j = max(0, min(static_cast<int>((y + 1) * _Ny / 2.), _Ny - 1));
+    int i, j;
+    if (za <= 2. / 3.)
+    {
+        double t1 = _Nside * (0.5 + tt);
+        double t2 = 0.75 * _Nside * z;
+        int jp = static_cast<int>(t1 - t2);
+        int jm = static_cast<int>(t1 + t2);
+
+        j = _Nside + 1 + jp - jm;
+        int kshift = 1 - (j & 1);
+        int temp = jp + jm + kshift + 1 + 7 * _Nside;
+        i = (_order > 0) ? (temp >> 1) & (4 * _Nside - 1) : (temp >> 1) % (4 * _Nside);
+    }
+    else
+    {
+        double tp = tt - static_cast<int>(tt);
+        double tmp = (za < 0.99) ? _Nside * sqrt(3. * (1. - za)) : _Nside * sin(theta) / sqrt((1. + za) / 3.);
+
+        int jp = static_cast<int>(tp * tmp);
+        int jm = static_cast<int>((1. - tp) * tmp);
+
+        j = jp + jm + 1;
+        i = static_cast<int>(tt * j);
+        if (z > 0) j = 4 * _Nside - j;
+    }
 
     // detect the photon packet in the appropriate pixel of the data cube and at the appropriate distance
     int l = i + _Nx * j;
