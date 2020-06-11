@@ -9,6 +9,7 @@
 #include "FatalError.hpp"
 #include "Log.hpp"
 #include "MediumSystem.hpp"
+#include "PathSegmentGenerator.hpp"
 #include "SpatialGridPlotFile.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -89,9 +90,9 @@ Position AdaptiveMeshSpatialGrid::randomPositionInCell(int m) const
 
 //////////////////////////////////////////////////////////////////////
 
-void AdaptiveMeshSpatialGrid::path(SpatialGridPath* path) const
+std::unique_ptr<PathSegmentGenerator> AdaptiveMeshSpatialGrid::createPathSegmentGenerator() const
 {
-    _mesh->path(path);
+    return _mesh->createPathSegmentGenerator();
 }
 
 //////////////////////////////////////////////////////////////////////

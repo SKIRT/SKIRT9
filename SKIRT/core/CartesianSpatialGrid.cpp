@@ -159,6 +159,8 @@ public:
     }
 };
 
+//////////////////////////////////////////////////////////////////////
+
 std::unique_ptr<PathSegmentGenerator> CartesianSpatialGrid::createPathSegmentGenerator() const
 {
     return std::make_unique<MySegmentGenerator>(this);
