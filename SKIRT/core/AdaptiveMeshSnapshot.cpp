@@ -510,10 +510,7 @@ public:
                     ds = dsz;
                     wall = (kz() < 0.0) ? Node::BOTTOM : Node::TOP;
                 }
-                setSegment(-1, ds + _grid->_eps);  // fake info to propagate with extra epsilon
-                propagatex();
-                propagatey();
-                propagatez();
+                propagater(ds + _grid->_eps);
                 setSegment(_node->cellIndex(), ds);
 
                 // try the most likely neighbor of the current node, and use top-down search as a fall-back

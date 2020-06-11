@@ -121,8 +121,8 @@ public:
                 {
                     setSegment(m, dsx);
                     setrx(xE);
-                    propagatey();
-                    propagatez();
+                    propagatery(dsx);
+                    propagaterz(dsx);
                     _i += (kx() < 0.0) ? -1 : 1;
                     if (_i >= _grid->_Nx || _i < 0) setState(State::Outside);
                 }
@@ -130,8 +130,8 @@ public:
                 {
                     setSegment(m, dsy);
                     setry(yE);
-                    propagatex();
-                    propagatez();
+                    propagaterx(dsy);
+                    propagaterz(dsy);
                     _j += (ky() < 0.0) ? -1 : 1;
                     if (_j >= _grid->_Ny || _j < 0) setState(State::Outside);
                 }
@@ -139,8 +139,8 @@ public:
                 {
                     setSegment(m, dsz);
                     setrz(zE);
-                    propagatex();
-                    propagatey();
+                    propagaterx(dsz);
+                    propagatery(dsz);
                     _k += (kz() < 0.0) ? -1 : 1;
                     if (_k >= _grid->_Nz || _k < 0) setState(State::Outside);
                 }

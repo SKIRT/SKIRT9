@@ -65,9 +65,15 @@ protected:
     void setry(double ry) { _ry = ry; }
     void setrz(double rz) { _rz = rz; }
 
-    void propagatex() { _rx += _kx * _ds; }
-    void propagatey() { _ry += _ky * _ds; }
-    void propagatez() { _rz += _kz * _ds; }
+    void propagater(double ds)
+    {
+        _rx += _kx * ds;
+        _ry += _ky * ds;
+        _rz += _kz * ds;
+    }
+    void propagaterx(double ds) { _rx += _kx * ds; }
+    void propagatery(double ds) { _ry += _ky * ds; }
+    void propagaterz(double ds) { _rz += _kz * ds; }
 
     void setSegment(int m, double ds)
     {

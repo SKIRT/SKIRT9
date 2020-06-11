@@ -1142,19 +1142,13 @@ public:
                     // recalculate the cell index, and return to the start of the loop
                     if (mq == NO_INDEX)
                     {
-                        setSegment(-1, _grid->_eps);  // fake info to propagate with epsilon
-                        propagatex();
-                        propagatey();
-                        propagatez();
+                        propagater(_grid->_eps);
                         _mr = _grid->cellIndex(r());
                     }
                     // otherwise set the current point to the exit point and return the path segment
                     else
                     {
-                        setSegment(-1, sq + _grid->_eps);  // fake info to propagate with extra epsilon
-                        propagatex();
-                        propagatey();
-                        propagatez();
+                        propagater(sq + _grid->_eps);
                         setSegment(_mr, sq);
                         _mr = mq;
 

@@ -173,10 +173,7 @@ public:
                     ds = dsz;
                     wall = (kz() < 0.0) ? TreeNode::BOTTOM : TreeNode::TOP;
                 }
-                setSegment(-1, ds + _grid->_eps);  // fake info to propagate with extra epsilon
-                propagatex();
-                propagatey();
-                propagatez();
+                propagater(ds + _grid->_eps);
                 setSegment(_grid->cellIndexForNode(_node), ds);
 
                 // attempt to find the new node among the neighbors of the current node;
