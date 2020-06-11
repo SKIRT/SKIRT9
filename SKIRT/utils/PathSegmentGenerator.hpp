@@ -50,6 +50,7 @@ protected:
     void setState(State state) { _state = state; }
 
     Position r() { return Position(_rx, _ry, _rz); }
+    Direction k() { return Direction(_kx, _ky, _kz); }
 
     /** TO DO: streamline these functions and their usage by the various grids) */
     double rx() const { return _rx; }

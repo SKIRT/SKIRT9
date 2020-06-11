@@ -90,10 +90,10 @@ public:
     /** This function returns a random location from the cell with index \f$m\f$. */
     Position randomPositionInCell(int m) const override;
 
-    /** This function calculates a path through the grid. The SpatialGridPath object passed as an
+    /**  TO DO. This function calculates a path through the grid. The SpatialGridPath object passed as an
         argument specifies the starting position \f${\bf{r}}\f$ and the direction \f${\bf{k}}\f$
         for the path. The data on the calculated path are added back into the same object. */
-    void path(SpatialGridPath* path) const override;
+    std::unique_ptr<PathSegmentGenerator> createPathSegmentGenerator() const override;
 
     /** This function outputs the grid plot files; it is provided here because the regular
         mechanism does not apply. The function reconstructs the Voronoi tesselation in order to

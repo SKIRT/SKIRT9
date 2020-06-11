@@ -8,6 +8,7 @@
 #include "Log.hpp"
 #include "MediumSystem.hpp"
 #include "NR.hpp"
+#include "PathSegmentGenerator.hpp"
 #include "Random.hpp"
 #include "SiteListInterface.hpp"
 #include "VoronoiMeshInterface.hpp"
@@ -180,9 +181,9 @@ Position VoronoiMeshSpatialGrid::randomPositionInCell(int m) const
 
 //////////////////////////////////////////////////////////////////////
 
-void VoronoiMeshSpatialGrid::path(SpatialGridPath* path) const
+std::unique_ptr<PathSegmentGenerator> VoronoiMeshSpatialGrid::createPathSegmentGenerator() const
 {
-    _mesh->path(path);
+    return _mesh->createPathSegmentGenerator();
 }
 
 //////////////////////////////////////////////////////////////////////

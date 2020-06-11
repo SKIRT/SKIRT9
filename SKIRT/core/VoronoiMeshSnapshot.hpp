@@ -8,6 +8,7 @@
 
 #include "Array.hpp"
 #include "Snapshot.hpp"
+class PathSegmentGenerator;
 class SiteListInterface;
 class SpatialGridPath;
 
@@ -331,7 +332,7 @@ public:
     //====================== Path construction =====================
 
 public:
-    /** This function calculates a path through the grid. The SpatialGridPath object passed as an
+    /** TO DO. This function calculates a path through the grid. The SpatialGridPath object passed as an
         argument specifies the starting position \f${\bf{r}}\f$ and the direction \f${\bf{k}}\f$
         for the path. The data on the calculated path are added back into the same object. See the
         SpatialGridPath class for more information.
@@ -408,7 +409,7 @@ public:
         with \f$m_i=-1\f$ one has \f$\mathbf{n}=(-1,0,0)\f$ and \f$\mathbf{p}=(x_\text{min},0,0)\f$
         so that \f[s_i=\frac{x_\text{min}-r_x}{k_x}.\f]
     */
-    void path(SpatialGridPath* path) const;
+    std::unique_ptr<PathSegmentGenerator> createPathSegmentGenerator() const;
 
     //======================== Data Members ========================
 
@@ -431,6 +432,10 @@ private:
     int _nb3{0};                      // nb*nb*nb
     vector<vector<int>> _blocklists;  // list of cell indices per block, indexed on i*_nb2+j*_nb+k
     vector<Node*> _blocktrees;        // root node of search tree or null for each block, indexed on i*_nb2+j*_nb+k
+
+    // allow our path segment generator to access our private data members
+    class MySegmentGenerator;
+    friend class MySegmentGenerator;
 };
 
 ////////////////////////////////////////////////////////////////////
