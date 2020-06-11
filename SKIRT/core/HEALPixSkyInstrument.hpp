@@ -36,7 +36,7 @@
     allows for a more efficient pixel location algorithm.
 
     After subdivision, the HEALPix tessellation will contain $12N_{side}^2$ pixels. These pixels are ordered
-    so that their centres lie on $4N_{side}$ rings of equal latitude. On each of these rings, pixel centres
+    so that their centres lie on $4N_{side}-1$ rings of equal latitude. On each of these rings, pixel centres
     are equidistantly spaced in longitude, but the number of pixels in each ring, @f$i@f$, depends on the latitude.
     For pixels with a ring index @f$j\in{}[N_{side},3N_{side}]@f$, the number of pixels in the ring is constant
     and equal to @f$i=4N_{side}@f$. Within the polar rings (@f$j < N_{side}@f$ or @f$j>3N_{side}@f$), the number
@@ -52,8 +52,8 @@
 
     For our implementation, we use an alternative ordering that closely matches the *ring* ordering. We compute
     the indices @f$j@f$ and @f$i@f$ for each pixel as if we were going to compute the *ring* pixel index, but
-    then use these indices as the 2D pixel coordinates in a @f$4N_{side}\times{}4N_{side}@f$ image. Evidently,
-    this leads to an excess of @f$4N_{side}^2@f$ pixels in the polar regions, similar to the empty pixels
+    then use these indices as the 2D pixel coordinates in a @f$(4N_{side}-1)\times{}4N_{side}@f$ image. Evidently,
+    this leads to an excess of @f$4N_{side}^2-16N@f$ pixels in the polar regions, similar to the empty pixels
     in projected AllSkyInstrument images. The advantage of this approach is that we can easily use the
     existing 2D image functionality for output, and that we can easily map output pixels to the corresponding
     HEALPix pixels in ring ordering during analysis. */

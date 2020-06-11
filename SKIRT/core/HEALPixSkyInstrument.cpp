@@ -8,7 +8,6 @@
 #include "FluxRecorder.hpp"
 #include "Log.hpp"
 #include "PhotonPacket.hpp"
-#include <sstream>
 
 ////////////////////////////////////////////////////////////////////
 
@@ -24,11 +23,12 @@ void HEALPixSkyInstrument::setupSelfBefore()
     if (Vec::cross(co, up).norm() < 1e-20)
         throw FATALERROR("Upwards direction cannot be parallel to viewing direction");
 
+    // compute the side length of the subdivision within a single HEALPix base pixel
     _Nside = 1 << _order;
 
-    // we map the 12 * _Nside^2 HEALPix pixels to a square image with 16 * _Nside^2 pixels
+    // we map the 12 * _Nside^2 HEALPix pixels to an almost square image with 16 * _Nside * (_Nside-1) pixels
     _Nx = 4 * _Nside;
-    _Ny = 4 * _Nside;
+    _Ny = 4 * _Nside - 1;
 
     // determine linear size of a single pixel
     // each HEALPix pixel has the same spherical area pi/(3*_Nside^2)
@@ -158,52 +158,64 @@ void HEALPixSkyInstrument::detect(PhotonPacket* pp)
     double d, theta, phi;
     p.spherical(d, theta, phi);
 
-    if (theta < 0.) theta += M_PI;
-    if (phi < 0.) phi += 2. * M_PI;
-
-    std::stringstream errormessage;
-    errormessage << "Wrong spherical coordinate: " << theta << ", " << phi << ")!";
-    if (theta < 0. || theta > M_PI) throw FATALERROR(errormessage.str());
-    if (phi < 0. || phi > 2. * M_PI) throw FATALERROR(errormessage.str());
-
     // if the radial distance is very small, ignore the photon packet
     if (d < _s) return;
 
+    // the HEALPix mapping algorithm expects theta in [0, pi] and phi in [0, 2*pi]
+    if (theta < 0.) theta += M_PI;
+    if (phi < 0.) phi += 2. * M_PI;
+
+    // the code below was mostly copied from healpix_base.cc in the official HEALPix repository
+    // it corresponds to the loc2pix function using the RING scheme
+    // unlike the loc2pix function, we do not compute a full RING pixel index, but restrict
+    // ourselves to a computation of the ring index and pixel-in-ring index, which we respectively
+    // use as vertical and horizontal pixel index
     double z = cos(theta);
     double za = abs(z);
     double tt = fmod(2. * phi / M_PI, 4.);
 
+    // i: pixel-in-ring index (horizontal pixel index)
+    // j: ring index (vertical pixel index)
     int i, j;
+    // first figure out if we are in the equatorial or polar region
     if (za <= 2. / 3.)
     {
+        // equatorial region: all rings have 4*_Nside pixels
         double t1 = _Nside * (0.5 + tt);
         double t2 = 0.75 * _Nside * z;
-        int jp = static_cast<int>(t1 - t2);
-        int jm = static_cast<int>(t1 + t2);
+        int jp = static_cast<int>(floor(t1 - t2));
+        int jm = static_cast<int>(floor(t1 + t2));
 
+        // we first compute the ring index as the offset in the equatorial region (j in [1, 2*_Nside+1])
         j = _Nside + 1 + jp - jm;
         int kshift = 1 - (j & 1);
         int temp = jp + jm + kshift + 1 + 7 * _Nside;
         i = (_order > 0) ? ((temp >> 1) & (4 * _Nside - 1)) : ((temp >> 1) % (4 * _Nside));
-        j += _Nside - 1;
+        // we now add the correct offset to the ring index to account for the rings in the north polar region
+        j += _Nside - 2;
     }
     else
     {
+        // polar region: the number of pixels per ring depends on how far the ring is from the pole
         double tp = tt - static_cast<int>(tt);
         double tmp = (za < 0.99) ? (_Nside * sqrt(3. * (1. - za))) : (_Nside * sin(theta) / sqrt((1. + za) / 3.));
 
         int jp = static_cast<int>(tp * tmp);
         int jm = static_cast<int>((1. - tp) * tmp);
 
+        // we first compute the ring index as an offset from the pole (j in [1, _Nside-1])
         j = jp + jm + 1;
         i = static_cast<int>(tt * j);
-        if (z < 0) j = 4 * _Nside - j;
+        // we now convert the ring index to the actual ring index, and distinguish between north and south pole
+        if (z < 0)
+        {
+            j = 4 * _Nside - j - 1;
+        }
+        else
+        {
+            --j;
+        }
     }
-
-    errormessage.str("");
-    errormessage << "Invalid HEALPix index: (" << j << ", " << i << ")!";
-    if (i < 0 || i >= _Ny) throw FATALERROR(errormessage.str());
-    if (j < 0 || j >= _Nx) throw FATALERROR(errormessage.str());
 
     // detect the photon packet in the appropriate pixel of the data cube and at the appropriate distance
     int l = i + _Nx * j;
