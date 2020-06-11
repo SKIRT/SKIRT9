@@ -65,15 +65,22 @@ protected:
     void setry(double ry) { _ry = ry; }
     void setrz(double rz) { _rz = rz; }
 
+    void propagaterx(double ds) { _rx += _kx * ds; }
+    void propagatery(double ds) { _ry += _ky * ds; }
+    void propagaterz(double ds) { _rz += _kz * ds; }
     void propagater(double ds)
     {
         _rx += _kx * ds;
         _ry += _ky * ds;
         _rz += _kz * ds;
     }
-    void propagaterx(double ds) { _rx += _kx * ds; }
-    void propagatery(double ds) { _ry += _ky * ds; }
-    void propagaterz(double ds) { _rz += _kz * ds; }
+
+    void propagateToNextAfter()
+    {
+        _rx = std::nextafter(_rx, (_kx < 0.) ? -DBL_MAX : DBL_MAX);
+        _ry = std::nextafter(_ry, (_ky < 0.) ? -DBL_MAX : DBL_MAX);
+        _rz = std::nextafter(_rz, (_kz < 0.) ? -DBL_MAX : DBL_MAX);
+    }
 
     void setSegment(int m, double ds)
     {

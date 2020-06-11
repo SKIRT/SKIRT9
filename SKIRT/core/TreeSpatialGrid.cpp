@@ -184,9 +184,16 @@ public:
                 _node = _node->neighbor(wall, r());
                 if (!_node) _node = _grid->root()->leafChild(r());
 
-                // TO DO: add extra attempt to escape the node (advance to next representable double)
+                // if we're stuck in the same node,
+                // try to escape by advancing the position to the next representable coordinates
+                if (_node == oldnode)
+                {
+                    // try to escape by advancing the position to the next representable coordinates
+                    propagateToNextAfter();
+                    _node = _grid->root()->leafChild(r());
+                }
 
-                // if we're outside the domain or stuck in the same node, terminate the path
+                // if we're outside the domain or still stuck in the same node, terminate the path
                 if (!_node || _node == oldnode) setState(State::Outside);
                 return true;
             }
