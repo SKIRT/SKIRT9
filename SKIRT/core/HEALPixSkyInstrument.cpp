@@ -6,7 +6,9 @@
 #include "HEALPixSkyInstrument.hpp"
 #include "FatalError.hpp"
 #include "FluxRecorder.hpp"
+#include "Log.hpp"
 #include "PhotonPacket.hpp"
+#include <sstream>
 
 ////////////////////////////////////////////////////////////////////
 
@@ -21,6 +23,8 @@ void HEALPixSkyInstrument::setupSelfBefore()
     if (up.norm() < 1e-20) throw FATALERROR("Upwards direction cannot be null vector");
     if (Vec::cross(co, up).norm() < 1e-20)
         throw FATALERROR("Upwards direction cannot be parallel to viewing direction");
+
+    _Nside = 1 << _order;
 
     // we map the 12 * _Nside^2 HEALPix pixels to a square image with 16 * _Nside^2 pixels
     _Nx = 4 * _Nside;
@@ -154,12 +158,20 @@ void HEALPixSkyInstrument::detect(PhotonPacket* pp)
     double d, theta, phi;
     p.spherical(d, theta, phi);
 
+    if (theta < 0.) theta += M_PI;
+    if (phi < 0.) phi += 2. * M_PI;
+
+    std::stringstream errormessage;
+    errormessage << "Wrong spherical coordinate: " << theta << ", " << phi << ")!";
+    if (theta < 0. || theta > M_PI) throw FATALERROR(errormessage.str());
+    if (phi < 0. || phi > 2. * M_PI) throw FATALERROR(errormessage.str());
+
     // if the radial distance is very small, ignore the photon packet
     if (d < _s) return;
 
     double z = cos(theta);
     double za = abs(z);
-    double tt = 2. * phi / M_PI;
+    double tt = fmod(2. * phi / M_PI, 4.);
 
     int i, j;
     if (za <= 2. / 3.)
@@ -172,20 +184,26 @@ void HEALPixSkyInstrument::detect(PhotonPacket* pp)
         j = _Nside + 1 + jp - jm;
         int kshift = 1 - (j & 1);
         int temp = jp + jm + kshift + 1 + 7 * _Nside;
-        i = (_order > 0) ? (temp >> 1) & (4 * _Nside - 1) : (temp >> 1) % (4 * _Nside);
+        i = (_order > 0) ? ((temp >> 1) & (4 * _Nside - 1)) : ((temp >> 1) % (4 * _Nside));
+        j += _Nside - 1;
     }
     else
     {
         double tp = tt - static_cast<int>(tt);
-        double tmp = (za < 0.99) ? _Nside * sqrt(3. * (1. - za)) : _Nside * sin(theta) / sqrt((1. + za) / 3.);
+        double tmp = (za < 0.99) ? (_Nside * sqrt(3. * (1. - za))) : (_Nside * sin(theta) / sqrt((1. + za) / 3.));
 
         int jp = static_cast<int>(tp * tmp);
         int jm = static_cast<int>((1. - tp) * tmp);
 
         j = jp + jm + 1;
         i = static_cast<int>(tt * j);
-        if (z > 0) j = 4 * _Nside - j;
+        if (z < 0) j = 4 * _Nside - j;
     }
+
+    errormessage.str("");
+    errormessage << "Invalid HEALPix index: (" << j << ", " << i << ")!";
+    if (i < 0 || i >= _Ny) throw FATALERROR(errormessage.str());
+    if (j < 0 || j >= _Nx) throw FATALERROR(errormessage.str());
 
     // detect the photon packet in the appropriate pixel of the data cube and at the appropriate distance
     int l = i + _Nx * j;

@@ -66,7 +66,7 @@ class HEALPixSkyInstrument : public Instrument
         PROPERTY_INT(order, "HEALPix order")
         ATTRIBUTE_MIN_VALUE(numPixelsY, "0")
         ATTRIBUTE_MAX_VALUE(numPixelsY, "15")
-        ATTRIBUTE_DEFAULT_VALUE(numPixelsY, "128")
+        ATTRIBUTE_DEFAULT_VALUE(numPixelsY, "6")
 
         PROPERTY_DOUBLE(radius, "the radius of the observer's all-sky sphere")
         ATTRIBUTE_QUANTITY(radius, "length")
@@ -158,7 +158,7 @@ private:
     // data members derived from the published attributes during setup
     int _Nx{0};                       // number of pixels in the x direction
     int _Ny{0};                       // number of pixels in the y direction
-    int _Nside{2 << _order};          // number of pixels in one direction of a HEALPix base pixel
+    int _Nside{0};                    // number of pixels in one direction of a HEALPix base pixel
     double _s{0.};                    // estimated linear size of a pixel
     Direction _bfkx;                  // unit vector along the viewport's x-axis
     Direction _bfky;                  // unit vector along the viewport's y-axis
