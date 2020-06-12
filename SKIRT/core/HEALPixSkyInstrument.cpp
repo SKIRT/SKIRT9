@@ -157,6 +157,7 @@ void HEALPixSkyInstrument::detect(PhotonPacket* pp)
     // get the spherical coordinates of the launch position relative to the observer
     double d, theta, phi;
     p.spherical(d, theta, phi);
+    phi += M_PI;
 
     // if the radial distance is very small, ignore the photon packet
     if (d < _s) return;
