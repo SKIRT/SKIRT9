@@ -85,6 +85,7 @@
 #include "GeometricMedium.hpp"
 #include "GeometricSource.hpp"
 #include "GrainPopulation.hpp"
+#include "HEALPixSkyInstrument.hpp"
 #include "HammerAitoffProjection.hpp"
 #include "HyperboloidGeometry.hpp"
 #include "HyperboloidShellGeometry.hpp"
@@ -554,6 +555,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<FrameInstrument>();
     ItemRegistry::add<FullInstrument>();
     ItemRegistry::add<AllSkyInstrument>();
+    ItemRegistry::add<HEALPixSkyInstrument>();
     ItemRegistry::add<PerspectiveInstrument>();
 
     // all-sky projections
