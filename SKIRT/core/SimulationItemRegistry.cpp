@@ -555,8 +555,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<FrameInstrument>();
     ItemRegistry::add<FullInstrument>();
     ItemRegistry::add<AllSkyInstrument>();
-    ItemRegistry::add<PerspectiveInstrument>();
     ItemRegistry::add<HEALPixSkyInstrument>();
+    ItemRegistry::add<PerspectiveInstrument>();
 
     // all-sky projections
     ItemRegistry::add<AllSkyProjection>();
