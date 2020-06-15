@@ -12,51 +12,57 @@
 
 ////////////////////////////////////////////////////////////////////
 
-/** The HEALPixSkyInstrument provides an all-sky instrument that does not perform any projection, but instead
-    records fluxes onto a HEALPix tessellation of the sky sphere that guarantees equal surface areas for all
-    pixels.
+/** The HEALPixSkyInstrument provides an all-sky instrument that does not perform any projection,
+    but instead records fluxes onto a HEALPix tessellation of the sky sphere that guarantees equal
+    surface areas for all pixels.
 
     The instrument is based on the official HEALPix algorithm by Górski, K. M. et al. (2005)
     (https://ui.adsabs.harvard.edu/abs/2005ApJ...622..759G/abstract), as available from
     https://healpix.sourceforge.io, but only uses the relevant part of the algorithm.
 
-    In short, the HEALPix tessellation starts from a base tessellation of the sphere into 12 quadrilaterals.
-    4 quadrilaterals are formed by subdividing the equator into 4 equal segments, so that each quadrilateral
-    has two equatorial segment endpoints as vertices, complemented with two vertices that are obtained by
-    translating the segment midpoint away from the equator over a zenith angle \f$\theta{}=\acos(2/3)\f$ in
-    both directions. The remaining 8 quadrilaterals are formed by connecting the north or south pole of the
-    sphere with 3 vertices of already existing quadrilaterals.
+    In short, the HEALPix tessellation starts from a base tessellation of the sphere into 12
+    quadrilaterals. 4 quadrilaterals are formed by subdividing the equator into 4 equal segments,
+    so that each quadrilateral has two equatorial segment endpoints as vertices, complemented with
+    two vertices that are obtained by translating the segment midpoint away from the equator over a
+    zenith angle \f$\theta{}=\arccos(2/3)\f$ in both directions. The remaining 8 quadrilaterals are
+    formed by connecting the north or south pole of the sphere with 3 vertices of already existing
+    quadrilaterals.
 
-    Within this base tessellation, higher order HEALPix tessellations are constructed by subdividing the
-    12 base quadrilaterals, as if these were simple squares in a flat Euclidian space. To guarantee that all
-    pixels have the same surface area, this subdivision needs to use the same number of sub-pixels along each
-    axis of the base quadrilateral. This number of sub-pixels is referred to as the HEALPix resolution
-    parameter \f$N_{side}\f$. It is common practice within the community to restrict \f$N_{side}=2^k\f$, with
-    \f$k\f$ an integer order, although this is not strictly required. We will use this parametrisation, as it
+    Within this base tessellation, higher order HEALPix tessellations are constructed by
+    subdividing the 12 base quadrilaterals, as if these were simple squares in a flat Euclidian
+    space. To guarantee that all pixels have the same surface area, this subdivision needs to use
+    the same number of sub-pixels along each axis of the base quadrilateral. This number of
+    sub-pixels is referred to as the HEALPix resolution parameter \f$N_\mathrm{side}\f$. It is
+    common practice within the community to restrict \f$N_\mathrm{side}=2^k\f$, with \f$k\f$ an
+    integer order, although this is not strictly required. We will use this parametrisation, as it
     allows for a more efficient pixel location algorithm.
 
-    After subdivision, the HEALPix tessellation will contain $12N_{side}^2$ pixels. These pixels are ordered
-    so that their centres lie on \f$4N_{side}-1\f$ rings of equal latitude. On each of these rings, pixel centres
-    are equidistantly spaced in longitude, but the number of pixels in each ring, \f$i\f$, depends on the latitude.
-    For pixels with a ring index \f$j\in{}[N_{side},3N_{side}]\f$, the number of pixels in the ring is constant
-    and equal to \f$i=4N_{side}\f$. Within the polar rings (\f$j < N_{side}\f$ or \f$j>3N_{side}\f$), the number
-    of pixels decreases by 4 for every ring closer to the pole. For the polar rings in the northern hemisphere,
-    the number of pixels is equal to \f$i=4j\f$. For the southern hemisphere, it is equal to \f$i=4(N_{side}-j)\f$.
+    After subdivision, the HEALPix tessellation will contain \f$12N_\mathrm{side}^2\f$ pixels.
+    These pixels are ordered so that their centres lie on \f$4N_\mathrm{side}-1\f$ rings of equal
+    latitude. On each of these rings, pixel centres are equidistantly spaced in longitude, but the
+    number of pixels in each ring, \f$i\f$, depends on the latitude. For pixels with a ring index
+    \f$j\in{}[N_\mathrm{side},3N_\mathrm{side}]\f$, the number of pixels in the ring is constant
+    and equal to \f$i=4N_\mathrm{side}\f$. Within the polar rings (\f$j < N_\mathrm{side}\f$ or
+    \f$j>3N_\mathrm{side}\f$), the number of pixels decreases by 4 for every ring closer to the
+    pole. For the polar rings in the northern hemisphere, the number of pixels is equal to
+    \f$i=4j\f$. For the southern hemisphere, it is equal to \f$i=4(N_\mathrm{side}-j)\f$.
 
-    HEALPix pixels can be ordered in two ways, depending on the application of interest. For many analysis tools,
-    a hierarchical ordering is advantageous, whereby the index of neighbouring pixels are related. In practice,
-    this so called *nested* ordering subdivides every base HEALPix pixel into a hierarchical quadtree structure.
-    This is the approach used by e.g. the public Planck data maps. For visualisation purposes, the so called
-    *ring* ordering is more appropriate, whereby the pixels are indexed per ring from northern to southern
-    hemisphere, and with increasing longitude along each ring.
+    HEALPix pixels can be ordered in two ways, depending on the application of interest. For many
+    analysis tools, a hierarchical ordering is advantageous, whereby the index of neighbouring
+    pixels are related. In practice, this so called \em nested ordering subdivides every base
+    HEALPix pixel into a hierarchical quadtree structure. This is the approach used by e.g. the
+    public Planck data maps. For visualisation purposes, the so called \em ring ordering is more
+    appropriate, whereby the pixels are indexed per ring from northern to southern hemisphere, and
+    with increasing longitude along each ring.
 
-    For our implementation, we use an alternative ordering that closely matches the *ring* ordering. We compute
-    the indices \f$j\f$ and \f$i\f$ for each pixel as if we were going to compute the *ring* pixel index, but
-    then use these indices as the 2D pixel coordinates in a \f$(4N_{side}-1)\times{}4N_{side}\f$ image. Evidently,
-    this leads to an excess of \f$4N_{side}^2-16N\f$ pixels in the polar regions, similar to the empty pixels
-    in projected AllSkyInstrument images. The advantage of this approach is that we can easily use the
-    existing 2D image functionality for output, and that we can easily map output pixels to the corresponding
-    HEALPix pixels in ring ordering during analysis. */
+    For our implementation, we use an alternative ordering that closely matches the *ring*
+    ordering. We compute the indices \f$j\f$ and \f$i\f$ for each pixel as if we were going to
+    compute the *ring* pixel index, but then use these indices as the 2D pixel coordinates in a
+    \f$(4N_\mathrm{side}-1)\times{}4N_\mathrm{side}\f$ image. Evidently, this leads to an excess of
+    \f$4N_\mathrm{side}^2-16N\f$ pixels in the polar regions, similar to the empty pixels in
+    projected AllSkyInstrument images. The advantage of this approach is that we can easily use the
+    existing 2D image functionality for output, and that we can easily map output pixels to the
+    corresponding HEALPix pixels in ring ordering during analysis. */
 class HEALPixSkyInstrument : public Instrument
 {
     ITEM_CONCRETE(HEALPixSkyInstrument, Instrument,
