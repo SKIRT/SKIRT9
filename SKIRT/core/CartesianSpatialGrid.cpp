@@ -4,7 +4,6 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "CartesianSpatialGrid.hpp"
-#include "FatalError.hpp"
 #include "Log.hpp"
 #include "NR.hpp"
 #include "PathSegmentGenerator.hpp"
@@ -135,7 +134,7 @@ public:
                     _j += (ky() < 0.0) ? -1 : 1;
                     if (_j >= _grid->_Ny || _j < 0) setState(State::Outside);
                 }
-                else if (dsz < dsx && dsz < dsy)
+                else // if (dsz < dsx && dsz < dsy)
                 {
                     setSegment(m, dsz);
                     setrz(zE);
@@ -143,10 +142,6 @@ public:
                     propagatery(dsz);
                     _k += (kz() < 0.0) ? -1 : 1;
                     if (_k >= _grid->_Nz || _k < 0) setState(State::Outside);
-                }
-                else
-                {
-                    throw FATALERROR("path segment error");
                 }
                 return true;
             }

@@ -25,7 +25,9 @@ public:
     // ------- Generating and retrieving path segments -------
 
 public:
-    /** TO DO. */
+    /** TO DO.  The SpatialGridPath object passed as an
+        argument specifies the starting position \f${\bf{r}}\f$ and the direction \f${\bf{k}}\f$
+        for the path. */
     void start(const SpatialGridPath* path)
     {
         _state = State::Unknown;
