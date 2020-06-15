@@ -5,11 +5,13 @@
 
 #include "MediumSystem.hpp"
 #include "Configuration.hpp"
+#include "Constants.hpp"
 #include "DensityInCellInterface.hpp"
 #include "DisjointWavelengthGrid.hpp"
 #include "FatalError.hpp"
 #include "LockFree.hpp"
 #include "Log.hpp"
+#include "LyaUtils.hpp"
 #include "MaterialMix.hpp"
 #include "NR.hpp"
 #include "Parallel.hpp"
@@ -74,12 +76,11 @@ void MediumSystem::setupSelfAfter()
     auto dic = _grid->interface<DensityInCellInterface>(0, false);  // optional fast-track interface for densities
     int numSamples = _config->numDensitySamples();
     bool oligo = _config->oligochromatic();
-    int magneticindex = -1;
-    for (int h = 0; h != _numMedia; ++h)
-        if (_media[h]->hasMagneticField()) magneticindex = h;
+    int hMag = _config->magneticFieldMediumIndex();
+    int hLya = _config->lyaMediumIndex();
     log->infoSetElapsed(_numCells);
     parfac->parallelDistributed()->call(
-        _numCells, [this, log, dic, numSamples, oligo, magneticindex](size_t firstIndex, size_t numIndices) {
+        _numCells, [this, log, dic, numSamples, oligo, hMag, hLya](size_t firstIndex, size_t numIndices) {
             ShortArray<8> nsumv(_numMedia);
 
             while (numIndices)
@@ -87,6 +88,7 @@ void MediumSystem::setupSelfAfter()
                 size_t currentChunkSize = min(logProgressChunkSize, numIndices);
                 for (size_t m = firstIndex; m != firstIndex + currentChunkSize; ++m)
                 {
+                    Position center = _grid->centralPositionInCell(m);
 
                     // density: use optional fast-track interface or sample 100 random positions within the cell
                     if (dic)
@@ -104,26 +106,32 @@ void MediumSystem::setupSelfAfter()
                         for (int h = 0; h != _numMedia; ++h) state(m, h).n = nsumv[h] / numSamples;
                     }
 
-                    // bulk velocity: weighted average at cell center; assumes densities have been calculated
-                    //                for oligochromatic simulations, leave at zero
+                    // bulk velocity: weighted average at cell center; for oligochromatic simulations, leave at zero
                     if (!oligo)
                     {
-                        Position bfr = _grid->centralPositionInCell(m);
                         double n = 0.;
                         Vec v;
                         for (int h = 0; h != _numMedia; ++h)
                         {
                             n += state(m, h).n;
-                            v += state(m, h).n * _media[h]->bulkVelocity(bfr);
+                            v += state(m, h).n * _media[h]->bulkVelocity(center);
                         }
                         if (n > 0.) state(m).v = v / n;  // leave bulk velocity at zero if cell has no material
                     }
 
                     // magnetic field: retrieve from medium component that specifies it, if any
-                    if (magneticindex >= 0)
+                    if (hMag >= 0)
                     {
-                        Position bfr = _grid->centralPositionInCell(m);
-                        state(m).B = _media[magneticindex]->magneticField(bfr);
+                        state(m).B = _media[hMag]->magneticField(center);
+                    }
+
+                    // gas temperature: retrieve from medium component that specifies it, if any
+                    if (hLya >= 0)
+                    {
+                        // leave the temperature at zero if the cell does not contain any Lya gas;
+                        // otherwise make sure the temperature is at least the local universe CMB temperature
+                        if (state(m, hLya).n > 0.)
+                            state(m).T = max(Constants::Tcmb(), _media[hLya]->temperature(center));
                     }
 
                     // volume
@@ -160,7 +168,7 @@ void MediumSystem::communicateStates()
     Table<2> data;
 
     // volumes, bulk velocities, and magnetic fields
-    data.resize(_numCells, 7);
+    data.resize(_numCells, 8);
     for (int m = 0; m != _numCells; ++m)
     {
         data(m, 0) = state(m).V;
@@ -170,6 +178,7 @@ void MediumSystem::communicateStates()
         data(m, 4) = state(m).B.x();
         data(m, 5) = state(m).B.y();
         data(m, 6) = state(m).B.z();
+        data(m, 7) = state(m).T;
     }
     ProcessManager::sumToAll(data.data());
     for (int m = 0; m != _numCells; ++m)
@@ -177,6 +186,7 @@ void MediumSystem::communicateStates()
         state(m).V = data(m, 0);
         state(m).v = Vec(data(m, 1), data(m, 2), data(m, 3));
         state(m).B = Vec(data(m, 4), data(m, 5), data(m, 6));
+        state(m).T = data(m, 7);
     }
 
     // densities
@@ -241,6 +251,13 @@ Vec MediumSystem::magneticField(int m)
 
 ////////////////////////////////////////////////////////////////////
 
+double MediumSystem::gasTemperature(int m)
+{
+    return state(m).T;
+}
+
+////////////////////////////////////////////////////////////////////
+
 bool MediumSystem::hasMaterialType(MaterialMix::MaterialType type) const
 {
     for (int h = 0; h != _numMedia; ++h)
@@ -284,8 +301,7 @@ const MaterialMix* MediumSystem::randomMixForScattering(Random* random, double l
     if (_numMedia > 1)
     {
         Array Xv;
-        NR::cdf(Xv, _numMedia,
-                [this, lambda, m](int h) { return state(m, h).n * state(m, h).mix->sectionSca(lambda); });
+        NR::cdf(Xv, _numMedia, [this, lambda, m](int h) { return opacitySca(lambda, m, h); });
         h = NR::locateClip(Xv, random->uniform());
     }
     return state(m, h).mix;
@@ -295,16 +311,25 @@ const MaterialMix* MediumSystem::randomMixForScattering(Random* random, double l
 
 double MediumSystem::opacitySca(double lambda, int m, int h) const
 {
-    return state(m, h).n * state(m, h).mix->sectionSca(lambda);
+    double n = state(m, h).n;
+    if (n <= 0.)
+        return 0.;
+    else if (h == _config->lyaMediumIndex())
+        return n * LyaUtils::section(lambda, state(m).T);
+    else
+        return n * state(m, h).mix->sectionSca(lambda);
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::opacitySca(double lambda, int m) const
+double MediumSystem::opacityAbs(double lambda, int m, int h) const
 {
-    double result = 0.;
-    for (int h = 0; h != _numMedia; ++h) result += state(m, h).n * state(m, h).mix->sectionSca(lambda);
-    return result;
+    // no need to check for Lyman-alpha because the material mix returns the correct zero value
+    double n = state(m, h).n;
+    if (n <= 0.)
+        return 0.;
+    else
+        return n * state(m, h).mix->sectionAbs(lambda);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -313,7 +338,7 @@ double MediumSystem::opacityAbs(double lambda, int m, MaterialMix::MaterialType 
 {
     double result = 0.;
     for (int h = 0; h != _numMedia; ++h)
-        if (state(0, h).mix->materialType() == type) result += state(m, h).n * state(m, h).mix->sectionAbs(lambda);
+        if (state(0, h).mix->materialType() == type) result += opacityAbs(lambda, m, h);
     return result;
 }
 
@@ -321,7 +346,13 @@ double MediumSystem::opacityAbs(double lambda, int m, MaterialMix::MaterialType 
 
 double MediumSystem::opacityExt(double lambda, int m, int h) const
 {
-    return state(m, h).n * state(m, h).mix->sectionExt(lambda);
+    double n = state(m, h).n;
+    if (n <= 0.)
+        return 0.;
+    else if (h == _config->lyaMediumIndex())
+        return n * LyaUtils::section(lambda, state(m).T);
+    else
+        return n * state(m, h).mix->sectionExt(lambda);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -329,7 +360,7 @@ double MediumSystem::opacityExt(double lambda, int m, int h) const
 double MediumSystem::opacityExt(double lambda, int m) const
 {
     double result = 0.;
-    for (int h = 0; h != _numMedia; ++h) result += state(m, h).n * state(m, h).mix->sectionExt(lambda);
+    for (int h = 0; h != _numMedia; ++h) result += opacityExt(lambda, m, h);
     return result;
 }
 
@@ -339,15 +370,8 @@ double MediumSystem::opacityExt(double lambda, int m, MaterialMix::MaterialType 
 {
     double result = 0.;
     for (int h = 0; h != _numMedia; ++h)
-        if (state(0, h).mix->materialType() == type) result += state(m, h).n * state(m, h).mix->sectionExt(lambda);
+        if (state(0, h).mix->materialType() == type) result += opacityExt(lambda, m, h);
     return result;
-}
-
-////////////////////////////////////////////////////////////////////
-
-double MediumSystem::albedo(double lambda, int m, int h) const
-{
-    return state(m, h).mix->albedo(lambda);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -358,10 +382,8 @@ double MediumSystem::albedo(double lambda, int m) const
     double kext = 0.;
     for (int h = 0; h != _numMedia; ++h)
     {
-        double n = state(m, h).n;
-        auto mix = state(m, h).mix;
-        ksca += n * mix->sectionSca(lambda);
-        kext += n * mix->sectionExt(lambda);
+        ksca += opacitySca(lambda, m, h);
+        kext += opacityExt(lambda, m, h);
     }
     return kext > 0. ? ksca / kext : 0.;
 }
@@ -384,13 +406,81 @@ double MediumSystem::opticalDepth(SpatialGridPath* path, double lambda, Material
 
 ////////////////////////////////////////////////////////////////////
 
+namespace
+{
+    // The dynamic range of a positive IEEE 754 double precision floating point number is just smaller than 2^2098.
+    // Consequently, the intensity of a photon packet will always become numerically zero beyond the point where the
+    // cumulative optical depth along the path reaches tau = 2098 ln 2.
+    constexpr double TAU_MAX = 2098 * M_LN2;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void MediumSystem::opticalDepth(PhotonPacket* pp)
+{
+    // determine the geometric details of the path
+    _grid->path(pp);
+
+    // calculate the cumulative optical depth and store it in the photon packet for each path segment;
+    // because this function is at the heart of the photon life cycle, we implement various optimized versions
+    double tau = 0.;
+    int i = 0;
+
+    // no kinematics and material properties are spatially constant
+    if (!_config->hasMovingMedia() && !_config->hasVariableMedia())
+    {
+        // single medium (no kinematics, spatially constant)
+        if (_numMedia == 1)
+        {
+            double section = state(0, 0).mix->sectionExt(pp->wavelength());
+            for (auto& segment : pp->segments())
+            {
+                if (segment.m >= 0) tau += section * state(segment.m, 0).n * segment.ds;
+                pp->setOpticalDepth(i++, tau);
+            }
+        }
+        // multiple media (no kinematics, spatially constant)
+        else
+        {
+            ShortArray<8> sectionv(_numMedia);
+            for (int h = 0; h != _numMedia; ++h) sectionv[h] = state(0, h).mix->sectionExt(pp->wavelength());
+            for (auto& segment : pp->segments())
+            {
+                if (segment.m >= 0)
+                    for (int h = 0; h != _numMedia; ++h) tau += sectionv[h] * state(segment.m, h).n * segment.ds;
+                pp->setOpticalDepth(i++, tau);
+            }
+        }
+    }
+    // with kinematics and/or spatially variable material properties
+    else
+    {
+        for (auto& segment : pp->segments())
+        {
+            if (segment.m >= 0)
+            {
+                double lambda = pp->perceivedWavelength(state(segment.m).v, _config->lyaExpansionRate() * segment.s);
+                tau += opacityExt(lambda, segment.m) * segment.ds;
+                if (tau >= TAU_MAX)
+                {
+                    pp->setTerminalOpticalDepth(i, tau);
+                    break;
+                }
+            }
+            pp->setOpticalDepth(i++, tau);
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
 double MediumSystem::opticalDepth(PhotonPacket* pp, double distance)
 {
     // determine the geometric details of the path
     _grid->path(pp);
 
-    // calculate the cumulative optical depth and store the corresponding extinction factors in the photon packet;
-    // because this function is the heart of the photon life cycle, we implement optimized versions for special cases
+    // calculate the cumulative optical depth
+    // because this function is at the heart of the photon life cycle, we implement various optimized versions
     double tau = 0.;
 
     // no kinematics and material properties are spatially constant
@@ -400,11 +490,9 @@ double MediumSystem::opticalDepth(PhotonPacket* pp, double distance)
         if (_numMedia == 1)
         {
             double section = state(0, 0).mix->sectionExt(pp->wavelength());
-            int i = 0;
             for (auto& segment : pp->segments())
             {
                 if (segment.m >= 0) tau += section * state(segment.m, 0).n * segment.ds;
-                pp->setOpticalDepth(i++, tau);
                 if (segment.s > distance) break;
             }
         }
@@ -413,12 +501,10 @@ double MediumSystem::opticalDepth(PhotonPacket* pp, double distance)
         {
             ShortArray<8> sectionv(_numMedia);
             for (int h = 0; h != _numMedia; ++h) sectionv[h] = state(0, h).mix->sectionExt(pp->wavelength());
-            int i = 0;
             for (auto& segment : pp->segments())
             {
                 if (segment.m >= 0)
                     for (int h = 0; h != _numMedia; ++h) tau += sectionv[h] * state(segment.m, h).n * segment.ds;
-                pp->setOpticalDepth(i++, tau);
                 if (segment.s > distance) break;
             }
         }
@@ -426,11 +512,14 @@ double MediumSystem::opticalDepth(PhotonPacket* pp, double distance)
     // with kinematics and/or spatially variable material properties
     else
     {
-        int i = 0;
         for (auto& segment : pp->segments())
         {
-            if (segment.m >= 0) tau += opacityExt(pp->perceivedWavelength(state(segment.m).v), segment.m) * segment.ds;
-            pp->setOpticalDepth(i++, tau);
+            if (segment.m >= 0)
+            {
+                double lambda = pp->perceivedWavelength(state(segment.m).v, _config->lyaExpansionRate() * segment.s);
+                tau += opacityExt(lambda, segment.m) * segment.ds;
+                if (tau >= TAU_MAX) break;
+            }
             if (segment.s > distance) break;
         }
     }

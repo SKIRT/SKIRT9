@@ -8,6 +8,7 @@
 
 #include "Configuration.hpp"
 #include "Cosmology.hpp"
+#include "DipolePhaseFunction.hpp"
 #include "InstrumentSystem.hpp"
 #include "MediumSystem.hpp"
 #include "ProbeSystem.hpp"
@@ -76,15 +77,16 @@ class MonteCarloSimulation : public Simulation
         the radation field (to calculate the dust emission) and optionally performs iterations to
         self-consistently calculate the effects of dust self-absorption. */
     ENUM_DEF(SimulationMode, OligoNoMedium, OligoExtinctionOnly, NoMedium, ExtinctionOnly, DustEmission,
-             DustEmissionWithSelfAbsorption)
+             DustEmissionWithSelfAbsorption, LyaWithDustExtinction)
         ENUM_VAL(SimulationMode, OligoNoMedium, "No medium - oligochromatic regime (a few discrete wavelengths)")
         ENUM_VAL(SimulationMode, OligoExtinctionOnly,
-                 "Extinction only - oligochromatic regime (a few discrete wavelengths)")
+                 "Dust extinction only - oligochromatic regime (a few discrete wavelengths)")
         ENUM_VAL(SimulationMode, NoMedium, "No medium (primary sources only)")
-        ENUM_VAL(SimulationMode, ExtinctionOnly, "Extinction-only (no secondary emission)")
+        ENUM_VAL(SimulationMode, ExtinctionOnly, "Dust extinction only (no secondary emission)")
         ENUM_VAL(SimulationMode, DustEmission, "With secondary emission from dust")
         ENUM_VAL(SimulationMode, DustEmissionWithSelfAbsorption,
                  "With secondary emission from dust and iterations for dust self-absorption")
+        ENUM_VAL(SimulationMode, LyaWithDustExtinction, "Lyman-alpha line transfer and dust extinction")
     ENUM_END()
 
     ITEM_CONCRETE(MonteCarloSimulation, Simulation, "a Monte Carlo simulation")
@@ -97,7 +99,8 @@ class MonteCarloSimulation : public Simulation
                                          "simulationModeExtinctionOnly:Panchromatic,ExtinctionOnly;"
                                          "simulationModeDustEmission:Panchromatic,DustEmission,Emission,RadiationField;"
                                          "simulationModeDustEmissionWithSelfAbsorption:"
-                                         "Panchromatic,DustEmission,Emission,RadiationField,DustSelfAbsorption")
+                                         "Panchromatic,DustEmission,Emission,RadiationField,DustSelfAbsorption;"
+                                         "simulationModeLyaWithDustExtinction:Lya,Panchromatic,ExtinctionOnly")
 
         PROPERTY_ITEM(cosmology, Cosmology, "the cosmology parameters")
         ATTRIBUTE_DEFAULT_VALUE(cosmology, "LocalUniverseCosmology")
@@ -139,7 +142,7 @@ protected:
     void setupSimulation() override;
 
     /** This function performs initial setup for the MonteCarloSimulation object. For example,
-        constructs a SecondarySourceSystem object if the simulation configuration requires
+        it constructs a SecondarySourceSystem object if the simulation configuration requires
         secondary emission. */
     void setupSelfBefore() override;
 
@@ -406,7 +409,7 @@ private:
         The first argument to this function specifies the photon packet that is about to be
         scattered; the second argument provides a placeholder peel off photon packet for use by the
         function. */
-    void peelOffScattering(const PhotonPacket* pp, PhotonPacket* ppp);
+    void peelOffScattering(PhotonPacket* pp, PhotonPacket* ppp);
 
     /** This function simulates a scattering event of a photon packet. Most of the properties of
         the photon packet remain unaltered, including the position and the luminosity. The
@@ -463,6 +466,9 @@ private:
 
     // data members used by the XXXprogress() functions in this class
     string _segment;  // a string identifying the photon shooting segment for use in the log message
+
+    // the dipole phase function used for Lyman-alpha scattering - initialized during setup if needed
+    DipolePhaseFunction _dpf;
 };
 
 ////////////////////////////////////////////////////////////////////

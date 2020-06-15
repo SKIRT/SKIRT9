@@ -10,6 +10,7 @@
 #include "DustEmissionOptions.hpp"
 #include "DustSelfAbsorptionOptions.hpp"
 #include "ExtinctionOnlyOptions.hpp"
+#include "LyaOptions.hpp"
 #include "MaterialMix.hpp"
 #include "Medium.hpp"
 #include "PhotonPacketOptions.hpp"
@@ -71,6 +72,10 @@ class MediumSystem : public SimulationItem
         PROPERTY_ITEM(dustSelfAbsorptionOptions, DustSelfAbsorptionOptions, "the dust self-absorption options")
         ATTRIBUTE_DEFAULT_VALUE(dustSelfAbsorptionOptions, "DustSelfAbsorptionOptions")
         ATTRIBUTE_RELEVANT_IF(dustSelfAbsorptionOptions, "DustSelfAbsorption")
+
+        PROPERTY_ITEM(lyaOptions, LyaOptions, "the Lyman-alpha line transfer options")
+        ATTRIBUTE_DEFAULT_VALUE(lyaOptions, "LyaOptions")
+        ATTRIBUTE_RELEVANT_IF(lyaOptions, "Lya")
 
         PROPERTY_INT(numDensitySamples, "the number of random density samples for determining spatial cell mass")
         ATTRIBUTE_MIN_VALUE(numDensitySamples, "10")
@@ -136,6 +141,11 @@ public:
         medium component specifies a magnetic field, this function returns the null vector. */
     Vec magneticField(int m);
 
+    /** This function returns the gas temperature \f$T\f$ in the spatial cell with index \f$m\f$.
+        At most one medium component is allowed to specify a gas temperature. If no medium
+        component specifies a gas temperature, this function returns zero. */
+    double gasTemperature(int m);
+
     /** This function returns true if at least one of the media in the medium system has the
         specified fundamental material type (i.e. dust, electrons, or gas). */
     bool hasMaterialType(MaterialMix::MaterialType type) const;
@@ -189,10 +199,10 @@ public:
         \f$m\f$. */
     double opacitySca(double lambda, int m, int h) const;
 
-    /** This function returns the scattering opacity \f$k=\sum_h n_h\sigma_h^\text{sca}\f$ summed
-        over all medium components at wavelength \f$\lambda\f$ in spatial cell with index \f$m\f$.
-        */
-    double opacitySca(double lambda, int m) const;
+    /** This function returns the absorption opacity \f$k=n_h\sigma_h^\text{abs}\f$ at wavelength
+        \f$\lambda\f$ of the medium component with index \f$h\f$ in spatial cell with index
+        \f$m\f$. */
+    double opacityAbs(double lambda, int m, int h) const;
 
     /** This function returns the absorption opacity \f$k=\sum_h n_h\sigma_h^\text{abs}\f$ summed
         over all medium components with the specified material type at wavelength \f$\lambda\f$ in
@@ -213,11 +223,6 @@ public:
         over all medium components with the specified material type at wavelength \f$\lambda\f$ in
         spatial cell with index \f$m\f$. */
     double opacityExt(double lambda, int m, MaterialMix::MaterialType type) const;
-
-    /** This function returns the scattering albedo \f$\sigma_h^\text{sca}/\sigma_h^\text{ext}\f$
-        at wavelength \f$\lambda\f$ of the medium component with index \f$h\f$ in spatial cell with
-        index \f$m\f$. */
-    double albedo(double lambda, int m, int h) const;
 
     /** This function returns the weighted scattering albedo \f[\frac{\sum_h
         n_h\sigma_h^\text{sca}} {\sum_h n_h\sigma_h^\text{ext}}\f] over all medium components at
@@ -262,15 +267,39 @@ public:
         Using these optical depth values per segment, the function determines the cumulative
         optical depth at the segment exit boundaries and stores them into the specified photon
         packet object. Note that the optical depth at entry of the initial segment is equal to zero
-        by definition. Finally, the function returns the total optical depth of the path (ending at
-        the boundary of the simulation's spatial grid).
+        by definition. */
+    void opticalDepth(PhotonPacket* pp);
 
-        If the optional \em distance argument is present, the calculation is limited to the
-        specified distance along the path. More precisely, all path segments with an entry boundary
-        at a cumulative distance along the path smaller than the specified distance are included in
-        the calculation, and any remaining segments are skipped. Note that the function also does
-        not store optical depth information in the photon packet for skipped path segments. */
-    double opticalDepth(PhotonPacket* pp, double distance = std::numeric_limits<double>::infinity());
+    /** This function calculates and returns the optical depth along a path through the medium
+        system defined by the specified PhotonPacket object and up to the specified distance.
+
+        The function first calls the SpatialGrid::path() function to store the geometrical
+        information on the path through the spatial grid into the photon packet object, using the
+        initial position \f${\boldsymbol{r}}\f$ and direction \f${\boldsymbol{k}}\f$ obtained from
+        the photon packet.
+
+        While the geometrical information is stored in the photon packet (because there is not
+        other obvious place for it to go), the optical depth information is not.
+
+        With this information given, the function calculates the optical depth for each path
+        segment (or equivalently, for each crossed cell \f$m\f$) as \f[ \tau_m(\lambda_m) = (\Delta
+        s)_m \sum_h \varsigma_{\lambda_m,h}^{\text{ext}}\, n_m, \f] where
+        \f$\varsigma_{\lambda_m,h}^{\text{abs}}\f$ is the extinction cross section corresponding to
+        the \f$h\f$'th medium component at wavelength \f$\lambda_m\f$ and \f$n_{m,h}\f$ the number
+        density in the cell with index \f$m\f$ corresponding to the \f$h\f$'th medium component,
+        and where the sum runs over all medium components. The wavelength \f$\lambda_m\f$ is the
+        wavelength perceived by the medium in cell \f$m\f$ taking into account the bulk velocity in
+        that cell.
+
+        Using these optical depth values per segment, the function determines the cumulative
+        optical depth at the segment exit boundaries. The calculation is limited to the specified
+        distance along the path. More precisely, all path segments with an entry boundary at a
+        cumulative distance along the path smaller than the specified distance are included in the
+        calculation, and any remaining segments are skipped.
+
+        Note that, while the geometrical information is stored in the photon packet (because there
+        is not other obvious place for it to go), the optical depth information is not stored. */
+    double opticalDepth(PhotonPacket* pp, double distance);
 
     /** This function initializes all values of the primary and/or secondary radiation field info
         tables to zero. In simulation modes that record the radiation field, the function should be
@@ -382,16 +411,17 @@ private:
     /** This data structure holds the information maintained per cell. */
     struct State1
     {
-        double V;  // volume
-        Vec v;     // bulk velocity
-        Vec B;     // magnetic field
+        double V{0.};  // volume
+        Vec v;         // bulk velocity
+        Vec B;         // magnetic field
+        double T{0.};  // gas temperature
     };
 
     /** This data structure holds the information maintained per cell and per medium. */
     struct State2
     {
-        double n;                // the number density
-        const MaterialMix* mix;  // pointer to the material mix
+        double n{0.};                     // the number density
+        const MaterialMix* mix{nullptr};  // pointer to the material mix
     };
 
     /** This function returns a writable reference to the state data structure for the given cell

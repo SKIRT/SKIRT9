@@ -85,7 +85,6 @@ void DustMix::setupSelfAfter()
     _sigmaabsv.resize(numLambda);
     _sigmascav.resize(numLambda);
     _sigmaextv.resize(numLambda);
-    _albedov.resize(numLambda);
     _asymmparv.resize(numLambda);
     if (mode == ScatteringMode::MaterialPhaseFunction || mode == ScatteringMode::SphericalPolarization
         || mode == ScatteringMode::SpheroidalPolarization)
@@ -108,11 +107,10 @@ void DustMix::setupSelfAfter()
     _mu = getOpticalProperties(lambdav, _thetav, _sigmaabsv, _sigmascav, _asymmparv, _S11vv, _S12vv, _S33vv, _S34vv,
                                _sigmaabsvv, _sigmaabspolvv);
 
-    // calculate some derived basic optical properties
+    // calculate derived basic optical properties
     for (int ell = 0; ell != numLambda; ++ell)
     {
         _sigmaextv[ell] = _sigmaabsv[ell] + _sigmascav[ell];
-        _albedov[ell] = _sigmaextv[ell] > 0. ? _sigmascav[ell] / _sigmaextv[ell] : 0.;
     }
 
     // precalculate discretizations related to the scattering angles as needed
@@ -172,7 +170,6 @@ void DustMix::setupSelfAfter()
     allocatedSize += _sigmaabsv.size();
     allocatedSize += _sigmascav.size();
     allocatedSize += _sigmaextv.size();
-    allocatedSize += _albedov.size();
     allocatedSize += _asymmparv.size();
     allocatedSize += _S11vv.size();
     allocatedSize += _S12vv.size();
@@ -246,13 +243,6 @@ double DustMix::sectionSca(double lambda) const
 double DustMix::sectionExt(double lambda) const
 {
     return _sigmaextv[indexForLambda(lambda)];
-}
-
-////////////////////////////////////////////////////////////////////
-
-double DustMix::albedo(double lambda) const
-{
-    return _albedov[indexForLambda(lambda)];
 }
 
 ////////////////////////////////////////////////////////////////////

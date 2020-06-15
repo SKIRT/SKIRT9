@@ -7,6 +7,7 @@
 #include "DisjointWavelengthGrid.hpp"
 #include "FatalError.hpp"
 #include "Log.hpp"
+#include "LyaUtils.hpp"
 #include "MaterialMix.hpp"
 #include "Parallel.hpp"
 #include "ParallelFactory.hpp"
@@ -18,6 +19,7 @@
 #include "SpecialFunctions.hpp"
 #include "StringUtils.hpp"
 #include "TimeLogger.hpp"
+#include "VoigtProfile.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -45,6 +47,9 @@ void MonteCarloSimulation::setupSimulation()
 void MonteCarloSimulation::setupSelfBefore()
 {
     Simulation::setupSelfBefore();
+
+    // initialize the dipole phase function helper if the configuration includes Lyman-alpha
+    if (_config->hasLymanAlpha()) _dpf.initialize(random(), _config->hasPolarization());
 
     // construct a secondary source system to help launch secondary photon packets if required
     if (_config->hasSecondaryEmission()) _secondarySourceSystem = new SecondarySourceSystem(this);
@@ -416,7 +421,8 @@ void MonteCarloSimulation::storeRadiationField(const PhotonPacket* pp)
             int m = segment.m;
             if (m >= 0)
             {
-                double lambda = pp->perceivedWavelength(mediumSystem()->bulkVelocity(m));
+                double lambda =
+                    pp->perceivedWavelength(mediumSystem()->bulkVelocity(m), _config->lyaExpansionRate() * segment.s);
                 int ell = _config->radiationFieldWLG()->bin(lambda);
                 if (ell >= 0)
                 {
@@ -476,8 +482,9 @@ void MonteCarloSimulation::simulatePropagation(PhotonPacket* pp)
     }
     else
     {
-        Vec bfv = mediumSystem()->bulkVelocity(m);
-        albedo = mediumSystem()->albedo(pp->perceivedWavelength(bfv), m);
+        double lambda = pp->perceivedWavelength(mediumSystem()->bulkVelocity(m),
+                                                _config->lyaExpansionRate() * pp->interactionDistance());
+        albedo = mediumSystem()->albedo(lambda, m);
     }
 
     // adjust the weight by the scattered fraction
@@ -509,7 +516,7 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-void MonteCarloSimulation::peelOffScattering(const PhotonPacket* pp, PhotonPacket* ppp)
+void MonteCarloSimulation::peelOffScattering(PhotonPacket* pp, PhotonPacket* ppp)
 {
     // get the cell hosting the scattering event
     int m = pp->interactionCellIndex();
@@ -526,7 +533,7 @@ void MonteCarloSimulation::peelOffScattering(const PhotonPacket* pp, PhotonPacke
     else
     {
         bfv = mediumSystem()->bulkVelocity(m);
-        lambda = pp->perceivedWavelength(bfv);
+        lambda = pp->perceivedWavelength(bfv, _config->lyaExpansionRate() * pp->interactionDistance());
     }
 
     // determine the weighting factor for each medium component as its scattering opacity (n * sigma_sca)
@@ -551,6 +558,8 @@ void MonteCarloSimulation::peelOffScattering(const PhotonPacket* pp, PhotonPacke
     // now do the actual peel-off for each instrument
     for (Instrument* instr : _instrumentSystem->instruments())
     {
+        double localLambda = lambda;
+
         if (!instr->isSameObserverAsPreceding())
         {
             // get the instrument direction
@@ -616,11 +625,94 @@ void MonteCarloSimulation::peelOffScattering(const PhotonPacket* pp, PhotonPacke
                         V += w * sv.stokesV();
                         break;
                     }
+                    case MaterialMix::ScatteringMode::Lya:
+                    {
+                        // draw a random atom velocity & phase function, unless a previous peel-off stored this already
+                        if (!pp->hasLyaScatteringInfo())
+                        {
+                            double T = mediumSystem()->gasTemperature(m);
+                            double nH = _mediumSystem->numberDensity(m, _config->lyaMediumIndex());
+                            pp->setLyaScatteringInfo(
+                                LyaUtils::sampleAtomVelocity(lambda, T, nH, pp->direction(), _config, random()));
+                        }
+
+                        // calculate the value of the appropriate phase function (dipole or isotropic)
+                        double costheta = Vec::dot(pp->direction(), bfkobs);
+                        double value = pp->lyaDipole() ? _dpf.phaseFunctionValueForCosine(costheta) : 1.;
+
+                        // accumulate the weighted sum in the intensity (no support for polarization in this case)
+                        I += wv[h] * value;
+
+                        // for a random fraction of the events governed by the relative Lya contribution,
+                        // Doppler-shift the photon packet wavelength into and out of the atom frame
+                        if (random()->uniform() <= wv[h])
+                            localLambda =
+                                LyaUtils::shiftWavelength(localLambda, pp->lyaAtomVelocity(), pp->direction(), bfkobs);
+                        break;
+                    }
+                    case MaterialMix::ScatteringMode::LyaPolarization:
+                    {
+                        // draw a random atom velocity & phase function, unless a previous peel-off stored this already
+                        if (!pp->hasLyaScatteringInfo())
+                        {
+                            double T = mediumSystem()->gasTemperature(m);
+                            double nH = _mediumSystem->numberDensity(m, _config->lyaMediumIndex());
+                            pp->setLyaScatteringInfo(
+                                LyaUtils::sampleAtomVelocity(lambda, T, nH, pp->direction(), _config, random()));
+                        }
+
+                        // copy the polarization state so we can change it without affecting the incoming photon packet
+                        StokesVector sv = *pp;
+
+                        // calculate the value of the appropriate phase function (dipole or isotropic)
+                        // and adjust the polarization state
+                        double value = 0.;
+                        if (pp->lyaDipole())
+                        {
+                            // calculate the value of the dipole phase function
+                            double theta = acos(Vec::dot(pp->direction(), bfkobs));
+                            double phi = angleBetweenScatteringPlanes(pp->normal(), pp->direction(), bfkobs);
+                            value = _dpf.phaseFunctionValue(theta, phi, pp);
+
+                            // rotate the Stokes vector reference direction into the scattering plane
+                            sv.rotateIntoPlane(pp->direction(), bfkobs);
+
+                            // apply the Mueller matrix
+                            _dpf.applyMueller(theta, &sv);
+
+                            // rotate the Stokes vector reference direction parallel to the instrument frame y-axis
+                            // it is given bfkobs because the photon is at this point aimed towards the observer
+                            sv.rotateIntoPlane(bfkobs, instr->bfky(pp->position()));
+                        }
+                        else
+                        {
+                            value = 1.;
+                            sv.setUnpolarized();
+                        }
+
+                        // acumulate the weighted sum of all Stokes components to support polarization
+                        double w = wv[h] * value;
+                        I += w * sv.stokesI();
+                        Q += w * sv.stokesQ();
+                        U += w * sv.stokesU();
+                        V += w * sv.stokesV();
+
+                        // for a random fraction of the events governed by the relative Lya contribution,
+                        // Doppler-shift the photon packet wavelength into and out of the atom frame
+                        if (random()->uniform() <= wv[h])
+                            localLambda =
+                                LyaUtils::shiftWavelength(localLambda, pp->lyaAtomVelocity(), pp->direction(), bfkobs);
+                        break;
+                    }
                 }
             }
 
+            // if the material in the cell has a nonzero bulk velocity, determine the Doppler-shifted wavelength
+            double emissionLambda =
+                bfv.isNull() ? localLambda : PhotonPacket::shiftedEmissionWavelength(localLambda, bfkobs, bfv);
+
             // pass the result to the peel-off photon packet and have it detected
-            ppp->launchScatteringPeelOff(pp, bfkobs, bfv, I);
+            ppp->launchScatteringPeelOff(pp, bfkobs, emissionLambda, I);
             if (_config->hasPolarization()) ppp->setPolarized(I, Q, U, V, pp->normal());
         }
         instr->detect(ppp);
@@ -646,7 +738,7 @@ void MonteCarloSimulation::simulateScattering(PhotonPacket* pp)
     else
     {
         bfv = mediumSystem()->bulkVelocity(m);
-        lambda = pp->perceivedWavelength(bfv);
+        lambda = pp->perceivedWavelength(bfv, _config->lyaExpansionRate() * pp->interactionDistance());
     }
 
     // randomly select a material mix; the probability of each component is weighted by the scattering opacity
@@ -703,8 +795,79 @@ void MonteCarloSimulation::simulateScattering(PhotonPacket* pp)
             bfknew = Direction(newdir / newdir.norm());
             break;
         }
+        case MaterialMix::ScatteringMode::Lya:
+        {
+            // draw a random atom velocity & phase function, unless a peel-off stored this already
+            if (!pp->hasLyaScatteringInfo())
+            {
+                double T = mediumSystem()->gasTemperature(m);
+                double nH = _mediumSystem->numberDensity(m, _config->lyaMediumIndex());
+                pp->setLyaScatteringInfo(
+                    LyaUtils::sampleAtomVelocity(lambda, T, nH, pp->direction(), _config, random()));
+            }
+
+            // draw the outgoing direction from the dipole or the isotropic phase function
+            if (pp->lyaDipole())
+            {
+                double costheta = _dpf.generateCosineFromPhaseFunction();
+                bfknew = random()->direction(pp->direction(), costheta);
+            }
+            else
+            {
+                bfknew = random()->direction();
+            }
+
+            // Doppler-shift the photon packet wavelength into and out of the atom frame
+            lambda = LyaUtils::shiftWavelength(lambda, pp->lyaAtomVelocity(), pp->direction(), bfknew);
+            break;
+        }
+        case MaterialMix::ScatteringMode::LyaPolarization:
+        {
+            // draw a random atom velocity & phase function, unless a peel-off stored this already
+            if (!pp->hasLyaScatteringInfo())
+            {
+                double T = mediumSystem()->gasTemperature(m);
+                double nH = _mediumSystem->numberDensity(m, _config->lyaMediumIndex());
+                pp->setLyaScatteringInfo(
+                    LyaUtils::sampleAtomVelocity(lambda, T, nH, pp->direction(), _config, random()));
+            }
+
+            // draw the outgoing direction from the dipole or the isotropic phase function
+            // and update the polarization state of the photon packet accordingly
+            if (pp->lyaDipole())
+            {
+                // sample the angles between the previous and new direction from the dipole phase function,
+                // given the incoming polarization state
+                double theta, phi;
+                std::tie(theta, phi) = _dpf.generateAnglesFromPhaseFunction(pp);
+
+                // rotate the Stokes vector (and the scattering plane) of the photon packet
+                pp->rotateStokes(phi, pp->direction());
+
+                // apply Mueller matrix to the Stokes vector of the photon packet
+                _dpf.applyMueller(theta, pp);
+
+                // rotate the propagation direction in the scattering plane
+                Vec newdir = pp->direction() * cos(theta) + Vec::cross(pp->normal(), pp->direction()) * sin(theta);
+
+                // normalize the new direction to prevent degradation
+                bfknew = Direction(newdir / newdir.norm());
+            }
+            else
+            {
+                bfknew = random()->direction();
+                pp->setUnpolarized();
+            }
+
+            // Doppler-shift the photon packet wavelength into and out of the atom frame
+            lambda = LyaUtils::shiftWavelength(lambda, pp->lyaAtomVelocity(), pp->direction(), bfknew);
+            break;
+        }
     }
-    pp->scatter(bfknew, bfv);
+
+    // if the material in the cell has a nonzero bulk velocity, determine the Doppler-shifted outgoing wavelength
+    if (!bfv.isNull()) lambda = PhotonPacket::shiftedEmissionWavelength(lambda, bfknew, bfv);
+    pp->scatter(bfknew, lambda);
 }
 
 ////////////////////////////////////////////////////////////////////

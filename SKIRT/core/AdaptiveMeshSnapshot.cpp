@@ -217,7 +217,7 @@ void AdaptiveMeshSnapshot::readAndClose()
         _rhov.resize(n);
 
         // get the maximum temperature, or zero of there is none
-        double maxT = hasTemperatureCutoff() ? maxTemperature() : 0.;
+        double maxT = useTemperatureCutoff() ? maxTemperature() : 0.;
 
         // initialize statistics
         double totalOriginalMass = 0;
@@ -238,7 +238,7 @@ void AdaptiveMeshSnapshot::readAndClose()
                 originalMass =
                     max(0., massIndex() >= 0 ? prop[massIndex()] : prop[densityIndex()] * _cells[m]->volume());
 
-            double metallicMass = originalMass * (metallicityIndex() >= 0 ? prop[metallicityIndex()] : 1.);
+            double metallicMass = originalMass * (useMetallicity() ? prop[metallicityIndex()] : 1.);
             double effectiveMass = metallicMass * multiplier();
 
             Mv[m] = effectiveMass;
@@ -253,8 +253,9 @@ void AdaptiveMeshSnapshot::readAndClose()
         if (numIgnored) log()->info("  Ignored mass in " + std::to_string(numIgnored) + " high-temperature cells");
         log()->info("  Total original mass : " + StringUtils::toString(units()->omass(totalOriginalMass), 'e', 4) + " "
                     + units()->umass());
-        log()->info("  Total metallic mass : " + StringUtils::toString(units()->omass(totalMetallicMass), 'e', 4) + " "
-                    + units()->umass());
+        if (useMetallicity())
+            log()->info("  Total metallic mass : " + StringUtils::toString(units()->omass(totalMetallicMass), 'e', 4)
+                        + " " + units()->umass());
         log()->info("  Total effective mass: " + StringUtils::toString(units()->omass(totalEffectiveMass), 'e', 4) + " "
                     + units()->umass());
 
@@ -321,6 +322,22 @@ double AdaptiveMeshSnapshot::diagonal(int m) const
 Box AdaptiveMeshSnapshot::extent(int m) const
 {
     return _cells[m]->extent();
+}
+
+////////////////////////////////////////////////////////////////////
+
+double AdaptiveMeshSnapshot::temperature(int m) const
+{
+    const Array& prop = _cells[m]->properties();
+    return prop[temperatureIndex()];
+}
+
+////////////////////////////////////////////////////////////////////
+
+double AdaptiveMeshSnapshot::temperature(Position bfr) const
+{
+    int m = cellIndex(bfr);
+    return m >= 0 ? temperature(m) : 0.;
 }
 
 ////////////////////////////////////////////////////////////////////

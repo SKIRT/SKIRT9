@@ -21,7 +21,7 @@ void ImportedGeometry::setupSelfAfter()
 
     // set the density policy;
     // our total mass is normalized to unity, so the constant mass multiplier can have an arbitrary value
-    _snapshot->setMassDensityPolicy(1., _importTemperature ? _maxTemperature : 0.);
+    _snapshot->setMassDensityPolicy(1., _importTemperature ? _maxTemperature : 0., true);
 
     // read the data from file
     _snapshot->readAndClose();

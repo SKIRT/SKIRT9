@@ -33,7 +33,7 @@
 class LyaGaussianSED : public SED
 {
     ITEM_CONCRETE(LyaGaussianSED, SED, "a Gaussian spectrum around the central Lyman-alpha wavelength")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(LyaGaussianSED, "Level3")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(LyaGaussianSED, "Lya|Level3")
 
         PROPERTY_DOUBLE(dispersion, "the Gaussian velocity dispersion")
         ATTRIBUTE_QUANTITY(dispersion, "velocity")

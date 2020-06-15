@@ -123,7 +123,9 @@ public:
         HenyeyGreenstein,
         MaterialPhaseFunction,
         SphericalPolarization,
-        SpheroidalPolarization
+        SpheroidalPolarization,
+        Lya,
+        LyaPolarization
     };
 
     /** This function returns the scattering mode supported by this material mix. In the current
@@ -151,6 +153,12 @@ public:
         is implemented and all other areas of the code treat spheroidal particles as if they were
         spherical.
 
+        - Lya: this material type requires and offers treatment of Lyman-alpha line scattering,
+        without support for polarization.
+
+        - LyaPolarization: this material type requires and offers treatment of Lyman-alpha line
+          scattering with support for polarization.
+
         The implementation of this function in this base class returns the HenyeyGreenstein
         scattering mode as a default value. Subclasses that support another scattering mode must
         override this function and return the appropriate value. */
@@ -162,7 +170,8 @@ public:
     bool hasPolarization() const
     {
         return scatteringMode() == ScatteringMode::SphericalPolarization
-               || scatteringMode() == ScatteringMode::SpheroidalPolarization;
+               || scatteringMode() == ScatteringMode::SpheroidalPolarization
+               || scatteringMode() == ScatteringMode::LyaPolarization;
     }
 
     //======== Basic material properties =======
@@ -192,12 +201,6 @@ public:
         \f$\varsigma^{\text{ext}}_{\lambda} = \varsigma^{\text{abs}}_{\lambda} +
         \varsigma^{\text{sca}}_{\lambda}\f$ at wavelength \f$\lambda\f$. */
     virtual double sectionExt(double lambda) const = 0;
-
-    /** This function returns the scattering albedo \f$\varpi_\lambda =
-        \varsigma_{\lambda}^{\text{sca}} / \varsigma_{\lambda}^{\text{ext}} =
-        \kappa_{\lambda}^{\text{sca}} / \kappa_{\lambda}^{\text{ext}}\f$ at
-        wavelength \f$\lambda\f$. */
-    virtual double albedo(double lambda) const = 0;
 
     /** This function is used only with the HenyeyGreenstein scattering mode. It returns the
         scattering asymmetry parameter \f$g_\lambda = \left<\cos\theta\right>\f$ at wavelength
