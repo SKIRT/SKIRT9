@@ -62,7 +62,18 @@
     \f$4N_\mathrm{side}^2-16N\f$ pixels in the polar regions, similar to the empty pixels in
     projected AllSkyInstrument images. The advantage of this approach is that we can easily use the
     existing 2D image functionality for output, and that we can easily map output pixels to the
-    corresponding HEALPix pixels in ring ordering during analysis. */
+    corresponding HEALPix pixels in ring ordering during analysis.
+
+    Note that the flux calibration for this instrument (as for the AllSkyInstrument) is not
+    clearly defined. While the angular size of the individual HEALPix pixels is known, the
+    angular size of the pixels as seen from a distant object is not, since the pixels do not
+    have an actual physical size. We can define such a physical size by defining a radius for
+    the instrument, which is then used to convert the angular size to a physical size. This radius
+    is quite arbitrary, but should nonetheless be chosen with some care: if the radius is too small,
+    then recorded flux values will be very high or even overflow. A good rule of thumb is to use a
+    radius that has a similar size to your object of study. For e.g. a galaxy (sizes in kpc), a radius of
+    1 pc works well. It is always possible to recalibrate the fluxes afterwards by using the same
+    radius and adjusting to the pixel size of an actual instrument. */
 class HEALPixSkyInstrument : public Instrument
 {
     ITEM_CONCRETE(HEALPixSkyInstrument, Instrument,
