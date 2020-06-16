@@ -134,7 +134,7 @@ public:
                     _j += (ky() < 0.0) ? -1 : 1;
                     if (_j >= _grid->_Ny || _j < 0) setState(State::Outside);
                 }
-                else // if (dsz < dsx && dsz < dsy)
+                else  // if (dsz < dsx && dsz < dsy)
                 {
                     setSegment(m, dsz);
                     setrz(zE);

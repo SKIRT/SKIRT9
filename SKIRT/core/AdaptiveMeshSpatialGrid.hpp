@@ -61,9 +61,10 @@ public:
     /** This function returns a random location from the cell with index \f$m\f$. */
     Position randomPositionInCell(int m) const override;
 
-    /**  TO DO. This function calculates a path through the grid. The SpatialGridPath object passed as an
-        argument specifies the starting position \f${\bf{r}}\f$ and the direction \f${\bf{k}}\f$
-        for the path. The data on the calculated path are added back into the same object. */
+    /** This function creates and hands over ownership of a path segment generator (an instance of
+        a PathSegmentGenerator subclass) appropriate for this spatial grid type. For the adaptive
+        mesh grid, the path segment generator is actually implemented in the AdaptiveMeshSnapshot
+        class. */
     std::unique_ptr<PathSegmentGenerator> createPathSegmentGenerator() const override;
 
 protected:

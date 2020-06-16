@@ -77,9 +77,10 @@ public:
         \f${\cal{X}}_1\f$, \f${\cal{X}}_2\f$ and \f${\cal{X}}_3\f$ three uniform deviates. */
     Position randomPositionInCell(int m) const override;
 
-    /** TO DO. This function calculates a path through the grid. The SpatialGridPath object passed as an
-        argument specifies the starting position \f${\bf{r}}\f$ and the direction \f${\bf{k}}\f$
-        for the path. The data on the calculated path are added back into the same object.
+    /** This function creates and hands over ownership of a path segment generator (an instance of
+        a PathSegmentGenerator subclass) appropriate for a 2D spherical grid, implemented as a
+        private PathSegmentGenerator subclass. The algorithm used to construct the path is
+        described below.
 
         We represent the path by its parameter equation \f${\bf{x}}={\bf{r}}+s\,{\bf{k}}\f$, and we
         assume that \f${\bf{k}}\f$ is a unit vector. The two intersection points with a radial

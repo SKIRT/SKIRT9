@@ -332,10 +332,9 @@ public:
     //====================== Path construction =====================
 
 public:
-    /** TO DO. This function calculates a path through the grid. The SpatialGridPath object passed as an
-        argument specifies the starting position \f${\bf{r}}\f$ and the direction \f${\bf{k}}\f$
-        for the path. The data on the calculated path are added back into the same object. See the
-        SpatialGridPath class for more information.
+    /** This function creates and hands over ownership of a path segment generator appropriate for
+        the adaptive mesh spatial grid, implemented as a private PathSegmentGenerator subclass. The
+        algorithm used to construct the path is described below.
 
         In the first stage, the function checks whether the start point is inside the domain. If
         so, the current point is simply initialized to the start point. If not, the function

@@ -26,13 +26,6 @@ double SpatialGrid::diagonal(int m) const
 
 //////////////////////////////////////////////////////////////////////
 
-std::unique_ptr<PathSegmentGenerator> SpatialGrid::createPathSegmentGenerator() const
-{
-    return std::unique_ptr<PathSegmentGenerator>();
-}
-
-//////////////////////////////////////////////////////////////////////
-
 void SpatialGrid::path(SpatialGridPath* path) const
 {
     auto generator = createPathSegmentGenerator();

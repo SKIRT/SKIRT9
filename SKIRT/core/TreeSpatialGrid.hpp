@@ -105,12 +105,11 @@ public:
         \f${\cal{X}}_3\f$ three uniform deviates. */
     Position randomPositionInCell(int m) const override;
 
-    /** TO DO.
-        This function calculates a path through the grid. The SpatialGridPath object passed as an
-        argument specifies the starting position \f${\bf{r}}\f$ and the direction \f${\bf{k}}\f$
-        for the path. The data on the calculated path are added back into the same object.
+    /** This function creates and hands over ownership of a path segment generator (an instance of
+        a PathSegmentGenerator subclass) appropriate for a tree grid, implemented as a private
+        PathSegmentGenerator subclass. The algorithm used to construct the path is described below.
 
-        For a tree grid, the function uses a rather straighforward algorithm. It determines the
+        The function uses a rather straighforward algorithm. It determines the
         cell that contains the starting position, and calculates the first wall of the cell that
         will be crossed. The pathlength \f$\Delta s\f$ is determined and the current position is
         moved to a new position along this path, a tiny fraction further than \f$\Delta s\f$, \f[

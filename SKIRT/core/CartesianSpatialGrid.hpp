@@ -77,7 +77,13 @@ public:
         uniform deviates. A position with these cartesian coordinates is returned. */
     Position randomPositionInCell(int m) const override;
 
-    /** TO DO. **/
+    /** This function creates and hands over ownership of a path segment generator (an instance of
+        a PathSegmentGenerator subclass) appropriate for a cartesian grid, implemented as a private
+        PathSegmentGenerator subclass.
+
+        The algorithm used to construct the path is fairly straightforward because all cells are
+        cuboids lined up with the coordinate axes and the neighboring cells are easily found by
+        manipulating cell indices. */
     std::unique_ptr<PathSegmentGenerator> createPathSegmentGenerator() const override;
 
 protected:

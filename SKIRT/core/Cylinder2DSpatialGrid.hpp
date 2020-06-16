@@ -76,7 +76,12 @@ public:
         cylindrical coordinates is returned. */
     Position randomPositionInCell(int m) const override;
 
-    /** TO DO. **/
+    /** This function creates and hands over ownership of a path segment generator (an instance of
+        a PathSegmentGenerator subclass) appropriate for an axisymmetric grid, implemented as a
+        private PathSegmentGenerator subclass.
+
+        The algorithm used to construct the path is fairly straightforward because of the symmetry
+        in the grid. */
     std::unique_ptr<PathSegmentGenerator> createPathSegmentGenerator() const override;
 
 protected:

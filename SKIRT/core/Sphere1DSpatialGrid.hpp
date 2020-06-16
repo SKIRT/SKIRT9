@@ -71,7 +71,12 @@ public:
         the unit sphere to generate a random position from the cell. */
     Position randomPositionInCell(int m) const override;
 
-    /** TO DO. **/
+    /** This function creates and hands over ownership of a path segment generator (an instance of
+        a PathSegmentGenerator subclass) appropriate for a spherical grid, implemented as a private
+        PathSegmentGenerator subclass.
+
+        The algorithm used to construct the path is fairly straightforward because of the symmetry
+        in the grid. */
     std::unique_ptr<PathSegmentGenerator> createPathSegmentGenerator() const override;
 
 protected:
