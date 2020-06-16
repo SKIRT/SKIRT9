@@ -97,7 +97,7 @@ public:
         {
             case State::Unknown:
             {
-                // try moving the photon packet inside the grid
+                // try moving the photon packet inside the grid, if necessary
                 double rmax = _grid->maxRadius();
                 double rmin = _grid->minRadius();
                 double r = sqrt(rx() * rx() + ry() * ry() + rz() * rz());
@@ -118,7 +118,11 @@ public:
                         setEmptySegment(qmax - _q);
                         _i = _grid->_Nr - 1;
                         _q = qmax;
+
+                        // determine the initial direction of movement relative to the center
                         setState(State::Inside);
+                        _imin = NR::locate(_grid->_rv, _p);  // returns -1 when p < rmin
+                        _phase = (_i > _imin) ? Phase::Inwards : Phase::Outwards;
                         return true;
                     }
                 }
@@ -130,21 +134,22 @@ public:
                     _i = 0;
                     _q = qmin;
                     setState(State::Inside);
+                    _phase = Phase::Outwards;
                     return true;
                 }
-
-                // path starts inside the grid
-                setState(State::Inside);
-
-                // determine the initial grid cell
-                _i = NR::locateClip(_grid->_rv, r);
-
-                // determine the initial direction of movement relative to the center
-                _phase = Phase::Outwards;
-                if (_q < 0.)
+                else
                 {
-                    _imin = NR::locate(_grid->_rv, _p);  // returns -1 when p < rmin
-                    if (_i > _imin) _phase = Phase::Inwards;
+                    // path starts inside the grid; determine the initial grid cell
+                    _i = NR::locateClip(_grid->_rv, r);
+
+                    // determine the initial direction of movement relative to the center
+                    setState(State::Inside);
+                    _phase = Phase::Outwards;
+                    if (_q < 0.)
+                    {
+                        _imin = NR::locate(_grid->_rv, _p);  // returns -1 when p < rmin
+                        if (_i > _imin) _phase = Phase::Inwards;
+                    }
                 }
 
                 // fall through to determine the first actual segment
@@ -184,92 +189,6 @@ public:
         return false;
     }
 };
-
-/*
-{
-    // Determination of the initial position and direction of the path,
-    // and calculation of some initial values
-
-    path->clear();
-    double x, y, z;
-    path->position().cartesian(x, y, z);
-    double kx, ky, kz;
-    path->direction().cartesian(kx, ky, kz);
-    double rmax = maxRadius();
-    double rmin = minRadius();
-
-    // Move the photon packet to the first grid cell that it will pass.
-    // If it does not pass any grid cell, return an empty path.
-
-    double r = path->position().radius();
-    double q = x * kx + y * ky + z * kz;
-    double p = sqrt((r - q) * (r + q));
-    if (r > rmax)
-    {
-        if (q > 0.0 || p > rmax)
-            return path->clear();
-        else
-        {
-            r = rmax - 1e-8 * (_rv[_Nr] - _rv[_Nr - 1]);
-            // path intersects rmax boundary going inward, qmax is negative
-            double qmax = -sqrt((rmax - p) * (rmax + p));
-            double ds = (qmax - q);
-            path->addSegment(-1, ds);
-            q = qmax;
-        }
-    }
-    else if (r < rmin)
-    {
-        r = rmin + 1e-8 * (_rv[1] - _rv[0]);
-        // path intersects rmin boundary going outward, qmin is positive
-        double qmin = sqrt((rmin - p) * (rmin + p));
-        double ds = (qmin - q);
-        path->addSegment(-1, ds);
-        q = qmin;
-    }
-
-    // Determination of the initial grid cell
-
-    int i = NR::locateClip(_rv, r);
-
-    // And here we go...
-
-    double rN, qN;
-
-    // Inward movement (not always...)
-
-    if (q < 0.0)
-    {
-        int imin = NR::locate(_rv, p);  // returns -1 when p < rmin
-        while (i > imin)
-        {
-            rN = _rv[i];  // i >= 0 here
-            qN = -sqrt((rN - p) * (rN + p));
-            int m = i;
-            double ds = qN - q;
-            path->addSegment(m, ds);
-            i--;  // i can become -1 here
-            q = qN;
-        }
-    }
-
-    // Outward movement (starting with i potentially -1)
-
-    while (true)
-    {
-        rN = _rv[i + 1];
-        qN = sqrt((rN - p) * (rN + p));
-        int m = i;
-        double ds = qN - q;
-        path->addSegment(m, ds);  // m can be -1 here, as intended
-        i++;
-        if (i >= _Nr)
-            return;
-        else
-            q = qN;
-    }
-}
-*/
 
 //////////////////////////////////////////////////////////////////////
 
