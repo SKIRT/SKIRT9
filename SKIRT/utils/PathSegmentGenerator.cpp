@@ -12,6 +12,7 @@ bool PathSegmentGenerator::moveInside(const Box& box, double eps)
 {
     // initialize to empty segment with zero length
     setEmptySegment();
+    _state = State::Outside;
 
     // keep track of cumulative length of all subsegments
     double cumds = 0.;
@@ -100,20 +101,14 @@ bool PathSegmentGenerator::moveInside(const Box& box, double eps)
         }
     }
 
-    if (box.contains(r()))
-    {
-        // return the empty segment with the cumulative length
-        // (which might be zero if the position was inside the box to begin with)
-        setEmptySegment(cumds);
-        _state = State::Inside;
-        return true;
-    }
-    else
-    {
-        // in rare border cases, the position can still be outside of the box
-        _state = State::Outside;
-        return false;
-    }
+    // in rare border cases, the position can still be outside of the box
+    if (!box.contains(r())) return false;
+
+    // return the empty segment with the cumulative length
+    // (which might be zero if the position was inside the box to begin with)
+    setEmptySegment(cumds);
+    _state = State::Inside;
+    return true;
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -76,10 +76,8 @@ public:
         cylindrical coordinates is returned. */
     Position randomPositionInCell(int m) const override;
 
-    /** This function calculates a path through the grid. The SpatialGridPath object passed as an
-        argument specifies the starting position \f${\bf{r}}\f$ and the direction \f${\bf{k}}\f$
-        for the path. The data on the calculated path are added back into the same object. */
-    void path(SpatialGridPath* path) const override;
+    /** TO DO. **/
+    std::unique_ptr<PathSegmentGenerator> createPathSegmentGenerator() const override;
 
 protected:
     /** This function writes the intersection of the grid with the xy plane to the specified
@@ -108,6 +106,10 @@ private:
     int _Nz{0};
     Array _Rv;
     Array _zv;
+
+    // allow our path segment generator to access our private data members
+    class MySegmentGenerator;
+    friend class MySegmentGenerator;
 };
 
 //////////////////////////////////////////////////////////////////////
