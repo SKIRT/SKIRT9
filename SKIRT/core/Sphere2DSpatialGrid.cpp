@@ -7,6 +7,7 @@
 #include "FatalError.hpp"
 #include "Log.hpp"
 #include "NR.hpp"
+#include "PathSegmentGenerator.hpp"
 #include "Random.hpp"
 #include "SpatialGridPath.hpp"
 #include "SpatialGridPlotFile.hpp"
@@ -197,7 +198,164 @@ namespace
 
 //////////////////////////////////////////////////////////////////////
 
-void Sphere2DSpatialGrid::path(SpatialGridPath* path) const
+class Sphere2DSpatialGrid::MySegmentGenerator : public PathSegmentGenerator
+{
+    const Sphere2DSpatialGrid* _grid{nullptr};
+    double _eps{0.};
+    int _i{-1}, _k{-1};
+
+public:
+    MySegmentGenerator(const Sphere2DSpatialGrid* grid) : _grid(grid) {}
+
+    // determine the indices of the cell containing the current position
+    // _i will be set to -1 if the position is outside the grid
+    void setCellIndices()
+    {
+        double radius, theta, phi;
+        r().spherical(radius, theta, phi);
+        _i = NR::locateFail(_grid->_rv, radius);
+        _k = NR::locateClip(_grid->_thetav, theta);
+    }
+
+    bool next() override
+    {
+        switch (state())
+        {
+            case State::Unknown:
+            {
+                // small value relative to domain size
+                double rmax = _grid->maxRadius();
+                _eps = 1e-11 * rmax;
+
+                // if necessary, try moving the photon packet inside the grid
+                double r2 = r().norm2();
+                if (r2 > rmax * rmax)
+                {
+                    double ds = firstIntersectionSphere(r(), k(), rmax);
+                    if (ds > 0.)
+                    {
+                        propagater(ds + _eps);
+                        setCellIndices();
+                        if (_i >= 0)
+                        {
+                            // return an empty path segment with the appropriate length
+                            setEmptySegment(ds);
+                            setState(State::Inside);
+                            return true;
+                        }
+                    }
+                    // there is no intersection with the grid; return an empty path
+                    setState(State::Outside);
+                    return false;
+                }
+
+                // the original position was inside the grid
+                // if necessary, move the position away from the origin so that it has meaningful cell indices
+                if (r2 == 0.) propagater(_eps);
+                setCellIndices();
+                setState(State::Inside);
+
+                // fall through to determine the first actual segment
+            }
+
+            case State::Inside:
+            {
+                while (true)  // the loop is executed more than once only if no exit point is found
+                {
+                    // remember the indices of the current cell
+                    int icur = _i;
+                    int kcur = _k;
+
+                    // calculate the distance travelled inside the cell by considering
+                    // the potential exit points for each of the four cell boundaries;
+                    // the smallest positive intersection "distance" wins.
+                    double ds = DBL_MAX;  // very large, but not infinity (so that infinite values are discarded)
+
+                    // inner radial boundary (not applicable to innermost cell)
+                    if (icur > 0)
+                    {
+                        double s = firstIntersectionSphere(r(), k(), _grid->_rv[icur]);
+                        if (s > 0 && s < ds)
+                        {
+                            ds = s;
+                            _i = icur - 1;
+                            _k = kcur;
+                        }
+                    }
+
+                    // outer radial boundary (always applicable)
+                    {
+                        double s = firstIntersectionSphere(r(), k(), _grid->_rv[icur + 1]);
+                        if (s > 0 && s < ds)
+                        {
+                            ds = s;
+                            _i = icur + 1;  // may be incremented beyond the outermost boundary
+                            _k = kcur;
+                        }
+                    }
+
+                    // upper angular boundary (not applicable to uppermost cell)
+                    if (kcur > 0)
+                    {
+                        double s = firstIntersectionCone(r(), k(), _grid->_cv[kcur]);
+                        if (s > 0 && s < ds)
+                        {
+                            ds = s;
+                            _i = icur;
+                            _k = kcur - 1;
+                        }
+                    }
+
+                    // lower angular boundary (not applicable to lowest cell)
+                    if (kcur < _grid->_Ntheta - 1)
+                    {
+                        double s = firstIntersectionCone(r(), k(), _grid->_cv[kcur + 1]);
+                        if (s > 0 && s < ds)
+                        {
+                            ds = s;
+                            _i = icur;
+                            _k = kcur + 1;
+                        }
+                    }
+
+                    // if an exit point was found, add a segment to the path
+                    if (_i != icur || _k != kcur)
+                    {
+                        setSegment(_grid->index(icur, kcur), ds);
+                        propagater(ds + _eps);
+                        if (_i >= _grid->_Nr) setState(State::Outside);
+                        return true;
+                    }
+
+                    // otherwise, move a tiny bit along the path and reset the current cell indices
+                    propagater(_eps);
+                    setCellIndices();
+                    if (_i < 0)
+                    {
+                        // the new current point is outside the grid; there is no segment to return
+                        setState(State::Outside);
+                        return false;
+                    }
+                    // try again from the start of this loop
+                }
+            }
+
+            case State::Outside:
+            {
+            }
+        }
+        return false;
+    }
+};
+
+//////////////////////////////////////////////////////////////////////
+
+std::unique_ptr<PathSegmentGenerator> Sphere2DSpatialGrid::createPathSegmentGenerator() const
+{
+    return std::make_unique<MySegmentGenerator>(this);
+}
+
+/*
 {
     // Small value relative to domain size
     double rmax = maxRadius();
@@ -309,7 +467,7 @@ void Sphere2DSpatialGrid::path(SpatialGridPath* path) const
         }
     }
 }
-
+*/
 //////////////////////////////////////////////////////////////////////
 
 void Sphere2DSpatialGrid::write_xy(SpatialGridPlotFile* outfile) const
