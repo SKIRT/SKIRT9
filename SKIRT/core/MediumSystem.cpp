@@ -426,32 +426,30 @@ void MediumSystem::opticalDepth(PhotonPacket* pp)
     double tau = 0.;
     int i = 0;
 
-    // no kinematics and material properties are spatially constant
-    if (!_config->hasMovingMedia() && !_config->hasVariableMedia())
+    // single medium, no kinematics, spatially constant
+    if (_config->hasSingleConstantMedium())
     {
-        // single medium (no kinematics, spatially constant)
-        if (_numMedia == 1)
+        double section = state(0, 0).mix->sectionExt(pp->wavelength());
+        for (auto& segment : pp->segments())
         {
-            double section = state(0, 0).mix->sectionExt(pp->wavelength());
-            for (auto& segment : pp->segments())
-            {
-                if (segment.m >= 0) tau += section * state(segment.m, 0).n * segment.ds;
-                pp->setOpticalDepth(i++, tau);
-            }
-        }
-        // multiple media (no kinematics, spatially constant)
-        else
-        {
-            ShortArray<8> sectionv(_numMedia);
-            for (int h = 0; h != _numMedia; ++h) sectionv[h] = state(0, h).mix->sectionExt(pp->wavelength());
-            for (auto& segment : pp->segments())
-            {
-                if (segment.m >= 0)
-                    for (int h = 0; h != _numMedia; ++h) tau += sectionv[h] * state(segment.m, h).n * segment.ds;
-                pp->setOpticalDepth(i++, tau);
-            }
+            if (segment.m >= 0) tau += section * state(segment.m, 0).n * segment.ds;
+            pp->setOpticalDepth(i++, tau);
         }
     }
+
+    // multiple media, no kinematics, spatially constant
+    else if (_config->hasMultipleConstantMedia())
+    {
+        ShortArray<8> sectionv(_numMedia);
+        for (int h = 0; h != _numMedia; ++h) sectionv[h] = state(0, h).mix->sectionExt(pp->wavelength());
+        for (auto& segment : pp->segments())
+        {
+            if (segment.m >= 0)
+                for (int h = 0; h != _numMedia; ++h) tau += sectionv[h] * state(segment.m, h).n * segment.ds;
+            pp->setOpticalDepth(i++, tau);
+        }
+    }
+
     // with kinematics and/or spatially variable material properties
     else
     {
@@ -483,32 +481,30 @@ double MediumSystem::opticalDepth(PhotonPacket* pp, double distance)
     // because this function is at the heart of the photon life cycle, we implement various optimized versions
     double tau = 0.;
 
-    // no kinematics and material properties are spatially constant
-    if (!_config->hasMovingMedia() && !_config->hasVariableMedia())
+    // single medium, no kinematics, spatially constant
+    if (_config->hasSingleConstantMedium())
     {
-        // single medium (no kinematics, spatially constant)
-        if (_numMedia == 1)
+        double section = state(0, 0).mix->sectionExt(pp->wavelength());
+        for (auto& segment : pp->segments())
         {
-            double section = state(0, 0).mix->sectionExt(pp->wavelength());
-            for (auto& segment : pp->segments())
-            {
-                if (segment.m >= 0) tau += section * state(segment.m, 0).n * segment.ds;
-                if (segment.s > distance) break;
-            }
-        }
-        // multiple media (no kinematics, spatially constant)
-        else
-        {
-            ShortArray<8> sectionv(_numMedia);
-            for (int h = 0; h != _numMedia; ++h) sectionv[h] = state(0, h).mix->sectionExt(pp->wavelength());
-            for (auto& segment : pp->segments())
-            {
-                if (segment.m >= 0)
-                    for (int h = 0; h != _numMedia; ++h) tau += sectionv[h] * state(segment.m, h).n * segment.ds;
-                if (segment.s > distance) break;
-            }
+            if (segment.m >= 0) tau += section * state(segment.m, 0).n * segment.ds;
+            if (segment.s > distance) break;
         }
     }
+
+    // multiple media, no kinematics, spatially constant
+    else if (_config->hasMultipleConstantMedia())
+    {
+        ShortArray<8> sectionv(_numMedia);
+        for (int h = 0; h != _numMedia; ++h) sectionv[h] = state(0, h).mix->sectionExt(pp->wavelength());
+        for (auto& segment : pp->segments())
+        {
+            if (segment.m >= 0)
+                for (int h = 0; h != _numMedia; ++h) tau += sectionv[h] * state(segment.m, h).n * segment.ds;
+            if (segment.s > distance) break;
+        }
+    }
+
     // with kinematics and/or spatially variable material properties
     else
     {

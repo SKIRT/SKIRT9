@@ -267,6 +267,18 @@ public:
         domain of the simulation. */
     bool hasVariableMedia() const { return _hasVariableMedia; }
 
+    /** Returns true if the simulation has a exactly one medium component and both the
+        hasMovingMedia() and hasVariableMedia() functions return false, in other words if the
+        single medium component has no kinematics and its material properties are spatially
+        constant. Otherwise the function returns false. */
+    bool hasSingleConstantMedium() const { return _hasSingleConstantMedium; }
+
+    /** Returns true if the simulation has two or more medium components and both the
+        hasMovingMedia() and hasVariableMedia() functions return false, in other words if there are
+        no kinematics and all material properties are spatially constant. Otherwise the function
+        returns false. */
+    bool hasMultipleConstantMedia() const { return _hasMultipleConstantMedia; }
+
     /** Returns true if all media in the simulation support polarization, and false if none of the
         media do. A mixture of support and no support for polarization is not allowed and will
         cause a fatal error during setup. */
@@ -350,6 +362,8 @@ private:
     bool _hasMovingSources{false};
     bool _hasMovingMedia{false};
     bool _hasVariableMedia{false};
+    bool _hasSingleConstantMedium{false};
+    bool _hasMultipleConstantMedia{false};
     bool _hasPolarization{false};
     bool _hasSpheroidalPolarization{false};
     int _magneticFieldMediumIndex{-1};

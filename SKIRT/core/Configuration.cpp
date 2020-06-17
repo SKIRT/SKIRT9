@@ -212,6 +212,10 @@ void Configuration::setupSelfBefore()
         for (auto medium : ms->media())
             if (medium->hasVariableMix()) _hasVariableMedia = true;
 
+    // set the combined medium criteria
+    _hasSingleConstantMedium = numMedia == 1 && !_hasMovingMedia && !_hasVariableMedia;
+    _hasMultipleConstantMedia = numMedia > 1 && !_hasMovingMedia && !_hasVariableMedia;
+
     // check for polarization
     if (_hasMedium)
     {
