@@ -16,6 +16,7 @@
 #include "NR.hpp"
 #include "Parallel.hpp"
 #include "ParallelFactory.hpp"
+#include "PathSegmentGenerator.hpp"
 #include "PhotonPacket.hpp"
 #include "ProcessManager.hpp"
 #include "Random.hpp"
@@ -390,39 +391,29 @@ double MediumSystem::albedo(double lambda, int m) const
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::opticalDepth(SpatialGridPath* path, double lambda, MaterialMix::MaterialType type)
+double MediumSystem::opticalDepth(const SpatialGridPath* path, double lambda, MaterialMix::MaterialType type)
 {
-    // determine the geometric details of the path
-    _grid->path(path);
-
-    // calculate the optical depth
+    // determine the geometric details of the path and calculate the optical depth at the same time
+    auto generator = _grid->createPathSegmentGenerator();
+    generator->start(path);
     double tau = 0.;
-    for (const auto& segment : path->segments())
+    while (generator->next())
     {
-        if (segment.m >= 0) tau += opacityExt(lambda, segment.m, type) * segment.ds;
+        if (generator->m() >= 0) tau += opacityExt(lambda, generator->m(), type) * generator->ds();
     }
     return tau;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-namespace
-{
-    // The dynamic range of a positive IEEE 754 double precision floating point number is just smaller than 2^2098.
-    // Consequently, the intensity of a photon packet will always become numerically zero beyond the point where the
-    // cumulative optical depth along the path reaches tau = 2098 ln 2.
-    constexpr double TAU_MAX = 2098 * M_LN2;
-}
-
-////////////////////////////////////////////////////////////////////
-
 void MediumSystem::opticalDepth(PhotonPacket* pp)
 {
-    // determine the geometric details of the path
+    // separating the geometric and optical depth calculations seems to be faster, probably due to memory access issues
+    // so we first determine and store the path segments and then calculate and store the cumulative optical depth
+    // because this function is at the heart of the photon life cycle, we implement various optimized versions
     _grid->path(pp);
 
-    // calculate the cumulative optical depth and store it in the photon packet for each path segment;
-    // because this function is at the heart of the photon life cycle, we implement various optimized versions
+    // calculate the cumulative optical depth and store it in the photon packet for each path segment
     double tau = 0.;
     int i = 0;
 
@@ -459,11 +450,6 @@ void MediumSystem::opticalDepth(PhotonPacket* pp)
             {
                 double lambda = pp->perceivedWavelength(state(segment.m).v, _config->lyaExpansionRate() * segment.s);
                 tau += opacityExt(lambda, segment.m) * segment.ds;
-                if (tau >= TAU_MAX)
-                {
-                    pp->setTerminalOpticalDepth(i, tau);
-                    break;
-                }
             }
             pp->setOpticalDepth(i++, tau);
         }
@@ -472,23 +458,24 @@ void MediumSystem::opticalDepth(PhotonPacket* pp)
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::opticalDepth(PhotonPacket* pp, double distance)
+double MediumSystem::opticalDepth(const PhotonPacket* pp, double distance)
 {
-    // determine the geometric details of the path
-    _grid->path(pp);
-
-    // calculate the cumulative optical depth
+    // determine the geometric details of the path and calculate the optical depth at the same time
     // because this function is at the heart of the photon life cycle, we implement various optimized versions
+    auto generator = _grid->createPathSegmentGenerator();
+    generator->start(pp);
     double tau = 0.;
+    double s = 0.;
 
     // single medium, no kinematics, spatially constant
     if (_config->hasSingleConstantMedium())
     {
         double section = state(0, 0).mix->sectionExt(pp->wavelength());
-        for (auto& segment : pp->segments())
+        while (generator->next())
         {
-            if (segment.m >= 0) tau += section * state(segment.m, 0).n * segment.ds;
-            if (segment.s > distance) break;
+            if (generator->m() >= 0) tau += section * state(generator->m(), 0).n * generator->ds();
+            s += generator->ds();
+            if (s > distance) break;
         }
     }
 
@@ -497,26 +484,37 @@ double MediumSystem::opticalDepth(PhotonPacket* pp, double distance)
     {
         ShortArray<8> sectionv(_numMedia);
         for (int h = 0; h != _numMedia; ++h) sectionv[h] = state(0, h).mix->sectionExt(pp->wavelength());
-        for (auto& segment : pp->segments())
+        while (generator->next())
         {
-            if (segment.m >= 0)
-                for (int h = 0; h != _numMedia; ++h) tau += sectionv[h] * state(segment.m, h).n * segment.ds;
-            if (segment.s > distance) break;
+            double ds = generator->ds();
+            int m = generator->m();
+            if (m >= 0)
+                for (int h = 0; h != _numMedia; ++h) tau += sectionv[h] * state(m, h).n * ds;
+            s += ds;
+            if (s > distance) break;
         }
     }
 
     // with kinematics and/or spatially variable material properties
     else
     {
-        for (auto& segment : pp->segments())
+        // The dynamic range of a positive IEEE 754 double precision floating point number is just smaller than 2^2098.
+        // Consequently, the intensity of a photon packet will always become numerically zero beyond the point where
+        // the cumulative optical depth along the path reaches tau = 2098 ln 2.
+        constexpr double TAU_MAX = 2098 * M_LN2;
+
+        while (generator->next())
         {
-            if (segment.m >= 0)
+            double ds = generator->ds();
+            int m = generator->m();
+            if (m >= 0)
             {
-                double lambda = pp->perceivedWavelength(state(segment.m).v, _config->lyaExpansionRate() * segment.s);
-                tau += opacityExt(lambda, segment.m) * segment.ds;
+                double lambda = pp->perceivedWavelength(state(m).v, _config->lyaExpansionRate() * s);
+                tau += opacityExt(lambda, m) * ds;
                 if (tau >= TAU_MAX) break;
             }
-            if (segment.s > distance) break;
+            s += ds;
+            if (s > distance) break;
         }
     }
 
