@@ -14,19 +14,31 @@
 
 /** The AllSkyInstrument class implements an all-sky view of the simulated model, with arbitrary
     placement of the observer outside or inside the model. The instrument's sky is transformed to a
-    rectangular image (for each wavelength) using one of the available all-sky projections.
+    rectangular image (for each wavelength) using one of the available all-sky projections. (See
+    the HEALPixSkyInstrument class for an instrument that does \em not perform such a projection).
 
-    Specifically, an all-sky instrument consists of a sphere with a given radius, centered at the
-    location of the instrument, on which model's radiation is projected. When a peel-off photon
-    packet arrives, the spherical coordinates of its origin relative to the instrument location are
-    determined. The two resulting angular coordinates are transformed to pixel coordinates in the
-    image frame using the selected all-sky projection. The radial coordinate (i.e. the distance
-    from the photon packet's origin to the instrument location) is used for converting the photon
-    packet's luminosity contribution to a flux density. In addition to the distance, this
-    conversion also requires a pixel size, which is determined from the radius of the instrument's
-    sphere (this is in fact the only purpose for specifying this quantity).
+    An all-sky instrument consists of a sphere with a given radius, centered at the location of the
+    instrument, on which model's radiation is projected. When a peel-off photon packet arrives, the
+    spherical coordinates of its origin relative to the instrument location are determined. The two
+    resulting angular coordinates are transformed to pixel coordinates in the image frame using the
+    selected all-sky projection. The radial coordinate (i.e. the distance from the photon packet's
+    origin to the instrument location) is used for converting the photon packet's luminosity
+    contribution to a flux density. In addition to the distance, this conversion also requires a
+    pixel size, which is determined from the radius of the instrument's sphere (this is in fact the
+    only purpose for specifying this quantity).
 
-    The all-sky instrument does \em not seperately record an integrated flux density. */
+    The surface brightness calibration for this instrument (as for the HEALPixSkyInstrument) is
+    tricky. While the angular size of the individual pixels is known, the angular size of the
+    pixels as seen from a distant object is not, since the pixels do not have an actual physical
+    size. We can define such a physical size by defining a radius for the instrument, which is then
+    used to convert the angular size to a physical size. This radius is quite arbitrary, but should
+    nonetheless be chosen with some care: if the radius is too small, then recorded flux values
+    will be very high or even overflow. A good rule of thumb is to use a radius that has a similar
+    size to your object of study. For example, for a galaxy, with sizes in kpc, a radius of 1 pc
+    works well. It is always possible to recalibrate the fluxes afterwards by using the same radius
+    and adjusting to the pixel size of an actual instrument.
+
+    This instrument does \em not seperately record spatially integrated flux densities. */
 class AllSkyInstrument : public Instrument
 {
     ITEM_CONCRETE(AllSkyInstrument, Instrument, "an all-sky instrument (for observing inside a model)")

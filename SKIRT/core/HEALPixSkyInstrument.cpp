@@ -33,7 +33,8 @@ void HEALPixSkyInstrument::setupSelfBefore()
     // determine linear size of a single pixel
     // each HEALPix pixel has the same spherical area pi/(3*_Nside^2)
     // we assume that the pixels are squares with this surface area
-    _s = sqrt(M_PI / (3 * _Nside * _Nside));
+    // due to the calibration of the FrameInstrument, we need to multiply this with the radius of the instrument
+    _s = sqrt(M_PI / (3 * _Nside * _Nside)) * _radius;
 
     // setup the transformation from world to observer coordinates
 

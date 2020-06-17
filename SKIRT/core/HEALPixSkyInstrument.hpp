@@ -12,11 +12,12 @@
 
 ////////////////////////////////////////////////////////////////////
 
-/** The HEALPixSkyInstrument provides an all-sky instrument that does not perform any projection,
-    but instead records fluxes onto a HEALPix tessellation of the sky sphere that guarantees equal
-    surface areas for all pixels.
+/** The HEALPixSkyInstrument class provides an all-sky instrument that does not perform any
+    projection, but instead records fluxes onto a HEALPix tessellation of the sky sphere that
+    guarantees equal surface areas for all pixels. (See the AllSkyInstrument class for an
+    instrument that does perform a projection).
 
-    The instrument is based on the official HEALPix algorithm by Górski, K. M. et al. (2005)
+    This class is based on the official HEALPix algorithm by Górski, K. M. et al. (2005)
     (https://ui.adsabs.harvard.edu/abs/2005ApJ...622..759G/abstract), as available from
     https://healpix.sourceforge.io, but only uses the relevant part of the algorithm.
 
@@ -62,7 +63,20 @@
     \f$4N_\mathrm{side}^2-16N\f$ pixels in the polar regions, similar to the empty pixels in
     projected AllSkyInstrument images. The advantage of this approach is that we can easily use the
     existing 2D image functionality for output, and that we can easily map output pixels to the
-    corresponding HEALPix pixels in ring ordering during analysis. */
+    corresponding HEALPix pixels in ring ordering during analysis.
+
+    The surface brightness calibration for this instrument (as for the AllSkyInstrument) is tricky.
+    While the angular size of the individual HEALPix pixels is known, the angular size of the
+    pixels as seen from a distant object is not, since the pixels do not have an actual physical
+    size. We can define such a physical size by defining a radius for the instrument, which is then
+    used to convert the angular size to a physical size. This radius is quite arbitrary, but should
+    nonetheless be chosen with some care: if the radius is too small, then recorded flux values
+    will be very high or even overflow. A good rule of thumb is to use a radius that has a similar
+    size to your object of study. For example, for a galaxy, with sizes in kpc, a radius of 1 pc
+    works well. It is always possible to recalibrate the fluxes afterwards by using the same radius
+    and adjusting to the pixel size of an actual instrument.
+
+    This instrument does \em not seperately record spatially integrated flux densities. */
 class HEALPixSkyInstrument : public Instrument
 {
     ITEM_CONCRETE(HEALPixSkyInstrument, Instrument,
