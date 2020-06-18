@@ -133,6 +133,9 @@ public:
     /** Returns true if there is at least one medium component in the simulation. */
     bool hasMedium() const { return _hasMedium; }
 
+    /** Returns true if forced scattering should be used during the photon cycle, false if not. */
+    bool forceScattering() const { return _forceScattering; }
+
     /** Returns the minimum weight reduction factor before a photon packet is terminated. */
     double minWeightReduction() const { return _minWeightReduction; }
 
@@ -323,6 +326,7 @@ private:
 
     // extinction
     bool _hasMedium{false};
+    bool _forceScattering{true};
     double _minWeightReduction{1e4};
     int _minScattEvents{0};
     double _pathLengthBias{0.5};

@@ -80,6 +80,7 @@ void Configuration::setupSelfBefore()
     if (_hasMedium)
     {
         _numDensitySamples = ms->numDensitySamples();
+        _forceScattering = ms->photonPacketOptions()->forceScattering();
         _minWeightReduction = ms->photonPacketOptions()->minWeightReduction();
         _minScattEvents = ms->photonPacketOptions()->minScattEvents();
         _pathLengthBias = ms->photonPacketOptions()->pathLengthBias();
@@ -90,7 +91,8 @@ void Configuration::setupSelfBefore()
         || sim->simulationMode() == MonteCarloSimulation::SimulationMode::ExtinctionOnly
         || sim->simulationMode() == MonteCarloSimulation::SimulationMode::LyaWithDustExtinction)
     {
-        _hasRadiationField = ms->extinctionOnlyOptions()->storeRadiationField();
+        // the non-forced photon cycle does not support storing a radiation field
+        _hasRadiationField = _forceScattering && ms->extinctionOnlyOptions()->storeRadiationField();
         if (_hasRadiationField)
         {
             _radiationFieldWLG = _oligochromatic ? dynamic_cast<OligoWavelengthGrid*>(_defaultWavelengthGrid)
@@ -103,6 +105,8 @@ void Configuration::setupSelfBefore()
     if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustEmission
         || sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustEmissionWithSelfAbsorption)
     {
+        // the non-forced photon cycle does not support storing a radiation field
+        _forceScattering = true;
         _hasRadiationField = true;
         _hasPanRadiationField = true;
         _hasDustEmission = true;
@@ -166,6 +170,7 @@ void Configuration::setupSelfBefore()
         // force moving media even if there are no bulk velocities (which would be exceptional anyway);
         // this automatically disables some optimizations that would not work for Lyman-alpha media
         _hasMovingMedia = true;
+        _pathLengthBias = 0.;
     }
 
     // verify that there is exactly one Lya medium component if required, and none if not required
