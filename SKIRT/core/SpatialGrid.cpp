@@ -4,7 +4,6 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "SpatialGrid.hpp"
-#include "PathSegmentGenerator.hpp"
 #include "Random.hpp"
 #include "SpatialGridPlotFile.hpp"
 
@@ -22,19 +21,6 @@ void SpatialGrid::setupSelfBefore()
 double SpatialGrid::diagonal(int m) const
 {
     return cbrt(3. * volume(m));
-}
-
-//////////////////////////////////////////////////////////////////////
-
-void SpatialGrid::path(SpatialGridPath* path) const
-{
-    auto generator = createPathSegmentGenerator();
-    generator->start(path);
-    path->clear();
-    while (generator->next())
-    {
-        path->addSegment(generator->m(), generator->ds());
-    }
 }
 
 //////////////////////////////////////////////////////////////////////

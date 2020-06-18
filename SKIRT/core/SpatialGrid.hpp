@@ -11,7 +11,6 @@
 #include "SimulationItem.hpp"
 class PathSegmentGenerator;
 class Random;
-class SpatialGridPath;
 class SpatialGridPlotFile;
 
 //////////////////////////////////////////////////////////////////////
@@ -70,15 +69,6 @@ public:
         each subclass to produce a path segment generator of a type corresponding to the specific
         type of spatial grid. */
     virtual std::unique_ptr<PathSegmentGenerator> createPathSegmentGenerator() const = 0;
-
-    /** This function calculates a path through the grid by creating and using a path segment
-        generator of the appropriate type; see createPathSegmentGenerator(). The SpatialGridPath
-        object passed as an argument specifies the starting position \f${\bf{r}}\f$ and the
-        direction \f${\bf{k}}\f$ for the path. The calculated path segments are added back into the
-        same object. Each segment includes the index \f$m\f$ of the cell crossed by the path, the
-        path length \f$\Delta s\f$ covered in the cell, and the accumulated path length \f$s\f$
-        until the end of the path in the cell. */
-    void path(SpatialGridPath* path) const;
 
     //================ Functions that may be implemented in subclasses ===============
 

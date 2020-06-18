@@ -90,7 +90,7 @@ namespace
                     {
                         // set the path direction after transforming from observer to world coordinates
                         path.setDirection(Direction(transform.transform(Direction(theta, phi))));
-                        tauv[i + Nx * j] = ms->opticalDepth(&path, lambda, type);
+                        tauv[i + Nx * j] = ms->getOpticalDepth(&path, lambda, type);
                     }
                 }
             }

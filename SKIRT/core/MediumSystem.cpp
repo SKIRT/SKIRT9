@@ -391,7 +391,7 @@ double MediumSystem::albedo(double lambda, int m) const
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::opticalDepth(const SpatialGridPath* path, double lambda, MaterialMix::MaterialType type)
+double MediumSystem::getOpticalDepth(const SpatialGridPath* path, double lambda, MaterialMix::MaterialType type)
 {
     // determine the geometric details of the path and calculate the optical depth at the same time
     auto generator = _grid->createPathSegmentGenerator();
@@ -406,12 +406,16 @@ double MediumSystem::opticalDepth(const SpatialGridPath* path, double lambda, Ma
 
 ////////////////////////////////////////////////////////////////////
 
-void MediumSystem::opticalDepth(PhotonPacket* pp)
+void MediumSystem::setOpticalDepths(PhotonPacket* pp)
 {
-    // separating the geometric and optical depth calculations seems to be faster, probably due to memory access issues
-    // so we first determine and store the path segments and then calculate and store the cumulative optical depth
-    // because this function is at the heart of the photon life cycle, we implement various optimized versions
-    _grid->path(pp);
+    // determine and store the path segments in the photon packet
+    auto generator = _grid->createPathSegmentGenerator();
+    generator->start(pp);
+    pp->clear();
+    while (generator->next())
+    {
+        pp->addSegment(generator->m(), generator->ds());
+    }
 
     // calculate the cumulative optical depth and store it in the photon packet for each path segment
     double tau = 0.;
@@ -458,10 +462,9 @@ void MediumSystem::opticalDepth(PhotonPacket* pp)
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::opticalDepth(const PhotonPacket* pp, double distance)
+double MediumSystem::getOpticalDepth(const PhotonPacket* pp, double distance)
 {
     // determine the geometric details of the path and calculate the optical depth at the same time
-    // because this function is at the heart of the photon life cycle, we implement various optimized versions
     auto generator = _grid->createPathSegmentGenerator();
     generator->start(pp);
     double tau = 0.;
