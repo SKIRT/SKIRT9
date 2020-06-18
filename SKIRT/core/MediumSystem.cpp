@@ -391,11 +391,32 @@ double MediumSystem::albedo(double lambda, int m) const
 
 ////////////////////////////////////////////////////////////////////
 
+namespace
+{
+    // This function returns a thread-local instance of the path segment generator for the specified grid
+    // that is initialized to the starting position and direction of the specified path.
+    // Providing a thread-local instance avoids creating a new generator for each use.
+    PathSegmentGenerator* getPathSegmentGenerator(SpatialGrid* grid, const SpatialGridPath* path)
+    {
+        thread_local SpatialGrid* t_grid{nullptr};
+        thread_local std::unique_ptr<PathSegmentGenerator> t_generator;
+
+        if (grid != t_grid)
+        {
+            t_grid = grid;
+            t_generator = grid->createPathSegmentGenerator();
+        }
+        t_generator->start(path);
+        return t_generator.get();
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
 double MediumSystem::getOpticalDepth(const SpatialGridPath* path, double lambda, MaterialMix::MaterialType type)
 {
     // determine the geometric details of the path and calculate the optical depth at the same time
-    auto generator = _grid->createPathSegmentGenerator();
-    generator->start(path);
+    auto generator = getPathSegmentGenerator(_grid, path);
     double tau = 0.;
     while (generator->next())
     {
@@ -409,8 +430,7 @@ double MediumSystem::getOpticalDepth(const SpatialGridPath* path, double lambda,
 void MediumSystem::setOpticalDepths(PhotonPacket* pp)
 {
     // determine and store the path segments in the photon packet
-    auto generator = _grid->createPathSegmentGenerator();
-    generator->start(pp);
+    auto generator = getPathSegmentGenerator(_grid, pp);
     pp->clear();
     while (generator->next())
     {
@@ -464,8 +484,7 @@ void MediumSystem::setOpticalDepths(PhotonPacket* pp)
 
 bool MediumSystem::setInteractionPoint(PhotonPacket* pp, double tauscat)
 {
-    auto generator = _grid->createPathSegmentGenerator();
-    generator->start(pp);
+    auto generator = getPathSegmentGenerator(_grid, pp);
     double tau = 0.;
     double s = 0.;
 
@@ -506,8 +525,7 @@ bool MediumSystem::setInteractionPoint(PhotonPacket* pp, double tauscat)
 double MediumSystem::getOpticalDepth(const PhotonPacket* pp, double distance)
 {
     // determine the geometric details of the path and calculate the optical depth at the same time
-    auto generator = _grid->createPathSegmentGenerator();
-    generator->start(pp);
+    auto generator = getPathSegmentGenerator(_grid, pp);
     double tau = 0.;
     double s = 0.;
 
