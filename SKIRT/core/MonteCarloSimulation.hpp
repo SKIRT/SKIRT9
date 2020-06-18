@@ -294,10 +294,11 @@ private:
         unit of wavelength, and per unit of solid angle. */
     void storeRadiationField(const PhotonPacket* pp);
 
-    /** This function determines the next scattering location of a photon packet and simulates its
-        propagation to that position. The function assumes that both the geometric and optical
-        depth information for the photon packet's path have been set; if this is not the case, the
-        behavior is undefined. The function proceeds in a number of steps as outlined below.
+    /** This function determines the next scattering location of a photon packet in a photon life
+        cycle with forced scattering and simulates its propagation to that position. The function
+        assumes that both the geometric and optical depth information for the photon packet's path
+        have been set; if this is not the case, the behavior is undefined. This function proceeds
+        in a number of steps as outlined below.
 
         <b>Total optical depth</b>
 
@@ -351,7 +352,49 @@ private:
         Finally we advance the initial position of the photon packet to the interaction point. This
         last step invalidates the photon packet's path (including geometric and optical depth
         information). The packet is now ready to be scattered into a new direction. */
-    void simulatePropagation(PhotonPacket* pp);
+    void simulateForcedPropagation(PhotonPacket* pp);
+
+    /** This function simulates the propagation of a photon packet to the next scattering location
+        in a photon life cycle without forced scattering. The function assumes that the next
+        scattering location for the photon packet's path has already been set; if this is not the
+        case, the behavior is undefined. This function proceeds in a number of steps as outlined
+        below.
+
+        <b>%Random optical depth</b>
+
+        Because the photon packet is allowed to escape the model, we randomly generate the optical
+        depth \f$\tau\f$ at the interaction site from the regular exponential distribution. The
+        current implementation does not support path length biasing.
+
+        <b>Interaction point</b>
+
+        Now that the optical depth \f$\tau\f$ at the interaction site has been (randomly) chosen,
+        we determine the physical position of the interaction point along the path. This is
+        accomplished by generating the path segments for crossed cells one by one and calculating
+        the corresponding cumulative optical depth on the fly. Once the cumulative optical depth at
+        the exit point of a segment exceeds the interaction optical depth, we know that the
+        interaction point must be within this segment. The physical interaction point is then
+        obtained through linear interpolation within the segment, assuming exponential behavior of
+        the extinction. If the cumulative optical depth of the path never exceeds the interaction
+        optical depth, the photon packet escapes and is terminated.
+
+        <b>Albedo</b>
+
+        We calculate the scattering albedo \f$\varpi\f$ of the medium at the interaction point (or
+        more precisely, for the spatial cell containing the interaction point).
+
+        <b>Weight adjustment</b>
+
+        We adjust the weight of the photon packet to compensate for the absorbed portion of the
+        luminosity. More precisely, the weight is multiplied by the scattered fraction, i.e. \f$
+        f_\text{sca} = \varpi \f$.
+
+        <b>Advance position</b>
+
+        Finally we advance the initial position of the photon packet to the interaction point. This
+        last step invalidates the photon packet's path (including geometric and optical depth
+        information). The packet is now ready to be scattered into a new direction. */
+    void simulateNonForcedPropagation(PhotonPacket* pp);
 
     /** This function simulates the peel-off of a photon packet before a scattering event. This
         means that, just before a scattering event, we create a peel-off photon packet for every

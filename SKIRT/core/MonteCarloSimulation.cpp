@@ -334,17 +334,49 @@ void MonteCarloSimulation::performLifeCycle(size_t firstIndex, size_t numIndices
                 // trace the packet through the media, if any
                 if (_config->hasMedium())
                 {
-                    double Lthreshold = pp.luminosity() / _config->minWeightReduction();
-                    int minScattEvents = _config->minScattEvents();
-                    while (true)
+                    if (_config->forceScattering())
                     {
-                        mediumSystem()->setOpticalDepths(&pp);
-                        if (store) storeRadiationField(&pp);
-                        simulatePropagation(&pp);
-                        if (pp.luminosity() <= 0 || (pp.luminosity() <= Lthreshold && pp.numScatt() >= minScattEvents))
-                            break;
-                        if (peel) peelOffScattering(&pp, &ppp);
-                        simulateScattering(&pp);
+                        // perform cycle with forced scattering
+                        double Lthreshold = pp.luminosity() / _config->minWeightReduction();
+                        int minScattEvents = _config->minScattEvents();
+                        while (true)
+                        {
+                            // calculate segments and optical depths for the complete path
+                            mediumSystem()->setOpticalDepths(&pp);
+
+                            // advance the packet
+                            if (store) storeRadiationField(&pp);
+                            simulateForcedPropagation(&pp);
+
+                            // if the packet's weight drops below the threshold, terminate it
+                            if (pp.luminosity() <= 0
+                                || (pp.luminosity() <= Lthreshold && pp.numScatt() >= minScattEvents))
+                                break;
+
+                            // process the scattering event
+                            if (peel) peelOffScattering(&pp, &ppp);
+                            simulateScattering(&pp);
+                        }
+                    }
+                    else
+                    {
+                        // perform cycle without forced scattering
+                        while (true)
+                        {
+                            // generate a random interaction optical depth
+                            double tauscat = random()->expon();
+
+                            // find the physical interaction point corresponding to this optical depth
+                            // if the interaction optical depth is outside of the path, terminate the photon packet
+                            if (!mediumSystem()->setInteractionPoint(&pp, tauscat)) break;
+
+                            // advance the packet
+                            simulateNonForcedPropagation(&pp);
+
+                            // process the scattering event
+                            if (peel) peelOffScattering(&pp, &ppp);
+                            simulateScattering(&pp);
+                        }
                     }
                 }
             }
@@ -440,7 +472,7 @@ void MonteCarloSimulation::storeRadiationField(const PhotonPacket* pp)
 
 ////////////////////////////////////////////////////////////////////
 
-void MonteCarloSimulation::simulatePropagation(PhotonPacket* pp)
+void MonteCarloSimulation::simulateForcedPropagation(PhotonPacket* pp)
 {
     // get the total optical depth
     double taupath = pp->totalOpticalDepth();
@@ -491,6 +523,23 @@ void MonteCarloSimulation::simulatePropagation(PhotonPacket* pp)
     pp->applyBias(-expm1(-taupath) * albedo);
 
     // advance the position
+    pp->propagate(pp->interactionDistance());
+}
+
+////////////////////////////////////////////////////////////////////
+
+void MonteCarloSimulation::simulateNonForcedPropagation(PhotonPacket* pp)
+{
+    int m = pp->interactionCellIndex();
+    if (m < 0) throw FATALERROR("Cannot locate photon packet interaction point");
+
+    // adjust the weight by the albedo for the cell containing the interaction point
+    double lambda = pp->perceivedWavelength(mediumSystem()->bulkVelocity(m),
+                                            _config->lyaExpansionRate() * pp->interactionDistance());
+    double albedo = mediumSystem()->albedo(lambda, m);
+    pp->applyBias(albedo);
+
+    // advance the photon packet position
     pp->propagate(pp->interactionDistance());
 }
 
