@@ -130,15 +130,21 @@ public:
         have been set; if this is not the case, the behavior is undefined. */
     void findInteractionPoint(double tau);
 
-    /** This function returns the spatial cell index \f$m\f$ corresponding to the interaction point
-        most recently calculated by the findInteractionPoint() function, or -1 if this function has
-        never been called or if there was no interaction point within the path. */
+    /** This function stores the specified spatial cell index and distance to the initial position
+        of the interaction point for later retrieval through the interactionCellIndex() and
+        interactionDistance() functions. */
+    void setInteractionPoint(int m, double s);
+
+    /** This function returns the spatial cell index corresponding to the interaction point most
+        recently calculated by the findInteractionPoint() function or set by the
+        setInteractionPoint() function, or -1 if these functions have never been called or if there
+        was no interaction point within the path. */
     int interactionCellIndex() const { return _interactionCellIndex; }
 
     /** This function returns the distance along the path from its initial position to the
-        interaction point most recently calculated by the findInteractionPoint() function, or zero if
-        this function has never been called or if there was no interaction point within the path.
-        */
+        interaction point most recently calculated by the findInteractionPoint() function or set by
+        the setInteractionPoint() function, or zero if these functions have never been called or if
+        there was no interaction point within the path. */
     double interactionDistance() const { return _interactionDistance; }
 
     // ------- Data members -------

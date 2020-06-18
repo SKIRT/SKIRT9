@@ -275,12 +275,28 @@ public:
         to zero by definition. */
     void setOpticalDepths(PhotonPacket* pp);
 
+    /** This function calculates the cumulative optical depth and distance at the end of path
+        segments along a path through the medium system defined by the initial position and
+        direction of the specified PhotonPacket object until the specified interaction optical
+        depth has been reached. The function then interpolates the interaction point, stores it in
+        the photon packet, and returns true. If the specified interaction optical depth is never
+        reached within the path, the function returns false.
+
+        This function is intended for handling random-walk photon packet paths during a photon life
+        cycle that does \em not use forced-scattering. In that case there is no need to calculate
+        the complete path, substantially boosting performance in high-optical depth media.
+
+        Because this function is at the heart of the photon life cycle, performance is important.
+        Hence the function implements optimized versions for media with spatially constant cross
+        sections. */
+    bool setInteractionPoint(PhotonPacket* pp, double tauscat);
+
     /** This function calculates and returns the optical depth along a path through the medium
         system defined by the initial position and direction of the specified PhotonPacket object
         and up to the specified distance. This function is intended for handling peel-off photon
         packets during the photon life cycle.
 
-        Because this function is at the heart of the photon life cycle, , performance is important.
+        Because this function is at the heart of the photon life cycle, performance is important.
         Hence the function implements optimized versions for media with spatially constant cross
         sections.
 

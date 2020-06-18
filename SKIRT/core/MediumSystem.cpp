@@ -462,6 +462,47 @@ void MediumSystem::setOpticalDepths(PhotonPacket* pp)
 
 ////////////////////////////////////////////////////////////////////
 
+bool MediumSystem::setInteractionPoint(PhotonPacket* pp, double tauscat)
+{
+    auto generator = _grid->createPathSegmentGenerator();
+    generator->start(pp);
+    double tau = 0.;
+    double s = 0.;
+
+    // ****!!!! TO DO: implement optimized versions for media with spatially constant cross sections
+
+    // loop over the segments of the path until the interaction optical depth is reached or the path ends
+    while (generator->next())
+    {
+        // remember the cumulative optical depth and distance at the start of this segment
+        // so that we can interpolate the interaction point should it happen to be inside this segment
+        double tau0 = tau;
+        double s0 = s;
+
+        // calculate the cumulative optical depth and distance at the end of this segment
+        double ds = generator->ds();
+        int m = generator->m();
+        if (m >= 0)
+        {
+            double lambda = pp->perceivedWavelength(state(m).v, _config->lyaExpansionRate() * s);
+            tau += opacityExt(lambda, m) * ds;
+        }
+        s += ds;
+
+        // if the interaction point is inside this segment, store it in the photon packet
+        if (tauscat < tau)
+        {
+            pp->setInteractionPoint(m, NR::interpolateLinLin(tauscat, tau0, tau, s0, s));
+            return true;
+        }
+    }
+
+    // the interaction point is outside of the path
+    return false;
+}
+
+////////////////////////////////////////////////////////////////////
+
 double MediumSystem::getOpticalDepth(const PhotonPacket* pp, double distance)
 {
     // determine the geometric details of the path and calculate the optical depth at the same time
