@@ -223,6 +223,8 @@ void FluxRecorder::detect(PhotonPacket* pp, int l, double distance)
             else
             {
                 tau = _ms->getOpticalDepth(pp, distance);
+                // abort if the contribution of this photon packet is guaranteed to be numerically zero
+                if (tau < 0.) return;
                 pp->setObservedOpticalDepth(tau);
             }
             Lext *= exp(-tau);

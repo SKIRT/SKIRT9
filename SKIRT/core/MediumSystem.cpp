@@ -581,6 +581,12 @@ bool MediumSystem::setInteractionPoint(PhotonPacket* pp, double tauscat)
 
 double MediumSystem::getOpticalDepth(const PhotonPacket* pp, double distance)
 {
+    // determine the optical depth at which the packet's contribution becomes zero
+    // or abort right away if the contribution is zero to begin with
+    double L = pp->luminosity();
+    if (L <= 0) return -1;
+    double taumax = std::log(L) + 745;
+
     // determine the geometric details of the path and calculate the optical depth at the same time
     auto generator = getPathSegmentGenerator(_grid, pp);
     double tau = 0.;
@@ -592,7 +598,11 @@ double MediumSystem::getOpticalDepth(const PhotonPacket* pp, double distance)
         double section = state(0, 0).mix->sectionExt(pp->wavelength());
         while (generator->next())
         {
-            if (generator->m() >= 0) tau += section * state(generator->m(), 0).n * generator->ds();
+            if (generator->m() >= 0)
+            {
+                tau += section * state(generator->m(), 0).n * generator->ds();
+                if (tau >= taumax) return -1.;
+            }
             s += generator->ds();
             if (s > distance) break;
         }
@@ -608,7 +618,10 @@ double MediumSystem::getOpticalDepth(const PhotonPacket* pp, double distance)
             double ds = generator->ds();
             int m = generator->m();
             if (m >= 0)
+            {
                 for (int h = 0; h != _numMedia; ++h) tau += sectionv[h] * state(m, h).n * ds;
+                if (tau >= taumax) return -1.;
+            }
             s += ds;
             if (s > distance) break;
         }
@@ -617,11 +630,6 @@ double MediumSystem::getOpticalDepth(const PhotonPacket* pp, double distance)
     // with kinematics and/or spatially variable material properties
     else
     {
-        // The dynamic range of a positive IEEE 754 double precision floating point number is just smaller than 2^2098.
-        // Consequently, the intensity of a photon packet will always become numerically zero beyond the point where
-        // the cumulative optical depth along the path reaches tau = 2098 ln 2.
-        constexpr double TAU_MAX = 2098 * M_LN2;
-
         while (generator->next())
         {
             double ds = generator->ds();
@@ -630,7 +638,7 @@ double MediumSystem::getOpticalDepth(const PhotonPacket* pp, double distance)
             {
                 double lambda = pp->perceivedWavelength(state(m).v, _config->lyaExpansionRate() * s);
                 tau += opacityExt(lambda, m) * ds;
-                if (tau >= TAU_MAX) break;
+                if (tau >= taumax) return -1.;
             }
             s += ds;
             if (s > distance) break;

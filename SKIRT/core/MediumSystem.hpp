@@ -291,10 +291,10 @@ public:
         sections. */
     bool setInteractionPoint(PhotonPacket* pp, double tauscat);
 
-    /** This function calculates and returns the optical depth along a path through the medium
-        system defined by the initial position and direction of the specified PhotonPacket object
-        and up to the specified distance. This function is intended for handling peel-off photon
-        packets during the photon life cycle.
+    /** This function calculates and returns the optical depth (or -1, see "High optical depth
+        below") along a path through the medium system defined by the initial position and
+        direction of the specified PhotonPacket object and up to the specified distance. This
+        function is intended for handling peel-off photon packets during the photon life cycle.
 
         Because this function is at the heart of the photon life cycle, performance is important.
         Hence the function implements optimized versions for media with spatially constant cross
@@ -315,7 +315,17 @@ public:
         optical depth at the segment exit boundaries. The calculation is limited to the specified
         distance along the path. More precisely, all path segments with an entry boundary at a
         cumulative distance along the path smaller than the specified distance are included in the
-        calculation, and any remaining segments are skipped. */
+        calculation, and any remaining segments are skipped.
+
+        <b>High optical depth</b>
+
+        The observable weight of a peel-off photon packet will become numerically zero when the
+        cumulative optical depth along its path is higher than \f$ \tau_\mathrm{max} =
+        \ln(L/L_\mathrm{min}) \f$ where \f$L\f$ is the
+        weight at the peel-off interaction site, and \f$L_\mathrm{min}\f$ is the smallest
+        representable positive double-precision floating point number. Hence this function aborts
+        the calculation and returns the special value of -1 when this happens. Callers must
+        specifically test for this special return value. */
     double getOpticalDepth(const PhotonPacket* pp, double distance);
 
     /** This function initializes all values of the primary and/or secondary radiation field info
