@@ -166,16 +166,23 @@ void Log::infoIfElapsed(string message, size_t numDone)
 
 ////////////////////////////////////////////////////////////////////
 
-void Log::warning(string message)
+void Log::warning(string message, bool store)
 {
     // Pass the message to the linked log
-    if (_link) _link->warning(message);
+    if (_link) _link->warning(message, false);
 
     // Obtain a string denoting the amount of used memory, if requested
     string memory = _logmemory ? "(" + StringUtils::toMemSizeString(System::currentMemoryUsage()) + ") " : "";
 
     // Output the message
     if (Level::Warning >= _lowestLevel) output(_procNameLong + memory + message, Level::Warning);
+
+    // Remember the message so it can be retrieved later on
+    if (store)
+    {
+        std::unique_lock<std::mutex> lock(_mutex);
+        if (_warnings.size() < 9 && !StringUtils::contains(_warnings, message)) _warnings.emplace_back(message);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -201,13 +208,20 @@ void Log::success(string message)
 
 ////////////////////////////////////////////////////////////////////
 
-void Log::error(string message)
+void Log::error(string message, bool store)
 {
     // Pass the message to the linked log
-    if (_link) _link->error(message);
+    if (_link) _link->error(message, false);
 
     // Output the message
     if (Level::Error >= _lowestLevel) output(_procNameLong + "*** Error: " + message, Level::Error);
+
+    // Remember the message so it can be retrieved later on
+    if (store)
+    {
+        std::unique_lock<std::mutex> lock(_mutex);
+        if (_errors.size() < 9 && !StringUtils::contains(_errors, message)) _errors.emplace_back(message);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -215,6 +229,22 @@ void Log::error(string message)
 string Log::processName()
 {
     return _procNameShort;
+}
+
+////////////////////////////////////////////////////////////////////
+
+vector<std::string> Log::warningsIssued()
+{
+    std::unique_lock<std::mutex> lock(_mutex);
+    return _warnings;
+}
+
+////////////////////////////////////////////////////////////////////
+
+vector<std::string> Log::errorsIssued()
+{
+    std::unique_lock<std::mutex> lock(_mutex);
+    return _errors;
 }
 
 ////////////////////////////////////////////////////////////////////
