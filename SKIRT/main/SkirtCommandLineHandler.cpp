@@ -120,23 +120,6 @@ namespace
         log->info("Available memory: " + StringUtils::toMemSizeString(avail) + " -- Peak memory usage: "
                   + StringUtils::toMemSizeString(peak) + " (" + StringUtils::toString(peakPerCent, 'f', 1) + "%)");
     }
-
-    // repeat errors and warnings that have been stored by the specified log instance
-    void repeatErrorsAndWarnings(Log* log)
-    {
-        vector<string> messages = log->warningsIssued();
-        if (!messages.empty())
-        {
-            log->warning("The following warning messages were issued during this simulation:", false);
-            for (const string& message : messages) log->warning("  " + message, false);
-        }
-        messages = log->errorsIssued();
-        if (!messages.empty())
-        {
-            log->error("The following error messages were issued during this simulation:", false);
-            for (const string& message : messages) log->error("  " + message, false);
-        }
-    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -383,7 +366,6 @@ void SkirtCommandLineHandler::doSimulation(size_t index)
         {
             running = true;
             simulation->setupAndRun();
-            repeatErrorsAndWarnings(simulation->log());
         }
         catch (FatalError& error)
         {

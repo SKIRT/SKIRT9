@@ -34,6 +34,20 @@ void Simulation::setupAndRun()
     // setup and run the simulation
     setupSimulation();
     runSimulation();
+
+    // repeat any warnings and errors that have been issued during this simulation
+    vector<string> messages = _log->warningsIssued();
+    if (!messages.empty())
+    {
+        _log->warning("The following warning messages were issued during this simulation:", false);
+        for (const string& message : messages) _log->warning("  " + message, false);
+    }
+    messages = _log->errorsIssued();
+    if (!messages.empty())
+    {
+        _log->error("The following error messages were issued during this simulation:", false);
+        for (const string& message : messages) _log->error("  " + message, false);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
