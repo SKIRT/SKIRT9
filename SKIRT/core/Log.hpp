@@ -8,6 +8,7 @@
 
 #include "SimulationItem.hpp"
 #include <atomic>
+#include <mutex>
 
 ////////////////////////////////////////////////////////////////////
 
@@ -76,7 +77,7 @@ public:
     /** Returns whether memory usage is logged or not. */
     bool memoryLogging() const;
 
-    //======================== Other Functions =======================
+    //======================== Logging Functions =======================
 
 public:
     /** Logs an informational message (i.e. at level Info). In multiprocessing mode, only the info
@@ -104,9 +105,11 @@ public:
     void infoIfElapsed(string message, size_t numDone);
 
     /** Logs a warning message (i.e. at level Warning). Each warning message is logged,
-        irrespective of the which process invokes this function. The warning message is prefixed
-        with the process name, if multiprocessing mode is used. This function is thread-safe. */
-    void warning(string message);
+        irrespective of which process invokes this function. The warning message is prefixed with
+        the process name, if multiprocessing mode is used. If the second argument is true or
+        omitted, the warning message is also stored for later retrieval (e.g., at the end of the
+        simulation). This function is thread-safe. */
+    void warning(string message, bool store = true);
 
     /** Logs an informational message (i.e. at level Success). In multiprocessing mode, only the
         success messages of the root processes are actually logged. If verbose mode is enabled,
@@ -114,10 +117,12 @@ public:
         function is thread-safe. */
     void success(string message);
 
-    /** Logs an informational message (i.e. at level Error). Each error message is logged, irrespective
-        of which process invokes this function. The error message is prefixed with the process name, if
-        multiprocessing mode is used. This function is thread-safe. */
-    void error(string message);
+    /** Logs an informational message (i.e. at level Error). Each error message is logged,
+        irrespective of which process invokes this function. The error message is prefixed with the
+        process name, if multiprocessing mode is used. If the second argument is true or omitted,
+        the warning message is also stored for later retrieval (e.g., at the end of the
+        simulation). This function is thread-safe. */
+    void error(string message, bool store = true);
 
 protected:
     /** This pure virtual function must be implemented in a subclass to actually output the
@@ -130,6 +135,23 @@ protected:
     /** This function returns a string identifying this process of the form "Pnnn",
         where nnn is the rank of the process. In singleprocessing mode, this string is empty. */
     string processName();
+
+    //======================== Other Functions =======================
+
+public:
+    /** This function returns a list of the warning messages issued since this Log instance was
+        constructed, limited to the first nine warnings, or the empty list if no warnings were
+        issued. The messages are returned as they were passed to the warning() function, i.e.
+        without time stamp, process name or other embellishment. This list can be used, for
+        example, to repeat the warnings at the end of a simulation. */
+    vector<string> warningsIssued();
+
+    /** This function returns a list of the error messages issued since this Log instance was
+        constructed, limited to the first nine errors, or the empty list if no errors were
+        issued. The messages are returned as they were passed to the error() function, i.e.
+        without time stamp, process name or other embellishment. This list can be used, for
+        example, to repeat the errors at the end of a simulation. */
+    vector<string> errorsIssued();
 
     //======================== Data Members ========================
 
@@ -144,6 +166,11 @@ private:
     std::atomic<uint64_t> _started{0};   // counts since epoch when timer started
     std::atomic<size_t> _numTotal{0};    // total number of tasks to be completed
     std::atomic<size_t> _numDone{0};     // number of tasks completed so far
+
+    // list of warnings and errors issued, so they can be repeated at the end of the simulation
+    vector<string> _warnings;
+    vector<string> _errors;
+    std::mutex _mutex;  // mutex to guard access to these message lists
 };
 
 ////////////////////////////////////////////////////////////////////
