@@ -1144,6 +1144,13 @@ public:
                     {
                         propagater(_grid->_eps);
                         _mr = _grid->cellIndex(r());
+
+                        // if we're outside the domain, terminate the path without returning a path segment
+                        if (_mr < 0)
+                        {
+                            setState(State::Outside);
+                            return false;
+                        }
                     }
                     // otherwise set the current point to the exit point and return the path segment
                     else
@@ -1152,7 +1159,7 @@ public:
                         setSegment(_mr, sq);
                         _mr = mq;
 
-                        // if we're outside the domain , terminate the path
+                        // if we're outside the domain, terminate the path after returning this path segment
                         if (_mr < 0) setState(State::Outside);
                         return true;
                     }
