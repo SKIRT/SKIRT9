@@ -584,7 +584,7 @@ double MediumSystem::getOpticalDepth(const PhotonPacket* pp, double distance)
     // determine the optical depth at which the packet's contribution becomes zero
     // or abort right away if the contribution is zero to begin with
     double L = pp->luminosity();
-    if (L <= 0) return -1;
+    if (L <= 0) return std::numeric_limits<double>::infinity();
     double taumax = std::log(L) + 745;
 
     // determine the geometric details of the path and calculate the optical depth at the same time
@@ -601,7 +601,7 @@ double MediumSystem::getOpticalDepth(const PhotonPacket* pp, double distance)
             if (generator->m() >= 0)
             {
                 tau += section * state(generator->m(), 0).n * generator->ds();
-                if (tau >= taumax) return -1.;
+                if (tau >= taumax) return std::numeric_limits<double>::infinity();
             }
             s += generator->ds();
             if (s > distance) break;
@@ -620,7 +620,7 @@ double MediumSystem::getOpticalDepth(const PhotonPacket* pp, double distance)
             if (m >= 0)
             {
                 for (int h = 0; h != _numMedia; ++h) tau += sectionv[h] * state(m, h).n * ds;
-                if (tau >= taumax) return -1.;
+                if (tau >= taumax) return std::numeric_limits<double>::infinity();
             }
             s += ds;
             if (s > distance) break;
@@ -638,7 +638,7 @@ double MediumSystem::getOpticalDepth(const PhotonPacket* pp, double distance)
             {
                 double lambda = pp->perceivedWavelength(state(m).v, _config->lyaExpansionRate() * s);
                 tau += opacityExt(lambda, m) * ds;
-                if (tau >= taumax) return -1.;
+                if (tau >= taumax) return std::numeric_limits<double>::infinity();
             }
             s += ds;
             if (s > distance) break;

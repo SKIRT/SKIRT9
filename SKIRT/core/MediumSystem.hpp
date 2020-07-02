@@ -324,8 +324,7 @@ public:
         \ln(L/L_\mathrm{min}) \f$ where \f$L\f$ is the
         weight at the peel-off interaction site, and \f$L_\mathrm{min}\f$ is the smallest
         representable positive double-precision floating point number. Hence this function aborts
-        the calculation and returns the special value of -1 when this happens. Callers must
-        specifically test for this special return value. */
+        the calculation and returns positive infinity when this happens. */
     double getOpticalDepth(const PhotonPacket* pp, double distance);
 
     /** This function initializes all values of the primary and/or secondary radiation field info
