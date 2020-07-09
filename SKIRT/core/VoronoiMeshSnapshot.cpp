@@ -680,6 +680,21 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
     log()->info("  Average number of neighbors per cell: " + StringUtils::toString(avgNeighbors, 'f', 1));
     log()->info("  Minimum number of neighbors per cell: " + std::to_string(minNeighbors));
     log()->info("  Maximum number of neighbors per cell: " + std::to_string(maxNeighbors));
+
+    // verify that neighbors are mutual as they should be
+    for (int m = 0; m < numCells; m++)
+    {
+        for (int m1 : _cells[m]->neighbors())
+        {
+            if (m1 >= 0)
+            {
+                const vector<int>& neighbors1 = _cells[m1]->neighbors();
+                if (std::find(neighbors1.begin(), neighbors1.end(), m) == neighbors1.end())
+                    log()->warning("Neighbors are not mutual for cells " + std::to_string(m) + " and "
+                                   + std::to_string(m1));
+            }
+        }
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
