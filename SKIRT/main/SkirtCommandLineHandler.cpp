@@ -39,8 +39,8 @@ SkirtCommandLineHandler::SkirtCommandLineHandler() : _args(System::arguments(), 
     _producerInfo =
         "SKIRT " + BuildInfo::projectVersion() + " (" + BuildInfo::codeVersion() + " " + BuildInfo::timestamp() + ")";
     _hostUserInfo = "Running on " + System::hostname() + " for " + System::username();
-    Console::info("Welcome to " + _producerInfo);
-    Console::info(_hostUserInfo);
+    _console.info("Welcome to " + _producerInfo);
+    _console.info(_hostUserInfo);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -57,17 +57,17 @@ int SkirtCommandLineHandler::perform()
         if (_args.isValid() && !_args.hasOptions() && !_args.hasFilepaths()) return doInteractive();
         if (_args.hasFilepaths()) return doBatch();
         if (_args.isPresent("-x")) return doSmileSchema();
-        Console::error("Invalid command line arguments");
+        _console.error("Invalid command line arguments", false);
         printHelp();
         return EXIT_FAILURE;
     }
     catch (FatalError& error)
     {
-        for (string line : error.message()) Console::error(line);
+        for (string line : error.message()) _console.error(line, false);
     }
     catch (const std::exception& except)
     {
-        Console::error("Standard Library Exception: " + string(except.what()));
+        _console.error("Standard Library Exception: " + string(except.what()), false);
     }
     ProcessManager::abort(EXIT_FAILURE);
     return EXIT_FAILURE;
@@ -132,7 +132,7 @@ int SkirtCommandLineHandler::doInteractive()
     reportResourceIssues(&_console);
 
     // ask for the name of the ski file in which to save the result
-    Console::info("Interactively constructing a simulation...");
+    _console.info("Interactively constructing a simulation...");
     string filename;
     while (true)
     {
@@ -143,7 +143,7 @@ int SkirtCommandLineHandler::doInteractive()
         // verify that the file does not yet exist
         // (we test whether the file can be opened, which is the best we can do in standard C++14)
         if (System::ifstream(filename))
-            Console::error("This file already exists; enter another name");
+            _console.error("This file already exists; enter another name", false);
         else
             break;
     }
@@ -156,8 +156,8 @@ int SkirtCommandLineHandler::doInteractive()
     XmlHierarchyWriter::write(simulation.get(), schema, filename, _producerInfo);
 
     // report success
-    Console::info("Successfully created ski file '" + filename + "'.");
-    Console::info("To run the simulation use the command: skirt " + filename.substr(0, filename.length() - 4));
+    _console.info("Successfully created ski file '" + filename + "'.");
+    _console.info("To run the simulation use the command: skirt " + filename.substr(0, filename.length() - 4));
     return EXIT_SUCCESS;
 }
 
@@ -217,7 +217,7 @@ int SkirtCommandLineHandler::doBatch()
     reportPeakMemory(&_console);
 
     // report stopwatch results, if any
-    for (string line : StopWatch::report()) Console::warning(line);
+    for (string line : StopWatch::report()) _console.warning(line, false);
     return EXIT_SUCCESS;
 }
 
@@ -227,7 +227,7 @@ int SkirtCommandLineHandler::doSmileSchema()
 {
     auto schema = SimulationItemRegistry::getSchemaDef();
     schema->save("skirt.smile", _producerInfo);
-    Console::info("Successfully created SMILE schema file 'skirt.smile'.");
+    _console.info("Successfully created SMILE schema file 'skirt.smile'.");
     return EXIT_SUCCESS;
 }
 
@@ -244,7 +244,7 @@ void SkirtCommandLineHandler::addSkiFilesFor(string filepath)
         if (!System::ifstream(filepath)) filepath = StringUtils::addExtension(filepath, "ski");
         if (!System::ifstream(filepath))
         {
-            Console::error("This ski file does not exist: " + filepath);
+            _console.error("This ski file does not exist: " + filepath, false);
             _hasError = true;
         }
         else
@@ -265,7 +265,7 @@ void SkirtCommandLineHandler::addSkiFilesFor(string filepath)
         if (newSize == oldSize)
         {
             _hasError = true;
-            Console::error("No ski file matches the pattern: " + filepath);
+            _console.error("No ski file matches the pattern: " + filepath, false);
         }
     }
 }
@@ -295,10 +295,10 @@ void SkirtCommandLineHandler::addSkiFilesFor(string dirpath, string name)
 void SkirtCommandLineHandler::doSimulation(size_t index)
 {
     if (_skifiles.size() > 1)
-        Console::warning("Performing simulation #" + std::to_string(index + 1) + " of "
-                         + std::to_string(_skifiles.size()));
+        _console.warning(
+            "Performing simulation #" + std::to_string(index + 1) + " of " + std::to_string(_skifiles.size()), false);
     string skipath = _skifiles[index];
-    Console::info("Constructing a simulation from ski file '" + skipath + "'...");
+    _console.info("Constructing a simulation from ski file '" + skipath + "'...");
 
     // flag becomes true as soon as the simulation log file is available and used for reporting errors
     bool running = false;
@@ -421,29 +421,29 @@ void SkirtCommandLineHandler::printHelp()
 {
     if (!ProcessManager::isRoot()) return;
 
-    Console::warning("");
-    Console::warning("To create a new ski file interactively:    skirt");
-    Console::warning("To run a simulation with default options:  skirt <ski-filename>");
-    Console::warning("");
-    Console::warning("  skirt [-t <threads>] [-s <simulations>] [-d]");
-    Console::warning("        [-b] [-v] [-m] [-e]");
-    Console::warning("        [-k] [-i <dirpath>] [-o <dirpath>]");
-    Console::warning("        [-r] {<filepath>}*");
-    Console::warning("");
-    Console::warning("  -t <threads> : the number of parallel threads for each simulation");
-    Console::warning("  -s <simulations> : the number of parallel simulations per process");
-    Console::warning("  -d : enable data parallelization mode for multiple processes");
-    Console::warning("  -b : force brief console logging");
-    Console::warning("  -v : force verbose logging for multiple processes");
-    Console::warning("  -m : state the amount of used memory at the start of each log message");
-    Console::warning("  -e : run the simulation in emulation mode to get an estimate of the memory consumption");
-    Console::warning("  -k : make the input/output paths relative to the ski file being processed");
-    Console::warning("  -i <dirpath> : the relative or absolute path for simulation input files");
-    Console::warning("  -o <dirpath> : the relative or absolute path for simulation output files");
-    Console::warning("  -r : cause recursive directory descent for all specified ski file paths");
-    Console::warning("  <filepath> : the relative or absolute file path for a ski file");
-    Console::warning("               (the filename may contain ? and * wildcards)");
-    Console::warning("");
+    _console.warning("");
+    _console.warning("To create a new ski file interactively:    skirt");
+    _console.warning("To run a simulation with default options:  skirt <ski-filename>");
+    _console.warning("");
+    _console.warning("  skirt [-t <threads>] [-s <simulations>] [-d]");
+    _console.warning("        [-b] [-v] [-m] [-e]");
+    _console.warning("        [-k] [-i <dirpath>] [-o <dirpath>]");
+    _console.warning("        [-r] {<filepath>}*");
+    _console.warning("");
+    _console.warning("  -t <threads> : the number of parallel threads for each simulation");
+    _console.warning("  -s <simulations> : the number of parallel simulations per process");
+    _console.warning("  -d : enable data parallelization mode for multiple processes");
+    _console.warning("  -b : force brief console logging");
+    _console.warning("  -v : force verbose logging for multiple processes");
+    _console.warning("  -m : state the amount of used memory at the start of each log message");
+    _console.warning("  -e : run the simulation in emulation mode to get an estimate of the memory consumption");
+    _console.warning("  -k : make the input/output paths relative to the ski file being processed");
+    _console.warning("  -i <dirpath> : the relative or absolute path for simulation input files");
+    _console.warning("  -o <dirpath> : the relative or absolute path for simulation output files");
+    _console.warning("  -r : cause recursive directory descent for all specified ski file paths");
+    _console.warning("  <filepath> : the relative or absolute file path for a ski file");
+    _console.warning("               (the filename may contain ? and * wildcards)");
+    _console.warning("");
 }
 
 //////////////////////////////////////////////////////////////////////
