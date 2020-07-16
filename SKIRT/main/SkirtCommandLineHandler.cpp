@@ -295,8 +295,8 @@ void SkirtCommandLineHandler::addSkiFilesFor(string dirpath, string name)
 void SkirtCommandLineHandler::doSimulation(size_t index)
 {
     if (_skifiles.size() > 1)
-        _console.warning("Performing simulation #" + std::to_string(index + 1) + " of "
-                         + std::to_string(_skifiles.size()), false);
+        _console.warning(
+            "Performing simulation #" + std::to_string(index + 1) + " of " + std::to_string(_skifiles.size()), false);
     string skipath = _skifiles[index];
     _console.info("Constructing a simulation from ski file '" + skipath + "'...");
 
