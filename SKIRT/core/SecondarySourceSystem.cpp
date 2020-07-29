@@ -421,40 +421,75 @@ namespace
         {
             // first generate a random azimuth angle
             const double phi = 2. * M_PI * random->uniform();
-            // compute its sine and cosine
-            const double cosphi = cos(phi);
-            const double sinphi = sin(phi);
 
             // now generate a random zenith angle
             // first, compute the cumulative distribution for a photon at the given wavelength
-            // create an empty array with the same size as the zenith angle grid
+            // create empty PDF and CDF arrays with the same size as the zenith angle grid
             const Array& thetas = _ms->mix(_m, _hv[0])->thetaGrid();
-            Array cdf(thetas.size());
+            Array pdf(thetas.size()), cdf(thetas.size());
             // add the distributions for the different components
             for (int h : _hv)
             {
                 const Array& Qabs = _ms->mix(_m, h)->sectionsAbs(_lambda);
-                cdf += _ms->numberDensity(_m, h) * Qabs;
+                pdf += _ms->numberDensity(_m, h) * Qabs;
             }
-            // convert to a cumulative distribution
+            // the CDF is computed from the PDF by integration
+            // since this is an integration is spherical coordinates, we need to
+            // multiply the PDF with the volume element sin(theta)
+            for (size_t i = 0; i < thetas.size(); ++i)
+            {
+                pdf[i] *= std::sin(thetas[i]);
+            }
+            // convert to the CDF
+            // note that we use the midpoint of each bin as integration point
+            // and omit the common factors from the integration
             for (size_t i = 1; i < thetas.size(); ++i)
             {
-                cdf[i] += cdf[i - 1];
+                cdf[i] = cdf[i - 1] + pdf[i - 1] + pdf[i];
             }
-            // normalise the distribution
+            // normalise the CDF
             for (size_t i = 0; i < thetas.size(); ++i)
             {
                 cdf[i] /= cdf[thetas.size() - 1];
             }
-            // draw a random uniform deviate
-            // get the corresponding zenith angle
+            // draw a random zenith angle from the CDF
             const double theta = random->cdfLinLin(thetas, cdf);
-            // compute the sine and cosine
-            const double costheta = cos(theta);
-            const double sintheta = sin(theta);
 
             // generate a random direction
-            return Direction(sintheta * cosphi, sintheta * sinphi, costheta);
+            const Direction krand(theta, phi);
+
+            // The random direction is defined in a frame that has the B direction
+            // as z-axis (the x and y axis can be chosen arbitrarily because of the
+            // symmetry in phi)
+            // We need to (passively) rotate the random direction to the lab frame
+            // where the z-axis is the actual z-axis
+            // This corresponds to a rotation over -beta degrees along an axis
+            // that is perpendicular to the plane through the B direction and the
+            // z-axis, where beta is the angle between the B direction and the
+            // z-axis
+            // Note that in this case, it does not matter whether we rotate over
+            // beta or -beta degrees, since the difference between these two is
+            // simply a rotation over 180 degrees in phi, and we still sample a
+            // uniform distribution in phi.
+            // If the angle is small enough, we simply assume that B already lies
+            // along the z-axis and return immediately.
+            const double cosbeta = _B_direction.z();
+            if (fabs(cosbeta) < 0.99999)
+            {
+                // B is not the z-axis. Compute beta and sin(beta)
+                const double beta = std::acos(cosbeta);
+                const double sinbeta = std::sin(beta);
+                // compute the direction of the rotation axis, z x B
+                const Direction n(Vec::cross(Vec(0., 0., 1.), _B_direction));
+                // now use Rodrigues' rotation formula to carry out the rotation
+                const Direction krand2(krand * cosbeta + Vec::cross(n, krand) * sinbeta
+                                       + n * Vec::dot(n, krand) * (1. - cosbeta));
+                return krand2;
+            }
+            else
+            {
+                return krand;
+            }
         }
 
         // this PolarizationProfileInterface implementation returns the Stokes vector for the given emission direction
