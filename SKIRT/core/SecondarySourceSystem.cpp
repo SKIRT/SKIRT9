@@ -427,7 +427,6 @@ namespace
             // create empty PDF and CDF arrays with the same size as the zenith angle grid
             const Array& thetas = _ms->mix(_m, _hv[0])->thetaGrid();
             Array pdf(thetas.size()), cdf(thetas.size());
-            ;
             // add the distributions for the different components
             for (int h : _hv)
             {
