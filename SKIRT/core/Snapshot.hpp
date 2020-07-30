@@ -122,6 +122,10 @@ public:
         pc. */
     void importSize();
 
+    /** This function configures the snapshot to import a cuboid lined up with the coordinate axes,
+        defined by six components (xmin,ymin,zmin,xmax,ymax,zmax). The default unit is pc. */
+    void importBox();
+
     /** This function configures the snapshot to import a mass density per unit of volume. The
         default unit is Msun/pc3. The importMassDensity(), importMass(), importNumberDensity(), and
         importNumber() options are mutually exclusive; calling more than one of these functions for
@@ -201,6 +205,10 @@ protected:
     /** This function returns the column index of the size field, or -1 if this is not being
         imported, for use by subclasses. */
     int sizeIndex() const { return _sizeIndex; }
+
+    /** This function returns the column index of the first box field, or -1 if this is not
+        being imported, for use by subclasses. */
+    int boxIndex() const { return _boxIndex; }
 
     /** This function returns the column index of the density field, or -1 if this is not being
         imported, for use by subclasses. */
@@ -392,6 +400,7 @@ private:
     int _nextIndex{0};
     int _positionIndex{-1};
     int _sizeIndex{-1};
+    int _boxIndex{-1};
     int _densityIndex{-1};
     int _massIndex{-1};
     int _metallicityIndex{-1};
