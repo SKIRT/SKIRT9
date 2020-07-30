@@ -73,6 +73,7 @@
 #include "FSPSSEDFamily.hpp"
 #include "FieldStrengthCellLibrary.hpp"
 #include "FileBand.hpp"
+#include "FileEmissionLineSEDFamily.hpp"
 #include "FileMesh.hpp"
 #include "FileSED.hpp"
 #include "FileSSPSEDFamily.hpp"
@@ -325,6 +326,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<LyaGaussianSEDFamily>();
     ItemRegistry::add<LyaDoublePeakedSEDFamily>();
     ItemRegistry::add<LyaSEDFamilyDecorator>();
+    ItemRegistry::add<FileEmissionLineSEDFamily>();
 
     // wavelength distributions
     ItemRegistry::add<WavelengthDistribution>();
