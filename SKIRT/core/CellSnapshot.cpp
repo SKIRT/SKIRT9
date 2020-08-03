@@ -33,7 +33,7 @@ namespace
         for (const Array& prop : propv)
         {
             cmin = min(cmin, prop[dir]);
-            cmax = max(cmax, prop[dir+3]);
+            cmax = max(cmax, prop[dir + 3]);
         }
 
         // determine the cell distribution by binning at a decent resolution
@@ -42,7 +42,7 @@ namespace
         vector<int> bins(nbins);
         for (const Array& prop : propv)
         {
-            double center = 0.5 * (prop[dir] + prop[dir+3]);
+            double center = 0.5 * (prop[dir] + prop[dir + 3]);
             bins[static_cast<int>((center - cmin) / binwidth)] += 1;
         }
 
@@ -78,12 +78,12 @@ namespace
 class CellSnapshot::CellGrid : public Box
 {
     // data members initialized during construction
-    const vector<Array>& _propv; // reference to the original list of cells
-    int _i;     // the box index in the properties list of each cell
-    int _p;                                          // number of grid cells in each spatial direction
-    Array _xgrid, _ygrid, _zgrid;                    // the m+1 grid separation points for each spatial direction
-    vector<vector<int>> _listv;  // the m*m*m lists of indices for cells overlapping each grid cell
-    int _pmin, _pmax, _ptotal;  // minimum, maximum nr of cells in list; total nr of cells in listv
+    const vector<Array>& _propv;   // reference to the original list of cells
+    int _i;                        // the box index in the properties list of each cell
+    int _p;                        // number of grid cells in each spatial direction
+    Array _xgrid, _ygrid, _zgrid;  // the m+1 grid separation points for each spatial direction
+    vector<vector<int>> _listv;    // the m*m*m lists of indices for cells overlapping each grid cell
+    int _pmin, _pmax, _ptotal;     // minimum, maximum nr of cells in list; total nr of cells in listv
 
 public:
     // The constructor creates a cuboidal grid of the specified number of grid cells in each
@@ -91,14 +91,13 @@ public:
     // overlapping the grid cell. In an attempt to distribute the cells evenly over the
     // grid cells, the sizes of the grid cells in each spatial direction are chosen so that
     // the cell centers are evenly distributed over the grid cells.
-    CellGrid(const vector<Array>& propv, int boxindex, int gridsize)
-        : _propv(propv), _i(boxindex), _p(gridsize)
+    CellGrid(const vector<Array>& propv, int boxindex, int gridsize) : _propv(propv), _i(boxindex), _p(gridsize)
     {
         // build the grids in each spatial direction
         double xmin, ymin, zmin, xmax, ymax, zmax;
-        makegrid(propv, boxindex+0, gridsize, _xgrid, xmin, xmax);
-        makegrid(propv, boxindex+1, gridsize, _ygrid, ymin, ymax);
-        makegrid(propv, boxindex+2, gridsize, _zgrid, zmin, zmax);
+        makegrid(propv, boxindex + 0, gridsize, _xgrid, xmin, xmax);
+        makegrid(propv, boxindex + 1, gridsize, _ygrid, ymin, ymax);
+        makegrid(propv, boxindex + 2, gridsize, _zgrid, zmin, zmax);
         setExtent(xmin, ymin, zmin, xmax, ymax, zmax);
 
         // make room for p*p*p grid cells
@@ -138,26 +137,16 @@ public:
             _pmax = max(_pmax, size);
             _ptotal += size;
         }
-
     }
 
     // This function returns the smallest number of cells overlapping a single grid cell.
-    int minCellRefsPerCell() const
-    {
-        return _pmin;
-    }
+    int minCellRefsPerCell() const { return _pmin; }
 
     // This function returns the largest number of cells overlapping a single grid cell.
-    int maxCellRefsPerCell() const
-    {
-        return _pmax;
-    }
+    int maxCellRefsPerCell() const { return _pmax; }
 
     // This function returns the total number of cell references for all cells in the grid.
-    int totalCellRefs() const
-    {
-        return _ptotal;
-    }
+    int totalCellRefs() const { return _ptotal; }
 
     // This function returns the index (in the list originally passed to the constructor)
     // of the first cell in the list that overlaps the specified position,
@@ -194,6 +183,9 @@ void CellSnapshot::readAndClose()
 
     // close the file
     Snapshot::readAndClose();
+
+    // inform the user
+    log()->info("  Number of cells: " + std::to_string(_propv.size()));
 
     // if a mass density policy has been set, calculate masses and densities for all cells
     if (hasMassDensityPolicy())
