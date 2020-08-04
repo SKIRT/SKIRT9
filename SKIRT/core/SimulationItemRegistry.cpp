@@ -26,6 +26,9 @@
 #include "CartesianSpatialGrid.hpp"
 #include "CastelliKuruczSED.hpp"
 #include "CastelliKuruczSEDFamily.hpp"
+#include "CellGeometry.hpp"
+#include "CellMedium.hpp"
+#include "CellSource.hpp"
 #include "ClumpyGeometryDecorator.hpp"
 #include "CombineGeometryDecorator.hpp"
 #include "ConfigurableBandWavelengthGrid.hpp"
@@ -273,6 +276,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<GeometricSource>();
     ItemRegistry::add<ImportedSource>();
     ItemRegistry::add<ParticleSource>();
+    ItemRegistry::add<CellSource>();
     ItemRegistry::add<MeshSource>();
     ItemRegistry::add<AdaptiveMeshSource>();
     ItemRegistry::add<VoronoiMeshSource>();
@@ -379,6 +383,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ReadFitsGeometry>();
     ItemRegistry::add<ImportedGeometry>();
     ItemRegistry::add<ParticleGeometry>();
+    ItemRegistry::add<CellGeometry>();
     ItemRegistry::add<MeshGeometry>();
     ItemRegistry::add<AdaptiveMeshGeometry>();
     ItemRegistry::add<VoronoiMeshGeometry>();
@@ -448,6 +453,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<GeometricMedium>();
     ItemRegistry::add<ImportedMedium>();
     ItemRegistry::add<ParticleMedium>();
+    ItemRegistry::add<CellMedium>();
     ItemRegistry::add<MeshMedium>();
     ItemRegistry::add<AdaptiveMeshMedium>();
     ItemRegistry::add<VoronoiMeshMedium>();
