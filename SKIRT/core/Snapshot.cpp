@@ -73,6 +73,20 @@ void Snapshot::importSize()
 
 ////////////////////////////////////////////////////////////////////
 
+void Snapshot::importBox()
+{
+    _boxIndex = _nextIndex;
+    _nextIndex += 6;
+    _infile->addColumn("box xmin", "length", "pc");
+    _infile->addColumn("box ymin", "length", "pc");
+    _infile->addColumn("box zmin", "length", "pc");
+    _infile->addColumn("box xmax", "length", "pc");
+    _infile->addColumn("box ymax", "length", "pc");
+    _infile->addColumn("box zmax", "length", "pc");
+}
+
+////////////////////////////////////////////////////////////////////
+
 void Snapshot::importMassDensity()
 {
     _densityIndex = _nextIndex++;
