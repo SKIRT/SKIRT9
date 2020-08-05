@@ -36,9 +36,10 @@ Range FileEmissionLineSEDFamily::intrinsicWavelengthRange() const
 double FileEmissionLineSEDFamily::specificLuminosity(double wavelength, const Array& parameters) const
 {
     double index = parameters[0];
+    // ignore negative indices as per the API
     if (index < 0)
     {
-        return 0;
+        return 0.;
     }
     else
     {
@@ -52,12 +53,17 @@ double FileEmissionLineSEDFamily::cdf(Array& lambdav, Array& pv, Array& Pv, cons
                                       const Array& parameters) const
 {
     double index = parameters[0];
+    // ignore negative indices as per the API
     if (index < 0)
     {
         return 0.;
     }
     else
     {
+        // note that no checks are in place to test the sanity of the input index
+        // if the index does not correspond to a value in the file, cdf() will
+        // interpolate from existing index values
+        // this interpolation will most likely be wrong
         return _table.cdf(lambdav, pv, Pv, wavelengthRange, index);
     }
 }
