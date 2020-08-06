@@ -177,8 +177,7 @@ void Configuration::setupSelfBefore()
     int numLyaMedia = 0;
     for (int h = 0; h != numMedia; ++h)
     {
-        auto mode = ms->media()[h]->mix()->scatteringMode();
-        if (mode == MaterialMix::ScatteringMode::Lya || mode == MaterialMix::ScatteringMode::LyaPolarization)
+        if (ms->media()[h]->mix()->hasResonantScattering())
         {
             numLyaMedia++;
             _lyaMediumIndex = h;
@@ -226,7 +225,7 @@ void Configuration::setupSelfBefore()
     {
         int numPolarization = 0;
         for (auto medium : ms->media())
-            if (medium->mix()->hasPolarization()) numPolarization++;
+            if (medium->mix()->hasPolarizedScattering()) numPolarization++;
         if (numPolarization != 0 && numPolarization != numMedia)
             throw FATALERROR("All media must consistenly support polarization, or not support polarization");
         _hasPolarization = numPolarization != 0;
@@ -236,8 +235,8 @@ void Configuration::setupSelfBefore()
     if (_hasPolarization)
     {
         for (auto medium : ms->media())
-            if (medium->mix()->scatteringMode() == MaterialMix::ScatteringMode::SpheroidalPolarization)
-                _hasSpheroidalPolarization = true;
+            if (medium->mix()->hasPolarizedAbsorption() || medium->mix()->hasPolarizedEmission())
+                _hasSpheroidalPolarization = true;  // this flag may need to be split over absorption and emission
     }
 
     // check for magnetic fields

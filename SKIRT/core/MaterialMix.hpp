@@ -17,24 +17,18 @@ class WavelengthGrid;
 /** MaterialMix is the abstract base class for all classes representing the concrete material
     properties of a specific transfer medium. The MaterialMix class hierarchy allows fundamentally
     different material types (e.g. dust, electrons, and hydrogen-dominated gas) to be implemented
-    as part of a single framework. All MaterialMix subclasses, regardless of material type, must
-    implement the public interface offered by this base class. This provides the material
-    properties required for tracing photon packets through a material of this type, in other words,
-    for processing absorption and scattering. The set of material properties that may be needed to
-    calculate secondary emission spectra (e.g. thermal emission from dust grains) and/or medium
-    state updates (e.g. hydrogen ionization fraction) differs between fundamental material types,
-    and is thus offered by implementing one or more seperate interfaces (called "XxxMixInterface").
+    as part of a single framework.
 
     Instances of MaterialMix subclasses are immutable after setup has been completed, so the same
     instance can be reused in multiple contexts.
 
-    The MediumSystem object in each simulation maintains (directly or indirectly) three key data
-    items to describe the contents of each spatial cell for each Medium component. The first is the
-    cell volume. The second is a pointer to a MaterialMix, defining the properties of the material.
-    The third is a number density, defining the amount of material present in the cell per unit of
-    volume. The kind of physical entity being counted by the number density and the conversion
-    from number density to mass density depend on the type of material, as indicated in the table
-    below.
+    <b>Material properties</b>
+
+    The medium state maintained by a simulation for each cell and medium component includes a
+    pointer to a MaterialMix instance defining the properties of the material, and a number density
+    value defining the amount of material present in the cell per unit of volume. The kind of
+    physical entity being counted by the number density and the conversion from number density to
+    mass density depend on the type of material, as indicated in the table below.
 
     Material type | Entity counted | Mass conversion
     --------------|----------------|-----------------------------
@@ -42,14 +36,17 @@ class WavelengthGrid;
     Electrons     | electron       | electron mass
     Gas           | hydrogen atom  | gas mass per hydrogen atom
 
-    The following table lists the key cell properties traced by the simulation, the key material
-    properties offered by the interface in this base class, and some properties that can be
-    derived from these.
+    The following table lists some relevant physical quantities including cell properties that may
+    be traced by a simulation, material properties defined by material mixes, and properties that
+    can be derived from these.
 
     <TABLE>
     <TR><TD><B>Symbol</B></TD>  <TD><B>Units</B></TD>  <TD><B>Description</B></TD></TR>
     <TR><TD>\f$\Delta s\f$</TD>  <TD>\f$m\f$</TD>  <TD>Distance along a path</TD></TR>
     <TR><TD>\f$V\f$</TD>  <TD>\f$\text{m}^3\f$</TD>  <TD>Volume</TD></TR>
+    <TR><TD>\f$v\f$</TD>  <TD>\f$\text{m}\,\text{s}^{-1}\f$</TD>  <TD>Bulk velocity</TD></TR>
+    <TR><TD>\f$\bf{B}\f$</TD>  <TD>\f$\text{T}\f$</TD>  <TD>Magnetic field vector</TD></TR>
+    <TR><TD>\f$T\f$</TD>  <TD>\f$\text{K}\f$</TD>  <TD>Temperature</TD></TR>
     <TR><TD>\f$n\f$</TD>  <TD>\f$\#\,\text{m}^{-3}\f$</TD>  <TD>Number density (of entities)</TD></TR>
     <TR><TD>\f$\mu\f$</TD>  <TD>\f$\text{kg}\,\#^{-1}\f$</TD>  <TD>Mass per entity</TD></TR>
     <TR><TD>\f$\varsigma\f$</TD>  <TD>\f$\text{m}^2\,\#^{-1}\f$</TD>  <TD>Cross section per entity</TD></TR>
@@ -63,23 +60,92 @@ class WavelengthGrid;
     <TR><TD>\f$\tau=n\varsigma\Delta s\f$</TD>  <TD>\f$1\f$</TD>  <TD>Optical depth</TD></TR>
     </TABLE>
 
-    This class offers an interface to obtain the following basic material properties:
-    - the mass per entity \f$\mu\f$
-    - the absorption cross section per entity \f$\varsigma^{\text{abs}}_{\lambda}\f$
-    - the scattering cross section per entity \f$\varsigma^{\text{sca}}_{\lambda}\f$
-    - the total extinction cross section per entity \f$\varsigma^{\text{ext}}_{\lambda}
-         = \varsigma^{\text{abs}}_{\lambda} + \varsigma^{\text{sca}}_{\lambda}\f$
-    - the scattering albedo \f$\varpi_\lambda
-         = \varsigma_{\lambda}^{\text{sca}} / \varsigma_{\lambda}^{\text{ext}}\f$
-    - scattering phase function properties; depending on the supported scattering mode this may be:
-      - the assymmetry parameter \f$g\f$ for the Henyey-Greenstein phase function
-      - a custom phase function \f$\Phi_\lambda(\cos\theta)\f$ that depends only on the cosine of
-        the scattering angle \f$\theta\f$
-      - a custom phase function \f$\Phi_\lambda(\theta,\phi)\f$ that depends on both scattering angles
-        \f$\theta\f$ and \f$\phi\f$, and on the polarization state of the incoming radiation
-    - the equilibrium temperature \f$T_{\text{eq}}\f$ for a given embedding radiation field,
-      using average material properties and assuming local thermal equilibrium conditions
-*/
+    <b>Public interface</b>
+
+    All MaterialMix subclasses, regardless of material type, must implement the public interface
+    offered by this base class. This interface includes the capabilities required for tracing
+    photon packets through a material of this type, in other words, for processing absorption and
+    scattering.
+
+    When the implementation of a particular feature specific to a subset of material mixes requires
+    external access to information offered by those material mixes, the corresponding set of public
+    functions is bundled in a separate abstract interface that can be implemented in the
+    appropriate subclasses. For example, the set of material properties needed to calculate
+    secondary emission spectra differs between fundamental material types and is thus offered by a
+    specific public interface for each material type (e.g. thermal emission from dust grains).
+
+    <b>Capabilities functions</b>
+
+    The MaterialMix class hierarchy offers the materialType() function to obtain the overall
+    material category (dust, gas, or electrons). In addition, it offers a number of Boolean
+    functions that indicate whether a certain physical process is supported.
+
+    This approach allows fine-grained run-time discovery of capabilities. The functions can be
+    used, for example, during setup to ensure that the configuration is valid (e.g., all material
+    mixes have the same level of support for polarization, all material mixes support stochastic
+    heating when enabled in the configuration), to disable optimizations as needed (e.g., when
+    calculating optical depth for dichroic materials), and to enable probing of the appropriate
+    information (e.g., grain size distributions only for dust mixes offering that information).
+
+    <b>Medium state setup functions</b>
+
+    The MaterialMix class hierarchy offers a number of functions that advertise the required medium
+    state variables and assist with initializing their values during setup. For example, the
+    stateVariableInfo() function returns a list of medium state variable descriptors specifying the
+    common and specific state variables used by the material mix. This allows the medium system to
+    allocate storage for the appropriate set of state variables.
+
+    The common state variables are initialized by the medium system without further help from the
+    material mixes. Initialization of the specific state variables proceeds as follows. If the
+    material mix is configured as part of a geometric medium component, the total density for the
+    component in each spatial cell is determined from the configured geometry and normalization and
+    it is passed to the material mix via the initializeGeometricState() function. If the material
+    mix is configured as part of an imported medium component, extra data fields are imported from
+    the snapshot based on the information returned by the parameterInfo() function and passed to
+    the material mix via the initializeImportedState() function. In each case, the initialize()
+    function is responsible for initializing all specific state variables.
+
+    <b>Low-level material properties functions</b>
+
+    The MaterialMix class hierarchy offers functions for retrieving some basic material properties
+    as a function of wavelength, including the absorption cross section, the scattering cross
+    section, and the scattering asymmetry parameter. These functions return \em default property
+    values, assuming fixed, predefined values for any quantities other than wavelength (e.g., a
+    default temperature, no polarization, no kinematics).
+
+    The indicativeTemperature(Jv) function similarly returns an indicative temperature, depending
+    on the material type. For dust mixes it returns the averaged equilibrium temperature of the
+    grain population given the specified radiation field and assuming local thermal equilibrium
+    conditions. Other materials may return a temperature determined based on the radiation field, a
+    default value, or zero if none of the above apply.
+
+    In principle, the values returned by these low-level functions may be used only during setup
+    and for probing. However, some portions of the photon life cycle code might be optimized to use
+    these functions directly in cases where the optical properties are known to depend solely on
+    the photon packet’s wavelength.
+
+    <b>High-level functions for photon life cycle</b>
+
+    Finally, the MaterialMix class hierarchy offers a set of functions that help implement the
+    photon life cycle on a high, generic level. These functions receive two arguments: an object
+    representing the medium state for a spatial cell and for a medium component configured with the
+    receiving material mix, and an incoming photon packet.
+
+    For example, the opacityAbs() and opacitySca() functions return the absorption and scattering
+    opacity \f$k=n\varsigma\f$. These functions are used to determine the scattering albedo once an
+    interaction site has been chosen or to determine the relative weights of the medium components
+    for a scattering operation.
+
+    The propagate() function adjusts the photon packet for any effects caused by propagation over a
+    given distance through the cell. This may include, for example, changes to the polarization
+    state caused by dichroism. The function also returns the total (possibly dichroic) optical
+    depth for the photon packet intensity over the given distance.
+
+    The performScattering() function handles a complete random-walk scattering interaction with the
+    medium component of the receiving material mix, including the effects of bulk velocity,
+    polarization, and so forth. The peelOffScattering() function similarly calculates the
+    contribution to a scattering peel-off event for this material, given the instrument reference
+    frame and the relative weight of this medium component. */
 class MaterialMix : public SimulationItem
 {
     ITEM_ABSTRACT(MaterialMix, SimulationItem, "a material mix")
@@ -114,7 +180,7 @@ public:
         material mix is Gas, and false otherwise. */
     bool isGas() const { return materialType() == MaterialType::Gas; }
 
-    //======== Functionality levels =======
+    //======== Capabilities =======
 
 public:
     /** This enumeration lists the possible scattering modes offered by the public material mix
@@ -164,15 +230,33 @@ public:
         override this function and return the appropriate value. */
     virtual ScatteringMode scatteringMode() const;
 
-    /** This convenience function returns true if this material mix uses and supports polarized
-        radiation, and false otherwise. In the current implementation, the function returns true
-        if the scattering mode is SphericalPolarization or SpheroidalPolarization. */
-    bool hasPolarization() const
-    {
-        return scatteringMode() == ScatteringMode::SphericalPolarization
-               || scatteringMode() == ScatteringMode::SpheroidalPolarization
-               || scatteringMode() == ScatteringMode::LyaPolarization;
-    }
+    /** This function returns true if this material mix supports polarization during scattering
+        events, and false otherwise. The default implementation in this base class returns false.
+        */
+    virtual bool hasPolarizedScattering() const;
+
+    /** This function returns true if the absorption of radiation for this material mix is dichroic
+        (i.e. the absorption cross section depends on the polarization state of incoming photon and
+        the polarization state is adjusted during absorption), and false otherwise. If
+        hasPolarizedAbsorption() returns true, hasPolarizedScattering() must return true as well.
+        The default implementation in this base class returns false. */
+    virtual bool hasPolarizedAbsorption() const;
+
+    /** This function returns true if the secondary emission for this material mix is or may be
+        polarized and anisotropic, and false otherwise. If hasPolarizedEmission() returns true,
+        hasPolarizedScattering() must return true as well. The default implementation in this base
+        class returns false. */
+    virtual bool hasPolarizedEmission() const;
+
+    /** This function returns true if scattering for this material mix is resonant (such as for
+        Lyman-alpha), and false otherwise. The default implementation in this base class returns
+        false. */
+    virtual bool hasResonantScattering() const;
+
+    /** This function returns true if this material mix represents dust and supports stochastic
+        heating of dust grains for the calculation of secondary emission, and false otherwise. The
+        default implementation in this base class returns false. */
+    virtual bool hasStochasticDustEmission() const;
 
     //======== Basic material properties =======
 

@@ -175,6 +175,13 @@ protected:
         requested). */
     size_t initializeExtraProperties(const Array& lambdav) override;
 
+    //======================== Capabilities =======================
+
+public:
+    /** This function returns true, indicating that this dust mix supports stochastic
+        heating of dust grains for the calculation of secondary emission. */
+    bool hasStochasticDustEmission() const override;
+
     //======== Emission =======
 
 public:

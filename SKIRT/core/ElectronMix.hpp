@@ -36,18 +36,21 @@ protected:
     /** This function initializes the DipolePhaseFunction instance held by this class. */
     void setupSelfBefore() override;
 
-    //======== Functionality levels =======
+    //======== Capabilities =======
 
 public:
     /** This function returns the fundamental material type represented by this material mix, which
-        is MaterialType::Electrons. See the documentation of the MaterialMix class for more
-        information. */
+        is MaterialType::Electrons. */
     MaterialType materialType() const override;
 
     /** This function returns the scattering mode supported by this material mix, which is
         ScatteringMode::MaterialPhaseFunction or ScatteringMode::SphericalPolarization depending on
         the value of the \em includePolarization flag. */
     ScatteringMode scatteringMode() const override;
+
+    /** This function returns the value of the \em includePolarization flag, indicating whether the
+        material mix supports polarization during scattering events or not. */
+    bool hasPolarizedScattering() const override;
 
     //======== Basic material properties =======
 

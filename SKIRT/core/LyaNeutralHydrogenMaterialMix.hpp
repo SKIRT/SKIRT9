@@ -47,18 +47,24 @@ class LyaNeutralHydrogenMaterialMix : public MaterialMix
 
     ITEM_END()
 
-    //======== Functionality levels =======
+    //======== Capabilities =======
 
 public:
     /** This function returns the fundamental material type represented by this material mix, which
-        is MaterialType::Gas. See the documentation of the MaterialMix class for more information.
-        */
+        is MaterialType::Gas. */
     MaterialType materialType() const override;
 
     /** This function returns the scattering mode supported by this material mix, which is
         ScatteringMode::Lya or ScatteringMode::LyaPolarization depending on the value of the \em
         includePolarization flag. */
     ScatteringMode scatteringMode() const override;
+
+    /** This function returns the value of the \em includePolarization flag, indicating whether the
+        material mix supports polarization during scattering events or not. */
+    bool hasPolarizedScattering() const override;
+
+    /** This function returns true, indicating that scattering for the material mix is resonant. */
+    bool hasResonantScattering() const override;
 
     //======== Basic material properties =======
 

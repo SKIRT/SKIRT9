@@ -25,6 +25,20 @@ MaterialMix::ScatteringMode LyaNeutralHydrogenMaterialMix::scatteringMode() cons
 
 ////////////////////////////////////////////////////////////////////
 
+bool LyaNeutralHydrogenMaterialMix::hasPolarizedScattering() const
+{
+    return includePolarization();
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool LyaNeutralHydrogenMaterialMix::hasResonantScattering() const
+{
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////
+
 double LyaNeutralHydrogenMaterialMix::mass() const
 {
     return Constants::Mproton();

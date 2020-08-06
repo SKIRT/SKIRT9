@@ -29,3 +29,18 @@ MaterialMix::ScatteringMode ConfigurableDustMix::scatteringMode() const
 }
 
 //////////////////////////////////////////////////////////////////////
+
+bool ConfigurableDustMix::hasPolarizedScattering() const
+{
+    return scatteringType() == ScatteringType::SphericalPolarization
+            || scatteringType() == ScatteringType::SpheroidalPolarization;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+bool ConfigurableDustMix::hasPolarizedEmission() const
+{
+    return scatteringType() == ScatteringType::SpheroidalPolarization;
+}
+
+//////////////////////////////////////////////////////////////////////

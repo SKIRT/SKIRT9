@@ -18,6 +18,13 @@ MaterialMix::ScatteringMode MeanPinteBenchmarkDustMix::scatteringMode() const
     return ScatteringMode::HenyeyGreenstein;  // to satisfy gcc compiler
 }
 
+////////////////////////////////////////////////////////////////////
+
+bool MeanPinteBenchmarkDustMix::hasPolarizedScattering() const
+{
+    return scatteringType() == ScatteringType::SphericalPolarization;
+}
+
 //////////////////////////////////////////////////////////////////////
 
 string MeanPinteBenchmarkDustMix::resourceNameForOpticalProps() const

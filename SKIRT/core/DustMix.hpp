@@ -127,8 +127,7 @@ protected:
 
 public:
     /** This function returns the fundamental material type represented by this material mix, in
-        other words it returns MaterialType::Dust. See the documentation of the MaterialMix class
-        for more information. */
+        other words it returns MaterialType::Dust. */
     MaterialType materialType() const override;
 
     //======== Basic material properties =======

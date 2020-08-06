@@ -433,6 +433,13 @@ size_t MultiGrainDustMix::initializeExtraProperties(const Array& lambdav)
 
 ////////////////////////////////////////////////////////////////////
 
+bool MultiGrainDustMix::hasStochasticDustEmission() const
+{
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////
+
 Array MultiGrainDustMix::emissivity(const Array& Jv) const
 {
     // use the appropriate emissivity calculator

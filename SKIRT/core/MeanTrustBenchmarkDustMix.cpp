@@ -18,6 +18,13 @@ MaterialMix::ScatteringMode MeanTrustBenchmarkDustMix::scatteringMode() const
     return ScatteringMode::HenyeyGreenstein;  // to satisfy gcc compiler
 }
 
+////////////////////////////////////////////////////////////////////
+
+bool MeanTrustBenchmarkDustMix::hasPolarizedScattering() const
+{
+    return scatteringType() == ScatteringType::SphericalPolarization;
+}
+
 //////////////////////////////////////////////////////////////////////
 
 string MeanTrustBenchmarkDustMix::resourceNameForOpticalProps() const

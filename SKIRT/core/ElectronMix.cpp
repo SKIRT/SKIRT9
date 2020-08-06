@@ -33,6 +33,13 @@ MaterialMix::ScatteringMode ElectronMix::scatteringMode() const
 
 ////////////////////////////////////////////////////////////////////
 
+bool ElectronMix::hasPolarizedScattering() const
+{
+    return includePolarization();
+}
+
+////////////////////////////////////////////////////////////////////
+
 double ElectronMix::mass() const
 {
     return Constants::Melectron();
