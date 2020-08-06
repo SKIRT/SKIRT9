@@ -193,6 +193,8 @@ namespace
         Vec _bfv;                  // bulk velocity
 
     public:
+        // instances of this class are allocated in thread-local storage, which means that the constructor is
+        // invoked under the hood for each new execution thread; hence it does trivial initialization only
         DustCellEmission() {}
 
         // calculates the emission information for the given cell if it is different from what's already stored
@@ -334,13 +336,10 @@ namespace
         Vec velocity() const override { return _bfv; }
     };
 
-    // setup a DustCellEmission instance for each parallel execution thread to cache dust emission information
-    thread_local DustCellEmission t_dustcell;
-
-    // An instance of this class obtains the information needed to determine
-    // angular distribution probabilities and polarization components for
-    // photon packets emitted from the dust in a given cell in the spatial grid,
-    // and remembers some information for fast retrieval.
+    // An instance of this class obtains the information needed to determine angular distribution probabilities
+    // and polarization components for photon packets emitted from the dust in a given cell in the spatial grid,
+    // and remembers some information for fast retrieval. It is actually used only when there are spheroidal
+    // dust grains in the simulation.
     class DustCellPolarisedEmission : public AngularDistributionInterface, public PolarizationProfileInterface
     {
     private:
@@ -353,20 +352,23 @@ namespace
         int _m{-1};        // spatial cell index
         Vec _B_direction;  // direction of the magnetic field
 
-        // information on a particular photon packet, initialized by calculate()
-        double _lambda{-1.};  // wavelength of the last photon packet
+        // information on a particular photon packet, initialized by calculateIfNeeded()
+        double _lambda{-1.};  // wavelength of the photon packet
 
     public:
+        // instances of this class are allocated in thread-local storage, which means that the constructor is
+        // invoked under the hood for each new execution thread; hence it does trivial initialization only
         DustCellPolarisedEmission() {}
 
-        // calculates the emission information for the given cell if it is different from what's already stored
-        //   m:  cell index
-        //   ms: medium system
-        //   config: configuration object
-        void calculateIfNeeded(int m, MediumSystem* ms, Configuration* config)
+        // calculates the emission information for the given cell and photon packet wavelength
+        // if it is different from what's already stored
+        void calculateIfNeeded(int m, MediumSystem* ms, double lambda)
         {
-            // if this photon packet is launched from the same cell as the previous one, we don't need to do anything
-            if (!config->hasSpheroidalPolarization() || m == _m) return;
+            // always remember the photon packet wavelength
+            _lambda = lambda;
+
+            // if this packet is launched from the same cell as the previous one, we don't need to do anything else
+            if (m == _m) return;
 
             // when called for the first time, construct a list of dust media and cache some other info
             if (_m == -1)
@@ -385,13 +387,7 @@ namespace
             _B_direction /= _B_direction.norm();
         }
 
-        // calculate the emission information that is always out of date
-        // in practice, we use this function to set the wavelength of the emission
-        //   lambda: wavelength
-        void calculate(double lambda) { _lambda = lambda; }
-
         // this AngularDistributionInterface implementation returns the probability for the given direction
-        //   bfk: direction
         double probabilityForDirection(Direction bfk) const override
         {
             // get the zenith angle of the direction
@@ -401,7 +397,7 @@ namespace
 
             // compute
             //   - Qabstheta: the absorption coefficient for the direction
-            //   - Qabstot: the agnular averaged absorption coefficient
+            //   - Qabstot: the angular averaged absorption coefficient
             double Qabstheta = 0.;
             double Qabstot = 0.;
             // we need to sum over all dust species
@@ -493,7 +489,6 @@ namespace
         }
 
         // this PolarizationProfileInterface implementation returns the Stokes vector for the given emission direction
-        //   bfk: emission direction
         StokesVector polarizationForDirection(Direction bfk) const override
         {
             // get the zenith angle of the direction
@@ -518,7 +513,8 @@ namespace
         }
     };
 
-    // setup a DustCellPolarisedEmission instance for each parallel execution thread to cache dust emission information
+    // setup instances of the above classes to cache dust emission information for each parallel execution thread
+    thread_local DustCellEmission t_dustcell;
     thread_local DustCellPolarisedEmission t_dustcellpol;
 }
 
@@ -532,7 +528,6 @@ void SecondarySourceSystem::launch(PhotonPacket* pp, size_t historyIndex) const
 
     // calculate the emission spectrum and bulk velocity for this cell, if not already available
     t_dustcell.calculateIfNeeded(p, _mv, _nv, _ms, _config);
-    t_dustcellpol.calculateIfNeeded(m, _ms, _config);
 
     // generate a random wavelength from the emission spectrum for the cell and/or from the bias distribution
     double lambda, w;
@@ -585,7 +580,7 @@ void SecondarySourceSystem::launch(PhotonPacket* pp, size_t historyIndex) const
     Direction bfk;
     if (_config->hasSpheroidalPolarization())
     {
-        t_dustcellpol.calculate(lambda);
+        t_dustcellpol.calculateIfNeeded(m, _ms, lambda);
         dpe = &t_dustcellpol;
         bfk = t_dustcellpol.generateDirection(_random);
     }
