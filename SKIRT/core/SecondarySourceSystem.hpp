@@ -178,9 +178,15 @@ public:
         Once the emission spectrum for the current cell is known, the function randomly generates a
         wavelength either from this emission spectrum or from the configured bias wavelength
         distribution, adjusting the launch weight with the proper bias factor. It then generates a
-        random position uniformly within the spatial cell, and a random direction uniformly on the
-        unit sphere (since the emission is assumed to be isotropic). Finally, it actually
-        initializes the photon packet with this information. */
+        random position uniformly within the spatial cell.
+
+        If the simulation includes aligned spheroidal grains, the function calculates the
+        polarization profile for the emitted photon packet and draws a random direction from the
+        corresponding anisotropic phase function. Otherwise, the emission is assumed to be
+        unpolarized and isotropic, and a random direction is determined uniformly on the unit
+        sphere.
+
+        Finally, the function actually initializes the photon packet with this information. */
     void launch(PhotonPacket* pp, size_t historyIndex) const;
 
     //======================== Data Members ========================
