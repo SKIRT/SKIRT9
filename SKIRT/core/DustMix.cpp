@@ -6,7 +6,9 @@
 #include "DustMix.hpp"
 #include "Configuration.hpp"
 #include "Log.hpp"
+#include "MediumState.hpp"
 #include "NR.hpp"
+#include "PhotonPacket.hpp"
 #include "Random.hpp"
 #include "StokesVector.hpp"
 #include "StringUtils.hpp"
@@ -250,6 +252,30 @@ double DustMix::sectionExt(double lambda) const
 double DustMix::asymmpar(double lambda) const
 {
     return _asymmparv[indexForLambda(lambda)];
+}
+
+////////////////////////////////////////////////////////////////////
+
+double DustMix::opacityAbs(double lambda, const MediumState* state, const PhotonPacket* /*pp*/) const
+{
+    double n = state->numberDensity();
+    return n > 0. ? n * _sigmaabsv[indexForLambda(lambda)] : 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double DustMix::opacitySca(double lambda, const MediumState* state, const PhotonPacket* /*pp*/) const
+{
+    double n = state->numberDensity();
+    return n > 0. ? n * _sigmascav[indexForLambda(lambda)] : 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double DustMix::opacityExt(double lambda, const MediumState* state, const PhotonPacket* /*pp*/) const
+{
+    double n = state->numberDensity();
+    return n > 0. ? n * _sigmaextv[indexForLambda(lambda)] : 0.;
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -135,17 +135,17 @@ public:
         velocity \f${\boldsymbol{v}}\f$ is determined by averaging the respective bulk velocities
         over the corresponding number densities, \f[{\boldsymbol{v}} = \frac{\sum_h n_h
         {\boldsymbol{v}}_h} {\sum_h n_h}.\f] */
-    Vec bulkVelocity(int m);
+    Vec bulkVelocity(int m) const;
 
     /** This function returns the magnetic field \f${\boldsymbol{B}}\f$ in the spatial cell with
         index \f$m\f$. At most one medium component is allowed to specify a magnetic field. If no
         medium component specifies a magnetic field, this function returns the null vector. */
-    Vec magneticField(int m);
+    Vec magneticField(int m) const;
 
     /** This function returns the gas temperature \f$T\f$ in the spatial cell with index \f$m\f$.
         At most one medium component is allowed to specify a gas temperature. If no medium
         component specifies a gas temperature, this function returns zero. */
-    double gasTemperature(int m);
+    double gasTemperature(int m) const;
 
     /** This function returns true if at least one of the media in the medium system has the
         specified fundamental material type (i.e. dust, electrons, or gas). */

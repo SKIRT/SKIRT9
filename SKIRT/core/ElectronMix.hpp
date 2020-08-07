@@ -71,8 +71,26 @@ public:
     /** This function returns the total extinction cross section per electron
         \f$\varsigma^{\text{ext}}_{\lambda} = \varsigma^{\text{abs}}_{\lambda} +
         \varsigma^{\text{sca}}_{\lambda}\f$ which is constant and equal to the Thomson cross
-        section for all wavelengths \f$\lambda\f$.. */
+        section for all wavelengths \f$\lambda\f$. */
     double sectionExt(double lambda) const override;
+
+    //======== High-level photon life cycle =======
+
+    /** This function returns the absorption opacity \f$k^\text{abs}=n\varsigma^\text{abs}\f$,
+        which is trivially zero for electrons. */
+    double opacityAbs(double lambda, const MediumState* state, const PhotonPacket* pp) const override;
+
+    /** This function returns the scattering opacity \f$k^\text{sca}=n\varsigma^\text{sca}\f$ for
+        the given medium state. The wavelentgh and photon properties are not used, because the
+        cross section is considered to be equal to the Thomson cross section for all wavelengths.
+        */
+    double opacitySca(double lambda, const MediumState* state, const PhotonPacket* pp) const override;
+
+    /** This function returns the extinction opacity \f$k^\text{ext}=k^\text{abs}+k^\text{sca}\f$
+        for the given medium state. The wavelentgh and photon properties are not used, because the
+        cross section is considered to be equal to the Thomson cross section for all wavelengths.
+        */
+    double opacityExt(double lambda, const MediumState* state, const PhotonPacket* pp) const override;
 
     //======== Scattering with material phase function =======
 

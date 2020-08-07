@@ -8,6 +8,8 @@
 
 #include "Array.hpp"
 #include "SimulationItem.hpp"
+class MediumState;
+class PhotonPacket;
 class Random;
 class StokesVector;
 class WavelengthGrid;
@@ -126,15 +128,18 @@ class WavelengthGrid;
 
     <b>High-level functions for photon life cycle</b>
 
-    Finally, the MaterialMix class hierarchy offers a set of functions that help implement the
-    photon life cycle on a high, generic level. These functions receive two arguments: an object
-    representing the medium state for a spatial cell and for a medium component configured with the
-    receiving material mix, and an incoming photon packet.
+    Most importantly, the MaterialMix class hierarchy offers a set of functions that help implement
+    the photon life cycle on a high, generic level. These functions  receive at least two
+    arguments: an object representing the medium state for a spatial cell and for a medium
+    component configured with the receiving material mix, and an incoming photon packet. Extra
+    arguments may override information that is also available as part of the state or photon
+    packet, or they may simply provide additional information.
 
     For example, the opacityAbs() and opacitySca() functions return the absorption and scattering
-    opacity \f$k=n\varsigma\f$. These functions are used to determine the scattering albedo once an
-    interaction site has been chosen or to determine the relative weights of the medium components
-    for a scattering operation.
+    opacity \f$k=n\varsigma\f$. They are given a wavelength that overrides the photon packet
+    wavelength. Providing a photon packet is in fact optional so that these functions can be used
+    in situations where there is no photon packet involved, such as when calculating the luminosity
+    absorbed by the dust in a cell.
 
     The propagate() function adjusts the photon packet for any effects caused by propagation over a
     given distance through the cell. This may include, for example, changes to the polarization
@@ -258,7 +263,7 @@ public:
         default implementation in this base class returns false. */
     virtual bool hasStochasticDustEmission() const;
 
-    //======== Basic material properties =======
+    //======== Low-level material properties =======
 
 public:
     /** This function returns the mass per entity \f$\mu\f$ for this material. The table below
@@ -273,25 +278,38 @@ public:
         */
     virtual double mass() const = 0;
 
-    /** This function returns the absorption cross section per entity
+    /** This function returns the default absorption cross section per entity
         \f$\varsigma^{\text{abs}}_{\lambda}\f$ at wavelength \f$\lambda\f$. */
     virtual double sectionAbs(double lambda) const = 0;
 
-    /** This function returns the scattering cross section per entity
+    /** This function returns the default scattering cross section per entity
         \f$\varsigma^{\text{sca}}_{\lambda}\f$ at wavelength \f$\lambda\f$. */
     virtual double sectionSca(double lambda) const = 0;
 
-    /** This function returns the total extinction cross section per entity
+    /** This function returns the default extinction cross section per entity
         \f$\varsigma^{\text{ext}}_{\lambda} = \varsigma^{\text{abs}}_{\lambda} +
         \varsigma^{\text{sca}}_{\lambda}\f$ at wavelength \f$\lambda\f$. */
     virtual double sectionExt(double lambda) const = 0;
 
-    /** This function is used only with the HenyeyGreenstein scattering mode. It returns the
-        scattering asymmetry parameter \f$g_\lambda = \left<\cos\theta\right>\f$ at wavelength
-        \f$\lambda\f$. This value serves as a parameter for the Henyey-Greenstein phase function.
-        For a value of \f$g=0\f$, isotropic scattering is implemented directly. The default
-        implementation in this base class returns 0. */
+    /** This function returns the default scattering asymmetry parameter \f$g_\lambda =
+        \left<\cos\theta\right>\f$ at wavelength \f$\lambda\f$. This value serves as a parameter
+        for the Henyey-Greenstein phase function. The default implementation in this base class
+        returns zero, indicating isotropic scattering. */
     virtual double asymmpar(double lambda) const;
+
+    //======== High-level photon life cycle =======
+
+    /** This function returns the absorption opacity \f$k^\text{abs}=n\varsigma^\text{abs}\f$ for
+        the given wavelength, medium state, and photon properties (optional; may be nullptr). */
+    virtual double opacityAbs(double lambda, const MediumState* state, const PhotonPacket* pp) const = 0;
+
+    /** This function returns the scattering opacity \f$k^\text{sca}=n\varsigma^\text{sca}\f$ for
+        the given wavelength, medium state, and photon properties (optional; may be nullptr). */
+    virtual double opacitySca(double lambda, const MediumState* state, const PhotonPacket* pp) const = 0;
+
+    /** This function returns the extinction opacity \f$k^\text{ext}=k^\text{abs}+k^\text{sca}\f$
+        for the given wavelength, medium state, and photon properties (optional; may be nullptr). */
+    virtual double opacityExt(double lambda, const MediumState* state, const PhotonPacket* pp) const = 0;
 
     //======== Scattering with material phase function =======
 

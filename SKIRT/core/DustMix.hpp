@@ -159,6 +159,20 @@ public:
         pre-computed during setup. */
     double asymmpar(double lambda) const override;
 
+    //======== High-level photon life cycle =======
+
+    /** This function returns the absorption opacity \f$k^\text{abs}=n\varsigma^\text{abs}\f$ for
+        the given wavelength and medium state. The photon properties are not used. */
+    double opacityAbs(double lambda, const MediumState* state, const PhotonPacket* pp) const override;
+
+    /** This function returns the scattering opacity \f$k^\text{sca}=n\varsigma^\text{sca}\f$ for
+        the given wavelength and medium state. The photon properties are not used. */
+    double opacitySca(double lambda, const MediumState* state, const PhotonPacket* pp) const override;
+
+    /** This function returns the extinction opacity \f$k^\text{ext}=k^\text{abs}+k^\text{sca}\f$
+        for the given wavelength and medium state. The photon properties are not used. */
+    double opacityExt(double lambda, const MediumState* state, const PhotonPacket* pp) const override;
+
     //======== Scattering with material phase function =======
 
 public:

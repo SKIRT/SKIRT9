@@ -238,21 +238,21 @@ double MediumSystem::volume(int m) const
 
 ////////////////////////////////////////////////////////////////////
 
-Vec MediumSystem::bulkVelocity(int m)
+Vec MediumSystem::bulkVelocity(int m) const
 {
     return state(m).v;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-Vec MediumSystem::magneticField(int m)
+Vec MediumSystem::magneticField(int m) const
 {
     return state(m).B;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::gasTemperature(int m)
+double MediumSystem::gasTemperature(int m) const
 {
     return state(m).T;
 }

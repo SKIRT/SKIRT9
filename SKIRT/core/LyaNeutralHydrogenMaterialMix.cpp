@@ -6,6 +6,8 @@
 #include "LyaNeutralHydrogenMaterialMix.hpp"
 #include "Constants.hpp"
 #include "LyaUtils.hpp"
+#include "MediumState.hpp"
+#include "PhotonPacket.hpp"
 #include "Random.hpp"
 #include "StokesVector.hpp"
 
@@ -63,6 +65,32 @@ double LyaNeutralHydrogenMaterialMix::sectionSca(double lambda) const
 double LyaNeutralHydrogenMaterialMix::sectionExt(double lambda) const
 {
     return LyaUtils::section(lambda, defaultTemperature());
+}
+
+////////////////////////////////////////////////////////////////////
+
+double LyaNeutralHydrogenMaterialMix::opacityAbs(double /*lambda*/, const MediumState* /*state*/,
+                                                 const PhotonPacket* /*pp*/) const
+{
+    return 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double LyaNeutralHydrogenMaterialMix::opacitySca(double lambda, const MediumState* state,
+                                                 const PhotonPacket* /*pp*/) const
+{
+    double n = state->numberDensity();
+    return n > 0. ? n * LyaUtils::section(lambda, state->temperature()) : 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double LyaNeutralHydrogenMaterialMix::opacityExt(double lambda, const MediumState* state,
+                                                 const PhotonPacket* /*pp*/) const
+{
+    double n = state->numberDensity();
+    return n > 0. ? n * LyaUtils::section(lambda, state->temperature()) : 0.;
 }
 
 ////////////////////////////////////////////////////////////////////

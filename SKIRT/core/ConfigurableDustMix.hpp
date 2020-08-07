@@ -62,9 +62,6 @@ public:
         mix may be polarized and anisotropic. For this dust mix, the function returns true if the
         user configured the SpheroidalPolarization scattering type, and false otherwise. */
     bool hasPolarizedEmission() const override;
-
-    //======================== Other Functions =======================
-
 };
 
 ////////////////////////////////////////////////////////////////////

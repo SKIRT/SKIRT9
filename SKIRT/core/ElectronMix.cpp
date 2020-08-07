@@ -5,6 +5,7 @@
 
 #include "ElectronMix.hpp"
 #include "Constants.hpp"
+#include "MediumState.hpp"
 #include "Random.hpp"
 #include "StokesVector.hpp"
 
@@ -64,6 +65,27 @@ double ElectronMix::sectionSca(double /*lambda*/) const
 double ElectronMix::sectionExt(double /*lambda*/) const
 {
     return Constants::sigmaThomson();
+}
+
+////////////////////////////////////////////////////////////////////
+
+double ElectronMix::opacityAbs(double /*lambda*/, const MediumState* /*state*/, const PhotonPacket* /*pp*/) const
+{
+    return 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double ElectronMix::opacitySca(double /*lambda*/, const MediumState* state, const PhotonPacket* /*pp*/) const
+{
+    return state->numberDensity() * Constants::sigmaThomson();
+}
+
+////////////////////////////////////////////////////////////////////
+
+double ElectronMix::opacityExt(double /*lambda*/, const MediumState* state, const PhotonPacket* /*pp*/) const
+{
+    return state->numberDensity() * Constants::sigmaThomson();
 }
 
 ////////////////////////////////////////////////////////////////////
