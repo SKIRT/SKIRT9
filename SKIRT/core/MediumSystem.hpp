@@ -191,43 +191,43 @@ public:
 
     /** This function randomly returns a material mix corresponding to one of the medium components
         in spatial cell with index \f$m\f$. The sampling is weighted by the scattering opacity
-        \f$k=n_h\sigma_h^\text{sca}\f$ at wavelength \f$\lambda\f$ of each medium component with
+        \f$k_h^\text{sca}\f$ at wavelength \f$\lambda\f$ of each medium component with
         index \f$h\f$ in the spatial cell with index \f$m\f$. */
     const MaterialMix* randomMixForScattering(Random* random, double lambda, int m) const;
 
-    /** This function returns the scattering opacity \f$k=n_h\sigma_h^\text{sca}\f$ at wavelength
-        \f$\lambda\f$ of the medium component with index \f$h\f$ in spatial cell with index
-        \f$m\f$. */
-    double opacitySca(double lambda, int m, int h) const;
-
-    /** This function returns the absorption opacity \f$k=n_h\sigma_h^\text{abs}\f$ at wavelength
+    /** This function returns the absorption opacity \f$k_h^\text{abs}\f$ at wavelength
         \f$\lambda\f$ of the medium component with index \f$h\f$ in spatial cell with index
         \f$m\f$. */
     double opacityAbs(double lambda, int m, int h) const;
 
-    /** This function returns the absorption opacity \f$k=\sum_h n_h\sigma_h^\text{abs}\f$ summed
-        over all medium components with the specified material type at wavelength \f$\lambda\f$ in
-        spatial cell with index \f$m\f$. */
-    double opacityAbs(double lambda, int m, MaterialMix::MaterialType type) const;
+    /** This function returns the scattering opacity \f$k_h^\text{sca}\f$ at wavelength
+        \f$\lambda\f$ of the medium component with index \f$h\f$ in spatial cell with index
+        \f$m\f$. */
+    double opacitySca(double lambda, int m, int h) const;
 
-    /** This function returns the extinction opacity \f$k=n_h\sigma_h^\text{ext}\f$ at wavelength
+    /** This function returns the extinction opacity \f$k_h^\text{ext}\f$ at wavelength
         \f$\lambda\f$ of the medium component with index \f$h\f$ in spatial cell with index
         \f$m\f$. */
     double opacityExt(double lambda, int m, int h) const;
 
-    /** This function returns the extinction opacity \f$k=\sum_h n_h\sigma_h^\text{ext}\f$ summed
-        over all medium components at wavelength \f$\lambda\f$ in spatial cell with index \f$m\f$.
-        */
-    double opacityExt(double lambda, int m) const;
+    /** This function returns the absorption opacity \f$k^\text{abs}=\sum_h k_h^\text{abs}\f$
+        summed over all medium components with the specified material type at wavelength
+        \f$\lambda\f$ in spatial cell with index \f$m\f$. */
+    double opacityAbs(double lambda, int m, MaterialMix::MaterialType type) const;
 
-    /** This function returns the extinction opacity \f$k=\sum_h n_h\sigma_h^\text{ext}\f$ summed
-        over all medium components with the specified material type at wavelength \f$\lambda\f$ in
-        spatial cell with index \f$m\f$. */
+    /** This function returns the extinction opacity \f$k^\text{ext}=\sum_h k_h^\text{ext}\f$
+        summed over all medium components with the specified material type at wavelength
+        \f$\lambda\f$ in spatial cell with index \f$m\f$. */
     double opacityExt(double lambda, int m, MaterialMix::MaterialType type) const;
 
-    /** This function returns the weighted scattering albedo \f[\frac{\sum_h
-        n_h\sigma_h^\text{sca}} {\sum_h n_h\sigma_h^\text{ext}}\f] over all medium components at
-        wavelength \f$\lambda\f$ in spatial cell with index \f$m\f$. */
+    /** This function returns the extinction opacity \f$k^\text{ext}=\sum_h k_h^\text{ext}\f$
+        summed over all medium components at wavelength \f$\lambda\f$ in spatial cell with index
+        \f$m\f$. */
+    double opacityExt(double lambda, int m) const;
+
+    /** This function returns the weighted scattering albedo \f[\frac{\sum_h k_h^\text{sca}}
+        {\sum_h k_h^\text{ext}}\f] over all medium components at wavelength \f$\lambda\f$ in
+        spatial cell with index \f$m\f$. */
     double albedo(double lambda, int m) const;
 
     /** This function returns the optical depth at the specified wavelength along a path through
@@ -236,38 +236,36 @@ public:
         SpatialGridPath object. This function is intended for use from probes and hence is not
         performance-sensitive.
 
-        The function determines the segments of the path as it crosses each of the cells in the
-        spatial grid and calculates the optical depth along the path as \f[
-        \tau_\text{path}(\lambda,{\boldsymbol{r}},{\boldsymbol{k}}) = \sum_m (\Delta s)_m \sum_h
-        \varsigma_{\lambda}^{\text{ext}}\, n_m, \f] where \f$\varsigma_{\lambda}^{\text{abs}}\f$ is
-        the extinction cross section corresponding to the \f$h\f$'th medium component at wavelength
-        \f$\lambda\f$ and \f$n_{m,h}\f$ the number density in the cell with index \f$m\f$
-        corresponding to the \f$h\f$'th medium component, and where the sum runs only over the
-        medium components with the specified material type. */
+        The function determines the segments of the path \f$(\Delta s)_m\f$ as it crosses the cells
+        with indices \f$m\f$ in the spatial grid and calculates the optical depth along the path as
+        \f[ \tau_\text{path} = \sum_m (\Delta s)_m \sum_h k_{m,h}^\text{ext}, \f] where
+        \f$k_{m,h}^\text{ext}\f$ is the extinction opacity corresponding to the \f$h\f$'th medium
+        component in the cell with index \f$m\f$ at the specified wavelength \f$\lambda\f$ and the
+        sum over \f$h\f$ runs only over the medium components with the specified material type. */
     double getOpticalDepth(const SpatialGridPath* path, double lambda, MaterialMix::MaterialType type);
 
     /** This function calculates the cumulative optical depth at the end of each path segment along
         a path through the medium system defined by the initial position and direction of the
         specified PhotonPacket object, and stores the results of the calculation into the same
-        PhotonPacket object. This function is intended for handling random-walk photon packet paths
-        during a forced-scattering photon life cycle.
+        PhotonPacket object.
 
-        Because this function is at the heart of the photon life cycle, performance is important.
-        Firstly, separating the geometric and optical depth calculations seems to be faster,
-        probably due to memory access and caching issues. So the function first determines and
-        stores the path segments and then calculates and stores the cumulative optical depth at the
-        end of each segment. Secondly, the function implements optimized versions for media with
-        spatially constant cross sections.
+        This function is intended for handling random-walk photon packet paths during a
+        forced-scattering photon life cycle. Because it is at the heart of the photon life cycle,
+        performance is important. Firstly, separating the geometric and optical depth calculations
+        seems to be faster, probably due to memory access and caching issues. So the function first
+        determines and stores the path segments and then calculates and stores the cumulative
+        optical depth at the end of each segment. Secondly, the function implements optimized
+        versions for media with spatially constant cross sections.
 
         With the geometric path information given, the function calculates the optical depth for
-        each path segment (or equivalently, for each crossed cell \f$m\f$) as \f[ \tau_m(\lambda_m)
-        = (\Delta s)_m \sum_h \varsigma_{\lambda_m,h}^{\text{ext}}\, n_m, \f] where
-        \f$\varsigma_{\lambda_m,h}^{\text{abs}}\f$ is the extinction cross section corresponding to
-        the \f$h\f$'th medium component at wavelength \f$\lambda_m\f$ and \f$n_{m,h}\f$ the number
-        density in the cell with index \f$m\f$ corresponding to the \f$h\f$'th medium component,
-        and where the sum runs over all medium components. The wavelength \f$\lambda_m\f$ is the
-        wavelength perceived by the medium in cell \f$m\f$ taking into account the bulk velocity in
-        that cell.
+        each path segment \f$(\Delta s)_m\f$ as it crosses the spatial cell with index \f$m\f$ as
+        \f[ \tau_m = (\Delta s)_m \sum_h k_{m,h}^\text{ext}, \f] where \f$k_{m,h}^\text{ext}\f$ is
+        the extinction opacity corresponding to the \f$h\f$'th medium component in the cell with
+        index \f$m\f$ and the sum over \f$h\f$ runs over all medium components. The opacities
+        \f$k_{m,h}^\text{ext}\f$ are calculated at the wavelength perceived by the medium in cell
+        \f$m\f$ taking into account the bulk velocity and Hubble expansion velocity in that cell,
+        and taking into account any relevant properties of the incoming photon packet such as the
+        polarization state.
 
         Using these optical depth values per segment, the function determines the cumulative
         optical depth at the segment exit boundaries and stores them into the specified photon
@@ -284,48 +282,42 @@ public:
 
         This function is intended for handling random-walk photon packet paths during a photon life
         cycle that does \em not use forced-scattering. In that case there is no need to calculate
-        the complete path, substantially boosting performance in high-optical depth media.
+        the complete path, substantially boosting performance in high-optical depth media. Because
+        the function is at the heart of the photon life cycle, performance is important. Hence it
+        implements optimized versions for media with spatially constant cross sections.
 
-        Because this function is at the heart of the photon life cycle, performance is important.
-        Hence the function implements optimized versions for media with spatially constant cross
-        sections. */
+        The optical depth for each traversed path segment is calculated as described for the
+        setOpticalDepths() function, i.e. at the wavelength perceived by the medium in the cell
+        being crossed and taking into account any relevant properties of the incoming photon
+        packet. */
     bool setInteractionPoint(PhotonPacket* pp, double tauscat);
 
     /** This function calculates and returns the optical depth (or -1, see "High optical depth
         below") along a path through the medium system defined by the initial position and
-        direction of the specified PhotonPacket object and up to the specified distance. This
-        function is intended for handling peel-off photon packets during the photon life cycle.
+        direction of the specified PhotonPacket object and up to the specified distance.
 
-        Because this function is at the heart of the photon life cycle, performance is important.
-        Hence the function implements optimized versions for media with spatially constant cross
-        sections.
+        This function is intended for handling peel-off photon packets during the photon life
+        cycle. Because it is at the heart of the photon life cycle, performance is important. Hence
+        the function implements optimized versions for media with spatially constant cross
+        sections. Furthermore, the calculation is limited to the specified distance along the path.
+        More precisely, all path segments with an entry boundary at a cumulative distance along the
+        path smaller than the specified distance are included in the calculation, and any remaining
+        segments are skipped.
 
-        The function determines the segments of the path as it crosses each of the cells in the
-        spatial grid and calculates the optical depth for each path segment (or equivalently, for
-        each crossed cell \f$m\f$) as \f[ \tau_m(\lambda_m) = (\Delta s)_m \sum_h
-        \varsigma_{\lambda_m,h}^{\text{ext}}\, n_m, \f] where
-        \f$\varsigma_{\lambda_m,h}^{\text{abs}}\f$ is the extinction cross section corresponding to
-        the \f$h\f$'th medium component at wavelength \f$\lambda_m\f$ and \f$n_{m,h}\f$ the number
-        density in the cell with index \f$m\f$ corresponding to the \f$h\f$'th medium component,
-        and where the sum runs over all medium components. The wavelength \f$\lambda_m\f$ is the
-        photon packet wavelength perceived by the medium in cell \f$m\f$ taking into account the
-        bulk velocity in that cell.
-
-        Using these optical depth values per segment, the function determines the cumulative
-        optical depth at the segment exit boundaries. The calculation is limited to the specified
-        distance along the path. More precisely, all path segments with an entry boundary at a
-        cumulative distance along the path smaller than the specified distance are included in the
-        calculation, and any remaining segments are skipped.
+        The optical depth for each traversed path segment is calculated as described for the
+        setOpticalDepths() function, i.e. at the wavelength perceived by the medium in the cell
+        being crossed and taking into account any relevant properties of the incoming photon
+        packet. This process may require storing intermediate results in the photon packet.
 
         <b>High optical depth</b>
 
         The observable weight of a peel-off photon packet will become numerically zero when the
         cumulative optical depth along its path is higher than \f$ \tau_\mathrm{max} =
-        \ln(L/L_\mathrm{min}) \f$ where \f$L\f$ is the
-        weight at the peel-off interaction site, and \f$L_\mathrm{min}\f$ is the smallest
-        representable positive double-precision floating point number. Hence this function aborts
-        the calculation and returns positive infinity when this happens. */
-    double getOpticalDepth(const PhotonPacket* pp, double distance);
+        \ln(L/L_\mathrm{min}) \f$ where \f$L\f$ is the weight at the peel-off interaction site, and
+        \f$L_\mathrm{min}\f$ is the smallest representable positive double-precision floating point
+        number. Hence this function aborts the calculation and returns positive infinity when this
+        happens. */
+    double getOpticalDepth(PhotonPacket* pp, double distance);
 
     /** This function initializes all values of the primary and/or secondary radiation field info
         tables to zero. In simulation modes that record the radiation field, the function should be
@@ -355,13 +347,6 @@ public:
         true, the primary table is synchronized; otherwise the temporary secondary table is
         synchronized and its contents is copied into the stable secondary table. */
     void communicateRadiationField(bool primary);
-
-    /** This function returns the bolometric luminosity absorbed by media with the specified
-        material type across the complete domain of the spatial grid, using the partial radiation
-        field stored in the table indicated by the \em primary flag (true for the primary table,
-        false for the stable secondary table). The bolometric absorbed luminosity in each cell is
-        calculated as described for the absorbedLuminosity() function. */
-    double totalAbsorbedLuminosity(bool primary, MaterialMix::MaterialType type) const;
 
 private:
     /** This function returns the sum of the values in both the primary and the stable secondary
@@ -415,7 +400,7 @@ public:
     double indicativeDustTemperature(int m) const;
 
     /** This function returns the bolometric luminosity \f$L^\text{abs}_{\text{bol},m}\f$ that has
-        been absorbed by media of the specified type in the spatial cell with index \f$m\f$.
+        been absorbed by dust media in the spatial cell with index \f$m\f$.
 
         This function assumes that a set of photon packets have been launched for primary and/or
         secondary simulation segments, and that radiation field information has been accumulated
@@ -426,10 +411,17 @@ public:
         The bolometric luminosity is calculated using \f[ L^\text{abs}_{\text{bol},m} = \sum_\ell
         (k^\text{abs}_\text{type})_{\ell,m} \,(L\Delta s)_{\ell,m} \f] where \f$\ell\f$ runs over
         the wavelengths in the simulation's radiation field wavelength grid, \f$m\f$ is the spatial
-        cell index, \f$(k^\text{abs}_\text{type})_{\ell,m}\f$ is the absorption opacity of the
-        specified material type in the cell, and \f$(L\Delta s)_{\ell,m}\f$ has been accumulated
-        over all photon packets contributing to the bin. */
-    double absorbedLuminosity(int m, MaterialMix::MaterialType type) const;
+        cell index, \f$(k^\text{abs}_\text{dust})_{\ell,m}\f$ is the absorption opacity of the dust
+        in the cell, and \f$(L\Delta s)_{\ell,m}\f$ has been accumulated over all photon packets
+        contributing to the bin. */
+    double absorbedDustLuminosity(int m) const;
+
+    /** This function returns the bolometric luminosity absorbed by dust media across the complete
+        domain of the spatial grid, using the partial radiation field stored in the table indicated
+        by the \em primary flag (true for the primary table, false for the stable secondary table).
+        The bolometric absorbed luminosity in each cell is calculated as described for the
+        absorbedDustLuminosity() function. */
+    double totalAbsorbedDustLuminosity(bool primary) const;
 
     //================== Private Types and Functions ====================
 

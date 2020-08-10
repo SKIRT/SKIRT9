@@ -13,6 +13,7 @@
 #include "Log.hpp"
 #include "LyaUtils.hpp"
 #include "MaterialMix.hpp"
+#include "MediumState.hpp"
 #include "NR.hpp"
 #include "Parallel.hpp"
 #include "ParallelFactory.hpp"
@@ -310,27 +311,26 @@ const MaterialMix* MediumSystem::randomMixForScattering(Random* random, double l
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::opacitySca(double lambda, int m, int h) const
+double MediumSystem::opacityAbs(double lambda, int m, int h) const
 {
-    double n = state(m, h).n;
-    if (n <= 0.)
-        return 0.;
-    else if (h == _config->lyaMediumIndex())
-        return n * LyaUtils::section(lambda, state(m).T);
-    else
-        return n * state(m, h).mix->sectionSca(lambda);
+    MediumState mst(this, m, h);
+    return state(m, h).mix->opacityAbs(lambda, &mst, nullptr);
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::opacityAbs(double lambda, int m, int h) const
+double MediumSystem::opacitySca(double lambda, int m, int h) const
 {
-    // no need to check for Lyman-alpha because the material mix returns the correct zero value
-    double n = state(m, h).n;
-    if (n <= 0.)
-        return 0.;
-    else
-        return n * state(m, h).mix->sectionAbs(lambda);
+    MediumState mst(this, m, h);
+    return state(m, h).mix->opacitySca(lambda, &mst, nullptr);
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::opacityExt(double lambda, int m, int h) const
+{
+    MediumState mst(this, m, h);
+    return state(m, h).mix->opacityExt(lambda, &mst, nullptr);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -345,15 +345,12 @@ double MediumSystem::opacityAbs(double lambda, int m, MaterialMix::MaterialType 
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::opacityExt(double lambda, int m, int h) const
+double MediumSystem::opacityExt(double lambda, int m, MaterialMix::MaterialType type) const
 {
-    double n = state(m, h).n;
-    if (n <= 0.)
-        return 0.;
-    else if (h == _config->lyaMediumIndex())
-        return n * LyaUtils::section(lambda, state(m).T);
-    else
-        return n * state(m, h).mix->sectionExt(lambda);
+    double result = 0.;
+    for (int h = 0; h != _numMedia; ++h)
+        if (state(0, h).mix->materialType() == type) result += opacityExt(lambda, m, h);
+    return result;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -362,16 +359,6 @@ double MediumSystem::opacityExt(double lambda, int m) const
 {
     double result = 0.;
     for (int h = 0; h != _numMedia; ++h) result += opacityExt(lambda, m, h);
-    return result;
-}
-
-////////////////////////////////////////////////////////////////////
-
-double MediumSystem::opacityExt(double lambda, int m, MaterialMix::MaterialType type) const
-{
-    double result = 0.;
-    for (int h = 0; h != _numMedia; ++h)
-        if (state(0, h).mix->materialType() == type) result += opacityExt(lambda, m, h);
     return result;
 }
 
@@ -441,7 +428,7 @@ void MediumSystem::setOpticalDepths(PhotonPacket* pp)
     double tau = 0.;
     int i = 0;
 
-    // single medium, no kinematics, spatially constant
+    // single medium, spatially constant cross sections
     if (_config->hasSingleConstantMedium())
     {
         double section = state(0, 0).mix->sectionExt(pp->wavelength());
@@ -452,7 +439,7 @@ void MediumSystem::setOpticalDepths(PhotonPacket* pp)
         }
     }
 
-    // multiple media, no kinematics, spatially constant
+    // multiple media, spatially constant cross sections
     else if (_config->hasMultipleConstantMedia())
     {
         ShortArray<8> sectionv(_numMedia);
@@ -465,7 +452,7 @@ void MediumSystem::setOpticalDepths(PhotonPacket* pp)
         }
     }
 
-    // with kinematics and/or spatially variable material properties
+    // spatially variable cross sections
     else
     {
         for (auto& segment : pp->segments())
@@ -490,7 +477,7 @@ bool MediumSystem::setInteractionPoint(PhotonPacket* pp, double tauscat)
 
     // loop over the segments of the path until the interaction optical depth is reached or the path ends
 
-    // --> single medium, no kinematics, spatially constant
+    // --> single medium, spatially constant cross sections
     if (_config->hasSingleConstantMedium())
     {
         double section = state(0, 0).mix->sectionExt(pp->wavelength());
@@ -516,7 +503,7 @@ bool MediumSystem::setInteractionPoint(PhotonPacket* pp, double tauscat)
         }
     }
 
-    // --> multiple media, no kinematics, spatially constant
+    // --> multiple media, spatially constant cross sections
     else if (_config->hasMultipleConstantMedia())
     {
         ShortArray<8> sectionv(_numMedia);
@@ -544,7 +531,7 @@ bool MediumSystem::setInteractionPoint(PhotonPacket* pp, double tauscat)
         }
     }
 
-    // --> with kinematics and/or spatially variable material properties
+    // --> spatially variable cross sections
     else
     {
         while (generator->next())
@@ -579,7 +566,7 @@ bool MediumSystem::setInteractionPoint(PhotonPacket* pp, double tauscat)
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::getOpticalDepth(const PhotonPacket* pp, double distance)
+double MediumSystem::getOpticalDepth(PhotonPacket* pp, double distance)
 {
     // determine the optical depth at which the packet's contribution becomes zero
     // or abort right away if the contribution is zero to begin with
@@ -592,7 +579,7 @@ double MediumSystem::getOpticalDepth(const PhotonPacket* pp, double distance)
     double tau = 0.;
     double s = 0.;
 
-    // single medium, no kinematics, spatially constant
+    // single medium, spatially constant cross sections
     if (_config->hasSingleConstantMedium())
     {
         double section = state(0, 0).mix->sectionExt(pp->wavelength());
@@ -608,7 +595,7 @@ double MediumSystem::getOpticalDepth(const PhotonPacket* pp, double distance)
         }
     }
 
-    // multiple media, no kinematics, spatially constant
+    // multiple media, spatially constant cross sections
     else if (_config->hasMultipleConstantMedia())
     {
         ShortArray<8> sectionv(_numMedia);
@@ -627,7 +614,7 @@ double MediumSystem::getOpticalDepth(const PhotonPacket* pp, double distance)
         }
     }
 
-    // with kinematics and/or spatially variable material properties
+    // spatially variable cross sections
     else
     {
         while (generator->next())
@@ -698,24 +685,6 @@ double MediumSystem::radiationField(int m, int ell) const
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::totalAbsorbedLuminosity(bool primary, MaterialMix::MaterialType type) const
-{
-    double Labs = 0.;
-    int numWavelengths = _wavelengthGrid->numBins();
-    for (int ell = 0; ell != numWavelengths; ++ell)
-    {
-        double lambda = _wavelengthGrid->wavelength(ell);
-        for (int m = 0; m != _numCells; ++m)
-        {
-            double rf = primary ? _rf1(m, ell) : _rf2(m, ell);
-            Labs += opacityAbs(lambda, m, type) * rf;
-        }
-    }
-    return Labs;
-}
-
-////////////////////////////////////////////////////////////////////
-
 Array MediumSystem::meanIntensity(int m) const
 {
     int numWavelengths = _wavelengthGrid->numBins();
@@ -756,13 +725,31 @@ double MediumSystem::indicativeDustTemperature(int m) const
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::absorbedLuminosity(int m, MaterialMix::MaterialType type) const
+double MediumSystem::absorbedDustLuminosity(int m) const
 {
     double Labs = 0.;
     int numWavelengths = _wavelengthGrid->numBins();
     for (int ell = 0; ell < numWavelengths; ell++)
     {
-        Labs += opacityAbs(_wavelengthGrid->wavelength(ell), m, type) * radiationField(m, ell);
+        Labs += opacityAbs(_wavelengthGrid->wavelength(ell), m, MaterialMix::MaterialType::Dust) * radiationField(m, ell);
+    }
+    return Labs;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::totalAbsorbedDustLuminosity(bool primary) const
+{
+    double Labs = 0.;
+    int numWavelengths = _wavelengthGrid->numBins();
+    for (int ell = 0; ell != numWavelengths; ++ell)
+    {
+        double lambda = _wavelengthGrid->wavelength(ell);
+        for (int m = 0; m != _numCells; ++m)
+        {
+            double rf = primary ? _rf1(m, ell) : _rf2(m, ell);
+            Labs += opacityAbs(lambda, m, MaterialMix::MaterialType::Dust) * rf;
+        }
     }
     return Labs;
 }

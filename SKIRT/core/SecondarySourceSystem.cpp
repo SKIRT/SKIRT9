@@ -63,7 +63,7 @@ bool SecondarySourceSystem::prepareForLaunch(size_t numPackets)
     find<ParallelFactory>()->parallelDistributed()->call(numCells, [this](size_t firstIndex, size_t numIndices) {
         for (size_t m = firstIndex; m != firstIndex + numIndices; ++m)
         {
-            _Lv[m] = _ms->absorbedLuminosity(m, MaterialMix::MaterialType::Dust);
+            _Lv[m] = _ms->absorbedDustLuminosity(m);
         }
     });
     ProcessManager::sumToAll(_Lv);

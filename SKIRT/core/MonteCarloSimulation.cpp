@@ -183,8 +183,8 @@ void MonteCarloSimulation::runDustSelfAbsorptionPhase()
         }
 
         // determine and log the total absorbed luminosity
-        double Labsprim = mediumSystem()->totalAbsorbedLuminosity(true, MaterialMix::MaterialType::Dust);
-        double Labsdust = mediumSystem()->totalAbsorbedLuminosity(false, MaterialMix::MaterialType::Dust);
+        double Labsprim = mediumSystem()->totalAbsorbedDustLuminosity(true);
+        double Labsdust = mediumSystem()->totalAbsorbedDustLuminosity(false);
         log()->info("The total dust-absorbed primary luminosity is "
                     + StringUtils::toString(units()->obolluminosity(Labsprim), 'g') + " " + units()->ubolluminosity());
         log()->info("The total dust-absorbed dust luminosity in iteration " + std::to_string(iter) + " is "
