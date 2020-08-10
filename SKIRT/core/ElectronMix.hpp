@@ -81,16 +81,23 @@ public:
     double opacityAbs(double lambda, const MediumState* state, const PhotonPacket* pp) const override;
 
     /** This function returns the scattering opacity \f$k^\text{sca}=n\varsigma^\text{sca}\f$ for
-        the given medium state. The wavelentgh and photon properties are not used, because the
+        the given medium state. The wavelength and photon properties are not used, because the
         cross section is considered to be equal to the Thomson cross section for all wavelengths.
         */
     double opacitySca(double lambda, const MediumState* state, const PhotonPacket* pp) const override;
 
     /** This function returns the extinction opacity \f$k^\text{ext}=k^\text{abs}+k^\text{sca}\f$
-        for the given medium state. The wavelentgh and photon properties are not used, because the
+        for the given medium state. The wavelength and photon properties are not used, because the
         cross section is considered to be equal to the Thomson cross section for all wavelengths.
         */
     double opacityExt(double lambda, const MediumState* state, const PhotonPacket* pp) const override;
+
+    /** This function performs a scattering event on the specified photon packet in the spatial
+        cell and medium component represented by the specified medium state and the receiving
+        material mix. For electrons, the function implements wavelenth-independent dipole
+        scattering without or with support for polarization depending on the user-configured \em
+        includePolarization property. */
+    void performScattering(const MediumState* state, PhotonPacket* pp) const override;
 
     //======== Scattering with material phase function =======
 

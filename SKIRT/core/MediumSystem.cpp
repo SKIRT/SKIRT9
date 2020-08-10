@@ -297,20 +297,6 @@ const MaterialMix* MediumSystem::mix(int m, int h) const
 
 ////////////////////////////////////////////////////////////////////
 
-const MaterialMix* MediumSystem::randomMixForScattering(Random* random, double lambda, int m) const
-{
-    int h = 0;
-    if (_numMedia > 1)
-    {
-        Array Xv;
-        NR::cdf(Xv, _numMedia, [this, lambda, m](int h) { return opacitySca(lambda, m, h); });
-        h = NR::locateClip(Xv, random->uniform());
-    }
-    return state(m, h).mix;
-}
-
-////////////////////////////////////////////////////////////////////
-
 double MediumSystem::opacityAbs(double lambda, int m, int h) const
 {
     MediumState mst(this, m, h);
@@ -374,6 +360,38 @@ double MediumSystem::albedo(double lambda, int m) const
         kext += opacityExt(lambda, m, h);
     }
     return kext > 0. ? ksca / kext : 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void MediumSystem::simulateScattering(Random* random, PhotonPacket* pp)
+{
+    // locate the cell hosting the scattering event
+    int m = pp->interactionCellIndex();
+
+    // select a medium component within that cell
+    int h = 0;
+    if (_numMedia > 1)
+    {
+        // calculate the perceived wavelength in the cell
+        double lambda = _config->hasMovingMedia()
+                            ? pp->perceivedWavelength(state(m).v, _config->lyaExpansionRate() * pp->interactionDistance())
+                            : pp->wavelength();
+
+        // build the cumulative distribution corresponding to the scattering opacities
+        Array Xv;
+        NR::cdf(Xv, _numMedia, [this, lambda, pp, m](int h) {
+            MediumState mst(this, m, h);
+            return state(m, h).mix->opacitySca(lambda, &mst, pp);
+        });
+
+        // randomly select an index
+        h = NR::locateClip(Xv, random->uniform());
+    }
+
+    // actually perform the scattering event for this cell and medium component
+    MediumState mst(this, m, h);
+    state(m, h).mix->performScattering(&mst, pp);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -731,7 +749,8 @@ double MediumSystem::absorbedDustLuminosity(int m) const
     int numWavelengths = _wavelengthGrid->numBins();
     for (int ell = 0; ell < numWavelengths; ell++)
     {
-        Labs += opacityAbs(_wavelengthGrid->wavelength(ell), m, MaterialMix::MaterialType::Dust) * radiationField(m, ell);
+        Labs +=
+            opacityAbs(_wavelengthGrid->wavelength(ell), m, MaterialMix::MaterialType::Dust) * radiationField(m, ell);
     }
     return Labs;
 }

@@ -355,7 +355,7 @@ void MonteCarloSimulation::performLifeCycle(size_t firstIndex, size_t numIndices
 
                             // process the scattering event
                             if (peel) peelOffScattering(&pp, &ppp);
-                            simulateScattering(&pp);
+                            mediumSystem()->simulateScattering(random(), &pp);
                         }
                     }
                     else
@@ -375,7 +375,7 @@ void MonteCarloSimulation::performLifeCycle(size_t firstIndex, size_t numIndices
 
                             // process the scattering event
                             if (peel) peelOffScattering(&pp, &ppp);
-                            simulateScattering(&pp);
+                            mediumSystem()->simulateScattering(random(), &pp);
                         }
                     }
                 }
@@ -791,8 +791,8 @@ void MonteCarloSimulation::simulateScattering(PhotonPacket* pp)
     }
 
     // randomly select a material mix; the probability of each component is weighted by the scattering opacity
-    auto mix = mediumSystem()->randomMixForScattering(random(), lambda, m);
-
+    //auto mix = mediumSystem()->randomMixForScattering(random(), lambda, m);
+    MaterialMix* mix = nullptr;
     // now perform the scattering using this material mix
     //   - determine the new propagation direction
     //   - if supported, update the polarization state of the photon packet along the way

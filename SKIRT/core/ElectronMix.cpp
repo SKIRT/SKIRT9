@@ -4,8 +4,10 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "ElectronMix.hpp"
+#include "Configuration.hpp"
 #include "Constants.hpp"
 #include "MediumState.hpp"
+#include "PhotonPacket.hpp"
 #include "Random.hpp"
 #include "StokesVector.hpp"
 
@@ -86,6 +88,30 @@ double ElectronMix::opacitySca(double /*lambda*/, const MediumState* state, cons
 double ElectronMix::opacityExt(double /*lambda*/, const MediumState* state, const PhotonPacket* /*pp*/) const
 {
     return state->numberDensity() * Constants::sigmaThomson();
+}
+
+////////////////////////////////////////////////////////////////////
+
+void ElectronMix::performScattering(const MediumState* state, PhotonPacket* pp) const
+{
+    // determine the new propagation direction, and if required, update the polarization state of the photon packet
+    Direction bfknew = _dpf.performScattering(pp->direction(), pp);
+
+    // calculate the kinematics-adjusted wavelength in the cell, if applicable
+    double lambda;
+    if (config()->hasMovingMedia())
+    {
+        Vec bfv = state->bulkVelocity();
+        lambda = pp->perceivedWavelength(bfv, config()->lyaExpansionRate() * pp->interactionDistance());
+        if (!bfv.isNull()) lambda = PhotonPacket::shiftedEmissionWavelength(lambda, bfknew, bfv);
+    }
+    else
+    {
+        lambda = pp->wavelength();
+    }
+
+    // set the scattering event in the photon packet
+    pp->scatter(bfknew, lambda);
 }
 
 ////////////////////////////////////////////////////////////////////

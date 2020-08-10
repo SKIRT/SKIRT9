@@ -8,6 +8,7 @@
 
 #include "Array.hpp"
 #include "SimulationItem.hpp"
+class Configuration;
 class MediumState;
 class PhotonPacket;
 class Random;
@@ -311,6 +312,21 @@ public:
         for the given wavelength, medium state, and photon properties (optional; may be nullptr). */
     virtual double opacityExt(double lambda, const MediumState* state, const PhotonPacket* pp) const = 0;
 
+    /** This function performs a scattering event on the specified photon packet in the spatial
+        cell and medium component represented by the specified medium state and the receiving
+        material mix. Most of the properties of the photon packet remain unaltered, including the
+        position and the luminosity. The properties that change include the number of scattering
+        events experienced by the photon packet, which is increased by one, the propagation
+        direction, which is generated randomly, the wavelength, which is properly Doppler-shifted
+        for the bulk velocity of the medium, and the polarization state, which may be affected by
+        the scattering process.
+
+        The calculation takes all physical processes into account, including the bulk velocity and
+        Hubble expansion velocity in the cell, any relevant medium state variables such as the
+        temperature of a gas medium, and any relevant properties of the incoming photon packet such
+        as the polarization state. */
+    virtual void performScattering(const MediumState* state, PhotonPacket* pp) const = 0;
+
     //======== Scattering with material phase function =======
 
 public:
@@ -403,11 +419,15 @@ protected:
     /** This function returns the simulation's random generator as a service to subclasses. */
     Random* random() const { return _random; }
 
+    /** This function returns the simulation's configuration object as a service to subclasses. */
+    Configuration* config() const { return _config; }
+
     //======================== Data Members ========================
 
 private:
-    // data member initialized in setupSelfBefore
+    // data members initialized in setupSelfBefore
     Random* _random{nullptr};
+    Configuration* _config{nullptr};
 };
 
 ////////////////////////////////////////////////////////////////////

@@ -6,6 +6,7 @@
 #ifndef LYANEUTRALHYDROGENMATERIALMIX_HPP
 #define LYANEUTRALHYDROGENMATERIALMIX_HPP
 
+#include "DipolePhaseFunction.hpp"
 #include "MaterialMix.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -46,6 +47,12 @@ class LyaNeutralHydrogenMaterialMix : public MaterialMix
         ATTRIBUTE_DISPLAYED_IF(includePolarization, "Level2")
 
     ITEM_END()
+
+    //============= Construction - Setup - Destruction =============
+
+protected:
+    /** This function initializes the DipolePhaseFunction instance held by this class. */
+    void setupSelfBefore() override;
 
     //======== Capabilities =======
 
@@ -104,6 +111,13 @@ public:
         Lyman-alpha material mix, the extinction opacity equals the scattering opacity. */
     double opacityExt(double lambda, const MediumState* state, const PhotonPacket* pp) const override;
 
+    /** This function performs a scattering event on the specified photon packet in the spatial
+        cell and medium component represented by the specified medium state and the receiving
+        material mix. For the Lyman-alpha material mix, the function implements resonant scattering
+        without or with support for polarization depending on the user-configured \em
+        includePolarization property. */
+    void performScattering(const MediumState* state, PhotonPacket* pp) const override;
+
     //======== Temperature and emission =======
 
     /** This function returns the equilibrium temperature \f$T_{\text{eq}}\f$ of the material mix
@@ -120,6 +134,12 @@ public:
         function in this class ignores the input radiation field and always returns an empty array.
         */
     Array emissivity(const Array& Jv) const override;
+
+    //======================== Data Members ========================
+
+private:
+    // the dipole phase function helper instance - initialized during setup
+    DipolePhaseFunction _dpf;
 };
 
 ////////////////////////////////////////////////////////////////////

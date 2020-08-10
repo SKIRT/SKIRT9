@@ -7,6 +7,7 @@
 #define DIPOLEPHASEFUNCTION
 
 #include "Array.hpp"
+#include "Direction.hpp"
 class Random;
 class StokesVector;
 
@@ -15,7 +16,7 @@ class StokesVector;
 /** The DipolePhaseFunction helper class represents the dipole scattering phase function, with
     optional support for polarization by scattering. For example, in a wide wavelength range,
     scattering of photons by electrons can be described by elastic and wavelength-independent
-    Thomson scattering, which is in turn described using the dipole phase function.ß The
+    Thomson scattering, which is in turn described using the dipole phase function. The
     corresponding Mueller matrix elements (and hence the phase function) can be expressed
     analytically as a function of just the scattering angle; see Bohren & Huffman (1998) or Wolf
     2003 (Computer Physics Communications, 150, 99–115).
@@ -109,11 +110,20 @@ public:
         and } S_{34}=0.\f] */
     void applyMueller(double theta, StokesVector* sv) const;
 
+    //======== Perform scattering with or without polarization =======
+
+    /** Given the incoming photon packet direction and polarization state, this function calculates
+        and returns a randomly sampled new propagation direction for a dipole scattering event, and
+        if applicable (depending in the polarization flag passed to the constructor), updates the
+        polarization state of the photon packet along the way. */
+    Direction performScattering(Direction bfk, StokesVector* sv) const;
+
     //======================== Data Members ========================
 
 private:
     // the simulation's random number generator - initialized during construction
     Random* _random{nullptr};
+    bool _includePolarization{false};
 
     // precalculated discretizations - initialized during construction
     Array _phiv;   // indexed on f

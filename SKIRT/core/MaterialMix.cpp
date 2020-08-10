@@ -6,6 +6,7 @@
 #include "MaterialMix.hpp"
 #include "FatalError.hpp"
 #include "Random.hpp"
+#include "Configuration.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -14,6 +15,7 @@ void MaterialMix::setupSelfBefore()
     SimulationItem::setupSelfBefore();
 
     _random = find<Random>();
+    _config = find<Configuration>();
 }
 
 ////////////////////////////////////////////////////////////////////

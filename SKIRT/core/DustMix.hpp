@@ -173,6 +173,38 @@ public:
         for the given wavelength and medium state. The photon properties are not used. */
     double opacityExt(double lambda, const MediumState* state, const PhotonPacket* pp) const override;
 
+    /** This function performs a scattering event on the specified photon packet in the spatial
+        cell and medium component represented by the specified medium state and the receiving
+        material mix.
+
+        For dust mixes, the operation depends on the scattering mode supported by the dust mix, as
+        defined by each subclass. For the most basic mode, the dust mix provides a value for the
+        scattering asymmetry parameter \f$g=\left<\cos\theta\right>\f$. For the value \f$g=0\f$,
+        corresponding to isotropic scattering, a new direction is generated uniformly on the unit
+        sphere. For other values \f$-1\le g\le 1\f$, a scattering angle \f$\theta\f$ is sampled
+        from the Henyey-Greenstein phase function, \f[ \Phi(\cos\theta) =
+        \frac{1-g^2}{(1+g^2-2g\cos\theta)^{3/2}}. \f] This can be accomplished as follows.
+        Substituting \f$\mu=\cos\theta\f$, the probability distribution for \f$\mu\f$ (normalized
+        to unity) becomes \f[ p(\mu)\,\text{d}\mu = \frac{1}{2} \,
+        \frac{1-g^2}{(1+g^2-2g\mu)^{3/2}} \,\text{d}\mu \qquad -1\leq\mu\leq1 \f] We can use the
+        transformation method to sample from this distribution. Given a uniform deviate
+        \f$\mathcal{X}\f$, we need to solve \f[ {\mathcal{X}} = \int_{-1}^\mu p(\mu')\,\text{d}\mu'
+        \f] Performing the integration and solving for \f$\mu\f$ yields \f[ \cos\theta = \mu =
+        \frac{1+g^2-f^2}{2g} \quad\text{with}\quad f=\frac{1-g^2}{1-g+2g {\mathcal{X}}}
+        \qquad\text{for}\; g\neq 0 \f] For other scattering modes, a function provided by the dust
+        mix is invoked instead to obtain a random scattering direction for the photon packet.
+
+        In case polarization is supported in the current simulation configuration, the polarization
+        state of the photon packet is adjusted as well. Note that all media must either support
+        polarization or not support it, mixing these support levels is not allowed. Compliance with
+        this requirement is verified during setup of the simulation. The adjusted Stokes vector is
+        obtained as follows, again using the randomly selected medium component. After obtaining
+        the sampled scattering angles \f$\theta\f$ and \f$\phi\f$ from the material mix, the Stokes
+        vector of the photon packet is rotated into the scattering plane and transformed by
+        applying the Mueller matrix. Finally, the new direction is computed from the previously
+        sampled \f$\theta\f$ and \f$\phi\f$ angles. */
+    void performScattering(const MediumState* state, PhotonPacket* pp) const override;
+
     //======== Scattering with material phase function =======
 
 public:

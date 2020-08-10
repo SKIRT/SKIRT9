@@ -280,6 +280,74 @@ double DustMix::opacityExt(double lambda, const MediumState* state, const Photon
 
 ////////////////////////////////////////////////////////////////////
 
+void DustMix::performScattering(const MediumState* state, PhotonPacket* pp) const
+{
+    // calculate the perceived wavelength in the cell
+    Vec bfv = state->bulkVelocity();
+    double lambda = config()->hasMovingMedia()
+                        ? pp->perceivedWavelength(bfv, config()->lyaExpansionRate() * pp->interactionDistance())
+                        : pp->wavelength();
+
+    // determine the new propagation direction and, if required, update the polarization state of the photon packet
+    Direction bfknew;
+    switch (scatteringMode())
+    {
+        case DustMix::ScatteringMode::HenyeyGreenstein:
+        {
+            // sample a scattering angle from the Henyey-Greenstein phase function
+            // handle isotropic scattering separately because the HG sampling procedure breaks down in this case
+            double g = asymmpar(lambda);
+            if (fabs(g) < 1e-6)
+            {
+                bfknew = random()->direction();
+            }
+            else
+            {
+                double f = ((1.0 - g) * (1.0 + g)) / (1.0 - g + 2.0 * g * random()->uniform());
+                double costheta = (1.0 + g * g - f * f) / (2.0 * g);
+                bfknew = random()->direction(pp->direction(), costheta);
+            }
+            break;
+        }
+        case DustMix::ScatteringMode::MaterialPhaseFunction:
+        {
+            // sample a scattering angle from the material-specific phase function
+            double costheta = generateCosineFromPhaseFunction(lambda);
+            bfknew = random()->direction(pp->direction(), costheta);
+            break;
+        }
+        case DustMix::ScatteringMode::SphericalPolarization:
+        case DustMix::ScatteringMode::SpheroidalPolarization:
+        {
+            // sample the angles between the previous and new direction from the material-specific phase function,
+            // given the incoming polarization state
+            double theta, phi;
+            std::tie(theta, phi) = generateAnglesFromPhaseFunction(lambda, pp);
+
+            // rotate the Stokes vector (and the scattering plane) of the photon packet
+            pp->rotateStokes(phi, pp->direction());
+
+            // apply Mueller matrix to the Stokes vector of the photon packet
+            applyMueller(lambda, theta, pp);
+
+            // rotate the propagation direction in the scattering plane
+            Vec newdir = pp->direction() * cos(theta) + Vec::cross(pp->normal(), pp->direction()) * sin(theta);
+
+            // normalize the new direction to prevent degradation
+            bfknew = Direction(newdir / newdir.norm());
+            break;
+        }
+    }
+
+    // if the material in the cell has a nonzero bulk velocity, determine the Doppler-shifted outgoing wavelength
+    if (!bfv.isNull()) lambda = PhotonPacket::shiftedEmissionWavelength(lambda, bfknew, bfv);
+
+    // set the scattering event in the photon packet
+    pp->scatter(bfknew, lambda);
+}
+
+////////////////////////////////////////////////////////////////////
+
 double DustMix::phaseFunctionValueForCosine(double lambda, double costheta) const
 {
     int ell = indexForLambda(lambda);

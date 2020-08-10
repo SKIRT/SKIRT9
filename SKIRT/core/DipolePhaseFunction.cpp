@@ -20,8 +20,9 @@ namespace
 
 void DipolePhaseFunction::initialize(Random* random, bool includePolarization)
 {
-    // cache random number generator
+    // cache random number generator and polarization flag
     _random = random;
+    _includePolarization = includePolarization;
 
     if (includePolarization)
     {
@@ -94,6 +95,38 @@ void DipolePhaseFunction::applyMueller(double theta, StokesVector* sv) const
 {
     double costheta = cos(theta);
     sv->applyMueller(costheta * costheta + 1., costheta * costheta - 1., 2. * costheta, 0.);
+}
+
+////////////////////////////////////////////////////////////////////
+
+Direction DipolePhaseFunction::performScattering(Direction bfk, StokesVector* sv) const
+{
+    // determine the new propagation direction, and if required, update the polarization state of the photon packet
+    if (!_includePolarization)
+    {
+        // sample a scattering angle from the dipole phase function
+        double costheta = generateCosineFromPhaseFunction();
+        return _random->direction(bfk, costheta);
+    }
+    else
+    {
+        // sample the angles between the previous and new direction from the dipole phase function,
+        // given the incoming polarization state
+        double theta, phi;
+        std::tie(theta, phi) = generateAnglesFromPhaseFunction(sv);
+
+        // rotate the Stokes vector (and the scattering plane) of the photon packet
+        sv->rotateStokes(phi, bfk);
+
+        // apply the Mueller matrix to the Stokes vector of the photon packet
+        applyMueller(theta, sv);
+
+        // rotate the propagation direction in the scattering plane
+        Vec newdir = bfk * cos(theta) + Vec::cross(sv->normal(), bfk) * sin(theta);
+
+        // normalize the new direction to prevent degradation
+        return Direction(newdir / newdir.norm());
+    }
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -189,12 +189,6 @@ public:
         \f$h\f$ in spatial cell with index \f$m\f$. */
     const MaterialMix* mix(int m, int h) const;
 
-    /** This function randomly returns a material mix corresponding to one of the medium components
-        in spatial cell with index \f$m\f$. The sampling is weighted by the scattering opacity
-        \f$k_h^\text{sca}\f$ at wavelength \f$\lambda\f$ of each medium component with
-        index \f$h\f$ in the spatial cell with index \f$m\f$. */
-    const MaterialMix* randomMixForScattering(Random* random, double lambda, int m) const;
-
     /** This function returns the absorption opacity \f$k_h^\text{abs}\f$ at wavelength
         \f$\lambda\f$ of the medium component with index \f$h\f$ in spatial cell with index
         \f$m\f$. */
@@ -229,6 +223,28 @@ public:
         {\sum_h k_h^\text{ext}}\f] over all medium components at wavelength \f$\lambda\f$ in
         spatial cell with index \f$m\f$. */
     double albedo(double lambda, int m) const;
+
+    /** This function simulates a scattering event of a photon packet. Most of the properties of
+        the photon packet remain unaltered, including the position and the luminosity. The
+        properties that change include the number of scattering events experienced by the photon
+        packet, which is increased by one, the propagation direction, which is generated randomly,
+        the wavelength, which is properly Doppler-shifted for the bulk velocity of the medium, and
+        the polarization state, which may be affected by the scattering process.
+
+        If there is only one medium component, the scattering event is governed by the
+        corresponding material mix. If there are several components, the function first randomly
+        selects a medium component from the list, where the relative weight of each component
+        \f$h\f$ is determined by the scattering opacity \f$k_{m,h}^\text{sca}\f$ of the medium
+        component in the scattering interaction cell \f$m\f$ obtained from the specified photon
+        packet. These opacities are calculated at the wavelength perceived by the medium in cell
+        \f$m\f$ taking into account the bulk velocity and Hubble expansion velocity in that cell,
+        and taking into account any relevant properties of the incoming photon packet such as the
+        polarization state.
+
+        Performing the actual scattering event is delegated to the material mix corresponding to
+        the selected medium component in the interaction cell. Refer to the
+        MaterialMix::performScattering() function for more information. */
+    void simulateScattering(Random* random, PhotonPacket* pp);
 
     /** This function returns the optical depth at the specified wavelength along a path through
         the medium system, taking into account only medium components with the specified material
