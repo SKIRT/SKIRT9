@@ -324,8 +324,10 @@ public:
         The calculation takes all physical processes into account, including the bulk velocity and
         Hubble expansion velocity in the cell, any relevant medium state variables such as the
         temperature of a gas medium, and any relevant properties of the incoming photon packet such
-        as the polarization state. */
-    virtual void performScattering(const MediumState* state, PhotonPacket* pp) const = 0;
+        as the polarization state. The first argument specifies the perceived wavelength of the
+        photon packet at the scattering location so that this value does not need to be
+        recalculated within the function. */
+    virtual void performScattering(double lambda, const MediumState* state, PhotonPacket* pp) const = 0;
 
     //======== Scattering with material phase function =======
 

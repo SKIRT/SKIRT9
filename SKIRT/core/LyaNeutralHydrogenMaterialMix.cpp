@@ -105,14 +105,8 @@ double LyaNeutralHydrogenMaterialMix::opacityExt(double lambda, const MediumStat
 
 ////////////////////////////////////////////////////////////////////
 
-void LyaNeutralHydrogenMaterialMix::performScattering(const MediumState* state, PhotonPacket* pp) const
+void LyaNeutralHydrogenMaterialMix::performScattering(double lambda, const MediumState* state, PhotonPacket* pp) const
 {
-    // calculate the perceived wavelength in the cell
-    Vec bfv = state->bulkVelocity();
-    double lambda = config()->hasMovingMedia()
-                        ? pp->perceivedWavelength(bfv, config()->lyaExpansionRate() * pp->interactionDistance())
-                        : pp->wavelength();
-
     // draw a random atom velocity & phase function, unless a peel-off stored this already
     if (!pp->hasLyaScatteringInfo())
     {
@@ -137,11 +131,8 @@ void LyaNeutralHydrogenMaterialMix::performScattering(const MediumState* state, 
     // Doppler-shift the photon packet wavelength into and out of the atom frame
     lambda = LyaUtils::shiftWavelength(lambda, pp->lyaAtomVelocity(), pp->direction(), bfknew);
 
-    // if the material in the cell has a nonzero bulk velocity, determine the Doppler-shifted outgoing wavelength
-    if (!bfv.isNull()) lambda = PhotonPacket::shiftedEmissionWavelength(lambda, bfknew, bfv);
-
-    // set the scattering event in the photon packet
-    pp->scatter(bfknew, lambda);
+    // execute the scattering event in the photon packet
+    pp->scatter(bfknew, state->bulkVelocity(), lambda);
 }
 
 ////////////////////////////////////////////////////////////////////

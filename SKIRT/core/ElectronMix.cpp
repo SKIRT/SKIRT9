@@ -92,26 +92,13 @@ double ElectronMix::opacityExt(double /*lambda*/, const MediumState* state, cons
 
 ////////////////////////////////////////////////////////////////////
 
-void ElectronMix::performScattering(const MediumState* state, PhotonPacket* pp) const
+void ElectronMix::performScattering(double lambda, const MediumState* state, PhotonPacket* pp) const
 {
     // determine the new propagation direction, and if required, update the polarization state of the photon packet
     Direction bfknew = _dpf.performScattering(pp->direction(), pp);
 
-    // calculate the kinematics-adjusted wavelength in the cell, if applicable
-    double lambda;
-    if (config()->hasMovingMedia())
-    {
-        Vec bfv = state->bulkVelocity();
-        lambda = pp->perceivedWavelength(bfv, config()->lyaExpansionRate() * pp->interactionDistance());
-        if (!bfv.isNull()) lambda = PhotonPacket::shiftedEmissionWavelength(lambda, bfknew, bfv);
-    }
-    else
-    {
-        lambda = pp->wavelength();
-    }
-
-    // set the scattering event in the photon packet
-    pp->scatter(bfknew, lambda);
+    // execute the scattering event in the photon packet
+    pp->scatter(bfknew, state->bulkVelocity(), lambda);
 }
 
 ////////////////////////////////////////////////////////////////////

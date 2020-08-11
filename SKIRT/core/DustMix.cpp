@@ -280,14 +280,8 @@ double DustMix::opacityExt(double lambda, const MediumState* state, const Photon
 
 ////////////////////////////////////////////////////////////////////
 
-void DustMix::performScattering(const MediumState* state, PhotonPacket* pp) const
+void DustMix::performScattering(double lambda, const MediumState* state, PhotonPacket* pp) const
 {
-    // calculate the perceived wavelength in the cell
-    Vec bfv = state->bulkVelocity();
-    double lambda = config()->hasMovingMedia()
-                        ? pp->perceivedWavelength(bfv, config()->lyaExpansionRate() * pp->interactionDistance())
-                        : pp->wavelength();
-
     // determine the new propagation direction and, if required, update the polarization state of the photon packet
     Direction bfknew;
     switch (scatteringMode())
@@ -339,11 +333,8 @@ void DustMix::performScattering(const MediumState* state, PhotonPacket* pp) cons
         }
     }
 
-    // if the material in the cell has a nonzero bulk velocity, determine the Doppler-shifted outgoing wavelength
-    if (!bfv.isNull()) lambda = PhotonPacket::shiftedEmissionWavelength(lambda, bfknew, bfv);
-
-    // set the scattering event in the photon packet
-    pp->scatter(bfknew, lambda);
+    // execute the scattering event in the photon packet
+    pp->scatter(bfknew, state->bulkVelocity(), lambda);
 }
 
 ////////////////////////////////////////////////////////////////////

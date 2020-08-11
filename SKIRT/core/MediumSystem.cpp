@@ -364,20 +364,66 @@ double MediumSystem::albedo(double lambda, int m) const
 
 ////////////////////////////////////////////////////////////////////
 
+bool MediumSystem::weightsForScattering(Array& wv, double lambda, const PhotonPacket* pp)
+{
+    // resize the target array
+    wv.resize(_numMedia);
+
+    // for a single component, the weight is trivial
+    if (_numMedia == 1)
+    {
+        wv[0] = 1.;
+        return true;
+    }
+
+    // locate the cell hosting the scattering event
+    int m = pp->interactionCellIndex();
+
+    // calculate the weights and their sum
+    double sum = 0.;
+    for (int h = 0; h != _numMedia; ++h)
+    {
+        MediumState mst(this, m, h);
+        wv[h] = state(m, h).mix->opacitySca(lambda, &mst, pp);
+        sum += wv[h];
+    }
+
+    // normalize the weights
+    if (sum > 0)
+    {
+        wv /= sum;
+        return true;
+    }
+
+    // none of the media scatter
+    return false;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::perceivedWavelengthForScattering(const PhotonPacket* pp)
+{
+    if (_config->hasMovingMedia())
+        return pp->perceivedWavelength(state(pp->interactionCellIndex()).v,
+                                       _config->lyaExpansionRate() * pp->interactionDistance());
+    else
+        return pp->wavelength();
+}
+
+////////////////////////////////////////////////////////////////////
+
 void MediumSystem::simulateScattering(Random* random, PhotonPacket* pp)
 {
     // locate the cell hosting the scattering event
     int m = pp->interactionCellIndex();
 
+    // calculate the perceived wavelength in the cell
+    double lambda = perceivedWavelengthForScattering(pp);
+
     // select a medium component within that cell
     int h = 0;
     if (_numMedia > 1)
     {
-        // calculate the perceived wavelength in the cell
-        double lambda = _config->hasMovingMedia()
-                            ? pp->perceivedWavelength(state(m).v, _config->lyaExpansionRate() * pp->interactionDistance())
-                            : pp->wavelength();
-
         // build the cumulative distribution corresponding to the scattering opacities
         Array Xv;
         NR::cdf(Xv, _numMedia, [this, lambda, pp, m](int h) {
@@ -391,7 +437,7 @@ void MediumSystem::simulateScattering(Random* random, PhotonPacket* pp)
 
     // actually perform the scattering event for this cell and medium component
     MediumState mst(this, m, h);
-    state(m, h).mix->performScattering(&mst, pp);
+    state(m, h).mix->performScattering(lambda, &mst, pp);
 }
 
 ////////////////////////////////////////////////////////////////////

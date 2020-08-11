@@ -135,11 +135,11 @@ public:
     void propagate(double s);
 
     /** This function scatters the photon packet into the new direction \f${\bf{k}}\f$ with the new
-        wavelength \f$\lambda\f$. It increments the counter that keeps track of scattering events,
-        updates the direction, invalidating the current path, and updates the wavelength. The
-        polarization remains unchanged; it should be properly updated through the StokesVector
-        class functions. */
-    void scatter(Direction bfk, double lambda);
+        wavelength \f$\lambda\f$ measured in a local frame with bulk velocity \f${\bf{v}}\f$. It
+        increments the counter that keeps track of scattering events, updates the direction,
+        invalidating the current path, and updates the wavelength. The polarization remains
+        unchanged; it should be properly updated through the StokesVector class functions. */
+    void scatter(Direction bfk, Vec bfv, double lambda);
 
     /** This function applies the given weight bias given as a multiplication factor. */
     void applyBias(double w);

@@ -203,7 +203,7 @@ public:
         vector of the photon packet is rotated into the scattering plane and transformed by
         applying the Mueller matrix. Finally, the new direction is computed from the previously
         sampled \f$\theta\f$ and \f$\phi\f$ angles. */
-    void performScattering(const MediumState* state, PhotonPacket* pp) const override;
+    void performScattering(double lambda, const MediumState* state, PhotonPacket* pp) const override;
 
     //======== Scattering with material phase function =======
 

@@ -97,7 +97,7 @@ public:
         material mix. For electrons, the function implements wavelenth-independent dipole
         scattering without or with support for polarization depending on the user-configured \em
         includePolarization property. */
-    void performScattering(const MediumState* state, PhotonPacket* pp) const override;
+    void performScattering(double lambda, const MediumState* state, PhotonPacket* pp) const override;
 
     //======== Scattering with material phase function =======
 

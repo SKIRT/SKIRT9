@@ -100,11 +100,11 @@ void PhotonPacket::propagate(double s)
 
 ////////////////////////////////////////////////////////////////////
 
-void PhotonPacket::scatter(Direction bfk, double lambda)
+void PhotonPacket::scatter(Direction bfk, Vec bfv, double lambda)
 {
     _nscatt++;
     setDirection(bfk);
-    _lambda = lambda;
+    _lambda = bfv.isNull() ? lambda : shiftedEmissionWavelength(lambda, bfk, bfv);
     _hasObservedOpticalDepth = false;
     _hasLyaScatteringInfo = false;
 }

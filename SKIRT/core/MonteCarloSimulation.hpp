@@ -454,52 +454,6 @@ private:
         function. */
     void peelOffScattering(PhotonPacket* pp, PhotonPacket* ppp);
 
-    /** This function simulates a scattering event of a photon packet. Most of the properties of
-        the photon packet remain unaltered, including the position and the luminosity. The
-        properties that change are the number of scattering events experienced by the photon packet
-        (this is obviously increased by one), the propagation direction, which is generated
-        randomly, the polarization state, and the wavelength, which is properly Doppler-shifted
-        taking into account the bulk velocity of the medium. In the analysis below, we drop the
-        wavelength-dependency of the material properties from the notation.
-
-        If there is only one medium component, the scattering event is governed by the
-        corresponding material mix. If there are several components, the function first randomly
-        selects a medium component from the list, where the relative weight of each component is
-        equal to \f[ w_h = \frac{ \varsigma_h^{\text{sca}}\, n_{h,m} }{ \sum_{h'}
-        \varsigma_{\ell,h'}^{\text{sca}}\, n_{h',m} }, \f] where \f$n_{m,h}\f$ is the number
-        density of the medium corresponding to the \f$h\f$'th component in the cell where the
-        scattering event takes place, and \f$\varsigma_h^{\text{sca}}\f$ is the scattering cross
-        section corresponding to the \f$h\f$'th component respectively.
-
-        The remainder of the operation depends on the scattering mode supported by the selected
-        medium component's material mix. For the most basic mode, the material mix provides a value
-        for the scattering asymmetry parameter \f$g=\left<\cos\theta\right>\f$. For the value
-        \f$g=0\f$, corresponding to isotropic scattering, a new direction is generated uniformly on
-        the unit sphere. For other values \f$-1\le g\le 1\f$, a scattering angle \f$\theta\f$ is
-        sampled from the Henyey-Greenstein phase function, \f[ \Phi(\cos\theta) =
-        \frac{1-g^2}{(1+g^2-2g\cos\theta)^{3/2}}. \f] This can be accomplished as follows.
-        Substituting \f$\mu=\cos\theta\f$, the probability distribution for \f$\mu\f$ (normalized
-        to unity) becomes \f[ p(\mu)\,\text{d}\mu = \frac{1}{2} \,
-        \frac{1-g^2}{(1+g^2-2g\mu)^{3/2}} \,\text{d}\mu \qquad -1\leq\mu\leq1 \f] We can use the
-        transformation method to sample from this distribution. Given a uniform deviate
-        \f$\mathcal{X}\f$, we need to solve \f[ {\mathcal{X}} = \int_{-1}^\mu p(\mu')\,\text{d}\mu'
-        \f] Performing the integration and solving for \f$\mu\f$ yields \f[ \cos\theta = \mu =
-        \frac{1+g^2-f^2}{2g} \quad\text{with}\quad f=\frac{1-g^2}{1-g+2g {\mathcal{X}}}
-        \qquad\text{for}\; g\neq 0 \f] For other scattering modes, a function provided by the
-        material mix is invoked instead to obtain a random scattering direction for the photon
-        packet.
-
-        In case polarization is supported in the current simulation configuration, the polarization
-        state of the photon packet is adjusted as well. Note that all media must either support
-        polarization or not support it, mixing these support levels is not allowed. Compliance with
-        this requirement is verified during setup of the simulation. The adjusted Stokes vector is
-        obtained as follows, again using the randomly selected medium component. After obtaining
-        the sampled scattering angles \f$\theta\f$ and \f$\phi\f$ from the material mix, the Stokes
-        vector of the photon packet is rotated into the scattering plane and transformed by
-        applying the Mueller matrix. Finally, the new direction is computed from the previously
-        sampled \f$\theta\f$ and \f$\phi\f$ angles. */
-    void simulateScattering(PhotonPacket* pp);
-
     //======================== Data Members ========================
 
 private:

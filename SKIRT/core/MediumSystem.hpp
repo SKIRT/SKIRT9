@@ -224,12 +224,32 @@ public:
         spatial cell with index \f$m\f$. */
     double albedo(double lambda, int m) const;
 
-    /** This function simulates a scattering event of a photon packet. Most of the properties of
-        the photon packet remain unaltered, including the position and the luminosity. The
-        properties that change include the number of scattering events experienced by the photon
-        packet, which is increased by one, the propagation direction, which is generated randomly,
-        the wavelength, which is properly Doppler-shifted for the bulk velocity of the medium, and
-        the polarization state, which may be affected by the scattering process.
+    /** This function calculates the relative weights of the medium components in a scattering
+        event, determined by the scattering opacity \f$k_{m,h}^\text{sca}\f$ of the medium
+        component \f$h\f$ in the scattering interaction cell \f$m\f$ obtained from the specified
+        photon packet. These opacities are calculated at the specified wavelength (which is assumed
+        to be the wavelength perceived by the medium in cell \f$m\f$ taking into account the bulk
+        velocity and Hubble expansion velocity in that cell) and taking into account any relevant
+        properties of the specified photon packet such as the polarization state.
+
+        The resulting weights are normalized to a total of unity and stored in the target array.
+        The array is resized appropriately (i.e. to the number of medium components in the
+        simulation). The function returns true if normalized weights have been successfully
+        calculated, and false if all of the weights are zero (i.e. the photon packet does not
+        scatter in this cell). */
+    bool weightsForScattering(Array& wv, double lambda, const PhotonPacket* pp);
+
+    /** This function returns the perceived wavelength of the photon packet at the scattering
+        interaction distance, taking into account the bulk velocity and Hubble expansion velocity
+        in that cell. */
+    double perceivedWavelengthForScattering(const PhotonPacket* pp);
+
+    /** This function simulates a random walk scattering event of a photon packet. Most of the
+        properties of the photon packet remain unaltered, including the position and the
+        luminosity. The properties that change include the number of scattering events experienced
+        by the photon packet, which is increased by one, the propagation direction, which is
+        generated randomly, the wavelength, which is properly Doppler-shifted for the bulk velocity
+        of the medium, and the polarization state, which may be affected by the scattering process.
 
         If there is only one medium component, the scattering event is governed by the
         corresponding material mix. If there are several components, the function first randomly
