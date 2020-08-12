@@ -16,7 +16,7 @@ void ConfigurableDustMix::setupSelfBefore()
 
 //////////////////////////////////////////////////////////////////////
 
-MaterialMix::ScatteringMode ConfigurableDustMix::scatteringMode() const
+DustMix::ScatteringMode ConfigurableDustMix::scatteringMode() const
 {
     switch (scatteringType())
     {

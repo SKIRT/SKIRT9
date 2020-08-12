@@ -61,11 +61,6 @@ public:
         is MaterialType::Gas. */
     MaterialType materialType() const override;
 
-    /** This function returns the scattering mode supported by this material mix, which is
-        ScatteringMode::Lya or ScatteringMode::LyaPolarization depending on the value of the \em
-        includePolarization flag. */
-    ScatteringMode scatteringMode() const override;
-
     /** This function returns the value of the \em includePolarization flag, indicating whether the
         material mix supports polarization during scattering events or not. */
     bool hasPolarizedScattering() const override;

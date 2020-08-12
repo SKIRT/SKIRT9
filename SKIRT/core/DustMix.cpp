@@ -10,7 +10,6 @@
 #include "NR.hpp"
 #include "PhotonPacket.hpp"
 #include "Random.hpp"
-#include "StokesVector.hpp"
 #include "StringUtils.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -305,7 +304,7 @@ void DustMix::peeloffScattering(double& I, double& Q, double& U, double& V, doub
 {
     switch (scatteringMode())
     {
-        case MaterialMix::ScatteringMode::HenyeyGreenstein:
+        case DustMix::ScatteringMode::HenyeyGreenstein:
         {
             // calculate the value of the Henyey-Greenstein phase function
             double costheta = Vec::dot(pp->direction(), bfkobs);
@@ -317,7 +316,7 @@ void DustMix::peeloffScattering(double& I, double& Q, double& U, double& V, doub
             I += w * value;
             break;
         }
-        case MaterialMix::ScatteringMode::MaterialPhaseFunction:
+        case DustMix::ScatteringMode::MaterialPhaseFunction:
         {
             // calculate the value of the material-specific phase function
             double costheta = Vec::dot(pp->direction(), bfkobs);
@@ -327,8 +326,8 @@ void DustMix::peeloffScattering(double& I, double& Q, double& U, double& V, doub
             I += w * value;
             break;
         }
-        case MaterialMix::ScatteringMode::SphericalPolarization:
-        case MaterialMix::ScatteringMode::SpheroidalPolarization:
+        case DustMix::ScatteringMode::SphericalPolarization:
+        case DustMix::ScatteringMode::SpheroidalPolarization:
         {
             // calculate the value of the material-specific phase function
             double theta = acos(Vec::dot(pp->direction(), bfkobs));
@@ -416,6 +415,13 @@ void DustMix::performScattering(double lambda, const MediumState* state, PhotonP
 
     // execute the scattering event in the photon packet
     pp->scatter(bfknew, state->bulkVelocity(), lambda);
+}
+
+////////////////////////////////////////////////////////////////////
+
+DustMix::ScatteringMode DustMix::scatteringMode() const
+{
+    return DustMix::ScatteringMode::HenyeyGreenstein;
 }
 
 ////////////////////////////////////////////////////////////////////

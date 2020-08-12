@@ -8,13 +8,11 @@
 
 #include "Configuration.hpp"
 #include "Cosmology.hpp"
-#include "DipolePhaseFunction.hpp"
 #include "InstrumentSystem.hpp"
 #include "MediumSystem.hpp"
 #include "ProbeSystem.hpp"
 #include "Simulation.hpp"
 #include "SourceSystem.hpp"
-#include <atomic>
 class SecondarySourceSystem;
 
 //////////////////////////////////////////////////////////////////////

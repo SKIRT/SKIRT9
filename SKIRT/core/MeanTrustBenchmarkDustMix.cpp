@@ -7,7 +7,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-MaterialMix::ScatteringMode MeanTrustBenchmarkDustMix::scatteringMode() const
+DustMix::ScatteringMode MeanTrustBenchmarkDustMix::scatteringMode() const
 {
     switch (scatteringType())
     {

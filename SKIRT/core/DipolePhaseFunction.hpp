@@ -37,7 +37,7 @@ public:
 
     //======== Scattering without polarization =======
 
-public:
+private:
     /** This function returns the value of the scattering phase function \f$\Phi(\cos\theta)\f$ for
         the specified scattering angle cosine \f$\cos\theta\f$, where the phase function is
         normalized as \f[\int_{-1}^1 \Phi(\cos\theta) \,\mathrm{d}\cos\theta =2.\f]
@@ -60,7 +60,7 @@ public:
 
     //======== Scattering with polarization =======
 
-public:
+private:
     /** This function returns the value of the scattering phase function \f$\Phi(\theta,\phi)\f$
         for the specified scattering angles \f$\theta\f$ and \f$\phi\f$, and for the specified
         incoming polarization state. The phase function is normalized as \f[\int\Phi(\theta,\phi)
@@ -112,6 +112,7 @@ public:
 
     //======== Perform scattering with or without polarization =======
 
+public:
     /** TO DO */
     void peeloffScattering(double& I, double& Q, double& U, double& V, double w, Direction bfk, Direction bfkobs,
                            Direction bfky, const StokesVector* sv) const;

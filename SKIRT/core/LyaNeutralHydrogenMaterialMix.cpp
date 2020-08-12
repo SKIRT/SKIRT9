@@ -10,7 +10,6 @@
 #include "MediumState.hpp"
 #include "PhotonPacket.hpp"
 #include "Random.hpp"
-#include "StokesVector.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -26,13 +25,6 @@ void LyaNeutralHydrogenMaterialMix::setupSelfBefore()
 MaterialMix::MaterialType LyaNeutralHydrogenMaterialMix::materialType() const
 {
     return MaterialType::Gas;
-}
-
-////////////////////////////////////////////////////////////////////
-
-MaterialMix::ScatteringMode LyaNeutralHydrogenMaterialMix::scatteringMode() const
-{
-    return includePolarization() ? ScatteringMode::LyaPolarization : ScatteringMode::Lya;
 }
 
 ////////////////////////////////////////////////////////////////////

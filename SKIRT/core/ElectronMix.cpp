@@ -4,12 +4,10 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "ElectronMix.hpp"
-#include "Configuration.hpp"
 #include "Constants.hpp"
 #include "MediumState.hpp"
 #include "PhotonPacket.hpp"
 #include "Random.hpp"
-#include "StokesVector.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -25,13 +23,6 @@ void ElectronMix::setupSelfBefore()
 MaterialMix::MaterialType ElectronMix::materialType() const
 {
     return MaterialType::Electrons;
-}
-
-////////////////////////////////////////////////////////////////////
-
-MaterialMix::ScatteringMode ElectronMix::scatteringMode() const
-{
-    return includePolarization() ? ScatteringMode::SphericalPolarization : ScatteringMode::MaterialPhaseFunction;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -108,41 +99,6 @@ void ElectronMix::performScattering(double lambda, const MediumState* state, Pho
 
     // execute the scattering event in the photon packet
     pp->scatter(bfknew, state->bulkVelocity(), lambda);
-}
-
-////////////////////////////////////////////////////////////////////
-
-double ElectronMix::phaseFunctionValueForCosine(double /*lambda*/, double costheta) const
-{
-    return _dpf.phaseFunctionValueForCosine(costheta);
-}
-
-////////////////////////////////////////////////////////////////////
-
-double ElectronMix::generateCosineFromPhaseFunction(double /*lambda*/) const
-{
-    return _dpf.generateCosineFromPhaseFunction();
-}
-
-////////////////////////////////////////////////////////////////////
-
-double ElectronMix::phaseFunctionValue(double /*lambda*/, double theta, double phi, const StokesVector* sv) const
-{
-    return _dpf.phaseFunctionValue(theta, phi, sv);
-}
-
-////////////////////////////////////////////////////////////////////
-
-std::pair<double, double> ElectronMix::generateAnglesFromPhaseFunction(double /*lambda*/, const StokesVector* sv) const
-{
-    return _dpf.generateAnglesFromPhaseFunction(sv);
-}
-
-////////////////////////////////////////////////////////////////////
-
-void ElectronMix::applyMueller(double /*lambda*/, double theta, StokesVector* sv) const
-{
-    _dpf.applyMueller(theta, sv);
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -190,53 +190,6 @@ public:
     //======== Capabilities =======
 
 public:
-    /** This enumeration lists the possible scattering modes offered by the public material mix
-        interface. */
-    enum class ScatteringMode {
-        HenyeyGreenstein,
-        MaterialPhaseFunction,
-        SphericalPolarization,
-        SpheroidalPolarization,
-        Lya,
-        LyaPolarization
-    };
-
-    /** This function returns the scattering mode supported by this material mix. In the current
-        implementation, this can be one of the following modes:
-
-        - HenyeyGreenstein: the value returned by the asymmpar() function serves as the assymmetry
-        parameter \f$g\f$ for the Henyey-Greenstein phase function. For a value of \f$g=0\f$,
-        isotropic scattering is implemented directly (rather than subsituting zero into the
-        Henyey-Greenstein phase function).
-
-        - MaterialPhaseFunction: this material type implements a custom phase function that depends
-        only on the cosine of the scattering angle, for unpolarized radiation. Specifically, the
-        phaseFunctionValueForCosine() and generateCosineFromPhaseFunction() functions are used to
-        obtain the value of the phase function and to sample a scattering angle from it.
-
-        - SphericalPolarization: this material type supports polarization through scattering by
-        spherical particles. In this mode, the phase function depends on the polarization state of
-        the incoming radiation, and the polarization state of the outgoing radiation must be
-        updated appropriately. The phaseFunctionValue() and generateAnglesFromPhaseFunction()
-        functions are used to obtain the value of the phase function and to sample a scattering
-        angle from it, and the applyMueller() function is used to updated the polarization state.
-
-        - SpheroidalPolarization: this material type supports polarization through scattering,
-        absorption and emission by nonspherical, spheroidal particles. Currently, only \em emission
-        is implemented and all other areas of the code treat spheroidal particles as if they were
-        spherical.
-
-        - Lya: this material type requires and offers treatment of Lyman-alpha line scattering,
-        without support for polarization.
-
-        - LyaPolarization: this material type requires and offers treatment of Lyman-alpha line
-          scattering with support for polarization.
-
-        The implementation of this function in this base class returns the HenyeyGreenstein
-        scattering mode as a default value. Subclasses that support another scattering mode must
-        override this function and return the appropriate value. */
-    virtual ScatteringMode scatteringMode() const;
-
     /** This function returns true if this material mix supports polarization during scattering
         events, and false otherwise. The default implementation in this base class returns false.
         */
@@ -334,50 +287,6 @@ public:
         photon packet at the scattering location so that this value does not need to be
         recalculated within the function. */
     virtual void performScattering(double lambda, const MediumState* state, PhotonPacket* pp) const = 0;
-
-    //======== Scattering with material phase function =======
-
-public:
-    /** This function is used with the MaterialPhaseFunction scattering mode, which assumes that
-        the scattering phase function depends only on the cosine of the scattering angle. The
-        function returns the value of the scattering phase function \f$\Phi_\lambda(\cos\theta)\f$
-        at wavelength \f$\lambda\f$ for the specified scattering angle cosine \f$\cos\theta\f$,
-        where the phase function is normalized as \f[\int_{-1}^1 \Phi_\lambda(\cos\theta)
-        \,\mathrm{d}\cos\theta =2.\f] The default implementation in this base class returns one,
-        corresponding to isotropic scattering. */
-    virtual double phaseFunctionValueForCosine(double lambda, double costheta) const;
-
-    /** This function is used with the MaterialPhaseFunction scattering mode, which assumes that
-        the scattering phase function depends only on the cosine of the scattering angle. The
-        function generates a random scattering angle cosine sampled from the phase function
-        \f$\Phi_\lambda(\cos\theta)\f$ at wavelength \f$\lambda\f$. The default implementation in
-        this base class returns a value sampled uniformly over the interval [-1,1], corresponding
-        to isotropic scattering. */
-    virtual double generateCosineFromPhaseFunction(double lambda) const;
-
-    //======== Polarization through scattering by spherical particles =======
-
-public:
-    /** This function is used with the SphericalPolarization scattering mode. It returns the value
-        of the scattering phase function \f$\Phi_\lambda(\theta,\phi)\f$ at wavelength
-        \f$\lambda\f$ for the specified scattering angles \f$\theta\f$ and \f$\phi\f$, and for the
-        specified incoming polarization state. The phase function is normalized as
-        \f[\int\Phi_\lambda(\theta,\phi) \,\mathrm{d}\Omega =4\pi.\f] The default implementation in
-        this base class throws a fatal error. */
-    virtual double phaseFunctionValue(double lambda, double theta, double phi, const StokesVector* sv) const;
-
-    /** This function is used with the SphericalPolarization scattering mode. It generates random
-        scattering angles \f$\theta\f$ and \f$\phi\f$ sampled from the phase function
-        \f$\Phi_\lambda(\theta,\phi)\f$ at wavelength \f$\lambda\f$, and for the specified incoming
-        polarization state. The results are returned as a pair of numbers in the order \f$\theta\f$
-        and \f$\phi\f$. The default implementation in this base class throws a fatal error. */
-    virtual std::pair<double, double> generateAnglesFromPhaseFunction(double lambda, const StokesVector* sv) const;
-
-    /** This function is used with the SphericalPolarization scattering mode. It applies the
-        Mueller matrix transformation for the specified wavelength \f$\lambda\f$ and scattering
-        angle \f$\theta\f$ to the given polarization state (which serves as both input and output
-        for the function). The default implementation in this base class throws a fatal error. */
-    virtual void applyMueller(double lambda, double theta, StokesVector* sv) const;
 
     //======== Polarization through scattering, absorption and emission by spheroidal particles =======
 

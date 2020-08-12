@@ -112,7 +112,7 @@ protected:
 
     //======== Private support functions =======
 
-protected:
+private:
     /** This function returns the index in the private wavelength grid corresponding to the
         specified wavelength. The parameters for converting a wavelength to the appropriate index
         are stored in data members during setup. */
@@ -209,21 +209,63 @@ public:
         sampled \f$\theta\f$ and \f$\phi\f$ angles. */
     void performScattering(double lambda, const MediumState* state, PhotonPacket* pp) const override;
 
-    //======== Scattering with material phase function =======
+    //======== Scattering implementation for dust mixes =======
 
-public:
-    /** This function returns the value of the scattering phase function
-        \f$\Phi_\lambda(\cos\theta)\f$ at wavelength \f$\lambda\f$ for the specified scattering
-        angle cosine \f$\cos\theta\f$, where the phase function is normalized as \f[\int_{-1}^1
-        \Phi_\lambda(\cos\theta) \,\mathrm{d}\cos\theta =2.\f]
+protected:
+    /** This enumeration lists the scattering modes supported by the dust mix hierarchy. */
+    enum class ScatteringMode {
+        HenyeyGreenstein,
+        MaterialPhaseFunction,
+        SphericalPolarization,
+        SpheroidalPolarization
+    };
+
+    /** This function returns the scattering mode supported by this dust mix. In the current
+        implementation, this can be one of the following modes:
+
+        - HenyeyGreenstein: the value returned by the asymmpar() function serves as the assymmetry
+        parameter \f$g\f$ for the Henyey-Greenstein phase function. For a value of \f$g=0\f$, the
+        Henyey-Greenstein phase function describes isotropic scattering.
+
+        - MaterialPhaseFunction: this material type implements a custom phase function that depends
+        only on the cosine of the scattering angle, for unpolarized radiation. Specifically, the
+        phaseFunctionValueForCosine() and generateCosineFromPhaseFunction() functions are used to
+        obtain the value of the phase function and to sample a scattering angle from it.
+
+        - SphericalPolarization: this material type supports polarization through scattering by
+        spherical particles. In this mode, the phase function depends on the polarization state of
+        the incoming radiation, and the polarization state of the outgoing radiation must be
+        updated appropriately. The phaseFunctionValue() and generateAnglesFromPhaseFunction()
+        functions are used to obtain the value of the phase function and to sample a scattering
+        angle from it, and the applyMueller() function is used to updated the polarization state.
+
+        - SpheroidalPolarization: this material type supports polarization through scattering,
+        absorption and emission by nonspherical, spheroidal particles. Currently, only \em emission
+        is implemented and all other areas of the code treat spheroidal particles as if they were
+        spherical.
+
+        The implementation of this function in this base class returns the HenyeyGreenstein
+        scattering mode as a default value. Subclasses that support another scattering mode must
+        override this function and return the appropriate value. */
+    virtual ScatteringMode scatteringMode() const;
+
+private:
+    /** This function is used with the MaterialPhaseFunction scattering mode, which assumes that
+        the scattering phase function depends only on the cosine of the scattering angle. The
+        function returns the value of the scattering phase function \f$\Phi_\lambda(\cos\theta)\f$
+        at wavelength \f$\lambda\f$ for the specified scattering angle cosine \f$\cos\theta\f$,
+        where the phase function is normalized as \f[\int_{-1}^1 \Phi_\lambda(\cos\theta)
+        \,\mathrm{d}\cos\theta =2.\f]
 
         The phase function for unpolarized radiation is obtained from the general polarized case
         described for the phaseFunctionValue() function by setting the linear polarization degree
         \f$P_\text{L}\f$ to zero. The simplified function uses only the first Mueller matrix
         coefficient \f$S_{11}\f$. */
-    double phaseFunctionValueForCosine(double lambda, double costheta) const override;
+    double phaseFunctionValueForCosine(double lambda, double costheta) const;
 
-    /** This function generates a random scattering angle cosine sampled from the phase function
+    /** This function is used with the MaterialPhaseFunction scattering mode, which assumes that
+        the scattering phase function depends only on the cosine of the scattering angle. The
+        function generates a random scattering angle cosine sampled from the phase function
         \f$\Phi_\lambda(\cos\theta)\f$ at wavelength \f$\lambda\f$.
 
         The phase function for unpolarized radiation is obtained from the general polarized case
@@ -232,16 +274,13 @@ public:
         only the first Mueller matrix coefficient \f$S_{11}\f$. To sample the scattering angle
         \f$\theta\f$ from this phase function, we follow the same procedure as described for the
         generateAnglesFromPhaseFunction() function, with \f$P_\text{L}=0\f$. */
-    double generateCosineFromPhaseFunction(double lambda) const override;
+    double generateCosineFromPhaseFunction(double lambda) const;
 
-    //======== Polarization through scattering by spherical particles =======
-
-public:
-    /** This function returns the value of the scattering phase function
-        \f$\Phi_\lambda(\theta,\phi)\f$ at wavelength \f$\lambda\f$ for the specified scattering
-        angles \f$\theta\f$ and \f$\phi\f$, and for the specified incoming polarization state. The
-        phase function is normalized as \f[\int\Phi_\lambda(\theta,\phi) \,\mathrm{d}\Omega
-        =4\pi.\f]
+    /** This function is used with the SphericalPolarization scattering mode. It returns the value
+        of the scattering phase function \f$\Phi_\lambda(\theta,\phi)\f$ at wavelength
+        \f$\lambda\f$ for the specified scattering angles \f$\theta\f$ and \f$\phi\f$, and for the
+        specified incoming polarization state. The phase function is normalized as
+        \f[\int\Phi_\lambda(\theta,\phi) \,\mathrm{d}\Omega =4\pi.\f]
 
         The phase function for scattering by spherical grains can be written as \f[
         \Phi(\theta,\phi) = N\,S_{11} \left( 1 + P_{\text{L}}\,\frac{S_{12}}{S_{11}}\cos2(\phi -
@@ -250,12 +289,13 @@ public:
         polarization angle of the incoming photon, and where the Mueller matrix coefficients
         \f$S_{xx}\f$ depend on both the photon wavelength \f$\lambda\f$ and the scattering angle
         \f$\theta\f$. */
-    double phaseFunctionValue(double lambda, double theta, double phi, const StokesVector* sv) const override;
+    double phaseFunctionValue(double lambda, double theta, double phi, const StokesVector* sv) const;
 
-    /** This function generates random scattering angles \f$\theta\f$ and \f$\phi\f$ sampled from
-        the phase function \f$\Phi_\lambda(\theta,\phi)\f$ at wavelength \f$\lambda\f$, and for the
-        specified incoming polarization state. The results are returned as a pair of numbers in the
-        order \f$\theta\f$ and \f$\phi\f$.
+    /** This function is used with the SphericalPolarization scattering mode. It generates random
+        scattering angles \f$\theta\f$ and \f$\phi\f$ sampled from the phase function
+        \f$\Phi_\lambda(\theta,\phi)\f$ at wavelength \f$\lambda\f$, and for the specified incoming
+        polarization state. The results are returned as a pair of numbers in the order \f$\theta\f$
+        and \f$\phi\f$.
 
         For scattering by spherical grains, we sample from the phase function listed for the
         phaseFunctionValue() function using the conditional probability technique. We reduce the
@@ -278,17 +318,18 @@ public:
         =\int_{0}^{\phi}\Phi_{\theta}(\phi')\,\text{d}\phi' =\frac{1}{2\pi} \left( \phi +
         P_{\text{L}}\,\frac{S_{12}}{S_{11}} \sin\phi \cos(\phi - 2\gamma)\right) \f] for
         \f$\phi\f$, with \f${\cal{X}}\f$ being a new uniform deviate. */
-    std::pair<double, double> generateAnglesFromPhaseFunction(double lambda, const StokesVector* sv) const override;
+    std::pair<double, double> generateAnglesFromPhaseFunction(double lambda, const StokesVector* sv) const;
 
-    /** This function applies the Mueller matrix transformation for the specified wavelength
-        \f$\lambda\f$ and scattering angle \f$\theta\f$ to the given polarization state (which
-        serves as both input and output for the function).
+    /** This function is used with the SphericalPolarization scattering mode. It applies the
+        Mueller matrix transformation for the specified wavelength \f$\lambda\f$ and scattering
+        angle \f$\theta\f$ to the given polarization state (which serves as both input and output
+        for the function).
 
         For scattering by spherical grains, the Mueller matrix has only four independent
         coefficients, namely \f$S_{11}\f$, \f$S_{12}\f$, \f$S_{33}\f$, and \f$S_{34}\f$, which
         depend on both the photon wavelength \f$\lambda\f$ and the scattering angle \f$\theta\f$.
         These coefficients are obtained from the tables pre-computed during setup. */
-    void applyMueller(double lambda, double theta, StokesVector* sv) const override;
+    void applyMueller(double lambda, double theta, StokesVector* sv) const;
 
     //======== Polarization through scattering, absorption and emission by spheroidal particles =======
 

@@ -7,7 +7,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-MaterialMix::ScatteringMode MeanPinteBenchmarkDustMix::scatteringMode() const
+DustMix::ScatteringMode MeanPinteBenchmarkDustMix::scatteringMode() const
 {
     switch (scatteringType())
     {

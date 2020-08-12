@@ -4,22 +4,16 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "MonteCarloSimulation.hpp"
-#include "DisjointWavelengthGrid.hpp"
 #include "FatalError.hpp"
 #include "Log.hpp"
-#include "LyaUtils.hpp"
-#include "MaterialMix.hpp"
 #include "Parallel.hpp"
 #include "ParallelFactory.hpp"
 #include "PhotonPacket.hpp"
 #include "ProcessManager.hpp"
 #include "SecondarySourceSystem.hpp"
-#include "ShortArray.hpp"
-#include "SpatialGrid.hpp"
 #include "SpecialFunctions.hpp"
 #include "StringUtils.hpp"
 #include "TimeLogger.hpp"
-#include "VoigtProfile.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
