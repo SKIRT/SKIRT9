@@ -418,16 +418,25 @@ void MediumSystem::peelOffScattering(double lambda, const Array& wv, Direction b
     // get the cell hosting the scattering event
     int m = pp->interactionCellIndex();
 
+    // the outgoing wavelength (in the bulk velocity frame)
+    double emissionLambda = lambda;
+
     // calculate the weighted sum of the effects on the Stokes vector and on the wavelength for all media
     double I = 0., Q = 0., U = 0., V = 0.;
     for (int h = 0; h != _numMedia; ++h)
     {
+        double localLambda = lambda;
         MediumState mst(this, m, h);
-        state(m, h).mix->peeloffScattering(I, Q, U, V, lambda, wv[h], bfkobs, bfky, &mst, pp);
+        state(m, h).mix->peeloffScattering(I, Q, U, V, localLambda, wv[h], bfkobs, bfky, &mst, pp);
+
+        // if this material mix changed the wavelength, it is copied as the outgoing wavelength
+        // (for lack of a better strategy, if more than one material mix changes the wavelength,
+        //  only the wavelength returned by the last one is preserved)
+        if (localLambda != lambda) emissionLambda = localLambda;
     }
 
     // pass the result to the peel-off photon packet
-    ppp->launchScatteringPeelOff(pp, bfkobs, bulkVelocity(m), lambda, I);
+    ppp->launchScatteringPeelOff(pp, bfkobs, bulkVelocity(m), emissionLambda, I);
     if (_config->hasPolarization()) ppp->setPolarized(I, Q, U, V, pp->normal());
 }
 
