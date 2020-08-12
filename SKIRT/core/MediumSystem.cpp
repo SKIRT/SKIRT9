@@ -364,6 +364,17 @@ double MediumSystem::albedo(double lambda, int m) const
 
 ////////////////////////////////////////////////////////////////////
 
+double MediumSystem::perceivedWavelengthForScattering(const PhotonPacket* pp)
+{
+    if (_config->hasMovingMedia())
+        return pp->perceivedWavelength(state(pp->interactionCellIndex()).v,
+                                       _config->lyaExpansionRate() * pp->interactionDistance());
+    else
+        return pp->wavelength();
+}
+
+////////////////////////////////////////////////////////////////////
+
 bool MediumSystem::weightsForScattering(Array& wv, double lambda, const PhotonPacket* pp)
 {
     // resize the target array
@@ -401,13 +412,23 @@ bool MediumSystem::weightsForScattering(Array& wv, double lambda, const PhotonPa
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::perceivedWavelengthForScattering(const PhotonPacket* pp)
+void MediumSystem::peelOffScattering(double lambda, const Array& wv, Direction bfkobs, Direction bfky, PhotonPacket* pp,
+                                     PhotonPacket* ppp)
 {
-    if (_config->hasMovingMedia())
-        return pp->perceivedWavelength(state(pp->interactionCellIndex()).v,
-                                       _config->lyaExpansionRate() * pp->interactionDistance());
-    else
-        return pp->wavelength();
+    // get the cell hosting the scattering event
+    int m = pp->interactionCellIndex();
+
+    // calculate the weighted sum of the effects on the Stokes vector and on the wavelength for all media
+    double I = 0., Q = 0., U = 0., V = 0.;
+    for (int h = 0; h != _numMedia; ++h)
+    {
+        MediumState mst(this, m, h);
+        state(m, h).mix->peeloffScattering(I, Q, U, V, lambda, wv[h], bfkobs, bfky, &mst, pp);
+    }
+
+    // pass the result to the peel-off photon packet
+    ppp->launchScatteringPeelOff(pp, bfkobs, bulkVelocity(m), lambda, I);
+    if (_config->hasPolarization()) ppp->setPolarized(I, Q, U, V, pp->normal());
 }
 
 ////////////////////////////////////////////////////////////////////

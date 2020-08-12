@@ -111,6 +111,10 @@ public:
         Lyman-alpha material mix, the extinction opacity equals the scattering opacity. */
     double opacityExt(double lambda, const MediumState* state, const PhotonPacket* pp) const override;
 
+    /** TO DO -- lambda, I, Q, U, V are I/O arguments!! */
+    void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w, Direction bfkobs,
+                           Direction bfky, const MediumState* state, PhotonPacket* pp) const override;
+
     /** This function performs a scattering event on the specified photon packet in the spatial
         cell and medium component represented by the specified medium state and the receiving
         material mix. For the Lyman-alpha material mix, the function implements resonant scattering

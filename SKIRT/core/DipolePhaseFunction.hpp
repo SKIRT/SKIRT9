@@ -112,6 +112,10 @@ public:
 
     //======== Perform scattering with or without polarization =======
 
+    /** TO DO */
+    void peeloffScattering(double& I, double& Q, double& U, double& V, double w, Direction bfk, Direction bfkobs,
+                           Direction bfky, const StokesVector* sv) const;
+
     /** Given the incoming photon packet direction and polarization state, this function calculates
         and returns a randomly sampled new propagation direction for a dipole scattering event, and
         if applicable (depending in the polarization flag passed to the constructor), updates the

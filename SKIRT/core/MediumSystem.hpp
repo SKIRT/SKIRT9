@@ -224,6 +224,11 @@ public:
         spatial cell with index \f$m\f$. */
     double albedo(double lambda, int m) const;
 
+    /** This function returns the perceived wavelength of the photon packet at the scattering
+        interaction distance, taking into account the bulk velocity and Hubble expansion velocity
+        in that cell. */
+    double perceivedWavelengthForScattering(const PhotonPacket* pp);
+
     /** This function calculates the relative weights of the medium components in a scattering
         event, determined by the scattering opacity \f$k_{m,h}^\text{sca}\f$ of the medium
         component \f$h\f$ in the scattering interaction cell \f$m\f$ obtained from the specified
@@ -239,10 +244,9 @@ public:
         scatter in this cell). */
     bool weightsForScattering(Array& wv, double lambda, const PhotonPacket* pp);
 
-    /** This function returns the perceived wavelength of the photon packet at the scattering
-        interaction distance, taking into account the bulk velocity and Hubble expansion velocity
-        in that cell. */
-    double perceivedWavelengthForScattering(const PhotonPacket* pp);
+    /** TO DO. */
+    void peelOffScattering(double lambda, const Array& wv, Direction bfkobs, Direction bfky, PhotonPacket* pp,
+                           PhotonPacket* ppp);
 
     /** This function simulates a random walk scattering event of a photon packet. Most of the
         properties of the photon packet remain unaltered, including the position and the

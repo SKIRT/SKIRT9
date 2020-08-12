@@ -92,6 +92,15 @@ double ElectronMix::opacityExt(double /*lambda*/, const MediumState* state, cons
 
 ////////////////////////////////////////////////////////////////////
 
+void ElectronMix::peeloffScattering(double& I, double& Q, double& U, double& V, double& /*lambda*/, double w,
+                                    Direction bfkobs, Direction bfky, const MediumState* /*state*/,
+                                    PhotonPacket* pp) const
+{
+    _dpf.peeloffScattering(I, Q, U, V, w, pp->direction(), bfkobs, bfky, pp);
+}
+
+////////////////////////////////////////////////////////////////////
+
 void ElectronMix::performScattering(double lambda, const MediumState* state, PhotonPacket* pp) const
 {
     // determine the new propagation direction, and if required, update the polarization state of the photon packet

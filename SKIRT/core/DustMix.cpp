@@ -280,6 +280,87 @@ double DustMix::opacityExt(double lambda, const MediumState* state, const Photon
 
 ////////////////////////////////////////////////////////////////////
 
+namespace
+{
+    // This helper function returns the angle phi between the previous and current scattering planes
+    // given the normal to the previous scattering plane and the current and new propagation directions
+    // of the photon packet. The function returns a zero angle if the light is unpolarized or when the
+    // current scattering event is completely forward or backward.
+    double angleBetweenScatteringPlanes(Direction np, Direction kc, Direction kn)
+    {
+        Vec nc = Vec::cross(kc, kn);
+        nc /= nc.norm();
+        double cosphi = Vec::dot(np, nc);
+        double sinphi = Vec::dot(Vec::cross(np, nc), kc);
+        double phi = atan2(sinphi, cosphi);
+        if (std::isfinite(phi)) return phi;
+        return 0.;
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
+void DustMix::peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w, Direction bfkobs,
+                                Direction bfky, const MediumState* /*state*/, PhotonPacket* pp) const
+{
+    switch (scatteringMode())
+    {
+        case MaterialMix::ScatteringMode::HenyeyGreenstein:
+        {
+            // calculate the value of the Henyey-Greenstein phase function
+            double costheta = Vec::dot(pp->direction(), bfkobs);
+            double g = asymmpar(lambda);
+            double t = 1.0 + g * g - 2 * g * costheta;
+            double value = (1.0 - g) * (1.0 + g) / sqrt(t * t * t);
+
+            // accumulate the weighted sum in the intensity (no support for polarization in this case)
+            I += w * value;
+            break;
+        }
+        case MaterialMix::ScatteringMode::MaterialPhaseFunction:
+        {
+            // calculate the value of the material-specific phase function
+            double costheta = Vec::dot(pp->direction(), bfkobs);
+            double value = phaseFunctionValueForCosine(lambda, costheta);
+
+            // accumulate the weighted sum in the intensity (no support for polarization in this case)
+            I += w * value;
+            break;
+        }
+        case MaterialMix::ScatteringMode::SphericalPolarization:
+        case MaterialMix::ScatteringMode::SpheroidalPolarization:
+        {
+            // calculate the value of the material-specific phase function
+            double theta = acos(Vec::dot(pp->direction(), bfkobs));
+            double phi = angleBetweenScatteringPlanes(pp->normal(), pp->direction(), bfkobs);
+            double value = phaseFunctionValue(lambda, theta, phi, pp);
+
+            // copy the polarization state so we can change it without affecting the incoming photon packet
+            StokesVector sv = *pp;
+
+            // rotate the Stokes vector reference direction into the scattering plane
+            sv.rotateIntoPlane(pp->direction(), bfkobs);
+
+            // apply the Mueller matrix
+            applyMueller(lambda, theta, &sv);
+
+            // rotate the Stokes vector reference direction parallel to the instrument frame y-axis
+            // it is given bfkobs because the photon is at this point aimed towards the observer
+            sv.rotateIntoPlane(bfkobs, bfky);
+
+            // acumulate the weighted sum of all Stokes components to support polarization
+            w *= value;
+            I += w * sv.stokesI();
+            Q += w * sv.stokesQ();
+            U += w * sv.stokesU();
+            V += w * sv.stokesV();
+            break;
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
 void DustMix::performScattering(double lambda, const MediumState* state, PhotonPacket* pp) const
 {
     // determine the new propagation direction and, if required, update the polarization state of the photon packet

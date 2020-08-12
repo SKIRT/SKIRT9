@@ -7,6 +7,7 @@
 #define MATERIALMIX_HPP
 
 #include "Array.hpp"
+#include "Direction.hpp"
 #include "SimulationItem.hpp"
 class Configuration;
 class MediumState;
@@ -311,6 +312,11 @@ public:
     /** This function returns the extinction opacity \f$k^\text{ext}=k^\text{abs}+k^\text{sca}\f$
         for the given wavelength, medium state, and photon properties (optional; may be nullptr). */
     virtual double opacityExt(double lambda, const MediumState* state, const PhotonPacket* pp) const = 0;
+
+    /** TO DO -- lambda, I, Q, U, V are I/O arguments!! */
+    virtual void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w,
+                                   Direction bfkobs, Direction bfky, const MediumState* state,
+                                   PhotonPacket* pp) const = 0;
 
     /** This function performs a scattering event on the specified photon packet in the spatial
         cell and medium component represented by the specified medium state and the receiving

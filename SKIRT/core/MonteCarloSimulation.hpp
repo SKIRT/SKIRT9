@@ -463,9 +463,6 @@ private:
 
     // data members used by the XXXprogress() functions in this class
     string _segment;  // a string identifying the photon shooting segment for use in the log message
-
-    // the dipole phase function used for Lyman-alpha scattering - initialized during setup if needed
-    DipolePhaseFunction _dpf;
 };
 
 ////////////////////////////////////////////////////////////////////
