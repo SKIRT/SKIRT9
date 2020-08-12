@@ -408,44 +408,7 @@ private:
         direction, because the scattering process is anisotropic. The third difference is that the
         polarization state of the peel-off photon packet is adjusted. And the last difference is
         that the wavelength of the peel-off photon packet is properly Doppler-shifted taking into
-        account the bulk velocity of the medium. We discuss some of these changes in more detail
-        below. In this analysis, we drop the wavelength-dependency of the material properties from
-        the notation.
-
-        Since we force the peel-off photon packet to be scattered from the direction \f${\bf{k}}\f$
-        into the direction \f${\bf{k}}_{\text{obs}}\f$, the corresponding biasing weight factor is
-        given by the probability that a photon packet would be scattered into the direction
-        \f${\bf{k}}_{\text{obs}}\f$ if its original propagation direction was \f${\bf{k}}\f$. If
-        there is only one medium component in the system, this weight factor is equal to the value
-        of the scattering phase function \f$w= \Phi({\bf{k}},{\bf{k}}_{\text{obs}})\f$ for that
-        medium component. If there are multiple medium components, the weight factor is the
-        weighted mean of the scattering phase function values, \f[ w = \frac{ \sum_h
-        \varsigma_h^{\text{sca}}\, n_{m,h}\, \Phi_h({\bf{k}}, {\bf{k}}_{\text{obs}}) }{ \sum_h
-        \varsigma_h^{\text{sca}}\, n_{m,h} }, \f] where \f$n_{m,h}\f$ is the number density of the
-        medium corresponding to the \f$h\f$'th component in the cell where the scattering event
-        takes place, and \f$\varsigma_h^{\text{sca}}\f$ and \f$\Phi_h\f$ are the scattering cross
-        section and phase function corresponding to the \f$h\f$'th component respectively.
-
-        Evaluation of the phase function depends on the scattering mode supported by each medium's
-        material mix. For the most basic mode, the material mix provides a value for the scattering
-        asymmetry parameter \f$g=\left<\cos\theta\right>\f$. A value of \f$g=0\f$ corresponds to
-        isotropic scattering. Other values \f$-1\le g\le 1\f$ are substituted in the
-        Henyey-Greenstein phase function, \f[ \Phi(\cos\theta) = \frac{1-g^2}
-        {(1+g^2-2g\cos\theta)^{3/2}}. \f] For other scattering modes, the phase function provided
-        by the material mix is invoked instead.
-
-        In case polarization is supported in the current simulation configuration, the polarization
-        state of the peel off photon packet is adjusted as well. Note that all media must either
-        support polarization or not support it, mixing these support levels is not allowed.
-        Compliance with this requirement is verified during setup of the simulation. The adjusted
-        Stokes vector for a particular medium component is obtained as follows. The function
-        rotates the Stokes vector from the reference direction in the previous scattering plane
-        into the peel-off scattering plane, applies the Mueller matrix on the Stokes vector, and
-        further rotates the Stokes vector from the reference direction in the peel-off scattering
-        plane to the x-axis of the instrument to which the peel-off photon packet is headed. If
-        there are multiple medium components (all supporting polarization), the weight factors
-        described above are used not just for the luminosity but also for the components of the
-        Stokes vector.
+        account the bulk velocity of the medium.
 
         The first argument to this function specifies the photon packet that is about to be
         scattered; the second argument provides a placeholder peel off photon packet for use by the

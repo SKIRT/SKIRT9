@@ -173,7 +173,28 @@ public:
         for the given wavelength and medium state. The photon properties are not used. */
     double opacityExt(double lambda, const MediumState* state, const PhotonPacket* pp) const override;
 
-    /** TO DO -- lambda, I, Q, U, V are I/O arguments!! */
+    /** This function calculates the contribution of the medium component associated with this
+        material mix to the peel-off photon luminosity, polarization state, and wavelength shift
+        for the given wavelength, geometry, medium state, and photon properties. See the
+        description of the MaterialMix::peeloffScattering() function for more information.
+
+        For dust mixes, evaluation of the phase function depends on the scattering mode supported
+        by supported by the dust mix, as defined by each subclass. For the most basic mode, the
+        material mix provides a value for the scattering asymmetry parameter
+        \f$g=\left<\cos\theta\right>\f$. A value of \f$g=0\f$ corresponds to isotropic scattering.
+        Other values \f$-1\le g\le 1\f$ are substituted in the Henyey-Greenstein phase function,
+        \f[ \Phi(\cos\theta) = \frac{1-g^2} {(1+g^2-2g\cos\theta)^{3/2}}. \f] For other scattering
+        modes, the phase function provided by the material mix is invoked instead.
+
+        In case polarization is supported in the current simulation configuration, the polarization
+        state of the peel off photon packet is adjusted as well. The adjusted Stokes vector for a
+        particular medium component is obtained as follows. The function rotates the Stokes vector
+        from the reference direction in the previous scattering plane into the peel-off scattering
+        plane, applies the Mueller matrix on the Stokes vector, and further rotates the Stokes
+        vector from the reference direction in the peel-off scattering plane to the x-axis of the
+        instrument to which the peel-off photon packet is headed. If there are multiple medium
+        components, the relative opacity weighting factor applies not just to the luminosity but
+        also to the other components of the Stokes vector. */
     void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w, Direction bfkobs,
                            Direction bfky, const MediumState* state, PhotonPacket* pp) const override;
 

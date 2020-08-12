@@ -266,7 +266,22 @@ public:
         for the given wavelength, medium state, and photon properties (optional; may be nullptr). */
     virtual double opacityExt(double lambda, const MediumState* state, const PhotonPacket* pp) const = 0;
 
-    /** TO DO -- lambda, I, Q, U, V are I/O arguments!! */
+    /** This function calculates the contribution of the medium component associated with this
+        material mix to the peel-off photon luminosity, polarization state, and wavelength shift
+        for the given wavelength, geometry, medium state, and photon properties. The contributions
+        to the Stokes vector components are added to the incoming values of the \em I, \em Q, \em
+        U, \em V arguments. If there is wavelength shift, the new wavelength value replaces the
+        incoming value of the \em lambda argument.
+
+        Since we force the peel-off photon packet to be scattered from the direction \f${\bf{k}}\f$
+        into the direction \f${\bf{k}}_{\text{obs}}\f$, the corresponding biasing factor is given
+        by the probability that a photon packet would be scattered into the direction
+        \f${\bf{k}}_{\text{obs}}\f$ if its original propagation direction was \f${\bf{k}}\f$. For a
+        given medium component, this biasing factor is equal to the value of the scattering phase
+        function \f$\Phi({\bf{k}},{\bf{k}}_{\text{obs}})\f$ for that medium component. If there are
+        multiple medium components, the aggregated biasing factor is the mean of the scattering
+        phase function values weighted using the relative opacities for the various components. The
+        relative opacity weight for the current component is specified as argument \em w. */
     virtual void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w,
                                    Direction bfkobs, Direction bfky, const MediumState* state,
                                    PhotonPacket* pp) const = 0;

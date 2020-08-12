@@ -113,7 +113,12 @@ private:
     //======== Perform scattering with or without polarization =======
 
 public:
-    /** TO DO */
+    /** This function calculates the contribution of a dipole scattering event to the peel-off
+        photon luminosity and polarization state for the given geometry, medium state, and
+        polarization state. The contributions to the Stokes vector components are added to the
+        incoming values of the \em I, \em Q, \em U, \em V arguments. The \em w argument specifies
+        the relative opacity weighting factor for this medium component. See the description of the
+        MaterialMix::peeloffScattering() function for more information. */
     void peeloffScattering(double& I, double& Q, double& U, double& V, double w, Direction bfk, Direction bfkobs,
                            Direction bfky, const StokesVector* sv) const;
 

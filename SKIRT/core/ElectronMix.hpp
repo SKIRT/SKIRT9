@@ -87,7 +87,14 @@ public:
         */
     double opacityExt(double lambda, const MediumState* state, const PhotonPacket* pp) const override;
 
-    /** TO DO -- lambda, I, Q, U, V are I/O arguments!! */
+    /** This function calculates the contribution of the medium component associated with this
+        material mix to the peel-off photon luminosity, polarization state, and wavelength shift
+        for the given wavelength, geometry, medium state, and photon properties. See the
+        description of the MaterialMix::peeloffScattering() function for more information.
+
+        For electrons, the function implements wavelenth-independent dipole scattering without or
+        with support for polarization depending on the user-configured \em includePolarization
+        property. */
     void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w, Direction bfkobs,
                            Direction bfky, const MediumState* state, PhotonPacket* pp) const override;
 
