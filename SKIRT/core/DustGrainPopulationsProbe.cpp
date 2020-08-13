@@ -6,9 +6,8 @@
 #include "DustGrainPopulationsProbe.hpp"
 #include "Configuration.hpp"
 #include "Constants.hpp"
-#include "Medium.hpp"
 #include "MediumSystem.hpp"
-#include "MultiGrainDustMix.hpp"
+#include "MultiGrainPopulationInterface.hpp"
 #include "StringUtils.hpp"
 #include "TextOutFile.hpp"
 #include "Units.hpp"
@@ -44,14 +43,14 @@ void DustGrainPopulationsProbe::probeSetup()
         for (int h = 0; h != numMedia; ++h)
         {
             // get the mix and skip mixes that don't offer multiple dust grain populations
-            auto mix = dynamic_cast<const MultiGrainDustMix*>(ms->media()[h]->mix());
+            auto mix = dynamic_cast<const MultiGrainPopulationInterface*>(ms->media()[h]->mix());
             if (mix)
             {
                 // create a text file
                 TextOutFile out(this, itemName() + "_grainpops_" + std::to_string(h), "grain populations");
 
                 // write the header
-                double totalmass = mix->mass();
+                double totalmass = mix->totalMass();
                 out.writeLine("# Medium component " + std::to_string(h) + " -- dust mass per hydrogen atom: "
                               + StringUtils::toString(units->obulkmass(totalmass), 'e', 9) + " " + units->ubulkmass());
                 out.addColumn("grain population index");

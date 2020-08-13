@@ -9,6 +9,7 @@
 #include "ArrayTable.hpp"
 #include "DustMix.hpp"
 #include "GrainPopulation.hpp"
+#include "MultiGrainPopulationInterface.hpp"
 #include "Range.hpp"
 #include "StochasticDustEmissionCalculator.hpp"
 #include "StoredTable.hpp"
@@ -106,7 +107,7 @@ class GrainSizeDistribution;
     information.
 
     */
-class MultiGrainDustMix : public DustMix
+class MultiGrainDustMix : public DustMix, public MultiGrainPopulationInterface
 {
     ITEM_ABSTRACT(MultiGrainDustMix, DustMix, "a dust mix with one or more grain populations")
     ITEM_END()
@@ -201,7 +202,7 @@ public:
         function relies. */
     Array emissivity(const Array& Jv) const override;
 
-    //=============== Exposing multiple grain populations ==============
+    //=========== Exposing multiple grain populations (MultiGrainPopulationInterface) ============
 
 public:
     /** This function returns the number of dust grain populations (with indices \f$c\f$) added to
@@ -209,24 +210,28 @@ public:
         composition, providing the optical and calorimetric properties of the grain material, and a
         grain size distribution with some normalization to specify the the amount of dust contained
         in the population. No grain size discretization has been applied to these populations. */
-    int numPopulations() const;
+    int numPopulations() const override;
 
     /** This function returns a brief human-readable identifier for the type of grain material
         represented by the population with index \f$c\f$. The identifier does not contain white
         space. */
-    string populationGrainType(int c) const;
+    string populationGrainType(int c) const override;
 
     /** This function returns the minimum and maximum grain sizes \f$a_{\text{min},c},
         a_{\text{max},c}\f$ for the population with index \f$c\f$. */
-    Range populationSizeRange(int c) const;
+    Range populationSizeRange(int c) const override;
 
     /** This function returns the grain size distribution object for the population with index
         \f$c\f$. */
-    const GrainSizeDistribution* populationSizeDistribution(int c) const;
+    const GrainSizeDistribution* populationSizeDistribution(int c) const override;
 
     /** This function returns the dust mass \f$\mu_c\f$ per hydrogen atom for the population with
         index \f$c\f$. */
-    double populationMass(int c) const;
+    double populationMass(int c) const override;
+
+    /** This function returns the total dust mass \f$\mu_c\f$ per hydrogen atom for all populations
+        combined. */
+    double totalMass() const override;
 
     //======================== Data Members ========================
 

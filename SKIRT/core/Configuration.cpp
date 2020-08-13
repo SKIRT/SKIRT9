@@ -10,7 +10,6 @@
 #include "MaterialMix.hpp"
 #include "MaterialWavelengthRangeInterface.hpp"
 #include "MonteCarloSimulation.hpp"
-#include "MultiGrainDustMix.hpp"
 #include "NR.hpp"
 #include "OligoWavelengthDistribution.hpp"
 #include "OligoWavelengthGrid.hpp"
@@ -114,7 +113,7 @@ void Configuration::setupSelfBefore()
         {
             // verify that all dust mixes are multi-grain when requesting stochastic heating
             for (auto medium : ms->media())
-                if (medium->mix()->isDust() && !dynamic_cast<const MultiGrainDustMix*>(medium->mix()))
+                if (medium->mix()->isDust() && !medium->mix()->hasStochasticDustEmission())
                     throw FATALERROR("When requesting stochastic heating, all dust mixes must be multi-grain");
             _hasStochasticDustEmission = true;
         }
