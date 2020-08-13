@@ -493,22 +493,9 @@ void MonteCarloSimulation::simulateForcedPropagation(PhotonPacket* pp)
 
     // determine the physical position of the interaction point
     pp->findInteractionPoint(tau);
-    int m = pp->interactionCellIndex();
-    if (m < 0) throw FATALERROR("Cannot locate photon packet interaction point");
 
     // calculate the albedo for the cell containing the interaction point
-    // use a faster version in case there are no kinematics
-    double albedo;
-    if (!_config->hasMovingMedia())
-    {
-        albedo = mediumSystem()->albedo(pp->wavelength(), m);
-    }
-    else
-    {
-        double lambda = pp->perceivedWavelength(mediumSystem()->bulkVelocity(m),
-                                                _config->lyaExpansionRate() * pp->interactionDistance());
-        albedo = mediumSystem()->albedo(lambda, m);
-    }
+    double albedo = mediumSystem()->albedoForScattering(pp);
 
     // adjust the weight by the scattered fraction
     pp->applyBias(-expm1(-taupath) * albedo);
@@ -521,13 +508,10 @@ void MonteCarloSimulation::simulateForcedPropagation(PhotonPacket* pp)
 
 void MonteCarloSimulation::simulateNonForcedPropagation(PhotonPacket* pp)
 {
-    int m = pp->interactionCellIndex();
-    if (m < 0) throw FATALERROR("Cannot locate photon packet interaction point");
+    // calculate the albedo for the cell containing the interaction point
+    double albedo = mediumSystem()->albedoForScattering(pp);
 
-    // adjust the weight by the albedo for the cell containing the interaction point
-    double lambda = pp->perceivedWavelength(mediumSystem()->bulkVelocity(m),
-                                            _config->lyaExpansionRate() * pp->interactionDistance());
-    double albedo = mediumSystem()->albedo(lambda, m);
+    // adjust the weight by the albedo
     pp->applyBias(albedo);
 
     // advance the photon packet position

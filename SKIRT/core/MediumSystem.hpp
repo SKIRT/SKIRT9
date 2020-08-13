@@ -189,45 +189,62 @@ public:
         \f$h\f$ in spatial cell with index \f$m\f$. */
     const MaterialMix* mix(int m, int h) const;
 
+private:
     /** This function returns the absorption opacity \f$k_h^\text{abs}\f$ at wavelength
         \f$\lambda\f$ of the medium component with index \f$h\f$ in spatial cell with index
-        \f$m\f$. */
+        \f$m\f$. Because no photon packet is provided, default values are used for any relevant
+        incoming photon packet properties. For example, the radiation is assumed to be unpolarized.
+        */
     double opacityAbs(double lambda, int m, int h) const;
 
     /** This function returns the scattering opacity \f$k_h^\text{sca}\f$ at wavelength
         \f$\lambda\f$ of the medium component with index \f$h\f$ in spatial cell with index
-        \f$m\f$. */
+        \f$m\f$. Because no photon packet is provided, default values are used for any relevant
+        incoming photon packet properties. For example, the radiation is assumed to be unpolarized.
+        */
     double opacitySca(double lambda, int m, int h) const;
 
     /** This function returns the extinction opacity \f$k_h^\text{ext}\f$ at wavelength
         \f$\lambda\f$ of the medium component with index \f$h\f$ in spatial cell with index
-        \f$m\f$. */
+        \f$m\f$. Because no photon packet is provided, default values are used for any relevant
+        incoming photon packet properties. For example, the radiation is assumed to be unpolarized.
+        */
     double opacityExt(double lambda, int m, int h) const;
 
+public:
     /** This function returns the absorption opacity \f$k^\text{abs}=\sum_h k_h^\text{abs}\f$
         summed over all medium components with the specified material type at wavelength
-        \f$\lambda\f$ in spatial cell with index \f$m\f$. */
+        \f$\lambda\f$ in spatial cell with index \f$m\f$. Because no photon packet is provided,
+        default values are used for any relevant incoming photon packet properties. For example,
+        the radiation is assumed to be unpolarized. */
     double opacityAbs(double lambda, int m, MaterialMix::MaterialType type) const;
 
     /** This function returns the extinction opacity \f$k^\text{ext}=\sum_h k_h^\text{ext}\f$
         summed over all medium components with the specified material type at wavelength
-        \f$\lambda\f$ in spatial cell with index \f$m\f$. */
+        \f$\lambda\f$ in spatial cell with index \f$m\f$. Because no photon packet is provided,
+        default values are used for any relevant incoming photon packet properties. For example,
+        the radiation is assumed to be unpolarized. */
     double opacityExt(double lambda, int m, MaterialMix::MaterialType type) const;
 
     /** This function returns the extinction opacity \f$k^\text{ext}=\sum_h k_h^\text{ext}\f$
         summed over all medium components at wavelength \f$\lambda\f$ in spatial cell with index
-        \f$m\f$. */
+        \f$m\f$. Because no photon packet is provided, default values are used for any relevant
+        incoming photon packet properties. For example, the radiation is assumed to be unpolarized.
+        */
     double opacityExt(double lambda, int m) const;
-
-    /** This function returns the weighted scattering albedo \f[\frac{\sum_h k_h^\text{sca}}
-        {\sum_h k_h^\text{ext}}\f] over all medium components at wavelength \f$\lambda\f$ in
-        spatial cell with index \f$m\f$. */
-    double albedo(double lambda, int m) const;
 
     /** This function returns the perceived wavelength of the photon packet at the scattering
         interaction distance, taking into account the bulk velocity and Hubble expansion velocity
         in that cell. */
-    double perceivedWavelengthForScattering(const PhotonPacket* pp);
+    double perceivedWavelengthForScattering(const PhotonPacket* pp) const;
+
+    /** This function returns the weighted scattering albedo \f[\frac{\sum_h k_h^\text{sca}}
+        {\sum_h k_h^\text{ext}}\f] over all medium components at wavelength \f$\lambda\f$ in the
+        spatial cell hosting the specified photon packet's scattering event. The opacities are
+        calculated at the wavelength perceived by the medium taking into account the bulk velocity
+        and Hubble expansion velocity in that cell and taking into account any relevant properties
+        of the specified photon packet such as the polarization state. */
+    double albedoForScattering(const PhotonPacket* pp) const;
 
     /** This function calculates the relative weights of the medium components in a scattering
         event, determined by the scattering opacity \f$k_{m,h}^\text{sca}\f$ of the medium
@@ -242,7 +259,7 @@ public:
         simulation). The function returns true if normalized weights have been successfully
         calculated, and false if all of the weights are zero (i.e. the photon packet does not
         scatter in this cell). */
-    bool weightsForScattering(Array& wv, double lambda, const PhotonPacket* pp);
+    bool weightsForScattering(Array& wv, double lambda, const PhotonPacket* pp) const;
 
     /** This function calculates the peel-off photon luminosity, polarization state, and wavelength
         shift for the given wavelength, geometry, medium state, and incoming photon packet. The
@@ -255,7 +272,7 @@ public:
         wavelength, only the wavelength shift returned by the last one is preserved (for lack of a
         better strategy). */
     void peelOffScattering(double lambda, const Array& wv, Direction bfkobs, Direction bfky, PhotonPacket* pp,
-                           PhotonPacket* ppp);
+                           PhotonPacket* ppp) const;
 
     /** This function simulates a random walk scattering event of a photon packet. Most of the
         properties of the photon packet remain unaltered, including the position and the
@@ -277,7 +294,7 @@ public:
         Performing the actual scattering event is delegated to the material mix corresponding to
         the selected medium component in the interaction cell. Refer to the
         MaterialMix::performScattering() function for more information. */
-    void simulateScattering(Random* random, PhotonPacket* pp);
+    void simulateScattering(Random* random, PhotonPacket* pp) const;
 
     /** This function returns the optical depth at the specified wavelength along a path through
         the medium system, taking into account only medium components with the specified material
@@ -291,7 +308,7 @@ public:
         \f$k_{m,h}^\text{ext}\f$ is the extinction opacity corresponding to the \f$h\f$'th medium
         component in the cell with index \f$m\f$ at the specified wavelength \f$\lambda\f$ and the
         sum over \f$h\f$ runs only over the medium components with the specified material type. */
-    double getOpticalDepth(const SpatialGridPath* path, double lambda, MaterialMix::MaterialType type);
+    double getOpticalDepth(const SpatialGridPath* path, double lambda, MaterialMix::MaterialType type) const;
 
     /** This function calculates the cumulative optical depth at the end of each path segment along
         a path through the medium system defined by the initial position and direction of the
@@ -320,7 +337,7 @@ public:
         optical depth at the segment exit boundaries and stores them into the specified photon
         packet object as well. Note that the optical depth at entry of the initial segment is equal
         to zero by definition. */
-    void setOpticalDepths(PhotonPacket* pp);
+    void setOpticalDepths(PhotonPacket* pp) const;
 
     /** This function calculates the cumulative optical depth and distance at the end of path
         segments along a path through the medium system defined by the initial position and
@@ -339,7 +356,7 @@ public:
         setOpticalDepths() function, i.e. at the wavelength perceived by the medium in the cell
         being crossed and taking into account any relevant properties of the incoming photon
         packet. */
-    bool setInteractionPoint(PhotonPacket* pp, double tauscat);
+    bool setInteractionPoint(PhotonPacket* pp, double tauscat) const;
 
     /** This function calculates and returns the optical depth (or -1, see "High optical depth
         below") along a path through the medium system defined by the initial position and
@@ -366,7 +383,7 @@ public:
         \f$L_\mathrm{min}\f$ is the smallest representable positive double-precision floating point
         number. Hence this function aborts the calculation and returns positive infinity when this
         happens. */
-    double getOpticalDepth(PhotonPacket* pp, double distance);
+    double getOpticalDepth(PhotonPacket* pp, double distance) const;
 
     /** This function initializes all values of the primary and/or secondary radiation field info
         tables to zero. In simulation modes that record the radiation field, the function should be

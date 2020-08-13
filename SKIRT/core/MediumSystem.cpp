@@ -350,21 +350,7 @@ double MediumSystem::opacityExt(double lambda, int m) const
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::albedo(double lambda, int m) const
-{
-    double ksca = 0.;
-    double kext = 0.;
-    for (int h = 0; h != _numMedia; ++h)
-    {
-        ksca += opacitySca(lambda, m, h);
-        kext += opacityExt(lambda, m, h);
-    }
-    return kext > 0. ? ksca / kext : 0.;
-}
-
-////////////////////////////////////////////////////////////////////
-
-double MediumSystem::perceivedWavelengthForScattering(const PhotonPacket* pp)
+double MediumSystem::perceivedWavelengthForScattering(const PhotonPacket* pp) const
 {
     if (_config->hasMovingMedia())
         return pp->perceivedWavelength(state(pp->interactionCellIndex()).v,
@@ -375,7 +361,26 @@ double MediumSystem::perceivedWavelengthForScattering(const PhotonPacket* pp)
 
 ////////////////////////////////////////////////////////////////////
 
-bool MediumSystem::weightsForScattering(Array& wv, double lambda, const PhotonPacket* pp)
+double MediumSystem::albedoForScattering(const PhotonPacket* pp) const
+{
+    double lambda = perceivedWavelengthForScattering(pp);
+    int m = pp->interactionCellIndex();
+    if (m < 0) throw FATALERROR("Cannot locate photon packet interaction point");
+
+    double ksca = 0.;
+    double kext = 0.;
+    for (int h = 0; h != _numMedia; ++h)
+    {
+        MediumState mst(this, m, h);
+        ksca += state(m, h).mix->opacitySca(lambda, &mst, pp);
+        kext += state(m, h).mix->opacityExt(lambda, &mst, pp);
+    }
+    return kext > 0. ? ksca / kext : 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool MediumSystem::weightsForScattering(Array& wv, double lambda, const PhotonPacket* pp) const
 {
     // resize the target array
     wv.resize(_numMedia);
@@ -413,7 +418,7 @@ bool MediumSystem::weightsForScattering(Array& wv, double lambda, const PhotonPa
 ////////////////////////////////////////////////////////////////////
 
 void MediumSystem::peelOffScattering(double lambda, const Array& wv, Direction bfkobs, Direction bfky, PhotonPacket* pp,
-                                     PhotonPacket* ppp)
+                                     PhotonPacket* ppp) const
 {
     // get the cell hosting the scattering event
     int m = pp->interactionCellIndex();
@@ -441,7 +446,7 @@ void MediumSystem::peelOffScattering(double lambda, const Array& wv, Direction b
 
 ////////////////////////////////////////////////////////////////////
 
-void MediumSystem::simulateScattering(Random* random, PhotonPacket* pp)
+void MediumSystem::simulateScattering(Random* random, PhotonPacket* pp) const
 {
     // locate the cell hosting the scattering event
     int m = pp->interactionCellIndex();
@@ -493,7 +498,7 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::getOpticalDepth(const SpatialGridPath* path, double lambda, MaterialMix::MaterialType type)
+double MediumSystem::getOpticalDepth(const SpatialGridPath* path, double lambda, MaterialMix::MaterialType type) const
 {
     // determine the geometric details of the path and calculate the optical depth at the same time
     auto generator = getPathSegmentGenerator(_grid, path);
@@ -507,7 +512,7 @@ double MediumSystem::getOpticalDepth(const SpatialGridPath* path, double lambda,
 
 ////////////////////////////////////////////////////////////////////
 
-void MediumSystem::setOpticalDepths(PhotonPacket* pp)
+void MediumSystem::setOpticalDepths(PhotonPacket* pp) const
 {
     // determine and store the path segments in the photon packet
     auto generator = getPathSegmentGenerator(_grid, pp);
@@ -562,7 +567,7 @@ void MediumSystem::setOpticalDepths(PhotonPacket* pp)
 
 ////////////////////////////////////////////////////////////////////
 
-bool MediumSystem::setInteractionPoint(PhotonPacket* pp, double tauscat)
+bool MediumSystem::setInteractionPoint(PhotonPacket* pp, double tauscat) const
 {
     auto generator = getPathSegmentGenerator(_grid, pp);
     double tau = 0.;
@@ -659,7 +664,7 @@ bool MediumSystem::setInteractionPoint(PhotonPacket* pp, double tauscat)
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::getOpticalDepth(PhotonPacket* pp, double distance)
+double MediumSystem::getOpticalDepth(PhotonPacket* pp, double distance) const
 {
     // determine the optical depth at which the packet's contribution becomes zero
     // or abort right away if the contribution is zero to begin with
@@ -782,7 +787,7 @@ Array MediumSystem::meanIntensity(int m) const
 {
     int numWavelengths = _wavelengthGrid->numBins();
     Array Jv(numWavelengths);
-    double factor = 1. / (4. * M_PI * volume(m));
+    double factor = 1. / (4. * M_PI * state(m).V);
     for (int ell = 0; ell < numWavelengths; ell++)
     {
         Jv[ell] = radiationField(m, ell) * factor / _wavelengthGrid->effectiveWidth(ell);
