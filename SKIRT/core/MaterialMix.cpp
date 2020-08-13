@@ -82,3 +82,10 @@ const Array& MaterialMix::sectionsAbspol(double /*lambda*/) const
 }
 
 ////////////////////////////////////////////////////////////////////
+
+Array MaterialMix::emissivity(const Array& /*Jv*/) const
+{
+    throw FATALERROR("This function implementation should never be called");
+}
+
+////////////////////////////////////////////////////////////////////

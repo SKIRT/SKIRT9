@@ -435,7 +435,7 @@ void MediumSystem::peelOffScattering(double lambda, const Array& wv, Direction b
     }
 
     // pass the result to the peel-off photon packet
-    ppp->launchScatteringPeelOff(pp, bfkobs, bulkVelocity(m), emissionLambda, I);
+    ppp->launchScatteringPeelOff(pp, bfkobs, state(m).v, emissionLambda, I);
     if (_config->hasPolarization()) ppp->setPolarized(I, Q, U, V, pp->normal());
 }
 
@@ -804,7 +804,7 @@ double MediumSystem::indicativeDustTemperature(int m) const
             double rho = massDensity(m, h);
             if (rho > 0.)
             {
-                double T = mix(m, h)->indicativeTemperature(Jv);
+                double T = state(m, h).mix->indicativeTemperature(Jv);
                 sumRhoT += rho * T;
                 sumRho += rho;
             }

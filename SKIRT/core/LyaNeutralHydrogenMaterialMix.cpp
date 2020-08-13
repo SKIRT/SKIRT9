@@ -168,10 +168,3 @@ void LyaNeutralHydrogenMaterialMix::performScattering(double lambda, const Mediu
 }
 
 ////////////////////////////////////////////////////////////////////
-
-Array LyaNeutralHydrogenMaterialMix::emissivity(const Array& /*Jv*/) const
-{
-    return Array();
-}
-
-////////////////////////////////////////////////////////////////////

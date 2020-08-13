@@ -372,7 +372,7 @@ private:
         These coefficients are obtained from the tables pre-computed during setup. */
     void applyMueller(double lambda, double theta, StokesVector* sv) const;
 
-    //======== Polarization through scattering, absorption and emission by spheroidal particles =======
+    //======== Spheroidal grains =======
 
 public:
     /** This function is intended for use with the SpheroidalPolarization mode. It returns the grid
@@ -393,7 +393,7 @@ public:
         \f$\theta\f$, discretized on the grid returned by the thetaGrid() function. */
     const Array& sectionsAbspol(double lambda) const override;
 
-    //======== Temperature and emission =======
+    //======== Secondary emission =======
 
 public:
     /** This function returns the emissivity spectrum per hydrogen atom \f$\varepsilon_{\ell'}\f$

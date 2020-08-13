@@ -74,9 +74,7 @@ class WavelengthGrid;
     When the implementation of a particular feature specific to a subset of material mixes requires
     external access to information offered by those material mixes, the corresponding set of public
     functions is bundled in a separate abstract interface that can be implemented in the
-    appropriate subclasses. For example, the set of material properties needed to calculate
-    secondary emission spectra differs between fundamental material types and is thus offered by a
-    specific public interface for each material type (e.g. thermal emission from dust grains).
+    appropriate subclasses.
 
     <b>Capabilities functions</b>
 
@@ -152,7 +150,12 @@ class WavelengthGrid;
     medium component of the receiving material mix, including the effects of bulk velocity,
     polarization, and so forth. The peelOffScattering() function similarly calculates the
     contribution to a scattering peel-off event for this material, given the instrument reference
-    frame and the relative weight of this medium component. */
+    frame and the relative weight of this medium component.
+
+    <b>Functions for spheroidal grains and for emission</b>
+
+    The design for these interfaces must be evaluated and possibly reconsidered.
+*/
 class MaterialMix : public SimulationItem
 {
     ITEM_ABSTRACT(MaterialMix, SimulationItem, "a material mix")
@@ -316,7 +319,7 @@ public:
         recalculated within the function. */
     virtual void performScattering(double lambda, const MediumState* state, PhotonPacket* pp) const = 0;
 
-    //======== Polarization through scattering, absorption and emission by spheroidal particles =======
+    //======== Spheroidal grains =======
 
 public:
     /** This function is intended for use with the SpheroidalPolarization mode. It returns the grid
@@ -340,7 +343,7 @@ public:
         implementation in this base class throws a fatal error. */
     virtual const Array& sectionsAbspol(double lambda) const;
 
-    //======== Temperature and emission =======
+    //======== Secondary emission =======
 
     /** This function returns the emissivity spectrum \f$\varepsilon_{\ell'}\f$ of the material mix
         when it would be embedded in the radiation field specified by the mean intensities
@@ -348,8 +351,8 @@ public:
         radiation field wavelength grid as returned by the Configuration::radiationFieldWLG()
         function. The output emissivity spectrum is discretized on a wavelength grid that depends
         on the material type. For more information, refer to the documentation of this function for
-        each material type. */
-    virtual Array emissivity(const Array& Jv) const = 0;
+        each material type. The default implementation in this base throws a fatal error. */
+    virtual Array emissivity(const Array& Jv) const;
 
     //======================== Other Functions =======================
 

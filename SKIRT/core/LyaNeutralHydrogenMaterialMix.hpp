@@ -131,15 +131,6 @@ public:
         includePolarization property. */
     void performScattering(double lambda, const MediumState* state, PhotonPacket* pp) const override;
 
-    //======== Temperature and emission =======
-
-    /** This function returns the emissivity spectrum \f$\varepsilon_{\ell'}\f$ of the material mix
-        when it would be embedded in a given radiation field. Because the hydrogen atoms absorb nor
-        emit at the Lyman-alpha line (at least in our treatment), the implementation of this
-        function in this class ignores the input radiation field and always returns an empty array.
-        */
-    Array emissivity(const Array& Jv) const override;
-
     //======================== Data Members ========================
 
 private:

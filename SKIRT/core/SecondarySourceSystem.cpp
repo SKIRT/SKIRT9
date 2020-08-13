@@ -346,7 +346,6 @@ namespace
         // information initialized once, during the first call to calculateIfNeeded()
         MediumSystem* _ms{nullptr};  // the medium system
         vector<int> _hv;             // a list of the media indices for the media containing dust
-        int _numMedia{0};            // the number of dust media in the system (and thus the size of hv)
 
         // information on a particular spatial cell, initialized by calculateIfNeeded()
         int _m{-1};        // spatial cell index
@@ -376,7 +375,6 @@ namespace
                 _ms = ms;
                 for (int h = 0; h != ms->numMedia(); ++h)
                     if (ms->isDust(h)) _hv.push_back(h);
-                _numMedia = _hv.size();
             }
 
             // remember the new cell index and map to the other indices

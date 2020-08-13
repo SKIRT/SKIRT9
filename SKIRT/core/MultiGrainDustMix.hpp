@@ -182,7 +182,7 @@ public:
         heating of dust grains for the calculation of secondary emission. */
     bool hasStochasticDustEmission() const override;
 
-    //======== Emission =======
+    //======== Secondary emission =======
 
 public:
     /** This function returns the emissivity spectrum per hydrogen atom
