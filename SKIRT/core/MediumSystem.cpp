@@ -804,7 +804,7 @@ double MediumSystem::indicativeDustTemperature(int m) const
             double rho = massDensity(m, h);
             if (rho > 0.)
             {
-                double T = mix(m, h)->equilibriumTemperature(Jv);
+                double T = mix(m, h)->indicativeTemperature(Jv);
                 sumRhoT += rho * T;
                 sumRho += rho;
             }

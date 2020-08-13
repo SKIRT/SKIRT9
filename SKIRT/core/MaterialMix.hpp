@@ -252,6 +252,19 @@ public:
         returns zero, indicating isotropic scattering. */
     virtual double asymmpar(double lambda) const;
 
+    /** This function returns an indicative temperature, assuming the material represented by this
+        mix would be embedded in the radiation field specified by the mean intensities
+        \f$(J_\lambda)_\ell\f$, which must be discretized on the simulation's radiation field
+        wavelength grid as returned by the Configuration::radiationFieldWLG() function.
+
+        The interpretation of the indicative temperature depends heavily on the material type. For
+        dust mixes, the function returns the averaged equilibrium temperature of the grain
+        population given the specified radiation field and assuming local thermal equilibrium
+        conditions. Other materials may return a temperature determined based on the radiation
+        field, a default value, or zero if none of the above apply. Refer to the description for
+        this function in the various subclasses for more information. */
+    virtual double indicativeTemperature(const Array& Jv) const = 0;
+
     //======== High-level photon life cycle =======
 
     /** This function returns the absorption opacity \f$k^\text{abs}=n\varsigma^\text{abs}\f$ for
@@ -328,13 +341,6 @@ public:
     virtual const Array& sectionsAbspol(double lambda) const;
 
     //======== Temperature and emission =======
-
-    /** This function returns the equilibrium temperature \f$T_{\text{eq}}\f$ (assuming LTE
-        conditions) of the material mix when it would be embedded in the radiation field specified
-        by the mean intensities \f$(J_\lambda)_\ell\f$, which must be discretized on the
-        simulation's radiation field wavelength grid as returned by the
-        Configuration::radiationFieldWLG() function. */
-    virtual double equilibriumTemperature(const Array& Jv) const = 0;
 
     /** This function returns the emissivity spectrum \f$\varepsilon_{\ell'}\f$ of the material mix
         when it would be embedded in the radiation field specified by the mean intensities

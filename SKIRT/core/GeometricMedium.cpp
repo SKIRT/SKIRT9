@@ -81,7 +81,7 @@ double GeometricMedium::temperature(Position /*bfr*/) const
     if (materialMix()->isGas())
     {
         Array dummyJv;
-        return materialMix()->equilibriumTemperature(dummyJv);
+        return materialMix()->indicativeTemperature(dummyJv);
     }
     return 0.;
 }

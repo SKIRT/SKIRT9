@@ -279,6 +279,13 @@ double DustMix::opacityExt(double lambda, const MediumState* state, const Photon
 
 ////////////////////////////////////////////////////////////////////
 
+double DustMix::indicativeTemperature(const Array& Jv) const
+{
+    return _calc.equilibriumTemperature(0, Jv);
+}
+
+////////////////////////////////////////////////////////////////////
+
 namespace
 {
     // This helper function returns the angle phi between the previous and current scattering planes
@@ -503,13 +510,6 @@ const Array& DustMix::sectionsAbspol(double lambda) const
 {
     int ell = indexForLambda(lambda);
     return _sigmaabspolvv[ell];
-}
-
-////////////////////////////////////////////////////////////////////
-
-double DustMix::equilibriumTemperature(const Array& Jv) const
-{
-    return _calc.equilibriumTemperature(0, Jv);
 }
 
 ////////////////////////////////////////////////////////////////////

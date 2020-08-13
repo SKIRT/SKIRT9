@@ -97,6 +97,13 @@ double LyaNeutralHydrogenMaterialMix::opacityExt(double lambda, const MediumStat
 
 ////////////////////////////////////////////////////////////////////
 
+double LyaNeutralHydrogenMaterialMix::indicativeTemperature(const Array& /*Jv*/) const
+{
+    return defaultTemperature();
+}
+
+////////////////////////////////////////////////////////////////////
+
 void LyaNeutralHydrogenMaterialMix::peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda,
                                                       double w, Direction bfkobs, Direction bfky,
                                                       const MediumState* state, PhotonPacket* pp) const
@@ -158,13 +165,6 @@ void LyaNeutralHydrogenMaterialMix::performScattering(double lambda, const Mediu
 
     // execute the scattering event in the photon packet
     pp->scatter(bfknew, state->bulkVelocity(), lambda);
-}
-
-////////////////////////////////////////////////////////////////////
-
-double LyaNeutralHydrogenMaterialMix::equilibriumTemperature(const Array& /*Jv*/) const
-{
-    return defaultTemperature();
 }
 
 ////////////////////////////////////////////////////////////////////

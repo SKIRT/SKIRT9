@@ -130,7 +130,7 @@ public:
         other words it returns MaterialType::Dust. */
     MaterialType materialType() const override;
 
-    //======== Basic material properties =======
+    //======== Low-level material properties =======
 
 public:
     /** This function returns the dust mass \f$\mu\f$ per hydrogen atom for this dust mix. It
@@ -158,6 +158,26 @@ public:
         HenyeyGreenstein scattering mode. It retrieves the requested value from a table that was
         pre-computed during setup. */
     double asymmpar(double lambda) const override;
+
+    /** This function returns an indicative temperature of the material mix when it would be
+        embedded in a given radiation field. For dust mixes, it returns the equilibrium temperature
+        \f$T_{\text{eq}}\f$ of the dust mix (or rather of the representative grain population
+        corresponding to the dust mix) when it would be embedded in the radiation field specified
+        by the mean intensities \f$(J_\lambda)_\ell\f$, which must be discretized on the
+        simulation's radiation field wavelength grid as returned by the
+        Configuration::radiationFieldWLG() function.
+
+        The equilibrium temperature is obtained from the energy balance equation, \f[ \int_0^\infty
+        \varsigma^\text{abs}(\lambda) \,J_\lambda(\lambda) \,\text{d}\lambda = \int_0^\infty
+        \varsigma^\text{abs}(\lambda) \,B_\lambda(T_\text{eq},\lambda) \,\text{d}\lambda, \f] where
+        the left-hand side is integrated over the radiation field wavelength grid, and the
+        right-hand side is precalculated during setup for a range of temperatures through
+        integration over a built-in wavelength grid.
+
+        The behavior of this function is undefined if the simulation does not track the radiation
+        field, because in that case setup does not calculate the information on which this function
+        relies. */
+    double indicativeTemperature(const Array& Jv) const override;
 
     //======== High-level photon life cycle =======
 
@@ -376,24 +396,6 @@ public:
     //======== Temperature and emission =======
 
 public:
-    /** This function returns the equilibrium temperature \f$T_{\text{eq}}\f$ of the dust mix (or
-        rather of the representative grain population corresponding to the dust mix) when it would
-        be embedded in the radiation field specified by the mean intensities
-        \f$(J_\lambda)_\ell\f$, which must be discretized on the simulation's radiation field
-        wavelength grid as returned by the Configuration::radiationFieldWLG() function.
-
-        The equilibrium temperature is obtained from the energy balance equation, \f[ \int_0^\infty
-        \varsigma^\text{abs}(\lambda) \,J_\lambda(\lambda) \,\text{d}\lambda = \int_0^\infty
-        \varsigma^\text{abs}(\lambda) \,B_\lambda(T_\text{eq},\lambda) \,\text{d}\lambda, \f] where
-        the left-hand side is integrated over the radiation field wavelength grid, and the
-        right-hand side is precalculated during setup for a range of temperatures through
-        integration over a built-in wavelength grid.
-
-        The behavior of this function is undefined if the simulation does not track the radiation
-        field, because in that case setup does not calculate the information on which this function
-        relies. */
-    double equilibriumTemperature(const Array& Jv) const override;
-
     /** This function returns the emissivity spectrum per hydrogen atom \f$\varepsilon_{\ell'}\f$
         of the dust mix (or rather of the representative grain population corresponding to the dust
         mix) when it would be embedded in a given radiation field, assuming that the dust grains
@@ -407,7 +409,7 @@ public:
         dust mass of the dust mix, \f$\varsigma_{\lambda}^{\text{abs}}\f$ the absorption cross
         section of the representative grain, and \f$T_\text{eq}\f$ the equilibrium temperature of
         that grain, obtained from the energy balance equation as described for the
-        equilibriumTemperature() function.
+        DustMix::indicativeTemperature() function.
 
         The behavior of this function is undefined if the simulation does not track the radiation
         field, because in that case setup does not calculate the information on which this function

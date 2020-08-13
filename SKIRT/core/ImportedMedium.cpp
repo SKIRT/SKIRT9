@@ -127,7 +127,7 @@ double ImportedMedium::temperature(Position bfr) const
         else
         {
             Array dummyJv;
-            return materialMix()->equilibriumTemperature(dummyJv);
+            return materialMix()->indicativeTemperature(dummyJv);
         }
     }
     return 0.;

@@ -47,7 +47,7 @@ public:
         material mix supports polarization during scattering events or not. */
     bool hasPolarizedScattering() const override;
 
-    //======== Basic material properties =======
+    //======== Low-level material properties =======
 
 public:
     /** This function returns the electron mass. */
@@ -68,6 +68,12 @@ public:
         \varsigma^{\text{sca}}_{\lambda}\f$ which is constant and equal to the Thomson cross
         section for all wavelengths \f$\lambda\f$. */
     double sectionExt(double lambda) const override;
+
+    /** This function returns an indicative temperature of the material mix when it would be
+        embedded in a given radiation field. Because electrons don't absorb nor emit (within the
+        range of physics supported here), the implementation in this class ignores the input
+        radiation field and always returns zero. */
+    double indicativeTemperature(const Array& Jv) const override;
 
     //======== High-level photon life cycle =======
 
@@ -106,12 +112,6 @@ public:
     void performScattering(double lambda, const MediumState* state, PhotonPacket* pp) const override;
 
     //======== Temperature and emission =======
-
-    /** This function returns the equilibrium temperature \f$T_{\text{eq}}\f$ of the material mix
-        when it would be embedded in a given radiation field. Because electrons don't absorb nor
-        emit (within the range of physics supported here), the implementation in this class ignores
-        the input radiation field and always returns zero. */
-    double equilibriumTemperature(const Array& Jv) const override;
 
     /** This function returns the emissivity spectrum \f$\varepsilon_{\ell'}\f$ of the material mix
         when it would be embedded in a given radiation field. Because electrons don't absorb nor
