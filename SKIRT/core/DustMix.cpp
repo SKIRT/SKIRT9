@@ -220,6 +220,13 @@ MaterialMix::MaterialType DustMix::materialType() const
 
 ////////////////////////////////////////////////////////////////////
 
+vector<StateVariable> DustMix::specificStateVariableInfo() const
+{
+    return vector<StateVariable>{ StateVariable::numberDensity() };
+}
+
+////////////////////////////////////////////////////////////////////
+
 double DustMix::mass() const
 {
     return _mu;

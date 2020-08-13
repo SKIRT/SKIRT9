@@ -9,6 +9,7 @@
 #include "Array.hpp"
 #include "Direction.hpp"
 #include "SimulationItem.hpp"
+#include "StateVariable.hpp"
 class Configuration;
 class MediumState;
 class PhotonPacket;
@@ -220,6 +221,24 @@ public:
         heating of dust grains for the calculation of secondary emission, and false otherwise. The
         default implementation in this base class returns false. */
     virtual bool hasStochasticDustEmission() const;
+
+    //======== Medium state setup =======
+
+    /** This function returns a list of StateVariable objects describing the specific state
+        variables used by the receiving material mix. This allows the MediumSystem class to
+        allocate storage for the appropriate set of state variables, and it allows probing the
+        relevant medium state variables for output. See the StateVariable class for more info.
+
+        Common state variables should \em not be listed; their presence is derived from other
+        aspects of the configured medium components. On the other hand, \em all specific state
+        variables used by the material mix must be listed, including those that are forced to be
+        always present by the medium system. Multiple state variables of type Custom can be
+        requested by supplying indices in the range \f$ 0 \le k < K\f$, where K is the total number
+        of custom variables. Any given type/index combination may occur in the list only once. The
+        order of occurrence in the list is irrelevant as far as the medium system is concerned, but
+        may be relevant for custom variables that are handled by other portion of the code in
+        agreement with the material mix. */
+    virtual vector<StateVariable> specificStateVariableInfo() const = 0;
 
     //======== Low-level material properties =======
 

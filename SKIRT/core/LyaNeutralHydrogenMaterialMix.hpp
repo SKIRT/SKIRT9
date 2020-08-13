@@ -68,6 +68,17 @@ public:
     /** This function returns true, indicating that scattering for the material mix is resonant. */
     bool hasResonantScattering() const override;
 
+    //======== Medium state setup =======
+
+public:
+    /** This function returns a list of StateVariable objects describing the specific state
+        variables used by the receiving material mix. See the description of the
+        MaterialMix::specificStateVariableInfo() function for more information.
+
+        The Lyman-alpha material mix requires a gas temperature in addition to the standard number
+        density, so this function returns a list containing these two items. */
+    vector<StateVariable> specificStateVariableInfo() const override;
+
     //======== Low-level material properties =======
 
 public:

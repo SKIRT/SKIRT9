@@ -34,6 +34,13 @@ bool ElectronMix::hasPolarizedScattering() const
 
 ////////////////////////////////////////////////////////////////////
 
+vector<StateVariable> ElectronMix::specificStateVariableInfo() const
+{
+    return vector<StateVariable>{ StateVariable::numberDensity() };
+}
+
+////////////////////////////////////////////////////////////////////
+
 double ElectronMix::mass() const
 {
     return Constants::Melectron();

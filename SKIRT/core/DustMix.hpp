@@ -130,6 +130,17 @@ public:
         other words it returns MaterialType::Dust. */
     MaterialType materialType() const override;
 
+    //======== Medium state setup =======
+
+public:
+    /** This function returns a list of StateVariable objects describing the specific state
+        variables used by the receiving material mix. See the description of the
+        MaterialMix::specificStateVariableInfo() function for more information.
+
+        Dust mixes require just the standard specific state variable of type numberDensity , so
+        this function returns a list containing a single item. */
+    vector<StateVariable> specificStateVariableInfo() const override;
+
     //======== Low-level material properties =======
 
 public:
