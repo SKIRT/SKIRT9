@@ -31,7 +31,7 @@ void GasTemperaturePerCellProbe::probeSetup()
         int numCells = ms->numCells();
         for (int m = 0; m != numCells; ++m)
         {
-            file.writeRow(m, units->otemperature(ms->gasTemperature(m)));
+            file.writeRow(m, units->otemperature(ms->indicativeGasTemperature(m)));
         }
     }
 }

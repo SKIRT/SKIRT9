@@ -55,7 +55,7 @@ void PlanarGasTemperatureCutsProbe::writeGasTemperatureCut(Probe* probe, bool xd
                 int l = i + Ni * j;
 
                 int m = grid->cellIndex(Position(x, y, z));
-                if (m >= 0) Tv[l] = units->otemperature(ms->gasTemperature(m));
+                if (m >= 0) Tv[l] = units->otemperature(ms->indicativeGasTemperature(m));
             }
         }
     });

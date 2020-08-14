@@ -142,10 +142,9 @@ public:
         medium component specifies a magnetic field, this function returns the null vector. */
     Vec magneticField(int m) const;
 
-    /** This function returns the gas temperature \f$T\f$ in the spatial cell with index \f$m\f$.
-        At most one medium component is allowed to specify a gas temperature. If no medium
-        component specifies a gas temperature, this function returns zero. */
-    double gasTemperature(int m) const;
+    /** This function returns the material mix corresponding to the medium component with index
+        \f$h\f$ in spatial cell with index \f$m\f$. */
+    const MaterialMix* mix(int m, int h) const;
 
     /** This function returns true if at least one of the media in the medium system has the
         specified fundamental material type (i.e. dust, electrons, or gas). */
@@ -185,9 +184,10 @@ public:
         spatial cell with index \f$m\f$. */
     double massDensity(int m, int h) const;
 
-    /** This function returns the material mix corresponding to the medium component with index
-        \f$h\f$ in spatial cell with index \f$m\f$. */
-    const MaterialMix* mix(int m, int h) const;
+    /** This function returns the temperature \f$T\f$ of the medium component with index \f$h\f$ in
+        the spatial cell with index \f$m\f$. If the specified medium component does not have a
+        temperature state variable, the behavior is undefined. */
+    double temperature(int m, int h) const;
 
 private:
     /** This function returns the absorption opacity \f$k_h^\text{abs}\f$ at wavelength
@@ -488,6 +488,12 @@ public:
         The bolometric absorbed luminosity in each cell is calculated as described for the
         absorbedDustLuminosity() function. */
     double totalAbsorbedDustLuminosity(bool primary) const;
+
+    /** This function returns an indicative gas temperature \f$T\f$ in the spatial cell with index
+        \f$m\f$. This temperature is obtained by averaging the temperature over the gas medium
+        components present in the spatial cell, weighed by relative mass in each component. If no
+        medium component specifies a gas temperature, this function returns zero. */
+    double indicativeGasTemperature(int m) const;
 
     //================== Private Types and Functions ====================
 

@@ -36,17 +36,17 @@ public:
     double volume() const { return _ms->volume(_m); }
 
     /** This function returns the aggregate bulk velocity \f${\boldsymbol{v}}\f$ of the medium in
-        spatial cell. */
+        the spatial cell. */
     Vec bulkVelocity() const { return _ms->bulkVelocity(_m); }
 
     /** This function returns the magnetic field \f${\boldsymbol{B}}\f$ in the spatial cell. */
     Vec magneticField() const { return _ms->magneticField(_m); }
 
-    /** This function returns the gas temperature \f$T\f$ in the spatial cell. */
-    double temperature() const { return _ms->gasTemperature(_m); }
+    /** This function returns the gas temperature \f$T\f$ of the medium component in the spatial
+        cell. */
+    double temperature() const { return _ms->temperature(_m, _h); }
 
-    /** This function returns the number density of the medium component in the
-        spatial cell. */
+    /** This function returns the number density of the medium component in the spatial cell. */
     double numberDensity() const { return _ms->numberDensity(_m, _h); }
 
     //======================== Data Members ========================

@@ -253,9 +253,9 @@ Vec MediumSystem::magneticField(int m) const
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::gasTemperature(int m) const
+const MaterialMix* MediumSystem::mix(int m, int h) const
 {
-    return state(m).T;
+    return state(m, h).mix;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -290,9 +290,10 @@ double MediumSystem::massDensity(int m, int h) const
 
 ////////////////////////////////////////////////////////////////////
 
-const MaterialMix* MediumSystem::mix(int m, int h) const
+double MediumSystem::temperature(int m, int /*h*/) const
 {
-    return state(m, h).mix;
+    // TO DO: implement h index
+    return state(m).T;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -851,6 +852,14 @@ double MediumSystem::totalAbsorbedDustLuminosity(bool primary) const
         }
     }
     return Labs;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::indicativeGasTemperature(int m) const
+{
+    // TO DO: implement averaging
+    return state(m).T;
 }
 
 ////////////////////////////////////////////////////////////////////
