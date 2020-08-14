@@ -5,7 +5,7 @@
 
 #include "ElectronMix.hpp"
 #include "Constants.hpp"
-#include "MediumState.hpp"
+#include "MaterialState.hpp"
 #include "PhotonPacket.hpp"
 #include "Random.hpp"
 
@@ -36,7 +36,7 @@ bool ElectronMix::hasPolarizedScattering() const
 
 vector<StateVariable> ElectronMix::specificStateVariableInfo() const
 {
-    return vector<StateVariable>{ StateVariable::numberDensity() };
+    return vector<StateVariable>{StateVariable::numberDensity()};
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -76,21 +76,21 @@ double ElectronMix::indicativeTemperature(const Array& /*Jv*/) const
 
 ////////////////////////////////////////////////////////////////////
 
-double ElectronMix::opacityAbs(double /*lambda*/, const MediumState* /*state*/, const PhotonPacket* /*pp*/) const
+double ElectronMix::opacityAbs(double /*lambda*/, const MaterialState* /*state*/, const PhotonPacket* /*pp*/) const
 {
     return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double ElectronMix::opacitySca(double /*lambda*/, const MediumState* state, const PhotonPacket* /*pp*/) const
+double ElectronMix::opacitySca(double /*lambda*/, const MaterialState* state, const PhotonPacket* /*pp*/) const
 {
     return state->numberDensity() * Constants::sigmaThomson();
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double ElectronMix::opacityExt(double /*lambda*/, const MediumState* state, const PhotonPacket* /*pp*/) const
+double ElectronMix::opacityExt(double /*lambda*/, const MaterialState* state, const PhotonPacket* /*pp*/) const
 {
     return state->numberDensity() * Constants::sigmaThomson();
 }
@@ -98,7 +98,7 @@ double ElectronMix::opacityExt(double /*lambda*/, const MediumState* state, cons
 ////////////////////////////////////////////////////////////////////
 
 void ElectronMix::peeloffScattering(double& I, double& Q, double& U, double& V, double& /*lambda*/, double w,
-                                    Direction bfkobs, Direction bfky, const MediumState* /*state*/,
+                                    Direction bfkobs, Direction bfky, const MaterialState* /*state*/,
                                     PhotonPacket* pp) const
 {
     _dpf.peeloffScattering(I, Q, U, V, w, pp->direction(), bfkobs, bfky, pp);
@@ -106,7 +106,7 @@ void ElectronMix::peeloffScattering(double& I, double& Q, double& U, double& V, 
 
 ////////////////////////////////////////////////////////////////////
 
-void ElectronMix::performScattering(double lambda, const MediumState* state, PhotonPacket* pp) const
+void ElectronMix::performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const
 {
     // determine the new propagation direction, and if required, update the polarization state of the photon packet
     Direction bfknew = _dpf.performScattering(pp->direction(), pp);

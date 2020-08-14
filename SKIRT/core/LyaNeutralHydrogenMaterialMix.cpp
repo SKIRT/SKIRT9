@@ -7,7 +7,7 @@
 #include "Configuration.hpp"
 #include "Constants.hpp"
 #include "LyaUtils.hpp"
-#include "MediumState.hpp"
+#include "MaterialState.hpp"
 #include "PhotonPacket.hpp"
 #include "Random.hpp"
 
@@ -45,7 +45,7 @@ bool LyaNeutralHydrogenMaterialMix::hasResonantScattering() const
 
 vector<StateVariable> LyaNeutralHydrogenMaterialMix::specificStateVariableInfo() const
 {
-    return vector<StateVariable>{ StateVariable::numberDensity(), StateVariable::temperature() };
+    return vector<StateVariable>{StateVariable::numberDensity(), StateVariable::temperature()};
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -78,7 +78,7 @@ double LyaNeutralHydrogenMaterialMix::sectionExt(double lambda) const
 
 ////////////////////////////////////////////////////////////////////
 
-double LyaNeutralHydrogenMaterialMix::opacityAbs(double /*lambda*/, const MediumState* /*state*/,
+double LyaNeutralHydrogenMaterialMix::opacityAbs(double /*lambda*/, const MaterialState* /*state*/,
                                                  const PhotonPacket* /*pp*/) const
 {
     return 0.;
@@ -86,7 +86,7 @@ double LyaNeutralHydrogenMaterialMix::opacityAbs(double /*lambda*/, const Medium
 
 ////////////////////////////////////////////////////////////////////
 
-double LyaNeutralHydrogenMaterialMix::opacitySca(double lambda, const MediumState* state,
+double LyaNeutralHydrogenMaterialMix::opacitySca(double lambda, const MaterialState* state,
                                                  const PhotonPacket* /*pp*/) const
 {
     double n = state->numberDensity();
@@ -95,7 +95,7 @@ double LyaNeutralHydrogenMaterialMix::opacitySca(double lambda, const MediumStat
 
 ////////////////////////////////////////////////////////////////////
 
-double LyaNeutralHydrogenMaterialMix::opacityExt(double lambda, const MediumState* state,
+double LyaNeutralHydrogenMaterialMix::opacityExt(double lambda, const MaterialState* state,
                                                  const PhotonPacket* /*pp*/) const
 {
     double n = state->numberDensity();
@@ -113,7 +113,7 @@ double LyaNeutralHydrogenMaterialMix::indicativeTemperature(const Array& /*Jv*/)
 
 void LyaNeutralHydrogenMaterialMix::peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda,
                                                       double w, Direction bfkobs, Direction bfky,
-                                                      const MediumState* state, PhotonPacket* pp) const
+                                                      const MaterialState* state, PhotonPacket* pp) const
 {
     // draw a random atom velocity & phase function, unless a previous peel-off stored this already
     if (!pp->hasLyaScatteringInfo())
@@ -144,7 +144,7 @@ void LyaNeutralHydrogenMaterialMix::peeloffScattering(double& I, double& Q, doub
 
 ////////////////////////////////////////////////////////////////////
 
-void LyaNeutralHydrogenMaterialMix::performScattering(double lambda, const MediumState* state, PhotonPacket* pp) const
+void LyaNeutralHydrogenMaterialMix::performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const
 {
     // draw a random atom velocity & phase function, unless a peel-off stored this already
     if (!pp->hasLyaScatteringInfo())

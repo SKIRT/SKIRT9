@@ -262,9 +262,9 @@ public:
     bool weightsForScattering(Array& wv, double lambda, const PhotonPacket* pp) const;
 
     /** This function calculates the peel-off photon luminosity, polarization state, and wavelength
-        shift for the given wavelength, geometry, medium state, and incoming photon packet. The
-        specified placeholder peel-off photon packet is then launched using this information so
-        that it is ready for detection by instruments.
+        shift for the given wavelength, geometry, and incoming photon packet. The specified
+        placeholder peel-off photon packet is then launched using this information so that it is
+        ready for detection by instruments.
 
         If there are multiple medium components, the contributions to the luminosity (and if
         polarization is enabled, to the other components of the Stokes vector) are weighted by the

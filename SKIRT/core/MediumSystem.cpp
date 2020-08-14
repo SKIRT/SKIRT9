@@ -13,7 +13,7 @@
 #include "Log.hpp"
 #include "LyaUtils.hpp"
 #include "MaterialMix.hpp"
-#include "MediumState.hpp"
+#include "MaterialState.hpp"
 #include "NR.hpp"
 #include "Parallel.hpp"
 #include "ParallelFactory.hpp"
@@ -299,7 +299,7 @@ const MaterialMix* MediumSystem::mix(int m, int h) const
 
 double MediumSystem::opacityAbs(double lambda, int m, int h) const
 {
-    MediumState mst(this, m, h);
+    MaterialState mst(this, m, h);
     return state(m, h).mix->opacityAbs(lambda, &mst, nullptr);
 }
 
@@ -307,7 +307,7 @@ double MediumSystem::opacityAbs(double lambda, int m, int h) const
 
 double MediumSystem::opacitySca(double lambda, int m, int h) const
 {
-    MediumState mst(this, m, h);
+    MaterialState mst(this, m, h);
     return state(m, h).mix->opacitySca(lambda, &mst, nullptr);
 }
 
@@ -315,7 +315,7 @@ double MediumSystem::opacitySca(double lambda, int m, int h) const
 
 double MediumSystem::opacityExt(double lambda, int m, int h) const
 {
-    MediumState mst(this, m, h);
+    MaterialState mst(this, m, h);
     return state(m, h).mix->opacityExt(lambda, &mst, nullptr);
 }
 
@@ -371,7 +371,7 @@ double MediumSystem::albedoForScattering(const PhotonPacket* pp) const
     double kext = 0.;
     for (int h = 0; h != _numMedia; ++h)
     {
-        MediumState mst(this, m, h);
+        MaterialState mst(this, m, h);
         ksca += state(m, h).mix->opacitySca(lambda, &mst, pp);
         kext += state(m, h).mix->opacityExt(lambda, &mst, pp);
     }
@@ -399,7 +399,7 @@ bool MediumSystem::weightsForScattering(Array& wv, double lambda, const PhotonPa
     double sum = 0.;
     for (int h = 0; h != _numMedia; ++h)
     {
-        MediumState mst(this, m, h);
+        MaterialState mst(this, m, h);
         wv[h] = state(m, h).mix->opacitySca(lambda, &mst, pp);
         sum += wv[h];
     }
@@ -431,7 +431,7 @@ void MediumSystem::peelOffScattering(double lambda, const Array& wv, Direction b
     for (int h = 0; h != _numMedia; ++h)
     {
         double localLambda = lambda;
-        MediumState mst(this, m, h);
+        MaterialState mst(this, m, h);
         state(m, h).mix->peeloffScattering(I, Q, U, V, localLambda, wv[h], bfkobs, bfky, &mst, pp);
 
         // if this material mix changed the wavelength, it is copied as the outgoing wavelength
@@ -461,7 +461,7 @@ void MediumSystem::simulateScattering(Random* random, PhotonPacket* pp) const
         // build the cumulative distribution corresponding to the scattering opacities
         Array Xv;
         NR::cdf(Xv, _numMedia, [this, lambda, pp, m](int h) {
-            MediumState mst(this, m, h);
+            MaterialState mst(this, m, h);
             return state(m, h).mix->opacitySca(lambda, &mst, pp);
         });
 
@@ -470,7 +470,7 @@ void MediumSystem::simulateScattering(Random* random, PhotonPacket* pp) const
     }
 
     // actually perform the scattering event for this cell and medium component
-    MediumState mst(this, m, h);
+    MaterialState mst(this, m, h);
     state(m, h).mix->performScattering(lambda, &mst, pp);
 }
 

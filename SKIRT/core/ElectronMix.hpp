@@ -90,37 +90,37 @@ public:
 
     /** This function returns the absorption opacity \f$k^\text{abs}=n\varsigma^\text{abs}\f$,
         which is trivially zero for electrons. */
-    double opacityAbs(double lambda, const MediumState* state, const PhotonPacket* pp) const override;
+    double opacityAbs(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
 
     /** This function returns the scattering opacity \f$k^\text{sca}=n\varsigma^\text{sca}\f$ for
-        the given medium state. The wavelength and photon properties are not used, because the
+        the given material state. The wavelength and photon properties are not used, because the
         cross section is considered to be equal to the Thomson cross section for all wavelengths.
         */
-    double opacitySca(double lambda, const MediumState* state, const PhotonPacket* pp) const override;
+    double opacitySca(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
 
     /** This function returns the extinction opacity \f$k^\text{ext}=k^\text{abs}+k^\text{sca}\f$
-        for the given medium state. The wavelength and photon properties are not used, because the
-        cross section is considered to be equal to the Thomson cross section for all wavelengths.
-        */
-    double opacityExt(double lambda, const MediumState* state, const PhotonPacket* pp) const override;
+        for the given material state. The wavelength and photon properties are not used, because
+        the cross section is considered to be equal to the Thomson cross section for all
+        wavelengths. */
+    double opacityExt(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
 
     /** This function calculates the contribution of the medium component associated with this
         material mix to the peel-off photon luminosity, polarization state, and wavelength shift
-        for the given wavelength, geometry, medium state, and photon properties. See the
+        for the given wavelength, geometry, material state, and photon properties. See the
         description of the MaterialMix::peeloffScattering() function for more information.
 
         For electrons, the function implements wavelenth-independent dipole scattering without or
         with support for polarization depending on the user-configured \em includePolarization
         property. */
     void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w, Direction bfkobs,
-                           Direction bfky, const MediumState* state, PhotonPacket* pp) const override;
+                           Direction bfky, const MaterialState* state, PhotonPacket* pp) const override;
 
     /** This function performs a scattering event on the specified photon packet in the spatial
-        cell and medium component represented by the specified medium state and the receiving
+        cell and medium component represented by the specified material state and the receiving
         material mix. For electrons, the function implements wavelenth-independent dipole
         scattering without or with support for polarization depending on the user-configured \em
         includePolarization property. */
-    void performScattering(double lambda, const MediumState* state, PhotonPacket* pp) const override;
+    void performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const override;
 
     //======================== Data Members ========================
 

@@ -3,26 +3,26 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef MEDIUMSTATE_HPP
-#define MEDIUMSTATE_HPP
+#ifndef MATERIALSTATE_HPP
+#define MATERIALSTATE_HPP
 
 #include "MediumSystem.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
-/** An instance of the MediumState class provides access to the medium state for a particular
+/** An instance of the MaterialState class provides access to the medium state for a particular
     spatial cell and medium component, as determined during construction. This includes the common
     state variables for the cell as well as the specific state variables for the medium component.
 
     This is a temporary implementation of this class. */
-class MediumState
+class MaterialState
 {
     //============= Construction - Setup - Destruction =============
 
 public:
     /** The constructor arguments specify the spatial cell and medium component to be represented.
         */
-    MediumState(const MediumSystem* ms, int m, int h)
+    MaterialState(const MediumSystem* ms, int m, int h)
     {
         _ms = ms;
         _m = m;

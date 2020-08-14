@@ -11,7 +11,7 @@
 #include "SimulationItem.hpp"
 #include "StateVariable.hpp"
 class Configuration;
-class MediumState;
+class MaterialState;
 class PhotonPacket;
 class Random;
 class StokesVector;
@@ -290,23 +290,24 @@ public:
     //======== High-level photon life cycle =======
 
     /** This function returns the absorption opacity \f$k^\text{abs}=n\varsigma^\text{abs}\f$ for
-        the given wavelength, medium state, and photon properties (optional; may be nullptr). */
-    virtual double opacityAbs(double lambda, const MediumState* state, const PhotonPacket* pp) const = 0;
+        the given wavelength, material state, and photon properties (optional; may be nullptr). */
+    virtual double opacityAbs(double lambda, const MaterialState* state, const PhotonPacket* pp) const = 0;
 
     /** This function returns the scattering opacity \f$k^\text{sca}=n\varsigma^\text{sca}\f$ for
-        the given wavelength, medium state, and photon properties (optional; may be nullptr). */
-    virtual double opacitySca(double lambda, const MediumState* state, const PhotonPacket* pp) const = 0;
+        the given wavelength, material state, and photon properties (optional; may be nullptr). */
+    virtual double opacitySca(double lambda, const MaterialState* state, const PhotonPacket* pp) const = 0;
 
     /** This function returns the extinction opacity \f$k^\text{ext}=k^\text{abs}+k^\text{sca}\f$
-        for the given wavelength, medium state, and photon properties (optional; may be nullptr). */
-    virtual double opacityExt(double lambda, const MediumState* state, const PhotonPacket* pp) const = 0;
+        for the given wavelength, material state, and photon properties (optional; may be nullptr).
+        */
+    virtual double opacityExt(double lambda, const MaterialState* state, const PhotonPacket* pp) const = 0;
 
     /** This function calculates the contribution of the medium component associated with this
         material mix to the peel-off photon luminosity, polarization state, and wavelength shift
-        for the given wavelength, geometry, medium state, and photon properties. The contributions
-        to the Stokes vector components are added to the incoming values of the \em I, \em Q, \em
-        U, \em V arguments. If there is wavelength shift, the new wavelength value replaces the
-        incoming value of the \em lambda argument.
+        for the given wavelength, geometry, material state, and photon properties. The
+        contributions to the Stokes vector components are added to the incoming values of the \em
+        I, \em Q, \em U, \em V arguments. If there is wavelength shift, the new wavelength value
+        replaces the incoming value of the \em lambda argument.
 
         Since we force the peel-off photon packet to be scattered from the direction \f${\bf{k}}\f$
         into the direction \f${\bf{k}}_{\text{obs}}\f$, the corresponding biasing factor is given
@@ -318,11 +319,11 @@ public:
         phase function values weighted using the relative opacities for the various components. The
         relative opacity weight for the current component is specified as argument \em w. */
     virtual void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w,
-                                   Direction bfkobs, Direction bfky, const MediumState* state,
+                                   Direction bfkobs, Direction bfky, const MaterialState* state,
                                    PhotonPacket* pp) const = 0;
 
     /** This function performs a scattering event on the specified photon packet in the spatial
-        cell and medium component represented by the specified medium state and the receiving
+        cell and medium component represented by the specified material state and the receiving
         material mix. Most of the properties of the photon packet remain unaltered, including the
         position and the luminosity. The properties that change include the number of scattering
         events experienced by the photon packet, which is increased by one, the propagation
@@ -331,12 +332,12 @@ public:
         the scattering process.
 
         The calculation takes all physical processes into account, including the bulk velocity and
-        Hubble expansion velocity in the cell, any relevant medium state variables such as the
+        Hubble expansion velocity in the cell, any relevant material state variables such as the
         temperature of a gas medium, and any relevant properties of the incoming photon packet such
         as the polarization state. The first argument specifies the perceived wavelength of the
         photon packet at the scattering location so that this value does not need to be
         recalculated within the function. */
-    virtual void performScattering(double lambda, const MediumState* state, PhotonPacket* pp) const = 0;
+    virtual void performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const = 0;
 
     //======== Spheroidal grains =======
 

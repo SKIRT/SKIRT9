@@ -193,20 +193,20 @@ public:
     //======== High-level photon life cycle =======
 
     /** This function returns the absorption opacity \f$k^\text{abs}=n\varsigma^\text{abs}\f$ for
-        the given wavelength and medium state. The photon properties are not used. */
-    double opacityAbs(double lambda, const MediumState* state, const PhotonPacket* pp) const override;
+        the given wavelength and material state. The photon properties are not used. */
+    double opacityAbs(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
 
     /** This function returns the scattering opacity \f$k^\text{sca}=n\varsigma^\text{sca}\f$ for
-        the given wavelength and medium state. The photon properties are not used. */
-    double opacitySca(double lambda, const MediumState* state, const PhotonPacket* pp) const override;
+        the given wavelength and material state. The photon properties are not used. */
+    double opacitySca(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
 
     /** This function returns the extinction opacity \f$k^\text{ext}=k^\text{abs}+k^\text{sca}\f$
-        for the given wavelength and medium state. The photon properties are not used. */
-    double opacityExt(double lambda, const MediumState* state, const PhotonPacket* pp) const override;
+        for the given wavelength and material state. The photon properties are not used. */
+    double opacityExt(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
 
     /** This function calculates the contribution of the medium component associated with this
         material mix to the peel-off photon luminosity, polarization state, and wavelength shift
-        for the given wavelength, geometry, medium state, and photon properties. See the
+        for the given wavelength, geometry, material state, and photon properties. See the
         description of the MaterialMix::peeloffScattering() function for more information.
 
         For dust mixes, evaluation of the phase function depends on the scattering mode supported
@@ -227,10 +227,10 @@ public:
         components, the relative opacity weighting factor applies not just to the luminosity but
         also to the other components of the Stokes vector. */
     void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w, Direction bfkobs,
-                           Direction bfky, const MediumState* state, PhotonPacket* pp) const override;
+                           Direction bfky, const MaterialState* state, PhotonPacket* pp) const override;
 
     /** This function performs a scattering event on the specified photon packet in the spatial
-        cell and medium component represented by the specified medium state and the receiving
+        cell and medium component represented by the specified material state and the receiving
         material mix.
 
         For dust mixes, the operation depends on the scattering mode supported by the dust mix, as
@@ -259,7 +259,7 @@ public:
         vector of the photon packet is rotated into the scattering plane and transformed by
         applying the Mueller matrix. Finally, the new direction is computed from the previously
         sampled \f$\theta\f$ and \f$\phi\f$ angles. */
-    void performScattering(double lambda, const MediumState* state, PhotonPacket* pp) const override;
+    void performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const override;
 
     //======== Scattering implementation for dust mixes =======
 

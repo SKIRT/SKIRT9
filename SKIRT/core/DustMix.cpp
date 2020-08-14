@@ -6,7 +6,7 @@
 #include "DustMix.hpp"
 #include "Configuration.hpp"
 #include "Log.hpp"
-#include "MediumState.hpp"
+#include "MaterialState.hpp"
 #include "NR.hpp"
 #include "PhotonPacket.hpp"
 #include "Random.hpp"
@@ -222,7 +222,7 @@ MaterialMix::MaterialType DustMix::materialType() const
 
 vector<StateVariable> DustMix::specificStateVariableInfo() const
 {
-    return vector<StateVariable>{ StateVariable::numberDensity() };
+    return vector<StateVariable>{StateVariable::numberDensity()};
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -262,7 +262,7 @@ double DustMix::asymmpar(double lambda) const
 
 ////////////////////////////////////////////////////////////////////
 
-double DustMix::opacityAbs(double lambda, const MediumState* state, const PhotonPacket* /*pp*/) const
+double DustMix::opacityAbs(double lambda, const MaterialState* state, const PhotonPacket* /*pp*/) const
 {
     double n = state->numberDensity();
     return n > 0. ? n * _sigmaabsv[indexForLambda(lambda)] : 0.;
@@ -270,7 +270,7 @@ double DustMix::opacityAbs(double lambda, const MediumState* state, const Photon
 
 ////////////////////////////////////////////////////////////////////
 
-double DustMix::opacitySca(double lambda, const MediumState* state, const PhotonPacket* /*pp*/) const
+double DustMix::opacitySca(double lambda, const MaterialState* state, const PhotonPacket* /*pp*/) const
 {
     double n = state->numberDensity();
     return n > 0. ? n * _sigmascav[indexForLambda(lambda)] : 0.;
@@ -278,7 +278,7 @@ double DustMix::opacitySca(double lambda, const MediumState* state, const Photon
 
 ////////////////////////////////////////////////////////////////////
 
-double DustMix::opacityExt(double lambda, const MediumState* state, const PhotonPacket* /*pp*/) const
+double DustMix::opacityExt(double lambda, const MaterialState* state, const PhotonPacket* /*pp*/) const
 {
     double n = state->numberDensity();
     return n > 0. ? n * _sigmaextv[indexForLambda(lambda)] : 0.;
@@ -314,7 +314,7 @@ namespace
 ////////////////////////////////////////////////////////////////////
 
 void DustMix::peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w, Direction bfkobs,
-                                Direction bfky, const MediumState* /*state*/, PhotonPacket* pp) const
+                                Direction bfky, const MaterialState* /*state*/, PhotonPacket* pp) const
 {
     switch (scatteringMode())
     {
@@ -374,7 +374,7 @@ void DustMix::peeloffScattering(double& I, double& Q, double& U, double& V, doub
 
 ////////////////////////////////////////////////////////////////////
 
-void DustMix::performScattering(double lambda, const MediumState* state, PhotonPacket* pp) const
+void DustMix::performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const
 {
     // determine the new propagation direction and, if required, update the polarization state of the photon packet
     Direction bfknew;
