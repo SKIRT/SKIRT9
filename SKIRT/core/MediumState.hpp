@@ -83,7 +83,7 @@ class MediumState
 
 public:
     /** This function initializes the number of spatial cells and number of medium components. */
-    void initConfiguration(int numCells, int numComps);
+    void initConfiguration(int numCells, int numMedia);
 
     /** This function initializes the set of required common state variables. */
     void initCommonStateVariables(const vector<StateVariable>& variables);
@@ -172,7 +172,7 @@ private:
 
     // configuration and offsets used for mapping to indices in the data array
     int _numCells{0};
-    int _numComps{0};
+    int _numMedia{0};
     int _numVars{0};
     int _off_volu{0};
     int _off_velo{0};

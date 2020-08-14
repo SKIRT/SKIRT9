@@ -41,20 +41,20 @@ void MediumSystem::setupSelfAfter()
     auto parfac = find<ParallelFactory>();
     _config = find<Configuration>();
 
-    // ----- allocate memory -----
-
     _numCells = _grid->numCells();
     if (_numCells < 1) throw FATALERROR("The spatial grid must have at least one cell");
     _numMedia = _media.size();
-
-    // initial state
     size_t allocatedBytes = 0;
+
+    // ----- allocate memory for the medium state -----
+
     _state1v.resize(_numCells);
     allocatedBytes += _state1v.size() * sizeof(State1);
     _state2vv.resize(_numCells * _numMedia);
     allocatedBytes += _state2vv.size() * sizeof(State2);
 
-    // radiation field
+    // ----- allocate memory for the radiation field -----
+
     if (_config->hasRadiationField())
     {
         _wavelengthGrid = _config->radiationFieldWLG();
@@ -69,7 +69,29 @@ void MediumSystem::setupSelfAfter()
         }
     }
 
-    // inform user
+    // ----- obtain the material mix pointers -----
+
+    if (_config->hasVariableMedia())
+    {
+        // we need a separate material mix pointer for each spatial cell (per medium component)
+        _mixv.resize(_numCells * _numMedia);
+        _mixPerCell = true;
+        for (int m = 0; m != _numCells; ++m)
+        {
+            Position bfr = _grid->centralPositionInCell(m);
+            for (int h = 0; h != _numMedia; ++h) _mixv[m * _numMedia + h] = _media[h]->mix(bfr);
+        }
+    }
+    else
+    {
+        // the material mix pointer is identical for all spatial cells (per medium component)
+        _mixv.resize(_numMedia);
+        for (int h = 0; h != _numMedia; ++h) _mixv[h] = _media[h]->mix();
+    }
+    allocatedBytes += _mixv.size() * sizeof(MaterialMix*);
+
+    // ----- inform user about allocated memory -----
+
     log->info(typeAndName() + " allocated " + StringUtils::toMemSizeString(allocatedBytes) + " of memory");
 
     // ----- calculate cell densities, bulk velocities, and volumes in parallel -----
@@ -149,14 +171,6 @@ void MediumSystem::setupSelfAfter()
     communicateStates();
 
     log->info("Done calculating cell densities");
-
-    // ----- obtain the material mix pointers -----
-
-    for (int m = 0; m != _numCells; ++m)
-    {
-        Position bfr = _grid->centralPositionInCell(m);
-        for (int h = 0; h != _numMedia; ++h) state(m, h).mix = _media[h]->mix(bfr);
-    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -255,7 +269,7 @@ Vec MediumSystem::magneticField(int m) const
 
 const MaterialMix* MediumSystem::mix(int m, int h) const
 {
-    return state(m, h).mix;
+    return _mixPerCell ? _mixv[m * _numMedia + h] : _mixv[h];
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -263,7 +277,7 @@ const MaterialMix* MediumSystem::mix(int m, int h) const
 bool MediumSystem::hasMaterialType(MaterialMix::MaterialType type) const
 {
     for (int h = 0; h != _numMedia; ++h)
-        if (state(0, h).mix->materialType() == type) return true;
+        if (mix(0, h)->materialType() == type) return true;
     return false;
 }
 
@@ -271,7 +285,7 @@ bool MediumSystem::hasMaterialType(MaterialMix::MaterialType type) const
 
 bool MediumSystem::isMaterialType(MaterialMix::MaterialType type, int h) const
 {
-    return state(0, h).mix->materialType() == type;
+    return mix(0, h)->materialType() == type;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -285,7 +299,7 @@ double MediumSystem::numberDensity(int m, int h) const
 
 double MediumSystem::massDensity(int m, int h) const
 {
-    return state(m, h).n * state(m, h).mix->mass();
+    return state(m, h).n * mix(m, h)->mass();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -301,7 +315,7 @@ double MediumSystem::temperature(int m, int /*h*/) const
 double MediumSystem::opacityAbs(double lambda, int m, int h) const
 {
     MaterialState mst(this, m, h);
-    return state(m, h).mix->opacityAbs(lambda, &mst, nullptr);
+    return mix(m, h)->opacityAbs(lambda, &mst, nullptr);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -309,7 +323,7 @@ double MediumSystem::opacityAbs(double lambda, int m, int h) const
 double MediumSystem::opacitySca(double lambda, int m, int h) const
 {
     MaterialState mst(this, m, h);
-    return state(m, h).mix->opacitySca(lambda, &mst, nullptr);
+    return mix(m, h)->opacitySca(lambda, &mst, nullptr);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -317,7 +331,7 @@ double MediumSystem::opacitySca(double lambda, int m, int h) const
 double MediumSystem::opacityExt(double lambda, int m, int h) const
 {
     MaterialState mst(this, m, h);
-    return state(m, h).mix->opacityExt(lambda, &mst, nullptr);
+    return mix(m, h)->opacityExt(lambda, &mst, nullptr);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -326,7 +340,7 @@ double MediumSystem::opacityAbs(double lambda, int m, MaterialMix::MaterialType 
 {
     double result = 0.;
     for (int h = 0; h != _numMedia; ++h)
-        if (state(0, h).mix->materialType() == type) result += opacityAbs(lambda, m, h);
+        if (mix(0, h)->materialType() == type) result += opacityAbs(lambda, m, h);
     return result;
 }
 
@@ -336,7 +350,7 @@ double MediumSystem::opacityExt(double lambda, int m, MaterialMix::MaterialType 
 {
     double result = 0.;
     for (int h = 0; h != _numMedia; ++h)
-        if (state(0, h).mix->materialType() == type) result += opacityExt(lambda, m, h);
+        if (mix(0, h)->materialType() == type) result += opacityExt(lambda, m, h);
     return result;
 }
 
@@ -373,8 +387,8 @@ double MediumSystem::albedoForScattering(const PhotonPacket* pp) const
     for (int h = 0; h != _numMedia; ++h)
     {
         MaterialState mst(this, m, h);
-        ksca += state(m, h).mix->opacitySca(lambda, &mst, pp);
-        kext += state(m, h).mix->opacityExt(lambda, &mst, pp);
+        ksca += mix(m, h)->opacitySca(lambda, &mst, pp);
+        kext += mix(m, h)->opacityExt(lambda, &mst, pp);
     }
     return kext > 0. ? ksca / kext : 0.;
 }
@@ -401,7 +415,7 @@ bool MediumSystem::weightsForScattering(Array& wv, double lambda, const PhotonPa
     for (int h = 0; h != _numMedia; ++h)
     {
         MaterialState mst(this, m, h);
-        wv[h] = state(m, h).mix->opacitySca(lambda, &mst, pp);
+        wv[h] = mix(m, h)->opacitySca(lambda, &mst, pp);
         sum += wv[h];
     }
 
@@ -433,7 +447,7 @@ void MediumSystem::peelOffScattering(double lambda, const Array& wv, Direction b
     {
         double localLambda = lambda;
         MaterialState mst(this, m, h);
-        state(m, h).mix->peeloffScattering(I, Q, U, V, localLambda, wv[h], bfkobs, bfky, &mst, pp);
+        mix(m, h)->peeloffScattering(I, Q, U, V, localLambda, wv[h], bfkobs, bfky, &mst, pp);
 
         // if this material mix changed the wavelength, it is copied as the outgoing wavelength
         // if more than one material mix changes the wavelength, only the last one is preserved
@@ -463,7 +477,7 @@ void MediumSystem::simulateScattering(Random* random, PhotonPacket* pp) const
         Array Xv;
         NR::cdf(Xv, _numMedia, [this, lambda, pp, m](int h) {
             MaterialState mst(this, m, h);
-            return state(m, h).mix->opacitySca(lambda, &mst, pp);
+            return mix(m, h)->opacitySca(lambda, &mst, pp);
         });
 
         // randomly select an index
@@ -472,7 +486,7 @@ void MediumSystem::simulateScattering(Random* random, PhotonPacket* pp) const
 
     // actually perform the scattering event for this cell and medium component
     MaterialState mst(this, m, h);
-    state(m, h).mix->performScattering(lambda, &mst, pp);
+    mix(m, h)->performScattering(lambda, &mst, pp);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -530,7 +544,7 @@ void MediumSystem::setOpticalDepths(PhotonPacket* pp) const
     // single medium, spatially constant cross sections
     if (_config->hasSingleConstantMedium())
     {
-        double section = state(0, 0).mix->sectionExt(pp->wavelength());
+        double section = mix(0, 0)->sectionExt(pp->wavelength());
         for (auto& segment : pp->segments())
         {
             if (segment.m >= 0) tau += section * state(segment.m, 0).n * segment.ds;
@@ -542,7 +556,7 @@ void MediumSystem::setOpticalDepths(PhotonPacket* pp) const
     else if (_config->hasMultipleConstantMedia())
     {
         ShortArray<8> sectionv(_numMedia);
-        for (int h = 0; h != _numMedia; ++h) sectionv[h] = state(0, h).mix->sectionExt(pp->wavelength());
+        for (int h = 0; h != _numMedia; ++h) sectionv[h] = mix(0, h)->sectionExt(pp->wavelength());
         for (auto& segment : pp->segments())
         {
             if (segment.m >= 0)
@@ -579,7 +593,7 @@ bool MediumSystem::setInteractionPoint(PhotonPacket* pp, double tauscat) const
     // --> single medium, spatially constant cross sections
     if (_config->hasSingleConstantMedium())
     {
-        double section = state(0, 0).mix->sectionExt(pp->wavelength());
+        double section = mix(0, 0)->sectionExt(pp->wavelength());
         while (generator->next())
         {
             // remember the cumulative optical depth and distance at the start of this segment
@@ -606,7 +620,7 @@ bool MediumSystem::setInteractionPoint(PhotonPacket* pp, double tauscat) const
     else if (_config->hasMultipleConstantMedia())
     {
         ShortArray<8> sectionv(_numMedia);
-        for (int h = 0; h != _numMedia; ++h) sectionv[h] = state(0, h).mix->sectionExt(pp->wavelength());
+        for (int h = 0; h != _numMedia; ++h) sectionv[h] = mix(0, h)->sectionExt(pp->wavelength());
         while (generator->next())
         {
             // remember the cumulative optical depth and distance at the start of this segment
@@ -681,7 +695,7 @@ double MediumSystem::getOpticalDepth(PhotonPacket* pp, double distance) const
     // single medium, spatially constant cross sections
     if (_config->hasSingleConstantMedium())
     {
-        double section = state(0, 0).mix->sectionExt(pp->wavelength());
+        double section = mix(0, 0)->sectionExt(pp->wavelength());
         while (generator->next())
         {
             if (generator->m() >= 0)
@@ -698,7 +712,7 @@ double MediumSystem::getOpticalDepth(PhotonPacket* pp, double distance) const
     else if (_config->hasMultipleConstantMedia())
     {
         ShortArray<8> sectionv(_numMedia);
-        for (int h = 0; h != _numMedia; ++h) sectionv[h] = state(0, h).mix->sectionExt(pp->wavelength());
+        for (int h = 0; h != _numMedia; ++h) sectionv[h] = mix(0, h)->sectionExt(pp->wavelength());
         while (generator->next())
         {
             double ds = generator->ds();
@@ -810,7 +824,7 @@ double MediumSystem::indicativeDustTemperature(int m) const
             double rho = massDensity(m, h);
             if (rho > 0.)
             {
-                double T = state(m, h).mix->indicativeTemperature(Jv);
+                double T = mix(m, h)->indicativeTemperature(Jv);
                 sumRhoT += rho * T;
                 sumRho += rho;
             }

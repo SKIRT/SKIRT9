@@ -9,14 +9,14 @@
 
 //////////////////////////////////////////////////////////////////////
 
-void MediumState::initConfiguration(int numCells, int numComps)
+void MediumState::initConfiguration(int numCells, int numMedia)
 {
     _numCells = numCells;
-    _numComps = numComps;
+    _numMedia = numMedia;
 
-    _off_dens.resize(_numComps);
-    _off_temp.resize(_numComps);
-    _off_cust.resize(_numComps);
+    _off_dens.resize(_numMedia);
+    _off_temp.resize(_numMedia);
+    _off_cust.resize(_numMedia);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -71,7 +71,7 @@ void MediumState::initSpecificStateVariables(const vector<StateVariable>& variab
 
 size_t MediumState::initAllocate()
 {
-    if (_nextComponent != _numComps) throw FATALERROR("Failed to request state variables for all medium components");
+    if (_nextComponent != _numMedia) throw FATALERROR("Failed to request state variables for all medium components");
     _numVars = _nextOffset;
 
     size_t numAlloc = static_cast<size_t>(_numVars) * static_cast<size_t>(_numCells);

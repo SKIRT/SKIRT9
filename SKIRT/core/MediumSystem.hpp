@@ -511,7 +511,7 @@ private:
     struct State2
     {
         double n{0.};                     // the number density
-        const MaterialMix* mix{nullptr};  // pointer to the material mix
+        //const MaterialMix* mix{nullptr};  // pointer to the material mix
     };
 
     /** This function returns a writable reference to the state data structure for the given cell
@@ -537,13 +537,15 @@ private:
     //======================== Data Members ========================
 
 private:
-    Configuration* _config;
+    Configuration* _config{nullptr};
 
     // relevant for any simulation mode that includes a medium
     int _numCells{0};          // index m
     int _numMedia{0};          // index h
     vector<State1> _state1v;   // state info for each cell (indexed on m)
     vector<State2> _state2vv;  // state info for each cell and each medium (indexed on m,h)
+    vector<const MaterialMix*> _mixv;  // indexed on h, or on m and h if mixPerCell is true
+    bool _mixPerCell{false};
 
     // relevant for any simulation mode that stores the radiation field
     WavelengthGrid* _wavelengthGrid{0};  // index ell
