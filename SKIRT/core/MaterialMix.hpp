@@ -231,13 +231,11 @@ public:
 
         Common state variables should \em not be listed; their presence is derived from other
         aspects of the configured medium components. On the other hand, \em all specific state
-        variables used by the material mix must be listed, including those that are forced to be
-        always present by the medium system. Multiple state variables of type Custom can be
-        requested by supplying indices in the range \f$ 0 \le k < K\f$, where K is the total number
-        of custom variables. Any given type/index combination may occur in the list only once. The
-        order of occurrence in the list is irrelevant as far as the medium system is concerned, but
-        may be relevant for custom variables that are handled by other portion of the code in
-        agreement with the material mix. */
+        variables used by the material mix must be listed, including those that should always
+        present. Variables of type Custom must be listed last. Multiple variables of type Custom
+        can be requested by supplying indices in the range \f$ 0 \le k < K\f$, where K is the total
+        number of custom variables. Each of these indices must occur in the list exactly once in
+        increasing order. */
     virtual vector<StateVariable> specificStateVariableInfo() const = 0;
 
     //======== Low-level material properties =======

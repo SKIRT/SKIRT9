@@ -16,31 +16,22 @@
     allows the MediumSystem class to allocate storage for the appropriate set of state variables,
     and it allows probing the relevant medium state variables for output.
 
-    For each spatial cell, the medium state managed by the MediumSystem class includes a common
-    state block shared by all medium components and a specific state block for each medium
-    component. The following table lists the variables that may be present in each of these state
-    blocks.
+    For each spatial cell in the simulation, the medium state includes a set of \em common state
+    variables shared by all medium components and a set of \em specific state variables for each
+    individual medium component. Refer to the MediumState class for a list of state variables that
+    may be present in each of these sets.
 
-    | Identifier | Symbol | Type | %Block | Present
-    | -----------|--------|------|-------|--------
-    | Volume        | \f$V\f$      | double | Common   | always
-    | BulkVelocity  | \f$v\f$      | Vec    | Common   | if requested by any medium component
-    | MagneticField | \f$\bf{B}\f$ | Vec    | Common   | if requested by any medium component
-    | NumberDensity | \f$n\f$      | double | Specific | always
-    | Temperature   | \f$T\f$      | double | Specific | if requested by the material mix
-    | Custom + k    |              | double | Specific | zero or more as requested by the material mix
+    Each StateVariable instance includes an identifier specifying one of the supported state
+    variables. Multiple custom variables can be specified by adding an index \f$0 \le k < K\f$ to
+    the base identifier, where \f$K\f$ is the total number of custom variables. The StateVariable
+    instance also includes a human-readable description of the quantity being represented, a unit
+    system quantity definition (string), and a text output format specifier. This information
+    allows custom variables to be output by generic probes or to be handled by portions of the code
+    that cooperate specifically with this type of material mix, such as recipes for adjusting the
+    medium state based on the calculated radiation field.
 
-    Each StateVariable instance specifies one of the identifiers listed in the table above.
-    Multiple custom variables can be requested by adding an index \f$0 \le k < K\f$ to the base
-    identifier, where \f$K\f$ is the total number of custom variables. The StateVariable instance
-    also includes a human-readable description of the quantity being represented, a unit system
-    quantity definition (string), and a text output format specifier. This information allows
-    custom variables to be output by generic probes or to be handled by portions of the code that
-    cooperate specifically with this type of material mix, such as recipes for adjusting the medium
-    state based on the calculated radiation field.
-
-    This class includes explicit support for the variables listed in the table above. Use one of
-    the factory functions to construct a StateVariable instance. */
+    This class includes explicit support for the known state variables. Use one of the factory
+    functions to construct a StateVariable instance. */
 class StateVariable
 {
     // ================== Data types ==================
