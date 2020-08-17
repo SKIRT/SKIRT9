@@ -49,10 +49,11 @@ class MonteCarloSimulation : public Simulation
 
         An important aspect determined by the simulation mode is the simulation's wavelength
         regime, which can be oligochromatic or panchromatic. Oligochromatic simulations use just a
-        few pre-defined, discrete wavelengths. They do not support secondary emission by the
-        transfer medium because the radiation field must be known across a wide spectrum to
-        calculate the medium state and the resulting emission. Panchromatic simulations use a
-        continuous range of wavelengths, lifting this limitation.
+        few pre-defined, discrete wavelengths. They do no support kinematics (moving sources and/or
+        media) because the wavelengths cannot shift away from the pre-defined values, and they do
+        not support secondary emission by the transfer medium because the radiation field must be
+        known across a wide spectrum to calculate the medium state and the resulting emission.
+        Panchromatic simulations use a continuous range of wavelengths, lifting these limitations.
 
         For panchromatic simulations, the simulation mode further determines fundamental choices
         such as whether to include secondary emission, and whether to iterate over the radiation

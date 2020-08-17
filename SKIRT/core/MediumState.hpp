@@ -69,14 +69,22 @@
     provides a mapping to locate a particular state variable in this array. This is accomplished by
     also storing the offset for each variable within the set of variables per spatial cell. To
     facilitate access, these offsets are stored for all supported variables (by name) and not just
-    for the required variables. The offsets for unused variables remain at zero, causing undefined
-    behavior if client code attempts to access a variable that has not been requested.
+    for the required variables. The offsets for unused variables remain at zero.
 
     Given the offset \f$O_x\f$ for a particular state variable \f$x\f$, a spatial cell index
     \f$m\f$ and a medium component index \f$h\f$, the index of the variable in the data array can
     be calculated as \f$i=K \times m + O_x\f$ (storing contiguously per cell) or \f$i=M \times O_x
     + m\f$ (storing contiguously per variable). We can evaluate the performance of these and
-    possibly other mapping schemes. */
+    possibly other mapping schemes.
+
+    <b>Access to undefined variables</b>
+
+    In general, an attempt to access (read or write) a variable for which storage has not been
+    requested results in undefined behavior. However, assuming that storage has been requested for
+    the volume (which is always needed anyway), the other variables in the common state can be
+    safely read (not written) even if no storage was requested for them. This allows the bulk
+    velocity and magnetic field vectors to be retrieved without concern for whether they were
+    configured in the input model. */
 class MediumState
 {
     //============= Construction =============
@@ -137,19 +145,28 @@ public:
     double volume(int m) const { return _data[_numVars * m + _off_volu]; }
 
     /** This function returns the aggregate bulk velocity \f${\boldsymbol{v}}\f$ of the medium in
-        the spatial cell with index \f$m\f$. */
+        the spatial cell with index \f$m\f$, or zero if storage was not requested for this
+        variable. */
     Vec bulkVelocity(int m) const
     {
-        int i = _numVars * m + _off_velo;
-        return Vec(_data[i], _data[i + 1], _data[i + 2]);
+        if (_off_velo)
+        {
+            int i = _numVars * m + _off_velo;
+            return Vec(_data[i], _data[i + 1], _data[i + 2]);
+        }
+        return Vec();
     }
 
     /** This function returns the magnetic field \f${\boldsymbol{B}}\f$ in the spatial cell with
-        index \f$m\f$. */
+        index \f$m\f$, or zero if storage was not requested for this variable. */
     Vec magneticField(int m) const
     {
-        int i = _numVars * m + _off_mfld;
-        return Vec(_data[i], _data[i + 1], _data[i + 2]);
+        if (_off_mfld)
+        {
+            int i = _numVars * m + _off_mfld;
+            return Vec(_data[i], _data[i + 1], _data[i + 2]);
+        }
+        return Vec();
     }
 
     /** This function returns the number density of the medium component with index \f$h\f$ in the
