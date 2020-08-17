@@ -48,6 +48,20 @@ vector<StateVariable> LyaNeutralHydrogenMaterialMix::specificStateVariableInfo()
     return vector<StateVariable>{StateVariable::numberDensity(), StateVariable::temperature()};
 }
 
+void LyaNeutralHydrogenMaterialMix::initializeSpecificState(MaterialState* state, double temperature,
+                                                            const Array& /*params*/) const
+{
+    // leave the temperature at zero if the cell does not contain any material for this component
+    if (state->numberDensity() > 0.)
+    {
+        // if no temperature was imported, use default value
+        if (temperature < 0) temperature = defaultTemperature();
+
+        // make sure the temperature is at least the local universe CMB temperature
+        state->setTemperature(max(Constants::Tcmb(), temperature));
+    }
+}
+
 ////////////////////////////////////////////////////////////////////
 
 double LyaNeutralHydrogenMaterialMix::mass() const

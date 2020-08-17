@@ -94,19 +94,17 @@ class WavelengthGrid;
 
     The MaterialMix class hierarchy offers a number of functions that advertise the required medium
     state variables and assist with initializing their values during setup. For example, the
-    stateVariableInfo() function returns a list of medium state variable descriptors specifying the
-    common and specific state variables used by the material mix. This allows the medium system to
-    allocate storage for the appropriate set of state variables.
+    specificStateVariableInfo() function returns a list of medium state variable descriptors
+    specifying the specific state variables used by the material mix. This allows the medium system
+    to allocate storage for the appropriate set of state variables.
 
-    The common state variables are initialized by the medium system without further help from the
-    material mixes. Initialization of the specific state variables proceeds as follows. If the
-    material mix is configured as part of a geometric medium component, the total density for the
-    component in each spatial cell is determined from the configured geometry and normalization and
-    it is passed to the material mix via the initializeGeometricState() function. If the material
-    mix is configured as part of an imported medium component, extra data fields are imported from
-    the snapshot based on the information returned by the parameterInfo() function and passed to
-    the material mix via the initializeImportedState() function. In each case, the initialize()
-    function is responsible for initializing all specific state variables.
+    All common state variables and the number density (part of the specific state) are initialized
+    by the medium system. Additional specific state variables must be initialized in the
+    initializeSpecificState() material mix function, which is invoked by the medium system for each
+    spatial cell just after the common state variables and the number density have been
+    initialized. If the material mix is configured as part of an imported medium component, extra
+    data fields imported from the snapshot based on the information returned by the parameterInfo()
+    function is passed to this function.
 
     <b>Low-level material properties functions</b>
 
@@ -237,6 +235,19 @@ public:
         number of custom variables. Each of these indices must occur in the list exactly once in
         increasing order. */
     virtual vector<StateVariable> specificStateVariableInfo() const = 0;
+
+    /** This function initializes any specific state variables requested by this material mix
+        through the specificStateVariableInfo() function except for the number density. The
+        function is invoked by the medium system for each spatial cell just after the common state
+        variables and the number density have been initialized. If the material mix is configured
+        as part of an imported medium component, the imported temperature, if any, and extra parameter
+        fields imported from the snapshot as requested by the parameterInfo()
+        function are passed to this function. If the material mix is configured as part of a
+        geometric medium component, or if the information has not been imported, the temperature
+        value is negative and the parameter array is empty.
+
+        The default implementation in this base class does nothing. */
+    virtual void initializeSpecificState(MaterialState* state, double temperature, const Array& params) const;
 
     //======== Low-level material properties =======
 

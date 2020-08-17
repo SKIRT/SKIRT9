@@ -134,11 +134,9 @@ public:
     Vec magneticField(Position bfr) const override;
 
     /** This function returns the temperature of the medium at the specified position, if defined
-        in the input model. Specifically, the function returns zero unless the medium has a gas
-        material mix. In that case, if the \em importTemperature flag is enabled, the function
-        returns the imported temperature at the specified position. If the \em importTemperature
-        flag is disabled, the function returns the default gas temperature provided by the material
-        mix at the given location. */
+        in the input model. Specifically, the function returns -1 unless the medium has a gas
+        material mix and the \em importTemperature flag is enabled. In that case, the function
+        returns the imported temperature at the specified position. */
     double temperature(Position bfr) const override;
 
     /** This function returns the number density of the medium at the specified position. */

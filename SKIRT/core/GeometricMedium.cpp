@@ -78,12 +78,7 @@ Vec GeometricMedium::magneticField(Position bfr) const
 
 double GeometricMedium::temperature(Position /*bfr*/) const
 {
-    if (materialMix()->isGas())
-    {
-        Array dummyJv;
-        return materialMix()->indicativeTemperature(dummyJv);
-    }
-    return 0.;
+    return -1.;
 }
 
 ////////////////////////////////////////////////////////////////////

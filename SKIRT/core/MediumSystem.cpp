@@ -110,10 +110,9 @@ void MediumSystem::setupSelfAfter()
     log->info("Calculating densities for " + std::to_string(_numCells) + " cells...");
     auto dic = _grid->interface<DensityInCellInterface>(0, false);  // optional fast-track interface for densities
     int numSamples = _config->numDensitySamples();
-    int hLya = _config->lyaMediumIndex();
     log->infoSetElapsed(_numCells);
     parfac->parallelDistributed()->call(
-        _numCells, [this, log, dic, numSamples, hLya](size_t firstIndex, size_t numIndices) {
+        _numCells, [this, log, dic, numSamples](size_t firstIndex, size_t numIndices) {
             ShortArray<8> nsumv(_numMedia);
 
             while (numIndices)
@@ -121,6 +120,8 @@ void MediumSystem::setupSelfAfter()
                 size_t currentChunkSize = min(logProgressChunkSize, numIndices);
                 for (size_t m = firstIndex; m != firstIndex + currentChunkSize; ++m)
                 {
+                    Position center = _grid->centralPositionInCell(m);
+
                     // volume
                     _state.setVolume(m, _grid->volume(m));
 
@@ -143,7 +144,6 @@ void MediumSystem::setupSelfAfter()
                     // bulk velocity: weighted average at cell center; for oligochromatic simulations, leave at zero
                     if (_config->hasMovingMedia())
                     {
-                        Position center = _grid->centralPositionInCell(m);
                         double n = 0.;
                         Vec v;
                         for (int h = 0; h != _numMedia; ++h)
@@ -158,18 +158,17 @@ void MediumSystem::setupSelfAfter()
                     // magnetic field: retrieve from medium component that specifies it, if any
                     if (_config->hasMagneticField())
                     {
-                        Position center = _grid->centralPositionInCell(m);
                         _state.setMagneticField(m, _media[_config->magneticFieldMediumIndex()]->magneticField(center));
                     }
 
-                    // gas temperature: retrieve from medium component that specifies it, if any
-                    if (hLya >= 0)
+                    // other specific variables
+                    for (int h = 0; h != _numMedia; ++h)
                     {
-                        Position center = _grid->centralPositionInCell(m);
-                        // leave the temperature at zero if the cell does not contain any Lya gas;
-                        // otherwise make sure the temperature is at least the local universe CMB temperature
-                        if (_state.numberDensity(m, hLya) > 0.)
-                            _state.setTemperature(m, hLya, max(Constants::Tcmb(), _media[hLya]->temperature(center)));
+                        // retrieve temperature and parameters from medium component
+                        double T = _media[h]->temperature(center);
+                        Array params;  // TO DO
+                        MaterialState mst(_state, m, h);
+                        mix(m, h)->initializeSpecificState(&mst, T, params);
                     }
                 }
                 log->infoIfElapsed("Calculated cell densities: ", currentChunkSize);
@@ -529,7 +528,8 @@ void MediumSystem::setOpticalDepths(PhotonPacket* pp) const
         for (auto& segment : pp->segments())
         {
             if (segment.m >= 0)
-                for (int h = 0; h != _numMedia; ++h) tau += sectionv[h] * _state.numberDensity(segment.m, h) * segment.ds;
+                for (int h = 0; h != _numMedia; ++h)
+                    tau += sectionv[h] * _state.numberDensity(segment.m, h) * segment.ds;
             pp->setOpticalDepth(i++, tau);
         }
     }
@@ -541,7 +541,8 @@ void MediumSystem::setOpticalDepths(PhotonPacket* pp) const
         {
             if (segment.m >= 0)
             {
-                double lambda = pp->perceivedWavelength(_state.bulkVelocity(segment.m), _config->lyaExpansionRate() * segment.s);
+                double lambda =
+                    pp->perceivedWavelength(_state.bulkVelocity(segment.m), _config->lyaExpansionRate() * segment.s);
                 tau += opacityExt(lambda, segment.m) * segment.ds;
             }
             pp->setOpticalDepth(i++, tau);

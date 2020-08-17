@@ -55,6 +55,12 @@ bool MaterialMix::hasStochasticDustEmission() const
 
 ////////////////////////////////////////////////////////////////////
 
+void MaterialMix::initializeSpecificState(MaterialState* /*state*/, double /*temperature*/,
+                                          const Array& /*params*/) const
+{}
+
+////////////////////////////////////////////////////////////////////
+
 double MaterialMix::asymmpar(double /*lambda*/) const
 {
     return 0.;

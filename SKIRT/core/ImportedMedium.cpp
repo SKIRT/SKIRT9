@@ -118,19 +118,8 @@ Vec ImportedMedium::magneticField(Position bfr) const
 
 double ImportedMedium::temperature(Position bfr) const
 {
-    if (materialMix()->isGas())
-    {
-        if (_importTemperature)
-        {
-            return _snapshot->temperature(bfr);
-        }
-        else
-        {
-            Array dummyJv;
-            return materialMix()->indicativeTemperature(dummyJv);
-        }
-    }
-    return 0.;
+    if (materialMix()->isGas() && _importTemperature) return _snapshot->temperature(bfr);
+    return -1.;
 }
 
 ////////////////////////////////////////////////////////////////////
