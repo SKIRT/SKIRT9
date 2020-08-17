@@ -48,10 +48,22 @@ void MediumSystem::setupSelfAfter()
 
     // ----- allocate memory for the medium state -----
 
-    _state1v.resize(_numCells);
-    allocatedBytes += _state1v.size() * sizeof(State1);
-    _state2vv.resize(_numCells * _numMedia);
-    allocatedBytes += _state2vv.size() * sizeof(State2);
+    // basic configuration
+    _state.initConfiguration(_numCells, _numMedia);
+
+    // common state variables
+    vector<StateVariable> variables;
+    variables.emplace_back(StateVariable::volume());
+//    if (_config->hasMovingMedia()) variables.emplace_back(StateVariable::bulkVelocity());
+    variables.emplace_back(StateVariable::bulkVelocity());
+    if (_config->hasMagneticField()) variables.emplace_back(StateVariable::magneticField());
+    _state.initCommonStateVariables(variables);
+
+    // specific state variables
+    for (auto medium : _media) _state.initSpecificStateVariables(medium->mix()->specificStateVariableInfo());
+
+    // finalize
+    allocatedBytes += _state.initAllocate() * sizeof(double);
 
     // ----- allocate memory for the radiation field -----
 
@@ -99,12 +111,12 @@ void MediumSystem::setupSelfAfter()
     log->info("Calculating densities for " + std::to_string(_numCells) + " cells...");
     auto dic = _grid->interface<DensityInCellInterface>(0, false);  // optional fast-track interface for densities
     int numSamples = _config->numDensitySamples();
-    bool oligo = _config->oligochromatic();
+    bool kine = _config->hasMovingMedia() && !_config->oligochromatic();
     int hMag = _config->magneticFieldMediumIndex();
     int hLya = _config->lyaMediumIndex();
     log->infoSetElapsed(_numCells);
     parfac->parallelDistributed()->call(
-        _numCells, [this, log, dic, numSamples, oligo, hMag, hLya](size_t firstIndex, size_t numIndices) {
+        _numCells, [this, log, dic, numSamples, kine, hMag, hLya](size_t firstIndex, size_t numIndices) {
             ShortArray<8> nsumv(_numMedia);
 
             while (numIndices)
@@ -117,7 +129,7 @@ void MediumSystem::setupSelfAfter()
                     // density: use optional fast-track interface or sample 100 random positions within the cell
                     if (dic)
                     {
-                        for (int h = 0; h != _numMedia; ++h) state(m, h).n = dic->numberDensity(h, m);
+                        for (int h = 0; h != _numMedia; ++h) _state.setNumberDensity(m, h, dic->numberDensity(h, m));
                     }
                     else
                     {
@@ -127,26 +139,27 @@ void MediumSystem::setupSelfAfter()
                             Position bfr = _grid->randomPositionInCell(m);
                             for (int h = 0; h != _numMedia; ++h) nsumv[h] += _media[h]->numberDensity(bfr);
                         }
-                        for (int h = 0; h != _numMedia; ++h) state(m, h).n = nsumv[h] / numSamples;
+                        for (int h = 0; h != _numMedia; ++h) _state.setNumberDensity(m, h, nsumv[h] / numSamples);
                     }
 
                     // bulk velocity: weighted average at cell center; for oligochromatic simulations, leave at zero
-                    if (!oligo)
+                    if (kine)
                     {
                         double n = 0.;
                         Vec v;
                         for (int h = 0; h != _numMedia; ++h)
                         {
-                            n += state(m, h).n;
-                            v += state(m, h).n * _media[h]->bulkVelocity(center);
+                            n += _state.numberDensity(m, h);
+                            v += _state.numberDensity(m, h) * _media[h]->bulkVelocity(center);
                         }
-                        if (n > 0.) state(m).v = v / n;  // leave bulk velocity at zero if cell has no material
+                        // leave bulk velocity at zero if cell has no material
+                        if (n > 0.) _state.setBulkVelocity(m, v / n);
                     }
 
                     // magnetic field: retrieve from medium component that specifies it, if any
                     if (hMag >= 0)
                     {
-                        state(m).B = _media[hMag]->magneticField(center);
+                        _state.setMagneticField(m, _media[hMag]->magneticField(center));
                     }
 
                     // gas temperature: retrieve from medium component that specifies it, if any
@@ -154,12 +167,12 @@ void MediumSystem::setupSelfAfter()
                     {
                         // leave the temperature at zero if the cell does not contain any Lya gas;
                         // otherwise make sure the temperature is at least the local universe CMB temperature
-                        if (state(m, hLya).n > 0.)
-                            state(m).T = max(Constants::Tcmb(), _media[hLya]->temperature(center));
+                        if (_state.numberDensity(m, hLya) > 0.)
+                            _state.setTemperature(m, hLya, max(Constants::Tcmb(), _media[hLya]->temperature(center)));
                     }
 
                     // volume
-                    state(m).V = _grid->volume(m);
+                    _state.setVolume(m, _grid->volume(m));
                 }
                 log->infoIfElapsed("Calculated cell densities: ", currentChunkSize);
                 firstIndex += currentChunkSize;
@@ -168,50 +181,9 @@ void MediumSystem::setupSelfAfter()
         });
 
     // communicate the calculated states across multiple processes, if needed
-    communicateStates();
+    _state.initCommunicate();
 
     log->info("Done calculating cell densities");
-}
-
-////////////////////////////////////////////////////////////////////
-
-void MediumSystem::communicateStates()
-{
-    if (!ProcessManager::isMultiProc()) return;
-
-    // NOTE: once the design of the state data structures is stable, a custom communication procedure could be provided
-    //       in the meantime, we copy the data into a temporary table so we can use the standard sumToAll procedure
-    Table<2> data;
-
-    // volumes, bulk velocities, and magnetic fields
-    data.resize(_numCells, 8);
-    for (int m = 0; m != _numCells; ++m)
-    {
-        data(m, 0) = state(m).V;
-        data(m, 1) = state(m).v.x();
-        data(m, 2) = state(m).v.y();
-        data(m, 3) = state(m).v.z();
-        data(m, 4) = state(m).B.x();
-        data(m, 5) = state(m).B.y();
-        data(m, 6) = state(m).B.z();
-        data(m, 7) = state(m).T;
-    }
-    ProcessManager::sumToAll(data.data());
-    for (int m = 0; m != _numCells; ++m)
-    {
-        state(m).V = data(m, 0);
-        state(m).v = Vec(data(m, 1), data(m, 2), data(m, 3));
-        state(m).B = Vec(data(m, 4), data(m, 5), data(m, 6));
-        state(m).T = data(m, 7);
-    }
-
-    // densities
-    data.resize(_numCells, _numMedia);
-    for (int m = 0; m != _numCells; ++m)
-        for (int h = 0; h != _numMedia; ++h) data(m, h) = state(m, h).n;
-    ProcessManager::sumToAll(data.data());
-    for (int m = 0; m != _numCells; ++m)
-        for (int h = 0; h != _numMedia; ++h) state(m, h).n = data(m, h);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -248,21 +220,21 @@ int MediumSystem::numCells() const
 
 double MediumSystem::volume(int m) const
 {
-    return state(m).V;
+    return _state.volume(m);
 }
 
 ////////////////////////////////////////////////////////////////////
 
 Vec MediumSystem::bulkVelocity(int m) const
 {
-    return state(m).v;
+    return _state.bulkVelocity(m);
 }
 
 ////////////////////////////////////////////////////////////////////
 
 Vec MediumSystem::magneticField(int m) const
 {
-    return state(m).B;
+    return _state.magneticField(m);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -292,29 +264,28 @@ bool MediumSystem::isMaterialType(MaterialMix::MaterialType type, int h) const
 
 double MediumSystem::numberDensity(int m, int h) const
 {
-    return state(m, h).n;
+    return _state.numberDensity(m, h);
 }
 
 ////////////////////////////////////////////////////////////////////
 
 double MediumSystem::massDensity(int m, int h) const
 {
-    return state(m, h).n * mix(m, h)->mass();
+    return _state.numberDensity(m, h) * mix(m, h)->mass();
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::temperature(int m, int /*h*/) const
+double MediumSystem::temperature(int m, int h) const
 {
-    // TO DO: implement h index
-    return state(m).T;
+    return _state.temperature(m, h);
 }
 
 ////////////////////////////////////////////////////////////////////
 
 double MediumSystem::opacityAbs(double lambda, int m, int h) const
 {
-    MaterialState mst(this, m, h);
+    MaterialState mst(_state, m, h);
     return mix(m, h)->opacityAbs(lambda, &mst, nullptr);
 }
 
@@ -322,7 +293,7 @@ double MediumSystem::opacityAbs(double lambda, int m, int h) const
 
 double MediumSystem::opacitySca(double lambda, int m, int h) const
 {
-    MaterialState mst(this, m, h);
+    MaterialState mst(_state, m, h);
     return mix(m, h)->opacitySca(lambda, &mst, nullptr);
 }
 
@@ -330,7 +301,7 @@ double MediumSystem::opacitySca(double lambda, int m, int h) const
 
 double MediumSystem::opacityExt(double lambda, int m, int h) const
 {
-    MaterialState mst(this, m, h);
+    MaterialState mst(_state, m, h);
     return mix(m, h)->opacityExt(lambda, &mst, nullptr);
 }
 
@@ -368,7 +339,7 @@ double MediumSystem::opacityExt(double lambda, int m) const
 double MediumSystem::perceivedWavelengthForScattering(const PhotonPacket* pp) const
 {
     if (_config->hasMovingMedia())
-        return pp->perceivedWavelength(state(pp->interactionCellIndex()).v,
+        return pp->perceivedWavelength(_state.bulkVelocity(pp->interactionCellIndex()),
                                        _config->lyaExpansionRate() * pp->interactionDistance());
     else
         return pp->wavelength();
@@ -386,7 +357,7 @@ double MediumSystem::albedoForScattering(const PhotonPacket* pp) const
     double kext = 0.;
     for (int h = 0; h != _numMedia; ++h)
     {
-        MaterialState mst(this, m, h);
+        MaterialState mst(_state, m, h);
         ksca += mix(m, h)->opacitySca(lambda, &mst, pp);
         kext += mix(m, h)->opacityExt(lambda, &mst, pp);
     }
@@ -414,7 +385,7 @@ bool MediumSystem::weightsForScattering(Array& wv, double lambda, const PhotonPa
     double sum = 0.;
     for (int h = 0; h != _numMedia; ++h)
     {
-        MaterialState mst(this, m, h);
+        MaterialState mst(_state, m, h);
         wv[h] = mix(m, h)->opacitySca(lambda, &mst, pp);
         sum += wv[h];
     }
@@ -446,7 +417,7 @@ void MediumSystem::peelOffScattering(double lambda, const Array& wv, Direction b
     for (int h = 0; h != _numMedia; ++h)
     {
         double localLambda = lambda;
-        MaterialState mst(this, m, h);
+        MaterialState mst(_state, m, h);
         mix(m, h)->peeloffScattering(I, Q, U, V, localLambda, wv[h], bfkobs, bfky, &mst, pp);
 
         // if this material mix changed the wavelength, it is copied as the outgoing wavelength
@@ -455,7 +426,7 @@ void MediumSystem::peelOffScattering(double lambda, const Array& wv, Direction b
     }
 
     // pass the result to the peel-off photon packet
-    ppp->launchScatteringPeelOff(pp, bfkobs, state(m).v, emissionLambda, I);
+    ppp->launchScatteringPeelOff(pp, bfkobs, _state.bulkVelocity(m), emissionLambda, I);
     if (_config->hasPolarization()) ppp->setPolarized(I, Q, U, V, pp->normal());
 }
 
@@ -476,7 +447,7 @@ void MediumSystem::simulateScattering(Random* random, PhotonPacket* pp) const
         // build the cumulative distribution corresponding to the scattering opacities
         Array Xv;
         NR::cdf(Xv, _numMedia, [this, lambda, pp, m](int h) {
-            MaterialState mst(this, m, h);
+            MaterialState mst(_state, m, h);
             return mix(m, h)->opacitySca(lambda, &mst, pp);
         });
 
@@ -485,7 +456,7 @@ void MediumSystem::simulateScattering(Random* random, PhotonPacket* pp) const
     }
 
     // actually perform the scattering event for this cell and medium component
-    MaterialState mst(this, m, h);
+    MaterialState mst(_state, m, h);
     mix(m, h)->performScattering(lambda, &mst, pp);
 }
 
@@ -547,7 +518,7 @@ void MediumSystem::setOpticalDepths(PhotonPacket* pp) const
         double section = mix(0, 0)->sectionExt(pp->wavelength());
         for (auto& segment : pp->segments())
         {
-            if (segment.m >= 0) tau += section * state(segment.m, 0).n * segment.ds;
+            if (segment.m >= 0) tau += section * _state.numberDensity(segment.m, 0) * segment.ds;
             pp->setOpticalDepth(i++, tau);
         }
     }
@@ -560,7 +531,7 @@ void MediumSystem::setOpticalDepths(PhotonPacket* pp) const
         for (auto& segment : pp->segments())
         {
             if (segment.m >= 0)
-                for (int h = 0; h != _numMedia; ++h) tau += sectionv[h] * state(segment.m, h).n * segment.ds;
+                for (int h = 0; h != _numMedia; ++h) tau += sectionv[h] * _state.numberDensity(segment.m, h) * segment.ds;
             pp->setOpticalDepth(i++, tau);
         }
     }
@@ -572,7 +543,7 @@ void MediumSystem::setOpticalDepths(PhotonPacket* pp) const
         {
             if (segment.m >= 0)
             {
-                double lambda = pp->perceivedWavelength(state(segment.m).v, _config->lyaExpansionRate() * segment.s);
+                double lambda = pp->perceivedWavelength(_state.bulkVelocity(segment.m), _config->lyaExpansionRate() * segment.s);
                 tau += opacityExt(lambda, segment.m) * segment.ds;
             }
             pp->setOpticalDepth(i++, tau);
@@ -604,7 +575,7 @@ bool MediumSystem::setInteractionPoint(PhotonPacket* pp, double tauscat) const
             // calculate the cumulative optical depth and distance at the end of this segment
             double ds = generator->ds();
             int m = generator->m();
-            if (m >= 0) tau += section * state(m, 0).n * generator->ds();
+            if (m >= 0) tau += section * _state.numberDensity(m, 0) * generator->ds();
             s += ds;
 
             // if the interaction point is inside this segment, store it in the photon packet
@@ -632,7 +603,7 @@ bool MediumSystem::setInteractionPoint(PhotonPacket* pp, double tauscat) const
             double ds = generator->ds();
             int m = generator->m();
             if (m >= 0)
-                for (int h = 0; h != _numMedia; ++h) tau += sectionv[h] * state(m, h).n * ds;
+                for (int h = 0; h != _numMedia; ++h) tau += sectionv[h] * _state.numberDensity(m, h) * ds;
             s += ds;
 
             // if the interaction point is inside this segment, store it in the photon packet
@@ -659,7 +630,7 @@ bool MediumSystem::setInteractionPoint(PhotonPacket* pp, double tauscat) const
             int m = generator->m();
             if (m >= 0)
             {
-                double lambda = pp->perceivedWavelength(state(m).v, _config->lyaExpansionRate() * s);
+                double lambda = pp->perceivedWavelength(_state.bulkVelocity(m), _config->lyaExpansionRate() * s);
                 tau += opacityExt(lambda, m) * ds;
             }
             s += ds;
@@ -700,7 +671,7 @@ double MediumSystem::getOpticalDepth(PhotonPacket* pp, double distance) const
         {
             if (generator->m() >= 0)
             {
-                tau += section * state(generator->m(), 0).n * generator->ds();
+                tau += section * _state.numberDensity(generator->m(), 0) * generator->ds();
                 if (tau >= taumax) return std::numeric_limits<double>::infinity();
             }
             s += generator->ds();
@@ -719,7 +690,7 @@ double MediumSystem::getOpticalDepth(PhotonPacket* pp, double distance) const
             int m = generator->m();
             if (m >= 0)
             {
-                for (int h = 0; h != _numMedia; ++h) tau += sectionv[h] * state(m, h).n * ds;
+                for (int h = 0; h != _numMedia; ++h) tau += sectionv[h] * _state.numberDensity(m, h) * ds;
                 if (tau >= taumax) return std::numeric_limits<double>::infinity();
             }
             s += ds;
@@ -736,7 +707,7 @@ double MediumSystem::getOpticalDepth(PhotonPacket* pp, double distance) const
             int m = generator->m();
             if (m >= 0)
             {
-                double lambda = pp->perceivedWavelength(state(m).v, _config->lyaExpansionRate() * s);
+                double lambda = pp->perceivedWavelength(_state.bulkVelocity(m), _config->lyaExpansionRate() * s);
                 tau += opacityExt(lambda, m) * ds;
                 if (tau >= taumax) return std::numeric_limits<double>::infinity();
             }
@@ -802,7 +773,7 @@ Array MediumSystem::meanIntensity(int m) const
 {
     int numWavelengths = _wavelengthGrid->numBins();
     Array Jv(numWavelengths);
-    double factor = 1. / (4. * M_PI * state(m).V);
+    double factor = 1. / (4. * M_PI * _state.volume(m));
     for (int ell = 0; ell < numWavelengths; ell++)
     {
         Jv[ell] = radiationField(m, ell) * factor / _wavelengthGrid->effectiveWidth(ell);
@@ -873,7 +844,7 @@ double MediumSystem::totalAbsorbedDustLuminosity(bool primary) const
 double MediumSystem::indicativeGasTemperature(int m) const
 {
     // TO DO: implement averaging
-    return state(m).T;
+    return _state.temperature(m, _config->lyaMediumIndex());
 }
 
 ////////////////////////////////////////////////////////////////////

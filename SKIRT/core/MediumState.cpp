@@ -88,14 +88,14 @@ void MediumState::initCommunicate()
 
 //////////////////////////////////////////////////////////////////////
 
-void MediumState::setVolume(double value, int m)
+void MediumState::setVolume(int m, double value)
 {
     _data[_numVars * m + _off_volu] = value;
 }
 
 //////////////////////////////////////////////////////////////////////
 
-void MediumState::setBulkVelocity(Vec value, int m)
+void MediumState::setBulkVelocity(int m, Vec value)
 {
     int i = _numVars * m + _off_velo;
     _data[i] = value.x();
@@ -105,7 +105,7 @@ void MediumState::setBulkVelocity(Vec value, int m)
 
 //////////////////////////////////////////////////////////////////////
 
-void MediumState::setMagneticField(Vec value, int m)
+void MediumState::setMagneticField(int m, Vec value)
 {
     int i = _numVars * m + _off_mfld;
     _data[i] = value.x();
@@ -115,21 +115,21 @@ void MediumState::setMagneticField(Vec value, int m)
 
 //////////////////////////////////////////////////////////////////////
 
-void MediumState::setNumberDensity(double value, int m, int h)
+void MediumState::setNumberDensity(int m, int h, double value)
 {
     _data[_numVars * m + _off_dens[h]] = value;
 }
 
 //////////////////////////////////////////////////////////////////////
 
-void MediumState::setTemperature(double value, int m, int h)
+void MediumState::setTemperature(int m, int h, double value)
 {
     _data[_numVars * m + _off_temp[h]] = value;
 }
 
 //////////////////////////////////////////////////////////////////////
 
-void MediumState::setCustom(double value, int i, int m, int h)
+void MediumState::setCustom(int i, int m, int h, double value)
 {
     _data[_numVars * m + _off_cust[h] + i] = value;
 }

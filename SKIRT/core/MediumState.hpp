@@ -108,27 +108,27 @@ public:
 
 public:
     /** This function sets the volume \f$V\f$ of the spatial cell with index \f$m\f$. */
-    void setVolume(double value, int m);
+    void setVolume(int m, double value);
 
     /** This function sets the aggregate bulk velocity \f${\boldsymbol{v}}\f$ of the medium in the
         spatial cell with index \f$m\f$. */
-    void setBulkVelocity(Vec value, int m);
+    void setBulkVelocity(int m, Vec value);
 
     /** This function sets the magnetic field \f${\boldsymbol{B}}\f$ in the spatial cell with index
         \f$m\f$. */
-    void setMagneticField(Vec value, int m);
+    void setMagneticField(int m, Vec value);
 
     /** This function sets the number density of the medium component with index \f$h\f$ in the
         spatial cell with index \f$m\f$. */
-    void setNumberDensity(double value, int m, int h);
+    void setNumberDensity(int m, int h, double value);
 
     /** This function sets the temperature \f$T\f$ of the medium component with index \f$h\f$ in
         the spatial cell with index \f$m\f$. */
-    void setTemperature(double value, int m, int h);
+    void setTemperature(int m, int h, double value);
 
     /** This function sets the value of the custom variable with index \f$i\f$ of the medium
         component with index \f$h\f$ in the spatial cell with index \f$m\f$. */
-    void setCustom(double value, int i, int m, int h);
+    void setCustom(int i, int m, int h, double value);
 
     //============= Querying =============
 

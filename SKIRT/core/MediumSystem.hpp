@@ -13,6 +13,7 @@
 #include "LyaOptions.hpp"
 #include "MaterialMix.hpp"
 #include "Medium.hpp"
+#include "MediumState.hpp"
 #include "PhotonPacketOptions.hpp"
 #include "SimulationItem.hpp"
 #include "SpatialGrid.hpp"
@@ -495,57 +496,17 @@ public:
         medium component specifies a gas temperature, this function returns zero. */
     double indicativeGasTemperature(int m) const;
 
-    //================== Private Types and Functions ====================
-
-private:
-    /** This data structure holds the information maintained per cell. */
-    struct State1
-    {
-        double V{0.};  // volume
-        Vec v;         // bulk velocity
-        Vec B;         // magnetic field
-        double T{0.};  // gas temperature
-    };
-
-    /** This data structure holds the information maintained per cell and per medium. */
-    struct State2
-    {
-        double n{0.};                     // the number density
-        //const MaterialMix* mix{nullptr};  // pointer to the material mix
-    };
-
-    /** This function returns a writable reference to the state data structure for the given cell
-        index. */
-    State1& state(int m) { return _state1v[m]; }
-
-    /** This function returns a read-only reference to the state data structure for the given cell
-        index. */
-    const State1& state(int m) const { return _state1v[m]; }
-
-    /** This function returns a writable reference to the state data structure for the given cell
-        and medium indices. */
-    State2& state(int m, int h) { return _state2vv[m * _numMedia + h]; }
-
-    /** This function returns a read-only reference to the state data structure for the given cell
-        and medium indices. */
-    const State2& state(int m, int h) const { return _state2vv[m * _numMedia + h]; }
-
-    /** This function communicates the cell states between multiple processes after the states have
-        been initialized in parallel (i.e. each process initialized a subset of the states). */
-    void communicateStates();
-
     //======================== Data Members ========================
 
 private:
     Configuration* _config{nullptr};
 
     // relevant for any simulation mode that includes a medium
-    int _numCells{0};          // index m
-    int _numMedia{0};          // index h
-    vector<State1> _state1v;   // state info for each cell (indexed on m)
-    vector<State2> _state2vv;  // state info for each cell and each medium (indexed on m,h)
-    vector<const MaterialMix*> _mixv;  // indexed on h, or on m and h if mixPerCell is true
+    int _numCells{0};  // index m
+    int _numMedia{0};  // index h
     bool _mixPerCell{false};
+    vector<const MaterialMix*> _mixv;  // material mixes; indexed on h, or on m and h if mixPerCell is true
+    MediumState _state;                // state info for each cell and each medium
 
     // relevant for any simulation mode that stores the radiation field
     WavelengthGrid* _wavelengthGrid{0};  // index ell
