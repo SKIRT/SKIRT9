@@ -19,11 +19,10 @@ class MaterialState
     //============= Construction - Setup - Destruction =============
 
 public:
-    /** The constructor arguments specify the spatial cell and medium component to be represented.
-        */
-    MaterialState(MediumState& ms, int m, int h) : _ms{ms}, _m{m}, _h{h} {}
-
-    /** TO DO */
+    /** The constructor arguments specify the spatial cell and medium component to be represented,
+        as well as a reference to the medium state object that holds the actual data. The constant
+        reference is cast internally to a writable reference. This is ugly, but it avoids providing
+        two versions of this class (read-only and writable). */
     MaterialState(const MediumState& ms, int m, int h) : _ms{const_cast<MediumState&>(ms)}, _m{m}, _h{h} {}
 
     //============= Setting =============
