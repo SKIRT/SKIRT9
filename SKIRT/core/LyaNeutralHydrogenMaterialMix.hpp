@@ -110,13 +110,6 @@ public:
         */
     double sectionExt(double lambda) const override;
 
-    /** This function returns an indicative temperature of the material mix when it would be
-        embedded in a given radiation field. Because the hydrogen atoms absorb nor
-        emit at the Lyman-alpha line (at least in our treatment), the implementation of this
-        function in this class ignores the input radiation field and always returns the default
-        temperature configured for this material mix. */
-    double indicativeTemperature(const Array& Jv) const override;
-
     //======== High-level photon life cycle =======
 
     /** This function returns the absorption opacity \f$k^\text{abs}=n\varsigma^\text{abs}\f$,
@@ -149,6 +142,14 @@ public:
         without or with support for polarization depending on the user-configured \em
         includePolarization property. */
     void performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const override;
+
+    /** This function returns an indicative temperature of the material mix when it would be
+        embedded in a given radiation field. The implementation in this class ignores the radiation
+        field and returns the temperature stored in the specific state for the relevant spatial
+        cell and medium component. Because the hydrogen temperature is not calculated
+        self-consistently in our treatment, this value corresponds to the temperature defined by
+        the input model at the start of the simulation. */
+    double indicativeTemperature(const MaterialState* state, const Array& Jv) const override;
 
     //======================== Data Members ========================
 

@@ -442,21 +442,41 @@ public:
         area, per unit of wavelength, and per unit of solid angle. */
     Array meanIntensity(int m) const;
 
-    /** This function returns an indicative dust temperature for the spatial cell with index
-        \f$m\f$. For each material mix of type dust present in the specified cell, the function
-        calculates the equilibrium temperature that would be reached when the dust is embedded in
-        the radiation field tracked by the simulation for the cell. This is achieved by solving the
-        energy balance equation under LTE (local thermal equilibrium) assumptions, and using a
-        single representative grain for the complete dust mix. The resulting temperatures are
-        averaged over the dust components present in the spatial cell (weighed by relative mass in
-        the cell). If the cell does not contain any dust, the function returns zero.
-
-        In formula form, for a dust cell \f$m\f$ with dust components \f$h\f$, the indicative dust
+    /** This function returns an indicative temperature for the material of the specified type in
+        the spatial cell with index \f$m\f$. It obtains an indicative temperature for each
+        component with a material mix of the specified type, and averages these temperatures over
+        the medium components weighed by their relative mass in the cell. In formula form, for a
+        spatial cell \f$m\f$ with components \f$h\f$ of the specified type, the indicative dust
         temperature is defined as \f[{\bar{T}}_m = \frac{\sum_h \rho_{m,h}\,{\bar{T}}_{m,h}}
-        {\sum_h \rho_{m,h}} \f] where \f${\bar{T}}_{m,h}\f$ is the LTE equilibrium temperature for
-        dust component \f$h\f$, obtained through the balance equation \f[ \int_0^\infty
-        \varsigma_{h,\lambda}^{\text{abs}}\, J_{m,\lambda}\, {\text{d}}\lambda = \int_0^\infty
-        \varsigma_{h,\lambda}^{\text{abs}}\, B_\lambda({\bar{T}}_{m,h})\, {\text{d}}\lambda. \f]
+        {\sum_h \rho_{m,h}} \f] where \f${\bar{T}}_{m,h}\f$ is the indicative temperature for each
+        component \f$h\f$. If the cell does not contain any material of the requested type, the
+        function returns zero.
+
+        The interpretation of the indicative temperature depends heavily on the material type.
+        Refer to the description for the MaterialMix::indicativeTemperature() function in the
+        various MaterialMix subclasses for more information. Note that, in any case, the indicative
+        temperature usually does not correspond to a physical temperature.
+
+        The calculation of the indicative temperature may depend on the radiation field embedding
+        the material in the specified spatial cell, it may simply reflect the medium state for the
+        cell as defined in the input model during setup, or it may somehow depend on both. If the
+        radiation field is not being tracked in the simulation, and the indicative temperature for
+        the requested material type depends on it, the function will return zero. If the radiation
+        field \em is being tracked, this function assumes that the radiation field information has
+        been accumulated and the communicateRadiationField() function has been called before
+        invoking this function; see the meanIntensity() function. If this is not the case, the
+        behavior is undefined. */
+    double indicativeTemperature(int m, MaterialMix::MaterialType type) const;
+
+    /** This function returns an indicative dust temperature for the spatial cell with index
+        \f$m\f$, or zero if the simulation does not track the radiation field. Also see the
+        indicativeTemperature() function for more information.
+
+        An indicative temperature for each dust component is obtained by solving the energy balance
+        equation under LTE (local thermal equilibrium) assumptions for a single representative
+        grain for each dust mix. The resulting temperatures are averaged over the dust components
+        present in the spatial cell, weighed by relative mass in the cell. If the cell does not
+        contain any dust, the function returns zero.
 
         Note that the indicative dust temperature does not correspond to a physical temperature.
         The LTE assumption is almost certainly unjustified for a relevant portion of the dust
@@ -465,6 +485,13 @@ public:
         and grain sizes within a particular dust mix has no clear-cut physical justification nor
         interpretation. */
     double indicativeDustTemperature(int m) const;
+
+    /** This function returns an indicative gas temperature in the spatial cell with index \f$m\f$.
+        This temperature is obtained by averaging the temperature over the gas medium components
+        present in the spatial cell, weighed by relative mass in each component. If no medium
+        component specifies a gas temperature, this function returns zero. Also see the
+        indicativeTemperature() function for more information. */
+    double indicativeGasTemperature(int m) const;
 
     /** This function returns the bolometric luminosity \f$L^\text{abs}_{\text{bol},m}\f$ that has
         been absorbed by dust media in the spatial cell with index \f$m\f$.
@@ -489,12 +516,6 @@ public:
         The bolometric absorbed luminosity in each cell is calculated as described for the
         absorbedDustLuminosity() function. */
     double totalAbsorbedDustLuminosity(bool primary) const;
-
-    /** This function returns an indicative gas temperature \f$T\f$ in the spatial cell with index
-        \f$m\f$. This temperature is obtained by averaging the temperature over the gas medium
-        components present in the spatial cell, weighed by relative mass in each component. If no
-        medium component specifies a gas temperature, this function returns zero. */
-    double indicativeGasTemperature(int m) const;
 
     //======================== Data Members ========================
 

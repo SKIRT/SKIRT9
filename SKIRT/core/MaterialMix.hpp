@@ -283,19 +283,6 @@ public:
         returns zero, indicating isotropic scattering. */
     virtual double asymmpar(double lambda) const;
 
-    /** This function returns an indicative temperature, assuming the material represented by this
-        mix would be embedded in the radiation field specified by the mean intensities
-        \f$(J_\lambda)_\ell\f$, which must be discretized on the simulation's radiation field
-        wavelength grid as returned by the Configuration::radiationFieldWLG() function.
-
-        The interpretation of the indicative temperature depends heavily on the material type. For
-        dust mixes, the function returns the averaged equilibrium temperature of the grain
-        population given the specified radiation field and assuming local thermal equilibrium
-        conditions. Other materials may return a temperature determined based on the radiation
-        field, a default value, or zero if none of the above apply. Refer to the description for
-        this function in the various subclasses for more information. */
-    virtual double indicativeTemperature(const Array& Jv) const = 0;
-
     //======== High-level photon life cycle =======
 
     /** This function returns the absorption opacity \f$k^\text{abs}=n\varsigma^\text{abs}\f$ for
@@ -347,6 +334,23 @@ public:
         photon packet at the scattering location so that this value does not need to be
         recalculated within the function. */
     virtual void performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const = 0;
+
+    /** This function returns an indicative temperature for the material represented by the
+        specified material state and the receiving material mix, assuming an embedding radiation
+        field specified by the mean intensities \f$(J_\lambda)_\ell\f$, if available.
+
+        If the simulation tracks the radiation field, the specified \em Jv array is discretized on
+        the simulation's radiation field wavelength grid as returned by the
+        Configuration::radiationFieldWLG() function. If the simulation does not track the radiation
+        field, the \em Jv array passed to this function is empty.
+
+        The interpretation of the indicative temperature depends heavily on the material type. For
+        dust mixes, the function returns the averaged equilibrium temperature of the grain
+        population given the specified radiation field and assuming local thermal equilibrium
+        conditions. Other materials may return a temperature determined based on the radiation
+        field and/or the material state, a default value, or zero if none of the above apply. Refer
+        to the description for this function in the various subclasses for more information. */
+    virtual double indicativeTemperature(const MaterialState* state, const Array& Jv) const = 0;
 
     //======== Spheroidal grains =======
 

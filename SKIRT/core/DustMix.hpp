@@ -170,26 +170,6 @@ public:
         pre-computed during setup. */
     double asymmpar(double lambda) const override;
 
-    /** This function returns an indicative temperature of the material mix when it would be
-        embedded in a given radiation field. For dust mixes, it returns the equilibrium temperature
-        \f$T_{\text{eq}}\f$ of the dust mix (or rather of the representative grain population
-        corresponding to the dust mix) when it would be embedded in the radiation field specified
-        by the mean intensities \f$(J_\lambda)_\ell\f$, which must be discretized on the
-        simulation's radiation field wavelength grid as returned by the
-        Configuration::radiationFieldWLG() function.
-
-        The equilibrium temperature is obtained from the energy balance equation, \f[ \int_0^\infty
-        \varsigma^\text{abs}(\lambda) \,J_\lambda(\lambda) \,\text{d}\lambda = \int_0^\infty
-        \varsigma^\text{abs}(\lambda) \,B_\lambda(T_\text{eq},\lambda) \,\text{d}\lambda, \f] where
-        the left-hand side is integrated over the radiation field wavelength grid, and the
-        right-hand side is precalculated during setup for a range of temperatures through
-        integration over a built-in wavelength grid.
-
-        The behavior of this function is undefined if the simulation does not track the radiation
-        field, because in that case setup does not calculate the information on which this function
-        relies. */
-    double indicativeTemperature(const Array& Jv) const override;
-
     //======== High-level photon life cycle =======
 
     /** This function returns the absorption opacity \f$k^\text{abs}=n\varsigma^\text{abs}\f$ for
@@ -260,6 +240,23 @@ public:
         applying the Mueller matrix. Finally, the new direction is computed from the previously
         sampled \f$\theta\f$ and \f$\phi\f$ angles. */
     void performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const override;
+
+    /** This function returns an indicative temperature of the material mix when it would be
+        embedded in a given radiation field. For dust mixes, it returns the equilibrium temperature
+        \f$T_{\text{eq}}\f$ of the dust mix (or rather of the representative grain population
+        corresponding to the dust mix) when it would be embedded in the radiation field specified
+        by the mean intensities \f$(J_\lambda)_\ell\f$, which must be discretized on the
+        simulation's radiation field wavelength grid as returned by the
+        Configuration::radiationFieldWLG() function. If the specified \em Jv array is empty
+        (because the simulation does not track the radiation field), this function returns zero.
+
+        The equilibrium temperature is obtained from the energy balance equation, \f[ \int_0^\infty
+        \varsigma^\text{abs}(\lambda) \,J_\lambda(\lambda) \,\text{d}\lambda = \int_0^\infty
+        \varsigma^\text{abs}(\lambda) \,B_\lambda(T_\text{eq},\lambda) \,\text{d}\lambda, \f] where
+        the left-hand side is integrated over the radiation field wavelength grid, and the
+        right-hand side is precalculated during setup for a range of temperatures through
+        integration over a built-in wavelength grid. */
+    double indicativeTemperature(const MaterialState* state, const Array& Jv) const override;
 
     //======== Scattering implementation for dust mixes =======
 

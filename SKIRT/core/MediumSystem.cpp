@@ -781,28 +781,46 @@ Array MediumSystem::meanIntensity(int m) const
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::indicativeDustTemperature(int m) const
+double MediumSystem::indicativeTemperature(int m, MaterialMix::MaterialType type) const
 {
-    const Array& Jv = meanIntensity(m);
+    // get the radiation field, if available
+    Array Jv;
+    if (_config->hasRadiationField()) Jv = meanIntensity(m);
+
+    // obtain the temperature and weight for each component of the requested type
     double sumRhoT = 0.;
     double sumRho = 0.;
     for (int h = 0; h != _numMedia; ++h)
     {
-        if (isDust(h))
+        if (isMaterialType(type, h))
         {
             double rho = massDensity(m, h);
             if (rho > 0.)
             {
-                double T = mix(m, h)->indicativeTemperature(Jv);
+                MaterialState mst(_state, m, h);
+                double T = mix(m, h)->indicativeTemperature(&mst, Jv);
                 sumRhoT += rho * T;
                 sumRho += rho;
             }
         }
     }
-    if (sumRho > 0.)
-        return sumRhoT / sumRho;
-    else
-        return 0.;
+
+    // return the average, if there is one
+    return sumRho > 0. ? sumRhoT / sumRho : 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::indicativeDustTemperature(int m) const
+{
+    return indicativeTemperature(m, MaterialMix::MaterialType::Dust);
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::indicativeGasTemperature(int m) const
+{
+    return indicativeTemperature(m, MaterialMix::MaterialType::Gas);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -835,14 +853,6 @@ double MediumSystem::totalAbsorbedDustLuminosity(bool primary) const
         }
     }
     return Labs;
-}
-
-////////////////////////////////////////////////////////////////////
-
-double MediumSystem::indicativeGasTemperature(int m) const
-{
-    // TO DO: implement averaging
-    return _state.temperature(m, _config->lyaMediumIndex());
 }
 
 ////////////////////////////////////////////////////////////////////

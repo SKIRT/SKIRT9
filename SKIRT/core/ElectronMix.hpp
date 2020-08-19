@@ -80,12 +80,6 @@ public:
         section for all wavelengths \f$\lambda\f$. */
     double sectionExt(double lambda) const override;
 
-    /** This function returns an indicative temperature of the material mix when it would be
-        embedded in a given radiation field. Because electrons don't absorb nor emit (within the
-        range of physics supported here), the implementation in this class ignores the input
-        radiation field and always returns zero. */
-    double indicativeTemperature(const Array& Jv) const override;
-
     //======== High-level photon life cycle =======
 
     /** This function returns the absorption opacity \f$k^\text{abs}=n\varsigma^\text{abs}\f$,
@@ -121,6 +115,11 @@ public:
         scattering without or with support for polarization depending on the user-configured \em
         includePolarization property. */
     void performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const override;
+
+    /** This function returns an indicative temperature of the material mix when it would be
+        embedded in a given radiation field. Because electrons don't absorb nor emit (within the
+        range of physics supported here), the implementation in this class always returns zero. */
+    double indicativeTemperature(const MaterialState* state, const Array& Jv) const override;
 
     //======================== Data Members ========================
 

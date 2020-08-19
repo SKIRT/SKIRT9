@@ -69,13 +69,6 @@ double ElectronMix::sectionExt(double /*lambda*/) const
 
 ////////////////////////////////////////////////////////////////////
 
-double ElectronMix::indicativeTemperature(const Array& /*Jv*/) const
-{
-    return 0.;
-}
-
-////////////////////////////////////////////////////////////////////
-
 double ElectronMix::opacityAbs(double /*lambda*/, const MaterialState* /*state*/, const PhotonPacket* /*pp*/) const
 {
     return 0.;
@@ -113,6 +106,13 @@ void ElectronMix::performScattering(double lambda, const MaterialState* state, P
 
     // execute the scattering event in the photon packet
     pp->scatter(bfknew, state->bulkVelocity(), lambda);
+}
+
+////////////////////////////////////////////////////////////////////
+
+double ElectronMix::indicativeTemperature(const MaterialState* /*state*/, const Array& /*Jv*/) const
+{
+    return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
