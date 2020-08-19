@@ -220,15 +220,9 @@ public:
     double maxFractionOfPrevious() const { return _maxFractionOfPrevious; }
 
     /** Returns true if the simulation includes treatment of the hydrogen Lyman-alpha line during
-        the primary photon cycle, and false if not. This value also corresponds to the presence or
-        absence of a medium component that has a material mix with the \c Lya or \c LyaPolarization
-        scattering mode. In the current implementation, there can be only a single such Lyman-alpha
-        medium component. This restriction may be lifted in the future. */
-    bool hasLymanAlpha() const { return _lyaMediumIndex >= 0; }
-
-    /** Returns the index of the medium component defining the neutral hydrogen interacting with
-        Lyman-alpha line transfer, if any. */
-    int lyaMediumIndex() const { return _lyaMediumIndex; }
+        the primary photon cycle, and false if not. This value corresponds to the presence or
+        absence of a medium component that implements resonant scattering. */
+    bool hasLymanAlpha() const { return _hasLymanAlpha; }
 
     /** This enumeration lists the supported Lyman-alpha acceleration schemes. */
     enum class LyaAccelerationScheme { None, Constant, Variable };
@@ -365,7 +359,7 @@ private:
     double _maxFractionOfPrevious{0.03};
 
     // Lyman-alpha properties
-    int _lyaMediumIndex{-1};
+    bool _hasLymanAlpha{false};
     LyaAccelerationScheme _lyaAccelerationScheme{LyaAccelerationScheme::Variable};
     double _lyaAccelerationStrength{1.};
     double _lyaExpansionRate{0.};

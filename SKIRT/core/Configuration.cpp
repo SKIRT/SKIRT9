@@ -146,10 +146,9 @@ void Configuration::setupSelfBefore()
     }
 
     // retrieve Lyman-alpha options
-    bool hasLymanAlpha = false;
     if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::LyaWithDustExtinction)
     {
-        hasLymanAlpha = true;
+        _hasLymanAlpha = true;
         switch (ms->lyaOptions()->lyaAccelerationScheme())
         {
             case LyaOptions::LyaAccelerationScheme::None:
@@ -172,21 +171,16 @@ void Configuration::setupSelfBefore()
         _pathLengthBias = 0.;
     }
 
-    // verify that there is exactly one Lya medium component if required, and none if not required
+    // verify that there is a Lya medium component if required, and none if not required
     int numLyaMedia = 0;
     for (int h = 0; h != numMedia; ++h)
     {
         if (ms->media()[h]->mix()->hasResonantScattering())
-        {
             numLyaMedia++;
-            _lyaMediumIndex = h;
-        }
     }
-    if (hasLymanAlpha && numLyaMedia < 1)
+    if (_hasLymanAlpha && numLyaMedia < 1)
         throw FATALERROR("Lyman-alpha simulation mode requires a medium component with Lyman-alpha material mix");
-    if (hasLymanAlpha && numLyaMedia > 1)
-        throw FATALERROR("It is not allowed for more than one medium component to have a Lyman-alpha material mix");
-    if (!hasLymanAlpha && numLyaMedia > 0)
+    if (!_hasLymanAlpha && numLyaMedia > 0)
         throw FATALERROR("Lyman-alpha material mix is allowed only with Lyman-alpha simulation mode");
 
     // retrieve symmetry dimensions
@@ -284,7 +278,7 @@ void Configuration::setupSelfAfter()
     log->info("  " + regime + "chromatic wavelength regime");
     string medium = _hasMedium ? "With" : "No";
     log->info("  " + medium + " transfer medium");
-    if (_lyaMediumIndex >= 0) log->info("  Including Lyman-alpha line transfer");
+    if (_hasLymanAlpha) log->info("  Including Lyman-alpha line transfer");
     if (_hasDustSelfAbsorption)
         log->info("  Including dust emission with iterative calculation of dust self-absorption");
     else if (_hasDustEmission)
