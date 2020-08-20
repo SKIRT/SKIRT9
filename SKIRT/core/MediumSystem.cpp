@@ -160,13 +160,14 @@ void MediumSystem::setupSelfAfter()
                     _state.setMagneticField(m, _media[_config->magneticFieldMediumIndex()]->magneticField(center));
                 }
 
-                // other specific variables
+                // specific state variables other than density
                 for (int h = 0; h != _numMedia; ++h)
                 {
-                    // retrieve temperature and parameters from medium component
-                    double T = _media[h]->temperature(center);
-                    Array params;  // TO DO
+                    // retrieve input model temperature and parameters from medium component
                     MaterialState mst(_state, m, h);
+                    double T = _media[h]->temperature(center);
+                    Array params;
+                    _media[h]->parameters(center, params);
                     mix(m, h)->initializeSpecificState(&mst, T, params);
                 }
             }

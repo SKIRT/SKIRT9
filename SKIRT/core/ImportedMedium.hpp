@@ -139,6 +139,21 @@ public:
         returns the imported temperature at the specified position. */
     double temperature(Position bfr) const override;
 
+    /** If custom input model parameters are available for this medium, this function stores the
+        parameter values at the specified position into the given array. If the position is outside
+        the domain, the parameter values default to zero. If no custom input model parameters are
+        available for this medium, the array is resized to zero length.
+
+        For an imported medium that is configured with a material mix, custom input model
+        parameters are imported from the snapshot as requested by the MaterialMix::parameterInfo()
+        function. The number and order of parameters returned by this function then reflects the
+        number and order of parameter descriptions returned by the MaterialMix::parameterInfo()
+        function. If the medium is configured with a material mix \em family, any imported
+        parameters are used to select a member of the material mix family at each location, and
+        this function returns an empty array. In other words, requests by material mix family
+        members for custom input model parameters are ignored. */
+    void parameters(Position bfr, Array& params) const override;
+
     /** This function returns the number density of the medium at the specified position. */
     double numberDensity(Position bfr) const override;
 

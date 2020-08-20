@@ -83,6 +83,13 @@ double GeometricMedium::temperature(Position /*bfr*/) const
 
 ////////////////////////////////////////////////////////////////////
 
+void GeometricMedium::parameters(Position /*bfr*/, Array& params) const
+{
+    params.resize(0);
+}
+
+////////////////////////////////////////////////////////////////////
+
 double GeometricMedium::numberDensity(Position bfr) const
 {
     return _number * geometry()->density(bfr);

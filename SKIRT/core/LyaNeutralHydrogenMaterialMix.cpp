@@ -48,6 +48,8 @@ vector<StateVariable> LyaNeutralHydrogenMaterialMix::specificStateVariableInfo()
     return vector<StateVariable>{StateVariable::numberDensity(), StateVariable::temperature()};
 }
 
+////////////////////////////////////////////////////////////////////
+
 void LyaNeutralHydrogenMaterialMix::initializeSpecificState(MaterialState* state, double temperature,
                                                             const Array& /*params*/) const
 {

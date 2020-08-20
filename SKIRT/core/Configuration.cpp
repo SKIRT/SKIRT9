@@ -175,8 +175,7 @@ void Configuration::setupSelfBefore()
     int numLyaMedia = 0;
     for (int h = 0; h != numMedia; ++h)
     {
-        if (ms->media()[h]->mix()->hasResonantScattering())
-            numLyaMedia++;
+        if (ms->media()[h]->mix()->hasResonantScattering()) numLyaMedia++;
     }
     if (_hasLymanAlpha && numLyaMedia < 1)
         throw FATALERROR("Lyman-alpha simulation mode requires a medium component with Lyman-alpha material mix");

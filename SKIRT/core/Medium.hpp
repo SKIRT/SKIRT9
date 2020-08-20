@@ -6,6 +6,7 @@
 #ifndef MEDIUM_HPP
 #define MEDIUM_HPP
 
+#include "Array.hpp"
 #include "Position.hpp"
 #include "SimulationItem.hpp"
 class MaterialMix;
@@ -101,6 +102,12 @@ public:
         the input model, or zero if the input model does not define a temperature for this medium
         (at all, or at the given position). */
     virtual double temperature(Position bfr) const = 0;
+
+    /** If custom input model parameters are available for this medium, this function stores the
+        parameter values at the specified position into the given array. If the position is outside
+        the domain, the parameter values default to zero. If no custom input model parameters are
+        available for this medium, the array is resized to zero length. */
+    virtual void parameters(Position bfr, Array& params) const = 0;
 
     /** This function returns the number density of the medium at the specified position. */
     virtual double numberDensity(Position bfr) const = 0;

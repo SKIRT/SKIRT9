@@ -9,6 +9,7 @@
 #include "Array.hpp"
 #include "Direction.hpp"
 #include "SimulationItem.hpp"
+#include "SnapshotParameter.hpp"
 #include "StateVariable.hpp"
 class Configuration;
 class MaterialState;
@@ -221,6 +222,12 @@ public:
     virtual bool hasStochasticDustEmission() const;
 
     //======== Medium state setup =======
+
+    /** This function returns the number and type of import parameters required by this particular
+        material mix as a list of SnapshotParameter objects. Each of these objects specifies unit
+        information and a human-readable descripton for the parameter. The default implementation
+        in this base class returns an empty list. */
+    virtual vector<SnapshotParameter> parameterInfo() const;
 
     /** This function returns a list of StateVariable objects describing the specific state
         variables used by the receiving material mix. This allows the MediumSystem class to

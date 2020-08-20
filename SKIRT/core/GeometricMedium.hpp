@@ -102,6 +102,12 @@ protected:
         geometric media do not define a temperature, the function returns -1. */
     double temperature(Position bfr) const override;
 
+    /** If custom input model parameters are available for this medium, this function stores the
+        parameter values at the specified position into the given array. Because a geometric medium
+        does not provide custom input model parameters, this function resizes the array is to zero
+        length. */
+    void parameters(Position bfr, Array& params) const override;
+
     /** This function returns the number density of the medium at the specified position. */
     double numberDensity(Position bfr) const override;
 

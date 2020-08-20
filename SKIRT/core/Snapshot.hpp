@@ -242,10 +242,11 @@ protected:
         this is not being imported, for use by subclasses. */
     int parametersIndex() const { return _parametersIndex; }
 
-    /** This function returns the number of parameters being imported (which may be zero), for use
-        by subclasses. */
+public:
+    /** This function returns the number of parameters being imported (which may be zero). */
     int numParameters() const { return _numParameters; }
 
+protected:
     /** This function returns the mass or mass density multiplier configured by the user, or zero
         if the user did not configure the mass or mass density policy, for use by subclasses. */
     double multiplier() const { return _multiplier; }

@@ -55,6 +55,13 @@ bool MaterialMix::hasStochasticDustEmission() const
 
 ////////////////////////////////////////////////////////////////////
 
+vector<SnapshotParameter> MaterialMix::parameterInfo() const
+{
+    return vector<SnapshotParameter>();
+}
+
+////////////////////////////////////////////////////////////////////
+
 void MaterialMix::initializeSpecificState(MaterialState* /*state*/, double /*temperature*/,
                                           const Array& /*params*/) const
 {}
