@@ -136,7 +136,7 @@ public:
 
     /** This function sets the value of the custom variable with index \f$i\f$ of the medium
         component with index \f$h\f$ in the spatial cell with index \f$m\f$. */
-    void setCustom(int i, int m, int h, double value);
+    void setCustom(int m, int h, int i, double value);
 
     //============= Querying =============
 
@@ -179,7 +179,7 @@ public:
 
     /** This function returns the value of the custom variable with index \f$i\f$ of the medium
         component with index \f$h\f$ in the spatial cell with index \f$m\f$. */
-    double custom(int i, int m, int h) const { return _data[_numVars * m + _off_cust[h] + i]; }
+    double custom(int m, int h, int i) const { return _data[_numVars * m + _off_cust[h] + i]; }
 
     //======================== Data Members ========================
 

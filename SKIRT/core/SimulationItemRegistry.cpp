@@ -80,6 +80,7 @@
 #include "FileWavelengthDistribution.hpp"
 #include "FileWavelengthGrid.hpp"
 #include "FlatUniverseCosmology.hpp"
+#include "FragmentDustMixDecorator.hpp"
 #include "FrameInstrument.hpp"
 #include "FullInstrument.hpp"
 #include "GammaGeometry.hpp"
@@ -495,6 +496,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<MRNDustMix>();
     ItemRegistry::add<TrustBenchmarkDustMix>();
     ItemRegistry::add<ConfigurableDustMix>();
+
+    ItemRegistry::add<FragmentDustMixDecorator>();
 
     ItemRegistry::add<ElectronMix>();
     ItemRegistry::add<LyaNeutralHydrogenMaterialMix>();

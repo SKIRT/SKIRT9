@@ -129,7 +129,7 @@ void MediumState::setTemperature(int m, int h, double value)
 
 //////////////////////////////////////////////////////////////////////
 
-void MediumState::setCustom(int i, int m, int h, double value)
+void MediumState::setCustom(int m, int h, int i, double value)
 {
     _data[_numVars * m + _off_cust[h] + i] = value;
 }

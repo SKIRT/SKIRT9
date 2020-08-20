@@ -31,6 +31,10 @@ public:
     /** This function sets the temperature \f$T\f$ of the medium component in the spatial cell. */
     void setTemperature(double value) { _ms.setTemperature(_m, _h, value); }
 
+    /** This function sets the custom state variable with index \f$i\f$ of the medium component in
+        the spatial cell. */
+    void setCustom(int i, double value) { _ms.setCustom(_m, _h, i, value); }
+
     //============= Querying =============
 
 public:
@@ -50,6 +54,10 @@ public:
     /** This function returns the temperature \f$T\f$ of the medium component in the spatial
         cell. */
     double temperature() const { return _ms.temperature(_m, _h); }
+
+    /** This function returns the custom state variable with index \f$i\f$ of the medium component
+        in the spatial cell. */
+    double custom(int i) const { return _ms.custom(_m, _h, i); }
 
     //======================== Data Members ========================
 
