@@ -3,12 +3,11 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "FileEmissionLineSEDFamily.hpp"
-#include "Constants.hpp"
+#include "FileIndexedSEDFamily.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-void FileEmissionLineSEDFamily::setupSelfBefore()
+void FileIndexedSEDFamily::setupSelfBefore()
 {
     SEDFamily::setupSelfBefore();
 
@@ -17,7 +16,7 @@ void FileEmissionLineSEDFamily::setupSelfBefore()
 
 ////////////////////////////////////////////////////////////////////
 
-vector<SnapshotParameter> FileEmissionLineSEDFamily::parameterInfo() const
+vector<SnapshotParameter> FileIndexedSEDFamily::parameterInfo() const
 {
     return vector<SnapshotParameter>{
         {"index"},
@@ -26,14 +25,14 @@ vector<SnapshotParameter> FileEmissionLineSEDFamily::parameterInfo() const
 
 ////////////////////////////////////////////////////////////////////
 
-Range FileEmissionLineSEDFamily::intrinsicWavelengthRange() const
+Range FileIndexedSEDFamily::intrinsicWavelengthRange() const
 {
     return _table.axisRange<0>();
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double FileEmissionLineSEDFamily::specificLuminosity(double wavelength, const Array& parameters) const
+double FileIndexedSEDFamily::specificLuminosity(double wavelength, const Array& parameters) const
 {
     double index = parameters[0];
     // ignore negative indices as per the API
@@ -49,8 +48,8 @@ double FileEmissionLineSEDFamily::specificLuminosity(double wavelength, const Ar
 
 ////////////////////////////////////////////////////////////////////
 
-double FileEmissionLineSEDFamily::cdf(Array& lambdav, Array& pv, Array& Pv, const Range& wavelengthRange,
-                                      const Array& parameters) const
+double FileIndexedSEDFamily::cdf(Array& lambdav, Array& pv, Array& Pv, const Range& wavelengthRange,
+                                 const Array& parameters) const
 {
     double index = parameters[0];
     // ignore negative indices as per the API
@@ -60,10 +59,8 @@ double FileEmissionLineSEDFamily::cdf(Array& lambdav, Array& pv, Array& Pv, cons
     }
     else
     {
-        // note that no checks are in place to test the sanity of the input index
-        // if the index does not correspond to a value in the file, cdf() will
-        // interpolate from existing index values
-        // this interpolation will most likely be wrong
+        // the sanity of the input index is not verified; if the index does not correspond to a value in the file,
+        // cdf() will interpolate from existing index values and this interpolation will most likely be wrong
         return _table.cdf(lambdav, pv, Pv, wavelengthRange, index);
     }
 }

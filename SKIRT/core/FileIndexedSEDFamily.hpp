@@ -3,34 +3,35 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef FILEEMISSIONLINESEDFAMILY_HPP
-#define FILEEMISSIONLINESEDFAMILY_HPP
+#ifndef FILEINDEXEDSEDFAMILY_HPP
+#define FILEINDEXEDSEDFAMILY_HPP
 
 #include "SEDFamily.hpp"
 #include "StoredTable.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
-/** An instance of the FileEmissionLineSEDFamily can be used to import user-provided spectra into a SKIRT simulation.
-    This is for instance useful when including line emission from the ISM itself in an AdaptiveMeshSource, CellSource,
-    ParticleSource...
+/** An instance of the FileIndexedSEDFamily can be used to specify user-provided spectra for an
+    imported source such as a CellSource or a ParticleSource. This can be useful, for example, to
+    include emission from the interstellar medium in a simulation. The spectra should be provided
+    in SKIRT stored table format as a 2-dimensional table with the wavelength as the first axis.
 
-    The spectra should be provided in SKIRT stored table format as a 2-dimensional table with the wavelength as the
-    first axis.
+    The implementation of this class has on purpose been kept very basic to allow for maximum
+    flexibility: the spectra are parametrised using a single (positive) dimensionless index
+    parameter that identifies each spectrum. Apart from the positivity requirement, there are no
+    restrictions on the values of the index. Although originally conceived as an integer counter,
+    the use of a stored table by the implementation also allows for floating point indices. Care
+    has to be taken that the indices referenced by the imported source elements do in fact exist in
+    the stored table. If not, the implementation will interpolate from existing index values and
+    this interpolation will most likely be wrong because spectra with consecutive indices do not
+    necessarily have a physical relationship.
 
-    The implementation has on purpose been kept very basic to allow for maximal flexibility: the spectra are
-    parametrised using a single (positive) dimensionless index parameter that identifies each spectrum. Apart from
-    the positivity requirement, there are no restrictions on the values of the index. Although originally conceived
-    as an integer counter number, the use of a stored table by the implementation also allows for floating point
-    indices. Care has to be taken that the indices referenced by the Source do in fact exist; the stored table will
-    (wrongly) interpolate the spectra for non-existing indices.
-
-    To allow for cells without emission, negative indices are ignored. Both specificLuminosity() and cdf() return 0
-    whenever a negative input index is specified. */
-class FileEmissionLineSEDFamily : public SEDFamily
+    To allow for source elements without emission, a negative index is interpreted as "no
+    emission". */
+class FileIndexedSEDFamily : public SEDFamily
 {
-    ITEM_CONCRETE(FileEmissionLineSEDFamily, SEDFamily, "a user-provided list of emission lines that make up an SED")
-        PROPERTY_STRING(filename, "the name of the stored table file defining the emission lines")
+    ITEM_CONCRETE(FileIndexedSEDFamily, SEDFamily, "a user-provided, indexed SED family")
+        PROPERTY_STRING(filename, "the name of the stored table file listing the SEDs")
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============

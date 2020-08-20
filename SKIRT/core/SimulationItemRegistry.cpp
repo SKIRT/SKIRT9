@@ -73,7 +73,7 @@
 #include "FSPSSEDFamily.hpp"
 #include "FieldStrengthCellLibrary.hpp"
 #include "FileBand.hpp"
-#include "FileEmissionLineSEDFamily.hpp"
+#include "FileIndexedSEDFamily.hpp"
 #include "FileMesh.hpp"
 #include "FileSED.hpp"
 #include "FileSSPSEDFamily.hpp"
@@ -322,11 +322,11 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<Starburst99SEDFamily>();
     ItemRegistry::add<FSPSSEDFamily>();
     ItemRegistry::add<FileSSPSEDFamily>();
+    ItemRegistry::add<FileIndexedSEDFamily>();
     ItemRegistry::add<MappingsSEDFamily>();
     ItemRegistry::add<LyaGaussianSEDFamily>();
     ItemRegistry::add<LyaDoublePeakedSEDFamily>();
     ItemRegistry::add<LyaSEDFamilyDecorator>();
-    ItemRegistry::add<FileEmissionLineSEDFamily>();
 
     // wavelength distributions
     ItemRegistry::add<WavelengthDistribution>();
