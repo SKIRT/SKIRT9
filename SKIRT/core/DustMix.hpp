@@ -260,7 +260,7 @@ public:
 
     //======== Scattering implementation for dust mixes =======
 
-protected:
+public:
     /** This enumeration lists the scattering modes supported by the dust mix hierarchy. */
     enum class ScatteringMode {
         HenyeyGreenstein,

@@ -228,9 +228,17 @@ public:
         index \f$c\f$. */
     double populationMass(int c) const override;
 
-    /** This function returns the total dust mass \f$\mu_c\f$ per hydrogen atom for all populations
+    /** This function returns the total dust mass \f$\mu\f$ per hydrogen atom for all populations
         combined. */
     double totalMass() const override;
+
+    //=========== Exposing grain populations to FragmentDustMixDecorator ============
+
+public:
+    /** This function returns a read-only pointer to the grain population with index \f$c\f$. It is
+        intended for use by the FragmentDustMixDecorator and should not be used for other purposes.
+        */
+    const GrainPopulation* population(int c) const;
 
     //======================== Data Members ========================
 

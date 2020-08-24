@@ -48,7 +48,7 @@ public:
         index \f$c\f$. */
     virtual double populationMass(int c) const = 0;
 
-    /** This function returns the total dust mass \f$\mu_c\f$ per hydrogen atom for all populations
+    /** This function returns the total dust mass \f$\mu\f$ per hydrogen atom for all populations
         combined. */
     virtual double totalMass() const = 0;
 };

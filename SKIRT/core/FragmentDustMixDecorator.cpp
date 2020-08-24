@@ -4,6 +4,8 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "FragmentDustMixDecorator.hpp"
+#include "DustMixFragment.hpp"
+#include "FatalError.hpp"
 #include "MaterialState.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -11,6 +13,39 @@
 void FragmentDustMixDecorator::setupSelfAfter()
 {
     MaterialMix::setupSelfAfter();
+    auto scatteringMode = _dustMix->scatteringMode();
+
+    // loop over the grain populations in the dust mix being decorated
+    int numPops = _dustMix->numPopulations();
+    for (int c = 0; c != numPops; ++c)
+    {
+        const GrainPopulation* population = _dustMix->population(c);
+
+        // create a dust mix fragment for each grain population
+        if (!fragmentSizeBins())
+        {
+            _fragments.push_back(new DustMixFragment(this, scatteringMode, population));
+        }
+
+        // or create a dust mix fragment for each size bin in each grain population
+        else
+        {
+            // construct the size bins (i.e. the bin border points) for this population
+            int numSizes = population->numSizes();
+            Array borders;
+            NR::buildLogGrid(borders, population->sizeDistribution()->amin(), population->sizeDistribution()->amax(),
+                             numSizes);
+
+            // loop over the size bins for this population
+            for (int s = 0; s != numSizes; ++s)
+            {
+                _fragments.push_back(new DustMixFragment(this, scatteringMode, population, borders[s], borders[s + 1]));
+            }
+        }
+    }
+
+    _numFrags = _fragments.size();
+    if (!_numFrags) throw FATALERROR("There are no fragments in the dust mix to be fragmented");
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -40,11 +75,9 @@ vector<SnapshotParameter> FragmentDustMixDecorator::parameterInfo() const
 {
     vector<SnapshotParameter> descriptors;
 
-    int numPops = _dustMix->numPopulations();
-    for (int c = 0; c != numPops; ++c)
+    for (int f = 0; f != _numFrags; ++f)
     {
-        string description = "number density fraction for grain population " + std::to_string(c) + " -- "
-                             + _dustMix->populationGrainType(c);
+        string description = "weight for dust mix fragment " + std::to_string(f) + " -- " + populationGrainType(f);
         descriptors.emplace_back(description);
     }
     return descriptors;
@@ -56,12 +89,10 @@ vector<StateVariable> FragmentDustMixDecorator::specificStateVariableInfo() cons
 {
     vector<StateVariable> descriptors{StateVariable::numberDensity()};
 
-    int numPops = _dustMix->numPopulations();
-    for (int c = 0; c != numPops; ++c)
+    for (int f = 0; f != _numFrags; ++f)
     {
-        string description = "number density fraction for grain population " + std::to_string(c) + " -- "
-                             + _dustMix->populationGrainType(c);
-        descriptors.emplace_back(StateVariable::custom(c, description, string()));
+        string description = "weight for dust mix fragment " + std::to_string(f) + " -- " + populationGrainType(f);
+        descriptors.emplace_back(StateVariable::custom(f, description, string()));
     }
     return descriptors;
 }
@@ -71,18 +102,9 @@ vector<StateVariable> FragmentDustMixDecorator::specificStateVariableInfo() cons
 void FragmentDustMixDecorator::initializeSpecificState(MaterialState* state, double /*temperature*/,
                                                        const Array& params) const
 {
-    if (params.size())
+    for (int f = 0; f != _numFrags; ++f)
     {
-        double norm = params.sum();
-        int numPops = _dustMix->numPopulations();
-        for (int c = 0; c != numPops; ++c)
-        {
-            state->setCustom(c, params[c] / norm);
-        }
-    }
-    else
-    {
-        // TO DO.
+        state->setCustom(f, params.size() ? params[f] : 1.);
     }
 }
 
@@ -125,21 +147,27 @@ double FragmentDustMixDecorator::asymmpar(double lambda) const
 
 double FragmentDustMixDecorator::opacityAbs(double lambda, const MaterialState* state, const PhotonPacket* pp) const
 {
-    return _dustMix->opacityAbs(lambda, state, pp);
+    double opacity = 0.;
+    for (int f = 0; f != _numFrags; ++f) opacity += state->custom(f) * _fragments[f]->opacityAbs(lambda, state, pp);
+    return opacity;
 }
 
 ////////////////////////////////////////////////////////////////////
 
 double FragmentDustMixDecorator::opacitySca(double lambda, const MaterialState* state, const PhotonPacket* pp) const
 {
-    return _dustMix->opacitySca(lambda, state, pp);
+    double opacity = 0.;
+    for (int f = 0; f != _numFrags; ++f) opacity += state->custom(f) * _fragments[f]->opacitySca(lambda, state, pp);
+    return opacity;
 }
 
 ////////////////////////////////////////////////////////////////////
 
 double FragmentDustMixDecorator::opacityExt(double lambda, const MaterialState* state, const PhotonPacket* pp) const
 {
-    return _dustMix->opacityExt(lambda, state, pp);
+    double opacity = 0.;
+    for (int f = 0; f != _numFrags; ++f) opacity += state->custom(f) * _fragments[f]->opacityExt(lambda, state, pp);
+    return opacity;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -162,49 +190,65 @@ void FragmentDustMixDecorator::performScattering(double lambda, const MaterialSt
 
 double FragmentDustMixDecorator::indicativeTemperature(const MaterialState* state, const Array& Jv) const
 {
-    return _dustMix->indicativeTemperature(state, Jv);
+    double sumRhoT = 0.;
+    double sumRho = 0.;
+
+    for (int f = 0; f != _numFrags; ++f)
+    {
+        double rho = state->custom(f);
+        if (rho > 0.)
+        {
+            double T = _fragments[f]->indicativeTemperature(state, Jv);
+            sumRhoT += rho * T;
+            sumRho += rho;
+        }
+    }
+    return sumRho > 0. ? sumRhoT / sumRho : 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
 
 Array FragmentDustMixDecorator::emissivity(const Array& Jv) const
 {
-    return _dustMix->emissivity(Jv);
+    // TO DO: NEED MATERIAL STATE HERE
+    Array ev = _fragments[0]->emissivity(Jv);
+    for (int f = 1; f != _numFrags; ++f) ev += _fragments[f]->emissivity(Jv);
+    return ev;
 }
 
 ////////////////////////////////////////////////////////////////////
 
 int FragmentDustMixDecorator::numPopulations() const
 {
-    return _dustMix->numPopulations();
+    return _fragments.size();
 }
 
 ////////////////////////////////////////////////////////////////////
 
-string FragmentDustMixDecorator::populationGrainType(int c) const
+string FragmentDustMixDecorator::populationGrainType(int f) const
 {
-    return _dustMix->populationGrainType(c);
+    return _fragments[f]->populationGrainType(0);
 }
 
 ////////////////////////////////////////////////////////////////////
 
-Range FragmentDustMixDecorator::populationSizeRange(int c) const
+Range FragmentDustMixDecorator::populationSizeRange(int f) const
 {
-    return _dustMix->populationSizeRange(c);
+    return _fragments[f]->populationSizeRange(0);
 }
 
 ////////////////////////////////////////////////////////////////////
 
-const GrainSizeDistribution* FragmentDustMixDecorator::populationSizeDistribution(int c) const
+const GrainSizeDistribution* FragmentDustMixDecorator::populationSizeDistribution(int f) const
 {
-    return _dustMix->populationSizeDistribution(c);
+    return _fragments[f]->populationSizeDistribution(0);
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double FragmentDustMixDecorator::populationMass(int c) const
+double FragmentDustMixDecorator::populationMass(int f) const
 {
-    return _dustMix->populationMass(c);
+    return _fragments[f]->populationMass(0);
 }
 
 ////////////////////////////////////////////////////////////////////

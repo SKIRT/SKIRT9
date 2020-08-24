@@ -7,10 +7,17 @@
 #define FRAGMENTDUSTMIXDECORATOR_HPP
 
 #include "MultiGrainDustMix.hpp"
+class DustMixFragment;
 
 ////////////////////////////////////////////////////////////////////
 
-/** TO DO. */
+/** TO DO.
+
+    To determine the composite dust mix represented by the fragmented dust mix decorator
+    corresponding to a spatial cell, the dust mass represented by each fragment in the original
+    dust mix is multiplied by its corresponding weight factor in the specific state. In other
+    words, a weight factor of one means that the fragment's mass remains unchanged from the
+    original dust mix. */
 class FragmentDustMixDecorator : public MaterialMix, public MultiGrainPopulationInterface
 {
     ITEM_CONCRETE(FragmentDustMixDecorator, MaterialMix,
@@ -29,81 +36,104 @@ class FragmentDustMixDecorator : public MaterialMix, public MultiGrainPopulation
     //============= Construction - Setup - Destruction =============
 
 protected:
-    /** TO DO. */
+    /** This function creates and remembers a dust mix fragment for each grain population in the
+        multi-grain dust mix being fragmented or, if requested by the user, for each size bin in
+        each of those grain populations. */
     void setupSelfAfter() override;
 
     //======== Material type =======
 
 public:
     /** This function returns the fundamental material type represented by this material mix. For
-        this dust mix decorator, it returns MaterialType::Dust. */
+        the fragment dust mix decorator, it returns MaterialType::Dust. */
     MaterialType materialType() const override;
 
     //======================== Capabilities =======================
 
 public:
     /** This function returns a flag indicating whether the material mix supports polarization
-        during scattering events or not. For this dust mix decorator, the function returns the
-        value obtained from the corresponding function for the dust mix being fragmented. */
+        during scattering events or not. For the fragment dust mix decorator, the function returns
+        the value returned by the corresponding function for the dust mix being fragmented. */
     bool hasPolarizedScattering() const override;
 
     /** This function returns a flag indicating whether this material mix supports stochastic
-        heating of dust grains. For this dust mix decorator, the function returns true because
-        all dust mixes being fragmented support stochastic heating by definition. */
+        heating of dust grains. For the fragment dust mix decorator, the function returns true
+        because all dust mixes being fragmented support stochastic heating by definition. */
     bool hasStochasticDustEmission() const override;
 
     //======== Medium state setup =======
 
 public:
-    /** This function returns the number and type of import parameters required by this particular
-        material mix as a list of SnapshotParameter objects. TO DO. */
+    /** This function returns the number and type of import parameters required by this fragmented
+        dust mix as a list of SnapshotParameter objects. Specifically, the function returns a
+        parameter description for each fragment corresponding to the weight factor to be assigned
+        to that fragment. The parameters imported for each spatial cell end up in the state for the
+        medium component associated with this fragmented dust mix. For more information, see the
+        specificStateVariableInfo() and initializeSpecificState() functions. */
     vector<SnapshotParameter> parameterInfo() const override;
 
     /** This function returns a list of StateVariable objects describing the specific state
-        variables used by the receiving material mix. TO DO. */
+        variables used by this fragmented dust mix. Specifically, in addition to a description for
+        the overall number density, the function returns a custom state variable description for
+        each fragment corresponding to the weight factor for that fragment. For more information,
+        see the parameterInfo() and initializeSpecificState() functions. */
     vector<StateVariable> specificStateVariableInfo() const override;
 
-    /** This function initializes any specific state variables requested by this material mix
-        through the specificStateVariableInfo() function except for the number density. TO DO. */
+    /** This function initializes the specific state variables requested by this fragmented dust
+        mix through the specificStateVariableInfo() function except for the number density. If the
+        \em params array is nonempty, the function assumes that the array contains the appropriate
+        number of imported parameter values as requested through the parameterInfo() function, i.e.
+        a weight factor per fragment. It then copies these weights into the corresponding specific
+        state variables. If the \em params array is empty, the function sets all the weights in the
+        specific state to a value of one. The \em temperature argument value is ignored. */
     void initializeSpecificState(MaterialState* state, double temperature, const Array& params) const override;
 
     //======== Low-level material properties =======
 
 public:
-    /** This function returns the dust mass \f$\mu\f$ per hydrogen atom for this dust mix. TO DO.
-        */
+    /** This function returns the dust mass \f$\mu\f$ per hydrogen atom for the original dust mix
+        being fragmented, without taking into account any additional fragment weights. */
     double mass() const override;
 
     /** This function returns the absorption cross section per entity
-        \f$\varsigma^{\text{abs}}_{\lambda}\f$ at wavelength \f$\lambda\f$. TO DO. */
+        \f$\varsigma^{\text{abs}}_{\lambda}\f$ at wavelength \f$\lambda\f$ for the original dust
+        mix being fragmented, without taking into account any additional fragment weights. */
     double sectionAbs(double lambda) const override;
 
     /** This function returns the scattering cross section per entity
-        \f$\varsigma^{\text{sca}}_{\lambda}\f$ at wavelength \f$\lambda\f$. TO DO. */
+        \f$\varsigma^{\text{sca}}_{\lambda}\f$ at wavelength \f$\lambda\f$ for the original dust
+        mix being fragmented, without taking into account any additional fragment weights. */
     double sectionSca(double lambda) const override;
 
     /** This function returns the total extinction cross section per entity
         \f$\varsigma^{\text{ext}}_{\lambda} = \varsigma^{\text{abs}}_{\lambda} +
-        \varsigma^{\text{sca}}_{\lambda}\f$ at wavelength \f$\lambda\f$. TO DO. */
+        \varsigma^{\text{sca}}_{\lambda}\f$ at wavelength \f$\lambda\f$ for the original dust mix
+        being fragmented, without taking into account any additional fragment weights. */
     double sectionExt(double lambda) const override;
 
     /** This function returns the scattering asymmetry parameter \f$g_\lambda =
-        \left<\cos\theta\right>\f$ at wavelength \f$\lambda\f$, which is used with the
-        HenyeyGreenstein scattering mode. TO DO. */
+        \left<\cos\theta\right>\f$ at wavelength \f$\lambda\f$ for the original dust mix being
+        fragmented, without taking into account any additional fragment weights. */
     double asymmpar(double lambda) const override;
 
     //======== High-level photon life cycle =======
 
     /** This function returns the absorption opacity \f$k^\text{abs}=n\varsigma^\text{abs}\f$ for
-        the given wavelength and material state. The photon properties are not used. TO DO. */
+        the given wavelength and material state, taking into account the fragment weights in the
+        material state as described in the class header. The photon properties are used only if
+        they are used by the dust mix being fragmented. */
     double opacityAbs(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
 
     /** This function returns the scattering opacity \f$k^\text{sca}=n\varsigma^\text{sca}\f$ for
-        the given wavelength and material state. The photon properties are not used. TO DO. */
+        the given wavelength and material state, taking into account the fragment weights in the
+        material state as described in the class header. The photon properties are used only if
+        they are used by the dust mix being fragmented. */
     double opacitySca(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
 
     /** This function returns the extinction opacity \f$k^\text{ext}=k^\text{abs}+k^\text{sca}\f$
-        for the given wavelength and material state. The photon properties are not used. TO DO. */
+        for the given wavelength and material state, taking into account the fragment weights in
+        the material state as described in the class header. The photon properties are used only if
+        they are used by the dust mix being fragmented. */
     double opacityExt(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
 
     /** This function calculates the contribution of the medium component associated with this
@@ -117,8 +147,9 @@ public:
         material mix. TO DO. */
     void performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const override;
 
-    /** This function returns an indicative temperature of the material mix when it would be
-        embedded in a given radiation field. TO DO. */
+    /** This function returns an indicative temperature of the fragmented dust mix when it would be
+        embedded in a given radiation field, averaging over the fragments using the fragment
+        weights in the material state as described in the class header. */
     double indicativeTemperature(const MaterialState* state, const Array& Jv) const override;
 
     //======== Secondary emission =======
@@ -135,34 +166,41 @@ public:
     //=========== Exposing multiple grain populations (MultiGrainPopulationInterface) ============
 
 public:
-    /** This function returns the number of dust grain populations (with indices \f$c\f$) in this
-        dust mix. TO DO. */
+    /** This function returns the number of fragments (with indices \f$f\f$) in this fragmented
+        dust mix. If the \em fragmentSizeBins flag is configured to false, this corresponds to the
+        number of populations in the dust mix being fragmented. If the \em fragmentSizeBins flag is
+        configured to true, this corresponds to the grand total of size bins for all populations in
+        the dust mix being fragmented. */
     int numPopulations() const override;
 
     /** This function returns a brief human-readable identifier for the type of grain material
-        represented by the population with index \f$c\f$. TO DO. */
-    string populationGrainType(int c) const override;
+        represented by the fragment with index \f$f\f$. */
+    string populationGrainType(int f) const override;
 
-    /** This function returns the minimum and maximum grain sizes \f$a_{\text{min},c},
-        a_{\text{max},c}\f$ for the population with index \f$c\f$. TO DO. */
-    Range populationSizeRange(int c) const override;
+    /** This function returns the minimum and maximum grain sizes \f$a_{\text{min},f},
+        a_{\text{max},c}\f$ for the fragment with index \f$f\f$. */
+    Range populationSizeRange(int f) const override;
 
-    /** This function returns the grain size distribution object for the population with index
-        \f$c\f$. TO DO. */
-    const GrainSizeDistribution* populationSizeDistribution(int c) const override;
+    /** This function returns the grain size distribution object for the fragment with index
+        \f$f\f$. */
+    const GrainSizeDistribution* populationSizeDistribution(int f) const override;
 
-    /** This function returns the dust mass \f$\mu_c\f$ per hydrogen atom for the population with
-        index \f$c\f$. TO DO. */
-    double populationMass(int c) const override;
+    /** This function returns the dust mass \f$\mu_f\f$ per hydrogen atom for the fragment with
+        index \f$f\f$ as it would be in the original dust mix being fragmented, without taking into
+        account any additional fragment weights. */
+    double populationMass(int f) const override;
 
-    /** This function returns the total dust mass \f$\mu_c\f$ per hydrogen atom for all populations
-        combined. TO DO. */
+    /** This function returns the total dust mass \f$\mu\f$ per hydrogen atom for all fragments
+        combined in the original dust mix being fragmented, without taking into account any
+        additional fragment weights. */
     double totalMass() const override;
 
     //======================== Data Members ========================
 
 private:
-    // all data members are precalculated in setupSelfAfter()
+    // list of fragments created in setupSelfAfter() and destructed automatically by being children
+    vector<const DustMixFragment*> _fragments;
+    int _numFrags{0};
 };
 
 ////////////////////////////////////////////////////////////////////
