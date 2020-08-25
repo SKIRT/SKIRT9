@@ -43,6 +43,13 @@ bool LyaNeutralHydrogenMaterialMix::hasResonantScattering() const
 
 ////////////////////////////////////////////////////////////////////
 
+bool LyaNeutralHydrogenMaterialMix::hasExtraSpecificState() const
+{
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////
+
 vector<StateVariable> LyaNeutralHydrogenMaterialMix::specificStateVariableInfo() const
 {
     return vector<StateVariable>{StateVariable::numberDensity(), StateVariable::temperature()};

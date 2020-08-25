@@ -72,6 +72,13 @@ bool FragmentDustMixDecorator::hasStochasticDustEmission() const
 
 ////////////////////////////////////////////////////////////////////
 
+bool FragmentDustMixDecorator::hasExtraSpecificState() const
+{
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////
+
 vector<SnapshotParameter> FragmentDustMixDecorator::parameterInfo() const
 {
     vector<SnapshotParameter> descriptors;

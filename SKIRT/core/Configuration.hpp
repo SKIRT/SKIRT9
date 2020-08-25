@@ -254,8 +254,7 @@ public:
     int gridDimension() const { return _gridDimension; }
 
     /** Returns true if one or more medium components in the simulation may have a nonzero velocity
-        for some positions, causing Doppler shifts in the perceived, scattered and emitted
-        wavelengths. If the function returns false, none of the media has a velocity. */
+        for some positions. If the function returns false, none of the media has a velocity. */
     bool hasMovingMedia() const { return _hasMovingMedia; }
 
     /** Returns true if the material mix for at least one medium component in the simulation may
@@ -264,17 +263,23 @@ public:
         domain of the simulation. */
     bool hasVariableMedia() const { return _hasVariableMedia; }
 
+    /** Returns true if the perceived photon packet wavelength equals the intrinsic photon packet
+        wavelength for all spatial cells along the path of the packet. The following conditions
+        cause this function to return false: Hubble expansion is enabled or some media may have a
+        non-zero velocity in some cells. */
+    bool hasConstantPerceivedWavelength() const { return _hasConstantPerceivedWavelength; }
+
     /** Returns true if the simulation has a exactly one medium component and the absorption and
         scattering cross sections for a photon packet traversing that medium component are
         spatially constant, so that the opacity in each crossed cell can be calculated by
         multiplying this constant cross section by the number density in the cell. Otherwise the
         function returns false.
 
-        The following conditions cause this function to return false: there are moving media or
-        Hubble expansion is enabled, so that the perceived wavelength changes between cells; some
-        media components have a variable material mix; the cross sections for some material mixes
-        depend on extra medium state variables such as temperature or destruction fractions. */
-    bool hasSingleConstantMedium() const { return _hasSingleConstantMedium; }
+        The following conditions cause this function to return false: Hubble expansion is enabled,
+        there is more than one medium component, the medium may have a non-zero velocity in some
+        cells, the medium has a variable material mix; the cross sections for some material mixes
+        depend on extra medium state variables such as temperature or fragment weight factors. */
+    bool hasSingleConstantSectionMedium() const { return _hasSingleConstantSectionMedium; }
 
     /** Returns true if the simulation has two or more medium components and the absorption and
         scattering cross sections for a photon packet traversing those medium components are
@@ -282,9 +287,12 @@ public:
         multiplying these constant cross sections by the corresponding number densities in the
         cell. Otherwise the function returns false.
 
-        See the hasSingleConstantMedium() for more information on the conditions that cause this
-        function to return false. */
-    bool hasMultipleConstantMedia() const { return _hasMultipleConstantMedia; }
+        The following conditions cause this function to return false: Hubble expansion is enabled,
+        some media may have a non-zero velocity in some cells, so that the perceived wavelength
+        changes between cells; some media have a variable material mix; the cross sections for some
+        material mixes depend on extra medium state variables such as temperature or fragment
+        weight factors. */
+    bool hasMultipleConstantSectionMedia() const { return _hasMultipleConstantSectionMedia; }
 
     /** Returns true if all media in the simulation support polarization, and false if none of the
         media do. A mixture of support and no support for polarization is not allowed and will
@@ -370,8 +378,9 @@ private:
     bool _hasMovingSources{false};
     bool _hasMovingMedia{false};
     bool _hasVariableMedia{false};
-    bool _hasSingleConstantMedium{false};
-    bool _hasMultipleConstantMedia{false};
+    bool _hasConstantPerceivedWavelength{false};
+    bool _hasSingleConstantSectionMedium{false};
+    bool _hasMultipleConstantSectionMedia{false};
     bool _hasPolarization{false};
     bool _hasSpheroidalPolarization{false};
     int _magneticFieldMediumIndex{-1};

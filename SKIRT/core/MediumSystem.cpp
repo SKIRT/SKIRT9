@@ -510,7 +510,7 @@ void MediumSystem::setOpticalDepths(PhotonPacket* pp) const
     int i = 0;
 
     // single medium, spatially constant cross sections
-    if (_config->hasSingleConstantMedium())
+    if (_config->hasSingleConstantSectionMedium())
     {
         double section = mix(0, 0)->sectionExt(pp->wavelength());
         for (auto& segment : pp->segments())
@@ -521,7 +521,7 @@ void MediumSystem::setOpticalDepths(PhotonPacket* pp) const
     }
 
     // multiple media, spatially constant cross sections
-    else if (_config->hasMultipleConstantMedia())
+    else if (_config->hasMultipleConstantSectionMedia())
     {
         ShortArray<8> sectionv(_numMedia);
         for (int h = 0; h != _numMedia; ++h) sectionv[h] = mix(0, h)->sectionExt(pp->wavelength());
@@ -561,7 +561,7 @@ bool MediumSystem::setInteractionPoint(PhotonPacket* pp, double tauscat) const
     // loop over the segments of the path until the interaction optical depth is reached or the path ends
 
     // --> single medium, spatially constant cross sections
-    if (_config->hasSingleConstantMedium())
+    if (_config->hasSingleConstantSectionMedium())
     {
         double section = mix(0, 0)->sectionExt(pp->wavelength());
         while (generator->next())
@@ -587,7 +587,7 @@ bool MediumSystem::setInteractionPoint(PhotonPacket* pp, double tauscat) const
     }
 
     // --> multiple media, spatially constant cross sections
-    else if (_config->hasMultipleConstantMedia())
+    else if (_config->hasMultipleConstantSectionMedia())
     {
         ShortArray<8> sectionv(_numMedia);
         for (int h = 0; h != _numMedia; ++h) sectionv[h] = mix(0, h)->sectionExt(pp->wavelength());
@@ -663,7 +663,7 @@ double MediumSystem::getOpticalDepth(PhotonPacket* pp, double distance) const
     double s = 0.;
 
     // single medium, spatially constant cross sections
-    if (_config->hasSingleConstantMedium())
+    if (_config->hasSingleConstantSectionMedium())
     {
         double section = mix(0, 0)->sectionExt(pp->wavelength());
         while (generator->next())
@@ -679,7 +679,7 @@ double MediumSystem::getOpticalDepth(PhotonPacket* pp, double distance) const
     }
 
     // multiple media, spatially constant cross sections
-    else if (_config->hasMultipleConstantMedia())
+    else if (_config->hasMultipleConstantSectionMedia())
     {
         ShortArray<8> sectionv(_numMedia);
         for (int h = 0; h != _numMedia; ++h) sectionv[h] = mix(0, h)->sectionExt(pp->wavelength());

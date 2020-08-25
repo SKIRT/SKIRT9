@@ -406,7 +406,7 @@ void MonteCarloSimulation::peelOffEmission(const PhotonPacket* pp, PhotonPacket*
 void MonteCarloSimulation::storeRadiationField(const PhotonPacket* pp)
 {
     // use a faster version in case there are no kinematics
-    if (!_config->hasMovingMedia())
+    if (_config->hasConstantPerceivedWavelength())
     {
         int ell = _config->radiationFieldWLG()->bin(pp->wavelength());
         if (ell >= 0)

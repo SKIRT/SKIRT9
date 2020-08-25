@@ -68,6 +68,11 @@ public:
     /** This function returns true, indicating that scattering for the material mix is resonant. */
     bool hasResonantScattering() const override;
 
+    /** This function returns true, indicating that the cross sections returned by this material
+        mix depend on the values of specific state variables other than the number density, in this
+        case the temperature. */
+    bool hasExtraSpecificState() const override;
+
     //======== Medium state setup =======
 
 public:

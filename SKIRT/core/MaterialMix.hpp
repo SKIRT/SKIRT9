@@ -221,6 +221,11 @@ public:
         default implementation in this base class returns false. */
     virtual bool hasStochasticDustEmission() const;
 
+    /** This function returns true if the cross sections returned by this material mix may depend
+        on the values of specific state variables other than the number density, and false
+        otherwise. The default implementation in this base class returns false. */
+    virtual bool hasExtraSpecificState() const;
+
     //======== Medium state setup =======
 
     /** This function returns the number and type of import parameters required by this particular

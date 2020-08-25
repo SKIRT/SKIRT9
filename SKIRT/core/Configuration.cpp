@@ -164,11 +164,6 @@ void Configuration::setupSelfBefore()
                 break;
         }
         if (ms->lyaOptions()->includeHubbleFlow()) _lyaExpansionRate = sim->cosmology()->relativeExpansionRate();
-
-        // force moving media even if there are no bulk velocities (which would be exceptional anyway);
-        // this automatically disables some optimizations that would not work for Lyman-alpha media
-        _hasMovingMedia = true;
-        _pathLengthBias = 0.;
     }
 
     // verify that there is a Lya medium component if required, and none if not required
@@ -208,9 +203,17 @@ void Configuration::setupSelfBefore()
         for (auto medium : ms->media())
             if (medium->hasVariableMix()) _hasVariableMedia = true;
 
+    // check for dependencies on extra specific state variables
+    bool hasExtraSpecificState = false;
+    if (_hasMedium)
+        for (auto medium : ms->media())
+            if (medium->mix()->hasExtraSpecificState()) hasExtraSpecificState = true;
+
     // set the combined medium criteria
-    _hasSingleConstantMedium = numMedia == 1 && !_hasMovingMedia && !_hasVariableMedia;
-    _hasMultipleConstantMedia = numMedia > 1 && !_hasMovingMedia && !_hasVariableMedia;
+    _hasConstantPerceivedWavelength = !_hasMovingMedia && !_lyaExpansionRate;
+    bool _hasConstantSectionMedium = _hasConstantPerceivedWavelength && !_hasVariableMedia && !hasExtraSpecificState;
+    _hasSingleConstantSectionMedium = numMedia == 1 && _hasConstantSectionMedium;
+    _hasMultipleConstantSectionMedia = numMedia > 1 && _hasConstantSectionMedium;
 
     // check for polarization
     if (_hasMedium)

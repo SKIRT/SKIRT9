@@ -79,6 +79,11 @@ public:
         because all dust mixes being fragmented support stochastic heating by definition. */
     bool hasStochasticDustEmission() const override;
 
+    /** This function returns true, indicating that the cross sections returned by the fragment
+        dust mix decorator depend on the values of specific state variables other than the number
+        density, in this case the fragment weight factors. */
+    bool hasExtraSpecificState() const override;
+
     //======== Medium state setup =======
 
 public:
