@@ -7,6 +7,7 @@
 #include "DustMixFragment.hpp"
 #include "FatalError.hpp"
 #include "MaterialState.hpp"
+#include "Random.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -176,34 +177,58 @@ void FragmentDustMixDecorator::peeloffScattering(double& I, double& Q, double& U
                                                  Direction bfkobs, Direction bfky, const MaterialState* state,
                                                  PhotonPacket* pp) const
 {
-    return _dustMix->peeloffScattering(I, Q, U, V, lambda, w, bfkobs, bfky, state, pp);
+    // calculate the weights corresponding to the scattering opacities for each fragment and their sum
+    Array wv(_numFrags);
+    double sum = 0.;
+    for (int f = 0; f != _numFrags; ++f)
+    {
+        wv[f] = state->custom(f) * _fragments[f]->opacitySca(lambda, state, pp);
+        sum += wv[f];
+    }
+
+    // normalize the weights
+    if (sum > 0.)
+    {
+        wv /= sum;
+
+        // perform the peel-off for each fragment with adjusted weights
+        for (int f = 0; f != _numFrags; ++f)
+            _dustMix->peeloffScattering(I, Q, U, V, lambda, wv[f] * w, bfkobs, bfky, state, pp);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
 
 void FragmentDustMixDecorator::performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const
 {
-    return _dustMix->performScattering(lambda, state, pp);
+    // build the cumulative distribution corresponding to the scattering opacities for each fragment
+    Array Xv;
+    NR::cdf(Xv, _numFrags, [this, lambda, state, pp](int f) {
+        return state->custom(f) * _fragments[f]->opacitySca(lambda, state, pp);
+    });
+
+    // randomly select a fragment
+    int f = NR::locateClip(Xv, random()->uniform());
+
+    // actually perform the scattering event for this fragment
+    _fragments[f]->performScattering(lambda, state, pp);
 }
 
 ////////////////////////////////////////////////////////////////////
 
 double FragmentDustMixDecorator::indicativeTemperature(const MaterialState* state, const Array& Jv) const
 {
-    double sumRhoT = 0.;
-    double sumRho = 0.;
+    double sumwT = 0.;
+    double sumw = 0.;
 
     for (int f = 0; f != _numFrags; ++f)
     {
-        double rho = state->custom(f);
-        if (rho > 0.)
-        {
-            double T = _fragments[f]->indicativeTemperature(state, Jv);
-            sumRhoT += rho * T;
-            sumRho += rho;
-        }
+        double w = state->custom(f);
+        double T = _fragments[f]->indicativeTemperature(state, Jv);
+        sumwT += w * T;
+        sumw += w;
     }
-    return sumRho > 0. ? sumRhoT / sumRho : 0.;
+    return sumw > 0. ? sumwT / sumw : 0.;
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -11,6 +11,7 @@ DustMixFragment::DustMixFragment(SimulationItem* parent, ScatteringMode scatteri
                                  const GrainPopulation* population)
     : _scatteringMode{scatteringMode}, _population{population}
 {
+    parent->addChild(this);
     setup();
 }
 

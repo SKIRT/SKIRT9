@@ -11,13 +11,31 @@ class DustMixFragment;
 
 ////////////////////////////////////////////////////////////////////
 
-/** TO DO.
+/** A FragmentDustMixDecorator instance aggregates a fixed number of predefined dust populations,
+    called \em fragments, and provides a way to manage the relative weight of each of those
+    fragments during the simulation. The aggregated fragments are defined by specifying a
+    MultiGrainDustMix instance as part of the user configuration. Depending on a user configuration
+    flag, the specified multi-grain dust mix is fragmented into its underlying dust populations or
+    into the individual grain size bins for those populations. A fragment dust mix decorator thus
+    essentially splits a multi-grain dust mix into its underlying fragments. The dust mix being
+    fragmented can be a turn-key multi-grain mix (e.g., ZubkoDustMix) or a fully user-configured
+    dust mix (ConfigurableDustMix), offering nearly limitless possibilities.
 
-    To determine the composite dust mix represented by the fragmented dust mix decorator
-    corresponding to a spatial cell, the dust mass represented by each fragment in the original
-    dust mix is multiplied by its corresponding weight factor in the specific state. In other
-    words, a weight factor of one means that the fragment's mass remains unchanged from the
-    original dust mix. */
+    The specific medium state for a fragmented dust mix consists of a weight factor for each
+    fragment. To construct the aggregated dust mix represented by the fragmented dust mix for a
+    given spatial cell, the dust mass represented by each fragment in the original dust mix is
+    multiplied by its corresponding weight factor in the specific state. In other words, a weight
+    factor of one means that the fragment's mass remains unchanged from the original dust mix.
+
+    Initialization of the specific medium state proceeds as follows. If the fragmented dust mix is
+    configured as part of a geometric medium component, all fragment weight factors are set to a
+    value of one, thus preserving the relative weigths of the fragments in the original dust mix.
+    If the fragmented dust mix is configured as part of an imported medium component, the fragment
+    weight factors are imported from the snapshot.
+
+    FragmentDustMixDecorator inherits directly from MaterialMix rather than from DustMix or
+    MultiGrainDustMix so that it cannot be nested inside another fragment dust mix decorator or
+    inside a SelectDustMixFamily instance. */
 class FragmentDustMixDecorator : public MaterialMix, public MultiGrainPopulationInterface
 {
     ITEM_CONCRETE(FragmentDustMixDecorator, MaterialMix,
@@ -138,13 +156,17 @@ public:
 
     /** This function calculates the contribution of the medium component associated with this
         material mix to the peel-off photon luminosity, polarization state, and wavelength shift
-        for the given wavelength, geometry, material state, and photon properties. TO DO. */
+        for the given wavelength, geometry, material state, and photon properties. The relative
+        weight of each fragment's contribution is adjusted by the relative scattering opacity of
+        the fragment. */
     void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w, Direction bfkobs,
                            Direction bfky, const MaterialState* state, PhotonPacket* pp) const override;
 
     /** This function performs a scattering event on the specified photon packet in the spatial
-        cell and medium component represented by the specified material state and the receiving
-        material mix. TO DO. */
+        cell and medium component represented by the specified material state. Specifically, it
+        randomly selects one of the fragments in the fragmented dust mix, weighted by their
+        relative scattering opacity, and then causes this fragment to perform the scattering event.
+        */
     void performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const override;
 
     /** This function returns an indicative temperature of the fragmented dust mix when it would be

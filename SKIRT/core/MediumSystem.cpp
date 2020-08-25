@@ -388,7 +388,7 @@ bool MediumSystem::weightsForScattering(Array& wv, double lambda, const PhotonPa
     }
 
     // normalize the weights
-    if (sum > 0)
+    if (sum > 0.)
     {
         wv /= sum;
         return true;
