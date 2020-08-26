@@ -444,8 +444,8 @@ void MonteCarloSimulation::storeRadiationField(const PhotonPacket* pp)
             int m = segment.m;
             if (m >= 0)
             {
-                double lambda =
-                    pp->perceivedWavelength(mediumSystem()->bulkVelocity(m), _config->lyaExpansionRate() * segment.s);
+                double lambda = pp->perceivedWavelength(mediumSystem()->bulkVelocity(m),
+                                                        _config->hubbleExpansionRate() * segment.s);
                 int ell = _config->radiationFieldWLG()->bin(lambda);
                 if (ell >= 0)
                 {

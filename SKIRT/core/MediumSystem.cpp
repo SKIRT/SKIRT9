@@ -337,7 +337,7 @@ double MediumSystem::perceivedWavelengthForScattering(const PhotonPacket* pp) co
 {
     if (_config->hasMovingMedia())
         return pp->perceivedWavelength(_state.bulkVelocity(pp->interactionCellIndex()),
-                                       _config->lyaExpansionRate() * pp->interactionDistance());
+                                       _config->hubbleExpansionRate() * pp->interactionDistance());
     else
         return pp->wavelength();
 }
@@ -542,7 +542,7 @@ void MediumSystem::setOpticalDepths(PhotonPacket* pp) const
             if (segment.m >= 0)
             {
                 double lambda =
-                    pp->perceivedWavelength(_state.bulkVelocity(segment.m), _config->lyaExpansionRate() * segment.s);
+                    pp->perceivedWavelength(_state.bulkVelocity(segment.m), _config->hubbleExpansionRate() * segment.s);
                 tau += opacityExt(lambda, segment.m) * segment.ds;
             }
             pp->setOpticalDepth(i++, tau);
@@ -629,7 +629,7 @@ bool MediumSystem::setInteractionPoint(PhotonPacket* pp, double tauscat) const
             int m = generator->m();
             if (m >= 0)
             {
-                double lambda = pp->perceivedWavelength(_state.bulkVelocity(m), _config->lyaExpansionRate() * s);
+                double lambda = pp->perceivedWavelength(_state.bulkVelocity(m), _config->hubbleExpansionRate() * s);
                 tau += opacityExt(lambda, m) * ds;
             }
             s += ds;
@@ -706,7 +706,7 @@ double MediumSystem::getOpticalDepth(PhotonPacket* pp, double distance) const
             int m = generator->m();
             if (m >= 0)
             {
-                double lambda = pp->perceivedWavelength(_state.bulkVelocity(m), _config->lyaExpansionRate() * s);
+                double lambda = pp->perceivedWavelength(_state.bulkVelocity(m), _config->hubbleExpansionRate() * s);
                 tau += opacityExt(lambda, m) * ds;
                 if (tau >= taumax) return std::numeric_limits<double>::infinity();
             }

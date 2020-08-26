@@ -219,29 +219,24 @@ public:
         this fraction compared to the previous iteration. */
     double maxFractionOfPrevious() const { return _maxFractionOfPrevious; }
 
-    /** Returns true if the simulation includes treatment of the hydrogen Lyman-alpha line during
-        the primary photon cycle, and false if not. This value corresponds to the presence or
-        absence of a medium component that implements resonant scattering. */
-    bool hasLymanAlpha() const { return _hasLymanAlpha; }
-
     /** This enumeration lists the supported Lyman-alpha acceleration schemes. */
     enum class LyaAccelerationScheme { None, Constant, Variable };
 
-    /** Returns the enumeration value determining the accelaration scheme to be used for
-        Lyman-alpha line treatment. The value is relevant only when hasLymanAlpha() returns true.
-        */
+    /** Returns the enumeration value determining the acceleration scheme to be used for
+        Lyman-alpha line scattering. The value is relevant only if Lyman-alpha line treatment is
+        enabled in the simulation. */
     LyaAccelerationScheme lyaAccelerationScheme() const { return _lyaAccelerationScheme; }
 
     /** Returns the strength of the Lyman-alpha acceleration scheme to be applied. The value is
-        relevant only when hasLymanAlpha() returns true and lyaAccelerationScheme() returns \c
-        Constant or \c Variable. */
+        relevant only if Lyman-alpha line treatment is enabled in the simulation and
+        lyaAccelerationScheme() returns \c Constant or \c Variable. */
     double lyaAccelerationStrength() const { return _lyaAccelerationStrength; }
 
-    /** If inclusion of the Hubble flow for Lyman-alpha transfer is enabled, this function returns
-        the relative expansion rate of the universe in which the model resides. If inclusion of the
-        Hubble flow is disabled, or if the simulation does not include treatment of the hydrogen
-        Lyman-alpha line, this function returns zero. */
-    double lyaExpansionRate() const { return _lyaExpansionRate; }
+    /** If inclusion of the Hubble flow is enabled, this function returns the relative expansion
+        rate of the universe in which the model resides. If inclusion of the Hubble flow is
+        disabled, or if the simulation does not include Lyman-alpha treatment, this function
+        returns zero. */
+    double hubbleExpansionRate() const { return _hubbleExpansionRate; }
 
     /** Returns the symmetry dimension of the input model, including sources and media, if present.
         A value of 1 means spherical symmetry, 2 means axial symmetry and 3 means none of these
@@ -370,7 +365,7 @@ private:
     bool _hasLymanAlpha{false};
     LyaAccelerationScheme _lyaAccelerationScheme{LyaAccelerationScheme::Variable};
     double _lyaAccelerationStrength{1.};
-    double _lyaExpansionRate{0.};
+    double _hubbleExpansionRate{0.};
 
     // properties derived from the configuration at large
     int _modelDimension{0};

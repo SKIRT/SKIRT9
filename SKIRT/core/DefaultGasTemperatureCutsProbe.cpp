@@ -12,7 +12,7 @@
 
 void DefaultGasTemperatureCutsProbe::probeSetup()
 {
-    if (find<Configuration>()->hasLymanAlpha())
+    if (find<Configuration>()->hasMedium() && find<MediumSystem>()->hasGas())
     {
         // the size in pixels (in each spatial direction) for the default cuts
         const int Np = 1024;

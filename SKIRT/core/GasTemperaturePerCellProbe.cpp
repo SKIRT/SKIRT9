@@ -13,7 +13,7 @@
 
 void GasTemperaturePerCellProbe::probeSetup()
 {
-    if (find<Configuration>()->hasLymanAlpha())
+    if (find<Configuration>()->hasMedium() && find<MediumSystem>()->hasGas())
     {
         // locate the medium system
         auto ms = find<MediumSystem>();

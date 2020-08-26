@@ -163,7 +163,7 @@ void Configuration::setupSelfBefore()
                 _lyaAccelerationStrength = ms->lyaOptions()->lyaAccelerationStrength();
                 break;
         }
-        if (ms->lyaOptions()->includeHubbleFlow()) _lyaExpansionRate = sim->cosmology()->relativeExpansionRate();
+        if (ms->lyaOptions()->includeHubbleFlow()) _hubbleExpansionRate = sim->cosmology()->relativeExpansionRate();
     }
 
     // verify that there is a Lya medium component if required, and none if not required
@@ -210,7 +210,7 @@ void Configuration::setupSelfBefore()
             if (medium->mix()->hasExtraSpecificState()) hasExtraSpecificState = true;
 
     // set the combined medium criteria
-    _hasConstantPerceivedWavelength = !_hasMovingMedia && !_lyaExpansionRate;
+    _hasConstantPerceivedWavelength = !_hasMovingMedia && !_hubbleExpansionRate;
     bool _hasConstantSectionMedium = _hasConstantPerceivedWavelength && !_hasVariableMedia && !hasExtraSpecificState;
     _hasSingleConstantSectionMedium = numMedia == 1 && _hasConstantSectionMedium;
     _hasMultipleConstantSectionMedia = numMedia > 1 && _hasConstantSectionMedium;
@@ -288,8 +288,8 @@ void Configuration::setupSelfAfter()
     if (_hasPolarization) log->info("  Including support for polarization");
     if (_hasMovingMedia) log->info("  Including support for kinematics");
 
-    // disable path length stretching for moving media (the wavelength shifts would be incorrectly sampled)
-    if (_hasMovingMedia && _pathLengthBias > 0.)
+    // disable path length stretching if the wavelength of a photon packet can change during its lifetime
+    if ((_hasMovingMedia || _hubbleExpansionRate || _hasLymanAlpha) && _pathLengthBias > 0.)
     {
         log->warning("  Disabling path length stretching to allow Doppler shifts to be properly sampled");
         _pathLengthBias = 0.;

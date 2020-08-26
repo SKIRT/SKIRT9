@@ -78,7 +78,7 @@ void PlanarGasTemperatureCutsProbe::writeGasTemperatureCut(Probe* probe, bool xd
 
 void PlanarGasTemperatureCutsProbe::probeSetup()
 {
-    if (find<Configuration>()->hasLymanAlpha())
+    if (find<Configuration>()->hasMedium() && find<MediumSystem>()->hasGas())
     {
         writeGasTemperatureCut(this, 1, 1, 0, positionX(), positionY(), positionZ(), numPixelsX(), numPixelsY(),
                                numPixelsZ());
