@@ -7,6 +7,13 @@
 
 //////////////////////////////////////////////////////////////////////
 
+string DustMixFragment::type() const
+{
+    return "FragmentDustMixDecorator";
+}
+
+//////////////////////////////////////////////////////////////////////
+
 DustMixFragment::DustMixFragment(SimulationItem* parent, ScatteringMode scatteringMode,
                                  const GrainPopulation* population)
     : _scatteringMode{scatteringMode}, _population{population}
@@ -44,13 +51,12 @@ namespace
 //////////////////////////////////////////////////////////////////////
 
 DustMixFragment::DustMixFragment(SimulationItem* parent, ScatteringMode scatteringMode,
-                                 const GrainPopulation* population, double amin, double amax)
+                                 const GrainPopulation* population, double amin, double amax, double normalization)
     : _scatteringMode{scatteringMode}
 {
-    // TO DO: fix normalization for new population
     _population = new GrainPopulation(this, population->composition(),
                                       new SizeDistributionFragment(this, population->sizeDistribution(), amin, amax), 1,
-                                      GrainPopulation::NormalizationType::FactorOnSizeDistribution, 1.);
+                                      GrainPopulation::NormalizationType::FactorOnSizeDistribution, normalization);
     parent->addChild(this);
     setup();
 }

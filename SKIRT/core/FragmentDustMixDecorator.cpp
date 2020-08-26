@@ -40,7 +40,8 @@ void FragmentDustMixDecorator::setupSelfAfter()
             // loop over the size bins for this population
             for (int s = 0; s != numSizes; ++s)
             {
-                _fragments.push_back(new DustMixFragment(this, scatteringMode, population, borders[s], borders[s + 1]));
+                _fragments.push_back(new DustMixFragment(this, scatteringMode, population, borders[s], borders[s + 1],
+                                                         _dustMix->populationNormalization(c)));
             }
         }
     }

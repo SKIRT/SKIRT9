@@ -240,6 +240,11 @@ public:
         */
     const GrainPopulation* population(int c) const;
 
+    /** This function returns the size distribution normalization factor for the population with
+        index \f$c\f$. It is intended for use by the FragmentDustMixDecorator and should not be
+        used for other purposes. */
+    double populationNormalization(int c) const;
+
     //======================== Data Members ========================
 
 private:

@@ -21,6 +21,16 @@
     ski file. */
 class DustMixFragment : public MultiGrainDustMix
 {
+    //============= Identity =============
+
+protected:
+    /** This function returns the name of the item's type and is usually automatically provided
+        through the ITEM macro's that define the metadata for a simulation item. Because
+        DustMixFragment cannot be configured in a ski file, that metadata is not needed and we
+        explicitly define the type() function instead. It returns the name of the
+        FragmentDustMixDecorator class for which DustMixFragment serves under the hood. */
+    string type() const override;
+
     //============= Construction - Setup - Destruction =============
 
 public:
@@ -39,7 +49,8 @@ public:
     /** This constructor programmatically constructs a DustMixFragment instance from a given size
         bin of an existing grain population (there are no provisions for creation through the ski
         file). The resulting object represents a fully functional "multi-grain" dust mix defined by
-        the specified single grain population, limited to the specified grain size range. The
+        the specified single grain population, limited to the specified grain size range. The last
+        argument specifies the grain size distribution normalization factor for the population. The
         GrainPopulation object must be kept alive by the caller as long as the DustMixFragment
         instance lives.
 
@@ -48,7 +59,7 @@ public:
         size-limited grain population has been passed to the MultiGrainDustMix base class, and the
         setup() function has been called. */
     explicit DustMixFragment(SimulationItem* parent, ScatteringMode scatteringMode, const GrainPopulation* population,
-                             double amin, double amax);
+                             double amin, double amax, double normalization);
 
 protected:
     /** This function adds the grain population specified in the constructor to the multi-grain
