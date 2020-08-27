@@ -34,26 +34,63 @@ class WavelengthGrid;
 
     In addition to the media input model, the MediumSystem class includes the spatial grid that
     tessellates the spatial domain of the simulation into cells, and manages the medium state and
-    the radiation field for each spatial cell in this grid.
+    the radiation field for each spatial cell in this grid. The class therefore plays a central
+    role in the simulation and it offers quite a few different type of functions.
 
-    The current implementation focuses on electrons and dust (i.e. there are no provisions for gas)
-    and assumes that the density distribution and material mix remain constant after setup (i.e.
-    there are no iterations for dust destruction). This will change as additional features are
-    added.
+    <b>Overall medium configuration</b>
 
-    The medium state includes the following information for each cell in the spatial grid: the
-    number density in the cell per medium component; (a pointer to) the corresponding material mix
-    for each medium component; the aggregate bulk velocity of the material in the cell; the
-    magnetic field vector in the cell, and the volume of the cell.
+    These functions offer basic information on the spatial grid, the medium components, and the
+    material types in the medium system.
 
-    The contribution to the radation field for each spatial cell and for each wavelength in the
-    simulation's radiation field wavelength grid is traced separately for primary and secondary
-    sources. This avoids the need for repeating primary emission during dust-temperature
-    convergence iterations. At all times, the sum of the primary and secondary contributions
-    represents the radiation field to be used as input for calculations. There is a third,
-    temporary table that serves as a target for storing the secondary radiation field so that the
-    "stable" primary and secondary tables remain available for calculating secondary emission
-    spectra while shooting secondary photons through the grid. */
+    <b>Medium state</b>
+
+    The medium state for each spatial cell in the simulation includes a set of \em common state
+    variables shared by all medium components and a set of \em specific state variables for each
+    individual medium component. See the MediumState class for more information. The functions in
+    this section allow access to the common state variables for a given spatial cell.
+
+    <b>Low-level optical properties</b>
+
+    These functions allow retrieving absorption, scattering and extinction cross sections for a
+    given spatial cell and material type as a function of wavelength, assuming fixed, predefined
+    values for any quantities other than wavelength (e.g., a default temperature, no polarization,
+    no kinematics). The values returned by these low-level functions may be used only during setup
+    and for probing.
+
+    <b>High-level photon life cycle</b>
+
+    These functions support the photon life cycle by offering a generic interface for operations
+    including tracing photon paths through the medium and performing scattering events. The
+    functions calculate opacities and other medium properties in a given spatial cell by passing
+    the incoming photon packet and the full medium state to the appropriate material mix for each
+    medium component. This allows proper treatment of polarization and kinematics and supports
+    dependencies on temperature or custom special state variables.
+
+    <b>Radiation field</b>
+
+    These functions allow storing the radiation field during the photon life cycle and retrieving
+    the results after a set of photon's have been processed. The contribution to the radation field
+    for each spatial cell and for each wavelength in the simulation's radiation field wavelength
+    grid is traced separately for primary and secondary sources. This avoids the need for repeating
+    primary emission during dust-temperature convergence iterations. At all times, the sum of the
+    primary and secondary contributions represents the radiation field to be used as input for
+    calculations. There is a third, temporary table that serves as a target for storing the
+    secondary radiation field so that the "stable" primary and secondary tables remain available
+    for calculating secondary emission spectra while shooting secondary photons through the grid.
+
+    <b>Indicative temperature</b>
+
+    These functions determine an indicative temperature in a given spatial cell and for a given
+    material type, averaged over medium components if applicable. Depending on the material type,
+    the indicative temperature may be based on the radiation field or it may be derived from a
+    value given in the input model. In any case, it does not reflect a physical quantity and it
+    should be used only for setup and probing purposes.
+
+    <b>Emission</b>
+
+    These functions support the secondary source system by offering a generic interface for
+    calculating the secondary emission properties in a given spatial cell and for a given material
+    type, including luminosities, spectra and polarization. */
 class MediumSystem : public SimulationItem
 {
     ITEM_CONCRETE(MediumSystem, SimulationItem, "a medium system")
@@ -105,7 +142,7 @@ protected:
         in the wavelength grid returned by the Configuration::radiationFieldWLG() function. */
     void setupSelfAfter() override;
 
-    //======================== Other Functions =======================
+    //=============== Overall medium configuration ===================
 
 public:
     /** This function returns the dimension of the medium system, which depends on the (lack of)
@@ -127,21 +164,6 @@ public:
     /** This function returns the number of cells in the spatial grid held by the medium system.
         The returned value is valid only after setup has been performed. */
     int numCells() const;
-
-    /** This function returns the volume of the spatial cell with index \f$m\f$. */
-    double volume(int m) const;
-
-    /** This function returns the aggregate bulk velocity \f${\boldsymbol{v}}\f$ of the medium in
-        spatial cell with index \f$m\f$. If there are multiple media components, the aggregate bulk
-        velocity \f${\boldsymbol{v}}\f$ is determined by averaging the respective bulk velocities
-        over the corresponding number densities, \f[{\boldsymbol{v}} = \frac{\sum_h n_h
-        {\boldsymbol{v}}_h} {\sum_h n_h}.\f] */
-    Vec bulkVelocity(int m) const;
-
-    /** This function returns the magnetic field \f${\boldsymbol{B}}\f$ in the spatial cell with
-        index \f$m\f$. At most one medium component is allowed to specify a magnetic field. If no
-        medium component specifies a magnetic field, this function returns the null vector. */
-    Vec magneticField(int m) const;
 
     /** This function returns the material mix corresponding to the medium component with index
         \f$h\f$ in spatial cell with index \f$m\f$. */
@@ -177,6 +199,33 @@ public:
     /** This function returns true if the medium component with index \f$h\f$ contains gas. */
     bool isGas(int h) const { return isMaterialType(MaterialMix::MaterialType::Gas, h); }
 
+    /** This function returns a list of indices \f$h\f$ for media components that contain dust. */
+    const vector<int>& dustMediumIndices() const { return _dust_hv; }
+
+    /** This function returns a list of indices \f$h\f$ for media components that contain gas. */
+    const vector<int>& gasMediumIndices() const { return _gas_hv; }
+
+    /** This function returns a list of indices \f$h\f$ for media components that contain electrons. */
+    const vector<int>& electronMediumIndices() const { return _elec_hv; }
+
+    //=============== Medium state ===================
+
+public:
+    /** This function returns the volume of the spatial cell with index \f$m\f$. */
+    double volume(int m) const;
+
+    /** This function returns the aggregate bulk velocity \f${\boldsymbol{v}}\f$ of the medium in
+        spatial cell with index \f$m\f$. If there are multiple media components, the aggregate bulk
+        velocity \f${\boldsymbol{v}}\f$ is determined by averaging the respective bulk velocities
+        over the corresponding number densities, \f[{\boldsymbol{v}} = \frac{\sum_h n_h
+        {\boldsymbol{v}}_h} {\sum_h n_h}.\f] */
+    Vec bulkVelocity(int m) const;
+
+    /** This function returns the magnetic field \f${\boldsymbol{B}}\f$ in the spatial cell with
+        index \f$m\f$. At most one medium component is allowed to specify a magnetic field. If no
+        medium component specifies a magnetic field, this function returns the null vector. */
+    Vec magneticField(int m) const;
+
     /** This function returns the number density of the medium component with index \f$h\f$ in
         spatial cell with index \f$m\f$. */
     double numberDensity(int m, int h) const;
@@ -185,10 +234,7 @@ public:
         spatial cell with index \f$m\f$. */
     double massDensity(int m, int h) const;
 
-    /** This function returns the temperature \f$T\f$ of the medium component with index \f$h\f$ in
-        the spatial cell with index \f$m\f$. If the specified medium component does not have a
-        temperature state variable, the behavior is undefined. */
-    double temperature(int m, int h) const;
+    //=============== Low-level optical properties ===================
 
 private:
     /** This function returns the absorption opacity \f$k_h^\text{abs}\f$ at wavelength
@@ -234,6 +280,9 @@ public:
         */
     double opacityExt(double lambda, int m) const;
 
+    //=============== High-level photon life cycle ===================
+
+public:
     /** This function returns the perceived wavelength of the photon packet at the scattering
         interaction distance, taking into account the bulk velocity and Hubble expansion velocity
         in that cell. */
@@ -386,6 +435,9 @@ public:
         happens. */
     double getOpticalDepth(PhotonPacket* pp, double distance) const;
 
+    //=============== Radiation field ===================
+
+public:
     /** This function initializes all values of the primary and/or secondary radiation field info
         tables to zero. In simulation modes that record the radiation field, the function should be
         called before starting a simulation segment (i.e. before a set of photon packets is
@@ -415,6 +467,13 @@ public:
         synchronized and its contents is copied into the stable secondary table. */
     void communicateRadiationField(bool primary);
 
+    /** This function returns the bolometric luminosity absorbed by dust media across the complete
+        domain of the spatial grid, using the partial radiation field stored in the table indicated
+        by the \em primary flag (true for the primary table, false for the stable secondary table).
+        The bolometric absorbed luminosity in each cell is calculated as described for the
+        absorbedDustLuminosity() function. */
+    double totalAbsorbedDustLuminosity(bool primary) const;
+
 private:
     /** This function returns the sum of the values in both the primary and the stable secondary
         radiation field tables at the specified cell and wavelength indices. If a table is not
@@ -427,12 +486,6 @@ public:
         bins \f$\ell\f$ defined by the wavelength grid returned by the
         Configuration::radiationFieldWLG() function.
 
-        This function assumes that a set of photon packets have been launched for primary and/or
-        secondary simulation segments, and that radiation field information has been accumulated
-        during the life cycles by calling the storeRadiationField() function. Furthermore, the
-        communicateRadiationField() function must have been called before invoking this function.
-        If this is not the case, the behavior is undefined.
-
         The mean intensity is calculated using \f[ (J_\lambda)_{\ell,m} = \frac{ (L\Delta
         s)_{\ell,m} }{4\pi\,V_m\,(\Delta \lambda)_\ell} \f] where \f$\ell\f$ is the index of the
         wavelength bin, \f$(\Delta \lambda)_\ell\f$ is the wavelength bin width, \f$m\f$ is the
@@ -442,6 +495,9 @@ public:
         area, per unit of wavelength, and per unit of solid angle. */
     Array meanIntensity(int m) const;
 
+    //=============== Indicative temperature ===================
+
+public:
     /** This function returns an indicative temperature for the material of the specified type in
         the spatial cell with index \f$m\f$. It obtains an indicative temperature for each
         component with a material mix of the specified type, and averages these temperatures over
@@ -493,14 +549,11 @@ public:
         indicativeTemperature() function for more information. */
     double indicativeGasTemperature(int m) const;
 
+    //====================== Emission ======================
+
+public:
     /** This function returns the bolometric luminosity \f$L^\text{abs}_{\text{bol},m}\f$ that has
         been absorbed by dust media in the spatial cell with index \f$m\f$.
-
-        This function assumes that a set of photon packets have been launched for primary and/or
-        secondary simulation segments, and that radiation field information has been accumulated
-        during the life cycles by calling the storeRadiationField() function. Furthermore, the
-        communicateRadiationField() function must have been called before invoking this function.
-        If this is not the case, the behavior is undefined.
 
         The bolometric luminosity is calculated using \f[ L^\text{abs}_{\text{bol},m} = \sum_\ell
         (k^\text{abs}_\text{type})_{\ell,m} \,(L\Delta s)_{\ell,m} \f] where \f$\ell\f$ runs over
@@ -508,14 +561,16 @@ public:
         cell index, \f$(k^\text{abs}_\text{dust})_{\ell,m}\f$ is the absorption opacity of the dust
         in the cell, and \f$(L\Delta s)_{\ell,m}\f$ has been accumulated over all photon packets
         contributing to the bin. */
-    double absorbedDustLuminosity(int m) const;
+    double dustLuminosity(int m) const;
 
-    /** This function returns the bolometric luminosity absorbed by dust media across the complete
-        domain of the spatial grid, using the partial radiation field stored in the table indicated
-        by the \em primary flag (true for the primary table, false for the stable secondary table).
-        The bolometric absorbed luminosity in each cell is calculated as described for the
-        absorbedDustLuminosity() function. */
-    double totalAbsorbedDustLuminosity(bool primary) const;
+    /** This function returns the combined emission spectrum for all dust media in the spatial cell
+        with index \f$m\f$. Depending on a simulation-wide configuration option, the spectrum is
+        calculated under the assumption of local thermal equilibrium (LTE) or taking into account
+        the effect of stochastically heated dust grains (NLTE). The returned spectrum is
+        discretized on the wavelength grid returned by the Configuration::dustEmissionWLG()
+        function and has arbitrary normalization. The caller is responsible for properly
+        normalizing the spectrum based on the value returned by the dustLuminosity() function. */
+    Array dustEmissionSpectrum(int m) const;
 
     //======================== Data Members ========================
 
@@ -529,6 +584,11 @@ private:
     vector<const MaterialMix*> _mixv;  // material mixes; indexed on h, or on m and h if mixPerCell is true
     MediumState _state;                // state info for each cell and each medium
 
+    // cached info relevant for any simulation mode that includes a medium
+    vector<int> _dust_hv;             // a list of indices for media components containing dust
+    vector<int> _gas_hv;             // a list of indices for media components containing gas
+    vector<int> _elec_hv;             // a list of indices for media components containing electrons
+
     // relevant for any simulation mode that stores the radiation field
     WavelengthGrid* _wavelengthGrid{0};  // index ell
     // each radiation field table has an entry for each cell and each wavelength (indexed on m,ell)
@@ -538,6 +598,9 @@ private:
     Table<2> _rf1;   // radiation field from primary sources
     Table<2> _rf2;   // radiation field from secondary sources (copied from _rf2c at the appropriate time)
     Table<2> _rf2c;  // radiation field currently being accumulated from secondary sources
+
+    // relevant for any simulation mode that includes dust emission
+    int _numDustEmissionWavelengths{0};
 };
 
 ////////////////////////////////////////////////////////////////

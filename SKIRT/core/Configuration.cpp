@@ -256,8 +256,8 @@ void Configuration::setupSelfBefore()
     if (_hasSpheroidalPolarization && numMagneticFields != 1)
         throw FATALERROR("Polarization by spheroidal particles requires a magnetic field to determine alignment");
 
-    // prohibit non-identity-mapping cell libraries in combination with variable material mixes
-    if (_hasVariableMedia && _cellLibrary && !dynamic_cast<AllCellsLibrary*>(_cellLibrary))
+    // prohibit non-identity-mapping cell libraries in combination with spatially varying material mixes
+    if ((_hasVariableMedia || hasExtraSpecificState) && _cellLibrary && !dynamic_cast<AllCellsLibrary*>(_cellLibrary))
         throw FATALERROR("Cannot use spatial cell library in combination with spatially varying material mixes");
 
     // in case emulation mode has been set before our setup() was called, perform the emulation overrides again

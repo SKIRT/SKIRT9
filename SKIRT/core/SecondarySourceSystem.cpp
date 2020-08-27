@@ -63,7 +63,7 @@ bool SecondarySourceSystem::prepareForLaunch(size_t numPackets)
     find<ParallelFactory>()->parallelDistributed()->call(numCells, [this](size_t firstIndex, size_t numIndices) {
         for (size_t m = firstIndex; m != firstIndex + numIndices; ++m)
         {
-            _Lv[m] = _ms->absorbedDustLuminosity(m);
+            _Lv[m] = _ms->dustLuminosity(m);
         }
     });
     ProcessManager::sumToAll(_Lv);
@@ -209,7 +209,7 @@ namespace
             // if this photon packet is launched from the same cell as the previous one, we don't need to do anything
             if (p == _p) return;
 
-            // when called for the first time, construct a list of dust media and cache some other info
+            // when called for the first time, cache some info
             if (_p == -1)
             {
                 _ms = ms;
@@ -217,8 +217,7 @@ namespace
                 _wavelengthGrid = wavelengthGrid->extlambdav();
                 _wavelengthRange = wavelengthGrid->wavelengthRange();
                 _numWavelengths = _wavelengthGrid.size();
-                for (int h = 0; h != ms->numMedia(); ++h)
-                    if (ms->isDust(h)) _hv.push_back(h);
+                _hv = ms->dustMediumIndices();
                 _numMedia = _hv.size();
                 _numCells = ms->numCells();
                 _evv.resize(ms->numMedia());
@@ -244,7 +243,7 @@ namespace
                 // if only a single cell maps to the library entry, we can simply calculate its emission
                 if (numMappedCells == 1)
                 {
-                    calculateSingleSpectrum(_ms->meanIntensity(m), m);
+                    calculateSingleSpectrum(m);
                 }
 
                 // if multiple cells map to the library entry, we use the average radiation field for these cells
@@ -291,6 +290,17 @@ namespace
         }
 
     private:
+        // calculate the emission spectrum for the dust mixes of the specified cell,
+        // and store the result in the data members _lambdav, _pv, _Pv
+        void calculateSingleSpectrum(int m)
+        {
+            // get the emmissivity spectrum for all dust medium components in the cell
+            const Array& ev = _ms->dustEmissionSpectrum(m);
+
+            // calculate the normalized plain and cumulative distributions
+            NR::cdf<NR::interpolateLogLog>(_lambdav, _pv, _Pv, _wavelengthGrid, ev, _wavelengthRange);
+        }
+
         // calculate the emission spectrum for the specified radiation field and the dust mixes of the specified cell,
         // and store the result in the data members _lambdav, _pv, _Pv
         void calculateSingleSpectrum(const Array& Jv, int m)
@@ -369,12 +379,11 @@ namespace
             // if this packet is launched from the same cell as the previous one, we don't need to do anything else
             if (m == _m) return;
 
-            // when called for the first time, construct a list of dust media and cache some other info
+            // when called for the first time, cache some info
             if (_m == -1)
             {
                 _ms = ms;
-                for (int h = 0; h != ms->numMedia(); ++h)
-                    if (ms->isDust(h)) _hv.push_back(h);
+                _hv = ms->dustMediumIndices();
             }
 
             // remember the new cell index and map to the other indices

@@ -80,6 +80,13 @@ void MediumSystem::setupSelfAfter()
         }
     }
 
+    // ----- cache info on the dust emission wavelength grid -----
+
+    if (_config->hasDustEmission())
+    {
+        _numDustEmissionWavelengths = _config->dustEmissionWLG()->extlambdav().size();
+    }
+
     // ----- obtain the material mix pointers -----
 
     if (_config->hasVariableMedia())
@@ -100,6 +107,17 @@ void MediumSystem::setupSelfAfter()
         for (int h = 0; h != _numMedia; ++h) _mixv[h] = _media[h]->mix();
     }
     allocatedBytes += _mixv.size() * sizeof(MaterialMix*);
+
+    // cache a list of medium component indices for each material type
+    for (int h = 0; h != _numMedia; ++h)
+    {
+        switch (mix(0, h)->materialType())
+        {
+            case MaterialMix::MaterialType::Dust: _dust_hv.push_back(h); break;
+            case MaterialMix::MaterialType::Gas: _gas_hv.push_back(h); break;
+            case MaterialMix::MaterialType::Electrons: _elec_hv.push_back(h); break;
+        }
+    }
 
     // ----- inform user about allocated memory -----
 
@@ -215,27 +233,6 @@ int MediumSystem::numCells() const
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::volume(int m) const
-{
-    return _state.volume(m);
-}
-
-////////////////////////////////////////////////////////////////////
-
-Vec MediumSystem::bulkVelocity(int m) const
-{
-    return _state.bulkVelocity(m);
-}
-
-////////////////////////////////////////////////////////////////////
-
-Vec MediumSystem::magneticField(int m) const
-{
-    return _state.magneticField(m);
-}
-
-////////////////////////////////////////////////////////////////////
-
 const MaterialMix* MediumSystem::mix(int m, int h) const
 {
     return _mixPerCell ? _mixv[m * _numMedia + h] : _mixv[h];
@@ -259,6 +256,27 @@ bool MediumSystem::isMaterialType(MaterialMix::MaterialType type, int h) const
 
 ////////////////////////////////////////////////////////////////////
 
+double MediumSystem::volume(int m) const
+{
+    return _state.volume(m);
+}
+
+////////////////////////////////////////////////////////////////////
+
+Vec MediumSystem::bulkVelocity(int m) const
+{
+    return _state.bulkVelocity(m);
+}
+
+////////////////////////////////////////////////////////////////////
+
+Vec MediumSystem::magneticField(int m) const
+{
+    return _state.magneticField(m);
+}
+
+////////////////////////////////////////////////////////////////////
+
 double MediumSystem::numberDensity(int m, int h) const
 {
     return _state.numberDensity(m, h);
@@ -269,13 +287,6 @@ double MediumSystem::numberDensity(int m, int h) const
 double MediumSystem::massDensity(int m, int h) const
 {
     return _state.numberDensity(m, h) * mix(m, h)->mass();
-}
-
-////////////////////////////////////////////////////////////////////
-
-double MediumSystem::temperature(int m, int h) const
-{
-    return _state.temperature(m, h);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -758,6 +769,24 @@ void MediumSystem::communicateRadiationField(bool primary)
 
 ////////////////////////////////////////////////////////////////////
 
+double MediumSystem::totalAbsorbedDustLuminosity(bool primary) const
+{
+    double Labs = 0.;
+    int numWavelengths = _wavelengthGrid->numBins();
+    for (int ell = 0; ell != numWavelengths; ++ell)
+    {
+        double lambda = _wavelengthGrid->wavelength(ell);
+        for (int m = 0; m != _numCells; ++m)
+        {
+            double rf = primary ? _rf1(m, ell) : _rf2(m, ell);
+            Labs += opacityAbs(lambda, m, MaterialMix::MaterialType::Dust) * rf;
+        }
+    }
+    return Labs;
+}
+
+////////////////////////////////////////////////////////////////////
+
 double MediumSystem::radiationField(int m, int ell) const
 {
     double rf = 0.;
@@ -826,7 +855,7 @@ double MediumSystem::indicativeGasTemperature(int m) const
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::absorbedDustLuminosity(int m) const
+double MediumSystem::dustLuminosity(int m) const
 {
     double Labs = 0.;
     int numWavelengths = _wavelengthGrid->numBins();
@@ -840,20 +869,12 @@ double MediumSystem::absorbedDustLuminosity(int m) const
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::totalAbsorbedDustLuminosity(bool primary) const
+Array MediumSystem::dustEmissionSpectrum(int m) const
 {
-    double Labs = 0.;
-    int numWavelengths = _wavelengthGrid->numBins();
-    for (int ell = 0; ell != numWavelengths; ++ell)
-    {
-        double lambda = _wavelengthGrid->wavelength(ell);
-        for (int m = 0; m != _numCells; ++m)
-        {
-            double rf = primary ? _rf1(m, ell) : _rf2(m, ell);
-            Labs += opacityAbs(lambda, m, MaterialMix::MaterialType::Dust) * rf;
-        }
-    }
-    return Labs;
+    const Array& Jv = meanIntensity(m);
+    Array ev(_numDustEmissionWavelengths);
+    for (int h : _dust_hv) ev += numberDensity(m, h) * mix(m, h)->emissivity(Jv);
+    return ev;
 }
 
 ////////////////////////////////////////////////////////////////////
