@@ -426,13 +426,6 @@ void DustMix::performScattering(double lambda, const MaterialState* state, Photo
 
 ////////////////////////////////////////////////////////////////////
 
-double DustMix::indicativeTemperature(const MaterialState* /*state*/, const Array& Jv) const
-{
-    return Jv.size() ? _calc.equilibriumTemperature(0, Jv) : 0.;
-}
-
-////////////////////////////////////////////////////////////////////
-
 DustMix::ScatteringMode DustMix::scatteringMode() const
 {
     return DustMix::ScatteringMode::HenyeyGreenstein;
@@ -524,6 +517,20 @@ const Array& DustMix::sectionsAbspol(double lambda) const
 Array DustMix::emissivity(const Array& Jv) const
 {
     return _calc.emissivity(Jv);
+}
+
+////////////////////////////////////////////////////////////////////
+
+Array DustMix::emissionSpectrum(const MaterialState* state, const Array& Jv) const
+{
+    return state->numberDensity() * emissivity(Jv);
+}
+
+////////////////////////////////////////////////////////////////////
+
+double DustMix::indicativeTemperature(const MaterialState* /*state*/, const Array& Jv) const
+{
+    return Jv.size() ? _calc.equilibriumTemperature(0, Jv) : 0.;
 }
 
 ////////////////////////////////////////////////////////////////////

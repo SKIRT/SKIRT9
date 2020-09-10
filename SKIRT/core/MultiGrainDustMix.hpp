@@ -185,15 +185,15 @@ public:
     //======== Secondary emission =======
 
 public:
-    /** This function returns the emissivity spectrum per hydrogen atom
-        \f$(\varepsilon_\lambda)_\ell\f$ of the dust mix (or rather of the corresponding mixture of
-        representative grain populations) when embedded in the radiation field specified by the
-        mean intensities \f$(J_\lambda)_k\f$. The input and output arrays are discretized on the
-        wavelength grids returned by the Configuration::radiationFieldWLG() and
-        Configuration::dustEmissionWLG() functions, repectively.
+    /** This function returns the emissivity spectrum \f$(\varepsilon_\lambda)_\ell\f$ (radiated
+        power per unit of solid angle and per hydrogen atom) of the dust mix (or rather of the
+        corresponding mixture of representative grain populations) when embedded in the radiation
+        field specified by the mean intensities \f$(J_\lambda)_k\f$. The input and output arrays
+        are discretized on the wavelength grids returned by the Configuration::radiationFieldWLG()
+        and Configuration::dustEmissionWLG() functions, repectively.
 
         Depending on the type of emission calculation configured by the user, this function uses an
-        instance of the EquilibriumDustEmissionCalculator or StochasticDustEmissionCalculator to to
+        instance of the EquilibriumDustEmissionCalculator or StochasticDustEmissionCalculator to
         calculate the emission spectrum. Refer to these classes for more information.
 
         The behavior of this function is undefined if the simulation does not track the radiation

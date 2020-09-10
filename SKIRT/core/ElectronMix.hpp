@@ -116,11 +116,6 @@ public:
         includePolarization property. */
     void performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const override;
 
-    /** This function returns an indicative temperature of the material mix when it would be
-        embedded in a given radiation field. Because electrons don't absorb nor emit (within the
-        range of physics supported here), the implementation in this class always returns zero. */
-    double indicativeTemperature(const MaterialState* state, const Array& Jv) const override;
-
     //======================== Data Members ========================
 
 private:

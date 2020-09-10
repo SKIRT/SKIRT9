@@ -224,6 +224,22 @@ void FragmentDustMixDecorator::performScattering(double lambda, const MaterialSt
 
 ////////////////////////////////////////////////////////////////////
 
+Array FragmentDustMixDecorator::emissivity(const Array& Jv) const
+{
+    return _dustMix->emissivity(Jv);
+}
+
+////////////////////////////////////////////////////////////////////
+
+Array FragmentDustMixDecorator::emissionSpectrum(const MaterialState* state, const Array& Jv) const
+{
+    Array ev = state->custom(0) * _fragments[0]->emissivity(Jv);
+    for (int f = 1; f != _numFrags; ++f) ev += state->custom(f) * _fragments[f]->emissivity(Jv);
+    return state->numberDensity() * ev;
+}
+
+////////////////////////////////////////////////////////////////////
+
 double FragmentDustMixDecorator::indicativeTemperature(const MaterialState* state, const Array& Jv) const
 {
     double sumwT = 0.;
@@ -237,16 +253,6 @@ double FragmentDustMixDecorator::indicativeTemperature(const MaterialState* stat
         sumw += w;
     }
     return sumw > 0. ? sumwT / sumw : 0.;
-}
-
-////////////////////////////////////////////////////////////////////
-
-Array FragmentDustMixDecorator::emissivity(const Array& Jv) const
-{
-    // TO DO: NEED MATERIAL STATE HERE
-    Array ev = _fragments[0]->emissivity(Jv);
-    for (int f = 1; f != _numFrags; ++f) ev += _fragments[f]->emissivity(Jv);
-    return ev;
 }
 
 ////////////////////////////////////////////////////////////////////

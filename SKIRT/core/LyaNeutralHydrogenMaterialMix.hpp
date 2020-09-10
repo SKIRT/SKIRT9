@@ -148,6 +148,8 @@ public:
         includePolarization property. */
     void performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const override;
 
+    //======== Secondary emission =======
+
     /** This function returns an indicative temperature of the material mix when it would be
         embedded in a given radiation field. The implementation in this class ignores the radiation
         field and returns the temperature stored in the specific state for the relevant spatial

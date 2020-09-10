@@ -585,9 +585,9 @@ private:
     MediumState _state;                // state info for each cell and each medium
 
     // cached info relevant for any simulation mode that includes a medium
-    vector<int> _dust_hv;             // a list of indices for media components containing dust
-    vector<int> _gas_hv;             // a list of indices for media components containing gas
-    vector<int> _elec_hv;             // a list of indices for media components containing electrons
+    vector<int> _dust_hv;  // a list of indices for media components containing dust
+    vector<int> _gas_hv;   // a list of indices for media components containing gas
+    vector<int> _elec_hv;  // a list of indices for media components containing electrons
 
     // relevant for any simulation mode that stores the radiation field
     WavelengthGrid* _wavelengthGrid{0};  // index ell

@@ -115,12 +115,6 @@ class WavelengthGrid;
     values, assuming fixed, predefined values for any quantities other than wavelength (e.g., a
     default temperature, no polarization, no kinematics).
 
-    The indicativeTemperature(Jv) function similarly returns an indicative temperature, depending
-    on the material type. For dust mixes it returns the averaged equilibrium temperature of the
-    grain population given the specified radiation field and assuming local thermal equilibrium
-    conditions. Other materials may return a temperature determined based on the radiation field, a
-    default value, or zero if none of the above apply.
-
     In principle, the values returned by these low-level functions may be used only during setup
     and for probing. However, some portions of the photon life cycle code might be optimized to use
     these functions directly in cases where the optical properties are known to depend solely on
@@ -152,9 +146,31 @@ class WavelengthGrid;
     contribution to a scattering peel-off event for this material, given the instrument reference
     frame and the relative weight of this medium component.
 
-    <b>Functions for spheroidal grains and for emission</b>
+    <b>Functions for secondary emission</b>
 
-    The design for these interfaces must be evaluated and possibly reconsidered.
+    These functions receive the radiation field in a given cell as one of their arguments.
+
+    The emissivity() function returns the emissivity spectrum per material entity of the material
+    mix when it would be embedded in a given radiation field, assuming default values for any
+    specific state variables and assuming isotropic, unpolarized emission. For regular dust mixes
+    that don't vary spatially and that represent spherical grains, the emissivity tells the full
+    story. For other material mixes, it provides just a default (or is not present at all).
+
+    The emissionSpectrum() function returns the emission spectrum in the spatial cell and medium
+    component represented by the specified material state and the receiving material mix when it
+    would be embedded in the specified radiation field. The returned spectrum takes into account
+    the values of any relevant specific or common state variables, including the number density of
+    the material in the specified cell.
+
+    The indicativeTemperature() function returns an indicative temperature with an interpretation
+    depending on the material type. For dust mixes it returns the averaged equilibrium temperature
+    of the grain population given the specified radiation field and assuming local thermal
+    equilibrium conditions. Other materials may return a temperature determined based on the
+    radiation field, the specific state, a default value, or zero if none of the above apply.
+
+    <b>Functions for spheroidal grains</b>
+
+    TO DO: the design for these functions must be evaluated and possibly reconsidered.
 */
 class MaterialMix : public SimulationItem
 {
@@ -347,6 +363,34 @@ public:
         recalculated within the function. */
     virtual void performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const = 0;
 
+    //======== Secondary emission =======
+
+    /** This function returns the emissivity spectrum \f$\varepsilon_{\ell'}\f$ (radiated power per
+        unit of solid angle and per material entity) of the material mix when it would be embedded
+        in the radiation field specified by the mean intensities \f$(J_\lambda)_\ell\f$. The input
+        radiation field must be discretized on the simulation's radiation field wavelength grid as
+        returned by the Configuration::radiationFieldWLG() function. The output emissivity spectrum
+        is discretized on a wavelength grid that depends on the material type. For more
+        information, refer to the documentation of this function for each material type. The
+        default implementation in this base class throws a fatal error. */
+    virtual Array emissivity(const Array& Jv) const;
+
+    /** This function returns the emission spectrum (radiated power per unit of solid angle) in the
+        spatial cell and medium component represented by the specified material state and the
+        receiving material mix when it would be embedded in the specified radiation field. The
+        returned spectrum takes into account the values of any specific and common state variables,
+        including the number density of the material in the specified cell. As a result, the
+        spectra returned for multiple media components of the same material type can be aggregated
+        through simple summation. However, the caller is responsible for final normalization after
+        such aggregation has taken place.
+
+        The input radiation field must be discretized on the simulation's radiation field
+        wavelength grid as returned by the Configuration::radiationFieldWLG() function. The output
+        emissivity spectrum is discretized on a wavelength grid that depends on the material type.
+        For more information, refer to the documentation of this function for each material type.
+        The default implementation in this base class throws a fatal error. */
+    virtual Array emissionSpectrum(const MaterialState* state, const Array& Jv) const;
+
     /** This function returns an indicative temperature for the material represented by the
         specified material state and the receiving material mix, assuming an embedding radiation
         field specified by the mean intensities \f$(J_\lambda)_\ell\f$, if available.
@@ -361,8 +405,9 @@ public:
         population given the specified radiation field and assuming local thermal equilibrium
         conditions. Other materials may return a temperature determined based on the radiation
         field and/or the material state, a default value, or zero if none of the above apply. Refer
-        to the description for this function in the various subclasses for more information. */
-    virtual double indicativeTemperature(const MaterialState* state, const Array& Jv) const = 0;
+        to the description for this function in the various subclasses for more information. The
+        default implementation in this base class throws a fatal error. */
+    virtual double indicativeTemperature(const MaterialState* state, const Array& Jv) const;
 
     //======== Spheroidal grains =======
 
@@ -387,17 +432,6 @@ public:
         \f$\theta\f$, discretized on the grid returned by the thetaGrid() function. The default
         implementation in this base class throws a fatal error. */
     virtual const Array& sectionsAbspol(double lambda) const;
-
-    //======== Secondary emission =======
-
-    /** This function returns the emissivity spectrum \f$\varepsilon_{\ell'}\f$ of the material mix
-        when it would be embedded in the radiation field specified by the mean intensities
-        \f$(J_\lambda)_\ell\f$. The input radiation field must be discretized on the simulation's
-        radiation field wavelength grid as returned by the Configuration::radiationFieldWLG()
-        function. The output emissivity spectrum is discretized on a wavelength grid that depends
-        on the material type. For more information, refer to the documentation of this function for
-        each material type. The default implementation in this base throws a fatal error. */
-    virtual Array emissivity(const Array& Jv) const;
 
     //======================== Other Functions =======================
 

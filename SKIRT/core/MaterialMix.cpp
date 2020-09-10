@@ -82,6 +82,27 @@ double MaterialMix::asymmpar(double /*lambda*/) const
 
 ////////////////////////////////////////////////////////////////////
 
+Array MaterialMix::emissivity(const Array& /*Jv*/) const
+{
+    throw FATALERROR("This function implementation should never be called");
+}
+
+////////////////////////////////////////////////////////////////////
+
+Array MaterialMix::emissionSpectrum(const MaterialState* /*state*/, const Array& /*Jv*/) const
+{
+    throw FATALERROR("This function implementation should never be called");
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MaterialMix::indicativeTemperature(const MaterialState* /*state*/, const Array& /*Jv*/) const
+{
+    throw FATALERROR("This function implementation should never be called");
+}
+
+////////////////////////////////////////////////////////////////////
+
 const Array& MaterialMix::thetaGrid() const
 {
     throw FATALERROR("This function implementation should never be called");
@@ -97,13 +118,6 @@ const Array& MaterialMix::sectionsAbs(double /*lambda*/) const
 ////////////////////////////////////////////////////////////////////
 
 const Array& MaterialMix::sectionsAbspol(double /*lambda*/) const
-{
-    throw FATALERROR("This function implementation should never be called");
-}
-
-////////////////////////////////////////////////////////////////////
-
-Array MaterialMix::emissivity(const Array& /*Jv*/) const
 {
     throw FATALERROR("This function implementation should never be called");
 }

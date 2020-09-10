@@ -241,23 +241,6 @@ public:
         sampled \f$\theta\f$ and \f$\phi\f$ angles. */
     void performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const override;
 
-    /** This function returns an indicative temperature of the material mix when it would be
-        embedded in a given radiation field. For dust mixes, it returns the equilibrium temperature
-        \f$T_{\text{eq}}\f$ of the dust mix (or rather of the representative grain population
-        corresponding to the dust mix) when it would be embedded in the radiation field specified
-        by the mean intensities \f$(J_\lambda)_\ell\f$, which must be discretized on the
-        simulation's radiation field wavelength grid as returned by the
-        Configuration::radiationFieldWLG() function. If the specified \em Jv array is empty
-        (because the simulation does not track the radiation field), this function returns zero.
-
-        The equilibrium temperature is obtained from the energy balance equation, \f[ \int_0^\infty
-        \varsigma^\text{abs}(\lambda) \,J_\lambda(\lambda) \,\text{d}\lambda = \int_0^\infty
-        \varsigma^\text{abs}(\lambda) \,B_\lambda(T_\text{eq},\lambda) \,\text{d}\lambda, \f] where
-        the left-hand side is integrated over the radiation field wavelength grid, and the
-        right-hand side is precalculated during setup for a range of temperatures through
-        integration over a built-in wavelength grid. */
-    double indicativeTemperature(const MaterialState* state, const Array& Jv) const override;
-
     //======== Scattering implementation for dust mixes =======
 
 public:
@@ -380,6 +363,54 @@ private:
         These coefficients are obtained from the tables pre-computed during setup. */
     void applyMueller(double lambda, double theta, StokesVector* sv) const;
 
+    //======== Secondary emission =======
+
+public:
+    /** This function returns the emissivity spectrum \f$\varepsilon_{\ell'}\f$ (radiated power per
+        unit of solid angle and per hydrogen atom) of the dust mix (or rather of the representative
+        grain population corresponding to the dust mix) when it would be embedded in a given
+        radiation field, assuming that the dust grains are in local thermal equilibrium. The input
+        and output arrays are discretized on the wavelength grids returned by the
+        Configuration::radiationFieldWLG() and Configuration::dustEmissionWLG() functions,
+        repectively.
+
+        The equilibrium emissivity of a representative grain population in an embedding radiation
+        field \f$J_\lambda\f$ can be calculated as \f[ \varepsilon_\lambda =
+        \varsigma_{\lambda,b}^{\text{abs}}\, B_\lambda(T_\text{eq}) \f] with \f$\mu\f$ the total
+        dust mass of the dust mix, \f$\varsigma_{\lambda}^{\text{abs}}\f$ the absorption cross
+        section of the representative grain, and \f$T_\text{eq}\f$ the equilibrium temperature of
+        that grain, obtained from the energy balance equation as described for the
+        DustMix::indicativeTemperature() function.
+
+        The behavior of this function is undefined if the simulation does not track the radiation
+        field, because in that case setup does not calculate the information on which this function
+        relies. */
+    Array emissivity(const Array& Jv) const override;
+
+    /** This function returns the emission spectrum (radiated power per unit of solid angle) in the
+        spatial cell and medium component represented by the specified material state and the
+        receiving material mix when it would be embedded in the specified radiation field. For a
+        dust mix, it returns the result of the emissivity() function multiplied by the hydrogen
+        number density retrieved from the material state. */
+    Array emissionSpectrum(const MaterialState* state, const Array& Jv) const override;
+
+    /** This function returns an indicative temperature of the material mix when it would be
+        embedded in a given radiation field. For dust mixes, it returns the equilibrium temperature
+        \f$T_{\text{eq}}\f$ of the dust mix (or rather of the representative grain population
+        corresponding to the dust mix) when it would be embedded in the radiation field specified
+        by the mean intensities \f$(J_\lambda)_\ell\f$, which must be discretized on the
+        simulation's radiation field wavelength grid as returned by the
+        Configuration::radiationFieldWLG() function. If the specified \em Jv array is empty
+        (because the simulation does not track the radiation field), this function returns zero.
+
+        The equilibrium temperature is obtained from the energy balance equation, \f[ \int_0^\infty
+        \varsigma^\text{abs}(\lambda) \,J_\lambda(\lambda) \,\text{d}\lambda = \int_0^\infty
+        \varsigma^\text{abs}(\lambda) \,B_\lambda(T_\text{eq},\lambda) \,\text{d}\lambda, \f] where
+        the left-hand side is integrated over the radiation field wavelength grid, and the
+        right-hand side is precalculated during setup for a range of temperatures through
+        integration over a built-in wavelength grid. */
+    double indicativeTemperature(const MaterialState* state, const Array& Jv) const override;
+
     //======== Spheroidal grains =======
 
 public:
@@ -400,29 +431,6 @@ public:
         _{\lambda} (\theta)\f$ at wavelength \f$\lambda\f$ as a function of the emission angle
         \f$\theta\f$, discretized on the grid returned by the thetaGrid() function. */
     const Array& sectionsAbspol(double lambda) const override;
-
-    //======== Secondary emission =======
-
-public:
-    /** This function returns the emissivity spectrum per hydrogen atom \f$\varepsilon_{\ell'}\f$
-        of the dust mix (or rather of the representative grain population corresponding to the dust
-        mix) when it would be embedded in a given radiation field, assuming that the dust grains
-        are in local thermal equilibrium. The input and output arrays are discretized on the
-        wavelength grids returned by the Configuration::radiationFieldWLG() and
-        Configuration::dustEmissionWLG() functions, repectively.
-
-        The equilibrium emissivity of a representative grain population in an embedding radiation
-        field \f$J_\lambda\f$ can be calculated as \f[ \varepsilon_\lambda =
-        \varsigma_{\lambda,b}^{\text{abs}}\, B_\lambda(T_\text{eq}) \f] with \f$\mu\f$ the total
-        dust mass of the dust mix, \f$\varsigma_{\lambda}^{\text{abs}}\f$ the absorption cross
-        section of the representative grain, and \f$T_\text{eq}\f$ the equilibrium temperature of
-        that grain, obtained from the energy balance equation as described for the
-        DustMix::indicativeTemperature() function.
-
-        The behavior of this function is undefined if the simulation does not track the radiation
-        field, because in that case setup does not calculate the information on which this function
-        relies. */
-    Array emissivity(const Array& Jv) const override;
 
     //======================== Data Members ========================
 

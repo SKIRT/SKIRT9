@@ -873,7 +873,11 @@ Array MediumSystem::dustEmissionSpectrum(int m) const
 {
     const Array& Jv = meanIntensity(m);
     Array ev(_numDustEmissionWavelengths);
-    for (int h : _dust_hv) ev += numberDensity(m, h) * mix(m, h)->emissivity(Jv);
+    for (int h : _dust_hv)
+    {
+        MaterialState mst(_state, m, h);
+        ev += mix(m, h)->emissionSpectrum(&mst, Jv);
+    }
     return ev;
 }
 

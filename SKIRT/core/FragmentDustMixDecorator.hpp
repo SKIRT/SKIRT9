@@ -174,21 +174,35 @@ public:
         */
     void performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const override;
 
+    //======== Secondary emission =======
+
+public:
+    /** This function returns the emissivity spectrum \f$\varepsilon_{\ell'}\f$ (radiated power per
+        unit of solid angle and per hydrogen atom) of the dust mix when it would be embedded in a
+        given radiation field. Because this function does not have access to the material state, it
+        simply returns the value returned by the corresponding function for the dust mix being
+        fragmented. In other words, it behaves as if the fragment weights are all equal to one.
+
+        The input and output arrays are discretized on the wavelength grids returned by the
+        Configuration::radiationFieldWLG() and Configuration::dustEmissionWLG() functions,
+        repectively. */
+    Array emissivity(const Array& Jv) const override;
+
+    /** This function returns the emission spectrum (radiated power per unit of solid angle) in the
+        spatial cell and medium component represented by the specified material state and the
+        receiving material mix when it would be embedded in the specified radiation field. The
+        returned spectrum takes into account the weigths of the various fragments in the mix in
+        addition to the number density of the material in the specified cell.
+
+        The input and output arrays are discretized on the wavelength grids returned by the
+        Configuration::radiationFieldWLG() and Configuration::dustEmissionWLG() functions,
+        repectively. */
+    Array emissionSpectrum(const MaterialState* state, const Array& Jv) const override;
+
     /** This function returns an indicative temperature of the fragmented dust mix when it would be
         embedded in a given radiation field, averaging over the fragments using the fragment
         weights in the material state as described in the class header. */
     double indicativeTemperature(const MaterialState* state, const Array& Jv) const override;
-
-    //======== Secondary emission =======
-
-public:
-    /** This function returns the emissivity spectrum per hydrogen atom \f$\varepsilon_{\ell'}\f$
-        of the dust mix (or rather of the representative grain population corresponding to the dust
-        mix) when it would be embedded in a given radiation field, assuming that the dust grains
-        are in local thermal equilibrium. The input and output arrays are discretized on the
-        wavelength grids returned by the Configuration::radiationFieldWLG() and
-        Configuration::dustEmissionWLG() functions, repectively. TO DO. */
-    Array emissivity(const Array& Jv) const override;
 
     //=========== Exposing multiple grain populations (MultiGrainPopulationInterface) ============
 
