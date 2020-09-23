@@ -11,6 +11,7 @@
 #include "PhotonPacket.hpp"
 #include "ProcessManager.hpp"
 #include "SecondarySourceSystem.hpp"
+#include "ShortArray.hpp"
 #include "SpecialFunctions.hpp"
 #include "StringUtils.hpp"
 #include "TimeLogger.hpp"
@@ -527,7 +528,7 @@ void MonteCarloSimulation::peelOffScattering(PhotonPacket* pp, PhotonPacket* ppp
 
     // determine the scattering opacity weight for each medium component;
     // abort if none of the media scatter this photon packet
-    Array wv;
+    ShortArray wv;
     if (!mediumSystem()->weightsForScattering(wv, lambda, pp)) return;
 
     // now do the actual peel-off for each instrument

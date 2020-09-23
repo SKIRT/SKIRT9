@@ -21,6 +21,7 @@
 class Configuration;
 class PhotonPacket;
 class Random;
+class ShortArray;
 class SpatialGridPath;
 class WavelengthGrid;
 
@@ -309,7 +310,7 @@ public:
         simulation). The function returns true if normalized weights have been successfully
         calculated, and false if all of the weights are zero (i.e. the photon packet does not
         scatter in this cell). */
-    bool weightsForScattering(Array& wv, double lambda, const PhotonPacket* pp) const;
+    bool weightsForScattering(ShortArray& wv, double lambda, const PhotonPacket* pp) const;
 
     /** This function calculates the peel-off photon luminosity, polarization state, and wavelength
         shift for the given wavelength, geometry, and incoming photon packet. The specified
@@ -321,7 +322,7 @@ public:
         relative opacities of the various medium components. If more than one component changes the
         wavelength, only the wavelength shift returned by the last one is preserved (for lack of a
         better strategy). */
-    void peelOffScattering(double lambda, const Array& wv, Direction bfkobs, Direction bfky, PhotonPacket* pp,
+    void peelOffScattering(double lambda, const ShortArray& wv, Direction bfkobs, Direction bfky, PhotonPacket* pp,
                            PhotonPacket* ppp) const;
 
     /** This function simulates a random walk scattering event of a photon packet. Most of the

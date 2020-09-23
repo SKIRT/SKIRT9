@@ -130,7 +130,7 @@ void MediumSystem::setupSelfAfter()
     int numSamples = _config->numDensitySamples();
     log->infoSetElapsed(_numCells);
     parfac->parallelDistributed()->call(_numCells, [this, log, dic, numSamples](size_t firstIndex, size_t numIndices) {
-        ShortArray<8> nsumv(_numMedia);
+        ShortArray nsumv(_numMedia);
 
         while (numIndices)
         {
@@ -374,7 +374,7 @@ double MediumSystem::albedoForScattering(const PhotonPacket* pp) const
 
 ////////////////////////////////////////////////////////////////////
 
-bool MediumSystem::weightsForScattering(Array& wv, double lambda, const PhotonPacket* pp) const
+bool MediumSystem::weightsForScattering(ShortArray& wv, double lambda, const PhotonPacket* pp) const
 {
     // resize the target array
     wv.resize(_numMedia);
@@ -401,7 +401,7 @@ bool MediumSystem::weightsForScattering(Array& wv, double lambda, const PhotonPa
     // normalize the weights
     if (sum > 0.)
     {
-        wv /= sum;
+        for (int h = 0; h != _numMedia; ++h) wv[h] /= sum;
         return true;
     }
 
@@ -411,8 +411,8 @@ bool MediumSystem::weightsForScattering(Array& wv, double lambda, const PhotonPa
 
 ////////////////////////////////////////////////////////////////////
 
-void MediumSystem::peelOffScattering(double lambda, const Array& wv, Direction bfkobs, Direction bfky, PhotonPacket* pp,
-                                     PhotonPacket* ppp) const
+void MediumSystem::peelOffScattering(double lambda, const ShortArray& wv, Direction bfkobs, Direction bfky,
+                                     PhotonPacket* pp, PhotonPacket* ppp) const
 {
     // get the cell hosting the scattering event
     int m = pp->interactionCellIndex();
@@ -534,7 +534,7 @@ void MediumSystem::setOpticalDepths(PhotonPacket* pp) const
     // multiple media, spatially constant cross sections
     else if (_config->hasMultipleConstantSectionMedia())
     {
-        ShortArray<8> sectionv(_numMedia);
+        ShortArray sectionv(_numMedia);
         for (int h = 0; h != _numMedia; ++h) sectionv[h] = mix(0, h)->sectionExt(pp->wavelength());
         for (auto& segment : pp->segments())
         {
@@ -600,7 +600,7 @@ bool MediumSystem::setInteractionPoint(PhotonPacket* pp, double tauscat) const
     // --> multiple media, spatially constant cross sections
     else if (_config->hasMultipleConstantSectionMedia())
     {
-        ShortArray<8> sectionv(_numMedia);
+        ShortArray sectionv(_numMedia);
         for (int h = 0; h != _numMedia; ++h) sectionv[h] = mix(0, h)->sectionExt(pp->wavelength());
         while (generator->next())
         {
@@ -692,7 +692,7 @@ double MediumSystem::getOpticalDepth(PhotonPacket* pp, double distance) const
     // multiple media, spatially constant cross sections
     else if (_config->hasMultipleConstantSectionMedia())
     {
-        ShortArray<8> sectionv(_numMedia);
+        ShortArray sectionv(_numMedia);
         for (int h = 0; h != _numMedia; ++h) sectionv[h] = mix(0, h)->sectionExt(pp->wavelength());
         while (generator->next())
         {
