@@ -40,7 +40,7 @@ class PhotonPacketOptions : public SimulationItem
         PROPERTY_DOUBLE(pathLengthBias, "the fraction of path lengths sampled from a stretched distribution")
         ATTRIBUTE_MIN_VALUE(pathLengthBias, "[0")
         ATTRIBUTE_MAX_VALUE(pathLengthBias, "1]")
-        ATTRIBUTE_DEFAULT_VALUE(pathLengthBias, "0.5")
+        ATTRIBUTE_DEFAULT_VALUE(pathLengthBias, "Lya:0;0.5")
         ATTRIBUTE_RELEVANT_IF(pathLengthBias, "(ForceScattering|Emission)&(!Lya)")
         ATTRIBUTE_DISPLAYED_IF(pathLengthBias, "Level3")
 
