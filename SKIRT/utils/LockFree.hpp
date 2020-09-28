@@ -22,8 +22,8 @@ namespace LockFree
         operation on the target memory location. */
     inline void add(double& target, double value)
     {
-        // construct an atom over the target location without initialization (this produces no assembly code)
-        std::atomic<double>* atom = new (&target) std::atomic<double>;
+        // reinterpret the target location as an atom (this produces no assembly code)
+        auto atom = reinterpret_cast<std::atomic<double>*>(&target);
 
         // make a local copy of the target location's value
         double old = *atom;
