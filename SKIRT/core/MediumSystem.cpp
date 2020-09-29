@@ -882,3 +882,62 @@ Array MediumSystem::dustEmissionSpectrum(int m) const
 }
 
 ////////////////////////////////////////////////////////////////////
+
+/*
+for r in recipes:
+    r.beginUpdate()
+
+parallel for m in spatial cells:
+    for r in recipes:
+        for h in medium components:
+            r.update(m, h)
+
+for r in recipes:
+    r.endUpdate()
+*/
+
+bool MediumSystem::updateDynamicMediumState()
+{
+    auto log = find<Log>();
+    auto parfac = find<ParallelFactory>();
+    auto& recipes = dynamicStateOptions()->recipes();
+
+    // tell all recipes to begin the update cycle
+    for (auto recipe : recipes) recipe->beginUpdate();
+
+    // TO DO: synchronize updated state between processes !!!
+
+    // loop over the spatial cells in parallel
+    log->info("Updating dynamic medium state for " + std::to_string(_numCells) + " cells...");
+    log->infoSetElapsed(_numCells);
+    parfac->parallelDistributed()->call(_numCells, [this, log, recipes](size_t firstIndex, size_t numIndices) {
+        while (numIndices)
+        {
+            size_t currentChunkSize = min(logProgressChunkSize, numIndices);
+            for (size_t m = firstIndex; m != firstIndex + currentChunkSize; ++m)
+            {
+                const Array& Jv = meanIntensity(m);
+
+                // tell all recipes to update the state for all media in this cell
+                for (auto recipe : recipes)
+                {
+                    for (int h = 0; h != _numMedia; ++h)
+                    {
+                        MaterialState mst(_state, m, h);
+                        recipe->update(&mst, Jv);
+                    }
+                }
+            }
+            log->infoIfElapsed("Updated dynamic medium state: ", currentChunkSize);
+            firstIndex += currentChunkSize;
+            numIndices -= currentChunkSize;
+        }
+    });
+
+    // tell all recipes to end the update cycle and collect convergence info
+    bool converged = true;
+    for (auto recipe : recipes) converged &= recipe->endUpdate();
+    return converged;
+}
+
+////////////////////////////////////////////////////////////////////

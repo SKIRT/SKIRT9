@@ -124,6 +124,10 @@ public:
     /** Returns the number of photon packets launched per primary emission simulation segment. */
     double numPrimaryPackets() const { return _numPrimaryPackets; }
 
+    /** Returns the number of photon packets launched per dynamic medium state iteration segment
+        during primary emission. */
+    double numDynamicStatePackets() const { return _numDynamicStatePackets; }
+
     /** Returns the number of photon packets launched per secondary emission simulation segment. */
     double numIterationPackets() const { return _numIterationPackets; }
 
@@ -160,6 +164,19 @@ public:
     /** Returns true if the radiation field for emission from secondary sources must be stored
         (in a separate data structure), and false otherwise. */
     bool hasSecondaryRadiationField() const { return _hasSecondaryRadiationField; }
+
+    /** Returns true if the primary emission phase includes iterations for self-consistent dynamic
+        medium state calculation, and false otherwise. If this function returns true, the functions
+        hasMedium() and hasPanRadiationField() also return true. */
+    bool hasDynamicState() const { return _hasDynamicState; }
+
+    /** Returns the minimum number of dynamic medium state iterations in the primary emission
+        phase. */
+    int minDynamicStateIterations() const { return _minDynamicStateIterations; }
+
+    /** Returns the maximum number of dynamic medium state iterations in the primary emission
+        phase. */
+    int maxDynamicStateIterations() const { return _maxDynamicStateIterations; }
 
     /** Returns true if secondary emission must be calculated for any media type, and false otherwise. */
     bool hasSecondaryEmission() const { return _hasDustEmission; }
@@ -209,7 +226,7 @@ public:
     /** Returns the maximum number of self-absorption iterations. */
     int maxIterations() const { return _maxIterations; }
 
-    /** Returns the self-absorption iteration convergece criterion described as follows:
+    /** Returns the self-absorption iteration convergence criterion described as follows:
         convergence is reached when the total absorbed dust luminosity is less than this fraction
         of the total absorbed primary luminosity. */
     double maxFractionOfPrimary() const { return _maxFractionOfPrimary; }
@@ -328,6 +345,7 @@ private:
 
     // launch
     double _numPrimaryPackets{0.};
+    double _numDynamicStatePackets{0.};
     double _numIterationPackets{0.};
     double _numSecondaryPackets{0.};
 
@@ -344,6 +362,11 @@ private:
     bool _hasPanRadiationField{false};
     bool _hasSecondaryRadiationField{false};
     DisjointWavelengthGrid* _radiationFieldWLG{nullptr};
+
+    // dynamic medium state
+    bool _hasDynamicState{false};
+    int _minDynamicStateIterations{1};
+    int _maxDynamicStateIterations{10};
 
     // emission
     bool _hasDustEmission{false};

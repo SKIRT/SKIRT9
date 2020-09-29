@@ -28,6 +28,10 @@ public:
     //============= Setting =============
 
 public:
+    /** This function sets the number density \f$n\f$ of the medium component in the spatial cell.
+        */
+    void setNumberDensity(double value) { _ms.setNumberDensity(_m, _h, value); }
+
     /** This function sets the temperature \f$T\f$ of the medium component in the spatial cell. */
     void setTemperature(double value) { _ms.setTemperature(_m, _h, value); }
 
@@ -48,11 +52,12 @@ public:
     /** This function returns the magnetic field \f${\boldsymbol{B}}\f$ in the spatial cell. */
     Vec magneticField() const { return _ms.magneticField(_m); }
 
-    /** This function returns the number density of the medium component in the spatial cell. */
+    /** This function returns the number density \f$n\f$ of the medium component in the spatial
+        cell. */
     double numberDensity() const { return _ms.numberDensity(_m, _h); }
 
-    /** This function returns the temperature \f$T\f$ of the medium component in the spatial
-        cell. */
+    /** This function returns the temperature \f$T\f$ of the medium component in the spatial cell.
+        */
     double temperature() const { return _ms.temperature(_m, _h); }
 
     /** This function returns the custom state variable with index \f$i\f$ of the medium component

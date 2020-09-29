@@ -166,6 +166,15 @@ void Configuration::setupSelfBefore()
         if (ms->lyaOptions()->includeHubbleFlow()) _hubbleExpansionRate = sim->cosmology()->relativeExpansionRate();
     }
 
+    // retrieve dynamic state options
+    if (_hasMedium && _hasPanRadiationField && !_hasLymanAlpha && ms->hasDynamicState())
+    {
+        _hasDynamicState = true;
+        _minDynamicStateIterations = ms->dynamicStateOptions()->minIterations();
+        _maxDynamicStateIterations = ms->dynamicStateOptions()->maxIterations();
+        _numDynamicStatePackets = sim->numPackets() * ms->dynamicStateOptions()->iterationPacketsMultiplier();
+    }
+
     // verify that there is a Lya medium component if required, and none if not required
     int numLyaMedia = 0;
     for (int h = 0; h != numMedia; ++h)
@@ -339,6 +348,7 @@ void Configuration::setEmulationMode()
     _numPrimaryPackets = 0.;
     _numIterationPackets = 0.;
     _numSecondaryPackets = 0.;
+    _hasDynamicState = false;
     _minIterations = 1;
     _maxIterations = 1;
 }

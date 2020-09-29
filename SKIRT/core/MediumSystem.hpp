@@ -9,6 +9,7 @@
 #include "Array.hpp"
 #include "DustEmissionOptions.hpp"
 #include "DustSelfAbsorptionOptions.hpp"
+#include "DynamicStateOptions.hpp"
 #include "ExtinctionOnlyOptions.hpp"
 #include "LyaOptions.hpp"
 #include "MaterialMix.hpp"
@@ -126,6 +127,16 @@ class MediumSystem : public SimulationItem
         PROPERTY_ITEM_LIST(media, Medium, "the transfer media")
         ATTRIBUTE_DEFAULT_VALUE(media, "GeometricMedium")
         ATTRIBUTE_REQUIRED_IF(media, "!NoMedium")
+
+        PROPERTY_BOOL(hasDynamicState, "dynamically adjust the medium state by iterating over the radiation field")
+        ATTRIBUTE_DEFAULT_VALUE(hasDynamicState, "false")
+        ATTRIBUTE_RELEVANT_IF(hasDynamicState, "Panchromatic&RadiationField&!Lya")
+        ATTRIBUTE_DISPLAYED_IF(hasDynamicState, "Level3")
+
+        PROPERTY_ITEM(dynamicStateOptions, DynamicStateOptions, "the options for dynamic medium state iterations")
+        ATTRIBUTE_DEFAULT_VALUE(dynamicStateOptions, "DynamicStateOptions")
+        ATTRIBUTE_RELEVANT_IF(dynamicStateOptions, "hasDynamicState&Panchromatic&RadiationField&!Lya")
+        ATTRIBUTE_DISPLAYED_IF(dynamicStateOptions, "Level3")
 
         PROPERTY_ITEM(grid, SpatialGrid, "the spatial grid")
         ATTRIBUTE_DEFAULT_VALUE(grid,
@@ -572,6 +583,18 @@ public:
         function and has arbitrary normalization. The caller is responsible for properly
         normalizing the spectrum based on the value returned by the dustLuminosity() function. */
     Array dustEmissionSpectrum(int m) const;
+
+    //=============== Dynamic medium state ===================
+
+public:
+    /** This function invokes the dynamic medium state recipes configured for this simulation to
+        update the medium state for all spatial cells and medium components based on the currently
+        established radiation field. The function returns true if all recipes have converged, and
+        false otherwise. See the DynamicStateRecipe class for more information.
+
+        This function assumes that the radiation field has been calculated and that at least one
+        dynamic medium state recipe has been configured for the simulation. */
+    bool updateDynamicMediumState();
 
     //======================== Data Members ========================
 

@@ -29,6 +29,7 @@
 #include "CellGeometry.hpp"
 #include "CellMedium.hpp"
 #include "CellSource.hpp"
+#include "ClearDensityRecipe.hpp"
 #include "ClumpyGeometryDecorator.hpp"
 #include "CombineGeometryDecorator.hpp"
 #include "ConfigurableBandWavelengthGrid.hpp"
@@ -64,6 +65,7 @@
 #include "DustGrainSizeDistributionProbe.hpp"
 #include "DustSelfAbsorptionOptions.hpp"
 #include "DustTemperaturePerCellProbe.hpp"
+#include "DynamicStateOptions.hpp"
 #include "EinastoGeometry.hpp"
 #include "ElectronMix.hpp"
 #include "ExpDiskGeometry.hpp"
@@ -467,6 +469,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<DustEmissionOptions>();
     ItemRegistry::add<DustSelfAbsorptionOptions>();
     ItemRegistry::add<LyaOptions>();
+    ItemRegistry::add<DynamicStateOptions>();
 
     // material normalizations
     ItemRegistry::add<MaterialNormalization>();
@@ -545,6 +548,10 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<AllCellsLibrary>();
     ItemRegistry::add<FieldStrengthCellLibrary>();
     ItemRegistry::add<TemperatureWavelengthCellLibrary>();
+
+    // dynamic medium state recipes
+    ItemRegistry::add<DynamicStateRecipe>();
+    ItemRegistry::add<ClearDensityRecipe>();
 
     // wavelength grids
     ItemRegistry::add<WavelengthGrid>();
