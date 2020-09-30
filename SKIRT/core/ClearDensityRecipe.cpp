@@ -50,8 +50,8 @@ bool ClearDensityRecipe::endUpdate()
         int numClearedCells = _numCleared / ms->numMedia();
         double percentage = 100. * numClearedCells / ms->numCells();
         find<Log>()->info("ClearDensityRecipe has not yet converged: " + std::to_string(numClearedCells) + " out of "
-                   + std::to_string(ms->numCells()) + " cells (" + StringUtils::toString(percentage, 'f', 2)
-                   + " %) have been cleared");
+                          + std::to_string(ms->numCells()) + " cells (" + StringUtils::toString(percentage, 'f', 2)
+                          + " %) have been cleared");
         return false;
     }
 }
