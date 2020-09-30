@@ -132,6 +132,7 @@ class MediumSystem : public SimulationItem
         ATTRIBUTE_DEFAULT_VALUE(hasDynamicState, "false")
         ATTRIBUTE_RELEVANT_IF(hasDynamicState, "Panchromatic&RadiationField&!Lya")
         ATTRIBUTE_DISPLAYED_IF(hasDynamicState, "Level3")
+        ATTRIBUTE_INSERT(hasDynamicState, "hasDynamicState:HasDynamicState")
 
         PROPERTY_ITEM(dynamicStateOptions, DynamicStateOptions, "the options for dynamic medium state iterations")
         ATTRIBUTE_DEFAULT_VALUE(dynamicStateOptions, "DynamicStateOptions")

@@ -13,6 +13,20 @@
 
 void SpatialCellPropertiesProbe::probeSetup()
 {
+    if (probeAfter() == ProbeAfter::Setup) probe();
+}
+
+////////////////////////////////////////////////////////////////////
+
+void SpatialCellPropertiesProbe::probeRun()
+{
+    if (probeAfter() == ProbeAfter::Run) probe();
+}
+
+////////////////////////////////////////////////////////////////////
+
+void SpatialCellPropertiesProbe::probe()
+{
     // locate the medium system and the grid (it is OK for the medium system to have no media components)
     auto ms = find<MediumSystem>(false);
     if (ms)

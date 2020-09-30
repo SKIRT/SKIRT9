@@ -129,6 +129,20 @@ namespace
 
 void OpticalDepthMapProbe::probeSetup()
 {
+    if (probeAfter() == ProbeAfter::Setup) probe();
+}
+
+////////////////////////////////////////////////////////////////////
+
+void OpticalDepthMapProbe::probeRun()
+{
+    if (probeAfter() == ProbeAfter::Run) probe();
+}
+
+////////////////////////////////////////////////////////////////////
+
+void OpticalDepthMapProbe::probe()
+{
     if (find<Configuration>()->hasMedium())
     {
         // locate the medium system

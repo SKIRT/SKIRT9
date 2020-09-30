@@ -131,6 +131,20 @@ void PlanarMediaDensityCutsProbe::writeMediaDensityCuts(Probe* probe, bool xd, b
 
 void PlanarMediaDensityCutsProbe::probeSetup()
 {
+    if (probeAfter() == ProbeAfter::Setup) probe();
+}
+
+////////////////////////////////////////////////////////////////////
+
+void PlanarMediaDensityCutsProbe::probeRun()
+{
+    if (probeAfter() == ProbeAfter::Run) probe();
+}
+
+////////////////////////////////////////////////////////////////////
+
+void PlanarMediaDensityCutsProbe::probe()
+{
     if (find<Configuration>()->hasMedium())
     {
         writeMediaDensityCuts(this, 1, 1, 0, positionX(), positionY(), positionZ(), numPixelsX(), numPixelsY(),
