@@ -174,6 +174,25 @@ private:
         information.) */
     void runPrimaryEmission();
 
+    /** This function implements primary source emission when the simulation includes a dynamic
+        medium state. In that case, the primary emission phase self-consistently calculates the
+        radiation field taking into account one or more recipes for updating the medium state as a
+        function of the radiation field. See the DynamicStateRecipe class for more information.
+
+        Specifically, this function implements a number of iterations, where each iteration tracks
+        a segment of photon packets through the medium and subsequently updates the medium state
+        based on the newly established radiation field. The number of photon packets launched for
+        each iteration can be configured as a multiplication factor on the default number of
+        primary photon packets. The minimum and maximum number of iterations can also be specified
+        as configuration options. Within these limits, the actual number of iterations performed is
+        determined by convergence criteria defined by the configured dynamic medium state
+        recipe(s).
+
+        After the dynamic state iterations have completed (with or without convergence), this
+        function performs a final segment of primary emission photon launching that now includes
+        peel-off towards the instruments. */
+    void runPrimaryEmissionWithDynamicState();
+
     /** This function runs the dust self-absorption phase. This phase includes a series of
         intermediate secondary source emission segments in an iteration to self-consistently
         calculate the radiation field, taking into account the fraction of dust emission absorbed

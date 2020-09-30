@@ -62,8 +62,11 @@ void MonteCarloSimulation::runSimulation()
     {
         TimeLogger logger(log(), "the run");
 
-        // primary emission segment
-        runPrimaryEmission();
+        // primary emission segment, possibly with dynamic medium state iterations
+        if (_config->hasDynamicState() && sourceSystem()->luminosity())
+            runPrimaryEmissionWithDynamicState();
+        else
+            runPrimaryEmission();
 
         // dust self-absorption iteration segments
         if (_config->hasDustSelfAbsorption()) runDustSelfAbsorptionPhase();
@@ -118,6 +121,103 @@ void MonteCarloSimulation::runPrimaryEmission()
     // wait for all processes to finish and synchronize the radiation field
     wait(segment);
     if (_config->hasRadiationField()) mediumSystem()->communicateRadiationField(true);
+}
+
+////////////////////////////////////////////////////////////////////
+
+void MonteCarloSimulation::runPrimaryEmissionWithDynamicState()
+{
+    // when this function is called
+    //  - the number of photon packets and the source luminosity are guaranteed to be nonzero
+    //  - the data structures to store the radiation field are guaranteed to exist
+
+    TimeLogger logger(log(), "the primary emission phase");
+
+    // get the parallel engine
+    auto parallel = find<ParallelFactory>()->parallelDistributed();
+
+    // get the parameters controlling the dynamic state iteration
+    size_t Npp = _config->numDynamicStatePackets();
+    int minIters = _config->minDynamicStateIterations();
+    int maxIters = _config->maxDynamicStateIterations();
+
+    // prepare the source system for the appropriate number of packets
+    sourceSystem()->prepareForLaunch(Npp);
+
+    // loop over the dynamic state iterations; the loop exits
+    //   - if convergence is reached after the minimum number of iterations, or
+    //   - if the maximum number of iterations has completed, even if there is no convergence
+    int iter = 0;
+    while (true)
+    {
+        ++iter;
+        bool converged = false;
+        {
+            string segment = "dynamic medium state iteration " + std::to_string(iter);
+            TimeLogger logger(log(), segment);
+
+            // clear the radiation field
+            mediumSystem()->clearRadiationField(true);
+
+            // launch photon packets
+            initProgress(segment, Npp);
+            parallel->call(Npp, [this](size_t i, size_t n) { performLifeCycle(i, n, true, false, true); });
+            instrumentSystem()->flush();
+
+            // wait for all processes to finish and synchronize the radiation field
+            wait(segment);
+            mediumSystem()->communicateRadiationField(false);
+
+            // update the medium state based on the newly established radiation field
+            converged = mediumSystem()->updateDynamicMediumState();
+        }
+
+        // force at least the minimum number of iterations
+        if (converged && iter < minIters)
+        {
+            log()->info("Convergence reached but continuing until " + std::to_string(minIters)
+                        + " iterations have been performed");
+        }
+        // exit the loop if convergence has been reached after at least the minimum number of iterations
+        else if (converged && iter >= minIters)
+        {
+            log()->info("Convergence reached after " + std::to_string(iter) + " iterations");
+            break;
+        }
+        // continue if convergence has not been reached after fewer than the maximum number of iterations
+        else if (!converged && iter < maxIters)
+        {
+            log()->info("Convergence not yet reached after " + std::to_string(iter) + " iterations");
+        }
+        // exit the loop if convergence has not been reached after the maximum number of iterations
+        else if (!converged && iter >= maxIters)
+        {
+            log()->error("Convergence not yet reached after " + std::to_string(iter) + " iterations");
+            break;
+        }
+    }
+
+    // update the number of photon packets
+    Npp = _config->numPrimaryPackets();
+    sourceSystem()->prepareForLaunch(Npp);
+
+    // perform the final photon launching segment
+    {
+        string segment = "final primary emission";
+        TimeLogger logger(log(), segment);
+
+        // clear the radiation field
+        mediumSystem()->clearRadiationField(true);
+
+        // shoot photon packets
+        initProgress(segment, Npp);
+        parallel->call(Npp, [this](size_t i, size_t n) { performLifeCycle(i, n, true, true, true); });
+        instrumentSystem()->flush();
+
+        // wait for all processes to finish and synchronize the radiation field
+        wait(segment);
+        mediumSystem()->communicateRadiationField(true);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////

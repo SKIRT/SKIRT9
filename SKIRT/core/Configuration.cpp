@@ -139,7 +139,7 @@ void Configuration::setupSelfBefore()
         _hasDustSelfAbsorption = true;
         _hasSecondaryRadiationField = true;
         _minIterations = ms->dustSelfAbsorptionOptions()->minIterations();
-        _maxIterations = ms->dustSelfAbsorptionOptions()->maxIterations();
+        _maxIterations = max(_minIterations, ms->dustSelfAbsorptionOptions()->maxIterations());
         _maxFractionOfPrimary = ms->dustSelfAbsorptionOptions()->maxFractionOfPrimary();
         _maxFractionOfPrevious = ms->dustSelfAbsorptionOptions()->maxFractionOfPrevious();
         _numIterationPackets = sim->numPackets() * ms->dustSelfAbsorptionOptions()->iterationPacketsMultiplier();
@@ -166,13 +166,16 @@ void Configuration::setupSelfBefore()
         if (ms->lyaOptions()->includeHubbleFlow()) _hubbleExpansionRate = sim->cosmology()->relativeExpansionRate();
     }
 
-    // retrieve dynamic state options
+    // retrieve dynamic state options (only enable dynamic state if there are photon packets to be launched)
     if (_hasMedium && _hasPanRadiationField && !_hasLymanAlpha && ms->hasDynamicState())
     {
-        _hasDynamicState = true;
-        _minDynamicStateIterations = ms->dynamicStateOptions()->minIterations();
-        _maxDynamicStateIterations = ms->dynamicStateOptions()->maxIterations();
-        _numDynamicStatePackets = sim->numPackets() * ms->dynamicStateOptions()->iterationPacketsMultiplier();
+        _numDynamicStatePackets = _numPrimaryPackets * ms->dynamicStateOptions()->iterationPacketsMultiplier();
+        if (_numPrimaryPackets > 0. && _numDynamicStatePackets > 0.)
+        {
+            _hasDynamicState = true;
+            _minDynamicStateIterations = ms->dynamicStateOptions()->minIterations();
+            _maxDynamicStateIterations = max(_minDynamicStateIterations, ms->dynamicStateOptions()->maxIterations());
+        }
     }
 
     // verify that there is a Lya medium component if required, and none if not required

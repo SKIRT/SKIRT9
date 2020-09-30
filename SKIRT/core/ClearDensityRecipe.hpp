@@ -33,17 +33,11 @@ class ClearDensityRecipe : public DynamicStateRecipe
 
     ITEM_END()
 
-    //============= Construction - Setup - Destruction =============
-
-protected:
-    /** This function caches the number of spatial cells and medium components in the simulation. */
-    void setupSelfBefore() override;
-
     //======================== Other Functions =======================
 
 public:
     /** This function is called before an update cycle begins. It initializes the number of cleared
-        cells to zero. */
+        cells to zero and caches the radiation field wavelength grid. */
     void beginUpdate() override;
 
     /** This function is called repeatedly as part of the update cycle. If the density of the
@@ -60,10 +54,7 @@ public:
     //======================== Data Members =======================
 
 private:
-    Log* _log{nullptr};                  // message log
     Array _dlambdav;                     // wavelength bin widths for the radiation field wavelength grid
-    int _numCells{0};                    // total number of spatial cells in the simulation
-    int _numMedia{0};                    // total number of medium components in the simulation
     std::atomic<size_t> _numCleared{0};  // number of cell/component combinations cleared during this update cycle
 };
 

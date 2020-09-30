@@ -12,26 +12,13 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void ClearDensityRecipe::setupSelfBefore()
-{
-    DynamicStateRecipe::setupSelfBefore();
-
-    _log = find<Log>();
-    _dlambdav = find<Configuration>()->radiationFieldWLG()->dlambdav();
-
-    auto ms = find<MediumSystem>();
-    _numCells = ms->numCells();
-    _numMedia = ms->numMedia();
-}
-
-//////////////////////////////////////////////////////////////////////
-
 void ClearDensityRecipe::beginUpdate()
 {
+    _dlambdav = find<Configuration>()->radiationFieldWLG()->dlambdav();
     _numCleared = 0;
 }
 
-//////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
 
 void ClearDensityRecipe::update(MaterialState* state, const Array& Jv)
 {
@@ -48,24 +35,25 @@ void ClearDensityRecipe::update(MaterialState* state, const Array& Jv)
     }
 }
 
-//////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
 
 bool ClearDensityRecipe::endUpdate()
 {
     if (_numCleared == 0)
     {
-        _log->info("ClearDensityRecipe has converged: no cells have been cleared");
+        find<Log>()->info("ClearDensityRecipe has converged: no cells have been cleared");
         return true;
     }
     else
     {
-        int numClearedCells = _numCleared / _numMedia;
-        double percentage = 100. * numClearedCells / _numCells;
-        _log->info("ClearDensityRecipe has not yet converged: " + std::to_string(numClearedCells) + " out of "
-                   + std::to_string(_numCells) + " cells (" + StringUtils::toString(percentage, 'f', 3)
-                   + " %) have been cleared)");
+        auto ms = find<MediumSystem>();
+        int numClearedCells = _numCleared / ms->numMedia();
+        double percentage = 100. * numClearedCells / ms->numCells();
+        find<Log>()->info("ClearDensityRecipe has not yet converged: " + std::to_string(numClearedCells) + " out of "
+                   + std::to_string(ms->numCells()) + " cells (" + StringUtils::toString(percentage, 'f', 2)
+                   + " %) have been cleared");
         return false;
     }
 }
 
-//////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////

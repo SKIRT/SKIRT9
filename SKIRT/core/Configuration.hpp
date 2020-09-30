@@ -166,8 +166,9 @@ public:
     bool hasSecondaryRadiationField() const { return _hasSecondaryRadiationField; }
 
     /** Returns true if the primary emission phase includes iterations for self-consistent dynamic
-        medium state calculation, and false otherwise. If this function returns true, the functions
-        hasMedium() and hasPanRadiationField() also return true. */
+        medium state calculation, and false otherwise. If this function returns true, hasMedium()
+        and hasPanRadiationField() also return true and numPrimaryPackets() and
+        numDynamicStatePackets() return a nonzero number. */
     bool hasDynamicState() const { return _hasDynamicState; }
 
     /** Returns the minimum number of dynamic medium state iterations in the primary emission
