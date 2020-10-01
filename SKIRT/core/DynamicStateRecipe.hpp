@@ -30,11 +30,11 @@ class MaterialState;
     function also returns a Boolean that indicates whether the iteration can be considered to have
     converged for this recipe.
 
-    A recipe is allowed to discover information about the configuration of the simulation during
-    setup, for example to determine the type of material mixes associated with the various medium
-    components. However, it should not update any information outside its own data members except
-    through the material states passed to the update() function. Furthermore, the operation of the
-    update function should solely depend on and affect changes to the material state passed to that
+    A recipe is allowed to discover information about the configuration of the simulation, for
+    example to determine the type of material mixes associated with the various medium components.
+    However, it should not update any information outside its own data members except through the
+    material states passed to the update() function. Furthermore, the operation of the update()
+    function should solely depend on and affect changes to the material state passed to that
     particular invocation of the function. In other words, each spatial cell/component must be
     treated independently from other spatial cells/components.
 
@@ -43,8 +43,8 @@ class MaterialState;
     in this order, recipe B will thus always see the state as it has been adjusted by recipe A.
 
     These requirements and guarantees allow the update() function to be called for different
-    spatial cell/component combinations in parallel execution threads (and thus in arbitrary
-    order). A possible execution sequence could be:
+    spatial cell/component combinations in parallel execution threads and in multiple parallel
+    processes, and thus in arbitrary order. A possible execution sequence could be:
 
     \verbatim
     for r in recipes:
@@ -67,27 +67,44 @@ class DynamicStateRecipe : public SimulationItem
     //======================== Other Functions =======================
 
 public:
-    /** This function is called before updating begins at the end of each iteration step. The
-        implementation in a subclass should initialize the data members that track whether the
-        recipe has converged. */
-    virtual void beginUpdate() = 0;
+    /** This function is called before updating begins at the end of each iteration step. The \em
+        numCells argument specifies the number of spatial cells in the simulation. The
+        implementation in a subclass can perform the following tasks, if applicable:
 
-    /** This function is called during updating at the end of each iteration step. It updates the
-        specified material state (corresponding to a particular spatial cell and medium component)
-        based on the specified radiation field (corresponding to that same cell and discretized on
-        the simulation's radiation field wavelength grid as returned by the
-        Configuration::radiationFieldWLG() function). The implementation in a subclass should also
-        update the data members that track whether the recipe has converged. Because this function
-        can be called from multiple parallel execution threads, those updates must be performed
-        atomically or be properly protected by a lock. */
-    virtual void update(MaterialState* state, const Array& Jv) = 0;
+        - gather and cache information about the simulation at large (this is easier done here than
+        during setup because recipe instances are being setup before the medium system of which
+        they are a part).
+
+        - initialize the data members that track convergence data for the recipe in case the recipe
+        requires more information than the number of updated spatial cells, which is automatically
+        provided to the endUpdate() function. */
+    virtual void beginUpdate(int numCells) = 0;
+
+    /** This function is called during updating at the end of each iteration step. If needed, it
+        updates the specified material state (corresponding to a particular spatial cell and medium
+        component) based on the specified radiation field (corresponding to that same cell and
+        discretized on the simulation's radiation field wavelength grid as returned by the
+        Configuration::radiationFieldWLG() function). The function returns true if the material
+        state has been updated and false if the material state has been left unchanged.
+
+        If applicable, the implementation in a subclass should also update the data members that
+        track additional convergence data for the recipe. Because the update() function can be
+        called from multiple parallel execution threads, those updates must be performed atomically
+        or be properly protected by a lock. */
+    virtual bool update(MaterialState* state, const Array& Jv) = 0;
 
     /** This function is called after updating has completed at the end of each iteration step. It
-        returns true if the recipe has converged and false if not. In addition to determining this
-        yes/no information from the data members that track whether the recipe has converged, the
-        implementation in a subclass should also issue a log message reporting the degree of
-        convergence. */
-    virtual bool endUpdate() = 0;
+        returns true if the recipe has converged and false if not. The \em numCells and \em
+        numUpdated arguments specify respectively the number of spatial cells in the simulation and
+        the number of cells updated during this update cycle.
+
+        In case the recipe tracks additional information in the update() function, the tracked data
+        must be aggregated across processes, cause the update() function can be called from
+        separate parallel processes.
+
+        In addition to determining the binary yes/no convergence result, the implementation in a
+        subclass should also issue a log message reporting the degree of convergence. */
+    virtual bool endUpdate(int numCells, int numUpdated) = 0;
 };
 
 ////////////////////////////////////////////////////////////////////

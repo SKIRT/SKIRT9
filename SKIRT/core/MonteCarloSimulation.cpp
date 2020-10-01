@@ -166,7 +166,7 @@ void MonteCarloSimulation::runPrimaryEmissionWithDynamicState()
 
             // wait for all processes to finish and synchronize the radiation field
             wait(segment);
-            mediumSystem()->communicateRadiationField(false);
+            mediumSystem()->communicateRadiationField(true);
 
             // update the medium state based on the newly established radiation field
             converged = mediumSystem()->updateDynamicMediumState();

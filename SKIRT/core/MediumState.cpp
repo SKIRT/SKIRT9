@@ -88,6 +88,44 @@ void MediumState::initCommunicate()
 
 //////////////////////////////////////////////////////////////////////
 
+int MediumState::synchronize(const std::vector<uint8_t>& cellFlags)
+{
+    int numUpdated = 0;
+
+    if (ProcessManager::isMultiProc())
+    {
+        auto producer = [this, &cellFlags, &numUpdated](vector<double>& data) {
+            for (int m = 0; m != _numCells; ++m)
+            {
+                if (cellFlags[m])
+                {
+                    data.push_back(m);
+                    double* first = &_data[_numVars * m];
+                    data.insert(data.end(), first, first + _numVars);
+                    numUpdated++;
+                }
+            }
+        };
+        auto consumer = [this, &numUpdated](const vector<double>& data) {
+            for (auto in = data.begin(); in != data.end(); in += (1 + _numVars))
+            {
+                int m = *in;
+                std::copy(in + 1, in + 1 + _numVars, &_data[_numVars * m]);
+                numUpdated++;
+            }
+        };
+        ProcessManager::broadcastAllToAll(producer, consumer);
+    }
+    else
+    {
+        for (int m = 0; m != _numCells; ++m)
+            if (cellFlags[m]) numUpdated++;
+    }
+    return numUpdated;
+}
+
+//////////////////////////////////////////////////////////////////////
+
 void MediumState::setVolume(int m, double value)
 {
     _data[_numVars * m + _off_volu] = value;

@@ -112,6 +112,25 @@ public:
         assumes that the uninitialized variables have a zero value). */
     void initCommunicate();
 
+    //============= Synchronization =============
+
+    /** This function synchronizes the state variables between processes after each process has
+        possibly updated some of their values. The provided vector indicates the cells for which
+        the calling process has made some changes. The vector must be of length \em numCells as
+        passed to the initConfiguration() function, where each element in the vector corresponds to
+        the cell with the same index. If the calling process updated the state of a given cell, the
+        corresponding vector element must be nonzero and otherwise it must be zero. The function
+        returns the total number of updated cells, aggregated over all processes.
+
+        Only one of the calling processes may have updated the state for any given cell. If two or
+        more processes updated the state of the same cell, the result of the synchronization is
+        undefined.
+
+        \note: We don't use \c bool as the vector element type because std::vector has a
+        specialization for \c bool that does not allow thread-safe access to individual elements,
+        which is important for the caller of this function. */
+    int synchronize(const std::vector<uint8_t>& cellFlags);
+
     //============= Setting =============
 
 public:

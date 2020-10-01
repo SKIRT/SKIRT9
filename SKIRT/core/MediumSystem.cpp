@@ -883,19 +883,6 @@ Array MediumSystem::dustEmissionSpectrum(int m) const
 
 ////////////////////////////////////////////////////////////////////
 
-/*
-for r in recipes:
-    r.beginUpdate()
-
-parallel for m in spatial cells:
-    for r in recipes:
-        for h in medium components:
-            r.update(m, h)
-
-for r in recipes:
-    r.endUpdate()
-*/
-
 bool MediumSystem::updateDynamicMediumState()
 {
     auto log = find<Log>();
@@ -903,14 +890,15 @@ bool MediumSystem::updateDynamicMediumState()
     auto& recipes = dynamicStateOptions()->recipes();
 
     // tell all recipes to begin the update cycle
-    for (auto recipe : recipes) recipe->beginUpdate();
+    for (auto recipe : recipes) recipe->beginUpdate(_numCells);
 
-    // TO DO: synchronize updated state between processes !!!
+    // flags for cells with updated state become nonzero
+    std::vector<uint8_t> flags(_numCells);
 
     // loop over the spatial cells in parallel
     log->info("Updating dynamic medium state for " + std::to_string(_numCells) + " cells...");
     log->infoSetElapsed(_numCells);
-    parfac->parallelDistributed()->call(_numCells, [this, log, recipes](size_t firstIndex, size_t numIndices) {
+    parfac->parallelDistributed()->call(_numCells, [this, log, &recipes, &flags](size_t firstIndex, size_t numIndices) {
         while (numIndices)
         {
             size_t currentChunkSize = min(logProgressChunkSize, numIndices);
@@ -919,14 +907,16 @@ bool MediumSystem::updateDynamicMediumState()
                 const Array& Jv = meanIntensity(m);
 
                 // tell all recipes to update the state for all media in this cell
+                bool updated = false;
                 for (auto recipe : recipes)
                 {
                     for (int h = 0; h != _numMedia; ++h)
                     {
                         MaterialState mst(_state, m, h);
-                        recipe->update(&mst, Jv);
+                        updated |= recipe->update(&mst, Jv);
                     }
                 }
+                if (updated) flags[m] = 1;
             }
             log->infoIfElapsed("Updated dynamic medium state: ", currentChunkSize);
             firstIndex += currentChunkSize;
@@ -934,9 +924,12 @@ bool MediumSystem::updateDynamicMediumState()
         }
     });
 
+    // synchronize the updated state between processes
+    int numUpdated = _state.synchronize(flags);
+
     // tell all recipes to end the update cycle and collect convergence info
     bool converged = true;
-    for (auto recipe : recipes) converged &= recipe->endUpdate();
+    for (auto recipe : recipes) converged &= recipe->endUpdate(_numCells, numUpdated);
     return converged;
 }
 
