@@ -231,7 +231,8 @@ public:
         spatial cell with index \f$m\f$. If there are multiple media components, the aggregate bulk
         velocity \f${\boldsymbol{v}}\f$ is determined by averaging the respective bulk velocities
         over the corresponding number densities, \f[{\boldsymbol{v}} = \frac{\sum_h n_h
-        {\boldsymbol{v}}_h} {\sum_h n_h}.\f] */
+        {\boldsymbol{v}}_h} {\sum_h n_h}.\f] If no medium component specifies a bulk velocity, this
+        function returns the null vector. */
     Vec bulkVelocity(int m) const;
 
     /** This function returns the magnetic field \f${\boldsymbol{B}}\f$ in the spatial cell with
@@ -246,6 +247,12 @@ public:
     /** This function returns the mass density of the medium component with index \f$h\f$ in
         spatial cell with index \f$m\f$. */
     double massDensity(int m, int h) const;
+
+    /** This function returns the value of the custom specific state variable with index \f$i\f$ of
+        the medium component with index \f$h\f$ in the spatial cell with index \f$m\f$. If the
+        specified medium component does not have a custom variable with the specified index, the
+        behavior of this function is undefined. */
+    double custom(int m, int h, int i) const;
 
     //=============== Low-level optical properties ===================
 

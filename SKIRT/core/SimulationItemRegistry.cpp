@@ -40,6 +40,7 @@
 #include "CrystalForsteriteGrainComposition.hpp"
 #include "CubicSplineSmoothingKernel.hpp"
 #include "CubicalBackgroundSource.hpp"
+#include "CustomStatePerCellProbe.hpp"
 #include "Cylinder2DSpatialGrid.hpp"
 #include "CylindricalClipGeometryDecorator.hpp"
 #include "CylindricalVectorField.hpp"
@@ -608,6 +609,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<DefaultMagneticFieldCutsProbe>();
     ItemRegistry::add<PlanarMagneticFieldCutsProbe>();
     ItemRegistry::add<MagneticFieldPerCellProbe>();
+    ItemRegistry::add<CustomStatePerCellProbe>();
 
     ItemRegistry::add<DefaultRadiationFieldCutsProbe>();
     ItemRegistry::add<PlanarRadiationFieldCutsProbe>();

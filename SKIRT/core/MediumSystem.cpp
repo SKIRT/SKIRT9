@@ -291,6 +291,13 @@ double MediumSystem::massDensity(int m, int h) const
 
 ////////////////////////////////////////////////////////////////////
 
+double MediumSystem::custom(int m, int h, int i) const
+{
+    return _state.custom(m, h, i);
+}
+
+////////////////////////////////////////////////////////////////////
+
 double MediumSystem::opacityAbs(double lambda, int m, int h) const
 {
     MaterialState mst(_state, m, h);
