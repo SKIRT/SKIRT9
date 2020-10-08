@@ -44,6 +44,7 @@
 #include "Cylinder2DSpatialGrid.hpp"
 #include "CylindricalClipGeometryDecorator.hpp"
 #include "CylindricalVectorField.hpp"
+//#include "DefaultCustomStateCutsProbe.hpp"
 #include "DefaultDustTemperatureCutsProbe.hpp"
 #include "DefaultGasTemperatureCutsProbe.hpp"
 #include "DefaultMagneticFieldCutsProbe.hpp"
@@ -166,6 +167,7 @@
 #include "ParticleSource.hpp"
 #include "PerspectiveInstrument.hpp"
 #include "PhotonPacketOptions.hpp"
+#include "PlanarCustomStateCutsProbe.hpp"
 #include "PlanarDustTemperatureCutsProbe.hpp"
 #include "PlanarGasTemperatureCutsProbe.hpp"
 #include "PlanarMagneticFieldCutsProbe.hpp"
@@ -609,6 +611,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<DefaultMagneticFieldCutsProbe>();
     ItemRegistry::add<PlanarMagneticFieldCutsProbe>();
     ItemRegistry::add<MagneticFieldPerCellProbe>();
+//    ItemRegistry::add<DefaultCustomStateCutsProbe>();
+    ItemRegistry::add<PlanarCustomStateCutsProbe>();
     ItemRegistry::add<CustomStatePerCellProbe>();
 
     ItemRegistry::add<DefaultRadiationFieldCutsProbe>();
