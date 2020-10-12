@@ -118,6 +118,11 @@ class MediumSystem : public SimulationItem
         ATTRIBUTE_DEFAULT_VALUE(lyaOptions, "LyaOptions")
         ATTRIBUTE_RELEVANT_IF(lyaOptions, "Lya")
 
+        PROPERTY_ITEM(dynamicStateOptions, DynamicStateOptions, "the options for dynamic medium state iterations")
+        ATTRIBUTE_DEFAULT_VALUE(dynamicStateOptions, "DynamicStateOptions")
+        ATTRIBUTE_RELEVANT_IF(dynamicStateOptions, "Panchromatic&RadiationField&!Lya")
+        ATTRIBUTE_DISPLAYED_IF(dynamicStateOptions, "Level3")
+
         PROPERTY_INT(numDensitySamples, "the number of random density samples for determining spatial cell mass")
         ATTRIBUTE_MIN_VALUE(numDensitySamples, "10")
         ATTRIBUTE_MAX_VALUE(numDensitySamples, "1000")
@@ -127,17 +132,6 @@ class MediumSystem : public SimulationItem
         PROPERTY_ITEM_LIST(media, Medium, "the transfer media")
         ATTRIBUTE_DEFAULT_VALUE(media, "GeometricMedium")
         ATTRIBUTE_REQUIRED_IF(media, "!NoMedium")
-
-        PROPERTY_BOOL(hasDynamicState, "dynamically adjust the medium state by iterating over the radiation field")
-        ATTRIBUTE_DEFAULT_VALUE(hasDynamicState, "false")
-        ATTRIBUTE_RELEVANT_IF(hasDynamicState, "Panchromatic&RadiationField&!Lya")
-        ATTRIBUTE_DISPLAYED_IF(hasDynamicState, "Level3")
-        ATTRIBUTE_INSERT(hasDynamicState, "hasDynamicState:HasDynamicState")
-
-        PROPERTY_ITEM(dynamicStateOptions, DynamicStateOptions, "the options for dynamic medium state iterations")
-        ATTRIBUTE_DEFAULT_VALUE(dynamicStateOptions, "DynamicStateOptions")
-        ATTRIBUTE_RELEVANT_IF(dynamicStateOptions, "hasDynamicState&Panchromatic&RadiationField&!Lya")
-        ATTRIBUTE_DISPLAYED_IF(dynamicStateOptions, "Level3")
 
         PROPERTY_ITEM(grid, SpatialGrid, "the spatial grid")
         ATTRIBUTE_DEFAULT_VALUE(grid,

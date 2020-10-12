@@ -167,7 +167,8 @@ void Configuration::setupSelfBefore()
     }
 
     // retrieve dynamic state options (only enable dynamic state if there are photon packets to be launched)
-    if (_hasMedium && _hasPanRadiationField && !_hasLymanAlpha && ms->hasDynamicState())
+    if (_hasMedium && _hasPanRadiationField && !_hasLymanAlpha && ms->dynamicStateOptions()
+        && ms->dynamicStateOptions()->hasDynamicState())
     {
         _numDynamicStatePackets = _numPrimaryPackets * ms->dynamicStateOptions()->iterationPacketsMultiplier();
         if (_numPrimaryPackets > 0. && _numDynamicStatePackets > 0.)

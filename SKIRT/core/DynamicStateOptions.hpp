@@ -26,18 +26,24 @@ class DynamicStateOptions : public SimulationItem
     ITEM_CONCRETE(DynamicStateOptions, SimulationItem,
                   "a set of options for dynamically adjusting the medium state by iterating over the radiation field")
 
-        PROPERTY_ITEM_LIST(recipes, DynamicStateRecipe, "the dynamic medium state recipes")
+        PROPERTY_BOOL(hasDynamicState, "dynamically adjust the medium state by iterating over the radiation field")
+        ATTRIBUTE_DEFAULT_VALUE(hasDynamicState, "false")
+        ATTRIBUTE_RELEVANT_IF(hasDynamicState, "Panchromatic&RadiationField&!Lya")
+        ATTRIBUTE_DISPLAYED_IF(hasDynamicState, "Level3")
+        ATTRIBUTE_INSERT(hasDynamicState, "hasDynamicState&Panchromatic&RadiationField&!Lya:HasDynamicState")
 
         PROPERTY_INT(minIterations, "the minimum number of dynamic medium state iterations")
         ATTRIBUTE_MIN_VALUE(minIterations, "1")
         ATTRIBUTE_MAX_VALUE(minIterations, "1000")
         ATTRIBUTE_DEFAULT_VALUE(minIterations, "1")
+        ATTRIBUTE_RELEVANT_IF(minIterations, "HasDynamicState")
         ATTRIBUTE_DISPLAYED_IF(minIterations, "Level3")
 
         PROPERTY_INT(maxIterations, "the maximum number of dynamic medium state iterations")
         ATTRIBUTE_MIN_VALUE(maxIterations, "1")
         ATTRIBUTE_MAX_VALUE(maxIterations, "1000")
         ATTRIBUTE_DEFAULT_VALUE(maxIterations, "10")
+        ATTRIBUTE_RELEVANT_IF(maxIterations, "HasDynamicState")
         ATTRIBUTE_DISPLAYED_IF(maxIterations, "Level3")
 
         PROPERTY_DOUBLE(
@@ -46,7 +52,11 @@ class DynamicStateOptions : public SimulationItem
         ATTRIBUTE_MIN_VALUE(iterationPacketsMultiplier, "]0")
         ATTRIBUTE_MAX_VALUE(iterationPacketsMultiplier, "1000]")
         ATTRIBUTE_DEFAULT_VALUE(iterationPacketsMultiplier, "1")
+        ATTRIBUTE_RELEVANT_IF(iterationPacketsMultiplier, "HasDynamicState")
         ATTRIBUTE_DISPLAYED_IF(iterationPacketsMultiplier, "Level3")
+
+        PROPERTY_ITEM_LIST(recipes, DynamicStateRecipe, "the dynamic medium state recipes")
+        ATTRIBUTE_RELEVANT_IF(recipes, "HasDynamicState")
 
     ITEM_END()
 };
