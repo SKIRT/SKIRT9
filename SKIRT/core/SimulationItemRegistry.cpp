@@ -44,7 +44,7 @@
 #include "Cylinder2DSpatialGrid.hpp"
 #include "CylindricalClipGeometryDecorator.hpp"
 #include "CylindricalVectorField.hpp"
-//#include "DefaultCustomStateCutsProbe.hpp"
+#include "DefaultCustomStateCutsProbe.hpp"
 #include "DefaultDustTemperatureCutsProbe.hpp"
 #include "DefaultGasTemperatureCutsProbe.hpp"
 #include "DefaultMagneticFieldCutsProbe.hpp"
@@ -611,7 +611,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<DefaultMagneticFieldCutsProbe>();
     ItemRegistry::add<PlanarMagneticFieldCutsProbe>();
     ItemRegistry::add<MagneticFieldPerCellProbe>();
-//    ItemRegistry::add<DefaultCustomStateCutsProbe>();
+    ItemRegistry::add<DefaultCustomStateCutsProbe>();
     ItemRegistry::add<PlanarCustomStateCutsProbe>();
     ItemRegistry::add<CustomStatePerCellProbe>();
 
