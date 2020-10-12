@@ -22,7 +22,12 @@
     orientation of the cut and N is replaced with the zero-based index of the medium in the
     configuration (i.e. in the ski file). Each file contains an image frame for each of the custom
     state variables of the corresponding medium, in the order in which those variables are
-    requested by the associated material mix. */
+    requested by the associated material mix.
+
+    \note The current implementation assumes that all custom state variables for a given medium
+    component are the same physical quantity type and thus also have the same output units. In
+    principle this restriction could be lifted but in that case it is unclear where to put the unit
+    information in the FITS header. */
 class PlanarCustomStateCutsProbe : public AbstractPlanarCutsProbe
 {
     /** The enumeration type indicating when probing occurs. */

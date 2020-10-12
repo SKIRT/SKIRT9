@@ -102,12 +102,20 @@ void PlanarCustomStateCutsProbe::writeCustomStateCuts(Probe* probe, bool xd, boo
         {
             string description = "custom state variables in the " + plane + " plane for medium " + std::to_string(h);
             string filename = probe->itemName() + "_customstate_" + plane + "_" + std::to_string(h);
+            string quantity = descriptors[h][0].quantity();
+            string unit = "1";
+            if (!quantity.empty())
+            {
+                unit = units->unit(quantity);
+                results[h] *= units->out(quantity, 1.);
+            }
+
             Array cgrid(numCustom);
             for (int c = 0; c != numCustom; ++c) cgrid[c] = descriptors[h][c].customIndex();
-            FITSInOut::write(probe, description, filename, results[h], units->umeanintensity(), Ni, Nj,
+            FITSInOut::write(probe, description, filename, results[h], unit, Ni, Nj,
                              units->olength(xd ? xpsize : ypsize), units->olength(zd ? zpsize : ypsize),
                              units->olength(xd ? xcenter : ycenter), units->olength(zd ? zcenter : ycenter),
-                             units->ulength(), cgrid, "indices");
+                             units->ulength(), cgrid, "1");
         }
     }
 }
