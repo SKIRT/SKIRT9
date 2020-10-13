@@ -231,7 +231,7 @@ public:
     string populationGrainType(int f) const override;
 
     /** This function returns the bulk mass density \f$\rho_\text{bulk}\f$ of the grain material
-        represented by the population with index \f$f\f$. */
+        represented by the fragment with index \f$f\f$. */
     double populationBulkDensity(int f) const override;
 
     /** This function returns the minimum and maximum grain sizes \f$a_{\text{min},f},
@@ -258,6 +258,15 @@ public:
     /** This function returns the equilibrium temperature of the dust population represented by the
         fragment with index \f$f\f$ when it would be embedded in a given radiation field. */
     double populationTemperature(int f, const Array& Jv) const;
+
+    /** This function returns true if the human-readable identifier for the type of grain material
+        represented by the fragment with index \f$f\f$ contains "Gra", "PAH" or "CM20", and false
+        otherwise. */
+    bool populationIsGraphite(int f) const;
+
+    /** This function returns the mean mass of a dust grain in the dust population represented by
+        the fragment with index \f$f\f$. */
+    double populationGrainMass(int f) const;
 
     //======================== Data Members ========================
 

@@ -42,6 +42,12 @@ public:
     //============= Querying =============
 
 public:
+    /** This function returns the index \f$m\f$ of the spatial cell being represented. */
+    int cellIndex() const { return _m; }
+
+    /** This function returns the index \f$h\f$ of the medium component being represented. */
+    int mediumIndex() const { return _h; }
+
     /** This function returns the volume \f$V\f$ of the spatial cell. */
     double volume() const { return _ms.volume(_m); }
 

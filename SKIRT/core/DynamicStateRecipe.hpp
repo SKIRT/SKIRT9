@@ -94,17 +94,18 @@ public:
     virtual bool update(MaterialState* state, const Array& Jv) = 0;
 
     /** This function is called after updating has completed at the end of each iteration step. It
-        returns true if the recipe has converged and false if not. The \em numCells and \em
-        numUpdated arguments specify respectively the number of spatial cells in the simulation and
-        the number of cells updated during this update cycle.
+        returns true if the recipe has converged and false if not. In addition to determining the
+        binary yes/no convergence result, the function also issues a log message reporting the
+        degree of convergence. To assist with these tasks, the \em numCells and \em numUpdated
+        arguments specify respectively the number of spatial cells in the simulation and the number
+        of cells updated during this update cycle.
 
-        In case the recipe tracks additional information in the update() function, the tracked data
-        must be aggregated across processes, cause the update() function can be called from
-        separate parallel processes.
-
-        In addition to determining the binary yes/no convergence result, the implementation in a
-        subclass should also issue a log message reporting the degree of convergence. */
-    virtual bool endUpdate(int numCells, int numUpdated) = 0;
+        The default implementation in this base class provides basic logging and returns true only
+        if none of the cells were updated. Subclasses may provide more complex implementations. In
+        case a recipe needs to tracks additional information in the update() function, the tracked
+        data must be aggregated across processes because the update() function can be called from
+        separate parallel processes. */
+    virtual bool endUpdate(int numCells, int numUpdated);
 };
 
 ////////////////////////////////////////////////////////////////////

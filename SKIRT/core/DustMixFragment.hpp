@@ -73,6 +73,17 @@ public:
         the constructor. */
     ScatteringMode scatteringMode() const override;
 
+    //============= Extra queries for cached information =============
+
+public:
+    /** This function returns true if the human-readable identifier for the type of grain material
+        represented by this fragment contains "Gra", "PAH" or "CM20", and false otherwise. */
+    bool isGraphite() const;
+
+    /** This function returns the mean mass of a dust grain in the population represented by this
+        fragment. */
+    double grainMass() const;
+
     //======================== Data Members ========================
 
 private:

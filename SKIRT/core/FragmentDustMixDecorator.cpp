@@ -172,10 +172,15 @@ double FragmentDustMixDecorator::asymmpar(double lambda) const
 
 ////////////////////////////////////////////////////////////////////
 
+// define macro for fragment weight combining initial weight and dynamic density fraction, if available
+#define WEIGHT(f) (_hasDynamicDensities ? state->custom(f) * state->custom(_numFrags + f) : state->custom(f))
+
+////////////////////////////////////////////////////////////////////
+
 double FragmentDustMixDecorator::opacityAbs(double lambda, const MaterialState* state, const PhotonPacket* pp) const
 {
     double opacity = 0.;
-    for (int f = 0; f != _numFrags; ++f) opacity += state->custom(f) * _fragments[f]->opacityAbs(lambda, state, pp);
+    for (int f = 0; f != _numFrags; ++f) opacity += WEIGHT(f) * _fragments[f]->opacityAbs(lambda, state, pp);
     return opacity;
 }
 
@@ -184,7 +189,7 @@ double FragmentDustMixDecorator::opacityAbs(double lambda, const MaterialState* 
 double FragmentDustMixDecorator::opacitySca(double lambda, const MaterialState* state, const PhotonPacket* pp) const
 {
     double opacity = 0.;
-    for (int f = 0; f != _numFrags; ++f) opacity += state->custom(f) * _fragments[f]->opacitySca(lambda, state, pp);
+    for (int f = 0; f != _numFrags; ++f) opacity += WEIGHT(f) * _fragments[f]->opacitySca(lambda, state, pp);
     return opacity;
 }
 
@@ -193,7 +198,7 @@ double FragmentDustMixDecorator::opacitySca(double lambda, const MaterialState* 
 double FragmentDustMixDecorator::opacityExt(double lambda, const MaterialState* state, const PhotonPacket* pp) const
 {
     double opacity = 0.;
-    for (int f = 0; f != _numFrags; ++f) opacity += state->custom(f) * _fragments[f]->opacityExt(lambda, state, pp);
+    for (int f = 0; f != _numFrags; ++f) opacity += WEIGHT(f) * _fragments[f]->opacityExt(lambda, state, pp);
     return opacity;
 }
 
@@ -208,7 +213,7 @@ void FragmentDustMixDecorator::peeloffScattering(double& I, double& Q, double& U
     double sum = 0.;
     for (int f = 0; f != _numFrags; ++f)
     {
-        wv[f] = state->custom(f) * _fragments[f]->opacitySca(lambda, state, pp);
+        wv[f] = WEIGHT(f) * _fragments[f]->opacitySca(lambda, state, pp);
         sum += wv[f];
     }
 
@@ -229,9 +234,8 @@ void FragmentDustMixDecorator::performScattering(double lambda, const MaterialSt
 {
     // build the cumulative distribution corresponding to the scattering opacities for each fragment
     Array Xv;
-    NR::cdf(Xv, _numFrags, [this, lambda, state, pp](int f) {
-        return state->custom(f) * _fragments[f]->opacitySca(lambda, state, pp);
-    });
+    NR::cdf(Xv, _numFrags,
+            [this, lambda, state, pp](int f) { return WEIGHT(f) * _fragments[f]->opacitySca(lambda, state, pp); });
 
     // randomly select a fragment
     int f = NR::locateClip(Xv, random()->uniform());
@@ -251,8 +255,8 @@ Array FragmentDustMixDecorator::emissivity(const Array& Jv) const
 
 Array FragmentDustMixDecorator::emissionSpectrum(const MaterialState* state, const Array& Jv) const
 {
-    Array ev = state->custom(0) * _fragments[0]->emissivity(Jv);
-    for (int f = 1; f != _numFrags; ++f) ev += state->custom(f) * _fragments[f]->emissivity(Jv);
+    Array ev = WEIGHT(0) * _fragments[0]->emissivity(Jv);
+    for (int f = 1; f != _numFrags; ++f) ev += WEIGHT(f) * _fragments[f]->emissivity(Jv);
     return state->numberDensity() * ev;
 }
 
@@ -265,7 +269,7 @@ double FragmentDustMixDecorator::indicativeTemperature(const MaterialState* stat
 
     for (int f = 0; f != _numFrags; ++f)
     {
-        double w = state->custom(f);
+        double w = WEIGHT(f);
         double T = _fragments[f]->indicativeTemperature(nullptr, Jv);  // material state is not used by dust mixes
         sumwT += w * T;
         sumw += w;
@@ -327,6 +331,20 @@ double FragmentDustMixDecorator::totalMass() const
 double FragmentDustMixDecorator::populationTemperature(int f, const Array& Jv) const
 {
     return _fragments[f]->indicativeTemperature(nullptr, Jv);  // material state is not used by dust mixes
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool FragmentDustMixDecorator::populationIsGraphite(int f) const
+{
+    return _fragments[f]->isGraphite();
+}
+
+////////////////////////////////////////////////////////////////////
+
+double FragmentDustMixDecorator::populationGrainMass(int f) const
+{
+    return _fragments[f]->grainMass();
 }
 
 ////////////////////////////////////////////////////////////////////

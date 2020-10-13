@@ -46,11 +46,6 @@ public:
         zero. The function returns true if the density has been updated and false otherwise. */
     bool update(MaterialState* state, const Array& Jv) override;
 
-    /** This function is called at the end of the update cyle. It issues a log message reporting
-        the number and percentage of cells cleared during this update cyle and returns true if no
-        cells have been cleared during this cycle or false otherwise. */
-    bool endUpdate(int numCells, int numUpdated) override;
-
     //======================== Data Members =======================
 
 private:

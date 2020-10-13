@@ -5,10 +5,8 @@
 
 #include "ClearDensityRecipe.hpp"
 #include "Configuration.hpp"
-#include "Log.hpp"
+#include "DisjointWavelengthGrid.hpp"
 #include "MaterialState.hpp"
-#include "MediumSystem.hpp"
-#include "StringUtils.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -33,25 +31,6 @@ bool ClearDensityRecipe::update(MaterialState* state, const Array& Jv)
         }
     }
     return false;
-}
-
-////////////////////////////////////////////////////////////////////
-
-bool ClearDensityRecipe::endUpdate(int numCells, int numUpdated)
-{
-    if (numUpdated == 0)
-    {
-        find<Log>()->info("ClearDensityRecipe has converged: no cells have been cleared");
-        return true;
-    }
-    else
-    {
-        double percentage = 100. * numUpdated / numCells;
-        find<Log>()->info("ClearDensityRecipe has not yet converged: " + std::to_string(numUpdated) + " out of "
-                          + std::to_string(numCells) + " cells (" + StringUtils::toString(percentage, 'f', 2)
-                          + " %) have been cleared");
-        return false;
-    }
 }
 
 ////////////////////////////////////////////////////////////////////
