@@ -465,6 +465,13 @@ string MultiGrainDustMix::populationGrainType(int c) const
 
 ////////////////////////////////////////////////////////////////////
 
+double MultiGrainDustMix::populationBulkDensity(int c) const
+{
+    return _populations[c]->composition()->bulkDensity();
+}
+
+////////////////////////////////////////////////////////////////////
+
 Range MultiGrainDustMix::populationSizeRange(int c) const
 {
     auto sd = _populations[c]->sizeDistribution();

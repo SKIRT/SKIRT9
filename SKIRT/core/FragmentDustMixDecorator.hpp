@@ -49,6 +49,18 @@ class FragmentDustMixDecorator : public MaterialMix, public MultiGrainPopulation
         PROPERTY_BOOL(fragmentSizeBins, "fragment each dust population into its grain size bins")
         ATTRIBUTE_DEFAULT_VALUE(fragmentSizeBins, "false")
 
+        PROPERTY_BOOL(hasDynamicDensities, "allow the fragment densities to be adjusted dynamically")
+        ATTRIBUTE_RELEVANT_IF(hasDynamicDensities, "HasDynamicState")
+        ATTRIBUTE_DEFAULT_VALUE(hasDynamicDensities, "HasDynamicState:true;false")
+        ATTRIBUTE_DISPLAYED_IF(hasDynamicDensities, "Level3")
+
+        PROPERTY_DOUBLE(initialDensityFraction, "the initial value of the dynamic density fraction")
+        ATTRIBUTE_MIN_VALUE(initialDensityFraction, "[0")
+        ATTRIBUTE_MAX_VALUE(initialDensityFraction, "1]")
+        ATTRIBUTE_DEFAULT_VALUE(initialDensityFraction, "1")
+        ATTRIBUTE_RELEVANT_IF(initialDensityFraction, "HasDynamicState&hasDynamicDensities")
+        ATTRIBUTE_DISPLAYED_IF(initialDensityFraction, "Level3")
+
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============
@@ -204,7 +216,7 @@ public:
         weights in the material state as described in the class header. */
     double indicativeTemperature(const MaterialState* state, const Array& Jv) const override;
 
-    //=========== Exposing multiple grain populations (MultiGrainPopulationInterface) ============
+    //=========== Exposing fragments (MultiGrainPopulationInterface) ============
 
 public:
     /** This function returns the number of fragments (with indices \f$f\f$) in this fragmented
@@ -217,6 +229,10 @@ public:
     /** This function returns a brief human-readable identifier for the type of grain material
         represented by the fragment with index \f$f\f$. */
     string populationGrainType(int f) const override;
+
+    /** This function returns the bulk mass density \f$\rho_\text{bulk}\f$ of the grain material
+        represented by the population with index \f$f\f$. */
+    double populationBulkDensity(int f) const override;
 
     /** This function returns the minimum and maximum grain sizes \f$a_{\text{min},f},
         a_{\text{max},c}\f$ for the fragment with index \f$f\f$. */
@@ -235,6 +251,13 @@ public:
         combined in the original dust mix being fragmented, without taking into account any
         additional fragment weights. */
     double totalMass() const override;
+
+    //=========== Exposing fragments (additional) ============
+
+public:
+    /** This function returns the equilibrium temperature of the dust population represented by the
+        fragment with index \f$f\f$ when it would be embedded in a given radiation field. */
+    double populationTemperature(int f, const Array& Jv) const;
 
     //======================== Data Members ========================
 

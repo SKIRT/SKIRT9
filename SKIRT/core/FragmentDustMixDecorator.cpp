@@ -103,6 +103,16 @@ vector<StateVariable> FragmentDustMixDecorator::specificStateVariableInfo() cons
         string description = "weight for dust mix fragment " + std::to_string(f) + " -- " + populationGrainType(f);
         descriptors.emplace_back(StateVariable::custom(f, description, string()));
     }
+
+    if (hasDynamicDensities())
+    {
+        for (int f = 0; f != _numFrags; ++f)
+        {
+            string description =
+                "dynamic density fraction for dust mix fragment " + std::to_string(f) + " -- " + populationGrainType(f);
+            descriptors.emplace_back(StateVariable::custom(_numFrags + f, description, string()));
+        }
+    }
     return descriptors;
 }
 
@@ -114,6 +124,14 @@ void FragmentDustMixDecorator::initializeSpecificState(MaterialState* state, dou
     for (int f = 0; f != _numFrags; ++f)
     {
         state->setCustom(f, params.size() ? params[f] : 1.);
+    }
+
+    if (hasDynamicDensities())
+    {
+        for (int f = 0; f != _numFrags; ++f)
+        {
+            state->setCustom(_numFrags + f, initialDensityFraction());
+        }
     }
 }
 
@@ -248,7 +266,7 @@ double FragmentDustMixDecorator::indicativeTemperature(const MaterialState* stat
     for (int f = 0; f != _numFrags; ++f)
     {
         double w = state->custom(f);
-        double T = _fragments[f]->indicativeTemperature(state, Jv);
+        double T = _fragments[f]->indicativeTemperature(nullptr, Jv);  // material state is not used by dust mixes
         sumwT += w * T;
         sumw += w;
     }
@@ -267,6 +285,13 @@ int FragmentDustMixDecorator::numPopulations() const
 string FragmentDustMixDecorator::populationGrainType(int f) const
 {
     return _fragments[f]->populationGrainType(0);
+}
+
+////////////////////////////////////////////////////////////////////
+
+double FragmentDustMixDecorator::populationBulkDensity(int f) const
+{
+    return _fragments[f]->populationBulkDensity(0);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -295,6 +320,13 @@ double FragmentDustMixDecorator::populationMass(int f) const
 double FragmentDustMixDecorator::totalMass() const
 {
     return _dustMix->totalMass();
+}
+
+////////////////////////////////////////////////////////////////////
+
+double FragmentDustMixDecorator::populationTemperature(int f, const Array& Jv) const
+{
+    return _fragments[f]->indicativeTemperature(nullptr, Jv);  // material state is not used by dust mixes
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -36,6 +36,10 @@ public:
         space. */
     virtual string populationGrainType(int c) const = 0;
 
+    /** This function returns the bulk mass density \f$\rho_\text{bulk}\f$ of the grain material
+        represented by the population with index \f$c\f$. */
+    virtual double populationBulkDensity(int c) const = 0;
+
     /** This function returns the minimum and maximum grain sizes \f$a_{\text{min},c},
         a_{\text{max},c}\f$ for the population with index \f$c\f$. */
     virtual Range populationSizeRange(int c) const = 0;

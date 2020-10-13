@@ -216,6 +216,10 @@ public:
         space. */
     string populationGrainType(int c) const override;
 
+    /** This function returns the bulk mass density \f$\rho_\text{bulk}\f$ of the grain material
+        represented by the population with index \f$c\f$. */
+    double populationBulkDensity(int c) const override;
+
     /** This function returns the minimum and maximum grain sizes \f$a_{\text{min},c},
         a_{\text{max},c}\f$ for the population with index \f$c\f$. */
     Range populationSizeRange(int c) const override;
