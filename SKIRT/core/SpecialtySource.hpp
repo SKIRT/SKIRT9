@@ -26,7 +26,7 @@ class SpecialtySource : public NormalizedSource, public VelocityInterface
 
         PROPERTY_DOUBLE(velocityX, "the bulk velocity of the source, x component")
         ATTRIBUTE_QUANTITY(velocityX, "velocity")
-        ATTRIBUTE_MIN_VALUE(velocityX, "[0")
+        ATTRIBUTE_MIN_VALUE(velocityX, "[-100000 km/s")
         ATTRIBUTE_MAX_VALUE(velocityX, "100000 km/s]")
         ATTRIBUTE_DEFAULT_VALUE(velocityX, "0")
         ATTRIBUTE_RELEVANT_IF(velocityX, "Panchromatic")
@@ -35,7 +35,7 @@ class SpecialtySource : public NormalizedSource, public VelocityInterface
 
         PROPERTY_DOUBLE(velocityY, "the bulk velocity of the source, y component")
         ATTRIBUTE_QUANTITY(velocityY, "velocity")
-        ATTRIBUTE_MIN_VALUE(velocityY, "[0")
+        ATTRIBUTE_MIN_VALUE(velocityY, "[-100000 km/s")
         ATTRIBUTE_MAX_VALUE(velocityY, "100000 km/s]")
         ATTRIBUTE_DEFAULT_VALUE(velocityY, "0")
         ATTRIBUTE_RELEVANT_IF(velocityY, "Panchromatic")
@@ -44,7 +44,7 @@ class SpecialtySource : public NormalizedSource, public VelocityInterface
 
         PROPERTY_DOUBLE(velocityZ, "the bulk velocity of the source, z component")
         ATTRIBUTE_QUANTITY(velocityZ, "velocity")
-        ATTRIBUTE_MIN_VALUE(velocityZ, "[0")
+        ATTRIBUTE_MIN_VALUE(velocityZ, "[-100000 km/s")
         ATTRIBUTE_MAX_VALUE(velocityZ, "100000 km/s]")
         ATTRIBUTE_DEFAULT_VALUE(velocityZ, "0")
         ATTRIBUTE_RELEVANT_IF(velocityZ, "Panchromatic")
