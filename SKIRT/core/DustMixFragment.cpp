@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "DustMixFragment.hpp"
+#include "StringUtils.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -72,6 +73,38 @@ void DustMixFragment::setupSelfBefore()
 
 //////////////////////////////////////////////////////////////////////
 
+void DustMixFragment::setupSelfAfter()
+{
+    MultiGrainDustMix::setupSelfAfter();
+
+    // graphite or silicate?
+    string name = _population->composition()->name();
+    _isGraphite =
+        StringUtils::contains(name, "Gra") || StringUtils::contains(name, "PAH") || StringUtils::contains(name, "CM20");
+
+    // integrate over the grain size distribution to calculate the average grain mass
+    double logamin = log10(_population->sizeDistribution()->amin());
+    double logamax = log10(_population->sizeDistribution()->amax());
+    int numSizes = max(3., 100. * (logamax - logamin));
+    double dloga = (logamax - logamin) / (numSizes - 1);
+    double sum1 = 0.;
+    double sum2 = 0.;
+    for (int i = 0; i != numSizes; ++i)
+    {
+        double w = (i == 0 || i == numSizes - 1) ? 0.5 : 1.;
+        double a = pow(10, logamin + i * dloga);
+        double da = a * M_LN10 * dloga;
+        double dnda = _population->sizeDistribution()->dnda(a);
+        double volume = 4.0 * M_PI / 3.0 * a * a * a;
+        sum1 += w * dnda * volume * da;
+        sum2 += w * dnda * da;
+    }
+    double bulkDensity = _population->composition()->bulkDensity();
+    _grainMass = sum2 ? bulkDensity * sum1 / sum2 : 0.;
+}
+
+//////////////////////////////////////////////////////////////////////
+
 DustMix::ScatteringMode DustMixFragment::scatteringMode() const
 {
     return _scatteringMode;
@@ -81,14 +114,14 @@ DustMix::ScatteringMode DustMixFragment::scatteringMode() const
 
 bool DustMixFragment::isGraphite() const
 {
-    return false;  // TO DO
+    return _isGraphite;
 }
 
 //////////////////////////////////////////////////////////////////////
 
 double DustMixFragment::grainMass() const
 {
-    return 0.;  // TO DO
+    return _grainMass;
 }
 
 ////////////////////////////////////////////////////////////////////

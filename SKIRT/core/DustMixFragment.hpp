@@ -66,6 +66,10 @@ protected:
         dust mix through the appropriate base class function. */
     void setupSelfBefore() override;
 
+    /** This function calculates and stores some derived properties of the dust population
+        represented by this fragment, intended for use by dust destruction/allocation recipes. */
+    void setupSelfAfter() override;
+
     //======== Scattering implementation for dust mixes =======
 
 public:
@@ -87,8 +91,13 @@ public:
     //======================== Data Members ========================
 
 private:
+    // initialized by constructor
     ScatteringMode _scatteringMode{ScatteringMode::HenyeyGreenstein};
     const GrainPopulation* _population{nullptr};
+
+    // initialized by setupSelfAfter
+    bool _isGraphite{false};
+    double _grainMass{0.};
 };
 
 ////////////////////////////////////////////////////////////////////
