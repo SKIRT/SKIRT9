@@ -84,9 +84,9 @@ public:
         represented by this fragment contains "Gra", "PAH" or "CM20", and false otherwise. */
     bool isGraphite() const;
 
-    /** This function returns the mean mass of a dust grain in the population represented by this
-        fragment. */
-    double grainMass() const;
+    /** This function returns the average radius of a dust grain in the population represented by
+        this fragment. */
+    double grainRadius() const;
 
     //======================== Data Members ========================
 
@@ -97,7 +97,7 @@ private:
 
     // initialized by setupSelfAfter
     bool _isGraphite{false};
-    double _grainMass{0.};
+    double _grainRadius{0.};
 };
 
 ////////////////////////////////////////////////////////////////////

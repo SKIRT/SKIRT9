@@ -57,7 +57,7 @@ class FragmentDustMixDecorator : public MaterialMix, public MultiGrainPopulation
         PROPERTY_DOUBLE(initialDensityFraction, "the initial value of the dynamic density fraction")
         ATTRIBUTE_MIN_VALUE(initialDensityFraction, "[0")
         ATTRIBUTE_MAX_VALUE(initialDensityFraction, "1]")
-        ATTRIBUTE_DEFAULT_VALUE(initialDensityFraction, "1")
+        ATTRIBUTE_DEFAULT_VALUE(initialDensityFraction, "0")
         ATTRIBUTE_RELEVANT_IF(initialDensityFraction, "HasDynamicState&hasDynamicDensities")
         ATTRIBUTE_DISPLAYED_IF(initialDensityFraction, "Level3")
 
@@ -264,9 +264,9 @@ public:
         otherwise. */
     bool populationIsGraphite(int f) const;
 
-    /** This function returns the mean mass of a dust grain in the dust population represented by
-        the fragment with index \f$f\f$. */
-    double populationGrainMass(int f) const;
+    /** This function returns the average radius of a dust grain in the dust population represented
+        by the fragment with index \f$f\f$. */
+    double populationGrainRadius(int f) const;
 
     //======================== Data Members ========================
 

@@ -107,6 +107,7 @@
 #include "LinMesh.hpp"
 #include "LinWavelengthDistribution.hpp"
 #include "LinWavelengthGrid.hpp"
+#include "LinearDustDestructionRecipe.hpp"
 #include "LinearDustTemperatureCutProbe.hpp"
 #include "ListBand.hpp"
 #include "ListMesh.hpp"
@@ -555,6 +556,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // dynamic medium state recipes
     ItemRegistry::add<DynamicStateRecipe>();
     ItemRegistry::add<ClearDensityRecipe>();
+    ItemRegistry::add<DustDestructionRecipe>();
+    ItemRegistry::add<LinearDustDestructionRecipe>();
 
     // wavelength grids
     ItemRegistry::add<WavelengthGrid>();

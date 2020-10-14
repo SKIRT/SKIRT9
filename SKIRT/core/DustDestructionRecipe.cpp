@@ -18,16 +18,30 @@ void DustDestructionRecipe::beginUpdate(int /*numCells*/)
     _dlambdav = find<Configuration>()->radiationFieldWLG()->dlambdav();
 
     // store a pointer for each medium component: either the corresponding fragmented dust mix or a null pointer
+    bool hasValidFragDecorator = false;
+    bool hasInvalidFragDecorator = false;
     for (auto medium : find<MediumSystem>()->media())
     {
         auto fd = dynamic_cast<const FragmentDustMixDecorator*>(medium->mix());
         if (fd && !fd->hasDynamicDensities())
         {
-            find<Log>()->warning("Cannot destroy dust for fragmented dust mix without dynamic densities");
             fd = nullptr;
+            hasInvalidFragDecorator = true;
         }
+        if (fd) hasValidFragDecorator = true;
         _fdv.push_back(fd);
     }
+
+    // inform user of problems
+    if (!hasValidFragDecorator)
+    {
+        if (hasInvalidFragDecorator)
+            find<Log>()->error("Cannot destroy dust for fragmented dust mix without dynamic densities");
+        else
+            find<Log>()->error("Cannot destroy dust without fragmented dust mix");
+    }
+    else if (hasInvalidFragDecorator)
+        find<Log>()->warning("Cannot destroy dust for fragmented dust mix without dynamic densities");
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -48,18 +62,18 @@ bool DustDestructionRecipe::update(MaterialState* state, const Array& Jv)
             // act only if this fragment contains dust
             if (state->custom(f) > 0.)
             {
-                // get the grain type and representative grain mass for this fragment
+                // get the grain type and radius for this fragment
                 bool graphite = fd->populationIsGraphite(f);
-                double m = fd->populationGrainMass(f);
+                double a = fd->populationGrainRadius(f);
 
                 // get the equilibrium temperature for this fragment in the cell's radiation field
                 double T = fd->populationTemperature(f, Jv);
 
                 // call the destruction recipe to determine the density fraction
-                double fraction = densityFraction(graphite, m, T);
+                double fraction = densityFraction(graphite, a, Jv, T);
 
                 // if the new fraction differs substantially from the previous one, update the medium state
-                if (abs(fraction - state->custom(numFrags + f)) > 0.01)  // TO DO: allow configuring convergence
+                if (abs(fraction - state->custom(numFrags + f)) > densityFractionTolerance())
                 {
                     state->setCustom(numFrags + f, fraction);
                     updated = true;
@@ -68,13 +82,6 @@ bool DustDestructionRecipe::update(MaterialState* state, const Array& Jv)
         }
     }
     return updated;
-}
-
-////////////////////////////////////////////////////////////////////
-
-double DustDestructionRecipe::densityFraction(bool graphite, double mass, double temperature)
-{
-    return 0.5;
 }
 
 ////////////////////////////////////////////////////////////////////

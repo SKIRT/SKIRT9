@@ -11,10 +11,28 @@ class FragmentDustMixDecorator;
 
 ////////////////////////////////////////////////////////////////////
 
-/** DustDestructionRecipe is a dynamic medium state recipe TO DO ... */
+/** DustDestructionRecipe is an abstract class representing recipes for dynamically calculating
+    radiative destruction of dust grains by iterating over the radiation field. The class derives
+    from DynamicStateRecipe so that it fits in the overall dynamic medium state framework. It
+    cooperates with the FragmentDustMixDecorator class to handle each dust mix fragment separately
+    (i.e. different grain materials and/or grain size bins). A subclass can specify a concrete
+    destruction recipe by implementing a single function that takes properties of the radiation
+    field and grain population/size bin under study and returns the corresponding non-destroyed
+    density fraction.
+
+    When a DustDestructionRecipe instance is included in the dynamic state configuration of a
+    simulation, it requires there to be one or more medium components with a
+    FragmentDustMixDecorator material mix that has the \em hasDynamicDensities flag enabled. These
+    media components will be automatically detected and handled. */
 class DustDestructionRecipe : public DynamicStateRecipe
 {
-    ITEM_CONCRETE(DustDestructionRecipe, DynamicStateRecipe, "a dust destruction recipe")
+    ITEM_ABSTRACT(DustDestructionRecipe, DynamicStateRecipe, "a dust destruction recipe")
+
+        PROPERTY_DOUBLE(densityFractionTolerance, "the tolerance on the dynamic density fraction")
+        ATTRIBUTE_MIN_VALUE(densityFractionTolerance, "]0")
+        ATTRIBUTE_MAX_VALUE(densityFractionTolerance, "0.5]")
+        ATTRIBUTE_DEFAULT_VALUE(densityFractionTolerance, "0.05")
+
     ITEM_END()
 
     //======================== Other Functions =======================
@@ -26,14 +44,18 @@ public:
     void beginUpdate(int numCells) override;
 
     /** This function is called repeatedly as part of the update cycle. If the density of the
-        medium component in the cell under study is nonzero, it calculates and if necessary updates
-        the dynamic density fractions in the corresponding medium state. TO DO ...
-        The function returns true if the density has been updated and false otherwise. */
+        medium component in the cell under study is nonzero, it calculates the non-destroyed
+        density fraction for each of the dust mix fragments in the medium component under study by
+        calling the densityFraction() function defined in a subclass. If a newly calculated
+        fraction differs by more than the configured tolerance from the previously stored value,
+        the corresponding medium state is updated. The function returns true if any of the
+        fractions have been updated and false otherwise. */
     bool update(MaterialState* state, const Array& Jv) override;
 
-    /** This function returns the density fraction for a grain population with the specified type
-        (graphite or silicate), representative grain mass and equilibrium temperature. TO DO ... */
-    virtual double densityFraction(bool graphite, double mass, double temperature);
+    /** This function returns the non-destroyed density fraction for a grain population with the
+        specified type (graphite or silicate), average grain radius, radiation field, and
+        equilibrium temperature. It must be implemented by a subclass. */
+    virtual double densityFraction(bool graphite, double a, const Array& Jv, double T) const = 0;
 
     //======================== Data Members =======================
 

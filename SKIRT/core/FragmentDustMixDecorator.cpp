@@ -342,9 +342,9 @@ bool FragmentDustMixDecorator::populationIsGraphite(int f) const
 
 ////////////////////////////////////////////////////////////////////
 
-double FragmentDustMixDecorator::populationGrainMass(int f) const
+double FragmentDustMixDecorator::populationGrainRadius(int f) const
 {
-    return _fragments[f]->grainMass();
+    return _fragments[f]->grainRadius();
 }
 
 ////////////////////////////////////////////////////////////////////

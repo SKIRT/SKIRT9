@@ -82,7 +82,7 @@ void DustMixFragment::setupSelfAfter()
     _isGraphite =
         StringUtils::contains(name, "Gra") || StringUtils::contains(name, "PAH") || StringUtils::contains(name, "CM20");
 
-    // integrate over the grain size distribution to calculate the average grain mass
+    // integrate over the grain size distribution to calculate the average grain radius
     double logamin = log10(_population->sizeDistribution()->amin());
     double logamax = log10(_population->sizeDistribution()->amax());
     int numSizes = max(3., 100. * (logamax - logamin));
@@ -95,12 +95,10 @@ void DustMixFragment::setupSelfAfter()
         double a = pow(10, logamin + i * dloga);
         double da = a * M_LN10 * dloga;
         double dnda = _population->sizeDistribution()->dnda(a);
-        double volume = 4.0 * M_PI / 3.0 * a * a * a;
-        sum1 += w * dnda * volume * da;
+        sum1 += w * dnda * a * da;
         sum2 += w * dnda * da;
     }
-    double bulkDensity = _population->composition()->bulkDensity();
-    _grainMass = sum2 ? bulkDensity * sum1 / sum2 : 0.;
+    _grainRadius = sum2 ? sum1 / sum2 : 0.;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -119,9 +117,9 @@ bool DustMixFragment::isGraphite() const
 
 //////////////////////////////////////////////////////////////////////
 
-double DustMixFragment::grainMass() const
+double DustMixFragment::grainRadius() const
 {
-    return _grainMass;
+    return _grainRadius;
 }
 
 ////////////////////////////////////////////////////////////////////
