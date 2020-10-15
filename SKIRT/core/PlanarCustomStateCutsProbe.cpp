@@ -74,14 +74,16 @@ void PlanarCustomStateCutsProbe::writeCustomStateCuts(Probe* probe, bool xd, boo
                 double y = yd ? (ybase + (zd ? i : j) * ypsize) : yc;
                 Position bfr(x, y, z);
                 int m = grid->cellIndex(bfr);
-
-                for (int h = 0; h != numMedia; ++h)
+                if (m >= 0)
                 {
-                    int numCustom = descriptors[h].size();
-                    for (int c = 0; c != numCustom; ++c)
+                    for (int h = 0; h != numMedia; ++h)
                     {
-                        size_t l = i + Ni * j + size * c;
-                        results[h][l] = ms->custom(m, h, descriptors[h][c].customIndex());
+                        int numCustom = descriptors[h].size();
+                        for (int c = 0; c != numCustom; ++c)
+                        {
+                            size_t l = i + Ni * j + size * c;
+                            results[h][l] = ms->custom(m, h, descriptors[h][c].customIndex());
+                        }
                     }
                 }
             }
