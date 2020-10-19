@@ -9,21 +9,21 @@
 
 ////////////////////////////////////////////////////////////////////
 
-bool DynamicStateRecipe::endUpdate(int numCells, int numUpdated)
+bool DynamicStateRecipe::endUpdate(int numCells, int numUpdated, int numNotConverged)
 {
-    if (numUpdated == 0)
-    {
-        find<Log>()->info(type() + " has converged: no cells have been updated");
-        return true;
-    }
+    // log converged or not
+    if (numNotConverged <= maxNotConvergedCells())
+        find<Log>()->info(type() + " has converged");
     else
-    {
-        double percentage = 100. * numUpdated / numCells;
-        find<Log>()->info(type() + " has not yet converged: " + std::to_string(numUpdated) + " out of "
-                          + std::to_string(numCells) + " cells (" + StringUtils::toString(percentage, 'f', 2)
-                          + " %) have been updated");
-        return false;
-    }
+        find<Log>()->info(type() + " has not yet converged");
+
+    // log extra info
+    find<Log>()->info("  updated:     " + std::to_string(numUpdated) + " out of " + std::to_string(numCells)
+                      + " cells (" + StringUtils::toString(100. * numUpdated / numCells, 'f', 2) + " %)");
+    find<Log>()->info("  not converged:" + std::to_string(numNotConverged) + " out of " + std::to_string(numCells)
+                      + " cells (" + StringUtils::toString(100. * numNotConverged / numCells, 'f', 2) + " %)");
+
+    return numNotConverged <= maxNotConvergedCells();
 }
 
 ////////////////////////////////////////////////////////////////////

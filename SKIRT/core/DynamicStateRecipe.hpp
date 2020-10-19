@@ -8,6 +8,7 @@
 
 #include "Array.hpp"
 #include "SimulationItem.hpp"
+#include "UpdateStatus.hpp"
 class MaterialState;
 
 ////////////////////////////////////////////////////////////////////
@@ -62,6 +63,11 @@ class MaterialState;
 class DynamicStateRecipe : public SimulationItem
 {
     ITEM_ABSTRACT(DynamicStateRecipe, SimulationItem, "a dynamic medium state recipe")
+
+    PROPERTY_INT(maxNotConvergedCells, "the number of spatial cells allowed to not converge")
+    ATTRIBUTE_MIN_VALUE(maxNotConvergedCells, "0")
+    ATTRIBUTE_DEFAULT_VALUE(maxNotConvergedCells, "0")
+
     ITEM_END()
 
     //======================== Other Functions =======================
@@ -84,28 +90,30 @@ public:
         updates the specified material state (corresponding to a particular spatial cell and medium
         component) based on the specified radiation field (corresponding to that same cell and
         discretized on the simulation's radiation field wavelength grid as returned by the
-        Configuration::radiationFieldWLG() function). The function returns true if the material
-        state has been updated and false if the material state has been left unchanged.
+        Configuration::radiationFieldWLG() function). The function returns the update status as
+        described for the UpdateStatus class.
 
         If applicable, the implementation in a subclass should also update the data members that
         track additional convergence data for the recipe. Because the update() function can be
         called from multiple parallel execution threads, those updates must be performed atomically
         or be properly protected by a lock. */
-    virtual bool update(MaterialState* state, const Array& Jv) = 0;
+    virtual UpdateStatus update(MaterialState* state, const Array& Jv) = 0;
 
     /** This function is called after updating has completed at the end of each iteration step. It
         returns true if the recipe has converged and false if not. In addition to determining the
         binary yes/no convergence result, the function also issues a log message reporting the
-        degree of convergence. To assist with these tasks, the \em numCells and \em numUpdated
-        arguments specify respectively the number of spatial cells in the simulation and the number
-        of cells updated during this update cycle.
+        degree of convergence. To assist with these tasks, the \em numCells, \em numUpdated and \em
+        numNotConverged arguments specify respectively the number of spatial cells in the
+        simulation, the number of cells updated during this update cycle, and the number of updated
+        cells that have not yet converged.
 
-        The default implementation in this base class provides basic logging and returns true only
-        if none of the cells were updated. Subclasses may provide more complex implementations. In
-        case a recipe needs to tracks additional information in the update() function, the tracked
-        data must be aggregated across processes because the update() function can be called from
-        separate parallel processes. */
-    virtual bool endUpdate(int numCells, int numUpdated);
+        The default implementation in this base class provides basic logging and returns true if
+        the actual number of not-converged cells exceeds the configured maximum number of
+        not-converged cells, and false otherwise. Subclasses may provide more complex
+        implementations. In case a recipe needs to tracks additional information in the update()
+        function, the tracked data must be aggregated across processes because the update()
+        function can be called from separate parallel processes. */
+    virtual bool endUpdate(int numCells, int numUpdated, int numNotConverged);
 };
 
 ////////////////////////////////////////////////////////////////////

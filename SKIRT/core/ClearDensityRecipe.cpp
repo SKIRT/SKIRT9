@@ -17,8 +17,9 @@ void ClearDensityRecipe::beginUpdate(int /*numCells*/)
 
 ////////////////////////////////////////////////////////////////////
 
-bool ClearDensityRecipe::update(MaterialState* state, const Array& Jv)
+UpdateStatus ClearDensityRecipe::update(MaterialState* state, const Array& Jv)
 {
+    UpdateStatus status;
     if (state->numberDensity() > 0.)
     {
         // the local radiation field in the Milky Way (Mathis et al. 1983) integrated over all wavelengths
@@ -27,10 +28,10 @@ bool ClearDensityRecipe::update(MaterialState* state, const Array& Jv)
         if (U > fieldStrengthThreshold())
         {
             state->setNumberDensity(0.);
-            return true;
+            status.updateNotConverged();
         }
     }
-    return false;
+    return status;
 }
 
 ////////////////////////////////////////////////////////////////////

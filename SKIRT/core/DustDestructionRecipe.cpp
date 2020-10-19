@@ -46,10 +46,9 @@ void DustDestructionRecipe::beginUpdate(int /*numCells*/)
 
 ////////////////////////////////////////////////////////////////////
 
-bool DustDestructionRecipe::update(MaterialState* state, const Array& Jv)
+UpdateStatus DustDestructionRecipe::update(MaterialState* state, const Array& Jv)
 {
-    // flag becomes true whenever the state is updated
-    bool updated = false;
+    UpdateStatus status;
 
     // act only if this component has a fragmented dust mix and if this cell contains dust
     auto fd = _fdv[state->mediumIndex()];
@@ -72,16 +71,22 @@ bool DustDestructionRecipe::update(MaterialState* state, const Array& Jv)
                 // call the destruction recipe to determine the density fraction
                 double fraction = densityFraction(graphite, a, Jv, T);
 
-                // if the new fraction differs substantially from the previous one, update the medium state
-                if (abs(fraction - state->custom(numFrags + f)) > densityFractionTolerance())
+                // if the new fraction differs by a small tolerance from the previous one, update the medium state
+                double difference = abs(fraction - state->custom(numFrags + f));
+                if (difference > 1e-6)  // should equal minimum value of densityFractionTolerance()
                 {
                     state->setCustom(numFrags + f, fraction);
-                    updated = true;
+
+                    // if the difference is smaller than the configured tolerance, consider it to be converged
+                    if (difference > densityFractionTolerance())
+                        status.updateNotConverged();
+                    else
+                        status.updateConverged();
                 }
             }
         }
     }
-    return updated;
+    return status;
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -43,8 +43,9 @@ public:
     /** This function is called repeatedly as part of the update cycle. If the density of the
         medium component in the cell under study is nonzero, it calculates the strength of the
         radiation field. If this value exceeds the configured threshold, the density is set to
-        zero. The function returns true if the density has been updated and false otherwise. */
-    bool update(MaterialState* state, const Array& Jv) override;
+        zero. The function returns \em UpdatedNotConverged if the density has been updated and \em
+        NotUpdated otherwise. */
+    UpdateStatus update(MaterialState* state, const Array& Jv) override;
 
     //======================== Data Members =======================
 

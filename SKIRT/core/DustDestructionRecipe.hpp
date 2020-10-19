@@ -28,8 +28,8 @@ class DustDestructionRecipe : public DynamicStateRecipe
 {
     ITEM_ABSTRACT(DustDestructionRecipe, DynamicStateRecipe, "a dust destruction recipe")
 
-        PROPERTY_DOUBLE(densityFractionTolerance, "the tolerance on the dynamic density fraction")
-        ATTRIBUTE_MIN_VALUE(densityFractionTolerance, "]0")
+        PROPERTY_DOUBLE(densityFractionTolerance, "the convergence tolerance on the dynamic density fraction")
+        ATTRIBUTE_MIN_VALUE(densityFractionTolerance, "[1e-6")
         ATTRIBUTE_MAX_VALUE(densityFractionTolerance, "0.5]")
         ATTRIBUTE_DEFAULT_VALUE(densityFractionTolerance, "0.05")
 
@@ -47,10 +47,13 @@ public:
         medium component in the cell under study is nonzero, it calculates the non-destroyed
         density fraction for each of the dust mix fragments in the medium component under study by
         calling the densityFraction() function defined in a subclass. If a newly calculated
-        fraction differs by more than the configured tolerance from the previously stored value,
-        the corresponding medium state is updated. The function returns true if any of the
-        fractions have been updated and false otherwise. */
-    bool update(MaterialState* state, const Array& Jv) override;
+        fraction differs by more than some small tolerance from the previously stored value, the
+        corresponding medium state is updated. The function returns \em NotUpdated if none of the
+        fractions have been updated, \em UpdatedNotConverged if one or more fractions were updated
+        by more than the configured convergence tolerance, \em UpdatedConverged if one or more
+        fractions were updated but none of them differed by more than the configured convergence
+        tolerance. */
+    UpdateStatus update(MaterialState* state, const Array& Jv) override;
 
     /** This function returns the non-destroyed density fraction for a grain population with the
         specified type (graphite or silicate), average grain radius, radiation field, and

@@ -8,6 +8,7 @@
 
 #include "Array.hpp"
 #include "StateVariable.hpp"
+#include "UpdateStatus.hpp"
 #include "Vec.hpp"
 
 //////////////////////////////////////////////////////////////////////
@@ -119,17 +120,15 @@ public:
         the calling process has made some changes. The vector must be of length \em numCells as
         passed to the initConfiguration() function, where each element in the vector corresponds to
         the cell with the same index. If the calling process updated the state of a given cell, the
-        corresponding vector element must be nonzero and otherwise it must be zero. The function
-        returns the total number of updated cells, aggregated over all processes.
+        corresponding vector element must be \em UpdatedConverged or \em UpdatedNotConverged and
+        otherwise it must be \em NotUpdated. The function returns a pair of integers specifying the
+        total number of updated cells and the total number of not-converged cells, aggregated over
+        all processes.
 
         Only one of the calling processes may have updated the state for any given cell. If two or
         more processes updated the state of the same cell, the result of the synchronization is
-        undefined.
-
-        \note: We don't use \c bool as the vector element type because std::vector has a
-        specialization for \c bool that does not allow thread-safe access to individual elements,
-        which is important for the caller of this function. */
-    int synchronize(const std::vector<uint8_t>& cellFlags);
+        undefined. */
+    std::pair<int, int> synchronize(const vector<UpdateStatus>& cellFlags);
 
     //============= Setting =============
 

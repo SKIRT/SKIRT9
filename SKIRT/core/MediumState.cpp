@@ -88,30 +88,47 @@ void MediumState::initCommunicate()
 
 //////////////////////////////////////////////////////////////////////
 
-int MediumState::synchronize(const std::vector<uint8_t>& cellFlags)
+std::pair<int, int> MediumState::synchronize(const vector<UpdateStatus>& cellFlags)
 {
     int numUpdated = 0;
+    int numNotConverged = 0;
 
     if (ProcessManager::isMultiProc())
     {
-        auto producer = [this, &cellFlags, &numUpdated](vector<double>& data) {
+        auto producer = [this, &cellFlags, &numUpdated, &numNotConverged](vector<double>& data) {
             for (int m = 0; m != _numCells; ++m)
             {
-                if (cellFlags[m])
+                if (cellFlags[m].isUpdated())
                 {
+                    // cell index
                     data.push_back(m);
+                    // state variables
                     double* first = &_data[_numVars * m];
                     data.insert(data.end(), first, first + _numVars);
+                    // update status
                     numUpdated++;
+                    if (cellFlags[m].isConverged())
+                    {
+                        data.push_back(0.);
+                    }
+                    else
+                    {
+                        data.push_back(1.);
+                        numNotConverged++;
+                    }
                 }
             }
         };
-        auto consumer = [this, &numUpdated](const vector<double>& data) {
-            for (auto in = data.begin(); in != data.end(); in += (1 + _numVars))
+        auto consumer = [this, &numUpdated, &numNotConverged](const vector<double>& data) {
+            for (auto in = data.begin(); in != data.end(); in += (2 + _numVars))
             {
+                // cell index
                 int m = *in;
+                // state variables
                 std::copy(in + 1, in + 1 + _numVars, &_data[_numVars * m]);
+                // update status
                 numUpdated++;
+                if (*(in + 1 + _numVars)) numNotConverged++;
             }
         };
         ProcessManager::broadcastAllToAll(producer, consumer);
@@ -119,9 +136,12 @@ int MediumState::synchronize(const std::vector<uint8_t>& cellFlags)
     else
     {
         for (int m = 0; m != _numCells; ++m)
-            if (cellFlags[m]) numUpdated++;
+        {
+            if (cellFlags[m].isUpdated()) numUpdated++;
+            if (!cellFlags[m].isConverged()) numNotConverged++;
+        }
     }
-    return numUpdated;
+    return std::make_pair(numUpdated, numNotConverged);
 }
 
 //////////////////////////////////////////////////////////////////////
