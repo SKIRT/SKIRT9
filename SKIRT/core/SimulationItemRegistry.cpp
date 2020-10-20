@@ -123,7 +123,7 @@
 #include "LyaDoublePeakedSEDFamily.hpp"
 #include "LyaGaussianSED.hpp"
 #include "LyaGaussianSEDFamily.hpp"
-#include "LyaNeutralHydrogenMaterialMix.hpp"
+#include "LyaNeutralHydrogenGasMix.hpp"
 #include "LyaOptions.hpp"
 #include "LyaSEDDecorator.hpp"
 #include "LyaSEDFamilyDecorator.hpp"
@@ -509,7 +509,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<FragmentDustMixDecorator>();
 
     ItemRegistry::add<ElectronMix>();
-    ItemRegistry::add<LyaNeutralHydrogenMaterialMix>();
+    ItemRegistry::add<LyaNeutralHydrogenGasMix>();
 
     // material mix families
     ItemRegistry::add<MaterialMixFamily>();

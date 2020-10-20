@@ -3,15 +3,15 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef LYANEUTRALHYDROGENMATERIALMIX_HPP
-#define LYANEUTRALHYDROGENMATERIALMIX_HPP
+#ifndef LYANEUTRALHYDROGENGASMIX_HPP
+#define LYANEUTRALHYDROGENGASMIX_HPP
 
 #include "DipolePhaseFunction.hpp"
 #include "MaterialMix.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-/** The LyaNeutralHydrogenMaterialMix class describes the material properties related to
+/** The LyaNeutralHydrogenGasMix class describes the material properties related to
     Lyman-alpha line transfer for a population of neutral hydrogen atoms, including support for
     polarization by scattering.
 
@@ -30,10 +30,10 @@
     them are used during setup, for example to normalize the mass of a geometric medium component
     based on optical depth. To this end, the scattering cross section is calculated using the
     configured default temperature and the absorption cross section is zero. */
-class LyaNeutralHydrogenMaterialMix : public MaterialMix
+class LyaNeutralHydrogenGasMix : public MaterialMix
 {
-    ITEM_CONCRETE(LyaNeutralHydrogenMaterialMix, MaterialMix, "neutral hydrogen for Lyman-alpha line transfer")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(LyaNeutralHydrogenMaterialMix, "Lya")
+    ITEM_CONCRETE(LyaNeutralHydrogenGasMix, MaterialMix, "neutral hydrogen for Lyman-alpha line transfer")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(LyaNeutralHydrogenGasMix, "Lya")
 
         PROPERTY_DOUBLE(defaultTemperature, "the default temperature of the neutral hydrogen gas")
         ATTRIBUTE_QUANTITY(defaultTemperature, "temperature")

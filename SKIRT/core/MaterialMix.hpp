@@ -170,8 +170,9 @@ class WavelengthGrid;
 
     <b>Functions for spheroidal grains</b>
 
-    TO DO: the design for these functions must be evaluated and possibly reconsidered.
-*/
+    These functions provide additional optical properties intended for use with the
+    SpheroidalPolarization mode. Over time, the design of this part of the interface should be
+    evaluated and possibly reconsidered. */
 class MaterialMix : public SimulationItem
 {
     ITEM_ABSTRACT(MaterialMix, SimulationItem, "a material mix")
