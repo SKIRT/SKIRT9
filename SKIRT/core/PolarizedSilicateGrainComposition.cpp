@@ -4,7 +4,6 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "PolarizedSilicateGrainComposition.hpp"
-#include "DraineSilicateGrainComposition.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -32,13 +31,6 @@ string PolarizedSilicateGrainComposition::resourceNameForOpticalProps() const
 string PolarizedSilicateGrainComposition::resourceNameForMuellerMatrix() const
 {
     return "StokesSilicateMuellerMatrix";
-}
-
-//////////////////////////////////////////////////////////////////////
-
-std::string PolarizedSilicateGrainComposition::resourceNameForSpheroidalEmission() const
-{
-    return _spheroidalEmissionTable;
 }
 
 //////////////////////////////////////////////////////////////////////

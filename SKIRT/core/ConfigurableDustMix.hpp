@@ -33,6 +33,7 @@ class ConfigurableDustMix : public MultiGrainDustMix
 
         PROPERTY_ENUM(scatteringType, ScatteringType, "the type of scattering to be implemented")
         ATTRIBUTE_DEFAULT_VALUE(scatteringType, "HenyeyGreenstein")
+        ATTRIBUTE_INSERT(scatteringType, "scatteringTypeSpheroidalPolarization:Spheroidal")
 
         PROPERTY_ITEM_LIST(populations, GrainPopulation, "the grain populations")
         ATTRIBUTE_DEFAULT_VALUE(populations, "GrainPopulation")

@@ -177,8 +177,6 @@
 #include "PlanarRadiationFieldCutsProbe.hpp"
 #include "PlummerGeometry.hpp"
 #include "PointSource.hpp"
-#include "PolarizedGraphiteGrainComposition.hpp"
-#include "PolarizedSilicateGrainComposition.hpp"
 #include "PolicyTreeSpatialGrid.hpp"
 #include "PowMesh.hpp"
 #include "PowerLawGrainSizeDistribution.hpp"
@@ -216,6 +214,8 @@
 #include "SphericalBackgroundSource.hpp"
 #include "SphericalClipGeometryDecorator.hpp"
 #include "SpheroidalGeometryDecorator.hpp"
+#include "SpheroidalGraphiteGrainComposition.hpp"
+#include "SpheroidalSilicateGrainComposition.hpp"
 #include "SpiralStructureGeometryDecorator.hpp"
 #include "Starburst99SED.hpp"
 #include "Starburst99SEDFamily.hpp"
@@ -546,6 +546,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<TrustSilicateGrainComposition>();
     ItemRegistry::add<TrustGraphiteGrainComposition>();
     ItemRegistry::add<TrustNeutralPAHGrainComposition>();
+    ItemRegistry::add<SpheroidalSilicateGrainComposition>();
+    ItemRegistry::add<SpheroidalGraphiteGrainComposition>();
 
     // spatial cell libraries
     ItemRegistry::add<SpatialCellLibrary>();
