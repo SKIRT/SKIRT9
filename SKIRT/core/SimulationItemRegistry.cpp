@@ -77,6 +77,7 @@
 #include "FSPSSEDFamily.hpp"
 #include "FieldStrengthCellLibrary.hpp"
 #include "FileBand.hpp"
+#include "FileGrainSizeDistribution.hpp"
 #include "FileIndexedSEDFamily.hpp"
 #include "FileMesh.hpp"
 #include "FileSED.hpp"
@@ -110,6 +111,7 @@
 #include "LinearDustDestructionRecipe.hpp"
 #include "LinearDustTemperatureCutProbe.hpp"
 #include "ListBand.hpp"
+#include "ListGrainSizeDistribution.hpp"
 #include "ListMesh.hpp"
 #include "ListSED.hpp"
 #include "ListWavelengthDistribution.hpp"
@@ -529,6 +531,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ZubkoSilicateGrainSizeDistribution>();
     ItemRegistry::add<ZubkoGraphiteGrainSizeDistribution>();
     ItemRegistry::add<ZubkoPAHGrainSizeDistribution>();
+    ItemRegistry::add<FileGrainSizeDistribution>();
+    ItemRegistry::add<ListGrainSizeDistribution>();
 
     // grain compositions
     ItemRegistry::add<GrainComposition>();

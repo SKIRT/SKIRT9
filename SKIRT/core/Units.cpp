@@ -93,6 +93,20 @@ double Units::ograinsize(double a) const
 
 ////////////////////////////////////////////////////////////////////
 
+std::string Units::upergrainsize() const
+{
+    return unit("pergrainsize");
+}
+
+////////////////////////////////////////////////////////////////////
+
+double Units::opergrainsize(double a) const
+{
+    return out("pergrainsize", a);
+}
+
+////////////////////////////////////////////////////////////////////
+
 string Units::usection() const
 {
     return unit("section");

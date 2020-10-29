@@ -44,7 +44,7 @@ void DustGrainSizeDistributionProbe::probeSetup()
                     // write the header
                     out.writeLine("# Dust grain size distribution");
                     out.addColumn("grain size", units->ugrainsize());
-                    out.addColumn("size distribution", "1/m");  // we don't scale these values
+                    out.addColumn("size distribution", units->upergrainsize());
 
                     // construct a grain size grid
                     Array av;
@@ -53,7 +53,7 @@ void DustGrainSizeDistributionProbe::probeSetup()
                     // write the columns
                     for (int i = 0; i != _numSamples; ++i)
                     {
-                        out.writeRow(units->ograinsize(av[i]), sd->dnda(av[i]));
+                        out.writeRow(units->ograinsize(av[i]), units->opergrainsize(sd->dnda(av[i])));
                     }
                 }
             }
