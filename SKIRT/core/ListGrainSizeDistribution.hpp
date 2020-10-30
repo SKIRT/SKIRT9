@@ -34,6 +34,7 @@ class ListGrainSizeDistribution : public GrainSizeDistribution
         ATTRIBUTE_MAX_VALUE(sizes, "1 mm]")
 
         PROPERTY_DOUBLE_LIST(sizeDistributionValues, "the size distribution values at each of the given grain sizes")
+        ATTRIBUTE_QUANTITY(sizeDistributionValues, "pergrainsize")
         ATTRIBUTE_MIN_VALUE(sizeDistributionValues, "]0")
 
     ITEM_END()
