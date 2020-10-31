@@ -18,7 +18,6 @@ bool SpheroidalGraphiteGrainComposition::resourcesForSpheroidalEmission(bool& re
                                                                         std::string& tableName1,
                                                                         std::string& tableName2) const
 {
-
     switch (_tableType)
     {
         case TableType::Builtin:
@@ -40,7 +39,6 @@ bool SpheroidalGraphiteGrainComposition::resourcesForSpheroidalEmission(bool& re
             tableName2 = _alignedEmissionTable;
             break;
     }
-
     return true;
 }
 

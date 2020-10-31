@@ -17,8 +17,8 @@
 
     The optical scattering and absorption properties and the calorimetric properties are taken from
     the PolarizedSilicateGrainComposition class, from which this class derives. The optical
-    properties driving the polarization signature for thermal emission are obtained from
-    additional built-in tables or can be provided by the user, as described below.
+    properties driving the polarization signature for thermal emission are obtained from additional
+    built-in tables or can be provided by the user, as described below.
 
     In the current implementation, the internally used optical properties table always assumes a
     fixed spheroidal dust model with a constant alignment. The table generally is a linear
@@ -26,14 +26,15 @@
     linear alignment fraction between 0 and 1. The builtin version of the tables further assumes
     that only grains with sizes larger than 0.1 micron align with the magnetic field, and that the
     spheroidal grains have shapes distributed according to a CDE2 shape distribution (this is the
-    fudicial model presented in Vandenbroucke, Baes & Camps, 2020).
-    
-    If this fiducial model is not sufficient, users can provide their own custom tables, e.g.
-    generated using CosTuuM. There are two options: either the user computes the tables for a
-    specific alignment fraction and provides a single table, or the user provides separate tables
-    for perfectly aligned and non-aligned grains. In the latter case, SKIRT will use the alignment
-    fraction to appropriately interpolate between the two tables, as in the builtin case.
-    
+    fiducial model presented in Vandenbroucke, Baes & Camps, 2020).
+
+    If this fiducial model is not sufficient, users can provide their own custom tables in SKIRT
+    stored table format, e.g. generated using CosTuuM. There are two options: either the user
+    computes the tables for a specific alignment fraction and provides a single table, or the user
+    provides separate tables for perfectly aligned and non-aligned grains. In the latter case,
+    SKIRT will use the alignment fraction to appropriately interpolate between the two tables, as
+    in the builtin case.
+
     The choice between the 3 different scenarios (builtin tables with interpolation, a single
     custom table without interpolation or two custom tables with interpolation) is configured
     through an enum. */

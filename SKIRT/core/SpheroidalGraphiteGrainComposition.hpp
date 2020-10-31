@@ -17,24 +17,25 @@
 
     The optical scattering and absorption properties and the calorimetric properties are taken from
     the PolarizedGraphiteGrainComposition class, from which this class derives. The optical
-    properties driving the polarization signature for thermal emission are obtained from
-    additional built-in tables or can be provided by the user, as described below.
-    
+    properties driving the polarization signature for thermal emission are obtained from additional
+    built-in tables or can be provided by the user, as described below.
+
     In the current implementation, the internally used optical properties table always assumes a
     fixed spheroidal dust model with a constant alignment. The table generally is a linear
     combination of a table for non-aligned grains and one for aligned grains, combined using a
     linear alignment fraction between 0 and 1. Contrary to the SpheroidalSilicateGrainComposition
-    case, the builtin version assumes that graphite grains are non-aligned, and hence consists of
-    a single table without an alignment fraction. This builtin table is simply a copy of the
+    case, the builtin version assumes that graphite grains are non-aligned, and hence consists of a
+    single table without an alignment fraction. This builtin table is simply a copy of the
     DraineGraphiteOpticalProps table that contains the additional columns required to handle the
     angular dependence of the optical properties (which is constant in the non-aligned case).
-    
-    If this default model is not sufficient, users can provide their own custom tables, e.g.
-    generated using CosTuuM. There are two options: either the user computes the tables for a
-    specific alignment fraction and provides a single table, or the user provides separate tables
-    for perfectly aligned and non-aligned grains. In the latter case, SKIRT will use the alignment
-    fraction to appropriately interpolate between the two tables, as in the builtin case.
-    
+
+    If this default model is not sufficient, users can provide their own custom tables in SKIRT
+    stored table format, e.g. generated using CosTuuM. There are two options: either the user
+    computes the tables for a specific alignment fraction and provides a single table, or the user
+    provides separate tables for perfectly aligned and non-aligned grains. In the latter case,
+    SKIRT will use the alignment fraction to appropriately interpolate between the two tables, as
+    in the builtin case.
+
     The choice between the 3 different scenarios (builtin table without interpolation, a single
     custom table without interpolation or two custom tables with interpolation) is configured
     through an enum. */
@@ -49,7 +50,7 @@ class SpheroidalGraphiteGrainComposition : public PolarizedGraphiteGrainComposit
 
     ITEM_CONCRETE(SpheroidalGraphiteGrainComposition, PolarizedGraphiteGrainComposition,
                   "a spheroidal graphite dust grain composition with support for polarization")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(SpheroidalSilicateGrainComposition, "Spheroidal")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(SpheroidalGraphiteGrainComposition, "Spheroidal")
 
         PROPERTY_ENUM(tableType, TableType, "the type of emission tables to use")
         ATTRIBUTE_DEFAULT_VALUE(tableType, "Builtin")
