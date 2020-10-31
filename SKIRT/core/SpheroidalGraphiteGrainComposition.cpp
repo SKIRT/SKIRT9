@@ -18,10 +18,29 @@ bool SpheroidalGraphiteGrainComposition::resourcesForSpheroidalEmission(bool& re
                                                                         std::string& tableName1,
                                                                         std::string& tableName2) const
 {
-    resource = false;
-    interpol = 0.;
-    tableName1 = _spheroidalEmissionTable;
-    tableName2 = string();
+
+    switch (_tableType)
+    {
+        case TableType::Builtin:
+            resource = true;
+            interpol = 0;
+            tableName1 = "SpheroidalGraphiteNonAlignedEmissionOpticalProps";
+            tableName2 = string();
+            break;
+        case TableType::OneTable:
+            resource = false;
+            interpol = 0;
+            tableName1 = _emissionTable;
+            tableName2 = string();
+            break;
+        case TableType::TwoTables:
+            resource = false;
+            interpol = _alignmentFraction;
+            tableName1 = _nonAlignedEmissionTable;
+            tableName2 = _alignedEmissionTable;
+            break;
+    }
+
     return true;
 }
 
