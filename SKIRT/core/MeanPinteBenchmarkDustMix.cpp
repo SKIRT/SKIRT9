@@ -7,7 +7,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-MaterialMix::ScatteringMode MeanPinteBenchmarkDustMix::scatteringMode() const
+DustMix::ScatteringMode MeanPinteBenchmarkDustMix::scatteringMode() const
 {
     switch (scatteringType())
     {
@@ -16,6 +16,13 @@ MaterialMix::ScatteringMode MeanPinteBenchmarkDustMix::scatteringMode() const
         case ScatteringType::SphericalPolarization: return ScatteringMode::SphericalPolarization;
     }
     return ScatteringMode::HenyeyGreenstein;  // to satisfy gcc compiler
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool MeanPinteBenchmarkDustMix::hasPolarizedScattering() const
+{
+    return scatteringType() == ScatteringType::SphericalPolarization;
 }
 
 //////////////////////////////////////////////////////////////////////

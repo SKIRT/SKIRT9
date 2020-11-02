@@ -9,7 +9,7 @@
 #include "ArrayTable.hpp"
 #include "DustMix.hpp"
 #include "GrainPopulation.hpp"
-#include "Range.hpp"
+#include "MultiGrainPopulationInterface.hpp"
 #include "StochasticDustEmissionCalculator.hpp"
 #include "StoredTable.hpp"
 class GrainComposition;
@@ -106,7 +106,7 @@ class GrainSizeDistribution;
     information.
 
     */
-class MultiGrainDustMix : public DustMix
+class MultiGrainDustMix : public DustMix, public MultiGrainPopulationInterface
 {
     ITEM_ABSTRACT(MultiGrainDustMix, DustMix, "a dust mix with one or more grain populations")
     ITEM_END()
@@ -175,18 +175,25 @@ protected:
         requested). */
     size_t initializeExtraProperties(const Array& lambdav) override;
 
-    //======== Emission =======
+    //======================== Capabilities =======================
 
 public:
-    /** This function returns the emissivity spectrum per hydrogen atom
-        \f$(\varepsilon_\lambda)_\ell\f$ of the dust mix (or rather of the corresponding mixture of
-        representative grain populations) when embedded in the radiation field specified by the
-        mean intensities \f$(J_\lambda)_k\f$. The input and output arrays are discretized on the
-        wavelength grids returned by the Configuration::radiationFieldWLG() and
-        Configuration::dustEmissionWLG() functions, repectively.
+    /** This function returns true, indicating that this dust mix supports stochastic
+        heating of dust grains for the calculation of secondary emission. */
+    bool hasStochasticDustEmission() const override;
+
+    //======== Secondary emission =======
+
+public:
+    /** This function returns the emissivity spectrum \f$(\varepsilon_\lambda)_\ell\f$ (radiated
+        power per unit of solid angle and per hydrogen atom) of the dust mix (or rather of the
+        corresponding mixture of representative grain populations) when embedded in the radiation
+        field specified by the mean intensities \f$(J_\lambda)_k\f$. The input and output arrays
+        are discretized on the wavelength grids returned by the Configuration::radiationFieldWLG()
+        and Configuration::dustEmissionWLG() functions, repectively.
 
         Depending on the type of emission calculation configured by the user, this function uses an
-        instance of the EquilibriumDustEmissionCalculator or StochasticDustEmissionCalculator to to
+        instance of the EquilibriumDustEmissionCalculator or StochasticDustEmissionCalculator to
         calculate the emission spectrum. Refer to these classes for more information.
 
         The behavior of this function is undefined if the simulation does not track the radiation
@@ -194,7 +201,7 @@ public:
         function relies. */
     Array emissivity(const Array& Jv) const override;
 
-    //=============== Exposing multiple grain populations ==============
+    //=========== Exposing multiple grain populations (MultiGrainPopulationInterface) ============
 
 public:
     /** This function returns the number of dust grain populations (with indices \f$c\f$) added to
@@ -202,24 +209,45 @@ public:
         composition, providing the optical and calorimetric properties of the grain material, and a
         grain size distribution with some normalization to specify the the amount of dust contained
         in the population. No grain size discretization has been applied to these populations. */
-    int numPopulations() const;
+    int numPopulations() const override;
 
     /** This function returns a brief human-readable identifier for the type of grain material
         represented by the population with index \f$c\f$. The identifier does not contain white
         space. */
-    string populationGrainType(int c) const;
+    string populationGrainType(int c) const override;
+
+    /** This function returns the bulk mass density \f$\rho_\text{bulk}\f$ of the grain material
+        represented by the population with index \f$c\f$. */
+    double populationBulkDensity(int c) const override;
 
     /** This function returns the minimum and maximum grain sizes \f$a_{\text{min},c},
         a_{\text{max},c}\f$ for the population with index \f$c\f$. */
-    Range populationSizeRange(int c) const;
+    Range populationSizeRange(int c) const override;
 
     /** This function returns the grain size distribution object for the population with index
         \f$c\f$. */
-    const GrainSizeDistribution* populationSizeDistribution(int c) const;
+    const GrainSizeDistribution* populationSizeDistribution(int c) const override;
 
     /** This function returns the dust mass \f$\mu_c\f$ per hydrogen atom for the population with
         index \f$c\f$. */
-    double populationMass(int c) const;
+    double populationMass(int c) const override;
+
+    /** This function returns the total dust mass \f$\mu\f$ per hydrogen atom for all populations
+        combined. */
+    double totalMass() const override;
+
+    //=========== Exposing grain populations to FragmentDustMixDecorator ============
+
+public:
+    /** This function returns a read-only pointer to the grain population with index \f$c\f$. It is
+        intended for use by the FragmentDustMixDecorator and should not be used for other purposes.
+        */
+    const GrainPopulation* population(int c) const;
+
+    /** This function returns the size distribution normalization factor for the population with
+        index \f$c\f$. It is intended for use by the FragmentDustMixDecorator and should not be
+        used for other purposes. */
+    double populationNormalization(int c) const;
 
     //======================== Data Members ========================
 

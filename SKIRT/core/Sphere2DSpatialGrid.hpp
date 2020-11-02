@@ -77,9 +77,10 @@ public:
         \f${\cal{X}}_1\f$, \f${\cal{X}}_2\f$ and \f${\cal{X}}_3\f$ three uniform deviates. */
     Position randomPositionInCell(int m) const override;
 
-    /** This function calculates a path through the grid. The SpatialGridPath object passed as an
-        argument specifies the starting position \f${\bf{r}}\f$ and the direction \f${\bf{k}}\f$
-        for the path. The data on the calculated path are added back into the same object.
+    /** This function creates and hands over ownership of a path segment generator (an instance of
+        a PathSegmentGenerator subclass) appropriate for a 2D spherical grid, implemented as a
+        private PathSegmentGenerator subclass. The algorithm used to construct the path is
+        described below.
 
         We represent the path by its parameter equation \f${\bf{x}}={\bf{r}}+s\,{\bf{k}}\f$, and we
         assume that \f${\bf{k}}\f$ is a unit vector. The two intersection points with a radial
@@ -91,7 +92,7 @@ public:
         intersection points with the reflected cone are always more distant than the other cell
         boundaries (the requirement to include the xy-plane \f$\theta=\pi/2\f$ in the grid ensures
         that this is true) and thus these phantom points are automatically ignored. */
-    void path(SpatialGridPath* path) const override;
+    std::unique_ptr<PathSegmentGenerator> createPathSegmentGenerator() const override;
 
 protected:
     /** This function writes the intersection of the grid with the xy plane to the specified
@@ -121,6 +122,10 @@ private:
     Array _rv;
     Array _thetav;
     Array _cv;
+
+    // allow our path segment generator to access our private data members
+    class MySegmentGenerator;
+    friend class MySegmentGenerator;
 };
 
 //////////////////////////////////////////////////////////////////////

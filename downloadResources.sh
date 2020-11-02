@@ -7,6 +7,13 @@
 # the SKIRT 9 resource files provided on the public SKIRT server, and
 # place them in the 'resources' directory next to the git directory.
 #
+# In its default and recommended mode, the script compares the version of the installed
+# resource packs to the version desired by the SKIRT code and, if there is a mismatch,
+# its asks the user what to do. This user interaction makes it hard to use the script
+# from automated and unattended installation procedures. Therefore, if the first command
+# line argument equals "--force", the script simply installs the resource packs desired
+# by the code regardless of the currently installed versions and without user interaction.
+#
 
 # select download command: wget (Linux) or curl (Mac OS X)
 if which wget >/dev/null
@@ -28,28 +35,34 @@ do
     VERSIONPATH=../resources/${RESOURCENAME}/version.txt
     ZIPFILENAME=${RESOURCENAME}_v${VERSION}.zip
 
-    # find out whether the expected version is already installed, and if not, ask the user what to do
-    PROCEED=0
-    if [ -e $VERSIONPATH ]
+    # if the force flag is specified on the command line, proceed to download without any checks
+    if [ "$1" = "--force" ]
     then
-        read INSTALLEDVERSION <<< $(<$VERSIONPATH)
-        if [ $INSTALLEDVERSION = $VERSION ]
+        PROCEED=1
+    else
+        # find out whether the expected version is already installed, and if not, ask the user what to do
+        PROCEED=0
+        if [ -e $VERSIONPATH ]
         then
-            echo $RESOURCENAME version $VERSION is already installed -- skipping
+            read INSTALLEDVERSION <<< $(<$VERSIONPATH)
+            if [ $INSTALLEDVERSION = $VERSION ]
+            then
+                echo $RESOURCENAME version $VERSION is already installed -- skipping
+            else
+                echo $RESOURCENAME version $INSTALLEDVERSION is installed while version $VERSION is expected
+                read -p "Do you want to download and install $RESOURCENAME version $VERSION? [y/n] " RESPONSE
+                if [[ $RESPONSE =~ ^[Yy] ]]
+                then
+                    PROCEED=1
+                fi
+            fi
         else
-            echo $RESOURCENAME version $INSTALLEDVERSION is installed while version $VERSION is expected
+            echo $RESOURCENAME is not installed
             read -p "Do you want to download and install $RESOURCENAME version $VERSION? [y/n] " RESPONSE
             if [[ $RESPONSE =~ ^[Yy] ]]
             then
                 PROCEED=1
             fi
-        fi
-    else
-        echo $RESOURCENAME is not installed
-        read -p "Do you want to download and install $RESOURCENAME version $VERSION? [y/n] " RESPONSE
-        if [[ $RESPONSE =~ ^[Yy] ]]
-        then
-            PROCEED=1
         fi
     fi
 

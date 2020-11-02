@@ -9,6 +9,7 @@
 #include "NR.hpp"
 #include "Parallel.hpp"
 #include "ParallelFactory.hpp"
+#include "PathSegmentGenerator.hpp"
 #include "ProcessManager.hpp"
 #include "Random.hpp"
 #include "SiteListInterface.hpp"
@@ -679,6 +680,21 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
     log()->info("  Average number of neighbors per cell: " + StringUtils::toString(avgNeighbors, 'f', 1));
     log()->info("  Minimum number of neighbors per cell: " + std::to_string(minNeighbors));
     log()->info("  Maximum number of neighbors per cell: " + std::to_string(maxNeighbors));
+
+    // verify that neighbors are mutual as they should be
+    for (int m = 0; m < numCells; m++)
+    {
+        for (int m1 : _cells[m]->neighbors())
+        {
+            if (m1 >= 0)
+            {
+                const vector<int>& neighbors1 = _cells[m1]->neighbors();
+                if (std::find(neighbors1.begin(), neighbors1.end(), m) == neighbors1.end())
+                    log()->warning("Neighbors are not mutual for cells " + std::to_string(m) + " and "
+                                   + std::to_string(m1));
+            }
+        }
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -1042,100 +1058,142 @@ int VoronoiMeshSnapshot::cellIndex(Position bfr) const
 
 ////////////////////////////////////////////////////////////////////
 
-void VoronoiMeshSnapshot::path(SpatialGridPath* path) const
+class VoronoiMeshSnapshot::MySegmentGenerator : public PathSegmentGenerator
 {
-    // Initialize the path
-    Direction bfk = path->direction();
+    const VoronoiMeshSnapshot* _grid{nullptr};
+    int _mr{-1};
 
-    // If the photon packet starts outside the dust grid, move it into the first grid cell that it will pass
-    Position r = path->moveInside(_extent, _eps);
+public:
+    MySegmentGenerator(const VoronoiMeshSnapshot* grid) : _grid(grid) {}
 
-    // Get the index of the cell containing the current position;
-    // if the position is not inside the grid, return an empty path
-    int mr = cellIndex(r);
-    if (mr < 0) return path->clear();
-
-    // Start the loop over cells/path segments until we leave the grid
-    while (mr >= 0)
+    bool next() override
     {
-        // get the site position for this cell
-        Vec pr = _cells[mr]->position();
-
-        // initialize the smallest nonnegative intersection distance and corresponding index
-        double sq = DBL_MAX;       // very large, but not infinity (so that infinite si values are discarded)
-        const int NO_INDEX = -99;  // meaningless cell index
-        int mq = NO_INDEX;
-
-        // loop over the list of neighbor indices
-        const vector<int>& mv = _cells[mr]->neighbors();
-        int n = mv.size();
-        for (int i = 0; i < n; i++)
+        switch (state())
         {
-            int mi = mv[i];
-
-            // declare the intersection distance for this neighbor (init to a value that will be rejected)
-            double si = 0;
-
-            // --- intersection with neighboring cell
-            if (mi >= 0)
+            case State::Unknown:
             {
-                // get the site position for this neighbor
-                Vec pi = _cells[mi]->position();
+                // try moving the photon packet inside the grid; if this is impossible, return an empty path
+                if (!moveInside(_grid->extent(), _grid->_eps)) return false;
 
-                // calculate the (unnormalized) normal on the bisecting plane
-                Vec n = pi - pr;
+                // get the index of the cell containing the current position
+                _mr = _grid->cellIndex(r());
 
-                // calculate the denominator of the intersection quotient
-                double ndotk = Vec::dot(n, bfk);
+                // if the photon packet started outside the grid, return the corresponding nonzero-length segment;
+                // otherwise fall through to determine the first actual segment
+                if (ds() > 0.) return true;
+            }
 
-                // if the denominator is negative the intersection distance is negative, so don't calculate it
-                if (ndotk > 0)
+            case State::Inside:
+            {
+                // loop in case no exit point was found (which should happen only rarely)
+                while (true)
                 {
-                    // calculate a point on the bisecting plane
-                    Vec p = 0.5 * (pi + pr);
+                    // get the site position for this cell
+                    Vec pr = _grid->_cells[_mr]->position();
 
-                    // calculate the intersection distance
-                    si = Vec::dot(n, p - r) / ndotk;
+                    // initialize the smallest nonnegative intersection distance and corresponding index
+                    double sq = DBL_MAX;  // very large, but not infinity (so that infinite si values are discarded)
+                    const int NO_INDEX = -99;  // meaningless cell index
+                    int mq = NO_INDEX;
+
+                    // loop over the list of neighbor indices
+                    const vector<int>& mv = _grid->_cells[_mr]->neighbors();
+                    int n = mv.size();
+                    for (int i = 0; i < n; i++)
+                    {
+                        int mi = mv[i];
+
+                        // declare the intersection distance for this neighbor (init to a value that will be rejected)
+                        double si = 0;
+
+                        // --- intersection with neighboring cell
+                        if (mi >= 0)
+                        {
+                            // get the site position for this neighbor
+                            Vec pi = _grid->_cells[mi]->position();
+
+                            // calculate the (unnormalized) normal on the bisecting plane
+                            Vec n = pi - pr;
+
+                            // calculate the denominator of the intersection quotient
+                            double ndotk = Vec::dot(n, k());
+
+                            // if the denominator is negative the intersection distance is negative,
+                            // so don't calculate it
+                            if (ndotk > 0)
+                            {
+                                // calculate a point on the bisecting plane
+                                Vec p = 0.5 * (pi + pr);
+
+                                // calculate the intersection distance
+                                si = Vec::dot(n, p - r()) / ndotk;
+                            }
+                        }
+
+                        // --- intersection with domain wall
+                        else
+                        {
+                            switch (mi)
+                            {
+                                case -1: si = (_grid->extent().xmin() - rx()) / kx(); break;
+                                case -2: si = (_grid->extent().xmax() - rx()) / kx(); break;
+                                case -3: si = (_grid->extent().ymin() - ry()) / ky(); break;
+                                case -4: si = (_grid->extent().ymax() - ry()) / ky(); break;
+                                case -5: si = (_grid->extent().zmin() - rz()) / kz(); break;
+                                case -6: si = (_grid->extent().zmax() - rz()) / kz(); break;
+                                default: throw FATALERROR("Invalid neighbor ID");
+                            }
+                        }
+
+                        // remember the smallest nonnegative intersection point
+                        if (si > 0 && si < sq)
+                        {
+                            sq = si;
+                            mq = mi;
+                        }
+                    }
+
+                    // if no exit point was found, advance the current point by a small distance,
+                    // recalculate the cell index, and return to the start of the loop
+                    if (mq == NO_INDEX)
+                    {
+                        propagater(_grid->_eps);
+                        _mr = _grid->cellIndex(r());
+
+                        // if we're outside the domain, terminate the path without returning a path segment
+                        if (_mr < 0)
+                        {
+                            setState(State::Outside);
+                            return false;
+                        }
+                    }
+                    // otherwise set the current point to the exit point and return the path segment
+                    else
+                    {
+                        propagater(sq + _grid->_eps);
+                        setSegment(_mr, sq);
+                        _mr = mq;
+
+                        // if we're outside the domain, terminate the path after returning this path segment
+                        if (_mr < 0) setState(State::Outside);
+                        return true;
+                    }
                 }
             }
 
-            // --- intersection with domain wall
-            else
+            case State::Outside:
             {
-                switch (mi)
-                {
-                    case -1: si = (extent().xmin() - r.x()) / bfk.x(); break;
-                    case -2: si = (extent().xmax() - r.x()) / bfk.x(); break;
-                    case -3: si = (extent().ymin() - r.y()) / bfk.y(); break;
-                    case -4: si = (extent().ymax() - r.y()) / bfk.y(); break;
-                    case -5: si = (extent().zmin() - r.z()) / bfk.z(); break;
-                    case -6: si = (extent().zmax() - r.z()) / bfk.z(); break;
-                    default: throw FATALERROR("Invalid neighbor ID");
-                }
-            }
-
-            // remember the smallest nonnegative intersection point
-            if (si > 0 && si < sq)
-            {
-                sq = si;
-                mq = mi;
             }
         }
-
-        // if no exit point was found, advance the current point by small distance and recalculate cell index
-        if (mq == NO_INDEX)
-        {
-            r += bfk * _eps;
-            mr = cellIndex(r);
-        }
-        // otherwise add a path segment and set the current point to the exit point
-        else
-        {
-            path->addSegment(mr, sq);
-            r += (sq + _eps) * bfk;
-            mr = mq;
-        }
+        return false;
     }
+};
+
+////////////////////////////////////////////////////////////////////
+
+std::unique_ptr<PathSegmentGenerator> VoronoiMeshSnapshot::createPathSegmentGenerator() const
+{
+    return std::make_unique<MySegmentGenerator>(this);
 }
 
 ////////////////////////////////////////////////////////////////////

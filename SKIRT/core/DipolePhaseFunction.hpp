@@ -7,6 +7,7 @@
 #define DIPOLEPHASEFUNCTION
 
 #include "Array.hpp"
+#include "Direction.hpp"
 class Random;
 class StokesVector;
 
@@ -15,7 +16,7 @@ class StokesVector;
 /** The DipolePhaseFunction helper class represents the dipole scattering phase function, with
     optional support for polarization by scattering. For example, in a wide wavelength range,
     scattering of photons by electrons can be described by elastic and wavelength-independent
-    Thomson scattering, which is in turn described using the dipole phase function.ß The
+    Thomson scattering, which is in turn described using the dipole phase function. The
     corresponding Mueller matrix elements (and hence the phase function) can be expressed
     analytically as a function of just the scattering angle; see Bohren & Huffman (1998) or Wolf
     2003 (Computer Physics Communications, 150, 99–115).
@@ -36,7 +37,7 @@ public:
 
     //======== Scattering without polarization =======
 
-public:
+private:
     /** This function returns the value of the scattering phase function \f$\Phi(\cos\theta)\f$ for
         the specified scattering angle cosine \f$\cos\theta\f$, where the phase function is
         normalized as \f[\int_{-1}^1 \Phi(\cos\theta) \,\mathrm{d}\cos\theta =2.\f]
@@ -59,7 +60,7 @@ public:
 
     //======== Scattering with polarization =======
 
-public:
+private:
     /** This function returns the value of the scattering phase function \f$\Phi(\theta,\phi)\f$
         for the specified scattering angles \f$\theta\f$ and \f$\phi\f$, and for the specified
         incoming polarization state. The phase function is normalized as \f[\int\Phi(\theta,\phi)
@@ -109,11 +110,30 @@ public:
         and } S_{34}=0.\f] */
     void applyMueller(double theta, StokesVector* sv) const;
 
+    //======== Perform scattering with or without polarization =======
+
+public:
+    /** This function calculates the contribution of a dipole scattering event to the peel-off
+        photon luminosity and polarization state for the given geometry and polarization state. The
+        contributions to the Stokes vector components are added to the incoming values of the \em
+        I, \em Q, \em U, \em V arguments. The \em w argument specifies the relative opacity
+        weighting factor for this medium component. See the description of the
+        MaterialMix::peeloffScattering() function for more information. */
+    void peeloffScattering(double& I, double& Q, double& U, double& V, double w, Direction bfk, Direction bfkobs,
+                           Direction bfky, const StokesVector* sv) const;
+
+    /** Given the incoming photon packet direction and polarization state, this function calculates
+        and returns a randomly sampled new propagation direction for a dipole scattering event, and
+        if applicable (depending in the polarization flag passed to the constructor), updates the
+        polarization state of the photon packet along the way. */
+    Direction performScattering(Direction bfk, StokesVector* sv) const;
+
     //======================== Data Members ========================
 
 private:
     // the simulation's random number generator - initialized during construction
     Random* _random{nullptr};
+    bool _includePolarization{false};
 
     // precalculated discretizations - initialized during construction
     Array _phiv;   // indexed on f

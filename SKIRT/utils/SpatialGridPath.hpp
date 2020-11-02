@@ -110,17 +110,6 @@ public:
         the index is out of range, undefined behavior results. */
     void setOpticalDepth(int i, double tau) { _segments[i].tau = tau; }
 
-    /** This function sets the optical depth corresponding to the end of the path segment with
-        zero-based index \f$i\f$ \em and all following path segments to the specified value. This
-        function can be used when the caller knows that the remaining path segments have no optical
-        depth, or that some maximum meaningful optical depth has been reached. If the index is out
-        of range, undefined behavior results. */
-    void setTerminalOpticalDepth(int i, double tau)
-    {
-        int n = _segments.size();
-        for (; i != n; ++i) _segments[i].tau = tau;
-    }
-
     /** This function returns the optical depth corresponding to the end of the last path segment
         in the path, or zero if the path has no segments. The function assumes that both the
         geometric and optical depth information for the path have been set; if this is not the
@@ -141,15 +130,21 @@ public:
         have been set; if this is not the case, the behavior is undefined. */
     void findInteractionPoint(double tau);
 
-    /** This function returns the spatial cell index \f$m\f$ corresponding to the interaction point
-        most recently calculated by the findInteractionPoint() function, or -1 if this function has
-        never been called or if there was no interaction point within the path. */
+    /** This function stores the specified spatial cell index and distance to the initial position
+        of the interaction point for later retrieval through the interactionCellIndex() and
+        interactionDistance() functions. */
+    void setInteractionPoint(int m, double s);
+
+    /** This function returns the spatial cell index corresponding to the interaction point most
+        recently calculated by the findInteractionPoint() function or set by the
+        setInteractionPoint() function, or -1 if these functions have never been called or if there
+        was no interaction point within the path. */
     int interactionCellIndex() const { return _interactionCellIndex; }
 
     /** This function returns the distance along the path from its initial position to the
-        interaction point most recently calculated by the findInteractionPoint() function, or zero if
-        this function has never been called or if there was no interaction point within the path.
-        */
+        interaction point most recently calculated by the findInteractionPoint() function or set by
+        the setInteractionPoint() function, or zero if these functions have never been called or if
+        there was no interaction point within the path. */
     double interactionDistance() const { return _interactionDistance; }
 
     // ------- Data members -------
@@ -157,6 +152,7 @@ private:
     Position _bfr;
     Direction _bfk;
     vector<Segment> _segments;
+    double _s{0.};
     int _interactionCellIndex{-1};
     double _interactionDistance{0.};
 };

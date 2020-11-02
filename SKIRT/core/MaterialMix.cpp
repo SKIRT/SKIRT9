@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "MaterialMix.hpp"
+#include "Configuration.hpp"
 #include "FatalError.hpp"
 #include "Random.hpp"
 
@@ -14,14 +15,63 @@ void MaterialMix::setupSelfBefore()
     SimulationItem::setupSelfBefore();
 
     _random = find<Random>();
+    _config = find<Configuration>();
 }
 
 ////////////////////////////////////////////////////////////////////
 
-MaterialMix::ScatteringMode MaterialMix::scatteringMode() const
+bool MaterialMix::hasPolarizedScattering() const
 {
-    return ScatteringMode::HenyeyGreenstein;
+    return false;
 }
+
+////////////////////////////////////////////////////////////////////
+
+bool MaterialMix::hasPolarizedAbsorption() const
+{
+    return false;
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool MaterialMix::hasPolarizedEmission() const
+{
+    return false;
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool MaterialMix::hasResonantScattering() const
+{
+    return false;
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool MaterialMix::hasStochasticDustEmission() const
+{
+    return false;
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool MaterialMix::hasExtraSpecificState() const
+{
+    return false;
+}
+
+////////////////////////////////////////////////////////////////////
+
+vector<SnapshotParameter> MaterialMix::parameterInfo() const
+{
+    return vector<SnapshotParameter>();
+}
+
+////////////////////////////////////////////////////////////////////
+
+void MaterialMix::initializeSpecificState(MaterialState* /*state*/, double /*temperature*/,
+                                          const Array& /*params*/) const
+{}
 
 ////////////////////////////////////////////////////////////////////
 
@@ -32,37 +82,21 @@ double MaterialMix::asymmpar(double /*lambda*/) const
 
 ////////////////////////////////////////////////////////////////////
 
-double MaterialMix::phaseFunctionValueForCosine(double /*lambda*/, double /*costheta*/) const
-{
-    return 1.;
-}
-
-////////////////////////////////////////////////////////////////////
-
-double MaterialMix::generateCosineFromPhaseFunction(double /*lambda*/) const
-{
-    return 2. * random()->uniform() - 1.;
-}
-
-////////////////////////////////////////////////////////////////////
-
-double MaterialMix::phaseFunctionValue(double /*lambda*/, double /*theta*/, double /*phi*/,
-                                       const StokesVector* /*sv*/) const
+Array MaterialMix::emissivity(const Array& /*Jv*/) const
 {
     throw FATALERROR("This function implementation should never be called");
 }
 
 ////////////////////////////////////////////////////////////////////
 
-std::pair<double, double> MaterialMix::generateAnglesFromPhaseFunction(double /*lambda*/,
-                                                                       const StokesVector* /*sv*/) const
+Array MaterialMix::emissionSpectrum(const MaterialState* /*state*/, const Array& /*Jv*/) const
 {
     throw FATALERROR("This function implementation should never be called");
 }
 
 ////////////////////////////////////////////////////////////////////
 
-void MaterialMix::applyMueller(double /*lambda*/, double /*theta*/, StokesVector* /*sv*/) const
+double MaterialMix::indicativeTemperature(const MaterialState* /*state*/, const Array& /*Jv*/) const
 {
     throw FATALERROR("This function implementation should never be called");
 }

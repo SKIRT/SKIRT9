@@ -12,6 +12,20 @@
 
 void DefaultMediaDensityCutsProbe::probeSetup()
 {
+    if (probeAfter() == ProbeAfter::Setup) probe();
+}
+
+////////////////////////////////////////////////////////////////////
+
+void DefaultMediaDensityCutsProbe::probeRun()
+{
+    if (probeAfter() == ProbeAfter::Run) probe();
+}
+
+////////////////////////////////////////////////////////////////////
+
+void DefaultMediaDensityCutsProbe::probe()
+{
     if (find<Configuration>()->hasMedium())
     {
         // the size in pixels (in each spatial direction) for the default cuts

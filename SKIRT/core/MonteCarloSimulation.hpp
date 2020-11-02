@@ -8,13 +8,11 @@
 
 #include "Configuration.hpp"
 #include "Cosmology.hpp"
-#include "DipolePhaseFunction.hpp"
 #include "InstrumentSystem.hpp"
 #include "MediumSystem.hpp"
 #include "ProbeSystem.hpp"
 #include "Simulation.hpp"
 #include "SourceSystem.hpp"
-#include <atomic>
 class SecondarySourceSystem;
 
 //////////////////////////////////////////////////////////////////////
@@ -51,10 +49,11 @@ class MonteCarloSimulation : public Simulation
 
         An important aspect determined by the simulation mode is the simulation's wavelength
         regime, which can be oligochromatic or panchromatic. Oligochromatic simulations use just a
-        few pre-defined, discrete wavelengths. They do not support secondary emission by the
-        transfer medium because the radiation field must be known across a wide spectrum to
-        calculate the medium state and the resulting emission. Panchromatic simulations use a
-        continuous range of wavelengths, lifting this limitation.
+        few pre-defined, discrete wavelengths. They do no support kinematics (moving sources and/or
+        media) because the wavelengths cannot shift away from the pre-defined values, and they do
+        not support secondary emission by the transfer medium because the radiation field must be
+        known across a wide spectrum to calculate the medium state and the resulting emission.
+        Panchromatic simulations use a continuous range of wavelengths, lifting these limitations.
 
         For panchromatic simulations, the simulation mode further determines fundamental choices
         such as whether to include secondary emission, and whether to iterate over the radiation
@@ -175,6 +174,25 @@ private:
         information.) */
     void runPrimaryEmission();
 
+    /** This function implements primary source emission when the simulation includes a dynamic
+        medium state. In that case, the primary emission phase self-consistently calculates the
+        radiation field taking into account one or more recipes for updating the medium state as a
+        function of the radiation field. See the DynamicStateRecipe class for more information.
+
+        Specifically, this function implements a number of iterations, where each iteration tracks
+        a segment of photon packets through the medium and subsequently updates the medium state
+        based on the newly established radiation field. The number of photon packets launched for
+        each iteration can be configured as a multiplication factor on the default number of
+        primary photon packets. The minimum and maximum number of iterations can also be specified
+        as configuration options. Within these limits, the actual number of iterations performed is
+        determined by convergence criteria defined by the configured dynamic medium state
+        recipe(s).
+
+        After the dynamic state iterations have completed (with or without convergence), this
+        function performs a final segment of primary emission photon launching that now includes
+        peel-off towards the instruments. */
+    void runPrimaryEmissionWithDynamicState();
+
     /** This function runs the dust self-absorption phase. This phase includes a series of
         intermediate secondary source emission segments in an iteration to self-consistently
         calculate the radiation field, taking into account the fraction of dust emission absorbed
@@ -294,10 +312,11 @@ private:
         unit of wavelength, and per unit of solid angle. */
     void storeRadiationField(const PhotonPacket* pp);
 
-    /** This function determines the next scattering location of a photon packet and simulates its
-        propagation to that position. The function assumes that both the geometric and optical
-        depth information for the photon packet's path have been set; if this is not the case, the
-        behavior is undefined. The function proceeds in a number of steps as outlined below.
+    /** This function determines the next scattering location of a photon packet in a photon life
+        cycle with forced scattering and simulates its propagation to that position. The function
+        assumes that both the geometric and optical depth information for the photon packet's path
+        have been set; if this is not the case, the behavior is undefined. This function proceeds
+        in a number of steps as outlined below.
 
         <b>Total optical depth</b>
 
@@ -351,7 +370,49 @@ private:
         Finally we advance the initial position of the photon packet to the interaction point. This
         last step invalidates the photon packet's path (including geometric and optical depth
         information). The packet is now ready to be scattered into a new direction. */
-    void simulatePropagation(PhotonPacket* pp);
+    void simulateForcedPropagation(PhotonPacket* pp);
+
+    /** This function simulates the propagation of a photon packet to the next scattering location
+        in a photon life cycle without forced scattering. The function assumes that the next
+        scattering location for the photon packet's path has already been set; if this is not the
+        case, the behavior is undefined. This function proceeds in a number of steps as outlined
+        below.
+
+        <b>%Random optical depth</b>
+
+        Because the photon packet is allowed to escape the model, we randomly generate the optical
+        depth \f$\tau\f$ at the interaction site from the regular exponential distribution. The
+        current implementation does not support path length biasing.
+
+        <b>Interaction point</b>
+
+        Now that the optical depth \f$\tau\f$ at the interaction site has been (randomly) chosen,
+        we determine the physical position of the interaction point along the path. This is
+        accomplished by generating the path segments for crossed cells one by one and calculating
+        the corresponding cumulative optical depth on the fly. Once the cumulative optical depth at
+        the exit point of a segment exceeds the interaction optical depth, we know that the
+        interaction point must be within this segment. The physical interaction point is then
+        obtained through linear interpolation within the segment, assuming exponential behavior of
+        the extinction. If the cumulative optical depth of the path never exceeds the interaction
+        optical depth, the photon packet escapes and is terminated.
+
+        <b>Albedo</b>
+
+        We calculate the scattering albedo \f$\varpi\f$ of the medium at the interaction point (or
+        more precisely, for the spatial cell containing the interaction point).
+
+        <b>Weight adjustment</b>
+
+        We adjust the weight of the photon packet to compensate for the absorbed portion of the
+        luminosity. More precisely, the weight is multiplied by the scattered fraction, i.e. \f$
+        f_\text{sca} = \varpi \f$.
+
+        <b>Advance position</b>
+
+        Finally we advance the initial position of the photon packet to the interaction point. This
+        last step invalidates the photon packet's path (including geometric and optical depth
+        information). The packet is now ready to be scattered into a new direction. */
+    void simulateNonForcedPropagation(PhotonPacket* pp);
 
     /** This function simulates the peel-off of a photon packet before a scattering event. This
         means that, just before a scattering event, we create a peel-off photon packet for every
@@ -367,95 +428,12 @@ private:
         direction, because the scattering process is anisotropic. The third difference is that the
         polarization state of the peel-off photon packet is adjusted. And the last difference is
         that the wavelength of the peel-off photon packet is properly Doppler-shifted taking into
-        account the bulk velocity of the medium. We discuss some of these changes in more detail
-        below. In this analysis, we drop the wavelength-dependency of the material properties from
-        the notation.
-
-        Since we force the peel-off photon packet to be scattered from the direction \f${\bf{k}}\f$
-        into the direction \f${\bf{k}}_{\text{obs}}\f$, the corresponding biasing weight factor is
-        given by the probability that a photon packet would be scattered into the direction
-        \f${\bf{k}}_{\text{obs}}\f$ if its original propagation direction was \f${\bf{k}}\f$. If
-        there is only one medium component in the system, this weight factor is equal to the value
-        of the scattering phase function \f$w= \Phi({\bf{k}},{\bf{k}}_{\text{obs}})\f$ for that
-        medium component. If there are multiple medium components, the weight factor is the
-        weighted mean of the scattering phase function values, \f[ w = \frac{ \sum_h
-        \varsigma_h^{\text{sca}}\, n_{m,h}\, \Phi_h({\bf{k}}, {\bf{k}}_{\text{obs}}) }{ \sum_h
-        \varsigma_h^{\text{sca}}\, n_{m,h} }, \f] where \f$n_{m,h}\f$ is the number density of the
-        medium corresponding to the \f$h\f$'th component in the cell where the scattering event
-        takes place, and \f$\varsigma_h^{\text{sca}}\f$ and \f$\Phi_h\f$ are the scattering cross
-        section and phase function corresponding to the \f$h\f$'th component respectively.
-
-        Evaluation of the phase function depends on the scattering mode supported by each medium's
-        material mix. For the most basic mode, the material mix provides a value for the scattering
-        asymmetry parameter \f$g=\left<\cos\theta\right>\f$. A value of \f$g=0\f$ corresponds to
-        isotropic scattering. Other values \f$-1\le g\le 1\f$ are substituted in the
-        Henyey-Greenstein phase function, \f[ \Phi(\cos\theta) = \frac{1-g^2}
-        {(1+g^2-2g\cos\theta)^{3/2}}. \f] For other scattering modes, the phase function provided
-        by the material mix is invoked instead.
-
-        In case polarization is supported in the current simulation configuration, the polarization
-        state of the peel off photon packet is adjusted as well. Note that all media must either
-        support polarization or not support it, mixing these support levels is not allowed.
-        Compliance with this requirement is verified during setup of the simulation. The adjusted
-        Stokes vector for a particular medium component is obtained as follows. The function
-        rotates the Stokes vector from the reference direction in the previous scattering plane
-        into the peel-off scattering plane, applies the Mueller matrix on the Stokes vector, and
-        further rotates the Stokes vector from the reference direction in the peel-off scattering
-        plane to the x-axis of the instrument to which the peel-off photon packet is headed. If
-        there are multiple medium components (all supporting polarization), the weight factors
-        described above are used not just for the luminosity but also for the components of the
-        Stokes vector.
+        account the bulk velocity of the medium.
 
         The first argument to this function specifies the photon packet that is about to be
         scattered; the second argument provides a placeholder peel off photon packet for use by the
         function. */
     void peelOffScattering(PhotonPacket* pp, PhotonPacket* ppp);
-
-    /** This function simulates a scattering event of a photon packet. Most of the properties of
-        the photon packet remain unaltered, including the position and the luminosity. The
-        properties that change are the number of scattering events experienced by the photon packet
-        (this is obviously increased by one), the propagation direction, which is generated
-        randomly, the polarization state, and the wavelength, which is properly Doppler-shifted
-        taking into account the bulk velocity of the medium. In the analysis below, we drop the
-        wavelength-dependency of the material properties from the notation.
-
-        If there is only one medium component, the scattering event is governed by the
-        corresponding material mix. If there are several components, the function first randomly
-        selects a medium component from the list, where the relative weight of each component is
-        equal to \f[ w_h = \frac{ \varsigma_h^{\text{sca}}\, n_{h,m} }{ \sum_{h'}
-        \varsigma_{\ell,h'}^{\text{sca}}\, n_{h',m} }, \f] where \f$n_{m,h}\f$ is the number
-        density of the medium corresponding to the \f$h\f$'th component in the cell where the
-        scattering event takes place, and \f$\varsigma_h^{\text{sca}}\f$ is the scattering cross
-        section corresponding to the \f$h\f$'th component respectively.
-
-        The remainder of the operation depends on the scattering mode supported by the selected
-        medium component's material mix. For the most basic mode, the material mix provides a value
-        for the scattering asymmetry parameter \f$g=\left<\cos\theta\right>\f$. For the value
-        \f$g=0\f$, corresponding to isotropic scattering, a new direction is generated uniformly on
-        the unit sphere. For other values \f$-1\le g\le 1\f$, a scattering angle \f$\theta\f$ is
-        sampled from the Henyey-Greenstein phase function, \f[ \Phi(\cos\theta) =
-        \frac{1-g^2}{(1+g^2-2g\cos\theta)^{3/2}}. \f] This can be accomplished as follows.
-        Substituting \f$\mu=\cos\theta\f$, the probability distribution for \f$\mu\f$ (normalized
-        to unity) becomes \f[ p(\mu)\,\text{d}\mu = \frac{1}{2} \,
-        \frac{1-g^2}{(1+g^2-2g\mu)^{3/2}} \,\text{d}\mu \qquad -1\leq\mu\leq1 \f] We can use the
-        transformation method to sample from this distribution. Given a uniform deviate
-        \f$\mathcal{X}\f$, we need to solve \f[ {\mathcal{X}} = \int_{-1}^\mu p(\mu')\,\text{d}\mu'
-        \f] Performing the integration and solving for \f$\mu\f$ yields \f[ \cos\theta = \mu =
-        \frac{1+g^2-f^2}{2g} \quad\text{with}\quad f=\frac{1-g^2}{1-g+2g {\mathcal{X}}}
-        \qquad\text{for}\; g\neq 0 \f] For other scattering modes, a function provided by the
-        material mix is invoked instead to obtain a random scattering direction for the photon
-        packet.
-
-        In case polarization is supported in the current simulation configuration, the polarization
-        state of the photon packet is adjusted as well. Note that all media must either support
-        polarization or not support it, mixing these support levels is not allowed. Compliance with
-        this requirement is verified during setup of the simulation. The adjusted Stokes vector is
-        obtained as follows, again using the randomly selected medium component. After obtaining
-        the sampled scattering angles \f$\theta\f$ and \f$\phi\f$ from the material mix, the Stokes
-        vector of the photon packet is rotated into the scattering plane and transformed by
-        applying the Mueller matrix. Finally, the new direction is computed from the previously
-        sampled \f$\theta\f$ and \f$\phi\f$ angles. */
-    void simulateScattering(PhotonPacket* pp);
 
     //======================== Data Members ========================
 
@@ -466,9 +444,6 @@ private:
 
     // data members used by the XXXprogress() functions in this class
     string _segment;  // a string identifying the photon shooting segment for use in the log message
-
-    // the dipole phase function used for Lyman-alpha scattering - initialized during setup if needed
-    DipolePhaseFunction _dpf;
 };
 
 ////////////////////////////////////////////////////////////////////

@@ -36,20 +36,29 @@ protected:
     /** This function initializes the DipolePhaseFunction instance held by this class. */
     void setupSelfBefore() override;
 
-    //======== Functionality levels =======
+    //======== Capabilities =======
 
 public:
     /** This function returns the fundamental material type represented by this material mix, which
-        is MaterialType::Electrons. See the documentation of the MaterialMix class for more
-        information. */
+        is MaterialType::Electrons. */
     MaterialType materialType() const override;
 
-    /** This function returns the scattering mode supported by this material mix, which is
-        ScatteringMode::MaterialPhaseFunction or ScatteringMode::SphericalPolarization depending on
-        the value of the \em includePolarization flag. */
-    ScatteringMode scatteringMode() const override;
+    /** This function returns the value of the \em includePolarization flag, indicating whether the
+        material mix supports polarization during scattering events or not. */
+    bool hasPolarizedScattering() const override;
 
-    //======== Basic material properties =======
+    //======== Medium state setup =======
+
+public:
+    /** This function returns a list of StateVariable objects describing the specific state
+        variables used by the receiving material mix. See the description of the
+        MaterialMix::specificStateVariableInfo() function for more information.
+
+        Electrons require just the standard specific state variable of type numberDensity , so this
+        function returns a list containing a single item. */
+    vector<StateVariable> specificStateVariableInfo() const override;
+
+    //======== Low-level material properties =======
 
 public:
     /** This function returns the electron mass. */
@@ -68,61 +77,44 @@ public:
     /** This function returns the total extinction cross section per electron
         \f$\varsigma^{\text{ext}}_{\lambda} = \varsigma^{\text{abs}}_{\lambda} +
         \varsigma^{\text{sca}}_{\lambda}\f$ which is constant and equal to the Thomson cross
-        section for all wavelengths \f$\lambda\f$.. */
+        section for all wavelengths \f$\lambda\f$. */
     double sectionExt(double lambda) const override;
 
-    //======== Scattering with material phase function =======
+    //======== High-level photon life cycle =======
 
-public:
-    /** This function returns the value of the scattering phase function
-        \f$\Phi_\lambda(\cos\theta)\f$ at wavelength \f$\lambda\f$ for the specified scattering
-        angle cosine \f$\cos\theta\f$, where the phase function is normalized as \f[\int_{-1}^1
-        \Phi_\lambda(\cos\theta) \,\mathrm{d}\cos\theta =2.\f] It invokes the corresponding
-        function of the DipolePhaseFunction class; see there for more information. */
-    double phaseFunctionValueForCosine(double lambda, double costheta) const override;
+    /** This function returns the absorption opacity \f$k^\text{abs}=n\varsigma^\text{abs}\f$,
+        which is trivially zero for electrons. */
+    double opacityAbs(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
 
-    /** This function generates a random scattering angle cosine sampled from the phase function
-        \f$\Phi_\lambda(\cos\theta)\f$ at wavelength \f$\lambda\f$. It invokes the corresponding
-        function of the DipolePhaseFunction class; see there for more information. */
-    double generateCosineFromPhaseFunction(double lambda) const override;
+    /** This function returns the scattering opacity \f$k^\text{sca}=n\varsigma^\text{sca}\f$ for
+        the given material state. The wavelength and photon properties are not used, because the
+        cross section is considered to be equal to the Thomson cross section for all wavelengths.
+        */
+    double opacitySca(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
 
-    //======== Polarization through scattering by spherical particles =======
+    /** This function returns the extinction opacity \f$k^\text{ext}=k^\text{abs}+k^\text{sca}\f$
+        for the given material state. The wavelength and photon properties are not used, because
+        the cross section is considered to be equal to the Thomson cross section for all
+        wavelengths. */
+    double opacityExt(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
 
-public:
-    /** This function returns the value of the scattering phase function
-        \f$\Phi_\lambda(\theta,\phi)\f$ at wavelength \f$\lambda\f$ for the specified scattering
-        angles \f$\theta\f$ and \f$\phi\f$, and for the specified incoming polarization state. The
-        phase function is normalized as \f[\int\Phi_\lambda(\theta,\phi) \,\mathrm{d}\Omega
-        =4\pi.\f] It invokes the corresponding function of the DipolePhaseFunction class; see there
-        for more information. */
-    double phaseFunctionValue(double lambda, double theta, double phi, const StokesVector* sv) const override;
+    /** This function calculates the contribution of the medium component associated with this
+        material mix to the peel-off photon luminosity, polarization state, and wavelength shift
+        for the given wavelength, geometry, material state, and photon properties. See the
+        description of the MaterialMix::peeloffScattering() function for more information.
 
-    /** This function generates random scattering angles \f$\theta\f$ and \f$\phi\f$ sampled from
-        the phase function \f$\Phi_\lambda(\theta,\phi)\f$ at wavelength \f$\lambda\f$, and for the
-        specified incoming polarization state. It invokes the corresponding function of the
-        DipolePhaseFunction class; see there for more information. The results are returned as a
-        pair of numbers in the order \f$\theta\f$ and \f$\phi\f$. */
-    std::pair<double, double> generateAnglesFromPhaseFunction(double lambda, const StokesVector* sv) const override;
+        For electrons, the function implements wavelenth-independent dipole scattering without or
+        with support for polarization depending on the user-configured \em includePolarization
+        property. */
+    void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w, Direction bfkobs,
+                           Direction bfky, const MaterialState* state, PhotonPacket* pp) const override;
 
-    /** This function applies the Mueller matrix transformation for the specified wavelength
-        \f$\lambda\f$ and scattering angle \f$\theta\f$ to the given polarization state (which
-        serves as both input and output for the function). It invokes the corresponding function of
-        the DipolePhaseFunction class; see there for more information. */
-    void applyMueller(double lambda, double theta, StokesVector* sv) const override;
-
-    //======== Temperature and emission =======
-
-    /** This function returns the equilibrium temperature \f$T_{\text{eq}}\f$ of the material mix
-        when it would be embedded in a given radiation field. Because electrons don't absorb nor
-        emit (within the range of physics supported here), the implementation in this class ignores
-        the input radiation field and always returns zero. */
-    double equilibriumTemperature(const Array& Jv) const override;
-
-    /** This function returns the emissivity spectrum \f$\varepsilon_{\ell'}\f$ of the material mix
-        when it would be embedded in a given radiation field. Because electrons don't absorb nor
-        emit (within the range of physics supported here), the implementation in this class ignores
-        the input radiation field and always returns an empty array. */
-    Array emissivity(const Array& Jv) const override;
+    /** This function performs a scattering event on the specified photon packet in the spatial
+        cell and medium component represented by the specified material state and the receiving
+        material mix. For electrons, the function implements wavelenth-independent dipole
+        scattering without or with support for polarization depending on the user-configured \em
+        includePolarization property. */
+    void performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const override;
 
     //======================== Data Members ========================
 

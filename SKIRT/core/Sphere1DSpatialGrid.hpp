@@ -71,10 +71,13 @@ public:
         the unit sphere to generate a random position from the cell. */
     Position randomPositionInCell(int m) const override;
 
-    /** This function calculates a path through the grid. The SpatialGridPath object passed as an
-        argument specifies the starting position \f${\bf{r}}\f$ and the direction \f${\bf{k}}\f$
-        for the path. The data on the calculated path are added back into the same object. */
-    void path(SpatialGridPath* path) const override;
+    /** This function creates and hands over ownership of a path segment generator (an instance of
+        a PathSegmentGenerator subclass) appropriate for a spherical grid, implemented as a private
+        PathSegmentGenerator subclass.
+
+        The algorithm used to construct the path is fairly straightforward because of the symmetry
+        in the grid. */
+    std::unique_ptr<PathSegmentGenerator> createPathSegmentGenerator() const override;
 
 protected:
     /** This function writes the intersection of the grid with the xy plane to the specified
@@ -86,6 +89,10 @@ protected:
 private:
     int _Nr{0};
     Array _rv;
+
+    // allow our path segment generator to access our private data members
+    class MySegmentGenerator;
+    friend class MySegmentGenerator;
 };
 
 ////////////////////////////////////////////////////////////////////

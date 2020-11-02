@@ -4,22 +4,17 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "MonteCarloSimulation.hpp"
-#include "DisjointWavelengthGrid.hpp"
 #include "FatalError.hpp"
 #include "Log.hpp"
-#include "LyaUtils.hpp"
-#include "MaterialMix.hpp"
 #include "Parallel.hpp"
 #include "ParallelFactory.hpp"
 #include "PhotonPacket.hpp"
 #include "ProcessManager.hpp"
 #include "SecondarySourceSystem.hpp"
 #include "ShortArray.hpp"
-#include "SpatialGrid.hpp"
 #include "SpecialFunctions.hpp"
 #include "StringUtils.hpp"
 #include "TimeLogger.hpp"
-#include "VoigtProfile.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -48,9 +43,6 @@ void MonteCarloSimulation::setupSelfBefore()
 {
     Simulation::setupSelfBefore();
 
-    // initialize the dipole phase function helper if the configuration includes Lyman-alpha
-    if (_config->hasLymanAlpha()) _dpf.initialize(random(), _config->hasPolarization());
-
     // construct a secondary source system to help launch secondary photon packets if required
     if (_config->hasSecondaryEmission()) _secondarySourceSystem = new SecondarySourceSystem(this);
 }
@@ -70,8 +62,11 @@ void MonteCarloSimulation::runSimulation()
     {
         TimeLogger logger(log(), "the run");
 
-        // primary emission segment
-        runPrimaryEmission();
+        // primary emission segment, possibly with dynamic medium state iterations
+        if (_config->hasDynamicState() && sourceSystem()->luminosity())
+            runPrimaryEmissionWithDynamicState();
+        else
+            runPrimaryEmission();
 
         // dust self-absorption iteration segments
         if (_config->hasDustSelfAbsorption()) runDustSelfAbsorptionPhase();
@@ -130,6 +125,103 @@ void MonteCarloSimulation::runPrimaryEmission()
 
 ////////////////////////////////////////////////////////////////////
 
+void MonteCarloSimulation::runPrimaryEmissionWithDynamicState()
+{
+    // when this function is called
+    //  - the number of photon packets and the source luminosity are guaranteed to be nonzero
+    //  - the data structures to store the radiation field are guaranteed to exist
+
+    TimeLogger logger(log(), "the primary emission phase");
+
+    // get the parallel engine
+    auto parallel = find<ParallelFactory>()->parallelDistributed();
+
+    // get the parameters controlling the dynamic state iteration
+    size_t Npp = _config->numDynamicStatePackets();
+    int minIters = _config->minDynamicStateIterations();
+    int maxIters = _config->maxDynamicStateIterations();
+
+    // prepare the source system for the appropriate number of packets
+    sourceSystem()->prepareForLaunch(Npp);
+
+    // loop over the dynamic state iterations; the loop exits
+    //   - if convergence is reached after the minimum number of iterations, or
+    //   - if the maximum number of iterations has completed, even if there is no convergence
+    int iter = 0;
+    while (true)
+    {
+        ++iter;
+        bool converged = false;
+        {
+            string segment = "dynamic medium state iteration " + std::to_string(iter);
+            TimeLogger logger(log(), segment);
+
+            // clear the radiation field
+            mediumSystem()->clearRadiationField(true);
+
+            // launch photon packets
+            initProgress(segment, Npp);
+            parallel->call(Npp, [this](size_t i, size_t n) { performLifeCycle(i, n, true, false, true); });
+            instrumentSystem()->flush();
+
+            // wait for all processes to finish and synchronize the radiation field
+            wait(segment);
+            mediumSystem()->communicateRadiationField(true);
+
+            // update the medium state based on the newly established radiation field
+            converged = mediumSystem()->updateDynamicMediumState();
+        }
+
+        // force at least the minimum number of iterations
+        if (converged && iter < minIters)
+        {
+            log()->info("Convergence reached but continuing until " + std::to_string(minIters)
+                        + " iterations have been performed");
+        }
+        // exit the loop if convergence has been reached after at least the minimum number of iterations
+        else if (converged && iter >= minIters)
+        {
+            log()->info("Convergence reached after " + std::to_string(iter) + " iterations");
+            break;
+        }
+        // continue if convergence has not been reached after fewer than the maximum number of iterations
+        else if (!converged && iter < maxIters)
+        {
+            log()->info("Convergence not yet reached after " + std::to_string(iter) + " iterations");
+        }
+        // exit the loop if convergence has not been reached after the maximum number of iterations
+        else if (!converged && iter >= maxIters)
+        {
+            log()->error("Convergence not yet reached after " + std::to_string(iter) + " iterations");
+            break;
+        }
+    }
+
+    // update the number of photon packets
+    Npp = _config->numPrimaryPackets();
+    sourceSystem()->prepareForLaunch(Npp);
+
+    // perform the final photon launching segment
+    {
+        string segment = "final primary emission";
+        TimeLogger logger(log(), segment);
+
+        // clear the radiation field
+        mediumSystem()->clearRadiationField(true);
+
+        // shoot photon packets
+        initProgress(segment, Npp);
+        parallel->call(Npp, [this](size_t i, size_t n) { performLifeCycle(i, n, true, true, true); });
+        instrumentSystem()->flush();
+
+        // wait for all processes to finish and synchronize the radiation field
+        wait(segment);
+        mediumSystem()->communicateRadiationField(true);
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
 void MonteCarloSimulation::runDustSelfAbsorptionPhase()
 {
     TimeLogger logger(log(), "the dust self-absorption phase");
@@ -183,8 +275,8 @@ void MonteCarloSimulation::runDustSelfAbsorptionPhase()
         }
 
         // determine and log the total absorbed luminosity
-        double Labsprim = mediumSystem()->totalAbsorbedLuminosity(true, MaterialMix::MaterialType::Dust);
-        double Labsdust = mediumSystem()->totalAbsorbedLuminosity(false, MaterialMix::MaterialType::Dust);
+        double Labsprim = mediumSystem()->totalAbsorbedDustLuminosity(true);
+        double Labsdust = mediumSystem()->totalAbsorbedDustLuminosity(false);
         log()->info("The total dust-absorbed primary luminosity is "
                     + StringUtils::toString(units()->obolluminosity(Labsprim), 'g') + " " + units()->ubolluminosity());
         log()->info("The total dust-absorbed dust luminosity in iteration " + std::to_string(iter) + " is "
@@ -307,7 +399,7 @@ void MonteCarloSimulation::logProgress(size_t numDone)
 namespace
 {
     // maximum number of photon packets processed between two invocations of infoIfElapsed()
-    const size_t logProgressChunkSize = 10000;
+    const size_t logProgressChunkSize = 1000;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -334,17 +426,49 @@ void MonteCarloSimulation::performLifeCycle(size_t firstIndex, size_t numIndices
                 // trace the packet through the media, if any
                 if (_config->hasMedium())
                 {
-                    double Lthreshold = pp.luminosity() / _config->minWeightReduction();
-                    int minScattEvents = _config->minScattEvents();
-                    while (true)
+                    if (_config->forceScattering())
                     {
-                        mediumSystem()->opticalDepth(&pp);
-                        if (store) storeRadiationField(&pp);
-                        simulatePropagation(&pp);
-                        if (pp.luminosity() <= 0 || (pp.luminosity() <= Lthreshold && pp.numScatt() >= minScattEvents))
-                            break;
-                        if (peel) peelOffScattering(&pp, &ppp);
-                        simulateScattering(&pp);
+                        // perform cycle with forced scattering
+                        double Lthreshold = pp.luminosity() / _config->minWeightReduction();
+                        int minScattEvents = _config->minScattEvents();
+                        while (true)
+                        {
+                            // calculate segments and optical depths for the complete path
+                            mediumSystem()->setOpticalDepths(&pp);
+
+                            // advance the packet
+                            if (store) storeRadiationField(&pp);
+                            simulateForcedPropagation(&pp);
+
+                            // if the packet's weight drops below the threshold, terminate it
+                            if (pp.luminosity() <= 0
+                                || (pp.luminosity() <= Lthreshold && pp.numScatt() >= minScattEvents))
+                                break;
+
+                            // process the scattering event
+                            if (peel) peelOffScattering(&pp, &ppp);
+                            mediumSystem()->simulateScattering(random(), &pp);
+                        }
+                    }
+                    else
+                    {
+                        // perform cycle without forced scattering
+                        while (true)
+                        {
+                            // generate a random interaction optical depth
+                            double tauscat = random()->expon();
+
+                            // find the physical interaction point corresponding to this optical depth
+                            // if the interaction optical depth is outside of the path, terminate the photon packet
+                            if (!mediumSystem()->setInteractionPoint(&pp, tauscat)) break;
+
+                            // advance the packet
+                            simulateNonForcedPropagation(&pp);
+
+                            // process the scattering event
+                            if (peel) peelOffScattering(&pp, &ppp);
+                            mediumSystem()->simulateScattering(random(), &pp);
+                        }
                     }
                 }
             }
@@ -383,7 +507,7 @@ void MonteCarloSimulation::peelOffEmission(const PhotonPacket* pp, PhotonPacket*
 void MonteCarloSimulation::storeRadiationField(const PhotonPacket* pp)
 {
     // use a faster version in case there are no kinematics
-    if (!_config->hasMovingMedia())
+    if (_config->hasConstantPerceivedWavelength())
     {
         int ell = _config->radiationFieldWLG()->bin(pp->wavelength());
         if (ell >= 0)
@@ -421,8 +545,8 @@ void MonteCarloSimulation::storeRadiationField(const PhotonPacket* pp)
             int m = segment.m;
             if (m >= 0)
             {
-                double lambda =
-                    pp->perceivedWavelength(mediumSystem()->bulkVelocity(m), _config->lyaExpansionRate() * segment.s);
+                double lambda = pp->perceivedWavelength(mediumSystem()->bulkVelocity(m),
+                                                        _config->hubbleExpansionRate() * segment.s);
                 int ell = _config->radiationFieldWLG()->bin(lambda);
                 if (ell >= 0)
                 {
@@ -440,7 +564,7 @@ void MonteCarloSimulation::storeRadiationField(const PhotonPacket* pp)
 
 ////////////////////////////////////////////////////////////////////
 
-void MonteCarloSimulation::simulatePropagation(PhotonPacket* pp)
+void MonteCarloSimulation::simulateForcedPropagation(PhotonPacket* pp)
 {
     // get the total optical depth
     double taupath = pp->totalOpticalDepth();
@@ -470,22 +594,9 @@ void MonteCarloSimulation::simulatePropagation(PhotonPacket* pp)
 
     // determine the physical position of the interaction point
     pp->findInteractionPoint(tau);
-    int m = pp->interactionCellIndex();
-    if (m < 0) throw FATALERROR("Cannot locate photon packet interaction point");
 
     // calculate the albedo for the cell containing the interaction point
-    // use a faster version in case there are no kinematics
-    double albedo;
-    if (!_config->hasMovingMedia())
-    {
-        albedo = mediumSystem()->albedo(pp->wavelength(), m);
-    }
-    else
-    {
-        double lambda = pp->perceivedWavelength(mediumSystem()->bulkVelocity(m),
-                                                _config->lyaExpansionRate() * pp->interactionDistance());
-        albedo = mediumSystem()->albedo(lambda, m);
-    }
+    double albedo = mediumSystem()->albedoForScattering(pp);
 
     // adjust the weight by the scattered fraction
     pp->applyBias(-expm1(-taupath) * albedo);
@@ -496,378 +607,47 @@ void MonteCarloSimulation::simulatePropagation(PhotonPacket* pp)
 
 ////////////////////////////////////////////////////////////////////
 
-namespace
+void MonteCarloSimulation::simulateNonForcedPropagation(PhotonPacket* pp)
 {
-    // This helper function returns the angle phi between the previous and current scattering planes
-    // given the normal to the previous scattering plane and the current and new propagation directions
-    // of the photon packet. The function returns a zero angle if the light is unpolarized or when the
-    // current scattering event is completely forward or backward.
-    double angleBetweenScatteringPlanes(Direction np, Direction kc, Direction kn)
-    {
-        Vec nc = Vec::cross(kc, kn);
-        nc /= nc.norm();
-        double cosphi = Vec::dot(np, nc);
-        double sinphi = Vec::dot(Vec::cross(np, nc), kc);
-        double phi = atan2(sinphi, cosphi);
-        if (std::isfinite(phi)) return phi;
-        return 0.;
-    }
+    // calculate the albedo for the cell containing the interaction point
+    double albedo = mediumSystem()->albedoForScattering(pp);
+
+    // adjust the weight by the albedo
+    pp->applyBias(albedo);
+
+    // advance the photon packet position
+    pp->propagate(pp->interactionDistance());
 }
 
 ////////////////////////////////////////////////////////////////////
 
 void MonteCarloSimulation::peelOffScattering(PhotonPacket* pp, PhotonPacket* ppp)
 {
-    // get the cell hosting the scattering event
-    int m = pp->interactionCellIndex();
+    // determine the perceived wavelength at the scattering location
+    double lambda = mediumSystem()->perceivedWavelengthForScattering(pp);
 
-    // get the bulk velocity of the material in that cell and determine the perceived wavelength,
-    // Doppler-shifted from the incoming wavelength according to the bulk velocity;
-    // use a faster version in case there are no kinematics
-    Vec bfv;
-    double lambda;
-    if (!_config->hasMovingMedia())
-    {
-        lambda = pp->wavelength();
-    }
-    else
-    {
-        bfv = mediumSystem()->bulkVelocity(m);
-        lambda = pp->perceivedWavelength(bfv, _config->lyaExpansionRate() * pp->interactionDistance());
-    }
-
-    // determine the weighting factor for each medium component as its scattering opacity (n * sigma_sca)
-    int numMedia = mediumSystem()->numMedia();
-    ShortArray<8> wv(numMedia);
-    if (numMedia == 1)
-    {
-        wv[0] = 1.;
-    }
-    else
-    {
-        double sum = 0.;
-        for (int h = 0; h != numMedia; ++h)
-        {
-            wv[h] = mediumSystem()->opacitySca(lambda, m, h);
-            sum += wv[h];
-        }
-        if (sum <= 0) return;  // abort peel-off if none of the media scatters
-        for (int h = 0; h != numMedia; ++h) wv[h] /= sum;
-    }
+    // determine the scattering opacity weight for each medium component;
+    // abort if none of the media scatter this photon packet
+    ShortArray wv;
+    if (!mediumSystem()->weightsForScattering(wv, lambda, pp)) return;
 
     // now do the actual peel-off for each instrument
     for (Instrument* instr : _instrumentSystem->instruments())
     {
-        double localLambda = lambda;
-
         if (!instr->isSameObserverAsPreceding())
         {
-            // get the instrument direction
+            // get the direction towards the instrument and (for polarization only) its Y-axis orientation
             Direction bfkobs = instr->bfkobs(pp->position());
+            Direction bfky = _config->hasPolarization() ? instr->bfky(pp->position()) : Direction();
 
-            // calculate the weighted sum of the effects on the Stokes vector for all media
-            double I = 0., Q = 0., U = 0., V = 0.;
-            for (int h = 0; h != numMedia; ++h)
-            {
-                // use the appropriate algorithm for each mix
-                // (all mixes must either support polarization or not; combining these support levels is not allowed)
-                auto mix = mediumSystem()->mix(m, h);
-                switch (mix->scatteringMode())
-                {
-                    case MaterialMix::ScatteringMode::HenyeyGreenstein:
-                    {
-                        // calculate the value of the Henyey-Greenstein phase function
-                        double costheta = Vec::dot(pp->direction(), bfkobs);
-                        double g = mix->asymmpar(lambda);
-                        double t = 1.0 + g * g - 2 * g * costheta;
-                        double value = (1.0 - g) * (1.0 + g) / sqrt(t * t * t);
-
-                        // accumulate the weighted sum in the intensity (no support for polarization in this case)
-                        I += wv[h] * value;
-                        break;
-                    }
-                    case MaterialMix::ScatteringMode::MaterialPhaseFunction:
-                    {
-                        // calculate the value of the material-specific phase function
-                        double costheta = Vec::dot(pp->direction(), bfkobs);
-                        double value = mix->phaseFunctionValueForCosine(lambda, costheta);
-
-                        // accumulate the weighted sum in the intensity (no support for polarization in this case)
-                        I += wv[h] * value;
-                        break;
-                    }
-                    case MaterialMix::ScatteringMode::SphericalPolarization:
-                    case MaterialMix::ScatteringMode::SpheroidalPolarization:
-                    {
-                        // calculate the value of the material-specific phase function
-                        double theta = acos(Vec::dot(pp->direction(), bfkobs));
-                        double phi = angleBetweenScatteringPlanes(pp->normal(), pp->direction(), bfkobs);
-                        double value = mix->phaseFunctionValue(lambda, theta, phi, pp);
-
-                        // copy the polarization state so we can change it without affecting the incoming photon packet
-                        StokesVector sv = *pp;
-
-                        // rotate the Stokes vector reference direction into the scattering plane
-                        sv.rotateIntoPlane(pp->direction(), bfkobs);
-
-                        // apply the Mueller matrix
-                        mix->applyMueller(lambda, theta, &sv);
-
-                        // rotate the Stokes vector reference direction parallel to the instrument frame y-axis
-                        // it is given bfkobs because the photon is at this point aimed towards the observer
-                        sv.rotateIntoPlane(bfkobs, instr->bfky(pp->position()));
-
-                        // acumulate the weighted sum of all Stokes components to support polarization
-                        double w = wv[h] * value;
-                        I += w * sv.stokesI();
-                        Q += w * sv.stokesQ();
-                        U += w * sv.stokesU();
-                        V += w * sv.stokesV();
-                        break;
-                    }
-                    case MaterialMix::ScatteringMode::Lya:
-                    {
-                        // draw a random atom velocity & phase function, unless a previous peel-off stored this already
-                        if (!pp->hasLyaScatteringInfo())
-                        {
-                            double T = mediumSystem()->gasTemperature(m);
-                            double nH = _mediumSystem->numberDensity(m, _config->lyaMediumIndex());
-                            pp->setLyaScatteringInfo(
-                                LyaUtils::sampleAtomVelocity(lambda, T, nH, pp->direction(), _config, random()));
-                        }
-
-                        // calculate the value of the appropriate phase function (dipole or isotropic)
-                        double costheta = Vec::dot(pp->direction(), bfkobs);
-                        double value = pp->lyaDipole() ? _dpf.phaseFunctionValueForCosine(costheta) : 1.;
-
-                        // accumulate the weighted sum in the intensity (no support for polarization in this case)
-                        I += wv[h] * value;
-
-                        // for a random fraction of the events governed by the relative Lya contribution,
-                        // Doppler-shift the photon packet wavelength into and out of the atom frame
-                        if (random()->uniform() <= wv[h])
-                            localLambda =
-                                LyaUtils::shiftWavelength(localLambda, pp->lyaAtomVelocity(), pp->direction(), bfkobs);
-                        break;
-                    }
-                    case MaterialMix::ScatteringMode::LyaPolarization:
-                    {
-                        // draw a random atom velocity & phase function, unless a previous peel-off stored this already
-                        if (!pp->hasLyaScatteringInfo())
-                        {
-                            double T = mediumSystem()->gasTemperature(m);
-                            double nH = _mediumSystem->numberDensity(m, _config->lyaMediumIndex());
-                            pp->setLyaScatteringInfo(
-                                LyaUtils::sampleAtomVelocity(lambda, T, nH, pp->direction(), _config, random()));
-                        }
-
-                        // copy the polarization state so we can change it without affecting the incoming photon packet
-                        StokesVector sv = *pp;
-
-                        // calculate the value of the appropriate phase function (dipole or isotropic)
-                        // and adjust the polarization state
-                        double value = 0.;
-                        if (pp->lyaDipole())
-                        {
-                            // calculate the value of the dipole phase function
-                            double theta = acos(Vec::dot(pp->direction(), bfkobs));
-                            double phi = angleBetweenScatteringPlanes(pp->normal(), pp->direction(), bfkobs);
-                            value = _dpf.phaseFunctionValue(theta, phi, pp);
-
-                            // rotate the Stokes vector reference direction into the scattering plane
-                            sv.rotateIntoPlane(pp->direction(), bfkobs);
-
-                            // apply the Mueller matrix
-                            _dpf.applyMueller(theta, &sv);
-
-                            // rotate the Stokes vector reference direction parallel to the instrument frame y-axis
-                            // it is given bfkobs because the photon is at this point aimed towards the observer
-                            sv.rotateIntoPlane(bfkobs, instr->bfky(pp->position()));
-                        }
-                        else
-                        {
-                            value = 1.;
-                            sv.setUnpolarized();
-                        }
-
-                        // acumulate the weighted sum of all Stokes components to support polarization
-                        double w = wv[h] * value;
-                        I += w * sv.stokesI();
-                        Q += w * sv.stokesQ();
-                        U += w * sv.stokesU();
-                        V += w * sv.stokesV();
-
-                        // for a random fraction of the events governed by the relative Lya contribution,
-                        // Doppler-shift the photon packet wavelength into and out of the atom frame
-                        if (random()->uniform() <= wv[h])
-                            localLambda =
-                                LyaUtils::shiftWavelength(localLambda, pp->lyaAtomVelocity(), pp->direction(), bfkobs);
-                        break;
-                    }
-                }
-            }
-
-            // if the material in the cell has a nonzero bulk velocity, determine the Doppler-shifted wavelength
-            double emissionLambda =
-                bfv.isNull() ? localLambda : PhotonPacket::shiftedEmissionWavelength(localLambda, bfkobs, bfv);
-
-            // pass the result to the peel-off photon packet and have it detected
-            ppp->launchScatteringPeelOff(pp, bfkobs, emissionLambda, I);
-            if (_config->hasPolarization()) ppp->setPolarized(I, Q, U, V, pp->normal());
+            // calculate peel-off for all medium components and launch the peel-off photon packet
+            // (all media must either support polarization or not; combining these support levels is not allowed)
+            mediumSystem()->peelOffScattering(lambda, wv, bfkobs, bfky, pp, ppp);
         }
+
+        // have the peel-off photon packet detected
         instr->detect(ppp);
     }
-}
-
-////////////////////////////////////////////////////////////////////
-
-void MonteCarloSimulation::simulateScattering(PhotonPacket* pp)
-{
-    // locate the cell hosting the scattering event
-    int m = pp->interactionCellIndex();
-
-    // get the bulk velocity of the material in that cell and determine the perceived wavelength,
-    // Doppler-shifted from the incoming wavelength according to the bulk velocity;
-    // use a faster version in case there are no kinematics
-    Vec bfv;
-    double lambda;
-    if (!_config->hasMovingMedia())
-    {
-        lambda = pp->wavelength();
-    }
-    else
-    {
-        bfv = mediumSystem()->bulkVelocity(m);
-        lambda = pp->perceivedWavelength(bfv, _config->lyaExpansionRate() * pp->interactionDistance());
-    }
-
-    // randomly select a material mix; the probability of each component is weighted by the scattering opacity
-    auto mix = mediumSystem()->randomMixForScattering(random(), lambda, m);
-
-    // now perform the scattering using this material mix
-    //   - determine the new propagation direction
-    //   - if supported, update the polarization state of the photon packet along the way
-    Direction bfknew;
-    switch (mix->scatteringMode())
-    {
-        case MaterialMix::ScatteringMode::HenyeyGreenstein:
-        {
-            // sample a scattering angle from the Henyey-Greenstein phase function
-            // handle isotropic scattering separately because the HG sampling procedure breaks down in this case
-            double g = mix->asymmpar(lambda);
-            if (fabs(g) < 1e-6)
-            {
-                bfknew = random()->direction();
-            }
-            else
-            {
-                double f = ((1.0 - g) * (1.0 + g)) / (1.0 - g + 2.0 * g * random()->uniform());
-                double costheta = (1.0 + g * g - f * f) / (2.0 * g);
-                bfknew = random()->direction(pp->direction(), costheta);
-            }
-            break;
-        }
-        case MaterialMix::ScatteringMode::MaterialPhaseFunction:
-        {
-            // sample a scattering angle from the material-specific phase function
-            double costheta = mix->generateCosineFromPhaseFunction(lambda);
-            bfknew = random()->direction(pp->direction(), costheta);
-            break;
-        }
-        case MaterialMix::ScatteringMode::SphericalPolarization:
-        case MaterialMix::ScatteringMode::SpheroidalPolarization:
-        {
-            // sample the angles between the previous and new direction from the material-specific phase function,
-            // given the incoming polarization state
-            double theta, phi;
-            std::tie(theta, phi) = mix->generateAnglesFromPhaseFunction(lambda, pp);
-
-            // rotate the Stokes vector (and the scattering plane) of the photon packet
-            pp->rotateStokes(phi, pp->direction());
-
-            // apply Mueller matrix to the Stokes vector of the photon packet
-            mix->applyMueller(lambda, theta, pp);
-
-            // rotate the propagation direction in the scattering plane
-            Vec newdir = pp->direction() * cos(theta) + Vec::cross(pp->normal(), pp->direction()) * sin(theta);
-
-            // normalize the new direction to prevent degradation
-            bfknew = Direction(newdir / newdir.norm());
-            break;
-        }
-        case MaterialMix::ScatteringMode::Lya:
-        {
-            // draw a random atom velocity & phase function, unless a peel-off stored this already
-            if (!pp->hasLyaScatteringInfo())
-            {
-                double T = mediumSystem()->gasTemperature(m);
-                double nH = _mediumSystem->numberDensity(m, _config->lyaMediumIndex());
-                pp->setLyaScatteringInfo(
-                    LyaUtils::sampleAtomVelocity(lambda, T, nH, pp->direction(), _config, random()));
-            }
-
-            // draw the outgoing direction from the dipole or the isotropic phase function
-            if (pp->lyaDipole())
-            {
-                double costheta = _dpf.generateCosineFromPhaseFunction();
-                bfknew = random()->direction(pp->direction(), costheta);
-            }
-            else
-            {
-                bfknew = random()->direction();
-            }
-
-            // Doppler-shift the photon packet wavelength into and out of the atom frame
-            lambda = LyaUtils::shiftWavelength(lambda, pp->lyaAtomVelocity(), pp->direction(), bfknew);
-            break;
-        }
-        case MaterialMix::ScatteringMode::LyaPolarization:
-        {
-            // draw a random atom velocity & phase function, unless a peel-off stored this already
-            if (!pp->hasLyaScatteringInfo())
-            {
-                double T = mediumSystem()->gasTemperature(m);
-                double nH = _mediumSystem->numberDensity(m, _config->lyaMediumIndex());
-                pp->setLyaScatteringInfo(
-                    LyaUtils::sampleAtomVelocity(lambda, T, nH, pp->direction(), _config, random()));
-            }
-
-            // draw the outgoing direction from the dipole or the isotropic phase function
-            // and update the polarization state of the photon packet accordingly
-            if (pp->lyaDipole())
-            {
-                // sample the angles between the previous and new direction from the dipole phase function,
-                // given the incoming polarization state
-                double theta, phi;
-                std::tie(theta, phi) = _dpf.generateAnglesFromPhaseFunction(pp);
-
-                // rotate the Stokes vector (and the scattering plane) of the photon packet
-                pp->rotateStokes(phi, pp->direction());
-
-                // apply Mueller matrix to the Stokes vector of the photon packet
-                _dpf.applyMueller(theta, pp);
-
-                // rotate the propagation direction in the scattering plane
-                Vec newdir = pp->direction() * cos(theta) + Vec::cross(pp->normal(), pp->direction()) * sin(theta);
-
-                // normalize the new direction to prevent degradation
-                bfknew = Direction(newdir / newdir.norm());
-            }
-            else
-            {
-                bfknew = random()->direction();
-                pp->setUnpolarized();
-            }
-
-            // Doppler-shift the photon packet wavelength into and out of the atom frame
-            lambda = LyaUtils::shiftWavelength(lambda, pp->lyaAtomVelocity(), pp->direction(), bfknew);
-            break;
-        }
-    }
-
-    // if the material in the cell has a nonzero bulk velocity, determine the Doppler-shifted outgoing wavelength
-    if (!bfv.isNull()) lambda = PhotonPacket::shiftedEmissionWavelength(lambda, bfknew, bfv);
-    pp->scatter(bfknew, lambda);
 }
 
 ////////////////////////////////////////////////////////////////////

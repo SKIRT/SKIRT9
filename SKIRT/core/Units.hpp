@@ -103,6 +103,14 @@ public:
         the program's output units. */
     double ograinsize(double a) const;
 
+    /** This function returns a string containing the name of the unit of inverse dust grain size
+        adopted by the program for output. */
+    string upergrainsize() const;
+
+    /** This function converts a quantity with units of inverse dust grain size from the internally
+        used SI units (1/m) to the program's output units. */
+    double opergrainsize(double a) const;
+
     /** This function returns a string containing the name of the unit of cross section adopted by
         the program for output. */
     string usection() const;

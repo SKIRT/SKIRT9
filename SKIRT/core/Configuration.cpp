@@ -10,7 +10,6 @@
 #include "MaterialMix.hpp"
 #include "MaterialWavelengthRangeInterface.hpp"
 #include "MonteCarloSimulation.hpp"
-#include "MultiGrainDustMix.hpp"
 #include "NR.hpp"
 #include "OligoWavelengthDistribution.hpp"
 #include "OligoWavelengthGrid.hpp"
@@ -80,6 +79,7 @@ void Configuration::setupSelfBefore()
     if (_hasMedium)
     {
         _numDensitySamples = ms->numDensitySamples();
+        _forceScattering = ms->photonPacketOptions()->forceScattering();
         _minWeightReduction = ms->photonPacketOptions()->minWeightReduction();
         _minScattEvents = ms->photonPacketOptions()->minScattEvents();
         _pathLengthBias = ms->photonPacketOptions()->pathLengthBias();
@@ -90,7 +90,8 @@ void Configuration::setupSelfBefore()
         || sim->simulationMode() == MonteCarloSimulation::SimulationMode::ExtinctionOnly
         || sim->simulationMode() == MonteCarloSimulation::SimulationMode::LyaWithDustExtinction)
     {
-        _hasRadiationField = ms->extinctionOnlyOptions()->storeRadiationField();
+        // the non-forced photon cycle does not support storing a radiation field
+        _hasRadiationField = _forceScattering && ms->extinctionOnlyOptions()->storeRadiationField();
         if (_hasRadiationField)
         {
             _radiationFieldWLG = _oligochromatic ? dynamic_cast<OligoWavelengthGrid*>(_defaultWavelengthGrid)
@@ -103,6 +104,8 @@ void Configuration::setupSelfBefore()
     if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustEmission
         || sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustEmissionWithSelfAbsorption)
     {
+        // the non-forced photon cycle does not support storing a radiation field
+        _forceScattering = true;
         _hasRadiationField = true;
         _hasPanRadiationField = true;
         _hasDustEmission = true;
@@ -110,7 +113,7 @@ void Configuration::setupSelfBefore()
         {
             // verify that all dust mixes are multi-grain when requesting stochastic heating
             for (auto medium : ms->media())
-                if (medium->mix()->isDust() && !dynamic_cast<const MultiGrainDustMix*>(medium->mix()))
+                if (medium->mix()->isDust() && !medium->mix()->hasStochasticDustEmission())
                     throw FATALERROR("When requesting stochastic heating, all dust mixes must be multi-grain");
             _hasStochasticDustEmission = true;
         }
@@ -136,17 +139,16 @@ void Configuration::setupSelfBefore()
         _hasDustSelfAbsorption = true;
         _hasSecondaryRadiationField = true;
         _minIterations = ms->dustSelfAbsorptionOptions()->minIterations();
-        _maxIterations = ms->dustSelfAbsorptionOptions()->maxIterations();
+        _maxIterations = max(_minIterations, ms->dustSelfAbsorptionOptions()->maxIterations());
         _maxFractionOfPrimary = ms->dustSelfAbsorptionOptions()->maxFractionOfPrimary();
         _maxFractionOfPrevious = ms->dustSelfAbsorptionOptions()->maxFractionOfPrevious();
         _numIterationPackets = sim->numPackets() * ms->dustSelfAbsorptionOptions()->iterationPacketsMultiplier();
     }
 
     // retrieve Lyman-alpha options
-    bool hasLymanAlpha = false;
     if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::LyaWithDustExtinction)
     {
-        hasLymanAlpha = true;
+        _hasLymanAlpha = true;
         switch (ms->lyaOptions()->lyaAccelerationScheme())
         {
             case LyaOptions::LyaAccelerationScheme::None:
@@ -161,29 +163,31 @@ void Configuration::setupSelfBefore()
                 _lyaAccelerationStrength = ms->lyaOptions()->lyaAccelerationStrength();
                 break;
         }
-        if (ms->lyaOptions()->includeHubbleFlow()) _lyaExpansionRate = sim->cosmology()->relativeExpansionRate();
-
-        // force moving media even if there are no bulk velocities (which would be exceptional anyway);
-        // this automatically disables some optimizations that would not work for Lyman-alpha media
-        _hasMovingMedia = true;
+        if (ms->lyaOptions()->includeHubbleFlow()) _hubbleExpansionRate = sim->cosmology()->relativeExpansionRate();
     }
 
-    // verify that there is exactly one Lya medium component if required, and none if not required
+    // retrieve dynamic state options (only enable dynamic state if there are photon packets to be launched)
+    if (_hasMedium && _hasPanRadiationField && !_hasLymanAlpha && ms->dynamicStateOptions()
+        && ms->dynamicStateOptions()->hasDynamicState())
+    {
+        _numDynamicStatePackets = _numPrimaryPackets * ms->dynamicStateOptions()->iterationPacketsMultiplier();
+        if (_numPrimaryPackets > 0. && _numDynamicStatePackets > 0.)
+        {
+            _hasDynamicState = true;
+            _minDynamicStateIterations = ms->dynamicStateOptions()->minIterations();
+            _maxDynamicStateIterations = max(_minDynamicStateIterations, ms->dynamicStateOptions()->maxIterations());
+        }
+    }
+
+    // verify that there is a Lya medium component if required, and none if not required
     int numLyaMedia = 0;
     for (int h = 0; h != numMedia; ++h)
     {
-        auto mode = ms->media()[h]->mix()->scatteringMode();
-        if (mode == MaterialMix::ScatteringMode::Lya || mode == MaterialMix::ScatteringMode::LyaPolarization)
-        {
-            numLyaMedia++;
-            _lyaMediumIndex = h;
-        }
+        if (ms->media()[h]->mix()->hasResonantScattering()) numLyaMedia++;
     }
-    if (hasLymanAlpha && numLyaMedia < 1)
+    if (_hasLymanAlpha && numLyaMedia < 1)
         throw FATALERROR("Lyman-alpha simulation mode requires a medium component with Lyman-alpha material mix");
-    if (hasLymanAlpha && numLyaMedia > 1)
-        throw FATALERROR("It is not allowed for more than one medium component to have a Lyman-alpha material mix");
-    if (!hasLymanAlpha && numLyaMedia > 0)
+    if (!_hasLymanAlpha && numLyaMedia > 0)
         throw FATALERROR("Lyman-alpha material mix is allowed only with Lyman-alpha simulation mode");
 
     // retrieve symmetry dimensions
@@ -212,12 +216,24 @@ void Configuration::setupSelfBefore()
         for (auto medium : ms->media())
             if (medium->hasVariableMix()) _hasVariableMedia = true;
 
+    // check for dependencies on extra specific state variables
+    bool hasExtraSpecificState = false;
+    if (_hasMedium)
+        for (auto medium : ms->media())
+            if (medium->mix()->hasExtraSpecificState()) hasExtraSpecificState = true;
+
+    // set the combined medium criteria
+    _hasConstantPerceivedWavelength = !_hasMovingMedia && !_hubbleExpansionRate;
+    bool _hasConstantSectionMedium = _hasConstantPerceivedWavelength && !_hasVariableMedia && !hasExtraSpecificState;
+    _hasSingleConstantSectionMedium = numMedia == 1 && _hasConstantSectionMedium;
+    _hasMultipleConstantSectionMedia = numMedia > 1 && _hasConstantSectionMedium;
+
     // check for polarization
     if (_hasMedium)
     {
         int numPolarization = 0;
         for (auto medium : ms->media())
-            if (medium->mix()->hasPolarization()) numPolarization++;
+            if (medium->mix()->hasPolarizedScattering()) numPolarization++;
         if (numPolarization != 0 && numPolarization != numMedia)
             throw FATALERROR("All media must consistenly support polarization, or not support polarization");
         _hasPolarization = numPolarization != 0;
@@ -227,8 +243,8 @@ void Configuration::setupSelfBefore()
     if (_hasPolarization)
     {
         for (auto medium : ms->media())
-            if (medium->mix()->scatteringMode() == MaterialMix::ScatteringMode::SpheroidalPolarization)
-                _hasSpheroidalPolarization = true;
+            if (medium->mix()->hasPolarizedAbsorption() || medium->mix()->hasPolarizedEmission())
+                _hasSpheroidalPolarization = true;  // this flag may need to be split over absorption and emission
     }
 
     // check for magnetic fields
@@ -253,8 +269,8 @@ void Configuration::setupSelfBefore()
     if (_hasSpheroidalPolarization && numMagneticFields != 1)
         throw FATALERROR("Polarization by spheroidal particles requires a magnetic field to determine alignment");
 
-    // prohibit non-identity-mapping cell libraries in combination with variable material mixes
-    if (_hasVariableMedia && _cellLibrary && !dynamic_cast<AllCellsLibrary*>(_cellLibrary))
+    // prohibit non-identity-mapping cell libraries in combination with spatially varying material mixes
+    if ((_hasVariableMedia || hasExtraSpecificState) && _cellLibrary && !dynamic_cast<AllCellsLibrary*>(_cellLibrary))
         throw FATALERROR("Cannot use spatial cell library in combination with spatially varying material mixes");
 
     // in case emulation mode has been set before our setup() was called, perform the emulation overrides again
@@ -277,7 +293,7 @@ void Configuration::setupSelfAfter()
     log->info("  " + regime + "chromatic wavelength regime");
     string medium = _hasMedium ? "With" : "No";
     log->info("  " + medium + " transfer medium");
-    if (_lyaMediumIndex >= 0) log->info("  Including Lyman-alpha line transfer");
+    if (_hasLymanAlpha) log->info("  Including Lyman-alpha line transfer");
     if (_hasDustSelfAbsorption)
         log->info("  Including dust emission with iterative calculation of dust self-absorption");
     else if (_hasDustEmission)
@@ -285,8 +301,8 @@ void Configuration::setupSelfAfter()
     if (_hasPolarization) log->info("  Including support for polarization");
     if (_hasMovingMedia) log->info("  Including support for kinematics");
 
-    // disable path length stretching for moving media (the wavelength shifts would be incorrectly sampled)
-    if (_hasMovingMedia && _pathLengthBias > 0.)
+    // disable path length stretching if the wavelength of a photon packet can change during its lifetime
+    if ((_hasMovingMedia || _hubbleExpansionRate || _hasLymanAlpha) && _pathLengthBias > 0.)
     {
         log->warning("  Disabling path length stretching to allow Doppler shifts to be properly sampled");
         _pathLengthBias = 0.;
@@ -336,6 +352,7 @@ void Configuration::setEmulationMode()
     _numPrimaryPackets = 0.;
     _numIterationPackets = 0.;
     _numSecondaryPackets = 0.;
+    _hasDynamicState = false;
     _minIterations = 1;
     _maxIterations = 1;
 }

@@ -76,9 +76,9 @@ void PhotonPacket::launchEmissionPeelOff(const PhotonPacket* pp, Direction bfk)
 
 ////////////////////////////////////////////////////////////////////
 
-void PhotonPacket::launchScatteringPeelOff(const PhotonPacket* pp, Direction bfk, double lambda, double w)
+void PhotonPacket::launchScatteringPeelOff(const PhotonPacket* pp, Direction bfk, Vec bfv, double lambda, double w)
 {
-    _lambda = lambda;
+    _lambda = bfv.isNull() ? lambda : shiftedEmissionWavelength(lambda, bfk, bfv);
     _W = pp->_W * w;
     _lambda0 = pp->_lambda0;
     _compIndex = pp->_compIndex;
@@ -100,11 +100,11 @@ void PhotonPacket::propagate(double s)
 
 ////////////////////////////////////////////////////////////////////
 
-void PhotonPacket::scatter(Direction bfk, double lambda)
+void PhotonPacket::scatter(Direction bfk, Vec bfv, double lambda)
 {
     _nscatt++;
     setDirection(bfk);
-    _lambda = lambda;
+    _lambda = bfv.isNull() ? lambda : shiftedEmissionWavelength(lambda, bfk, bfv);
     _hasObservedOpticalDepth = false;
     _hasLyaScatteringInfo = false;
 }

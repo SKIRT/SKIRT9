@@ -79,14 +79,35 @@ public:
         indicating that only the HenyeyGreenstein scattering mode can be used. */
     virtual string resourceNameForMuellerMatrix() const;
 
-    /** This function returns the name of the stored table resource tabulating the absorption
-        efficiencies \f$Q^\mathrm{abs}(a,\lambda,\theta)\f$ and the corresponding linear
-        polarization efficiencies \f$Q^\mathrm{abspol}(a,\lambda,\theta)\f$ as a function of grain
-        size \f$a\f$, wavelength \f$\lambda\f$ and emission angle \f$\theta\f$. This function is
-        invoked for the SpheroidalPolarization scattering mode. The default implementation in this
-        base class returns the empty string, indicating that there is no support for spheroidal
-        grains. */
-    virtual string resourceNameForSpheroidalEmission() const;
+    /** This function returns information on the resources required for implementing thermal
+        emission from aligned spheriodal grains. It is invoked for the SpheroidalPolarization
+        scattering mode. If the grain composition does not support this mode, the function returns
+        false and the output arguments remain unchanghed. If the grain composition does support
+        this mode, the function returns true and the output arguments are updated as follows:
+
+        - \em resource: true if the specified tables are built-in resources or false if they are
+        provided as user input files.
+
+        - \em interpol: the interpolation fraction between the two tables in range [0,1]; the value
+        is used to linearly interpolate between the two tables. A value of 0 means that the second
+        table is ignored, a value of 1 means that the first table is ignored. A value in between is
+        used to linearly interpolate between the two tables.
+
+        - \em tableName1: the name of the first stored table (resource or user input file); this
+        name must always be provided (i.e. non-empty and valid) even if \em interpol is equal to 1.
+
+        - \em tableName2: the name of the second stored table (resource or user input file); this
+        name may be missing (i.e. the empty string) if \em interpol is equal to 0.
+
+        Each of the stored tables tabulates the absorption efficiencies
+        \f$Q^\mathrm{abs}(a,\lambda,\theta)\f$ and the corresponding linear polarization
+        efficiencies \f$Q^\mathrm{abspol}(a,\lambda,\theta)\f$ as a function of grain size \f$a\f$,
+        wavelength \f$\lambda\f$ and emission angle \f$\theta\f$.
+
+        The default implementation in this base class returns false and does not change the output
+        arguments, indicating that there is no support for spheroidal grains. */
+    virtual bool resourcesForSpheroidalEmission(bool& resource, double& interpol, string& tableName1,
+                                                string& tableName2) const;
 
     /** This function returns the name of the stored table resource tabulating the specific
         enthalpies per unit volume as a function of temperature. */

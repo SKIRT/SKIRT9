@@ -28,6 +28,7 @@ class MeanPascucciBenchmarkDustMix : public SingleGrainDustMix
 
     //======================== Other Functions =======================
 
+protected:
     /** This function returns the name of the stored table resource tabulating the basic optical
         properties for this dust mix. */
     string resourceNameForOpticalProps() const override;

@@ -8,11 +8,8 @@
 
 #include "Array.hpp"
 #include "Snapshot.hpp"
+class PathSegmentGenerator;
 class SpatialGridPath;
-namespace AdaptiveMesh_Private
-{
-    class Node;
-}
 
 ////////////////////////////////////////////////////////////////////
 
@@ -158,9 +155,9 @@ public:
 
     /** This function adds neighbor information to all leaf nodes in the adaptive mesh. If should
         be called after the readAndClose() function has completed its operation, and before the
-        path() function is used. Specifically, the function causes each leaf node to remember its
-        most likely neighbor at each of its six walls. This information, while optional,
-        substantially accelerates the operation of the path() function. */
+        createPathSegmentGenerator() function is invoked. Specifically, the function causes each
+        leaf node to remember its most likely neighbor at each of its six walls. This information,
+        while optional, substantially accelerates path construction. */
     void addNeighbors();
 
     //=========== Interrogation ==========
@@ -279,15 +276,13 @@ public:
     //====================== Path construction =====================
 
 public:
-    /** This function calculates a path through the grid. The SpatialGridPath object passed as an
-        argument specifies the starting position \f${\bf{r}}\f$ and the direction \f${\bf{k}}\f$
-        for the path. The data on the calculated path are added back into the same object. See the
-        SpatialGridPath class for more information.
+    /** This function creates and hands over ownership of a path segment generator appropriate for
+        the adaptive mesh spatial grid, implemented as a private PathSegmentGenerator subclass.
 
-        The algorithm used to construct the path is fairly straightfoward because all cells are
+        The algorithm used to construct the path is fairly straightforward because all cells are
         cuboids lined up with the coordinate axes. The information added by the addNeighbors()
-        function significantly accelerates the operation of this function. */
-    void path(SpatialGridPath* path) const;
+        function significantly accelerates path construction. */
+    std::unique_ptr<PathSegmentGenerator> createPathSegmentGenerator() const;
 
     //======================== Data Members ========================
 
@@ -297,13 +292,18 @@ private:
     double _eps{0.};  // small fraction of extent
 
     // data members initialized when processing snapshot input
-    AdaptiveMesh_Private::Node* _root{nullptr};  // root node representing the complete domain
-    vector<AdaptiveMesh_Private::Node*> _cells;  // leaf nodes indexed on m
+    class Node;
+    Node* _root{nullptr};  // root node representing the complete domain
+    vector<Node*> _cells;  // leaf nodes indexed on m
 
     // data members initialized when processing snapshot input, but only if a density policy has been set
     Array _rhov;       // density for each cell (not normalized)
     Array _cumrhov;    // normalized cumulative density distribution for cells
     double _mass{0.};  // total effective mass
+
+    // allow our path segment generator to access our private data members
+    class MySegmentGenerator;
+    friend class MySegmentGenerator;
 };
 
 ////////////////////////////////////////////////////////////////////

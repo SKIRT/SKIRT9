@@ -4,9 +4,9 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "CartesianSpatialGrid.hpp"
-#include "FatalError.hpp"
 #include "Log.hpp"
 #include "NR.hpp"
+#include "PathSegmentGenerator.hpp"
 #include "Random.hpp"
 #include "SpatialGridPath.hpp"
 #include "SpatialGridPlotFile.hpp"
@@ -77,79 +77,88 @@ Position CartesianSpatialGrid::randomPositionInCell(int m) const
 
 //////////////////////////////////////////////////////////////////////
 
-void CartesianSpatialGrid::path(SpatialGridPath* path) const
+class CartesianSpatialGrid::MySegmentGenerator : public PathSegmentGenerator
 {
-    // If the photon packet starts outside the grid, move it inside;
-    // if this is impossible, return an empty path
-    double eps = 1e-12 * extent().widths().norm();
-    Position bfr = path->moveInside(extent(), eps);
-    if (!contains(bfr)) return path->clear();
+    const CartesianSpatialGrid* _grid{nullptr};
+    int _i{-1}, _j{-1}, _k{-1};
 
-    // Get the direction and the current position of the path
-    double kx, ky, kz;
-    path->direction().cartesian(kx, ky, kz);
-    double x, y, z;
-    bfr.cartesian(x, y, z);
+public:
+    MySegmentGenerator(const CartesianSpatialGrid* grid) : _grid(grid) {}
 
-    // Determine which grid cell we are in
-    int i = NR::locateClip(_xv, x);
-    int j = NR::locateClip(_yv, y);
-    int k = NR::locateClip(_zv, z);
-
-    // There we go...
-    double ds, dsx, dsy, dsz;
-    while (true)
+    bool next() override
     {
-        int m = index(i, j, k);
-        double xE = (kx < 0.0) ? _xv[i] : _xv[i + 1];
-        double yE = (ky < 0.0) ? _yv[j] : _yv[j + 1];
-        double zE = (kz < 0.0) ? _zv[k] : _zv[k + 1];
-        dsx = (fabs(kx) > 1e-15) ? (xE - x) / kx : DBL_MAX;
-        dsy = (fabs(ky) > 1e-15) ? (yE - y) / ky : DBL_MAX;
-        dsz = (fabs(kz) > 1e-15) ? (zE - z) / kz : DBL_MAX;
-        if (dsx <= dsy && dsx <= dsz)
+        switch (state())
         {
-            ds = dsx;
-            path->addSegment(m, ds);
-            i += (kx < 0.0) ? -1 : 1;
-            if (i >= _Nx || i < 0)
-                return;
-            else
+            case State::Unknown:
             {
-                x = xE;
-                y += ky * ds;
-                z += kz * ds;
+                // try moving the photon packet inside the grid; if this is impossible, return an empty path
+                if (!moveInside(_grid->extent(), 1e-12 * _grid->extent().widths().norm())) return false;
+
+                // determine which grid cell we are in
+                _i = NR::locateClip(_grid->_xv, rx());
+                _j = NR::locateClip(_grid->_yv, ry());
+                _k = NR::locateClip(_grid->_zv, rz());
+
+                // if the photon packet started outside the grid, return the corresponding nonzero-length segment;
+                // otherwise fall through to determine the first actual segment
+                if (ds() > 0.) return true;
+            }
+
+            case State::Inside:
+            {
+                // determine the segment from the current position to the first cell wall
+                // and adjust the position and cell indices accordingly
+                int m = _grid->index(_i, _j, _k);
+                double xE = (kx() < 0.0) ? _grid->_xv[_i] : _grid->_xv[_i + 1];
+                double yE = (ky() < 0.0) ? _grid->_yv[_j] : _grid->_yv[_j + 1];
+                double zE = (kz() < 0.0) ? _grid->_zv[_k] : _grid->_zv[_k + 1];
+                double dsx = (fabs(kx()) > 1e-15) ? (xE - rx()) / kx() : DBL_MAX;
+                double dsy = (fabs(ky()) > 1e-15) ? (yE - ry()) / ky() : DBL_MAX;
+                double dsz = (fabs(kz()) > 1e-15) ? (zE - rz()) / kz() : DBL_MAX;
+
+                if (dsx <= dsy && dsx <= dsz)
+                {
+                    setSegment(m, dsx);
+                    setrx(xE);
+                    propagatery(dsx);
+                    propagaterz(dsx);
+                    _i += (kx() < 0.0) ? -1 : 1;
+                    if (_i >= _grid->_Nx || _i < 0) setState(State::Outside);
+                }
+                else if (dsy < dsx && dsy <= dsz)
+                {
+                    setSegment(m, dsy);
+                    setry(yE);
+                    propagaterx(dsy);
+                    propagaterz(dsy);
+                    _j += (ky() < 0.0) ? -1 : 1;
+                    if (_j >= _grid->_Ny || _j < 0) setState(State::Outside);
+                }
+                else  // if (dsz < dsx && dsz < dsy)
+                {
+                    setSegment(m, dsz);
+                    setrz(zE);
+                    propagaterx(dsz);
+                    propagatery(dsz);
+                    _k += (kz() < 0.0) ? -1 : 1;
+                    if (_k >= _grid->_Nz || _k < 0) setState(State::Outside);
+                }
+                return true;
+            }
+
+            case State::Outside:
+            {
             }
         }
-        else if (dsy < dsx && dsy <= dsz)
-        {
-            ds = dsy;
-            path->addSegment(m, ds);
-            j += (ky < 0.0) ? -1 : 1;
-            if (j >= _Ny || j < 0)
-                return;
-            else
-            {
-                x += kx * ds;
-                y = yE;
-                z += kz * ds;
-            }
-        }
-        else if (dsz < dsx && dsz < dsy)
-        {
-            ds = dsz;
-            path->addSegment(m, ds);
-            k += (kz < 0.0) ? -1 : 1;
-            if (k >= _Nz || k < 0)
-                return;
-            else
-            {
-                x += kx * ds;
-                y += ky * ds;
-                z = zE;
-            }
-        }
+        return false;
     }
+};
+
+//////////////////////////////////////////////////////////////////////
+
+std::unique_ptr<PathSegmentGenerator> CartesianSpatialGrid::createPathSegmentGenerator() const
+{
+    return std::make_unique<MySegmentGenerator>(this);
 }
 
 //////////////////////////////////////////////////////////////////////

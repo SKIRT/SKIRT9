@@ -15,7 +15,7 @@
     default instrument wavelength grid. For each medium component, the probe retrieves a
     representative material mix (the mix at the origin of the model coordinate system) and creates
     a file with the key optical properties for that mix. The files are named
-    <tt>prefix_probe_opticalprops_N.fits</tt> where N is replaced with the zero-based index of the
+    <tt>prefix_probe_opticalprops_N.dat</tt> where N is replaced with the zero-based index of the
     medium in the configuration (i.e. in the ski file).
 
     The first line in each file indicates the fundamental material type (i.e. dust, electrons, or

@@ -32,17 +32,25 @@
     no difference between both sets of maps). */
 class PlanarMediaDensityCutsProbe : public AbstractPlanarCutsProbe
 {
+    /** The enumeration type indicating when probing occurs. */
+    ENUM_DEF(ProbeAfter, Setup, Run)
+        ENUM_VAL(ProbeAfter, Setup, "after setup")
+        ENUM_VAL(ProbeAfter, Run, "after the complete simulation run")
+    ENUM_END()
+
     ITEM_CONCRETE(PlanarMediaDensityCutsProbe, AbstractPlanarCutsProbe,
                   "cuts of the media densities along planes parallel to the coordinate planes")
         ATTRIBUTE_TYPE_DISPLAYED_IF(PlanarMediaDensityCutsProbe, "Level2&Medium&SpatialGrid")
+
+        PROPERTY_ENUM(probeAfter, ProbeAfter, "when to probe the medium state")
+        ATTRIBUTE_DEFAULT_VALUE(probeAfter, "Setup")
+        ATTRIBUTE_DISPLAYED_IF(probeAfter, "HasDynamicState")
+
     ITEM_END()
 
     //======================== Other Functions =======================
 
 public:
-    /** This function performs probing after setup. */
-    void probeSetup() override;
-
     /** This function outputs FITS files with the theoretical and grid density for each material
         type in a plane parallel to the coordinate plane indicated by the boolean "direction"
         arguments \em xd, \em yd, and \em zd, exactly two of which must be true. The arguments \em
@@ -50,6 +58,19 @@ public:
         and \em Nz specify the number of pixels in each direction. */
     static void writeMediaDensityCuts(Probe* probe, bool xd, bool yd, bool zd, double xc, double yc, double zc, int Nx,
                                       int Ny, int Nz);
+
+    /** This function performs probing after setup. It produces output only if the \em
+        probeAfter property is set to Setup. */
+    void probeSetup() override;
+
+    /** This function performs probing after all photon packets have been emitted and detected. It
+        produces output only if the \em probeAfter property is set to Run. */
+    void probeRun() override;
+
+private:
+    /** This function performs the probing; it is called from probeSetup() or probeRun() depending
+        on the value of the \em probeAfter property. */
+    void probe();
 };
 
 ////////////////////////////////////////////////////////////////////

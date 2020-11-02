@@ -6,9 +6,10 @@
 #include "DustMix.hpp"
 #include "Configuration.hpp"
 #include "Log.hpp"
+#include "MaterialState.hpp"
 #include "NR.hpp"
+#include "PhotonPacket.hpp"
 #include "Random.hpp"
-#include "StokesVector.hpp"
 #include "StringUtils.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -219,6 +220,13 @@ MaterialMix::MaterialType DustMix::materialType() const
 
 ////////////////////////////////////////////////////////////////////
 
+vector<StateVariable> DustMix::specificStateVariableInfo() const
+{
+    return vector<StateVariable>{StateVariable::numberDensity()};
+}
+
+////////////////////////////////////////////////////////////////////
+
 double DustMix::mass() const
 {
     return _mu;
@@ -250,6 +258,177 @@ double DustMix::sectionExt(double lambda) const
 double DustMix::asymmpar(double lambda) const
 {
     return _asymmparv[indexForLambda(lambda)];
+}
+
+////////////////////////////////////////////////////////////////////
+
+double DustMix::opacityAbs(double lambda, const MaterialState* state, const PhotonPacket* /*pp*/) const
+{
+    double n = state->numberDensity();
+    return n > 0. ? n * _sigmaabsv[indexForLambda(lambda)] : 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double DustMix::opacitySca(double lambda, const MaterialState* state, const PhotonPacket* /*pp*/) const
+{
+    double n = state->numberDensity();
+    return n > 0. ? n * _sigmascav[indexForLambda(lambda)] : 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double DustMix::opacityExt(double lambda, const MaterialState* state, const PhotonPacket* /*pp*/) const
+{
+    double n = state->numberDensity();
+    return n > 0. ? n * _sigmaextv[indexForLambda(lambda)] : 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+namespace
+{
+    // This helper function returns the angle phi between the previous and current scattering planes
+    // given the normal to the previous scattering plane and the current and new propagation directions
+    // of the photon packet. The function returns a zero angle if the light is unpolarized or when the
+    // current scattering event is completely forward or backward.
+    double angleBetweenScatteringPlanes(Direction np, Direction kc, Direction kn)
+    {
+        Vec nc = Vec::cross(kc, kn);
+        nc /= nc.norm();
+        double cosphi = Vec::dot(np, nc);
+        double sinphi = Vec::dot(Vec::cross(np, nc), kc);
+        double phi = atan2(sinphi, cosphi);
+        if (std::isfinite(phi)) return phi;
+        return 0.;
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
+void DustMix::peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w, Direction bfkobs,
+                                Direction bfky, const MaterialState* /*state*/, PhotonPacket* pp) const
+{
+    switch (scatteringMode())
+    {
+        case DustMix::ScatteringMode::HenyeyGreenstein:
+        {
+            // calculate the value of the Henyey-Greenstein phase function
+            double costheta = Vec::dot(pp->direction(), bfkobs);
+            double g = asymmpar(lambda);
+            double t = 1.0 + g * g - 2 * g * costheta;
+            double value = (1.0 - g) * (1.0 + g) / sqrt(t * t * t);
+
+            // accumulate the weighted sum in the intensity (no support for polarization in this case)
+            I += w * value;
+            break;
+        }
+        case DustMix::ScatteringMode::MaterialPhaseFunction:
+        {
+            // calculate the value of the material-specific phase function
+            double costheta = Vec::dot(pp->direction(), bfkobs);
+            double value = phaseFunctionValueForCosine(lambda, costheta);
+
+            // accumulate the weighted sum in the intensity (no support for polarization in this case)
+            I += w * value;
+            break;
+        }
+        case DustMix::ScatteringMode::SphericalPolarization:
+        case DustMix::ScatteringMode::SpheroidalPolarization:
+        {
+            // calculate the value of the material-specific phase function
+            double theta = acos(Vec::dot(pp->direction(), bfkobs));
+            double phi = angleBetweenScatteringPlanes(pp->normal(), pp->direction(), bfkobs);
+            double value = phaseFunctionValue(lambda, theta, phi, pp);
+
+            // copy the polarization state so we can change it without affecting the incoming photon packet
+            StokesVector sv = *pp;
+
+            // rotate the Stokes vector reference direction into the scattering plane
+            sv.rotateIntoPlane(pp->direction(), bfkobs);
+
+            // apply the Mueller matrix
+            applyMueller(lambda, theta, &sv);
+
+            // rotate the Stokes vector reference direction parallel to the instrument frame y-axis
+            // it is given bfkobs because the photon is at this point aimed towards the observer
+            sv.rotateIntoPlane(bfkobs, bfky);
+
+            // acumulate the weighted sum of all Stokes components to support polarization
+            w *= value;
+            I += w * sv.stokesI();
+            Q += w * sv.stokesQ();
+            U += w * sv.stokesU();
+            V += w * sv.stokesV();
+            break;
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
+void DustMix::performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const
+{
+    // determine the new propagation direction and, if required, update the polarization state of the photon packet
+    Direction bfknew;
+    switch (scatteringMode())
+    {
+        case DustMix::ScatteringMode::HenyeyGreenstein:
+        {
+            // sample a scattering angle from the Henyey-Greenstein phase function
+            // handle isotropic scattering separately because the HG sampling procedure breaks down in this case
+            double g = asymmpar(lambda);
+            if (fabs(g) < 1e-6)
+            {
+                bfknew = random()->direction();
+            }
+            else
+            {
+                double f = ((1.0 - g) * (1.0 + g)) / (1.0 - g + 2.0 * g * random()->uniform());
+                double costheta = (1.0 + g * g - f * f) / (2.0 * g);
+                bfknew = random()->direction(pp->direction(), costheta);
+            }
+            break;
+        }
+        case DustMix::ScatteringMode::MaterialPhaseFunction:
+        {
+            // sample a scattering angle from the material-specific phase function
+            double costheta = generateCosineFromPhaseFunction(lambda);
+            bfknew = random()->direction(pp->direction(), costheta);
+            break;
+        }
+        case DustMix::ScatteringMode::SphericalPolarization:
+        case DustMix::ScatteringMode::SpheroidalPolarization:
+        {
+            // sample the angles between the previous and new direction from the material-specific phase function,
+            // given the incoming polarization state
+            double theta, phi;
+            std::tie(theta, phi) = generateAnglesFromPhaseFunction(lambda, pp);
+
+            // rotate the Stokes vector (and the scattering plane) of the photon packet
+            pp->rotateStokes(phi, pp->direction());
+
+            // apply Mueller matrix to the Stokes vector of the photon packet
+            applyMueller(lambda, theta, pp);
+
+            // rotate the propagation direction in the scattering plane
+            Vec newdir = pp->direction() * cos(theta) + Vec::cross(pp->normal(), pp->direction()) * sin(theta);
+
+            // normalize the new direction to prevent degradation
+            bfknew = Direction(newdir / newdir.norm());
+            break;
+        }
+    }
+
+    // execute the scattering event in the photon packet
+    pp->scatter(bfknew, state->bulkVelocity(), lambda);
+}
+
+////////////////////////////////////////////////////////////////////
+
+DustMix::ScatteringMode DustMix::scatteringMode() const
+{
+    return DustMix::ScatteringMode::HenyeyGreenstein;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -335,16 +514,23 @@ const Array& DustMix::sectionsAbspol(double lambda) const
 
 ////////////////////////////////////////////////////////////////////
 
-double DustMix::equilibriumTemperature(const Array& Jv) const
+Array DustMix::emissivity(const Array& Jv) const
 {
-    return _calc.equilibriumTemperature(0, Jv);
+    return _calc.emissivity(Jv);
 }
 
 ////////////////////////////////////////////////////////////////////
 
-Array DustMix::emissivity(const Array& Jv) const
+Array DustMix::emissionSpectrum(const MaterialState* state, const Array& Jv) const
 {
-    return _calc.emissivity(Jv);
+    return state->numberDensity() * emissivity(Jv);
+}
+
+////////////////////////////////////////////////////////////////////
+
+double DustMix::indicativeTemperature(const MaterialState* /*state*/, const Array& Jv) const
+{
+    return Jv.size() ? _calc.equilibriumTemperature(0, Jv) : 0.;
 }
 
 ////////////////////////////////////////////////////////////////////

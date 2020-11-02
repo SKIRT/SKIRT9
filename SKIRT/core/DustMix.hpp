@@ -112,7 +112,7 @@ protected:
 
     //======== Private support functions =======
 
-protected:
+private:
     /** This function returns the index in the private wavelength grid corresponding to the
         specified wavelength. The parameters for converting a wavelength to the appropriate index
         are stored in data members during setup. */
@@ -127,11 +127,21 @@ protected:
 
 public:
     /** This function returns the fundamental material type represented by this material mix, in
-        other words it returns MaterialType::Dust. See the documentation of the MaterialMix class
-        for more information. */
+        other words it returns MaterialType::Dust. */
     MaterialType materialType() const override;
 
-    //======== Basic material properties =======
+    //======== Medium state setup =======
+
+public:
+    /** This function returns a list of StateVariable objects describing the specific state
+        variables used by the receiving material mix. See the description of the
+        MaterialMix::specificStateVariableInfo() function for more information.
+
+        Dust mixes require just the standard specific state variable of type numberDensity , so
+        this function returns a list containing a single item. */
+    vector<StateVariable> specificStateVariableInfo() const override;
+
+    //======== Low-level material properties =======
 
 public:
     /** This function returns the dust mass \f$\mu\f$ per hydrogen atom for this dust mix. It
@@ -160,21 +170,134 @@ public:
         pre-computed during setup. */
     double asymmpar(double lambda) const override;
 
-    //======== Scattering with material phase function =======
+    //======== High-level photon life cycle =======
+
+    /** This function returns the absorption opacity \f$k^\text{abs}=n\varsigma^\text{abs}\f$ for
+        the given wavelength and material state. The photon properties are not used. */
+    double opacityAbs(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
+
+    /** This function returns the scattering opacity \f$k^\text{sca}=n\varsigma^\text{sca}\f$ for
+        the given wavelength and material state. The photon properties are not used. */
+    double opacitySca(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
+
+    /** This function returns the extinction opacity \f$k^\text{ext}=k^\text{abs}+k^\text{sca}\f$
+        for the given wavelength and material state. The photon properties are not used. */
+    double opacityExt(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
+
+    /** This function calculates the contribution of the medium component associated with this
+        material mix to the peel-off photon luminosity, polarization state, and wavelength shift
+        for the given wavelength, geometry, material state, and photon properties. See the
+        description of the MaterialMix::peeloffScattering() function for more information.
+
+        For dust mixes, evaluation of the phase function depends on the scattering mode supported
+        by supported by the dust mix, as defined by each subclass. For the most basic mode, the
+        material mix provides a value for the scattering asymmetry parameter
+        \f$g=\left<\cos\theta\right>\f$. A value of \f$g=0\f$ corresponds to isotropic scattering.
+        Other values \f$-1\le g\le 1\f$ are substituted in the Henyey-Greenstein phase function,
+        \f[ \Phi(\cos\theta) = \frac{1-g^2} {(1+g^2-2g\cos\theta)^{3/2}}. \f] For other scattering
+        modes, the phase function provided by the material mix is invoked instead.
+
+        In case polarization is supported in the current simulation configuration, the polarization
+        state of the peel off photon packet is adjusted as well. The adjusted Stokes vector for a
+        particular medium component is obtained as follows. The function rotates the Stokes vector
+        from the reference direction in the previous scattering plane into the peel-off scattering
+        plane, applies the Mueller matrix on the Stokes vector, and further rotates the Stokes
+        vector from the reference direction in the peel-off scattering plane to the x-axis of the
+        instrument to which the peel-off photon packet is headed. If there are multiple medium
+        components, the relative opacity weighting factor applies not just to the luminosity but
+        also to the other components of the Stokes vector. */
+    void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w, Direction bfkobs,
+                           Direction bfky, const MaterialState* state, PhotonPacket* pp) const override;
+
+    /** This function performs a scattering event on the specified photon packet in the spatial
+        cell and medium component represented by the specified material state and the receiving
+        material mix.
+
+        For dust mixes, the operation depends on the scattering mode supported by the dust mix, as
+        defined by each subclass. For the most basic mode, the dust mix provides a value for the
+        scattering asymmetry parameter \f$g=\left<\cos\theta\right>\f$. For the value \f$g=0\f$,
+        corresponding to isotropic scattering, a new direction is generated uniformly on the unit
+        sphere. For other values \f$-1\le g\le 1\f$, a scattering angle \f$\theta\f$ is sampled
+        from the Henyey-Greenstein phase function, \f[ \Phi(\cos\theta) =
+        \frac{1-g^2}{(1+g^2-2g\cos\theta)^{3/2}}. \f] This can be accomplished as follows.
+        Substituting \f$\mu=\cos\theta\f$, the probability distribution for \f$\mu\f$ (normalized
+        to unity) becomes \f[ p(\mu)\,\text{d}\mu = \frac{1}{2} \,
+        \frac{1-g^2}{(1+g^2-2g\mu)^{3/2}} \,\text{d}\mu \qquad -1\leq\mu\leq1 \f] We can use the
+        transformation method to sample from this distribution. Given a uniform deviate
+        \f$\mathcal{X}\f$, we need to solve \f[ {\mathcal{X}} = \int_{-1}^\mu p(\mu')\,\text{d}\mu'
+        \f] Performing the integration and solving for \f$\mu\f$ yields \f[ \cos\theta = \mu =
+        \frac{1+g^2-f^2}{2g} \quad\text{with}\quad f=\frac{1-g^2}{1-g+2g {\mathcal{X}}}
+        \qquad\text{for}\; g\neq 0 \f] For other scattering modes, a function provided by the dust
+        mix is invoked instead to obtain a random scattering direction for the photon packet.
+
+        In case polarization is supported in the current simulation configuration, the polarization
+        state of the photon packet is adjusted as well. Note that all media must either support
+        polarization or not support it, mixing these support levels is not allowed. Compliance with
+        this requirement is verified during setup of the simulation. The adjusted Stokes vector is
+        obtained as follows, again using the randomly selected medium component. After obtaining
+        the sampled scattering angles \f$\theta\f$ and \f$\phi\f$ from the material mix, the Stokes
+        vector of the photon packet is rotated into the scattering plane and transformed by
+        applying the Mueller matrix. Finally, the new direction is computed from the previously
+        sampled \f$\theta\f$ and \f$\phi\f$ angles. */
+    void performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const override;
+
+    //======== Scattering implementation for dust mixes =======
 
 public:
-    /** This function returns the value of the scattering phase function
-        \f$\Phi_\lambda(\cos\theta)\f$ at wavelength \f$\lambda\f$ for the specified scattering
-        angle cosine \f$\cos\theta\f$, where the phase function is normalized as \f[\int_{-1}^1
-        \Phi_\lambda(\cos\theta) \,\mathrm{d}\cos\theta =2.\f]
+    /** This enumeration lists the scattering modes supported by the dust mix hierarchy. */
+    enum class ScatteringMode {
+        HenyeyGreenstein,
+        MaterialPhaseFunction,
+        SphericalPolarization,
+        SpheroidalPolarization
+    };
+
+    /** This function returns the scattering mode supported by this dust mix. In the current
+        implementation, this can be one of the following modes:
+
+        - HenyeyGreenstein: the value returned by the asymmpar() function serves as the assymmetry
+        parameter \f$g\f$ for the Henyey-Greenstein phase function. For a value of \f$g=0\f$, the
+        Henyey-Greenstein phase function describes isotropic scattering.
+
+        - MaterialPhaseFunction: this material type implements a custom phase function that depends
+        only on the cosine of the scattering angle, for unpolarized radiation. Specifically, the
+        phaseFunctionValueForCosine() and generateCosineFromPhaseFunction() functions are used to
+        obtain the value of the phase function and to sample a scattering angle from it.
+
+        - SphericalPolarization: this material type supports polarization through scattering by
+        spherical particles. In this mode, the phase function depends on the polarization state of
+        the incoming radiation, and the polarization state of the outgoing radiation must be
+        updated appropriately. The phaseFunctionValue() and generateAnglesFromPhaseFunction()
+        functions are used to obtain the value of the phase function and to sample a scattering
+        angle from it, and the applyMueller() function is used to updated the polarization state.
+
+        - SpheroidalPolarization: this material type supports polarization through scattering,
+        absorption and emission by nonspherical, spheroidal particles. Currently, only \em emission
+        is implemented and all other areas of the code treat spheroidal particles as if they were
+        spherical.
+
+        The implementation of this function in this base class returns the HenyeyGreenstein
+        scattering mode as a default value. Subclasses that support another scattering mode must
+        override this function and return the appropriate value. */
+    virtual ScatteringMode scatteringMode() const;
+
+private:
+    /** This function is used with the MaterialPhaseFunction scattering mode, which assumes that
+        the scattering phase function depends only on the cosine of the scattering angle. The
+        function returns the value of the scattering phase function \f$\Phi_\lambda(\cos\theta)\f$
+        at wavelength \f$\lambda\f$ for the specified scattering angle cosine \f$\cos\theta\f$,
+        where the phase function is normalized as \f[\int_{-1}^1 \Phi_\lambda(\cos\theta)
+        \,\mathrm{d}\cos\theta =2.\f]
 
         The phase function for unpolarized radiation is obtained from the general polarized case
         described for the phaseFunctionValue() function by setting the linear polarization degree
         \f$P_\text{L}\f$ to zero. The simplified function uses only the first Mueller matrix
         coefficient \f$S_{11}\f$. */
-    double phaseFunctionValueForCosine(double lambda, double costheta) const override;
+    double phaseFunctionValueForCosine(double lambda, double costheta) const;
 
-    /** This function generates a random scattering angle cosine sampled from the phase function
+    /** This function is used with the MaterialPhaseFunction scattering mode, which assumes that
+        the scattering phase function depends only on the cosine of the scattering angle. The
+        function generates a random scattering angle cosine sampled from the phase function
         \f$\Phi_\lambda(\cos\theta)\f$ at wavelength \f$\lambda\f$.
 
         The phase function for unpolarized radiation is obtained from the general polarized case
@@ -183,16 +306,13 @@ public:
         only the first Mueller matrix coefficient \f$S_{11}\f$. To sample the scattering angle
         \f$\theta\f$ from this phase function, we follow the same procedure as described for the
         generateAnglesFromPhaseFunction() function, with \f$P_\text{L}=0\f$. */
-    double generateCosineFromPhaseFunction(double lambda) const override;
+    double generateCosineFromPhaseFunction(double lambda) const;
 
-    //======== Polarization through scattering by spherical particles =======
-
-public:
-    /** This function returns the value of the scattering phase function
-        \f$\Phi_\lambda(\theta,\phi)\f$ at wavelength \f$\lambda\f$ for the specified scattering
-        angles \f$\theta\f$ and \f$\phi\f$, and for the specified incoming polarization state. The
-        phase function is normalized as \f[\int\Phi_\lambda(\theta,\phi) \,\mathrm{d}\Omega
-        =4\pi.\f]
+    /** This function is used with the SphericalPolarization scattering mode. It returns the value
+        of the scattering phase function \f$\Phi_\lambda(\theta,\phi)\f$ at wavelength
+        \f$\lambda\f$ for the specified scattering angles \f$\theta\f$ and \f$\phi\f$, and for the
+        specified incoming polarization state. The phase function is normalized as
+        \f[\int\Phi_\lambda(\theta,\phi) \,\mathrm{d}\Omega =4\pi.\f]
 
         The phase function for scattering by spherical grains can be written as \f[
         \Phi(\theta,\phi) = N\,S_{11} \left( 1 + P_{\text{L}}\,\frac{S_{12}}{S_{11}}\cos2(\phi -
@@ -201,12 +321,13 @@ public:
         polarization angle of the incoming photon, and where the Mueller matrix coefficients
         \f$S_{xx}\f$ depend on both the photon wavelength \f$\lambda\f$ and the scattering angle
         \f$\theta\f$. */
-    double phaseFunctionValue(double lambda, double theta, double phi, const StokesVector* sv) const override;
+    double phaseFunctionValue(double lambda, double theta, double phi, const StokesVector* sv) const;
 
-    /** This function generates random scattering angles \f$\theta\f$ and \f$\phi\f$ sampled from
-        the phase function \f$\Phi_\lambda(\theta,\phi)\f$ at wavelength \f$\lambda\f$, and for the
-        specified incoming polarization state. The results are returned as a pair of numbers in the
-        order \f$\theta\f$ and \f$\phi\f$.
+    /** This function is used with the SphericalPolarization scattering mode. It generates random
+        scattering angles \f$\theta\f$ and \f$\phi\f$ sampled from the phase function
+        \f$\Phi_\lambda(\theta,\phi)\f$ at wavelength \f$\lambda\f$, and for the specified incoming
+        polarization state. The results are returned as a pair of numbers in the order \f$\theta\f$
+        and \f$\phi\f$.
 
         For scattering by spherical grains, we sample from the phase function listed for the
         phaseFunctionValue() function using the conditional probability technique. We reduce the
@@ -229,19 +350,68 @@ public:
         =\int_{0}^{\phi}\Phi_{\theta}(\phi')\,\text{d}\phi' =\frac{1}{2\pi} \left( \phi +
         P_{\text{L}}\,\frac{S_{12}}{S_{11}} \sin\phi \cos(\phi - 2\gamma)\right) \f] for
         \f$\phi\f$, with \f${\cal{X}}\f$ being a new uniform deviate. */
-    std::pair<double, double> generateAnglesFromPhaseFunction(double lambda, const StokesVector* sv) const override;
+    std::pair<double, double> generateAnglesFromPhaseFunction(double lambda, const StokesVector* sv) const;
 
-    /** This function applies the Mueller matrix transformation for the specified wavelength
-        \f$\lambda\f$ and scattering angle \f$\theta\f$ to the given polarization state (which
-        serves as both input and output for the function).
+    /** This function is used with the SphericalPolarization scattering mode. It applies the
+        Mueller matrix transformation for the specified wavelength \f$\lambda\f$ and scattering
+        angle \f$\theta\f$ to the given polarization state (which serves as both input and output
+        for the function).
 
         For scattering by spherical grains, the Mueller matrix has only four independent
         coefficients, namely \f$S_{11}\f$, \f$S_{12}\f$, \f$S_{33}\f$, and \f$S_{34}\f$, which
         depend on both the photon wavelength \f$\lambda\f$ and the scattering angle \f$\theta\f$.
         These coefficients are obtained from the tables pre-computed during setup. */
-    void applyMueller(double lambda, double theta, StokesVector* sv) const override;
+    void applyMueller(double lambda, double theta, StokesVector* sv) const;
 
-    //======== Polarization through scattering, absorption and emission by spheroidal particles =======
+    //======== Secondary emission =======
+
+public:
+    /** This function returns the emissivity spectrum \f$\varepsilon_{\ell'}\f$ (radiated power per
+        unit of solid angle and per hydrogen atom) of the dust mix (or rather of the representative
+        grain population corresponding to the dust mix) when it would be embedded in a given
+        radiation field, assuming that the dust grains are in local thermal equilibrium. The input
+        and output arrays are discretized on the wavelength grids returned by the
+        Configuration::radiationFieldWLG() and Configuration::dustEmissionWLG() functions,
+        repectively.
+
+        The equilibrium emissivity of a representative grain population in an embedding radiation
+        field \f$J_\lambda\f$ can be calculated as \f[ \varepsilon_\lambda =
+        \varsigma_{\lambda,b}^{\text{abs}}\, B_\lambda(T_\text{eq}) \f] with \f$\mu\f$ the total
+        dust mass of the dust mix, \f$\varsigma_{\lambda}^{\text{abs}}\f$ the absorption cross
+        section of the representative grain, and \f$T_\text{eq}\f$ the equilibrium temperature of
+        that grain, obtained from the energy balance equation as described for the
+        DustMix::indicativeTemperature() function.
+
+        The behavior of this function is undefined if the simulation does not track the radiation
+        field, because in that case setup does not calculate the information on which this function
+        relies. */
+    Array emissivity(const Array& Jv) const override;
+
+    /** This function returns the emission spectrum (radiated power per unit of solid angle) in the
+        spatial cell and medium component represented by the specified material state and the
+        receiving material mix when it would be embedded in the specified radiation field. For a
+        dust mix, it returns the result of the emissivity() function multiplied by the hydrogen
+        number density retrieved from the material state. */
+    Array emissionSpectrum(const MaterialState* state, const Array& Jv) const override;
+
+    /** This function returns an indicative temperature of the material mix when it would be
+        embedded in a given radiation field. For dust mixes, it returns the equilibrium temperature
+        \f$T_{\text{eq}}\f$ of the dust mix (or rather of the representative grain population
+        corresponding to the dust mix) when it would be embedded in the radiation field specified
+        by the mean intensities \f$(J_\lambda)_\ell\f$, which must be discretized on the
+        simulation's radiation field wavelength grid as returned by the
+        Configuration::radiationFieldWLG() function. If the specified \em Jv array is empty
+        (because the simulation does not track the radiation field), this function returns zero.
+
+        The equilibrium temperature is obtained from the energy balance equation, \f[ \int_0^\infty
+        \varsigma^\text{abs}(\lambda) \,J_\lambda(\lambda) \,\text{d}\lambda = \int_0^\infty
+        \varsigma^\text{abs}(\lambda) \,B_\lambda(T_\text{eq},\lambda) \,\text{d}\lambda, \f] where
+        the left-hand side is integrated over the radiation field wavelength grid, and the
+        right-hand side is precalculated during setup for a range of temperatures through
+        integration over a built-in wavelength grid. */
+    double indicativeTemperature(const MaterialState* state, const Array& Jv) const override;
+
+    //======== Spheroidal grains =======
 
 public:
     /** This function is intended for use with the SpheroidalPolarization mode. It returns the grid
@@ -261,47 +431,6 @@ public:
         _{\lambda} (\theta)\f$ at wavelength \f$\lambda\f$ as a function of the emission angle
         \f$\theta\f$, discretized on the grid returned by the thetaGrid() function. */
     const Array& sectionsAbspol(double lambda) const override;
-
-    //======== Temperature and emission =======
-
-public:
-    /** This function returns the equilibrium temperature \f$T_{\text{eq}}\f$ of the dust mix (or
-        rather of the representative grain population corresponding to the dust mix) when it would
-        be embedded in the radiation field specified by the mean intensities
-        \f$(J_\lambda)_\ell\f$, which must be discretized on the simulation's radiation field
-        wavelength grid as returned by the Configuration::radiationFieldWLG() function.
-
-        The equilibrium temperature is obtained from the energy balance equation, \f[ \int_0^\infty
-        \varsigma^\text{abs}(\lambda) \,J_\lambda(\lambda) \,\text{d}\lambda = \int_0^\infty
-        \varsigma^\text{abs}(\lambda) \,B_\lambda(T_\text{eq},\lambda) \,\text{d}\lambda, \f] where
-        the left-hand side is integrated over the radiation field wavelength grid, and the
-        right-hand side is precalculated during setup for a range of temperatures through
-        integration over a built-in wavelength grid.
-
-        The behavior of this function is undefined if the simulation does not track the radiation
-        field, because in that case setup does not calculate the information on which this function
-        relies. */
-    double equilibriumTemperature(const Array& Jv) const override;
-
-    /** This function returns the emissivity spectrum per hydrogen atom \f$\varepsilon_{\ell'}\f$
-        of the dust mix (or rather of the representative grain population corresponding to the dust
-        mix) when it would be embedded in a given radiation field, assuming that the dust grains
-        are in local thermal equilibrium. The input and output arrays are discretized on the
-        wavelength grids returned by the Configuration::radiationFieldWLG() and
-        Configuration::dustEmissionWLG() functions, repectively.
-
-        The equilibrium emissivity of a representative grain population in an embedding radiation
-        field \f$J_\lambda\f$ can be calculated as \f[ \varepsilon_\lambda =
-        \varsigma_{\lambda,b}^{\text{abs}}\, B_\lambda(T_\text{eq}) \f] with \f$\mu\f$ the total
-        dust mass of the dust mix, \f$\varsigma_{\lambda}^{\text{abs}}\f$ the absorption cross
-        section of the representative grain, and \f$T_\text{eq}\f$ the equilibrium temperature of
-        that grain, obtained from the energy balance equation as described for the
-        equilibriumTemperature() function.
-
-        The behavior of this function is undefined if the simulation does not track the radiation
-        field, because in that case setup does not calculate the information on which this function
-        relies. */
-    Array emissivity(const Array& Jv) const override;
 
     //======================== Data Members ========================
 

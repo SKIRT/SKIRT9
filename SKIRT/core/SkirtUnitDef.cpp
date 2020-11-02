@@ -56,6 +56,14 @@ SkirtUnitDef::SkirtUnitDef()
     addUnit("grainsize", "nm", 1e-9);
     addUnit("grainsize", "Angstrom", 1e-10);
 
+    // pergrainsize
+    addUnit("pergrainsize", "1/m", 1.);
+    addUnit("pergrainsize", "1/cm", 1e2);
+    addUnit("pergrainsize", "1/mm", 1e3);
+    addUnit("pergrainsize", "1/micron", 1e6);
+    addUnit("pergrainsize", "1/nm", 1e9);
+    addUnit("pergrainsize", "1/Angstrom", 1e10);
+
     // cross section
     addUnit("section", "m2", 1.);
     addUnit("section", "cm2", 1e-4);
@@ -310,6 +318,7 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("SIUnits", "distance", "m");
     addDefaultUnit("SIUnits", "wavelength", "m");
     addDefaultUnit("SIUnits", "grainsize", "m");
+    addDefaultUnit("SIUnits", "pergrainsize", "1/m");
     addDefaultUnit("SIUnits", "section", "m2");
     addDefaultUnit("SIUnits", "volume", "m3");
     addDefaultUnit("SIUnits", "velocity", "m/s");
@@ -350,6 +359,7 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("StellarUnits", "distance", "pc");
     addDefaultUnit("StellarUnits", "wavelength", "micron");
     addDefaultUnit("StellarUnits", "grainsize", "micron");
+    addDefaultUnit("StellarUnits", "pergrainsize", "1/micron");
     addDefaultUnit("StellarUnits", "section", "m2");
     addDefaultUnit("StellarUnits", "volume", "AU3");
     addDefaultUnit("StellarUnits", "velocity", "km/s");
@@ -390,6 +400,7 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("ExtragalacticUnits", "distance", "Mpc");
     addDefaultUnit("ExtragalacticUnits", "wavelength", "micron");
     addDefaultUnit("ExtragalacticUnits", "grainsize", "micron");
+    addDefaultUnit("ExtragalacticUnits", "pergrainsize", "1/micron");
     addDefaultUnit("ExtragalacticUnits", "section", "m2");
     addDefaultUnit("ExtragalacticUnits", "volume", "pc3");
     addDefaultUnit("ExtragalacticUnits", "velocity", "km/s");

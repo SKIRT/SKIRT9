@@ -9,8 +9,8 @@
 #include "Box.hpp"
 #include "Position.hpp"
 #include "SimulationItem.hpp"
+class PathSegmentGenerator;
 class Random;
-class SpatialGridPath;
 class SpatialGridPlotFile;
 
 //////////////////////////////////////////////////////////////////////
@@ -64,14 +64,11 @@ public:
     /** This function returns a random location from the cell with index \f$m\f$. */
     virtual Position randomPositionInCell(int m) const = 0;
 
-    /** This function calculates a path through the grid. The SpatialGridPath object passed as an
-        argument specifies the starting position \f${\bf{r}}\f$ and the direction \f${\bf{k}}\f$
-        for the path. The data on the calculated path are added back into the same object. This
-        consists of three vectors: the first one lists the cell indices \f$m\f$ of all the cells
-        crossed by the path, the second lists the path length \f$\Delta s\f$ covered in each of
-        these cells, and the third lists the accumulated path length \f$s\f$ until the end of each
-        cell is encountered. */
-    virtual void path(SpatialGridPath* path) const = 0;
+    /** This function creates and hands over ownership of a path segment generator (an instance of
+        a PathSegmentGenerator subclass) for the spatial grid. The function must be implemented in
+        each subclass to produce a path segment generator of a type corresponding to the specific
+        type of spatial grid. */
+    virtual std::unique_ptr<PathSegmentGenerator> createPathSegmentGenerator() const = 0;
 
     //================ Functions that may be implemented in subclasses ===============
 

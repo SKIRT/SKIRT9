@@ -24,9 +24,9 @@ namespace
         // we integrate along a small offset from the axes to avoid cell borders
         double eps = 1e-12 * ms->grid()->boundingBox().widths().norm();
         SpatialGridPath path(Position(eps, eps, eps), axis);
-        double tau = ms->opticalDepth(&path, lambda, type);
+        double tau = ms->getOpticalDepth(&path, lambda, type);
         path.setDirection(Direction(-axis.x(), -axis.y(), -axis.z()));
-        tau += ms->opticalDepth(&path, lambda, type);
+        tau += ms->getOpticalDepth(&path, lambda, type);
         return tau;
     }
 

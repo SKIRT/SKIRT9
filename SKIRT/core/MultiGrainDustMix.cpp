@@ -176,13 +176,25 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
             }
 
             // open the stored tables for the spheroidal grain efficiencies, if present for this population
-            StoredTable<3> sQabs, sQabspol;
-            string spheroidalPropsName = population->composition()->resourceNameForSpheroidalEmission();
-            bool hasSpheroidalPolarization = needSpheroidalPolarization && !spheroidalPropsName.empty();
-            if (hasSpheroidalPolarization)
+            bool hasSpheroidalPolarization = false;
+            double q = 0.;  // interpolation fraction between first and second table
+            StoredTable<3> sQabs1, sQabspol1, sQabs2, sQabspol2;
+            if (needSpheroidalPolarization)
             {
-                sQabs.open(this, spheroidalPropsName, "a(m),lambda(m),theta(rad)", "Qabs(1)", true, false);
-                sQabspol.open(this, spheroidalPropsName, "a(m),lambda(m),theta(rad)", "Qabspol(1)", true, false);
+                bool resource;
+                string tableName1, tableName2;
+                hasSpheroidalPolarization =
+                    population->composition()->resourcesForSpheroidalEmission(resource, q, tableName1, tableName2);
+                if (hasSpheroidalPolarization)
+                {
+                    sQabs1.open(this, tableName1, "a(m),lambda(m),theta(rad)", "Qabs(1)", true, resource);
+                    sQabspol1.open(this, tableName1, "a(m),lambda(m),theta(rad)", "Qabspol(1)", true, resource);
+                    if (q)
+                    {
+                        sQabs2.open(this, tableName2, "a(m),lambda(m),theta(rad)", "Qabs(1)", true, resource);
+                        sQabspol2.open(this, tableName2, "a(m),lambda(m),theta(rad)", "Qabspol(1)", true, resource);
+                    }
+                }
             }
 
             // calculate the required grain properties on the requested wavelength and scattering angle grid;
@@ -192,10 +204,10 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
             log->info("Integrating grain properties over the grain size distribution...");
             log->infoSetElapsed(numLambda);
             find<ParallelFactory>()->parallelDistributed()->call(
-                numLambda,
-                [log, needSphericalPolarization, needSpheroidalPolarization, hasSpheroidalPolarization, &lambdav,
-                 &thetav, &av, &dav, &dndav, &weightv, &S11, &S12, &S33, &S34, &S11vv, &S12vv, &S33vv, &S34vv, &Qabs,
-                 &sQabs, &sQabspol, &sigmaabsvv, &sigmaabspolvv](size_t firstIndex, size_t numIndices) {
+                numLambda, [log, needSphericalPolarization, needSpheroidalPolarization, hasSpheroidalPolarization,
+                            &lambdav, &thetav, &av, &dav, &dndav, &weightv, &S11, &S12, &S33, &S34, &S11vv, &S12vv,
+                            &S33vv, &S34vv, &Qabs, q, &sQabs1, &sQabspol1, &sQabs2, &sQabspol2, &sigmaabsvv,
+                            &sigmaabspolvv](size_t firstIndex, size_t numIndices) {
                     int numTheta = thetav.size();
                     int numSizes = av.size();
 
@@ -233,8 +245,15 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
                                         factor *= M_PI * a * a;
                                         if (hasSpheroidalPolarization)
                                         {
-                                            sumabs += factor * sQabs(a, lambda, theta);
-                                            sumabspol += factor * sQabspol(a, lambda, theta);
+                                            double abs = sQabs1(a, lambda, theta);
+                                            double abspol = sQabspol1(a, lambda, theta);
+                                            if (q)
+                                            {
+                                                abs = (1. - q) * abs + q * sQabs2(a, lambda, theta);
+                                                abspol = (1. - q) * abspol + q * sQabspol2(a, lambda, theta);
+                                            }
+                                            sumabs += factor * abs;
+                                            sumabspol += factor * abspol;
                                         }
                                         else
                                         {
@@ -433,6 +452,13 @@ size_t MultiGrainDustMix::initializeExtraProperties(const Array& lambdav)
 
 ////////////////////////////////////////////////////////////////////
 
+bool MultiGrainDustMix::hasStochasticDustEmission() const
+{
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////
+
 Array MultiGrainDustMix::emissivity(const Array& Jv) const
 {
     // use the appropriate emissivity calculator
@@ -458,6 +484,13 @@ string MultiGrainDustMix::populationGrainType(int c) const
 
 ////////////////////////////////////////////////////////////////////
 
+double MultiGrainDustMix::populationBulkDensity(int c) const
+{
+    return _populations[c]->composition()->bulkDensity();
+}
+
+////////////////////////////////////////////////////////////////////
+
 Range MultiGrainDustMix::populationSizeRange(int c) const
 {
     auto sd = _populations[c]->sizeDistribution();
@@ -476,6 +509,27 @@ const GrainSizeDistribution* MultiGrainDustMix::populationSizeDistribution(int c
 double MultiGrainDustMix::populationMass(int c) const
 {
     return _mupopv[c];
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MultiGrainDustMix::totalMass() const
+{
+    return mass();
+}
+
+////////////////////////////////////////////////////////////////////
+
+const GrainPopulation* MultiGrainDustMix::population(int c) const
+{
+    return _populations[c];
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MultiGrainDustMix::populationNormalization(int c) const
+{
+    return _normv[c];
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -33,6 +33,7 @@ class ConfigurableDustMix : public MultiGrainDustMix
 
         PROPERTY_ENUM(scatteringType, ScatteringType, "the type of scattering to be implemented")
         ATTRIBUTE_DEFAULT_VALUE(scatteringType, "HenyeyGreenstein")
+        ATTRIBUTE_INSERT(scatteringType, "scatteringTypeSpheroidalPolarization:Spheroidal")
 
         PROPERTY_ITEM_LIST(populations, GrainPopulation, "the grain populations")
         ATTRIBUTE_DEFAULT_VALUE(populations, "GrainPopulation")
@@ -45,11 +46,23 @@ protected:
     /** This function adds the configured grain populations to the dust mix. */
     void setupSelfBefore() override;
 
-    //======================== Other Functions =======================
+    //======== Capabilities =======
 
+public:
     /** This function returns the scattering mode supported by this material mix as configured by
         the user through the scatteringType property. */
     ScatteringMode scatteringMode() const override;
+
+    /** This function returns a flag indicating whether the material mix supports polarization
+        during scattering events or not. For this dust mix, the function returns true if the user
+        configured the SphericalPolarization or the SpheroidalPolarization scattering type, and
+        false otherwise. */
+    bool hasPolarizedScattering() const override;
+
+    /** This function returns a flag indicating whether the secondary emission for this material
+        mix may be polarized and anisotropic. For this dust mix, the function returns true if the
+        user configured the SpheroidalPolarization scattering type, and false otherwise. */
+    bool hasPolarizedEmission() const override;
 };
 
 ////////////////////////////////////////////////////////////////////

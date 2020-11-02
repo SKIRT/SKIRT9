@@ -22,11 +22,12 @@ class ExtinctionOnlyOptions : public SimulationItem
 
         PROPERTY_BOOL(storeRadiationField, "store the radiation field so that it can be probed for output")
         ATTRIBUTE_DEFAULT_VALUE(storeRadiationField, "false")
+        ATTRIBUTE_RELEVANT_IF(storeRadiationField, "ForceScattering")
         ATTRIBUTE_DISPLAYED_IF(storeRadiationField, "Level3")
         ATTRIBUTE_INSERT(storeRadiationField, "storeRadiationField:RadiationField")
 
         PROPERTY_ITEM(radiationFieldWLG, DisjointWavelengthGrid, "the wavelength grid for storing the radiation field")
-        ATTRIBUTE_RELEVANT_IF(radiationFieldWLG, "storeRadiationField&Panchromatic")
+        ATTRIBUTE_RELEVANT_IF(radiationFieldWLG, "ForceScattering&storeRadiationField&Panchromatic")
 
     ITEM_END()
 };

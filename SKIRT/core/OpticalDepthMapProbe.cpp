@@ -90,7 +90,7 @@ namespace
                     {
                         // set the path direction after transforming from observer to world coordinates
                         path.setDirection(Direction(transform.transform(Direction(theta, phi))));
-                        tauv[i + Nx * j] = ms->opticalDepth(&path, lambda, type);
+                        tauv[i + Nx * j] = ms->getOpticalDepth(&path, lambda, type);
                     }
                 }
             }
@@ -128,6 +128,20 @@ namespace
 ////////////////////////////////////////////////////////////////////
 
 void OpticalDepthMapProbe::probeSetup()
+{
+    if (probeAfter() == ProbeAfter::Setup) probe();
+}
+
+////////////////////////////////////////////////////////////////////
+
+void OpticalDepthMapProbe::probeRun()
+{
+    if (probeAfter() == ProbeAfter::Run) probe();
+}
+
+////////////////////////////////////////////////////////////////////
+
+void OpticalDepthMapProbe::probe()
 {
     if (find<Configuration>()->hasMedium())
     {

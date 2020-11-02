@@ -10,16 +10,20 @@
 
 ////////////////////////////////////////////////////////////////////
 
-/** A ShortArray<N> instance holds a an array of double values that is usually shorter than the
-    compile-time constant N but can be larger if needed. As long as the array is not longer than N,
-    no heap allocations occur. If the array does become longer than N, the appropriate space is
-    allocated on the heap. The number of items held by the array can be adjusted, but only at the
-    cost of erasing all previously stored values: the resize operation sets all values to zero,
-    just as if the array was freshly constructed. ShortArray<N> instances cannot be copied or
-    moved. */
-template<size_t N> class ShortArray
+/** A ShortArray instance holds a an array of double values that is usually shorter than the
+    compile-time constant ShortArray::N but can be larger if needed. As long as the array is not
+    longer than N, no heap allocations occur. If the array does become longer than N, the
+    appropriate space is allocated on the heap. The number of items held by the array can be
+    adjusted, but only at the cost of erasing all previously stored values: the resize operation
+    sets all values to zero, just as if the array was freshly constructed. ShortArray instances
+    cannot be copied or moved.
+
+    In the current implementation, the value of N is 8. */
+class ShortArray
 {
 public:
+    const static int N = 8;
+
     // ================== Constructing and assigning ==================
 
     /** The default constructor creates an empty array. */
@@ -90,32 +94,6 @@ private:
     size_t _c{0};    // the capacity of the heap-allocated buffer, or zero if there is none
     double _a[N];    // the inside buffer
 };
-
-// ================== Iterating ==================
-
-/** This function returns an iterator to the first array element. */
-template<size_t N> double* begin(ShortArray<N>& a)
-{
-    return &a[0];
-}
-
-/** This function returns an iterator to the first array element. */
-template<size_t N> const double* begin(const ShortArray<N>& a)
-{
-    return &a[0];
-}
-
-/** This function returns an iterator just beyond the last array element. */
-template<size_t N> double* end(ShortArray<N>& a)
-{
-    return &a[a.size()];
-}
-
-/** This function returns an iterator just beyond the last array element. */
-template<size_t N> const double* end(const ShortArray<N>& a)
-{
-    return &a[a.size()];
-}
 
 ////////////////////////////////////////////////////////////////////
 

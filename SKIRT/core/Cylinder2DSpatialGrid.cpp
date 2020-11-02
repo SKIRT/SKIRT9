@@ -7,6 +7,7 @@
 #include "FatalError.hpp"
 #include "Log.hpp"
 #include "NR.hpp"
+#include "PathSegmentGenerator.hpp"
 #include "Random.hpp"
 #include "SpatialGridPath.hpp"
 #include "SpatialGridPlotFile.hpp"
@@ -90,244 +91,297 @@ Position Cylinder2DSpatialGrid::randomPositionInCell(int m) const
 
 //////////////////////////////////////////////////////////////////////
 
-void Cylinder2DSpatialGrid::path(SpatialGridPath* path) const
+class Cylinder2DSpatialGrid::MySegmentGenerator : public PathSegmentGenerator
 {
-    // Determination of the initial position and direction of the path,
-    // and calculation of some initial values
-    path->clear();
-    double kx, ky, kz;
-    path->direction().cartesian(kx, ky, kz);
-    double kq = sqrt(kx * kx + ky * ky);
-    if (kz == 0.0) kz = 1e-20;  // avoid moving exactly parallel to the equatorial plane
-    if (kq == 0.0) kq = 1e-20;  // avoid moving exactly parallel to the z-axis
-    double x, y, z;
-    path->position().cartesian(x, y, z);
-    double R = path->position().cylRadius();
-    double q = (x * kx + y * ky) / kq;
-    double p2 = (R - q) * (R + q);
-    double p = sqrt(max(0.0, p2));  // make sure that p>=0 here; necessary sometimes due to rounding errors
-    double Rmax = maxRadius();
-    double zmin = minZ();
-    double zmax = maxZ();
+    const Cylinder2DSpatialGrid* _grid{nullptr};
+    enum class Phase { UpInwards, UpOutwards, DownInwards, DownOutwards };
+    Phase _phase{Phase::UpInwards};
+    double _R{0.}, _z{0.}, _kq{0.}, _kz{0.}, _p{0.}, _q{0.};
+    int _i{-1}, _imin{-1}, _k{-1};
 
-    // Move the photon packet to the first grid cell that it will pass.
-    // If it does not pass any grid cell, return an empty path.
-    // Otherwise calculate the distance covered and add a segment to the path.
+public:
+    MySegmentGenerator(const Cylinder2DSpatialGrid* grid) : _grid(grid) {}
 
-    if (R >= Rmax)
+    // This function initializes the position and direction in cylindrical coordinates (R,z,kq,kz,p,q)
+    // and attempts to move the position inside the cylinder, setting an empty path segment and the
+    // segment generator state accordingly. The function returns true if the position is now inside.
+    bool moveInside()
     {
-        if (q > 0.0 || p > Rmax)
-            return path->clear();
-        else
+        // intialize position and direction
+        _R = sqrt(rx() * rx() + ry() * ry());
+        _z = rz();
+        _kq = sqrt(kx() * kx() + ky() * ky());
+        _kz = kz();
+        if (_kq == 0.0) _kq = 1e-20;  // avoid moving exactly parallel to the z-axis
+        if (_kz == 0.0) _kz = 1e-20;  // avoid moving exactly parallel to the equatorial plane
+        _q = (rx() * kx() + ry() * ky()) / _kq;
+        _p = sqrt(max(0., (_R - _q) * (_R + _q)));  // make sure that p>=0 in case of rounding errors
+
+        // get boundaries
+        double Rmax = _grid->maxRadius();
+        double zmin = _grid->minZ();
+        double zmax = _grid->maxZ();
+
+        // initialize to empty segment with zero length
+        setEmptySegment();
+        setState(State::Outside);
+
+        // keep track of cumulative length of all subsegments
+        double cumds = 0.;
+
+        // --> R direction
+        if (_R >= Rmax)
         {
-            R = Rmax - 1e-8 * (_Rv[_NR] - _Rv[_NR - 1]);
-            double qmax = sqrt((Rmax - p) * (Rmax + p));
-            double ds = (qmax - q) / kq;
-            path->addSegment(-1, ds);
-            q = qmax;
-            z += kz * ds;
-        }
-    }
-    if (z < zmin)
-    {
-        if (kz <= 0.0)
-            return path->clear();
-        else
-        {
-            double ds = (zmin - z) / kz;
-            path->addSegment(-1, ds);
-            q += kq * ds;
-            R = sqrt(p * p + q * q);
-            z = zmin + 1e-8 * (_zv[1] - _zv[0]);
-        }
-    }
-    else if (z > zmax)
-    {
-        if (kz >= 0.0)
-            return path->clear();
-        else
-        {
-            double ds = (zmax - z) / kz;
-            path->addSegment(-1, ds);
-            q += kq * ds;
-            R = sqrt(p * p + q * q);
-            z = zmax - 1e-8 * (_zv[_Nz] - _zv[_Nz - 1]);
-        }
-    }
-    if (std::isinf(R) || std::isnan(R) || std::isinf(z) || std::isnan(z) || R >= Rmax || z <= zmin || z >= zmax)
-        return path->clear();
-
-    // Determination of the initial grid cell
-
-    int i = NR::locateClip(_Rv, R);
-    int k = NR::locateClip(_zv, z);
-
-    // And here we go...
-
-    double ds, dsq, dsz;
-    double RN, qN, zN;
-
-    // SCENARIO 1: UPWARD MOVEMENT
-
-    if (kz >= 0.0)
-    {
-        if (q < 0.0)
-        {
-            int imin = NR::locateClip(_Rv, p);
-            RN = _Rv[i];
-            qN = -sqrt((RN - p) * (RN + p));
-            zN = _zv[k + 1];
-            while (i > imin)
+            if (_q > 0.0 || _p > Rmax)
+                return false;
+            else
             {
-                int m = index(i, k);
-                dsq = (qN - q) / kq;
-                dsz = (zN - z) / kz;
-                if (dsq < dsz)
+                double qmax = sqrt((Rmax - _p) * (Rmax + _p));
+                double ds = (qmax - _q) / _kq;
+                _q = qmax;
+                _R = Rmax - 1e-8 * (_grid->_Rv[_grid->_NR] - _grid->_Rv[_grid->_NR - 1]);
+                _z += _kz * ds;
+                cumds += ds;
+            }
+        }
+
+        // --> z direction
+        if (_z < zmin)
+        {
+            if (_kz <= 0.0)
+                return false;
+            else
+            {
+                double ds = (zmin - _z) / _kz;
+                _q += _kq * ds;
+                _R = sqrt(_p * _p + _q * _q);
+                _z = zmin + 1e-8 * (_grid->_zv[1] - _grid->_zv[0]);
+                cumds += ds;
+            }
+        }
+        else if (_z > zmax)
+        {
+            if (_kz >= 0.0)
+                return false;
+            else
+            {
+                double ds = (zmax - _z) / _kz;
+                _q += _kq * ds;
+                _R = sqrt(_p * _p + _q * _q);
+                _z = zmax - 1e-8 * (_grid->_zv[_grid->_Nz] - _grid->_zv[_grid->_Nz - 1]);
+                cumds += ds;
+            }
+        }
+
+        // in rare border cases, the position can still be outside of the cylinder or have an invalid value
+        if (std::isinf(_R) || std::isnan(_R) || std::isinf(_z) || std::isnan(_z)) return false;
+        if (_R >= Rmax || _z <= zmin || _z >= zmax) return false;
+
+        // return the empty segment with the cumulative length
+        // (which might be zero if the position was inside the box to begin with)
+        setEmptySegment(cumds);
+        setState(State::Inside);
+        return true;
+    }
+
+    bool next() override
+    {
+        switch (state())
+        {
+            case State::Unknown:
+            {
+                // try moving the photon packet inside the grid; if this is impossible, return an empty path
+                if (!moveInside()) return false;
+
+                // determine the grid cell we are in
+                _i = NR::locateClip(_grid->_Rv, _R);
+                _k = NR::locateClip(_grid->_zv, _z);
+
+                // determine the initial direction of movement for each coordinate
+                if (_kz >= 0.)
                 {
-                    ds = dsq;
-                    path->addSegment(m, ds);
-                    i--;
-                    q = qN;
-                    z += kz * ds;
-                    RN = _Rv[i];
-                    qN = -sqrt((RN - p) * (RN + p));
+                    _phase = Phase::UpOutwards;
+                    if (_q < 0.)
+                    {
+                        _imin = NR::locateClip(_grid->_Rv, _p);
+                        if (_i > _imin) _phase = Phase::UpInwards;
+                    }
                 }
                 else
                 {
-                    ds = dsz;
-                    path->addSegment(m, ds);
-                    k++;
-                    if (k >= _Nz)
-                        return;
-                    else
+                    _phase = Phase::DownOutwards;
+                    if (_q < 0.)
                     {
-                        q += kq * ds;
-                        z = zN;
-                        zN = _zv[k + 1];
+                        _imin = NR::locateClip(_grid->_Rv, _p);
+                        if (_i > _imin) _phase = Phase::DownInwards;
+                    }
+                }
+
+                // if the photon packet started outside the grid, return the corresponding nonzero-length segment;
+                // otherwise fall through to determine the first actual segment
+                if (ds() > 0.) return true;
+            }
+
+            case State::Inside:
+            {
+                switch (_phase)
+                {
+                    case Phase::UpInwards:
+                    {
+                        double RN = _grid->_Rv[_i];
+                        double qN = -sqrt((RN - _p) * (RN + _p));
+                        double zN = _grid->_zv[_k + 1];
+
+                        int m = _grid->index(_i, _k);
+                        double dsq = (qN - _q) / _kq;
+                        double dsz = (zN - _z) / _kz;
+                        if (dsq < dsz)
+                        {
+                            double ds = dsq;
+                            setSegment(m, ds);
+                            _i--;
+                            _q = qN;
+                            _z += _kz * ds;
+                            if (_i <= _imin) _phase = Phase::UpOutwards;
+                        }
+                        else
+                        {
+                            double ds = dsz;
+                            setSegment(m, ds);
+                            _k++;
+                            if (_k >= _grid->_Nz)
+                                setState(State::Outside);
+                            else
+                            {
+                                _q += _kq * ds;
+                                _z = zN;
+                            }
+                        }
+                        return true;
+                    }
+                    case Phase::UpOutwards:
+                    {
+                        double RN = _grid->_Rv[_i + 1];
+                        double qN = sqrt((RN - _p) * (RN + _p));
+                        double zN = _grid->_zv[_k + 1];
+
+                        int m = _grid->index(_i, _k);
+                        double dsq = (qN - _q) / _kq;
+                        double dsz = (zN - _z) / _kz;
+                        if (dsq < dsz)
+                        {
+                            double ds = dsq;
+                            setSegment(m, ds);
+                            _i++;
+                            if (_i >= _grid->_NR)
+                                setState(State::Outside);
+                            else
+                            {
+                                _q = qN;
+                                _z += _kz * ds;
+                            }
+                        }
+                        else
+                        {
+                            double ds = dsz;
+                            setSegment(m, ds);
+                            _k++;
+                            if (_k >= _grid->_Nz)
+                                setState(State::Outside);
+                            else
+                            {
+                                _q += _kq * ds;
+                                _z = zN;
+                            }
+                        }
+                        return true;
+                    }
+                    case Phase::DownInwards:
+                    {
+                        double RN = _grid->_Rv[_i];
+                        double qN = -sqrt((RN - _p) * (RN + _p));
+                        double zN = _grid->_zv[_k];
+
+                        int m = _grid->index(_i, _k);
+                        double dsq = (qN - _q) / _kq;
+                        double dsz = (zN - _z) / _kz;
+                        if (dsq < dsz)
+                        {
+                            double ds = dsq;
+                            setSegment(m, ds);
+                            _i--;
+                            _q = qN;
+                            _z += _kz * ds;
+                            if (_i <= _imin) _phase = Phase::DownOutwards;
+                        }
+                        else
+                        {
+                            double ds = dsz;
+                            setSegment(m, ds);
+                            _k--;
+                            if (_k < 0)
+                                setState(State::Outside);
+                            else
+                            {
+                                _q += _kq * ds;
+                                _z = zN;
+                            }
+                        }
+                        return true;
+                    }
+                    case Phase::DownOutwards:
+                    {
+                        double RN = _grid->_Rv[_i + 1];
+                        double qN = sqrt((RN - _p) * (RN + _p));
+                        double zN = _grid->_zv[_k];
+
+                        int m = _grid->index(_i, _k);
+                        double dsq = (qN - _q) / _kq;
+                        double dsz = (zN - _z) / _kz;
+                        if (dsq < dsz)
+                        {
+                            double ds = dsq;
+                            setSegment(m, ds);
+                            _i++;
+                            if (_i >= _grid->_NR)
+                                setState(State::Outside);
+                            else
+                            {
+                                _q = qN;
+                                _z += _kz * ds;
+                            }
+                        }
+                        else
+                        {
+                            double ds = dsz;
+                            setSegment(m, ds);
+                            _k--;
+                            if (_k < 0)
+                                setState(State::Outside);
+                            else
+                            {
+                                _q += _kq * ds;
+                                _z = zN;
+                            }
+                        }
+                        return true;
                     }
                 }
             }
-        }
-        RN = _Rv[i + 1];
-        qN = sqrt((RN - p) * (RN + p));
-        zN = _zv[k + 1];
-        while (true)
-        {
-            int m = index(i, k);
-            dsq = (qN - q) / kq;
-            dsz = (zN - z) / kz;
-            if (dsq < dsz)
-            {
-                ds = dsq;
-                path->addSegment(m, ds);
-                i++;
-                if (i >= _NR)
-                    return;
-                else
-                {
-                    q = qN;
-                    z += kz * ds;
-                    RN = _Rv[i + 1];
-                    qN = sqrt((RN - p) * (RN + p));
-                }
-            }
-            else
-            {
-                ds = dsz;
-                path->addSegment(m, ds);
-                k++;
-                if (k >= _Nz)
-                    return;
-                else
-                {
-                    q += kq * ds;
-                    z = zN;
-                    zN = _zv[k + 1];
-                }
-            }
-        }
-    }
 
-    // SCENARIO 2: DOWNWARD MOVEMENT
-
-    else
-    {
-        if (q < 0.0)
-        {
-            int imin = NR::locateClip(_Rv, p);
-            RN = _Rv[i];
-            qN = -sqrt((RN - p) * (RN + p));
-            zN = _zv[k];
-            while (i > imin)
+            case State::Outside:
             {
-                int m = index(i, k);
-                dsq = (qN - q) / kq;
-                dsz = (zN - z) / kz;
-                if (dsq < dsz)
-                {
-                    ds = dsq;
-                    path->addSegment(m, ds);
-                    i--;
-                    q = qN;
-                    z += kz * ds;
-                    RN = _Rv[i];
-                    qN = -sqrt((RN - p) * (RN + p));
-                }
-                else
-                {
-                    ds = dsz;
-                    path->addSegment(m, ds);
-                    k--;
-                    if (k < 0)
-                        return;
-                    else
-                    {
-                        q += kq * ds;
-                        z = zN;
-                        zN = _zv[k];
-                    }
-                }
             }
         }
-        RN = _Rv[i + 1];
-        qN = sqrt((RN - p) * (RN + p));
-        zN = _zv[k];
-        while (true)
-        {
-            int m = index(i, k);
-            dsq = (qN - q) / kq;
-            dsz = (zN - z) / kz;
-            if (dsq < dsz)
-            {
-                ds = dsq;
-                path->addSegment(m, ds);
-                i++;
-                if (i >= _NR)
-                    return;
-                else
-                {
-                    q = qN;
-                    z += kz * ds;
-                    RN = _Rv[i + 1];
-                    qN = sqrt((RN - p) * (RN + p));
-                }
-            }
-            else
-            {
-                ds = dsz;
-                path->addSegment(m, ds);
-                k--;
-                if (k < 0)
-                    return;
-                else
-                {
-                    q += kq * ds;
-                    z = zN;
-                    zN = _zv[k];
-                }
-            }
-        }
+        return false;
     }
+};
+
+//////////////////////////////////////////////////////////////////////
+
+std::unique_ptr<PathSegmentGenerator> Cylinder2DSpatialGrid::createPathSegmentGenerator() const
+{
+    return std::make_unique<MySegmentGenerator>(this);
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -5,9 +5,9 @@
 
 #include "DustGrainSizeDistributionProbe.hpp"
 #include "Configuration.hpp"
-#include "Medium.hpp"
+#include "GrainSizeDistribution.hpp"
 #include "MediumSystem.hpp"
-#include "MultiGrainDustMix.hpp"
+#include "MultiGrainPopulationInterface.hpp"
 #include "NR.hpp"
 #include "TextOutFile.hpp"
 #include "Units.hpp"
@@ -28,7 +28,7 @@ void DustGrainSizeDistributionProbe::probeSetup()
         // skipping mixes that don't offer multiple dust grain populations
         for (int h = 0; h != numMedia; ++h)
         {
-            auto mix = dynamic_cast<const MultiGrainDustMix*>(ms->media()[h]->mix());
+            auto mix = dynamic_cast<const MultiGrainPopulationInterface*>(ms->media()[h]->mix());
             if (mix)
             {
                 int numPops = mix->numPopulations();
@@ -44,7 +44,7 @@ void DustGrainSizeDistributionProbe::probeSetup()
                     // write the header
                     out.writeLine("# Dust grain size distribution");
                     out.addColumn("grain size", units->ugrainsize());
-                    out.addColumn("size distribution", "1/m");  // we don't scale these values
+                    out.addColumn("size distribution", units->upergrainsize());
 
                     // construct a grain size grid
                     Array av;
@@ -53,7 +53,7 @@ void DustGrainSizeDistributionProbe::probeSetup()
                     // write the columns
                     for (int i = 0; i != _numSamples; ++i)
                     {
-                        out.writeRow(units->ograinsize(av[i]), sd->dnda(av[i]));
+                        out.writeRow(units->ograinsize(av[i]), units->opergrainsize(sd->dnda(av[i])));
                     }
                 }
             }

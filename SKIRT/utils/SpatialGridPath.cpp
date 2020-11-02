@@ -33,6 +33,7 @@ SpatialGridPath::SpatialGridPath()
 void SpatialGridPath::clear()
 {
     _segments.clear();
+    _s = 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -41,8 +42,8 @@ void SpatialGridPath::addSegment(int m, double ds)
 {
     if (ds > 0)
     {
-        double s = !_segments.empty() ? _segments.back().s : 0.;
-        _segments.push_back(Segment{m, ds, s + ds, 0.});
+        _s += ds;
+        _segments.push_back(Segment{m, ds, _s, 0.});
     }
 }
 
@@ -196,6 +197,14 @@ void SpatialGridPath::findInteractionPoint(double tau)
             _interactionDistance = (seg - 1)->s;
         }
     }
+}
+
+////////////////////////////////////////////////////////////////////
+
+void SpatialGridPath::setInteractionPoint(int m, double s)
+{
+    _interactionCellIndex = m;
+    _interactionDistance = s;
 }
 
 ////////////////////////////////////////////////////////////////////

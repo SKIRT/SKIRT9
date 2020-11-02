@@ -20,8 +20,9 @@ namespace
 
 void DipolePhaseFunction::initialize(Random* random, bool includePolarization)
 {
-    // cache random number generator
+    // cache random number generator and polarization flag
     _random = random;
+    _includePolarization = includePolarization;
 
     if (includePolarization)
     {
@@ -94,6 +95,101 @@ void DipolePhaseFunction::applyMueller(double theta, StokesVector* sv) const
 {
     double costheta = cos(theta);
     sv->applyMueller(costheta * costheta + 1., costheta * costheta - 1., 2. * costheta, 0.);
+}
+
+////////////////////////////////////////////////////////////////////
+
+namespace
+{
+    // This helper function returns the angle phi between the previous and current scattering planes
+    // given the normal to the previous scattering plane and the current and new propagation directions
+    // of the photon packet. The function returns a zero angle if the light is unpolarized or when the
+    // current scattering event is completely forward or backward.
+    double angleBetweenScatteringPlanes(Direction np, Direction kc, Direction kn)
+    {
+        Vec nc = Vec::cross(kc, kn);
+        nc /= nc.norm();
+        double cosphi = Vec::dot(np, nc);
+        double sinphi = Vec::dot(Vec::cross(np, nc), kc);
+        double phi = atan2(sinphi, cosphi);
+        if (std::isfinite(phi)) return phi;
+        return 0.;
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
+void DipolePhaseFunction::peeloffScattering(double& I, double& Q, double& U, double& V, double w, Direction bfk,
+                                            Direction bfkobs, Direction bfky, const StokesVector* sv) const
+{
+    if (!_includePolarization)
+    {
+        // calculate the value of the material-specific phase function
+        double costheta = Vec::dot(bfk, bfkobs);
+        double value = phaseFunctionValueForCosine(costheta);
+
+        // accumulate the weighted sum in the intensity
+        I += w * value;
+    }
+    else
+    {
+        // calculate the value of the material-specific phase function
+        double theta = acos(Vec::dot(bfk, bfkobs));
+        double phi = angleBetweenScatteringPlanes(sv->normal(), bfk, bfkobs);
+        double value = phaseFunctionValue(theta, phi, sv);
+
+        // copy the polarization state so we can change it without affecting the incoming stokes vector
+        StokesVector svnew = *sv;
+
+        // rotate the Stokes vector reference direction into the scattering plane
+        svnew.rotateIntoPlane(bfk, bfkobs);
+
+        // apply the Mueller matrix
+        applyMueller(theta, &svnew);
+
+        // rotate the Stokes vector reference direction parallel to the instrument frame y-axis
+        // it is given bfkobs because the photon is at this point aimed towards the observer
+        svnew.rotateIntoPlane(bfkobs, bfky);
+
+        // acumulate the weighted sum of all Stokes components to support polarization
+        w *= value;
+        I += w * svnew.stokesI();
+        Q += w * svnew.stokesQ();
+        U += w * svnew.stokesU();
+        V += w * svnew.stokesV();
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
+Direction DipolePhaseFunction::performScattering(Direction bfk, StokesVector* sv) const
+{
+    // determine the new propagation direction, and if required, update the polarization state of the photon packet
+    if (!_includePolarization)
+    {
+        // sample a scattering angle from the dipole phase function
+        double costheta = generateCosineFromPhaseFunction();
+        return _random->direction(bfk, costheta);
+    }
+    else
+    {
+        // sample the angles between the previous and new direction from the dipole phase function,
+        // given the incoming polarization state
+        double theta, phi;
+        std::tie(theta, phi) = generateAnglesFromPhaseFunction(sv);
+
+        // rotate the Stokes vector (and the scattering plane) of the photon packet
+        sv->rotateStokes(phi, bfk);
+
+        // apply the Mueller matrix to the Stokes vector of the photon packet
+        applyMueller(theta, sv);
+
+        // rotate the propagation direction in the scattering plane
+        Vec newdir = bfk * cos(theta) + Vec::cross(sv->normal(), bfk) * sin(theta);
+
+        // normalize the new direction to prevent degradation
+        return Direction(newdir / newdir.norm());
+    }
 }
 
 ////////////////////////////////////////////////////////////////////

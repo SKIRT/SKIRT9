@@ -14,9 +14,10 @@ string GrainComposition::resourceNameForMuellerMatrix() const
 
 ////////////////////////////////////////////////////////////////////
 
-std::string GrainComposition::resourceNameForSpheroidalEmission() const
+bool GrainComposition::resourcesForSpheroidalEmission(bool& /*resource*/, double& /*interpol*/, string& /*tableName1*/,
+                                                      string& /*tableName2*/) const
 {
-    return string();
+    return false;
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -7,6 +7,7 @@
 #include "FatalError.hpp"
 #include "Log.hpp"
 #include "NR.hpp"
+#include "PathSegmentGenerator.hpp"
 #include "Random.hpp"
 #include "SpatialGridPath.hpp"
 #include "StringUtils.hpp"
@@ -15,171 +16,166 @@
 
 ////////////////////////////////////////////////////////////////////
 
-namespace AdaptiveMesh_Private
+/* The Node class is a helper class used to represent individual nodes in a tree data
+   structure. An Node instance can represent a leaf or a nonleaf node. A nonleaf node
+   maintains a list of pointers to its children. A leaf node instead keeps a list of pointers
+   to the most likely neighbor for each of the six cell walls. */
+class AdaptiveMeshSnapshot::Node : public Box
 {
-    /* The Node class is a helper class used to represent individual nodes in a tree data
-       structure. An Node instance can represent a leaf or a nonleaf node. A nonleaf node
-       maintains a list of pointers to its children. A leaf node instead keeps a list of pointers
-       to the most likely neighbor for each of the six cell walls. */
-    class Node : public Box
+public:
+    /* The constructor receives the node's extent, and reads the other node data from the
+       following line in the specified input file. It then recursively constructs any child
+       nodes. In addition to constructing the new node(s), the constructor also adds leaf node
+       pointers to the vector held by the AdaptiveMeshSnapshot class. */
+    Node(const Box& extent, TextInFile* infile, vector<Node*>& leafnodes) : Box(extent)
     {
-    public:
-        /* The constructor receives the node's extent, and reads the other node data from the
-           following line in the specified input file. It then recursively constructs any child
-           nodes. In addition to constructing the new node(s), the constructor also adds leaf node
-           pointers to the vector held by the AdaptiveMeshSnapshot class. */
-        Node(const Box& extent, TextInFile* infile, vector<Node*>& leafnodes) : Box(extent)
+        // if this is a nonleaf line, process it
+        if (infile->readNonLeaf(_Nx, _Ny, _Nz))
         {
-            // if this is a nonleaf line, process it
-            if (infile->readNonLeaf(_Nx, _Ny, _Nz))
-            {
-                _m = -1;
+            _m = -1;
 
-                // construct and store our children, in local Morton order
-                _nodes.resize(_Nx * _Ny * _Nz);
-                int m = 0;
-                for (int k = 0; k < _Nz; k++)
-                    for (int j = 0; j < _Ny; j++)
-                        for (int i = 0; i < _Nx; i++)
-                        {
-                            Vec r0 = extent.fracPos(i, j, k, _Nx, _Ny, _Nz);
-                            Vec r1 = extent.fracPos(i + 1, j + 1, k + 1, _Nx, _Ny, _Nz);
-                            _nodes[m++] = new Node(Box(r0, r1), infile, leafnodes);
-                        }
-            }
-
-            // if this is not a nonleaf line, it should be a leaf line
-            else
-            {
-                _Nx = 0;
-                _Ny = 0;
-                _Nz = 0;
-
-                // read a leaf line and detect premature end-of file
-                if (!infile->readRow(_properties))
-                    throw FATALERROR("Reached end of file in adaptive mesh data before all nodes were read");
-
-                // add this leaf node to the list
-                _m = leafnodes.size();
-                leafnodes.push_back(this);
-            }
+            // construct and store our children, in local Morton order
+            _nodes.resize(_Nx * _Ny * _Nz);
+            int m = 0;
+            for (int k = 0; k < _Nz; k++)
+                for (int j = 0; j < _Ny; j++)
+                    for (int i = 0; i < _Nx; i++)
+                    {
+                        Vec r0 = extent.fracPos(i, j, k, _Nx, _Ny, _Nz);
+                        Vec r1 = extent.fracPos(i + 1, j + 1, k + 1, _Nx, _Ny, _Nz);
+                        _nodes[m++] = new Node(Box(r0, r1), infile, leafnodes);
+                    }
         }
 
-        /* This function adds neighbor information to the receiving leaf node. Specifically, it
-           constructs a list of the node's most likely neighbor at each of its six walls. The function
-           does nothing if neighbor information has already been added, or if the node is a nonleaf
-           node. The first argument specifies the adaptive mesh root node, which is queried by this
-           function to locate the node's neighbors. The second argument specifies a very small offset
-           (relative to the domain size) used to determine a location just beyond a node wall. */
-        void addNeighbors(Node* root, double eps)
+        // if this is not a nonleaf line, it should be a leaf line
+        else
         {
-            // skip if this node has children or if neighbors already have been added
-            if (_nodes.empty())
-            {
-                // node center
-                Vec ctr = center();
+            _Nx = 0;
+            _Ny = 0;
+            _Nz = 0;
 
-                // determine the node just beyond the center of each wall (or null pointer for domain walls)
-                _nodes.resize(6);
-                _nodes[BACK] = root->leaf(ctr + Vec(-eps, 0, 0));
-                _nodes[FRONT] = root->leaf(ctr + Vec(+eps, 0, 0));
-                _nodes[LEFT] = root->leaf(ctr + Vec(0, -eps, 0));
-                _nodes[RIGHT] = root->leaf(ctr + Vec(0, +eps, 0));
-                _nodes[BOTTOM] = root->leaf(ctr + Vec(0, 0, -eps));
-                _nodes[TOP] = root->leaf(ctr + Vec(0, 0, +eps));
-            }
+            // read a leaf line and detect premature end-of file
+            if (!infile->readRow(_properties))
+                throw FATALERROR("Reached end of file in adaptive mesh data before all nodes were read");
+
+            // add this leaf node to the list
+            _m = leafnodes.size();
+            leafnodes.push_back(this);
         }
+    }
 
-        /* The destructor releases the node's children if it is a nonleaf node. */
-        ~Node()
+    /* This function adds neighbor information to the receiving leaf node. Specifically, it
+       constructs a list of the node's most likely neighbor at each of its six walls. The function
+       does nothing if neighbor information has already been added, or if the node is a nonleaf
+       node. The first argument specifies the adaptive mesh root node, which is queried by this
+       function to locate the node's neighbors. The second argument specifies a very small offset
+       (relative to the domain size) used to determine a location just beyond a node wall. */
+    void addNeighbors(Node* root, double eps)
+    {
+        // skip if this node has children or if neighbors already have been added
+        if (_nodes.empty())
         {
-            if (!isLeaf())
-                for (auto node : _nodes) delete node;
+            // node center
+            Vec ctr = center();
+
+            // determine the node just beyond the center of each wall (or null pointer for domain walls)
+            _nodes.resize(6);
+            _nodes[BACK] = root->leaf(ctr + Vec(-eps, 0, 0));
+            _nodes[FRONT] = root->leaf(ctr + Vec(+eps, 0, 0));
+            _nodes[LEFT] = root->leaf(ctr + Vec(0, -eps, 0));
+            _nodes[RIGHT] = root->leaf(ctr + Vec(0, +eps, 0));
+            _nodes[BOTTOM] = root->leaf(ctr + Vec(0, 0, -eps));
+            _nodes[TOP] = root->leaf(ctr + Vec(0, 0, +eps));
         }
+    }
 
-        /* For leaf nodes, this function returns the Morton order cell index of the corresponding
-           cell. For nonleaf nodes, this function returns -1. */
-        int cellIndex() const { return _m; }
+    /* The destructor releases the node's children if it is a nonleaf node. */
+    ~Node()
+    {
+        if (!isLeaf())
+            for (auto node : _nodes) delete node;
+    }
 
-        /* This function returns true if the node is a leaf node, false if it is a nonleaf node. */
-        bool isLeaf() const { return _m >= 0; }
+    /* For leaf nodes, this function returns the Morton order cell index of the corresponding
+       cell. For nonleaf nodes, this function returns -1. */
+    int cellIndex() const { return _m; }
 
-        /* This function returns a pointer to the node's immediate child that contains the specified
-           point, assuming that the point is inside the node (which is not verified). This function
-           causes undefined behavior if the node is a leaf node. */
-        const Node* child(Vec r) const
+    /* This function returns true if the node is a leaf node, false if it is a nonleaf node. */
+    bool isLeaf() const { return _m >= 0; }
+
+    /* This function returns a pointer to the node's immediate child that contains the specified
+       point, assuming that the point is inside the node (which is not verified). This function
+       causes undefined behavior if the node is a leaf node. */
+    const Node* child(Vec r) const
+    {
+        // estimate the child node indices; this may be off by one due to rounding errors
+        int i, j, k;
+        cellIndices(i, j, k, r, _Nx, _Ny, _Nz);
+
+        // get the estimated node using local Morton order
+        const Node* node = _nodes[(k * _Ny + j) * _Nx + i];
+
+        // if the point is NOT in the node, correct the indices and get the new node
+        if (!node->contains(r))
         {
-            // estimate the child node indices; this may be off by one due to rounding errors
-            int i, j, k;
-            cellIndices(i, j, k, r, _Nx, _Ny, _Nz);
+            if (r.x() < node->xmin())
+                i--;
+            else if (r.x() > node->xmax())
+                i++;
+            if (r.y() < node->ymin())
+                j--;
+            else if (r.y() > node->ymax())
+                j++;
+            if (r.z() < node->zmin())
+                k--;
+            else if (r.z() > node->zmax())
+                k++;
+            node = _nodes[(k * _Ny + j) * _Nx + i];
+            if (!node->contains(r)) throw FATALERROR("Can't locate the appropriate child node");
+        }
+        return node;
+    }
 
-            // get the estimated node using local Morton order
-            const Node* node = _nodes[(k * _Ny + j) * _Nx + i];
+    /* This function returns a pointer to the deepest node in the child hierarchy of this node
+       that contains the specified point, or null if the point is outside the node. It uses the
+       child() function repeatedly to locate the appropriate node. */
+    const Node* leaf(Vec r) const
+    {
+        if (!contains(r)) return nullptr;
 
-            // if the point is NOT in the node, correct the indices and get the new node
-            if (!node->contains(r))
-            {
-                if (r.x() < node->xmin())
-                    i--;
-                else if (r.x() > node->xmax())
-                    i++;
-                if (r.y() < node->ymin())
-                    j--;
-                else if (r.y() > node->ymax())
-                    j++;
-                if (r.z() < node->zmin())
-                    k--;
-                else if (r.z() > node->zmax())
-                    k++;
-                node = _nodes[(k * _Ny + j) * _Nx + i];
-                if (!node->contains(r)) throw FATALERROR("Can't locate the appropriate child node");
-            }
+        const Node* node = this;
+        while (!node->isLeaf()) node = node->child(r);
+        return node;
+    }
+
+    /* This enum lists a constant for each of the walls in a node. The x-coordinate increases
+       from BACK to FRONT, the y-coordinate increases from LEFT to RIGHT, and the z-coordinate
+       increases from BOTTOM to TOP. */
+    enum Wall { BACK = 0, FRONT, LEFT, RIGHT, BOTTOM, TOP };
+
+    /* This function returns a pointer to the leaf node just beyond a given wall that contains
+       the specified position, or null if the specified position is not inside the most likely
+       neighbor for that wall, or if neighbors have not been added for the node, or if this is
+       not a leaf node. */
+    const Node* neighbor(Wall wall, Vec r) const
+    {
+        const Node* node = _nodes.size() == 6 ? _nodes[wall] : nullptr;
+        if (node && node->contains(r))
             return node;
-        }
+        else
+            return nullptr;
+    }
 
-        /* This function returns a pointer to the deepest node in the child hierarchy of this node
-           that contains the specified point, or null if the point is outside the node. It uses the
-           child() function repeatedly to locate the appropriate node. */
-        const Node* leaf(Vec r) const
-        {
-            if (!contains(r)) return nullptr;
+    /* This function returns the user properties for leaf nodes; for nonleaf nodes the
+       returned array is empty. */
+    const Array& properties() { return _properties; }
 
-            const Node* node = this;
-            while (!node->isLeaf()) node = node->child(r);
-            return node;
-        }
-
-        /* This enum lists a constant for each of the walls in a node. The x-coordinate increases
-           from BACK to FRONT, the y-coordinate increases from LEFT to RIGHT, and the z-coordinate
-           increases from BOTTOM to TOP. */
-        enum Wall { BACK = 0, FRONT, LEFT, RIGHT, BOTTOM, TOP };
-
-        /* This function returns a pointer to the leaf node just beyond a given wall that contains
-           the specified position, or null if the specified position is not inside the most likely
-           neighbor for that wall, or if neighbors have not been added for the node, or if this is
-           not a leaf node. */
-        const Node* neighbor(Wall wall, Vec r) const
-        {
-            const Node* node = _nodes.size() == 6 ? _nodes[wall] : nullptr;
-            if (node && node->contains(r))
-                return node;
-            else
-                return nullptr;
-        }
-
-        /* This function returns the user properties for leaf nodes; for nonleaf nodes the
-           returned array is empty. */
-        const Array& properties() { return _properties; }
-
-    private:
-        int _Nx, _Ny, _Nz;  // number of grid cells in each direction; zero for leaf nodes
-        int _m;             // Morton order index for the cell represented by this leaf node; -1 for nonleaf nodes
-        vector<const Node*> _nodes;  // pointers to children (nonleaf nodes) or neighbors (leaf nodes)
-        Array _properties;           // user-defined properties
-    };
-}
-
-using namespace AdaptiveMesh_Private;
+private:
+    int _Nx, _Ny, _Nz;           // number of grid cells in each direction; zero for leaf nodes
+    int _m;                      // Morton order index for the cell represented by this leaf node; -1 for nonleaf nodes
+    vector<const Node*> _nodes;  // pointers to children (nonleaf nodes) or neighbors (leaf nodes)
+    Array _properties;           // user-defined properties
+};
 
 ////////////////////////////////////////////////////////////////////
 
@@ -461,70 +457,94 @@ int AdaptiveMeshSnapshot::cellIndex(Position bfr) const
 
 ////////////////////////////////////////////////////////////////////
 
-void AdaptiveMeshSnapshot::path(SpatialGridPath* path) const
+class AdaptiveMeshSnapshot::MySegmentGenerator : public PathSegmentGenerator
 {
-    // if the photon packet starts outside the dust grid, move it into the first grid cell that it will pass
-    Position r = path->moveInside(_root->extent(), _eps);
+    const AdaptiveMeshSnapshot* _grid{nullptr};
+    const Node* _node{nullptr};
 
-    // get the node containing the current location;
-    // if the position is not inside the grid, return an empty path
-    const Node* node = _root->leaf(r);
-    if (!node) return path->clear();
+public:
+    MySegmentGenerator(const AdaptiveMeshSnapshot* grid) : _grid(grid) {}
 
-    // start the loop over nodes/path segments until we leave the grid
-    double kx, ky, kz;
-    path->direction().cartesian(kx, ky, kz);
-    while (node)
+    bool next() override
     {
-        double xnext = (kx < 0.0) ? node->xmin() : node->xmax();
-        double ynext = (ky < 0.0) ? node->ymin() : node->ymax();
-        double znext = (kz < 0.0) ? node->zmin() : node->zmax();
-        double dsx = (fabs(kx) > 1e-15) ? (xnext - r.x()) / kx : DBL_MAX;
-        double dsy = (fabs(ky) > 1e-15) ? (ynext - r.y()) / ky : DBL_MAX;
-        double dsz = (fabs(kz) > 1e-15) ? (znext - r.z()) / kz : DBL_MAX;
-
-        double ds;
-        Node::Wall wall;
-        if (dsx <= dsy && dsx <= dsz)
+        switch (state())
         {
-            ds = dsx;
-            wall = (kx < 0.0) ? Node::BACK : Node::FRONT;
-        }
-        else if (dsy <= dsx && dsy <= dsz)
-        {
-            ds = dsy;
-            wall = (ky < 0.0) ? Node::LEFT : Node::RIGHT;
-        }
-        else
-        {
-            ds = dsz;
-            wall = (kz < 0.0) ? Node::BOTTOM : Node::TOP;
-        }
-        path->addSegment(node->cellIndex(), ds);
-        r += (ds + _eps) * (path->direction());
-
-        // try the most likely neighbor of the current node, and use top-down search as a fall-back
-        const Node* oldnode = node;
-        node = node->neighbor(wall, r);
-        if (!node) node = _root->leaf(r);
-
-        // if we're stuck in the same node...
-        if (node == oldnode)
-        {
-            // try to escape by advancing the position to the next representable coordinates
-            r.set(nextafter(r.x(), (kx < 0.0) ? -DBL_MAX : DBL_MAX), nextafter(r.y(), (ky < 0.0) ? -DBL_MAX : DBL_MAX),
-                  nextafter(r.z(), (kz < 0.0) ? -DBL_MAX : DBL_MAX));
-            node = _root->leaf(r);
-
-            // if that didn't work, terminate the path
-            if (node == oldnode)
+            case State::Unknown:
             {
-                log()->warning("Photon packet is stuck in cell " + std::to_string(node->cellIndex())
-                               + " -- terminating this path");
-                break;
+                // try moving the photon packet inside the grid; if this is impossible, return an empty path
+                if (!moveInside(_grid->extent(), _grid->_eps)) return false;
+
+                // get the node containing the current location;
+                _node = _grid->_root->leaf(r());
+
+                // if the photon packet started outside the grid, return the corresponding nonzero-length segment;
+                // otherwise fall through to determine the first actual segment
+                if (ds() > 0.) return true;
+            }
+
+            case State::Inside:
+            {
+                // determine the segment from the current position to the first cell wall
+                // and adjust the position and cell indices accordingly
+                double xnext = (kx() < 0.0) ? _node->xmin() : _node->xmax();
+                double ynext = (ky() < 0.0) ? _node->ymin() : _node->ymax();
+                double znext = (kz() < 0.0) ? _node->zmin() : _node->zmax();
+                double dsx = (fabs(kx()) > 1e-15) ? (xnext - rx()) / kx() : DBL_MAX;
+                double dsy = (fabs(ky()) > 1e-15) ? (ynext - ry()) / ky() : DBL_MAX;
+                double dsz = (fabs(kz()) > 1e-15) ? (znext - rz()) / kz() : DBL_MAX;
+
+                double ds;
+                Node::Wall wall;
+                if (dsx <= dsy && dsx <= dsz)
+                {
+                    ds = dsx;
+                    wall = (kx() < 0.0) ? Node::BACK : Node::FRONT;
+                }
+                else if (dsy <= dsx && dsy <= dsz)
+                {
+                    ds = dsy;
+                    wall = (ky() < 0.0) ? Node::LEFT : Node::RIGHT;
+                }
+                else
+                {
+                    ds = dsz;
+                    wall = (kz() < 0.0) ? Node::BOTTOM : Node::TOP;
+                }
+                propagater(ds + _grid->_eps);
+                setSegment(_node->cellIndex(), ds);
+
+                // try the most likely neighbor of the current node, and use top-down search as a fall-back
+                const Node* oldnode = _node;
+                _node = _node->neighbor(wall, r());
+                if (!_node) _node = _grid->_root->leaf(r());
+
+                // if we're stuck in the same node,
+                // try to escape by advancing the position to the next representable coordinates
+                if (_node == oldnode)
+                {
+                    // try to escape by advancing the position to the next representable coordinates
+                    propagateToNextAfter();
+                    _node = _grid->_root->leaf(r());
+                }
+
+                // if we're outside the domain or still stuck in the same node, terminate the path
+                if (!_node || _node == oldnode) setState(State::Outside);
+                return true;
+            }
+
+            case State::Outside:
+            {
             }
         }
+        return false;
     }
+};
+
+////////////////////////////////////////////////////////////////////
+
+std::unique_ptr<PathSegmentGenerator> AdaptiveMeshSnapshot::createPathSegmentGenerator() const
+{
+    return std::make_unique<MySegmentGenerator>(this);
 }
 
 ////////////////////////////////////////////////////////////////////

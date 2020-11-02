@@ -124,6 +124,10 @@ public:
     /** Returns the number of photon packets launched per primary emission simulation segment. */
     double numPrimaryPackets() const { return _numPrimaryPackets; }
 
+    /** Returns the number of photon packets launched per dynamic medium state iteration segment
+        during primary emission. */
+    double numDynamicStatePackets() const { return _numDynamicStatePackets; }
+
     /** Returns the number of photon packets launched per secondary emission simulation segment. */
     double numIterationPackets() const { return _numIterationPackets; }
 
@@ -132,6 +136,9 @@ public:
 
     /** Returns true if there is at least one medium component in the simulation. */
     bool hasMedium() const { return _hasMedium; }
+
+    /** Returns true if forced scattering should be used during the photon cycle, false if not. */
+    bool forceScattering() const { return _forceScattering; }
 
     /** Returns the minimum weight reduction factor before a photon packet is terminated. */
     double minWeightReduction() const { return _minWeightReduction; }
@@ -157,6 +164,20 @@ public:
     /** Returns true if the radiation field for emission from secondary sources must be stored
         (in a separate data structure), and false otherwise. */
     bool hasSecondaryRadiationField() const { return _hasSecondaryRadiationField; }
+
+    /** Returns true if the primary emission phase includes iterations for self-consistent dynamic
+        medium state calculation, and false otherwise. If this function returns true, hasMedium()
+        and hasPanRadiationField() also return true and numPrimaryPackets() and
+        numDynamicStatePackets() return a nonzero number. */
+    bool hasDynamicState() const { return _hasDynamicState; }
+
+    /** Returns the minimum number of dynamic medium state iterations in the primary emission
+        phase. */
+    int minDynamicStateIterations() const { return _minDynamicStateIterations; }
+
+    /** Returns the maximum number of dynamic medium state iterations in the primary emission
+        phase. */
+    int maxDynamicStateIterations() const { return _maxDynamicStateIterations; }
 
     /** Returns true if secondary emission must be calculated for any media type, and false otherwise. */
     bool hasSecondaryEmission() const { return _hasDustEmission; }
@@ -206,7 +227,7 @@ public:
     /** Returns the maximum number of self-absorption iterations. */
     int maxIterations() const { return _maxIterations; }
 
-    /** Returns the self-absorption iteration convergece criterion described as follows:
+    /** Returns the self-absorption iteration convergence criterion described as follows:
         convergence is reached when the total absorbed dust luminosity is less than this fraction
         of the total absorbed primary luminosity. */
     double maxFractionOfPrimary() const { return _maxFractionOfPrimary; }
@@ -216,35 +237,24 @@ public:
         this fraction compared to the previous iteration. */
     double maxFractionOfPrevious() const { return _maxFractionOfPrevious; }
 
-    /** Returns true if the simulation includes treatment of the hydrogen Lyman-alpha line during
-        the primary photon cycle, and false if not. This value also corresponds to the presence or
-        absence of a medium component that has a material mix with the \c Lya or \c LyaPolarization
-        scattering mode. In the current implementation, there can be only a single such Lyman-alpha
-        medium component. This restriction may be lifted in the future. */
-    bool hasLymanAlpha() const { return _lyaMediumIndex >= 0; }
-
-    /** Returns the index of the medium component defining the neutral hydrogen interacting with
-        Lyman-alpha line transfer, if any. */
-    int lyaMediumIndex() const { return _lyaMediumIndex; }
-
     /** This enumeration lists the supported Lyman-alpha acceleration schemes. */
     enum class LyaAccelerationScheme { None, Constant, Variable };
 
-    /** Returns the enumeration value determining the accelaration scheme to be used for
-        Lyman-alpha line treatment. The value is relevant only when hasLymanAlpha() returns true.
-        */
+    /** Returns the enumeration value determining the acceleration scheme to be used for
+        Lyman-alpha line scattering. The value is relevant only if Lyman-alpha line treatment is
+        enabled in the simulation. */
     LyaAccelerationScheme lyaAccelerationScheme() const { return _lyaAccelerationScheme; }
 
     /** Returns the strength of the Lyman-alpha acceleration scheme to be applied. The value is
-        relevant only when hasLymanAlpha() returns true and lyaAccelerationScheme() returns \c
-        Constant or \c Variable. */
+        relevant only if Lyman-alpha line treatment is enabled in the simulation and
+        lyaAccelerationScheme() returns \c Constant or \c Variable. */
     double lyaAccelerationStrength() const { return _lyaAccelerationStrength; }
 
-    /** If inclusion of the Hubble flow for Lyman-alpha transfer is enabled, this function returns
-        the relative expansion rate of the universe in which the model resides. If inclusion of the
-        Hubble flow is disabled, or if the simulation does not include treatment of the hydrogen
-        Lyman-alpha line, this function returns zero. */
-    double lyaExpansionRate() const { return _lyaExpansionRate; }
+    /** If inclusion of the Hubble flow is enabled, this function returns the relative expansion
+        rate of the universe in which the model resides. If inclusion of the Hubble flow is
+        disabled, or if the simulation does not include Lyman-alpha treatment, this function
+        returns zero. */
+    double hubbleExpansionRate() const { return _hubbleExpansionRate; }
 
     /** Returns the symmetry dimension of the input model, including sources and media, if present.
         A value of 1 means spherical symmetry, 2 means axial symmetry and 3 means none of these
@@ -256,9 +266,8 @@ public:
         means spherical symmetry, 2 means axial symmetry and 3 means none of these symmetries. */
     int gridDimension() const { return _gridDimension; }
 
-    /** Returns true if at least one medium component in the simulation can have a nonzero velocity
-        for some positions, causing Doppler shifts in the perceived, scattered and emitted
-        wavelengths. If the function returns false, none of the media has a velocity. */
+    /** Returns true if one or more medium components in the simulation may have a nonzero velocity
+        for some positions. If the function returns false, none of the media has a velocity. */
     bool hasMovingMedia() const { return _hasMovingMedia; }
 
     /** Returns true if the material mix for at least one medium component in the simulation may
@@ -266,6 +275,37 @@ public:
         thus the material properties for all media are constant throughout the complete spatial
         domain of the simulation. */
     bool hasVariableMedia() const { return _hasVariableMedia; }
+
+    /** Returns true if the perceived photon packet wavelength equals the intrinsic photon packet
+        wavelength for all spatial cells along the path of the packet. The following conditions
+        cause this function to return false: Hubble expansion is enabled or some media may have a
+        non-zero velocity in some cells. */
+    bool hasConstantPerceivedWavelength() const { return _hasConstantPerceivedWavelength; }
+
+    /** Returns true if the simulation has a exactly one medium component and the absorption and
+        scattering cross sections for a photon packet traversing that medium component are
+        spatially constant, so that the opacity in each crossed cell can be calculated by
+        multiplying this constant cross section by the number density in the cell. Otherwise the
+        function returns false.
+
+        The following conditions cause this function to return false: Hubble expansion is enabled,
+        there is more than one medium component, the medium may have a non-zero velocity in some
+        cells, the medium has a variable material mix; the cross sections for some material mixes
+        depend on extra medium state variables such as temperature or fragment weight factors. */
+    bool hasSingleConstantSectionMedium() const { return _hasSingleConstantSectionMedium; }
+
+    /** Returns true if the simulation has two or more medium components and the absorption and
+        scattering cross sections for a photon packet traversing those medium components are
+        spatially constant, so that the opacity in each crossed cell can be calculated by
+        multiplying these constant cross sections by the corresponding number densities in the
+        cell. Otherwise the function returns false.
+
+        The following conditions cause this function to return false: Hubble expansion is enabled,
+        some media may have a non-zero velocity in some cells, so that the perceived wavelength
+        changes between cells; some media have a variable material mix; the cross sections for some
+        material mixes depend on extra medium state variables such as temperature or fragment
+        weight factors. */
+    bool hasMultipleConstantSectionMedia() const { return _hasMultipleConstantSectionMedia; }
 
     /** Returns true if all media in the simulation support polarization, and false if none of the
         media do. A mixture of support and no support for polarization is not allowed and will
@@ -306,11 +346,13 @@ private:
 
     // launch
     double _numPrimaryPackets{0.};
+    double _numDynamicStatePackets{0.};
     double _numIterationPackets{0.};
     double _numSecondaryPackets{0.};
 
     // extinction
     bool _hasMedium{false};
+    bool _forceScattering{true};
     double _minWeightReduction{1e4};
     int _minScattEvents{0};
     double _pathLengthBias{0.5};
@@ -321,6 +363,11 @@ private:
     bool _hasPanRadiationField{false};
     bool _hasSecondaryRadiationField{false};
     DisjointWavelengthGrid* _radiationFieldWLG{nullptr};
+
+    // dynamic medium state
+    bool _hasDynamicState{false};
+    int _minDynamicStateIterations{1};
+    int _maxDynamicStateIterations{10};
 
     // emission
     bool _hasDustEmission{false};
@@ -339,10 +386,10 @@ private:
     double _maxFractionOfPrevious{0.03};
 
     // Lyman-alpha properties
-    int _lyaMediumIndex{-1};
+    bool _hasLymanAlpha{false};
     LyaAccelerationScheme _lyaAccelerationScheme{LyaAccelerationScheme::Variable};
     double _lyaAccelerationStrength{1.};
-    double _lyaExpansionRate{0.};
+    double _hubbleExpansionRate{0.};
 
     // properties derived from the configuration at large
     int _modelDimension{0};
@@ -350,6 +397,9 @@ private:
     bool _hasMovingSources{false};
     bool _hasMovingMedia{false};
     bool _hasVariableMedia{false};
+    bool _hasConstantPerceivedWavelength{false};
+    bool _hasSingleConstantSectionMedium{false};
+    bool _hasMultipleConstantSectionMedia{false};
     bool _hasPolarization{false};
     bool _hasSpheroidalPolarization{false};
     int _magneticFieldMediumIndex{-1};

@@ -40,12 +40,21 @@ class MeanTrustBenchmarkDustMix : public SingleGrainDustMix
 
     ITEM_END()
 
-    //======================== Other Functions =======================
+    //======================== Capabilities =======================
 
+public:
     /** This function returns the scattering mode supported by this material mix as configured by
         the user through the scatteringType property. */
     ScatteringMode scatteringMode() const override;
 
+    /** This function returns a flag indicating whether the material mix supports polarization
+        during scattering events or not. For this dust mix, the function returns true if the user
+        configured the SphericalPolarization scattering type, and false otherwise. */
+    bool hasPolarizedScattering() const override;
+
+    //======================== Other Functions =======================
+
+protected:
     /** This function returns the name of the stored table resource tabulating the basic optical
         properties for this dust mix. */
     string resourceNameForOpticalProps() const override;

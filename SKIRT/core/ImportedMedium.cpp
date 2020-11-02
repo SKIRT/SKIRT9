@@ -21,7 +21,11 @@ void ImportedMedium::setupSelfAfter()
     if (_importTemperature) _snapshot->importTemperature();
     if (hasVelocity()) _snapshot->importVelocity();
     if (_importMagneticField) _snapshot->importMagneticField();
-    if (_importVariableMixParams) _snapshot->importParameters(_materialMixFamily->parameterInfo());
+
+    // add snapshot import columns if applicable
+    vector<SnapshotParameter> parameterInfo =
+        _importVariableMixParams ? _materialMixFamily->parameterInfo() : _materialMix->parameterInfo();
+    if (!parameterInfo.empty()) _snapshot->importParameters(parameterInfo);
 
     // set the density policy
     if (mix()->isDust())
@@ -118,19 +122,18 @@ Vec ImportedMedium::magneticField(Position bfr) const
 
 double ImportedMedium::temperature(Position bfr) const
 {
-    if (materialMix()->isGas())
-    {
-        if (_importTemperature)
-        {
-            return _snapshot->temperature(bfr);
-        }
-        else
-        {
-            Array dummyJv;
-            return materialMix()->equilibriumTemperature(dummyJv);
-        }
-    }
-    return 0.;
+    if (!_importVariableMixParams && _importTemperature && materialMix()->isGas()) return _snapshot->temperature(bfr);
+    return -1.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void ImportedMedium::parameters(Position bfr, Array& params) const
+{
+    if (!_importVariableMixParams && _snapshot->numParameters() > 0)
+        _snapshot->parameters(bfr, params);
+    else
+        params.resize(0);
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -29,6 +29,7 @@
 #include "CellGeometry.hpp"
 #include "CellMedium.hpp"
 #include "CellSource.hpp"
+#include "ClearDensityRecipe.hpp"
 #include "ClumpyGeometryDecorator.hpp"
 #include "CombineGeometryDecorator.hpp"
 #include "ConfigurableBandWavelengthGrid.hpp"
@@ -39,9 +40,11 @@
 #include "CrystalForsteriteGrainComposition.hpp"
 #include "CubicSplineSmoothingKernel.hpp"
 #include "CubicalBackgroundSource.hpp"
+#include "CustomStatePerCellProbe.hpp"
 #include "Cylinder2DSpatialGrid.hpp"
 #include "CylindricalClipGeometryDecorator.hpp"
 #include "CylindricalVectorField.hpp"
+#include "DefaultCustomStateCutsProbe.hpp"
 #include "DefaultDustTemperatureCutsProbe.hpp"
 #include "DefaultGasTemperatureCutsProbe.hpp"
 #include "DefaultMagneticFieldCutsProbe.hpp"
@@ -64,6 +67,7 @@
 #include "DustGrainSizeDistributionProbe.hpp"
 #include "DustSelfAbsorptionOptions.hpp"
 #include "DustTemperaturePerCellProbe.hpp"
+#include "DynamicStateOptions.hpp"
 #include "EinastoGeometry.hpp"
 #include "ElectronMix.hpp"
 #include "ExpDiskGeometry.hpp"
@@ -73,6 +77,7 @@
 #include "FSPSSEDFamily.hpp"
 #include "FieldStrengthCellLibrary.hpp"
 #include "FileBand.hpp"
+#include "FileGrainSizeDistribution.hpp"
 #include "FileIndexedSEDFamily.hpp"
 #include "FileMesh.hpp"
 #include "FileSED.hpp"
@@ -81,6 +86,7 @@
 #include "FileWavelengthDistribution.hpp"
 #include "FileWavelengthGrid.hpp"
 #include "FlatUniverseCosmology.hpp"
+#include "FragmentDustMixDecorator.hpp"
 #include "FrameInstrument.hpp"
 #include "FullInstrument.hpp"
 #include "GammaGeometry.hpp"
@@ -102,8 +108,10 @@
 #include "LinMesh.hpp"
 #include "LinWavelengthDistribution.hpp"
 #include "LinWavelengthGrid.hpp"
+#include "LinearDustDestructionRecipe.hpp"
 #include "LinearDustTemperatureCutProbe.hpp"
 #include "ListBand.hpp"
+#include "ListGrainSizeDistribution.hpp"
 #include "ListMesh.hpp"
 #include "ListSED.hpp"
 #include "ListWavelengthDistribution.hpp"
@@ -117,7 +125,7 @@
 #include "LyaDoublePeakedSEDFamily.hpp"
 #include "LyaGaussianSED.hpp"
 #include "LyaGaussianSEDFamily.hpp"
-#include "LyaNeutralHydrogenMaterialMix.hpp"
+#include "LyaNeutralHydrogenGasMix.hpp"
 #include "LyaOptions.hpp"
 #include "LyaSEDDecorator.hpp"
 #include "LyaSEDFamilyDecorator.hpp"
@@ -162,6 +170,7 @@
 #include "ParticleSource.hpp"
 #include "PerspectiveInstrument.hpp"
 #include "PhotonPacketOptions.hpp"
+#include "PlanarCustomStateCutsProbe.hpp"
 #include "PlanarDustTemperatureCutsProbe.hpp"
 #include "PlanarGasTemperatureCutsProbe.hpp"
 #include "PlanarMagneticFieldCutsProbe.hpp"
@@ -170,8 +179,6 @@
 #include "PlanarRadiationFieldCutsProbe.hpp"
 #include "PlummerGeometry.hpp"
 #include "PointSource.hpp"
-#include "PolarizedGraphiteGrainComposition.hpp"
-#include "PolarizedSilicateGrainComposition.hpp"
 #include "PolicyTreeSpatialGrid.hpp"
 #include "PowMesh.hpp"
 #include "PowerLawGrainSizeDistribution.hpp"
@@ -209,6 +216,8 @@
 #include "SphericalBackgroundSource.hpp"
 #include "SphericalClipGeometryDecorator.hpp"
 #include "SpheroidalGeometryDecorator.hpp"
+#include "SpheroidalGraphiteGrainComposition.hpp"
+#include "SpheroidalSilicateGrainComposition.hpp"
 #include "SpiralStructureGeometryDecorator.hpp"
 #include "Starburst99SED.hpp"
 #include "Starburst99SEDFamily.hpp"
@@ -466,6 +475,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<DustEmissionOptions>();
     ItemRegistry::add<DustSelfAbsorptionOptions>();
     ItemRegistry::add<LyaOptions>();
+    ItemRegistry::add<DynamicStateOptions>();
 
     // material normalizations
     ItemRegistry::add<MaterialNormalization>();
@@ -498,8 +508,10 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<TrustBenchmarkDustMix>();
     ItemRegistry::add<ConfigurableDustMix>();
 
+    ItemRegistry::add<FragmentDustMixDecorator>();
+
     ItemRegistry::add<ElectronMix>();
-    ItemRegistry::add<LyaNeutralHydrogenMaterialMix>();
+    ItemRegistry::add<LyaNeutralHydrogenGasMix>();
 
     // material mix families
     ItemRegistry::add<MaterialMixFamily>();
@@ -519,6 +531,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ZubkoSilicateGrainSizeDistribution>();
     ItemRegistry::add<ZubkoGraphiteGrainSizeDistribution>();
     ItemRegistry::add<ZubkoPAHGrainSizeDistribution>();
+    ItemRegistry::add<FileGrainSizeDistribution>();
+    ItemRegistry::add<ListGrainSizeDistribution>();
 
     // grain compositions
     ItemRegistry::add<GrainComposition>();
@@ -536,12 +550,20 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<TrustSilicateGrainComposition>();
     ItemRegistry::add<TrustGraphiteGrainComposition>();
     ItemRegistry::add<TrustNeutralPAHGrainComposition>();
+    ItemRegistry::add<SpheroidalSilicateGrainComposition>();
+    ItemRegistry::add<SpheroidalGraphiteGrainComposition>();
 
     // spatial cell libraries
     ItemRegistry::add<SpatialCellLibrary>();
     ItemRegistry::add<AllCellsLibrary>();
     ItemRegistry::add<FieldStrengthCellLibrary>();
     ItemRegistry::add<TemperatureWavelengthCellLibrary>();
+
+    // dynamic medium state recipes
+    ItemRegistry::add<DynamicStateRecipe>();
+    ItemRegistry::add<ClearDensityRecipe>();
+    ItemRegistry::add<DustDestructionRecipe>();
+    ItemRegistry::add<LinearDustDestructionRecipe>();
 
     // wavelength grids
     ItemRegistry::add<WavelengthGrid>();
@@ -598,6 +620,9 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<DefaultMagneticFieldCutsProbe>();
     ItemRegistry::add<PlanarMagneticFieldCutsProbe>();
     ItemRegistry::add<MagneticFieldPerCellProbe>();
+    ItemRegistry::add<DefaultCustomStateCutsProbe>();
+    ItemRegistry::add<PlanarCustomStateCutsProbe>();
+    ItemRegistry::add<CustomStatePerCellProbe>();
 
     ItemRegistry::add<DefaultRadiationFieldCutsProbe>();
     ItemRegistry::add<PlanarRadiationFieldCutsProbe>();

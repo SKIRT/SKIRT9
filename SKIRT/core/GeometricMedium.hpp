@@ -98,11 +98,15 @@ protected:
         field for the given position; otherwise it returns a zero magnetic field. */
     Vec magneticField(Position bfr) const override;
 
-    /** This function returns the temperature of the medium at the specified position, if defined
-        in the input model. For media with a gas material mix, the function returns the default gas
-        temperature provided by the material mix. For other material mixes, the function returns
-        zero. */
+    /** This function returns the temperature of the medium at the specified position. Because
+        geometric media do not define a temperature, the function returns -1. */
     double temperature(Position bfr) const override;
+
+    /** If custom input model parameters are available for this medium, this function stores the
+        parameter values at the specified position into the given array. Because a geometric medium
+        does not provide custom input model parameters, this function resizes the array is to zero
+        length. */
+    void parameters(Position bfr, Array& params) const override;
 
     /** This function returns the number density of the medium at the specified position. */
     double numberDensity(Position bfr) const override;

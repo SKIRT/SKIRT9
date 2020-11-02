@@ -105,11 +105,11 @@ public:
         \f${\cal{X}}_3\f$ three uniform deviates. */
     Position randomPositionInCell(int m) const override;
 
-    /** This function calculates a path through the grid. The SpatialGridPath object passed as an
-        argument specifies the starting position \f${\bf{r}}\f$ and the direction \f${\bf{k}}\f$
-        for the path. The data on the calculated path are added back into the same object.
+    /** This function creates and hands over ownership of a path segment generator (an instance of
+        a PathSegmentGenerator subclass) appropriate for a tree grid, implemented as a private
+        PathSegmentGenerator subclass. The algorithm used to construct the path is described below.
 
-        For a tree grid, the function uses a rather straighforward algorithm. It determines the
+        The function uses a rather straighforward algorithm. It determines the
         cell that contains the starting position, and calculates the first wall of the cell that
         will be crossed. The pathlength \f$\Delta s\f$ is determined and the current position is
         moved to a new position along this path, a tiny fraction further than \f$\Delta s\f$, \f[
@@ -122,7 +122,7 @@ public:
 
         To determine the cell index of the "next cell" in this algorithm, the function uses the
         neighbor lists constructed for each tree node during setup. */
-    void path(SpatialGridPath* path) const override;
+    std::unique_ptr<PathSegmentGenerator> createPathSegmentGenerator() const override;
 
     /** This function writes the topology of the tree to the specified text file in a simple,
         proprietary format. After a brief descriptive header, it writes lines that each contain
@@ -174,6 +174,10 @@ private:
                                // node id in each node corresponds to index in this vector
     vector<int> _cellindexv;   // cell index m corresponding to each node in nodev; -1 for nonleaf nodes
     vector<int> _idv;          // node id (or equivalently, index in nodev) for each cell (i.e. leaf node)
+
+    // allow our path segment generator to access our private data members
+    class MySegmentGenerator;
+    friend class MySegmentGenerator;
 };
 
 //////////////////////////////////////////////////////////////////////

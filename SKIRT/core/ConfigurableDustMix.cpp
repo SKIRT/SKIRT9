@@ -16,7 +16,7 @@ void ConfigurableDustMix::setupSelfBefore()
 
 //////////////////////////////////////////////////////////////////////
 
-MaterialMix::ScatteringMode ConfigurableDustMix::scatteringMode() const
+DustMix::ScatteringMode ConfigurableDustMix::scatteringMode() const
 {
     switch (scatteringType())
     {
@@ -26,6 +26,21 @@ MaterialMix::ScatteringMode ConfigurableDustMix::scatteringMode() const
         case ScatteringType::SpheroidalPolarization: return ScatteringMode::SpheroidalPolarization;
     }
     return ScatteringMode::HenyeyGreenstein;  // to satisfy gcc compiler
+}
+
+//////////////////////////////////////////////////////////////////////
+
+bool ConfigurableDustMix::hasPolarizedScattering() const
+{
+    return scatteringType() == ScatteringType::SphericalPolarization
+           || scatteringType() == ScatteringType::SpheroidalPolarization;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+bool ConfigurableDustMix::hasPolarizedEmission() const
+{
+    return scatteringType() == ScatteringType::SpheroidalPolarization;
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -77,10 +77,14 @@ public:
         uniform deviates. A position with these cartesian coordinates is returned. */
     Position randomPositionInCell(int m) const override;
 
-    /** This function calculates a path through the grid. The SpatialGridPath object passed as an
-        argument specifies the starting position \f${\bf{r}}\f$ and the direction \f${\bf{k}}\f$
-        for the path. The data on the calculated path are added back into the same object. */
-    void path(SpatialGridPath* path) const override;
+    /** This function creates and hands over ownership of a path segment generator (an instance of
+        a PathSegmentGenerator subclass) appropriate for a cartesian grid, implemented as a private
+        PathSegmentGenerator subclass.
+
+        The algorithm used to construct the path is fairly straightforward because all cells are
+        cuboids lined up with the coordinate axes and the neighboring cells are easily found by
+        manipulating cell indices. */
+    std::unique_ptr<PathSegmentGenerator> createPathSegmentGenerator() const override;
 
 protected:
     /** This function writes the intersection of the grid structure with the xy plane to the
@@ -121,6 +125,10 @@ private:
     Array _xv;
     Array _yv;
     Array _zv;
+
+    // allow our path segment generator to access our private data members
+    class MySegmentGenerator;
+    friend class MySegmentGenerator;
 };
 
 ////////////////////////////////////////////////////////////////////
