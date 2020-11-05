@@ -190,6 +190,7 @@
 #include "RadiationFieldPerCellProbe.hpp"
 #include "RadiationFieldWavelengthGridProbe.hpp"
 #include "Random.hpp"
+#include "ReadFits3DGeometry.hpp"
 #include "ReadFitsGeometry.hpp"
 #include "RingGeometry.hpp"
 #include "RotateGeometryDecorator.hpp"
@@ -391,6 +392,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<MultiGaussianExpansionGeometry>();
     ItemRegistry::add<GenGeometry>();
     ItemRegistry::add<UniformBoxGeometry>();
+    ItemRegistry::add<ReadFits3DGeometry>();
     ItemRegistry::add<ReadFitsGeometry>();
     ItemRegistry::add<ImportedGeometry>();
     ItemRegistry::add<ParticleGeometry>();
