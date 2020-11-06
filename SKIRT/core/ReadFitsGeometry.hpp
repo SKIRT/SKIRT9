@@ -23,7 +23,7 @@
     (x,y) image coordinates \f$x_c\f$ and \f$y_c\f$ and the vertical scale height \f$h_z\f$. */
 class ReadFitsGeometry : public GenGeometry
 {
-    ITEM_CONCRETE(ReadFitsGeometry, GenGeometry, "a geometry read from a FITS file")
+    ITEM_CONCRETE(ReadFitsGeometry, GenGeometry, "a geometry read from a 2D FITS file")
         ATTRIBUTE_TYPE_DISPLAYED_IF(ReadFitsGeometry, "Level2")
 
         PROPERTY_STRING(filename, "the name of the input image file")

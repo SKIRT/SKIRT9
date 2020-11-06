@@ -73,17 +73,17 @@ Position ReadFits3DGeometry::generatePosition() const
 double ReadFits3DGeometry::SigmaX() const
 {
     double sum = 0;
-    const int NSAMPLES = 10000;
-    double step = (_xmax - _xmin) / NSAMPLES;
 
     // For each position, get the density and add it to the total
-    for (int k = 0; k < NSAMPLES; k++)
+    int j = static_cast<int>(floor(_ny / 2.));
+    int k = static_cast<int>(floor(_nz / 2.));
+    for (int i = 0; i < _nx; i++)
     {
-        sum += density(Position(_xmin + k * step, 0, 0));
+        sum += _datacube[i + _nx * j + _nx * _ny * k];
     }
 
     // Return the x-axis surface density
-    return sum * step;
+    return sum * _pixelScale;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -91,17 +91,17 @@ double ReadFits3DGeometry::SigmaX() const
 double ReadFits3DGeometry::SigmaY() const
 {
     double sum = 0;
-    const int NSAMPLES = 10000;
-    double step = (_ymax - _ymin) / NSAMPLES;
 
     // For each position, get the density and add it to the total
-    for (int k = 0; k < NSAMPLES; k++)
+    int i = static_cast<int>(floor(_nx / 2.));
+    int k = static_cast<int>(floor(_nz / 2.));
+    for (int j = 0; j < _ny; j++)
     {
-        sum += density(Position(_ymin + k * step, 0, 0));
+        sum += _datacube[i + _nx * j + _nx * _ny * k];
     }
 
     // Return the y-axis surface density
-    return sum * step;
+    return sum * _pixelScale;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -109,17 +109,17 @@ double ReadFits3DGeometry::SigmaY() const
 double ReadFits3DGeometry::SigmaZ() const
 {
     double sum = 0;
-    const int NSAMPLES = 10000;
-    double step = (_zmax - _zmin) / NSAMPLES;
 
     // For each position, get the density and add it to the total
-    for (int k = 0; k < NSAMPLES; k++)
+    int i = static_cast<int>(floor(_nx / 2.));
+    int j = static_cast<int>(floor(_ny / 2.));
+    for (int k = 0; k < _nz; k++)
     {
-        sum += density(Position(0, _zmin + k * step, 0));
+        sum += _datacube[i + _nx * j + _nx * _ny * k];
     }
 
     // Return the z-axis surface density
-    return sum * step;
+    return sum * _pixelScale;
 }
 
 ////////////////////////////////////////////////////////////////////
