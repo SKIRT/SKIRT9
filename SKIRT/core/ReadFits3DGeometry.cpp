@@ -5,6 +5,7 @@
 
 #include "ReadFits3DGeometry.hpp"
 #include "FITSInOut.hpp"
+#include "FatalError.hpp"
 #include "NR.hpp"
 #include "Random.hpp"
 
@@ -17,19 +18,22 @@ void ReadFits3DGeometry::setupSelfBefore()
     // Read in the datacube
     FITSInOut::read(this, _filename, _datacube, _nx, _ny, _nz);
 
-    // Normalize the datacube
-    _datacube /= _datacube.sum();
+    // Verify maximum size:
+    //   we use NR::locate() on the cumulative distribution of the pixels, which returns an int,
+    //   so things will fail badly if the datacube is larger than what fits in an int
+    if (_datacube.size() > static_cast<size_t>(std::numeric_limits<int>::max() - 1))
+        throw FATALERROR("Datacube size exceeds maximum supported size");
 
-    // Construct a vector with the normalized cumulative distribution
-    NR::cdf(_Xv, _datacube);
+    // Construct a vector with the normalized cumulative density distribution
+    double sum = NR::cdf(_Xv, _datacube);
+
+    // Normalize the density datacube
+    _datacube /= sum * _pixelScale * _pixelScale * _pixelScale;
 
     // Calculate the boundaries of the datacube in physical coordinates
     _xmin = -(_nx / 2.) * _pixelScale;
-    _xmax = (_nx / 2.) * _pixelScale;
     _ymin = -(_ny / 2.) * _pixelScale;
-    _ymax = (_ny / 2.) * _pixelScale;
     _zmin = -(_nz / 2.) * _pixelScale;
-    _zmax = (_nz / 2.) * _pixelScale;
 }
 
 ////////////////////////////////////////////////////////////////////
