@@ -100,9 +100,7 @@ std::pair<Vec, bool> LyaUtils::sampleAtomVelocity(double lambda, double T, doubl
 
 double LyaUtils::shiftWavelength(double lambda, const Vec& vatom, const Direction& kin, const Direction& kout)
 {
-    double vp = (la - lambda) / lambda * c;                  // incoming photon velocity shift
-    vp = vp - Vec::dot(vatom, kin) + Vec::dot(vatom, kout);  // outgoing photon velocity shift
-    return la / (1 + vp / c);
+    return lambda / (1 - Vec::dot(kin, vatom) / c) * (1 - Vec::dot(kout, vatom) / c);
 }
 
 ////////////////////////////////////////////////////////////////////
