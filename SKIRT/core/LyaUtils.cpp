@@ -87,7 +87,7 @@ std::pair<Vec, bool> LyaUtils::sampleAtomVelocity(double lambda, double T, doubl
     // select the isotropic or the dipole phase function:
     // all wing events and 1/3 of core events are dipole, and the remaining 2/3 core events are isotropic,
     // where x=0.2 (in the atom frame) defines the transition between core and wings
-    bool dipole = x > 0.2 || random->uniform() < 1. / 3.;
+    bool dipole = abs(x) > 0.2 || random->uniform() < 1. / 3.;
 
     // scale the atom velocity from dimensionless to regular units
     u *= vth;
@@ -100,9 +100,7 @@ std::pair<Vec, bool> LyaUtils::sampleAtomVelocity(double lambda, double T, doubl
 
 double LyaUtils::shiftWavelength(double lambda, const Vec& vatom, const Direction& kin, const Direction& kout)
 {
-    double vp = (la - lambda) / lambda * c;                  // incoming photon velocity shift
-    vp = vp - Vec::dot(vatom, kin) + Vec::dot(vatom, kout);  // outgoing photon velocity shift
-    return la / (1 + vp / c);
+    return lambda / (1 - Vec::dot(kin, vatom) / c) * (1 - Vec::dot(kout, vatom) / c);
 }
 
 ////////////////////////////////////////////////////////////////////
