@@ -1083,6 +1083,7 @@ public:
                 if (ds() > 0.) return true;
             }
 
+            // intentionally falls through
             case State::Inside:
             {
                 // loop in case no exit point was found (which should happen only rarely)
