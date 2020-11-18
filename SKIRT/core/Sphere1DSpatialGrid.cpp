@@ -155,6 +155,7 @@ public:
                 // fall through to determine the first actual segment
             }
 
+            // intentionally falls through
             case State::Inside:
             {
                 switch (_phase)

@@ -145,6 +145,7 @@ public:
                 if (ds() > 0.) return true;
             }
 
+            // intentionally falls through
             case State::Inside:
             {
                 // determine the segment from the current position to the first cell wall

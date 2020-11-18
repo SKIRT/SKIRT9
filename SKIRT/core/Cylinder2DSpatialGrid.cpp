@@ -222,6 +222,7 @@ public:
                 if (ds() > 0.) return true;
             }
 
+            // intentionally falls through
             case State::Inside:
             {
                 switch (_phase)

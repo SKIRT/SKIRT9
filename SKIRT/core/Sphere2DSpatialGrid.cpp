@@ -258,6 +258,7 @@ public:
                 // fall through to determine the first actual segment
             }
 
+            // intentionally falls through
             case State::Inside:
             {
                 while (true)  // the loop is executed more than once only if no exit point is found
