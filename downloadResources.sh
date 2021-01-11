@@ -27,6 +27,13 @@ else
     exit 1
 fi
 
+# before we download: check that unzip is available
+if ! which unzip >/dev/null
+then
+    echo error: no unzip available to unzip files
+    exit 1
+fi
+
 # loop over the list of expected archives and versions given in the text file in the SKIRT repository
 while read -u 3 LINE        # use explicit file descriptor 3 to allow nested read from terminal
 do
