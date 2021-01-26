@@ -102,6 +102,7 @@
 #include "InstrumentSystem.hpp"
 #include "InstrumentWavelengthGridProbe.hpp"
 #include "IntegratedLuminosityNormalization.hpp"
+#include "IsoThermalDiskGeometry.hpp"
 #include "IsotropicAngularDistribution.hpp"
 #include "LaserAngularDistribution.hpp"
 #include "LaunchedPacketsProbe.hpp"
@@ -380,6 +381,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<AxGeometry>();
     ItemRegistry::add<SepAxGeometry>();
     ItemRegistry::add<ExpDiskGeometry>();
+    ItemRegistry::add<IsoThermalDiskGeometry>();  
     ItemRegistry::add<BrokenExpDiskGeometry>();
     ItemRegistry::add<RingGeometry>();
     ItemRegistry::add<TorusGeometry>();
