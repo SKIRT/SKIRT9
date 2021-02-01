@@ -80,6 +80,8 @@
 #include "FileGrainSizeDistribution.hpp"
 #include "FileIndexedSEDFamily.hpp"
 #include "FileMesh.hpp"
+#include "FileLineSED.hpp"
+#include "ListLineSED.hpp"
 #include "FileSED.hpp"
 #include "FileSSPSEDFamily.hpp"
 #include "FileTreeSpatialGrid.hpp"
@@ -322,6 +324,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<LyaDoublePeakedSED>();
     ItemRegistry::add<LyaSEDDecorator>();
     ItemRegistry::add<LineSED>();
+    ItemRegistry::add<FileLineSED>();
+    ItemRegistry::add<ListLineSED>();
     ItemRegistry::add<SingleWavelengthSED>();
 
     // SED families
