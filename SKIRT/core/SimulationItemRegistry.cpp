@@ -316,12 +316,13 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<FSPSSED>();
     ItemRegistry::add<MappingsSED>();
     ItemRegistry::add<TabulatedSED>();
-    ItemRegistry::add<SingleWavelengthSED>();
     ItemRegistry::add<FileSED>();
     ItemRegistry::add<ListSED>();
     ItemRegistry::add<LyaGaussianSED>();
     ItemRegistry::add<LyaDoublePeakedSED>();
     ItemRegistry::add<LyaSEDDecorator>();
+    ItemRegistry::add<LineSED>();
+    ItemRegistry::add<SingleWavelengthSED>();
 
     // SED families
     ItemRegistry::add<SEDFamily>();

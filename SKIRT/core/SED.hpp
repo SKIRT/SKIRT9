@@ -31,7 +31,15 @@ class Random;
     operate across the full intrinsic wavelength range of the %SED without being limited by the
     source wavelength range. This makes it possible for a user to configure a luminosity
     normalization at a wavelength (or over a wavelength range) outside of the wavelength range
-    where the sources are actually emitting. */
+    where the sources are actually emitting.
+
+    There is a special category of spectra that consist of one or more discrete emission lines with
+    zero width. Mathematically, the specific luminosity is infinite at the line wavelengths and
+    zero everywhere else, while the integrated luminosity (over all lines) is still normalized to
+    unity. As a result, the specific luminosity is numerically undefined and the corresponding
+    functions should never be called. This imposes restrictions on the use of that %SED. Most
+    importantly, luminosity normalization must use integration over a wavelength range and the
+    mechanism for wavelength biasing does not work. */
 class SED : public SimulationItem
 {
     ITEM_ABSTRACT(SED, SimulationItem, "a spectral energy distribution")
@@ -49,6 +57,11 @@ public:
     /** This function returns the intrinsic wavelength range of the %SED. Outside this range, all
         luminosities are zero. */
     virtual Range intrinsicWavelengthRange() const = 0;
+
+    /** This function returns true if the specific luminosity is defined for this %SED. The default
+        implementation in this base class returns true. If this function returns false, the
+        specificLuminosity() and specificLuminosityArray() functions should not be called. */
+    virtual bool hasSpecificLuminosity() const;
 
     /** This function returns the normalized specific luminosity \f$L_\lambda\f$ (i.e. radiative
         power per unit of wavelength) at the specified wavelength, or zero if the wavelength is
