@@ -79,9 +79,8 @@
 #include "FileBand.hpp"
 #include "FileGrainSizeDistribution.hpp"
 #include "FileIndexedSEDFamily.hpp"
-#include "FileMesh.hpp"
 #include "FileLineSED.hpp"
-#include "ListLineSED.hpp"
+#include "FileMesh.hpp"
 #include "FileSED.hpp"
 #include "FileSSPSEDFamily.hpp"
 #include "FileTreeSpatialGrid.hpp"
@@ -110,10 +109,12 @@
 #include "LinMesh.hpp"
 #include "LinWavelengthDistribution.hpp"
 #include "LinWavelengthGrid.hpp"
+#include "LineLuminosityNormalization.hpp"
 #include "LinearDustDestructionRecipe.hpp"
 #include "LinearDustTemperatureCutProbe.hpp"
 #include "ListBand.hpp"
 #include "ListGrainSizeDistribution.hpp"
+#include "ListLineSED.hpp"
 #include "ListMesh.hpp"
 #include "ListSED.hpp"
 #include "ListWavelengthDistribution.hpp"
@@ -303,6 +304,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<IntegratedLuminosityNormalization>();
     ItemRegistry::add<SpecificLuminosityNormalization>();
     ItemRegistry::add<BandLuminosityNormalization>();
+    ItemRegistry::add<LineLuminosityNormalization>();
 
     // SEDs
     ItemRegistry::add<SED>();
