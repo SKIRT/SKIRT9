@@ -7,16 +7,16 @@
 #define RESOURCESED_HPP
 
 #include "Array.hpp"
-#include "SED.hpp"
+#include "ContSED.hpp"
 #include "StoredTable.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
 /** ResourceSED is an abstract class for representing a spectral energy distribution loaded from a
     resource in SKIRT stored table format. The subclass must provide the name of the resource. */
-class ResourceSED : public SED
+class ResourceSED : public ContSED
 {
-    ITEM_ABSTRACT(ResourceSED, SED, "a spectral energy distribution loaded from a resource")
+    ITEM_ABSTRACT(ResourceSED, ContSED, "a spectral energy distribution loaded from a resource")
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============

@@ -15,8 +15,7 @@
     or more discrete emission lines with zero width. Mathematically, the specific luminosity is
     infinite at the line wavelengths and zero everywhere else, while the integrated luminosity
     (over all lines in the source wavelength range) is still normalized to unity. As a result, the
-    specific luminosity is numerically undefined and the corresponding functions should never be
-    called. This imposes important restrictions on the use of the %SED:
+    specific luminosity is numerically undefined. This imposes important restrictions on the use of the %SED:
 
     - A LineSED must be normalized by defining the integrated luminosity over a wavelength range
     that includes one or more of the line wavelengths. It \em cannot be normalized by defining the
@@ -30,6 +29,7 @@
 class LineSED : public SED
 {
     ITEM_ABSTRACT(LineSED, SED, "a spectral energy distribution consisting of discrete lines")
+        ATTRIBUTE_TYPE_ALLOWED_IF(LineSED, "Panchromatic")
         ATTRIBUTE_TYPE_DISPLAYED_IF(LineSED, "Level2")
     ITEM_END()
 
@@ -54,19 +54,6 @@ public:
     /** This function returns the intrinsic wavelength range of the %SED. For the current class,
         the range includes all line wavelengths. */
     Range intrinsicWavelengthRange() const override;
-
-    /** This function returns false, indicating that the specific luminosity is undefined for this
-        %SED, and that the specificLuminosity() and specificLuminosityArray() functions should not
-        be called. */
-    bool hasSpecificLuminosity() const override;
-
-    /** This function throws a fatal error because the specific luminosity is undefined for this
-        %SED. */
-    double specificLuminosity(double wavelength) const override;
-
-    /** This function throws a fatal error because the specific luminosity is undefined for this
-        %SED. */
-    void specificLuminosityArray(Array& lambdav, Array& pv, const Range& wavelengthRange) const override;
 
     /** This function returns the normalized integrated luminosity \f$L\f$ (i.e. radiative power)
         over the specified wavelength range. For the current class, this corresponds to the sum of

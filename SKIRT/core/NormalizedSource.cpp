@@ -5,6 +5,8 @@
 
 #include "NormalizedSource.hpp"
 #include "Configuration.hpp"
+#include "ContSED.hpp"
+#include "FatalError.hpp"
 #include "PhotonPacket.hpp"
 #include "Random.hpp"
 
@@ -17,6 +19,9 @@ void NormalizedSource::setupSelfBefore()
     auto config = find<Configuration>();
     _oligochromatic = config->oligochromatic();
 
+    // cast the SED to a version that supports specific luminosities if possible
+    _contsed = dynamic_cast<ContSED*>(_sed);
+
     // cache wavelength information depending on whether this is an oligo- or panchromatic simulation
     if (_oligochromatic)
     {
@@ -25,7 +30,7 @@ void NormalizedSource::setupSelfBefore()
     }
     else
     {
-        _xi = wavelengthBias();
+        _xi = _contsed ? wavelengthBias() : 0.;  // wavelength bias mechanism needs specific luminosities
         _biasDistribution = wavelengthBiasDistribution();
     }
 }
@@ -48,8 +53,10 @@ double NormalizedSource::luminosity() const
 
 double NormalizedSource::specificLuminosity(double wavelength) const
 {
+    if (!_contsed) throw FATALERROR("Cannot probe specific luminosity for a line emission spectrum");
+
     if (!sed()->normalizationWavelengthRange().containsFuzzy(wavelength)) return 0.;
-    return _sed->specificLuminosity(wavelength) * luminosity();
+    return _contsed->specificLuminosity(wavelength) * luminosity();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -73,7 +80,7 @@ void NormalizedSource::launch(PhotonPacket* pp, size_t historyIndex, double L) c
             lambda = _biasDistribution->generateWavelength();
 
         // calculate the compensating weight factor
-        double s = sed()->specificLuminosity(lambda);
+        double s = _contsed->specificLuminosity(lambda);
         if (!s)
         {
             // if the wavelength can't occur in the intrinsic distribution,

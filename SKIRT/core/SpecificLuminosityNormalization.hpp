@@ -12,7 +12,8 @@
 
 /** A SpecificLuminosityNormalization instance sets the normalization of a primary source by
     specifying the specific luminosity (radiative power per units of wavelength or frequency) at a
-    certain wavelength. */
+    certain wavelength. This normalization cannot be used with LineSED subclasses, for which the
+    specific luminosity is undefined. An attempt to do so will result in a fatal error. */
 class SpecificLuminosityNormalization : public LuminosityNormalization
 {
     /** The enumeration type indicating the specific luminosity unit style, e.g. whether to use

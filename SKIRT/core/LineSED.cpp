@@ -56,27 +56,6 @@ Range LineSED::intrinsicWavelengthRange() const
 
 ////////////////////////////////////////////////////////////////////
 
-bool LineSED::hasSpecificLuminosity() const
-{
-    return false;
-}
-
-////////////////////////////////////////////////////////////////////
-
-double LineSED::specificLuminosity(double /*wavelength*/) const
-{
-    throw FATALERROR("Specific luminosity is undefined for LineSED");
-}
-
-////////////////////////////////////////////////////////////////////
-
-void LineSED::specificLuminosityArray(Array& /*lambdav*/, Array& /*pv*/, const Range& /*wavelengthRange*/) const
-{
-    throw FATALERROR("Specific luminosity is undefined for LineSED");
-}
-
-////////////////////////////////////////////////////////////////////
-
 double LineSED::integratedLuminosity(const Range& wavelengthRange) const
 {
     double sum = 0.;

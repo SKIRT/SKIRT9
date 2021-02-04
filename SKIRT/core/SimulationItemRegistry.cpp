@@ -308,6 +308,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
 
     // SEDs
     ItemRegistry::add<SED>();
+    ItemRegistry::add<ContSED>();
     ItemRegistry::add<BlackBodySED>();
     ItemRegistry::add<ResourceSED>();
     ItemRegistry::add<SunSED>();

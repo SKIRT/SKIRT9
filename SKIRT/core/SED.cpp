@@ -19,13 +19,6 @@ void SED::setupSelfBefore()
 
 ////////////////////////////////////////////////////////////////////
 
-bool SED::hasSpecificLuminosity() const
-{
-    return true;
-}
-
-////////////////////////////////////////////////////////////////////
-
 Range SED::normalizationWavelengthRange() const
 {
     Range range = find<Configuration>()->sourceWavelengthRange();

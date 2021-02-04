@@ -9,6 +9,7 @@
 #include "LuminosityNormalization.hpp"
 #include "SED.hpp"
 #include "Source.hpp"
+class ContSED;
 
 //////////////////////////////////////////////////////////////////////
 
@@ -81,6 +82,7 @@ private:
     bool _oligochromatic{false};                         // true if the simulation is oligochromatic
     double _xi{0.};                                      // the wavelength bias fraction
     WavelengthDistribution* _biasDistribution{nullptr};  // the wavelength bias distribution
+    ContSED* _contsed{nullptr};                          // cast of SED to ContSED or nullptr if line spectrum
 };
 
 //////////////////////////////////////////////////////////////////////
