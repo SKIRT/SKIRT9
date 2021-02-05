@@ -19,6 +19,7 @@ class LineLuminosityNormalization : public LuminosityNormalization
 {
     ITEM_CONCRETE(LineLuminosityNormalization, LuminosityNormalization,
                   "source normalization through the luminosity for a given emission line")
+        ATTRIBUTE_TYPE_ALLOWED_IF(LineLuminosityNormalization, "LineSED")
         ATTRIBUTE_TYPE_DISPLAYED_IF(LineLuminosityNormalization, "Level2")
 
         PROPERTY_DOUBLE(wavelength, "the central wavelength of the emission line")

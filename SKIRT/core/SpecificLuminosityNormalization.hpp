@@ -26,6 +26,7 @@ class SpecificLuminosityNormalization : public LuminosityNormalization
 
     ITEM_CONCRETE(SpecificLuminosityNormalization, LuminosityNormalization,
                   "source normalization through the specific luminosity at a given wavelength")
+        ATTRIBUTE_TYPE_ALLOWED_IF(SpecificLuminosityNormalization, "ContSED")
 
         PROPERTY_DOUBLE(wavelength, "the wavelength at which to provide the specific luminosity")
         ATTRIBUTE_QUANTITY(wavelength, "wavelength")
