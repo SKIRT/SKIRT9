@@ -39,7 +39,7 @@ void NormalizedSource::setupSelfBefore()
 
 Range NormalizedSource::wavelengthRange() const
 {
-    return sed()->normalizationWavelengthRange();
+    return _sed->normalizationWavelengthRange();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -53,10 +53,9 @@ double NormalizedSource::luminosity() const
 
 double NormalizedSource::specificLuminosity(double wavelength) const
 {
-    if (!_contsed) throw FATALERROR("Cannot probe specific luminosity for a line emission spectrum");
-
-    if (!sed()->normalizationWavelengthRange().containsFuzzy(wavelength)) return 0.;
-    return _contsed->specificLuminosity(wavelength) * luminosity();
+    return _contsed && _contsed->normalizationWavelengthRange().containsFuzzy(wavelength)
+               ? _contsed->specificLuminosity(wavelength) * luminosity()
+               : 0.;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -75,7 +74,7 @@ void NormalizedSource::launch(PhotonPacket* pp, size_t historyIndex, double L) c
     {
         // biasing -- use one or the other distribution
         if (random()->uniform() > _xi)
-            lambda = sed()->generateWavelength();
+            lambda = _sed->generateWavelength();
         else
             lambda = _biasDistribution->generateWavelength();
 

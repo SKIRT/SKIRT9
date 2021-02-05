@@ -56,9 +56,10 @@ public:
     double luminosity() const override;
 
     /** This function returns the specific luminosity \f$L_\lambda\f$ (i.e. radiative power per
-         unit of wavelength) of the source at the specified wavelength, or zero if the wavelength is
-         outside the wavelength range of primary sources (configured for the source system as a
-         whole) or if the source simply does not emit at the wavelength. */
+        unit of wavelength) of the source at the specified wavelength, or zero if the wavelength is
+        outside the wavelength range of primary sources (configured for the source system as a
+        whole) or if the source simply does not emit at the wavelength. Discrete line emission
+        (i.e. with zero line width) is ignored. */
     double specificLuminosity(double wavelength) const override;
 
     /** This function causes the photon packet \em pp to be launched from the source using the
