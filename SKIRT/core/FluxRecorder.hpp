@@ -166,6 +166,15 @@ public:
     void includeSurfaceBrightness(int numPixelsX, int numPixelsY, double pixelSizeX, double pixelSizeY, double centerX,
                                   double centerY, bool convertToAngularSize);
 
+    /** This function enables recording of IFU data cubes of the entire sky, i.e. a surface brightness
+        image frame for each wavelength with a fixed angular pixel size and a flux calibration that
+        depends on the actual distance between an object and the observer.
+        This function is similar to includeSurfaceBrightness(), but includes some sensible defaults for
+        some of the parameters. It also sets all the distances of the instrument, replacing calls to
+        setRestFrameDistance() or setObserverFrameRedshift().
+        */
+    void includeAllSkySurfaceBrightness(int numPixelsX, int numPixelsY, double angularPixelSize);
+
     /** This function completes the configuration of the recorder. It must be called after any of
         the configuration functions, and before the first invocation of the detect() function. */
     void finalizeConfiguration();
@@ -284,6 +293,10 @@ private:
     double _centerX{0};
     double _centerY{0};
     bool _convertToAngularSize{false};
+
+    // recorder configuration for all-sky maps, received from client during configuration
+    bool _fixAngularPixelSize{false};
+    double _angularPixelSize{0};
 
     // cached info, initialized when configuration is finalized
     MediumSystem* _ms{nullptr};   // pointer to medium system, if present (used only if hasMedium is true)

@@ -109,6 +109,25 @@ void FluxRecorder::includeSurfaceBrightness(int numPixelsX, int numPixelsY, doub
 
 ////////////////////////////////////////////////////////////////////
 
+void FluxRecorder::includeAllSkySurfaceBrightness(int numPixelsX, int numPixelsY, double angularPixelSize)
+{
+    _includeSurfaceBrightness = true;
+    _numPixelsX = numPixelsX;
+    _numPixelsY = numPixelsY;
+    _fixAngularPixelSize = true;
+    _angularPixelSize = angularPixelSize;
+    // set the luminosity distance to a value that is guaranteed to be larger than any distance
+    _luminosityDistance = std::numeric_limits<double>::infinity();
+    // fudge the pixel sizes and the angular diameter distance so that the right angular pixel size is recovered
+    _convertToAngularSize = true;
+    _angularDiameterDistance = 1.;
+    _pixelSizeAverage = 2. * tan(sqrt(0.25 * angularPixelSize));
+    _pixelSizeX = _pixelSizeAverage;
+    _pixelSizeY = _pixelSizeAverage;
+}
+
+////////////////////////////////////////////////////////////////////
+
 void FluxRecorder::finalizeConfiguration()
 {
     // get a pointer to the medium system, if present
@@ -203,9 +222,16 @@ void FluxRecorder::detect(PhotonPacket* pp, int l, double distance)
         // adjust the luminosity for near distance if needed
         if (distance < _luminosityDistance)
         {
-            double r = _pixelSizeAverage / (2. * distance);
-            double rar = r / atan(r);
-            L *= rar * rar;
+            if (_fixAngularPixelSize)
+            {
+                L /= (distance * distance);
+            }
+            else
+            {
+                double r = _pixelSizeAverage / (2. * distance);
+                double rar = r / atan(r);
+                L *= rar * rar;
+            }
         }
 
         // apply the extinction along the path to the recorder
@@ -354,6 +380,11 @@ void FluxRecorder::calibrateAndWrite()
     double fourpid2 = 4. * M_PI * _luminosityDistance * _luminosityDistance;
     double omega =
         4. * atan(0.5 * _pixelSizeX / _angularDiameterDistance) * atan(0.5 * _pixelSizeY / _angularDiameterDistance);
+    if (_fixAngularPixelSize)
+    {
+        fourpid2 = 4. * M_PI;
+        omega = _angularPixelSize;
+    }
 
     // convert from recorded quantities to output quantities and from internal units to user-selected output units
     // (for performance reasons, determine the units scaling factor only once for each wavelength)

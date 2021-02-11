@@ -65,16 +65,28 @@
     existing 2D image functionality for output, and that we can easily map output pixels to the
     corresponding HEALPix pixels in ring ordering during analysis.
 
-    The surface brightness calibration for this instrument (as for the AllSkyInstrument) is tricky.
-    While the angular size of the individual HEALPix pixels is known, the angular size of the
-    pixels as seen from a distant object is not, since the pixels do not have an actual physical
-    size. We can define such a physical size by defining a radius for the instrument, which is then
-    used to convert the angular size to a physical size. This radius is quite arbitrary, but should
-    nonetheless be chosen with some care: if the radius is too small, then recorded flux values
-    will be very high or even overflow. A good rule of thumb is to use a radius that has a similar
-    size to your object of study. For example, for a galaxy, with sizes in kpc, a radius of 1 pc
-    works well. It is always possible to recalibrate the fluxes afterwards by using the same radius
-    and adjusting to the pixel size of an actual instrument.
+    Since this instrument receives fluxes from objects at (very) different distances, the flux
+    calibration differs from that of traditional distant instruments, where the distance between
+    the observer and the object of interest is assumed to be constant and is only accounted for
+    at the end of the simulation when outputting the image data cube. Instead, we need to properly
+    account for the distance when detecting the photon packet This is configured through the use
+    of FluxRecorder::includeAllSkySurfaceBrightness(). The key point for the calibration is that
+    the solid angle that appears in the flux formula is fixed (independent of the distance between
+    the instrument and the object) and set by the resolution of the HEALPix grid. By multiplying
+    this solid angle with the distance squared, one gets a surface area that corresponds to the
+    area that receives the flux from the object. This area increases with increasing distance,
+    leading to a lower flux for objects that are further away. Since this also means that very
+    nearby objects have large flux contributions, this instrument discards photon packets originating
+    at distances that are closer than some configurable small radius.
+
+    The orientation and position of the instrument is governed by a position (that sets the origin
+    of the observer reference frame) and two directions: a crosshair direction that determines the
+    direction of the x-axis of the observer reference frame, and an upward direction that determines
+    the direction of the z-axis of the observer reference frame. These directions should be
+    orthogonal to each other. The HEALPix pixels are labelled with the spherical coordinate angles
+    \f$\theta{}\f$ and \f$\phi{}\f$ within this frame. The resulting image data cube is rotated
+    around the z-axis over an additional angle \f$\phi{}'=180^\circ{}\f$ to place the crosshair at
+    the centre of the output image.
 
     This instrument does \em not seperately record spatially integrated flux densities. */
 class HEALPixSkyInstrument : public Instrument
@@ -88,9 +100,10 @@ class HEALPixSkyInstrument : public Instrument
         ATTRIBUTE_MAX_VALUE(order, "15")
         ATTRIBUTE_DEFAULT_VALUE(order, "6")
 
-        PROPERTY_DOUBLE(radius, "the radius of the observer's all-sky sphere")
-        ATTRIBUTE_QUANTITY(radius, "length")
-        ATTRIBUTE_MIN_VALUE(radius, "]0")
+        PROPERTY_DOUBLE(smallRadius,
+                        "the radius below which photon packets are considered too close to the observer and discarded")
+        ATTRIBUTE_QUANTITY(smallRadius, "length")
+        ATTRIBUTE_MIN_VALUE(smallRadius, "]0")
 
         PROPERTY_DOUBLE(observerX, "the position of the observer, x component")
         ATTRIBUTE_QUANTITY(observerX, "length")
@@ -176,13 +189,12 @@ private:
     const double& _Uz{_upZ};
 
     // data members derived from the published attributes during setup
-    int _Nx{0};                       // number of pixels in the x direction
-    int _Ny{0};                       // number of pixels in the y direction
-    int _Nside{0};                    // number of pixels in one direction of a HEALPix base pixel
-    double _s{0.};                    // estimated linear size of a pixel
-    Direction _bfkx;                  // unit vector along the viewport's x-axis
-    Direction _bfky;                  // unit vector along the viewport's y-axis
-    HomogeneousTransform _transform;  // transform from world to observer coordinates
+    int _Nx{0};     // number of pixels in the x direction
+    int _Ny{0};     // number of pixels in the y direction
+    int _Nside{0};  // number of pixels in one direction of a HEALPix base pixel
+    Vec _bfax;      // unit vector along the observer x-axis
+    Vec _bfay;      // unit vector along the observer y-axis
+    Vec _bfaz;      // unit vector along the observer z-axis
 };
 
 ////////////////////////////////////////////////////////////////////
