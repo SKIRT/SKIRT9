@@ -155,7 +155,8 @@ public:
     int numDensitySamples() const { return _numDensitySamples; }
 
     /** Returns true if the radiation field must be stored during the photon cycle, and false otherwise. */
-    bool hasRadiationField() const { return _hasRadiationField; }
+    /** bool hasRadiationField() const { return _hasRadiationField; } */
+    bool hasRadiationField() const { return true; }
 
     /** Returns true if a panchromatic radiation field (from which a temperature can be calculated)
         is being stored during the photon cycle, and false otherwise. */
