@@ -82,11 +82,12 @@
     The orientation and position of the instrument is governed by a position (that sets the origin
     of the observer reference frame) and two directions: a crosshair direction that determines the
     direction of the x-axis of the observer reference frame, and an upward direction that determines
-    the direction of the z-axis of the observer reference frame. These directions should be
-    orthogonal to each other. The HEALPix pixels are labelled with the spherical coordinate angles
-    \f$\theta{}\f$ and \f$\phi{}\f$ within this frame. The resulting image data cube is rotated
-    around the z-axis over an additional angle \f$\phi{}'=180^\circ{}\f$ to place the crosshair at
-    the centre of the output image.
+    the direction of the z-axis of the observer reference frame. These directions should not be parallel
+    to each other. If the upward direction is not orthogonal to the crosshair direction, the actual
+    z-axis will be the projection of the upward direction onto the plane perpendicular to the crosshair
+    direction. The HEALPix pixels are labelled with the spherical coordinate angles \f$\theta{}\f$ and
+    \f$\phi{}\f$ within this frame. The resulting image data cube is rotated around the z-axis over an
+    additional angle \f$\phi{}'=180^\circ{}\f$ to place the crosshair at the centre of the output image.
 
     This instrument does \em not seperately record spatially integrated flux densities. */
 class HEALPixSkyInstrument : public Instrument

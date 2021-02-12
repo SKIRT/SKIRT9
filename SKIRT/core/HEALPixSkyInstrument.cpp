@@ -21,13 +21,14 @@ void HEALPixSkyInstrument::setupSelfBefore()
     Vec up(_Ux, _Uy, _Uz);                    // vector in the upward direction
     if (co.norm() < 1e-20) throw FATALERROR("Crosshair is too close to observer");
     if (up.norm() < 1e-20) throw FATALERROR("Upwards direction cannot be null vector");
-    if (Vec::dot(co, up) > 1e-20) throw FATALERROR("Crosshair direction and upwards direction are not orthogonal!");
+    _bfay = Vec::cross(up, co);
+    if (_bfay.norm() < 1e-20) throw FATALERROR("Upwards direction cannot be parallel to viewing direction");
+
+    _bfaz = Vec::cross(co, _bfay);
 
     _bfax = co / co.norm();
-    _bfaz = up / up.norm();
-    _bfay = Vec::cross(_bfaz, _bfax);
-    // correct for possible rounding issues
     _bfay /= _bfay.norm();
+    _bfaz /= _bfaz.norm();
 
     // compute the side length of the subdivision within a single HEALPix base pixel
     _Nside = 1 << _order;
