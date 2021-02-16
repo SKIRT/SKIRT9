@@ -26,10 +26,6 @@ void AllSkyInstrument::setupSelfBefore()
     _Nx = 2 * _numPixelsY;
     _Ny = _numPixelsY;
 
-    // determine linear size of a single pixel
-    // assume: square pixels; fraction of effective pixels pi/4; total area sphere with radius R
-    _s = sqrt(8) * _radius / _numPixelsY;
-
     // setup the transformation from world to observer coordinates
 
     // translate to observer position
@@ -68,10 +64,15 @@ void AllSkyInstrument::setupSelfBefore()
     _transform.rotateX(0., 1.);
     _transform.rotateZ(0., -1.);
 
-    // configure flux recorder with a large distance relative to the pixel size so that atan(s/2d) = s/2d
-    // and the default calibration can be easily corrected when detecting each individual photon packet
-    instrumentFluxRecorder()->setRestFrameDistance(_s * 1e8);
-    instrumentFluxRecorder()->includeSurfaceBrightness(_Nx, _Ny, _s, _s, 0, 0, false);
+    // determine the solid angle corresponding to each pixel, assuming an area preserving projection
+    // and a usage fraction in the output rectangle of pi/4
+    double omega = 16. / (_Nx * _Ny);
+
+    // determine the angular size of a pixel in the output map, i.e. in geographical coordinates
+    double inc = M_PI / _Ny;
+
+    // configure flux recorder
+    instrumentFluxRecorder()->includeSurfaceBrightnessForLocal(_Nx, _Ny, omega, inc, inc, 0., 0., "posangle");
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -97,7 +98,7 @@ Direction AllSkyInstrument::bfkobs(const Position& bfr) const
     double d = k.norm();
 
     // if the distance is very small, return something arbitrary - the photon packet will not be detected anyway
-    if (d < _s) return Direction();
+    if (d <= _radius) return Direction();
 
     // otherwise return a unit vector in the direction from launch to observer
     return Direction(k / d);
@@ -112,7 +113,7 @@ Direction AllSkyInstrument::bfkx(const Position& bfr) const
     double d = k.norm();
 
     // if the distance is very small, return something arbitrary - the photon packet will not be detected anyway
-    if (d < _s) return Direction();
+    if (d <= _radius) return Direction();
 
     // vector in the plane normal to the line launch-observer
     // oriented perpendicular to the projection of the up direction in that plane
@@ -132,7 +133,7 @@ Direction AllSkyInstrument::bfky(const Position& bfr) const
     double d = k.norm();
 
     // if the distance is very small, return something arbitrary - the photon packet will not be detected anyway
-    if (d < _s) return Direction();
+    if (d <= _radius) return Direction();
 
     // vector in the plane normal to the line launch-observer
     // oriented along the projection of the up direction in that plane
@@ -155,7 +156,7 @@ void AllSkyInstrument::detect(PhotonPacket* pp)
     p.spherical(d, inc, azi);
 
     // if the radial distance is very small, ignore the photon packet
-    if (d < _s) return;
+    if (d <= _radius) return;
 
     // convert spherical coordinates to viewport coordinates:  -1 < x < 1  and -1 < y < 1
     double x, y;

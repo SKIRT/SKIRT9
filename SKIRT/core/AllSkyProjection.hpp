@@ -36,6 +36,15 @@
       -  longitude = -azimuth
       -  latitude = inclination - \f$\pi/2\f$
 
+    <b>Projection properties</b>
+
+    Projecting a sphere to a rectangle necessarily introduces distortions to distance, angle,
+    shape, and/or area. To properly work with the SKIRT instrument flux calibration, an all-sky
+    projection must be preserve area ("equal area"), while it may and probably will distort
+    distance, angle and shape. Furthermore, in the rectangular coordinates defined above, the
+    portion of the rectangle that maps to the sphere (the "used" portion) must be a circle with
+    radius one.
+
     */
 class AllSkyProjection : public SimulationItem
 {
