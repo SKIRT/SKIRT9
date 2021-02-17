@@ -31,10 +31,10 @@
         Longitude ranges from \f$-\pi\f$ to \f$\pi\f$, and latitude from \f$-\pi/2\f$ to \f$\pi/2\f$
 
     Including an east-west flip because an all-sky projection looks from inside the sphere, while a
-    geographical map looks from outside of the sphere; conversion from spherical to geographical
+    geographical map looks from outside of the sphere, conversion from spherical to geographical
     coordinates reads:
       -  longitude = -azimuth
-      -  latitude = inclination - \f$\pi/2\f$
+      -  latitude = \f$\pi/2\f$ - inclination
 
     <b>Projection properties</b>
 

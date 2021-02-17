@@ -65,15 +65,23 @@ void HEALPixSkyInstrument::setupSelfBefore()
     }
 
     // rotate the axes into the alignment appropriate for our purposes (z-axis up, x-axis towards crosshair)
-    _transform.rotateX(0., 1.);
-    _transform.rotateZ(0., -1.);
+    _transform.rotateX(0., -1.);
+    _transform.rotateZ(0., 1.);
 
     // determine the solid angle corresponding to each pixel
     // each HEALPix pixel has the same spherical area:  4 pi/(12 Nside^2)
     double omega = M_PI / (3 * _Nside * _Nside);
 
+    // determine the (approximate) scale and center of the output map axes
+    // x: theta in [0, pi]
+    // y: phi in [0, 2*pi]
+    double incx = 2. * M_PI / _Nx;
+    double ctrx = M_PI;
+    double incy = M_PI / _Ny;
+    double ctry = M_PI / 2.;
+
     // configure flux recorder
-    instrumentFluxRecorder()->includeSurfaceBrightnessForLocal(_Nx, _Ny, omega, 1., 1., 0., 0.);
+    instrumentFluxRecorder()->includeSurfaceBrightnessForLocal(_Nx, _Ny, omega, incx, incy, ctrx, ctry, "posangle");
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -160,7 +168,8 @@ void HEALPixSkyInstrument::detect(PhotonPacket* pp)
 
     // p.spherical() returns theta in [0, pi] and phi in [-pi, pi]
     // the HEALPix mapping algorithm expects theta in [0, pi] and phi in [0, 2*pi]
-    if (phi < 0.) phi += 2. * M_PI;
+    // we center the output image on the crosshair direction by offsetting phi
+    phi += M_PI;
 
     // the code below was mostly copied from healpix_base.cc in the official HEALPix repository
     // it corresponds to the loc2pix function using the RING scheme

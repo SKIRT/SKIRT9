@@ -61,14 +61,14 @@ void AllSkyInstrument::setupSelfBefore()
     }
 
     // rotate the axes into the alignment appropriate for our purposes (z-axis up, x-axis towards crosshair)
-    _transform.rotateX(0., 1.);
-    _transform.rotateZ(0., -1.);
+    _transform.rotateX(0., -1.);
+    _transform.rotateZ(0., 1.);
 
     // determine the solid angle corresponding to each pixel, assuming an area preserving projection
     // and a usage fraction in the output rectangle of pi/4
     double omega = 16. / (_Nx * _Ny);
 
-    // determine the angular size of a pixel in the output map, i.e. in geographical coordinates
+    // determine the scale of the output map axes, i.e. in geographical coordinates
     double inc = M_PI / _Ny;
 
     // configure flux recorder
