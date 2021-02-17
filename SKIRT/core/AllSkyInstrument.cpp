@@ -59,7 +59,7 @@ void AllSkyInstrument::setupSelfBefore()
         double u = sqrt(k * k + l * l);
         _transform.rotateZ(l / u, -k / u);
     }
-    // rather than flipping the z-axis as is done for the perspective transformation,
+
     // rotate the axes into the alignment appropriate for our purposes (z-axis up, x-axis towards crosshair)
     _transform.rotateX(0., 1.);
     _transform.rotateZ(0., -1.);
@@ -80,10 +80,9 @@ void AllSkyInstrument::setupSelfBefore()
 void AllSkyInstrument::determineSameObserverAsPreceding(const Instrument* precedingInstrument)
 {
     auto other = dynamic_cast<const AllSkyInstrument*>(precedingInstrument);
-    if (other && projection()->type() == other->projection()->type() && radius() == other->radius()
-        && observerX() == other->observerX() && observerY() == other->observerY() && observerZ() == other->observerZ()
-        && crossX() == other->crossX() && crossY() == other->crossY() && crossZ() == other->crossZ()
-        && upX() == other->upX() && upY() == other->upY() && upZ() == other->upZ())
+    if (other && radius() == other->radius() && observerX() == other->observerX() && observerY() == other->observerY()
+        && observerZ() == other->observerZ() && crossX() == other->crossX() && crossY() == other->crossY()
+        && crossZ() == other->crossZ() && upX() == other->upX() && upY() == other->upY() && upZ() == other->upZ())
     {
         setSameObserverAsPreceding();
     }

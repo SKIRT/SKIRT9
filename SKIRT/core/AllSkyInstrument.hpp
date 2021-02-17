@@ -18,14 +18,14 @@
     the HEALPixSkyInstrument class for an instrument that does \em not perform such a projection).
 
     An all-sky instrument consists of a sphere with a given radius, centered at the location of the
-    instrument. Only photon packets originating outside of this sphere are detected. When a
-    peel-off photon packet arrives, the spherical coordinates of its origin relative to the
-    instrument location are determined. The two resulting angular coordinates are transformed to
-    pixel coordinates in the image frame using the selected all-sky projection. The radial
-    coordinate (i.e. the distance from the photon packet's origin to the instrument location) is
-    used for adjusting the photon packet's luminosity contribution to the surface brightness in its
-    target pixel. More details on the flux calibration for this "local" instrument are provided in
-    the header of the FluxRecorder class.
+    instrument. Only photon packets originating outside of this sphere are detected. When a photon
+    packet arrives, the spherical coordinates of its originating position relative to the
+    instrument coordinate system are determined. The two resulting angular coordinates are
+    transformed to pixel coordinates in the image frame using the selected all-sky projection. The
+    radial coordinate (i.e. the distance from the photon packet's origin to the instrument
+    location) is used for adjusting the photon packet's luminosity contribution to the surface
+    brightness in its target pixel. More details on the flux calibration for this "local"
+    instrument are provided in the header of the FluxRecorder class.
 
     This instrument does \em not support recording of spatially integrated flux densities. */
 class AllSkyInstrument : public Instrument

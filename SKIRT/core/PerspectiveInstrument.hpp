@@ -15,7 +15,8 @@
     arbitrary placement of the viewport outside or inside the model. Only photon packets arriving
     from the front are recorded; light emitted behind the viewport is ignored. For each wavelength
     the instrument outputs the detected surface brightness in every pixel of a given frame as a
-    data cube in a FITS file. The instrument does \em not record an integrated flux density.
+    data cube in a FITS file. The instrument does \em not support recording of spatially integrated
+    flux densities.
 
     The perspective instrument is intended mostly for making movies. Each movie frame is generated
     by a separate perspective instrument with the appropriate parameters. */
