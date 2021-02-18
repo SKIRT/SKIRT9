@@ -72,7 +72,7 @@ void AllSkyInstrument::setupSelfBefore()
     double inc = M_PI / _Ny;
 
     // configure flux recorder
-    instrumentFluxRecorder()->includeSurfaceBrightnessForLocal(_Nx, _Ny, omega, inc, inc, 0., 0., "posangle");
+    instrumentFluxRecorder()->includeSurfaceBrightnessForLocal(_Nx, _Ny, omega, -inc, inc, 0., 0., "posangle");
 }
 
 ////////////////////////////////////////////////////////////////////
