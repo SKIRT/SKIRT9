@@ -6,7 +6,6 @@
 #ifndef SED_HPP
 #define SED_HPP
 
-#include "Array.hpp"
 #include "Range.hpp"
 #include "SimulationItem.hpp"
 class Random;
@@ -15,15 +14,30 @@ class Random;
 
 /** An instance of a SED subclass represents a spectral energy distribution \f$L_\lambda\f$, i.e.
     power per unit of wavelength. This abstract base class just defines an interface that must be
-    implemented by each subclass. There are three key operations: drawing a random wavelength from
-    the spectral energy distribution, calculating the specific luminosity at a given wavelength,
-    and calculating the integrated luminosity over a given wavelength range.
+    implemented by each subclass. The two key operations supported by all SEDs are drawing a random
+    wavelength from the spectral energy distribution and calculating the integrated luminosity over
+    a given wavelength range.
 
-    Each SED subclass must ensure that the implemented spectral energy distribution is normalized
-    to unity over the normalization wavelength range, which is defined as the intersection of the
-    source wavelength range (determined by the SourceSystem) and the intrinsic wavelength range of
-    the implemented distribution (determined by the SED subclass). A convenience function offered
-    by this abstract base class returns this normalization wavelength range.
+    There are two important categories of emission spectra, each represented by an abstract SED
+    subclass:
+
+    - ContSED: regular continuous spectra. These SEDs allow obtaining the specific luminosity at a
+    given wavelength or for a sampled range of wavelengths. They support all operations of the code
+    to the fullest degree possible.
+
+    - LineSED: line emission spectra, consisting of one or more discrete emission lines with zero
+    width. Mathematically, the specific luminosity is infinite at the line wavelengths and zero
+    everywhere else, while the integrated luminosity over one or more lines is finite. In practice,
+    the specific luminosity is numerically undefined, imposing important restrictions. For example,
+    luminosity normalization must use integration over a wavelength range and the mechanism for
+    wavelength biasing does not work.
+
+    Each SED subclass, regardless of its category, must ensure that the implemented spectral energy
+    distribution is normalized to unity over the normalization wavelength range, which is defined
+    as the intersection of the source wavelength range (determined by the SourceSystem) and the
+    intrinsic wavelength range of the implemented distribution (determined by the SED subclass). A
+    convenience function offered by this abstract base class returns this normalization wavelength
+    range.
 
     Specifically, this means that the random wavelengths returned by the generateWavelength()
     function will always fall inside the normalization range. On the other hand, while the
@@ -49,20 +63,6 @@ public:
     /** This function returns the intrinsic wavelength range of the %SED. Outside this range, all
         luminosities are zero. */
     virtual Range intrinsicWavelengthRange() const = 0;
-
-    /** This function returns the normalized specific luminosity \f$L_\lambda\f$ (i.e. radiative
-        power per unit of wavelength) at the specified wavelength, or zero if the wavelength is
-        outside of the %SED's intrinsic wavelength range. */
-    virtual double specificLuminosity(double wavelength) const = 0;
-
-    /** This function returns the normalized specific luminosity \f$L_\lambda\f$ (i.e. radiative
-        power per unit of wavelength) at a number of wavelength points within the specified
-        wavelength range. The number of points returned is implementation-dependent and usually
-        matches the internal tabular representation of the %SED. The minimum and maximum
-        wavelengths in the specified range may or may not be included in the returned result if
-        they fall outside of the %SED's intrinsic wavelength range. In that case, the specific
-        luminosities outside the returned range should be assumed to be zero. */
-    virtual void specificLuminosityArray(Array& lambdav, Array& pv, const Range& wavelengthRange) const = 0;
 
     /** This function returns the normalized integrated luminosity \f$L\f$ (i.e. radiative power)
         over the specified wavelength range, or zero if the range is fully outside of the %SED's

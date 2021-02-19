@@ -6,7 +6,7 @@
 #ifndef LYADOUBLEPEAKEDSED_HPP
 #define LYADOUBLEPEAKEDSED_HPP
 
-#include "SED.hpp"
+#include "ContSED.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -34,9 +34,9 @@
     To simplify normalization of this %SED, the source wavelength range configured by the user must
     fully contain the intrinsic wavelength range defined by \f[ \lambda_\alpha \left(1 \pm
     \frac{3.6\,s}{c}\right) \f] */
-class LyaDoublePeakedSED : public SED
+class LyaDoublePeakedSED : public ContSED
 {
-    ITEM_CONCRETE(LyaDoublePeakedSED, SED, "a double-peaked spectrum around the central Lyman-alpha wavelength")
+    ITEM_CONCRETE(LyaDoublePeakedSED, ContSED, "a double-peaked spectrum around the central Lyman-alpha wavelength")
         ATTRIBUTE_TYPE_DISPLAYED_IF(LyaDoublePeakedSED, "Lya|Level3")
 
         PROPERTY_DOUBLE(scale, "the velocity scale")

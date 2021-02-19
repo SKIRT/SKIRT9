@@ -7,7 +7,7 @@
 #define FAMILYSED_HPP
 
 #include "Array.hpp"
-#include "SED.hpp"
+#include "ContSED.hpp"
 class SEDFamily;
 
 ////////////////////////////////////////////////////////////////////
@@ -15,9 +15,9 @@ class SEDFamily;
 /** FamilySED is an abstract class for representing a spectral energy distribution obtained from an
     SED family for a set of parameters configured by the user. The subclass must provide a function
     to create the appropriate SEDFamily object and to return the configuration parameters. */
-class FamilySED : public SED
+class FamilySED : public ContSED
 {
-    ITEM_ABSTRACT(FamilySED, SED, "a spectral energy distribution obtained from an SED family")
+    ITEM_ABSTRACT(FamilySED, ContSED, "a spectral energy distribution obtained from an SED family")
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============

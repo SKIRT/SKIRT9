@@ -6,7 +6,7 @@
 #ifndef LYAGAUSSIANSED_HPP
 #define LYAGAUSSIANSED_HPP
 
-#include "SED.hpp"
+#include "ContSED.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -30,9 +30,9 @@
     To simplify normalization of this %SED, the source wavelength range configured by the user must
     fully contain the intrinsic wavelength range defined by \f[ \lambda_\alpha \left(1 \pm
     \frac{9\,s}{c}\right) \f] */
-class LyaGaussianSED : public SED
+class LyaGaussianSED : public ContSED
 {
-    ITEM_CONCRETE(LyaGaussianSED, SED, "a Gaussian spectrum around the central Lyman-alpha wavelength")
+    ITEM_CONCRETE(LyaGaussianSED, ContSED, "a Gaussian spectrum around the central Lyman-alpha wavelength")
         ATTRIBUTE_TYPE_DISPLAYED_IF(LyaGaussianSED, "Lya|Level3")
 
         PROPERTY_DOUBLE(dispersion, "the Gaussian velocity dispersion")

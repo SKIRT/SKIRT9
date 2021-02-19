@@ -7,7 +7,7 @@
 #define BLACKBODYSED_HPP
 
 #include "Array.hpp"
-#include "SED.hpp"
+#include "ContSED.hpp"
 class PlanckFunction;
 
 ////////////////////////////////////////////////////////////////////
@@ -18,9 +18,9 @@ class PlanckFunction;
 
     Whenever a tabular form of the black body %SED is requested, this class uses a spectral
     resolution of \f$R\triangleq\lambda/\Delta\lambda\geq 1000\f$ (see PlanckFunction::cdf()). */
-class BlackBodySED : public SED
+class BlackBodySED : public ContSED
 {
-    ITEM_CONCRETE(BlackBodySED, SED, "a black-body spectral energy distribution")
+    ITEM_CONCRETE(BlackBodySED, ContSED, "a black-body spectral energy distribution")
 
         PROPERTY_DOUBLE(temperature, "the black body temperature")
         ATTRIBUTE_QUANTITY(temperature, "temperature")
