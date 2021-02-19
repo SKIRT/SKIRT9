@@ -146,11 +146,6 @@ public:
         position, expressed in model coordinates. */
     Direction bfkobs(const Position& bfr) const override;
 
-    /** Returns the direction along the positive x-axis in a plane normal to the vector towards the
-        observer from the given photon packet launching position, expressed in model coordinates.
-        */
-    Direction bfkx(const Position& bfr) const override;
-
     /** Returns the direction along the positive y-axis in a plane normal to the vector towards the
         observer from the given photon packet launching position, expressed in model coordinates.
         */

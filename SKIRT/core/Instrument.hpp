@@ -130,11 +130,6 @@ public:
         subclass. */
     virtual Direction bfkobs(const Position& bfr) const = 0;
 
-    /** This function returns the direction along the positive x-axis of the instrument frame,
-        expressed in model coordinates, given the photon packet's launching position. The
-        implementation must be provided in a subclass. */
-    virtual Direction bfkx(const Position& bfr) const = 0;
-
     /** This function returns the direction along the positive y-axis of the instrument frame,
         expressed in model coordinates, given the photon packet's launching position. The
         implementation must be provided in a subclass. */

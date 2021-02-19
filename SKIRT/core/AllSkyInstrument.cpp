@@ -105,26 +105,6 @@ Direction AllSkyInstrument::bfkobs(const Position& bfr) const
 
 ////////////////////////////////////////////////////////////////////
 
-Direction AllSkyInstrument::bfkx(const Position& bfr) const
-{
-    // vector and distance from launch to observer
-    Vec k = Vec(_Ox, _Oy, _Oz) - bfr;
-    double d = k.norm();
-
-    // if the distance is very small, return something arbitrary - the photon packet will not be detected anyway
-    if (d <= _radius) return Direction();
-
-    // vector in the plane normal to the line launch-observer
-    // oriented perpendicular to the projection of the up direction in that plane
-    Vec ku(_Ux, _Uy, _Uz);
-    Vec kx = Vec::cross(ku, k);
-
-    // return unit vector along y-axis
-    return Direction(kx / kx.norm());
-}
-
-////////////////////////////////////////////////////////////////////
-
 Direction AllSkyInstrument::bfky(const Position& bfr) const
 {
     // vector and distance from launch to observer

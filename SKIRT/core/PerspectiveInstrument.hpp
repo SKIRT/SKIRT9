@@ -91,11 +91,6 @@ public:
     /** Returns the direction towards the eye from the given photon packet launching position. */
     Direction bfkobs(const Position& bfr) const override;
 
-    /** Returns the direction along the positive x-axis of the instrument frame, expressed in model
-        coordinates. The provided photon packet's launching position is not used because the
-        orientation of the instrument frame does not depend on it. */
-    Direction bfkx(const Position& bfr) const override;
-
     /** Returns the direction along the positive y-axis of the instrument frame, expressed in model
         coordinates. The provided photon packet's launching position is not used because the
         orientation of the instrument frame does not depend on it. */
@@ -126,7 +121,6 @@ private:
     // data members derived from the published attributes during setup
     double _s{0.};                     // width and height of a pixel
     double _Ex{0.}, _Ey{0.}, _Ez{0.};  // eye position
-    Direction _bfkx;                   // unit vector along the viewport's x-axis
     Direction _bfky;                   // unit vector along the viewport's y-axis
     HomogeneousTransform _transform;   // transform from world to pixel coordinates
 };
