@@ -104,7 +104,7 @@ namespace
             string description =
                 "optical depth map at λ = " + StringUtils::toString(units->owavelength(probe->wavelength())) + " "
                 + units->uwavelength();
-            FITSInOut::write(probe, description, filename, tauv, "", Nx, Ny, units->oposangle(2 * M_PI / Nx),
+            FITSInOut::write(probe, description, filename, tauv, "", Nx, Ny, units->oposangle(-2 * M_PI / Nx),
                              units->oposangle(M_PI / Ny), 0., 0., units->uposangle());
         }
     };
@@ -149,11 +149,11 @@ void OpticalDepthMapProbe::probe()
         auto ms = find<MediumSystem>();
 
         // setup the transformation from observer to world coordinates;
-        // we need the inverse of the translation used by the all-sky instrument,
+        // we need the inverse of the transformation used by the all-sky instrument,
         // but without the translation because we will transform just the direction
         HomogeneousTransform transform;
-        transform.rotateZ(0., 1.);
-        transform.rotateX(0., -1.);
+        transform.rotateZ(0., -1.);
+        transform.rotateX(0., 1.);
 
         Vec kn(_Ox - _Cx, _Oy - _Cy, _Oz - _Cz);
         kn /= kn.norm();

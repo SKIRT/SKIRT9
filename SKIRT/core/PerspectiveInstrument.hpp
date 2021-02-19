@@ -15,7 +15,8 @@
     arbitrary placement of the viewport outside or inside the model. Only photon packets arriving
     from the front are recorded; light emitted behind the viewport is ignored. For each wavelength
     the instrument outputs the detected surface brightness in every pixel of a given frame as a
-    data cube in a FITS file. The instrument does \em not record an integrated flux density.
+    data cube in a FITS file. The instrument does \em not support recording of spatially integrated
+    flux densities.
 
     The perspective instrument is intended mostly for making movies. Each movie frame is generated
     by a separate perspective instrument with the appropriate parameters. */
@@ -90,11 +91,6 @@ public:
     /** Returns the direction towards the eye from the given photon packet launching position. */
     Direction bfkobs(const Position& bfr) const override;
 
-    /** Returns the direction along the positive x-axis of the instrument frame, expressed in model
-        coordinates. The provided photon packet's launching position is not used because the
-        orientation of the instrument frame does not depend on it. */
-    Direction bfkx(const Position& bfr) const override;
-
     /** Returns the direction along the positive y-axis of the instrument frame, expressed in model
         coordinates. The provided photon packet's launching position is not used because the
         orientation of the instrument frame does not depend on it. */
@@ -125,7 +121,6 @@ private:
     // data members derived from the published attributes during setup
     double _s{0.};                     // width and height of a pixel
     double _Ex{0.}, _Ey{0.}, _Ez{0.};  // eye position
-    Direction _bfkx;                   // unit vector along the viewport's x-axis
     Direction _bfky;                   // unit vector along the viewport's y-axis
     HomogeneousTransform _transform;   // transform from world to pixel coordinates
 };

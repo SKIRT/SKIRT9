@@ -30,12 +30,6 @@ void HEALPixSkyInstrument::setupSelfBefore()
     _Nx = 4 * _Nside;
     _Ny = 4 * _Nside - 1;
 
-    // determine linear size of a single pixel
-    // each HEALPix pixel has the same spherical area pi/(3*_Nside^2)
-    // we assume that the pixels are squares with this surface area
-    // due to the calibration of the FrameInstrument, we need to multiply this with the radius of the instrument
-    _s = sqrt(M_PI / (3 * _Nside * _Nside)) * _radius;
-
     // setup the transformation from world to observer coordinates
 
     // translate to observer position
@@ -69,15 +63,25 @@ void HEALPixSkyInstrument::setupSelfBefore()
         double u = sqrt(k * k + l * l);
         _transform.rotateZ(l / u, -k / u);
     }
-    // rather than flipping the z-axis as is done for the perspective transformation,
-    // rotate the axes into the alignment appropriate for our purposes (z-axis up, x-axis towards crosshair)
-    _transform.rotateX(0., 1.);
-    _transform.rotateZ(0., -1.);
 
-    // configure flux recorder with a large distance relative to the pixel size so that atan(s/2d) = s/2d
-    // and the default calibration can be easily corrected when detecting each individual photon packet
-    instrumentFluxRecorder()->setRestFrameDistance(_s * 1e8);
-    instrumentFluxRecorder()->includeSurfaceBrightness(_Nx, _Ny, _s, _s, 0, 0, false);
+    // rotate the axes into the alignment appropriate for our purposes (z-axis up, x-axis towards crosshair)
+    _transform.rotateX(0., -1.);
+    _transform.rotateZ(0., 1.);
+
+    // determine the solid angle corresponding to each pixel
+    // each HEALPix pixel has the same spherical area:  4 pi/(12 Nside^2)
+    double omega = M_PI / (3 * _Nside * _Nside);
+
+    // determine the (approximate) scale and center of the output map axes
+    // x: theta in [0, pi]
+    // y: phi in [0, 2*pi]
+    double incx = 2. * M_PI / _Nx;
+    double ctrx = M_PI;
+    double incy = M_PI / _Ny;
+    double ctry = M_PI / 2.;
+
+    // configure flux recorder
+    instrumentFluxRecorder()->includeSurfaceBrightnessForLocal(_Nx, _Ny, omega, incx, incy, ctrx, ctry, "posangle");
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -102,30 +106,10 @@ Direction HEALPixSkyInstrument::bfkobs(const Position& bfr) const
     double d = k.norm();
 
     // if the distance is very small, return something arbitrary - the photon packet will not be detected anyway
-    if (d < _s) return Direction();
+    if (d < _radius) return Direction();
 
     // otherwise return a unit vector in the direction from launch to observer
     return Direction(k / d);
-}
-
-////////////////////////////////////////////////////////////////////
-
-Direction HEALPixSkyInstrument::bfkx(const Position& bfr) const
-{
-    // vector and distance from launch to observer
-    Vec k = Vec(_Ox, _Oy, _Oz) - bfr;
-    double d = k.norm();
-
-    // if the distance is very small, return something arbitrary - the photon packet will not be detected anyway
-    if (d < _s) return Direction();
-
-    // vector in the plane normal to the line launch-observer
-    // oriented perpendicular to the projection of the up direction in that plane
-    Vec ku(_Ux, _Uy, _Uz);
-    Vec kx = Vec::cross(ku, k);
-
-    // return unit vector along y-axis
-    return Direction(kx / kx.norm());
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -137,7 +121,7 @@ Direction HEALPixSkyInstrument::bfky(const Position& bfr) const
     double d = k.norm();
 
     // if the distance is very small, return something arbitrary - the photon packet will not be detected anyway
-    if (d < _s) return Direction();
+    if (d < _radius) return Direction();
 
     // vector in the plane normal to the line launch-observer
     // oriented along the projection of the up direction in that plane
@@ -158,14 +142,14 @@ void HEALPixSkyInstrument::detect(PhotonPacket* pp)
     // get the spherical coordinates of the launch position relative to the observer
     double d, theta, phi;
     p.spherical(d, theta, phi);
-    phi += M_PI;
 
     // if the radial distance is very small, ignore the photon packet
-    if (d < _s) return;
+    if (d < _radius) return;
 
+    // p.spherical() returns theta in [0, pi] and phi in [-pi, pi]
     // the HEALPix mapping algorithm expects theta in [0, pi] and phi in [0, 2*pi]
-    if (theta < 0.) theta += M_PI;
-    if (phi < 0.) phi += 2. * M_PI;
+    // we center the output image on the crosshair direction by offsetting phi
+    phi += M_PI;
 
     // the code below was mostly copied from healpix_base.cc in the official HEALPix repository
     // it corresponds to the loc2pix function using the RING scheme

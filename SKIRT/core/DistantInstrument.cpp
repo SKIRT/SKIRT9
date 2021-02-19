@@ -43,8 +43,6 @@ void DistantInstrument::setupSelfBefore()
 
     // calculate relevant directions
     _bfkobs = Direction(_inclination, _azimuth);
-    _bfkx = Direction(+cosphi * costheta * sinomega - sinphi * cosomega,
-                      +sinphi * costheta * sinomega + cosphi * cosomega, -sintheta * sinomega);
     _bfky = Direction(-cosphi * costheta * cosomega - sinphi * sinomega,
                       -sinphi * costheta * cosomega + cosphi * sinomega, +sintheta * cosomega);
 }
@@ -66,13 +64,6 @@ void DistantInstrument::determineSameObserverAsPreceding(const Instrument* prece
 Direction DistantInstrument::bfkobs(const Position& /*bfr*/) const
 {
     return _bfkobs;
-}
-
-////////////////////////////////////////////////////////////////////
-
-Direction DistantInstrument::bfkx(const Position& /*bfr*/) const
-{
-    return _bfkx;
 }
 
 ////////////////////////////////////////////////////////////////////
