@@ -93,15 +93,15 @@ class WavelengthGrid;
     requested. It includes a column for the wavelength plus a column for each of the individual
     photon contribution sums, for powers from zero to 4.
 
-    Usage
-    -----
+    Calling sequence
+    ----------------
 
     A FluxRecorder instance expects a rigourous calling sequence. During setup, the instrument
     configures the FluxRecorder's operation, specifying the wavelength grid, the items to be
-    recorded (SED, IFU, individual flux components, statistics), the distance and/or redshift, and
-    some additional information on the simulation in which the instrument is embedded (e.g., is
-    there any secondary emission). The configuration must be completed by calling the
-    finalizeConfiguration() function.
+    recorded (%SED, IFU, individual flux components, statistics), flux calibration settings
+    (instrument type, distance, redshift), and some additional information on the simulation in
+    which the instrument is embedded (e.g., is there any secondary emission). The configuration
+    must be completed by calling the finalizeConfiguration() function.
 
     To record the effects of detecting a photon packet, the instrument invokes the detect()
     function. This function is thread-safe, so it may be (and often is) called from multiple
@@ -111,12 +111,61 @@ class WavelengthGrid;
     detect() function in thread-local storage. Finally, at the end of the simulation, the
     instrument calls the calibrateAndWrite() function to output the recorded information.
 
+    Flux calibration
+    ----------------
+
+    A FluxRecorder instance handles the conversion of the detected photon packet contributions to a
+    corresponding observed quantity for each spectral and/or spatial bin. This process is called
+    flux calibration and it depends to some extent on whether the instrument associated with the
+    flux recorder is "distant" or "local".
+
+    A distant instrument is placed at a large distance from the model under study. The observed
+    portion of the sky is approximated by a plane perpendicular to the line of sight rather than a
+    part of a sphere. The instrument uses parallel projection and considers all photon packets to
+    originate at the same distance from the instrument. Consequently, the incoming photon packet
+    contributions can simply be accumulated for each bin and flux calibration can occur on the
+    aggregated result. Assuming a non-relativistic distance, the calibration for the flux densities
+    \f$F_\lambda\f$ in an %SED is \f[ F_\lambda = \frac{1}{\Delta\lambda} \, \frac{1}{4\pi
+    d_\mathrm{m}^2} \, L_\mathrm{bin}\f] where \f$L_\mathrm{bin}\f$ is the aggregated photon packet
+    luminosity contribution in a spectral bin, \f$\Delta\lambda\f$ is the width of that bin, and
+    \f$d_\mathrm{m}\f$ is the distance from the model to the instrument. The calibration for the
+    surface brightness values \f$f_\lambda\f$ in an IFU is \f[ f_\lambda = \frac{1}{\Delta\lambda}
+    \, \frac{1}{4\pi d_\mathrm{m}^2} \, \frac{1}{\Omega_\mathrm{distant}}\, L_\mathrm{bin}\f] where
+    \f$\Omega_\mathrm{distant}\f$ is the solid angle subtended by the detector pixel corresponding
+    to the bin. For a distant instrument using parallel projection, the latter is given by
+    \f[\Omega_\mathrm{distant} = 4\arctan\left(\frac{s_\mathrm{x}}{2d_\mathrm{m}}\right)
+    \arctan\left(\frac{s_\mathrm{y}}{2d_\mathrm{m}}\right) \f] where \f$s_\mathrm{x}\f$ and
+    \f$s_\mathrm{y}\f$ represent the field of view (in model units) of a pixel in each direction.
+    For relativistic distances these relations become slightly more involved, as discussed in a
+    seperate concept note on cosmological redshift.
+
+    A local instrument is placed near or even inside the model. The mapping between incoming photon
+    packet trajectories and detector pixels is determined by the instrument. Although all distances
+    are considered to be non-relativistic, photon packets can now originate at various distances
+    from the instrument, with a wide dynamic range. The FluxRecorder class does not support
+    recording %SEDs for local instruments. The calibration for the surface brightness values
+    \f$f_\lambda\f$ in an IFU now becomes \f[ f_\lambda = \frac{1}{\Delta\lambda} \, \frac{1}{4\pi
+    d_\mathrm{pp}^2} \, \frac{1}{\Omega_\mathrm{local}}\, L_\mathrm{pp}\f] where
+    \f$L_\mathrm{pp}\f$ is the luminosity contribution by a particular photon packet,
+    \f$d_\mathrm{pp}\f$ is the distance of the packet's originating position to the instrument, and
+    \f$\Omega_\mathrm{local}\f$ is the solid angle subtended by the detector pixel corresponding to
+    the bin. The correction for distance now must be performed for each photon packet individually.
+    Furthermore, the solid angle subtended by a detector pixel now depends on the projection
+    applied by the instrument. The current implementation assumes that the solid angle is identical
+    for all pixels in the detector, alhough this is not generally true for all instrument
+    projections. In that case, the instrument should specify a representative value and advise the
+    user to avoid situations where the actual solid angles deviate much from this value.
+
+    Memory usage
+    ------------
+
     A FluxRecorder instance dynamically adjusts its memory allocation to the configuration and
     simulation characteristics. Detector arrays for individual flux components, polarization, or
     statistics are allocated only when requested in the configuration. Also, for example, if there
     is no secondary emission in the simulation, the corresponding detector arrays are not
     allocated, even if recording of individual components is requested in the configuration.
 */
+
 class FluxRecorder final
 {
     //============= Construction - Setup - Destruction =============
@@ -124,8 +173,8 @@ class FluxRecorder final
 public:
     /** The constructor initializes the FluxRecorder to a configuration that records nothing. The
         argument specifies a simulation item in the hierarchy of the caller (usually the caller
-        itself). It is used to get a human-readable name for the caller, and to retrieve a logger
-        and a unit system, from the simulation hierarchy. */
+        itself). It is used to get a human-readable name for the caller and to retrieve a logger
+        and a unit system from the simulation hierarchy. */
     FluxRecorder(const SimulationItem* parentItem);
 
     /** This function configures information on the simulation in which the recorder is embedded.
@@ -141,30 +190,41 @@ public:
         information. */
     void setUserFlags(bool recordComponents, int numScatteringLevels, bool recordPolarization, bool recordStatistics);
 
-    /** This function configures the distance of the recorder in the model's rest frame. The
-        specified distance must be nonzero. The client must call either the setRestFrameDistance()
-        or setObserverFrameRedshift() functions, not both. */
+    /** This function configures the distance of the recorder in the model's rest frame for a
+        distant instrument. The specified distance must be nonzero. The client must call either the
+        setRestFrameDistance() or setObserverFrameRedshift() functions, not both. This function
+        should not be called for a local instrument. */
     void setRestFrameDistance(double distance);
 
     /** This function configures the redshift and relativistic distances of the recorder's observer
-        frame. The specified redshift and distances must be nonzero. The client must call either
-        the setRestFrameDistance() or setObserverFrameRedshift() functions, noth both. */
+        frame for a distant instrument. The specified redshift and distances must be nonzero. The
+        client must call either the setRestFrameDistance() or setObserverFrameRedshift() functions,
+        not both. This function should not be called for a local instrument. */
     void setObserverFrameRedshift(double redshift, double angularDiameterDistance, double luminosityDistance);
 
-    /** This function enables recording of spatially integrated flux densities, i.e. an %SED,
-        assuming parallel projection at the configured distance from the model. */
-    void includeFluxDensity();
+    /** This function enables recording of spatially integrated flux densities, i.e. an %SED, for a
+        distant instrument. Recording of spatially integrated flux densities for local instruments
+        is not supported, so this function should not be called for a local instrument. */
+    void includeFluxDensityForDistant();
 
     /** This function enables recording of IFU data cubes, i.e. a surface brightness image frame
-        for each wavelength. The recorder assumes parallel projection at the specified distance
-        from the model and using the specified frame properties. The number of pixels, and the
-        pixel sizes are used to calibrate the surface brightness; the center coordinates are used
-        only for the metadata in the output file. If the \em convertToAngularSize flag is true, the
-        coordinates and pixel sizes are converted to angular sizes before being written to the
-        metadata of the output file. If the flag is false, these values are left in distance units.
-        */
-    void includeSurfaceBrightness(int numPixelsX, int numPixelsY, double pixelSizeX, double pixelSizeY, double centerX,
-                                  double centerY, bool convertToAngularSize);
+        for each wavelength, for a distant instrument. The number of pixels and the pixel sizes are
+        used to calibrate the surface brightness; the center coordinates are used only for the
+        metadata in the output file. The coordinates and pixel sizes are converted to angular sizes
+        before being written to the metadata of the output file. This function should not be called
+        for a local instrument. */
+    void includeSurfaceBrightnessForDistant(int numPixelsX, int numPixelsY, double pixelSizeX, double pixelSizeY,
+                                            double centerX, double centerY);
+
+    /** This function enables recording of IFU data cubes, i.e. a surface brightness image frame
+        for each wavelength, for a local instrument. The solid ange per pixel is used to calibrate
+        the surface brightness. The remaining arguments are used only for the metadata in the
+        output file. If the quantity string is nonempty, it should specify a valid SKIRT quantity
+        name and the increment and center values are converted to the corresponding output units.
+        This function should not be called for a distant instrument. */
+    void includeSurfaceBrightnessForLocal(int numPixelsX, int numPixelsY, double solidAnglePerPixel, double incrementX,
+                                          double incrementY, double centerX, double centerY,
+                                          string quantityXY = string());
 
     /** This function completes the configuration of the recorder. It must be called after any of
         the configuration functions, and before the first invocation of the detect() function. */
@@ -181,10 +241,9 @@ public:
         instrument frame where the photon packet arrives, because this depends on the projection
         being used. In addition, the instrument can specify a \em distance from the photon packet's
         last interaction site to the instrument. For distant instruments with parallel projection,
-        this distance should be left at its default value of infinity (or it can be set at the
-        actual instrument distance). For instruments that may be placed close by or inside the
-        model, the actual distance should be specified so that the flux calibration can be properly
-        corrected for each individual photon packet.
+        this distance should be left at its default value of infinity. For instruments that may be
+        placed close by or inside the model, the actual distance should be specified so that the
+        flux can be properly calibrated for each individual photon packet.
 
         All other information is obtained directly or indirectly from the photon packet. If there
         is an obscuring medium, the optical depth from the photon packet's last interaction site to
@@ -201,13 +260,13 @@ public:
     /** This function calibrates and outputs the instrument data. The calibration includes dividing
         the luminosities (W) recorded for each bin by the wavelength bin width to obtain specific
         luminosities (W/m) and further conversion to flux density (incorporating distance) and/or
-        to surface brightness (i.e. incorporating distance and solid angle per pixel) based on the
+        to surface brightness (incorporating distance and solid angle per pixel) based on the
         information passed during configuration. The function also converts the resulting values
         from internal units to output units depending on the simulation's choices for flux output
         style.
 
-        For more information on the names and contents of the generated files, see the
-        documentation in the header of this class. */
+        For more information on flux calibration and on the names and contents of the generated
+        files, see the documentation in the header of this class. */
     void calibrateAndWrite();
 
     //================= Private Types and Functions ===============
@@ -276,14 +335,17 @@ private:
     double _luminosityDistance{0};
 
     // recorder configuration for IFUs, received from client during configuration
+    bool _local{false};
     int _numPixelsX{0};
     int _numPixelsY{0};
     double _pixelSizeX{0};
     double _pixelSizeY{0};
-    double _pixelSizeAverage{0};
+    double _solidAnglePerPixel{0};
     double _centerX{0};
     double _centerY{0};
-    bool _convertToAngularSize{false};
+    double _incrementX{0};
+    double _incrementY{0};
+    string _quantityXY;
 
     // cached info, initialized when configuration is finalized
     MediumSystem* _ms{nullptr};   // pointer to medium system, if present (used only if hasMedium is true)

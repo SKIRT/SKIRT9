@@ -13,7 +13,7 @@ void FullInstrument::setupSelfBefore()
     FrameInstrument::setupSelfBefore();
 
     // add SED to FrameInstrument's flux recorder's configuration
-    instrumentFluxRecorder()->includeFluxDensity();
+    instrumentFluxRecorder()->includeFluxDensityForDistant();
 }
 
 ////////////////////////////////////////////////////////////////////

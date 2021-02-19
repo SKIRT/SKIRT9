@@ -65,18 +65,17 @@
     existing 2D image functionality for output, and that we can easily map output pixels to the
     corresponding HEALPix pixels in ring ordering during analysis.
 
-    The surface brightness calibration for this instrument (as for the AllSkyInstrument) is tricky.
-    While the angular size of the individual HEALPix pixels is known, the angular size of the
-    pixels as seen from a distant object is not, since the pixels do not have an actual physical
-    size. We can define such a physical size by defining a radius for the instrument, which is then
-    used to convert the angular size to a physical size. This radius is quite arbitrary, but should
-    nonetheless be chosen with some care: if the radius is too small, then recorded flux values
-    will be very high or even overflow. A good rule of thumb is to use a radius that has a similar
-    size to your object of study. For example, for a galaxy, with sizes in kpc, a radius of 1 pc
-    works well. It is always possible to recalibrate the fluxes afterwards by using the same radius
-    and adjusting to the pixel size of an actual instrument.
+    An HEALPix sky instrument consists of a sphere with a given radius, centered at the location of
+    the instrument. Only photon packets originating outside of this sphere are detected. When a
+    photon packet arrives, the spherical coordinates of its originating position relative to the
+    instrument coordinate system are determined. The two resulting angular coordinates are
+    transformed to pixel coordinates on the HEALPix sphere. The radial coordinate (i.e. the
+    distance from the photon packet's origin to the instrument location) is used for adjusting the
+    photon packet's luminosity contribution to the surface brightness in its target pixel. More
+    details on the flux calibration for this "local" instrument are provided in the header of the
+    FluxRecorder class.
 
-    This instrument does \em not seperately record spatially integrated flux densities. */
+    This instrument does \em not support recording of spatially integrated flux densities. */
 class HEALPixSkyInstrument : public Instrument
 {
     ITEM_CONCRETE(HEALPixSkyInstrument, Instrument,
@@ -147,11 +146,6 @@ public:
         position, expressed in model coordinates. */
     Direction bfkobs(const Position& bfr) const override;
 
-    /** Returns the direction along the positive x-axis in a plane normal to the vector towards the
-        observer from the given photon packet launching position, expressed in model coordinates.
-        */
-    Direction bfkx(const Position& bfr) const override;
-
     /** Returns the direction along the positive y-axis in a plane normal to the vector towards the
         observer from the given photon packet launching position, expressed in model coordinates.
         */
@@ -179,9 +173,6 @@ private:
     int _Nx{0};                       // number of pixels in the x direction
     int _Ny{0};                       // number of pixels in the y direction
     int _Nside{0};                    // number of pixels in one direction of a HEALPix base pixel
-    double _s{0.};                    // estimated linear size of a pixel
-    Direction _bfkx;                  // unit vector along the viewport's x-axis
-    Direction _bfky;                  // unit vector along the viewport's y-axis
     HomogeneousTransform _transform;  // transform from world to observer coordinates
 };
 
