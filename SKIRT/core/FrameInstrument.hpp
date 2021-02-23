@@ -58,10 +58,9 @@ protected:
 
 public:
     /** This function simulates the detection of a photon packet by the instrument. It determines
-        the projected position of the photon packet's last interaction site on the instrument
-        frame, calculates the optical depth of the path from the photon packet's last interaction
-        site to the instrument, and then calls the detect() function of the FluxRecorder instance
-        associated with this instrument. */
+        the projected position of the photon packet's last interaction site on the instrument frame
+        and then calls the detect() function of the FluxRecorder instance associated with this
+        instrument. */
     void detect(PhotonPacket* pp) override;
 
 private:
@@ -69,7 +68,7 @@ private:
         will be hit by a photon packet, or -1 if the photon packet does not hit the detector. Given
         the position \f${\boldsymbol{x}}=(x,y,z)\f$ of the last emission or scattering event of the
         photon packet, the direction \f${\boldsymbol{k}}_{\text{obs}} = (\theta,\varphi)\f$ towards
-        the observer, and the position angle \f$\omega\f$ of the instrument, the impact coordinates
+        the observer, and the roll angle \f$\omega\f$ of the instrument, the impact coordinates
         \f$(x_{\text{p}},y_{\text{p}})\f$ are given by the following Euler-like transformation,
         where \f$z_{\text{p}}\f$ is ignored: \f[ \begin{bmatrix}x_{\text{p}} \\ y_{\text{p}} \\
         z_{\text{p}} \end{bmatrix} = \begin{bmatrix}\cos\omega & -\sin\omega & 0\\ \sin\omega &
@@ -81,9 +80,9 @@ private:
         the azimuth angle \f$\varphi\f$ (with a minus sign because the observer is looking towards
         the center rather than along the specified direction), then rotated about the new Y-axis
         over the inclination angle \f$\theta\f$, and finally rotated about the new Z-axis over the
-        position angle \f$\omega\f$ reduced by 90 degrees (this constant transformation over -90
+        roll angle \f$\omega\f$ reduced by 90 degrees (this constant transformation over -90
         degrees is represented above as a separate matrix). The 90 degree correction on the
-        position angle is introduced so that it would be more natural to specify this angle; in
+        roll angle is introduced so that it would be more natural to specify this angle; in
         most cases it can be left to its default value of 0. Given these impact coordinates, the
         pixel indices \f$i\f$ and \f$j\f$ are determined as \f[ \begin{split} i &=
         \frac{{\text{floor}}(x_{\text{p}}-x_{\text{min}})}{\Delta x} \\ j &=

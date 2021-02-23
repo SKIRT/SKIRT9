@@ -48,7 +48,7 @@ int FrameInstrument::pixelOnDetector(const PhotonPacket* pp) const
     double x, y, z;
     pp->position().cartesian(x, y, z);
 
-    // transform to detector coordinates using inclination, azimuth, and position angle
+    // transform to detector coordinates using inclination, azimuth, and roll angle
     double xpp = -_sinphi * x + _cosphi * y;
     double ypp = -_cosphi * _costheta * x - _sinphi * _costheta * y + _sintheta * z;
     double xp = _cosomega * xpp - _sinomega * ypp;
