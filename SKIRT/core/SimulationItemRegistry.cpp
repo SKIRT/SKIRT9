@@ -19,6 +19,8 @@
 #include "BlackBodySED.hpp"
 #include "BlackBodySEDFamily.hpp"
 #include "BoxClipGeometryDecorator.hpp"
+#include "BpassSED.hpp"
+#include "BpassSEDFamily.hpp"
 #include "BroadBand.hpp"
 #include "BrokenExpDiskGeometry.hpp"
 #include "BruzualCharlotSED.hpp"
@@ -319,6 +321,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<MarastonSED>();
     ItemRegistry::add<Starburst99SED>();
     ItemRegistry::add<FSPSSED>();
+    ItemRegistry::add<BpassSED>();
     ItemRegistry::add<MappingsSED>();
     ItemRegistry::add<TabulatedSED>();
     ItemRegistry::add<FileSED>();
@@ -339,6 +342,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<MarastonSEDFamily>();
     ItemRegistry::add<Starburst99SEDFamily>();
     ItemRegistry::add<FSPSSEDFamily>();
+    ItemRegistry::add<BpassSEDFamily>();
     ItemRegistry::add<FileSSPSEDFamily>();
     ItemRegistry::add<FileIndexedSEDFamily>();
     ItemRegistry::add<MappingsSEDFamily>();
