@@ -27,6 +27,7 @@ class SEDInstrument : public DistantInstrument
         ATTRIBUTE_QUANTITY(radius, "length")
         ATTRIBUTE_MIN_VALUE(radius, "[0")
         ATTRIBUTE_DEFAULT_VALUE(radius, "0")
+        ATTRIBUTE_DISPLAYED_IF(radius, "Level2")
 
     ITEM_END()
 
