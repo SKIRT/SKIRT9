@@ -654,12 +654,15 @@ void FluxRecorder::recordContributions(ContributionList* contributionList)
             if (i + 1 == numContributions || contributions[i].ell() != contributions[i + 1].ell()
                 || contributions[i].l() != contributions[i + 1].l())
             {
-                size_t lell = contributions[i].l() + contributions[i].ell() * _numPixelsInFrame;
-                double wn = 1.;
-                for (int k = 0; k <= maxContributionPower; ++k)
+                if (contributions[i].l() >= 0)
                 {
-                    LockFree::add(_wifu[k][lell], wn);
-                    wn *= w;
+                    size_t lell = contributions[i].l() + contributions[i].ell() * _numPixelsInFrame;
+                    double wn = 1.;
+                    for (int k = 0; k <= maxContributionPower; ++k)
+                    {
+                        LockFree::add(_wifu[k][lell], wn);
+                        wn *= w;
+                    }
                 }
                 w = 0;
             }
