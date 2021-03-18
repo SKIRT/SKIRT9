@@ -20,12 +20,18 @@
     requirements set by the ImportedMedium class. */
 class MeshMedium : public ImportedMedium
 {
-    /** The enumeration type indicating the type of mass quantity to be imported. */
-    ENUM_DEF(MassType, MassDensity, Mass, NumberDensity, Number)
+    /** The enumeration type indicating the type of mass quantity to be imported. The choices
+        specifying two columns (either both mass density and mass or both number density and
+        number) are intended for use in special cases where the volume of each imported entity
+        cannot be easily derived otherwise. In the current implementation, this is used only by the
+        VoronoiMeshMedium to avoid constructing a full Voronoi tessellation in certain cases. */
+    ENUM_DEF(MassType, MassDensity, Mass, MassDensityAndMass, NumberDensity, Number, NumberDensityAndNumber)
         ENUM_VAL(MassType, MassDensity, "mass density")
-        ENUM_VAL(MassType, Mass, "mass (volume-integrated mass density)")
+        ENUM_VAL(MassType, Mass, "mass (volume-integrated)")
+        ENUM_VAL(MassType, MassDensityAndMass, "both mass density and volume-integrated mass")
         ENUM_VAL(MassType, NumberDensity, "number density")
-        ENUM_VAL(MassType, Number, "number (volume-integrated number density)")
+        ENUM_VAL(MassType, Number, "number (volume-integrated)")
+        ENUM_VAL(MassType, NumberDensityAndNumber, "both number density and volume-integrated number")
     ENUM_END()
 
     ITEM_ABSTRACT(MeshMedium, ImportedMedium, "a geometry imported from mesh-based data")

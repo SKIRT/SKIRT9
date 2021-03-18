@@ -87,13 +87,10 @@ public:
     void setExtent(const Box& extent);
 
     /** This function configures the snapshot to skip construction of the actual Voronoi
-        tessellation and instead use a search tree across all sites. This disables a substantial
-        portion of the snapshot functionality, including calculating cell volumes (and hence
-        converting between mass and density), generating random positions in a cell, and tracing
-        paths through the grid. The only remaining supported capability is determining the density
-        at a given position, which is sufficient for the important use case of regridding an
-        imported Voronoi density distribution on an octree grid. Attempting to use any of the
-        disabled functionalities after calling this configuration function will result in undefined
+        tessellation and instead use a search tree across all sites. It should be called only if
+        (1) the snapshot has been configured to import both a mass/number density column \em and a
+        volume-integrated mass/number column, and (2) the snapshot will not be required to generate
+        random positions or trace paths. Violating these conditions will result in undefined
         behavior. */
     void foregoVoronoiMesh();
 
@@ -177,15 +174,15 @@ private:
         quite time-consuming because the Voronoi tessellation must be constructed twice. */
     void buildMesh(bool relax);
 
-    /** This private function calculates the densities and (cumulative) masses for all cells, and
-        logs some statistics. The function assumes that the Voronoi mesh has already been built. */
-    void calculateDensityAndMass();
+    /** This private function calculates the volumes for all cells without using the Voronoi mesh.
+        It assumes that both mass and mass density columns are being imported. */
+    void calculateVolume();
 
-    /** This private function calculates the densities for all cells without using the Voronoi
-        mesh. It assumes that the density is imported (rather than the mass) so that the cell
-        volume is not needed. The function does \em not calculate any masses, so the total mass
-        reported by the mass() function remains zero. */
-    void calculateDensity();
+    /** This private function calculates the densities and (cumulative) masses for all cells, and
+        logs some statistics. The function assumes that the cell volumes have been calculated,
+        either by building a Voronoi tessellation, or by deriving the volume from mass and mass
+        density columns being imported. */
+    void calculateDensityAndMass();
 
     /** Private function to recursively build a binary search tree (see
         en.wikipedia.org/wiki/Kd-tree) */

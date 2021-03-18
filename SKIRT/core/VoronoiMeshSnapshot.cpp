@@ -137,6 +137,9 @@ public:
         cell.neighbors(_neighbors);
     }
 
+    // initializes the receiver with the volume calculated from imported information
+    void init(double volume) { _volume = volume; }
+
     // returns the cell's site position
     Vec position() const { return _r; }
 
@@ -374,7 +377,8 @@ void VoronoiMeshSnapshot::readAndClose()
     // if we forego building a Voronoi mesh, there is a density policy by definition
     else
     {
-        calculateDensity();
+        calculateVolume();
+        calculateDensityAndMass();
         buildSearchSingle();
     }
 }
@@ -663,12 +667,25 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
 
 ////////////////////////////////////////////////////////////////////
 
+void VoronoiMeshSnapshot::calculateVolume()
+{
+    int numCells = _cells.size();
+    for (int m = 0; m != numCells; ++m)
+    {
+        const Array& prop = _cells[m]->properties();
+        double volume = prop[massIndex()] / prop[densityIndex()];
+        _cells[m]->init(volume);
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
 void VoronoiMeshSnapshot::calculateDensityAndMass()
 {
     // allocate vectors for mass and density
-    size_t n = _cells.size();
-    Array Mv(n);
-    _rhov.resize(n);
+    int numCells = _cells.size();
+    Array Mv(numCells);
+    _rhov.resize(numCells);
 
     // get the maximum temperature, or zero of there is none
     double maxT = useTemperatureCutoff() ? maxTemperature() : 0.;
@@ -680,7 +697,7 @@ void VoronoiMeshSnapshot::calculateDensityAndMass()
 
     // loop over all sites/cells
     int numIgnored = 0;
-    for (size_t m = 0; m != n; ++m)
+    for (int m = 0; m != numCells; ++m)
     {
         const Array& prop = _cells[m]->properties();
 
@@ -716,41 +733,7 @@ void VoronoiMeshSnapshot::calculateDensityAndMass()
     _mass = totalEffectiveMass;
 
     // construct a vector with the normalized cumulative site densities
-    if (n) NR::cdf(_cumrhov, Mv);
-}
-
-////////////////////////////////////////////////////////////////////
-
-void VoronoiMeshSnapshot::calculateDensity()
-{
-    // allocate vector for density
-    size_t n = _cells.size();
-    _rhov.resize(n);
-
-    // get the maximum temperature, or zero of there is none
-    double maxT = useTemperatureCutoff() ? maxTemperature() : 0.;
-
-    // loop over all sites/cells
-    int numIgnored = 0;
-    for (size_t m = 0; m != n; ++m)
-    {
-        const Array& prop = _cells[m]->properties();
-
-        // original density is zero if temperature is above cutoff or if imported density is not positive
-        double originalDensity = 0.;
-        if (maxT && prop[temperatureIndex()] > maxT)
-            numIgnored++;
-        else
-            originalDensity = max(0., prop[densityIndex()]);
-
-        double metallicDensity = originalDensity * (useMetallicity() ? prop[metallicityIndex()] : 1.);
-        double effectiveDensity = metallicDensity * multiplier();
-
-        _rhov[m] = effectiveDensity;
-    }
-
-    // log mass statistics
-    if (numIgnored) log()->info("  Ignored density in " + std::to_string(numIgnored) + " high-temperature cells");
+    if (numCells) NR::cdf(_cumrhov, Mv);
 }
 
 ////////////////////////////////////////////////////////////////////
