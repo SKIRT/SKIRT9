@@ -66,6 +66,12 @@ class VoronoiMeshMedium : public MeshMedium, public VoronoiMeshInterface
 {
     ITEM_CONCRETE(VoronoiMeshMedium, MeshMedium, "a transfer medium imported from data represented on a Voronoi mesh")
         ATTRIBUTE_TYPE_INSERT(VoronoiMeshMedium, "VoronoiMeshInterface")
+
+        PROPERTY_BOOL(foregoVoronoMesh, "forego constructing the Voronoi tessellation and use a search tree instead")
+        ATTRIBUTE_DEFAULT_VALUE(foregoVoronoMesh, "false")
+        ATTRIBUTE_RELEVANT_IF(foregoVoronoMesh, "massTypeMassDensity|massTypeNumberDensity")
+        ATTRIBUTE_DISPLAYED_IF(foregoVoronoMesh, "Level3")
+
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============

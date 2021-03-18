@@ -86,6 +86,17 @@ public:
         default; failing to set the extent of the domain results in undefined behavior. */
     void setExtent(const Box& extent);
 
+    /** This function configures the snapshot to skip construction of the actual Voronoi
+        tessellation and instead use a search tree across all sites. This disables a substantial
+        portion of the snapshot functionality, including calculating cell volumes (and hence
+        converting between mass and density), generating random positions in a cell, and tracing
+        paths through the grid. The only remaining supported capability is determining the density
+        at a given position, which is sufficient for the important use case of regridding an
+        imported Voronoi density distribution on an octree grid. Attempting to use any of the
+        disabled functionalities after calling this configuration function will result in undefined
+        behavior. */
+    void foregoVoronoMesh();
+
     //========== Specialty constructors ==========
 
 public:
@@ -166,12 +177,22 @@ private:
         quite time-consuming because the Voronoi tessellation must be constructed twice. */
     void buildMesh(bool relax);
 
+    /** This private function calculates the densities and (cumulative) masses for all cells, and
+        logs some statistics. The function assumes that the Voronoi mesh has already been built. */
+    void calculateDensityAndMass();
+
+    /** This private function calculates the densities for all cells without using the Voronoi
+        mesh. It assumes that the density is imported (rather than the mass) so that the cell
+        volume is not needed. The function does \em not calculate any masses, so the total mass
+        reported by the mass() function remains zero. */
+    void calculateDensity();
+
     /** Private function to recursively build a binary search tree (see
         en.wikipedia.org/wiki/Kd-tree) */
     Node* buildTree(vector<int>::iterator first, vector<int>::iterator last, int depth) const;
 
     /** This private function builds data structures that allow accelerating the operation of the
-        cellIndex() function.
+        cellIndex() function. It assumes that the Voronoi mesh has already been built.
 
         The domain is partitioned using a linear cubodial grid into cells that are called \em
         blocks. For each block, the function builds and stores a list of all Voronoi cells that
@@ -185,7 +206,13 @@ private:
         To further reduce the search time within blocks that overlap with a large number of cells,
         the function builds a binary search tree on the cell sites for those blocks (see for example
         <a href="http://en.wikipedia.org/wiki/Kd-tree">en.wikipedia.org/wiki/Kd-tree</a>). */
-    void buildSearch();
+    void buildSearchPerBlock();
+
+    /** This private function builds a data structure that allows accelerating the operation of the
+        cellIndex() function without using the Voronoi mesh. The domain is not partitioned in
+        blocks. The function builds a single binary search tree on all cell sites (see for example
+        <a href="http://en.wikipedia.org/wiki/Kd-tree">en.wikipedia.org/wiki/Kd-tree</a>). */
+    void buildSearchSingle();
 
     /** This private function returns true if the given point is closer to the site with index m
         than to the sites with indices ids. */
@@ -414,8 +441,9 @@ public:
 
 private:
     // data members initialized during configuration
-    Box _extent;      // the spatial domain of the mesh
-    double _eps{0.};  // small fraction of extent
+    Box _extent;                    // the spatial domain of the mesh
+    double _eps{0.};                // small fraction of extent
+    bool _foregoVoronoMesh{false};  // true if using search tree instead of Voronoi tessellation
 
     // data members initialized when processing snapshot input and further completed by BuildMesh()
     vector<Cell*> _cells;  // cell objects, indexed on m

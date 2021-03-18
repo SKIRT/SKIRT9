@@ -357,68 +357,25 @@ void VoronoiMeshSnapshot::readAndClose()
     // close the file
     Snapshot::readAndClose();
 
-    // calculate the Voronoi cells
-    buildMesh(false);
-
-    // if a mass density policy has been set, calculate masses and densities for all cells
-    if (hasMassDensityPolicy())
+    // if we are allowed to build a Voronoi mesh
+    if (!_foregoVoronoMesh)
     {
-        // allocate vectors for mass and density
-        size_t n = _cells.size();
-        Array Mv(n);
-        _rhov.resize(n);
+        // calculate the Voronoi cells
+        buildMesh(false);
 
-        // get the maximum temperature, or zero of there is none
-        double maxT = useTemperatureCutoff() ? maxTemperature() : 0.;
-
-        // initialize statistics
-        double totalOriginalMass = 0;
-        double totalMetallicMass = 0;
-        double totalEffectiveMass = 0;
-
-        // loop over all sites/cells
-        int numIgnored = 0;
-        for (size_t m = 0; m != n; ++m)
+        // if a mass density policy has been set, calculate masses and densities and build the search data structure
+        if (hasMassDensityPolicy())
         {
-            const Array& prop = _cells[m]->properties();
-
-            // original mass is zero if temperature is above cutoff or if imported mass/density is not positive
-            double originalMass = 0.;
-            if (maxT && prop[temperatureIndex()] > maxT)
-                numIgnored++;
-            else
-                originalMass =
-                    max(0., massIndex() >= 0 ? prop[massIndex()] : prop[densityIndex()] * _cells[m]->volume());
-
-            double metallicMass = originalMass * (useMetallicity() ? prop[metallicityIndex()] : 1.);
-            double effectiveMass = metallicMass * multiplier();
-
-            Mv[m] = effectiveMass;
-            _rhov[m] = effectiveMass / _cells[m]->volume();
-
-            totalOriginalMass += originalMass;
-            totalMetallicMass += metallicMass;
-            totalEffectiveMass += effectiveMass;
+            calculateDensityAndMass();
+            buildSearchPerBlock();
         }
+    }
 
-        // log mass statistics
-        if (numIgnored) log()->info("  Ignored mass in " + std::to_string(numIgnored) + " high-temperature cells");
-        log()->info("  Total original mass : " + StringUtils::toString(units()->omass(totalOriginalMass), 'e', 4) + " "
-                    + units()->umass());
-        if (useMetallicity())
-            log()->info("  Total metallic mass : " + StringUtils::toString(units()->omass(totalMetallicMass), 'e', 4)
-                        + " " + units()->umass());
-        log()->info("  Total effective mass: " + StringUtils::toString(units()->omass(totalEffectiveMass), 'e', 4) + " "
-                    + units()->umass());
-
-        // remember the effective mass
-        _mass = totalEffectiveMass;
-
-        // construct a vector with the normalized cumulative site densities
-        if (n) NR::cdf(_cumrhov, Mv);
-
-        // build the search data structure
-        buildSearch();
+    // if we forego building a Voronoi mesh, there is a density policy by definition
+    else
+    {
+        calculateDensity();
+        buildSearchSingle();
     }
 }
 
@@ -428,6 +385,13 @@ void VoronoiMeshSnapshot::setExtent(const Box& extent)
 {
     _extent = extent;
     _eps = 1e-12 * extent.widths().norm();
+}
+
+////////////////////////////////////////////////////////////////////
+
+void VoronoiMeshSnapshot::foregoVoronoMesh()
+{
+    _foregoVoronoMesh = true;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -447,7 +411,7 @@ VoronoiMeshSnapshot::VoronoiMeshSnapshot(const SimulationItem* item, const Box& 
     setContext(item);
     setExtent(extent);
     buildMesh(relax);
-    buildSearch();
+    buildSearchPerBlock();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -464,7 +428,7 @@ VoronoiMeshSnapshot::VoronoiMeshSnapshot(const SimulationItem* item, const Box& 
     setContext(item);
     setExtent(extent);
     buildMesh(relax);
-    buildSearch();
+    buildSearchPerBlock();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -481,7 +445,7 @@ VoronoiMeshSnapshot::VoronoiMeshSnapshot(const SimulationItem* item, const Box& 
     setContext(item);
     setExtent(extent);
     buildMesh(relax);
-    buildSearch();
+    buildSearchPerBlock();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -699,6 +663,72 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
 
 ////////////////////////////////////////////////////////////////////
 
+void VoronoiMeshSnapshot::calculateDensityAndMass()
+{
+    // allocate vectors for mass and density
+    size_t n = _cells.size();
+    Array Mv(n);
+    _rhov.resize(n);
+
+    // get the maximum temperature, or zero of there is none
+    double maxT = useTemperatureCutoff() ? maxTemperature() : 0.;
+
+    // initialize statistics
+    double totalOriginalMass = 0;
+    double totalMetallicMass = 0;
+    double totalEffectiveMass = 0;
+
+    // loop over all sites/cells
+    int numIgnored = 0;
+    for (size_t m = 0; m != n; ++m)
+    {
+        const Array& prop = _cells[m]->properties();
+
+        // original mass is zero if temperature is above cutoff or if imported mass/density is not positive
+        double originalMass = 0.;
+        if (maxT && prop[temperatureIndex()] > maxT)
+            numIgnored++;
+        else
+            originalMass =
+                max(0., massIndex() >= 0 ? prop[massIndex()] : prop[densityIndex()] * _cells[m]->volume());
+
+        double metallicMass = originalMass * (useMetallicity() ? prop[metallicityIndex()] : 1.);
+        double effectiveMass = metallicMass * multiplier();
+
+        Mv[m] = effectiveMass;
+        _rhov[m] = effectiveMass / _cells[m]->volume();
+
+        totalOriginalMass += originalMass;
+        totalMetallicMass += metallicMass;
+        totalEffectiveMass += effectiveMass;
+    }
+
+    // log mass statistics
+    if (numIgnored) log()->info("  Ignored mass in " + std::to_string(numIgnored) + " high-temperature cells");
+    log()->info("  Total original mass : " + StringUtils::toString(units()->omass(totalOriginalMass), 'e', 4) + " "
+                + units()->umass());
+    if (useMetallicity())
+        log()->info("  Total metallic mass : " + StringUtils::toString(units()->omass(totalMetallicMass), 'e', 4)
+                    + " " + units()->umass());
+    log()->info("  Total effective mass: " + StringUtils::toString(units()->omass(totalEffectiveMass), 'e', 4) + " "
+                + units()->umass());
+
+    // remember the effective mass
+    _mass = totalEffectiveMass;
+
+    // construct a vector with the normalized cumulative site densities
+    if (n) NR::cdf(_cumrhov, Mv);
+}
+
+////////////////////////////////////////////////////////////////////
+
+void VoronoiMeshSnapshot::calculateDensity()
+{
+
+}
+
+////////////////////////////////////////////////////////////////////
+
 VoronoiMeshSnapshot::Node* VoronoiMeshSnapshot::buildTree(vector<int>::iterator first, vector<int>::iterator last,
                                                           int depth) const
 {
@@ -717,7 +747,7 @@ VoronoiMeshSnapshot::Node* VoronoiMeshSnapshot::buildTree(vector<int>::iterator 
 
 ////////////////////////////////////////////////////////////////////
 
-void VoronoiMeshSnapshot::buildSearch()
+void VoronoiMeshSnapshot::buildSearchPerBlock()
 {
     // abort if there are no cells
     int numCells = _cells.size();
@@ -777,6 +807,13 @@ void VoronoiMeshSnapshot::buildSearch()
         if (_blocktrees[b]) numTrees++;
     log()->info("  Number of search trees: " + std::to_string(numTrees) + " ("
                 + StringUtils::toString(100. * numTrees / _nb3, 'f', 1) + "% of blocks)");
+}
+
+////////////////////////////////////////////////////////////////////
+
+void VoronoiMeshSnapshot::buildSearchSingle()
+{
+
 }
 
 ////////////////////////////////////////////////////////////////////
