@@ -95,7 +95,7 @@ public:
         imported Voronoi density distribution on an octree grid. Attempting to use any of the
         disabled functionalities after calling this configuration function will result in undefined
         behavior. */
-    void foregoVoronoMesh();
+    void foregoVoronoiMesh();
 
     //========== Specialty constructors ==========
 
@@ -443,7 +443,7 @@ private:
     // data members initialized during configuration
     Box _extent;                    // the spatial domain of the mesh
     double _eps{0.};                // small fraction of extent
-    bool _foregoVoronoMesh{false};  // true if using search tree instead of Voronoi tessellation
+    bool _foregoVoronoiMesh{false};  // true if using search tree instead of Voronoi tessellation
 
     // data members initialized when processing snapshot input and further completed by BuildMesh()
     vector<Cell*> _cells;  // cell objects, indexed on m

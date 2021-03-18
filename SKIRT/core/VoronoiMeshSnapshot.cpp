@@ -358,7 +358,7 @@ void VoronoiMeshSnapshot::readAndClose()
     Snapshot::readAndClose();
 
     // if we are allowed to build a Voronoi mesh
-    if (!_foregoVoronoMesh)
+    if (!_foregoVoronoiMesh)
     {
         // calculate the Voronoi cells
         buildMesh(false);
@@ -389,9 +389,9 @@ void VoronoiMeshSnapshot::setExtent(const Box& extent)
 
 ////////////////////////////////////////////////////////////////////
 
-void VoronoiMeshSnapshot::foregoVoronoMesh()
+void VoronoiMeshSnapshot::foregoVoronoiMesh()
 {
-    _foregoVoronoMesh = true;
+    _foregoVoronoiMesh = true;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -847,7 +847,7 @@ void VoronoiMeshSnapshot::buildSearchSingle()
     if (!numCells) return;
 
     // construct a single search tree on the site locations of all cells
-    log()->info("Building data structure to accelerate searching Voronoi sites");
+    log()->info("Building data structure to accelerate searching " + std::to_string(numCells) + " Voronoi sites");
     _blocktrees.resize(1);
     vector<int> ids(numCells);
     for (int m = 0; m != numCells; ++m) ids[m] = m;
@@ -1108,7 +1108,7 @@ int VoronoiMeshSnapshot::cellIndex(Position bfr) const
     // determine the block in which the point falls
     // if we didn't build a Voronoi mesh, the search tree is always in the first "block"
     int b = 0;
-    if (!_foregoVoronoMesh)
+    if (!_foregoVoronoiMesh)
     {
         int i, j, k;
         _extent.cellIndices(i, j, k, bfr, _nb, _nb, _nb);

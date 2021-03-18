@@ -31,9 +31,9 @@ Snapshot* VoronoiMeshMedium::createAndOpenSnapshot()
     }
 
     // determine whether to forego the Voronoi mesh
-    if (foregoVoronoMesh() && (massType() == MassType::MassDensity || massType() == MassType::NumberDensity)
+    if (foregoVoronoiMesh() && (massType() == MassType::MassDensity || massType() == MassType::NumberDensity)
         && !find<Configuration>()->mediaNeedGeneratePosition())
-        _voronoiMeshSnapshot->foregoVoronoMesh();
+        _voronoiMeshSnapshot->foregoVoronoiMesh();
 
     // set the domain extent
     _voronoiMeshSnapshot->setExtent(domain());
