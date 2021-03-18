@@ -673,7 +673,7 @@ void VoronoiMeshSnapshot::calculateVolume()
     for (int m = 0; m != numCells; ++m)
     {
         const Array& prop = _cells[m]->properties();
-        double volume = prop[massIndex()] / prop[densityIndex()];
+        double volume = prop[densityIndex()] > 0. ? prop[massIndex()] / prop[densityIndex()] : 0.;
         _cells[m]->init(volume);
     }
 }
@@ -684,8 +684,8 @@ void VoronoiMeshSnapshot::calculateDensityAndMass()
 {
     // allocate vectors for mass and density
     int numCells = _cells.size();
-    Array Mv(numCells);
     _rhov.resize(numCells);
+    Array Mv(numCells);
 
     // get the maximum temperature, or zero of there is none
     double maxT = useTemperatureCutoff() ? maxTemperature() : 0.;
@@ -702,17 +702,25 @@ void VoronoiMeshSnapshot::calculateDensityAndMass()
         const Array& prop = _cells[m]->properties();
 
         // original mass is zero if temperature is above cutoff or if imported mass/density is not positive
+        double originalDensity = 0.;
         double originalMass = 0.;
         if (maxT && prop[temperatureIndex()] > maxT)
+        {
             numIgnored++;
+        }
         else
-            originalMass = max(0., massIndex() >= 0 ? prop[massIndex()] : prop[densityIndex()] * _cells[m]->volume());
+        {
+            double volume = _cells[m]->volume();
+            originalDensity = max(0., densityIndex() >= 0 ? prop[densityIndex()] : prop[massIndex()] / volume);
+            originalMass = max(0., massIndex() >= 0 ? prop[massIndex()] : prop[densityIndex()] * volume);
+        }
 
+        double effectiveDensity = originalDensity * (useMetallicity() ? prop[metallicityIndex()] : 1.) * multiplier();
         double metallicMass = originalMass * (useMetallicity() ? prop[metallicityIndex()] : 1.);
         double effectiveMass = metallicMass * multiplier();
 
+        _rhov[m] = effectiveDensity;
         Mv[m] = effectiveMass;
-        _rhov[m] = effectiveMass / _cells[m]->volume();
 
         totalOriginalMass += originalMass;
         totalMetallicMass += metallicMass;
