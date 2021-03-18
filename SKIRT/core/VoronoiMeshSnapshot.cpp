@@ -689,8 +689,7 @@ void VoronoiMeshSnapshot::calculateDensityAndMass()
         if (maxT && prop[temperatureIndex()] > maxT)
             numIgnored++;
         else
-            originalMass =
-                max(0., massIndex() >= 0 ? prop[massIndex()] : prop[densityIndex()] * _cells[m]->volume());
+            originalMass = max(0., massIndex() >= 0 ? prop[massIndex()] : prop[densityIndex()] * _cells[m]->volume());
 
         double metallicMass = originalMass * (useMetallicity() ? prop[metallicityIndex()] : 1.);
         double effectiveMass = metallicMass * multiplier();
@@ -708,8 +707,8 @@ void VoronoiMeshSnapshot::calculateDensityAndMass()
     log()->info("  Total original mass : " + StringUtils::toString(units()->omass(totalOriginalMass), 'e', 4) + " "
                 + units()->umass());
     if (useMetallicity())
-        log()->info("  Total metallic mass : " + StringUtils::toString(units()->omass(totalMetallicMass), 'e', 4)
-                    + " " + units()->umass());
+        log()->info("  Total metallic mass : " + StringUtils::toString(units()->omass(totalMetallicMass), 'e', 4) + " "
+                    + units()->umass());
     log()->info("  Total effective mass: " + StringUtils::toString(units()->omass(totalEffectiveMass), 'e', 4) + " "
                 + units()->umass());
 
@@ -724,7 +723,34 @@ void VoronoiMeshSnapshot::calculateDensityAndMass()
 
 void VoronoiMeshSnapshot::calculateDensity()
 {
+    // allocate vector for density
+    size_t n = _cells.size();
+    _rhov.resize(n);
 
+    // get the maximum temperature, or zero of there is none
+    double maxT = useTemperatureCutoff() ? maxTemperature() : 0.;
+
+    // loop over all sites/cells
+    int numIgnored = 0;
+    for (size_t m = 0; m != n; ++m)
+    {
+        const Array& prop = _cells[m]->properties();
+
+        // original density is zero if temperature is above cutoff or if imported density is not positive
+        double originalDensity = 0.;
+        if (maxT && prop[temperatureIndex()] > maxT)
+            numIgnored++;
+        else
+            originalDensity = max(0., prop[densityIndex()]);
+
+        double metallicDensity = originalDensity * (useMetallicity() ? prop[metallicityIndex()] : 1.);
+        double effectiveDensity = metallicDensity * multiplier();
+
+        _rhov[m] = effectiveDensity;
+    }
+
+    // log mass statistics
+    if (numIgnored) log()->info("  Ignored density in " + std::to_string(numIgnored) + " high-temperature cells");
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -813,7 +839,19 @@ void VoronoiMeshSnapshot::buildSearchPerBlock()
 
 void VoronoiMeshSnapshot::buildSearchSingle()
 {
+    // log the number of sites
+    int numCells = _cells.size();
+    log()->info("  Number of sites: " + std::to_string(numCells));
 
+    // abort if there are no cells
+    if (!numCells) return;
+
+    // construct a single search tree on the site locations of all cells
+    log()->info("Building data structure to accelerate searching Voronoi sites");
+    _blocktrees.resize(1);
+    vector<int> ids(numCells);
+    for (int m = 0; m != numCells; ++m) ids[m] = m;
+    _blocktrees[0] = buildTree(ids.begin(), ids.end(), 0);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -1068,9 +1106,14 @@ int VoronoiMeshSnapshot::cellIndex(Position bfr) const
     if (!_extent.contains(bfr)) return -1;
 
     // determine the block in which the point falls
-    int i, j, k;
-    _extent.cellIndices(i, j, k, bfr, _nb, _nb, _nb);
-    int b = i * _nb2 + j * _nb + k;
+    // if we didn't build a Voronoi mesh, the search tree is always in the first "block"
+    int b = 0;
+    if (!_foregoVoronoMesh)
+    {
+        int i, j, k;
+        _extent.cellIndices(i, j, k, bfr, _nb, _nb, _nb);
+        b = i * _nb2 + j * _nb + k;
+    }
 
     // look for the closest site in this block, using the search tree if there is one
     Node* tree = _blocktrees[b];
