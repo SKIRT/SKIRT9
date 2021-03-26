@@ -26,7 +26,7 @@ namespace CompileTimeUtils
         return all(std::is_floating_point<Ts>::value...);
     }
 
-    // returns true if the parameter pack has only integral arguments
+    // returns true if the parameter pack has only numeric arguments
     template<typename... Ts> inline constexpr bool isNumericArgList() { return all(std::is_arithmetic<Ts>::value...); }
 
     // returns true if the parameter pack has the specified number of integral arguments

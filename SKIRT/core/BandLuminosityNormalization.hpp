@@ -27,6 +27,7 @@ class BandLuminosityNormalization : public LuminosityNormalization
 
     ITEM_CONCRETE(BandLuminosityNormalization, LuminosityNormalization,
                   "source normalization through the specific luminosity for a given wavelength band")
+        ATTRIBUTE_TYPE_ALLOWED_IF(SpecificLuminosityNormalization, "ContSED")
 
         PROPERTY_ITEM(band, Band, "the wavelength band for which to provide the specific luminosity")
         ATTRIBUTE_DEFAULT_VALUE(band, "BroadBand")

@@ -247,7 +247,8 @@ string FilePaths::resource(string name)
     {
         throw FATALERROR("Could not locate resource '" + name
                          + "'"
-                           "\nDownload additional resources from www.skirt.ugent.be");
+                           "\nRun ./downloadResources.sh in the ~/SKIRT/git directory"
+                           "\nOr download additional resources from www.skirt.ugent.be");
     }
     return _resourcePaths.at(name);
 }

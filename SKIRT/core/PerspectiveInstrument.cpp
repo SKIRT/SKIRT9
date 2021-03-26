@@ -43,8 +43,6 @@ void PerspectiveInstrument::setupSelfBefore()
     Vec kn(_Vx - _Cx, _Vy - _Cy, _Vz - _Cz);
     Vec ku(_Ux, _Uy, _Uz);
     Vec ky = Vec::cross(kn, Vec::cross(ku, kn));
-    Vec kx = Vec::cross(ky, kn);
-    _bfkx = Direction(kx / kx.norm());
     _bfky = Direction(ky / ky.norm());
 
     // the perspective transformation
@@ -80,10 +78,13 @@ void PerspectiveInstrument::setupSelfBefore()
     _transform.scale(1. / _s, 1. / _s, 1.);
     _transform.translate(_Nx / 2., _Ny / 2., 0);
 
-    // configure flux recorder with a large distance relative to the pixel size so that atan(s/2d) = s/2d
-    // and the default calibration can be easily corrected when detecting each individual photon packet
-    instrumentFluxRecorder()->setRestFrameDistance(_s * 1e8);
-    instrumentFluxRecorder()->includeSurfaceBrightness(_Nx, _Ny, _s, _s, 0, 0, false);
+    // determine the solid angle subtended by a pixel in the center of the viewport
+    // and use this as an approximate, representative solid angle for all pixels
+    double alpha = 2. * atan(0.5 * _s / _Fe);
+    double omega = alpha * alpha;
+
+    // configure flux recorder
+    instrumentFluxRecorder()->includeSurfaceBrightnessForLocal(_Nx, _Ny, omega, _s, _s, 0., 0., "length");
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -110,17 +111,10 @@ Direction PerspectiveInstrument::bfkobs(const Position& bfr) const
     double D = norm(_Ex - Px, _Ey - Py, _Ez - Pz);
 
     // if the distance is very small, return something silly - the photon packet is behind the viewport anyway
-    if (D < 1e-20) return Direction();
+    if (D < _s / 10.) return Direction();
 
     // otherwise return a unit vector in the direction from launch to eye
     return Direction((_Ex - Px) / D, (_Ey - Py) / D, (_Ez - Pz) / D);
-}
-
-////////////////////////////////////////////////////////////////////
-
-Direction PerspectiveInstrument::bfkx(const Position& /*bfr*/) const
-{
-    return _bfkx;
 }
 
 ////////////////////////////////////////////////////////////////////

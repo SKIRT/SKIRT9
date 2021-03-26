@@ -86,25 +86,41 @@ void FluxRecorder::setObserverFrameRedshift(double redshift, double angularDiame
 
 ////////////////////////////////////////////////////////////////////
 
-void FluxRecorder::includeFluxDensity()
+void FluxRecorder::includeFluxDensityForDistant()
 {
     _includeFluxDensity = true;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-void FluxRecorder::includeSurfaceBrightness(int numPixelsX, int numPixelsY, double pixelSizeX, double pixelSizeY,
-                                            double centerX, double centerY, bool convertToAngularSize)
+void FluxRecorder::includeSurfaceBrightnessForDistant(int numPixelsX, int numPixelsY, double pixelSizeX,
+                                                      double pixelSizeY, double centerX, double centerY)
 {
     _includeSurfaceBrightness = true;
     _numPixelsX = numPixelsX;
     _numPixelsY = numPixelsY;
     _pixelSizeX = pixelSizeX;
     _pixelSizeY = pixelSizeY;
-    _pixelSizeAverage = sqrt(pixelSizeX * pixelSizeY);
     _centerX = centerX;
     _centerY = centerY;
-    _convertToAngularSize = convertToAngularSize;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void FluxRecorder::includeSurfaceBrightnessForLocal(int numPixelsX, int numPixelsY, double solidAnglePerPixel,
+                                                    double incrementX, double incrementY, double centerX,
+                                                    double centerY, string quantityXY)
+{
+    _includeSurfaceBrightness = true;
+    _local = true;
+    _numPixelsX = numPixelsX;
+    _numPixelsY = numPixelsY;
+    _solidAnglePerPixel = solidAnglePerPixel;
+    _incrementX = incrementX;
+    _incrementY = incrementY;
+    _centerX = centerX;
+    _centerY = centerY;
+    _quantityXY = quantityXY;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -201,11 +217,9 @@ void FluxRecorder::detect(PhotonPacket* pp, int l, double distance)
         double L = pp->luminosity() * _lambdagrid->transmission(ell, wavelength);
 
         // adjust the luminosity for near distance if needed
-        if (distance < _luminosityDistance)
+        if (_local)
         {
-            double r = _pixelSizeAverage / (2. * distance);
-            double rar = r / atan(r);
-            L *= rar * rar;
+            L /= distance * distance;
         }
 
         // apply the extinction along the path to the recorder
@@ -350,10 +364,12 @@ void FluxRecorder::calibrateAndWrite()
     // calibrate and write only in the root process
     if (!ProcessManager::isRoot()) return;
 
-    // calculate front factors for converting from recorded quantities to output quantities:
-    double fourpid2 = 4. * M_PI * _luminosityDistance * _luminosityDistance;
-    double omega =
-        4. * atan(0.5 * _pixelSizeX / _angularDiameterDistance) * atan(0.5 * _pixelSizeY / _angularDiameterDistance);
+    // calculate front factors for converting from recorded quantities to output quantities
+    // (for local instruments, the distance correction already happened)
+    double fourpid2 = 4. * M_PI * (_local ? 1. : _luminosityDistance * _luminosityDistance);
+    double omega = _local ? _solidAnglePerPixel
+                          : 4. * atan(0.5 * _pixelSizeX / _angularDiameterDistance)
+                                * atan(0.5 * _pixelSizeY / _angularDiameterDistance);
 
     // convert from recorded quantities to output quantities and from internal units to user-selected output units
     // (for performance reasons, determine the units scaling factor only once for each wavelength)
@@ -528,24 +544,37 @@ void FluxRecorder::calibrateAndWrite()
         for (int ell = 0; ell != numWavelengths; ++ell)
             wavegrid[ell] = units->owavelength(_lambdagrid->wavelength(ell));
 
-        // determine coordinate axes values and units, converted to angular size if requested
+        // determine coordinate axes values and units
         double incx, incy, cx, cy;
         string unitsxy;
-        if (_convertToAngularSize)
+        if (_local)
         {
+            // for local instruments, use the metadata provided by the instrument
+            if (_quantityXY.empty())
+            {
+                incx = _incrementX;
+                incy = _incrementY;
+                cx = _centerX;
+                cy = _centerY;
+                unitsxy = "1";
+            }
+            else
+            {
+                incx = units->out(_quantityXY, _incrementX);
+                incy = units->out(_quantityXY, _incrementY);
+                cx = units->out(_quantityXY, _centerX);
+                cy = units->out(_quantityXY, _centerY);
+                unitsxy = units->unit(_quantityXY);
+            }
+        }
+        else
+        {
+            // for distant instruments, convert to angular sizes
             incx = units->oangle(2. * atan(0.5 * _pixelSizeX / _angularDiameterDistance));
             incy = units->oangle(2. * atan(0.5 * _pixelSizeY / _angularDiameterDistance));
             cx = units->oangle(2. * atan(0.5 * _centerX / _angularDiameterDistance));
             cy = units->oangle(2. * atan(0.5 * _centerY / _angularDiameterDistance));
             unitsxy = units->uangle();
-        }
-        else
-        {
-            incx = units->olength(_pixelSizeX);
-            incy = units->olength(_pixelSizeY);
-            cx = units->olength(_centerX);
-            cy = units->olength(_centerY);
-            unitsxy = units->ulength();
         }
 
         // output the files (ignoring empty arrays)
@@ -625,12 +654,15 @@ void FluxRecorder::recordContributions(ContributionList* contributionList)
             if (i + 1 == numContributions || contributions[i].ell() != contributions[i + 1].ell()
                 || contributions[i].l() != contributions[i + 1].l())
             {
-                size_t lell = contributions[i].l() + contributions[i].ell() * _numPixelsInFrame;
-                double wn = 1.;
-                for (int k = 0; k <= maxContributionPower; ++k)
+                if (contributions[i].l() >= 0)
                 {
-                    LockFree::add(_wifu[k][lell], wn);
-                    wn *= w;
+                    size_t lell = contributions[i].l() + contributions[i].ell() * _numPixelsInFrame;
+                    double wn = 1.;
+                    for (int k = 0; k <= maxContributionPower; ++k)
+                    {
+                        LockFree::add(_wifu[k][lell], wn);
+                        wn *= w;
+                    }
                 }
                 w = 0;
             }

@@ -5,15 +5,18 @@
 
 #include "SpecificLuminosityNormalization.hpp"
 #include "Constants.hpp"
+#include "ContSED.hpp"
 #include "FatalError.hpp"
-#include "SED.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
 double SpecificLuminosityNormalization::luminosity(SED* sed) const
 {
+    auto contsed = dynamic_cast<ContSED*>(sed);
+    if (!contsed) throw FATALERROR("Cannot use specific luminosity normalization for a line emission spectrum");
+
     // get the normalized specific luminosity in the SED
-    double LlambdaSED = sed->specificLuminosity(_wavelength);
+    double LlambdaSED = contsed->specificLuminosity(_wavelength);
     if (LlambdaSED <= 0) throw FATALERROR("The normalization wavelength is outside of the SED's wavelength range");
 
     // convert the user-configured specific luminosity to per-wavelength units

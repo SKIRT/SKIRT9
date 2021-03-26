@@ -12,25 +12,33 @@ void FileSSPSEDFamily::setupSelfBefore()
 {
     SEDFamily::setupSelfBefore();
 
-    _table.open(this, filename(), "lambda(m),Z(1),t(yr)", "Llambda(W/m)", false, false);
+    if (!_hasIonizationParameter)
+        _table3.open(this, filename(), "lambda(m),Z(1),t(yr)", "Llambda(W/m)", false, false);
+    else
+        _table4.open(this, filename(), "lambda(m),Z(1),t(yr),U(1)", "Llambda(W/m)", false, false);
 }
 
 ////////////////////////////////////////////////////////////////////
 
 vector<SnapshotParameter> FileSSPSEDFamily::parameterInfo() const
 {
-    return vector<SnapshotParameter>{
+    auto info = vector<SnapshotParameter>{
         {"initial mass", "mass", "Msun"},
         {"metallicity"},
         {"age", "time", "yr"},
     };
+    if (_hasIonizationParameter) info.emplace_back("ionization parameter");
+    return info;
 }
 
 ////////////////////////////////////////////////////////////////////
 
 Range FileSSPSEDFamily::intrinsicWavelengthRange() const
 {
-    return _table.axisRange<0>();
+    if (!_hasIonizationParameter)
+        return _table3.axisRange<0>();
+    else
+        return _table4.axisRange<0>();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -41,7 +49,15 @@ double FileSSPSEDFamily::specificLuminosity(double wavelength, const Array& para
     double Z = parameters[1];
     double t = parameters[2] / Constants::year();
 
-    return M * _table(wavelength, Z, t);
+    if (!_hasIonizationParameter)
+    {
+        return M * _table3(wavelength, Z, t);
+    }
+    else
+    {
+        double U = parameters[3];
+        return M * _table4(wavelength, Z, t, U);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -53,7 +69,15 @@ double FileSSPSEDFamily::cdf(Array& lambdav, Array& pv, Array& Pv, const Range& 
     double Z = parameters[1];
     double t = parameters[2] / Constants::year();
 
-    return M * _table.cdf(lambdav, pv, Pv, wavelengthRange, Z, t);
+    if (!_hasIonizationParameter)
+    {
+        return M * _table3.cdf(lambdav, pv, Pv, wavelengthRange, Z, t);
+    }
+    else
+    {
+        double U = parameters[3];
+        return M * _table4.cdf(lambdav, pv, Pv, wavelengthRange, Z, t, U);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////

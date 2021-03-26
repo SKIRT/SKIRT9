@@ -7,7 +7,7 @@
 #define TABULATEDSED_HPP
 
 #include "Array.hpp"
-#include "SED.hpp"
+#include "ContSED.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -16,9 +16,9 @@
     range indicated by the first and the last wavelength is considered to be zero.
 
     The subclass must load the tabulated data, and this abstract class handles everything else. */
-class TabulatedSED : public SED
+class TabulatedSED : public ContSED
 {
-    ITEM_ABSTRACT(TabulatedSED, SED, "a spectral energy distribution tabulated by the user")
+    ITEM_ABSTRACT(TabulatedSED, ContSED, "a spectral energy distribution tabulated by the user")
         ATTRIBUTE_TYPE_DISPLAYED_IF(TabulatedSED, "Level2")
     ITEM_END()
 

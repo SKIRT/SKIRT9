@@ -19,6 +19,8 @@
 #include "BlackBodySED.hpp"
 #include "BlackBodySEDFamily.hpp"
 #include "BoxClipGeometryDecorator.hpp"
+#include "BpassSED.hpp"
+#include "BpassSEDFamily.hpp"
 #include "BroadBand.hpp"
 #include "BrokenExpDiskGeometry.hpp"
 #include "BruzualCharlotSED.hpp"
@@ -79,6 +81,7 @@
 #include "FileBand.hpp"
 #include "FileGrainSizeDistribution.hpp"
 #include "FileIndexedSEDFamily.hpp"
+#include "FileLineSED.hpp"
 #include "FileMesh.hpp"
 #include "FileSED.hpp"
 #include "FileSSPSEDFamily.hpp"
@@ -109,10 +112,12 @@
 #include "LinMesh.hpp"
 #include "LinWavelengthDistribution.hpp"
 #include "LinWavelengthGrid.hpp"
+#include "LineLuminosityNormalization.hpp"
 #include "LinearDustDestructionRecipe.hpp"
 #include "LinearDustTemperatureCutProbe.hpp"
 #include "ListBand.hpp"
 #include "ListGrainSizeDistribution.hpp"
+#include "ListLineSED.hpp"
 #include "ListMesh.hpp"
 #include "ListSED.hpp"
 #include "ListWavelengthDistribution.hpp"
@@ -302,9 +307,11 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<IntegratedLuminosityNormalization>();
     ItemRegistry::add<SpecificLuminosityNormalization>();
     ItemRegistry::add<BandLuminosityNormalization>();
+    ItemRegistry::add<LineLuminosityNormalization>();
 
     // SEDs
     ItemRegistry::add<SED>();
+    ItemRegistry::add<ContSED>();
     ItemRegistry::add<BlackBodySED>();
     ItemRegistry::add<ResourceSED>();
     ItemRegistry::add<SunSED>();
@@ -315,14 +322,18 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<MarastonSED>();
     ItemRegistry::add<Starburst99SED>();
     ItemRegistry::add<FSPSSED>();
+    ItemRegistry::add<BpassSED>();
     ItemRegistry::add<MappingsSED>();
     ItemRegistry::add<TabulatedSED>();
-    ItemRegistry::add<SingleWavelengthSED>();
     ItemRegistry::add<FileSED>();
     ItemRegistry::add<ListSED>();
     ItemRegistry::add<LyaGaussianSED>();
     ItemRegistry::add<LyaDoublePeakedSED>();
     ItemRegistry::add<LyaSEDDecorator>();
+    ItemRegistry::add<LineSED>();
+    ItemRegistry::add<FileLineSED>();
+    ItemRegistry::add<ListLineSED>();
+    ItemRegistry::add<SingleWavelengthSED>();
 
     // SED families
     ItemRegistry::add<SEDFamily>();
@@ -332,6 +343,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<MarastonSEDFamily>();
     ItemRegistry::add<Starburst99SEDFamily>();
     ItemRegistry::add<FSPSSEDFamily>();
+    ItemRegistry::add<BpassSEDFamily>();
     ItemRegistry::add<FileSSPSEDFamily>();
     ItemRegistry::add<FileIndexedSEDFamily>();
     ItemRegistry::add<MappingsSEDFamily>();

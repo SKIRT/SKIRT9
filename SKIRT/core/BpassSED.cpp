@@ -3,22 +3,19 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "SingleWavelengthSED.hpp"
+#include "BpassSED.hpp"
+#include "BpassSEDFamily.hpp"
 #include "NR.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-void SingleWavelengthSED::getWavelengthsAndLuminosities(Array& lambdav, Array& Lv) const
+const SEDFamily* BpassSED::getFamilyAndParameters(Array& parameters)
 {
-    NR::assign(lambdav, _wavelength);
-    NR::assign(Lv, 1.);
-}
+    // set the parameters using arbitrary scaling
+    NR::assign(parameters, 1., _metallicity, _age);
 
-////////////////////////////////////////////////////////////////////
-
-double SingleWavelengthSED::generateWavelength() const
-{
-    return _wavelength;
+    // construct the library of SED models
+    return new BpassSEDFamily(this);
 }
 
 ////////////////////////////////////////////////////////////////////
