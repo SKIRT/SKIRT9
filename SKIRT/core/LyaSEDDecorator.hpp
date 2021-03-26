@@ -6,7 +6,7 @@
 #ifndef LYASEDDECORATOR_HPP
 #define LYASEDDECORATOR_HPP
 
-#include "SED.hpp"
+#include "ContSED.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -24,15 +24,16 @@
     The luminosity normalization configured by the user applies to the decorated %SED. The source
     wavelength range must include the ionizing portion of the spectrum to be considered, even if
     all ionizing radiation is being converted to Lyman-alpha emission. */
-class LyaSEDDecorator : public SED
+class LyaSEDDecorator : public ContSED
 {
-    ITEM_CONCRETE(LyaSEDDecorator, SED, "an SED decorator replacing ionizing radiation with Lyman-alpha line emission")
+    ITEM_CONCRETE(LyaSEDDecorator, ContSED,
+                  "an SED decorator replacing ionizing radiation with Lyman-alpha line emission")
         ATTRIBUTE_TYPE_DISPLAYED_IF(LyaSEDDecorator, "Lya|Level3")
 
-        PROPERTY_ITEM(sedOriginal, SED, "the original SED being adjusted")
+        PROPERTY_ITEM(sedOriginal, ContSED, "the original SED being adjusted")
         ATTRIBUTE_DEFAULT_VALUE(sedOriginal, "BlackBodySED")
 
-        PROPERTY_ITEM(sedLymanAlpha, SED, "the SED representing the Lyman-alpha line emission")
+        PROPERTY_ITEM(sedLymanAlpha, ContSED, "the SED representing the Lyman-alpha line emission")
         ATTRIBUTE_DEFAULT_VALUE(sedLymanAlpha, "LyaGaussianSED")
 
         PROPERTY_DOUBLE(conversionFraction, "the fraction of ionizing radiation replaced by Lyman-alpha emission")

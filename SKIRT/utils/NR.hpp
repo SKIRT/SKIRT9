@@ -36,7 +36,8 @@ public:
         destination array if necessary. This template function works for any source container type
         with indexed random access (specifically including std::vector), and for any item types, as
         long as the source items can be assigned to or converted to double. */
-    template<class V> static inline void assign(Array& targetv, const V& sourcev)
+    template<class V, typename = std::enable_if_t<!CompileTimeUtils::isNumericArgList<V>()>>
+    static inline void assign(Array& targetv, const V& sourcev)
     {
         size_t n = sourcev.size();
         targetv.resize(n);

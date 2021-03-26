@@ -6,7 +6,7 @@
 #ifndef LYASEDFAMILYDECORATOR_HPP
 #define LYASEDFAMILYDECORATOR_HPP
 
-#include "SED.hpp"
+#include "ContSED.hpp"
 #include "SEDFamily.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -34,7 +34,7 @@ class LyaSEDFamilyDecorator : public SEDFamily
         PROPERTY_ITEM(sedFamilyOriginal, SEDFamily, "the original SED family being adjusted")
         ATTRIBUTE_DEFAULT_VALUE(sedFamilyOriginal, "BlackBodySEDFamily")
 
-        PROPERTY_ITEM(sedLymanAlpha, SED, "the SED representing the Lyman-alpha line emission")
+        PROPERTY_ITEM(sedLymanAlpha, ContSED, "the SED representing the Lyman-alpha line emission")
         ATTRIBUTE_DEFAULT_VALUE(sedLymanAlpha, "LyaGaussianSED")
 
         PROPERTY_DOUBLE(conversionFraction, "the fraction of ionizing radiation replaced by Lyman-alpha emission")
