@@ -438,8 +438,8 @@ public:
 
 private:
     // data members initialized during configuration
-    Box _extent;                    // the spatial domain of the mesh
-    double _eps{0.};                // small fraction of extent
+    Box _extent;                     // the spatial domain of the mesh
+    double _eps{0.};                 // small fraction of extent
     bool _foregoVoronoiMesh{false};  // true if using search tree instead of Voronoi tessellation
 
     // data members initialized when processing snapshot input and further completed by BuildMesh()
