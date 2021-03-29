@@ -61,7 +61,31 @@
 
     Finally, if the \em importVariableMixParams option is enabled, the remaining columns specify
     the parameters used by the configured material mix family to select a particular material mix
-    for the cell. */
+    for the cell.
+
+    <b>Avoiding construction of the Voronoi tessellation</b>
+
+    The algorithm used by the VoronoiMeshSnapshot class for constructing Voronoi tessellations
+    sometimes fails (for example, when generating sites are too close to each other). In those
+    cases, it can be desirable to forego the construction of the Voronoi tessellation and instead
+    use a nearest neighbor search for sampling the density distribution. This is possible as long
+    as the full tessellation is not needed for other purposes, such as to perform radiative
+    transfer or to generate random positions drawn from the density distribution. An important use
+    case is when the medium density distribution defined on the Voronoi grid is resampled to an
+    octree grid to perform radiative transfer. However, the octree subdivision algorithm requires
+    the total mass of the medium in addition to the density samples. Without the full Voronoi
+    tessellation, it is impossible to calculate the cell volume that would allow conversion between
+    cell density and mass.
+
+    To enable this use case, the \em massType option can be set to include both mass density and
+    volume-integrated mass (or both number density and volume-integrated number) in the imported
+    data file. Thus, if the \em massType option is set to one of these choices, the import file
+    must include two columns (mass density \f$\rho\f$ plus integrated mass \f$M\f$, or number
+    density \f$n\f$ plus integrated number density \f$N\f$ ). Furthermore, if the simulation
+    configuration allows it (i.e. the full Voronoi tessellation is not needed for other purposes),
+    the VoronoiMeshSnapshot class will use the information in these two columns to calculate the
+    cell volumes and the total medium mass, and it will forego construction of the Voronoi
+    tessellation. */
 class VoronoiMeshMedium : public MeshMedium, public VoronoiMeshInterface
 {
     ITEM_CONCRETE(VoronoiMeshMedium, MeshMedium, "a transfer medium imported from data represented on a Voronoi mesh")
