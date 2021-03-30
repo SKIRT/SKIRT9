@@ -193,6 +193,7 @@
 #include "PseudoSersicGeometry.hpp"
 #include "QuasarSED.hpp"
 #include "RadialVectorField.hpp"
+#include "RadiationFieldAtPositionsProbe.hpp"
 #include "RadiationFieldPerCellProbe.hpp"
 #include "RadiationFieldWavelengthGridProbe.hpp"
 #include "Random.hpp"
@@ -643,6 +644,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<DefaultRadiationFieldCutsProbe>();
     ItemRegistry::add<PlanarRadiationFieldCutsProbe>();
     ItemRegistry::add<RadiationFieldPerCellProbe>();
+    ItemRegistry::add<RadiationFieldAtPositionsProbe>();
     ItemRegistry::add<RadiationFieldWavelengthGridProbe>();
     ItemRegistry::add<DefaultDustTemperatureCutsProbe>();
     ItemRegistry::add<PlanarDustTemperatureCutsProbe>();

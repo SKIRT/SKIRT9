@@ -267,6 +267,13 @@ public:
         means spherical symmetry, 2 means axial symmetry and 3 means none of these symmetries. */
     int gridDimension() const { return _gridDimension; }
 
+    /** Returns true if the Medium::generatePosition() function may be called for the media in the
+        simulation. In the current implementation, this happens only if the simulation uses a
+        VoronoiMeshSpatialGrid instance to discretize the spatial domain. If there are no media or
+        the Medium::generatePosition() will never be called during this simulation, this function
+        returns false. */
+    bool mediaNeedGeneratePosition() const { return _mediaNeedGeneratePosition; }
+
     /** Returns true if one or more medium components in the simulation may have a nonzero velocity
         for some positions. If the function returns false, none of the media has a velocity. */
     bool hasMovingMedia() const { return _hasMovingMedia; }
@@ -395,6 +402,7 @@ private:
     // properties derived from the configuration at large
     int _modelDimension{0};
     int _gridDimension{0};
+    bool _mediaNeedGeneratePosition{false};
     bool _hasMovingSources{false};
     bool _hasMovingMedia{false};
     bool _hasVariableMedia{false};
