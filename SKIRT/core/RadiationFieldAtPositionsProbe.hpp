@@ -36,7 +36,7 @@
 class RadiationFieldAtPositionsProbe : public Probe
 {
     ITEM_CONCRETE(RadiationFieldAtPositionsProbe, Probe, "the mean radiation field intensity at imported positions")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(RadiationFieldAtPositions, "Level2&Medium&SpatialGrid&RadiationField")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(RadiationFieldAtPositionsProbe, "Level2&Medium&SpatialGrid&RadiationField")
 
         PROPERTY_STRING(filename, "the name of the file listing the positions")
 
