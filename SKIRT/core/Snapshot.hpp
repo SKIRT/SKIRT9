@@ -127,27 +127,31 @@ public:
     void importBox();
 
     /** This function configures the snapshot to import a mass density per unit of volume. The
-        default unit is Msun/pc3. The importMassDensity(), importMass(), importNumberDensity(), and
-        importNumber() options are mutually exclusive; calling more than one of these functions for
-        the same snapshot results in undefined behavior. */
+        default unit is Msun/pc3. It is allowed to combine the importMassDensity() and importMass()
+        options, supporting special use cases where the volume of the entity cannot be derived
+        otherwise. However, combining the "mass" family functions with the "number" family
+        functions is prohibited and leads to undefined behavior. */
     void importMassDensity();
 
     /** This function configures the snapshot to import a mass (i.e. mass density integrated over
-        volume). The default unit is Msun. The importMassDensity(), importMass(),
-        importNumberDensity(), and importNumber() options are mutually exclusive; calling more than
-        one of these functions for the same snapshot results in undefined behavior. */
+        volume). The default unit is Msun. It is allowed to combine the importMassDensity() and
+        importMass() options, supporting special use cases where the volume of the entity cannot be
+        derived otherwise. However, combining the "mass" family functions with the "number" family
+        functions is prohibited and leads to undefined behavior. */
     void importMass();
 
     /** This function configures the snapshot to import a number density per unit of volume. The
-        default unit is 1/cm3. The importMassDensity(), importMass(), importNumberDensity(), and
-        importNumber() options are mutually exclusive; calling more than one of these functions for
-        the same snapshot results in undefined behavior. */
+        default unit is 1/cm3. It is allowed to combine the importNumberDensity() and
+        importNumber() options, supporting special use cases where the volume of the entity cannot
+        be derived otherwise. However, combining the "mass" family functions with the "number"
+        family functions is prohibited and leads to undefined behavior. */
     void importNumberDensity();
 
     /** This function configures the snapshot to import a number (i.e. number density integrated
-        over volume). The default unit is 1. The importMassDensity(), importMass(),
-        importNumberDensity(), and importNumber() options are mutually exclusive; calling more than
-        one of these functions for the same snapshot results in undefined behavior. */
+        over volume). The default unit is 1. It is allowed to combine the importNumberDensity() and
+        importNumber() options, supporting special use cases where the volume of the entity cannot
+        be derived otherwise. However, combining the "mass" family functions with the "number"
+        family functions is prohibited and leads to undefined behavior. */
     void importNumber();
 
     /** This function configures the snapshot to import a (dimensionless) metallicity fraction. */

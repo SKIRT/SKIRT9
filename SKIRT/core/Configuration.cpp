@@ -15,6 +15,7 @@
 #include "OligoWavelengthGrid.hpp"
 #include "PhotonPacketOptions.hpp"
 #include "StringUtils.hpp"
+#include "VoronoiMeshSpatialGrid.hpp"
 #include <set>
 
 ////////////////////////////////////////////////////////////////////
@@ -202,6 +203,24 @@ void Configuration::setupSelfBefore()
     else
     {
         _modelDimension = ss->dimension();
+    }
+
+    // determine whether media must support the generatePosition() function
+    // currently, that function is called only by the VoronoiMeshSpatialGrid class for certain policies
+    if (_hasMedium)
+    {
+        auto grid = dynamic_cast<VoronoiMeshSpatialGrid*>(ms->grid());
+        if (grid)
+        {
+            auto policy = grid->policy();
+            if (policy == VoronoiMeshSpatialGrid::Policy::DustDensity
+                || policy == VoronoiMeshSpatialGrid::Policy::ElectronDensity
+                || policy == VoronoiMeshSpatialGrid::Policy::GasDensity
+                || policy == VoronoiMeshSpatialGrid::Policy::ImportedMesh)
+            {
+                _mediaNeedGeneratePosition = true;
+            }
+        }
     }
 
     // check for velocities in sources and media

@@ -22,8 +22,17 @@ Snapshot* AdaptiveMeshMedium::createAndOpenSnapshot()
     {
         case MassType::MassDensity: _adaptiveMeshSnapshot->importMassDensity(); break;
         case MassType::Mass: _adaptiveMeshSnapshot->importMass(); break;
+        case MassType::MassDensityAndMass:
+            _adaptiveMeshSnapshot->importMassDensity();
+            _adaptiveMeshSnapshot->importMass();
+            break;
+
         case MassType::NumberDensity: _adaptiveMeshSnapshot->importNumberDensity(); break;
         case MassType::Number: _adaptiveMeshSnapshot->importNumber(); break;
+        case MassType::NumberDensityAndNumber:
+            _adaptiveMeshSnapshot->importNumberDensity();
+            _adaptiveMeshSnapshot->importNumber();
+            break;
     }
 
     // set the domain extent
