@@ -20,7 +20,7 @@
 #endif
 
 #ifdef HAVE_FTRUNCATE
-#if defined(unix) || defined(__unix__)  || defined(__unix)
+#if defined(unix) || defined(__unix__)  || defined(__unix) || defined(HAVE_UNISTD_H)
 #include <unistd.h>  /* needed for getcwd prototype on unix machines */
 #endif
 #endif
@@ -358,7 +358,7 @@ printf("rootstring=%s, cwd=%s.\n", rootstring, cwd);
 	/* Get the current working directory */
 	fits_get_cwd(cwd, &status);  
 	slen = strlen(cwd);
-	if (cwd[slen-1] != '/') strcat(cwd,"/"); /* make sure the CWD ends with slash */
+	if ((slen < FLEN_FILENAME) && cwd[slen-1] != '/') strcat(cwd,"/"); /* make sure the CWD ends with slash */
 
 
 	/* check that CWD string matches the rootstring */
@@ -370,6 +370,7 @@ printf("rootstring=%s, cwd=%s.\n", rootstring, cwd);
 
 	    /* get the user name from CWD (it follows the root string) */
 	    strncpy(username, cwd+rootlen, 50);  /* limit length of user name */
+            username[50]=0;
 	    cpos=strchr(username, '/');
 	    if (!cpos) {
                ffpmsg("invalid CWD: not equal to root data directory + username");
@@ -765,13 +766,19 @@ int file_is_compressed(char *filename) /* I - FITS file name          */
     /* Open file.  Try various suffix combinations */  
     if (file_openfile(filename, 0, &diskfile))
     {
-      if (strlen(filename) > FLEN_FILENAME - 1)
+      if (strlen(filename) > FLEN_FILENAME - 5)
           return(0);
 
       strcpy(tmpfilename,filename);
       strcat(filename,".gz");
       if (file_openfile(filename, 0, &diskfile))
       {
+#if HAVE_BZIP2
+        strcpy(filename,tmpfilename);
+        strcat(filename,".bz2");
+        if (file_openfile(filename, 0, &diskfile))
+        {
+#endif
         strcpy(filename, tmpfilename);
         strcat(filename,".Z");
         if (file_openfile(filename, 0, &diskfile))
@@ -799,6 +806,9 @@ int file_is_compressed(char *filename) /* I - FITS file name          */
             }
           }
         }
+#if HAVE_BZIP2
+        }
+#endif
       }
     }
 
@@ -815,7 +825,10 @@ int file_is_compressed(char *filename) /* I - FITS file name          */
          (memcmp(buffer, "\120\113", 2) == 0) ||  /* PKZIP */
          (memcmp(buffer, "\037\036", 2) == 0) ||  /* PACK  */
          (memcmp(buffer, "\037\235", 2) == 0) ||  /* LZW   */
-         (memcmp(buffer, "\037\240", 2) == 0) )   /* LZH   */
+#if HAVE_BZIP2
+         (memcmp(buffer, "BZ",       2) == 0) ||  /* BZip2 */
+#endif
+         (memcmp(buffer, "\037\240", 2) == 0))  /* LZH   */
         {
             return(1);  /* this is a compressed file */
         }

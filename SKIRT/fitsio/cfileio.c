@@ -12,9 +12,12 @@
 #include <stddef.h>  /* apparently needed to define size_t */
 #include "fitsio2.h"
 #include "group.h"
+#ifdef CFITSIO_HAVE_CURL
+  #include <curl/curl.h>
+#endif
 
 #define MAX_PREFIX_LEN 20  /* max length of file type prefix (e.g. 'http://') */
-#define MAX_DRIVERS 24     /* max number of file I/O drivers */
+#define MAX_DRIVERS 31     /* max number of file I/O drivers */
 
 typedef struct    /* structure containing pointers to I/O driver functions */ 
 {   char prefix[MAX_PREFIX_LEN];
@@ -51,6 +54,7 @@ static int find_doublequote(char **string);
 static int find_paren(char **string);
 static int find_bracket(char **string);
 static int find_curlybracket(char **string);
+static int standardize_path(char *fullpath, int *status);
 int comma2semicolon(char *string);
 
 #ifdef _REENTRANT
@@ -62,10 +66,11 @@ pthread_mutex_t Fitsio_InitLock = PTHREAD_MUTEX_INITIALIZER;
 /*--------------------------------------------------------------------------*/
 int fitsio_init_lock(void)
 {
-  static int need_to_init = 1;
   int status = 0;
   
 #ifdef _REENTRANT
+
+  static int need_to_init = 1;
 
   pthread_mutexattr_t mutex_init;
 
@@ -81,7 +86,7 @@ int fitsio_init_lock(void)
         return(status);
     }
 
-#ifdef linux
+#ifdef __GLIBC__
     status = pthread_mutexattr_settype(&mutex_init,
 				     PTHREAD_MUTEX_RECURSIVE_NP);
 #else
@@ -89,7 +94,7 @@ int fitsio_init_lock(void)
 				     PTHREAD_MUTEX_RECURSIVE);
 #endif
     if (status) {
-        ffpmsg("pthread_mutexattr_settu[e failed (fitsio_init_lock)");
+        ffpmsg("pthread_mutexattr_settype failed (fitsio_init_lock)");
         return(status);
     }
 
@@ -274,6 +279,7 @@ int ffomem(fitsfile **fptr,      /* O - FITS file pointer                   */
     ((*fptr)->Fptr)->curbuf = -1;             /* undefined current IO buffer */
     ((*fptr)->Fptr)->open_count = 1;     /* structure is currently used once */
     ((*fptr)->Fptr)->validcode = VALIDSTRUC; /* flag denoting valid structure */
+    ((*fptr)->Fptr)->noextsyntax = 0;  /* extended syntax can be used in filename */
 
     ffldrc(*fptr, 0, REPORT_EOF, status);     /* load first record */
 
@@ -323,26 +329,26 @@ int ffomem(fitsfile **fptr,      /* O - FITS file pointer                   */
         ffpmsg("ffomem could not move to the specified extension:");
         if (extnum > 0)
         {
-          sprintf(errmsg,
+          snprintf(errmsg, FLEN_ERRMSG,
           " extension number %d doesn't exist or couldn't be opened.",extnum);
           ffpmsg(errmsg);
         }
         else
         {
-          sprintf(errmsg,
+          snprintf(errmsg, FLEN_ERRMSG,
           " extension with EXTNAME = %s,", extname);
           ffpmsg(errmsg);
 
           if (extvers)
           {
-             sprintf(errmsg,
+             snprintf(errmsg, FLEN_ERRMSG,
              "           and with EXTVERS = %d,", extvers);
              ffpmsg(errmsg);
           }
 
           if (movetotype != ANY_HDU)
           {
-             sprintf(errmsg,
+             snprintf(errmsg, FLEN_ERRMSG,
              "           and with XTENSION = %s,", hdtype[movetotype]);
              ffpmsg(errmsg);
           }
@@ -394,6 +400,70 @@ int ffdopn(fitsfile **fptr,      /* O - FITS file pointer                   */
 
     ffopen(fptr, name, mode, status);
 
+    return(*status);
+}
+/*--------------------------------------------------------------------------*/
+int ffeopn(fitsfile **fptr,      /* O - FITS file pointer                   */ 
+           const char *name,     /* I - full name of file to open           */
+           int mode,             /* I - 0 = open readonly; 1 = read/write   */
+           char *extlist,        /* I - list of 'good' extensions to move to */
+           int *hdutype,         /* O - type of extension that is moved to  */
+           int *status)          /* IO - error status                       */
+/*
+  Open an existing FITS file with either readonly or read/write access. and
+  if the primary array contains a null image (i.e., NAXIS = 0) then attempt to
+  move to the first extension named in the extlist of extension names. If
+  none are found, then simply move to the 2nd extension.
+*/
+{
+    int hdunum, naxis = 0, thdutype, gotext=0;
+    char *ext, *textlist;
+    char *saveptr;
+  
+    if (*status > 0)
+        return(*status);
+
+    if (ffopen(fptr, name, mode, status) > 0)
+        return(*status);
+
+    fits_get_hdu_num(*fptr, &hdunum);
+    fits_get_hdu_type(*fptr, &thdutype, status);
+    if (hdunum == 1 && thdutype == IMAGE_HDU) {
+      fits_get_img_dim(*fptr, &naxis, status);
+    }
+
+    /* We are in the "default" primary extension */
+    /* look through the extension list */
+    if( (hdunum == 1) && (naxis == 0) ){ 
+      if( extlist ){
+        gotext = 0;
+	textlist = malloc(strlen(extlist) + 1);
+	if (!textlist) {
+	    *status = MEMORY_ALLOCATION;
+	    return(*status);
+	}
+
+        strcpy(textlist, extlist);
+        for(ext=(char *)ffstrtok(textlist, " ",&saveptr); ext != NULL; 
+	    ext=(char *)ffstrtok(NULL," ",&saveptr)){
+	    fits_movnam_hdu(*fptr, ANY_HDU, ext, 0, status);
+	    if( *status == 0 ){
+	      gotext = 1;
+	      break;
+	    } else {
+	      *status = 0;
+	    }
+        }
+        free(textlist);      
+      }
+      if( !gotext ){
+        /* if all else fails, move to extension #2 and hope for the best */
+        fits_movabs_hdu(*fptr, 2, &thdutype, status);
+      }
+    }
+    if (hdutype) {
+      fits_get_hdu_type(*fptr, hdutype, status);
+    }
     return(*status);
 }
 /*--------------------------------------------------------------------------*/
@@ -662,7 +732,7 @@ int ffopen(fitsfile **fptr,      /* O - FITS file pointer                   */
 
     FFLOCK;
     if (fits_already_open(fptr, url, urltype, infile, extspec, rowfilter,
-            binspec, colspec, mode, &isopen, status) > 0)
+            binspec, colspec, mode, open_disk_file, &isopen, status) > 0)
     {
         FFUNLOCK;
         return(*status);
@@ -840,6 +910,7 @@ int ffopen(fitsfile **fptr,      /* O - FITS file pointer                   */
     ((*fptr)->Fptr)->open_count = 1;      /* structure is currently used once */
     ((*fptr)->Fptr)->validcode = VALIDSTRUC; /* flag denoting valid structure */
     ((*fptr)->Fptr)->only_one = only_one; /* flag denoting only copy single extension */
+    ((*fptr)->Fptr)->noextsyntax = open_disk_file; /* true if extended syntax is disabled */
 
     ffldrc(*fptr, 0, REPORT_EOF, status);     /* load first record */
 
@@ -890,26 +961,26 @@ move2hdu:
         ffpmsg("ffopen could not move to the specified extension:");
         if (extnum > 0)
         {
-          sprintf(errmsg,
+          snprintf(errmsg, FLEN_ERRMSG,
           " extension number %d doesn't exist or couldn't be opened.",extnum);
           ffpmsg(errmsg);
         }
         else
         {
-          sprintf(errmsg,
+          snprintf(errmsg, FLEN_ERRMSG,
           " extension with EXTNAME = %s,", extname);
           ffpmsg(errmsg);
 
           if (extvers)
           {
-             sprintf(errmsg,
+             snprintf(errmsg, FLEN_ERRMSG,
              "           and with EXTVERS = %d,", extvers);
              ffpmsg(errmsg);
           }
 
           if (movetotype != ANY_HDU)
           {
-             sprintf(errmsg,
+             snprintf(errmsg, FLEN_ERRMSG,
              "           and with XTENSION = %s,", hdtype[movetotype]);
              ffpmsg(errmsg);
           }
@@ -988,7 +1059,7 @@ move2hdu:
                fits_read_key(*fptr, TSTRING, "EXTNAME", tblname, NULL,&tstatus);
 
                if ( (!strstr(tblname, "GTI") && !strstr(tblname, "gti")) &&
-                    strncasecmp(tblname, "OBSTABLE", 8) )
+                    fits_strncasecmp(tblname, "OBSTABLE", 8) )
                   break;  /* found an interesting table */
             }
           }  /* end while */
@@ -1030,7 +1101,7 @@ move2hdu:
 
        if (rownum == 0)
        {
-          ffpmsg("row statisfying this expression doesn't exist::");
+          ffpmsg("row satisfying this expression doesn't exist::");
           ffpmsg(rowexpress);
           ffpmsg("Could not open the following image in a table cell:");
           ffpmsg(extspec);
@@ -1073,16 +1144,8 @@ move2hdu:
 
        writecopy = 1;  /* we are now dealing with a copy of the original file */
 
-       /* add some HISTORY; fits_copy_image_cell also wrote HISTORY keywords */
        
-/*  disable this; leave it up to calling routine to write any HISTORY keywords
-       if (*extname)
-        sprintf(card,"HISTORY  in HDU '%.16s' of file '%.36s'",extname,infile);
-       else
-        sprintf(card,"HISTORY  in HDU %d of file '%.45s'", extnum, infile);
-
-       ffprec(*fptr, card, status);
-*/
+       /*  leave it up to calling routine to write any HISTORY keywords */
     }
 
     /* --------------------------------------------------------------------- */
@@ -1407,6 +1470,7 @@ int fits_already_open(fitsfile **fptr, /* I/O - FITS file pointer       */
            char *binspec, 
            char *colspec, 
            int  mode,             /* I - 0 = open readonly; 1 = read/write   */
+           int  noextsyn, /* I - 0 = ext syntax may be used; 1 = ext syntax disabled */
            int  *isopen,          /* O - 1 = file is already open            */
            int  *status)          /* IO - error status                       */
 /*
@@ -1429,15 +1493,15 @@ int fits_already_open(fitsfile **fptr, /* I/O - FITS file pointer       */
      */
 {
     FITSfile *oldFptr;
-    int ii;
+    int ii, iMatch=-1;
     char oldurltype[MAX_PREFIX_LEN], oldinfile[FLEN_FILENAME];
     char oldextspec[FLEN_FILENAME], oldoutfile[FLEN_FILENAME];
     char oldrowfilter[FLEN_FILENAME];
     char oldbinspec[FLEN_FILENAME], oldcolspec[FLEN_FILENAME];
     char cwd[FLEN_FILENAME];
     char tmpStr[FLEN_FILENAME];
-    char tmpinfile[FLEN_FILENAME];
-
+    char tmpinfile[FLEN_FILENAME]; 
+    
     *isopen = 0;
 
 /*  When opening a file with readonly access then we simply let
@@ -1452,126 +1516,178 @@ int fits_already_open(fitsfile **fptr, /* I/O - FITS file pointer       */
     if (mode == 0)
         return(*status);
 
-    if(strcasecmp(urltype,"FILE://") == 0)
-      {
-        fits_path2url(infile,tmpinfile,status);
-
-        if(tmpinfile[0] != '/')
-          {
-            fits_get_cwd(cwd,status);
-            strcat(cwd,"/");
- 
-            if (strlen(cwd) + strlen(tmpinfile) > FLEN_FILENAME-1) {
-		  ffpmsg("File name is too long. (fits_already_open)");
-                  return(*status = FILE_NOT_OPENED);
-            }
-
-            strcat(cwd,tmpinfile);
-            fits_clean_url(cwd,tmpinfile,status);
-          }
-      }
-    else
-      strcpy(tmpinfile,infile);
+    strcpy(tmpinfile, infile);
+    if(fits_strcasecmp(urltype,"FILE://") == 0)
+    {
+       if (standardize_path(tmpinfile, status))
+          return(*status);          
+    }
 
     for (ii = 0; ii < NMAXFILES; ii++)   /* check every buffer */
     {
         if (FptrTable[ii] != 0)
         {
           oldFptr = FptrTable[ii];
-
-          fits_parse_input_url(oldFptr->filename, oldurltype, 
-                    oldinfile, oldoutfile, oldextspec, oldrowfilter, 
-                    oldbinspec, oldcolspec, status);
-
-          if (*status > 0)
+          
+          if (oldFptr->noextsyntax)
           {
-            ffpmsg("could not parse the previously opened filename: (ffopen)");
-            ffpmsg(oldFptr->filename);
-            return(*status);
-          }
-
-          if(strcasecmp(oldurltype,"FILE://") == 0)
+            /* old urltype must be "file://" */
+            if (fits_strcasecmp(urltype,"FILE://") == 0)
             {
-              fits_path2url(oldinfile,tmpStr,status);
-              
-              if(tmpStr[0] != '/')
-                {
-                  fits_get_cwd(cwd,status);
-                  strcat(cwd,"/");
+               /* compare tmpinfile to adjusted oldFptr->filename */
+               
+               /* This shouldn't be possible, but check anyway */
+               if (strlen(oldFptr->filename) > FLEN_FILENAME-1)        
+               {
+                  ffpmsg("Name of old file is too long. (fits_already_open)");
+                  return (*status = FILE_NOT_OPENED);
+               }
+               strcpy(oldinfile, oldFptr->filename);
+               if (standardize_path(oldinfile, status))
+                  return(*status);
+                              
+               if (!strcmp(tmpinfile, oldinfile))
+               {
+                  /* if infile is not noextsyn, must check that it is not
+                     using filters of any kind */
+                  if (noextsyn || (!rowfilter[0] && !binspec[0] && !colspec[0])) 
+                  {
+                     if (mode == READWRITE && oldFptr->writemode == READONLY)
+                     {
+                       /*
+                         cannot assume that a file previously opened with READONLY
+                         can now be written to (e.g., files on CDROM, or over the
+                         the network, or STDIN), so return with an error.
+                       */
 
-
-                  strcat(cwd,tmpStr);
-                  fits_clean_url(cwd,tmpStr,status);
-                }
-
-              strcpy(oldinfile,tmpStr);
-            }
-
-          if (!strcmp(urltype, oldurltype) && !strcmp(tmpinfile, oldinfile) )
+                       ffpmsg(
+                   "cannot reopen file READWRITE when previously opened READONLY");
+                       ffpmsg(url);
+                       return(*status = FILE_NOT_OPENED);
+                     }
+                     iMatch = ii;
+                  }  
+               }
+             }            
+          } /* end if old file has disabled extended syntax */
+          else
           {
-              /* identical type of file and root file name */
+             fits_parse_input_url(oldFptr->filename, oldurltype, 
+                       oldinfile, oldoutfile, oldextspec, oldrowfilter, 
+                       oldbinspec, oldcolspec, status);
 
-              if ( (!rowfilter[0] && !oldrowfilter[0] &&
-                    !binspec[0]   && !oldbinspec[0] &&
-                    !colspec[0]   && !oldcolspec[0])
+             if (*status > 0)
+             {
+               ffpmsg("could not parse the previously opened filename: (ffopen)");
+               ffpmsg(oldFptr->filename);
+               return(*status);
+             }
+             
+             if(fits_strcasecmp(oldurltype,"FILE://") == 0)
+               {
+                 if (standardize_path(oldinfile, status))
+                    return(*status);
+               }
 
-                  /* no filtering or binning specs for either file, so */
-                  /* this is a case where the same file is being reopened. */
-                  /* It doesn't matter if the extensions are different */
+             if (!strcmp(urltype, oldurltype) && !strcmp(tmpinfile, oldinfile) )
+             {
+                 /* identical type of file and root file name */
 
-                      ||   /* or */
+                 if ( (!rowfilter[0] && !oldrowfilter[0] &&
+                       !binspec[0]   && !oldbinspec[0] &&
+                       !colspec[0]   && !oldcolspec[0])
 
-                  (!strcmp(rowfilter, oldrowfilter) &&
-                   !strcmp(binspec, oldbinspec)     &&
-                   !strcmp(colspec, oldcolspec)     &&
-                   !strcmp(extspec, oldextspec) ) )
+                     /* no filtering or binning specs for either file, so */
+                     /* this is a case where the same file is being reopened. */
+                     /* It doesn't matter if the extensions are different */
 
-                  /* filtering specs are given and are identical, and */
-                  /* the same extension is specified */
+                         ||   /* or */
 
-              {
-                  if (mode == READWRITE && oldFptr->writemode == READONLY)
-                  {
-                    /*
-                      cannot assume that a file previously opened with READONLY
-                      can now be written to (e.g., files on CDROM, or over the
-                      the network, or STDIN), so return with an error.
-                    */
+                     (!strcmp(rowfilter, oldrowfilter) &&
+                      !strcmp(binspec, oldbinspec)     &&
+                      !strcmp(colspec, oldcolspec)     &&
+                      !strcmp(extspec, oldextspec) ) )
 
-                    ffpmsg(
-                "cannot reopen file READWRITE when previously opened READONLY");
-                    ffpmsg(url);
-                    return(*status = FILE_NOT_OPENED);
+                     /* filtering specs are given and are identical, and */
+                     /* the same extension is specified */
+
+                 {
+                     if (mode == READWRITE && oldFptr->writemode == READONLY)
+                     {
+                       /*
+                         cannot assume that a file previously opened with READONLY
+                         can now be written to (e.g., files on CDROM, or over the
+                         the network, or STDIN), so return with an error.
+                       */
+
+                       ffpmsg(
+                   "cannot reopen file READWRITE when previously opened READONLY");
+                       ffpmsg(url);
+                       return(*status = FILE_NOT_OPENED);
+                     }
+                     iMatch = ii;
+
                   }
-
-                  *fptr = (fitsfile *) calloc(1, sizeof(fitsfile));
-
-                  if (!(*fptr))
-                  {
-                     ffpmsg(
-                   "failed to allocate structure for following file: (ffopen)");
-                     ffpmsg(url);
-                     return(*status = MEMORY_ALLOCATION);
-                  }
-
-                  (*fptr)->Fptr = oldFptr; /* point to the structure */
-                  (*fptr)->HDUposition = 0;     /* set initial position */
-                (((*fptr)->Fptr)->open_count)++;  /* increment usage counter */
-
-                  if (binspec[0])  /* if binning specified, don't move */
-                      extspec[0] = '\0';
-
-                  /* all the filtering has already been applied, so ignore */
-                  rowfilter[0] = '\0';
-                  binspec[0] = '\0';
-                  colspec[0] = '\0';
-
-                  *isopen = 1;
               }
-            }
-        }
+          } /* end if old file recognizes extended syntax */
+      } /* end if old fptr exists */
+    } /* end loop over NMAXFILES */
+    if (iMatch >= 0)
+    {
+       oldFptr = FptrTable[iMatch];
+       *fptr = (fitsfile *) calloc(1, sizeof(fitsfile));
+
+       if (!(*fptr))
+       {
+          ffpmsg(
+        "failed to allocate structure for following file: (ffopen)");
+          ffpmsg(url);
+          return(*status = MEMORY_ALLOCATION);
+       }
+
+       (*fptr)->Fptr = oldFptr; /* point to the structure */
+       (*fptr)->HDUposition = 0;     /* set initial position */
+       (((*fptr)->Fptr)->open_count)++;  /* increment usage counter */
+
+       if (binspec[0])  /* if binning specified, don't move */
+           extspec[0] = '\0';
+
+       /* all the filtering has already been applied, so ignore */
+       rowfilter[0] = '\0';
+       binspec[0] = '\0';
+       colspec[0] = '\0';
+
+       *isopen = 1;
     }
     return(*status);
+}
+/*--------------------------------------------------------------------------*/
+int standardize_path(char *fullpath, int* status)
+{
+   /* Utility function for common operation in fits_already_open 
+      fullpath:  I/O string to be standardized. Assume len = FLEN_FILENAME */
+    
+   char tmpPath[FLEN_FILENAME];
+   char cwd [FLEN_FILENAME];
+    
+   if (fits_path2url(fullpath, FLEN_FILENAME, tmpPath, status))
+      return(*status);
+   
+   if (tmpPath[0] != '/')
+   {
+      fits_get_cwd(cwd,status);
+      if (strlen(cwd) + strlen(tmpPath) + 1 > FLEN_FILENAME-1) {
+	    ffpmsg("Tile name is too long. (standardize_path)");
+            return(*status = FILE_NOT_OPENED);
+      }
+      strcat(cwd,"/");
+      strcat(cwd,tmpPath);
+      fits_clean_url(cwd,tmpPath,status);
+   }
+   
+   strcpy(fullpath, tmpPath);
+      
+   return (*status);
 }
 /*--------------------------------------------------------------------------*/
 int fits_is_this_a_copy(char *urltype) /* I - type of file */
@@ -1802,7 +1918,7 @@ int ffedit_columns(
     fitsfile *newptr;
     int ii, hdunum, slen, colnum = -1, testnum, deletecol = 0, savecol = 0;
     int numcols = 0, *colindex = 0, tstatus = 0;
-    char *cptr, *cptr2, *cptr3, *clause = NULL, keyname[FLEN_KEYWORD];
+    char *tstbuff=0, *cptr, *cptr2, *cptr3, *clause = NULL, keyname[FLEN_KEYWORD];
     char colname[FLEN_VALUE], oldname[FLEN_VALUE], colformat[FLEN_VALUE];
     char *file_expr = NULL, testname[FLEN_VALUE], card[FLEN_CARD];
 
@@ -1908,11 +2024,64 @@ int ffedit_columns(
 
         if (clause[0] == '!' || clause[0] == '-')
         {
+	    char *clause1 = clause+1;
+	    int clen = clause1[0] ? strlen(clause1) : 0;
             /* ===================================== */
             /* Case I. delete this column or keyword */
             /* ===================================== */
 
-            if (ffgcno(*fptr, CASEINSEN, &clause[1], &colnum, status) <= 0)
+	    /* Case Ia. delete column names with 0-or-more wildcard
+	            -COLNAME+ - delete repeated columns with exact name
+		    -COLNAM*+ - delete columns matching patterns
+	    */
+	    if (*status == 0 &&
+		clen > 1 && clause1[0] != '#' &&
+		clause1[clen-1] == '+') {
+
+	      clause1[clen-1] = 0; clen--;
+
+	      /* Note that this is a delete 0 or more specification,
+		 which means that no matching columns is not an error. */
+	      do {
+		int status_del = 0;
+
+		/* Have to set status=0 so we can reset the search at
+		   start column.  Because we are deleting columns on
+		   the fly here, we have to reset the search every
+		   time. The only penalty here is execution time
+		   because leaving *status == COL_NOT_UNIQUE is merely
+		   an optimization for tables assuming the tables do
+		   not change from one call to the next. (an
+		   assumption broken in this loop) */
+		*status = 0; 
+		ffgcno(*fptr, CASEINSEN, clause1, &colnum, status);
+		/* ffgcno returns COL_NOT_UNIQUE if there are multiple columns,
+		   and COL_NOT_FOUND after the last column is found, and 
+		   COL_NOT_FOUND if no matches were found */
+		if (*status != 0 && *status != COL_NOT_UNIQUE) break;
+		
+                if (ffdcol(*fptr, colnum, &status_del) > 0) {
+		  ffpmsg("failed to delete column in input file:");
+		  ffpmsg(clause);
+		  if( colindex ) free( colindex );
+		  if( file_expr ) free( file_expr );
+		  if( clause ) free(clause);
+		  return (*status = status_del);
+		}
+                deletecol = 1; /* set flag that at least one col was deleted */
+                numcols--;
+	      } while (*status == COL_NOT_UNIQUE);
+
+	      *status = 0; /* No matches are still successful */
+	      colnum = -1; /* Ignore the column we found */
+
+	    /* Case Ib. delete column names with wildcard or not
+	            -COLNAME  - deleted exact column
+		    -COLNAM*  - delete first column that matches pattern
+	       Note no leading '#'
+	    */
+	    } else if (clause1[0] && clause1[0] != '#' &&
+		ffgcno(*fptr, CASEINSEN, clause1, &colnum, status) <= 0)
             {
                 /* a column with this name exists, so try to delete it */
                 if (ffdcol(*fptr, colnum, status) > 0)
@@ -1928,20 +2097,65 @@ int ffedit_columns(
                 numcols--;
                 colnum = -1;
             }
+	    /* Case Ic. delete keyword(s)
+	            -KEYNAME,#KEYNAME  - delete exact keyword (first match)
+		    -KEYNAM*,#KEYNAM*  - delete first matching keyword
+		    -KEYNAME+,-#KEYNAME+ - delete 0-or-more exact matches of exact keyword
+		    -KEYNAM*+,-#KEYNAM*+ - delete 0-or-more wildcard matches 
+	       Note the preceding # is optional if no conflicting column name exists
+	       and that wildcard patterns are described in "colfilter" section of
+	       documentation.
+	    */
             else
             {
+	      int delall = 0;
+	      int haswild = 0;
 	        ffcmsg();   /* clear previous error message from ffgcno */
                 /* try deleting a keyword with this name */
                 *status = 0;
-                if (ffdkey(*fptr, &clause[1], status) > 0)
-                {
-                    ffpmsg("column or keyword to be deleted does not exist:");
-                    ffpmsg(clause);
-                    if( colindex ) free( colindex );
-                    if( file_expr ) free( file_expr );
-		    if( clause ) free(clause);
-                    return(*status);
-                }
+		/* skip past leading '#' if any */
+		if (clause1[0] == '#') clause1++;
+		clen = strlen(clause1);
+
+		/* Repeat deletion of keyword if requested with trailing '+' */
+		if (clen > 1 && clause1[clen-1] == '+') {
+		  delall = 1;
+		  clause1[clen-1] = 0;
+		}
+		/* Determine if this pattern has wildcards */
+		if (strchr(clause1,'?') || strchr(clause1,'*') || strchr(clause1,'#')) {
+		  haswild = 1;
+		}
+
+		if (haswild) {
+		  /* ffdkey() behaves differently if the pattern has a wildcard:
+		     it only checks from the "current" header position to the end, and doesn't
+		     check before the "current" header position.  Therefore, for the
+		     case of wildcards we will have to reset to the beginning. */
+		  ffmaky(*fptr, 1, status);  /* reset pointer to beginning of header */
+		}
+
+		/* Single or repeated deletions until done */
+		do {
+		  if (ffdkey(*fptr, clause1, status) > 0)
+		    {
+		      if (delall && *status == KEY_NO_EXIST) {
+			/* Found last wildcard item. Stop deleting */
+			ffcmsg();
+			*status = 0;
+			delall = 0; /* Force end of this loop */
+		      } else {
+			/* This was not a wildcard deletion, or it resulted in
+			   another kind of error */
+			ffpmsg("column or keyword to be deleted does not exist:");
+			ffpmsg(clause1);
+			if( colindex ) free( colindex );
+			if( file_expr ) free( file_expr );
+			if( clause ) free(clause);
+			return(*status);
+		      }
+		    }
+		} while(delall); /* end do{} */
             }
         }
         else
@@ -1957,17 +2171,32 @@ int ffedit_columns(
 	       calculation expression (case 2B) */
             /* ===================================================== */
             cptr2 = clause;
-            slen = fits_get_token(&cptr2, "( =", colname, NULL);
+            slen = fits_get_token2(&cptr2, "( =", &tstbuff, NULL, status);
 
-            if (slen == 0)
+            if (slen == 0 || *status)
             {
-                ffpmsg("error: column or keyword name is blank:");
+                ffpmsg("error: column or keyword name is blank (ffedit_columns):");
                 ffpmsg(clause);
                 if( colindex ) free( colindex );
                 if( file_expr ) free( file_expr );
 		if (clause) free(clause);
+                if (*status==0)
+                   *status=URL_PARSE_ERROR;
+                return(*status);
+            }
+            if (strlen(tstbuff) > FLEN_VALUE-1)
+            {
+                ffpmsg("error: column or keyword name is too long (ffedit_columns):");
+                ffpmsg(clause);
+                if( colindex ) free( colindex );
+                if( file_expr ) free( file_expr );
+		if (clause) free(clause);
+                free(tstbuff);
                 return(*status= URL_PARSE_ERROR);
             }
+            strcpy(colname, tstbuff);
+            free(tstbuff);
+            tstbuff=0;
 
 	    /* If this is a keyword of the form 
 	         #KEYWORD# 
@@ -2037,9 +2266,27 @@ int ffedit_columns(
             */
             if (*cptr2  == '(')
             {
-                fits_get_token(&cptr2, ")", oldname, NULL);
-                strcat(colname, oldname);
-                strcat(colname, ")");
+                if (fits_get_token2(&cptr2, ")", &tstbuff, NULL, status)==0)
+                {
+                   strcat(colname,")");
+                }
+                else
+                {
+                   if ((strlen(tstbuff) + strlen(colname) + 1) >
+                        FLEN_VALUE-1)
+                   {
+                      ffpmsg("error: column name is too long (ffedit_columns):");
+                      if( file_expr ) free( file_expr );
+		      if (clause) free(clause);
+                      free(tstbuff);
+                      *status=URL_PARSE_ERROR;
+		      return (*status);
+                   }
+                   strcat(colname, tstbuff);
+                   strcat(colname, ")");
+                   free(tstbuff);
+                   tstbuff=0;
+                }
                 cptr2++;
             }
 
@@ -2123,8 +2370,25 @@ int ffedit_columns(
                 while (*cptr2 == ' ')
                       cptr2++;       /* skip white space */
 
-                fits_get_token(&cptr2, " ", oldname, NULL);
-
+                if (fits_get_token2(&cptr2, " ", &tstbuff, NULL, status)==0)
+                {
+                   oldname[0]=0;
+                }
+                else
+                {
+                   if (strlen(tstbuff) > FLEN_VALUE-1)
+                   {
+                      ffpmsg("error: column name syntax is too long (ffedit_columns):");
+                      if( file_expr ) free( file_expr );
+		      if (clause) free(clause);
+                      free(tstbuff);
+                      *status=URL_PARSE_ERROR;
+		      return (*status);
+                   }
+                   strcpy(oldname, tstbuff);
+                   free(tstbuff);
+                   tstbuff=0;
+                }
                 /* get column number of the existing column */
                 if (ffgcno(*fptr, CASEINSEN, oldname, &colnum, status) <= 0)
                 {
@@ -2178,12 +2442,49 @@ int ffedit_columns(
                 colformat[0] = '\0';
                 cptr3 = colname;
 
-                fits_get_token(&cptr3, "(", oldname, NULL);
-
+                if (fits_get_token2(&cptr3, "(", &tstbuff, NULL, status)==0)
+                {
+                   oldname[0]=0;
+                }
+                else
+                {
+                   if (strlen(tstbuff) > FLEN_VALUE-1)
+                   {
+                         ffpmsg("column expression is too long (ffedit_columns)");
+                         if( colindex ) free( colindex );
+                         if( file_expr ) free( file_expr );
+		         if (clause) free(clause);
+                         free(tstbuff);
+                         *status=URL_PARSE_ERROR;
+                         return(*status);
+                   }
+                   strcpy(oldname, tstbuff);
+                   free(tstbuff);
+                   tstbuff=0;
+                }
                 if (cptr3[0] == '(' )
                 {
                    cptr3++;  /* skip the '(' */
-                   fits_get_token(&cptr3, ")", colformat, NULL);
+                   if (fits_get_token2(&cptr3, ")", &tstbuff, NULL, status)==0)
+                   {
+                      colformat[0]=0;
+                   }
+                   else
+                   {
+                      if (strlen(tstbuff) > FLEN_VALUE-1)
+                      {
+                            ffpmsg("column expression is too long (ffedit_columns)");
+                            if( colindex ) free( colindex );
+                            if( file_expr ) free( file_expr );
+		            if (clause) free(clause);
+                            free(tstbuff);
+                            *status=URL_PARSE_ERROR;
+                            return(*status);
+                      }
+                      strcpy(colformat, tstbuff);
+                      free(tstbuff);
+                      tstbuff=0;
+                   }
                 }
 
                 /* calculate values for the column or keyword */
@@ -2471,7 +2772,7 @@ int fits_copy_cell2image(
 			    colnum, 0, 0, status);
 
     /* add some HISTORY  */
-    sprintf(card,"HISTORY  This image was copied from row %ld of column '%s',",
+    snprintf(card,FLEN_CARD,"HISTORY  This image was copied from row %ld of column '%s',",
             rownum, colname);
 /* disable this; leave it up to the caller to write history if needed.    
     ffprec(newptr, card, status);
@@ -2677,7 +2978,7 @@ int fits_copy_image2cell(
     if (*status) {
 
       *status = 0;
-      sprintf(tform, "%.0f%c", (double) repeat, tformchar);
+      snprintf(tform, 20, "%.0f%c", (double) repeat, tformchar);
       ffgncl(newptr, &ncols, status);
       colnum = ncols+1;
       fficol(newptr, colnum, colname, tform, status);
@@ -2740,7 +3041,7 @@ int fits_copy_image2cell(
     ffghadll(fptr, &headstart, &datastart, &dataend, status);
     imgstart = datastart;
 
-    sprintf(card, "HISTORY  Table column '%s' row %ld copied from image",
+    snprintf(card, FLEN_CARD, "HISTORY  Table column '%s' row %ld copied from image",
 	    colname, rownum);
 /*
   Don't automatically write History keywords; leave this up to the caller. 
@@ -2753,7 +3054,7 @@ int fits_copy_image2cell(
     strcpy(filename, "HISTORY   ");
     ffflnm(fptr, filename+strlen(filename), status);
     ffghdn(fptr, &hdunum);
-    sprintf(filename+strlen(filename),"[%d]", hdunum-1);
+    snprintf(filename+strlen(filename),FLEN_FILENAME+20-strlen(filename),"[%d]", hdunum-1);
 /*
     ffprec(newptr, filename, status);
 */
@@ -3228,15 +3529,30 @@ int fits_get_section_range(char **ptr,
 */
 {
     int slen, isanumber;
-    char token[FLEN_VALUE];
+    char token[FLEN_VALUE], *tstbuff=0;
 
     if (*status > 0)
         return(*status);
 
-    slen = fits_get_token(ptr, " ,:", token, &isanumber); /* get 1st token */
-
-    /* support [:2,:2] type syntax, where the leading * is implied */
-    if (slen==0) strcpy(token,"*");
+    slen = fits_get_token2(ptr, " ,:", &tstbuff, &isanumber, status); /* get 1st token */
+    if (slen==0)
+    {
+       /* support [:2,:2] type syntax, where the leading * is implied */
+       strcpy(token,"*");
+    }
+    else
+    {
+       if (strlen(tstbuff) > FLEN_VALUE-1)
+       {
+          ffpmsg("Error: image section string too long (fits_get_section_range)");
+          free(tstbuff);
+          *status = URL_PARSE_ERROR;
+          return(*status);
+       }
+       strcpy(token, tstbuff);
+       free(tstbuff);
+       tstbuff=0;
+    }
 
     if (*token == '*')  /* wild card means to use the whole range */
     {
@@ -3257,10 +3573,23 @@ int fits_get_section_range(char **ptr,
       *secmin = atol(token);
 
       (*ptr)++;  /* skip the colon between the min and max values */
-      slen = fits_get_token(ptr, " ,:", token, &isanumber); /* get token */
-
+      slen = fits_get_token2(ptr, " ,:", &tstbuff, &isanumber, status); /* get token */
       if (slen == 0 || !isanumber)
-        return(*status = URL_PARSE_ERROR);   
+      {
+        if (tstbuff)
+           free(tstbuff);
+        return(*status = URL_PARSE_ERROR);  
+      } 
+      if (strlen(tstbuff) > FLEN_VALUE-1)
+      {
+         ffpmsg("Error: image section string too long (fits_get_section_range)");
+         free(tstbuff);
+         *status = URL_PARSE_ERROR;
+         return(*status);
+      }
+      strcpy(token, tstbuff);
+      free(tstbuff);
+      tstbuff=0;
 
       /* the token contains the max value */
       *secmax = atol(token);
@@ -3269,10 +3598,24 @@ int fits_get_section_range(char **ptr,
     if (**ptr == ':')
     {
         (*ptr)++;  /* skip the colon between the max and incre values */
-        slen = fits_get_token(ptr, " ,", token, &isanumber); /* get token */
-
+        slen = fits_get_token2(ptr, " ,", &tstbuff, &isanumber, status); /* get token */
         if (slen == 0 || !isanumber)
-            return(*status = URL_PARSE_ERROR);   
+        {
+            if (tstbuff)
+               free(tstbuff);
+            return(*status = URL_PARSE_ERROR); 
+        }  
+        if (strlen(tstbuff) > FLEN_VALUE-1)
+        {
+           ffpmsg("Error: image section string too long (fits_get_section_range)");
+           free(tstbuff);
+           *status = URL_PARSE_ERROR;
+           return(*status);
+        }
+        strcpy(token, tstbuff);
+        free(tstbuff);
+        tstbuff=0;
+
 
         *incre = atol(token);
     }
@@ -3606,6 +3949,8 @@ int ffdkinit(fitsfile **fptr,      /* O - FITS file pointer                   */
   extended filename syntax.
 */
 {
+    *fptr = 0;              /* initialize null file pointer, */
+                            /* regardless of the value of *status */
     if (*status > 0)
         return(*status);
 
@@ -3629,6 +3974,8 @@ int ffinit(fitsfile **fptr,      /* O - FITS file pointer                   */
     char tmplfile[FLEN_FILENAME], compspec[80];
     int handle, create_disk_file = 0;
 
+    *fptr = 0;              /* initialize null file pointer, */
+                            /* regardless of the value of *status */
     if (*status > 0)
         return(*status);
 
@@ -3637,8 +3984,6 @@ int ffinit(fitsfile **fptr,      /* O - FITS file pointer                   */
        create_disk_file = 1;
        *status = 0;
     }
-
-    *fptr = 0;              /* initialize null file pointer */
 
     if (need_to_initialize)  {          /* this is called only once */
         *status = fits_init_cfitsio();
@@ -3822,6 +4167,7 @@ int ffinit(fitsfile **fptr,      /* O - FITS file pointer                   */
     ((*fptr)->Fptr)->curbuf = -1;         /* undefined current IO buffer   */
     ((*fptr)->Fptr)->open_count = 1;      /* structure is currently used once */
     ((*fptr)->Fptr)->validcode = VALIDSTRUC; /* flag denoting valid structure */
+    ((*fptr)->Fptr)->noextsyntax = create_disk_file; /* true if extended syntax is disabled */
 
     ffldrc(*fptr, 0, IGNORE_EOF, status);     /* initialize first record */
 
@@ -3973,6 +4319,7 @@ int ffimem(fitsfile **fptr,      /* O - FITS file pointer                   */
     ((*fptr)->Fptr)->curbuf = -1;             /* undefined current IO buffer */
     ((*fptr)->Fptr)->open_count = 1;     /* structure is currently used once */
     ((*fptr)->Fptr)->validcode = VALIDSTRUC; /* flag denoting valid structure */
+    ((*fptr)->Fptr)->noextsyntax = 0;  /* extended syntax can be used in filename */
 
     ffldrc(*fptr, 0, IGNORE_EOF, status);     /* initialize first record */
     fits_store_Fptr( (*fptr)->Fptr, status);  /* store Fptr address */
@@ -4714,6 +5061,205 @@ int fits_init_cfitsio(void)
         return(status);
     }
 
+#ifdef HAVE_NET_SERVICES
+
+    /* 25--------------------https  driver-----------------------*/
+    status = fits_register_driver("https://",
+            NULL,
+            mem_shutdown,
+            mem_setoptions,
+            mem_getoptions, 
+            mem_getversion,
+            https_checkfile,
+            https_open,
+            NULL,            /* create function not required */
+            mem_truncate,
+            mem_close_free,
+            NULL,            /* remove function not required */
+            mem_size,
+            NULL,            /* flush function not required */
+            mem_seek,
+            mem_read,
+            mem_write);
+
+    if (status)
+    {
+        ffpmsg("failed to register the https:// driver (init_cfitsio)");
+        FFUNLOCK;
+        return(status);
+    }
+
+    /* 26--------------------https file driver-----------------------*/
+
+    status = fits_register_driver("httpsfile://",
+            NULL,
+            file_shutdown,
+            file_setoptions,
+            file_getoptions, 
+            file_getversion,
+            NULL,            /* checkfile not needed */ 
+            https_file_open,
+            file_create,
+#ifdef HAVE_FTRUNCATE
+            file_truncate,
+#else
+            NULL,   /* no file truncate function */
+#endif
+            file_close,
+            file_remove,
+            file_size,
+            file_flush,
+            file_seek,
+            file_read,
+            file_write);
+
+    if (status)
+    {
+        ffpmsg("failed to register the httpsfile:// driver (init_cfitsio)");
+        FFUNLOCK;
+        return(status);
+    }
+
+    /* 27--------------------https memory driver-----------------------*/
+    /*  same as https:// driver, except memory file can be opened READWRITE */
+    status = fits_register_driver("httpsmem://",
+            NULL,
+            mem_shutdown,
+            mem_setoptions,
+            mem_getoptions, 
+            mem_getversion,
+            https_checkfile,
+            https_file_open,  /* this will simply call https_open */
+            NULL,            /* create function not required */
+            mem_truncate,
+            mem_close_free,
+            NULL,            /* remove function not required */
+            mem_size,
+            NULL,            /* flush function not required */
+            mem_seek,
+            mem_read,
+            mem_write);
+
+    if (status)
+    {
+        ffpmsg("failed to register the httpsmem:// driver (init_cfitsio)");
+        FFUNLOCK;
+        return(status);
+    }
+      /* === End of https net drivers section === */  
+
+    /* 28--------------------ftps  driver-----------------------*/
+    status = fits_register_driver("ftps://",
+            NULL,
+            mem_shutdown,
+            mem_setoptions,
+            mem_getoptions, 
+            mem_getversion,
+            ftps_checkfile,
+            ftps_open,
+            NULL,            
+            mem_truncate,
+            mem_close_free,
+            NULL,            
+            mem_size,
+            NULL,            
+            mem_seek,
+            mem_read,
+            mem_write);
+
+    if (status)
+    {
+        ffpmsg("failed to register the ftps:// driver (init_cfitsio)");
+        FFUNLOCK;
+        return(status);
+    }
+
+    /* 29--------------------ftps file driver-----------------------*/
+
+    status = fits_register_driver("ftpsfile://",
+            NULL,
+            file_shutdown,
+            file_setoptions,
+            file_getoptions, 
+            file_getversion,
+            NULL,             
+            ftps_file_open,
+            file_create,
+#ifdef HAVE_FTRUNCATE
+            file_truncate,
+#else
+            NULL,   
+#endif
+            file_close,
+            file_remove,
+            file_size,
+            file_flush,
+            file_seek,
+            file_read,
+            file_write);
+
+    if (status)
+    {
+        ffpmsg("failed to register the ftpsfile:// driver (init_cfitsio)");
+        FFUNLOCK;
+        return(status);
+    }
+
+    /* 30--------------------ftps memory driver-----------------------*/
+    /*  same as ftps:// driver, except memory file can be opened READWRITE */
+    status = fits_register_driver("ftpsmem://",
+            NULL,
+            mem_shutdown,
+            mem_setoptions,
+            mem_getoptions, 
+            mem_getversion,
+            ftps_checkfile,
+            ftps_file_open,  
+            NULL,            
+            mem_truncate,
+            mem_close_free,
+            NULL,           
+            mem_size,
+            NULL,            
+            mem_seek,
+            mem_read,
+            mem_write);
+
+    if (status)
+    {
+        ffpmsg("failed to register the ftpsmem:// driver (init_cfitsio)");
+        FFUNLOCK;
+        return(status);
+    }
+
+    /* 31--------------------ftps compressed file driver------------------*/
+    status = fits_register_driver("ftpscompress://",
+            NULL,
+            mem_shutdown,
+            mem_setoptions,
+            mem_getoptions, 
+            mem_getversion,
+            NULL,            /* checkfile not needed */ 
+            ftps_compress_open,
+            0,            /* create function not required */
+            mem_truncate,
+            mem_close_free,
+            0,            /* remove function not required */
+            mem_size,
+            0,            /* flush function not required */
+            mem_seek,
+            mem_read,
+            mem_write);
+
+    if (status)
+    {
+        ffpmsg("failed to register the ftpscompress:// driver (init_cfitsio)");
+        FFUNLOCK;
+        return(status);
+    }
+#endif
+
+
     /* reset flag.  Any other threads will now not need to call this routine */
     need_to_initialize = 0;
 
@@ -4733,7 +5279,7 @@ int fits_register_driver(char *prefix,
 	int (*truncate)(int driverhandle, LONGLONG filesize),
 	int (*close)(int driverhandle),
 	int (*fremove)(char *filename),
-        int (*size)(int driverhandle, LONGLONG *size),
+        int (*size)(int driverhandle, LONGLONG *sizex),
 	int (*flush)(int driverhandle),
 	int (*seek)(int driverhandle, LONGLONG offset),
 	int (*read) (int driverhandle, void *buffer, long nbytes),
@@ -4852,7 +5398,6 @@ int ffifile2(char *url,       /* input filename */
     int hasAt, hasDot, hasOper, followingOper, spaceTerm, rowFilter;
     int colStart, binStart, pixStart, compStart;
 
-
     /* must have temporary variable for these, in case inputs are NULL */
     char *infile;
     char *rowfilter;
@@ -4901,7 +5446,7 @@ int ffifile2(char *url,       /* input filename */
             strcat(urltype, "stdin://");
         ptr1++;
     }
-    else if (!strncasecmp(ptr1, "stdin", 5))
+    else if (!fits_strncasecmp(ptr1, "stdin", 5))
     {
         if (urltype)
             strcat(urltype, "stdin://");
@@ -4918,9 +5463,14 @@ int ffifile2(char *url,       /* input filename */
            /* to the output file, and is not the urltype of the input file */
            ptr2 = 0;   /* so reset pointer to zero */
         }
-
+        
         if (ptr2)            /* copy the explicit urltype string */ 
         {
+            if (ptr2-ptr1+3 >= MAX_PREFIX_LEN)
+            {
+               ffpmsg("Name of urltype is too long.");
+               return(*status = URL_PARSE_ERROR);
+            }
             if (urltype)
                  strncat(urltype, ptr1, ptr2 - ptr1 + 3);
             ptr1 = ptr2 + 3;
@@ -5040,6 +5590,20 @@ int ffifile2(char *url,       /* input filename */
 
     ptr2 = strchr(tmptr, '(');   /* search for opening parenthesis ( */
     ptr3 = strchr(tmptr, '[');   /* search for opening bracket [ */
+    if (ptr2)
+    {
+       ptr4 = strchr(ptr2, ')'); /* search for closing parenthesis ) */
+       while (ptr4 && ptr2)
+       {
+          do {
+             ++ptr4;
+          } while (*ptr4 == ' '); /* find next non-blank char after ')' */
+          if (*ptr4 == 0 || *ptr4 == '[')
+             break;
+          ptr2 = strchr(ptr2+1, '(');
+          ptr4 = strchr(ptr4, ')');
+       }
+    }
 
     if (ptr2 == ptr3)  /* simple case: no [ or ( in the file name */
     {
@@ -5412,21 +5976,21 @@ int ffifile2(char *url,       /* input filename */
            if (*tmptr == '@')  /* test for leading @ symbol */
                hasAt = 1;
 
-           if ( !strncasecmp(tmptr, "col ", 4) )
+           if ( !fits_strncasecmp(tmptr, "col ", 4) )
               colStart = 1;
 
-           if ( !strncasecmp(tmptr, "bin", 3) )
+           if ( !fits_strncasecmp(tmptr, "bin", 3) )
               binStart = 1;
 
-           if ( !strncasecmp(tmptr, "pix", 3) )
+           if ( !fits_strncasecmp(tmptr, "pix", 3) )
               pixStart = 1;
 
-           if ( !strncasecmp(tmptr, "compress ", 9) ||
-                !strncasecmp(tmptr, "compress]", 9) )
+           if ( !fits_strncasecmp(tmptr, "compress ", 9) ||
+                !fits_strncasecmp(tmptr, "compress]", 9) )
               compStart = 1;
 
-           if ( !strncasecmp(tmptr, "gtifilter(", 10) ||
-                !strncasecmp(tmptr, "regfilter(", 10) )
+           if ( !fits_strncasecmp(tmptr, "gtifilter(", 10) ||
+                !fits_strncasecmp(tmptr, "regfilter(", 10) )
            {
                rowFilter = 1;
            }
@@ -5593,11 +6157,17 @@ int ffifile2(char *url,       /* input filename */
             ptr1 = strstr(rowfilter, "[Col ");
     }
 
-    if (ptr1)
-    {           /* find the end of the column specifier */
+    hasAt = 0;
+    while (ptr1) {
+
+        /* find the end of the column specifier */
         ptr2 = ptr1 + 5;
-        while (*ptr2 != ']')
-        {
+	/* Scan past any whitespace and check for @filename */
+	while (*ptr2 == ' ') ptr2++;
+	if (*ptr2 == '@') hasAt = 1;
+
+        while (*ptr2 != ']') {
+
             if (*ptr2 == '\0')
             {
                 ffpmsg("input file URL is missing closing bracket ']'");
@@ -5634,16 +6204,32 @@ int ffifile2(char *url,       /* input filename */
 
         collen = ptr2 - ptr1 - 1;
 
-        if (colspec)    /* copy the column specifier to output string */
-        {
-            if (collen > FLEN_FILENAME - 1) {
-                       free(infile);
-                       return(*status = URL_PARSE_ERROR);
-            }
+        if (colspec) {   /* copy the column specifier to output string */
 
-            strncpy(colspec, ptr1 + 1, collen);       
-            colspec[collen] = '\0';
- 
+            if (collen + strlen(colspec) > FLEN_FILENAME - 1) {
+	        free(infile);
+	        return(*status = URL_PARSE_ERROR);
+            }
+	    
+	    if (*colspec == 0) {
+	        strncpy(colspec, ptr1 + 1, collen);
+	        colspec[collen] = '\0';
+	    } else { /* Pre-existing colspec, append with ";" */
+	        strcat(colspec, ";");
+	        strncat(colspec, ptr1 + 5, collen-4); 
+		/* Note that strncat always null-terminates the destination string */
+
+		/* Special error checking here.  We can't allow there to be a
+		   col @filename.txt includes if there are multiple col expressions */
+		if (hasAt) {
+		  ffpmsg("input URL multiple column filter cannot use @filename.txt");
+		  free(infile);
+		  return(*status = URL_PARSE_ERROR);
+		}
+
+	    }
+
+	    collen = strlen(colspec);
             while (colspec[--collen] == ' ')
                 colspec[collen] = '\0';  /* strip trailing blanks */
         }
@@ -5651,6 +6237,11 @@ int ffifile2(char *url,       /* input filename */
         /* delete the column selection spec from the row filter string */
         strcpy(tmpstr, ptr2 + 1);  /* copy any chars after the colspec */
         strcpy(ptr1, tmpstr);      /* overwrite binspec */
+
+	/* Check for additional column specifiers */
+	ptr1 = strstr(rowfilter, "[col ");
+	if (!ptr1) ptr1 = strstr(rowfilter, "[COL ");
+	if (!ptr1) ptr1 = strstr(rowfilter, "[Col ");
     }
 
     /* --------------------------------------------------------- */
@@ -5794,17 +6385,75 @@ int ffifile2(char *url,       /* input filename */
     /* contain a rowfilter expression of the form "[expr]"              */
 
     if (rowfilterx && rowfilter[0]) {
-       ptr2 = rowfilter + strlen(rowfilter) - 1;
-       if( rowfilter[0]=='[' && *ptr2==']' ) {
-          *ptr2 = '\0';
+      hasAt = 0;
 
-	   if (strlen(rowfilter + 1)  > FLEN_FILENAME - 1)
-	   {
-                    free(infile);
-                    return(*status = URL_PARSE_ERROR);
-           }
+      /* Check for multiple expressions, which would appear as "[expr][expr]..." */
+      ptr1 = rowfilter;
+      while((*ptr1 == '[') && (ptr2 = strstr(rowfilter,"]["))-ptr1 > 2) {
+	 /* Advance past any white space */
+	 ptr3 = ptr1+1;
+	 while (*ptr3 == ' ') ptr3++;
+	 /* Check for @filename.txt */
+	 if (*ptr3 == '@') hasAt = 1;
 
-          strcpy(rowfilterx, rowfilter+1);
+	 /* Add expression of the form "((expr))&&", note the addition of 6 characters */
+	 if ((strlen(rowfilterx) + (ptr2-ptr1) + 6) > FLEN_FILENAME - 1) {
+	   free(infile);
+	   return (*status = URL_PARSE_ERROR);
+	 }
+
+	 /* Special error checking here.  We can't allow there to be a
+	    @filename.txt includes if there are multiple row expressions */
+	 if (*rowfilterx && hasAt) {
+	   ffpmsg("input URL multiple row filter cannot use @filename.txt");
+	   free(infile);
+	   return(*status = URL_PARSE_ERROR);
+	 }
+
+	 /* Append the expression */
+	 strcat(rowfilterx, "((");
+	 strncat(rowfilterx, ptr1+1, (ptr2-ptr1-1));
+	 /* Note that strncat always null-terminates the destination string */
+	 strcat(rowfilterx, "))&&");
+
+	 /* Advance to next expression */
+	 ptr1 = ptr2 + 1;
+      }
+
+      /* At final iteration, ptr1 points to beginning [ and ptr2 to ending ] */
+      ptr2 = rowfilter + strlen(rowfilter) - 1;
+      if( *ptr1=='[' && *ptr2==']' ) {
+	  /* Check for @include in final position */
+	  ptr3 = ptr1 + 1;
+	  while (*ptr3 == ' ') ptr3++;
+	  if (*ptr3 == '@') hasAt = 1;
+
+	  /* Check for overflow; add extra 4 characters if we have pre-existing expression */
+  	  if (strlen(rowfilterx) + (ptr2-ptr1 + (*rowfilterx)?4:0) > FLEN_FILENAME - 1) {
+	      free(infile);
+	      return(*status = URL_PARSE_ERROR);
+	  }
+
+	  /* Special error checking here.  We can't allow there to be a
+	     @filename.txt includes if there are multiple row expressions */
+	  if (*rowfilterx && hasAt) {
+	    ffpmsg("input URL multiple row filter cannot use @filename.txt");
+	    free(infile);
+	    return(*status = URL_PARSE_ERROR);
+	  }
+
+	  if (*rowfilterx) {
+	    /* A pre-existing row filter: we bracket by ((expr)) to be sure */
+	    strcat(rowfilterx, "((");
+	    strncat(rowfilterx, ptr1+1, (ptr2-ptr1-1));
+	    strcat(rowfilterx, "))");
+
+	  } else {
+	    /* We have only one filter, so just copy the expression alone.
+	       This will be the most typical case */
+	    strncat(rowfilterx, ptr1+1, (ptr2-ptr1-1));
+	  }
+
        } else {
           ffpmsg("input file URL lacks valid row filter expression");
           *status = URL_PARSE_ERROR;
@@ -5881,7 +6530,7 @@ int ffrtnm(char *url,
 
 { 
     int ii, jj, slen, infilelen;
-    char *ptr1, *ptr2, *ptr3;
+    char *ptr1, *ptr2, *ptr3, *ptr4;
     char urltype[MAX_PREFIX_LEN];
     char infile[FLEN_FILENAME];
 
@@ -5963,6 +6612,20 @@ int ffrtnm(char *url,
        /*  get the input file name  */
     ptr2 = strchr(ptr1, '(');   /* search for opening parenthesis ( */
     ptr3 = strchr(ptr1, '[');   /* search for opening bracket [ */
+    if (ptr2)
+    {
+       ptr4 = strchr(ptr2, ')');
+       while (ptr4 && ptr2)
+       {
+          do {
+             ++ptr4;
+          }  while (*ptr4 == ' ');
+          if (*ptr4 == 0 || *ptr4 == '[')
+             break;
+          ptr2 = strchr(ptr2+1, '(');
+          ptr4 = strchr(ptr4, ')');
+       }
+    }
 
     if (ptr2 == ptr3)  /* simple case: no [ or ( in the file name */
     {
@@ -6594,7 +7257,7 @@ int ffimport_file( char *filename,   /* Text file to read                   */
    lines[0] = '\0';
 
    if( (aFile = fopen( filename, "r" ))==NULL ) {
-      sprintf(line,"Could not open ASCII file %s.",filename);
+      snprintf(line,256,"Could not open ASCII file %s.",filename);
       ffpmsg(line);
       free( lines );
       return(*status = FILE_NOT_OPENED);
@@ -7065,6 +7728,8 @@ int fftplt(fitsfile **fptr,      /* O - FITS file pointer                   */
   Uses C fopen and fgets functions.
 */
 {
+    *fptr = 0;              /* initialize null file pointer, */
+                            /* regardless of the value of *status */
     if (*status > 0)
         return(*status);
 
@@ -7268,4 +7933,78 @@ int pixel_filter_helper(
         fits_movabs_hdu(*fptr, hdunum, NULL, status);
 
     return(*status);
+}
+
+/*-------------------------------------------------------------------*/
+int ffihtps(void)
+{
+   /* Wrapper function for global initialization of curl library.
+      This is NOT THREAD-SAFE */
+   int status=0;
+#ifdef CFITSIO_HAVE_CURL
+   if (curl_global_init(CURL_GLOBAL_ALL))
+      /* Do we want to define a new CFITSIO error code for this? */
+      status = -1;
+#endif
+   return status;
+}
+
+/*-------------------------------------------------------------------*/
+int ffchtps(void)
+{
+   /* Wrapper function for global cleanup of curl library.
+      This is NOT THREAD-SAFE */
+#ifdef CFITSIO_HAVE_CURL
+   curl_global_cleanup();
+#endif
+   return 0;
+}
+
+/*-------------------------------------------------------------------*/
+void ffvhtps(int flag)
+{
+   /* Turn libcurl's verbose output on (1) or off (0). 
+      This is NOT THREAD-SAFE */
+#ifdef HAVE_NET_SERVICES
+
+   https_set_verbose(flag);
+#endif
+}
+
+/*-------------------------------------------------------------------*/
+void ffshdwn(int flag)
+{
+   /* Display download status bar (to stderr), where applicable.
+      This is NOT THREAD-SAFE */
+#ifdef HAVE_NET_SERVICES
+   fits_dwnld_prog_bar(flag);
+#endif
+}
+
+/*-------------------------------------------------------------------*/
+int ffgtmo(void)
+{
+   int timeout=0;
+#ifdef HAVE_NET_SERVICES
+   timeout = fits_net_timeout(-1);
+#endif
+   return timeout;
+}
+
+/*-------------------------------------------------------------------*/
+int ffstmo(int sec, int *status)
+{
+   if (*status > 0)
+      return (*status);
+
+#ifdef HAVE_NET_SERVICES
+   if (sec <= 0)
+   {
+      *status = BAD_NETTIMEOUT;
+      ffpmsg("Bad value for net timeout setting (fits_set_timeout).");
+      return(*status);
+   }
+   fits_net_timeout(sec);
+#endif
+   return(*status);   
 }
