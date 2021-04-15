@@ -323,6 +323,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<CastelliKuruczSED>();
     ItemRegistry::add<BruzualCharlotSED>();
     ItemRegistry::add<MarastonSED>();
+    ItemRegistry::add<Starburst99ContSED>();
     ItemRegistry::add<Starburst99SED>();
     ItemRegistry::add<FSPSSED>();
     ItemRegistry::add<BpassSED>();
@@ -344,6 +345,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<CastelliKuruczSEDFamily>();
     ItemRegistry::add<BruzualCharlotSEDFamily>();
     ItemRegistry::add<MarastonSEDFamily>();
+    ItemRegistry::add<Starburst99ContSEDFamily>();
     ItemRegistry::add<Starburst99SEDFamily>();
     ItemRegistry::add<FSPSSEDFamily>();
     ItemRegistry::add<BpassSEDFamily>();
