@@ -227,6 +227,8 @@
 #include "SpheroidalGraphiteGrainComposition.hpp"
 #include "SpheroidalSilicateGrainComposition.hpp"
 #include "SpiralStructureGeometryDecorator.hpp"
+#include "Starburst99ContSED.hpp"
+#include "Starburst99ContSEDFamily.hpp"
 #include "Starburst99SED.hpp"
 #include "Starburst99SEDFamily.hpp"
 #include "StellarSurfaceSource.hpp"
