@@ -26,7 +26,7 @@ int ffcopy(fitsfile *infptr,    /* I - FITS file pointer to input file  */
     if (infptr == outfptr)
         return(*status = SAME_FILE);
 
-    if (ffcphd(infptr, outfptr, status) )  /* copy the header keywords */
+    if (ffcphd(infptr, outfptr, status) > 0)  /* copy the header keywords */
        return(*status);
 
     if (morekeys > 0) {
@@ -263,6 +263,47 @@ int ffcphd(fitsfile *infptr,    /* I - FITS file pointer to input file  */
     return(*status);
 }
 /*--------------------------------------------------------------------------*/
+int ffcpht(fitsfile *infptr,    /* I - FITS file pointer to input file  */
+	   fitsfile *outfptr,   /* I - FITS file pointer to output file */
+           LONGLONG firstrow,   /* I - number of first row to copy (1 based)  */
+	   LONGLONG nrows,      /* I - number of rows to copy  */
+	   int *status)         /* IO - error status     */
+
+/* 
+   Copy the table structure from an existing table HDU, but only
+   copy a limited row range.  All header keywords from the input
+   table are copied directly, but NAXSI2 and PCOUNT are set to their
+   correct values. 
+*/
+{
+  if (*status > 0)
+    return(*status);
+
+  /* Copy the header only */
+  ffcphd(infptr, outfptr, status);
+  /* Note that we now have a copied header that describes the table,
+     and that is the current header, but the original number of table
+     rows and heap area sizes are still there. */
+
+  /* Zero out the size-related keywords */
+  if (! *status ) {
+    ffukyj(outfptr,"NAXIS2",0,0,status); /* NAXIS2 = 0 */
+    ffukyj(outfptr,"PCOUNT",0,0,status); /* PCOUNT = 0 */
+    /* Update the internal structure variables within CFITSIO now
+       that we have a valid table header */
+    ffrdef(outfptr,status);
+  }
+
+  /* OK now that we have a pristine HDU, copy the requested rows */
+  if (! *status && nrows > 0) {
+    ffcprw(infptr, outfptr, firstrow, nrows, status);
+  }
+ 
+  return (*status);
+}
+
+
+/*--------------------------------------------------------------------------*/
 int ffcpdt(fitsfile *infptr,    /* I - FITS file pointer to input file  */
            fitsfile *outfptr,   /* I - FITS file pointer to output file */
            int *status)         /* IO - error status     */
@@ -428,14 +469,14 @@ int ffiimgll(fitsfile *fptr,    /* I - FITS file pointer           */
         bytlen = 8;
     else
     {
-        sprintf(errmsg,
+        snprintf(errmsg, FLEN_ERRMSG,
         "Illegal value for BITPIX keyword: %d", bitpix);
         ffpmsg(errmsg);
         return(*status = BAD_BITPIX);  /* illegal bitpix value */
     }
     if (naxis < 0 || naxis > 999)
     {
-        sprintf(errmsg,
+        snprintf(errmsg, FLEN_ERRMSG,
         "Illegal value for NAXIS keyword: %d", naxis);
         ffpmsg(errmsg);
         return(*status = BAD_NAXIS);
@@ -445,7 +486,7 @@ int ffiimgll(fitsfile *fptr,    /* I - FITS file pointer           */
     {
         if (naxes[ii] < 0)
         {
-            sprintf(errmsg,
+            snprintf(errmsg, FLEN_ERRMSG,
             "Illegal value for NAXIS%d keyword: %ld", ii + 1,  (long) naxes[ii]);
             ffpmsg(errmsg);
             return(*status = BAD_NAXES);
@@ -561,7 +602,7 @@ int ffitab(fitsfile *fptr,  /* I - FITS file pointer                        */
     int nexthdu, maxhdu, ii, nunit, nhead, ncols, gotmem = 0;
     long nblocks, rowlen;
     LONGLONG datasize, newstart;
-    char errmsg[81], extnm[FLEN_VALUE];
+    char errmsg[FLEN_ERRMSG], extnm[FLEN_VALUE];
 
     if (*status > 0)
         return(*status);
@@ -592,7 +633,7 @@ int ffitab(fitsfile *fptr,  /* I - FITS file pointer                        */
         return(*status = NEG_ROWS);
     else if (tfields < 0 || tfields > 999)
     {
-        sprintf(errmsg,
+        snprintf(errmsg, FLEN_ERRMSG,
         "Illegal value for TFIELDS keyword: %d", tfields);
         ffpmsg(errmsg);
         return(*status = BAD_TFIELDS);
@@ -698,7 +739,7 @@ int ffibin(fitsfile *fptr,  /* I - FITS file pointer                        */
     LONGLONG naxis1;
     long nblocks, repeat, width;
     LONGLONG datasize, newstart;
-    char errmsg[81], extnm[FLEN_VALUE];
+    char errmsg[FLEN_ERRMSG], extnm[FLEN_VALUE];
 
     if (*status > 0)
         return(*status);
@@ -727,7 +768,7 @@ int ffibin(fitsfile *fptr,  /* I - FITS file pointer                        */
         return(*status = NEG_ROWS);
     else if (tfields < 0 || tfields > 999)
     {
-        sprintf(errmsg,
+        snprintf(errmsg, FLEN_ERRMSG,
         "Illegal value for TFIELDS keyword: %d", tfields);
         ffpmsg(errmsg);
         return(*status = BAD_TFIELDS);

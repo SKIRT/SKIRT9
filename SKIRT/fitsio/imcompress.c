@@ -161,6 +161,14 @@ static int fits_unshuffle_8bytes(char *heap, LONGLONG length, int *status);
 static int fits_unshuffle_4bytes(char *heap, LONGLONG length, int *status);
 static int fits_unshuffle_2bytes(char *heap, LONGLONG length, int *status);
 
+static int fits_int_to_longlong_inplace(int *intarray, long length, int *status);
+static int fits_short_to_int_inplace(short *intarray, long length, int shift, int *status);
+static int fits_ushort_to_int_inplace(unsigned short *intarray, long length, int shift, int *status);
+static int fits_sbyte_to_int_inplace(signed char *intarray, long length, int *status);
+static int fits_ubyte_to_int_inplace(unsigned char *intarray, long length, int *status);
+
+static int fits_calc_tile_rows(long *tlpixel, long *tfpixel, int ndim, long *trowsize, long *ntrows, int *status); 
+
 /* only used for diagnoitic purposes */
 /* int fits_get_case(int *c1, int*c2, int*c3); */ 
 /*---------------------------------------------------------------------------*/
@@ -598,7 +606,7 @@ int fits_set_compression_pref(
 */
 
     int ii, naxis, nkeys, comptype;
-    int  ivalue, tstatus;
+    int  ivalue;
     long tiledim[6]= {1,1,1,1,1,1};
     char card[FLEN_CARD], value[FLEN_VALUE];
     double  qvalue;
@@ -633,17 +641,17 @@ int fits_set_compression_pref(
                 /* allowed values: RICE_1, GZIP_1, GZIP_2, PLIO_1,     */
                 /*  HCOMPRESS_1, BZIP2_1, and NOCOMPRESS               */
 
-                if        (!strncasecmp(value, "'RICE_1", 7) ) {
+                if        (!fits_strncasecmp(value, "'RICE_1", 7) ) {
 		    comptype = RICE_1;
-                } else if (!strncasecmp(value, "'GZIP_1", 7) ) {
+                } else if (!fits_strncasecmp(value, "'GZIP_1", 7) ) {
 		    comptype = GZIP_1;
-                } else if (!strncasecmp(value, "'GZIP_2", 7) ) {
+                } else if (!fits_strncasecmp(value, "'GZIP_2", 7) ) {
 		    comptype = GZIP_2;
-                } else if (!strncasecmp(value, "'PLIO_1", 7) ) {
+                } else if (!fits_strncasecmp(value, "'PLIO_1", 7) ) {
 		    comptype = PLIO_1;
-                } else if (!strncasecmp(value, "'HCOMPRESS_1", 12) ) {
+                } else if (!fits_strncasecmp(value, "'HCOMPRESS_1", 12) ) {
 		    comptype = HCOMPRESS_1;
-                } else if (!strncasecmp(value, "'NONE", 5) ) {
+                } else if (!fits_strncasecmp(value, "'NONE", 5) ) {
 		    comptype = NOCOMPRESS;
 		} else {
 			ffpmsg("Unknown FZALGOR keyword compression algorithm:");
@@ -655,10 +663,9 @@ int fits_set_compression_pref(
 
 	    } else if (!strncmp(card+2, "TILE  ", 6) ) {
 
-		tstatus = 0;
-                if (!strncasecmp(value, "'row", 4) ) {
+                if (!fits_strncasecmp(value, "'row", 4) ) {
                    tiledim[0] = -1;
-		} else if (!strncasecmp(value, "'whole", 6) ) {
+		} else if (!fits_strncasecmp(value, "'whole", 6) ) {
                    tiledim[0] = -1;
                    tiledim[1] = -1;
                    tiledim[2] = -1;
@@ -677,11 +684,11 @@ int fits_set_compression_pref(
 
 	    } else if (!strncmp(card+2, "QMETHD", 6) ) {
 
-                    if (!strncasecmp(value, "'no_dither", 10) ) {
+                    if (!fits_strncasecmp(value, "'no_dither", 10) ) {
                         ivalue = -1; /* just quantize, with no dithering */
-		    } else if (!strncasecmp(value, "'subtractive_dither_1", 21) ) {
+		    } else if (!fits_strncasecmp(value, "'subtractive_dither_1", 21) ) {
                         ivalue = SUBTRACTIVE_DITHER_1; /* use subtractive dithering */
-		    } else if (!strncasecmp(value, "'subtractive_dither_2", 21) ) {
+		    } else if (!fits_strncasecmp(value, "'subtractive_dither_2", 21) ) {
                         ivalue = SUBTRACTIVE_DITHER_2; /* dither, except preserve zero-valued pixels */
 		    } else {
 		        ffpmsg("Unknown value for FZQUANT keyword: (set_compression_pref)");
@@ -693,9 +700,9 @@ int fits_set_compression_pref(
 		    
 	    } else if (!strncmp(card+2, "DTHRSD", 6) ) {
 
-                if (!strncasecmp(value, "'checksum", 9) ) {
+                if (!fits_strncasecmp(value, "'checksum", 9) ) {
                     ivalue = -1; /* use checksum of first tile */
-		} else if (!strncasecmp(value, "'clock", 6) ) {
+		} else if (!fits_strncasecmp(value, "'clock", 6) ) {
                     ivalue = 0; /* set dithering seed based on system clock */
 		} else {  /* read integer value */
 		    if (*value == '\'')
@@ -716,9 +723,9 @@ int fits_set_compression_pref(
 	    } else if (!strncmp(card+2, "I2F", 3) ) {
 
 	        /* set whether to convert integers to float then use lossy compression */
-                if (!strcasecmp(value, "t") ) {
+                if (!fits_strcasecmp(value, "t") ) {
 		    fits_set_lossy_int (outfptr, 1, status);
-		} else if (!strcasecmp(value, "f") ) {
+		} else if (!fits_strcasecmp(value, "f") ) {
 		    fits_set_lossy_int (outfptr, 0, status);
 		} else {
 		        ffpmsg("Unknown value for FZI2F keyword: (set_compression_pref)");
@@ -955,7 +962,7 @@ int imcomp_init_table(fitsfile *outfptr,
 */
 {
     char keyname[FLEN_KEYWORD], zcmptype[12];
-    int ii,  remain,  ncols, bitpix;
+    int ii,  remain,  ndiv, addToDim, ncols, bitpix;
     long nrows;
     char *ttype[] = {"COMPRESSED_DATA", "ZSCALE", "ZZERO"};
     char *tform[3];
@@ -963,13 +970,18 @@ int imcomp_init_table(fitsfile *outfptr,
     char *tunit[] = {"\0",            "\0",            "\0"  };
     char comm[FLEN_COMMENT];
     long actual_tilesize[MAX_COMPRESS_DIM]; /* Actual size to use for tiles */
+    int is_primary=0; /* Is this attempting to write to the primary? */
+    int nQualifyDims=0; /* For Hcompress, number of image dimensions with required pixels. */
+    int noHigherDims=1; /* Set to true if all tile dims other than x are size 1. */
+    int firstDim=-1, secondDim=-1; /* Indices of first and second tiles dimensions
+                                with width > 1 */
     
     if (*status > 0)
         return(*status);
 
     /* check for special case of losslessly compressing floating point */
     /* images.  Only compression algorithm that supports this is GZIP */
-    if ( (outfptr->Fptr)->request_quantize_level == NO_QUANTIZE) {
+    if ( (inbitpix < 0) && ((outfptr->Fptr)->request_quantize_level == NO_QUANTIZE) ) {
        if (((outfptr->Fptr)->request_compress_type != GZIP_1) &&
            ((outfptr->Fptr)->request_compress_type != GZIP_2)) {
          ffpmsg("Lossless compression of floating point images must use GZIP (imcomp_init_table)");
@@ -1022,15 +1034,37 @@ int imcomp_init_table(fitsfile *outfptr,
     memcpy(actual_tilesize, outfptr->Fptr->request_tilesize, MAX_COMPRESS_DIM * sizeof(long));
 
     if ((outfptr->Fptr)->request_compress_type == HCOMPRESS_1) {
-
+         
+         /* Tiles must ultimately have 2 (and only 2) dimensions, each with
+             at least 4 pixels. First catch the case where the image
+             itself won't allow this. */
          if (naxis < 2 ) {
             ffpmsg("Hcompress cannot be used with 1-dimensional images (imcomp_init_table)");
             return(*status = DATA_COMPRESSION_ERR);
-
-	 } else if  (naxes[0] < 4 || naxes[1] < 4) {
-            ffpmsg("Hcompress minimum image dimension is 4 pixels (imcomp_init_table)");
-            return(*status = DATA_COMPRESSION_ERR);
+	 }
+         for (ii=0; ii<naxis; ii++)
+         {
+            if (naxes[ii] >= 4)
+               ++nQualifyDims;
          }
+         if (nQualifyDims < 2)
+         {
+            ffpmsg("Hcompress minimum image dimension is 4 pixels (imcomp_init_table)");
+            return(*status = DATA_COMPRESSION_ERR);            
+         }
+
+         /* Handle 2 special cases for backwards compatibility.
+            1) If both X and Y tile dims are set to full size, ignore
+               any other requested dimensions and just set their sizes to 1. 
+            2) If X is full size and all the rest are size 1, attempt to
+               find a reasonable size for Y. All other 1-D tile specifications
+               will be rejected. */
+         for (ii=1; ii<naxis; ++ii)
+            if (actual_tilesize[ii] != 0 && actual_tilesize[ii] != 1)
+            {
+               noHigherDims = 0;
+               break;
+            }
 
          if ((actual_tilesize[0] <= 0) &&
              (actual_tilesize[1] == -1) ){
@@ -1044,8 +1078,7 @@ int imcomp_init_table(fitsfile *outfptr,
                      actual_tilesize[ii] = 1;
 	      }
 
-         } else if ((actual_tilesize[0] <= 0) &&
-             (actual_tilesize[1] == 0 || actual_tilesize[1] == 1) ){
+         } else if ((actual_tilesize[0] <= 0) && noHigherDims) {
 	     
              /*
               The Hcompress algorithm is inherently 2D in nature, so the row by row
@@ -1088,31 +1121,66 @@ int imcomp_init_table(fitsfile *outfptr,
                       actual_tilesize[1] = 17;
 		  }
 	      }
-        } else if (actual_tilesize[0] < 4 ||
-                   actual_tilesize[1] < 4) {
-
-            /* user-specified tile size is too small */
-            ffpmsg("Hcompress minimum tile dimension is 4 pixels (imcomp_init_table)");
+        } else {
+           if (actual_tilesize[0] <= 0)
+              actual_tilesize[0] = naxes[0];
+           for (ii=1; ii<naxis; ++ii)
+           {
+              if (actual_tilesize[ii] < 0)
+                 actual_tilesize[ii] = naxes[ii];
+              else if (actual_tilesize[ii] == 0)
+                 actual_tilesize[ii] = 1;
+           }
+        }
+        
+        for (ii=0; ii<naxis; ++ii)
+        {
+           if (actual_tilesize[ii] > 1)
+           {
+              if (firstDim < 0)
+                 firstDim = ii;
+              else if (secondDim < 0)
+                 secondDim = ii;
+              else
+              {
+                 ffpmsg("Hcompress tiles can only have 2 dimensions (imcomp_init_table)");
+                 return(*status = DATA_COMPRESSION_ERR);
+              }
+           }
+        }
+        if (firstDim < 0 || secondDim < 0)
+        {
+            ffpmsg("Hcompress tiles must have 2 dimensions (imcomp_init_table)");
             return(*status = DATA_COMPRESSION_ERR);
-	}
+        }
+        
+        if (actual_tilesize[firstDim] < 4 || actual_tilesize[secondDim] < 4)
+        {
+           ffpmsg("Hcompress minimum tile dimension is 4 pixels (imcomp_init_table)");
+           return (*status = DATA_COMPRESSION_ERR);
+        }
 	
         /* check if requested tile size causes the last tile to to have less than 4 pixels */
-        remain = naxes[0] % (actual_tilesize[0]);  /* 1st dimension */
+        remain = naxes[firstDim] % (actual_tilesize[firstDim]);  /* 1st dimension */
         if (remain > 0 && remain < 4) {
-            (actual_tilesize[0])++; /* try increasing tile size by 1 */
+            ndiv = naxes[firstDim]/actual_tilesize[firstDim]; /* integer truncation is intentional */
+            addToDim = ceil((double)remain/ndiv);
+            (actual_tilesize[firstDim]) += addToDim; /* increase tile size */
 	   
-            remain = naxes[0] % (actual_tilesize[0]);
+            remain = naxes[firstDim] % (actual_tilesize[firstDim]);
             if (remain > 0 && remain < 4) {
                 ffpmsg("Last tile along 1st dimension has less than 4 pixels (imcomp_init_table)");
                 return(*status = DATA_COMPRESSION_ERR);	
             }        
         }
 
-        remain = naxes[1] % (actual_tilesize[1]);  /* 2nd dimension */
+        remain = naxes[secondDim] % (actual_tilesize[secondDim]);  /* 2nd dimension */
         if (remain > 0 && remain < 4) {
-            (actual_tilesize[1])++; /* try increasing tile size by 1 */
+            ndiv = naxes[secondDim]/actual_tilesize[secondDim]; /* integer truncation is intentional */
+            addToDim = ceil((double)remain/ndiv);
+            (actual_tilesize[secondDim]) += addToDim; /* increase tile size */
 	   
-            remain = naxes[1] % (actual_tilesize[1]);
+            remain = naxes[secondDim] % (actual_tilesize[secondDim]);
             if (remain > 0 && remain < 4) {
                 ffpmsg("Last tile along 2nd dimension has less than 4 pixels (imcomp_init_table)");
                 return(*status = DATA_COMPRESSION_ERR);	
@@ -1201,6 +1269,10 @@ int imcomp_init_table(fitsfile *outfptr,
         return(*status = DATA_COMPRESSION_ERR);
     }
 
+    /* If attempting to write compressed image to primary, the
+       call to ffcrtb will increment Fptr->curhdu to 1.  Therefore
+       we need to test now for setting is_primary */
+    is_primary = (outfptr->Fptr->curhdu == 0);
     /* create the bintable extension to contain the compressed image */
     ffcrtb(outfptr, BINARY_TBL, nrows, ncols, ttype, 
                 tform, tunit, 0, status);
@@ -1213,8 +1285,9 @@ int imcomp_init_table(fitsfile *outfptr,
         /*  write the keywords defining the datatype and dimensions of */
 	/*  the uncompressed image.  If not, these keywords will be */
         /*  copied later from the input uncompressed image  */
-	   
-        ffpkyl (outfptr, "ZSIMPLE", 1,
+	
+        if (is_primary)   
+            ffpkyl (outfptr, "ZSIMPLE", 1,
 			"file does conform to FITS standard", status);
         ffpkyj (outfptr, "ZBITPIX", bitpix,
 			"data type of original image", status);
@@ -1223,7 +1296,7 @@ int imcomp_init_table(fitsfile *outfptr,
 
         for (ii = 0;  ii < naxis;  ii++)
         {
-            sprintf (keyname, "ZNAXIS%d", ii+1);
+            snprintf (keyname, FLEN_KEYWORD,"ZNAXIS%d", ii+1);
             ffpkyj (outfptr, keyname, naxes[ii],
 			"length of original image axis", status);
         }
@@ -1231,7 +1304,7 @@ int imcomp_init_table(fitsfile *outfptr,
                       
     for (ii = 0;  ii < naxis;  ii++)
     {
-        sprintf (keyname, "ZTILE%d", ii+1);
+        snprintf (keyname, FLEN_KEYWORD,"ZTILE%d", ii+1);
         ffpkyj (outfptr, keyname, actual_tilesize[ii],
 			"size of tiles to be compressed", status);
     }
@@ -1428,7 +1501,7 @@ int imcomp_compress_image (fitsfile *infptr, fitsfile *outfptr, int *status)
     long naxes[MAX_COMPRESS_DIM], fpixel[MAX_COMPRESS_DIM];
     long lpixel[MAX_COMPRESS_DIM], tile[MAX_COMPRESS_DIM];
     long tilesize[MAX_COMPRESS_DIM];
-    long i0, i1, i2, i3, i4, i5;
+    long i0, i1, i2, i3, i4, i5, trowsize, ntrows;
     char card[FLEN_CARD];
 
     if (*status > 0)
@@ -1617,15 +1690,22 @@ int imcomp_compress_image (fitsfile *infptr, fitsfile *outfptr, int *status)
 	       If it is a floating point array, then we need to check for null
 	       only if the anynul parameter returned a true value when reading the tile
 	  */
+          
+          /* Collapse sizes of higher dimension tiles into 2 dimensional
+             equivalents needed by the quantizing algorithms for
+             floating point types */
+          fits_calc_tile_rows(lpixel, fpixel, naxis, &trowsize,
+                            &ntrows, status);
+
           if (anynul && datatype == TFLOAT) {
               imcomp_compress_tile(outfptr, row, datatype, tiledata, tilelen,
-                               tile[0], tile[1], 1, &fltnull, status);
+                               trowsize, ntrows, 1, &fltnull, status);
           } else if (anynul && datatype == TDOUBLE) {
               imcomp_compress_tile(outfptr, row, datatype, tiledata, tilelen,
-                               tile[0], tile[1], 1, &dblnull, status);
+                               trowsize, ntrows, 1, &dblnull, status);
           } else {
               imcomp_compress_tile(outfptr, row, datatype, tiledata, tilelen,
-                               tile[0], tile[1], 0, &dummy, status);
+                               trowsize, ntrows, 0, &dummy, status);
           }
 
           /* set flag if we found any null values */
@@ -1720,8 +1800,16 @@ int imcomp_compress_tile (fitsfile *outfptr,
     if ( (outfptr->Fptr)->quantize_level == NO_QUANTIZE) {
        if (((outfptr->Fptr)->compress_type != GZIP_1) &&
            ((outfptr->Fptr)->compress_type != GZIP_2)) {
-         ffpmsg("Lossless compression of floating point images must use GZIP (imcomp_compress_tile)");
-         return(*status = DATA_COMPRESSION_ERR);
+           switch (datatype) {
+            case TFLOAT:
+            case TDOUBLE:
+            case TCOMPLEX:
+            case TDBLCOMPLEX:
+              ffpmsg("Lossless compression of floating point images must use GZIP (imcomp_compress_tile)");
+              return(*status = DATA_COMPRESSION_ERR);
+            default:
+              break;
+          }
        }
     }
 
@@ -2022,11 +2110,9 @@ int imcomp_compress_tile (fitsfile *outfptr,
             } else {
                  /* have to convert idata to an I*8 array, in place */
                  /* idata must have been allocated large enough to do this */
-                lldata = (LONGLONG *) idata;
-		
-                for (ii = tilelen - 1; ii >= 0; ii--) {
-		    lldata[ii] = idata[ii];
-		}
+
+                fits_int_to_longlong_inplace(idata, tilelen, status);
+                lldata = (LONGLONG *) idata;		
 
                 fits_hcompress64(lldata, tilenx, tileny, 
 		  ihcompscale, (char *) cbuf, &hcomp_len, status);
@@ -2091,7 +2177,7 @@ int imcomp_compress_tile (fitsfile *outfptr,
                compress2mem_from_mem((char *) tiledata, tilelen * sizeof(float),
                     (char **) &cbuf,  &clen, realloc, &gzip_nelem, status);
 
-         } else if (datatype == TDOUBLE) {
+         } else {  /* datatype == TDOUBLE */
 
                /* allocate buffer for the compressed tile bytes */
 	       /* make it 10% larger than the original uncompressed data */
@@ -2229,12 +2315,13 @@ int imcomp_convert_tile_tshort(
                for (ii = tilelen - 1; ii >= 0; ii--) {
 	            if (sbuff[ii] == (short) flagval)
 		       idata[ii] = nullval;
-                    else
+                    else 
                        idata[ii] = (int) sbuff[ii];
                }
            } else {  /* just do the data type conversion to int */
-               for (ii = tilelen - 1; ii >= 0; ii--) 
-                   idata[ii] = (int) sbuff[ii];
+                 /* have to convert sbuff to an I*4 array, in place */
+                 /* sbuff must have been allocated large enough to do this */
+                 fits_short_to_int_inplace(sbuff, tilelen, 0, status);
            }
        } else {
            /* have to convert to int if using PLIO */
@@ -2255,9 +2342,10 @@ int imcomp_convert_tile_tshort(
                     else
                        idata[ii] = (int) sbuff[ii] + 32768;
                }
-             } else {  /* just do the data type conversion to int */
-               for (ii = tilelen - 1; ii >= 0; ii--) 
-                   idata[ii] = (int) sbuff[ii] + 32768;
+             } else {  
+                 /* have to convert sbuff to an I*4 array, in place */
+                 /* sbuff must have been allocated large enough to do this */
+                 fits_short_to_int_inplace(sbuff, tilelen, 32768, status);
              }
            } else {
 	     /* This is not an unsigned 16-bit integer array, so process normally */
@@ -2271,8 +2359,9 @@ int imcomp_convert_tile_tshort(
                        idata[ii] = (int) sbuff[ii];
                }
              } else {  /* just do the data type conversion to int */
-               for (ii = tilelen - 1; ii >= 0; ii--) 
-                   idata[ii] = (int) sbuff[ii];
+                 /* have to convert sbuff to an I*4 array, in place */
+                 /* sbuff must have been allocated large enough to do this */
+                 fits_short_to_int_inplace(sbuff, tilelen, 0, status);
              }
            }
         }
@@ -2353,8 +2442,15 @@ int imcomp_convert_tile_tushort(
 		       idata[ii] = ((int) usbuff[ii]) - 32768;
                }
            } else {  /* just do the data type conversion to int */
-               for (ii = tilelen - 1; ii >= 0; ii--)
-		       idata[ii] = ((int) usbuff[ii]) - 32768;
+               /* for HCOMPRESS we need to simply subtract 32768 */
+               /* for PLIO, have to convert usbuff to an I*4 array, in place */
+               /* usbuff must have been allocated large enough to do this */
+
+               if ((outfptr->Fptr)->compress_type == HCOMPRESS_1) {
+                    fits_ushort_to_int_inplace(usbuff, tilelen, -32768, status);
+               } else {
+                    fits_ushort_to_int_inplace(usbuff, tilelen, 0, status);
+               }
            }
         }
 
@@ -2529,8 +2625,9 @@ int imcomp_convert_tile_tbyte(
                        idata[ii] = (int) usbbuff[ii];
                }
            } else {  /* just do the data type conversion to int */
-               for (ii = tilelen - 1; ii >= 0; ii--) 
-                   idata[ii] = (int) usbbuff[ii];
+                 /* have to convert usbbuff to an I*4 array, in place */
+                 /* usbbuff must have been allocated large enough to do this */
+                 fits_ubyte_to_int_inplace(usbbuff, tilelen, status);
            }
        }
 
@@ -2559,7 +2656,7 @@ int imcomp_convert_tile_tsbyte(
     int flagval, *idata;
     long ii;
     signed char *sbbuff;
- 
+
        /* datatype of input array is signed byte.  We only support writing this datatype
           to a FITS image with BITPIX = 8 and with BZERO = 0 and BSCALE = -128.  */
 
@@ -2606,8 +2703,9 @@ int imcomp_convert_tile_tsbyte(
                        idata[ii] = ((int) sbbuff[ii]) + 128;
                }
            } else {  /* just do the data type conversion to int */
-               for (ii = tilelen - 1; ii >= 0; ii--) 
-                   idata[ii] = ((int) sbbuff[ii]) + 128;
+                 /* have to convert sbbuff to an I*4 array, in place */
+                 /* sbbuff must have been allocated large enough to do this */
+                 fits_sbyte_to_int_inplace(sbbuff, tilelen, status);
            }
        }
  
@@ -3415,7 +3513,7 @@ int fits_write_compressed_img(fitsfile *fptr,   /* I - FITS file pointer     */
     long tfpixel[MAX_COMPRESS_DIM], tlpixel[MAX_COMPRESS_DIM];
     long rowdim[MAX_COMPRESS_DIM], offset[MAX_COMPRESS_DIM],ntemp;
     long fpixel[MAX_COMPRESS_DIM], lpixel[MAX_COMPRESS_DIM];
-    long i5, i4, i3, i2, i1, i0, irow;
+    long i5, i4, i3, i2, i1, i0, irow, trowsize, ntrows;
     int ii, ndim, pixlen, tilenul;
     int  tstatus, buffpixsiz;
     void *buffer;
@@ -3616,12 +3714,18 @@ int fits_write_compressed_img(fitsfile *fptr,   /* I - FITS file pointer     */
               /* copy the intersecting pixels to this tile from the input */
               imcomp_merge_overlap(buffer, pixlen, ndim, tfpixel, tlpixel, 
                      bnullarray, array, fpixel, lpixel, nullcheck, status);
+                     
+             /* Collapse sizes of higher dimension tiles into 2 dimensional
+                equivalents needed by the quantizing algorithms for
+                floating point types */
+              fits_calc_tile_rows(tlpixel, tfpixel, ndim, &trowsize,
+                              &ntrows, status);
 
               /* compress the tile again, and write it back to the FITS file */
               imcomp_compress_tile (fptr, irow, datatype, buffer, 
                                     thistilesize[0],
-				    tlpixel[0] - tfpixel[0] + 1,
-				    tlpixel[1] - tfpixel[1] + 1,
+				    trowsize,
+				    ntrows,
 				    nullcheck, nullval, 
 				    status);
             }
@@ -4318,7 +4422,7 @@ int fits_read_compressed_img(fitsfile *fptr,   /* I - FITS file pointer      */
     long fpixel[MAX_COMPRESS_DIM], lpixel[MAX_COMPRESS_DIM];
     long inc[MAX_COMPRESS_DIM];
     long i5, i4, i3, i2, i1, i0, irow;
-    int ii, ndim, pixlen, tilenul;
+    int ii, ndim, pixlen, tilenul=0;
     void *buffer;
     char *bnullarray = 0;
     double testnullval = 0.;
@@ -4595,7 +4699,7 @@ int fits_read_write_compressed_img(fitsfile *fptr,   /* I - FITS file pointer   
     long fpixel[MAX_COMPRESS_DIM], lpixel[MAX_COMPRESS_DIM];
     long inc[MAX_COMPRESS_DIM];
     long i5, i4, i3, i2, i1, i0, irow;
-    int ii, ndim, pixlen, tilenul;
+    int ii, ndim, tilenul;
     void *buffer;
     char *bnullarray = 0, *cnull;
     LONGLONG firstelem;
@@ -4617,7 +4721,6 @@ int fits_read_write_compressed_img(fitsfile *fptr,   /* I - FITS file pointer   
     if (datatype == TSHORT)
     {
        buffer =  malloc ((fptr->Fptr)->maxtilelen * sizeof (short)); 
-       pixlen = sizeof(short);
        if (cnull) {
          if (cnull[0] == 0 && cnull[1] == 0 ) {
            nullcheck = 0;
@@ -4627,7 +4730,6 @@ int fits_read_write_compressed_img(fitsfile *fptr,   /* I - FITS file pointer   
     else if (datatype == TINT)
     {
        buffer =  malloc ((fptr->Fptr)->maxtilelen * sizeof (int));
-       pixlen = sizeof(int);
        if (cnull) {
          if (cnull[0] == 0 && cnull[1] == 0 && cnull[2] == 0 && cnull[3] == 0 ) {
            nullcheck = 0;
@@ -4637,7 +4739,6 @@ int fits_read_write_compressed_img(fitsfile *fptr,   /* I - FITS file pointer   
     else if (datatype == TLONG)
     {
        buffer =  malloc ((fptr->Fptr)->maxtilelen * sizeof (long));
-       pixlen = sizeof(long);
        if (cnull) {
          if (cnull[0] == 0 && cnull[1] == 0 && cnull[2] == 0 && cnull[3] == 0 ) {
            nullcheck = 0;
@@ -4647,7 +4748,6 @@ int fits_read_write_compressed_img(fitsfile *fptr,   /* I - FITS file pointer   
     else if (datatype == TFLOAT)
     {
        buffer =  malloc ((fptr->Fptr)->maxtilelen * sizeof (float));
-       pixlen = sizeof(float);
        if (cnull) {
          if (cnull[0] == 0 && cnull[1] == 0 && cnull[2] == 0 && cnull[3] == 0  ) {
            nullcheck = 0;
@@ -4657,7 +4757,6 @@ int fits_read_write_compressed_img(fitsfile *fptr,   /* I - FITS file pointer   
     else if (datatype == TDOUBLE)
     {
        buffer =  malloc ((fptr->Fptr)->maxtilelen * sizeof (double));
-       pixlen = sizeof(double);
        if (cnull) {
          if (cnull[0] == 0 && cnull[1] == 0 && cnull[2] == 0 && cnull[3] == 0 &&
 	     cnull[4] == 0 && cnull[5] == 0 && cnull[6] == 0 && cnull[7] == 0 ) {
@@ -4668,7 +4767,6 @@ int fits_read_write_compressed_img(fitsfile *fptr,   /* I - FITS file pointer   
     else if (datatype == TUSHORT)
     {
        buffer =  malloc ((fptr->Fptr)->maxtilelen * sizeof (unsigned short));
-       pixlen = sizeof(short);
        if (cnull) {
          if (cnull[0] == 0 && cnull[1] == 0 ){
            nullcheck = 0;
@@ -4678,7 +4776,6 @@ int fits_read_write_compressed_img(fitsfile *fptr,   /* I - FITS file pointer   
     else if (datatype == TUINT)
     {
        buffer =  malloc ((fptr->Fptr)->maxtilelen * sizeof (unsigned int));
-       pixlen = sizeof(int);
        if (cnull) {
          if (cnull[0] == 0 && cnull[1] == 0 && cnull[2] == 0 && cnull[3] == 0 ){
            nullcheck = 0;
@@ -4688,7 +4785,6 @@ int fits_read_write_compressed_img(fitsfile *fptr,   /* I - FITS file pointer   
     else if (datatype == TULONG)
     {
        buffer =  malloc ((fptr->Fptr)->maxtilelen * sizeof (unsigned long));
-       pixlen = sizeof(long);
        if (cnull) {
          if (cnull[0] == 0 && cnull[1] == 0 && cnull[2] == 0 && cnull[3] == 0 ){
            nullcheck = 0;
@@ -4698,7 +4794,6 @@ int fits_read_write_compressed_img(fitsfile *fptr,   /* I - FITS file pointer   
     else if (datatype == TBYTE || datatype == TSBYTE)
     {
        buffer =  malloc ((fptr->Fptr)->maxtilelen * sizeof (char));
-       pixlen = 1;
        if (cnull) {
          if (cnull[0] == 0){
            nullcheck = 0;
@@ -5150,7 +5245,7 @@ int imcomp_get_compressed_image_par(fitsfile *infptr, int *status)
 {
     char keyword[FLEN_KEYWORD];
     char value[FLEN_VALUE];
-    int ii, tstatus, doffset;
+    int ii, tstatus, tstatus2, doffset, oldFormat=0, colNum=0;
     long expect_nrows, maxtilelen;
 
     if (*status > 0)
@@ -5187,25 +5282,47 @@ int imcomp_get_compressed_image_par(fitsfile *infptr, int *status)
         ffpmsg(value);
 	return (*status = DATA_DECOMPRESSION_ERR);
     }
-
-    /* get the floating point to integer quantization type, if present. */
-    /* FITS files produced before 2009 will not have this keyword */
-    tstatus = 0;
-    if (ffgky(infptr, TSTRING, "ZQUANTIZ", value, NULL, &tstatus) > 0)
+    
+    if (ffgky (infptr, TINT,  "ZBITPIX",  &(infptr->Fptr)->zbitpix,  
+               NULL, status) > 0)
     {
-        (infptr->Fptr)->quantize_method = 0;
-    } else {
+        ffpmsg("required ZBITPIX compression keyword not found");
+        return(*status);
+    }
 
-        if (!FSTRCMP(value, "NONE") ) {
-            (infptr->Fptr)->quantize_level = NO_QUANTIZE;
-       } else if (!FSTRCMP(value, "SUBTRACTIVE_DITHER_1") )
-            (infptr->Fptr)->quantize_method = SUBTRACTIVE_DITHER_1;
-        else if (!FSTRCMP(value, "SUBTRACTIVE_DITHER_2") )
-            (infptr->Fptr)->quantize_method = SUBTRACTIVE_DITHER_2;
-        else if (!FSTRCMP(value, "NO_DITHER") )
-            (infptr->Fptr)->quantize_method = NO_DITHER;
-        else
-            (infptr->Fptr)->quantize_method = 0;
+    /* If ZZERO and ZSCALE columns don't exist for floating-point types,
+     assume there is NO quantization.  Treat exactly as if it had ZQUANTIZ='NONE'.
+     This is true regardless of whether or not file has a ZQUANTIZ keyword. */
+    tstatus=0;
+    tstatus2=0;
+    if ((infptr->Fptr->zbitpix < 0) &&
+       (fits_get_colnum(infptr,CASEINSEN,"ZZERO",&colNum,&tstatus)
+	      == COL_NOT_FOUND) &&
+       (fits_get_colnum(infptr,CASEINSEN,"ZSCALE",&colNum,&tstatus2)
+	      == COL_NOT_FOUND)) {
+	  (infptr->Fptr)->quantize_level = NO_QUANTIZE;
+    }
+    else {
+       /* get the floating point to integer quantization type, if present. */
+       /* FITS files produced before 2009 will not have this keyword */
+       tstatus = 0;
+       if (ffgky(infptr, TSTRING, "ZQUANTIZ", value, NULL, &tstatus) > 0)
+       {
+           (infptr->Fptr)->quantize_method = 0;
+           (infptr->Fptr)->quantize_level = 0;
+       } else {
+
+           if (!FSTRCMP(value, "NONE") ) {
+               (infptr->Fptr)->quantize_level = NO_QUANTIZE;
+	  } else if (!FSTRCMP(value, "SUBTRACTIVE_DITHER_1") )
+               (infptr->Fptr)->quantize_method = SUBTRACTIVE_DITHER_1;
+           else if (!FSTRCMP(value, "SUBTRACTIVE_DITHER_2") )
+               (infptr->Fptr)->quantize_method = SUBTRACTIVE_DITHER_2;
+           else if (!FSTRCMP(value, "NO_DITHER") )
+               (infptr->Fptr)->quantize_method = NO_DITHER;
+           else
+               (infptr->Fptr)->quantize_method = 0;
+       }
     }
 
     /* get the floating point quantization dithering offset, if present. */
@@ -5217,13 +5334,6 @@ int imcomp_get_compressed_image_par(fitsfile *infptr, int *status)
         (infptr->Fptr)->dither_seed = 1;  
     } else {
         (infptr->Fptr)->dither_seed = doffset;
-    }
-
-    if (ffgky (infptr, TINT,  "ZBITPIX",  &(infptr->Fptr)->zbitpix,  
-               NULL, status) > 0)
-    {
-        ffpmsg("required ZBITPIX compression keyword not found");
-        return(*status);
     }
 
     if (ffgky (infptr,TINT, "ZNAXIS", &(infptr->Fptr)->zndim, NULL, status) > 0)
@@ -5249,7 +5359,7 @@ int imcomp_get_compressed_image_par(fitsfile *infptr, int *status)
     for (ii = 0;  ii < (infptr->Fptr)->zndim;  ii++)
     {
         /* get image size */
-        sprintf (keyword, "ZNAXIS%d", ii+1);
+        snprintf (keyword, FLEN_KEYWORD,"ZNAXIS%d", ii+1);
 	ffgky (infptr, TLONG,keyword, &(infptr->Fptr)->znaxis[ii],NULL,status);
 
         if (*status > 0)
@@ -5259,7 +5369,7 @@ int imcomp_get_compressed_image_par(fitsfile *infptr, int *status)
         }
 
         /* get compression tile size */
-	sprintf (keyword, "ZTILE%d", ii+1);
+	snprintf (keyword, FLEN_KEYWORD,"ZTILE%d", ii+1);
 
         /* set default tile size in case keywords are not present */
         if (ii == 0)
@@ -5295,7 +5405,16 @@ int imcomp_get_compressed_image_par(fitsfile *infptr, int *status)
         }
 
         tstatus = 0;
-        if (ffgky(infptr, TINT,"ZVAL2", &(infptr->Fptr)->rice_bytepix,
+        /* First check for very old files, where ZVAL2 wasn't yet designated
+           for bytepix */
+        if (!ffgky(infptr, TSTRING, "ZNAME2", value, NULL, &tstatus)
+                && !FSTRCMP(value, "NOISEBIT"))
+        {
+            oldFormat = 1;
+        }
+                
+        tstatus = 0;
+        if (oldFormat || ffgky(infptr, TINT,"ZVAL2", &(infptr->Fptr)->rice_bytepix,
                   NULL, &tstatus) > 0)
         {
             (infptr->Fptr)->rice_bytepix = 4;  /* default value */
@@ -5559,11 +5678,11 @@ int imcomp_copy_img2comp(fitsfile *infptr, fitsfile *outfptr, int *status)
 
 	/* write some associated HISTORY keywords */
         fits_parse_value(card, card2, NULL, status);
-	if (strncasecmp(card2, "'NONE", 5) ) {
+	if (fits_strncasecmp(card2, "'NONE", 5) ) {
 	    /* the value is not 'NONE' */	
 	    fits_write_history(outfptr, 
 	        "Image was compressed by CFITSIO using scaled integer quantization:", status);
-	    sprintf(card2, "  q = %f / quantized level scaling parameter", 
+	    snprintf(card2, FLEN_CARD,"  q = %f / quantized level scaling parameter", 
 	        (outfptr->Fptr)->request_quantize_level);
 	    fits_write_history(outfptr, card2, status); 
 	    fits_write_history(outfptr, card+10, status); 
@@ -5635,6 +5754,7 @@ int imcomp_copy_comp2img(fitsfile *infptr, fitsfile *outfptr,
 			   {"TFIELDS", "-"       },
 			   {"TTYPEm",  "-"       },
 			   {"TFORMm",  "-"       },
+			   {"THEAP",   "-"       },
 			   {"ZIMAGE",  "-"       },
 			   {"ZQUANTIZ", "-"      },
 			   {"ZDITHER0", "-"      },
@@ -5760,10 +5880,12 @@ int imcomp_decompress_tile (fitsfile *infptr,
     int blocksize, ntilebins, tilecol = 0;
     float fnulval=0;
     float *tempfloat = 0;
+    double *tempdouble = 0;
     double dnulval=0;
     double bscale, bzero, actual_bzero, dummy = 0;    /* scaling parameters */
-    long nelem = 0, offset = 0, tilesize;      /* number of bytes */
+    long tilesize;      /* number of bytes */
     int smooth, nx, ny, scale;  /* hcompress parameters */
+    LONGLONG nelemll = 0, offset = 0;
 
     if (*status > 0)
        return(*status);
@@ -5809,7 +5931,7 @@ int imcomp_decompress_tile (fitsfile *infptr,
 
     /* **************************************************************** */
     /* get length of the compressed byte stream */
-    ffgdes (infptr, (infptr->Fptr)->cn_compressed, nrow, &nelem, &offset, 
+    ffgdesll (infptr, (infptr->Fptr)->cn_compressed, nrow, &nelemll, &offset, 
             status);
 
     /* EOF error here indicates that this tile has not yet been written */
@@ -5817,7 +5939,7 @@ int imcomp_decompress_tile (fitsfile *infptr,
            return(*status = NO_COMPRESSED_TILE);
       
     /* **************************************************************** */
-    if (nelem == 0)  /* special case: tile was not compressed normally */
+    if (nelemll == 0)  /* special case: tile was not compressed normally */
     {
         if ((infptr->Fptr)->cn_uncompressed >= 1 ) {
 
@@ -5828,18 +5950,18 @@ int imcomp_decompress_tile (fitsfile *infptr,
 	    
             /* no compressed data, so simply read the uncompressed data */
             /* directly from the UNCOMPRESSED_DATA column */   
-            ffgdes (infptr, (infptr->Fptr)->cn_uncompressed, nrow, &nelem,
+            ffgdesll (infptr, (infptr->Fptr)->cn_uncompressed, nrow, &nelemll,
                &offset, status);
 
-            if (nelem == 0 && offset == 0)  /* this should never happen */
+            if (nelemll == 0 && offset == 0)  /* this should never happen */
 	        return (*status = NO_COMPRESSED_TILE);
 
             if (nullcheck <= 1) { /* set any null values in the array = nulval */
                 fits_read_col(infptr, datatype, (infptr->Fptr)->cn_uncompressed,
-                  nrow, 1, nelem, nulval, buffer, anynul, status);
+                  nrow, 1, (long) nelemll, nulval, buffer, anynul, status);
             } else  { /* set the bnullarray = 1 for any null values in the array */
                 fits_read_colnull(infptr, datatype, (infptr->Fptr)->cn_uncompressed,
-                  nrow, 1, nelem, buffer, bnullarray, anynul, status);
+                  nrow, 1, (long) nelemll, buffer, bnullarray, anynul, status);
             }
         } else if ((infptr->Fptr)->cn_gzip_data >= 1) {
 
@@ -5847,14 +5969,14 @@ int imcomp_decompress_tile (fitsfile *infptr,
             /* floating point data was not quantized,  so read the losslessly */
 	    /* compressed data from the GZIP_COMPRESSED_DATA column */   
 
-            ffgdes (infptr, (infptr->Fptr)->cn_gzip_data, nrow, &nelem,
+            ffgdesll (infptr, (infptr->Fptr)->cn_gzip_data, nrow, &nelemll,
                &offset, status);
 
-            if (nelem == 0 && offset == 0) /* this should never happen */
+            if (nelemll == 0 && offset == 0) /* this should never happen */
 	        return (*status = NO_COMPRESSED_TILE);
 
 	    /* allocate memory for the compressed tile of data */
-            cbuf = (unsigned char *) malloc (nelem);  
+            cbuf = (unsigned char *) malloc ((long) nelemll);  
             if (cbuf == NULL) {
 	        ffpmsg("error allocating memory for gzipped tile (imcomp_decompress_tile)");
 	        return (*status = MEMORY_ALLOCATION);
@@ -5862,7 +5984,7 @@ int imcomp_decompress_tile (fitsfile *infptr,
 
             /* read array of compressed bytes */
             if (fits_read_col(infptr, TBYTE, (infptr->Fptr)->cn_gzip_data, nrow,
-                 1, nelem, &charnull, cbuf, NULL, status) > 0) {
+                 1, (long) nelemll, &charnull, cbuf, NULL, status) > 0) {
                 ffpmsg("error reading compressed byte stream from binary table");
 	        free (cbuf);
                 return (*status);
@@ -5879,8 +6001,34 @@ int imcomp_decompress_tile (fitsfile *infptr,
                 free (cbuf);
                 return (*status = DATA_DECOMPRESSION_ERR);
             }
+            
+            /* Do not allow image float/doubles into int arrays */
+            if (datatype != TFLOAT && datatype != TDOUBLE)
+            {
+               ffpmsg("attempting to read compressed float or double image into incompatible data type");
+               free(cbuf);
+               return (*status = DATA_DECOMPRESSION_ERR);
+            }
 
-            if (datatype == TDOUBLE && (infptr->Fptr)->zbitpix == FLOAT_IMG) {  
+            if (datatype == TFLOAT && (infptr->Fptr)->zbitpix == DOUBLE_IMG)
+            {
+               tempdouble = (double*)malloc(idatalen);
+               if (tempdouble == NULL) {
+	           ffpmsg("Memory allocation failure for tempdouble. (imcomp_decompress_tile)");
+                   free (cbuf);
+	           return (*status = MEMORY_ALLOCATION);
+               }
+
+               /* uncompress the data into temp buffer */
+               if (uncompress2mem_from_mem ((char *)cbuf, (long) nelemll,
+                    (char **) &tempdouble, &idatalen, NULL, &tilebytesize, status)) {
+                   ffpmsg("failed to gunzip the image tile");
+                   free (tempdouble);
+                   free (cbuf);
+                   return (*status);
+               }
+            }
+            else if (datatype == TDOUBLE && (infptr->Fptr)->zbitpix == FLOAT_IMG) {  
                 /*  have to allocat a temporary buffer for the uncompressed data in the */
                 /*  case where a gzipped "float" tile is returned as a "double" array   */
                 tempfloat = (float*) malloc (idatalen); 
@@ -5892,7 +6040,7 @@ int imcomp_decompress_tile (fitsfile *infptr,
                 }
 
                 /* uncompress the data into temp buffer */
-                if (uncompress2mem_from_mem ((char *)cbuf, nelem,
+                if (uncompress2mem_from_mem ((char *)cbuf, (long) nelemll,
                      (char **) &tempfloat, &idatalen, NULL, &tilebytesize, status)) {
                     ffpmsg("failed to gunzip the image tile");
                     free (tempfloat);
@@ -5902,7 +6050,7 @@ int imcomp_decompress_tile (fitsfile *infptr,
             } else {
 
                 /* uncompress the data directly into the output buffer in all other cases */
-                if (uncompress2mem_from_mem ((char *)cbuf, nelem,
+                if (uncompress2mem_from_mem ((char *)cbuf, (long) nelemll,
                   (char **) &buffer, &idatalen, NULL, &tilebytesize, status)) {
                     ffpmsg("failed to gunzip the image tile");
                     free (cbuf);
@@ -5947,16 +6095,21 @@ int imcomp_decompress_tile (fitsfile *infptr,
             } else if (tilebytesize == 8 * tilelen) { /* double pixels */
 
 #if BYTESWAPPED
-                ffswap8((double *) buffer, tilelen);
+                if (tempdouble)
+                   ffswap8((double *) tempdouble, tilelen);
+                else
+                   ffswap8((double *) buffer, tilelen);
 #endif
                 if (datatype == TFLOAT) {
                   if (nulval) {
 		    fnulval = *(float *) nulval;
   		  }
 
-                  fffr8r4((double *) buffer, (long) tilelen, 1., 0., nullcheck,   
+                  fffr8r4((double *) tempdouble, (long) tilelen, 1., 0., nullcheck,   
                         fnulval, bnullarray, anynul,
                         (float *) buffer, status);
+                  free(tempdouble);
+                  tempdouble=0;
                 } else if (datatype == TDOUBLE) {
                   if (nulval) {
 		    dnulval = *(double *) nulval;
@@ -6103,9 +6256,9 @@ int imcomp_decompress_tile (fitsfile *infptr,
     /* allocate memory for the compressed bytes */
 
     if ((infptr->Fptr)->compress_type == PLIO_1) {
-        cbuf = (unsigned char *) malloc (nelem * sizeof (short));
+        cbuf = (unsigned char *) malloc ((long) nelemll * sizeof (short));
     } else {
-        cbuf = (unsigned char *) malloc (nelem);
+        cbuf = (unsigned char *) malloc ((long) nelemll);
     }
     if (cbuf == NULL) {
 	ffpmsg("Out of memory for cbuf. (imcomp_decompress_tile)");
@@ -6118,10 +6271,10 @@ int imcomp_decompress_tile (fitsfile *infptr,
 
     if ((infptr->Fptr)->compress_type == PLIO_1) {
         fits_read_col(infptr, TSHORT, (infptr->Fptr)->cn_compressed, nrow,
-             1, nelem, &snull, (short *) cbuf, NULL, status);
+             1, (long) nelemll, &snull, (short *) cbuf, NULL, status);
     } else {
        fits_read_col(infptr, TBYTE, (infptr->Fptr)->cn_compressed, nrow,
-             1, nelem, &charnull, cbuf, NULL, status);
+             1, (long) nelemll, &charnull, cbuf, NULL, status);
     }
 
     if (*status > 0) {
@@ -6139,15 +6292,15 @@ int imcomp_decompress_tile (fitsfile *infptr,
         blocksize = (infptr->Fptr)->rice_blocksize;
 
         if ((infptr->Fptr)->rice_bytepix == 1 ) {
-            *status = fits_rdecomp_byte (cbuf, nelem, (unsigned char *)idata,
+            *status = fits_rdecomp_byte (cbuf, (long) nelemll, (unsigned char *)idata,
                         tilelen, blocksize);
             tiledatatype = TBYTE;
         } else if ((infptr->Fptr)->rice_bytepix == 2 ) {
-            *status = fits_rdecomp_short (cbuf, nelem, (unsigned short *)idata,
+            *status = fits_rdecomp_short (cbuf, (long) nelemll, (unsigned short *)idata,
                         tilelen, blocksize);
             tiledatatype = TSHORT;
         } else {
-            *status = fits_rdecomp (cbuf, nelem, (unsigned int *)idata,
+            *status = fits_rdecomp (cbuf, (long) nelemll, (unsigned int *)idata,
                          tilelen, blocksize);
             tiledatatype = TINT;
         }
@@ -6178,7 +6331,7 @@ int imcomp_decompress_tile (fitsfile *infptr,
     } else if ( ((infptr->Fptr)->compress_type == GZIP_1) ||
                 ((infptr->Fptr)->compress_type == GZIP_2) ) {
 
-        uncompress2mem_from_mem ((char *)cbuf, nelem,
+        uncompress2mem_from_mem ((char *)cbuf, (long) nelemll,
              (char **) &idata, &idatalen, realloc, &tilebytesize, status);
 
         /* determine the data type of the uncompressed array, and */
@@ -6232,7 +6385,7 @@ int imcomp_decompress_tile (fitsfile *infptr,
 /*  BZIP2 is not supported in the public release; this is only for test purposes 
 
         if (BZ2_bzBuffToBuffDecompress ((char *) idata, &idatalen, 
-		(char *)cbuf, (unsigned int) nelem, 0, 0) )
+		(char *)cbuf, (unsigned int) nelemll, 0, 0) )
 */
         {
             ffpmsg("bzip2 decompression error");
@@ -6292,12 +6445,11 @@ int imcomp_decompress_tile (fitsfile *infptr,
                 *(short *) nulval, bnullarray, anynul,
                 (short *) buffer, status);
           }
-        } else if (tiledatatype == TINT)
-          if ((infptr->Fptr)->compress_type == PLIO_1 &&
-	    bzero == 0. && actual_bzero == 32768.) {
+        } else if (tiledatatype == TINT) {
+          if ((infptr->Fptr)->compress_type == PLIO_1 && actual_bzero == 32768.) {
 	    /* special case where unsigned 16-bit integers have been */
 	    /* offset by +32768 when using PLIO */
-            fffi4i2(idata, tilelen, bscale, -32768., nullcheck, tnull,
+            fffi4i2(idata, tilelen, bscale, bzero - 32768., nullcheck, tnull,
              *(short *) nulval, bnullarray, anynul,
             (short *) buffer, status);
           } else {
@@ -6314,18 +6466,20 @@ int imcomp_decompress_tile (fitsfile *infptr,
 	       all we need to is to reset the error status to zero.
 	    */
 	       
-            if ((infptr->Fptr)->compress_type == HCOMPRESS_1) {
-	        if (*status == NUM_OVERFLOW) *status = 0;
-	    }
+             if ((infptr->Fptr)->compress_type == HCOMPRESS_1) {
+                if ((*status == NUM_OVERFLOW) || (*status == OVERFLOW_ERR))
+                        *status = 0;
+             }
           }
-        else if (tiledatatype == TSHORT)
+        } else if (tiledatatype == TSHORT) {
           fffi2i2((short *)idata, tilelen, bscale, bzero, nullcheck, (short) tnull,
            *(short *) nulval, bnullarray, anynul,
           (short *) buffer, status);
-        else if (tiledatatype == TBYTE)
+        } else if (tiledatatype == TBYTE) {
           fffi1i2((unsigned char *)idata, tilelen, bscale, bzero, nullcheck, (unsigned char) tnull,
            *(short *) nulval, bnullarray, anynul,
           (short *) buffer, status);
+        }
     }
     else if (datatype == TINT)
     {
@@ -6345,9 +6499,17 @@ int imcomp_decompress_tile (fitsfile *infptr,
                 (int *) buffer, status);
           }
         } else if (tiledatatype == TINT)
-          fffi4int(idata, (long) tilelen, bscale, bzero, nullcheck, tnull,
-           *(int *) nulval, bnullarray, anynul,
-           (int *) buffer, status);
+          if ((infptr->Fptr)->compress_type == PLIO_1 && actual_bzero == 32768.) {
+	    /* special case where unsigned 16-bit integers have been */
+	    /* offset by +32768 when using PLIO */
+            fffi4int(idata, (long) tilelen, bscale, bzero - 32768., nullcheck, tnull,
+             *(int *) nulval, bnullarray, anynul,
+            (int *) buffer, status);
+          } else {
+            fffi4int(idata, (long) tilelen, bscale, bzero, nullcheck, tnull,
+             *(int *) nulval, bnullarray, anynul,
+            (int *) buffer, status);
+          } 
         else if (tiledatatype == TSHORT)
           fffi2int((short *)idata, tilelen, bscale, bzero, nullcheck, (short) tnull,
            *(int *) nulval, bnullarray, anynul,
@@ -6375,9 +6537,17 @@ int imcomp_decompress_tile (fitsfile *infptr,
                 (long *) buffer, status);
           }
         } else if (tiledatatype == TINT)
-          fffi4i4(idata, tilelen, bscale, bzero, nullcheck, tnull,
-           *(long *) nulval, bnullarray, anynul,
-            (long *) buffer, status);
+          if ((infptr->Fptr)->compress_type == PLIO_1 && actual_bzero == 32768.) {
+	    /* special case where unsigned 16-bit integers have been */
+	    /* offset by +32768 when using PLIO */
+            fffi4i4(idata, tilelen, bscale, bzero - 32768., nullcheck, tnull,
+             *(long *) nulval, bnullarray, anynul,
+             (long *) buffer, status);
+          } else {
+            fffi4i4(idata, tilelen, bscale, bzero, nullcheck, tnull,
+             *(long *) nulval, bnullarray, anynul,
+              (long *) buffer, status);
+          }
         else if (tiledatatype == TSHORT)
           fffi2i4((short *)idata, tilelen, bscale, bzero, nullcheck, (short) tnull,
            *(long *) nulval, bnullarray, anynul,
@@ -6432,9 +6602,17 @@ int imcomp_decompress_tile (fitsfile *infptr,
         } else {  /* use the old "round to nearest level" quantization algorithm */
 
          if (tiledatatype == TINT)
-          fffi4r4(idata, tilelen, bscale, bzero, nullcheck, tnull,  
-           fnulval, bnullarray, anynul,
-            (float *) buffer, status);
+          if ((infptr->Fptr)->compress_type == PLIO_1 && actual_bzero == 32768.) {
+	    /* special case where unsigned 16-bit integers have been */
+	    /* offset by +32768 when using PLIO */
+            fffi4r4(idata, tilelen, bscale, bzero - 32768., nullcheck, tnull,
+             fnulval, bnullarray, anynul,
+             (float *) buffer, status);
+          } else {
+            fffi4r4(idata, tilelen, bscale, bzero, nullcheck, tnull,  
+             fnulval, bnullarray, anynul,
+              (float *) buffer, status);
+          }
          else if (tiledatatype == TSHORT)
           fffi2r4((short *)idata, tilelen, bscale, bzero, nullcheck, (short) tnull,  
            fnulval, bnullarray, anynul,
@@ -6488,15 +6666,23 @@ int imcomp_decompress_tile (fitsfile *infptr,
 
         } else {  /* use the old "round to nearest level" quantization algorithm */
 
-         if (tiledatatype == TINT)
-          fffi4r8(idata, tilelen, bscale, bzero, nullcheck, tnull,
-           dnulval, bnullarray, anynul,
-            (double *) buffer, status);
-         else if (tiledatatype == TSHORT)
+         if (tiledatatype == TINT) {
+          if ((infptr->Fptr)->compress_type == PLIO_1 && actual_bzero == 32768.) {
+	    /* special case where unsigned 16-bit integers have been */
+	    /* offset by +32768 when using PLIO */
+            fffi4r8(idata, tilelen, bscale, bzero - 32768., nullcheck, tnull,
+             dnulval, bnullarray, anynul,
+             (double *) buffer, status);
+          } else {
+            fffi4r8(idata, tilelen, bscale, bzero, nullcheck, tnull,
+             dnulval, bnullarray, anynul,
+              (double *) buffer, status);
+          }
+         } else if (tiledatatype == TSHORT) {
           fffi2r8((short *)idata, tilelen, bscale, bzero, nullcheck, (short) tnull,
            dnulval, bnullarray, anynul,
             (double *) buffer, status);
-         else if (tiledatatype == TBYTE)
+         } else if (tiledatatype == TBYTE)
           fffi1r8((unsigned char *)idata, tilelen, bscale, bzero, nullcheck, (unsigned char) tnull,
            dnulval, bnullarray, anynul,
             (double *) buffer, status);
@@ -6552,9 +6738,17 @@ int imcomp_decompress_tile (fitsfile *infptr,
                 (unsigned short *) buffer, status);
           }
         } else if (tiledatatype == TINT)
-          fffi4u2(idata, tilelen, bscale, bzero, nullcheck, tnull,
-           *(unsigned short *) nulval, bnullarray, anynul,
+          if ((infptr->Fptr)->compress_type == PLIO_1 && actual_bzero == 32768.) {
+	    /* special case where unsigned 16-bit integers have been */
+	    /* offset by +32768 when using PLIO */
+            fffi4u2(idata, tilelen, bscale, bzero - 32768., nullcheck, tnull,
+             *(unsigned short *) nulval, bnullarray, anynul,
             (unsigned short *) buffer, status);
+          } else {
+            fffi4u2(idata, tilelen, bscale, bzero, nullcheck, tnull,
+             *(unsigned short *) nulval, bnullarray, anynul,
+              (unsigned short *) buffer, status);
+          }
         else if (tiledatatype == TSHORT)
           fffi2u2((short *)idata, tilelen, bscale, bzero, nullcheck, (short) tnull,
            *(unsigned short *) nulval, bnullarray, anynul,
@@ -6581,10 +6775,19 @@ int imcomp_decompress_tile (fitsfile *infptr,
                 *(unsigned int *) nulval, bnullarray, anynul,
                 (unsigned int *) buffer, status);
           }
-        } else         if (tiledatatype == TINT)
-          fffi4uint(idata, tilelen, bscale, bzero, nullcheck, tnull,
-           *(unsigned int *) nulval, bnullarray, anynul,
-            (unsigned int *) buffer, status);
+        } else
+         if (tiledatatype == TINT)
+          if ((infptr->Fptr)->compress_type == PLIO_1 && actual_bzero == 32768.) {
+	    /* special case where unsigned 16-bit integers have been */
+	    /* offset by +32768 when using PLIO */
+            fffi4uint(idata, tilelen, bscale, bzero - 32768., nullcheck, tnull,
+             *(unsigned int *) nulval, bnullarray, anynul,
+              (unsigned int *) buffer, status);
+          } else {
+            fffi4uint(idata, tilelen, bscale, bzero, nullcheck, tnull,
+             *(unsigned int *) nulval, bnullarray, anynul,
+              (unsigned int *) buffer, status);
+          }
         else if (tiledatatype == TSHORT)
           fffi2uint((short *)idata, tilelen, bscale, bzero, nullcheck, (short) tnull,
            *(unsigned int *) nulval, bnullarray, anynul,
@@ -6612,9 +6815,17 @@ int imcomp_decompress_tile (fitsfile *infptr,
                 (unsigned long *) buffer, status);
           }
         } else if (tiledatatype == TINT)
-          fffi4u4(idata, tilelen, bscale, bzero, nullcheck, tnull,
-           *(unsigned long *) nulval, bnullarray, anynul, 
-            (unsigned long *) buffer, status);
+          if ((infptr->Fptr)->compress_type == PLIO_1 && actual_bzero == 32768.) {
+	    /* special case where unsigned 16-bit integers have been */
+	    /* offset by +32768 when using PLIO */
+            fffi4u4(idata, tilelen, bscale, bzero - 32768., nullcheck, tnull,
+             *(unsigned long *) nulval, bnullarray, anynul,
+              (unsigned long *) buffer, status);
+          } else {
+            fffi4u4(idata, tilelen, bscale, bzero, nullcheck, tnull,
+             *(unsigned long *) nulval, bnullarray, anynul, 
+              (unsigned long *) buffer, status);
+          }
         else if (tiledatatype == TSHORT)
           fffi2u4((short *)idata, tilelen, bscale, bzero, nullcheck, (short) tnull,
            *(unsigned long *) nulval, bnullarray, anynul, 
@@ -7894,13 +8105,13 @@ int fits_compress_table(fitsfile *infptr, fitsfile *outfptr, int *status)
     tstatus = 0;
     if (!fits_read_key(infptr, TSTRING, "FZALGOR", tempstring, NULL, &tstatus)) {
 
-	    if (!strcasecmp(tempstring, "NONE")) {
+	    if (!fits_strcasecmp(tempstring, "NONE")) {
 	            default_algor = NOCOMPRESS;
-	    } else if (!strcasecmp(tempstring, "GZIP") || !strcasecmp(tempstring, "GZIP_1")) {
+	    } else if (!fits_strcasecmp(tempstring, "GZIP") || !fits_strcasecmp(tempstring, "GZIP_1")) {
 	            default_algor = GZIP_1;
-	    } else if (!strcasecmp(tempstring, "GZIP_2")) {
+	    } else if (!fits_strcasecmp(tempstring, "GZIP_2")) {
 	            default_algor = GZIP_2;
- 	    } else if (!strcasecmp(tempstring, "RICE_1")) {
+ 	    } else if (!fits_strcasecmp(tempstring, "RICE_1")) {
 	            default_algor = RICE_1;
  	    } else {
  	        ffpmsg("FZALGOR specifies unsupported table compression algorithm:");
@@ -7945,7 +8156,7 @@ int fits_compress_table(fitsfile *infptr, fitsfile *outfptr, int *status)
     fits_copy_header(infptr, outfptr, status);  /* start with verbatim copy of the input header */
 
     fits_write_key(outfptr, TLOGICAL, "ZTABLE", &ltrue, "this is a compressed table", status);
-    fits_write_key(outfptr, TLONGLONG, "ZTILELEN", &rowspertile, "number of rows in each tile", status);
+    fits_write_key(outfptr, TLONG, "ZTILELEN", &rowspertile, "number of rows in each tile", status);
 
     fits_read_card(outfptr, "NAXIS1", card, status); /* copy NAXIS1 to ZNAXIS1 */
     strncpy(card, "ZNAXIS1", 7);
@@ -8021,11 +8232,11 @@ int fits_compress_table(fitsfile *infptr, fitsfile *outfptr, int *status)
 	tstatus = 0;
 	if (!fits_read_key(outfptr, TSTRING, keyname, tempstring, NULL, &tstatus)) {
 
-	    if (!strcasecmp(tempstring, "GZIP") || !strcasecmp(tempstring, "GZIP_1")) {
+	    if (!fits_strcasecmp(tempstring, "GZIP") || !fits_strcasecmp(tempstring, "GZIP_1")) {
 	            compalgor[ii] = GZIP_1;
-	    } else if (!strcasecmp(tempstring, "GZIP_2")) {
+	    } else if (!fits_strcasecmp(tempstring, "GZIP_2")) {
 	            compalgor[ii] = GZIP_2;
-	    } else if (!strcasecmp(tempstring, "RICE_1")) {
+	    } else if (!fits_strcasecmp(tempstring, "RICE_1")) {
 	            compalgor[ii] = RICE_1;
 	    } else {
 	        ffpmsg("Unsupported table compression algorithm specification.");
@@ -8158,7 +8369,7 @@ int fits_compress_table(fitsfile *infptr, fitsfile *outfptr, int *status)
     
         for (ii = 0; ii < ncols; ii++) {  /* loop over columns */
 	  /* initialize the diagnostic compression results string */
-	  sprintf(results[ii],"%3d %3d %3d ", ii+1, coltype[ii], compalgor[ii]);  
+	  snprintf(results[ii],30,"%3d %3d %3d ", ii+1, coltype[ii], compalgor[ii]);  
           cratio[ii] = 0;
 	  
           if (rm_repeat[ii] > 0) {  /* skip virtual columns with zero width */
@@ -8259,7 +8470,7 @@ int fits_compress_table(fitsfile *infptr, fitsfile *outfptr, int *status)
                            (int) compmemlen, 32);
 		        } else {
 			  /* this should not happen */
-			  ffpmsg(" Error: cannot compress this column type with the RICE algorthm");
+			  ffpmsg(" Error: cannot compress this column type with the RICE algorithm");
 			  free(vlamem); free(cdescript); free(cm_buffer); free(cvlamem);
 			  *status = DATA_COMPRESSION_ERR;
 			  return(*status);
@@ -8279,7 +8490,7 @@ int fits_compress_table(fitsfile *infptr, fitsfile *outfptr, int *status)
 	    		    &cvlamem,  &compmemlen, realloc, &dlen, status);        
 		    } else {
 			  /* this should not happen */
-			  ffpmsg(" Error: unknown compression algorthm");
+			  ffpmsg(" Error: unknown compression algorithm");
 			  free(vlamem); free(cdescript); free(cm_buffer); free(cvlamem);
 			  *status = DATA_COMPRESSION_ERR;
 			  return(*status);
@@ -8321,8 +8532,8 @@ int fits_compress_table(fitsfile *infptr, fitsfile *outfptr, int *status)
 		if (compressed_size != 0)
 		    cratio[ii] = uncompressed_size / compressed_size;
 
-		sprintf(tempstring," r=%6.2f",cratio[ii]);
-		strcat(results[ii],tempstring);
+		snprintf(tempstring,FLEN_VALUE," r=%6.2f",cratio[ii]);
+		strncat(results[ii],tempstring, 29-strlen(results[ii]));
 
 		/* now we just have to compress the array of descriptors (both input and output) */
 		/* and write them to the output table. */
@@ -8448,8 +8659,8 @@ int fits_compress_table(fitsfile *infptr, fitsfile *outfptr, int *status)
 	    if (dlen != 0)
 	       cratio[ii] = (float) datasize / (float) dlen;  /* compression ratio of the column */
 
-	    sprintf(tempstring," r=%6.2f",cratio[ii]);
-	    strcat(results[ii],tempstring);
+	    snprintf(tempstring,FLEN_VALUE," r=%6.2f",cratio[ii]);
+	    strncat(results[ii],tempstring,29-strlen(results[ii]));
  
           }  /* end of not a virtual column */
         }  /* end of loop over columns */
@@ -8557,6 +8768,9 @@ int fits_uncompress_table(fitsfile *infptr, fitsfile *outfptr, int *status)
         *status = DATA_DECOMPRESSION_ERR;
         return(*status);
     }
+
+    /* silently ignore illegal ZTILELEN value if too large */
+    if (rowspertile > naxis2) rowspertile = naxis2;
 
     fits_read_key(infptr, TLONG, "ZPCOUNT", &pcount, comm, status);
     if (*status > 0) {
@@ -8808,7 +9022,7 @@ int fits_uncompress_table(fitsfile *infptr, fitsfile *outfptr, int *status)
 	 ptr = (char *) (cm_buffer + cmajor_colstart[ii]);  /* initialize ptr to start of the column in the cm_buffer */
          if (rmajor_repeat[ii] > 0) {  /* skip columns with zero elements */
              if (coltype[ii] > 0) {  /* normal fixed length array columns */
-                 if ((zctype[ii] == GZIP_2)) {  /*  need to unshuffle the bytes */
+                 if (zctype[ii] == GZIP_2) {  /*  need to unshuffle the bytes */
 
 	             /* recombine the byte planes for the 2-byte, 4-byte, and 8-byte numeric columns */
 	             switch (colcode[ii]) {
@@ -9067,7 +9281,7 @@ int fits_uncompress_table(fitsfile *infptr, fitsfile *outfptr, int *status)
 					(int) vlalen, 32);
 				} else {
 				    /* this should not happen */
-				    ffpmsg(" Error: cannot uncompress this column type with the RICE algorthm");
+				    ffpmsg(" Error: cannot uncompress this column type with the RICE algorithm");
 
 				    *status = DATA_DECOMPRESSION_ERR;
 			            free(uncompressed_vla); free(compressed_vla); free(rm_buffer);  free(cm_buffer);
@@ -9092,7 +9306,7 @@ int fits_uncompress_table(fitsfile *infptr, fitsfile *outfptr, int *status)
 
 			    } else {
 				/* this should not happen */
-				ffpmsg(" Error: unknown compression algorthm");
+				ffpmsg(" Error: unknown compression algorithm");
 			        free(uncompressed_vla); free(compressed_vla); free(rm_buffer);  free(cm_buffer);
 				*status = DATA_COMPRESSION_ERR;
 				return(*status);
@@ -9365,4 +9579,369 @@ static int fits_unshuffle_8bytes(char *heap, LONGLONG length, int *status)
     memcpy(heap, ptr, (size_t) (length * 8));
     free(ptr);
     return(*status);
+}
+/*--------------------------------------------------------------------------*/
+static int fits_int_to_longlong_inplace(int *intarray, long length, int *status)
+
+/* convert the input array of 32-bit integers into an array of 64-bit integers,
+in place. This will overwrite the input array with the new longer array starting
+at the same memory location.  
+
+Note that aliasing the same memory location with pointers of different datatypes is
+not allowed in strict ANSI C99, however it is  used here for efficency. In principle,
+one could simply copy the input array in reverse order to the output array,
+but this only works if the compiler performs the operation in strict order.  Certain
+compiler optimization techniques may vioate this assumption.  Therefore, we first
+copy a section of the input array to a temporary intermediate array, before copying
+the longer datatype values back to the original array.
+*/
+
+{
+    LONGLONG *longlongarray, *aliasarray;
+    long ii, ntodo, firstelem, nmax = 10000;
+    
+    if (*status > 0) 
+        return(*status);
+
+    ntodo = nmax;
+    if (length < nmax) ntodo = length;
+    
+    firstelem = length - ntodo;  /* first element to be converted */
+    
+    longlongarray = (LONGLONG *) malloc(ntodo * sizeof(LONGLONG));
+    
+    if (longlongarray == NULL)
+    {
+	ffpmsg("Out of memory. (fits_int_to_longlong_inplace)");
+	return (*status = MEMORY_ALLOCATION);
+    }
+
+    aliasarray = (LONGLONG *) intarray; /* alias pointer to the input array */
+
+    while (ntodo > 0) {
+    
+	/* do datatype conversion into temp array */
+        for (ii = 0; ii < ntodo; ii++) { 
+	    longlongarray[ii] = intarray[ii + firstelem];
+        }
+
+        /* copy temp array back to alias */
+        memcpy(&(aliasarray[firstelem]), longlongarray, ntodo * 8);
+	
+        if (firstelem == 0) {  /* we are all done */
+	    ntodo = 0;   
+	} else {  /* recalculate ntodo and firstelem for next loop */
+	    if (firstelem > nmax) {
+	        firstelem -= nmax;
+	    } else {
+	        ntodo = firstelem;
+	        firstelem = 0;
+	    }
+	}
+    }
+
+    free(longlongarray);
+    return(*status);
+}
+/*--------------------------------------------------------------------------*/
+static int fits_short_to_int_inplace(short *shortarray, long length, int shift, int *status)
+
+/* convert the input array of 16-bit integers into an array of 32-bit integers,
+in place. This will overwrite the input array with the new longer array starting
+at the same memory location.  
+
+Note that aliasing the same memory location with pointers of different datatypes is
+not allowed in strict ANSI C99, however it is  used here for efficency. In principle,
+one could simply copy the input array in reverse order to the output array,
+but this only works if the compiler performs the operation in strict order.  Certain
+compiler optimization techniques may vioate this assumption.  Therefore, we first
+copy a section of the input array to a temporary intermediate array, before copying
+the longer datatype values back to the original array.
+*/
+
+{
+    int *intarray, *aliasarray;
+    long ii, ntodo, firstelem, nmax = 10000;
+    
+    if (*status > 0) 
+        return(*status);
+
+    ntodo = nmax;
+    if (length < nmax) ntodo = length;
+    
+    firstelem = length - ntodo;  /* first element to be converted */
+    
+    intarray = (int *) malloc(ntodo * sizeof(int));
+    
+    if (intarray == NULL)
+    {
+	ffpmsg("Out of memory. (fits_short_to_int_inplace)");
+	return (*status = MEMORY_ALLOCATION);
+    }
+
+    aliasarray = (int *) shortarray; /* alias pointer to the input array */
+
+    while (ntodo > 0) {
+    
+	/* do datatype conversion into temp array */
+        for (ii = 0; ii < ntodo; ii++) { 
+	    intarray[ii] = (int)(shortarray[ii + firstelem]) + shift;
+        }
+
+        /* copy temp array back to alias */
+        memcpy(&(aliasarray[firstelem]), intarray, ntodo * 4);
+	
+        if (firstelem == 0) {  /* we are all done */
+	    ntodo = 0;   
+	} else {  /* recalculate ntodo and firstelem for next loop */
+	    if (firstelem > nmax) {
+	        firstelem -= nmax;
+	    } else {
+	        ntodo = firstelem;
+	        firstelem = 0;
+	    }
+	}
+    }
+
+    free(intarray);
+    return(*status);
+}
+/*--------------------------------------------------------------------------*/
+static int fits_ushort_to_int_inplace(unsigned short *ushortarray, long length, 
+                                      int shift, int *status)
+
+/* convert the input array of 16-bit unsigned integers into an array of 32-bit integers,
+in place. This will overwrite the input array with the new longer array starting
+at the same memory location.  
+
+Note that aliasing the same memory location with pointers of different datatypes is
+not allowed in strict ANSI C99, however it is  used here for efficency. In principle,
+one could simply copy the input array in reverse order to the output array,
+but this only works if the compiler performs the operation in strict order.  Certain
+compiler optimization techniques may vioate this assumption.  Therefore, we first
+copy a section of the input array to a temporary intermediate array, before copying
+the longer datatype values back to the original array.
+*/
+
+{
+    int *intarray, *aliasarray;
+    long ii, ntodo, firstelem, nmax = 10000;
+    
+    if (*status > 0) 
+        return(*status);
+
+    ntodo = nmax;
+    if (length < nmax) ntodo = length;
+    
+    firstelem = length - ntodo;  /* first element to be converted */
+    
+    intarray = (int *) malloc(ntodo * sizeof(int));
+    
+    if (intarray == NULL)
+    {
+	ffpmsg("Out of memory. (fits_ushort_to_int_inplace)");
+	return (*status = MEMORY_ALLOCATION);
+    }
+
+    aliasarray = (int *) ushortarray; /* alias pointer to the input array */
+
+    while (ntodo > 0) {
+    
+	/* do datatype conversion into temp array */
+        for (ii = 0; ii < ntodo; ii++) { 
+	    intarray[ii] = (int)(ushortarray[ii + firstelem]) + shift;
+        }
+
+        /* copy temp array back to alias */
+        memcpy(&(aliasarray[firstelem]), intarray, ntodo * 4);
+	
+        if (firstelem == 0) {  /* we are all done */
+	    ntodo = 0;   
+	} else {  /* recalculate ntodo and firstelem for next loop */
+	    if (firstelem > nmax) {
+	        firstelem -= nmax;
+	    } else {
+	        ntodo = firstelem;
+	        firstelem = 0;
+	    }
+	}
+    }
+
+    free(intarray);
+    return(*status);
+}
+/*--------------------------------------------------------------------------*/
+static int fits_ubyte_to_int_inplace(unsigned char *ubytearray, long length, 
+                                      int *status)
+
+/* convert the input array of 8-bit unsigned integers into an array of 32-bit integers,
+in place. This will overwrite the input array with the new longer array starting
+at the same memory location.  
+
+Note that aliasing the same memory location with pointers of different datatypes is
+not allowed in strict ANSI C99, however it is  used here for efficency. In principle,
+one could simply copy the input array in reverse order to the output array,
+but this only works if the compiler performs the operation in strict order.  Certain
+compiler optimization techniques may vioate this assumption.  Therefore, we first
+copy a section of the input array to a temporary intermediate array, before copying
+the longer datatype values back to the original array.
+*/
+
+{
+    int *intarray, *aliasarray;
+    long ii, ntodo, firstelem, nmax = 10000;
+    
+    if (*status > 0) 
+        return(*status);
+
+    ntodo = nmax;
+    if (length < nmax) ntodo = length;
+    
+    firstelem = length - ntodo;  /* first element to be converted */
+    
+    intarray = (int *) malloc(ntodo * sizeof(int));
+    
+    if (intarray == NULL)
+    {
+	ffpmsg("Out of memory. (fits_ubyte_to_int_inplace)");
+	return (*status = MEMORY_ALLOCATION);
+    }
+
+    aliasarray = (int *) ubytearray; /* alias pointer to the input array */
+
+    while (ntodo > 0) {
+    
+	/* do datatype conversion into temp array */
+        for (ii = 0; ii < ntodo; ii++) { 
+	    intarray[ii] = ubytearray[ii + firstelem];
+        }
+
+        /* copy temp array back to alias */
+        memcpy(&(aliasarray[firstelem]), intarray, ntodo * 4);
+	
+        if (firstelem == 0) {  /* we are all done */
+	    ntodo = 0;   
+	} else {  /* recalculate ntodo and firstelem for next loop */
+	    if (firstelem > nmax) {
+	        firstelem -= nmax;
+	    } else {
+	        ntodo = firstelem;
+	        firstelem = 0;
+	    }
+	}
+    }
+
+    free(intarray);
+    return(*status);
+}
+/*--------------------------------------------------------------------------*/
+static int fits_sbyte_to_int_inplace(signed char *sbytearray, long length, 
+                                      int *status)
+
+/* convert the input array of 8-bit signed integers into an array of 32-bit integers,
+in place. This will overwrite the input array with the new longer array starting
+at the same memory location.  
+
+Note that aliasing the same memory location with pointers of different datatypes is
+not allowed in strict ANSI C99, however it is  used here for efficency. In principle,
+one could simply copy the input array in reverse order to the output array,
+but this only works if the compiler performs the operation in strict order.  Certain
+compiler optimization techniques may vioate this assumption.  Therefore, we first
+copy a section of the input array to a temporary intermediate array, before copying
+the longer datatype values back to the original array.
+*/
+
+/*
+!!!!!!!!!!!!!!!!!
+NOTE THAT THIS IS A SPECIALIZED ROUTINE THAT ADDS AN OFFSET OF 128 TO THE ARRAY VALUES
+!!!!!!!!!!!!!!!!!
+*/
+
+{
+    int *intarray, *aliasarray;
+    long ii, ntodo, firstelem, nmax = 10000;
+    
+    if (*status > 0) 
+        return(*status);
+
+    ntodo = nmax;
+    if (length < nmax) ntodo = length;
+    
+    firstelem = length - ntodo;  /* first element to be converted */
+    
+    intarray = (int *) malloc(ntodo * sizeof(int));
+    
+    if (intarray == NULL)
+    {
+	ffpmsg("Out of memory. (fits_sbyte_to_int_inplace)");
+	return (*status = MEMORY_ALLOCATION);
+    }
+
+    aliasarray = (int *) sbytearray; /* alias pointer to the input array */
+
+    while (ntodo > 0) {
+    
+	/* do datatype conversion into temp array */
+        for (ii = 0; ii < ntodo; ii++) { 
+	    intarray[ii] = sbytearray[ii + firstelem] + 128;  /* !! Note the offset !! */
+        }
+
+        /* copy temp array back to alias */
+        memcpy(&(aliasarray[firstelem]), intarray, ntodo * 4);
+	
+        if (firstelem == 0) {  /* we are all done */
+	    ntodo = 0;   
+	} else {  /* recalculate ntodo and firstelem for next loop */
+	    if (firstelem > nmax) {
+	        firstelem -= nmax;
+	    } else {
+	        ntodo = firstelem;
+	        firstelem = 0;
+	    }
+	}
+    }
+
+    free(intarray);
+    return(*status);
+}
+
+int fits_calc_tile_rows(long *tlpixel, long *tfpixel, int ndim, long *trowsize, long *ntrows, int *status)
+{
+
+   /*  The quantizing algorithms treat all N-dimensional tiles as if they
+       were 2 dimensions (trowsize * ntrows).  This sets trowsize to the
+       first dimensional size encountered that's > 1 (typically the X dimension).
+       ntrows will then be the product of the remaining dimensional sizes.
+       
+       Examples:  Tile = (5,4,1,3):  trowsize=5, ntrows=12
+                  Tile = (1,1,5):  trowsize=5, ntrows=1
+   */
+
+   int ii;
+   long np;
+   
+   if (*status)
+      return (*status);
+    
+   *trowsize = 0; 
+   *ntrows = 1;  
+   for (ii=0; ii<ndim; ++ii)
+   {
+      np = tlpixel[ii] - tfpixel[ii] + 1;
+      if (np > 1)
+      {
+         if (!(*trowsize))
+            *trowsize = np;
+         else
+            *ntrows *= np;
+      }
+   }
+   if (!(*trowsize))
+   {
+      /* Should only get here for the unusual case of all tile dimensions 
+         having size = 1  */
+      *trowsize = 1;
+   }  
+      
+   return (*status);
 }

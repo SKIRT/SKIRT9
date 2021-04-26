@@ -80,7 +80,7 @@ int ffrsimll(fitsfile *fptr,    /* I - FITS file pointer           */
         longbitpix != LONG_IMG && longbitpix != LONGLONG_IMG &&
         longbitpix != FLOAT_IMG && longbitpix != DOUBLE_IMG)
     {
-        sprintf(message,
+        snprintf(message, FLEN_ERRMSG,
         "Illegal value for BITPIX keyword: %d", bitpix);
         ffpmsg(message);
         return(*status = BAD_BITPIX);
@@ -88,7 +88,7 @@ int ffrsimll(fitsfile *fptr,    /* I - FITS file pointer           */
 
     if (naxis < 0 || naxis > 999)
     {
-        sprintf(message,
+        snprintf(message, FLEN_ERRMSG,
         "Illegal value for NAXIS keyword: %d", naxis);
         ffpmsg(message);
         return(*status = BAD_NAXIS);
@@ -103,7 +103,7 @@ int ffrsimll(fitsfile *fptr,    /* I - FITS file pointer           */
     {
         if (naxes[ii] < 0)
         {
-            sprintf(message,
+            snprintf(message, FLEN_ERRMSG,
             "Illegal value for NAXIS%d keyword: %.0f", ii + 1,  (double) (naxes[ii]));
             ffpmsg(message);
             return(*status = BAD_NAXES);
@@ -1080,7 +1080,7 @@ int fficls(fitsfile *fptr,  /* I - FITS file pointer                        */
 
     if ((fptr->Fptr)->hdutype == IMAGE_HDU)
     {
-       ffpmsg("Can only add columns to TABLE or BINTABLE extension (fficol)");
+       ffpmsg("Can only add columns to TABLE or BINTABLE extension (fficls)");
        return(*status = NOT_TABLE);
     }
 
@@ -1097,6 +1097,11 @@ int fficls(fitsfile *fptr,  /* I - FITS file pointer                        */
     delbyte = 0;
     for (ii = 0; ii < ncols; ii++)
     {
+        if (strlen(tform[ii]) > FLEN_VALUE-1)
+        {
+           ffpmsg("Column format string too long (fficls)");
+           return (*status=BAD_TFORM);
+        }
         strcpy(tfm, tform[ii]);
         ffupch(tfm);         /* make sure format is in upper case */
 
@@ -1399,6 +1404,11 @@ int ffmvec(fitsfile *fptr,  /* I - FITS file pointer                        */
       tstatus = 0;
       ffmkyj(fptr, "THEAP", (fptr->Fptr)->heapstart, "&", &tstatus);
 
+      /* Must reset colptr before using it again.  (fptr->Fptr)->tableptr
+         may have been reallocated down in ffbinit via the call to ffiblk above.*/
+      colptr = (fptr->Fptr)->tableptr;
+      colptr += (colnum - 1);
+
       firstcol = colptr->tbcol + (repeat * width);  /* insert position */
 
       /* insert delbyte bytes in every row, at byte position firstcol */
@@ -1464,9 +1474,9 @@ int ffmvec(fitsfile *fptr,  /* I - FITS file pointer                        */
       strcpy(tcode,"M");
 
     /* write as a double value because the LONGLONG conversion */
-    /* character in sprintf is platform dependent ( %lld, %ld, %I64d ) */
+    /* character in snprintf is platform dependent ( %lld, %ld, %I64d ) */
 
-    sprintf(tfm,"%.0f%s",(double) newveclen, tcode); 
+    snprintf(tfm,FLEN_VALUE,"%.0f%s",(double) newveclen, tcode); 
 
     ffkeyn("TFORM", colnum, keyname, status);  /* Keyword name */
     ffmkys(fptr, keyname, tfm, "&", status);   /* modify TFORM keyword */
@@ -1487,8 +1497,9 @@ int ffcpcl(fitsfile *infptr,    /* I - FITS file pointer to input file  */
   copy a column from infptr and insert it in the outfptr table.
 */
 {
-    int tstatus, colnum, typecode, anynull;
-    long tfields, repeat, width, nrows, outrows;
+    int tstatus, colnum, typecode, otypecode, etypecode, anynull;
+    int inHduType, outHduType;
+    long tfields, repeat, orepeat, width, owidth, nrows, outrows;
     long inloop, outloop, maxloop, ndone, ntodo, npixels;
     long firstrow, firstelem, ii;
     char keyname[FLEN_KEYWORD], ttype[FLEN_VALUE], tform[FLEN_VALUE];
@@ -1497,6 +1508,8 @@ int ffcpcl(fitsfile *infptr,    /* I - FITS file pointer to input file  */
     char nulstr[] = {'\5', '\0'};  /* unique null string value */
     double dnull = 0.l, *dvalues = 0;
     float fnull = 0., *fvalues = 0;
+    long long int *jjvalues = 0;
+    unsigned long long int *ujjvalues = 0;
 
     if (*status > 0)
         return(*status);
@@ -1507,25 +1520,27 @@ int ffcpcl(fitsfile *infptr,    /* I - FITS file pointer to input file  */
     }
     else if ((infptr->Fptr)->datastart == DATA_UNDEFINED)
         ffrdef(infptr, status);                /* rescan header */
-
+    inHduType = (infptr->Fptr)->hdutype;
+    
     if (outfptr->HDUposition != (outfptr->Fptr)->curhdu)
     {
         ffmahd(outfptr, (outfptr->HDUposition) + 1, NULL, status);
     }
     else if ((outfptr->Fptr)->datastart == DATA_UNDEFINED)
         ffrdef(outfptr, status);               /* rescan header */
-
+    outHduType = (outfptr->Fptr)->hdutype;
+    
     if (*status > 0)
         return(*status);
 
-    if ((infptr->Fptr)->hdutype == IMAGE_HDU || (outfptr->Fptr)->hdutype == IMAGE_HDU)
+    if (inHduType == IMAGE_HDU || outHduType == IMAGE_HDU)
     {
        ffpmsg
        ("Can not copy columns to or from IMAGE HDUs (ffcpcl)");
        return(*status = NOT_TABLE);
     }
 
-    if ( (infptr->Fptr)->hdutype == BINARY_TBL &&  (outfptr->Fptr)->hdutype == ASCII_TBL)
+    if ( inHduType == BINARY_TBL &&  outHduType == ASCII_TBL)
     {
        ffpmsg
        ("Copying from Binary table to ASCII table is not supported (ffcpcl)");
@@ -1534,6 +1549,8 @@ int ffcpcl(fitsfile *infptr,    /* I - FITS file pointer to input file  */
 
     /* get the datatype and vector repeat length of the column */
     ffgtcl(infptr, incol, &typecode, &repeat, &width, status);
+    /* ... and equivalent type code */
+    ffeqty(infptr, incol, &etypecode, 0,      0,      status);
 
     if (typecode < 0)
     {
@@ -1555,7 +1572,7 @@ int ffcpcl(fitsfile *infptr,    /* I - FITS file pointer to input file  */
           return(*status = NO_TFORM);
         }
 
-        if ((infptr->Fptr)->hdutype == ASCII_TBL && (outfptr->Fptr)->hdutype == BINARY_TBL)
+        if (inHduType == ASCII_TBL && outHduType == BINARY_TBL)
         {
             /* convert from ASCII table to BINARY table format string */
             if (typecode == TSTRING)
@@ -1591,6 +1608,12 @@ int ffcpcl(fitsfile *infptr,    /* I - FITS file pointer to input file  */
            return(*status);
         }
 
+        if ((infptr->Fptr == outfptr->Fptr)
+           && (infptr->HDUposition == outfptr->HDUposition)
+           && (colnum <= incol))  {
+	       incol++;  /* the input column has been shifted over */
+        }
+
         /* copy the comment strings from the input file for TTYPE and TFORM */
         tstatus = 0;
         ffkeyn("TTYPE", colnum, keyname, &tstatus);
@@ -1616,7 +1639,7 @@ int ffcpcl(fitsfile *infptr,    /* I - FITS file pointer to input file  */
         ffcpky(infptr, outfptr, incol, colnum, "TCDLT", status);
         ffcpky(infptr, outfptr, incol, colnum, "TCROT", status);
 
-        if ((infptr->Fptr)->hdutype == ASCII_TBL && (outfptr->Fptr)->hdutype == BINARY_TBL)
+        if (inHduType == ASCII_TBL && outHduType == BINARY_TBL)
         {
             /* binary tables only have TNULLn keyword for integer columns */
             if (typecode == TLONG || typecode == TSHORT)
@@ -1645,6 +1668,13 @@ int ffcpcl(fitsfile *infptr,    /* I - FITS file pointer to input file  */
     else
     {
         colnum = outcol;
+        /* get the datatype and vector repeat length of the output column */
+        ffgtcl(outfptr, outcol, &otypecode, &orepeat, &owidth, status);
+
+        if (orepeat != repeat) {
+            ffpmsg("Input and output vector columns must have same length (ffcpcl)");
+            return(*status = BAD_TFORM);
+        }
     }
 
     ffgkyj(infptr,  "NAXIS2", &nrows,   0, status);  /* no. of input rows */
@@ -1653,7 +1683,7 @@ int ffcpcl(fitsfile *infptr,    /* I - FITS file pointer to input file  */
 
     if (typecode == TBIT)
         repeat = (repeat + 7) / 8;  /* convert from bits to bytes */
-    else if (typecode == TSTRING && (infptr->Fptr)->hdutype == BINARY_TBL)
+    else if (typecode == TSTRING && inHduType == BINARY_TBL)
         repeat = repeat / width;  /* convert from chars to unit strings */
 
     /* get optimum number of rows to copy at one time */
@@ -1708,7 +1738,29 @@ int ffcpcl(fitsfile *infptr,    /* I - FITS file pointer to input file  */
        }
        dnull = 0.;
     }
-    else    /* numerical datatype; read them all as doubles */
+    /* These are unsigned long-long ints that are not rescaled to floating point numbers */
+    else if (typecode == TLONGLONG && etypecode == TULONGLONG) {
+
+       ujjvalues = (unsigned long long int *) calloc(maxloop, sizeof(unsigned long long int) );
+       if (!ujjvalues)
+       {
+         ffpmsg
+         ("malloc failed to get memory for unsigned long long int (ffcpcl)");
+         return(*status = ARRAY_TOO_BIG);
+       }
+    }
+    /* These are long-long ints that are not rescaled to floating point numbers */
+    else if (typecode == TLONGLONG && etypecode != TDOUBLE) {
+
+       jjvalues = (long long int *) calloc(maxloop, sizeof(long long int) );
+       if (!jjvalues)
+       {
+         ffpmsg
+         ("malloc failed to get memory for long long int (ffcpcl)");
+         return(*status = ARRAY_TOO_BIG);
+       }
+    }
+    else    /* other numerical datatype; read them all as doubles */
     {
        dvalues = (double *) calloc(maxloop, sizeof(double) );
        if (!dvalues)
@@ -1744,6 +1796,18 @@ int ffcpcl(fitsfile *infptr,    /* I - FITS file pointer to input file  */
         else if (typecode == TDBLCOMPLEX)
             ffgcvm(infptr, incol, firstrow, firstelem, ntodo, dnull, 
                    dvalues, &anynull, status);
+
+	/* Neither TULONGLONG nor TLONGLONG does null checking.  Whatever
+	   null value is in input table is transferred to output table
+	   without checking.  Since the TNULL value was copied, this
+	   should preserve null values */
+	else if (typecode == TLONGLONG && etypecode == TULONGLONG)
+	  ffgcvujj(infptr, incol, firstrow, firstelem, ntodo, /*nulval*/ 0,
+                   ujjvalues, &anynull, status);
+
+	else if (typecode == TLONGLONG && etypecode != TDOUBLE) 
+	  ffgcvjj(infptr, incol, firstrow, firstelem, ntodo, /*nulval*/ 0, 
+                   jjvalues, &anynull, status);
 
         else       /* all numerical types */
             ffgcvd(infptr, incol, firstrow, firstelem, ntodo, dnull, 
@@ -1787,6 +1851,16 @@ int ffcpcl(fitsfile *infptr,    /* I - FITS file pointer to input file  */
                        dvalues, status);
         }
 
+	else if (typecode == TLONGLONG && etypecode == TULONGLONG)
+	{   /* No null checking because we did none to read */
+            ffpclujj(outfptr, colnum, firstrow, firstelem, ntodo, 
+		     ujjvalues, status);
+	}
+	else if (typecode == TLONGLONG && etypecode != TDOUBLE) 
+	{   /* No null checking because we did none to read */
+	    ffpcljj(outfptr, colnum, firstrow, firstelem, ntodo, 
+		    jjvalues, status);
+	}
         else  /* all other numerical types */
         {
             if (anynull)
@@ -1820,9 +1894,213 @@ int ffcpcl(fitsfile *infptr,    /* I - FITS file pointer to input file  */
 
          free(strarray);
     }
-    else
+    if (ujjvalues) free(ujjvalues);
+    if (jjvalues)  free(jjvalues);
+    if (dvalues)   free(dvalues);
+
+    return(*status);
+}
+/*--------------------------------------------------------------------------*/
+int ffccls(fitsfile *infptr,    /* I - FITS file pointer to input file  */
+           fitsfile *outfptr,   /* I - FITS file pointer to output file */
+           int incol,           /* I - number of first input column   */
+           int outcol,          /* I - number for first output column  */
+	   int ncols,           /* I - number of columns to copy from input to output */
+           int create_col,      /* I - create new col if TRUE, else overwrite */
+           int *status)         /* IO - error status     */
+/*
+  copy multiple columns from infptr and insert them in the outfptr
+  table.  Optimized for multiple-column case since it only expands the
+  output file once using fits_insert_cols() instead of calling
+  fits_insert_col() multiple times.
+*/
+{
+    int tstatus, colnum, typecode, otypecode, anynull;
+    int inHduType, outHduType;
+    long tfields, repeat, orepeat, width, owidth, nrows, outrows;
+    long inloop, outloop, maxloop, ndone, ntodo, npixels;
+    long firstrow, firstelem, ii;
+    char keyname[FLEN_KEYWORD], ttype[FLEN_VALUE], tform[FLEN_VALUE];
+    char ttype_comm[FLEN_COMMENT],tform_comm[FLEN_COMMENT];
+    char *lvalues = 0, nullflag, **strarray = 0;
+    char nulstr[] = {'\5', '\0'};  /* unique null string value */
+    double dnull = 0.l, *dvalues = 0;
+    float fnull = 0., *fvalues = 0;
+    int typecodes[1000];
+    char *ttypes[1000], *tforms[1000], keyarr[1001][FLEN_CARD];
+    int ikey = 0;
+    int icol, incol1, outcol1;
+
+    if (*status > 0)
+        return(*status);
+
+    /* Do not allow more than internal array limit to be copied */
+    if (ncols > 1000) return (*status = ARRAY_TOO_BIG);
+
+    if (infptr->HDUposition != (infptr->Fptr)->curhdu)
     {
-        free(dvalues);
+        ffmahd(infptr, (infptr->HDUposition) + 1, NULL, status);
+    }
+    else if ((infptr->Fptr)->datastart == DATA_UNDEFINED)
+        ffrdef(infptr, status);                /* rescan header */
+    inHduType = (infptr->Fptr)->hdutype;
+    
+    if (outfptr->HDUposition != (outfptr->Fptr)->curhdu)
+    {
+        ffmahd(outfptr, (outfptr->HDUposition) + 1, NULL, status);
+    }
+    else if ((outfptr->Fptr)->datastart == DATA_UNDEFINED)
+        ffrdef(outfptr, status);               /* rescan header */
+    outHduType = (outfptr->Fptr)->hdutype;
+    
+    if (*status > 0)
+        return(*status);
+
+    if (inHduType == IMAGE_HDU || outHduType == IMAGE_HDU)
+    {
+       ffpmsg
+       ("Can not copy columns to or from IMAGE HDUs (ffccls)");
+       return(*status = NOT_TABLE);
+    }
+
+    if ( (inHduType == BINARY_TBL &&  outHduType == ASCII_TBL) ||
+	 (inHduType == ASCII_TBL  &&  outHduType == BINARY_TBL) )
+    {
+       ffpmsg
+       ("Copying between Binary and ASCII tables is not supported (ffccls)");
+       return(*status = NOT_BTABLE);
+    }
+
+    /* Do not allow copying multiple columns in the same HDU because the
+       permutations of possible overlapping copies is mind-bending */
+    if ((infptr->Fptr == outfptr->Fptr)
+	&& (infptr->HDUposition == outfptr->HDUposition))
+    {
+       ffpmsg
+       ("Copying multiple columns in same HDU is not supported (ffccls)");
+       return(*status = NOT_BTABLE);
+    }
+
+    /* Retrieve the number of columns in output file */
+    tstatus=0;
+    if (ffgkyj(outfptr, "TFIELDS", &tfields, 0, &tstatus))
+    {
+      ffpmsg
+	("Could not read TFIELDS keyword in output table (ffccls)");
+      return(*status = NO_TFIELDS);
+    }
+
+    colnum = minvalue((int) tfields + 1, outcol); /* output col. number */
+
+    /* Collect data about input column (type, repeat, etc) */
+    for (incol1 = incol, outcol1 = colnum, icol = 0; 
+	 icol < ncols; 
+	 icol++, incol1++, outcol1++)
+    {
+      ffgtcl(infptr, incol1, &typecode, &repeat, &width, status);
+
+      if (typecode < 0)
+	{
+	  ffpmsg("Variable-length columns are not supported (ffccls)");
+	  return(*status = BAD_TFORM);
+	}
+
+      typecodes[icol] = typecode;
+
+      tstatus = 0;
+      ffkeyn("TTYPE", incol1, keyname, &tstatus);
+      ffgkys(infptr, keyname, ttype, ttype_comm, &tstatus);
+
+      ffkeyn("TFORM", incol1, keyname, &tstatus);
+    
+      if (ffgkys(infptr, keyname, tform, tform_comm, &tstatus) )
+        {
+          ffpmsg
+	    ("Could not find TTYPE and TFORM keywords in input table (ffccls)");
+          return(*status = NO_TFORM);
+        }
+
+      /* If creating columns, we need to save these values */
+      if ( create_col ) {
+	tforms[icol] = keyarr[ikey++];
+	ttypes[icol] = keyarr[ikey++];
+
+	strcpy(tforms[icol], tform);
+	strcpy(ttypes[icol], ttype);
+      } else {
+	/* If not creating columns, then check the datatype and vector
+	   repeat length of the output column */
+        ffgtcl(outfptr, outcol1, &otypecode, &orepeat, &owidth, status);
+
+        if (orepeat != repeat) {
+            ffpmsg("Input and output vector columns must have same length (ffccls)");
+            return(*status = BAD_TFORM);
+        }
+      }
+    }
+
+    /* Insert columns into output file and copy all meta-data
+       keywords, if requested */
+    if (create_col)
+    {
+        /* create the empty columns */
+        if (fficls(outfptr, colnum, ncols, ttypes, tforms, status) > 0)
+        {
+           ffpmsg
+           ("Could not append new columns to output file (ffccls)");
+           return(*status);
+        }
+
+	/* Copy meta-data strings from input column to output */
+	for (incol1 = incol, outcol1 = colnum, icol = 0; 
+	     icol < ncols; 
+	     icol++, incol1++, outcol1++)
+	{
+	  /* copy the comment strings from the input file for TTYPE and TFORM */
+	  ffkeyn("TTYPE", incol1, keyname, status);
+	  ffgkys(infptr, keyname, ttype, ttype_comm, status);
+	  ffkeyn("TTYPE", outcol1, keyname, status);
+	  ffmcom(outfptr, keyname, ttype_comm, status);
+	  
+	  ffkeyn("TFORM", incol1, keyname, status);
+	  ffgkys(infptr, keyname, tform, tform_comm, status);
+	  ffkeyn("TFORM", outcol1, keyname, status);
+	  ffmcom(outfptr, keyname, tform_comm, status);
+	  
+	  /* copy other column-related keywords if they exist */
+	  
+	  ffcpky(infptr, outfptr, incol1, outcol1, "TUNIT", status);
+	  ffcpky(infptr, outfptr, incol1, outcol1, "TSCAL", status);
+	  ffcpky(infptr, outfptr, incol1, outcol1, "TZERO", status);
+	  ffcpky(infptr, outfptr, incol1, outcol1, "TDISP", status);
+	  ffcpky(infptr, outfptr, incol1, outcol1, "TLMIN", status);
+	  ffcpky(infptr, outfptr, incol1, outcol1, "TLMAX", status);
+	  ffcpky(infptr, outfptr, incol1, outcol1, "TDIM", status);
+
+	  /*  WCS keywords */
+	  ffcpky(infptr, outfptr, incol1, outcol1, "TCTYP", status);
+	  ffcpky(infptr, outfptr, incol1, outcol1, "TCUNI", status);
+	  ffcpky(infptr, outfptr, incol1, outcol1, "TCRVL", status);
+	  ffcpky(infptr, outfptr, incol1, outcol1, "TCRPX", status);
+	  ffcpky(infptr, outfptr, incol1, outcol1, "TCDLT", status);
+	  ffcpky(infptr, outfptr, incol1, outcol1, "TCROT", status);
+	  
+	  ffcpky(infptr, outfptr, incol1, outcol1, "TNULL", status);
+
+	}
+
+	/* rescan header to recognize the new keywords */
+	if (ffrdef(outfptr, status) )
+	  return(*status);
+    }
+	
+    /* Copy columns using standard ffcpcl(); do this in a loop because
+       the I/O-intensive column expanding is done */
+    for (incol1 = incol, outcol1 = colnum, icol = 0; 
+	 icol < ncols; 
+	 icol++, incol1++, outcol1++)
+    {
+      ffcpcl(infptr, outfptr, incol1, outcol1, 0, status);
     }
 
     return(*status);
@@ -1837,9 +2115,15 @@ int ffcprw(fitsfile *infptr,    /* I - FITS file pointer to input file  */
   copy consecutive set of rows from infptr and append it in the outfptr table.
 */
 {
-    LONGLONG innaxis1, innaxis2, outnaxis1, outnaxis2, ii, jj;
-    unsigned char *buffer;
-
+    LONGLONG innaxis1, innaxis2, outnaxis1, outnaxis2, ii, jj, icol;
+    LONGLONG iVarCol, inPos, outPos, nVarBytes, nVarAllocBytes = 0;
+    unsigned char *buffer, *varColBuff=0;
+    int nInVarCols=0, nOutVarCols=0, varColDiff=0;
+    int *inVarCols=0, *outVarCols=0;
+    long nNewBlocks;
+    LONGLONG hrepeat=0, hoffset=0;
+    tcolumn *colptr=0;
+    
     if (*status > 0)
         return(*status);
 
@@ -1883,7 +2167,7 @@ int ffcprw(fitsfile *infptr,    /* I - FITS file pointer to input file  */
     if (*status > 0)
         return(*status);
 
-    if (outnaxis1 > innaxis1) {
+    if (outnaxis1 != innaxis1) {
        ffpmsg
        ("Input and output tables do not have same width (ffcprw)");
        return(*status = BAD_ROW_WIDTH);
@@ -1894,7 +2178,14 @@ int ffcprw(fitsfile *infptr,    /* I - FITS file pointer to input file  */
        ("Not enough rows in input table to copy (ffcprw)");
        return(*status = BAD_ROW_NUM);
     }
-
+    
+    if ((infptr->Fptr)->tfield != (outfptr->Fptr)->tfield)
+    {
+       ffpmsg
+       ("Input and output tables do not have same number of columns (ffcprw)");
+       return(*status = BAD_COL_NUM);
+    }
+    
     /* allocate buffer to hold 1 row of data */
     buffer = malloc( (size_t) innaxis1);
     if (!buffer) {
@@ -1903,18 +2194,138 @@ int ffcprw(fitsfile *infptr,    /* I - FITS file pointer to input file  */
        return(*status = MEMORY_ALLOCATION);
     }
  
-    /* copy the rows, 1 at a time */
-    jj = outnaxis2 + 1;
-    for (ii = firstrow; ii < firstrow + nrows; ii++) {
-        fits_read_tblbytes (infptr,  ii, 1, innaxis1, buffer, status);
-        fits_write_tblbytes(outfptr, jj, 1, innaxis1, buffer, status);
-        jj++;
+    inVarCols = malloc(infptr->Fptr->tfield*sizeof(int));
+    outVarCols = malloc(outfptr->Fptr->tfield*sizeof(int));
+    fffvcl(infptr, &nInVarCols, inVarCols, status);
+    fffvcl(outfptr, &nOutVarCols, outVarCols, status);
+    if (nInVarCols != nOutVarCols)
+       varColDiff=1;
+    else
+    {
+       for (ii=0; ii<nInVarCols; ++ii)
+       {
+          if (inVarCols[ii] != outVarCols[ii])
+          {
+             varColDiff=1;
+             break;
+          }
+       }
     }
+    
+    if (varColDiff)
+    {
+       ffpmsg("Input and output tables have different variable columns (ffcprw)");
+       *status = BAD_COL_NUM;
+       goto CLEANUP_RETURN;
+    }
+    
+    jj = outnaxis2 + 1;
+    if (nInVarCols)
+    {
+       ffirow(outfptr, outnaxis2, nrows, status);
+       for (ii = firstrow; ii < firstrow + nrows; ii++)
+       {
+          fits_read_tblbytes (infptr, ii, 1, innaxis1, buffer, status);
+          fits_write_tblbytes(outfptr, jj, 1, innaxis1, buffer, status);
+          /* Now make corrections for variable length columns */
+          iVarCol=0;
+          colptr = (infptr->Fptr)->tableptr;
+          for (icol=0; icol<(infptr->Fptr)->tfield; ++icol)
+          {
+             if (iVarCol < nInVarCols && inVarCols[iVarCol] == icol+1)
+             {
+                /* Copy from a variable length column */
+                
+                ffgdesll(infptr, icol+1, ii, &hrepeat, &hoffset, status);
+                /* If this is a bit column, hrepeat will be number of
+                   bits, not bytes. If it is a string column, hrepeat
+		   is the number of bytes, twidth is the max col width 
+		   and can be ignored.*/
+                if (colptr->tdatatype == -TBIT)
+		{
+		   nVarBytes = (hrepeat+7)/8;
+		}
+		else if (colptr->tdatatype == -TSTRING)
+		{
+		   nVarBytes = hrepeat;
+		}
+		else
+		{
+		   nVarBytes = hrepeat*colptr->twidth*sizeof(char);
+		}
+                inPos = (infptr->Fptr)->datastart + (infptr->Fptr)->heapstart
+				+ hoffset;
+		outPos = (outfptr->Fptr)->datastart + (outfptr->Fptr)->heapstart
+				+ (outfptr->Fptr)->heapsize;
+                ffmbyt(infptr, inPos, REPORT_EOF, status);
+		/* If this is not the last HDU in the file, then check if */
+		/* extending the heap would overwrite the following header. */
+		/* If so, then have to insert more blocks. */
+                if ( !((outfptr->Fptr)->lasthdu) )
+                {
+		   if (outPos+nVarBytes > 
+		      (outfptr->Fptr)->headstart[(outfptr->Fptr)->curhdu+1])
+		   {
+		      nNewBlocks = (long)(((outPos+nVarBytes - 1 -
+                        (outfptr->Fptr)->headstart[(outfptr->Fptr)->
+                        curhdu+1]) / 2880) + 1);
+                      if (ffiblk(outfptr, nNewBlocks, 1, status) > 0)
+                      {
+                         ffpmsg("Failed to extend the size of the variable length heap (ffcprw)");
+			 goto CLEANUP_RETURN;
+                      }
 
+		   }
+                }
+                if (nVarBytes)
+		{
+		   if (nVarBytes > nVarAllocBytes)
+		   {
+		     /* Grow the copy buffer to accomodate the new maximum size. 
+			Note it is safe to call realloc() with null input pointer, 
+			which is equivalent to malloc(). */
+		     unsigned char *varColBuff1 = (unsigned char *) realloc(varColBuff, nVarBytes);
+		     if (! varColBuff1)
+		     {
+		       *status = MEMORY_ALLOCATION;
+		       ffpmsg("failed to allocate memory for variable column copy (ffcprw)");
+		       goto CLEANUP_RETURN;
+		     }
+		     /* Record the new state */
+		     varColBuff = varColBuff1;
+		     nVarAllocBytes = nVarBytes;
+		   }
+		   /* Copy date from input to output */
+                   ffgbyt(infptr, nVarBytes, varColBuff, status);
+		   ffmbyt(outfptr, outPos, IGNORE_EOF, status);
+                   ffpbyt(outfptr, nVarBytes, varColBuff, status);
+		}
+		ffpdes(outfptr, icol+1, jj, hrepeat, (outfptr->Fptr)->heapsize, status);
+                (outfptr->Fptr)->heapsize += nVarBytes;
+                ++iVarCol;
+             }
+             ++colptr;
+          }
+          ++jj;
+       }
+    }
+    else
+    {    
+       /* copy the rows, 1 at a time */
+       for (ii = firstrow; ii < firstrow + nrows; ii++) {
+           fits_read_tblbytes (infptr,  ii, 1, innaxis1, buffer, status);
+           fits_write_tblbytes(outfptr, jj, 1, innaxis1, buffer, status);
+           jj++;
+       }
+    }
     outnaxis2 += nrows;
     fits_update_key(outfptr, TLONGLONG, "NAXIS2", &outnaxis2, 0, status);
 
+ CLEANUP_RETURN:
     free(buffer);
+    free(inVarCols);
+    free(outVarCols);
+    if (varColBuff) free(varColBuff);
     return(*status);
 }
 /*--------------------------------------------------------------------------*/
@@ -2119,6 +2530,18 @@ int ffcins(fitsfile *fptr,  /* I - FITS file pointer                        */
         /* first move the trailing bytes (if any) in the last row */
         fbyte = bytepos + 1;
         nbytes = naxis1 - bytepos;
+        /* If the last row hasn't yet been accessed in full, it's possible
+           that logfilesize hasn't been updated to account for it (by way
+           of an ffldrc call).  This could cause ffgtbb to return with an
+           EOF error.  To prevent this, we must increase logfilesize here. 
+        */
+        if ((fptr->Fptr)->logfilesize < (fptr->Fptr)->datastart + 
+                 (fptr->Fptr)->heapstart)
+        {
+            (fptr->Fptr)->logfilesize = (((fptr->Fptr)->datastart +
+                 (fptr->Fptr)->heapstart + 2879)/2880)*2880;
+        }
+        
         ffgtbb(fptr, naxis2, fbyte, nbytes, &buffer[ninsert], status);
         (fptr->Fptr)->rowlength = newlen; /*  new row length */
 
@@ -2379,6 +2802,8 @@ int ffkshf(fitsfile *fptr,  /* I - FITS file pointer                        */
                   strncat(q, rec, i1);
      
                   ffkeyn(q, ivalue, newkey, status);
+		  /* NOTE: because of null termination, it is not 
+		     equivalent to use strcpy() for the same calls */
                   strncpy(rec, "        ", 8);    /* erase old keyword name */
                   i1 = strlen(newkey);
                   strncpy(rec, newkey, i1);   /* overwrite new keyword name */
@@ -2390,6 +2815,48 @@ int ffkshf(fitsfile *fptr,  /* I - FITS file pointer                        */
     }
     return(*status);
 }
+/*--------------------------------------------------------------------------*/
+int fffvcl(fitsfile *fptr,   /* I - FITS file pointer                       */
+           int *nvarcols,    /* O - Number of variable length columns found */
+           int *colnums,     /* O - 1-based variable column positions       */
+           int *status)      /* IO - error status                           */
+{
+/*
+   Internal function to identify which columns in a binary table are variable length.
+   The colnums array will be filled with nvarcols elements - the 1-based numbers
+   of all variable length columns in the table.  This ASSUMES calling function
+   has passed in a colnums array large enough to hold these.
+*/
+   int tfields=0,icol;
+   tcolumn *colptr=0;
+   
+   *nvarcols = 0;
+   if (*status > 0)
+       return(*status);
+       
+   if ((fptr->Fptr)->hdutype != BINARY_TBL)
+   {
+      ffpmsg("Var-length column search can only be performed on Binary tables (fffvcl)");
+      return(*status = NOT_BTABLE);
+   }
+   
+   if ((fptr->Fptr)->tableptr)
+   {
+      colptr = (fptr->Fptr)->tableptr;
+      tfields = (fptr->Fptr)->tfield;
+      for (icol=0; icol<tfields; ++icol, ++colptr)
+      {
+         /* Condition for variable length column: negative tdatatype */
+         if (colptr->tdatatype < 0)
+         {
+            colnums[*nvarcols] = icol + 1;
+            *nvarcols += 1;            
+         }
+      }      
+   }   
+   return(*status);
+}
+
 /*--------------------------------------------------------------------------*/
 int ffshft(fitsfile *fptr,  /* I - FITS file pointer                        */
            LONGLONG firstbyte, /* I - position of first byte in block to shift */
