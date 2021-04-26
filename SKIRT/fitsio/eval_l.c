@@ -1,5 +1,5 @@
 
-#line 3 "<stdout>"
+//#line 3 "<stdout>"
 
 #define  FF_INT_ALIGNED short int
 
@@ -607,8 +607,8 @@ int ff_flex_debug = 0;
 #define FF_MORE_ADJ 0
 #define FF_RESTORE_FF_MORE_OFFSET
 char *fftext;
-#line 1 "eval.l"
-#line 2 "eval.l"
+//#line 1 "eval.l"
+//#line 2 "eval.l"
 /************************************************************************/
 /*                                                                      */
 /*                       CFITSIO Lexical Parser                         */
@@ -724,7 +724,7 @@ static int expr_read( char *buf, int nbytes );
         if ( (result = expr_read( (char *) buf, max_size )) < 0 ) \
             FF_FATAL_ERROR( "read() in flex scanner failed" );
 
-#line 728 "<stdout>"
+//#line 728 "<stdout>"
 
 #define INITIAL 0
 
@@ -906,10 +906,10 @@ FF_DECL
 	register char *ff_cp, *ff_bp;
 	register int ff_act;
     
-#line 146 "eval.l"
+//#line 146 "eval.l"
 
 
-#line 913 "<stdout>"
+//#line 913 "<stdout>"
 
 	if ( !(ff_init) )
 		{
@@ -994,12 +994,12 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 FF_RULE_SETUP
-#line 148 "eval.l"
+//#line 148 "eval.l"
 ;
 	FF_BREAK
 case 2:
 FF_RULE_SETUP
-#line 149 "eval.l"
+//#line 149 "eval.l"
 {
                   int len;
                   len = strlen(fftext);
@@ -1013,7 +1013,7 @@ FF_RULE_SETUP
 	FF_BREAK
 case 3:
 FF_RULE_SETUP
-#line 159 "eval.l"
+//#line 159 "eval.l"
 {
                   int len;
                   char tmpstring[256];
@@ -1077,7 +1077,7 @@ FF_RULE_SETUP
 	FF_BREAK
 case 4:
 FF_RULE_SETUP
-#line 219 "eval.l"
+//#line 219 "eval.l"
 {
                   int len;
                   char tmpstring[256];
@@ -1172,7 +1172,7 @@ FF_RULE_SETUP
 	FF_BREAK
 case 5:
 FF_RULE_SETUP
-#line 310 "eval.l"
+//#line 310 "eval.l"
 {
 		  long int constval = 0;
 		  char *p;
@@ -1185,7 +1185,7 @@ FF_RULE_SETUP
 	FF_BREAK
 case 6:
 FF_RULE_SETUP
-#line 319 "eval.l"
+//#line 319 "eval.l"
 {
 		  long int constval = 0;
 		  char *p;
@@ -1198,7 +1198,7 @@ FF_RULE_SETUP
 	FF_BREAK
 case 7:
 FF_RULE_SETUP
-#line 328 "eval.l"
+//#line 328 "eval.l"
 {
 		  long int constval = 0;
 		  char *p;
@@ -1212,7 +1212,7 @@ FF_RULE_SETUP
 	FF_BREAK
 case 8:
 FF_RULE_SETUP
-#line 340 "eval.l"
+//#line 340 "eval.l"
 {
                   fflval.lng = atol(fftext);
 		  return( LONG );
@@ -1220,7 +1220,7 @@ FF_RULE_SETUP
 	FF_BREAK
 case 9:
 FF_RULE_SETUP
-#line 344 "eval.l"
+//#line 344 "eval.l"
 {
                   if ((fftext[0] == 't') || (fftext[0] == 'T'))
 		    fflval.log = 1;
@@ -1231,7 +1231,7 @@ FF_RULE_SETUP
 	FF_BREAK
 case 10:
 FF_RULE_SETUP
-#line 351 "eval.l"
+//#line 351 "eval.l"
 {
                   fflval.dbl = atof(fftext);
 		  return( DOUBLE );
@@ -1239,7 +1239,7 @@ FF_RULE_SETUP
 	FF_BREAK
 case 11:
 FF_RULE_SETUP
-#line 355 "eval.l"
+//#line 355 "eval.l"
 {
                   if(        !fits_strcasecmp(fftext,"#PI") ) {
 		     fflval.dbl = (double)(4) * atan((double)(1));
@@ -1271,7 +1271,7 @@ FF_RULE_SETUP
 	FF_BREAK
 case 12:
 FF_RULE_SETUP
-#line 383 "eval.l"
+//#line 383 "eval.l"
 {
                   int len;
                   len = strlen(fftext) - 2;
@@ -1292,7 +1292,7 @@ FF_RULE_SETUP
 	FF_BREAK
 case 13:
 FF_RULE_SETUP
-#line 400 "eval.l"
+//#line 400 "eval.l"
 {
 		 int    len,type;
 
@@ -1308,7 +1308,7 @@ FF_RULE_SETUP
 	FF_BREAK
 case 14:
 FF_RULE_SETUP
-#line 412 "eval.l"
+//#line 412 "eval.l"
 {
                   char *fname;
 		  int len=0;
@@ -1339,86 +1339,86 @@ FF_RULE_SETUP
 	FF_BREAK
 case 15:
 FF_RULE_SETUP
-#line 439 "eval.l"
+//#line 439 "eval.l"
 { return( INTCAST ); }
 	FF_BREAK
 case 16:
 FF_RULE_SETUP
-#line 440 "eval.l"
+//#line 440 "eval.l"
 { return( FLTCAST ); }
 	FF_BREAK
 case 17:
 FF_RULE_SETUP
-#line 441 "eval.l"
+//#line 441 "eval.l"
 { return( POWER   ); }
 	FF_BREAK
 case 18:
 FF_RULE_SETUP
-#line 442 "eval.l"
+//#line 442 "eval.l"
 { return( NOT     ); }
 	FF_BREAK
 case 19:
 FF_RULE_SETUP
-#line 443 "eval.l"
+//#line 443 "eval.l"
 { return( OR      ); }
 	FF_BREAK
 case 20:
 FF_RULE_SETUP
-#line 444 "eval.l"
+//#line 444 "eval.l"
 { return( AND     ); }
 	FF_BREAK
 case 21:
 FF_RULE_SETUP
-#line 445 "eval.l"
+//#line 445 "eval.l"
 { return( EQ      ); }
 	FF_BREAK
 case 22:
 FF_RULE_SETUP
-#line 446 "eval.l"
+//#line 446 "eval.l"
 { return( NE      ); }
 	FF_BREAK
 case 23:
 FF_RULE_SETUP
-#line 447 "eval.l"
+//#line 447 "eval.l"
 { return( GT      ); }
 	FF_BREAK
 case 24:
 FF_RULE_SETUP
-#line 448 "eval.l"
+//#line 448 "eval.l"
 { return( LT      ); }
 	FF_BREAK
 case 25:
 FF_RULE_SETUP
-#line 449 "eval.l"
+//#line 449 "eval.l"
 { return( GTE     ); }
 	FF_BREAK
 case 26:
 FF_RULE_SETUP
-#line 450 "eval.l"
+//#line 450 "eval.l"
 { return( LTE     ); }
 	FF_BREAK
 case 27:
 FF_RULE_SETUP
-#line 451 "eval.l"
+//#line 451 "eval.l"
 { return( XOR     ); }
 	FF_BREAK
 case 28:
 /* rule 28 can match eol */
 FF_RULE_SETUP
-#line 452 "eval.l"
+//#line 452 "eval.l"
 { return( '\n'    ); }
 	FF_BREAK
 case 29:
 FF_RULE_SETUP
-#line 453 "eval.l"
+//#line 453 "eval.l"
 { return( fftext[0] ); }
 	FF_BREAK
 case 30:
 FF_RULE_SETUP
-#line 454 "eval.l"
+//#line 454 "eval.l"
 ECHO;
 	FF_BREAK
-#line 1422 "<stdout>"
+//#line 1422 "<stdout>"
 case FF_STATE_EOF(INITIAL):
 	ffterminate();
 
@@ -2416,7 +2416,7 @@ void yyfffree (void * ptr )
 
 #define FFTABLES_NAME "fftables"
 
-#line 454 "eval.l"
+//#line 454 "eval.l"
 
 
 

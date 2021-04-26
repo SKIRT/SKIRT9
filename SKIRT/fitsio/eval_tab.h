@@ -120,7 +120,7 @@ extern int ffdebug;
 
 union FFSTYPE
 {
-#line 192 "eval.y" /* yacc.c:1910  */
+//#line 192 "eval.y" /* yacc.c:1910  */
 
     int    Node;        /* Index of Node */
     double dbl;         /* real value    */
@@ -128,7 +128,7 @@ union FFSTYPE
     char   log;         /* logical value */
     char   str[MAX_STRLEN];    /* string value  */
 
-#line 132 "y.tab.h" /* yacc.c:1910  */
+//#line 132 "y.tab.h" /* yacc.c:1910  */
 };
 
 typedef union FFSTYPE FFSTYPE;

@@ -62,7 +62,7 @@
 
 
 /* Copy the first part of user declarations.  */
-#line 1 "eval.y" /* yacc.c:339  */
+//#line 1 "eval.y" /* yacc.c:339  */
 
 /************************************************************************/
 /*                                                                      */
@@ -253,7 +253,7 @@ static void  fferror(char *msg);
 #endif
 
 
-#line 257 "y.tab.c" /* yacc.c:339  */
+//#line 257 "y.tab.c" /* yacc.c:339  */
 
 # ifndef FF_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -363,7 +363,7 @@ extern int ffdebug;
 
 union FFSTYPE
 {
-#line 192 "eval.y" /* yacc.c:355  */
+//#line 192 "eval.y" /* yacc.c:355  */
 
     int    Node;        /* Index of Node */
     double dbl;         /* real value    */
@@ -371,7 +371,7 @@ union FFSTYPE
     char   log;         /* logical value */
     char   str[MAX_STRLEN];    /* string value  */
 
-#line 375 "y.tab.c" /* yacc.c:355  */
+//#line 375 "y.tab.c" /* yacc.c:355  */
 };
 
 typedef union FFSTYPE FFSTYPE;
@@ -388,7 +388,7 @@ int ffparse (void);
 
 /* Copy the second part of user declarations.  */
 
-#line 392 "y.tab.c" /* yacc.c:358  */
+//#line 392 "y.tab.c" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -1916,65 +1916,65 @@ ffreduce:
   switch (ffn)
     {
         case 4:
-#line 248 "eval.y" /* yacc.c:1648  */
+//#line 248 "eval.y" /* yacc.c:1648  */
     {}
-#line 1922 "y.tab.c" /* yacc.c:1648  */
+//#line 1922 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 5:
-#line 250 "eval.y" /* yacc.c:1648  */
+//#line 250 "eval.y" /* yacc.c:1648  */
     { if( (ffvsp[-1].Node)<0 ) {
 		     fferror("Couldn't build node structure: out of memory?");
 		     FFERROR;  }
                   gParse.resultNode = (ffvsp[-1].Node);
 		}
-#line 1932 "y.tab.c" /* yacc.c:1648  */
+//#line 1932 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 6:
-#line 256 "eval.y" /* yacc.c:1648  */
+//#line 256 "eval.y" /* yacc.c:1648  */
     { if( (ffvsp[-1].Node)<0 ) {
 		     fferror("Couldn't build node structure: out of memory?");
 		     FFERROR;  }
                   gParse.resultNode = (ffvsp[-1].Node);
 		}
-#line 1942 "y.tab.c" /* yacc.c:1648  */
+//#line 1942 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 7:
-#line 262 "eval.y" /* yacc.c:1648  */
+//#line 262 "eval.y" /* yacc.c:1648  */
     { if( (ffvsp[-1].Node)<0 ) {
 		     fferror("Couldn't build node structure: out of memory?");
 		     FFERROR;  } 
                   gParse.resultNode = (ffvsp[-1].Node);
 		}
-#line 1952 "y.tab.c" /* yacc.c:1648  */
+//#line 1952 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 8:
-#line 268 "eval.y" /* yacc.c:1648  */
+//#line 268 "eval.y" /* yacc.c:1648  */
     { if( (ffvsp[-1].Node)<0 ) {
 		     fferror("Couldn't build node structure: out of memory?");
 		     FFERROR;  }
                   gParse.resultNode = (ffvsp[-1].Node);
 		}
-#line 1962 "y.tab.c" /* yacc.c:1648  */
+//#line 1962 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 9:
-#line 273 "eval.y" /* yacc.c:1648  */
+//#line 273 "eval.y" /* yacc.c:1648  */
     {  fferrok;  }
-#line 1968 "y.tab.c" /* yacc.c:1648  */
+//#line 1968 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 10:
-#line 277 "eval.y" /* yacc.c:1648  */
+//#line 277 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_Vector( (ffvsp[0].Node) ); TEST((ffval.Node)); }
-#line 1974 "y.tab.c" /* yacc.c:1648  */
+//#line 1974 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 11:
-#line 279 "eval.y" /* yacc.c:1648  */
+//#line 279 "eval.y" /* yacc.c:1648  */
     {
                   if( gParse.Nodes[(ffvsp[-2].Node)].nSubNodes >= MAXSUBS ) {
 		     (ffvsp[-2].Node) = Close_Vec( (ffvsp[-2].Node) ); TEST((ffvsp[-2].Node));
@@ -1985,17 +1985,17 @@ ffreduce:
 		  gParse.Nodes[(ffval.Node)].SubNodes[ gParse.Nodes[(ffval.Node)].nSubNodes++ ]
 		     = (ffvsp[0].Node);
                 }
-#line 1989 "y.tab.c" /* yacc.c:1648  */
+//#line 1989 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 12:
-#line 292 "eval.y" /* yacc.c:1648  */
+//#line 292 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_Vector( (ffvsp[0].Node) ); TEST((ffval.Node)); }
-#line 1995 "y.tab.c" /* yacc.c:1648  */
+//#line 1995 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 13:
-#line 294 "eval.y" /* yacc.c:1648  */
+//#line 294 "eval.y" /* yacc.c:1648  */
     {
                   if( TYPE((ffvsp[-2].Node)) < TYPE((ffvsp[0].Node)) )
                      TYPE((ffvsp[-2].Node)) = TYPE((ffvsp[0].Node));
@@ -2008,11 +2008,11 @@ ffreduce:
 		  gParse.Nodes[(ffval.Node)].SubNodes[ gParse.Nodes[(ffval.Node)].nSubNodes++ ]
 		     = (ffvsp[0].Node);
                 }
-#line 2012 "y.tab.c" /* yacc.c:1648  */
+//#line 2012 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 14:
-#line 307 "eval.y" /* yacc.c:1648  */
+//#line 307 "eval.y" /* yacc.c:1648  */
     {
                   if( gParse.Nodes[(ffvsp[-2].Node)].nSubNodes >= MAXSUBS ) {
 		     (ffvsp[-2].Node) = Close_Vec( (ffvsp[-2].Node) ); TEST((ffvsp[-2].Node));
@@ -2023,11 +2023,11 @@ ffreduce:
 		  gParse.Nodes[(ffval.Node)].SubNodes[ gParse.Nodes[(ffval.Node)].nSubNodes++ ]
 		     = (ffvsp[0].Node);
                 }
-#line 2027 "y.tab.c" /* yacc.c:1648  */
+//#line 2027 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 15:
-#line 318 "eval.y" /* yacc.c:1648  */
+//#line 318 "eval.y" /* yacc.c:1648  */
     {
                   TYPE((ffvsp[-2].Node)) = TYPE((ffvsp[0].Node));
                   if( gParse.Nodes[(ffvsp[-2].Node)].nSubNodes >= MAXSUBS ) {
@@ -2039,37 +2039,37 @@ ffreduce:
 		  gParse.Nodes[(ffval.Node)].SubNodes[ gParse.Nodes[(ffval.Node)].nSubNodes++ ]
 		     = (ffvsp[0].Node);
                 }
-#line 2043 "y.tab.c" /* yacc.c:1648  */
+//#line 2043 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 16:
-#line 332 "eval.y" /* yacc.c:1648  */
+//#line 332 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = Close_Vec( (ffvsp[-1].Node) ); TEST((ffval.Node)); }
-#line 2049 "y.tab.c" /* yacc.c:1648  */
+//#line 2049 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 17:
-#line 336 "eval.y" /* yacc.c:1648  */
+//#line 336 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = Close_Vec( (ffvsp[-1].Node) ); TEST((ffval.Node)); }
-#line 2055 "y.tab.c" /* yacc.c:1648  */
+//#line 2055 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 18:
-#line 340 "eval.y" /* yacc.c:1648  */
+//#line 340 "eval.y" /* yacc.c:1648  */
     {
                   (ffval.Node) = New_Const( BITSTR, (ffvsp[0].str), strlen((ffvsp[0].str))+1 ); TEST((ffval.Node));
 		  SIZE((ffval.Node)) = strlen((ffvsp[0].str)); }
-#line 2063 "y.tab.c" /* yacc.c:1648  */
+//#line 2063 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 19:
-#line 344 "eval.y" /* yacc.c:1648  */
+//#line 344 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_Column( (ffvsp[0].lng) ); TEST((ffval.Node)); }
-#line 2069 "y.tab.c" /* yacc.c:1648  */
+//#line 2069 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 20:
-#line 346 "eval.y" /* yacc.c:1648  */
+//#line 346 "eval.y" /* yacc.c:1648  */
     {
                   if( TYPE((ffvsp[-1].Node)) != LONG
 		      || OPER((ffvsp[-1].Node)) != CONST_OP ) {
@@ -2078,25 +2078,25 @@ ffreduce:
 		  }
                   (ffval.Node) = New_Offset( (ffvsp[-3].lng), (ffvsp[-1].Node) ); TEST((ffval.Node));
                 }
-#line 2082 "y.tab.c" /* yacc.c:1648  */
+//#line 2082 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 21:
-#line 355 "eval.y" /* yacc.c:1648  */
+//#line 355 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_BinOp( BITSTR, (ffvsp[-2].Node), '&', (ffvsp[0].Node) ); TEST((ffval.Node));
                   SIZE((ffval.Node)) = ( SIZE((ffvsp[-2].Node))>SIZE((ffvsp[0].Node)) ? SIZE((ffvsp[-2].Node)) : SIZE((ffvsp[0].Node)) );  }
-#line 2089 "y.tab.c" /* yacc.c:1648  */
+//#line 2089 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 22:
-#line 358 "eval.y" /* yacc.c:1648  */
+//#line 358 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_BinOp( BITSTR, (ffvsp[-2].Node), '|', (ffvsp[0].Node) ); TEST((ffval.Node));
                   SIZE((ffval.Node)) = ( SIZE((ffvsp[-2].Node))>SIZE((ffvsp[0].Node)) ? SIZE((ffvsp[-2].Node)) : SIZE((ffvsp[0].Node)) );  }
-#line 2096 "y.tab.c" /* yacc.c:1648  */
+//#line 2096 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 23:
-#line 361 "eval.y" /* yacc.c:1648  */
+//#line 361 "eval.y" /* yacc.c:1648  */
     { 
 		  if (SIZE((ffvsp[-2].Node))+SIZE((ffvsp[0].Node)) >= MAX_STRLEN) {
 		    fferror("Combined bit string size exceeds " MAX_STRLEN_S " bits");
@@ -2105,71 +2105,71 @@ ffreduce:
 		  (ffval.Node) = New_BinOp( BITSTR, (ffvsp[-2].Node), '+', (ffvsp[0].Node) ); TEST((ffval.Node));
                   SIZE((ffval.Node)) = SIZE((ffvsp[-2].Node)) + SIZE((ffvsp[0].Node)); 
 		}
-#line 2109 "y.tab.c" /* yacc.c:1648  */
+//#line 2109 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 24:
-#line 370 "eval.y" /* yacc.c:1648  */
+//#line 370 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_Deref( (ffvsp[-3].Node), 1, (ffvsp[-1].Node),  0,  0,  0,   0 ); TEST((ffval.Node)); }
-#line 2115 "y.tab.c" /* yacc.c:1648  */
+//#line 2115 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 25:
-#line 372 "eval.y" /* yacc.c:1648  */
+//#line 372 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_Deref( (ffvsp[-5].Node), 2, (ffvsp[-3].Node), (ffvsp[-1].Node),  0,  0,   0 ); TEST((ffval.Node)); }
-#line 2121 "y.tab.c" /* yacc.c:1648  */
+//#line 2121 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 26:
-#line 374 "eval.y" /* yacc.c:1648  */
+//#line 374 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_Deref( (ffvsp[-7].Node), 3, (ffvsp[-5].Node), (ffvsp[-3].Node), (ffvsp[-1].Node),  0,   0 ); TEST((ffval.Node)); }
-#line 2127 "y.tab.c" /* yacc.c:1648  */
+//#line 2127 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 27:
-#line 376 "eval.y" /* yacc.c:1648  */
+//#line 376 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_Deref( (ffvsp[-9].Node), 4, (ffvsp[-7].Node), (ffvsp[-5].Node), (ffvsp[-3].Node), (ffvsp[-1].Node),   0 ); TEST((ffval.Node)); }
-#line 2133 "y.tab.c" /* yacc.c:1648  */
+//#line 2133 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 28:
-#line 378 "eval.y" /* yacc.c:1648  */
+//#line 378 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_Deref( (ffvsp[-11].Node), 5, (ffvsp[-9].Node), (ffvsp[-7].Node), (ffvsp[-5].Node), (ffvsp[-3].Node), (ffvsp[-1].Node) ); TEST((ffval.Node)); }
-#line 2139 "y.tab.c" /* yacc.c:1648  */
+//#line 2139 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 29:
-#line 380 "eval.y" /* yacc.c:1648  */
+//#line 380 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_Unary( BITSTR, NOT, (ffvsp[0].Node) ); TEST((ffval.Node));     }
-#line 2145 "y.tab.c" /* yacc.c:1648  */
+//#line 2145 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 30:
-#line 383 "eval.y" /* yacc.c:1648  */
+//#line 383 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = (ffvsp[-1].Node); }
-#line 2151 "y.tab.c" /* yacc.c:1648  */
+//#line 2151 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 31:
-#line 387 "eval.y" /* yacc.c:1648  */
+//#line 387 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_Const( LONG,   &((ffvsp[0].lng)), sizeof(long)   ); TEST((ffval.Node)); }
-#line 2157 "y.tab.c" /* yacc.c:1648  */
+//#line 2157 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 32:
-#line 389 "eval.y" /* yacc.c:1648  */
+//#line 389 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_Const( DOUBLE, &((ffvsp[0].dbl)), sizeof(double) ); TEST((ffval.Node)); }
-#line 2163 "y.tab.c" /* yacc.c:1648  */
+//#line 2163 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 33:
-#line 391 "eval.y" /* yacc.c:1648  */
+//#line 391 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_Column( (ffvsp[0].lng) ); TEST((ffval.Node)); }
-#line 2169 "y.tab.c" /* yacc.c:1648  */
+//#line 2169 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 34:
-#line 393 "eval.y" /* yacc.c:1648  */
+//#line 393 "eval.y" /* yacc.c:1648  */
     {
                   if( TYPE((ffvsp[-1].Node)) != LONG
 		      || OPER((ffvsp[-1].Node)) != CONST_OP ) {
@@ -2178,58 +2178,58 @@ ffreduce:
 		  }
                   (ffval.Node) = New_Offset( (ffvsp[-3].lng), (ffvsp[-1].Node) ); TEST((ffval.Node));
                 }
-#line 2182 "y.tab.c" /* yacc.c:1648  */
+//#line 2182 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 35:
-#line 402 "eval.y" /* yacc.c:1648  */
+//#line 402 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_Func( LONG, row_fct,  0, 0, 0, 0, 0, 0, 0, 0 ); }
-#line 2188 "y.tab.c" /* yacc.c:1648  */
+//#line 2188 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 36:
-#line 404 "eval.y" /* yacc.c:1648  */
+//#line 404 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_Func( LONG, null_fct, 0, 0, 0, 0, 0, 0, 0, 0 ); }
-#line 2194 "y.tab.c" /* yacc.c:1648  */
+//#line 2194 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 37:
-#line 406 "eval.y" /* yacc.c:1648  */
+//#line 406 "eval.y" /* yacc.c:1648  */
     { PROMOTE((ffvsp[-2].Node),(ffvsp[0].Node)); (ffval.Node) = New_BinOp( TYPE((ffvsp[-2].Node)), (ffvsp[-2].Node), '%', (ffvsp[0].Node) );
 		  TEST((ffval.Node));                                                }
-#line 2201 "y.tab.c" /* yacc.c:1648  */
+//#line 2201 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 38:
-#line 409 "eval.y" /* yacc.c:1648  */
+//#line 409 "eval.y" /* yacc.c:1648  */
     { PROMOTE((ffvsp[-2].Node),(ffvsp[0].Node)); (ffval.Node) = New_BinOp( TYPE((ffvsp[-2].Node)), (ffvsp[-2].Node), '+', (ffvsp[0].Node) );
 		  TEST((ffval.Node));                                                }
-#line 2208 "y.tab.c" /* yacc.c:1648  */
+//#line 2208 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 39:
-#line 412 "eval.y" /* yacc.c:1648  */
+//#line 412 "eval.y" /* yacc.c:1648  */
     { PROMOTE((ffvsp[-2].Node),(ffvsp[0].Node)); (ffval.Node) = New_BinOp( TYPE((ffvsp[-2].Node)), (ffvsp[-2].Node), '-', (ffvsp[0].Node) ); 
 		  TEST((ffval.Node));                                                }
-#line 2215 "y.tab.c" /* yacc.c:1648  */
+//#line 2215 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 40:
-#line 415 "eval.y" /* yacc.c:1648  */
+//#line 415 "eval.y" /* yacc.c:1648  */
     { PROMOTE((ffvsp[-2].Node),(ffvsp[0].Node)); (ffval.Node) = New_BinOp( TYPE((ffvsp[-2].Node)), (ffvsp[-2].Node), '*', (ffvsp[0].Node) ); 
 		  TEST((ffval.Node));                                                }
-#line 2222 "y.tab.c" /* yacc.c:1648  */
+//#line 2222 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 41:
-#line 418 "eval.y" /* yacc.c:1648  */
+//#line 418 "eval.y" /* yacc.c:1648  */
     { PROMOTE((ffvsp[-2].Node),(ffvsp[0].Node)); (ffval.Node) = New_BinOp( TYPE((ffvsp[-2].Node)), (ffvsp[-2].Node), '/', (ffvsp[0].Node) ); 
 		  TEST((ffval.Node));                                                }
-#line 2229 "y.tab.c" /* yacc.c:1648  */
+//#line 2229 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 42:
-#line 421 "eval.y" /* yacc.c:1648  */
+//#line 421 "eval.y" /* yacc.c:1648  */
     { 
                    if (TYPE((ffvsp[-2].Node)) != LONG ||
 		       TYPE((ffvsp[0].Node)) != LONG) {
@@ -2238,11 +2238,11 @@ ffreduce:
                    }
                    (ffval.Node) = New_BinOp( TYPE((ffvsp[-2].Node)), (ffvsp[-2].Node), '&', (ffvsp[0].Node) );
                 }
-#line 2242 "y.tab.c" /* yacc.c:1648  */
+//#line 2242 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 43:
-#line 430 "eval.y" /* yacc.c:1648  */
+//#line 430 "eval.y" /* yacc.c:1648  */
     { 
                    if (TYPE((ffvsp[-2].Node)) != LONG ||
 		       TYPE((ffvsp[0].Node)) != LONG) {
@@ -2251,11 +2251,11 @@ ffreduce:
                    }
                    (ffval.Node) = New_BinOp( TYPE((ffvsp[-2].Node)), (ffvsp[-2].Node), '|', (ffvsp[0].Node) );
                 }
-#line 2255 "y.tab.c" /* yacc.c:1648  */
+//#line 2255 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 44:
-#line 439 "eval.y" /* yacc.c:1648  */
+//#line 439 "eval.y" /* yacc.c:1648  */
     { 
                    if (TYPE((ffvsp[-2].Node)) != LONG ||
 		       TYPE((ffvsp[0].Node)) != LONG) {
@@ -2264,52 +2264,52 @@ ffreduce:
                    }
                    (ffval.Node) = New_BinOp( TYPE((ffvsp[-2].Node)), (ffvsp[-2].Node), '^', (ffvsp[0].Node) );
                 }
-#line 2268 "y.tab.c" /* yacc.c:1648  */
+//#line 2268 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 45:
-#line 448 "eval.y" /* yacc.c:1648  */
+//#line 448 "eval.y" /* yacc.c:1648  */
     { PROMOTE((ffvsp[-2].Node),(ffvsp[0].Node)); (ffval.Node) = New_BinOp( TYPE((ffvsp[-2].Node)), (ffvsp[-2].Node), POWER, (ffvsp[0].Node) );
 		  TEST((ffval.Node));                                                }
-#line 2275 "y.tab.c" /* yacc.c:1648  */
+//#line 2275 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 46:
-#line 451 "eval.y" /* yacc.c:1648  */
+//#line 451 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = (ffvsp[0].Node); }
-#line 2281 "y.tab.c" /* yacc.c:1648  */
+//#line 2281 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 47:
-#line 453 "eval.y" /* yacc.c:1648  */
+//#line 453 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_Unary( TYPE((ffvsp[0].Node)), UMINUS, (ffvsp[0].Node) ); TEST((ffval.Node)); }
-#line 2287 "y.tab.c" /* yacc.c:1648  */
+//#line 2287 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 48:
-#line 455 "eval.y" /* yacc.c:1648  */
+//#line 455 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = (ffvsp[-1].Node); }
-#line 2293 "y.tab.c" /* yacc.c:1648  */
+//#line 2293 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 49:
-#line 457 "eval.y" /* yacc.c:1648  */
+//#line 457 "eval.y" /* yacc.c:1648  */
     { (ffvsp[0].Node) = New_Unary( TYPE((ffvsp[-2].Node)), 0, (ffvsp[0].Node) );
                   (ffval.Node) = New_BinOp( TYPE((ffvsp[-2].Node)), (ffvsp[-2].Node), '*', (ffvsp[0].Node) ); 
 		  TEST((ffval.Node));                                }
-#line 2301 "y.tab.c" /* yacc.c:1648  */
+//#line 2301 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 50:
-#line 461 "eval.y" /* yacc.c:1648  */
+//#line 461 "eval.y" /* yacc.c:1648  */
     { (ffvsp[-2].Node) = New_Unary( TYPE((ffvsp[0].Node)), 0, (ffvsp[-2].Node) );
                   (ffval.Node) = New_BinOp( TYPE((ffvsp[0].Node)), (ffvsp[-2].Node), '*', (ffvsp[0].Node) );
                   TEST((ffval.Node));                                }
-#line 2309 "y.tab.c" /* yacc.c:1648  */
+//#line 2309 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 51:
-#line 465 "eval.y" /* yacc.c:1648  */
+//#line 465 "eval.y" /* yacc.c:1648  */
     {
                   PROMOTE((ffvsp[-2].Node),(ffvsp[0].Node));
                   if( ! Test_Dims((ffvsp[-2].Node),(ffvsp[0].Node)) ) {
@@ -2328,11 +2328,11 @@ ffreduce:
                   TYPE((ffvsp[-4].Node)) = BOOLEAN;
                   if( SIZE((ffval.Node))<SIZE((ffvsp[-4].Node)) )  Copy_Dims((ffval.Node), (ffvsp[-4].Node));
                 }
-#line 2332 "y.tab.c" /* yacc.c:1648  */
+//#line 2332 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 52:
-#line 484 "eval.y" /* yacc.c:1648  */
+//#line 484 "eval.y" /* yacc.c:1648  */
     {
                   PROMOTE((ffvsp[-2].Node),(ffvsp[0].Node));
                   if( ! Test_Dims((ffvsp[-2].Node),(ffvsp[0].Node)) ) {
@@ -2351,11 +2351,11 @@ ffreduce:
                   TYPE((ffvsp[-4].Node)) = BOOLEAN;
                   if( SIZE((ffval.Node))<SIZE((ffvsp[-4].Node)) )  Copy_Dims((ffval.Node), (ffvsp[-4].Node));
                 }
-#line 2355 "y.tab.c" /* yacc.c:1648  */
+//#line 2355 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 53:
-#line 503 "eval.y" /* yacc.c:1648  */
+//#line 503 "eval.y" /* yacc.c:1648  */
     {
                   PROMOTE((ffvsp[-2].Node),(ffvsp[0].Node));
                   if( ! Test_Dims((ffvsp[-2].Node),(ffvsp[0].Node)) ) {
@@ -2374,11 +2374,11 @@ ffreduce:
                   TYPE((ffvsp[-4].Node)) = BOOLEAN;
                   if( SIZE((ffval.Node))<SIZE((ffvsp[-4].Node)) )  Copy_Dims((ffval.Node), (ffvsp[-4].Node));
                 }
-#line 2378 "y.tab.c" /* yacc.c:1648  */
+//#line 2378 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 54:
-#line 522 "eval.y" /* yacc.c:1648  */
+//#line 522 "eval.y" /* yacc.c:1648  */
     { if (FSTRCMP((ffvsp[-1].str),"RANDOM(") == 0) {  /* Scalar RANDOM() */
                      (ffval.Node) = New_Func( DOUBLE, rnd_fct, 0, 0, 0, 0, 0, 0, 0, 0 );
 		  } else if (FSTRCMP((ffvsp[-1].str),"RANDOMN(") == 0) {/*Scalar RANDOMN()*/
@@ -2389,11 +2389,11 @@ ffreduce:
 		  }
                   TEST((ffval.Node)); 
                 }
-#line 2393 "y.tab.c" /* yacc.c:1648  */
+//#line 2393 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 55:
-#line 533 "eval.y" /* yacc.c:1648  */
+//#line 533 "eval.y" /* yacc.c:1648  */
     { if (FSTRCMP((ffvsp[-2].str),"SUM(") == 0) {
 		     (ffval.Node) = New_Func( LONG, sum_fct, 1, (ffvsp[-1].Node), 0, 0, 0, 0, 0, 0 );
                   } else if (FSTRCMP((ffvsp[-2].str),"NELEM(") == 0) {
@@ -2407,11 +2407,11 @@ ffreduce:
 		  }
                   TEST((ffval.Node)); 
 		}
-#line 2411 "y.tab.c" /* yacc.c:1648  */
+//#line 2411 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 56:
-#line 547 "eval.y" /* yacc.c:1648  */
+//#line 547 "eval.y" /* yacc.c:1648  */
     { if (FSTRCMP((ffvsp[-2].str),"NELEM(") == 0) {
                      (ffval.Node) = New_Const( LONG, &( SIZE((ffvsp[-1].Node)) ), sizeof(long) );
 		  } else if (FSTRCMP((ffvsp[-2].str),"NVALID(") == 0) {
@@ -2423,11 +2423,11 @@ ffreduce:
 		  }
                   TEST((ffval.Node)); 
 		}
-#line 2427 "y.tab.c" /* yacc.c:1648  */
+//#line 2427 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 57:
-#line 559 "eval.y" /* yacc.c:1648  */
+//#line 559 "eval.y" /* yacc.c:1648  */
     { if (FSTRCMP((ffvsp[-2].str),"NELEM(") == 0) {
                      (ffval.Node) = New_Const( LONG, &( SIZE((ffvsp[-1].Node)) ), sizeof(long) );
 		} else if (FSTRCMP((ffvsp[-2].str),"NVALID(") == 0) { /* Bit arrays do not have NULL */
@@ -2458,11 +2458,11 @@ ffreduce:
 		  }
                   TEST((ffval.Node)); 
 		}
-#line 2462 "y.tab.c" /* yacc.c:1648  */
+//#line 2462 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 58:
-#line 590 "eval.y" /* yacc.c:1648  */
+//#line 590 "eval.y" /* yacc.c:1648  */
     { if (FSTRCMP((ffvsp[-2].str),"SUM(") == 0)
 		     (ffval.Node) = New_Func( TYPE((ffvsp[-1].Node)), sum_fct, 1, (ffvsp[-1].Node),
 				    0, 0, 0, 0, 0, 0 );
@@ -2557,11 +2557,11 @@ ffreduce:
 		  }
                   TEST((ffval.Node)); 
                 }
-#line 2561 "y.tab.c" /* yacc.c:1648  */
+//#line 2561 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 59:
-#line 685 "eval.y" /* yacc.c:1648  */
+//#line 685 "eval.y" /* yacc.c:1648  */
     { 
 		  if (FSTRCMP((ffvsp[-4].str),"STRSTR(") == 0) {
 		    (ffval.Node) = New_Func( LONG, strpos_fct, 2, (ffvsp[-3].Node), (ffvsp[-1].Node), 0, 
@@ -2569,11 +2569,11 @@ ffreduce:
 		    TEST((ffval.Node));
 		  }
                 }
-#line 2573 "y.tab.c" /* yacc.c:1648  */
+//#line 2573 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 60:
-#line 693 "eval.y" /* yacc.c:1648  */
+//#line 693 "eval.y" /* yacc.c:1648  */
     { 
 		   if (FSTRCMP((ffvsp[-4].str),"DEFNULL(") == 0) {
 		      if( SIZE((ffvsp[-3].Node))>=SIZE((ffvsp[-1].Node)) && Test_Dims( (ffvsp[-3].Node), (ffvsp[-1].Node) ) ) {
@@ -2635,11 +2635,11 @@ ffreduce:
 		      FFERROR;
 		   }
                 }
-#line 2639 "y.tab.c" /* yacc.c:1648  */
+//#line 2639 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 61:
-#line 755 "eval.y" /* yacc.c:1648  */
+//#line 755 "eval.y" /* yacc.c:1648  */
     { 
 		  if (FSTRCMP((ffvsp[-8].str),"ANGSEP(") == 0) {
 		    if( TYPE((ffvsp[-7].Node)) != DOUBLE ) (ffvsp[-7].Node) = New_Unary( DOUBLE, 0, (ffvsp[-7].Node) );
@@ -2663,77 +2663,77 @@ ffreduce:
 		      FFERROR;
 		   }
                 }
-#line 2667 "y.tab.c" /* yacc.c:1648  */
+//#line 2667 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 62:
-#line 779 "eval.y" /* yacc.c:1648  */
+//#line 779 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_Deref( (ffvsp[-3].Node), 1, (ffvsp[-1].Node),  0,  0,  0,   0 ); TEST((ffval.Node)); }
-#line 2673 "y.tab.c" /* yacc.c:1648  */
+//#line 2673 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 63:
-#line 781 "eval.y" /* yacc.c:1648  */
+//#line 781 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_Deref( (ffvsp[-5].Node), 2, (ffvsp[-3].Node), (ffvsp[-1].Node),  0,  0,   0 ); TEST((ffval.Node)); }
-#line 2679 "y.tab.c" /* yacc.c:1648  */
+//#line 2679 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 64:
-#line 783 "eval.y" /* yacc.c:1648  */
+//#line 783 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_Deref( (ffvsp[-7].Node), 3, (ffvsp[-5].Node), (ffvsp[-3].Node), (ffvsp[-1].Node),  0,   0 ); TEST((ffval.Node)); }
-#line 2685 "y.tab.c" /* yacc.c:1648  */
+//#line 2685 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 65:
-#line 785 "eval.y" /* yacc.c:1648  */
+//#line 785 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_Deref( (ffvsp[-9].Node), 4, (ffvsp[-7].Node), (ffvsp[-5].Node), (ffvsp[-3].Node), (ffvsp[-1].Node),   0 ); TEST((ffval.Node)); }
-#line 2691 "y.tab.c" /* yacc.c:1648  */
+//#line 2691 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 66:
-#line 787 "eval.y" /* yacc.c:1648  */
+//#line 787 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_Deref( (ffvsp[-11].Node), 5, (ffvsp[-9].Node), (ffvsp[-7].Node), (ffvsp[-5].Node), (ffvsp[-3].Node), (ffvsp[-1].Node) ); TEST((ffval.Node)); }
-#line 2697 "y.tab.c" /* yacc.c:1648  */
+//#line 2697 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 67:
-#line 789 "eval.y" /* yacc.c:1648  */
+//#line 789 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_Unary( LONG,   INTCAST, (ffvsp[0].Node) );  TEST((ffval.Node));  }
-#line 2703 "y.tab.c" /* yacc.c:1648  */
+//#line 2703 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 68:
-#line 791 "eval.y" /* yacc.c:1648  */
+//#line 791 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_Unary( LONG,   INTCAST, (ffvsp[0].Node) );  TEST((ffval.Node));  }
-#line 2709 "y.tab.c" /* yacc.c:1648  */
+//#line 2709 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 69:
-#line 793 "eval.y" /* yacc.c:1648  */
+//#line 793 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_Unary( DOUBLE, FLTCAST, (ffvsp[0].Node) );  TEST((ffval.Node));  }
-#line 2715 "y.tab.c" /* yacc.c:1648  */
+//#line 2715 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 70:
-#line 795 "eval.y" /* yacc.c:1648  */
+//#line 795 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_Unary( DOUBLE, FLTCAST, (ffvsp[0].Node) );  TEST((ffval.Node));  }
-#line 2721 "y.tab.c" /* yacc.c:1648  */
+//#line 2721 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 71:
-#line 799 "eval.y" /* yacc.c:1648  */
+//#line 799 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_Const( BOOLEAN, &((ffvsp[0].log)), sizeof(char) ); TEST((ffval.Node)); }
-#line 2727 "y.tab.c" /* yacc.c:1648  */
+//#line 2727 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 72:
-#line 801 "eval.y" /* yacc.c:1648  */
+//#line 801 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_Column( (ffvsp[0].lng) ); TEST((ffval.Node)); }
-#line 2733 "y.tab.c" /* yacc.c:1648  */
+//#line 2733 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 73:
-#line 803 "eval.y" /* yacc.c:1648  */
+//#line 803 "eval.y" /* yacc.c:1648  */
     {
                   if( TYPE((ffvsp[-1].Node)) != LONG
 		      || OPER((ffvsp[-1].Node)) != CONST_OP ) {
@@ -2742,178 +2742,178 @@ ffreduce:
 		  }
                   (ffval.Node) = New_Offset( (ffvsp[-3].lng), (ffvsp[-1].Node) ); TEST((ffval.Node));
                 }
-#line 2746 "y.tab.c" /* yacc.c:1648  */
+//#line 2746 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 74:
-#line 812 "eval.y" /* yacc.c:1648  */
+//#line 812 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_BinOp( BOOLEAN, (ffvsp[-2].Node), EQ,  (ffvsp[0].Node) ); TEST((ffval.Node));
 		  SIZE((ffval.Node)) = 1;                                     }
-#line 2753 "y.tab.c" /* yacc.c:1648  */
+//#line 2753 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 75:
-#line 815 "eval.y" /* yacc.c:1648  */
+//#line 815 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_BinOp( BOOLEAN, (ffvsp[-2].Node), NE,  (ffvsp[0].Node) ); TEST((ffval.Node)); 
 		  SIZE((ffval.Node)) = 1;                                     }
-#line 2760 "y.tab.c" /* yacc.c:1648  */
+//#line 2760 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 76:
-#line 818 "eval.y" /* yacc.c:1648  */
+//#line 818 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_BinOp( BOOLEAN, (ffvsp[-2].Node), LT,  (ffvsp[0].Node) ); TEST((ffval.Node)); 
 		  SIZE((ffval.Node)) = 1;                                     }
-#line 2767 "y.tab.c" /* yacc.c:1648  */
+//#line 2767 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 77:
-#line 821 "eval.y" /* yacc.c:1648  */
+//#line 821 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_BinOp( BOOLEAN, (ffvsp[-2].Node), LTE, (ffvsp[0].Node) ); TEST((ffval.Node)); 
 		  SIZE((ffval.Node)) = 1;                                     }
-#line 2774 "y.tab.c" /* yacc.c:1648  */
+//#line 2774 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 78:
-#line 824 "eval.y" /* yacc.c:1648  */
+//#line 824 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_BinOp( BOOLEAN, (ffvsp[-2].Node), GT,  (ffvsp[0].Node) ); TEST((ffval.Node)); 
 		  SIZE((ffval.Node)) = 1;                                     }
-#line 2781 "y.tab.c" /* yacc.c:1648  */
+//#line 2781 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 79:
-#line 827 "eval.y" /* yacc.c:1648  */
+//#line 827 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_BinOp( BOOLEAN, (ffvsp[-2].Node), GTE, (ffvsp[0].Node) ); TEST((ffval.Node)); 
 		  SIZE((ffval.Node)) = 1;                                     }
-#line 2788 "y.tab.c" /* yacc.c:1648  */
+//#line 2788 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 80:
-#line 830 "eval.y" /* yacc.c:1648  */
+//#line 830 "eval.y" /* yacc.c:1648  */
     { PROMOTE((ffvsp[-2].Node),(ffvsp[0].Node)); (ffval.Node) = New_BinOp( BOOLEAN, (ffvsp[-2].Node), GT,  (ffvsp[0].Node) );
                   TEST((ffval.Node));                                               }
-#line 2795 "y.tab.c" /* yacc.c:1648  */
+//#line 2795 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 81:
-#line 833 "eval.y" /* yacc.c:1648  */
+//#line 833 "eval.y" /* yacc.c:1648  */
     { PROMOTE((ffvsp[-2].Node),(ffvsp[0].Node)); (ffval.Node) = New_BinOp( BOOLEAN, (ffvsp[-2].Node), LT,  (ffvsp[0].Node) );
                   TEST((ffval.Node));                                               }
-#line 2802 "y.tab.c" /* yacc.c:1648  */
+//#line 2802 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 82:
-#line 836 "eval.y" /* yacc.c:1648  */
+//#line 836 "eval.y" /* yacc.c:1648  */
     { PROMOTE((ffvsp[-2].Node),(ffvsp[0].Node)); (ffval.Node) = New_BinOp( BOOLEAN, (ffvsp[-2].Node), GTE, (ffvsp[0].Node) );
                   TEST((ffval.Node));                                               }
-#line 2809 "y.tab.c" /* yacc.c:1648  */
+//#line 2809 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 83:
-#line 839 "eval.y" /* yacc.c:1648  */
+//#line 839 "eval.y" /* yacc.c:1648  */
     { PROMOTE((ffvsp[-2].Node),(ffvsp[0].Node)); (ffval.Node) = New_BinOp( BOOLEAN, (ffvsp[-2].Node), LTE, (ffvsp[0].Node) );
                   TEST((ffval.Node));                                               }
-#line 2816 "y.tab.c" /* yacc.c:1648  */
+//#line 2816 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 84:
-#line 842 "eval.y" /* yacc.c:1648  */
+//#line 842 "eval.y" /* yacc.c:1648  */
     { PROMOTE((ffvsp[-2].Node),(ffvsp[0].Node)); (ffval.Node) = New_BinOp( BOOLEAN, (ffvsp[-2].Node), '~', (ffvsp[0].Node) );
                   TEST((ffval.Node));                                               }
-#line 2823 "y.tab.c" /* yacc.c:1648  */
+//#line 2823 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 85:
-#line 845 "eval.y" /* yacc.c:1648  */
+//#line 845 "eval.y" /* yacc.c:1648  */
     { PROMOTE((ffvsp[-2].Node),(ffvsp[0].Node)); (ffval.Node) = New_BinOp( BOOLEAN, (ffvsp[-2].Node), EQ,  (ffvsp[0].Node) );
                   TEST((ffval.Node));                                               }
-#line 2830 "y.tab.c" /* yacc.c:1648  */
+//#line 2830 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 86:
-#line 848 "eval.y" /* yacc.c:1648  */
+//#line 848 "eval.y" /* yacc.c:1648  */
     { PROMOTE((ffvsp[-2].Node),(ffvsp[0].Node)); (ffval.Node) = New_BinOp( BOOLEAN, (ffvsp[-2].Node), NE,  (ffvsp[0].Node) );
                   TEST((ffval.Node));                                               }
-#line 2837 "y.tab.c" /* yacc.c:1648  */
+//#line 2837 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 87:
-#line 851 "eval.y" /* yacc.c:1648  */
+//#line 851 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_BinOp( BOOLEAN, (ffvsp[-2].Node), EQ,  (ffvsp[0].Node) ); TEST((ffval.Node));
                   SIZE((ffval.Node)) = 1; }
-#line 2844 "y.tab.c" /* yacc.c:1648  */
+//#line 2844 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 88:
-#line 854 "eval.y" /* yacc.c:1648  */
+//#line 854 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_BinOp( BOOLEAN, (ffvsp[-2].Node), NE,  (ffvsp[0].Node) ); TEST((ffval.Node));
                   SIZE((ffval.Node)) = 1; }
-#line 2851 "y.tab.c" /* yacc.c:1648  */
+//#line 2851 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 89:
-#line 857 "eval.y" /* yacc.c:1648  */
+//#line 857 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_BinOp( BOOLEAN, (ffvsp[-2].Node), GT,  (ffvsp[0].Node) ); TEST((ffval.Node));
                   SIZE((ffval.Node)) = 1; }
-#line 2858 "y.tab.c" /* yacc.c:1648  */
+//#line 2858 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 90:
-#line 860 "eval.y" /* yacc.c:1648  */
+//#line 860 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_BinOp( BOOLEAN, (ffvsp[-2].Node), GTE, (ffvsp[0].Node) ); TEST((ffval.Node));
                   SIZE((ffval.Node)) = 1; }
-#line 2865 "y.tab.c" /* yacc.c:1648  */
+//#line 2865 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 91:
-#line 863 "eval.y" /* yacc.c:1648  */
+//#line 863 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_BinOp( BOOLEAN, (ffvsp[-2].Node), LT,  (ffvsp[0].Node) ); TEST((ffval.Node));
                   SIZE((ffval.Node)) = 1; }
-#line 2872 "y.tab.c" /* yacc.c:1648  */
+//#line 2872 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 92:
-#line 866 "eval.y" /* yacc.c:1648  */
+//#line 866 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_BinOp( BOOLEAN, (ffvsp[-2].Node), LTE, (ffvsp[0].Node) ); TEST((ffval.Node));
                   SIZE((ffval.Node)) = 1; }
-#line 2879 "y.tab.c" /* yacc.c:1648  */
+//#line 2879 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 93:
-#line 869 "eval.y" /* yacc.c:1648  */
+//#line 869 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_BinOp( BOOLEAN, (ffvsp[-2].Node), AND, (ffvsp[0].Node) ); TEST((ffval.Node)); }
-#line 2885 "y.tab.c" /* yacc.c:1648  */
+//#line 2885 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 94:
-#line 871 "eval.y" /* yacc.c:1648  */
+//#line 871 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_BinOp( BOOLEAN, (ffvsp[-2].Node), OR,  (ffvsp[0].Node) ); TEST((ffval.Node)); }
-#line 2891 "y.tab.c" /* yacc.c:1648  */
+//#line 2891 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 95:
-#line 873 "eval.y" /* yacc.c:1648  */
+//#line 873 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_BinOp( BOOLEAN, (ffvsp[-2].Node), EQ,  (ffvsp[0].Node) ); TEST((ffval.Node)); }
-#line 2897 "y.tab.c" /* yacc.c:1648  */
+//#line 2897 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 96:
-#line 875 "eval.y" /* yacc.c:1648  */
+//#line 875 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_BinOp( BOOLEAN, (ffvsp[-2].Node), NE,  (ffvsp[0].Node) ); TEST((ffval.Node)); }
-#line 2903 "y.tab.c" /* yacc.c:1648  */
+//#line 2903 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 97:
-#line 878 "eval.y" /* yacc.c:1648  */
+//#line 878 "eval.y" /* yacc.c:1648  */
     { PROMOTE((ffvsp[-4].Node),(ffvsp[-2].Node)); PROMOTE((ffvsp[-4].Node),(ffvsp[0].Node)); PROMOTE((ffvsp[-2].Node),(ffvsp[0].Node));
 		  (ffvsp[-2].Node) = New_BinOp( BOOLEAN, (ffvsp[-2].Node), LTE, (ffvsp[-4].Node) );
                   (ffvsp[0].Node) = New_BinOp( BOOLEAN, (ffvsp[-4].Node), LTE, (ffvsp[0].Node) );
                   (ffval.Node) = New_BinOp( BOOLEAN, (ffvsp[-2].Node), AND, (ffvsp[0].Node) );
                   TEST((ffval.Node));                                         }
-#line 2913 "y.tab.c" /* yacc.c:1648  */
+//#line 2913 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 98:
-#line 885 "eval.y" /* yacc.c:1648  */
+//#line 885 "eval.y" /* yacc.c:1648  */
     {
                   if( ! Test_Dims((ffvsp[-2].Node),(ffvsp[0].Node)) ) {
                      fferror("Incompatible dimensions in '?:' arguments");
@@ -2929,11 +2929,11 @@ ffreduce:
                   }
                   if( SIZE((ffval.Node))<SIZE((ffvsp[-4].Node)) )  Copy_Dims((ffval.Node), (ffvsp[-4].Node));
                 }
-#line 2933 "y.tab.c" /* yacc.c:1648  */
+//#line 2933 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 99:
-#line 902 "eval.y" /* yacc.c:1648  */
+//#line 902 "eval.y" /* yacc.c:1648  */
     {
 		   if (FSTRCMP((ffvsp[-2].str),"ISNULL(") == 0) {
 		      (ffval.Node) = New_Func( 0, isnull_fct, 1, (ffvsp[-1].Node), 0, 0,
@@ -2946,11 +2946,11 @@ ffreduce:
 		      FFERROR;
 		   }
 		}
-#line 2950 "y.tab.c" /* yacc.c:1648  */
+//#line 2950 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 100:
-#line 915 "eval.y" /* yacc.c:1648  */
+//#line 915 "eval.y" /* yacc.c:1648  */
     {
 		   if (FSTRCMP((ffvsp[-2].str),"ISNULL(") == 0) {
 		      (ffval.Node) = New_Func( 0, isnull_fct, 1, (ffvsp[-1].Node), 0, 0,
@@ -2963,11 +2963,11 @@ ffreduce:
 		      FFERROR;
 		   }
 		}
-#line 2967 "y.tab.c" /* yacc.c:1648  */
+//#line 2967 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 101:
-#line 928 "eval.y" /* yacc.c:1648  */
+//#line 928 "eval.y" /* yacc.c:1648  */
     {
 		   if (FSTRCMP((ffvsp[-2].str),"ISNULL(") == 0) {
 		      (ffval.Node) = New_Func( BOOLEAN, isnull_fct, 1, (ffvsp[-1].Node), 0, 0,
@@ -2978,11 +2978,11 @@ ffreduce:
 		      FFERROR;
 		   }
 		}
-#line 2982 "y.tab.c" /* yacc.c:1648  */
+//#line 2982 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 102:
-#line 939 "eval.y" /* yacc.c:1648  */
+//#line 939 "eval.y" /* yacc.c:1648  */
     {
 		   if (FSTRCMP((ffvsp[-4].str),"DEFNULL(") == 0) {
 		      if( SIZE((ffvsp[-3].Node))>=SIZE((ffvsp[-1].Node)) && Test_Dims( (ffvsp[-3].Node), (ffvsp[-1].Node) ) ) {
@@ -2998,11 +2998,11 @@ ffreduce:
 		      FFERROR;
 		   }
 		}
-#line 3002 "y.tab.c" /* yacc.c:1648  */
+//#line 3002 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 103:
-#line 955 "eval.y" /* yacc.c:1648  */
+//#line 955 "eval.y" /* yacc.c:1648  */
     {
 		   if( TYPE((ffvsp[-5].Node)) != DOUBLE ) (ffvsp[-5].Node) = New_Unary( DOUBLE, 0, (ffvsp[-5].Node) );
 		   if( TYPE((ffvsp[-3].Node)) != DOUBLE ) (ffvsp[-3].Node) = New_Unary( DOUBLE, 0, (ffvsp[-3].Node) );
@@ -3026,11 +3026,11 @@ ffreduce:
 		     if( SIZE((ffvsp[-3].Node))<SIZE((ffvsp[-1].Node)) )  Copy_Dims((ffval.Node), (ffvsp[-1].Node));
 		   }
 		}
-#line 3030 "y.tab.c" /* yacc.c:1648  */
+//#line 3030 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 104:
-#line 979 "eval.y" /* yacc.c:1648  */
+//#line 979 "eval.y" /* yacc.c:1648  */
     {
 		   if( TYPE((ffvsp[-9].Node)) != DOUBLE ) (ffvsp[-9].Node) = New_Unary( DOUBLE, 0, (ffvsp[-9].Node) );
 		   if( TYPE((ffvsp[-7].Node)) != DOUBLE ) (ffvsp[-7].Node) = New_Unary( DOUBLE, 0, (ffvsp[-7].Node) );
@@ -3058,11 +3058,11 @@ ffreduce:
 		     if( SIZE((ffvsp[-3].Node))<SIZE((ffvsp[-1].Node)) ) Copy_Dims((ffval.Node), (ffvsp[-1].Node));
 		   }
 		}
-#line 3062 "y.tab.c" /* yacc.c:1648  */
+//#line 3062 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 105:
-#line 1007 "eval.y" /* yacc.c:1648  */
+//#line 1007 "eval.y" /* yacc.c:1648  */
     {
 		   if( TYPE((ffvsp[-13].Node)) != DOUBLE ) (ffvsp[-13].Node) = New_Unary( DOUBLE, 0, (ffvsp[-13].Node) );
 		   if( TYPE((ffvsp[-11].Node)) != DOUBLE ) (ffvsp[-11].Node) = New_Unary( DOUBLE, 0, (ffvsp[-11].Node) );
@@ -3098,118 +3098,118 @@ ffreduce:
 		     if( SIZE((ffvsp[-3].Node))<SIZE((ffvsp[-1].Node)) ) Copy_Dims((ffval.Node), (ffvsp[-1].Node));
 		   }
 		}
-#line 3102 "y.tab.c" /* yacc.c:1648  */
+//#line 3102 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 106:
-#line 1044 "eval.y" /* yacc.c:1648  */
+//#line 1044 "eval.y" /* yacc.c:1648  */
     { /* Use defaults for all elements */
                    (ffval.Node) = New_GTI( "", -99, "*START*", "*STOP*" );
                    TEST((ffval.Node));                                        }
-#line 3110 "y.tab.c" /* yacc.c:1648  */
+//#line 3110 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 107:
-#line 1048 "eval.y" /* yacc.c:1648  */
+//#line 1048 "eval.y" /* yacc.c:1648  */
     { /* Use defaults for all except filename */
                    (ffval.Node) = New_GTI( (ffvsp[-1].str), -99, "*START*", "*STOP*" );
                    TEST((ffval.Node));                                        }
-#line 3118 "y.tab.c" /* yacc.c:1648  */
+//#line 3118 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 108:
-#line 1052 "eval.y" /* yacc.c:1648  */
+//#line 1052 "eval.y" /* yacc.c:1648  */
     {  (ffval.Node) = New_GTI( (ffvsp[-3].str), (ffvsp[-1].Node), "*START*", "*STOP*" );
                    TEST((ffval.Node));                                        }
-#line 3125 "y.tab.c" /* yacc.c:1648  */
+//#line 3125 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 109:
-#line 1055 "eval.y" /* yacc.c:1648  */
+//#line 1055 "eval.y" /* yacc.c:1648  */
     {  (ffval.Node) = New_GTI( (ffvsp[-7].str), (ffvsp[-5].Node), (ffvsp[-3].str), (ffvsp[-1].str) );
                    TEST((ffval.Node));                                        }
-#line 3132 "y.tab.c" /* yacc.c:1648  */
+//#line 3132 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 110:
-#line 1059 "eval.y" /* yacc.c:1648  */
+//#line 1059 "eval.y" /* yacc.c:1648  */
     { /* Use defaults for all except filename */
                    (ffval.Node) = New_REG( (ffvsp[-1].str), -99, -99, "" );
                    TEST((ffval.Node));                                        }
-#line 3140 "y.tab.c" /* yacc.c:1648  */
+//#line 3140 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 111:
-#line 1063 "eval.y" /* yacc.c:1648  */
+//#line 1063 "eval.y" /* yacc.c:1648  */
     {  (ffval.Node) = New_REG( (ffvsp[-5].str), (ffvsp[-3].Node), (ffvsp[-1].Node), "" );
                    TEST((ffval.Node));                                        }
-#line 3147 "y.tab.c" /* yacc.c:1648  */
+//#line 3147 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 112:
-#line 1066 "eval.y" /* yacc.c:1648  */
+//#line 1066 "eval.y" /* yacc.c:1648  */
     {  (ffval.Node) = New_REG( (ffvsp[-7].str), (ffvsp[-5].Node), (ffvsp[-3].Node), (ffvsp[-1].str) );
                    TEST((ffval.Node));                                        }
-#line 3154 "y.tab.c" /* yacc.c:1648  */
+//#line 3154 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 113:
-#line 1070 "eval.y" /* yacc.c:1648  */
+//#line 1070 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_Deref( (ffvsp[-3].Node), 1, (ffvsp[-1].Node),  0,  0,  0,   0 ); TEST((ffval.Node)); }
-#line 3160 "y.tab.c" /* yacc.c:1648  */
+//#line 3160 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 114:
-#line 1072 "eval.y" /* yacc.c:1648  */
+//#line 1072 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_Deref( (ffvsp[-5].Node), 2, (ffvsp[-3].Node), (ffvsp[-1].Node),  0,  0,   0 ); TEST((ffval.Node)); }
-#line 3166 "y.tab.c" /* yacc.c:1648  */
+//#line 3166 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 115:
-#line 1074 "eval.y" /* yacc.c:1648  */
+//#line 1074 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_Deref( (ffvsp[-7].Node), 3, (ffvsp[-5].Node), (ffvsp[-3].Node), (ffvsp[-1].Node),  0,   0 ); TEST((ffval.Node)); }
-#line 3172 "y.tab.c" /* yacc.c:1648  */
+//#line 3172 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 116:
-#line 1076 "eval.y" /* yacc.c:1648  */
+//#line 1076 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_Deref( (ffvsp[-9].Node), 4, (ffvsp[-7].Node), (ffvsp[-5].Node), (ffvsp[-3].Node), (ffvsp[-1].Node),   0 ); TEST((ffval.Node)); }
-#line 3178 "y.tab.c" /* yacc.c:1648  */
+//#line 3178 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 117:
-#line 1078 "eval.y" /* yacc.c:1648  */
+//#line 1078 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_Deref( (ffvsp[-11].Node), 5, (ffvsp[-9].Node), (ffvsp[-7].Node), (ffvsp[-5].Node), (ffvsp[-3].Node), (ffvsp[-1].Node) ); TEST((ffval.Node)); }
-#line 3184 "y.tab.c" /* yacc.c:1648  */
+//#line 3184 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 118:
-#line 1080 "eval.y" /* yacc.c:1648  */
+//#line 1080 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_Unary( BOOLEAN, NOT, (ffvsp[0].Node) ); TEST((ffval.Node)); }
-#line 3190 "y.tab.c" /* yacc.c:1648  */
+//#line 3190 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 119:
-#line 1082 "eval.y" /* yacc.c:1648  */
+//#line 1082 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = (ffvsp[-1].Node); }
-#line 3196 "y.tab.c" /* yacc.c:1648  */
+//#line 3196 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 120:
-#line 1086 "eval.y" /* yacc.c:1648  */
+//#line 1086 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_Const( STRING, (ffvsp[0].str), strlen((ffvsp[0].str))+1 ); TEST((ffval.Node));
                   SIZE((ffval.Node)) = strlen((ffvsp[0].str)); }
-#line 3203 "y.tab.c" /* yacc.c:1648  */
+//#line 3203 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 121:
-#line 1089 "eval.y" /* yacc.c:1648  */
+//#line 1089 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_Column( (ffvsp[0].lng) ); TEST((ffval.Node)); }
-#line 3209 "y.tab.c" /* yacc.c:1648  */
+//#line 3209 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 122:
-#line 1091 "eval.y" /* yacc.c:1648  */
+//#line 1091 "eval.y" /* yacc.c:1648  */
     {
                   if( TYPE((ffvsp[-1].Node)) != LONG
 		      || OPER((ffvsp[-1].Node)) != CONST_OP ) {
@@ -3218,23 +3218,23 @@ ffreduce:
 		  }
                   (ffval.Node) = New_Offset( (ffvsp[-3].lng), (ffvsp[-1].Node) ); TEST((ffval.Node));
                 }
-#line 3222 "y.tab.c" /* yacc.c:1648  */
+//#line 3222 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 123:
-#line 1100 "eval.y" /* yacc.c:1648  */
+//#line 1100 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = New_Func( STRING, null_fct, 0, 0, 0, 0, 0, 0, 0, 0 ); }
-#line 3228 "y.tab.c" /* yacc.c:1648  */
+//#line 3228 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 124:
-#line 1102 "eval.y" /* yacc.c:1648  */
+//#line 1102 "eval.y" /* yacc.c:1648  */
     { (ffval.Node) = (ffvsp[-1].Node); }
-#line 3234 "y.tab.c" /* yacc.c:1648  */
+//#line 3234 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 125:
-#line 1104 "eval.y" /* yacc.c:1648  */
+//#line 1104 "eval.y" /* yacc.c:1648  */
     { 
 		  if (SIZE((ffvsp[-2].Node))+SIZE((ffvsp[0].Node)) >= MAX_STRLEN) {
 		    fferror("Combined string size exceeds " MAX_STRLEN_S " characters");
@@ -3243,11 +3243,11 @@ ffreduce:
 		  (ffval.Node) = New_BinOp( STRING, (ffvsp[-2].Node), '+', (ffvsp[0].Node) );  TEST((ffval.Node));
 		  SIZE((ffval.Node)) = SIZE((ffvsp[-2].Node)) + SIZE((ffvsp[0].Node));
 		}
-#line 3247 "y.tab.c" /* yacc.c:1648  */
+//#line 3247 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 126:
-#line 1113 "eval.y" /* yacc.c:1648  */
+//#line 1113 "eval.y" /* yacc.c:1648  */
     {
 		  int outSize;
                   if( SIZE((ffvsp[-4].Node))!=1 ) {
@@ -3265,11 +3265,11 @@ ffreduce:
                   TEST((ffval.Node));
                   if( SIZE((ffvsp[-2].Node))<SIZE((ffvsp[0].Node)) )  Copy_Dims((ffval.Node), (ffvsp[0].Node));
                 }
-#line 3269 "y.tab.c" /* yacc.c:1648  */
+//#line 3269 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 127:
-#line 1132 "eval.y" /* yacc.c:1648  */
+//#line 1132 "eval.y" /* yacc.c:1648  */
     { 
 		  if (FSTRCMP((ffvsp[-4].str),"DEFNULL(") == 0) {
 		     int outSize;
@@ -3288,11 +3288,11 @@ ffreduce:
 		     FFERROR;
 		  }
 		}
-#line 3292 "y.tab.c" /* yacc.c:1648  */
+//#line 3292 "y.tab.c" /* yacc.c:1648  */
     break;
 
   case 128:
-#line 1151 "eval.y" /* yacc.c:1648  */
+//#line 1151 "eval.y" /* yacc.c:1648  */
     { 
 		  if (FSTRCMP((ffvsp[-6].str),"STRMID(") == 0) {
 		    int len;
@@ -3319,11 +3319,11 @@ ffreduce:
 		     FFERROR;
 		  }
 		}
-#line 3323 "y.tab.c" /* yacc.c:1648  */
+//#line 3323 "y.tab.c" /* yacc.c:1648  */
     break;
 
 
-#line 3327 "y.tab.c" /* yacc.c:1648  */
+//#line 3327 "y.tab.c" /* yacc.c:1648  */
       default: break;
     }
   /* User semantic actions sometimes alter ffchar, and that requires
@@ -3551,7 +3551,7 @@ ffreturn:
 #endif
   return ffresult;
 }
-#line 1180 "eval.y" /* yacc.c:1907  */
+//#line 1180 "eval.y" /* yacc.c:1907  */
 
 
 /*************************************************************************/
