@@ -22,5 +22,8 @@ file(GLOB HEADERS "*.h")
 # create the library target
 add_library(${TARGET} STATIC ${SOURCES} ${HEADERS})
 
+# avoid non-ANSI include
+add_definitions(-DFF_NO_UNISTD_H=1)
+
 # suppress all compiler warnings
 target_compile_options(${TARGET} PRIVATE -w)
