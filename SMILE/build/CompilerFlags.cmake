@@ -12,7 +12,9 @@ set_property(TARGET ${TARGET} PROPERTY CXX_STANDARD_REQUIRED ON)
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     target_compile_options(${TARGET} PRIVATE -Wall -W -pedantic)
-    if (NOT NO_EXTRA_WARNINGS)
+    if (NO_EXTRA_WARNINGS)
+        target_compile_options(${TARGET} PRIVATE -Wno-unused-parameter -Wno-extra-semi)
+    else()
         target_compile_options(${TARGET} PRIVATE
             -Wdeprecated -Wextra-semi -Wold-style-cast -Wdouble-promotion
             -Wunused-exception-parameter -Wmissing-variable-declarations
