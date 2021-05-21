@@ -538,6 +538,8 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
         log()->infoSetElapsed(numCells);
         auto parallel = log()->find<ParallelFactory>()->parallelDistributed();
         parallel->call(numCells, [this, &vcon, &offsets](size_t firstIndex, size_t numIndices) {
+            // allocate a separate cell calculator for each thread to avoid conflicts
+            voro::voro_compute<voro::container> vcompute(vcon, _nb, _nb, _nb);
             // allocate space for the resulting cell info
             voro::voronoicell_neighbor vcell;
 
@@ -551,7 +553,7 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
                     if (m >= firstIndex && m < firstIndex + numIndices)
                     {
                         // compute the cell
-                        bool ok = vcon.compute_cell(vcell, vloop);
+                        bool ok = vcompute.compute_cell(vcell, vloop.ijk, vloop.q, vloop.i, vloop.j, vloop.k);
                         if (!ok) throw FATALERROR("Can't compute Voronoi cell");
 
                         // store the cell's centroid as relaxation offset
@@ -586,6 +588,8 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
     log()->infoSetElapsed(numCells);
     auto parallel = log()->find<ParallelFactory>()->parallelDistributed();
     parallel->call(numCells, [this, &vcon](size_t firstIndex, size_t numIndices) {
+        // allocate a separate cell calculator for each thread to avoid conflicts
+        voro::voro_compute<voro::container> vcompute(vcon, _nb, _nb, _nb);
         // allocate space for the resulting cell info
         voro::voronoicell_neighbor vcell;
 
@@ -599,7 +603,7 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
                 if (m >= firstIndex && m < firstIndex + numIndices)
                 {
                     // compute the cell
-                    bool ok = vcon.compute_cell(vcell, vloop);
+                    bool ok = vcompute.compute_cell(vcell, vloop.ijk, vloop.q, vloop.i, vloop.j, vloop.k);
                     if (!ok) throw FATALERROR("Can't compute Voronoi cell");
 
                     // copy all relevant information to the cell object that will stay around
