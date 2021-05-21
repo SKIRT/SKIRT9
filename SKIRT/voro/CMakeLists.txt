@@ -12,6 +12,7 @@
 # Changes:
 #  - rename v_base_wl.cc to v_base_wl.hh
 #  - fix warnings in cell.hh and rad_option.hh
+#  - remove wall.hh/cc, pre_container.hh/cc and all non-source files
 #---------------------------------------------------------------------
 
 # set the target name
