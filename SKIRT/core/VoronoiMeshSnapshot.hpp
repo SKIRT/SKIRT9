@@ -42,9 +42,50 @@ class SpatialGridPath;
     configuration sequence of the object, so that the getters can be used immediately after
     construction.
 
-    This class uses the Voro++ code written by Chris H. Rycroft (LBL / UC Berkeley) to build the
-    Voronoi tesselation. Once an VoronoiMeshSnapshot object has been constructed and fully
-    configured, its data is no longer modified. Consequently all getters are re-entrant. */
+    Once an VoronoiMeshSnapshot object has been constructed and fully configured, its data members
+    are no longer modified. Consequently all getters are re-entrant.
+
+    Using the Voro++ library
+    ------------------------
+
+    To build the Voronoi tessellation, the buildMesh() function in this class uses the code in the
+    \c voro subfolder of the SKIRT code hierarchy, which is taken from the Voro++ library written
+    by Chris H. Rycroft (Harvard University/Lawrence Berkeley Laboratory) at
+    https://github.com/chr1shr/voro (git commit 122531f) with minimal changes to avoid compiler
+    warnings.
+
+    A distinguishing feature of the Voro++ library is that it carries out cell-based calculations,
+    computing the Voronoi cell for each site individually, rather than computing the Voronoi
+    tessellation as a global network of vertices and edges. It is therefore particularly
+    well-suited for applications that require cell-based properties such as the cell volume, the
+    centroid position or the number of faces or vertices. Equally important in the context of
+    SKIRT, it is easy to distribute the work over parallel execution threads because, after setting
+    up a common search data structure holding all sites, the calculations for the various cells are
+    mutually independent.
+
+    The Voro++ approach also has an important drawback. Because cells are handled independently of
+    each other, floating pointing rounding errors sometimes cause inconsistencies where the results
+    for one cell do not properly match the corresponding results for a neighboring cell. This most
+    often happens when the generating sites are very close to each other and/or form certain
+    hard-to-calculate geometries. These problems manifest themselves either as empty cells or as
+    asymmetries in the neighbor lists. To handle these situations, the buildMesh() function removes
+    some sites from the input list as described below.
+
+    Firstly, before actually building the Voronoi tessellation, and in addition to removing sites
+    that lie outside of the spatial domain, the function discards sites that lie closer to any
+    previously listed site than \f$10^{-12}\f$ times the diagonal of the spatial domain. This
+    preventative measure essentially removes any "degenerate" sites from the input list. Given the
+    extremely small distances, it is very unlikely that the physcis of the input model would be
+    affected by this operation.
+
+    Secondly, after all Voronoi cells have been calculated, the function verifies the cell
+    properties. If any of the cells have a zero volume or if any of the cell neighbors are not
+    mutual, the involved sites are discarded and the Voronoi construction starts anew from scratch
+    with the reduced list of sites. After a maximum of 5 attempts, the function throws a fatal
+    error. In practice, this will hopefully never happen. Discarding incorrectly calculated cells
+    perhaps incurs a slightly higher risk of changing the physcis of the input model. However, in
+    practice it seems that these issues mostly occur in regions of high site density, so that the
+    errors should be fairly limited. */
 class VoronoiMeshSnapshot : public Snapshot
 {
     //================= Construction - Destruction =================
@@ -159,10 +200,6 @@ private:
         Voro++ container, computes the Voronoi cells one by one, and copies the relevant cell
         information (such as the list of neighboring cells) from the Voro++ data structures into
         its own.
-
-        Before actually starting to build the Voronoi tessellation, the function discards sites
-        (represented as Cell objects) outside of the domain and sites that are too close to
-        another site.
 
         If the \em relax argument is true, the function performs a single relaxation step on the
         site positions using Lloyd's algorithm (Lloyd 1982; Du, Faber and Gunzburger 1999, SIAM
