@@ -12,7 +12,9 @@ set_property(TARGET ${TARGET} PROPERTY CXX_STANDARD_REQUIRED ON)
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     target_compile_options(${TARGET} PRIVATE -Wall -W -pedantic)
-    if (NOT NO_EXTRA_WARNINGS)
+    if (NO_EXTRA_WARNINGS)
+        target_compile_options(${TARGET} PRIVATE -Wno-unused-parameter)
+    else()
         target_compile_options(${TARGET} PRIVATE
             -Wdeprecated -Wextra-semi -Wold-style-cast -Wdouble-promotion
             -Wunused-exception-parameter -Wmissing-variable-declarations
@@ -22,10 +24,10 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     target_compile_options(${TARGET} PRIVATE -Wall -W -pedantic)
     if (NO_EXTRA_WARNINGS)
-        target_compile_options(${TARGET} PRIVATE -Wno-misleading-indentation)
+        target_compile_options(${TARGET} PRIVATE -Wno-misleading-indentation -Wno-unused-parameter)
     endif()
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "Intel")
-    target_compile_options(${TARGET} PRIVATE -Wall)
+    target_compile_options(${TARGET} PRIVATE -fp-model precise -Wall)
     if (NO_EXTRA_WARNINGS)
         target_compile_options(${TARGET} PRIVATE -Wno-deprecated)
     endif()

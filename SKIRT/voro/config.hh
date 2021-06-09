@@ -1,14 +1,16 @@
 // Voro++, a 3D cell-based Voronoi library
 //
-// Author   : Chris H. Rycroft (LBL / UC Berkeley)
+// Author   : Chris H. Rycroft (Harvard University / LBL)
 // Email    : chr@alum.mit.edu
 // Date     : August 30th 2011
 
-/* \file voro_config.hh
+/** \file config.hh
  * \brief Master configuration file for setting various compile-time options. */
 
-#ifndef VORO_CONFIG_HH
-#define VORO_CONFIG_HH
+#ifndef VOROPP_CONFIG_HH
+#define VOROPP_CONFIG_HH
+
+#include <limits>
 
 namespace voro {
 
@@ -23,12 +25,14 @@ const int init_3_vertices=256;
 /** The initial memory allocation for the number of vertices of higher order.
  */
 const int init_n_vertices=8;
-/** The initial buffer size for marginal cases used by the suretest class. */
-const int init_marginal=64;
 /** The initial size for the delete stack. */
 const int init_delete_size=256;
 /** The initial size for the auxiliary delete stack. */
 const int init_delete2_size=256;
+/** The initial size for the extra search stack. */
+const int init_xsearch_size=32;
+/** The initial size for the wall pointer array. */
+const int init_wall_size=32;
 /** The default initial size for the ordering class. */
 const int init_ordering_size=4096;
 /** The initial size of the pre_container chunk index. */
@@ -42,14 +46,16 @@ const int max_vertices=16777216;
 const int max_vertex_order=2048;
 /** The maximum memory allocation for the any particular order of vertex. */
 const int max_n_vertices=16777216;
-/** The maximum buffer size for marginal cases used by the suretest class. */
-const int max_marginal=16777216;
 /** The maximum size for the delete stack. */
 const int max_delete_size=16777216;
 /** The maximum size for the auxiliary delete stack. */
 const int max_delete2_size=16777216;
+/** The maximum size for the extra search stack. */
+const int max_xsearch_size=16777216;
 /** The maximum amount of particle memory allocated for a single region. */
 const int max_particle_memory=16777216;
+/** The maximum size for the wall pointer array. */
+const int max_wall_size=2048;
 /** The maximum size for the ordering class. */
 const int max_ordering_size=67108864;
 /** The maximum size for the pre_container chunk index. */
@@ -58,22 +64,27 @@ const int max_chunk_size=65536;
 /** The chunk size in the pre_container classes. */
 const int pre_container_chunk_size=1024;
 
+#ifndef VOROPP_VERBOSE
+/** Voro++ can print a number of different status and debugging messages to
+ * notify the user of special behavior, and this macro sets the amount which
+ * are displayed. At level 0, no messages are printed. At level 1, messages
+ * about unusual cases during cell construction are printed, such as when the
+ * plane routine bails out due to floating point problems. At level 2, general
+ * messages about memory expansion are printed. At level 3, technical details
+ * about memory management are printed. */
+#define VOROPP_VERBOSE 2
+#endif
+
 /** If a point is within this distance of a cutting plane, then the code
  * assumes that point exactly lies on the plane. */
-const double tolerance=1e-11;
+const double tolerance=10.*std::numeric_limits<double>::epsilon();
 
-/** If a point is within this distance of a cutting plane, then the code stores
- * whether this point is inside, outside, or exactly on the cutting plane in
- * the marginal cases buffer, to prevent the test giving a different result on
- * a subsequent evaluation due to floating point rounding errors. */
-const double tolerance2=2e-11;
+const double big_tolerance_fac=20.;
 
-/** The square of the tolerance, used when deciding whether some squared
- * quantities are large enough to be used. */
-const double tolerance_sq=tolerance*tolerance;
+const double default_length=1000.;
 
 /** A large number that is used in the computation. */
-const double large_number=1e30;
+const double large_number=std::numeric_limits<double>::max();
 
 /** A radius to use as a placeholder when no other information is available. */
 const double default_radius=0.5;
@@ -85,30 +96,27 @@ const int max_unit_voro_shells=10;
  * container grid. */
 const double optimal_particles=5.6;
 
+/** If this is set to 1, then the code reports any instances of particles being
+ * put outside of the container geometry. */
+#define VOROPP_REPORT_OUT_OF_BOUNDS 0
+
+/** Voro++ returns this status code if there is a file-related error, such as
+ * not being able to open file. */
+#define VOROPP_FILE_ERROR 1
+
 /** Voro++ returns this status code if there is a memory allocation error, if
  * one of the safe memory limits is exceeded. */
-const int VOROPP_MEMORY_ERROR=2;
+#define VOROPP_MEMORY_ERROR 2
 
 /** Voro++ returns this status code if there is any type of internal error, if
  * it detects that representation of the Voronoi cell is inconsistent. This
  * status code will generally indicate a bug, and the developer should be
  * contacted. */
-const int VOROPP_INTERNAL_ERROR=3;
+#define VOROPP_INTERNAL_ERROR 3
 
-// These constants are automatically generated by worklist_gen.pl and are not
-// intended to be edited by hand.
-
-/** Each region is divided into a grid of subregions, and a worklist is
-# constructed for each. This parameter sets is set to half the number of
-# subregions that the block is divided into. */
-const int wl_hgrid=4;
-/** The number of subregions that a block is subdivided into, which is twice
-the value of hgrid. */
-const int wl_fgrid=8;
-/** The total number of worklists, set to the cube of hgrid. */
-const int wl_hgridcu=64;
-/** The number of elements in each worklist. */
-const int wl_seq_length=64;
+/** Voro++ returns this status code if it could not interpret the command line
+ * arguments passed to the command line utility. */
+#define VOROPP_CMD_LINE_ERROR 4
 
 }
 
