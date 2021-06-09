@@ -60,44 +60,79 @@ namespace
 
 TextInFile::TextInFile(const SimulationItem* item, string filename, string description)
 {
-    // open the file
-    string filepath = item->find<FilePaths>()->input(filename);
-    _in = System::ifstream(filepath);
-    if (!_in) throw FATALERROR("Could not open the " + description + " text file " + filepath);
-
     // remember the units system and the logger
     _units = item->find<Units>();
     _log = item->find<Log>();
 
-    // log "reading file" message
-    _log->info(item->typeAndName() + " reads " + description + " from text file " + filepath + "...");
+    // get the filepath
+    string filepath = item->find<FilePaths>()->input(filename);
 
-    // read any structured header lines into a list of ColumnInfo records
-    size_t index;  // one-based column index obtained from file info
-    string title;
-    string unit;
-    while (getNextInfoLine(_in, index, title, unit))
+    // if the file is in SKIRT stored column format, open a binary file
+    if (StringUtils::endsWith(filepath, ".scol"))
     {
-        // add a default-constructed ColumnInfo record to the list
-        _colv.emplace_back();
-        if (index != _colv.size())
-            throw FATALERROR("Incorrect column index in file header for column " + std::to_string(_colv.size()));
+        _scol.open(filepath);
 
-        // remember the description and the units specified in the file
-        _colv.back().physColIndex = index;
-        _colv.back().unit = unit;
-        _colv.back().title = title;
+        // log "reading file" message
+        _log->info(item->typeAndName() + " reads " + description + " from binary file " + filepath + "...");
+
+        // read the header information into a list of ColumnInfo records
+        auto columnNames = _scol.columnNames();
+        auto columnUnits = _scol.columnUnits();
+        for (size_t index = 0; index != columnNames.size(); ++index)
+        {
+            // add a default-constructed ColumnInfo record to the list
+            _colv.emplace_back();
+
+            // remember the name and the units specified in the file
+            _colv.back().physColIndex = index + 1;  // one-based column index
+            _colv.back().unit = columnUnits[index];
+            _colv.back().title = columnNames[index];
+        }
+        _hasFileInfo = true;
+        _hasBinaryOpen = true;
     }
-    _hasFileInfo = !_colv.empty();
+
+    // otherwise open a regular text column file
+    else
+    {
+        _in = System::ifstream(filepath);
+        if (!_in) throw FATALERROR("Could not open the " + description + " text file " + filepath);
+
+        // log "reading file" message
+        _log->info(item->typeAndName() + " reads " + description + " from text file " + filepath + "...");
+
+        // read any structured header lines into a list of ColumnInfo records
+        size_t index;  // one-based column index obtained from file info
+        string title;
+        string unit;
+        while (getNextInfoLine(_in, index, title, unit))
+        {
+            // add a default-constructed ColumnInfo record to the list
+            _colv.emplace_back();
+            if (index != _colv.size())
+                throw FATALERROR("Incorrect column index in file header for column " + std::to_string(_colv.size()));
+
+            // remember the description and the units specified in the file
+            _colv.back().physColIndex = index;
+            _colv.back().unit = unit;
+            _colv.back().title = title;
+        }
+        _hasFileInfo = !_colv.empty();
+        _hasTextOpen = true;
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
 
 void TextInFile::close()
 {
-    if (_in.is_open())
+    if (_hasTextOpen) _in.close();
+    if (_hasBinaryOpen) _scol.close();
+
+    if (_hasTextOpen || _hasBinaryOpen)
     {
-        _in.close();
+        _hasTextOpen = false;
+        _hasBinaryOpen = false;
 
         // log "done" message, except if an exception has been thrown
         if (!std::uncaught_exception()) _log->info("Done reading");
@@ -283,27 +318,58 @@ bool TextInFile::readRow(Array& values)
 {
     if (!_hasProgInfo) throw FATALERROR("No columns were declared for column text file");
 
-    // read new line until it is non-empty and non-comment
-    string line;
-    while (_in.good())
+    // read next row in text file
+    if (_hasTextOpen)
     {
-        getline(_in, line);
-        auto pos = line.find_first_not_of(" \t");
-        if (pos != string::npos && line[pos] != '#')
+        // read new line until it is non-empty and non-comment
+        string line;
+        while (_in.good())
+        {
+            getline(_in, line);
+            auto pos = line.find_first_not_of(" \t");
+            if (pos != string::npos && line[pos] != '#')
+            {
+                // resize result array if needed (we don't need it to be cleared)
+                if (values.size() != _numLogCols) values.resize(_numLogCols);
+
+                // convert values from line and store them in result array
+                std::stringstream linestream(line);
+                for (size_t i : _logColIndices)  // i: zero-based logical index
+                {
+                    if (linestream.eof()) throw FATALERROR("One or more required value(s) on text line are missing");
+
+                    // read the value as floating point
+                    double value;
+                    linestream >> value;
+                    if (linestream.fail()) throw FATALERROR("Input text is not formatted as a floating point number");
+
+                    // if mapped to a logical column, convert from input units to internal units, and store the result
+                    if (i != ERROR_NO_INDEX)
+                    {
+                        const ColumnInfo& col = _colv[i];
+                        values[i] =
+                            value * (col.waveExponent ? pow(values[col.waveIndex], col.waveExponent) : col.convFactor);
+                    }
+                }
+                return true;
+            }
+        }
+    }
+
+    // read next row in binary file
+    else if (_hasBinaryOpen)
+    {
+        const double* row = _scol.nextRow();
+        if (row)
         {
             // resize result array if needed (we don't need it to be cleared)
             if (values.size() != _numLogCols) values.resize(_numLogCols);
 
-            // convert values from line and store them in result array
-            std::stringstream linestream(line);
+            // copy values from row into result array
             for (size_t i : _logColIndices)  // i: zero-based logical index
             {
-                if (linestream.eof()) throw FATALERROR("One or more required value(s) on text line are missing");
-
-                // read the value as floating point
-                double value;
-                linestream >> value;
-                if (linestream.fail()) throw FATALERROR("Input text is not formatted as a floating point number");
+                // get the value
+                double value = *row++;
 
                 // if mapped to a logical column, convert from input units to internal units, and store the result
                 if (i != ERROR_NO_INDEX)
@@ -317,7 +383,7 @@ bool TextInFile::readRow(Array& values)
         }
     }
 
-    // end of file was reached
+    // end of file was reached or no file is open
     return false;
 }
 
@@ -325,45 +391,52 @@ bool TextInFile::readRow(Array& values)
 
 bool TextInFile::readNonLeaf(int& nx, int& ny, int& nz)
 {
-    string line;
-
-    while (true)
+    // read next non-leaf row in text file
+    if (_hasTextOpen)
     {
-        int c = _in.peek();
+        string line;
 
-        // skip comments line
-        if (c == '#')
+        while (true)
         {
-            getline(_in, line);
-        }
+            int c = _in.peek();
 
-        // process nonleaf line
-        else if (c == '!')
-        {
-            _in.get();  // skip exclamation mark
-            getline(_in, line);
+            // skip comments line
+            if (c == '#')
+            {
+                getline(_in, line);
+            }
 
-            // convert nx,ny,nz values from line and store them in output arguments
-            std::stringstream linestream(line);
-            linestream >> nx >> ny >> nz;
-            if (linestream.fail())
-                throw FATALERROR("Nonleaf subdivision specifiers are missing or not formatted as integers");
+            // process nonleaf line
+            else if (c == '!')
+            {
+                _in.get();  // skip exclamation mark
+                getline(_in, line);
 
-            return true;
-        }
+                // convert nx,ny,nz values from line and store them in output arguments
+                std::stringstream linestream(line);
+                linestream >> nx >> ny >> nz;
+                if (linestream.fail())
+                    throw FATALERROR("Nonleaf subdivision specifiers are missing or not formatted as integers");
 
-        // eat leading white space and empty lines
-        else if (c == ' ' || c == '\t' || c == '\n' || c == '\r')
-        {
-            _in.get();
-        }
+                return true;
+            }
 
-        // signal not a nonleaf line
-        else
-        {
-            return false;
+            // eat leading white space and empty lines
+            else if (c == ' ' || c == '\t' || c == '\n' || c == '\r')
+            {
+                _in.get();
+            }
+
+            // signal not a nonleaf line
+            else
+            {
+                return false;
+            }
         }
     }
+
+    // unsupported binary file format, or no file is open
+    return false;
 }
 
 ////////////////////////////////////////////////////////////////////
