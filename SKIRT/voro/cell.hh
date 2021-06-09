@@ -207,7 +207,7 @@ class voronoicell_base {
          * corresponding to each face. By default, when no neighbor
          * information is available, the routine does nothing.
          * \param[in] fp the file handle to write to. */
-        virtual void output_neighbors(FILE */*fp=stdout*/) {}
+        virtual void output_neighbors(FILE * /*fp=stdout*/) {}
         /** This a virtual function that is overridden by a routine to
          * print the neighboring particle IDs for a given vertex. By
          * default, when no neighbor information is available, the
