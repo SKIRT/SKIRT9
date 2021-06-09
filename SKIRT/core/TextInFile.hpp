@@ -8,6 +8,7 @@
 
 #include "Array.hpp"
 #include "CompileTimeUtils.hpp"
+#include "StoredColumns.hpp"
 #include <fstream>
 class Log;
 class SimulationItem;
@@ -50,7 +51,26 @@ class Units;
     and after the column info lines.
 
     If there is no column information in the file (i.e. none of the header lines match the syntax
-    decribed above), the default units provided by the program are used. */
+    decribed above), the default units provided by the program are used.
+
+    Stored columns file format
+    --------------------------
+
+    Reading large text files can be very slow. Therefore, in certain cases, this class supports the
+    possibility to provide the input file in a much faster SKIRT-specific binary file format, i.e.
+    the stored columns format described in the StoredColumns class. This file format has the
+    following limitations:
+
+    - being a binary format, the files are not human readable.
+    - a (binary) file header with column names and unit strings must always be included.
+    - the column names and unit strings have a maximum length of 8 characters each.
+    - there is no support for non-leaf rows, so the format cannot be used for representing
+      adaptive mesh data.
+
+    If the input file provided to the TextInFile constructor has the \c .scol filename extension,
+    the implementation automatically switches to reading the binary file format instead of the
+    regular column text format. This is fully transparent to the caller of the TextInFile class.
+*/
 class TextInFile
 {
     //=============== Construction - Destruction  ==================
@@ -62,7 +82,11 @@ public:
         the input file path and an appropriate logger; (2) \em filename specifies the name of the
         file, including filename extension but excluding path and simulation prefix; (3) \em
         description describes the contents of the file for use in the log message issued after the
-        file is successfully opened. */
+        file is successfully opened.
+
+        If the specified file has the \c .scol filename extension, the implementation automatically
+        switches to reading the binary SKIRT column file format instead of the regular column text
+        format. For more information, see the class header. */
     TextInFile(const SimulationItem* item, string filename, string description);
 
     /** This function closes the file if it was not already closed. It is best to call close() or
@@ -158,7 +182,7 @@ public:
         the size and contents of the \em values array are undefined. */
     bool readRow(Array& values);
 
-    /** This is a specialy function intended for use by the AdaptiveMeshSnapshot class when
+    /** This is a specialty function intended for use by the AdaptiveMeshSnapshot class when
         importing an adaptive mesh text column file. The function attempts to read a line
         containing a nonleaf node specification. Such a line starts with an exclamation mark, which
         must be followed by three integers (one subdivision specifier for each dimension).
@@ -252,9 +276,10 @@ private:
     //======================== Data Members ========================
 
 private:
-    std::ifstream _in;       // the input stream
     Units* _units{nullptr};  // the units system
     Log* _log{nullptr};      // the logger
+    std::ifstream _in;       // the text input stream, if any
+    StoredColumns _scol;     // the binary input file, if any
 
     // private type to store column info
     class ColumnInfo
@@ -270,8 +295,10 @@ private:
         size_t waveIndex{0};     // zero-based logical index of wavelength column for converting "specific" quantities
     };
 
-    bool _hasFileInfo{false};  // becomes true if the file has column header info
-    bool _hasProgInfo{false};  // becomes true if the program has added at least one column
+    bool _hasTextOpen{false};    // true if a regular column text format file is currently open
+    bool _hasBinaryOpen{false};  // true if a binary stored column format file is currently open
+    bool _hasFileInfo{false};    // becomes true if the file has column header info
+    bool _hasProgInfo{false};    // becomes true if the program has added at least one column
 
     vector<ColumnInfo> _colv;  // info for each column, derived from file info and/or program info
     size_t _numLogCols{0};     // number of logical columns, or number of program columns added so far
