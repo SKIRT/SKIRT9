@@ -12,7 +12,10 @@
 
 /** A FrameInstrument object represents a distant instrument that records the surface brightness in
     every pixel of a given frame for each wavelength, and outputs an IFU data cube in a FITS file.
-    */
+
+    The instrument allows configuring the field of view and number of pixels in both directions of
+    the observer plane. Photon packets arriving from a point that parallel projects outside of the
+    field of view are ignored. */
 class FrameInstrument : public DistantInstrument
 {
     ITEM_CONCRETE(FrameInstrument, DistantInstrument,
