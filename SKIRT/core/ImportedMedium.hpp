@@ -103,14 +103,21 @@ public:
     int dimension() const override;
 
     /** This function returns the MaterialMix object defining the material properties for the
-        medium at the specified position. If the position argument is omitted, the function returns
-        the material mix for the model coordinate origin as a default value.
+        medium at the specified position.
 
         If the \em importVariableMixParams flag is enabled, the appropriate material mix is
         selected from the configured material mix family based on the value of the imported
         parameters for the specified position. If the flag is disabled, the fixed configured
         material mix is returned regardless of position. */
-    const MaterialMix* mix(Position bfr = Position()) const override;
+    const MaterialMix* mix(Position bfr) const override;
+
+    /** This function returns a default MaterialMix object representative of the material
+        properties of the medium.
+
+        If the \em importVariableMixParams flag is enabled, a default material mix is selected from
+        the configured material mix family using the appropriate number of parameters with a value
+        of zero. If the flag is disabled, the fixed configured material mix is returned. */
+    const MaterialMix* mix() const override;
 
     /** This function returns the configured value of the \em importVariableMixParams flag. If
         true, this medium may return a different MaterialMix object depending on the specified

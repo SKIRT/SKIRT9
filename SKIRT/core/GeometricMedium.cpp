@@ -34,6 +34,13 @@ const MaterialMix* GeometricMedium::mix(Position /*bfr*/) const
 
 ////////////////////////////////////////////////////////////////////
 
+const MaterialMix* GeometricMedium::mix() const
+{
+    return materialMix();
+}
+
+////////////////////////////////////////////////////////////////////
+
 bool GeometricMedium::hasVariableMix() const
 {
     return false;
