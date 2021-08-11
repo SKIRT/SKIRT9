@@ -73,12 +73,16 @@ public:
         with location, the material type and the level of support for various physical processes
         (such as, e.g., polarization) must be the same for all positions. An object of the
         appropriate type must be returned even if the density of the material happens to be zero at
-        the specified position. As a result of this rule, one can call this function with an
-        arbitrary location (or a missing argument to substitute the default) to obtain a MaterialMix
-        object with a type and level of support representative for this medium. */
-    virtual const MaterialMix* mix(Position bfr = Position()) const = 0;
+        the specified position. */
+    virtual const MaterialMix* mix(Position bfr) const = 0;
 
-    /** This function returns true if the mix() function for this medium may return a different
+    /** This function returns (a pointer to) a default MaterialMix object representative of the
+        material properties of this medium. In other words, it returns an arbitrary material mix
+        with the same material type and level of support for various physical processes as any of
+        the material mixes that may be returned by the mix(bfr) function. */
+    virtual const MaterialMix* mix() const = 0;
+
+    /** This function returns true if the mix(bfr) function for this medium may return a different
         MaterialMix object depending on the specified position, or false when the same object is
         always returned. */
     virtual bool hasVariableMix() const = 0;
