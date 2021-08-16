@@ -138,7 +138,7 @@ void VoronoiMeshSpatialGrid::setupSelfBefore()
 
             // if there is a single medium component, calculate the normalization factor imposed by it;
             // we need this to directly compute cell densities for the DensityInCellInterface
-            if (ms->media().size() == 1) _norm = ms->media()[0]->number() / _mesh->mass();
+            if (ms->media().size() == 1) _norm = _mesh->mass() > 0 ? ms->media()[0]->number() / _mesh->mass() : 0.;
             break;
         }
     }
