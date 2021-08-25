@@ -469,45 +469,66 @@ namespace
 
     // maximum number of Voronoi grid construction iterations
     const int maxConstructionIterations = 5;
+
+    // function to erase null pointers from a vector of pointers in one go; returns the new size
+    template<class T> size_t eraseNullPointers(vector<T*>& v)
+    {
+        // scan to the first null (or to the end)
+        auto from = v.begin();
+        while (from != v.end() && *from) ++from;
+
+        // copy the tail, overwriting any nulls
+        auto to = from;
+        while (from != v.end())
+        {
+            if (*from) *to++ = *from;
+            ++from;
+        }
+        v.erase(to, v.end());
+        return v.size();
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
 
 void VoronoiMeshSnapshot::buildMesh(bool relax)
 {
+    int numCells = _cells.size();
+
     // remove sites that lie outside of the domain
     int numOutside = 0;
-    for (int m = _cells.size() - 1; m >= 0; --m)
+    for (int m = 0; m != numCells; ++m)
     {
         if (!_extent.contains(_cells[m]->position()))
         {
             delete _cells[m];
-            _cells.erase(_cells.cbegin() + m);
+            _cells[m] = 0;
             numOutside++;
         }
     }
+    if (numOutside) numCells = eraseNullPointers(_cells);
 
     // sort sites in order of increasing x coordinate to accelerate search for nearby sites
     std::sort(_cells.begin(), _cells.end(), [](Cell* c1, Cell* c2) { return c1->x() < c2->x(); });
 
     // remove sites that lie too nearby another site
     int numNearby = 0;
-    for (int m = _cells.size() - 1; m >= 0; --m)
+    for (int m = 0; m != numCells; ++m)
     {
-        for (int j = m - 1; j >= 0 && _cells[m]->x() - _cells[j]->x() < _eps; --j)
+        for (int j = m + 1; j != numCells && _cells[j]->x() - _cells[m]->x() < _eps; ++j)
         {
-            if ((_cells[m]->position() - _cells[j]->position()).norm2() < _eps * _eps)
+            if ((_cells[j]->position() - _cells[m]->position()).norm2() < _eps * _eps)
             {
                 delete _cells[m];
-                _cells.erase(_cells.cbegin() + m);
+                _cells[m] = 0;
                 numNearby++;
                 break;
             }
         }
     }
+    if (numNearby) numCells = eraseNullPointers(_cells);
 
     // log the number of sites
-    int numCells = _cells.size();
     if (!numOutside && !numNearby)
     {
         log()->info("  Number of sites: " + std::to_string(numCells));
@@ -679,13 +700,13 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
         // remove invalid cells and prepare to repeat construction
         log()->warning("Removing sites for " + std::to_string(invalid.size())
                        + " invalid Voronoi cells and reconstructing the tessellation");
-        for (auto rit = invalid.rbegin(); rit != invalid.rend(); ++rit)
+        for (auto it = invalid.begin(); it != invalid.end(); ++it)
         {
-            int m = *rit;
+            int m = *it;
             delete _cells[m];
-            _cells.erase(_cells.cbegin() + m);
+            _cells[m] = 0;
         }
-        numCells = _cells.size();
+        numCells = eraseNullPointers(_cells);
         for (int m = 0; m != numCells; ++m) _cells[m]->clear();
     }
 
