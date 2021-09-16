@@ -189,6 +189,7 @@
 #include "PowerLawGrainSizeDistribution.hpp"
 #include "PredefinedBandWavelengthGrid.hpp"
 #include "ProbeSystem.hpp"
+#include "ProjectedMediaDensityProbe.hpp"
 #include "PseudoSersicGeometry.hpp"
 #include "QuasarSED.hpp"
 #include "RadialVectorField.hpp"
@@ -622,6 +623,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<TreeSpatialGridTopologyProbe>();
     ItemRegistry::add<DefaultMediaDensityCutsProbe>();
     ItemRegistry::add<PlanarMediaDensityCutsProbe>();
+    ItemRegistry::add<ProjectedMediaDensityProbe>();
     ItemRegistry::add<OpticalDepthMapProbe>();
     ItemRegistry::add<SpatialCellPropertiesProbe>();
     ItemRegistry::add<SpatialGridSourceDensityProbe>();

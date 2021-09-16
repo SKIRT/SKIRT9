@@ -70,6 +70,9 @@ public:
         the formulae \f[ \begin{split} \theta &= \arccos\left(k_z\right), \\ \varphi &=
         \arctan\left(\frac{k_y}{k_x}\right). \end{split} \f] */
     void spherical(double& theta, double& phi) const;
+
+    /** This operator returns the opposite direction (negating each component). */
+    Direction operator-() const { return Direction(-_x, -_y, -_z); }
 };
 
 //////////////////////////////////////////////////////////////////////
