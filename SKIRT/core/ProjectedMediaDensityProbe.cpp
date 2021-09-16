@@ -78,6 +78,9 @@ void ProjectedMediaDensityProbe::probe()
             SpatialGridPath path;
             auto generator = grid->createPathSegmentGenerator();
 
+            // get a distance well outside of the model (but with a similar order of magnitude)
+            double zp = 2. * grid->boundingBox().diagonal();
+
             // loop over pixels
             for (size_t j = firstIndex; j != firstIndex + numIndices; ++j)
             {
@@ -88,7 +91,6 @@ void ProjectedMediaDensityProbe::probe()
                     // transform pixel indices to observer coordinates
                     double xp = xpmin + (i + 0.5) * xpsiz;
                     double yp = ypmin + (j + 0.5) * ypsiz;
-                    double zp = 2. * grid->boundingBox().diagonal();  // somewhere outside of the model
 
                     // transform observer coordinates to model coordinates (inverse transform of frame instrument)
                     double xpp = sinomega * xp - cosomega * yp;
