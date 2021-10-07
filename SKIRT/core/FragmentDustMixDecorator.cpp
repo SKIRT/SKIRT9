@@ -206,7 +206,7 @@ double FragmentDustMixDecorator::opacityExt(double lambda, const MaterialState* 
 
 void FragmentDustMixDecorator::peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w,
                                                  Direction bfkobs, Direction bfky, const MaterialState* state,
-                                                 PhotonPacket* pp) const
+                                                 const PhotonPacket* pp) const
 {
     // calculate the weights corresponding to the scattering opacities for each fragment and their sum
     Array wv(_numFrags);

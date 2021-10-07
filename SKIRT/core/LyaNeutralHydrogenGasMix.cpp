@@ -127,14 +127,15 @@ double LyaNeutralHydrogenGasMix::opacityExt(double lambda, const MaterialState* 
 
 void LyaNeutralHydrogenGasMix::peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w,
                                                  Direction bfkobs, Direction bfky, const MaterialState* state,
-                                                 PhotonPacket* pp) const
+                                                 const PhotonPacket* pp) const
 {
     // draw a random atom velocity & phase function, unless a previous peel-off stored this already
     if (!pp->hasLyaScatteringInfo())
     {
         double T = state->temperature();
         double nH = state->numberDensity();
-        pp->setLyaScatteringInfo(LyaUtils::sampleAtomVelocity(lambda, T, nH, pp->direction(), config(), random()));
+        const_cast<PhotonPacket*>(pp)->setLyaScatteringInfo(
+            LyaUtils::sampleAtomVelocity(lambda, T, nH, pp->direction(), config(), random()));
     }
 
     // add the contribution to the Stokes vector components depending on scattering type

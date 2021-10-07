@@ -11,6 +11,7 @@
 #include "PhotonPacket.hpp"
 #include "Random.hpp"
 #include "StringUtils.hpp"
+#include "Units.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -198,6 +199,25 @@ size_t DustMix::initializeExtraProperties(const Array& /*lambdav*/)
 
 ////////////////////////////////////////////////////////////////////
 
+void DustMix::informAvailableWavelengthRange(Range available)
+{
+    Range required(_lambdav[0], _lambdav[_lambdav.size() - 1]);
+    if (available.max() < required.max() || available.min() > required.min())
+    {
+        auto units = find<Units>();
+        auto outstring = [units](double wavelength) {
+            return StringUtils::toString(units->owavelength(wavelength), 'g', 4) + " " + units->uwavelength();
+        };
+
+        auto log = find<Log>();
+        log->warning(type() + " dust properties are not available for full simulation wavelength range");
+        log->warning("Required: " + outstring(required.min()) + " - " + outstring(required.max()));
+        log->warning("Available: " + outstring(available.min()) + " - " + outstring(available.max()));
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
 int DustMix::indexForLambda(double lambda) const
 {
     return NR::locateClip(_lambdav, lambda);
@@ -307,7 +327,7 @@ namespace
 ////////////////////////////////////////////////////////////////////
 
 void DustMix::peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w, Direction bfkobs,
-                                Direction bfky, const MaterialState* /*state*/, PhotonPacket* pp) const
+                                Direction bfky, const MaterialState* /*state*/, const PhotonPacket* pp) const
 {
     switch (scatteringMode())
     {

@@ -177,7 +177,7 @@ public:
         weight of each fragment's contribution is adjusted by the relative scattering opacity of
         the fragment. */
     void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w, Direction bfkobs,
-                           Direction bfky, const MaterialState* state, PhotonPacket* pp) const override;
+                           Direction bfky, const MaterialState* state, const PhotonPacket* pp) const override;
 
     /** This function performs a scattering event on the specified photon packet in the spatial
         cell and medium component represented by the specified material state. Specifically, it

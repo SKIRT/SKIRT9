@@ -9,6 +9,7 @@
 #include "ArrayTable.hpp"
 #include "EquilibriumDustEmissionCalculator.hpp"
 #include "MaterialMix.hpp"
+#include "Range.hpp"
 #include "Table.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -110,6 +111,11 @@ protected:
         returns zero. */
     virtual size_t initializeExtraProperties(const Array& lambdav);
 
+    /** This function logs a warning message if the given range is smaller than the simulation
+        wavelength range. It can (but does not have to) be called from subclasses that support dust
+        properties for a limited wavelength range. */
+    void informAvailableWavelengthRange(Range available);
+
     //======== Private support functions =======
 
 private:
@@ -172,6 +178,7 @@ public:
 
     //======== High-level photon life cycle =======
 
+public:
     /** This function returns the absorption opacity \f$k^\text{abs}=n\varsigma^\text{abs}\f$ for
         the given wavelength and material state. The photon properties are not used. */
     double opacityAbs(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
@@ -207,7 +214,7 @@ public:
         components, the relative opacity weighting factor applies not just to the luminosity but
         also to the other components of the Stokes vector. */
     void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w, Direction bfkobs,
-                           Direction bfky, const MaterialState* state, PhotonPacket* pp) const override;
+                           Direction bfky, const MaterialState* state, const PhotonPacket* pp) const override;
 
     /** This function performs a scattering event on the specified photon packet in the spatial
         cell and medium component represented by the specified material state and the receiving

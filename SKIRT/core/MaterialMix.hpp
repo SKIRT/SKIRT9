@@ -345,7 +345,7 @@ public:
         relative opacity weight for the current component is specified as argument \em w. */
     virtual void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w,
                                    Direction bfkobs, Direction bfky, const MaterialState* state,
-                                   PhotonPacket* pp) const = 0;
+                                   const PhotonPacket* pp) const = 0;
 
     /** This function performs a scattering event on the specified photon packet in the spatial
         cell and medium component represented by the specified material state and the receiving
