@@ -178,9 +178,9 @@ void DustMix::setupSelfAfter()
     // by setting the last value to zero (we now that the last wavelength in the list is the cutoff wavelength)
     if (radioCutoff)
     {
-        _sigmaabsv[numLambda-1] = 0.;
-        _sigmascav[numLambda-1] = 0.;
-        _sigmaextv[numLambda-1] = 0.;
+        _sigmaabsv[numLambda - 1] = 0.;
+        _sigmascav[numLambda - 1] = 0.;
+        _sigmaextv[numLambda - 1] = 0.;
     }
 
     // give the subclass a chance to obtain additional precalculated information
