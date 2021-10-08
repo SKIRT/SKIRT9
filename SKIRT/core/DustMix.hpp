@@ -64,6 +64,12 @@ protected:
         scattering cross sections, the scattering asymmetry parameter, and/or the Mueller matrix
         coefficients as required by the implemented scattering mode.
 
+        If the simulation wavelength range extends beyond 10 cm, it is cut off at that value and
+        any dust cross sections beyond 10 cm are forced to zero. None of the currently provided
+        dust mixes offers optical properties beyond 10 cm, and historically any values outside the
+        supported range are clamped to the nearest available value. This leads to substantially
+        overestimated dust extinction in the radio wavelength range. Hence this "hack".
+
         Furthermore, if the simulation tracks the radiation field, this function precalculates the
         Planck-integrated absorption cross sections on an appropriate temperature grid. This
         information is used to obtain the equilibrium temperature of the material mix (or rather,
