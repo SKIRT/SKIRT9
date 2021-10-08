@@ -37,6 +37,16 @@ void NormalizedSource::setupSelfBefore()
 
 //////////////////////////////////////////////////////////////////////
 
+void NormalizedSource::setupSelfAfter()
+{
+    Source::setupSelfAfter();
+
+    // warn the user if this source's intrinsic wavelength range does not fully cover the configured wavelength range
+    informAvailableWavelengthRange(_sed->intrinsicWavelengthRange(), _sed->type());
+}
+
+//////////////////////////////////////////////////////////////////////
+
 Range NormalizedSource::wavelengthRange() const
 {
     return _sed->normalizationWavelengthRange();

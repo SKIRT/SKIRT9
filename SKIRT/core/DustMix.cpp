@@ -65,7 +65,7 @@ void DustMix::setupSelfAfter()
     {
         wavelengths.resize(NR::locate(wavelengths, dm) + 1);
         if (wavelengths.empty() || wavelengths.back() != dm) wavelengths.push_back(dm);
-        wavelengths.push_back(dm * 1.001); // add a dummy border value which is never used
+        wavelengths.push_back(dm * 1.001);  // add a dummy border value which is never used
     }
 
     // remember the wavelength range
@@ -232,8 +232,8 @@ void DustMix::informAvailableWavelengthRange(Range available)
 
         auto log = find<Log>();
         log->warning(type() + " dust properties are not available for full simulation wavelength range");
-        log->warning("Required: " + outstring(_required.min()) + " - " + outstring(_required.max()));
-        log->warning("Available: " + outstring(available.min()) + " - " + outstring(available.max()));
+        log->warning("  Required: " + outstring(_required.min()) + " - " + outstring(_required.max()));
+        log->warning("  Available: " + outstring(available.min()) + " - " + outstring(available.max()));
     }
 }
 
