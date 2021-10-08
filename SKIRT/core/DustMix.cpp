@@ -65,6 +65,7 @@ void DustMix::setupSelfAfter()
     {
         wavelengths.resize(NR::locate(wavelengths, dm) + 1);
         if (wavelengths.empty() || wavelengths.back() != dm) wavelengths.push_back(dm);
+        wavelengths.push_back(dm * 1.001); // add a dummy border value which is never used
     }
 
     // remember the wavelength range
@@ -175,12 +176,12 @@ void DustMix::setupSelfAfter()
     }
 
     // if the wavelength range was cut off, suppress all cross sections beyond the cutoff wavelength
-    // by setting the last value to zero (we now that the last wavelength in the list is the cutoff wavelength)
+    // by setting the last two values to zero (the penultimate item is for the cutoff wavelength)
     if (radioCutoff)
     {
-        _sigmaabsv[numLambda - 1] = 0.;
-        _sigmascav[numLambda - 1] = 0.;
-        _sigmaextv[numLambda - 1] = 0.;
+        _sigmaabsv[numLambda - 2] = _sigmaabsv[numLambda - 1] = 0.;
+        _sigmascav[numLambda - 2] = _sigmascav[numLambda - 1] = 0.;
+        _sigmaextv[numLambda - 2] = _sigmaextv[numLambda - 1] = 0.;
     }
 
     // give the subclass a chance to obtain additional precalculated information
@@ -226,7 +227,7 @@ void DustMix::informAvailableWavelengthRange(Range available)
     {
         auto units = find<Units>();
         auto outstring = [units](double wavelength) {
-            return StringUtils::toString(units->owavelength(wavelength), 'g', 4) + " " + units->uwavelength();
+            return StringUtils::toString(units->owavelength(wavelength), 'g', 3) + " " + units->uwavelength();
         };
 
         auto log = find<Log>();
