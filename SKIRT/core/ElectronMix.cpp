@@ -92,7 +92,7 @@ double ElectronMix::opacityExt(double /*lambda*/, const MaterialState* state, co
 
 void ElectronMix::peeloffScattering(double& I, double& Q, double& U, double& V, double& /*lambda*/, double w,
                                     Direction bfkobs, Direction bfky, const MaterialState* /*state*/,
-                                    PhotonPacket* pp) const
+                                    const PhotonPacket* pp) const
 {
     _dpf.peeloffScattering(I, Q, U, V, w, pp->direction(), bfkobs, bfky, pp);
 }

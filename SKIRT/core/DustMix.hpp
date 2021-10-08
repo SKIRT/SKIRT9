@@ -9,6 +9,7 @@
 #include "ArrayTable.hpp"
 #include "EquilibriumDustEmissionCalculator.hpp"
 #include "MaterialMix.hpp"
+#include "Range.hpp"
 #include "Table.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -63,6 +64,12 @@ protected:
         scattering cross sections, the scattering asymmetry parameter, and/or the Mueller matrix
         coefficients as required by the implemented scattering mode.
 
+        If the simulation wavelength range extends beyond 10 cm, it is cut off at that value and
+        any dust cross sections beyond 10 cm are forced to zero. None of the currently provided
+        dust mixes offers optical properties beyond 10 cm, and historically any values outside the
+        supported range are clamped to the nearest available value. This leads to substantially
+        overestimated dust extinction in the radio wavelength range. Hence this "hack".
+
         Furthermore, if the simulation tracks the radiation field, this function precalculates the
         Planck-integrated absorption cross sections on an appropriate temperature grid. This
         information is used to obtain the equilibrium temperature of the material mix (or rather,
@@ -109,6 +116,11 @@ protected:
         used for logging purposes). The default implementation of this function does nothing and
         returns zero. */
     virtual size_t initializeExtraProperties(const Array& lambdav);
+
+    /** This function logs a warning message if the given range is smaller than the simulation
+        wavelength range. It can (but does not have to) be called from subclasses that support dust
+        properties for a limited wavelength range. */
+    void informAvailableWavelengthRange(Range available);
 
     //======== Private support functions =======
 
@@ -172,6 +184,7 @@ public:
 
     //======== High-level photon life cycle =======
 
+public:
     /** This function returns the absorption opacity \f$k^\text{abs}=n\varsigma^\text{abs}\f$ for
         the given wavelength and material state. The photon properties are not used. */
     double opacityAbs(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
@@ -207,7 +220,7 @@ public:
         components, the relative opacity weighting factor applies not just to the luminosity but
         also to the other components of the Stokes vector. */
     void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w, Direction bfkobs,
-                           Direction bfky, const MaterialState* state, PhotonPacket* pp) const override;
+                           Direction bfky, const MaterialState* state, const PhotonPacket* pp) const override;
 
     /** This function performs a scattering event on the specified photon packet in the spatial
         cell and medium component represented by the specified material state and the receiving
@@ -438,7 +451,8 @@ private:
     // all data members are precalculated in setupSelfAfter()
 
     // wavelength grid (shifted to the left of the actually sampled points to approximate rounding)
-    Array _lambdav;  // indexed on ell
+    Array _lambdav;   // indexed on ell
+    Range _required;  // the required wavelength range, i.e. the range of _lambdav before it was shifted
 
     // scattering angle grid
     Array _thetav;  // indexed on t

@@ -39,6 +39,10 @@ protected:
     /** This function caches some wavelength information. */
     void setupSelfBefore() override;
 
+    /** This function warns the user if this source's intrinsic wavelength range does not fully
+        cover the configured wavelength range. */
+    void setupSelfAfter() override;
+
     //======================== Other Functions =======================
 
 public:
