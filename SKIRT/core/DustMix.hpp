@@ -445,7 +445,8 @@ private:
     // all data members are precalculated in setupSelfAfter()
 
     // wavelength grid (shifted to the left of the actually sampled points to approximate rounding)
-    Array _lambdav;  // indexed on ell
+    Array _lambdav;   // indexed on ell
+    Range _required;  // the required wavelength range, i.e. the range of _lambdav before it was shifted
 
     // scattering angle grid
     Array _thetav;  // indexed on t
