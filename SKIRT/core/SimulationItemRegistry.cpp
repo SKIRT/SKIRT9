@@ -226,6 +226,7 @@
 #include "SpheroidalGeometryDecorator.hpp"
 #include "SpheroidalGraphiteGrainComposition.hpp"
 #include "SpheroidalSilicateGrainComposition.hpp"
+#include "SpinFlipHydrogenGasMix.hpp"
 #include "SpiralStructureGeometryDecorator.hpp"
 #include "Starburst99SED.hpp"
 #include "Starburst99SEDFamily.hpp"
@@ -528,6 +529,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
 
     ItemRegistry::add<ElectronMix>();
     ItemRegistry::add<LyaNeutralHydrogenGasMix>();
+    ItemRegistry::add<SpinFlipHydrogenGasMix>();
 
     // material mix families
     ItemRegistry::add<MaterialMixFamily>();
