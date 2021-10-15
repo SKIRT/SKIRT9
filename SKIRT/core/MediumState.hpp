@@ -28,6 +28,7 @@
     | BulkVelocity  | \f$v\f$      | Vec    | Common   | if needed for any medium component
     | MagneticField | \f$\bf{B}\f$ | Vec    | Common   | if needed for any medium component
     | NumberDensity | \f$n\f$      | double | Specific | always
+    | Metallicity   | \f$Z\f$      | double | Specific | if requested by the medium component
     | Temperature   | \f$T\f$      | double | Specific | if requested by the medium component
     | Custom + k    |              | double | Specific | zero or more as requested by the medium component
 
@@ -148,6 +149,10 @@ public:
         spatial cell with index \f$m\f$. */
     void setNumberDensity(int m, int h, double value);
 
+    /** This function sets the metallicity \f$Z\f$ of the medium component with index \f$h\f$ in
+        the spatial cell with index \f$m\f$. */
+    void setMetallicity(int m, int h, double value);
+
     /** This function sets the temperature \f$T\f$ of the medium component with index \f$h\f$ in
         the spatial cell with index \f$m\f$. */
     void setTemperature(int m, int h, double value);
@@ -191,6 +196,10 @@ public:
         spatial cell with index \f$m\f$. */
     double numberDensity(int m, int h) const { return _data[_numVars * m + _off_dens[h]]; }
 
+    /** This function returns the metallicity \f$Z\f$ of the medium component with index \f$h\f$ in
+        the spatial cell with index \f$m\f$. */
+    double metallicity(int m, int h) const { return _data[_numVars * m + _off_meta[h]]; }
+
     /** This function returns the temperature \f$T\f$ of the medium component with index \f$h\f$ in
         the spatial cell with index \f$m\f$. */
     double temperature(int m, int h) const { return _data[_numVars * m + _off_temp[h]]; }
@@ -213,6 +222,7 @@ private:
     int _off_velo{0};
     int _off_mfld{0};
     vector<int> _off_dens;
+    vector<int> _off_meta;
     vector<int> _off_temp;
     vector<int> _off_cust;
 
