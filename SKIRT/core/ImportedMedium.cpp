@@ -128,9 +128,17 @@ Vec ImportedMedium::magneticField(Position bfr) const
 
 ////////////////////////////////////////////////////////////////////
 
+double ImportedMedium::metallicity(Position bfr) const
+{
+    if (!_importVariableMixParams && _importMetallicity && !materialMix()->isDust()) return _snapshot->metallicity(bfr);
+    return -1.;
+}
+
+////////////////////////////////////////////////////////////////////
+
 double ImportedMedium::temperature(Position bfr) const
 {
-    if (!_importVariableMixParams && _importTemperature && materialMix()->isGas()) return _snapshot->temperature(bfr);
+    if (!_importVariableMixParams && _importTemperature && !materialMix()->isDust()) return _snapshot->temperature(bfr);
     return -1.;
 }
 

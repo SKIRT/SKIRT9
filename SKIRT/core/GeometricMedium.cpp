@@ -83,6 +83,13 @@ Vec GeometricMedium::magneticField(Position bfr) const
 
 ////////////////////////////////////////////////////////////////////
 
+double GeometricMedium::metallicity(Position /*bfr*/) const
+{
+    return -1.;
+}
+
+////////////////////////////////////////////////////////////////////
+
 double GeometricMedium::temperature(Position /*bfr*/) const
 {
     return -1.;

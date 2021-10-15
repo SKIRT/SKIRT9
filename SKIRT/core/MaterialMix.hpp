@@ -269,14 +269,15 @@ public:
         through the specificStateVariableInfo() function except for the number density. The
         function is invoked by the medium system for each spatial cell just after the common state
         variables and the number density have been initialized. If the material mix is configured
-        as part of an imported medium component, the imported temperature, if any, and extra parameter
-        fields imported from the snapshot as requested by the parameterInfo()
+        as part of an imported medium component, the imported metallicity and temperature, if any,
+        and extra parameter fields imported from the snapshot as requested by the parameterInfo()
         function are passed to this function. If the material mix is configured as part of a
         geometric medium component, or if the information has not been imported, the temperature
         value is negative and the parameter array is empty.
 
         The default implementation in this base class does nothing. */
-    virtual void initializeSpecificState(MaterialState* state, double temperature, const Array& params) const;
+    virtual void initializeSpecificState(MaterialState* state, double metallicity, double temperature,
+                                         const Array& params) const;
 
     //======== Low-level material properties =======
 

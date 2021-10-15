@@ -90,7 +90,8 @@ public:
         material mix, the function initializes the temperature to the specified imported
         temperature, or if this is not available, to the user-configured default temperature for
         this material mix. */
-    void initializeSpecificState(MaterialState* state, double temperature, const Array& params) const override;
+    void initializeSpecificState(MaterialState* state, double metallicity, double temperature,
+                                 const Array& params) const override;
 
     //======== Low-level material properties =======
 

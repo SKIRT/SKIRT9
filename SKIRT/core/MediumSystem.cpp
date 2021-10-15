@@ -183,10 +183,11 @@ void MediumSystem::setupSelfAfter()
                 {
                     // retrieve input model temperature and parameters from medium component
                     MaterialState mst(_state, m, h);
+                    double Z = _media[h]->metallicity(center);
                     double T = _media[h]->temperature(center);
                     Array params;
                     _media[h]->parameters(center, params);
-                    mix(m, h)->initializeSpecificState(&mst, T, params);
+                    mix(m, h)->initializeSpecificState(&mst, Z, T, params);
                 }
             }
             log->infoIfElapsed("Calculated cell densities: ", currentChunkSize);

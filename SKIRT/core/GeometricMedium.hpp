@@ -102,6 +102,10 @@ protected:
         field for the given position; otherwise it returns a zero magnetic field. */
     Vec magneticField(Position bfr) const override;
 
+    /** This function returns the metallicity of the medium at the specified position. Because
+        geometric media do not define a metallicity, the function returns -1. */
+    double metallicity(Position bfr) const override;
+
     /** This function returns the temperature of the medium at the specified position. Because
         geometric media do not define a temperature, the function returns -1. */
     double temperature(Position bfr) const override;
