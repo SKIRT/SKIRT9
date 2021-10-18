@@ -1020,6 +1020,22 @@ Box VoronoiMeshSnapshot::extent(int m) const
 
 ////////////////////////////////////////////////////////////////////
 
+double VoronoiMeshSnapshot::metallicity(int m) const
+{
+    const Array& prop = _cells[m]->properties();
+    return prop[metallicityIndex()];
+}
+
+////////////////////////////////////////////////////////////////////
+
+double VoronoiMeshSnapshot::metallicity(Position bfr) const
+{
+    int m = cellIndex(bfr);
+    return m >= 0 ? metallicity(m) : -1.;
+}
+
+////////////////////////////////////////////////////////////////////
+
 double VoronoiMeshSnapshot::temperature(int m) const
 {
     const Array& prop = _cells[m]->properties();
@@ -1031,7 +1047,7 @@ double VoronoiMeshSnapshot::temperature(int m) const
 double VoronoiMeshSnapshot::temperature(Position bfr) const
 {
     int m = cellIndex(bfr);
-    return m >= 0 ? temperature(m) : 0.;
+    return m >= 0 ? temperature(m) : -1.;
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -242,6 +242,11 @@ public:
         spatial cell with index \f$m\f$. */
     double massDensity(int m, int h) const;
 
+    /** This function returns the metallicity \f$Z\f$ of the medium component with index \f$h\f$ in
+        spatial cell with index \f$m\f$. If the specified medium component does not have the
+        metallicity specific state variable, the behavior of this function is undefined. */
+    double metallicity(int m, int h) const;
+
     /** This function returns the value of the custom specific state variable with index \f$i\f$ of
         the medium component with index \f$h\f$ in the spatial cell with index \f$m\f$. If the
         specified medium component does not have a custom variable with the specified index, the

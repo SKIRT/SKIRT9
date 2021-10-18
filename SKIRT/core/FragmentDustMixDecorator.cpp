@@ -118,8 +118,8 @@ vector<StateVariable> FragmentDustMixDecorator::specificStateVariableInfo() cons
 
 ////////////////////////////////////////////////////////////////////
 
-void FragmentDustMixDecorator::initializeSpecificState(MaterialState* state, double /*temperature*/,
-                                                       const Array& params) const
+void FragmentDustMixDecorator::initializeSpecificState(MaterialState* state, double /*metallicity*/,
+                                                       double /*temperature*/, const Array& params) const
 {
     for (int f = 0; f != _numFrags; ++f)
     {

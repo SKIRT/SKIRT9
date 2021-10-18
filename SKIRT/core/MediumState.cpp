@@ -15,6 +15,7 @@ void MediumState::initConfiguration(int numCells, int numMedia)
     _numMedia = numMedia;
 
     _off_dens.resize(_numMedia);
+    _off_meta.resize(_numMedia);
     _off_temp.resize(_numMedia);
     _off_cust.resize(_numMedia);
 }
@@ -37,6 +38,7 @@ void MediumState::initCommonStateVariables(const vector<StateVariable>& variable
                 _nextOffset += 3;
                 break;
             case StateVariable::Identifier::NumberDensity:
+            case StateVariable::Identifier::Metallicity:
             case StateVariable::Identifier::Temperature:
             case StateVariable::Identifier::Custom:
                 throw FATALERROR("Requesting common state variable of unsupported type");
@@ -53,6 +55,7 @@ void MediumState::initSpecificStateVariables(const vector<StateVariable>& variab
         switch (variable.identifier())
         {
             case StateVariable::Identifier::NumberDensity: _off_dens[_nextComponent] = _nextOffset++; break;
+            case StateVariable::Identifier::Metallicity: _off_meta[_nextComponent] = _nextOffset++; break;
             case StateVariable::Identifier::Temperature: _off_temp[_nextComponent] = _nextOffset++; break;
             case StateVariable::Identifier::Custom:
                 if (variable.customIndex() == 0) _off_cust[_nextComponent] = _nextOffset;
@@ -176,6 +179,13 @@ void MediumState::setMagneticField(int m, Vec value)
 void MediumState::setNumberDensity(int m, int h, double value)
 {
     _data[_numVars * m + _off_dens[h]] = value;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void MediumState::setMetallicity(int m, int h, double value)
+{
+    _data[_numVars * m + _off_meta[h]] = value;
 }
 
 //////////////////////////////////////////////////////////////////////

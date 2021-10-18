@@ -32,6 +32,9 @@ public:
         */
     void setNumberDensity(double value) { _ms.setNumberDensity(_m, _h, value); }
 
+    /** This function sets the metallicity \f$Z\f$ of the medium component in the spatial cell. */
+    void setMetallicity(double value) { _ms.setMetallicity(_m, _h, value); }
+
     /** This function sets the temperature \f$T\f$ of the medium component in the spatial cell. */
     void setTemperature(double value) { _ms.setTemperature(_m, _h, value); }
 
@@ -61,6 +64,10 @@ public:
     /** This function returns the number density \f$n\f$ of the medium component in the spatial
         cell. */
     double numberDensity() const { return _ms.numberDensity(_m, _h); }
+
+    /** This function returns the metallicity \f$Z\f$ of the medium component in the spatial cell.
+        */
+    double metallicity() const { return _ms.metallicity(_m, _h); }
 
     /** This function returns the temperature \f$T\f$ of the medium component in the spatial cell.
         */

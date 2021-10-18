@@ -57,7 +57,7 @@ vector<StateVariable> LyaNeutralHydrogenGasMix::specificStateVariableInfo() cons
 
 ////////////////////////////////////////////////////////////////////
 
-void LyaNeutralHydrogenGasMix::initializeSpecificState(MaterialState* state, double temperature,
+void LyaNeutralHydrogenGasMix::initializeSpecificState(MaterialState* state, double /*metallicity*/, double temperature,
                                                        const Array& /*params*/) const
 {
     // leave the temperature at zero if the cell does not contain any material for this component

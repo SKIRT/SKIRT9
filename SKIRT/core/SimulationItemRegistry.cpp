@@ -52,6 +52,7 @@
 #include "DefaultMagneticFieldCutsProbe.hpp"
 #include "DefaultMediaDensityCutsProbe.hpp"
 #include "DefaultMediumVelocityCutsProbe.hpp"
+#include "DefaultMetallicityCutsProbe.hpp"
 #include "DefaultRadiationFieldCutsProbe.hpp"
 #include "DensityTreePolicy.hpp"
 #include "DiscreteWavelengthDistribution.hpp"
@@ -152,6 +153,7 @@
 #include "MediumSystem.hpp"
 #include "MediumVelocityPerCellProbe.hpp"
 #include "MeridionalDustTemperatureCutProbe.hpp"
+#include "MetallicityPerCellProbe.hpp"
 #include "MieSilicateGrainComposition.hpp"
 #include "MinSilicateGrainComposition.hpp"
 #include "ModifiedLogNormalGrainSizeDistribution.hpp"
@@ -181,6 +183,7 @@
 #include "PlanarMagneticFieldCutsProbe.hpp"
 #include "PlanarMediaDensityCutsProbe.hpp"
 #include "PlanarMediumVelocityCutsProbe.hpp"
+#include "PlanarMetallicityCutsProbe.hpp"
 #include "PlanarRadiationFieldCutsProbe.hpp"
 #include "PlummerGeometry.hpp"
 #include "PointSource.hpp"
@@ -226,6 +229,7 @@
 #include "SpheroidalGeometryDecorator.hpp"
 #include "SpheroidalGraphiteGrainComposition.hpp"
 #include "SpheroidalSilicateGrainComposition.hpp"
+#include "SpinFlipHydrogenGasMix.hpp"
 #include "SpiralStructureGeometryDecorator.hpp"
 #include "Starburst99SED.hpp"
 #include "Starburst99SEDFamily.hpp"
@@ -528,6 +532,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
 
     ItemRegistry::add<ElectronMix>();
     ItemRegistry::add<LyaNeutralHydrogenGasMix>();
+    //ItemRegistry::add<SpinFlipHydrogenGasMix>();
 
     // material mix families
     ItemRegistry::add<MaterialMixFamily>();
@@ -655,6 +660,9 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<DustEmissivityProbe>();
     ItemRegistry::add<DustEmissionWavelengthGridProbe>();
 
+    //ItemRegistry::add<DefaultMetallicityCutsProbe>();
+    //ItemRegistry::add<PlanarMetallicityCutsProbe>();
+    //ItemRegistry::add<MetallicityPerCellProbe>();
     ItemRegistry::add<DefaultGasTemperatureCutsProbe>();
     ItemRegistry::add<PlanarGasTemperatureCutsProbe>();
     ItemRegistry::add<GasTemperaturePerCellProbe>();

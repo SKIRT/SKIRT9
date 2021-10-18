@@ -69,7 +69,7 @@ vector<SnapshotParameter> MaterialMix::parameterInfo() const
 
 ////////////////////////////////////////////////////////////////////
 
-void MaterialMix::initializeSpecificState(MaterialState* /*state*/, double /*temperature*/,
+void MaterialMix::initializeSpecificState(MaterialState* /*state*/, double /*metallicity*/, double /*temperature*/,
                                           const Array& /*params*/) const
 {}
 
