@@ -532,7 +532,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
 
     ItemRegistry::add<ElectronMix>();
     ItemRegistry::add<LyaNeutralHydrogenGasMix>();
-    //ItemRegistry::add<SpinFlipHydrogenGasMix>();
+    ItemRegistry::add<SpinFlipHydrogenGasMix>();
 
     // material mix families
     ItemRegistry::add<MaterialMixFamily>();
@@ -660,9 +660,9 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<DustEmissivityProbe>();
     ItemRegistry::add<DustEmissionWavelengthGridProbe>();
 
-    //ItemRegistry::add<DefaultMetallicityCutsProbe>();
-    //ItemRegistry::add<PlanarMetallicityCutsProbe>();
-    //ItemRegistry::add<MetallicityPerCellProbe>();
+    ItemRegistry::add<DefaultMetallicityCutsProbe>();
+    ItemRegistry::add<PlanarMetallicityCutsProbe>();
+    ItemRegistry::add<MetallicityPerCellProbe>();
     ItemRegistry::add<DefaultGasTemperatureCutsProbe>();
     ItemRegistry::add<PlanarGasTemperatureCutsProbe>();
     ItemRegistry::add<GasTemperaturePerCellProbe>();
