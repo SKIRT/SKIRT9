@@ -292,6 +292,13 @@ double MediumSystem::massDensity(int m, int h) const
 
 ////////////////////////////////////////////////////////////////////
 
+double MediumSystem::metallicity(int m, int h) const
+{
+    return _state.metallicity(m, h);
+}
+
+////////////////////////////////////////////////////////////////////
+
 double MediumSystem::custom(int m, int h, int i) const
 {
     return _state.custom(m, h, i);
