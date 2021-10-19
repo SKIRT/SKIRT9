@@ -63,18 +63,14 @@
 #include "DraineSilicateGrainComposition.hpp"
 #include "DustAbsorptionPerCellProbe.hpp"
 #include "DustEmGrainComposition.hpp"
-#include "DustEmissionOptions.hpp"
 #include "DustEmissionWavelengthGridProbe.hpp"
 #include "DustEmissivityProbe.hpp"
 #include "DustGrainPopulationsProbe.hpp"
 #include "DustGrainSizeDistributionProbe.hpp"
-#include "DustSelfAbsorptionOptions.hpp"
 #include "DustTemperaturePerCellProbe.hpp"
-#include "DynamicStateOptions.hpp"
 #include "EinastoGeometry.hpp"
 #include "ElectronMix.hpp"
 #include "ExpDiskGeometry.hpp"
-#include "ExtinctionOnlyOptions.hpp"
 #include "ExtragalacticUnits.hpp"
 #include "FSPSSED.hpp"
 #include "FSPSSEDFamily.hpp"
@@ -132,7 +128,6 @@
 #include "LyaGaussianSED.hpp"
 #include "LyaGaussianSEDFamily.hpp"
 #include "LyaNeutralHydrogenGasMix.hpp"
-#include "LyaOptions.hpp"
 #include "LyaSEDDecorator.hpp"
 #include "LyaSEDFamilyDecorator.hpp"
 #include "MRNDustMix.hpp"
@@ -176,7 +171,6 @@
 #include "ParticleMedium.hpp"
 #include "ParticleSource.hpp"
 #include "PerspectiveInstrument.hpp"
-#include "PhotonPacketOptions.hpp"
 #include "PlanarCustomStateCutsProbe.hpp"
 #include "PlanarDustTemperatureCutsProbe.hpp"
 #include "PlanarGasTemperatureCutsProbe.hpp"
@@ -492,11 +486,13 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
 
     // medium system options
     ItemRegistry::add<PhotonPacketOptions>();
-    ItemRegistry::add<ExtinctionOnlyOptions>();
-    ItemRegistry::add<DustEmissionOptions>();
-    ItemRegistry::add<DustSelfAbsorptionOptions>();
     ItemRegistry::add<LyaOptions>();
     ItemRegistry::add<DynamicStateOptions>();
+    ItemRegistry::add<RadiationFieldOptions>();
+    ItemRegistry::add<SecondaryEmissionOptions>();
+    ItemRegistry::add<IterationOptions>();
+    ItemRegistry::add<DustEmissionOptions>();
+    ItemRegistry::add<SamplingOptions>();
 
     // material normalizations
     ItemRegistry::add<MaterialNormalization>();
@@ -533,6 +529,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
 
     ItemRegistry::add<ElectronMix>();
     ItemRegistry::add<LyaNeutralHydrogenGasMix>();
+    ItemRegistry::add<EmittingGasMix>();
     ItemRegistry::add<SpinFlipHydrogenGasMix>();
 
     // material mix families

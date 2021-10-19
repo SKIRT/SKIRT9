@@ -6,7 +6,7 @@
 #ifndef SPINFLIPHYDROGENGASMIX_HPP
 #define SPINFLIPHYDROGENGASMIX_HPP
 
-#include "MaterialMix.hpp"
+#include "EmittingGasMix.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -20,9 +20,10 @@
     the simulation. In this context, this material mix offers configuration properties to specify
     default values for these quantities that will be used by geometric media across the spatial
     domain. */
-class SpinFlipHydrogenGasMix : public MaterialMix
+class SpinFlipHydrogenGasMix : public EmittingGasMix
 {
-    ITEM_CONCRETE(SpinFlipHydrogenGasMix, MaterialMix, "A gas mix supporting the spin-flip 21 cm hydrogen transition")
+    ITEM_CONCRETE(SpinFlipHydrogenGasMix, EmittingGasMix,
+                  "A gas mix supporting the spin-flip 21 cm hydrogen transition")
 
         PROPERTY_DOUBLE(defaultMetallicity, "the default metallicity of the gas")
         ATTRIBUTE_MIN_VALUE(defaultMetallicity, "]0")

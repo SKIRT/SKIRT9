@@ -79,7 +79,7 @@ void Configuration::setupSelfBefore()
     _numPrimaryPackets = sim->numPackets();
     if (_hasMedium)
     {
-        _numDensitySamples = ms->numDensitySamples();
+        _numDensitySamples = ms->samplingOptions()->numDensitySamples();
         _forceScattering = ms->photonPacketOptions()->forceScattering();
         _minWeightReduction = ms->photonPacketOptions()->minWeightReduction();
         _minScattEvents = ms->photonPacketOptions()->minScattEvents();
@@ -89,21 +89,20 @@ void Configuration::setupSelfBefore()
     // retrieve extinction-only options
     if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::OligoExtinctionOnly
         || sim->simulationMode() == MonteCarloSimulation::SimulationMode::ExtinctionOnly
-        || sim->simulationMode() == MonteCarloSimulation::SimulationMode::LyaWithDustExtinction)
+        || sim->simulationMode() == MonteCarloSimulation::SimulationMode::LyaExtinctionOnly)
     {
         // the non-forced photon cycle does not support storing a radiation field
-        _hasRadiationField = _forceScattering && ms->extinctionOnlyOptions()->storeRadiationField();
+        _hasRadiationField = _forceScattering && ms->radiationFieldOptions()->storeRadiationField();
         if (_hasRadiationField)
         {
             _radiationFieldWLG = _oligochromatic ? dynamic_cast<OligoWavelengthGrid*>(_defaultWavelengthGrid)
-                                                 : ms->extinctionOnlyOptions()->radiationFieldWLG();
+                                                 : ms->radiationFieldOptions()->radiationFieldWLG();
             _hasPanRadiationField = !_oligochromatic;
         }
     }
 
     // retrieve dust emission options
-    if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustEmission
-        || sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustEmissionWithSelfAbsorption)
+    if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustEmission)
     {
         // the non-forced photon cycle does not support storing a radiation field
         _forceScattering = true;
@@ -121,33 +120,33 @@ void Configuration::setupSelfBefore()
         _includeHeatingByCMB = ms->dustEmissionOptions()->includeHeatingByCMB();
         _cellLibrary = ms->dustEmissionOptions()->cellLibrary();
         if (!_cellLibrary) _cellLibrary = new AllCellsLibrary(this);
-        _radiationFieldWLG = ms->dustEmissionOptions()->radiationFieldWLG();
+        _radiationFieldWLG = ms->radiationFieldOptions()->radiationFieldWLG();
         _dustEmissionWLG = ms->dustEmissionOptions()->dustEmissionWLG();
-        if (ms->dustEmissionOptions()->storeEmissionRadiationField())
+        if (ms->secondaryEmissionOptions()->storeEmissionRadiationField())
         {
             _storeEmissionRadiationField = true;
             _hasSecondaryRadiationField = true;
         }
-        _numSecondaryPackets = sim->numPackets() * ms->dustEmissionOptions()->secondaryPacketsMultiplier();
-        _secondarySpatialBias = ms->dustEmissionOptions()->spatialBias();
+        _numSecondaryPackets = sim->numPackets() * ms->secondaryEmissionOptions()->secondaryPacketsMultiplier();
+        _secondarySpatialBias = ms->secondaryEmissionOptions()->spatialBias();
         _secondaryWavelengthBias = ms->dustEmissionOptions()->wavelengthBias();
         _secondaryWavelengthBiasDistribution = ms->dustEmissionOptions()->wavelengthBiasDistribution();
     }
 
     // retrieve dust self-absorption options
-    if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustEmissionWithSelfAbsorption)
+    if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustEmission)  // TO DO: && iteration
     {
         _hasDustSelfAbsorption = true;
         _hasSecondaryRadiationField = true;
-        _minIterations = ms->dustSelfAbsorptionOptions()->minIterations();
-        _maxIterations = max(_minIterations, ms->dustSelfAbsorptionOptions()->maxIterations());
-        _maxFractionOfPrimary = ms->dustSelfAbsorptionOptions()->maxFractionOfPrimary();
-        _maxFractionOfPrevious = ms->dustSelfAbsorptionOptions()->maxFractionOfPrevious();
-        _numIterationPackets = sim->numPackets() * ms->dustSelfAbsorptionOptions()->iterationPacketsMultiplier();
+        _minIterations = ms->iterationOptions()->minPrimaryIterations();
+        _maxIterations = max(_minIterations, ms->iterationOptions()->maxPrimaryIterations());
+        _maxFractionOfPrimary = ms->dustEmissionOptions()->maxFractionOfPrimary();
+        _maxFractionOfPrevious = ms->dustEmissionOptions()->maxFractionOfPrevious();
+        _numIterationPackets = sim->numPackets() * ms->iterationOptions()->iterationPacketsMultiplier();
     }
 
     // retrieve Lyman-alpha options
-    if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::LyaWithDustExtinction)
+    if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::LyaExtinctionOnly)
     {
         _hasLymanAlpha = true;
         switch (ms->lyaOptions()->lyaAccelerationScheme())
@@ -168,7 +167,7 @@ void Configuration::setupSelfBefore()
     }
 
     // retrieve dynamic state options (only enable dynamic state if there are photon packets to be launched)
-    if (_hasMedium && _hasPanRadiationField && !_hasLymanAlpha && ms->dynamicStateOptions()
+    /*    if (_hasMedium && _hasPanRadiationField && !_hasLymanAlpha && ms->dynamicStateOptions()
         && ms->dynamicStateOptions()->hasDynamicState())
     {
         _numDynamicStatePackets = _numPrimaryPackets * ms->dynamicStateOptions()->iterationPacketsMultiplier();
@@ -179,6 +178,7 @@ void Configuration::setupSelfBefore()
             _maxDynamicStateIterations = max(_minDynamicStateIterations, ms->dynamicStateOptions()->maxIterations());
         }
     }
+*/  //TO DO!!
 
     // verify that there is a Lya medium component if required, and none if not required
     int numLyaMedia = 0;
