@@ -39,7 +39,7 @@ class DefaultCustomStateCutsProbe : public Probe
 
         PROPERTY_ENUM(probeAfter, ProbeAfter, "when to probe the medium state")
         ATTRIBUTE_DEFAULT_VALUE(probeAfter, "Setup")
-        ATTRIBUTE_DISPLAYED_IF(probeAfter, "HasDynamicState")
+        ATTRIBUTE_DISPLAYED_IF(probeAfter, "DynamicState")
 
     ITEM_END()
 

@@ -17,98 +17,195 @@ class SecondarySourceSystem;
 
 //////////////////////////////////////////////////////////////////////
 
-/** The MonteCarloSimulation class is the top-level class describing a SKIRT simulation. Running a
-    Monte Carlo simulation with SKIRT essentially comes down to constructing an instance of the
-    MonteCarloSimulation class and invoking the setupAndRun() function on it. The
-    MonteCarloSimulation class holds the source, media, instrument and probe systems, implements
-    the core aspects of the photon packet life-cycle, and manages the iterative processes in the
-    simulation (including phases, iterations and segments).
-
-    The user-configurable \em SimulationMode enumeration sets the overall simulation mode. It
-    determines the simulation's wavelength regime (oligochromatic or panchromatic) and the required
-    simulation segments (e.g., extinction only or including secondary emission). The
-    runSimulation() function performs all segments of the simulation, calling the
-    runPrimaryEmission(), runDustSelfAbsorptionPhase(), and runSecondaryEmission() functions as
-    required. These functions in turn invoke the performLifeCycle() function to trace photon
-    packets through their complete life cycle, including emission, multiple forced scattering
-    events, peel-off towards the instruments, and registration of the contribution to the radiation
-    field in each spatial cell crossed.
+/** The MonteCarloSimulation class is the top-level class describing a SKIRT simulation. It holds
+    the source, media, instrument and probe systems, implements the core aspects of the photon
+    packet life-cycle, and manages the iterative processes in the simulation (including phases,
+    iterations and segments). Running a Monte Carlo simulation with SKIRT essentially comes down to
+    constructing an instance of the MonteCarloSimulation class and invoking the setupAndRun()
+    function on it. The runSimulation() function performs all segments of the simulation, calling
+    functions such as runPrimaryEmission() and runSecondaryEmission() as required. These functions
+    in turn invoke the performLifeCycle() function to trace photon packets through their complete
+    life cycle, including emission, scattering events, peel-off towards the instruments, and
+    registration of the contribution to the radiation field in each spatial cell crossed.
 
     The MonteCarloSimulation class also holds the non-discoverable \em config property, which is
     automatically set to an instance of the Configuration class. The setup() function of the config
     object is invoked at the very early stages of overall simulation setup, so that it can
     initialize its internal state to reflect the simulation configuration. As a result, it is safe
-    for other simulation items to retrieve information from the config object during setup. */
+    for other simulation items to retrieve information from the config object during setup.
+
+    <b>%Simulation phases, iterations and segments</b>
+
+    In a first simulation phase, SKIRT determines the radiation field (RF) based on just the
+    primary emission. In a second phase, it performs secondary emission using spectra calculated
+    based on this RF.
+
+    Some SKIRT media allow the density and/or the optical properties of the medium to depend on the
+    local RF. The changes to the medium may sufficiently affect the RF to cause a significant
+    change in the medium properties itself, so that the RF must be calculated self-consistently by
+    iterating over primary and/or secondary emission. We call this a \em dynamic \em medium \em
+    state (DMS).
+
+    As a special case, for some SKIRT media the properties depending on the RF are significant only
+    for determining the secondary emission spectrum and have no effect during primary emission. As
+    a result, there is no need for iteration over primary emission. We call this a \em semi-dynamic
+    \em medium \em state (SDMS).
+
+    Secondary emission may sufficiently affect the RF to cause a significant change in the
+    secondary emission spectrum itself. If this is the case, the RF must be calculated
+    self-consistently by iterating over the secondary emission. We call this \em dynamic \em
+    secondary \em emission (DSE).
+
+    A simulation consecutively performs one or more \em segments as part of the relevant \em
+    iterations and \em phases. A segment processes a set of photon packets, including emission from
+    the relevant sources or media, absorption and scattering by the media, and updating the RF, the
+    medium state, and/or the instruments as appropriate. We define the following segment types:
+
+    - \f$\mathbf{P}\f$ -- primary emission: photon packets are launched from the configured
+    (primary) source components.
+
+    - \f$\mathbf{S}\f$ -- secondary emission: photon packets are launched from the configured
+    medium components that support emission; this includes calculation of the secondary emission
+    spectrum for each component based on the RF and the medium state in each spatial cell at the
+    start of the segment.
+
+    These segment identifiers are decorated by one or more of the following modifiers:
+
+    - \f$p\f$: peel off a photon packet to the instruments for each emission and scattering event.
+
+    - \f$r\f$: register the RF while tracing photon packets through the medium.
+
+    - \f$(r)\f$: optionally register the RF if requested for probing (not needed for instruments).
+
+    - \f$s\f$: update the DMS (and SDMS, if any) based on the RF after processing all photon
+    packets for the segment.
+
+    - \f$(s)\f$: update the SDMS, if any, based on the RF after processing all photon packets for
+    the segment.
+
+    <b>%Simulation mode configuration</b>
+
+    The user-configurable \em simulationMode enumeration sets the overall simulation mode. It
+    determines the presence or absence of a transfer medium, the wavelength regime (oligochromatic
+    or panchromatic), whether there is a secondary emission phase, and if so, which media types
+    (dust and/or gas) are emitting photon packets. The Boolean user options \em iterateMediumState
+    and \em iterateSecondaryEmission further determine whether the simulation iterates over the
+    radiation field to self-consistently calculate a DMS or DSE. The presence of an SDMS is derived
+    at run-time from the capabilities advertised by each of the configured medium components.
+
+    An important aspect determined by the simulation mode is the simulation's wavelength regime,
+    which can be oligochromatic or panchromatic. Oligochromatic simulations use just a few
+    pre-defined, discrete wavelengths. They do no support kinematics (moving sources and/or media)
+    because the wavelengths cannot shift away from the pre-defined values, and they do not support
+    secondary emission by the transfer medium because the radiation field must be known across a
+    wide spectrum to calculate the medium state and the resulting emission. Panchromatic
+    simulations use a continuous range of wavelengths, lifting these limitations.
+
+    The "extinction-only" simulation modes calculate the extinction of the primary radiation
+    through the configured media, including the effects of absorption and scattering. There is no
+    secondary emission, so these modes are meaningful only for wavelengths at which secondary
+    sources (radiation from the media) can be neglected. The "emission" simulation modes (which
+    require a panchromatic wavelength range) include secondary emission from dust and/or gas, in
+    addition to the effects of absorption and scattering.
+
+    The prefix \c Dust-, \c Gas-, or \c DustAndGas- in the emission simulation modes indicates
+    which media types are emitting photon packets during secondary emission. Other media types can
+    still be configured in the simulation and will contribute extinction during both primary and
+    secondary emission.
+
+    The simulation mode and iteration flags are set at the start of the configuration process.
+    Their values have a significant impact on which options are allowed or required in the
+    simulation's configuration.
+
+    <b>Execution flow</b>
+
+    The following table shows the flow of execution for each simulation mode. \c DMS1 and \c DMS2
+    indicate a dynamic medium state during primary and secondary emission, respectively. The arrows
+    in the flow diagrams indicate forward progression (\f$\rightarrow\f$) and iteration
+    (\f$\longleftarrow\f$).
+
+    | | %Simulation mode | Flow diagram |
+    |-|-----------------|--------------|
+    | 1 | \c OligoNoMedium | \f$\mathbf{P}^p\f$ |
+    | 2 | \c OligoExtinctionOnly | \f$\mathbf{P}^p_{(r)}\f$ |
+    | 3 | \c LyaExtinctionOnly | \f$\mathbf{P}^p_{(r)}\f$ |
+    | 4 | \c NoMedium | \f$\mathbf{P}^p\f$ |
+    | 5 | \c ExtinctionOnly | \f$\mathbf{P}^p_{(r)}\f$ |
+    | 6 | ... + \c DMS1 | \f$\overleftarrow{\mathbf{P}_{rs}} \;\rightarrow\; \mathbf{P}^p_{(r)}\f$ |
+    | 7 | \c Dust-, \c Gas-, \c DustAndGasEmission | \f$\mathbf{P}^p_{r(s)} \;\rightarrow\; \mathbf{S}^p_{(r)}\f$ |
+    | 8 | ... + \c DMS1 | \f$\overleftarrow{\mathbf{P}_{rs}} \;\rightarrow\; \mathbf{P}^p_{r(s)} \;\rightarrow\; \mathbf{S}^p_{(r)}\f$ |
+    | 9 | ... + \c DSE | \f$\mathbf{P}^p_{r(s)} \;\rightarrow\; \overleftarrow{\mathbf{S}_{r(s)}} \;\rightarrow\; \mathbf{S}^p_{(r)}\f$ |
+    | 10 | ... + \c DSE + \c DMS1 | \f$\overleftarrow{\mathbf{P}_{rs}} \;\rightarrow\; \textbf{}\mathbf{P}^p_{r(s)} \;\rightarrow\; \overleftarrow{\mathbf{S}_{r(s)}} \;\rightarrow\; \mathbf{S}^p_{(r)}\f$ |
+    | 11 | ... + \c DSE + \c DMS1 + \c DMS2 | \f$\overleftarrow{\mathbf{P}_{rs}} \;\rightarrow\; \overleftarrow{\mathbf{P}_{r(s)} \;\rightarrow\; \mathbf{S}_{rs}} \;\rightarrow\; \mathbf{P}^p_{(r)} \;\rightarrow\; \mathbf{S}^p_{(r)}\f$ |
+
+    Rows 1-6 describe simulation modes that include primary emission only, without or with media.
+    The last mode in this list (row 6) includes iteration over the DMS during primary emission.
+    Rows 7-11 describe modes that include dust and/or gas emission, possibly iterating over the RF
+    during secondary emission to handle DSE (rows 9-11). If one or more of the dust media have a
+    DMS, there are modes supporting iteration over primary emission (rows 8 and 10) or even over
+    both primary and secondary emission (row 11).
+
+    The simulation modes in rows 7-11 support medium components with SDMS by updating the medium
+    state for these components at the end of the relevant segments. It is meaningful to update an
+    SDMS at the end of a segment that performs peel-off to the instruments because the update does
+    not affect the outcome of a primary emission segment.
+
+    */
 class MonteCarloSimulation : public Simulation
 {
     /** The enumeration type indicating the simulation mode, which determines the overall structure
         of the simulation and its capabilities. The choice made for the simulation mode has a
         significant impact on which options are allowed or required in the simulation's
-        configuration. For example, some basic simulation modes support just primary sources
-        without any media.
-
-        An important aspect determined by the simulation mode is the simulation's wavelength
-        regime, which can be oligochromatic or panchromatic. Oligochromatic simulations use just a
-        few pre-defined, discrete wavelengths. They do no support kinematics (moving sources and/or
-        media) because the wavelengths cannot shift away from the pre-defined values, and they do
-        not support secondary emission by the transfer medium because the radiation field must be
-        known across a wide spectrum to calculate the medium state and the resulting emission.
-        Panchromatic simulations use a continuous range of wavelengths, lifting these limitations.
-
-        For panchromatic simulations, the simulation mode further determines fundamental choices
-        such as whether to include secondary emission, and whether to iterate over the radiation
-        field state to obtain self-consistent results taking into account, for example, dust
-        self-absorption.
-
-        The "extinction-only" simulation modes calculate the extinction of the primary radiation
-        through the configured media, including the effects of absorption and scattering. There is
-        no secondary emission, so these modes are meaningful only for wavelengths at which
-        secondary sources (radiation from the media) can be neglected, i.e. in the ultraviolet,
-        optical and near-infrared. Also, the media state is constant, i.e. it is initialized from
-        the properties defined in the input model (density distributions, material properties) and
-        is never updated. As a result, there is no need to store the radiation field during the
-        photon packet life cycle. However, there is user-configurable option to store the radiation
-        field anyway so that it can be probed for output.
-
-        The "dust emission" simulation modes (which require a panchromatic wavelength range that
-        includes optical to far-infrared regimes) include secondary emission from dust, in addition
-        to the effects of absorption and scattering. In these modes, the simulation keeps track of
-        the radation field (to calculate the dust emission) and optionally performs iterations to
-        self-consistently calculate the effects of dust self-absorption. */
-    ENUM_DEF(SimulationMode, OligoNoMedium, OligoExtinctionOnly, NoMedium, ExtinctionOnly, DustEmission,
-             DustEmissionWithSelfAbsorption, LyaWithDustExtinction)
+        configuration. See the class header for more information. */
+    ENUM_DEF(SimulationMode, OligoNoMedium, OligoExtinctionOnly, NoMedium, ExtinctionOnly, LyaExtinctionOnly,
+             DustEmission, GasEmission, DustAndGasEmission)
         ENUM_VAL(SimulationMode, OligoNoMedium, "No medium - oligochromatic regime (a few discrete wavelengths)")
         ENUM_VAL(SimulationMode, OligoExtinctionOnly,
-                 "Dust extinction only - oligochromatic regime (a few discrete wavelengths)")
+                 "Extinction only - oligochromatic regime (a few discrete wavelengths)")
         ENUM_VAL(SimulationMode, NoMedium, "No medium (primary sources only)")
-        ENUM_VAL(SimulationMode, ExtinctionOnly, "Dust extinction only (no secondary emission)")
+        ENUM_VAL(SimulationMode, ExtinctionOnly, "Extinction only (no secondary emission)")
+        ENUM_VAL(SimulationMode, LyaExtinctionOnly, "Extinction only with Lyman-alpha line transfer")
         ENUM_VAL(SimulationMode, DustEmission, "With secondary emission from dust")
-        ENUM_VAL(SimulationMode, DustEmissionWithSelfAbsorption,
-                 "With secondary emission from dust and iterations for dust self-absorption")
-        ENUM_VAL(SimulationMode, LyaWithDustExtinction, "Lyman-alpha line transfer and dust extinction")
+        ENUM_VAL(SimulationMode, GasEmission, "With secondary emission from gas")
+        ENUM_VAL(SimulationMode, DustAndGasEmission, "With secondary emission from dust and gas")
     ENUM_END()
 
     ITEM_CONCRETE(MonteCarloSimulation, Simulation, "a Monte Carlo simulation")
 
         PROPERTY_ENUM(simulationMode, SimulationMode, "the overall simulation mode")
         ATTRIBUTE_DEFAULT_VALUE(simulationMode, "ExtinctionOnly")
-        ATTRIBUTE_INSERT(simulationMode, "simulationModeOligoNoMedium:Oligochromatic,NoMedium;"
-                                         "simulationModeOligoExtinctionOnly:Oligochromatic,ExtinctionOnly;"
-                                         "simulationModeNoMedium:Panchromatic,NoMedium;"
-                                         "simulationModeExtinctionOnly:Panchromatic,ExtinctionOnly;"
-                                         "simulationModeDustEmission:Panchromatic,DustEmission,Emission,RadiationField;"
-                                         "simulationModeDustEmissionWithSelfAbsorption:"
-                                         "Panchromatic,DustEmission,Emission,RadiationField,DustSelfAbsorption;"
-                                         "simulationModeLyaWithDustExtinction:Lya,Panchromatic,ExtinctionOnly")
+        ATTRIBUTE_INSERT(
+            simulationMode,
+            "simulationModeOligoNoMedium:Oligochromatic,NoMedium;"
+            "simulationModeOligoExtinctionOnly:Oligochromatic,ExtinctionOnly;"
+            "simulationModeNoMedium:Panchromatic,NoMedium;"
+            "simulationModeExtinctionOnly:Panchromatic,ExtinctionOnly;"
+            "simulationModeLyaExtinctionOnly:Lya,Panchromatic,ExtinctionOnly;"
+            "simulationModeDustEmission:Panchromatic,DustEmission,Emission,RadiationField;"
+            "simulationModeGasEmission:Panchromatic,GasEmission,Emission,RadiationField;"
+            "simulationModeDustAndGasEmission:Panchromatic,DustEmission,GasEmission,Emission,RadiationField")
 
-        PROPERTY_ITEM(cosmology, Cosmology, "the cosmology parameters")
-        ATTRIBUTE_DEFAULT_VALUE(cosmology, "LocalUniverseCosmology")
-        ATTRIBUTE_DISPLAYED_IF(cosmology, "Level2")
+        PROPERTY_BOOL(iterateMediumState, "iterate to self-consistently determine the medium state")
+        ATTRIBUTE_DEFAULT_VALUE(iterateMediumState, "false")
+        ATTRIBUTE_RELEVANT_IF(iterateMediumState, "simulationModeExtinctionOnly|Emission")
+        ATTRIBUTE_DISPLAYED_IF(iterateMediumState, "Level3")
+        ATTRIBUTE_INSERT(iterateMediumState,
+                         "(simulationModeExtinctionOnly|Emission)&iterateMediumState:DynamicState,RadiationField")
+
+        PROPERTY_BOOL(iterateSecondaryEmission, "iterate to self-consistently determine secondary emission")
+        ATTRIBUTE_DEFAULT_VALUE(iterateSecondaryEmission, "false")
+        ATTRIBUTE_RELEVANT_IF(iterateSecondaryEmission, "Emission")
+        ATTRIBUTE_DISPLAYED_IF(iterateSecondaryEmission, "Level2")
+        ATTRIBUTE_INSERT(iterateSecondaryEmission, "Emission&iterateSecondaryEmission:DynamicEmission")
 
         PROPERTY_DOUBLE(numPackets, "the default number of photon packets launched per simulation segment")
         ATTRIBUTE_MIN_VALUE(numPackets, "[0")
         ATTRIBUTE_MAX_VALUE(numPackets, "1e19]")
         ATTRIBUTE_DEFAULT_VALUE(numPackets, "1e6")
+
+        PROPERTY_ITEM(cosmology, Cosmology, "the cosmology parameters")
+        ATTRIBUTE_DEFAULT_VALUE(cosmology, "LocalUniverseCosmology")
+        ATTRIBUTE_DISPLAYED_IF(cosmology, "Level2")
 
         PROPERTY_ITEM(sourceSystem, SourceSystem, "the source system")
         ATTRIBUTE_DEFAULT_VALUE(sourceSystem, "SourceSystem")
@@ -140,8 +237,8 @@ protected:
         setup() function and notifies the probe system when setup has been completed. */
     void setupSimulation() override;
 
-    /** This function performs initial setup for the MonteCarloSimulation object. For example,
-        it constructs a SecondarySourceSystem object if the simulation configuration requires
+    /** This function performs initial setup for the MonteCarloSimulation object. For example, it
+        constructs a SecondarySourceSystem object if the simulation configuration requires
         secondary emission. */
     void setupSelfBefore() override;
 
@@ -270,8 +367,9 @@ private:
         direction of the observer \f${\bf{k}}_{\text{obs}}\f$. For anisotropic emission, a weight
         factor is applied to the luminosity to compensate for the fact that the probability that a
         photon packet would have been emitted towards the observer is not the same as the
-        probability that it is emitted in any other direction. If the source has a nonzero velocity,
-        the wavelength of the peel-off photon packet is Doppler-shifted for the new direction.
+        probability that it is emitted in any other direction. If the source has a nonzero
+        velocity, the wavelength of the peel-off photon packet is Doppler-shifted for the new
+        direction.
 
         The first argument specifies the photon packet that was just emitted; the second argument
         provides a placeholder peel off photon packet for use by the function. */
@@ -287,8 +385,8 @@ private:
         the Configuration::radiationFieldWLG() function for more information). Locating the
         appropriate spatial bin is trivial because each segment in the photon packet's path stores
         the index of the cell being crossed. The wavelength bin is derived from the photon packet's
-        perceived wavelength in the cell under consideration, taking into account the velocity
-        of the medium in that cell.
+        perceived wavelength in the cell under consideration, taking into account the velocity of
+        the medium in that cell.
 
         For each segment \f$n\f$ in the photon packet's path, this function first determines the
         corresponding spatial/wavelength bin as described above. To the contents of that bin, the

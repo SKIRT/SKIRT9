@@ -8,14 +8,16 @@
 
 #include "Array.hpp"
 #include "DustEmissionOptions.hpp"
-#include "DustSelfAbsorptionOptions.hpp"
 #include "DynamicStateOptions.hpp"
-#include "ExtinctionOnlyOptions.hpp"
+#include "IterationOptions.hpp"
 #include "LyaOptions.hpp"
 #include "MaterialMix.hpp"
 #include "Medium.hpp"
 #include "MediumState.hpp"
 #include "PhotonPacketOptions.hpp"
+#include "RadiationFieldOptions.hpp"
+#include "SamplingOptions.hpp"
+#include "SecondaryEmissionOptions.hpp"
 #include "SimulationItem.hpp"
 #include "SpatialGrid.hpp"
 #include "Table.hpp"
@@ -102,32 +104,32 @@ class MediumSystem : public SimulationItem
         ATTRIBUTE_DEFAULT_VALUE(photonPacketOptions, "PhotonPacketOptions")
         ATTRIBUTE_RELEVANT_IF(media, "!NoMedium")
 
-        PROPERTY_ITEM(extinctionOnlyOptions, ExtinctionOnlyOptions, "the extinction-only options")
-        ATTRIBUTE_DEFAULT_VALUE(extinctionOnlyOptions, "ExtinctionOnlyOptions")
-        ATTRIBUTE_RELEVANT_IF(extinctionOnlyOptions, "ExtinctionOnly")
+        PROPERTY_ITEM(lyaOptions, LyaOptions, "the Lyman-alpha line transfer options")
+        ATTRIBUTE_DEFAULT_VALUE(lyaOptions, "LyaOptions")
+        ATTRIBUTE_RELEVANT_IF(lyaOptions, "Lya")
+
+        PROPERTY_ITEM(dynamicStateOptions, DynamicStateOptions, "the dynamic medium state options")
+        ATTRIBUTE_DEFAULT_VALUE(dynamicStateOptions, "DynamicStateOptions")
+        ATTRIBUTE_RELEVANT_IF(dynamicStateOptions, "DynamicState")
+
+        PROPERTY_ITEM(radiationFieldOptions, RadiationFieldOptions, "the radiation field options")
+        ATTRIBUTE_DEFAULT_VALUE(radiationFieldOptions, "RadiationFieldOptions")
+        ATTRIBUTE_RELEVANT_IF(radiationFieldOptions, "!NoMedium")
+
+        PROPERTY_ITEM(secondaryEmissionOptions, SecondaryEmissionOptions, "the secondary emission options")
+        ATTRIBUTE_DEFAULT_VALUE(secondaryEmissionOptions, "SecondaryEmissionOptions")
+        ATTRIBUTE_RELEVANT_IF(secondaryEmissionOptions, "Emission")
+
+        PROPERTY_ITEM(iterationOptions, IterationOptions, "the primary and/or secondary emission iteration options")
+        ATTRIBUTE_DEFAULT_VALUE(iterationOptions, "IterationOptions")
+        ATTRIBUTE_RELEVANT_IF(iterationOptions, "DynamicState|DynamicEmission")
 
         PROPERTY_ITEM(dustEmissionOptions, DustEmissionOptions, "the dust emission options")
         ATTRIBUTE_DEFAULT_VALUE(dustEmissionOptions, "DustEmissionOptions")
         ATTRIBUTE_RELEVANT_IF(dustEmissionOptions, "DustEmission")
 
-        PROPERTY_ITEM(dustSelfAbsorptionOptions, DustSelfAbsorptionOptions, "the dust self-absorption options")
-        ATTRIBUTE_DEFAULT_VALUE(dustSelfAbsorptionOptions, "DustSelfAbsorptionOptions")
-        ATTRIBUTE_RELEVANT_IF(dustSelfAbsorptionOptions, "DustSelfAbsorption")
-
-        PROPERTY_ITEM(lyaOptions, LyaOptions, "the Lyman-alpha line transfer options")
-        ATTRIBUTE_DEFAULT_VALUE(lyaOptions, "LyaOptions")
-        ATTRIBUTE_RELEVANT_IF(lyaOptions, "Lya")
-
-        PROPERTY_ITEM(dynamicStateOptions, DynamicStateOptions, "the options for dynamic medium state iterations")
-        ATTRIBUTE_DEFAULT_VALUE(dynamicStateOptions, "DynamicStateOptions")
-        ATTRIBUTE_RELEVANT_IF(dynamicStateOptions, "Panchromatic&RadiationField&!Lya")
-        ATTRIBUTE_DISPLAYED_IF(dynamicStateOptions, "Level3")
-
-        PROPERTY_INT(numDensitySamples, "the number of random density samples for determining spatial cell mass")
-        ATTRIBUTE_MIN_VALUE(numDensitySamples, "10")
-        ATTRIBUTE_MAX_VALUE(numDensitySamples, "1000")
-        ATTRIBUTE_DEFAULT_VALUE(numDensitySamples, "100")
-        ATTRIBUTE_DISPLAYED_IF(numDensitySamples, "Level2")
+        PROPERTY_ITEM(samplingOptions, SamplingOptions, "the spatial grid sampling options")
+        ATTRIBUTE_DEFAULT_VALUE(samplingOptions, "SamplingOptions")
 
         PROPERTY_ITEM_LIST(media, Medium, "the transfer media")
         ATTRIBUTE_DEFAULT_VALUE(media, "GeometricMedium")

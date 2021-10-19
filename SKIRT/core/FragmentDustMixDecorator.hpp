@@ -50,15 +50,15 @@ class FragmentDustMixDecorator : public MaterialMix, public MultiGrainPopulation
         ATTRIBUTE_DEFAULT_VALUE(fragmentSizeBins, "false")
 
         PROPERTY_BOOL(hasDynamicDensities, "allow the fragment densities to be adjusted dynamically")
-        ATTRIBUTE_RELEVANT_IF(hasDynamicDensities, "HasDynamicState")
-        ATTRIBUTE_DEFAULT_VALUE(hasDynamicDensities, "HasDynamicState:true;false")
+        ATTRIBUTE_RELEVANT_IF(hasDynamicDensities, "DynamicState")
+        ATTRIBUTE_DEFAULT_VALUE(hasDynamicDensities, "DynamicState:true;false")
         ATTRIBUTE_DISPLAYED_IF(hasDynamicDensities, "Level3")
 
         PROPERTY_DOUBLE(initialDensityFraction, "the initial value of the dynamic density fraction")
         ATTRIBUTE_MIN_VALUE(initialDensityFraction, "[0")
         ATTRIBUTE_MAX_VALUE(initialDensityFraction, "1]")
         ATTRIBUTE_DEFAULT_VALUE(initialDensityFraction, "0")
-        ATTRIBUTE_RELEVANT_IF(initialDensityFraction, "HasDynamicState&hasDynamicDensities")
+        ATTRIBUTE_RELEVANT_IF(initialDensityFraction, "DynamicState&hasDynamicDensities")
         ATTRIBUTE_DISPLAYED_IF(initialDensityFraction, "Level3")
 
     ITEM_END()
