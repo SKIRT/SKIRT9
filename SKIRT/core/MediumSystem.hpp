@@ -128,12 +128,12 @@ class MediumSystem : public SimulationItem
         ATTRIBUTE_DEFAULT_VALUE(dustEmissionOptions, "DustEmissionOptions")
         ATTRIBUTE_RELEVANT_IF(dustEmissionOptions, "DustEmission")
 
-        PROPERTY_ITEM(samplingOptions, SamplingOptions, "the spatial grid sampling options")
-        ATTRIBUTE_DEFAULT_VALUE(samplingOptions, "SamplingOptions")
-
         PROPERTY_ITEM_LIST(media, Medium, "the transfer media")
         ATTRIBUTE_DEFAULT_VALUE(media, "GeometricMedium")
         ATTRIBUTE_REQUIRED_IF(media, "!NoMedium")
+
+        PROPERTY_ITEM(samplingOptions, SamplingOptions, "the spatial grid sampling options")
+        ATTRIBUTE_DEFAULT_VALUE(samplingOptions, "SamplingOptions")
 
         PROPERTY_ITEM(grid, SpatialGrid, "the spatial grid")
         ATTRIBUTE_DEFAULT_VALUE(grid,
