@@ -26,7 +26,7 @@ class PlanarMediumVelocityCutsProbe : public AbstractPlanarCutsProbe
 {
     ITEM_CONCRETE(PlanarMediumVelocityCutsProbe, AbstractPlanarCutsProbe,
                   "cuts of the medium velocity along planes parallel to the coordinate planes")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(PlanarMediumVelocityCutsProbe, "Level2&Medium&SpatialGrid&MediumVelocity")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(PlanarMediumVelocityCutsProbe, "Level2&SpatialGrid&MediumVelocity")
     ITEM_END()
 
     //======================== Other Functions =======================

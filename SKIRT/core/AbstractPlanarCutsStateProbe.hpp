@@ -3,19 +3,19 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef ABSTRACTPLANARCUTSPROBE_HPP
-#define ABSTRACTPLANARCUTSPROBE_HPP
+#ifndef ABSTRACTPLANARCUTSSTATEPROBE_HPP
+#define ABSTRACTPLANARCUTSSTATEPROBE_HPP
 
-#include "Probe.hpp"
+#include "StateProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-/** AbstractPlanarCutsProbe is a base class for probes that need configuration options for planar
-    cuts parallel to the coordinate planes. The provided options include the position of the planar
-    cuts and the number of pixels in each spatial direction. */
-class AbstractPlanarCutsProbe : public Probe
+/** AbstractPlanarCutsStateProbe is a base class for state probes that need configuration options
+    for planar cuts parallel to the coordinate planes. The provided options include the position of
+    the planar cuts and the number of pixels in each spatial direction. */
+class AbstractPlanarCutsStateProbe : public StateProbe
 {
-    ITEM_ABSTRACT(AbstractPlanarCutsProbe, Probe, "a probe using configurable planar cuts")
+    ITEM_ABSTRACT(AbstractPlanarCutsStateProbe, StateProbe, "a state probe using configurable planar cuts")
 
         PROPERTY_DOUBLE(positionX, "the x position of the cut parallel to the yz plane")
         ATTRIBUTE_QUANTITY(positionX, "length")

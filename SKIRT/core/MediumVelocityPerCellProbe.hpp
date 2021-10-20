@@ -18,7 +18,7 @@
 class MediumVelocityPerCellProbe : public Probe
 {
     ITEM_CONCRETE(MediumVelocityPerCellProbe, Probe, "the medium velocity for each spatial cell")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(MediumVelocityPerCellProbe, "Level2&Medium&SpatialGrid&MediumVelocity")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(MediumVelocityPerCellProbe, "Level2&SpatialGrid&MediumVelocity")
     ITEM_END()
 
     //======================== Other Functions =======================

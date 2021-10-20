@@ -10,20 +10,6 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void DefaultCustomStateCutsProbe::probeSetup()
-{
-    if (probeAfter() == ProbeAfter::Setup) probe();
-}
-
-////////////////////////////////////////////////////////////////////
-
-void DefaultCustomStateCutsProbe::probeRun()
-{
-    if (probeAfter() == ProbeAfter::Run) probe();
-}
-
-////////////////////////////////////////////////////////////////////
-
 void DefaultCustomStateCutsProbe::probe()
 {
     if (find<Configuration>()->hasMedium())

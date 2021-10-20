@@ -76,7 +76,7 @@ void PlanarGasTemperatureCutsProbe::writeGasTemperatureCut(Probe* probe, bool xd
 
 ////////////////////////////////////////////////////////////////////
 
-void PlanarGasTemperatureCutsProbe::probeSetup()
+void PlanarGasTemperatureCutsProbe::probe()
 {
     if (find<Configuration>()->hasMedium() && find<MediumSystem>()->hasGas())
     {
