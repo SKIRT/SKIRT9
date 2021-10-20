@@ -33,13 +33,13 @@ class IterationOptions : public SimulationItem
         PROPERTY_INT(minSecondaryIterations, "the minimum number of iterations during secondary emission")
         ATTRIBUTE_MIN_VALUE(minSecondaryIterations, "0")
         ATTRIBUTE_MAX_VALUE(minSecondaryIterations, "1000")
-        ATTRIBUTE_DEFAULT_VALUE(minSecondaryIterations, "Emission:1:0")
+        ATTRIBUTE_DEFAULT_VALUE(minSecondaryIterations, "Emission:1;0")
         ATTRIBUTE_RELEVANT_IF(minSecondaryIterations, "DynamicState|Emission")
 
         PROPERTY_INT(maxSecondaryIterations, "the maximum number of iterations during secondary emission")
         ATTRIBUTE_MIN_VALUE(maxSecondaryIterations, "0")
         ATTRIBUTE_MAX_VALUE(maxSecondaryIterations, "1000")
-        ATTRIBUTE_DEFAULT_VALUE(maxSecondaryIterations, "Emission:10:0")
+        ATTRIBUTE_DEFAULT_VALUE(maxSecondaryIterations, "Emission:10;0")
         ATTRIBUTE_RELEVANT_IF(maxSecondaryIterations, "(DynamicState|Emission)&minSecondaryIterations")
 
         PROPERTY_BOOL(includePrimaryEmission, "include primary emission in the secondary emission iterations")
