@@ -147,7 +147,7 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-void SpatialGridConvergenceProbe::probeSetup()
+void SpatialGridConvergenceProbe::probe()
 {
     if (find<Configuration>()->hasMedium())
     {

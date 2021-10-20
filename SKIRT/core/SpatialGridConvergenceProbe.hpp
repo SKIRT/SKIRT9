@@ -36,9 +36,9 @@ class SpatialGridConvergenceProbe : public AbstractWavelengthProbe
 
     //======================== Other Functions =======================
 
-public:
-    /** This function performs probing after setup. */
-    void probeSetup() override;
+protected:
+    /** This function performs the probing. */
+    void probe() override;
 };
 
 ////////////////////////////////////////////////////////////////////

@@ -28,7 +28,7 @@
 class DefaultMediumVelocityCutsProbe : public Probe
 {
     ITEM_CONCRETE(DefaultMediumVelocityCutsProbe, Probe, "cuts of the medium velocity along the coordinate planes")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(DefaultMediumVelocityCutsProbe, "Level2&Medium&SpatialGrid&MediumVelocity")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(DefaultMediumVelocityCutsProbe, "Level2&SpatialGrid&MediumVelocity")
     ITEM_END()
 
     //======================== Other Functions =======================

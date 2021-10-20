@@ -27,7 +27,7 @@
 class DefaultMagneticFieldCutsProbe : public Probe
 {
     ITEM_CONCRETE(DefaultMagneticFieldCutsProbe, Probe, "cuts of the magnetic field along the coordinate planes")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(DefaultMagneticFieldCutsProbe, "Level3&Medium&SpatialGrid&MagneticField")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(DefaultMagneticFieldCutsProbe, "Level3&SpatialGrid&MagneticField")
     ITEM_END()
 
     //======================== Other Functions =======================

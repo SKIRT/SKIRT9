@@ -26,15 +26,12 @@ class PlanarMagneticFieldCutsProbe : public AbstractPlanarCutsProbe
 {
     ITEM_CONCRETE(PlanarMagneticFieldCutsProbe, AbstractPlanarCutsProbe,
                   "cuts of the magnetic field along planes parallel to the coordinate planes")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(PlanarMagneticFieldCutsProbe, "Level3&Medium&SpatialGrid&MagneticField")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(PlanarMagneticFieldCutsProbe, "Level3&SpatialGrid&MagneticField")
     ITEM_END()
 
     //======================== Other Functions =======================
 
 public:
-    /** This function performs probing after setup. */
-    void probeSetup() override;
-
     /** This function outputs FITS files with cuts through the spatial magnetic field distribution
         along a plane parallel to the coordinate plane indicated by the boolean "direction"
         arguments \em xd, \em yd, and \em zd, exactly two of which must be true. The arguments \em
@@ -42,6 +39,9 @@ public:
         and \em Nz specify the number of pixels in each direction. */
     static void writeMagneticFieldCut(Probe* probe, bool xd, bool yd, bool zd, double xc, double yc, double zc, int Nx,
                                       int Ny, int Nz);
+
+    /** This function performs probing after setup. */
+    void probeSetup() override;
 };
 
 ////////////////////////////////////////////////////////////////////

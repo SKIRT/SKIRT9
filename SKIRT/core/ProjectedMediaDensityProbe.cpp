@@ -15,20 +15,6 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void ProjectedMediaDensityProbe::probeSetup()
-{
-    if (probeAfter() == ProbeAfter::Setup) probe();
-}
-
-////////////////////////////////////////////////////////////////////
-
-void ProjectedMediaDensityProbe::probeRun()
-{
-    if (probeAfter() == ProbeAfter::Run) probe();
-}
-
-////////////////////////////////////////////////////////////////////
-
 void ProjectedMediaDensityProbe::probe()
 {
     if (find<Configuration>()->hasMedium())

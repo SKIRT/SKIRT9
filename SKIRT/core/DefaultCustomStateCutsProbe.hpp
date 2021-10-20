@@ -6,7 +6,7 @@
 #ifndef DEFAULTCUSTOMSTATECUTSPROBE_HPP
 #define DEFAULTCUSTOMSTATECUTSPROBE_HPP
 
-#include "Probe.hpp"
+#include "StateProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -26,38 +26,18 @@
     component are the same physical quantity type and thus also have the same output units. In
     principle this restriction could be lifted but in that case it is unclear where to put the unit
     information in the FITS header. */
-class DefaultCustomStateCutsProbe : public Probe
+class DefaultCustomStateCutsProbe : public StateProbe
 {
-    /** The enumeration type indicating when probing occurs. */
-    ENUM_DEF(ProbeAfter, Setup, Run)
-        ENUM_VAL(ProbeAfter, Setup, "after setup")
-        ENUM_VAL(ProbeAfter, Run, "after the complete simulation run")
-    ENUM_END()
-
-    ITEM_CONCRETE(DefaultCustomStateCutsProbe, Probe, "cuts of the custom medium state along the coordinate planes")
+    ITEM_CONCRETE(DefaultCustomStateCutsProbe, StateProbe,
+                  "cuts of the custom medium state along the coordinate planes")
         ATTRIBUTE_TYPE_DISPLAYED_IF(DefaultCustomStateCutsProbe, "Level2&CustomMediumState&SpatialGrid")
-
-        PROPERTY_ENUM(probeAfter, ProbeAfter, "when to probe the medium state")
-        ATTRIBUTE_DEFAULT_VALUE(probeAfter, "Setup")
-        ATTRIBUTE_DISPLAYED_IF(probeAfter, "DynamicState")
-
     ITEM_END()
 
     //======================== Other Functions =======================
 
-public:
-    /** This function performs probing after setup. It produces output only if the \em
-        probeAfter property is set to Setup. */
-    void probeSetup() override;
-
-    /** This function performs probing after all photon packets have been emitted and detected. It
-        produces output only if the \em probeAfter property is set to Run. */
-    void probeRun() override;
-
-private:
-    /** This function performs the probing; it is called from probeSetup() or probeRun() depending
-        on the value of the \em probeAfter property. */
-    void probe();
+protected:
+    /** This function performs the probing. */
+    void probe() override;
 };
 
 ////////////////////////////////////////////////////////////////////
