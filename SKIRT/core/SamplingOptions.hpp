@@ -17,8 +17,8 @@ class SamplingOptions : public SimulationItem
     /** The enumeration type defining a policy for aggregating (in each spatial cell) a single bulk
         velocity or magnetic field vector from the values in multiple medium components. */
     ENUM_DEF(AggregatePolicy, Average, Maximum, Single)
-        ENUM_VAL(AggregatePolicy, Average, "Use (component-wise) average vector; missing values are taken to be zero")
-        ENUM_VAL(AggregatePolicy, Maximum, "Use vector with largest magnitude; missing values are taken to be zero")
+        ENUM_VAL(AggregatePolicy, Average, "Use the average vector; missing values are taken to be zero")
+        ENUM_VAL(AggregatePolicy, Maximum, "Use the vector with largest magnitude; missing values are taken to be zero")
         ENUM_VAL(AggregatePolicy, Single, "Require exactly one medium component to provide the value")
     ENUM_END()
 
@@ -36,13 +36,15 @@ class SamplingOptions : public SimulationItem
         ATTRIBUTE_DEFAULT_VALUE(numPropertySamples, "1")
         ATTRIBUTE_DISPLAYED_IF(numPropertySamples, "Level3")
 
-        PROPERTY_ENUM(velocityPolicy, AggregatePolicy,
-                      "the policy for aggregating the bulk velocity from multiple medium components")
+        PROPERTY_ENUM(aggregateVelocity, AggregatePolicy,
+                      "aggregating the bulk velocity from multiple medium components")
         ATTRIBUTE_DEFAULT_VALUE(velocityPolicy, "Average")
+        ATTRIBUTE_RELEVANT_IF(velocityPolicy, "MediumVelocity")
 
-        PROPERTY_ENUM(magneticFieldPolicy, AggregatePolicy,
-                      "the policy for aggregating the magnetic field from multiple medium components")
+        PROPERTY_ENUM(aggregateMagneticField, AggregatePolicy,
+                      "aggregating the magnetic field from multiple medium components")
         ATTRIBUTE_DEFAULT_VALUE(magneticFieldPolicy, "Single")
+        ATTRIBUTE_RELEVANT_IF(magneticFieldPolicy, "MagneticField")
 
     ITEM_END()
 };
