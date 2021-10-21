@@ -539,7 +539,7 @@ void SecondarySourceSystem::launch(PhotonPacket* pp, size_t historyIndex) const
     // generate a random wavelength from the emission spectrum for the cell and/or from the bias distribution
     double lambda, w;
     {
-        double xi = _config->secondaryWavelengthBias();
+        double xi = _config->dustEmissionWavelengthBias();
         if (!xi)
         {
             // no biasing -- simply use the intrinsic spectral distribution
@@ -552,7 +552,7 @@ void SecondarySourceSystem::launch(PhotonPacket* pp, size_t historyIndex) const
             if (_random->uniform() > xi)
                 lambda = t_dustcell.generateWavelength(_random);
             else
-                lambda = _config->secondaryWavelengthBiasDistribution()->generateWavelength();
+                lambda = _config->dustEmissionWavelengthBiasDistribution()->generateWavelength();
 
             // calculate the compensating weight factor
             double s = t_dustcell.specificLuminosity(lambda);
@@ -566,7 +566,7 @@ void SecondarySourceSystem::launch(PhotonPacket* pp, size_t historyIndex) const
             else
             {
                 // regular composite bias weight
-                double b = _config->secondaryWavelengthBiasDistribution()->probability(lambda);
+                double b = _config->dustEmissionWavelengthBiasDistribution()->probability(lambda);
                 w = s / ((1 - xi) * s + xi * b);
             }
         }

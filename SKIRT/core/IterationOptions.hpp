@@ -31,20 +31,20 @@ class IterationOptions : public SimulationItem
         ATTRIBUTE_RELEVANT_IF(maxPrimaryIterations, "DynamicState")
 
         PROPERTY_INT(minSecondaryIterations, "the minimum number of iterations during secondary emission")
-        ATTRIBUTE_MIN_VALUE(minSecondaryIterations, "0")
+        ATTRIBUTE_MIN_VALUE(minSecondaryIterations, "1")
         ATTRIBUTE_MAX_VALUE(minSecondaryIterations, "1000")
-        ATTRIBUTE_DEFAULT_VALUE(minSecondaryIterations, "Emission:1;0")
-        ATTRIBUTE_RELEVANT_IF(minSecondaryIterations, "DynamicState|Emission")
+        ATTRIBUTE_DEFAULT_VALUE(minSecondaryIterations, "1")
+        ATTRIBUTE_RELEVANT_IF(minSecondaryIterations, "DynamicEmission")
 
         PROPERTY_INT(maxSecondaryIterations, "the maximum number of iterations during secondary emission")
         ATTRIBUTE_MIN_VALUE(maxSecondaryIterations, "0")
         ATTRIBUTE_MAX_VALUE(maxSecondaryIterations, "1000")
-        ATTRIBUTE_DEFAULT_VALUE(maxSecondaryIterations, "Emission:10;0")
-        ATTRIBUTE_RELEVANT_IF(maxSecondaryIterations, "(DynamicState|Emission)&minSecondaryIterations")
+        ATTRIBUTE_DEFAULT_VALUE(maxSecondaryIterations, "10")
+        ATTRIBUTE_RELEVANT_IF(maxSecondaryIterations, "DynamicEmission")
 
         PROPERTY_BOOL(includePrimaryEmission, "include primary emission in the secondary emission iterations")
         ATTRIBUTE_DEFAULT_VALUE(includePrimaryEmission, "false")
-        ATTRIBUTE_RELEVANT_IF(includePrimaryEmission, "(DynamicState|Emission)&minSecondaryIterations")
+        ATTRIBUTE_RELEVANT_IF(includePrimaryEmission, "DynamicState&DynamicEmission")
         ATTRIBUTE_DISPLAYED_IF(includePrimaryEmission, "Level3")
 
         PROPERTY_DOUBLE(iterationPacketsMultiplier,
@@ -52,7 +52,7 @@ class IterationOptions : public SimulationItem
         ATTRIBUTE_MIN_VALUE(iterationPacketsMultiplier, "]0")
         ATTRIBUTE_MAX_VALUE(iterationPacketsMultiplier, "1000]")
         ATTRIBUTE_DEFAULT_VALUE(iterationPacketsMultiplier, "1")
-        ATTRIBUTE_RELEVANT_IF(iterationPacketsMultiplier, "DynamicState|Emission")
+        ATTRIBUTE_RELEVANT_IF(iterationPacketsMultiplier, "DynamicState|DynamicEmission")
         ATTRIBUTE_DISPLAYED_IF(iterationPacketsMultiplier, "Level3")
 
     ITEM_END()

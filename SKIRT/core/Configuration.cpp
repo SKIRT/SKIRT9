@@ -13,7 +13,6 @@
 #include "NR.hpp"
 #include "OligoWavelengthDistribution.hpp"
 #include "OligoWavelengthGrid.hpp"
-#include "PhotonPacketOptions.hpp"
 #include "StringUtils.hpp"
 #include "VoronoiMeshSpatialGrid.hpp"
 #include <set>
@@ -34,12 +33,20 @@ void Configuration::setupSelfBefore()
     // Implementation note: this function is NOT allowed to perform setup on any simulation item in the hierarchy;
     //                      in other words, always use find<XXX>(false) and check for a nullptr result.
 
-    // retrieve objects that we'll need anyway
+    // locate objects that we'll need anyway
     auto sim = find<MonteCarloSimulation>(false);
     if (!sim) throw FATALERROR("Cannot locate a MonteCarloSimulation object in the simulation hierarchy");
     auto ss = find<SourceSystem>(false);
     if (!ss) throw FATALERROR("Cannot locate a SourceSystem object in the simulation hierarchy");
-    auto is = find<InstrumentSystem>(false);
+
+    // ---- set configuration relevant for all simulations, even if there are no media ----
+
+    // retrieve simulation mode
+    auto simulationMode = sim->simulationMode();
+    using SimulationMode = MonteCarloSimulation::SimulationMode;
+
+    // retrieve base number of packets
+    _numPrimaryPackets = sim->numPackets();
 
     // retrieve cosmology parameters
     _redshift = sim->cosmology()->modelRedshift();
@@ -47,8 +54,8 @@ void Configuration::setupSelfBefore()
     _luminosityDistance = sim->cosmology()->luminosityDistance();
 
     // retrieve wavelength-related options
-    _oligochromatic = sim->simulationMode() == MonteCarloSimulation::SimulationMode::OligoNoMedium
-                      || sim->simulationMode() == MonteCarloSimulation::SimulationMode::OligoExtinctionOnly;
+    _oligochromatic =
+        simulationMode == SimulationMode::OligoNoMedium || simulationMode == SimulationMode::OligoExtinctionOnly;
     if (_oligochromatic)
     {
         auto oligoWavelengthGrid = new OligoWavelengthGrid(this, ss->wavelengths());
@@ -59,8 +66,12 @@ void Configuration::setupSelfBefore()
     else
     {
         _sourceWavelengthRange.set(ss->minWavelength(), ss->maxWavelength());
+        auto is = find<InstrumentSystem>(false);
         if (is) _defaultWavelengthGrid = is->defaultWavelengthGrid();
     }
+
+    // determine model dimension based on sources only (we'll redo this later if there are media)
+    _modelDimension = ss->dimension();
 
     // determine the number of media in the simulation hierarchy
     int numMedia = 0;
@@ -69,84 +80,24 @@ void Configuration::setupSelfBefore()
     _hasMedium = (numMedia != 0);
 
     // verify this with the requirements set by the simulation mode
-    bool mustHaveMedium = sim->simulationMode() != MonteCarloSimulation::SimulationMode::OligoNoMedium
-                          && sim->simulationMode() != MonteCarloSimulation::SimulationMode::NoMedium;
+    bool mustHaveMedium = simulationMode != SimulationMode::OligoNoMedium && simulationMode != SimulationMode::NoMedium;
     if (!mustHaveMedium && _hasMedium) throw FATALERROR("This simulation mode does not allow media to be configured");
     if (mustHaveMedium && !_hasMedium)
         throw FATALERROR("This simulation mode requires at least one medium to be configured");
 
-    // retrieve photon life-cycle and basic medium-related options
-    _numPrimaryPackets = sim->numPackets();
-    if (_hasMedium)
-    {
-        _numDensitySamples = ms->samplingOptions()->numDensitySamples();
-        _forceScattering = ms->photonPacketOptions()->forceScattering();
-        _minWeightReduction = ms->photonPacketOptions()->minWeightReduction();
-        _minScattEvents = ms->photonPacketOptions()->minScattEvents();
-        _pathLengthBias = ms->photonPacketOptions()->pathLengthBias();
-    }
+    // if there are no media, we're done
+    if (!_hasMedium) return;
 
-    // retrieve extinction-only options
-    if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::OligoExtinctionOnly
-        || sim->simulationMode() == MonteCarloSimulation::SimulationMode::ExtinctionOnly
-        || sim->simulationMode() == MonteCarloSimulation::SimulationMode::LyaExtinctionOnly)
-    {
-        // the non-forced photon cycle does not support storing a radiation field
-        _hasRadiationField = _forceScattering && ms->radiationFieldOptions()->storeRadiationField();
-        if (_hasRadiationField)
-        {
-            _radiationFieldWLG = _oligochromatic ? dynamic_cast<OligoWavelengthGrid*>(_defaultWavelengthGrid)
-                                                 : ms->radiationFieldOptions()->radiationFieldWLG();
-            _hasPanRadiationField = !_oligochromatic;
-        }
-    }
+    // ---- set configuration relevant for simulations that have media ----
 
-    // retrieve dust emission options
-    if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustEmission)
-    {
-        // the non-forced photon cycle does not support storing a radiation field
-        _forceScattering = true;
-        _hasRadiationField = true;
-        _hasPanRadiationField = true;
-        _hasDustEmission = true;
-        if (ms->dustEmissionOptions()->dustEmissionType() == DustEmissionOptions::EmissionType::Stochastic)
-        {
-            // verify that all dust mixes are multi-grain when requesting stochastic heating
-            for (auto medium : ms->media())
-                if (medium->mix()->isDust() && !medium->mix()->hasStochasticDustEmission())
-                    throw FATALERROR("When requesting stochastic heating, all dust mixes must be multi-grain");
-            _hasStochasticDustEmission = true;
-        }
-        _includeHeatingByCMB = ms->dustEmissionOptions()->includeHeatingByCMB();
-        _cellLibrary = ms->dustEmissionOptions()->cellLibrary();
-        if (!_cellLibrary) _cellLibrary = new AllCellsLibrary(this);
-        _radiationFieldWLG = ms->radiationFieldOptions()->radiationFieldWLG();
-        _dustEmissionWLG = ms->dustEmissionOptions()->dustEmissionWLG();
-        if (ms->secondaryEmissionOptions()->storeEmissionRadiationField())
-        {
-            _storeEmissionRadiationField = true;
-            _hasSecondaryRadiationField = true;
-        }
-        _numSecondaryPackets = sim->numPackets() * ms->secondaryEmissionOptions()->secondaryPacketsMultiplier();
-        _secondarySpatialBias = ms->secondaryEmissionOptions()->spatialBias();
-        _secondaryWavelengthBias = ms->dustEmissionOptions()->wavelengthBias();
-        _secondaryWavelengthBiasDistribution = ms->dustEmissionOptions()->wavelengthBiasDistribution();
-    }
-
-    // retrieve dust self-absorption options
-    if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::DustEmission)  // TO DO: && iteration
-    {
-        _hasDustSelfAbsorption = true;
-        _hasSecondaryRadiationField = true;
-        _minIterations = ms->iterationOptions()->minPrimaryIterations();
-        _maxIterations = max(_minIterations, ms->iterationOptions()->maxPrimaryIterations());
-        _maxFractionOfPrimary = ms->dustEmissionOptions()->maxFractionOfPrimary();
-        _maxFractionOfPrevious = ms->dustEmissionOptions()->maxFractionOfPrevious();
-        _numIterationPackets = sim->numPackets() * ms->iterationOptions()->iterationPacketsMultiplier();
-    }
+    // retrieve basic photon life-cycle options
+    _forceScattering = ms->photonPacketOptions()->forceScattering();
+    _minWeightReduction = ms->photonPacketOptions()->minWeightReduction();
+    _minScattEvents = ms->photonPacketOptions()->minScattEvents();
+    _pathLengthBias = ms->photonPacketOptions()->pathLengthBias();
 
     // retrieve Lyman-alpha options
-    if (sim->simulationMode() == MonteCarloSimulation::SimulationMode::LyaExtinctionOnly)
+    if (simulationMode == SimulationMode::LyaExtinctionOnly)
     {
         _hasLymanAlpha = true;
         switch (ms->lyaOptions()->lyaAccelerationScheme())
@@ -166,80 +117,168 @@ void Configuration::setupSelfBefore()
         if (ms->lyaOptions()->includeHubbleFlow()) _hubbleExpansionRate = sim->cosmology()->relativeExpansionRate();
     }
 
-    // retrieve dynamic state options (only enable dynamic state if there are photon packets to be launched)
-    /*    if (_hasMedium && _hasPanRadiationField && !_hasLymanAlpha && ms->dynamicStateOptions()
-        && ms->dynamicStateOptions()->hasDynamicState())
+    // retrieve the presence of phases and iterations
+    if (simulationMode == SimulationMode::ExtinctionOnly)
     {
-        _numDynamicStatePackets = _numPrimaryPackets * ms->dynamicStateOptions()->iterationPacketsMultiplier();
-        if (_numPrimaryPackets > 0. && _numDynamicStatePackets > 0.)
-        {
-            _hasDynamicState = true;
-            _minDynamicStateIterations = ms->dynamicStateOptions()->minIterations();
-            _maxDynamicStateIterations = max(_minDynamicStateIterations, ms->dynamicStateOptions()->maxIterations());
-        }
+        _hasPrimaryIterations = sim->iterateMediumState();
     }
-*/  //TO DO!!
+    else if (simulationMode == SimulationMode::DustEmission)
+    {
+        _hasSecondaryEmission = true;
+        _hasDustEmission = true;
+        _hasPrimaryIterations = sim->iterateMediumState();
+        _hasSecondaryIterations = sim->iterateSecondaryEmission();
+    }
+    else if (simulationMode == SimulationMode::GasEmission)
+    {
+        _hasSecondaryEmission = true;
+        _hasGasEmission = true;
+        _hasPrimaryIterations = sim->iterateMediumState();
+        _hasSecondaryIterations = sim->iterateSecondaryEmission();
+    }
+    else if (simulationMode == SimulationMode::DustAndGasEmission)
+    {
+        _hasSecondaryEmission = true;
+        _hasDustEmission = true;
+        _hasGasEmission = true;
+        _hasPrimaryIterations = sim->iterateMediumState();
+        _hasSecondaryIterations = sim->iterateSecondaryEmission();
+    }
+
+    // retrieve secondary emission options
+    if (_hasSecondaryEmission)
+    {
+        _numSecondaryPackets = _numPrimaryPackets * ms->secondaryEmissionOptions()->secondaryPacketsMultiplier();
+        _storeEmissionRadiationField = ms->secondaryEmissionOptions()->storeEmissionRadiationField();
+        _secondarySpatialBias = ms->secondaryEmissionOptions()->spatialBias();
+        _secondarySourceBias = ms->secondaryEmissionOptions()->sourceBias();
+    }
+
+    // retrieve primary iteration options; suppress primary iteration if no packets are launched
+    if (_hasPrimaryIterations)
+    {
+        _numPrimaryIterationPackets = _numPrimaryPackets * ms->iterationOptions()->iterationPacketsMultiplier();
+        if (_numPrimaryIterationPackets >= 1.)
+        {
+            _minPrimaryIterations = ms->iterationOptions()->minPrimaryIterations();
+            _maxPrimaryIterations = max(_minPrimaryIterations, ms->iterationOptions()->maxPrimaryIterations());
+        }
+        else
+            _hasPrimaryIterations = false;
+    }
+
+    // if iteration over primary emission is requested, verify that there are dynamic state recipes
+    if (_hasPrimaryIterations)
+    {
+        if (ms->dynamicStateOptions()->recipes().empty())
+            throw FATALERROR("At least one dynamic state recipe must be configured when iterateMediumState is true");
+        _hasDynamicState = true;
+    }
+
+    // retrieve secondary iteration options; suppress secondary iteration if no packets are launched
+    if (_hasSecondaryIterations)
+    {
+        _numSecondaryIterationPackets = _numSecondaryPackets * ms->iterationOptions()->iterationPacketsMultiplier();
+        if (_numSecondaryIterationPackets > 0.)
+        {
+            _minSecondaryIterations = ms->iterationOptions()->minSecondaryIterations();
+            _maxSecondaryIterations = max(_minSecondaryIterations, ms->iterationOptions()->maxSecondaryIterations());
+            if (_hasPrimaryIterations) _includePrimaryEmission = ms->iterationOptions()->includePrimaryEmission();
+        }
+        else
+            _hasSecondaryIterations = false;
+    }
+
+    // retrieve radiation field options
+    _hasRadiationField =
+        _hasPrimaryIterations || _hasSecondaryEmission || ms->radiationFieldOptions()->storeRadiationField();
+    if (_hasRadiationField)
+    {
+        _hasPanRadiationField = !_oligochromatic;
+        _radiationFieldWLG = _oligochromatic ? dynamic_cast<OligoWavelengthGrid*>(_defaultWavelengthGrid)
+                                             : ms->radiationFieldOptions()->radiationFieldWLG();
+    }
+    _hasSecondaryRadiationField = _hasSecondaryIterations || _storeEmissionRadiationField;
+
+    // retrieve dust emission options
+    if (_hasDustEmission)
+    {
+        if (ms->dustEmissionOptions()->dustEmissionType() == DustEmissionOptions::EmissionType::Stochastic)
+        {
+            // verify that all dust mixes are multi-grain when requesting stochastic heating
+            for (auto medium : ms->media())
+                if (medium->mix()->isDust() && !medium->mix()->hasStochasticDustEmission())
+                    throw FATALERROR("When requesting stochastic heating, all dust mixes must be multi-grain");
+            _hasStochasticDustEmission = true;
+        }
+        _includeHeatingByCMB = ms->dustEmissionOptions()->includeHeatingByCMB();
+        _cellLibrary = ms->dustEmissionOptions()->cellLibrary();
+        if (!_cellLibrary) _cellLibrary = new AllCellsLibrary(this);
+        _dustEmissionWLG = ms->dustEmissionOptions()->dustEmissionWLG();
+        if (_hasSecondaryIterations)
+        {
+            _maxFractionOfPrimary = ms->dustEmissionOptions()->maxFractionOfPrimary();
+            _maxFractionOfPrevious = ms->dustEmissionOptions()->maxFractionOfPrevious();
+        }
+        _dustEmissionSourceWeight = ms->dustEmissionOptions()->sourceWeight();
+        _dustEmissionWavelengthBias = ms->dustEmissionOptions()->wavelengthBias();
+        _dustEmissionWavelengthBiasDistribution = ms->dustEmissionOptions()->wavelengthBiasDistribution();
+    }
+
+    // retrieve media sampling options
+    _numDensitySamples = ms->samplingOptions()->numDensitySamples();
+    _numPropertySamples = ms->samplingOptions()->numPropertySamples();
+
+    // retrieve symmetry dimensions
+    _modelDimension = max(ss->dimension(), ms->dimension());
+    _gridDimension = ms->gridDimension();
+    if (_modelDimension > _gridDimension)
+        throw FATALERROR("The grid symmetry (" + std::to_string(_gridDimension)
+                         + "D) does not support the model symmetry (" + std::to_string(_modelDimension) + "D)");
 
     // verify that there is a Lya medium component if required, and none if not required
     int numLyaMedia = 0;
-    for (int h = 0; h != numMedia; ++h)
-    {
-        if (ms->media()[h]->mix()->hasResonantScattering()) numLyaMedia++;
-    }
+    for (auto medium : ms->media())
+        if (medium->mix()->hasResonantScattering()) numLyaMedia++;
     if (_hasLymanAlpha && numLyaMedia < 1)
         throw FATALERROR("Lyman-alpha simulation mode requires a medium component with Lyman-alpha material mix");
     if (!_hasLymanAlpha && numLyaMedia > 0)
         throw FATALERROR("Lyman-alpha material mix is allowed only with Lyman-alpha simulation mode");
 
-    // retrieve symmetry dimensions
-    if (_hasMedium)
-    {
-        _modelDimension = max(ss->dimension(), ms->dimension());
-        _gridDimension = ms->gridDimension();
-        if (_modelDimension > _gridDimension)
-            throw FATALERROR("The grid symmetry (" + std::to_string(_gridDimension)
-                             + "D) does not support the model symmetry (" + std::to_string(_modelDimension) + "D)");
-    }
-    else
-    {
-        _modelDimension = ss->dimension();
-    }
-
     // determine whether media must support the generatePosition() function
     // currently, that function is called only by the VoronoiMeshSpatialGrid class for certain policies
-    if (_hasMedium)
+    auto grid = dynamic_cast<VoronoiMeshSpatialGrid*>(ms->grid());
+    if (grid)
     {
-        auto grid = dynamic_cast<VoronoiMeshSpatialGrid*>(ms->grid());
-        if (grid)
+        auto policy = grid->policy();
+        if (policy == VoronoiMeshSpatialGrid::Policy::DustDensity
+            || policy == VoronoiMeshSpatialGrid::Policy::ElectronDensity
+            || policy == VoronoiMeshSpatialGrid::Policy::GasDensity
+            || policy == VoronoiMeshSpatialGrid::Policy::ImportedMesh)
         {
-            auto policy = grid->policy();
-            if (policy == VoronoiMeshSpatialGrid::Policy::DustDensity
-                || policy == VoronoiMeshSpatialGrid::Policy::ElectronDensity
-                || policy == VoronoiMeshSpatialGrid::Policy::GasDensity
-                || policy == VoronoiMeshSpatialGrid::Policy::ImportedMesh)
-            {
-                _mediaNeedGeneratePosition = true;
-            }
+            _mediaNeedGeneratePosition = true;
         }
     }
+
+    // check for semi-dymamic medium state
+    if (_hasSecondaryEmission)
+        for (auto medium : ms->media())
+            if (medium->mix()->hasSemiDynamicMediumState()) _hasSemiDynamicState = true;
 
     // check for velocities in sources and media
     for (auto source : ss->sources())
         if (source->hasVelocity()) _hasMovingSources = true;
-    if (_hasMedium)
-        for (auto medium : ms->media())
-            if (medium->hasVelocity()) _hasMovingMedia = true;
+    for (auto medium : ms->media())
+        if (medium->hasVelocity()) _hasMovingMedia = true;
 
     // check for variable material mixes
-    if (_hasMedium)
-        for (auto medium : ms->media())
-            if (medium->hasVariableMix()) _hasVariableMedia = true;
+    for (auto medium : ms->media())
+        if (medium->hasVariableMix()) _hasVariableMedia = true;
 
     // check for dependencies on extra specific state variables
     bool hasExtraSpecificState = false;
-    if (_hasMedium)
-        for (auto medium : ms->media())
-            if (medium->mix()->hasExtraSpecificState()) hasExtraSpecificState = true;
+    for (auto medium : ms->media())
+        if (medium->mix()->hasExtraSpecificState()) hasExtraSpecificState = true;
 
     // set the combined medium criteria
     _hasConstantPerceivedWavelength = !_hasMovingMedia && !_hubbleExpansionRate;
@@ -247,53 +286,31 @@ void Configuration::setupSelfBefore()
     _hasSingleConstantSectionMedium = numMedia == 1 && _hasConstantSectionMedium;
     _hasMultipleConstantSectionMedia = numMedia > 1 && _hasConstantSectionMedium;
 
+    // check for magnetic fields
+    for (auto medium : ms->media())
+        if (medium->hasMagneticField()) _hasMagneticField = true;
+
     // check for polarization
-    if (_hasMedium)
-    {
-        int numPolarization = 0;
-        for (auto medium : ms->media())
-            if (medium->mix()->hasPolarizedScattering()) numPolarization++;
-        if (numPolarization != 0 && numPolarization != numMedia)
-            throw FATALERROR("All media must consistenly support polarization, or not support polarization");
-        _hasPolarization = numPolarization != 0;
-    }
+    int numPolarization = 0;
+    for (auto medium : ms->media())
+        if (medium->mix()->hasPolarizedScattering()) numPolarization++;
+    if (numPolarization != 0 && numPolarization != numMedia)
+        throw FATALERROR("All media must consistenly support polarization, or not support polarization");
+    _hasPolarization = numPolarization != 0;
 
     // check for polarization by spheroidal particles
     if (_hasPolarization)
-    {
         for (auto medium : ms->media())
             if (medium->mix()->hasPolarizedAbsorption() || medium->mix()->hasPolarizedEmission())
                 _hasSpheroidalPolarization = true;  // this flag may need to be split over absorption and emission
-    }
-
-    // check for magnetic fields
-    int numMagneticFields = 0;
-    int magneticFieldIndex = -1;
-    for (int h = 0; h != numMedia; ++h)
-    {
-        if (ms->media()[h]->hasMagneticField())
-        {
-            numMagneticFields++;
-            magneticFieldIndex = h;
-        }
-    }
-    if (numMagneticFields > 1)
-        throw FATALERROR("It is not allowed for more than one medium component to define a magnetic field");
-    if (numMagneticFields == 1)
-    {
-        _magneticFieldMediumIndex = magneticFieldIndex;
-    }
 
     // spheroidal particles require a magnetic field
-    if (_hasSpheroidalPolarization && numMagneticFields != 1)
+    if (_hasSpheroidalPolarization && !_hasMagneticField)
         throw FATALERROR("Polarization by spheroidal particles requires a magnetic field to determine alignment");
 
     // prohibit non-identity-mapping cell libraries in combination with spatially varying material mixes
     if ((_hasVariableMedia || hasExtraSpecificState) && _cellLibrary && !dynamic_cast<AllCellsLibrary*>(_cellLibrary))
         throw FATALERROR("Cannot use spatial cell library in combination with spatially varying material mixes");
-
-    // in case emulation mode has been set before our setup() was called, perform the emulation overrides again
-    if (emulationMode()) setEmulationMode();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -306,6 +323,9 @@ void Configuration::setupSelfAfter()
     //                      on any simulation item in the hierarchy except for the logger.
     auto log = find<Log>();
 
+    // in case emulation mode has been set before our setup() was called, perform the emulation overrides again
+    if (emulationMode()) setEmulationMode();
+
     // --- log wavelength regime, simulation mode, and media characteristics  ---
 
     string regime = _oligochromatic ? "Oligo" : "Pan";
@@ -313,18 +333,43 @@ void Configuration::setupSelfAfter()
     string medium = _hasMedium ? "With" : "No";
     log->info("  " + medium + " transfer medium");
     if (_hasLymanAlpha) log->info("  Including Lyman-alpha line transfer");
-    if (_hasDustSelfAbsorption)
-        log->info("  Including dust emission with iterative calculation of dust self-absorption");
+
+    if (_hasPrimaryIterations && _hasSecondaryIterations)
+    {
+        if (_includePrimaryEmission)
+            log->info("  Iterating over primary emission, and then over primary and secondary emission");
+        else
+            log->info("  Iterating over primary emission, and then over secondary emission");
+    }
+    else if (_hasPrimaryIterations)
+    {
+        log->info("  Iterating over primary emission");
+    }
+    else if (_hasSecondaryIterations)
+    {
+        log->info("  Iterating over secondary emission");
+    }
+
+    string gas = _hasGasEmission ? " and gas emission" : "";
+    if (_hasStochasticDustEmission)
+        log->info("  Including stochastic dust emission" + gas);
     else if (_hasDustEmission)
-        log->info("  Including dust emission");
+        log->info("  Including equilibrium dust emission" + gas);
+    else if (_hasGasEmission)
+        log->info("  Including gas emission");
+
+    if (_hasSemiDynamicState) log->info("  With semi-dynamic state");
+
     if (_hasPolarization) log->info("  Including support for polarization");
     if (_hasMovingMedia) log->info("  Including support for kinematics");
 
-    // disable path length stretching if the wavelength of a photon packet can change during its lifetime
-    if ((_hasMovingMedia || _hubbleExpansionRate || _hasLymanAlpha) && _pathLengthBias > 0.)
+    // --- log cosmology ---
+
+    if (_redshift)
     {
-        log->warning("  Disabling path length stretching to allow Doppler shifts to be properly sampled");
-        _pathLengthBias = 0.;
+        log->info("  Redshift: " + StringUtils::toString(_redshift, 'g', 6));
+        double dL = _luminosityDistance / Constants::pc() / 1e6;
+        log->info("  Luminosity distance: " + StringUtils::toString(dL, 'g', 6) + " Mpc");
     }
 
     // --- log model symmetries ---
@@ -347,19 +392,25 @@ void Configuration::setupSelfAfter()
         log->warning("  Selecting a grid with the model symmetry might be more efficient");
     }
 
-    // --- log cosmology ---
+    // --- other warnings ---
 
-    if (_redshift)
+    // enable forced scattering when we have a radiation field because
+    // the photon cycle without forced scattering does not support storing the radiation field
+    if (_hasRadiationField && !_forceScattering)
     {
-        log->info("  Redshift: " + StringUtils::toString(_redshift, 'g', 6));
-        double dL = _luminosityDistance / Constants::pc() / 1e6;
-        log->info("  Luminosity distance: " + StringUtils::toString(dL, 'g', 6) + " Mpc");
+        log->warning("  Enabling forced scattering to allow storing the radiation field");
+        _forceScattering = true;
     }
 
-    // --- other ---
+    // disable path length stretching if the wavelength of a photon packet can change during its lifetime
+    if ((_hasMovingMedia || _hubbleExpansionRate || _hasLymanAlpha) && _forceScattering && _pathLengthBias > 0.)
+    {
+        log->warning("  Disabling path length stretching to allow Doppler shifts to be properly sampled");
+        _pathLengthBias = 0.;
+    }
 
     // if there is a magnetic field, there usually should be spheroidal particles
-    if (_magneticFieldMediumIndex >= 0 && !_hasSpheroidalPolarization)
+    if (_hasMagneticField && !_hasSpheroidalPolarization)
         log->warning("  No media have spheroidal particles that could align with the specified magnetic field");
 }
 
@@ -368,12 +419,18 @@ void Configuration::setupSelfAfter()
 void Configuration::setEmulationMode()
 {
     _emulationMode = true;
-    _numPrimaryPackets = 0.;
-    _numIterationPackets = 0.;
-    _numSecondaryPackets = 0.;
     _hasDynamicState = false;
-    _minIterations = 1;
-    _maxIterations = 1;
+    _hasPrimaryIterations = false;
+    _hasSecondaryIterations = false;
+    _includePrimaryEmission = false;
+    _minPrimaryIterations = 0;
+    _maxPrimaryIterations = 0;
+    _minSecondaryIterations = 0;
+    _maxSecondaryIterations = 0;
+    _numPrimaryPackets = 0;
+    _numPrimaryIterationPackets = 0;
+    _numSecondaryPackets = 0;
+    _numSecondaryIterationPackets = 0;
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -125,76 +125,91 @@ void MediumSystem::setupSelfAfter()
 
     // ----- calculate cell densities, bulk velocities, and volumes in parallel -----
 
+    // temporary hack: determine index of first medium that offers magnetic field (we'll support policies later)
+    int magneticFieldIndex = -1;
+    if (_config->hasMagneticField())
+    {
+        for (int h = 0; h != _numMedia; ++h)
+        {
+            if (_media[h]->hasMagneticField())
+            {
+                magneticFieldIndex = h;
+                break;
+            }
+        }
+    }
+
     log->info("Calculating densities for " + std::to_string(_numCells) + " cells...");
     auto dic = _grid->interface<DensityInCellInterface>(0, false);  // optional fast-track interface for densities
     int numSamples = _config->numDensitySamples();
     log->infoSetElapsed(_numCells);
-    parfac->parallelDistributed()->call(_numCells, [this, log, dic, numSamples](size_t firstIndex, size_t numIndices) {
-        ShortArray nsumv(_numMedia);
+    parfac->parallelDistributed()->call(
+        _numCells, [this, log, dic, numSamples, magneticFieldIndex](size_t firstIndex, size_t numIndices) {
+            ShortArray nsumv(_numMedia);
 
-        while (numIndices)
-        {
-            size_t currentChunkSize = min(logProgressChunkSize, numIndices);
-            for (size_t m = firstIndex; m != firstIndex + currentChunkSize; ++m)
+            while (numIndices)
             {
-                Position center = _grid->centralPositionInCell(m);
-
-                // volume
-                _state.setVolume(m, _grid->volume(m));
-
-                // density: use optional fast-track interface or sample 100 random positions within the cell
-                if (dic)
+                size_t currentChunkSize = min(logProgressChunkSize, numIndices);
+                for (size_t m = firstIndex; m != firstIndex + currentChunkSize; ++m)
                 {
-                    for (int h = 0; h != _numMedia; ++h) _state.setNumberDensity(m, h, dic->numberDensity(h, m));
-                }
-                else
-                {
-                    nsumv.clear();
-                    for (int n = 0; n < numSamples; n++)
+                    Position center = _grid->centralPositionInCell(m);
+
+                    // volume
+                    _state.setVolume(m, _grid->volume(m));
+
+                    // density: use optional fast-track interface or sample 100 random positions within the cell
+                    if (dic)
                     {
-                        Position bfr = _grid->randomPositionInCell(m);
-                        for (int h = 0; h != _numMedia; ++h) nsumv[h] += _media[h]->numberDensity(bfr);
+                        for (int h = 0; h != _numMedia; ++h) _state.setNumberDensity(m, h, dic->numberDensity(h, m));
                     }
-                    for (int h = 0; h != _numMedia; ++h) _state.setNumberDensity(m, h, nsumv[h] / numSamples);
-                }
+                    else
+                    {
+                        nsumv.clear();
+                        for (int n = 0; n < numSamples; n++)
+                        {
+                            Position bfr = _grid->randomPositionInCell(m);
+                            for (int h = 0; h != _numMedia; ++h) nsumv[h] += _media[h]->numberDensity(bfr);
+                        }
+                        for (int h = 0; h != _numMedia; ++h) _state.setNumberDensity(m, h, nsumv[h] / numSamples);
+                    }
 
-                // bulk velocity: weighted average at cell center; for oligochromatic simulations, leave at zero
-                if (_config->hasMovingMedia())
-                {
-                    double n = 0.;
-                    Vec v;
+                    // bulk velocity: weighted average at cell center; for oligochromatic simulations, leave at zero
+                    if (_config->hasMovingMedia())
+                    {
+                        double n = 0.;
+                        Vec v;
+                        for (int h = 0; h != _numMedia; ++h)
+                        {
+                            n += _state.numberDensity(m, h);
+                            v += _state.numberDensity(m, h) * _media[h]->bulkVelocity(center);
+                        }
+                        // leave bulk velocity at zero if cell has no material
+                        if (n > 0.) _state.setBulkVelocity(m, v / n);
+                    }
+
+                    // magnetic field: retrieve from medium component that specifies it, if any
+                    if (_config->hasMagneticField())
+                    {
+                        _state.setMagneticField(m, _media[magneticFieldIndex]->magneticField(center));
+                    }
+
+                    // specific state variables other than density
                     for (int h = 0; h != _numMedia; ++h)
                     {
-                        n += _state.numberDensity(m, h);
-                        v += _state.numberDensity(m, h) * _media[h]->bulkVelocity(center);
+                        // retrieve input model temperature and parameters from medium component
+                        MaterialState mst(_state, m, h);
+                        double Z = _media[h]->metallicity(center);
+                        double T = _media[h]->temperature(center);
+                        Array params;
+                        _media[h]->parameters(center, params);
+                        mix(m, h)->initializeSpecificState(&mst, Z, T, params);
                     }
-                    // leave bulk velocity at zero if cell has no material
-                    if (n > 0.) _state.setBulkVelocity(m, v / n);
                 }
-
-                // magnetic field: retrieve from medium component that specifies it, if any
-                if (_config->hasMagneticField())
-                {
-                    _state.setMagneticField(m, _media[_config->magneticFieldMediumIndex()]->magneticField(center));
-                }
-
-                // specific state variables other than density
-                for (int h = 0; h != _numMedia; ++h)
-                {
-                    // retrieve input model temperature and parameters from medium component
-                    MaterialState mst(_state, m, h);
-                    double Z = _media[h]->metallicity(center);
-                    double T = _media[h]->temperature(center);
-                    Array params;
-                    _media[h]->parameters(center, params);
-                    mix(m, h)->initializeSpecificState(&mst, Z, T, params);
-                }
+                log->infoIfElapsed("Calculated cell densities: ", currentChunkSize);
+                firstIndex += currentChunkSize;
+                numIndices -= currentChunkSize;
             }
-            log->infoIfElapsed("Calculated cell densities: ", currentChunkSize);
-            firstIndex += currentChunkSize;
-            numIndices -= currentChunkSize;
-        }
-    });
+        });
 
     // communicate the calculated states across multiple processes, if needed
     _state.initCommunicate();
