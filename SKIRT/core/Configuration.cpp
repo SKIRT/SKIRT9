@@ -73,6 +73,10 @@ void Configuration::setupSelfBefore()
     // determine model dimension based on sources only (we'll redo this later if there are media)
     _modelDimension = ss->dimension();
 
+    // check for velocities in sources
+    for (auto source : ss->sources())
+        if (source->hasVelocity()) _hasMovingSources = true;
+
     // determine the number of media in the simulation hierarchy
     int numMedia = 0;
     auto ms = find<MediumSystem>(false);
@@ -179,7 +183,7 @@ void Configuration::setupSelfBefore()
     if (_hasSecondaryIterations)
     {
         _numSecondaryIterationPackets = _numSecondaryPackets * ms->iterationOptions()->iterationPacketsMultiplier();
-        if (_numSecondaryIterationPackets > 0.)
+        if (_numSecondaryIterationPackets >= 1.)
         {
             _minSecondaryIterations = ms->iterationOptions()->minSecondaryIterations();
             _maxSecondaryIterations = max(_minSecondaryIterations, ms->iterationOptions()->maxSecondaryIterations());
@@ -265,9 +269,7 @@ void Configuration::setupSelfBefore()
         for (auto medium : ms->media())
             if (medium->mix()->hasSemiDynamicMediumState()) _hasSemiDynamicState = true;
 
-    // check for velocities in sources and media
-    for (auto source : ss->sources())
-        if (source->hasVelocity()) _hasMovingSources = true;
+    // check for velocities in media
     for (auto medium : ms->media())
         if (medium->hasVelocity()) _hasMovingMedia = true;
 
