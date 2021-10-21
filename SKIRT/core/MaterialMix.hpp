@@ -243,6 +243,10 @@ public:
         otherwise. The default implementation in this base class returns false. */
     virtual bool hasExtraSpecificState() const;
 
+    /** This function returns true if this material mix has a semi-dynamic medium state and thus
+        supports XXX and requires XXX. */
+    virtual bool hasSemiDynamicMediumState() const;
+
     //======== Medium state setup =======
 
     /** This function returns the number and type of import parameters required by this particular

@@ -69,7 +69,7 @@ void MonteCarloSimulation::runSimulation()
             runPrimaryEmission();
 
         // dust self-absorption iteration segments
-        if (_config->hasDustSelfAbsorption()) runDustSelfAbsorptionPhase();
+        if (_config->hasSecondaryIterations()) runDustSelfAbsorptionPhase();
 
         // secondary emission segment
         if (_config->hasSecondaryEmission()) runSecondaryEmission();
@@ -137,9 +137,9 @@ void MonteCarloSimulation::runPrimaryEmissionWithDynamicState()
     auto parallel = find<ParallelFactory>()->parallelDistributed();
 
     // get the parameters controlling the dynamic state iteration
-    size_t Npp = _config->numDynamicStatePackets();
-    int minIters = _config->minDynamicStateIterations();
-    int maxIters = _config->maxDynamicStateIterations();
+    size_t Npp = _config->numPrimaryIterationPackets();
+    int minIters = _config->minPrimaryIterations();
+    int maxIters = _config->maxPrimaryIterations();
 
     // prepare the source system for the appropriate number of packets
     sourceSystem()->prepareForLaunch(Npp);
@@ -227,7 +227,7 @@ void MonteCarloSimulation::runDustSelfAbsorptionPhase()
     TimeLogger logger(log(), "the dust self-absorption phase");
 
     // get number of photons; return if zero
-    size_t Npp = _config->numIterationPackets();
+    size_t Npp = _config->numSecondaryIterationPackets();
     if (!Npp)
     {
         log()->warning("Skipping dust self-absorption phase because no photon packets were requested");
@@ -238,8 +238,8 @@ void MonteCarloSimulation::runDustSelfAbsorptionPhase()
     auto parallel = find<ParallelFactory>()->parallelDistributed();
 
     // get the parameters controlling the self-absorption iteration
-    int minIters = _config->minIterations();
-    int maxIters = _config->maxIterations();
+    int minIters = _config->minSecondaryIterations();
+    int maxIters = _config->maxSecondaryIterations();
     double fractionOfPrimary = _config->maxFractionOfPrimary();
     double fractionOfPrevious = _config->maxFractionOfPrevious();
 
