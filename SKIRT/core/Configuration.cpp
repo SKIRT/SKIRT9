@@ -161,7 +161,7 @@ void Configuration::setupSelfBefore()
     // retrieve primary iteration options; suppress primary iteration if no packets are launched
     if (_hasPrimaryIterations)
     {
-        _numPrimaryIterationPackets = _numPrimaryPackets * ms->iterationOptions()->iterationPacketsMultiplier();
+        _numPrimaryIterationPackets = _numPrimaryPackets * ms->iterationOptions()->primaryIterationPacketsMultiplier();
         if (_numPrimaryIterationPackets >= 1.)
         {
             _minPrimaryIterations = ms->iterationOptions()->minPrimaryIterations();
@@ -182,7 +182,8 @@ void Configuration::setupSelfBefore()
     // retrieve secondary iteration options; suppress secondary iteration if no packets are launched
     if (_hasSecondaryIterations)
     {
-        _numSecondaryIterationPackets = _numSecondaryPackets * ms->iterationOptions()->iterationPacketsMultiplier();
+        _numSecondaryIterationPackets =
+            _numSecondaryPackets * ms->iterationOptions()->secondaryIterationPacketsMultiplier();
         if (_numSecondaryIterationPackets >= 1.)
         {
             _minSecondaryIterations = ms->iterationOptions()->minSecondaryIterations();

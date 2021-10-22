@@ -47,13 +47,21 @@ class IterationOptions : public SimulationItem
         ATTRIBUTE_RELEVANT_IF(includePrimaryEmission, "DynamicState&DynamicEmission")
         ATTRIBUTE_DISPLAYED_IF(includePrimaryEmission, "Level3")
 
-        PROPERTY_DOUBLE(iterationPacketsMultiplier,
-                        "the multiplier on the number of photon packets launched for each iteration")
-        ATTRIBUTE_MIN_VALUE(iterationPacketsMultiplier, "]0")
-        ATTRIBUTE_MAX_VALUE(iterationPacketsMultiplier, "1000]")
-        ATTRIBUTE_DEFAULT_VALUE(iterationPacketsMultiplier, "1")
-        ATTRIBUTE_RELEVANT_IF(iterationPacketsMultiplier, "DynamicState|DynamicEmission")
-        ATTRIBUTE_DISPLAYED_IF(iterationPacketsMultiplier, "Level3")
+        PROPERTY_DOUBLE(primaryIterationPacketsMultiplier,
+                        "the multiplier on the number of photon packets launched for each primary emission iteration")
+        ATTRIBUTE_MIN_VALUE(primaryIterationPacketsMultiplier, "]0")
+        ATTRIBUTE_MAX_VALUE(primaryIterationPacketsMultiplier, "1000]")
+        ATTRIBUTE_DEFAULT_VALUE(primaryIterationPacketsMultiplier, "1")
+        ATTRIBUTE_RELEVANT_IF(primaryIterationPacketsMultiplier, "DynamicState|DynamicEmission")
+        ATTRIBUTE_DISPLAYED_IF(primaryIterationPacketsMultiplier, "Level3")
+
+        PROPERTY_DOUBLE(secondaryIterationPacketsMultiplier,
+                        "the multiplier on the number of photon packets launched for each secondary emission iteration")
+        ATTRIBUTE_MIN_VALUE(secondaryIterationPacketsMultiplier, "]0")
+        ATTRIBUTE_MAX_VALUE(secondaryIterationPacketsMultiplier, "1000]")
+        ATTRIBUTE_DEFAULT_VALUE(secondaryIterationPacketsMultiplier, "1")
+        ATTRIBUTE_RELEVANT_IF(secondaryIterationPacketsMultiplier, "DynamicState|DynamicEmission")
+        ATTRIBUTE_DISPLAYED_IF(secondaryIterationPacketsMultiplier, "Level3")
 
     ITEM_END()
 };
