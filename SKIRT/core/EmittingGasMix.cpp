@@ -14,7 +14,7 @@ Range EmittingGasMix::wavelengthRange() const
     if (hasLineEmission())
     {
         Array centers = lineEmissionCenters();
-        lineRange.set(centers.min()*0.999, centers.max()*1.001);
+        lineRange.set(centers.min() * 0.999, centers.max() * 1.001);
     }
     if (hasContinuumEmission())
     {

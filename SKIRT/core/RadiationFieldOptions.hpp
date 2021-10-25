@@ -29,7 +29,7 @@ class RadiationFieldOptions : public SimulationItem
 
         PROPERTY_ITEM(radiationFieldWLG, DisjointWavelengthGrid, "the wavelength grid for storing the radiation field")
         ATTRIBUTE_DEFAULT_VALUE(radiationFieldWLG, "LogWavelengthGrid")
-        ATTRIBUTE_RELEVANT_IF(radiationFieldWLG, "RadiationField")
+        ATTRIBUTE_RELEVANT_IF(radiationFieldWLG, "RadiationField&Panchromatic")
 
     ITEM_END()
 };
