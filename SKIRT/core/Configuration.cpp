@@ -183,7 +183,7 @@ void Configuration::setupSelfBefore()
     if (_hasSecondaryIterations)
     {
         _numSecondaryIterationPackets =
-            _numSecondaryPackets * ms->iterationOptions()->secondaryIterationPacketsMultiplier();
+            _numPrimaryPackets * ms->iterationOptions()->secondaryIterationPacketsMultiplier();
         if (_numSecondaryIterationPackets >= 1.)
         {
             _minSecondaryIterations = ms->iterationOptions()->minSecondaryIterations();
@@ -337,6 +337,17 @@ void Configuration::setupSelfAfter()
     log->info("  " + medium + " transfer medium");
     if (_hasLymanAlpha) log->info("  Including Lyman-alpha line transfer");
 
+    if (_hasStochasticDustEmission)
+        log->info("  Including dust emission with stochastic heating");
+    else if (_hasDustEmission)
+        log->info("  Including dust emission with equilibrium heating");
+    if (_hasGasEmission) log->info("  Including gas emission");
+
+    if (_hasSemiDynamicState) log->info("  With semi-dynamic state");
+
+    if (_hasPolarization) log->info("  Including support for polarization");
+    if (_hasMovingMedia) log->info("  Including support for kinematics");
+
     if (_hasPrimaryIterations && _hasSecondaryIterations)
     {
         if (_includePrimaryEmission)
@@ -352,19 +363,6 @@ void Configuration::setupSelfAfter()
     {
         log->info("  Iterating over secondary emission");
     }
-
-    string gas = _hasGasEmission ? " and gas emission" : "";
-    if (_hasStochasticDustEmission)
-        log->info("  Including stochastic dust emission" + gas);
-    else if (_hasDustEmission)
-        log->info("  Including equilibrium dust emission" + gas);
-    else if (_hasGasEmission)
-        log->info("  Including gas emission");
-
-    if (_hasSemiDynamicState) log->info("  With semi-dynamic state");
-
-    if (_hasPolarization) log->info("  Including support for polarization");
-    if (_hasMovingMedia) log->info("  Including support for kinematics");
 
     // --- log cosmology ---
 
