@@ -61,6 +61,14 @@ public:
         mix depend on the values of specific state variables other than the number density. */
     bool hasExtraSpecificState() const override;
 
+    /** This function returns true, indicating that this material has a semi-dynamic medium state.
+        */
+    bool hasSemiDynamicMediumState() const override;
+
+    /** This function returns true, indicating that this material supports secondary line emission
+        from gas. */
+    bool hasLineEmission() const override;
+
     //======== Medium state setup =======
 
 public:
@@ -127,6 +135,12 @@ public:
     void performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const override;
 
     //======== Secondary emission =======
+
+    /** This function returns a list including a single item: the line center of the 21 cm hydrogen
+        spinflip transition. */
+    Array lineEmissionCenters() const override;
+
+    //======== Temperature =======
 
     /** This function returns an indicative temperature of the material mix when it would be
         embedded in a given radiation field. The implementation in this class ignores the radiation

@@ -62,33 +62,37 @@ public:
     /** This function updates the range so that it represents the intersection of the original
         range with the other range given as an argument. If the two ranges do not overlap, the
         resulting range will have a minimum larger than or equal to its maximum. */
-    void intersect(const Range& range)
+    Range& intersect(const Range& range)
     {
         if (_min < range._min) _min = range._min;
         if (_max > range._max) _max = range._max;
+        return *this;
     }
 
     /** This function updates the range so that it represents the union of the original
         range with the other range given as an argument. If the two ranges do not overlap, the
         resulting range will include the interval between the input ranges. */
-    void extend(const Range& range)
+    Range& extend(const Range& range)
     {
         if (range._min < _min) _min = range._min;
         if (range._max > _max) _max = range._max;
+        return *this;
     }
 
     /** This function updates the range so that it includes the specified value. */
-    void extend(double x)
+    Range& extend(double x)
     {
         if (x < _min) _min = x;
         if (x > _max) _max = x;
+        return *this;
     }
 
     /** This function extends the range with a factor of (1+z) on each side. */
-    void extendWithRedshift(double z)
+    Range& extendWithRedshift(double z)
     {
         _min /= (1. + z);
         _max *= (1. + z);
+        return *this;
     }
 };
 
