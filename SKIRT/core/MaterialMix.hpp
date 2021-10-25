@@ -17,6 +17,7 @@ class PhotonPacket;
 class Random;
 class StokesVector;
 class WavelengthGrid;
+class DisjointWavelengthGrid;
 
 ////////////////////////////////////////////////////////////////////
 
@@ -244,8 +245,19 @@ public:
     virtual bool hasExtraSpecificState() const;
 
     /** This function returns true if this material mix has a semi-dynamic medium state and thus
-        supports XXX and requires XXX. */
+        supports XXX and requires XXX. The default implementation in this base class returns false.
+        */
     virtual bool hasSemiDynamicMediumState() const;
+
+    /** This function returns true if this material mix represents gas with secondary line
+        emission, i.e. emission at discrete wavelengths, and thus supports XXX and requires XXX.
+        The default implementation in this base class returns false. */
+    virtual bool hasLineEmission() const;
+
+    /** This function returns true if this material mix represents gas with secondary continuum
+        emission, i.e. discretized over a wavelength grid with adjacent bins, and thus supports XXX
+        and requires XXX. The default implementation in this base class returns false. */
+    virtual bool hasContinuumEmission() const;
 
     //======== Medium state setup =======
 
@@ -369,7 +381,7 @@ public:
         recalculated within the function. */
     virtual void performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const = 0;
 
-    //======== Secondary emission =======
+    //======== Secondary emission from dust =======
 
     /** This function returns the emissivity spectrum \f$\varepsilon_{\ell'}\f$ (radiated power per
         unit of solid angle and per material entity) of the material mix when it would be embedded
@@ -397,24 +409,6 @@ public:
         The default implementation in this base class throws a fatal error. */
     virtual Array emissionSpectrum(const MaterialState* state, const Array& Jv) const;
 
-    /** This function returns an indicative temperature for the material represented by the
-        specified material state and the receiving material mix, assuming an embedding radiation
-        field specified by the mean intensities \f$(J_\lambda)_\ell\f$, if available.
-
-        If the simulation tracks the radiation field, the specified \em Jv array is discretized on
-        the simulation's radiation field wavelength grid as returned by the
-        Configuration::radiationFieldWLG() function. If the simulation does not track the radiation
-        field, the \em Jv array passed to this function is empty.
-
-        The interpretation of the indicative temperature depends heavily on the material type. For
-        dust mixes, the function returns the averaged equilibrium temperature of the grain
-        population given the specified radiation field and assuming local thermal equilibrium
-        conditions. Other materials may return a temperature determined based on the radiation
-        field and/or the material state, a default value, or zero if none of the above apply. Refer
-        to the description for this function in the various subclasses for more information. The
-        default implementation in this base class throws a fatal error. */
-    virtual double indicativeTemperature(const MaterialState* state, const Array& Jv) const;
-
     //======== Spheroidal grains =======
 
 public:
@@ -438,6 +432,38 @@ public:
         \f$\theta\f$, discretized on the grid returned by the thetaGrid() function. The default
         implementation in this base class throws a fatal error. */
     virtual const Array& sectionsAbspol(double lambda) const;
+
+    //======== Secondary emission from gas =======
+
+    /** If this material mix supports secondary line emission from gas, this function returns a
+        list of the line centers on which this emission occurs. The default implementation in this
+        base class throws a fatal error. */
+    virtual Array lineEmissionCenters() const;
+
+    /** If this material mix supports secondary continuum emission from gas, this function returns
+        the wavelength grid on which this emission is discretized. The default implementation in
+        this base class throws a fatal error. */
+    virtual DisjointWavelengthGrid* continuumEmissionWLG() const;
+
+    //============== Indicative temperature =============
+
+    /** This function returns an indicative temperature for the material represented by the
+        specified material state and the receiving material mix, assuming an embedding radiation
+        field specified by the mean intensities \f$(J_\lambda)_\ell\f$, if available.
+
+        If the simulation tracks the radiation field, the specified \em Jv array is discretized on
+        the simulation's radiation field wavelength grid as returned by the
+        Configuration::radiationFieldWLG() function. If the simulation does not track the radiation
+        field, the \em Jv array passed to this function is empty.
+
+        The interpretation of the indicative temperature depends heavily on the material type. For
+        dust mixes, the function returns the averaged equilibrium temperature of the grain
+        population given the specified radiation field and assuming local thermal equilibrium
+        conditions. Other materials may return a temperature determined based on the radiation
+        field and/or the material state, a default value, or zero if none of the above apply. Refer
+        to the description for this function in the various subclasses for more information. The
+        default implementation in this base class throws a fatal error. */
+    virtual double indicativeTemperature(const MaterialState* state, const Array& Jv) const;
 
     //======================== Other Functions =======================
 

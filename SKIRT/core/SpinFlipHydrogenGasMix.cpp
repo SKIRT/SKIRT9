@@ -24,6 +24,20 @@ bool SpinFlipHydrogenGasMix::hasExtraSpecificState() const
 
 ////////////////////////////////////////////////////////////////////
 
+bool SpinFlipHydrogenGasMix::hasSemiDynamicMediumState() const
+{
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool SpinFlipHydrogenGasMix::hasLineEmission() const
+{
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////
+
 vector<SnapshotParameter> SpinFlipHydrogenGasMix::parameterInfo() const
 {
     return vector<SnapshotParameter>{SnapshotParameter("dust-to-gas ratio")};
@@ -117,6 +131,15 @@ void SpinFlipHydrogenGasMix::peeloffScattering(double& /*I*/, double& /*Q*/, dou
 void SpinFlipHydrogenGasMix::performScattering(double /*lambda*/, const MaterialState* /*state*/,
                                                PhotonPacket* /*pp*/) const
 {}
+
+////////////////////////////////////////////////////////////////////
+
+Array SpinFlipHydrogenGasMix::lineEmissionCenters() const
+{
+    Array centers(1);
+    centers[0] = 21.10611405413e-2;
+    return centers;
+}
 
 ////////////////////////////////////////////////////////////////////
 

@@ -69,6 +69,20 @@ bool MaterialMix::hasSemiDynamicMediumState() const
 
 ////////////////////////////////////////////////////////////////////
 
+bool MaterialMix::hasLineEmission() const
+{
+    return false;
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool MaterialMix::hasContinuumEmission() const
+{
+    return false;
+}
+
+////////////////////////////////////////////////////////////////////
+
 vector<SnapshotParameter> MaterialMix::parameterInfo() const
 {
     return vector<SnapshotParameter>();
@@ -103,13 +117,6 @@ Array MaterialMix::emissionSpectrum(const MaterialState* /*state*/, const Array&
 
 ////////////////////////////////////////////////////////////////////
 
-double MaterialMix::indicativeTemperature(const MaterialState* /*state*/, const Array& /*Jv*/) const
-{
-    throw FATALERROR("This function implementation should never be called");
-}
-
-////////////////////////////////////////////////////////////////////
-
 const Array& MaterialMix::thetaGrid() const
 {
     throw FATALERROR("This function implementation should never be called");
@@ -125,6 +132,27 @@ const Array& MaterialMix::sectionsAbs(double /*lambda*/) const
 ////////////////////////////////////////////////////////////////////
 
 const Array& MaterialMix::sectionsAbspol(double /*lambda*/) const
+{
+    throw FATALERROR("This function implementation should never be called");
+}
+
+////////////////////////////////////////////////////////////////////
+
+Array MaterialMix::lineEmissionCenters() const
+{
+    throw FATALERROR("This function implementation should never be called");
+}
+
+////////////////////////////////////////////////////////////////////
+
+DisjointWavelengthGrid* MaterialMix::continuumEmissionWLG() const
+{
+    throw FATALERROR("This function implementation should never be called");
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MaterialMix::indicativeTemperature(const MaterialState* /*state*/, const Array& /*Jv*/) const
 {
     throw FATALERROR("This function implementation should never be called");
 }
