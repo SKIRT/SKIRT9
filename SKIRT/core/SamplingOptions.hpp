@@ -38,13 +38,13 @@ class SamplingOptions : public SimulationItem
 
         PROPERTY_ENUM(aggregateVelocity, AggregatePolicy,
                       "aggregating the bulk velocity from multiple medium components")
-        ATTRIBUTE_DEFAULT_VALUE(velocityPolicy, "Average")
-        ATTRIBUTE_RELEVANT_IF(velocityPolicy, "MediumVelocity")
+        ATTRIBUTE_DEFAULT_VALUE(aggregateVelocity, "Average")
+        ATTRIBUTE_RELEVANT_IF(aggregateVelocity, "MediumVelocity")
 
         PROPERTY_ENUM(aggregateMagneticField, AggregatePolicy,
                       "aggregating the magnetic field from multiple medium components")
-        ATTRIBUTE_DEFAULT_VALUE(magneticFieldPolicy, "Single")
-        ATTRIBUTE_RELEVANT_IF(magneticFieldPolicy, "MagneticField")
+        ATTRIBUTE_DEFAULT_VALUE(aggregateMagneticField, "Single")
+        ATTRIBUTE_RELEVANT_IF(aggregateMagneticField, "MagneticField")
 
     ITEM_END()
 };
