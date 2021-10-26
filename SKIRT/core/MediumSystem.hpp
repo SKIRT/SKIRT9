@@ -46,7 +46,7 @@ class WavelengthGrid;
     These functions offer basic information on the spatial grid, the medium components, and the
     material types in the medium system.
 
-    <b>Medium state</b>
+    <b>%Medium state</b>
 
     The medium state for each spatial cell in the simulation includes a set of \em common state
     variables shared by all medium components and a set of \em specific state variables for each

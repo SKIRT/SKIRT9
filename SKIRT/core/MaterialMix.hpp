@@ -93,7 +93,7 @@ class DisjointWavelengthGrid;
     acceptable to apply a dynamic cast to discover whether a given material mix offers the relevant
     extended interface.
 
-    <b>Medium state setup functions</b>
+    <b>%Medium state setup functions</b>
 
     The MaterialMix class hierarchy offers a number of functions that advertise the required medium
     state variables and assist with initializing their values during setup. For example, the
