@@ -379,6 +379,10 @@ private:
     //======== Secondary emission =======
 
 public:
+    /** This function returns the wavelength grid on which dust emission is discretized, i.e. the
+        wavelength grid returned by the Configuration::dustEmissionWLG() function. */
+    DisjointWavelengthGrid* emissionWavelengthGrid() const override;
+
     /** This function returns the emissivity spectrum \f$\varepsilon_{\ell'}\f$ (radiated power per
         unit of solid angle and per hydrogen atom) of the dust mix (or rather of the representative
         grain population corresponding to the dust mix) when it would be embedded in a given

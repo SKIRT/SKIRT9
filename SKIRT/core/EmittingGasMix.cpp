@@ -18,7 +18,7 @@ Range EmittingGasMix::wavelengthRange() const
     }
     if (hasContinuumEmission())
     {
-        contRange = continuumEmissionWLG()->wavelengthRange();
+        contRange = emissionWavelengthGrid()->wavelengthRange();
     }
 
     if (lineRange.empty()) return contRange;
