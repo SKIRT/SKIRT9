@@ -67,30 +67,31 @@ class DisjointWavelengthGrid;
     <TR><TD>\f$\tau=n\varsigma\Delta s\f$</TD>  <TD>\f$1\f$</TD>  <TD>Optical depth</TD></TR>
     </TABLE>
 
-    <b>Public interface</b>
-
-    All MaterialMix subclasses, regardless of material type, must implement the public interface
-    offered by this base class. This interface includes the capabilities required for tracing
-    photon packets through a material of this type, in other words, for processing absorption and
-    scattering.
-
-    When the implementation of a particular feature specific to a subset of material mixes requires
-    external access to information offered by those material mixes, the corresponding set of public
-    functions is bundled in a separate abstract interface that can be implemented in the
-    appropriate subclasses.
-
     <b>Capabilities functions</b>
 
-    The MaterialMix class hierarchy offers the materialType() function to obtain the overall
-    material category (dust, gas, or electrons). In addition, it offers a number of Boolean
+    The abstract interface defined by the MaterialMix base class allows handling essentially all
+    aspects of the simulation with respect to a material of a given type, including absorption,
+    scattering, and secondary emission of photon packets. The base class does not provide any
+    functionality, so everything must be implemented in subclasses.
+
+    Because not all physical processes are relevant for (or supported by) all material types, the
+    MaterialMix interface includes a set of functions to define the capabilities of a given
+    concrete material mix. On a basic level, the materialType() function returns the overall
+    material category (dust, gas, or electrons). In addition, there are a number of Boolean
     functions that indicate whether a certain physical process is supported.
 
     This approach allows fine-grained run-time discovery of capabilities. The functions can be
     used, for example, during setup to ensure that the configuration is valid (e.g., all material
-    mixes have the same level of support for polarization, all material mixes support stochastic
-    heating when enabled in the configuration), to disable optimizations as needed (e.g., when
-    calculating optical depth for dichroic materials), and to enable probing of the appropriate
-    information (e.g., grain size distributions only for dust mixes offering that information).
+    mixes support stochastic heating when enabled in the configuration), to enable or disable
+    optimizations (e.g., when calculating optical depth), and to enable probing of the appropriate
+    information (e.g., producing separate density cuts for dust, gas, and electrons).
+
+    Most MaterialMix subclasses implement no public functions outside of those defined in this base
+    class. However, sometimes specific features require external access to additional information
+    offered by a material mix. For example, MultiGrainDustMix subclasses offer access to individual
+    grain populations for use in probes or dust destruction recipes. In those contexts, it is
+    acceptable to apply a dynamic cast to discover whether a given material mix offers the relevant
+    extended interface.
 
     <b>Medium state setup functions</b>
 
@@ -106,7 +107,7 @@ class DisjointWavelengthGrid;
     spatial cell just after the common state variables and the number density have been
     initialized. If the material mix is configured as part of an imported medium component, extra
     data fields imported from the snapshot based on the information returned by the parameterInfo()
-    function is passed to this function.
+    function are passed to this function.
 
     <b>Low-level material properties functions</b>
 
@@ -124,11 +125,11 @@ class DisjointWavelengthGrid;
     <b>High-level functions for photon life cycle</b>
 
     Most importantly, the MaterialMix class hierarchy offers a set of functions that help implement
-    the photon life cycle on a high, generic level. These functions  receive at least two
-    arguments: an object representing the medium state for a spatial cell and for a medium
-    component configured with the receiving material mix, and an incoming photon packet. Extra
-    arguments may override information that is also available as part of the state or photon
-    packet, or they may simply provide additional information.
+    the photon life cycle on a high, generic level. These functions receive at least two arguments:
+    an object representing the medium state for a spatial cell and for a medium component
+    configured with the receiving material mix, and an incoming photon packet. Extra arguments may
+    override information that is also available as part of the state or photon packet, or they may
+    simply provide additional information.
 
     For example, the opacityAbs() and opacitySca() functions return the absorption and scattering
     opacity \f$k=n\varsigma\f$. They are given a wavelength that overrides the photon packet
@@ -147,33 +148,40 @@ class DisjointWavelengthGrid;
     contribution to a scattering peel-off event for this material, given the instrument reference
     frame and the relative weight of this medium component.
 
-    <b>Functions for secondary emission</b>
+    <b>Functions for secondary continuum emission</b>
 
-    These functions receive the radiation field in a given cell as one of their arguments.
-
-    The emissivity() function returns the emissivity spectrum per material entity of the material
-    mix when it would be embedded in a given radiation field, assuming default values for any
-    specific state variables and assuming isotropic, unpolarized emission. For regular dust mixes
-    that don't vary spatially and that represent spherical grains, the emissivity tells the full
-    story. For other material mixes, it provides just a default (or is not present at all).
+    The emissivity() function returns the emissivity spectrum of a material mix when it would be
+    embedded in a given radiation field, assuming default values for any specific state variables
+    and assuming isotropic, unpolarized emission. For regular dust mixes that don't vary spatially
+    and that represent spherical grains, the emissivity tells the full story. For other material
+    mixes, it provides just a default.
 
     The emissionSpectrum() function returns the emission spectrum in the spatial cell and medium
     component represented by the specified material state and the receiving material mix when it
     would be embedded in the specified radiation field. The returned spectrum takes into account
     the values of any relevant specific or common state variables, including the number density of
-    the material in the specified cell.
+    the dust in the specified cell.
+
+    The remaining functions in this section provide additional optical properties intended for use
+    with the SpheroidalPolarization mode.
+
+    <b>Functions for secondary line emission</b>
+
+    The lineEmissionSpectrum() function returns the luminosities that will be emitted at the line
+    centers defined by the lineEmissionCenters() function for a material mix with a given material
+    state and embedded in a given radiation field. The caller handling secondary emission will add
+    a Doppler shift corresponding to random thermal motion with particle masses given by the
+    lineEmissionCenters() function. The intrinsic line widths are ignored because they are usually
+    much smaller than the thermal dispersion.
+
+    <b>Indicative temperature function</b>
 
     The indicativeTemperature() function returns an indicative temperature with an interpretation
     depending on the material type. For dust mixes it returns the averaged equilibrium temperature
     of the grain population given the specified radiation field and assuming local thermal
     equilibrium conditions. Other materials may return a temperature determined based on the
     radiation field, the specific state, a default value, or zero if none of the above apply.
-
-    <b>Functions for spheroidal grains</b>
-
-    These functions provide additional optical properties intended for use with the
-    SpheroidalPolarization mode. Over time, the design of this part of the interface should be
-    evaluated and possibly reconsidered. */
+*/
 class MaterialMix : public SimulationItem
 {
     ITEM_ABSTRACT(MaterialMix, SimulationItem, "a material mix")
@@ -244,23 +252,24 @@ public:
         otherwise. The default implementation in this base class returns false. */
     virtual bool hasExtraSpecificState() const;
 
-    /** This function returns true if this material mix has a semi-dynamic medium state and thus
-        supports XXX and requires XXX. The default implementation in this base class returns false.
-        */
+    /** This function returns true if this material mix has a semi-dynamic medium state that must
+        be updated at the end of a primary emission segment by invoking the updateMediumState()
+        function. The default implementation in this base class returns false. */
     virtual bool hasSemiDynamicMediumState() const;
 
-    /** This function returns true if this material mix represents gas with secondary line
-        emission, i.e. emission at discrete wavelengths, and thus supports XXX and requires XXX.
-        The default implementation in this base class returns false. */
-    virtual bool hasLineEmission() const;
-
-    /** This function returns true if this material mix represents gas with secondary continuum
-        emission, i.e. discretized over a wavelength grid with adjacent bins, and thus supports XXX
-        and requires XXX. The default implementation in this base class returns false. */
+    /** This function returns true if this material mix supports secondary continuum emission, i.e.
+        with an emission spectrum discretized over a wavelength grid with adjacent bins. The
+        default implementation in this base class returns false. */
     virtual bool hasContinuumEmission() const;
+
+    /** This function returns true if this material mix supports secondary line emission, i.e.
+        emission at discrete wavelengths. The default implementation in this base class returns
+        false. */
+    virtual bool hasLineEmission() const;
 
     //======== Medium state setup =======
 
+public:
     /** This function returns the number and type of import parameters required by this particular
         material mix as a list of SnapshotParameter objects. Each of these objects specifies unit
         information and a human-readable descripton for the parameter. The default implementation
@@ -331,6 +340,7 @@ public:
 
     //======== High-level photon life cycle =======
 
+public:
     /** This function returns the absorption opacity \f$k^\text{abs}=n\varsigma^\text{abs}\f$ for
         the given wavelength, material state, and photon properties (optional; may be nullptr). */
     virtual double opacityAbs(double lambda, const MaterialState* state, const PhotonPacket* pp) const = 0;
@@ -381,37 +391,58 @@ public:
         recalculated within the function. */
     virtual void performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const = 0;
 
-    //======== Secondary emission from dust =======
+    //======== Medium state updates =======
 
-    /** This function returns the emissivity spectrum \f$\varepsilon_{\ell'}\f$ (radiated power per
-        unit of solid angle and per material entity) of the material mix when it would be embedded
-        in the radiation field specified by the mean intensities \f$(J_\lambda)_\ell\f$. The input
-        radiation field must be discretized on the simulation's radiation field wavelength grid as
-        returned by the Configuration::radiationFieldWLG() function. The output emissivity spectrum
-        is discretized on a wavelength grid that depends on the material type. For more
-        information, refer to the documentation of this function for each material type. The
-        default implementation in this base class throws a fatal error. */
-    virtual Array emissivity(const Array& Jv) const;
+    /** If this material mix has a semi-dynamic medium state, i.e. if the
+        hasSemiDynamicMediumState() function returns true, this function is invoked at the end of a
+        primary emission segment. Based on the specified radiation field, the function updates any
+        values in the specific material state for this cell that may inform the local emission
+        and/or extinction properties of the material during secondary emission. The default
+        implementation in this base class throws a fatal error. */
+    virtual void updateSpecificState(MaterialState* state, const Array& Jv) const;
 
-    /** This function returns the emission spectrum (radiated power per unit of solid angle) in the
-        spatial cell and medium component represented by the specified material state and the
-        receiving material mix when it would be embedded in the specified radiation field. The
-        returned spectrum takes into account the values of any specific and common state variables,
-        including the number density of the material in the specified cell. As a result, the
-        spectra returned for multiple media components of the same material type can be aggregated
-        through simple summation. However, the caller is responsible for final normalization after
-        such aggregation has taken place.
+    //======== Secondary continuum emission =======
+
+public:
+    /** If this material mix supports secondary continuum emission, this function returns the
+        wavelength grid on which this emission is discretized. For more information, refer to the
+        documentation of this function for each material type. The default implementation in this
+        base class throws a fatal error. */
+    virtual DisjointWavelengthGrid* emissionWavelengthGrid() const;
+
+    /** This function returns the continuum emissivity spectrum \f$\varepsilon_{\ell'}\f$ (radiated
+        power per unit of solid angle and per material entity) of the material mix when it would be
+        embedded in the radiation field specified by the mean intensities \f$(J_\lambda)_\ell\f$,
+        assuming default values for any specific state variables and assuming isotropic,
+        unpolarized emission. For regular dust mixes that don't vary spatially and that represent
+        spherical grains, the emissivity tells the full story. For other material mixes, it
+        provides just a default or it is not implemented.
 
         The input radiation field must be discretized on the simulation's radiation field
         wavelength grid as returned by the Configuration::radiationFieldWLG() function. The output
-        emissivity spectrum is discretized on a wavelength grid that depends on the material type.
-        For more information, refer to the documentation of this function for each material type.
-        The default implementation in this base class throws a fatal error. */
+        emissivity spectrum is discretized on the wavelength grid returned by the
+        emissionWavelengthGrid() function. For more information, refer to the documentation of this
+        function for each material type. The default implementation in this base class throws a
+        fatal error. */
+    virtual Array emissivity(const Array& Jv) const;
+
+    /** This function returns the continuum emission spectrum (radiated power per unit of solid
+        angle) in the spatial cell and medium component represented by the specified material state
+        and the receiving material mix when it would be embedded in the specified radiation field.
+        The returned spectrum takes into account the values of any specific and common state
+        variables, including the number density of the material in the specified cell. As a result,
+        the spectra returned for multiple media components of the same material type can be
+        aggregated through simple summation. However, the caller is responsible for final
+        normalization after such aggregation has taken place.
+
+        The input radiation field must be discretized on the simulation's radiation field
+        wavelength grid as returned by the Configuration::radiationFieldWLG() function. The output
+        emissivity spectrum is discretized on the wavelength grid returned by the
+        emissionWavelengthGrid() function. For more information, refer to the documentation of this
+        function for each material type. The default implementation in this base class throws a
+        fatal error. */
     virtual Array emissionSpectrum(const MaterialState* state, const Array& Jv) const;
 
-    //======== Spheroidal grains =======
-
-public:
     /** This function is intended for use with the SpheroidalPolarization mode. It returns the grid
         used for discretizing quantities that are a function of the scattering/emission angle
         \f$\theta\f$. The same grid is returned by all material mixes that have
@@ -433,20 +464,34 @@ public:
         implementation in this base class throws a fatal error. */
     virtual const Array& sectionsAbspol(double lambda) const;
 
-    //======== Secondary emission from gas =======
+    //======== Secondary line emission =======
 
-    /** If this material mix supports secondary line emission from gas, this function returns a
-        list of the line centers on which this emission occurs. The default implementation in this
-        base class throws a fatal error. */
+public:
+    /** If this material mix supports secondary line emission, this function returns a list of the
+        line centers at which this emission occurs. The default implementation in this base class
+        throws a fatal error. */
     virtual Array lineEmissionCenters() const;
 
-    /** If this material mix supports secondary continuum emission from gas, this function returns
-        the wavelength grid on which this emission is discretized. The default implementation in
-        this base class throws a fatal error. */
-    virtual DisjointWavelengthGrid* continuumEmissionWLG() const;
+    /** If this material mix supports secondary line emission, this function returns a list of the
+        particle masses for each of the lines returned by the lineEmissionCenters() function. These
+        masses can be used by a caller in conjunction with the temperature stored in the medium
+        state to determine the thermal velocity distribution of emitting particles and assign a
+        corresponding random Doppler shift to the wavelength of emitted photon packets. The default
+        implementation in this base class throws a fatal error. */
+    virtual Array lineEmissionMasses() const;
+
+    /** This function returns the line emission spectrum (radiated power per unit of solid angle)
+        in the spatial cell and medium component represented by the specified material state and
+        the receiving material mix when it would be embedded in the specified radiation field. The
+        returned spectrum takes into account the values of any specific and common state variables,
+        including the number density of the material in the specified cell. The returned values
+        correspond to each of the lines returned by the lineEmissionCenters() function. The default
+        implementation in this base class throws a fatal error. */
+    virtual Array lineEmissionSpectrum(const MaterialState* state, const Array& Jv) const;
 
     //============== Indicative temperature =============
 
+public:
     /** This function returns an indicative temperature for the material represented by the
         specified material state and the receiving material mix, assuming an embedding radiation
         field specified by the mean intensities \f$(J_\lambda)_\ell\f$, if available.

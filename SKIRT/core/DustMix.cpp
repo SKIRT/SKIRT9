@@ -562,6 +562,13 @@ Array DustMix::emissivity(const Array& Jv) const
 
 ////////////////////////////////////////////////////////////////////
 
+DisjointWavelengthGrid* DustMix::emissionWavelengthGrid() const
+{
+    return find<Configuration>()->dustEmissionWLG();
+}
+
+////////////////////////////////////////////////////////////////////
+
 Array DustMix::emissionSpectrum(const MaterialState* state, const Array& Jv) const
 {
     return state->numberDensity() * emissivity(Jv);

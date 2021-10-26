@@ -103,6 +103,20 @@ double MaterialMix::asymmpar(double /*lambda*/) const
 
 ////////////////////////////////////////////////////////////////////
 
+void MaterialMix::updateSpecificState(MaterialState* /*state*/, const Array& /*Jv*/) const
+{
+    throw FATALERROR("This function implementation should never be called");
+}
+
+////////////////////////////////////////////////////////////////////
+
+DisjointWavelengthGrid* MaterialMix::emissionWavelengthGrid() const
+{
+    throw FATALERROR("This function implementation should never be called");
+}
+
+////////////////////////////////////////////////////////////////////
+
 Array MaterialMix::emissivity(const Array& /*Jv*/) const
 {
     throw FATALERROR("This function implementation should never be called");
@@ -145,7 +159,14 @@ Array MaterialMix::lineEmissionCenters() const
 
 ////////////////////////////////////////////////////////////////////
 
-DisjointWavelengthGrid* MaterialMix::continuumEmissionWLG() const
+Array MaterialMix::lineEmissionMasses() const
+{
+    throw FATALERROR("This function implementation should never be called");
+}
+
+////////////////////////////////////////////////////////////////////
+
+Array MaterialMix::lineEmissionSpectrum(const MaterialState* /*state*/, const Array& /*Jv*/) const
 {
     throw FATALERROR("This function implementation should never be called");
 }
