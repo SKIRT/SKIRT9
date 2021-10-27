@@ -153,10 +153,15 @@ public:
         for some positions. If the function returns false, none of the media has a velocity. */
     bool hasMovingMedia() const { return _hasMovingMedia; }
 
-    /** Returns true if one or more medium components in the simulation define a spatial magnetic
+    /** Returns true if one of the medium components in the simulation defines a spatial magnetic
         field distribution that may have nonzero strength for some positions, or false if none of
-        the media define a magnetic field. */
-    bool hasMagneticField() const { return _hasMagneticField; }
+        the media define a magnetic field. It is not allowed for multiple medium components to
+        define a magnetic field (a fatal error is raised during setup when this happens). */
+    bool hasMagneticField() const { return _magneticFieldMediumIndex >= 0; }
+
+    /** Returns the index of the medium component defining the magnetic field, or a negative value
+        if none of the media define a magnetic field. */
+    int magneticFieldMediumIndex() const { return _magneticFieldMediumIndex; }
 
     /** Returns true if the material mix for at least one medium component in the simulation may
         vary depending on spatial position. If the function returns false, the material mixes and
@@ -404,7 +409,7 @@ private:
     bool _mediaNeedGeneratePosition{false};
     bool _hasMovingSources{false};
     bool _hasMovingMedia{false};
-    bool _hasMagneticField{false};
+    int _magneticFieldMediumIndex{-1};
     bool _hasVariableMedia{false};
     bool _hasConstantPerceivedWavelength{false};
     bool _hasSingleConstantSectionMedium{false};

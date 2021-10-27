@@ -290,15 +290,22 @@ void Configuration::setupSelfBefore()
     _hasMultipleConstantSectionMedia = numMedia > 1 && _hasConstantSectionMedium;
 
     // check for magnetic fields
-    for (auto medium : ms->media())
-        if (medium->hasMagneticField()) _hasMagneticField = true;
+    for (int h = 0; h != numMedia; ++h)
+    {
+        if (ms->media()[h]->hasMagneticField())
+        {
+            if (_magneticFieldMediumIndex >= 0)
+                throw FATALERROR("It is not allowed for more than one medium component to define a magnetic field");
+            _magneticFieldMediumIndex = h;
+        }
+    }
 
     // check for polarization
     int numPolarization = 0;
     for (auto medium : ms->media())
         if (medium->mix()->hasPolarizedScattering()) numPolarization++;
     if (numPolarization != 0 && numPolarization != numMedia)
-        throw FATALERROR("All media must consistenly support polarization, or not support polarization");
+        throw FATALERROR("All media must consistently support polarization, or not support polarization");
     _hasPolarization = numPolarization != 0;
 
     // check for polarization by spheroidal particles
@@ -308,7 +315,7 @@ void Configuration::setupSelfBefore()
                 _hasSpheroidalPolarization = true;  // this flag may need to be split over absorption and emission
 
     // spheroidal particles require a magnetic field
-    if (_hasSpheroidalPolarization && !_hasMagneticField)
+    if (_hasSpheroidalPolarization && _magneticFieldMediumIndex < 0)
         throw FATALERROR("Polarization by spheroidal particles requires a magnetic field to determine alignment");
 
     // prohibit non-identity-mapping cell libraries in combination with spatially varying material mixes
@@ -411,7 +418,7 @@ void Configuration::setupSelfAfter()
     }
 
     // if there is a magnetic field, there usually should be spheroidal particles
-    if (_hasMagneticField && !_hasSpheroidalPolarization)
+    if (_magneticFieldMediumIndex >= 0 && !_hasSpheroidalPolarization)
         log->warning("  No media have spheroidal particles that could align with the specified magnetic field");
 }
 

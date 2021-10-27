@@ -125,26 +125,12 @@ void MediumSystem::setupSelfAfter()
 
     // ----- calculate cell densities, bulk velocities, and volumes in parallel -----
 
-    // temporary hack: determine index of first medium that offers magnetic field (we'll support policies later)
-    int magneticFieldIndex = -1;
-    if (_config->hasMagneticField())
-    {
-        for (int h = 0; h != _numMedia; ++h)
-        {
-            if (_media[h]->hasMagneticField())
-            {
-                magneticFieldIndex = h;
-                break;
-            }
-        }
-    }
-
     log->info("Calculating densities for " + std::to_string(_numCells) + " cells...");
     auto dic = _grid->interface<DensityInCellInterface>(0, false);  // optional fast-track interface for densities
     int numSamples = _config->numDensitySamples();
     log->infoSetElapsed(_numCells);
     parfac->parallelDistributed()->call(
-        _numCells, [this, log, dic, numSamples, magneticFieldIndex](size_t firstIndex, size_t numIndices) {
+        _numCells, [this, log, dic, numSamples](size_t firstIndex, size_t numIndices) {
             ShortArray nsumv(_numMedia);
 
             while (numIndices)
@@ -190,7 +176,7 @@ void MediumSystem::setupSelfAfter()
                     // magnetic field: retrieve from medium component that specifies it, if any
                     if (_config->hasMagneticField())
                     {
-                        _state.setMagneticField(m, _media[magneticFieldIndex]->magneticField(center));
+                        _state.setMagneticField(m, _media[_config->magneticFieldMediumIndex()]->magneticField(center));
                     }
 
                     // specific state variables other than density

@@ -128,6 +128,13 @@ Vec ImportedMedium::magneticField(Position bfr) const
 
 ////////////////////////////////////////////////////////////////////
 
+bool ImportedMedium::hasMetallicity() const
+{
+    return !_importVariableMixParams && _importMetallicity && !materialMix()->isDust();
+}
+
+////////////////////////////////////////////////////////////////////
+
 double ImportedMedium::metallicity(Position bfr) const
 {
     if (!_importVariableMixParams && _importMetallicity && !materialMix()->isDust()) return _snapshot->metallicity(bfr);
@@ -136,10 +143,24 @@ double ImportedMedium::metallicity(Position bfr) const
 
 ////////////////////////////////////////////////////////////////////
 
+bool ImportedMedium::hasTemperature() const
+{
+    return !_importVariableMixParams && _importTemperature && !materialMix()->isDust();
+}
+
+////////////////////////////////////////////////////////////////////
+
 double ImportedMedium::temperature(Position bfr) const
 {
     if (!_importVariableMixParams && _importTemperature && !materialMix()->isDust()) return _snapshot->temperature(bfr);
     return -1.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool ImportedMedium::hasParameters() const
+{
+    return !_importVariableMixParams && _snapshot->numParameters() > 0;
 }
 
 ////////////////////////////////////////////////////////////////////
