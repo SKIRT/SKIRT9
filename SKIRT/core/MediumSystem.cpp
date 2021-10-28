@@ -48,7 +48,7 @@ namespace
         int _cellIndex;
         Position _center;
         vector<Position> _positions;  // indexed on n
-        Table<2> _densities;          // indexed on n and h
+        Table<2> _densities;          // indexed on h and n
 
     public:
         // nr of samples is
@@ -63,7 +63,7 @@ namespace
             {
                 int numSamples = max(_numDensitySamples, _numPropertySamples);
                 _positions.resize(numSamples);
-                _densities.resize(numSamples, _numMedia);
+                _densities.resize(_numMedia, numSamples);
             }
         }
 
@@ -82,15 +82,36 @@ namespace
             for (int n = 0; n != numSamples; ++n)
             {
                 _positions[n] = _grid->randomPositionInCell(_cellIndex);
-                for (int h = 0; h != _numMedia; ++h) _densities(n, h) = _media[h]->numberDensity(_positions[n]);
+                for (int h = 0; h != _numMedia; ++h) _densities(h, n) = _media[h]->numberDensity(_positions[n]);
             }
         }
 
         double density(int h)
         {
-            double result = 0.;
-            for (int n = 0; n != _numDensitySamples; ++n) result += _densities(n, h);
-            return result / _numDensitySamples;
+            double sum = 0.;
+            for (int n = 0; n != _numDensitySamples; ++n) sum += _densities(h, n);
+            return sum / _numDensitySamples;
+        }
+
+        Vec bulkVelocity(int h)
+        {
+            if (_numPropertySamples == 1) return _media[h]->bulkVelocity(_center);
+            double nsum = 0;
+            Vec vsum;
+            for (int n = 0; n != _numPropertySamples; ++n)
+            {
+                nsum += _densities(h, n);
+                vsum += _densities(h, n) * _media[h]->bulkVelocity(_positions[n]);
+            }
+            return vsum / nsum;
+        }
+
+        Vec magneticField(int h)
+        {
+            if (_numPropertySamples == 1) return _media[h]->magneticField(_center);
+            Vec Bsum;
+            for (int n = 0; n != _numPropertySamples; ++n) Bsum += _media[h]->magneticField(_positions[n]);
+            return Bsum / _numPropertySamples;
         }
     };
 }
@@ -205,7 +226,6 @@ void MediumSystem::setupSelfAfter()
             {
                 // prepare the sampler for this cell (i.e. store the relevant positions and density samples)
                 sampler.prepareForCell(m);
-                Position center = _grid->centralPositionInCell(m);
 
                 // volume
                 _state.setVolume(m, _grid->volume(m));
@@ -220,35 +240,67 @@ void MediumSystem::setupSelfAfter()
                     for (int h = 0; h != _numMedia; ++h) _state.setNumberDensity(m, h, sampler.density(h));
                 }
 
-                // bulk velocity: weighted average at cell center; for oligochromatic simulations, leave at zero
+                // bulk velocity: aggregate values sampled for each component according to specfied policy
                 if (_config->hasMovingMedia())
                 {
+                    // accumulate total density in the cell
                     double n = 0.;
-                    Vec v;
-                    for (int h = 0; h != _numMedia; ++h)
-                    {
-                        n += _state.numberDensity(m, h);
-                        v += _state.numberDensity(m, h) * _media[h]->bulkVelocity(center);
-                    }
+                    for (int h = 0; h != _numMedia; ++h) n += _state.numberDensity(m, h);
+
                     // leave bulk velocity at zero if cell has no material
-                    if (n > 0.) _state.setBulkVelocity(m, v / n);
+                    if (n > 0.)
+                    {
+                        Vec v;
+                        switch (_samplingOptions->aggregateVelocity())
+                        {
+                            case SamplingOptions::AggregatePolicy::Average:
+                                for (int h = 0; h != _numMedia; ++h)
+                                {
+                                    v += _state.numberDensity(m, h) * sampler.bulkVelocity(h);
+                                }
+                                v /= n;
+                                break;
+                            case SamplingOptions::AggregatePolicy::Maximum:
+                                for (int h = 0; h != _numMedia; ++h)
+                                {
+                                    if (_state.numberDensity(m, h) > 0)
+                                    {
+                                        Vec w = sampler.bulkVelocity(h);
+                                        if (w.norm2() > v.norm2()) v = w;
+                                    }
+                                }
+                                break;
+                            case SamplingOptions::AggregatePolicy::First:
+                                for (int h = 0; h != _numMedia; ++h)
+                                {
+                                    if (_media[h]->hasVelocity())
+                                    {
+                                        if (_state.numberDensity(m, h) > 0) v = sampler.bulkVelocity(h);
+                                        break;
+                                    }
+                                    break;
+                                }
+                        }
+                        _state.setBulkVelocity(m, v);
+                    }
                 }
 
-                // magnetic field: retrieve from medium component that specifies it, if any
+                // magnetic field: retrieve value sampled from medium component that specifies it
                 if (_config->hasMagneticField())
                 {
-                    _state.setMagneticField(m, _media[_config->magneticFieldMediumIndex()]->magneticField(center));
+                    _state.setMagneticField(m, sampler.magneticField(_config->magneticFieldMediumIndex()));
                 }
 
                 // specific state variables other than density
                 for (int h = 0; h != _numMedia; ++h)
                 {
                     // retrieve input model temperature and parameters from medium component
-                    MaterialState mst(_state, m, h);
+                    Position center = _grid->centralPositionInCell(m);
                     double Z = _media[h]->metallicity(center);
                     double T = _media[h]->temperature(center);
                     Array params;
                     _media[h]->parameters(center, params);
+                    MaterialState mst(_state, m, h);
                     mix(m, h)->initializeSpecificState(&mst, Z, T, params);
                 }
             }
