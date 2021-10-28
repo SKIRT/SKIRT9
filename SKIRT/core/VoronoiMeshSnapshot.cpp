@@ -1031,7 +1031,7 @@ double VoronoiMeshSnapshot::metallicity(int m) const
 double VoronoiMeshSnapshot::metallicity(Position bfr) const
 {
     int m = cellIndex(bfr);
-    return m >= 0 ? metallicity(m) : -1.;
+    return m >= 0 ? metallicity(m) : 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -1047,7 +1047,7 @@ double VoronoiMeshSnapshot::temperature(int m) const
 double VoronoiMeshSnapshot::temperature(Position bfr) const
 {
     int m = cellIndex(bfr);
-    return m >= 0 ? temperature(m) : -1.;
+    return m >= 0 ? temperature(m) : 0.;
 }
 
 ////////////////////////////////////////////////////////////////////

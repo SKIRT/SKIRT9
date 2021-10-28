@@ -296,8 +296,8 @@ void MediumSystem::setupSelfAfter()
                 {
                     // retrieve input model temperature and parameters from medium component
                     Position center = _grid->centralPositionInCell(m);
-                    double Z = _media[h]->metallicity(center);
-                    double T = _media[h]->temperature(center);
+                    double Z = _media[h]->hasMetallicity() ? _media[h]->metallicity(center) : -1.;
+                    double T = _media[h]->hasTemperature() ? _media[h]->temperature(center) : -1.;
                     Array params;
                     _media[h]->parameters(center, params);
                     MaterialState mst(_state, m, h);

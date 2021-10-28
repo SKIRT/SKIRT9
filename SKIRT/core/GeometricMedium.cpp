@@ -92,7 +92,7 @@ bool GeometricMedium::hasMetallicity() const
 
 double GeometricMedium::metallicity(Position /*bfr*/) const
 {
-    return -1.;
+    return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -106,7 +106,7 @@ bool GeometricMedium::hasTemperature() const
 
 double GeometricMedium::temperature(Position /*bfr*/) const
 {
-    return -1.;
+    return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////

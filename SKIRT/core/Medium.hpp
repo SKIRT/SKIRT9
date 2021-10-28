@@ -103,21 +103,21 @@ public:
     virtual Vec magneticField(Position bfr) const = 0;
 
     /** This function returns true if the metallicity() function for this medium may return a
-        nonnegative value for some positions. */
+        nonzero value for some positions. */
     virtual bool hasMetallicity() const = 0;
 
     /** This function returns the metallicity of the medium at the specified position as defined in
-        the input model, or a negative value if the input model does not define a metallicity for
-        this medium (at all, or at the given position). */
+        the input model, or zero if the input model does not define a metallicity for this medium
+        (at all, or at the given position). */
     virtual double metallicity(Position bfr) const = 0;
 
     /** This function returns true if the temperature() function for this medium may return a
-        nonnegative value for some positions. */
+        nonzero value for some positions. */
     virtual bool hasTemperature() const = 0;
 
     /** This function returns the temperature of the medium at the specified position as defined in
-        the input model, or a negative value if the input model does not define a temperature for
-        this medium (at all, or at the given position). */
+        the input model, or zero if the input model does not define a temperature for this medium
+        (at all, or at the given position). */
     virtual double temperature(Position bfr) const = 0;
 
     /** This function returns true if the parameters() function for this medium returns a nonempty
