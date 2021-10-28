@@ -85,12 +85,12 @@ public:
         density, so this function returns a list containing these two items. */
     vector<StateVariable> specificStateVariableInfo() const override;
 
-    /** This function initializes any specific state variables requested by this material mix
-        except for the number density. See the description of the
-        MaterialMix::initializeSpecificState() function for more information. For the Lyman-alpha
-        material mix, the function initializes the temperature to the specified imported
-        temperature, or if this is not available, to the user-configured default temperature for
-        this material mix. */
+    /** This function initializes the specific state variables requested by this fragmented dust
+        mix through the specificStateVariableInfo() function except for the number density. For the
+        Lyman-alpha material mix, the function initializes the temperature to the specified
+        imported temperature, or if this is not available, to the user-configured default
+        temperature for this material mix. The metallicity and custom parameter arguments are
+        ignored. */
     void initializeSpecificState(MaterialState* state, double metallicity, double temperature,
                                  const Array& params) const override;
 

@@ -137,8 +137,8 @@ bool ImportedMedium::hasMetallicity() const
 
 double ImportedMedium::metallicity(Position bfr) const
 {
-    if (!_importVariableMixParams && _importMetallicity && !materialMix()->isDust()) return _snapshot->metallicity(bfr);
-    return -1.;
+    if (hasMetallicity()) return _snapshot->metallicity(bfr);
+    return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -152,8 +152,8 @@ bool ImportedMedium::hasTemperature() const
 
 double ImportedMedium::temperature(Position bfr) const
 {
-    if (!_importVariableMixParams && _importTemperature && !materialMix()->isDust()) return _snapshot->temperature(bfr);
-    return -1.;
+    if (hasTemperature()) return _snapshot->temperature(bfr);
+    return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -167,7 +167,7 @@ bool ImportedMedium::hasParameters() const
 
 void ImportedMedium::parameters(Position bfr, Array& params) const
 {
-    if (!_importVariableMixParams && _snapshot->numParameters() > 0)
+    if (hasParameters())
         _snapshot->parameters(bfr, params);
     else
         params.resize(0);

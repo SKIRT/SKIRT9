@@ -181,7 +181,7 @@ double ParticleSnapshot::metallicity(int m) const
 double ParticleSnapshot::metallicity(Position bfr) const
 {
     const SmoothedParticle* nearestParticle = _grid ? _grid->nearestParticle(bfr) : nullptr;
-    return nearestParticle ? metallicity(nearestParticle->index()) : -1.;
+    return nearestParticle ? metallicity(nearestParticle->index()) : 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -196,7 +196,7 @@ double ParticleSnapshot::temperature(int m) const
 double ParticleSnapshot::temperature(Position bfr) const
 {
     const SmoothedParticle* nearestParticle = _grid ? _grid->nearestParticle(bfr) : nullptr;
-    return nearestParticle ? temperature(nearestParticle->index()) : -1.;
+    return nearestParticle ? temperature(nearestParticle->index()) : 0.;
 }
 
 ////////////////////////////////////////////////////////////////////

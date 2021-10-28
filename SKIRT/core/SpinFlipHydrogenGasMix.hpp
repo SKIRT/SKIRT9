@@ -84,10 +84,11 @@ public:
         to hold the dust-to-gas-ratio. */
     vector<StateVariable> specificStateVariableInfo() const override;
 
-    /** This function initializes any specific state variables requested by this material mix
-        except for the number density. For this class, the function initializes the temperature,
-        metallicity and dust-to-gas ratio to the specified imported values, or if not available, to
-        the user-configured default values. */
+    /** This function initializes the specific state variables requested by this fragmented dust
+        mix through the specificStateVariableInfo() function except for the number density. For
+        this class, the function initializes the temperature, metallicity and dust-to-gas ratio to
+        the specified imported values, or if not available, to the user-configured default values.
+        */
     void initializeSpecificState(MaterialState* state, double metallicity, double temperature,
                                  const Array& params) const override;
 

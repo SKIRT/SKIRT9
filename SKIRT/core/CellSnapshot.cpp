@@ -316,7 +316,7 @@ double CellSnapshot::metallicity(int m) const
 double CellSnapshot::metallicity(Position bfr) const
 {
     int m = _grid ? _grid->cellIndexFor(bfr) : -1;
-    return m >= 0 ? metallicity(m) : -1.;
+    return m >= 0 ? metallicity(m) : 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -331,7 +331,7 @@ double CellSnapshot::temperature(int m) const
 double CellSnapshot::temperature(Position bfr) const
 {
     int m = _grid ? _grid->cellIndexFor(bfr) : -1;
-    return m >= 0 ? temperature(m) : -1.;
+    return m >= 0 ? temperature(m) : 0.;
 }
 
 ////////////////////////////////////////////////////////////////////

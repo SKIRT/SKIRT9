@@ -61,9 +61,9 @@ void SpinFlipHydrogenGasMix::initializeSpecificState(MaterialState* state, doubl
     {
         // if no value was imported, use default value
         // make sure the temperature is at least the local universe CMB temperature
-        state->setMetallicity(metallicity > 0 ? metallicity : defaultMetallicity());
-        state->setTemperature(max(Constants::Tcmb(), temperature > 0 ? temperature : defaultTemperature()));
-        state->setCustom(0, params.size() && params[0] > 0 ? params[0] : defaultDustToGasRatio());
+        state->setMetallicity(metallicity >= 0. ? metallicity : defaultMetallicity());
+        state->setTemperature(max(Constants::Tcmb(), temperature >= 0. ? temperature : defaultTemperature()));
+        state->setCustom(0, params.size() ? params[0] : defaultDustToGasRatio());
     }
 }
 

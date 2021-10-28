@@ -192,7 +192,7 @@ public:
     double metallicity(int m) const override;
 
     /** This function returns the metallicity associated with the leaf cell containing the specified
-        point \f${\bf{r}}\f$. If the point is outside the domain, the function returns -1.
+        point \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero.
         If the metallicity is not being imported, the behavior is undefined. */
     double metallicity(Position bfr) const override;
 
@@ -201,7 +201,7 @@ public:
     double temperature(int m) const override;
 
     /** This function returns the temperature associated with the leaf cell containing the specified
-        point \f${\bf{r}}\f$. If the point is outside the domain, the function returns -1.
+        point \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero.
         If the temperature is not being imported, the behavior is undefined. */
     double temperature(Position bfr) const override;
 
