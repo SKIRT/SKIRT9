@@ -34,6 +34,69 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
+namespace
+{
+    // TO DO !!
+    class PropertySampler
+    {
+    private:
+        vector<Medium*>& _media;
+        SpatialGrid* _grid;
+        int _numDensitySamples;
+        int _numPropertySamples;
+        int _numMedia;
+        int _cellIndex;
+        Position _center;
+        vector<Position> _positions;  // indexed on n
+        Table<2> _densities;          // indexed on n and h
+
+    public:
+        // nr of samples is
+        //   0: sampling function(s) will never be called
+        //   1: "sample" at the cell center only
+        //  >1: sample at the specified nr of random points in the cell
+        PropertySampler(vector<Medium*>& media, SpatialGrid* grid, int numDensitySamples, int numPropertySamples)
+            : _media(media), _grid(grid), _numDensitySamples(numDensitySamples),
+              _numPropertySamples(numPropertySamples), _numMedia(_media.size()), _cellIndex(0)
+        {
+            if (_numDensitySamples > 1 || _numPropertySamples > 1)
+            {
+                int numSamples = max(_numDensitySamples, _numPropertySamples);
+                _positions.resize(numSamples);
+                _densities.resize(numSamples, _numMedia);
+            }
+        }
+
+        void prepareForCell(int cellIndex)
+        {
+            _cellIndex = cellIndex;
+
+            // if we need center "sampling", get the cell center
+            if (_numDensitySamples == 1 || _numPropertySamples == 1)
+            {
+                _center = _grid->centralPositionInCell(_cellIndex);
+            }
+
+            // if we need random sampling, draw the positions and get the corresponding densities
+            int numSamples = _positions.size();
+            for (int n = 0; n != numSamples; ++n)
+            {
+                _positions[n] = _grid->randomPositionInCell(_cellIndex);
+                for (int h = 0; h != _numMedia; ++h) _densities(n, h) = _media[h]->numberDensity(_positions[n]);
+            }
+        }
+
+        double density(int h)
+        {
+            double result = 0.;
+            for (int n = 0; n != _numDensitySamples; ++n) result += _densities(n, h);
+            return result / _numDensitySamples;
+        }
+    };
+}
+
+////////////////////////////////////////////////////////////////////
+
 void MediumSystem::setupSelfAfter()
 {
     SimulationItem::setupSelfAfter();
@@ -127,35 +190,34 @@ void MediumSystem::setupSelfAfter()
 
     log->info("Calculating densities for " + std::to_string(_numCells) + " cells...");
     auto dic = _grid->interface<DensityInCellInterface>(0, false);  // optional fast-track interface for densities
-    int numSamples = _config->numDensitySamples();
     log->infoSetElapsed(_numCells);
-    parfac->parallelDistributed()->call(_numCells, [this, log, dic, numSamples](size_t firstIndex, size_t numIndices) {
-        ShortArray nsumv(_numMedia);
+    parfac->parallelDistributed()->call(_numCells, [this, log, dic](size_t firstIndex, size_t numIndices) {
+        // construct a property sampler to be shared by all cells handled in the loop below
+        bool hasProperty = _config->hasMovingMedia() || _config->hasMagneticField();
+        PropertySampler sampler(_media, _grid, dic ? 0 : _config->numDensitySamples(),
+                                hasProperty ? _config->numPropertySamples() : 0);
 
+        // loop over cells
         while (numIndices)
         {
             size_t currentChunkSize = min(logProgressChunkSize, numIndices);
             for (size_t m = firstIndex; m != firstIndex + currentChunkSize; ++m)
             {
+                // prepare the sampler for this cell (i.e. store the relevant positions and density samples)
+                sampler.prepareForCell(m);
                 Position center = _grid->centralPositionInCell(m);
 
                 // volume
                 _state.setVolume(m, _grid->volume(m));
 
-                // density: use optional fast-track interface or sample 100 random positions within the cell
+                // density: use optional fast-track interface or sample within the cell
                 if (dic)
                 {
                     for (int h = 0; h != _numMedia; ++h) _state.setNumberDensity(m, h, dic->numberDensity(h, m));
                 }
                 else
                 {
-                    nsumv.clear();
-                    for (int n = 0; n < numSamples; n++)
-                    {
-                        Position bfr = _grid->randomPositionInCell(m);
-                        for (int h = 0; h != _numMedia; ++h) nsumv[h] += _media[h]->numberDensity(bfr);
-                    }
-                    for (int h = 0; h != _numMedia; ++h) _state.setNumberDensity(m, h, nsumv[h] / numSamples);
+                    for (int h = 0; h != _numMedia; ++h) _state.setNumberDensity(m, h, sampler.density(h));
                 }
 
                 // bulk velocity: weighted average at cell center; for oligochromatic simulations, leave at zero

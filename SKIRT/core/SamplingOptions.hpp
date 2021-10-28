@@ -25,7 +25,7 @@ class SamplingOptions : public SimulationItem
     ITEM_CONCRETE(SamplingOptions, SimulationItem, "a set of options related to media sampling for the spatial grid")
 
         PROPERTY_INT(numDensitySamples, "the number of random density samples for determining spatial cell mass")
-        ATTRIBUTE_MIN_VALUE(numDensitySamples, "10")
+        ATTRIBUTE_MIN_VALUE(numDensitySamples, "1")
         ATTRIBUTE_MAX_VALUE(numDensitySamples, "1000")
         ATTRIBUTE_DEFAULT_VALUE(numDensitySamples, "100")
         ATTRIBUTE_DISPLAYED_IF(numDensitySamples, "Level2")
