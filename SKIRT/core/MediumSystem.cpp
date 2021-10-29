@@ -272,9 +272,9 @@ void MediumSystem::setupSelfAfter()
 
     log->info(typeAndName() + " allocated " + StringUtils::toMemSizeString(allocatedBytes) + " of memory");
 
-    // ----- calculate cell densities, bulk velocities, and volumes in parallel -----
+    // ----- calculate medium properties parallelized on spatial cells -----
 
-    log->info("Calculating densities for " + std::to_string(_numCells) + " cells...");
+    log->info("Calculating medium properties for " + std::to_string(_numCells) + " cells...");
     auto dic = _grid->interface<DensityInCellInterface>(0, false);  // optional fast-track interface for densities
     log->infoSetElapsed(_numCells);
     parfac->parallelDistributed()->call(_numCells, [this, log, dic](size_t firstIndex, size_t numIndices) {
@@ -371,7 +371,7 @@ void MediumSystem::setupSelfAfter()
                     mix(m, h)->initializeSpecificState(&mst, Z, T, params);
                 }
             }
-            log->infoIfElapsed("Calculated cell densities: ", currentChunkSize);
+            log->infoIfElapsed("Calculated medium properties: ", currentChunkSize);
             firstIndex += currentChunkSize;
             numIndices -= currentChunkSize;
         }
