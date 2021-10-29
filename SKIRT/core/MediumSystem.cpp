@@ -1129,3 +1129,43 @@ bool MediumSystem::updateDynamicMediumState()
 }
 
 ////////////////////////////////////////////////////////////////////
+
+void MediumSystem::updateSemiDynamicMediumState()
+{
+    auto log = find<Log>();
+    auto parfac = find<ParallelFactory>();
+
+    // update status for each cell
+    std::vector<UpdateStatus> flags(_numCells);
+
+    // loop over the spatial cells in parallel
+    log->info("Updating semi-dynamic medium state for " + std::to_string(_numCells) + " cells...");
+    log->infoSetElapsed(_numCells);
+    parfac->parallelDistributed()->call(_numCells, [this, log, &flags](size_t firstIndex, size_t numIndices) {
+        while (numIndices)
+        {
+            size_t currentChunkSize = min(logProgressChunkSize, numIndices);
+            for (size_t m = firstIndex; m != firstIndex + currentChunkSize; ++m)
+            {
+                const Array& Jv = meanIntensity(m);
+
+                for (int h = 0; h != _numMedia; ++h)
+                {
+                    if (mix(m, h)->hasSemiDynamicMediumState())
+                    {
+                        MaterialState mst(_state, m, h);
+                        if (mix(m, h)->updateSpecificState(&mst, Jv)) flags[m].updateConverged();
+                    }
+                }
+            }
+            log->infoIfElapsed("Updated semi-dynamic medium state: ", currentChunkSize);
+            firstIndex += currentChunkSize;
+            numIndices -= currentChunkSize;
+        }
+    });
+
+    // synchronize the updated state between processes
+    _state.synchronize(flags);
+}
+
+////////////////////////////////////////////////////////////////////

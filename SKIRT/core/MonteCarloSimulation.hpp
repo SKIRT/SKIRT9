@@ -77,8 +77,7 @@ class SecondarySourceSystem;
 
     - \f$(r)\f$: optionally register the RF if requested for probing (not needed for instruments).
 
-    - \f$s\f$: update the DMS (and SDMS, if any) based on the RF after processing all photon
-    packets for the segment.
+    - \f$s\f$: update the DMS based on the RF after processing all photon packets for the segment.
 
     - \f$(s)\f$: update the SDMS, if any, based on the RF after processing all photon packets for
     the segment.
@@ -252,43 +251,52 @@ public:
 
 protected:
     /** This function actually runs the simulation, assuming setup has been completed. It
-        consecutively performs all segments of the simulation, including primary source segments,
-        secondary source segments, and any required iterations. For each segment, it tells the
-        source system to prepare for launching photon packets in serial code, and then it causes
-        photon packets to be launched (and traced through their life cycles) by calling the
-        performLifeCycle() function in appropriately parallelized code depending on the run-time
-        environment and the command-line options. After each of the segments but the last one, the
-        function also tells the medium system to synchronize the radiation field between processes
-        (in a multi-process environment). */
+        determines the appropriate execution flow from the simulation's configuration (see the
+        table in the class header documentation) and invokes other functions in this class to
+        consecutively perform all segments of the simulation, including primary source segments,
+        secondary source segments, and any required iterations. For each segment, these invoked
+        functions will tell the source system to prepare for launching photon packets (in serial
+        code), and then cause photon packets to be launched and traced through their life cycles
+        (in appropriately parallelized code depending on the run-time environment and the
+        command-line options). */
     void runSimulation() override;
 
 private:
-    /** This function runs the primary source emission segment. It implements a parallelized loop
-        that iterates over the configured number of photon packets and drives the photon packet
-        life cycle for each. The primary emission segment includes peel-off and records radiation
-        field contributions if the configuration requires it (e.g., because secondary emisison must
-        be calculated, or because the user configured probes to directly output radiation field
-        information.) */
+    /** This function runs a single primary source emission segment in configurations that do not
+        require iteration over primary emission. The implemented primary emission segment always
+        includes peel-off. It records radiation field contributions if the configuration requires
+        it (e.g., because secondary emission must be calculated, or because the user configured
+        probes to directly output radiation field information). If the configuration also includes
+        emission, any semi-dynamic state media in the simulation receive an update request at the
+        end of the segment.
+
+        Using the notation of the table in the class header documentation, this function implements
+        \f$\mathbf{P}^p\f$, \f$\mathbf{P}^p_{(r)}\f$, or \f$\mathbf{P}^p_{r(s)}\f$ depending on the
+        relevant configuration options. */
     void runPrimaryEmission();
 
-    /** This function implements primary source emission when the simulation includes a dynamic
-        medium state. In that case, the primary emission phase self-consistently calculates the
-        radiation field taking into account one or more recipes for updating the medium state as a
-        function of the radiation field. See the DynamicStateRecipe class for more information.
+    /** This function iteratively runs consecutive primary source emission segments to
+        self-consistently calculate the radiation field taking into account one or more recipes for
+        updating the dynamic medium state as a function of the radiation field. See the
+        DynamicStateRecipe class for more information.
 
-        Specifically, this function implements a number of iterations, where each iteration tracks
-        a segment of photon packets through the medium and subsequently updates the medium state
-        based on the newly established radiation field. The number of photon packets launched for
-        each iteration can be configured as a multiplication factor on the default number of
-        primary photon packets. The minimum and maximum number of iterations can also be specified
-        as configuration options. Within these limits, the actual number of iterations performed is
-        determined by convergence criteria defined by the configured dynamic medium state
-        recipe(s).
+        Each segment in the iteration tracks photon packets through the medium and subsequently
+        updates the medium state based on the newly established radiation field. The number of
+        photon packets launched for each segment can be configured as a multiplication factor on
+        the default number of primary photon packets. The minimum and maximum number of iterations
+        can also be specified as configuration options. Within these limits, the actual number of
+        iterations performed is determined by convergence criteria defined by the configured
+        dynamic medium state recipe(s).
 
-        After the dynamic state iterations have completed (with or without convergence), this
-        function performs a final segment of primary emission photon launching that now includes
-        peel-off towards the instruments. */
-    void runPrimaryEmissionWithDynamicState();
+        After the iterations have completed (with or without convergence), the function performs a
+        final segment of primary emission photon launching that now includes peel-off towards the
+        instruments.
+
+        Using the notation of the table in the class header documentation, this function implements
+        \f$\overleftarrow{\mathbf{P}_{rs}} \;\rightarrow\; \mathbf{P}^p_{(r)}\f$ or
+        \f$\overleftarrow{\mathbf{P}_{rs}} \;\rightarrow\; \mathbf{P}^p_{r(s)}\f$ depending on the
+        relevant configuration options. */
+    void runPrimaryEmissionWithIterations();
 
     /** This function runs the dust self-absorption phase. This phase includes a series of
         intermediate secondary source emission segments in an iteration to self-consistently

@@ -63,8 +63,8 @@ void MonteCarloSimulation::runSimulation()
         TimeLogger logger(log(), "the run");
 
         // primary emission segment, possibly with dynamic medium state iterations
-        if (_config->hasDynamicState() && sourceSystem()->luminosity())
-            runPrimaryEmissionWithDynamicState();
+        if (_config->hasPrimaryIterations() && sourceSystem()->luminosity())
+            runPrimaryEmissionWithIterations();
         else
             runPrimaryEmission();
 
@@ -121,11 +121,14 @@ void MonteCarloSimulation::runPrimaryEmission()
     // wait for all processes to finish and synchronize the radiation field
     wait(segment);
     if (_config->hasRadiationField()) mediumSystem()->communicateRadiationField(true);
+
+    // update semi-dynamic medium state if needed
+    if (_config->hasSemiDynamicState()) mediumSystem()->updateSemiDynamicMediumState();
 }
 
 ////////////////////////////////////////////////////////////////////
 
-void MonteCarloSimulation::runPrimaryEmissionWithDynamicState()
+void MonteCarloSimulation::runPrimaryEmissionWithIterations()
 {
     // when this function is called
     //  - the number of photon packets and the source luminosity are guaranteed to be nonzero
@@ -153,7 +156,7 @@ void MonteCarloSimulation::runPrimaryEmissionWithDynamicState()
         ++iter;
         bool converged = false;
         {
-            string segment = "dynamic medium state iteration " + std::to_string(iter);
+            string segment = "primary emission iteration " + std::to_string(iter);
             TimeLogger logger(log(), segment);
 
             // clear the radiation field
@@ -217,6 +220,9 @@ void MonteCarloSimulation::runPrimaryEmissionWithDynamicState()
         // wait for all processes to finish and synchronize the radiation field
         wait(segment);
         mediumSystem()->communicateRadiationField(true);
+
+        // update semi-dynamic medium state if needed
+        if (_config->hasSemiDynamicState()) mediumSystem()->updateSemiDynamicMediumState();
     }
 }
 

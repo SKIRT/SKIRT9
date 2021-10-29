@@ -398,9 +398,11 @@ public:
         hasSemiDynamicMediumState() function returns true, this function is invoked at the end of a
         primary emission segment. Based on the specified radiation field, the function updates any
         values in the specific material state for this cell that may inform the local emission
-        and/or extinction properties of the material during secondary emission. The default
-        implementation in this base class throws a fatal error. */
-    virtual void updateSpecificState(MaterialState* state, const Array& Jv) const;
+        and/or extinction properties of the material during secondary emission. The function
+        returns true if the medium state has indeed be changed, and false if the medium state has
+        remained unchanged (this allows optimizing the synchronization of changes across multiple
+        processes). The default implementation in this base class throws a fatal error. */
+    virtual bool updateSpecificState(MaterialState* state, const Array& Jv) const;
 
     //======== Secondary continuum emission =======
 

@@ -103,7 +103,7 @@ double MaterialMix::asymmpar(double /*lambda*/) const
 
 ////////////////////////////////////////////////////////////////////
 
-void MaterialMix::updateSpecificState(MaterialState* /*state*/, const Array& /*Jv*/) const
+bool MaterialMix::updateSpecificState(MaterialState* /*state*/, const Array& /*Jv*/) const
 {
     throw FATALERROR("This function implementation should never be called");
 }
