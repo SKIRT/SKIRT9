@@ -117,7 +117,7 @@ namespace
                 nsum += _densities(h, n);
                 vsum += _densities(h, n) * _media[h]->bulkVelocity(_positions[n]);
             }
-            return vsum / nsum;
+            return nsum > 0. ? vsum / nsum : Vec();
         }
 
         // Returns the central or average magnetic field in the cell for the given medium component.
@@ -141,7 +141,7 @@ namespace
                 nsum += _densities(h, n);
                 Zsum += _densities(h, n) * _media[h]->metallicity(_positions[n]);
             }
-            return Zsum / nsum;
+            return nsum > 0. ? Zsum / nsum : 0.;
         }
 
         // Returns the central or density-averaged temperature in the cell for the given medium component.
@@ -155,7 +155,7 @@ namespace
                 nsum += _densities(h, n);
                 Tsum += _densities(h, n) * _media[h]->temperature(_positions[n]);
             }
-            return Tsum / nsum;
+            return nsum > 0. ? Tsum / nsum : 0.;
         }
 
         // Returns the central or density-averaged custom parameter values in the cell for the given medium component.
