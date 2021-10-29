@@ -605,6 +605,12 @@ public:
         dynamic medium state recipe has been configured for the simulation. */
     bool updateDynamicMediumState();
 
+    /** This function updates the semi-dynamic medium state for all media that require/support such
+        an update based on the currently established radiation field by invoking the corresponding
+        material mix function for all spatial cells. The function assumes that the radiation field
+        has been calculated. */
+    void updateSemiDynamicMediumState();
+
     //======================== Data Members ========================
 
 private:
