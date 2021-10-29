@@ -36,7 +36,14 @@ namespace
 
 namespace
 {
-    // TO DO !!
+    // This helper class performs spatial sampling of the medium properties within a given cell and
+    // for a given medium component. The number of samples to be taken can be specified separately
+    // for the density and for all other properties (velocity, magnetic field, metallicity, ...).
+    // The main reason for bundling this functionality in its own class/object is to allow caching
+    // the random sampling positions with the corresponding sampled density values in a cell.
+    // The constructor takes arguments that depend only on the simulation configuration and thus
+    // do not vary between cells. This allows consecutively reusing the same object for multiple
+    // cells, avoiding memory allocation/deallocation for each cell.
     class PropertySampler
     {
     private:
@@ -51,8 +58,9 @@ namespace
         Table<2> _densities;          // indexed on h and n
 
     public:
-        // nr of samples is
-        //   0: sampling function(s) will never be called
+        // The constructor allocates the required memory depending on the sampling configuration.
+        // The number of samples for each type (density or other properties) can be:
+        //   0: the sampling function(s) will never be called
         //   1: "sample" at the cell center only
         //  >1: sample at the specified nr of random points in the cell
         PropertySampler(vector<Medium*>& media, SpatialGrid* grid, int numDensitySamples, int numPropertySamples)
@@ -67,6 +75,9 @@ namespace
             }
         }
 
+        // This function should be called with a spatial cell index before calling any of the other
+        // functions for that cell. It initializes the required sampling positions and obtains the
+        // corresponding sampled density values.
         void prepareForCell(int cellIndex)
         {
             _cellIndex = cellIndex;
@@ -86,13 +97,16 @@ namespace
             }
         }
 
+        // Returns the central or average density in the cell for the given medium component.
         double density(int h)
         {
+            if (_numDensitySamples == 1) return _media[h]->numberDensity(_center);
             double sum = 0.;
             for (int n = 0; n != _numDensitySamples; ++n) sum += _densities(h, n);
             return sum / _numDensitySamples;
         }
 
+        // Returns the central or density-averaged velocity in the cell for the given medium component.
         Vec bulkVelocity(int h)
         {
             if (_numPropertySamples == 1) return _media[h]->bulkVelocity(_center);
@@ -106,12 +120,63 @@ namespace
             return vsum / nsum;
         }
 
+        // Returns the central or average magnetic field in the cell for the given medium component.
+        // Note the magnetic field average is NOT weighed with density.
         Vec magneticField(int h)
         {
             if (_numPropertySamples == 1) return _media[h]->magneticField(_center);
             Vec Bsum;
             for (int n = 0; n != _numPropertySamples; ++n) Bsum += _media[h]->magneticField(_positions[n]);
             return Bsum / _numPropertySamples;
+        }
+
+        // Returns the central or density-averaged metallicity in the cell for the given medium component.
+        double metallicity(int h)
+        {
+            if (_numPropertySamples == 1) return _media[h]->metallicity(_center);
+            double nsum = 0;
+            double Zsum = 0.;
+            for (int n = 0; n != _numPropertySamples; ++n)
+            {
+                nsum += _densities(h, n);
+                Zsum += _densities(h, n) * _media[h]->metallicity(_positions[n]);
+            }
+            return Zsum / nsum;
+        }
+
+        // Returns the central or density-averaged temperature in the cell for the given medium component.
+        double temperature(int h)
+        {
+            if (_numPropertySamples == 1) return _media[h]->temperature(_center);
+            double nsum = 0;
+            double Tsum = 0.;
+            for (int n = 0; n != _numPropertySamples; ++n)
+            {
+                nsum += _densities(h, n);
+                Tsum += _densities(h, n) * _media[h]->temperature(_positions[n]);
+            }
+            return Tsum / nsum;
+        }
+
+        // Returns the central or density-averaged custom parameter values in the cell for the given medium component.
+        void parameters(int h, Array& params)
+        {
+            // always sample at the center to make sure that the output array has the proper size
+            _media[h]->parameters(_center, params);
+            // if center-sampling is requested, we're done
+            if (_numPropertySamples == 1) return;
+            // otherwise, clear the output values and accumulate the samples
+            params = 0.;
+            double nsum = 0;
+            Array sample;
+            for (int n = 0; n != _numPropertySamples; ++n)
+            {
+                nsum += _densities(h, n);
+                _media[h]->parameters(_positions[n], sample);
+                params += _densities(h, n) * sample;
+            }
+            params /= nsum;
+            return;
         }
     };
 }
@@ -215,6 +280,9 @@ void MediumSystem::setupSelfAfter()
     parfac->parallelDistributed()->call(_numCells, [this, log, dic](size_t firstIndex, size_t numIndices) {
         // construct a property sampler to be shared by all cells handled in the loop below
         bool hasProperty = _config->hasMovingMedia() || _config->hasMagneticField();
+        for (int h = 0; h != _numMedia; ++h)
+            if (_media[h]->hasMetallicity() || _media[h]->hasTemperature() || _media[h]->hasParameters())
+                hasProperty = true;
         PropertySampler sampler(_media, _grid, dic ? 0 : _config->numDensitySamples(),
                                 hasProperty ? _config->numPropertySamples() : 0);
 
@@ -291,15 +359,14 @@ void MediumSystem::setupSelfAfter()
                     _state.setMagneticField(m, sampler.magneticField(_config->magneticFieldMediumIndex()));
                 }
 
-                // specific state variables other than density
+                // specific state variables other than density:
+                // retrieve value sampled from corresponding medium component
                 for (int h = 0; h != _numMedia; ++h)
                 {
-                    // retrieve input model temperature and parameters from medium component
-                    Position center = _grid->centralPositionInCell(m);
-                    double Z = _media[h]->hasMetallicity() ? _media[h]->metallicity(center) : -1.;
-                    double T = _media[h]->hasTemperature() ? _media[h]->temperature(center) : -1.;
+                    double Z = _media[h]->hasMetallicity() ? sampler.metallicity(h) : -1.;
+                    double T = _media[h]->hasTemperature() ? sampler.temperature(h) : -1.;
                     Array params;
-                    _media[h]->parameters(center, params);
+                    if (_media[h]->hasParameters()) sampler.parameters(h, params);
                     MaterialState mst(_state, m, h);
                     mix(m, h)->initializeSpecificState(&mst, Z, T, params);
                 }
