@@ -67,7 +67,7 @@ void MonteCarloSimulation::runSimulation()
         runPrimaryEmission();
 
         // secondary emission phase, possibly with dynamic secondary emission iterations
-        if (_config->hasSecondaryIterations()) runDustSelfAbsorptionPhase();
+        if (_config->hasSecondaryIterations()) runSecondaryEmissionIterations();
         if (_config->hasSecondaryEmission()) runSecondaryEmission();
     }
 
@@ -197,22 +197,15 @@ void MonteCarloSimulation::runPrimaryEmission()
 
 ////////////////////////////////////////////////////////////////////
 
-void MonteCarloSimulation::runDustSelfAbsorptionPhase()
+void MonteCarloSimulation::runSecondaryEmissionIterations()
 {
-    TimeLogger logger(log(), "the dust self-absorption phase");
-
-    // get number of photons; return if zero
+    // get number of photons (guaranteed to be nonzero)
     size_t Npp = _config->numSecondaryIterationPackets();
-    if (!Npp)
-    {
-        log()->warning("Skipping dust self-absorption phase because no photon packets were requested");
-        return;
-    }
 
     // get the parallel engine
     auto parallel = find<ParallelFactory>()->parallelDistributed();
 
-    // get the parameters controlling the self-absorption iteration
+    // get the parameters controlling the secondary iteration
     int minIters = _config->minSecondaryIterations();
     int maxIters = _config->maxSecondaryIterations();
     double fractionOfPrimary = _config->maxFractionOfPrimary();
@@ -225,17 +218,17 @@ void MonteCarloSimulation::runDustSelfAbsorptionPhase()
     // when convergence is reached after the minimum number of iterations have been completed
     for (int iter = 1; iter <= maxIters; iter++)
     {
-        string segment = "dust self-absorption iteration " + std::to_string(iter);
+        string segment = "secondary emission iteration " + std::to_string(iter);
         {
             TimeLogger logger(log(), segment);
 
             // clear the secondary radiation field
             mediumSystem()->clearRadiationField(false);
 
-            // prepare the source system; terminate if the dust has zero luminosity (which should never happen)
+            // prepare the source system; terminate if secondary luminosity is zero (which would be very unusual)
             if (!_secondarySourceSystem->prepareForLaunch(Npp))
             {
-                log()->warning("Terminating dust self-absorption phase because the total dust luminosity is zero");
+                log()->warning("Terminating secondary emission iterations because the secondary luminosity is zero");
                 return;
             }
 
@@ -247,6 +240,9 @@ void MonteCarloSimulation::runDustSelfAbsorptionPhase()
             // wait for all processes to finish and synchronize the radiation field
             wait(segment);
             mediumSystem()->communicateRadiationField(false);
+
+            // update semi-dynamic medium state if needed
+            if (_config->hasSemiDynamicState()) mediumSystem()->updateSemiDynamicMediumState();
         }
 
         // determine and log the total absorbed luminosity
@@ -254,7 +250,7 @@ void MonteCarloSimulation::runDustSelfAbsorptionPhase()
         double Labsdust = mediumSystem()->totalAbsorbedDustLuminosity(false);
         log()->info("The total dust-absorbed primary luminosity is "
                     + StringUtils::toString(units()->obolluminosity(Labsprim), 'g') + " " + units()->ubolluminosity());
-        log()->info("The total dust-absorbed dust luminosity in iteration " + std::to_string(iter) + " is "
+        log()->info("The total dust-absorbed secondary luminosity in iteration " + std::to_string(iter) + " is "
                     + StringUtils::toString(units()->obolluminosity(Labsdust), 'g') + " " + units()->ubolluminosity());
 
         // log the current performance and corresponding convergence criteria
@@ -262,14 +258,14 @@ void MonteCarloSimulation::runDustSelfAbsorptionPhase()
         {
             if (iter == 1)
             {
-                log()->info("--> absorbed dust luminosity is "
+                log()->info("--> absorbed secondary luminosity is "
                             + StringUtils::toString(Labsdust / Labsprim * 100., 'f', 2)
-                            + "% of absorbed stellar luminosity (convergence criterion is "
+                            + "% of absorbed primary luminosity (convergence criterion is "
                             + StringUtils::toString(fractionOfPrimary * 100., 'f', 2) + "%)");
             }
             else
             {
-                log()->info("--> absorbed dust luminosity changed by "
+                log()->info("--> absorbed secondary luminosity changed by "
                             + StringUtils::toString(abs((Labsdust - prevLabsdust) / Labsdust) * 100., 'f', 2)
                             + "% compared to previous iteration (convergence criterion is "
                             + StringUtils::toString(fractionOfPrevious * 100., 'f', 2) + "%)");
@@ -284,10 +280,10 @@ void MonteCarloSimulation::runDustSelfAbsorptionPhase()
         else
         {
             // the self-absorption iteration has reached convergence if one or more of the following conditions holds:
-            // - the absorbed stellar luminosity is zero
-            // - the absorbed dust luminosity is zero
-            // - the absorbed dust luminosity is less than a given fraction of the absorbed stellar luminosity
-            // - the absorbed dust luminosity has changed by less than a given fraction compared to the previous iter
+            // - the absorbed primary luminosity is zero
+            // - the absorbed secondary luminosity is zero
+            // - the absorbed secondary luminosity is less than a given fraction of the absorbed primary luminosity
+            // - the absorbed secondary luminosity has changed by less than a given fraction compared to previous iter
             if (Labsprim <= 0. || Labsdust <= 0. || Labsdust / Labsprim < fractionOfPrimary
                 || abs((Labsdust - prevLabsdust) / Labsdust) < fractionOfPrevious)
             {
