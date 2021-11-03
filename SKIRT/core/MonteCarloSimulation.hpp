@@ -275,15 +275,19 @@ private:
         iterations performed is determined by convergence criteria defined by the configured
         dynamic medium state recipe(s).
 
+        The photon packets emitted by this function do not perform peel-off to the instruments
+        because the radiation field has not yet converged. After this function returns, a final
+        segment of primary emission with peel-off must be performed by calling the
+        runPrimaryEmission() function.
+
         Using the notation of the table in the class header documentation, this function implements
         the \f$\overleftarrow{\mathbf{P}_{rs}}\f$ execution flow. */
     void runPrimaryEmissionIterations();
 
-    /** This function runs a single primary source emission segment in configurations that do not
-        require iteration over primary emission. The implemented primary emission segment always
-        includes peel-off. It records radiation field contributions if the configuration requires
-        it (e.g., because secondary emission must be calculated, or because the user configured
-        probes to directly output radiation field information). If the configuration also includes
+    /** This function runs a final primary source emission segment including peel-off towards the
+        instruments. It records radiation field contributions if the configuration requires it
+        (e.g., because secondary emission must be calculated, or because the user configured probes
+        to directly output radiation field information). If the configuration also includes
         emission, any semi-dynamic state media in the simulation receive an update request at the
         end of the segment.
 
@@ -292,27 +296,46 @@ private:
         \f$\mathbf{P}^p_{r(s)}\f$, depending on the relevant configuration options. */
     void runPrimaryEmission();
 
-    /** This function runs the dust self-absorption phase. This phase includes a series of
-        intermediate secondary source emission segments in an iteration to self-consistently
-        calculate the radiation field, taking into account the fraction of dust emission absorbed
-        by the dust itself. The intermediate secondary emission segments do not perform peel-off
-        towards the instruments (because the radiation field is not yet converged). They record
-        radiation field contributions in a seperate table, so that the radiation field resulting
-        from primary emission remains untouched and can be reused.
+    /** This function iteratively runs consecutive secondary source emission segments to
+        self-consistently calculate the radiation field in models where the secondary emission
+        spectrum and the total (primary plus secondary) radiation field significantly depend on
+        each other. A typical example is a model where the dust medium is sufficiently opaque at
+        infrared wavelengths to cause significant self-absorption and thus additional heating.
 
-        The minimum and maximum number of iterations can be specified as configuration options.
-        Within these limits, the actual number of iterations performed is determined by convergence
-        criteria which can also be specified as configuration options. Convergence is reached (and
-        the function exits) when (a) the absorbed dust luminosity is less than a given fraction of
-        the absorbed stellar luminosity, \em OR (b) the absorbed dust luminosity has changed by
-        less than a given fraction compared to the previous iteration. */
-    void runDustSelfAbsorptionPhase();
+        Each segment in the iteration tracks photon packets through the medium to calculate the
+        radiation field resulting from the secondary sources in the simulation. The subsequent
+        segment then recalculates the secondary emission spectrum based on the newly established
+        total (primary and secondary) radiation field. The number of photon packets launched for
+        each segment can be configured as a multiplication factor on the default number of primary
+        photon packets. The minimum and maximum number of iterations can also be specified as
+        configuration options. Within these limits, the actual number of iterations performed is
+        determined by user-configured convergence criteria. Specifically, convergence is reached
+        when (a) the absorbed secondary luminosity is less than a given fraction of the absorbed
+        primary luminosity, \em OR (b) the absorbed secondary luminosity has changed by less than a
+        given fraction compared to the previous iteration.
 
-    /** This function runs the final secondary source emission segment. It implements a
-        parallelized loop that iterates over the configured number of photon packets and drives the
-        photon packet life cycle for each. The final secondary emission segment includes peel-off
-        but does not record radiation field contributions, because the radiation field is assumed
-        to be converged (or simply immutable). */
+        \note In the current implementation, the convergence criteria are based solely on dust
+        absorption. For proper operation, this function thus requires the simulated model to
+        contain one or more dust components and have dust emission enabled.
+
+        Any semi-dynamic state media in the simulation receive an update request at the end of each
+        segment.
+
+        The photon packets emitted by this function do not perform peel-off to the instruments
+        because the radiation field has not yet converged. After this function returns, a final
+        segment of secondary emission with peel-off must be performed by calling the
+        runSecondaryEmission() function.
+
+        Using the notation of the table in the class header documentation, this function implements
+        the \f$\overleftarrow{\mathbf{S}_{r(s)}}\f$ execution flow. */
+    void runSecondaryEmissionIterations();
+
+    /** This function runs a final secondary source emission segment including peel-off towards the
+        instruments. It records radiation field contributions if the configuration requires it
+        (e.g., because the user configured probes to directly output radiation field information).
+
+        Using the notation of the table in the class header documentation, this function implements
+        the \f$\mathbf{S}^p_{(r)}\f$ execution flow. */
     void runSecondaryEmission();
 
     /** In a multi-processing environment, this function logs a message and waits for all processes
