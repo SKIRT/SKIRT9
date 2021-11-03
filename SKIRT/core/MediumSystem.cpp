@@ -965,20 +965,22 @@ void MediumSystem::communicateRadiationField(bool primary)
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::totalAbsorbedDustLuminosity(bool primary) const
+std::pair<double, double> MediumSystem::totalDustAbsorbedLuminosity() const
 {
-    double Labs = 0.;
+    double Labs1 = 0.;
+    double Labs2 = 0.;
     int numWavelengths = _wavelengthGrid->numBins();
     for (int ell = 0; ell != numWavelengths; ++ell)
     {
         double lambda = _wavelengthGrid->wavelength(ell);
         for (int m = 0; m != _numCells; ++m)
         {
-            double rf = primary ? _rf1(m, ell) : _rf2(m, ell);
-            Labs += opacityAbs(lambda, m, MaterialMix::MaterialType::Dust) * rf;
+            double opacity = opacityAbs(lambda, m, MaterialMix::MaterialType::Dust);
+            Labs1 += opacity * _rf1(m, ell);
+            Labs2 += opacity * _rf2(m, ell);
         }
     }
-    return Labs;
+    return std::make_pair(Labs1, Labs2);
 }
 
 ////////////////////////////////////////////////////////////////////
