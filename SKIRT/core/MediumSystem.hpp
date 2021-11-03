@@ -488,12 +488,12 @@ public:
         synchronized and its contents is copied into the stable secondary table. */
     void communicateRadiationField(bool primary);
 
-    /** This function returns the bolometric luminosity absorbed by dust media across the complete
-        domain of the spatial grid, using the partial radiation field stored in the table indicated
-        by the \em primary flag (true for the primary table, false for the stable secondary table).
-        The bolometric absorbed luminosity in each cell is calculated as described for the
-        absorbedDustLuminosity() function. */
-    double totalAbsorbedDustLuminosity(bool primary) const;
+    /** This function returns a pair of values specifying the bolometric luminosity absorbed by
+        dust media across the complete domain of the spatial grid, respectively using the partial
+        radiation field stored in the primary table and the stable secondary table. The bolometric
+        absorbed luminosity in each cell is calculated as described for the dustLuminosity()
+        function. */
+    std::pair<double, double> totalDustAbsorbedLuminosity() const;
 
 private:
     /** This function returns the sum of the values in both the primary and the stable secondary

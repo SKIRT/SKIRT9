@@ -246,27 +246,27 @@ void MonteCarloSimulation::runSecondaryEmissionIterations()
         }
 
         // determine and log the total absorbed luminosity
-        double Labsprim = mediumSystem()->totalAbsorbedDustLuminosity(true);
-        double Labsdust = mediumSystem()->totalAbsorbedDustLuminosity(false);
+        double Labsprim, Labsseco;
+        std::tie(Labsprim, Labsseco) = mediumSystem()->totalDustAbsorbedLuminosity();
         log()->info("The total dust-absorbed primary luminosity is "
                     + StringUtils::toString(units()->obolluminosity(Labsprim), 'g') + " " + units()->ubolluminosity());
         log()->info("The total dust-absorbed secondary luminosity in iteration " + std::to_string(iter) + " is "
-                    + StringUtils::toString(units()->obolluminosity(Labsdust), 'g') + " " + units()->ubolluminosity());
+                    + StringUtils::toString(units()->obolluminosity(Labsseco), 'g') + " " + units()->ubolluminosity());
 
         // log the current performance and corresponding convergence criteria
-        if (Labsprim > 0. && Labsdust > 0.)
+        if (Labsprim > 0. && Labsseco > 0.)
         {
             if (iter == 1)
             {
                 log()->info("--> absorbed secondary luminosity is "
-                            + StringUtils::toString(Labsdust / Labsprim * 100., 'f', 2)
+                            + StringUtils::toString(Labsseco / Labsprim * 100., 'f', 2)
                             + "% of absorbed primary luminosity (convergence criterion is "
                             + StringUtils::toString(fractionOfPrimary * 100., 'f', 2) + "%)");
             }
             else
             {
                 log()->info("--> absorbed secondary luminosity changed by "
-                            + StringUtils::toString(abs((Labsdust - prevLabsdust) / Labsdust) * 100., 'f', 2)
+                            + StringUtils::toString(abs((Labsseco - prevLabsdust) / Labsseco) * 100., 'f', 2)
                             + "% compared to previous iteration (convergence criterion is "
                             + StringUtils::toString(fractionOfPrevious * 100., 'f', 2) + "%)");
             }
@@ -284,8 +284,8 @@ void MonteCarloSimulation::runSecondaryEmissionIterations()
             // - the absorbed secondary luminosity is zero
             // - the absorbed secondary luminosity is less than a given fraction of the absorbed primary luminosity
             // - the absorbed secondary luminosity has changed by less than a given fraction compared to previous iter
-            if (Labsprim <= 0. || Labsdust <= 0. || Labsdust / Labsprim < fractionOfPrimary
-                || abs((Labsdust - prevLabsdust) / Labsdust) < fractionOfPrevious)
+            if (Labsprim <= 0. || Labsseco <= 0. || Labsseco / Labsprim < fractionOfPrimary
+                || abs((Labsseco - prevLabsdust) / Labsseco) < fractionOfPrevious)
             {
                 log()->info("Convergence reached after " + std::to_string(iter) + " iterations");
                 return;  // end the iteration by returning from the function
@@ -295,7 +295,7 @@ void MonteCarloSimulation::runSecondaryEmissionIterations()
                 log()->info("Convergence not yet reached after " + std::to_string(iter) + " iterations");
             }
         }
-        prevLabsdust = Labsdust;
+        prevLabsdust = Labsseco;
     }
 
     // if the loop runs out, convergence was not reached even after the maximum number of iterations
