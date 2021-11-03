@@ -62,16 +62,12 @@ void MonteCarloSimulation::runSimulation()
     {
         TimeLogger logger(log(), "the run");
 
-        // primary emission segment, possibly with dynamic medium state iterations
-        if (_config->hasPrimaryIterations() && sourceSystem()->luminosity())
-            runPrimaryEmissionWithIterations();
-        else
-            runPrimaryEmission();
+        // primary emission phase, possibly with dynamic medium state iterations
+        if (_config->hasPrimaryIterations() && sourceSystem()->luminosity()) runPrimaryEmissionIterations();
+        runPrimaryEmission();
 
-        // dust self-absorption iteration segments
+        // secondary emission phase, possibly with dynamic secondary emission iterations
         if (_config->hasSecondaryIterations()) runDustSelfAbsorptionPhase();
-
-        // secondary emission segment
         if (_config->hasSecondaryEmission()) runSecondaryEmission();
     }
 
@@ -90,51 +86,11 @@ void MonteCarloSimulation::runSimulation()
 
 ////////////////////////////////////////////////////////////////////
 
-void MonteCarloSimulation::runPrimaryEmission()
-{
-    string segment = "primary emission";
-    TimeLogger logger(log(), segment);
-
-    // clear the radiation field
-    if (_config->hasRadiationField()) mediumSystem()->clearRadiationField(true);
-
-    // shoot photons from primary sources, if needed
-    size_t Npp = _config->numPrimaryPackets();
-    if (!Npp)
-    {
-        log()->warning("Skipping primary emission because no photon packets were requested");
-    }
-    else if (!sourceSystem()->luminosity())
-    {
-        log()->warning("Skipping primary emission because the total luminosity of primary sources is zero");
-    }
-    else
-    {
-        initProgress(segment, Npp);
-        sourceSystem()->prepareForLaunch(Npp);
-        auto parallel = find<ParallelFactory>()->parallelDistributed();
-        parallel->call(
-            Npp, [this](size_t i, size_t n) { performLifeCycle(i, n, true, true, _config->hasRadiationField()); });
-        instrumentSystem()->flush();
-    }
-
-    // wait for all processes to finish and synchronize the radiation field
-    wait(segment);
-    if (_config->hasRadiationField()) mediumSystem()->communicateRadiationField(true);
-
-    // update semi-dynamic medium state if needed
-    if (_config->hasSemiDynamicState()) mediumSystem()->updateSemiDynamicMediumState();
-}
-
-////////////////////////////////////////////////////////////////////
-
-void MonteCarloSimulation::runPrimaryEmissionWithIterations()
+void MonteCarloSimulation::runPrimaryEmissionIterations()
 {
     // when this function is called
     //  - the number of photon packets and the source luminosity are guaranteed to be nonzero
     //  - the data structures to store the radiation field are guaranteed to exist
-
-    TimeLogger logger(log(), "the primary emission phase");
 
     // get the parallel engine
     auto parallel = find<ParallelFactory>()->parallelDistributed();
@@ -199,31 +155,44 @@ void MonteCarloSimulation::runPrimaryEmissionWithIterations()
             break;
         }
     }
+}
 
-    // update the number of photon packets
-    Npp = _config->numPrimaryPackets();
-    sourceSystem()->prepareForLaunch(Npp);
+////////////////////////////////////////////////////////////////////
 
-    // perform the final photon launching segment
+void MonteCarloSimulation::runPrimaryEmission()
+{
+    string segment = "primary emission";
+    TimeLogger logger(log(), segment);
+
+    // clear the radiation field
+    if (_config->hasRadiationField()) mediumSystem()->clearRadiationField(true);
+
+    // shoot photons from primary sources, if needed
+    size_t Npp = _config->numPrimaryPackets();
+    if (!Npp)
     {
-        string segment = "final primary emission";
-        TimeLogger logger(log(), segment);
-
-        // clear the radiation field
-        mediumSystem()->clearRadiationField(true);
-
-        // shoot photon packets
-        initProgress(segment, Npp);
-        parallel->call(Npp, [this](size_t i, size_t n) { performLifeCycle(i, n, true, true, true); });
-        instrumentSystem()->flush();
-
-        // wait for all processes to finish and synchronize the radiation field
-        wait(segment);
-        mediumSystem()->communicateRadiationField(true);
-
-        // update semi-dynamic medium state if needed
-        if (_config->hasSemiDynamicState()) mediumSystem()->updateSemiDynamicMediumState();
+        log()->warning("Skipping primary emission because no photon packets were requested");
     }
+    else if (!sourceSystem()->luminosity())
+    {
+        log()->warning("Skipping primary emission because the total luminosity of primary sources is zero");
+    }
+    else
+    {
+        initProgress(segment, Npp);
+        sourceSystem()->prepareForLaunch(Npp);
+        auto parallel = find<ParallelFactory>()->parallelDistributed();
+        parallel->call(
+            Npp, [this](size_t i, size_t n) { performLifeCycle(i, n, true, true, _config->hasRadiationField()); });
+        instrumentSystem()->flush();
+    }
+
+    // wait for all processes to finish and synchronize the radiation field
+    wait(segment);
+    if (_config->hasRadiationField()) mediumSystem()->communicateRadiationField(true);
+
+    // update semi-dynamic medium state if needed
+    if (_config->hasSemiDynamicState()) mediumSystem()->updateSemiDynamicMediumState();
 }
 
 ////////////////////////////////////////////////////////////////////
