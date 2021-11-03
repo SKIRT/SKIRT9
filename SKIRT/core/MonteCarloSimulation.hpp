@@ -262,19 +262,6 @@ protected:
     void runSimulation() override;
 
 private:
-    /** This function runs a single primary source emission segment in configurations that do not
-        require iteration over primary emission. The implemented primary emission segment always
-        includes peel-off. It records radiation field contributions if the configuration requires
-        it (e.g., because secondary emission must be calculated, or because the user configured
-        probes to directly output radiation field information). If the configuration also includes
-        emission, any semi-dynamic state media in the simulation receive an update request at the
-        end of the segment.
-
-        Using the notation of the table in the class header documentation, this function implements
-        \f$\mathbf{P}^p\f$, \f$\mathbf{P}^p_{(r)}\f$, or \f$\mathbf{P}^p_{r(s)}\f$ depending on the
-        relevant configuration options. */
-    void runPrimaryEmission();
-
     /** This function iteratively runs consecutive primary source emission segments to
         self-consistently calculate the radiation field taking into account one or more recipes for
         updating the dynamic medium state as a function of the radiation field. See the
@@ -288,15 +275,22 @@ private:
         iterations performed is determined by convergence criteria defined by the configured
         dynamic medium state recipe(s).
 
-        After the iterations have completed (with or without convergence), the function performs a
-        final segment of primary emission photon launching that now includes peel-off towards the
-        instruments.
+        Using the notation of the table in the class header documentation, this function implements
+        the \f$\overleftarrow{\mathbf{P}_{rs}}\f$ execution flow. */
+    void runPrimaryEmissionIterations();
+
+    /** This function runs a single primary source emission segment in configurations that do not
+        require iteration over primary emission. The implemented primary emission segment always
+        includes peel-off. It records radiation field contributions if the configuration requires
+        it (e.g., because secondary emission must be calculated, or because the user configured
+        probes to directly output radiation field information). If the configuration also includes
+        emission, any semi-dynamic state media in the simulation receive an update request at the
+        end of the segment.
 
         Using the notation of the table in the class header documentation, this function implements
-        \f$\overleftarrow{\mathbf{P}_{rs}} \;\rightarrow\; \mathbf{P}^p_{(r)}\f$ or
-        \f$\overleftarrow{\mathbf{P}_{rs}} \;\rightarrow\; \mathbf{P}^p_{r(s)}\f$ depending on the
-        relevant configuration options. */
-    void runPrimaryEmissionWithIterations();
+        the execution flow \f$\mathbf{P}^p\f$, \f$\mathbf{P}^p_{(r)}\f$, or
+        \f$\mathbf{P}^p_{r(s)}\f$, depending on the relevant configuration options. */
+    void runPrimaryEmission();
 
     /** This function runs the dust self-absorption phase. This phase includes a series of
         intermediate secondary source emission segments in an iteration to self-consistently
