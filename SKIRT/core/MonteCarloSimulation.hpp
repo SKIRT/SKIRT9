@@ -262,6 +262,26 @@ protected:
     void runSimulation() override;
 
 private:
+    /** This function runs a final primary source emission segment including peel-off towards the
+        instruments. It records radiation field contributions if the configuration requires it
+        (e.g., because secondary emission must be calculated, or because the user configured probes
+        to directly output radiation field information). If the configuration also includes
+        emission, any semi-dynamic state media in the simulation receive an update request at the
+        end of the segment.
+
+        Using the notation of the table in the class header documentation, this function implements
+        the execution flow \f$\mathbf{P}^p\f$, \f$\mathbf{P}^p_{(r)}\f$, or
+        \f$\mathbf{P}^p_{r(s)}\f$, depending on the relevant configuration options. */
+    void runPrimaryEmission();
+
+    /** This function runs a final secondary source emission segment including peel-off towards the
+        instruments. It records radiation field contributions if the configuration requires it
+        (e.g., because the user configured probes to directly output radiation field information).
+
+        Using the notation of the table in the class header documentation, this function implements
+        the \f$\mathbf{S}^p_{(r)}\f$ execution flow. */
+    void runSecondaryEmission();
+
     /** This function iteratively runs consecutive primary source emission segments to
         self-consistently calculate the radiation field taking into account one or more recipes for
         updating the dynamic medium state as a function of the radiation field. See the
@@ -283,18 +303,6 @@ private:
         Using the notation of the table in the class header documentation, this function implements
         the \f$\overleftarrow{\mathbf{P}_{rs}}\f$ execution flow. */
     void runPrimaryEmissionIterations();
-
-    /** This function runs a final primary source emission segment including peel-off towards the
-        instruments. It records radiation field contributions if the configuration requires it
-        (e.g., because secondary emission must be calculated, or because the user configured probes
-        to directly output radiation field information). If the configuration also includes
-        emission, any semi-dynamic state media in the simulation receive an update request at the
-        end of the segment.
-
-        Using the notation of the table in the class header documentation, this function implements
-        the execution flow \f$\mathbf{P}^p\f$, \f$\mathbf{P}^p_{(r)}\f$, or
-        \f$\mathbf{P}^p_{r(s)}\f$, depending on the relevant configuration options. */
-    void runPrimaryEmission();
 
     /** This function iteratively runs consecutive secondary source emission segments to
         self-consistently calculate the radiation field in models where the secondary emission
@@ -330,13 +338,33 @@ private:
         the \f$\overleftarrow{\mathbf{S}_{r(s)}}\f$ execution flow. */
     void runSecondaryEmissionIterations();
 
-    /** This function runs a final secondary source emission segment including peel-off towards the
-        instruments. It records radiation field contributions if the configuration requires it
-        (e.g., because the user configured probes to directly output radiation field information).
+    /** This function iteratively runs consecutive primary and secondary source emission segments
+        to self-consistently calculate the radiation field in models that have both a dynamic
+        medium state (the extinction properties depend on the radiation field) and dynamic
+        secondary emission (the emission spectrum depends on the radiation field), and the user
+        requested to include the primary emission in secondary emission iterations. This would be
+        meaningful in case the changes in the radiation field caused by secondary emission could
+        sufficiently influence the medium state to significantly affect the results of primary
+        emission.
+
+        The iteration is considered to be converged only when both the criteria for primary
+        emission iteration and those for secondary emission iteration are satisfied; for more
+        information see the runPrimaryEmissionIterations() and runSecondaryEmissionIterations()
+        functions.
+
+        Any semi-dynamic state media in the simulation receive an update request at the end of each
+        primary segment, and the dynamic state recipes are requested to update the dynamic state
+        after each secondary emission segment.
+
+        The photon packets emitted by this function do not perform peel-off to the instruments
+        because the radiation field has not yet converged. After this function returns, a final
+        segment of secondary emission with peel-off must be performed by calling the
+        runSecondaryEmission() function.
 
         Using the notation of the table in the class header documentation, this function implements
-        the \f$\mathbf{S}^p_{(r)}\f$ execution flow. */
-    void runSecondaryEmission();
+        the \f$\overleftarrow{\mathbf{P}_{r(s)} \;\rightarrow\; \mathbf{S}_{rs}}\f$ execution flow.
+        */
+    void runMergedEmissionIterations();
 
     /** In a multi-processing environment, this function logs a message and waits for all processes
         to finish the work (i.e. it places a barrier). The string argument is included in the log

@@ -62,13 +62,29 @@ void MonteCarloSimulation::runSimulation()
     {
         TimeLogger logger(log(), "the run");
 
-        // primary emission phase, possibly with dynamic medium state iterations
-        if (_config->hasPrimaryIterations() && sourceSystem()->luminosity()) runPrimaryEmissionIterations();
-        runPrimaryEmission();
+        bool hasPrimaryLuminosity = sourceSystem()->luminosity() > 0.;
 
-        // secondary emission phase, possibly with dynamic secondary emission iterations
-        if (_config->hasSecondaryIterations()) runSecondaryEmissionIterations();
-        if (_config->hasSecondaryEmission()) runSecondaryEmission();
+        // special case of merged primary and secondary iterations
+        if (_config->hasMergedIterations() && hasPrimaryLuminosity)
+        {
+            runPrimaryEmissionIterations();
+            runMergedEmissionIterations();
+            runPrimaryEmission();
+            runSecondaryEmission();
+        }
+        else
+        {
+            // primary emission phase, possibly with dynamic medium state iterations
+            if (_config->hasPrimaryIterations() && hasPrimaryLuminosity) runPrimaryEmissionIterations();
+            runPrimaryEmission();
+
+            // optional secondary emission phase, possibly with dynamic secondary emission iterations
+            if (_config->hasSecondaryEmission())
+            {
+                if (_config->hasSecondaryIterations()) runSecondaryEmissionIterations();
+                runSecondaryEmission();
+            }
+        }
     }
 
     // write final output
@@ -82,6 +98,77 @@ void MonteCarloSimulation::runSimulation()
         instrumentSystem()->flush();
         instrumentSystem()->write();
     }
+}
+
+////////////////////////////////////////////////////////////////////
+
+void MonteCarloSimulation::runPrimaryEmission()
+{
+    string segment = "primary emission";
+    TimeLogger logger(log(), segment);
+
+    // clear the radiation field
+    if (_config->hasRadiationField()) mediumSystem()->clearRadiationField(true);
+
+    // shoot photons from primary sources, if needed
+    size_t Npp = _config->numPrimaryPackets();
+    if (!Npp)
+    {
+        log()->warning("Skipping primary emission because no photon packets were requested");
+    }
+    else if (!sourceSystem()->luminosity())
+    {
+        log()->warning("Skipping primary emission because the total luminosity of primary sources is zero");
+    }
+    else
+    {
+        initProgress(segment, Npp);
+        sourceSystem()->prepareForLaunch(Npp);
+        auto parallel = find<ParallelFactory>()->parallelDistributed();
+        parallel->call(
+            Npp, [this](size_t i, size_t n) { performLifeCycle(i, n, true, true, _config->hasRadiationField()); });
+        instrumentSystem()->flush();
+    }
+
+    // wait for all processes to finish and synchronize the radiation field
+    wait(segment);
+    if (_config->hasRadiationField()) mediumSystem()->communicateRadiationField(true);
+
+    // update semi-dynamic medium state if needed
+    if (_config->hasSemiDynamicState()) mediumSystem()->updateSemiDynamicMediumState();
+}
+
+////////////////////////////////////////////////////////////////////
+
+void MonteCarloSimulation::runSecondaryEmission()
+{
+    string segment = "secondary emission";
+    TimeLogger logger(log(), segment);
+
+    // determine whether we need to store the radiation field during secondary emission
+    bool storeRF = _config->storeEmissionRadiationField();
+
+    // shoot photons from secondary sources, if needed
+    size_t Npp = _config->numSecondaryPackets();
+    if (!Npp)
+    {
+        log()->warning("Skipping secondary emission because no photon packets were requested");
+    }
+    else if (!_secondarySourceSystem->prepareForLaunch(Npp))
+    {
+        log()->warning("Skipping secondary emission because the total luminosity of secondary sources is zero");
+    }
+    else
+    {
+        initProgress(segment, Npp);
+        auto parallel = find<ParallelFactory>()->parallelDistributed();
+        parallel->call(Npp, [this, storeRF](size_t i, size_t n) { performLifeCycle(i, n, false, true, storeRF); });
+        instrumentSystem()->flush();
+    }
+
+    // wait for all processes to finish and synchronize the radiation field if needed
+    wait(segment);
+    if (storeRF) mediumSystem()->communicateRadiationField(false);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -155,44 +242,6 @@ void MonteCarloSimulation::runPrimaryEmissionIterations()
             break;
         }
     }
-}
-
-////////////////////////////////////////////////////////////////////
-
-void MonteCarloSimulation::runPrimaryEmission()
-{
-    string segment = "primary emission";
-    TimeLogger logger(log(), segment);
-
-    // clear the radiation field
-    if (_config->hasRadiationField()) mediumSystem()->clearRadiationField(true);
-
-    // shoot photons from primary sources, if needed
-    size_t Npp = _config->numPrimaryPackets();
-    if (!Npp)
-    {
-        log()->warning("Skipping primary emission because no photon packets were requested");
-    }
-    else if (!sourceSystem()->luminosity())
-    {
-        log()->warning("Skipping primary emission because the total luminosity of primary sources is zero");
-    }
-    else
-    {
-        initProgress(segment, Npp);
-        sourceSystem()->prepareForLaunch(Npp);
-        auto parallel = find<ParallelFactory>()->parallelDistributed();
-        parallel->call(
-            Npp, [this](size_t i, size_t n) { performLifeCycle(i, n, true, true, _config->hasRadiationField()); });
-        instrumentSystem()->flush();
-    }
-
-    // wait for all processes to finish and synchronize the radiation field
-    wait(segment);
-    if (_config->hasRadiationField()) mediumSystem()->communicateRadiationField(true);
-
-    // update semi-dynamic medium state if needed
-    if (_config->hasSemiDynamicState()) mediumSystem()->updateSemiDynamicMediumState();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -304,35 +353,9 @@ void MonteCarloSimulation::runSecondaryEmissionIterations()
 
 ////////////////////////////////////////////////////////////////////
 
-void MonteCarloSimulation::runSecondaryEmission()
+void MonteCarloSimulation::runMergedEmissionIterations()
 {
-    string segment = "secondary emission";
-    TimeLogger logger(log(), segment);
-
-    // determine whether we need to store the radiation field during secondary emission
-    bool storeRF = _config->storeEmissionRadiationField();
-
-    // shoot photons from secondary sources, if needed
-    size_t Npp = _config->numSecondaryPackets();
-    if (!Npp)
-    {
-        log()->warning("Skipping secondary emission because no photon packets were requested");
-    }
-    else if (!_secondarySourceSystem->prepareForLaunch(Npp))
-    {
-        log()->warning("Skipping secondary emission because the total luminosity of secondary sources is zero");
-    }
-    else
-    {
-        initProgress(segment, Npp);
-        auto parallel = find<ParallelFactory>()->parallelDistributed();
-        parallel->call(Npp, [this, storeRF](size_t i, size_t n) { performLifeCycle(i, n, false, true, storeRF); });
-        instrumentSystem()->flush();
-    }
-
-    // wait for all processes to finish and synchronize the radiation field if needed
-    wait(segment);
-    if (storeRF) mediumSystem()->communicateRadiationField(false);
+    throw FATALERROR("Including primary emission in secondary emission iterations is not yet implemented");
 }
 
 ////////////////////////////////////////////////////////////////////
