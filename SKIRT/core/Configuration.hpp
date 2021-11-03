@@ -238,9 +238,9 @@ public:
     /** Returns true if the simulation iterates over secondary emission, and false otherwise. */
     bool hasSecondaryIterations() const { return _hasSecondaryIterations; }
 
-    /** Returns true if the iterations over secondary emission include primary emission, and false
-        otherwise. */
-    bool includePrimaryEmission() const { return _includePrimaryEmission; }
+    /** Returns true if the simulation iterates over both primary and secondary emission and the
+        iterations over secondary emission should include primary emission, and false otherwise. */
+    bool hasMergedIterations() const { return _hasMergedIterations; }
 
     /** Returns the minimum number of iterations in the primary emission phase. */
     int minPrimaryIterations() const { return _minPrimaryIterations; }
@@ -427,7 +427,7 @@ private:
     bool _hasSecondaryEmission{false};
     bool _hasPrimaryIterations{false};
     bool _hasSecondaryIterations{false};
-    bool _includePrimaryEmission{false};
+    bool _hasMergedIterations{false};
     int _minPrimaryIterations{1};
     int _maxPrimaryIterations{10};
     int _minSecondaryIterations{1};

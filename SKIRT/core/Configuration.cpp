@@ -188,7 +188,7 @@ void Configuration::setupSelfBefore()
         {
             _minSecondaryIterations = ms->iterationOptions()->minSecondaryIterations();
             _maxSecondaryIterations = max(_minSecondaryIterations, ms->iterationOptions()->maxSecondaryIterations());
-            if (_hasPrimaryIterations) _includePrimaryEmission = ms->iterationOptions()->includePrimaryEmission();
+            if (_hasPrimaryIterations) _hasMergedIterations = ms->iterationOptions()->includePrimaryEmission();
         }
         else
             _hasSecondaryIterations = false;
@@ -357,7 +357,7 @@ void Configuration::setupSelfAfter()
 
     if (_hasPrimaryIterations && _hasSecondaryIterations)
     {
-        if (_includePrimaryEmission)
+        if (_hasMergedIterations)
             log->info("  Iterating over primary emission, and then over primary and secondary emission");
         else
             log->info("  Iterating over primary emission, and then over secondary emission");
@@ -430,7 +430,7 @@ void Configuration::setEmulationMode()
     _hasDynamicState = false;
     _hasPrimaryIterations = false;
     _hasSecondaryIterations = false;
-    _includePrimaryEmission = false;
+    _hasMergedIterations = false;
     _minPrimaryIterations = 0;
     _maxPrimaryIterations = 0;
     _minSecondaryIterations = 0;
