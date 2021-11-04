@@ -53,6 +53,9 @@ void SecondarySourceSystem::installLaunchCallBack(ProbePhotonPacketInterface* ca
 
 bool SecondarySourceSystem::prepareForLaunch(size_t numPackets)
 {
+    // this is a HACK until we implement gas emission
+    if (!_config->hasDustEmission()) return false;
+
     int numCells = _ms->numCells();
 
     // --------- luminosities 1 ---------

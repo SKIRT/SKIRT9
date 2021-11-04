@@ -279,7 +279,8 @@ void MonteCarloSimulation::runSecondaryEmissionIterations()
             // prepare the source system; terminate if secondary luminosity is zero (which would be very unusual)
             if (!_secondarySourceSystem->prepareForLaunch(Npp))
             {
-                log()->warning("Terminating secondary emission iterations because the secondary luminosity is zero");
+                log()->warning(
+                    "Skipping secondary emission iterations because the total luminosity of secondary sources is zero");
                 return;
             }
 
