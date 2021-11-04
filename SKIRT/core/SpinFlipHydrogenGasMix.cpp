@@ -4,9 +4,26 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "SpinFlipHydrogenGasMix.hpp"
+#include "Configuration.hpp"
 #include "Constants.hpp"
+#include "DisjointWavelengthGrid.hpp"
+#include "FatalError.hpp"
 #include "MaterialState.hpp"
 #include "PhotonPacket.hpp"
+
+////////////////////////////////////////////////////////////////////
+
+void SpinFlipHydrogenGasMix::setupSelfBefore()
+{
+    const double lambdaUV = 1000e-10;  // 1000 Angstrom
+
+    auto config = find<Configuration>();
+    if (config->hasSecondaryEmission())
+    {
+        _indexUV = config->radiationFieldWLG()->bin(lambdaUV);
+        if (_indexUV < 0) throw FATALERROR("Radiation field wavelength grid does not include 1000 Angstrom");
+    }
+}
 
 ////////////////////////////////////////////////////////////////////
 
@@ -48,7 +65,8 @@ vector<SnapshotParameter> SpinFlipHydrogenGasMix::parameterInfo() const
 vector<StateVariable> SpinFlipHydrogenGasMix::specificStateVariableInfo() const
 {
     return vector<StateVariable>{StateVariable::numberDensity(), StateVariable::metallicity(),
-                                 StateVariable::temperature(), StateVariable::custom(0, "dust-to-gas ratio", "")};
+                                 StateVariable::temperature(), StateVariable::custom(0, "dust-to-gas ratio", ""),
+                                 StateVariable::custom(1, "UV field strength", "wavelengthmeanintensity")};
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -64,7 +82,17 @@ void SpinFlipHydrogenGasMix::initializeSpecificState(MaterialState* state, doubl
         state->setMetallicity(metallicity >= 0. ? metallicity : defaultMetallicity());
         state->setTemperature(max(Constants::Tcmb(), temperature >= 0. ? temperature : defaultTemperature()));
         state->setCustom(0, params.size() ? params[0] : defaultDustToGasRatio());
+        state->setCustom(1, 0.);
     }
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool SpinFlipHydrogenGasMix::updateSpecificState(MaterialState* state, const Array& Jv) const
+{
+    if (_indexUV < 0) throw FATALERROR("State update should not be called if there is no radiation field");
+    state->setCustom(1, Jv[_indexUV]);
+    return true;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -78,7 +106,7 @@ double SpinFlipHydrogenGasMix::mass() const
 
 double SpinFlipHydrogenGasMix::sectionAbs(double /*lambda*/) const
 {
-    return 0.;
+    return 0.;  // TO DO
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -100,7 +128,7 @@ double SpinFlipHydrogenGasMix::sectionExt(double lambda) const
 double SpinFlipHydrogenGasMix::opacityAbs(double /*lambda*/, const MaterialState* /*state*/,
                                           const PhotonPacket* /*pp*/) const
 {
-    return 0.;
+    return 0.;  // TO DO
 }
 
 ////////////////////////////////////////////////////////////////////

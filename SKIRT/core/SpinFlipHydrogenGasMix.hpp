@@ -50,6 +50,10 @@ class SpinFlipHydrogenGasMix : public EmittingGasMix
     //============= Construction - Setup - Destruction =============
 
 protected:
+    /** This function determines the radiation field wavelength bin containing the UV field
+        strength. */
+    void setupSelfBefore() override;
+
     //======== Capabilities =======
 
 public:
@@ -80,17 +84,25 @@ public:
 
     /** This function returns a list of StateVariable objects describing the specific state
         variables used by the receiving material mix. For this class, the function returns a list
-        containing descriptors for number density, metallicity, temperature and one custom variable
-        to hold the dust-to-gas-ratio. */
+        containing descriptors for number density, metallicity, temperature, a custom variable to
+        hold the dust-to-gas-ratio, and a custom variable to hold the UV field strength derived
+        from the radiation field when the semi-dynamic medium state is updated. */
     vector<StateVariable> specificStateVariableInfo() const override;
 
     /** This function initializes the specific state variables requested by this fragmented dust
         mix through the specificStateVariableInfo() function except for the number density. For
         this class, the function initializes the temperature, metallicity and dust-to-gas ratio to
         the specified imported values, or if not available, to the user-configured default values.
-        */
+        The UV field strength is set to zero. */
     void initializeSpecificState(MaterialState* state, double metallicity, double temperature,
                                  const Array& params) const override;
+
+    //======== Medium state updates =======
+
+    /** Based on the specified radiation field, the function obtains the UV field strength and
+        stores it in the medium state for the specified cell. The function returns true if the
+        medium state has indeed be changed, and false otherwise. */
+    bool updateSpecificState(MaterialState* state, const Array& Jv) const override;
 
     //======== Low-level material properties =======
 
@@ -154,6 +166,7 @@ public:
     //======================== Data Members ========================
 
 private:
+    int _indexUV{-1};  // index in simulation's RF WLG for the bin containing 1000 A
 };
 
 ////////////////////////////////////////////////////////////////////
