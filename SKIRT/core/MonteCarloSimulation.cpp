@@ -146,7 +146,9 @@ void MonteCarloSimulation::runSecondaryEmission()
     TimeLogger logger(log(), segment);
 
     // determine whether we need to store the radiation field during secondary emission
+    // if so, clear the secondary radiation field
     bool storeRF = _config->storeEmissionRadiationField();
+    if (storeRF) mediumSystem()->clearRadiationField(false);
 
     // shoot photons from secondary sources, if needed
     size_t Npp = _config->numSecondaryPackets();
