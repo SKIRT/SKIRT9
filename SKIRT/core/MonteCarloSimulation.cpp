@@ -175,10 +175,98 @@ void MonteCarloSimulation::runSecondaryEmission()
 
 ////////////////////////////////////////////////////////////////////
 
+namespace
+{
+    // this helper class checks secondary emission convergence based on the dust-absorbed luminosity
+    class SecondaryEmissionConvergence
+    {
+        double _prevLabsseco{0.};  // remembers the absorbed luminosity in the previous iteration
+    public:
+        // this function determines and logs the total absorbed luminosity and related percentages
+        // it returns true if secondary emission can be considered to be converged, false otherwise
+        bool logConvergenceInfo(Log* log, Units* units, MediumSystem* mediumSystem, int iter, double fractionOfPrimary,
+                                double fractionOfPrevious)
+        {
+            // determine and log the total absorbed luminosity
+            double Labsprim, Labsseco;
+            std::tie(Labsprim, Labsseco) = mediumSystem->totalDustAbsorbedLuminosity();
+            log->info("The total dust-absorbed primary luminosity is "
+                      + StringUtils::toString(units->obolluminosity(Labsprim), 'g') + " " + units->ubolluminosity());
+            log->info("The total dust-absorbed secondary luminosity in iteration " + std::to_string(iter) + " is "
+                      + StringUtils::toString(units->obolluminosity(Labsseco), 'g') + " " + units->ubolluminosity());
+
+            // log the current performance and corresponding convergence criteria
+            if (Labsprim > 0. && Labsseco > 0.)
+            {
+                if (iter == 1)
+                {
+                    log->info("--> absorbed secondary luminosity is "
+                              + StringUtils::toString(Labsseco / Labsprim * 100., 'f', 2)
+                              + "% of absorbed primary luminosity (convergence criterion is "
+                              + StringUtils::toString(fractionOfPrimary * 100., 'f', 2) + "%)");
+                }
+                else
+                {
+                    log->info("--> absorbed secondary luminosity changed by "
+                              + StringUtils::toString(abs((Labsseco - _prevLabsseco) / Labsseco) * 100., 'f', 2)
+                              + "% compared to previous iteration (convergence criterion is "
+                              + StringUtils::toString(fractionOfPrevious * 100., 'f', 2) + "%)");
+                }
+            }
+
+            // secondary emission has reached convergence if one or more of the following conditions holds:
+            // - the absorbed primary luminosity is zero
+            // - the absorbed secondary luminosity is zero
+            // - the absorbed secondary luminosity is less than a given fraction of the absorbed primary luminosity
+            // - the absorbed secondary luminosity has changed by less than a given fraction compared to previous iter
+            bool converged = Labsprim <= 0. || Labsseco <= 0. || Labsseco / Labsprim < fractionOfPrimary
+                             || abs((Labsseco - _prevLabsseco) / Labsseco) < fractionOfPrevious;
+            _prevLabsseco = Labsseco;
+            return converged;
+        }
+    };
+
+    // this function logs the convergence status and returns true if the loop should exit, false if it should continue
+    // specifically, the loop exits
+    //   - if convergence is reached after the minimum number of iterations, or
+    //   - if the maximum number of iterations has completed, even if there is no convergence
+    bool logLoopConvergence(Log* log, bool converged, int iter, int minIters, int maxIters)
+    {
+        // force at least the minimum number of iterations
+        if (converged && iter < minIters)
+        {
+            log->info("Convergence reached but continuing until " + std::to_string(minIters)
+                      + " iterations have been performed");
+            return false;
+        }
+        // exit the loop if convergence has been reached after at least the minimum number of iterations
+        if (converged && iter >= minIters)
+        {
+            log->info("Convergence reached after " + std::to_string(iter) + " iterations");
+            return true;
+        }
+        // continue if convergence has not been reached after fewer than the maximum number of iterations
+        if (!converged && iter < maxIters)
+        {
+            log->info("Convergence not yet reached after " + std::to_string(iter) + " iterations");
+            return false;
+        }
+        // exit the loop if convergence has not been reached after the maximum number of iterations
+        if (!converged && iter >= maxIters)
+        {
+            log->error("Convergence not yet reached after " + std::to_string(iter) + " iterations");
+            return true;
+        }
+        return true;  // the logic can never get here
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
 void MonteCarloSimulation::runPrimaryEmissionIterations()
 {
     // when this function is called
-    //  - the number of photon packets and the source luminosity are guaranteed to be nonzero
+    //  - the number of photon packets and the primary source luminosity are guaranteed to be nonzero
     //  - the data structures to store the radiation field are guaranteed to exist
 
     // get the parallel engine
@@ -192,13 +280,12 @@ void MonteCarloSimulation::runPrimaryEmissionIterations()
     // prepare the source system for the appropriate number of packets
     sourceSystem()->prepareForLaunch(Npp);
 
-    // loop over the dynamic state iterations; the loop exits
-    //   - if convergence is reached after the minimum number of iterations, or
-    //   - if the maximum number of iterations has completed, even if there is no convergence
+    // loop over the dynamic state iterations
     int iter = 0;
     while (true)
     {
         ++iter;
+
         bool converged = false;
         {
             string segment = "primary emission iteration " + std::to_string(iter);
@@ -220,29 +307,8 @@ void MonteCarloSimulation::runPrimaryEmissionIterations()
             converged = mediumSystem()->updateDynamicMediumState();
         }
 
-        // force at least the minimum number of iterations
-        if (converged && iter < minIters)
-        {
-            log()->info("Convergence reached but continuing until " + std::to_string(minIters)
-                        + " iterations have been performed");
-        }
-        // exit the loop if convergence has been reached after at least the minimum number of iterations
-        else if (converged && iter >= minIters)
-        {
-            log()->info("Convergence reached after " + std::to_string(iter) + " iterations");
-            break;
-        }
-        // continue if convergence has not been reached after fewer than the maximum number of iterations
-        else if (!converged && iter < maxIters)
-        {
-            log()->info("Convergence not yet reached after " + std::to_string(iter) + " iterations");
-        }
-        // exit the loop if convergence has not been reached after the maximum number of iterations
-        else if (!converged && iter >= maxIters)
-        {
-            log()->error("Convergence not yet reached after " + std::to_string(iter) + " iterations");
-            break;
-        }
+        // verify and log loop convergence
+        if (logLoopConvergence(log(), converged, iter, minIters, maxIters)) break;
     }
 }
 
@@ -250,27 +316,32 @@ void MonteCarloSimulation::runPrimaryEmissionIterations()
 
 void MonteCarloSimulation::runSecondaryEmissionIterations()
 {
-    // get number of photons (guaranteed to be nonzero)
-    size_t Npp = _config->numSecondaryIterationPackets();
+    // when this function is called
+    //  - the number of photon packets is guaranteed to be nonzero
+    //  - the total luminosity of secondary sources may still be zero
+    //  - the data structures to store the radiation field are guaranteed to exist
 
     // get the parallel engine
     auto parallel = find<ParallelFactory>()->parallelDistributed();
 
-    // get the parameters controlling the secondary iteration
+    // get the parameters controlling the dynamic secondary emission iteration
+    size_t Npp = _config->numSecondaryIterationPackets();
     int minIters = _config->minSecondaryIterations();
     int maxIters = _config->maxSecondaryIterations();
     double fractionOfPrimary = _config->maxFractionOfPrimary();
     double fractionOfPrevious = _config->maxFractionOfPrevious();
 
-    // initialize the total absorbed luminosity in the previous iteration
-    double prevLabsdust = 0.;
+    // helper object to verify convergence of secondary emission
+    SecondaryEmissionConvergence emissionConvergence;
 
-    // iterate over the maximum number of iterations; the loop body returns from the function
-    // when convergence is reached after the minimum number of iterations have been completed
-    for (int iter = 1; iter <= maxIters; iter++)
+    // loop over the secondary emission iterations
+    int iter = 0;
+    while (true)
     {
-        string segment = "secondary emission iteration " + std::to_string(iter);
+        ++iter;
+
         {
+            string segment = "secondary emission iteration " + std::to_string(iter);
             TimeLogger logger(log(), segment);
 
             // clear the secondary radiation field
@@ -297,68 +368,100 @@ void MonteCarloSimulation::runSecondaryEmissionIterations()
             if (_config->hasSemiDynamicState()) mediumSystem()->updateSemiDynamicMediumState();
         }
 
-        // determine and log the total absorbed luminosity
-        double Labsprim, Labsseco;
-        std::tie(Labsprim, Labsseco) = mediumSystem()->totalDustAbsorbedLuminosity();
-        log()->info("The total dust-absorbed primary luminosity is "
-                    + StringUtils::toString(units()->obolluminosity(Labsprim), 'g') + " " + units()->ubolluminosity());
-        log()->info("The total dust-absorbed secondary luminosity in iteration " + std::to_string(iter) + " is "
-                    + StringUtils::toString(units()->obolluminosity(Labsseco), 'g') + " " + units()->ubolluminosity());
+        // verify and log secondary emission convergence
+        bool converged = emissionConvergence.logConvergenceInfo(log(), units(), mediumSystem(), iter, fractionOfPrimary,
+                                                                fractionOfPrevious);
 
-        // log the current performance and corresponding convergence criteria
-        if (Labsprim > 0. && Labsseco > 0.)
-        {
-            if (iter == 1)
-            {
-                log()->info("--> absorbed secondary luminosity is "
-                            + StringUtils::toString(Labsseco / Labsprim * 100., 'f', 2)
-                            + "% of absorbed primary luminosity (convergence criterion is "
-                            + StringUtils::toString(fractionOfPrimary * 100., 'f', 2) + "%)");
-            }
-            else
-            {
-                log()->info("--> absorbed secondary luminosity changed by "
-                            + StringUtils::toString(abs((Labsseco - prevLabsdust) / Labsseco) * 100., 'f', 2)
-                            + "% compared to previous iteration (convergence criterion is "
-                            + StringUtils::toString(fractionOfPrevious * 100., 'f', 2) + "%)");
-            }
-        }
-
-        // force at least the minimum number of iterations
-        if (iter < minIters)
-        {
-            log()->info("Continuing until " + std::to_string(minIters) + " iterations have been performed");
-        }
-        else
-        {
-            // the self-absorption iteration has reached convergence if one or more of the following conditions holds:
-            // - the absorbed primary luminosity is zero
-            // - the absorbed secondary luminosity is zero
-            // - the absorbed secondary luminosity is less than a given fraction of the absorbed primary luminosity
-            // - the absorbed secondary luminosity has changed by less than a given fraction compared to previous iter
-            if (Labsprim <= 0. || Labsseco <= 0. || Labsseco / Labsprim < fractionOfPrimary
-                || abs((Labsseco - prevLabsdust) / Labsseco) < fractionOfPrevious)
-            {
-                log()->info("Convergence reached after " + std::to_string(iter) + " iterations");
-                return;  // end the iteration by returning from the function
-            }
-            else
-            {
-                log()->info("Convergence not yet reached after " + std::to_string(iter) + " iterations");
-            }
-        }
-        prevLabsdust = Labsseco;
+        // verify and log loop convergence
+        if (logLoopConvergence(log(), converged, iter, minIters, maxIters)) break;
     }
-
-    // if the loop runs out, convergence was not reached even after the maximum number of iterations
-    log()->error("Convergence not yet reached after " + std::to_string(maxIters) + " iterations");
 }
 
 ////////////////////////////////////////////////////////////////////
 
 void MonteCarloSimulation::runMergedEmissionIterations()
 {
-    throw FATALERROR("Including primary emission in secondary emission iterations is not yet implemented");
+    // when this function is called
+    //  - the number of photon packets and the primary source luminosity are guaranteed to be nonzero
+    //  - the total luminosity of secondary sources may still be zero
+    //  - the data structures to store the radiation field are guaranteed to exist
+
+    // get the parallel engine
+    auto parallel = find<ParallelFactory>()->parallelDistributed();
+
+    // get the parameters controlling the merged iteration
+    size_t Npp1 = _config->numPrimaryIterationPackets();
+    size_t Npp2 = _config->numSecondaryIterationPackets();
+    int minIters = _config->minSecondaryIterations();
+    int maxIters = _config->maxSecondaryIterations();
+    double fractionOfPrimary = _config->maxFractionOfPrimary();
+    double fractionOfPrevious = _config->maxFractionOfPrevious();
+
+    // prepare the primary source system for the appropriate number of packets
+    sourceSystem()->prepareForLaunch(Npp1);
+
+    // helper object to verify convergence of secondary emission
+    SecondaryEmissionConvergence emissionConvergence;
+
+    // loop over the merged iterations
+    int iter = 0;
+    while (true)
+    {
+        ++iter;
+
+        bool converged1 = false;
+        {
+            string segment = "merged primary and secondary emission iteration " + std::to_string(iter);
+            string segment1 = "merged primary emission iteration " + std::to_string(iter);
+            string segment2 = "merged secondary emission iteration " + std::to_string(iter);
+            TimeLogger logger(log(), segment);
+
+            // clear the radiation field
+            mediumSystem()->clearRadiationField(true);
+
+            // launch photon packets
+            initProgress(segment1, Npp1);
+            parallel->call(Npp1, [this](size_t i, size_t n) { performLifeCycle(i, n, true, false, true); });
+            instrumentSystem()->flush();
+
+            // wait for all processes to finish and synchronize the radiation field
+            wait(segment1);
+            mediumSystem()->communicateRadiationField(true);
+
+            // update semi-dynamic medium state if needed
+            if (_config->hasSemiDynamicState()) mediumSystem()->updateSemiDynamicMediumState();
+
+            // clear the secondary radiation field
+            mediumSystem()->clearRadiationField(false);
+
+            // prepare the source system; terminate if secondary luminosity is zero (which would be very unusual)
+            if (!_secondarySourceSystem->prepareForLaunch(Npp2))
+            {
+                log()->warning(
+                    "Skipping merged emission iterations because the total luminosity of secondary sources is zero");
+                return;
+            }
+
+            // launch photon packets
+            initProgress(segment2, Npp2);
+            parallel->call(Npp2, [this](size_t i, size_t n) { performLifeCycle(i, n, false, false, true); });
+            instrumentSystem()->flush();
+
+            // wait for all processes to finish and synchronize the radiation field
+            wait(segment2);
+            mediumSystem()->communicateRadiationField(false);
+
+            // update the medium state based on the newly established radiation field
+            converged1 = mediumSystem()->updateDynamicMediumState();
+        }
+
+        // verify and log secondary emission convergence
+        bool converged2 = emissionConvergence.logConvergenceInfo(log(), units(), mediumSystem(), iter,
+                                                                 fractionOfPrimary, fractionOfPrevious);
+
+        // verify and log loop convergence
+        if (logLoopConvergence(log(), converged1 & converged2, iter, minIters, maxIters)) break;
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
