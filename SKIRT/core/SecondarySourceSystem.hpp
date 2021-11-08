@@ -6,13 +6,10 @@
 #ifndef SECONDARYSOURCESYSTEM_HPP
 #define SECONDARYSOURCESYSTEM_HPP
 
-#include "Array.hpp"
 #include "SimulationItem.hpp"
-class Configuration;
-class MediumSystem;
+class SecondarySource;
 class PhotonPacket;
 class ProbePhotonPacketInterface;
-class Random;
 
 //////////////////////////////////////////////////////////////////////
 
@@ -24,8 +21,8 @@ class Random;
     both types of sources. Also, bundling this functionality in this class avoids adding everything
     to the already heavy MediumSystem class.
 
-    The SecondarySourceSystem class inherits SimulationItem, so that it can be located through the
-    find() template function, but it is not part of the configurable simulation item hierarchy.
+    The SecondarySourceSystem class inherits SimulationItem so that, for example, it can easily use
+    the find() template function, but it is not part of the configurable simulation item hierarchy.
     Instead, if secondary emission is enabled in the configuration, the MonteCarloSimulation class
     creates and holds a single instance of the SecondarySourceSystem class. Evidently, the
     SecondarySourceSystem object closely interacts with the MediumSystem object in the
@@ -188,8 +185,8 @@ public:
     explicit SecondarySourceSystem(SimulationItem* parent);
 
 protected:
-    /** This function obtains and caches a pointer to several objects in the simulation item
-        hierarchy. */
+    /** This function constructs a secondary source object for each enabled secondary source in the
+        simulation, and stores these objects in a list for later use. */
     void setupSelfBefore() override;
 
 public:
@@ -201,66 +198,27 @@ public:
     //======================== Other Functions =======================
 
 public:
-    /** This function prepares the mapping of history indices to sources; see the description in
-        the class header for more information. The function returns false if the total bolometric
-        luminosity of the secondary sources is zero (which means no photon packets can be
-        launched), and true otherwise. */
+    /** This function prepares the mapping of history indices to sources and tells all sources to
+        prepare their individual mapping of history indices to spatial cells. The function returns
+        false if the total bolometric luminosity of the secondary sources is zero (which means no
+        photon packets can be launched), and true otherwise. */
     bool prepareForLaunch(size_t numPackets);
 
-    /** This function causes the photon packet \em pp to be launched from one of the cells in the
-        spatial grid using the given history index; see the description in the class header for
-        more information. The photon packet's contents is fully (re-)initialized so that it is
-        ready to start its lifecycle.
-
-        Before it can randomly emit photon packets from a spatial cell, this function must
-        calculate the normalized regular and cumulative dust emission spectrum for the cell from
-        the radiation field and the dust properties held by the medium system, using the configured
-        emission calculator (LTE or NLTE). Also, it must obtain the average bulk velocity of the
-        material in the cell from the medium system. Especially the NLTE emission spectrum
-        calculations can be very time-consuming, so it is important to perform them only once for
-        each cell. On the other hand, pre-calculating and storing the spectra for all cells in
-        advance requires a potentially large amount of memory (proportional to both the number of
-        cells and to the number of wavelengths on which the emission is discretized). As described
-        in the class header, photon packets launched from a given spatial cell are usually handled
-        consecutively by the same execution thread, allowing this function to remember the
-        information calculated for the "current" cell from one invocation to the next in a helper
-        object allocated with thread-local storage scope. As a result, memory requirements are
-        limited to storing the information for only a single cell per execution thread, and the
-        calculation is still performed only once per cell.
-
-        Once the emission spectrum for the current cell is known, the function randomly generates a
-        wavelength either from this emission spectrum or from the configured bias wavelength
-        distribution, adjusting the launch weight with the proper bias factor. It then generates a
-        random position uniformly within the spatial cell.
-
-        If the simulation includes aligned spheroidal grains, the function calculates the
-        polarization profile for the emitted photon packet and draws a random direction from the
-        corresponding anisotropic phase function. Otherwise, the emission is assumed to be
-        unpolarized and isotropic, and a random direction is determined uniformly on the unit
-        sphere.
-
-        Finally, the function actually initializes the photon packet with this information. */
+    /** This function causes the photon packet \em pp to be launched from one of the secondary
+        sources, depending on the specified history index. The photon packet's contents is fully
+        (re-)initialized so that it is ready to start its lifecycle. */
     void launch(PhotonPacket* pp, size_t historyIndex) const;
 
     //======================== Data Members ========================
 
 private:
     // initialized by setupSelfBefore()
-    Configuration* _config{nullptr};
-    MediumSystem* _ms{nullptr};
-    Random* _random{nullptr};
+    vector<SecondarySource*> _sources;  // list of secondary sources managed by this class
 
     // initialized by installLaunchCallBack()
     ProbePhotonPacketInterface* _callback{nullptr};  // interface to be invoked for each packet launch if nonzero
 
     // initialized by prepareForLaunch()
-    double _L{0};        // the total bolometric luminosity of all spatial cells
-    double _Lpp{0};      // the average luminosity contribution for each packet
-    Array _Lv;           // the relative bolometric luminosity of each spatial cell (normalized to unity)
-    Array _Wv;           // the relative launch weight for each spatial cell (normalized to unity)
-    vector<int> _nv;     // the library entry index corresponding to each spatial cell (i.e. map from cells to entries)
-    vector<int> _mv;     // the spatial cell indices sorted so that cells belonging to the same entry are consecutive
-    vector<size_t> _Iv;  // first history index allocated to each spatial cell (with extra entry at the end)
 };
 
 ////////////////////////////////////////////////////////////////
