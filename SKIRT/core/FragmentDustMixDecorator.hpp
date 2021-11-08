@@ -96,6 +96,10 @@ public:
         density, in this case the fragment weight factors. */
     bool hasExtraSpecificState() const override;
 
+    /** This function returns true for this class because all dust mixes support secondary
+        continuum emission. */
+    bool hasContinuumEmission() const override;
+
     //======== Medium state setup =======
 
 public:
@@ -191,6 +195,10 @@ public:
     //======== Secondary emission =======
 
 public:
+    /** This function returns the wavelength grid on which dust emission is discretized, i.e. the
+        wavelength grid returned by the Configuration::dustEmissionWLG() function. */
+    DisjointWavelengthGrid* emissionWavelengthGrid() const override;
+
     /** This function returns the emissivity spectrum \f$\varepsilon_{\ell'}\f$ (radiated power per
         unit of solid angle and per hydrogen atom) of the dust mix when it would be embedded in a
         given radiation field. Because this function does not have access to the material state, it

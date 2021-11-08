@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "FragmentDustMixDecorator.hpp"
+#include "Configuration.hpp"
 #include "DustMixFragment.hpp"
 #include "FatalError.hpp"
 #include "MaterialState.hpp"
@@ -74,6 +75,13 @@ bool FragmentDustMixDecorator::hasStochasticDustEmission() const
 ////////////////////////////////////////////////////////////////////
 
 bool FragmentDustMixDecorator::hasExtraSpecificState() const
+{
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool FragmentDustMixDecorator::hasContinuumEmission() const
 {
     return true;
 }
@@ -242,6 +250,13 @@ void FragmentDustMixDecorator::performScattering(double lambda, const MaterialSt
 
     // actually perform the scattering event for this fragment
     _fragments[f]->performScattering(lambda, state, pp);
+}
+
+////////////////////////////////////////////////////////////////////
+
+DisjointWavelengthGrid* FragmentDustMixDecorator::emissionWavelengthGrid() const
+{
+    return find<Configuration>()->dustEmissionWLG();
 }
 
 ////////////////////////////////////////////////////////////////////

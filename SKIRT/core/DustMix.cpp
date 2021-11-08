@@ -261,6 +261,13 @@ MaterialMix::MaterialType DustMix::materialType() const
 
 ////////////////////////////////////////////////////////////////////
 
+bool DustMix::hasContinuumEmission() const
+{
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////
+
 vector<StateVariable> DustMix::specificStateVariableInfo() const
 {
     return vector<StateVariable>{StateVariable::numberDensity()};
