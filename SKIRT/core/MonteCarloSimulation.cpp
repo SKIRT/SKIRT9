@@ -39,9 +39,9 @@ void MonteCarloSimulation::setupSimulation()
 
 ////////////////////////////////////////////////////////////////////
 
-void MonteCarloSimulation::setupSelfBefore()
+void MonteCarloSimulation::setupSelfAfter()
 {
-    Simulation::setupSelfBefore();
+    Simulation::setupSelfAfter();
 
     // construct a secondary source system to help launch secondary photon packets if required
     if (_config->hasSecondaryEmission()) _secondarySourceSystem = new SecondarySourceSystem(this);

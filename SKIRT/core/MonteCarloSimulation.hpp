@@ -236,10 +236,9 @@ protected:
         setup() function and notifies the probe system when setup has been completed. */
     void setupSimulation() override;
 
-    /** This function performs initial setup for the MonteCarloSimulation object. For example, it
-        constructs a SecondarySourceSystem object if the simulation configuration requires
-        secondary emission. */
-    void setupSelfBefore() override;
+    /** This function constructs a SecondarySourceSystem object if the simulation configuration
+        requires secondary emission. */
+    void setupSelfAfter() override;
 
     //======== Getters for Non-Discoverable Properties =======
 
