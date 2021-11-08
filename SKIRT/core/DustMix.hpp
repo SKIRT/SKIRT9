@@ -142,6 +142,10 @@ public:
         other words it returns MaterialType::Dust. */
     MaterialType materialType() const override;
 
+    /** This function returns true for this class because all dust mixes support secondary
+        continuum emission. */
+    bool hasContinuumEmission() const override;
+
     //======== Medium state setup =======
 
 public:
