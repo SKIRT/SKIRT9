@@ -135,7 +135,7 @@ class SecondarySourceSystem;
     | 8 | ... + \c DMS1 | \f$\overleftarrow{\mathbf{P}_{rs}} \;\rightarrow\; \mathbf{P}^p_{r(s)} \;\rightarrow\; \mathbf{S}^p_{(r)}\f$ |
     | 9 | ... + \c DSE | \f$\mathbf{P}^p_{r(s)} \;\rightarrow\; \overleftarrow{\mathbf{S}_{r(s)}} \;\rightarrow\; \mathbf{S}^p_{(r)}\f$ |
     | 10 | ... + \c DSE + \c DMS1 | \f$\overleftarrow{\mathbf{P}_{rs}} \;\rightarrow\; \textbf{}\mathbf{P}^p_{r(s)} \;\rightarrow\; \overleftarrow{\mathbf{S}_{r(s)}} \;\rightarrow\; \mathbf{S}^p_{(r)}\f$ |
-    | 11 | ... + \c DSE + \c DMS1 + \c DMS2 | \f$\overleftarrow{\mathbf{P}_{rs}} \;\rightarrow\; \overleftarrow{\mathbf{P}_{r(s)} \;\rightarrow\; \mathbf{S}_{rs}} \;\rightarrow\; \mathbf{P}^p_{(r)} \;\rightarrow\; \mathbf{S}^p_{(r)}\f$ |
+    | 11 | ... + \c DSE + \c DMS1 + \c DMS2 | \f$\overleftarrow{\mathbf{P}_{rs}} \;\rightarrow\; \overleftarrow{\mathbf{P}_{r(s)} \;\rightarrow\; \mathbf{S}_{rs}} \;\rightarrow\; \mathbf{P}^p_{r(s)} \;\rightarrow\; \mathbf{S}^p_{(r)}\f$ |
 
     Rows 1-6 describe simulation modes that include primary emission only, without or with media.
     The last mode in this list (row 6) includes iteration over the DMS during primary emission.
