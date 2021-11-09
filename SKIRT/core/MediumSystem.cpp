@@ -1081,6 +1081,24 @@ Array MediumSystem::dustEmissionSpectrum(int m) const
 
 ////////////////////////////////////////////////////////////////////
 
+Array MediumSystem::continuumEmissionSpectrum(int m, int h) const
+{
+    const Array& Jv = meanIntensity(m);
+    MaterialState mst(_state, m, h);
+    return mix(m, h)->emissionSpectrum(&mst, Jv);
+}
+
+////////////////////////////////////////////////////////////////////
+
+Array MediumSystem::lineEmissionSpectrum(int m, int h) const
+{
+    const Array& Jv = meanIntensity(m);
+    MaterialState mst(_state, m, h);
+    return mix(m, h)->lineEmissionSpectrum(&mst, Jv);
+}
+
+////////////////////////////////////////////////////////////////////
+
 bool MediumSystem::updateDynamicMediumState()
 {
     auto log = find<Log>();

@@ -214,3 +214,17 @@ Array DisjointWavelengthGrid::extlambdav() const
 }
 
 ////////////////////////////////////////////////////////////////////
+
+Array DisjointWavelengthGrid::extdlambdav() const
+{
+    int n = _dlambdav.size();
+    Array extv(n + 2);
+
+    extv[0] = 0.;
+    for (int ell = 0; ell != n; ++ell) extv[ell + 1] = _dlambdav[ell];
+    extv[n + 1] = 0.;
+
+    return extv;
+}
+
+////////////////////////////////////////////////////////////////////

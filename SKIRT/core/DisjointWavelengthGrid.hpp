@@ -154,6 +154,12 @@ public:
         of the wavelength grid and not just up to the outermost characteristic wavelengths. */
     Array extlambdav() const;
 
+    /** This function returns a list of bin widths in this wavelength grid extended with a zero
+        value on each side. This extended wavelength bin width list can be used, for example, to
+        integrate a function discretized on the extended wavelength grid returned by the
+        extlambdav() function over the wavelength range. */
+    Array extdlambdav() const;
+
     //======================== Data Members ========================
 
 private:
