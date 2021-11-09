@@ -15,6 +15,8 @@
 #include "PhotonPacket.hpp"
 #include "ProcessManager.hpp"
 #include "Random.hpp"
+#include "StringUtils.hpp"
+#include "Units.hpp"
 #include "VelocityInterface.hpp"
 #include "WavelengthDistribution.hpp"
 
@@ -45,10 +47,23 @@ double ContGasSecondarySource::prepareLuminosities()
     });
     ProcessManager::sumToAll(_Lv);
 
-    // calculate and return the total luminosity, and normalize the individual luminosities to unity
-    _L = _Lv.sum();
-    _Lv /= _L;
-    return _L;
+    // calculate the total luminosity, and normalize the individual luminosities to unity
+    double L = _Lv.sum();
+    _Lv /= L;
+
+    // log the luminosity and the number of emitting cells
+    auto log = find<Log>();
+    auto units = find<Units>();
+    int emittingCells = 0;  // number of nonzero luminosity cells
+    for (int m = 0; m != numCells; ++m)
+        if (_Lv[m] > 0.) emittingCells++;
+    log->info("Continuum luminosity for gas medium component " + std::to_string(_h) + ": "
+              + StringUtils::toString(units->obolluminosity(L), 'g') + " " + units->ubolluminosity());
+    log->info("  Emitting from " + std::to_string(emittingCells) + " out of " + std::to_string(numCells)
+              + " spatial cells");
+
+    // return the total luminosity
+    return L;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -78,13 +93,6 @@ void ContGasSecondarySource::preparePacketMap(size_t firstIndex, size_t numIndic
         _Iv[m] = firstIndex + min(numIndices, static_cast<size_t>(std::round(W * numIndices)));
     }
     _Iv[numCells] = firstIndex + numIndices;
-
-    // log the number of emitting cells
-    int emittingCells = 0;  // number of nonzero luminosity cells
-    for (int m = 0; m != numCells; ++m)
-        if (_Lv[m] > 0.) emittingCells++;
-    find<Log>()->info("Gas continuum emission for medium component " + std::to_string(_h) + " from "
-                      + std::to_string(emittingCells) + " out of " + std::to_string(numCells) + " spatial cells");
 }
 
 ////////////////////////////////////////////////////////////////////

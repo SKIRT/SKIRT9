@@ -34,8 +34,8 @@ double LineGasSecondarySource::prepareLuminosities()
     // calculate and return the total luminosity
     int numCells = _ms->numCells();
     _Lv.resize(numCells);
-    _L = _Lv.sum();
-    return _L;
+    double L = _Lv.sum();
+    return L;
 }
 
 ////////////////////////////////////////////////////////////////////

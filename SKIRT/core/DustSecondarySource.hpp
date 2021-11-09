@@ -79,7 +79,6 @@ private:
     Configuration* _config{nullptr};
     MediumSystem* _ms{nullptr};
     Random* _random{nullptr};
-    double _L{0};        // the total bolometric luminosity of all spatial cells
     Array _Lv;           // the relative bolometric luminosity of each spatial cell (normalized to unity)
     Array _Wv;           // the relative launch weight for each spatial cell (normalized to unity)
     vector<int> _nv;     // the library entry index corresponding to each spatial cell (i.e. map from cells to entries)
