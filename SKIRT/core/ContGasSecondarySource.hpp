@@ -9,6 +9,7 @@
 #include "Array.hpp"
 #include "SecondarySource.hpp"
 class Configuration;
+class EmittingGasMix;
 class MediumSystem;
 class PhotonPacket;
 class Random;
@@ -60,6 +61,7 @@ private:
     // initialized by prepareLuminosities() and preparePacketMap()
     Configuration* _config{nullptr};
     MediumSystem* _ms{nullptr};
+    const EmittingGasMix* _mix{nullptr};  // material mix of medium component being handled
     Random* _random{nullptr};
     double _L{0};        // the total bolometric luminosity of all spatial cells
     Array _Lv;           // the relative bolometric luminosity of each spatial cell (normalized to unity)

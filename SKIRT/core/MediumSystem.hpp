@@ -593,6 +593,24 @@ public:
         normalizing the spectrum based on the value returned by the dustLuminosity() function. */
     Array dustEmissionSpectrum(int m) const;
 
+    /** This function returns the continuum emission spectrum in the spatial cell with index
+        \f$m\f$ for the medium component with index \f$h\f$. It is intended for use with gas medium
+        components that support secondary continuum emission. When invoked for other medium
+        components, the behavior of the function is undefined. The returned spectrum is discretized
+        on the wavelength grid returned by the MaterialMix::emissionWavelengthGrid() function of
+        the material mix associated with the specified medium component. It contains absolute
+        (specific) luminosity values that do not need further normalization. */
+    Array continuumEmissionSpectrum(int m, int h) const;
+
+    /** This function returns the line emission spectrum in the spatial cell with index \f$m\f$ for
+        the medium component with index \f$h\f$. It is intended for use with gas medium components
+        that support secondary line emission. When invoked for other medium components, the
+        behavior of the function is undefined. The returned values correspond to each of the lines
+        returned by the MaterialMix::lineEmissionCenters() function of the material mix associated
+        with the specified medium component. The values represent absolute line luminosities that
+        do not need further normalization. */
+    Array lineEmissionSpectrum(int m, int h) const;
+
     //=============== Dynamic medium state ===================
 
 public:
