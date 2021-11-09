@@ -17,6 +17,7 @@
 #include "ProcessManager.hpp"
 #include "Random.hpp"
 #include "StringUtils.hpp"
+#include "Units.hpp"
 #include "VelocityInterface.hpp"
 #include "WavelengthDistribution.hpp"
 
@@ -62,52 +63,22 @@ double DustSecondarySource::prepareLuminosities()
     for (int m = 0; m != numCells; ++m)
         if (_nv[m] < 0) _Lv[m] = 0.;
 
-    // calculate and return the total luminosity, and normalize the individual luminosities to unity
-    _L = _Lv.sum();
-    _Lv /= _L;
-    return _L;
-}
-
-////////////////////////////////////////////////////////////////////
-
-void DustSecondarySource::preparePacketMap(size_t firstIndex, size_t numIndices)
-{
-    int numCells = _ms->numCells();
-
-    // --------- weights ---------
-
-    // determine a uniform weight for each cell with non-negligable emission, and normalize to unity
-    Array wv(numCells);
-    for (int m = 0; m != numCells; ++m) wv[m] = _Lv[m] > 0 ? 1. : 0.;
-    wv /= wv.sum();
-
-    // calculate the final, composite-biased launch weight for each cell, normalized to unity
-    double xi = _config->secondarySpatialBias();
-    _Wv = (1 - xi) * _Lv + xi * wv;
-
-    // determine the first history index for each cell, using the adjusted cell ordering so that
-    // all photon packets for a given library entry are launched consecutively
-    _Iv.resize(numCells + 1);
-    _Iv[0] = firstIndex;
-    double W = 0.;
-    for (int p = 1; p != numCells; ++p)
-    {
-        // track the cumulative normalized weight as a floating point number
-        // and limit the index to numPackets to avoid issues with rounding errors
-        W += _Wv[_mv[p - 1]];
-        _Iv[p] = firstIndex + min(numIndices, static_cast<size_t>(std::round(W * numIndices)));
-    }
-    _Iv[numCells] = firstIndex + numIndices;
+    // calculate  the total luminosity, and normalize the individual luminosities to unity
+    double L = _Lv.sum();
+    _Lv /= L;
 
     // --------- logging ---------
 
     auto log = find<Log>();
+    auto units = find<Units>();
 
-    // spatial cells
+    // luminosity and spatial cells
     int emittingCells = 0;  // number of nonzero luminosity cells
     for (int m = 0; m != numCells; ++m)
         if (_Lv[m] > 0.) emittingCells++;
-    log->info("Dust emission from " + std::to_string(emittingCells) + " out of " + std::to_string(numCells)
+    log->info("Dust luminosity: " + StringUtils::toString(units->obolluminosity(L), 'g') + " "
+              + units->ubolluminosity());
+    log->info("  Emitting from " + std::to_string(emittingCells) + " out of " + std::to_string(numCells)
               + " spatial cells");
 
     // library entries
@@ -137,6 +108,41 @@ void DustSecondarySource::preparePacketMap(size_t firstIndex, size_t numIndices)
         log->info("  Average number of cells per (used) library entry: "
                   + StringUtils::toString(static_cast<double>(totMappedCells) / usedEntries, 'f', 1));
     }
+
+    // return the total luminosity
+    return L;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void DustSecondarySource::preparePacketMap(size_t firstIndex, size_t numIndices)
+{
+    int numCells = _ms->numCells();
+
+    // --------- weights ---------
+
+    // determine a uniform weight for each cell with non-negligable emission, and normalize to unity
+    Array wv(numCells);
+    for (int m = 0; m != numCells; ++m) wv[m] = _Lv[m] > 0 ? 1. : 0.;
+    wv /= wv.sum();
+
+    // calculate the final, composite-biased launch weight for each cell, normalized to unity
+    double xi = _config->secondarySpatialBias();
+    _Wv = (1 - xi) * _Lv + xi * wv;
+
+    // determine the first history index for each cell, using the adjusted cell ordering so that
+    // all photon packets for a given library entry are launched consecutively
+    _Iv.resize(numCells + 1);
+    _Iv[0] = firstIndex;
+    double W = 0.;
+    for (int p = 1; p != numCells; ++p)
+    {
+        // track the cumulative normalized weight as a floating point number
+        // and limit the index to firstIndex+numIndices to avoid issues with rounding errors
+        W += _Wv[_mv[p - 1]];
+        _Iv[p] = firstIndex + min(numIndices, static_cast<size_t>(std::round(W * numIndices)));
+    }
+    _Iv[numCells] = firstIndex + numIndices;
 }
 
 ////////////////////////////////////////////////////////////////////
