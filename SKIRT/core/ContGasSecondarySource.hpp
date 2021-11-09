@@ -45,9 +45,20 @@ public:
     void preparePacketMap(size_t firstIndex, size_t numIndices) override;
 
     /** This function causes the photon packet \em pp to be launched from one of the cells in the
-        spatial grid using the given history index.
+        spatial grid using the given history index. Because photon packets launched from a given
+        spatial cell are usually handled consecutively by the same execution thread, this function
+        can and does calculate the emission spectrum for a given cell only once. It preserves the
+        relevant information from one invocation of the function to the next in a helper object
+        allocated with thread-local storage scope. As a result, memory requirements are limited to
+        storing the information for only a single cell per execution thread, and the calculation is
+        still performed only once per cell.
 
-        TO DO XXX.
+        Once the emission spectrum for the current cell is known, the function randomly generates a
+        wavelength either from this emission spectrum or from the configured bias wavelength
+        distribution, adjusting the launch weight with the proper bias factor. It then generates a
+        random position uniformly within the spatial cell. The function obtains the bulk velocity
+        of the cell for application of the appropriate macroscopic Doppler shift; other than this
+        the emission is assumed to be unpolarized and isotropic in the comoving frame.
 
         Finally, the function actually initializes the photon packet with this information. */
     void launch(PhotonPacket* pp, size_t historyIndex, double L) const override;
