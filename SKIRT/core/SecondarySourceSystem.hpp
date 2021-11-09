@@ -6,6 +6,7 @@
 #ifndef SECONDARYSOURCESYSTEM_HPP
 #define SECONDARYSOURCESYSTEM_HPP
 
+#include "Array.hpp"
 #include "SimulationItem.hpp"
 class SecondarySource;
 class PhotonPacket;
@@ -214,11 +215,18 @@ public:
 private:
     // initialized by setupSelfBefore()
     vector<SecondarySource*> _sources;  // list of secondary sources managed by this class
+    vector<double> _wv;                 // the configured weight for each of these sources
+    double _xi;                         // the configured secondary source bias
 
     // initialized by installLaunchCallBack()
     ProbePhotonPacketInterface* _callback{nullptr};  // interface to be invoked for each packet launch if nonzero
 
     // initialized by prepareForLaunch()
+    double _L{0};        // the total bolometric luminosity of all sources (absolute number)
+    Array _Lv;           // the relative bolometric luminosity of each source (normalized to unity)
+    Array _Wv;           // the relative launch weight for each source (normalized to unity)
+    double _Lpp{0};      // the average luminosity contribution for each packet
+    vector<size_t> _Iv;  // first history index allocated to each source (with extra entry at the end)
 };
 
 ////////////////////////////////////////////////////////////////

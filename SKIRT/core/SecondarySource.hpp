@@ -27,8 +27,7 @@ class SecondarySource : public SimulationItem
 public:
     /** This constructor creates a SecondarySource subclass instance. Before the constructor
         returns, the newly created object is hooked up as a child to the specified parent in the
-        simulation hierarchy (so it will automatically be deleted), and its setup() function has
-        been called. */
+        simulation hierarchy (so it will automatically be deleted). */
     explicit SecondarySource(SimulationItem* parent);
 
     //======================== Other Functions =======================
@@ -44,8 +43,8 @@ public:
     virtual void preparePacketMap(size_t firstIndex, size_t numIndices) = 0;
 
     /** This function causes the photon packet \em pp to be launched for this source from one of
-        the cells in the spatial grid using the given history index. */
-    virtual void launch(PhotonPacket* pp, size_t historyIndex) const = 0;
+        the cells in the spatial grid using the given history index and luminosity. */
+    virtual void launch(PhotonPacket* pp, size_t historyIndex, double L) const = 0;
 };
 
 ////////////////////////////////////////////////////////////////

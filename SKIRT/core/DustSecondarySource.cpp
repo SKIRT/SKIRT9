@@ -3,11 +3,10 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "SecondaryDustSource.hpp"
+#include "DustSecondarySource.hpp"
 #include "AngularDistributionInterface.hpp"
 #include "Configuration.hpp"
 #include "DisjointWavelengthGrid.hpp"
-#include "FatalError.hpp"
 #include "Log.hpp"
 #include "MediumSystem.hpp"
 #include "NR.hpp"
@@ -15,7 +14,6 @@
 #include "ParallelFactory.hpp"
 #include "PhotonPacket.hpp"
 #include "PolarizationProfileInterface.hpp"
-#include "ProbePhotonPacketInterface.hpp"
 #include "ProcessManager.hpp"
 #include "Random.hpp"
 #include "StringUtils.hpp"
@@ -24,7 +22,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-double SecondaryDustSource::prepareLuminosities()
+double DustSecondarySource::prepareLuminosities()
 {
     // cache some pointers for later use
     _config = find<Configuration>();
@@ -64,24 +62,17 @@ double SecondaryDustSource::prepareLuminosities()
     for (int m = 0; m != numCells; ++m)
         if (_nv[m] < 0) _Lv[m] = 0.;
 
-    // calculate and return the total luminosity
+    // calculate and return the total luminosity, and normalize the individual luminosities to unity
     _L = _Lv.sum();
+    _Lv /= _L;
     return _L;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-void SecondaryDustSource::preparePacketMap(size_t firstIndex, size_t numIndices)
+void DustSecondarySource::preparePacketMap(size_t firstIndex, size_t numIndices)
 {
     int numCells = _ms->numCells();
-
-    // --------- luminosities 3 ---------
-
-    // calculate the average luminosity contribution for each packet
-    _Lpp = _L / numIndices;
-
-    // normalize the individual luminosities to unity
-    _Lv /= _L;
 
     // --------- weights ---------
 
@@ -116,7 +107,7 @@ void SecondaryDustSource::preparePacketMap(size_t firstIndex, size_t numIndices)
     int emittingCells = 0;  // number of nonzero luminosity cells
     for (int m = 0; m != numCells; ++m)
         if (_Lv[m] > 0.) emittingCells++;
-    log->info("Emitting from " + std::to_string(emittingCells) + " out of " + std::to_string(numCells)
+    log->info("Dust emission from " + std::to_string(emittingCells) + " out of " + std::to_string(numCells)
               + " spatial cells");
 
     // library entries
@@ -511,11 +502,14 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-void SecondaryDustSource::launch(PhotonPacket* pp, size_t historyIndex) const
+void DustSecondarySource::launch(PhotonPacket* pp, size_t historyIndex, double L) const
 {
     // select the spatial cell from which to launch based on the history index of this photon packet
     auto p = std::upper_bound(_Iv.cbegin(), _Iv.cend(), historyIndex) - _Iv.cbegin() - 1;
     auto m = _mv[p];
+
+    // calculate the weight related to biased source selection
+    double ws = _Lv[m] / _Wv[m];
 
     // calculate the emission spectrum and bulk velocity for this cell, if not already available
     t_dustcell.calculateIfNeeded(p, _mv, _nv, _ms, _config);
@@ -556,9 +550,6 @@ void SecondaryDustSource::launch(PhotonPacket* pp, size_t historyIndex) const
         }
     }
 
-    // get the weighted luminosity corresponding to this cell
-    double L = _Lpp * _Lv[m] / _Wv[m];
-
     // generate a random position in this spatial cell
     Position bfr = _ms->grid()->randomPositionInCell(m);
 
@@ -580,7 +571,7 @@ void SecondaryDustSource::launch(PhotonPacket* pp, size_t historyIndex) const
         bfk = _random->direction();
     }
 
-    pp->launch(historyIndex, lambda, L * w, bfr, bfk, bvi, dpe, dpe);
+    pp->launch(historyIndex, lambda, L * ws * w, bfr, bfk, bvi, dpe, dpe);
 }
 
 ////////////////////////////////////////////////////////////////////
