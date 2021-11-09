@@ -3,8 +3,8 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef SECONDARYDUSTSOURCE_HPP
-#define SECONDARYDUSTSOURCE_HPP
+#ifndef DUSTSECONDARYSOURCE_HPP
+#define DUSTSECONDARYSOURCE_HPP
 
 #include "Array.hpp"
 #include "SecondarySource.hpp"
@@ -15,13 +15,13 @@ class Random;
 
 //////////////////////////////////////////////////////////////////////
 
-/** SecondaryDustSource is a helper class that launches secondary emission photon packets from dust
+/** DustSecondarySource is a helper class that launches secondary emission photon packets from dust
     media. It handles the aggregated thermal emission from all dust components in the simulation.
     An instance of this class should be constructed only if the simulation configuration includes
     one or more dust medium components and secondary emission from dust is enabled.
 
     For more information on the operation of this class, see the SecondarySourceSystem class. */
-class SecondaryDustSource : public SecondarySource
+class DustSecondarySource : public SecondarySource
 {
     //============= Construction - Setup - Destruction =============
 
@@ -35,7 +35,7 @@ public:
         of the simulation, and returns the total bolometric dust luminosity. */
     double prepareLuminosities() override;
 
-    /** This function prepares the mapping of history indices to sources, given the range of
+    /** This function prepares the mapping of history indices to spatial cells, given the range of
         history indices allocated to this source. */
     void preparePacketMap(size_t firstIndex, size_t numIndices) override;
 
@@ -70,19 +70,16 @@ public:
         sphere.
 
         Finally, the function actually initializes the photon packet with this information. */
-    void launch(PhotonPacket* pp, size_t historyIndex) const override;
+    void launch(PhotonPacket* pp, size_t historyIndex, double L) const override;
 
     //======================== Data Members ========================
 
 private:
-    // initialized by setupSelfBefore()
+    // initialized by prepareLuminosities() and preparePacketMap()
     Configuration* _config{nullptr};
     MediumSystem* _ms{nullptr};
     Random* _random{nullptr};
-
-    // initialized by prepareForLaunch()
     double _L{0};        // the total bolometric luminosity of all spatial cells
-    double _Lpp{0};      // the average luminosity contribution for each packet
     Array _Lv;           // the relative bolometric luminosity of each spatial cell (normalized to unity)
     Array _Wv;           // the relative launch weight for each spatial cell (normalized to unity)
     vector<int> _nv;     // the library entry index corresponding to each spatial cell (i.e. map from cells to entries)

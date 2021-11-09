@@ -5,12 +5,15 @@
 
 #include "SecondarySourceSystem.hpp"
 #include "Configuration.hpp"
+#include "ContGasSecondarySource.hpp"
+#include "DustSecondarySource.hpp"
 #include "EmittingGasMix.hpp"
 #include "FatalError.hpp"
+#include "LineGasSecondarySource.hpp"
 #include "MediumSystem.hpp"
+#include "NR.hpp"
 #include "PhotonPacket.hpp"
 #include "ProbePhotonPacketInterface.hpp"
-#include "SecondaryDustSource.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -29,10 +32,14 @@ void SecondarySourceSystem::setupSelfBefore()
     auto config = find<Configuration>();
     auto ms = find<MediumSystem>();
 
+    // remember the source bias
+    _xi = config->secondarySourceBias();
+
     // add aggregate dust source if applicable
     if (config->hasDustEmission() && ms->hasDust())
     {
-        _sources.push_back(new SecondaryDustSource(this));
+        _sources.push_back(new DustSecondarySource(this));
+        _wv.push_back(config->dustEmissionSourceWeight());
     }
 
     // add gas sources if applicable
@@ -43,8 +50,16 @@ void SecondarySourceSystem::setupSelfBefore()
             auto emittingMix = dynamic_cast<const EmittingGasMix*>(ms->mix(0, h));
             if (emittingMix)
             {
-                //if (emittingMix->hasContinuumEmission()) _sources.push_back(new SecondaryDustSource(this));
-                //if (emittingMix->hasLineEmission()) _sources.push_back(new SecondaryDustSource(this));
+                if (emittingMix->hasContinuumEmission())
+                {
+                    _sources.push_back(new ContGasSecondarySource(this, h));
+                    _wv.push_back(emittingMix->sourceWeight());
+                }
+                if (emittingMix->hasLineEmission())
+                {
+                    _sources.push_back(new LineGasSecondarySource(this, h));
+                    _wv.push_back(emittingMix->sourceWeight());
+                }
             }
         }
     }
@@ -62,13 +77,43 @@ void SecondarySourceSystem::installLaunchCallBack(ProbePhotonPacketInterface* ca
 
 bool SecondarySourceSystem::prepareForLaunch(size_t numPackets)
 {
-    // calculate the total luminosity over all sources; if it is zero, report failure
-    double L = 0.;
-    for (auto source : _sources) L += source->prepareLuminosities();
-    if (L <= 0.) return false;
+    // obtain the luminosity for each source
+    int Ns = _sources.size();
+    _Lv.resize(Ns);
+    for (int s = 0; s != Ns; ++s) _Lv[s] = _sources[s]->prepareLuminosities();
 
-    // tell the sources to prepare their packet mappings
-    for (auto source : _sources) source->preparePacketMap(0, numPackets);
+    // calculate the total luminosity and report failure if it is zero
+    _L = _Lv.sum();
+    if (!_L) return false;
+
+    // normalize the individual luminosities to unity
+    _Lv /= _L;
+
+    // calculate the launch weight for each source, normalized to unity
+    Array wv = NR::array(_wv);
+    Array wLv = wv * _Lv;
+    _Wv = (1 - _xi) * wLv / wLv.sum() + _xi * wv / wv.sum();
+
+    // resize the history index mapping vector
+    _Iv.resize(Ns + 1);
+
+    // determine the first history index for each source
+    _Iv[0] = 0;
+    double W = 0.;
+    for (int s = 1; s != Ns; ++s)
+    {
+        // track the cumulative normalized weight as a floating point number
+        // and limit the index to numPackets to avoid issues with rounding errors
+        W += _Wv[s - 1];
+        _Iv[s] = min(numPackets, static_cast<size_t>(std::round(W * numPackets)));
+    }
+    _Iv[Ns] = numPackets;
+
+    // calculate the average luminosity contribution for each packet
+    _Lpp = _L / numPackets;
+
+    //  pass the mapping on to each source
+    for (int s = 0; s != Ns; ++s) _sources[s]->preparePacketMap(_Iv[s], _Iv[s + 1] - _Iv[s]);
 
     // report success
     return true;
@@ -78,11 +123,10 @@ bool SecondarySourceSystem::prepareForLaunch(size_t numPackets)
 
 void SecondarySourceSystem::launch(PhotonPacket* pp, size_t historyIndex) const
 {
-    // select the source from which to launch based on the history index of this photon packet
-    int s = 0;
-
-    // tell the source to launch a packet
-    _sources[s]->launch(pp, historyIndex);
+    // ask the appropriate source to prepare the photon packet for launch
+    auto s = std::upper_bound(_Iv.cbegin(), _Iv.cend(), historyIndex) - _Iv.cbegin() - 1;
+    double weight = _Lv[s] / _Wv[s];
+    _sources[s]->launch(pp, historyIndex, _Lpp * weight);
 
     // add origin info (the index reflects the secondary source, not the medium component)
     pp->setSecondaryOrigin(s);

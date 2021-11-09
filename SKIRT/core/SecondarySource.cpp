@@ -10,6 +10,9 @@
 SecondarySource::SecondarySource(SimulationItem* parent)
 {
     parent->addChild(this);
+
+    // because virtual functions don't work properly from with a constructor,
+    // this calls setupSelfBefore/After in base classes but NOT in subclasses
     setup();
 }
 
