@@ -167,7 +167,7 @@ namespace
         Vec velocity() const override { return _bfv; }
     };
 
-    // setup an instance of the above classe to cache emission information for each parallel execution thread
+    // setup an instance of the above class to cache emission information for each parallel execution thread
     thread_local GasCellEmission t_gascell;
 }
 

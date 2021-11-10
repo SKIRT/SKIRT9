@@ -153,6 +153,15 @@ public:
         spinflip transition. */
     Array lineEmissionCenters() const override;
 
+    /** This function returns a list including a single item: the mass of the particle emitting the
+        21 cm line, i.e. the hydrogen atom. */
+    Array lineEmissionMasses() const override;
+
+    /** This function returns  a list including a single item: the 21 cm line luminosity
+        in the spatial cell and medium component represented by the specified material state and
+        the receiving material mix when it would be embedded in the specified radiation field. */
+    Array lineEmissionSpectrum(const MaterialState* state, const Array& Jv) const override;
+
     //======== Temperature =======
 
     /** This function returns an indicative temperature of the material mix when it would be

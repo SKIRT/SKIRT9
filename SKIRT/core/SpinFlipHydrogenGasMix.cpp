@@ -13,10 +13,16 @@
 
 ////////////////////////////////////////////////////////////////////
 
+namespace
+{
+    const double lambdaUV = 1000e-10;           // 1000 Angstrom
+    const double lambdaSF = 21.10611405413e-2;  // 21 cm
+}
+
+////////////////////////////////////////////////////////////////////
+
 void SpinFlipHydrogenGasMix::setupSelfBefore()
 {
-    const double lambdaUV = 1000e-10;  // 1000 Angstrom
-
     auto config = find<Configuration>();
     if (config->hasSecondaryEmission())
     {
@@ -165,8 +171,34 @@ void SpinFlipHydrogenGasMix::performScattering(double /*lambda*/, const Material
 Array SpinFlipHydrogenGasMix::lineEmissionCenters() const
 {
     Array centers(1);
-    centers[0] = 21.10611405413e-2;
+    centers[0] = lambdaSF;
     return centers;
+}
+
+////////////////////////////////////////////////////////////////////
+
+Array SpinFlipHydrogenGasMix::lineEmissionMasses() const
+{
+    Array masses(1);
+    masses[0] = Constants::Mproton();
+    return masses;
+}
+
+////////////////////////////////////////////////////////////////////
+
+Array SpinFlipHydrogenGasMix::lineEmissionSpectrum(const MaterialState* state, const Array& Jv) const
+{
+    // calculate the 21 cm luminosity -- TO DO
+    double number = state->numberDensity() * state->volume();
+    double strength = Jv[_indexUV];
+    double temperature = state->temperature();
+    double norm = 1e-34;
+    double L = norm * number * strength * temperature * temperature;
+
+    // encapsulate the result in an array
+    Array luminosities(1);
+    luminosities[0] = L;
+    return luminosities;
 }
 
 ////////////////////////////////////////////////////////////////////
