@@ -480,6 +480,13 @@ double MediumSystem::metallicity(int m, int h) const
 
 ////////////////////////////////////////////////////////////////////
 
+double MediumSystem::temperature(int m, int h) const
+{
+    return _state.temperature(m, h);
+}
+
+////////////////////////////////////////////////////////////////////
+
 double MediumSystem::custom(int m, int h, int i) const
 {
     return _state.custom(m, h, i);
