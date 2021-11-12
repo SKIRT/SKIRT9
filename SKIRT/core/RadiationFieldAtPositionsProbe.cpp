@@ -57,7 +57,7 @@ void RadiationFieldAtPositionsProbe::probeRun()
                 {
                     const Array& Jv = ms->meanIntensity(m);
                     for (int ell = 0; ell != wavelengthGrid->numBins(); ++ell)
-                        values.push_back(units->omeanintensityWavelength(wavelengthGrid->wavelength(ell), Jv[ell]));
+                        values.push_back(units->omeanintensity(wavelengthGrid->wavelength(ell), Jv[ell]));
                 }
                 else
                 {
