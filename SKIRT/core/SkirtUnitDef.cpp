@@ -12,8 +12,11 @@ SkirtUnitDef::SkirtUnitDef()
 {
     // get relevant constants in local variables
     double k = Constants::k();
+    double c = Constants::c();
+    double hc = Constants::h() * Constants::c();
     double pc = Constants::pc();
     double AU = Constants::AU();
+    double Qel = Constants::Qelectron();
     double Msun = Constants::Msun();
     double Lsun = Constants::Lsun();
     double year = Constants::year();
@@ -47,6 +50,22 @@ SkirtUnitDef::SkirtUnitDef()
     addUnit("wavelength", "micron", 1e-6);
     addUnit("wavelength", "nm", 1e-9);
     addUnit("wavelength", "Angstrom", 1e-10);
+    addUnit("wavelength", "pm", 1e-12);
+    addUnit("wavelength", "Hz", c, -1.);
+    addUnit("wavelength", "kHz", 1e-3 * c, -1.);
+    addUnit("wavelength", "MHz", 1e-6 * c, -1.);
+    addUnit("wavelength", "GHz", 1e-9 * c, -1.);
+    addUnit("wavelength", "THz", 1e-12 * c, -1.);
+    addUnit("wavelength", "THz", 1e-12 * c, -1.);
+    addUnit("wavelength", "PHz", 1e-15 * c, -1.);
+    addUnit("wavelength", "EHz", 1e-18 * c, -1.);
+    addUnit("wavelength", "ZHz", 1e-21 * c, -1.);
+    addUnit("wavelength", "eV", hc / Qel, -1.);
+    addUnit("wavelength", "meV", 1e3 * hc / Qel, -1.);
+    addUnit("wavelength", "keV", 1e-3 * hc / Qel, -1.);
+    addUnit("wavelength", "MeV", 1e-6 * hc / Qel, -1.);
+    addUnit("wavelength", "GeV", 1e-9 * hc / Qel, -1.);
+    addUnit("wavelength", "TeV", 1e-12 * hc / Qel, -1.);
 
     // grainsize
     addUnit("grainsize", "m", 1.);
@@ -147,6 +166,12 @@ SkirtUnitDef::SkirtUnitDef()
     // energy
     addUnit("energy", "J", 1.);
     addUnit("energy", "erg", 1e-7);
+    addUnit("energy", "eV", Qel);
+    addUnit("energy", "meV", 1e-3 * Qel);
+    addUnit("energy", "keV", 1e3 * Qel);
+    addUnit("energy", "MeV", 1e6 * Qel);
+    addUnit("energy", "GeV", 1e9 * Qel);
+    addUnit("energy", "TeV", 1e12 * Qel);
 
     // magnetic field
     addUnit("magneticfield", "T", 1.);

@@ -40,6 +40,10 @@ namespace Constants
     /** This function returns the rest mass of the electron. */
     constexpr double Melectron() { return 9.10938215e-31; }
 
+    /** This function returns the electric charge of an electron in coulombs, which is equivalent
+        to the value of 1 eV in joules. */
+    constexpr double Qelectron() { return 1.602176634e-19; }
+
     /** This function returns the solar mass. */
     constexpr double Msun() { return 1.9891e30; }
 

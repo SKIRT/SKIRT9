@@ -52,7 +52,7 @@
     addUnit("wavelength", "micron", 1e-6);
     addUnit("wavelength", "Angstrom", 1e-10);
     addUnit("temperature", "K", 1.);
-    addUnit("temperature", "C", 1., 273.15);
+    addUnit("temperature", "C", 1., 1, 273.15);
 
     addDefaultUnit("SIUnits", "wavelength", "m");
     addDefaultUnit("SIUnits", "temperature", "K");
@@ -86,11 +86,11 @@ protected:
     /** This function adds information about a particular unit. It can be called from the
         constructor of a subclass to load the appropriate information into the definition. In order
         of occurrence, the arguments specify the name of the physical quantity using this unit, the
-        name of the unit, and the factor \f$f\f$ and offset \f$o\f$ needed to convert a value in
-        this unit to a value in the corresponding internal program unit. The conversion is
-        performed using \f[ v_\mathrm{program} = (v_\mathrm{this}\times f) + o.\f] The offset
-        defaults to zero if it is not specified. */
-    void addUnit(string quantity, string unit, double factor, double offset = 0.);
+        name of the unit, and the factor \f$f\f$, power index \f$p\f$ and offset \f$o\f$ needed to
+        convert a value in this unit to a value in the corresponding internal program unit. The
+        conversion is performed using \f[ v_\mathrm{program} = f\,v^p + o.\f] If not specified, the
+        power index defaults to one and the offset defaults to zero. */
+    void addUnit(string quantity, string unit, double factor, double power = 1., double offset = 0.);
 
     /** This function specifies the default unit for a particular quantity in a given unit system.
         It can be called from the constructor of a subclass to load the appropriate information
@@ -137,10 +137,12 @@ private:
     // use ordered maps below so that things are sorted when retrieved by the schema definition for saving
     // (the implementation of the UnitDef class does not depend on the maps being ordered)
 
-    // a list of all physical quantities with corresponding units: <quantity-name, <unit-name, (factor, offset)>>
-    std::map<string, std::map<string, std::pair<double, double>>> _quantities;
+    // a list of all physical quantities with corresponding units:
+    //      <quantity-name, <unit-name, (factor, power, offset)>>
+    std::map<string, std::map<string, std::tuple<double, double, double>>> _quantities;
 
-    // a list of all units systems with corresponding default units: <unitsystem-name, <quantity-name, unit-name>>
+    // a list of all units systems with corresponding default units:
+    //      <unitsystem-name, <quantity-name, unit-name>>
     std::map<string, std::map<string, string>> _unitSystems;
 };
 
