@@ -27,7 +27,7 @@ class ListBand : public Band
 
         PROPERTY_DOUBLE_LIST(wavelengths, "the wavelengths at which to specify the transmission")
         ATTRIBUTE_QUANTITY(wavelengths, "wavelength")
-        ATTRIBUTE_MIN_VALUE(wavelengths, "1 Angstrom")
+        ATTRIBUTE_MIN_VALUE(wavelengths, "1 pm")
         ATTRIBUTE_MAX_VALUE(wavelengths, "1 m")
 
         PROPERTY_DOUBLE_LIST(transmissionValues, "the transmission at each of the given wavelengths")

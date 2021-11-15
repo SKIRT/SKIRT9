@@ -35,7 +35,7 @@ class ListSED : public TabulatedSED
 
         PROPERTY_DOUBLE_LIST(wavelengths, "the wavelengths at which to specify the specific luminosity")
         ATTRIBUTE_QUANTITY(wavelengths, "wavelength")
-        ATTRIBUTE_MIN_VALUE(wavelengths, "1 Angstrom")
+        ATTRIBUTE_MIN_VALUE(wavelengths, "1 pm")
         ATTRIBUTE_MAX_VALUE(wavelengths, "1 m")
 
         PROPERTY_ENUM(unitStyle, UnitStyle, "the luminosity unit style")

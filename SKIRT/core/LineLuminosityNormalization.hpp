@@ -24,7 +24,7 @@ class LineLuminosityNormalization : public LuminosityNormalization
 
         PROPERTY_DOUBLE(wavelength, "the central wavelength of the emission line")
         ATTRIBUTE_QUANTITY(wavelength, "wavelength")
-        ATTRIBUTE_MIN_VALUE(wavelength, "1 Angstrom")
+        ATTRIBUTE_MIN_VALUE(wavelength, "1 pm")
         ATTRIBUTE_MAX_VALUE(wavelength, "1 m")
         ATTRIBUTE_DEFAULT_VALUE(wavelength, "1215.67 Angstrom")
 

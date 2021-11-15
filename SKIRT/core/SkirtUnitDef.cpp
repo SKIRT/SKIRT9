@@ -56,7 +56,6 @@ SkirtUnitDef::SkirtUnitDef()
     addUnit("wavelength", "MHz", 1e-6 * c, -1.);
     addUnit("wavelength", "GHz", 1e-9 * c, -1.);
     addUnit("wavelength", "THz", 1e-12 * c, -1.);
-    addUnit("wavelength", "THz", 1e-12 * c, -1.);
     addUnit("wavelength", "PHz", 1e-15 * c, -1.);
     addUnit("wavelength", "EHz", 1e-18 * c, -1.);
     addUnit("wavelength", "ZHz", 1e-21 * c, -1.);

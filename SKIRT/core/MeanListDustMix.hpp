@@ -36,7 +36,7 @@ class MeanListDustMix : public TabulatedDustMix
 
         PROPERTY_DOUBLE_LIST(wavelengths, "the wavelengths at which to specify the optical properties")
         ATTRIBUTE_QUANTITY(wavelengths, "wavelength")
-        ATTRIBUTE_MIN_VALUE(wavelengths, "1 Angstrom")
+        ATTRIBUTE_MIN_VALUE(wavelengths, "1 pm")
         ATTRIBUTE_MAX_VALUE(wavelengths, "1 m")
 
         PROPERTY_DOUBLE_LIST(extinctionCoefficients,

@@ -30,7 +30,7 @@ class SpecificLuminosityNormalization : public LuminosityNormalization
 
         PROPERTY_DOUBLE(wavelength, "the wavelength at which to provide the specific luminosity")
         ATTRIBUTE_QUANTITY(wavelength, "wavelength")
-        ATTRIBUTE_MIN_VALUE(wavelength, "1 Angstrom")
+        ATTRIBUTE_MIN_VALUE(wavelength, "1 pm")
         ATTRIBUTE_MAX_VALUE(wavelength, "1 m")
 
         PROPERTY_ENUM(unitStyle, UnitStyle, "the luminosity unit style")

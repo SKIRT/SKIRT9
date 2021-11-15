@@ -20,7 +20,7 @@ class AbstractWavelengthProbe : public Probe, public MaterialWavelengthRangeInte
 
         PROPERTY_DOUBLE(wavelength, "the wavelength at which to determine the optical depth")
         ATTRIBUTE_QUANTITY(wavelength, "wavelength")
-        ATTRIBUTE_MIN_VALUE(wavelength, "1 Angstrom")
+        ATTRIBUTE_MIN_VALUE(wavelength, "1 pm")
         ATTRIBUTE_MAX_VALUE(wavelength, "1 m")
         ATTRIBUTE_DEFAULT_VALUE(wavelength, "0.55 micron")
         ATTRIBUTE_DISPLAYED_IF(wavelength, "Level2")

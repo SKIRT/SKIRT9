@@ -90,7 +90,7 @@ class DensityTreePolicy : public TreePolicy, public MaterialWavelengthRangeInter
 
         PROPERTY_DOUBLE(wavelength, "the wavelength at which to evaluate the optical depth")
         ATTRIBUTE_QUANTITY(wavelength, "wavelength")
-        ATTRIBUTE_MIN_VALUE(wavelength, "1 Angstrom")
+        ATTRIBUTE_MIN_VALUE(wavelength, "1 pm")
         ATTRIBUTE_MAX_VALUE(wavelength, "1 m")
         ATTRIBUTE_DEFAULT_VALUE(wavelength, "0.55 micron")
         ATTRIBUTE_RELEVANT_IF(wavelength, "maxDustOpticalDepth")

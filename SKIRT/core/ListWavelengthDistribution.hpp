@@ -38,7 +38,7 @@ class ListWavelengthDistribution : public TabulatedWavelengthDistribution
 
         PROPERTY_DOUBLE_LIST(wavelengths, "the wavelengths at which to specify the probability")
         ATTRIBUTE_QUANTITY(wavelengths, "wavelength")
-        ATTRIBUTE_MIN_VALUE(wavelengths, "1 Angstrom")
+        ATTRIBUTE_MIN_VALUE(wavelengths, "1 pm")
         ATTRIBUTE_MAX_VALUE(wavelengths, "1 m")
 
         PROPERTY_ENUM(unitStyle, UnitStyle, "the probability unit style")
