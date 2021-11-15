@@ -64,7 +64,6 @@ SkirtUnitDef::SkirtUnitDef()
     addUnit("wavelength", "keV", 1e-3 * hc / Qel, -1.);
     addUnit("wavelength", "MeV", 1e-6 * hc / Qel, -1.);
     addUnit("wavelength", "GeV", 1e-9 * hc / Qel, -1.);
-    addUnit("wavelength", "TeV", 1e-12 * hc / Qel, -1.);
 
     // grainsize
     addUnit("grainsize", "m", 1.);
