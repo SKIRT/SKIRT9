@@ -29,11 +29,12 @@ class Units : public SimulationItem
 {
     /** The enumeration type indicating the output style for flux density and surface brightness.
         Neutral indicates \f$\lambda F_\lambda = \nu F_\nu\f$; Wavelength indicates
-        \f$F_\lambda\f$; and Frequency indicates \f$F_\nu\f$. */
-    ENUM_DEF(FluxOutputStyle, Neutral, Wavelength, Frequency)
+        \f$F_\lambda\f$; Frequency indicates \f$F_\nu\f$; and Energy indicates \f$F_E\f$. */
+    ENUM_DEF(FluxOutputStyle, Neutral, Wavelength, Frequency, Energy)
         ENUM_VAL(FluxOutputStyle, Neutral, "neutral: λ F_λ = ν F_ν")
         ENUM_VAL(FluxOutputStyle, Wavelength, "per unit of wavelength: F_λ")
         ENUM_VAL(FluxOutputStyle, Frequency, "per unit of frequency: F_ν")
+        ENUM_VAL(FluxOutputStyle, Energy, "counts per unit of energy: F_E")
     ENUM_END()
 
     ITEM_ABSTRACT(Units, SimulationItem, "a units system")
@@ -233,7 +234,7 @@ public:
 
     /** This function converts the monochromatic per-wavelength luminosity \f$L_\lambda\f$ from the
         internally used SI units (\f${\text{W}}\, {\text{m}}^{-1}\f$) to the program's flux output
-        style (neutral, wavelength or frequency) and units. */
+        style and units. */
     double omonluminosity(double lambda, double Llambda) const;
 
     /** This function returns a string describing the flux density output style adopted by the
@@ -246,7 +247,7 @@ public:
 
     /** This function converts the per-wavelength flux density \f$F_\lambda\f$ for wavelength
         \f$\lambda\f$ from the internally used SI units (\f${\text{W}}\, {\text{m}}^{-3}\f$) to the
-        program's flux output style (neutral, wavelength or frequency) and units. */
+        program's flux output style and units. */
     double ofluxdensity(double lambda, double Flambda) const;
 
     /** This function returns a string describing the surface brightness output style adopted by
@@ -259,8 +260,7 @@ public:
 
     /** This function converts the per-wavelength surface brightness \f$f_\lambda\f$ for wavelength
         \f$\lambda\f$ from the internally used SI units (\f${\text{W}}\, {\text{m}}^{-3}\,
-        {\text{sr}}^{-1}\f$) to the program's flux output style (neutral, wavelength or frequency)
-        and units. */
+        {\text{sr}}^{-1}\f$) to the program's flux output style and units. */
     double osurfacebrightness(double lambda, double flambda) const;
 
     /** This function returns a string describing the mean intensity output style adopted by
@@ -273,8 +273,7 @@ public:
 
     /** This function converts the per-wavelength mean intensity \f$J_\lambda\f$ for wavelength
         \f$\lambda\f$ from the internally used SI units (\f${\text{W}}\, {\text{m}}^{-3}\,
-        {\text{sr}}^{-1}\f$) to the program's flux output style (neutral, wavelength or frequency)
-        and units. */
+        {\text{sr}}^{-1}\f$) to the program's flux output style and units. */
     double omeanintensity(double lambda, double Jlambda) const;
 
     /** This function returns a string containing the name of the unit of temperature adopted by

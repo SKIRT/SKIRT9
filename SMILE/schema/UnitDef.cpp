@@ -55,7 +55,7 @@ double UnitDef::in(string qty, string unit, double value) const
         double factor, power, offset;
         std::tie(factor, power, offset) = _quantities.at(qty).at(unit);
         if (power != 1.) value = pow(value, power);
-        return factor * value  + offset;
+        return factor * value + offset;
     }
 
     // otherwise report the error
@@ -75,7 +75,7 @@ double UnitDef::out(string qty, string unit, double value) const
         double factor, power, offset;
         std::tie(factor, power, offset) = _quantities.at(qty).at(unit);
         value = (value - offset) / factor;
-        if (power != 1.) value = pow(value, 1./power);
+        if (power != 1.) value = pow(value, 1. / power);
         return value;
     }
 

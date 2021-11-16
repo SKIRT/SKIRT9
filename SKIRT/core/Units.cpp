@@ -303,13 +303,22 @@ double Units::obolluminosity(double L) const
 
 ////////////////////////////////////////////////////////////////////
 
+namespace
+{
+    const double c = Constants::c();
+    const double hc2 = Constants::h() * Constants::c() * Constants::h() * Constants::c();
+}
+
+////////////////////////////////////////////////////////////////////
+
 string Units::smonluminosity() const
 {
     switch (_fluxOutputStyle)
     {
+        case FluxOutputStyle::Neutral: return "lambda*L_lambda";
         case FluxOutputStyle::Wavelength: return "L_lambda";
         case FluxOutputStyle::Frequency: return "L_nu";
-        case FluxOutputStyle::Neutral: return "lambda*L_lambda";
+        case FluxOutputStyle::Energy: return "L_E";
     }
     return string();
 }
@@ -320,9 +329,10 @@ string Units::umonluminosity() const
 {
     switch (_fluxOutputStyle)
     {
+        case FluxOutputStyle::Neutral: return unit("neutralmonluminosity");
         case FluxOutputStyle::Wavelength: return unit("wavelengthmonluminosity");
         case FluxOutputStyle::Frequency: return unit("frequencymonluminosity");
-        case FluxOutputStyle::Neutral: return unit("neutralmonluminosity");
+        case FluxOutputStyle::Energy: return unit("energymonluminosity");
     }
     return string();
 }
@@ -333,10 +343,10 @@ double Units::omonluminosity(double lambda, double Llambda) const
 {
     switch (_fluxOutputStyle)
     {
-        case FluxOutputStyle::Wavelength: return out("wavelengthmonluminosity", Llambda);
-        case FluxOutputStyle::Frequency:
-            return out("frequencymonluminosity", lambda * lambda * Llambda / Constants::c());
         case FluxOutputStyle::Neutral: return out("neutralmonluminosity", lambda * Llambda);
+        case FluxOutputStyle::Wavelength: return out("wavelengthmonluminosity", Llambda);
+        case FluxOutputStyle::Frequency: return out("frequencymonluminosity", lambda * lambda * Llambda / c);
+        case FluxOutputStyle::Energy: return out("energymonluminosity", lambda * lambda * lambda * Llambda / hc2);
     }
     return 0.;
 }
@@ -347,9 +357,10 @@ string Units::sfluxdensity() const
 {
     switch (_fluxOutputStyle)
     {
+        case FluxOutputStyle::Neutral: return "lambda*F_lambda";
         case FluxOutputStyle::Wavelength: return "F_lambda";
         case FluxOutputStyle::Frequency: return "F_nu";
-        case FluxOutputStyle::Neutral: return "lambda*F_lambda";
+        case FluxOutputStyle::Energy: return "F_E";
     }
     return string();
 }
@@ -360,9 +371,10 @@ string Units::ufluxdensity() const
 {
     switch (_fluxOutputStyle)
     {
+        case FluxOutputStyle::Neutral: return unit("neutralfluxdensity");
         case FluxOutputStyle::Wavelength: return unit("wavelengthfluxdensity");
         case FluxOutputStyle::Frequency: return unit("frequencyfluxdensity");
-        case FluxOutputStyle::Neutral: return unit("neutralfluxdensity");
+        case FluxOutputStyle::Energy: return unit("energyfluxdensity");
     }
     return string();
 }
@@ -373,9 +385,10 @@ double Units::ofluxdensity(double lambda, double Flambda) const
 {
     switch (_fluxOutputStyle)
     {
-        case FluxOutputStyle::Wavelength: return out("wavelengthfluxdensity", Flambda);
-        case FluxOutputStyle::Frequency: return out("frequencyfluxdensity", lambda * lambda * Flambda / Constants::c());
         case FluxOutputStyle::Neutral: return out("neutralfluxdensity", lambda * Flambda);
+        case FluxOutputStyle::Wavelength: return out("wavelengthfluxdensity", Flambda);
+        case FluxOutputStyle::Frequency: return out("frequencyfluxdensity", lambda * lambda * Flambda / c);
+        case FluxOutputStyle::Energy: return out("energyfluxdensity", lambda * lambda * lambda * Flambda / hc2);
     }
     return 0.;
 }
@@ -386,9 +399,10 @@ string Units::ssurfacebrightness() const
 {
     switch (_fluxOutputStyle)
     {
+        case FluxOutputStyle::Neutral: return "lambda*f_lambda";
         case FluxOutputStyle::Wavelength: return "f_lambda";
         case FluxOutputStyle::Frequency: return "f_nu";
-        case FluxOutputStyle::Neutral: return "lambda*f_lambda";
+        case FluxOutputStyle::Energy: return "f_E";
     }
     return string();
 }
@@ -399,9 +413,10 @@ string Units::usurfacebrightness() const
 {
     switch (_fluxOutputStyle)
     {
+        case FluxOutputStyle::Neutral: return unit("neutralsurfacebrightness");
         case FluxOutputStyle::Wavelength: return unit("wavelengthsurfacebrightness");
         case FluxOutputStyle::Frequency: return unit("frequencysurfacebrightness");
-        case FluxOutputStyle::Neutral: return unit("neutralsurfacebrightness");
+        case FluxOutputStyle::Energy: return unit("energysurfacebrightness");
     }
     return string();
 }
@@ -412,10 +427,10 @@ double Units::osurfacebrightness(double lambda, double flambda) const
 {
     switch (_fluxOutputStyle)
     {
-        case FluxOutputStyle::Wavelength: return out("wavelengthsurfacebrightness", flambda);
-        case FluxOutputStyle::Frequency:
-            return out("frequencysurfacebrightness", lambda * lambda * flambda / Constants::c());
         case FluxOutputStyle::Neutral: return out("neutralsurfacebrightness", lambda * flambda);
+        case FluxOutputStyle::Wavelength: return out("wavelengthsurfacebrightness", flambda);
+        case FluxOutputStyle::Frequency: return out("frequencysurfacebrightness", lambda * lambda * flambda / c);
+        case FluxOutputStyle::Energy: return out("energysurfacebrightness", lambda * lambda * lambda * flambda / hc2);
     }
     return 0.;
 }
@@ -426,9 +441,10 @@ std::string Units::smeanintensity() const
 {
     switch (_fluxOutputStyle)
     {
+        case FluxOutputStyle::Neutral: return "lambda*J_lambda";
         case FluxOutputStyle::Wavelength: return "J_lambda";
         case FluxOutputStyle::Frequency: return "J_nu";
-        case FluxOutputStyle::Neutral: return "lambda*J_lambda";
+        case FluxOutputStyle::Energy: return "J_E";
     }
     return string();
 }
@@ -439,9 +455,10 @@ std::string Units::umeanintensity() const
 {
     switch (_fluxOutputStyle)
     {
+        case FluxOutputStyle::Neutral: return unit("neutralmeanintensity");
         case FluxOutputStyle::Wavelength: return unit("wavelengthmeanintensity");
         case FluxOutputStyle::Frequency: return unit("frequencymeanintensity");
-        case FluxOutputStyle::Neutral: return unit("neutralmeanintensity");
+        case FluxOutputStyle::Energy: return unit("energymeanintensity");
     }
     return string();
 }
@@ -452,10 +469,10 @@ double Units::omeanintensity(double lambda, double Jlambda) const
 {
     switch (_fluxOutputStyle)
     {
-        case FluxOutputStyle::Wavelength: return out("wavelengthmeanintensity", Jlambda);
-        case FluxOutputStyle::Frequency:
-            return out("frequencymeanintensity", lambda * lambda * Jlambda / Constants::c());
         case FluxOutputStyle::Neutral: return out("neutralmeanintensity", lambda * Jlambda);
+        case FluxOutputStyle::Wavelength: return out("wavelengthmeanintensity", Jlambda);
+        case FluxOutputStyle::Frequency: return out("frequencymeanintensity", lambda * lambda * Jlambda / c);
+        case FluxOutputStyle::Energy: return out("energymeanintensity", lambda * lambda * lambda * Jlambda / hc2);
     }
     return 0.;
 }
