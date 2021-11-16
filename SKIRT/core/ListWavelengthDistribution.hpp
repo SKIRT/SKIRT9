@@ -25,12 +25,13 @@
     insists on knowing the precise units. */
 class ListWavelengthDistribution : public TabulatedWavelengthDistribution
 {
-    /** The enumeration type indicating the specific probability unit style, e.g. whether to use
-        probability per unit of wavelength or per unit of frequency. */
-    ENUM_DEF(UnitStyle, wavelengthmonluminosity, frequencymonluminosity, neutralmonluminosity)
-        ENUM_VAL(UnitStyle, wavelengthmonluminosity, "per unit of wavelength: p_λ")
-        ENUM_VAL(UnitStyle, frequencymonluminosity, "per unit of frequency: p_ν")
-        ENUM_VAL(UnitStyle, neutralmonluminosity, "neutral: λ p_λ = ν p_ν")
+    /** The enumeration type indicating the specific luminosity unit style, e.g. whether to use
+        specific luminosity per unit of wavelength, frequency or energy. */
+    ENUM_DEF(UnitStyle, neutralmonluminosity, wavelengthmonluminosity, frequencymonluminosity, energymonluminosity)
+        ENUM_VAL(UnitStyle, neutralmonluminosity, "neutral: λ L_λ = ν L_ν")
+        ENUM_VAL(UnitStyle, wavelengthmonluminosity, "per unit of wavelength: L_λ")
+        ENUM_VAL(UnitStyle, frequencymonluminosity, "per unit of frequency: L_ν")
+        ENUM_VAL(UnitStyle, energymonluminosity, "counts per unit of energy: L_E")
     ENUM_END()
 
     ITEM_CONCRETE(ListWavelengthDistribution, TabulatedWavelengthDistribution,

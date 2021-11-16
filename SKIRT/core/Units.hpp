@@ -316,6 +316,26 @@ public:
         program's output units. */
     double opressure(double p) const;
 
+    //======================== Static Functions =======================
+
+    /** This function converts a specific luminosity or flux density from neutral style to
+        per-wavelength style. Both the input value and the returned value are in SI units. */
+    static double fromNeutralStyle(double lambda, double lambdaFlambda);
+
+    /** This function converts a specific luminosity or flux density from per-wavelength style to
+        per-wavelength style. Both the input value and the returned value are in SI units. In other
+        words, the function simply returns the input value, ignoring the wavelength. It is provided
+        for consistency with the other fromXxxStyle() functions. */
+    static double fromWavelengthStyle(double lambda, double Flambda);
+
+    /** This function converts a specific luminosity or flux density from per-frequency style to
+        per-wavelength style. Both the input value and the returned value are in SI units. */
+    static double fromFrequencyStyle(double lambda, double Fnu);
+
+    /** This function converts a specific luminosity or flux density from per-energy style to
+        per-wavelength style. Both the input value and the returned value are in SI units. */
+    static double fromEnergyStyle(double lambda, double FE);
+
     //======================== Data Members ========================
 
 private:

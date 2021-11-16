@@ -24,11 +24,12 @@
 class ListSED : public TabulatedSED
 {
     /** The enumeration type indicating the specific luminosity unit style, e.g. whether to use
-        specific luminosity per unit of wavelength or per unit of frequency. */
-    ENUM_DEF(UnitStyle, wavelengthmonluminosity, frequencymonluminosity, neutralmonluminosity)
+        specific luminosity per unit of wavelength, frequency or energy. */
+    ENUM_DEF(UnitStyle, neutralmonluminosity, wavelengthmonluminosity, frequencymonluminosity, energymonluminosity)
+        ENUM_VAL(UnitStyle, neutralmonluminosity, "neutral: λ L_λ = ν L_ν")
         ENUM_VAL(UnitStyle, wavelengthmonluminosity, "per unit of wavelength: L_λ")
         ENUM_VAL(UnitStyle, frequencymonluminosity, "per unit of frequency: L_ν")
-        ENUM_VAL(UnitStyle, neutralmonluminosity, "neutral: λ L_λ = ν L_ν")
+        ENUM_VAL(UnitStyle, energymonluminosity, "counts per unit of energy: L_E")
     ENUM_END()
 
     ITEM_CONCRETE(ListSED, TabulatedSED, "a spectral energy distribution specified inside the configuration file")

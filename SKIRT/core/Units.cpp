@@ -548,3 +548,31 @@ double Units::opressure(double p) const
 }
 
 ////////////////////////////////////////////////////////////////////
+
+double Units::fromNeutralStyle(double lambda, double lambdaFlambda)
+{
+    return lambdaFlambda / lambda;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double Units::fromWavelengthStyle(double /*lambda*/, double Flambda)
+{
+    return Flambda;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double Units::fromFrequencyStyle(double lambda, double Fnu)
+{
+    return Fnu * c / lambda / lambda;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double Units::fromEnergyStyle(double lambda, double FE)
+{
+    return FE * hc2 / lambda / lambda / lambda;
+}
+
+////////////////////////////////////////////////////////////////////

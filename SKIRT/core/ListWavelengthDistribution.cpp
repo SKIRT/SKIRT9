@@ -22,9 +22,10 @@ void ListWavelengthDistribution::getWavelengthsAndProbabilities(Array& lambdav, 
     // convert the user-configured probabilities to per-wavelength units without worrying about constant scale
     switch (_unitStyle)
     {
+        case UnitStyle::neutralmonluminosity: pv /= lambdav; break;
         case UnitStyle::wavelengthmonluminosity: break;
         case UnitStyle::frequencymonluminosity: pv /= (lambdav * lambdav); break;
-        case UnitStyle::neutralmonluminosity: pv /= lambdav; break;
+        case UnitStyle::energymonluminosity: pv /= (lambdav * lambdav * lambdav); break;
     }
 }
 

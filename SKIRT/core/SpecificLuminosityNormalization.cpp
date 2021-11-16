@@ -4,9 +4,9 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "SpecificLuminosityNormalization.hpp"
-#include "Constants.hpp"
 #include "ContSED.hpp"
 #include "FatalError.hpp"
+#include "Units.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -23,11 +23,18 @@ double SpecificLuminosityNormalization::luminosity(SED* sed) const
     double LlambdaUser = 0.;
     switch (_unitStyle)
     {
-        case UnitStyle::wavelengthmonluminosity: LlambdaUser = _specificLuminosity; break;
-        case UnitStyle::frequencymonluminosity:
-            LlambdaUser = _specificLuminosity * Constants::c() / _wavelength / _wavelength;
+        case UnitStyle::neutralmonluminosity:
+            LlambdaUser = Units::fromNeutralStyle(_wavelength, _specificLuminosity);
             break;
-        case UnitStyle::neutralmonluminosity: LlambdaUser = _specificLuminosity / _wavelength; break;
+        case UnitStyle::wavelengthmonluminosity:
+            LlambdaUser = Units::fromWavelengthStyle(_wavelength, _specificLuminosity);
+            break;
+        case UnitStyle::frequencymonluminosity:
+            LlambdaUser = Units::fromFrequencyStyle(_wavelength, _specificLuminosity);
+            break;
+        case UnitStyle::energymonluminosity:
+            LlambdaUser = Units::fromEnergyStyle(_wavelength, _specificLuminosity);
+            break;
     }
 
     // return the ratio
