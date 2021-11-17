@@ -6,9 +6,9 @@
 #ifndef UNITS_HPP
 #define UNITS_HPP
 
+#include "Array.hpp"
 #include "SimulationItem.hpp"
 #include "SkirtUnitDef.hpp"
-#include "Array.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -51,6 +51,11 @@ public:
     /** This function returns true if the specified combination of physical quantity and unit or
         unit system is present in the unit definition, and false if not. */
     bool has(string qty, string unit) const;
+
+    /** This function returns the definition of the specified units in the form of a tuple
+        providing the front factor, power exponent and offset for conversion from input to internal
+        quantities. */
+    std::tuple<double, double, double> def(string qty, string unit) const;
 
     /** This function converts a physical value from the specified units to internal program units.
         If the specified combination is not present in the unit definition, the function throws an

@@ -155,8 +155,8 @@ namespace
     const size_t ERROR_NO_INDEX = 999999;
     const size_t ERROR_AM_INDEX = 999998;
 
-    // This function returns the wavelength exponent needed to convert a per wavelength / per frequency
-    // quantity to internal (per wavelength) flavor, given the input units, or the error value if the
+    // This function returns the wavelength exponent needed to convert a per wavelength/frequency/energy
+    // quantity to internal (per wavelength) style, given the input units, or the error value if the
     // given units are not supported by any of the relevant quantities.
     int waveExponentForSpecificQuantity(Units* unitSystem, string unitString)
     {
@@ -164,8 +164,8 @@ namespace
         static const vector<string> specificQuantities(
             {"wavelengthmonluminosity", "wavelengthfluxdensity", "wavelengthsurfacebrightness", "neutralmonluminosity",
              "neutralfluxdensity", "neutralsurfacebrightness", "frequencymonluminosity", "frequencyfluxdensity",
-             "frequencysurfacebrightness"});
-        static const vector<int> specificExponents({0, 0, 0, -1, -1, -1, -2, -2, -2});
+             "frequencysurfacebrightness", "energymonluminosity", "energyfluxdensity", "energysurfacebrightness"});
+        static const vector<int> specificExponents({0, 0, 0, -1, -1, -1, -2, -2, -2, -3, -3, -3});
 
         // loop over the list
         for (size_t q = 0; q != specificQuantities.size(); ++q)
@@ -290,7 +290,8 @@ void TextInFile::addColumn(string description, string quantity, string defaultUn
     {
         if (!_units->has(col.quantity, col.unit))
             throw FATALERROR("Invalid units for quantity in column " + std::to_string(_numLogCols));
-        col.convFactor = _units->in(col.quantity, col.unit, 1.);
+        double offset;  // all SKIRT units have a zero offset
+        std::tie(col.convFactor, col.convPower, offset) = _units->def(col.quantity, col.unit);
     }
 
     // add the physical to logical column mapping for this column
@@ -347,8 +348,9 @@ bool TextInFile::readRow(Array& values)
                     if (i != ERROR_NO_INDEX)
                     {
                         const ColumnInfo& col = _colv[i];
-                        values[i] =
-                            value * (col.waveExponent ? pow(values[col.waveIndex], col.waveExponent) : col.convFactor);
+                        if (col.convPower != 1.) value = pow(value, col.convPower);
+                        value *= (col.waveExponent ? pow(values[col.waveIndex], col.waveExponent) : col.convFactor);
+                        values[i] = value;
                     }
                 }
                 return true;
@@ -375,8 +377,9 @@ bool TextInFile::readRow(Array& values)
                 if (i != ERROR_NO_INDEX)
                 {
                     const ColumnInfo& col = _colv[i];
-                    values[i] =
-                        value * (col.waveExponent ? pow(values[col.waveIndex], col.waveExponent) : col.convFactor);
+                    if (col.convPower != 1.) value = pow(value, col.convPower);
+                    value *= (col.waveExponent ? pow(values[col.waveIndex], col.waveExponent) : col.convFactor);
+                    values[i] = value;
                 }
             }
             return true;

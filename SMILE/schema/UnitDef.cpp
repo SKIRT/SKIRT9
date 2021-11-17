@@ -44,6 +44,23 @@ bool UnitDef::has(string qty, string unit) const
 
 ////////////////////////////////////////////////////////////////////
 
+std::tuple<double, double, double> UnitDef::def(string qty, string unit) const
+{
+    // if the unit argument represents a unit system, replace it by the default unit for the quantity
+    if (_unitSystems.count(unit) && _unitSystems.at(unit).count(qty)) unit = _unitSystems.at(unit).at(qty);
+
+    // if the unit is defined for the quantity, return its definition
+    if (_quantities.count(qty) && _quantities.at(qty).count(unit))
+    {
+        return _quantities.at(qty).at(unit);
+    }
+
+    // otherwise report the error
+    throw FATALERROR("Unknow quantity " + qty + " and/or unit (system) " + unit);
+}
+
+////////////////////////////////////////////////////////////////////
+
 double UnitDef::in(string qty, string unit, double value) const
 {
     // if the unit argument represents a unit system, replace it by the default unit for the quantity

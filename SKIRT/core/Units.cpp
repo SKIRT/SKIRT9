@@ -24,7 +24,14 @@ bool Units::has(string qty, string unit) const
 
 ////////////////////////////////////////////////////////////////////
 
-double Units::in(std::string qty, std::string unit, double value) const
+std::tuple<double, double, double> Units::def(string qty, string unit) const
+{
+    return _unitDef.def(qty, unit);
+}
+
+////////////////////////////////////////////////////////////////////
+
+double Units::in(string qty, std::string unit, double value) const
 {
     return _unitDef.in(qty, unit, value);
 }

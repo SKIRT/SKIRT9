@@ -113,6 +113,13 @@ public:
         the default unit for the specified quantity in the specified unit system. */
     bool has(string qty, string unit) const;
 
+    /** This function returns the definition of the specified combination of physical quantity and
+        unit or unit system in the form of a tuple providing the front factor, power exponent and
+        offset for conversion from input to internal quantities. Refer to the has() function for a
+        description of how to specify the physical quantity and unit. If the specified combination
+        is not present in the unit definition, the function throws an exception. */
+    std::tuple<double, double, double> def(string qty, string unit) const;
+
     /** This function converts a physical value from the specified units to internal program units.
         Refer to the has() function for a description of how to specify the physical quantity and
         unit. If the specified combination is not present in the unit definition, the function
