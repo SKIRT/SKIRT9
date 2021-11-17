@@ -20,22 +20,7 @@ double SpecificLuminosityNormalization::luminosity(SED* sed) const
     if (LlambdaSED <= 0) throw FATALERROR("The normalization wavelength is outside of the SED's wavelength range");
 
     // convert the user-configured specific luminosity to per-wavelength units
-    double LlambdaUser = 0.;
-    switch (_unitStyle)
-    {
-        case UnitStyle::neutralmonluminosity:
-            LlambdaUser = Units::fromNeutralStyle(_wavelength, _specificLuminosity);
-            break;
-        case UnitStyle::wavelengthmonluminosity:
-            LlambdaUser = Units::fromWavelengthStyle(_wavelength, _specificLuminosity);
-            break;
-        case UnitStyle::frequencymonluminosity:
-            LlambdaUser = Units::fromFrequencyStyle(_wavelength, _specificLuminosity);
-            break;
-        case UnitStyle::energymonluminosity:
-            LlambdaUser = Units::fromEnergyStyle(_wavelength, _specificLuminosity);
-            break;
-    }
+    double LlambdaUser = Units::fromFluxStyle(_wavelength, _specificLuminosity, Units::fluxStyle(_unitStyle));
 
     // return the ratio
     return LlambdaUser / LlambdaSED;

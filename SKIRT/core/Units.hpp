@@ -8,6 +8,7 @@
 
 #include "SimulationItem.hpp"
 #include "SkirtUnitDef.hpp"
+#include "Array.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -44,23 +45,49 @@ class Units : public SimulationItem
 
     ITEM_END()
 
-    //======================== Other Functions =======================
+    //======================== Input Conversion =======================
 
 public:
     /** This function returns true if the specified combination of physical quantity and unit or
         unit system is present in the unit definition, and false if not. */
     bool has(string qty, string unit) const;
 
+    /** This function converts a physical value from the specified units to internal program units.
+        If the specified combination is not present in the unit definition, the function throws an
+        exception. */
+    double in(string qty, string unit, double value) const;
+
+    /** This function converts a specific luminosity from a given input style to the internal
+        per-wavelength style, assuming a given wavelength. Both the input values and the returned
+        value are in SI units. */
+    static double fromFluxStyle(double lambda, double L, FluxOutputStyle style);
+
+    /** This function converts a list of specific luminosities from a given input style to the
+        internal per-wavelength style, assuming the given corresponding wavelengths. Both the input
+        values and the returned value are in SI units. */
+    static Array fromFluxStyle(const Array& lambdav, const Array& Lv, FluxOutputStyle style);
+
+    /** This template function translates a flux style given as an enumeration with elements
+        corresponding to the specific luminosity quantity strings defined by the SkirtUnitDef class
+        to a FluxOutputStyle flux style. */
+    template<class Style> static FluxOutputStyle fluxStyle(Style style)
+    {
+        switch (style)
+        {
+            case Style::neutralmonluminosity: return FluxOutputStyle::Neutral;
+            case Style::wavelengthmonluminosity: return FluxOutputStyle::Wavelength;
+            case Style::frequencymonluminosity: return FluxOutputStyle::Frequency;
+            case Style::energymonluminosity: return FluxOutputStyle::Energy;
+        }
+    }
+
+    //======================== Output Conversion =======================
+
     /** This function returns a string containing the name of the output unit adopted by the
         program for the specified physical quantity. The name of the physical quantity must be
         specified in all lowercase and without any spaces. The function throws a fatal error if the
         specified physical quantity is unknown. */
     string unit(string qty) const;
-
-    /** This function converts a physical value from the specified units to internal program units.
-        If the specified combination is not present in the unit definition, the function throws an
-        exception. */
-    double in(string qty, string unit, double value) const;
 
     /** This function converts a physical value from internal SI units to the output units adopted
         by the program. The name of the physical quantity must be specified in all lowercase and
@@ -315,26 +342,6 @@ public:
     /** This function converts the pressure \f$p\f$ from the internally used SI units (Pa) to the
         program's output units. */
     double opressure(double p) const;
-
-    //======================== Static Functions =======================
-
-    /** This function converts a specific luminosity or flux density from neutral style to
-        per-wavelength style. Both the input value and the returned value are in SI units. */
-    static double fromNeutralStyle(double lambda, double lambdaFlambda);
-
-    /** This function converts a specific luminosity or flux density from per-wavelength style to
-        per-wavelength style. Both the input value and the returned value are in SI units. In other
-        words, the function simply returns the input value, ignoring the wavelength. It is provided
-        for consistency with the other fromXxxStyle() functions. */
-    static double fromWavelengthStyle(double lambda, double Flambda);
-
-    /** This function converts a specific luminosity or flux density from per-frequency style to
-        per-wavelength style. Both the input value and the returned value are in SI units. */
-    static double fromFrequencyStyle(double lambda, double Fnu);
-
-    /** This function converts a specific luminosity or flux density from per-energy style to
-        per-wavelength style. Both the input value and the returned value are in SI units. */
-    static double fromEnergyStyle(double lambda, double FE);
 
     //======================== Data Members ========================
 

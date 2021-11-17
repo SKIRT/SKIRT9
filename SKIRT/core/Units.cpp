@@ -9,6 +9,14 @@
 
 ////////////////////////////////////////////////////////////////////
 
+namespace
+{
+    const double c = Constants::c();
+    const double hc2 = Constants::h() * Constants::c() * Constants::h() * Constants::c();
+}
+
+////////////////////////////////////////////////////////////////////
+
 bool Units::has(string qty, string unit) const
 {
     return _unitDef.has(qty, unit);
@@ -16,16 +24,42 @@ bool Units::has(string qty, string unit) const
 
 ////////////////////////////////////////////////////////////////////
 
-string Units::unit(string qty) const
+double Units::in(std::string qty, std::string unit, double value) const
 {
-    return _unitDef.unit(qty, type());
+    return _unitDef.in(qty, unit, value);
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double Units::in(std::string qty, std::string unit, double value) const
+double Units::fromFluxStyle(double lambda, double L, FluxOutputStyle style)
 {
-    return _unitDef.in(qty, unit, value);
+    switch (style)
+    {
+        case FluxOutputStyle::Neutral: return L / lambda;
+        case FluxOutputStyle::Wavelength: return L;
+        case FluxOutputStyle::Frequency: return L * c / lambda / lambda;
+        case FluxOutputStyle::Energy: return L * hc2 / lambda / lambda / lambda;
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
+Array Units::fromFluxStyle(const Array& lambdav, const Array& Lv, FluxOutputStyle style)
+{
+    switch (style)
+    {
+        case FluxOutputStyle::Neutral: return Lv / lambdav;
+        case FluxOutputStyle::Wavelength: return Lv;
+        case FluxOutputStyle::Frequency: return Lv * c / lambdav / lambdav;
+        case FluxOutputStyle::Energy: return Lv * hc2 / lambdav / lambdav / lambdav;
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
+string Units::unit(string qty) const
+{
+    return _unitDef.unit(qty, type());
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -303,14 +337,6 @@ double Units::obolluminosity(double L) const
 
 ////////////////////////////////////////////////////////////////////
 
-namespace
-{
-    const double c = Constants::c();
-    const double hc2 = Constants::h() * Constants::c() * Constants::h() * Constants::c();
-}
-
-////////////////////////////////////////////////////////////////////
-
 string Units::smonluminosity() const
 {
     switch (_fluxOutputStyle)
@@ -545,34 +571,6 @@ string Units::upressure() const
 double Units::opressure(double p) const
 {
     return out("pressure", p);
-}
-
-////////////////////////////////////////////////////////////////////
-
-double Units::fromNeutralStyle(double lambda, double lambdaFlambda)
-{
-    return lambdaFlambda / lambda;
-}
-
-////////////////////////////////////////////////////////////////////
-
-double Units::fromWavelengthStyle(double /*lambda*/, double Flambda)
-{
-    return Flambda;
-}
-
-////////////////////////////////////////////////////////////////////
-
-double Units::fromFrequencyStyle(double lambda, double Fnu)
-{
-    return Fnu * c / lambda / lambda;
-}
-
-////////////////////////////////////////////////////////////////////
-
-double Units::fromEnergyStyle(double lambda, double FE)
-{
-    return FE * hc2 / lambda / lambda / lambda;
 }
 
 ////////////////////////////////////////////////////////////////////

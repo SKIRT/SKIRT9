@@ -23,22 +23,7 @@ double BandLuminosityNormalization::luminosity(SED* sed) const
 
     // convert the user-configured specific luminosity to per-wavelength units
     double wavelength = _band->pivotWavelength();
-    double LlambdaUser = 0.;
-    switch (_unitStyle)
-    {
-        case UnitStyle::neutralmonluminosity:
-            LlambdaUser = Units::fromNeutralStyle(wavelength, _specificLuminosity);
-            break;
-        case UnitStyle::wavelengthmonluminosity:
-            LlambdaUser = Units::fromWavelengthStyle(wavelength, _specificLuminosity);
-            break;
-        case UnitStyle::frequencymonluminosity:
-            LlambdaUser = Units::fromFrequencyStyle(wavelength, _specificLuminosity);
-            break;
-        case UnitStyle::energymonluminosity:
-            LlambdaUser = Units::fromEnergyStyle(wavelength, _specificLuminosity);
-            break;
-    }
+    double LlambdaUser = Units::fromFluxStyle(wavelength, _specificLuminosity, Units::fluxStyle(_unitStyle));
 
     // return the ratio
     return LlambdaUser / LlambdaSED;

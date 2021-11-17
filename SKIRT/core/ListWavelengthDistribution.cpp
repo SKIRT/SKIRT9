@@ -6,6 +6,7 @@
 #include "ListWavelengthDistribution.hpp"
 #include "FatalError.hpp"
 #include "NR.hpp"
+#include "Units.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -15,18 +16,11 @@ void ListWavelengthDistribution::getWavelengthsAndProbabilities(Array& lambdav, 
     if (_wavelengths.size() != _probabilities.size())
         throw FATALERROR("Number of listed probabilities does not match number of listed wavelengths");
 
-    // copy the wavelengths and probabilities from the configuration
+    // copy the user-configured wavelengths
     NR::assign(lambdav, _wavelengths);
-    NR::assign(pv, _probabilities);
 
-    // convert the user-configured probabilities to per-wavelength units without worrying about constant scale
-    switch (_unitStyle)
-    {
-        case UnitStyle::neutralmonluminosity: pv /= lambdav; break;
-        case UnitStyle::wavelengthmonluminosity: break;
-        case UnitStyle::frequencymonluminosity: pv /= (lambdav * lambdav); break;
-        case UnitStyle::energymonluminosity: pv /= (lambdav * lambdav * lambdav); break;
-    }
+    // convert the user-configured probabilities to per-wavelength units
+    pv = Units::fromFluxStyle(lambdav, NR::array(_probabilities), Units::fluxStyle(_unitStyle));
 }
 
 //////////////////////////////////////////////////////////////////////

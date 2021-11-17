@@ -52,7 +52,7 @@
     addUnit("wavelength", "micron", 1e-6);
     addUnit("wavelength", "Angstrom", 1e-10);
     addUnit("temperature", "K", 1.);
-    addUnit("temperature", "C", 1., 1, 273.15);
+    addUnit("temperature", "C", 1., 1., 273.15);
 
     addDefaultUnit("SIUnits", "wavelength", "m");
     addDefaultUnit("SIUnits", "temperature", "K");
