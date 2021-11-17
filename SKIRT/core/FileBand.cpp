@@ -23,6 +23,13 @@ void FileBand::setupSelfBefore()
     // verify the number of values
     if (_transv.size() < 2) throw FATALERROR("Number of loaded transmission values is less than 2");
 
+    // reverse the arrays if needed to get the wavelengths in increasing order
+    if (_lambdav[0] > _lambdav[_lambdav.size()-1])
+    {
+        std::reverse(begin(_lambdav), end(_lambdav));
+        std::reverse(begin(_transv), end(_transv));
+    }
+
     // calculate the normalization factor for the transmission values
     size_t size = _transv.size();
     double norm = 0.;
