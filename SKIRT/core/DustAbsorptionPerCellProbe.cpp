@@ -48,7 +48,7 @@ void DustAbsorptionPerCellProbe::probeRun()
                 {
                     double lambda = wavelengthGrid->wavelength(ell);
                     double Labs = Jv[ell] * factor * ms->opacityAbs(lambda, m, MaterialMix::MaterialType::Dust);
-                    values.push_back(units->omonluminosityWavelength(lambda, Labs));
+                    values.push_back(units->omonluminosity(lambda, Labs));
                 }
                 file.writeRow(values);
             }

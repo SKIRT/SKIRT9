@@ -136,29 +136,30 @@ public:
     void useColumns(string columns);
 
     /** This function (virtually) adds a new column to the text file, characterized by the given
-        description and unit information. The \em description argument is used only for
-        logging purposes. The \em quantity argument specifies the physical quantity represented by
-        the column. It must match one of the quantity strings supported by the Units system, or one
-        of the special quantity strings recognized by this class (see below). The \em defaultUnit
+        description and unit information. The \em description argument is used only for logging
+        purposes. The \em quantity argument specifies the physical quantity represented by the
+        column. It must match one of the quantity strings supported by the Units system, or one of
+        the special quantity strings recognized by this class (see below). The \em defaultUnit
         argument specifies the default unit string, which is used in case the input file does not
         contain column information.
 
         In addition to the quantity strings supported by the Units system, this function supports
         the following special quantity strings.
-           - The empty string (the default argument value): indicates a dimensionless quantity;
-             the default unit must be the empty string as well.
-           - The string "specific": indicates a quantity that represents a specific luminosity per
-             unit of frequency or per unit of wavelength, in arbitrary units (because the values
-             will be normalized after being read). The function determines the frequency/wavelength
-             flavor based on the units given in the file header or the default units. The values
-             are converted to "per wavelength" flavor if needed using the value of the first
-             preceding column described as "wavelength". However, the values will remain scaled
-             with some arbitary wavelength-independent constant.
+
+        - The empty string (the default argument value): indicates a dimensionless quantity; the
+        default unit must be the empty string as well.
+
+        - The string "specific": indicates a quantity that represents a specific luminosity per
+        unit of wavelength, frequency or energy with arbitrary scaling because the values will be
+        normalized by the client after being read. The function determines the unit style (per
+        wavelength, frequency or energy) based on the units given in the file header or the default
+        units. The values are always converted to "per wavelength" style assuming a wavelength
+        given by the value of the first preceding column described as "wavelength". However, the
+        values will remain scaled with some arbitary wavelength-independent constant.
 
         The function looks for and, if present, reads the header information line corresponding to
         this column. The unit information from the header is stored with the information provided
-        by the function arguments for later use.
-    */
+        by the function arguments for later use. */
     void addColumn(string description, string quantity = string(), string defaultUnit = string());
 
     /** This function reads the next row from a column text file and stores the resulting values in
@@ -291,6 +292,7 @@ private:
         string quantity;         // quantity, provided by the program
         string unit;             // unit, provided by the program or specified in the file
         double convFactor{1.};   // unit conversion factor from input to internal
+        double convPower{1.};    // unit conversion power (exponent) from input to internal
         int waveExponent{0};     // wavelength exponent for converting "specific" quantities
         size_t waveIndex{0};     // zero-based logical index of wavelength column for converting "specific" quantities
     };

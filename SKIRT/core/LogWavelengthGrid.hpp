@@ -18,12 +18,12 @@ class LogWavelengthGrid : public DisjointWavelengthGrid
 
         PROPERTY_DOUBLE(minWavelength, "the shortest wavelength")
         ATTRIBUTE_QUANTITY(minWavelength, "wavelength")
-        ATTRIBUTE_MIN_VALUE(minWavelength, "1 Angstrom")
+        ATTRIBUTE_MIN_VALUE(minWavelength, "1 pm")
         ATTRIBUTE_MAX_VALUE(minWavelength, "1 m")
 
         PROPERTY_DOUBLE(maxWavelength, "the longest wavelength")
         ATTRIBUTE_QUANTITY(maxWavelength, "wavelength")
-        ATTRIBUTE_MIN_VALUE(maxWavelength, "1 Angstrom")
+        ATTRIBUTE_MIN_VALUE(maxWavelength, "1 pm")
         ATTRIBUTE_MAX_VALUE(maxWavelength, "1 m")
 
         PROPERTY_INT(numWavelengths, "the number of wavelength grid points")

@@ -56,8 +56,8 @@ void LuminosityProbe::probeSetup()
         for (int i = 0; i != numSources; ++i) Llambdatot += Llambdavv(ell, i);
         double Ltot = Llambdatot * dlambda;
 
-        std::vector<double> row({units->owavelength(lambda), units->omonluminosityWavelength(lambda, Llambdatot),
-                                 units->obolluminosity(Ltot)});
+        std::vector<double> row(
+            {units->owavelength(lambda), units->omonluminosity(lambda, Llambdatot), units->obolluminosity(Ltot)});
         for (int i = 0; i != numSources; ++i) row.push_back(Llambdatot > 0 ? Llambdavv(ell, i) / Llambdatot : 0);
         file.writeRow(row);
     }

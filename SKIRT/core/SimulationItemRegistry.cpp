@@ -369,6 +369,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // bands
     ItemRegistry::add<Band>();
     ItemRegistry::add<BroadBand>();
+    ItemRegistry::add<TabulatedBand>();
     ItemRegistry::add<FileBand>();
     ItemRegistry::add<ListBand>();
 

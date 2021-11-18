@@ -64,7 +64,7 @@ void PlanarRadiationFieldCutsProbe::writeRadiationFieldCut(Probe* probe, bool xd
                     for (int ell = 0; ell != wavelengthGrid->numBins(); ++ell)
                     {
                         size_t l = i + Ni * j + size * ell;
-                        Jvv[l] = units->omeanintensityWavelength(wavelengthGrid->wavelength(ell), Jv[ell]);
+                        Jvv[l] = units->omeanintensity(wavelengthGrid->wavelength(ell), Jv[ell]);
                     }
                 }
             }

@@ -14,10 +14,11 @@
 /** TabulatedWavelengthDistribution is an abstract class for representing wavelength probability
     distributions that are tabulated by the user in the form of wavelength/probability pairs. The
     probability distribution function is defined segment-wise by the tabulated values, using
-    logarithmic interpolation. Probability values outside the range indicated by the first and the
-    last tabulated wavelength are considered to be zero. In addition, this range is intersected
-    with the wavelength range of the associated source (obtained through the
-    SourceWavelengthRangeInterface) before the distribution is normalized.
+    logarithmic interpolation. The wavelengths must be listed in increasing or decreasing order.
+    Probability values outside the range indicated by the first and the last tabulated wavelength
+    are considered to be zero. In addition, this range is intersected with the wavelength range of
+    the associated source (obtained through the SourceWavelengthRangeInterface) before the
+    distribution is normalized.
 
     The subclass must load the tabulated data, and this abstract class handles everything else. */
 class TabulatedWavelengthDistribution : public WavelengthDistribution
@@ -36,8 +37,9 @@ protected:
 
     /** This function must be implemented in each subclass to return the wavelengths and the
         corresponding probabilities tabulating the distribution. The function must guarantee that
-        both arrays have the same size. Constant scaling of the probabilities is not important
-        because the distribution will be normalized by this abstract class. */
+        both arrays have the same size. The wavelengths must be listed in increasing or decreasing
+        order. Constant scaling of the probabilities is not important because the distribution will
+        be normalized by this abstract class. */
     virtual void getWavelengthsAndProbabilities(Array& lambdav, Array& pv) const = 0;
 
     //======================== Other Functions =======================

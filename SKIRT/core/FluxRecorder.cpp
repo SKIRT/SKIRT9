@@ -381,7 +381,7 @@ void FluxRecorder::calibrateAndWrite()
         if (_includeFluxDensity)
         {
             double factor = 1. / fourpid2 / _lambdagrid->effectiveWidth(ell)
-                            * units->ofluxdensityWavelength(_lambdagrid->wavelength(ell), 1.);
+                            * units->ofluxdensity(_lambdagrid->wavelength(ell), 1.);
             for (auto& array : _sed)
                 if (array.size()) array[ell] *= factor;
         }
@@ -389,7 +389,7 @@ void FluxRecorder::calibrateAndWrite()
         if (_includeSurfaceBrightness)
         {
             double factor = 1. / fourpid2 / omega / _lambdagrid->effectiveWidth(ell)
-                            * units->osurfacebrightnessWavelength(_lambdagrid->wavelength(ell), 1.);
+                            * units->osurfacebrightness(_lambdagrid->wavelength(ell), 1.);
             size_t begin = ell * _numPixelsInFrame;
             size_t end = begin + _numPixelsInFrame;
             for (auto& array : _ifu)

@@ -6,6 +6,7 @@
 #ifndef UNITS_HPP
 #define UNITS_HPP
 
+#include "Array.hpp"
 #include "SimulationItem.hpp"
 #include "SkirtUnitDef.hpp"
 
@@ -29,11 +30,12 @@ class Units : public SimulationItem
 {
     /** The enumeration type indicating the output style for flux density and surface brightness.
         Neutral indicates \f$\lambda F_\lambda = \nu F_\nu\f$; Wavelength indicates
-        \f$F_\lambda\f$; and Frequency indicates \f$F_\nu\f$. */
-    ENUM_DEF(FluxOutputStyle, Neutral, Wavelength, Frequency)
+        \f$F_\lambda\f$; Frequency indicates \f$F_\nu\f$; and Energy indicates \f$F_E\f$. */
+    ENUM_DEF(FluxOutputStyle, Neutral, Wavelength, Frequency, Energy)
         ENUM_VAL(FluxOutputStyle, Neutral, "neutral: λ F_λ = ν F_ν")
         ENUM_VAL(FluxOutputStyle, Wavelength, "per unit of wavelength: F_λ")
         ENUM_VAL(FluxOutputStyle, Frequency, "per unit of frequency: F_ν")
+        ENUM_VAL(FluxOutputStyle, Energy, "counts per unit of energy: F_E")
     ENUM_END()
 
     ITEM_ABSTRACT(Units, SimulationItem, "a units system")
@@ -43,23 +45,54 @@ class Units : public SimulationItem
 
     ITEM_END()
 
-    //======================== Other Functions =======================
+    //======================== Input Conversion =======================
 
 public:
     /** This function returns true if the specified combination of physical quantity and unit or
         unit system is present in the unit definition, and false if not. */
     bool has(string qty, string unit) const;
 
-    /** This function returns a string containing the name of the output unit adopted by the
-        program for the specified physical quantity. The name of the physical quantity must be
-        specified in all lowercase and without any spaces. The function throws a fatal error if the
-        specified physical quantity is unknown. */
-    string unit(string qty) const;
+    /** This function returns the definition of the specified units in the form of a tuple
+        providing the front factor, power exponent and offset for conversion from input to internal
+        quantities. */
+    std::tuple<double, double, double> def(string qty, string unit) const;
 
     /** This function converts a physical value from the specified units to internal program units.
         If the specified combination is not present in the unit definition, the function throws an
         exception. */
     double in(string qty, string unit, double value) const;
+
+    /** This function converts a specific luminosity from a given input style to the internal
+        per-wavelength style, assuming a given wavelength. Both the input values and the returned
+        value are in SI units. */
+    static double fromFluxStyle(double lambda, double L, FluxOutputStyle style);
+
+    /** This function converts a list of specific luminosities from a given input style to the
+        internal per-wavelength style, assuming the given corresponding wavelengths. Both the input
+        values and the returned value are in SI units. */
+    static Array fromFluxStyle(const Array& lambdav, const Array& Lv, FluxOutputStyle style);
+
+    /** This template function translates a flux style given as an enumeration with elements
+        corresponding to the specific luminosity quantity strings defined by the SkirtUnitDef class
+        to a FluxOutputStyle flux style. */
+    template<class Style> static FluxOutputStyle fluxStyle(Style style)
+    {
+        switch (style)
+        {
+            case Style::neutralmonluminosity: return FluxOutputStyle::Neutral;
+            case Style::wavelengthmonluminosity: return FluxOutputStyle::Wavelength;
+            case Style::frequencymonluminosity: return FluxOutputStyle::Frequency;
+            case Style::energymonluminosity: return FluxOutputStyle::Energy;
+        }
+    }
+
+    //======================== Output Conversion =======================
+
+    /** This function returns a string containing the name of the output unit adopted by the
+        program for the specified physical quantity. The name of the physical quantity must be
+        specified in all lowercase and without any spaces. The function throws a fatal error if the
+        specified physical quantity is unknown. */
+    string unit(string qty) const;
 
     /** This function converts a physical value from internal SI units to the output units adopted
         by the program. The name of the physical quantity must be specified in all lowercase and
@@ -233,13 +266,8 @@ public:
 
     /** This function converts the monochromatic per-wavelength luminosity \f$L_\lambda\f$ from the
         internally used SI units (\f${\text{W}}\, {\text{m}}^{-1}\f$) to the program's flux output
-        style (neutral, wavelength or frequency) and units. */
-    double omonluminosityWavelength(double lambda, double Llambda) const;
-
-    /** This function converts the monochromatic per-frequency luminosity \f$L_\nu\f$ from the
-        internally used SI units (\f${\text{W}}\, {\text{Hz}}^{-1}\f$) to the program's flux output
-        style (neutral, wavelength or frequency) and units. */
-    double omonluminosityFrequency(double lambda, double Lnu) const;
+        style and units. */
+    double omonluminosity(double lambda, double Llambda) const;
 
     /** This function returns a string describing the flux density output style adopted by the
         program. */
@@ -251,14 +279,8 @@ public:
 
     /** This function converts the per-wavelength flux density \f$F_\lambda\f$ for wavelength
         \f$\lambda\f$ from the internally used SI units (\f${\text{W}}\, {\text{m}}^{-3}\f$) to the
-        program's flux output style (neutral, wavelength or frequency) and units. */
-    double ofluxdensityWavelength(double lambda, double Flambda) const;
-
-    /** This function converts the per-frequency flux density \f$F_\nu\f$ for wavelength
-        \f$\lambda\f$ from the internally used SI units (\f${\text{W}}\, {\text{m}}^{-2}\,
-        {\text{Hz}}^{-1}\f$) to the program's flux output style (neutral, wavelength or frequency)
-        and units. */
-    double ofluxdensityFrequency(double lambda, double Fnu) const;
+        program's flux output style and units. */
+    double ofluxdensity(double lambda, double Flambda) const;
 
     /** This function returns a string describing the surface brightness output style adopted by
         the program. */
@@ -270,15 +292,8 @@ public:
 
     /** This function converts the per-wavelength surface brightness \f$f_\lambda\f$ for wavelength
         \f$\lambda\f$ from the internally used SI units (\f${\text{W}}\, {\text{m}}^{-3}\,
-        {\text{sr}}^{-1}\f$) to the program's flux output style (neutral, wavelength or frequency)
-        and units. */
-    double osurfacebrightnessWavelength(double lambda, double flambda) const;
-
-    /** This function converts the per-frequency surface brightness \f$f_\nu\f$ for wavelength
-        \f$\lambda\f$ from the internally used SI units (\f${\text{W}}\, {\text{m}}^{-2}\,
-        {\text{Hz}}^{-1}\, {\text{sr}}^{-1}\f$) to the program's flux output style (neutral,
-        wavelength or frequency) and units. */
-    double osurfacebrightnessFrequency(double lambda, double fnu) const;
+        {\text{sr}}^{-1}\f$) to the program's flux output style and units. */
+    double osurfacebrightness(double lambda, double flambda) const;
 
     /** This function returns a string describing the mean intensity output style adopted by
         the program. */
@@ -290,15 +305,8 @@ public:
 
     /** This function converts the per-wavelength mean intensity \f$J_\lambda\f$ for wavelength
         \f$\lambda\f$ from the internally used SI units (\f${\text{W}}\, {\text{m}}^{-3}\,
-        {\text{sr}}^{-1}\f$) to the program's flux output style (neutral, wavelength or frequency)
-        and units. */
-    double omeanintensityWavelength(double lambda, double Jlambda) const;
-
-    /** This function converts the per-frequency mean intensity \f$J_\nu\f$ for wavelength
-        \f$\lambda\f$ from the internally used SI units (\f${\text{W}}\, {\text{m}}^{-2}\,
-        {\text{Hz}}^{-1}\, {\text{sr}}^{-1}\f$) to the program's flux output style (neutral,
-        wavelength or frequency) and units. */
-    double omeanintensityFrequency(double lambda, double Jnu) const;
+        {\text{sr}}^{-1}\f$) to the program's flux output style and units. */
+    double omeanintensity(double lambda, double Jlambda) const;
 
     /** This function returns a string containing the name of the unit of temperature adopted by
         the program for output. */

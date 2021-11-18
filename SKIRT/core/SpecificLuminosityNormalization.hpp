@@ -11,17 +11,19 @@
 ////////////////////////////////////////////////////////////////////
 
 /** A SpecificLuminosityNormalization instance sets the normalization of a primary source by
-    specifying the specific luminosity (radiative power per units of wavelength or frequency) at a
-    certain wavelength. This normalization cannot be used with LineSED subclasses, for which the
-    specific luminosity is undefined. An attempt to do so will result in a fatal error. */
+    specifying the specific luminosity (radiative power per units of wavelength, frequency, or
+    energy) at a certain wavelength. This normalization cannot be used with LineSED subclasses, for
+    which the specific luminosity is undefined. An attempt to do so will result in a fatal error.
+    */
 class SpecificLuminosityNormalization : public LuminosityNormalization
 {
     /** The enumeration type indicating the specific luminosity unit style, e.g. whether to use
-        specific luminosity per unit of wavelength or per unit of frequency. */
-    ENUM_DEF(UnitStyle, wavelengthmonluminosity, frequencymonluminosity, neutralmonluminosity)
+        specific luminosity per unit of wavelength, frequency or energy. */
+    ENUM_DEF(UnitStyle, neutralmonluminosity, wavelengthmonluminosity, frequencymonluminosity, energymonluminosity)
+        ENUM_VAL(UnitStyle, neutralmonluminosity, "neutral: λ L_λ = ν L_ν")
         ENUM_VAL(UnitStyle, wavelengthmonluminosity, "per unit of wavelength: L_λ")
         ENUM_VAL(UnitStyle, frequencymonluminosity, "per unit of frequency: L_ν")
-        ENUM_VAL(UnitStyle, neutralmonluminosity, "neutral: λ L_λ = ν L_ν")
+        ENUM_VAL(UnitStyle, energymonluminosity, "counts per unit of energy: L_E")
     ENUM_END()
 
     ITEM_CONCRETE(SpecificLuminosityNormalization, LuminosityNormalization,
@@ -30,7 +32,7 @@ class SpecificLuminosityNormalization : public LuminosityNormalization
 
         PROPERTY_DOUBLE(wavelength, "the wavelength at which to provide the specific luminosity")
         ATTRIBUTE_QUANTITY(wavelength, "wavelength")
-        ATTRIBUTE_MIN_VALUE(wavelength, "1 Angstrom")
+        ATTRIBUTE_MIN_VALUE(wavelength, "1 pm")
         ATTRIBUTE_MAX_VALUE(wavelength, "1 m")
 
         PROPERTY_ENUM(unitStyle, UnitStyle, "the luminosity unit style")
