@@ -18,10 +18,11 @@
 
     The numbers in the four user-configurable lists specify respectively the wavelength
     \f$\lambda\f$, the extinction mass coefficient \f$\kappa^\text{ext}_\lambda\f$, the scattering
-    albedo \f$\varpi_\lambda\f$, and the scattering asymmetry parameter \f$g_\lambda\f$. Property
-    values outside of the tabulated wavelength range are clamped to the nearest border value. As a
-    special-case consequence, if only a single wavelength is tabulated, the properties are
-    considered to be constant for all wavelengths.
+    albedo \f$\varpi_\lambda\f$, and the scattering asymmetry parameter \f$g_\lambda\f$. The
+    wavelengths must be listed in increasing or decreasing order. Property values outside of the
+    tabulated wavelength range are clamped to the nearest border value. As a special-case
+    consequence, if only a single wavelength is tabulated, the properties are considered to be
+    constant for all wavelengths.
 
     Because a basic dust mix such as this one is usually used in isolation and the dust
     distribution is normalized to a given optical depth or total dust mass, the value of the

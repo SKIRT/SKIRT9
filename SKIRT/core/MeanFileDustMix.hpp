@@ -17,13 +17,15 @@
     The floating point numbers in the first four columns of the text file specify respectively the
     wavelength \f$\lambda\f$, the extinction mass coefficient \f$\kappa^\text{ext}_\lambda\f$, the
     scattering albedo \f$\varpi_\lambda\f$, and the scattering asymmetry parameter \f$g_\lambda\f$.
-    Any additional columns in the file are ignored. The wavelengths are by default given in micron
-    (the units can be overridden by column header info in the file) and must listed be in
-    increasing order. The extinction mass coefficients are by default given in
+    Any additional columns in the file are ignored.
+
+    The wavelengths are by default given in micron (the units can be overridden by column header
+    info in the file). The extinction mass coefficients are by default given in
     \f$\text{m}^2\,\text{kg}^{-2}\f$ (again, this can be overridden by column header info in the
-    file). Property values outside of the tabulated wavelength range are clamped to the nearest
-    border value. As a special-case consequence, if only a single wavelength is tabulated, the
-    properties are considered to be constant for all wavelengths.
+    file). The wavelengths must be listed in increasing or decreasing order. Property values
+    outside of the tabulated wavelength range are clamped to the nearest border value. As a
+    special-case consequence, if only a single wavelength is tabulated, the properties are
+    considered to be constant for all wavelengths.
 
     Because a basic dust mix such as this one is usually used in isolation and the dust
     distribution is normalized to a given optical depth or total dust mass, the value of the

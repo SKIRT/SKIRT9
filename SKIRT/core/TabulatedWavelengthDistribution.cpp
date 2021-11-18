@@ -20,7 +20,7 @@ void TabulatedWavelengthDistribution::setupSelfBefore()
     getWavelengthsAndProbabilities(inlambdav, inpv);
 
     // reverse the arrays if needed to get the wavelengths in increasing order
-    if (inlambdav.size() > 1 && inlambdav[0] > inlambdav[inlambdav.size()-1])
+    if (inlambdav.size() > 1 && inlambdav[0] > inlambdav[inlambdav.size() - 1])
     {
         std::reverse(begin(inlambdav), end(inlambdav));
         std::reverse(begin(inpv), end(inpv));

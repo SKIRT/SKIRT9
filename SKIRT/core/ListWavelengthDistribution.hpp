@@ -15,14 +15,14 @@
     tabulated wavelength/probability pairs. The probability distribution function is defined
     segment-wise by the tabulated values, using logarithmic interpolation. This class is intended
     for use in cases where there are just a few wavelength/probability pairs, but nothing keeps the
-    user from specifying a long list. The probability outside the range indicated by the first and
-    the last wavelength in the list is considered to be zero.
+    user from specifying a long list. The wavelengths must be listed in increasing or decreasing
+    order. The probability outside the range indicated by the first and the last wavelength in the
+    list is considered to be zero.
 
-    The wavelengths must listed be in increasing order. The probability values are in fact given in
-    luminosity units. The default is to use per-wavelength units, but the user can opt to use
-    per-frequency or neutral units. Other than this, the scaling of the values is arbitrary because
-    the distribution will be normalized after being loaded. However, the input procedure still
-    insists on knowing the precise units. */
+    The probability values are in fact given in luminosity units. The default is to use
+    per-wavelength units, but the user can opt to use per-frequency or neutral units. Other than
+    this, the scaling of the values is arbitrary because the distribution will be normalized after
+    being loaded. However, the input procedure still insists on knowing the precise units. */
 class ListWavelengthDistribution : public TabulatedWavelengthDistribution
 {
     /** The enumeration type indicating the specific luminosity unit style, e.g. whether to use

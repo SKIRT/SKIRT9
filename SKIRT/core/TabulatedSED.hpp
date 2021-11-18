@@ -12,8 +12,9 @@
 ////////////////////////////////////////////////////////////////////
 
 /** TabulatedSED is an abstract class for representing spectral energy distributions that are
-    tabulated by the user in the form of wavelength/luminosity pairs. The luminosity outside the
-    range indicated by the first and the last wavelength is considered to be zero.
+    tabulated by the user in the form of wavelength/luminosity pairs. The wavelengths must be
+    listed in increasing or decreasing order. The luminosity outside the range indicated by the
+    first and the last wavelength is considered to be zero.
 
     The subclass must load the tabulated data, and this abstract class handles everything else. */
 class TabulatedSED : public ContSED
@@ -31,8 +32,9 @@ protected:
 
     /** This function must be implemented in each subclass to return the wavelengths and the
         corresponding luminosities tabulating the %SED. The function must guarantee that both
-        arrays have the same size. Constant scaling of the luminosities is not important because
-        the %SED will be normalized by this abstract class. */
+        arrays have the same size. The wavelengths must be listed in increasing or decreasing
+        order. Constant scaling of the luminosities is not important because the %SED will be
+        normalized by this abstract class. */
     virtual void getWavelengthsAndLuminosities(Array& lambdav, Array& pv) const = 0;
 
     //======================== Other Functions =======================

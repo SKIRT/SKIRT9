@@ -23,9 +23,10 @@
     set the absolute scale of the property, so that the cross sections listed by some of the probes
     have an appropriately scaled value.
 
-    Property values outside of the tabulated wavelength range are clamped to the nearest border
-    value. As a special-case consequence, if only a single wavelength is tabulated, the properties
-    are considered to be constant for all wavelengths.
+    The wavelengths must be listed in increasing or decreasing order. Property values outside of
+    the tabulated wavelength range are clamped to the nearest border value. As a special-case
+    consequence, if only a single wavelength is tabulated, the properties are considered to be
+    constant for all wavelengths.
 
     The subclass must load the tabulated data, and this abstract class handles everything else. */
 class TabulatedDustMix : public DustMix
@@ -55,7 +56,8 @@ protected:
 
     /** This function must be implemented in each subclass to store the wavelengths and the
         corresponding tabulated properties in the array arguments, and to return the dust mass per
-        hydrogen atom. The function must guarantee that all arrays have the same size. */
+        hydrogen atom. The function must guarantee that all arrays have the same size. The
+        wavelengths must be listed in increasing or decreasing order. */
     virtual double getDustProperties(Array& lambdav, Array& kappaextv, Array& albedov, Array& asymmparv) const = 0;
 };
 

@@ -13,14 +13,14 @@
 /** A ListSED object represents a spectral energy distribution that is fully specified inside the
     configuration file (i.e. without referring to an input file). It is intended for use in cases
     where there are just a few wavelength/luminosity pairs, but nothing keeps the user from
-    specifying a long list. The luminosity outside the range indicated by the first and the last
-    wavelength in the list is considered to be zero.
+    specifying a long list. The wavelengths must be listed in increasing or decreasing order. The
+    luminosity outside the range indicated by the first and the last wavelength in the list is
+    considered to be zero.
 
-    The wavelengths are by default given in micron and must listed be in increasing order. The
-    specific luminosity values are by default given in per-wavelength units, but the user can opt
-    to use per-frequency or neutral units. Other than this, the scaling of the values is arbitrary
-    because the %SED will be normalized after being loaded. However, the input procedure still
-    insists on knowing the precise units. */
+    The wavelengths are by default given in micron. The specific luminosity values are by default
+    given in per-wavelength units, but the user can opt to use per-frequency or neutral units.
+    Other than this, the scaling of the values is arbitrary because the %SED will be normalized
+    after being loaded. However, the input procedure still insists on knowing the precise units. */
 class ListSED : public TabulatedSED
 {
     /** The enumeration type indicating the specific luminosity unit style, e.g. whether to use

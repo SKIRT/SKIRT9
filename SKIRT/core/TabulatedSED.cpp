@@ -21,7 +21,7 @@ void TabulatedSED::setupSelfBefore()
     if (_inlambdav.size() < 2) throw FATALERROR("SED must have at least two wavelength/luminosity pairs");
 
     // reverse the arrays if needed to get the wavelengths in increasing order
-    if (_inlambdav[0] > _inlambdav[_inlambdav.size()-1])
+    if (_inlambdav[0] > _inlambdav[_inlambdav.size() - 1])
     {
         std::reverse(begin(_inlambdav), end(_inlambdav));
         std::reverse(begin(_inpv), end(_inpv));

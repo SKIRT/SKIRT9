@@ -6,24 +6,23 @@
 #ifndef LISTBAND_HPP
 #define LISTBAND_HPP
 
-#include "Band.hpp"
+#include "TabulatedBand.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
 /** A ListBand object represents a wavelength band with a transmission curve that is fully
     specified inside the configuration file (i.e. without referring to an input file). It is
     intended for use in cases where there are just a few wavelength/transmission pairs, but nothing
-    keeps the user from specifying a long list. The transmission outside the range indicated by the
-    first and the last wavelength in the list is considered to be zero.
-
-    The wavelengths must listed be in increasing order, and a transmission value must be specified
-    corresponding to each wavelength. The scaling of the transmission values is arbitrary because
-    the transmission curve will be normalized after being loaded. Refer to the description of the
-    Band class for more information. */
-class ListBand : public Band
+    keeps the user from specifying a long list. The wavelengths must be listed in increasing or
+    decreasing order, and a dimensionless transmission value must be specified corresponding to
+    each wavelength. The transmission outside the range indicated by the first and the last
+    wavelength in the list is considered to be zero. The scaling of the transmission values is
+    arbitrary because the transmission curve will be normalized after being loaded. Refer to the
+    description of the Band class for more information. */
+class ListBand : public TabulatedBand
 {
-    ITEM_CONCRETE(ListBand, Band, "a wavelength band (transmission curve) specified inside the configuration file")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(ListBand, "Level2")
+    ITEM_CONCRETE(ListBand, TabulatedBand,
+                  "a wavelength band (transmission curve) specified inside the configuration file")
 
         PROPERTY_DOUBLE_LIST(wavelengths, "the wavelengths at which to specify the transmission")
         ATTRIBUTE_QUANTITY(wavelengths, "wavelength")
@@ -38,33 +37,9 @@ class ListBand : public Band
     //============= Construction - Setup - Destruction =============
 
 protected:
-    /** This function normalizes the transmission values configured by the user as described in the
-        Band class header. */
-    void setupSelfBefore() override;
-
-    //============= Functions required by base class =============
-
-protected:
-    /** This function returns the number of elements in the wavelength and transmission data arrays
-        held by this subclass. */
-    size_t dataSize() const override;
-
-    /** This function returns a pointer to the first wavelength in the corresponding array held by
-        this subclass. The number of elements in this array can be obtained through the dataSize()
-        function. */
-    const double* wavelengthData() const override;
-
-    /** This function returns a pointer to the first transmission value in the corresponding array
-        held by this subclass. The number of elements in this array can be obtained through the
-        dataSize() function. The transmission values are normalized as described in the Band class
-        header. */
-    const double* transmissionData() const override;
-
-    //======================== Data Members ========================
-
-private:
-    // data members initialized during setup
-    Array _transv;  // normalized transmission values
+    /** This function copies the user-configured wavelengths and transmission values into the
+        result arrays. */
+    void getWavelengthsAndTransmissions(Array& lambdav, Array& transv) const override;
 };
 
 ////////////////////////////////////////////////////////////////////

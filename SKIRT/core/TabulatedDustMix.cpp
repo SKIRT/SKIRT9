@@ -22,7 +22,7 @@ double TabulatedDustMix::getOpticalProperties(const Array& lambdav, const Array&
     if (inlambdav.size() < 1) throw FATALERROR("Dust properties must be tabulated for at least one wavelength");
 
     // reverse the arrays if needed to get the wavelengths in increasing order
-    if (inlambdav.size() > 1 && inlambdav[0] > inlambdav[inlambdav.size()-1])
+    if (inlambdav.size() > 1 && inlambdav[0] > inlambdav[inlambdav.size() - 1])
     {
         std::reverse(begin(inlambdav), end(inlambdav));
         std::reverse(begin(inkappaextv), end(inkappaextv));
