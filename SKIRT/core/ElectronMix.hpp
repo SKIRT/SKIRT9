@@ -6,20 +6,39 @@
 #ifndef ELECTRONMIX_HPP
 #define ELECTRONMIX_HPP
 
+#include "ComptonPhaseFunction.hpp"
 #include "DipolePhaseFunction.hpp"
 #include "MaterialMix.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-/** The ElectronMix class describes the material properties for a population of electrons,
-    including support for polarization by scattering.
+/** The ElectronMix class describes the material properties for a population of electrons.
+    Electrons do not absorb photons. They do, however, significantly scatter photons. This process
+    is described by Compton scattering, which converges to Thomson scattering at low photon
+    energies. It is meaningful to implement both processes, because the calculations for Compton
+    scattering are substantially slower than those for Thomson scattering.
 
-    Electrons do not absorb photons, and at the wavelengths relevant for SKIRT, scattering of
-    photons by electrons can be described by elastic and wavelength-independent Thomson scattering.
-    The scattering cross section is given by the well-known Thomson cross section (a constant) and
-    the Mueller matrix elements and the phase function are those of a dipole. Consequently, this
-    class calls on the DipolePhaseFunction class to implement most of its functionality. See there
-    for more information. */
+    Specifically, for wavelengths shorter than 10 nm, this class models Compton scattering, which
+    features a wavelength-dependent cross section and phase function, and which causes the photon
+    energy (wavelength) to change during the interaction. This process is implemented through the
+    ComptonPhaseFunction class; see that class for more information. The current implementation of
+    Compton scattering does not support polarization.
+
+    For wavelengths longer than 10nm, the scattering process can be described by elastic and
+    wavelength-independent Thomson scattering. The scattering cross section is given by the
+    well-known Thomson cross section (a constant) and the phase function is that of a dipole.
+    Consequently, this class calls on the DipolePhaseFunction class to implement Thomson
+    scattering; see that class for more information. In this wavelength regime, polarization is
+    fully supported (if enabled by the user).
+
+    The transition point between Compton and Thomson scattering can be justified as follows. At a
+    wavelength of 10 nm, the Compton cross section has approached the Thomson constant to within
+    less than 0.05 per cent. At the same time, for wavelengths much longer than 10 nm, the
+    expression for the Compton cross section becomes numerically unstable. Switching to Thomson
+    scattering for longer wavelengths is thus important for accuracy in addition to performance.
+
+    The current implementation of this class assumes that all electrons are at rest in the local
+    bulk velocity frame (i.e they all move exactly at the local bulk velocity). */
 class ElectronMix : public MaterialMix
 {
     ITEM_CONCRETE(ElectronMix, MaterialMix, "a population of electrons")
@@ -119,8 +138,12 @@ public:
     //======================== Data Members ========================
 
 private:
-    // the dipole phase function helper instance - initialized during setup
+    // flag indicating whether support for Compton scattering is enabled
+    bool _hasCompton{false};
+
+    // the dipole and Compton phase function helper instances - initialized during setup
     DipolePhaseFunction _dpf;
+    ComptonPhaseFunction _cpf;
 };
 
 ////////////////////////////////////////////////////////////////////
