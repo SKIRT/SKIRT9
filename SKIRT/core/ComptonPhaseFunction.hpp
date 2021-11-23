@@ -31,6 +31,15 @@ class Random;
     = \big(1+x(1-\cos \theta)\big)^{-1}\f$. Equivalently, the wavelength change is given by
     \f$\lambda_\mathrm{out} / \lambda_\mathrm{in} = \big(1+x(1-\cos \theta)\big)\f$.
 
+    The normalized phase function for an interaction with incoming photon energy \f$x\f$ is given
+    by:
+
+    \f[ \Phi(x, \theta) = \frac{\sigma_\mathrm{T}}{\sigma_\mathrm{C}(x)} \, \frac{3}{4}
+    \left[ C^3(x, \theta) + C(x, \theta) -C^2(x, \theta)\sin^2\theta \right], \f]
+
+    where \f$\theta\f$ is the scattering angle and \f$C(x, \theta)\f$ is the Compton factor defined
+    earlier.
+
     */
 class ComptonPhaseFunction
 {
@@ -80,10 +89,13 @@ public:
     //======================== Data Members ========================
 
 private:
-    // the simulation's random number generator - initialized during construction
+    // the simulation's random number generator - initialized by initialize()
     Random* _random{nullptr};
 
-    // precalculated discretizations - initialized during construction
+    // precalculated discretizations - initialized by initialize()
+    Array _costhetav;
+    Array _sinthetav;
+    Array _sin2thetav;
 };
 
 ////////////////////////////////////////////////////////////////////
