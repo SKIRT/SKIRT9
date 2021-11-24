@@ -18,9 +18,11 @@
     energies. It is meaningful to implement both processes, because the calculations for Compton
     scattering are substantially slower than those for Thomson scattering.
 
-    Specifically, for wavelengths shorter than 10 nm, this class models Compton scattering, which
-    features a wavelength-dependent cross section and phase function, and which causes the photon
-    energy (wavelength) to change during the interaction. This process is implemented through the
+    <b>Compton and Thomson scattering</b>
+
+    For wavelengths shorter than 10 nm, this class models Compton scattering, which features a
+    wavelength-dependent cross section and phase function, and which causes the photon energy
+    (wavelength) to change during the interaction. This process is implemented through the
     ComptonPhaseFunction class; see that class for more information. The current implementation of
     Compton scattering does not support polarization.
 
@@ -31,14 +33,27 @@
     scattering; see that class for more information. In this wavelength regime, polarization is
     fully supported (if enabled by the user).
 
-    The transition point between Compton and Thomson scattering can be justified as follows. At a
-    wavelength of 10 nm, the Compton cross section has approached the Thomson constant to within
-    less than 0.05 per cent. At the same time, for wavelengths much longer than 10 nm, the
-    expression for the Compton cross section becomes numerically unstable. Switching to Thomson
-    scattering for longer wavelengths is thus important for accuracy in addition to performance.
+    The transition point between Compton and Thomson scattering can be justified as follows. For
+    wavelengths much longer than 10 nm, the expression for the Compton cross section becomes
+    numerically unstable. This could be solved by using a series expansion approximation at longer
+    wavelengths. However, at a wavelength of 10 nm, the Compton cross section has approached the
+    Thomson constant to within less than 0.05 per cent. It thus seems reasonable to transition to
+    the much faster Thomson scattering at that wavelength point.
 
-    The current implementation of this class assumes that all electrons are at rest in the local
-    bulk velocity frame (i.e they all move exactly at the local bulk velocity). */
+    <b>Thermal dispersion</b>
+
+    By default, this class assumes that all electrons are at rest in the local frame (i.e., there
+    is no movement other than the bulk velocity of the spatial cell containing the electrons). If
+    the \em includeThermalDispersion configuration flag is enabled (and the simulation mode is
+    panchromatic), a random thermal motion corresponding to the local temperature is added when
+    performing a scattering interaction. The dispersion is not taken into account to determine the
+    scattering cross section, because that value does not vary significantly for small wavelength
+    shifts (and it does not vary at all for Thomson scattering).
+
+    If the electron mix is associated with an ImportedMedium and the \em importTemperature flag for
+    the medium is enabled, the local dispersion temperature is obtained from the imported file.
+    Otherwise, the value configured for the \em defaultTemperature property is used instead,
+    resulting in a constant temperature across space. */
 class ElectronMix : public MaterialMix
 {
     ITEM_CONCRETE(ElectronMix, MaterialMix, "a population of electrons")
@@ -46,6 +61,19 @@ class ElectronMix : public MaterialMix
         PROPERTY_BOOL(includePolarization, "include support for polarization")
         ATTRIBUTE_DEFAULT_VALUE(includePolarization, "false")
         ATTRIBUTE_DISPLAYED_IF(includePolarization, "Level2")
+
+        PROPERTY_BOOL(includeThermalDispersion, "include thermal velocity dispersion")
+        ATTRIBUTE_DEFAULT_VALUE(includeThermalDispersion, "false")
+        ATTRIBUTE_RELEVANT_IF(includeThermalDispersion, "Panchromatic")
+        ATTRIBUTE_DISPLAYED_IF(includeThermalDispersion, "Level2")
+
+        PROPERTY_DOUBLE(defaultTemperature, "the default temperature of the electron population")
+        ATTRIBUTE_QUANTITY(defaultTemperature, "temperature")
+        ATTRIBUTE_MIN_VALUE(defaultTemperature, "[3")  // temperature must be above local Universe T_CMB
+        ATTRIBUTE_MAX_VALUE(defaultTemperature, "1e6]")
+        ATTRIBUTE_DEFAULT_VALUE(defaultTemperature, "1e4")
+        ATTRIBUTE_RELEVANT_IF(defaultTemperature, "Panchromatic&includeDispersion")
+        ATTRIBUTE_DISPLAYED_IF(defaultTemperature, "Level2")
 
     ITEM_END()
 
@@ -73,9 +101,20 @@ public:
         variables used by the receiving material mix. See the description of the
         MaterialMix::specificStateVariableInfo() function for more information.
 
-        Electrons require just the standard specific state variable of type numberDensity , so this
-        function returns a list containing a single item. */
+        For the electron mix class, the returned list always includes the specific state variable
+        for number density and, in case the electron mix has thermal dispersion, it also includes
+        the specific state variable for temperature. */
     vector<StateVariable> specificStateVariableInfo() const override;
+
+    /** This function initializes any specific state variables requested by this material mix
+        except for the number density. See the description of the
+        MaterialMix::initializeSpecificState() function for more information.
+
+        For this class, in case the electron mix has thermal dispersion, the function initializes
+        the temperature to the specified imported temperature, or if this is not available, to the
+        user-configured default temperature for this electron mix. */
+    void initializeSpecificState(MaterialState* state, double metallicity, double temperature,
+                                 const Array& params) const override;
 
     //======== Low-level material properties =======
 
@@ -138,8 +177,9 @@ public:
     //======================== Data Members ========================
 
 private:
-    // flag indicating whether support for Compton scattering is enabled
-    bool _hasCompton{false};
+    // flags initialized during setup
+    bool _hasDispersion{false};  // true if thermal velocity dispersion is enabled
+    bool _hasCompton{false};     // true if support for Compton scattering is enabled
 
     // the dipole and Compton phase function helper instances - initialized during setup
     DipolePhaseFunction _dpf;

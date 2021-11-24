@@ -16,7 +16,7 @@
 namespace
 {
     // transition wavelength from Compton to Thomson scattering
-    const double comptonWL = 10e-9;  // 10 nm
+    const double comptonWL = 9.999999e-9;  // 10 nm
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -24,6 +24,9 @@ namespace
 void ElectronMix::setupSelfBefore()
 {
     MaterialMix::setupSelfBefore();
+
+    // determine whether velocity dispersion is enabled
+    _hasDispersion = includeThermalDispersion() && !find<Configuration>()->oligochromatic();
 
     // determine whether we need Compton scattering because the simulation may have short wavelengths
     auto range = find<Configuration>()->simulationWavelengthRange();
@@ -59,7 +62,25 @@ bool ElectronMix::hasPolarizedScattering() const
 
 vector<StateVariable> ElectronMix::specificStateVariableInfo() const
 {
-    return vector<StateVariable>{StateVariable::numberDensity()};
+    vector<StateVariable> result{StateVariable::numberDensity()};
+    if (_hasDispersion) result.push_back(StateVariable::temperature());
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void ElectronMix::initializeSpecificState(MaterialState* state, double /*metallicity*/, double temperature,
+                                          const Array& /*params*/) const
+{
+    // leave the temperature at zero if the cell does not contain any material for this component
+    if (_hasDispersion && state->numberDensity() > 0.)
+    {
+        // if no temperature was imported, use default value
+        if (temperature < 0) temperature = defaultTemperature();
+
+        // make sure the temperature is at least the local universe CMB temperature
+        state->setTemperature(max(Constants::Tcmb(), temperature));
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
