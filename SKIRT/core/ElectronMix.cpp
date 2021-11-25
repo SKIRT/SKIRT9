@@ -136,6 +136,31 @@ double ElectronMix::opacityExt(double lambda, const MaterialState* state, const 
 
 ////////////////////////////////////////////////////////////////////
 
+namespace
+{
+    // draw a random electron velocity unless a previous peel-off stored this already
+    void generateElectronVelocityIfNeeded(PhotonPacket* pp, double T, Random* random)
+    {
+        if (!pp->hasScatteringInfo())
+        {
+            // for high temperatures the generated velocity can be relativistic or even above the speed of light,
+            // in which case our non-relativistic Doppler shift formulas produce negative wavelengths;
+            // we thus reject any velocities above c/3
+            while (true)
+            {
+                double vtherm = sqrt(Constants::k() / Constants::Melectron() * T) * random->gauss();
+                if (abs(vtherm) < Constants::c() / 3.)
+                {
+                    pp->setScatteringInfo(vtherm * random->direction());
+                    break;
+                }
+            }
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
 void ElectronMix::peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w,
                                     Direction bfkobs, Direction bfky, const MaterialState* state,
                                     const PhotonPacket* pp) const
@@ -148,12 +173,7 @@ void ElectronMix::peeloffScattering(double& I, double& Q, double& U, double& V, 
     if (_hasDispersion)
     {
         // draw a random electron velocity unless a previous peel-off stored this already
-        if (!pp->hasScatteringInfo())
-        {
-            double T = state->temperature();
-            Vec vtherm = sqrt(Constants::k() / Constants::Melectron() * T) * random()->gauss() * random()->direction();
-            const_cast<PhotonPacket*>(pp)->setScatteringInfo(vtherm);
-        }
+        generateElectronVelocityIfNeeded(const_cast<PhotonPacket*>(pp), state->temperature(), random());
 
         // adjust the wavelength
         wavelength = PhotonPacket::shiftedReceptionWavelength(wavelength, pp->direction(), pp->particleVelocity());
@@ -184,12 +204,7 @@ void ElectronMix::performScattering(double lambda, const MaterialState* state, P
     if (_hasDispersion)
     {
         // draw a random electron velocity unless a previous peel-off stored this already
-        if (!pp->hasScatteringInfo())
-        {
-            double T = state->temperature();
-            Vec vtherm = sqrt(Constants::k() / Constants::Melectron() * T) * random()->gauss() * random()->direction();
-            const_cast<PhotonPacket*>(pp)->setScatteringInfo(vtherm);
-        }
+        generateElectronVelocityIfNeeded(pp, state->temperature(), random());
 
         // adjust the wavelength
         lambda = PhotonPacket::shiftedReceptionWavelength(lambda, pp->direction(), pp->particleVelocity());

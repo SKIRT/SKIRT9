@@ -69,8 +69,8 @@ class ElectronMix : public MaterialMix
 
         PROPERTY_DOUBLE(defaultTemperature, "the default temperature of the electron population")
         ATTRIBUTE_QUANTITY(defaultTemperature, "temperature")
-        ATTRIBUTE_MIN_VALUE(defaultTemperature, "[3")  // temperature must be above local Universe T_CMB
-        ATTRIBUTE_MAX_VALUE(defaultTemperature, "1e10]")
+        ATTRIBUTE_MIN_VALUE(defaultTemperature, "[3")    // temperature must be above local Universe T_CMB
+        ATTRIBUTE_MAX_VALUE(defaultTemperature, "1e8]")  // higher temperatures cause relativistic dispersion
         ATTRIBUTE_DEFAULT_VALUE(defaultTemperature, "1e4")
         ATTRIBUTE_RELEVANT_IF(defaultTemperature, "Panchromatic&includeDispersion")
         ATTRIBUTE_DISPLAYED_IF(defaultTemperature, "Level2")
