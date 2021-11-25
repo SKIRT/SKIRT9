@@ -137,23 +137,74 @@ double ElectronMix::opacityExt(double lambda, const MaterialState* state, const 
 ////////////////////////////////////////////////////////////////////
 
 void ElectronMix::peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w,
-                                    Direction bfkobs, Direction bfky, const MaterialState* /*state*/,
+                                    Direction bfkobs, Direction bfky, const MaterialState* state,
                                     const PhotonPacket* pp) const
 {
-    if (_hasCompton && lambda < comptonWL)
-        _cpf.peeloffScattering(I, lambda, w, pp->direction(), bfkobs);
+    // the caller's wavelength should be updated only for a random fraction of the events governed by
+    // the relative contribution of this medium component, so we copy the wavelength into a local variable
+    double wavelength = lambda;
+
+    // if we have dispersion, adjust the incoming wavelength to the electron rest frame
+    if (_hasDispersion)
+    {
+        // draw a random electron velocity unless a previous peel-off stored this already
+        if (!pp->hasScatteringInfo())
+        {
+            double T = state->temperature();
+            Vec vtherm = sqrt(Constants::k() / Constants::Melectron() * T) * random()->gauss() * random()->direction();
+            const_cast<PhotonPacket*>(pp)->setScatteringInfo(vtherm);
+        }
+
+        // adjust the wavelength
+        wavelength = PhotonPacket::shiftedReceptionWavelength(wavelength, pp->direction(), pp->particleVelocity());
+    }
+
+    // perform the scattering event in the electron rest frame
+    if (_hasCompton && wavelength < comptonWL)
+        _cpf.peeloffScattering(I, wavelength, w, pp->direction(), bfkobs);
     else
         _dpf.peeloffScattering(I, Q, U, V, w, pp->direction(), bfkobs, bfky, pp);
+
+    // if we have dispersion, adjust the outgoing wavelength from the electron rest frame
+    if (_hasDispersion)
+    {
+        wavelength = PhotonPacket::shiftedEmissionWavelength(wavelength, bfkobs, pp->particleVelocity());
+    }
+
+    // actually update the caller's wavelength for a random fraction of the events
+    // governed by the relative contribution of this medium component
+    if (wavelength != lambda && (w == 1. || random()->uniform() <= w)) lambda = wavelength;
 }
 
 ////////////////////////////////////////////////////////////////////
 
 void ElectronMix::performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const
 {
+    // if we have dispersion, adjust the incoming wavelength to the electron rest frame
+    if (_hasDispersion)
+    {
+        // draw a random electron velocity unless a previous peel-off stored this already
+        if (!pp->hasScatteringInfo())
+        {
+            double T = state->temperature();
+            Vec vtherm = sqrt(Constants::k() / Constants::Melectron() * T) * random()->gauss() * random()->direction();
+            const_cast<PhotonPacket*>(pp)->setScatteringInfo(vtherm);
+        }
+
+        // adjust the wavelength
+        lambda = PhotonPacket::shiftedReceptionWavelength(lambda, pp->direction(), pp->particleVelocity());
+    }
+
     // determine the new propagation direction, and if required,
     // update the wavelength or the polarization state of the photon packet
     Direction bfknew = (_hasCompton && lambda < comptonWL) ? _cpf.performScattering(lambda, pp->direction())
                                                            : _dpf.performScattering(pp->direction(), pp);
+
+    // if we have dispersion, adjust the outgoing wavelength from the electron rest frame
+    if (_hasDispersion)
+    {
+        lambda = PhotonPacket::shiftedEmissionWavelength(lambda, bfknew, pp->particleVelocity());
+    }
 
     // execute the scattering event in the photon packet
     pp->scatter(bfknew, state->bulkVelocity(), lambda);

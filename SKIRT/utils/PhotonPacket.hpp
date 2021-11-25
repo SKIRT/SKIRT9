@@ -214,7 +214,7 @@ public:
         \frac{{\bf{k}}_\text{ph} \cdot {\bf{v}}_\text{rec} + \Delta v_\mathrm{h}}{c} \right)
         \right. \f] where \f$c\f$ is the speed of light in vacuum. */
     static double shiftedReceptionWavelength(double photonWavelength, Direction photonDirection, Vec receiverVelocity,
-                                             double expansionVelocity);
+                                             double expansionVelocity = 0.);
 
     /** This function returns the Doppler-shifted wavelength perceived for this photon packet by a
         moving receiver (with non-relativistic velocity). The arguments specify the velocity of the
