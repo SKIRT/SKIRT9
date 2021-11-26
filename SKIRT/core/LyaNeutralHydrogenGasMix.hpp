@@ -38,7 +38,7 @@ class LyaNeutralHydrogenGasMix : public MaterialMix
         PROPERTY_DOUBLE(defaultTemperature, "the default temperature of the neutral hydrogen gas")
         ATTRIBUTE_QUANTITY(defaultTemperature, "temperature")
         ATTRIBUTE_MIN_VALUE(defaultTemperature, "[3")  // gas temperature must be above local Universe T_CMB
-        ATTRIBUTE_MAX_VALUE(defaultTemperature, "1e6]")
+        ATTRIBUTE_MAX_VALUE(defaultTemperature, "1e9]")
         ATTRIBUTE_DEFAULT_VALUE(defaultTemperature, "1e4")
         ATTRIBUTE_DISPLAYED_IF(defaultTemperature, "Level2")
 
@@ -72,6 +72,10 @@ public:
         mix depend on the values of specific state variables other than the number density, in this
         case the temperature. */
     bool hasExtraSpecificState() const override;
+
+    /** This function returns true, indicating that a scattering interaction for this material mix
+        may (and usually does) adjust the wavelength of the interacting photon packet. */
+    bool hasScatteringDispersion() const override;
 
     //======== Medium state setup =======
 

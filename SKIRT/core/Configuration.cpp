@@ -320,8 +320,16 @@ void Configuration::setupSelfAfter()
     if (_hasPolarization) log->info("  Including support for polarization");
     if (_hasMovingMedia) log->info("  Including support for kinematics");
 
+    // check for scattering dispersion
+    bool hasDispersion = false;
+    if (_hasMedium)
+    {
+        for (auto medium : find<MediumSystem>(false)->media())
+            if (medium->mix()->hasScatteringDispersion()) hasDispersion = true;
+    }
+
     // disable path length stretching if the wavelength of a photon packet can change during its lifetime
-    if ((_hasMovingMedia || _hubbleExpansionRate || _hasLymanAlpha) && _pathLengthBias > 0.)
+    if ((_hasMovingMedia || hasDispersion || _hubbleExpansionRate || _hasLymanAlpha) && _pathLengthBias > 0.)
     {
         log->warning("  Disabling path length stretching to allow Doppler shifts to be properly sampled");
         _pathLengthBias = 0.;
