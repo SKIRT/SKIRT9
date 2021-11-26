@@ -73,6 +73,10 @@ public:
         case the temperature. */
     bool hasExtraSpecificState() const override;
 
+    /** This function returns true, indicating that a scattering interaction for this material mix
+        may (and usually does) adjust the wavelength of the interacting photon packet. */
+    bool hasScatteringDispersion() const override;
+
     //======== Medium state setup =======
 
 public:

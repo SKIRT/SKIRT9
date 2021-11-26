@@ -50,6 +50,13 @@ bool LyaNeutralHydrogenGasMix::hasExtraSpecificState() const
 
 ////////////////////////////////////////////////////////////////////
 
+bool LyaNeutralHydrogenGasMix::hasScatteringDispersion() const
+{
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////
+
 vector<StateVariable> LyaNeutralHydrogenGasMix::specificStateVariableInfo() const
 {
     return vector<StateVariable>{StateVariable::numberDensity(), StateVariable::temperature()};

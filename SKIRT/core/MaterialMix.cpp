@@ -62,6 +62,13 @@ bool MaterialMix::hasExtraSpecificState() const
 
 ////////////////////////////////////////////////////////////////////
 
+bool MaterialMix::hasScatteringDispersion() const
+{
+    return false;
+}
+
+////////////////////////////////////////////////////////////////////
+
 vector<SnapshotParameter> MaterialMix::parameterInfo() const
 {
     return vector<SnapshotParameter>();

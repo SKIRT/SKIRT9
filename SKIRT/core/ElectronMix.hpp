@@ -94,6 +94,13 @@ public:
         material mix supports polarization during scattering events or not. */
     bool hasPolarizedScattering() const override;
 
+    /** This function returns true when thermal dispersion is enabled and/or support for Compton
+        scattering has been turned on (based on the simulation's wavelength range), indicating that
+        in those cases a scattering interaction for the electron mix may (and usually does) adjust
+        the wavelength of the interacting photon packet. If both thermal dispersion and support for
+        Compton scattering are disabled, the function returns false. */
+    bool hasScatteringDispersion() const override;
+
     //======== Medium state setup =======
 
 public:

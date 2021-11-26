@@ -243,6 +243,11 @@ public:
         otherwise. The default implementation in this base class returns false. */
     virtual bool hasExtraSpecificState() const;
 
+    /** This function returns true if a scattering interaction for this material mix may adjust the
+        wavelength of the interacting photon packet, and false otherwise. The default
+        implementation in this base class returns false. */
+    virtual bool hasScatteringDispersion() const;
+
     //======== Medium state setup =======
 
     /** This function returns the number and type of import parameters required by this particular

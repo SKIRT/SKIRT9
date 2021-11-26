@@ -60,6 +60,25 @@ bool ElectronMix::hasPolarizedScattering() const
 
 ////////////////////////////////////////////////////////////////////
 
+bool ElectronMix::hasScatteringDispersion() const
+{
+    // this function may be called before setup() has been invoked, so we need to figure out the result ourselves
+
+    // determine whether velocity dispersion is enabled
+    bool hasDispersion = includeThermalDispersion() && !find<Configuration>()->oligochromatic();
+
+    // determine whether we need Compton scattering because the simulation may have short wavelengths
+    if (!hasDispersion && !includePolarization())
+    {
+        auto range = find<Configuration>()->simulationWavelengthRange();
+        hasDispersion = range.min() < comptonWL;
+    }
+
+    return hasDispersion;
+}
+
+////////////////////////////////////////////////////////////////////
+
 vector<StateVariable> ElectronMix::specificStateVariableInfo() const
 {
     vector<StateVariable> result{StateVariable::numberDensity()};
