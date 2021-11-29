@@ -72,7 +72,7 @@ class ElectronMix : public MaterialMix
         ATTRIBUTE_MIN_VALUE(defaultTemperature, "[3")    // temperature must be above local Universe T_CMB
         ATTRIBUTE_MAX_VALUE(defaultTemperature, "1e8]")  // higher temperatures cause relativistic dispersion
         ATTRIBUTE_DEFAULT_VALUE(defaultTemperature, "1e4")
-        ATTRIBUTE_RELEVANT_IF(defaultTemperature, "Panchromatic&includeDispersion")
+        ATTRIBUTE_RELEVANT_IF(defaultTemperature, "Panchromatic&includeThermalDispersion")
         ATTRIBUTE_DISPLAYED_IF(defaultTemperature, "Level2")
 
     ITEM_END()
@@ -180,6 +180,17 @@ public:
         scattering without or with support for polarization depending on the user-configured \em
         includePolarization property. */
     void performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const override;
+
+    //======================== Probing ========================
+
+    /** This function returns an indicative temperature of the material mix when it would be
+        embedded in a given radiation field. The implementation in this class ignores the radiation
+        field and returns the temperature driving the thermal velocity dispersion for the medium
+        component in the relevant spatial cell, or zero if thermal velocity dispersion is not
+        enabled for this material mix. Because nothing in the simulation changes the electron
+        temperature, this value corresponds to the temperature defined by the input model at the
+        start of the simulation. */
+    double indicativeTemperature(const MaterialState* state, const Array& Jv) const override;
 
     //======================== Data Members ========================
 

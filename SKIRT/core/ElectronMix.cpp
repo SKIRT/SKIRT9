@@ -245,3 +245,10 @@ void ElectronMix::performScattering(double lambda, const MaterialState* state, P
 }
 
 ////////////////////////////////////////////////////////////////////
+
+double ElectronMix::indicativeTemperature(const MaterialState* state, const Array& /*Jv*/) const
+{
+    return _hasDispersion ? state->temperature() : 0.;
+}
+
+////////////////////////////////////////////////////////////////////
