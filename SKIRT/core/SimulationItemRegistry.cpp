@@ -48,6 +48,7 @@
 #include "CylindricalVectorField.hpp"
 #include "DefaultCustomStateCutsProbe.hpp"
 #include "DefaultDustTemperatureCutsProbe.hpp"
+#include "DefaultElectronTemperatureCutsProbe.hpp"
 #include "DefaultGasTemperatureCutsProbe.hpp"
 #include "DefaultMagneticFieldCutsProbe.hpp"
 #include "DefaultMediaDensityCutsProbe.hpp"
@@ -70,6 +71,7 @@
 #include "DustTemperaturePerCellProbe.hpp"
 #include "EinastoGeometry.hpp"
 #include "ElectronMix.hpp"
+#include "ElectronTemperaturePerCellProbe.hpp"
 #include "ExpDiskGeometry.hpp"
 #include "ExtragalacticUnits.hpp"
 #include "FSPSSED.hpp"
@@ -173,6 +175,7 @@
 #include "PerspectiveInstrument.hpp"
 #include "PlanarCustomStateCutsProbe.hpp"
 #include "PlanarDustTemperatureCutsProbe.hpp"
+#include "PlanarElectronTemperatureCutsProbe.hpp"
 #include "PlanarGasTemperatureCutsProbe.hpp"
 #include "PlanarMagneticFieldCutsProbe.hpp"
 #include "PlanarMediaDensityCutsProbe.hpp"
@@ -663,6 +666,9 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<DefaultMetallicityCutsProbe>();
     ItemRegistry::add<PlanarMetallicityCutsProbe>();
     ItemRegistry::add<MetallicityPerCellProbe>();
+    ItemRegistry::add<DefaultElectronTemperatureCutsProbe>();
+    ItemRegistry::add<PlanarElectronTemperatureCutsProbe>();
+    ItemRegistry::add<ElectronTemperaturePerCellProbe>();
     ItemRegistry::add<DefaultGasTemperatureCutsProbe>();
     ItemRegistry::add<PlanarGasTemperatureCutsProbe>();
     ItemRegistry::add<GasTemperaturePerCellProbe>();

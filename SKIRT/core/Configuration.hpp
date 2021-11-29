@@ -414,6 +414,7 @@ private:
     bool _hasConstantPerceivedWavelength{false};
     bool _hasSingleConstantSectionMedium{false};
     bool _hasMultipleConstantSectionMedia{false};
+    bool _hasDispersion{false};
     bool _hasPolarization{false};
     bool _hasSpheroidalPolarization{false};
 

@@ -29,7 +29,7 @@ class RangeWavelengthDistribution : public WavelengthDistribution
         ATTRIBUTE_QUANTITY(minWavelength, "wavelength")
         ATTRIBUTE_MIN_VALUE(minWavelength, "1 pm")
         ATTRIBUTE_MAX_VALUE(minWavelength, "1 m")
-        ATTRIBUTE_DEFAULT_VALUE(minWavelength, "1 Angstrom")
+        ATTRIBUTE_DEFAULT_VALUE(minWavelength, "1 pm")
 
         PROPERTY_DOUBLE(maxWavelength, "the longest wavelength of the wavelength probability distribution")
         ATTRIBUTE_QUANTITY(maxWavelength, "wavelength")

@@ -62,6 +62,13 @@ bool MaterialMix::hasExtraSpecificState() const
 
 ////////////////////////////////////////////////////////////////////
 
+bool MaterialMix::hasScatteringDispersion() const
+{
+    return false;
+}
+
+////////////////////////////////////////////////////////////////////
+
 bool MaterialMix::hasSemiDynamicMediumState() const
 {
     return false;
@@ -69,14 +76,14 @@ bool MaterialMix::hasSemiDynamicMediumState() const
 
 ////////////////////////////////////////////////////////////////////
 
-bool MaterialMix::hasLineEmission() const
+bool MaterialMix::hasContinuumEmission() const
 {
     return false;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-bool MaterialMix::hasContinuumEmission() const
+bool MaterialMix::hasLineEmission() const
 {
     return false;
 }

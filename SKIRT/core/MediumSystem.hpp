@@ -568,6 +568,13 @@ public:
         interpretation. */
     double indicativeDustTemperature(int m) const;
 
+    /** This function returns an indicative electron temperature in the spatial cell with index
+        \f$m\f$. This temperature is obtained by averaging the temperature over the electron medium
+        components present in the spatial cell, weighed by relative mass in each component. If no
+        medium component specifies an electron temperature, this function returns zero. Also see
+        the indicativeTemperature() function for more information. */
+    double indicativeElectronTemperature(int m) const;
+
     /** This function returns an indicative gas temperature in the spatial cell with index \f$m\f$.
         This temperature is obtained by averaging the temperature over the gas medium components
         present in the spatial cell, weighed by relative mass in each component. If no medium

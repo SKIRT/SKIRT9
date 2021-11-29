@@ -1053,6 +1053,13 @@ double MediumSystem::indicativeDustTemperature(int m) const
 
 ////////////////////////////////////////////////////////////////////
 
+double MediumSystem::indicativeElectronTemperature(int m) const
+{
+    return indicativeTemperature(m, MaterialMix::MaterialType::Electrons);
+}
+
+////////////////////////////////////////////////////////////////////
+
 double MediumSystem::indicativeGasTemperature(int m) const
 {
     return indicativeTemperature(m, MaterialMix::MaterialType::Gas);
