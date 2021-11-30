@@ -61,11 +61,39 @@ SkirtUnitDef::SkirtUnitDef()
     addUnit("wavelength", "PHz", 1e-15 * c, -1.);
     addUnit("wavelength", "EHz", 1e-18 * c, -1.);
     addUnit("wavelength", "ZHz", 1e-21 * c, -1.);
+    addUnit("wavelength", "J", hc, -1.);
     addUnit("wavelength", "eV", hc / Qel, -1.);
     addUnit("wavelength", "meV", 1e3 * hc / Qel, -1.);
     addUnit("wavelength", "keV", 1e-3 * hc / Qel, -1.);
     addUnit("wavelength", "MeV", 1e-6 * hc / Qel, -1.);
     addUnit("wavelength", "GeV", 1e-9 * hc / Qel, -1.);
+
+    // wavelength-style wavelength
+    addUnit("wavelengthwavelength", "m", 1.);
+    addUnit("wavelengthwavelength", "cm", 1e-2);
+    addUnit("wavelengthwavelength", "mm", 1e-3);
+    addUnit("wavelengthwavelength", "micron", 1e-6);
+    addUnit("wavelengthwavelength", "nm", 1e-9);
+    addUnit("wavelengthwavelength", "Angstrom", 1e-10);
+    addUnit("wavelengthwavelength", "pm", 1e-12);
+
+    // frequency-style wavelength
+    addUnit("frequencywavelength", "Hz", c, -1.);
+    addUnit("frequencywavelength", "kHz", 1e-3 * c, -1.);
+    addUnit("frequencywavelength", "MHz", 1e-6 * c, -1.);
+    addUnit("frequencywavelength", "GHz", 1e-9 * c, -1.);
+    addUnit("frequencywavelength", "THz", 1e-12 * c, -1.);
+    addUnit("frequencywavelength", "PHz", 1e-15 * c, -1.);
+    addUnit("frequencywavelength", "EHz", 1e-18 * c, -1.);
+    addUnit("frequencywavelength", "ZHz", 1e-21 * c, -1.);
+
+    // energy-style wavelength
+    addUnit("energywavelength", "J", hc, -1.);
+    addUnit("energywavelength", "eV", hc / Qel, -1.);
+    addUnit("energywavelength", "meV", 1e3 * hc / Qel, -1.);
+    addUnit("energywavelength", "keV", 1e-3 * hc / Qel, -1.);
+    addUnit("energywavelength", "MeV", 1e-6 * hc / Qel, -1.);
+    addUnit("energywavelength", "GeV", 1e-9 * hc / Qel, -1.);
 
     // grainsize
     addUnit("grainsize", "m", 1.);
@@ -380,6 +408,9 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("SIUnits", "length", "m");
     addDefaultUnit("SIUnits", "distance", "m");
     addDefaultUnit("SIUnits", "wavelength", "m");
+    addDefaultUnit("SIUnits", "wavelengthwavelength", "m");
+    addDefaultUnit("SIUnits", "frequencywavelength", "Hz");
+    addDefaultUnit("SIUnits", "energywavelength", "J");
     addDefaultUnit("SIUnits", "grainsize", "m");
     addDefaultUnit("SIUnits", "pergrainsize", "1/m");
     addDefaultUnit("SIUnits", "section", "m2");
@@ -425,6 +456,9 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("StellarUnits", "length", "AU");
     addDefaultUnit("StellarUnits", "distance", "pc");
     addDefaultUnit("StellarUnits", "wavelength", "micron");
+    addDefaultUnit("StellarUnits", "wavelengthwavelength", "micron");
+    addDefaultUnit("StellarUnits", "frequencywavelength", "GHz");
+    addDefaultUnit("StellarUnits", "energywavelength", "keV");
     addDefaultUnit("StellarUnits", "grainsize", "micron");
     addDefaultUnit("StellarUnits", "pergrainsize", "1/micron");
     addDefaultUnit("StellarUnits", "section", "m2");
@@ -470,6 +504,9 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("ExtragalacticUnits", "length", "pc");
     addDefaultUnit("ExtragalacticUnits", "distance", "Mpc");
     addDefaultUnit("ExtragalacticUnits", "wavelength", "micron");
+    addDefaultUnit("ExtragalacticUnits", "wavelengthwavelength", "micron");
+    addDefaultUnit("ExtragalacticUnits", "frequencywavelength", "GHz");
+    addDefaultUnit("ExtragalacticUnits", "energywavelength", "keV");
     addDefaultUnit("ExtragalacticUnits", "grainsize", "micron");
     addDefaultUnit("ExtragalacticUnits", "pergrainsize", "1/micron");
     addDefaultUnit("ExtragalacticUnits", "section", "m2");

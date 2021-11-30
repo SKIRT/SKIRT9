@@ -106,16 +106,41 @@ double Units::odistance(double d) const
 
 ////////////////////////////////////////////////////////////////////
 
+string Units::swavelength() const
+{
+    switch (_wavelengthOutputStyle)
+    {
+        case WavelengthOutputStyle::Wavelength: return "lambda";
+        case WavelengthOutputStyle::Frequency: return "nu";
+        case WavelengthOutputStyle::Energy: return "E";
+    }
+    return string();
+}
+
+////////////////////////////////////////////////////////////////////
+
 string Units::uwavelength() const
 {
-    return unit("wavelength");
+    switch (_wavelengthOutputStyle)
+    {
+        case WavelengthOutputStyle::Wavelength: return unit("wavelengthwavelength");
+        case WavelengthOutputStyle::Frequency: return unit("frequencywavelength");
+        case WavelengthOutputStyle::Energy: return unit("energywavelength");
+    }
+    return string();
 }
 
 ////////////////////////////////////////////////////////////////////
 
 double Units::owavelength(double lambda) const
 {
-    return out("wavelength", lambda);
+    switch (_wavelengthOutputStyle)
+    {
+        case WavelengthOutputStyle::Wavelength: return out("wavelengthwavelength", lambda);
+        case WavelengthOutputStyle::Frequency: return out("frequencywavelength", lambda);
+        case WavelengthOutputStyle::Energy: return out("energywavelength", lambda);
+    }
+    return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
