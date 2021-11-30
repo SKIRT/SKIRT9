@@ -18,7 +18,7 @@
 class ElectronTemperaturePerCellProbe : public Probe
 {
     ITEM_CONCRETE(ElectronTemperaturePerCellProbe, Probe, "the electron temperature for each spatial cell")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(ElectronTemperaturePerCellProbe, "ElectronMix")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(ElectronTemperaturePerCellProbe, "Level2&ElectronMix")
     ITEM_END()
 
     //======================== Other Functions =======================

@@ -415,7 +415,8 @@ void Configuration::setupSelfAfter()
     }
 
     // disable path length stretching if the wavelength of a photon packet can change during its lifetime
-    if ((_hasMovingMedia || _hasDispersion || _hubbleExpansionRate || _hasLymanAlpha) && _forceScattering && _pathLengthBias > 0.)
+    if ((_hasMovingMedia || _hasDispersion || _hubbleExpansionRate || _hasLymanAlpha) && _forceScattering
+        && _pathLengthBias > 0.)
     {
         log->warning("  Disabling path length stretching to allow Doppler shifts to be properly sampled");
         _pathLengthBias = 0.;

@@ -22,7 +22,7 @@ class DefaultElectronTemperatureCutsProbe : public Probe
 {
     ITEM_CONCRETE(DefaultElectronTemperatureCutsProbe, Probe,
                   "cuts of the electron temperature along the coordinate planes")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(DefaultElectronTemperatureCutsProbe, "ElectronMix")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(DefaultElectronTemperatureCutsProbe, "Level2&ElectronMix")
     ITEM_END()
 
     //======================== Other Functions =======================
