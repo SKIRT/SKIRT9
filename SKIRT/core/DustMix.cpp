@@ -261,6 +261,13 @@ MaterialMix::MaterialType DustMix::materialType() const
 
 ////////////////////////////////////////////////////////////////////
 
+bool DustMix::hasContinuumEmission() const
+{
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////
+
 vector<StateVariable> DustMix::specificStateVariableInfo() const
 {
     return vector<StateVariable>{StateVariable::numberDensity()};
@@ -558,6 +565,13 @@ const Array& DustMix::sectionsAbspol(double lambda) const
 Array DustMix::emissivity(const Array& Jv) const
 {
     return _calc.emissivity(Jv);
+}
+
+////////////////////////////////////////////////////////////////////
+
+DisjointWavelengthGrid* DustMix::emissionWavelengthGrid() const
+{
+    return find<Configuration>()->dustEmissionWLG();
 }
 
 ////////////////////////////////////////////////////////////////////

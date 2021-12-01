@@ -21,7 +21,7 @@ class PlanarElectronTemperatureCutsProbe : public AbstractPlanarCutsProbe
 {
     ITEM_CONCRETE(PlanarElectronTemperatureCutsProbe, AbstractPlanarCutsProbe,
                   "cuts of the electron temperature along planes parallel to the coordinate planes")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(PlanarElectronTemperatureCutsProbe, "ElectronMix")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(PlanarElectronTemperatureCutsProbe, "Level2&ElectronMix")
     ITEM_END()
 
     //======================== Other Functions =======================

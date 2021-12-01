@@ -29,7 +29,7 @@ void PlanarCustomStateCutsProbe::writeCustomStateCuts(Probe* probe, bool xd, boo
     for (int h = 0; h != numMedia; ++h)
     {
         auto mix = ms->media()[h]->mix();
-        for (auto candidate : mix->specificStateVariableInfo())
+        for (const auto& candidate : mix->specificStateVariableInfo())
         {
             if (candidate.identifier() == StateVariable::Identifier::Custom)
             {
@@ -120,20 +120,6 @@ void PlanarCustomStateCutsProbe::writeCustomStateCuts(Probe* probe, bool xd, boo
                              units->ulength(), cgrid, "1");
         }
     }
-}
-
-////////////////////////////////////////////////////////////////////
-
-void PlanarCustomStateCutsProbe::probeSetup()
-{
-    if (probeAfter() == ProbeAfter::Setup) probe();
-}
-
-////////////////////////////////////////////////////////////////////
-
-void PlanarCustomStateCutsProbe::probeRun()
-{
-    if (probeAfter() == ProbeAfter::Run) probe();
 }
 
 ////////////////////////////////////////////////////////////////////

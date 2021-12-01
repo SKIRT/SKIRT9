@@ -1,0 +1,19 @@
+/*//////////////////////////////////////////////////////////////////
+////     The SKIRT project -- advanced radiative transfer       ////
+////       © Astronomical Observatory, Ghent University         ////
+///////////////////////////////////////////////////////////////// */
+
+#include "SecondarySource.hpp"
+
+////////////////////////////////////////////////////////////////////
+
+SecondarySource::SecondarySource(SimulationItem* parent)
+{
+    parent->addChild(this);
+
+    // because virtual functions don't work properly from with a constructor,
+    // this calls setupSelfBefore/After in base classes but NOT in subclasses
+    setup();
+}
+
+////////////////////////////////////////////////////////////////////

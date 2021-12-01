@@ -10,20 +10,6 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void DefaultMetallicityCutsProbe::probeSetup()
-{
-    if (probeAfter() == ProbeAfter::Setup) probe();
-}
-
-////////////////////////////////////////////////////////////////////
-
-void DefaultMetallicityCutsProbe::probeRun()
-{
-    if (probeAfter() == ProbeAfter::Run) probe();
-}
-
-////////////////////////////////////////////////////////////////////
-
 void DefaultMetallicityCutsProbe::probe()
 {
     if (find<Configuration>()->hasMedium())

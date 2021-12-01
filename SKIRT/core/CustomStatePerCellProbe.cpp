@@ -12,20 +12,6 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void CustomStatePerCellProbe::probeSetup()
-{
-    if (probeAfter() == ProbeAfter::Setup) probe();
-}
-
-////////////////////////////////////////////////////////////////////
-
-void CustomStatePerCellProbe::probeRun()
-{
-    if (probeAfter() == ProbeAfter::Run) probe();
-}
-
-////////////////////////////////////////////////////////////////////
-
 void CustomStatePerCellProbe::probe()
 {
     if (find<Configuration>()->hasMedium())

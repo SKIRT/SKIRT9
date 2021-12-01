@@ -6,7 +6,7 @@
 #ifndef PLANARMEDIADENSITYCUTSPROBE_HPP
 #define PLANARMEDIADENSITYCUTSPROBE_HPP
 
-#include "AbstractPlanarCutsProbe.hpp"
+#include "AbstractPlanarCutsStateProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -30,22 +30,11 @@
     from the finite-resolution spatial grid in the simulation. A comparison of both sets of maps
     can reveal whether the configured spatial grid is suitable (in the ideal case, there would be
     no difference between both sets of maps). */
-class PlanarMediaDensityCutsProbe : public AbstractPlanarCutsProbe
+class PlanarMediaDensityCutsProbe : public AbstractPlanarCutsStateProbe
 {
-    /** The enumeration type indicating when probing occurs. */
-    ENUM_DEF(ProbeAfter, Setup, Run)
-        ENUM_VAL(ProbeAfter, Setup, "after setup")
-        ENUM_VAL(ProbeAfter, Run, "after the complete simulation run")
-    ENUM_END()
-
-    ITEM_CONCRETE(PlanarMediaDensityCutsProbe, AbstractPlanarCutsProbe,
+    ITEM_CONCRETE(PlanarMediaDensityCutsProbe, AbstractPlanarCutsStateProbe,
                   "cuts of the media densities along planes parallel to the coordinate planes")
         ATTRIBUTE_TYPE_DISPLAYED_IF(PlanarMediaDensityCutsProbe, "Level2&Medium&SpatialGrid")
-
-        PROPERTY_ENUM(probeAfter, ProbeAfter, "when to probe the medium state")
-        ATTRIBUTE_DEFAULT_VALUE(probeAfter, "Setup")
-        ATTRIBUTE_DISPLAYED_IF(probeAfter, "HasDynamicState")
-
     ITEM_END()
 
     //======================== Other Functions =======================
@@ -59,18 +48,9 @@ public:
     static void writeMediaDensityCuts(Probe* probe, bool xd, bool yd, bool zd, double xc, double yc, double zc, int Nx,
                                       int Ny, int Nz);
 
-    /** This function performs probing after setup. It produces output only if the \em
-        probeAfter property is set to Setup. */
-    void probeSetup() override;
-
-    /** This function performs probing after all photon packets have been emitted and detected. It
-        produces output only if the \em probeAfter property is set to Run. */
-    void probeRun() override;
-
-private:
-    /** This function performs the probing; it is called from probeSetup() or probeRun() depending
-        on the value of the \em probeAfter property. */
-    void probe();
+protected:
+    /** This function performs the probing. */
+    void probe() override;
 };
 
 ////////////////////////////////////////////////////////////////////

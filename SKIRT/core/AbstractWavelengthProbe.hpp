@@ -7,16 +7,16 @@
 #define ABSTRACTWAVELENGTHPROBE_HPP
 
 #include "MaterialWavelengthRangeInterface.hpp"
-#include "Probe.hpp"
+#include "StateProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
 /** AbstractWavelengthProbe is a base class for probes that require a configurable wavelength
     property. It implements the MaterialWavelengthRangeInterface to indicate that
     wavelength-dependent material properties may be required for the configured wavelength. */
-class AbstractWavelengthProbe : public Probe, public MaterialWavelengthRangeInterface
+class AbstractWavelengthProbe : public StateProbe, public MaterialWavelengthRangeInterface
 {
-    ITEM_ABSTRACT(AbstractWavelengthProbe, Probe, "a probe requiring a wavelength value")
+    ITEM_ABSTRACT(AbstractWavelengthProbe, StateProbe, "a probe requiring a wavelength value")
 
         PROPERTY_DOUBLE(wavelength, "the wavelength at which to determine the optical depth")
         ATTRIBUTE_QUANTITY(wavelength, "wavelength")

@@ -19,12 +19,6 @@
     material type. */
 class OpticalDepthMapProbe : public AbstractWavelengthProbe
 {
-    /** The enumeration type indicating when probing occurs. */
-    ENUM_DEF(ProbeAfter, Setup, Run)
-        ENUM_VAL(ProbeAfter, Setup, "after setup")
-        ENUM_VAL(ProbeAfter, Run, "after the complete simulation run")
-    ENUM_END()
-
     ITEM_CONCRETE(OpticalDepthMapProbe, AbstractWavelengthProbe,
                   "all-sky optical depth map as seen from given location")
         ATTRIBUTE_TYPE_DISPLAYED_IF(OpticalDepthMapProbe, "Level2&Medium&SpatialGrid")
@@ -73,10 +67,6 @@ class OpticalDepthMapProbe : public AbstractWavelengthProbe
         ATTRIBUTE_QUANTITY(upZ, "length")
         ATTRIBUTE_DEFAULT_VALUE(upZ, "1")
 
-        PROPERTY_ENUM(probeAfter, ProbeAfter, "when to probe the medium state")
-        ATTRIBUTE_DEFAULT_VALUE(probeAfter, "Setup")
-        ATTRIBUTE_DISPLAYED_IF(probeAfter, "HasDynamicState")
-
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============
@@ -87,19 +77,9 @@ protected:
 
     //======================== Other Functions =======================
 
-public:
-    /** This function performs probing after setup. It produces output only if the \em
-        probeAfter property is set to Setup. */
-    void probeSetup() override;
-
-    /** This function performs probing after all photon packets have been emitted and detected. It
-        produces output only if the \em probeAfter property is set to Run. */
-    void probeRun() override;
-
-private:
-    /** This function performs the probing; it is called from probeSetup() or probeRun() depending
-        on the value of the \em probeAfter property. */
-    void probe();
+protected:
+    /** This function performs the probing. */
+    void probe() override;
 
     //======================== Data Members ========================
 

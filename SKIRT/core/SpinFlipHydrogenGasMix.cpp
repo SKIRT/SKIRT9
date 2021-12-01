@@ -4,9 +4,32 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "SpinFlipHydrogenGasMix.hpp"
+#include "Configuration.hpp"
 #include "Constants.hpp"
+#include "DisjointWavelengthGrid.hpp"
+#include "FatalError.hpp"
 #include "MaterialState.hpp"
 #include "PhotonPacket.hpp"
+
+////////////////////////////////////////////////////////////////////
+
+namespace
+{
+    const double lambdaUV = 1000e-10;           // 1000 Angstrom
+    const double lambdaSF = 21.10611405413e-2;  // 21 cm
+}
+
+////////////////////////////////////////////////////////////////////
+
+void SpinFlipHydrogenGasMix::setupSelfBefore()
+{
+    auto config = find<Configuration>();
+    if (config->hasSecondaryEmission())
+    {
+        _indexUV = config->radiationFieldWLG()->bin(lambdaUV);
+        if (_indexUV < 0) throw FATALERROR("Radiation field wavelength grid does not include 1000 Angstrom");
+    }
+}
 
 ////////////////////////////////////////////////////////////////////
 
@@ -24,6 +47,20 @@ bool SpinFlipHydrogenGasMix::hasExtraSpecificState() const
 
 ////////////////////////////////////////////////////////////////////
 
+bool SpinFlipHydrogenGasMix::hasSemiDynamicMediumState() const
+{
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool SpinFlipHydrogenGasMix::hasLineEmission() const
+{
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////
+
 vector<SnapshotParameter> SpinFlipHydrogenGasMix::parameterInfo() const
 {
     return vector<SnapshotParameter>{SnapshotParameter("dust-to-gas ratio")};
@@ -34,7 +71,8 @@ vector<SnapshotParameter> SpinFlipHydrogenGasMix::parameterInfo() const
 vector<StateVariable> SpinFlipHydrogenGasMix::specificStateVariableInfo() const
 {
     return vector<StateVariable>{StateVariable::numberDensity(), StateVariable::metallicity(),
-                                 StateVariable::temperature(), StateVariable::custom(0, "dust-to-gas ratio", "")};
+                                 StateVariable::temperature(), StateVariable::custom(0, "dust-to-gas ratio", ""),
+                                 StateVariable::custom(1, "UV field strength", "wavelengthmeanintensity")};
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -47,10 +85,20 @@ void SpinFlipHydrogenGasMix::initializeSpecificState(MaterialState* state, doubl
     {
         // if no value was imported, use default value
         // make sure the temperature is at least the local universe CMB temperature
-        state->setMetallicity(metallicity > 0 ? metallicity : defaultMetallicity());
-        state->setTemperature(max(Constants::Tcmb(), temperature > 0 ? temperature : defaultTemperature()));
-        state->setCustom(0, params.size() && params[0] > 0 ? params[0] : defaultDustToGasRatio());
+        state->setMetallicity(metallicity >= 0. ? metallicity : defaultMetallicity());
+        state->setTemperature(max(Constants::Tcmb(), temperature >= 0. ? temperature : defaultTemperature()));
+        state->setCustom(0, params.size() ? params[0] : defaultDustToGasRatio());
+        state->setCustom(1, 0.);
     }
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool SpinFlipHydrogenGasMix::updateSpecificState(MaterialState* state, const Array& Jv) const
+{
+    if (_indexUV < 0) throw FATALERROR("State update should not be called if there is no radiation field");
+    state->setCustom(1, Jv[_indexUV]);
+    return true;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -64,7 +112,7 @@ double SpinFlipHydrogenGasMix::mass() const
 
 double SpinFlipHydrogenGasMix::sectionAbs(double /*lambda*/) const
 {
-    return 0.;
+    return 0.;  // TO DO
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -86,7 +134,7 @@ double SpinFlipHydrogenGasMix::sectionExt(double lambda) const
 double SpinFlipHydrogenGasMix::opacityAbs(double /*lambda*/, const MaterialState* /*state*/,
                                           const PhotonPacket* /*pp*/) const
 {
-    return 0.;
+    return 0.;  // TO DO
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -117,6 +165,41 @@ void SpinFlipHydrogenGasMix::peeloffScattering(double& /*I*/, double& /*Q*/, dou
 void SpinFlipHydrogenGasMix::performScattering(double /*lambda*/, const MaterialState* /*state*/,
                                                PhotonPacket* /*pp*/) const
 {}
+
+////////////////////////////////////////////////////////////////////
+
+Array SpinFlipHydrogenGasMix::lineEmissionCenters() const
+{
+    Array centers(1);
+    centers[0] = lambdaSF;
+    return centers;
+}
+
+////////////////////////////////////////////////////////////////////
+
+Array SpinFlipHydrogenGasMix::lineEmissionMasses() const
+{
+    Array masses(1);
+    masses[0] = Constants::Mproton();
+    return masses;
+}
+
+////////////////////////////////////////////////////////////////////
+
+Array SpinFlipHydrogenGasMix::lineEmissionSpectrum(const MaterialState* state, const Array& Jv) const
+{
+    // calculate the 21 cm luminosity -- TO DO
+    double number = state->numberDensity() * state->volume();
+    double strength = Jv[_indexUV];
+    double temperature = state->temperature();
+    double norm = 1e-34;
+    double L = norm * number * strength * temperature * temperature;
+
+    // encapsulate the result in an array
+    Array luminosities(1);
+    luminosities[0] = L;
+    return luminosities;
+}
 
 ////////////////////////////////////////////////////////////////////
 

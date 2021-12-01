@@ -34,6 +34,7 @@ class LyaNeutralHydrogenGasMix : public MaterialMix
 {
     ITEM_CONCRETE(LyaNeutralHydrogenGasMix, MaterialMix, "neutral hydrogen for Lyman-alpha line transfer")
         ATTRIBUTE_TYPE_DISPLAYED_IF(LyaNeutralHydrogenGasMix, "Lya")
+        ATTRIBUTE_TYPE_INSERT(LyaNeutralHydrogenGasMix, "Gas")
 
         PROPERTY_DOUBLE(defaultTemperature, "the default temperature of the neutral hydrogen gas")
         ATTRIBUTE_QUANTITY(defaultTemperature, "temperature")
@@ -88,12 +89,12 @@ public:
         density, so this function returns a list containing these two items. */
     vector<StateVariable> specificStateVariableInfo() const override;
 
-    /** This function initializes any specific state variables requested by this material mix
-        except for the number density. See the description of the
-        MaterialMix::initializeSpecificState() function for more information. For the Lyman-alpha
-        material mix, the function initializes the temperature to the specified imported
-        temperature, or if this is not available, to the user-configured default temperature for
-        this material mix. */
+    /** This function initializes the specific state variables requested by this fragmented dust
+        mix through the specificStateVariableInfo() function except for the number density. For the
+        Lyman-alpha material mix, the function initializes the temperature to the specified
+        imported temperature, or if this is not available, to the user-configured default
+        temperature for this material mix. The metallicity and custom parameter arguments are
+        ignored. */
     void initializeSpecificState(MaterialState* state, double metallicity, double temperature,
                                  const Array& params) const override;
 

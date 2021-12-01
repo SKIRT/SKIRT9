@@ -11,7 +11,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void GasTemperaturePerCellProbe::probeSetup()
+void GasTemperaturePerCellProbe::probe()
 {
     if (find<Configuration>()->hasMedium() && find<MediumSystem>()->hasGas())
     {

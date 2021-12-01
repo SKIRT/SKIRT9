@@ -140,17 +140,29 @@ public:
         the snapshot object; otherwise it returns a zero magnetic field. */
     Vec magneticField(Position bfr) const override;
 
+    /** This function returns true if the medium has a gas or electron material mix and the \em
+        importMetallicity flag is enabled for the medium. */
+    bool hasMetallicity() const override;
+
     /** This function returns the metallicity of the medium at the specified position, if defined
         in the input model. Specifically, if the medium has a gas or electron material mix and the
         \em importMetallicity flag is enabled, the function returns the imported metallicity at the
-        specified position. Otherwise, the function returns -1. */
+        specified position. Otherwise, the function returns zero. */
     double metallicity(Position bfr) const override;
+
+    /** This function returns true if the medium has a gas or electron material mix and the \em
+        importTemperature flag is enabled for the medium. */
+    bool hasTemperature() const override;
 
     /** This function returns the temperature of the medium at the specified position, if defined
         in the input model. Specifically, if the medium has a gas or electron material mix and the
         \em importTemperature flag is enabled, the function returns the imported temperature at the
-        specified position. Otherwise, the function returns -1. */
+        specified position. Otherwise, the function returns zero. */
     double temperature(Position bfr) const override;
+
+    /** This function returns true if custom input model parameters are available for this medium.
+        See the parameters() function for more information. */
+    bool hasParameters() const override;
 
     /** If custom input model parameters are available for this medium, this function stores the
         parameter values at the specified position into the given array. If the position is outside

@@ -10,7 +10,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void DefaultGasTemperatureCutsProbe::probeSetup()
+void DefaultGasTemperatureCutsProbe::probe()
 {
     if (find<Configuration>()->hasMedium() && find<MediumSystem>()->hasGas())
     {

@@ -26,7 +26,7 @@ class PlanarRadiationFieldCutsProbe : public AbstractPlanarCutsProbe
 {
     ITEM_CONCRETE(PlanarRadiationFieldCutsProbe, AbstractPlanarCutsProbe,
                   "cuts of the mean radiation field intensity along planes parallel to the coordinate planes")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(PlanarRadiationFieldCutsProbe, "Level2&Medium&SpatialGrid&RadiationField")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(PlanarRadiationFieldCutsProbe, "Level2&SpatialGrid&RadiationField")
 
         PROPERTY_BOOL(writeWavelengthGrid, "output a text file with the radiation field wavelength grid")
         ATTRIBUTE_DEFAULT_VALUE(writeWavelengthGrid, "false")

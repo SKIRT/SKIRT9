@@ -333,7 +333,7 @@ double AdaptiveMeshSnapshot::metallicity(int m) const
 double AdaptiveMeshSnapshot::metallicity(Position bfr) const
 {
     int m = cellIndex(bfr);
-    return m >= 0 ? metallicity(m) : -1.;
+    return m >= 0 ? metallicity(m) : 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -349,7 +349,7 @@ double AdaptiveMeshSnapshot::temperature(int m) const
 double AdaptiveMeshSnapshot::temperature(Position bfr) const
 {
     int m = cellIndex(bfr);
-    return m >= 0 ? temperature(m) : -1.;
+    return m >= 0 ? temperature(m) : 0.;
 }
 
 ////////////////////////////////////////////////////////////////////

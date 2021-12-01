@@ -296,7 +296,7 @@ public:
     virtual double metallicity(int m) const = 0;
 
     /** This function returns the metallicity of the entity nearest to (or at) the specified point
-        \f${\bf{r}}\f$. If the point is outside the domain, the function returns -1. If the
+        \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If the
         metallicity is not being imported, the behavior is undefined. */
     virtual double metallicity(Position bfr) const = 0;
 
@@ -306,7 +306,7 @@ public:
     virtual double temperature(int m) const = 0;
 
     /** This function returns the temperature of the entity nearest to (or at) the specified point
-        \f${\bf{r}}\f$. If the point is outside the domain, the function returns -1. If the
+        \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If the
         temperature is not being imported, the behavior is undefined. */
     virtual double temperature(Position bfr) const = 0;
 

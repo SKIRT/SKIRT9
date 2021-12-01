@@ -128,25 +128,46 @@ Vec ImportedMedium::magneticField(Position bfr) const
 
 ////////////////////////////////////////////////////////////////////
 
+bool ImportedMedium::hasMetallicity() const
+{
+    return !_importVariableMixParams && _importMetallicity && !materialMix()->isDust();
+}
+
+////////////////////////////////////////////////////////////////////
+
 double ImportedMedium::metallicity(Position bfr) const
 {
-    if (!_importVariableMixParams && _importMetallicity && !materialMix()->isDust()) return _snapshot->metallicity(bfr);
-    return -1.;
+    if (hasMetallicity()) return _snapshot->metallicity(bfr);
+    return 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool ImportedMedium::hasTemperature() const
+{
+    return !_importVariableMixParams && _importTemperature && !materialMix()->isDust();
 }
 
 ////////////////////////////////////////////////////////////////////
 
 double ImportedMedium::temperature(Position bfr) const
 {
-    if (!_importVariableMixParams && _importTemperature && !materialMix()->isDust()) return _snapshot->temperature(bfr);
-    return -1.;
+    if (hasTemperature()) return _snapshot->temperature(bfr);
+    return 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool ImportedMedium::hasParameters() const
+{
+    return !_importVariableMixParams && _snapshot->numParameters() > 0;
 }
 
 ////////////////////////////////////////////////////////////////////
 
 void ImportedMedium::parameters(Position bfr, Array& params) const
 {
-    if (!_importVariableMixParams && _snapshot->numParameters() > 0)
+    if (hasParameters())
         _snapshot->parameters(bfr, params);
     else
         params.resize(0);

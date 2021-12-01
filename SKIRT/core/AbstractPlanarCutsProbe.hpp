@@ -10,9 +10,9 @@
 
 ////////////////////////////////////////////////////////////////////
 
-/** AbstractWavelengthGridProbe is a base class for probes that need configuration options for
-    planar cuts parallel to the coordinate planes. The provided options include the position of the
-    planar cuts and the number of pixels in each spatial direction. */
+/** AbstractPlanarCutsProbe is a base class for probes that need configuration options for planar
+    cuts parallel to the coordinate planes. The provided options include the position of the planar
+    cuts and the number of pixels in each spatial direction. */
 class AbstractPlanarCutsProbe : public Probe
 {
     ITEM_ABSTRACT(AbstractPlanarCutsProbe, Probe, "a probe using configurable planar cuts")

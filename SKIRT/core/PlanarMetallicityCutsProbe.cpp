@@ -106,20 +106,6 @@ void PlanarMetallicityCutsProbe::writeMetallicityCuts(Probe* probe, bool xd, boo
 
 ////////////////////////////////////////////////////////////////////
 
-void PlanarMetallicityCutsProbe::probeSetup()
-{
-    if (probeAfter() == ProbeAfter::Setup) probe();
-}
-
-////////////////////////////////////////////////////////////////////
-
-void PlanarMetallicityCutsProbe::probeRun()
-{
-    if (probeAfter() == ProbeAfter::Run) probe();
-}
-
-////////////////////////////////////////////////////////////////////
-
 void PlanarMetallicityCutsProbe::probe()
 {
     if (find<Configuration>()->hasMedium())

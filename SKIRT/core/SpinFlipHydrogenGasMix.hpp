@@ -6,7 +6,7 @@
 #ifndef SPINFLIPHYDROGENGASMIX_HPP
 #define SPINFLIPHYDROGENGASMIX_HPP
 
-#include "MaterialMix.hpp"
+#include "EmittingGasMix.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -20,9 +20,11 @@
     the simulation. In this context, this material mix offers configuration properties to specify
     default values for these quantities that will be used by geometric media across the spatial
     domain. */
-class SpinFlipHydrogenGasMix : public MaterialMix
+class SpinFlipHydrogenGasMix : public EmittingGasMix
 {
-    ITEM_CONCRETE(SpinFlipHydrogenGasMix, MaterialMix, "A gas mix supporting the spin-flip 21 cm hydrogen transition")
+    ITEM_CONCRETE(SpinFlipHydrogenGasMix, EmittingGasMix,
+                  "A gas mix supporting the spin-flip 21 cm hydrogen transition")
+        ATTRIBUTE_TYPE_INSERT(SpinFlipHydrogenGasMix, "CustomMediumState")
 
         PROPERTY_DOUBLE(defaultMetallicity, "the default metallicity of the gas")
         ATTRIBUTE_MIN_VALUE(defaultMetallicity, "]0")
@@ -48,6 +50,10 @@ class SpinFlipHydrogenGasMix : public MaterialMix
     //============= Construction - Setup - Destruction =============
 
 protected:
+    /** This function determines the radiation field wavelength bin containing the UV field
+        strength. */
+    void setupSelfBefore() override;
+
     //======== Capabilities =======
 
 public:
@@ -58,6 +64,14 @@ public:
     /** This function returns true, indicating that the cross sections returned by this material
         mix depend on the values of specific state variables other than the number density. */
     bool hasExtraSpecificState() const override;
+
+    /** This function returns true, indicating that this material has a semi-dynamic medium state.
+        */
+    bool hasSemiDynamicMediumState() const override;
+
+    /** This function returns true, indicating that this material supports secondary line emission
+        from gas. */
+    bool hasLineEmission() const override;
 
     //======== Medium state setup =======
 
@@ -70,16 +84,25 @@ public:
 
     /** This function returns a list of StateVariable objects describing the specific state
         variables used by the receiving material mix. For this class, the function returns a list
-        containing descriptors for number density, metallicity, temperature and one custom variable
-        to hold the dust-to-gas-ratio. */
+        containing descriptors for number density, metallicity, temperature, a custom variable to
+        hold the dust-to-gas-ratio, and a custom variable to hold the UV field strength derived
+        from the radiation field when the semi-dynamic medium state is updated. */
     vector<StateVariable> specificStateVariableInfo() const override;
 
-    /** This function initializes any specific state variables requested by this material mix
-        except for the number density. For this class, the function initializes the temperature,
-        metallicity and dust-to-gas ratio to the specified imported values, or if not available, to
-        the user-configured default values. */
+    /** This function initializes the specific state variables requested by this fragmented dust
+        mix through the specificStateVariableInfo() function except for the number density. For
+        this class, the function initializes the temperature, metallicity and dust-to-gas ratio to
+        the specified imported values, or if not available, to the user-configured default values.
+        The UV field strength is set to zero. */
     void initializeSpecificState(MaterialState* state, double metallicity, double temperature,
                                  const Array& params) const override;
+
+    //======== Medium state updates =======
+
+    /** Based on the specified radiation field, the function obtains the UV field strength and
+        stores it in the medium state for the specified cell. The function returns true if the
+        medium state has indeed be changed, and false otherwise. */
+    bool updateSpecificState(MaterialState* state, const Array& Jv) const override;
 
     //======== Low-level material properties =======
 
@@ -126,6 +149,21 @@ public:
 
     //======== Secondary emission =======
 
+    /** This function returns a list including a single item: the line center of the 21 cm hydrogen
+        spinflip transition. */
+    Array lineEmissionCenters() const override;
+
+    /** This function returns a list including a single item: the mass of the particle emitting the
+        21 cm line, i.e. the hydrogen atom. */
+    Array lineEmissionMasses() const override;
+
+    /** This function returns  a list including a single item: the 21 cm line luminosity
+        in the spatial cell and medium component represented by the specified material state and
+        the receiving material mix when it would be embedded in the specified radiation field. */
+    Array lineEmissionSpectrum(const MaterialState* state, const Array& Jv) const override;
+
+    //======== Temperature =======
+
     /** This function returns an indicative temperature of the material mix when it would be
         embedded in a given radiation field. The implementation in this class ignores the radiation
         field and returns the temperature stored in the specific state for the relevant spatial
@@ -137,6 +175,7 @@ public:
     //======================== Data Members ========================
 
 private:
+    int _indexUV{-1};  // index in simulation's RF WLG for the bin containing 1000 A
 };
 
 ////////////////////////////////////////////////////////////////////

@@ -50,15 +50,15 @@ class FragmentDustMixDecorator : public MaterialMix, public MultiGrainPopulation
         ATTRIBUTE_DEFAULT_VALUE(fragmentSizeBins, "false")
 
         PROPERTY_BOOL(hasDynamicDensities, "allow the fragment densities to be adjusted dynamically")
-        ATTRIBUTE_RELEVANT_IF(hasDynamicDensities, "HasDynamicState")
-        ATTRIBUTE_DEFAULT_VALUE(hasDynamicDensities, "HasDynamicState:true;false")
+        ATTRIBUTE_RELEVANT_IF(hasDynamicDensities, "DynamicState")
+        ATTRIBUTE_DEFAULT_VALUE(hasDynamicDensities, "DynamicState:true;false")
         ATTRIBUTE_DISPLAYED_IF(hasDynamicDensities, "Level3")
 
         PROPERTY_DOUBLE(initialDensityFraction, "the initial value of the dynamic density fraction")
         ATTRIBUTE_MIN_VALUE(initialDensityFraction, "[0")
         ATTRIBUTE_MAX_VALUE(initialDensityFraction, "1]")
         ATTRIBUTE_DEFAULT_VALUE(initialDensityFraction, "0")
-        ATTRIBUTE_RELEVANT_IF(initialDensityFraction, "HasDynamicState&hasDynamicDensities")
+        ATTRIBUTE_RELEVANT_IF(initialDensityFraction, "DynamicState&hasDynamicDensities")
         ATTRIBUTE_DISPLAYED_IF(initialDensityFraction, "Level3")
 
     ITEM_END()
@@ -96,6 +96,10 @@ public:
         density, in this case the fragment weight factors. */
     bool hasExtraSpecificState() const override;
 
+    /** This function returns true for this class because all dust mixes support secondary
+        continuum emission. */
+    bool hasContinuumEmission() const override;
+
     //======== Medium state setup =======
 
 public:
@@ -120,7 +124,8 @@ public:
         number of imported parameter values as requested through the parameterInfo() function, i.e.
         a weight factor per fragment. It then copies these weights into the corresponding specific
         state variables. If the \em params array is empty, the function sets all the weights in the
-        specific state to a value of one. The \em temperature argument value is ignored. */
+        specific state to a value of one. The \em metallicity and \em temperature arguments are
+        ignored. */
     void initializeSpecificState(MaterialState* state, double metallicity, double temperature,
                                  const Array& params) const override;
 
@@ -190,6 +195,10 @@ public:
     //======== Secondary emission =======
 
 public:
+    /** This function returns the wavelength grid on which dust emission is discretized, i.e. the
+        wavelength grid returned by the Configuration::dustEmissionWLG() function. */
+    DisjointWavelengthGrid* emissionWavelengthGrid() const override;
+
     /** This function returns the emissivity spectrum \f$\varepsilon_{\ell'}\f$ (radiated power per
         unit of solid angle and per hydrogen atom) of the dust mix when it would be embedded in a
         given radiation field. Because this function does not have access to the material state, it

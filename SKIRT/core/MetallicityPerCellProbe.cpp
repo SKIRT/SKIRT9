@@ -11,20 +11,6 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void MetallicityPerCellProbe::probeSetup()
-{
-    if (probeAfter() == ProbeAfter::Setup) probe();
-}
-
-////////////////////////////////////////////////////////////////////
-
-void MetallicityPerCellProbe::probeRun()
-{
-    if (probeAfter() == ProbeAfter::Run) probe();
-}
-
-////////////////////////////////////////////////////////////////////
-
 void MetallicityPerCellProbe::probe()
 {
     if (find<Configuration>()->hasMedium())

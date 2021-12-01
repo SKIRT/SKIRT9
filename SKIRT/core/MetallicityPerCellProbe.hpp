@@ -6,7 +6,7 @@
 #ifndef METALLICITYPERCELLPROBE_HPP
 #define METALLICITYPERCELLPROBE_HPP
 
-#include "Probe.hpp"
+#include "StateProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -19,38 +19,17 @@
 
     Note that dust components do not store the imported metallicity; for those components,
     metallicity is simply used as a multiplier to calculate the mass density. */
-class MetallicityPerCellProbe : public Probe
+class MetallicityPerCellProbe : public StateProbe
 {
-    /** The enumeration type indicating when probing occurs. */
-    ENUM_DEF(ProbeAfter, Setup, Run)
-        ENUM_VAL(ProbeAfter, Setup, "after setup")
-        ENUM_VAL(ProbeAfter, Run, "after the complete simulation run")
-    ENUM_END()
-
-    ITEM_CONCRETE(MetallicityPerCellProbe, Probe, "metallicity values for all spatial cells")
+    ITEM_CONCRETE(MetallicityPerCellProbe, StateProbe, "metallicity values for all spatial cells")
         ATTRIBUTE_TYPE_DISPLAYED_IF(MetallicityPerCellProbe, "Level2&Gas&SpatialGrid")
-
-        PROPERTY_ENUM(probeAfter, ProbeAfter, "when to probe the medium state")
-        ATTRIBUTE_DEFAULT_VALUE(probeAfter, "Setup")
-        ATTRIBUTE_DISPLAYED_IF(probeAfter, "HasDynamicState")
-
     ITEM_END()
 
     //======================== Other Functions =======================
 
-public:
-    /** This function performs probing after setup. It produces output only if the \em
-        probeAfter property is set to Setup. */
-    void probeSetup() override;
-
-    /** This function performs probing after all photon packets have been emitted and detected. It
-        produces output only if the \em probeAfter property is set to Run. */
-    void probeRun() override;
-
-private:
-    /** This function performs the probing; it is called from probeSetup() or probeRun() depending
-        on the value of the \em probeAfter property. */
-    void probe();
+protected:
+    /** This function performs the probing. */
+    void probe() override;
 };
 
 ////////////////////////////////////////////////////////////////////

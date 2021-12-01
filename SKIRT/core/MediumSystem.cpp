@@ -34,6 +34,155 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
+namespace
+{
+    // This helper class performs spatial sampling of the medium properties within a given cell and
+    // for a given medium component. The number of samples to be taken can be specified separately
+    // for the density and for all other properties (velocity, magnetic field, metallicity, ...).
+    // The main reason for bundling this functionality in its own class/object is to allow caching
+    // the random sampling positions with the corresponding sampled density values in a cell.
+    // The constructor takes arguments that depend only on the simulation configuration and thus
+    // do not vary between cells. This allows consecutively reusing the same object for multiple
+    // cells, avoiding memory allocation/deallocation for each cell.
+    class PropertySampler
+    {
+    private:
+        vector<Medium*>& _media;
+        SpatialGrid* _grid;
+        int _numDensitySamples;
+        int _numPropertySamples;
+        int _numMedia;
+        int _cellIndex;
+        Position _center;
+        vector<Position> _positions;  // indexed on n
+        Table<2> _densities;          // indexed on h and n
+
+    public:
+        // The constructor allocates the required memory depending on the sampling configuration.
+        // The number of samples for each type (density or other properties) can be:
+        //   0: the sampling function(s) will never be called
+        //   1: "sample" at the cell center only
+        //  >1: sample at the specified nr of random points in the cell
+        PropertySampler(vector<Medium*>& media, SpatialGrid* grid, int numDensitySamples, int numPropertySamples)
+            : _media(media), _grid(grid), _numDensitySamples(numDensitySamples),
+              _numPropertySamples(numPropertySamples), _numMedia(_media.size()), _cellIndex(0)
+        {
+            if (_numDensitySamples > 1 || _numPropertySamples > 1)
+            {
+                int numSamples = max(_numDensitySamples, _numPropertySamples);
+                _positions.resize(numSamples);
+                _densities.resize(_numMedia, numSamples);
+            }
+        }
+
+        // This function should be called with a spatial cell index before calling any of the other
+        // functions for that cell. It initializes the required sampling positions and obtains the
+        // corresponding sampled density values.
+        void prepareForCell(int cellIndex)
+        {
+            _cellIndex = cellIndex;
+
+            // if we need center "sampling", get the cell center
+            if (_numDensitySamples == 1 || _numPropertySamples == 1)
+            {
+                _center = _grid->centralPositionInCell(_cellIndex);
+            }
+
+            // if we need random sampling, draw the positions and get the corresponding densities
+            int numSamples = _positions.size();
+            for (int n = 0; n != numSamples; ++n)
+            {
+                _positions[n] = _grid->randomPositionInCell(_cellIndex);
+                for (int h = 0; h != _numMedia; ++h) _densities(h, n) = _media[h]->numberDensity(_positions[n]);
+            }
+        }
+
+        // Returns the central or average density in the cell for the given medium component.
+        double density(int h)
+        {
+            if (_numDensitySamples == 1) return _media[h]->numberDensity(_center);
+            double sum = 0.;
+            for (int n = 0; n != _numDensitySamples; ++n) sum += _densities(h, n);
+            return sum / _numDensitySamples;
+        }
+
+        // Returns the central or density-averaged velocity in the cell for the given medium component.
+        Vec bulkVelocity(int h)
+        {
+            if (_numPropertySamples == 1) return _media[h]->bulkVelocity(_center);
+            double nsum = 0;
+            Vec vsum;
+            for (int n = 0; n != _numPropertySamples; ++n)
+            {
+                nsum += _densities(h, n);
+                vsum += _densities(h, n) * _media[h]->bulkVelocity(_positions[n]);
+            }
+            return nsum > 0. ? vsum / nsum : Vec();
+        }
+
+        // Returns the central or average magnetic field in the cell for the given medium component.
+        // Note the magnetic field average is NOT weighed with density.
+        Vec magneticField(int h)
+        {
+            if (_numPropertySamples == 1) return _media[h]->magneticField(_center);
+            Vec Bsum;
+            for (int n = 0; n != _numPropertySamples; ++n) Bsum += _media[h]->magneticField(_positions[n]);
+            return Bsum / _numPropertySamples;
+        }
+
+        // Returns the central or density-averaged metallicity in the cell for the given medium component.
+        double metallicity(int h)
+        {
+            if (_numPropertySamples == 1) return _media[h]->metallicity(_center);
+            double nsum = 0;
+            double Zsum = 0.;
+            for (int n = 0; n != _numPropertySamples; ++n)
+            {
+                nsum += _densities(h, n);
+                Zsum += _densities(h, n) * _media[h]->metallicity(_positions[n]);
+            }
+            return nsum > 0. ? Zsum / nsum : 0.;
+        }
+
+        // Returns the central or density-averaged temperature in the cell for the given medium component.
+        double temperature(int h)
+        {
+            if (_numPropertySamples == 1) return _media[h]->temperature(_center);
+            double nsum = 0;
+            double Tsum = 0.;
+            for (int n = 0; n != _numPropertySamples; ++n)
+            {
+                nsum += _densities(h, n);
+                Tsum += _densities(h, n) * _media[h]->temperature(_positions[n]);
+            }
+            return nsum > 0. ? Tsum / nsum : 0.;
+        }
+
+        // Returns the central or density-averaged custom parameter values in the cell for the given medium component.
+        void parameters(int h, Array& params)
+        {
+            // always sample at the center to make sure that the output array has the proper size
+            _media[h]->parameters(_center, params);
+            // if center-sampling is requested, we're done
+            if (_numPropertySamples == 1) return;
+            // otherwise, clear the output values and accumulate the samples
+            params = 0.;
+            double nsum = 0;
+            Array sample;
+            for (int n = 0; n != _numPropertySamples; ++n)
+            {
+                nsum += _densities(h, n);
+                _media[h]->parameters(_positions[n], sample);
+                params += _densities(h, n) * sample;
+            }
+            params /= nsum;
+            return;
+        }
+    };
+}
+
+////////////////////////////////////////////////////////////////////
+
 void MediumSystem::setupSelfAfter()
 {
     SimulationItem::setupSelfAfter();
@@ -123,74 +272,106 @@ void MediumSystem::setupSelfAfter()
 
     log->info(typeAndName() + " allocated " + StringUtils::toMemSizeString(allocatedBytes) + " of memory");
 
-    // ----- calculate cell densities, bulk velocities, and volumes in parallel -----
+    // ----- calculate medium properties parallelized on spatial cells -----
 
-    log->info("Calculating densities for " + std::to_string(_numCells) + " cells...");
+    log->info("Calculating medium properties for " + std::to_string(_numCells) + " cells...");
     auto dic = _grid->interface<DensityInCellInterface>(0, false);  // optional fast-track interface for densities
-    int numSamples = _config->numDensitySamples();
     log->infoSetElapsed(_numCells);
-    parfac->parallelDistributed()->call(_numCells, [this, log, dic, numSamples](size_t firstIndex, size_t numIndices) {
-        ShortArray nsumv(_numMedia);
+    parfac->parallelDistributed()->call(_numCells, [this, log, dic](size_t firstIndex, size_t numIndices) {
+        // construct a property sampler to be shared by all cells handled in the loop below
+        bool hasProperty = _config->hasMovingMedia() || _config->hasMagneticField();
+        for (int h = 0; h != _numMedia; ++h)
+            if (_media[h]->hasMetallicity() || _media[h]->hasTemperature() || _media[h]->hasParameters())
+                hasProperty = true;
+        PropertySampler sampler(_media, _grid, dic ? 0 : _config->numDensitySamples(),
+                                hasProperty ? _config->numPropertySamples() : 0);
 
+        // loop over cells
         while (numIndices)
         {
             size_t currentChunkSize = min(logProgressChunkSize, numIndices);
             for (size_t m = firstIndex; m != firstIndex + currentChunkSize; ++m)
             {
-                Position center = _grid->centralPositionInCell(m);
+                // prepare the sampler for this cell (i.e. store the relevant positions and density samples)
+                sampler.prepareForCell(m);
 
                 // volume
                 _state.setVolume(m, _grid->volume(m));
 
-                // density: use optional fast-track interface or sample 100 random positions within the cell
+                // density: use optional fast-track interface or sample within the cell
                 if (dic)
                 {
                     for (int h = 0; h != _numMedia; ++h) _state.setNumberDensity(m, h, dic->numberDensity(h, m));
                 }
                 else
                 {
-                    nsumv.clear();
-                    for (int n = 0; n < numSamples; n++)
-                    {
-                        Position bfr = _grid->randomPositionInCell(m);
-                        for (int h = 0; h != _numMedia; ++h) nsumv[h] += _media[h]->numberDensity(bfr);
-                    }
-                    for (int h = 0; h != _numMedia; ++h) _state.setNumberDensity(m, h, nsumv[h] / numSamples);
+                    for (int h = 0; h != _numMedia; ++h) _state.setNumberDensity(m, h, sampler.density(h));
                 }
 
-                // bulk velocity: weighted average at cell center; for oligochromatic simulations, leave at zero
+                // bulk velocity: aggregate values sampled for each component according to specfied policy
                 if (_config->hasMovingMedia())
                 {
+                    // accumulate total density in the cell
                     double n = 0.;
-                    Vec v;
-                    for (int h = 0; h != _numMedia; ++h)
-                    {
-                        n += _state.numberDensity(m, h);
-                        v += _state.numberDensity(m, h) * _media[h]->bulkVelocity(center);
-                    }
+                    for (int h = 0; h != _numMedia; ++h) n += _state.numberDensity(m, h);
+
                     // leave bulk velocity at zero if cell has no material
-                    if (n > 0.) _state.setBulkVelocity(m, v / n);
+                    if (n > 0.)
+                    {
+                        Vec v;
+                        switch (_samplingOptions->aggregateVelocity())
+                        {
+                            case SamplingOptions::AggregatePolicy::Average:
+                                for (int h = 0; h != _numMedia; ++h)
+                                {
+                                    v += _state.numberDensity(m, h) * sampler.bulkVelocity(h);
+                                }
+                                v /= n;
+                                break;
+                            case SamplingOptions::AggregatePolicy::Maximum:
+                                for (int h = 0; h != _numMedia; ++h)
+                                {
+                                    if (_state.numberDensity(m, h) > 0)
+                                    {
+                                        Vec w = sampler.bulkVelocity(h);
+                                        if (w.norm2() > v.norm2()) v = w;
+                                    }
+                                }
+                                break;
+                            case SamplingOptions::AggregatePolicy::First:
+                                for (int h = 0; h != _numMedia; ++h)
+                                {
+                                    if (_media[h]->hasVelocity())
+                                    {
+                                        if (_state.numberDensity(m, h) > 0) v = sampler.bulkVelocity(h);
+                                        break;
+                                    }
+                                    break;
+                                }
+                        }
+                        _state.setBulkVelocity(m, v);
+                    }
                 }
 
-                // magnetic field: retrieve from medium component that specifies it, if any
+                // magnetic field: retrieve value sampled from medium component that specifies it
                 if (_config->hasMagneticField())
                 {
-                    _state.setMagneticField(m, _media[_config->magneticFieldMediumIndex()]->magneticField(center));
+                    _state.setMagneticField(m, sampler.magneticField(_config->magneticFieldMediumIndex()));
                 }
 
-                // specific state variables other than density
+                // specific state variables other than density:
+                // retrieve value sampled from corresponding medium component
                 for (int h = 0; h != _numMedia; ++h)
                 {
-                    // retrieve input model temperature and parameters from medium component
-                    MaterialState mst(_state, m, h);
-                    double Z = _media[h]->metallicity(center);
-                    double T = _media[h]->temperature(center);
+                    double Z = _media[h]->hasMetallicity() ? sampler.metallicity(h) : -1.;
+                    double T = _media[h]->hasTemperature() ? sampler.temperature(h) : -1.;
                     Array params;
-                    _media[h]->parameters(center, params);
+                    if (_media[h]->hasParameters()) sampler.parameters(h, params);
+                    MaterialState mst(_state, m, h);
                     mix(m, h)->initializeSpecificState(&mst, Z, T, params);
                 }
             }
-            log->infoIfElapsed("Calculated cell densities: ", currentChunkSize);
+            log->infoIfElapsed("Calculated medium properties: ", currentChunkSize);
             firstIndex += currentChunkSize;
             numIndices -= currentChunkSize;
         }
@@ -295,6 +476,13 @@ double MediumSystem::massDensity(int m, int h) const
 double MediumSystem::metallicity(int m, int h) const
 {
     return _state.metallicity(m, h);
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::temperature(int m, int h) const
+{
+    return _state.temperature(m, h);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -784,20 +972,22 @@ void MediumSystem::communicateRadiationField(bool primary)
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::totalAbsorbedDustLuminosity(bool primary) const
+std::pair<double, double> MediumSystem::totalDustAbsorbedLuminosity() const
 {
-    double Labs = 0.;
+    double Labs1 = 0.;
+    double Labs2 = 0.;
     int numWavelengths = _wavelengthGrid->numBins();
     for (int ell = 0; ell != numWavelengths; ++ell)
     {
         double lambda = _wavelengthGrid->wavelength(ell);
         for (int m = 0; m != _numCells; ++m)
         {
-            double rf = primary ? _rf1(m, ell) : _rf2(m, ell);
-            Labs += opacityAbs(lambda, m, MaterialMix::MaterialType::Dust) * rf;
+            double opacity = opacityAbs(lambda, m, MaterialMix::MaterialType::Dust);
+            Labs1 += opacity * _rf1(m, ell);
+            Labs2 += opacity * _rf2(m, ell);
         }
     }
-    return Labs;
+    return std::make_pair(Labs1, Labs2);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -905,6 +1095,24 @@ Array MediumSystem::dustEmissionSpectrum(int m) const
 
 ////////////////////////////////////////////////////////////////////
 
+Array MediumSystem::continuumEmissionSpectrum(int m, int h) const
+{
+    const Array& Jv = meanIntensity(m);
+    MaterialState mst(_state, m, h);
+    return mix(m, h)->emissionSpectrum(&mst, Jv);
+}
+
+////////////////////////////////////////////////////////////////////
+
+Array MediumSystem::lineEmissionSpectrum(int m, int h) const
+{
+    const Array& Jv = meanIntensity(m);
+    MaterialState mst(_state, m, h);
+    return mix(m, h)->lineEmissionSpectrum(&mst, Jv);
+}
+
+////////////////////////////////////////////////////////////////////
+
 bool MediumSystem::updateDynamicMediumState()
 {
     auto log = find<Log>();
@@ -952,6 +1160,46 @@ bool MediumSystem::updateDynamicMediumState()
     bool converged = true;
     for (auto recipe : recipes) converged &= recipe->endUpdate(_numCells, numUpdated, numNotConverged);
     return converged;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void MediumSystem::updateSemiDynamicMediumState()
+{
+    auto log = find<Log>();
+    auto parfac = find<ParallelFactory>();
+
+    // update status for each cell
+    std::vector<UpdateStatus> flags(_numCells);
+
+    // loop over the spatial cells in parallel
+    log->info("Updating semi-dynamic medium state for " + std::to_string(_numCells) + " cells...");
+    log->infoSetElapsed(_numCells);
+    parfac->parallelDistributed()->call(_numCells, [this, log, &flags](size_t firstIndex, size_t numIndices) {
+        while (numIndices)
+        {
+            size_t currentChunkSize = min(logProgressChunkSize, numIndices);
+            for (size_t m = firstIndex; m != firstIndex + currentChunkSize; ++m)
+            {
+                const Array& Jv = meanIntensity(m);
+
+                for (int h = 0; h != _numMedia; ++h)
+                {
+                    if (mix(m, h)->hasSemiDynamicMediumState())
+                    {
+                        MaterialState mst(_state, m, h);
+                        if (mix(m, h)->updateSpecificState(&mst, Jv)) flags[m].updateConverged();
+                    }
+                }
+            }
+            log->infoIfElapsed("Updated semi-dynamic medium state: ", currentChunkSize);
+            firstIndex += currentChunkSize;
+            numIndices -= currentChunkSize;
+        }
+    });
+
+    // synchronize the updated state between processes
+    _state.synchronize(flags);
 }
 
 ////////////////////////////////////////////////////////////////////
