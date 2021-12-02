@@ -227,12 +227,6 @@ SkirtUnitDef::SkirtUnitDef()
     addUnit("bolluminosity", "J/s", 1.);
     addUnit("bolluminosity", "erg/s", 1e-7);
     addUnit("bolluminosity", "Lsun", Lsun);
-    addUnit("bolluminosity", "eV/s", Qel);
-    addUnit("bolluminosity", "meV/s", 1e-3 * Qel);
-    addUnit("bolluminosity", "keV/s", 1e3 * Qel);
-    addUnit("bolluminosity", "MeV/s", 1e6 * Qel);
-    addUnit("bolluminosity", "GeV/s", 1e9 * Qel);
-    addUnit("bolluminosity", "TeV/s", 1e12 * Qel);
 
     // neutral monochromatic luminosity (lambda L_lambda = nu L_nu)
     addUnit("neutralmonluminosity", "W", 1.);
