@@ -142,7 +142,7 @@ void DustMix::setupSelfAfter()
         log->warning(type() + " extreme forward/backward scattering asymmetry parameter values reduced to "
                      + StringUtils::toString(maxg));
         log->warning("  For some or all wavelengths short of "
-                     + StringUtils::toString(units->owavelength(_lambdav[lastAdjustedEll]), 'g', 3) + " "
+                     + StringUtils::toString(units->owavelength(lambdav[lastAdjustedEll]), 'g', 3) + " "
                      + units->uwavelength());
     }
 
