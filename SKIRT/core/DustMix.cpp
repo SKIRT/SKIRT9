@@ -121,6 +121,31 @@ void DustMix::setupSelfAfter()
     _mu = getOpticalProperties(lambdav, _thetav, _sigmaabsv, _sigmascav, _asymmparv, _S11vv, _S12vv, _S33vv, _S34vv,
                                _sigmaabsvv, _sigmaabspolvv);
 
+    // ensure that values for the asymmetry parameter g are not too close to 1 or -1
+    // - the HG phase function expression becomes numerically unstable for abs(g) > 1-1e-7
+    // - more annoyingly, HG phase function values (and hence the bias factors for peel-off photon packets)
+    //   become exceedingly large or small for abs(g) > 0.95, causing unacceptable artificial "noise"
+    const double maxg = 0.95;
+    int lastAdjustedEll = -1;  // index of longest wavelength for which adjustment has been made
+    for (int ell = 0; ell != numLambda; ++ell)
+    {
+        if (abs(_asymmparv[ell]) > maxg)
+        {
+            _asymmparv[ell] = std::copysign(maxg, _asymmparv[ell]);
+            lastAdjustedEll = ell;
+        }
+    }
+    if (lastAdjustedEll >= 0)
+    {
+        auto units = find<Units>();
+        auto log = find<Log>();
+        log->warning(type() + " extreme forward/backward scattering asymmetry parameter values reduced to "
+                     + StringUtils::toString(maxg));
+        log->warning("  For some or all wavelengths short of "
+                     + StringUtils::toString(units->owavelength(lambdav[lastAdjustedEll]), 'g', 3) + " "
+                     + units->uwavelength());
+    }
+
     // calculate derived basic optical properties
     for (int ell = 0; ell != numLambda; ++ell)
     {
