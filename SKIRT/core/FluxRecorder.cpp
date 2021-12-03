@@ -9,6 +9,7 @@
 #include "LockFree.hpp"
 #include "Log.hpp"
 #include "MediumSystem.hpp"
+#include "NR.hpp"
 #include "PhotonPacket.hpp"
 #include "ProcessManager.hpp"
 #include "StringUtils.hpp"
@@ -548,29 +549,15 @@ void FluxRecorder::calibrateAndWrite()
         // reverse the ordering of the wavelength grid and frames if necessary
         if (units->rwavelength())
         {
-            int ell1 = 0;
-            int ell2 = numWavelengths;
-            while (ell1 != ell2 && ell1 != --ell2)
-            {
-                size_t begin1 = ell1 * _numPixelsInFrame;
-                size_t begin2 = ell2 * _numPixelsInFrame;
+            NR::reverse(wavegrid);
 
-                // swap wavelengths
-                std::swap(wavegrid[ell1], wavegrid[ell2]);
+            // flux frames
+            for (auto array : ifuArrays)
+                if (array->size()) NR::reverse(*array, _numPixelsInFrame);
 
-                // swap regular frames
-                for (auto array : ifuArrays)
-                    if (array->size())
-                        for (size_t i = 0; i != _numPixelsInFrame; ++i)
-                            std::swap((*array)[begin1 + i], (*array)[begin2 + i]);
-
-                // swap statistics frames
-                for (auto& array : _wifu)
-                    if (array.size())
-                        for (size_t i = 0; i != _numPixelsInFrame; ++i) std::swap(array[begin1 + i], array[begin2 + i]);
-
-                ++ell1;
-            }
+            // statistics frames
+            for (auto& array : _wifu)
+                if (array.size()) NR::reverse(array, _numPixelsInFrame);
         }
 
         // determine spatial axes values and units

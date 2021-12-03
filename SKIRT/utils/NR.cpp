@@ -8,6 +8,20 @@
 
 ////////////////////////////////////////////////////////////////////
 
+void NR::reverse(Array& xv, size_t blocksize)
+{
+    auto first = begin(xv);
+    auto last = end(xv) - blocksize;
+    while (first < last)
+    {
+        for (size_t i = 0; i != blocksize; ++i) std::iter_swap(first + i, last + i);
+        first += blocksize;
+        last -= blocksize;
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
 double NR::cdf2(bool loglog, const Array& xv, Array& pv, Array& Pv)
 {
     size_t n = xv.size() - 1;

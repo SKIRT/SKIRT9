@@ -85,6 +85,11 @@ public:
         xv.resize(n);
     }
 
+    /** This function reverses blocks of values in the specified array. The number of values in the
+        array must be an integer multiple of the specified block size. If not, the behavior is
+        undefined. */
+    static void reverse(Array& xv, size_t blocksize = 1);
+
     //======================== Searching =======================
 
 public:
