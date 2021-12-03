@@ -5,6 +5,7 @@
 
 #include "LaunchedPacketsProbe.hpp"
 #include "Configuration.hpp"
+#include "Indices.hpp"
 #include "LockFree.hpp"
 #include "PhotonPacket.hpp"
 #include "SourceSystem.hpp"
@@ -57,7 +58,7 @@ void LaunchedPacketsProbe::probeRun()
         file.addColumn("nr of photon packets launched in bin by source " + std::to_string(h + 1));
 
     // write the rows
-    for (int ell = 0; ell != numWavelengths; ++ell)
+    for (int ell : Indices(numWavelengths, units->rwavelength()))
     {
         double lambda = _probeWavelengthGrid->wavelength(ell);
 

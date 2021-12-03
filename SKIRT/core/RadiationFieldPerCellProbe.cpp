@@ -6,6 +6,7 @@
 #include "RadiationFieldPerCellProbe.hpp"
 #include "Configuration.hpp"
 #include "DisjointWavelengthGrid.hpp"
+#include "Indices.hpp"
 #include "InstrumentWavelengthGridProbe.hpp"
 #include "MediumSystem.hpp"
 #include "StringUtils.hpp"
@@ -31,7 +32,7 @@ void RadiationFieldPerCellProbe::probeRun()
             // write the header
             file.writeLine("# Mean radiation field intensities per spatial cell");
             file.addColumn("spatial cell index", "", 'd');
-            for (int ell = 0; ell != wavelengthGrid->numBins(); ++ell)
+            for (int ell : Indices(wavelengthGrid->numBins(), units->rwavelength()))
                 file.addColumn(units->smeanintensity() + " at " + units->swavelength() + " = "
                                    + StringUtils::toString(units->owavelength(wavelengthGrid->wavelength(ell)), 'g')
                                    + " " + units->uwavelength(),
@@ -43,7 +44,7 @@ void RadiationFieldPerCellProbe::probeRun()
             {
                 vector<double> values({static_cast<double>(m)});
                 const Array& Jv = ms->meanIntensity(m);
-                for (int ell = 0; ell != wavelengthGrid->numBins(); ++ell)
+                for (int ell : Indices(wavelengthGrid->numBins(), units->rwavelength()))
                 {
                     values.push_back(units->omeanintensity(wavelengthGrid->wavelength(ell), Jv[ell]));
                 }

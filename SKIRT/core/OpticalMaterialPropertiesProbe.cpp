@@ -5,6 +5,7 @@
 
 #include "OpticalMaterialPropertiesProbe.hpp"
 #include "Configuration.hpp"
+#include "Indices.hpp"
 #include "InstrumentSystem.hpp"
 #include "MaterialMix.hpp"
 #include "Medium.hpp"
@@ -56,7 +57,6 @@ void OpticalMaterialPropertiesProbe::probeSetup()
 
         // select "local" or default wavelength grid
         auto probeWavelengthGrid = find<Configuration>()->wavelengthGrid(wavelengthGrid());
-        int numWavelengths = probeWavelengthGrid->numBins();
 
         // create a seperate file for each medium
         for (int h = 0; h != numMedia; ++h)
@@ -82,7 +82,7 @@ void OpticalMaterialPropertiesProbe::probeSetup()
             out.addColumn("scattering asymmetry parameter");
 
             // write the columns
-            for (int ell = 0; ell != numWavelengths; ++ell)
+            for (int ell : Indices(probeWavelengthGrid->numBins(), units->rwavelength()))
             {
                 double lambda = probeWavelengthGrid->wavelength(ell);
                 double sigmaExt = mix->sectionExt(lambda);

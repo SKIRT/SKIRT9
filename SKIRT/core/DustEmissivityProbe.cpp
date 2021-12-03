@@ -7,6 +7,7 @@
 #include "ArrayTable.hpp"
 #include "Configuration.hpp"
 #include "DisjointWavelengthGrid.hpp"
+#include "Indices.hpp"
 #include "InstrumentWavelengthGridProbe.hpp"
 #include "MediumSystem.hpp"
 #include "PlanckFunction.hpp"
@@ -97,7 +98,7 @@ namespace
         for (int h : hv) file.addColumn("lambda*j_lambda for dust in medium component " + std::to_string(h), "W/sr/H");
 
         // write the emissivity for each dust mix to file
-        for (int ell = 0; ell != wavelengthGrid->numBins(); ++ell)
+        for (int ell : Indices(wavelengthGrid->numBins(), units->rwavelength()))
         {
             double lambda = wavelengthGrid->wavelength(ell);
             vector<double> values({units->owavelength(lambda)});

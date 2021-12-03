@@ -119,6 +119,19 @@ string Units::swavelength() const
 
 ////////////////////////////////////////////////////////////////////
 
+bool Units::rwavelength() const
+{
+    switch (_wavelengthOutputStyle)
+    {
+        case WavelengthOutputStyle::Wavelength: return false;
+        case WavelengthOutputStyle::Frequency: return true;
+        case WavelengthOutputStyle::Energy: return true;
+    }
+    return false;
+}
+
+////////////////////////////////////////////////////////////////////
+
 string Units::uwavelength() const
 {
     switch (_wavelengthOutputStyle)

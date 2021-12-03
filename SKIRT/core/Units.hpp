@@ -135,6 +135,12 @@ public:
         program. */
     string swavelength() const;
 
+    /** This function returns true if wavelength values are ordered in reverse in the wavelength
+        output style adopted by the program, and false otherwise. Specifically, it returns false
+        for the output style 'wavelength' and true for the output styles 'frequency' and 'energy'.
+        */
+    bool rwavelength() const;
+
     /** This function returns a string containing the name of the style and unit of wavelength
         adopted by the program for output. */
     string uwavelength() const;

@@ -5,6 +5,7 @@
 
 #include "FluxRecorder.hpp"
 #include "FITSInOut.hpp"
+#include "Indices.hpp"
 #include "LockFree.hpp"
 #include "Log.hpp"
 #include "MediumSystem.hpp"
@@ -458,7 +459,7 @@ void FluxRecorder::calibrateAndWrite()
         }
 
         // write the column data
-        for (int ell = 0; ell != numWavelengths; ++ell)
+        for (int ell : Indices(numWavelengths, units->rwavelength()))
         {
             vector<double> values({units->owavelength(_lambdagrid->wavelength(ell))});
             for (const Array* array : sedArrays) values.push_back(array->size() ? (*array)[ell] : 0.);
@@ -479,7 +480,7 @@ void FluxRecorder::calibrateAndWrite()
             statFile.writeLine("# --> w_i is luminosity contribution (in W) from i_th launched photon");
 
             // write the column data
-            for (int ell = 0; ell != numWavelengths; ++ell)
+            for (int ell : Indices(numWavelengths, units->rwavelength()))
             {
                 vector<double> values({units->owavelength(_lambdagrid->wavelength(ell))});
                 for (int k = 0; k <= maxContributionPower; ++k) values.push_back(_wsed[k][ell]);
