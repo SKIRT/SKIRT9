@@ -31,10 +31,10 @@ void InstrumentWavelengthGridProbe::writeWavelengthGrid(Probe* item, const Wavel
 
     // create a text file and add the columns
     TextOutFile file(item, filename, description);
-    file.addColumn("characteristic wavelength", units->uwavelength());
-    file.addColumn("effective wavelength bin width", units->uwavelength());
-    file.addColumn("left border of wavelength bin", units->uwavelength());
-    file.addColumn("right border of wavelength bin", units->uwavelength());
+    file.addColumn("characteristic wavelength; " + units->swavelength(), units->uwavelength());
+    file.addColumn("effective wavelength bin width; " + units->swavelength(), units->uwavelength());
+    file.addColumn("left border of wavelength bin; " + units->swavelength(), units->uwavelength());
+    file.addColumn("right border of wavelength bin; " + units->swavelength(), units->uwavelength());
 
     // write the rows
     int numWavelengths = wavelengthGrid->numBins();

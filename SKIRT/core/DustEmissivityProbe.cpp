@@ -93,7 +93,7 @@ namespace
 
         // write the header
         file.writeLine("# Dust emissivities for input field " + title);
-        file.addColumn("wavelength", units->uwavelength());
+        file.addColumn("wavelength; " + units->swavelength(), units->uwavelength());
         for (int h : hv) file.addColumn("lambda*j_lambda for dust in medium component " + std::to_string(h), "W/sr/H");
 
         // write the emissivity for each dust mix to file

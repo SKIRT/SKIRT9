@@ -32,7 +32,7 @@ void RadiationFieldPerCellProbe::probeRun()
             file.writeLine("# Mean radiation field intensities per spatial cell");
             file.addColumn("spatial cell index", "", 'd');
             for (int ell = 0; ell != wavelengthGrid->numBins(); ++ell)
-                file.addColumn(units->smeanintensity() + " at lambda = "
+                file.addColumn(units->smeanintensity() + " at " + units->swavelength() + " = "
                                    + StringUtils::toString(units->owavelength(wavelengthGrid->wavelength(ell)), 'g')
                                    + " " + units->uwavelength(),
                                units->umeanintensity());

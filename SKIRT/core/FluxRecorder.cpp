@@ -451,7 +451,7 @@ void FluxRecorder::calibrateAndWrite()
 
         // open the file and add the column headers
         TextOutFile sedFile(_parentItem, _instrumentName + "_sed", "SED");
-        sedFile.addColumn("wavelength", units->uwavelength());
+        sedFile.addColumn("wavelength; " + units->swavelength(), units->uwavelength());
         for (const string& name : sedNames)
         {
             sedFile.addColumn(name + "; " + units->sfluxdensity(), units->ufluxdensity());
@@ -471,7 +471,7 @@ void FluxRecorder::calibrateAndWrite()
         {
             // open the file and add the column headers
             TextOutFile statFile(_parentItem, _instrumentName + "_sedstats", "SED statistics");
-            statFile.addColumn("wavelength", units->uwavelength());
+            statFile.addColumn("wavelength; " + units->swavelength(), units->uwavelength());
             for (int k = 0; k <= maxContributionPower; ++k)
             {
                 statFile.addColumn("Sum[w_i**" + std::to_string(k) + "]");

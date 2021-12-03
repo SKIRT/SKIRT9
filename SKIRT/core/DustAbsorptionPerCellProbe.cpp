@@ -32,7 +32,7 @@ void DustAbsorptionPerCellProbe::probeRun()
             file.writeLine("# Spectral luminosity absorbed by dust per spatial cell");
             file.addColumn("spatial cell index", "", 'd');
             for (int ell = 0; ell != wavelengthGrid->numBins(); ++ell)
-                file.addColumn(units->smonluminosity() + "^abs at lambda = "
+                file.addColumn(units->smonluminosity() + "^abs at " + units->swavelength() + " = "
                                    + StringUtils::toString(units->owavelength(wavelengthGrid->wavelength(ell)), 'g')
                                    + " " + units->uwavelength(),
                                units->umonluminosity());

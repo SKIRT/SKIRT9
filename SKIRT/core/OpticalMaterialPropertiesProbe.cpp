@@ -71,7 +71,7 @@ void OpticalMaterialPropertiesProbe::probeSetup()
             out.writeLine("# Medium component " + std::to_string(h) + " -- " + materialForType(mix->materialType())
                           + " mass per " + entityForType(mix->materialType()) + ": "
                           + StringUtils::toString(units->obulkmass(mix->mass()), 'e', 9) + " " + units->ubulkmass());
-            out.addColumn("wavelength", units->uwavelength());
+            out.addColumn("wavelength; " + units->swavelength(), units->uwavelength());
             out.addColumn("extinction cross section per " + entityForType(mix->materialType()), units->usection());
             out.addColumn("absorption cross section per " + entityForType(mix->materialType()), units->usection());
             out.addColumn("scattering cross section per " + entityForType(mix->materialType()), units->usection());

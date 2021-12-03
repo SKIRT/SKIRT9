@@ -42,7 +42,7 @@ void RadiationFieldAtPositionsProbe::probeRun()
             outfile.addColumn("position y", units->ulength());
             outfile.addColumn("position z", units->ulength());
             for (int ell = 0; ell != wavelengthGrid->numBins(); ++ell)
-                outfile.addColumn(units->smeanintensity() + " at lambda = "
+                outfile.addColumn(units->smeanintensity() + " at " + units->swavelength() + " = "
                                       + StringUtils::toString(units->owavelength(wavelengthGrid->wavelength(ell)), 'g')
                                       + " " + units->uwavelength(),
                                   units->umeanintensity());
