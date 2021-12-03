@@ -545,7 +545,35 @@ void FluxRecorder::calibrateAndWrite()
         for (int ell = 0; ell != numWavelengths; ++ell)
             wavegrid[ell] = units->owavelength(_lambdagrid->wavelength(ell));
 
-        // determine coordinate axes values and units
+        // reverse the ordering of the wavelength grid and frames if necessary
+        if (units->rwavelength())
+        {
+            int ell1 = 0;
+            int ell2 = numWavelengths;
+            while (ell1 != ell2 && ell1 != --ell2)
+            {
+                size_t begin1 = ell1 * _numPixelsInFrame;
+                size_t begin2 = ell2 * _numPixelsInFrame;
+
+                // swap wavelengths
+                std::swap(wavegrid[ell1], wavegrid[ell2]);
+
+                // swap regular frames
+                for (auto array : ifuArrays)
+                    if (array->size())
+                        for (size_t i = 0; i != _numPixelsInFrame; ++i)
+                            std::swap((*array)[begin1 + i], (*array)[begin2 + i]);
+
+                // swap statistics frames
+                for (auto& array : _wifu)
+                    if (array.size())
+                        for (size_t i = 0; i != _numPixelsInFrame; ++i) std::swap(array[begin1 + i], array[begin2 + i]);
+
+                ++ell1;
+            }
+        }
+
+        // determine spatial axes values and units
         double incx, incy, cx, cy;
         string unitsxy;
         if (_local)
