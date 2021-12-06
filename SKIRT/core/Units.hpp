@@ -19,15 +19,23 @@
     Firstly, the Units base class and its derived classes enable the SMILE units mechanism in SKIRT
     parameter files, as described in the documentation of the UnitDef class.
 
-    Secondly, the Units class allows the user to configure the flux output style as an attribute in
-    the SKIRT parameter file.
+    Secondly, the Units class allows the user to configure the wavelength and flux output styles as
+    attributes in the SKIRT parameter file.
 
     Finally, the Units class offers functionality for use by other classes in the simulation item
     hierarchy. It provides functions for converting physical quantities from internal SI units to
     external output units depending on the unit system (determined by the name of the subclass
-    being called) and, where applicable, on the selected flux output style. */
+    being called) and, where applicable, on the selected wavelength and flux output styles. */
 class Units : public SimulationItem
 {
+    /** The enumeration type indicating the output style for spectral values, i.e. as photon
+        wavelength (the internal representation), as photon frequency, or as photon energy. */
+    ENUM_DEF(WavelengthOutputStyle, Wavelength, Frequency, Energy)
+        ENUM_VAL(WavelengthOutputStyle, Wavelength, "as photon wavelength: λ")
+        ENUM_VAL(WavelengthOutputStyle, Frequency, "as photon frequency: ν")
+        ENUM_VAL(WavelengthOutputStyle, Energy, "as photon energy: E")
+    ENUM_END()
+
     /** The enumeration type indicating the output style for flux density and surface brightness.
         Neutral indicates \f$\lambda F_\lambda = \nu F_\nu\f$; Wavelength indicates
         \f$F_\lambda\f$; Frequency indicates \f$F_\nu\f$; and Energy indicates \f$F_E\f$. */
@@ -40,8 +48,11 @@ class Units : public SimulationItem
 
     ITEM_ABSTRACT(Units, SimulationItem, "a units system")
 
+        PROPERTY_ENUM(wavelengthOutputStyle, WavelengthOutputStyle, "the output style for wavelengths")
+        ATTRIBUTE_DEFAULT_VALUE(wavelengthOutputStyle, "Wavelength")
+
         PROPERTY_ENUM(fluxOutputStyle, FluxOutputStyle, "the output style for flux density and surface brightness")
-        ATTRIBUTE_DEFAULT_VALUE(fluxOutputStyle, "Frequency")
+        ATTRIBUTE_DEFAULT_VALUE(fluxOutputStyle, "wavelengthOutputStyleEnergy:Energy;Frequency")
 
     ITEM_END()
 
@@ -120,12 +131,22 @@ public:
         program's output units. */
     double odistance(double d) const;
 
-    /** This function returns a string containing the name of the unit of wavelength adopted by the
-        program for output. */
+    /** This function returns a string describing the wavelength output style adopted by the
+        program. */
+    string swavelength() const;
+
+    /** This function returns true if wavelength values are ordered in reverse in the wavelength
+        output style adopted by the program, and false otherwise. Specifically, it returns false
+        for the output style 'wavelength' and true for the output styles 'frequency' and 'energy'.
+        */
+    bool rwavelength() const;
+
+    /** This function returns a string containing the name of the style and unit of wavelength
+        adopted by the program for output. */
     string uwavelength() const;
 
-    /** This function converts the wavelength \f$\lambda\f$ from the internally used SI units (m)
-        to the program's output units. */
+    /** This function converts the wavelength \f$\lambda\f$ from the internal style (wavelength)
+        and the internally used SI units (m) to the program's adopted output style and units. */
     double owavelength(double lambda) const;
 
     /** This function returns a string containing the name of the unit of dust grain size adopted

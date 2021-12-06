@@ -181,10 +181,10 @@ private: \
     third argument provides a human readable description for the enumeration value (as a quoted
     string). */
 #define ENUM_VAL(enumtype, enumvalue, title) \
-        ii_loadEnumInfo_##enumtype_##enumvalue(); \
+        ii_loadEnumInfo_##enumtype##_##enumvalue(); \
     } \
     /** \enum enumtype enumvalue : title. */ \
-    static void ii_loadEnumInfo_##enumtype_##enumvalue() \
+    static void ii_loadEnumInfo_##enumtype##_##enumvalue() \
     { \
         ItemRegistry::addEnum(static_cast<int>(enumtype::enumvalue), #enumvalue, title);
 

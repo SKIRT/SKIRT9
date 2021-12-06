@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "InstrumentWavelengthGridProbe.hpp"
+#include "Indices.hpp"
 #include "Instrument.hpp"
 #include "InstrumentSystem.hpp"
 #include "TextOutFile.hpp"
@@ -31,19 +32,20 @@ void InstrumentWavelengthGridProbe::writeWavelengthGrid(Probe* item, const Wavel
 
     // create a text file and add the columns
     TextOutFile file(item, filename, description);
-    file.addColumn("characteristic wavelength", units->uwavelength());
-    file.addColumn("effective wavelength bin width", units->uwavelength());
-    file.addColumn("left border of wavelength bin", units->uwavelength());
-    file.addColumn("right border of wavelength bin", units->uwavelength());
+    file.addColumn("characteristic wavelength; " + units->swavelength(), units->uwavelength());
+    file.addColumn("effective wavelength bin width; " + units->swavelength(), units->uwavelength());
+    file.addColumn("left border of wavelength bin; " + units->swavelength(), units->uwavelength());
+    file.addColumn("right border of wavelength bin; " + units->swavelength(), units->uwavelength());
 
     // write the rows
-    int numWavelengths = wavelengthGrid->numBins();
-    for (int ell = 0; ell != numWavelengths; ++ell)
+    for (int ell : Indices(wavelengthGrid->numBins(), units->rwavelength()))
     {
-        file.writeRow(units->owavelength(wavelengthGrid->wavelength(ell)),
-                      units->owavelength(wavelengthGrid->effectiveWidth(ell)),
-                      units->owavelength(wavelengthGrid->leftBorder(ell)),
-                      units->owavelength(wavelengthGrid->rightBorder(ell)));
+        double chara = units->owavelength(wavelengthGrid->wavelength(ell));
+        double width = units->owavelength(wavelengthGrid->effectiveWidth(ell));
+        double left = units->owavelength(wavelengthGrid->leftBorder(ell));
+        double right = units->owavelength(wavelengthGrid->rightBorder(ell));
+        if (units->rwavelength()) std::swap(left, right);
+        file.writeRow(chara, width, left, right);
     }
 }
 

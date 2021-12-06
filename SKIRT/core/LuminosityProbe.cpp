@@ -5,6 +5,7 @@
 
 #include "LuminosityProbe.hpp"
 #include "Configuration.hpp"
+#include "Indices.hpp"
 #include "Parallel.hpp"
 #include "ParallelFactory.hpp"
 #include "ProcessManager.hpp"
@@ -42,13 +43,13 @@ void LuminosityProbe::probeSetup()
 
     // create a text file and add the columns
     TextOutFile file(this, itemName() + "_luminosities", "primary source luminosities");
-    file.addColumn("wavelength", units->uwavelength());
-    file.addColumn("specific luminosity", units->umonluminosity());
+    file.addColumn("wavelength; " + units->swavelength(), units->uwavelength());
+    file.addColumn("specific luminosity; " + units->smonluminosity(), units->umonluminosity());
     file.addColumn("luminosity in bin", units->ubolluminosity());
     for (int i = 0; i != numSources; ++i) file.addColumn("luminosity fraction for source " + std::to_string(i + 1));
 
     // write the rows
-    for (int ell = 0; ell != numWavelengths; ++ell)
+    for (int ell : Indices(numWavelengths, units->rwavelength()))
     {
         double lambda = probeWavelengthGrid->wavelength(ell);
         double dlambda = probeWavelengthGrid->effectiveWidth(ell);

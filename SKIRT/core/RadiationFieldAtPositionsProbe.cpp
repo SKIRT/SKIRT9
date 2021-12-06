@@ -6,6 +6,7 @@
 #include "RadiationFieldAtPositionsProbe.hpp"
 #include "Configuration.hpp"
 #include "DisjointWavelengthGrid.hpp"
+#include "Indices.hpp"
 #include "InstrumentWavelengthGridProbe.hpp"
 #include "MediumSystem.hpp"
 #include "StringUtils.hpp"
@@ -41,8 +42,8 @@ void RadiationFieldAtPositionsProbe::probeRun()
             outfile.addColumn("position x", units->ulength());
             outfile.addColumn("position y", units->ulength());
             outfile.addColumn("position z", units->ulength());
-            for (int ell = 0; ell != wavelengthGrid->numBins(); ++ell)
-                outfile.addColumn(units->smeanintensity() + " at lambda = "
+            for (int ell : Indices(wavelengthGrid->numBins(), units->rwavelength()))
+                outfile.addColumn(units->smeanintensity() + " at " + units->swavelength() + " = "
                                       + StringUtils::toString(units->owavelength(wavelengthGrid->wavelength(ell)), 'g')
                                       + " " + units->uwavelength(),
                                   units->umeanintensity());
@@ -56,7 +57,7 @@ void RadiationFieldAtPositionsProbe::probeRun()
                 if (m >= 0)
                 {
                     const Array& Jv = ms->meanIntensity(m);
-                    for (int ell = 0; ell != wavelengthGrid->numBins(); ++ell)
+                    for (int ell : Indices(wavelengthGrid->numBins(), units->rwavelength()))
                         values.push_back(units->omeanintensity(wavelengthGrid->wavelength(ell), Jv[ell]));
                 }
                 else
