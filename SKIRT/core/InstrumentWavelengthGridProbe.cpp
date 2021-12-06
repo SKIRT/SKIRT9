@@ -40,10 +40,12 @@ void InstrumentWavelengthGridProbe::writeWavelengthGrid(Probe* item, const Wavel
     // write the rows
     for (int ell : Indices(wavelengthGrid->numBins(), units->rwavelength()))
     {
-        file.writeRow(units->owavelength(wavelengthGrid->wavelength(ell)),
-                      units->owavelength(wavelengthGrid->effectiveWidth(ell)),
-                      units->owavelength(wavelengthGrid->leftBorder(ell)),
-                      units->owavelength(wavelengthGrid->rightBorder(ell)));
+        double chara = units->owavelength(wavelengthGrid->wavelength(ell));
+        double width = units->owavelength(wavelengthGrid->effectiveWidth(ell));
+        double left = units->owavelength(wavelengthGrid->leftBorder(ell));
+        double right = units->owavelength(wavelengthGrid->rightBorder(ell));
+        if (units->rwavelength()) std::swap(left, right);
+        file.writeRow(chara, width, left, right);
     }
 }
 
