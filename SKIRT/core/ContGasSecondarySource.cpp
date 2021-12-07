@@ -108,9 +108,10 @@ namespace
     {
     private:
         // information initialized once, during the first call to calculateIfNeeded()
-        Array _wavelengthGrid;   // the emission wavelength grid
-        Range _wavelengthRange;  // the range of the emission wavelength grid
-        int _numWavelengths{0};  // the number of wavelengths in the emission wavelength grid
+        const EmittingGasMix* _mix{nullptr};  // the gas mix;
+        Array _wavelengthGrid;                // the emission wavelength grid
+        Range _wavelengthRange;               // the range of the emission wavelength grid
+        int _numWavelengths{0};               // the number of wavelengths in the emission wavelength grid
 
         // information on a particular spatial cell, initialized by calculateIfNeeded()
         int _m{-1};                // spatial cell index
@@ -129,17 +130,19 @@ namespace
         //   ms: medium system
         void calculateIfNeeded(int m, int h, const EmittingGasMix* mix, MediumSystem* ms)
         {
-            // if this photon packet is launched from the same cell as the previous one, we don't need to do anything
-            if (m == _m) return;
-
-            // when called for the first time, cache info on the emission wavelength grid
-            if (_m == -1)
+            // when called for the first time for a given gas mix, cache info on the emission wavelength grid
+            if (_mix != mix)
             {
+                _m = -1;
+                _mix = mix;
                 auto wavelengthGrid = mix->emissionWavelengthGrid();
                 _wavelengthGrid = wavelengthGrid->extlambdav();
                 _wavelengthRange = wavelengthGrid->wavelengthRange();
                 _numWavelengths = _wavelengthGrid.size();
             }
+
+            // if this photon packet is launched from the same cell as the previous one, we don't need to do anything
+            if (m == _m) return;
 
             // remember the new cell index
             _m = m;
