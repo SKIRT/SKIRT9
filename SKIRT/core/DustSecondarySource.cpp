@@ -187,12 +187,11 @@ namespace
         void calculateIfNeeded(int p, const vector<int>& mv, const vector<int>& nv, MediumSystem* ms,
                                Configuration* config)
         {
-            // if this photon packet is launched from the same cell as the previous one, we don't need to do anything
-            if (p == _p) return;
-
-            // when called for the first time, cache some info
-            if (_p == -1)
+            // when called for the first time for a given simulation, cache some info
+            if (_ms != ms)
             {
+                _p = -1;
+                _n = -1;
                 _ms = ms;
                 auto wavelengthGrid = config->dustEmissionWLG();
                 _wavelengthGrid = wavelengthGrid->extlambdav();
@@ -203,6 +202,9 @@ namespace
                 _numCells = ms->numCells();
                 _evv.resize(ms->numMedia());
             }
+
+            // if this photon packet is launched from the same cell as the previous one, we don't need to do anything
+            if (p == _p) return;
 
             // remember the new cell index and map to the other indices
             _p = p;
