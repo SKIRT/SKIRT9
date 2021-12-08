@@ -13,17 +13,22 @@
 /** DisjointWavelengthGrid is an abstract class that represents wavelength grids with
     straightforward, non-overlapping bins with constant transmission across each bin.
 
-    Specifically, a disjoint wavelength grid consists of \f$N>0\f$ non-overlapping but possibly
-    adjacent wavelength bins in increasing wavelength order. Each bin is defined by its left and
-    right borders. The left border is considered to be inside of the bin; the right border is
-    considered to be outside of the bin. Furthermore, each bin is characterized by a characteristic
-    wavelength that falls inside the bin, i.e. \f$\lambda^\mathrm{left}_\ell \le
-    \lambda^\mathrm{c}_\ell < \lambda^\mathrm{right}_\ell, \ell=0\dots N-1\f$. Finally, each bin of
-    course has an associated bin width, \f$\lambda^\mathrm{right}_\ell -
-    \lambda^\mathrm{left}_\ell, \ell=0\dots N-1\f$.
+    Specifically, a disjoint wavelength grid consists of non-overlapping but possibly adjacent
+    wavelength bins in increasing wavelength order, with constant maximum transmission within the
+    bins and zero transmission outside of the bins. Each bin is defined by its left and right
+    borders and has a characteristic wavelength that falls inside the bin. The left border is
+    considered to be inside of the bin; the right border is considered to be outside of the bin.
+    Neighboring bins may have a common border but can also be disconnected.
+
+    Formally, assuming \f$N>0\f$ bins with zero-based indices, we have \f[
+    \lambda^\mathrm{left}_\ell \le \lambda^\mathrm{c}_\ell < \lambda^\mathrm{right}_\ell, \quad
+    \ell=0\dots N-1 \f] and if \f$N>1\f$, we additionally have \f[ \lambda^\mathrm{right}_\ell \le
+    \lambda^\mathrm{left}_{\ell+1}, \quad \ell=0\dots N-2. \f] Finally, each bin of course has an
+    associated bin width, \f[\lambda^\mathrm{right}_\ell - \lambda^\mathrm{left}_\ell > 0, \quad
+    \ell=0\dots N-1.\f]
 
     A DisjointWavelengthGrid subclass is expected to invoke one of the setWavelengthXXX() functions
-    during setup to intialize the wavelength grid. The current implementation offers two such
+    during setup to initialize the wavelength grid. The current implementation offers two such
     functions: one to specify a consecutive range of adjacent wavelength bins given a list of
     characteric wavelengths, and another one to specify distinct, nonadjacent wavelength bins given
     a list of characteric wavelengths and a relative bin width. Other options can be added as the
@@ -37,17 +42,17 @@ class DisjointWavelengthGrid : public WavelengthGrid
 
 protected:
     /** This function verifies that the wavelength bins have been initialized by a subclass calling
-        the one of the setWavelengthXXX() functions of this class in their setupSelfBefore()
-        function. */
+        one of the setWavelengthXXX() functions of this class in their setupSelfBefore() function.
+        */
     void setupSelfAfter() override;
 
     /** This function initializes the wavelength grid to a consecutive range of adjacent wavelength
         bins given a list of characteric wavelengths. This function or one of its alternatives
-        should be called from the setupSelfBefore() function in each WavelengthGrid subclass. The
-        subclass determines a list of characteric wavelengths according to some predefined scheme,
-        and the bin borders and bin widths are automatically determined from that list by this
-        function. If the specified wavelength list is empty, or if there are duplicate values
-        (which would lead to empty bins), the function throws a fatal error.
+        should be called from the setupSelfBefore() function in each subclass. The subclass
+        determines a list of characteric wavelengths according to some predefined scheme, and the
+        bin borders and bin widths are automatically determined from that list by this function. If
+        the specified wavelength list is empty, or if there are duplicate values (which would lead
+        to empty bins), the function throws a fatal error.
 
         The function first sorts the specified characteristic wavelengths in ascending order and
         then calculates the bin borders assuming linear or logarithmic scaling depending on the
@@ -72,17 +77,17 @@ protected:
         If there is just a single wavelength in the grid, the outer borders are placed (for both
         linear and logarithmic scaling) according to \f$\lambda^\mathrm{left}_0 =
         \lambda^\mathrm{c}_{0}(1-1/1000)\f$ and \f$\lambda^\mathrm{right}_0 =
-        \lambda^\mathrm{c}_{0}(1+1/1000)\f$.  */
+        \lambda^\mathrm{c}_{0}(1+1/1000)\f$. */
     void setWavelengthRange(const Array& lambdav, bool logScale = true);
 
     /** This function initializes the wavelength grid to a set of distinct, nonadjacent wavelength
         bins given a list of characteric wavelengths and a relative half bin width. This function
         or one of its alternatives should be called from the setupSelfBefore() function in each
-        WavelengthGrid subclass. The subclass determines a list of characteric wavelengths and a
-        relative half bin width, and the bin borders and bin widths are automatically calculated
-        from that information by this function. If the specified wavelength list is empty, or if
-        the relative half bin width is not positive, or if the calculated bins overlap, the
-        function throws a fatal error.
+        subclass. The subclass determines a list of characteric wavelengths and a relative half bin
+        width, and the bin borders and bin widths are automatically calculated from that
+        information by this function. If the specified wavelength list is empty, or if the relative
+        half bin width is not positive, or if the calculated bins overlap, the function throws a
+        fatal error.
 
         Specifically, the function first sorts the specified characteristic wavelengths in
         ascending order and then calculates the bin borders using \f$\lambda^\mathrm{left}_\ell =

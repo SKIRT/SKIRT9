@@ -27,7 +27,7 @@ class LinWavelengthGrid : public DisjointWavelengthGrid
         ATTRIBUTE_MAX_VALUE(maxWavelength, "1 m")
 
         PROPERTY_INT(numWavelengths, "the number of wavelength grid points")
-        ATTRIBUTE_MIN_VALUE(numWavelengths, "3")
+        ATTRIBUTE_MIN_VALUE(numWavelengths, "2")
         ATTRIBUTE_DEFAULT_VALUE(numWavelengths, "25")
 
     ITEM_END()
