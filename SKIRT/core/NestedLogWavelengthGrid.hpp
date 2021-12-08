@@ -29,7 +29,7 @@ class NestedLogWavelengthGrid : public DisjointWavelengthGrid
         ATTRIBUTE_MAX_VALUE(maxWavelengthBaseGrid, "1 m")
 
         PROPERTY_INT(numWavelengthsBaseGrid, "the number of wavelength grid points in the low-resolution grid")
-        ATTRIBUTE_MIN_VALUE(numWavelengthsBaseGrid, "3")
+        ATTRIBUTE_MIN_VALUE(numWavelengthsBaseGrid, "2")
         ATTRIBUTE_DEFAULT_VALUE(numWavelengthsBaseGrid, "25")
 
         PROPERTY_DOUBLE(minWavelengthSubGrid, "the shortest wavelength of the high-resolution subgrid")
@@ -43,7 +43,7 @@ class NestedLogWavelengthGrid : public DisjointWavelengthGrid
         ATTRIBUTE_MAX_VALUE(maxWavelengthSubGrid, "1 m")
 
         PROPERTY_INT(numWavelengthsSubGrid, "the number of wavelength grid points in the high-resolution subgrid")
-        ATTRIBUTE_MIN_VALUE(numWavelengthsSubGrid, "3")
+        ATTRIBUTE_MIN_VALUE(numWavelengthsSubGrid, "2")
         ATTRIBUTE_DEFAULT_VALUE(numWavelengthsSubGrid, "25")
 
     ITEM_END()

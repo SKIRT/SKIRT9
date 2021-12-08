@@ -66,6 +66,9 @@ void DisjointWavelengthGrid::setWavelengthRange(const Array& lambdav, bool logSc
         }
     }
 
+    // verify that all bin borders are positive
+    if (_lambdaleftv[0] <= 0.0) throw FATALERROR("All wavelength bin borders should be positive");
+
     // calculate the bin widths
     _dlambdav = _lambdarightv - _lambdaleftv;
 
