@@ -10,10 +10,18 @@
 
 ////////////////////////////////////////////////////////////////////
 
-/** NestedLogWavelengthGrid is a subclass of the DisjointWavelengthGrid class representing hybrid grids
-    consisting of a logarithmically distributed wavelength grid in which another, more compact
-    logarithmic grid is embedded. It can be very useful to get higher-resolution spectra in a
-    particular wavelength grid while still covering a broad wavelength range. */
+/** NestedLogWavelengthGrid is a subclass of the DisjointWavelengthGrid class representing hybrid
+    grids consisting of a logarithmically distributed wavelength grid in which another, more
+    compact logarithmic grid is embedded. It can be very useful to get higher-resolution spectra in
+    a particular wavelength grid while still covering a broad wavelength range.
+
+    The characteristic wavelengths of the bins in each of the two grids (low-resolution grid and
+    high-resolution subgrid) are equally distributed (in log space) between and including the
+    specified minimum and maximum wavelength. The outermost bins are given the same width as the
+    inner bins (in log space), which implies that the outermost bin borders are placed beyond the
+    specified minimum and maximum wavelength. The grids must have at least two bins, which then
+    have the specified minimum and maximum wavelength as their respective characteristic
+    wavelength. */
 class NestedLogWavelengthGrid : public DisjointWavelengthGrid
 {
     ITEM_CONCRETE(NestedLogWavelengthGrid, DisjointWavelengthGrid, "a nested logarithmic wavelength grid")

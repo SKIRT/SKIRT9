@@ -10,8 +10,13 @@
 
 ////////////////////////////////////////////////////////////////////
 
-/** LinWavelengthGrid is a subclass of the DisjointWavelengthGrid class representing
-    linearly distributed wavelength grids. */
+/** LinWavelengthGrid is a subclass of the DisjointWavelengthGrid class representing linearly
+    distributed wavelength grids. The characteristic wavelengths of the grid bins are equally
+    distributed between and including the specified minimum and maximum wavelength. The outermost
+    bins are given the same width as the inner bins, which implies that the outermost bin borders
+    are placed beyond the specified minimum and maximum wavelength. The grid must have at least two
+    bins, which then have the specified minimum and maximum wavelength as their respective
+    characteristic wavelength. */
 class LinWavelengthGrid : public DisjointWavelengthGrid
 {
     ITEM_CONCRETE(LinWavelengthGrid, DisjointWavelengthGrid, "a linear wavelength grid")
