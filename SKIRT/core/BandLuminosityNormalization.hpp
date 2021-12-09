@@ -50,7 +50,7 @@ public:
         object over the source wavelength range is normalized to unity, the requested luminosity is
         obtained by dividing the user-configured specific luminosity by the normalized specific
         luminosity in the %SED at the same wavelength. */
-    double luminosity(SED* sed) const override;
+    double luminosityForSED(SED* sed) const override;
 };
 
 ////////////////////////////////////////////////////////////////////

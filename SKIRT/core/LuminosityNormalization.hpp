@@ -24,9 +24,9 @@ class LuminosityNormalization : public SimulationItem
 
 public:
     /** This function returns the luminosity of a source with the normalized spectral distribution
-        described by the specified SED object, limited to the source's wavelength range (which is
+        described by the specified SED object, limited to the intrinsic wavelength range (which is
         known by the SED object). */
-    virtual double luminosity(SED* sed) const = 0;
+    virtual double luminosityForSED(SED* sed) const = 0;
 };
 
 ////////////////////////////////////////////////////////////////////

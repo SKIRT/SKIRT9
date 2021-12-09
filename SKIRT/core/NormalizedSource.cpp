@@ -56,7 +56,7 @@ Range NormalizedSource::wavelengthRange() const
 
 double NormalizedSource::luminosity() const
 {
-    return _normalization->luminosity(_sed);
+    return _normalization->luminosityForSED(_sed);
 }
 
 //////////////////////////////////////////////////////////////////////
