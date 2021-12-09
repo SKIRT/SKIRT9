@@ -23,7 +23,7 @@ void FileWavelengthGrid::setupSelfBefore()
     if (_relativeHalfWidth)
         setWavelengthBins(wavelengths, _relativeHalfWidth);
     else
-        setWavelengthRange(wavelengths);
+        setWavelengthRange(wavelengths, _log);
 }
 
 //////////////////////////////////////////////////////////////////////

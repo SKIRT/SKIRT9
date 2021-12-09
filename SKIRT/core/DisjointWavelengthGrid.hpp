@@ -64,10 +64,10 @@ protected:
         next to the wavelength to form a narrow bin. Finally, the function trivially calculates the
         wavelength bin widths from the bin borders.
 
-        For linear scaling, the corresponding formulas are trivial. For logarithmic scaling (the
-        default), the formalas in logarithmic space translate easily to equivalent but more
-        efficient formulas in real space. For the inner borders this yields the geometric mean of
-        the two adjacent characteristic wavelengths, i.e. \f$\lambda^\mathrm{right}_{\ell-1} =
+        For linear scaling, the corresponding formulas are trivial. For logarithmic scaling, the
+        formalas in logarithmic space translate easily to equivalent but more efficient formulas in
+        real space. For the inner borders this yields the geometric mean of the two adjacent
+        characteristic wavelengths, i.e. \f$\lambda^\mathrm{right}_{\ell-1} =
         \lambda^\mathrm{left}_\ell = \sqrt{\lambda^\mathrm{c}_{\ell-1}\lambda^\mathrm{c}_\ell}\;,
         \ell=1\dots N-1\f$. The leftmost outer border is placed at \f$\lambda^\mathrm{left}_0 =
         \sqrt{(\lambda^\mathrm{c}_{0})^3/\lambda^\mathrm{c}_1}\f$, and the rightmost outer border
@@ -78,7 +78,7 @@ protected:
         linear and logarithmic scaling) according to \f$\lambda^\mathrm{left}_0 =
         \lambda^\mathrm{c}_{0}(1-1/1000)\f$ and \f$\lambda^\mathrm{right}_0 =
         \lambda^\mathrm{c}_{0}(1+1/1000)\f$. */
-    void setWavelengthRange(const Array& lambdav, bool logScale = true);
+    void setWavelengthRange(const Array& lambdav, bool logScale);
 
     /** This function initializes the wavelength grid to a set of distinct, nonadjacent wavelength
         bins given a list of characteric wavelengths and a relative half bin width. This function
@@ -97,6 +97,19 @@ protected:
         wavelength is used for all bin widths instead. Finally the function trivially calculates
         the wavelength bin widths from the bin borders. */
     void setWavelengthBins(const Array& lambdav, double relativeHalfWidth, bool constantWidth = false);
+
+    /** This function initializes the wavelength grid to a consecutive range of \f$N>0\f$ adjacent
+        wavelength bins given a list of \f$N+1\f$ wavelength bin borders. This function or one of
+        its alternatives should be called from the setupSelfBefore() function in each subclass. The
+        subclass determines a list of bin borders according to some predefined scheme, and the
+        characteristic wavelengths and bin widths are automatically determined from that list by
+        this function. If the specified list has fewer than two bin borders, or if there are
+        duplicate values (which would lead to empty bins), the function throws a fatal error.
+
+        The function first sorts the specified wavelength bin borders in ascending order and then
+        calculates the characteristic wavelengths assuming linear scaling (arithmetic mean) or
+        logarithmic scaling (geometric mean) depending on the value of the \em logScale flag. */
+    void setWavelengthBorders(const Array& borderv, bool logScale);
 
     //================= Functions implementing virtual base class functions ===================
 

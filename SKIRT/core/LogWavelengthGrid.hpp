@@ -11,7 +11,12 @@
 ////////////////////////////////////////////////////////////////////
 
 /** LogWavelengthGrid is a subclass of the DisjointWavelengthGrid class representing
-    logarithmically distributed wavelength grids. */
+    logarithmically distributed wavelength grids. The characteristic wavelengths of the grid bins
+    are equally distributed (in log space) between and including the specified minimum and maximum
+    wavelength. The outermost bins are given the same width as the inner bins (in log space), which
+    implies that the outermost bin borders are placed beyond the specified minimum and maximum
+    wavelength. The grid must have at least two bins, which then have the specified minimum and
+    maximum wavelength as their respective characteristic wavelength. */
 class LogWavelengthGrid : public DisjointWavelengthGrid
 {
     ITEM_CONCRETE(LogWavelengthGrid, DisjointWavelengthGrid, "a logarithmic wavelength grid")

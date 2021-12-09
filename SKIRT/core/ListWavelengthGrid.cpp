@@ -16,7 +16,7 @@ void ListWavelengthGrid::setupSelfBefore()
     if (_relativeHalfWidth)
         setWavelengthBins(NR::array(_wavelengths), _relativeHalfWidth);
     else
-        setWavelengthRange(NR::array(_wavelengths));
+        setWavelengthRange(NR::array(_wavelengths), _log);
 }
 
 //////////////////////////////////////////////////////////////////////
