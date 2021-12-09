@@ -203,6 +203,8 @@
 #include "Random.hpp"
 #include "ReadFits3DGeometry.hpp"
 #include "ReadFitsGeometry.hpp"
+#include "ResolutionBorderWavelengthGrid.hpp"
+#include "ResolutionWavelengthGrid.hpp"
 #include "RingGeometry.hpp"
 #include "RotateGeometryDecorator.hpp"
 #include "RotateVectorFieldDecorator.hpp"
@@ -597,10 +599,12 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<LogWavelengthGrid>();
     ItemRegistry::add<NestedLogWavelengthGrid>();
     ItemRegistry::add<LinWavelengthGrid>();
+    ItemRegistry::add<ResolutionWavelengthGrid>();
     ItemRegistry::add<FileWavelengthGrid>();
     ItemRegistry::add<ListWavelengthGrid>();
     ItemRegistry::add<LogBorderWavelengthGrid>();
     ItemRegistry::add<LinBorderWavelengthGrid>();
+    ItemRegistry::add<ResolutionBorderWavelengthGrid>();
     ItemRegistry::add<FileBorderWavelengthGrid>();
     ItemRegistry::add<ListBorderWavelengthGrid>();
     ItemRegistry::add<BandWavelengthGrid>();
