@@ -110,6 +110,7 @@
 #include "LinMesh.hpp"
 #include "LinWavelengthDistribution.hpp"
 #include "LinWavelengthGrid.hpp"
+#include "LinBorderWavelengthGrid.hpp"
 #include "LineLuminosityNormalization.hpp"
 #include "LinearDustDestructionRecipe.hpp"
 #include "LinearDustTemperatureCutProbe.hpp"
@@ -593,6 +594,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<LogWavelengthGrid>();
     ItemRegistry::add<NestedLogWavelengthGrid>();
     ItemRegistry::add<LinWavelengthGrid>();
+    ItemRegistry::add<LinBorderWavelengthGrid>();
     ItemRegistry::add<BandWavelengthGrid>();
     ItemRegistry::add<PredefinedBandWavelengthGrid>();
     ItemRegistry::add<ConfigurableBandWavelengthGrid>();
