@@ -122,6 +122,7 @@
 #include "ListWavelengthDistribution.hpp"
 #include "ListWavelengthGrid.hpp"
 #include "LocalUniverseCosmology.hpp"
+#include "LogBorderWavelengthGrid.hpp"
 #include "LogMesh.hpp"
 #include "LogWavelengthDistribution.hpp"
 #include "LogWavelengthGrid.hpp"
@@ -594,6 +595,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<LogWavelengthGrid>();
     ItemRegistry::add<NestedLogWavelengthGrid>();
     ItemRegistry::add<LinWavelengthGrid>();
+    ItemRegistry::add<LogBorderWavelengthGrid>();
     ItemRegistry::add<LinBorderWavelengthGrid>();
     ItemRegistry::add<BandWavelengthGrid>();
     ItemRegistry::add<PredefinedBandWavelengthGrid>();
