@@ -9,7 +9,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-double IntegratedLuminosityNormalization::luminosity(SED* sed) const
+double IntegratedLuminosityNormalization::luminosityForSED(SED* sed) const
 {
     // if the integration range is the source range, the configured luminosity is the answer
     if (_wavelengthRange == WavelengthRange::Source) return _integratedLuminosity;

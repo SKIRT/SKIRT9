@@ -78,6 +78,7 @@
 #include "FSPSSEDFamily.hpp"
 #include "FieldStrengthCellLibrary.hpp"
 #include "FileBand.hpp"
+#include "FileBorderWavelengthGrid.hpp"
 #include "FileGrainSizeDistribution.hpp"
 #include "FileIndexedSEDFamily.hpp"
 #include "FileLineSED.hpp"
@@ -107,6 +108,7 @@
 #include "IsotropicAngularDistribution.hpp"
 #include "LaserAngularDistribution.hpp"
 #include "LaunchedPacketsProbe.hpp"
+#include "LinBorderWavelengthGrid.hpp"
 #include "LinMesh.hpp"
 #include "LinWavelengthDistribution.hpp"
 #include "LinWavelengthGrid.hpp"
@@ -114,6 +116,7 @@
 #include "LinearDustDestructionRecipe.hpp"
 #include "LinearDustTemperatureCutProbe.hpp"
 #include "ListBand.hpp"
+#include "ListBorderWavelengthGrid.hpp"
 #include "ListGrainSizeDistribution.hpp"
 #include "ListLineSED.hpp"
 #include "ListMesh.hpp"
@@ -121,6 +124,7 @@
 #include "ListWavelengthDistribution.hpp"
 #include "ListWavelengthGrid.hpp"
 #include "LocalUniverseCosmology.hpp"
+#include "LogBorderWavelengthGrid.hpp"
 #include "LogMesh.hpp"
 #include "LogWavelengthDistribution.hpp"
 #include "LogWavelengthGrid.hpp"
@@ -199,6 +203,8 @@
 #include "Random.hpp"
 #include "ReadFits3DGeometry.hpp"
 #include "ReadFitsGeometry.hpp"
+#include "ResolutionBorderWavelengthGrid.hpp"
+#include "ResolutionWavelengthGrid.hpp"
 #include "RingGeometry.hpp"
 #include "RotateGeometryDecorator.hpp"
 #include "RotateVectorFieldDecorator.hpp"
@@ -593,11 +599,17 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<LogWavelengthGrid>();
     ItemRegistry::add<NestedLogWavelengthGrid>();
     ItemRegistry::add<LinWavelengthGrid>();
+    ItemRegistry::add<ResolutionWavelengthGrid>();
+    ItemRegistry::add<FileWavelengthGrid>();
+    ItemRegistry::add<ListWavelengthGrid>();
+    ItemRegistry::add<LogBorderWavelengthGrid>();
+    ItemRegistry::add<LinBorderWavelengthGrid>();
+    ItemRegistry::add<ResolutionBorderWavelengthGrid>();
+    ItemRegistry::add<FileBorderWavelengthGrid>();
+    ItemRegistry::add<ListBorderWavelengthGrid>();
     ItemRegistry::add<BandWavelengthGrid>();
     ItemRegistry::add<PredefinedBandWavelengthGrid>();
     ItemRegistry::add<ConfigurableBandWavelengthGrid>();
-    ItemRegistry::add<FileWavelengthGrid>();
-    ItemRegistry::add<ListWavelengthGrid>();
 
     // instrument system and instruments
     ItemRegistry::add<InstrumentSystem>();

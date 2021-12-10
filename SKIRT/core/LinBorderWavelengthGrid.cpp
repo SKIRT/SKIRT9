@@ -3,13 +3,13 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "LogWavelengthGrid.hpp"
+#include "LinBorderWavelengthGrid.hpp"
 #include "FatalError.hpp"
 #include "NR.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-void LogWavelengthGrid::setupSelfBefore()
+void LinBorderWavelengthGrid::setupSelfBefore()
 {
     DisjointWavelengthGrid::setupSelfBefore();
 
@@ -17,9 +17,9 @@ void LogWavelengthGrid::setupSelfBefore()
     if (_maxWavelength <= _minWavelength) throw FATALERROR("the longest wavelength should be larger than the shortest");
 
     // construct the grid
-    Array lambdav;
-    NR::buildLogGrid(lambdav, _minWavelength, _maxWavelength, _numWavelengths - 1);
-    setWavelengthRange(lambdav, true);
+    Array borderv;
+    NR::buildLinearGrid(borderv, _minWavelength, _maxWavelength, _numWavelengthBins);
+    setWavelengthBorders(borderv, false);
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -3,20 +3,24 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "ListWavelengthGrid.hpp"
-#include "NR.hpp"
+#include "FileBorderWavelengthGrid.hpp"
+#include "TextInFile.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-void ListWavelengthGrid::setupSelfBefore()
+void FileBorderWavelengthGrid::setupSelfBefore()
 {
     DisjointWavelengthGrid::setupSelfBefore();
 
-    // set the wavelength grid from the list of property values
-    if (_relativeHalfWidth)
-        setWavelengthBins(NR::array(_wavelengths), _relativeHalfWidth);
-    else
-        setWavelengthRange(NR::array(_wavelengths), _log);
+    // read the borders from the input file
+    TextInFile infile(this, _filename, "wavelength grid");
+    infile.addColumn("wavelength", "wavelength", "micron");
+    Array wavelengths;
+    infile.readAllColumns(wavelengths);
+    infile.close();
+
+    // set the wavelength grid
+    setWavelengthBorders(wavelengths, _log);
 }
 
 //////////////////////////////////////////////////////////////////////

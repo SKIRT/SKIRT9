@@ -3,20 +3,17 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "ListWavelengthGrid.hpp"
+#include "ListBorderWavelengthGrid.hpp"
 #include "NR.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-void ListWavelengthGrid::setupSelfBefore()
+void ListBorderWavelengthGrid::setupSelfBefore()
 {
     DisjointWavelengthGrid::setupSelfBefore();
 
-    // set the wavelength grid from the list of property values
-    if (_relativeHalfWidth)
-        setWavelengthBins(NR::array(_wavelengths), _relativeHalfWidth);
-    else
-        setWavelengthRange(NR::array(_wavelengths), _log);
+    // set the wavelength grid
+    setWavelengthBorders(NR::array(_wavelengths), _log);
 }
 
 //////////////////////////////////////////////////////////////////////

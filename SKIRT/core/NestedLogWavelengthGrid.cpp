@@ -33,7 +33,7 @@ void NestedLogWavelengthGrid::setupSelfBefore()
     for (double lambda : lambdasubv) lambdav.push_back(lambda);
 
     // store the result
-    setWavelengthRange(NR::array(lambdav));
+    setWavelengthRange(NR::array(lambdav), true);
 }
 
 ////////////////////////////////////////////////////////////////////

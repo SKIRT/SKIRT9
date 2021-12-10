@@ -10,7 +10,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-double BandLuminosityNormalization::luminosity(SED* sed) const
+double BandLuminosityNormalization::luminosityForSED(SED* sed) const
 {
     auto contsed = dynamic_cast<ContSED*>(sed);
     if (!contsed) throw FATALERROR("Cannot use band luminosity normalization for a line emission spectrum");
