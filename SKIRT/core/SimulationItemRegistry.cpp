@@ -34,6 +34,7 @@
 #include "ClearDensityRecipe.hpp"
 #include "ClumpyGeometryDecorator.hpp"
 #include "CombineGeometryDecorator.hpp"
+#include "CompositeWavelengthGrid.hpp"
 #include "ConfigurableBandWavelengthGrid.hpp"
 #include "ConfigurableDustMix.hpp"
 #include "ConicalAngularDistribution.hpp"
@@ -607,6 +608,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ResolutionBorderWavelengthGrid>();
     ItemRegistry::add<FileBorderWavelengthGrid>();
     ItemRegistry::add<ListBorderWavelengthGrid>();
+    ItemRegistry::add<CompositeWavelengthGrid>();
     ItemRegistry::add<BandWavelengthGrid>();
     ItemRegistry::add<PredefinedBandWavelengthGrid>();
     ItemRegistry::add<ConfigurableBandWavelengthGrid>();

@@ -31,7 +31,7 @@ class ListBorderWavelengthGrid : public DisjointWavelengthGrid
         ATTRIBUTE_MIN_VALUE(wavelengths, "1 pm")
         ATTRIBUTE_MAX_VALUE(wavelengths, "1 m")
 
-        PROPERTY_BOOL(log, "logarithmic scale")
+        PROPERTY_BOOL(log, "use logarithmic scale")
         ATTRIBUTE_DEFAULT_VALUE(log, "true")
 
     ITEM_END()

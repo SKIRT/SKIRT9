@@ -43,7 +43,7 @@ class ListWavelengthGrid : public DisjointWavelengthGrid
         ATTRIBUTE_MAX_VALUE(relativeHalfWidth, "1[")
         ATTRIBUTE_DEFAULT_VALUE(relativeHalfWidth, "0")
 
-        PROPERTY_BOOL(log, "logarithmic scale")
+        PROPERTY_BOOL(log, "use logarithmic scale")
         ATTRIBUTE_DEFAULT_VALUE(log, "true")
         ATTRIBUTE_RELEVANT_IF(log, "!relativeHalfWidth")
 
