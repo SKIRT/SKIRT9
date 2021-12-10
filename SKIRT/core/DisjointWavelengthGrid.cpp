@@ -5,6 +5,7 @@
 
 #include "DisjointWavelengthGrid.hpp"
 #include "FatalError.hpp"
+#include "NR.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -72,7 +73,7 @@ void DisjointWavelengthGrid::setWavelengthRange(const Array& lambdav, bool logSc
     // calculate the bin widths
     _dlambdav = _lambdarightv - _lambdaleftv;
 
-    // setup the mapping from border bin indices to actual wavelength bin indices (see ell() function)
+    // setup the mapping from border bin indices to actual wavelength bin indices (see bin() function)
     _ellv.resize(n + 2);
     _ellv[0] = -1;
     for (size_t ell = 0; ell != n; ++ell) _ellv[ell + 1] = ell;
@@ -124,7 +125,7 @@ void DisjointWavelengthGrid::setWavelengthBins(const Array& lambdav, double rela
     // calculate the bin widths
     _dlambdav = _lambdarightv - _lambdaleftv;
 
-    // setup the mapping from border bin indices to actual wavelength bin indices (see ell() function)
+    // setup the mapping from border bin indices to actual wavelength bin indices (see bin() function)
     _ellv.resize(2 * n + 1);
     _ellv[0] = -1;
     for (size_t ell = 0; ell != n; ++ell)
@@ -182,11 +183,48 @@ void DisjointWavelengthGrid::setWavelengthBorders(const Array& borderv, bool log
     // calculate the bin widths
     _dlambdav = _lambdarightv - _lambdaleftv;
 
-    // setup the mapping from border bin indices to actual wavelength bin indices (see ell() function)
+    // setup the mapping from border bin indices to actual wavelength bin indices (see bin() function)
     _ellv.resize(n + 2);
     _ellv[0] = -1;
     for (size_t ell = 0; ell != n; ++ell) _ellv[ell + 1] = ell;
     _ellv[n + 1] = -1;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void DisjointWavelengthGrid::setWavelengthSegments(const vector<double>& borderv, const vector<double>& characv)
+{
+    // determine the number of borders and the number of actual bins
+    int numBorders = borderv.size();
+    int numBins = std::count_if(characv.begin(), characv.end(), [](double c) { return c > 0.; });
+
+    // allocate memory for all arrays
+    _lambdav.resize(numBins);       // index ell
+    _dlambdav.resize(numBins);      // index ell
+    _lambdaleftv.resize(numBins);   // index ell
+    _lambdarightv.resize(numBins);  // index ell
+    _borderv.resize(numBorders);    // index k
+    _ellv.resize(numBorders + 1);   // index k+1
+
+    // copy the data into our arrays, and construct the bin index mapping
+    _ellv[0] = -1;
+    int ell = 0;  // ell is bin index; k is border index
+    for (int k = 0; k != numBorders; ++k)
+    {
+        _borderv[k] = borderv[k];
+        if (characv[k] > 0.)
+        {
+            _lambdav[ell] = characv[k];
+            _dlambdav[ell] = borderv[k + 1] - borderv[k];
+            _lambdaleftv[ell] = borderv[k];
+            _lambdarightv[ell] = borderv[k + 1];
+            _ellv[k + 1] = ell++;
+        }
+        else
+        {
+            _ellv[k + 1] = -1;
+        }
+    }
 }
 
 ////////////////////////////////////////////////////////////////////

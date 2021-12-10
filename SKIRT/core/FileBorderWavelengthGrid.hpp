@@ -29,7 +29,7 @@ class FileBorderWavelengthGrid : public DisjointWavelengthGrid
 
         PROPERTY_STRING(filename, "the name of the file with the wavelength bin borders")
 
-        PROPERTY_BOOL(log, "logarithmic scale")
+        PROPERTY_BOOL(log, "use logarithmic scale")
         ATTRIBUTE_DEFAULT_VALUE(log, "true")
 
     ITEM_END()
