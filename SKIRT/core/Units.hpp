@@ -95,6 +95,7 @@ public:
             case Style::frequencymonluminosity: return FluxOutputStyle::Frequency;
             case Style::energymonluminosity: return FluxOutputStyle::Energy;
         }
+        return FluxOutputStyle::Wavelength;
     }
 
     //======================== Output Conversion =======================

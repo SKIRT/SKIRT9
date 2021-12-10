@@ -47,6 +47,7 @@ double Units::fromFluxStyle(double lambda, double L, FluxOutputStyle style)
         case FluxOutputStyle::Frequency: return L * c / lambda / lambda;
         case FluxOutputStyle::Energy: return L * hc2 / lambda / lambda / lambda;
     }
+    return L;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -60,6 +61,7 @@ Array Units::fromFluxStyle(const Array& lambdav, const Array& Lv, FluxOutputStyl
         case FluxOutputStyle::Frequency: return Lv * c / lambdav / lambdav;
         case FluxOutputStyle::Energy: return Lv * hc2 / lambdav / lambdav / lambdav;
     }
+    return Lv;
 }
 
 ////////////////////////////////////////////////////////////////////
