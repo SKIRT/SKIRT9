@@ -10,6 +10,7 @@
 #include "FatalError.hpp"
 #include "MaterialState.hpp"
 #include "PhotonPacket.hpp"
+#include <iostream>
 
 ////////////////////////////////////////////////////////////////////
 
@@ -19,10 +20,11 @@ namespace
     constexpr double lambdaSF = 21.10611405413e-2;  // 21 cm
 
     // reference Milky Way radiation field at 1000 Angstrom
-    // converted from 3.43e-8 photons/cm2/s/Hz to internal units W/m2/m/sr
+    // converted from 1e6 photons/cm2/s/sr/eV to internal units W/m2/m/sr
     constexpr double c = Constants::c();
     constexpr double h = Constants::h();
-    constexpr double JMW = 3.43e-8 * 1e4 * (h * c / lambdaUV) * (c / (lambdaUV * lambdaUV)) / (4. * M_PI);
+    constexpr double Qel = Constants::Qelectron();
+    constexpr double JMW = 1e6 * 1e4 * (h * c * h * c / (lambdaUV * lambdaUV * lambdaUV)) / Qel;
 }
 
 ////////////////////////////////////////////////////////////////////

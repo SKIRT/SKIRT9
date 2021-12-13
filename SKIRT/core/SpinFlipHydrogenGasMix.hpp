@@ -10,10 +10,114 @@
 
 ////////////////////////////////////////////////////////////////////
 
-/** At some point in the future, the SpinFlipHydrogenGasMix class will hopefully describe the
-    material properties related to the 21 cm spin-flip transition in neutral hydrogen, including
-    emission and absorption. For now, it just serves as a stub for testing the framework that will
-    enable this functionality.
+/** The SpinFlipHydrogenGasMix class describes the material properties related to the 21 cm
+    spin-flip transition in neutral atomic hydrogen, including emission and absorption. The 21 cm
+    emission luminosity and self-absorption opacity in a given cell are determined from gas
+    properties defined in the input model (total hydrogen number density, gas metallity, gas
+    temperature, neutral hydrogen fraction) and the local UV radiation field calculated by the
+    simulation (taking into account dust extinction).
+
+    <b>Partitioning</b>
+
+    While the input model is expected to define the neutral (i.e. non-ionized) hydrogen fraction,
+    the partitioning of the hydrogen gas into its atomic and molecular components must be
+    determined based on the the UV radiation field calculated by the simulation. Since UV radiation
+    in the Lyman-Werner band (912-1110 Angstrom) dissociates molecular hydrogen, hydrogen
+    partitioning schemes usually have the UV field in that wavelength range as an important
+    parameter. For this purpose, this class samples the radiation field
+    \f$J_\lambda(\lambda_\mathrm{UV})\f$ at \f$\lambda_\mathrm{UV}=1000\,\mathrm{Angstrom}\f$ The
+    wavelength bin index for \f$\lambda_\mathrm{UV}\f$ in the radiation field grid is determined
+    during setup.
+
+    Currently, this class implements the partioning scheme described by Gnedin and Kravtsov 2011
+    (ApJ 728:88). This scheme estimates the mass fraction of molecular hydrogen compared to the
+    total hydrogen mass, i.e. \f$f_\mathrm{H2} = M_\mathrm{H2}/M_H\f$, where \f$M_\mathrm{H} =
+    M_\mathrm{HI} + M_\mathrm{H2} + M_\mathrm{HII}\f$ denotes the total (atomic, molecular, and
+    ionized) hydrogen mass. The scheme has the following three input parameters:
+
+    - The total hydrogen number density \f$n_\mathrm{H}\f$ defined in the input model.
+
+    - The dust-to-gas ratio \f$D\f$ relative to the representative Galactic value. Because the
+    dust-to-gas ratio can be assumed to scale with metallicity, this is roughly equivalent to the
+    gas metallicity relative to the solar value. In other words, \f$D=Z/0.0127\f$, where \f$Z\f$ is
+    defined in the input model.
+
+    - The dimensionless UV radiation field \f$U = J_\lambda(\lambda_\mathrm{UV}) /
+    J^\mathrm{MW}_\lambda(\lambda_\mathrm{UV})\f$, obtained by normalizing the sampled UV radiation
+    field to the representative Galactic value, which is taken to be
+    \f$J^\mathrm{MW}_{E}(\lambda_\mathrm{UV}) = 10^{6} \,\mathrm{photons} \,\mathrm{cm}^{-2}
+    \,\mathrm{s}^{-1} \,\mathrm{sr}^{-1} \,\mathrm{eV}^{-1}\f$. The latter value is converted at
+    compile time from the specified photons-per-energy units to the internal SKIRT
+    energy-per-wavelength units.
+
+    The Gnedin and Kravtsov 2011 partitioning scheme is then defined by their equations (6) and
+    following, which are replicated below using our notation.
+
+    \f[ f_\mathrm{H2} = \frac{1}{1 + \exp(-4x-3x^3)} \f]
+
+    \f[ x = \Lambda^{3/7}\,\ln\left( \frac{D\,n_\mathrm{H}}{\Lambda\,n_*}\right) \f]
+
+    \f[ \Lambda = \ln\left( 1 + g D^{3/7} (U/15)^{4/7} \right) \f]
+
+    \f[ g = \frac{1+\alpha s + s^2}{1+s} \f]
+
+    \f[ s = \frac{0.04}{D_* + D} \f]
+
+    \f[ \alpha = \frac{5\,U/2}{1+(U/2)^2} \f]
+
+    \f[ n_* = 25~\mathrm{cm}^{-3} \f]
+
+    \f[ D_* = 1.5 \times 10^{-3} \times \ln\left(1 + (3 U)^{1.7} \right) \f]
+
+    Given the total hydrogen number density \f$n_\mathrm{H}\f$ and the neutral hydrogen fraction
+    \f$f_\mathrm{HI+H2} = (M_\mathrm{HI} + M_\mathrm{H2})/M_H\f$ defined in the input model, the
+    atomic number density can then be easily derived as \f$n_\mathrm{HI} = n_\mathrm{H}
+    (f_\mathrm{HI+H2} - f_\mathrm{H2})\f$.
+
+    <b>Emission</b>
+
+    Following Draine 2011 Chapter 8, the integrated luminosity \f$L\f$ of the 21 cm line for a
+    given spatial cell can be written as \f[ L = \frac{3}{4} \,A_\mathrm{SF}
+    \,\frac{hc}{\lambda_\mathrm{SF}} \,n_\mathrm{HI}V \f] where \f$A_\mathrm{SF}=2.8843 \times
+    10^{-15} \,s^{-1}\f$ is the Einstein coefficient of the 21cm spin-flip transition,
+    \f$\lambda_\mathrm{SF} = 21.10611405413\times 10^{-2}\,\mathrm{m}\f$ is its wavelength,
+    \f$n_\mathrm{HI}\f$ is the number density of atomic hydrogen in the cell, and \f$V\f$ is the
+    cell volume.
+
+    The 21cm line is extremely narrow so that the emerging line profile is dominated by the Doppler
+    shift caused by the thermal motion of the atoms. The gas temperature defined in the input model
+    is used to randomly shift the wavelength of each emitted photon packet according to a
+    Maxwell-Boltzmann distribution. This happens outside of this class in the secondary source
+    machinery.
+
+    <b>Absorption</b>
+
+    Again following Draine 2011 Chapter 8, the monochromatic absorption cross section
+    \f$\varsigma(\lambda)\f$ at wavelength \f$\lambda\f$ can be written as \f[\varsigma(\lambda) =
+    \frac{3}{32\pi}\,\frac{A_\mathrm{SF}\,hc \,\lambda_\mathrm{SF}} {k_\mathrm{B}T_\mathrm{s}}
+    \,\phi(\lambda)\f] where \f$T_\mathrm{s}\f$ is the spin temperature of the hydrogen gas (see
+    below) and \f$\phi(\lambda)\f$ is a Gaussian distribution representing the Doppler shift caused
+    by the thermal motion of the atoms, with \f$\int\phi(\lambda) \,\mathrm{d}\lambda=1\f$.
+
+    According to Kim, Ostriker and Kim 2014 (ApJ 786:64), the spin temperature \f$T_\mathrm{s}\f$
+    is essentially equal to the kinetic gas temperature \f$T\f$ for low gas temperatures
+    \f$T<1000~\mathrm{K}\f$. For higher gas temperatures, it also depends on other gas properties,
+    with an upper bound that never exceeds a fixed maximum value, i.e. \f$T_\mathrm{s,upper}
+    \lesssim 5000~\mathrm{K}\f$ (see their Figure 2).
+
+    To avoid the need for defining additional gas properties in the input model, we here use an
+    approximate upper bound for the spin temperature given by \f[ T_\mathrm{s}= 6000~\mathrm{K}
+    \times \left( 1-\mathrm{e}^{-T/5000~\mathrm{K} } \right).\f] Because the absorption cross
+    section is inversely proportional to the spin temperature, this yields an approximate lower
+    bound for the cross section.
+
+    <b>Configuring the simulation</b>
+
+    simulation mode
+
+    RF bins
+
+    default values
 
     The spatial distributions for the gas density, metallicity, and temperature and for the local
     dust-to-gas ratio must be defined by the input model and are considered to be constant during
