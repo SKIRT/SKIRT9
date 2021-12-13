@@ -15,8 +15,14 @@
 
 namespace
 {
-    const double lambdaUV = 1000e-10;           // 1000 Angstrom
-    const double lambdaSF = 21.10611405413e-2;  // 21 cm
+    constexpr double lambdaUV = 1000e-10;           // 1000 Angstrom
+    constexpr double lambdaSF = 21.10611405413e-2;  // 21 cm
+
+    // reference Milky Way radiation field at 1000 Angstrom
+    // converted from 3.43e-8 photons/cm2/s/Hz to internal units W/m2/m/sr
+    constexpr double c = Constants::c();
+    constexpr double h = Constants::h();
+    constexpr double JMW = 3.43e-8 * 1e4 * (h * c / lambdaUV) * (c / (lambdaUV * lambdaUV)) / (4. * M_PI);
 }
 
 ////////////////////////////////////////////////////////////////////
