@@ -47,8 +47,9 @@
     field to the representative Galactic value, which is taken to be
     \f$J^\mathrm{MW}_{E}(\lambda_\mathrm{UV}) = 10^{6} \,\mathrm{photons} \,\mathrm{cm}^{-2}
     \,\mathrm{s}^{-1} \,\mathrm{sr}^{-1} \,\mathrm{eV}^{-1}\f$. The latter value is converted at
-    compile time from the specified photons-per-energy units to the internal SKIRT
-    energy-per-wavelength units.
+    compile time from the specified photons-per-energy cgs units to the internal SKIRT
+    energy-per-wavelength SI units using \f[ J^\mathrm{MW}_\lambda(\lambda_\mathrm{UV}) = 10^4 \,
+    \frac{(hc)^2}{q_\mathrm{el}\lambda^3_\mathrm{UV}} J^\mathrm{MW}_{E}(\lambda_\mathrm{UV}). \f]
 
     The Gnedin and Kravtsov 2011 partitioning scheme is then defined by their equations (6) and
     following, which are replicated below using our notation.
@@ -65,7 +66,7 @@
 
     \f[ \alpha = \frac{5\,U/2}{1+(U/2)^2} \f]
 
-    \f[ n_* = 25~\mathrm{cm}^{-3} \f]
+    \f[ n_* = 25\times 10^6 ~\mathrm{m}^{-3} \f]
 
     \f[ D_* = 1.5 \times 10^{-3} \times \ln\left(1 + (3 U)^{1.7} \right) \f]
 
@@ -92,12 +93,15 @@
 
     <b>Absorption</b>
 
-    Again following Draine 2011 Chapter 8, the monochromatic absorption cross section
-    \f$\varsigma(\lambda)\f$ at wavelength \f$\lambda\f$ can be written as \f[\varsigma(\lambda) =
-    \frac{3}{32\pi}\,\frac{A_\mathrm{SF}\,hc \,\lambda_\mathrm{SF}} {k_\mathrm{B}T_\mathrm{s}}
-    \,\phi(\lambda)\f] where \f$T_\mathrm{s}\f$ is the spin temperature of the hydrogen gas (see
-    below) and \f$\phi(\lambda)\f$ is a Gaussian distribution representing the Doppler shift caused
-    by the thermal motion of the atoms, with \f$\int\phi(\lambda) \,\mathrm{d}\lambda=1\f$.
+    Again following Draine 2011 Chapter 8, and substituting wavelengths for frequencies, the
+    monochromatic absorption cross section \f$\varsigma(\lambda)\f$ at frequency \f$\lambda\f$ can
+    be written as \f[\varsigma(\lambda) = \frac{3}{32\pi}\,A_\mathrm{SF}\,\frac{hc
+    \,\lambda_\mathrm{SF}} {k_\mathrm{B}T_\mathrm{s}} \times \frac{\lambda_\mathrm{SF}}
+    {\sqrt{2\pi}\,\sigma} \,\exp\left(-\frac{u^2(\lambda)} {2\sigma^2}\right) \f] where
+    \f$T_\mathrm{s}\f$ is the spin temperature of the hydrogen gas (see below), \f$\sigma=\sqrt{k_B
+    T/m_\mathrm{p}}\f$ is the velocity dispersion corresponding to the thermal motion of the
+    atoms, and \f$u(\lambda)=c(\lambda-\lambda_\mathrm{SF})/\lambda\f$ is the frequency deviation
+    from the line center in velocity units.
 
     According to Kim, Ostriker and Kim 2014 (ApJ 786:64), the spin temperature \f$T_\mathrm{s}\f$
     is essentially equal to the kinetic gas temperature \f$T\f$ for low gas temperatures
@@ -113,17 +117,49 @@
 
     <b>Configuring the simulation</b>
 
-    simulation mode
+    Simulations of 21 cm the spin-flip transition usually include primary sources and a dust medium
+    in addition to a medium component configured with the spin flip material mix (this class).
+    During primary emission, the dust medium determines the UV radiation field, allowing the spin
+    flip material mix to calculate the 21 cm line luminosity and absorption cross section for use
+    during secondary emission. This calculation happens in the updateSpecificState() function,
+    which is invoked at the end of primary emission (because the material mix advertises that it
+    has a semi-dynamic medium state). This does imply that the 21 cm line absorption remains zero
+    during primary emission, which is not a problem as long as the primary sources don't emit in
+    the radio wavelength range. Thus, unless dust opacities are very high, there is no need for
+    iteration over primary nor secondary emission.
 
-    RF bins
+    If one is not interested in dust emission (i.e. only in the 21 cm line emission), the
+    simulation mode can be set to "GasEmission" and the radiation field wavelength grid can be
+    limited to a single bin in the UV wavelength range. This bin should be configured to cover the
+    full Lyman-Werner band (912-1110 Angstrom) so that it accurately captures all radiation that
+    dissociates molecular hydrogen. Similarly, instrument wavelength grids can be limited to a
+    relevant range around 21 cm line center.
 
-    default values
+    To calculate both the dust emission spectrum and the 21 line emission in the same simulation,
+    the simulation mode must be set to "DustAndGasEmission" and the radiation field wavelength grid
+    must now include and properly resolve the UV, optical, and infrared wavelength range. Separate
+    instruments can be configured for the relevant wavelength ranges, e.g. using a logarithmic grid
+    for the continuum spectrum and a linear grid for the line profile.
 
-    The spatial distributions for the gas density, metallicity, and temperature and for the local
-    dust-to-gas ratio must be defined by the input model and are considered to be constant during
-    the simulation. In this context, this material mix offers configuration properties to specify
-    default values for these quantities that will be used by geometric media across the spatial
-    domain. */
+    As indicated above, the input model must provide values for the spatial distribuition of four
+    medium properties: the total hydrogen number density, the gas metallity, the gas temperature,
+    and the neutral hydrogen fraction. These values remain constant during the simulation.
+
+    Most often, this information will be read from an input file by associating the spin flip
+    material mix with a subclass of ImportedMedium. For that medium component, the ski file
+    attributes \em importMetallicity and \em importTemperature <b>must</b> be set to 'true', and
+    \em importVariableMixParams must be left at 'false'. The additional column required by the spin
+    flip material mix (neutral hydrogen fraction) is automatically imported and is expected
+    <b>after</b> all other columns. For example, if bulk velocities are also imported for this
+    medium component (i.e. \em importVelocity is 'true'), the column order would be \f[ ...,
+    n_\mathrm{H}, Z, T, v_\mathrm{x}, v_\mathrm{y}, v_\mathrm{z}, f_\mathrm{HI+H2} \f]
+
+    For basic testing purposes, the spin flip material mix can also be associated with a geometric
+    medium component. The geometry then defines the spatial density distribution (i.e.
+    \f$n_\mathrm{H}\f$), and the spin flip material mix offers configuration properties to specify
+    fixed default values for the other properties that will be used across the spatial domain.
+
+    */
 class SpinFlipHydrogenGasMix : public EmittingGasMix
 {
     ITEM_CONCRETE(SpinFlipHydrogenGasMix, EmittingGasMix,
