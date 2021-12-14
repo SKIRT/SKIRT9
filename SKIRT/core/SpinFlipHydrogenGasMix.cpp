@@ -9,28 +9,32 @@
 #include "DisjointWavelengthGrid.hpp"
 #include "FatalError.hpp"
 #include "MaterialState.hpp"
-#include "PhotonPacket.hpp"
-#include <iostream>
 
 ////////////////////////////////////////////////////////////////////
 
 namespace
 {
+    // special wavelengths
     constexpr double lambdaUV = 1000e-10;           // 1000 Angstrom
     constexpr double lambdaSF = 21.10611405413e-2;  // 21 cm
 
-    // reference Milky Way radiation field at 1000 Angstrom
-    // converted from 1e6 photons/cm2/s/sr/eV to internal units W/m2/m/sr
-    constexpr double c = Constants::c();
-    constexpr double h = Constants::h();
-    constexpr double Qel = Constants::Qelectron();
-    constexpr double JMW = 1e6 * 1e4 * (h * c * h * c / (lambdaUV * lambdaUV * lambdaUV)) / Qel;
+    // wavelength range outside of which we consider absorption to be zero (range of plus-min 0.21 mm)
+    constexpr Range absorptionRange(lambdaSF * 0.999, lambdaSF * 1.001);
+
+    // Einstein coefficient of the 21cm spin-flip transition
+    constexpr double ASF = 2.8843e-15;
+
+    // indices for custom state variables
+    constexpr int NEUTRAL_FRACTION = 0;
+    constexpr int ATOMIC_FRACTION = 1;
 }
 
 ////////////////////////////////////////////////////////////////////
 
 void SpinFlipHydrogenGasMix::setupSelfBefore()
 {
+    EmittingGasMix::setupSelfBefore();
+
     auto config = find<Configuration>();
     if (config->hasSecondaryEmission())
     {
@@ -71,7 +75,7 @@ bool SpinFlipHydrogenGasMix::hasLineEmission() const
 
 vector<SnapshotParameter> SpinFlipHydrogenGasMix::parameterInfo() const
 {
-    return vector<SnapshotParameter>{SnapshotParameter("dust-to-gas ratio")};
+    return vector<SnapshotParameter>{SnapshotParameter("neutral hydrogen fraction")};
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -79,8 +83,9 @@ vector<SnapshotParameter> SpinFlipHydrogenGasMix::parameterInfo() const
 vector<StateVariable> SpinFlipHydrogenGasMix::specificStateVariableInfo() const
 {
     return vector<StateVariable>{StateVariable::numberDensity(), StateVariable::metallicity(),
-                                 StateVariable::temperature(), StateVariable::custom(0, "dust-to-gas ratio", ""),
-                                 StateVariable::custom(1, "UV field strength", "wavelengthmeanintensity")};
+                                 StateVariable::temperature(),
+                                 StateVariable::custom(NEUTRAL_FRACTION, "neutral hydrogen fraction", ""),
+                                 StateVariable::custom(ATOMIC_FRACTION, "atomic hydrogen fraction", "")};
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -95,8 +100,8 @@ void SpinFlipHydrogenGasMix::initializeSpecificState(MaterialState* state, doubl
         // make sure the temperature is at least the local universe CMB temperature
         state->setMetallicity(metallicity >= 0. ? metallicity : defaultMetallicity());
         state->setTemperature(max(Constants::Tcmb(), temperature >= 0. ? temperature : defaultTemperature()));
-        state->setCustom(0, params.size() ? params[0] : defaultDustToGasRatio());
-        state->setCustom(1, 0.);
+        state->setCustom(NEUTRAL_FRACTION, params.size() ? params[0] : defaultNeutralFraction());
+        state->setCustom(ATOMIC_FRACTION, 0.);
     }
 }
 
@@ -105,7 +110,36 @@ void SpinFlipHydrogenGasMix::initializeSpecificState(MaterialState* state, doubl
 bool SpinFlipHydrogenGasMix::updateSpecificState(MaterialState* state, const Array& Jv) const
 {
     if (_indexUV < 0) throw FATALERROR("State update should not be called if there is no radiation field");
-    state->setCustom(1, Jv[_indexUV]);
+
+    // if the cell has no hydrogen or the neutral fraction is zero, then leave the atomic fraction at zero
+    double nH = state->numberDensity();
+    double fHIpH2 = state->custom(NEUTRAL_FRACTION);
+    if (nH <= 0. || fHIpH2 <= 0.) return false;
+
+    // get the radiation field
+    // scaled to the reference Milky Way radiation field at 1000 Angstrom
+    // converted from 1e6 photons/cm2/s/sr/eV to internal units W/m2/m/sr
+    constexpr double h = Constants::h();
+    constexpr double c = Constants::c();
+    constexpr double Qel = Constants::Qelectron();
+    constexpr double JMW = 1e6 * 1e4 * (h * c * h * c / (lambdaUV * lambdaUV * lambdaUV)) / Qel;
+    double U = Jv[_indexUV] / JMW;
+
+    // get the metallicity scaled to the solar reference value
+    double D = state->metallicity() / 0.0127;
+
+    // perform the partitioning scheme
+    double Dstar = 1.5e-3 * log(1. + pow(3 * U, 1.7));
+    double nstar = 25e6;
+    double alpha = 2.5 * U / (1. + 0.25 * U * U);
+    double s = 0.04 / (Dstar + D);
+    double g = (1. + alpha * s + s * s) / (1. + s);
+    double Lambda = log(1. + g * pow(D, 3. / 7.) * pow(U / 15., 4. / 7.));
+    double x = pow(Lambda, 3. / 7.) * log(D / Lambda * nH / nstar);
+    double fH2 = 1. / (1. + exp(-4. * x - 3. * x * x * x));
+
+    // set the atomic fraction
+    state->setCustom(ATOMIC_FRACTION, max(0., fHIpH2 - fH2));
     return true;
 }
 
@@ -118,9 +152,30 @@ double SpinFlipHydrogenGasMix::mass() const
 
 ////////////////////////////////////////////////////////////////////
 
-double SpinFlipHydrogenGasMix::sectionAbs(double /*lambda*/) const
+#define M_2_SQRTPI 1.12837916709551257389615890312154517 /* 2/sqrt(pi)     */
+#define M_SQRT2 1.41421356237309504880168872420969808    /* sqrt(2)        */
+
+namespace
 {
-    return 0.;  // TO DO
+    // returns the absorption cross section per neutral hydrogen atom for the given wavelength and gas temperature
+    double crossSection(double lambda, double T)
+    {
+        constexpr double front = 3. * M_SQRT2 * M_2_SQRTPI / M_PI / 128. * ASF * Constants::h() * Constants::c()
+                                 * lambdaSF * lambdaSF / Constants::k();
+        double Tspin = 6000. * (1 - exp(-0.0002 * T));
+        double sigma = sqrt(Constants::k() / Constants::Mproton() * T);
+        double u = Constants::c() * (lambda - lambdaSF) / lambda;
+        double x = u / sigma;
+        double expon = exp(-0.5 * x * x);
+        return front / Tspin / sigma * expon;
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
+double SpinFlipHydrogenGasMix::sectionAbs(double lambda) const
+{
+    return absorptionRange.contains(lambda) ? crossSection(lambda, defaultTemperature()) : 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -139,10 +194,14 @@ double SpinFlipHydrogenGasMix::sectionExt(double lambda) const
 
 ////////////////////////////////////////////////////////////////////
 
-double SpinFlipHydrogenGasMix::opacityAbs(double /*lambda*/, const MaterialState* /*state*/,
-                                          const PhotonPacket* /*pp*/) const
+double SpinFlipHydrogenGasMix::opacityAbs(double lambda, const MaterialState* state, const PhotonPacket* /*pp*/) const
 {
-    return 0.;  // TO DO
+    if (absorptionRange.contains(lambda))
+    {
+        double number = state->numberDensity() * state->custom(ATOMIC_FRACTION);
+        if (number > 0.) return crossSection(lambda, state->temperature()) * number;
+    }
+    return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -194,14 +253,11 @@ Array SpinFlipHydrogenGasMix::lineEmissionMasses() const
 
 ////////////////////////////////////////////////////////////////////
 
-Array SpinFlipHydrogenGasMix::lineEmissionSpectrum(const MaterialState* state, const Array& Jv) const
+Array SpinFlipHydrogenGasMix::lineEmissionSpectrum(const MaterialState* state, const Array& /*Jv*/) const
 {
-    // calculate the 21 cm luminosity -- TO DO
-    double number = state->numberDensity() * state->volume();
-    double strength = Jv[_indexUV];
-    double temperature = state->temperature();
-    double norm = 1e-34;
-    double L = norm * number * strength * temperature * temperature;
+    // calculate the 21 cm luminosity
+    constexpr double front = 0.75 * ASF * Constants::h() * Constants::c() / lambdaSF;
+    double L = front * state->custom(ATOMIC_FRACTION) * state->numberDensity() * state->volume();
 
     // encapsulate the result in an array
     Array luminosities(1);

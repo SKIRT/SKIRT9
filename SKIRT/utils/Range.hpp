@@ -21,10 +21,10 @@ protected:
 
 public:
     /** This is the default constructor; the minimum and maximum values are initialized to zero. */
-    Range() : _min(0), _max(0) {}
+    constexpr Range() : _min(0), _max(0) {}
 
     /** This constructor initializes the range to the minimum and maximum values provided as arguments. */
-    Range(double min, double max) : _min(min), _max(max) {}
+    constexpr Range(double min, double max) : _min(min), _max(max) {}
 
     /** This function sets the range to the minimum and maximum values provided as arguments. */
     void set(double min, double max)

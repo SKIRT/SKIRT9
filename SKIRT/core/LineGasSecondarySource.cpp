@@ -212,7 +212,7 @@ void LineGasSecondarySource::launch(PhotonPacket* pp, size_t historyIndex, doubl
         double T = _ms->temperature(m, _h);
         double M = _masses[index];
         double vtherm = sqrt(Constants::k() * T / M) * _random->gauss();
-        wavelength *=  1 + vtherm / Constants::c();
+        wavelength *= 1 + vtherm / Constants::c();
     }
 
     // generate a random position in this spatial cell

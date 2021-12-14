@@ -94,14 +94,14 @@
     <b>Absorption</b>
 
     Again following Draine 2011 Chapter 8, and substituting wavelengths for frequencies, the
-    monochromatic absorption cross section \f$\varsigma(\lambda)\f$ at frequency \f$\lambda\f$ can
-    be written as \f[\varsigma(\lambda) = \frac{3}{32\pi}\,A_\mathrm{SF}\,\frac{hc
-    \,\lambda_\mathrm{SF}} {k_\mathrm{B}T_\mathrm{s}} \times \frac{\lambda_\mathrm{SF}}
-    {\sqrt{2\pi}\,\sigma} \,\exp\left(-\frac{u^2(\lambda)} {2\sigma^2}\right) \f] where
-    \f$T_\mathrm{s}\f$ is the spin temperature of the hydrogen gas (see below), \f$\sigma=\sqrt{k_B
-    T/m_\mathrm{p}}\f$ is the velocity dispersion corresponding to the thermal motion of the
-    atoms, and \f$u(\lambda)=c(\lambda-\lambda_\mathrm{SF})/\lambda\f$ is the frequency deviation
-    from the line center in velocity units.
+    monochromatic absorption cross section per neutral hydrogen atom \f$\varsigma(\lambda)\f$ at
+    frequency \f$\lambda\f$ can be written as \f[\varsigma^\text{abs}(\lambda) =
+    \frac{3}{32\pi}\,A_\mathrm{SF}\,\frac{hc \,\lambda_\mathrm{SF}} {k_\mathrm{B}T_\mathrm{s}}
+    \times \frac{\lambda_\mathrm{SF}} {\sqrt{2\pi}\,\sigma} \,\exp\left(-\frac{u^2(\lambda)}
+    {2\sigma^2}\right) \f] where \f$T_\mathrm{s}\f$ is the spin temperature of the hydrogen gas
+    (see below), \f$\sigma=\sqrt{k_B T/m_\mathrm{p}}\f$ is the velocity dispersion corresponding to
+    the thermal motion of the atoms, and \f$u(\lambda)=c(\lambda-\lambda_\mathrm{SF})/\lambda\f$ is
+    the frequency deviation from the line center in velocity units.
 
     According to Kim, Ostriker and Kim 2014 (ApJ 786:64), the spin temperature \f$T_\mathrm{s}\f$
     is essentially equal to the kinetic gas temperature \f$T\f$ for low gas temperatures
@@ -179,11 +179,11 @@ class SpinFlipHydrogenGasMix : public EmittingGasMix
         ATTRIBUTE_DEFAULT_VALUE(defaultTemperature, "1e4")
         ATTRIBUTE_DISPLAYED_IF(defaultTemperature, "Level2")
 
-        PROPERTY_DOUBLE(defaultDustToGasRatio, "the default dust-to-gas ratio")
-        ATTRIBUTE_MIN_VALUE(defaultDustToGasRatio, "]0")
-        ATTRIBUTE_MAX_VALUE(defaultDustToGasRatio, "0.2]")
-        ATTRIBUTE_DEFAULT_VALUE(defaultDustToGasRatio, "0.01")
-        ATTRIBUTE_DISPLAYED_IF(defaultDustToGasRatio, "Level2")
+        PROPERTY_DOUBLE(defaultNeutralFraction, "the default neutral hydrogen fraction")
+        ATTRIBUTE_MIN_VALUE(defaultNeutralFraction, "[0")
+        ATTRIBUTE_MAX_VALUE(defaultNeutralFraction, "1]")
+        ATTRIBUTE_DEFAULT_VALUE(defaultNeutralFraction, "0.5")
+        ATTRIBUTE_DISPLAYED_IF(defaultNeutralFraction, "Level2")
 
     ITEM_END()
 
@@ -218,30 +218,33 @@ public:
 public:
     /** This function returns the number and type of import parameters required by this particular
         material mix as a list of SnapshotParameter objects. For this class, the function returns a
-        descriptor for the dust-to-gas ratio import parameter. Importing metallicity and
+        descriptor for the neutral hydrogen fraction import parameter. Importing metallicity and
         temperature should be enabled through the corresponding standard configuration flags. */
     vector<SnapshotParameter> parameterInfo() const override;
 
     /** This function returns a list of StateVariable objects describing the specific state
         variables used by the receiving material mix. For this class, the function returns a list
-        containing descriptors for number density, metallicity, temperature, a custom variable to
-        hold the dust-to-gas-ratio, and a custom variable to hold the UV field strength derived
-        from the radiation field when the semi-dynamic medium state is updated. */
+        containing descriptors for the properties defined in the input model (number density,
+        metallicity, temperature, and neutral hydrogen fraction) and for a variable to hold the
+        atomic hydrogen fraction derived from the radiation field when the semi-dynamic medium
+        state is updated. */
     vector<StateVariable> specificStateVariableInfo() const override;
 
-    /** This function initializes the specific state variables requested by this fragmented dust
-        mix through the specificStateVariableInfo() function except for the number density. For
-        this class, the function initializes the temperature, metallicity and dust-to-gas ratio to
-        the specified imported values, or if not available, to the user-configured default values.
-        The UV field strength is set to zero. */
+    /** This function initializes the specific state variables requested by this material mix
+        through the specificStateVariableInfo() function except for the number density. For this
+        class, the function initializes the temperature, metallicity and neutral hydrogen fraction
+        to the specified imported values, or if not available, to the user-configured default
+        values. The atomic hydrogen fraction is set to zero. */
     void initializeSpecificState(MaterialState* state, double metallicity, double temperature,
                                  const Array& params) const override;
 
     //======== Medium state updates =======
 
-    /** Based on the specified radiation field, the function obtains the UV field strength and
-        stores it in the medium state for the specified cell. The function returns true if the
-        medium state has indeed be changed, and false otherwise. */
+    /** Based on the specified radiation field and the input model properties found in the given
+        material state, this function performs the partitioning scheme described in the class
+        header and stores the resulting atomic hydrogen fraction back in the given material state.
+        The function returns true if the material state has indeed be changed, and false otherwise.
+        */
     bool updateSpecificState(MaterialState* state, const Array& Jv) const override;
 
     //======== Low-level material properties =======
@@ -250,41 +253,41 @@ public:
     /** This function returns the mass of a neutral hydrogen atom. */
     double mass() const override;
 
-    /** This function returns the 21 cm absorption cross section per hydrogen atom at the given
-        wavelength and using the default gas properties configured for this material mix. */
+    /** This function returns the 21 cm absorption cross section per neutral hydrogen atom at the
+        given wavelength and using the default gas properties configured for this material mix. */
     double sectionAbs(double lambda) const override;
 
-    /** This function returns the 21 scattering cross section per hydrogen atom, which is trivially
-        zero for all wavelengths. */
+    /** This function returns the 21 scattering cross section per neutral hydrogen atom, which is
+        trivially zero for all wavelengths. */
     double sectionSca(double lambda) const override;
 
-    /** This function returns the total 21 cm extinction cross section per hydrogen atom at the
-        given wavelength and using the default gas properties configured for this material mix. The
-        extinction cross section is identical to the absorption cross section because the
+    /** This function returns the total 21 cm extinction cross section per neutral hydrogen atom at
+        the given wavelength and using the default gas properties configured for this material mix.
+        The extinction cross section is identical to the absorption cross section because the
         scattering cross section is zero. */
     double sectionExt(double lambda) const override;
 
     //======== High-level photon life cycle =======
 
-    /** This function returns the 21 cm absorption opacity \f$k^\text{abs}=n\varsigma^\text{abs}\f$
-        for the given wavelength and material state. The photon packet properties are not used. */
+    /** This function returns the 21 cm absorption opacity \f$k^\text{abs}= n_mathrm{HI}
+        \varsigma^\text{abs}\f$ for the given wavelength and material state. The photon packet
+        properties are not used. */
     double opacityAbs(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
 
-    /** This function returns the 21 cm scattering opacity \f$k^\text{sca}=n\varsigma^\text{sca}\f$
-        which is trivially zero at all wavelengths. */
+    /** This function returns the 21 cm scattering opacity \f$k^\text{sca}\f$ which is trivially
+        zero at all wavelengths. */
     double opacitySca(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
 
-    /** This function returns the 21 cm extinction opacity
-        \f$k^\text{ext}=k^\text{abs}+k^\text{sca}\f$ for the given wavelength and material state.
-        The photon packet properties are not used. The extinction opacity equals the absorption
-        opacity. */
+    /** This function returns the 21 cm extinction opacity \f$k^\text{ext}=k^\text{abs}\f$ for the
+        given wavelength and material state, which equals the absorption opacity because the
+        scattering opacity is zero. The photon packet properties are not used. */
     double opacityExt(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
 
-    /** This function throws a fatal error because the 21 cm line does not scatter. */
+    /** This function does nothing because the 21 cm line does not scatter. */
     void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w, Direction bfkobs,
                            Direction bfky, const MaterialState* state, const PhotonPacket* pp) const override;
 
-    /** This function throws a fatal error because the 21 cm line does not scatter. */
+    /** This function does nothing because the 21 cm line does not scatter. */
     void performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const override;
 
     //======== Secondary emission =======
