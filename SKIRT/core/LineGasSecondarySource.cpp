@@ -124,6 +124,9 @@ namespace
         Array _pv, _Pv;  // normalized discrete emission spectrum (relative line luminosities)
         Vec _vbulk;      // bulk velocity
 
+        // information on a particular photon packet launch, initialized by generateThermalVelocity()
+        Vec _vtherm;  // random thermal velocity
+
     public:
         // instances of this class are allocated in thread-local storage, which means that the constructor is
         // invoked under the hood for each new execution thread; hence it does trivial initialization only
@@ -150,6 +153,9 @@ namespace
 
             // get the average bulk velocity for this cell
             _vbulk = ms->bulkVelocity(m);
+
+            // reset the thermal velocity
+            _vtherm = Vec();
         }
 
         // returns a random line index generated from the discrete spectral distribution
@@ -158,8 +164,17 @@ namespace
         // returns the normalized line luminosity for the given wavelength
         double luminosity(int index) const { return _pv[index]; }
 
-        // returns the bulk velocity
-        Vec velocity() const override { return _vbulk; }
+        // generates and stores a random thermal velocity for the given medium temperature and particle mass
+        void generateThermalVelocity(Random* random, double T, double M)
+        {
+            if (T > 0. && M > 0.)
+                _vtherm = sqrt(Constants::k() * T / M) * random->maxwell();
+            else
+                _vtherm = Vec();
+        }
+
+        // returns the sum of the bulk velocity and the random thermal velocity
+        Vec velocity() const override { return _vbulk + _vtherm; }
     };
 
     // setup an instance of the above class to cache emission information for each parallel execution thread
@@ -205,15 +220,8 @@ void LineGasSecondarySource::launch(PhotonPacket* pp, size_t historyIndex, doubl
         }
     }
 
-    // get the central wavelength, and if a temperature is available, adjust it for a random thermal velocity
-    double wavelength = _centers[index];
-    if (_hasTemperature)
-    {
-        double T = _ms->temperature(m, _h);
-        double M = _masses[index];
-        double vtherm = sqrt(Constants::k() * T / M) * _random->gauss();
-        wavelength *= 1 + vtherm / Constants::c();
-    }
+    // if a temperature is available, generate a random thermal velocity
+    if (_hasTemperature) t_gascell.generateThermalVelocity(_random, _ms->temperature(m, _h), _masses[index]);
 
     // generate a random position in this spatial cell
     Position bfr = _ms->grid()->randomPositionInCell(m);
@@ -222,7 +230,7 @@ void LineGasSecondarySource::launch(PhotonPacket* pp, size_t historyIndex, doubl
     VelocityInterface* bvi = t_gascell.velocity().isNull() ? nullptr : &t_gascell;
 
     // launch the photon packet with isotropic direction
-    pp->launch(historyIndex, wavelength, L * ws * w, bfr, _random->direction(), bvi);
+    pp->launch(historyIndex, _centers[index], L * ws * w, bfr, _random->direction(), bvi);
 }
 
 ////////////////////////////////////////////////////////////////////
