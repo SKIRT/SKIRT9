@@ -165,12 +165,13 @@ namespace
             // for high temperatures the generated velocity can be relativistic or even above the speed of light,
             // in which case our non-relativistic Doppler shift formulas produce negative wavelengths;
             // we thus reject any velocities above c/3
+            constexpr double vmax2 = Constants::c() * Constants::c() / 9.;
             while (true)
             {
-                double vtherm = sqrt(Constants::k() / Constants::Melectron() * T) * random->gauss();
-                if (abs(vtherm) < Constants::c() / 3.)
+                Vec vtherm = sqrt(Constants::k() / Constants::Melectron() * T) * random->maxwell();
+                if (vtherm.norm2() < vmax2)
                 {
-                    pp->setScatteringInfo(vtherm * random->direction());
+                    pp->setScatteringInfo(vtherm);
                     break;
                 }
             }
