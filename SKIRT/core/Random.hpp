@@ -11,6 +11,7 @@
 class Box;
 class Direction;
 class Position;
+class Vec;
 
 //////////////////////////////////////////////////////////////////////
 
@@ -116,6 +117,13 @@ public:
     /** This function generates a uniformly distributed random position in a given box (i.e. a
         cuboid lined up with the coordinate axes). */
     Position position(const Box& box);
+
+    /** This function generates a random velocity from a three-dimensional Maxwell-Boltzmann
+        distribution with velocity dispersion 1, which is equivalent to a Gaussian distribution
+        with mean 0 and standard deviation 1 for each of the Cartesian velocity components. The
+        implementation simply calls the function gauss() to obtain each of these three velocity
+        components. */
+    Vec maxwell();
 
     /** This function generates a random number drawn from an arbitrary probability distribution
         \f$p(x)\,{\text{d}}x\f$ with corresponding cumulative distribution function \f$P(x)\f$. The

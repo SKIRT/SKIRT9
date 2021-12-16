@@ -153,6 +153,9 @@ namespace
 
             // get the average bulk velocity for this cell
             _vbulk = ms->bulkVelocity(m);
+
+            // reset the thermal velocity
+            _vtherm = Vec();
         }
 
         // returns a random line index generated from the discrete spectral distribution
@@ -165,7 +168,7 @@ namespace
         void generateThermalVelocity(Random* random, double T, double M)
         {
             if (T > 0. && M > 0.)
-                _vtherm = sqrt(Constants::k() * T / M) * random->gauss() * random->direction();
+                _vtherm = sqrt(Constants::k() * T / M) * random->maxwell();
             else
                 _vtherm = Vec();
         }

@@ -252,10 +252,7 @@ namespace
     public:
         EntityVelocity() {}
         void setBulkVelocity(Vec bfv) { _bfv = bfv; }
-        void applyVelocityDispersion(Random* random, double sigma)
-        {
-            _bfv += sigma * random->gauss() * random->direction();
-        }
+        void applyVelocityDispersion(Random* random, double sigma) { _bfv += sigma * random->maxwell(); }
         Vec velocity() const override { return _bfv; }
     };
 

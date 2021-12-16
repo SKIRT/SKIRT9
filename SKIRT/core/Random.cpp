@@ -163,6 +163,16 @@ Position Random::position(const Box& box)
     return Position(box.fracPos(x, y, z));
 }
 
+Vec Random::maxwell()
+{
+    // generate the random numbers in separate statements to guarantee evaluation order
+    // (function arguments are evaluated in different order depending on the compiler)
+    double x = gauss();
+    double y = gauss();
+    double z = gauss();
+    return Vec(x, y, z);
+}
+
 //////////////////////////////////////////////////////////////////////
 
 double Random::cdfLinLin(const Array& xv, const Array& Pv)
