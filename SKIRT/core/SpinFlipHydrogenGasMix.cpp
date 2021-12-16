@@ -152,9 +152,6 @@ double SpinFlipHydrogenGasMix::mass() const
 
 ////////////////////////////////////////////////////////////////////
 
-#define M_2_SQRTPI 1.12837916709551257389615890312154517 /* 2/sqrt(pi)     */
-#define M_SQRT2 1.41421356237309504880168872420969808    /* sqrt(2)        */
-
 namespace
 {
     // returns the absorption cross section per neutral hydrogen atom for the given wavelength and gas temperature
