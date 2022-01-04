@@ -47,12 +47,11 @@ protected:
     void setupSelfAfter() override;
 
     /** This function initializes the wavelength grid to a consecutive range of adjacent wavelength
-        bins given a list of characteric wavelengths. This function or one of its alternatives
-        should be called from the setupSelfBefore() function in each subclass. The subclass
-        determines a list of characteric wavelengths according to some predefined scheme, and the
-        bin borders and bin widths are automatically determined from that list by this function. If
-        the specified wavelength list is empty, or if there are duplicate values (which would lead
-        to empty bins), the function throws a fatal error.
+        bins given a list of characteric wavelengths. The subclass determines a list of characteric
+        wavelengths according to some predefined scheme, and the bin borders and bin widths are
+        automatically determined from that list by this function. If the specified wavelength list
+        is empty, or if there are duplicate values (which would lead to empty bins), the function
+        throws a fatal error.
 
         The function first sorts the specified characteristic wavelengths in ascending order and
         then calculates the bin borders assuming linear or logarithmic scaling depending on the
@@ -81,13 +80,11 @@ protected:
     void setWavelengthRange(const Array& lambdav, bool logScale);
 
     /** This function initializes the wavelength grid to a set of distinct, nonadjacent wavelength
-        bins given a list of characteric wavelengths and a relative half bin width. This function
-        or one of its alternatives should be called from the setupSelfBefore() function in each
-        subclass. The subclass determines a list of characteric wavelengths and a relative half bin
-        width, and the bin borders and bin widths are automatically calculated from that
-        information by this function. If the specified wavelength list is empty, or if the relative
-        half bin width is not positive, or if the calculated bins overlap, the function throws a
-        fatal error.
+        bins given a list of characteric wavelengths and a relative half bin width. The subclass
+        determines a list of characteric wavelengths and a relative half bin width, and the bin
+        borders and bin widths are automatically calculated from that information by this function.
+        If the specified wavelength list is empty, or if the relative half bin width is not
+        positive, or if the calculated bins overlap, the function throws a fatal error.
 
         Specifically, the function first sorts the specified characteristic wavelengths in
         ascending order and then calculates the bin borders using \f$\lambda^\mathrm{left}_\ell =
@@ -99,17 +96,29 @@ protected:
     void setWavelengthBins(const Array& lambdav, double relativeHalfWidth, bool constantWidth = false);
 
     /** This function initializes the wavelength grid to a consecutive range of \f$N>0\f$ adjacent
-        wavelength bins given a list of \f$N+1\f$ wavelength bin borders. This function or one of
-        its alternatives should be called from the setupSelfBefore() function in each subclass. The
-        subclass determines a list of bin borders according to some predefined scheme, and the
-        characteristic wavelengths and bin widths are automatically determined from that list by
-        this function. If the specified list has fewer than two bin borders, or if there are
-        duplicate values (which would lead to empty bins), the function throws a fatal error.
+        wavelength bins given a list of \f$N+1\f$ wavelength bin borders. The subclass determines a
+        list of bin borders according to some predefined scheme, and the characteristic wavelengths
+        and bin widths are automatically determined from that list by this function. If the
+        specified list has fewer than two bin borders, or if there are duplicate values (which
+        would lead to empty bins), the function throws a fatal error.
 
         The function first sorts the specified wavelength bin borders in ascending order and then
         calculates the characteristic wavelengths assuming linear scaling (arithmetic mean) or
         logarithmic scaling (geometric mean) depending on the value of the \em logScale flag. */
     void setWavelengthBorders(const Array& borderv, bool logScale);
+
+    /** This function initializes the wavelength grid from a list of bin border points and a
+        corresponding list of characteristic wavelengths. A zero characteristic wavelength
+        indicates a segment that is not part of the grid, i.e. that lies between two non-adjacent
+        bins or beyond the outer grid borders. In other words, the subclass has full control over
+        the placement of bin borders and characteristic wavelengths.
+
+        The two lists must have the same size. The borders must be listed in strictly increasing
+        order of wavelength (i.e. there cannot be any duplicates), all nonzero characteristic
+        wavelengths must lie within their corresponding bin, the last characteristic wavelength
+        must be zero, and there must be at least one nonzero characteristic wavelength. If these
+        requirements are violated, the behavior of this function is undefined. */
+    void setWavelengthSegments(const vector<double>& borderv, const vector<double>& characv);
 
     //================= Functions implementing virtual base class functions ===================
 
@@ -188,7 +197,6 @@ private:
     Array _lambdarightv;  // N right wavelength bin widths
     Array _borderv;       // K=N+1 or K=N*2 ordered border points (depending on whether bins are adjacent)
     vector<int> _ellv;    // K+1 indices of the wavelength bins defined by the border points, or -1 if out of range
-    bool _isConsecutive{false};
 };
 
 //////////////////////////////////////////////////////////////////////
