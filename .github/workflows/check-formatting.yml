@@ -1,0 +1,34 @@
+# GitHub action workflow that performs a source code formatting check.
+#
+# The workflow fails if one or more of the .hpp or .cpp files in the repository
+# are not properly formatted according to the rules in the .clang-format file
+# located in the root of the repository directory, using clang-format version 9.
+# In that case, the log file provides a list of improperly formatted files.
+# Source files with other extensions (including .h, .c, .hh, .cc) are NOT tested
+# to allow for differently formatted third-party code.
+#
+name: Check source code formatting
+
+# workflow event triggers
+on: [pull_request, workflow_dispatch]
+
+# jobs that run
+jobs:
+  # automatic formatting check
+  check_formatting_job:
+    # job name, displayed in the action log
+    name: Check source code formatting
+    # run this job on the Github-provided runner with Ubuntu 18.04
+    # because that runner has clang-format version 9 installed
+    runs-on: ubuntu-18.04
+    # steps that make up this job
+    steps:
+    # checkout using the default checkout action, v2
+    - name: Checkout
+      uses: actions/checkout@v2
+    # run clang-format-9 on all .hpp and .cpp files
+    - name: Autoformat
+      run: find . \( -name '*.hpp' -or -name '*.cpp' \) -exec clang-format-9 -style=file -i {} \;
+    # fail the workflow if anything changed to the repository
+    - name: Verify
+      run: git diff --stat --no-ext-diff --exit-code
