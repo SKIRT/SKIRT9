@@ -7,7 +7,7 @@
 # Source files with other extensions (including .h, .c, .hh, .cc) are NOT tested
 # to allow for differently formatted third-party code.
 #
-name: Check source code formatting
+name: Check formatting
 
 # workflow event triggers
 on: [pull_request, workflow_dispatch]
