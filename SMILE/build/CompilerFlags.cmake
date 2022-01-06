@@ -38,4 +38,12 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     endif()
 endif()
 
+if (WARNINGS_AS_ERRORS)
+    if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+        target_compile_options(${TARGET} PRIVATE /WX)
+    else()
+        target_compile_options(${TARGET} PRIVATE -Werror)
+    endif()
+endif()
+
 # ------------------------------------------------------------------

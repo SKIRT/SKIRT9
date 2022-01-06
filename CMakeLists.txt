@@ -20,6 +20,9 @@ option(BUILD_MAKE_UP "build MakeUp, desktop GUI wizard - requires Qt5")
 # define a user-configurable option to build doxstyle
 option(BUILD_DOX_STYLE "build doxstyle, documentation block streamliner")
 
+# define a user-configurable option to force warnings to be handled as errors
+option (WARNINGS_AS_ERRORS "handle warnings as errors")
+
 # add all relevant subdirectories; each subdirectory defines a single target
 add_subdirectory(SMILE)
 if (BUILD_SKIRT)
@@ -33,7 +36,9 @@ if (BUILD_DOX_STYLE)
 endif()
 
 # set the build type to "Release" as a default; this can be overridden by the user
-set(CMAKE_BUILD_TYPE Release)
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "the type of build" FORCE)
+endif()
 
 # mark some obscure variables as advanced so they don't clutter the user interface
 mark_as_advanced(CMAKE_OSX_ARCHITECTURES CMAKE_OSX_DEPLOYMENT_TARGET CMAKE_OSX_SYSROOT)
