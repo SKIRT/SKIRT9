@@ -24,7 +24,7 @@ class LineLuminosityNormalization : public LuminosityNormalization
 
         PROPERTY_DOUBLE(wavelength, "the central wavelength of the emission line")
         ATTRIBUTE_QUANTITY(wavelength, "wavelength")
-        ATTRIBUTE_MIN_VALUE(wavelength, "1 Angstrom")
+        ATTRIBUTE_MIN_VALUE(wavelength, "1 pm")
         ATTRIBUTE_MAX_VALUE(wavelength, "1 m")
         ATTRIBUTE_DEFAULT_VALUE(wavelength, "1215.67 Angstrom")
 
@@ -42,7 +42,7 @@ public:
         object over the source wavelength range is normalized to unity, the requested luminosity is
         obtained by dividing the user-configured luminosity by the normalized luminosity for the
         line in the specified %SED. */
-    double luminosity(SED* sed) const override;
+    double luminosityForSED(SED* sed) const override;
 };
 
 ////////////////////////////////////////////////////////////////////

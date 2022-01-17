@@ -103,14 +103,21 @@ public:
     int dimension() const override;
 
     /** This function returns the MaterialMix object defining the material properties for the
-        medium at the specified position. If the position argument is omitted, the function returns
-        the material mix for the model coordinate origin as a default value.
+        medium at the specified position.
 
         If the \em importVariableMixParams flag is enabled, the appropriate material mix is
         selected from the configured material mix family based on the value of the imported
         parameters for the specified position. If the flag is disabled, the fixed configured
         material mix is returned regardless of position. */
-    const MaterialMix* mix(Position bfr = Position()) const override;
+    const MaterialMix* mix(Position bfr) const override;
+
+    /** This function returns a default MaterialMix object representative of the material
+        properties of the medium.
+
+        If the \em importVariableMixParams flag is enabled, a default material mix is selected from
+        the configured material mix family using the appropriate number of parameters with a value
+        of zero. If the flag is disabled, the fixed configured material mix is returned. */
+    const MaterialMix* mix() const override;
 
     /** This function returns the configured value of the \em importVariableMixParams flag. If
         true, this medium may return a different MaterialMix object depending on the specified
@@ -133,11 +140,29 @@ public:
         the snapshot object; otherwise it returns a zero magnetic field. */
     Vec magneticField(Position bfr) const override;
 
+    /** This function returns true if the medium has a gas or electron material mix and the \em
+        importMetallicity flag is enabled for the medium. */
+    bool hasMetallicity() const override;
+
+    /** This function returns the metallicity of the medium at the specified position, if defined
+        in the input model. Specifically, if the medium has a gas or electron material mix and the
+        \em importMetallicity flag is enabled, the function returns the imported metallicity at the
+        specified position. Otherwise, the function returns zero. */
+    double metallicity(Position bfr) const override;
+
+    /** This function returns true if the medium has a gas or electron material mix and the \em
+        importTemperature flag is enabled for the medium. */
+    bool hasTemperature() const override;
+
     /** This function returns the temperature of the medium at the specified position, if defined
-        in the input model. Specifically, the function returns -1 unless the medium has a gas
-        material mix and the \em importTemperature flag is enabled. In that case, the function
-        returns the imported temperature at the specified position. */
+        in the input model. Specifically, if the medium has a gas or electron material mix and the
+        \em importTemperature flag is enabled, the function returns the imported temperature at the
+        specified position. Otherwise, the function returns zero. */
     double temperature(Position bfr) const override;
+
+    /** This function returns true if custom input model parameters are available for this medium.
+        See the parameters() function for more information. */
+    bool hasParameters() const override;
 
     /** If custom input model parameters are available for this medium, this function stores the
         parameter values at the specified position into the given array. If the position is outside

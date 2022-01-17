@@ -47,14 +47,14 @@ class ProbePhotonPacketInterface;
 
     To achieve the goals described above, the SourceSystem::prepareForLaunch() function maps
     consecutive history index ranges to each of the sources being held. This mapping is also passed
-    on to each source, so that it can (but doesn't have to) implement a simular approach for its
+    on to each source, so that it can (but doesn't have to) implement a similar approach for its
     subsources. The number of photon packets allocated to each source is determined as follows:
 
     \f[ N_s = \left[ (1-\xi) \frac{w_s L_s}{\sum w_s L_s} + \xi \frac{w_s}{\sum w_s} \right] N \f]
 
     where \f$N\f$ is the total number of photon packets to be launched, \f$N_s\f$ is the number of
     photon packets to be launched by source \f$s\f$, \f$L_s\f$ is the bolometric luminosity of
-    source \f$s\f$, \f$w_s\f$ is the \em emissionWeight property value for source \f$s\f$,
+    source \f$s\f$, \f$w_s\f$ is the \em sourceWeight property value for source \f$s\f$,
     \f$\xi\f$ is the \em sourceBias property value of the source system, and the sums range over
     all sources in the source system.
 */
@@ -64,21 +64,21 @@ class SourceSystem : public SimulationItem
 
         PROPERTY_DOUBLE(minWavelength, "the shortest wavelength of photon packets launched from primary sources")
         ATTRIBUTE_QUANTITY(minWavelength, "wavelength")
-        ATTRIBUTE_MIN_VALUE(minWavelength, "1 Angstrom")
+        ATTRIBUTE_MIN_VALUE(minWavelength, "1 pm")
         ATTRIBUTE_MAX_VALUE(minWavelength, "1 m")
         ATTRIBUTE_DEFAULT_VALUE(minWavelength, "0.09 micron")
         ATTRIBUTE_RELEVANT_IF(minWavelength, "Panchromatic")
 
         PROPERTY_DOUBLE(maxWavelength, "the longest wavelength of photon packets launched from primary sources")
         ATTRIBUTE_QUANTITY(maxWavelength, "wavelength")
-        ATTRIBUTE_MIN_VALUE(maxWavelength, "1 Angstrom")
+        ATTRIBUTE_MIN_VALUE(maxWavelength, "1 pm")
         ATTRIBUTE_MAX_VALUE(maxWavelength, "1 m")
         ATTRIBUTE_DEFAULT_VALUE(maxWavelength, "100 micron")
         ATTRIBUTE_RELEVANT_IF(maxWavelength, "Panchromatic")
 
         PROPERTY_DOUBLE_LIST(wavelengths, "the discrete wavelengths of photon packets launched from primary sources")
         ATTRIBUTE_QUANTITY(wavelengths, "wavelength")
-        ATTRIBUTE_MIN_VALUE(wavelengths, "1 Angstrom")
+        ATTRIBUTE_MIN_VALUE(wavelengths, "1 pm")
         ATTRIBUTE_MAX_VALUE(wavelengths, "1 m")
         ATTRIBUTE_DEFAULT_VALUE(wavelengths, "0.55 micron")
         ATTRIBUTE_RELEVANT_IF(wavelengths, "Oligochromatic")

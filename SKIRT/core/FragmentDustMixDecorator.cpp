@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "FragmentDustMixDecorator.hpp"
+#include "Configuration.hpp"
 #include "DustMixFragment.hpp"
 #include "FatalError.hpp"
 #include "MaterialState.hpp"
@@ -80,6 +81,13 @@ bool FragmentDustMixDecorator::hasExtraSpecificState() const
 
 ////////////////////////////////////////////////////////////////////
 
+bool FragmentDustMixDecorator::hasContinuumEmission() const
+{
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////
+
 vector<SnapshotParameter> FragmentDustMixDecorator::parameterInfo() const
 {
     vector<SnapshotParameter> descriptors;
@@ -118,8 +126,8 @@ vector<StateVariable> FragmentDustMixDecorator::specificStateVariableInfo() cons
 
 ////////////////////////////////////////////////////////////////////
 
-void FragmentDustMixDecorator::initializeSpecificState(MaterialState* state, double /*temperature*/,
-                                                       const Array& params) const
+void FragmentDustMixDecorator::initializeSpecificState(MaterialState* state, double /*metallicity*/,
+                                                       double /*temperature*/, const Array& params) const
 {
     for (int f = 0; f != _numFrags; ++f)
     {
@@ -206,7 +214,7 @@ double FragmentDustMixDecorator::opacityExt(double lambda, const MaterialState* 
 
 void FragmentDustMixDecorator::peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w,
                                                  Direction bfkobs, Direction bfky, const MaterialState* state,
-                                                 PhotonPacket* pp) const
+                                                 const PhotonPacket* pp) const
 {
     // calculate the weights corresponding to the scattering opacities for each fragment and their sum
     Array wv(_numFrags);
@@ -242,6 +250,13 @@ void FragmentDustMixDecorator::performScattering(double lambda, const MaterialSt
 
     // actually perform the scattering event for this fragment
     _fragments[f]->performScattering(lambda, state, pp);
+}
+
+////////////////////////////////////////////////////////////////////
+
+DisjointWavelengthGrid* FragmentDustMixDecorator::emissionWavelengthGrid() const
+{
+    return find<Configuration>()->dustEmissionWLG();
 }
 
 ////////////////////////////////////////////////////////////////////

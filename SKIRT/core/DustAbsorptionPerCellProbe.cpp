@@ -6,6 +6,7 @@
 #include "DustAbsorptionPerCellProbe.hpp"
 #include "Configuration.hpp"
 #include "DisjointWavelengthGrid.hpp"
+#include "Indices.hpp"
 #include "InstrumentWavelengthGridProbe.hpp"
 #include "MediumSystem.hpp"
 #include "StringUtils.hpp"
@@ -31,8 +32,8 @@ void DustAbsorptionPerCellProbe::probeRun()
             // write the header
             file.writeLine("# Spectral luminosity absorbed by dust per spatial cell");
             file.addColumn("spatial cell index", "", 'd');
-            for (int ell = 0; ell != wavelengthGrid->numBins(); ++ell)
-                file.addColumn(units->smonluminosity() + "^abs at lambda = "
+            for (int ell : Indices(wavelengthGrid->numBins(), units->rwavelength()))
+                file.addColumn(units->smonluminosity() + "^abs at " + units->swavelength() + " = "
                                    + StringUtils::toString(units->owavelength(wavelengthGrid->wavelength(ell)), 'g')
                                    + " " + units->uwavelength(),
                                units->umonluminosity());
@@ -44,11 +45,11 @@ void DustAbsorptionPerCellProbe::probeRun()
                 vector<double> values({static_cast<double>(m)});
                 const Array& Jv = ms->meanIntensity(m);
                 double factor = 4. * M_PI * ms->volume(m);
-                for (int ell = 0; ell != wavelengthGrid->numBins(); ++ell)
+                for (int ell : Indices(wavelengthGrid->numBins(), units->rwavelength()))
                 {
                     double lambda = wavelengthGrid->wavelength(ell);
                     double Labs = Jv[ell] * factor * ms->opacityAbs(lambda, m, MaterialMix::MaterialType::Dust);
-                    values.push_back(units->omonluminosityWavelength(lambda, Labs));
+                    values.push_back(units->omonluminosity(lambda, Labs));
                 }
                 file.writeRow(values);
             }

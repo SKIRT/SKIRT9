@@ -19,6 +19,13 @@ void TabulatedWavelengthDistribution::setupSelfBefore()
     Array inlambdav, inpv;
     getWavelengthsAndProbabilities(inlambdav, inpv);
 
+    // reverse the arrays if needed to get the wavelengths in increasing order
+    if (inlambdav.size() > 1 && inlambdav[0] > inlambdav[inlambdav.size() - 1])
+    {
+        std::reverse(begin(inlambdav), end(inlambdav));
+        std::reverse(begin(inpv), end(inpv));
+    }
+
     // determine the intersected wavelength range
     Range range(inlambdav[0], inlambdav[inlambdav.size() - 1]);
     range.intersect(interface<SourceWavelengthRangeInterface>()->wavelengthRange());

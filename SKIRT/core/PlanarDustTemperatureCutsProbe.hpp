@@ -35,9 +35,6 @@ class PlanarDustTemperatureCutsProbe : public AbstractPlanarCutsProbe
     //======================== Other Functions =======================
 
 public:
-    /** This function performs probing after all photon packets have been emitted and detected. */
-    void probeRun() override;
-
     /** This function outputs a FITS file with an indicative dust temperature cut in a plane
         parallel to the coordinate plane indicated by the boolean "direction" arguments \em xd, \em
         yd, and \em zd, exactly two of which must be true. The arguments \em xc, \em yc, and \em zc
@@ -45,6 +42,9 @@ public:
         number of pixels in each direction. */
     static void writeDustTemperatureCut(Probe* probe, bool xd, bool yd, bool zd, double xc, double yc, double zc,
                                         int Nx, int Ny, int Nz);
+
+    /** This function performs probing after all photon packets have been emitted and detected. */
+    void probeRun() override;
 };
 
 ////////////////////////////////////////////////////////////////////

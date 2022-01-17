@@ -9,7 +9,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-double LineLuminosityNormalization::luminosity(SED* sed) const
+double LineLuminosityNormalization::luminosityForSED(SED* sed) const
 {
     // get the normalized luminosity for the configured line from the sed, using a very narrow wavelength range
     double L = sed->integratedLuminosity(Range(_wavelength * (1 - 1e-10), _wavelength * (1 + 1e-10)));

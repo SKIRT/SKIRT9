@@ -5,6 +5,7 @@
 
 #include "OpticalMaterialPropertiesProbe.hpp"
 #include "Configuration.hpp"
+#include "Indices.hpp"
 #include "InstrumentSystem.hpp"
 #include "MaterialMix.hpp"
 #include "Medium.hpp"
@@ -56,7 +57,6 @@ void OpticalMaterialPropertiesProbe::probeSetup()
 
         // select "local" or default wavelength grid
         auto probeWavelengthGrid = find<Configuration>()->wavelengthGrid(wavelengthGrid());
-        int numWavelengths = probeWavelengthGrid->numBins();
 
         // create a seperate file for each medium
         for (int h = 0; h != numMedia; ++h)
@@ -71,7 +71,7 @@ void OpticalMaterialPropertiesProbe::probeSetup()
             out.writeLine("# Medium component " + std::to_string(h) + " -- " + materialForType(mix->materialType())
                           + " mass per " + entityForType(mix->materialType()) + ": "
                           + StringUtils::toString(units->obulkmass(mix->mass()), 'e', 9) + " " + units->ubulkmass());
-            out.addColumn("wavelength", units->uwavelength());
+            out.addColumn("wavelength; " + units->swavelength(), units->uwavelength());
             out.addColumn("extinction cross section per " + entityForType(mix->materialType()), units->usection());
             out.addColumn("absorption cross section per " + entityForType(mix->materialType()), units->usection());
             out.addColumn("scattering cross section per " + entityForType(mix->materialType()), units->usection());
@@ -82,7 +82,7 @@ void OpticalMaterialPropertiesProbe::probeSetup()
             out.addColumn("scattering asymmetry parameter");
 
             // write the columns
-            for (int ell = 0; ell != numWavelengths; ++ell)
+            for (int ell : Indices(probeWavelengthGrid->numBins(), units->rwavelength()))
             {
                 double lambda = probeWavelengthGrid->wavelength(ell);
                 double sigmaExt = mix->sectionExt(lambda);

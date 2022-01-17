@@ -11,6 +11,7 @@
 #include "PhotonPacket.hpp"
 #include "Random.hpp"
 #include "StringUtils.hpp"
+#include "Units.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -55,12 +56,24 @@ void DustMix::setupSelfAfter()
     for (double lambda : config->simulationWavelengths()) wavelengths.push_back(lambda);
 
     // sort the wavelengths and remove duplicates
-    std::sort(wavelengths.begin(), wavelengths.end());
-    int numLambda = std::unique(wavelengths.begin(), wavelengths.end()) - wavelengths.begin();
+    NR::unique(wavelengths);
+
+    // remove wavelengths beyond 10 cm, if any, because those dust cross sections should be assumed to be zero
+    const double dm = 0.1;
+    bool radioCutoff = wavelengths.back() > dm;
+    if (radioCutoff)
+    {
+        wavelengths.resize(NR::locate(wavelengths, dm) + 1);
+        if (wavelengths.empty() || wavelengths.back() != dm) wavelengths.push_back(dm);
+        wavelengths.push_back(dm * 1.001);  // add a dummy border value which is never used
+    }
+
+    // remember the wavelength range
+    _required.set(wavelengths.front(), wavelengths.back());
 
     // copy the wavelengths into a temporary (local) array that will be used to sample the dust properties
-    Array lambdav(numLambda);
-    for (int ell = 0; ell != numLambda; ++ell) lambdav[ell] = wavelengths[ell];
+    Array lambdav = NR::array(wavelengths);
+    int numLambda = lambdav.size();
 
     // derive a wavelength grid that will be used for converting a wavelength to an index in the above array;
     // the grid points are shifted to the left of the actual sample points to approximate rounding
@@ -107,6 +120,31 @@ void DustMix::setupSelfAfter()
     // obtain the optical properties from the subclass
     _mu = getOpticalProperties(lambdav, _thetav, _sigmaabsv, _sigmascav, _asymmparv, _S11vv, _S12vv, _S33vv, _S34vv,
                                _sigmaabsvv, _sigmaabspolvv);
+
+    // ensure that values for the asymmetry parameter g are not too close to 1 or -1
+    // - the HG phase function expression becomes numerically unstable for abs(g) > 1-1e-7
+    // - more annoyingly, HG phase function values (and hence the bias factors for peel-off photon packets)
+    //   become exceedingly large or small for abs(g) > 0.95, causing unacceptable artificial "noise"
+    const double maxg = 0.95;
+    int lastAdjustedEll = -1;  // index of longest wavelength for which adjustment has been made
+    for (int ell = 0; ell != numLambda; ++ell)
+    {
+        if (abs(_asymmparv[ell]) > maxg)
+        {
+            _asymmparv[ell] = std::copysign(maxg, _asymmparv[ell]);
+            lastAdjustedEll = ell;
+        }
+    }
+    if (lastAdjustedEll >= 0)
+    {
+        auto units = find<Units>();
+        auto log = find<Log>();
+        log->warning(type() + " extreme forward/backward scattering asymmetry parameter values reduced to "
+                     + StringUtils::toString(maxg));
+        log->warning("  For some or all wavelengths short of "
+                     + StringUtils::toString(units->owavelength(lambdav[lastAdjustedEll]), 'g', 3) + " "
+                     + units->uwavelength());
+    }
 
     // calculate derived basic optical properties
     for (int ell = 0; ell != numLambda; ++ell)
@@ -162,6 +200,15 @@ void DustMix::setupSelfAfter()
         _calc.precalculate(this, lambdav, _sigmaabsv);
     }
 
+    // if the wavelength range was cut off, suppress all cross sections beyond the cutoff wavelength
+    // by setting the last two values to zero (the penultimate item is for the cutoff wavelength)
+    if (radioCutoff)
+    {
+        _sigmaabsv[numLambda - 2] = _sigmaabsv[numLambda - 1] = 0.;
+        _sigmascav[numLambda - 2] = _sigmascav[numLambda - 1] = 0.;
+        _sigmaextv[numLambda - 2] = _sigmaextv[numLambda - 1] = 0.;
+    }
+
     // give the subclass a chance to obtain additional precalculated information
     size_t allocatedBytes = initializeExtraProperties(lambdav);
 
@@ -198,6 +245,25 @@ size_t DustMix::initializeExtraProperties(const Array& /*lambdav*/)
 
 ////////////////////////////////////////////////////////////////////
 
+void DustMix::informAvailableWavelengthRange(Range available)
+{
+    const double fuzzy = 0.011;  // slightly more than 1% because Configuration class extends the range by 1%
+    if (!available.containsFuzzy(_required.min(), fuzzy) || !available.containsFuzzy(_required.max(), fuzzy))
+    {
+        auto units = find<Units>();
+        auto outstring = [units](double wavelength) {
+            return StringUtils::toString(units->owavelength(wavelength), 'g', 3) + " " + units->uwavelength();
+        };
+
+        auto log = find<Log>();
+        log->warning(type() + " dust properties are not available for full simulation wavelength range");
+        log->warning("  Required: " + outstring(_required.min()) + " - " + outstring(_required.max()));
+        log->warning("  Available: " + outstring(available.min()) + " - " + outstring(available.max()));
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
 int DustMix::indexForLambda(double lambda) const
 {
     return NR::locateClip(_lambdav, lambda);
@@ -216,6 +282,13 @@ int DustMix::indexForTheta(double theta) const
 MaterialMix::MaterialType DustMix::materialType() const
 {
     return MaterialType::Dust;
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool DustMix::hasContinuumEmission() const
+{
+    return true;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -307,7 +380,7 @@ namespace
 ////////////////////////////////////////////////////////////////////
 
 void DustMix::peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w, Direction bfkobs,
-                                Direction bfky, const MaterialState* /*state*/, PhotonPacket* pp) const
+                                Direction bfky, const MaterialState* /*state*/, const PhotonPacket* pp) const
 {
     switch (scatteringMode())
     {
@@ -517,6 +590,13 @@ const Array& DustMix::sectionsAbspol(double lambda) const
 Array DustMix::emissivity(const Array& Jv) const
 {
     return _calc.emissivity(Jv);
+}
+
+////////////////////////////////////////////////////////////////////
+
+DisjointWavelengthGrid* DustMix::emissionWavelengthGrid() const
+{
+    return find<Configuration>()->dustEmissionWLG();
 }
 
 ////////////////////////////////////////////////////////////////////

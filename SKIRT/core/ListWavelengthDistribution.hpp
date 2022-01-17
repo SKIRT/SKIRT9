@@ -15,22 +15,23 @@
     tabulated wavelength/probability pairs. The probability distribution function is defined
     segment-wise by the tabulated values, using logarithmic interpolation. This class is intended
     for use in cases where there are just a few wavelength/probability pairs, but nothing keeps the
-    user from specifying a long list. The probability outside the range indicated by the first and
-    the last wavelength in the list is considered to be zero.
+    user from specifying a long list. The wavelengths must be listed in increasing or decreasing
+    order. The probability outside the range indicated by the first and the last wavelength in the
+    list is considered to be zero.
 
-    The wavelengths must listed be in increasing order. The probability values are in fact given in
-    luminosity units. The default is to use per-wavelength units, but the user can opt to use
-    per-frequency or neutral units. Other than this, the scaling of the values is arbitrary because
-    the distribution will be normalized after being loaded. However, the input procedure still
-    insists on knowing the precise units. */
+    The probability values are in fact given in luminosity units. The default is to use
+    per-wavelength units, but the user can opt to use per-frequency or neutral units. Other than
+    this, the scaling of the values is arbitrary because the distribution will be normalized after
+    being loaded. However, the input procedure still insists on knowing the precise units. */
 class ListWavelengthDistribution : public TabulatedWavelengthDistribution
 {
-    /** The enumeration type indicating the specific probability unit style, e.g. whether to use
-        probability per unit of wavelength or per unit of frequency. */
-    ENUM_DEF(UnitStyle, wavelengthmonluminosity, frequencymonluminosity, neutralmonluminosity)
-        ENUM_VAL(UnitStyle, wavelengthmonluminosity, "per unit of wavelength: p_λ")
-        ENUM_VAL(UnitStyle, frequencymonluminosity, "per unit of frequency: p_ν")
-        ENUM_VAL(UnitStyle, neutralmonluminosity, "neutral: λ p_λ = ν p_ν")
+    /** The enumeration type indicating the specific luminosity unit style, e.g. whether to use
+        specific luminosity per unit of wavelength, frequency or energy. */
+    ENUM_DEF(UnitStyle, neutralmonluminosity, wavelengthmonluminosity, frequencymonluminosity, energymonluminosity)
+        ENUM_VAL(UnitStyle, neutralmonluminosity, "neutral: λ L_λ = ν L_ν")
+        ENUM_VAL(UnitStyle, wavelengthmonluminosity, "per unit of wavelength: L_λ")
+        ENUM_VAL(UnitStyle, frequencymonluminosity, "per unit of frequency: L_ν")
+        ENUM_VAL(UnitStyle, energymonluminosity, "counts per unit of energy: L_E")
     ENUM_END()
 
     ITEM_CONCRETE(ListWavelengthDistribution, TabulatedWavelengthDistribution,
@@ -38,7 +39,7 @@ class ListWavelengthDistribution : public TabulatedWavelengthDistribution
 
         PROPERTY_DOUBLE_LIST(wavelengths, "the wavelengths at which to specify the probability")
         ATTRIBUTE_QUANTITY(wavelengths, "wavelength")
-        ATTRIBUTE_MIN_VALUE(wavelengths, "1 Angstrom")
+        ATTRIBUTE_MIN_VALUE(wavelengths, "1 pm")
         ATTRIBUTE_MAX_VALUE(wavelengths, "1 m")
 
         PROPERTY_ENUM(unitStyle, UnitStyle, "the probability unit style")

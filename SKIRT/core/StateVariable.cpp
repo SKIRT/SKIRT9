@@ -42,6 +42,13 @@ StateVariable StateVariable::numberDensity()
 
 //////////////////////////////////////////////////////////////////////
 
+StateVariable StateVariable::metallicity()
+{
+    return StateVariable(Identifier::Metallicity, 0, "metallicity", "", 'e');
+}
+
+//////////////////////////////////////////////////////////////////////
+
 StateVariable StateVariable::temperature()
 {
     return StateVariable(Identifier::Temperature, 0, "temperature", "temperature", 'e');

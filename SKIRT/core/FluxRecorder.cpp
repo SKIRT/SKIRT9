@@ -5,9 +5,11 @@
 
 #include "FluxRecorder.hpp"
 #include "FITSInOut.hpp"
+#include "Indices.hpp"
 #include "LockFree.hpp"
 #include "Log.hpp"
 #include "MediumSystem.hpp"
+#include "NR.hpp"
 #include "PhotonPacket.hpp"
 #include "ProcessManager.hpp"
 #include "StringUtils.hpp"
@@ -381,7 +383,7 @@ void FluxRecorder::calibrateAndWrite()
         if (_includeFluxDensity)
         {
             double factor = 1. / fourpid2 / _lambdagrid->effectiveWidth(ell)
-                            * units->ofluxdensityWavelength(_lambdagrid->wavelength(ell), 1.);
+                            * units->ofluxdensity(_lambdagrid->wavelength(ell), 1.);
             for (auto& array : _sed)
                 if (array.size()) array[ell] *= factor;
         }
@@ -389,7 +391,7 @@ void FluxRecorder::calibrateAndWrite()
         if (_includeSurfaceBrightness)
         {
             double factor = 1. / fourpid2 / omega / _lambdagrid->effectiveWidth(ell)
-                            * units->osurfacebrightnessWavelength(_lambdagrid->wavelength(ell), 1.);
+                            * units->osurfacebrightness(_lambdagrid->wavelength(ell), 1.);
             size_t begin = ell * _numPixelsInFrame;
             size_t end = begin + _numPixelsInFrame;
             for (auto& array : _ifu)
@@ -451,14 +453,14 @@ void FluxRecorder::calibrateAndWrite()
 
         // open the file and add the column headers
         TextOutFile sedFile(_parentItem, _instrumentName + "_sed", "SED");
-        sedFile.addColumn("wavelength", units->uwavelength());
+        sedFile.addColumn("wavelength; " + units->swavelength(), units->uwavelength());
         for (const string& name : sedNames)
         {
             sedFile.addColumn(name + "; " + units->sfluxdensity(), units->ufluxdensity());
         }
 
         // write the column data
-        for (int ell = 0; ell != numWavelengths; ++ell)
+        for (int ell : Indices(numWavelengths, units->rwavelength()))
         {
             vector<double> values({units->owavelength(_lambdagrid->wavelength(ell))});
             for (const Array* array : sedArrays) values.push_back(array->size() ? (*array)[ell] : 0.);
@@ -471,7 +473,7 @@ void FluxRecorder::calibrateAndWrite()
         {
             // open the file and add the column headers
             TextOutFile statFile(_parentItem, _instrumentName + "_sedstats", "SED statistics");
-            statFile.addColumn("wavelength", units->uwavelength());
+            statFile.addColumn("wavelength; " + units->swavelength(), units->uwavelength());
             for (int k = 0; k <= maxContributionPower; ++k)
             {
                 statFile.addColumn("Sum[w_i**" + std::to_string(k) + "]");
@@ -479,7 +481,7 @@ void FluxRecorder::calibrateAndWrite()
             statFile.writeLine("# --> w_i is luminosity contribution (in W) from i_th launched photon");
 
             // write the column data
-            for (int ell = 0; ell != numWavelengths; ++ell)
+            for (int ell : Indices(numWavelengths, units->rwavelength()))
             {
                 vector<double> values({units->owavelength(_lambdagrid->wavelength(ell))});
                 for (int k = 0; k <= maxContributionPower; ++k) values.push_back(_wsed[k][ell]);
@@ -544,7 +546,21 @@ void FluxRecorder::calibrateAndWrite()
         for (int ell = 0; ell != numWavelengths; ++ell)
             wavegrid[ell] = units->owavelength(_lambdagrid->wavelength(ell));
 
-        // determine coordinate axes values and units
+        // reverse the ordering of the wavelength grid and frames if necessary
+        if (units->rwavelength())
+        {
+            NR::reverse(wavegrid);
+
+            // flux frames
+            for (auto array : ifuArrays)
+                if (array->size()) NR::reverse(*array, _numPixelsInFrame);
+
+            // statistics frames
+            for (auto& array : _wifu)
+                if (array.size()) NR::reverse(array, _numPixelsInFrame);
+        }
+
+        // determine spatial axes values and units
         double incx, incy, cx, cy;
         string unitsxy;
         if (_local)

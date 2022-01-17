@@ -30,13 +30,13 @@ void ImportedMedium::setupSelfAfter()
     // set the density policy
     if (mix()->isDust())
     {
-        // for dust, use metallicity and temperature cutoff
+        // for dust, use temperature cutoff and metallicity multiplier
         _snapshot->setMassDensityPolicy(_massFraction, _importTemperature ? _maxTemperature : 0., true);
     }
     else
     {
-        // for gas, do not use temperature cutoff and use metallicity as a multiplier
-        _snapshot->setMassDensityPolicy(_massFraction, 0., true);
+        // for gas and electrons, do not use temperature or metallicity
+        _snapshot->setMassDensityPolicy(_massFraction, 0., false);
     }
 
     // read the data from file
@@ -64,12 +64,20 @@ const MaterialMix* ImportedMedium::mix(Position bfr) const
     if (_importVariableMixParams)
     {
         Array params;
-        // this function is called by the Configuration object before setup() has been performed on the medium;
-        // so if the snapshot has not yet been created, just return a default material mix
-        if (_snapshot)
-            _snapshot->parameters(bfr, params);
-        else
-            params.resize(_materialMixFamily->parameterInfo().size());
+        _snapshot->parameters(bfr, params);
+        return _materialMixFamily->mix(params);
+    }
+    else
+        return _materialMix;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+const MaterialMix* ImportedMedium::mix() const
+{
+    if (_importVariableMixParams)
+    {
+        Array params(_materialMixFamily->parameterInfo().size());
         return _materialMixFamily->mix(params);
     }
     else
@@ -120,17 +128,46 @@ Vec ImportedMedium::magneticField(Position bfr) const
 
 ////////////////////////////////////////////////////////////////////
 
+bool ImportedMedium::hasMetallicity() const
+{
+    return !_importVariableMixParams && _importMetallicity && !materialMix()->isDust();
+}
+
+////////////////////////////////////////////////////////////////////
+
+double ImportedMedium::metallicity(Position bfr) const
+{
+    if (hasMetallicity()) return _snapshot->metallicity(bfr);
+    return 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool ImportedMedium::hasTemperature() const
+{
+    return !_importVariableMixParams && _importTemperature && !materialMix()->isDust();
+}
+
+////////////////////////////////////////////////////////////////////
+
 double ImportedMedium::temperature(Position bfr) const
 {
-    if (!_importVariableMixParams && _importTemperature && materialMix()->isGas()) return _snapshot->temperature(bfr);
-    return -1.;
+    if (hasTemperature()) return _snapshot->temperature(bfr);
+    return 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool ImportedMedium::hasParameters() const
+{
+    return !_importVariableMixParams && _snapshot->numParameters() > 0;
 }
 
 ////////////////////////////////////////////////////////////////////
 
 void ImportedMedium::parameters(Position bfr, Array& params) const
 {
-    if (!_importVariableMixParams && _snapshot->numParameters() > 0)
+    if (hasParameters())
         _snapshot->parameters(bfr, params);
     else
         params.resize(0);

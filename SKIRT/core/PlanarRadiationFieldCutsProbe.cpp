@@ -10,6 +10,7 @@
 #include "FITSInOut.hpp"
 #include "InstrumentWavelengthGridProbe.hpp"
 #include "MediumSystem.hpp"
+#include "NR.hpp"
 #include "Parallel.hpp"
 #include "ParallelFactory.hpp"
 #include "Units.hpp"
@@ -64,7 +65,7 @@ void PlanarRadiationFieldCutsProbe::writeRadiationFieldCut(Probe* probe, bool xd
                     for (int ell = 0; ell != wavelengthGrid->numBins(); ++ell)
                     {
                         size_t l = i + Ni * j + size * ell;
-                        Jvv[l] = units->omeanintensityWavelength(wavelengthGrid->wavelength(ell), Jv[ell]);
+                        Jvv[l] = units->omeanintensity(wavelengthGrid->wavelength(ell), Jv[ell]);
                     }
                 }
             }
@@ -77,12 +78,21 @@ void PlanarRadiationFieldCutsProbe::writeRadiationFieldCut(Probe* probe, bool xd
     if (yd) plane += "y";
     if (zd) plane += "z";
 
+    // copy the wavelength grid in output units
+    int numWavelengths = wavelengthGrid->numBins();
+    Array wavegrid(numWavelengths);
+    for (int ell = 0; ell != numWavelengths; ++ell) wavegrid[ell] = units->owavelength(wavelengthGrid->wavelength(ell));
+
+    // reverse the ordering of the wavelength grid and frames if necessary
+    if (units->rwavelength())
+    {
+        NR::reverse(wavegrid);
+        NR::reverse(Jvv, size);
+    }
+
     // write the results to a FITS file with an appropriate name
     string description = "mean intensity in the " + plane + " plane";
     string filename = probe->itemName() + "_J_" + plane;
-    Array wavegrid(wavelengthGrid->numBins());
-    for (int ell = 0; ell != wavelengthGrid->numBins(); ++ell)
-        wavegrid[ell] = units->owavelength(wavelengthGrid->wavelength(ell));
     FITSInOut::write(probe, description, filename, Jvv, units->umeanintensity(), Ni, Nj,
                      units->olength(xd ? xpsize : ypsize), units->olength(zd ? zpsize : ypsize),
                      units->olength(xd ? xcenter : ycenter), units->olength(zd ? zcenter : ycenter), units->ulength(),

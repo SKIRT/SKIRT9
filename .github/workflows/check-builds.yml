@@ -1,0 +1,50 @@
+# GitHub action workflow that checks the build process on multiple platforms.
+#
+# The workflow builds the code (without MPI and without MakeUp)
+# using GCC on Ubuntu and using Clang on macOS, in two different jobs.
+# Other compiler/platform combinations can be added if the need arises.
+# The workflow fails if there are any build errors and/or warnings.
+#
+name: Check builds
+
+# workflow event trigger
+on: [pull_request, workflow_dispatch]
+
+# jobs that run
+jobs:
+
+  # GCC on Ubuntu
+  check_build_gcc:
+    # job name, displayed in the action log
+    name: Build using GCC on Ubuntu
+    # run this job on the Github-provided runner with a recent Ubuntu version
+    runs-on: ubuntu-20.04
+    # steps that make up this job
+    steps:
+    # checkout using the default checkout action, v2
+    - name: Checkout
+      uses: actions/checkout@v2
+    # configure the build files through CMake
+    - name: Configure
+      run: cmake -B release -DCMAKE_BUILD_TYPE:STRING=Release -DWARNINGS_AS_ERRORS:BOOL=ON -DBUILD_DOX_STYLE:BOOL=ON -DBUILD_SMILE_SHAPES:BOOL=ON -DBUILD_SMILE_TOOL:BOOL=ON -L
+    # perform the actual build (Ubuntu runners have 2 cores)
+    - name: Build
+      run: make -C release -j 2
+
+  # Clang on macOS
+  check_build_clang:
+    # job name, displayed in the action log
+    name: Build using Clang on macOS
+    # run this job on the Github-provided runner with a recent macOS version
+    runs-on: macos-11
+    # steps that make up this job
+    steps:
+    # checkout using the default checkout action, v2
+    - name: Checkout
+      uses: actions/checkout@v2
+    # configure the build files through CMake
+    - name: Configure
+      run: cmake -B release -DCMAKE_BUILD_TYPE:STRING=Release -DWARNINGS_AS_ERRORS:BOOL=ON -DBUILD_DOX_STYLE:BOOL=ON -DBUILD_SMILE_SHAPES:BOOL=ON -DBUILD_SMILE_TOOL:BOOL=ON -L
+    # perform the actual build (mac OS runners have 3 cores)
+    - name: Build
+      run: make -C release -j 3

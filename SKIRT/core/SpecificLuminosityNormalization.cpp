@@ -4,13 +4,13 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "SpecificLuminosityNormalization.hpp"
-#include "Constants.hpp"
 #include "ContSED.hpp"
 #include "FatalError.hpp"
+#include "Units.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-double SpecificLuminosityNormalization::luminosity(SED* sed) const
+double SpecificLuminosityNormalization::luminosityForSED(SED* sed) const
 {
     auto contsed = dynamic_cast<ContSED*>(sed);
     if (!contsed) throw FATALERROR("Cannot use specific luminosity normalization for a line emission spectrum");
@@ -20,15 +20,7 @@ double SpecificLuminosityNormalization::luminosity(SED* sed) const
     if (LlambdaSED <= 0) throw FATALERROR("The normalization wavelength is outside of the SED's wavelength range");
 
     // convert the user-configured specific luminosity to per-wavelength units
-    double LlambdaUser = 0.;
-    switch (_unitStyle)
-    {
-        case UnitStyle::wavelengthmonluminosity: LlambdaUser = _specificLuminosity; break;
-        case UnitStyle::frequencymonluminosity:
-            LlambdaUser = _specificLuminosity * Constants::c() / _wavelength / _wavelength;
-            break;
-        case UnitStyle::neutralmonluminosity: LlambdaUser = _specificLuminosity / _wavelength; break;
-    }
+    double LlambdaUser = Units::fromFluxStyle(_wavelength, _specificLuminosity, Units::fluxStyle(_unitStyle));
 
     // return the ratio
     return LlambdaUser / LlambdaSED;

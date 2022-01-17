@@ -71,6 +71,7 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
     double mu = 0.;
 
     // accumulate the relevant properties over all populations
+    Range availableWavelengthRange;
     for (auto population : _populations)
     {
         // construct a grain size integration grid for this population
@@ -136,6 +137,12 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
         StoredTable<2> Qabs(this, opticalPropsName, "a(m),lambda(m)", "Qabs(1)");
         StoredTable<2> Qsca(this, opticalPropsName, "a(m),lambda(m)", "Qsca(1)");
         StoredTable<2> g(this, opticalPropsName, "a(m),lambda(m)", "g(1)");
+
+        // track the smallest available wavelength range
+        if (availableWavelengthRange.empty())
+            availableWavelengthRange = Qabs.axisRange<1>();
+        else
+            availableWavelengthRange.intersect(Qabs.axisRange<1>());
 
         // calculate the optical properties for each wavelength, and add them to the global total
         for (int ell = 0; ell != numLambda; ++ell)
@@ -315,6 +322,10 @@ double MultiGrainDustMix::getOpticalProperties(const Array& lambdav, const Array
             ProcessManager::sumToAll(sigmaabspolvv[ell]);
         }
     }
+
+    // log warning if the simulation wavelength range extends beyond the optical property range
+    informAvailableWavelengthRange(availableWavelengthRange);
+
     return mu;
 }
 

@@ -322,6 +322,22 @@ Box AdaptiveMeshSnapshot::extent(int m) const
 
 ////////////////////////////////////////////////////////////////////
 
+double AdaptiveMeshSnapshot::metallicity(int m) const
+{
+    const Array& prop = _cells[m]->properties();
+    return prop[metallicityIndex()];
+}
+
+////////////////////////////////////////////////////////////////////
+
+double AdaptiveMeshSnapshot::metallicity(Position bfr) const
+{
+    int m = cellIndex(bfr);
+    return m >= 0 ? metallicity(m) : 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
 double AdaptiveMeshSnapshot::temperature(int m) const
 {
     const Array& prop = _cells[m]->properties();

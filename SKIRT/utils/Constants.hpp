@@ -40,6 +40,10 @@ namespace Constants
     /** This function returns the rest mass of the electron. */
     constexpr double Melectron() { return 9.10938215e-31; }
 
+    /** This function returns the electric charge of an electron in coulombs, which is equivalent
+        to the value of 1 eV in joules. */
+    constexpr double Qelectron() { return 1.602176634e-19; }
+
     /** This function returns the solar mass. */
     constexpr double Msun() { return 1.9891e30; }
 
@@ -58,14 +62,6 @@ namespace Constants
 
     /** This function returns the Einstein A-coefficient of the Lyman-alpha transition. */
     constexpr double EinsteinALya() { return 6.25e8; }
-
-    /** This function returns the wavelength of the center of the optical \f$V\f$ band. */
-    constexpr double lambdaV() { return 550e-9; }
-
-    /** This function returns the total (i.e. absorption and scattering) dust opacity
-        \f$\kappa_{\text{V}}\f$ in the V-band for a Draine & Li (2007) dust mix with
-        characteristics corresponding to the InterstellarDistMix class. */
-    constexpr double kappaV() { return 2600.; }
 
     /** This function returns the Thomson cross section for an electron. */
     constexpr double sigmaThomson() { return 6.6524587158e-29; }

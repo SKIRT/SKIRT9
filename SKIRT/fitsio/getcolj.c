@@ -236,7 +236,7 @@ int ffgsvj(fitsfile *fptr, /* I - FITS file pointer                         */
 
     if (naxis < 1 || naxis > 9)
     {
-        sprintf(msg, "NAXIS = %d in call to ffgsvj is out of range", naxis);
+        snprintf(msg, FLEN_ERRMSG,"NAXIS = %d in call to ffgsvj is out of range", naxis);
         ffpmsg(msg);
         return(*status = BAD_DIMEN);
     }
@@ -314,7 +314,7 @@ int ffgsvj(fitsfile *fptr, /* I - FITS file pointer                         */
         }
         else
         {
-          sprintf(msg, "ffgsvj: illegal range specified for axis %ld", ii + 1);
+          snprintf(msg, FLEN_ERRMSG,"ffgsvj: illegal range specified for axis %ld", ii + 1);
           ffpmsg(msg);
           return(*status = BAD_PIX_NUM);
         }
@@ -413,7 +413,7 @@ int ffgsfj(fitsfile *fptr, /* I - FITS file pointer                         */
 
     if (naxis < 1 || naxis > 9)
     {
-        sprintf(msg, "NAXIS = %d in call to ffgsvj is out of range", naxis);
+        snprintf(msg, FLEN_ERRMSG,"NAXIS = %d in call to ffgsvj is out of range", naxis);
         ffpmsg(msg);
         return(*status = BAD_DIMEN);
     }
@@ -482,7 +482,7 @@ int ffgsfj(fitsfile *fptr, /* I - FITS file pointer                         */
     {
       if (trc[ii] < blc[ii])
       {
-        sprintf(msg, "ffgsvj: illegal range specified for axis %ld", ii + 1);
+        snprintf(msg, FLEN_ERRMSG,"ffgsvj: illegal range specified for axis %ld", ii + 1);
         ffpmsg(msg);
         return(*status = BAD_PIX_NUM);
       }
@@ -665,7 +665,7 @@ int ffgclj( fitsfile *fptr,   /* I - FITS file pointer                       */
     LONGLONG repeat, startpos, elemnum, readptr, tnull;
     LONGLONG rowlen, rownum, remain, next, rowincre, maxelem;
     char tform[20];
-    char message[81];
+    char message[FLEN_ERRMSG];
     char snull[20];   /*  the FITS null value if reading from ASCII table  */
 
     double cbuff[DBUFFSIZE / sizeof(double)]; /* align cbuff on word boundary */
@@ -729,18 +729,17 @@ int ffgclj( fitsfile *fptr,   /* I - FITS file pointer                       */
     /*  not need to use a temporary buffer to store intermediate datatype.  */
     /*----------------------------------------------------------------------*/
     convert = 1;
-    if (tcode == TLONG)  /* Special Case:                        */
+    if ((tcode == TLONG) && (LONGSIZE == 32))  /* Special Case:                        */
     {                             /* no type convertion required, so read */
                                   /* data directly into output buffer.    */
 
-        if (nelem < (LONGLONG)INT32_MAX/8) {
+        if (nelem < (LONGLONG)INT32_MAX/4) {
             maxelem = nelem;
         } else {
-        /* divide by 8 instead of 4 in case sizeof(long) = 8 */
-            maxelem = INT32_MAX/8;   
+            maxelem = INT32_MAX/4;   
         }
 
-        if (nulcheck == 0 && scale == 1. && zero == 0. && LONGSIZE == 32)
+        if (nulcheck == 0 && scale == 1. && zero == 0. )
             convert = 0;  /* no need to scale data or find nulls */
     }
 
@@ -780,12 +779,22 @@ int ffgclj( fitsfile *fptr,   /* I - FITS file pointer                       */
         switch (tcode) 
         {
             case (TLONG):
+	      if (LONGSIZE == 32) {
                 ffgi4b(fptr, readptr, ntodo, incre, (INT32BIT *) &array[next],
                        status);
                 if (convert)
                     fffi4i4((INT32BIT *) &array[next], ntodo, scale, zero, 
                            nulcheck, (INT32BIT) tnull, nulval, &nularray[next], 
                             anynul, &array[next], status);
+	      } else { /* case where sizeof(long) = 8 */
+                ffgi4b(fptr, readptr, ntodo, incre, (INT32BIT *) buffer,
+                       status);
+                if (convert)
+                    fffi4i4((INT32BIT *) buffer, ntodo, scale, zero, 
+                           nulcheck, (INT32BIT) tnull, nulval, &nularray[next], 
+                            anynul, &array[next], status);
+	      }
+
                 break;
             case (TLONGLONG):
                 ffgi8b(fptr, readptr, ntodo, incre, (long *) buffer, status);
@@ -833,7 +842,7 @@ int ffgclj( fitsfile *fptr,   /* I - FITS file pointer                       */
                 break;
 
             default:  /*  error trap for invalid column format */
-                sprintf(message, 
+                snprintf(message, FLEN_ERRMSG,
                    "Cannot read numbers from column %d which has format %s",
                     colnum, tform);
                 ffpmsg(message);
@@ -851,11 +860,11 @@ int ffgclj( fitsfile *fptr,   /* I - FITS file pointer                       */
         {
 	  dtemp = (double) next;
           if (hdutype > 0)
-            sprintf(message,
+            snprintf(message,FLEN_ERRMSG,
             "Error reading elements %.0f thru %.0f from column %d (ffgclj).",
               dtemp+1., dtemp+ntodo, colnum);
           else
-            sprintf(message,
+            snprintf(message,FLEN_ERRMSG,
             "Error reading elements %.0f thru %.0f from image (ffgclj).",
               dtemp+1., dtemp+ntodo);
 
@@ -1148,10 +1157,6 @@ int fffi4i4(INT32BIT *input,      /* I - array of values to be converted     */
   nullarray will be set to 1; the value of nullarray for non-null pixels 
   will = 0.  The anynull parameter will be set = 1 if any of the returned
   pixels are null, otherwise anynull will be returned with a value = 0;
-
-  Process the array of data in reverse order, to handle the case where
-  the input data is 4-bytes and the output is  8-bytes and the conversion
-  is being done in place in the same array.
 */
 {
     long ii;
@@ -1161,12 +1166,13 @@ int fffi4i4(INT32BIT *input,      /* I - array of values to be converted     */
     {
         if (scale == 1. && zero == 0.)      /* no scaling */
         {       
-            for (ii = ntodo - 1; ii >= 0; ii--)
-                output[ii] = (long) input[ii];   /* copy input to output */
+            for (ii = 0; ii < ntodo; ii++) { 
+                 output[ii] = (long) input[ii];   /* copy input to output */
+	    }
         }
         else             /* must scale the data */
         {
-            for (ii = ntodo - 1; ii >= 0; ii--)
+            for (ii = 0; ii < ntodo; ii++)
             {
                 dvalue = input[ii] * scale + zero;
 
@@ -1189,7 +1195,7 @@ int fffi4i4(INT32BIT *input,      /* I - array of values to be converted     */
     {
         if (scale == 1. && zero == 0.)  /* no scaling */
         {       
-            for (ii = ntodo - 1; ii >= 0; ii--)
+            for (ii = 0; ii < ntodo; ii++)
             {
                 if (input[ii] == tnull)
                 {
@@ -1201,12 +1207,11 @@ int fffi4i4(INT32BIT *input,      /* I - array of values to be converted     */
                 }
                 else
                     output[ii] = input[ii];
-
             }
         }
         else                  /* must scale the data */
         {
-            for (ii = ntodo - 1; ii >= 0; ii--)
+            for (ii = 0; ii < ntodo; ii++)
             {
                 if (input[ii] == tnull)
                 {
@@ -1268,10 +1273,32 @@ int fffi8i4(LONGLONG *input,      /* I - array of values to be converted     */
 {
     long ii;
     double dvalue;
+    ULONGLONG ulltemp;
 
     if (nullcheck == 0)     /* no null checking required */
     {
-        if (scale == 1. && zero == 0.)      /* no scaling */
+        if (scale == 1. && zero ==  9223372036854775808.)
+        {       
+            /* The column we read contains unsigned long long values. */
+            /* Instead of adding 9223372036854775808, it is more efficient */
+            /* and more precise to just flip the sign bit with the XOR operator */
+
+            for (ii = 0; ii < ntodo; ii++) {
+ 
+                ulltemp = (ULONGLONG) (((LONGLONG) input[ii]) ^ 0x8000000000000000);
+
+                if (ulltemp > LONG_MAX)
+                {
+                    *status = OVERFLOW_ERR;
+                    output[ii] = LONG_MAX;
+                }
+                else
+		{
+                    output[ii] = (long) ulltemp;
+		}
+            }
+        }
+        else if (scale == 1. && zero == 0.)      /* no scaling */
         {       
             for (ii = 0; ii < ntodo; ii++)
             {
@@ -1312,7 +1339,39 @@ int fffi8i4(LONGLONG *input,      /* I - array of values to be converted     */
     }
     else        /* must check for null values */
     {
-        if (scale == 1. && zero == 0.)  /* no scaling */
+        if (scale == 1. && zero ==  9223372036854775808.)
+        {       
+            /* The column we read contains unsigned long long values. */
+            /* Instead of subtracting 9223372036854775808, it is more efficient */
+            /* and more precise to just flip the sign bit with the XOR operator */
+
+            for (ii = 0; ii < ntodo; ii++) {
+ 
+                if (input[ii] == tnull)
+                {
+                    *anynull = 1;
+                    if (nullcheck == 1)
+                        output[ii] = nullval;
+                    else
+                        nullarray[ii] = 1;
+                }
+                else
+		{
+                    ulltemp = (ULONGLONG) (((LONGLONG) input[ii]) ^ 0x8000000000000000);
+
+                    if (ulltemp > LONG_MAX)
+                    {
+                        *status = OVERFLOW_ERR;
+                        output[ii] = LONG_MAX;
+                    }
+                    else
+		    {
+                        output[ii] = (long) ulltemp;
+		    }
+                }
+            }
+        }
+        else if (scale == 1. && zero == 0.)  /* no scaling */
         {       
             for (ii = 0; ii < ntodo; ii++)
             {
@@ -1738,7 +1797,7 @@ int fffstri4(char *input,         /* I - array of values to be converted     */
     int nullen;
     long ii;
     double dvalue;
-    char *cstring, message[81];
+    char *cstring, message[FLEN_ERRMSG];
     char *cptr, *tpos;
     char tempstore, chrzero = '0';
     double val, power;
@@ -1851,9 +1910,9 @@ int fffstri4(char *input,         /* I - array of values to be converted     */
 
         if (*cptr  != 0)  /* should end up at the null terminator */
         {
-          sprintf(message, "Cannot read number from ASCII table");
+          snprintf(message, FLEN_ERRMSG,"Cannot read number from ASCII table");
           ffpmsg(message);
-          sprintf(message, "Column field = %s.", cstring);
+          snprintf(message, FLEN_ERRMSG,"Column field = %s.", cstring);
           ffpmsg(message);
           /* restore the char that was overwritten by the null */
           *tpos = tempstore;
@@ -2117,7 +2176,7 @@ int ffgsvjj(fitsfile *fptr, /* I - FITS file pointer                         */
 
     if (naxis < 1 || naxis > 9)
     {
-        sprintf(msg, "NAXIS = %d in call to ffgsvj is out of range", naxis);
+        snprintf(msg, FLEN_ERRMSG,"NAXIS = %d in call to ffgsvj is out of range", naxis);
         ffpmsg(msg);
         return(*status = BAD_DIMEN);
     }
@@ -2195,7 +2254,7 @@ int ffgsvjj(fitsfile *fptr, /* I - FITS file pointer                         */
         }
         else
         {
-          sprintf(msg, "ffgsvj: illegal range specified for axis %ld", ii + 1);
+          snprintf(msg, FLEN_ERRMSG,"ffgsvj: illegal range specified for axis %ld", ii + 1);
           ffpmsg(msg);
           return(*status = BAD_PIX_NUM);
         }
@@ -2294,7 +2353,7 @@ int ffgsfjj(fitsfile *fptr, /* I - FITS file pointer                         */
 
     if (naxis < 1 || naxis > 9)
     {
-        sprintf(msg, "NAXIS = %d in call to ffgsvj is out of range", naxis);
+        snprintf(msg, FLEN_ERRMSG,"NAXIS = %d in call to ffgsvj is out of range", naxis);
         ffpmsg(msg);
         return(*status = BAD_DIMEN);
     }
@@ -2363,7 +2422,7 @@ int ffgsfjj(fitsfile *fptr, /* I - FITS file pointer                         */
     {
       if (trc[ii] < blc[ii])
       {
-        sprintf(msg, "ffgsvj: illegal range specified for axis %ld", ii + 1);
+        snprintf(msg, FLEN_ERRMSG,"ffgsvj: illegal range specified for axis %ld", ii + 1);
         ffpmsg(msg);
         return(*status = BAD_PIX_NUM);
       }
@@ -2548,7 +2607,7 @@ int ffgcljj( fitsfile *fptr,   /* I - FITS file pointer                       */
     LONGLONG repeat, startpos, elemnum, readptr, tnull;
     LONGLONG rowlen, rownum, remain, next, rowincre, maxelem;
     char tform[20];
-    char message[81];
+    char message[FLEN_ERRMSG];
     char snull[20];   /*  the FITS null value if reading from ASCII table  */
 
     double cbuff[DBUFFSIZE / sizeof(double)]; /* align cbuff on word boundary */
@@ -2716,7 +2775,7 @@ int ffgcljj( fitsfile *fptr,   /* I - FITS file pointer                       */
                 break;
 
             default:  /*  error trap for invalid column format */
-                sprintf(message, 
+                snprintf(message,FLEN_ERRMSG, 
                    "Cannot read numbers from column %d which has format %s",
                     colnum, tform);
                 ffpmsg(message);
@@ -2734,11 +2793,11 @@ int ffgcljj( fitsfile *fptr,   /* I - FITS file pointer                       */
         {
 	  dtemp = (double) next;
           if (hdutype > 0)
-            sprintf(message,
+            snprintf(message,FLEN_ERRMSG,
             "Error reading elements %.0f thru %.0f from column %d (ffgclj).",
               dtemp+1., dtemp+ntodo, colnum);
           else
-            sprintf(message,
+            snprintf(message,FLEN_ERRMSG,
             "Error reading elements %.0f thru %.0f from image (ffgclj).",
               dtemp+1., dtemp+ntodo);
 
@@ -3147,13 +3206,37 @@ int fffi8i8(LONGLONG *input,      /* I - array of values to be converted     */
 {
     long ii;
     double dvalue;
+    ULONGLONG ulltemp;
 
     if (nullcheck == 0)     /* no null checking required */
     {
-        if (scale == 1. && zero == 0.)      /* no scaling */
+        if (scale == 1. && zero ==  9223372036854775808.)
+        {       
+            /* The column we read contains unsigned long long values. */
+            /* Instead of adding 9223372036854775808, it is more efficient */
+            /* and more precise to just flip the sign bit with the XOR operator */
+
+            for (ii = 0; ii < ntodo; ii++) {
+ 
+                ulltemp = (ULONGLONG) (((LONGLONG) input[ii]) ^ 0x8000000000000000);
+
+                if (ulltemp > LONGLONG_MAX)
+                {
+                    *status = OVERFLOW_ERR;
+                    output[ii] = LONGLONG_MAX;
+                }
+                else
+		{
+                    output[ii] = (LONGLONG) ulltemp;
+		}
+            }
+        }
+        else if (scale == 1. && zero == 0.)      /* no scaling */
         {       
             for (ii = 0; ii < ntodo; ii++)
+            {
                 output[ii] =  input[ii];   /* copy input to output */
+            }
         }
         else             /* must scale the data */
         {
@@ -3178,7 +3261,38 @@ int fffi8i8(LONGLONG *input,      /* I - array of values to be converted     */
     }
     else        /* must check for null values */
     {
-        if (scale == 1. && zero == 0.)  /* no scaling */
+        if (scale == 1. && zero ==  9223372036854775808.)
+        {       
+            /* The column we read contains unsigned long long values. */
+            /* Instead of subtracting 9223372036854775808, it is more efficient */
+            /* and more precise to just flip the sign bit with the XOR operator */
+
+            for (ii = 0; ii < ntodo; ii++) { 
+                if (input[ii] == tnull)
+                {
+                    *anynull = 1;
+                    if (nullcheck == 1)
+                        output[ii] = nullval;
+                    else
+                        nullarray[ii] = 1;
+                }
+                else
+		{
+                    ulltemp = (ULONGLONG) (((LONGLONG) input[ii]) ^ 0x8000000000000000);
+
+                    if (ulltemp > LONGLONG_MAX)
+                    {
+                        *status = OVERFLOW_ERR;
+                        output[ii] = LONGLONG_MAX;
+                    }
+                    else
+		    {
+                        output[ii] = (LONGLONG) ulltemp;
+		    }
+                }
+            }
+        }
+        else if (scale == 1. && zero == 0.)  /* no scaling */
         {       
             for (ii = 0; ii < ntodo; ii++)
             {
@@ -3592,7 +3706,7 @@ int fffstri8(char *input,         /* I - array of values to be converted     */
     int nullen;
     long ii;
     double dvalue;
-    char *cstring, message[81];
+    char *cstring, message[FLEN_ERRMSG];
     char *cptr, *tpos;
     char tempstore, chrzero = '0';
     double val, power;
@@ -3705,9 +3819,9 @@ int fffstri8(char *input,         /* I - array of values to be converted     */
 
         if (*cptr  != 0)  /* should end up at the null terminator */
         {
-          sprintf(message, "Cannot read number from ASCII table");
+          snprintf(message, FLEN_ERRMSG, "Cannot read number from ASCII table");
           ffpmsg(message);
-          sprintf(message, "Column field = %s.", cstring);
+          snprintf(message, FLEN_ERRMSG,"Column field = %s.", cstring);
           ffpmsg(message);
           /* restore the char that was overwritten by the null */
           *tpos = tempstore;

@@ -51,7 +51,15 @@ class VelocityInterface;
     SpatialGridPath class and the StokesVector class. For performance reasons, a PhotonPacket object
     is usually constructed once at the start of a loop and then reused in the loop body for many
     consecutive launches; this allows the vectors with path information to remain allocated. Also,
-    some trivial functions are implemented inline in the header. */
+    several trivial functions are implemented inline in the header.
+
+    The PhotonPacket class offers auxiliary facilities for caching "technical" information related
+    to a photon packet's state during its lifecycle. This optional information is managed by the
+    clients invoking the corresponding store and retrieve functions. Examples include the observed
+    optical depth, used to avoid recalculating the optical depth for consecutive instruments with
+    the same viewing direction, and extra scattering information, used by some material mixes to
+    ensure that peel-off and random-walk operations for a given scattering interaction are treated
+    consistently. */
 class PhotonPacket : public SpatialGridPath, public StokesVector
 {
     // ------- Construction, launch and lifecycle events -------
@@ -206,7 +214,7 @@ public:
         \frac{{\bf{k}}_\text{ph} \cdot {\bf{v}}_\text{rec} + \Delta v_\mathrm{h}}{c} \right)
         \right. \f] where \f$c\f$ is the speed of light in vacuum. */
     static double shiftedReceptionWavelength(double photonWavelength, Direction photonDirection, Vec receiverVelocity,
-                                             double expansionVelocity);
+                                             double expansionVelocity = 0.);
 
     /** This function returns the Doppler-shifted wavelength perceived for this photon packet by a
         moving receiver (with non-relativistic velocity). The arguments specify the velocity of the
@@ -242,36 +250,47 @@ public:
         direction can avoid recalculating the optical depth. */
     double observedOpticalDepth() const { return _observedOpticalDepth; }
 
-    // ------- Caching Lya scattering info -------
+    // ------- Caching scattering info -------
 
 public:
-    /** This function stores externally calculated information on the Lyman-alpha scattering event
-        currently being processed in data members. This capability is offered so that the actual
-        scattering event and all its peel-offs can use the same atom velocity and phase function.
-        */
-    void setLyaScatteringInfo(const std::pair<Vec, bool>& scattInfo)
+    /** This function stores externally calculated information on a scattering event currently
+        being processed in data members. The single argument is a pair specifying the interacting
+        particle velocity and whether to use a dipole phase function (true) or isotropic scattering
+        (false). This capability is offered so that the actual scattering event and all its
+        peel-offs can use the same random particle velocity and phase function. */
+    void setScatteringInfo(const std::pair<Vec, bool>& scattInfo)
     {
-        std::tie(_lyaAtomVelocity, _lyaDipole) = scattInfo;
-        _hasLyaScatteringInfo = true;
+        std::tie(_particleVelocity, _dipole) = scattInfo;
+        _hasScatteringInfo = true;
     }
 
-    /** This function returns true if valid Lyman-alpha scattering information has been stored
-        since the latest photon packet launch or scattering event. Otherwise the function returns
-        false. */
-    bool hasLyaScatteringInfo() const { return _hasLyaScatteringInfo; }
+    /** This function stores externally calculated information on a scattering event currently
+        being processed in data members. The single argument specifies the interacting particle
+        velocity. The phase function flag is always set to isotropic (false). This capability is
+        offered so that the actual scattering event and all its peel-offs can use the same random
+        particle velocity. */
+    void setScatteringInfo(Vec particleVelocity)
+    {
+        _particleVelocity = particleVelocity;
+        _dipole = false;
+        _hasScatteringInfo = true;
+    }
 
-    /** If hasLyaScatteringInfo() returns true, this function returns the most recently stored
-        velocity vector of the scattering atom relative to the local gas frame. Otherwise, it
-        returns some meaningless value. This capability is offered so that the actual Lyman-alpha
-        scattering event and all its peel-offs can use the same atom velocity. */
-    Vec lyaAtomVelocity() const { return _lyaAtomVelocity; }
+    /** This function returns true if valid scattering information has been stored since the latest
+        photon packet launch or scattering event. Otherwise the function returns false. */
+    bool hasScatteringInfo() const { return _hasScatteringInfo; }
 
-    /** If hasLyaScatteringInfo() returns true, this function returns the most recently stored
-        phase function choice, i.e., true if scattering as a dipole, false if scattering
-        isotropically. Otherwise, the function returns some meaningless value. This capability is
-        offered so that the actual Lyman-alpha scattering event and all its peel-offs can use the
-        same phase function. */
-    bool lyaDipole() const { return _lyaDipole; }
+    /** If hasScatteringInfo() returns true, this function returns the most recently stored
+        velocity vector of the scattering particle relative to the local frame. Otherwise, it
+        returns some meaningless value. This capability is offered so that the actual scattering
+        event and all its peel-offs can use the same particle velocity. */
+    Vec particleVelocity() const { return _particleVelocity; }
+
+    /** If hasScatteringInfo() returns true, this function returns the most recently stored phase
+        function choice, i.e., true if scattering as a dipole, false if scattering isotropically.
+        Otherwise, the function returns some meaningless value. This capability is offered so that
+        the actual scattering event and all its peel-offs can use the same phase function. */
+    bool dipole() const { return _dipole; }
 
     // ------- Data members -------
 
@@ -298,10 +317,10 @@ private:
     double _observedOpticalDepth{0.};      // optical depth calculated for peel-off to an instrument
     bool _hasObservedOpticalDepth{false};  // true if the above field holds a valid value for this packet
 
-    // Lyman-alpha scattering information
-    Vec _lyaAtomVelocity;               // the velocity vector of the scattering atom in the local gas frame
-    bool _lyaDipole{false};             // true if scattering as a dipole, false if scattering isotropically
-    bool _hasLyaScatteringInfo{false};  // true if the above field holds a valid value for this packet
+    // scattering information
+    Vec _particleVelocity;           // the velocity vector of the scattering particle in the local frame
+    bool _dipole{false};             // true if scattering as a dipole, false if scattering isotropically
+    bool _hasScatteringInfo{false};  // true if the above field holds a valid value for this packet
 };
 
 ////////////////////////////////////////////////////////////////////

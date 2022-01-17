@@ -136,9 +136,9 @@ public:
                 return false;
             else
             {
-                double qmax = sqrt((Rmax - _p) * (Rmax + _p));
-                double ds = (qmax - _q) / _kq;
-                _q = qmax;
+                double qmin = -sqrt((Rmax - _p) * (Rmax + _p));
+                double ds = (qmin - _q) / _kq;
+                _q = qmin;
                 _R = Rmax - 1e-8 * (_grid->_Rv[_grid->_NR] - _grid->_Rv[_grid->_NR - 1]);
                 _z += _kz * ds;
                 cumds += ds;

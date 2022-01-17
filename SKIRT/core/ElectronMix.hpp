@@ -6,20 +6,54 @@
 #ifndef ELECTRONMIX_HPP
 #define ELECTRONMIX_HPP
 
+#include "ComptonPhaseFunction.hpp"
 #include "DipolePhaseFunction.hpp"
 #include "MaterialMix.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-/** The ElectronMix class describes the material properties for a population of electrons,
-    including support for polarization by scattering.
+/** The ElectronMix class describes the material properties for a population of electrons.
+    Electrons do not absorb photons. They do, however, significantly scatter photons. This process
+    is described by Compton scattering, which converges to Thomson scattering at low photon
+    energies. It is meaningful to implement both processes, because the calculations for Compton
+    scattering are substantially slower than those for Thomson scattering.
 
-    Electrons do not absorb photons, and at the wavelengths relevant for SKIRT, scattering of
-    photons by electrons can be described by elastic and wavelength-independent Thomson scattering.
-    The scattering cross section is given by the well-known Thomson cross section (a constant) and
-    the Mueller matrix elements and the phase function are those of a dipole. Consequently, this
-    class calls on the DipolePhaseFunction class to implement most of its functionality. See there
-    for more information. */
+    <b>Compton and Thomson scattering</b>
+
+    For wavelengths shorter than 10 nm, this class models Compton scattering, which features a
+    wavelength-dependent cross section and phase function, and which causes the photon energy
+    (wavelength) to change during the interaction. This process is implemented through the
+    ComptonPhaseFunction class; see that class for more information. The current implementation of
+    Compton scattering does not support polarization.
+
+    For wavelengths longer than 10nm, the scattering process can be described by elastic and
+    wavelength-independent Thomson scattering. The scattering cross section is given by the
+    well-known Thomson cross section (a constant) and the phase function is that of a dipole.
+    Consequently, this class calls on the DipolePhaseFunction class to implement Thomson
+    scattering; see that class for more information. In this wavelength regime, polarization is
+    fully supported (if enabled by the user).
+
+    The transition point between Compton and Thomson scattering can be justified as follows. For
+    wavelengths much longer than 10 nm, the expression for the Compton cross section becomes
+    numerically unstable. This could be solved by using a series expansion approximation at longer
+    wavelengths. However, at a wavelength of 10 nm, the Compton cross section has approached the
+    Thomson constant to within less than 0.05 per cent. It thus seems reasonable to transition to
+    the much faster Thomson scattering at that wavelength point.
+
+    <b>Thermal dispersion</b>
+
+    By default, this class assumes that all electrons are at rest in the local frame (i.e., there
+    is no movement other than the bulk velocity of the spatial cell containing the electrons). If
+    the \em includeThermalDispersion configuration flag is enabled (and the simulation mode is
+    panchromatic), a random thermal motion corresponding to the local temperature is added when
+    performing a scattering interaction. The dispersion is not taken into account to determine the
+    scattering cross section, because that value does not vary significantly for small wavelength
+    shifts (and it does not vary at all for Thomson scattering).
+
+    If the electron mix is associated with an ImportedMedium and the \em importTemperature flag for
+    the medium is enabled, the local dispersion temperature is obtained from the imported file.
+    Otherwise, the value configured for the \em defaultTemperature property is used instead,
+    resulting in a constant temperature across space. */
 class ElectronMix : public MaterialMix
 {
     ITEM_CONCRETE(ElectronMix, MaterialMix, "a population of electrons")
@@ -27,6 +61,19 @@ class ElectronMix : public MaterialMix
         PROPERTY_BOOL(includePolarization, "include support for polarization")
         ATTRIBUTE_DEFAULT_VALUE(includePolarization, "false")
         ATTRIBUTE_DISPLAYED_IF(includePolarization, "Level2")
+
+        PROPERTY_BOOL(includeThermalDispersion, "include thermal velocity dispersion")
+        ATTRIBUTE_DEFAULT_VALUE(includeThermalDispersion, "false")
+        ATTRIBUTE_RELEVANT_IF(includeThermalDispersion, "Panchromatic")
+        ATTRIBUTE_DISPLAYED_IF(includeThermalDispersion, "Level2")
+
+        PROPERTY_DOUBLE(defaultTemperature, "the default temperature of the electron population")
+        ATTRIBUTE_QUANTITY(defaultTemperature, "temperature")
+        ATTRIBUTE_MIN_VALUE(defaultTemperature, "[3")    // temperature must be above local Universe T_CMB
+        ATTRIBUTE_MAX_VALUE(defaultTemperature, "1e8]")  // higher temperatures cause relativistic dispersion
+        ATTRIBUTE_DEFAULT_VALUE(defaultTemperature, "1e4")
+        ATTRIBUTE_RELEVANT_IF(defaultTemperature, "Panchromatic&includeThermalDispersion")
+        ATTRIBUTE_DISPLAYED_IF(defaultTemperature, "Level2")
 
     ITEM_END()
 
@@ -47,6 +94,13 @@ public:
         material mix supports polarization during scattering events or not. */
     bool hasPolarizedScattering() const override;
 
+    /** This function returns true when thermal dispersion is enabled and/or support for Compton
+        scattering has been turned on (based on the simulation's wavelength range), indicating that
+        in those cases a scattering interaction for the electron mix may (and usually does) adjust
+        the wavelength of the interacting photon packet. If both thermal dispersion and support for
+        Compton scattering are disabled, the function returns false. */
+    bool hasScatteringDispersion() const override;
+
     //======== Medium state setup =======
 
 public:
@@ -54,9 +108,20 @@ public:
         variables used by the receiving material mix. See the description of the
         MaterialMix::specificStateVariableInfo() function for more information.
 
-        Electrons require just the standard specific state variable of type numberDensity , so this
-        function returns a list containing a single item. */
+        For the electron mix class, the returned list always includes the specific state variable
+        for number density and, in case the electron mix has thermal dispersion, it also includes
+        the specific state variable for temperature. */
     vector<StateVariable> specificStateVariableInfo() const override;
+
+    /** This function initializes any specific state variables requested by this material mix
+        except for the number density. See the description of the
+        MaterialMix::initializeSpecificState() function for more information.
+
+        For this class, in case the electron mix has thermal dispersion, the function initializes
+        the temperature to the specified imported temperature, or if this is not available, to the
+        user-configured default temperature for this electron mix. */
+    void initializeSpecificState(MaterialState* state, double metallicity, double temperature,
+                                 const Array& params) const override;
 
     //======== Low-level material properties =======
 
@@ -107,7 +172,7 @@ public:
         with support for polarization depending on the user-configured \em includePolarization
         property. */
     void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w, Direction bfkobs,
-                           Direction bfky, const MaterialState* state, PhotonPacket* pp) const override;
+                           Direction bfky, const MaterialState* state, const PhotonPacket* pp) const override;
 
     /** This function performs a scattering event on the specified photon packet in the spatial
         cell and medium component represented by the specified material state and the receiving
@@ -116,11 +181,27 @@ public:
         includePolarization property. */
     void performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const override;
 
+    //======================== Probing ========================
+
+    /** This function returns an indicative temperature of the material mix when it would be
+        embedded in a given radiation field. The implementation in this class ignores the radiation
+        field and returns the temperature driving the thermal velocity dispersion for the medium
+        component in the relevant spatial cell, or zero if thermal velocity dispersion is not
+        enabled for this material mix. Because nothing in the simulation changes the electron
+        temperature, this value corresponds to the temperature defined by the input model at the
+        start of the simulation. */
+    double indicativeTemperature(const MaterialState* state, const Array& Jv) const override;
+
     //======================== Data Members ========================
 
 private:
-    // the dipole phase function helper instance - initialized during setup
+    // flags initialized during setup
+    bool _hasDispersion{false};  // true if thermal velocity dispersion is enabled
+    bool _hasCompton{false};     // true if support for Compton scattering is enabled
+
+    // the dipole and Compton phase function helper instances - initialized during setup
     DipolePhaseFunction _dpf;
+    ComptonPhaseFunction _cpf;
 };
 
 ////////////////////////////////////////////////////////////////////

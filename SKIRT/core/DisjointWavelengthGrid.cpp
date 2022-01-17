@@ -5,6 +5,7 @@
 
 #include "DisjointWavelengthGrid.hpp"
 #include "FatalError.hpp"
+#include "NR.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -66,10 +67,13 @@ void DisjointWavelengthGrid::setWavelengthRange(const Array& lambdav, bool logSc
         }
     }
 
+    // verify that all bin borders are positive
+    if (_lambdaleftv[0] <= 0.0) throw FATALERROR("All wavelength bin borders should be positive");
+
     // calculate the bin widths
     _dlambdav = _lambdarightv - _lambdaleftv;
 
-    // setup the mapping from border bin indices to actual wavelength bin indices (see ell() function)
+    // setup the mapping from border bin indices to actual wavelength bin indices (see bin() function)
     _ellv.resize(n + 2);
     _ellv[0] = -1;
     for (size_t ell = 0; ell != n; ++ell) _ellv[ell + 1] = ell;
@@ -121,13 +125,105 @@ void DisjointWavelengthGrid::setWavelengthBins(const Array& lambdav, double rela
     // calculate the bin widths
     _dlambdav = _lambdarightv - _lambdaleftv;
 
-    // setup the mapping from border bin indices to actual wavelength bin indices (see ell() function)
+    // setup the mapping from border bin indices to actual wavelength bin indices (see bin() function)
     _ellv.resize(2 * n + 1);
     _ellv[0] = -1;
     for (size_t ell = 0; ell != n; ++ell)
     {
         _ellv[2 * ell + 1] = ell;
         _ellv[2 * ell + 2] = -1;  // regions between the bins are considered out of range
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
+void DisjointWavelengthGrid::setWavelengthBorders(const Array& borderv, bool logScale)
+{
+    // copy and sort the specified bin borders
+    _borderv = borderv;
+    std::sort(begin(_borderv), end(_borderv));
+
+    // verify that there are at least two bin borders and that the smallest one is positive
+    if (_borderv.size() < 2) throw FATALERROR("There must be at least two wavelength bin borders in the grid");
+    if (_borderv[0] <= 0.0) throw FATALERROR("All wavelength bin borders should be positive");
+
+    // verify that there are no duplicates
+    if (std::unique(begin(_borderv), end(_borderv)) != end(_borderv))
+        throw FATALERROR("There should be no duplicate wavelength bin borders in the grid");
+
+    // make n refer to the number of bins, not the number of borders
+    size_t n = _borderv.size() - 1;
+
+    // copy the left and right bin borders
+    _lambdaleftv.resize(n);
+    _lambdarightv.resize(n);
+    for (size_t ell = 0; ell != n; ++ell)
+    {
+        _lambdaleftv[ell] = _borderv[ell];
+        _lambdarightv[ell] = _borderv[ell + 1];
+    }
+
+    // calculate the characteristic wavelengths
+    _lambdav.resize(n);
+    if (logScale)
+    {
+        for (size_t ell = 0; ell != n; ++ell)
+        {
+            _lambdav[ell] = sqrt(_lambdaleftv[ell] * _lambdarightv[ell]);
+        }
+    }
+    else
+    {
+        for (size_t ell = 0; ell != n; ++ell)
+        {
+            _lambdav[ell] = (_lambdaleftv[ell] + _lambdarightv[ell]) / 2.;
+        }
+    }
+
+    // calculate the bin widths
+    _dlambdav = _lambdarightv - _lambdaleftv;
+
+    // setup the mapping from border bin indices to actual wavelength bin indices (see bin() function)
+    _ellv.resize(n + 2);
+    _ellv[0] = -1;
+    for (size_t ell = 0; ell != n; ++ell) _ellv[ell + 1] = ell;
+    _ellv[n + 1] = -1;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void DisjointWavelengthGrid::setWavelengthSegments(const vector<double>& borderv, const vector<double>& characv)
+{
+    // determine the number of borders and the number of actual bins
+    int numBorders = borderv.size();
+    int numBins = std::count_if(characv.begin(), characv.end(), [](double c) { return c > 0.; });
+
+    // allocate memory for all arrays
+    _lambdav.resize(numBins);       // index ell
+    _dlambdav.resize(numBins);      // index ell
+    _lambdaleftv.resize(numBins);   // index ell
+    _lambdarightv.resize(numBins);  // index ell
+    _borderv.resize(numBorders);    // index k
+    _ellv.resize(numBorders + 1);   // index k+1
+
+    // copy the data into our arrays, and construct the bin index mapping
+    _ellv[0] = -1;
+    int ell = 0;  // ell is bin index; k is border index
+    for (int k = 0; k != numBorders; ++k)
+    {
+        _borderv[k] = borderv[k];
+        if (characv[k] > 0.)
+        {
+            _lambdav[ell] = characv[k];
+            _dlambdav[ell] = borderv[k + 1] - borderv[k];
+            _lambdaleftv[ell] = borderv[k];
+            _lambdarightv[ell] = borderv[k + 1];
+            _ellv[k + 1] = ell++;
+        }
+        else
+        {
+            _ellv[k + 1] = -1;
+        }
     }
 }
 
@@ -209,6 +305,20 @@ Array DisjointWavelengthGrid::extlambdav() const
     extv[0] = _lambdaleftv[0];
     for (int ell = 0; ell != n; ++ell) extv[ell + 1] = _lambdav[ell];
     extv[n + 1] = _lambdarightv[n - 1];
+
+    return extv;
+}
+
+////////////////////////////////////////////////////////////////////
+
+Array DisjointWavelengthGrid::extdlambdav() const
+{
+    int n = _dlambdav.size();
+    Array extv(n + 2);
+
+    extv[0] = 0.;
+    for (int ell = 0; ell != n; ++ell) extv[ell + 1] = _dlambdav[ell];
+    extv[n + 1] = 0.;
 
     return extv;
 }

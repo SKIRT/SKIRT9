@@ -36,6 +36,9 @@ void ImportedSource::setupSelfAfter()
     auto config = find<Configuration>();
     _oligochromatic = config->oligochromatic();
 
+    // warn the user if this source's intrinsic wavelength range does not fully cover the configured wavelength range
+    informAvailableWavelengthRange(_sedFamily->intrinsicWavelengthRange(), _sedFamily->type());
+
     // determine the wavelength range for this soource
     _wavelengthRange = config->sourceWavelengthRange();
     _wavelengthRange.intersect(_sedFamily->intrinsicWavelengthRange());
@@ -249,10 +252,7 @@ namespace
     public:
         EntityVelocity() {}
         void setBulkVelocity(Vec bfv) { _bfv = bfv; }
-        void applyVelocityDispersion(Random* random, double sigma)
-        {
-            _bfv += sigma * random->gauss() * random->direction();
-        }
+        void applyVelocityDispersion(Random* random, double sigma) { _bfv += sigma * random->maxwell(); }
         Vec velocity() const override { return _bfv; }
     };
 

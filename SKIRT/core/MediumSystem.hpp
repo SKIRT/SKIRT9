@@ -8,14 +8,16 @@
 
 #include "Array.hpp"
 #include "DustEmissionOptions.hpp"
-#include "DustSelfAbsorptionOptions.hpp"
 #include "DynamicStateOptions.hpp"
-#include "ExtinctionOnlyOptions.hpp"
+#include "IterationOptions.hpp"
 #include "LyaOptions.hpp"
 #include "MaterialMix.hpp"
 #include "Medium.hpp"
 #include "MediumState.hpp"
 #include "PhotonPacketOptions.hpp"
+#include "RadiationFieldOptions.hpp"
+#include "SamplingOptions.hpp"
+#include "SecondaryEmissionOptions.hpp"
 #include "SimulationItem.hpp"
 #include "SpatialGrid.hpp"
 #include "Table.hpp"
@@ -44,7 +46,7 @@ class WavelengthGrid;
     These functions offer basic information on the spatial grid, the medium components, and the
     material types in the medium system.
 
-    <b>Medium state</b>
+    <b>%Medium state</b>
 
     The medium state for each spatial cell in the simulation includes a set of \em common state
     variables shared by all medium components and a set of \em specific state variables for each
@@ -102,36 +104,36 @@ class MediumSystem : public SimulationItem
         ATTRIBUTE_DEFAULT_VALUE(photonPacketOptions, "PhotonPacketOptions")
         ATTRIBUTE_RELEVANT_IF(media, "!NoMedium")
 
-        PROPERTY_ITEM(extinctionOnlyOptions, ExtinctionOnlyOptions, "the extinction-only options")
-        ATTRIBUTE_DEFAULT_VALUE(extinctionOnlyOptions, "ExtinctionOnlyOptions")
-        ATTRIBUTE_RELEVANT_IF(extinctionOnlyOptions, "ExtinctionOnly")
+        PROPERTY_ITEM(lyaOptions, LyaOptions, "the Lyman-alpha line transfer options")
+        ATTRIBUTE_DEFAULT_VALUE(lyaOptions, "LyaOptions")
+        ATTRIBUTE_RELEVANT_IF(lyaOptions, "Lya")
+
+        PROPERTY_ITEM(dynamicStateOptions, DynamicStateOptions, "the dynamic medium state options")
+        ATTRIBUTE_DEFAULT_VALUE(dynamicStateOptions, "DynamicStateOptions")
+        ATTRIBUTE_RELEVANT_IF(dynamicStateOptions, "DynamicState")
+
+        PROPERTY_ITEM(radiationFieldOptions, RadiationFieldOptions, "the radiation field options")
+        ATTRIBUTE_DEFAULT_VALUE(radiationFieldOptions, "RadiationFieldOptions")
+        ATTRIBUTE_RELEVANT_IF(radiationFieldOptions, "!NoMedium")
+
+        PROPERTY_ITEM(secondaryEmissionOptions, SecondaryEmissionOptions, "the secondary emission options")
+        ATTRIBUTE_DEFAULT_VALUE(secondaryEmissionOptions, "SecondaryEmissionOptions")
+        ATTRIBUTE_RELEVANT_IF(secondaryEmissionOptions, "Emission")
+
+        PROPERTY_ITEM(iterationOptions, IterationOptions, "the primary and/or secondary emission iteration options")
+        ATTRIBUTE_DEFAULT_VALUE(iterationOptions, "IterationOptions")
+        ATTRIBUTE_RELEVANT_IF(iterationOptions, "DynamicState|DynamicEmission")
 
         PROPERTY_ITEM(dustEmissionOptions, DustEmissionOptions, "the dust emission options")
         ATTRIBUTE_DEFAULT_VALUE(dustEmissionOptions, "DustEmissionOptions")
         ATTRIBUTE_RELEVANT_IF(dustEmissionOptions, "DustEmission")
 
-        PROPERTY_ITEM(dustSelfAbsorptionOptions, DustSelfAbsorptionOptions, "the dust self-absorption options")
-        ATTRIBUTE_DEFAULT_VALUE(dustSelfAbsorptionOptions, "DustSelfAbsorptionOptions")
-        ATTRIBUTE_RELEVANT_IF(dustSelfAbsorptionOptions, "DustSelfAbsorption")
-
-        PROPERTY_ITEM(lyaOptions, LyaOptions, "the Lyman-alpha line transfer options")
-        ATTRIBUTE_DEFAULT_VALUE(lyaOptions, "LyaOptions")
-        ATTRIBUTE_RELEVANT_IF(lyaOptions, "Lya")
-
-        PROPERTY_ITEM(dynamicStateOptions, DynamicStateOptions, "the options for dynamic medium state iterations")
-        ATTRIBUTE_DEFAULT_VALUE(dynamicStateOptions, "DynamicStateOptions")
-        ATTRIBUTE_RELEVANT_IF(dynamicStateOptions, "Panchromatic&RadiationField&!Lya")
-        ATTRIBUTE_DISPLAYED_IF(dynamicStateOptions, "Level3")
-
-        PROPERTY_INT(numDensitySamples, "the number of random density samples for determining spatial cell mass")
-        ATTRIBUTE_MIN_VALUE(numDensitySamples, "10")
-        ATTRIBUTE_MAX_VALUE(numDensitySamples, "1000")
-        ATTRIBUTE_DEFAULT_VALUE(numDensitySamples, "100")
-        ATTRIBUTE_DISPLAYED_IF(numDensitySamples, "Level2")
-
         PROPERTY_ITEM_LIST(media, Medium, "the transfer media")
         ATTRIBUTE_DEFAULT_VALUE(media, "GeometricMedium")
         ATTRIBUTE_REQUIRED_IF(media, "!NoMedium")
+
+        PROPERTY_ITEM(samplingOptions, SamplingOptions, "the spatial grid sampling options")
+        ATTRIBUTE_DEFAULT_VALUE(samplingOptions, "SamplingOptions")
 
         PROPERTY_ITEM(grid, SpatialGrid, "the spatial grid")
         ATTRIBUTE_DEFAULT_VALUE(grid,
@@ -241,6 +243,16 @@ public:
     /** This function returns the mass density of the medium component with index \f$h\f$ in
         spatial cell with index \f$m\f$. */
     double massDensity(int m, int h) const;
+
+    /** This function returns the metallicity \f$Z\f$ of the medium component with index \f$h\f$ in
+        spatial cell with index \f$m\f$. If the specified medium component does not have the
+        metallicity specific state variable, the behavior of this function is undefined. */
+    double metallicity(int m, int h) const;
+
+    /** This function returns the temperature \f$T\f$ of the medium component with index \f$h\f$ in
+        spatial cell with index \f$m\f$. If the specified medium component does not have the
+        temperature specific state variable, the behavior of this function is undefined. */
+    double temperature(int m, int h) const;
 
     /** This function returns the value of the custom specific state variable with index \f$i\f$ of
         the medium component with index \f$h\f$ in the spatial cell with index \f$m\f$. If the
@@ -481,12 +493,12 @@ public:
         synchronized and its contents is copied into the stable secondary table. */
     void communicateRadiationField(bool primary);
 
-    /** This function returns the bolometric luminosity absorbed by dust media across the complete
-        domain of the spatial grid, using the partial radiation field stored in the table indicated
-        by the \em primary flag (true for the primary table, false for the stable secondary table).
-        The bolometric absorbed luminosity in each cell is calculated as described for the
-        absorbedDustLuminosity() function. */
-    double totalAbsorbedDustLuminosity(bool primary) const;
+    /** This function returns a pair of values specifying the bolometric luminosity absorbed by
+        dust media across the complete domain of the spatial grid, respectively using the partial
+        radiation field stored in the primary table and the stable secondary table. The bolometric
+        absorbed luminosity in each cell is calculated as described for the dustLuminosity()
+        function. */
+    std::pair<double, double> totalDustAbsorbedLuminosity() const;
 
 private:
     /** This function returns the sum of the values in both the primary and the stable secondary
@@ -556,6 +568,13 @@ public:
         interpretation. */
     double indicativeDustTemperature(int m) const;
 
+    /** This function returns an indicative electron temperature in the spatial cell with index
+        \f$m\f$. This temperature is obtained by averaging the temperature over the electron medium
+        components present in the spatial cell, weighed by relative mass in each component. If no
+        medium component specifies an electron temperature, this function returns zero. Also see
+        the indicativeTemperature() function for more information. */
+    double indicativeElectronTemperature(int m) const;
+
     /** This function returns an indicative gas temperature in the spatial cell with index \f$m\f$.
         This temperature is obtained by averaging the temperature over the gas medium components
         present in the spatial cell, weighed by relative mass in each component. If no medium
@@ -586,6 +605,24 @@ public:
         normalizing the spectrum based on the value returned by the dustLuminosity() function. */
     Array dustEmissionSpectrum(int m) const;
 
+    /** This function returns the continuum emission spectrum in the spatial cell with index
+        \f$m\f$ for the medium component with index \f$h\f$. It is intended for use with gas medium
+        components that support secondary continuum emission. When invoked for other medium
+        components, the behavior of the function is undefined. The returned spectrum is discretized
+        on the wavelength grid returned by the MaterialMix::emissionWavelengthGrid() function of
+        the material mix associated with the specified medium component. It contains absolute
+        (specific) luminosity values that do not need further normalization. */
+    Array continuumEmissionSpectrum(int m, int h) const;
+
+    /** This function returns the line emission spectrum in the spatial cell with index \f$m\f$ for
+        the medium component with index \f$h\f$. It is intended for use with gas medium components
+        that support secondary line emission. When invoked for other medium components, the
+        behavior of the function is undefined. The returned values correspond to each of the lines
+        returned by the MaterialMix::lineEmissionCenters() function of the material mix associated
+        with the specified medium component. The values represent absolute line luminosities that
+        do not need further normalization. */
+    Array lineEmissionSpectrum(int m, int h) const;
+
     //=============== Dynamic medium state ===================
 
 public:
@@ -597,6 +634,12 @@ public:
         This function assumes that the radiation field has been calculated and that at least one
         dynamic medium state recipe has been configured for the simulation. */
     bool updateDynamicMediumState();
+
+    /** This function updates the semi-dynamic medium state for all media that require/support such
+        an update based on the currently established radiation field by invoking the corresponding
+        material mix function for all spatial cells. The function assumes that the radiation field
+        has been calculated. */
+    void updateSemiDynamicMediumState();
 
     //======================== Data Members ========================
 

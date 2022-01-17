@@ -34,6 +34,7 @@
 #include "ClearDensityRecipe.hpp"
 #include "ClumpyGeometryDecorator.hpp"
 #include "CombineGeometryDecorator.hpp"
+#include "CompositeWavelengthGrid.hpp"
 #include "ConfigurableBandWavelengthGrid.hpp"
 #include "ConfigurableDustMix.hpp"
 #include "ConicalAngularDistribution.hpp"
@@ -48,10 +49,12 @@
 #include "CylindricalVectorField.hpp"
 #include "DefaultCustomStateCutsProbe.hpp"
 #include "DefaultDustTemperatureCutsProbe.hpp"
+#include "DefaultElectronTemperatureCutsProbe.hpp"
 #include "DefaultGasTemperatureCutsProbe.hpp"
 #include "DefaultMagneticFieldCutsProbe.hpp"
 #include "DefaultMediaDensityCutsProbe.hpp"
 #include "DefaultMediumVelocityCutsProbe.hpp"
+#include "DefaultMetallicityCutsProbe.hpp"
 #include "DefaultRadiationFieldCutsProbe.hpp"
 #include "DensityTreePolicy.hpp"
 #include "DiscreteWavelengthDistribution.hpp"
@@ -62,23 +65,21 @@
 #include "DraineSilicateGrainComposition.hpp"
 #include "DustAbsorptionPerCellProbe.hpp"
 #include "DustEmGrainComposition.hpp"
-#include "DustEmissionOptions.hpp"
 #include "DustEmissionWavelengthGridProbe.hpp"
 #include "DustEmissivityProbe.hpp"
 #include "DustGrainPopulationsProbe.hpp"
 #include "DustGrainSizeDistributionProbe.hpp"
-#include "DustSelfAbsorptionOptions.hpp"
 #include "DustTemperaturePerCellProbe.hpp"
-#include "DynamicStateOptions.hpp"
 #include "EinastoGeometry.hpp"
 #include "ElectronMix.hpp"
+#include "ElectronTemperaturePerCellProbe.hpp"
 #include "ExpDiskGeometry.hpp"
-#include "ExtinctionOnlyOptions.hpp"
 #include "ExtragalacticUnits.hpp"
 #include "FSPSSED.hpp"
 #include "FSPSSEDFamily.hpp"
 #include "FieldStrengthCellLibrary.hpp"
 #include "FileBand.hpp"
+#include "FileBorderWavelengthGrid.hpp"
 #include "FileGrainSizeDistribution.hpp"
 #include "FileIndexedSEDFamily.hpp"
 #include "FileLineSED.hpp"
@@ -109,6 +110,7 @@
 #include "IsotropicAngularDistribution.hpp"
 #include "LaserAngularDistribution.hpp"
 #include "LaunchedPacketsProbe.hpp"
+#include "LinBorderWavelengthGrid.hpp"
 #include "LinMesh.hpp"
 #include "LinWavelengthDistribution.hpp"
 #include "LinWavelengthGrid.hpp"
@@ -116,6 +118,7 @@
 #include "LinearDustDestructionRecipe.hpp"
 #include "LinearDustTemperatureCutProbe.hpp"
 #include "ListBand.hpp"
+#include "ListBorderWavelengthGrid.hpp"
 #include "ListGrainSizeDistribution.hpp"
 #include "ListLineSED.hpp"
 #include "ListMesh.hpp"
@@ -123,6 +126,7 @@
 #include "ListWavelengthDistribution.hpp"
 #include "ListWavelengthGrid.hpp"
 #include "LocalUniverseCosmology.hpp"
+#include "LogBorderWavelengthGrid.hpp"
 #include "LogMesh.hpp"
 #include "LogWavelengthDistribution.hpp"
 #include "LogWavelengthGrid.hpp"
@@ -132,7 +136,6 @@
 #include "LyaGaussianSED.hpp"
 #include "LyaGaussianSEDFamily.hpp"
 #include "LyaNeutralHydrogenGasMix.hpp"
-#include "LyaOptions.hpp"
 #include "LyaSEDDecorator.hpp"
 #include "LyaSEDFamilyDecorator.hpp"
 #include "MRNDustMix.hpp"
@@ -153,6 +156,7 @@
 #include "MediumSystem.hpp"
 #include "MediumVelocityPerCellProbe.hpp"
 #include "MeridionalDustTemperatureCutProbe.hpp"
+#include "MetallicityPerCellProbe.hpp"
 #include "MieSilicateGrainComposition.hpp"
 #include "MinSilicateGrainComposition.hpp"
 #include "ModifiedLogNormalGrainSizeDistribution.hpp"
@@ -175,13 +179,14 @@
 #include "ParticleMedium.hpp"
 #include "ParticleSource.hpp"
 #include "PerspectiveInstrument.hpp"
-#include "PhotonPacketOptions.hpp"
 #include "PlanarCustomStateCutsProbe.hpp"
 #include "PlanarDustTemperatureCutsProbe.hpp"
+#include "PlanarElectronTemperatureCutsProbe.hpp"
 #include "PlanarGasTemperatureCutsProbe.hpp"
 #include "PlanarMagneticFieldCutsProbe.hpp"
 #include "PlanarMediaDensityCutsProbe.hpp"
 #include "PlanarMediumVelocityCutsProbe.hpp"
+#include "PlanarMetallicityCutsProbe.hpp"
 #include "PlanarRadiationFieldCutsProbe.hpp"
 #include "PlummerGeometry.hpp"
 #include "PointSource.hpp"
@@ -190,6 +195,7 @@
 #include "PowerLawGrainSizeDistribution.hpp"
 #include "PredefinedBandWavelengthGrid.hpp"
 #include "ProbeSystem.hpp"
+#include "ProjectedMediaDensityProbe.hpp"
 #include "PseudoSersicGeometry.hpp"
 #include "QuasarSED.hpp"
 #include "RadialVectorField.hpp"
@@ -199,6 +205,8 @@
 #include "Random.hpp"
 #include "ReadFits3DGeometry.hpp"
 #include "ReadFitsGeometry.hpp"
+#include "ResolutionBorderWavelengthGrid.hpp"
+#include "ResolutionWavelengthGrid.hpp"
 #include "RingGeometry.hpp"
 #include "RotateGeometryDecorator.hpp"
 #include "RotateVectorFieldDecorator.hpp"
@@ -226,6 +234,7 @@
 #include "SpheroidalGeometryDecorator.hpp"
 #include "SpheroidalGraphiteGrainComposition.hpp"
 #include "SpheroidalSilicateGrainComposition.hpp"
+#include "SpinFlipHydrogenGasMix.hpp"
 #include "SpiralStructureGeometryDecorator.hpp"
 #include "Starburst99ContSED.hpp"
 #include "Starburst99ContSEDFamily.hpp"
@@ -369,6 +378,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // bands
     ItemRegistry::add<Band>();
     ItemRegistry::add<BroadBand>();
+    ItemRegistry::add<TabulatedBand>();
     ItemRegistry::add<FileBand>();
     ItemRegistry::add<ListBand>();
 
@@ -492,11 +502,13 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
 
     // medium system options
     ItemRegistry::add<PhotonPacketOptions>();
-    ItemRegistry::add<ExtinctionOnlyOptions>();
-    ItemRegistry::add<DustEmissionOptions>();
-    ItemRegistry::add<DustSelfAbsorptionOptions>();
     ItemRegistry::add<LyaOptions>();
     ItemRegistry::add<DynamicStateOptions>();
+    ItemRegistry::add<RadiationFieldOptions>();
+    ItemRegistry::add<SecondaryEmissionOptions>();
+    ItemRegistry::add<IterationOptions>();
+    ItemRegistry::add<DustEmissionOptions>();
+    ItemRegistry::add<SamplingOptions>();
 
     // material normalizations
     ItemRegistry::add<MaterialNormalization>();
@@ -533,6 +545,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
 
     ItemRegistry::add<ElectronMix>();
     ItemRegistry::add<LyaNeutralHydrogenGasMix>();
+    ItemRegistry::add<EmittingGasMix>();
+    ItemRegistry::add<SpinFlipHydrogenGasMix>();
 
     // material mix families
     ItemRegistry::add<MaterialMixFamily>();
@@ -592,11 +606,18 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<LogWavelengthGrid>();
     ItemRegistry::add<NestedLogWavelengthGrid>();
     ItemRegistry::add<LinWavelengthGrid>();
+    ItemRegistry::add<ResolutionWavelengthGrid>();
+    ItemRegistry::add<FileWavelengthGrid>();
+    ItemRegistry::add<ListWavelengthGrid>();
+    ItemRegistry::add<LogBorderWavelengthGrid>();
+    ItemRegistry::add<LinBorderWavelengthGrid>();
+    ItemRegistry::add<ResolutionBorderWavelengthGrid>();
+    ItemRegistry::add<FileBorderWavelengthGrid>();
+    ItemRegistry::add<ListBorderWavelengthGrid>();
+    ItemRegistry::add<CompositeWavelengthGrid>();
     ItemRegistry::add<BandWavelengthGrid>();
     ItemRegistry::add<PredefinedBandWavelengthGrid>();
     ItemRegistry::add<ConfigurableBandWavelengthGrid>();
-    ItemRegistry::add<FileWavelengthGrid>();
-    ItemRegistry::add<ListWavelengthGrid>();
 
     // instrument system and instruments
     ItemRegistry::add<InstrumentSystem>();
@@ -617,9 +638,11 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // probe system and probes
     ItemRegistry::add<ProbeSystem>();
     ItemRegistry::add<Probe>();
+    ItemRegistry::add<StateProbe>();
     ItemRegistry::add<AbstractWavelengthProbe>();
     ItemRegistry::add<AbstractWavelengthGridProbe>();
     ItemRegistry::add<AbstractPlanarCutsProbe>();
+    ItemRegistry::add<AbstractPlanarCutsStateProbe>();
     ItemRegistry::add<InstrumentWavelengthGridProbe>();
     ItemRegistry::add<LuminosityProbe>();
     ItemRegistry::add<LaunchedPacketsProbe>();
@@ -628,6 +651,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<TreeSpatialGridTopologyProbe>();
     ItemRegistry::add<DefaultMediaDensityCutsProbe>();
     ItemRegistry::add<PlanarMediaDensityCutsProbe>();
+    ItemRegistry::add<ProjectedMediaDensityProbe>();
     ItemRegistry::add<OpticalDepthMapProbe>();
     ItemRegistry::add<SpatialCellPropertiesProbe>();
     ItemRegistry::add<SpatialGridSourceDensityProbe>();
@@ -659,6 +683,12 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<DustEmissivityProbe>();
     ItemRegistry::add<DustEmissionWavelengthGridProbe>();
 
+    ItemRegistry::add<DefaultMetallicityCutsProbe>();
+    ItemRegistry::add<PlanarMetallicityCutsProbe>();
+    ItemRegistry::add<MetallicityPerCellProbe>();
+    ItemRegistry::add<DefaultElectronTemperatureCutsProbe>();
+    ItemRegistry::add<PlanarElectronTemperatureCutsProbe>();
+    ItemRegistry::add<ElectronTemperaturePerCellProbe>();
     ItemRegistry::add<DefaultGasTemperatureCutsProbe>();
     ItemRegistry::add<PlanarGasTemperatureCutsProbe>();
     ItemRegistry::add<GasTemperaturePerCellProbe>();

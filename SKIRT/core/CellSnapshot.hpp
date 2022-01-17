@@ -72,6 +72,15 @@ public:
         is out of range, the behavior is undefined. */
     Position position(int m) const override;
 
+    /** This function returns the metallicity of the cell with index \em m. If the metallicity is
+        not being imported, or the index is out of range, the behavior is undefined. */
+    double metallicity(int m) const override;
+
+    /** This function returns the metallicity of the cell containing the specified point
+        \f${\bf{r}}\f$. If the point is not inside any cell, the function returns zero. If the
+        metallicity is not being imported, the behavior is undefined. */
+    double metallicity(Position bfr) const override;
+
     /** This function returns the temperature of the cell with index \em m. If the temperature is
         not being imported, or the index is out of range, the behavior is undefined. */
     double temperature(int m) const override;

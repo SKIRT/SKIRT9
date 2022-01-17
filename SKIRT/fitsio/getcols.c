@@ -75,6 +75,7 @@ int ffgcls( fitsfile *fptr,   /* I - FITS file pointer                       */
 */
 {
     int tcode, hdutype, tstatus, scaled, intcol, dwidth, nulwidth, ll, dlen;
+    int equivtype;
     long ii, jj;
     tcolumn *colptr;
     char message[FLEN_ERRMSG], *carray, keyname[FLEN_KEYWORD];
@@ -83,6 +84,7 @@ int ffgcls( fitsfile *fptr,   /* I - FITS file pointer                       */
     float *earray;
     double *darray, tscale = 1.0;
     LONGLONG *llarray;
+    ULONGLONG *ullarray;
 
     if (*status > 0 || nelem == 0)  /* inherit input status value if > 0 */
         return(*status);
@@ -98,16 +100,21 @@ int ffgcls( fitsfile *fptr,   /* I - FITS file pointer                       */
 
     if (colnum < 1 || colnum > (fptr->Fptr)->tfield)
     {
-        sprintf(message, "Specified column number is out of range: %d",
+        snprintf(message, FLEN_ERRMSG,"Specified column number is out of range: %d",
                 colnum);
         ffpmsg(message);
         return(*status = BAD_COL_NUM);
     }
 
+    /* get equivalent dataype of column (only needed for TLONGLONG columns) */
+    ffeqtyll(fptr, colnum, &equivtype, NULL, NULL, status);
+    if (equivtype < 0) equivtype = abs(equivtype);
+    
     colptr  = (fptr->Fptr)->tableptr;   /* point to first column */
     colptr += (colnum - 1);     /* offset to correct column structure */
     tcode = abs(colptr->tdatatype);
 
+    intcol = 0;
     if (tcode == TSTRING)
     {
       /* simply call the string column reading routine */
@@ -164,6 +171,19 @@ int ffgcls( fitsfile *fptr,   /* I - FITS file pointer                       */
          {
              /* convert the Fortran style format to a C style format */
              ffcdsp(dispfmt, cform);
+
+	     /* Special case: TDISPn='Aw' disallowed for numeric types */
+	     if (dispfmt[0] == 'A') {
+	       cform[0] = 0;
+
+	       /* Special case: if the output is intended to be represented
+		  as an integer, but we read it as a double, we need to
+		  set intcol = 1 so it is printed as an integer */
+	     } else if ((dispfmt[0] == 'I') || (dispfmt[0] == 'i') ||
+			(dispfmt[0] == 'O') || (dispfmt[0] == 'o') ||
+			(dispfmt[0] == 'Z') || (dispfmt[0] == 'z')) {
+	       intcol = 1;
+	     }
          }
 
          if (!cform[0])
@@ -182,8 +202,14 @@ int ffgcls( fitsfile *fptr,   /* I - FITS file pointer                       */
              if (nultyp == 2)
                 nularray[ii] = 1;
            }
-           else
-             sprintf(tmpstr, cform, earray[jj]);
+           else if (intcol)
+	   {
+	       snprintf(tmpstr, 400,cform, (int) earray[jj]);
+	   } 
+	   else 
+	   {
+	       snprintf(tmpstr, 400,cform, earray[jj]);
+	   }
 
            strncat(array[ii], tmpstr, dwidth);
            strcat(array[ii], ",");
@@ -196,8 +222,14 @@ int ffgcls( fitsfile *fptr,   /* I - FITS file pointer                       */
              if (nultyp == 2)
                 nularray[ii] = 1;
            }
-           else
-             sprintf(tmpstr, cform, earray[jj]);
+           else if (intcol)
+	   {
+	       snprintf(tmpstr, 400,cform, (int) earray[jj]);
+	   } 
+	   else 
+	   {
+	       snprintf(tmpstr, 400,cform, earray[jj]);
+	   }
 
            strncat(array[ii], tmpstr, dwidth);
            strcat(array[ii], ")");
@@ -231,6 +263,19 @@ int ffgcls( fitsfile *fptr,   /* I - FITS file pointer                       */
          {
              /* convert the Fortran style format to a C style format */
              ffcdsp(dispfmt, cform);
+
+	     /* Special case: TDISPn='Aw' disallowed for numeric types */
+	     if (dispfmt[0] == 'A') {
+	       cform[0] = 0;
+
+	       /* Special case: if the output is intended to be represented
+		  as an integer, but we read it as a double, we need to
+		  set intcol = 1 so it is printed as an integer */
+	     } else if ((dispfmt[0] == 'I') || (dispfmt[0] == 'i') ||
+			(dispfmt[0] == 'O') || (dispfmt[0] == 'o') ||
+			(dispfmt[0] == 'Z') || (dispfmt[0] == 'z')) {
+	       intcol = 1;
+	     }
          }
 
          if (!cform[0])
@@ -249,8 +294,14 @@ int ffgcls( fitsfile *fptr,   /* I - FITS file pointer                       */
              if (nultyp == 2)
                 nularray[ii] = 1;
            }
-           else
-             sprintf(tmpstr, cform, darray[jj]);
+           else if (intcol)
+	   {
+	       snprintf(tmpstr, 400,cform, (int) darray[jj]);
+	   } 
+	   else 
+	   {
+	       snprintf(tmpstr, 400,cform, darray[jj]);
+	   }
 
            strncat(array[ii], tmpstr, dwidth);
            strcat(array[ii], ",");
@@ -263,8 +314,14 @@ int ffgcls( fitsfile *fptr,   /* I - FITS file pointer                       */
              if (nultyp == 2)
                 nularray[ii] = 1;
            }
-           else
-             sprintf(tmpstr, cform, darray[jj]);
+           else if (intcol)
+	   {
+	       snprintf(tmpstr, 400,cform, (int) darray[jj]);
+	   } 
+	   else 
+	   {
+	       snprintf(tmpstr, 400,cform, darray[jj]);
+	   }
 
            strncat(array[ii], tmpstr, dwidth);
            strcat(array[ii], ")");
@@ -274,7 +331,7 @@ int ffgcls( fitsfile *fptr,   /* I - FITS file pointer                       */
 
       free(darray);  /* free the memory */
     }
-    else if (tcode == TLONGLONG)
+    else if (tcode == TLONGLONG && equivtype == TLONGLONG)
     {
       /* allocate memory for the array of LONGLONG values */
       llarray = (LONGLONG *) calloc((size_t) nelem, sizeof(LONGLONG) );
@@ -291,8 +348,9 @@ int ffgcls( fitsfile *fptr,   /* I - FITS file pointer                       */
 
       /* write the formated string for each value */
       if (nulval) {
-          strcpy(tmpnull, nulval);
-          nulwidth = strlen(nulval);
+          strncpy(tmpnull, nulval,79);
+          tmpnull[79]='\0'; /* In case len(nulval) >= 79 */
+          nulwidth = strlen(tmpnull);
       } else {
           strcpy(tmpnull, " ");
           nulwidth = 1;
@@ -316,11 +374,11 @@ int ffgcls( fitsfile *fptr,   /* I - FITS file pointer                       */
 
 #if defined(_MSC_VER)
     /* Microsoft Visual C++ 6.0 uses '%I64d' syntax  for 8-byte integers */
-        sprintf(tmpstr, "%20I64d", llarray[ii]);
+        snprintf(tmpstr, 400,"%20I64d", llarray[ii]);
 #elif (USE_LL_SUFFIX == 1)
-        sprintf(tmpstr, "%20lld", llarray[ii]);
+        snprintf(tmpstr, 400,"%20lld", llarray[ii]);
 #else
-        sprintf(tmpstr, "%20ld", llarray[ii]);
+        snprintf(tmpstr, 400,"%20ld", llarray[ii]);
 #endif
               *array[ii] = '\0';
               strncat(array[ii], tmpstr, 20);
@@ -329,6 +387,64 @@ int ffgcls( fitsfile *fptr,   /* I - FITS file pointer                       */
 
       free(flgarray);
       free(llarray);  /* free the memory */
+
+    }
+    else if (tcode == TLONGLONG && equivtype == TULONGLONG)
+    {
+      /* allocate memory for the array of ULONGLONG values */
+      ullarray = (ULONGLONG *) calloc((size_t) nelem, sizeof(ULONGLONG) );
+      flgarray = (char *) calloc((size_t) nelem, sizeof(char) );
+      dwidth = 20;  /* max width of displayed unsigned long long integer value */
+
+      if (ffgcfujj(fptr, colnum, firstrow, firstelem, nelem,
+            ullarray, flgarray, anynul, status) > 0)
+      {
+         free(flgarray);
+         free(ullarray);
+         return(*status);
+      }
+
+      /* write the formated string for each value */
+      if (nulval) {
+          strncpy(tmpnull, nulval, 79);
+          tmpnull[79]='\0'; /* In case len(nulval) >= 79 */
+          nulwidth = strlen(tmpnull);
+      } else {
+          strcpy(tmpnull, " ");
+          nulwidth = 1;
+      }
+
+      for (ii = 0; ii < nelem; ii++)
+      {
+           if ( flgarray[ii] )
+           {
+              *array[ii] = '\0';
+              if (dwidth < nulwidth)
+                  strncat(array[ii], tmpnull, dwidth);
+              else
+                  sprintf(array[ii],"%*s",dwidth,tmpnull);
+		  
+              if (nultyp == 2)
+	          nularray[ii] = 1;
+           }
+           else
+           {	   
+
+#if defined(_MSC_VER)
+    /* Microsoft Visual C++ 6.0 uses '%I64d' syntax  for 8-byte integers */
+        snprintf(tmpstr, 400, "%20I64u", ullarray[ii]); 
+#elif (USE_LL_SUFFIX == 1)
+        snprintf(tmpstr, 400, "%20llu", ullarray[ii]);
+#else
+        snprintf(tmpstr, 400, "%20lu", ullarray[ii]);
+#endif
+              *array[ii] = '\0';
+              strncat(array[ii], tmpstr, 20);
+           }
+      }
+
+      free(flgarray);
+      free(ullarray);  /* free the memory */
 
     }
     else
@@ -371,6 +487,19 @@ int ffgcls( fitsfile *fptr,   /* I - FITS file pointer                       */
       {
            /* convert the Fortran style TDISPn to a C style format */
            ffcdsp(dispfmt, cform);
+
+	   /* Special case: TDISPn='Aw' disallowed for numeric types */
+	   if (dispfmt[0] == 'A') {
+	     cform[0] = 0;
+
+	   /* Special case: if the output is intended to be represented
+	      as an integer, but we read it as a double, we need to
+	      set intcol = 1 so it is printed as an integer */
+	   } else if ((dispfmt[0] == 'I') || (dispfmt[0] == 'i') ||
+		      (dispfmt[0] == 'O') || (dispfmt[0] == 'o') ||
+		      (dispfmt[0] == 'Z') || (dispfmt[0] == 'z')) {
+	     intcol = 1;
+	   }
       }
 
       if (!cform[0])
@@ -388,6 +517,11 @@ int ffgcls( fitsfile *fptr,   /* I - FITS file pointer                       */
             else if (scaled && tcode == TLONG)
             {
                   /* scaled long integer column == double */
+                  strcpy(cform, "%#23.15G");
+            }
+            else if (scaled && tcode == TLONGLONG)
+            {
+                  /* scaled long long integer column == double */
                   strcpy(cform, "%#23.15G");
             }
             else
@@ -420,8 +554,9 @@ int ffgcls( fitsfile *fptr,   /* I - FITS file pointer                       */
       } 
 
       if (nulval) {
-          strcpy(tmpnull, nulval);
-          nulwidth = strlen(nulval);
+          strncpy(tmpnull, nulval,79);
+          tmpnull[79]='\0';
+          nulwidth = strlen(tmpnull);
       } else {
           strcpy(tmpnull, " ");
           nulwidth = 1;
@@ -455,11 +590,12 @@ int ffgcls( fitsfile *fptr,   /* I - FITS file pointer                       */
            }
            else
            {	   
-              if (intcol)
-                sprintf(tmpstr, cform, (int) darray[ii]);
-              else
-                sprintf(tmpstr, cform, darray[ii]);
-
+              if (intcol) {
+                snprintf(tmpstr, 400,cform, (int) darray[ii]);
+              } else {
+                snprintf(tmpstr, 400,cform, darray[ii]);
+              }
+	      
               /* fill field with '*' if number is too wide */
               dlen = strlen(tmpstr);
 	      if (dlen > dwidth) {
@@ -498,7 +634,7 @@ int ffgcdw( fitsfile *fptr,   /* I - FITS file pointer                       */
 
     if (colnum < 1 || colnum > (fptr->Fptr)->tfield)
     {
-        sprintf(message, "Specified column number is out of range: %d",
+        snprintf(message, FLEN_ERRMSG,"Specified column number is out of range: %d",
                 colnum);
         ffpmsg(message);
         return(*status = BAD_COL_NUM);
@@ -567,6 +703,12 @@ int ffgcdw( fitsfile *fptr,   /* I - FITS file pointer                       */
             /* scaled long integer col == double; default format is 23.15G */
             *width = 23;
         }
+        else if (scaled && tcode == TLONGLONG)
+        {
+            /* scaled long long integer col == double; default format is 23.15G */
+            *width = 23;
+        }
+
         else
         {
            ffghdt(fptr, &hdutype, status);  /* get type of table */
@@ -604,13 +746,28 @@ int ffgcdw( fitsfile *fptr,   /* I - FITS file pointer                       */
                      *width = 1;
                   else if (tcode == TSTRING)   /* 'A' */
                   {
-                     cptr = dispfmt;
-                     while(!isdigit((int) *cptr) && *cptr != '\0') 
-                         cptr++;
+		    int typecode;
+		    long int repeat = 0, rwidth = 0;
+		    int gstatus = 0;
 
-                     *width = atoi(cptr);
+		    /* Deal with possible vector string with repeat / width  by parsing
+		       the TFORM=rAw keyword */
+		    if (ffgtcl(fptr, colnum, &typecode, &repeat, &rwidth, &gstatus) == 0 &&
+			rwidth >= 1 && rwidth < repeat) {
+		      *width = rwidth;
 
-                     if (*width < 1)
+		    } else {
+		      
+		      /* Hmmm, we couldn't parse the TFORM keyword by standard, so just do
+			 simple parsing */
+		      cptr = dispfmt;
+		      while(!isdigit((int) *cptr) && *cptr != '\0') 
+			cptr++;
+		      
+		      *width = atoi(cptr);
+		    }
+
+                    if (*width < 1)
                          *width = 1;  /* default is at least 1 column */
                   }
             }
@@ -668,7 +825,7 @@ int ffgcls2 ( fitsfile *fptr,   /* I - FITS file pointer                       *
     /*---------------------------------------------------*/
     if (colnum < 1 || colnum > (fptr->Fptr)->tfield)
     {
-        sprintf(message, "Specified column number is out of range: %d",
+        snprintf(message, FLEN_ERRMSG,"Specified column number is out of range: %d",
                 colnum);
         ffpmsg(message);
         return(*status = BAD_COL_NUM);
@@ -806,7 +963,7 @@ int ffgcls2 ( fitsfile *fptr,   /* I - FITS file pointer                       *
       if (*status > 0)  /* test for error during previous read operation */
       {
          dtemp = (double) next;
-         sprintf(message,
+         snprintf(message,FLEN_ERRMSG,
           "Error reading elements %.0f thru %.0f of data array (ffpcls).",
              dtemp+1., dtemp+ntodo);
 

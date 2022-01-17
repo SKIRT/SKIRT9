@@ -213,9 +213,11 @@ SchemaDef::SchemaDef(string filePath)
                     {
                         string unit = reader.attributeValue("name");
                         double factor = StringUtils::toDouble(reader.attributeValue("factor"));
-                        if (!factor) factor = 1;  // default factor of 1
+                        if (!factor) factor = 1.;  // default factor of 1
+                        double power = StringUtils::toDouble(reader.attributeValue("power"));
+                        if (!power) power = 1.;  // default power of 1
                         double offset = StringUtils::toDouble(reader.attributeValue("offset"));
-                        _unitDef.addUnit(qty, unit, factor, offset);
+                        _unitDef.addUnit(qty, unit, factor, power, offset);
                         reader.skipCurrentElement();
                     }
                 }
@@ -448,12 +450,13 @@ void SchemaDef::save(string filePath, string producer) const
             {
                 // write "Unit" element
                 const string& unitname = upair.first;
-                double factor = upair.second.first;
-                double offset = upair.second.second;
+                double factor, power, offset;
+                std::tie(factor, power, offset) = upair.second;
                 writer.writeStartElement("Unit");
                 writer.writeAttribute("name", unitname);
                 writer.writeAttribute("factor", StringUtils::toString(factor));
-                if (offset) writer.writeAttribute("offset", StringUtils::toString(offset));
+                if (power != 1.) writer.writeAttribute("power", StringUtils::toString(power));
+                if (offset != 0.) writer.writeAttribute("offset", StringUtils::toString(offset));
                 writer.writeEndElement();
             }
 

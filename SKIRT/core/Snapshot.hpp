@@ -290,6 +290,16 @@ public:
         the behavior is undefined. */
     virtual Position position(int m) const = 0;
 
+    /** This function returns the metallicity of the entity with index \f$0\le m \le
+        N_\mathrm{ent}-1\f$. If the metallicity is not being imported, or the index is out of
+        range, the behavior is undefined. */
+    virtual double metallicity(int m) const = 0;
+
+    /** This function returns the metallicity of the entity nearest to (or at) the specified point
+        \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If the
+        metallicity is not being imported, the behavior is undefined. */
+    virtual double metallicity(Position bfr) const = 0;
+
     /** This function returns the temperature of the entity with index \f$0\le m \le
         N_\mathrm{ent}-1\f$. If the temperature is not being imported, or the index is out of
         range, the behavior is undefined. */

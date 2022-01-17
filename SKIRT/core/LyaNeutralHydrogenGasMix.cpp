@@ -50,6 +50,13 @@ bool LyaNeutralHydrogenGasMix::hasExtraSpecificState() const
 
 ////////////////////////////////////////////////////////////////////
 
+bool LyaNeutralHydrogenGasMix::hasScatteringDispersion() const
+{
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////
+
 vector<StateVariable> LyaNeutralHydrogenGasMix::specificStateVariableInfo() const
 {
     return vector<StateVariable>{StateVariable::numberDensity(), StateVariable::temperature()};
@@ -57,7 +64,7 @@ vector<StateVariable> LyaNeutralHydrogenGasMix::specificStateVariableInfo() cons
 
 ////////////////////////////////////////////////////////////////////
 
-void LyaNeutralHydrogenGasMix::initializeSpecificState(MaterialState* state, double temperature,
+void LyaNeutralHydrogenGasMix::initializeSpecificState(MaterialState* state, double /*metallicity*/, double temperature,
                                                        const Array& /*params*/) const
 {
     // leave the temperature at zero if the cell does not contain any material for this component
@@ -127,18 +134,19 @@ double LyaNeutralHydrogenGasMix::opacityExt(double lambda, const MaterialState* 
 
 void LyaNeutralHydrogenGasMix::peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w,
                                                  Direction bfkobs, Direction bfky, const MaterialState* state,
-                                                 PhotonPacket* pp) const
+                                                 const PhotonPacket* pp) const
 {
     // draw a random atom velocity & phase function, unless a previous peel-off stored this already
-    if (!pp->hasLyaScatteringInfo())
+    if (!pp->hasScatteringInfo())
     {
         double T = state->temperature();
         double nH = state->numberDensity();
-        pp->setLyaScatteringInfo(LyaUtils::sampleAtomVelocity(lambda, T, nH, pp->direction(), config(), random()));
+        const_cast<PhotonPacket*>(pp)->setScatteringInfo(
+            LyaUtils::sampleAtomVelocity(lambda, T, nH, pp->direction(), config(), random()));
     }
 
     // add the contribution to the Stokes vector components depending on scattering type
-    if (pp->lyaDipole())
+    if (pp->dipole())
     {
         // contribution of dipole scattering with or without polarization
         _dpf.peeloffScattering(I, Q, U, V, w, pp->direction(), bfkobs, bfky, pp);
@@ -153,7 +161,7 @@ void LyaNeutralHydrogenGasMix::peeloffScattering(double& I, double& Q, double& U
     // for a random fraction of the events governed by the relative Lya contribution,
     // Doppler-shift the photon packet wavelength into and out of the atom frame
     if (random()->uniform() <= w)
-        lambda = LyaUtils::shiftWavelength(lambda, pp->lyaAtomVelocity(), pp->direction(), bfkobs);
+        lambda = LyaUtils::shiftWavelength(lambda, pp->particleVelocity(), pp->direction(), bfkobs);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -161,17 +169,17 @@ void LyaNeutralHydrogenGasMix::peeloffScattering(double& I, double& Q, double& U
 void LyaNeutralHydrogenGasMix::performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const
 {
     // draw a random atom velocity & phase function, unless a peel-off stored this already
-    if (!pp->hasLyaScatteringInfo())
+    if (!pp->hasScatteringInfo())
     {
         double T = state->temperature();
         double nH = state->numberDensity();
-        pp->setLyaScatteringInfo(LyaUtils::sampleAtomVelocity(lambda, T, nH, pp->direction(), config(), random()));
+        pp->setScatteringInfo(LyaUtils::sampleAtomVelocity(lambda, T, nH, pp->direction(), config(), random()));
     }
 
     // draw the outgoing direction from the dipole or the isotropic phase function
     // and, if required, update the polarization state of the photon packet
     Direction bfknew;
-    if (pp->lyaDipole())
+    if (pp->dipole())
     {
         bfknew = _dpf.performScattering(pp->direction(), pp);
     }
@@ -182,7 +190,7 @@ void LyaNeutralHydrogenGasMix::performScattering(double lambda, const MaterialSt
     }
 
     // Doppler-shift the photon packet wavelength into and out of the atom frame
-    lambda = LyaUtils::shiftWavelength(lambda, pp->lyaAtomVelocity(), pp->direction(), bfknew);
+    lambda = LyaUtils::shiftWavelength(lambda, pp->particleVelocity(), pp->direction(), bfknew);
 
     // execute the scattering event in the photon packet
     pp->scatter(bfknew, state->bulkVelocity(), lambda);

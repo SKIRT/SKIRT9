@@ -19,6 +19,9 @@ double SingleGrainDustMix::getOpticalProperties(const Array& lambdav, const Arra
     StoredTable<1> sigmasca(this, opticalPropsName, "lambda(m)", "sigmasca(m2/H)");
     StoredTable<1> asymmpar(this, opticalPropsName, "lambda(m)", "g(1)");
 
+    // log warning if the simulation wavelength range extends beyond the optical property range
+    informAvailableWavelengthRange(sigmaabs.axisRange<0>());
+
     // retrieve the optical properties on the requested wavelength grid
     int numLambda = lambdav.size();
     for (int ell = 0; ell != numLambda; ++ell)

@@ -816,8 +816,6 @@ INPUT_ENCODING         = UTF-8
 # *.f, *.for, *.tcl, *.vhd, *.vhdl, *.ucf and *.qsf.
 
 FILE_PATTERNS          = *.hpp \
-                         *.hh \
-                         *.cc \
                          *.txt
 
 # The RECURSIVE tag can be used to specify whether or not subdirectories should
