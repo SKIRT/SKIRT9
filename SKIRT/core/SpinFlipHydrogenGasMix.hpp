@@ -14,8 +14,8 @@
     spin-flip transition in neutral atomic hydrogen, including emission and absorption. The 21 cm
     emission luminosity and self-absorption opacity in a given cell are determined from gas
     properties defined in the input model (total hydrogen number density, gas metallity, gas
-    temperature, neutral hydrogen fraction) and the local UV radiation field calculated by the
-    simulation (taking into account dust extinction).
+    temperature, neutral hydrogen mass fraction) and the local UV radiation field calculated by
+    the simulation (taking into account dust extinction).
 
     <b>Partitioning</b>
 
@@ -32,10 +32,13 @@
     Currently, this class implements the partioning scheme described by Gnedin and Kravtsov 2011
     (ApJ 728:88). This scheme estimates the mass fraction of molecular hydrogen compared to the
     total hydrogen mass, i.e. \f$f_\mathrm{H2} = M_\mathrm{H2}/M_H\f$, where \f$M_\mathrm{H} =
-    M_\mathrm{HI} + M_\mathrm{H2} + M_\mathrm{HII}\f$ denotes the total (atomic, molecular, and
-    ionized) hydrogen mass. The scheme has the following three input parameters:
+    M_\mathrm{HI} + M_\mathrm{HII} + M_\mathrm{H2}\f$ denotes the total (atomic, ionized, and
+    molecular) hydrogen mass. The scheme has the following three input parameters:
 
-    - The total hydrogen number density \f$n_\mathrm{H}\f$ defined in the input model.
+    - The total hydrogen number density \f$n_\mathrm{H}\f$ defined in the input model, where
+    \f$n_\mathrm{H} = n_\mathrm{HI} + n_\mathrm{HII} + 2\,n_\mathrm{H2}\f$. Note the factor 2
+    in this equation; \f$n_\mathrm{H}\f$ in fact specifies the number of protons per volume
+    rather than the number of hydrogen-like particles per volume.
 
     - The dust-to-gas ratio \f$D\f$ relative to the representative Galactic value. Because the
     dust-to-gas ratio can be assumed to scale with metallicity, this is roughly equivalent to the
@@ -70,10 +73,11 @@
 
     \f[ D_* = 1.5 \times 10^{-3} \times \ln\left(1 + (3 U)^{1.7} \right) \f]
 
-    Given the total hydrogen number density \f$n_\mathrm{H}\f$ and the neutral hydrogen fraction
-    \f$f_\mathrm{HI+H2} = (M_\mathrm{HI} + M_\mathrm{H2})/M_H\f$ defined in the input model, the
-    atomic number density can then be easily derived as \f$n_\mathrm{HI} = n_\mathrm{H}
-    (f_\mathrm{HI+H2} - f_\mathrm{H2})\f$.
+    Given the total hydrogen number density \f$n_\mathrm{H}\f$ and the neutral hydrogen mass
+    fraction \f$f_\mathrm{HI+H2} = (M_\mathrm{HI} + M_\mathrm{H2})/M_H\f$ defined in the input
+    model, the atomic number density can then be easily derived as \f$n_\mathrm{HI} = n_\mathrm{H}
+    (f_\mathrm{HI+H2} - f_\mathrm{H2})\f$. Note that \f$f_\mathrm{HI+H2}\f$ is a mass fraction
+    rather than a number density fraction.
 
     <b>Emission</b>
 
