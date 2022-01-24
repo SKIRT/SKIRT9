@@ -63,10 +63,11 @@ class WavelengthGrid;
     IFU file name          | Description | Configured by
     -----------------------|-------------|--------------
     total                  | Total attenuated flux | always on
-    transparent            | Transparent flux, as if there were no attenuating media | \em recordComponents = true
+    transparent            | Transparent flux from primary sources | \em recordComponents = true
     primarydirect          | Direct, unscattered flux from primary sources | \em recordComponents = true
     primaryscattered       | Indirect, scattered flux from primary sources | \em recordComponents = true
     primaryscatteredN      | Flux from primary sources that has scattered N times | .. & \em numScatteringLevels > 0
+    secondarytransparent   | Transparent flux emitted by media | \em recordComponents = true
     secondarydirect        | Direct, unscattered flux emitted by media | \em recordComponents = true
     secondaryscattered     | Indirect, scattered flux emitted by media | \em recordComponents = true
     stokesQ                | Stokes vector element Q for total flux | \em recordPolarization = true
@@ -85,7 +86,7 @@ class WavelengthGrid;
     Block                                  | Configured by
     ---------------------------------------|--------------
     Total flux                             | always on
-    Transparent flux and 4 flux components | \em recordComponents = true
+    Transparent fluxes and flux components | \em recordComponents = true
     Stokes vector elements                 | \em recordPolarization = true
     N-times scattered primary flux         | \em recordComponents = true & \em numScatteringLevels > 0
 
