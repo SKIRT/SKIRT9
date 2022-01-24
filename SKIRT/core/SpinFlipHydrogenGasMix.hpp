@@ -13,9 +13,65 @@
 /** The SpinFlipHydrogenGasMix class describes the material properties related to the 21 cm
     spin-flip transition in neutral atomic hydrogen, including emission and absorption. The 21 cm
     emission luminosity and self-absorption opacity in a given cell are determined from gas
-    properties defined in the input model (total hydrogen number density, gas metallity, gas
-    temperature, neutral hydrogen fraction) and the local UV radiation field calculated by the
+    properties defined in the input model (total hydrogen number density, neutral hydrogen mass
+    fraction, gas metallity, gas temperature) and the local UV radiation field calculated by the
     simulation (taking into account dust extinction).
+
+    <b>Configuring the simulation</b>
+
+    Simulations of 21 cm the spin-flip transition usually include primary sources and a dust medium
+    in addition to a medium component configured with the spin flip material mix (this class).
+    During primary emission, the dust medium determines the UV radiation field, allowing the spin
+    flip material mix to calculate the 21 cm line luminosity and absorption cross section for use
+    during secondary emission. This calculation happens in the updateSpecificState() function,
+    which is invoked at the end of primary emission (because the material mix advertises that it
+    has a semi-dynamic medium state). This does imply that the 21 cm line absorption remains zero
+    during primary emission, which is not a problem as long as the primary sources don't emit in
+    the radio wavelength range. Thus, unless dust opacities are very high, there is no need for
+    iteration over primary nor secondary emission.
+
+    If one is not interested in dust emission (i.e. only in the 21 cm line emission), the
+    simulation mode can be set to "GasEmission" and the radiation field wavelength grid can be
+    limited to a single bin in the UV wavelength range. This bin should be configured to cover the
+    full Lyman-Werner band (912-1110 Angstrom) so that it accurately captures all radiation that
+    dissociates molecular hydrogen. Similarly, instrument wavelength grids can be limited to a
+    relevant range around 21 cm line center.
+
+    To calculate both the dust emission spectrum and the 21 line emission in the same simulation,
+    the simulation mode must be set to "DustAndGasEmission" and the radiation field wavelength grid
+    must now include and properly resolve the UV, optical, and infrared wavelength range. Separate
+    instruments can be configured for the relevant wavelength ranges, e.g. using a logarithmic grid
+    for the continuum spectrum and a linear grid for the line profile.
+
+    The input model must provide values for the spatial distribution of four medium properties that
+    remain constant during the simulation:
+
+    - The total hydrogen number density \f$n_\mathrm{H}\f$, defined as \f$n_\mathrm{H} =
+    n_\mathrm{HI} + n_\mathrm{HII} + 2\,n_\mathrm{H2}\f$, i.e. including atomic, ionized, and
+    molecular hydrogen. Note the factor 2 in this equation; \f$n_\mathrm{H}\f$ in fact specifies
+    the number of protons per volume rather than the number of hydrogen-like particles per volume.
+
+    - The neutral hydrogen fraction \f$f_\mathrm{HI+H2}\f$, defined as \f$f_\mathrm{HI+H2} =
+    (M_\mathrm{HI} + M_\mathrm{H2})/M_H\f$. Note that \f$f_\mathrm{HI+H2}\f$ is a mass fraction
+    rather than a number density fraction.
+
+    - The metallicity \f$Z\f$ of the gas.
+
+    - The kinetic temperature \f$T\f$ of the gas.
+
+    Most often, this information will be read from an input file by associating the spin flip
+    material mix with a subclass of ImportedMedium. For that medium component, the ski file
+    attributes \em importMetallicity and \em importTemperature <b>must</b> be set to 'true', and
+    \em importVariableMixParams must be left at 'false'. The additional column required by the spin
+    flip material mix (neutral hydrogen fraction) is automatically imported and is expected
+    <b>after</b> all other columns. For example, if bulk velocities are also imported for this
+    medium component (i.e. \em importVelocity is 'true'), the column order would be \f[ ...,
+    n_\mathrm{H}, Z, T, v_\mathrm{x}, v_\mathrm{y}, v_\mathrm{z}, f_\mathrm{HI+H2} \f]
+
+    For basic testing purposes, the spin flip material mix can also be associated with a geometric
+    medium component. The geometry then defines the spatial density distribution (i.e.
+    \f$n_\mathrm{H}\f$), and the spin flip material mix offers configuration properties to specify
+    fixed default values for the other properties that will be used across the spatial domain.
 
     <b>Partitioning</b>
 
@@ -32,8 +88,8 @@
     Currently, this class implements the partioning scheme described by Gnedin and Kravtsov 2011
     (ApJ 728:88). This scheme estimates the mass fraction of molecular hydrogen compared to the
     total hydrogen mass, i.e. \f$f_\mathrm{H2} = M_\mathrm{H2}/M_H\f$, where \f$M_\mathrm{H} =
-    M_\mathrm{HI} + M_\mathrm{H2} + M_\mathrm{HII}\f$ denotes the total (atomic, molecular, and
-    ionized) hydrogen mass. The scheme has the following three input parameters:
+    M_\mathrm{HI} + M_\mathrm{HII} + M_\mathrm{H2}\f$ denotes the total (atomic, ionized, and
+    molecular) hydrogen mass. The scheme has the following three input parameters:
 
     - The total hydrogen number density \f$n_\mathrm{H}\f$ defined in the input model.
 
@@ -70,10 +126,9 @@
 
     \f[ D_* = 1.5 \times 10^{-3} \times \ln\left(1 + (3 U)^{1.7} \right) \f]
 
-    Given the total hydrogen number density \f$n_\mathrm{H}\f$ and the neutral hydrogen fraction
-    \f$f_\mathrm{HI+H2} = (M_\mathrm{HI} + M_\mathrm{H2})/M_H\f$ defined in the input model, the
-    atomic number density can then be easily derived as \f$n_\mathrm{HI} = n_\mathrm{H}
-    (f_\mathrm{HI+H2} - f_\mathrm{H2})\f$.
+    Given the total hydrogen number density \f$n_\mathrm{H}\f$ and the neutral hydrogen mass
+    fraction \f$f_\mathrm{HI+H2}\f$ defined in the input model, the atomic number density can then
+    be easily derived as \f$n_\mathrm{HI} = n_\mathrm{H} (f_\mathrm{HI+H2} - f_\mathrm{H2})\f$.
 
     <b>Emission</b>
 
@@ -114,50 +169,6 @@
     \times \left( 1-\mathrm{e}^{-T/5000~\mathrm{K} } \right).\f] Because the absorption cross
     section is inversely proportional to the spin temperature, this yields an approximate lower
     bound for the cross section.
-
-    <b>Configuring the simulation</b>
-
-    Simulations of 21 cm the spin-flip transition usually include primary sources and a dust medium
-    in addition to a medium component configured with the spin flip material mix (this class).
-    During primary emission, the dust medium determines the UV radiation field, allowing the spin
-    flip material mix to calculate the 21 cm line luminosity and absorption cross section for use
-    during secondary emission. This calculation happens in the updateSpecificState() function,
-    which is invoked at the end of primary emission (because the material mix advertises that it
-    has a semi-dynamic medium state). This does imply that the 21 cm line absorption remains zero
-    during primary emission, which is not a problem as long as the primary sources don't emit in
-    the radio wavelength range. Thus, unless dust opacities are very high, there is no need for
-    iteration over primary nor secondary emission.
-
-    If one is not interested in dust emission (i.e. only in the 21 cm line emission), the
-    simulation mode can be set to "GasEmission" and the radiation field wavelength grid can be
-    limited to a single bin in the UV wavelength range. This bin should be configured to cover the
-    full Lyman-Werner band (912-1110 Angstrom) so that it accurately captures all radiation that
-    dissociates molecular hydrogen. Similarly, instrument wavelength grids can be limited to a
-    relevant range around 21 cm line center.
-
-    To calculate both the dust emission spectrum and the 21 line emission in the same simulation,
-    the simulation mode must be set to "DustAndGasEmission" and the radiation field wavelength grid
-    must now include and properly resolve the UV, optical, and infrared wavelength range. Separate
-    instruments can be configured for the relevant wavelength ranges, e.g. using a logarithmic grid
-    for the continuum spectrum and a linear grid for the line profile.
-
-    As indicated above, the input model must provide values for the spatial distribuition of four
-    medium properties: the total hydrogen number density, the gas metallity, the gas temperature,
-    and the neutral hydrogen fraction. These values remain constant during the simulation.
-
-    Most often, this information will be read from an input file by associating the spin flip
-    material mix with a subclass of ImportedMedium. For that medium component, the ski file
-    attributes \em importMetallicity and \em importTemperature <b>must</b> be set to 'true', and
-    \em importVariableMixParams must be left at 'false'. The additional column required by the spin
-    flip material mix (neutral hydrogen fraction) is automatically imported and is expected
-    <b>after</b> all other columns. For example, if bulk velocities are also imported for this
-    medium component (i.e. \em importVelocity is 'true'), the column order would be \f[ ...,
-    n_\mathrm{H}, Z, T, v_\mathrm{x}, v_\mathrm{y}, v_\mathrm{z}, f_\mathrm{HI+H2} \f]
-
-    For basic testing purposes, the spin flip material mix can also be associated with a geometric
-    medium component. The geometry then defines the spatial density distribution (i.e.
-    \f$n_\mathrm{H}\f$), and the spin flip material mix offers configuration properties to specify
-    fixed default values for the other properties that will be used across the spatial domain.
 
     */
 class SpinFlipHydrogenGasMix : public EmittingGasMix
@@ -300,9 +311,9 @@ public:
         21 cm line, i.e. the hydrogen atom. */
     Array lineEmissionMasses() const override;
 
-    /** This function returns  a list including a single item: the 21 cm line luminosity
-        in the spatial cell and medium component represented by the specified material state and
-        the receiving material mix when it would be embedded in the specified radiation field. */
+    /** This function returns a list including a single item: the 21 cm line luminosity in the
+        spatial cell and medium component represented by the specified material state and the
+        receiving material mix when it would be embedded in the specified radiation field. */
     Array lineEmissionSpectrum(const MaterialState* state, const Array& Jv) const override;
 
     //======== Temperature =======
