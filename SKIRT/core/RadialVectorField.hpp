@@ -18,7 +18,7 @@
     magnitude is unity from the origin to the specified distance, and then ramps down from there to
     zero at infinity.
 
-    Given the user-configurable scale radius \f$r_1\ge 0\f$ and power-law exponent \f$\alpha\f$,
+    Given the user-configurable unity radius \f$r_1\ge 0\f$ and power-law exponent \f$\alpha\f$,
     the magnitude \f$v(r)\f$ of the vectors as a function of radial distance \f$r\f$ is given by
 
     \f[ r_1=0 \lor \alpha=0 \qquad v(r) = \begin{cases} 0 & \mathrm{for}\;r=0 \\ 1 &
@@ -58,9 +58,8 @@ public:
         indicating no symmetries (the vectors point in a different direction at each position). */
     int dimension() const override;
 
-    /** This function returns a unit vector pointing away from the origin at the given position
-        \f$\bf{r}\f$. Specifically, it returns \f$\bf{r}/||\bf{r}||\f$ unless \f$||\bf{r}||=0\f$ in
-        which case it returns the null vector. */
+    /** This function returns a vector pointing away from the origin at the given position
+        \f$\bf{r}\f$ according to the definitions given in the class header. */
     Vec vector(Position bfr) const override;
 };
 
