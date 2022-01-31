@@ -25,6 +25,7 @@
 #include "BrokenExpDiskGeometry.hpp"
 #include "BruzualCharlotSED.hpp"
 #include "BruzualCharlotSEDFamily.hpp"
+#include "CarbonMonoxideGasMix.hpp"
 #include "CartesianSpatialGrid.hpp"
 #include "CastelliKuruczSED.hpp"
 #include "CastelliKuruczSEDFamily.hpp"
@@ -541,6 +542,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<LyaNeutralHydrogenGasMix>();
     ItemRegistry::add<EmittingGasMix>();
     ItemRegistry::add<SpinFlipHydrogenGasMix>();
+    ///ItemRegistry::add<CarbonMonoxideGasMix>();
 
     // material mix families
     ItemRegistry::add<MaterialMixFamily>();
