@@ -16,9 +16,23 @@ int CylindricalVectorField::dimension() const
 
 Vec CylindricalVectorField::vector(Position bfr) const
 {
-    Vec result(-bfr.y(), bfr.x(), 0.);
-    double norm = result.norm();
-    return norm > 0. ? result / norm : Vec();
+    // get the radial distance and a unit vector in the rotation direction
+    // except that, if at the z-axis, always immediately return a null vector
+    Vec u(-bfr.y(), bfr.x(), 0.);
+    double r = u.norm();
+    if (r == 0) return Vec();
+    u /= r;
+
+    // set the magnitude to a default value of unity and update if needed
+    double v = 1.;
+    if (unityRadius() > 0.)
+    {
+        if ((exponent() > 0. && r < unityRadius()) || (exponent() < 0. && r > unityRadius()))
+            v = pow(r / unityRadius(), exponent());
+    }
+
+    // return a vector with proper magnitude and direction
+    return v * u;
 }
 
 //////////////////////////////////////////////////////////////////////

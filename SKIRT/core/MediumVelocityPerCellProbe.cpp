@@ -36,7 +36,7 @@ void MediumVelocityPerCellProbe::probeSetup()
         for (int m = 0; m != numCells; ++m)
         {
             Vec v = ms->bulkVelocity(m);
-            file.writeRow(m, units->omagneticfield(v.x()), units->omagneticfield(v.y()), units->omagneticfield(v.z()));
+            file.writeRow(m, units->ovelocity(v.x()), units->ovelocity(v.y()), units->ovelocity(v.z()));
         }
     }
 }

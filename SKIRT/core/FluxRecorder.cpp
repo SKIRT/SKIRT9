@@ -27,6 +27,7 @@ namespace
         Transparent,
         PrimaryDirect,
         PrimaryScattered,
+        SecondaryTransparent,
         SecondaryDirect,
         SecondaryScattered,
         TotalQ,
@@ -166,6 +167,8 @@ void FluxRecorder::finalizeConfiguration()
         }
         if (_hasMediumEmission)
         {
+            _sed[SecondaryTransparent].resize(lenSED);
+            _ifu[SecondaryTransparent].resize(lenIFU);
             _sed[SecondaryDirect].resize(lenSED);
             _ifu[SecondaryDirect].resize(lenIFU);
             _sed[SecondaryScattered].resize(lenSED);
@@ -273,9 +276,14 @@ void FluxRecorder::detect(PhotonPacket* pp, int l, double distance)
                 else
                 {
                     if (numScatt == 0)
+                    {
+                        LockFree::add(_sed[SecondaryTransparent][ell], L);
                         LockFree::add(_sed[SecondaryDirect][ell], Lext);
+                    }
                     else
+                    {
                         LockFree::add(_sed[SecondaryScattered][ell], Lext);
+                    }
                 }
             }
             if (_recordPolarization)
@@ -314,9 +322,14 @@ void FluxRecorder::detect(PhotonPacket* pp, int l, double distance)
                 else
                 {
                     if (numScatt == 0)
+                    {
+                        LockFree::add(_ifu[SecondaryTransparent][lell], L);
                         LockFree::add(_ifu[SecondaryDirect][lell], Lext);
+                    }
                     else
+                    {
                         LockFree::add(_ifu[SecondaryScattered][lell], Lext);
+                    }
                 }
             }
             if (_recordPolarization)
@@ -430,9 +443,9 @@ void FluxRecorder::calibrateAndWrite()
 
             // add the actual components of the total flux
             sedNames.insert(sedNames.end(), {"direct primary flux", "scattered primary flux", "direct secondary flux",
-                                             "scattered secondary flux"});
+                                             "scattered secondary flux", "transparent secondary flux"});
             sedArrays.insert(sedArrays.end(), {&_sed[PrimaryDirect], &_sed[PrimaryScattered], &_sed[SecondaryDirect],
-                                               &_sed[SecondaryScattered]});
+                                               &_sed[SecondaryScattered], &_sed[SecondaryTransparent]});
         }
 
         // add the polarization components, if requested
@@ -520,10 +533,11 @@ void FluxRecorder::calibrateAndWrite()
                 ifuArrays.push_back(&_ifu[Transparent]);
             }
             // add the actual components of the total flux (empty arrays will be ignored later on)
-            ifuNames.insert(ifuNames.end(),
-                            {"primarydirect", "primaryscattered", "secondarydirect", "secondaryscattered"});
-            ifuArrays.insert(ifuArrays.end(), {&_ifu[PrimaryDirect], &_ifu[PrimaryScattered], &_ifu[SecondaryDirect],
-                                               &_ifu[SecondaryScattered]});
+            ifuNames.insert(ifuNames.end(), {"primarydirect", "primaryscattered", "secondarytransparent",
+                                             "secondarydirect", "secondaryscattered"});
+            ifuArrays.insert(ifuArrays.end(),
+                             {&_ifu[PrimaryDirect], &_ifu[PrimaryScattered], &_ifu[SecondaryTransparent],
+                              &_ifu[SecondaryDirect], &_ifu[SecondaryScattered]});
         }
 
         // add the polarization components, if requested
