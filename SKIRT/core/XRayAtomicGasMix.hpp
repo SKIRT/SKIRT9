@@ -73,15 +73,43 @@
 
     <b>Extinction (photo-absorption) cross section</b>
 
-    ...
+    The total extinction cross section per hydrogen atom for this material mix is obtained by
+    accumulating the photo-absorption cross sections for all shells and for all individual
+    elements, weighted by element abundancy, and convolved with a Gaussian profile reflecting each
+    element's thermal velocity. Because the abundancies and the temperature are fixed, this
+    calculation can be performed during setup and the result stored, discretized on a
+    high-resolution wavelength grid for later retrieval.
+
+    Verner and Yakovlev (1995, www.pa.uky.edu/~verner/photo.html) provide analytic fits to the
+    photo-absorption cross sections \f$\sigma_{ph}(E)\f$ as a function of photon energy \f$E\f$ for
+    the ground-state shells of the first 30 atomic elements:
+
+    \f[\begin{aligned} \sigma_{ph}(E) &= \begin{cases} 0 & E < E_\mathrm{th} \\ \sigma_0 \,
+    F(E/E_0) & E \ge E_\mathrm{th} \end{cases}, \\ F(y) &= \left[(y-1)^2+y_{\rm w}^2 \right]y^{-Q}
+    \left(1+ \sqrt{(y/y_{\rm a})} \right )^{-P}, \\ Q&=5.5+l-0.5P, \end{aligned} \f]
+
+    with \f$E_\mathrm{th}\f$ the tabulated ionization threshold energy, \f$\sigma_0\f$, \f$E_0\f$,
+    \f$y_{\rm w}\f$, \f$y_{\rm a}\f$ and \f$P\f$ five tabulated fitting parameters, and \f$l\f$ the
+    subshell orbital quantum number (\f$l=0, 1, 2, 3\f$ for s, p, d, f orbitals respectively).
 
     <b>Scattering (fluorescence) cross section</b>
 
-    ...
+    The total "scattering" cross section per hydrogen atom for this material mix is obtained
+    similarly, but now including only the K shell photo-absorption cross section for each element
+    and multiplying by the appropriate fluorescence yields in addition to element abundancy.
+
+    The total "absorption" cross section is then simply obtained by subtracting the "scattering"
+    cross section from the extinction cross section.
 
     <b>Performing scattering (fluorescence)</b>
 
-    ...
+    The function performing an actual scattering event randomly selects one of the supported
+    fluorescence transitions (i.e. K\f$\alpha\f$ or K\f$\beta\f$ for one of the supported
+    elements). The relative probabilities for these transitions (as a function of incoming photon
+    packet wavelength) are also calculated during setup. The selected transition determines the
+    fluorescence wavelength. The outgoing photon packet wavelength is then obtained by adding a
+    random Gaussian dispersion reflecting the interacting element's thermal velocity. The emission
+    direction is isotropic.
 
     */
 class XRayAtomicGasMix : public MaterialMix
