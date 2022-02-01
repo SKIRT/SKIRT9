@@ -45,13 +45,6 @@ void SpinFlipHydrogenGasMix::setupSelfBefore()
 
 ////////////////////////////////////////////////////////////////////
 
-MaterialMix::MaterialType SpinFlipHydrogenGasMix::materialType() const
-{
-    return MaterialType::Gas;
-}
-
-////////////////////////////////////////////////////////////////////
-
 bool SpinFlipHydrogenGasMix::hasExtraSpecificState() const
 {
     return true;

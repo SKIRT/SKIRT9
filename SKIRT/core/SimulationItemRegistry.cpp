@@ -25,6 +25,7 @@
 #include "BrokenExpDiskGeometry.hpp"
 #include "BruzualCharlotSED.hpp"
 #include "BruzualCharlotSEDFamily.hpp"
+#include "CarbonMonoxideGasMix.hpp"
 #include "CartesianSpatialGrid.hpp"
 #include "CastelliKuruczSED.hpp"
 #include "CastelliKuruczSEDFamily.hpp"
@@ -261,6 +262,7 @@
 #include "VoronoiMeshSource.hpp"
 #include "VoronoiMeshSpatialGrid.hpp"
 #include "WeingartnerDraineDustMix.hpp"
+#include "XRayAtomicGasMix.hpp"
 #include "ZubkoDustMix.hpp"
 #include "ZubkoGraphiteGrainSizeDistribution.hpp"
 #include "ZubkoPAHGrainSizeDistribution.hpp"
@@ -539,8 +541,10 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
 
     ItemRegistry::add<ElectronMix>();
     ItemRegistry::add<LyaNeutralHydrogenGasMix>();
+    ///ItemRegistry::add<XRayAtomicGasMix>();
     ItemRegistry::add<EmittingGasMix>();
     ItemRegistry::add<SpinFlipHydrogenGasMix>();
+    ///ItemRegistry::add<CarbonMonoxideGasMix>();
 
     // material mix families
     ItemRegistry::add<MaterialMixFamily>();

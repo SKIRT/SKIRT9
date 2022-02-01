@@ -8,6 +8,13 @@
 
 ////////////////////////////////////////////////////////////////////
 
+MaterialMix::MaterialType EmittingGasMix::materialType() const
+{
+    return MaterialType::Gas;
+}
+
+////////////////////////////////////////////////////////////////////
+
 Range EmittingGasMix::wavelengthRange() const
 {
     Range lineRange, contRange;

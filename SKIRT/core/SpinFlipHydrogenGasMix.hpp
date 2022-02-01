@@ -208,10 +208,6 @@ protected:
     //======== Capabilities =======
 
 public:
-    /** This function returns the fundamental material type represented by this material mix, which
-        is MaterialType::Gas. */
-    MaterialType materialType() const override;
-
     /** This function returns true, indicating that the cross sections returned by this material
         mix depend on the values of specific state variables other than the number density. */
     bool hasExtraSpecificState() const override;

@@ -41,7 +41,14 @@ class EmittingGasMix : public MaterialMix, public SourceWavelengthRangeInterface
 
     ITEM_END()
 
-    //======================== Other Functions =======================
+    //======== Material type =======
+
+public:
+    /** This function returns the fundamental material type represented by this material mix, which
+        is MaterialType::Gas. */
+    MaterialType materialType() const override;
+
+    //======== Wavelength range interface =======
 
 public:
     /** This function returns the wavelength range of the gas emission wavelength grid,
