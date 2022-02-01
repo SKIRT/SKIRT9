@@ -139,6 +139,14 @@ protected:
         high-resolution wavelength grid. */
     void setupSelfBefore() override;
 
+    //======== Private support functions =======
+
+private:
+    /** This function returns the index in the private wavelength grid corresponding to the
+        specified wavelength. The parameters for converting a wavelength to the appropriate index
+        are stored in data members during setup. */
+    int indexForLambda(double lambda) const;
+
     //======== Capabilities =======
 
 public:
@@ -241,6 +249,14 @@ public:
     //======================== Data Members ========================
 
 private:
+    // all data members are precalculated in setupSelfAfter()
+
+    // wavelength grid (shifted to the left of the actually sampled points to approximate rounding)
+    Array _lambdav;  // indexed on ell
+
+    // cross sections
+    Array _sigmaextv;  // indexed on ell
+    Array _sigmascav;  // indexed on ell
 };
 
 ////////////////////////////////////////////////////////////////////
