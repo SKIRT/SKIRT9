@@ -214,7 +214,6 @@ namespace
         double F = (ym1 * ym1 + p.yw * p.yw) * std::pow(y, -Q) * std::pow(1. + std::sqrt(y / p.ya), -p.P);
         return 1e-22 * p.sigma0 * F;  // from Mb to m2
     }
-
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -290,7 +289,7 @@ void XRayAtomicGasMix::setupSelfBefore()
     {
         double E = wavelengthToFromEnergy(lambdav[ell]);
         double sigma = 0.;
-        for (const auto& params : crossSectionParams) sigma += crossSection(E, params);
+        for (const auto& params : crossSectionParams) sigma += crossSection(E, params) * _abundancies[params.Z - 1];
         _sigmaextv[ell] = sigma;
     }
 
