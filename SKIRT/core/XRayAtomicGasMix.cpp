@@ -187,6 +187,30 @@ namespace
         {30, 1, 0, 0.9667E+04, 0.8320E+03, 0.2586E+02, 0.4497E+02, 0.2215E+01, 0.0000E+00}};
     static_assert(144 == crossSectionParams.size(), "Incorrect number of cross sections");
 
+    // fluorescence parameters taken from ...
+    // there are separate records for K-alpha and K-beta channels
+    struct FluorescenceParams
+    {
+        short Z;       // atomic number
+        short n;       // principal quantum number of the shell (always 1 because we only support K shell)
+        double omega;  // fluorescence yield (1)
+        double E;      // energy of the emitted photon (eV)
+    };
+    constexpr std::initializer_list<FluorescenceParams> fluorescenceParams = {
+        {3, 1, 0.000081, 54.3}, {4, 1, 0.00026, 108.5}, {5, 1, 0.00062, 183.3}, {6, 1, 0.0013, 277.0},
+        {7, 1, 0.0024, 392.4},  {8, 1, 0.0041, 524.9},  {9, 1, 0.0065, 676.8},  {10, 1, 0.0099, 848.6},
+        {11, 1, 0.014, 1041.0}, {12, 1, 0.020, 1253.6}, {13, 1, 0.014, 1486.5}, {13, 1, 0.014, 1557.4},
+        {14, 1, 0.018, 1739.7}, {14, 1, 0.018, 1835.9}, {15, 1, 0.024, 2013.2}, {15, 1, 0.024, 2139.1},
+        {16, 1, 0.031, 2307.2}, {16, 1, 0.031, 2464.0}, {17, 1, 0.039, 2621.6}, {17, 1, 0.039, 2815.6},
+        {18, 1, 0.048, 2956.6}, {18, 1, 0.048, 3190.5}, {19, 1, 0.058, 3312.5}, {19, 1, 0.058, 3589.6},
+        {20, 1, 0.069, 3689.9}, {20, 1, 0.069, 4012.7}, {21, 1, 0.081, 4088.3}, {21, 1, 0.081, 4460.5},
+        {22, 1, 0.095, 4507.8}, {22, 1, 0.095, 4931.8}, {23, 1, 0.11, 4948.4},  {23, 1, 0.11, 5427.3},
+        {24, 1, 0.12, 5410.1},  {24, 1, 0.12, 5946.7},  {25, 1, 0.14, 5893.2},  {25, 1, 0.14, 6490.4},
+        {26, 1, 0.16, 6397.3},  {26, 1, 0.16, 7058.0},  {27, 1, 0.17, 6922.8},  {27, 1, 0.17, 7649.4},
+        {28, 1, 0.19, 7469.5},  {28, 1, 0.19, 8264.7},  {29, 1, 0.21, 8047.8},  {29, 1, 0.21, 8905.3},
+        {30, 1, 0.22, 8627.3},  {30, 1, 0.22, 9572.0}};
+    static_assert(46 == fluorescenceParams.size(), "Incorrect number of cross sections");
+
     // wavelength range over which our cross sections may be nonzero
     constexpr Range nonZeroRange(4e-12, 290e-9);  // 300 keV --> 4.3 eV
 
@@ -217,6 +241,8 @@ namespace
 }
 
 ////////////////////////////////////////////////////////////////////
+
+#include <iostream>
 
 void XRayAtomicGasMix::setupSelfBefore()
 {
@@ -267,6 +293,9 @@ void XRayAtomicGasMix::setupSelfBefore()
         lambdav.push_back(lambda * (1. + 0.1 / numPerDex));
     }
 
+    // add the fluorescence emission wavelengths
+    for (const auto& params : fluorescenceParams) lambdav.push_back(wavelengthToFromEnergy(params.E));
+
     // sort the wavelengths and remove duplicates
     NR::unique(lambdav);
     int numLambda = lambdav.size();
@@ -295,11 +324,41 @@ void XRayAtomicGasMix::setupSelfBefore()
 
     // ---- scattering ----
 
-    // calculate the scattering cross section at every wavelength; to guarantee that the cross section is zero
-    // for wavelengths outside our range, leave the values for the outer wavelength points at zero
-    _sigmascav.resize(numLambda);
+    // calculate and store the fluorescence emission wavelengths
+    _fluolambdav.reserve(fluorescenceParams.size());
+    for (const auto& params : fluorescenceParams) _fluolambdav.push_back(wavelengthToFromEnergy(params.E));
 
-    // ...
+    // make room for the scattering cross section and the cumulative fluorescence probabilities at every wavelength
+    _sigmascav.resize(numLambda);
+    _fluocumprobvv.resize(numLambda, 0);
+
+    // provide temporary array for the non-normalized fluorescence contributions (at the current wavelength)
+    Array flucontribv(fluorescenceParams.size());
+
+    // calculate the above for every wavelength; as before, leave the values for the outer wavelength points at zero
+    for (int ell = 1; ell < numLambda - 1; ++ell)
+    {
+        double E = wavelengthToFromEnergy(lambdav[ell]);
+        double sigma = 0.;
+
+        // interate over both cross section and fluorescence parameter sets in sync
+        const auto* flp = fluorescenceParams.begin();
+        for (const auto& csp : crossSectionParams)
+        {
+            // process all fluorescence parameter sets matching this cross section set
+            while (flp != fluorescenceParams.end() && flp->Z == csp.Z && flp->n == csp.n)
+            {
+                double contribution = crossSection(E, csp) * _abundancies[csp.Z - 1] * flp->omega;
+                sigma += contribution;
+                flucontribv[flp - fluorescenceParams.begin()] = contribution;
+                flp++;
+            }
+        }
+
+        // accumulate the cross section and determine the normalized cumulative probability distribution
+        _sigmascav[ell] = sigma;
+        NR::cdf(_fluocumprobvv[ell], flucontribv);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////

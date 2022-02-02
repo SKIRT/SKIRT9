@@ -6,6 +6,7 @@
 #ifndef XRAYATOMICGASMIX_HPP
 #define XRAYATOMICGASMIX_HPP
 
+#include "ArrayTable.hpp"
 #include "MaterialMix.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -257,6 +258,10 @@ private:
     // cross sections
     Array _sigmaextv;  // indexed on ell
     Array _sigmascav;  // indexed on ell
+
+    // emission wavelengths and normalized cumulative probability distributions of fluorescence channels
+    vector<double> _fluolambdav;   // indexed on k
+    ArrayTable<2> _fluocumprobvv;  // indexed on ell, k
 };
 
 ////////////////////////////////////////////////////////////////////
