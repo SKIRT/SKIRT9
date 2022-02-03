@@ -187,6 +187,7 @@ public:
 
     //======== High-level photon life cycle =======
 
+public:
     /** This function returns the absorption (i.e. extinction minus fluorescence) opacity at the
         given wavelength and material state, using the abundances and temperature configured for
         this material mix. The photon packet properties are not used. */
@@ -202,6 +203,12 @@ public:
         properties are not used. */
     double opacityExt(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
 
+private:
+    /** This private function draws a random fluorescence channel and atom velocity and stores this
+        information in the photon packet, unless a previous peel-off stored this already. */
+    void setScatteringInfoIfNeeded(PhotonPacket* pp, double lambda) const;
+
+public:
     /** This function calculates the contribution of the medium component associated with this
         material mix to the peel-off photon luminosity, polarization state, and wavelength shift
         for the given wavelength, geometry, material state, and photon properties. The
@@ -240,6 +247,7 @@ public:
 
     //======== Temperature =======
 
+public:
     /** This function returns an indicative temperature of the material mix when it would be
         embedded in a given radiation field. The implementation in this class ignores the radiation
         field and returns the (spatially constant) temperature configured for this material mix. */
@@ -257,8 +265,10 @@ private:
     Array _sigmaextv;  // indexed on ell
     Array _sigmascav;  // indexed on ell
 
-    // emission wavelengths and normalized cumulative probability distributions of fluorescence channels
+    // emission wavelengths, thermal velocities and normalized cumulative probability distributions
+    // for each of the fluorescence channels
     vector<double> _fluolambdav;   // indexed on k
+    vector<double> _fluovthermv;   // indexed on k
     ArrayTable<2> _fluocumprobvv;  // indexed on ell, k
 };
 

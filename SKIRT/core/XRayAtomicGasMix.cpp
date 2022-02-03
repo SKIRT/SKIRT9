@@ -429,6 +429,16 @@ void XRayAtomicGasMix::setupSelfBefore()
     _fluolambdav.reserve(fluorescenceParams.size());
     for (const auto& params : fluorescenceParams) _fluolambdav.push_back(wavelengthToFromEnergy(params.E));
 
+    // calculate and store the thermal velocities corresponding to the fluorescence transitions
+    vector<double> massv = masses;
+    _fluovthermv.reserve(fluorescenceParams.size());
+    for (const auto& params : fluorescenceParams)
+    {
+        double mass = massv[params.Z - 1] * Constants::amu();
+        double vtherm = sqrt(Constants::k() * temperature() / mass);
+        _fluovthermv.push_back(vtherm);
+    }
+
     // make room for the scattering cross section and the cumulative fluorescence probabilities at every wavelength
     _sigmascav.resize(numLambda);
     _fluocumprobvv.resize(numLambda, 0);
@@ -545,17 +555,24 @@ double XRayAtomicGasMix::opacityExt(double lambda, const MaterialState* state, c
 
 ////////////////////////////////////////////////////////////////////
 
+void XRayAtomicGasMix::setScatteringInfoIfNeeded(PhotonPacket* pp, double lambda) const
+{
+    if (!pp->hasScatteringInfo())
+    {
+        int k = NR::locateClip(_fluocumprobvv[indexForLambda(lambda)], random()->uniform());
+        Vec v = _fluovthermv[k] * random()->maxwell();
+        pp->setScatteringInfo(v, k);
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
 void XRayAtomicGasMix::peeloffScattering(double& I, double& /*Q*/, double& /*U*/, double& /*V*/, double& lambda,
                                          double w, Direction bfkobs, Direction /*bfky*/, const MaterialState* /*state*/,
                                          const PhotonPacket* pp) const
 {
     // draw a random fluorescence channel and atom velocity, unless a previous peel-off stored this already
-    if (!pp->hasScatteringInfo())
-    {
-        int k = NR::locateClip(_fluocumprobvv[indexForLambda(lambda)], random()->uniform());
-        Vec v = Vec();
-        const_cast<PhotonPacket*>(pp)->setScatteringInfo(v, k);
-    }
+    setScatteringInfoIfNeeded(const_cast<PhotonPacket*>(pp), lambda);
 
     // isotropic scattering, so the contribution is trivially 1 (multiplied by the weight for this component)
     I += w;
@@ -575,12 +592,7 @@ void XRayAtomicGasMix::peeloffScattering(double& I, double& /*Q*/, double& /*U*/
 void XRayAtomicGasMix::performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const
 {
     // draw a random fluorescence channel and atom velocity, unless a previous peel-off stored this already
-    if (!pp->hasScatteringInfo())
-    {
-        int k = NR::locateClip(_fluocumprobvv[indexForLambda(lambda)], random()->uniform());
-        Vec v = Vec();
-        const_cast<PhotonPacket*>(pp)->setScatteringInfo(v, k);
-    }
+    setScatteringInfoIfNeeded(pp, lambda);
 
     // draw a random, isotropic outgoing direction
     Direction bfknew = random()->direction();
