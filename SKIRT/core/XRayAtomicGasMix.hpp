@@ -12,19 +12,18 @@
 ////////////////////////////////////////////////////////////////////
 
 /** The XRayAtomicGasMix class describes the material properties related to photo-absorption and
-    fluorescence by atomic gas in the X-ray wavelength range. The class assumes a gas containing a
-    mixture of non-ionized elements with atomic numbers from 1 (hydrogen) up to 30 (zinc). The
-    spatial density distribution of the gas is established by setting the hydrogen density. The
-    relative abundances of the 30 elements and the temperature of the gas can be configured by the
-    user as constant properties. In other words, the abundances and the temperature are considered
-    to be spatially constant (for a given medium component), while the overall density can
-    obviously vary across space as usual.
+    fluorescence by neutral atomic gas in the X-ray wavelength range. The class assumes a gas
+    containing a mixture of non-ionized elements with atomic numbers from 1 (hydrogen) up to 30
+    (zinc). The spatial density distribution of the gas is established by setting the hydrogen
+    density. The relative abundances of the 30 elements and the temperature of the gas can be
+    configured by the user as constant properties. In other words, the abundances and the
+    temperature are considered to be spatially constant (for a given medium component), while the
+    overall density can obviously vary across space as usual.
 
     Photo-absorption by an atom is the process where the energy of a photon is used to liberate a
     bound electron from one of the electron shells of the atom. This class supports
     photo-absorption by any of the 30 elements in the gas for any of the electron shells, i.e. up
-    to the K, L, M, or N shell depending on the atomic number of the element. The corresponding
-    cross sections can be found in the literature (see below).
+    to the K, L, M, or N shell depending on the atomic number of the element.
 
     Fluorescence (in this context) is the process where an electron from a higher energy level
     "falls" into an empty space created by photo-absorption, emitting a new photon with a different
@@ -32,7 +31,6 @@
     shell, the \em yield defines the the probability that such fluorescence event occurs after an
     electron has been liberated in that shell. This class supports K\f$\alpha\f$ and K\f$\beta\f$
     fluorescence (transitions from higher shells towards the K shell) for all elements in the gas.
-    The corresponding yields can be found in the literature (see below).
 
     Because fluorescence only occurs as the result of a photo-absorption event, this class
     implements fluorescence as a form of scattering (where the wavelength of the photon being
@@ -81,9 +79,9 @@
     calculation can be performed during setup and the result stored, discretized on a
     high-resolution wavelength grid for later retrieval.
 
-    Verner and Yakovlev (1995, www.pa.uky.edu/~verner/photo.html) provide analytic fits to the
-    photo-absorption cross sections \f$\sigma_{ph}(E)\f$ as a function of photon energy \f$E\f$ for
-    the ground-state shells of the first 30 atomic elements:
+    Verner and Yakovlev (1995) provide analytic fits to the photo-absorption cross sections
+    \f$\sigma_{ph}(E)\f$ as a function of photon energy \f$E\f$ for the ground-state shells of the
+    first 30 atomic elements:
 
     \f[\begin{aligned} \sigma_{ph}(E) &= \begin{cases} 0 & E < E_\mathrm{th} \\ \sigma_0 \,
     F(E/E_0) & E \ge E_\mathrm{th} \end{cases}, \\ F(y) &= \left[(y-1)^2+y_{\rm w}^2 \right]y^{-Q}
