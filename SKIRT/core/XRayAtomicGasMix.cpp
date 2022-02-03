@@ -196,10 +196,10 @@ namespace
         {30, 2, 1, 0.1037E+04, 0.3486E+03, 0.7784E+02, 0.8298E+02, 0.3391E+01, 0.1125E-07},
         {30, 2, 0, 0.1203E+04, 0.9755E+02, 0.9077E+01, 0.3219E+02, 0.5888E+01, 0.0000E+00},
         {30, 1, 0, 0.9667E+04, 0.8320E+03, 0.2586E+02, 0.4497E+02, 0.2215E+01, 0.0000E+00}};
-    static_assert(144 == crossSectionParams.size(), "Incorrect number of cross sections");
 
     // fluorescence parameters from [TO DO: provide reference]
     // there is a separate record for each fluorescence transition
+    // fluorescence records MUST be sorted on Z and n in the same way as the cross section parameter records
     struct FluorescenceParams
     {
         short Z;       // atomic number
@@ -302,7 +302,6 @@ namespace
         {30, 1, 1.73890e-02, 9528.66},  // Kb3
         {30, 1, 3.39969e-02, 9531.81},  // Kb1
     };
-    static_assert(93 == fluorescenceParams.size(), "Incorrect number of cross sections");
 
     // wavelength range over which our cross sections may be nonzero
     constexpr Range nonZeroRange(4e-12, 290e-9);  // 300 keV --> 4.3 eV
@@ -380,12 +379,23 @@ void XRayAtomicGasMix::setupSelfBefore()
     for (const auto& params : crossSectionParams)
     {
         double lambda = wavelengthToFromEnergy(params.Eth);
-        lambdav.push_back(lambda);
-        lambdav.push_back(lambda * (1. + 0.1 / numPerDex));
+        if (range.contains(lambda))
+        {
+            lambdav.push_back(lambda);
+            lambdav.push_back(lambda * (1. + 0.1 / numPerDex));
+        }
     }
 
     // add the fluorescence emission wavelengths
-    for (const auto& params : fluorescenceParams) lambdav.push_back(wavelengthToFromEnergy(params.E));
+    for (const auto& params : fluorescenceParams)
+    {
+        double lambda = wavelengthToFromEnergy(params.E);
+        if (range.contains(lambda)) lambdav.push_back(lambda);
+    }
+
+    // add the outer wavelengths of our nonzero range so that there are always at least two points in the grid
+    lambdav.push_back(nonZeroRange.min());
+    lambdav.push_back(nonZeroRange.max());
 
     // sort the wavelengths and remove duplicates
     NR::unique(lambdav);
@@ -573,12 +583,12 @@ void XRayAtomicGasMix::performScattering(double lambda, const MaterialState* sta
     }
 
     // draw a random, isotropic outgoing direction
-    Direction bfknew= random()->direction();
+    Direction bfknew = random()->direction();
 
     // update the photon packet wavelength to the wavelength of this fluorescence transition,
     // Doppler-shifted out of the atom velocity frame
-    lambda = PhotonPacket::shiftedEmissionWavelength(_fluolambdav[pp->particleSpecies()], bfknew,
-                                                     pp->particleVelocity());
+    lambda =
+        PhotonPacket::shiftedEmissionWavelength(_fluolambdav[pp->particleSpecies()], bfknew, pp->particleVelocity());
 
     // execute the scattering event in the photon packet
     pp->scatter(bfknew, state->bulkVelocity(), lambda);
