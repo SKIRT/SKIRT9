@@ -256,7 +256,8 @@ public:
     /** This function stores externally calculated information on a scattering event currently
         being processed in data members. The single argument is a pair specifying the interacting
         particle velocity and whether to use a dipole phase function (true) or isotropic scattering
-        (false). This capability is offered so that the actual scattering event and all its
+        (false). Other scattering information fields are left at an arbitrary value and should not
+        be used. This capability is offered so that the actual scattering event and all its
         peel-offs can use the same random particle velocity and phase function. */
     void setScatteringInfo(const std::pair<Vec, bool>& scattInfo)
     {
@@ -266,13 +267,24 @@ public:
 
     /** This function stores externally calculated information on a scattering event currently
         being processed in data members. The single argument specifies the interacting particle
-        velocity. The phase function flag is always set to isotropic (false). This capability is
-        offered so that the actual scattering event and all its peel-offs can use the same random
-        particle velocity. */
+        velocity. Other scattering information fields are left at an arbitrary value and should not
+        be used. This capability is offered so that the actual scattering event and all its
+        peel-offs can use the same random particle velocity. */
     void setScatteringInfo(Vec particleVelocity)
     {
         _particleVelocity = particleVelocity;
-        _dipole = false;
+        _hasScatteringInfo = true;
+    }
+
+    /** This function stores externally calculated information on a scattering event currently
+        being processed in data members. The arguments specify the interacting particle velocity
+        and species identifier. Other scattering information fields are left at an arbitrary value
+        and should not be used. This capability is offered so that the actual scattering event and
+        all its peel-offs can use the same random particle velocity and species. */
+    void setScatteringInfo(Vec particleVelocity, int particleSpecies)
+    {
+        _particleVelocity = particleVelocity;
+        _particleSpecies = particleSpecies;
         _hasScatteringInfo = true;
     }
 
@@ -285,6 +297,12 @@ public:
         returns some meaningless value. This capability is offered so that the actual scattering
         event and all its peel-offs can use the same particle velocity. */
     Vec particleVelocity() const { return _particleVelocity; }
+
+    /** If hasScatteringInfo() returns true, this function returns the most recently stored species
+        identifier of the scattering particle. Otherwise, the function returns some meaningless
+        value. This capability is offered so that the actual scattering event and all its peel-offs
+        can use the same phase function. */
+    int particleSpecies() const { return _particleSpecies; }
 
     /** If hasScatteringInfo() returns true, this function returns the most recently stored phase
         function choice, i.e., true if scattering as a dipole, false if scattering isotropically.
@@ -319,6 +337,7 @@ private:
 
     // scattering information
     Vec _particleVelocity;           // the velocity vector of the scattering particle in the local frame
+    int _particleSpecies{0};         // identifier of the scattering particle species
     bool _dipole{false};             // true if scattering as a dipole, false if scattering isotropically
     bool _hasScatteringInfo{false};  // true if the above field holds a valid value for this packet
 };
