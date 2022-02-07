@@ -54,8 +54,17 @@ Position TorusGeometry::generatePosition() const
     while (true)
     {
         double X = random()->uniform();
-        double s = _smin + X * _sdiff;
-        double r = SpecialFunctions::gexp(_p - 2.0, s);
+        double r = 0.0;
+        if (fabs(_p - 2.0) < 1e-2)
+        {
+            double s = _smin + X * _sdiff;
+            r = SpecialFunctions::gexp(_p - 2.0, s);
+        }
+        else
+        {
+            double z = (1.0 - X) * pow(_rmin, 3.0 - _p) + X * pow(_rmax, 3.0 - _p);
+            r = pow(z, 1.0 / (3.0 - _p));
+        }
         X = random()->uniform();
         double costheta = 0.0;
         if (_q < 1e-3)
