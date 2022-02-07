@@ -319,7 +319,11 @@ namespace
         return front / x;
     }
 
-    // return cross section in m2 for given energy in eV and parameters
+    // return thermal velocity for given gas temperature (in K) and particle mass (in amu)
+    double vtherm(double T, double amu) { return sqrt(Constants::k() / Constants::amu() * T / amu); }
+
+    // return cross section in m2 for given energy in eV and cross section parameters,
+    // without taking into account thermal dispersion
     double crossSection(double E, const CrossSectionParams& p)
     {
         if (E < p.Eth) return 0.;
@@ -329,6 +333,18 @@ namespace
         double ym1 = y - 1.;
         double F = (ym1 * ym1 + p.yw * p.yw) * std::pow(y, -Q) * std::pow(1. + std::sqrt(y / p.ya), -p.P);
         return 1e-22 * p.sigma0 * F;  // from Mb to m2
+    }
+
+    // return cross section in m2 for given energy in eV and cross section parameters,
+    // approximating thermal dispersion by replacing the steep threshold transition by a sigmoid
+    // error function with given parameters (dispersion and maximum value)
+    double crossSection(double E, std::pair<double, double> sigmoid, const CrossSectionParams& p)
+    {
+        double Es, sigmamax;
+        std::tie(Es, sigmamax) = sigmoid;
+        if (E <= p.Eth - 2. * Es) return 0.;
+        if (E >= p.Eth + 2. * Es) return crossSection(E, p);
+        return sigmamax * (0.5 + 0.5 * std::erf((E - p.Eth) / Es));
     }
 }
 
@@ -347,6 +363,31 @@ void XRayAtomicGasMix::setupSelfBefore()
     else if (_abundancies.size() != numAtoms)
         throw FATALERROR("The abundancies list must have exactly " + std::to_string(numAtoms) + " values");
 
+    // ---- thermal dispersion ----
+
+    // copy the atom masses (in amu) into a temporary vector
+    vector<double> massv = masses;
+
+    // calculate the parameters for the sigmoid function approximating the convolution with a Gaussian
+    // at the threshold energy for each cross section record, and and store the result into a temporary vector;
+    // the information includes the thermal energy dispersion at the threshold energy and the intrinsic cross section
+    // at the threshold energy plus twice this energy dispersion
+    vector<std::pair<double, double>> sigmoidv;
+    sigmoidv.reserve(crossSectionParams.size());
+    for (const auto& params : crossSectionParams)
+    {
+        double Es = params.Eth * vtherm(temperature(), massv[params.Z - 1]) / Constants::c();
+        double sigmamax = crossSection(params.Eth + 2. * Es, params);
+        sigmoidv.emplace_back(Es, sigmamax);
+    }
+
+    // calculate and store the thermal velocities corresponding to the fluorescence transitions
+    _fluovthermv.reserve(fluorescenceParams.size());
+    for (const auto& params : fluorescenceParams)
+    {
+        _fluovthermv.push_back(vtherm(temperature(), massv[params.Z - 1]));
+    }
+
     // ---- wavelength grid ----
 
     // construct a wavelength grid for sampling cross sections containing a merged set of grid points
@@ -354,7 +395,8 @@ void XRayAtomicGasMix::setupSelfBefore()
     //  - a fine grid in log space that provides sufficient resolution for most applications
     //  - all specific wavelengths mentioned in the configuration of the simulation (grids, normalizations, ...)
     //    ensuring that the cross sections are calculated at exactly these wavelengths
-    //  - extra wavelength points at the threshold energies for all transitions
+    //  - 7 extra wavelength points around the threshold energies for all transitions,
+    //    placed at -2, -4/3, -2/3, 0, 2/3, 4/3, 2 times the thermal energy dispersion
 
     // we first gather all the wavelength points, in arbitrary order, and then sort them
     vector<double> lambdav;
@@ -375,14 +417,15 @@ void XRayAtomicGasMix::setupSelfBefore()
     for (double lambda : config->simulationWavelengths())
         if (range.contains(lambda)) lambdav.push_back(lambda);
 
-    // add wavelength points at and just before the threshold energies for all transitions
+    // add wavelength points around the threshold energies for all transitions
+    int index = 0;
     for (const auto& params : crossSectionParams)
     {
-        double lambda = wavelengthToFromEnergy(params.Eth);
-        if (range.contains(lambda))
+        double Es = sigmoidv[index++].first;
+        for (double delta : {-2., -4. / 3., -2. / 3., 0., 2. / 3., 4. / 3., 2.})
         {
-            lambdav.push_back(lambda);
-            lambdav.push_back(lambda * (1. + 0.1 / numPerDex));
+            double lambda = wavelengthToFromEnergy(params.Eth + delta * Es);
+            if (range.contains(lambda)) lambdav.push_back(lambda);
         }
     }
 
@@ -419,7 +462,11 @@ void XRayAtomicGasMix::setupSelfBefore()
     {
         double E = wavelengthToFromEnergy(lambdav[ell]);
         double sigma = 0.;
-        for (const auto& params : crossSectionParams) sigma += crossSection(E, params) * _abundancies[params.Z - 1];
+        int index = 0;
+        for (const auto& params : crossSectionParams)
+        {
+            sigma += crossSection(E, sigmoidv[index++], params) * _abundancies[params.Z - 1];
+        }
         _sigmaextv[ell] = sigma;
     }
 
@@ -428,16 +475,6 @@ void XRayAtomicGasMix::setupSelfBefore()
     // calculate and store the fluorescence emission wavelengths
     _fluolambdav.reserve(fluorescenceParams.size());
     for (const auto& params : fluorescenceParams) _fluolambdav.push_back(wavelengthToFromEnergy(params.E));
-
-    // calculate and store the thermal velocities corresponding to the fluorescence transitions
-    vector<double> massv = masses;
-    _fluovthermv.reserve(fluorescenceParams.size());
-    for (const auto& params : fluorescenceParams)
-    {
-        double mass = massv[params.Z - 1] * Constants::amu();
-        double vtherm = sqrt(Constants::k() * temperature() / mass);
-        _fluovthermv.push_back(vtherm);
-    }
 
     // make room for the scattering cross section and the cumulative fluorescence probabilities at every wavelength
     _sigmascav.resize(numLambda);
@@ -454,12 +491,15 @@ void XRayAtomicGasMix::setupSelfBefore()
 
         // interate over both cross section and fluorescence parameter sets in sync
         const auto* flp = fluorescenceParams.begin();
+        int index = 0;
         for (const auto& csp : crossSectionParams)
         {
+            auto sigmoid = sigmoidv[index++];
+
             // process all fluorescence parameter sets matching this cross section set
             while (flp != fluorescenceParams.end() && flp->Z == csp.Z && flp->n == csp.n)
             {
-                double contribution = crossSection(E, csp) * _abundancies[csp.Z - 1] * flp->omega;
+                double contribution = crossSection(E, sigmoid, csp) * _abundancies[csp.Z - 1] * flp->omega;
                 sigma += contribution;
                 flucontribv[flp - fluorescenceParams.begin()] = contribution;
                 flp++;
