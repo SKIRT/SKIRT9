@@ -19,7 +19,7 @@ void TorusGeometry::setupSelfBefore()
     _sdiff = SpecialFunctions::gln2(_p - 2.0, _rmax, _rmin);
     _tmin = pow(_rmin, 3.0 - _p);
     _tmax = pow(_rmax, 3.0 - _p);
-    
+
     // determine the normalization factor
     if (_q > 1e-3)
         _A = _q * 0.25 / M_PI / _sdiff / (1.0 - exp(-_q * _sinDelta));
