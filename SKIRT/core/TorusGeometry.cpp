@@ -17,7 +17,9 @@ void TorusGeometry::setupSelfBefore()
     _sinDelta = sin(_Delta);
     _smin = SpecialFunctions::gln(_p - 2.0, _rmin);
     _sdiff = SpecialFunctions::gln2(_p - 2.0, _rmax, _rmin);
-
+    _tmin = pow(_rmin, 3.0 - _p);
+    _tmax = pow(_rmax, 3.0 - _p);
+    
     // determine the normalization factor
     if (_q > 1e-3)
         _A = _q * 0.25 / M_PI / _sdiff / (1.0 - exp(-_q * _sinDelta));
@@ -62,7 +64,7 @@ Position TorusGeometry::generatePosition() const
         }
         else
         {
-            double z = (1.0 - X) * pow(_rmin, 3.0 - _p) + X * pow(_rmax, 3.0 - _p);
+            double z = (1.0 - X) * _tmin + X * _tmax;
             r = pow(z, 1.0 / (3.0 - _p));
         }
         X = random()->uniform();
