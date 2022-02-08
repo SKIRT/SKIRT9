@@ -237,45 +237,29 @@ public:
     double opacityExt(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
 
 private:
-    /** This private function draws a random fluorescence channel and atom velocity and stores this
+    /** This private function draws a random fluorescence transition and atom velocity and stores this
         information in the photon packet, unless a previous peel-off stored this already. */
     void setScatteringInfoIfNeeded(PhotonPacket* pp, double lambda) const;
 
 public:
     /** This function calculates the contribution of the medium component associated with this
-        material mix to the peel-off photon luminosity, polarization state, and wavelength shift
-        for the given wavelength, geometry, material state, and photon properties. The
-        contributions to the Stokes vector components are added to the incoming values of the \em
-        I, \em Q, \em U, \em V arguments. If there is wavelength shift, the new wavelength value
-        replaces the incoming value of the \em lambda argument.
-
-        Since we force the peel-off photon packet to be scattered from the direction \f${\bf{k}}\f$
-        into the direction \f${\bf{k}}_{\text{obs}}\f$, the corresponding biasing factor is given
-        by the probability that a photon packet would be scattered into the direction
-        \f${\bf{k}}_{\text{obs}}\f$ if its original propagation direction was \f${\bf{k}}\f$. For a
-        given medium component, this biasing factor is equal to the value of the scattering phase
-        function \f$\Phi({\bf{k}},{\bf{k}}_{\text{obs}})\f$ for that medium component. If there are
-        multiple medium components, the aggregated biasing factor is the mean of the scattering
-        phase function values weighted using the relative opacities for the various components. The
-        relative opacity weight for the current component is specified as argument \em w. */
+        material mix to the peel-off photon luminosity and wavelength shift for the given
+        wavelength and observer direction. It first calls the private setScatteringInfoIfNeeded()
+        function to establish a random fluorescence transition and atom velocity for this
+        "scattering" event. Because fluorescence emission is isotropic, the contribution to the
+        intensity is simply given by the relative weight of this component in the overall
+        simulation. The outgoing wavelength is determined by Doppler-shifting the rest wavelength
+        of the selected fluorescence transition for the selected atom velocity. */
     void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w, Direction bfkobs,
                            Direction bfky, const MaterialState* state, const PhotonPacket* pp) const override;
 
     /** This function performs a scattering event on the specified photon packet in the spatial
         cell and medium component represented by the specified material state and the receiving
-        material mix. Most of the properties of the photon packet remain unaltered, including the
-        position and the luminosity. The properties that change include the number of scattering
-        events experienced by the photon packet, which is increased by one, the propagation
-        direction, which is generated randomly, the wavelength, which is properly Doppler-shifted
-        for the bulk velocity of the medium, and the polarization state, which may be affected by
-        the scattering process.
-
-        The calculation takes all physical processes into account, including the bulk velocity and
-        Hubble expansion velocity in the cell, any relevant material state variables such as the
-        temperature of a gas medium, and any relevant properties of the incoming photon packet such
-        as the polarization state. The first argument specifies the perceived wavelength of the
-        photon packet at the scattering location so that this value does not need to be
-        recalculated within the function. */
+        material mix. It first calls the private setScatteringInfoIfNeeded() function to establish
+        a random fluorescence transition and atom velocity for this "scattering" event. Because
+        fluorescence emission is isotropic, the new outgoing direction is randomly chosen from the
+        isotropic distribution. The outgoing wavelength is determined by Doppler-shifting the rest
+        wavelength of the selected fluorescence transition for the selected atom velocity. */
     void performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const override;
 
     //======== Temperature =======
@@ -299,7 +283,7 @@ private:
     Array _sigmascav;  // indexed on ell
 
     // emission wavelengths, thermal velocities and normalized cumulative probability distributions
-    // for each of the fluorescence channels
+    // for each of the fluorescence transitions
     vector<double> _fluolambdav;   // indexed on k
     vector<double> _fluovthermv;   // indexed on k
     ArrayTable<2> _fluocumprobvv;  // indexed on ell, k
