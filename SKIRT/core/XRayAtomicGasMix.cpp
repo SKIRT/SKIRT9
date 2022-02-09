@@ -197,7 +197,7 @@ namespace
         {30, 2, 0, 0.1203E+04, 0.9755E+02, 0.9077E+01, 0.3219E+02, 0.5888E+01, 0.0000E+00},
         {30, 1, 0, 0.9667E+04, 0.8320E+03, 0.2586E+02, 0.4497E+02, 0.2215E+01, 0.0000E+00}};
 
-    // fluorescence parameters from [TO DO: provide reference]
+    // fluorescence parameters from Perkins et al. 1991, derived from the LLNL Evaluated Electron Data Library (EEDL)
     // there is a separate record for each fluorescence transition
     // fluorescence records MUST be sorted on Z and n in the same way as the cross section parameter records
     struct FluorescenceParams
@@ -208,8 +208,6 @@ namespace
         double E;      // energy of the emitted photon (eV)
     };
     constexpr std::initializer_list<FluorescenceParams> fluorescenceParams = {
-        {3, 1, 8.09934e-05, 54.3},      // Ka1,2 -- approximate data from https://www.globalsino.com/EM/page4672.html
-        {4, 1, 2.55934e-04, 108.5},     // Ka1,2 -- approximate data from https://www.globalsino.com/EM/page4672.html
         {5, 1, 6.24610e-04, 183.3},     // Ka1,2 -- approximate data from https://www.globalsino.com/EM/page4672.html
         {6, 1, 5.61488e-04, 282.02},    // Ka2
         {6, 1, 1.12060e-03, 282.03},    // Ka1
