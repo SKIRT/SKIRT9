@@ -541,7 +541,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
 
     ItemRegistry::add<ElectronMix>();
     ItemRegistry::add<LyaNeutralHydrogenGasMix>();
-    ///ItemRegistry::add<XRayAtomicGasMix>();
+    ItemRegistry::add<XRayAtomicGasMix>();
     ItemRegistry::add<EmittingGasMix>();
     ItemRegistry::add<SpinFlipHydrogenGasMix>();
     ///ItemRegistry::add<CarbonMonoxideGasMix>();

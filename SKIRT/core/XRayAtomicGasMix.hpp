@@ -6,32 +6,31 @@
 #ifndef XRAYATOMICGASMIX_HPP
 #define XRAYATOMICGASMIX_HPP
 
+#include "ArrayTable.hpp"
 #include "MaterialMix.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
 /** The XRayAtomicGasMix class describes the material properties related to photo-absorption and
-    fluorescence by atomic gas in the X-ray wavelength range. The class assumes a gas containing a
-    mixture of non-ionized elements with atomic numbers from 1 (hydrogen) up to 30 (zinc). The
-    spatial density distribution of the gas is established by setting the hydrogen density. The
-    relative abundances of the 30 elements and the temperature of the gas can be configured by the
-    user as constant properties. In other words, the abundances and the temperature are considered
-    to be spatially constant (for a given medium component), while the overall density can
-    obviously vary across space as usual.
+    fluorescence by neutral atomic gas in the X-ray wavelength range. The class assumes a gas
+    containing a mixture of non-ionized elements with atomic numbers from 1 (hydrogen) up to 30
+    (zinc). The spatial density distribution of the gas is established by setting the hydrogen
+    density. The relative abundances of the 30 elements and the temperature of the gas can be
+    configured by the user as constant properties. In other words, the abundances and the
+    temperature are considered to be spatially constant (for a given medium component), while the
+    overall density can obviously vary across space as usual.
 
     Photo-absorption by an atom is the process where the energy of a photon is used to liberate a
     bound electron from one of the electron shells of the atom. This class supports
     photo-absorption by any of the 30 elements in the gas for any of the electron shells, i.e. up
-    to the K, L, M, or N shell depending on the atomic number of the element. The corresponding
-    cross sections can be found in the literature (see below).
+    to the K, L, M, or N shell depending on the atomic number of the element.
 
     Fluorescence (in this context) is the process where an electron from a higher energy level
     "falls" into an empty space created by photo-absorption, emitting a new photon with a different
     energy. For each electron shell and for each possible fluorescence transition towards that
-    shell, the \em yield defines the the probability that such fluorescence event occurs after an
+    shell, the \em yield defines the probability that such fluorescence event occurs after an
     electron has been liberated in that shell. This class supports K\f$\alpha\f$ and K\f$\beta\f$
     fluorescence (transitions from higher shells towards the K shell) for all elements in the gas.
-    The corresponding yields can be found in the literature (see below).
 
     Because fluorescence only occurs as the result of a photo-absorption event, this class
     implements fluorescence as a form of scattering (where the wavelength of the photon being
@@ -48,6 +47,14 @@
     spectrum and absorption and emission features can be recorded by a single instrument configured
     with a high-resolution wavelength grid, or separate instruments can be configured with
     wavelength grids to resolve specific features of interest.
+
+    To study fluorescence lines seperated from the background continuum, configure the instrument
+    to record flux components seperately and consider the scattered flux component, which includes
+    the fluorescence lines in addition to any flux scattered from other media components. To ensure
+    that low-intensity lines are properly included in this flux, set the advanced property \em
+    minWeightReduction in the \c PhotonPacketOptions section to a value of \c 1e10 or so. With the
+    default value of \c 1e4, low-intensity fluorescence photon packets are killed before having a
+    chance to register in the instruments.
 
     The input model must define the spatial distribution of the hydrogen number density
     \f$n_\mathrm{H} = n_\mathrm{HI} + n_\mathrm{HII} + 2\,n_\mathrm{H2}\f$, i.e. including atomic,
@@ -80,9 +87,9 @@
     calculation can be performed during setup and the result stored, discretized on a
     high-resolution wavelength grid for later retrieval.
 
-    Verner and Yakovlev (1995, www.pa.uky.edu/~verner/photo.html) provide analytic fits to the
-    photo-absorption cross sections \f$\sigma_{ph}(E)\f$ as a function of photon energy \f$E\f$ for
-    the ground-state shells of the first 30 atomic elements:
+    Verner and Yakovlev (1995) provide analytic fits to the photo-absorption cross sections
+    \f$\sigma_{ph}(E)\f$ as a function of photon energy \f$E\f$ for the ground-state shells of the
+    first 30 atomic elements:
 
     \f[\begin{aligned} \sigma_{ph}(E) &= \begin{cases} 0 & E < E_\mathrm{th} \\ \sigma_0 \,
     F(E/E_0) & E \ge E_\mathrm{th} \end{cases}, \\ F(y) &= \left[(y-1)^2+y_{\rm w}^2 \right]y^{-Q}
@@ -111,6 +118,32 @@
     random Gaussian dispersion reflecting the interacting element's thermal velocity. The emission
     direction is isotropic.
 
+    <b>Thermal dispersion</b>
+
+    The thermal dispersion appropriate for a given absorption or fluorescence event depends on the
+    (constant) temperature configured for this material mix and on the mass of the interacting
+    atom. For fluorescence events, the implementation is straightforward. Once a fluorescence
+    transition has been randomly selected, the magnitude of the interacting atom's thermal velocity
+    is taken from a precalculated table and a velocity vector is sampled from the Maxwell
+    distribution. This velocity vector is then passed to the photon emission procedure.
+
+    For absorption, the situation is much more involved. In principle, the full cross section curve
+    for each ionization transition must be convolved with a Gaussian kernel of appropriate width.
+    In practice, the cross section curves are very smooth except for the step at the threshold
+    energy. The effect of the convolution is therefore limited to energies near the threshold
+    energy, replacing the infinitely steep step by a sigmoid function. Considering that the
+    convolution of a step function with a Gaussion is given by the error function, this class uses
+    the following approximation. With \f$E_\mathrm{th}\f$ the threshold energy and
+    \f$E_\mathrm{s}\f$ the energy dispersion corresponding to the thermal velocity of the atom
+    being ionized, the cross section near \f$E_\mathrm{th}\f$ is replaced by
+
+    \f[ \sigma_{ph}'(E) = \frac{\sigma_{ph}(E_\mathrm{th} +2 E_\mathrm{s})} {2} \, \left[ 1+
+    \mathrm{erf} ( \frac{E - E_\mathrm{th}} {E_\mathrm{s}} ) \right] \qquad \mathrm{for} \;
+    E_\mathrm{th} -2 E_\mathrm{s} < E < E_\mathrm{th} +2 E_\mathrm{s}. \f]
+
+    The sigmoid is scaled by the value of the actual cross section at the end of the interval,
+    achieving good continuity at that point in most cases, including all important transitions.
+
     */
 class XRayAtomicGasMix : public MaterialMix
 {
@@ -138,6 +171,14 @@ protected:
     /** This function precalculates relevant cross sections and relative constribution over a
         high-resolution wavelength grid. */
     void setupSelfBefore() override;
+
+    //======== Private support functions =======
+
+private:
+    /** This function returns the index in the private wavelength grid corresponding to the
+        specified wavelength. The parameters for converting a wavelength to the appropriate index
+        are stored in data members during setup. */
+    int indexForLambda(double lambda) const;
 
     //======== Capabilities =======
 
@@ -180,6 +221,7 @@ public:
 
     //======== High-level photon life cycle =======
 
+public:
     /** This function returns the absorption (i.e. extinction minus fluorescence) opacity at the
         given wavelength and material state, using the abundances and temperature configured for
         this material mix. The photon packet properties are not used. */
@@ -195,44 +237,35 @@ public:
         properties are not used. */
     double opacityExt(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
 
-    /** This function calculates the contribution of the medium component associated with this
-        material mix to the peel-off photon luminosity, polarization state, and wavelength shift
-        for the given wavelength, geometry, material state, and photon properties. The
-        contributions to the Stokes vector components are added to the incoming values of the \em
-        I, \em Q, \em U, \em V arguments. If there is wavelength shift, the new wavelength value
-        replaces the incoming value of the \em lambda argument.
+private:
+    /** This private function draws a random fluorescence transition and atom velocity and stores this
+        information in the photon packet, unless a previous peel-off stored this already. */
+    void setScatteringInfoIfNeeded(PhotonPacket* pp, double lambda) const;
 
-        Since we force the peel-off photon packet to be scattered from the direction \f${\bf{k}}\f$
-        into the direction \f${\bf{k}}_{\text{obs}}\f$, the corresponding biasing factor is given
-        by the probability that a photon packet would be scattered into the direction
-        \f${\bf{k}}_{\text{obs}}\f$ if its original propagation direction was \f${\bf{k}}\f$. For a
-        given medium component, this biasing factor is equal to the value of the scattering phase
-        function \f$\Phi({\bf{k}},{\bf{k}}_{\text{obs}})\f$ for that medium component. If there are
-        multiple medium components, the aggregated biasing factor is the mean of the scattering
-        phase function values weighted using the relative opacities for the various components. The
-        relative opacity weight for the current component is specified as argument \em w. */
+public:
+    /** This function calculates the contribution of the medium component associated with this
+        material mix to the peel-off photon luminosity and wavelength shift for the given
+        wavelength and observer direction. It first calls the private setScatteringInfoIfNeeded()
+        function to establish a random fluorescence transition and atom velocity for this
+        "scattering" event. Because fluorescence emission is isotropic, the contribution to the
+        intensity is simply given by the relative weight of this component in the overall
+        simulation. The outgoing wavelength is determined by Doppler-shifting the rest wavelength
+        of the selected fluorescence transition for the selected atom velocity. */
     void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w, Direction bfkobs,
                            Direction bfky, const MaterialState* state, const PhotonPacket* pp) const override;
 
     /** This function performs a scattering event on the specified photon packet in the spatial
         cell and medium component represented by the specified material state and the receiving
-        material mix. Most of the properties of the photon packet remain unaltered, including the
-        position and the luminosity. The properties that change include the number of scattering
-        events experienced by the photon packet, which is increased by one, the propagation
-        direction, which is generated randomly, the wavelength, which is properly Doppler-shifted
-        for the bulk velocity of the medium, and the polarization state, which may be affected by
-        the scattering process.
-
-        The calculation takes all physical processes into account, including the bulk velocity and
-        Hubble expansion velocity in the cell, any relevant material state variables such as the
-        temperature of a gas medium, and any relevant properties of the incoming photon packet such
-        as the polarization state. The first argument specifies the perceived wavelength of the
-        photon packet at the scattering location so that this value does not need to be
-        recalculated within the function. */
+        material mix. It first calls the private setScatteringInfoIfNeeded() function to establish
+        a random fluorescence transition and atom velocity for this "scattering" event. Because
+        fluorescence emission is isotropic, the new outgoing direction is randomly chosen from the
+        isotropic distribution. The outgoing wavelength is determined by Doppler-shifting the rest
+        wavelength of the selected fluorescence transition for the selected atom velocity. */
     void performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const override;
 
     //======== Temperature =======
 
+public:
     /** This function returns an indicative temperature of the material mix when it would be
         embedded in a given radiation field. The implementation in this class ignores the radiation
         field and returns the (spatially constant) temperature configured for this material mix. */
@@ -241,6 +274,20 @@ public:
     //======================== Data Members ========================
 
 private:
+    // all data members are precalculated in setupSelfAfter()
+
+    // wavelength grid (shifted to the left of the actually sampled points to approximate rounding)
+    Array _lambdav;  // indexed on ell
+
+    // cross sections
+    Array _sigmaextv;  // indexed on ell
+    Array _sigmascav;  // indexed on ell
+
+    // emission wavelengths, thermal velocities and normalized cumulative probability distributions
+    // for each of the fluorescence transitions
+    vector<double> _fluolambdav;   // indexed on k
+    vector<double> _fluovthermv;   // indexed on k
+    ArrayTable<2> _fluocumprobvv;  // indexed on ell, k
 };
 
 ////////////////////////////////////////////////////////////////////
