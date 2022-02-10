@@ -171,10 +171,10 @@ void SpatialGridPath::findInteractionPoint(double tau)
     }
     else
     {
-        // find a pointer to the first segment that has an exit optical depth larger than or equal to the given value,
-        // or a pointer beyond the list if no such element is found
-        auto seg = std::lower_bound(_segments.cbegin(), _segments.cend(), tau,
-                                    [](const Segment& seg, double t) { return seg.tau < t; });
+        // find a pointer to the first segment that has an exit optical depth strictly larger than the given value,
+        // (so that we never select an empty segment) or a pointer beyond the list if no such element is found
+        auto seg = std::upper_bound(_segments.cbegin(), _segments.cend(), tau,
+                                    [](double t, const Segment& seg) { return t < seg.tau; });
 
         // if we find the first segment, interpolate with the path's entry point
         if (seg == _segments.cbegin())
@@ -190,7 +190,7 @@ void SpatialGridPath::findInteractionPoint(double tau)
             _interactionDistance = NR::interpolateLinLin(tau, (seg - 1)->tau, seg->tau, (seg - 1)->s, seg->s);
         }
 
-        // if we are beyond the last segment, just use the last segment (i.e. assume this is a numerical inaccuracy)
+        // if we are precisely at or beyond the exit optical depth of the last segment, just use the last segment
         else
         {
             _interactionCellIndex = (seg - 1)->m;
