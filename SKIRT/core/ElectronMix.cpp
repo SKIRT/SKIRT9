@@ -158,22 +158,20 @@ double ElectronMix::opacityExt(double lambda, const MaterialState* state, const 
 namespace
 {
     // draw a random electron velocity unless a previous peel-off stored this already
-    void generateElectronVelocityIfNeeded(PhotonPacket* pp, double T, Random* random)
+    void generateElectronVelocityIfNeeded(PhotonPacket::ScatteringInfo* scatinfo, double T, Random* random)
     {
-        if (!pp->hasScatteringInfo())
+        if (!scatinfo->valid)
         {
+            scatinfo->valid = true;
+
             // for high temperatures the generated velocity can be relativistic or even above the speed of light,
             // in which case our non-relativistic Doppler shift formulas produce negative wavelengths;
             // we thus reject any velocities above c/3
             constexpr double vmax2 = Constants::c() * Constants::c() / 9.;
             while (true)
             {
-                Vec vtherm = sqrt(Constants::k() / Constants::Melectron() * T) * random->maxwell();
-                if (vtherm.norm2() < vmax2)
-                {
-                    pp->setScatteringInfo(vtherm);
-                    break;
-                }
+                scatinfo->velocity = sqrt(Constants::k() / Constants::Melectron() * T) * random->maxwell();
+                if (scatinfo->velocity.norm2() < vmax2) break;
             }
         }
     }
@@ -190,13 +188,15 @@ void ElectronMix::peeloffScattering(double& I, double& Q, double& U, double& V, 
     double wavelength = lambda;
 
     // if we have dispersion, adjust the incoming wavelength to the electron rest frame
+    PhotonPacket::ScatteringInfo* scatinfo = nullptr;
     if (_hasDispersion)
     {
         // draw a random electron velocity unless a previous peel-off stored this already
-        generateElectronVelocityIfNeeded(const_cast<PhotonPacket*>(pp), state->temperature(), random());
+        scatinfo = const_cast<PhotonPacket*>(pp)->getScatteringInfo();
+        generateElectronVelocityIfNeeded(scatinfo, state->temperature(), random());
 
         // adjust the wavelength
-        wavelength = PhotonPacket::shiftedReceptionWavelength(wavelength, pp->direction(), pp->particleVelocity());
+        wavelength = PhotonPacket::shiftedReceptionWavelength(wavelength, pp->direction(), scatinfo->velocity);
     }
 
     // perform the scattering event in the electron rest frame
@@ -208,7 +208,7 @@ void ElectronMix::peeloffScattering(double& I, double& Q, double& U, double& V, 
     // if we have dispersion, adjust the outgoing wavelength from the electron rest frame
     if (_hasDispersion)
     {
-        wavelength = PhotonPacket::shiftedEmissionWavelength(wavelength, bfkobs, pp->particleVelocity());
+        wavelength = PhotonPacket::shiftedEmissionWavelength(wavelength, bfkobs, scatinfo->velocity);
     }
 
     // actually update the caller's wavelength for a random fraction of the events
@@ -221,13 +221,15 @@ void ElectronMix::peeloffScattering(double& I, double& Q, double& U, double& V, 
 void ElectronMix::performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const
 {
     // if we have dispersion, adjust the incoming wavelength to the electron rest frame
+    PhotonPacket::ScatteringInfo* scatinfo = nullptr;
     if (_hasDispersion)
     {
         // draw a random electron velocity unless a previous peel-off stored this already
-        generateElectronVelocityIfNeeded(pp, state->temperature(), random());
+        scatinfo = pp->getScatteringInfo();
+        generateElectronVelocityIfNeeded(scatinfo, state->temperature(), random());
 
         // adjust the wavelength
-        lambda = PhotonPacket::shiftedReceptionWavelength(lambda, pp->direction(), pp->particleVelocity());
+        lambda = PhotonPacket::shiftedReceptionWavelength(lambda, pp->direction(), scatinfo->velocity);
     }
 
     // determine the new propagation direction, and if required,
@@ -238,7 +240,7 @@ void ElectronMix::performScattering(double lambda, const MaterialState* state, P
     // if we have dispersion, adjust the outgoing wavelength from the electron rest frame
     if (_hasDispersion)
     {
-        lambda = PhotonPacket::shiftedEmissionWavelength(lambda, bfknew, pp->particleVelocity());
+        lambda = PhotonPacket::shiftedEmissionWavelength(lambda, bfknew, scatinfo->velocity);
     }
 
     // execute the scattering event in the photon packet

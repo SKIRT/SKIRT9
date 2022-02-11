@@ -137,16 +137,16 @@ void LyaNeutralHydrogenGasMix::peeloffScattering(double& I, double& Q, double& U
                                                  const PhotonPacket* pp) const
 {
     // draw a random atom velocity & phase function, unless a previous peel-off stored this already
-    if (!pp->hasScatteringInfo())
+    auto scatinfo = const_cast<PhotonPacket*>(pp)->getScatteringInfo();
+    if (!scatinfo->valid)
     {
-        double T = state->temperature();
-        double nH = state->numberDensity();
-        const_cast<PhotonPacket*>(pp)->setScatteringInfo(
-            LyaUtils::sampleAtomVelocity(lambda, T, nH, pp->direction(), config(), random()));
+        scatinfo->valid = true;
+        std::tie(scatinfo->velocity, scatinfo->dipole) = LyaUtils::sampleAtomVelocity(
+            lambda, state->temperature(), state->numberDensity(), pp->direction(), config(), random());
     }
 
     // add the contribution to the Stokes vector components depending on scattering type
-    if (pp->dipole())
+    if (scatinfo->dipole)
     {
         // contribution of dipole scattering with or without polarization
         _dpf.peeloffScattering(I, Q, U, V, w, pp->direction(), bfkobs, bfky, pp);
@@ -161,7 +161,7 @@ void LyaNeutralHydrogenGasMix::peeloffScattering(double& I, double& Q, double& U
     // for a random fraction of the events governed by the relative Lya contribution,
     // Doppler-shift the photon packet wavelength into and out of the atom frame
     if (random()->uniform() <= w)
-        lambda = LyaUtils::shiftWavelength(lambda, pp->particleVelocity(), pp->direction(), bfkobs);
+        lambda = LyaUtils::shiftWavelength(lambda, scatinfo->velocity, pp->direction(), bfkobs);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -169,17 +169,18 @@ void LyaNeutralHydrogenGasMix::peeloffScattering(double& I, double& Q, double& U
 void LyaNeutralHydrogenGasMix::performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const
 {
     // draw a random atom velocity & phase function, unless a peel-off stored this already
-    if (!pp->hasScatteringInfo())
+    auto scatinfo = pp->getScatteringInfo();
+    if (!scatinfo->valid)
     {
-        double T = state->temperature();
-        double nH = state->numberDensity();
-        pp->setScatteringInfo(LyaUtils::sampleAtomVelocity(lambda, T, nH, pp->direction(), config(), random()));
+        scatinfo->valid = true;
+        std::tie(scatinfo->velocity, scatinfo->dipole) = LyaUtils::sampleAtomVelocity(
+            lambda, state->temperature(), state->numberDensity(), pp->direction(), config(), random());
     }
 
     // draw the outgoing direction from the dipole or the isotropic phase function
     // and, if required, update the polarization state of the photon packet
     Direction bfknew;
-    if (pp->dipole())
+    if (scatinfo->dipole)
     {
         bfknew = _dpf.performScattering(pp->direction(), pp);
     }
@@ -190,7 +191,7 @@ void LyaNeutralHydrogenGasMix::performScattering(double lambda, const MaterialSt
     }
 
     // Doppler-shift the photon packet wavelength into and out of the atom frame
-    lambda = LyaUtils::shiftWavelength(lambda, pp->particleVelocity(), pp->direction(), bfknew);
+    lambda = LyaUtils::shiftWavelength(lambda, scatinfo->velocity, pp->direction(), bfknew);
 
     // execute the scattering event in the photon packet
     pp->scatter(bfknew, state->bulkVelocity(), lambda);

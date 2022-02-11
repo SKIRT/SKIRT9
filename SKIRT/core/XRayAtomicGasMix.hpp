@@ -8,6 +8,7 @@
 
 #include "ArrayTable.hpp"
 #include "MaterialMix.hpp"
+#include "PhotonPacket.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -238,9 +239,10 @@ public:
     double opacityExt(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
 
 private:
-    /** This private function draws a random fluorescence transition and atom velocity and stores this
-        information in the photon packet, unless a previous peel-off stored this already. */
-    void setScatteringInfoIfNeeded(PhotonPacket* pp, double lambda) const;
+    /** This private function draws a random fluorescence transition and atom velocity and stores
+        this information in the photon packet's scattering information record, unless a previous
+        peel-off stored this already. */
+    void setScatteringInfoIfNeeded(PhotonPacket::ScatteringInfo* scatinfo, double lambda) const;
 
 public:
     /** This function calculates the contribution of the medium component associated with this

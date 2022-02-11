@@ -629,6 +629,7 @@ void MediumSystem::peelOffScattering(double lambda, const ShortArray& wv, Direct
     {
         double localLambda = lambda;
         MaterialState mst(_state, m, h);
+        pp->setScatteringComponent(h);
         mix(m, h)->peeloffScattering(I, Q, U, V, localLambda, wv[h], bfkobs, bfky, &mst, pp);
 
         // if this material mix changed the wavelength, it is copied as the outgoing wavelength
@@ -668,6 +669,7 @@ void MediumSystem::simulateScattering(Random* random, PhotonPacket* pp) const
 
     // actually perform the scattering event for this cell and medium component
     MaterialState mst(_state, m, h);
+    pp->setScatteringComponent(h);
     mix(m, h)->performScattering(lambda, &mst, pp);
 }
 

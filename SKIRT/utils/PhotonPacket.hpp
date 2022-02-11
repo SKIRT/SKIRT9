@@ -253,62 +253,58 @@ public:
     // ------- Caching scattering info -------
 
 public:
-    /** This function stores externally calculated information on a scattering event currently
-        being processed in data members. The single argument is a pair specifying the interacting
-        particle velocity and whether to use a dipole phase function (true) or isotropic scattering
-        (false). Other scattering information fields are left at an arbitrary value and should not
-        be used. This capability is offered so that the actual scattering event and all its
-        peel-offs can use the same random particle velocity and phase function. */
-    void setScatteringInfo(const std::pair<Vec, bool>& scattInfo)
+    /** This function sets the index of the medium component participating in the next peel-off or
+        random-walk scattering operation. It should be called by the photon cycle machinery just
+        before the material mix corresponding to the specified medium component is requested to
+        determine its contribution to a peel-off or to perform a random-walk scattering operation.
+        This mechanism allows the photon packet to maintain a seperate scattering information
+        record for each medium component. */
+    void setScatteringComponent(int h) { _h = h; }
+
+    /** This class defines the scattering information record maintained by a photon packet for each
+        medium component that needs it. The following data members have public scope so that they
+        can be directly accessed by client code:
+
+        - \em valid: boolean flag, initially false; should be set to true once this record holds
+        valid values.
+
+        - \em dipole: boolean flag, initially false, indicating the selected scattering phase
+        function: true means dipole, false means isotropic.
+
+        - \em species: integer identifier of the scattering particle species, initially zero
+
+        - \em velocity: velocity vector of the scattering particle in the local frame, initially
+        the null vector.
+
+        Apart from initialization by the getScatteringInfo() function as indicated above, the
+        client code is fully responsible for writing and reading these fields. */
+    class ScatteringInfo
     {
-        std::tie(_particleVelocity, _dipole) = scattInfo;
-        _hasScatteringInfo = true;
-    }
+    private:
+        friend class PhotonPacket;
+        int _h;  // the index of the medium component to which this information record belongs
+    public:
+        ScatteringInfo(int h) : _h{h} {}  // cannot be private because we use emplace_back to construct
+    public:
+        bool valid{false};   // true if this record holds valid values
+        bool dipole{false};  // true if scattering as a dipole, false if scattering isotropically
+        int species{0};      // identifier of the scattering particle species
+        Vec velocity;        // the velocity vector of the scattering particle in the local frame
+    };
 
-    /** This function stores externally calculated information on a scattering event currently
-        being processed in data members. The single argument specifies the interacting particle
-        velocity. Other scattering information fields are left at an arbitrary value and should not
-        be used. This capability is offered so that the actual scattering event and all its
-        peel-offs can use the same random particle velocity. */
-    void setScatteringInfo(Vec particleVelocity)
-    {
-        _particleVelocity = particleVelocity;
-        _hasScatteringInfo = true;
-    }
+    /** This function returns a pointer to the (writable) scattering information record maintained
+        for the current medium component as previously set through the setScatteringComponent()
+        function. When this function is called for the first time for a new scattering event, the
+        information record will be freshly initialized as described for the ScatteringInfo class.
+        Specifically, the \em valid flag will be false. Subsequent invocations for the same
+        scattering event will return the same information record with field values as updated by
+        the client code.
 
-    /** This function stores externally calculated information on a scattering event currently
-        being processed in data members. The arguments specify the interacting particle velocity
-        and species identifier. Other scattering information fields are left at an arbitrary value
-        and should not be used. This capability is offered so that the actual scattering event and
-        all its peel-offs can use the same random particle velocity and species. */
-    void setScatteringInfo(Vec particleVelocity, int particleSpecies)
-    {
-        _particleVelocity = particleVelocity;
-        _particleSpecies = particleSpecies;
-        _hasScatteringInfo = true;
-    }
-
-    /** This function returns true if valid scattering information has been stored since the latest
-        photon packet launch or scattering event. Otherwise the function returns false. */
-    bool hasScatteringInfo() const { return _hasScatteringInfo; }
-
-    /** If hasScatteringInfo() returns true, this function returns the most recently stored
-        velocity vector of the scattering particle relative to the local frame. Otherwise, it
-        returns some meaningless value. This capability is offered so that the actual scattering
-        event and all its peel-offs can use the same particle velocity. */
-    Vec particleVelocity() const { return _particleVelocity; }
-
-    /** If hasScatteringInfo() returns true, this function returns the most recently stored species
-        identifier of the scattering particle. Otherwise, the function returns some meaningless
-        value. This capability is offered so that the actual scattering event and all its peel-offs
-        can use the same phase function. */
-    int particleSpecies() const { return _particleSpecies; }
-
-    /** If hasScatteringInfo() returns true, this function returns the most recently stored phase
-        function choice, i.e., true if scattering as a dipole, false if scattering isotropically.
-        Otherwise, the function returns some meaningless value. This capability is offered so that
-        the actual scattering event and all its peel-offs can use the same phase function. */
-    bool dipole() const { return _dipole; }
+        Material mixes that need to store scattering information should call this function for each
+        peel-off and random-walk scattering operation. If \em valid is false, the material mix
+        should update the relevant fields and set \em valid to true. If \em valid is already true,
+        the previously stored field values can be retrieved. */
+    ScatteringInfo* getScatteringInfo();
 
     // ------- Data members -------
 
@@ -336,10 +332,8 @@ private:
     bool _hasObservedOpticalDepth{false};  // true if the above field holds a valid value for this packet
 
     // scattering information
-    Vec _particleVelocity;           // the velocity vector of the scattering particle in the local frame
-    int _particleSpecies{0};         // identifier of the scattering particle species
-    bool _dipole{false};             // true if scattering as a dipole, false if scattering isotropically
-    bool _hasScatteringInfo{false};  // true if the above field holds a valid value for this packet
+    int _h{0};  // the index of the medium component currently participating in a scattering operation
+    vector<ScatteringInfo> _scatteringInfo;  // list of scattering information records
 };
 
 ////////////////////////////////////////////////////////////////////

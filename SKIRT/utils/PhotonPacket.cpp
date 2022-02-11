@@ -35,7 +35,7 @@ void PhotonPacket::launch(size_t historyIndex, double lambda, double L, Position
     else
         setUnpolarized();
     _hasObservedOpticalDepth = false;
-    _hasScatteringInfo = false;
+    _scatteringInfo.clear();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -71,7 +71,7 @@ void PhotonPacket::launchEmissionPeelOff(const PhotonPacket* pp, Direction bfk)
     else
         setUnpolarized();
     _hasObservedOpticalDepth = false;
-    _hasScatteringInfo = false;
+    _scatteringInfo.clear();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -88,7 +88,7 @@ void PhotonPacket::launchScatteringPeelOff(const PhotonPacket* pp, Direction bfk
     setDirection(bfk);
     setUnpolarized();
     _hasObservedOpticalDepth = false;
-    _hasScatteringInfo = false;
+    _scatteringInfo.clear();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -106,7 +106,7 @@ void PhotonPacket::scatter(Direction bfk, Vec bfv, double lambda)
     setDirection(bfk);
     _lambda = bfv.isNull() ? lambda : shiftedEmissionWavelength(lambda, bfk, bfv);
     _hasObservedOpticalDepth = false;
-    _hasScatteringInfo = false;
+    _scatteringInfo.clear();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -136,6 +136,18 @@ double PhotonPacket::shiftedReceptionWavelength(double photonWavelength, Directi
 double PhotonPacket::perceivedWavelength(Vec receiverVelocity, double expansionVelocity) const
 {
     return shiftedReceptionWavelength(_lambda, direction(), receiverVelocity, expansionVelocity);
+}
+
+////////////////////////////////////////////////////////////////////
+
+PhotonPacket::ScatteringInfo* PhotonPacket::getScatteringInfo()
+{
+    for (auto& candidate : _scatteringInfo)
+    {
+        if (_h == candidate._h) return &candidate;
+    }
+    _scatteringInfo.emplace_back(_h);
+    return &_scatteringInfo.back();
 }
 
 ////////////////////////////////////////////////////////////////////
