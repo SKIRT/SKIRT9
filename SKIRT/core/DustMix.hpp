@@ -220,11 +220,9 @@ public:
         from the reference direction in the previous scattering plane into the peel-off scattering
         plane, applies the Mueller matrix on the Stokes vector, and further rotates the Stokes
         vector from the reference direction in the peel-off scattering plane to the x-axis of the
-        instrument to which the peel-off photon packet is headed. If there are multiple medium
-        components, the relative opacity weighting factor applies not just to the luminosity but
-        also to the other components of the Stokes vector. */
-    void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w, Direction bfkobs,
-                           Direction bfky, const MaterialState* state, const PhotonPacket* pp) const override;
+        instrument to which the peel-off photon packet is headed. */
+    void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs, Direction bfky,
+                           const MaterialState* state, const PhotonPacket* pp) const override;
 
     /** This function performs a scattering event on the specified photon packet in the spatial
         cell and medium component represented by the specified material state and the receiving

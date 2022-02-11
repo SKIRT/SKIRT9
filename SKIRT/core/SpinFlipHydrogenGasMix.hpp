@@ -291,8 +291,8 @@ public:
     double opacityExt(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
 
     /** This function does nothing because the 21 cm line does not scatter. */
-    void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w, Direction bfkobs,
-                           Direction bfky, const MaterialState* state, const PhotonPacket* pp) const override;
+    void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs, Direction bfky,
+                           const MaterialState* state, const PhotonPacket* pp) const override;
 
     /** This function does nothing because the 21 cm line does not scatter. */
     void performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const override;

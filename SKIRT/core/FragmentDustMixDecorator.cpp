@@ -9,6 +9,7 @@
 #include "FatalError.hpp"
 #include "MaterialState.hpp"
 #include "Random.hpp"
+#include "ShortArray.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -212,12 +213,12 @@ double FragmentDustMixDecorator::opacityExt(double lambda, const MaterialState* 
 
 ////////////////////////////////////////////////////////////////////
 
-void FragmentDustMixDecorator::peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w,
+void FragmentDustMixDecorator::peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda,
                                                  Direction bfkobs, Direction bfky, const MaterialState* state,
                                                  const PhotonPacket* pp) const
 {
     // calculate the weights corresponding to the scattering opacities for each fragment and their sum
-    Array wv(_numFrags);
+    ShortArray wv(_numFrags);
     double sum = 0.;
     for (int f = 0; f != _numFrags; ++f)
     {
@@ -225,14 +226,19 @@ void FragmentDustMixDecorator::peeloffScattering(double& I, double& Q, double& U
         sum += wv[f];
     }
 
-    // normalize the weights
+    // perform the peel-off for each fragment with corresponding normalized weights
     if (sum > 0.)
     {
-        wv /= sum;
-
-        // perform the peel-off for each fragment with adjusted weights
         for (int f = 0; f != _numFrags; ++f)
-            _dustMix->peeloffScattering(I, Q, U, V, lambda, wv[f] * w, bfkobs, bfky, state, pp);
+        {
+            double If = 0., Qf = 0., Uf = 0., Vf = 0.;
+            _dustMix->peeloffScattering(If, Qf, Uf, Vf, lambda, bfkobs, bfky, state, pp);
+            double wf = wv[f] / sum;
+            I += If * wf;
+            Q += Qf * wf;
+            U += Uf * wf;
+            V += Vf * wf;
+        }
     }
 }
 

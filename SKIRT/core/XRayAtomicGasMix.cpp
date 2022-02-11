@@ -602,23 +602,19 @@ void XRayAtomicGasMix::setScatteringInfoIfNeeded(PhotonPacket::ScatteringInfo* s
 ////////////////////////////////////////////////////////////////////
 
 void XRayAtomicGasMix::peeloffScattering(double& I, double& /*Q*/, double& /*U*/, double& /*V*/, double& lambda,
-                                         double w, Direction bfkobs, Direction /*bfky*/, const MaterialState* /*state*/,
+                                         Direction bfkobs, Direction /*bfky*/, const MaterialState* /*state*/,
                                          const PhotonPacket* pp) const
 {
     // draw a random fluorescence channel and atom velocity, unless a previous peel-off stored this already
     auto scatinfo = const_cast<PhotonPacket*>(pp)->getScatteringInfo();
     setScatteringInfoIfNeeded(scatinfo, lambda);
 
-    // isotropic scattering, so the contribution is trivially 1 (multiplied by the weight for this component)
-    I += w;
+    // isotropic scattering, so the contribution is trivially 1
+    I += 1.;
 
-    // for a random fraction of the events governed by the weight for this component,
     // update the photon packet wavelength to the wavelength of this fluorescence transition,
     // Doppler-shifted out of the atom velocity frame
-    if (random()->uniform() <= w)
-    {
-        lambda = PhotonPacket::shiftedEmissionWavelength(_fluolambdav[scatinfo->species], bfkobs, scatinfo->velocity);
-    }
+    lambda = PhotonPacket::shiftedEmissionWavelength(_fluolambdav[scatinfo->species], bfkobs, scatinfo->velocity);
 }
 
 ////////////////////////////////////////////////////////////////////

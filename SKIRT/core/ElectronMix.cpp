@@ -179,14 +179,9 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-void ElectronMix::peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w,
-                                    Direction bfkobs, Direction bfky, const MaterialState* state,
-                                    const PhotonPacket* pp) const
+void ElectronMix::peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs,
+                                    Direction bfky, const MaterialState* state, const PhotonPacket* pp) const
 {
-    // the caller's wavelength should be updated only for a random fraction of the events governed by
-    // the relative contribution of this medium component, so we copy the wavelength into a local variable
-    double wavelength = lambda;
-
     // if we have dispersion, adjust the incoming wavelength to the electron rest frame
     PhotonPacket::ScatteringInfo* scatinfo = nullptr;
     if (_hasDispersion)
@@ -196,24 +191,20 @@ void ElectronMix::peeloffScattering(double& I, double& Q, double& U, double& V, 
         generateElectronVelocityIfNeeded(scatinfo, state->temperature(), random());
 
         // adjust the wavelength
-        wavelength = PhotonPacket::shiftedReceptionWavelength(wavelength, pp->direction(), scatinfo->velocity);
+        lambda = PhotonPacket::shiftedReceptionWavelength(lambda, pp->direction(), scatinfo->velocity);
     }
 
     // perform the scattering event in the electron rest frame
-    if (_hasCompton && wavelength < comptonWL)
-        _cpf.peeloffScattering(I, wavelength, w, pp->direction(), bfkobs);
+    if (_hasCompton && lambda < comptonWL)
+        _cpf.peeloffScattering(I, lambda, 1., pp->direction(), bfkobs);
     else
-        _dpf.peeloffScattering(I, Q, U, V, w, pp->direction(), bfkobs, bfky, pp);
+        _dpf.peeloffScattering(I, Q, U, V, 1., pp->direction(), bfkobs, bfky, pp);
 
     // if we have dispersion, adjust the outgoing wavelength from the electron rest frame
     if (_hasDispersion)
     {
-        wavelength = PhotonPacket::shiftedEmissionWavelength(wavelength, bfkobs, scatinfo->velocity);
+        lambda = PhotonPacket::shiftedEmissionWavelength(lambda, bfkobs, scatinfo->velocity);
     }
-
-    // actually update the caller's wavelength for a random fraction of the events
-    // governed by the relative contribution of this medium component
-    if (wavelength != lambda && (w == 1. || random()->uniform() <= w)) lambda = wavelength;
 }
 
 ////////////////////////////////////////////////////////////////////

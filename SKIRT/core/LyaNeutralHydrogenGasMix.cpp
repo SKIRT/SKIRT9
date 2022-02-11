@@ -132,7 +132,7 @@ double LyaNeutralHydrogenGasMix::opacityExt(double lambda, const MaterialState* 
 
 ////////////////////////////////////////////////////////////////////
 
-void LyaNeutralHydrogenGasMix::peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w,
+void LyaNeutralHydrogenGasMix::peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda,
                                                  Direction bfkobs, Direction bfky, const MaterialState* state,
                                                  const PhotonPacket* pp) const
 {
@@ -149,19 +149,16 @@ void LyaNeutralHydrogenGasMix::peeloffScattering(double& I, double& Q, double& U
     if (scatinfo->dipole)
     {
         // contribution of dipole scattering with or without polarization
-        _dpf.peeloffScattering(I, Q, U, V, w, pp->direction(), bfkobs, bfky, pp);
+        _dpf.peeloffScattering(I, Q, U, V, 1., pp->direction(), bfkobs, bfky, pp);
     }
     else
     {
-        // isotropic scattering removes polarization,
-        // so the contribution is trivially 1 (multiplied by the weight for this component)
-        I += w;
+        // isotropic scattering removes polarization, so the contribution is trivially 1
+        I += 1.;
     }
 
-    // for a random fraction of the events governed by the relative Lya contribution,
     // Doppler-shift the photon packet wavelength into and out of the atom frame
-    if (random()->uniform() <= w)
-        lambda = LyaUtils::shiftWavelength(lambda, scatinfo->velocity, pp->direction(), bfkobs);
+    lambda = LyaUtils::shiftWavelength(lambda, scatinfo->velocity, pp->direction(), bfkobs);
 }
 
 ////////////////////////////////////////////////////////////////////

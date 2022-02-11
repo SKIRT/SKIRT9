@@ -379,7 +379,7 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-void DustMix::peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w, Direction bfkobs,
+void DustMix::peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs,
                                 Direction bfky, const MaterialState* /*state*/, const PhotonPacket* pp) const
 {
     switch (scatteringMode())
@@ -393,7 +393,7 @@ void DustMix::peeloffScattering(double& I, double& Q, double& U, double& V, doub
             double value = (1.0 - g) * (1.0 + g) / sqrt(t * t * t);
 
             // accumulate the weighted sum in the intensity (no support for polarization in this case)
-            I += w * value;
+            I += value;
             break;
         }
         case DustMix::ScatteringMode::MaterialPhaseFunction:
@@ -403,7 +403,7 @@ void DustMix::peeloffScattering(double& I, double& Q, double& U, double& V, doub
             double value = phaseFunctionValueForCosine(lambda, costheta);
 
             // accumulate the weighted sum in the intensity (no support for polarization in this case)
-            I += w * value;
+            I += value;
             break;
         }
         case DustMix::ScatteringMode::SphericalPolarization:
@@ -428,11 +428,10 @@ void DustMix::peeloffScattering(double& I, double& Q, double& U, double& V, doub
             sv.rotateIntoPlane(bfkobs, bfky);
 
             // acumulate the weighted sum of all Stokes components to support polarization
-            w *= value;
-            I += w * sv.stokesI();
-            Q += w * sv.stokesQ();
-            U += w * sv.stokesU();
-            V += w * sv.stokesV();
+            I += value * sv.stokesI();
+            Q += value * sv.stokesQ();
+            U += value * sv.stokesU();
+            V += value * sv.stokesV();
             break;
         }
     }
