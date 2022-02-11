@@ -478,13 +478,12 @@ void XRayAtomicGasMix::setupSelfBefore()
     _fluocumprobvv.resize(numLambda, 0);
 
     // provide temporary array for the non-normalized fluorescence contributions (at the current wavelength)
-    Array flucontribv(fluorescenceParams.size());
+    Array fluocontribv(fluorescenceParams.size());
 
     // calculate the above for every wavelength; as before, leave the values for the outer wavelength points at zero
     for (int ell = 1; ell < numLambda - 1; ++ell)
     {
         double E = wavelengthToFromEnergy(lambdav[ell]);
-        double sigma = 0.;
 
         // interate over both cross section and fluorescence parameter sets in sync
         const auto* flp = fluorescenceParams.begin();
@@ -497,15 +496,13 @@ void XRayAtomicGasMix::setupSelfBefore()
             while (flp != fluorescenceParams.end() && flp->Z == csp.Z && flp->n == csp.n)
             {
                 double contribution = crossSection(E, sigmoid, csp) * _abundancies[csp.Z - 1] * flp->omega;
-                sigma += contribution;
-                flucontribv[flp - fluorescenceParams.begin()] = contribution;
+                fluocontribv[flp - fluorescenceParams.begin()] = contribution;
                 flp++;
             }
         }
 
-        // store the cross section and determine the normalized cumulative probability distribution
-        _sigmascav[ell] = sigma;
-        NR::cdf(_fluocumprobvv[ell], flucontribv);
+        // determine the normalized cumulative probability distribution and the cross section
+        _sigmascav[ell] = NR::cdf(_fluocumprobvv[ell], fluocontribv);
     }
 }
 
