@@ -372,13 +372,9 @@ public:
         by the probability that a photon packet would be scattered into the direction
         \f${\bf{k}}_{\text{obs}}\f$ if its original propagation direction was \f${\bf{k}}\f$. For a
         given medium component, this biasing factor is equal to the value of the scattering phase
-        function \f$\Phi({\bf{k}},{\bf{k}}_{\text{obs}})\f$ for that medium component. If there are
-        multiple medium components, the aggregated biasing factor is the mean of the scattering
-        phase function values weighted using the relative opacities for the various components. The
-        relative opacity weight for the current component is specified as argument \em w. */
-    virtual void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w,
-                                   Direction bfkobs, Direction bfky, const MaterialState* state,
-                                   const PhotonPacket* pp) const = 0;
+        function \f$\Phi({\bf{k}},{\bf{k}}_{\text{obs}})\f$ for that medium component. */
+    virtual void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs,
+                                   Direction bfky, const MaterialState* state, const PhotonPacket* pp) const = 0;
 
     /** This function performs a scattering event on the specified photon packet in the spatial
         cell and medium component represented by the specified material state and the receiving

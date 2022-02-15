@@ -200,6 +200,10 @@ public:
         weight factors. */
     bool hasMultipleConstantSectionMedia() const { return _hasMultipleConstantSectionMedia; }
 
+    /** Returns true if a scattering interaction for one or more media may adjust the wavelength of
+        the interacting photon packet, and false otherwise. */
+    bool hasScatteringDispersion() const { return _hasScatteringDispersion; }
+
     /** Returns true if all media in the simulation support polarization, and false if none of the
         media do. A mixture of support and no support for polarization is not allowed and will
         cause a fatal error during setup. */
@@ -414,7 +418,7 @@ private:
     bool _hasConstantPerceivedWavelength{false};
     bool _hasSingleConstantSectionMedium{false};
     bool _hasMultipleConstantSectionMedia{false};
-    bool _hasDispersion{false};
+    bool _hasScatteringDispersion{false};
     bool _hasPolarization{false};
     bool _hasSpheroidalPolarization{false};
 

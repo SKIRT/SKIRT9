@@ -95,7 +95,7 @@ double ComptonPhaseFunction::generateCosineFromPhaseFunction(double x) const
 
 ////////////////////////////////////////////////////////////////////
 
-void ComptonPhaseFunction::peeloffScattering(double& I, double& lambda, double w, Direction bfk, Direction bfkobs) const
+void ComptonPhaseFunction::peeloffScattering(double& I, double& lambda, Direction bfk, Direction bfkobs) const
 {
     double x = scaledEnergy(lambda);
 
@@ -104,7 +104,7 @@ void ComptonPhaseFunction::peeloffScattering(double& I, double& lambda, double w
     double value = phaseFunctionValueForCosine(x, costheta);
 
     // accumulate the weighted sum in the intensity
-    I += w * value;
+    I += value;
 
     // adjust the wavelength
     lambda *= inverseComptonfactor(x, costheta);

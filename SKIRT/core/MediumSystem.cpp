@@ -614,30 +614,48 @@ bool MediumSystem::weightsForScattering(ShortArray& wv, double lambda, const Pho
 
 ////////////////////////////////////////////////////////////////////
 
-void MediumSystem::peelOffScattering(double lambda, const ShortArray& wv, Direction bfkobs, Direction bfky,
+void MediumSystem::peelOffScattering(const ShortArray& wv, double lambda, Direction bfkobs, Direction bfky,
                                      PhotonPacket* pp, PhotonPacket* ppp) const
 {
     // get the cell hosting the scattering event
     int m = pp->interactionCellIndex();
 
-    // the outgoing wavelength (in the bulk velocity frame)
-    double emissionLambda = lambda;
-
-    // calculate the weighted sum of the effects on the Stokes vector and on the wavelength for all media
+    // calculate the weighted sum of the effects on the Stokes vector for all media
+    // we assume the wavelength does not change
     double I = 0., Q = 0., U = 0., V = 0.;
     for (int h = 0; h != _numMedia; ++h)
     {
-        double localLambda = lambda;
+        double Ih = 0., Qh = 0., Uh = 0., Vh = 0.;
         MaterialState mst(_state, m, h);
-        mix(m, h)->peeloffScattering(I, Q, U, V, localLambda, wv[h], bfkobs, bfky, &mst, pp);
-
-        // if this material mix changed the wavelength, it is copied as the outgoing wavelength
-        // if more than one material mix changes the wavelength, only the last one is preserved
-        if (localLambda != lambda) emissionLambda = localLambda;
+        pp->setScatteringComponent(h);
+        mix(m, h)->peeloffScattering(Ih, Qh, Uh, Vh, lambda, bfkobs, bfky, &mst, pp);
+        I += Ih * wv[h];
+        Q += Qh * wv[h];
+        U += Uh * wv[h];
+        V += Vh * wv[h];
     }
 
     // pass the result to the peel-off photon packet
-    ppp->launchScatteringPeelOff(pp, bfkobs, _state.bulkVelocity(m), emissionLambda, I);
+    ppp->launchScatteringPeelOff(pp, bfkobs, _state.bulkVelocity(m), lambda, I);
+    if (_config->hasPolarization()) ppp->setPolarized(I, Q, U, V, pp->normal());
+}
+
+////////////////////////////////////////////////////////////////////
+
+void MediumSystem::peelOffScattering(int h, double w, double lambda, Direction bfkobs, Direction bfky, PhotonPacket* pp,
+                                     PhotonPacket* ppp) const
+{
+    // get the cell hosting the scattering event
+    int m = pp->interactionCellIndex();
+
+    // calculate the effects on the Stokes vector and on the wavelength for this medium component
+    double I = 0., Q = 0., U = 0., V = 0.;
+    MaterialState mst(_state, m, h);
+    pp->setScatteringComponent(h);
+    mix(m, h)->peeloffScattering(I, Q, U, V, lambda, bfkobs, bfky, &mst, pp);
+
+    // pass the result to the peel-off photon packet
+    ppp->launchScatteringPeelOff(pp, bfkobs, _state.bulkVelocity(m), lambda, I * w);
     if (_config->hasPolarization()) ppp->setPolarized(I, Q, U, V, pp->normal());
 }
 
@@ -668,6 +686,7 @@ void MediumSystem::simulateScattering(Random* random, PhotonPacket* pp) const
 
     // actually perform the scattering event for this cell and medium component
     MaterialState mst(_state, m, h);
+    pp->setScatteringComponent(h);
     mix(m, h)->performScattering(lambda, &mst, pp);
 }
 

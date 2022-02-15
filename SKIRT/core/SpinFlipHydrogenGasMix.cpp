@@ -212,9 +212,8 @@ double SpinFlipHydrogenGasMix::opacityExt(double lambda, const MaterialState* st
 ////////////////////////////////////////////////////////////////////
 
 void SpinFlipHydrogenGasMix::peeloffScattering(double& /*I*/, double& /*Q*/, double& /*U*/, double& /*V*/,
-                                               double& /*lambda*/, double /*w*/, Direction /*bfkobs*/,
-                                               Direction /*bfky*/, const MaterialState* /*state*/,
-                                               const PhotonPacket* /*pp*/) const
+                                               double& /*lambda*/, Direction /*bfkobs*/, Direction /*bfky*/,
+                                               const MaterialState* /*state*/, const PhotonPacket* /*pp*/) const
 {}
 
 ////////////////////////////////////////////////////////////////////

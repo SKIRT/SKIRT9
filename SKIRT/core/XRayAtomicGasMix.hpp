@@ -8,6 +8,7 @@
 
 #include "ArrayTable.hpp"
 #include "MaterialMix.hpp"
+#include "PhotonPacket.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -238,9 +239,10 @@ public:
     double opacityExt(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
 
 private:
-    /** This private function draws a random fluorescence transition and atom velocity and stores this
-        information in the photon packet, unless a previous peel-off stored this already. */
-    void setScatteringInfoIfNeeded(PhotonPacket* pp, double lambda) const;
+    /** This private function draws a random fluorescence transition and atom velocity and stores
+        this information in the photon packet's scattering information record, unless a previous
+        peel-off stored this already. */
+    void setScatteringInfoIfNeeded(PhotonPacket::ScatteringInfo* scatinfo, double lambda) const;
 
 public:
     /** This function calculates the contribution of the medium component associated with this
@@ -251,8 +253,8 @@ public:
         intensity is simply given by the relative weight of this component in the overall
         simulation. The outgoing wavelength is determined by Doppler-shifting the rest wavelength
         of the selected fluorescence transition for the selected atom velocity. */
-    void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w, Direction bfkobs,
-                           Direction bfky, const MaterialState* state, const PhotonPacket* pp) const override;
+    void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs, Direction bfky,
+                           const MaterialState* state, const PhotonPacket* pp) const override;
 
     /** This function performs a scattering event on the specified photon packet in the spatial
         cell and medium component represented by the specified material state and the receiving

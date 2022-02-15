@@ -731,22 +731,49 @@ void MonteCarloSimulation::peelOffScattering(PhotonPacket* pp, PhotonPacket* ppp
     ShortArray wv;
     if (!mediumSystem()->weightsForScattering(wv, lambda, pp)) return;
 
-    // now do the actual peel-off for each instrument
-    for (Instrument* instr : _instrumentSystem->instruments())
+    // now do the actual peel-off
+    if (_config->hasScatteringDispersion())
     {
-        if (!instr->isSameObserverAsPreceding())
+        // if wavelengths may change, send a peel-off photon packet per medium component to each instrument
+        int numMedia = wv.size();
+        for (int h = 0; h != numMedia; ++h)
         {
-            // get the direction towards the instrument and (for polarization only) its Y-axis orientation
-            Direction bfkobs = instr->bfkobs(pp->position());
-            Direction bfky = _config->hasPolarization() ? instr->bfky(pp->position()) : Direction();
+            for (Instrument* instr : _instrumentSystem->instruments())
+            {
+                if (!instr->isSameObserverAsPreceding())
+                {
+                    // get the direction towards the instrument and (for polarization only) its Y-axis orientation
+                    Direction bfkobs = instr->bfkobs(pp->position());
+                    Direction bfky = _config->hasPolarization() ? instr->bfky(pp->position()) : Direction();
 
-            // calculate peel-off for all medium components and launch the peel-off photon packet
-            // (all media must either support polarization or not; combining these support levels is not allowed)
-            mediumSystem()->peelOffScattering(lambda, wv, bfkobs, bfky, pp, ppp);
+                    // calculate peel-off for the current component and launch the peel-off photon packet
+                    mediumSystem()->peelOffScattering(h, wv[h], lambda, bfkobs, bfky, pp, ppp);
+                }
+
+                // have the peel-off photon packet detected
+                instr->detect(ppp);
+            }
         }
+    }
+    else
+    {
+        // if wavelengths cannot change, send a consolidated peel-off photon packet to each instrument
+        for (Instrument* instr : _instrumentSystem->instruments())
+        {
+            if (!instr->isSameObserverAsPreceding())
+            {
+                // get the direction towards the instrument and (for polarization only) its Y-axis orientation
+                Direction bfkobs = instr->bfkobs(pp->position());
+                Direction bfky = _config->hasPolarization() ? instr->bfky(pp->position()) : Direction();
 
-        // have the peel-off photon packet detected
-        instr->detect(ppp);
+                // calculate peel-off for all medium components and launch the peel-off photon packet
+                // (all media must either support polarization or not; combining these support levels is not allowed)
+                mediumSystem()->peelOffScattering(wv, lambda, bfkobs, bfky, pp, ppp);
+            }
+
+            // have the peel-off photon packet detected
+            instr->detect(ppp);
+        }
     }
 }
 

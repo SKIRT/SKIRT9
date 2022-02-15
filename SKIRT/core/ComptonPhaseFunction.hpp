@@ -75,10 +75,9 @@ public:
         photon luminosity for the given geometry and wavelength, and determines the adjusted
         wavelength of the outgoing photon packet. The luminosity contribution is added to the
         incoming value of the \em I argument, and the adjusted wavelength is stored in the \em
-        lambda argument. The \em w argument specifies the relative opacity weighting factor for
-        this medium component. See the description of the MaterialMix::peeloffScattering() function
+        lambda argument. See the description of the MaterialMix::peeloffScattering() function
         for more information. */
-    void peeloffScattering(double& I, double& lambda, double w, Direction bfk, Direction bfkobs) const;
+    void peeloffScattering(double& I, double& lambda, Direction bfk, Direction bfkobs) const;
 
     /** Given the incoming photon packet wavelength and direction this function calculates a
         randomly sampled new propagation direction for a Compton scattering event, and determines

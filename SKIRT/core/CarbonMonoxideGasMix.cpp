@@ -176,7 +176,7 @@ double CarbonMonoxideGasMix::opacityExt(double lambda, const MaterialState* stat
 ////////////////////////////////////////////////////////////////////
 
 void CarbonMonoxideGasMix::peeloffScattering(double& /*I*/, double& /*Q*/, double& /*U*/, double& /*V*/,
-                                             double& /*lambda*/, double /*w*/, Direction /*bfkobs*/, Direction /*bfky*/,
+                                             double& /*lambda*/, Direction /*bfkobs*/, Direction /*bfky*/,
                                              const MaterialState* /*state*/, const PhotonPacket* /*pp*/) const
 {}
 
