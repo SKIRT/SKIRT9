@@ -149,7 +149,7 @@ void LyaNeutralHydrogenGasMix::peeloffScattering(double& I, double& Q, double& U
     if (scatinfo->dipole)
     {
         // contribution of dipole scattering with or without polarization
-        _dpf.peeloffScattering(I, Q, U, V, 1., pp->direction(), bfkobs, bfky, pp);
+        _dpf.peeloffScattering(I, Q, U, V, pp->direction(), bfkobs, bfky, pp);
     }
     else
     {

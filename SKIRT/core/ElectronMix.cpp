@@ -196,9 +196,9 @@ void ElectronMix::peeloffScattering(double& I, double& Q, double& U, double& V, 
 
     // perform the scattering event in the electron rest frame
     if (_hasCompton && lambda < comptonWL)
-        _cpf.peeloffScattering(I, lambda, 1., pp->direction(), bfkobs);
+        _cpf.peeloffScattering(I, lambda, pp->direction(), bfkobs);
     else
-        _dpf.peeloffScattering(I, Q, U, V, 1., pp->direction(), bfkobs, bfky, pp);
+        _dpf.peeloffScattering(I, Q, U, V, pp->direction(), bfkobs, bfky, pp);
 
     // if we have dispersion, adjust the outgoing wavelength from the electron rest frame
     if (_hasDispersion)
