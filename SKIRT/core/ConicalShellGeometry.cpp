@@ -24,6 +24,8 @@ void ConicalShellGeometry::setupSelfBefore()
     _cosDelta = cos((_DeltaOut + _DeltaIn) / 2.);
     _smin = SpecialFunctions::gln(_p - 2.0, _rmin);
     _sdiff = SpecialFunctions::gln2(_p - 2.0, _rmax, _rmin);
+    _tmin = pow(_rmin, 3.0 - _p);
+    _tmax = pow(_rmax, 3.0 - _p);
 
     // determine the normalization factor
     if (_q > 1e-3)
@@ -62,8 +64,18 @@ Position ConicalShellGeometry::generatePosition() const
     while (true)
     {
         double X = random()->uniform();
-        double s = _smin + X * _sdiff;
-        double r = SpecialFunctions::gexp(_p - 2.0, s);
+        double r = 0.0;
+        if (fabs(_p - 3.0) < 1e-2)
+        {
+            double s = _smin + X * _sdiff;
+            r = SpecialFunctions::gexp(_p - 2.0, s);
+        }
+        else
+        {
+            double z = (1.0 - X) * _tmin + X * _tmax;
+            r = pow(z, 1.0 / (3.0 - _p));
+        }
+
         X = random()->uniform();
         double costheta = 0.0;
         if (_q < 1e-3)
