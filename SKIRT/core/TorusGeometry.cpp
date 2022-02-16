@@ -57,7 +57,7 @@ Position TorusGeometry::generatePosition() const
     {
         double X = random()->uniform();
         double r = 0.0;
-        if (fabs(_p - 2.0) < 1e-2)
+        if (fabs(_p - 3.0) < 1e-2)
         {
             double s = _smin + X * _sdiff;
             r = SpecialFunctions::gexp(_p - 2.0, s);
