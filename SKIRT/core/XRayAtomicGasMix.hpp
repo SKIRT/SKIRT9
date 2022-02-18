@@ -157,9 +157,9 @@ class XRayAtomicGasMix : public MaterialMix
         ATTRIBUTE_REQUIRED_IF(abundancies, "false")
         ATTRIBUTE_DISPLAYED_IF(abundancies, "Level2")
 
-        PROPERTY_DOUBLE(temperature, "the temperature of the gas")
+        PROPERTY_DOUBLE(temperature, "the temperature of the gas or zero to disable thermal dispersion")
         ATTRIBUTE_QUANTITY(temperature, "temperature")
-        ATTRIBUTE_MIN_VALUE(temperature, "[3")  // gas temperature must be above local Universe T_CMB
+        ATTRIBUTE_MIN_VALUE(temperature, "[0")
         ATTRIBUTE_MAX_VALUE(temperature, "1e9]")
         ATTRIBUTE_DEFAULT_VALUE(temperature, "1e4")
         ATTRIBUTE_DISPLAYED_IF(temperature, "Level2")
