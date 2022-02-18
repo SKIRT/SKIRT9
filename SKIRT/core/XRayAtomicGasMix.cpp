@@ -595,7 +595,7 @@ void XRayAtomicGasMix::setScatteringInfoIfNeeded(PhotonPacket::ScatteringInfo* s
     {
         scatinfo->valid = true;
         scatinfo->species = NR::locateClip(_fluocumprobvv[indexForLambda(lambda)], random()->uniform());
-        scatinfo->velocity = _fluovthermv[scatinfo->species] * random()->maxwell();
+        if (temperature() > 0.) scatinfo->velocity = _fluovthermv[scatinfo->species] * random()->maxwell();
     }
 }
 
@@ -614,7 +614,8 @@ void XRayAtomicGasMix::peeloffScattering(double& I, double& /*Q*/, double& /*U*/
 
     // update the photon packet wavelength to the wavelength of this fluorescence transition,
     // Doppler-shifted out of the atom velocity frame
-    lambda = PhotonPacket::shiftedEmissionWavelength(_fluolambdav[scatinfo->species], bfkobs, scatinfo->velocity);
+    lambda = _fluolambdav[scatinfo->species];
+    if (temperature() > 0.) lambda = PhotonPacket::shiftedEmissionWavelength(lambda, bfkobs, scatinfo->velocity);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -630,7 +631,8 @@ void XRayAtomicGasMix::performScattering(double lambda, const MaterialState* sta
 
     // update the photon packet wavelength to the wavelength of this fluorescence transition,
     // Doppler-shifted out of the atom velocity frame
-    lambda = PhotonPacket::shiftedEmissionWavelength(_fluolambdav[scatinfo->species], bfknew, scatinfo->velocity);
+    lambda = _fluolambdav[scatinfo->species];
+    if (temperature() > 0.) lambda = PhotonPacket::shiftedEmissionWavelength(lambda, bfknew, scatinfo->velocity);
 
     // execute the scattering event in the photon packet
     pp->scatter(bfknew, state->bulkVelocity(), lambda);
