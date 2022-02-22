@@ -309,7 +309,7 @@ double ConsoleHierarchyCreator::promptForDouble(string prefix, const DoublePrope
 vector<double> ConsoleHierarchyCreator::promptForDoubleList(string prefix, const DoubleListPropertyHandler* handler)
 {
     // get default and min/max values and verify that default is in range
-    bool hasDef = handler->hasDefaultValue();
+    bool hasDef = handler->hasDefaultValue() || !handler->isRequired();
     vector<double> def = handler->defaultValue();
     if (hasDef && !handler->isInRange(def)) throw FATALERROR("Default double list value out of range");
 

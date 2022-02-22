@@ -25,7 +25,8 @@ namespace
     string headerMessage(DoubleListPropertyHandler* hdlr)
     {
         string message = "Enter " + hdlr->title() + " " + hdlr->rangeDescription();
-        if (hdlr->hasDefaultValue()) message += " (" + hdlr->toString(hdlr->defaultValue()) + ")";
+        if (hdlr->hasDefaultValue() || !hdlr->isRequired())
+            message += " (" + hdlr->toString(hdlr->defaultValue()) + ")";
         message += ":";
         return message;
     }
