@@ -58,14 +58,14 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-TextInFile::TextInFile(const SimulationItem* item, string filename, string description)
+TextInFile::TextInFile(const SimulationItem* item, string filename, string description, bool resource)
 {
     // remember the units system and the logger
     _units = item->find<Units>();
     _log = item->find<Log>();
 
-    // get the filepath
-    string filepath = item->find<FilePaths>()->input(filename);
+    // get the full path for the resource or for the input file
+    string filepath = resource ? FilePaths::resource(filename) : item->find<FilePaths>()->input(filename);
 
     // if the file is in SKIRT stored column format, open a binary file
     if (StringUtils::endsWith(filepath, ".scol"))
