@@ -102,6 +102,7 @@
 #include "GrainPopulation.hpp"
 #include "HEALPixSkyInstrument.hpp"
 #include "HammerAitoffProjection.hpp"
+#include "HollowRadialVectorField.hpp"
 #include "HyperboloidGeometry.hpp"
 #include "HyperboloidShellGeometry.hpp"
 #include "InstrumentSystem.hpp"
@@ -448,6 +449,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // vector fields
     ItemRegistry::add<VectorField>();
     ItemRegistry::add<RadialVectorField>();
+    ItemRegistry::add<HollowRadialVectorField>();
     ItemRegistry::add<CylindricalVectorField>();
     ItemRegistry::add<UnidirectionalVectorField>();
     ItemRegistry::add<OffsetVectorFieldDecorator>();
