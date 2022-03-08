@@ -1183,7 +1183,7 @@ bool MediumSystem::updateDynamicMediumState()
 
 ////////////////////////////////////////////////////////////////////
 
-void MediumSystem::updateSemiDynamicMediumState()
+bool MediumSystem::updateSemiDynamicMediumState()
 {
     auto log = find<Log>();
     auto parfac = find<ParallelFactory>();
@@ -1207,7 +1207,7 @@ void MediumSystem::updateSemiDynamicMediumState()
                     if (mix(m, h)->hasSemiDynamicMediumState())
                     {
                         MaterialState mst(_state, m, h);
-                        if (mix(m, h)->updateSpecificState(&mst, Jv)) flags[m].updateConverged();
+                        flags[m].update(mix(m, h)->updateSpecificState(&mst, Jv));
                     }
                 }
             }
@@ -1218,7 +1218,18 @@ void MediumSystem::updateSemiDynamicMediumState()
     });
 
     // synchronize the updated state between processes
-    _state.synchronize(flags);
+    int numUpdated, numNotConverged;
+    std::tie(numUpdated, numNotConverged) = _state.synchronize(flags);
+
+    // log statistics
+    log->info("  Updated cells: " + std::to_string(numUpdated) + " out of " + std::to_string(_numCells) + " ("
+              + StringUtils::toString(100. * numUpdated / _numCells, 'f', 2) + " %)");
+    if (numNotConverged)
+        log->info("  Not converged: " + std::to_string(numNotConverged) + " out of " + std::to_string(_numCells) + " ("
+                  + StringUtils::toString(100. * numNotConverged / _numCells, 'f', 2) + " %)");
+
+    // TO DO
+    return numNotConverged == 0;
 }
 
 ////////////////////////////////////////////////////////////////////

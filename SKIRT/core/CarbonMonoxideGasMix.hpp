@@ -213,8 +213,8 @@ public:
     /** Based on the specified radiation field and the input model properties found in the given
         material state, this function determines the level populations for the supported CO
         transitions and stores these results back in the given material state. The function returns
-        true if the material state has indeed be changed, and false otherwise. */
-    bool updateSpecificState(MaterialState* state, const Array& Jv) const override;
+        the update status as described for the UpdateStatus class. */
+    UpdateStatus updateSpecificState(MaterialState* state, const Array& Jv) const override;
 
     //======== Low-level material properties =======
 

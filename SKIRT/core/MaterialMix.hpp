@@ -11,6 +11,7 @@
 #include "SimulationItem.hpp"
 #include "SnapshotParameter.hpp"
 #include "StateVariable.hpp"
+#include "UpdateStatus.hpp"
 class Configuration;
 class MaterialState;
 class PhotonPacket;
@@ -397,13 +398,14 @@ public:
 
     /** If this material mix has a semi-dynamic medium state, i.e. if the
         hasSemiDynamicMediumState() function returns true, this function is invoked at the end of a
-        primary emission segment. Based on the specified radiation field, the function updates any
-        values in the specific material state for this cell that may inform the local emission
-        and/or extinction properties of the material during secondary emission. The function
-        returns true if the medium state has indeed be changed, and false if the medium state has
-        remained unchanged (this allows optimizing the synchronization of changes across multiple
-        processes). The default implementation in this base class throws a fatal error. */
-    virtual bool updateSpecificState(MaterialState* state, const Array& Jv) const;
+        primary emission segment. Based on the specified radiation field, if needed, the function
+        updates any values in the specific material state for this cell that may inform the local
+        emission and/or extinction properties of the material during secondary emission. The
+        function returns the update status as described for the UpdateStatus class. This
+        information is used to optimize the synchronization of changes across multiple processes
+        and to determine whether an iterative update has converged, if applicable. The default
+        implementation in this base class throws a fatal error. */
+    virtual UpdateStatus updateSpecificState(MaterialState* state, const Array& Jv) const;
 
     //======== Secondary continuum emission =======
 

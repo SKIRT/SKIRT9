@@ -250,9 +250,9 @@ public:
     /** Based on the specified radiation field and the input model properties found in the given
         material state, this function performs the partitioning scheme described in the class
         header and stores the resulting atomic hydrogen fraction back in the given material state.
-        The function returns true if the material state has indeed be changed, and false otherwise.
+        The function returns the update status as described for the UpdateStatus class.
         */
-    bool updateSpecificState(MaterialState* state, const Array& Jv) const override;
+    UpdateStatus updateSpecificState(MaterialState* state, const Array& Jv) const override;
 
     //======== Low-level material properties =======
 
