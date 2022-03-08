@@ -676,6 +676,7 @@ private:
     vector<int> _dust_hv;  // a list of indices for media components containing dust
     vector<int> _gas_hv;   // a list of indices for media components containing gas
     vector<int> _elec_hv;  // a list of indices for media components containing electrons
+    vector<int> _sdms_hv;  // a list of indices for media components with a semi-dynamic medium state
 
     // relevant for any simulation mode that stores the radiation field
     WavelengthGrid* _wavelengthGrid{0};  // index ell
