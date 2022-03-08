@@ -1227,7 +1227,7 @@ bool MediumSystem::updateSemiDynamicMediumState()
 
     // collect convergence info
     bool converged = true;
-    ///    for (int h : _sdms_hv) converged &= mix(0, h)->isSpecificStateConverged(_numCells, numUpdated, numNotConverged);
+    for (int h : _sdms_hv) converged &= mix(0, h)->isSpecificStateConverged(_numCells, numUpdated, numNotConverged);
     return converged;
 }
 

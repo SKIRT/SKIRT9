@@ -397,15 +397,30 @@ public:
     //======== Medium state updates =======
 
     /** If this material mix has a semi-dynamic medium state, i.e. if the
-        hasSemiDynamicMediumState() function returns true, this function is invoked at the end of a
-        primary emission segment. Based on the specified radiation field, if needed, the function
-        updates any values in the specific material state for this cell that may inform the local
-        emission and/or extinction properties of the material during secondary emission. The
-        function returns the update status as described for the UpdateStatus class. This
-        information is used to optimize the synchronization of changes across multiple processes
-        and to determine whether an iterative update has converged, if applicable. The default
-        implementation in this base class throws a fatal error. */
+        hasSemiDynamicMediumState() function returns true, this function is invoked for each
+        spatial cell at the end of an emission segment that in turn will be followed by a secondary
+        emission segment. Based on the specified radiation field, if needed, the function updates
+        any values in the specific material state for this cell and medium component that may
+        inform the local emission and/or extinction properties of the material during secondary
+        emission. The function returns the update status as described for the UpdateStatus class.
+        This information is used to optimize the synchronization of changes across multiple
+        processes and to determine whether an iterative update has converged, if applicable.
+
+        This function may be called in parallel across multiple threads and processes. It should
+        not update any information outside the specific medium state of the given cell and medium
+        component. The default implementation in this base class throws a fatal error. */
     virtual UpdateStatus updateSpecificState(MaterialState* state, const Array& Jv) const;
+
+    /** If this material mix has a semi-dynamic medium state, i.e. if the
+        hasSemiDynamicMediumState() function returns true, this function is invoked (once) \em
+        after updateSpecificState() has been called for all spatial cells. The \em numCells, \em
+        numUpdated and \em numNotConverged arguments specify respectively the number of spatial
+        cells in the simulation, the number of cells updated during this update cycle, and the
+        number of updated cells that have not yet converged. Based on this information and any
+        relevant user configuration options, the function returns true if the medium state is
+        considered to be converged and false if not. The default implementation in this base class
+        always returns true. */
+    virtual bool isSpecificStateConverged(int numCells, int numUpdated, int numNotConverged) const;
 
     //======== Secondary continuum emission =======
 

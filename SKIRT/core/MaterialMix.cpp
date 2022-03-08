@@ -117,6 +117,13 @@ UpdateStatus MaterialMix::updateSpecificState(MaterialState* /*state*/, const Ar
 
 ////////////////////////////////////////////////////////////////////
 
+bool MaterialMix::isSpecificStateConverged(int /*numCells*/, int /*numUpdated*/, int /*numNotConverged*/) const
+{
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////
+
 DisjointWavelengthGrid* MaterialMix::emissionWavelengthGrid() const
 {
     throw FATALERROR("This function implementation should never be called");
