@@ -107,6 +107,7 @@ vector<TreeNode*> SiteListTreePolicy::constructTree(TreeNode* root)
     for (int extra = 0; extra != numExtraLevels(); ++extra)
     {
         log->info("Subdividing extra level " + std::to_string(extra) + ": " + std::to_string(lend - lbeg) + " nodes");
+        log->infoSetElapsed(lend - lbeg);
         for (size_t l = lbeg; l != lend; ++l)
         {
             if (nodev[l]->isChildless() && nodev[l]->level() < maxLevel()) nodev[l]->subdivide(nodev);
