@@ -266,6 +266,7 @@ void MediumSystem::setupSelfAfter()
             case MaterialMix::MaterialType::Gas: _gas_hv.push_back(h); break;
             case MaterialMix::MaterialType::Electrons: _elec_hv.push_back(h); break;
         }
+        if (mix(0, h)->hasSemiDynamicMediumState()) _sdms_hv.push_back(h);
     }
 
     // ----- inform user about allocated memory -----
@@ -1175,6 +1176,12 @@ bool MediumSystem::updateDynamicMediumState()
     int numUpdated, numNotConverged;
     std::tie(numUpdated, numNotConverged) = _state.synchronize(flags);
 
+    // log statistics
+    log->info("  Updated cells: " + std::to_string(numUpdated) + " out of " + std::to_string(_numCells) + " ("
+              + StringUtils::toString(100. * numUpdated / _numCells, 'f', 2) + " %)");
+    log->info("  Not converged: " + std::to_string(numNotConverged) + " out of " + std::to_string(_numCells) + " ("
+              + StringUtils::toString(100. * numNotConverged / _numCells, 'f', 2) + " %)");
+
     // tell all recipes to end the update cycle and collect convergence info
     bool converged = true;
     for (auto recipe : recipes) converged &= recipe->endUpdate(_numCells, numUpdated, numNotConverged);
@@ -1183,7 +1190,7 @@ bool MediumSystem::updateDynamicMediumState()
 
 ////////////////////////////////////////////////////////////////////
 
-void MediumSystem::updateSemiDynamicMediumState()
+bool MediumSystem::updateSemiDynamicMediumState()
 {
     auto log = find<Log>();
     auto parfac = find<ParallelFactory>();
@@ -1201,14 +1208,10 @@ void MediumSystem::updateSemiDynamicMediumState()
             for (size_t m = firstIndex; m != firstIndex + currentChunkSize; ++m)
             {
                 const Array& Jv = meanIntensity(m);
-
-                for (int h = 0; h != _numMedia; ++h)
+                for (int h : _sdms_hv)
                 {
-                    if (mix(m, h)->hasSemiDynamicMediumState())
-                    {
-                        MaterialState mst(_state, m, h);
-                        if (mix(m, h)->updateSpecificState(&mst, Jv)) flags[m].updateConverged();
-                    }
+                    MaterialState mst(_state, m, h);
+                    flags[m].update(mix(m, h)->updateSpecificState(&mst, Jv));
                 }
             }
             log->infoIfElapsed("Updated semi-dynamic medium state: ", currentChunkSize);
@@ -1218,7 +1221,20 @@ void MediumSystem::updateSemiDynamicMediumState()
     });
 
     // synchronize the updated state between processes
-    _state.synchronize(flags);
+    int numUpdated, numNotConverged;
+    std::tie(numUpdated, numNotConverged) = _state.synchronize(flags);
+
+    // log statistics
+    log->info("  Updated cells: " + std::to_string(numUpdated) + " out of " + std::to_string(_numCells) + " ("
+              + StringUtils::toString(100. * numUpdated / _numCells, 'f', 2) + " %)");
+    if (numNotConverged)
+        log->info("  Not converged: " + std::to_string(numNotConverged) + " out of " + std::to_string(_numCells) + " ("
+                  + StringUtils::toString(100. * numNotConverged / _numCells, 'f', 2) + " %)");
+
+    // collect convergence info
+    bool converged = true;
+    for (int h : _sdms_hv) converged &= mix(0, h)->isSpecificStateConverged(_numCells, numUpdated, numNotConverged);
+    return converged;
 }
 
 ////////////////////////////////////////////////////////////////////

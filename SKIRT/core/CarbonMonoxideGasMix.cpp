@@ -100,8 +100,10 @@ void CarbonMonoxideGasMix::initializeSpecificState(MaterialState* state, double 
 
 ////////////////////////////////////////////////////////////////////
 
-bool CarbonMonoxideGasMix::updateSpecificState(MaterialState* state, const Array& Jv) const
+UpdateStatus CarbonMonoxideGasMix::updateSpecificState(MaterialState* state, const Array& Jv) const
 {
+    UpdateStatus status;
+
     // leave the properties untouched if the cell does not contain any material for this component
     if (state->numberDensity() > 0.)
     {
@@ -111,9 +113,16 @@ bool CarbonMonoxideGasMix::updateSpecificState(MaterialState* state, const Array
         // set the level populations (here some arbitrary example value
         for (int p = 1; p <= numLevelPops; ++p) state->setCustom(p, 1.);
 
-        return true;
+        status.updateConverged();
     }
-    return false;
+    return status;
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool CarbonMonoxideGasMix::isSpecificStateConverged(int numCells, int /*numUpdated*/, int numNotConverged) const
+{
+    return static_cast<double>(numNotConverged) / static_cast<double>(numCells) <= maxFractionNotConverged();
 }
 
 ////////////////////////////////////////////////////////////////////

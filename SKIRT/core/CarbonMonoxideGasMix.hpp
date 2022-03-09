@@ -160,6 +160,12 @@ class CarbonMonoxideGasMix : public EmittingGasMix
         ATTRIBUTE_DEFAULT_VALUE(defaultMolecularHydrogenRatio, "100")
         ATTRIBUTE_DISPLAYED_IF(defaultMolecularHydrogenRatio, "Level2")
 
+        PROPERTY_DOUBLE(maxFractionNotConverged, "the maximum fraction of not-converged spatial cells")
+        ATTRIBUTE_MIN_VALUE(maxFractionNotConverged, "[0")
+        ATTRIBUTE_MAX_VALUE(maxFractionNotConverged, "1]")
+        ATTRIBUTE_DEFAULT_VALUE(maxFractionNotConverged, "0.001")
+        ATTRIBUTE_DISPLAYED_IF(maxFractionNotConverged, "Level3")
+
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============
@@ -213,8 +219,16 @@ public:
     /** Based on the specified radiation field and the input model properties found in the given
         material state, this function determines the level populations for the supported CO
         transitions and stores these results back in the given material state. The function returns
-        true if the material state has indeed be changed, and false otherwise. */
-    bool updateSpecificState(MaterialState* state, const Array& Jv) const override;
+        the update status as described for the UpdateStatus class. */
+    UpdateStatus updateSpecificState(MaterialState* state, const Array& Jv) const override;
+
+    /** This function returns true if the state of the medium component corresponding to this
+        material mix can be considered to be converged based on the given spatial cell statistics,
+        and false otherwise. The \em numCells, \em numUpdated and \em numNotConverged arguments
+        specify respectively the number of spatial cells in the simulation, the number of cells
+        updated during the latest update cycle, and the number of updated cells that have not yet
+        converged. */
+    bool isSpecificStateConverged(int numCells, int numUpdated, int numNotConverged) const override;
 
     //======== Low-level material properties =======
 

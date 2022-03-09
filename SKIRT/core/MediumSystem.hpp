@@ -650,11 +650,17 @@ public:
         dynamic medium state recipe has been configured for the simulation. */
     bool updateDynamicMediumState();
 
-    /** This function updates the semi-dynamic medium state for all media that require/support such
-        an update based on the currently established radiation field by invoking the corresponding
-        material mix function for all spatial cells. The function assumes that the radiation field
-        has been calculated. */
-    void updateSemiDynamicMediumState();
+    /** This function updates the semi-dynamic medium state for all relevant medium components
+        based on the currently established radiation field. A medium component is relevant in the
+        context of this function if the hasSemiDynamicMediumState() function of its material mix
+        returns true. The update is performed by invoking the updateSpecificState() function of the
+        material mix for all spatial cells. The function returns true if the medium states for all
+        medium components have converged, and false otherwise.
+
+        This function assumes that the radiation field has been calculated and that at least one
+        medium component in the simulation is configured with a material mix requiring/supporting a
+        semi-dynamic medium state. */
+    bool updateSemiDynamicMediumState();
 
     //======================== Data Members ========================
 
@@ -672,6 +678,7 @@ private:
     vector<int> _dust_hv;  // a list of indices for media components containing dust
     vector<int> _gas_hv;   // a list of indices for media components containing gas
     vector<int> _elec_hv;  // a list of indices for media components containing electrons
+    vector<int> _sdms_hv;  // a list of indices for media components with a semi-dynamic medium state
 
     // relevant for any simulation mode that stores the radiation field
     WavelengthGrid* _wavelengthGrid{0};  // index ell
