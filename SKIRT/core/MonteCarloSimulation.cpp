@@ -340,7 +340,7 @@ void MonteCarloSimulation::runSecondaryEmissionIterations()
     {
         ++iter;
 
-        bool converged1 = true;
+        bool converged = true;
         {
             string segment = "secondary emission iteration " + std::to_string(iter);
             TimeLogger logger(log(), segment);
@@ -365,16 +365,17 @@ void MonteCarloSimulation::runSecondaryEmissionIterations()
             wait(segment);
             mediumSystem()->communicateRadiationField(false);
 
-            // update semi-dynamic medium state if needed
-            if (_config->hasSemiDynamicState()) converged1 = mediumSystem()->updateSemiDynamicMediumState();
+            // if needed, update semi-dynamic medium state and log convergence info
+            if (_config->hasSemiDynamicState()) converged &= mediumSystem()->updateSemiDynamicMediumState();
+
+            // log dust emission convergence info
+            if (mediumSystem()->hasDust())
+                converged &= dustConvergence.logConvergenceInfo(log(), units(), mediumSystem(), iter, fractionOfPrimary,
+                                                                fractionOfPrevious);
         }
 
-        // verify and log secondary emission convergence
-        bool converged2 = dustConvergence.logConvergenceInfo(log(), units(), mediumSystem(), iter, fractionOfPrimary,
-                                                             fractionOfPrevious);
-
         // verify and log loop convergence
-        if (logLoopConvergence(log(), converged1 & converged2, iter, minIters, maxIters)) break;
+        if (logLoopConvergence(log(), converged, iter, minIters, maxIters)) break;
     }
 }
 
@@ -410,8 +411,7 @@ void MonteCarloSimulation::runMergedEmissionIterations()
     {
         ++iter;
 
-        bool converged1 = true;
-        bool converged2 = true;
+        bool converged = true;
         {
             string segment = "merged primary and secondary emission iteration " + std::to_string(iter);
             string segment1 = "merged primary emission iteration " + std::to_string(iter);
@@ -430,8 +430,8 @@ void MonteCarloSimulation::runMergedEmissionIterations()
             wait(segment1);
             mediumSystem()->communicateRadiationField(true);
 
-            // update semi-dynamic medium state if needed
-            if (_config->hasSemiDynamicState()) converged1 = mediumSystem()->updateSemiDynamicMediumState();
+            // if needed, update semi-dynamic medium state and log convergence info
+            if (_config->hasSemiDynamicState()) converged &= mediumSystem()->updateSemiDynamicMediumState();
 
             // clear the secondary radiation field
             mediumSystem()->clearRadiationField(false);
@@ -454,15 +454,16 @@ void MonteCarloSimulation::runMergedEmissionIterations()
             mediumSystem()->communicateRadiationField(false);
 
             // update the medium state based on the newly established radiation field
-            converged2 = mediumSystem()->updateDynamicMediumState();
+            converged &= mediumSystem()->updateDynamicMediumState();
+
+            // log dust emission convergence info
+            if (mediumSystem()->hasDust())
+                converged &= dustConvergence.logConvergenceInfo(log(), units(), mediumSystem(), iter, fractionOfPrimary,
+                                                                fractionOfPrevious);
         }
 
-        // verify and log secondary emission convergence
-        bool converged3 = dustConvergence.logConvergenceInfo(log(), units(), mediumSystem(), iter, fractionOfPrimary,
-                                                             fractionOfPrevious);
-
         // verify and log loop convergence
-        if (logLoopConvergence(log(), converged1 & converged2 & converged3, iter, minIters, maxIters)) break;
+        if (logLoopConvergence(log(), converged, iter, minIters, maxIters)) break;
     }
 }
 
