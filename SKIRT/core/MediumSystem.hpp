@@ -657,7 +657,9 @@ public:
         material mix for all spatial cells. The function returns true if the medium states for all
         medium components have converged, and false otherwise.
 
-        This function assumes that the radiation field has been calculated. */
+        This function assumes that the radiation field has been calculated and that at least one
+        medium component in the simulation is configured with a material mix requiring/supporting a
+        semi-dynamic medium state. */
     bool updateSemiDynamicMediumState();
 
     //======================== Data Members ========================

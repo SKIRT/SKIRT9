@@ -1176,6 +1176,12 @@ bool MediumSystem::updateDynamicMediumState()
     int numUpdated, numNotConverged;
     std::tie(numUpdated, numNotConverged) = _state.synchronize(flags);
 
+    // log statistics
+    log->info("  Updated cells: " + std::to_string(numUpdated) + " out of " + std::to_string(_numCells) + " ("
+              + StringUtils::toString(100. * numUpdated / _numCells, 'f', 2) + " %)");
+    log->info("  Not converged: " + std::to_string(numNotConverged) + " out of " + std::to_string(_numCells) + " ("
+              + StringUtils::toString(100. * numNotConverged / _numCells, 'f', 2) + " %)");
+
     // tell all recipes to end the update cycle and collect convergence info
     bool converged = true;
     for (auto recipe : recipes) converged &= recipe->endUpdate(_numCells, numUpdated, numNotConverged);
