@@ -120,6 +120,13 @@ UpdateStatus CarbonMonoxideGasMix::updateSpecificState(MaterialState* state, con
 
 ////////////////////////////////////////////////////////////////////
 
+bool CarbonMonoxideGasMix::isSpecificStateConverged(int numCells, int /*numUpdated*/, int numNotConverged) const
+{
+    return static_cast<double>(numNotConverged) / static_cast<double>(numCells) <= maxFractionNotConverged();
+}
+
+////////////////////////////////////////////////////////////////////
+
 double CarbonMonoxideGasMix::mass() const
 {
     return Constants::Mproton();  // ... should be CO molecule mass
