@@ -69,8 +69,14 @@ void SecondarySourceSystem::setupSelfBefore()
 
 void SecondarySourceSystem::installLaunchCallBack(ProbePhotonPacketInterface* callback)
 {
-    if (_callback) throw FATALERROR("Cannot install more than one photon packet launch probe");
-    _callback = callback;
+    _callbackv.push_back(callback);
+}
+
+////////////////////////////////////////////////////////////////////
+
+int SecondarySourceSystem::numSources() const
+{
+    return _sources.size();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -131,8 +137,8 @@ void SecondarySourceSystem::launch(PhotonPacket* pp, size_t historyIndex) const
     // add origin info (the index reflects the secondary source, not the medium component)
     pp->setSecondaryOrigin(s);
 
-    // invoke launch call-back if installed
-    if (_callback) _callback->probePhotonPacket(pp);
+    // invoke any installed launch call-backs
+    for (auto callback : _callbackv) callback->probePhotonPacket(pp);
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -140,7 +140,7 @@ private:
     double _L{0};  // the total bolometric luminosity of all sources (absolute number)
     Array _Lv;     // the relative bolometric luminosity of each source (normalized to unity)
     Array _Wv;     // the relative launch weight for each source (normalized to unity)
-    ProbePhotonPacketInterface* _callback{nullptr};  // interface to be invoked for each packet launch if nonzero
+    vector<ProbePhotonPacketInterface*> _callbackv;  // interfaces to be invoked for each packet launch
 
     // intialized by prepareForLaunch()
     double _Lpp{0};      // the average luminosity contribution for each packet
