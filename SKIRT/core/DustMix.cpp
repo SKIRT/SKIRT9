@@ -29,6 +29,19 @@ namespace
     constexpr double deltaPhi = 2 * M_PI / (maxPhi - 1);
 }
 
+// hard-coded parameters configuring extreme forward/backward Henyey-Greenstein scattering
+namespace
+{
+    // calculating the value of and sampling from the HG phase function is numerically unstable for abs(g) > gmax
+    constexpr double gmax = 0.999999;
+
+    // peel-off bias factors are averaged for abs(g) > glarge
+    constexpr double glarge = 0.95;
+
+    // half-opening angle over which to average the HG phase function for abs(g) > glarge
+    constexpr double delta = 4. * M_PI / 180.;  // 4 degrees
+}
+
 ////////////////////////////////////////////////////////////////////
 
 void DustMix::setupSelfAfter()
@@ -122,16 +135,12 @@ void DustMix::setupSelfAfter()
                                _sigmaabsvv, _sigmaabspolvv);
 
     // ensure that values for the asymmetry parameter g are not too close to 1 or -1
-    // - the HG phase function expression becomes numerically unstable for abs(g) > 1-1e-7
-    // - more annoyingly, HG phase function values (and hence the bias factors for peel-off photon packets)
-    //   become exceedingly large or small for abs(g) > 0.95, causing unacceptable artificial "noise"
-    const double maxg = 0.95;
     int lastAdjustedEll = -1;  // index of longest wavelength for which adjustment has been made
     for (int ell = 0; ell != numLambda; ++ell)
     {
-        if (abs(_asymmparv[ell]) > maxg)
+        if (abs(_asymmparv[ell]) > gmax)
         {
-            _asymmparv[ell] = std::copysign(maxg, _asymmparv[ell]);
+            _asymmparv[ell] = std::copysign(gmax, _asymmparv[ell]);
             lastAdjustedEll = ell;
         }
     }
@@ -140,7 +149,7 @@ void DustMix::setupSelfAfter()
         auto units = find<Units>();
         auto log = find<Log>();
         log->warning(type() + " extreme forward/backward scattering asymmetry parameter values reduced to "
-                     + StringUtils::toString(maxg));
+                     + StringUtils::toString(gmax));
         log->warning("  For some or all wavelengths short of "
                      + StringUtils::toString(units->owavelength(lambdav[lastAdjustedEll]), 'g', 3) + " "
                      + units->uwavelength());
@@ -379,6 +388,45 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
+namespace
+{
+    // returns the value of the Henyey-Greenstein phase function;
+    // numerically stable for abs(g) <= 1-1e-6
+    double valueHG(double g, double costheta)
+    {
+        double t = 1. + g * g - 2. * g * costheta;
+        return (1. - g) * (1. + g) / sqrt(t * t * t);
+    }
+
+    // returns the value of the definite integral of the Henyey-Greenstein phase function over the interval
+    // between two angles 0 <= alpha < beta <= pi specified as cosines -1 <= cosbeta < cosalpha <= 1;
+    // numerically stable for values of 0 << abs(g) <= 1-1e-6
+    double integralHG(double g, double cosalpha, double cosbeta)
+    {
+        double ta = sqrt(1. + g * g - 2. * g * cosalpha);
+        double tb = sqrt(1. + g * g - 2. * g * cosbeta);
+        double f1 = (1. - g) * (1. + g) / g;
+        double f2 = (tb - ta) / (tb * ta);
+        return f1 * f2;
+    }
+
+    // returns the Henyey-Greenstein phase function value averaged over a hard-coded half-opening angle;
+    // numerically stable for values of 0 << abs(g) <= 1-1e-6
+    double meanHG(double g, double costheta)
+    {
+        double theta = acos(costheta);
+        double cosalpha = cos(theta - delta);
+        double cosbeta = cos(theta + delta);
+        if (theta < delta)
+            return (integralHG(g, 1., cosalpha) + integralHG(g, 1., cosbeta)) / (2. - cosalpha - cosbeta);
+        if (theta > M_PI - delta)
+            return (integralHG(g, cosalpha, -1.) + integralHG(g, cosbeta, -1.)) / (2. + cosalpha + cosbeta);
+        return integralHG(g, cosalpha, cosbeta) / (cosalpha - cosbeta);
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
 void DustMix::peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs,
                                 Direction bfky, const MaterialState* /*state*/, const PhotonPacket* pp) const
 {
@@ -389,8 +437,7 @@ void DustMix::peeloffScattering(double& I, double& Q, double& U, double& V, doub
             // calculate the value of the Henyey-Greenstein phase function
             double costheta = Vec::dot(pp->direction(), bfkobs);
             double g = asymmpar(lambda);
-            double t = 1.0 + g * g - 2 * g * costheta;
-            double value = (1.0 - g) * (1.0 + g) / sqrt(t * t * t);
+            double value = abs(g) > glarge ? meanHG(g, costheta) : valueHG(g, costheta);
 
             // accumulate the weighted sum in the intensity (no support for polarization in this case)
             I += value;
