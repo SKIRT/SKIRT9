@@ -12,6 +12,7 @@ class Direction;
 class Form;
 class Position;
 class Probe;
+class SpatialGrid;
 class TextOutFile;
 
 //////////////////////////////////////////////////////////////////////
@@ -174,7 +175,7 @@ public:
     //======== Querying: for use by all form types  =======
 
     /** This function returns the probe associated with this bridge upon construction. */
-    Probe* probe() const;
+    const Probe* probe() const;
 
     /** This function returns the number of values in the quantity being probed, as set by the most
         recent call to setQuantity(). */
@@ -200,6 +201,9 @@ public:
         specified text output file. It does so by invoking the \em addColumnHeaders callback set by
         the most recent call to setQuantity(). */
     void addColumnHeaders(TextOutFile* outfile) const;
+
+    /** This function returns the file identifier set by the most recent call to writeFile(). */
+    string fileid() const;
 
     //======== Querying: for use by spatial grid-specific forms  =======
 
@@ -251,6 +255,7 @@ private:
     // set by constructor
     const Probe* _probe{nullptr};
     const Form* _form{nullptr};
+    const SpatialGrid* _grid{nullptr};
 
     // set by setQuantity()
     int _numValues{0};
@@ -259,6 +264,13 @@ private:
     string _description;
     string _projectedDescription;
     AddColumnHeaders _addColumnHeaders;
+
+    // set by writeFile()
+    string _fileid;
+    ValuesInCell _valuesInCell;
+    WeightInCell _weightInCell;
+    ValuesAtPosition _valuesAtPosition;
+    ValuesAlongPath _valuesAlongPath;
 };
 
 //////////////////////////////////////////////////////////////////////
