@@ -5,12 +5,10 @@
 
 #include "ProbeFormBridge.hpp"
 #include "Configuration.hpp"
-#include "Direction.hpp"
 #include "FatalError.hpp"
 #include "Form.hpp"
 #include "MediumSystem.hpp"
 #include "PathSegmentGenerator.hpp"
-#include "Position.hpp"
 #include "Probe.hpp"
 #include "SpatialGrid.hpp"
 #include "SpatialGridPath.hpp"
@@ -29,14 +27,14 @@ ProbeFormBridge::ProbeFormBridge(const Probe* probe, const Form* form)
 ////////////////////////////////////////////////////////////////////
 
 void ProbeFormBridge::setQuantity(int numValues, string quantity, string projectedQuantity, string description,
-                                  string projectedDescription, AddColumnHeaders addColumnHeaders)
+                                  string projectedDescription, AddColumnDefinitions addColumnDefinitions)
 {
     _numValues = numValues;
     _quantity = quantity;
     _projectedQuantity = projectedQuantity;
     _description = description;
     _projectedDescription = projectedDescription;
-    _addColumnHeaders = addColumnHeaders;
+    _addColumnDefinitions = addColumnDefinitions;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -67,9 +65,14 @@ void ProbeFormBridge::writeFile(string fileid, ValuesAtPosition valuesAtPosition
 
 ////////////////////////////////////////////////////////////////////
 
-const Probe* ProbeFormBridge::probe() const
+const SimulationItem* ProbeFormBridge::probe() const
 {
     return _probe;
+}
+
+const SpatialGrid* ProbeFormBridge::grid() const
+{
+    return _grid;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -109,17 +112,19 @@ string ProbeFormBridge::projectedDescription() const
 
 ////////////////////////////////////////////////////////////////////
 
-void ProbeFormBridge::addColumnHeaders(TextOutFile* outfile) const
+void ProbeFormBridge::addColumnDefinitions(TextOutFile& outfile) const
 {
-    if (!_addColumnHeaders) throw FATALERROR("Callback function addColumnHeaders has not been set");
-    _addColumnHeaders(outfile);
+    if (!_addColumnDefinitions) throw FATALERROR("Callback function addColumnDefinitions has not been set");
+    _addColumnDefinitions(outfile);
 }
 
 ////////////////////////////////////////////////////////////////////
 
-string ProbeFormBridge::fileid() const
+string ProbeFormBridge::prefix() const
 {
-    return _fileid;
+    string result = _probe->itemName();
+    if (!_fileid.empty()) result += "_" + _fileid;
+    return result;
 }
 
 ////////////////////////////////////////////////////////////////////

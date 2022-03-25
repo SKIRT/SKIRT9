@@ -13,7 +13,7 @@ class ProbeFormBridge;
 
 /** Form is the abstract base class for simulation item classes that describe how a given quantity
     should be probed. Refer to the ProbeFormBridge class for more information. */
-class Form : SimulationItem
+class Form : public SimulationItem
 {
     ITEM_ABSTRACT(Form, SimulationItem, "a probe form")
     ITEM_END()
