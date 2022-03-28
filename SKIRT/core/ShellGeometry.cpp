@@ -20,6 +20,8 @@ void ShellGeometry::setupSelfBefore()
     // calculate cached values
     _smin = SpecialFunctions::gln(_p - 2.0, _rmin);
     _sdiff = SpecialFunctions::gln2(_p - 2.0, _rmax, _rmin);
+    _tmin = pow(_rmin, 3.0 - _p);
+    _tmax = pow(_rmax, 3.0 - _p);
     _A = 0.25 / M_PI / _sdiff;
 }
 
@@ -38,8 +40,16 @@ double ShellGeometry::density(double r) const
 double ShellGeometry::randomRadius() const
 {
     double X = random()->uniform();
-    double s = _smin + X * _sdiff;
-    return SpecialFunctions::gexp(_p - 2.0, s);
+    if (fabs(_p - 3.0) < 1e-2)
+    {
+        double s = _smin + X * _sdiff;
+        return SpecialFunctions::gexp(_p - 2.0, s);
+    }
+    else
+    {
+        double z = (1.0 - X) * _tmin + X * _tmax;
+        return pow(z, 1.0 / (3.0 - _p));
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

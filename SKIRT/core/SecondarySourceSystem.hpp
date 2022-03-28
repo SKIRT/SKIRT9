@@ -199,6 +199,9 @@ public:
     //======================== Other Functions =======================
 
 public:
+    /** This function returns the number of secondary sources in the secondary source system. */
+    int numSources() const;
+
     /** This function prepares the mapping of history indices to sources and tells all sources to
         prepare their individual mapping of history indices to spatial cells. The function returns
         false if the total bolometric luminosity of the secondary sources is zero (which means no
@@ -219,7 +222,7 @@ private:
     double _xi;                         // the configured secondary source bias
 
     // initialized by installLaunchCallBack()
-    ProbePhotonPacketInterface* _callback{nullptr};  // interface to be invoked for each packet launch if nonzero
+    vector<ProbePhotonPacketInterface*> _callbackv;  // interfaces to be invoked for each packet launch
 
     // initialized by prepareForLaunch()
     double _L{0};        // the total bolometric luminosity of all sources (absolute number)

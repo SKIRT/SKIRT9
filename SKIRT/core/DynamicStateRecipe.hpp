@@ -28,7 +28,7 @@ class MaterialState;
     At the end of each iteration step, the functions for each configured recipe are called in the
     following order: the beginUpdate() function; the update() function for each spatial cell and
     for each medium component in the simulation; and finally the endUpdate() function. The latter
-    function also returns a Boolean that indicates whether the iteration can be considered to have
+    function returns a Boolean that indicates whether the iteration can be considered to have
     converged for this recipe.
 
     A recipe is allowed to discover information about the configuration of the simulation, for
@@ -100,19 +100,18 @@ public:
     virtual UpdateStatus update(MaterialState* state, const Array& Jv) = 0;
 
     /** This function is called after updating has completed at the end of each iteration step. It
-        returns true if the recipe has converged and false if not. In addition to determining the
-        binary yes/no convergence result, the function also issues a log message reporting the
-        degree of convergence. To assist with these tasks, the \em numCells, \em numUpdated and \em
-        numNotConverged arguments specify respectively the number of spatial cells in the
-        simulation, the number of cells updated during this update cycle, and the number of updated
-        cells that have not yet converged.
+        returns true if, based on the given spatial cell statistics, the recipe has converged.
+        Otherwise it returns false. The \em numCells, \em numUpdated and \em numNotConverged
+        arguments specify respectively the number of spatial cells in the simulation, the number of
+        cells updated during this update cycle, and the number of updated cells that have not yet
+        converged.
 
-        The default implementation in this base class provides basic logging and returns true if
-        the actual number of not-converged cells exceeds the configured maximum number of
-        not-converged cells, and false otherwise. Subclasses may provide more complex
-        implementations. In case a recipe needs to tracks additional information in the update()
-        function, the tracked data must be aggregated across processes because the update()
-        function can be called from separate parallel processes. */
+        The default implementation in this base class returns true if the actual number of
+        not-converged cells does not exceed the configured maximum number of not-converged cells,
+        and false otherwise. Subclasses may provide more complex implementations. In case a recipe
+        needs to tracks additional information in the update() function, the tracked data must be
+        aggregated across processes because the update() function can be called from separate
+        parallel processes. */
     virtual bool endUpdate(int numCells, int numUpdated, int numNotConverged);
 };
 

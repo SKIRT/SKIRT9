@@ -119,8 +119,8 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-void DipolePhaseFunction::peeloffScattering(double& I, double& Q, double& U, double& V, double w, Direction bfk,
-                                            Direction bfkobs, Direction bfky, const StokesVector* sv) const
+void DipolePhaseFunction::peeloffScattering(double& I, double& Q, double& U, double& V, Direction bfk, Direction bfkobs,
+                                            Direction bfky, const StokesVector* sv) const
 {
     if (!_includePolarization)
     {
@@ -129,7 +129,7 @@ void DipolePhaseFunction::peeloffScattering(double& I, double& Q, double& U, dou
         double value = phaseFunctionValueForCosine(costheta);
 
         // accumulate the weighted sum in the intensity
-        I += w * value;
+        I += value;
     }
     else
     {
@@ -152,11 +152,10 @@ void DipolePhaseFunction::peeloffScattering(double& I, double& Q, double& U, dou
         svnew.rotateIntoPlane(bfkobs, bfky);
 
         // acumulate the weighted sum of all Stokes components to support polarization
-        w *= value;
-        I += w * svnew.stokesI();
-        Q += w * svnew.stokesQ();
-        U += w * svnew.stokesU();
-        V += w * svnew.stokesV();
+        I += value * svnew.stokesI();
+        Q += value * svnew.stokesQ();
+        U += value * svnew.stokesU();
+        V += value * svnew.stokesV();
     }
 }
 

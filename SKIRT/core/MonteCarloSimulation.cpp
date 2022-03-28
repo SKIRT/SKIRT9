@@ -178,7 +178,7 @@ void MonteCarloSimulation::runSecondaryEmission()
 namespace
 {
     // this helper class checks secondary emission convergence based on the dust-absorbed luminosity
-    class SecondaryEmissionConvergence
+    class DustAbsorptionConvergence
     {
         double _prevLabsseco{0.};  // remembers the absorbed luminosity in the previous iteration
     public:
@@ -286,7 +286,7 @@ void MonteCarloSimulation::runPrimaryEmissionIterations()
     {
         ++iter;
 
-        bool converged = false;
+        bool converged = true;
         {
             string segment = "primary emission iteration " + std::to_string(iter);
             TimeLogger logger(log(), segment);
@@ -332,7 +332,7 @@ void MonteCarloSimulation::runSecondaryEmissionIterations()
     double fractionOfPrevious = _config->maxFractionOfPrevious();
 
     // helper object to verify convergence of secondary emission
-    SecondaryEmissionConvergence emissionConvergence;
+    DustAbsorptionConvergence dustConvergence;
 
     // loop over the secondary emission iterations
     int iter = 0;
@@ -340,6 +340,7 @@ void MonteCarloSimulation::runSecondaryEmissionIterations()
     {
         ++iter;
 
+        bool converged = true;
         {
             string segment = "secondary emission iteration " + std::to_string(iter);
             TimeLogger logger(log(), segment);
@@ -364,13 +365,14 @@ void MonteCarloSimulation::runSecondaryEmissionIterations()
             wait(segment);
             mediumSystem()->communicateRadiationField(false);
 
-            // update semi-dynamic medium state if needed
-            if (_config->hasSemiDynamicState()) mediumSystem()->updateSemiDynamicMediumState();
-        }
+            // if needed, update semi-dynamic medium state and log convergence info
+            if (_config->hasSemiDynamicState()) converged &= mediumSystem()->updateSemiDynamicMediumState();
 
-        // verify and log secondary emission convergence
-        bool converged = emissionConvergence.logConvergenceInfo(log(), units(), mediumSystem(), iter, fractionOfPrimary,
+            // log dust emission convergence info
+            if (mediumSystem()->hasDust())
+                converged &= dustConvergence.logConvergenceInfo(log(), units(), mediumSystem(), iter, fractionOfPrimary,
                                                                 fractionOfPrevious);
+        }
 
         // verify and log loop convergence
         if (logLoopConvergence(log(), converged, iter, minIters, maxIters)) break;
@@ -401,7 +403,7 @@ void MonteCarloSimulation::runMergedEmissionIterations()
     sourceSystem()->prepareForLaunch(Npp1);
 
     // helper object to verify convergence of secondary emission
-    SecondaryEmissionConvergence emissionConvergence;
+    DustAbsorptionConvergence dustConvergence;
 
     // loop over the merged iterations
     int iter = 0;
@@ -409,7 +411,7 @@ void MonteCarloSimulation::runMergedEmissionIterations()
     {
         ++iter;
 
-        bool converged1 = false;
+        bool converged = true;
         {
             string segment = "merged primary and secondary emission iteration " + std::to_string(iter);
             string segment1 = "merged primary emission iteration " + std::to_string(iter);
@@ -428,8 +430,8 @@ void MonteCarloSimulation::runMergedEmissionIterations()
             wait(segment1);
             mediumSystem()->communicateRadiationField(true);
 
-            // update semi-dynamic medium state if needed
-            if (_config->hasSemiDynamicState()) mediumSystem()->updateSemiDynamicMediumState();
+            // if needed, update semi-dynamic medium state and log convergence info
+            if (_config->hasSemiDynamicState()) converged &= mediumSystem()->updateSemiDynamicMediumState();
 
             // clear the secondary radiation field
             mediumSystem()->clearRadiationField(false);
@@ -452,15 +454,16 @@ void MonteCarloSimulation::runMergedEmissionIterations()
             mediumSystem()->communicateRadiationField(false);
 
             // update the medium state based on the newly established radiation field
-            converged1 = mediumSystem()->updateDynamicMediumState();
+            converged &= mediumSystem()->updateDynamicMediumState();
+
+            // log dust emission convergence info
+            if (mediumSystem()->hasDust())
+                converged &= dustConvergence.logConvergenceInfo(log(), units(), mediumSystem(), iter, fractionOfPrimary,
+                                                                fractionOfPrevious);
         }
 
-        // verify and log secondary emission convergence
-        bool converged2 = emissionConvergence.logConvergenceInfo(log(), units(), mediumSystem(), iter,
-                                                                 fractionOfPrimary, fractionOfPrevious);
-
         // verify and log loop convergence
-        if (logLoopConvergence(log(), converged1 & converged2, iter, minIters, maxIters)) break;
+        if (logLoopConvergence(log(), converged, iter, minIters, maxIters)) break;
     }
 }
 
@@ -731,22 +734,49 @@ void MonteCarloSimulation::peelOffScattering(PhotonPacket* pp, PhotonPacket* ppp
     ShortArray wv;
     if (!mediumSystem()->weightsForScattering(wv, lambda, pp)) return;
 
-    // now do the actual peel-off for each instrument
-    for (Instrument* instr : _instrumentSystem->instruments())
+    // now do the actual peel-off
+    if (_config->hasScatteringDispersion())
     {
-        if (!instr->isSameObserverAsPreceding())
+        // if wavelengths may change, send a peel-off photon packet per medium component to each instrument
+        int numMedia = wv.size();
+        for (int h = 0; h != numMedia; ++h)
         {
-            // get the direction towards the instrument and (for polarization only) its Y-axis orientation
-            Direction bfkobs = instr->bfkobs(pp->position());
-            Direction bfky = _config->hasPolarization() ? instr->bfky(pp->position()) : Direction();
+            for (Instrument* instr : _instrumentSystem->instruments())
+            {
+                if (!instr->isSameObserverAsPreceding())
+                {
+                    // get the direction towards the instrument and (for polarization only) its Y-axis orientation
+                    Direction bfkobs = instr->bfkobs(pp->position());
+                    Direction bfky = _config->hasPolarization() ? instr->bfky(pp->position()) : Direction();
 
-            // calculate peel-off for all medium components and launch the peel-off photon packet
-            // (all media must either support polarization or not; combining these support levels is not allowed)
-            mediumSystem()->peelOffScattering(lambda, wv, bfkobs, bfky, pp, ppp);
+                    // calculate peel-off for the current component and launch the peel-off photon packet
+                    mediumSystem()->peelOffScattering(h, wv[h], lambda, bfkobs, bfky, pp, ppp);
+                }
+
+                // have the peel-off photon packet detected
+                instr->detect(ppp);
+            }
         }
+    }
+    else
+    {
+        // if wavelengths cannot change, send a consolidated peel-off photon packet to each instrument
+        for (Instrument* instr : _instrumentSystem->instruments())
+        {
+            if (!instr->isSameObserverAsPreceding())
+            {
+                // get the direction towards the instrument and (for polarization only) its Y-axis orientation
+                Direction bfkobs = instr->bfkobs(pp->position());
+                Direction bfky = _config->hasPolarization() ? instr->bfky(pp->position()) : Direction();
 
-        // have the peel-off photon packet detected
-        instr->detect(ppp);
+                // calculate peel-off for all medium components and launch the peel-off photon packet
+                // (all media must either support polarization or not; combining these support levels is not allowed)
+                mediumSystem()->peelOffScattering(wv, lambda, bfkobs, bfky, pp, ppp);
+            }
+
+            // have the peel-off photon packet detected
+            instr->detect(ppp);
+        }
     }
 }
 

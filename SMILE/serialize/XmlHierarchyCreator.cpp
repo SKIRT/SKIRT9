@@ -139,8 +139,11 @@ namespace
                                        + "' is (are) out of range " + handler->rangeDescription());
             }
             else
-                _reader.throwError("Value '" + value + "' for property '" + handler->name()
-                                   + "' can't be converted to list of doubles");
+            {
+                if (!StringUtils::squeeze(value).empty())
+                    _reader.throwError("Value '" + value + "' for property '" + handler->name()
+                                       + "' can't be converted to list of doubles");
+            }
         }
 
         void visitPropertyHandler(ItemPropertyHandler* handler) override

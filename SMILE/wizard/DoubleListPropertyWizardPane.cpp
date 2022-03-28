@@ -16,6 +16,7 @@ namespace
     // returns true if text is a valid double list, and all numbers are within range
     bool isValidAndInRange(DoubleListPropertyHandler* hdlr, string text)
     {
+        if (text.empty() && !hdlr->isRequired()) return true;
         if (!hdlr->isValidDoubleList(text)) return false;
         return hdlr->isInRange(hdlr->toDoubleList(text));
     }
@@ -24,7 +25,8 @@ namespace
     string headerMessage(DoubleListPropertyHandler* hdlr)
     {
         string message = "Enter " + hdlr->title() + " " + hdlr->rangeDescription();
-        if (hdlr->hasDefaultValue()) message += " (" + hdlr->toString(hdlr->defaultValue()) + ")";
+        if (hdlr->hasDefaultValue() || !hdlr->isRequired())
+            message += " (" + hdlr->toString(hdlr->defaultValue()) + ")";
         message += ":";
         return message;
     }
@@ -32,7 +34,7 @@ namespace
     // sets the default value for this property, if there is one
     void setDefaultValue(DoubleListPropertyHandler* hdlr, QLineEdit* field)
     {
-        if (hdlr->hasDefaultValue())
+        if (hdlr->hasDefaultValue() || !hdlr->isRequired())
         {
             field->setText(QString::fromStdString(hdlr->toString(hdlr->defaultValue())));
             hdlr->setValue(hdlr->defaultValue());
@@ -75,6 +77,7 @@ DoubleListPropertyWizardPane::DoubleListPropertyWizardPane(std::unique_ptr<Prope
 
     // if the property has been configured, put its value in the text field
     // otherwise, if there is a default value, put that in both the text field and the property value
+    // otherwise, if the property is optional, put an empty string in both the text field and the property value
     // otherwise, just empty the text field (an invalid value that will have to be updated by the user)
     if (hdlr->isConfigured())
         _field->setText(QString::fromStdString(hdlr->toString(hdlr->value())));

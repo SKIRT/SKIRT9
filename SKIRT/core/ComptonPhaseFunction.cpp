@@ -12,11 +12,6 @@
 
 namespace
 {
-    // discretization of the phase function over scattering angle: theta from 0 to pi, index t
-    constexpr int numTheta = 361;
-    constexpr int maxTheta = numTheta - 1;
-    constexpr double deltaTheta = M_PI / maxTheta;
-
     // returns the photon energy scaled to the electron rest energy: h nu / m_e c^2
     double scaledEnergy(double lambda) { return (Constants::h() / Constants::Melectron() / Constants::c()) / lambda; }
 
@@ -43,19 +38,6 @@ void ComptonPhaseFunction::initialize(Random* random)
 {
     // cache random number generator
     _random = random;
-
-    // construct a theta grid and precalculate values used in generateCosineFromPhaseFunction()
-    // to accelerate construction of the cumulative phase function distribution
-    _costhetav.resize(numTheta);
-    _sinthetav.resize(numTheta);
-    _sin2thetav.resize(numTheta);
-    for (int t = 0; t != numTheta; ++t)
-    {
-        double theta = t * deltaTheta;
-        _costhetav[t] = cos(theta);
-        _sinthetav[t] = sin(theta);
-        _sin2thetav[t] = _sinthetav[t] * _sinthetav[t];
-    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -80,22 +62,36 @@ double ComptonPhaseFunction::phaseFunctionValueForCosine(double x, double costhe
 
 double ComptonPhaseFunction::generateCosineFromPhaseFunction(double x) const
 {
-    // construct the normalized cumulative phase function distribution for this x
-    Array thetaXv;
-    NR::cdf(thetaXv, maxTheta, [this, x](int t) {
-        t += 1;
-        double C = comptonFactor(x, _costhetav[t]);
-        double phase = C * C * C + C - C * C * _sin2thetav[t];
-        return phase * _sinthetav[t];
-    });
+    // get scaled energy with different definition
+    double e = 2. * x;
 
-    // draw a random cosine from this distribution
-    return _random->cdfLinLin(_costhetav, thetaXv);
+    // draw random number from the distribution of the inverse Compton factor
+    double r;
+    while (true)
+    {
+        double xi1 = _random->uniform();
+        double xi2 = _random->uniform();
+        double xi3 = _random->uniform();
+
+        if (xi1 <= 27. / (2. * e + 29.))
+        {
+            r = (e + 1.) / (e * xi2 + 1.);
+            if (xi3 <= (std::pow((e + 2. - 2. * r) / e, 2) + 1.) / 2.) break;
+        }
+        else
+        {
+            r = e * xi2 + 1;
+            if (xi3 <= 6.75 * (r - 1) * (r - 1) / (r * r * r)) break;
+        }
+    }
+
+    // convert from inverse Compton factor to cosine theta
+    return 1 - (r - 1) / x;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-void ComptonPhaseFunction::peeloffScattering(double& I, double& lambda, double w, Direction bfk, Direction bfkobs) const
+void ComptonPhaseFunction::peeloffScattering(double& I, double& lambda, Direction bfk, Direction bfkobs) const
 {
     double x = scaledEnergy(lambda);
 
@@ -104,7 +100,7 @@ void ComptonPhaseFunction::peeloffScattering(double& I, double& lambda, double w
     double value = phaseFunctionValueForCosine(x, costheta);
 
     // accumulate the weighted sum in the intensity
-    I += w * value;
+    I += value;
 
     // adjust the wavelength
     lambda *= inverseComptonfactor(x, costheta);

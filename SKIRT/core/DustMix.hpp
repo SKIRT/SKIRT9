@@ -45,7 +45,62 @@
     refer to the description of the MultiGrainDustMix class for more information.
 
     The implementation of polarization by scattering in this class is based on the analysis
-    presented by Peest at al. 2017 (A&A, 601, A92). */
+    presented by Peest at al. 2017 (A&A, 601, A92).
+
+    <b>Extreme forward (or backward) Henyey-Greenstein scattering</b>
+
+    In the X-ray wavelength range, dust grains exhibit extreme forward scattering with asymmetry
+    parameter \f$g\f$ values very close to unity. Calculating the value of and sampling from the
+    Henyey-Greenstein (HG) phase function becomes numerically unstable for \f$|g| > 1-10^{-6}\f$.
+    Therefore, the implementation clips any larger \f$|g|\f$ values to that limit.
+
+    More annoyingly, the bias weights for scattering peel-off photon packets can become very large,
+    causing unacceptably high noise levels in the fluxes recorded by instruments. Consider the HG
+    phase function, \f[ \Phi_\mathrm{HG}(\cos\theta) = \frac{1-g^2}{(1+g^2-2g\cos\theta)^{3/2}}.
+    \f] Given the angle \f$\theta\f$ between the direction of the incoming photon packet and a
+    given SKIRT instrument, the bias weight for a peel-off photon packet sent to the instrument is
+    given by \f$w=\Phi_\mathrm{HG}(\cos\theta)\f$. For \f$g>0\f$, the largest bias weights are
+    associated with peel-off photon packets emitted in the original propagation direction
+    (\f$\theta=0\f$). Experiments show that the weigths should be kept under \f$\approx 10^3\f$ to
+    achieve acceptable noise levels with a practical number of photon packets. Incidentally, for
+    \f$g = 0.95\f$ we find \f$w\approx 780\f$, indicating the maximum asymmetry parameter value we
+    could support given this criterion. For \f$g = 1-10^{-6}\f$, we find \f$w\approx 2 \times
+    10^{12}\f$.
+
+    To address this situation, we average the peel-off bias weight for a photon packet sent to an
+    instrument over a portion of the phase function, as opposed to taking the value at a given
+    angle. This introduces a certain amount of blur in recorded fluxes, while simultaneously
+    decreasing the level of noise. The effect is reminiscent of that of an actual instrument's
+    point spread function.
+
+    We introduce the notation \f$\Psi(\alpha,\beta)\f$ for the definite integral of the HG phase
+    function between two angles \f$0 \le \alpha \le \beta \le \pi\f$, and assuming \f$0 < |g| <
+    1\f$, \f[ \Psi(\alpha,\beta) \equiv \int_{\cos\beta}^{\cos\alpha} \Phi_\mathrm{HG}(\cos\theta)
+    \,\mathrm{d}\cos\theta = \frac{(1-g^2)}{g}\,\frac{(t_\beta-t_\alpha)}{t_\beta\,t_\alpha},\f]
+    with \f[ t_x = \sqrt{1+g^2-2g\cos x}, \;\;x=\alpha,\beta. \f]
+
+    We similarly use \f$\ell(\alpha,\beta)\f$ for the length of the interval between the cosines of
+    two angles \f$0 \le \alpha \le \beta \le \pi\f$, \f[ \ell(\alpha,\beta) \equiv
+    \cos\alpha-\cos\beta. \f]
+
+    We further denote the half-opening angle of the instrument's solid angle as \f$\delta\f$, with
+    \f$0 < \delta \ll \pi/2\f$. The averaged peel-off bias weight can then be written as, \f[
+    \left<w\right> = \begin{cases} \displaystyle \frac{\Psi(\theta-\delta,\theta+\delta)}
+    {\ell(\theta-\delta,\theta+\delta)} & \mathrm{for}\; \delta \le \theta \le \pi-\delta, \\[15pt]
+    \displaystyle \frac{\Psi(0,\delta-\theta) + \Psi(0,\delta+\theta)} {\ell(0,\delta-\theta) +
+    \ell(0,\delta+\theta)} & \mathrm{for}\; \theta < \delta, \\[15pt] \displaystyle
+    \frac{\Psi(\theta-\delta,\pi) + \Psi(2\pi-\theta-\delta,\pi)} {\ell(\theta-\delta,\pi) +
+    \ell(2\pi-\theta-\delta,\pi)} & \mathrm{for}\; \theta > \pi-\delta. \end{cases} \f]
+
+    The last two expressions are needed to handle the cases where the averaging interval straddles
+    zero or \f$\pi\f$ because the definitions above are not valid for angles outside that range.
+
+    Investigation of these expressions shows that a half-opening angle of \f$\delta = 4^\circ\f$
+    dampens the maximum averaged bias weight for \em all \f$g\f$ to \f$\left<w\right>\approx
+    820\f$. For \f$g = 0.999\f$, the maximum weight reaches \f$\left<w\right>\approx 810\f$ and
+    remains saturated from there on. In conclusion, the implementation uses the regular bias weight
+    for \f$|g| \le 0.95\f$ and the averaged bias weight for larger values, with \f$\delta =
+    4^\circ\f$. As a result, recorded fluxes will be blurred accordingly. */
 class DustMix : public MaterialMix
 {
     ITEM_ABSTRACT(DustMix, MaterialMix, "a dust mix")
@@ -220,11 +275,9 @@ public:
         from the reference direction in the previous scattering plane into the peel-off scattering
         plane, applies the Mueller matrix on the Stokes vector, and further rotates the Stokes
         vector from the reference direction in the peel-off scattering plane to the x-axis of the
-        instrument to which the peel-off photon packet is headed. If there are multiple medium
-        components, the relative opacity weighting factor applies not just to the luminosity but
-        also to the other components of the Stokes vector. */
-    void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w, Direction bfkobs,
-                           Direction bfky, const MaterialState* state, const PhotonPacket* pp) const override;
+        instrument to which the peel-off photon packet is headed. */
+    void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs, Direction bfky,
+                           const MaterialState* state, const PhotonPacket* pp) const override;
 
     /** This function performs a scattering event on the specified photon packet in the spatial
         cell and medium component represented by the specified material state and the receiving

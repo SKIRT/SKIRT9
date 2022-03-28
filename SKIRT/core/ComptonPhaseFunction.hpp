@@ -40,7 +40,20 @@ class Random;
     where \f$\theta\f$ is the scattering angle and \f$C(x, \theta)\f$ is the Compton factor defined
     earlier.
 
-    */
+    <b>Sampling from the phase function</b>
+
+    To draw a random scattering angle from the phase function, we use the algorithm described by
+    Hua et al. 1997 (Computers in Physics 11, 660), which is a variation of the technique first
+    suggested by Pei 1979 and often referred to as Khan's technique. A combination of composition
+    and rejection methods, the algorithm avoids expensive operations and has a rejection rate of
+    about 1/3 depending on the energy.
+
+    Using our notation for the scaled energy \f$x\f$ of the incoming photon (see above), Hua et al.
+    1997 define the doubled scaled incoming photon energy \f$\epsilon=2 x\f$ and the inverse
+    Compton factor \f$r = 1 + x (1-\cos\theta)\f$. The sampling algorithm draws a random number for
+    \f$r\f$, i.e. from the probability distribution for the inverse Compton factor at a given
+    energy. The scattering angle can then easily be obtained from the definition of the inverse
+    Compton factor. */
 class ComptonPhaseFunction
 {
     //============= Construction - Setup - Destruction =============
@@ -75,10 +88,9 @@ public:
         photon luminosity for the given geometry and wavelength, and determines the adjusted
         wavelength of the outgoing photon packet. The luminosity contribution is added to the
         incoming value of the \em I argument, and the adjusted wavelength is stored in the \em
-        lambda argument. The \em w argument specifies the relative opacity weighting factor for
-        this medium component. See the description of the MaterialMix::peeloffScattering() function
+        lambda argument. See the description of the MaterialMix::peeloffScattering() function
         for more information. */
-    void peeloffScattering(double& I, double& lambda, double w, Direction bfk, Direction bfkobs) const;
+    void peeloffScattering(double& I, double& lambda, Direction bfk, Direction bfkobs) const;
 
     /** Given the incoming photon packet wavelength and direction this function calculates a
         randomly sampled new propagation direction for a Compton scattering event, and determines
@@ -91,11 +103,6 @@ public:
 private:
     // the simulation's random number generator - initialized by initialize()
     Random* _random{nullptr};
-
-    // precalculated discretizations - initialized by initialize()
-    Array _costhetav;
-    Array _sinthetav;
-    Array _sin2thetav;
 };
 
 ////////////////////////////////////////////////////////////////////

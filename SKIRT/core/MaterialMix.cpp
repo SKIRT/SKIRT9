@@ -110,9 +110,16 @@ double MaterialMix::asymmpar(double /*lambda*/) const
 
 ////////////////////////////////////////////////////////////////////
 
-bool MaterialMix::updateSpecificState(MaterialState* /*state*/, const Array& /*Jv*/) const
+UpdateStatus MaterialMix::updateSpecificState(MaterialState* /*state*/, const Array& /*Jv*/) const
 {
     throw FATALERROR("This function implementation should never be called");
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool MaterialMix::isSpecificStateConverged(int /*numCells*/, int /*numUpdated*/, int /*numNotConverged*/) const
+{
+    return true;
 }
 
 ////////////////////////////////////////////////////////////////////

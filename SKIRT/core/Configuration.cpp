@@ -291,7 +291,7 @@ void Configuration::setupSelfBefore()
 
     // check for scattering dispersion
     for (auto medium : ms->media())
-        if (medium->mix()->hasScatteringDispersion()) _hasDispersion = true;
+        if (medium->mix()->hasScatteringDispersion()) _hasScatteringDispersion = true;
 
     // check for magnetic fields
     for (int h = 0; h != numMedia; ++h)
@@ -415,7 +415,7 @@ void Configuration::setupSelfAfter()
     }
 
     // disable path length stretching if the wavelength of a photon packet can change during its lifetime
-    if ((_hasMovingMedia || _hasDispersion || _hubbleExpansionRate || _hasLymanAlpha) && _forceScattering
+    if ((_hasMovingMedia || _hasScatteringDispersion || _hubbleExpansionRate || _hasLymanAlpha) && _forceScattering
         && _pathLengthBias > 0.)
     {
         log->warning("  Disabling path length stretching to allow Doppler shifts to be properly sampled");

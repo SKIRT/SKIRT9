@@ -45,13 +45,6 @@ void SpinFlipHydrogenGasMix::setupSelfBefore()
 
 ////////////////////////////////////////////////////////////////////
 
-MaterialMix::MaterialType SpinFlipHydrogenGasMix::materialType() const
-{
-    return MaterialType::Gas;
-}
-
-////////////////////////////////////////////////////////////////////
-
 bool SpinFlipHydrogenGasMix::hasExtraSpecificState() const
 {
     return true;
@@ -107,40 +100,43 @@ void SpinFlipHydrogenGasMix::initializeSpecificState(MaterialState* state, doubl
 
 ////////////////////////////////////////////////////////////////////
 
-bool SpinFlipHydrogenGasMix::updateSpecificState(MaterialState* state, const Array& Jv) const
+UpdateStatus SpinFlipHydrogenGasMix::updateSpecificState(MaterialState* state, const Array& Jv) const
 {
     if (_indexUV < 0) throw FATALERROR("State update should not be called if there is no radiation field");
+    UpdateStatus status;
 
     // if the cell has no hydrogen or the neutral fraction is zero, then leave the atomic fraction at zero
     double nH = state->numberDensity();
     double fHIpH2 = state->custom(NEUTRAL_FRACTION);
-    if (nH <= 0. || fHIpH2 <= 0.) return false;
+    if (nH > 0. && fHIpH2 > 0.)
+    {
+        // get the radiation field
+        // scaled to the reference Milky Way radiation field at 1000 Angstrom
+        // converted from 1e6 photons/cm2/s/sr/eV to internal units W/m2/m/sr
+        constexpr double h = Constants::h();
+        constexpr double c = Constants::c();
+        constexpr double Qel = Constants::Qelectron();
+        constexpr double JMW = 1e6 * 1e4 * (h * c * h * c / (lambdaUV * lambdaUV * lambdaUV)) / Qel;
+        double U = Jv[_indexUV] / JMW;
 
-    // get the radiation field
-    // scaled to the reference Milky Way radiation field at 1000 Angstrom
-    // converted from 1e6 photons/cm2/s/sr/eV to internal units W/m2/m/sr
-    constexpr double h = Constants::h();
-    constexpr double c = Constants::c();
-    constexpr double Qel = Constants::Qelectron();
-    constexpr double JMW = 1e6 * 1e4 * (h * c * h * c / (lambdaUV * lambdaUV * lambdaUV)) / Qel;
-    double U = Jv[_indexUV] / JMW;
+        // get the metallicity scaled to the solar reference value
+        double D = state->metallicity() / 0.0127;
 
-    // get the metallicity scaled to the solar reference value
-    double D = state->metallicity() / 0.0127;
+        // perform the partitioning scheme
+        double Dstar = 1.5e-3 * log(1. + pow(3 * U, 1.7));
+        double nstar = 25e6;
+        double alpha = 2.5 * U / (1. + 0.25 * U * U);
+        double s = 0.04 / (Dstar + D);
+        double g = (1. + alpha * s + s * s) / (1. + s);
+        double Lambda = log(1. + g * pow(D, 3. / 7.) * pow(U / 15., 4. / 7.));
+        double x = pow(Lambda, 3. / 7.) * log(D / Lambda * nH / nstar);
+        double fH2 = 1. / (1. + exp(-4. * x - 3. * x * x * x));
 
-    // perform the partitioning scheme
-    double Dstar = 1.5e-3 * log(1. + pow(3 * U, 1.7));
-    double nstar = 25e6;
-    double alpha = 2.5 * U / (1. + 0.25 * U * U);
-    double s = 0.04 / (Dstar + D);
-    double g = (1. + alpha * s + s * s) / (1. + s);
-    double Lambda = log(1. + g * pow(D, 3. / 7.) * pow(U / 15., 4. / 7.));
-    double x = pow(Lambda, 3. / 7.) * log(D / Lambda * nH / nstar);
-    double fH2 = 1. / (1. + exp(-4. * x - 3. * x * x * x));
-
-    // set the atomic fraction
-    state->setCustom(ATOMIC_FRACTION, max(0., fHIpH2 - fH2));
-    return true;
+        // set the atomic fraction
+        state->setCustom(ATOMIC_FRACTION, max(0., fHIpH2 - fH2));
+        status.updateConverged();
+    }
+    return status;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -219,9 +215,8 @@ double SpinFlipHydrogenGasMix::opacityExt(double lambda, const MaterialState* st
 ////////////////////////////////////////////////////////////////////
 
 void SpinFlipHydrogenGasMix::peeloffScattering(double& /*I*/, double& /*Q*/, double& /*U*/, double& /*V*/,
-                                               double& /*lambda*/, double /*w*/, Direction /*bfkobs*/,
-                                               Direction /*bfky*/, const MaterialState* /*state*/,
-                                               const PhotonPacket* /*pp*/) const
+                                               double& /*lambda*/, Direction /*bfkobs*/, Direction /*bfky*/,
+                                               const MaterialState* /*state*/, const PhotonPacket* /*pp*/) const
 {}
 
 ////////////////////////////////////////////////////////////////////

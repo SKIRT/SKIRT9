@@ -44,8 +44,7 @@ void SourceSystem::setupSelfAfter()
 
 void SourceSystem::installLaunchCallBack(ProbePhotonPacketInterface* callback)
 {
-    if (_callback) throw FATALERROR("Cannot install more than one photon packet launch probe");
-    _callback = callback;
+    _callbackv.push_back(callback);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -109,8 +108,8 @@ void SourceSystem::launch(PhotonPacket* pp, size_t historyIndex) const
     // add additional info
     pp->setPrimaryOrigin(h);
 
-    // invoke launch call-back if installed
-    if (_callback) _callback->probePhotonPacket(pp);
+    // invoke any installed launch call-backs
+    for (auto callback : _callbackv) callback->probePhotonPacket(pp);
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -337,17 +337,32 @@ public:
         scatter in this cell). */
     bool weightsForScattering(ShortArray& wv, double lambda, const PhotonPacket* pp) const;
 
-    /** This function calculates the peel-off photon luminosity, polarization state, and wavelength
-        shift for the given wavelength, geometry, and incoming photon packet. The specified
-        placeholder peel-off photon packet is then launched using this information so that it is
-        ready for detection by instruments.
+    /** This function calculates the consolidated peel-off photon luminosity and polarization state
+        for all medium components with the specified opacity weights and for the given perceived
+        wavelength, geometry, and incoming photon packet. The specified placeholder peel-off photon
+        packet is then launched using this information so that it is ready for detection by
+        instruments. If there are multiple medium components, the contributions to the luminosity
+        (and if polarization is enabled, to the other components of the Stokes vector) are weighted
+        by the specified relative opacities of the various medium components.
 
-        If there are multiple medium components, the contributions to the luminosity (and if
-        polarization is enabled, to the other components of the Stokes vector) are weighted by the
-        relative opacities of the various medium components. If more than one component changes the
-        wavelength, only the wavelength shift returned by the last one is preserved (for lack of a
-        better strategy). */
-    void peelOffScattering(double lambda, const ShortArray& wv, Direction bfkobs, Direction bfky, PhotonPacket* pp,
+        This function should be called only when scattering events cannot change the wavelength,
+        i.e. the hasScatteringDispersion() function returns false for all material mixes in the
+        simulation. In this case, a single consolidated peel-off photon packet can be sent to each
+        intrument. */
+    void peelOffScattering(const ShortArray& wv, double lambda, Direction bfkobs, Direction bfky, PhotonPacket* pp,
+                           PhotonPacket* ppp) const;
+
+    /** This function calculates the peel-off photon luminosity, polarization state, and wavelength
+        for the specified medium component with the specified opacity weight and for the given
+        perceived wavelength, geometry, and incoming photon packet. The specified placeholder
+        peel-off photon packet is then launched using this information so that it is ready for
+        detection by instruments.
+
+        This function should be used when scattering events may change the wavelength, i.e. the
+        hasScatteringDispersion() function returns true for one or more material mixes in the
+        simulation. In this case, a seperate peel-off photon packet for each medium component must
+        be sent to each intrument. */
+    void peelOffScattering(int h, double w, double lambda, Direction bfkobs, Direction bfky, PhotonPacket* pp,
                            PhotonPacket* ppp) const;
 
     /** This function simulates a random walk scattering event of a photon packet. Most of the
@@ -635,11 +650,17 @@ public:
         dynamic medium state recipe has been configured for the simulation. */
     bool updateDynamicMediumState();
 
-    /** This function updates the semi-dynamic medium state for all media that require/support such
-        an update based on the currently established radiation field by invoking the corresponding
-        material mix function for all spatial cells. The function assumes that the radiation field
-        has been calculated. */
-    void updateSemiDynamicMediumState();
+    /** This function updates the semi-dynamic medium state for all relevant medium components
+        based on the currently established radiation field. A medium component is relevant in the
+        context of this function if the hasSemiDynamicMediumState() function of its material mix
+        returns true. The update is performed by invoking the updateSpecificState() function of the
+        material mix for all spatial cells. The function returns true if the medium states for all
+        medium components have converged, and false otherwise.
+
+        This function assumes that the radiation field has been calculated and that at least one
+        medium component in the simulation is configured with a material mix requiring/supporting a
+        semi-dynamic medium state. */
+    bool updateSemiDynamicMediumState();
 
     //======================== Data Members ========================
 
@@ -657,6 +678,7 @@ private:
     vector<int> _dust_hv;  // a list of indices for media components containing dust
     vector<int> _gas_hv;   // a list of indices for media components containing gas
     vector<int> _elec_hv;  // a list of indices for media components containing electrons
+    vector<int> _sdms_hv;  // a list of indices for media components with a semi-dynamic medium state
 
     // relevant for any simulation mode that stores the radiation field
     WavelengthGrid* _wavelengthGrid{0};  // index ell

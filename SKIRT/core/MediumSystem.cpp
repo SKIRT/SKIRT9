@@ -266,6 +266,7 @@ void MediumSystem::setupSelfAfter()
             case MaterialMix::MaterialType::Gas: _gas_hv.push_back(h); break;
             case MaterialMix::MaterialType::Electrons: _elec_hv.push_back(h); break;
         }
+        if (mix(0, h)->hasSemiDynamicMediumState()) _sdms_hv.push_back(h);
     }
 
     // ----- inform user about allocated memory -----
@@ -614,30 +615,48 @@ bool MediumSystem::weightsForScattering(ShortArray& wv, double lambda, const Pho
 
 ////////////////////////////////////////////////////////////////////
 
-void MediumSystem::peelOffScattering(double lambda, const ShortArray& wv, Direction bfkobs, Direction bfky,
+void MediumSystem::peelOffScattering(const ShortArray& wv, double lambda, Direction bfkobs, Direction bfky,
                                      PhotonPacket* pp, PhotonPacket* ppp) const
 {
     // get the cell hosting the scattering event
     int m = pp->interactionCellIndex();
 
-    // the outgoing wavelength (in the bulk velocity frame)
-    double emissionLambda = lambda;
-
-    // calculate the weighted sum of the effects on the Stokes vector and on the wavelength for all media
+    // calculate the weighted sum of the effects on the Stokes vector for all media
+    // we assume the wavelength does not change
     double I = 0., Q = 0., U = 0., V = 0.;
     for (int h = 0; h != _numMedia; ++h)
     {
-        double localLambda = lambda;
+        double Ih = 0., Qh = 0., Uh = 0., Vh = 0.;
         MaterialState mst(_state, m, h);
-        mix(m, h)->peeloffScattering(I, Q, U, V, localLambda, wv[h], bfkobs, bfky, &mst, pp);
-
-        // if this material mix changed the wavelength, it is copied as the outgoing wavelength
-        // if more than one material mix changes the wavelength, only the last one is preserved
-        if (localLambda != lambda) emissionLambda = localLambda;
+        pp->setScatteringComponent(h);
+        mix(m, h)->peeloffScattering(Ih, Qh, Uh, Vh, lambda, bfkobs, bfky, &mst, pp);
+        I += Ih * wv[h];
+        Q += Qh * wv[h];
+        U += Uh * wv[h];
+        V += Vh * wv[h];
     }
 
     // pass the result to the peel-off photon packet
-    ppp->launchScatteringPeelOff(pp, bfkobs, _state.bulkVelocity(m), emissionLambda, I);
+    ppp->launchScatteringPeelOff(pp, bfkobs, _state.bulkVelocity(m), lambda, I);
+    if (_config->hasPolarization()) ppp->setPolarized(I, Q, U, V, pp->normal());
+}
+
+////////////////////////////////////////////////////////////////////
+
+void MediumSystem::peelOffScattering(int h, double w, double lambda, Direction bfkobs, Direction bfky, PhotonPacket* pp,
+                                     PhotonPacket* ppp) const
+{
+    // get the cell hosting the scattering event
+    int m = pp->interactionCellIndex();
+
+    // calculate the effects on the Stokes vector and on the wavelength for this medium component
+    double I = 0., Q = 0., U = 0., V = 0.;
+    MaterialState mst(_state, m, h);
+    pp->setScatteringComponent(h);
+    mix(m, h)->peeloffScattering(I, Q, U, V, lambda, bfkobs, bfky, &mst, pp);
+
+    // pass the result to the peel-off photon packet
+    ppp->launchScatteringPeelOff(pp, bfkobs, _state.bulkVelocity(m), lambda, I * w);
     if (_config->hasPolarization()) ppp->setPolarized(I, Q, U, V, pp->normal());
 }
 
@@ -668,6 +687,7 @@ void MediumSystem::simulateScattering(Random* random, PhotonPacket* pp) const
 
     // actually perform the scattering event for this cell and medium component
     MaterialState mst(_state, m, h);
+    pp->setScatteringComponent(h);
     mix(m, h)->performScattering(lambda, &mst, pp);
 }
 
@@ -1156,6 +1176,12 @@ bool MediumSystem::updateDynamicMediumState()
     int numUpdated, numNotConverged;
     std::tie(numUpdated, numNotConverged) = _state.synchronize(flags);
 
+    // log statistics
+    log->info("  Updated cells: " + std::to_string(numUpdated) + " out of " + std::to_string(_numCells) + " ("
+              + StringUtils::toString(100. * numUpdated / _numCells, 'f', 2) + " %)");
+    log->info("  Not converged: " + std::to_string(numNotConverged) + " out of " + std::to_string(_numCells) + " ("
+              + StringUtils::toString(100. * numNotConverged / _numCells, 'f', 2) + " %)");
+
     // tell all recipes to end the update cycle and collect convergence info
     bool converged = true;
     for (auto recipe : recipes) converged &= recipe->endUpdate(_numCells, numUpdated, numNotConverged);
@@ -1164,7 +1190,7 @@ bool MediumSystem::updateDynamicMediumState()
 
 ////////////////////////////////////////////////////////////////////
 
-void MediumSystem::updateSemiDynamicMediumState()
+bool MediumSystem::updateSemiDynamicMediumState()
 {
     auto log = find<Log>();
     auto parfac = find<ParallelFactory>();
@@ -1182,14 +1208,10 @@ void MediumSystem::updateSemiDynamicMediumState()
             for (size_t m = firstIndex; m != firstIndex + currentChunkSize; ++m)
             {
                 const Array& Jv = meanIntensity(m);
-
-                for (int h = 0; h != _numMedia; ++h)
+                for (int h : _sdms_hv)
                 {
-                    if (mix(m, h)->hasSemiDynamicMediumState())
-                    {
-                        MaterialState mst(_state, m, h);
-                        if (mix(m, h)->updateSpecificState(&mst, Jv)) flags[m].updateConverged();
-                    }
+                    MaterialState mst(_state, m, h);
+                    flags[m].update(mix(m, h)->updateSpecificState(&mst, Jv));
                 }
             }
             log->infoIfElapsed("Updated semi-dynamic medium state: ", currentChunkSize);
@@ -1199,7 +1221,20 @@ void MediumSystem::updateSemiDynamicMediumState()
     });
 
     // synchronize the updated state between processes
-    _state.synchronize(flags);
+    int numUpdated, numNotConverged;
+    std::tie(numUpdated, numNotConverged) = _state.synchronize(flags);
+
+    // log statistics
+    log->info("  Updated cells: " + std::to_string(numUpdated) + " out of " + std::to_string(_numCells) + " ("
+              + StringUtils::toString(100. * numUpdated / _numCells, 'f', 2) + " %)");
+    if (numNotConverged)
+        log->info("  Not converged: " + std::to_string(numNotConverged) + " out of " + std::to_string(_numCells) + " ("
+                  + StringUtils::toString(100. * numNotConverged / _numCells, 'f', 2) + " %)");
+
+    // collect convergence info
+    bool converged = true;
+    for (int h : _sdms_hv) converged &= mix(0, h)->isSpecificStateConverged(_numCells, numUpdated, numNotConverged);
+    return converged;
 }
 
 ////////////////////////////////////////////////////////////////////

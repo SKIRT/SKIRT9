@@ -208,10 +208,6 @@ protected:
     //======== Capabilities =======
 
 public:
-    /** This function returns the fundamental material type represented by this material mix, which
-        is MaterialType::Gas. */
-    MaterialType materialType() const override;
-
     /** This function returns true, indicating that the cross sections returned by this material
         mix depend on the values of specific state variables other than the number density. */
     bool hasExtraSpecificState() const override;
@@ -254,9 +250,9 @@ public:
     /** Based on the specified radiation field and the input model properties found in the given
         material state, this function performs the partitioning scheme described in the class
         header and stores the resulting atomic hydrogen fraction back in the given material state.
-        The function returns true if the material state has indeed be changed, and false otherwise.
+        The function returns the update status as described for the UpdateStatus class.
         */
-    bool updateSpecificState(MaterialState* state, const Array& Jv) const override;
+    UpdateStatus updateSpecificState(MaterialState* state, const Array& Jv) const override;
 
     //======== Low-level material properties =======
 
@@ -295,8 +291,8 @@ public:
     double opacityExt(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
 
     /** This function does nothing because the 21 cm line does not scatter. */
-    void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, double w, Direction bfkobs,
-                           Direction bfky, const MaterialState* state, const PhotonPacket* pp) const override;
+    void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs, Direction bfky,
+                           const MaterialState* state, const PhotonPacket* pp) const override;
 
     /** This function does nothing because the 21 cm line does not scatter. */
     void performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const override;

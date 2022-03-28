@@ -34,6 +34,10 @@ namespace Constants
     /** This function returns the distance of one parsec. */
     constexpr double pc() { return 3.08567758e16; }
 
+    /** This function returns the mass of an atomic mass unit (1/12 of the mass of an unbound
+        neutral atom of carbon-12 in its nuclear and electronic ground state and at rest). */
+    constexpr double amu() { return 1.6605390666e-27; }
+
     /** This function returns the rest mass of the proton. */
     constexpr double Mproton() { return 1.67262178e-27; }
 
