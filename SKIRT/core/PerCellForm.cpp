@@ -4,13 +4,13 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "PerCellForm.hpp"
-#include "SpatialGrid.hpp"
 #include "ProbeFormBridge.hpp"
+#include "SpatialGrid.hpp"
 #include "TextOutFile.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-void PerCellForm::writeFile(const ProbeFormBridge* bridge) const
+void PerCellForm::writeQuantity(const ProbeFormBridge* bridge) const
 {
     // create a text column file and add the column definitions
     TextOutFile outfile(bridge->probe(), bridge->prefix(), bridge->description() + " per spatial cell");

@@ -9,13 +9,14 @@
 #include "Parallel.hpp"
 #include "ParallelFactory.hpp"
 #include "ProbeFormBridge.hpp"
+#include "ProcessManager.hpp"
 #include "SpatialGrid.hpp"
 #include "Table.hpp"
 #include "Units.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-void PlanarCutsForm::writeFile(const ProbeFormBridge* bridge) const
+void PlanarCutsForm::writeQuantity(const ProbeFormBridge* bridge) const
 {
     writePlanarCut(bridge, 1, 1, 0, positionX(), positionY(), positionZ(), fieldOfViewX(), fieldOfViewY(),
                    fieldOfViewZ(), numPixelsX(), numPixelsY(), numPixelsZ());
@@ -65,8 +66,8 @@ void PlanarCutsForm::writePlanarCut(const ProbeFormBridge* bridge, bool xd, bool
     // allocate result array with the appropriate size and initialize contents to zero
     Table<3> vvv(Nv, Nj, Ni);  // reverse index order to get proper data value ordering for FITSInOut::write()
 
-    // calculate the results in parallel; perform only at the root process
-    auto parallel = bridge->probe()->find<ParallelFactory>()->parallelRootOnly();
+    // calculate the results in parallel
+    auto parallel = bridge->probe()->find<ParallelFactory>()->parallelDistributed();
     parallel->call(Nj, [&vvv, bridge, xpsize, ypsize, zpsize, xbase, ybase, zbase, xd, yd, zd, xp, yp, zp, Ni,
                         Nv](size_t firstIndex, size_t numIndices) {
         Array values(Nv);
@@ -78,10 +79,21 @@ void PlanarCutsForm::writePlanarCut(const ProbeFormBridge* bridge, bool xd, bool
                 double x = xd ? (xbase + i * xpsize) : xp;
                 double y = yd ? (ybase + (zd ? i : j) * ypsize) : yp;
                 bridge->valuesAtPosition(Position(x, y, z), values);
-                for (int p = 0; p != Nv; ++p) vvv(p, j, i) = values[p];
+                if (bridge->isVector())
+                {
+                    Vec v(values[0], values[1], values[2]);
+                    vvv(0, j, i) = xd ? v.x() : v.y();
+                    vvv(1, j, i) = zd ? v.z() : v.y();
+                    vvv(2, j, i) = xd ? (yd ? -v.z() : v.y()) : -v.x();
+                }
+                else
+                {
+                    for (int p = 0; p != Nv; ++p) vvv(p, j, i) = values[p];
+                }
             }
         }
     });
+    ProcessManager::sumToAll(vvv.data());
 
     // get the name of the coordinate plane (xy, xz, or yz)
     string plane;
@@ -89,13 +101,13 @@ void PlanarCutsForm::writePlanarCut(const ProbeFormBridge* bridge, bool xd, bool
     if (yd) plane += "y";
     if (zd) plane += "z";
 
-    // write file
-    auto units = bridge->probe()->find<Units>();
-    FITSInOut::write(bridge->probe(), bridge->description() + " in the " + plane + " plane", bridge->prefix() + "_" + plane,
-                     vvv.data(),
-                     unitstring, Ni, Nj, units->olength(xd ? xpsize : ypsize), units->olength(zd ? zpsize : ypsize),
+    // write the file
+    auto units = bridge->units();
+    FITSInOut::write(bridge->probe(), bridge->description() + " in the " + plane + " plane",
+                     bridge->prefix() + "_" + plane, vvv.data(), bridge->unit(), Ni, Nj,
+                     units->olength(xd ? xpsize : ypsize), units->olength(zd ? zpsize : ypsize),
                      units->olength(xd ? xcenter : ycenter), units->olength(zd ? zcenter : ycenter), units->ulength(),
-                     NR::array(std::vector<double>({1., 2., 3.})), "1");
+                     bridge->axis(), bridge->axisUnit());
 }
 
 ////////////////////////////////////////////////////////////////////

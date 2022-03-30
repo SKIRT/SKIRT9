@@ -19,7 +19,7 @@ class Units;
 
 //////////////////////////////////////////////////////////////////////
 
-/** ProbeFormBridge is a helper class that forms a bridge between Probe and Form instances for
+/** ProbeFormBridge is a helper class that provides a bridge between Probe and Form instances for
     form-assisted probes. The overall design objectives are described below. Refer to the
     documentation of the respective classes for more details.
 
@@ -54,7 +54,7 @@ class Units;
     user-specified list of positions, and parallel or all-sky projections. Spatial grid forms
     (inheriting the SpatialGridForm class) rely on the fact that the probed quantity is discretized
     on the simulation's spatial grid, and thus can be associated only with spatial grid probes. The
-    prime (and perhaps only) example is the per-cell form.
+    prime example is the per-cell form.
 
     <b>The probe-form bridge</b>
 
@@ -71,6 +71,21 @@ class Units;
     the case of a spatial grid probe, a request by the form for a value at a given position is
     translated to a request for a value in the cell containing the position.
 
+    One aspect that needs special care is the conversion from internal units (always SI) to output
+    units (defined by the unit system configured by the user). For each probe-form combination, the
+    bridge handles two different quantity types: the 'straight' quantity, probed at a given
+    position, and the 'projected' quantity, probed along a given path. The projected quantity can
+    be averaged or accumulated over the path. In the first case, the project and straight
+    quantities have the same units; in the second case they don't.
+
+    The bridge always supplies output units to the form, simplifying the implementation of a Form
+    subclass. On the probe side, things are more complicated. Probes that handle scalar or vector
+    quantities must specify the type of quantity to the bridge and supply any quantity values in
+    internal units. The bridge will take care of the unit conversions. On the other hand, probes
+    handling compound quantities must always convert quantity values to output units before
+    supplying them to the bridge. This is so because the conversion factor may differ between
+    components in a complicated way (for example, spectral quantities at different wavelengths).
+
     There are several variations of the writeQuantity() function tailored to scalar, vector and
     compound quantities, and catering to spatial grid or input model probes. Because these
     functions often expect the same arguments in different combinations, all arguments are
@@ -80,11 +95,9 @@ class Units;
     probe (e.g. "0", "1", or "dust_T"), or the empty string if such identification is not needed.
 
     - \em quantity, \em projectedQuantity: the quantity names (as defined in the SKIRT unit system)
-    of the quantity being probed, straight (as returned by the valuesAtPosition and \em
-    valuesInCell callbacks) and projected (as returned by the \em valuesAlongPath callback). These
-    strings differ if the projected quantity is accumulated over distance and they are equal if the
-    projected quantity is a weighted average. If these arguments are specified, the bridge performs
-    all unit conversions.
+    of the quantity being probed, straight and projected. These strings differ if the projected
+    quantity is accumulated over distance and they are equal if the projected quantity is a
+    weighted average. If these arguments are specified, the bridge performs all unit conversions.
 
     - \em unit, \em projectedUnit: the unit strings (as defined in the SKIRT unit system) of the
     quantity being probed, straight and projected. If these arguments are specified, the bridge
@@ -101,8 +114,7 @@ class Units;
     - \em axisUnit: for compound values, the unit string for the compound axis values.
 
     - \em addColumnDefinitions: the callback function that will be called to add the appropriate
-    column definitions if the form creates a text column output file in response to a
-    writeQuantity() invocation.
+    column definitions if the form creates a text column output file.
 
     - \em valueInCell: the callback function that will be used to retrieve values of the quantity
     being probed in a spatial cell with given index. Used for spatial grid probes.
@@ -131,57 +143,61 @@ public:
     //======== Callback type declarations  =======
 
     /** This is the type declaration for the callback function provided by the probe to add the
-        appropriate column definitions the specified text output file. */
+        appropriate column definitions to the specified text output file. */
     using AddColumnDefinitions = std::function<void(TextOutFile& outfile)>;
 
     /** This is the type declaration for the callback function provided by the spatial grid probe
-        to retrieve the scalar value of the quantity being probed in the spatial cell with index
-        \f$m\f$. */
+        to retrieve the scalar value (in internal units) of the quantity being probed in the
+        spatial cell with index \f$m\f$. */
     using ScalarValueInCell = std::function<double(int m)>;
 
     /** This is the type declaration for the callback function provided by the spatial grid probe
-        to retrieve the vector value of the quantity being probed in the spatial cell with index
-        \f$m\f$. */
+        to retrieve the vector value (in internal units) of the quantity being probed in the
+        spatial cell with index \f$m\f$. */
     using VectorValueInCell = std::function<Vec(int m)>;
 
     /** This is the type declaration for the callback function provided by the spatial grid probe
-        to retrieve the compound value of the quantity being probed in the spatial cell with index
-        \f$m\f$. The returned array must have the same number of elements as the \em axis array
-        passed to the writeQuantity() function. */
+        to retrieve the compound value (in output units) of the quantity being probed in the
+        spatial cell with index \f$m\f$. The returned array must have the same number of elements
+        as the \em axis array passed to the writeQuantity() function. */
     using CompoundValueInCell = std::function<Array(int m)>;
 
     /** This is the type declaration for the callback function provided by the spatial grid probe
-        to retrieve the weight of the quantity being probed in the spatial cell with index \f$m\f$.
-        */
+        to retrieve the weight (in arbitrary units) of the quantity being probed in the spatial
+        cell with index \f$m\f$. */
     using WeightInCell = std::function<double(int m)>;
 
     /** This is the type declaration for the callback function provided by the input model probe to
-        retrieve the scalar value of the quantity being probed at the specified position. */
+        retrieve the scalar value (in internal units) of the quantity being probed at the specified
+        position. */
     using ScalarValueAtPosition = std::function<double(Position bfr)>;
 
     /** This is the type declaration for the callback function provided by the input model probe to
-        retrieve the vector value of the quantity being probed at the specified position. */
+        retrieve the vector value (in internal units) of the quantity being probed at the specified
+        position. */
     using VectorValueAtPosition = std::function<Vec(Position bfr)>;
 
     /** This is the type declaration for the callback function provided by the input model probe to
-        retrieve the compound value of the quantity being probed at the specified position. The
-        returned array must have the same number of elements as the \em axis array passed to the
-        writeQuantity() function. */
+        retrieve the compound value (in output units) of the quantity being probed at the specified
+        position. The returned array must have the same number of elements as the \em axis array
+        passed to the writeQuantity() function. */
     using CompoundValueAtPosition = std::function<Array(Position bfr)>;
 
     /** This is the type declaration for the callback function provided by the input model probe to
-        retrieve the scalar value of the quantity being probed along the path starting at the
-        specified position in the specified direction. */
+        retrieve the scalar value (in internal units) of the quantity being probed along the path
+        starting at the specified position in the specified direction. */
     using ScalarValueAlongPath = std::function<double(Position bfr, Direction bfk)>;
 
     /** This is the type declaration for the callback function provided by the input model probe to
-        retrieve the vector value of the quantity being probed along the path starting at the
-        specified position in the specified direction. */
+        retrieve the vector value (in internal units) of the quantity being probed along the path
+        starting at the specified position in the specified direction. */
     using VectorValueAlongPath = std::function<Vec(Position bfr, Direction bfk)>;
+
     /** This is the type declaration for the callback function provided by the input model probe to
-        retrieve the compound value of the quantity being probed along the path starting at the
-        specified position in the specified direction. The returned array must have the same number
-        of elements as the \em axis array passed to the writeQuantity() function. */
+        retrieve the compound value (in output units) of the quantity being probed along the path
+        starting at the specified position in the specified direction. The returned array must have
+        the same number of elements as the \em axis array passed to the writeQuantity() function.
+        */
     using CompoundValueAlongPath = std::function<Array(Position bfr, Direction bfk)>;
 
     //======== Writing: for use by spatial grid probes  =======
@@ -256,17 +272,13 @@ public:
         identifier set by the most recent call to writeQuantity(), if any. */
     string prefix() const;
 
-    /** This function returns the number of values in the quantity being probed, as set by the most
-        recent call to writeQuantity(). */
-    int numValues() const;
+    /** This function returns the unit string of the straight quantity, as set by the most recent
+        call to writeQuantity(). */
+    string unit() const;
 
-    /** This function returns the name of the straight quantity, as set by the most recent call to
-        writeQuantity(). */
-    string quantity() const;
-
-    /** This function returns the name of the projected quantity, as set by the most recent call to
-        writeQuantity(). */
-    string projectedQuantity() const;
+    /** This function returns the unit string of the projected quantity, as set by the most recent
+        call to writeQuantity(). */
+    string projectedUnit() const;
 
     /** This function returns the user description of the straight quantity, as set by the most
         recent call to writeQuantity(). */
@@ -276,6 +288,29 @@ public:
         recent call to writeQuantity(). */
     string projectedDescription() const;
 
+    /** This function returns an array with the axis values for the quantity being probed, as set
+        by the most recent call to writeQuantity(). For a scalar quantity, this returns the empty
+        array (as opposed to an array with a single value). For a vector quantity, this returns an
+        array containing {1.,2.,3.}. For a compound quantity, this returns the axis values set by
+        the call to writeQuantity(). In the latter two cases, the number of elements in the
+        returned array equals the return value of numValues(). */
+    Array axis() const;
+
+    /** This function returns the unit string of the axis values for the quantity, as set by the
+        most recent call to writeQuantity(). For a scalar or vector quantity, this returns "1". For
+        a compound quantity, this returns the axis unit set by the call to writeQuantity(). */
+    string axisUnit() const;
+
+    /** This function returns the number of values in the quantity being probed, as set by the most
+        recent call to writeQuantity(). For a scalar quantity, this returns 1. For a vector
+        quantity, this returns 3. For a compound quantity, this returns the size of the axis array
+        set by the call to writeQuantity(). */
+    int numValues() const;
+
+    /** This function returns if the quantity being probed, as set by the most recent call to
+        writeQuantity(), is a vector quantity, and false if it is a scalar or compound quantity. */
+    bool isVector() const;
+
     /** This function adds the column definitions appropriate for the quantity being probed to the
         specified text output file. It does so by invoking the \em addColumnDefinitions callback
         set by the most recent call to writeQuantity(). */
@@ -283,9 +318,9 @@ public:
 
     //======== Querying: for use by spatial grid-specific forms  =======
 
-    /** This function retrieves the values of the quantity being probed in the spatial cell with
-        index \f$m\f$. The provided array must have \em numValues elements with undefined values
-        that will be overwritten by this function.
+    /** This function retrieves the values (in output units) of the quantity being probed in the
+        spatial cell with index \f$m\f$. The provided array must have \em numValues elements that
+        will be overwritten by this function.
 
         This function should be called only from within the writeQuantity() function of a spatial
         grid-specific form. It operates by invoking the \em valuesInCell callback set by the
@@ -294,8 +329,8 @@ public:
 
     //======== Querying: for use by generic forms  =======
 
-    /** This function retrieves the values of the quantity being probed at the specified position.
-        The provided array must have \em numValues elements with undefined values that will be
+    /** This function retrieves the values (in output units) of the quantity being probed at the
+        specified position. The provided array must have \em numValues elements that will be
         overwritten by this function.
 
         This function should be called only from within the writeQuantity() function of a generic
@@ -306,9 +341,9 @@ public:
         position. */
     void valuesAtPosition(Position bfr, Array& values) const;
 
-    /** This function retrieves the values of the quantity being probed along the path starting at
-        the specified position in the specified direction. The provided array must have \em
-        numValues elements with undefined values that will be overwritten by this function.
+    /** This function retrieves the values (in output units) of the quantity being probed along the
+        path starting at the specified position in the specified direction. The provided array must
+        have \em numValues elements that will be overwritten by this function.
 
         This function should be called only from within the writeQuantity() function of a generic
         form. Its operation depends on the type of the associated probe, the quantity properties
@@ -328,25 +363,48 @@ public:
     //======== Data members: private  =======
 
 private:
-    // set by constructor
+    // class instances -- set by constructor
     const Probe* _probe{nullptr};
     const Form* _form{nullptr};
     const SpatialGrid* _grid{nullptr};
+    const Units* _units{nullptr};
 
-    // set by writeQuantity()
-    int _numValues{0};
-    string _quantity;
-    string _projectedQuantity;
+    // probe/quantity type
+    enum class Type {
+        GridScalarAccumulated,
+        GridScalarAveraged,
+        GridVectorAveraged,
+        GridCompoundAveraged,
+        InputScalar,
+        InputVector,
+        InputCompound
+    };
+    Type _type{Type::GridScalarAccumulated};
+
+    // quantity info -- set by writeQuantity()
+    string _fileid;
+    string _unit;
+    string _projectedUnit;
+    double _unitFactor{1.};
+    double _projectedUnitFactor{1.};
     string _description;
     string _projectedDescription;
-    AddColumnDefinitions _addColumnDefinitions;
+    Array _axis;
+    string _axisUnit;
+    int _numValues{0};
 
-    // set by writeQuantity()
-    string _fileid;
+    // call-back functions -- set by writeQuantity()
+    AddColumnDefinitions _addColumnDefinitions;
     ScalarValueInCell _scalarValueInCell;
+    VectorValueInCell _vectorValueInCell;
+    CompoundValueInCell _compoundValueInCell;
     WeightInCell _weightInCell;
     ScalarValueAtPosition _scalarValueAtPosition;
+    VectorValueAtPosition _vectorValueAtPosition;
+    CompoundValueAtPosition _compoundValueAtPosition;
     ScalarValueAlongPath _scalarValueAlongPath;
+    VectorValueAlongPath _vectorValueAlongPath;
+    CompoundValueAlongPath _compoundValueAlongPath;
 };
 
 //////////////////////////////////////////////////////////////////////

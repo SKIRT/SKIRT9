@@ -24,7 +24,10 @@
 
     Each of the three FITS files contains a number of image frames corresponding to the number of
     components in a value of the quantity being probed (i.e. 1 for scalar quantities, 3 for vector
-    quantities, and N for compound quantities). */
+    quantities, and N for compound quantities). In case of a vector quantity, the three image
+    frames representing the velocity vector components in the frame of the cut, i.e. the two
+    components projected on the x and y axes of the cut and the component perpendicular to the cut,
+    where positive values indicate vectors pointing away from the viewer. */
 class PlanarCutsForm : public GenericForm
 {
     ITEM_CONCRETE(PlanarCutsForm, GenericForm, "configurable planar cuts parallel to the coordinate planes")
@@ -74,10 +77,10 @@ class PlanarCutsForm : public GenericForm
     ITEM_END()
 
 public:
-    /** This function causes the form to output a file as described in the class header for the
+    /** This function causes the form to output file(s) as described in the class header for the
         quantity being probed according to the information provided by the specified
         ProbeFormBridge instance. */
-    void writeFile(const ProbeFormBridge* bridge) const override;
+    void writeQuantity(const ProbeFormBridge* bridge) const override;
 
     /** This static function is also used by the DefaultPlanarCutsForm. It outputs a single FITS
         file representing a cut through the spatial domain along a plane parallel to the coordinate
