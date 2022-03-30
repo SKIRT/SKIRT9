@@ -44,10 +44,10 @@ class AtPositionsForm : public GenericForm
     ITEM_END()
 
 public:
-    /** This function causes the form to output a file as described in the class header for the
+    /** This function causes the form to output file(s) as described in the class header for the
         quantity being probed according to the information provided by the specified
         ProbeFormBridge instance. */
-    void writeFile(const ProbeFormBridge* bridge) const override;
+    void writeQuantity(const ProbeFormBridge* bridge) const override;
 };
 
 //////////////////////////////////////////////////////////////////////

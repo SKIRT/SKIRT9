@@ -4,7 +4,6 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "AtPositionsForm.hpp"
-#include "Position.hpp"
 #include "ProbeFormBridge.hpp"
 #include "TextInFile.hpp"
 #include "TextOutFile.hpp"
@@ -12,7 +11,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void AtPositionsForm::writeFile(const ProbeFormBridge* bridge) const
+void AtPositionsForm::writeQuantity(const ProbeFormBridge* bridge) const
 {
     auto units = find<Units>();
 
@@ -41,9 +40,9 @@ void AtPositionsForm::writeFile(const ProbeFormBridge* bridge) const
     while (infile.readRow(x, y, z))
     {
         bridge->valuesAtPosition(Position(x, y, z), values);
-        columns[0] = x;
-        columns[1] = y;
-        columns[2] = z;
+        columns[0] = units->olength(x);
+        columns[1] = units->olength(y);
+        columns[2] = units->olength(z);
         for (int p = 0; p != numValues; ++p) columns[p + 3] = values[p];
         outfile.writeRow(columns);
     }
