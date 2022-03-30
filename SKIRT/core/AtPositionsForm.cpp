@@ -13,7 +13,7 @@
 
 void AtPositionsForm::writeQuantity(const ProbeFormBridge* bridge) const
 {
-    auto units = find<Units>();
+    auto units = bridge->units();
 
     // create a text column file and add the column definitions
     TextOutFile outfile(bridge->probe(), bridge->prefix(), bridge->description() + " at imported positions");
