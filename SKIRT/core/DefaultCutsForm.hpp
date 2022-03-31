@@ -3,15 +3,15 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef DEFAULTPLANARCUTSFORM_HPP
-#define DEFAULTPLANARCUTSFORM_HPP
+#ifndef DEFAULTCUTSFORM_H
+#define DEFAULTCUTSFORM_H
 
 #include "SpatialGridForm.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
-/** DefaultPlanarCutsForm represents a spatial grid-specific probe form. Refer to the
-    ProbeFormBridge class for more information about probes and forms.
+/** DefaultCutsForm represents a spatial grid-specific probe form. Refer to the ProbeFormBridge
+    class for more information about probes and forms.
 
     This particular form outputs FITS files representing cuts through the spatial domain of the
     simulated model along the coordinate planes. The field of view of each cut covers the extent of
@@ -27,9 +27,9 @@
     frames representing the velocity vector components in the frame of the cut, i.e. the two
     components projected on the x and y axes of the cut and the component perpendicular to the cut,
     where positive values indicate vectors pointing away from the viewer. */
-class DefaultPlanarCutsForm : public SpatialGridForm
+class DefaultCutsForm : public SpatialGridForm
 {
-    ITEM_CONCRETE(DefaultPlanarCutsForm, SpatialGridForm, "planar cuts along the coordinate planes")
+    ITEM_CONCRETE(DefaultCutsForm, SpatialGridForm, "planar cuts along the coordinate planes")
     ITEM_END()
 
 public:
