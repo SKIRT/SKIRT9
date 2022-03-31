@@ -25,6 +25,7 @@
 class LinearCutForm : public GenericForm
 {
     ITEM_CONCRETE(LinearCutForm, GenericForm, "a text column file with values along a given line segment")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(LinearCutForm, "Level2")
 
         PROPERTY_INT(numSamples, "the number of samples along the line segment")
         ATTRIBUTE_MIN_VALUE(numSamples, "3")

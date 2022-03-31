@@ -33,6 +33,7 @@
 class AtPositionsForm : public GenericForm
 {
     ITEM_CONCRETE(AtPositionsForm, GenericForm, "a text column file with a row for each imported position")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(AtPositionsForm, "Level2")
 
         PROPERTY_STRING(filename, "the name of the file listing the positions")
 

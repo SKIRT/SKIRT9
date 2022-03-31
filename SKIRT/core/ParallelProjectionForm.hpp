@@ -28,6 +28,7 @@
 class ParallelProjectionForm : public GenericForm
 {
     ITEM_CONCRETE(ParallelProjectionForm, GenericForm, "parallel projection on a distant plane")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(ParallelProjectionForm, "Level2")
 
         PROPERTY_DOUBLE(inclination, "the inclination angle θ of the projection")
         ATTRIBUTE_QUANTITY(inclination, "posangle")

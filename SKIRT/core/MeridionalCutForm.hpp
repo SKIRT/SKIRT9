@@ -25,6 +25,7 @@
 class MeridionalCutForm : public GenericForm
 {
     ITEM_CONCRETE(MeridionalCutForm, GenericForm, "a text column file with values along a meridian")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(MeridionalCutForm, "Level2")
 
         PROPERTY_INT(numSamples, "the number of samples along the meridian")
         ATTRIBUTE_MIN_VALUE(numSamples, "3")
