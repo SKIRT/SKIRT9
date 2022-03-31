@@ -15,7 +15,14 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void LaunchedPacketsProbe::probeSetup()
+Probe::When LaunchedPacketsProbe::when() const
+{
+    return When::Run;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void LaunchedPacketsProbe::initialize()
 {
     // select "local" or default wavelength grid
     _probeWavelengthGrid = find<Configuration>()->wavelengthGrid(wavelengthGrid());
@@ -56,7 +63,7 @@ void LaunchedPacketsProbe::probePhotonPacket(const PhotonPacket* pp)
 
 ////////////////////////////////////////////////////////////////////
 
-void LaunchedPacketsProbe::probeRun()
+void LaunchedPacketsProbe::probe()
 {
     auto units = find<Units>();
     int numWavelengths = _primaryCounts.size(1);

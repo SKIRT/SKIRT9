@@ -24,10 +24,11 @@ class InstrumentWavelengthGridProbe : public Probe
 
     //======================== Other Functions =======================
 
-public:
-    /** This function performs probing after setup. */
-    void probeSetup() override;
+protected:
+    /** This function performs probing. */
+    void probe() override;
 
+public:
     /** This function outputs a column text file for the specified wavelength grid in the format as
         described in the header of this class. It can be used from other probes to output
         wavelength grid details. */

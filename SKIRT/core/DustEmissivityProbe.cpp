@@ -111,7 +111,7 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-void DustEmissivityProbe::probeSetup()
+void DustEmissivityProbe::probe()
 {
     if (find<Configuration>()->hasDustEmission() && find<MediumSystem>()->hasDust())
     {

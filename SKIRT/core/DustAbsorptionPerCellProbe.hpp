@@ -40,11 +40,18 @@ class DustAbsorptionPerCellProbe : public Probe
 
     ITEM_END()
 
+    //============= Construction - Setup - Destruction =============
+
+protected:
+    /** This function returns the enumeration \c Run indicating that probing for this probe should
+        be performed at the end of the simulation. */
+    When when() const override;
+
     //======================== Other Functions =======================
 
-public:
+protected:
     /** This function performs probing after all photon packets have been emitted and detected. */
-    void probeRun() override;
+    void probe() override;
 };
 
 ////////////////////////////////////////////////////////////////////

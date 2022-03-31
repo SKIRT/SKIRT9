@@ -40,9 +40,9 @@ class OpticalMaterialPropertiesProbe : public AbstractWavelengthGridProbe
 
     //======================== Other Functions =======================
 
-public:
-    /** This function performs probing after setup. */
-    void probeSetup() override;
+protected:
+    /** This function performs probing. */
+    void probe() override;
 };
 
 ////////////////////////////////////////////////////////////////////

@@ -14,7 +14,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void DustGrainSizeDistributionProbe::probeSetup()
+void DustGrainSizeDistributionProbe::probe()
 {
     if (find<Configuration>()->hasMedium())
     {
