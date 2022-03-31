@@ -29,7 +29,7 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-void DustGrainPopulationsProbe::probeSetup()
+void DustGrainPopulationsProbe::probe()
 {
     if (find<Configuration>()->hasMedium())
     {

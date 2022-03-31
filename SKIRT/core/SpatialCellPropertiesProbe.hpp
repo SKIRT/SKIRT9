@@ -25,7 +25,7 @@ class SpatialCellPropertiesProbe : public AbstractWavelengthProbe
     //======================== Other Functions =======================
 
 protected:
-    /** This function performs the probing. */
+    /** This function performs probing. */
     void probe() override;
 };
 

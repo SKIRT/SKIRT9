@@ -7,6 +7,13 @@
 
 ////////////////////////////////////////////////////////////////////
 
+Probe::When AbstractWavelengthProbe::when() const
+{
+    return probeAfter() == ProbeAfter::Run ? When::Run : When::Setup;
+}
+
+////////////////////////////////////////////////////////////////////
+
 Range AbstractWavelengthProbe::wavelengthRange() const
 {
     return Range(wavelength(), wavelength());
