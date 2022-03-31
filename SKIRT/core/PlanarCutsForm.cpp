@@ -4,13 +4,13 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "PlanarCutsForm.hpp"
+#include "Box.hpp"
 #include "FITSInOut.hpp"
 #include "FatalError.hpp"
 #include "Parallel.hpp"
 #include "ParallelFactory.hpp"
 #include "ProbeFormBridge.hpp"
 #include "ProcessManager.hpp"
-#include "SpatialGrid.hpp"
 #include "Table.hpp"
 #include "Units.hpp"
 
@@ -18,35 +18,20 @@
 
 void PlanarCutsForm::writeQuantity(const ProbeFormBridge* bridge) const
 {
-    writePlanarCut(bridge, 1, 1, 0, positionX(), positionY(), positionZ(), fieldOfViewX(), fieldOfViewY(),
-                   fieldOfViewZ(), numPixelsX(), numPixelsY(), numPixelsZ());
-    writePlanarCut(bridge, 1, 0, 1, positionX(), positionY(), positionZ(), fieldOfViewX(), fieldOfViewY(),
-                   fieldOfViewZ(), numPixelsX(), numPixelsY(), numPixelsZ());
-    writePlanarCut(bridge, 0, 1, 1, positionX(), positionY(), positionZ(), fieldOfViewX(), fieldOfViewY(),
-                   fieldOfViewZ(), numPixelsX(), numPixelsY(), numPixelsZ());
+    Box box(minX(), minY(), minZ(), maxX(), maxY(), maxZ());
+    writePlanarCut(bridge, 1, 1, 0, box, positionX(), positionY(), positionZ(), numPixelsX(), numPixelsY(),
+                   numPixelsZ());
+    writePlanarCut(bridge, 1, 0, 1, box, positionX(), positionY(), positionZ(), numPixelsX(), numPixelsY(),
+                   numPixelsZ());
+    writePlanarCut(bridge, 0, 1, 1, box, positionX(), positionY(), positionZ(), numPixelsX(), numPixelsY(),
+                   numPixelsZ());
 }
 
 ////////////////////////////////////////////////////////////////////
 
-void PlanarCutsForm::writePlanarCut(const ProbeFormBridge* bridge, bool xd, bool yd, bool zd, double xp, double yp,
-                                    double zp, double xf, double yf, double zf, int xn, int yn, int zn)
+void PlanarCutsForm::writePlanarCut(const ProbeFormBridge* bridge, bool xd, bool yd, bool zd, const Box& box, double xp,
+                                    double yp, double zp, int xn, int yn, int zn)
 {
-    // get the spatial grid bounds if available, and verify that we have them if we need them
-    Box box;
-    if (bridge->grid())
-        box = bridge->grid()->boundingBox();
-    else if (!xf || !yf || !zf)
-        throw FATALERROR("Field of view must be explicitly configured if the simulation has no media");
-
-    // determine spatial domain
-    double xmin = xf ? xp - xf / 2. : box.xmin();
-    double ymin = yf ? yp - yf / 2. : box.ymin();
-    double zmin = zf ? zp - zf / 2. : box.zmin();
-    double xmax = xf ? xp + xf / 2. : box.xmax();
-    double ymax = yf ? yp + yf / 2. : box.ymax();
-    double zmax = zf ? zp + zf / 2. : box.zmax();
-    box = Box(xmin, ymin, zmin, xmax, ymax, zmax);
-
     // determine spatial configuration
     double xpsize = box.xwidth() / xn;
     double ypsize = box.ywidth() / yn;
@@ -93,7 +78,7 @@ void PlanarCutsForm::writePlanarCut(const ProbeFormBridge* bridge, bool xd, bool
             }
         }
     });
-    ProcessManager::sumToAll(vvv.data());
+    ProcessManager::sumToRoot(vvv.data());
 
     // get the name of the coordinate plane (xy, xz, or yz)
     string plane;
