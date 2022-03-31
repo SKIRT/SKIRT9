@@ -3,21 +3,21 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef ABSTRACTWAVELENGTHGRIDPROBE_HPP
-#define ABSTRACTWAVELENGTHGRIDPROBE_HPP
+#ifndef SPECIALTYWAVELENGTHGRIDPROBE_HPP
+#define SPECIALTYWAVELENGTHGRIDPROBE_HPP
 
 #include "MaterialWavelengthRangeInterface.hpp"
-#include "Probe.hpp"
+#include "SpecialtyProbe.hpp"
 #include "WavelengthGrid.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-/** AbstractWavelengthGridProbe is a base class for probes that require a configurable wavelength
+/** SpecialtyWavelengthGridProbe is a base class for probes that require a configurable wavelength
     grid property. It implements the MaterialWavelengthRangeInterface to indicate that
     wavelength-dependent material properties may be required for the configured wavelength grid. */
-class AbstractWavelengthGridProbe : public Probe, public MaterialWavelengthRangeInterface
+class SpecialtyWavelengthGridProbe : public SpecialtyProbe, public MaterialWavelengthRangeInterface
 {
-    ITEM_ABSTRACT(AbstractWavelengthGridProbe, Probe, "a probe requiring a wavelength grid")
+    ITEM_ABSTRACT(SpecialtyWavelengthGridProbe, SpecialtyProbe, "a probe requiring a wavelength grid")
 
         PROPERTY_ITEM(wavelengthGrid, WavelengthGrid, "the wavelength grid for this probe")
         ATTRIBUTE_RELEVANT_IF(wavelengthGrid, "Panchromatic")

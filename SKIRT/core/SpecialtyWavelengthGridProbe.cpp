@@ -3,11 +3,11 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "AbstractWavelengthGridProbe.hpp"
+#include "SpecialtyWavelengthGridProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-Range AbstractWavelengthGridProbe::wavelengthRange() const
+Range SpecialtyWavelengthGridProbe::wavelengthRange() const
 {
     if (wavelengthGrid())
     {
@@ -19,7 +19,7 @@ Range AbstractWavelengthGridProbe::wavelengthRange() const
 
 ////////////////////////////////////////////////////////////////////
 
-WavelengthGrid* AbstractWavelengthGridProbe::materialWavelengthGrid() const
+WavelengthGrid* SpecialtyWavelengthGridProbe::materialWavelengthGrid() const
 {
     return wavelengthGrid();
 }

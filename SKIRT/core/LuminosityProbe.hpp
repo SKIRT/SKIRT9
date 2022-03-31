@@ -6,7 +6,7 @@
 #ifndef LUMINOSITYPROBE_HPP
 #define LUMINOSITYPROBE_HPP
 
-#include "AbstractWavelengthGridProbe.hpp"
+#include "SpecialtyWavelengthGridProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -21,9 +21,9 @@
 
     Note that, by definition, the luminosity is zero outside of the primary source wavelength range
     configured in the source system. */
-class LuminosityProbe : public AbstractWavelengthGridProbe
+class LuminosityProbe : public SpecialtyWavelengthGridProbe
 {
-    ITEM_CONCRETE(LuminosityProbe, AbstractWavelengthGridProbe, "the primary source luminosities")
+    ITEM_CONCRETE(LuminosityProbe, SpecialtyWavelengthGridProbe, "the primary source luminosities")
         ATTRIBUTE_TYPE_DISPLAYED_IF(LuminosityProbe, "Source")
 
     ITEM_END()

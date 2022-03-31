@@ -6,7 +6,7 @@
 #ifndef DUSTGRAINSIZEDISTRIBUTIONPROBE_HPP
 #define DUSTGRAINSIZEDISTRIBUTIONPROBE_HPP
 
-#include "Probe.hpp"
+#include "SpecialtyProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -28,9 +28,9 @@
     or normalization. The grain size values in the table are distributed logarithmically over the
     range of the size distribution. The number of values in the table can be configured by the
     user. */
-class DustGrainSizeDistributionProbe : public Probe
+class DustGrainSizeDistributionProbe : public SpecialtyProbe
 {
-    ITEM_CONCRETE(DustGrainSizeDistributionProbe, Probe, "dust grain size distribution")
+    ITEM_CONCRETE(DustGrainSizeDistributionProbe, SpecialtyProbe, "dust grain size distribution")
         ATTRIBUTE_TYPE_DISPLAYED_IF(DustGrainSizeDistributionProbe, "Medium&MultiGrainDustMix")
 
         PROPERTY_INT(numSamples, "the number of samples in the size distribution table")

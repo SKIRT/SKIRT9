@@ -15,6 +15,8 @@
 #include "AdaptiveMeshSpatialGrid.hpp"
 #include "AllCellsLibrary.hpp"
 #include "AllSkyInstrument.hpp"
+#include "AllSkyProjectionForm.hpp"
+#include "AtPositionsForm.hpp"
 #include "BandLuminosityNormalization.hpp"
 #include "BlackBodySED.hpp"
 #include "BlackBodySEDFamily.hpp"
@@ -47,6 +49,7 @@
 #include "Cylinder2DSpatialGrid.hpp"
 #include "CylindricalClipGeometryDecorator.hpp"
 #include "CylindricalVectorField.hpp"
+#include "DefaultCutsForm.hpp"
 #include "DensityTreePolicy.hpp"
 #include "DiscreteWavelengthDistribution.hpp"
 #include "DraineGraphiteGrainComposition.hpp"
@@ -103,6 +106,7 @@
 #include "LinWavelengthDistribution.hpp"
 #include "LinWavelengthGrid.hpp"
 #include "LineLuminosityNormalization.hpp"
+#include "LinearCutForm.hpp"
 #include "LinearDustDestructionRecipe.hpp"
 #include "ListBand.hpp"
 #include "ListBorderWavelengthGrid.hpp"
@@ -140,6 +144,7 @@
 #include "MeanPinteBenchmarkDustMix.hpp"
 #include "MeanTrustBenchmarkDustMix.hpp"
 #include "MediumSystem.hpp"
+#include "MeridionalCutForm.hpp"
 #include "MieSilicateGrainComposition.hpp"
 #include "MinSilicateGrainComposition.hpp"
 #include "ModifiedLogNormalGrainSizeDistribution.hpp"
@@ -157,10 +162,13 @@
 #include "OpticalMaterialPropertiesProbe.hpp"
 #include "ParaboloidGeometry.hpp"
 #include "ParaboloidShellGeometry.hpp"
+#include "ParallelProjectionForm.hpp"
 #include "ParticleGeometry.hpp"
 #include "ParticleMedium.hpp"
 #include "ParticleSource.hpp"
+#include "PerCellForm.hpp"
 #include "PerspectiveInstrument.hpp"
+#include "PlanarCutsForm.hpp"
 #include "PlummerGeometry.hpp"
 #include "PointSource.hpp"
 #include "PolicyTreeSpatialGrid.hpp"
@@ -237,14 +245,6 @@
 #include "ZubkoGraphiteGrainSizeDistribution.hpp"
 #include "ZubkoPAHGrainSizeDistribution.hpp"
 #include "ZubkoSilicateGrainSizeDistribution.hpp"
-#include "PerCellForm.hpp"
-#include "DefaultCutsForm.hpp"
-#include "PlanarCutsForm.hpp"
-#include "ParallelProjectionForm.hpp"
-#include "MeridionalCutForm.hpp"
-#include "LinearCutForm.hpp"
-#include "AtPositionsForm.hpp"
-#include "AllSkyProjectionForm.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -615,8 +615,9 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // probe system and probes
     ItemRegistry::add<ProbeSystem>();
     ItemRegistry::add<Probe>();
-    ItemRegistry::add<AbstractWavelengthProbe>();
-    ItemRegistry::add<AbstractWavelengthGridProbe>();
+    ItemRegistry::add<SpecialtyProbe>();
+    ItemRegistry::add<SpecialtyWavelengthProbe>();
+    ItemRegistry::add<SpecialtyWavelengthGridProbe>();
 
     ItemRegistry::add<LuminosityProbe>();
     ItemRegistry::add<LaunchedPacketsProbe>();

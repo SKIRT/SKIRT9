@@ -6,7 +6,7 @@
 #ifndef WAVELENGTHGRIDPROBE_HPP
 #define WAVELENGTHGRIDPROBE_HPP
 
-#include "Probe.hpp"
+#include "SpecialtyProbe.hpp"
 class WavelengthGrid;
 
 ////////////////////////////////////////////////////////////////////
@@ -16,9 +16,9 @@ class WavelengthGrid;
     the files written by the corresponding instrument. For each wavelength bin, the file lists the
     characteristic wavelength, the wavelength bin width, and the left and right borders of the bin.
     */
-class InstrumentWavelengthGridProbe : public Probe
+class InstrumentWavelengthGridProbe : public SpecialtyProbe
 {
-    ITEM_CONCRETE(InstrumentWavelengthGridProbe, Probe, "the instrument wavelength grids")
+    ITEM_CONCRETE(InstrumentWavelengthGridProbe, SpecialtyProbe, "the instrument wavelength grids")
         ATTRIBUTE_TYPE_DISPLAYED_IF(InstrumentWavelengthGridProbe, "Instrument")
     ITEM_END()
 

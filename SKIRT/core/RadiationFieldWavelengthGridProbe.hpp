@@ -6,7 +6,7 @@
 #ifndef RADIATIONFIELDWAVELENGTHGRIDPROBE_HPP
 #define RADIATIONFIELDWAVELENGTHGRIDPROBE_HPP
 
-#include "Probe.hpp"
+#include "SpecialtyProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -15,9 +15,9 @@
     i.e. the wavelength grid returned by the Configuration::radiationFieldWLG() function. For each
     wavelength bin, the file lists the characteristic wavelength, the wavelength bin width, and the
     left and right borders of the bin. */
-class RadiationFieldWavelengthGridProbe : public Probe
+class RadiationFieldWavelengthGridProbe : public SpecialtyProbe
 {
-    ITEM_CONCRETE(RadiationFieldWavelengthGridProbe, Probe, "the radiation field wavelength grid")
+    ITEM_CONCRETE(RadiationFieldWavelengthGridProbe, SpecialtyProbe, "the radiation field wavelength grid")
         ATTRIBUTE_TYPE_DISPLAYED_IF(RadiationFieldWavelengthGridProbe, "Level2&Medium&SpatialGrid&RadiationField")
     ITEM_END()
 

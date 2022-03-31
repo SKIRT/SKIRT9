@@ -6,7 +6,7 @@
 #ifndef DUSTABSORPTIONPERCELLPROBE_HPP
 #define DUSTABSORPTIONPERCELLPROBE_HPP
 
-#include "Probe.hpp"
+#include "SpecialtyProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -30,9 +30,10 @@
     The probe offers an option to output a separate text column file with details on the radiation
     field wavelength grid. For each wavelength bin, the file lists the characteristic wavelength,
     the wavelength bin width, and the left and right borders of the bin. */
-class DustAbsorptionPerCellProbe : public Probe
+class DustAbsorptionPerCellProbe : public SpecialtyProbe
 {
-    ITEM_CONCRETE(DustAbsorptionPerCellProbe, Probe, "the spectral luminosity absorbed by dust for each spatial cell")
+    ITEM_CONCRETE(DustAbsorptionPerCellProbe, SpecialtyProbe,
+                  "the spectral luminosity absorbed by dust for each spatial cell")
         ATTRIBUTE_TYPE_DISPLAYED_IF(DustAbsorptionPerCellProbe, "Level2&Dust&SpatialGrid&RadiationField")
 
         PROPERTY_BOOL(writeWavelengthGrid, "output a text file with the radiation field wavelength grid")
