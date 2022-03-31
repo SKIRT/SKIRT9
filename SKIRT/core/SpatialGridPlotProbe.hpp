@@ -6,7 +6,7 @@
 #ifndef SPATIALGRIDPLOTPROBE_HPP
 #define SPATIALGRIDPLOTPROBE_HPP
 
-#include "Probe.hpp"
+#include "SpecialtyProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -23,9 +23,9 @@
     "xz", "yz" or "xyz" depending on the file under consideration. Within a file, each line
     contains two coordinates seperated by whitespace or is empty. Consecutive nonempty lines
     represent a sequence of "lineto" commands; an empty line marks a "moveto" command. */
-class SpatialGridPlotProbe : public Probe
+class SpatialGridPlotProbe : public SpecialtyProbe
 {
-    ITEM_CONCRETE(SpatialGridPlotProbe, Probe, "data files for plotting the structure of the grid")
+    ITEM_CONCRETE(SpatialGridPlotProbe, SpecialtyProbe, "data files for plotting the structure of the grid")
         ATTRIBUTE_TYPE_DISPLAYED_IF(SpatialGridPlotProbe, "SpatialGrid")
     ITEM_END()
 

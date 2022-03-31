@@ -3,18 +3,18 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "AbstractWavelengthProbe.hpp"
+#include "SpecialtyWavelengthProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-Probe::When AbstractWavelengthProbe::when() const
+Probe::When SpecialtyWavelengthProbe::when() const
 {
     return probeAfter() == ProbeAfter::Run ? When::Run : When::Setup;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-Range AbstractWavelengthProbe::wavelengthRange() const
+Range SpecialtyWavelengthProbe::wavelengthRange() const
 {
     return Range(wavelength(), wavelength());
 }

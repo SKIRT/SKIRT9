@@ -6,8 +6,8 @@
 #ifndef LAUNCHEDPACKETSPROBE_HPP
 #define LAUNCHEDPACKETSPROBE_HPP
 
-#include "AbstractWavelengthGridProbe.hpp"
 #include "ProbePhotonPacketInterface.hpp"
+#include "SpecialtyWavelengthGridProbe.hpp"
 #include "Table.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -43,9 +43,9 @@
     The current implementation uses doubles to count the photon packets in each source/wavelength
     bin. Consequently, the results will be incorrect when the number of photon packets in a single
     bin exceeds 9e15. */
-class LaunchedPacketsProbe : public AbstractWavelengthGridProbe, public ProbePhotonPacketInterface
+class LaunchedPacketsProbe : public SpecialtyWavelengthGridProbe, public ProbePhotonPacketInterface
 {
-    ITEM_CONCRETE(LaunchedPacketsProbe, AbstractWavelengthGridProbe,
+    ITEM_CONCRETE(LaunchedPacketsProbe, SpecialtyWavelengthGridProbe,
                   "the number of photon packets launched from primary and secondary sources")
         ATTRIBUTE_TYPE_DISPLAYED_IF(LaunchedPacketsProbe, "Level2&Source")
 

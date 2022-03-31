@@ -6,7 +6,7 @@
 #ifndef SPATIALGRIDSOURCEDENSITYPROBE_HPP
 #define SPATIALGRIDSOURCEDENSITYPROBE_HPP
 
-#include "Probe.hpp"
+#include "SpecialtyProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -22,9 +22,9 @@
     <tt>prefix_probe_sourcedens.dat</tt>, which contains a line for each cell in the spatial grid.
     Each line contains the cell index and the normalized density for each GeometricSource component
     sampled at the cell center. */
-class SpatialGridSourceDensityProbe : public Probe
+class SpatialGridSourceDensityProbe : public SpecialtyProbe
 {
-    ITEM_CONCRETE(SpatialGridSourceDensityProbe, Probe, "primary source density discretized on spatial grid")
+    ITEM_CONCRETE(SpatialGridSourceDensityProbe, SpecialtyProbe, "primary source density discretized on spatial grid")
         ATTRIBUTE_TYPE_DISPLAYED_IF(SpatialGridSourceDensityProbe, "Level2&GeometricSource&SpatialGrid")
     ITEM_END()
 
