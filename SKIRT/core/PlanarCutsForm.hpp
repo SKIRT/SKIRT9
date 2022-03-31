@@ -29,6 +29,7 @@ class Box;
 class PlanarCutsForm : public GenericForm
 {
     ITEM_CONCRETE(PlanarCutsForm, GenericForm, "configurable planar cuts parallel to the coordinate planes")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(PlanarCutsForm, "Level2")
 
         PROPERTY_DOUBLE(minX, "the start point of the box in the X direction")
         ATTRIBUTE_QUANTITY(minX, "length")
