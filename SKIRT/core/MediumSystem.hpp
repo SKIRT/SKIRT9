@@ -236,6 +236,10 @@ public:
         medium component specifies a magnetic field, this function returns the null vector. */
     Vec magneticField(int m) const;
 
+    /** This function returns the total mass density of all medium components in spatial cell with
+        index \f$m\f$. */
+    double massDensity(int m) const;
+
     /** This function returns the number density of the medium component with index \f$h\f$ in
         spatial cell with index \f$m\f$. */
     double numberDensity(int m, int h) const;

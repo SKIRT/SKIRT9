@@ -460,6 +460,15 @@ Vec MediumSystem::magneticField(int m) const
 
 ////////////////////////////////////////////////////////////////////
 
+double MediumSystem::massDensity(int m) const
+{
+    double result = 0.;
+    for (int h = 0; h != _numMedia; ++h) result += massDensity(m, h);
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////
+
 double MediumSystem::numberDensity(int m, int h) const
 {
     return _state.numberDensity(m, h);
