@@ -29,7 +29,7 @@
     where positive values indicate vectors pointing away from the viewer. */
 class DefaultCutsForm : public SpatialGridForm
 {
-    ITEM_CONCRETE(DefaultCutsForm, SpatialGridForm, "planar cuts along the coordinate planes")
+    ITEM_CONCRETE(DefaultCutsForm, SpatialGridForm, "default planar cuts along the coordinate planes")
     ITEM_END()
 
 public:

@@ -5,6 +5,7 @@
 
 #include "LinearCutForm.hpp"
 #include "ProbeFormBridge.hpp"
+#include "StringUtils.hpp"
 #include "TextOutFile.hpp"
 #include "Units.hpp"
 
@@ -16,7 +17,7 @@ void LinearCutForm::writeQuantity(const ProbeFormBridge* bridge) const
 
     // create a text column file and add the column definitions
     TextOutFile outfile(bridge->probe(), bridge->prefix(), bridge->description() + " along a line segment");
-    outfile.writeLine("# " + bridge->description() + " along a line segment");
+    outfile.writeLine("# " + StringUtils::toUpperFirst(bridge->description()) + " along a line segment");
     outfile.addColumn("distance from starting point", units->ulength());
     bridge->addColumnDefinitions(outfile);
 
