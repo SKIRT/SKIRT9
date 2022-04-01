@@ -235,6 +235,7 @@
 #include "UnidirectionalVectorField.hpp"
 #include "UniformBoxGeometry.hpp"
 #include "UniformSmoothingKernel.hpp"
+#include "VelocityProbe.hpp"
 #include "VoronoiMeshGeometry.hpp"
 #include "VoronoiMeshMedium.hpp"
 #include "VoronoiMeshSource.hpp"
@@ -618,6 +619,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<SpecialtyProbe>();
     ItemRegistry::add<SpecialtyWavelengthProbe>();
     ItemRegistry::add<SpecialtyWavelengthGridProbe>();
+    ItemRegistry::add<SpatialGridFormProbe>();
 
     ItemRegistry::add<LuminosityProbe>();
     ItemRegistry::add<LaunchedPacketsProbe>();
@@ -631,10 +633,11 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<DustGrainSizeDistributionProbe>();
     ItemRegistry::add<DustAbsorptionPerCellProbe>();
     ItemRegistry::add<DustEmissivityProbe>();
-
     ItemRegistry::add<InstrumentWavelengthGridProbe>();
     ItemRegistry::add<RadiationFieldWavelengthGridProbe>();
     ItemRegistry::add<DustEmissionWavelengthGridProbe>();
+
+    ItemRegistry::add<VelocityProbe>();
 
     // forms
     ItemRegistry::add<Form>();
