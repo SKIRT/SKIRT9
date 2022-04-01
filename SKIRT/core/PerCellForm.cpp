@@ -6,6 +6,7 @@
 #include "PerCellForm.hpp"
 #include "ProbeFormBridge.hpp"
 #include "SpatialGrid.hpp"
+#include "StringUtils.hpp"
 #include "TextOutFile.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -14,7 +15,7 @@ void PerCellForm::writeQuantity(const ProbeFormBridge* bridge) const
 {
     // create a text column file and add the column definitions
     TextOutFile outfile(bridge->probe(), bridge->prefix(), bridge->description() + " per spatial cell");
-    outfile.writeLine("# " + bridge->description() + " per spatial cell");
+    outfile.writeLine("# " + StringUtils::toUpperFirst(bridge->description()) + " per spatial cell");
     outfile.addColumn("spatial cell index", "", 'd');
     bridge->addColumnDefinitions(outfile);
 

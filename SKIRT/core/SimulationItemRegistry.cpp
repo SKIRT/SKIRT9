@@ -646,8 +646,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<DefaultCutsForm>();
     ItemRegistry::add<PlanarCutsForm>();
     ItemRegistry::add<PerCellForm>();
-    ItemRegistry::add<MeridionalCutForm>();
     ItemRegistry::add<LinearCutForm>();
+    ItemRegistry::add<MeridionalCutForm>();
     ItemRegistry::add<AtPositionsForm>();
     ItemRegistry::add<ParallelProjectionForm>();
     ItemRegistry::add<AllSkyProjectionForm>();

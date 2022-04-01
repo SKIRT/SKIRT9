@@ -86,9 +86,16 @@ void PlanarCutsForm::writePlanarCut(const ProbeFormBridge* bridge, bool xd, bool
     if (yd) plane += "y";
     if (zd) plane += "z";
 
+    // determine whether we are in the coordinate plane or parallel to it
+    double offset = 0.;
+    if (!xd) offset = xp;
+    if (!yd) offset = yp;
+    if (!zd) offset = yp;
+    string position = offset ? " parallel to the " : " in the ";
+
     // write the file
     auto units = bridge->units();
-    FITSInOut::write(bridge->probe(), bridge->description() + " in the " + plane + " plane",
+    FITSInOut::write(bridge->probe(), bridge->description() + position + plane + " plane",
                      bridge->prefix() + "_" + plane, vvv.data(), bridge->unit(), Ni, Nj,
                      units->olength(xd ? xpsize : ypsize), units->olength(zd ? zpsize : ypsize),
                      units->olength(xd ? xcenter : ycenter), units->olength(zd ? zcenter : ycenter), units->ulength(),

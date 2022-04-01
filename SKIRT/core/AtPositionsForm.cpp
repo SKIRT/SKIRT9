@@ -5,6 +5,7 @@
 
 #include "AtPositionsForm.hpp"
 #include "ProbeFormBridge.hpp"
+#include "StringUtils.hpp"
 #include "TextInFile.hpp"
 #include "TextOutFile.hpp"
 #include "Units.hpp"
@@ -17,7 +18,7 @@ void AtPositionsForm::writeQuantity(const ProbeFormBridge* bridge) const
 
     // create a text column file and add the column definitions
     TextOutFile outfile(bridge->probe(), bridge->prefix(), bridge->description() + " at imported positions");
-    outfile.writeLine("# " + bridge->description() + " at imported positions");
+    outfile.writeLine("# " + StringUtils::toUpperFirst(bridge->description()) + " at imported positions");
     outfile.addColumn("position x", units->ulength());
     outfile.addColumn("position y", units->ulength());
     outfile.addColumn("position z", units->ulength());
