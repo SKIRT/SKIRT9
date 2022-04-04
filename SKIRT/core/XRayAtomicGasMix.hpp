@@ -15,7 +15,9 @@
 
 /** The XRayAtomicGasMix class describes the material properties of neutral atomic gas in the X-ray
     wavelength range, taking into account the effects of photo-absorption, fluorescence, and
-    scattering by bound electrons.
+    scattering by bound electrons. This material mix should not be used for wavelengths outside of
+    the X-ray regime for which it has been designed. Specifically, several of the assumptions and
+    numerical treatments break down for photon energies below 4 eV.
 
     The class assumes a gas containing a mixture of non-ionized elements with atomic numbers from 1
     (hydrogen) up to 30 (zinc). The spatial density distribution of the gas is established by
@@ -42,16 +44,17 @@
     to be treated during primary emission. A possible drawback is that the weaker fluorescence
     lines will be represented by a fairly small number of photon packets.
 
-    Electrons bound to the atoms in the gas scatter incoming photons in a way similar to free
-    electrons. For lower photon energies, the cross section and phase function for the two
-    processes differ substantially. However, in that regime, scattering is totally dominated by
-    photo-absorption, so it does not seem important to accurately model the scattering process. For
-    higher energies, where the scattering cross section does become significant, bound-electron
-    scattering approaches free-electron scattering. This class thus simply assumes that each of the
-    electrons bound to the atoms in the gas Compton-scatters the incoming photons (for more
-    information, see the ComptonPhaseFunction class). Because the gas is assumed to be neutral, the
-    number of electrons is equal to the number of protons, which is easily obtained from the atomic
-    numbers and the respective abundances.
+    Electrons bound to the atoms in the gas scatter incoming X-ray photons with a cross section
+    that is very close to that of free electrons. For lower X-ray photon energies, the phase
+    function for the two processes differs substantially. However, in that regime, scattering is
+    totally dominated by photo-absorption, so it does not seem important to accurately model the
+    scattering process. For higher X-ray photon energies, where the scattering cross section does
+    become significant, bound-electron scattering closely approaches free-electron scattering. This
+    class thus simply assumes that each of the electrons bound to the atoms in the gas
+    Compton-scatters the incoming photons (for more information, see the ComptonPhaseFunction
+    class). Because the gas is assumed to be neutral, the number of electrons is equal to the
+    number of protons, which is easily obtained from the atomic numbers and the respective
+    abundances.
 
     <b>Configuring the simulation</b>
 
