@@ -362,9 +362,9 @@ void XRayAtomicGasMix::setupSelfBefore()
     vector<double> massv = masses;
 
     // calculate the parameters for the sigmoid function approximating the convolution with a Gaussian
-    // at the threshold energy for each cross section record, and and store the result into a temporary vector;
-    // the information includes the thermal energy dispersion at the threshold energy and the intrinsic cross section
-    // at the threshold energy plus twice this energy dispersion
+    // at the threshold energy for each cross section record, and store the result into a temporary vector;
+    // the information includes the thermal energy dispersion at the threshold energy and
+    // the intrinsic cross section at the threshold energy plus twice this energy dispersion
     vector<std::pair<double, double>> sigmoidv;
     sigmoidv.reserve(crossSectionParams.size());
     for (const auto& params : crossSectionParams)
@@ -374,11 +374,15 @@ void XRayAtomicGasMix::setupSelfBefore()
         sigmoidv.emplace_back(Es, sigmamax);
     }
 
-    // calculate and store the thermal velocities corresponding to the fluorescence transitions
-    _fluovthermv.reserve(fluorescenceParams.size());
+    // calculate and store the thermal velocities corresponding to the scattering channels
+    _vthermscav.reserve(numAtoms + fluorescenceParams.size());
+    for (double mass : masses)
+    {
+        _vthermscav.push_back(vtherm(temperature(), mass));
+    }
     for (const auto& params : fluorescenceParams)
     {
-        _fluovthermv.push_back(vtherm(temperature(), massv[params.Z - 1]));
+        _vthermscav.push_back(vtherm(temperature(), massv[params.Z - 1]));
     }
 
     // ---- wavelength grid ----
@@ -448,13 +452,25 @@ void XRayAtomicGasMix::setupSelfBefore()
 
     // ---- extinction ----
 
+    // initialize the Compton phase function helper
+    _cpf.initialize(random());
+
+    // determine total nr of electrons per hydrogen atom
+    double numElectrons = 0.;
+    for (size_t Z = 1; Z <= numAtoms; ++Z) numElectrons += Z * _abundancies[Z - 1];
+
     // calculate the extinction cross section at every wavelength; to guarantee that the cross section is zero
     // for wavelengths outside our range, leave the values for the outer wavelength points at zero
     _sigmaextv.resize(numLambda);
     for (int ell = 1; ell < numLambda - 1; ++ell)
     {
-        double E = wavelengthToFromEnergy(lambdav[ell]);
-        double sigma = 0.;
+        double lambda = lambdav[ell];
+        double E = wavelengthToFromEnergy(lambda);
+
+        // bound electron scattering
+        double sigma = numElectrons * Constants::sigmaThomson() * _cpf.sectionSca(lambda);
+
+        // photo-absorption and fluorescence
         int index = 0;
         for (const auto& params : crossSectionParams)
         {
@@ -466,22 +482,27 @@ void XRayAtomicGasMix::setupSelfBefore()
     // ---- scattering ----
 
     // calculate and store the fluorescence emission wavelengths
-    _fluolambdav.reserve(fluorescenceParams.size());
-    for (const auto& params : fluorescenceParams) _fluolambdav.push_back(wavelengthToFromEnergy(params.E));
+    _lambdafluov.reserve(fluorescenceParams.size());
+    for (const auto& params : fluorescenceParams) _lambdafluov.push_back(wavelengthToFromEnergy(params.E));
 
-    // make room for the scattering cross section and the cumulative fluorescence probabilities at every wavelength
+    // make room for the scattering cross section and the cumulative fluorescence/scattering probabilities
     _sigmascav.resize(numLambda);
-    _fluocumprobvv.resize(numLambda, 0);
+    _cumprobscavv.resize(numLambda, 0);
 
-    // provide temporary array for the non-normalized fluorescence contributions (at the current wavelength)
-    Array fluocontribv(fluorescenceParams.size());
+    // provide temporary array for the non-normalized fluorescence/scattering contributions (at the current wavelength)
+    Array contribv(numAtoms + fluorescenceParams.size());
 
     // calculate the above for every wavelength; as before, leave the values for the outer wavelength points at zero
     for (int ell = 1; ell < numLambda - 1; ++ell)
     {
-        double E = wavelengthToFromEnergy(lambdav[ell]);
+        double lambda = lambdav[ell];
+        double E = wavelengthToFromEnergy(lambda);
 
-        // interate over both cross section and fluorescence parameter sets in sync
+        // bound electron scattering
+        double section = Constants::sigmaThomson() * _cpf.sectionSca(lambda);
+        for (size_t Z = 1; Z <= numAtoms; ++Z) contribv[Z - 1] = Z * _abundancies[Z - 1] * section;
+
+        // fluorescence: interate over both cross section and fluorescence parameter sets in sync
         const auto* flp = fluorescenceParams.begin();
         int index = 0;
         for (const auto& csp : crossSectionParams)
@@ -492,13 +513,13 @@ void XRayAtomicGasMix::setupSelfBefore()
             while (flp != fluorescenceParams.end() && flp->Z == csp.Z && flp->n == csp.n)
             {
                 double contribution = crossSection(E, sigmoid, csp) * _abundancies[csp.Z - 1] * flp->omega;
-                fluocontribv[flp - fluorescenceParams.begin()] = contribution;
+                contribv[numAtoms + flp - fluorescenceParams.begin()] = contribution;
                 flp++;
             }
         }
 
         // determine the normalized cumulative probability distribution and the cross section
-        _sigmascav[ell] = NR::cdf(_fluocumprobvv[ell], fluocontribv);
+        _sigmascav[ell] = NR::cdf(_cumprobscavv[ell], contribv);
     }
 }
 
@@ -590,8 +611,8 @@ void XRayAtomicGasMix::setScatteringInfoIfNeeded(PhotonPacket::ScatteringInfo* s
     if (!scatinfo->valid)
     {
         scatinfo->valid = true;
-        scatinfo->species = NR::locateClip(_fluocumprobvv[indexForLambda(lambda)], random()->uniform());
-        if (temperature() > 0.) scatinfo->velocity = _fluovthermv[scatinfo->species] * random()->maxwell();
+        scatinfo->species = NR::locateClip(_cumprobscavv[indexForLambda(lambda)], random()->uniform());
+        if (temperature() > 0.) scatinfo->velocity = _vthermscav[scatinfo->species] * random()->maxwell();
     }
 }
 
@@ -601,16 +622,32 @@ void XRayAtomicGasMix::peeloffScattering(double& I, double& /*Q*/, double& /*U*/
                                          Direction bfkobs, Direction /*bfky*/, const MaterialState* /*state*/,
                                          const PhotonPacket* pp) const
 {
-    // draw a random fluorescence channel and atom velocity, unless a previous peel-off stored this already
+    // draw a random scattering channel and atom velocity, unless a previous peel-off stored this already
     auto scatinfo = const_cast<PhotonPacket*>(pp)->getScatteringInfo();
     setScatteringInfoIfNeeded(scatinfo, lambda);
 
-    // isotropic scattering, so the contribution is trivially 1
-    I += 1.;
+    // bound electron scattering
+    if (scatinfo->species < static_cast<int>(numAtoms))
+    {
+        // if we have dispersion, adjust the incoming wavelength to the electron rest frame
+        if (temperature() > 0.)
+            lambda = PhotonPacket::shiftedReceptionWavelength(lambda, pp->direction(), scatinfo->velocity);
 
-    // update the photon packet wavelength to the wavelength of this fluorescence transition,
-    // Doppler-shifted out of the atom velocity frame
-    lambda = _fluolambdav[scatinfo->species];
+        // perform the scattering event in the electron rest frame
+        _cpf.peeloffScattering(I, lambda, pp->direction(), bfkobs);
+    }
+
+    // fluorescence
+    else
+    {
+        // isotropic emission, so the bias weight is trivially 1
+        I += 1.;
+
+        // update the photon packet wavelength to the wavelength of this fluorescence transition
+        lambda = _lambdafluov[scatinfo->species - numAtoms];
+    }
+
+    // if we have dispersion, Doppler-shift the outgoing wavelength from the electron rest frame
     if (temperature() > 0.) lambda = PhotonPacket::shiftedEmissionWavelength(lambda, bfkobs, scatinfo->velocity);
 }
 
@@ -622,12 +659,31 @@ void XRayAtomicGasMix::performScattering(double lambda, const MaterialState* sta
     auto scatinfo = pp->getScatteringInfo();
     setScatteringInfoIfNeeded(scatinfo, lambda);
 
-    // draw a random, isotropic outgoing direction
-    Direction bfknew = random()->direction();
+    // room for the outgoing direction
+    Direction bfknew;
 
-    // update the photon packet wavelength to the wavelength of this fluorescence transition,
-    // Doppler-shifted out of the atom velocity frame
-    lambda = _fluolambdav[scatinfo->species];
+    // bound electron scatterimg
+    if (scatinfo->species < static_cast<int>(numAtoms))
+    {
+        // if we have dispersion, adjust the incoming wavelength to the electron rest frame
+        if (temperature() > 0.)
+            lambda = PhotonPacket::shiftedReceptionWavelength(lambda, pp->direction(), scatinfo->velocity);
+
+        // determine the new propagation direction and update the wavelength of the photon packet
+        bfknew = _cpf.performScattering(lambda, pp->direction());
+    }
+
+    // fluorescence
+    else
+    {
+        // update the photon packet wavelength to the wavelength of this fluorescence transition
+        lambda = _lambdafluov[scatinfo->species - numAtoms];
+
+        // draw a random, isotropic outgoing direction
+        bfknew = random()->direction();
+    }
+
+    // if we have dispersion, Doppler-shift the outgoing wavelength from the electron rest frame
     if (temperature() > 0.) lambda = PhotonPacket::shiftedEmissionWavelength(lambda, bfknew, scatinfo->velocity);
 
     // execute the scattering event in the photon packet
