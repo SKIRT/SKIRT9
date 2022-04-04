@@ -1,2 +1,2 @@
-Core 5
+Core 6
 BPASS 1
