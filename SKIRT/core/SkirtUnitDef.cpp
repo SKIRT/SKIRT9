@@ -196,6 +196,19 @@ SkirtUnitDef::SkirtUnitDef()
     addUnit("masscoefficient", "m2/kg", 1.);
     addUnit("masscoefficient", "cm2/g", 0.1);
 
+    // opacity
+    addUnit("opacity", "1/m", 1.);
+    addUnit("opacity", "1/cm", 1e2);
+    addUnit("opacity", "1/AU", 1 / AU);
+    addUnit("opacity", "1/pc", 1 / pc);
+    addUnit("opacity", "/m", 1.);
+    addUnit("opacity", "/cm", 1e2);
+    addUnit("opacity", "/AU", 1 / AU);
+    addUnit("opacity", "/pc", 1 / pc);
+
+    // optical depth
+    addUnit("opticaldepth", "1", 1.);
+
     // time
     addUnit("time", "s", 1.);
     addUnit("time", "yr", year);
@@ -457,6 +470,8 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("SIUnits", "numbersurfacedensity", "1/m2");
     addDefaultUnit("SIUnits", "numbervolumedensity", "1/m3");
     addDefaultUnit("SIUnits", "masscoefficient", "m2/kg");
+    addDefaultUnit("SIUnits", "opacity", "1/m");
+    addDefaultUnit("SIUnits", "opticaldepth", "1");
     addDefaultUnit("SIUnits", "time", "s");
     addDefaultUnit("SIUnits", "temperature", "K");
     addDefaultUnit("SIUnits", "energy", "J");
@@ -505,6 +520,8 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("StellarUnits", "numbersurfacedensity", "1/cm2");
     addDefaultUnit("StellarUnits", "numbervolumedensity", "1/cm3");
     addDefaultUnit("StellarUnits", "masscoefficient", "m2/kg");
+    addDefaultUnit("StellarUnits", "opacity", "1/AU");
+    addDefaultUnit("StellarUnits", "opticaldepth", "1");
     addDefaultUnit("StellarUnits", "time", "Gyr");
     addDefaultUnit("StellarUnits", "temperature", "K");
     addDefaultUnit("StellarUnits", "energy", "J");
@@ -553,6 +570,8 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("ExtragalacticUnits", "numbersurfacedensity", "1/cm2");
     addDefaultUnit("ExtragalacticUnits", "numbervolumedensity", "1/cm3");
     addDefaultUnit("ExtragalacticUnits", "masscoefficient", "m2/kg");
+    addDefaultUnit("ExtragalacticUnits", "opacity", "1/pc");
+    addDefaultUnit("ExtragalacticUnits", "opticaldepth", "1");
     addDefaultUnit("ExtragalacticUnits", "time", "Gyr");
     addDefaultUnit("ExtragalacticUnits", "temperature", "K");
     addDefaultUnit("ExtragalacticUnits", "energy", "J");

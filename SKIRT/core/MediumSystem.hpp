@@ -266,7 +266,7 @@ public:
 
     //=============== Low-level optical properties ===================
 
-private:
+public:
     /** This function returns the absorption opacity \f$k_h^\text{abs}\f$ at wavelength
         \f$\lambda\f$ of the medium component with index \f$h\f$ in spatial cell with index
         \f$m\f$. Because no photon packet is provided, default values are used for any relevant
@@ -288,7 +288,6 @@ private:
         */
     double opacityExt(double lambda, int m, int h) const;
 
-public:
     /** This function returns the absorption opacity \f$k^\text{abs}=\sum_h k_h^\text{abs}\f$
         summed over all medium components with the specified material type at wavelength
         \f$\lambda\f$ in spatial cell with index \f$m\f$. Because no photon packet is provided,

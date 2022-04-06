@@ -158,6 +158,7 @@
 #include "NumberColumnMaterialNormalization.hpp"
 #include "OffsetGeometryDecorator.hpp"
 #include "OffsetVectorFieldDecorator.hpp"
+#include "OpacityProbe.hpp"
 #include "OpticalDepthMaterialNormalization.hpp"
 #include "OpticalMaterialPropertiesProbe.hpp"
 #include "ParaboloidGeometry.hpp"
@@ -637,6 +638,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<RadiationFieldWavelengthGridProbe>();
     ItemRegistry::add<DustEmissionWavelengthGridProbe>();
 
+    ItemRegistry::add<OpacityProbe>();
     ItemRegistry::add<VelocityProbe>();
 
     // forms
