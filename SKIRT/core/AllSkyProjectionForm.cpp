@@ -104,10 +104,14 @@ void AllSkyProjectionForm::writeQuantity(const ProbeFormBridge* bridge) const
                     // store the result
                     if (bridge->isVector())
                     {
-                        // transform the x and y axis directions from observer to model coordinates
-                        Direction kx = Direction(transform.transform(Direction(theta, phi + M_PI_2)));
-                        Direction ky = Direction(transform.transform(Direction(theta - M_PI_2, phi)));
+                        // obtain the x and y axis directions in model coordinates
+                        Vec ku(_Ux, _Uy, _Uz);
+                        Vec kx = Vec::cross(ku, kz);
+                        Vec ky = Vec::cross(kz, kx);
+                        kx = kx / kx.norm();
+                        ky = ky / ky.norm();
 
+                        // project the vector on each of the axes
                         Vec v(values[0], values[1], values[2]);
                         vvv(0, j, i) = Vec::dot(v, kx);
                         vvv(1, j, i) = Vec::dot(v, ky);
