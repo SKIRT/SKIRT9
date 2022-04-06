@@ -328,9 +328,9 @@ void ProbeFormBridge::addColumnDefinitions(TextOutFile& outfile) const
         case Type::GridVectorAveraged:
         case Type::InputVector:
         {
-            outfile.addColumn("x component of " + _description, _unit);
-            outfile.addColumn("y component of " + _description, _unit);
-            outfile.addColumn("z component of " + _description, _unit);
+            outfile.addColumn(_description + " x", _unit);
+            outfile.addColumn(_description + " y", _unit);
+            outfile.addColumn(_description + " z", _unit);
             break;
         }
         case Type::GridCompoundAveraged:
