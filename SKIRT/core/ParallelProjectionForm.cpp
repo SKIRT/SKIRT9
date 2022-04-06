@@ -94,8 +94,8 @@ void ParallelProjectionForm::writeQuantity(const ProbeFormBridge* bridge) const
 
     // write the file
     auto units = bridge->units();
-    FITSInOut::write(bridge->probe(), "parallel-projected " + bridge->description(), bridge->prefix(), vvv.data(),
-                     bridge->projectedUnit(), Nxp, Nyp, units->olength(xpsiz), units->olength(ypsiz),
+    FITSInOut::write(bridge->probe(), "parallel-projected " + bridge->description(), bridge->projectedPrefix(),
+                     vvv.data(), bridge->projectedUnit(), Nxp, Nyp, units->olength(xpsiz), units->olength(ypsiz),
                      units->olength(xcent), units->olength(ycent), units->ulength(), bridge->axis(),
                      bridge->axisUnit());
 }

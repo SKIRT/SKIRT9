@@ -91,8 +91,9 @@ class Units;
     functions often expect the same arguments in different combinations, all arguments are
     described here.
 
-    - \em fileid: a string identifying the file among the possibly multiple files produced by this
-    probe (e.g. "0", "1", or "dust_T"), or the empty string if such identification is not needed.
+    - \em fileid, \em projectedFileid: a string identifying the output file for the quantity being
+    probed, straight and projected, among the possibly multiple files produced by this probe (e.g.
+    "v", "1_rho", or "dust_T").
 
     - \em quantity, \em projectedQuantity: the quantity names (as defined in the SKIRT unit system)
     of the quantity being probed, straight and projected. These strings differ if the projected
@@ -142,8 +143,8 @@ public:
 
     //======== Callback type declarations  =======
 
-    /** This is the type declaration for the callback function provided by the probe to add the
-        appropriate column definitions to the specified text output file. */
+    /** This is the type declaration for the callback function provided by the probe to add column
+        definitions for a straight compound quantity to the specified text output file. */
     using AddColumnDefinitions = std::function<void(TextOutFile& outfile)>;
 
     /** This is the type declaration for the callback function provided by the spatial grid probe
@@ -206,24 +207,21 @@ public:
         quantity that needs to be accumulated along a path, according to the provided information.
         It should be called only from spatial grid probes. Refer to the class header for more
         information on the arguments. */
-    void writeQuantity(string fileid, string quantity, string projectedQuantity, string description,
-                       string projectedDescription, AddColumnDefinitions addColumnDefinitions,
-                       ScalarValueInCell valueInCell);
+    void writeQuantity(string fileid, string projectedFileid, string quantity, string projectedQuantity,
+                       string description, string projectedDescription, ScalarValueInCell valueInCell);
 
     /** This function causes the form associated with this bridge to output a file for a scalar
         quantity that needs to be averaged along a path, according to the provided information. It
         should be called only from spatial grid probes. Refer to the class header for more
         information on the arguments. */
     void writeQuantity(string fileid, string quantity, string description, string projectedDescription,
-                       AddColumnDefinitions addColumnDefinitions, ScalarValueInCell valueInCell,
-                       WeightInCell weightInCell);
+                       ScalarValueInCell valueInCell, WeightInCell weightInCell);
 
     /** This function causes the form associated with this bridge to output a file for a vector
         quantity according to the provided information. It should be called only from spatial grid
         probes. Refer to the class header for more information on the arguments. */
     void writeQuantity(string fileid, string quantity, string description, string projectedDescription,
-                       AddColumnDefinitions addColumnDefinitions, VectorValueInCell valueInCell,
-                       WeightInCell weightInCell);
+                       VectorValueInCell valueInCell, WeightInCell weightInCell);
 
     /** This function causes the form associated with this bridge to output a file for a compound
         quantity according to the provided information. It should be called only from spatial grid
@@ -237,21 +235,21 @@ public:
     /** This function causes the form associated with this bridge to output a file for a scalar
         quantity according to provided the information. It should be called only from input model
         probes. Refer to the class header for more information on the arguments. */
-    void writeQuantity(string fileid, string quantity, string projectedQuantity, string description,
-                       string projectedDescription, AddColumnDefinitions addColumnDefinitions,
-                       ScalarValueAtPosition valueAtPosition, ScalarValueAlongPath valueAlongPath);
+    void writeQuantity(string fileid, string projectedFileid, string quantity, string projectedQuantity,
+                       string description, string projectedDescription, ScalarValueAtPosition valueAtPosition,
+                       ScalarValueAlongPath valueAlongPath);
 
     /** This function causes the form associated with this bridge to output a file for a vector
         quantity according to provided the information. It should be called only from input model
         probes. Refer to the class header for more information on the arguments. */
-    void writeQuantity(string fileid, string quantity, string projectedQuantity, string description,
-                       string projectedDescription, AddColumnDefinitions addColumnDefinitions,
-                       VectorValueAtPosition valueAtPosition, VectorValueAlongPath valueAlongPath);
+    void writeQuantity(string fileid, string projectedFileid, string quantity, string projectedQuantity,
+                       string description, string projectedDescription, VectorValueAtPosition valueAtPosition,
+                       VectorValueAlongPath valueAlongPath);
 
     /** This function causes the form associated with this bridge to output a file for a compound
         quantity according to provided the information. It should be called only from input model
         probes. Refer to the class header for more information on the arguments. */
-    void writeQuantity(string fileid, string unit, string projectedUnit, string description,
+    void writeQuantity(string fileid, string projectedFileid, string unit, string projectedUnit, string description,
                        string projectedDescription, const Array& axis, string axisUnit,
                        AddColumnDefinitions addColumnDefinitions, CompoundValueAtPosition valueAtPosition,
                        CompoundValueAlongPath valueAlongPath);
@@ -269,8 +267,12 @@ public:
     const Units* units() const;
 
     /** This function returns the file name prefix formed by combining the probe name with the file
-        identifier set by the most recent call to writeQuantity(), if any. */
+        identifier for the straight quantity set by the most recent call to writeQuantity(). */
     string prefix() const;
+
+    /** This function returns the file name prefix formed by combining the probe name with the file
+        identifier for the projected quantity set by the most recent call to writeQuantity(). */
+    string projectedPrefix() const;
 
     /** This function returns the unit string of the straight quantity, as set by the most recent
         call to writeQuantity(). */
@@ -311,8 +313,11 @@ public:
         writeQuantity(), is a vector quantity, and false if it is a scalar or compound quantity. */
     bool isVector() const;
 
-    /** This function adds the column definitions appropriate for the quantity being probed to the
-        specified text output file. It does so by invoking the \em addColumnDefinitions callback
+    /** This function adds the column definitions appropriate for the straight quantity being
+        probed to the specified text output file. It should not be called for projected quantities.
+        For scalar and vector quantities, the function adds the appropriate column definitions
+        based on the description and unit information provided to the most recent call to
+        writeQuantity(). For compound quantities, it invokes the \em addColumnDefinitions callback
         set by the most recent call to writeQuantity(). */
     void addColumnDefinitions(TextOutFile& outfile) const;
 
@@ -383,6 +388,7 @@ private:
 
     // quantity info -- set by writeQuantity()
     string _fileid;
+    string _projectedFileid;
     string _unit;
     string _projectedUnit;
     double _unitFactor{1.};

@@ -12,6 +12,7 @@
 #include "Probe.hpp"
 #include "SpatialGrid.hpp"
 #include "SpatialGridPath.hpp"
+#include "TextOutFile.hpp"
 #include "Units.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -31,13 +32,13 @@ ProbeFormBridge::ProbeFormBridge(const Probe* probe, const Form* form)
 
 ////////////////////////////////////////////////////////////////////
 
-void ProbeFormBridge::writeQuantity(string fileid, string quantity, string projectedQuantity, string description,
-                                    string projectedDescription, AddColumnDefinitions addColumnDefinitions,
-                                    ScalarValueInCell valueInCell)
+void ProbeFormBridge::writeQuantity(string fileid, string projectedFileid, string quantity, string projectedQuantity,
+                                    string description, string projectedDescription, ScalarValueInCell valueInCell)
 {
     _type = Type::GridScalarAccumulated;
 
     _fileid = fileid;
+    _projectedFileid = projectedFileid;
     _unit = _units->unit(quantity);
     _projectedUnit = _units->unit(projectedQuantity);
     _unitFactor = _units->out(quantity, 1.);
@@ -48,7 +49,6 @@ void ProbeFormBridge::writeQuantity(string fileid, string quantity, string proje
     _axisUnit = "1";
     _numValues = 1.;
 
-    _addColumnDefinitions = addColumnDefinitions;
     _scalarValueInCell = valueInCell;
 
     _form->writeQuantity(this);
@@ -57,12 +57,12 @@ void ProbeFormBridge::writeQuantity(string fileid, string quantity, string proje
 ////////////////////////////////////////////////////////////////////
 
 void ProbeFormBridge::writeQuantity(string fileid, string quantity, string description, string projectedDescription,
-                                    AddColumnDefinitions addColumnDefinitions, ScalarValueInCell valueInCell,
-                                    WeightInCell weightInCell)
+                                    ScalarValueInCell valueInCell, WeightInCell weightInCell)
 {
     _type = Type::GridScalarAveraged;
 
     _fileid = fileid;
+    _projectedFileid = _fileid;
     _unit = _units->unit(quantity);
     _projectedUnit = _unit;
     _unitFactor = _units->out(quantity, 1.);
@@ -73,7 +73,6 @@ void ProbeFormBridge::writeQuantity(string fileid, string quantity, string descr
     _axisUnit = "1";
     _numValues = 1.;
 
-    _addColumnDefinitions = addColumnDefinitions;
     _scalarValueInCell = valueInCell;
     _weightInCell = weightInCell;
 
@@ -83,12 +82,12 @@ void ProbeFormBridge::writeQuantity(string fileid, string quantity, string descr
 ////////////////////////////////////////////////////////////////////
 
 void ProbeFormBridge::writeQuantity(string fileid, string quantity, string description, string projectedDescription,
-                                    AddColumnDefinitions addColumnDefinitions, VectorValueInCell valueInCell,
-                                    WeightInCell weightInCell)
+                                    VectorValueInCell valueInCell, WeightInCell weightInCell)
 {
     _type = Type::GridVectorAveraged;
 
     _fileid = fileid;
+    _projectedFileid = _fileid;
     _unit = _units->unit(quantity);
     _projectedUnit = _unit;
     _unitFactor = _units->out(quantity, 1.);
@@ -102,7 +101,6 @@ void ProbeFormBridge::writeQuantity(string fileid, string quantity, string descr
     _axisUnit = "1";
     _numValues = 3.;
 
-    _addColumnDefinitions = addColumnDefinitions;
     _vectorValueInCell = valueInCell;
     _weightInCell = weightInCell;
 
@@ -118,6 +116,7 @@ void ProbeFormBridge::writeQuantity(string fileid, string unit, string descripti
     _type = Type::GridCompoundAveraged;
 
     _fileid = fileid;
+    _projectedFileid = _fileid;
     _unit = unit;
     _projectedUnit = _unit;
     _unitFactor = 1.;
@@ -137,13 +136,14 @@ void ProbeFormBridge::writeQuantity(string fileid, string unit, string descripti
 
 ////////////////////////////////////////////////////////////////////
 
-void ProbeFormBridge::writeQuantity(string fileid, string quantity, string projectedQuantity, string description,
-                                    string projectedDescription, AddColumnDefinitions addColumnDefinitions,
+void ProbeFormBridge::writeQuantity(string fileid, string projectedFileid, string quantity, string projectedQuantity,
+                                    string description, string projectedDescription,
                                     ScalarValueAtPosition valueAtPosition, ScalarValueAlongPath valueAlongPath)
 {
     _type = Type::InputScalar;
 
     _fileid = fileid;
+    _projectedFileid = projectedFileid;
     _unit = _units->unit(quantity);
     _projectedUnit = _units->unit(projectedQuantity);
     _unitFactor = _units->out(quantity, 1.);
@@ -154,7 +154,6 @@ void ProbeFormBridge::writeQuantity(string fileid, string quantity, string proje
     _axisUnit = "1";
     _numValues = 1.;
 
-    _addColumnDefinitions = addColumnDefinitions;
     _scalarValueAtPosition = valueAtPosition;
     _scalarValueAlongPath = valueAlongPath;
 
@@ -163,13 +162,14 @@ void ProbeFormBridge::writeQuantity(string fileid, string quantity, string proje
 
 ////////////////////////////////////////////////////////////////////
 
-void ProbeFormBridge::writeQuantity(string fileid, string quantity, string projectedQuantity, string description,
-                                    string projectedDescription, AddColumnDefinitions addColumnDefinitions,
+void ProbeFormBridge::writeQuantity(string fileid, string projectedFileid, string quantity, string projectedQuantity,
+                                    string description, string projectedDescription,
                                     VectorValueAtPosition valueAtPosition, VectorValueAlongPath valueAlongPath)
 {
     _type = Type::InputVector;
 
     _fileid = fileid;
+    _projectedFileid = projectedFileid;
     _unit = _units->unit(quantity);
     _projectedUnit = _units->unit(projectedQuantity);
     _unitFactor = _units->out(quantity, 1.);
@@ -183,7 +183,6 @@ void ProbeFormBridge::writeQuantity(string fileid, string quantity, string proje
     _axisUnit = "1";
     _numValues = 3.;
 
-    _addColumnDefinitions = addColumnDefinitions;
     _vectorValueAtPosition = valueAtPosition;
     _vectorValueAlongPath = valueAlongPath;
 
@@ -192,14 +191,15 @@ void ProbeFormBridge::writeQuantity(string fileid, string quantity, string proje
 
 ////////////////////////////////////////////////////////////////////
 
-void ProbeFormBridge::writeQuantity(string fileid, string unit, string projectedUnit, string description,
-                                    string projectedDescription, const Array& axis, string axisUnit,
+void ProbeFormBridge::writeQuantity(string fileid, string projectedFileid, string unit, string projectedUnit,
+                                    string description, string projectedDescription, const Array& axis, string axisUnit,
                                     AddColumnDefinitions addColumnDefinitions, CompoundValueAtPosition valueAtPosition,
                                     CompoundValueAlongPath valueAlongPath)
 {
     _type = Type::InputCompound;
 
     _fileid = fileid;
+    _projectedFileid = projectedFileid;
     _unit = unit;
     _projectedUnit = projectedUnit;
     _unitFactor = 1.;
@@ -244,6 +244,15 @@ string ProbeFormBridge::prefix() const
 {
     string result = _probe->itemName();
     if (!_fileid.empty()) result += "_" + _fileid;
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////
+
+string ProbeFormBridge::projectedPrefix() const
+{
+    string result = _probe->itemName();
+    if (!_fileid.empty()) result += "_" + _projectedFileid;
     return result;
 }
 
@@ -307,7 +316,29 @@ bool ProbeFormBridge::isVector() const
 
 void ProbeFormBridge::addColumnDefinitions(TextOutFile& outfile) const
 {
-    _addColumnDefinitions(outfile);
+    switch (_type)
+    {
+        case Type::GridScalarAccumulated:
+        case Type::GridScalarAveraged:
+        case Type::InputScalar:
+        {
+            outfile.addColumn(_description, _unit);
+            break;
+        }
+        case Type::GridVectorAveraged:
+        case Type::InputVector:
+        {
+            outfile.addColumn("x component of " + _description, _unit);
+            outfile.addColumn("y component of " + _description, _unit);
+            outfile.addColumn("z component of " + _description, _unit);
+            break;
+        }
+        case Type::GridCompoundAveraged:
+        case Type::InputCompound:
+        {
+            _addColumnDefinitions(outfile);
+        }
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
