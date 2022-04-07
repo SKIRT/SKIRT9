@@ -620,6 +620,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ProbeSystem>();
     ItemRegistry::add<Probe>();
     ItemRegistry::add<SpecialtyProbe>();
+    ItemRegistry::add<SpecialtyWhenProbe>();
     ItemRegistry::add<SpecialtyWavelengthProbe>();
     ItemRegistry::add<SpecialtyWavelengthGridProbe>();
     ItemRegistry::add<SpatialGridFormProbe>();

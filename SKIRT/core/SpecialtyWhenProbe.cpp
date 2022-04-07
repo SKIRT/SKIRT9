@@ -3,13 +3,13 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "SpecialtyWavelengthProbe.hpp"
+#include "SpecialtyWhenProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-Range SpecialtyWavelengthProbe::wavelengthRange() const
+Probe::When SpecialtyWhenProbe::when() const
 {
-    return Range(wavelength(), wavelength());
+    return probeAfter() == ProbeAfter::Run ? When::Run : When::Setup;
 }
 
 ////////////////////////////////////////////////////////////////////

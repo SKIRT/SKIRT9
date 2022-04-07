@@ -6,7 +6,7 @@
 #ifndef CONVERGENCECUTSPROBE_HPP
 #define CONVERGENCECUTSPROBE_HPP
 
-#include "SpecialtyProbe.hpp"
+#include "SpecialtyWhenProbe.hpp"
 class Form;
 
 ////////////////////////////////////////////////////////////////////
@@ -34,9 +34,9 @@ class Form;
     from the finite-resolution spatial grid in the simulation. A comparison of both sets of maps
     can reveal whether the configured spatial grid is suitable (in the ideal case, there would be
     no difference between both sets of maps). */
-class ConvergenceCutsProbe : public SpecialtyProbe
+class ConvergenceCutsProbe : public SpecialtyWhenProbe
 {
-    ITEM_CONCRETE(ConvergenceCutsProbe, SpecialtyProbe,
+    ITEM_CONCRETE(ConvergenceCutsProbe, SpecialtyWhenProbe,
                   "convergence cuts of the medium density along the coordinate planes")
         ATTRIBUTE_TYPE_DISPLAYED_IF(ConvergenceCutsProbe, "Medium&SpatialGrid")
     ITEM_END()

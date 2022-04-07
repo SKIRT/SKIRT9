@@ -7,7 +7,7 @@
 #define SPECIALTYWAVELENGTHPROBE_HPP
 
 #include "MaterialWavelengthRangeInterface.hpp"
-#include "SpecialtyProbe.hpp"
+#include "SpecialtyWhenProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -15,19 +15,12 @@
     property. It implements the MaterialWavelengthRangeInterface to indicate that
     wavelength-dependent material properties may be required for the configured wavelength.
 
-    In addition, this class offers an option for the user to decide whether the probe should be
-    performed after setup or after the full simulation run. This functionality is unrelated to the
-    wavelength property but (today) it happens to be required by the same subclasses so it is
-    implemented here for convenience. */
-class SpecialtyWavelengthProbe : public SpecialtyProbe, public MaterialWavelengthRangeInterface
+    This class derives from the SpecialtyWhenProbe class because all subclasses happen to need the
+    option for the user to decide whether the probe should be performed after setup or after the
+    full simulation run. */
+class SpecialtyWavelengthProbe : public SpecialtyWhenProbe, public MaterialWavelengthRangeInterface
 {
-    /** The enumeration type indicating when probing occurs. */
-    ENUM_DEF(ProbeAfter, Setup, Run)
-        ENUM_VAL(ProbeAfter, Setup, "after setup")
-        ENUM_VAL(ProbeAfter, Run, "after the complete simulation run")
-    ENUM_END()
-
-    ITEM_ABSTRACT(SpecialtyWavelengthProbe, SpecialtyProbe, "a probe requiring a wavelength value")
+    ITEM_ABSTRACT(SpecialtyWavelengthProbe, SpecialtyWhenProbe, "a specialty probe requiring a wavelength value")
 
         PROPERTY_DOUBLE(wavelength, "the wavelength at which to determine the optical depth")
         ATTRIBUTE_QUANTITY(wavelength, "wavelength")
@@ -36,20 +29,7 @@ class SpecialtyWavelengthProbe : public SpecialtyProbe, public MaterialWavelengt
         ATTRIBUTE_DEFAULT_VALUE(wavelength, "0.55 micron")
         ATTRIBUTE_DISPLAYED_IF(wavelength, "Level2")
 
-        ATTRIBUTE_SUB_PROPERTIES_HERE()
-
-        PROPERTY_ENUM(probeAfter, ProbeAfter, "perform the probe after")
-        ATTRIBUTE_DEFAULT_VALUE(probeAfter, "Setup")
-        ATTRIBUTE_DISPLAYED_IF(probeAfter, "DynamicState")
-
     ITEM_END()
-
-    //============= Construction - Setup - Destruction =============
-
-protected:
-    /** This function returns an enumeration indicating when probing for this probe should be
-        performed corresponding to the configured value of the \em probeAfter property. */
-    When when() const override;
 
     //======================== Other Functions =======================
 

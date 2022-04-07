@@ -13,6 +13,8 @@
 
 void ConvergenceCutsProbe::setupSelfBefore()
 {
+    SpecialtyWhenProbe::setupSelfBefore();
+
     _form = new DefaultCutsForm(this);
 }
 
