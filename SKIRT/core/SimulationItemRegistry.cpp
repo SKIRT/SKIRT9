@@ -50,6 +50,7 @@
 #include "CylindricalClipGeometryDecorator.hpp"
 #include "CylindricalVectorField.hpp"
 #include "DefaultCutsForm.hpp"
+#include "DensityProbe.hpp"
 #include "DensityTreePolicy.hpp"
 #include "DiscreteWavelengthDistribution.hpp"
 #include "DraineGraphiteGrainComposition.hpp"
@@ -638,6 +639,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<RadiationFieldWavelengthGridProbe>();
     ItemRegistry::add<DustEmissionWavelengthGridProbe>();
 
+    ItemRegistry::add<DensityProbe>();
     ItemRegistry::add<OpacityProbe>();
     ItemRegistry::add<VelocityProbe>();
 

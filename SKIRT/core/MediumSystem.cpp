@@ -469,6 +469,33 @@ double MediumSystem::massDensity(int m) const
 
 ////////////////////////////////////////////////////////////////////
 
+double MediumSystem::dustMassDensity(int m) const
+{
+    double result = 0.;
+    for (int h : _dust_hv) result += massDensity(m, h);
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::electronNumberDensity(int m) const
+{
+    double result = 0.;
+    for (int h : _elec_hv) result += numberDensity(m, h);
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::gasNumberDensity(int m) const
+{
+    double result = 0.;
+    for (int h : _gas_hv) result += numberDensity(m, h);
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////
+
 double MediumSystem::numberDensity(int m, int h) const
 {
     return _state.numberDensity(m, h);

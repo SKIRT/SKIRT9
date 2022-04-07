@@ -240,6 +240,18 @@ public:
         index \f$m\f$. */
     double massDensity(int m) const;
 
+    /** This function returns the total mass density of all dust medium components in spatial cell
+        with index \f$m\f$. */
+    double dustMassDensity(int m) const;
+
+    /** This function returns the total number density of all electron medium components in spatial
+        cell with index \f$m\f$. */
+    double electronNumberDensity(int m) const;
+
+    /** This function returns the total number density of all gas medium components in spatial cell
+        with index \f$m\f$. */
+    double gasNumberDensity(int m) const;
+
     /** This function returns the number density of the medium component with index \f$h\f$ in
         spatial cell with index \f$m\f$. */
     double numberDensity(int m, int h) const;

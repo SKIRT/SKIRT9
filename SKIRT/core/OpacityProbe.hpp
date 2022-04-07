@@ -56,7 +56,7 @@ class OpacityProbe : public SpatialGridFormProbe, public MaterialWavelengthRange
         ATTRIBUTE_DEFAULT_VALUE(wavelength, "0.55 micron")
         ATTRIBUTE_DISPLAYED_IF(wavelength, "Level2")
 
-        PROPERTY_ENUM(aggregation, Aggregation, "how to aggregate the opacity: produce an output file...")
+        PROPERTY_ENUM(aggregation, Aggregation, "how to aggregate the opacity")
         ATTRIBUTE_DEFAULT_VALUE(aggregation, "Type")
         ATTRIBUTE_DISPLAYED_IF(aggregation, "Level2")
 
