@@ -10,13 +10,6 @@
 
 ////////////////////////////////////////////////////////////////////
 
-Probe::When DensityProbe::when() const
-{
-    return probeAfter() == ProbeAfter::Run ? When::Run : When::Setup;
-}
-
-////////////////////////////////////////////////////////////////////
-
 void DensityProbe::probe()
 {
     if (find<Configuration>()->hasMedium())

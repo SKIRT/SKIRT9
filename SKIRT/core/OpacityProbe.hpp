@@ -7,7 +7,7 @@
 #define OPACITYPROBE_HPP
 
 #include "MaterialWavelengthRangeInterface.hpp"
-#include "SpatialGridFormProbe.hpp"
+#include "SpatialGridWhenFormProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -30,14 +30,8 @@
 
     This probe implements the MaterialWavelengthRangeInterface to indicate that
     wavelength-dependent material properties may be required for the configured wavelength. */
-class OpacityProbe : public SpatialGridFormProbe, public MaterialWavelengthRangeInterface
+class OpacityProbe : public SpatialGridWhenFormProbe, public MaterialWavelengthRangeInterface
 {
-    /** The enumeration type indicating when probing occurs. */
-    ENUM_DEF(ProbeAfter, Setup, Run)
-        ENUM_VAL(ProbeAfter, Setup, "after setup")
-        ENUM_VAL(ProbeAfter, Run, "after the complete simulation run")
-    ENUM_END()
-
     /** The enumeration type indicating how to aggregate the output: per medium component, per
         medium type (dust, electrons, gas), or for the complete medium system. */
     ENUM_DEF(Aggregation, Component, Type, System)
@@ -46,7 +40,7 @@ class OpacityProbe : public SpatialGridFormProbe, public MaterialWavelengthRange
         ENUM_VAL(Aggregation, System, "for the complete medium system")
     ENUM_END()
 
-    ITEM_CONCRETE(OpacityProbe, SpatialGridFormProbe, "the opacity of the medium")
+    ITEM_CONCRETE(OpacityProbe, SpatialGridWhenFormProbe, "the opacity of the medium")
         ATTRIBUTE_TYPE_DISPLAYED_IF(OpacityProbe, "Level2&Medium&SpatialGrid")
 
         PROPERTY_DOUBLE(wavelength, "the wavelength at which to determine the opacity")
@@ -60,18 +54,9 @@ class OpacityProbe : public SpatialGridFormProbe, public MaterialWavelengthRange
         ATTRIBUTE_DEFAULT_VALUE(aggregation, "Type")
         ATTRIBUTE_DISPLAYED_IF(aggregation, "Level2")
 
-        PROPERTY_ENUM(probeAfter, ProbeAfter, "perform the probe after")
-        ATTRIBUTE_DEFAULT_VALUE(probeAfter, "Setup")
-        ATTRIBUTE_DISPLAYED_IF(probeAfter, "DynamicState")
-
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============
-
-protected:
-    /** This function returns an enumeration indicating when probing for this probe should be
-        performed corresponding to the configured value of the \em probeAfter property. */
-    When when() const override;
 
 public:
     /** This function returns a wavelength range corresponding to the user-configured wavelength,

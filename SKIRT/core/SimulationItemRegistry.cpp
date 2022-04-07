@@ -624,6 +624,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<SpecialtyWavelengthProbe>();
     ItemRegistry::add<SpecialtyWavelengthGridProbe>();
     ItemRegistry::add<SpatialGridFormProbe>();
+    ItemRegistry::add<SpatialGridWhenFormProbe>();
 
     ItemRegistry::add<ConvergenceInfoProbe>();
     ItemRegistry::add<ConvergenceCutsProbe>();

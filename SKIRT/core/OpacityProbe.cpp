@@ -10,13 +10,6 @@
 
 ////////////////////////////////////////////////////////////////////
 
-Probe::When OpacityProbe::when() const
-{
-    return probeAfter() == ProbeAfter::Run ? When::Run : When::Setup;
-}
-
-////////////////////////////////////////////////////////////////////
-
 Range OpacityProbe::wavelengthRange() const
 {
     return Range(wavelength(), wavelength());
