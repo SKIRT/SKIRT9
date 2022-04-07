@@ -3,7 +3,7 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "SpatialGridConvergenceProbe.hpp"
+#include "ConvergenceInfoProbe.hpp"
 #include "Configuration.hpp"
 #include "Medium.hpp"
 #include "MediumSystem.hpp"
@@ -147,7 +147,7 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-void SpatialGridConvergenceProbe::probe()
+void ConvergenceInfoProbe::probe()
 {
     if (find<Configuration>()->hasMedium())
     {

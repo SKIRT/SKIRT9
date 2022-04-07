@@ -43,6 +43,7 @@
 #include "ConicalAngularDistribution.hpp"
 #include "ConicalShellGeometry.hpp"
 #include "ConvergenceCutsProbe.hpp"
+#include "ConvergenceInfoProbe.hpp"
 #include "CrystalEnstatiteGrainComposition.hpp"
 #include "CrystalForsteriteGrainComposition.hpp"
 #include "CubicSplineSmoothingKernel.hpp"
@@ -204,7 +205,6 @@
 #include "SourceSystem.hpp"
 #include "SpatialCellPropertiesProbe.hpp"
 #include "SpatialGrid.hpp"
-#include "SpatialGridConvergenceProbe.hpp"
 #include "SpatialGridPlotProbe.hpp"
 #include "SpatialGridSourceDensityProbe.hpp"
 #include "SpecificLuminosityNormalization.hpp"
@@ -625,7 +625,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<SpecialtyWavelengthGridProbe>();
     ItemRegistry::add<SpatialGridFormProbe>();
 
-    ItemRegistry::add<SpatialGridConvergenceProbe>();
+    ItemRegistry::add<ConvergenceInfoProbe>();
     ItemRegistry::add<ConvergenceCutsProbe>();
     ItemRegistry::add<DensityProbe>();
     ItemRegistry::add<OpacityProbe>();

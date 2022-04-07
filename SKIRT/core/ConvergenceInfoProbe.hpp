@@ -3,14 +3,14 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef SPATIALGRIDCONVERGENCEPROBE_HPP
-#define SPATIALGRIDCONVERGENCEPROBE_HPP
+#ifndef CONVERGENCEINFOPROBE_HPP
+#define CONVERGENCEINFOPROBE_HPP
 
 #include "SpecialtyWavelengthProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-/** SpatialGridConvergenceProbe outputs a text file named <tt>prefix_probe_convergence.dat</tt>
+/** ConvergenceInfoProbe outputs a text file named <tt>prefix_probe_convergence.dat</tt>
     with convergence information on the spatial grid for each material type in the medium system.
     The file is formatted for human consumption (not in column text format) and is intended as a
     basic sanity check on the configuration of the simulation.
@@ -27,10 +27,10 @@
 
     Finally, the file includes some basic statistics on the diagonal optical depths of the spatial
     grid cells: the largest and average diagonal optical depth, and the 90% percentile. */
-class SpatialGridConvergenceProbe : public SpecialtyWavelengthProbe
+class ConvergenceInfoProbe : public SpecialtyWavelengthProbe
 {
-    ITEM_CONCRETE(SpatialGridConvergenceProbe, SpecialtyWavelengthProbe, "convergence information on the spatial grid")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(SpatialGridConvergenceProbe, "Medium&SpatialGrid")
+    ITEM_CONCRETE(ConvergenceInfoProbe, SpecialtyWavelengthProbe, "convergence information on the spatial grid")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(ConvergenceInfoProbe, "Medium&SpatialGrid")
 
     ITEM_END()
 
