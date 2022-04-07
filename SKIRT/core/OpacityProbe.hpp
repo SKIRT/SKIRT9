@@ -25,7 +25,8 @@
     The user can select the aggregation level, i.e. whether to produce an output file per medium
     component, per medium type (dust, electrons, gas), or for the complete medium system. There is
     also an option to decide whether the probe should be performed after setup or after the full
-    simulation run.
+    simulation run. The latter option is meaningful if the density and/or cross section of the
+    media may change during the simulation.
 
     This probe implements the MaterialWavelengthRangeInterface to indicate that
     wavelength-dependent material properties may be required for the configured wavelength. */

@@ -49,17 +49,17 @@ void OpacityProbe::probe()
                 using MatType = MaterialMix::MaterialType;
                 if (ms->hasDust())
                 {
-                    bridge.writeQuantity("dust_k", "tau", "opacity", "opticaldepth", "opacity", "optical depth",
+                    bridge.writeQuantity("dust_k", "dust_tau", "opacity", "opticaldepth", "opacity", "optical depth",
                                          [ms, lambda](int m) { return ms->opacityExt(lambda, m, MatType::Dust); });
                 }
                 if (ms->hasElectrons())
                 {
-                    bridge.writeQuantity("elec_k", "tau", "opacity", "opticaldepth", "opacity", "optical depth",
+                    bridge.writeQuantity("elec_k", "elec_tau", "opacity", "opticaldepth", "opacity", "optical depth",
                                          [ms, lambda](int m) { return ms->opacityExt(lambda, m, MatType::Electrons); });
                 }
                 if (ms->hasGas())
                 {
-                    bridge.writeQuantity("gas_k", "tau", "opacity", "opticaldepth", "opacity", "optical depth",
+                    bridge.writeQuantity("gas_k", "gas_tau", "opacity", "opticaldepth", "opacity", "optical depth",
                                          [ms, lambda](int m) { return ms->opacityExt(lambda, m, MatType::Gas); });
                 }
                 break;
@@ -69,8 +69,8 @@ void OpacityProbe::probe()
                 int numMedia = ms->numMedia();
                 for (int h = 0; h != numMedia; ++h)
                 {
-                    bridge.writeQuantity(std::to_string(h) + "_k", "tau", "opacity", "opticaldepth", "opacity",
-                                         "optical depth",
+                    string sh = std::to_string(h);
+                    bridge.writeQuantity(sh + "_k", sh + "_tau", "opacity", "opticaldepth", "opacity", "optical depth",
                                          [ms, lambda, h](int m) { return ms->opacityExt(lambda, m, h); });
                 }
                 break;

@@ -252,7 +252,7 @@ string ProbeFormBridge::prefix() const
 string ProbeFormBridge::projectedPrefix() const
 {
     string result = _probe->itemName();
-    if (!_fileid.empty()) result += "_" + _projectedFileid;
+    if (!_projectedFileid.empty()) result += "_" + _projectedFileid;
     return result;
 }
 
