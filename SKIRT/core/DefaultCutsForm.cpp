@@ -9,6 +9,14 @@
 
 ////////////////////////////////////////////////////////////////////
 
+DefaultCutsForm::DefaultCutsForm(SimulationItem* parent)
+{
+    parent->addChild(this);
+    setup();
+}
+
+////////////////////////////////////////////////////////////////////
+
 void DefaultCutsForm::writeQuantity(const ProbeFormBridge* bridge) const
 {
     // the size in pixels (in each spatial direction) for the default cuts

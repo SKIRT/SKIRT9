@@ -439,6 +439,33 @@ bool MediumSystem::isMaterialType(MaterialMix::MaterialType type, int h) const
 
 ////////////////////////////////////////////////////////////////////
 
+double MediumSystem::dustMassDensity(Position bfr) const
+{
+    double result = 0.;
+    for (int h : _dust_hv) result += _media[h]->massDensity(bfr);
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::electronNumberDensity(Position bfr) const
+{
+    double result = 0.;
+    for (int h : _elec_hv) result += _media[h]->numberDensity(bfr);
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::gasNumberDensity(Position bfr) const
+{
+    double result = 0.;
+    for (int h : _gas_hv) result += _media[h]->numberDensity(bfr);
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////
+
 double MediumSystem::volume(int m) const
 {
     return _state.volume(m);

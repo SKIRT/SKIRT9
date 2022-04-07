@@ -42,6 +42,7 @@
 #include "ConfigurableDustMix.hpp"
 #include "ConicalAngularDistribution.hpp"
 #include "ConicalShellGeometry.hpp"
+#include "ConvergenceCutsProbe.hpp"
 #include "CrystalEnstatiteGrainComposition.hpp"
 #include "CrystalForsteriteGrainComposition.hpp"
 #include "CubicSplineSmoothingKernel.hpp"
@@ -623,9 +624,14 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<SpecialtyWavelengthGridProbe>();
     ItemRegistry::add<SpatialGridFormProbe>();
 
+    ItemRegistry::add<SpatialGridConvergenceProbe>();
+    ItemRegistry::add<ConvergenceCutsProbe>();
+    ItemRegistry::add<DensityProbe>();
+    ItemRegistry::add<OpacityProbe>();
+    ItemRegistry::add<VelocityProbe>();
+
     ItemRegistry::add<LuminosityProbe>();
     ItemRegistry::add<LaunchedPacketsProbe>();
-    ItemRegistry::add<SpatialGridConvergenceProbe>();
     ItemRegistry::add<SpatialGridPlotProbe>();
     ItemRegistry::add<TreeSpatialGridTopologyProbe>();
     ItemRegistry::add<SpatialCellPropertiesProbe>();
@@ -638,10 +644,6 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<InstrumentWavelengthGridProbe>();
     ItemRegistry::add<RadiationFieldWavelengthGridProbe>();
     ItemRegistry::add<DustEmissionWavelengthGridProbe>();
-
-    ItemRegistry::add<DensityProbe>();
-    ItemRegistry::add<OpacityProbe>();
-    ItemRegistry::add<VelocityProbe>();
 
     // forms
     ItemRegistry::add<Form>();

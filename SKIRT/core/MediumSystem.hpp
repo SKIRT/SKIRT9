@@ -217,6 +217,24 @@ public:
     /** This function returns a list of indices \f$h\f$ for media components that contain electrons. */
     const vector<int>& electronMediumIndices() const { return _elec_hv; }
 
+    //=============== Input model ===================
+
+public:
+    /** This function returns the total mass density of all dust medium components at the specified
+        position in the input model (i.e. directly querying the medium components rather than the
+        gridded medium state). */
+    double dustMassDensity(Position bfr) const;
+
+    /** This function returns the total number density of all electron medium components at the specified
+        position in the input model (i.e. directly querying the medium components rather than the
+        gridded medium state). */
+    double electronNumberDensity(Position bfr) const;
+
+    /** This function returns the total number density of all gas medium components at the specified
+        position in the input model (i.e. directly querying the medium components rather than the
+        gridded medium state). */
+    double gasNumberDensity(Position bfr) const;
+
     //=============== Medium state ===================
 
 public:
