@@ -133,6 +133,7 @@
 #include "LyaSEDDecorator.hpp"
 #include "LyaSEDFamilyDecorator.hpp"
 #include "MRNDustMix.hpp"
+#include "MagneticFieldProbe.hpp"
 #include "MappingsSED.hpp"
 #include "MappingsSEDFamily.hpp"
 #include "MarastonSED.hpp"
@@ -635,6 +636,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<TemperatureProbe>();
     ItemRegistry::add<MetallicityProbe>();
     ItemRegistry::add<VelocityProbe>();
+    ItemRegistry::add<MagneticFieldProbe>();
 
     ItemRegistry::add<LuminosityProbe>();
     ItemRegistry::add<LaunchedPacketsProbe>();
