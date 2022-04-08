@@ -206,9 +206,6 @@ SkirtUnitDef::SkirtUnitDef()
     addUnit("opacity", "/AU", 1 / AU);
     addUnit("opacity", "/pc", 1 / pc);
 
-    // optical depth
-    addUnit("opticaldepth", "1", 1.);
-
     // time
     addUnit("time", "s", 1.);
     addUnit("time", "yr", year);
@@ -446,6 +443,9 @@ SkirtUnitDef::SkirtUnitDef()
     addUnit("solidangle", "sr", 1.);
     addUnit("solidangle", "arcsec2", arcsec2);
 
+    // dimensionless (to avoid special cases in generic code)
+    addUnit("dimensionless", "1", 1.);
+
     // *** add default units for each physical quantity and for each unit system
 
     // SI unit system
@@ -471,7 +471,6 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("SIUnits", "numbervolumedensity", "1/m3");
     addDefaultUnit("SIUnits", "masscoefficient", "m2/kg");
     addDefaultUnit("SIUnits", "opacity", "1/m");
-    addDefaultUnit("SIUnits", "opticaldepth", "1");
     addDefaultUnit("SIUnits", "time", "s");
     addDefaultUnit("SIUnits", "temperature", "K");
     addDefaultUnit("SIUnits", "energy", "J");
@@ -497,6 +496,7 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("SIUnits", "angle", "rad");
     addDefaultUnit("SIUnits", "posangle", "rad");
     addDefaultUnit("SIUnits", "solidangle", "sr");
+    addDefaultUnit("SIUnits", "dimensionless", "1");
 
     // stellar unit system
     addDefaultUnit("StellarUnits", "length", "AU");
@@ -521,7 +521,6 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("StellarUnits", "numbervolumedensity", "1/cm3");
     addDefaultUnit("StellarUnits", "masscoefficient", "m2/kg");
     addDefaultUnit("StellarUnits", "opacity", "1/AU");
-    addDefaultUnit("StellarUnits", "opticaldepth", "1");
     addDefaultUnit("StellarUnits", "time", "Gyr");
     addDefaultUnit("StellarUnits", "temperature", "K");
     addDefaultUnit("StellarUnits", "energy", "J");
@@ -547,6 +546,7 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("StellarUnits", "angle", "arcsec");
     addDefaultUnit("StellarUnits", "posangle", "deg");
     addDefaultUnit("StellarUnits", "solidangle", "arcsec2");
+    addDefaultUnit("StellarUnits", "dimensionless", "1");
 
     // extra-galactic unit system
     addDefaultUnit("ExtragalacticUnits", "length", "pc");
@@ -571,7 +571,6 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("ExtragalacticUnits", "numbervolumedensity", "1/cm3");
     addDefaultUnit("ExtragalacticUnits", "masscoefficient", "m2/kg");
     addDefaultUnit("ExtragalacticUnits", "opacity", "1/pc");
-    addDefaultUnit("ExtragalacticUnits", "opticaldepth", "1");
     addDefaultUnit("ExtragalacticUnits", "time", "Gyr");
     addDefaultUnit("ExtragalacticUnits", "temperature", "K");
     addDefaultUnit("ExtragalacticUnits", "energy", "J");
@@ -597,6 +596,7 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("ExtragalacticUnits", "angle", "arcsec");
     addDefaultUnit("ExtragalacticUnits", "posangle", "deg");
     addDefaultUnit("ExtragalacticUnits", "solidangle", "arcsec2");
+    addDefaultUnit("ExtragalacticUnits", "dimensionless", "1");
 }
 
 ////////////////////////////////////////////////////////////////////

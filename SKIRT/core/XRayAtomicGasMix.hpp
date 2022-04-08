@@ -174,6 +174,7 @@ class XRayAtomicGasMix : public MaterialMix
 {
     ITEM_CONCRETE(XRayAtomicGasMix, MaterialMix,
                   "A gas mix supporting photo-absorption and fluorescence for X-ray wavelengths")
+        ATTRIBUTE_TYPE_INSERT(EmittingGasMix, "GasMix")
 
         PROPERTY_DOUBLE_LIST(abundancies, "the abundancies for the elements with atomic number Z = 1,...,30")
         ATTRIBUTE_MIN_VALUE(abundancies, "[0")

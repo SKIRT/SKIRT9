@@ -148,6 +148,7 @@
 #include "MeanTrustBenchmarkDustMix.hpp"
 #include "MediumSystem.hpp"
 #include "MeridionalCutForm.hpp"
+#include "MetallicityProbe.hpp"
 #include "MieSilicateGrainComposition.hpp"
 #include "MinSilicateGrainComposition.hpp"
 #include "ModifiedLogNormalGrainSizeDistribution.hpp"
@@ -630,6 +631,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ConvergenceCutsProbe>();
     ItemRegistry::add<DensityProbe>();
     ItemRegistry::add<OpacityProbe>();
+    ItemRegistry::add<MetallicityProbe>();
     ItemRegistry::add<VelocityProbe>();
 
     ItemRegistry::add<LuminosityProbe>();

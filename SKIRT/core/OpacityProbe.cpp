@@ -33,7 +33,7 @@ void OpacityProbe::probe()
         {
             case Aggregation::System:
             {
-                bridge.writeQuantity("k", "tau", "opacity", "opticaldepth", "opacity", "optical depth",
+                bridge.writeQuantity("k", "tau", "opacity", "dimensionless", "opacity", "optical depth",
                                      [ms, lambda](int m) { return ms->opacityExt(lambda, m); });
                 break;
             }
@@ -42,17 +42,17 @@ void OpacityProbe::probe()
                 using MatType = MaterialMix::MaterialType;
                 if (ms->hasDust())
                 {
-                    bridge.writeQuantity("dust_k", "dust_tau", "opacity", "opticaldepth", "opacity", "optical depth",
+                    bridge.writeQuantity("dust_k", "dust_tau", "opacity", "dimensionless", "opacity", "optical depth",
                                          [ms, lambda](int m) { return ms->opacityExt(lambda, m, MatType::Dust); });
                 }
                 if (ms->hasElectrons())
                 {
-                    bridge.writeQuantity("elec_k", "elec_tau", "opacity", "opticaldepth", "opacity", "optical depth",
+                    bridge.writeQuantity("elec_k", "elec_tau", "opacity", "dimensionless", "opacity", "optical depth",
                                          [ms, lambda](int m) { return ms->opacityExt(lambda, m, MatType::Electrons); });
                 }
                 if (ms->hasGas())
                 {
-                    bridge.writeQuantity("gas_k", "gas_tau", "opacity", "opticaldepth", "opacity", "optical depth",
+                    bridge.writeQuantity("gas_k", "gas_tau", "opacity", "dimensionless", "opacity", "optical depth",
                                          [ms, lambda](int m) { return ms->opacityExt(lambda, m, MatType::Gas); });
                 }
                 break;
@@ -63,7 +63,7 @@ void OpacityProbe::probe()
                 for (int h = 0; h != numMedia; ++h)
                 {
                     string sh = std::to_string(h);
-                    bridge.writeQuantity(sh + "_k", sh + "_tau", "opacity", "opticaldepth", "opacity", "optical depth",
+                    bridge.writeQuantity(sh + "_k", sh + "_tau", "opacity", "dimensionless", "opacity", "optical depth",
                                          [ms, lambda, h](int m) { return ms->opacityExt(lambda, m, h); });
                 }
                 break;
