@@ -487,7 +487,7 @@ void ProbeFormBridge::valuesAlongPath(Position bfr, Direction bfk, Array& values
                         values[0] += weight * _scalarValueInCell(m);
                     }
                 }
-                values[0] *= _projectedUnitFactor / totalWeight;
+                if (totalWeight) values[0] *= _projectedUnitFactor / totalWeight;
             }
             break;
         }
@@ -513,7 +513,7 @@ void ProbeFormBridge::valuesAlongPath(Position bfr, Direction bfk, Array& values
                         v += weight * _vectorValueInCell(m);
                     }
                 }
-                v *= _projectedUnitFactor / totalWeight;
+                if (totalWeight) v *= _projectedUnitFactor / totalWeight;
             }
             values[0] = v.x();
             values[1] = v.y();
@@ -542,7 +542,7 @@ void ProbeFormBridge::valuesAlongPath(Position bfr, Direction bfk, Array& values
                         values += weight * _compoundValueInCell(m);
                     }
                 }
-                values /= totalWeight;
+                if (totalWeight) values /= totalWeight;
             }
             break;
         }

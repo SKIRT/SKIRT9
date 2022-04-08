@@ -225,6 +225,7 @@
 #include "SunSED.hpp"
 #include "SymPowMesh.hpp"
 #include "TTauriDiskGeometry.hpp"
+#include "TemperatureProbe.hpp"
 #include "TemperatureWavelengthCellLibrary.hpp"
 #include "ThemisDustMix.hpp"
 #include "TorusGeometry.hpp"
@@ -631,6 +632,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ConvergenceCutsProbe>();
     ItemRegistry::add<DensityProbe>();
     ItemRegistry::add<OpacityProbe>();
+    ItemRegistry::add<TemperatureProbe>();
     ItemRegistry::add<MetallicityProbe>();
     ItemRegistry::add<VelocityProbe>();
 

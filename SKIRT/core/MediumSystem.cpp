@@ -1106,8 +1106,12 @@ double MediumSystem::indicativeTemperature(int m, int h) const
     if (_config->hasRadiationField()) Jv = meanIntensity(m);
 
     // obtain the temperature for the requested component and cell
-    MaterialState mst(_state, m, h);
-    return mix(m, h)->indicativeTemperature(&mst, Jv);
+    if (massDensity(m, h) > 0.)
+    {
+        MaterialState mst(_state, m, h);
+        return mix(m, h)->indicativeTemperature(&mst, Jv);
+    }
+    return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
