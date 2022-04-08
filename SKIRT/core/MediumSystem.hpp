@@ -572,6 +572,26 @@ public:
     //=============== Indicative temperature ===================
 
 public:
+    /** This function returns an indicative temperature \f${\bar{T}}_{m,h}\f$ for the material in
+        the medium component with index \f$h\f$ in the spatial cell with index \f$m\f$. If the cell
+        does not contain any material for the medium component, the function returns zero.
+
+        The interpretation of the indicative temperature depends heavily on the material type.
+        Refer to the description for the MaterialMix::indicativeTemperature() function in the
+        various MaterialMix subclasses for more information. Note that, in any case, the indicative
+        temperature usually does not correspond to a physical temperature.
+
+        The calculation of the indicative temperature may depend on the radiation field embedding
+        the material in the specified spatial cell, it may simply reflect the medium state for the
+        cell as defined in the input model during setup, or it may somehow depend on both. If the
+        radiation field is not being tracked in the simulation, and the indicative temperature for
+        the requested material type depends on it, the function will return zero. If the radiation
+        field \em is being tracked, this function assumes that the radiation field information has
+        been accumulated and the communicateRadiationField() function has been called before
+        invoking this function; see the meanIntensity() function. If this is not the case, the
+        behavior is undefined. */
+    double indicativeTemperature(int m, int h) const;
+
     /** This function returns an indicative temperature for the material of the specified type in
         the spatial cell with index \f$m\f$. It obtains an indicative temperature for each
         component with a material mix of the specified type, and averages these temperatures over

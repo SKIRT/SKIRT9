@@ -104,7 +104,6 @@
 class DustMix : public MaterialMix
 {
     ITEM_ABSTRACT(DustMix, MaterialMix, "a dust mix")
-        ATTRIBUTE_TYPE_INSERT(DustMix, "Dust")
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============

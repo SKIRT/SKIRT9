@@ -22,8 +22,8 @@
     is meaningful if the density of the media may change during the simulation. */
 class DensityProbe : public SpatialGridWhenFormProbe
 {
-    /** The enumeration type indicating how to aggregate the output: per medium component, per
-        medium type (dust, electrons, gas), or for the complete medium system. */
+    /** The enumeration type indicating how to aggregate the output: per medium component or per
+        medium type (dust, electrons, gas). */
     ENUM_DEF(Aggregation, Component, Type)
         ENUM_VAL(Aggregation, Component, "per medium component")
         ENUM_VAL(Aggregation, Type, "per medium type (dust, electrons, gas)")

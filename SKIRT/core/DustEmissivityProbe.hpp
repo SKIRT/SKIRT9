@@ -40,7 +40,7 @@ class DustEmissivityProbe : public SpecialtyProbe
 {
     ITEM_CONCRETE(DustEmissivityProbe, SpecialtyProbe,
                   "the emissivity spectrum for each dust mix in a range of standard fields")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(DustEmissivityProbe, "Level3&Dust&DustEmission")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(DustEmissivityProbe, "Level3&DustMix&DustEmission")
 
         PROPERTY_BOOL(writeWavelengthGrid, "output a text file with the emission spectrum wavelength grid")
         ATTRIBUTE_DEFAULT_VALUE(writeWavelengthGrid, "false")

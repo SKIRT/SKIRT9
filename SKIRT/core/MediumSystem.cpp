@@ -1099,6 +1099,19 @@ Array MediumSystem::meanIntensity(int m) const
 
 ////////////////////////////////////////////////////////////////////
 
+double MediumSystem::indicativeTemperature(int m, int h) const
+{
+    // get the radiation field, if available
+    Array Jv;
+    if (_config->hasRadiationField()) Jv = meanIntensity(m);
+
+    // obtain the temperature for the requested component and cell
+    MaterialState mst(_state, m, h);
+    return mix(m, h)->indicativeTemperature(&mst, Jv);
+}
+
+////////////////////////////////////////////////////////////////////
+
 double MediumSystem::indicativeTemperature(int m, MaterialMix::MaterialType type) const
 {
     // get the radiation field, if available

@@ -23,7 +23,7 @@ void VelocityProbe::probe()
 
         // construct a bridge and tell it to produce output
         ProbeFormBridge bridge(this, form());
-        bridge.writeQuantity("v", "velocity", "medium velocity", "mass-weighted medium velocity", valueInCell,
+        bridge.writeQuantity("v", "velocity", "medium velocity", "density-weighted medium velocity", valueInCell,
                              weightInCell);
     }
 }

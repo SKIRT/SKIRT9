@@ -360,9 +360,9 @@ public:
         list of path segments (traversing each cell) corresponding to the specified path, and it
         calls the \em valuesInCell callback for each cell in the list. If the straight and
         projected quantity names differ, the function calculates the accumulated quantity
-        \f$\Sigma_m Q_m \Delta s_m\f$. If the quantity names are the same, it calculates the
-        weigthed average \f$\Sigma_m Q_m w_m \Delta s_m / \Sigma_m w_m \Delta s_m\f$, where the
-        weigths are retrieved by calling the \em weightInCell callback for each cell. */
+        \f$\sum_m Q_m \Delta s_m\f$. If the quantity names are the same, it calculates the
+        weighted average \f$\sum_m Q_m w_m \Delta s_m / \sum_m w_m \Delta s_m\f$, where the
+        weights are retrieved by calling the \em weightInCell callback for each cell. */
     void valuesAlongPath(Position bfr, Direction bfk, Array& values) const;
 
     //======== Data members: private  =======

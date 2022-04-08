@@ -18,7 +18,7 @@
 class DustEmissionWavelengthGridProbe : public SpecialtyProbe
 {
     ITEM_CONCRETE(DustEmissionWavelengthGridProbe, SpecialtyProbe, "the dust emission wavelength grid")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(DustEmissionWavelengthGridProbe, "Level2&Dust&DustEmission")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(DustEmissionWavelengthGridProbe, "Level2&DustMix&DustEmission")
     ITEM_END()
 
     //======================== Other Functions =======================

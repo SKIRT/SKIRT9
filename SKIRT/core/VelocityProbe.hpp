@@ -12,7 +12,7 @@
 
 /** VelocityProbe probes the bulk velocity of the medium as discretized on the spatial grid of the
     simulation. The probe can be used with any Form subclass. When associated with a form that
-    projects the quantity along a path, the value is mass-weighted. */
+    projects the quantity along a path, the value is density-weighted. */
 class VelocityProbe : public SpatialGridFormProbe
 {
     ITEM_CONCRETE(VelocityProbe, SpatialGridFormProbe, "the bulk velocity of the medium")

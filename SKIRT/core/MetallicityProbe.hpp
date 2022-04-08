@@ -18,7 +18,7 @@
 
     A seperate output file is produced for each gas medium component that stores a metallicity
     value in the medium state. The probe can be used with any Form subclass. When associated with a
-    form that projects the quantity along a path, the value is mass-weighted. */
+    form that projects the quantity along a path, the value is density-weighted. */
 class MetallicityProbe : public SpatialGridWhenFormProbe
 {
     ITEM_CONCRETE(MetallicityProbe, SpatialGridWhenFormProbe, "the metallicity of the gas medium")
