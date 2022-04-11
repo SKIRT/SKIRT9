@@ -185,6 +185,7 @@
 #include "PseudoSersicGeometry.hpp"
 #include "QuasarSED.hpp"
 #include "RadialVectorField.hpp"
+#include "RadiationFieldProbe.hpp"
 #include "RadiationFieldWavelengthGridProbe.hpp"
 #include "Random.hpp"
 #include "ReadFits3DGeometry.hpp"
@@ -637,6 +638,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<MetallicityProbe>();
     ItemRegistry::add<VelocityProbe>();
     ItemRegistry::add<MagneticFieldProbe>();
+    ItemRegistry::add<RadiationFieldProbe>();
 
     ItemRegistry::add<LuminosityProbe>();
     ItemRegistry::add<LaunchedPacketsProbe>();
