@@ -48,6 +48,7 @@
 #include "CrystalForsteriteGrainComposition.hpp"
 #include "CubicSplineSmoothingKernel.hpp"
 #include "CubicalBackgroundSource.hpp"
+#include "CustomStateProbe.hpp"
 #include "Cylinder2DSpatialGrid.hpp"
 #include "CylindricalClipGeometryDecorator.hpp"
 #include "CylindricalVectorField.hpp"
@@ -639,6 +640,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<VelocityProbe>();
     ItemRegistry::add<MagneticFieldProbe>();
     ItemRegistry::add<RadiationFieldProbe>();
+    ItemRegistry::add<CustomStateProbe>();
 
     ItemRegistry::add<LuminosityProbe>();
     ItemRegistry::add<LaunchedPacketsProbe>();
