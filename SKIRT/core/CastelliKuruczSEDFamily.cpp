@@ -25,12 +25,8 @@ void CastelliKuruczSEDFamily::setupSelfBefore()
 
 vector<SnapshotParameter> CastelliKuruczSEDFamily::parameterInfo() const
 {
-    return vector<SnapshotParameter>{
-        {"radius", "length", "km"},
-        {"metallicity"},
-        {"effective temperature", "temperature", "K"},
-        {"surface gravity", "acceleration", "m/s2"},
-    };
+    return {SnapshotParameter::custom("radius", "length", "km"), SnapshotParameter::metallicity(),
+            SnapshotParameter::temperature(), SnapshotParameter::custom("surface gravity", "acceleration", "m/s2")};
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -10,10 +10,7 @@
 
 vector<SnapshotParameter> BlackBodySEDFamily::parameterInfo() const
 {
-    return vector<SnapshotParameter>{
-        {"radius", "length", "km"},
-        {"temperature", "temperature", "K"},
-    };
+    return {SnapshotParameter::custom("radius", "length", "km"), SnapshotParameter::temperature()};
 }
 
 ////////////////////////////////////////////////////////////////////

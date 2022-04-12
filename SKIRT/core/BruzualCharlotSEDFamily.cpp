@@ -34,11 +34,7 @@ void BruzualCharlotSEDFamily::setupSelfBefore()
 
 vector<SnapshotParameter> BruzualCharlotSEDFamily::parameterInfo() const
 {
-    return vector<SnapshotParameter>{
-        {"initial mass", "mass", "Msun"},
-        {"metallicity"},
-        {"age", "time", "yr"},
-    };
+    return {SnapshotParameter::initialMass(), SnapshotParameter::metallicity(), SnapshotParameter::age()};
 }
 
 ////////////////////////////////////////////////////////////////////

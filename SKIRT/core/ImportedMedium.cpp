@@ -31,7 +31,7 @@ void ImportedMedium::setupSelfAfter()
     if (mix()->isDust())
     {
         // for dust, use temperature cutoff and metallicity multiplier
-        _snapshot->setMassDensityPolicy(_massFraction, _importTemperature ? _maxTemperature : 0., true);
+        _snapshot->setMassDensityPolicy(_massFraction, _importTemperature ? _maxTemperature : 0., _importMetallicity);
     }
     else
     {
@@ -160,7 +160,7 @@ double ImportedMedium::temperature(Position bfr) const
 
 bool ImportedMedium::hasParameters() const
 {
-    return !_importVariableMixParams && _snapshot->numParameters() > 0;
+    return !_importVariableMixParams && _snapshot->hasParameters();
 }
 
 ////////////////////////////////////////////////////////////////////

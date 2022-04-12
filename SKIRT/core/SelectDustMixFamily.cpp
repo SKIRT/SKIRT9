@@ -10,9 +10,7 @@
 
 vector<SnapshotParameter> SelectDustMixFamily::parameterInfo() const
 {
-    return vector<SnapshotParameter>{
-        {"dustmix index"},
-    };
+    return {SnapshotParameter::custom("dustmix index")};
 }
 
 ////////////////////////////////////////////////////////////////////
