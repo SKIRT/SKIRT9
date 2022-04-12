@@ -101,12 +101,13 @@ void CustomStateProbe::probe()
                 // define the call-back function to retrieve a compound value in output units
                 auto valueInCell = [ms, &indexv, &descriptors, h, units](int m) {
                     Array out(indexv.size());
+                    int outindex = 0;
                     for (int index : indexv)
                     {
                         const auto& descriptor = descriptors[index];
                         double value = ms->custom(m, h, descriptor.customIndex());
                         if (!descriptor.quantity().empty()) value = units->out(descriptor.quantity(), value);
-                        out[index] = value;
+                        out[outindex++] = value;
                     }
                     return out;
                 };

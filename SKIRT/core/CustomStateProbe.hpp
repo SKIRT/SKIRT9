@@ -11,13 +11,14 @@
 ////////////////////////////////////////////////////////////////////
 
 /** CustomStateProbe probes the custom medium state quantities for medium components configured
-    with a material mix that requests such variables. Examples include the neutral and atomic
-    hydrogen fractions required by the SpinFlipHydrogenGasMix and the energy level population
-    densities used by the CarbonMonoxideGasMix. These custom quantities are always discretized on
-    the simulation's spatial grid. The probe outputs a compound quantity with a value for each of
-    the custom medium state quantities. It can be used with any Form subclass, taking into account
-    the caveat discussed below. When associated with a form that projects the quantity along a
-    path, the value is density-weighted.
+    with a material mix that requests such variables. Examples include the dust fragment weights
+    used by the FragmentDustMixDecorator, the neutral and atomic hydrogen fractions required by the
+    SpinFlipHydrogenGasMix, and the energy level population densities used by the
+    CarbonMonoxideGasMix. These custom quantities are always discretized on the simulation's
+    spatial grid. The probe outputs a compound quantity with a value for each of the custom medium
+    state quantities. It can be used with any Form subclass, taking into account the caveat
+    discussed below. When associated with a form that projects the quantity along a path, the value
+    is density-weighted.
 
     A given material mix (and thus its associated medium component) may use custom state quantities
     of different types and hence different output units. This is no problem for text column output
@@ -28,14 +29,15 @@
     quantity stored in the first frame.
 
     The \em indices option allows specifying a subset of the custom state quantities to be probed.
-    If the string is empty, all custom quantities are included. Otherwise, the probe expects a
-    comma-separated list of zero-based indices or index ranges indicated with a dash. Examples of
-    valid strings include: "5,1,2" or "0-9,17". This allows restricting the probe to quantities
-    with the same units or otherwise grouping or reordering quantities.
+    This allows restricting the probe to quantities with the same units or otherwise grouping or
+    reordering quantities. If the \em indices string is empty, all custom quantities are included.
+    Otherwise, the probe expects a comma-separated list of zero-based indices or index ranges
+    indicated with a dash. Examples of valid strings include: "5,1,2" or "0-9,17". Incorrectly
+    formatted string segments and out-of-range indices are ignored.
 
     The probe produces output for each medium component that has custom quantities, or if the \em
-    indices string is nonempty, for each medium component that has custom quantities for all of the
-    specified indices.
+    indices string is nonempty, for each medium component that has custom quantities for at least
+    one of the specified indices.
 
     There is also an option to decide whether the probe should be performed after setup or after
     the full simulation run. The latter option is meaningful if the custom medium state may change
