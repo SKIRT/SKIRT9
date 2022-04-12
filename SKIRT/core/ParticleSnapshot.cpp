@@ -158,109 +158,6 @@ int ParticleSnapshot::numEntities() const
 
 ////////////////////////////////////////////////////////////////////
 
-Position ParticleSnapshot::position(int m) const
-{
-    return Position(_propv[m][positionIndex() + 0], _propv[m][positionIndex() + 1], _propv[m][positionIndex() + 2]);
-}
-
-////////////////////////////////////////////////////////////////////
-
-double ParticleSnapshot::metallicity(int m) const
-{
-    return _propv[m][metallicityIndex()];
-}
-
-////////////////////////////////////////////////////////////////////
-
-double ParticleSnapshot::metallicity(Position bfr) const
-{
-    const SmoothedParticle* nearestParticle = _grid ? _grid->nearestParticle(bfr) : nullptr;
-    return nearestParticle ? metallicity(nearestParticle->index()) : 0.;
-}
-
-////////////////////////////////////////////////////////////////////
-
-double ParticleSnapshot::temperature(int m) const
-{
-    return _propv[m][temperatureIndex()];
-}
-
-////////////////////////////////////////////////////////////////////
-
-double ParticleSnapshot::temperature(Position bfr) const
-{
-    const SmoothedParticle* nearestParticle = _grid ? _grid->nearestParticle(bfr) : nullptr;
-    return nearestParticle ? temperature(nearestParticle->index()) : 0.;
-}
-
-////////////////////////////////////////////////////////////////////
-
-Vec ParticleSnapshot::velocity(int m) const
-{
-    return Vec(_propv[m][velocityIndex() + 0], _propv[m][velocityIndex() + 1], _propv[m][velocityIndex() + 2]);
-}
-
-////////////////////////////////////////////////////////////////////
-
-Vec ParticleSnapshot::velocity(Position bfr) const
-{
-    const SmoothedParticle* nearestParticle = _grid ? _grid->nearestParticle(bfr) : nullptr;
-    return nearestParticle ? velocity(nearestParticle->index()) : Vec();
-}
-
-////////////////////////////////////////////////////////////////////
-
-double ParticleSnapshot::velocityDispersion(int m) const
-{
-    return _propv[m][velocityDispersionIndex()];
-}
-
-////////////////////////////////////////////////////////////////////
-
-double ParticleSnapshot::velocityDispersion(Position bfr) const
-{
-    const SmoothedParticle* nearestParticle = _grid ? _grid->nearestParticle(bfr) : nullptr;
-    return nearestParticle ? velocityDispersion(nearestParticle->index()) : 0.;
-}
-
-////////////////////////////////////////////////////////////////////
-
-Vec ParticleSnapshot::magneticField(int m) const
-{
-    return Vec(_propv[m][magneticFieldIndex() + 0], _propv[m][magneticFieldIndex() + 1],
-               _propv[m][magneticFieldIndex() + 2]);
-}
-
-////////////////////////////////////////////////////////////////////
-
-Vec ParticleSnapshot::magneticField(Position bfr) const
-{
-    const SmoothedParticle* nearestParticle = _grid ? _grid->nearestParticle(bfr) : nullptr;
-    return nearestParticle ? magneticField(nearestParticle->index()) : Vec();
-}
-
-////////////////////////////////////////////////////////////////////
-
-void ParticleSnapshot::parameters(int m, Array& params) const
-{
-    int n = numParameters();
-    params.resize(n);
-    for (int i = 0; i != n; ++i) params[i] = _propv[m][parametersIndex() + i];
-}
-
-////////////////////////////////////////////////////////////////////
-
-void ParticleSnapshot::parameters(Position bfr, Array& params) const
-{
-    const SmoothedParticle* nearestParticle = _grid ? _grid->nearestParticle(bfr) : nullptr;
-    if (nearestParticle)
-        parameters(nearestParticle->index(), params);
-    else
-        params.resize(numParameters());
-}
-
-////////////////////////////////////////////////////////////////////
-
 double ParticleSnapshot::density(Position bfr) const
 {
     double sum = 0.;
@@ -279,6 +176,13 @@ double ParticleSnapshot::density(Position bfr) const
 double ParticleSnapshot::mass() const
 {
     return _mass;
+}
+
+////////////////////////////////////////////////////////////////////
+
+Position ParticleSnapshot::position(int m) const
+{
+    return Position(_propv[m][positionIndex() + 0], _propv[m][positionIndex() + 1], _propv[m][positionIndex() + 2]);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -307,6 +211,21 @@ Position ParticleSnapshot::generatePosition() const
     int m = NR::locateClip(_cumrhov, random()->uniform());
 
     return generatePosition(m);
+}
+
+////////////////////////////////////////////////////////////////////
+
+const Array& ParticleSnapshot::properties(int m) const
+{
+    return _propv[m];
+}
+
+////////////////////////////////////////////////////////////////////
+
+int ParticleSnapshot::nearestEntity(Position bfr) const
+{
+    const SmoothedParticle* nearestParticle = _grid ? _grid->nearestParticle(bfr) : nullptr;
+    return nearestParticle ? nearestParticle->index() : -1;
 }
 
 ////////////////////////////////////////////////////////////////////

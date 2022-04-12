@@ -283,75 +283,6 @@ public:
     /** This function returns the number of entities \f$N_\mathrm{ent}\f$ in the snapshot. */
     virtual int numEntities() const = 0;
 
-    /** This function returns a characteristic position for the entity with index \f$0\le m \le
-        N_\mathrm{ent}-1\f$. Such a position is always available for all snapshot types, regardless
-        of whether a position is explicitly being imported or not. If the index is out of range,
-        the behavior is undefined. */
-    virtual Position position(int m) const = 0;
-
-    /** This function returns the metallicity of the entity with index \f$0\le m \le
-        N_\mathrm{ent}-1\f$. If the metallicity is not being imported, or the index is out of
-        range, the behavior is undefined. */
-    virtual double metallicity(int m) const = 0;
-
-    /** This function returns the metallicity of the entity nearest to (or at) the specified point
-        \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If the
-        metallicity is not being imported, the behavior is undefined. */
-    virtual double metallicity(Position bfr) const = 0;
-
-    /** This function returns the temperature of the entity with index \f$0\le m \le
-        N_\mathrm{ent}-1\f$. If the temperature is not being imported, or the index is out of
-        range, the behavior is undefined. */
-    virtual double temperature(int m) const = 0;
-
-    /** This function returns the temperature of the entity nearest to (or at) the specified point
-        \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If the
-        temperature is not being imported, the behavior is undefined. */
-    virtual double temperature(Position bfr) const = 0;
-
-    /** This function returns the velocity of the entity with index \f$0\le m \le
-        N_\mathrm{ent}-1\f$. If the velocity is not being imported, or the index is out of range,
-        the behavior is undefined. */
-    virtual Vec velocity(int m) const = 0;
-
-    /** This function returns the velocity of the entity nearest to (or at) the specified point
-        \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero velocity. If
-        the velocity is not being imported, the behavior is undefined. */
-    virtual Vec velocity(Position bfr) const = 0;
-
-    /** This function returns the velocity dispersion of the entity with index \f$0\le m \le
-        N_\mathrm{ent}-1\f$. If the velocity dispersion is not being imported, or the index is out
-        of range, the behavior is undefined. */
-    virtual double velocityDispersion(int m) const = 0;
-
-    /** This function returns the velocity dispersion of the entity nearest to (or at) the
-        specified point \f${\bf{r}}\f$. If the point is outside the domain, the function returns
-        zero dispersion. If the velocity dispersion is not being imported, the behavior is
-        undefined. */
-    virtual double velocityDispersion(Position bfr) const = 0;
-
-    /** This function returns the magnetic field vector of the entity with index \f$0\le m \le
-        N_\mathrm{ent}-1\f$. If the magnetic field is not being imported, or the index is out of
-        range, the behavior is undefined. */
-    virtual Vec magneticField(int m) const = 0;
-
-    /** This function returns the magnetic field vector of the entity nearest to (or at) the
-        specified point \f${\bf{r}}\f$. If the point is outside the domain, the function returns a
-        zero magnetic field. If the magnetic field is not being imported, the behavior is
-        undefined. */
-    virtual Vec magneticField(Position bfr) const = 0;
-
-    /** This function stores the parameters of the entity with index \f$0\le m \le
-        N_\mathrm{ent}-1\f$ into the given array. If parameters are not being imported, or the
-        index is out of range, the behavior is undefined. */
-    virtual void parameters(int m, Array& params) const = 0;
-
-    /** This function stores the parameters of the entity nearest to (or at) the specified point
-        \f${\bf{r}}\f$ into the given array. If the point is outside the domain, the function
-        returns the appropriate number of zero parameter values. If parameters are not being
-        imported, the behavior is undefined. */
-    virtual void parameters(Position bfr, Array& params) const = 0;
-
     /** This function returns the mass or number density represented by the snapshot at a given
         point \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If no
         density policy has been set or no mass/density information is being imported, the behavior
@@ -364,6 +295,12 @@ public:
         is undefined. */
     virtual double mass() const = 0;
 
+    /** This function returns a characteristic position for the entity with index \f$0\le m \le
+        N_\mathrm{ent}-1\f$. Such a position is always available for all snapshot types, regardless
+        of whether a position is explicitly being imported or not. If the index is out of range,
+        the behavior is undefined. */
+    virtual Position position(int m) const = 0;
+
     /** This function returns a random position within the entity with index \f$0\le m \le
         N_\mathrm{ent}-1\f$, drawn from an appropriate probability distribution depending on the
         snapshot type (e.g. uniform for cells, and some smoothing kernel for particles). If the
@@ -375,19 +312,96 @@ public:
         been set or no mass/density information is being imported, the behavior is undefined. */
     virtual Position generatePosition() const = 0;
 
+protected:
+    /** This function returns a reference to an array containing the imported properties (in column
+        order) for the entity with index \f$0\le m \le N_\mathrm{ent}-1\f$. If the index is out of
+        range, the behavior is undefined. */
+    virtual const Array& properties(int m) const = 0;
+
+    /** This function returns the index \f$0\le m \le N_\mathrm{ent}-1\f$ for the entity at or
+        nearest to the specified point \f${\bf{r}}\f$, or -1 if the point is outside the domain or
+        if there are no entities in the snapshot. For a cell-based snapshot, the function returns
+        the index of the cell containing the given point. For a particle-based snapshot, the
+        function returns the index of the particle whose center is nearest to the given point. */
+    virtual int nearestEntity(Position bfr) const = 0;
+
     //============== Interrogation implemented here =============
+
+public:
+    /** This function returns true if the snapshot holds number (density) values, and false if it
+        holds mass (density) values (or if no mass or density column is being imported). */
+    bool holdsNumber() const { return _holdsNumber; }
 
     /** This function returns the volume of the complete domain of the snapshot, taken to be a box
         lined up with the coordinate axes. */
     double volume() const;
 
-    /** This function returns true if the snapshot holds number (density) values, and false if it
-        holds mass (density) values (or if no mass or density column is being imported). */
-    bool holdsNumber() const { return _holdsNumber; }
+    /** This function returns the metallicity of the entity with index \f$0\le m \le
+        N_\mathrm{ent}-1\f$. If the metallicity is not being imported, or the index is out of
+        range, the behavior is undefined. */
+    double metallicity(int m) const;
 
-    /** This function returns true if parameters are imported (i.e. the number of parameters is
-        nonzero). */
+    /** This function returns the metallicity of the entity nearest to (or at) the specified point
+        \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If the
+        metallicity is not being imported, the behavior is undefined. */
+    double metallicity(Position bfr) const;
+
+    /** This function returns the temperature of the entity with index \f$0\le m \le
+        N_\mathrm{ent}-1\f$. If the temperature is not being imported, or the index is out of
+        range, the behavior is undefined. */
+    double temperature(int m) const;
+
+    /** This function returns the temperature of the entity nearest to (or at) the specified point
+        \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If the
+        temperature is not being imported, the behavior is undefined. */
+    double temperature(Position bfr) const;
+
+    /** This function returns the velocity of the entity with index \f$0\le m \le
+        N_\mathrm{ent}-1\f$. If the velocity is not being imported, or the index is out of range,
+        the behavior is undefined. */
+    Vec velocity(int m) const;
+
+    /** This function returns the velocity of the entity nearest to (or at) the specified point
+        \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero velocity. If
+        the velocity is not being imported, the behavior is undefined. */
+    Vec velocity(Position bfr) const;
+
+    /** This function returns the velocity dispersion of the entity with index \f$0\le m \le
+        N_\mathrm{ent}-1\f$. If the velocity dispersion is not being imported, or the index is out
+        of range, the behavior is undefined. */
+    double velocityDispersion(int m) const;
+
+    /** This function returns the velocity dispersion of the entity nearest to (or at) the
+        specified point \f${\bf{r}}\f$. If the point is outside the domain, the function returns
+        zero dispersion. If the velocity dispersion is not being imported, the behavior is
+        undefined. */
+    double velocityDispersion(Position bfr) const;
+
+    /** This function returns the magnetic field vector of the entity with index \f$0\le m \le
+        N_\mathrm{ent}-1\f$. If the magnetic field is not being imported, or the index is out of
+        range, the behavior is undefined. */
+    Vec magneticField(int m) const;
+
+    /** This function returns the magnetic field vector of the entity nearest to (or at) the
+        specified point \f${\bf{r}}\f$. If the point is outside the domain, the function returns a
+        zero magnetic field. If the magnetic field is not being imported, the behavior is
+        undefined. */
+    Vec magneticField(Position bfr) const;
+
+    /** This function returns true if parameters are imported (i.e. if the number of imported
+         parameters is nonzero). */
     bool hasParameters() const { return _numParameters > 0; }
+
+    /** This function stores the parameters of the entity with index \f$0\le m \le
+        N_\mathrm{ent}-1\f$ into the given array. If parameters are not being imported, or the
+        index is out of range, the behavior is undefined. */
+    void parameters(int m, Array& params) const;
+
+    /** This function stores the parameters of the entity nearest to (or at) the specified point
+        \f${\bf{r}}\f$ into the given array. If the point is outside the domain, the function
+        returns the appropriate number of zero parameter values. If parameters are not being
+        imported, the behavior is undefined. */
+    void parameters(Position bfr, Array& params) const;
 
     /** This function returns the X-axis surface density of the density distribution represented by
         the snapshot, defined as the integration of the density along the entire X-axis, \f[

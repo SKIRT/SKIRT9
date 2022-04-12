@@ -292,109 +292,6 @@ int CellSnapshot::numEntities() const
 
 ////////////////////////////////////////////////////////////////////
 
-Position CellSnapshot::position(int m) const
-{
-    return Position(box(_propv[m], boxIndex()).center());
-}
-
-////////////////////////////////////////////////////////////////////
-
-double CellSnapshot::metallicity(int m) const
-{
-    return _propv[m][metallicityIndex()];
-}
-
-////////////////////////////////////////////////////////////////////
-
-double CellSnapshot::metallicity(Position bfr) const
-{
-    int m = _grid ? _grid->cellIndexFor(bfr) : -1;
-    return m >= 0 ? metallicity(m) : 0.;
-}
-
-////////////////////////////////////////////////////////////////////
-
-double CellSnapshot::temperature(int m) const
-{
-    return _propv[m][temperatureIndex()];
-}
-
-////////////////////////////////////////////////////////////////////
-
-double CellSnapshot::temperature(Position bfr) const
-{
-    int m = _grid ? _grid->cellIndexFor(bfr) : -1;
-    return m >= 0 ? temperature(m) : 0.;
-}
-
-////////////////////////////////////////////////////////////////////
-
-Vec CellSnapshot::velocity(int m) const
-{
-    return Vec(_propv[m][velocityIndex() + 0], _propv[m][velocityIndex() + 1], _propv[m][velocityIndex() + 2]);
-}
-
-////////////////////////////////////////////////////////////////////
-
-Vec CellSnapshot::velocity(Position bfr) const
-{
-    int m = _grid ? _grid->cellIndexFor(bfr) : -1;
-    return m >= 0 ? velocity(m) : Vec();
-}
-
-////////////////////////////////////////////////////////////////////
-
-double CellSnapshot::velocityDispersion(int m) const
-{
-    return _propv[m][velocityDispersionIndex()];
-}
-
-////////////////////////////////////////////////////////////////////
-
-double CellSnapshot::velocityDispersion(Position bfr) const
-{
-    int m = _grid ? _grid->cellIndexFor(bfr) : -1;
-    return m >= 0 ? velocityDispersion(m) : 0.;
-}
-
-////////////////////////////////////////////////////////////////////
-
-Vec CellSnapshot::magneticField(int m) const
-{
-    return Vec(_propv[m][magneticFieldIndex() + 0], _propv[m][magneticFieldIndex() + 1],
-               _propv[m][magneticFieldIndex() + 2]);
-}
-
-////////////////////////////////////////////////////////////////////
-
-Vec CellSnapshot::magneticField(Position bfr) const
-{
-    int m = _grid ? _grid->cellIndexFor(bfr) : -1;
-    return m >= 0 ? magneticField(m) : Vec();
-}
-
-////////////////////////////////////////////////////////////////////
-
-void CellSnapshot::parameters(int m, Array& params) const
-{
-    int n = numParameters();
-    params.resize(n);
-    for (int i = 0; i != n; ++i) params[i] = _propv[m][parametersIndex() + i];
-}
-
-////////////////////////////////////////////////////////////////////
-
-void CellSnapshot::parameters(Position bfr, Array& params) const
-{
-    int m = _grid ? _grid->cellIndexFor(bfr) : -1;
-    if (m >= 0)
-        parameters(m, params);
-    else
-        params.resize(numParameters());
-}
-
-////////////////////////////////////////////////////////////////////
-
 double CellSnapshot::density(Position bfr) const
 {
     int m = _grid ? _grid->cellIndexFor(bfr) : -1;
@@ -406,6 +303,13 @@ double CellSnapshot::density(Position bfr) const
 double CellSnapshot::mass() const
 {
     return _mass;
+}
+
+////////////////////////////////////////////////////////////////////
+
+Position CellSnapshot::position(int m) const
+{
+    return Position(box(_propv[m], boxIndex()).center());
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -426,6 +330,20 @@ Position CellSnapshot::generatePosition() const
     int m = NR::locateClip(_cumrhov, random()->uniform());
 
     return generatePosition(m);
+}
+
+////////////////////////////////////////////////////////////////////
+
+const Array& CellSnapshot::properties(int m) const
+{
+    return _propv[m];
+}
+
+////////////////////////////////////////////////////////////////////
+
+int CellSnapshot::nearestEntity(Position bfr) const
+{
+    return _grid ? _grid->cellIndexFor(bfr) : -1;
 }
 
 ////////////////////////////////////////////////////////////////////

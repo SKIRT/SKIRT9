@@ -63,70 +63,6 @@ public:
     /** This function returns the number of particles in the snapshot. */
     int numEntities() const override;
 
-    /** This function returns the position for the particle with index \em m. If the index is out
-        of range, the behavior is undefined. */
-    Position position(int m) const override;
-
-    /** This function returns the metallicity of the particle with index \em m. If the metallicity
-        is not being imported, or the index is out of range, the behavior is undefined. */
-    double metallicity(int m) const override;
-
-    /** This function returns the metallicity of the particle centered nearest to the specified
-        point \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If the
-        metallicity is not being imported, the behavior is undefined. */
-    double metallicity(Position bfr) const override;
-
-    /** This function returns the temperature of the particle with index \em m. If the temperature
-        is not being imported, or the index is out of range, the behavior is undefined. */
-    double temperature(int m) const override;
-
-    /** This function returns the temperature of the particle centered nearest to the specified
-        point \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If the
-        temperature is not being imported, the behavior is undefined. */
-    double temperature(Position bfr) const override;
-
-    /** This function returns the velocity of the particle with index \em m. If the velocity is not
-        being imported, or the index is out of range, the behavior is undefined. */
-    Vec velocity(int m) const override;
-
-    /** This function returns the velocity of the particle centered nearest to the specified point
-        \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero velocity. If
-        the velocity is not being imported, the behavior is undefined. */
-    Vec velocity(Position bfr) const override;
-
-    /** This function returns the velocity dispersion of the entity with index \f$0\le m \le
-        N_\mathrm{ent}-1\f$. If the velocity dispersion is not being imported, or the index is out
-        of range, the behavior is undefined. */
-    double velocityDispersion(int m) const override;
-
-    /** This function returns the velocity dispersion of the entity nearest to (or at) the
-        specified point \f${\bf{r}}\f$. If the point is outside the domain, the function returns
-        zero dispersion. If the velocity dispersion is not being imported, the behavior is
-        undefined. */
-    double velocityDispersion(Position bfr) const override;
-
-    /** This function returns the magnetic field vector of the particle with index \em m. If the
-        magnetic field is not being imported, or the index is out of range, the behavior is
-        undefined. */
-    Vec magneticField(int m) const override;
-
-    /** This function returns the magnetic field vector of the particle centered nearest to the
-        specified point \f${\bf{r}}\f$. If the point is outside the domain, the function returns a
-        zero magnetic field. If the magnetic field is not being imported, the behavior is
-        undefined. */
-    Vec magneticField(Position bfr) const override;
-
-    /** This function stores the parameters of the particle with index \em m into the given array.
-        If parameters are not being imported, or the index is out of range, the behavior is
-        undefined. */
-    void parameters(int m, Array& params) const override;
-
-    /** This function stores the parameters of the particle centered nearest to the specified point
-        \f${\bf{r}}\f$ into the given array. If the point is outside the domain, the function
-        returns the appropriate number of zero parameter values. If parameters are not being
-        imported, the behavior is undefined. */
-    void parameters(Position bfr, Array& params) const override;
-
     /** This function returns the mass density represented by the snapshot at a given point
         \f${\bf{r}}\f$, determined by interpolating (conceptually) over all smoothed particles. If
         the point is outside the domain, the function returns zero. If no density policy has been
@@ -137,6 +73,10 @@ public:
         the masses of all particles. If no density policy has been set or no mass information is
         being imported, the behavior is undefined. */
     double mass() const override;
+
+    /** This function returns the position for the particle with index \em m. If the index is out
+        of range, the behavior is undefined. */
+    Position position(int m) const override;
 
     /** This function returns a random position drawn from the smoothing kernel of the particle
         with index \em m. If the index is out of range, the behavior is undefined. */
@@ -149,6 +89,17 @@ public:
         particle. If no density policy has been set or no mass information is being imported, the
         behavior is undefined. */
     Position generatePosition() const override;
+
+protected:
+    /** This function returns a reference to an array containing the imported properties (in column
+        order) for the particle with index \f$0\le m \le N_\mathrm{ent}-1\f$. If the index is out
+        of range, the behavior is undefined. */
+    const Array& properties(int m) const override;
+
+    /** This function returns the index \f$0\le m \le N_\mathrm{ent}-1\f$ of the particle whose
+        center is nearest to the specified point \f${\bf{r}}\f$, or -1 if the point is outside the
+        domain or if there are no particles in the snapshot. */
+    int nearestEntity(Position bfr) const override;
 
     //======================== Data Members ========================
 

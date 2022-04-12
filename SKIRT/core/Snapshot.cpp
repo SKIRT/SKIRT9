@@ -219,6 +219,104 @@ double Snapshot::volume() const
 
 ////////////////////////////////////////////////////////////////////
 
+double Snapshot::metallicity(int m) const
+{
+    return properties(m)[metallicityIndex()];
+}
+
+////////////////////////////////////////////////////////////////////
+
+double Snapshot::metallicity(Position bfr) const
+{
+    int m = nearestEntity(bfr);
+    return m >= 0 ? metallicity(m) : 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double Snapshot::temperature(int m) const
+{
+    return properties(m)[temperatureIndex()];
+}
+
+////////////////////////////////////////////////////////////////////
+
+double Snapshot::temperature(Position bfr) const
+{
+    int m = nearestEntity(bfr);
+    return m >= 0 ? temperature(m) : 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+Vec Snapshot::velocity(int m) const
+{
+    const auto& propv = properties(m);
+    return Vec(propv[velocityIndex() + 0], propv[velocityIndex() + 1], propv[velocityIndex() + 2]);
+}
+
+////////////////////////////////////////////////////////////////////
+
+Vec Snapshot::velocity(Position bfr) const
+{
+    int m = nearestEntity(bfr);
+    return m >= 0 ? velocity(m) : Vec();
+}
+
+////////////////////////////////////////////////////////////////////
+
+double Snapshot::velocityDispersion(int m) const
+{
+    return properties(m)[velocityDispersionIndex()];
+}
+
+////////////////////////////////////////////////////////////////////
+
+double Snapshot::velocityDispersion(Position bfr) const
+{
+    int m = nearestEntity(bfr);
+    return m >= 0 ? velocityDispersion(m) : 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+Vec Snapshot::magneticField(int m) const
+{
+    const auto& propv = properties(m);
+    return Vec(propv[magneticFieldIndex() + 0], propv[magneticFieldIndex() + 1], propv[magneticFieldIndex() + 2]);
+}
+
+////////////////////////////////////////////////////////////////////
+
+Vec Snapshot::magneticField(Position bfr) const
+{
+    int m = nearestEntity(bfr);
+    return m >= 0 ? magneticField(m) : Vec();
+}
+
+////////////////////////////////////////////////////////////////////
+
+void Snapshot::parameters(int m, Array& params) const
+{
+    int n = numParameters();
+    params.resize(n);
+    const auto& propv = properties(m);
+    for (int i = 0; i != n; ++i) params[i] = propv[parametersIndex() + i];
+}
+
+////////////////////////////////////////////////////////////////////
+
+void Snapshot::parameters(Position bfr, Array& params) const
+{
+    int m = nearestEntity(bfr);
+    if (m >= 0)
+        parameters(m, params);
+    else
+        params.resize(numParameters());
+}
+
+////////////////////////////////////////////////////////////////////
+
 namespace
 {
     // the number of samples used for integrating the surface densities
