@@ -6,6 +6,7 @@
 #include "Snapshot.hpp"
 #include "Log.hpp"
 #include "Random.hpp"
+#include "StringUtils.hpp"
 #include "TextInFile.hpp"
 #include "Units.hpp"
 
@@ -192,6 +193,21 @@ void Snapshot::setMassDensityPolicy(double multiplier, double maxTemperature, bo
     _maxTemperature = maxTemperature;
     _useMetallicity = useMetallicity;
     _hasDensityPolicy = true;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void Snapshot::logMassStatistics(int numIgnored, double totalOriginalMass, double totalMetallicMass,
+                                 double totalEffectiveMass)
+{
+    auto massUnit = holdsNumber() ? "" : units()->umass();
+    auto massToString = [this](double mass) {
+        return StringUtils::toString(holdsNumber() ? mass : units()->omass(mass), 'e', 4);
+    };
+    if (numIgnored) log()->info("  Ignored mass in " + std::to_string(numIgnored) + " high-temperature cells");
+    log()->info("  Total original mass : " + massToString(totalOriginalMass) + " " + massUnit);
+    if (useMetallicity()) log()->info("  Total metallic mass : " + massToString(totalMetallicMass) + " " + massUnit);
+    log()->info("  Total effective mass: " + massToString(totalEffectiveMass) + " " + massUnit);
 }
 
 ////////////////////////////////////////////////////////////////////

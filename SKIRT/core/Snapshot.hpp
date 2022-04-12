@@ -268,6 +268,11 @@ protected:
         otherwise. For use by subclasses. */
     bool useTemperatureCutoff() const { return _hasDensityPolicy && _maxTemperature > 0 && _temperatureIndex >= 0; }
 
+    /** This function issues log messages with statistics on the imported masses. It is implemented
+        here for use by subclasses. */
+    void logMassStatistics(int numIgnored, double totalOriginalMass, double totalMetallicMass,
+                           double totalEffectiveMass);
+
     //============== Interrogation (to be implemented in subclass) =============
 
 public:
@@ -347,15 +352,16 @@ public:
         imported, the behavior is undefined. */
     virtual void parameters(Position bfr, Array& params) const = 0;
 
-    /** This function returns the mass density represented by the snapshot at a given point
-        \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If no
+    /** This function returns the mass or number density represented by the snapshot at a given
+        point \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If no
         density policy has been set or no mass/density information is being imported, the behavior
         is undefined. */
     virtual double density(Position bfr) const = 0;
 
-    /** This function returns the total mass represented by the snapshot, which is equivalent to
-        the mass density integrated over the complete spatial domain. If no density policy has been
-        set or no mass/density information is being imported, the behavior is undefined. */
+    /** This function returns the total mass or number represented by the snapshot, which is
+        equivalent to the mass or number density integrated over the complete spatial domain. If no
+        density policy has been set or no mass/density information is being imported, the behavior
+        is undefined. */
     virtual double mass() const = 0;
 
     /** This function returns a random position within the entity with index \f$0\le m \le

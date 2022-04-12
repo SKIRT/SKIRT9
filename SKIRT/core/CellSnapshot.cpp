@@ -229,14 +229,7 @@ void CellSnapshot::readAndClose()
         }
 
         // log mass statistics
-        if (numIgnored) log()->info("  Ignored mass in " + std::to_string(numIgnored) + " high-temperature cells");
-        log()->info("  Total original mass : " + StringUtils::toString(units()->omass(totalOriginalMass), 'e', 4) + " "
-                    + units()->umass());
-        if (useMetallicity())
-            log()->info("  Total metallic mass : " + StringUtils::toString(units()->omass(totalMetallicMass), 'e', 4)
-                        + " " + units()->umass());
-        log()->info("  Total effective mass: " + StringUtils::toString(units()->omass(totalEffectiveMass), 'e', 4) + " "
-                    + units()->umass());
+        logMassStatistics(numIgnored, totalOriginalMass, totalMetallicMass, totalEffectiveMass);
 
         // remember the effective mass
         _mass = totalEffectiveMass;
