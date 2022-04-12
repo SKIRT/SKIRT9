@@ -420,7 +420,9 @@ private:
     int _boxIndex{-1};
     int _densityIndex{-1};
     int _massIndex{-1};
+    int _initialMassIndex{-1};
     int _metallicityIndex{-1};
+    int _ageIndex{-1};
     int _temperatureIndex{-1};
     int _velocityIndex{-1};
     int _velocityDispersionIndex{-1};

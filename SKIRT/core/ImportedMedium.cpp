@@ -16,15 +16,25 @@ void ImportedMedium::setupSelfAfter()
     // create the snapshot with preconfigured mass or density column
     _snapshot = createAndOpenSnapshot();
 
-    // add optional columns if applicable
-    if (_importMetallicity) _snapshot->importMetallicity();
-    if (_importTemperature) _snapshot->importTemperature();
+    // get list of requested snapshot parameters, if any
+    vector<SnapshotParameter> parameterInfo =
+        _importVariableMixParams ? _materialMixFamily->parameterInfo() : _materialMix->parameterInfo();
+
+    // define function to discover standard snapshot parameters
+    using Identifier = SnapshotParameter::Identifier;
+    auto hasParam = [&parameterInfo](Identifier identifier) {
+        for (const auto& param : parameterInfo)
+            if (param.identifier() == identifier) return true;
+        return false;
+    };
+
+    // add optional columns if applicable; skip metallicity or temperature if also requested by the material mix
+    if (_importMetallicity && !hasParam(Identifier::Metallicity)) _snapshot->importMetallicity();
+    if (_importTemperature && !hasParam(Identifier::Temperature)) _snapshot->importTemperature();
     if (hasVelocity()) _snapshot->importVelocity();
     if (_importMagneticField) _snapshot->importMagneticField();
 
-    // add snapshot import columns if applicable
-    vector<SnapshotParameter> parameterInfo =
-        _importVariableMixParams ? _materialMixFamily->parameterInfo() : _materialMix->parameterInfo();
+    // add snapshot parameter import columns if applicable
     if (!parameterInfo.empty()) _snapshot->importParameters(parameterInfo);
 
     // set the density policy

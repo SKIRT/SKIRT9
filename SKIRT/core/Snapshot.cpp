@@ -167,8 +167,21 @@ void Snapshot::importParameters(const vector<SnapshotParameter>& parameters)
 {
     _parametersIndex = _nextIndex;
     _numParameters = parameters.size();
-    _nextIndex += _numParameters;
-    for (const auto& p : parameters) _infile->addColumn(p.description(), p.quantity(), p.defaultUnit());
+    for (const auto& param : parameters)
+    {
+        _infile->addColumn(param.description(), param.quantity(), param.defaultUnit());
+
+        // discover standard parameter types and set the corresponding index so these values can be probed
+        switch (param.identifier())
+        {
+            case SnapshotParameter::Identifier::InitialMass: _initialMassIndex = _nextIndex; break;
+            case SnapshotParameter::Identifier::Metallicity: _metallicityIndex = _nextIndex; break;
+            case SnapshotParameter::Identifier::Age: _ageIndex = _nextIndex; break;
+            case SnapshotParameter::Identifier::Temperature: _temperatureIndex = _nextIndex; break;
+            case SnapshotParameter::Identifier::Custom: break;
+        }
+        _nextIndex++;
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
