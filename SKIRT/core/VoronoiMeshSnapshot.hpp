@@ -347,9 +347,17 @@ protected:
     const Array& properties(int m) const override;
 
     /** This function returns the index \f$0\le m \le N_\mathrm{ent}-1\f$ of the cell containing
-        the specified point \f${\bf{r}}\f$, or -1 if the point is outside the domain or if there
-        are no cells in the snapshot. */
+        the specified point \f${\bf{r}}\f$, or -1 if the point is outside the domain, if there
+        are no cells in the snapshot, or if the search data structures were not created. */
     int nearestEntity(Position bfr) const override;
+
+    /** This function sets the specified entity collection to the cell containing the specified
+        point \f${\bf{r}}\f$, or to the empty collection if the point is outside the domain or if
+        there are no cells in the snapshot.
+
+        TO DO: If the search data structures were not created, invoking this function causes
+        undefined behavior. */
+    void getEntities(EntityCollection& entities, Position bfr) const override;
 
     //====================== Path construction =====================
 

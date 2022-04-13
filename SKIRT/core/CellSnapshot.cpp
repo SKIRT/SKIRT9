@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "CellSnapshot.hpp"
+#include "EntityCollection.hpp"
 #include "Log.hpp"
 #include "NR.hpp"
 #include "Random.hpp"
@@ -344,6 +345,13 @@ const Array& CellSnapshot::properties(int m) const
 int CellSnapshot::nearestEntity(Position bfr) const
 {
     return _grid ? _grid->cellIndexFor(bfr) : -1;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void CellSnapshot::getEntities(EntityCollection& entities, Position bfr) const
+{
+    entities.addSingle(_grid->cellIndexFor(bfr));
 }
 
 ////////////////////////////////////////////////////////////////////

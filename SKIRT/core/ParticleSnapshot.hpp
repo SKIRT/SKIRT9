@@ -98,8 +98,18 @@ protected:
 
     /** This function returns the index \f$0\le m \le N_\mathrm{ent}-1\f$ of the particle whose
         center is nearest to the specified point \f${\bf{r}}\f$, or -1 if the point is outside the
-        domain or if there are no particles in the snapshot. */
+        domain, if there are no particles in the snapshot, or if the search data structures were
+        not created. */
     int nearestEntity(Position bfr) const override;
+
+    /** This function replaces the contents of the specified entity collection by the set of
+        particles whose smoothing kernel overlaps the specified point \f${\bf{r}}\f$. The weight
+        corresponding to each particle is set to the particle's smoothing kernel value at the given
+        point. If the given point does not overlap any particle, the collection will be empty.
+
+        TO DO: If the search data structures were not created, invoking this function causes
+        undefined behavior. */
+    void getEntities(EntityCollection& entities, Position bfr) const override;
 
     //======================== Data Members ========================
 

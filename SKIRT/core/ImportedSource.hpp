@@ -113,10 +113,22 @@ public:
     double luminosity() const override;
 
     /** This function returns the specific luminosity \f$L_\lambda\f$ (i.e. radiative power per
-         unit of wavelength) of the source at the specified wavelength, or zero if the wavelength is
+         unit of wavelength) of the source at the specified wavelength \f$\lambda\f$, or zero if the wavelength is
          outside the wavelength range of primary sources (configured for the source system as a
          whole) or if the source simply does not emit at the wavelength. */
     double specificLuminosity(double wavelength) const override;
+
+    /** This function returns the specific luminosity \f$L_\lambda\f$ (i.e. radiative power per
+        unit of wavelength) of the source's snapshot entity with index \f$m\f$ at the specified
+        wavelength \f$\lambda\f$, or zero if the wavelength is outside the wavelength range of
+        primary sources (configured for the source system as a whole) or if the source simply does
+        not emit at the wavelength. If the index is out of range, the behavior is undefined.
+
+        This function is intended to provide InputModelProbe instances with access to the
+        luminosity per snapshot entity, information that is not otherwise made available to the
+        simulation. To preserve proper data encapsulation, this function should \em not be called
+        from anywhere else in the simulation machinery. */
+    double specificLuminosity(double wavelength, int m) const;
 
     /** This function performs some preparations for launching photon packets. It is called in
          serial mode before each segment of photon packet launches, providing the history indices

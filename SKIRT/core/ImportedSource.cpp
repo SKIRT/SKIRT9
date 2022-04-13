@@ -173,6 +173,17 @@ double ImportedSource::specificLuminosity(double wavelength) const
 
 ////////////////////////////////////////////////////////////////////
 
+double ImportedSource::specificLuminosity(double wavelength, int m) const
+{
+    if (!_wavelengthRange.containsFuzzy(wavelength)) return 0.;
+
+    Array params;
+    _snapshot->parameters(m, params);
+    return _sedFamily->specificLuminosity(wavelength, params);
+}
+
+////////////////////////////////////////////////////////////////////
+
 void ImportedSource::prepareForLaunch(double sourceBias, size_t firstIndex, size_t numIndices)
 {
     // skip preparation if there are no entities

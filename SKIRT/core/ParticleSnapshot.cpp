@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "ParticleSnapshot.hpp"
+#include "EntityCollection.hpp"
 #include "Log.hpp"
 #include "NR.hpp"
 #include "Random.hpp"
@@ -226,6 +227,20 @@ int ParticleSnapshot::nearestEntity(Position bfr) const
 {
     const SmoothedParticle* nearestParticle = _grid ? _grid->nearestParticle(bfr) : nullptr;
     return nearestParticle ? nearestParticle->index() : -1;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void ParticleSnapshot::getEntities(EntityCollection& entities, Position bfr) const
+{
+    entities.clear();
+    for (const SmoothedParticle* p : _grid->particlesFor(bfr))
+    {
+        double h = p->radius();
+        double u = (bfr - p->center()).norm() / h;
+        double w = _kernel->density(u) / (h * h * h);
+        entities.add(p->index(), w);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "AdaptiveMeshSnapshot.hpp"
+#include "EntityCollection.hpp"
 #include "FatalError.hpp"
 #include "Log.hpp"
 #include "NR.hpp"
@@ -375,6 +376,13 @@ const Array& AdaptiveMeshSnapshot::properties(int m) const
 int AdaptiveMeshSnapshot::nearestEntity(Position bfr) const
 {
     return cellIndex(bfr);
+}
+
+////////////////////////////////////////////////////////////////////
+
+void AdaptiveMeshSnapshot::getEntities(EntityCollection& entities, Position bfr) const
+{
+    entities.addSingle(cellIndex(bfr));
 }
 
 ////////////////////////////////////////////////////////////////////

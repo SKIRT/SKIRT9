@@ -10,6 +10,7 @@
 #include "Box.hpp"
 #include "Position.hpp"
 #include "SnapshotParameter.hpp"
+class EntityCollection;
 class Log;
 class Random;
 class SimulationItem;
@@ -332,6 +333,17 @@ protected:
         the index of the cell containing the given point. For a particle-based snapshot, the
         function returns the index of the particle whose center is nearest to the given point. */
     virtual int nearestEntity(Position bfr) const = 0;
+
+    /** This function replaces the contents of the specified entity collection by the set of
+        entities that overlap the specified point \f${\bf{r}}\f$, with their relative
+        weights. If the point is outside the domain or otherwise does not overlap any entity,
+        the collection will be empty.
+
+        For a cell-based snapshot, the function returns the cell containing the given point, if
+        any. The weight is arbitrarily set to 1. For a particle-based snapshot, the function
+        returns all particles whose smoothing kernel overlaps the given point. The weights take into
+        account the particle's mass and smoothing kernel value at the given point. */
+    virtual void getEntities(EntityCollection& entities, Position bfr) const = 0;
 
     //============== Interrogation implemented here =============
 

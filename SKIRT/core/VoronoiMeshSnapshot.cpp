@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "VoronoiMeshSnapshot.hpp"
+#include "EntityCollection.hpp"
 #include "FatalError.hpp"
 #include "Log.hpp"
 #include "NR.hpp"
@@ -1113,6 +1114,13 @@ const Array& VoronoiMeshSnapshot::properties(int m) const
 int VoronoiMeshSnapshot::nearestEntity(Position bfr) const
 {
     return _blocktrees.size() ? cellIndex(bfr) : -1;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void VoronoiMeshSnapshot::getEntities(EntityCollection& entities, Position bfr) const
+{
+    entities.addSingle(cellIndex(bfr));
 }
 
 ////////////////////////////////////////////////////////////////////
