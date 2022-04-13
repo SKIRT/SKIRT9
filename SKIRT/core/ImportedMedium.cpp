@@ -5,6 +5,7 @@
 
 #include "ImportedMedium.hpp"
 #include "Configuration.hpp"
+#include "FatalError.hpp"
 #include "Snapshot.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -16,7 +17,13 @@ void ImportedMedium::setupSelfAfter()
     // create the snapshot with preconfigured mass or density column
     _snapshot = createAndOpenSnapshot();
 
-    // get list of requested snapshot parameters, if any
+    // add optional standard columns if applicable
+    if (_importMetallicity) _snapshot->importMetallicity();
+    if (_importTemperature) _snapshot->importTemperature();
+    if (hasVelocity()) _snapshot->importVelocity();
+    if (_importMagneticField) _snapshot->importMagneticField();
+
+    // get the snapshot parameters requested by the material mix (family)
     vector<SnapshotParameter> parameterInfo =
         _importVariableMixParams ? _materialMixFamily->parameterInfo() : _materialMix->parameterInfo();
 
@@ -28,13 +35,13 @@ void ImportedMedium::setupSelfAfter()
         return false;
     };
 
-    // add optional columns if applicable; skip metallicity or temperature if also requested by the material mix
-    if (_importMetallicity && !hasParam(Identifier::Metallicity)) _snapshot->importMetallicity();
-    if (_importTemperature && !hasParam(Identifier::Temperature)) _snapshot->importTemperature();
-    if (hasVelocity()) _snapshot->importVelocity();
-    if (_importMagneticField) _snapshot->importMagneticField();
+    // verify that material mix is not requesting metallicity or temperature, as these are available separately
+    if (hasParam(Identifier::Metallicity))
+        throw FATALERROR("Material mix is not allowed to request Metallicity as a custom parameter");
+    if (hasParam(Identifier::Temperature))
+        throw FATALERROR("Material mix is not allowed to request Temperature as a custom parameter");
 
-    // add snapshot parameter import columns if applicable
+    // add requested snapshot parameter columns if applicable
     if (!parameterInfo.empty()) _snapshot->importParameters(parameterInfo);
 
     // set the density policy
