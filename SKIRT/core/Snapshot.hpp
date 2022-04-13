@@ -218,9 +218,17 @@ protected:
         imported, for use by subclasses. */
     int massIndex() const { return _massIndex; }
 
+    /** This function returns the column index of the initial mass field, or -1 if this is not
+        being imported, for use by subclasses. */
+    int initialMassIndex() const { return _initialMassIndex; }
+
     /** This function returns the column index of the metallicity field, or -1 if this is not being
         imported, for use by subclasses. */
     int metallicityIndex() const { return _metallicityIndex; }
+
+    /** This function returns the column index of the age field, or -1 if this is not being
+        imported, for use by subclasses. */
+    int ageIndex() const { return _ageIndex; }
 
     /** This function returns the column index of the temperature field, or -1 if this is not being
         imported, for use by subclasses. */
@@ -336,6 +344,22 @@ public:
         lined up with the coordinate axes. */
     double volume() const;
 
+    /** This function returns true if the initial mass is being imported, and false otherwise. */
+    bool hasInitialMass() const { return _initialMassIndex >= 0; }
+
+    /** This function returns the initial mass of the entity with index \f$0\le m \le
+        N_\mathrm{ent}-1\f$. If the initial mass is not being imported, or the index is out of
+        range, the behavior is undefined. */
+    double initialMass(int m) const;
+
+    /** This function returns the initial mass of the entity nearest to (or at) the specified point
+        \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If the
+        initial mass is not being imported, the behavior is undefined. */
+    double initialMass(Position bfr) const;
+
+    /** This function returns true if the metallicity is being imported, and false otherwise. */
+    bool hasMetallicity() const { return _metallicityIndex >= 0; }
+
     /** This function returns the metallicity of the entity with index \f$0\le m \le
         N_\mathrm{ent}-1\f$. If the metallicity is not being imported, or the index is out of
         range, the behavior is undefined. */
@@ -345,6 +369,22 @@ public:
         \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If the
         metallicity is not being imported, the behavior is undefined. */
     double metallicity(Position bfr) const;
+
+    /** This function returns true if the age is being imported, and false otherwise. */
+    bool hasAge() const { return _ageIndex >= 0; }
+
+    /** This function returns the age of the entity with index \f$0\le m \le N_\mathrm{ent}-1\f$.
+        If the age is not being imported, or the index is out of range, the behavior is undefined.
+        */
+    double age(int m) const;
+
+    /** This function returns the age of the entity nearest to (or at) the specified point
+        \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If the age
+        is not being imported, the behavior is undefined. */
+    double age(Position bfr) const;
+
+    /** This function returns true if the temperature is being imported, and false otherwise. */
+    bool hasTemperature() const { return _temperatureIndex >= 0; }
 
     /** This function returns the temperature of the entity with index \f$0\le m \le
         N_\mathrm{ent}-1\f$. If the temperature is not being imported, or the index is out of
@@ -356,6 +396,9 @@ public:
         temperature is not being imported, the behavior is undefined. */
     double temperature(Position bfr) const;
 
+    /** This function returns true if the velocity is being imported, and false otherwise. */
+    bool hasVelocity() const { return _velocityIndex >= 0; }
+
     /** This function returns the velocity of the entity with index \f$0\le m \le
         N_\mathrm{ent}-1\f$. If the velocity is not being imported, or the index is out of range,
         the behavior is undefined. */
@@ -365,6 +408,10 @@ public:
         \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero velocity. If
         the velocity is not being imported, the behavior is undefined. */
     Vec velocity(Position bfr) const;
+
+    /** This function returns true if the velocity dispersion is being imported, and false
+        otherwise. */
+    bool hasVelocityDispersion() const { return _velocityDispersionIndex >= 0; }
 
     /** This function returns the velocity dispersion of the entity with index \f$0\le m \le
         N_\mathrm{ent}-1\f$. If the velocity dispersion is not being imported, or the index is out
@@ -377,6 +424,9 @@ public:
         undefined. */
     double velocityDispersion(Position bfr) const;
 
+    /** This function returns true if the magnetic field is being imported, and false otherwise. */
+    bool hasMagneticField() const { return _magneticFieldIndex >= 0; }
+
     /** This function returns the magnetic field vector of the entity with index \f$0\le m \le
         N_\mathrm{ent}-1\f$. If the magnetic field is not being imported, or the index is out of
         range, the behavior is undefined. */
@@ -388,8 +438,8 @@ public:
         undefined. */
     Vec magneticField(Position bfr) const;
 
-    /** This function returns true if parameters are imported (i.e. if the number of imported
-         parameters is nonzero). */
+    /** This function returns true if parameters are being imported (i.e. if the number of imported
+         parameters is nonzero), and false otherwise. */
     bool hasParameters() const { return _numParameters > 0; }
 
     /** This function stores the parameters of the entity with index \f$0\le m \le

@@ -219,6 +219,21 @@ double Snapshot::volume() const
 
 ////////////////////////////////////////////////////////////////////
 
+double Snapshot::initialMass(int m) const
+{
+    return properties(m)[initialMassIndex()];
+}
+
+////////////////////////////////////////////////////////////////////
+
+double Snapshot::initialMass(Position bfr) const
+{
+    int m = nearestEntity(bfr);
+    return m >= 0 ? initialMass(m) : 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
 double Snapshot::metallicity(int m) const
 {
     return properties(m)[metallicityIndex()];
@@ -230,6 +245,21 @@ double Snapshot::metallicity(Position bfr) const
 {
     int m = nearestEntity(bfr);
     return m >= 0 ? metallicity(m) : 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double Snapshot::age(int m) const
+{
+    return properties(m)[ageIndex()];
+}
+
+////////////////////////////////////////////////////////////////////
+
+double Snapshot::age(Position bfr) const
+{
+    int m = nearestEntity(bfr);
+    return m >= 0 ? age(m) : 0.;
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -159,6 +159,13 @@ public:
          described above and an isotropic launch direction. */
     void launch(PhotonPacket* pp, size_t historyIndex, double L) const override;
 
+    /** This function returns (a pointer to) the snapshot object associated with this imported
+        source. It is intended to provide InputModelProbe instances with direct access to the
+        snapshot for probing imported information that is not otherwise made available to the
+        simulation. To preserve proper data encapsulation, this function should \em not be called
+        from anywhere else in the simulation machinery. */
+    const Snapshot* snapshot() const;
+
     //======================== Data Members ========================
 
 private:
