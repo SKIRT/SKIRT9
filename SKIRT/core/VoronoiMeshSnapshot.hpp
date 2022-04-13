@@ -354,19 +354,15 @@ protected:
 public:
     /** This function sets the specified entity collection to the cell containing the specified
         point \f${\bf{r}}\f$, or to the empty collection if the point is outside the domain or if
-        there are no cells in the snapshot.
-
-        TO DO: If the search data structures were not created, invoking this function causes
-        undefined behavior. */
+        there are no cells in the snapshot. If the search data structures were not created,
+        invoking this function causes undefined behavior. */
     void getEntities(EntityCollection& entities, Position bfr) const override;
 
     /** This function replaces the contents of the specified entity collection by the set of cells
         crossed by the specified path with starting point \f${\bf{r}}\f$ and direction
         \f${\bf{k}}\f$. The weight of a cell is given by the length of the path segment inside the
         cell. If the path does not cross the spatial domain of the snapshot, the collection will be
-        empty.
-
-        TO DO: If the search data structures were not created, invoking this function causes
+        empty. If the search data structures were not created, invoking this function causes
         undefined behavior. */
     void getEntities(EntityCollection& entities, Position bfr, Direction bfk) const override;
 

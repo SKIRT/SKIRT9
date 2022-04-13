@@ -235,23 +235,21 @@ void CellSnapshot::readAndClose()
         // remember the effective mass
         _mass = totalEffectiveMass;
 
-        // build further data structures only if there are cells
-        if (n)
-        {
-            // construct a vector with the normalized cumulative cell densities
-            NR::cdf(_cumrhov, Mv);
+        // construct a vector with the normalized cumulative cell densities
+        if (n) NR::cdf(_cumrhov, Mv);
+    }
 
-            // construct a 3D-grid over the domain, and create a list of cells that overlap each grid cell
-            int gridsize = max(20, static_cast<int>(pow(n, 1. / 3.) / 5));
-            string size = std::to_string(gridsize);
-            log()->info("Constructing intermediate " + size + "x" + size + "x" + size + " grid for cells...");
-            _grid = new CellGrid(_propv, boxIndex(), gridsize);
-            log()->info("  Smallest number of cells per grid cell: " + std::to_string(_grid->minCellRefsPerCell()));
-            log()->info("  Largest  number of cells per grid cell: " + std::to_string(_grid->maxCellRefsPerCell()));
-            log()->info(
-                "  Average  number of cells per grid cell: "
-                + StringUtils::toString(_grid->totalCellRefs() / double(gridsize * gridsize * gridsize), 'f', 1));
-        }
+    // if needed, construct a 3D-grid over the domain, and create a list of cells that overlap each grid cell
+    if (hasMassDensityPolicy() || needGetEntities())
+    {
+        int gridsize = max(20, static_cast<int>(pow(_propv.size(), 1. / 3.) / 5));
+        string size = std::to_string(gridsize);
+        log()->info("Constructing intermediate " + size + "x" + size + "x" + size + " grid for cells...");
+        _grid = new CellGrid(_propv, boxIndex(), gridsize);
+        log()->info("  Smallest number of cells per grid cell: " + std::to_string(_grid->minCellRefsPerCell()));
+        log()->info("  Largest  number of cells per grid cell: " + std::to_string(_grid->maxCellRefsPerCell()));
+        log()->info("  Average  number of cells per grid cell: "
+                    + StringUtils::toString(_grid->totalCellRefs() / double(gridsize * gridsize * gridsize), 'f', 1));
     }
 }
 
@@ -365,6 +363,7 @@ void CellSnapshot::getEntities(EntityCollection& entities, Position bfr) const
 
 void CellSnapshot::getEntities(EntityCollection& entities, Position bfr, Direction bfk) const
 {
+    // TO DO: implement this function
     entities.clear();
     (void)bfr, (void)bfk;
 }

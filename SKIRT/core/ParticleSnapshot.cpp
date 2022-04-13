@@ -57,61 +57,75 @@ void ParticleSnapshot::readAndClose()
         log()->info("  Number of particles retained: " + std::to_string(_propv.size()));
     }
 
-    // we can calculate mass and densities only if a policy has been set
-    if (!hasMassDensityPolicy()) return;
-
-    // build a list of compact smoothed particle objects that we can organize in a grid
-    double totalOriginalMass = 0;
-    double totalMetallicMass = 0;
-    double totalEffectiveMass = 0;
-    int numParticles = _propv.size();
-    _pv.reserve(numParticles);
-    for (int m = 0; m != numParticles; ++m)
+    // if a mass density policy has been set, calculate masses and densities for all cells
+    if (hasMassDensityPolicy())
     {
-        const Array& prop = _propv[m];
+        // build a list of compact smoothed particle objects that we can organize in a grid
+        double totalOriginalMass = 0;
+        double totalMetallicMass = 0;
+        double totalEffectiveMass = 0;
+        int numParticles = _propv.size();
+        _pv.reserve(numParticles);
+        for (int m = 0; m != numParticles; ++m)
+        {
+            const Array& prop = _propv[m];
 
-        double originalMass = prop[massIndex()];
-        double metallicMass = originalMass * (useMetallicity() ? prop[metallicityIndex()] : 1.);
-        double effectiveMass = metallicMass * multiplier();
+            double originalMass = prop[massIndex()];
+            double metallicMass = originalMass * (useMetallicity() ? prop[metallicityIndex()] : 1.);
+            double effectiveMass = metallicMass * multiplier();
 
-        _pv.emplace_back(m, prop[positionIndex() + 0], prop[positionIndex() + 1], prop[positionIndex() + 2],
-                         prop[sizeIndex()], effectiveMass);
+            _pv.emplace_back(m, prop[positionIndex() + 0], prop[positionIndex() + 1], prop[positionIndex() + 2],
+                             prop[sizeIndex()], effectiveMass);
 
-        totalOriginalMass += originalMass;
-        totalMetallicMass += metallicMass;
-        totalEffectiveMass += effectiveMass;
+            totalOriginalMass += originalMass;
+            totalMetallicMass += metallicMass;
+            totalEffectiveMass += effectiveMass;
+        }
+
+        // log mass statistics
+        logMassStatistics(0, totalOriginalMass, totalMetallicMass, totalEffectiveMass);
+
+        // if one of the total masses is negative, suppress the complete mass distribution
+        if (totalOriginalMass < 0 || totalMetallicMass < 0 || totalEffectiveMass < 0)
+        {
+            log()->warning("  Total imported mass is negative; suppressing the complete mass distribution");
+            _propv.clear();
+            _pv.clear();
+            totalEffectiveMass = 0;
+        }
+
+        // remember the effective mass
+        _mass = totalEffectiveMass;
+
+        // construct a vector with the normalized cumulative particle densities
+        if (!_pv.empty()) NR::cdf(_cumrhov, _pv.size(), [this](int i) { return _pv[i].mass(); });
     }
 
-    // log mass statistics
-    logMassStatistics(0, totalOriginalMass, totalMetallicMass, totalEffectiveMass);
-
-    // if one of the total masses is negative, suppress the complete mass distribution
-    if (totalOriginalMass < 0 || totalMetallicMass < 0 || totalEffectiveMass < 0)
+    // if needed, build a list of compact particles without masses that we can organize in a grid
+    if (!hasMassDensityPolicy() && needGetEntities())
     {
-        log()->warning("  Total imported mass is negative; suppressing the complete mass distribution");
-        _propv.clear();
-        _pv.clear();
-        return;  // abort
+        int numParticles = _propv.size();
+        _pv.reserve(numParticles);
+        for (int m = 0; m != numParticles; ++m)
+        {
+            const Array& prop = _propv[m];
+            _pv.emplace_back(m, prop[positionIndex() + 0], prop[positionIndex() + 1], prop[positionIndex() + 2],
+                             prop[sizeIndex()], 0.);
+        }
     }
 
-    // remember the effective mass
-    _mass = totalEffectiveMass;
-
-    // if there are no particles, do not build the special structures for optimizing operations
-    if (_pv.empty()) return;
-
-    // construct a 3D-grid over the particle space, and create a list of particles that overlap each grid cell
-    int gridsize = max(20, static_cast<int>(pow(_pv.size(), 1. / 3.) / 5));
-    string size = std::to_string(gridsize);
-    log()->info("Constructing intermediate " + size + "x" + size + "x" + size + " grid for particles...");
-    _grid = new SmoothedParticleGrid(_pv, gridsize);
-    log()->info("  Smallest number of particles per cell: " + std::to_string(_grid->minParticlesPerCell()));
-    log()->info("  Largest  number of particles per cell: " + std::to_string(_grid->maxParticlesPerCell()));
-    log()->info("  Average  number of particles per cell: "
-                + StringUtils::toString(_grid->totalParticles() / double(gridsize * gridsize * gridsize), 'f', 1));
-
-    // construct a vector with the normalized cumulative particle densities
-    NR::cdf(_cumrhov, _pv.size(), [this](int i) { return _pv[i].mass(); });
+    // if needed, construct a 3D-grid over the domain, and create a list of particles that overlap each grid cell
+    if (hasMassDensityPolicy() || needGetEntities())
+    {
+        int gridsize = max(20, static_cast<int>(pow(_pv.size(), 1. / 3.) / 5));
+        string size = std::to_string(gridsize);
+        log()->info("Constructing intermediate " + size + "x" + size + "x" + size + " grid for particles...");
+        _grid = new SmoothedParticleGrid(_pv, gridsize);
+        log()->info("  Smallest number of particles per cell: " + std::to_string(_grid->minParticlesPerCell()));
+        log()->info("  Largest  number of particles per cell: " + std::to_string(_grid->maxParticlesPerCell()));
+        log()->info("  Average  number of particles per cell: "
+                    + StringUtils::toString(_grid->totalParticles() / double(gridsize * gridsize * gridsize), 'f', 1));
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -254,6 +268,7 @@ void ParticleSnapshot::getEntities(EntityCollection& entities, Position bfr) con
 
 void ParticleSnapshot::getEntities(EntityCollection& entities, Position bfr, Direction bfk) const
 {
+    // TO DO: implement this function
     entities.clear();
     (void)bfr, (void)bfk;
 }

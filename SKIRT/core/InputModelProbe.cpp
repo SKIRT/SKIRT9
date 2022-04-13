@@ -42,6 +42,21 @@ namespace
 
             item->find<Log>()->info("   Temperature at origin: " + StringUtils::toString(sum) + " K");
         }
+        if (snapshot->hasMetallicity())
+        {
+            double sum = 0.;
+            double sumw = 0.;
+            for (const auto& entity : entities.entities())
+            {
+                double value = snapshot->metallicity(entity.m);
+                double weight = entity.w;
+                sum += value * weight;
+                sumw += weight;
+            }
+            if (sumw) sum /= sumw;
+
+            item->find<Log>()->info("   Metallicity at origin: " + StringUtils::toString(sum));
+        }
     }
 
     void probeMedium(const SimulationItem* item, int index, const ImportedMedium* medium)
