@@ -244,3 +244,11 @@ void ParticleSnapshot::getEntities(EntityCollection& entities, Position bfr) con
 }
 
 ////////////////////////////////////////////////////////////////////
+
+void ParticleSnapshot::getEntities(EntityCollection& entities, Position bfr, Direction bfk) const
+{
+    entities.clear();
+    (void)bfr, (void)bfk;
+}
+
+////////////////////////////////////////////////////////////////////

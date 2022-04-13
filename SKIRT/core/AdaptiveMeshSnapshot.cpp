@@ -473,6 +473,22 @@ public:
 
 ////////////////////////////////////////////////////////////////////
 
+void AdaptiveMeshSnapshot::getEntities(EntityCollection& entities, Position bfr, Direction bfk) const
+{
+    // initialize a path segment generator
+    MySegmentGenerator generator(this);
+    generator.start(bfr, bfk);
+
+    // determine and store the path segments in the entity collection
+    entities.clear();
+    while (generator.next())
+    {
+        entities.add(generator.m(), generator.ds());
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
 std::unique_ptr<PathSegmentGenerator> AdaptiveMeshSnapshot::createPathSegmentGenerator() const
 {
     return std::make_unique<MySegmentGenerator>(this);

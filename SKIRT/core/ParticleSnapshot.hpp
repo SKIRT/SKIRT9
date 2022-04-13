@@ -103,13 +103,23 @@ protected:
     int nearestEntity(Position bfr) const override;
 
     /** This function replaces the contents of the specified entity collection by the set of
-        particles whose smoothing kernel overlaps the specified point \f${\bf{r}}\f$. The weight
-        corresponding to each particle is set to the particle's smoothing kernel value at the given
-        point. If the given point does not overlap any particle, the collection will be empty.
+        particles with a smoothing kernel that overlaps the specified point \f${\bf{r}}\f$. The
+        weight corresponding to each particle is set to the particle's smoothing kernel value at
+        the given point. If the given point does not overlap any particle, the collection will be
+        empty.
 
         TO DO: If the search data structures were not created, invoking this function causes
         undefined behavior. */
     void getEntities(EntityCollection& entities, Position bfr) const override;
+
+    /** This function replaces the contents of the specified entity collection by the set of
+        particles with a smoothing kernel that overlaps the specified path with starting point
+        \f${\bf{r}}\f$ and direction \f${\bf{k}}\f$. The weight of each particle is given by the
+        column density seen by the path as it crosses the particle's smoothing kernel. If the path
+        does not overlap any particle, the collection will be empty.
+
+        TO DO: Implement this function. */
+    void getEntities(EntityCollection& entities, Position bfr, Direction bfk) const override;
 
     //======================== Data Members ========================
 

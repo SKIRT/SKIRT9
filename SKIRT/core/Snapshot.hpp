@@ -8,6 +8,7 @@
 
 #include "Array.hpp"
 #include "Box.hpp"
+#include "Direction.hpp"
 #include "Position.hpp"
 #include "SnapshotParameter.hpp"
 class EntityCollection;
@@ -335,15 +336,25 @@ protected:
     virtual int nearestEntity(Position bfr) const = 0;
 
     /** This function replaces the contents of the specified entity collection by the set of
-        entities that overlap the specified point \f${\bf{r}}\f$, with their relative
-        weights. If the point is outside the domain or otherwise does not overlap any entity,
-        the collection will be empty.
+        entities that overlap the specified point \f${\bf{r}}\f$, with their corresponding weights.
+        If the point is outside the domain or otherwise does not overlap any entity, the collection
+        will be empty.
 
         For a cell-based snapshot, the function returns the cell containing the given point, if
         any. The weight is arbitrarily set to 1. For a particle-based snapshot, the function
-        returns all particles whose smoothing kernel overlaps the given point. The weights take into
-        account the particle's mass and smoothing kernel value at the given point. */
+        returns all particles with a smoothing kernel that overlaps the given point. The weight of
+        a particle is given by the particle's smoothing kernel value at the given point. */
     virtual void getEntities(EntityCollection& entities, Position bfr) const = 0;
+
+    /** This function replaces the contents of the specified entity collection by the set of
+        entities that overlap the specified path with starting point \f${\bf{r}}\f$ and direction
+        \f${\bf{k}}\f$, with their corresponding weights. If the path does not overlap any entity,
+        the collection will be empty.
+
+        For a cell-based snapshot, the weight of a cell is given by the length of the path segment
+        inside the cell. For a particle-based snapshot, the weight of a particle is given by the
+        column density seen by the path as it crosses the particle's smoothing kernel. */
+    virtual void getEntities(EntityCollection& entities, Position bfr, Direction bfk) const = 0;
 
     //============== Interrogation implemented here =============
 

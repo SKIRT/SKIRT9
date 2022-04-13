@@ -113,6 +113,14 @@ protected:
         undefined behavior. */
     void getEntities(EntityCollection& entities, Position bfr) const override;
 
+    /** This function replaces the contents of the specified entity collection by the set of cells
+        that overlap the specified path with starting point \f${\bf{r}}\f$ and direction
+        \f${\bf{k}}\f$. The weight of a cell is given by the length of the path segment inside the
+        cell. If the path does not overlap any cells, the collection will be empty.
+
+        TO DO: Implement this function. */
+    void getEntities(EntityCollection& entities, Position bfr, Direction bfk) const override;
+
     //======================== Data Members ========================
 
 private:
