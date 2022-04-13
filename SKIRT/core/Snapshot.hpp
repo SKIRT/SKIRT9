@@ -199,6 +199,11 @@ public:
         value of the \em multiplier argument to obtain the final result. */
     void setMassDensityPolicy(double multiplier, double maxTemperature, bool useMetallicity);
 
+    /** This function notifies the snapshot that one of the getEntities() functions may be called
+        during the simulation, implying that the snapshot must prebuild the required search data
+        structures. */
+    void setNeedGetEntities();
+
 protected:
     /** This function returns the column index of the first position field, or -1 if this is not
         being imported, for use by subclasses. */
@@ -278,6 +283,11 @@ protected:
         otherwise. For use by subclasses. */
     bool useTemperatureCutoff() const { return _hasDensityPolicy && _maxTemperature > 0 && _temperatureIndex >= 0; }
 
+    /** This function returns true if one of the getEntities() functions may be called during the
+        simulation, implying that the snapshot must prebuild the required search data structures.
+        Returns false otherwise. For use by subclasses. */
+    bool needGetEntities() const { return _needGetEntities; }
+
     /** This function issues log messages with statistics on the imported masses. It is implemented
         here for use by subclasses. */
     void logMassStatistics(int numIgnored, double totalOriginalMass, double totalMetallicMass,
@@ -292,6 +302,11 @@ public:
 
     /** This function returns the number of entities \f$N_\mathrm{ent}\f$ in the snapshot. */
     virtual int numEntities() const = 0;
+
+    /** This function returns the mass or number density for the entity with index \f$0\le m \le
+        N_\mathrm{ent}-1\f$. If the index is out of range, if no density policy has been set, or no
+        mass/density information is being imported, the behavior is undefined. */
+    virtual double density(int m) const = 0;
 
     /** This function returns the mass or number density represented by the snapshot at a given
         point \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If no
@@ -335,6 +350,7 @@ protected:
         function returns the index of the particle whose center is nearest to the given point. */
     virtual int nearestEntity(Position bfr) const = 0;
 
+public:
     /** This function replaces the contents of the specified entity collection by the set of
         entities that overlap the specified point \f${\bf{r}}\f$, with their corresponding weights.
         If the point is outside the domain or otherwise does not overlap any entity, the collection
@@ -529,6 +545,7 @@ private:
     bool _useMetallicity{false};
     bool _hasDensityPolicy{false};
     bool _holdsNumber{false};  // true if snapshot holds number (density); false if it holds mass (density)
+    bool _needGetEntities{false};
 };
 
 ////////////////////////////////////////////////////////////////////

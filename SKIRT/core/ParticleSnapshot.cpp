@@ -159,6 +159,13 @@ int ParticleSnapshot::numEntities() const
 
 ////////////////////////////////////////////////////////////////////
 
+double ParticleSnapshot::density(int m) const
+{
+    return _pv[m].mass();
+}
+
+////////////////////////////////////////////////////////////////////
+
 double ParticleSnapshot::density(Position bfr) const
 {
     double sum = 0.;

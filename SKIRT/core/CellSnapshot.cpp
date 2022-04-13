@@ -293,6 +293,13 @@ int CellSnapshot::numEntities() const
 
 ////////////////////////////////////////////////////////////////////
 
+double CellSnapshot::density(int m) const
+{
+    return _rhov[m];
+}
+
+////////////////////////////////////////////////////////////////////
+
 double CellSnapshot::density(Position bfr) const
 {
     int m = _grid ? _grid->cellIndexFor(bfr) : -1;

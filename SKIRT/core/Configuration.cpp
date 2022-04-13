@@ -7,12 +7,14 @@
 #include "AllCellsLibrary.hpp"
 #include "Constants.hpp"
 #include "FatalError.hpp"
+#include "InputModelProbe.hpp"
 #include "MaterialMix.hpp"
 #include "MaterialWavelengthRangeInterface.hpp"
 #include "MonteCarloSimulation.hpp"
 #include "NR.hpp"
 #include "OligoWavelengthDistribution.hpp"
 #include "OligoWavelengthGrid.hpp"
+#include "ProbeSystem.hpp"
 #include "StringUtils.hpp"
 #include "VoronoiMeshSpatialGrid.hpp"
 #include <set>
@@ -264,6 +266,10 @@ void Configuration::setupSelfBefore()
             _mediaNeedGeneratePosition = true;
         }
     }
+
+    // check for input model probes, which require snapshots to build search data structures
+    auto probesystem = find<ProbeSystem>(false);
+    if (probesystem && probesystem->find<InputModelProbe>(false)) _snapshotsNeedGetEntities = true;
 
     // check for semi-dymamic medium state
     if (_hasSecondaryEmission)

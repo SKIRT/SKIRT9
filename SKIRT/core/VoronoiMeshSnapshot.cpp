@@ -376,11 +376,8 @@ void VoronoiMeshSnapshot::readAndClose()
         buildMesh(false);
 
         // if a mass density policy has been set, calculate masses and densities and build the search data structure
-        if (hasMassDensityPolicy())
-        {
-            calculateDensityAndMass();
-            buildSearchPerBlock();
-        }
+        if (hasMassDensityPolicy()) calculateDensityAndMass();
+        if (hasMassDensityPolicy() || needGetEntities()) buildSearchPerBlock();
     }
 
     // if we forego building a Voronoi mesh, there is a density policy by definition

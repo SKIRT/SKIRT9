@@ -56,6 +56,9 @@ void ImportedMedium::setupSelfAfter()
         _snapshot->setMassDensityPolicy(_massFraction, 0., false);
     }
 
+    // notify about building search data structures if needed
+    if (find<Configuration>()->snapshotsNeedGetEntities()) _snapshot->setNeedGetEntities();
+
     // read the data from file
     _snapshot->readAndClose();
 }

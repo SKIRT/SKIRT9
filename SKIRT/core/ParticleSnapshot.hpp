@@ -63,6 +63,11 @@ public:
     /** This function returns the number of particles in the snapshot. */
     int numEntities() const override;
 
+    /** This function returns the mass associated with the particle with index \em m. If no
+        density policy has been set or no mass information is being imported, or if the index is
+        out of range, the behavior is undefined. */
+    double density(int m) const override;
+
     /** This function returns the mass density represented by the snapshot at a given point
         \f${\bf{r}}\f$, determined by interpolating (conceptually) over all smoothed particles. If
         the point is outside the domain, the function returns zero. If no density policy has been
@@ -102,6 +107,7 @@ protected:
         not created. */
     int nearestEntity(Position bfr) const override;
 
+public:
     /** This function replaces the contents of the specified entity collection by the set of
         particles with a smoothing kernel that overlaps the specified point \f${\bf{r}}\f$. The
         weight corresponding to each particle is set to the particle's smoothing kernel value at

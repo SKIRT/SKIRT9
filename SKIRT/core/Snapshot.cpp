@@ -197,6 +197,13 @@ void Snapshot::setMassDensityPolicy(double multiplier, double maxTemperature, bo
 
 ////////////////////////////////////////////////////////////////////
 
+void Snapshot::setNeedGetEntities()
+{
+    _needGetEntities = true;
+}
+
+////////////////////////////////////////////////////////////////////
+
 void Snapshot::logMassStatistics(int numIgnored, double totalOriginalMass, double totalMetallicMass,
                                  double totalEffectiveMass)
 {

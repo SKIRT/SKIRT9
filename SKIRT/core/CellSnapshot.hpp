@@ -68,6 +68,11 @@ public:
     /** This function returns the number of cells in the snapshot. */
     int numEntities() const override;
 
+    /** This function returns the mass density associated with the cell with index \em m. If no
+        density policy has been set or no mass information is being imported, or if the index is
+        out of range, the behavior is undefined. */
+    double density(int m) const override;
+
     /** This function returns the mass density of the cell containing the specified point
         \f${\bf{r}}\f$. If the point is not inside any cell, the function returns zero. If no
         density policy has been set or no mass information is being imported, the behavior is
@@ -105,6 +110,7 @@ protected:
         no cells in the snapshot, or if the search data structures were not created. */
     int nearestEntity(Position bfr) const override;
 
+public:
     /** This function sets the specified entity collection to the cell containing the specified
         point \f${\bf{r}}\f$, or to the empty collection if the point is outside the domain or if
         there are no cells in the snapshot.

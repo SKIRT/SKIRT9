@@ -70,6 +70,9 @@ void ImportedSource::setupSelfAfter()
     }
     _snapshot->importParameters(_sedFamily->parameterInfo());
 
+    // notify about building search data structures if needed
+    if (find<Configuration>()->snapshotsNeedGetEntities()) _snapshot->setNeedGetEntities();
+
     // read the data from file
     _snapshot->readAndClose();
 
