@@ -7,6 +7,7 @@
 #define ENTITYCOLLECTION_HPP
 
 #include "Basics.hpp"
+#include <unordered_map>
 
 //////////////////////////////////////////////////////////////////////
 
@@ -16,15 +17,14 @@
     snapshot with \f$N_\mathrm{ent}\f$ entities, any given entity is identfied by its zero-based
     index \f$0\le m \le N_\mathrm{ent}-1\f$.
 
-    An EntityCollection object contains an unordered list of entity indices with corresponding
-    weights. This can be used to represent the set of entities that overlap a given position or
-    path in space with their corresponding relative weights. The relative weights
+    An EntityCollection object contains an unordered collection of unique entity indices with
+    corresponding weights. This can be used to represent the set of entities that overlap a given
+    position or path in space with their corresponding relative weights. The relative weights
     would, depending on the circumstances, take into account the smoothing kernel of an imported
     particle and/or the length of the path segment overlapping the particle or cell.
 
-    For performance reasons, the implementation allows the same entity to occur multiple times in
-    the collection, although this is not recommended. Furthermore, an EntityCollection instance can
-    be reused for storing a new collection without causing memory reallocations. */
+    An EntityCollection instance can be reused for storing a new collection without forcing memory
+    reallocations. */
 class EntityCollection
 {
 public:
@@ -39,7 +39,8 @@ public:
     void clear();
 
     /** This function adds an entity with index \f$m\f$ and weight \f$w\f$ to the collection. If
-        \f$m<0\f$ or \f$w\le 0\f$ (or \f$w\f$ is NaN or infinity), the function does nothing. */
+        \f$m<0\f$, \f$w\le 0\f$, \f$w\f$ is NaN or infinity, or an entity with the same index is
+        already in the collection, the function does nothing. */
     void add(int m, double w);
 
     /** This function removes any pre-existing entities from the collection and then adds a single
@@ -49,18 +50,17 @@ public:
 
     // ------- Retrieving entities -------
 
-    // basic data structure holding information about an entity
-    struct Entity
-    {
-        int m;     // entity index
-        double w;  // corresponding weight
-    };
+    /** Type declaration for the unordered map underlying the entity collection. */
+    using Map = std::unordered_map<int, double>;
 
-    /** This function returns (a read-only reference to) a list of the current entities in the
-        collection, in arbitrary order. Each Entity object in the list holds two public data
-        members: the index \em m of the entity being represented and the corresponding weight
-        \f$w\f$. The entity index is guaranteed to be nonnegative. */
-    const vector<Entity>& entities() const { return _entities; }
+    /** This function returns read-only iterator to the first entity in the collection. Each entity
+        consists of a key/value pair, where the key is the index \f$m\f$ of the entity being
+        represented and the value is the corresponding weight \f$w\f$. The entity index is
+        guaranteed to be nonnegative. */
+    Map::const_iterator begin() const { return _entities.cbegin(); }
+
+    /** This function returns read-only iterator just beyond the last entity in the collection. */
+    Map::const_iterator end() const { return _entities.cend(); }
 
     /** This function returns true if the collection currently contains exactly one entity, and
         false otherwise. */
@@ -69,12 +69,12 @@ public:
     /** If the collection currently contains exactly one entity, i.e. isSingle() returns true, this
         function returns the index of that single entity. Otherwise, the behavior of this function
         is undefined. */
-    bool singleIndex() const { return _entities[0].m; }
+    bool singleIndex() const { return _entities.cbegin()->first; }
 
     // ------- Data members -------
 
 private:
-    vector<Entity> _entities;
+    Map _entities;
 };
 
 //////////////////////////////////////////////////////////////////////

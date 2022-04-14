@@ -31,10 +31,10 @@ namespace
         {
             double sum = 0.;
             double sumw = 0.;
-            for (const auto& entity : entities.entities())
+            for (const auto& entity : entities)
             {
-                double value = snapshot->temperature(entity.m);
-                double weight = entity.w;
+                double value = snapshot->temperature(entity.first);
+                double weight = entity.second;
                 sum += value * weight;
                 sumw += weight;
             }
@@ -46,10 +46,10 @@ namespace
         {
             double sum = 0.;
             double sumw = 0.;
-            for (const auto& entity : entities.entities())
+            for (const auto& entity : entities)
             {
-                double value = snapshot->metallicity(entity.m);
-                double weight = entity.w;
+                double value = snapshot->metallicity(entity.first);
+                double weight = entity.second;
                 sum += value * weight;
                 sumw += weight;
             }
@@ -71,10 +71,10 @@ namespace
         {
             double sum = 0.;
             double sumw = 0.;
-            for (const auto& entity : entities.entities())
+            for (const auto& entity : entities)
             {
-                double value = snapshot->temperature(entity.m);
-                double weight = snapshot->density(entity.m) * entity.w;
+                double value = snapshot->temperature(entity.first);
+                double weight = snapshot->density(entity.first) * entity.second;
                 sum += value * weight;
                 sumw += weight;
             }
