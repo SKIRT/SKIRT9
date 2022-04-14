@@ -79,6 +79,10 @@ void Configuration::setupSelfBefore()
     for (auto source : ss->sources())
         if (source->hasVelocity()) _hasMovingSources = true;
 
+    // check for input model probes, which require snapshots to build search data structures
+    auto probesystem = find<ProbeSystem>(false);
+    if (probesystem && probesystem->find<InputModelProbe>(false)) _snapshotsNeedGetEntities = true;
+
     // determine the number of media in the simulation hierarchy
     int numMedia = 0;
     auto ms = find<MediumSystem>(false);
@@ -266,10 +270,6 @@ void Configuration::setupSelfBefore()
             _mediaNeedGeneratePosition = true;
         }
     }
-
-    // check for input model probes, which require snapshots to build search data structures
-    auto probesystem = find<ProbeSystem>(false);
-    if (probesystem && probesystem->find<InputModelProbe>(false)) _snapshotsNeedGetEntities = true;
 
     // check for semi-dymamic medium state
     if (_hasSecondaryEmission)

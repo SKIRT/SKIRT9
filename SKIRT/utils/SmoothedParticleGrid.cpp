@@ -30,6 +30,14 @@ namespace
             cmax = max(cmax, pv[p].center(dir) + pv[p].radius());
         }
 
+        // guard against point sources (h=0) that are all lined up along this coordinate
+        if (cmin == cmax)
+        {
+            double eps = 1e-12 * (cmin ? abs(cmin) : 1.);
+            cmin -= eps;
+            cmax += eps;
+        }
+
         // determine the particle distribution by binning at a decent resolution
         int nbins = gridsize * 100;
         double binwidth = (cmax - cmin) / nbins;
@@ -81,7 +89,7 @@ namespace
         else if (zc > zmax)
             squaredist -= square(zc - zmax);
 
-        return squaredist > 0.;
+        return squaredist >= 0.;
     }
 }
 

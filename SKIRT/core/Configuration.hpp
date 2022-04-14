@@ -136,6 +136,15 @@ public:
         pointer. */
     WavelengthDistribution* oligoWavelengthBiasDistribution() { return _oligoWavelengthBiasDistribution; }
 
+    // ----> probes
+
+    /** Returns true if one of the Snapshot::getEntities() functions may be called for any of the
+        snapshots associated with the imported sources and media in the simulation, implying that
+        the snapshot must prebuild the required search data structures. In the current
+        implementation, this happens only if the simulation includes one or more input model
+        probes, i.e. instances of an InputModelProbe subclass. */
+    bool snapshotsNeedGetEntities() const { return _snapshotsNeedGetEntities; }
+
     // ----> media
 
     /** Returns true if there is at least one medium component in the simulation, and false
@@ -148,13 +157,6 @@ public:
         the Medium::generatePosition() will never be called during this simulation, this function
         returns false. */
     bool mediaNeedGeneratePosition() const { return _mediaNeedGeneratePosition; }
-
-    /** Returns true if one of the Snapshot::getEntities() functions may be called for any of the
-        snapshots associated with the imported sources and media in the simulation, implying that
-        the snapshot must prebuild the required search data structures. In the current
-        implementation, this happens only if the simulation includes one or more input model
-        probes, i.e. instances of an InputModelProbe subclass. */
-    bool snapshotsNeedGetEntities() const { return _snapshotsNeedGetEntities; }
 
     /** Returns true if one or more medium components in the simulation may have a nonzero velocity
         for some positions. If the function returns false, none of the media has a velocity. */
@@ -415,10 +417,12 @@ private:
     WavelengthGrid* _defaultWavelengthGrid{nullptr};
     WavelengthDistribution* _oligoWavelengthBiasDistribution{nullptr};
 
-    // sources and media
+    // probes
+    bool _snapshotsNeedGetEntities{false};
+
+    // media
     bool _hasMedium{false};
     bool _mediaNeedGeneratePosition{false};
-    bool _snapshotsNeedGetEntities{false};
     bool _hasMovingSources{false};
     bool _hasMovingMedia{false};
     int _magneticFieldMediumIndex{-1};

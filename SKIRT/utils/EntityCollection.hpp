@@ -39,7 +39,7 @@ public:
     void clear();
 
     /** This function adds an entity with index \f$m\f$ and weight \f$w\f$ to the collection. If
-        \f$m<0\f$ or \f$w\le 0\f$, the function does nothing. */
+        \f$m<0\f$ or \f$w\le 0\f$ (or \f$w\f$ is NaN or infinity), the function does nothing. */
     void add(int m, double w);
 
     /** This function removes any pre-existing entities from the collection and then adds a single

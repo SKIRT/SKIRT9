@@ -20,7 +20,7 @@ void EntityCollection::clear()
 
 void EntityCollection::add(int m, double w)
 {
-    if (m >= 0 && w > 0.) _entities.push_back(Entity{m, w});
+    if (m >= 0 && w > 0. && std::isfinite(w)) _entities.push_back(Entity{m, w});
 }
 
 ////////////////////////////////////////////////////////////////////
