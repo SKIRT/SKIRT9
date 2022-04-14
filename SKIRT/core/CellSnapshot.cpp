@@ -16,6 +16,83 @@
 
 namespace
 {
+    // Intersect axis-aligned bounding box with ray (path in SKIRT speak) using slab method
+    // - if the ray intersects the box, returns true and stores the intersection distances in smin and smax
+    // - if the ray does not intersect the box, returns false and smin and smax are undefined (overwritten)
+    // Contrary to most implementations, we don't consider "touching" the border as an intersection
+    bool intersects(const Box& box, const Position& r, const Direction& k, double& smin, double& smax)
+    {
+        constexpr double eps = 1e-9;
+        smin = -std::numeric_limits<double>::infinity();
+        smax = +std::numeric_limits<double>::infinity();
+
+        // --- handle YZ planes ---
+
+        // check for ray parallel to plane
+        if (abs(k.x()) < eps)
+        {
+            // if parallel AND outside box: no intersection possible
+            if (r.x() <= box.xmin() || r.x() >= box.xmax()) return false;
+        }
+        else
+        {
+            // find intersection distances and put them in increasing order
+            double s1 = (box.xmin() - r.x()) / k.x();
+            double s2 = (box.xmax() - r.x()) / k.x();
+            if (s1 > s2) std::swap(s1, s2);
+
+            // compare with current values
+            if (s1 > smin) smin = s1;
+            if (s2 < smax) smax = s2;
+
+            // check if ray misses entirely
+            if (smin >= smax || smax <= 0) return false;
+        }
+
+        // --- handle XZ planes ---
+
+        if (abs(k.y()) < eps)
+        {
+            if (r.y() <= box.ymin() || r.y() >= box.ymax()) return false;
+        }
+        else
+        {
+            double s1 = (box.ymin() - r.y()) / k.y();
+            double s2 = (box.ymax() - r.y()) / k.y();
+            if (s1 > s2) std::swap(s1, s2);
+            if (s1 > smin) smin = s1;
+            if (s2 < smax) smax = s2;
+            if (smin >= smax || smax <= 0) return false;
+        }
+
+        // --- handle XY planes ---
+
+        if (abs(k.z()) < eps)
+        {
+            if (r.z() <= box.zmin() || r.z() >= box.zmax()) return false;
+        }
+        else
+        {
+            double s1 = (box.zmin() - r.z()) / k.z();
+            double s2 = (box.zmax() - r.z()) / k.z();
+            if (s1 > s2) std::swap(s1, s2);
+            if (s1 > smin) smin = s1;
+            if (s2 < smax) smax = s2;
+            if (smin >= smax || smax <= 0) return false;
+        }
+
+        // --- box is definitely intersected ---
+
+        // if origin is inside the box, set first intersection distance to zero
+        if (smin < 0.) smin = 0.;
+        return true;
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
+namespace
+{
     // returns a Box object corresponding to the six elements in the given properties array starting at the given index
     Box box(const Array& prop, int i)
     {
