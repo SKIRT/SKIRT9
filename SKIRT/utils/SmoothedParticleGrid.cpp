@@ -62,35 +62,6 @@ namespace
         }
         grid[gridsize] = std::numeric_limits<double>::infinity();
     }
-
-    // returns the square of the argument
-    inline double square(double value) { return value * value; }
-
-    // Determines whether an axis-aligned bounding box intersects with a sphere
-    // (algorithm due to Jim Arvo in "Graphics Gems" (1990))
-    // xmin, xmax, ymin, ymax, zmin, zmax: ll and ur corner of the bounding box
-    // xc, yc, zc, r: center and radius of the sphere
-    // returns true if the bounding box and the sphere intersect, false otherwise
-    bool intersects(double xmin, double xmax, double ymin, double ymax, double zmin, double zmax, double xc, double yc,
-                    double zc, double r)
-    {
-        double squaredist = square(r);
-
-        if (xc < xmin)
-            squaredist -= square(xc - xmin);
-        else if (xc > xmax)
-            squaredist -= square(xc - xmax);
-        if (yc < ymin)
-            squaredist -= square(yc - ymin);
-        else if (yc > ymax)
-            squaredist -= square(yc - ymax);
-        if (zc < zmin)
-            squaredist -= square(zc - zmin);
-        else if (zc > zmax)
-            squaredist -= square(zc - zmax);
-
-        return squaredist >= 0.;
-    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -128,9 +99,8 @@ SmoothedParticleGrid::SmoothedParticleGrid(const vector<SmoothedParticle>& pv, i
                 for (int k = k1; k <= k2; k++)
                 {
                     // add the particle to the list if it indeed overlaps the cell
-                    if (intersects(_xgrid[i], _xgrid[i + 1], _ygrid[j], _ygrid[j + 1], _zgrid[k], _zgrid[k + 1], rc.x(),
-                                   rc.y(), rc.z(), h))
-                        _listv[index(gridsize, i, j, k)].push_back(&pv[p]);
+                    Box cell(_xgrid[i], _ygrid[j], _zgrid[k], _xgrid[i + 1], _ygrid[j + 1], _zgrid[k + 1]);
+                    if (cell.intersects(rc, h)) _listv[index(gridsize, i, j, k)].push_back(&pv[p]);
                 }
     }
 

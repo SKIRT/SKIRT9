@@ -19,7 +19,7 @@
     essentially immutable: once created it can no longer be changed. There is one exception to this
     rule: a derived class can replace the complete Box contents through the setExtent() function.
 
-    The Box class is fully implemented inline (in this header file). Most compilers optimize away
+    The Box class is largely implemented inline (in this header file). Most compilers optimize away
     all overhead so that using this class is just as efficient as directly writing the code in
     terms of the box components. */
 class Box
@@ -158,6 +158,33 @@ public:
         j = std::max(0, std::min(ny - 1, static_cast<int>(ny * (r.y() - _ymin) / (_ymax - _ymin))));
         k = std::max(0, std::min(nz - 1, static_cast<int>(nz * (r.z() - _zmin) / (_zmax - _zmin))));
     }
+
+    /** This function intersects the receiving axis-aligned bounding box with a ray (half-line)
+        defined by the specified starting position \f$\bf{r}\f$ and direction \f$\bf{k}\f$. If the
+        ray intersects the box, the function returns true after storing the near and far
+        intersection distances relative to the starting position in \f$s_\mathrm{min}\f$ and
+        \f$s_\mathrm{max}\f$, respectively. If the starting position is inside the box, the nearest
+        intersection distance is set to zero. In other words, the following relation always holds:
+        \f$0\le s_\mathrm{min} < s_\mathrm{max}\f$.
+
+        If the ray does not intersect the box, the function returns false and the values of
+        \f$s_\mathrm{min}\f$ and \f$s_\mathrm{max}\f$ are undefined. A ray that "touches" the box
+        border in a single point is not considered to intersect the box. A ray along an edge or
+        face on the lower side of the box is considered to intersect the box, while ray along an
+        edge or face on the upper side of the box is considered \em not to intersect the box. This
+        approach avoids duplicate intersection of adjacent boxes.
+
+        The function employs the slab method originated by Kay and Kajiya (1986) and adapted by
+        Haines (1989) as described in "Geometric Tools for Computer Graphics" by Scheider and
+        Eberly (2003, Elsevier). */
+    bool intersects(Vec r, const Vec k, double& smin, double& smax) const;
+
+    /** This function intersects the receiving axis-aligned bounding box with a sphere defined by
+        the specified center position \f${\bf{r}}_\mathrm{c}\f$ and radius \f$r\f$. It returns true
+        if the box and the sphere intersect, and false otherwise.
+
+        The function employs the algorithm due to Jim Arvo described in "Graphics Gems" (1990). */
+    bool intersects(Vec rc, double r) const;
 
 protected:
     /** This function replaces the extent of the box with the newly specified values. This function

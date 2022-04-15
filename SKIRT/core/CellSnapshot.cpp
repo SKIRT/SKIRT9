@@ -16,83 +16,6 @@
 
 namespace
 {
-    // Intersect axis-aligned bounding box with ray (path in SKIRT speak) using slab method
-    // - if the ray intersects the box, returns true and stores the intersection distances in smin and smax
-    // - if the ray does not intersect the box, returns false and smin and smax are undefined (overwritten)
-    // Contrary to most implementations, we don't consider "touching" the border as an intersection
-    bool intersects(const Box& box, const Position& r, const Direction& k, double& smin, double& smax)
-    {
-        constexpr double eps = 1e-9;
-        smin = -std::numeric_limits<double>::infinity();
-        smax = +std::numeric_limits<double>::infinity();
-
-        // --- handle YZ planes ---
-
-        // check for ray parallel to plane
-        if (abs(k.x()) < eps)
-        {
-            // if parallel AND outside box: no intersection possible
-            if (r.x() <= box.xmin() || r.x() >= box.xmax()) return false;
-        }
-        else
-        {
-            // find intersection distances and put them in increasing order
-            double s1 = (box.xmin() - r.x()) / k.x();
-            double s2 = (box.xmax() - r.x()) / k.x();
-            if (s1 > s2) std::swap(s1, s2);
-
-            // compare with current values
-            if (s1 > smin) smin = s1;
-            if (s2 < smax) smax = s2;
-
-            // check if ray misses entirely
-            if (smin >= smax || smax <= 0) return false;
-        }
-
-        // --- handle XZ planes ---
-
-        if (abs(k.y()) < eps)
-        {
-            if (r.y() <= box.ymin() || r.y() >= box.ymax()) return false;
-        }
-        else
-        {
-            double s1 = (box.ymin() - r.y()) / k.y();
-            double s2 = (box.ymax() - r.y()) / k.y();
-            if (s1 > s2) std::swap(s1, s2);
-            if (s1 > smin) smin = s1;
-            if (s2 < smax) smax = s2;
-            if (smin >= smax || smax <= 0) return false;
-        }
-
-        // --- handle XY planes ---
-
-        if (abs(k.z()) < eps)
-        {
-            if (r.z() <= box.zmin() || r.z() >= box.zmax()) return false;
-        }
-        else
-        {
-            double s1 = (box.zmin() - r.z()) / k.z();
-            double s2 = (box.zmax() - r.z()) / k.z();
-            if (s1 > s2) std::swap(s1, s2);
-            if (s1 > smin) smin = s1;
-            if (s2 < smax) smax = s2;
-            if (smin >= smax || smax <= 0) return false;
-        }
-
-        // --- box is definitely intersected ---
-
-        // if origin is inside the box, set first intersection distance to zero
-        if (smin < 0.) smin = 0.;
-        return true;
-    }
-}
-
-////////////////////////////////////////////////////////////////////
-
-namespace
-{
     // returns a Box object corresponding to the six elements in the given properties array starting at the given index
     Box box(const Array& prop, int i)
     {
@@ -229,7 +152,7 @@ public:
     // This function returns the index (in the list originally passed to the constructor)
     // of the first cell in the list that overlaps the specified position,
     // or -1 if none of the cells in the list overlap the specified position.
-    int cellIndexFor(Position r)
+    int cellIndexFor(Position r) const
     {
         // locate the grid cell containing the specified position
         int i = NR::locateClip(_xgrid, r.x());
@@ -242,6 +165,50 @@ public:
             if (box(_propv[m], _i).contains(r)) return m;
         }
         return -1;
+    }
+
+    // This function replaces the contents of the specified entity collection by the set of cells
+    // that overlap the path with specified starting point and direction.
+    // The weight of a cell is given by the length of the path segment inside the cell.
+    void getEntities(EntityCollection& entities, Position bfr, Direction bfk) const
+    {
+        // use the values in these variables only after an intersection call that returns true
+        double smin, smax;
+
+        // initialize the output collection
+        entities.clear();
+
+        // verify that the path intersects the domain
+        if (extent().intersects(bfr, bfk, smin, smax))
+        {
+            // find the indices for first and last grid cell, in each spatial direction,
+            // overlapped by the bounding box of the path's intersection with the domain
+            Box pathbox(bfr + smin * bfk, bfr + smax * bfk);
+            int i1 = NR::locateClip(_xgrid, pathbox.xmin());
+            int i2 = NR::locateClip(_xgrid, pathbox.xmax());
+            int j1 = NR::locateClip(_ygrid, pathbox.ymin());
+            int j2 = NR::locateClip(_ygrid, pathbox.ymax());
+            int k1 = NR::locateClip(_zgrid, pathbox.zmin());
+            int k2 = NR::locateClip(_zgrid, pathbox.zmax());
+
+            // loop over all grid cells in that 3D range
+            for (int i = i1; i <= i2; i++)
+                for (int j = j1; j <= j2; j++)
+                    for (int k = k1; k <= k2; k++)
+                    {
+                        // if the path intersects the grid cell
+                        Box gridcellbox(_xgrid[i], _ygrid[j], _zgrid[k], _xgrid[i + 1], _ygrid[j + 1], _zgrid[k + 1]);
+                        if (gridcellbox.intersects(bfr, bfk, smin, smax))
+                        {
+                            // loop over all cells in this grid cell
+                            for (int m : _listv[index(_p, i, j, k)])
+                            {
+                                // if the path intersects the cell, add the cell to the output collection
+                                if (box(_propv[m], _i).intersects(bfr, bfk, smin, smax)) entities.add(m, smax - smin);
+                            }
+                        }
+                    }
+        }
     }
 };
 
@@ -440,9 +407,7 @@ void CellSnapshot::getEntities(EntityCollection& entities, Position bfr) const
 
 void CellSnapshot::getEntities(EntityCollection& entities, Position bfr, Direction bfk) const
 {
-    // TO DO: implement this function
-    entities.clear();
-    (void)bfr, (void)bfk;
+    _grid->getEntities(entities, bfr, bfk);
 }
 
 ////////////////////////////////////////////////////////////////////
