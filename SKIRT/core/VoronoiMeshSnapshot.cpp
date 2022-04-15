@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "VoronoiMeshSnapshot.hpp"
+#include "EntityCollection.hpp"
 #include "FatalError.hpp"
 #include "Log.hpp"
 #include "NR.hpp"
@@ -375,11 +376,8 @@ void VoronoiMeshSnapshot::readAndClose()
         buildMesh(false);
 
         // if a mass density policy has been set, calculate masses and densities and build the search data structure
-        if (hasMassDensityPolicy())
-        {
-            calculateDensityAndMass();
-            buildSearchPerBlock();
-        }
+        if (hasMassDensityPolicy()) calculateDensityAndMass();
+        if (hasMassDensityPolicy() || needGetEntities()) buildSearchPerBlock();
     }
 
     // if we forego building a Voronoi mesh, there is a density policy by definition
@@ -795,14 +793,7 @@ void VoronoiMeshSnapshot::calculateDensityAndMass()
     }
 
     // log mass statistics
-    if (numIgnored) log()->info("  Ignored mass in " + std::to_string(numIgnored) + " high-temperature cells");
-    log()->info("  Total original mass : " + StringUtils::toString(units()->omass(totalOriginalMass), 'e', 4) + " "
-                + units()->umass());
-    if (useMetallicity())
-        log()->info("  Total metallic mass : " + StringUtils::toString(units()->omass(totalMetallicMass), 'e', 4) + " "
-                    + units()->umass());
-    log()->info("  Total effective mass: " + StringUtils::toString(units()->omass(totalEffectiveMass), 'e', 4) + " "
-                + units()->umass());
+    logMassStatistics(numIgnored, totalOriginalMass, totalMetallicMass, totalEffectiveMass);
 
     // remember the effective mass
     _mass = totalEffectiveMass;
@@ -1020,107 +1011,6 @@ Box VoronoiMeshSnapshot::extent(int m) const
 
 ////////////////////////////////////////////////////////////////////
 
-double VoronoiMeshSnapshot::metallicity(int m) const
-{
-    const Array& prop = _cells[m]->properties();
-    return prop[metallicityIndex()];
-}
-
-////////////////////////////////////////////////////////////////////
-
-double VoronoiMeshSnapshot::metallicity(Position bfr) const
-{
-    int m = cellIndex(bfr);
-    return m >= 0 ? metallicity(m) : 0.;
-}
-
-////////////////////////////////////////////////////////////////////
-
-double VoronoiMeshSnapshot::temperature(int m) const
-{
-    const Array& prop = _cells[m]->properties();
-    return prop[temperatureIndex()];
-}
-
-////////////////////////////////////////////////////////////////////
-
-double VoronoiMeshSnapshot::temperature(Position bfr) const
-{
-    int m = cellIndex(bfr);
-    return m >= 0 ? temperature(m) : 0.;
-}
-
-////////////////////////////////////////////////////////////////////
-
-Vec VoronoiMeshSnapshot::velocity(int m) const
-{
-    const Array& prop = _cells[m]->properties();
-    return Vec(prop[velocityIndex() + 0], prop[velocityIndex() + 1], prop[velocityIndex() + 2]);
-}
-
-////////////////////////////////////////////////////////////////////
-
-Vec VoronoiMeshSnapshot::velocity(Position bfr) const
-{
-    int m = cellIndex(bfr);
-    return m >= 0 ? velocity(m) : Vec();
-}
-
-////////////////////////////////////////////////////////////////////
-
-double VoronoiMeshSnapshot::velocityDispersion(int m) const
-{
-    const Array& prop = _cells[m]->properties();
-    return prop[velocityDispersionIndex()];
-}
-
-////////////////////////////////////////////////////////////////////
-
-double VoronoiMeshSnapshot::velocityDispersion(Position bfr) const
-{
-    int m = cellIndex(bfr);
-    return m >= 0 ? velocityDispersion(m) : 0.;
-}
-
-////////////////////////////////////////////////////////////////////
-
-Vec VoronoiMeshSnapshot::magneticField(int m) const
-{
-    const Array& prop = _cells[m]->properties();
-    return Vec(prop[magneticFieldIndex() + 0], prop[magneticFieldIndex() + 1], prop[magneticFieldIndex() + 2]);
-}
-
-////////////////////////////////////////////////////////////////////
-
-Vec VoronoiMeshSnapshot::magneticField(Position bfr) const
-{
-    int m = cellIndex(bfr);
-    return m >= 0 ? magneticField(m) : Vec();
-}
-
-////////////////////////////////////////////////////////////////////
-
-void VoronoiMeshSnapshot::parameters(int m, Array& params) const
-{
-    int n = numParameters();
-    params.resize(n);
-    const Array& prop = _cells[m]->properties();
-    for (int i = 0; i != n; ++i) params[i] = prop[parametersIndex() + i];
-}
-
-////////////////////////////////////////////////////////////////////
-
-void VoronoiMeshSnapshot::parameters(Position bfr, Array& params) const
-{
-    int m = cellIndex(bfr);
-    if (m >= 0)
-        parameters(m, params);
-    else
-        params.resize(numParameters());
-}
-
-////////////////////////////////////////////////////////////////////
-
 double VoronoiMeshSnapshot::density(int m) const
 {
     return _rhov[m];
@@ -1207,6 +1097,27 @@ int VoronoiMeshSnapshot::cellIndex(Position bfr) const
         }
     }
     return m;
+}
+
+////////////////////////////////////////////////////////////////////
+
+const Array& VoronoiMeshSnapshot::properties(int m) const
+{
+    return _cells[m]->properties();
+}
+
+////////////////////////////////////////////////////////////////////
+
+int VoronoiMeshSnapshot::nearestEntity(Position bfr) const
+{
+    return _blocktrees.size() ? cellIndex(bfr) : -1;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void VoronoiMeshSnapshot::getEntities(EntityCollection& entities, Position bfr) const
+{
+    entities.addSingle(cellIndex(bfr));
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -1342,6 +1253,22 @@ public:
         return false;
     }
 };
+
+////////////////////////////////////////////////////////////////////
+
+void VoronoiMeshSnapshot::getEntities(EntityCollection& entities, Position bfr, Direction bfk) const
+{
+    // initialize a path segment generator
+    MySegmentGenerator generator(this);
+    generator.start(bfr, bfk);
+
+    // determine and store the path segments in the entity collection
+    entities.clear();
+    while (generator.next())
+    {
+        entities.add(generator.m(), generator.ds());
+    }
+}
 
 ////////////////////////////////////////////////////////////////////
 

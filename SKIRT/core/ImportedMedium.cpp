@@ -5,6 +5,7 @@
 
 #include "ImportedMedium.hpp"
 #include "Configuration.hpp"
+#include "FatalError.hpp"
 #include "Snapshot.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -16,28 +17,47 @@ void ImportedMedium::setupSelfAfter()
     // create the snapshot with preconfigured mass or density column
     _snapshot = createAndOpenSnapshot();
 
-    // add optional columns if applicable
+    // add optional standard columns if applicable
     if (_importMetallicity) _snapshot->importMetallicity();
     if (_importTemperature) _snapshot->importTemperature();
     if (hasVelocity()) _snapshot->importVelocity();
     if (_importMagneticField) _snapshot->importMagneticField();
 
-    // add snapshot import columns if applicable
+    // get the snapshot parameters requested by the material mix (family)
     vector<SnapshotParameter> parameterInfo =
         _importVariableMixParams ? _materialMixFamily->parameterInfo() : _materialMix->parameterInfo();
+
+    // define function to discover standard snapshot parameters
+    using Identifier = SnapshotParameter::Identifier;
+    auto hasParam = [&parameterInfo](Identifier identifier) {
+        for (const auto& param : parameterInfo)
+            if (param.identifier() == identifier) return true;
+        return false;
+    };
+
+    // verify that material mix is not requesting metallicity or temperature, as these are available separately
+    if (hasParam(Identifier::Metallicity))
+        throw FATALERROR("Material mix is not allowed to request Metallicity as a custom parameter");
+    if (hasParam(Identifier::Temperature))
+        throw FATALERROR("Material mix is not allowed to request Temperature as a custom parameter");
+
+    // add requested snapshot parameter columns if applicable
     if (!parameterInfo.empty()) _snapshot->importParameters(parameterInfo);
 
     // set the density policy
     if (mix()->isDust())
     {
         // for dust, use temperature cutoff and metallicity multiplier
-        _snapshot->setMassDensityPolicy(_massFraction, _importTemperature ? _maxTemperature : 0., true);
+        _snapshot->setMassDensityPolicy(_massFraction, _importTemperature ? _maxTemperature : 0., _importMetallicity);
     }
     else
     {
         // for gas and electrons, do not use temperature or metallicity
         _snapshot->setMassDensityPolicy(_massFraction, 0., false);
     }
+
+    // notify about building search data structures if needed
+    if (find<Configuration>()->snapshotsNeedGetEntities()) _snapshot->setNeedGetEntities();
 
     // read the data from file
     _snapshot->readAndClose();
@@ -160,7 +180,7 @@ double ImportedMedium::temperature(Position bfr) const
 
 bool ImportedMedium::hasParameters() const
 {
-    return !_importVariableMixParams && _snapshot->numParameters() > 0;
+    return !_importVariableMixParams && _snapshot->hasParameters();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -255,6 +275,13 @@ int ImportedMedium::numSites() const
 Position ImportedMedium::sitePosition(int index) const
 {
     return _snapshot->position(index);
+}
+
+//////////////////////////////////////////////////////////////////////
+
+const Snapshot* ImportedMedium::snapshot() const
+{
+    return _snapshot;
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -136,6 +136,15 @@ public:
         pointer. */
     WavelengthDistribution* oligoWavelengthBiasDistribution() { return _oligoWavelengthBiasDistribution; }
 
+    // ----> probes
+
+    /** Returns true if one of the Snapshot::getEntities() functions may be called for any of the
+        snapshots associated with the imported sources and media in the simulation, implying that
+        the snapshot must prebuild the required search data structures. In the current
+        implementation, this happens only if the simulation includes one or more input model
+        probes, i.e. instances of an InputModelProbe subclass. */
+    bool snapshotsNeedGetEntities() const { return _snapshotsNeedGetEntities; }
+
     // ----> media
 
     /** Returns true if there is at least one medium component in the simulation, and false
@@ -407,6 +416,9 @@ private:
     Range _sourceWavelengthRange;
     WavelengthGrid* _defaultWavelengthGrid{nullptr};
     WavelengthDistribution* _oligoWavelengthBiasDistribution{nullptr};
+
+    // probes
+    bool _snapshotsNeedGetEntities{false};
 
     // media
     bool _hasMedium{false};

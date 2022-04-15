@@ -18,9 +18,7 @@ void FileIndexedSEDFamily::setupSelfBefore()
 
 vector<SnapshotParameter> FileIndexedSEDFamily::parameterInfo() const
 {
-    return vector<SnapshotParameter>{
-        {"index"},
-    };
+    return {SnapshotParameter::custom("index")};
 }
 
 ////////////////////////////////////////////////////////////////////

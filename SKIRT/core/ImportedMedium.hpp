@@ -231,6 +231,13 @@ public:
         object. */
     Position sitePosition(int index) const override;
 
+    /** This function returns (a pointer to) the snapshot object associated with this imported
+        medium. It is intended to provide InputModelProbe instances with direct access to the
+        snapshot for probing imported information that is not otherwise made available to the
+        simulation. To preserve proper data encapsulation, this function should \em not be called
+        from anywhere else in the simulation machinery. */
+    const Snapshot* snapshot() const;
+
     //======================== Data Members ========================
 
 private:
