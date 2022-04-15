@@ -62,7 +62,7 @@ bool CarbonMonoxideGasMix::hasLineEmission() const
 
 vector<SnapshotParameter> CarbonMonoxideGasMix::parameterInfo() const
 {
-    return vector<SnapshotParameter>{SnapshotParameter("H2 number density", "volumenumberdensity", "1/cm3")};
+    return {SnapshotParameter::custom("H2 number density", "volumenumberdensity", "1/cm3")};
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -27,12 +27,12 @@ void MappingsSEDFamily::setupSelfBefore()
 
 vector<SnapshotParameter> MappingsSEDFamily::parameterInfo() const
 {
-    return vector<SnapshotParameter>{
-        {"star formation rate", "massrate", "Msun/yr"},
-        {"metallicity"},
-        {"compactness"},
-        {"pressure", "pressure", "Pa"},
-        {"covering factor"},
+    return {
+        SnapshotParameter::custom("star formation rate", "massrate", "Msun/yr"),
+        SnapshotParameter::metallicity(),
+        SnapshotParameter::custom("compactness"),
+        SnapshotParameter::custom("pressure", "pressure", "Pa"),
+        SnapshotParameter::custom("covering factor"),
     };
 }
 

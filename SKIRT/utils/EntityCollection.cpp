@@ -3,23 +3,32 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "SelectDustMixFamily.hpp"
-#include "Constants.hpp"
+#include "EntityCollection.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-vector<SnapshotParameter> SelectDustMixFamily::parameterInfo() const
+EntityCollection::EntityCollection() {}
+
+////////////////////////////////////////////////////////////////////
+
+void EntityCollection::clear()
 {
-    return {SnapshotParameter::custom("dustmix index")};
+    _entities.clear();
 }
 
 ////////////////////////////////////////////////////////////////////
 
-const MaterialMix* SelectDustMixFamily::mix(const Array& parameters) const
+void EntityCollection::add(int m, double w)
 {
-    long numMixes = _dustMixes.size();
-    long index = max(0L, min(std::lround(parameters[0]), numMixes - 1));
-    return _dustMixes[index];
+    if (m >= 0 && w > 0. && std::isfinite(w)) _entities.emplace(m, w);
+}
+
+////////////////////////////////////////////////////////////////////
+
+void EntityCollection::addSingle(int m)
+{
+    _entities.clear();
+    if (m >= 0) _entities.emplace(m, 1.);
 }
 
 ////////////////////////////////////////////////////////////////////

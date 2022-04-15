@@ -27,11 +27,7 @@ void BpassSEDFamily::setupSelfBefore()
 
 vector<SnapshotParameter> BpassSEDFamily::parameterInfo() const
 {
-    return vector<SnapshotParameter>{
-        {"initial mass", "mass", "Msun"},
-        {"metallicity"},
-        {"age", "time", "yr"},
-    };
+    return {SnapshotParameter::initialMass(), SnapshotParameter::metallicity(), SnapshotParameter::age()};
 }
 
 ////////////////////////////////////////////////////////////////////

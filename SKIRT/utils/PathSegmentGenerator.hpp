@@ -47,6 +47,17 @@ public:
         path->direction().cartesian(_kx, _ky, _kz);
     }
 
+    /** This function initializes path segment generation for the specified starting position
+        \f${\bf{r}}\f$ and direction \f${\bf{k}}\f$. The function \em must be called before calling
+        the next() function for the first time, or to re-initialize the generator for a fresh path.
+        */
+    void start(Position bfr, Direction bfk)
+    {
+        _state = State::Unknown;
+        bfr.cartesian(_rx, _ry, _rz);
+        bfk.cartesian(_kx, _ky, _kz);
+    }
+
     /** This function calculates the next path segment and stores its cell index and path length in
         data members that can be accessed through the m() and ds() functions. It should be called
         only after the path has been intialized through the start() function. The next() function

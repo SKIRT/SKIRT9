@@ -22,10 +22,8 @@ namespace
 
 vector<SnapshotParameter> LyaGaussianSEDFamily::parameterInfo() const
 {
-    return vector<SnapshotParameter>{
-        {"line luminosity", "bolluminosity", "W"},
-        {"dispersion", "velocity", "km/s"},
-    };
+    return {SnapshotParameter::custom("line luminosity", "bolluminosity", "W"),
+            SnapshotParameter::custom("dispersion", "velocity", "km/s")};
 }
 
 ////////////////////////////////////////////////////////////////////

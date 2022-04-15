@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "CellSnapshot.hpp"
+#include "EntityCollection.hpp"
 #include "Log.hpp"
 #include "NR.hpp"
 #include "Random.hpp"
@@ -151,7 +152,7 @@ public:
     // This function returns the index (in the list originally passed to the constructor)
     // of the first cell in the list that overlaps the specified position,
     // or -1 if none of the cells in the list overlap the specified position.
-    int cellIndexFor(Position r)
+    int cellIndexFor(Position r) const
     {
         // locate the grid cell containing the specified position
         int i = NR::locateClip(_xgrid, r.x());
@@ -164,6 +165,50 @@ public:
             if (box(_propv[m], _i).contains(r)) return m;
         }
         return -1;
+    }
+
+    // This function replaces the contents of the specified entity collection by the set of cells
+    // that overlap the path with specified starting point and direction.
+    // The weight of a cell is given by the length of the path segment inside the cell.
+    void getEntities(EntityCollection& entities, Position bfr, Direction bfk) const
+    {
+        // use the values in these variables only after an intersection call that returns true
+        double smin, smax;
+
+        // initialize the output collection
+        entities.clear();
+
+        // verify that the path intersects the domain
+        if (extent().intersects(bfr, bfk, smin, smax))
+        {
+            // find the indices for first and last grid cell, in each spatial direction,
+            // overlapped by the bounding box of the path's intersection with the domain
+            Box pathbox(bfr + smin * bfk, bfr + smax * bfk);
+            int i1 = NR::locateClip(_xgrid, pathbox.xmin());
+            int i2 = NR::locateClip(_xgrid, pathbox.xmax());
+            int j1 = NR::locateClip(_ygrid, pathbox.ymin());
+            int j2 = NR::locateClip(_ygrid, pathbox.ymax());
+            int k1 = NR::locateClip(_zgrid, pathbox.zmin());
+            int k2 = NR::locateClip(_zgrid, pathbox.zmax());
+
+            // loop over all grid cells in that 3D range
+            for (int i = i1; i <= i2; i++)
+                for (int j = j1; j <= j2; j++)
+                    for (int k = k1; k <= k2; k++)
+                    {
+                        // if the path intersects the grid cell
+                        Box gridcellbox(_xgrid[i], _ygrid[j], _zgrid[k], _xgrid[i + 1], _ygrid[j + 1], _zgrid[k + 1]);
+                        if (gridcellbox.intersects(bfr, bfk, smin, smax))
+                        {
+                            // loop over all cells in this grid cell
+                            for (int m : _listv[index(_p, i, j, k)])
+                            {
+                                // if the path intersects the cell, add the cell to the output collection
+                                if (box(_propv[m], _i).intersects(bfr, bfk, smin, smax)) entities.add(m, smax - smin);
+                            }
+                        }
+                    }
+        }
     }
 };
 
@@ -229,35 +274,26 @@ void CellSnapshot::readAndClose()
         }
 
         // log mass statistics
-        if (numIgnored) log()->info("  Ignored mass in " + std::to_string(numIgnored) + " high-temperature cells");
-        log()->info("  Total original mass : " + StringUtils::toString(units()->omass(totalOriginalMass), 'e', 4) + " "
-                    + units()->umass());
-        if (useMetallicity())
-            log()->info("  Total metallic mass : " + StringUtils::toString(units()->omass(totalMetallicMass), 'e', 4)
-                        + " " + units()->umass());
-        log()->info("  Total effective mass: " + StringUtils::toString(units()->omass(totalEffectiveMass), 'e', 4) + " "
-                    + units()->umass());
+        logMassStatistics(numIgnored, totalOriginalMass, totalMetallicMass, totalEffectiveMass);
 
         // remember the effective mass
         _mass = totalEffectiveMass;
 
-        // build further data structures only if there are cells
-        if (n)
-        {
-            // construct a vector with the normalized cumulative cell densities
-            NR::cdf(_cumrhov, Mv);
+        // construct a vector with the normalized cumulative cell densities
+        if (n) NR::cdf(_cumrhov, Mv);
+    }
 
-            // construct a 3D-grid over the domain, and create a list of cells that overlap each grid cell
-            int gridsize = max(20, static_cast<int>(pow(n, 1. / 3.) / 5));
-            string size = std::to_string(gridsize);
-            log()->info("Constructing intermediate " + size + "x" + size + "x" + size + " grid for cells...");
-            _grid = new CellGrid(_propv, boxIndex(), gridsize);
-            log()->info("  Smallest number of cells per grid cell: " + std::to_string(_grid->minCellRefsPerCell()));
-            log()->info("  Largest  number of cells per grid cell: " + std::to_string(_grid->maxCellRefsPerCell()));
-            log()->info(
-                "  Average  number of cells per grid cell: "
-                + StringUtils::toString(_grid->totalCellRefs() / double(gridsize * gridsize * gridsize), 'f', 1));
-        }
+    // if needed, construct a 3D-grid over the domain, and create a list of cells that overlap each grid cell
+    if (hasMassDensityPolicy() || needGetEntities())
+    {
+        int gridsize = max(20, static_cast<int>(pow(_propv.size(), 1. / 3.) / 5));
+        string size = std::to_string(gridsize);
+        log()->info("Constructing intermediate " + size + "x" + size + "x" + size + " grid for cells...");
+        _grid = new CellGrid(_propv, boxIndex(), gridsize);
+        log()->info("  Smallest number of cells per grid cell: " + std::to_string(_grid->minCellRefsPerCell()));
+        log()->info("  Largest  number of cells per grid cell: " + std::to_string(_grid->maxCellRefsPerCell()));
+        log()->info("  Average  number of cells per grid cell: "
+                    + StringUtils::toString(_grid->totalCellRefs() / double(gridsize * gridsize * gridsize), 'f', 1));
     }
 }
 
@@ -299,105 +335,9 @@ int CellSnapshot::numEntities() const
 
 ////////////////////////////////////////////////////////////////////
 
-Position CellSnapshot::position(int m) const
+double CellSnapshot::density(int m) const
 {
-    return Position(box(_propv[m], boxIndex()).center());
-}
-
-////////////////////////////////////////////////////////////////////
-
-double CellSnapshot::metallicity(int m) const
-{
-    return _propv[m][metallicityIndex()];
-}
-
-////////////////////////////////////////////////////////////////////
-
-double CellSnapshot::metallicity(Position bfr) const
-{
-    int m = _grid ? _grid->cellIndexFor(bfr) : -1;
-    return m >= 0 ? metallicity(m) : 0.;
-}
-
-////////////////////////////////////////////////////////////////////
-
-double CellSnapshot::temperature(int m) const
-{
-    return _propv[m][temperatureIndex()];
-}
-
-////////////////////////////////////////////////////////////////////
-
-double CellSnapshot::temperature(Position bfr) const
-{
-    int m = _grid ? _grid->cellIndexFor(bfr) : -1;
-    return m >= 0 ? temperature(m) : 0.;
-}
-
-////////////////////////////////////////////////////////////////////
-
-Vec CellSnapshot::velocity(int m) const
-{
-    return Vec(_propv[m][velocityIndex() + 0], _propv[m][velocityIndex() + 1], _propv[m][velocityIndex() + 2]);
-}
-
-////////////////////////////////////////////////////////////////////
-
-Vec CellSnapshot::velocity(Position bfr) const
-{
-    int m = _grid ? _grid->cellIndexFor(bfr) : -1;
-    return m >= 0 ? velocity(m) : Vec();
-}
-
-////////////////////////////////////////////////////////////////////
-
-double CellSnapshot::velocityDispersion(int m) const
-{
-    return _propv[m][velocityDispersionIndex()];
-}
-
-////////////////////////////////////////////////////////////////////
-
-double CellSnapshot::velocityDispersion(Position bfr) const
-{
-    int m = _grid ? _grid->cellIndexFor(bfr) : -1;
-    return m >= 0 ? velocityDispersion(m) : 0.;
-}
-
-////////////////////////////////////////////////////////////////////
-
-Vec CellSnapshot::magneticField(int m) const
-{
-    return Vec(_propv[m][magneticFieldIndex() + 0], _propv[m][magneticFieldIndex() + 1],
-               _propv[m][magneticFieldIndex() + 2]);
-}
-
-////////////////////////////////////////////////////////////////////
-
-Vec CellSnapshot::magneticField(Position bfr) const
-{
-    int m = _grid ? _grid->cellIndexFor(bfr) : -1;
-    return m >= 0 ? magneticField(m) : Vec();
-}
-
-////////////////////////////////////////////////////////////////////
-
-void CellSnapshot::parameters(int m, Array& params) const
-{
-    int n = numParameters();
-    params.resize(n);
-    for (int i = 0; i != n; ++i) params[i] = _propv[m][parametersIndex() + i];
-}
-
-////////////////////////////////////////////////////////////////////
-
-void CellSnapshot::parameters(Position bfr, Array& params) const
-{
-    int m = _grid ? _grid->cellIndexFor(bfr) : -1;
-    if (m >= 0)
-        parameters(m, params);
-    else
-        params.resize(numParameters());
+    return _rhov[m];
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -413,6 +353,13 @@ double CellSnapshot::density(Position bfr) const
 double CellSnapshot::mass() const
 {
     return _mass;
+}
+
+////////////////////////////////////////////////////////////////////
+
+Position CellSnapshot::position(int m) const
+{
+    return Position(box(_propv[m], boxIndex()).center());
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -433,6 +380,34 @@ Position CellSnapshot::generatePosition() const
     int m = NR::locateClip(_cumrhov, random()->uniform());
 
     return generatePosition(m);
+}
+
+////////////////////////////////////////////////////////////////////
+
+const Array& CellSnapshot::properties(int m) const
+{
+    return _propv[m];
+}
+
+////////////////////////////////////////////////////////////////////
+
+int CellSnapshot::nearestEntity(Position bfr) const
+{
+    return _grid ? _grid->cellIndexFor(bfr) : -1;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void CellSnapshot::getEntities(EntityCollection& entities, Position bfr) const
+{
+    entities.addSingle(_grid->cellIndexFor(bfr));
+}
+
+////////////////////////////////////////////////////////////////////
+
+void CellSnapshot::getEntities(EntityCollection& entities, Position bfr, Direction bfk) const
+{
+    _grid->getEntities(entities, bfr, bfk);
 }
 
 ////////////////////////////////////////////////////////////////////
