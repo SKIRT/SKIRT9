@@ -7,7 +7,7 @@
 #include "AllCellsLibrary.hpp"
 #include "Constants.hpp"
 #include "FatalError.hpp"
-#include "InputModelProbe.hpp"
+#include "InputModelFormProbe.hpp"
 #include "MaterialMix.hpp"
 #include "MaterialWavelengthRangeInterface.hpp"
 #include "MonteCarloSimulation.hpp"
@@ -81,7 +81,7 @@ void Configuration::setupSelfBefore()
 
     // check for input model probes, which require snapshots to build search data structures
     auto probesystem = find<ProbeSystem>(false);
-    if (probesystem && probesystem->find<InputModelProbe>(false)) _snapshotsNeedGetEntities = true;
+    if (probesystem && probesystem->find<InputModelFormProbe>(false)) _snapshotsNeedGetEntities = true;
 
     // determine the number of media in the simulation hierarchy
     int numMedia = 0;

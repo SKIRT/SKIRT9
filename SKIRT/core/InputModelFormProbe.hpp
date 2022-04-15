@@ -3,19 +3,19 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef INPUTMODELPROBE_HPP
-#define INPUTMODELPROBE_HPP
+#ifndef INPUTMODELFORMPROBE_HPP
+#define INPUTMODELFORMPROBE_HPP
 
 #include "Probe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-/** InputModelProbe is as stub that serves testing purposes. It will be replaced by an actual
+/** InputModelFormProbe is as stub that serves testing purposes. It will be replaced by an actual
     implementation later. */
-class InputModelProbe : public Probe
+class InputModelFormProbe : public Probe
 {
-    ITEM_CONCRETE(InputModelProbe, Probe, "an input model probe")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(InputModelProbe, "Level3")
+    ITEM_CONCRETE(InputModelFormProbe, Probe, "an input model form probe")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(InputModelFormProbe, "Level3")
     ITEM_END()
 
     //======================== Other Functions =======================
