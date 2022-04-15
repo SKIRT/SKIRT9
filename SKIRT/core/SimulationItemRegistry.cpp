@@ -99,6 +99,7 @@
 #include "HollowRadialVectorField.hpp"
 #include "HyperboloidGeometry.hpp"
 #include "HyperboloidShellGeometry.hpp"
+#include "InputModelFormProbe.hpp"
 #include "InstrumentSystem.hpp"
 #include "InstrumentWavelengthGridProbe.hpp"
 #include "IntegratedLuminosityNormalization.hpp"
@@ -630,6 +631,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<SpecialtyWavelengthGridProbe>();
     ItemRegistry::add<SpatialGridFormProbe>();
     ItemRegistry::add<SpatialGridWhenFormProbe>();
+    ItemRegistry::add<InputModelFormProbe>();
 
     ItemRegistry::add<ConvergenceInfoProbe>();
     ItemRegistry::add<ConvergenceCutsProbe>();

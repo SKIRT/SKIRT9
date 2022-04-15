@@ -21,8 +21,8 @@ class InputModelFormProbe : public Probe
     //======================== Other Functions =======================
 
 public:
-    /** This function performs probing after setup. */
-    void probeSetup() override;
+    /** This function performs probing. */
+    void probe() override;
 };
 
 ////////////////////////////////////////////////////////////////////
