@@ -25,7 +25,7 @@ namespace
         auto snapshot = source->snapshot();
 
         EntityCollection entities;
-        snapshot->getEntities(entities, Position());
+        snapshot->getEntities(entities, Position(), Direction(1,0,0));
 
         if (snapshot->hasTemperature())
         {
@@ -40,7 +40,7 @@ namespace
             }
             if (sumw) sum /= sumw;
 
-            item->find<Log>()->info("   Temperature at origin: " + StringUtils::toString(sum) + " K");
+            item->find<Log>()->info("   Temperature: " + StringUtils::toString(sum) + " K");
         }
         if (snapshot->hasMetallicity())
         {
@@ -55,7 +55,7 @@ namespace
             }
             if (sumw) sum /= sumw;
 
-            item->find<Log>()->info("   Metallicity at origin: " + StringUtils::toString(sum));
+            item->find<Log>()->info("   Metallicity: " + StringUtils::toString(sum));
         }
     }
 
@@ -65,7 +65,7 @@ namespace
         auto snapshot = medium->snapshot();
 
         EntityCollection entities;
-        snapshot->getEntities(entities, Position());
+        snapshot->getEntities(entities, Position(), Direction(1,0,0));
 
         if (snapshot->hasTemperature())
         {
@@ -80,7 +80,7 @@ namespace
             }
             if (sumw) sum /= sumw;
 
-            item->find<Log>()->info("   Temperature at origin: " + StringUtils::toString(sum) + " K");
+            item->find<Log>()->info("   Temperature: " + StringUtils::toString(sum) + " K");
         }
     }
 }
