@@ -20,6 +20,13 @@ SnapshotParameter SnapshotParameter::initialMass()
 
 //////////////////////////////////////////////////////////////////////
 
+SnapshotParameter SnapshotParameter::currentMass()
+{
+    return SnapshotParameter(Identifier::CurrentMass, "current mass", "mass", "Msun");
+}
+
+//////////////////////////////////////////////////////////////////////
+
 SnapshotParameter SnapshotParameter::metallicity()
 {
     return SnapshotParameter(Identifier::Metallicity, "metallicity", string(), string());

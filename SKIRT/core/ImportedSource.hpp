@@ -33,11 +33,16 @@ class Snapshot;
     spatial and spectral information for an entity yields its contribution to the imported
     radiation source.
 
-    The input file may also include a bulk velocity vector with an optional velocity dispersion
-    for each entity. When this option is enabled, the appropriate Doppler shift is taken into
-    account when launching photon packets. Apart from the anisotropy resulting from this optional
-    Doppler shift, the radiation emitted by this primary source is always isotropic. It is also
-    always unpolarized. */
+    The input file may include a separate column listing the current mass. When this option is
+    enabled, the provided current mass can be used for probing the input model. This is relevant
+    because %SED families usually do not request the current mass as a parameter (they often use
+    the initial mass instead, or do not include direct mass information at all).
+
+    The input file may also include a bulk velocity vector with an optional velocity dispersion for
+    each entity. When this option is enabled, the appropriate Doppler shift is taken into account
+    when launching photon packets. Apart from the anisotropy resulting from this optional Doppler
+    shift, the radiation emitted by this primary source is always isotropic. It is also always
+    unpolarized. */
 class ImportedSource : public Source
 {
     ITEM_ABSTRACT(ImportedSource, Source, "a primary source imported from snapshot data")
@@ -56,6 +61,10 @@ class ImportedSource : public Source
         ATTRIBUTE_DEFAULT_VALUE(importVelocityDispersion, "false")
         ATTRIBUTE_RELEVANT_IF(importVelocityDispersion, "Panchromatic&importVelocity")
         ATTRIBUTE_DISPLAYED_IF(importVelocityDispersion, "Level2")
+
+        PROPERTY_BOOL(importCurrentMass, "import current mass")
+        ATTRIBUTE_DEFAULT_VALUE(importCurrentMass, "false")
+        ATTRIBUTE_DISPLAYED_IF(importCurrentMass, "Level3")
 
         PROPERTY_STRING(useColumns, "a list of names corresponding to columns in the file to be imported")
         ATTRIBUTE_DEFAULT_VALUE(useColumns, "")

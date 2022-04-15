@@ -68,6 +68,7 @@ void ImportedSource::setupSelfAfter()
         _snapshot->importVelocity();
         if (_importVelocityDispersion) _snapshot->importVelocityDispersion();
     }
+    if (_importCurrentMass) _snapshot->importCurrentMass();
     _snapshot->importParameters(_sedFamily->parameterInfo());
 
     // notify about building search data structures if needed
