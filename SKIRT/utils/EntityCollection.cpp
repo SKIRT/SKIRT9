@@ -32,3 +32,40 @@ void EntityCollection::addSingle(int m)
 }
 
 ////////////////////////////////////////////////////////////////////
+
+double EntityCollection::average(std::function<double(int)> value)
+{
+    if (_entities.size() > 1)
+    {
+        double sumvw = 0.;
+        double sumw = 0.;
+        for (const auto& entity : _entities)
+        {
+            sumvw += value(entity.first) * entity.second;
+            sumw += entity.second;
+        }
+        return sumw > 0. ? sumvw / sumw : 0.;
+    }
+    else if (_entities.size() == 1)
+    {
+        return value(_entities.cbegin()->first);
+    }
+    else
+    {
+        return 0.;
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
+double EntityCollection::accumulate(std::function<double(int)> value)
+{
+    double sumvw = 0.;
+    for (const auto& entity : _entities)
+    {
+        sumvw += value(entity.first) * entity.second;
+    }
+    return sumvw;
+}
+
+////////////////////////////////////////////////////////////////////

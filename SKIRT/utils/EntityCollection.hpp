@@ -44,8 +44,8 @@ public:
     void add(int m, double w);
 
     /** This function removes any pre-existing entities from the collection and then adds a single
-        entity with index \f$m\f$ and arbitrary weight 1 to the collection. If \f$m<0\f$, the
-        function clears the collection but does not add an entity. */
+        entity with index \f$m\f$ and weight 1 to the collection. If \f$m<0\f$, the function clears
+        the collection but does not add an entity. */
     void addSingle(int m);
 
     // ------- Retrieving entities -------
@@ -62,14 +62,18 @@ public:
     /** This function returns read-only iterator just beyond the last entity in the collection. */
     Map::const_iterator end() const { return _entities.cend(); }
 
-    /** This function returns true if the collection currently contains exactly one entity, and
-        false otherwise. */
-    bool isSingle() const { return _entities.size() == 1; }
+    // ------- Calculating results -------
 
-    /** If the collection currently contains exactly one entity, i.e. isSingle() returns true, this
-        function returns the index of that single entity. Otherwise, the behavior of this function
-        is undefined. */
-    bool singleIndex() const { return _entities.cbegin()->first; }
+    /** This function calculates the weighted average of a given scalar field \f$f(m)\f$ over all
+        entities in the collection, \f[\frac{\sum_m f(m)\,w_m} {\sum_m w_m}.\f] The argument
+        specifies the scalar field \f$f(m)\f$, which should return a value corresponding to a given
+        entity index. */
+    double average(std::function<double(int m)> value);
+
+    /** This function accumulates the weighted value of a given scalar field \f$f(m)\f$ over all
+        entities in the collection, \f[\sum_m f(m)\,w_m.\f] The argument specifies the scalar field
+        \f$f(m)\f$, which should return a value corresponding to a given entity index. */
+    double accumulate(std::function<double(int m)> value);
 
     // ------- Data members -------
 

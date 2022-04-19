@@ -200,7 +200,7 @@ void CarbonMonoxideGasMix::performScattering(double /*lambda*/, const MaterialSt
 Array CarbonMonoxideGasMix::lineEmissionCenters() const
 {
     Array centers(numLines);
-    for (int i = 0; i!=numLines; ++i) centers[i] = i+1;
+    for (int i = 0; i != numLines; ++i) centers[i] = i + 1;
     // ...
     return centers;
 }

@@ -368,9 +368,9 @@ public:
         will be empty.
 
         For a cell-based snapshot, the function returns the cell containing the given point, if
-        any. The weight is arbitrarily set to 1. For a particle-based snapshot, the function
-        returns all particles with a smoothing kernel that overlaps the given point. The weight of
-        a particle is given by the particle's smoothing kernel value at the given point. */
+        any. The weight is set to 1. For a particle-based snapshot, the function returns all
+        particles with a smoothing kernel that overlaps the given point. The weight of a particle
+        is given by the particle's smoothing kernel value at the given point. */
     virtual void getEntities(EntityCollection& entities, Position bfr) const = 0;
 
     /** This function replaces the contents of the specified entity collection by the set of

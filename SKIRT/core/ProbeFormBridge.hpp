@@ -43,10 +43,10 @@ class Units;
     - Input model probes (inheriting the InputModelFormProbe class) handle quantities defined by
     the input model, provided the relevant data is retained in memory by the simulation, and
     provided methods exist (and are implemented) to extract the information required for probing.
-    In practice, this can be achieved only in specific cases, e.g. for the set of smoothed
-    particles defining the spatial distribution of a primary source. Because these quantities are
-    probed directly from the original (imported) data structures, there are no (additional) grid
-    effects.
+    In practice, this can be achieved for imported components, where the spatial distribution of
+    the source or medium is defined through a set of particles or cells. Because these quantities
+    are probed directly from the original (imported) data structures, there are no (additional)
+    grid effects.
 
     Forms describe how a given quantity should be probed. Generic forms (inheriting the GenericForm
     class) can be associated with any probe, including both spatial grid and input model probes.
