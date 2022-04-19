@@ -25,7 +25,7 @@ class Snapshot;
     aspects of the input model, then an extra layer of subclasses may be required. */
 class InputModelFormProbe : public Probe
 {
-    ITEM_CONCRETE(InputModelFormProbe, Probe, "an input model form probe")
+    ITEM_ABSTRACT(InputModelFormProbe, Probe, "an input model form probe")
         ATTRIBUTE_TYPE_DISPLAYED_IF(InputModelFormProbe, "Level2")
 
         PROPERTY_ITEM(form, GenericForm, "the form describing how this quantity should be probed")

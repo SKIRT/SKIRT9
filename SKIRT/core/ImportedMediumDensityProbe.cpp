@@ -14,33 +14,33 @@
 void ImportedMediumDensityProbe::probeImportedMedium(string sh, const ImportedMedium* /*medium*/,
                                                      const Snapshot* snapshot)
 {
-    // construct an entities collection that can be reused for all queries
-    EntityCollection entities;
-
     // construct a bridge
     ProbeFormBridge bridge(this, form());
 
     // define the call-back function to retrieve a density value at a given position
-    auto valueAtPosition = [&entities, snapshot](Position bfr) {
+    auto valueAtPosition = [snapshot](Position bfr) {
+        thread_local EntityCollection entities;  // can be reused for all queries in a given execution thread
         snapshot->getEntities(entities, bfr);
         return entities.average([snapshot](int m) { return snapshot->density(m); });
     };
 
     // define the call-back function to retrieve a surface density value along a given path
-    auto valueAlongPath = [&entities, snapshot](Position bfr, Direction bfk) {
+    auto valueAlongPath = [snapshot](Position bfr, Direction bfk) {
+        thread_local EntityCollection entities;  // can be reused for all queries in a given execution thread
         snapshot->getEntities(entities, bfr, bfk);
         return entities.accumulate([snapshot](int m) { return snapshot->density(m); });
     };
 
+    // produce output
     if (snapshot->holdsNumber())
-    {
-        bridge.writeQuantity(sh + "_rho", sh + "_Sigma", "massvolumedensity", "masssurfacedensity", "mass density",
-                             "mass surface density", valueAtPosition, valueAlongPath);
-    }
-    else
     {
         bridge.writeQuantity(sh + "_n", sh + "_N", "numbervolumedensity", "numbersurfacedensity", "number density",
                              "column density", valueAtPosition, valueAlongPath);
+    }
+    else
+    {
+        bridge.writeQuantity(sh + "_rho", sh + "_Sigma", "massvolumedensity", "masssurfacedensity", "mass density",
+                             "mass surface density", valueAtPosition, valueAlongPath);
     }
 }
 

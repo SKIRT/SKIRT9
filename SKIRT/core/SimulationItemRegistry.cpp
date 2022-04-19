@@ -99,7 +99,7 @@
 #include "HollowRadialVectorField.hpp"
 #include "HyperboloidGeometry.hpp"
 #include "HyperboloidShellGeometry.hpp"
-#include "InputModelFormProbe.hpp"
+#include "ImportedMediumDensityProbe.hpp"
 #include "InstrumentSystem.hpp"
 #include "InstrumentWavelengthGridProbe.hpp"
 #include "IntegratedLuminosityNormalization.hpp"
@@ -643,6 +643,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<MagneticFieldProbe>();
     ItemRegistry::add<RadiationFieldProbe>();
     ItemRegistry::add<CustomStateProbe>();
+
+    ItemRegistry::add<ImportedMediumDensityProbe>();
 
     ItemRegistry::add<LuminosityProbe>();
     ItemRegistry::add<LaunchedPacketsProbe>();
