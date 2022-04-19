@@ -19,7 +19,7 @@
     and subsequent column(s) list the quantity being probed. */
 class PerCellForm : public SpatialGridForm
 {
-    ITEM_CONCRETE(PerCellForm, SpatialGridForm, "a text column file with a row for each spatial cell")
+    ITEM_CONCRETE(PerCellForm, SpatialGridForm, "a text column file with values for each spatial cell")
     ITEM_END()
 
 public:
