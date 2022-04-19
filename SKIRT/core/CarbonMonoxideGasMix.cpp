@@ -62,7 +62,7 @@ bool CarbonMonoxideGasMix::hasLineEmission() const
 
 vector<SnapshotParameter> CarbonMonoxideGasMix::parameterInfo() const
 {
-    return {SnapshotParameter::custom("H2 number density", "volumenumberdensity", "1/cm3")};
+    return {SnapshotParameter::custom("H2 number density", "numbervolumedensity", "1/cm3")};
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -70,7 +70,7 @@ vector<SnapshotParameter> CarbonMonoxideGasMix::parameterInfo() const
 vector<StateVariable> CarbonMonoxideGasMix::specificStateVariableInfo() const
 {
     vector<StateVariable> result{StateVariable::numberDensity(), StateVariable::temperature(),
-                                 StateVariable::custom(0, "H2 number density", "volumenumberdensity")};
+                                 StateVariable::custom(0, "H2 number density", "numbervolumedensity")};
 
     // add one custom variable for each level population
     // (the indices start at one because index zero is taken by the H2 number density)
@@ -200,6 +200,7 @@ void CarbonMonoxideGasMix::performScattering(double /*lambda*/, const MaterialSt
 Array CarbonMonoxideGasMix::lineEmissionCenters() const
 {
     Array centers(numLines);
+    for (int i = 0; i!=numLines; ++i) centers[i] = i+1;
     // ...
     return centers;
 }
