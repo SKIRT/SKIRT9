@@ -45,7 +45,7 @@
 class CustomStateProbe : public SpatialGridWhenFormProbe
 {
     ITEM_CONCRETE(CustomStateProbe, SpatialGridWhenFormProbe, "custom medium state quantities")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(CustomStateProbe, "Level3&CustomMediumState&RadiationField")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(CustomStateProbe, "Level3&CustomMediumState")
 
         PROPERTY_STRING(indices, "zero-based indices or index ranges of quantities to probe, or empty for all")
         ATTRIBUTE_DEFAULT_VALUE(indices, "")

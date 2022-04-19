@@ -34,12 +34,16 @@ void RadiationFieldProbe::probe()
         // get the radiation field wavelength grid
         auto wlg = find<Configuration>()->radiationFieldWLG();
 
-        // construct the wavelength axis in output units and ordering
+        // construct the wavelength axis in output units and ordering,
+        // plus a list of corresponding unit conversion factors for the mean intensity (for performance reasons)
         Array axis(wlg->numBins());
+        Array conv(wlg->numBins());
         int outell = 0;
         for (int ell : Indices(wlg->numBins(), units->rwavelength()))
         {
-            axis[outell++] = units->owavelength(wlg->wavelength(ell));
+            axis[outell] = units->owavelength(wlg->wavelength(ell));
+            conv[outell] = units->omeanintensity(wlg->wavelength(ell), 1.);
+            outell++;
         }
 
         // define the call-back function to add column definitions
@@ -54,13 +58,14 @@ void RadiationFieldProbe::probe()
         };
 
         // define the call-back function to retrieve a compound mean intensity value in output units and ordering
-        auto valueInCell = [ms, wlg, units](int m) {
+        auto valueInCell = [ms, wlg, units, conv](int m) {
             const Array& Jv = ms->meanIntensity(m);
             Array outJv(wlg->numBins());
             int outell = 0;
             for (int ell : Indices(wlg->numBins(), units->rwavelength()))
             {
-                outJv[outell++] = units->omeanintensity(wlg->wavelength(ell), Jv[ell]);
+                outJv[outell] = conv[outell] * Jv[ell];
+                outell++;
             }
             return outJv;
         };

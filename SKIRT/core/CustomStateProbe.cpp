@@ -87,6 +87,16 @@ void CustomStateProbe::probe()
                 // construct the "quantity axis" from the zero-based indices
                 Array axis = NR::array(indexv);
 
+                // construct a list of corresponding unit conversion factors (for performance reasons)
+                Array conv(axis.size());
+                int outindex = 0;
+                for (int index : indexv)
+                {
+                    const auto& descriptor = descriptors[index];
+                    conv[outindex] = descriptor.quantity().empty() ? 1. : units->out(descriptor.quantity(), 1.);
+                    outindex++;
+                }
+
                 // define the call-back function to add column definitions
                 auto addColumnDefinitions = [&indexv, &descriptors, units](TextOutFile& outfile) {
                     for (int index : indexv)
@@ -99,15 +109,14 @@ void CustomStateProbe::probe()
                 };
 
                 // define the call-back function to retrieve a compound value in output units
-                auto valueInCell = [ms, &indexv, &descriptors, h, units](int m) {
+                auto valueInCell = [ms, &indexv, &descriptors, h, conv](int m) {
                     Array out(indexv.size());
                     int outindex = 0;
                     for (int index : indexv)
                     {
                         const auto& descriptor = descriptors[index];
-                        double value = ms->custom(m, h, descriptor.customIndex());
-                        if (!descriptor.quantity().empty()) value = units->out(descriptor.quantity(), value);
-                        out[outindex++] = value;
+                        out[outindex] = conv[outindex] * ms->custom(m, h, descriptor.customIndex());
+                        outindex++;
                     }
                     return out;
                 };
