@@ -16,6 +16,14 @@ double UniformSmoothingKernel::density(double u) const
 
 //////////////////////////////////////////////////////////////////////
 
+double UniformSmoothingKernel::columnDensity(double q) const
+{
+    if (q < 0.0 || q >= 1.0) return 0.0;
+    return 1.5 / M_PI * sqrt((1.0 - q) * (1.0 + q));
+}
+
+//////////////////////////////////////////////////////////////////////
+
 double UniformSmoothingKernel::generateRadius() const
 {
     double X = random()->uniform();

@@ -292,7 +292,7 @@ public:
                                 // if the path intersects the particle, add the particle to the output collection
                                 if (q < 1.)
                                 {
-                                    double w = kernel->density(q) / (h * h);  // TO DO: use column density instead
+                                    double w = kernel->columnDensity(q) / (h * h);
                                     entities.add(particle->index(), w);
                                 }
                             }
