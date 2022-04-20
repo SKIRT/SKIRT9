@@ -21,7 +21,7 @@ void ImportedMediumDensityProbe::probeImportedMedium(string sh, const ImportedMe
     auto valueAtPosition = [snapshot](Position bfr) {
         thread_local EntityCollection entities;  // can be reused for all queries in a given execution thread
         snapshot->getEntities(entities, bfr);
-        return entities.average([snapshot](int m) { return snapshot->density(m); });
+        return entities.accumulate([snapshot](int m) { return snapshot->density(m); });
     };
 
     // define the call-back function to retrieve a surface density value along a given path

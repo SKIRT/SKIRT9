@@ -236,8 +236,12 @@ public:
         {
             double h = particle->radius();
             double u = (bfr - particle->center()).norm() / h;
-            double w = kernel->density(u) / (h * h * h);
-            entities.add(particle->index(), w);
+            // if the point is inside the particle, add the particle to the output collection
+            if (u <= 1.)
+            {
+                double w = kernel->density(u) / (h * h * h);
+                entities.add(particle->index(), w);
+            }
         }
     }
 
@@ -266,6 +270,9 @@ public:
             int j2 = NR::locateClip(_ygrid, pathbox.ymax());
             int k1 = NR::locateClip(_zgrid, pathbox.zmin());
             int k2 = NR::locateClip(_zgrid, pathbox.zmax());
+            if (i1 > i2) std::swap(i1, i2);  // fix reversed coords for negative bfk components
+            if (j1 > j2) std::swap(j1, j2);
+            if (k1 > k2) std::swap(k1, k2);
 
             // loop over all grid cells in that 3D range
             for (int i = i1; i <= i2; i++)
