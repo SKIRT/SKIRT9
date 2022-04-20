@@ -5,6 +5,7 @@
 
 #include "ParallelProjectionForm.hpp"
 #include "FITSInOut.hpp"
+#include "Log.hpp"
 #include "Parallel.hpp"
 #include "ParallelFactory.hpp"
 #include "ProbeFormBridge.hpp"
@@ -50,10 +51,13 @@ void ParallelProjectionForm::writeQuantity(const ProbeFormBridge* bridge) const
     Table<3> vvv(Nv, Nyp, Nxp);  // reverse index order to get proper data value ordering for FITSInOut::write()
 
     // calculate the results in parallel
+    auto log = find<Log>();
+    log->infoSetElapsed(Nyp);
     auto parallel = bridge->probe()->find<ParallelFactory>()->parallelDistributed();
     parallel->call(Nyp, [&vvv, bridge, xpmin, xpsiz, ypmin, ypsiz, kx, ky, kz, zp, costheta, sintheta, cosphi, sinphi,
-                         cosomega, sinomega, Nxp, Nv](size_t firstIndex, size_t numIndices) {
+                         cosomega, sinomega, Nxp, Nv, log](size_t firstIndex, size_t numIndices) {
         Array values(Nv);
+        string progress = bridge->probe()->typeAndName() + " calculated projected pixels: ";
 
         // loop over pixels
         for (size_t j = firstIndex; j != firstIndex + numIndices; ++j)
@@ -88,6 +92,7 @@ void ParallelProjectionForm::writeQuantity(const ProbeFormBridge* bridge) const
                     for (int p = 0; p != Nv; ++p) vvv(p, j, i) = values[p];
                 }
             }
+            log->infoIfElapsed(progress, 1);
         }
     });
     ProcessManager::sumToRoot(vvv.data());

@@ -7,6 +7,7 @@
 #include "FITSInOut.hpp"
 #include "FatalError.hpp"
 #include "HomogeneousTransform.hpp"
+#include "Log.hpp"
 #include "Parallel.hpp"
 #include "ParallelFactory.hpp"
 #include "ProbeFormBridge.hpp"
@@ -76,9 +77,12 @@ void AllSkyProjectionForm::writeQuantity(const ProbeFormBridge* bridge) const
     Table<3> vvv(Nv, Ny, Nx);  // reverse index order to get proper data value ordering for FITSInOut::write()
 
     // calculate the results in parallel
+    auto log = find<Log>();
+    log->infoSetElapsed(Ny);
     auto parallel = bridge->probe()->find<ParallelFactory>()->parallelDistributed();
-    parallel->call(Ny, [&vvv, this, bridge, &transform, Nx, Ny, Nv](size_t firstIndex, size_t numIndices) {
+    parallel->call(Ny, [&vvv, this, bridge, &transform, Nx, Ny, Nv, log](size_t firstIndex, size_t numIndices) {
         Array values(Nv);
+        string progress = bridge->probe()->typeAndName() + " calculated projected pixels: ";
 
         // loop over pixels
         for (size_t j = firstIndex; j != firstIndex + numIndices; ++j)
@@ -123,6 +127,7 @@ void AllSkyProjectionForm::writeQuantity(const ProbeFormBridge* bridge) const
                     }
                 }
             }
+            log->infoIfElapsed(progress, 1);
         }
     });
     ProcessManager::sumToRoot(vvv.data());
