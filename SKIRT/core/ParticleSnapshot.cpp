@@ -44,6 +44,9 @@ public:
     /** This function returns the mass of the particle. */
     double mass() const { return _M; }
 
+    /** This function returns the effective density of the particle. */
+    double density() const { return _M / (_h * _h * _h); }
+
     /** This function returns the impact radius of the path specified by a starting position and
         direction relative to the particle center (i.e. the minimum distance between the path and
         the center). If the path's starting position is located beyond the impact point (the point
@@ -239,7 +242,7 @@ public:
             // if the point is inside the particle, add the particle to the output collection
             if (u <= 1.)
             {
-                double w = kernel->density(u) / (h * h * h);
+                double w = kernel->density(u);
                 entities.add(particle->index(), w);
             }
         }
@@ -248,8 +251,8 @@ public:
     /** This function replaces the contents of the specified entity collection by the set of
         particles with a smoothing kernel that overlaps the specified path with starting point
         \f${\bf{r}}\f$ and direction \f${\bf{k}}\f$. The weight of each particle is given by the
-        column density seen by the path as it crosses the particle's smoothing kernel. If the path
-        does not overlap any particle, the collection will be empty. */
+        effective length seen by the path as it crosses the particle's smoothing kernel. If the
+        path does not overlap any particle, the collection will be empty. */
     void getEntities(EntityCollection& entities, Vec bfr, Vec bfk, const SmoothingKernel* kernel) const
     {
         // use the values in these variables only after a box/path intersection call that returns true
@@ -292,7 +295,7 @@ public:
                                 // if the path intersects the particle, add the particle to the output collection
                                 if (q < 1.)
                                 {
-                                    double w = kernel->columnDensity(q) / (h * h);
+                                    double w = kernel->columnDensity(q) * h;
                                     entities.add(particle->index(), w);
                                 }
                             }
@@ -311,6 +314,8 @@ private:
 ////////////////////////////////////////////////////////////////////
 
 ParticleSnapshot::ParticleSnapshot() {}
+
+////////////////////////////////////////////////////////////////////
 
 ParticleSnapshot::~ParticleSnapshot()
 {
@@ -471,7 +476,7 @@ int ParticleSnapshot::numEntities() const
 
 double ParticleSnapshot::density(int m) const
 {
-    return _pv[m].mass();
+    return _pv[m].density();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -484,7 +489,7 @@ double ParticleSnapshot::density(Position bfr) const
         {
             double h = p->radius();
             double u = (bfr - p->center()).norm() / h;
-            sum += _kernel->density(u) * p->mass() / (h * h * h);
+            sum += _kernel->density(u) * p->density();
         }
     return sum > 0. ? sum : 0.;  // guard against negative densities
 }

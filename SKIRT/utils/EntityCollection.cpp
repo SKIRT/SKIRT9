@@ -33,7 +33,19 @@ void EntityCollection::addSingle(int m)
 
 ////////////////////////////////////////////////////////////////////
 
-double EntityCollection::average(std::function<double(int)> value)
+double EntityCollection::accumulate(std::function<double(int)> value)
+{
+    double sumvw = 0.;
+    for (const auto& entity : _entities)
+    {
+        sumvw += value(entity.first) * entity.second;
+    }
+    return sumvw;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double EntityCollection::average(std::function<double(int m)> value, std::function<double(int m)> weight)
 {
     if (_entities.size() > 1)
     {
@@ -41,8 +53,10 @@ double EntityCollection::average(std::function<double(int)> value)
         double sumw = 0.;
         for (const auto& entity : _entities)
         {
-            sumvw += value(entity.first) * entity.second;
-            sumw += entity.second;
+            double v = value(entity.first);
+            double w = weight(entity.first) * entity.second;
+            sumvw += v * w;
+            sumw += w;
         }
         return sumw > 0. ? sumvw / sumw : 0.;
     }
@@ -54,18 +68,6 @@ double EntityCollection::average(std::function<double(int)> value)
     {
         return 0.;
     }
-}
-
-////////////////////////////////////////////////////////////////////
-
-double EntityCollection::accumulate(std::function<double(int)> value)
-{
-    double sumvw = 0.;
-    for (const auto& entity : _entities)
-    {
-        sumvw += value(entity.first) * entity.second;
-    }
-    return sumvw;
 }
 
 ////////////////////////////////////////////////////////////////////

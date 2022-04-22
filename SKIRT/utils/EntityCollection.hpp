@@ -64,16 +64,22 @@ public:
 
     // ------- Calculating results -------
 
-    /** This function calculates the weighted average of a given scalar field \f$f(m)\f$ over all
-        entities in the collection, \f[\frac{\sum_m f(m)\,w_m} {\sum_m w_m}.\f] The argument
-        specifies the scalar field \f$f(m)\f$, which should return a value corresponding to a given
-        entity index. */
-    double average(std::function<double(int m)> value);
-
-    /** This function accumulates the weighted value of a given scalar field \f$f(m)\f$ over all
-        entities in the collection, \f[\sum_m f(m)\,w_m.\f] The argument specifies the scalar field
-        \f$f(m)\f$, which should return a value corresponding to a given entity index. */
+    /** This function returns the accumulated weighted value of a given scalar field \f$f(m)\f$
+        over all entities in the collection, \f[\sum_m f(m)\,w_m.\f] The argument specifies the
+        scalar field \f$f(m)\f$; the call-back function should return the field value corresponding
+        to a given entity index. */
     double accumulate(std::function<double(int m)> value);
+
+    /** This function returns the weighted average of a given scalar field \f$f(m)\f$ with given
+        external weight \f$\omega(m)\f$ over all entities in the collection. The arguments
+        respectively specify the scalar field \f$f(m)\f$ and the corresponding external weight
+        \f$\omega(m)\f$. These functions should return the field value respectively the external
+        weight corresponding to a given entity index.
+
+        The function combines the external weights with the weights stored internally for each
+        entity in the collection. Specifically, it calculates \f[\frac{\sum_m f(m)\,\omega(m)\,w_m}
+        {\sum_m \omega(m)\,w_m}.\f] */
+    double average(std::function<double(int m)> value, std::function<double(int m)> weight);
 
     // ------- Data members -------
 

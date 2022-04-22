@@ -380,7 +380,7 @@ public:
 
         For a cell-based snapshot, the weight of a cell is given by the length of the path segment
         inside the cell. For a particle-based snapshot, the weight of a particle is given by the
-        column density seen by the path as it crosses the particle's smoothing kernel. */
+        effective length seen by the path as it crosses the particle's smoothing kernel. */
     virtual void getEntities(EntityCollection& entities, Position bfr, Direction bfk) const = 0;
 
     //============== Interrogation implemented here =============

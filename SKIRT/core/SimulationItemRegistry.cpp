@@ -100,6 +100,7 @@
 #include "HyperboloidGeometry.hpp"
 #include "HyperboloidShellGeometry.hpp"
 #include "ImportedMediumDensityProbe.hpp"
+#include "ImportedMediumMetallicityProbe.hpp"
 #include "InstrumentSystem.hpp"
 #include "InstrumentWavelengthGridProbe.hpp"
 #include "IntegratedLuminosityNormalization.hpp"
@@ -645,6 +646,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<CustomStateProbe>();
 
     ItemRegistry::add<ImportedMediumDensityProbe>();
+    ItemRegistry::add<ImportedMediumMetallicityProbe>();
 
     ItemRegistry::add<LuminosityProbe>();
     ItemRegistry::add<LaunchedPacketsProbe>();
