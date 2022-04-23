@@ -8,6 +8,7 @@
 
 #include "Basics.hpp"
 #include <unordered_map>
+class Vec;
 
 //////////////////////////////////////////////////////////////////////
 
@@ -80,6 +81,17 @@ public:
         entity in the collection. Specifically, it calculates \f[\frac{\sum_m f(m)\,\omega(m)\,w_m}
         {\sum_m \omega(m)\,w_m}.\f] */
     double average(std::function<double(int m)> value, std::function<double(int m)> weight);
+
+    /** This function returns the weighted average of a given vector field \f${\bf{f}}(m)\f$ with
+        given external weight \f$\omega(m)\f$ over all entities in the collection. The arguments
+        respectively specify the vector field \f${\bf{f}}(m)\f$ and the corresponding external
+        weight \f$\omega(m)\f$. These functions should return the field value respectively the
+        external weight corresponding to a given entity index.
+
+        The function combines the external weights with the weights stored internally for each
+        entity in the collection. Specifically, it calculates \f[\frac{\sum_m
+        {\bf{f}}(m)\,\omega(m)\,w_m} {\sum_m \omega(m)\,w_m}.\f] */
+    Vec average(std::function<Vec(int m)> value, std::function<double(int m)> weight);
 
     // ------- Data members -------
 

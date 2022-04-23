@@ -102,6 +102,7 @@
 #include "ImportedMediumDensityProbe.hpp"
 #include "ImportedMediumMetallicityProbe.hpp"
 #include "ImportedMediumTemperatureProbe.hpp"
+#include "ImportedMediumVelocityProbe.hpp"
 #include "InstrumentSystem.hpp"
 #include "InstrumentWavelengthGridProbe.hpp"
 #include "IntegratedLuminosityNormalization.hpp"
@@ -649,6 +650,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ImportedMediumDensityProbe>();
     ItemRegistry::add<ImportedMediumMetallicityProbe>();
     ItemRegistry::add<ImportedMediumTemperatureProbe>();
+    ItemRegistry::add<ImportedMediumVelocityProbe>();
 
     ItemRegistry::add<LuminosityProbe>();
     ItemRegistry::add<LaunchedPacketsProbe>();

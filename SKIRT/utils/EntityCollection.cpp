@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "EntityCollection.hpp"
+#include "Vec.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -67,6 +68,33 @@ double EntityCollection::average(std::function<double(int m)> value, std::functi
     else
     {
         return 0.;
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
+Vec EntityCollection::average(std::function<Vec(int)> value, std::function<double(int)> weight)
+{
+    if (_entities.size() > 1)
+    {
+        Vec sumvw;
+        double sumw = 0.;
+        for (const auto& entity : _entities)
+        {
+            Vec v = value(entity.first);
+            double w = weight(entity.first) * entity.second;
+            sumvw += v * w;
+            sumw += w;
+        }
+        return sumw > 0. ? sumvw / sumw : Vec();
+    }
+    else if (_entities.size() == 1)
+    {
+        return value(_entities.cbegin()->first);
+    }
+    else
+    {
+        return Vec();
     }
 }
 
