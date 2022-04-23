@@ -3,28 +3,29 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef IMPORTEDMEDIUMMETALLICITYPROBE_HPP
-#define IMPORTEDMEDIUMMETALLICITYPROBE_HPP
+#ifndef IMPORTEDMEDIUMTEMPERATUREPROBE_HPP
+#define IMPORTEDMEDIUMTEMPERATUREPROBE_HPP
 
 #include "InputModelFormProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-/** ImportedMediumMetallicityProbe probes the metallicity of each imported medium component in the
+/** ImportedMediumTemperatureProbe probes the temperature of each imported medium component in the
     simulation for which that information is available. The probe uses the data as represented by
-    the imported snapshot, without involving the spatial grid of the simulation. The metallicity is
+    the imported snapshot, without involving the spatial grid of the simulation. The temperature is
     (mass or number) density-weighted where necessary, i.e. when the probe is associated with a
     form that projects the quantity along a path, or when two or more smoothed particles in the
     imported data overlap.
 
-    For dust medium components, the weighting is based on the (dusty) gas density rather than the
-    dust density itself. In other words, the probe uses the medium density before the automatic
-    multiplication with metallicity occurs, but ignoring any cells or particles that do not contain
-    dust (because the corresponding information is removed during import). */
-class ImportedMediumMetallicityProbe : public InputModelFormProbe
+    For dust medium components, if metallicity is being imported in addition to temperature, the
+    weighting is based on the (dusty) gas density rather than the dust density itself. In other
+    words, the probe uses the medium density before the automatic multiplication with metallicity
+    occurs, but ignoring any cells or particles that do not contain dust (because the corresponding
+    information is removed during import). */
+class ImportedMediumTemperatureProbe : public InputModelFormProbe
 {
-    ITEM_CONCRETE(ImportedMediumMetallicityProbe, InputModelFormProbe, "the metallicity of the imported medium")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(ImportedMediumMetallicityProbe, "ImportedMedium")
+    ITEM_CONCRETE(ImportedMediumTemperatureProbe, InputModelFormProbe, "the temperature of the imported medium")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(ImportedMediumTemperatureProbe, "ImportedMedium")
     ITEM_END()
 
     //======================== Other Functions =======================

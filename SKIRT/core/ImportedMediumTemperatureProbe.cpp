@@ -3,7 +3,7 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "ImportedMediumMetallicityProbe.hpp"
+#include "ImportedMediumTemperatureProbe.hpp"
 #include "EntityCollection.hpp"
 #include "ImportedMedium.hpp"
 #include "ProbeFormBridge.hpp"
@@ -11,18 +11,18 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void ImportedMediumMetallicityProbe::probeImportedMedium(string sh, const ImportedMedium* medium,
+void ImportedMediumTemperatureProbe::probeImportedMedium(string sh, const ImportedMedium* medium,
                                                          const Snapshot* snapshot)
 {
-    if (snapshot->hasMetallicity())
+    if (snapshot->hasTemperature())
     {
         // construct a bridge
         ProbeFormBridge bridge(this, form());
 
         // define call-back functions to retrieve the probed quantity and corresponding weight for a given entity
         // for dust media, use the gas density rather than the dust density for weighting the probed quantity
-        bool dust = medium->mix()->isDust();
-        auto getValue = [snapshot](int m) { return snapshot->metallicity(m); };
+        bool dust = medium->mix()->isDust() && snapshot->hasMetallicity();
+        auto getValue = [snapshot](int m) { return snapshot->temperature(m); };
         auto getWeight = [snapshot, dust](int m) {
             double w = snapshot->density(m);
             if (dust) w /= snapshot->metallicity(m);
@@ -44,8 +44,8 @@ void ImportedMediumMetallicityProbe::probeImportedMedium(string sh, const Import
         };
 
         // produce output
-        bridge.writeQuantity(sh + "_Z", sh + "_Z", "dimensionless", "dimensionless", "metallicity",
-                             "density-weighted metallicity", valueAtPosition, valueAlongPath);
+        bridge.writeQuantity(sh + "_T", sh + "_T", "temperature", "temperature", "temperature",
+                             "density-weighted temperature", valueAtPosition, valueAlongPath);
     }
 }
 
