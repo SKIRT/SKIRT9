@@ -51,7 +51,7 @@ class ImportedSourceDensityProbe : public InputModelFormProbe
 
     //======================== Other Functions =======================
 
-public:
+protected:
     /** This function probes the specified imported source component. */
     void probeImportedSource(string sh, const ImportedSource* source, const Snapshot* snapshot) override;
 };

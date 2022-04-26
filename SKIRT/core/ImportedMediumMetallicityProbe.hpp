@@ -29,7 +29,7 @@ class ImportedMediumMetallicityProbe : public InputModelFormProbe
 
     //======================== Other Functions =======================
 
-public:
+protected:
     /** This function probes the specified imported medium component. */
     void probeImportedMedium(string sh, const ImportedMedium* medium, const Snapshot* snapshot) override;
 };

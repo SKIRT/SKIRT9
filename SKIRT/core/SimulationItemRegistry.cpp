@@ -104,6 +104,7 @@
 #include "ImportedMediumTemperatureProbe.hpp"
 #include "ImportedMediumVelocityProbe.hpp"
 #include "ImportedSourceDensityProbe.hpp"
+#include "ImportedSourceMetallicityProbe.hpp"
 #include "InstrumentSystem.hpp"
 #include "InstrumentWavelengthGridProbe.hpp"
 #include "IntegratedLuminosityNormalization.hpp"
@@ -636,6 +637,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<SpatialGridFormProbe>();
     ItemRegistry::add<SpatialGridWhenFormProbe>();
     ItemRegistry::add<InputModelFormProbe>();
+    ItemRegistry::add<ImportedSourceWeightedProbe>();
 
     ItemRegistry::add<ConvergenceInfoProbe>();
     ItemRegistry::add<ConvergenceCutsProbe>();
@@ -649,6 +651,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<CustomStateProbe>();
 
     ItemRegistry::add<ImportedSourceDensityProbe>();
+    ItemRegistry::add<ImportedSourceMetallicityProbe>();
     ItemRegistry::add<ImportedMediumDensityProbe>();
     ItemRegistry::add<ImportedMediumMetallicityProbe>();
     ItemRegistry::add<ImportedMediumTemperatureProbe>();
