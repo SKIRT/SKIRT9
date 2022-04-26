@@ -44,6 +44,9 @@ public:
     /** This function returns the mass of the particle. */
     double mass() const { return _M; }
 
+    /** This function returns the effective volume of the particle. */
+    double volume() const { return _h * _h * _h; }
+
     /** This function returns the effective density of the particle. */
     double density() const { return _M / (_h * _h * _h); }
 
@@ -470,6 +473,13 @@ Box ParticleSnapshot::extent() const
 int ParticleSnapshot::numEntities() const
 {
     return _propv.size();
+}
+
+////////////////////////////////////////////////////////////////////
+
+double ParticleSnapshot::volume(int m) const
+{
+    return _pv[m].volume();
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -280,7 +280,7 @@ public:
 
     /** This function returns the volume of the Voronoi cell with index \em m. If the index is out
         of range, the behavior is undefined. */
-    double volume(int m) const;
+    double volume(int m) const override;
 
     /** This function returns the bounding box (enclosing cuboid lined up with the coordinate axes)
         of the Voronoi cell with index \em m. If the index is out of range, the behavior is

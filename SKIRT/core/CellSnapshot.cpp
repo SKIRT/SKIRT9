@@ -338,6 +338,13 @@ int CellSnapshot::numEntities() const
 
 ////////////////////////////////////////////////////////////////////
 
+double CellSnapshot::volume(int m) const
+{
+    return box(_propv[m], boxIndex()).volume();
+}
+
+////////////////////////////////////////////////////////////////////
+
 double CellSnapshot::density(int m) const
 {
     return _rhov[m];

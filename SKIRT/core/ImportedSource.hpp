@@ -65,6 +65,7 @@ class ImportedSource : public Source
         PROPERTY_BOOL(importCurrentMass, "import current mass")
         ATTRIBUTE_DEFAULT_VALUE(importCurrentMass, "false")
         ATTRIBUTE_DISPLAYED_IF(importCurrentMass, "Level3")
+        ATTRIBUTE_INSERT(importCurrentMass, "importCurrentMass:CurrentMass")
 
         PROPERTY_STRING(useColumns, "a list of names corresponding to columns in the file to be imported")
         ATTRIBUTE_DEFAULT_VALUE(useColumns, "")

@@ -314,6 +314,11 @@ public:
     /** This function returns the number of entities \f$N_\mathrm{ent}\f$ in the snapshot. */
     virtual int numEntities() const = 0;
 
+    /** This function returns the volume of the entity with index \f$0\le m \le
+        N_\mathrm{ent}-1\f$. If the index is out of range, if no density policy has been set, or no
+        mass/density information is being imported, the behavior is undefined. */
+    virtual double volume(int m) const = 0;
+
     /** This function returns the mass or number density for the entity with index \f$0\le m \le
         N_\mathrm{ent}-1\f$. If the index is out of range, if no density policy has been set, or no
         mass/density information is being imported, the behavior is undefined. */

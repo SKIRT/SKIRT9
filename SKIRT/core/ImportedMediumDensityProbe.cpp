@@ -5,7 +5,6 @@
 
 #include "ImportedMediumDensityProbe.hpp"
 #include "EntityCollection.hpp"
-#include "ImportedMedium.hpp"
 #include "ProbeFormBridge.hpp"
 #include "Snapshot.hpp"
 

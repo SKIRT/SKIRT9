@@ -176,7 +176,7 @@ public:
 
     /** This function returns the volume of the leaf cell with index \em m. If the index is out of
         range, the behavior is undefined. */
-    double volume(int m) const;
+    double volume(int m) const override;
 
     /** This function returns the diagonal of the leaf cell with index \em m. If the index is out of
         range, the behavior is undefined. */

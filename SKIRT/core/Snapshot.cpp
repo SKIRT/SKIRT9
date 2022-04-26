@@ -124,7 +124,7 @@ void Snapshot::importNumber()
 
 void Snapshot::importCurrentMass()
 {
-    _massIndex = _nextIndex++;
+    _currentMassIndex = _nextIndex++;
     _infile->addColumn("current mass", "mass", "Msun");
 }
 

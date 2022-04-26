@@ -68,6 +68,10 @@ public:
     /** This function returns the number of cells in the snapshot. */
     int numEntities() const override;
 
+    /** This function returns the volume of the cell with index \em m. If the index is out of
+        range, the behavior is undefined. */
+    double volume(int m) const override;
+
     /** This function returns the mass density associated with the cell with index \em m. If no
         density policy has been set or no mass information is being imported, or if the index is
         out of range, the behavior is undefined. */
