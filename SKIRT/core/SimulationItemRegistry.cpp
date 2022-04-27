@@ -105,6 +105,7 @@
 #include "ImportedMediumVelocityProbe.hpp"
 #include "ImportedSourceAgeProbe.hpp"
 #include "ImportedSourceDensityProbe.hpp"
+#include "ImportedSourceLuminosityProbe.hpp"
 #include "ImportedSourceMetallicityProbe.hpp"
 #include "ImportedSourceVelocityProbe.hpp"
 #include "InstrumentSystem.hpp"
@@ -652,6 +653,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<RadiationFieldProbe>();
     ItemRegistry::add<CustomStateProbe>();
 
+    ItemRegistry::add<ImportedSourceLuminosityProbe>();
     ItemRegistry::add<ImportedSourceDensityProbe>();
     ItemRegistry::add<ImportedSourceMetallicityProbe>();
     ItemRegistry::add<ImportedSourceAgeProbe>();
