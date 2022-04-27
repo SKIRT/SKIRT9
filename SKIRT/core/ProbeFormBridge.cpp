@@ -208,7 +208,7 @@ void ProbeFormBridge::writeQuantity(string fileid, string projectedFileid, strin
     _projectedDescription = projectedDescription;
     _axis = axis;
     _axisUnit = axisUnit;
-    _numValues = 3.;
+    _numValues = axis.size();
 
     _addColumnDefinitions = addColumnDefinitions;
     _compoundValueAtPosition = valueAtPosition;

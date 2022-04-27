@@ -14,7 +14,7 @@
 /** ImportedSourceWeightedProbe is an abstract base class for imported source probes that average
     the probed quantity along a path rather than accumulating it. This class offers the options
     that allow the user to configure the weighting mechanism. There are three choices: using the
-    luminosity at a given wavelength, using initial mass, or using current mass.
+    specific luminosity at a given wavelength, using initial mass, or using current mass.
 
     Luminosity weighting can be accomplished for any imported source, regardless of the configured
     %SED family, as long as the source's spectral range includes the specified wavelength.
