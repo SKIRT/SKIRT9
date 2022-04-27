@@ -270,26 +270,29 @@ void TextInFile::addColumn(string description, string quantity, string defaultUn
     if (col.quantity.empty())  // dimensionless quantity
     {
         if (!col.unit.empty() && col.unit != "1")
-            throw FATALERROR("Invalid units for dimensionless quantity in column " + std::to_string(_numLogCols));
+            throw FATALERROR("Invalid units (" + col.unit + ") for dimensionless quantity in column "
+                             + std::to_string(_numLogCols));
         col.unit = "1";
     }
     else if (col.quantity == "specific")  // arbitrarily scaled value per wavelength or per frequency
     {
         col.waveExponent = waveExponentForSpecificQuantity(_units, col.unit);
         if (col.waveExponent == ERROR_NO_EXPON)
-            throw FATALERROR("Invalid units for specific quantity in column " + std::to_string(_numLogCols));
+            throw FATALERROR("Invalid units (" + col.unit + ") for specific quantity '" + col.quantity + "' in column "
+                             + std::to_string(_numLogCols));
         if (col.waveExponent)
         {
             col.waveIndex = waveIndexForSpecificQuantity();
             if (col.waveIndex == ERROR_NO_INDEX)
-                throw FATALERROR("No preceding wavelength column for specific quantity in column "
-                                 + std::to_string(_numLogCols));
+                throw FATALERROR("No preceding wavelength column for specific quantity '" + col.quantity
+                                 + "' in column " + std::to_string(_numLogCols));
         }
     }
     else
     {
         if (!_units->has(col.quantity, col.unit))
-            throw FATALERROR("Invalid units for quantity in column " + std::to_string(_numLogCols));
+            throw FATALERROR("Invalid units (" + col.unit + ") for quantity '" + col.quantity + "' in column "
+                             + std::to_string(_numLogCols));
         double offset;  // all SKIRT units have a zero offset
         std::tie(col.convFactor, col.convPower, offset) = _units->def(col.quantity, col.unit);
     }
