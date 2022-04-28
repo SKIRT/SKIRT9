@@ -15,9 +15,6 @@ void ImportedMediumVelocityProbe::probeImportedMedium(string sh, const ImportedM
 {
     if (snapshot->hasVelocity())
     {
-        // construct a bridge
-        ProbeFormBridge bridge(this, form());
-
         // define call-back functions to retrieve the probed quantity and corresponding weight for a given entity
         // for dust media, use the gas density rather than the dust density for weighting the probed quantity
         bool dust = medium->mix()->isDust() && snapshot->hasMetallicity();
@@ -28,23 +25,10 @@ void ImportedMediumVelocityProbe::probeImportedMedium(string sh, const ImportedM
             return w;
         };
 
-        // define the call-back function to retrieve an averaged quantity value at a given position
-        auto valueAtPosition = [snapshot, getValue, getWeight](Position bfr) {
-            thread_local EntityCollection entities;  // can be reused for all queries in a given execution thread
-            snapshot->getEntities(entities, bfr);
-            return entities.average(getValue, getWeight);
-        };
-
-        // define the call-back function to retrieve an averaged quantity value along a given path
-        auto valueAlongPath = [snapshot, getValue, getWeight](Position bfr, Direction bfk) {
-            thread_local EntityCollection entities;  // can be reused for all queries in a given execution thread
-            snapshot->getEntities(entities, bfr, bfk);
-            return entities.average(getValue, getWeight);
-        };
-
-        // produce output
-        bridge.writeQuantity(sh + "_v", sh + "_v", "velocity", "velocity", "velocity", "density-weighted velocity",
-                             valueAtPosition, valueAlongPath);
+        // construct a bridge and produce output
+        ProbeFormBridge bridge(this, form());
+        bridge.writeQuantity(sh + "_v", "velocity", "velocity", "density-weighted velocity", snapshot, getValue,
+                             getWeight);
     }
 }
 

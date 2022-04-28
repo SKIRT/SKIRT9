@@ -15,26 +15,11 @@ void ImportedSourceVelocityProbe::probeImportedSourceWeighted(string sh, string 
 {
     if (snapshot->hasVelocity())
     {
-        // construct a bridge
+        // construct a bridge and produce output
         ProbeFormBridge bridge(this, form());
-
-        // define the call-back function to retrieve an averaged quantity value at a given position
-        auto valueAtPosition = [snapshot, weight](Position bfr) {
-            thread_local EntityCollection entities;  // can be reused for all queries in a given execution thread
-            snapshot->getEntities(entities, bfr);
-            return entities.average([snapshot](int m) { return snapshot->velocity(m); }, weight);
-        };
-
-        // define the call-back function to retrieve an averaged quantity value along a given path
-        auto valueAlongPath = [snapshot, weight](Position bfr, Direction bfk) {
-            thread_local EntityCollection entities;  // can be reused for all queries in a given execution thread
-            snapshot->getEntities(entities, bfr, bfk);
-            return entities.average([snapshot](int m) { return snapshot->velocity(m); }, weight);
-        };
-
-        // produce output
-        bridge.writeQuantity(sh + "_v", sh + "_v", "velocity", "velocity", "velocity", sweight + "-weighted velocity",
-                             valueAtPosition, valueAlongPath);
+        bridge.writeQuantity(
+            sh + "_v", "velocity", "velocity", sweight + "-weighted velocity", snapshot,
+            [snapshot](int m) { return snapshot->velocity(m); }, weight);
     }
 }
 

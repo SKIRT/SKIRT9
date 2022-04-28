@@ -5,11 +5,13 @@
 
 #include "ProbeFormBridge.hpp"
 #include "Configuration.hpp"
+#include "EntityCollection.hpp"
 #include "FatalError.hpp"
 #include "Form.hpp"
 #include "MediumSystem.hpp"
 #include "PathSegmentGenerator.hpp"
 #include "Probe.hpp"
+#include "Snapshot.hpp"
 #include "SpatialGrid.hpp"
 #include "SpatialGridPath.hpp"
 #include "TextOutFile.hpp"
@@ -215,6 +217,78 @@ void ProbeFormBridge::writeQuantity(string fileid, string projectedFileid, strin
     _compoundValueAlongPath = valueAlongPath;
 
     _form->writeQuantity(this);
+}
+
+////////////////////////////////////////////////////////////////////
+
+void ProbeFormBridge::writeQuantity(string fileid, string projectedFileid, string quantity, string projectedQuantity,
+                                    string description, string projectedDescription, const Snapshot* snapshot,
+                                    ScalarValueInEntity valueInEntity)
+{
+    // define the call-back function to retrieve an accumulated value at a given position
+    auto valueAtPosition = [snapshot, valueInEntity](Position bfr) {
+        thread_local EntityCollection entities;  // can be reused for all queries in a given execution thread
+        snapshot->getEntities(entities, bfr);
+        return entities.accumulate(valueInEntity);
+    };
+
+    // define the call-back function to retrieve an accumulated value along a given path
+    auto valueAlongPath = [snapshot, valueInEntity](Position bfr, Direction bfk) {
+        thread_local EntityCollection entities;  // can be reused for all queries in a given execution thread
+        snapshot->getEntities(entities, bfr, bfk);
+        return entities.accumulate(valueInEntity);
+    };
+
+    writeQuantity(fileid, projectedFileid, quantity, projectedQuantity, description, projectedDescription,
+                  valueAtPosition, valueAlongPath);
+}
+
+////////////////////////////////////////////////////////////////////
+
+void ProbeFormBridge::writeQuantity(string fileid, string quantity, string description, string projectedDescription,
+                                    const Snapshot* snapshot, ScalarValueInEntity valueInEntity,
+                                    ScalarValueInEntity weightInEntity)
+{
+    // define the call-back function to retrieve an averaged value at a given position
+    auto valueAtPosition = [snapshot, valueInEntity, weightInEntity](Position bfr) {
+        thread_local EntityCollection entities;  // can be reused for all queries in a given execution thread
+        snapshot->getEntities(entities, bfr);
+        return entities.average(valueInEntity, weightInEntity);
+    };
+
+    // define the call-back function to retrieve an averaged value along a given path
+    auto valueAlongPath = [snapshot, valueInEntity, weightInEntity](Position bfr, Direction bfk) {
+        thread_local EntityCollection entities;  // can be reused for all queries in a given execution thread
+        snapshot->getEntities(entities, bfr, bfk);
+        return entities.average(valueInEntity, weightInEntity);
+    };
+
+    writeQuantity(fileid, fileid, quantity, quantity, description, projectedDescription, valueAtPosition,
+                  valueAlongPath);
+}
+
+////////////////////////////////////////////////////////////////////
+
+void ProbeFormBridge::writeQuantity(string fileid, string quantity, string description, string projectedDescription,
+                                    const Snapshot* snapshot, VectorValueInEntity valueInEntity,
+                                    ScalarValueInEntity weightInEntity)
+{
+    // define the call-back function to retrieve an averaged quantity value at a given position
+    auto valueAtPosition = [snapshot, valueInEntity, weightInEntity](Position bfr) {
+        thread_local EntityCollection entities;  // can be reused for all queries in a given execution thread
+        snapshot->getEntities(entities, bfr);
+        return entities.average(valueInEntity, weightInEntity);
+    };
+
+    // define the call-back function to retrieve an averaged quantity value along a given path
+    auto valueAlongPath = [snapshot, valueInEntity, weightInEntity](Position bfr, Direction bfk) {
+        thread_local EntityCollection entities;  // can be reused for all queries in a given execution thread
+        snapshot->getEntities(entities, bfr, bfk);
+        return entities.average(valueInEntity, weightInEntity);
+    };
+
+    writeQuantity(fileid, fileid, quantity, quantity, description, projectedDescription, valueAtPosition,
+                  valueAlongPath);
 }
 
 ////////////////////////////////////////////////////////////////////

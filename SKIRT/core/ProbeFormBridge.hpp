@@ -13,6 +13,7 @@
 class Form;
 class Probe;
 class SimulationItem;
+class Snapshot;
 class SpatialGrid;
 class TextOutFile;
 class Units;
@@ -201,6 +202,16 @@ public:
         */
     using CompoundValueAlongPath = std::function<Array(Position bfr, Direction bfk)>;
 
+    /** This is the type declaration for the callback function provided by the imported model probe
+        to retrieve the scalar value (in internal units) of the quantity being probed in the
+        snapshot entity with index \f$m\f$. */
+    using ScalarValueInEntity = std::function<double(int m)>;
+
+    /** This is the type declaration for the callback function provided by the imported model probe
+        to retrieve the vector value (in internal units) of the quantity being probed in the
+        snapshot entity with index \f$m\f$. */
+    using VectorValueInEntity = std::function<Vec(int m)>;
+
     //======== Writing: for use by spatial grid probes  =======
 
     /** This function causes the form associated with this bridge to output a file for a scalar
@@ -253,6 +264,30 @@ public:
                        string projectedDescription, const Array& axis, string axisUnit,
                        AddColumnDefinitions addColumnDefinitions, CompoundValueAtPosition valueAtPosition,
                        CompoundValueAlongPath valueAlongPath);
+
+    //======== Writing: for use by imported source or media component probes  =======
+
+    /** This function causes the form associated with this bridge to output a file for a scalar
+        quantity that needs to be accumulated along a path, according to the provided information.
+        It should be called only from input model probes for imported source or media components.
+        Refer to the class header for more information on the arguments. */
+    void writeQuantity(string fileid, string projectedFileid, string quantity, string projectedQuantity,
+                       string description, string projectedDescription, const Snapshot* snapshot,
+                       ScalarValueInEntity valueInEntity);
+
+    /** This function causes the form associated with this bridge to output a file for a scalar
+        quantity that needs to be averaged along a path, according to the provided information. It
+        should be called only from input model probes for imported source or media components.
+        Refer to the class header for more information on the arguments. */
+    void writeQuantity(string fileid, string quantity, string description, string projectedDescription,
+                       const Snapshot* snapshot, ScalarValueInEntity valueInEntity, ScalarValueInEntity weightInEntity);
+
+    /** This function causes the form associated with this bridge to output a file for a vector
+        quantity that needs to be averaged along a path, according to the provided information. It
+        should be called only from input model probes for imported source or media components.
+        Refer to the class header for more information on the arguments. */
+    void writeQuantity(string fileid, string quantity, string description, string projectedDescription,
+                       const Snapshot* snapshot, VectorValueInEntity valueInEntity, ScalarValueInEntity weightInEntity);
 
     //======== Querying: for use by all form types  =======
 
