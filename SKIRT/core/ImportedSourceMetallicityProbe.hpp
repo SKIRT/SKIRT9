@@ -20,7 +20,7 @@
     class derives. */
 class ImportedSourceMetallicityProbe : public ImportedSourceWeightedProbe
 {
-    ITEM_CONCRETE(ImportedSourceMetallicityProbe, ImportedSourceWeightedProbe, "the metallicity of the imported source")
+    ITEM_CONCRETE(ImportedSourceMetallicityProbe, ImportedSourceWeightedProbe, "imported source: metallicity")
     ITEM_END()
 
     //======================== Other Functions =======================

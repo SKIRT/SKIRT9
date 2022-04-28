@@ -33,7 +33,7 @@
 class OpticalMaterialPropertiesProbe : public SpecialtyWavelengthGridProbe
 {
     ITEM_CONCRETE(OpticalMaterialPropertiesProbe, SpecialtyWavelengthGridProbe,
-                  "aggregate optical material properties for each medium")
+                  "properties: aggregate optical material properties for each medium")
         ATTRIBUTE_TYPE_DISPLAYED_IF(OpticalMaterialPropertiesProbe, "Medium")
 
     ITEM_END()

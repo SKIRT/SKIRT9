@@ -29,7 +29,7 @@
     can be used to produce transparent noise-free images of an imported source. */
 class ImportedSourceLuminosityProbe : public InputModelFormProbe, public MaterialWavelengthRangeInterface
 {
-    ITEM_CONCRETE(ImportedSourceLuminosityProbe, InputModelFormProbe, "the specific luminosity of the imported source")
+    ITEM_CONCRETE(ImportedSourceLuminosityProbe, InputModelFormProbe, "imported source: specific luminosity density")
         ATTRIBUTE_TYPE_DISPLAYED_IF(ImportedSourceLuminosityProbe, "ImportedSource")
 
         PROPERTY_ITEM(wavelengthGrid, WavelengthGrid, "the wavelength grid for this probe")

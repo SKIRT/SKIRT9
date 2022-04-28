@@ -23,7 +23,7 @@
     configured in the source system. */
 class LuminosityProbe : public SpecialtyWavelengthGridProbe
 {
-    ITEM_CONCRETE(LuminosityProbe, SpecialtyWavelengthGridProbe, "the primary source luminosities")
+    ITEM_CONCRETE(LuminosityProbe, SpecialtyWavelengthGridProbe, "source: luminosities of primary sources")
         ATTRIBUTE_TYPE_DISPLAYED_IF(LuminosityProbe, "Source")
 
     ITEM_END()

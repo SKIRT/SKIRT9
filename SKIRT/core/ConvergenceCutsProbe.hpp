@@ -37,7 +37,7 @@ class Form;
 class ConvergenceCutsProbe : public SpecialtyWhenProbe
 {
     ITEM_CONCRETE(ConvergenceCutsProbe, SpecialtyWhenProbe,
-                  "convergence cuts of the medium density along the coordinate planes")
+                  "convergence: cuts of the medium density along the coordinate planes")
         ATTRIBUTE_TYPE_DISPLAYED_IF(ConvergenceCutsProbe, "Medium&SpatialGrid")
     ITEM_END()
 

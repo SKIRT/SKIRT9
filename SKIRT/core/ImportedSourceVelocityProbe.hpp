@@ -20,7 +20,8 @@
     class derives. */
 class ImportedSourceVelocityProbe : public ImportedSourceWeightedProbe
 {
-    ITEM_CONCRETE(ImportedSourceVelocityProbe, ImportedSourceWeightedProbe, "the bulk velocity of the imported source")
+    ITEM_CONCRETE(ImportedSourceVelocityProbe, ImportedSourceWeightedProbe, "imported source: bulk velocity")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(ImportedSourceVelocityProbe, "ImportedSource&SourceVelocity")
     ITEM_END()
 
     //======================== Other Functions =======================

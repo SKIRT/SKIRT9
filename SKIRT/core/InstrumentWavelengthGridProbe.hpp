@@ -18,8 +18,8 @@ class WavelengthGrid;
     */
 class InstrumentWavelengthGridProbe : public SpecialtyProbe
 {
-    ITEM_CONCRETE(InstrumentWavelengthGridProbe, SpecialtyProbe, "the instrument wavelength grids")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(InstrumentWavelengthGridProbe, "Instrument")
+    ITEM_CONCRETE(InstrumentWavelengthGridProbe, SpecialtyProbe, "wavelength grid: instruments")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(InstrumentWavelengthGridProbe, "Level2&Instrument")
     ITEM_END()
 
     //======================== Other Functions =======================

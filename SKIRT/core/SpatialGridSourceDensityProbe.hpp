@@ -24,8 +24,9 @@
     sampled at the cell center. */
 class SpatialGridSourceDensityProbe : public SpecialtyProbe
 {
-    ITEM_CONCRETE(SpatialGridSourceDensityProbe, SpecialtyProbe, "primary source density discretized on spatial grid")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(SpatialGridSourceDensityProbe, "Level2&GeometricSource&SpatialGrid")
+    ITEM_CONCRETE(SpatialGridSourceDensityProbe, SpecialtyProbe,
+                  "specialty: primary source density discretized on spatial grid")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(SpatialGridSourceDensityProbe, "Level3&GeometricSource&SpatialGrid")
     ITEM_END()
 
     //======================== Other Functions =======================

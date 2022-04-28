@@ -40,8 +40,8 @@ class OpacityProbe : public SpatialGridWhenFormProbe, public MaterialWavelengthR
         ENUM_VAL(Aggregation, System, "for the complete medium system")
     ENUM_END()
 
-    ITEM_CONCRETE(OpacityProbe, SpatialGridWhenFormProbe, "the opacity of the medium")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(OpacityProbe, "Level2&Medium&SpatialGrid")
+    ITEM_CONCRETE(OpacityProbe, SpatialGridWhenFormProbe, "spatial grid: opacity of the medium")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(OpacityProbe, "Medium&SpatialGrid")
 
         PROPERTY_DOUBLE(wavelength, "the wavelength at which to determine the opacity")
         ATTRIBUTE_QUANTITY(wavelength, "wavelength")

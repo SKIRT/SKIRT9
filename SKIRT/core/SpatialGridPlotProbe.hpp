@@ -25,7 +25,7 @@
     represent a sequence of "lineto" commands; an empty line marks a "moveto" command. */
 class SpatialGridPlotProbe : public SpecialtyProbe
 {
-    ITEM_CONCRETE(SpatialGridPlotProbe, SpecialtyProbe, "data files for plotting the structure of the grid")
+    ITEM_CONCRETE(SpatialGridPlotProbe, SpecialtyProbe, "properties: data files for plotting the structure of the grid")
         ATTRIBUTE_TYPE_DISPLAYED_IF(SpatialGridPlotProbe, "SpatialGrid")
     ITEM_END()
 

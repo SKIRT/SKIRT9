@@ -46,7 +46,7 @@
 class LaunchedPacketsProbe : public SpecialtyWavelengthGridProbe, public ProbePhotonPacketInterface
 {
     ITEM_CONCRETE(LaunchedPacketsProbe, SpecialtyWavelengthGridProbe,
-                  "the number of photon packets launched from primary and secondary sources")
+                  "source: number of photon packets launched from primary and secondary sources")
         ATTRIBUTE_TYPE_DISPLAYED_IF(LaunchedPacketsProbe, "Level2&Source")
 
     ITEM_END()

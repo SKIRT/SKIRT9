@@ -45,7 +45,7 @@ class ImportedSourceWeightedProbe : public InputModelFormProbe, public MaterialW
         ENUM_VAL(Weight, CurrentMass, "current mass")
     ENUM_END()
 
-    ITEM_ABSTRACT(ImportedSourceWeightedProbe, InputModelFormProbe, "a weighted quantity of the imported source")
+    ITEM_ABSTRACT(ImportedSourceWeightedProbe, InputModelFormProbe, "an imported source weighted probe")
         ATTRIBUTE_TYPE_DISPLAYED_IF(ImportedSourceWeightedProbe, "ImportedSource")
 
         PROPERTY_ENUM(weight, Weight, "weight for averaging the probed quantity")

@@ -40,7 +40,7 @@ class ImportedSourceDensityProbe : public InputModelFormProbe
         ENUM_VAL(MassType, CurrentMass, "current mass")
     ENUM_END()
 
-    ITEM_CONCRETE(ImportedSourceDensityProbe, InputModelFormProbe, "the mass density of the imported source")
+    ITEM_CONCRETE(ImportedSourceDensityProbe, InputModelFormProbe, "imported source: mass density")
         ATTRIBUTE_TYPE_DISPLAYED_IF(ImportedSourceDensityProbe, "ImportedSource")
 
         PROPERTY_ENUM(massType, MassType, "type of mass being probed")

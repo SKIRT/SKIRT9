@@ -25,7 +25,7 @@
     the wavelength bin width, and the left and right borders of the bin. */
 class RadiationFieldProbe : public SpatialGridFormProbe
 {
-    ITEM_CONCRETE(RadiationFieldProbe, SpatialGridFormProbe, "the mean radiation field intensity")
+    ITEM_CONCRETE(RadiationFieldProbe, SpatialGridFormProbe, "spatial grid: the mean radiation field intensity")
         ATTRIBUTE_TYPE_DISPLAYED_IF(RadiationFieldProbe, "Level2&SpatialGrid&RadiationField")
 
         PROPERTY_BOOL(writeWavelengthGrid, "output a text file with the radiation field wavelength grid")

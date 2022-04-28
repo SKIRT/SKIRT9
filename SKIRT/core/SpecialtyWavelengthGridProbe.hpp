@@ -17,7 +17,7 @@
     wavelength-dependent material properties may be required for the configured wavelength grid. */
 class SpecialtyWavelengthGridProbe : public SpecialtyProbe, public MaterialWavelengthRangeInterface
 {
-    ITEM_ABSTRACT(SpecialtyWavelengthGridProbe, SpecialtyProbe, "a probe requiring a wavelength grid")
+    ITEM_ABSTRACT(SpecialtyWavelengthGridProbe, SpecialtyProbe, "a specialty wavelength grid probe")
 
         PROPERTY_ITEM(wavelengthGrid, WavelengthGrid, "the wavelength grid for this probe")
         ATTRIBUTE_RELEVANT_IF(wavelengthGrid, "Panchromatic")

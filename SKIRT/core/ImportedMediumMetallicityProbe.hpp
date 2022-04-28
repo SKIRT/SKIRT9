@@ -23,7 +23,7 @@
     dust (because the corresponding information is removed during import). */
 class ImportedMediumMetallicityProbe : public InputModelFormProbe
 {
-    ITEM_CONCRETE(ImportedMediumMetallicityProbe, InputModelFormProbe, "the metallicity of the imported medium")
+    ITEM_CONCRETE(ImportedMediumMetallicityProbe, InputModelFormProbe, "imported medium: metallicity")
         ATTRIBUTE_TYPE_DISPLAYED_IF(ImportedMediumMetallicityProbe, "ImportedMedium")
     ITEM_END()
 

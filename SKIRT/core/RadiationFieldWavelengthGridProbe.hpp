@@ -17,7 +17,7 @@
     left and right borders of the bin. */
 class RadiationFieldWavelengthGridProbe : public SpecialtyProbe
 {
-    ITEM_CONCRETE(RadiationFieldWavelengthGridProbe, SpecialtyProbe, "the radiation field wavelength grid")
+    ITEM_CONCRETE(RadiationFieldWavelengthGridProbe, SpecialtyProbe, "wavelength grid: radiation field ")
         ATTRIBUTE_TYPE_DISPLAYED_IF(RadiationFieldWavelengthGridProbe, "Level2&Medium&SpatialGrid&RadiationField")
     ITEM_END()
 

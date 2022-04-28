@@ -20,7 +20,7 @@
     full simulation run. */
 class SpecialtyWavelengthProbe : public SpecialtyWhenProbe, public MaterialWavelengthRangeInterface
 {
-    ITEM_ABSTRACT(SpecialtyWavelengthProbe, SpecialtyWhenProbe, "a specialty probe requiring a wavelength value")
+    ITEM_ABSTRACT(SpecialtyWavelengthProbe, SpecialtyWhenProbe, "a specialty wavelength probe")
 
         PROPERTY_DOUBLE(wavelength, "the wavelength at which to determine the optical depth")
         ATTRIBUTE_QUANTITY(wavelength, "wavelength")

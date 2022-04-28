@@ -56,6 +56,7 @@ class ImportedSource : public Source
         ATTRIBUTE_DEFAULT_VALUE(importVelocity, "false")
         ATTRIBUTE_RELEVANT_IF(importVelocity, "Panchromatic")
         ATTRIBUTE_DISPLAYED_IF(importVelocity, "Level2")
+        ATTRIBUTE_INSERT(importVelocity, "importVelocity:SourceVelocity")
 
         PROPERTY_BOOL(importVelocityDispersion, "import velocity dispersion (spherically symmetric)")
         ATTRIBUTE_DEFAULT_VALUE(importVelocityDispersion, "false")

@@ -19,7 +19,7 @@
     described for the ImportedSourceWeightedProbe class, from which this class derives. */
 class ImportedSourceAgeProbe : public ImportedSourceWeightedProbe
 {
-    ITEM_CONCRETE(ImportedSourceAgeProbe, ImportedSourceWeightedProbe, "the age of the imported source")
+    ITEM_CONCRETE(ImportedSourceAgeProbe, ImportedSourceWeightedProbe, "imported source: age")
     ITEM_END()
 
     //======================== Other Functions =======================

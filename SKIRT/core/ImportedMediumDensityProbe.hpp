@@ -17,7 +17,7 @@
     outputs mass surface density or number surface density (column density). */
 class ImportedMediumDensityProbe : public InputModelFormProbe
 {
-    ITEM_CONCRETE(ImportedMediumDensityProbe, InputModelFormProbe, "the density of the imported medium")
+    ITEM_CONCRETE(ImportedMediumDensityProbe, InputModelFormProbe, "imported medium: mass or number density")
         ATTRIBUTE_TYPE_DISPLAYED_IF(ImportedMediumDensityProbe, "ImportedMedium")
     ITEM_END()
 

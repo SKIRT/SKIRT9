@@ -641,42 +641,47 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<SpatialGridWhenFormProbe>();
     ItemRegistry::add<InputModelFormProbe>();
     ItemRegistry::add<ImportedSourceWeightedProbe>();
-
+    //   .. convergence
     ItemRegistry::add<ConvergenceInfoProbe>();
     ItemRegistry::add<ConvergenceCutsProbe>();
+    //   .. source
+    ItemRegistry::add<LuminosityProbe>();
+    ItemRegistry::add<LaunchedPacketsProbe>();
+    //   .. spatial grid
     ItemRegistry::add<DensityProbe>();
     ItemRegistry::add<OpacityProbe>();
     ItemRegistry::add<TemperatureProbe>();
     ItemRegistry::add<MetallicityProbe>();
     ItemRegistry::add<VelocityProbe>();
     ItemRegistry::add<MagneticFieldProbe>();
-    ItemRegistry::add<RadiationFieldProbe>();
     ItemRegistry::add<CustomStateProbe>();
-
+    ItemRegistry::add<RadiationFieldProbe>();
+    //   .. properties
+    ItemRegistry::add<SpatialCellPropertiesProbe>();
+    ItemRegistry::add<SpatialGridPlotProbe>();
+    ItemRegistry::add<OpticalMaterialPropertiesProbe>();
+    ItemRegistry::add<DustGrainPopulationsProbe>();
+    ItemRegistry::add<DustGrainSizeDistributionProbe>();
+    ItemRegistry::add<DustEmissivityProbe>();
+    //   .. wavelength grid
+    ItemRegistry::add<RadiationFieldWavelengthGridProbe>();
+    ItemRegistry::add<DustEmissionWavelengthGridProbe>();
+    ItemRegistry::add<InstrumentWavelengthGridProbe>();
+    //   .. specialty
+    ItemRegistry::add<DustAbsorptionPerCellProbe>();
+    ItemRegistry::add<SpatialGridSourceDensityProbe>();
+    ItemRegistry::add<TreeSpatialGridTopologyProbe>();
+    //   .. imported source
     ItemRegistry::add<ImportedSourceLuminosityProbe>();
     ItemRegistry::add<ImportedSourceDensityProbe>();
     ItemRegistry::add<ImportedSourceMetallicityProbe>();
     ItemRegistry::add<ImportedSourceAgeProbe>();
     ItemRegistry::add<ImportedSourceVelocityProbe>();
+    //   .. imported medium
     ItemRegistry::add<ImportedMediumDensityProbe>();
     ItemRegistry::add<ImportedMediumMetallicityProbe>();
     ItemRegistry::add<ImportedMediumTemperatureProbe>();
     ItemRegistry::add<ImportedMediumVelocityProbe>();
-
-    ItemRegistry::add<LuminosityProbe>();
-    ItemRegistry::add<LaunchedPacketsProbe>();
-    ItemRegistry::add<SpatialGridPlotProbe>();
-    ItemRegistry::add<TreeSpatialGridTopologyProbe>();
-    ItemRegistry::add<SpatialCellPropertiesProbe>();
-    ItemRegistry::add<SpatialGridSourceDensityProbe>();
-    ItemRegistry::add<OpticalMaterialPropertiesProbe>();
-    ItemRegistry::add<DustGrainPopulationsProbe>();
-    ItemRegistry::add<DustGrainSizeDistributionProbe>();
-    ItemRegistry::add<DustAbsorptionPerCellProbe>();
-    ItemRegistry::add<DustEmissivityProbe>();
-    ItemRegistry::add<InstrumentWavelengthGridProbe>();
-    ItemRegistry::add<RadiationFieldWavelengthGridProbe>();
-    ItemRegistry::add<DustEmissionWavelengthGridProbe>();
 
     // forms
     ItemRegistry::add<Form>();

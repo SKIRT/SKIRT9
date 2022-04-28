@@ -26,8 +26,9 @@
     population. */
 class DustGrainPopulationsProbe : public SpecialtyProbe
 {
-    ITEM_CONCRETE(DustGrainPopulationsProbe, SpecialtyProbe, "dust grain population mass and size information")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(DustGrainPopulationsProbe, "Medium&MultiGrainDustMix")
+    ITEM_CONCRETE(DustGrainPopulationsProbe, SpecialtyProbe,
+                  "properties: dust grain population mass and size information")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(DustGrainPopulationsProbe, "Level2&Medium&MultiGrainDustMix")
 
     ITEM_END()
 

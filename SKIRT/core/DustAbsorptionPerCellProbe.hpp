@@ -33,8 +33,8 @@
 class DustAbsorptionPerCellProbe : public SpecialtyProbe
 {
     ITEM_CONCRETE(DustAbsorptionPerCellProbe, SpecialtyProbe,
-                  "the spectral luminosity absorbed by dust for each spatial cell")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(DustAbsorptionPerCellProbe, "Level2&DustMix&SpatialGrid&RadiationField")
+                  "specialty: spectral luminosity absorbed by dust for each spatial cell")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(DustAbsorptionPerCellProbe, "Level3&DustMix&SpatialGrid&RadiationField")
 
         PROPERTY_BOOL(writeWavelengthGrid, "output a text file with the radiation field wavelength grid")
         ATTRIBUTE_DEFAULT_VALUE(writeWavelengthGrid, "false")

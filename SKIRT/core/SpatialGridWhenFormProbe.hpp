@@ -20,14 +20,13 @@ class SpatialGridWhenFormProbe : public SpatialGridFormProbe
         ENUM_VAL(ProbeAfter, Run, "after the complete simulation run")
     ENUM_END()
 
-    ITEM_ABSTRACT(SpatialGridWhenFormProbe, SpatialGridFormProbe,
-                  "a spatial grid form probe with the probeAfter option")
+    ITEM_ABSTRACT(SpatialGridWhenFormProbe, SpatialGridFormProbe, "a spatial grid when form probe")
 
         ATTRIBUTE_SUB_PROPERTIES_HERE()
 
         PROPERTY_ENUM(probeAfter, ProbeAfter, "perform the probe after")
         ATTRIBUTE_DEFAULT_VALUE(probeAfter, "Setup")
-        ATTRIBUTE_DISPLAYED_IF(probeAfter, "DynamicState")
+        ATTRIBUTE_DISPLAYED_IF(probeAfter, "DynamicState|SemiDynamicState")
 
     ITEM_END()
 

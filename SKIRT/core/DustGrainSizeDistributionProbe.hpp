@@ -30,8 +30,8 @@
     user. */
 class DustGrainSizeDistributionProbe : public SpecialtyProbe
 {
-    ITEM_CONCRETE(DustGrainSizeDistributionProbe, SpecialtyProbe, "dust grain size distribution")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(DustGrainSizeDistributionProbe, "Medium&MultiGrainDustMix")
+    ITEM_CONCRETE(DustGrainSizeDistributionProbe, SpecialtyProbe, "properties: dust grain size distribution")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(DustGrainSizeDistributionProbe, "Level2&Medium&MultiGrainDustMix")
 
         PROPERTY_INT(numSamples, "the number of samples in the size distribution table")
         ATTRIBUTE_MIN_VALUE(numSamples, "3")

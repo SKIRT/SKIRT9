@@ -24,8 +24,8 @@
     information is removed during import). */
 class ImportedMediumVelocityProbe : public InputModelFormProbe
 {
-    ITEM_CONCRETE(ImportedMediumVelocityProbe, InputModelFormProbe, "the bulk velocity of the imported medium")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(ImportedMediumVelocityProbe, "ImportedMedium")
+    ITEM_CONCRETE(ImportedMediumVelocityProbe, InputModelFormProbe, "imported medium: bulk velocity")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(ImportedMediumVelocityProbe, "ImportedMedium&MediumVelocity")
     ITEM_END()
 
     //======================== Other Functions =======================

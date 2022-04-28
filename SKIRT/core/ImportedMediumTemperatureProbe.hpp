@@ -24,7 +24,7 @@
     information is removed during import). */
 class ImportedMediumTemperatureProbe : public InputModelFormProbe
 {
-    ITEM_CONCRETE(ImportedMediumTemperatureProbe, InputModelFormProbe, "the temperature of the imported medium")
+    ITEM_CONCRETE(ImportedMediumTemperatureProbe, InputModelFormProbe, "imported medium: temperature")
         ATTRIBUTE_TYPE_DISPLAYED_IF(ImportedMediumTemperatureProbe, "ImportedMedium")
     ITEM_END()
 

@@ -33,8 +33,8 @@
 class TreeSpatialGridTopologyProbe : public SpecialtyProbe
 {
     ITEM_CONCRETE(TreeSpatialGridTopologyProbe, SpecialtyProbe,
-                  "data file representing the topology of the tree spatial grid")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(TreeSpatialGridTopologyProbe, "Level2&TreeSpatialGrid")
+                  "specialty: data file representing the topology of the tree spatial grid")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(TreeSpatialGridTopologyProbe, "Level3&TreeSpatialGrid")
     ITEM_END()
 
     //======================== Other Functions =======================

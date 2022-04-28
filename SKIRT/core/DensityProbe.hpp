@@ -29,7 +29,7 @@ class DensityProbe : public SpatialGridWhenFormProbe
         ENUM_VAL(Aggregation, Type, "per medium type (dust, electrons, gas)")
     ENUM_END()
 
-    ITEM_CONCRETE(DensityProbe, SpatialGridWhenFormProbe, "the density of the medium")
+    ITEM_CONCRETE(DensityProbe, SpatialGridWhenFormProbe, "spatial grid: density of the medium")
         ATTRIBUTE_TYPE_DISPLAYED_IF(DensityProbe, "Medium&SpatialGrid")
 
         PROPERTY_ENUM(aggregation, Aggregation, "how to aggregate the density")

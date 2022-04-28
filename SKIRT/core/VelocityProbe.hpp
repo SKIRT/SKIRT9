@@ -15,7 +15,7 @@
     projects the quantity along a path, the value is density-weighted. */
 class VelocityProbe : public SpatialGridFormProbe
 {
-    ITEM_CONCRETE(VelocityProbe, SpatialGridFormProbe, "the bulk velocity of the medium")
+    ITEM_CONCRETE(VelocityProbe, SpatialGridFormProbe, "spatial grid: bulk velocity of the medium")
         ATTRIBUTE_TYPE_DISPLAYED_IF(VelocityProbe, "Level2&SpatialGrid&MediumVelocity")
     ITEM_END()
 

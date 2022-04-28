@@ -17,7 +17,7 @@
     left and right borders of the bin. */
 class DustEmissionWavelengthGridProbe : public SpecialtyProbe
 {
-    ITEM_CONCRETE(DustEmissionWavelengthGridProbe, SpecialtyProbe, "the dust emission wavelength grid")
+    ITEM_CONCRETE(DustEmissionWavelengthGridProbe, SpecialtyProbe, "wavelength grid: dust emission")
         ATTRIBUTE_TYPE_DISPLAYED_IF(DustEmissionWavelengthGridProbe, "Level2&DustMix&DustEmission")
     ITEM_END()
 

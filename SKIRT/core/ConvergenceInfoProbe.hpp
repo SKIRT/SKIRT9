@@ -29,7 +29,7 @@
     grid cells: the largest and average diagonal optical depth, and the 90% percentile. */
 class ConvergenceInfoProbe : public SpecialtyWavelengthProbe
 {
-    ITEM_CONCRETE(ConvergenceInfoProbe, SpecialtyWavelengthProbe, "convergence information on the spatial grid")
+    ITEM_CONCRETE(ConvergenceInfoProbe, SpecialtyWavelengthProbe, "convergence: information on the spatial grid")
         ATTRIBUTE_TYPE_DISPLAYED_IF(ConvergenceInfoProbe, "Medium&SpatialGrid")
 
     ITEM_END()
