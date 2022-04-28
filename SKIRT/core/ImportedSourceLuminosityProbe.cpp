@@ -50,59 +50,66 @@ void ImportedSourceLuminosityProbe::probeImportedSource(string sh, const Importe
     Array wave(numWaves);  // wavelengths in internal units
     Array axis(numWaves);  // wavelengths in output units
     Array cvol(numWaves);  // conversion factors for luminosity volume density
-    Array csrf(numWaves);  // conversion factors for luminosity surface density
+    Array csrf(numWaves);  // conversion factors for luminosity surface density (i.e. surface brightness)
     int outell = 0;
     for (int ell : Indices(numWaves, units->rwavelength()))
     {
         wave[outell] = wlg->wavelength(ell);
         axis[outell] = units->owavelength(wlg->wavelength(ell));
-        cvol[outell] = 1.;  // TODO
-        csrf[outell] = 1.;  // TODO
+        cvol[outell] = units->omonluminosityvolumedensity(wlg->wavelength(ell), 1.);
+        csrf[outell] = units->osurfacebrightness(wlg->wavelength(ell), 1.) * (0.25 / M_PI);
         outell++;
     }
 
     // define the call-back function to add column definitions
     auto addColumnDefinitions = [axis, units](TextOutFile& outfile) {
-        for (double lambda : axis)
+        for (double outwave : axis)
         {
-            outfile.addColumn(units->smeanintensity() + " at " + units->swavelength() + " = "
-                                  + StringUtils::toString(lambda, 'g') + " " + units->uwavelength(),
-                              "W/m/m3");  // TODO
+            // we assume that text files always contain values at a given position;
+            // this will be incorrect if a new form would list projected quantities
+            outfile.addColumn(units->smonluminosityvolumedensity() + " at " + units->swavelength() + " = "
+                                  + StringUtils::toString(outwave, 'g') + " " + units->uwavelength(),
+                              units->umonluminosityvolumedensity());
         }
     };
 
-    // define a function to accumulate the luminosity spectrum for all entities in a collection
-    auto accumulate = [source, snapshot, wave, numWaves](const EntityCollection& entities) {
+    // define the call-back function to retrieve a (compound) luminosity volume density value at a given position
+    auto valueAtPosition = [source, snapshot, wave, numWaves, cvol](Position bfr) {
+        thread_local EntityCollection entities;  // can be reused for all queries in a given execution thread
+        snapshot->getEntities(entities, bfr);
+
         Array sumvw(numWaves);
         for (const auto& entity : entities)
         {
             int m = entity.first;
             double w = entity.second;
             for (int ell = 0; ell != numWaves; ++ell)
-                sumvw[ell] += source->specificLuminosity(wave[ell], m) / snapshot->volume(m) * w;
+                sumvw[ell] += cvol[ell] * w * source->specificLuminosity(wave[ell], m) / snapshot->volume(m);
         }
         return sumvw;
     };
 
-    // define the call-back function to retrieve a luminosity volume density value at a given position
-    auto valueAtPosition = [snapshot, accumulate](Position bfr) {
-        thread_local EntityCollection entities;  // can be reused for all queries in a given execution thread
-        snapshot->getEntities(entities, bfr);
-        return accumulate(entities);
-    };
-
-    // define the call-back function to retrieve a luminosity surface density value along a given path
-    auto valueAlongPath = [snapshot, accumulate](Position bfr, Direction bfk) {
+    // define the call-back function to retrieve a surface brightness value along a given path
+    auto valueAlongPath = [source, snapshot, wave, numWaves, csrf](Position bfr, Direction bfk) {
         thread_local EntityCollection entities;  // can be reused for all queries in a given execution thread
         snapshot->getEntities(entities, bfr, bfk);
-        return accumulate(entities);
+
+        Array sumvw(numWaves);
+        for (const auto& entity : entities)
+        {
+            int m = entity.first;
+            double w = entity.second;
+            for (int ell = 0; ell != numWaves; ++ell)
+                sumvw[ell] += csrf[ell] * w * source->specificLuminosity(wave[ell], m) / snapshot->volume(m);
+        }
+        return sumvw;
     };
 
     // construct a bridge and tell it to produce output
     ProbeFormBridge bridge(this, form());
-    bridge.writeQuantity(sh + "_L", sh + "_L", "W/m/m3", "W/m/m2", "luminosity volume density",
-                         "luminosity surface density", axis, units->uwavelength(), addColumnDefinitions,
-                         valueAtPosition, valueAlongPath);  // TODO
+    bridge.writeQuantity(sh + "_L", sh + "_S", units->umonluminosityvolumedensity(), units->usurfacebrightness(),
+                         "luminosity density", "surface brightness", axis, units->uwavelength(), addColumnDefinitions,
+                         valueAtPosition, valueAlongPath);
 }
 
 ////////////////////////////////////////////////////////////////////
