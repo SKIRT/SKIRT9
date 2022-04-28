@@ -247,7 +247,7 @@ void ProbeFormBridge::writeQuantity(string fileid, string projectedFileid, strin
 
 void ProbeFormBridge::writeQuantity(string fileid, string quantity, string description, string projectedDescription,
                                     const Snapshot* snapshot, ScalarValueInEntity valueInEntity,
-                                    ScalarValueInEntity weightInEntity)
+                                    WeightInEntity weightInEntity)
 {
     // define the call-back function to retrieve an averaged value at a given position
     auto valueAtPosition = [snapshot, valueInEntity, weightInEntity](Position bfr) {
@@ -271,7 +271,7 @@ void ProbeFormBridge::writeQuantity(string fileid, string quantity, string descr
 
 void ProbeFormBridge::writeQuantity(string fileid, string quantity, string description, string projectedDescription,
                                     const Snapshot* snapshot, VectorValueInEntity valueInEntity,
-                                    ScalarValueInEntity weightInEntity)
+                                    WeightInEntity weightInEntity)
 {
     // define the call-back function to retrieve an averaged quantity value at a given position
     auto valueAtPosition = [snapshot, valueInEntity, weightInEntity](Position bfr) {
