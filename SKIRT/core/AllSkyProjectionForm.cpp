@@ -134,7 +134,7 @@ void AllSkyProjectionForm::writeQuantity(const ProbeFormBridge* bridge) const
 
     // write the file
     auto units = bridge->units();
-    FITSInOut::write(bridge->probe(), "all-sky-projected " + bridge->description(), bridge->projectedPrefix(),
+    FITSInOut::write(bridge->probe(), "all-sky-projected " + bridge->projectedDescription(), bridge->projectedPrefix(),
                      vvv.data(), bridge->projectedUnit(), Nx, Ny, units->oposangle(-2 * M_PI / Nx),
                      units->oposangle(M_PI / Ny), 0., 0., units->uposangle(), bridge->axis(), bridge->axisUnit());
 }
