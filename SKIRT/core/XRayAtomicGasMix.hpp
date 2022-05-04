@@ -307,6 +307,7 @@ public:
 
 private:
     // all data members are precalculated in setupSelfAfter()
+    size_t _numAtoms{0}; // number of supported atoms
 
     // wavelength grid (shifted to the left of the actually sampled points to approximate rounding)
     Array _lambdav;  // indexed on ell
