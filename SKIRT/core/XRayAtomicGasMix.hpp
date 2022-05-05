@@ -16,8 +16,8 @@
 /** The XRayAtomicGasMix class describes the material properties of neutral atomic gas in the X-ray
     wavelength range, taking into account the effects of photo-absorption, fluorescence, and
     scattering by bound electrons. To avoid the use of this material mix outside of the regime for
-    which it has been designed, all cross sections are forced to zero below 4.3 eV and above 300
-    keV (corresponding to a wavelength range from 4 pm to 290 nm).
+    which it has been designed, all cross sections are forced to zero below 4 eV and above 310
+    keV (corresponding approximately to a wavelength range from 4 pm to 310 nm).
 
     The class assumes a gas containing a mixture of non-ionized elements with atomic numbers from 1
     (hydrogen) up to 30 (zinc). The spatial density distribution of the gas is established by

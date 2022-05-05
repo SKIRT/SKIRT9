@@ -17,18 +17,10 @@
 
 namespace
 {
-    // ---- hardcoded configuration constants ----
-
-    // wavelength range over which our cross sections may be nonzero
-    constexpr Range nonZeroRange(4e-12, 290e-9);  // 300 keV --> 4.3 eV
-
-    // number of wavelengths per dex in high-resolution grid
-    constexpr size_t numWavelengthsPerDex = 2500;
-
     // ---- common helper functions ----
 
     // convert photon energy in eV to and from wavelength in m (same conversion in both directions)
-    double wavelengthToFromEnergy(double x)
+    constexpr double wavelengthToFromEnergy(double x)
     {
         constexpr double front = Constants::h() * Constants::c() / Constants::Qelectron();
         return front / x;
@@ -36,6 +28,14 @@ namespace
 
     // return thermal velocity for given gas temperature (in K) and particle mass (in amu)
     double vtherm(double T, double amu) { return sqrt(Constants::k() / Constants::amu() * T / amu); }
+
+    // ---- hardcoded configuration constants ----
+
+    // wavelength range over which our cross sections may be nonzero
+    constexpr Range nonZeroRange(wavelengthToFromEnergy(310e3), wavelengthToFromEnergy(4.));
+
+    // number of wavelengths per dex in high-resolution grid
+    constexpr size_t numWavelengthsPerDex = 2500;
 
     // ---- photo-absorption and fluorescence resources ----
 
@@ -252,9 +252,11 @@ void XRayAtomicGasMix::setupSelfBefore()
         if (range.contains(lambda)) lambdav.push_back(lambda);
     }
 
-    // add the outer wavelengths of our nonzero range so that there are always at least two points in the grid
+    // add the outer wavelengths of our nonzero range, plus an extra just outside of that range,
+    // so that there are always at least three points and thus two bins in the grid
     lambdav.push_back(nonZeroRange.min());
     lambdav.push_back(nonZeroRange.max());
+    lambdav.push_back(nonZeroRange.max()*1.000001); // this wavelength point is never actually used
 
     // sort the wavelengths and remove duplicates
     NR::unique(lambdav);
@@ -272,9 +274,9 @@ void XRayAtomicGasMix::setupSelfBefore()
     // ---- extinction ----
 
     // calculate the extinction cross section at every wavelength; to guarantee that the cross section is zero
-    // for wavelengths outside our range, leave the values for the outer wavelength points at zero
+    // for wavelengths outside our range, leave the values for the three outer wavelength points at zero
     _sigmaextv.resize(numLambda);
-    for (int ell = 1; ell < numLambda - 1; ++ell)
+    for (int ell = 1; ell < numLambda - 2; ++ell)
     {
         double lambda = lambdav[ell];
         double E = wavelengthToFromEnergy(lambda);
@@ -325,7 +327,7 @@ void XRayAtomicGasMix::setupSelfBefore()
     Array contribv(2 * _numAtoms + fluorescenceParams.size());
 
     // calculate the above for every wavelength; as before, leave the values for the outer wavelength points at zero
-    for (int ell = 1; ell < numLambda - 1; ++ell)
+    for (int ell = 1; ell < numLambda - 2; ++ell)
     {
         double lambda = lambdav[ell];
         double E = wavelengthToFromEnergy(lambda);
