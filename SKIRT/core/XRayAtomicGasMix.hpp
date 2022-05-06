@@ -7,7 +7,6 @@
 #define XRAYATOMICGASMIX_HPP
 
 #include "ArrayTable.hpp"
-#include "ComptonPhaseFunction.hpp"
 #include "MaterialMix.hpp"
 #include "PhotonPacket.hpp"
 
@@ -218,6 +217,9 @@ protected:
         high-resolution wavelength grid. */
     void setupSelfBefore() override;
 
+    /** The destructor destructs the phase function helpers that were created during setup. */
+    ~XRayAtomicGasMix();
+
     //======== Private support functions =======
 
 private:
@@ -326,6 +328,10 @@ public:
 
     //======================== Data Members ========================
 
+public:
+    // base class for bound-electron scattering helpers (public because we derive from it in anonymous namespace)
+    class ScatteringHelper;
+
 private:
     // all data members are precalculated in setupSelfAfter()
     size_t _numAtoms{0};  // number of supported atoms
@@ -347,11 +353,9 @@ private:
     vector<double> _vthermscav;   // indexed on m
     ArrayTable<2> _cumprobscavv;  // indexed on ell, m
 
-    // bound-electron scattering resources depending on the configured implementation
-    ComptonPhaseFunction _cpf;  // the free-electron Compton phase function helper
-    vector<Array> _RSSv;        // 0: E (keV); 1-30: smooth Rayleigh cross sections (cm2)
-    vector<Array> _RSAv;        // 2*Z: E (keV); 2*Z+1: anomalous Rayleigh cross sections (cm2)
-    vector<Array> _CSv;         // 0: E (keV); 1-30: bound Compton cross sections (cm2)
+    // bound-electron scattering helpers depending on the configured implementation
+    ScatteringHelper* _ray{nullptr};  // Rayleigh scattering helper
+    ScatteringHelper* _com{nullptr};  // Compton scattering helper
 };
 
 ////////////////////////////////////////////////////////////////////

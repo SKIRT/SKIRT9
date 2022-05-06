@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "XRayAtomicGasMix.hpp"
+#include "ComptonPhaseFunction.hpp"
 #include "Configuration.hpp"
 #include "Constants.hpp"
 #include "FatalError.hpp"
@@ -142,6 +143,153 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
+// ---- scattering helper classes ----
+
+// base class for scattering helpers
+class XRayAtomicGasMix::ScatteringHelper
+{
+public:
+    virtual ~ScatteringHelper() {}
+
+    // return scattering cross section for atom in m2
+    virtual double sectionSca(double lambda, int Z) const = 0;
+
+    // peel-off scattering event
+    virtual void peeloffScattering(double& I, double& lambda, int Z, Direction bfk, Direction bfkobs) const = 0;
+
+    // perform scattering event
+    virtual Direction performScattering(double& lambda, int Z, Direction bfk) const = 0;
+};
+
+namespace
+{
+    // ---- free-electron Compton scattering helper ----
+
+    class FreeComptonHelper : public XRayAtomicGasMix::ScatteringHelper
+    {
+    private:
+        ComptonPhaseFunction _cpf;  // forward all calls to external helper class
+
+    public:
+        FreeComptonHelper(Random* random) { _cpf.initialize(random); }
+
+        double sectionSca(double lambda, int Z) const override
+        {
+            return Z * Constants::sigmaThomson() * _cpf.sectionSca(lambda);
+        }
+
+        void peeloffScattering(double& I, double& lambda, int /*Z*/, Direction bfk, Direction bfkobs) const override
+        {
+            _cpf.peeloffScattering(I, lambda, bfk, bfkobs);
+        }
+
+        Direction performScattering(double& lambda, int /*Z*/, Direction bfk) const override
+        {
+            return _cpf.performScattering(lambda, bfk);
+        }
+    };
+
+    // ---- bound-electron Compton scattering helper ----
+
+    class BoundComptonHelper : public XRayAtomicGasMix::ScatteringHelper
+    {
+    private:
+        vector<Array> _CSv;  // 0: E (keV); 1-30: bound Compton cross sections (cm2)
+        vector<Array> _SFv;  // 0: q (1); 1-30: incoherent scattering functions (1)
+        Random* _random;
+
+    public:
+        BoundComptonHelper(const vector<Array>& CSv, const vector<Array>& SFv, Random* random)
+            : _CSv(CSv), _SFv(SFv), _random(random)
+        {}
+
+        double sectionSca(double lambda, int Z) const override
+        {
+            double E = wavelengthToFromEnergy(lambda) * 1e-3;
+            return NR::clampedValue<NR::interpolateLogLog>(E, _CSv[0], _CSv[Z]) * 1e-4;
+        }
+
+        void peeloffScattering(double& I, double& lambda, int Z, Direction bfk, Direction bfkobs) const override {}
+
+        Direction performScattering(double& lambda, int Z, Direction bfk) const override {}
+    };
+
+    // ---- no Rayleigh scattering helper ----
+
+    class NoRayleighHelper : public XRayAtomicGasMix::ScatteringHelper
+    {
+    public:
+        NoRayleighHelper() {}
+
+        double sectionSca(double lambda, int Z) const override { return 0.; }
+
+        void peeloffScattering(double& /*I*/, double& /*lambda*/, int /*Z*/, Direction /*bfk*/,
+                               Direction /*bfkobs*/) const override
+        {}
+
+        Direction performScattering(double& /*lambda*/, int /*Z*/, Direction /*bfk*/) const override
+        {
+            return Direction();
+        }
+    };
+
+    // ---- smooth Rayleigh scattering helper ----
+
+    class SmoothRayleighHelper : public XRayAtomicGasMix::ScatteringHelper
+    {
+    private:
+        vector<Array> _RSSv;  // 0: E (keV); 1-30: smooth Rayleigh cross sections (cm2)
+        vector<Array> _FFv;   // 0: q (1); 1-30: atomic form factors (1)
+        Random* _random;
+
+    public:
+        SmoothRayleighHelper(const vector<Array>& RSSv, const vector<Array>& FFv, Random* random)
+            : _RSSv(RSSv), _FFv(FFv), _random(random)
+        {}
+
+        double sectionSca(double lambda, int Z) const override
+        {
+            double E = wavelengthToFromEnergy(lambda) * 1e-3;
+            return NR::clampedValue<NR::interpolateLogLog>(E, _RSSv[0], _RSSv[Z]) * 1e-4;
+        }
+
+        void peeloffScattering(double& I, double& lambda, int Z, Direction bfk, Direction bfkobs) const override {}
+
+        Direction performScattering(double& lambda, int Z, Direction bfk) const override {}
+    };
+
+    // ---- anomalous Rayleigh scattering helper ----
+
+    class AnomalousRayleighHelper : public XRayAtomicGasMix::ScatteringHelper
+    {
+    private:
+        vector<Array> _RSAv;  // 2*Z: E (keV); 2*Z+1: anomalous Rayleigh cross sections (cm2)
+        vector<Array> _FFv;   // 0: q (1); 1-30: atomic form factors (1)
+        vector<Array> _F1v;   // 2*Z: E (keV); 2*Z+1: Real anomalous scattering function (1)
+        vector<Array> _F2v;   // 2*Z: E (keV); 2*Z+1: Imaginary anomalous scattering function (1)
+        Random* _random;
+
+    public:
+        AnomalousRayleighHelper(const vector<Array>& RSAv, const vector<Array>& FFv, const vector<Array>& F1v,
+                                const vector<Array>& F2v, Random* random)
+            : _RSAv(RSAv), _FFv(FFv), _F1v(F1v), _F2v(F2v), _random(random)
+        {}
+
+        double sectionSca(double lambda, int Z) const override
+        {
+            double E = wavelengthToFromEnergy(lambda) * 1e-3;
+            return NR::clampedValue<NR::interpolateLogLog>(E, _RSAv[2 * Z], _RSAv[2 * Z + 1]) * 1e-4;
+        }
+
+        void peeloffScattering(double& I, double& lambda, int Z, Direction bfk, Direction bfkobs) const override {}
+
+        Direction performScattering(double& lambda, int Z, Direction bfk) const override {}
+    };
+
+}
+
+////////////////////////////////////////////////////////////////////
+
 void XRayAtomicGasMix::setupSelfBefore()
 {
     MaterialMix::setupSelfBefore();
@@ -167,17 +315,31 @@ void XRayAtomicGasMix::setupSelfBefore()
     // load the fluorescence parameters
     auto fluorescenceParams = loadStruct<FluorescenceParams, 4>(this, "XRay_FL.txt", "fluorescence data");
 
-    // load the required bound-electron scattering resources depending on the configured implementation
+    // create scattering helpers and load the required bound-electron scattering resources
+    // depending on the user-configured implementation type
     switch (scatterBoundElectrons())
     {
-        case BoundElectrons::Free: _cpf.initialize(random()); break;
+        case BoundElectrons::Free:
+            _ray = new NoRayleighHelper;
+            _com = new FreeComptonHelper(random());
+            break;
         case BoundElectrons::Good:
-            _RSSv = loadColumns(_numAtoms + 1, this, "XRay_RSS.txt", "smooth Rayleigh data");
-            _CSv = loadColumns(_numAtoms + 1, this, "XRay_CS.txt", "bound Compton data");
+            _ray = new SmoothRayleighHelper(loadColumns(_numAtoms + 1, this, "XRay_RSS.txt", "smooth Rayleigh data"),
+                                            loadColumns(_numAtoms + 1, this, "XRay_FF.txt", "smooth Rayleigh data"),
+                                            random());
+            _com =
+                new BoundComptonHelper(loadColumns(_numAtoms + 1, this, "XRay_CS.txt", "bound Compton data"),
+                                       loadColumns(_numAtoms + 1, this, "XRay_SF.txt", "bound Compton data"), random());
             break;
         case BoundElectrons::Exact:
-            _RSAv = loadColumns(2 * _numAtoms + 2, this, "XRay_RSA.txt", "anomalous Rayleigh data");
-            _CSv = loadColumns(_numAtoms + 1, this, "XRay_CS.txt", "bound Compton data");
+            _ray = new AnomalousRayleighHelper(
+                loadColumns(2 * _numAtoms + 2, this, "XRay_RSA.txt", "anomalous Rayleigh data"),
+                loadColumns(_numAtoms + 1, this, "XRay_FF.txt", "anomalous Rayleigh data"),
+                loadColumns(2 * _numAtoms + 2, this, "XRay_F1.txt", "anomalous Rayleigh data"),
+                loadColumns(2 * _numAtoms + 2, this, "XRay_F2.txt", "anomalous Rayleigh data"), random());
+            _com =
+                new BoundComptonHelper(loadColumns(_numAtoms + 1, this, "XRay_CS.txt", "bound Compton data"),
+                                       loadColumns(_numAtoms + 1, this, "XRay_SF.txt", "bound Compton data"), random());
             break;
     }
 
@@ -256,7 +418,7 @@ void XRayAtomicGasMix::setupSelfBefore()
     // so that there are always at least three points and thus two bins in the grid
     lambdav.push_back(nonZeroRange.min());
     lambdav.push_back(nonZeroRange.max());
-    lambdav.push_back(nonZeroRange.max()*1.000001); // this wavelength point is never actually used
+    lambdav.push_back(nonZeroRange.max() * 1.000001);  // this wavelength point is never actually used
 
     // sort the wavelengths and remove duplicates
     NR::unique(lambdav);
@@ -279,35 +441,19 @@ void XRayAtomicGasMix::setupSelfBefore()
     for (int ell = 1; ell < numLambda - 2; ++ell)
     {
         double lambda = lambdav[ell];
-        double E = wavelengthToFromEnergy(lambda);
         double sigma = 0.;
 
         // bound electron scattering
         for (size_t Z = 1; Z <= _numAtoms; ++Z)
         {
-            double abund = atomv[Z - 1].abund;
-            switch (scatterBoundElectrons())
-            {
-                case BoundElectrons::Free:
-                    sigma += Z * abund * Constants::sigmaThomson() * _cpf.sectionSca(lambda);
-                    break;
-                case BoundElectrons::Good:
-                    sigma += (NR::clampedValue<NR::interpolateLogLog>(E * 1e-3, _RSSv[0], _RSSv[Z])
-                              + NR::clampedValue<NR::interpolateLogLog>(E * 1e-3, _CSv[0], _CSv[Z]))
-                             * abund * 1e-4;
-                    break;
-                case BoundElectrons::Exact:
-                    sigma += (NR::clampedValue<NR::interpolateLogLog>(E * 1e-3, _RSAv[2 * Z], _RSAv[2 * Z + 1])
-                              + NR::clampedValue<NR::interpolateLogLog>(E * 1e-3, _CSv[0], _CSv[Z]))
-                             * abund * 1e-4;
-                    break;
-            }
+            sigma += (_ray->sectionSca(lambda, Z) + _com->sectionSca(lambda, Z)) * atomv[Z - 1].abund;
         }
 
         // photo-absorption and fluorescence
         int index = 0;
         for (const auto& params : crossSectionParams)
         {
+            double E = wavelengthToFromEnergy(lambda);
             sigma += crossSection(E, sigmoidv[index++], params) * atomv[params.Z - 1].abund;
         }
         _sigmaextv[ell] = sigma;
@@ -335,26 +481,8 @@ void XRayAtomicGasMix::setupSelfBefore()
         // bound electron scattering
         for (size_t Z = 1; Z <= _numAtoms; ++Z)
         {
-            double abund = atomv[Z - 1].abund;
-            switch (scatterBoundElectrons())
-            {
-                case BoundElectrons::Free:
-                    contribv[Z - 1] = 0.;
-                    contribv[_numAtoms + Z - 1] = Z * abund * Constants::sigmaThomson() * _cpf.sectionSca(lambda);
-                    break;
-                case BoundElectrons::Good:
-                    contribv[Z - 1] =
-                        NR::clampedValue<NR::interpolateLogLog>(E * 1e-3, _RSSv[0], _RSSv[Z]) * abund * 1e-4;
-                    contribv[_numAtoms + Z - 1] =
-                        NR::clampedValue<NR::interpolateLogLog>(E * 1e-3, _CSv[0], _CSv[Z]) * abund * 1e-4;
-                    break;
-                case BoundElectrons::Exact:
-                    contribv[Z - 1] = NR::clampedValue<NR::interpolateLogLog>(E * 1e-3, _RSAv[2 * Z], _RSAv[2 * Z + 1])
-                                      * abund * 1e-4;
-                    contribv[_numAtoms + Z - 1] =
-                        NR::clampedValue<NR::interpolateLogLog>(E * 1e-3, _CSv[0], _CSv[Z]) * abund * 1e-4;
-                    break;
-            }
+            contribv[Z - 1] = _ray->sectionSca(lambda, Z) * atomv[Z - 1].abund;
+            contribv[_numAtoms + Z - 1] = _com->sectionSca(lambda, Z) * atomv[Z - 1].abund;
         }
 
         // fluorescence: iterate over both cross section and fluorescence parameter sets in sync
@@ -376,6 +504,14 @@ void XRayAtomicGasMix::setupSelfBefore()
         // determine the normalized cumulative probability distribution and the cross section
         _sigmascav[ell] = NR::cdf(_cumprobscavv[ell], contribv);
     }
+}
+
+////////////////////////////////////////////////////////////////////
+
+XRayAtomicGasMix::~XRayAtomicGasMix()
+{
+    delete _ray;
+    delete _com;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -488,18 +624,13 @@ void XRayAtomicGasMix::peeloffScattering(double& I, double& /*Q*/, double& /*U*/
     // Rayleigh scattering in electron rest frame
     if (scatinfo->species < static_cast<int>(_numAtoms))
     {
-        ///if (scatterBoundElectrons() == BoundElectrons::Good)
-        ///    peeloffScatteringSmoothRayleigh(I, lambda, pp->direction(), bfkobs);
-        ///else
-        ///    peeloffScatteringAnomalousRayleigh(I, lambda, pp->direction(), bfkobs);
+        _ray->peeloffScattering(I, lambda, scatinfo->species, pp->direction(), bfkobs);
     }
 
     // Compton scattering in electron rest frame
     else if (scatinfo->species < static_cast<int>(2 * _numAtoms))
     {
-        if (scatterBoundElectrons() == BoundElectrons::Free) _cpf.peeloffScattering(I, lambda, pp->direction(), bfkobs);
-        ///else
-        ///    peeloffScatteringBoundCompton(I, lambda, pp->direction(), bfkobs);
+        _com->peeloffScattering(I, lambda, scatinfo->species - _numAtoms, pp->direction(), bfkobs);
     }
 
     // fluorescence
@@ -531,21 +662,16 @@ void XRayAtomicGasMix::performScattering(double lambda, const MaterialState* sta
     // room for the outgoing direction
     Direction bfknew;
 
-    // Rayleigh scattering: determine the new propagation direction and wavelength
+    // Rayleigh scattering: determine the new propagation direction
     if (scatinfo->species < static_cast<int>(_numAtoms))
     {
-        ///if (scatterBoundElectrons() == BoundElectrons::Good)
-        ///    performScatteringSmoothRayleigh(I, lambda, pp->direction(), bfkobs);
-        ///else
-        ///    performScatteringAnomalousRayleigh(I, lambda, pp->direction(), bfkobs);
+        bfknew = _ray->performScattering(lambda, scatinfo->species, pp->direction());
     }
 
     // Compton scattering: determine the new propagation direction and wavelength
     else if (scatinfo->species < static_cast<int>(2 * _numAtoms))
     {
-        if (scatterBoundElectrons() == BoundElectrons::Free) bfknew = _cpf.performScattering(lambda, pp->direction());
-        ///else
-        ///    performScatteringBoundCompton(I, lambda, pp->direction(), bfkobs);
+        bfknew = _com->performScattering(lambda, scatinfo->species - _numAtoms, pp->direction());
     }
 
     // fluorescence
