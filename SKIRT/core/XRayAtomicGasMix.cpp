@@ -254,7 +254,7 @@ namespace
     double interpolateQ(double x, double sintheta2, const Array& qv, const Array& fv)
     {
         double q = scaledEnergyTo12keV * x * sintheta2;
-        if (q < 1e-2) return NR::clampedValue<NR::interpolateLinLin>(q, qv, fv);
+        if (q < 1e-3) return NR::clampedValue<NR::interpolateLinLin>(q, qv, fv);
         return NR::clampedValue<NR::interpolateLogLog>(q, qv, fv);
     }
 
@@ -267,10 +267,10 @@ namespace
         Random* _random{nullptr};
 
         // precalculated discretizations
-        Array _costhetav{numTheta};
-        Array _sinthetav{numTheta};
-        Array _sin2thetav{numTheta};
-        Array _sintheta2v{numTheta};
+        Array _costhetav = Array(numTheta);
+        Array _sinthetav = Array(numTheta);
+        Array _sin2thetav = Array(numTheta);
+        Array _sintheta2v = Array(numTheta);
 
     public:
         BoundComptonHelper(SimulationItem* item)
@@ -409,10 +409,10 @@ namespace
         DipolePhaseFunction _dpf;
 
         // precalculated discretizations
-        Array _costhetav{numTheta};
-        Array _cos2thetav{numTheta};
-        Array _sinthetav{numTheta};
-        Array _sintheta2v{numTheta};
+        Array _costhetav = Array(numTheta);
+        Array _cos2thetav = Array(numTheta);
+        Array _sinthetav = Array(numTheta);
+        Array _sintheta2v = Array(numTheta);
 
     public:
         SmoothRayleighHelper(SimulationItem* item)
@@ -533,10 +533,10 @@ namespace
         DipolePhaseFunction _dpf;
 
         // precalculated discretizations
-        Array _costhetav{numTheta};
-        Array _cos2thetav{numTheta};
-        Array _sinthetav{numTheta};
-        Array _sintheta2v{numTheta};
+        Array _costhetav = Array(numTheta);
+        Array _cos2thetav = Array(numTheta);
+        Array _sinthetav = Array(numTheta);
+        Array _sintheta2v = Array(numTheta);
 
     public:
         AnomalousRayleighHelper(SimulationItem* item)
@@ -649,7 +649,6 @@ namespace
             return _random->direction(bfk, generateCosineFromPhaseFunction(x, Z));
         }
     };
-
 }
 
 ////////////////////////////////////////////////////////////////////
