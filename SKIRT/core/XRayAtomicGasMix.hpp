@@ -128,17 +128,47 @@
     similarly, but now including only the K shell photo-absorption cross section for each element
     and multiplying by the appropriate fluorescence yields in addition to element abundancy.
 
-    <b>Electron scattering cross section</b>
+    <b>Electron scattering</b>
 
     As described above, this class provides three implementations for the scattering of X-rays
-    photons by the electrons bound to the atoms.
+    photons by the electrons bound to the atoms. These implementations involve four types of
+    scattering: free-electron Compton scattering, bound-electron Compton scattering, smooth
+    Rayleigh scattering, and anomalous Rayleigh scattering. Note that, in all cases, the listed
+    cross sections must be multiplied by the abundance of the corresponding element relative to
+    hydrogen.
 
-    For the free-electron implementation, the cross section per hydrogen atom for each element is
-    given by \f$\sigma_\mathrm{C}\,Z\,a_Z\f$, where \f$\sigma_\mathrm{C}\f$ is the
-    (wavelength-dependent) Compton cross section, \f$Z\f$ is the atomic number, and \f$a_Z\f$ is
-    the abundance of the corresponding element relative to hydrogen.
+    For free-electron Compton scattering, the cross section for an element with atomic number
+    \f$Z\f$ is given by \f$Z\,\sigma_\mathrm{C}\f$, where \f$\sigma_\mathrm{C}\f$ is the
+    (wavelength-dependent) Compton cross section for a single free electron. The implementation of
+    the scattering events is delegated to the ComptonPhaseFunction class; see there for more
+    information on the cross section and phase function for free-electron Compton scattering.
 
-    TO DO: describe the other two implementations.
+    The other scattering implementations depend on quantities that are available for each element
+    \f$Z\f$ in tabulated form as a function of the incoming photon energy \f$E\f$ or as a function
+    of the dimensionless momentum transfer parameter \f$q\f$, \f[q= \frac{E}{12.4 \, \mathrm{keV}}
+    \cdot \sin(\theta/2), \f] with \f$\theta\f$ the scattering angle.
+
+    For bound-electron Compton scattering, the cross sections \f$\sigma_{CS, Z}(E)\f$ are available
+    as a table. The normalised scattering phase function for element Z is given by \f[ \Phi_{CS,
+    Z}(\theta, E)= \frac{3}{16\pi}\, \frac{\sigma_T}{\sigma_{CS, Z}(E)}\Big[C^3(\theta, E) +
+    C(\theta, E) -C^2(\theta, E)\sin^2\theta\Big] \cdot S_Z(q), \f] with tabulated incoherent
+    scattering functions \f$S_Z(q)\f$ and the Compton factor \f$C(\theta, E)\f$ defined as \f[
+    C(\theta, E) = {\Big[{1+\frac{E}{m_ec^2}(1-\cos \theta)\Big]}}^{-1}. \f] Also, inelastic
+    bound-Compton scattering will change the photon energy by the Compton factor, just as for
+    free-electron scattering.
+
+    For smooth Rayleigh scattering, the cross sections \f$\sigma_{RSS, Z}(E)\f$ are available as a
+    table. The normalised scattering phase function for element Z is given by \f[ \Phi_{RSS,
+    Z}(\theta, E)= \frac{3}{16\pi}\, \frac{\sigma_T}{\sigma_{RSS, Z}(E)}\Big[ 1 + \cos^2\theta
+    \Big] \cdot F_Z^2(q), \f] with tabulated atomic form factors \f$F_Z(q)\f$, which converge to
+    \f$Z\f$ at small \f$q\f$ and decrease to zero for large \f$q\f$.
+
+    Similarly, for anomalous Rayleigh scattering, the cross sections \f$\sigma_{RSA, Z}(E)\f$ are
+    available as a table. The normalised scattering phase function for element Z is now given by
+    \f[ \Phi_{RSA, Z}(\theta, E)= \frac{3}{16\pi}\, \frac{\sigma_T}{\sigma_{RSA, Z}(E)}\Big[ 1 +
+    \cos^2\theta \Big] \cdot \Big[\big(F_Z(q) + F'_Z(E)\big)^2 + {F''_Z}^2(E)\Big], \f] with the
+    same atomic form factors \f$F_Z(q)\f$ as before, and tabulated real and imaginary anomalous
+    scattering functions \f$F'_Z(E)\f$ and \f$F''_Z(E)\f$.
 
     <b>Performing scattering</b>
 
@@ -147,10 +177,10 @@
     K\f$\alpha\f$ or K\f$\beta\f$ fluorescence transition for one of the supported elements). The
     relative probabilities for these transitions as a function of incoming photon packet wavelength
     are also calculated during setup. The selected transition determines the scattering mechanism.
-    For bound electrons, Rayleigh or Compton scattering is used. For fluorescence, the emission direction is
-    isotropic, and the outgoing wavelength is the fluorescence wavelength. In both cases, a random
-    Gaussian dispersion reflecting the interacting element's thermal velocity is applied to the
-    outgoing wavelength.
+    For bound electrons, Rayleigh or Compton scattering is used. For fluorescence, the emission
+    direction is isotropic, and the outgoing wavelength is the fluorescence wavelength. In both
+    cases, a random Gaussian dispersion reflecting the interacting element's thermal velocity is
+    applied to the outgoing wavelength.
 
     <b>Thermal dispersion</b>
 
@@ -181,7 +211,8 @@
     */
 class XRayAtomicGasMix : public MaterialMix
 {
-    /** The enumeration type indicating the implementation used for scattering by bound electrons. */
+    /** The enumeration type indicating the implementation used for scattering by bound electrons.
+        */
     ENUM_DEF(BoundElectrons, Free, Good, Exact)
         ENUM_VAL(BoundElectrons, Free, "use free-electron Compton scattering")
         ENUM_VAL(BoundElectrons, Good, "use smooth Rayleigh scattering and exact bound-Compton scattering")
