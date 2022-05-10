@@ -31,6 +31,21 @@ namespace
     // return thermal velocity for given gas temperature (in K) and particle mass (in amu)
     double vtherm(double T, double amu) { return sqrt(Constants::k() / Constants::amu() * T / amu); }
 
+    // multiplicator to convert energy in keV to scaled energy E / (m_e c^2)
+    constexpr double keVtoScaledEnergy =
+        (1e3 * Constants::Qelectron()) / (Constants::Melectron() * Constants::c() * Constants::c());
+
+    // multiplicator to convert scaled energy to energy in units of 12.4 keV
+    constexpr double scaledEnergyTo12keV =
+        (Constants::Melectron() * Constants::c() * Constants::c()) / (12.4e3 * Constants::Qelectron());
+
+    // convert wavelength to scaled photon energy: h nu / (m_e c^2)
+    constexpr double scaledEnergy(double lambda)
+    {
+        constexpr double front = Constants::h() / Constants::Melectron() / Constants::c();
+        return front / lambda;
+    }
+
     // ---- hardcoded configuration constants ----
 
     // number of supported atoms; the data provided in the resource files must match this number
@@ -41,6 +56,11 @@ namespace
 
     // number of wavelengths per dex in high-resolution grid
     constexpr size_t numWavelengthsPerDex = 2500;
+
+    // discretization of the phase function over scattering angle: theta from 0 to pi, index t
+    constexpr size_t numTheta = 361;
+    constexpr size_t maxTheta = numTheta - 1;
+    constexpr double deltaTheta = M_PI / maxTheta;
 
     // ---- photo-absorption and fluorescence resources ----
 
@@ -222,26 +242,21 @@ namespace
 
 namespace
 {
-    // multiplicator to convert energy in keV to scaled energy E / (m_e c^2)
-    constexpr double keVtoScaledEnergy =
-        (1e3 * Constants::Qelectron()) / (Constants::Melectron() * Constants::c() * Constants::c());
-
-    // multiplicator to convert scaled energy to energy in 12.4 keV
-    constexpr double scaledEnergyTo12keV =
-        (Constants::Melectron() * Constants::c() * Constants::c()) / (12.4e3 * Constants::Qelectron());
-
-    // convert wavelength to scaled photon energy: h nu / (m_e c^2)
-    constexpr double scaledEnergy(double lambda)
-    {
-        constexpr double front = Constants::h() / Constants::Melectron() / Constants::c();
-        return front / lambda;
-    }
-
     // returns the inverse Compton factor for a given scaled energy and scattering angle cosine
     constexpr double inverseComptonfactor(double x, double costheta) { return 1 + x * (1 - costheta); }
 
     // returns the Compton factor for a given scaled energy and scattering angle cosine
     constexpr double comptonFactor(double x, double costheta) { return 1. / inverseComptonfactor(x, costheta); }
+
+    // returns the value interpolated from the specified table as a function of the momentum transfer parameter
+    // q = (E/12.4 keV) sin(theta/2), given the scaled energy x and the sine;
+    // logarithmic interpolation is used except for q values near zero
+    double interpolateQ(double x, double sintheta2, const Array& qv, const Array& fv)
+    {
+        double q = scaledEnergyTo12keV * x * sintheta2;
+        if (q < 1e-2) return NR::clampedValue<NR::interpolateLinLin>(q, qv, fv);
+        return NR::clampedValue<NR::interpolateLogLog>(q, qv, fv);
+    }
 
     // this helper implements bound-electron Compton scattering
     class BoundComptonHelper : public XRayAtomicGasMix::ScatteringHelper
@@ -250,6 +265,12 @@ namespace
         vector<Array> _CSv;  // 0: E (keV->1); 1-30: bound Compton cross sections (cm2->m2)
         vector<Array> _SFv;  // 0: q (1); 1-30: incoherent scattering functions (1)
         Random* _random{nullptr};
+
+        // precalculated discretizations
+        Array _costhetav{numTheta};
+        Array _sinthetav{numTheta};
+        Array _sin2thetav{numTheta};
+        Array _sintheta2v{numTheta};
 
     public:
         BoundComptonHelper(SimulationItem* item)
@@ -264,6 +285,17 @@ namespace
 
             // cache random nr generator
             _random = item->find<Random>();
+
+            // construct a theta grid and precalculate values used in generateCosineFromPhaseFunction()
+            // to accelerate construction of the cumulative phase function distribution
+            for (size_t t = 0; t != numTheta; ++t)
+            {
+                double theta = t * deltaTheta;
+                _costhetav[t] = cos(theta);
+                _sinthetav[t] = sin(theta);
+                _sin2thetav[t] = _sinthetav[t] * _sinthetav[t];
+                _sintheta2v[t] = sin(0.5 * theta);
+            }
         }
 
         double sectionSca(double lambda, int Z) const override
@@ -281,14 +313,27 @@ namespace
             double C = comptonFactor(x, costheta);
             double sin2theta = (1 - costheta) * (1 + costheta);
             double phase = C * C * C + C - C * C * sin2theta;
-            double section = NR::clampedValue<NR::interpolateLogLog>(x, _CSv[0], _CSv[Z]);
+            double section = NR::value<NR::interpolateLogLog>(x, _CSv[0], _CSv[Z]);
             double sintheta2 = sqrt(0.5 * (1 - costheta));
-            double q = scaledEnergyTo12keV * x * sintheta2;
-            double incoherent = NR::clampedValue<NR::interpolateLogLog>(q, _SFv[0], _SFv[Z]);
+            double incoherent = interpolateQ(x, sintheta2, _SFv[0], _SFv[Z]);
             return norm / section * phase * incoherent;
         }
 
-        double generateCosineFromPhaseFunction(double x, double Z) const {}
+        double generateCosineFromPhaseFunction(double x, double Z) const
+        {
+            // construct the normalized cumulative phase function distribution for this x
+            Array thetaXv;
+            NR::cdf(thetaXv, maxTheta, [this, x, Z](int t) {
+                t += 1;
+                double C = comptonFactor(x, _costhetav[t]);
+                double phase = C * C * C + C - C * C * _sin2thetav[t];
+                double incoherent = interpolateQ(x, _sintheta2v[t], _SFv[0], _SFv[Z]);
+                return phase * incoherent * _sinthetav[t];
+            });
+
+            // draw a random cosine from this distribution
+            return _random->cdfLinLin(_costhetav, thetaXv);
+        }
 
     public:
         void peeloffScattering(double& I, double& lambda, int Z, Direction bfk, Direction bfkobs) const override
@@ -353,13 +398,21 @@ namespace
 
 namespace
 {
-    // this helper implements smooth Rayleigh scattering
+    // this helper implements smooth Rayleigh scattering;
+    // below the energy limit of the tabulated data, use Thomson scattering instead
     class SmoothRayleighHelper : public XRayAtomicGasMix::ScatteringHelper
     {
     private:
-        vector<Array> _RSSv;  // 0: E (keV); 1-30: smooth Rayleigh cross sections (cm2)
+        vector<Array> _RSSv;  // 0: E (keV->1); 1-30: smooth Rayleigh cross sections (cm2->m2)
         vector<Array> _FFv;   // 0: q (1); 1-30: atomic form factors (1)
         Random* _random{nullptr};
+        DipolePhaseFunction _dpf;
+
+        // precalculated discretizations
+        Array _costhetav{numTheta};
+        Array _cos2thetav{numTheta};
+        Array _sinthetav{numTheta};
+        Array _sintheta2v{numTheta};
 
     public:
         SmoothRayleighHelper(SimulationItem* item)
@@ -372,8 +425,20 @@ namespace
             // load atomic form factors
             _FFv = loadColumns(numAtoms + 1, item, "XRay_FF.txt", "smooth Rayleigh data");
 
-            // cache random nr generator
+            // cache random nr generator and initialize the Thomson helper
             _random = item->find<Random>();
+            _dpf.initialize(_random);
+
+            // construct a theta grid and precalculate values used in generateCosineFromPhaseFunction()
+            // to accelerate construction of the cumulative phase function distribution
+            for (size_t t = 0; t != numTheta; ++t)
+            {
+                double theta = t * deltaTheta;
+                _costhetav[t] = cos(theta);
+                _cos2thetav[t] = _costhetav[t] * _costhetav[t];
+                _sinthetav[t] = sin(theta);
+                _sintheta2v[t] = sin(0.5 * theta);
+            }
         }
 
         double sectionSca(double lambda, int Z) const override
@@ -386,9 +451,66 @@ namespace
             return NR::value<NR::interpolateLogLog>(x, _RSSv[0], _RSSv[Z]);
         }
 
-        void peeloffScattering(double& I, double& lambda, int Z, Direction bfk, Direction bfkobs) const override {}
+    private:
+        double phaseFunctionValue(double x, double costheta, int Z) const
+        {
+            constexpr double norm = 3. / 16. / M_PI * Constants::sigmaThomson();
+            double phase = 1. + costheta * costheta;
+            double section = NR::value<NR::interpolateLogLog>(x, _RSSv[0], _RSSv[Z]);
+            double sintheta2 = sqrt(0.5 * (1 - costheta));
+            double form = interpolateQ(x, sintheta2, _FFv[0], _FFv[Z]);
+            return norm / section * phase * form * form;
+        }
 
-        Direction performScattering(double& lambda, int Z, Direction bfk) const override {}
+        double generateCosineFromPhaseFunction(double x, double Z) const
+        {
+            // construct the normalized cumulative phase function distribution for this x
+            Array thetaXv;
+            NR::cdf(thetaXv, maxTheta, [this, x, Z](int t) {
+                t += 1;
+                double phase = 1. + _cos2thetav[t];
+                double form = interpolateQ(x, _sintheta2v[t], _FFv[0], _FFv[Z]);
+                return phase * form * form * _sinthetav[t];
+            });
+
+            // draw a random cosine from this distribution
+            return _random->cdfLinLin(_costhetav, thetaXv);
+        }
+
+    public:
+        void peeloffScattering(double& I, double& lambda, int Z, Direction bfk, Direction bfkobs) const override
+        {
+            double x = scaledEnergy(lambda);
+
+            // for low energies use Thomson scattering
+            if (x < _RSSv[0][0])
+            {
+                double Q, U, V;
+                _dpf.peeloffScattering(I, Q, U, V, bfk, bfkobs, Direction(), nullptr);
+            }
+
+            // otherwise use Rayleigh scattering
+            else
+            {
+                // calculate the value of the phase function
+                double costheta = Vec::dot(bfk, bfkobs);
+                double value = phaseFunctionValue(x, costheta, Z);
+
+                // accumulate the weighted sum in the intensity
+                I += value;
+            }
+        }
+
+        Direction performScattering(double& lambda, int Z, Direction bfk) const override
+        {
+            double x = scaledEnergy(lambda);
+
+            // for low energies use Thomson scattering
+            if (x < _RSSv[0][0]) return _dpf.performScattering(bfk, nullptr);
+
+            // otherwise use Rayleigh scattering
+            return _random->direction(bfk, generateCosineFromPhaseFunction(x, Z));
+        }
     };
 }
 
@@ -399,33 +521,55 @@ namespace
 namespace
 {
     // this helper implements anomalous Rayleigh scattering
+    // below the energy limit of the tabulated data, use Thomson scattering instead
     class AnomalousRayleighHelper : public XRayAtomicGasMix::ScatteringHelper
     {
     private:
-        vector<Array> _RSAv;  // 2*Z: E (keV); 2*Z+1: anomalous Rayleigh cross sections (cm2)
+        vector<Array> _RSAv;  // 2*Z: E (keV->1); 2*Z+1: anomalous Rayleigh cross sections (cm2->m2)
         vector<Array> _FFv;   // 0: q (1); 1-30: atomic form factors (1)
-        vector<Array> _F1v;   // 2*Z: E (keV); 2*Z+1: Real anomalous scattering function (1)
-        vector<Array> _F2v;   // 2*Z: E (keV); 2*Z+1: Imaginary anomalous scattering function (1)
+        vector<Array> _F1v;   // 2*Z: E (keV->1); 2*Z+1: Real anomalous scattering function (1)
+        vector<Array> _F2v;   // 2*Z: E (keV->1); 2*Z+1: Imaginary anomalous scattering function (1)
         Random* _random{nullptr};
+        DipolePhaseFunction _dpf;
+
+        // precalculated discretizations
+        Array _costhetav{numTheta};
+        Array _cos2thetav{numTheta};
+        Array _sinthetav{numTheta};
+        Array _sintheta2v{numTheta};
 
     public:
         AnomalousRayleighHelper(SimulationItem* item)
         {
-            // load anomalous Rayleigh cross sections
+            // load anomalous Rayleigh cross sections, atomic form factors and anomalous scattering functions
             _RSAv = loadColumns(2 * numAtoms + 2, item, "XRay_RSA.txt", "anomalous Rayleigh data");
-            for (size_t Z = 1; Z <= numAtoms; ++Z)
-            {
-                _RSAv[2 * Z] *= keVtoScaledEnergy;  // convert from keV to 1
-                _RSAv[2 * Z + 1] *= 1e-4;           // convert from cm2 to m2
-            }
-
-            // load atomic form factors and anomalous scattering functions
             _FFv = loadColumns(numAtoms + 1, item, "XRay_FF.txt", "anomalous Rayleigh data");
             _F1v = loadColumns(2 * numAtoms + 2, item, "XRay_F1.txt", "anomalous Rayleigh data");
             _F2v = loadColumns(2 * numAtoms + 2, item, "XRay_F2.txt", "anomalous Rayleigh data");
 
-            // cache random nr generator
+            // convert units
+            for (size_t Z = 1; Z <= numAtoms; ++Z)
+            {
+                _RSAv[2 * Z] *= keVtoScaledEnergy;  // convert from keV to 1
+                _F1v[2 * Z] *= keVtoScaledEnergy;   // convert from keV to 1
+                _F2v[2 * Z] *= keVtoScaledEnergy;   // convert from keV to 1
+                _RSAv[2 * Z + 1] *= 1e-4;           // convert from cm2 to m2
+            }
+
+            // cache random nr generator and initialize the Thomson helper
             _random = item->find<Random>();
+            _dpf.initialize(_random);
+
+            // construct a theta grid and precalculate values used in generateCosineFromPhaseFunction()
+            // to accelerate construction of the cumulative phase function distribution
+            for (size_t t = 0; t != numTheta; ++t)
+            {
+                double theta = t * deltaTheta;
+                _costhetav[t] = cos(theta);
+                _cos2thetav[t] = _costhetav[t] * _costhetav[t];
+                _sinthetav[t] = sin(theta);
+                _sintheta2v[t] = sin(0.5 * theta);
+            }
         }
 
         double sectionSca(double lambda, int Z) const override
@@ -438,9 +582,72 @@ namespace
             return NR::clampedValue<NR::interpolateLogLog>(x, _RSAv[2 * Z], _RSAv[2 * Z + 1]);
         }
 
-        void peeloffScattering(double& I, double& lambda, int Z, Direction bfk, Direction bfkobs) const override {}
+    private:
+        double phaseFunctionValue(double x, double costheta, int Z) const
+        {
+            constexpr double norm = 3. / 16. / M_PI * Constants::sigmaThomson();
+            double phase = 1. + costheta * costheta;
+            double section = NR::clampedValue<NR::interpolateLogLog>(x, _RSAv[2 * Z], _RSAv[2 * Z + 1]);
+            double sintheta2 = sqrt(0.5 * (1 - costheta));
+            double form = interpolateQ(x, sintheta2, _FFv[0], _FFv[Z]);
+            double form1 = NR::clampedValue<NR::interpolateLogLin>(x, _F1v[2 * Z], _F1v[2 * Z + 1]);  // negative values
+            double form2 = NR::clampedValue<NR::interpolateLogLog>(x, _F2v[2 * Z], _F2v[2 * Z + 1]);
+            double formsum = form + form1;
+            return norm / section * phase * (formsum * formsum + form2 * form2);
+        }
 
-        Direction performScattering(double& lambda, int Z, Direction bfk) const override {}
+        double generateCosineFromPhaseFunction(double x, double Z) const
+        {
+            // construct the normalized cumulative phase function distribution for this x
+            Array thetaXv;
+            NR::cdf(thetaXv, maxTheta, [this, x, Z](int t) {
+                t += 1;
+                double phase = 1. + _cos2thetav[t];
+                double form = interpolateQ(x, _sintheta2v[t], _FFv[0], _FFv[Z]);
+                double form1 = NR::clampedValue<NR::interpolateLogLin>(x, _F1v[2 * Z], _F1v[2 * Z + 1]);
+                double form2 = NR::clampedValue<NR::interpolateLogLog>(x, _F2v[2 * Z], _F2v[2 * Z + 1]);
+                double formsum = form + form1;
+                return phase * (formsum * formsum + form2 * form2) * _sinthetav[t];
+            });
+
+            // draw a random cosine from this distribution
+            return _random->cdfLinLin(_costhetav, thetaXv);
+        }
+
+    public:
+        void peeloffScattering(double& I, double& lambda, int Z, Direction bfk, Direction bfkobs) const override
+        {
+            double x = scaledEnergy(lambda);
+
+            // for low energies use Thomson scattering
+            if (x < _RSAv[2 * Z][0])
+            {
+                double Q, U, V;
+                _dpf.peeloffScattering(I, Q, U, V, bfk, bfkobs, Direction(), nullptr);
+            }
+
+            // otherwise use Rayleigh scattering
+            else
+            {
+                // calculate the value of the phase function
+                double costheta = Vec::dot(bfk, bfkobs);
+                double value = phaseFunctionValue(x, costheta, Z);
+
+                // accumulate the weighted sum in the intensity
+                I += value;
+            }
+        }
+
+        Direction performScattering(double& lambda, int Z, Direction bfk) const override
+        {
+            double x = scaledEnergy(lambda);
+
+            // for low energies use Thomson scattering
+            if (x < _RSAv[2 * Z][0]) return _dpf.performScattering(bfk, nullptr);
+
+            // otherwise use Rayleigh scattering
+            return _random->direction(bfk, generateCosineFromPhaseFunction(x, Z));
+        }
     };
 
 }
