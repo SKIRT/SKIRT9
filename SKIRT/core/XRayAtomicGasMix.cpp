@@ -976,13 +976,13 @@ void XRayAtomicGasMix::peeloffScattering(double& I, double& /*Q*/, double& /*U*/
     // Rayleigh scattering in electron rest frame
     if (scatinfo->species < static_cast<int>(numAtoms))
     {
-        _ray->peeloffScattering(I, lambda, scatinfo->species, pp->direction(), bfkobs);
+        _ray->peeloffScattering(I, lambda, scatinfo->species + 1, pp->direction(), bfkobs);
     }
 
     // Compton scattering in electron rest frame
     else if (scatinfo->species < static_cast<int>(2 * numAtoms))
     {
-        _com->peeloffScattering(I, lambda, scatinfo->species - numAtoms, pp->direction(), bfkobs);
+        _com->peeloffScattering(I, lambda, scatinfo->species - numAtoms + 1, pp->direction(), bfkobs);
     }
 
     // fluorescence
@@ -1017,13 +1017,13 @@ void XRayAtomicGasMix::performScattering(double lambda, const MaterialState* sta
     // Rayleigh scattering: determine the new propagation direction
     if (scatinfo->species < static_cast<int>(numAtoms))
     {
-        bfknew = _ray->performScattering(lambda, scatinfo->species, pp->direction());
+        bfknew = _ray->performScattering(lambda, scatinfo->species + 1, pp->direction());
     }
 
     // Compton scattering: determine the new propagation direction and wavelength
     else if (scatinfo->species < static_cast<int>(2 * numAtoms))
     {
-        bfknew = _com->performScattering(lambda, scatinfo->species - numAtoms, pp->direction());
+        bfknew = _com->performScattering(lambda, scatinfo->species - numAtoms + 1, pp->direction());
     }
 
     // fluorescence
