@@ -7,7 +7,6 @@
 #define XRAYATOMICGASMIX_HPP
 
 #include "ArrayTable.hpp"
-#include "ComptonPhaseFunction.hpp"
 #include "MaterialMix.hpp"
 #include "PhotonPacket.hpp"
 
@@ -15,9 +14,9 @@
 
 /** The XRayAtomicGasMix class describes the material properties of neutral atomic gas in the X-ray
     wavelength range, taking into account the effects of photo-absorption, fluorescence, and
-    scattering by bound electrons. This material mix should not be used for wavelengths outside of
-    the X-ray regime for which it has been designed. Specifically, several of the assumptions and
-    numerical treatments break down for photon energies below 4 eV.
+    scattering by bound electrons. To avoid the use of this material mix outside of the regime for
+    which it has been designed, all cross sections are forced to zero below 4.3 eV and above 500
+    keV (corresponding approximately to a wavelength range from 2.5 pm to 290 nm).
 
     The class assumes a gas containing a mixture of non-ionized elements with atomic numbers from 1
     (hydrogen) up to 30 (zinc). The spatial density distribution of the gas is established by
@@ -44,17 +43,23 @@
     to be treated during primary emission. A possible drawback is that the weaker fluorescence
     lines will be represented by a fairly small number of photon packets.
 
-    Electrons bound to the atoms in the gas scatter incoming X-ray photons with a cross section
-    that is very close to that of free electrons. For lower X-ray photon energies, the phase
-    function for the two processes differs substantially. However, in that regime, scattering is
-    totally dominated by photo-absorption, so it does not seem important to accurately model the
-    scattering process. For higher X-ray photon energies, where the scattering cross section does
-    become significant, bound-electron scattering closely approaches free-electron scattering. This
-    class thus simply assumes that each of the electrons bound to the atoms in the gas
-    Compton-scatters the incoming photons (for more information, see the ComptonPhaseFunction
-    class). Because the gas is assumed to be neutral, the number of electrons is equal to the
-    number of protons, which is easily obtained from the atomic numbers and the respective
-    abundances.
+    Electrons bound to the atoms in the gas scatter incoming X-ray photons. This process can be
+    elastic (Rayleigh scattering) or inelastic (bound-Compton scattering). The user can select one
+    of three implementations of bound-electron scattering. In increasing order of accuracy and
+    computational effort, these are:
+
+    - \em Free: use free-electron Compton scattering. This approximation works reasonably well for
+    high energies (because the bound-electron scattering cross section approaches that of
+    free-electron scattering) and for lower energies (because the total scattering cross section is
+    dominated by photo-absorption anyway). However, it is less accurate for intermediate energies.
+
+    - \em Good: use the smooth Rayleigh scattering approximation and exact bound-Compton
+    scattering. This reflects the implementation by most X-ray codes and can be considered to be a
+    good approximation. It relies on tabulated cross sections and correction factors.
+
+    - \em Exact: use anomalous Rayleigh scattering and exact bound-Compton scattering. This
+    implementation accurately reflects the physical processes, apart from approximations caused by
+    discretization, tabulation, and interpolation.
 
     <b>Configuring the simulation</b>
 
@@ -123,13 +128,47 @@
     similarly, but now including only the K shell photo-absorption cross section for each element
     and multiplying by the appropriate fluorescence yields in addition to element abundancy.
 
-    <b>Electron scattering cross section</b>
+    <b>Electron scattering</b>
 
-    As described above, this class assumes that the electrons bound to the atoms in the gas scatter
-    photon in the same way as free electrons would. The corresponding cross section per hydrogen
-    atom for the complete material mix is then easily obtained as \f$\sum_{Z=1}^30 Z\,a_Z\f$, where
-    \f$Z\f$ is the atomic number and \f$a_Z\f$ is the abundance of the corresponding element
-    relative to hydrogen.
+    As described above, this class provides three implementations for the scattering of X-rays
+    photons by the electrons bound to the atoms. These implementations involve four types of
+    scattering: free-electron Compton scattering, bound-electron Compton scattering, smooth
+    Rayleigh scattering, and anomalous Rayleigh scattering. Note that, in all cases, the listed
+    cross sections must be multiplied by the abundance of the corresponding element relative to
+    hydrogen.
+
+    For free-electron Compton scattering, the cross section for an element with atomic number
+    \f$Z\f$ is given by \f$Z\,\sigma_\mathrm{C}\f$, where \f$\sigma_\mathrm{C}\f$ is the
+    (wavelength-dependent) Compton cross section for a single free electron. The implementation of
+    the scattering events is delegated to the ComptonPhaseFunction class; see there for more
+    information on the cross section and phase function for free-electron Compton scattering.
+
+    The other scattering implementations depend on quantities that are available for each element
+    \f$Z\f$ in tabulated form as a function of the incoming photon energy \f$E\f$ or as a function
+    of the dimensionless momentum transfer parameter \f$q\f$, \f[q= \frac{E}{12.4 \, \mathrm{keV}}
+    \cdot \sin(\theta/2), \f] with \f$\theta\f$ the scattering angle.
+
+    For bound-electron Compton scattering, the cross sections \f$\sigma_{CS, Z}(E)\f$ are available
+    as a table. The normalised scattering phase function for element Z is given by \f[ \Phi_{CS,
+    Z}(\theta, E)= \frac{3}{4}\, \frac{\sigma_T}{\sigma_{CS, Z}(E)}\Big[C^3(\theta, E) +
+    C(\theta, E) -C^2(\theta, E)\sin^2\theta\Big] \cdot S_Z(q), \f] with tabulated incoherent
+    scattering functions \f$S_Z(q)\f$ and the Compton factor \f$C(\theta, E)\f$ defined as \f[
+    C(\theta, E) = {\Big[{1+\frac{E}{m_ec^2}(1-\cos \theta)\Big]}}^{-1}. \f] Also, inelastic
+    bound-Compton scattering will change the photon energy by the Compton factor, just as for
+    free-electron scattering.
+
+    For smooth Rayleigh scattering, the cross sections \f$\sigma_{RSS, Z}(E)\f$ are available as a
+    table. The normalised scattering phase function for element Z is given by \f[ \Phi_{RSS,
+    Z}(\theta, E)= \frac{3}{4}\, \frac{\sigma_T}{\sigma_{RSS, Z}(E)}\Big[ 1 + \cos^2\theta
+    \Big] \cdot F_Z^2(q), \f] with tabulated atomic form factors \f$F_Z(q)\f$, which converge to
+    \f$Z\f$ at small \f$q\f$ and decrease to zero for large \f$q\f$.
+
+    Similarly, for anomalous Rayleigh scattering, the cross sections \f$\sigma_{RSA, Z}(E)\f$ are
+    available as a table. The normalised scattering phase function for element Z is now given by
+    \f[ \Phi_{RSA, Z}(\theta, E)= \frac{3}{4}\, \frac{\sigma_T}{\sigma_{RSA, Z}(E)}\Big[ 1 +
+    \cos^2\theta \Big] \cdot \Big[\big(F_Z(q) + F'_Z(E)\big)^2 + {F''_Z}^2(E)\Big], \f] with the
+    same atomic form factors \f$F_Z(q)\f$ as before, and tabulated real and imaginary anomalous
+    scattering functions \f$F'_Z(E)\f$ and \f$F''_Z(E)\f$.
 
     <b>Performing scattering</b>
 
@@ -138,10 +177,10 @@
     K\f$\alpha\f$ or K\f$\beta\f$ fluorescence transition for one of the supported elements). The
     relative probabilities for these transitions as a function of incoming photon packet wavelength
     are also calculated during setup. The selected transition determines the scattering mechanism.
-    For bound electrons, Compton scattering is used. For fluorescence, the emission direction is
-    isotropic, and the outgoing wavelength is the fluorescence wavelength. In both cases, a random
-    Gaussian dispersion reflecting the interacting element's thermal velocity is applied to the
-    outgoing wavelength.
+    For bound electrons, Rayleigh or Compton scattering is used. For fluorescence, the emission
+    direction is isotropic, and the outgoing wavelength is the fluorescence wavelength. In both
+    cases, a random Gaussian dispersion reflecting the interacting element's thermal velocity is
+    applied to the outgoing wavelength.
 
     <b>Thermal dispersion</b>
 
@@ -172,6 +211,14 @@
     */
 class XRayAtomicGasMix : public MaterialMix
 {
+    /** The enumeration type indicating the implementation used for scattering by bound electrons.
+        */
+    ENUM_DEF(BoundElectrons, Free, Good, Exact)
+        ENUM_VAL(BoundElectrons, Free, "use free-electron Compton scattering")
+        ENUM_VAL(BoundElectrons, Good, "use smooth Rayleigh scattering and exact bound-Compton scattering")
+        ENUM_VAL(BoundElectrons, Exact, "use anomalous Rayleigh scattering and exact bound-Compton scattering")
+    ENUM_END()
+
     ITEM_CONCRETE(XRayAtomicGasMix, MaterialMix,
                   "A gas mix supporting photo-absorption and fluorescence for X-ray wavelengths")
 
@@ -188,6 +235,10 @@ class XRayAtomicGasMix : public MaterialMix
         ATTRIBUTE_DEFAULT_VALUE(temperature, "1e4")
         ATTRIBUTE_DISPLAYED_IF(temperature, "Level2")
 
+        PROPERTY_ENUM(scatterBoundElectrons, BoundElectrons, "implementation of scattering by bound electrons")
+        ATTRIBUTE_DEFAULT_VALUE(scatterBoundElectrons, "Good")
+        ATTRIBUTE_DISPLAYED_IF(scatterBoundElectrons, "Level3")
+
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============
@@ -196,6 +247,9 @@ protected:
     /** This function precalculates relevant cross sections and relative contributions over a
         high-resolution wavelength grid. */
     void setupSelfBefore() override;
+
+    /** The destructor destructs the phase function helpers that were created during setup. */
+    ~XRayAtomicGasMix();
 
     //======== Private support functions =======
 
@@ -305,13 +359,17 @@ public:
 
     //======================== Data Members ========================
 
+public:
+    // base class for bound-electron scattering helpers (public because we derive from it in anonymous namespace)
+    class ScatteringHelper;
+
 private:
     // all data members are precalculated in setupSelfAfter()
 
     // wavelength grid (shifted to the left of the actually sampled points to approximate rounding)
     Array _lambdav;  // indexed on ell
 
-    // cross sections
+    // total extinction and scattering cross sections
     Array _sigmaextv;  // indexed on ell
     Array _sigmascav;  // indexed on ell
 
@@ -319,13 +377,15 @@ private:
     vector<double> _lambdafluov;  // indexed on k
 
     // thermal velocities and normalized cumulative probability distributions for the scattering channnels:
-    //   - bound electron scattering for each atom
+    //   - Rayleigh scattering by bound electrons for each atom
+    //   - Compton scattering by bound electrons for each atom
     //   - fluorescence transitions
     vector<double> _vthermscav;   // indexed on m
     ArrayTable<2> _cumprobscavv;  // indexed on ell, m
 
-    // the Compton phase function helper
-    ComptonPhaseFunction _cpf;
+    // bound-electron scattering helpers depending on the configured implementation
+    ScatteringHelper* _ray{nullptr};  // Rayleigh scattering helper
+    ScatteringHelper* _com{nullptr};  // Compton scattering helper
 };
 
 ////////////////////////////////////////////////////////////////////

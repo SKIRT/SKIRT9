@@ -65,6 +65,7 @@ TextInFile::TextInFile(const SimulationItem* item, string filename, string descr
     _log = item->find<Log>();
 
     // get the full path for the resource or for the input file
+    _isResource = resource;
     string filepath = resource ? FilePaths::resource(filename) : item->find<FilePaths>()->input(filename);
 
     // if the file is in SKIRT stored column format, open a binary file
@@ -134,8 +135,8 @@ void TextInFile::close()
         _hasTextOpen = false;
         _hasBinaryOpen = false;
 
-        // log "done" message, except if an exception has been thrown
-        if (!std::uncaught_exception()) _log->info("Done reading");
+        // log "done" message, except if this is a resource file or after an exception has been thrown
+        if (!_isResource && !std::uncaught_exception()) _log->info("Done reading");
     }
 }
 
@@ -302,15 +303,18 @@ void TextInFile::addColumn(string description, string quantity, string defaultUn
                          + std::to_string(col.physColIndex) + ")");
     _logColIndices[col.physColIndex - 1] = _numLogCols - 1;
 
-    // log column information
-    string message = "  Column " + std::to_string(_numLogCols) + ": " + col.description + " (" + col.unit + ")";
-    if (!col.title.empty())
+    // for regular user input files, log column information
+    if (!_isResource)
     {
-        message += " <-- ";
-        if (col.physColIndex != _numLogCols) message += "column " + std::to_string(col.physColIndex) + ": ";
-        message += col.title;
+        string message = "  Column " + std::to_string(_numLogCols) + ": " + col.description + " (" + col.unit + ")";
+        if (!col.title.empty())
+        {
+            message += " <-- ";
+            if (col.physColIndex != _numLogCols) message += "column " + std::to_string(col.physColIndex) + ": ";
+            message += col.title;
+        }
+        _log->info(message);
     }
-    _log->info(message);
 }
 
 ////////////////////////////////////////////////////////////////////
