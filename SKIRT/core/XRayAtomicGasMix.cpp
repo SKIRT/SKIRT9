@@ -309,7 +309,7 @@ namespace
     private:
         double phaseFunctionValue(double x, double costheta, int Z) const
         {
-            constexpr double norm = 3. / 16. / M_PI * Constants::sigmaThomson();
+            constexpr double norm = 3. / 4. * Constants::sigmaThomson();
             double C = comptonFactor(x, costheta);
             double sin2theta = (1 - costheta) * (1 + costheta);
             double phase = C * C * C + C - C * C * sin2theta;
@@ -454,7 +454,7 @@ namespace
     private:
         double phaseFunctionValue(double x, double costheta, int Z) const
         {
-            constexpr double norm = 3. / 16. / M_PI * Constants::sigmaThomson();
+            constexpr double norm = 3. / 4. * Constants::sigmaThomson();
             double phase = 1. + costheta * costheta;
             double section = NR::value<NR::interpolateLogLog>(x, _RSSv[0], _RSSv[Z]);
             double sintheta2 = sqrt(0.5 * (1 - costheta));
@@ -585,7 +585,7 @@ namespace
     private:
         double phaseFunctionValue(double x, double costheta, int Z) const
         {
-            constexpr double norm = 3. / 16. / M_PI * Constants::sigmaThomson();
+            constexpr double norm = 3. / 4. * Constants::sigmaThomson();
             double phase = 1. + costheta * costheta;
             double section = NR::clampedValue<NR::interpolateLogLog>(x, _RSAv[2 * Z], _RSAv[2 * Z + 1]);
             double sintheta2 = sqrt(0.5 * (1 - costheta));
