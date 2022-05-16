@@ -349,7 +349,18 @@ bool TextInFile::readRow(Array& values)
                     // read the value as floating point
                     double value;
                     linestream >> value;
-                    if (linestream.fail()) throw FATALERROR("Input text is not formatted as a floating point number");
+                    if (linestream.fail())
+                    {
+                        // some compilers/libraries do not support reading NaN or Inf values, while others do;
+                        // we here provide backup support for NaN values (infinities are more complex because of
+                        // the need for handling the negative sign which may be already consumed by the stream)
+                        linestream.clear();
+                        string offending;
+                        linestream >> offending;
+                        if (StringUtils::toLower(offending) != "nan")
+                            throw FATALERROR("Input text is not formatted as a floating point number: " + offending);
+                        value = std::numeric_limits<double>::quiet_NaN();
+                    }
 
                     // if mapped to a logical column, convert from input units to internal units, and store the result
                     if (i != ERROR_NO_INDEX)
