@@ -7,6 +7,7 @@
 #define ENTITYCOLLECTION_HPP
 
 #include "Basics.hpp"
+#include <functional>
 #include <unordered_map>
 class Vec;
 

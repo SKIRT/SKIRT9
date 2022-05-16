@@ -8,6 +8,7 @@
 
 #include "InputModelFormProbe.hpp"
 #include "MaterialWavelengthRangeInterface.hpp"
+#include <functional>
 
 ////////////////////////////////////////////////////////////////////
 
