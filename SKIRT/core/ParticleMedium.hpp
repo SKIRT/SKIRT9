@@ -23,21 +23,22 @@
     this ParticleMedium instance:
 
     \f[ x\,(\mathrm{pc}) \quad y\,(\mathrm{pc}) \quad z\,(\mathrm{pc}) \quad h\,(\mathrm{pc}) \quad
-    M\,(\mathrm{M}_\odot) \quad [Z\,(1)] \quad [T\,(\mathrm{K})] \quad [ v_x\,(\mathrm{km/s}) \quad
-    v_y\,(\mathrm{km/s}) \quad v_z\,(\mathrm{km/s}) ] \quad [ B_x\,(\mu\mathrm{G}) \quad
-    B_y\,(\mu\mathrm{G}) \quad B_z\,(\mu\mathrm{G}) ] \quad [ \dots\text{mix family params}\dots ]
-    \f]
+    \{\, M\,(\mathrm{M}_\odot) \;\;|\;\; N\,(1) \,\} \quad [Z\,(1)] \quad [T\,(\mathrm{K})] \quad [
+    v_x\,(\mathrm{km/s}) \quad v_y\,(\mathrm{km/s}) \quad v_z\,(\mathrm{km/s}) ] \quad [
+    B_x\,(\mu\mathrm{G}) \quad B_y\,(\mu\mathrm{G}) \quad B_z\,(\mu\mathrm{G}) ] \quad [
+    \dots\text{mix family params}\dots ] \f]
 
     The first three columns are the \f$x\f$, \f$y\f$ and \f$z\f$ coordinates of the particle, the
     fourth column is the particle smoothing length \f$h\f$.
 
-    The fifth column is the mass \f$M\f$ of the particle, which is multiplied by the value of the
-    \em massFraction option. If the \em importMetallicity option is enabled, the next column
-    specifies a "metallicity" fraction, which is multiplied with the mass column to obtain the
-    actual mass of the particle. If the \em importTemperature option is enabled, the next column
-    specifies a temperature. If this temperature is higher than the value of the \em maxTemperature
-    option, the particle is ignored. If the \em importTemperature option is disabled, or the
-    maximum temperature value is set to zero, the particle is never ignored.
+    The fifth column is the volume-integrated mass \f$M\f$ or number \f$N\f$ of the particle,
+    depending on the value of the \em massType option. This mass or number is multiplied by the
+    value of the \em massFraction option. If the \em importMetallicity option is enabled, the next
+    column specifies a "metallicity" fraction, which is multiplied with the mass or number column
+    to obtain the actual mass of the particle. If the \em importTemperature option is enabled, the
+    next column specifies a temperature. If this temperature is higher than the value of the \em
+    maxTemperature option, the particle is ignored. If the \em importTemperature option is
+    disabled, or the maximum temperature value is set to zero, the particle is never ignored.
 
     If both the \em importMetallicity and \em importTemperature options are enabled, this leads to
     the following expression for the mass of an imported particle:
