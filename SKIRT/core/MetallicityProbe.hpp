@@ -21,7 +21,7 @@
     form that projects the quantity along a path, the value is density-weighted. */
 class MetallicityProbe : public SpatialGridWhenFormProbe
 {
-    ITEM_CONCRETE(MetallicityProbe, SpatialGridWhenFormProbe, "spatial grid: metallicity of the gas medium")
+    ITEM_CONCRETE(MetallicityProbe, SpatialGridWhenFormProbe, "internal spatial grid: metallicity of the gas medium")
         ATTRIBUTE_TYPE_DISPLAYED_IF(MetallicityProbe, "Medium&SpatialGrid&GasMix")
     ITEM_END()
 

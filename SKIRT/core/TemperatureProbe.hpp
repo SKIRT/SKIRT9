@@ -76,7 +76,8 @@ class TemperatureProbe : public SpatialGridWhenFormProbe
         ENUM_VAL(Aggregation, Type, "per medium type (dust, electrons, gas)")
     ENUM_END()
 
-    ITEM_CONCRETE(TemperatureProbe, SpatialGridWhenFormProbe, "spatial grid: indicative temperature of the medium")
+    ITEM_CONCRETE(TemperatureProbe, SpatialGridWhenFormProbe,
+                  "internal spatial grid: indicative temperature of the medium")
         ATTRIBUTE_TYPE_DISPLAYED_IF(TemperatureProbe,
                                     "Medium&SpatialGrid&((DustMix&RadiationField&Panchromatic)|ElectronMix|GasMix)")
 

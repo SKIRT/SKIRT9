@@ -44,7 +44,7 @@
     during the simulation. */
 class CustomStateProbe : public SpatialGridWhenFormProbe
 {
-    ITEM_CONCRETE(CustomStateProbe, SpatialGridWhenFormProbe, "spatial grid: custom medium state quantities")
+    ITEM_CONCRETE(CustomStateProbe, SpatialGridWhenFormProbe, "internal spatial grid: custom medium state quantities")
         ATTRIBUTE_TYPE_DISPLAYED_IF(CustomStateProbe, "Level3&CustomMediumState")
 
         PROPERTY_STRING(indices, "zero-based indices or index ranges of quantities to probe, or empty for all")

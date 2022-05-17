@@ -15,7 +15,8 @@
     with a form that projects the quantity along a path, the value is density-weighted. */
 class MagneticFieldProbe : public SpatialGridFormProbe
 {
-    ITEM_CONCRETE(MagneticFieldProbe, SpatialGridFormProbe, "spatial grid: magnetic field associated with the medium")
+    ITEM_CONCRETE(MagneticFieldProbe, SpatialGridFormProbe,
+                  "internal spatial grid: magnetic field associated with the medium")
         ATTRIBUTE_TYPE_DISPLAYED_IF(MagneticFieldProbe, "Level3&SpatialGrid&MagneticField")
     ITEM_END()
 
