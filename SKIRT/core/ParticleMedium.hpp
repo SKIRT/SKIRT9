@@ -57,11 +57,20 @@
     for the particle. */
 class ParticleMedium : public ImportedMedium
 {
+    /** The enumeration type indicating the type of mass quantity to be imported. */
+    ENUM_DEF(MassType, Mass, Number)
+        ENUM_VAL(MassType, Mass, "mass (volume-integrated)")
+        ENUM_VAL(MassType, Number, "number (volume-integrated)")
+    ENUM_END()
+
     ITEM_CONCRETE(ParticleMedium, ImportedMedium, "a transfer medium imported from smoothed particle data")
 
         PROPERTY_ITEM(smoothingKernel, SmoothingKernel, "the kernel for interpolating the smoothed particles")
         ATTRIBUTE_DEFAULT_VALUE(smoothingKernel, "CubicSplineSmoothingKernel")
         ATTRIBUTE_DISPLAYED_IF(smoothingKernel, "Level2")
+
+        PROPERTY_ENUM(massType, MassType, "the type of mass quantity to be imported")
+        ATTRIBUTE_DEFAULT_VALUE(massType, "Mass")
 
     ITEM_END()
 

@@ -65,9 +65,9 @@ class CellMedium : public ImportedMedium
     /** The enumeration type indicating the type of mass quantity to be imported. */
     ENUM_DEF(MassType, MassDensity, Mass, NumberDensity, Number)
         ENUM_VAL(MassType, MassDensity, "mass density")
-        ENUM_VAL(MassType, Mass, "mass (volume-integrated mass density)")
+        ENUM_VAL(MassType, Mass, "mass (volume-integrated)")
         ENUM_VAL(MassType, NumberDensity, "number density")
-        ENUM_VAL(MassType, Number, "number (volume-integrated number density)")
+        ENUM_VAL(MassType, Number, "number (volume-integrated)")
     ENUM_END()
 
     ITEM_CONCRETE(CellMedium, ImportedMedium, "a transfer medium imported from cuboidal cell data")

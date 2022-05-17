@@ -45,8 +45,8 @@ void MetallicityProbe::probe()
             auto weightInCell = [ms, h](int m) { return ms->massDensity(m, h); };
 
             // produce output
-            bridge.writeQuantity(sh + "_Z", "dimensionless", "metallicity", "density-weighted metallicity",
-                                 valueInCell, weightInCell);
+            bridge.writeQuantity(sh + "_Z", "dimensionless", "metallicity", "density-weighted metallicity", valueInCell,
+                                 weightInCell);
         }
     }
 }
