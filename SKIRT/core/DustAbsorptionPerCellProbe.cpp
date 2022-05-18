@@ -15,7 +15,14 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void DustAbsorptionPerCellProbe::probeRun()
+Probe::When DustAbsorptionPerCellProbe::when() const
+{
+    return When::Run;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void DustAbsorptionPerCellProbe::probe()
 {
     if (find<Configuration>()->hasRadiationField() && find<MediumSystem>()->hasDust())
     {

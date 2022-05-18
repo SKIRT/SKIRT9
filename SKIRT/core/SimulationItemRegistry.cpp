@@ -15,6 +15,8 @@
 #include "AdaptiveMeshSpatialGrid.hpp"
 #include "AllCellsLibrary.hpp"
 #include "AllSkyInstrument.hpp"
+#include "AllSkyProjectionForm.hpp"
+#include "AtPositionsForm.hpp"
 #include "BandLuminosityNormalization.hpp"
 #include "BlackBodySED.hpp"
 #include "BlackBodySEDFamily.hpp"
@@ -40,23 +42,18 @@
 #include "ConfigurableDustMix.hpp"
 #include "ConicalAngularDistribution.hpp"
 #include "ConicalShellGeometry.hpp"
+#include "ConvergenceCutsProbe.hpp"
+#include "ConvergenceInfoProbe.hpp"
 #include "CrystalEnstatiteGrainComposition.hpp"
 #include "CrystalForsteriteGrainComposition.hpp"
 #include "CubicSplineSmoothingKernel.hpp"
 #include "CubicalBackgroundSource.hpp"
-#include "CustomStatePerCellProbe.hpp"
+#include "CustomStateProbe.hpp"
 #include "Cylinder2DSpatialGrid.hpp"
 #include "CylindricalClipGeometryDecorator.hpp"
 #include "CylindricalVectorField.hpp"
-#include "DefaultCustomStateCutsProbe.hpp"
-#include "DefaultDustTemperatureCutsProbe.hpp"
-#include "DefaultElectronTemperatureCutsProbe.hpp"
-#include "DefaultGasTemperatureCutsProbe.hpp"
-#include "DefaultMagneticFieldCutsProbe.hpp"
-#include "DefaultMediaDensityCutsProbe.hpp"
-#include "DefaultMediumVelocityCutsProbe.hpp"
-#include "DefaultMetallicityCutsProbe.hpp"
-#include "DefaultRadiationFieldCutsProbe.hpp"
+#include "DefaultCutsForm.hpp"
+#include "DensityProbe.hpp"
 #include "DensityTreePolicy.hpp"
 #include "DiscreteWavelengthDistribution.hpp"
 #include "DraineGraphiteGrainComposition.hpp"
@@ -70,10 +67,8 @@
 #include "DustEmissivityProbe.hpp"
 #include "DustGrainPopulationsProbe.hpp"
 #include "DustGrainSizeDistributionProbe.hpp"
-#include "DustTemperaturePerCellProbe.hpp"
 #include "EinastoGeometry.hpp"
 #include "ElectronMix.hpp"
-#include "ElectronTemperaturePerCellProbe.hpp"
 #include "ExpDiskGeometry.hpp"
 #include "ExtragalacticUnits.hpp"
 #include "FSPSSED.hpp"
@@ -95,7 +90,6 @@
 #include "FrameInstrument.hpp"
 #include "FullInstrument.hpp"
 #include "GammaGeometry.hpp"
-#include "GasTemperaturePerCellProbe.hpp"
 #include "GaussianGeometry.hpp"
 #include "GeometricMedium.hpp"
 #include "GeometricSource.hpp"
@@ -105,6 +99,15 @@
 #include "HollowRadialVectorField.hpp"
 #include "HyperboloidGeometry.hpp"
 #include "HyperboloidShellGeometry.hpp"
+#include "ImportedMediumDensityProbe.hpp"
+#include "ImportedMediumMetallicityProbe.hpp"
+#include "ImportedMediumTemperatureProbe.hpp"
+#include "ImportedMediumVelocityProbe.hpp"
+#include "ImportedSourceAgeProbe.hpp"
+#include "ImportedSourceDensityProbe.hpp"
+#include "ImportedSourceLuminosityProbe.hpp"
+#include "ImportedSourceMetallicityProbe.hpp"
+#include "ImportedSourceVelocityProbe.hpp"
 #include "InstrumentSystem.hpp"
 #include "InstrumentWavelengthGridProbe.hpp"
 #include "IntegratedLuminosityNormalization.hpp"
@@ -116,8 +119,8 @@
 #include "LinWavelengthDistribution.hpp"
 #include "LinWavelengthGrid.hpp"
 #include "LineLuminosityNormalization.hpp"
+#include "LinearCutForm.hpp"
 #include "LinearDustDestructionRecipe.hpp"
-#include "LinearDustTemperatureCutProbe.hpp"
 #include "ListBand.hpp"
 #include "ListBorderWavelengthGrid.hpp"
 #include "ListGrainSizeDistribution.hpp"
@@ -140,7 +143,7 @@
 #include "LyaSEDDecorator.hpp"
 #include "LyaSEDFamilyDecorator.hpp"
 #include "MRNDustMix.hpp"
-#include "MagneticFieldPerCellProbe.hpp"
+#include "MagneticFieldProbe.hpp"
 #include "MappingsSED.hpp"
 #include "MappingsSEDFamily.hpp"
 #include "MarastonSED.hpp"
@@ -155,9 +158,8 @@
 #include "MeanPinteBenchmarkDustMix.hpp"
 #include "MeanTrustBenchmarkDustMix.hpp"
 #include "MediumSystem.hpp"
-#include "MediumVelocityPerCellProbe.hpp"
-#include "MeridionalDustTemperatureCutProbe.hpp"
-#include "MetallicityPerCellProbe.hpp"
+#include "MeridionalCutForm.hpp"
+#include "MetallicityProbe.hpp"
 #include "MieSilicateGrainComposition.hpp"
 #include "MinSilicateGrainComposition.hpp"
 #include "ModifiedLogNormalGrainSizeDistribution.hpp"
@@ -171,24 +173,18 @@
 #include "NumberColumnMaterialNormalization.hpp"
 #include "OffsetGeometryDecorator.hpp"
 #include "OffsetVectorFieldDecorator.hpp"
-#include "OpticalDepthMapProbe.hpp"
+#include "OpacityProbe.hpp"
 #include "OpticalDepthMaterialNormalization.hpp"
 #include "OpticalMaterialPropertiesProbe.hpp"
 #include "ParaboloidGeometry.hpp"
 #include "ParaboloidShellGeometry.hpp"
+#include "ParallelProjectionForm.hpp"
 #include "ParticleGeometry.hpp"
 #include "ParticleMedium.hpp"
 #include "ParticleSource.hpp"
+#include "PerCellForm.hpp"
 #include "PerspectiveInstrument.hpp"
-#include "PlanarCustomStateCutsProbe.hpp"
-#include "PlanarDustTemperatureCutsProbe.hpp"
-#include "PlanarElectronTemperatureCutsProbe.hpp"
-#include "PlanarGasTemperatureCutsProbe.hpp"
-#include "PlanarMagneticFieldCutsProbe.hpp"
-#include "PlanarMediaDensityCutsProbe.hpp"
-#include "PlanarMediumVelocityCutsProbe.hpp"
-#include "PlanarMetallicityCutsProbe.hpp"
-#include "PlanarRadiationFieldCutsProbe.hpp"
+#include "PlanarCutsForm.hpp"
 #include "PlummerGeometry.hpp"
 #include "PointSource.hpp"
 #include "PolicyTreeSpatialGrid.hpp"
@@ -196,12 +192,10 @@
 #include "PowerLawGrainSizeDistribution.hpp"
 #include "PredefinedBandWavelengthGrid.hpp"
 #include "ProbeSystem.hpp"
-#include "ProjectedMediaDensityProbe.hpp"
 #include "PseudoSersicGeometry.hpp"
 #include "QuasarSED.hpp"
 #include "RadialVectorField.hpp"
-#include "RadiationFieldAtPositionsProbe.hpp"
-#include "RadiationFieldPerCellProbe.hpp"
+#include "RadiationFieldProbe.hpp"
 #include "RadiationFieldWavelengthGridProbe.hpp"
 #include "Random.hpp"
 #include "ReadFits3DGeometry.hpp"
@@ -224,7 +218,6 @@
 #include "SourceSystem.hpp"
 #include "SpatialCellPropertiesProbe.hpp"
 #include "SpatialGrid.hpp"
-#include "SpatialGridConvergenceProbe.hpp"
 #include "SpatialGridPlotProbe.hpp"
 #include "SpatialGridSourceDensityProbe.hpp"
 #include "SpecificLuminosityNormalization.hpp"
@@ -244,6 +237,7 @@
 #include "SunSED.hpp"
 #include "SymPowMesh.hpp"
 #include "TTauriDiskGeometry.hpp"
+#include "TemperatureProbe.hpp"
 #include "TemperatureWavelengthCellLibrary.hpp"
 #include "ThemisDustMix.hpp"
 #include "TorusGeometry.hpp"
@@ -258,6 +252,7 @@
 #include "UnidirectionalVectorField.hpp"
 #include "UniformBoxGeometry.hpp"
 #include "UniformSmoothingKernel.hpp"
+#include "VelocityProbe.hpp"
 #include "VoronoiMeshGeometry.hpp"
 #include "VoronoiMeshMedium.hpp"
 #include "VoronoiMeshSource.hpp"
@@ -638,60 +633,68 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // probe system and probes
     ItemRegistry::add<ProbeSystem>();
     ItemRegistry::add<Probe>();
-    ItemRegistry::add<StateProbe>();
-    ItemRegistry::add<AbstractWavelengthProbe>();
-    ItemRegistry::add<AbstractWavelengthGridProbe>();
-    ItemRegistry::add<AbstractPlanarCutsProbe>();
-    ItemRegistry::add<AbstractPlanarCutsStateProbe>();
-    ItemRegistry::add<InstrumentWavelengthGridProbe>();
+    ItemRegistry::add<SpecialtyProbe>();
+    ItemRegistry::add<SpecialtyWhenProbe>();
+    ItemRegistry::add<SpecialtyWavelengthProbe>();
+    ItemRegistry::add<SpecialtyWavelengthGridProbe>();
+    ItemRegistry::add<SpatialGridFormProbe>();
+    ItemRegistry::add<SpatialGridWhenFormProbe>();
+    ItemRegistry::add<InputModelFormProbe>();
+    ItemRegistry::add<ImportedSourceWeightedProbe>();
+    //   .. convergence
+    ItemRegistry::add<ConvergenceInfoProbe>();
+    ItemRegistry::add<ConvergenceCutsProbe>();
+    //   .. source
     ItemRegistry::add<LuminosityProbe>();
     ItemRegistry::add<LaunchedPacketsProbe>();
-    ItemRegistry::add<SpatialGridPlotProbe>();
-    ItemRegistry::add<SpatialGridConvergenceProbe>();
-    ItemRegistry::add<TreeSpatialGridTopologyProbe>();
-    ItemRegistry::add<DefaultMediaDensityCutsProbe>();
-    ItemRegistry::add<PlanarMediaDensityCutsProbe>();
-    ItemRegistry::add<ProjectedMediaDensityProbe>();
-    ItemRegistry::add<OpticalDepthMapProbe>();
+    //   .. spatial grid
+    ItemRegistry::add<DensityProbe>();
+    ItemRegistry::add<OpacityProbe>();
+    ItemRegistry::add<TemperatureProbe>();
+    ItemRegistry::add<MetallicityProbe>();
+    ItemRegistry::add<VelocityProbe>();
+    ItemRegistry::add<MagneticFieldProbe>();
+    ItemRegistry::add<CustomStateProbe>();
+    ItemRegistry::add<RadiationFieldProbe>();
+    //   .. properties
     ItemRegistry::add<SpatialCellPropertiesProbe>();
-    ItemRegistry::add<SpatialGridSourceDensityProbe>();
+    ItemRegistry::add<SpatialGridPlotProbe>();
     ItemRegistry::add<OpticalMaterialPropertiesProbe>();
     ItemRegistry::add<DustGrainPopulationsProbe>();
     ItemRegistry::add<DustGrainSizeDistributionProbe>();
-
-    ItemRegistry::add<DefaultMediumVelocityCutsProbe>();
-    ItemRegistry::add<PlanarMediumVelocityCutsProbe>();
-    ItemRegistry::add<MediumVelocityPerCellProbe>();
-    ItemRegistry::add<DefaultMagneticFieldCutsProbe>();
-    ItemRegistry::add<PlanarMagneticFieldCutsProbe>();
-    ItemRegistry::add<MagneticFieldPerCellProbe>();
-    ItemRegistry::add<DefaultCustomStateCutsProbe>();
-    ItemRegistry::add<PlanarCustomStateCutsProbe>();
-    ItemRegistry::add<CustomStatePerCellProbe>();
-
-    ItemRegistry::add<DefaultRadiationFieldCutsProbe>();
-    ItemRegistry::add<PlanarRadiationFieldCutsProbe>();
-    ItemRegistry::add<RadiationFieldPerCellProbe>();
-    ItemRegistry::add<RadiationFieldAtPositionsProbe>();
-    ItemRegistry::add<RadiationFieldWavelengthGridProbe>();
-    ItemRegistry::add<DefaultDustTemperatureCutsProbe>();
-    ItemRegistry::add<PlanarDustTemperatureCutsProbe>();
-    ItemRegistry::add<DustTemperaturePerCellProbe>();
-    ItemRegistry::add<LinearDustTemperatureCutProbe>();
-    ItemRegistry::add<MeridionalDustTemperatureCutProbe>();
-    ItemRegistry::add<DustAbsorptionPerCellProbe>();
     ItemRegistry::add<DustEmissivityProbe>();
+    //   .. wavelength grid
+    ItemRegistry::add<RadiationFieldWavelengthGridProbe>();
     ItemRegistry::add<DustEmissionWavelengthGridProbe>();
+    ItemRegistry::add<InstrumentWavelengthGridProbe>();
+    //   .. specialty
+    ItemRegistry::add<DustAbsorptionPerCellProbe>();
+    ItemRegistry::add<SpatialGridSourceDensityProbe>();
+    ItemRegistry::add<TreeSpatialGridTopologyProbe>();
+    //   .. imported source
+    ItemRegistry::add<ImportedSourceLuminosityProbe>();
+    ItemRegistry::add<ImportedSourceDensityProbe>();
+    ItemRegistry::add<ImportedSourceMetallicityProbe>();
+    ItemRegistry::add<ImportedSourceAgeProbe>();
+    ItemRegistry::add<ImportedSourceVelocityProbe>();
+    //   .. imported medium
+    ItemRegistry::add<ImportedMediumDensityProbe>();
+    ItemRegistry::add<ImportedMediumMetallicityProbe>();
+    ItemRegistry::add<ImportedMediumTemperatureProbe>();
+    ItemRegistry::add<ImportedMediumVelocityProbe>();
 
-    ItemRegistry::add<DefaultMetallicityCutsProbe>();
-    ItemRegistry::add<PlanarMetallicityCutsProbe>();
-    ItemRegistry::add<MetallicityPerCellProbe>();
-    ItemRegistry::add<DefaultElectronTemperatureCutsProbe>();
-    ItemRegistry::add<PlanarElectronTemperatureCutsProbe>();
-    ItemRegistry::add<ElectronTemperaturePerCellProbe>();
-    ItemRegistry::add<DefaultGasTemperatureCutsProbe>();
-    ItemRegistry::add<PlanarGasTemperatureCutsProbe>();
-    ItemRegistry::add<GasTemperaturePerCellProbe>();
+    // forms
+    ItemRegistry::add<Form>();
+    ItemRegistry::add<SpatialGridForm>();
+    ItemRegistry::add<GenericForm>();
+    ItemRegistry::add<DefaultCutsForm>();
+    ItemRegistry::add<PlanarCutsForm>();
+    ItemRegistry::add<PerCellForm>();
+    ItemRegistry::add<LinearCutForm>();
+    ItemRegistry::add<MeridionalCutForm>();
+    ItemRegistry::add<AtPositionsForm>();
+    ItemRegistry::add<ParallelProjectionForm>();
+    ItemRegistry::add<AllSkyProjectionForm>();
 
     // Monte Carlo simulations
     ItemRegistry::add<MonteCarloSimulation>();

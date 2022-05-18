@@ -50,9 +50,18 @@ protected:
 
 public:
     /** This function returns the density \f$W(u)\f$ of the smoothing kernel as a function of the
-        normalized radius \f$u\f$. Just implements the analytical formula listed in the header for
-        this class. */
+        normalized radius \f$u\f$. It just implements the analytical formula given in the class
+        header. */
     double density(double u) const override;
+
+    /** This function returns the column density \f$\Sigma(q) = 2 \int_{q}^1 \frac{W(u)\,u
+        \,{\text{d}}u} {\sqrt{u^2-q^2}}\f$ of the smoothing kernel as a function of the normalized
+        impact radius \f$q=r_\text{i}/h\f$. For the scaled Gaussian smoothing kernel, we obtain
+        \f[\Sigma(q) = \begin{cases} \; {\cal{N}}\,\sqrt{2\pi}\,\sigma
+        \exp\left(-\frac{q^2}{2\sigma^2}\right) \mathrm{erf}\left(\frac{\sqrt{1-q^2}}
+        {\sqrt{2}\sigma}\right) & \quad{\text{if }} 0\leq q\leq 1, \\ \; 0 & \quad{\text{else}}.
+        \end{cases} \f] */
+    double columnDensity(double q) const override;
 
     /** This function generates a random normalized radius \f$u\f$ from the smoothing kernel, by
         drawing a number from the one-dimensional probability density \f$p(u)\,{\text{d}}u =

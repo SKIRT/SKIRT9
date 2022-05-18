@@ -439,6 +439,33 @@ bool MediumSystem::isMaterialType(MaterialMix::MaterialType type, int h) const
 
 ////////////////////////////////////////////////////////////////////
 
+double MediumSystem::dustMassDensity(Position bfr) const
+{
+    double result = 0.;
+    for (int h : _dust_hv) result += _media[h]->massDensity(bfr);
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::electronNumberDensity(Position bfr) const
+{
+    double result = 0.;
+    for (int h : _elec_hv) result += _media[h]->numberDensity(bfr);
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::gasNumberDensity(Position bfr) const
+{
+    double result = 0.;
+    for (int h : _gas_hv) result += _media[h]->numberDensity(bfr);
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////
+
 double MediumSystem::volume(int m) const
 {
     return _state.volume(m);
@@ -456,6 +483,42 @@ Vec MediumSystem::bulkVelocity(int m) const
 Vec MediumSystem::magneticField(int m) const
 {
     return _state.magneticField(m);
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::massDensity(int m) const
+{
+    double result = 0.;
+    for (int h = 0; h != _numMedia; ++h) result += massDensity(m, h);
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::dustMassDensity(int m) const
+{
+    double result = 0.;
+    for (int h : _dust_hv) result += massDensity(m, h);
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::electronNumberDensity(int m) const
+{
+    double result = 0.;
+    for (int h : _elec_hv) result += numberDensity(m, h);
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::gasNumberDensity(int m) const
+{
+    double result = 0.;
+    for (int h : _gas_hv) result += numberDensity(m, h);
+    return result;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -1032,6 +1095,23 @@ Array MediumSystem::meanIntensity(int m) const
         Jv[ell] = radiationField(m, ell) * factor / _wavelengthGrid->effectiveWidth(ell);
     }
     return Jv;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::indicativeTemperature(int m, int h) const
+{
+    // get the radiation field, if available
+    Array Jv;
+    if (_config->hasRadiationField()) Jv = meanIntensity(m);
+
+    // obtain the temperature for the requested component and cell
+    if (massDensity(m, h) > 0.)
+    {
+        MaterialState mst(_state, m, h);
+        return mix(m, h)->indicativeTemperature(&mst, Jv);
+    }
+    return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////

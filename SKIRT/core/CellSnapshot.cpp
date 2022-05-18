@@ -190,6 +190,9 @@ public:
             int j2 = NR::locateClip(_ygrid, pathbox.ymax());
             int k1 = NR::locateClip(_zgrid, pathbox.zmin());
             int k2 = NR::locateClip(_zgrid, pathbox.zmax());
+            if (i1 > i2) std::swap(i1, i2);  // fix reversed coords for negative bfk components
+            if (j1 > j2) std::swap(j1, j2);
+            if (k1 > k2) std::swap(k1, k2);
 
             // loop over all grid cells in that 3D range
             for (int i = i1; i <= i2; i++)
@@ -331,6 +334,13 @@ Box CellSnapshot::extent() const
 int CellSnapshot::numEntities() const
 {
     return _propv.size();
+}
+
+////////////////////////////////////////////////////////////////////
+
+double CellSnapshot::volume(int m) const
+{
+    return box(_propv[m], boxIndex()).volume();
 }
 
 ////////////////////////////////////////////////////////////////////

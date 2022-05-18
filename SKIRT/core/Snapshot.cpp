@@ -122,6 +122,14 @@ void Snapshot::importNumber()
 
 ////////////////////////////////////////////////////////////////////
 
+void Snapshot::importCurrentMass()
+{
+    _currentMassIndex = _nextIndex++;
+    _infile->addColumn("current mass", "mass", "Msun");
+}
+
+////////////////////////////////////////////////////////////////////
+
 void Snapshot::importMetallicity()
 {
     _metallicityIndex = _nextIndex++;
@@ -176,6 +184,7 @@ void Snapshot::importParameters(const vector<SnapshotParameter>& parameters)
         switch (param.identifier())
         {
             case SnapshotParameter::Identifier::InitialMass: _initialMassIndex = _nextIndex; break;
+            case SnapshotParameter::Identifier::CurrentMass: _currentMassIndex = _nextIndex; break;
             case SnapshotParameter::Identifier::Metallicity: _metallicityIndex = _nextIndex; break;
             case SnapshotParameter::Identifier::Age: _ageIndex = _nextIndex; break;
             case SnapshotParameter::Identifier::Temperature: _temperatureIndex = _nextIndex; break;
@@ -237,6 +246,21 @@ double Snapshot::initialMass(Position bfr) const
 {
     int m = nearestEntity(bfr);
     return m >= 0 ? initialMass(m) : 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double Snapshot::currentMass(int m) const
+{
+    return properties(m)[currentMassIndex()];
+}
+
+////////////////////////////////////////////////////////////////////
+
+double Snapshot::currentMass(Position bfr) const
+{
+    int m = nearestEntity(bfr);
+    return m >= 0 ? currentMass(m) : 0.;
 }
 
 ////////////////////////////////////////////////////////////////////

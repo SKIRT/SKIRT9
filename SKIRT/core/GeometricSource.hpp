@@ -35,6 +35,7 @@ class GeometricSource : public NormalizedSource
         ATTRIBUTE_MAX_VALUE(velocityMagnitude, "100000 km/s]")
         ATTRIBUTE_RELEVANT_IF(velocityMagnitude, "Panchromatic&velocityDistribution")
         ATTRIBUTE_DISPLAYED_IF(velocityMagnitude, "Level2")
+        ATTRIBUTE_INSERT(velocityMagnitude, "velocityDistribution&velocityMagnitude:SourceVelocity")
 
     ITEM_END()
 

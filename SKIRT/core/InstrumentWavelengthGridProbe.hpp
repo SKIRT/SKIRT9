@@ -6,7 +6,7 @@
 #ifndef WAVELENGTHGRIDPROBE_HPP
 #define WAVELENGTHGRIDPROBE_HPP
 
-#include "Probe.hpp"
+#include "SpecialtyProbe.hpp"
 class WavelengthGrid;
 
 ////////////////////////////////////////////////////////////////////
@@ -16,18 +16,19 @@ class WavelengthGrid;
     the files written by the corresponding instrument. For each wavelength bin, the file lists the
     characteristic wavelength, the wavelength bin width, and the left and right borders of the bin.
     */
-class InstrumentWavelengthGridProbe : public Probe
+class InstrumentWavelengthGridProbe : public SpecialtyProbe
 {
-    ITEM_CONCRETE(InstrumentWavelengthGridProbe, Probe, "the instrument wavelength grids")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(InstrumentWavelengthGridProbe, "Instrument")
+    ITEM_CONCRETE(InstrumentWavelengthGridProbe, SpecialtyProbe, "wavelength grid: instruments")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(InstrumentWavelengthGridProbe, "Level2&Instrument")
     ITEM_END()
 
     //======================== Other Functions =======================
 
-public:
-    /** This function performs probing after setup. */
-    void probeSetup() override;
+protected:
+    /** This function performs probing. */
+    void probe() override;
 
+public:
     /** This function outputs a column text file for the specified wavelength grid in the format as
         described in the header of this class. It can be used from other probes to output
         wavelength grid details. */

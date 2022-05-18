@@ -426,6 +426,50 @@ double Units::omonluminosity(double lambda, double Llambda) const
 
 ////////////////////////////////////////////////////////////////////
 
+string Units::smonluminosityvolumedensity() const
+{
+    switch (_fluxOutputStyle)
+    {
+        case FluxOutputStyle::Neutral: return "lambda*L_lambda/V";
+        case FluxOutputStyle::Wavelength: return "L_lambda/V";
+        case FluxOutputStyle::Frequency: return "L_nu/V";
+        case FluxOutputStyle::Energy: return "L_E/V";
+    }
+    return string();
+}
+
+////////////////////////////////////////////////////////////////////
+
+string Units::umonluminosityvolumedensity() const
+{
+    switch (_fluxOutputStyle)
+    {
+        case FluxOutputStyle::Neutral: return unit("neutralmonluminosityvolumedensity");
+        case FluxOutputStyle::Wavelength: return unit("wavelengthmonluminosityvolumedensity");
+        case FluxOutputStyle::Frequency: return unit("frequencymonluminosityvolumedensity");
+        case FluxOutputStyle::Energy: return unit("energymonluminosityvolumedensity");
+    }
+    return string();
+}
+
+////////////////////////////////////////////////////////////////////
+
+double Units::omonluminosityvolumedensity(double lambda, double Llambda) const
+{
+    switch (_fluxOutputStyle)
+    {
+        case FluxOutputStyle::Neutral: return out("neutralmonluminosityvolumedensity", lambda * Llambda);
+        case FluxOutputStyle::Wavelength: return out("wavelengthmonluminosityvolumedensity", Llambda);
+        case FluxOutputStyle::Frequency:
+            return out("frequencymonluminosityvolumedensity", lambda * lambda * Llambda / c);
+        case FluxOutputStyle::Energy:
+            return out("energymonluminosityvolumedensity", lambda * lambda * lambda * Llambda / hc2);
+    }
+    return 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
 string Units::sfluxdensity() const
 {
     switch (_fluxOutputStyle)

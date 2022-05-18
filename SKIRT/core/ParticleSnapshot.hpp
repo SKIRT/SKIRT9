@@ -65,9 +65,14 @@ public:
     /** This function returns the number of particles in the snapshot. */
     int numEntities() const override;
 
-    /** This function returns the mass associated with the particle with index \em m. If no
-        density policy has been set or no mass information is being imported, or if the index is
-        out of range, the behavior is undefined. */
+    /** This function returns the effective volume of the particle with index \em m. If no density
+        policy has been set or no mass information is being imported, or if the index is out of
+        range, the behavior is undefined. */
+    double volume(int m) const override;
+
+    /** This function returns the effective mass density associated with the particle with index
+        \em m. If no density policy has been set or no mass information is being imported, or if
+        the index is out of range, the behavior is undefined. */
     double density(int m) const override;
 
     /** This function returns the mass density represented by the snapshot at a given point
@@ -121,9 +126,9 @@ public:
     /** This function replaces the contents of the specified entity collection by the set of
         particles with a smoothing kernel that overlaps the specified path with starting point
         \f${\bf{r}}\f$ and direction \f${\bf{k}}\f$. The weight of each particle is given by the
-        column density seen by the path as it crosses the particle's smoothing kernel. If the path
-        does not overlap any particle, the collection will be empty. If the search data structures
-        were not created, invoking this function causes undefined behavior. */
+        effective length seen by the path as it crosses the particle's smoothing kernel. If the
+        path does not overlap any particle, the collection will be empty. If the search data
+        structures were not created, invoking this function causes undefined behavior. */
     void getEntities(EntityCollection& entities, Position bfr, Direction bfk) const override;
 
     //======================== Data Members ========================

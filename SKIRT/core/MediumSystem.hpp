@@ -217,6 +217,24 @@ public:
     /** This function returns a list of indices \f$h\f$ for media components that contain electrons. */
     const vector<int>& electronMediumIndices() const { return _elec_hv; }
 
+    //=============== Input model ===================
+
+public:
+    /** This function returns the total mass density of all dust medium components at the specified
+        position in the input model (i.e. directly querying the medium components rather than the
+        gridded medium state). */
+    double dustMassDensity(Position bfr) const;
+
+    /** This function returns the total number density of all electron medium components at the specified
+        position in the input model (i.e. directly querying the medium components rather than the
+        gridded medium state). */
+    double electronNumberDensity(Position bfr) const;
+
+    /** This function returns the total number density of all gas medium components at the specified
+        position in the input model (i.e. directly querying the medium components rather than the
+        gridded medium state). */
+    double gasNumberDensity(Position bfr) const;
+
     //=============== Medium state ===================
 
 public:
@@ -235,6 +253,22 @@ public:
         index \f$m\f$. At most one medium component is allowed to specify a magnetic field. If no
         medium component specifies a magnetic field, this function returns the null vector. */
     Vec magneticField(int m) const;
+
+    /** This function returns the total mass density of all medium components in spatial cell with
+        index \f$m\f$. */
+    double massDensity(int m) const;
+
+    /** This function returns the total mass density of all dust medium components in spatial cell
+        with index \f$m\f$. */
+    double dustMassDensity(int m) const;
+
+    /** This function returns the total number density of all electron medium components in spatial
+        cell with index \f$m\f$. */
+    double electronNumberDensity(int m) const;
+
+    /** This function returns the total number density of all gas medium components in spatial cell
+        with index \f$m\f$. */
+    double gasNumberDensity(int m) const;
 
     /** This function returns the number density of the medium component with index \f$h\f$ in
         spatial cell with index \f$m\f$. */
@@ -262,7 +296,7 @@ public:
 
     //=============== Low-level optical properties ===================
 
-private:
+public:
     /** This function returns the absorption opacity \f$k_h^\text{abs}\f$ at wavelength
         \f$\lambda\f$ of the medium component with index \f$h\f$ in spatial cell with index
         \f$m\f$. Because no photon packet is provided, default values are used for any relevant
@@ -284,7 +318,6 @@ private:
         */
     double opacityExt(double lambda, int m, int h) const;
 
-public:
     /** This function returns the absorption opacity \f$k^\text{abs}=\sum_h k_h^\text{abs}\f$
         summed over all medium components with the specified material type at wavelength
         \f$\lambda\f$ in spatial cell with index \f$m\f$. Because no photon packet is provided,
@@ -539,6 +572,26 @@ public:
     //=============== Indicative temperature ===================
 
 public:
+    /** This function returns an indicative temperature \f${\bar{T}}_{m,h}\f$ for the material in
+        the medium component with index \f$h\f$ in the spatial cell with index \f$m\f$. If the cell
+        does not contain any material for the medium component, the function returns zero.
+
+        The interpretation of the indicative temperature depends heavily on the material type.
+        Refer to the description for the MaterialMix::indicativeTemperature() function in the
+        various MaterialMix subclasses for more information. Note that, in any case, the indicative
+        temperature usually does not correspond to a physical temperature.
+
+        The calculation of the indicative temperature may depend on the radiation field embedding
+        the material in the specified spatial cell, it may simply reflect the medium state for the
+        cell as defined in the input model during setup, or it may somehow depend on both. If the
+        radiation field is not being tracked in the simulation, and the indicative temperature for
+        the requested material type depends on it, the function will return zero. If the radiation
+        field \em is being tracked, this function assumes that the radiation field information has
+        been accumulated and the communicateRadiationField() function has been called before
+        invoking this function; see the meanIntensity() function. If this is not the case, the
+        behavior is undefined. */
+    double indicativeTemperature(int m, int h) const;
+
     /** This function returns an indicative temperature for the material of the specified type in
         the spatial cell with index \f$m\f$. It obtains an indicative temperature for each
         component with a material mix of the specified type, and averages these temperatures over

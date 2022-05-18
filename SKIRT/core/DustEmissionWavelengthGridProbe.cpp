@@ -11,7 +11,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void DustEmissionWavelengthGridProbe::probeSetup()
+void DustEmissionWavelengthGridProbe::probe()
 {
     if (find<Configuration>()->hasDustEmission() && find<MediumSystem>()->hasDust())
     {

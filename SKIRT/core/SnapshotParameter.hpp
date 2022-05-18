@@ -26,7 +26,7 @@ class SnapshotParameter
 
 public:
     /** This enumeration lists the identifiers for the supported snapshot parameter types. */
-    enum class Identifier { InitialMass, Metallicity, Age, Temperature, Custom };
+    enum class Identifier { InitialMass, CurrentMass, Metallicity, Age, Temperature, Custom };
 
     // ================== Constructing ==================
 
@@ -39,6 +39,10 @@ public:
     /** This function returns a SnapshotParameter instance of type InitialMass with default units
         of solar mass. */
     static SnapshotParameter initialMass();
+
+    /** This function returns a SnapshotParameter instance of type CurrentMass with default units
+        of solar mass. */
+    static SnapshotParameter currentMass();
 
     /** This function returns a SnapshotParameter instance of type Metallicity. */
     static SnapshotParameter metallicity();

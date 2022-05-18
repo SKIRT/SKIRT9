@@ -13,7 +13,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void InstrumentWavelengthGridProbe::probeSetup()
+void InstrumentWavelengthGridProbe::probe()
 {
     // loop over instruments
     for (auto instrument : find<InstrumentSystem>()->instruments())

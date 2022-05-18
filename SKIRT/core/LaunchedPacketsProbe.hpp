@@ -6,8 +6,8 @@
 #ifndef LAUNCHEDPACKETSPROBE_HPP
 #define LAUNCHEDPACKETSPROBE_HPP
 
-#include "AbstractWavelengthGridProbe.hpp"
 #include "ProbePhotonPacketInterface.hpp"
+#include "SpecialtyWavelengthGridProbe.hpp"
 #include "Table.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -43,10 +43,10 @@
     The current implementation uses doubles to count the photon packets in each source/wavelength
     bin. Consequently, the results will be incorrect when the number of photon packets in a single
     bin exceeds 9e15. */
-class LaunchedPacketsProbe : public AbstractWavelengthGridProbe, public ProbePhotonPacketInterface
+class LaunchedPacketsProbe : public SpecialtyWavelengthGridProbe, public ProbePhotonPacketInterface
 {
-    ITEM_CONCRETE(LaunchedPacketsProbe, AbstractWavelengthGridProbe,
-                  "the number of photon packets launched from primary and secondary sources")
+    ITEM_CONCRETE(LaunchedPacketsProbe, SpecialtyWavelengthGridProbe,
+                  "source: number of photon packets launched from primary and secondary sources")
         ATTRIBUTE_TYPE_DISPLAYED_IF(LaunchedPacketsProbe, "Level2&Source")
 
     ITEM_END()
@@ -54,11 +54,15 @@ class LaunchedPacketsProbe : public AbstractWavelengthGridProbe, public ProbePho
     //============= Construction - Setup - Destruction =============
 
 protected:
+    /** This function returns the enumeration \c Run indicating that probing for this probe should
+        be performed at the end of the simulation. */
+    When when() const override;
+
     /** This function installs the call-back function for this probe with the primary and secondary
-        source systems and initializes the photon packet counters. We abuse the probeSetup()
-        function to do this, as opposed to setupSelfAfter(), because we need the secondary source
-        system (if any) to be constructed and fully setup. */
-    void probeSetup() override;
+        source systems and initializes the photon packet counters. We do this here as opposed to in
+        setupSelfAfter(), because we need the secondary source system (if any) to be constructed
+        and fully setup. */
+    void initialize() override;
 
     //======================== Other Functions =======================
 
@@ -67,13 +71,14 @@ public:
         the given photon packet. */
     void probePhotonPacket(const PhotonPacket* pp) override;
 
+protected:
     /** This function outputs the photon packet counts after the simulation run. */
-    void probeRun() override;
+    void probe() override;
 
     //======================== Data Members ========================
 
 private:
-    // data members initialized during setup
+    // data members initialized during initialize
     WavelengthGrid* _probeWavelengthGrid{nullptr};  // probe wavelength grid (local or default)
     Table<2> _primaryCounts;                        // photon packet counters; indices h, ell
     Table<2> _secondaryCounts;                      // photon packet counters; indices h, ell

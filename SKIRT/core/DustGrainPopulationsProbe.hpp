@@ -6,7 +6,7 @@
 #ifndef DUSTGRAINPOPULATIONSPROBE_HPP
 #define DUSTGRAINPOPULATIONSPROBE_HPP
 
-#include "Probe.hpp"
+#include "SpecialtyProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -24,18 +24,19 @@
     population; the dust mass in the population as a percentage of the total, as a mass per
     hydrogen atom, and as a mass per hydrogen mass; and the size range of the grains in the
     population. */
-class DustGrainPopulationsProbe : public Probe
+class DustGrainPopulationsProbe : public SpecialtyProbe
 {
-    ITEM_CONCRETE(DustGrainPopulationsProbe, Probe, "dust grain population mass and size information")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(DustGrainPopulationsProbe, "Medium&MultiGrainDustMix")
+    ITEM_CONCRETE(DustGrainPopulationsProbe, SpecialtyProbe,
+                  "properties: dust grain population mass and size information")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(DustGrainPopulationsProbe, "Level2&Medium&MultiGrainDustMix")
 
     ITEM_END()
 
     //======================== Other Functions =======================
 
-public:
-    /** This function performs probing after setup. */
-    void probeSetup() override;
+protected:
+    /** This function performs probing. */
+    void probe() override;
 };
 
 ////////////////////////////////////////////////////////////////////
