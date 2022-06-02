@@ -45,8 +45,12 @@
 
     Electrons bound to the atoms in the gas scatter incoming X-ray photons. This process can be
     elastic (Rayleigh scattering) or inelastic (bound-Compton scattering). The user can select one
-    of three implementations of bound-electron scattering. In increasing order of accuracy and
+    of four implementations of bound-electron scattering. In increasing order of accuracy and
     computational effort, these are:
+
+    - \em None: ignore scattering by bound electrons. This approximation works reasonably well for
+    low energies only (as the total extinction cross section is dominated by photo-absorption).
+    However, it is wrong for higher energies. This models photo-absorption and fluorescence only.
 
     - \em Free: use free-electron Compton scattering. This approximation works reasonably well for
     high energies (because the bound-electron scattering cross section approaches that of
@@ -110,17 +114,18 @@
     calculation can be performed during setup and the result stored, discretized on a
     high-resolution wavelength grid for later retrieval.
 
-    Verner and Yakovlev (1995) provide analytic fits to the photo-absorption cross sections
+    Verner and Yakovlev (1995, 1996) provide analytic fits to the photo-absorption cross sections
     \f$\sigma_{ph}(E)\f$ as a function of photon energy \f$E\f$ for the ground-state shells of the
     first 30 atomic elements:
 
     \f[\begin{aligned} \sigma_{ph}(E) &= \begin{cases} 0 & E < E_\mathrm{th} \\ \sigma_0 \,
-    F(E/E_0) & E \ge E_\mathrm{th} \end{cases}, \\ F(y) &= \left[(y-1)^2+y_{\rm w}^2 \right]y^{-Q}
-    \left(1+ \sqrt{(y/y_{\rm a})} \right )^{-P}, \\ Q&=5.5+l-0.5P, \end{aligned} \f]
-
-    with \f$E_\mathrm{th}\f$ the tabulated ionization threshold energy, \f$\sigma_0\f$, \f$E_0\f$,
-    \f$y_{\rm w}\f$, \f$y_{\rm a}\f$ and \f$P\f$ five tabulated fitting parameters, and \f$l\f$ the
-    subshell orbital quantum number (\f$l=0, 1, 2, 3\f$ for s, p, d, f orbitals respectively).
+    F(y) & E_\mathrm{th} \le E < E_\mathrm{max}\\ 0 & E_\mathrm{max} \le E \end{cases}, \\
+    x &= \frac{E}{E_0} - y_0, \; \; \; \; y = \sqrt{x^2 + y_1^2},\\ F(y) &= \left[(x-1)^2+y_{\rm w}^2
+    \right]y^{-Q} \left(1+ \sqrt{(y/y_{\rm a})} \right )^{-P}, \\ Q&=5.5+l-0.5P, \end{aligned} \f]
+    with \f$E_\mathrm{th}\f$ the tabulated ionization threshold energy, \f$E_\mathrm{max}\f$ the
+    tabulated maximum energy for the formula to be valid, \f$\sigma_0\f$, \f$E_0\f$, \f$y_{\rm w}\f$,
+    \f$y_{\rm a}\f$, \f$P\f$, \f$y_0\f$ and \f$y_1\f$ seven tabulated fitting parameters, and \f$l\f$
+    the subshell orbital quantum number (\f$l=0, 1, 2, 3\f$ for s, p, d, f orbitals respectively).
 
     <b>Fluorescence cross section</b>
 
@@ -130,7 +135,7 @@
 
     <b>Electron scattering</b>
 
-    As described above, this class provides three implementations for the scattering of X-rays
+    As described above, this class provides four implementations for the scattering of X-rays
     photons by the electrons bound to the atoms. These implementations involve four types of
     scattering: free-electron Compton scattering, bound-electron Compton scattering, smooth
     Rayleigh scattering, and anomalous Rayleigh scattering. Note that, in all cases, the listed
@@ -213,7 +218,8 @@ class XRayAtomicGasMix : public MaterialMix
 {
     /** The enumeration type indicating the implementation used for scattering by bound electrons.
         */
-    ENUM_DEF(BoundElectrons, Free, Good, Exact)
+    ENUM_DEF(BoundElectrons, None, Free, Good, Exact)
+        ENUM_VAL(BoundElectrons, None, "ignore bound electrons")
         ENUM_VAL(BoundElectrons, Free, "use free-electron Compton scattering")
         ENUM_VAL(BoundElectrons, Good, "use smooth Rayleigh scattering and exact bound-Compton scattering")
         ENUM_VAL(BoundElectrons, Exact, "use anomalous Rayleigh scattering and exact bound-Compton scattering")

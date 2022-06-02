@@ -76,17 +76,21 @@ namespace
     struct CrossSectionParams
     {
         CrossSectionParams(const Array& a)
-            : Z(a[0]), n(a[1]), l(a[2]), Eth(a[3]), E0(a[4]), sigma0(a[5]), ya(a[6]), P(a[7]), yw(a[8])
+            : Z(a[0]), n(a[1]), l(a[2]), Eth(a[3]), Emax(a[4]), E0(a[5]), sigma0(a[6]), ya(a[7]), P(a[8]), yw(a[9]), y0(a[10]), y1(a[11])
         {}
         short Z;        // atomic number
         short n;        // principal quantum number of the shell
         short l;        // orbital quantum number of the subshell
         double Eth;     // subshell ionization threshold energy (eV)
+        double Emax;    // maximum energy for validity of the formula (eV)
         double E0;      // fit parameter (eV)
         double sigma0;  // fit parameter (Mb = 10^-22 m^2)
         double ya;      // fit parameter (1)
         double P;       // fit parameter (1)
         double yw;      // fit parameter (1)
+        double y0;      // fit parameter (1)
+        double y1;      // fit parameter (1)
+
     };
 
     // fluorescence parameters
@@ -118,11 +122,13 @@ namespace
     double crossSection(double E, const CrossSectionParams& p)
     {
         if (E < p.Eth) return 0.;
+        if (E >= p.Emax) return 0.;
 
+        double x = E/p.E0 - p.y0;
+        double y = std::sqrt(x * x + p.y1 * p.y1);
+        double xm1 = x - 1.;
         double Q = 5.5 + p.l - 0.5 * p.P;
-        double y = E / p.E0;
-        double ym1 = y - 1.;
-        double F = (ym1 * ym1 + p.yw * p.yw) * std::pow(y, -Q) * std::pow(1. + std::sqrt(y / p.ya), -p.P);
+        double F = (xm1 * xm1 + p.yw * p.yw) * std::pow(y, -Q) * std::pow(1. + std::sqrt(y / p.ya), -p.P);
         return 1e-22 * p.sigma0 * F;  // from Mb to m2
     }
 
@@ -183,6 +189,31 @@ public:
     // perform scattering event
     virtual Direction performScattering(double& lambda, int Z, Direction bfk) const = 0;
 };
+
+////////////////////////////////////////////////////////////////////
+
+// ---- no Compton scattering helper ----
+
+namespace
+{
+    // this helper does nothing; it is used as a stub in case there is no Compton scattering
+    class NoComptonHelper : public XRayAtomicGasMix::ScatteringHelper
+    {
+    public:
+        NoComptonHelper(SimulationItem* /*item*/) {}
+
+        double sectionSca(double /*lambda*/, int /*Z*/) const override { return 0.; }
+
+        void peeloffScattering(double& /*I*/, double& /*lambda*/, int /*Z*/, Direction /*bfk*/,
+                               Direction /*bfkobs*/) const override
+        {}
+
+        Direction performScattering(double& /*lambda*/, int /*Z*/, Direction /*bfk*/) const override
+        {
+            return Direction();
+        }
+    };
+}
 
 ////////////////////////////////////////////////////////////////////
 
@@ -672,7 +703,7 @@ void XRayAtomicGasMix::setupSelfBefore()
     }
 
     // load the photo-absorption cross section parameters
-    auto crossSectionParams = loadStruct<CrossSectionParams, 9>(this, "XRay_PA.txt", "photo-absorption data");
+    auto crossSectionParams = loadStruct<CrossSectionParams, 11>(this, "XRay_PA.txt", "photo-absorption data");
 
     // load the fluorescence parameters
     auto fluorescenceParams = loadStruct<FluorescenceParams, 4>(this, "XRay_FL.txt", "fluorescence data");
@@ -681,6 +712,10 @@ void XRayAtomicGasMix::setupSelfBefore()
     // the respective helper constructors load the required bound-electron scattering resources
     switch (scatterBoundElectrons())
     {
+        case BoundElectrons::None:
+            _ray = new NoRayleighHelper(this);
+            _com = new NoComptonHelper(this);
+            break;
         case BoundElectrons::Free:
             _ray = new NoRayleighHelper(this);
             _com = new FreeComptonHelper(this);
