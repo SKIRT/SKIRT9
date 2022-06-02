@@ -523,10 +523,8 @@ private:
     void simulateForcedPropagation(PhotonPacket* pp);
 
     /** This function simulates the propagation of a photon packet to the next scattering location
-        in a photon life cycle without forced scattering. The function assumes that the next
-        scattering location for the photon packet's path has already been set; if this is not the
-        case, the behavior is undefined. This function proceeds in a number of steps as outlined
-        below.
+        in a photon life cycle without forced scattering. It proceeds in a number of steps as
+        outlined below. The function returns false if the photon packet must be terminated.
 
         <b>%Random optical depth</b>
 
@@ -562,7 +560,43 @@ private:
         Finally we advance the initial position of the photon packet to the interaction point. This
         last step invalidates the photon packet's path (including geometric and optical depth
         information). The packet is now ready to be scattered into a new direction. */
-    void simulateNonForcedPropagation(PhotonPacket* pp);
+    bool simulateNonForcedPropagation(PhotonPacket* pp);
+
+    /** This function simulates the propagation of a photon packet to the next scattering location
+        in a photon life cycle without forced scattering and using explicit absorption. It proceeds
+        in a number of steps as outlined below. The function returns false if the photon packet
+        must be terminated.
+
+        <b>%Random optical depth</b>
+
+        Because the photon packet is allowed to escape the model, we randomly generate the \em
+        scattering optical depth \f$\tau_\text{sca}\f$ at the interaction site from the regular
+        exponential distribution. The current implementation does not support path length biasing.
+
+        <b>Interaction point</b>
+
+        We generate the path segments for crossed cells one by one and on the fly calculate the
+        corresponding cumulative scattering optical depth \f$\tau_\text{sca}\f$, absorption optical
+        depth \f$\tau_\text{abs}\f$, and distance \f$s\f$ covered. Once the cumulative scattering
+        optical depth at the exit point of a segment exceeds the interaction scattering optical
+        depth, we know that the interaction point must be within this segment. The physical
+        location and the absorption optical depth of the interaction point is then obtained through
+        linear interpolation within the segment, assuming exponential behavior of the extinction.
+        If the cumulative scattering optical depth of the path never exceeds the interaction
+        scattering optical depth, the photon packet escapes and is terminated.
+
+        <b>Weight adjustment</b>
+
+        We adjust the weight of the photon packet to compensate for the absorbed portion of the
+        luminosity along the path to the interaction site. More precisely, the weight is multiplied
+        by \f$\exp(-\tau_\text{abs})\f$.
+
+        <b>Advance position</b>
+
+        Finally we advance the initial position of the photon packet to the interaction point. This
+        last step invalidates the photon packet's path (including geometric and optical depth
+        information). The packet is now ready to be scattered into a new direction. */
+    bool simulateNonForcedExplicitAbsorptionPropagation(PhotonPacket* pp);
 
     /** This function simulates the peel-off of a photon packet before a scattering event. This
         means that, just before a scattering event, we create a peel-off photon packet for every

@@ -208,3 +208,12 @@ void SpatialGridPath::setInteractionPoint(int m, double s)
 }
 
 ////////////////////////////////////////////////////////////////////
+
+void SpatialGridPath::setInteractionPoint(int m, double s, double tau)
+{
+    _interactionCellIndex = m;
+    _interactionDistance = s;
+    _interactionOpticalDepth = tau;
+}
+
+////////////////////////////////////////////////////////////////////

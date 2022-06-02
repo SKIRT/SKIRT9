@@ -531,7 +531,7 @@ void MonteCarloSimulation::performLifeCycle(size_t firstIndex, size_t numIndices
                 {
                     if (_config->forceScattering())
                     {
-                        // perform cycle with forced scattering
+                        // --- forced scattering ---
                         double Lthreshold = pp.luminosity() / _config->minWeightReduction();
                         int minScattEvents = _config->minScattEvents();
                         while (true)
@@ -555,22 +555,33 @@ void MonteCarloSimulation::performLifeCycle(size_t firstIndex, size_t numIndices
                     }
                     else
                     {
-                        // perform cycle without forced scattering
-                        while (true)
+                        if (!_config->explicitAbsorption())
                         {
-                            // generate a random interaction optical depth
-                            double tauscat = random()->expon();
+                            // --- no forced scattering ---
+                            while (true)
+                            {
+                                // advance the packet (without storing the radiation field)
+                                // if the interaction point is outside of the path, terminate the packet
+                                if (!simulateNonForcedPropagation(&pp)) break;
 
-                            // find the physical interaction point corresponding to this optical depth
-                            // if the interaction optical depth is outside of the path, terminate the photon packet
-                            if (!mediumSystem()->setInteractionPoint(&pp, tauscat)) break;
+                                // process the scattering event
+                                if (peel) peelOffScattering(&pp, &ppp);
+                                mediumSystem()->simulateScattering(random(), &pp);
+                            }
+                        }
+                        else
+                        {
+                            // --- no forced scattering, explicit absorption ---
+                            while (true)
+                            {
+                                // advance the packet (without storing the radiation field)
+                                // if the interaction point is outside of the path, terminate the packet
+                                if (!simulateNonForcedExplicitAbsorptionPropagation(&pp)) break;
 
-                            // advance the packet
-                            simulateNonForcedPropagation(&pp);
-
-                            // process the scattering event
-                            if (peel) peelOffScattering(&pp, &ppp);
-                            mediumSystem()->simulateScattering(random(), &pp);
+                                // process the scattering event
+                                if (peel) peelOffScattering(&pp, &ppp);
+                                mediumSystem()->simulateScattering(random(), &pp);
+                            }
                         }
                     }
                 }
@@ -710,8 +721,15 @@ void MonteCarloSimulation::simulateForcedPropagation(PhotonPacket* pp)
 
 ////////////////////////////////////////////////////////////////////
 
-void MonteCarloSimulation::simulateNonForcedPropagation(PhotonPacket* pp)
+bool MonteCarloSimulation::simulateNonForcedPropagation(PhotonPacket* pp)
 {
+    // generate a random interaction optical depth
+    double tauinteract = random()->expon();
+
+    // find the physical interaction point corresponding to this optical depth
+    // if the interaction point is outside of the path, terminate the photon packet
+    if (!mediumSystem()->setInteractionPoint(pp, tauinteract)) return false;
+
     // calculate the albedo for the cell containing the interaction point
     double albedo = mediumSystem()->albedoForScattering(pp);
 
@@ -720,6 +738,30 @@ void MonteCarloSimulation::simulateNonForcedPropagation(PhotonPacket* pp)
 
     // advance the photon packet position
     pp->propagate(pp->interactionDistance());
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool MonteCarloSimulation::simulateNonForcedExplicitAbsorptionPropagation(PhotonPacket* pp)
+{
+    // generate a random interaction *scattering* optical depth
+    double tauinteract = random()->expon();
+
+    // find the physical interaction point corresponding to this scattering optical depth
+    // and calculate the absorption optical depth at the interaction point;
+    // if the interaction point is outside of the path, terminate the photon packet
+    if (!mediumSystem()->setExplicitAbsorptionInteractionPoint(pp, tauinteract)) return false;
+
+    // get the cumulative absorption optical depth at the interaction point
+    double tauAbs = pp->interactionOpticalDepth();
+
+    // adjust the packet weight by the corresponding extinction (or stimulation, for negative optical depth)
+    pp->applyBias(exp(-tauAbs));
+
+    // advance the photon packet position
+    pp->propagate(pp->interactionDistance());
+    return true;
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -14,17 +14,32 @@
     Monte Carlo photon packet life cycle. These options are relevant as soon as there is a medium
     in the configuration.
 
-    Two variations of the photon life cycle are implemented: with and without forced scattering.
-    Forced scattering is the default behavior for all simulation modes except when Lyman-alpha line
-    transfer is included (because the extra peel-offs for the many resonant scattering events tend
-    to slow down the simulation). The implementation without forced scattering does \em not support
-    storing the radiation field, which means it cannot be used when the simulation includes
-    secondary emission or dynamic state iteration. */
+    Several variations of the photon life cycle implementation can be configured:
+
+    - With or without explicit absorption. Explicit absorption allows absorption cross sections to
+    be negative, which can be the case for materials that exhibit stimulated emission. Note that
+    scattering cross sections never can be negative. The default behavior is not to use explicit
+    absorption, because the effects of this recent technique has not yet been well studied.
+
+    - With or without forced scattering. Forced scattering tends to reduce noise for simulations
+    with low to limited optical depths, such as for most dust models on galaxy-wide scales.
+    Therefore, forced scattering is the default behavior except when Lyman-alpha line transfer is
+    included, because the extra peel-offs for the many resonant scattering events tend to slow down
+    the simulation. Furthermore, the implementation without forced scattering currently does \em
+    not support storing the radiation field, which means it cannot be used when the simulation
+    includes secondary emission or dynamic state iteration.
+
+    The remaining options serve to further configure the detailed behavior of the forced scattering
+    photon cycle. */
 class PhotonPacketOptions : public SimulationItem
 {
     ITEM_CONCRETE(PhotonPacketOptions, SimulationItem, "a set of options related to the photon packet lifecycle")
 
-        PROPERTY_BOOL(forceScattering, "use forced scattering to accelerate the photon life cycle")
+        PROPERTY_BOOL(explicitAbsorption, "use explicit absorption to allow negative absorption (stimulated emission)")
+        ATTRIBUTE_DEFAULT_VALUE(explicitAbsorption, "false")
+        ATTRIBUTE_DISPLAYED_IF(explicitAbsorption, "Level3")
+
+        PROPERTY_BOOL(forceScattering, "use forced scattering to reduce noise")
         ATTRIBUTE_DEFAULT_VALUE(forceScattering, "Lya:false;true")
         ATTRIBUTE_RELEVANT_IF(forceScattering, "!(Emission|DynamicState)")
         ATTRIBUTE_DISPLAYED_IF(forceScattering, "Level3")

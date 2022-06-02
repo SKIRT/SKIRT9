@@ -101,6 +101,7 @@ void Configuration::setupSelfBefore()
     // ---- set configuration relevant for simulations that have media ----
 
     // retrieve basic photon life-cycle options
+    _explicitAbsorption = ms->photonPacketOptions()->explicitAbsorption();
     _forceScattering = ms->photonPacketOptions()->forceScattering();
     _minWeightReduction = ms->photonPacketOptions()->minWeightReduction();
     _minScattEvents = ms->photonPacketOptions()->minScattEvents();
