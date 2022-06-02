@@ -611,6 +611,45 @@ double MediumSystem::opacityExt(double lambda, int m) const
 
 ////////////////////////////////////////////////////////////////////
 
+double MediumSystem::opacityAbs(double lambda, int m, const PhotonPacket* pp) const
+{
+    double result = 0.;
+    for (int h = 0; h != _numMedia; ++h)
+    {
+        MaterialState mst(_state, m, h);
+        result += mix(m, h)->opacityAbs(lambda, &mst, pp);
+    }
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::opacitySca(double lambda, int m, const PhotonPacket* pp) const
+{
+    double result = 0.;
+    for (int h = 0; h != _numMedia; ++h)
+    {
+        MaterialState mst(_state, m, h);
+        result += mix(m, h)->opacitySca(lambda, &mst, pp);
+    }
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::opacityExt(double lambda, int m, const PhotonPacket* pp) const
+{
+    double result = 0.;
+    for (int h = 0; h != _numMedia; ++h)
+    {
+        MaterialState mst(_state, m, h);
+        result += mix(m, h)->opacityExt(lambda, &mst, pp);
+    }
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////
+
 double MediumSystem::perceivedWavelengthForScattering(const PhotonPacket* pp) const
 {
     if (_config->hasMovingMedia())
@@ -840,7 +879,7 @@ void MediumSystem::setOpticalDepths(PhotonPacket* pp) const
             {
                 double lambda =
                     pp->perceivedWavelength(_state.bulkVelocity(segment.m), _config->hubbleExpansionRate() * segment.s);
-                tau += opacityExt(lambda, segment.m) * segment.ds;
+                tau += opacityExt(lambda, segment.m, pp) * segment.ds;
             }
             pp->setOpticalDepth(i++, tau);
         }
@@ -849,7 +888,7 @@ void MediumSystem::setOpticalDepths(PhotonPacket* pp) const
 
 ////////////////////////////////////////////////////////////////////
 
-bool MediumSystem::setInteractionPoint(PhotonPacket* pp, double tauscat) const
+bool MediumSystem::setInteractionPoint(PhotonPacket* pp, double tauinteract) const
 {
     auto generator = getPathSegmentGenerator(_grid, pp);
     double tau = 0.;
@@ -875,9 +914,9 @@ bool MediumSystem::setInteractionPoint(PhotonPacket* pp, double tauscat) const
             s += ds;
 
             // if the interaction point is inside this segment, store it in the photon packet
-            if (tauscat < tau)
+            if (tauinteract < tau)
             {
-                pp->setInteractionPoint(m, NR::interpolateLinLin(tauscat, tau0, tau, s0, s));
+                pp->setInteractionPoint(m, NR::interpolateLinLin(tauinteract, tau0, tau, s0, s));
                 return true;
             }
         }
@@ -903,9 +942,9 @@ bool MediumSystem::setInteractionPoint(PhotonPacket* pp, double tauscat) const
             s += ds;
 
             // if the interaction point is inside this segment, store it in the photon packet
-            if (tauscat < tau)
+            if (tauinteract < tau)
             {
-                pp->setInteractionPoint(m, NR::interpolateLinLin(tauscat, tau0, tau, s0, s));
+                pp->setInteractionPoint(m, NR::interpolateLinLin(tauinteract, tau0, tau, s0, s));
                 return true;
             }
         }
@@ -927,14 +966,131 @@ bool MediumSystem::setInteractionPoint(PhotonPacket* pp, double tauscat) const
             if (m >= 0)
             {
                 double lambda = pp->perceivedWavelength(_state.bulkVelocity(m), _config->hubbleExpansionRate() * s);
-                tau += opacityExt(lambda, m) * ds;
+                tau += opacityExt(lambda, m, pp) * ds;
             }
             s += ds;
 
             // if the interaction point is inside this segment, store it in the photon packet
-            if (tauscat < tau)
+            if (tauinteract < tau)
             {
-                pp->setInteractionPoint(m, NR::interpolateLinLin(tauscat, tau0, tau, s0, s));
+                pp->setInteractionPoint(m, NR::interpolateLinLin(tauinteract, tau0, tau, s0, s));
+                return true;
+            }
+        }
+    }
+
+    // the interaction point is outside of the path
+    return false;
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool MediumSystem::setExplicitAbsorptionInteractionPoint(PhotonPacket* pp, double tauinteract) const
+{
+    auto generator = getPathSegmentGenerator(_grid, pp);
+    double tauSca = 0.;
+    double tauAbs = 0.;
+    double s = 0.;
+
+    // loop over the segments of the path until the interaction optical depth is reached or the path ends
+
+    // --> single medium, spatially constant cross sections
+    if (_config->hasSingleConstantSectionMedium())
+    {
+        double sectionSca = mix(0, 0)->sectionSca(pp->wavelength());
+        double sectionAbs = mix(0, 0)->sectionAbs(pp->wavelength());
+        while (generator->next())
+        {
+            // remember the cumulative scattering optical depth and distance at the start of this segment
+            // so that we can interpolate the interaction point should it happen to be inside this segment
+            double tauSca0 = tauSca;
+            double s0 = s;
+
+            // calculate the cumulative optical depths and distance at the end of this segment
+            double ds = generator->ds();
+            int m = generator->m();
+            if (m >= 0) tauSca += sectionSca * _state.numberDensity(m, 0) * generator->ds();
+            s += ds;
+
+            // if the interaction point is inside this segment, store it in the photon packet
+            if (tauinteract < tauSca)
+            {
+                tauAbs = tauinteract * sectionAbs / sectionSca;
+                pp->setInteractionPoint(m, NR::interpolateLinLin(tauinteract, tauSca0, tauSca, s0, s), tauAbs);
+                return true;
+            }
+        }
+    }
+
+    // --> multiple media, spatially constant cross sections
+    else if (_config->hasMultipleConstantSectionMedia())
+    {
+        ShortArray sectionScav(_numMedia);
+        ShortArray sectionAbsv(_numMedia);
+        for (int h = 0; h != _numMedia; ++h)
+        {
+            sectionScav[h] = mix(0, h)->sectionSca(pp->wavelength());
+            sectionAbsv[h] = mix(0, h)->sectionAbs(pp->wavelength());
+        }
+        while (generator->next())
+        {
+            // remember the cumulative optical depth and distance at the start of this segment
+            // so that we can interpolate the interaction point should it happen to be inside this segment
+            double tauSca0 = tauSca;
+            double tauAbs0 = tauAbs;
+            double s0 = s;
+
+            // calculate the cumulative optical depth and distance at the end of this segment
+            double ds = generator->ds();
+            int m = generator->m();
+            if (m >= 0)
+            {
+                for (int h = 0; h != _numMedia; ++h)
+                {
+                    double ns = _state.numberDensity(m, h) * ds;
+                    tauSca += sectionScav[h] * ns;
+                    tauAbs += sectionAbsv[h] * ns;
+                }
+            }
+            s += ds;
+
+            // if the interaction point is inside this segment, store it in the photon packet
+            if (tauinteract < tauSca)
+            {
+                pp->setInteractionPoint(m, NR::interpolateLinLin(tauinteract, tauSca0, tauSca, s0, s),
+                                        NR::interpolateLinLin(tauinteract, tauSca0, tauSca, tauAbs0, tauAbs));
+                return true;
+            }
+        }
+    }
+
+    // --> spatially variable cross sections
+    else
+    {
+        while (generator->next())
+        {
+            // remember the cumulative optical depth and distance at the start of this segment
+            // so that we can interpolate the interaction point should it happen to be inside this segment
+            double tauSca0 = tauSca;
+            double tauAbs0 = tauAbs;
+            double s0 = s;
+
+            // calculate the cumulative optical depth and distance at the end of this segment
+            double ds = generator->ds();
+            int m = generator->m();
+            if (m >= 0)
+            {
+                double lambda = pp->perceivedWavelength(_state.bulkVelocity(m), _config->hubbleExpansionRate() * s);
+                tauSca += opacitySca(lambda, m, pp) * ds;
+                tauAbs += opacityAbs(lambda, m, pp) * ds;
+            }
+            s += ds;
+
+            // if the interaction point is inside this segment, store it in the photon packet
+            if (tauinteract < tauSca)
+            {
+                pp->setInteractionPoint(m, NR::interpolateLinLin(tauinteract, tauSca0, tauSca, s0, s),
+                                        NR::interpolateLinLin(tauinteract, tauSca0, tauSca, tauAbs0, tauAbs));
                 return true;
             }
         }
@@ -1004,7 +1160,7 @@ double MediumSystem::getOpticalDepth(PhotonPacket* pp, double distance) const
             if (m >= 0)
             {
                 double lambda = pp->perceivedWavelength(_state.bulkVelocity(m), _config->hubbleExpansionRate() * s);
-                tau += opacityExt(lambda, m) * ds;
+                tau += opacityExt(lambda, m, pp) * ds;
                 if (tau >= taumax) return std::numeric_limits<double>::infinity();
             }
             s += ds;

@@ -341,6 +341,25 @@ public:
 
     //=============== High-level photon life cycle ===================
 
+private:
+    /** This function returns the absorption opacity \f$k^\text{abs}=\sum_h k_h^\text{abs}\f$
+        summed over all medium components at wavelength \f$\lambda\f$ in spatial cell with index
+        \f$m\f$, where applicable taking into account the properties of the specified incoming
+        photon packet (for example, its polarization state). */
+    double opacityAbs(double lambda, int m, const PhotonPacket* pp) const;
+
+    /** This function returns the scattering opacity \f$k^\text{sca}=\sum_h k_h^\text{sca}\f$
+        summed over all medium components at wavelength \f$\lambda\f$ in spatial cell with index
+        \f$m\f$, where applicable taking into account the properties of the specified incoming
+        photon packet (for example, its polarization state). */
+    double opacitySca(double lambda, int m, const PhotonPacket* pp) const;
+
+    /** This function returns the extinction opacity \f$k^\text{ext}=\sum_h k_h^\text{ext}\f$
+        summed over all medium components at wavelength \f$\lambda\f$ in spatial cell with index
+        \f$m\f$, where applicable taking into account the properties of the specified incoming
+        photon packet (for example, its polarization state). */
+    double opacityExt(double lambda, int m, const PhotonPacket* pp) const;
+
 public:
     /** This function returns the perceived wavelength of the photon packet at the scattering
         interaction distance, taking into account the bulk velocity and Hubble expansion velocity
@@ -480,7 +499,29 @@ public:
         setOpticalDepths() function, i.e. at the wavelength perceived by the medium in the cell
         being crossed and taking into account any relevant properties of the incoming photon
         packet. */
-    bool setInteractionPoint(PhotonPacket* pp, double tauscat) const;
+    bool setInteractionPoint(PhotonPacket* pp, double tauinteract) const;
+
+    /** This function calculates the cumulative scattering optical depth, the cumulative absorption
+        optical depth, and the distance at the end of each of the path segments along a path
+        through the medium system defined by the initial position and direction of the specified
+        PhotonPacket object. The calculation proceeds until the \em scattering optical depth
+        reaches the specified interaction optical depth. The function then interpolates the
+        interaction point, stores it in the photon packet along with the corresponding absorption
+        optical depth, and returns true. If the specified interaction optical depth is never
+        reached within the path, the function returns false.
+
+        This function is intended for handling random-walk photon packet paths during a photon life
+        cycle that does \em not use forced-scattering and \em does use explicit absorption. In that
+        case there is no need to calculate the complete path, substantially boosting performance in
+        high-optical depth media. Because the function is at the heart of the photon life cycle,
+        performance is important. Hence it implements optimized versions for media with spatially
+        constant cross sections.
+
+        The optical depth for each traversed path segment is calculated as described for the
+        setOpticalDepths() function, i.e. at the wavelength perceived by the medium in the cell
+        being crossed and taking into account any relevant properties of the incoming photon
+        packet. */
+    bool setExplicitAbsorptionInteractionPoint(PhotonPacket* pp, double tauinteract) const;
 
     /** This function calculates and returns the optical depth (or -1, see "High optical depth
         below") along a path through the medium system defined by the initial position and

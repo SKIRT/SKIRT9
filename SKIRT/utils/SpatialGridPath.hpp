@@ -135,6 +135,11 @@ public:
         interactionDistance() functions. */
     void setInteractionPoint(int m, double s);
 
+    /** This function stores the specified spatial cell index, distance and cumulative optical
+        depth to the initial position of the interaction point for later retrieval through the
+        interactionCellIndex(), interactionDistance(), and interactionOpticalDepth() functions. */
+    void setInteractionPoint(int m, double s, double tau);
+
     /** This function returns the spatial cell index corresponding to the interaction point most
         recently calculated by the findInteractionPoint() function or set by the
         setInteractionPoint() function, or -1 if these functions have never been called or if there
@@ -147,6 +152,11 @@ public:
         there was no interaction point within the path. */
     double interactionDistance() const { return _interactionDistance; }
 
+    /** This function returns the cumulative optical depth along the path from its initial position
+        to the interaction point most recently set by the setInteractionPoint() function, or zero
+        if this functions has never been called. */
+    double interactionOpticalDepth() const { return _interactionOpticalDepth; }
+
     // ------- Data members -------
 private:
     Position _bfr;
@@ -155,6 +165,7 @@ private:
     double _s{0.};
     int _interactionCellIndex{-1};
     double _interactionDistance{0.};
+    double _interactionOpticalDepth{0.};
 };
 
 //////////////////////////////////////////////////////////////////////
