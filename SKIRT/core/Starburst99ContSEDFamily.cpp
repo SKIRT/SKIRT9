@@ -27,11 +27,7 @@ void Starburst99ContSEDFamily::setupSelfBefore()
 
 vector<SnapshotParameter> Starburst99ContSEDFamily::parameterInfo() const
 {
-    return vector<SnapshotParameter>{
-        {"star formation rate", "massrate", "Msun/yr"},
-        {"metallicity"},
-        {"age", "time", "yr"},
-    };
+    return {SnapshotParameter::custom("star formation rate", "massrate", "Msun/yr"), SnapshotParameter::metallicity(), SnapshotParameter::age()};
 }
 
 ////////////////////////////////////////////////////////////////////
