@@ -7,12 +7,14 @@
 #include "AllCellsLibrary.hpp"
 #include "Constants.hpp"
 #include "FatalError.hpp"
+#include "InputModelFormProbe.hpp"
 #include "MaterialMix.hpp"
 #include "MaterialWavelengthRangeInterface.hpp"
 #include "MonteCarloSimulation.hpp"
 #include "NR.hpp"
 #include "OligoWavelengthDistribution.hpp"
 #include "OligoWavelengthGrid.hpp"
+#include "ProbeSystem.hpp"
 #include "StringUtils.hpp"
 #include "VoronoiMeshSpatialGrid.hpp"
 #include <set>
@@ -76,6 +78,10 @@ void Configuration::setupSelfBefore()
     // check for velocities in sources
     for (auto source : ss->sources())
         if (source->hasVelocity()) _hasMovingSources = true;
+
+    // check for input model probes, which require snapshots to build search data structures
+    auto probesystem = find<ProbeSystem>(false);
+    if (probesystem && probesystem->find<InputModelFormProbe>(false)) _snapshotsNeedGetEntities = true;
 
     // determine the number of media in the simulation hierarchy
     int numMedia = 0;

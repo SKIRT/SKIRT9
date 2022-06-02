@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "AdaptiveMeshSnapshot.hpp"
+#include "EntityCollection.hpp"
 #include "FatalError.hpp"
 #include "Log.hpp"
 #include "NR.hpp"
@@ -246,14 +247,7 @@ void AdaptiveMeshSnapshot::readAndClose()
         }
 
         // log mass statistics
-        if (numIgnored) log()->info("  Ignored mass in " + std::to_string(numIgnored) + " high-temperature cells");
-        log()->info("  Total original mass : " + StringUtils::toString(units()->omass(totalOriginalMass), 'e', 4) + " "
-                    + units()->umass());
-        if (useMetallicity())
-            log()->info("  Total metallic mass : " + StringUtils::toString(units()->omass(totalMetallicMass), 'e', 4)
-                        + " " + units()->umass());
-        log()->info("  Total effective mass: " + StringUtils::toString(units()->omass(totalEffectiveMass), 'e', 4) + " "
-                    + units()->umass());
+        logMassStatistics(numIgnored, totalOriginalMass, totalMetallicMass, totalEffectiveMass);
 
         // remember the effective mass
         _mass = totalEffectiveMass;
@@ -322,107 +316,6 @@ Box AdaptiveMeshSnapshot::extent(int m) const
 
 ////////////////////////////////////////////////////////////////////
 
-double AdaptiveMeshSnapshot::metallicity(int m) const
-{
-    const Array& prop = _cells[m]->properties();
-    return prop[metallicityIndex()];
-}
-
-////////////////////////////////////////////////////////////////////
-
-double AdaptiveMeshSnapshot::metallicity(Position bfr) const
-{
-    int m = cellIndex(bfr);
-    return m >= 0 ? metallicity(m) : 0.;
-}
-
-////////////////////////////////////////////////////////////////////
-
-double AdaptiveMeshSnapshot::temperature(int m) const
-{
-    const Array& prop = _cells[m]->properties();
-    return prop[temperatureIndex()];
-}
-
-////////////////////////////////////////////////////////////////////
-
-double AdaptiveMeshSnapshot::temperature(Position bfr) const
-{
-    int m = cellIndex(bfr);
-    return m >= 0 ? temperature(m) : 0.;
-}
-
-////////////////////////////////////////////////////////////////////
-
-Vec AdaptiveMeshSnapshot::velocity(int m) const
-{
-    const Array& prop = _cells[m]->properties();
-    return Vec(prop[velocityIndex() + 0], prop[velocityIndex() + 1], prop[velocityIndex() + 2]);
-}
-
-////////////////////////////////////////////////////////////////////
-
-Vec AdaptiveMeshSnapshot::velocity(Position bfr) const
-{
-    int m = cellIndex(bfr);
-    return m >= 0 ? velocity(m) : Vec();
-}
-
-////////////////////////////////////////////////////////////////////
-
-double AdaptiveMeshSnapshot::velocityDispersion(int m) const
-{
-    const Array& prop = _cells[m]->properties();
-    return prop[velocityDispersionIndex()];
-}
-
-////////////////////////////////////////////////////////////////////
-
-double AdaptiveMeshSnapshot::velocityDispersion(Position bfr) const
-{
-    int m = cellIndex(bfr);
-    return m >= 0 ? velocityDispersion(m) : 0.;
-}
-
-////////////////////////////////////////////////////////////////////
-
-Vec AdaptiveMeshSnapshot::magneticField(int m) const
-{
-    const Array& prop = _cells[m]->properties();
-    return Vec(prop[magneticFieldIndex() + 0], prop[magneticFieldIndex() + 1], prop[magneticFieldIndex() + 2]);
-}
-
-////////////////////////////////////////////////////////////////////
-
-Vec AdaptiveMeshSnapshot::magneticField(Position bfr) const
-{
-    int m = cellIndex(bfr);
-    return m >= 0 ? magneticField(m) : Vec();
-}
-
-////////////////////////////////////////////////////////////////////
-
-void AdaptiveMeshSnapshot::parameters(int m, Array& params) const
-{
-    int n = numParameters();
-    params.resize(n);
-    const Array& prop = _cells[m]->properties();
-    for (int i = 0; i != n; ++i) params[i] = prop[parametersIndex() + i];
-}
-
-////////////////////////////////////////////////////////////////////
-
-void AdaptiveMeshSnapshot::parameters(Position bfr, Array& params) const
-{
-    int m = cellIndex(bfr);
-    if (m >= 0)
-        parameters(m, params);
-    else
-        params.resize(numParameters());
-}
-
-////////////////////////////////////////////////////////////////////
-
 double AdaptiveMeshSnapshot::density(int m) const
 {
     return _rhov[m];
@@ -469,6 +362,27 @@ int AdaptiveMeshSnapshot::cellIndex(Position bfr) const
 {
     const Node* cell = _root->leaf(bfr);
     return cell ? cell->cellIndex() : -1;
+}
+
+////////////////////////////////////////////////////////////////////
+
+const Array& AdaptiveMeshSnapshot::properties(int m) const
+{
+    return _cells[m]->properties();
+}
+
+////////////////////////////////////////////////////////////////////
+
+int AdaptiveMeshSnapshot::nearestEntity(Position bfr) const
+{
+    return cellIndex(bfr);
+}
+
+////////////////////////////////////////////////////////////////////
+
+void AdaptiveMeshSnapshot::getEntities(EntityCollection& entities, Position bfr) const
+{
+    entities.addSingle(cellIndex(bfr));
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -556,6 +470,22 @@ public:
         return false;
     }
 };
+
+////////////////////////////////////////////////////////////////////
+
+void AdaptiveMeshSnapshot::getEntities(EntityCollection& entities, Position bfr, Direction bfk) const
+{
+    // initialize a path segment generator
+    MySegmentGenerator generator(this);
+    generator.start(bfr, bfk);
+
+    // determine and store the path segments in the entity collection
+    entities.clear();
+    while (generator.next())
+    {
+        entities.add(generator.m(), generator.ds());
+    }
+}
 
 ////////////////////////////////////////////////////////////////////
 

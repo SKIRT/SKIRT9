@@ -25,7 +25,24 @@
     The dust mass per hydrogen nucleon is obtained from information in the header of the data file.
     The optical data were downloaded from Bruce Draine's home page
     https://www.astro.princeton.edu/~draine/ and more specifically from
-    ftp://ftp.astro.princeton.edu/draine/dust/mix/kext_albedo_WD_MW_3.1_60_D03.all */
+    ftp://ftp.astro.princeton.edu/draine/dust/mix/kext_albedo_WD_MW_3.1_60_D03.all
+
+    <b>Extreme forward scattering for X-ray wavelengths</b>
+
+    The properties for this dust mix as discussed above are given down to wavelengths as short as
+    \f$10^{-4}\f$ micron, i.e. well into the soft X-ray wavelength range. The tabulated cross
+    sections seem to be very accurate, however the average scattering angle cosine values in this
+    regime are unrealistic (e.g., equal to one for the shortest wavelengths).
+
+    Draine 2003c (ApJ, 98, 1026–1037) presents experimental data for the phase function in the
+    soft X-ray wavelength range and proposes an analytical phase function to model the observed
+    extreme forward scattering. Rather than attempting to implement this phase function, we
+    approximate it through the Henyey-Greenstein phase function just as we do for other
+    wavelengths. For wavelengths shorter than 0.01 micron, the value of the HG asymmetry parameter
+    \f$g\f$ that causes the HG function to best approximate the Draine 2003c function for extreme
+    forward angles can be written as \f$g = 1 - \lambda/(\mu\mathrm{m})\f$, i.e. one minus the
+    wavelength in micron. We thus replace the asymmetry parameter values in that wavelength range
+    by this improved appoximation before storing the result in the SKIRT resource table. */
 class MeanInterstellarDustMix : public SingleGrainDustMix
 {
     ITEM_CONCRETE(MeanInterstellarDustMix, SingleGrainDustMix, "a typical interstellar dust mix (mean properties)")

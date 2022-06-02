@@ -16,7 +16,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void LuminosityProbe::probeSetup()
+void LuminosityProbe::probe()
 {
     auto units = find<Units>();
 

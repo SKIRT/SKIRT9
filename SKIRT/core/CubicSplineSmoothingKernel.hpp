@@ -34,8 +34,21 @@ protected:
 
 public:
     /** This function returns the density \f$W(u)\f$ of the smoothing kernel as a function of the
-        normalized radius \f$u\f$. Just implements the analytical formula. */
+        normalized radius \f$u\f$. It just implements the analytical formula given in the class
+        header. */
     double density(double u) const override;
+
+    /** This function returns the column density \f$\Sigma(q) = 2 \int_{q}^1 \frac{W(u)\,u
+        \,{\text{d}}u} {\sqrt{u^2-q^2}}\f$ of the smoothing kernel as a function of the normalized
+        impact radius \f$q=r_\text{i}/h\f$. For the cubic spline smoothing kernel, we obtain
+        \f[\Sigma(q) = \begin{cases} \; \dfrac{2}{\pi}\left[(4+26\,q^2)\sqrt{1-q^2} -
+        (1+26\,q^2)\sqrt{1-4\,q^2} \right. \\ \left. \qquad\quad-18\,q^4\ln \left(\dfrac{2\,q}
+        {1+\sqrt{1-4\,q^2}}\right) -6\,q^2(4+q^2) \ln\left(\dfrac{2+2\sqrt{1-q^2}}
+        {1+\sqrt{1-4\,q^2}}\right) \right] & \quad{\text{if }}0\leq q\leq \tfrac12, \\[1em] \;
+        \dfrac{4}{\pi}\left[(2+13\,q^2)\sqrt{1-q^2} + 3\,q^2(4+q^2)\ln\left(\dfrac{q}
+        {1+\sqrt{1-q^2}}\right)\right] & \quad{\text{if }}\tfrac12\leq q\leq 1, \\ \; 0 &
+        \quad{\text{else}}. \end{cases} \f] */
+    double columnDensity(double q) const override;
 
     /** This function generates a random normalized radius \f$u\f$ from the smoothing kernel, by
         drawing a number from the one-dimensional probability density \f$p(u)\,{\text{d}}u =

@@ -45,7 +45,7 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-void OpticalMaterialPropertiesProbe::probeSetup()
+void OpticalMaterialPropertiesProbe::probe()
 {
     if (find<Configuration>()->hasMedium())
     {

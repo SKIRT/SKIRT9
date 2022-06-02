@@ -6,7 +6,7 @@
 #ifndef TREESPATIALGRIDTOPOLOGYPROBE_HPP
 #define TREESPATIALGRIDTOPOLOGYPROBE_HPP
 
-#include "Probe.hpp"
+#include "SpecialtyProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -30,17 +30,18 @@
     is not subdivided). The second line contains 1 if the root node is subdivided, or 0 if not. The
     following lines similarly contain 1 or 0 indicating subdivision for any children of the
     preceding node, recursively, in a depth-first traversal of the tree. */
-class TreeSpatialGridTopologyProbe : public Probe
+class TreeSpatialGridTopologyProbe : public SpecialtyProbe
 {
-    ITEM_CONCRETE(TreeSpatialGridTopologyProbe, Probe, "data file representing the topology of the tree spatial grid")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(TreeSpatialGridTopologyProbe, "Level2&TreeSpatialGrid")
+    ITEM_CONCRETE(TreeSpatialGridTopologyProbe, SpecialtyProbe,
+                  "specialty: data file representing the topology of the tree spatial grid")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(TreeSpatialGridTopologyProbe, "Level3&TreeSpatialGrid")
     ITEM_END()
 
     //======================== Other Functions =======================
 
-public:
-    /** This function performs probing after setup. */
-    void probeSetup() override;
+protected:
+    /** This function performs probing. */
+    void probe() override;
 };
 
 ////////////////////////////////////////////////////////////////////

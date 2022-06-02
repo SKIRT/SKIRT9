@@ -96,7 +96,7 @@ vector<SnapshotParameter> FragmentDustMixDecorator::parameterInfo() const
     for (int f = 0; f != _numFrags; ++f)
     {
         string description = "weight for dust mix fragment " + std::to_string(f) + " -- " + populationGrainType(f);
-        descriptors.emplace_back(description);
+        descriptors.push_back(SnapshotParameter::custom(description));
     }
     return descriptors;
 }

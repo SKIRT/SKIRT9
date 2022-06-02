@@ -6,7 +6,7 @@
 #ifndef DUSTEMISSIVITYPROBE_HPP
 #define DUSTEMISSIVITYPROBE_HPP
 
-#include "Probe.hpp"
+#include "SpecialtyProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -36,10 +36,11 @@
     The probe offers an option to output a separate text column file with additional details on the
     emission spectrum wavelength grid. For each wavelength bin, the file lists the characteristic
     wavelength, the wavelength bin width, and the left and right borders of the bin. */
-class DustEmissivityProbe : public Probe
+class DustEmissivityProbe : public SpecialtyProbe
 {
-    ITEM_CONCRETE(DustEmissivityProbe, Probe, "the emissivity spectrum for each dust mix in a range of standard fields")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(DustEmissivityProbe, "Level3&Dust&DustEmission")
+    ITEM_CONCRETE(DustEmissivityProbe, SpecialtyProbe,
+                  "properties: emissivity spectrum for each dust mix in a range of standard fields")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(DustEmissivityProbe, "Level3&DustMix&DustEmission")
 
         PROPERTY_BOOL(writeWavelengthGrid, "output a text file with the emission spectrum wavelength grid")
         ATTRIBUTE_DEFAULT_VALUE(writeWavelengthGrid, "false")
@@ -48,9 +49,9 @@ class DustEmissivityProbe : public Probe
 
     //======================== Other Functions =======================
 
-public:
-    /** This function performs probing after setup. */
-    void probeSetup() override;
+protected:
+    /** This function performs probing. */
+    void probe() override;
 };
 
 ////////////////////////////////////////////////////////////////////

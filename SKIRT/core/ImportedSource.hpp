@@ -33,11 +33,16 @@ class Snapshot;
     spatial and spectral information for an entity yields its contribution to the imported
     radiation source.
 
-    The input file may also include a bulk velocity vector with an optional velocity dispersion
-    for each entity. When this option is enabled, the appropriate Doppler shift is taken into
-    account when launching photon packets. Apart from the anisotropy resulting from this optional
-    Doppler shift, the radiation emitted by this primary source is always isotropic. It is also
-    always unpolarized. */
+    The input file may include a separate column listing the current mass. When this option is
+    enabled, the provided current mass can be used for probing the input model. This is relevant
+    because %SED families usually do not request the current mass as a parameter (they often use
+    the initial mass instead, or do not include direct mass information at all).
+
+    The input file may also include a bulk velocity vector with an optional velocity dispersion for
+    each entity. When this option is enabled, the appropriate Doppler shift is taken into account
+    when launching photon packets. Apart from the anisotropy resulting from this optional Doppler
+    shift, the radiation emitted by this primary source is always isotropic. It is also always
+    unpolarized. */
 class ImportedSource : public Source
 {
     ITEM_ABSTRACT(ImportedSource, Source, "a primary source imported from snapshot data")
@@ -51,11 +56,17 @@ class ImportedSource : public Source
         ATTRIBUTE_DEFAULT_VALUE(importVelocity, "false")
         ATTRIBUTE_RELEVANT_IF(importVelocity, "Panchromatic")
         ATTRIBUTE_DISPLAYED_IF(importVelocity, "Level2")
+        ATTRIBUTE_INSERT(importVelocity, "importVelocity:SourceVelocity")
 
         PROPERTY_BOOL(importVelocityDispersion, "import velocity dispersion (spherically symmetric)")
         ATTRIBUTE_DEFAULT_VALUE(importVelocityDispersion, "false")
         ATTRIBUTE_RELEVANT_IF(importVelocityDispersion, "Panchromatic&importVelocity")
         ATTRIBUTE_DISPLAYED_IF(importVelocityDispersion, "Level2")
+
+        PROPERTY_BOOL(importCurrentMass, "import current mass")
+        ATTRIBUTE_DEFAULT_VALUE(importCurrentMass, "false")
+        ATTRIBUTE_DISPLAYED_IF(importCurrentMass, "Level3")
+        ATTRIBUTE_INSERT(importCurrentMass, "importCurrentMass:CurrentMass")
 
         PROPERTY_STRING(useColumns, "a list of names corresponding to columns in the file to be imported")
         ATTRIBUTE_DEFAULT_VALUE(useColumns, "")
@@ -113,10 +124,22 @@ public:
     double luminosity() const override;
 
     /** This function returns the specific luminosity \f$L_\lambda\f$ (i.e. radiative power per
-         unit of wavelength) of the source at the specified wavelength, or zero if the wavelength is
+         unit of wavelength) of the source at the specified wavelength \f$\lambda\f$, or zero if the wavelength is
          outside the wavelength range of primary sources (configured for the source system as a
          whole) or if the source simply does not emit at the wavelength. */
     double specificLuminosity(double wavelength) const override;
+
+    /** This function returns the specific luminosity \f$L_\lambda\f$ (i.e. radiative power per
+        unit of wavelength) of the source's snapshot entity with index \f$m\f$ at the specified
+        wavelength \f$\lambda\f$, or zero if the wavelength is outside the wavelength range of
+        primary sources (configured for the source system as a whole) or if the source simply does
+        not emit at the wavelength. If the index is out of range, the behavior is undefined.
+
+        This function is intended to provide InputModelProbe instances with access to the
+        luminosity per snapshot entity, information that is not otherwise made available to the
+        simulation. To preserve proper data encapsulation, this function should \em not be called
+        from anywhere else in the simulation machinery. */
+    double specificLuminosity(double wavelength, int m) const;
 
     /** This function performs some preparations for launching photon packets. It is called in
          serial mode before each segment of photon packet launches, providing the history indices
@@ -158,6 +181,13 @@ public:
          Finally, the function causes the photon packet to be launched with the information
          described above and an isotropic launch direction. */
     void launch(PhotonPacket* pp, size_t historyIndex, double L) const override;
+
+    /** This function returns (a pointer to) the snapshot object associated with this imported
+        source. It is intended to provide InputModelProbe instances with direct access to the
+        snapshot for probing imported information that is not otherwise made available to the
+        simulation. To preserve proper data encapsulation, this function should \em not be called
+        from anywhere else in the simulation machinery. */
+    const Snapshot* snapshot() const;
 
     //======================== Data Members ========================
 

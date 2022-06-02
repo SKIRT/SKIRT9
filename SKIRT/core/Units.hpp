@@ -291,6 +291,20 @@ public:
         style and units. */
     double omonluminosity(double lambda, double Llambda) const;
 
+    /** This function returns a string describing the monochromatic luminosity volume density
+        output style adopted by the program. */
+    string smonluminosityvolumedensity() const;
+
+    /** This function returns a string containing the name of the unit of monochromatic luminosity
+        volume density adopted by the program for output, depending on the selected flux output
+        style. */
+    string umonluminosityvolumedensity() const;
+
+    /** This function converts the monochromatic per-wavelength luminosity volume density
+        \f$L_\lambda/V\f$ from the internally used SI units (\f${\text{W}}\, {\text{m}}^{-4}\f$) to
+        the program's flux output style and units. */
+    double omonluminosityvolumedensity(double lambda, double Llambda) const;
+
     /** This function returns a string describing the flux density output style adopted by the
         program. */
     string sfluxdensity() const;

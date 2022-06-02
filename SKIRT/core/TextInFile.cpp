@@ -65,6 +65,7 @@ TextInFile::TextInFile(const SimulationItem* item, string filename, string descr
     _log = item->find<Log>();
 
     // get the full path for the resource or for the input file
+    _isResource = resource;
     string filepath = resource ? FilePaths::resource(filename) : item->find<FilePaths>()->input(filename);
 
     // if the file is in SKIRT stored column format, open a binary file
@@ -134,8 +135,8 @@ void TextInFile::close()
         _hasTextOpen = false;
         _hasBinaryOpen = false;
 
-        // log "done" message, except if an exception has been thrown
-        if (!std::uncaught_exception()) _log->info("Done reading");
+        // log "done" message, except if this is a resource file or after an exception has been thrown
+        if (!_isResource && !std::uncaught_exception()) _log->info("Done reading");
     }
 }
 
@@ -270,26 +271,29 @@ void TextInFile::addColumn(string description, string quantity, string defaultUn
     if (col.quantity.empty())  // dimensionless quantity
     {
         if (!col.unit.empty() && col.unit != "1")
-            throw FATALERROR("Invalid units for dimensionless quantity in column " + std::to_string(_numLogCols));
+            throw FATALERROR("Invalid units (" + col.unit + ") for dimensionless quantity in column "
+                             + std::to_string(_numLogCols));
         col.unit = "1";
     }
     else if (col.quantity == "specific")  // arbitrarily scaled value per wavelength or per frequency
     {
         col.waveExponent = waveExponentForSpecificQuantity(_units, col.unit);
         if (col.waveExponent == ERROR_NO_EXPON)
-            throw FATALERROR("Invalid units for specific quantity in column " + std::to_string(_numLogCols));
+            throw FATALERROR("Invalid units (" + col.unit + ") for specific quantity '" + col.quantity + "' in column "
+                             + std::to_string(_numLogCols));
         if (col.waveExponent)
         {
             col.waveIndex = waveIndexForSpecificQuantity();
             if (col.waveIndex == ERROR_NO_INDEX)
-                throw FATALERROR("No preceding wavelength column for specific quantity in column "
-                                 + std::to_string(_numLogCols));
+                throw FATALERROR("No preceding wavelength column for specific quantity '" + col.quantity
+                                 + "' in column " + std::to_string(_numLogCols));
         }
     }
     else
     {
         if (!_units->has(col.quantity, col.unit))
-            throw FATALERROR("Invalid units for quantity in column " + std::to_string(_numLogCols));
+            throw FATALERROR("Invalid units (" + col.unit + ") for quantity '" + col.quantity + "' in column "
+                             + std::to_string(_numLogCols));
         double offset;  // all SKIRT units have a zero offset
         std::tie(col.convFactor, col.convPower, offset) = _units->def(col.quantity, col.unit);
     }
@@ -302,15 +306,18 @@ void TextInFile::addColumn(string description, string quantity, string defaultUn
                          + std::to_string(col.physColIndex) + ")");
     _logColIndices[col.physColIndex - 1] = _numLogCols - 1;
 
-    // log column information
-    string message = "  Column " + std::to_string(_numLogCols) + ": " + col.description + " (" + col.unit + ")";
-    if (!col.title.empty())
+    // for regular user input files, log column information
+    if (!_isResource)
     {
-        message += " <-- ";
-        if (col.physColIndex != _numLogCols) message += "column " + std::to_string(col.physColIndex) + ": ";
-        message += col.title;
+        string message = "  Column " + std::to_string(_numLogCols) + ": " + col.description + " (" + col.unit + ")";
+        if (!col.title.empty())
+        {
+            message += " <-- ";
+            if (col.physColIndex != _numLogCols) message += "column " + std::to_string(col.physColIndex) + ": ";
+            message += col.title;
+        }
+        _log->info(message);
     }
-    _log->info(message);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -342,7 +349,18 @@ bool TextInFile::readRow(Array& values)
                     // read the value as floating point
                     double value;
                     linestream >> value;
-                    if (linestream.fail()) throw FATALERROR("Input text is not formatted as a floating point number");
+                    if (linestream.fail())
+                    {
+                        // some compilers/libraries do not support reading NaN or Inf values, while others do;
+                        // we here provide backup support for NaN values (infinities are more complex because of
+                        // the need for handling the negative sign which may be already consumed by the stream)
+                        linestream.clear();
+                        string offending;
+                        linestream >> offending;
+                        if (StringUtils::toLower(offending) != "nan")
+                            throw FATALERROR("Input text is not formatted as a floating point number: " + offending);
+                        value = std::numeric_limits<double>::quiet_NaN();
+                    }
 
                     // if mapped to a logical column, convert from input units to internal units, and store the result
                     if (i != ERROR_NO_INDEX)

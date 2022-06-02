@@ -17,10 +17,16 @@ Snapshot* ParticleMedium::createAndOpenSnapshot()
     // honor custom column reordering
     snapshot->useColumns(useColumns());
 
-    // configure the position, size and mass columns
+    // configure the position and size columns
     snapshot->importPosition();
     snapshot->importSize();
-    snapshot->importMass();
+
+    // configure the mass or number column
+    switch (massType())
+    {
+        case MassType::Mass: snapshot->importMass(); break;
+        case MassType::Number: snapshot->importNumber(); break;
+    }
 
     // set the smoothing kernel
     snapshot->setSmoothingKernel(smoothingKernel());

@@ -1,0 +1,27 @@
+/*//////////////////////////////////////////////////////////////////
+////     The SKIRT project -- advanced radiative transfer       ////
+////       © Astronomical Observatory, Ghent University         ////
+///////////////////////////////////////////////////////////////// */
+
+#include "SpecialtyWavelengthGridProbe.hpp"
+
+////////////////////////////////////////////////////////////////////
+
+Range SpecialtyWavelengthGridProbe::wavelengthRange() const
+{
+    if (wavelengthGrid())
+    {
+        wavelengthGrid()->setup();
+        return Range(wavelengthGrid()->wavelengthRange());
+    }
+    return Range();
+}
+
+////////////////////////////////////////////////////////////////////
+
+WavelengthGrid* SpecialtyWavelengthGridProbe::materialWavelengthGrid() const
+{
+    return wavelengthGrid();
+}
+
+////////////////////////////////////////////////////////////////////

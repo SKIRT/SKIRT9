@@ -68,7 +68,7 @@ bool SpinFlipHydrogenGasMix::hasLineEmission() const
 
 vector<SnapshotParameter> SpinFlipHydrogenGasMix::parameterInfo() const
 {
-    return vector<SnapshotParameter>{SnapshotParameter("neutral hydrogen fraction")};
+    return {SnapshotParameter::custom("neutral hydrogen fraction")};
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -8,8 +8,10 @@
 
 #include "Array.hpp"
 #include "Box.hpp"
+#include "Direction.hpp"
 #include "Position.hpp"
 #include "SnapshotParameter.hpp"
+class EntityCollection;
 class Log;
 class Random;
 class SimulationItem;
@@ -126,33 +128,40 @@ public:
         defined by six components (xmin,ymin,zmin,xmax,ymax,zmax). The default unit is pc. */
     void importBox();
 
-    /** This function configures the snapshot to import a mass density per unit of volume. The
-        default unit is Msun/pc3. It is allowed to combine the importMassDensity() and importMass()
-        options, supporting special use cases where the volume of the entity cannot be derived
-        otherwise. However, combining the "mass" family functions with the "number" family
-        functions is prohibited and leads to undefined behavior. */
+    /** This function configures the snapshot to import a mass density per unit of volume (for use
+        by media). The default unit is Msun/pc3. It is allowed to combine the importMassDensity()
+        and importMass() options, supporting special use cases where the volume of the entity
+        cannot be derived otherwise. However, combining the "mass" family functions with the
+        "number" family functions is prohibited and leads to undefined behavior. */
     void importMassDensity();
 
-    /** This function configures the snapshot to import a mass (i.e. mass density integrated over
-        volume). The default unit is Msun. It is allowed to combine the importMassDensity() and
-        importMass() options, supporting special use cases where the volume of the entity cannot be
-        derived otherwise. However, combining the "mass" family functions with the "number" family
-        functions is prohibited and leads to undefined behavior. */
+    /** This function configures the snapshot to import a mass, i.e. mass density integrated over
+        volume (for use by media). The default unit is Msun. It is allowed to combine the
+        importMassDensity() and importMass() options, supporting special use cases where the volume
+        of the entity cannot be derived otherwise. However, combining the "mass" family functions
+        with the "number" family functions is prohibited and leads to undefined behavior. */
     void importMass();
 
-    /** This function configures the snapshot to import a number density per unit of volume. The
-        default unit is 1/cm3. It is allowed to combine the importNumberDensity() and
-        importNumber() options, supporting special use cases where the volume of the entity cannot
-        be derived otherwise. However, combining the "mass" family functions with the "number"
-        family functions is prohibited and leads to undefined behavior. */
+    /** This function configures the snapshot to import a number density per unit of volume (for
+        use by media). The default unit is 1/cm3. It is allowed to combine the
+        importNumberDensity() and importNumber() options, supporting special use cases where the
+        volume of the entity cannot be derived otherwise. However, combining the "mass" family
+        functions with the "number" family functions is prohibited and leads to undefined behavior.
+        */
     void importNumberDensity();
 
-    /** This function configures the snapshot to import a number (i.e. number density integrated
-        over volume). The default unit is 1. It is allowed to combine the importNumberDensity() and
-        importNumber() options, supporting special use cases where the volume of the entity cannot
-        be derived otherwise. However, combining the "mass" family functions with the "number"
-        family functions is prohibited and leads to undefined behavior. */
+    /** This function configures the snapshot to import a number, i.e. number density integrated
+        over volume (for use by media). The default unit is 1. It is allowed to combine the
+        importNumberDensity() and importNumber() options, supporting special use cases where the
+        volume of the entity cannot be derived otherwise. However, combining the "mass" family
+        functions with the "number" family functions is prohibited and leads to undefined behavior.
+        */
     void importNumber();
+
+    /** This function configures the snapshot to import the current mass (for use by sources). Not
+        to be confused with the initial mass, which is often requested by single stellar population
+        %SED families. The default unit is Msun. */
+    void importCurrentMass();
 
     /** This function configures the snapshot to import a (dimensionless) metallicity fraction. */
     void importMetallicity();
@@ -197,9 +206,10 @@ public:
         value of the \em multiplier argument to obtain the final result. */
     void setMassDensityPolicy(double multiplier, double maxTemperature, bool useMetallicity);
 
-    /** This function returns true if the snapshot holds number (density) values, and false if it
-        holds mass (density) values (or if no mass or density column is being imported). */
-    bool holdsNumber() const { return _holdsNumber; }
+    /** This function notifies the snapshot that one of the getEntities() functions may be called
+        during the simulation, implying that the snapshot must prebuild the required search data
+        structures. */
+    void setNeedGetEntities();
 
 protected:
     /** This function returns the column index of the first position field, or -1 if this is not
@@ -222,9 +232,21 @@ protected:
         imported, for use by subclasses. */
     int massIndex() const { return _massIndex; }
 
+    /** This function returns the column index of the initial mass field, or -1 if this is not
+        being imported, for use by subclasses. */
+    int initialMassIndex() const { return _initialMassIndex; }
+
+    /** This function returns the column index of the current mass field, or -1 if this is not
+        being imported, for use by subclasses. */
+    int currentMassIndex() const { return _currentMassIndex; }
+
     /** This function returns the column index of the metallicity field, or -1 if this is not being
         imported, for use by subclasses. */
     int metallicityIndex() const { return _metallicityIndex; }
+
+    /** This function returns the column index of the age field, or -1 if this is not being
+        imported, for use by subclasses. */
+    int ageIndex() const { return _ageIndex; }
 
     /** This function returns the column index of the temperature field, or -1 if this is not being
         imported, for use by subclasses. */
@@ -246,11 +268,9 @@ protected:
         this is not being imported, for use by subclasses. */
     int parametersIndex() const { return _parametersIndex; }
 
-public:
     /** This function returns the number of parameters being imported (which may be zero). */
     int numParameters() const { return _numParameters; }
 
-protected:
     /** This function returns the mass or mass density multiplier configured by the user, or zero
         if the user did not configure the mass or mass density policy, for use by subclasses. */
     double multiplier() const { return _multiplier; }
@@ -274,6 +294,16 @@ protected:
         otherwise. For use by subclasses. */
     bool useTemperatureCutoff() const { return _hasDensityPolicy && _maxTemperature > 0 && _temperatureIndex >= 0; }
 
+    /** This function returns true if one of the getEntities() functions may be called during the
+        simulation, implying that the snapshot must prebuild the required search data structures.
+        Returns false otherwise. For use by subclasses. */
+    bool needGetEntities() const { return _needGetEntities; }
+
+    /** This function issues log messages with statistics on the imported masses. It is implemented
+        here for use by subclasses. */
+    void logMassStatistics(int numIgnored, double totalOriginalMass, double totalMetallicMass,
+                           double totalEffectiveMass);
+
     //============== Interrogation (to be implemented in subclass) =============
 
 public:
@@ -284,85 +314,33 @@ public:
     /** This function returns the number of entities \f$N_\mathrm{ent}\f$ in the snapshot. */
     virtual int numEntities() const = 0;
 
+    /** This function returns the volume of the entity with index \f$0\le m \le
+        N_\mathrm{ent}-1\f$. If the index is out of range, if no density policy has been set, or no
+        mass/density information is being imported, the behavior is undefined. */
+    virtual double volume(int m) const = 0;
+
+    /** This function returns the mass or number density for the entity with index \f$0\le m \le
+        N_\mathrm{ent}-1\f$. If the index is out of range, if no density policy has been set, or no
+        mass/density information is being imported, the behavior is undefined. */
+    virtual double density(int m) const = 0;
+
+    /** This function returns the mass or number density represented by the snapshot at a given
+        point \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If no
+        density policy has been set or no mass/density information is being imported, the behavior
+        is undefined. */
+    virtual double density(Position bfr) const = 0;
+
+    /** This function returns the total mass or number represented by the snapshot, which is
+        equivalent to the mass or number density integrated over the complete spatial domain. If no
+        density policy has been set or no mass/density information is being imported, the behavior
+        is undefined. */
+    virtual double mass() const = 0;
+
     /** This function returns a characteristic position for the entity with index \f$0\le m \le
         N_\mathrm{ent}-1\f$. Such a position is always available for all snapshot types, regardless
         of whether a position is explicitly being imported or not. If the index is out of range,
         the behavior is undefined. */
     virtual Position position(int m) const = 0;
-
-    /** This function returns the metallicity of the entity with index \f$0\le m \le
-        N_\mathrm{ent}-1\f$. If the metallicity is not being imported, or the index is out of
-        range, the behavior is undefined. */
-    virtual double metallicity(int m) const = 0;
-
-    /** This function returns the metallicity of the entity nearest to (or at) the specified point
-        \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If the
-        metallicity is not being imported, the behavior is undefined. */
-    virtual double metallicity(Position bfr) const = 0;
-
-    /** This function returns the temperature of the entity with index \f$0\le m \le
-        N_\mathrm{ent}-1\f$. If the temperature is not being imported, or the index is out of
-        range, the behavior is undefined. */
-    virtual double temperature(int m) const = 0;
-
-    /** This function returns the temperature of the entity nearest to (or at) the specified point
-        \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If the
-        temperature is not being imported, the behavior is undefined. */
-    virtual double temperature(Position bfr) const = 0;
-
-    /** This function returns the velocity of the entity with index \f$0\le m \le
-        N_\mathrm{ent}-1\f$. If the velocity is not being imported, or the index is out of range,
-        the behavior is undefined. */
-    virtual Vec velocity(int m) const = 0;
-
-    /** This function returns the velocity of the entity nearest to (or at) the specified point
-        \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero velocity. If
-        the velocity is not being imported, the behavior is undefined. */
-    virtual Vec velocity(Position bfr) const = 0;
-
-    /** This function returns the velocity dispersion of the entity with index \f$0\le m \le
-        N_\mathrm{ent}-1\f$. If the velocity dispersion is not being imported, or the index is out
-        of range, the behavior is undefined. */
-    virtual double velocityDispersion(int m) const = 0;
-
-    /** This function returns the velocity dispersion of the entity nearest to (or at) the
-        specified point \f${\bf{r}}\f$. If the point is outside the domain, the function returns
-        zero dispersion. If the velocity dispersion is not being imported, the behavior is
-        undefined. */
-    virtual double velocityDispersion(Position bfr) const = 0;
-
-    /** This function returns the magnetic field vector of the entity with index \f$0\le m \le
-        N_\mathrm{ent}-1\f$. If the magnetic field is not being imported, or the index is out of
-        range, the behavior is undefined. */
-    virtual Vec magneticField(int m) const = 0;
-
-    /** This function returns the magnetic field vector of the entity nearest to (or at) the
-        specified point \f${\bf{r}}\f$. If the point is outside the domain, the function returns a
-        zero magnetic field. If the magnetic field is not being imported, the behavior is
-        undefined. */
-    virtual Vec magneticField(Position bfr) const = 0;
-
-    /** This function stores the parameters of the entity with index \f$0\le m \le
-        N_\mathrm{ent}-1\f$ into the given array. If parameters are not being imported, or the
-        index is out of range, the behavior is undefined. */
-    virtual void parameters(int m, Array& params) const = 0;
-
-    /** This function stores the parameters of the entity nearest to (or at) the specified point
-        \f${\bf{r}}\f$ into the given array. If the point is outside the domain, the function
-        returns the appropriate number of zero parameter values. If parameters are not being
-        imported, the behavior is undefined. */
-    virtual void parameters(Position bfr, Array& params) const = 0;
-
-    /** This function returns the mass density represented by the snapshot at a given point
-        \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If no
-        density policy has been set or no mass/density information is being imported, the behavior
-        is undefined. */
-    virtual double density(Position bfr) const = 0;
-
-    /** This function returns the total mass represented by the snapshot, which is equivalent to
-        the mass density integrated over the complete spatial domain. If no density policy has been
-        set or no mass/density information is being imported, the behavior is undefined. */
-    virtual double mass() const = 0;
 
     /** This function returns a random position within the entity with index \f$0\le m \le
         N_\mathrm{ent}-1\f$, drawn from an appropriate probability distribution depending on the
@@ -375,11 +353,173 @@ public:
         been set or no mass/density information is being imported, the behavior is undefined. */
     virtual Position generatePosition() const = 0;
 
+protected:
+    /** This function returns a reference to an array containing the imported properties (in column
+        order) for the entity with index \f$0\le m \le N_\mathrm{ent}-1\f$. If the index is out of
+        range, the behavior is undefined. */
+    virtual const Array& properties(int m) const = 0;
+
+    /** This function returns the index \f$0\le m \le N_\mathrm{ent}-1\f$ for the entity at or
+        nearest to the specified point \f${\bf{r}}\f$, or -1 if the point is outside the domain or
+        if there are no entities in the snapshot. For a cell-based snapshot, the function returns
+        the index of the cell containing the given point. For a particle-based snapshot, the
+        function returns the index of the particle whose center is nearest to the given point. */
+    virtual int nearestEntity(Position bfr) const = 0;
+
+public:
+    /** This function replaces the contents of the specified entity collection by the set of
+        entities that overlap the specified point \f${\bf{r}}\f$, with their corresponding weights.
+        If the point is outside the domain or otherwise does not overlap any entity, the collection
+        will be empty.
+
+        For a cell-based snapshot, the function returns the cell containing the given point, if
+        any. The weight is set to 1. For a particle-based snapshot, the function returns all
+        particles with a smoothing kernel that overlaps the given point. The weight of a particle
+        is given by the particle's smoothing kernel value at the given point. */
+    virtual void getEntities(EntityCollection& entities, Position bfr) const = 0;
+
+    /** This function replaces the contents of the specified entity collection by the set of
+        entities that overlap the specified path with starting point \f${\bf{r}}\f$ and direction
+        \f${\bf{k}}\f$, with their corresponding weights. If the path does not overlap any entity,
+        the collection will be empty.
+
+        For a cell-based snapshot, the weight of a cell is given by the length of the path segment
+        inside the cell. For a particle-based snapshot, the weight of a particle is given by the
+        effective length seen by the path as it crosses the particle's smoothing kernel. */
+    virtual void getEntities(EntityCollection& entities, Position bfr, Direction bfk) const = 0;
+
     //============== Interrogation implemented here =============
+
+public:
+    /** This function returns true if the snapshot holds number (density) values, and false if it
+        holds mass (density) values (or if no mass or density column is being imported). */
+    bool holdsNumber() const { return _holdsNumber; }
 
     /** This function returns the volume of the complete domain of the snapshot, taken to be a box
         lined up with the coordinate axes. */
     double volume() const;
+
+    /** This function returns true if the initial mass is being imported, and false otherwise. */
+    bool hasInitialMass() const { return _initialMassIndex >= 0; }
+
+    /** This function returns the initial mass of the entity with index \f$0\le m \le
+        N_\mathrm{ent}-1\f$. If the initial mass is not being imported, or the index is out of
+        range, the behavior is undefined. */
+    double initialMass(int m) const;
+
+    /** This function returns the initial mass of the entity nearest to (or at) the specified point
+        \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If the
+        initial mass is not being imported, the behavior is undefined. */
+    double initialMass(Position bfr) const;
+
+    /** This function returns true if the current mass is being imported, and false otherwise. */
+    bool hasCurrentMass() const { return _currentMassIndex >= 0; }
+
+    /** This function returns the current mass of the entity with index \f$0\le m \le
+        N_\mathrm{ent}-1\f$. If the current mass is not being imported, or the index is out of
+        range, the behavior is undefined. */
+    double currentMass(int m) const;
+
+    /** This function returns the current mass of the entity nearest to (or at) the specified point
+        \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If the
+        current mass is not being imported, the behavior is undefined. */
+    double currentMass(Position bfr) const;
+
+    /** This function returns true if the metallicity is being imported, and false otherwise. */
+    bool hasMetallicity() const { return _metallicityIndex >= 0; }
+
+    /** This function returns the metallicity of the entity with index \f$0\le m \le
+        N_\mathrm{ent}-1\f$. If the metallicity is not being imported, or the index is out of
+        range, the behavior is undefined. */
+    double metallicity(int m) const;
+
+    /** This function returns the metallicity of the entity nearest to (or at) the specified point
+        \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If the
+        metallicity is not being imported, the behavior is undefined. */
+    double metallicity(Position bfr) const;
+
+    /** This function returns true if the age is being imported, and false otherwise. */
+    bool hasAge() const { return _ageIndex >= 0; }
+
+    /** This function returns the age of the entity with index \f$0\le m \le N_\mathrm{ent}-1\f$.
+        If the age is not being imported, or the index is out of range, the behavior is undefined.
+        */
+    double age(int m) const;
+
+    /** This function returns the age of the entity nearest to (or at) the specified point
+        \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If the age
+        is not being imported, the behavior is undefined. */
+    double age(Position bfr) const;
+
+    /** This function returns true if the temperature is being imported, and false otherwise. */
+    bool hasTemperature() const { return _temperatureIndex >= 0; }
+
+    /** This function returns the temperature of the entity with index \f$0\le m \le
+        N_\mathrm{ent}-1\f$. If the temperature is not being imported, or the index is out of
+        range, the behavior is undefined. */
+    double temperature(int m) const;
+
+    /** This function returns the temperature of the entity nearest to (or at) the specified point
+        \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If the
+        temperature is not being imported, the behavior is undefined. */
+    double temperature(Position bfr) const;
+
+    /** This function returns true if the velocity is being imported, and false otherwise. */
+    bool hasVelocity() const { return _velocityIndex >= 0; }
+
+    /** This function returns the velocity of the entity with index \f$0\le m \le
+        N_\mathrm{ent}-1\f$. If the velocity is not being imported, or the index is out of range,
+        the behavior is undefined. */
+    Vec velocity(int m) const;
+
+    /** This function returns the velocity of the entity nearest to (or at) the specified point
+        \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero velocity. If
+        the velocity is not being imported, the behavior is undefined. */
+    Vec velocity(Position bfr) const;
+
+    /** This function returns true if the velocity dispersion is being imported, and false
+        otherwise. */
+    bool hasVelocityDispersion() const { return _velocityDispersionIndex >= 0; }
+
+    /** This function returns the velocity dispersion of the entity with index \f$0\le m \le
+        N_\mathrm{ent}-1\f$. If the velocity dispersion is not being imported, or the index is out
+        of range, the behavior is undefined. */
+    double velocityDispersion(int m) const;
+
+    /** This function returns the velocity dispersion of the entity nearest to (or at) the
+        specified point \f${\bf{r}}\f$. If the point is outside the domain, the function returns
+        zero dispersion. If the velocity dispersion is not being imported, the behavior is
+        undefined. */
+    double velocityDispersion(Position bfr) const;
+
+    /** This function returns true if the magnetic field is being imported, and false otherwise. */
+    bool hasMagneticField() const { return _magneticFieldIndex >= 0; }
+
+    /** This function returns the magnetic field vector of the entity with index \f$0\le m \le
+        N_\mathrm{ent}-1\f$. If the magnetic field is not being imported, or the index is out of
+        range, the behavior is undefined. */
+    Vec magneticField(int m) const;
+
+    /** This function returns the magnetic field vector of the entity nearest to (or at) the
+        specified point \f${\bf{r}}\f$. If the point is outside the domain, the function returns a
+        zero magnetic field. If the magnetic field is not being imported, the behavior is
+        undefined. */
+    Vec magneticField(Position bfr) const;
+
+    /** This function returns true if parameters are being imported (i.e. if the number of imported
+         parameters is nonzero), and false otherwise. */
+    bool hasParameters() const { return _numParameters > 0; }
+
+    /** This function stores the parameters of the entity with index \f$0\le m \le
+        N_\mathrm{ent}-1\f$ into the given array. If parameters are not being imported, or the
+        index is out of range, the behavior is undefined. */
+    void parameters(int m, Array& params) const;
+
+    /** This function stores the parameters of the entity nearest to (or at) the specified point
+        \f${\bf{r}}\f$ into the given array. If the point is outside the domain, the function
+        returns the appropriate number of zero parameter values. If parameters are not being
+        imported, the behavior is undefined. */
+    void parameters(Position bfr, Array& params) const;
 
     /** This function returns the X-axis surface density of the density distribution represented by
         the snapshot, defined as the integration of the density along the entire X-axis, \f[
@@ -418,7 +558,10 @@ private:
     int _boxIndex{-1};
     int _densityIndex{-1};
     int _massIndex{-1};
+    int _initialMassIndex{-1};
+    int _currentMassIndex{-1};
     int _metallicityIndex{-1};
+    int _ageIndex{-1};
     int _temperatureIndex{-1};
     int _velocityIndex{-1};
     int _velocityDispersionIndex{-1};
@@ -432,6 +575,7 @@ private:
     bool _useMetallicity{false};
     bool _hasDensityPolicy{false};
     bool _holdsNumber{false};  // true if snapshot holds number (density); false if it holds mass (density)
+    bool _needGetEntities{false};
 };
 
 ////////////////////////////////////////////////////////////////////

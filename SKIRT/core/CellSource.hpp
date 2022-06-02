@@ -26,7 +26,7 @@
     z_\mathrm{min}\,(\mathrm{pc}) \quad x_\mathrm{max}\,(\mathrm{pc}) \quad
     y_\mathrm{max}\,(\mathrm{pc}) \quad z_\mathrm{max}\,(\mathrm{pc}) \quad [ v_x\,(\mathrm{km/s})
     \quad v_y\,(\mathrm{km/s}) \quad v_z\,(\mathrm{km/s}) \quad [ \sigma_v\,(\mathrm{km/s}) ] ]
-    \quad \dots \text{SED family parameters}\dots \f]
+    \quad [M_\mathrm{curr}\,(\mathrm{M}_\odot)] \quad \dots \text{SED family parameters}\dots \f]
 
     The first six columns specify the coordinates of the lower-left and upper-right corners of the
     cell. If the \em importVelocity option is enabled, the next three columns specify the

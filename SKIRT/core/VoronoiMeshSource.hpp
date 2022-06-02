@@ -23,7 +23,7 @@
 
     \f[ x\,(\mathrm{pc}) \quad y\,(\mathrm{pc}) \quad z\,(\mathrm{pc}) \quad [ v_x\,(\mathrm{km/s})
     \quad v_y\,(\mathrm{km/s}) \quad v_z\,(\mathrm{km/s}) \quad [ \sigma_v\,(\mathrm{km/s}) ] ]
-    \quad \dots \text{SED family parameters}\dots \f]
+    \quad [M_\mathrm{curr}\,(\mathrm{M}_\odot)] \quad \dots \text{SED family parameters}\dots \f]
 
     The first three columns are the \f$x\f$, \f$y\f$ and \f$z\f$ coordinates of the Voronoi site
     (i.e. the location defining a particular Voronoi cell). If the \em importVelocity option is

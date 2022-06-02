@@ -14,7 +14,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void RadiationFieldWavelengthGridProbe::probeSetup()
+void RadiationFieldWavelengthGridProbe::probe()
 {
     if (find<Configuration>()->hasRadiationField())
     {

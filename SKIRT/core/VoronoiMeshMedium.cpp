@@ -43,7 +43,8 @@ Snapshot* VoronoiMeshMedium::createAndOpenSnapshot()
     }
 
     // determine whether to forego the Voronoi mesh
-    if (bothDensityAndMass && !find<Configuration>()->mediaNeedGeneratePosition())
+    auto config = find<Configuration>();
+    if (bothDensityAndMass && !config->mediaNeedGeneratePosition() && !config->snapshotsNeedGetEntities())
         _voronoiMeshSnapshot->foregoVoronoiMesh();
 
     // set the domain extent

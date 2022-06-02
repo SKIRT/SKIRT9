@@ -301,6 +301,7 @@ private:
 
     bool _hasTextOpen{false};    // true if a regular column text format file is currently open
     bool _hasBinaryOpen{false};  // true if a binary stored column format file is currently open
+    bool _isResource{false};     // true if the file is a resource (as opposed to a user input file)
     bool _hasFileInfo{false};    // becomes true if the file has column header info
     bool _hasProgInfo{false};    // becomes true if the program has added at least one column
 

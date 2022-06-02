@@ -279,7 +279,14 @@ public:
     /** This function returns the number and type of import parameters required by this particular
         material mix as a list of SnapshotParameter objects. Each of these objects specifies unit
         information and a human-readable descripton for the parameter. The default implementation
-        in this base class returns an empty list. */
+        in this base class returns an empty list.
+
+        <em>Important note</em>: for historical reasons, a metallicity and/or temperature import
+        column can be configured explicitly by the user. If so, these values are made available to
+        the material mix seperately from and in addition to the parameters requested here; see the
+        initializeSpecificState() function. Consequently, it is not allowed for a material mix to
+        request an additional metallicity and/or temperature parameter with the parameterInfo()
+        function. */
     virtual vector<SnapshotParameter> parameterInfo() const;
 
     /** This function returns a list of StateVariable objects describing the specific state

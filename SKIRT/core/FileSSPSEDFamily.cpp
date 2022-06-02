@@ -22,12 +22,9 @@ void FileSSPSEDFamily::setupSelfBefore()
 
 vector<SnapshotParameter> FileSSPSEDFamily::parameterInfo() const
 {
-    auto info = vector<SnapshotParameter>{
-        {"initial mass", "mass", "Msun"},
-        {"metallicity"},
-        {"age", "time", "yr"},
-    };
-    if (_hasIonizationParameter) info.emplace_back("ionization parameter");
+    vector<SnapshotParameter> info{SnapshotParameter::initialMass(), SnapshotParameter::metallicity(),
+                                   SnapshotParameter::age()};
+    if (_hasIonizationParameter) info.push_back(SnapshotParameter::custom("ionization parameter"));
     return info;
 }
 

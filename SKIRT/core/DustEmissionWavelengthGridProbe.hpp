@@ -6,7 +6,7 @@
 #ifndef DUSTEMISSIONWAVELENGTHGRIDPROBE_HPP
 #define DUSTEMISSIONWAVELENGTHGRIDPROBE_HPP
 
-#include "Probe.hpp"
+#include "SpecialtyProbe.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -15,17 +15,17 @@
     the wavelength grid returned by the Configuration::dustEmissionWLG() function. For each
     wavelength bin, the file lists the characteristic wavelength, the wavelength bin width, and the
     left and right borders of the bin. */
-class DustEmissionWavelengthGridProbe : public Probe
+class DustEmissionWavelengthGridProbe : public SpecialtyProbe
 {
-    ITEM_CONCRETE(DustEmissionWavelengthGridProbe, Probe, "the dust emission wavelength grid")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(DustEmissionWavelengthGridProbe, "Level2&Dust&DustEmission")
+    ITEM_CONCRETE(DustEmissionWavelengthGridProbe, SpecialtyProbe, "wavelength grid: dust emission")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(DustEmissionWavelengthGridProbe, "Level2&DustMix&DustEmission")
     ITEM_END()
 
     //======================== Other Functions =======================
 
-public:
-    /** This function performs probing after setup. */
-    void probeSetup() override;
+protected:
+    /** This function performs probing. */
+    void probe() override;
 };
 
 ////////////////////////////////////////////////////////////////////

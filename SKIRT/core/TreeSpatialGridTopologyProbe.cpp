@@ -10,7 +10,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void TreeSpatialGridTopologyProbe::probeSetup()
+void TreeSpatialGridTopologyProbe::probe()
 {
     // locate the grid (it is OK for the medium system to have no media components)
     auto ms = find<MediumSystem>(false);

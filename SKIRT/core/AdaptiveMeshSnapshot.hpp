@@ -176,7 +176,7 @@ public:
 
     /** This function returns the volume of the leaf cell with index \em m. If the index is out of
         range, the behavior is undefined. */
-    double volume(int m) const;
+    double volume(int m) const override;
 
     /** This function returns the diagonal of the leaf cell with index \em m. If the index is out of
         range, the behavior is undefined. */
@@ -187,70 +187,10 @@ public:
         undefined. */
     Box extent(int m) const;
 
-    /** This function returns the metallicity of the leaf cell with index \em m. If the metallicity is
-        not being imported, or the index is out of range, the behavior is undefined. */
-    double metallicity(int m) const override;
-
-    /** This function returns the metallicity associated with the leaf cell containing the specified
-        point \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero.
-        If the metallicity is not being imported, the behavior is undefined. */
-    double metallicity(Position bfr) const override;
-
-    /** This function returns the temperature of the leaf cell with index \em m. If the temperature is
-        not being imported, or the index is out of range, the behavior is undefined. */
-    double temperature(int m) const override;
-
-    /** This function returns the temperature associated with the leaf cell containing the specified
-        point \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero.
-        If the temperature is not being imported, the behavior is undefined. */
-    double temperature(Position bfr) const override;
-
-    /** This function returns the velocity of the leaf cell with index \em m. If the velocity is
-        not being imported, or the index is out of range, the behavior is undefined. */
-    Vec velocity(int m) const override;
-
-    /** This function returns the velocity associated with the leaf cell containing the specified
-        point \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero
-        velocity. If the velocity is not being imported, the behavior is undefined. */
-    Vec velocity(Position bfr) const override;
-
-    /** This function returns the velocity dispersion of the entity with index \f$0\le m \le
-        N_\mathrm{ent}-1\f$. If the velocity dispersion is not being imported, or the index is out
-        of range, the behavior is undefined. */
-    double velocityDispersion(int m) const override;
-
-    /** This function returns the velocity dispersion of the entity nearest to (or at) the
-        specified point \f${\bf{r}}\f$. If the point is outside the domain, the function returns
-        zero dispersion. If the velocity dispersion is not being imported, the behavior is
-        undefined. */
-    double velocityDispersion(Position bfr) const override;
-
-    /** This function returns the magnetic field vector of the leaf cell with index \em m. If the
-        magnetic field is not being imported, or the index is out of range, the behavior is
-        undefined. */
-    Vec magneticField(int m) const override;
-
-    /** This function returns the magnetic field vector associated with the leaf cell containing
-        the specified point \f${\bf{r}}\f$. If the point is outside the domain, the function
-        returns a zero magnetic field. If the magnetic field is not being imported, the behavior is
-        undefined. */
-    Vec magneticField(Position bfr) const override;
-
-    /** This function stores the parameters of the leaf cell with index \em m into the given array.
-        If parameters are not being imported, or the index is out of range, the behavior is
-        undefined. */
-    void parameters(int m, Array& params) const override;
-
-    /** This function stores the parameters of the leaf cell containing the specified point
-        \f${\bf{r}}\f$ into the given array. If the point is outside the domain, the function
-        returns the appropriate number of zero parameter values. If parameters are not being
-        imported, the behavior is undefined. */
-    void parameters(Position bfr, Array& params) const override;
-
     /** This function returns the mass density associated with the leaf cell with index \em m. If
         no density policy has been set or no mass information is being imported, or if the index is
         out of range, the behavior is undefined. */
-    double density(int m) const;
+    double density(int m) const override;
 
     /** This function returns the mass density represented by the snapshot at a given point
         \f${\bf{r}}\f$, or equivalently, the mass density associated with the leaf cell containing
@@ -281,6 +221,28 @@ public:
         function returns -1. The function recursively searches the adaptive mesh tree until it
         finds the appropriate leaf cell. */
     int cellIndex(Position bfr) const;
+
+protected:
+    /** This function returns a reference to an array containing the imported properties (in column
+        order) for the cell with index \f$0\le m \le N_\mathrm{ent}-1\f$. If the index is out of
+        range, the behavior is undefined. */
+    const Array& properties(int m) const override;
+
+    /** This function returns the index \f$0\le m \le N_\mathrm{ent}-1\f$ of the cell containing
+        the specified point \f${\bf{r}}\f$, or -1 if the point is outside the domain. */
+    int nearestEntity(Position bfr) const override;
+
+public:
+    /** This function sets the specified entity collection to the cell containing the specified
+        point \f${\bf{r}}\f$, or to the empty collection if the point is outside the domain. */
+    void getEntities(EntityCollection& entities, Position bfr) const override;
+
+    /** This function replaces the contents of the specified entity collection by the set of cells
+        crossed by the specified path with starting point \f${\bf{r}}\f$ and direction
+        \f${\bf{k}}\f$. The weight of a cell is given by the length of the path segment inside the
+        cell. If the path does not cross the spatial domain of the snapshot, the collection will be
+        empty. */
+    void getEntities(EntityCollection& entities, Position bfr, Direction bfk) const override;
 
     //====================== Path construction =====================
 

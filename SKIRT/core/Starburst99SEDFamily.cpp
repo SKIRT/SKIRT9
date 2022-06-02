@@ -27,11 +27,7 @@ void Starburst99SEDFamily::setupSelfBefore()
 
 vector<SnapshotParameter> Starburst99SEDFamily::parameterInfo() const
 {
-    return vector<SnapshotParameter>{
-        {"initial mass", "mass", "Msun"},
-        {"metallicity"},
-        {"age", "time", "yr"},
-    };
+    return {SnapshotParameter::initialMass(), SnapshotParameter::metallicity(), SnapshotParameter::age()};
 }
 
 ////////////////////////////////////////////////////////////////////

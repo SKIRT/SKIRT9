@@ -22,10 +22,8 @@ namespace
 
 vector<SnapshotParameter> LyaDoublePeakedSEDFamily::parameterInfo() const
 {
-    return vector<SnapshotParameter>{
-        {"line luminosity", "bolluminosity", "W"},
-        {"scale", "velocity", "km/s"},
-    };
+    return {SnapshotParameter::custom("line luminosity", "bolluminosity", "W"),
+            SnapshotParameter::custom("scale", "velocity", "km/s")};
 }
 
 ////////////////////////////////////////////////////////////////////

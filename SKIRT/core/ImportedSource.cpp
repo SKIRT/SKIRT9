@@ -68,7 +68,11 @@ void ImportedSource::setupSelfAfter()
         _snapshot->importVelocity();
         if (_importVelocityDispersion) _snapshot->importVelocityDispersion();
     }
+    if (_importCurrentMass) _snapshot->importCurrentMass();
     _snapshot->importParameters(_sedFamily->parameterInfo());
+
+    // notify about building search data structures if needed
+    if (find<Configuration>()->snapshotsNeedGetEntities()) _snapshot->setNeedGetEntities();
 
     // read the data from file
     _snapshot->readAndClose();
@@ -169,6 +173,17 @@ double ImportedSource::specificLuminosity(double wavelength) const
         sum += _sedFamily->specificLuminosity(wavelength, params);
     }
     return sum;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double ImportedSource::specificLuminosity(double wavelength, int m) const
+{
+    if (!_wavelengthRange.containsFuzzy(wavelength)) return 0.;
+
+    Array params;
+    _snapshot->parameters(m, params);
+    return _sedFamily->specificLuminosity(wavelength, params);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -329,6 +344,13 @@ void ImportedSource::launch(PhotonPacket* pp, size_t historyIndex, double L) con
 
     // launch the photon packet with isotropic direction
     pp->launch(historyIndex, lambda, L * w * ws, bfr, random()->direction(), bvi);
+}
+
+////////////////////////////////////////////////////////////////////
+
+const Snapshot* ImportedSource::snapshot() const
+{
+    return _snapshot;
 }
 
 ////////////////////////////////////////////////////////////////////

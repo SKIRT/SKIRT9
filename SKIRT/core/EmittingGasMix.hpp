@@ -18,7 +18,7 @@
 class EmittingGasMix : public MaterialMix, public SourceWavelengthRangeInterface
 {
     ITEM_ABSTRACT(EmittingGasMix, MaterialMix, "an emitting gas mix")
-        ATTRIBUTE_TYPE_INSERT(EmittingGasMix, "Gas")
+        ATTRIBUTE_TYPE_INSERT(EmittingGasMix, "GasMix")
 
         PROPERTY_DOUBLE(sourceWeight, "the weight of this secondary source for the number of photon packets launched")
         ATTRIBUTE_MIN_VALUE(sourceWeight, "]0")
