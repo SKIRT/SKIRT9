@@ -25,8 +25,10 @@ namespace
     constexpr double ASF = 2.8843e-15;
 
     // indices for custom state variables
-    constexpr int NEUTRAL_FRACTION = 0;
-    constexpr int ATOMIC_FRACTION = 1;
+    constexpr int NEUTRAL_SURFACE_DENSITY = 0;
+    constexpr int CELL_SIZE = 1;
+    constexpr int NEUTRAL_FRACTION = 2;
+    constexpr int ATOMIC_FRACTION = 3;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -68,7 +70,9 @@ bool SpinFlipHydrogenGasMix::hasLineEmission() const
 
 vector<SnapshotParameter> SpinFlipHydrogenGasMix::parameterInfo() const
 {
-    return {SnapshotParameter::custom("neutral hydrogen fraction")};
+    return {SnapshotParameter::custom("neutral hydrogen surface density", "masssurfacedensity", "Msun/pc2"),
+    SnapshotParameter::custom("cell size", "length", "pc"),
+    SnapshotParameter::custom("neutral hydrogen fraction")};
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -77,6 +81,8 @@ vector<StateVariable> SpinFlipHydrogenGasMix::specificStateVariableInfo() const
 {
     return vector<StateVariable>{StateVariable::numberDensity(), StateVariable::metallicity(),
                                  StateVariable::temperature(),
+                                 StateVariable::custom(NEUTRAL_SURFACE_DENSITY, "neutral hydrogen surface density", "masssurfacedensity"),
+                                 StateVariable::custom(CELL_SIZE, "cell size", "length"),
                                  StateVariable::custom(NEUTRAL_FRACTION, "neutral hydrogen fraction", ""),
                                  StateVariable::custom(ATOMIC_FRACTION, "atomic hydrogen fraction", "")};
 }
@@ -93,7 +99,9 @@ void SpinFlipHydrogenGasMix::initializeSpecificState(MaterialState* state, doubl
         // make sure the temperature is at least the local universe CMB temperature
         state->setMetallicity(metallicity >= 0. ? metallicity : defaultMetallicity());
         state->setTemperature(max(Constants::Tcmb(), temperature >= 0. ? temperature : defaultTemperature()));
-        state->setCustom(NEUTRAL_FRACTION, params.size() ? params[0] : defaultNeutralFraction());
+        state->setCustom(NEUTRAL_SURFACE_DENSITY,  params.size() ? params[0] : defaultNeutralSurfaceDensity());
+        state->setCustom(CELL_SIZE,  params.size() ? params[1] : defaultCellSize());
+        state->setCustom(NEUTRAL_FRACTION, params.size() ? params[2] : defaultNeutralFraction());
         state->setCustom(ATOMIC_FRACTION, 0.);
     }
 }
@@ -107,6 +115,9 @@ UpdateStatus SpinFlipHydrogenGasMix::updateSpecificState(MaterialState* state, c
 
     // if the cell has no hydrogen or the neutral fraction is zero, then leave the atomic fraction at zero
     double nH = state->numberDensity();
+
+    double SigmaHIpH2 = state->custom(NEUTRAL_SURFACE_DENSITY);
+    double lCell = state->custom(CELL_SIZE);
     double fHIpH2 = state->custom(NEUTRAL_FRACTION);
     if (nH > 0. && fHIpH2 > 0.)
     {
@@ -116,6 +127,8 @@ UpdateStatus SpinFlipHydrogenGasMix::updateSpecificState(MaterialState* state, c
         constexpr double h = Constants::h();
         constexpr double c = Constants::c();
         constexpr double Qel = Constants::Qelectron();
+        constexpr double pc = Constants::pc();
+        constexpr double Msun = Constants::Msun();
         constexpr double JMW = 1e6 * 1e4 * (h * c * h * c / (lambdaUV * lambdaUV * lambdaUV)) / Qel;
         double U = Jv[_indexUV] / JMW;
 
@@ -123,15 +136,13 @@ UpdateStatus SpinFlipHydrogenGasMix::updateSpecificState(MaterialState* state, c
         double D = state->metallicity() / 0.0127;
 
         // perform the partitioning scheme
-        double Dstar = 1.5e-3 * log(1. + pow(3 * U, 1.7));
-        double nstar = 25e6;
-        double alpha = 2.5 * U / (1. + 0.25 * U * U);
-        double s = 0.04 / (Dstar + D);
-        double g = (1. + alpha * s + s * s) / (1. + s);
-        double Lambda = log(1. + g * pow(D, 3. / 7.) * pow(U / 15., 4. / 7.));
-        double x = pow(Lambda, 3. / 7.) * log(D / Lambda * nH / nstar);
-        double fH2 = 1. / (1. + exp(-4. * x - 3. * x * x * x));
-
+        double SCell = lCell / (100. * pc);
+        double Dstar = 0.17 * (2. + pow(SCell, 5.)) / (1. + pow(SCell, 5.));
+        double g = sqrt(pow(D, 2.) + pow(Dstar, 2.));
+        double SigmaC = 50. * sqrt(0.001 + 0.1 * U) / (g * (1. + 1.69 * sqrt(0.001 + 0.1 * U))) * Msun / (pc * pc);
+        double alpha = 0.5 + 1. / (1. + sqrt(U * pow(D, 2) / 600.));
+        double RH2 = pow(SigmaHIpH2 / SigmaC, alpha);
+        double fH2 = RH2 / (RH2 + 1.);
         // set the atomic fraction
         state->setCustom(ATOMIC_FRACTION, max(0., fHIpH2 - fH2));
         status.updateConverged();

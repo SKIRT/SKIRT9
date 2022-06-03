@@ -190,6 +190,18 @@ class SpinFlipHydrogenGasMix : public EmittingGasMix
         ATTRIBUTE_DEFAULT_VALUE(defaultTemperature, "1e4")
         ATTRIBUTE_DISPLAYED_IF(defaultTemperature, "Level2")
 
+        PROPERTY_DOUBLE(defaultNeutralSurfaceDensity, "the default neutral hydrogen surface density of the gas")
+        ATTRIBUTE_QUANTITY(defaultNeutralSurfaceDensity, "masssurfacedensity")
+        ATTRIBUTE_MIN_VALUE(defaultNeutralSurfaceDensity, "]0")
+        ATTRIBUTE_DEFAULT_VALUE(defaultNeutralSurfaceDensity, "1")
+        ATTRIBUTE_DISPLAYED_IF(defaultNeutralSurfaceDensity, "Level2")
+
+        PROPERTY_DOUBLE(defaultCellSize, "the default size of a gas cell")
+        ATTRIBUTE_QUANTITY(defaultCellSize, "length")
+        ATTRIBUTE_MIN_VALUE(defaultCellSize, "]0")
+        ATTRIBUTE_DEFAULT_VALUE(defaultCellSize, "100")
+        ATTRIBUTE_DISPLAYED_IF(defaultCellSize, "Level2")
+
         PROPERTY_DOUBLE(defaultNeutralFraction, "the default neutral hydrogen fraction")
         ATTRIBUTE_MIN_VALUE(defaultNeutralFraction, "[0")
         ATTRIBUTE_MAX_VALUE(defaultNeutralFraction, "1]")
