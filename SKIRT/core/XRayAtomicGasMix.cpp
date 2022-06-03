@@ -76,7 +76,8 @@ namespace
     struct CrossSectionParams
     {
         CrossSectionParams(const Array& a)
-            : Z(a[0]), n(a[1]), l(a[2]), Eth(a[3]), Emax(a[4]), E0(a[5]), sigma0(a[6]), ya(a[7]), P(a[8]), yw(a[9]), y0(a[10]), y1(a[11])
+            : Z(a[0]), n(a[1]), l(a[2]), Eth(a[3]), Emax(a[4]), E0(a[5]), sigma0(a[6]), ya(a[7]), P(a[8]), yw(a[9]),
+              y0(a[10]), y1(a[11])
         {}
         short Z;        // atomic number
         short n;        // principal quantum number of the shell
@@ -90,7 +91,6 @@ namespace
         double yw;      // fit parameter (1)
         double y0;      // fit parameter (1)
         double y1;      // fit parameter (1)
-
     };
 
     // fluorescence parameters
@@ -121,10 +121,9 @@ namespace
     // without taking into account thermal dispersion
     double crossSection(double E, const CrossSectionParams& p)
     {
-        if (E < p.Eth) return 0.;
-        if (E >= p.Emax) return 0.;
+        if (E < p.Eth || E >= p.Emax) return 0.;
 
-        double x = E/p.E0 - p.y0;
+        double x = E / p.E0 - p.y0;
         double y = std::sqrt(x * x + p.y1 * p.y1);
         double xm1 = x - 1.;
         double Q = 5.5 + p.l - 0.5 * p.P;
@@ -192,15 +191,15 @@ public:
 
 ////////////////////////////////////////////////////////////////////
 
-// ---- no Compton scattering helper ----
+// ---- no scattering helper ----
 
 namespace
 {
-    // this helper does nothing; it is used as a stub in case there is no Compton scattering
-    class NoComptonHelper : public XRayAtomicGasMix::ScatteringHelper
+    // this helper does nothing; it is used as a stub in case there is no scattering of a given type
+    class NoScatteringHelper : public XRayAtomicGasMix::ScatteringHelper
     {
     public:
-        NoComptonHelper(SimulationItem* /*item*/) {}
+        NoScatteringHelper(SimulationItem* /*item*/) {}
 
         double sectionSca(double /*lambda*/, int /*Z*/) const override { return 0.; }
 
@@ -394,31 +393,6 @@ namespace
 
             // determine the new propagation direction
             return _random->direction(bfk, costheta);
-        }
-    };
-}
-
-////////////////////////////////////////////////////////////////////
-
-// ---- no Rayleigh scattering helper ----
-
-namespace
-{
-    // this helper does nothing; it is used as a stub in case there is no Rayleigh scattering
-    class NoRayleighHelper : public XRayAtomicGasMix::ScatteringHelper
-    {
-    public:
-        NoRayleighHelper(SimulationItem* /*item*/) {}
-
-        double sectionSca(double /*lambda*/, int /*Z*/) const override { return 0.; }
-
-        void peeloffScattering(double& /*I*/, double& /*lambda*/, int /*Z*/, Direction /*bfk*/,
-                               Direction /*bfkobs*/) const override
-        {}
-
-        Direction performScattering(double& /*lambda*/, int /*Z*/, Direction /*bfk*/) const override
-        {
-            return Direction();
         }
     };
 }
@@ -713,11 +687,11 @@ void XRayAtomicGasMix::setupSelfBefore()
     switch (scatterBoundElectrons())
     {
         case BoundElectrons::None:
-            _ray = new NoRayleighHelper(this);
-            _com = new NoComptonHelper(this);
+            _ray = new NoScatteringHelper(this);
+            _com = new NoScatteringHelper(this);
             break;
         case BoundElectrons::Free:
-            _ray = new NoRayleighHelper(this);
+            _ray = new NoScatteringHelper(this);
             _com = new FreeComptonHelper(this);
             break;
         case BoundElectrons::Good:
