@@ -40,10 +40,10 @@ void SpatialGridPath::clear()
 
 void SpatialGridPath::addSegment(int m, double ds)
 {
-    if (ds > 0)
+    if (ds > 0.)
     {
         _s += ds;
-        _segments.push_back(Segment{m, ds, _s, 0., 0.});
+        _segments.emplace_back(m, ds, _s);
     }
 }
 
@@ -156,52 +156,12 @@ Position SpatialGridPath::moveInside(const Box& box, double eps)
 
 double SpatialGridPath::totalOpticalDepth() const
 {
-    return !_segments.empty() ? _segments.back().tau : 0.;
+    return !_segments.empty() ? _segments.back().tauExtOrSca() : 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-void SpatialGridPath::findInteractionPoint(double tau)
-{
-    // we can't handle an empty path
-    if (_segments.empty())
-    {
-        _interactionCellIndex = -1;
-        _interactionDistance = 0.;
-    }
-    else
-    {
-        // find a pointer to the first segment that has an exit optical depth strictly larger than the given value,
-        // (so that we never select an empty segment) or a pointer beyond the list if no such element is found
-        auto seg = std::upper_bound(_segments.cbegin(), _segments.cend(), tau,
-                                    [](double t, const Segment& seg) { return t < seg.tau; });
-
-        // if we find the first segment, interpolate with the path's entry point
-        if (seg == _segments.cbegin())
-        {
-            _interactionCellIndex = seg->m;
-            _interactionDistance = NR::interpolateLinLin(tau, 0., seg->tau, 0., seg->s);
-        }
-
-        // if we find some other segment, interpolate with the previous segment
-        else if (seg < _segments.cend())
-        {
-            _interactionCellIndex = seg->m;
-            _interactionDistance = NR::interpolateLinLin(tau, (seg - 1)->tau, seg->tau, (seg - 1)->s, seg->s);
-        }
-
-        // if we are precisely at or beyond the exit optical depth of the last segment, just use the last segment
-        else
-        {
-            _interactionCellIndex = (seg - 1)->m;
-            _interactionDistance = (seg - 1)->s;
-        }
-    }
-}
-
-////////////////////////////////////////////////////////////////////
-
-void SpatialGridPath::findExplicitAbsorptionInteractionPoint(double tau)
+void SpatialGridPath::findInteractionPoint(double tauinteract)
 {
     // we can't handle an empty path
     if (_segments.empty())
@@ -214,50 +174,44 @@ void SpatialGridPath::findExplicitAbsorptionInteractionPoint(double tau)
     {
         // find a pointer to the first segment that has an exit optical depth strictly larger than the given value,
         // (so that we never select an empty segment) or a pointer beyond the list if no such element is found
-        auto seg = std::upper_bound(_segments.cbegin(), _segments.cend(), tau,
-                                    [](double t, const Segment& seg) { return t < seg.tau; });
+        auto seg = std::upper_bound(_segments.cbegin(), _segments.cend(), tauinteract,
+                                    [](double t, const Segment& seg) { return t < seg.tauExtOrSca(); });
 
         // if we find the first segment, interpolate with the path's entry point
         if (seg == _segments.cbegin())
         {
-            _interactionCellIndex = seg->m;
-            _interactionDistance = NR::interpolateLinLin(tau, 0., seg->tau, 0., seg->s);
-            _interactionOpticalDepth = NR::interpolateLinLin(tau, 0., seg->tau, 0., seg->tauAbs);
+            _interactionCellIndex = seg->m();
+            _interactionDistance = NR::interpolateLinLin(tauinteract, 0., seg->tauExtOrSca(), 0., seg->s());
+            _interactionOpticalDepth = NR::interpolateLinLin(tauinteract, 0., seg->tauExtOrSca(), 0., seg->tauAbs());
         }
 
         // if we find some other segment, interpolate with the previous segment
         else if (seg < _segments.cend())
         {
-            _interactionCellIndex = seg->m;
-            _interactionDistance = NR::interpolateLinLin(tau, (seg - 1)->tau, seg->tau, (seg - 1)->s, seg->s);
-            _interactionOpticalDepth = NR::interpolateLinLin(tau, (seg - 1)->tau, seg->tau, (seg - 1)->tauAbs, seg->tauAbs);
+            _interactionCellIndex = seg->m();
+            _interactionDistance = NR::interpolateLinLin(tauinteract, (seg - 1)->tauExtOrSca(), seg->tauExtOrSca(),
+                                                         (seg - 1)->s(), seg->s());
+            _interactionOpticalDepth = NR::interpolateLinLin(tauinteract, (seg - 1)->tauExtOrSca(), seg->tauExtOrSca(),
+                                                             (seg - 1)->tauAbs(), seg->tauAbs());
         }
 
         // if we are precisely at or beyond the exit optical depth of the last segment, just use the last segment
         else
         {
-            _interactionCellIndex = (seg - 1)->m;
-            _interactionDistance = (seg - 1)->s;
-            _interactionOpticalDepth = (seg - 1)->tauAbs;
+            _interactionCellIndex = (seg - 1)->m();
+            _interactionDistance = (seg - 1)->s();
+            _interactionOpticalDepth = (seg - 1)->tauAbs();
         }
     }
 }
 
 ////////////////////////////////////////////////////////////////////
 
-void SpatialGridPath::setInteractionPoint(int m, double s)
+void SpatialGridPath::setInteractionPoint(int m, double s, double tauAbs)
 {
     _interactionCellIndex = m;
     _interactionDistance = s;
-}
-
-////////////////////////////////////////////////////////////////////
-
-void SpatialGridPath::setInteractionPoint(int m, double s, double tau)
-{
-    _interactionCellIndex = m;
-    _interactionDistance = s;
-    _interactionOpticalDepth = tau;
+    _interactionOpticalDepth = tauAbs;
 }
 
 ////////////////////////////////////////////////////////////////////

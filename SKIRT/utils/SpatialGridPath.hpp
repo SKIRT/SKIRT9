@@ -20,16 +20,18 @@ class Box;
     together with the physical path length \f$\Delta s\f$ covered within the cell, and the path
     length \f$s\f$ covered along the entire path up to the end of the cell.
 
-    In addition, a SpatialGridPath object allows storing a (cumulative) optical depth \f$tau\f$
-    with each path segment. Before this non-geometric information is used, it must be set
-    explicitly by a client class after the segments of the path have been calculated. As a
-    convenience to client classes, the SpatialGridPath class offers some operations on this extra
-    information, such as locating the interaction point along the path corresponding to a given
-    optical depth.
-
     Updating the initial position and/or the direction of the path invalidates all segments in the
     path, but the segments are not automatically cleared. One should call the clear() function or
-    the moveInside() function to do so. */
+    the moveInside() function to do so.
+
+    In addition to the geometric data, a SpatialGridPath object allows client code to store optical
+    depth information with each path segment, as well as information on the interaction point along
+    the path corresponding to a given optical depth. Specifically, each path segment can store
+    either an extinction optical depth (for forced-scattering photon life cycles \em without
+    explicit absorption) or both a scattering and absorption optical depth (for forced-scattering
+    photon life cycles \em with explicit absorption). The interaction point information includes
+    the spatial cell index, the cumulative distance, and the cumulative absorption optical depth
+    (for the second type of photon cycle). */
 class SpatialGridPath
 {
 public:
@@ -80,113 +82,99 @@ public:
         the box. */
     Position moveInside(const Box& box, double eps);
 
-    // ------- Retrieving path segments -------
+    // ------- Working with path segments -------
 
-    // basic data structure holding information about a given segment in the path
-    struct Segment
+    /** This data structure holds information about a given segment in the path. In addition to the
+        spatial information (cell index, incremental distance, cumulative distance) managed by the
+        SpatialGridPath class itself, segments can also store optical depth information managed by
+        client code for forced-scattering photon life cycles. For photon life cycles \em without
+        explicit absorption, just the extinction optical depth is stored. For life cycles \em with
+        explicit absorption, the scattering and absorption optical depth are stored separately. */
+    class Segment
     {
-        int m;          // cell index
-        double ds;      // distance within the cell
-        double s;       // cumulative distance until cell exit
-        double tau;     // cumulative optical depth at cell exit
-                        //    regular photon cycle: extinction (scattering + absorption) optical depth
-                        //    with explicit absorption: scattering optical depth
-        double tauAbs;  // cumulative absorption optical depth at cell exit (only with explicit absorption)
+        int _m;               // cell index
+        double _ds;           // distance within the cell
+        double _s;            // cumulative distance until cell exit
+        double _tauExtOrSca;  // cumulative extinction or scattering optical depth at cell exit
+        double _tauAbs;       // cumulative absorption optical depth at cell exit or zero
+    public:
+        Segment(int m, double ds, double s) : _m(m), _ds(ds), _s(s), _tauExtOrSca{0.}, _tauAbs{0.} {}
+        int m() const { return _m; }
+        double ds() const { return _ds; }
+        double s() const { return _s; }
+        double tauExtOrSca() const { return _tauExtOrSca; }
+        double tauAbs() const { return _tauAbs; }
+        double tauExt() const { return _tauExtOrSca + _tauAbs; }
+        void setOpticalDepth(double tauExt) { _tauExtOrSca = tauExt; }
+        void setOpticalDepth(double tauSca, double tauAbs)
+        {
+            _tauExtOrSca = tauSca;
+            _tauAbs = tauAbs;
+        }
     };
 
-    /** This function returns (a read-only reference to) a list of the current segments in the
-        path. Each Segment object holds the following public data members: the index \em m of the
-        spatial cell being represented, the distance \f$\Delta s\f$ covered by the path inside the
-        cell, the cumulative distance \f$s\f$ covered by the path from its initial position to the
-        exit point from the cell, and the cumulative cumulative optical depth \f$\tau\f$ at the
-        exit point (or zero if this information has not been set for the path). */
+    /** This function returns a read-only reference to the list of the current segments in the
+        path. */
     const vector<Segment>& segments() const { return _segments; }
 
-    // ------- Handling optical depth -------
+    /** This function returns a writable reference to the list of the current segments in the path.
+        Because the segments are writable, the client code can update the stored optical depth
+        information. */
+    vector<Segment>& segments() { return _segments; }
 
-    /** This function sets the extinction (scattering plus absorption) optical depth corresponding
-        to the end of the path segment with zero-based index \f$i\f$ to the specified value. The
-        optical depth values for consecutive segments must form a non-descending sequence, i.e. \f[
-        0\leq\tau_0 \leq\tau_1 \leq\,\dots\, \leq\tau_{N-1}\f] where \f$N\f$ is the number of
-        segments in the path.
-
-        This (non-geometric) information can be stored here as a convenience to client classes. If
-        the index is out of range, undefined behavior results. */
-    void setOpticalDepth(int i, double tau) { _segments[i].tau = tau; }
-
-    /** This function sets the scattering and absorption optical
-        depths corresponding to the end of the path segment with zero-based index \f$i\f$ to the
-        specified values. This function is used in photon cycles with explicit absorption. The
-        scattering optical depth values for consecutive segments must form a non-descending
-        sequence, but this restriction does not hold for the absorption optical depth.
-
-        This (non-geometric) information can be stored here as a convenience to client classes. If
-        the index is out of range, undefined behavior results. */
-    void setOpticalDepth(int i, double tauSca, double tauAbs)
-    {
-        _segments[i].tau = tauSca;
-        _segments[i].tauAbs = tauAbs;
-    }
+    // ------- Handling the interaction point -------
 
     /** This function returns the optical depth corresponding to the end of the last path segment
-        in the path, or zero if the path has no segments. The function assumes that both the
-        geometric and optical depth information for the path have been set; if this is not the
-        case, the behavior is undefined. */
+        in the path, or zero if the path has no segments. The procedure uses the extinction or
+        scattering optical depth depending on which one has been stored in the segments by the
+        client code.
+
+        The function assumes that both the geometric and optical depth information for the path
+        have been set; if this is not the case, the behavior is undefined. */
     double totalOpticalDepth() const;
 
     /** This function determines the interaction point along the path corresponding to the
-        specified optical depth, and stores relevant information about it in data members for later
-        retrieval through the interactionCellIndex() and interactionDistance() functions.
+        specified interaction optical depth, and stores relevant information about it in data
+        members for later retrieval through the interactionCellIndex(), interactionDistance() and
+        interactionOpticalDepth() functions.
+
         Specifically, the function first determines the path segment for which the exit optical
-        depth becomes smaller than the specified optical depth. It then stores the index of the
-        spatial cell corresponding to the interacting segment. Finally, it calculates and stores
-        the distance covered along the path until the specified optical depth has been reached by
-        linear interpolation within the interacting cell. Using linear interpolation is equivalent
-        to assuming exponential behavior of the extinction with distance within the cell.
+        depth becomes larger than the specified interaction optical depth. The procedure uses the
+        extinction or scattering optical depth depending on which one has been stored in the
+        segments by the client code. The function then calculates the distance covered along the
+        path until the interaction optical depth has been reached by linear interpolation within
+        the interacting cell. If applicable, it similarly interpolates and the absorption optical
+        depth at the interaction point. Using linear interpolation is equivalent to assuming
+        exponential behavior of the extinction with distance within the cell. Finally, the function
+        stores the index of the spatial cell corresponding to the interacting segment plus the
+        interpolated values in data members for later retrieval.
 
         The function assumes that both the geometric and optical depth information for the path
         have been set; if this is not the case, the behavior is undefined. */
-    void findInteractionPoint(double tau);
+    void findInteractionPoint(double tauinteract);
 
-    /** This function determines the interaction point along the path corresponding to the
-        specified optical depth, and stores relevant information about it in data members for later
-        retrieval through the interactionCellIndex() and interactionDistance() functions.
-        Specifically, the function first determines the path segment for which the exit optical
-        depth becomes smaller than the specified optical depth. It then stores the index of the
-        spatial cell corresponding to the interacting segment. Finally, it calculates and stores
-        the distance covered along the path until the specified optical depth has been reached by
-        linear interpolation within the interacting cell. Using linear interpolation is equivalent
-        to assuming exponential behavior of the extinction with distance within the cell.
-
-        The function assumes that both the geometric and optical depth information for the path
-        have been set; if this is not the case, the behavior is undefined. */
-    void findExplicitAbsorptionInteractionPoint(double tau);
-
-    /** This function stores the specified spatial cell index and distance to the initial position
-        of the interaction point for later retrieval through the interactionCellIndex() and
-        interactionDistance() functions. */
-    void setInteractionPoint(int m, double s);
-
-    /** This function stores the specified spatial cell index, distance and cumulative optical
-        depth to the initial position of the interaction point for later retrieval through the
-        interactionCellIndex(), interactionDistance(), and interactionOpticalDepth() functions. */
-    void setInteractionPoint(int m, double s, double tau);
+    /** This function stores the specified spatial cell index, distance and cumulative absorption
+        optical depth to the initial position of the interaction point for later retrieval through
+        the interactionCellIndex(), interactionDistance(), and interactionOpticalDepth() functions.
+        */
+    void setInteractionPoint(int m, double s, double tauAbs = 0.);
 
     /** This function returns the spatial cell index corresponding to the interaction point most
-        recently calculated by the findInteractionPoint() function or set by the
-        setInteractionPoint() function, or -1 if these functions have never been called or if there
-        was no interaction point within the path. */
+        recently set by one of the findInteractionPoint() or setInteractionPoint() functions, or -1
+        if these functions have never been called or if there was no interaction point within the
+        path. */
     int interactionCellIndex() const { return _interactionCellIndex; }
 
     /** This function returns the distance along the path from its initial position to the
-        interaction point most recently calculated by the findInteractionPoint() function or set by
-        the setInteractionPoint() function, or zero if these functions have never been called or if
+        interaction point most recently set by one of the findInteractionPoint() or
+        setInteractionPoint() functions, or zero if these functions have never been called or if
         there was no interaction point within the path. */
     double interactionDistance() const { return _interactionDistance; }
 
-    /** This function returns the cumulative optical depth along the path from its initial position
-        to the interaction point most recently set by the setInteractionPoint() function, or zero
-        if this functions has never been called. */
+    /** This function returns the cumulative absorption optical depth along the path from its
+        initial position to the interaction point most recently set by one of the
+        findInteractionPoint() or setInteractionPoint() functions, or zero if these functions has
+        never been called. */
     double interactionOpticalDepth() const { return _interactionOpticalDepth; }
 
     // ------- Data members -------

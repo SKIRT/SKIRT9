@@ -829,7 +829,6 @@ void MediumSystem::setExtinctionOpticalDepths(PhotonPacket* pp) const
 
     // calculate the cumulative optical depth and store it in the photon packet for each path segment
     double tau = 0.;
-    int i = 0;
 
     // single medium, spatially constant cross sections
     if (_config->hasSingleConstantSectionMedium())
@@ -837,8 +836,8 @@ void MediumSystem::setExtinctionOpticalDepths(PhotonPacket* pp) const
         double section = mix(0, 0)->sectionExt(pp->wavelength());
         for (auto& segment : pp->segments())
         {
-            if (segment.m >= 0) tau += section * _state.numberDensity(segment.m, 0) * segment.ds;
-            pp->setOpticalDepth(i++, tau);
+            if (segment.m() >= 0) tau += section * _state.numberDensity(segment.m(), 0) * segment.ds();
+            segment.setOpticalDepth(tau);
         }
     }
 
@@ -849,10 +848,10 @@ void MediumSystem::setExtinctionOpticalDepths(PhotonPacket* pp) const
         for (int h = 0; h != _numMedia; ++h) sectionv[h] = mix(0, h)->sectionExt(pp->wavelength());
         for (auto& segment : pp->segments())
         {
-            if (segment.m >= 0)
+            if (segment.m() >= 0)
                 for (int h = 0; h != _numMedia; ++h)
-                    tau += sectionv[h] * _state.numberDensity(segment.m, h) * segment.ds;
-            pp->setOpticalDepth(i++, tau);
+                    tau += sectionv[h] * _state.numberDensity(segment.m(), h) * segment.ds();
+            segment.setOpticalDepth(tau);
         }
     }
 
@@ -861,13 +860,13 @@ void MediumSystem::setExtinctionOpticalDepths(PhotonPacket* pp) const
     {
         for (auto& segment : pp->segments())
         {
-            if (segment.m >= 0)
+            if (segment.m() >= 0)
             {
-                double lambda =
-                    pp->perceivedWavelength(_state.bulkVelocity(segment.m), _config->hubbleExpansionRate() * segment.s);
-                tau += opacityExt(lambda, segment.m, pp) * segment.ds;
+                double lambda = pp->perceivedWavelength(_state.bulkVelocity(segment.m()),
+                                                        _config->hubbleExpansionRate() * segment.s());
+                tau += opacityExt(lambda, segment.m(), pp) * segment.ds();
             }
-            pp->setOpticalDepth(i++, tau);
+            segment.setOpticalDepth(tau);
         }
     }
 }
@@ -887,7 +886,6 @@ void MediumSystem::setScatteringAndAbsorptionOpticalDepths(PhotonPacket* pp) con
     // calculate the cumulative optical depths and store them in the photon packet for each path segment
     double tauSca = 0.;
     double tauAbs = 0.;
-    int i = 0;
 
     // single medium, spatially constant cross sections
     if (_config->hasSingleConstantSectionMedium())
@@ -896,13 +894,13 @@ void MediumSystem::setScatteringAndAbsorptionOpticalDepths(PhotonPacket* pp) con
         double sectionAbs = mix(0, 0)->sectionAbs(pp->wavelength());
         for (auto& segment : pp->segments())
         {
-            if (segment.m >= 0)
+            if (segment.m() >= 0)
             {
-                double ns = _state.numberDensity(segment.m, 0) * segment.ds;
+                double ns = _state.numberDensity(segment.m(), 0) * segment.ds();
                 tauSca += sectionSca * ns;
                 tauAbs += sectionAbs * ns;
             }
-            pp->setOpticalDepth(i++, tauSca, tauAbs);
+            segment.setOpticalDepth(tauSca, tauAbs);
         }
     }
 
@@ -918,14 +916,14 @@ void MediumSystem::setScatteringAndAbsorptionOpticalDepths(PhotonPacket* pp) con
         }
         for (auto& segment : pp->segments())
         {
-            if (segment.m >= 0)
+            if (segment.m() >= 0)
                 for (int h = 0; h != _numMedia; ++h)
                 {
-                    double ns = _state.numberDensity(segment.m, h) * segment.ds;
+                    double ns = _state.numberDensity(segment.m(), h) * segment.ds();
                     tauSca += sectionScav[h] * ns;
                     tauAbs += sectionAbsv[h] * ns;
                 }
-            pp->setOpticalDepth(i++, tauSca, tauAbs);
+            segment.setOpticalDepth(tauSca, tauAbs);
         }
     }
 
@@ -934,14 +932,14 @@ void MediumSystem::setScatteringAndAbsorptionOpticalDepths(PhotonPacket* pp) con
     {
         for (auto& segment : pp->segments())
         {
-            if (segment.m >= 0)
+            if (segment.m() >= 0)
             {
-                double lambda =
-                    pp->perceivedWavelength(_state.bulkVelocity(segment.m), _config->hubbleExpansionRate() * segment.s);
-                tauSca += opacitySca(lambda, segment.m, pp) * segment.ds;
-                tauAbs += opacityAbs(lambda, segment.m, pp) * segment.ds;
+                double lambda = pp->perceivedWavelength(_state.bulkVelocity(segment.m()),
+                                                        _config->hubbleExpansionRate() * segment.s());
+                tauSca += opacitySca(lambda, segment.m(), pp) * segment.ds();
+                tauAbs += opacityAbs(lambda, segment.m(), pp) * segment.ds();
             }
-            pp->setOpticalDepth(i++, tauSca, tauAbs);
+            segment.setOpticalDepth(tauSca, tauAbs);
         }
     }
 }
