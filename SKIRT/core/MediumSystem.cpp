@@ -888,6 +888,80 @@ void MediumSystem::setOpticalDepths(PhotonPacket* pp) const
 
 ////////////////////////////////////////////////////////////////////
 
+void MediumSystem::setExplicitAbsorptionOpticalDepths(PhotonPacket* pp) const
+{
+    // determine and store the path segments in the photon packet
+    auto generator = getPathSegmentGenerator(_grid, pp);
+    pp->clear();
+    while (generator->next())
+    {
+        pp->addSegment(generator->m(), generator->ds());
+    }
+
+    // calculate the cumulative optical depths and store them in the photon packet for each path segment
+    double tauSca = 0.;
+    double tauAbs = 0.;
+    int i = 0;
+
+    // single medium, spatially constant cross sections
+    if (_config->hasSingleConstantSectionMedium())
+    {
+        double sectionSca = mix(0, 0)->sectionSca(pp->wavelength());
+        double sectionAbs = mix(0, 0)->sectionAbs(pp->wavelength());
+        for (auto& segment : pp->segments())
+        {
+            if (segment.m >= 0)
+            {
+                double ns = _state.numberDensity(segment.m, 0) * segment.ds;
+                tauSca += sectionSca * ns;
+                tauAbs += sectionAbs * ns;
+            }
+            pp->setOpticalDepth(i++, tauSca, tauAbs);
+        }
+    }
+
+    // multiple media, spatially constant cross sections
+    else if (_config->hasMultipleConstantSectionMedia())
+    {
+        ShortArray sectionScav(_numMedia);
+        ShortArray sectionAbsv(_numMedia);
+        for (int h = 0; h != _numMedia; ++h)
+        {
+            sectionScav[h] = mix(0, h)->sectionSca(pp->wavelength());
+            sectionAbsv[h] = mix(0, h)->sectionAbs(pp->wavelength());
+        }
+        for (auto& segment : pp->segments())
+        {
+            if (segment.m >= 0)
+                for (int h = 0; h != _numMedia; ++h)
+                {
+                    double ns =  _state.numberDensity(segment.m, h) * segment.ds;
+                    tauSca += sectionScav[h] * ns;
+                    tauAbs += sectionAbsv[h] * ns;
+                }
+            pp->setOpticalDepth(i++, tauSca, tauAbs);
+        }
+    }
+
+    // spatially variable cross sections
+    else
+    {
+        for (auto& segment : pp->segments())
+        {
+            if (segment.m >= 0)
+            {
+                double lambda =
+                    pp->perceivedWavelength(_state.bulkVelocity(segment.m), _config->hubbleExpansionRate() * segment.s);
+                tauSca += opacitySca(lambda, segment.m, pp) * segment.ds;
+                tauAbs += opacityAbs(lambda, segment.m, pp) * segment.ds;
+            }
+            pp->setOpticalDepth(i++, tauSca, tauAbs);
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
 bool MediumSystem::setInteractionPoint(PhotonPacket* pp, double tauinteract) const
 {
     auto generator = getPathSegmentGenerator(_grid, pp);

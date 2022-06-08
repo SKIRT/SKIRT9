@@ -482,6 +482,40 @@ public:
         to zero by definition. */
     void setOpticalDepths(PhotonPacket* pp) const;
 
+    /** This function calculates the cumulative scattering and absorption optical depths at the end
+        of each path segment along a path through the medium system defined by the initial position
+        and direction of the specified PhotonPacket object, and stores the results of the
+        calculation into the same PhotonPacket object.
+
+        This function is intended for handling random-walk photon packet paths during a
+        forced-scattering photon life cycle that uses explicit absorption. In this case, the next
+        interaction point is determined based on the scattering optical depth (as opposed to the
+        total extinction optical depth), so we need to calculate and store the scattering and
+        absorption optical depths separately.
+
+        Because it is at the heart of the photon life cycle, performance is important. Firstly,
+        separating the geometric and optical depth calculations seems to be faster, probably due to
+        memory access and caching issues. So the function first determines and stores the path
+        segments and then calculates and stores the cumulative optical depth at the end of each
+        segment. Secondly, the function implements optimized versions for media with spatially
+        constant cross sections.
+
+        With the geometric path information given, the function calculates the optical depth for
+        each path segment \f$(\Delta s)_m\f$ as it crosses the spatial cell with index \f$m\f$ as
+        \f[ \tau_m = (\Delta s)_m \sum_h k_{m,h}^\text{ext}, \f] where \f$k_{m,h}^\text{ext}\f$ is
+        the extinction opacity corresponding to the \f$h\f$'th medium component in the cell with
+        index \f$m\f$ and the sum over \f$h\f$ runs over all medium components. The opacities
+        \f$k_{m,h}^\text{ext}\f$ are calculated at the wavelength perceived by the medium in cell
+        \f$m\f$ taking into account the bulk velocity and Hubble expansion velocity in that cell,
+        and taking into account any relevant properties of the incoming photon packet such as the
+        polarization state.
+
+        Using these optical depth values per segment, the function determines the cumulative
+        optical depth at the segment exit boundaries and stores them into the specified photon
+        packet object as well. Note that the optical depth at entry of the initial segment is equal
+        to zero by definition. */
+    void setExplicitAbsorptionOpticalDepths(PhotonPacket* pp) const;
+
     /** This function calculates the cumulative optical depth and distance at the end of path
         segments along a path through the medium system defined by the initial position and
         direction of the specified PhotonPacket object until the specified interaction optical

@@ -522,6 +522,66 @@ private:
         information). The packet is now ready to be scattered into a new direction. */
     void simulateForcedPropagation(PhotonPacket* pp);
 
+    /** This function determines the next scattering location of a photon packet in a photon life
+        cycle with forced scattering and simulates its propagation to that position. The function
+        assumes that both the geometric and optical depth information for the photon packet's path
+        have been set; if this is not the case, the behavior is undefined. This function proceeds
+        in a number of steps as outlined below.
+
+        <b>Total optical depth</b>
+
+        We first determine the total optical depth \f$\tau_\text{path}\f$ of the photon packet's
+        path. Because the path has been calculated until the edge of the simulation's spatial grid,
+        \f$\tau_\text{path}\f$ is equal to the cumulative optical depth at the end of the last
+        segment in the path.
+
+        <b>%Random optical depth</b>
+
+        We then randomly generate the optical depth \f$\tau\f$ at the interaction site from an
+        appropriate distribution. Given the total optical depth along the path of the photon packet
+        \f$\tau_\text{path}\f$, the appropriate probability distribution for the covered optical
+        depth is an exponential probability distribution cut off at \f$\tau_\text{path}\f$.
+        Properly normalized, it reads as \f[ p(\tau) = \frac{{\text{e}}^{-\tau}}
+        {1-{\text{e}}^{-\tau_\text{path}}} \f] where the range of \f$\tau\f$ is limited to the
+        interval \f$[0,\tau_\text{path}]\f$. Instead of generating a random optical depth
+        \f$\tau\f$ directly from this distribution, we use the biasing technique in order to cover
+        the entire allowed optical depth range \f$[0,\tau_\text{path}]\f$ more uniformly. As the
+        biased probability distribution, we use a linear combination between an exponential
+        distribution and a uniform distribution, with a parameter \f$\xi\f$ setting the relative
+        importance of the uniform part. In formula form, \f[ q(\tau) = (1-\xi)\, \frac{
+        {\text{e}}^{-\tau} } { 1-{\text{e}}^{-\tau_\text{path}} } + \frac{\xi}{\tau_\text{path}}.
+        \f] A random optical depth from this distribution is readily determined. Since we use
+        biasing, the weight, or correspondingly the luminosity, of the photon packet needs to be
+        adjusted with a bias factor \f$p(\tau)/q(\tau)\f$.
+
+        <b>Interaction point</b>
+
+        Now that the optical depth \f$\tau\f$ at the interaction site has been (randomly) chosen,
+        we determine the physical position of the interaction point along the path. This is
+        accomplished in two steps: a binary search among the path segments to determine the segment
+        (or cell) "containing" the given cumulative optical depth, and subsequent linear
+        interpolation within the cell assuming exponential behavior of the extinction.
+
+        <b>Albedo</b>
+
+        We calculate the scattering albedo \f$\varpi\f$ of the medium at the interaction point (or
+        more precisely, for the spatial cell containing the interaction point).
+
+        <b>Weight adjustment</b>
+
+        We adjust the weight of the photon packet to compensate for the escaped and absorbed
+        portions of the luminosity. More precisely, the weight is multiplied by the scattered
+        fraction, i.e. the fraction of the luminosity that does not escape and does not get
+        absorbed, \f[ f_\text{sca} = (1-f_\text{esc}) \,\varpi = (1-\text{e}^{-\tau_\text{path}})
+        \,\varpi. \f]
+
+        <b>Advance position</b>
+
+        Finally we advance the initial position of the photon packet to the interaction point. This
+        last step invalidates the photon packet's path (including geometric and optical depth
+        information). The packet is now ready to be scattered into a new direction. */
+    void simulateForcedExplicitAbsorptionPropagation(PhotonPacket* pp);
+
     /** This function simulates the propagation of a photon packet to the next scattering location
         in a photon life cycle without forced scattering. It proceeds in a number of steps as
         outlined below. The function returns false if the photon packet must be terminated.

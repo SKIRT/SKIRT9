@@ -43,7 +43,7 @@ void SpatialGridPath::addSegment(int m, double ds)
     if (ds > 0)
     {
         _s += ds;
-        _segments.push_back(Segment{m, ds, _s, 0.});
+        _segments.push_back(Segment{m, ds, _s, 0., 0.});
     }
 }
 
@@ -195,6 +195,50 @@ void SpatialGridPath::findInteractionPoint(double tau)
         {
             _interactionCellIndex = (seg - 1)->m;
             _interactionDistance = (seg - 1)->s;
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
+void SpatialGridPath::findExplicitAbsorptionInteractionPoint(double tau)
+{
+    // we can't handle an empty path
+    if (_segments.empty())
+    {
+        _interactionCellIndex = -1;
+        _interactionDistance = 0.;
+        _interactionOpticalDepth = 0.;
+    }
+    else
+    {
+        // find a pointer to the first segment that has an exit optical depth strictly larger than the given value,
+        // (so that we never select an empty segment) or a pointer beyond the list if no such element is found
+        auto seg = std::upper_bound(_segments.cbegin(), _segments.cend(), tau,
+                                    [](double t, const Segment& seg) { return t < seg.tau; });
+
+        // if we find the first segment, interpolate with the path's entry point
+        if (seg == _segments.cbegin())
+        {
+            _interactionCellIndex = seg->m;
+            _interactionDistance = NR::interpolateLinLin(tau, 0., seg->tau, 0., seg->s);
+            _interactionOpticalDepth = NR::interpolateLinLin(tau, 0., seg->tau, 0., seg->tauAbs);
+        }
+
+        // if we find some other segment, interpolate with the previous segment
+        else if (seg < _segments.cend())
+        {
+            _interactionCellIndex = seg->m;
+            _interactionDistance = NR::interpolateLinLin(tau, (seg - 1)->tau, seg->tau, (seg - 1)->s, seg->s);
+            _interactionOpticalDepth = NR::interpolateLinLin(tau, (seg - 1)->tau, seg->tau, (seg - 1)->tauAbs, seg->tauAbs);
+        }
+
+        // if we are precisely at or beyond the exit optical depth of the last segment, just use the last segment
+        else
+        {
+            _interactionCellIndex = (seg - 1)->m;
+            _interactionDistance = (seg - 1)->s;
+            _interactionOpticalDepth = (seg - 1)->tauAbs;
         }
     }
 }

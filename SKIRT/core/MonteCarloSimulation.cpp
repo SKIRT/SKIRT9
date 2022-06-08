@@ -531,26 +531,53 @@ void MonteCarloSimulation::performLifeCycle(size_t firstIndex, size_t numIndices
                 {
                     if (_config->forceScattering())
                     {
-                        // --- forced scattering ---
-                        double Lthreshold = pp.luminosity() / _config->minWeightReduction();
-                        int minScattEvents = _config->minScattEvents();
-                        while (true)
+                        if (!_config->explicitAbsorption())
                         {
-                            // calculate segments and optical depths for the complete path
-                            mediumSystem()->setOpticalDepths(&pp);
+                            // --- forced scattering ---
+                            double Lthreshold = pp.luminosity() / _config->minWeightReduction();
+                            int minScattEvents = _config->minScattEvents();
+                            while (true)
+                            {
+                                // calculate segments and optical depths for the complete path
+                                mediumSystem()->setOpticalDepths(&pp);
 
-                            // advance the packet
-                            if (store) storeRadiationField(&pp);
-                            simulateForcedPropagation(&pp);
+                                // advance the packet
+                                if (store) storeRadiationField(&pp);
+                                simulateForcedPropagation(&pp);
 
-                            // if the packet's weight drops below the threshold, terminate it
-                            if (pp.luminosity() <= 0
-                                || (pp.luminosity() <= Lthreshold && pp.numScatt() >= minScattEvents))
-                                break;
+                                // if the packet's weight drops below the threshold, terminate it
+                                if (pp.luminosity() <= 0
+                                    || (pp.luminosity() <= Lthreshold && pp.numScatt() >= minScattEvents))
+                                    break;
 
-                            // process the scattering event
-                            if (peel) peelOffScattering(&pp, &ppp);
-                            mediumSystem()->simulateScattering(random(), &pp);
+                                // process the scattering event
+                                if (peel) peelOffScattering(&pp, &ppp);
+                                mediumSystem()->simulateScattering(random(), &pp);
+                            }
+                        }
+                        else
+                        {
+                            // --- forced scattering, explicit absorption ---
+                            double Lthreshold = pp.luminosity() / _config->minWeightReduction();
+                            int minScattEvents = _config->minScattEvents();
+                            while (true)
+                            {
+                                // calculate segments and optical depths for the complete path
+                                mediumSystem()->setExplicitAbsorptionOpticalDepths(&pp);
+
+                                // advance the packet
+                                if (store) storeRadiationField(&pp);
+                                simulateForcedExplicitAbsorptionPropagation(&pp);
+
+                                // if the packet's weight drops below the threshold, terminate it
+                                if (pp.luminosity() <= 0
+                                    || (pp.luminosity() <= Lthreshold && pp.numScatt() >= minScattEvents))
+                                    break;
+
+                                // process the scattering event
+                                if (peel) peelOffScattering(&pp, &ppp);
+                                mediumSystem()->simulateScattering(random(), &pp);
+                            }
                         }
                     }
                     else
@@ -633,7 +660,7 @@ void MonteCarloSimulation::storeRadiationField(const PhotonPacket* pp)
             double extBeg = 1.;
             for (const auto& segment : pp->segments())
             {
-                double lnExtEnd = -segment.tau;  // extinction factor and its logarithm at end of current segment
+                double lnExtEnd = -(segment.tau+segment.tauAbs);  // extinction factor and its logarithm at end of current segment
                 double extEnd = exp(lnExtEnd);
                 int m = segment.m;
                 if (m >= 0)
@@ -654,7 +681,7 @@ void MonteCarloSimulation::storeRadiationField(const PhotonPacket* pp)
         double extBeg = 1.;
         for (const auto& segment : pp->segments())
         {
-            double lnExtEnd = -segment.tau;  // extinction factor and its logarithm at end of current segment
+            double lnExtEnd = -(segment.tau+segment.tauAbs);  // extinction factor and its logarithm at end of current segment
             double extEnd = exp(lnExtEnd);
             int m = segment.m;
             if (m >= 0)
@@ -714,6 +741,49 @@ void MonteCarloSimulation::simulateForcedPropagation(PhotonPacket* pp)
 
     // adjust the weight by the scattered fraction
     pp->applyBias(-expm1(-taupath) * albedo);
+
+    // advance the position
+    pp->propagate(pp->interactionDistance());
+}
+
+////////////////////////////////////////////////////////////////////
+
+void MonteCarloSimulation::simulateForcedExplicitAbsorptionPropagation(PhotonPacket* pp)
+{
+    // get the total optical depth
+    double taupath = pp->totalOpticalDepth();
+
+    // if there is no extinction along the path, this photon packet cannot scatter, so terminate it right away
+    if (taupath <= 0.)
+    {
+        pp->applyBias(0.);
+        return;
+    }
+
+    // generate a random optical depth
+    double xi = _config->pathLengthBias();
+    double tau = 0.;
+    if (xi == 0.)
+    {
+        tau = random()->exponCutoff(taupath);
+    }
+    else
+    {
+        tau = random()->uniform() < xi ? random()->uniform() * taupath : random()->exponCutoff(taupath);
+        double p = -exp(-tau) / expm1(-taupath);
+        double q = (1.0 - xi) * p + xi / taupath;
+        double weight = p / q;
+        pp->applyBias(weight);
+    }
+
+    // determine the physical position of the interaction point
+    pp->findExplicitAbsorptionInteractionPoint(tau);
+
+    // get the cumulative absorption optical depth at the interaction point
+    double tauAbs = pp->interactionOpticalDepth();
+
+    // adjust the packet weight by the corresponding extinction (or stimulation, for negative optical depth)
+    pp->applyBias(-expm1(-taupath) * exp(-tauAbs));
 
     // advance the position
     pp->propagate(pp->interactionDistance());
