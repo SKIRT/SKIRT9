@@ -539,7 +539,7 @@ void MonteCarloSimulation::performLifeCycle(size_t firstIndex, size_t numIndices
                             while (true)
                             {
                                 // calculate segments and optical depths for the complete path
-                                mediumSystem()->setOpticalDepths(&pp);
+                                mediumSystem()->setExtinctionOpticalDepths(&pp);
 
                                 // advance the packet
                                 if (store) storeRadiationField(&pp);
@@ -563,7 +563,7 @@ void MonteCarloSimulation::performLifeCycle(size_t firstIndex, size_t numIndices
                             while (true)
                             {
                                 // calculate segments and optical depths for the complete path
-                                mediumSystem()->setExplicitAbsorptionOpticalDepths(&pp);
+                                mediumSystem()->setScatteringAndAbsorptionOpticalDepths(&pp);
 
                                 // advance the packet
                                 if (store) storeRadiationField(&pp);
@@ -798,7 +798,7 @@ bool MonteCarloSimulation::simulateNonForcedPropagation(PhotonPacket* pp)
 
     // find the physical interaction point corresponding to this optical depth
     // if the interaction point is outside of the path, terminate the photon packet
-    if (!mediumSystem()->setInteractionPoint(pp, tauinteract)) return false;
+    if (!mediumSystem()->setInteractionPointUsingExtinction(pp, tauinteract)) return false;
 
     // calculate the albedo for the cell containing the interaction point
     double albedo = mediumSystem()->albedoForScattering(pp);
@@ -821,7 +821,7 @@ bool MonteCarloSimulation::simulateNonForcedExplicitAbsorptionPropagation(Photon
     // find the physical interaction point corresponding to this scattering optical depth
     // and calculate the absorption optical depth at the interaction point;
     // if the interaction point is outside of the path, terminate the photon packet
-    if (!mediumSystem()->setExplicitAbsorptionInteractionPoint(pp, tauinteract)) return false;
+    if (!mediumSystem()->setInteractionPointUsingScatteringAndAbsorption(pp, tauinteract)) return false;
 
     // get the cumulative absorption optical depth at the interaction point
     double tauAbs = pp->interactionOpticalDepth();

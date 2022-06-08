@@ -817,21 +817,7 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::getOpticalDepth(const SpatialGridPath* path, double lambda, MaterialMix::MaterialType type) const
-{
-    // determine the geometric details of the path and calculate the optical depth at the same time
-    auto generator = getPathSegmentGenerator(_grid, path);
-    double tau = 0.;
-    while (generator->next())
-    {
-        if (generator->m() >= 0) tau += opacityExt(lambda, generator->m(), type) * generator->ds();
-    }
-    return tau;
-}
-
-////////////////////////////////////////////////////////////////////
-
-void MediumSystem::setOpticalDepths(PhotonPacket* pp) const
+void MediumSystem::setExtinctionOpticalDepths(PhotonPacket* pp) const
 {
     // determine and store the path segments in the photon packet
     auto generator = getPathSegmentGenerator(_grid, pp);
@@ -888,7 +874,7 @@ void MediumSystem::setOpticalDepths(PhotonPacket* pp) const
 
 ////////////////////////////////////////////////////////////////////
 
-void MediumSystem::setExplicitAbsorptionOpticalDepths(PhotonPacket* pp) const
+void MediumSystem::setScatteringAndAbsorptionOpticalDepths(PhotonPacket* pp) const
 {
     // determine and store the path segments in the photon packet
     auto generator = getPathSegmentGenerator(_grid, pp);
@@ -935,7 +921,7 @@ void MediumSystem::setExplicitAbsorptionOpticalDepths(PhotonPacket* pp) const
             if (segment.m >= 0)
                 for (int h = 0; h != _numMedia; ++h)
                 {
-                    double ns =  _state.numberDensity(segment.m, h) * segment.ds;
+                    double ns = _state.numberDensity(segment.m, h) * segment.ds;
                     tauSca += sectionScav[h] * ns;
                     tauAbs += sectionAbsv[h] * ns;
                 }
@@ -962,7 +948,7 @@ void MediumSystem::setExplicitAbsorptionOpticalDepths(PhotonPacket* pp) const
 
 ////////////////////////////////////////////////////////////////////
 
-bool MediumSystem::setInteractionPoint(PhotonPacket* pp, double tauinteract) const
+bool MediumSystem::setInteractionPointUsingExtinction(PhotonPacket* pp, double tauinteract) const
 {
     auto generator = getPathSegmentGenerator(_grid, pp);
     double tau = 0.;
@@ -1059,7 +1045,7 @@ bool MediumSystem::setInteractionPoint(PhotonPacket* pp, double tauinteract) con
 
 ////////////////////////////////////////////////////////////////////
 
-bool MediumSystem::setExplicitAbsorptionInteractionPoint(PhotonPacket* pp, double tauinteract) const
+bool MediumSystem::setInteractionPointUsingScatteringAndAbsorption(PhotonPacket* pp, double tauinteract) const
 {
     auto generator = getPathSegmentGenerator(_grid, pp);
     double tauSca = 0.;
@@ -1089,8 +1075,8 @@ bool MediumSystem::setExplicitAbsorptionInteractionPoint(PhotonPacket* pp, doubl
             // if the interaction point is inside this segment, store it in the photon packet
             if (tauinteract < tauSca)
             {
-                tauAbs = tauinteract * sectionAbs / sectionSca;
-                pp->setInteractionPoint(m, NR::interpolateLinLin(tauinteract, tauSca0, tauSca, s0, s), tauAbs);
+                pp->setInteractionPoint(m, NR::interpolateLinLin(tauinteract, tauSca0, tauSca, s0, s),
+                                        tauinteract * sectionAbs / sectionSca);
                 return true;
             }
         }
@@ -1176,13 +1162,14 @@ bool MediumSystem::setExplicitAbsorptionInteractionPoint(PhotonPacket* pp, doubl
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::getOpticalDepth(PhotonPacket* pp, double distance) const
+double MediumSystem::getExtinctionOpticalDepth(const PhotonPacket* pp, double distance) const
 {
-    // determine the optical depth at which the packet's contribution becomes zero
-    // or abort right away if the contribution is zero to begin with
+    // abort if the packet's contribution is zero to begin with
     double L = pp->luminosity();
     if (L <= 0) return std::numeric_limits<double>::infinity();
-    double taumax = std::log(L) + 745;
+
+    // if extinction is always positive, determine the optical depth at which the packet's contribution becomes zero
+    double taumax = _config->hasNegativeExtinction() ? std::numeric_limits<double>::infinity() : std::log(L) + 745;
 
     // determine the geometric details of the path and calculate the optical depth at the same time
     auto generator = getPathSegmentGenerator(_grid, pp);
@@ -1242,6 +1229,21 @@ double MediumSystem::getOpticalDepth(PhotonPacket* pp, double distance) const
         }
     }
 
+    return tau;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::getExtinctionOpticalDepth(const SpatialGridPath* path, double lambda,
+                                               MaterialMix::MaterialType type) const
+{
+    // determine the geometric details of the path and calculate the optical depth at the same time
+    auto generator = getPathSegmentGenerator(_grid, path);
+    double tau = 0.;
+    while (generator->next())
+    {
+        if (generator->m() >= 0) tau += opacityExt(lambda, generator->m(), type) * generator->ds();
+    }
     return tau;
 }
 

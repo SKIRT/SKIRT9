@@ -241,7 +241,7 @@ void FluxRecorder::detect(PhotonPacket* pp, int l, double distance)
             }
             else
             {
-                tau = _ms->getOpticalDepth(pp, distance);
+                tau = _ms->getExtinctionOpticalDepth(pp, distance);
                 pp->setObservedOpticalDepth(tau);
             }
             Lext *= exp(-tau);
