@@ -295,6 +295,11 @@ public:
 
     // ----> photon cycle
 
+    /** Returns true if the extinction cross section (the sum of the absorption and scattering
+        cross section) for one or more material mixes in the simulation can be negative, and false
+        if not. */
+    bool hasNegativeExtinction() const { return _hasNegativeExtinction; }
+
     /** Returns true if explicit absorption should be used during the photon cycle, false if not.
         */
     bool explicitAbsorption() const { return _explicitAbsorption; }
@@ -461,6 +466,7 @@ private:
     double _maxFractionOfPrevious{0.03};
 
     // photon cycle
+    bool _hasNegativeExtinction{false};
     bool _explicitAbsorption{false};
     bool _forceScattering{true};
     double _minWeightReduction{1e4};

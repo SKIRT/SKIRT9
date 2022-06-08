@@ -18,6 +18,14 @@ MaterialMix::MaterialType TrivialGasMix::materialType() const
 
 ////////////////////////////////////////////////////////////////////
 
+bool TrivialGasMix::hasNegativeExtinction() const
+{
+    // capture the border case where the magnitudes are nonzero and equal
+    return absorptionCrossSection() < 0. && (absorptionCrossSection() + scatteringCrossSection()) <= 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
 vector<StateVariable> TrivialGasMix::specificStateVariableInfo() const
 {
     return vector<StateVariable>{StateVariable::numberDensity()};

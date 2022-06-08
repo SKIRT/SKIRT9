@@ -243,6 +243,22 @@ public:
         false. */
     virtual bool hasResonantScattering() const;
 
+    /** This function returns true if the extinction cross section (the sum of the absorption and
+        scattering cross section) for this material mix can be negative, and false otherwise. The
+        default implementation in this base class returns false.
+
+        For all material mixes, the scattering cross section must always be positive or zero for
+        all wavelengths and material properties. The absorption cross section at a given wavelength
+        can be negative if the material exhibits stimulated emission at that wavelength. As long as
+        the magnitude of the absorption cross section is guaranteed to be smaller than the
+        scattering cross section, the extinction cross section (the sum of both cross sections)
+        always remains positive, and this function can safely return false. As soon as the
+        magnitude of the negative absorption cross section can be larger than the scattering cross
+        section for some wavelengths and material properties, this function must return true. This
+        allows the photon cycle machinery to properly handle negative extinction cross sections
+        and the corresponding negative optical depths. */
+    virtual bool hasNegativeExtinction() const;
+
     /** This function returns true if this material mix represents dust and supports stochastic
         heating of dust grains for the calculation of secondary emission, and false otherwise. The
         default implementation in this base class returns false. */

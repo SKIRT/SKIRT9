@@ -107,6 +107,13 @@ void Configuration::setupSelfBefore()
     _minScattEvents = ms->photonPacketOptions()->minScattEvents();
     _pathLengthBias = ms->photonPacketOptions()->pathLengthBias();
 
+    // check for negative extinction, which requires explicit absorption
+    for (auto medium : ms->media())
+        if (medium->mix()->hasNegativeExtinction()) _hasNegativeExtinction = true;
+    if (_hasNegativeExtinction && !_explicitAbsorption)
+        throw FATALERROR(
+            "Media with negative extinction (stimulated emission) require explicit absorption to be enabled");
+
     // retrieve Lyman-alpha options
     if (simulationMode == SimulationMode::LyaExtinctionOnly)
     {
@@ -272,7 +279,7 @@ void Configuration::setupSelfBefore()
         }
     }
 
-    // check for semi-dymamic medium state
+    // check for semi-dynamic medium state
     if (_hasSecondaryEmission)
         for (auto medium : ms->media())
             if (medium->mix()->hasSemiDynamicMediumState()) _hasSemiDynamicState = true;

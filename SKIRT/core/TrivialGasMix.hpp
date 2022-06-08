@@ -52,6 +52,11 @@ public:
         is MaterialType::Gas. */
     MaterialType materialType() const override;
 
+    /** This function returns true if the configured extinction cross section (the sum of the
+        configured absorption and scattering cross section) for this material mix is negative, and
+        false otherwise. */
+    bool hasNegativeExtinction() const override;
+
     //======== Medium state setup =======
 
 public:
