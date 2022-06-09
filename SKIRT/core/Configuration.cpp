@@ -110,9 +110,6 @@ void Configuration::setupSelfBefore()
     // check for negative extinction, which requires explicit absorption
     for (auto medium : ms->media())
         if (medium->mix()->hasNegativeExtinction()) _hasNegativeExtinction = true;
-    if (_hasNegativeExtinction && !_explicitAbsorption)
-        throw FATALERROR(
-            "Media with negative extinction (stimulated emission) require explicit absorption to be enabled");
 
     // retrieve Lyman-alpha options
     if (simulationMode == SimulationMode::LyaExtinctionOnly)
@@ -419,6 +416,14 @@ void Configuration::setupSelfAfter()
     }
 
     // --- other warnings ---
+
+    // enable explicit absorption when we have negative extinction because
+    // the photon cycle without explicit absorption does not support negative extinction
+    if (_hasNegativeExtinction && !_explicitAbsorption)
+    {
+        log->warning("  Enabling explicit absorption to allow handling negative extinction cross sections");
+        _explicitAbsorption = true;
+    }
 
     // enable forced scattering when we have a radiation field because
     // the photon cycle without forced scattering does not support storing the radiation field
