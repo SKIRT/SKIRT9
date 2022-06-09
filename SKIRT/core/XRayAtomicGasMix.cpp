@@ -677,7 +677,7 @@ void XRayAtomicGasMix::setupSelfBefore()
     }
 
     // load the photo-absorption cross section parameters
-    auto crossSectionParams = loadStruct<CrossSectionParams, 11>(this, "XRay_PA.txt", "photo-absorption data");
+    auto crossSectionParams = loadStruct<CrossSectionParams, 12>(this, "XRay_PA.txt", "photo-absorption data");
 
     // load the fluorescence parameters
     auto fluorescenceParams = loadStruct<FluorescenceParams, 4>(this, "XRay_FL.txt", "fluorescence data");
