@@ -556,7 +556,7 @@ void MonteCarloSimulation::performLifeCycle(size_t firstIndex, size_t numIndices
                             mediumSystem()->simulateScattering(random(), &pp);
                         }
                     }
-                    // --- no forced scattering ---
+                    // --- non-forced scattering ---
                     else
                     {
                         while (true)

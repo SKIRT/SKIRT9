@@ -149,6 +149,40 @@ class SecondarySourceSystem;
     SDMS at the end of a segment that performs peel-off to the instruments because the update does
     not affect the outcome of a primary emission segment.
 
+    <b>Photon life cycle</b>
+
+    As mentioned above, each segment processes the life cycles for a set of photon packets,
+    including emission and propagation through the medium and up to the instruments. The
+    PhotonPacketOptions allow configuring four basic variations of the photon packet life cycle by
+    enabling or disabling forced scattering and/or explicit absorption. Each of these variations
+    comes with specific advantages or drawbacks, as follows:
+
+    - With forced scattering. Forced scattering tends to reduce noise for simulations with low to
+    limited optical depths, such as for most dust models on galaxy-wide scales. However, for each
+    scattering event, it requires the calculation of the geometry and optical depth of the full
+    path up to the model boundary, regardless of the location of the scattering event along the
+    path.
+
+    - Without forced scattering. In models with very intensive scattering, such as for Lyman-alpha
+    line transfer, the photon cycle without forced scattering is often the better choice, because
+    it avoids calculating the path geometry and optical depth beyond the scattering location.
+    However, our implementation does not support storing the radiation field, which means this
+    option cannot be used when the simulation includes secondary emission or dynamic state
+    iteration.
+
+    - Without explicit absorption. The default technique uses the extinction (sum of scattering and
+    absorption) along a photon packet's path to locate the next interaction point. This requires
+    the cumulative extinction optical depth to be a nondecreasing function of path length. It is
+    thus not possible to handle negative extinction cross sections.
+
+    - With explicit absorption. This technique instead used the scattering optical depth to locate
+    the next interaction point. While the scattering cross section still must be nonnegative, this
+    allows the extinction cross section to be negative. The latter is the case for materials that
+    exhibit stimulated emission as soon as the magnitude of the negative absorption cross section
+    is larger than the scattering cross section. As a drawback, this technique requires calculating
+    both the scattering and absorption optical depths for the photon packet path.
+
+    Refer to the performLifeCycle() function for more information on these life cycle variations.
     */
 class MonteCarloSimulation : public Simulation
 {
@@ -383,23 +417,40 @@ private:
 
     /** This function launches the specified chunk of photon packets from primary or secondary
         sources, and it implements the complete life-cycle for each of these photon packets. This
-        includes emission and multiple forced scattering events, and, if requested, the
-        corresponding peel-off towards the instruments, and registration of the contribution to the
-        radiation field in each spatial cell crossed.
+        includes emission and multiple scattering events, and, if requested, the corresponding
+        peel-off towards the instruments, and registration of the contribution to the radiation
+        field in each spatial cell crossed.
 
         A photon packet is born when it is emitted by either the primary or the secondary source
         system. Immediately after birth, peel-off photon packets are created and launched towards
-        the instruments (one for each instrument). If the simulation contains one or more media,
-        the photon packet now enters a cycle which consists of different steps. First, all details
-        of the path of the photon packet through the medium are calculated and stored. Based on
-        this information, the contribution of the photon packet to the radiation field in each
-        spatial cell can be stored. The packet is then propagated to a new (random) scattering
-        position, and its weight (luminosity) is adjusted for the escape fraction and the absorbed
-        energy. If the photon packet is still sufficiently luminous, scattering peel-off photon
-        packets are created and launched towards each instrument, and the actual scattering event
-        is simulated. Finally, the loop repeats itself. It is terminated only when the photon
-        packet has lost a substantial part of its original luminosity (and hence becomes
-        irrelevant).
+        the instruments, if so requested. If the simulation contains one or more media, the photon
+        packet now enters one of two life cycles: the forced scattering life cycle or the
+        non-forced scattering life cycle.
+
+        - Forced scattering. First, the geometry and optical depth information of the photon packet
+        path through the medium up to the model boundary is calculated and stored in the photon
+        packet. If explicit absorption is enabled, the scattering and absorption optical depth must
+        be calculated separately. Otherwise, it suffices to calculate and store the extinction
+        optical depth (i.e. the sum of both). Based on this information, the contribution of the
+        photon packet to the radiation field in each spatial cell can be stored, if so requested.
+        The packet is then propagated to a new (random) scattering position, and its weight
+        (luminosity) is adjusted for the escape fraction and the absorbed energy. The details of
+        this process depend on whether explicit absorption is enabled or not. Refer to the
+        simulateForcedPropagation() function. If, after this adjustment, the photon packet is still
+        sufficiently luminous, scattering peel-off photon packets are created and launched towards
+        each instrument, if so requested, and the actual scattering event is simulated. Finally,
+        the loop repeats itself. It is terminated only when the photon packet has lost a
+        substantial part of its original luminosity (and hence becomes irrelevant).
+
+        - Non-forced scattering. The photon packet is propagated to a new (random) scattering
+        position, calculating the path geometry and optical depth information on the fly up to the
+        interaction location. Because the path segment information is not stored, it is impossible
+        to register the radiation field (in the current implementation). The details of the
+        propagation process depend on whether explicit absorption is enabled or not. Refer to the
+        simulateNonForcedPropagation() function. If the selected interaction point turns out to be
+        beyond the model boundary, the packet is terminated. Otherwise, scattering peel-off photon
+        packets are created and launched towards each instrument, if so requested, the actual
+        scattering event is simulated, and the loop repeats itself.
 
         The first two arguments of this function specify the range of photon packet history indices
         to be handled. The \em primary flag is true to launch from primary sources, false for
@@ -421,7 +472,8 @@ private:
         photon packet would have been emitted towards the observer is not the same as the
         probability that it is emitted in any other direction. If the source has a nonzero
         velocity, the wavelength of the peel-off photon packet is Doppler-shifted for the new
-        direction.
+        direction. If the photon packet is polarized, the Stokes vector is rotated into the frame
+        of the target instrument.
 
         The first argument specifies the photon packet that was just emitted; the second argument
         provides a placeholder peel off photon packet for use by the function. */
@@ -473,7 +525,8 @@ private:
         We first determine the total optical depth \f$\tau_\text{path}\f$ of the photon packet's
         path. Because the path has been calculated until the edge of the simulation's spatial grid,
         \f$\tau_\text{path}\f$ is equal to the cumulative optical depth at the end of the last
-        segment in the path.
+        segment in the path. If explicit absorption is disabled, this step uses the extinction
+        optical depth. If explicit absorption is enabled, it uses the scattering optical depth.
 
         <b>%Random optical depth</b>
 
@@ -500,20 +553,28 @@ private:
         we determine the physical position of the interaction point along the path. This is
         accomplished in two steps: a binary search among the path segments to determine the segment
         (or cell) "containing" the given cumulative optical depth, and subsequent linear
-        interpolation within the cell assuming exponential behavior of the extinction.
-
-        <b>Albedo</b>
-
-        We calculate the scattering albedo \f$\varpi\f$ of the medium at the interaction point (or
-        more precisely, for the spatial cell containing the interaction point).
+        interpolation within the cell assuming exponential behavior of the extinction. Again, if
+        explicit absorption is disabled, this step uses the extinction optical depth. If explicit
+        absorption is enabled, it uses the scattering optical depth.
 
         <b>Weight adjustment</b>
 
         We adjust the weight of the photon packet to compensate for the escaped and absorbed
-        portions of the luminosity. More precisely, the weight is multiplied by the scattered
-        fraction, i.e. the fraction of the luminosity that does not escape and does not get
-        absorbed, \f[ f_\text{sca} = (1-f_\text{esc}) \,\varpi = (1-\text{e}^{-\tau_\text{path}})
-        \,\varpi. \f]
+        portions of the luminosity through multiplication by a bias factor \f$b\f$.
+
+        If explicit absorption is disabled, the bias factor is given by the scattered fraction,
+        i.e. the fraction of the luminosity that does not escape and does not get absorbed, \f[ b =
+        f_\text{sca} = (1-f_\text{esc}) \,\varpi_\text{int} =
+        (1-\text{e}^{-\tau^\text{ext}_\text{path}}) \,\varpi_\text{int}, \f] where
+        \f$\varpi_\text{int}\f$ is the scattering albedo of the medium at the interaction point (or
+        more precisely, for the spatial cell containing the interaction point).
+
+        If explicit absorption is enabled, the factor compensating for the escape fraction remains
+        the same, but now calculated using the scattering optical depth, and the albedo is replaced
+        by the absorbed fraction along the path up to the interaction point, \f[ b =
+        (1-\text{e}^{-\tau^\text{sca}_\text{path}}) \,\text{e}^{-\tau^\text{abs}_\text{int}}, \f]
+        where \f$\tau^\text{abs}_\text{int}\f$ is the absorption optical depth at the interaction
+        point.
 
         <b>Advance position</b>
 
@@ -524,7 +585,8 @@ private:
 
     /** This function simulates the propagation of a photon packet to the next scattering location
         in a photon life cycle without forced scattering. It proceeds in a number of steps as
-        outlined below. The function returns false if the photon packet must be terminated.
+        outlined below. The function returns false if the photon packet must be terminated because
+        the selected interaction point is beyond the model boundary.
 
         <b>%Random optical depth</b>
 
@@ -535,25 +597,33 @@ private:
         <b>Interaction point</b>
 
         Now that the optical depth \f$\tau\f$ at the interaction site has been (randomly) chosen,
-        we determine the physical position of the interaction point along the path. This is
-        accomplished by generating the path segments for crossed cells one by one and calculating
-        the corresponding cumulative optical depth on the fly. Once the cumulative optical depth at
-        the exit point of a segment exceeds the interaction optical depth, we know that the
-        interaction point must be within this segment. The physical interaction point is then
-        obtained through linear interpolation within the segment, assuming exponential behavior of
-        the extinction. If the cumulative optical depth of the path never exceeds the interaction
-        optical depth, the photon packet escapes and is terminated.
+        we determine the physical position of the interaction point along the path. If explicit
+        absorption is disabled, this step uses the extinction optical depth. If explicit absorption
+        is enabled, it uses the scattering optical depth.
 
-        <b>Albedo</b>
-
-        We calculate the scattering albedo \f$\varpi\f$ of the medium at the interaction point (or
-        more precisely, for the spatial cell containing the interaction point).
+        The interaction point is located by generating the path segments for crossed cells one by
+        one and calculating the corresponding cumulative optical depth on the fly. Once the
+        cumulative optical depth at the exit point of a segment exceeds the interaction optical
+        depth, we know that the interaction point must be within this segment. The physical
+        interaction point is then obtained through linear interpolation within the segment,
+        assuming exponential behavior of the extinction. If the cumulative optical depth of the
+        path never exceeds the interaction optical depth, the photon packet escapes and is
+        terminated.
 
         <b>Weight adjustment</b>
 
         We adjust the weight of the photon packet to compensate for the absorbed portion of the
-        luminosity. More precisely, the weight is multiplied by the scattered fraction, i.e. \f$
-        f_\text{sca} = \varpi \f$.
+        luminosity through multiplication by a bias factor \f$b\f$.
+
+        If explicit absorption is disabled, the bias factor is given by the scattered fraction,
+        which is easily obtained as the scattering albedo of the medium at the interaction point
+        (or more precisely, for the spatial cell containing the interaction point), \f[ b =
+        f_\text{sca} = \varpi_\text{int}. \f]
+
+        If explicit absorption is enabled, the bias factor is given by the absorbed fraction along
+        the path up to the interaction point, \f[ b = \text{e}^{-\tau^\text{abs}_\text{int}}, \f]
+        where \f$\tau^\text{abs}_\text{int}\f$ is the absorption optical depth at the interaction
+        point.
 
         <b>Advance position</b>
 
@@ -562,56 +632,28 @@ private:
         information). The packet is now ready to be scattered into a new direction. */
     bool simulateNonForcedPropagation(PhotonPacket* pp);
 
-    /** This function simulates the propagation of a photon packet to the next scattering location
-        in a photon life cycle without forced scattering and using explicit absorption. It proceeds
-        in a number of steps as outlined below. The function returns false if the photon packet
-        must be terminated.
-
-        <b>%Random optical depth</b>
-
-        Because the photon packet is allowed to escape the model, we randomly generate the \em
-        scattering optical depth \f$\tau_\text{sca}\f$ at the interaction site from the regular
-        exponential distribution. The current implementation does not support path length biasing.
-
-        <b>Interaction point</b>
-
-        We generate the path segments for crossed cells one by one and on the fly calculate the
-        corresponding cumulative scattering optical depth \f$\tau_\text{sca}\f$, absorption optical
-        depth \f$\tau_\text{abs}\f$, and distance \f$s\f$ covered. Once the cumulative scattering
-        optical depth at the exit point of a segment exceeds the interaction scattering optical
-        depth, we know that the interaction point must be within this segment. The physical
-        location and the absorption optical depth of the interaction point is then obtained through
-        linear interpolation within the segment, assuming exponential behavior of the extinction.
-        If the cumulative scattering optical depth of the path never exceeds the interaction
-        scattering optical depth, the photon packet escapes and is terminated.
-
-        <b>Weight adjustment</b>
-
-        We adjust the weight of the photon packet to compensate for the absorbed portion of the
-        luminosity along the path to the interaction site. More precisely, the weight is multiplied
-        by \f$\exp(-\tau_\text{abs})\f$.
-
-        <b>Advance position</b>
-
-        Finally we advance the initial position of the photon packet to the interaction point. This
-        last step invalidates the photon packet's path (including geometric and optical depth
-        information). The packet is now ready to be scattered into a new direction. */
-
     /** This function simulates the peel-off of a photon packet before a scattering event. This
-        means that, just before a scattering event, we create a peel-off photon packet for every
-        instrument in the instrument system, which is forced to propagate in the direction of the
-        observer instead of in the propagation direction determined randomly by the scattering
-        process. Each peel-off photon packet is subsequently fed into its target instrument for
-        detection.
+        means that, just before a scattering event, we create one or more peel-off photon packets
+        for every instrument in the instrument system, which are forced to propagate in the
+        direction of the observer instead of in the propagation direction determined randomly by
+        the scattering process. Each peel-off photon packet is subsequently fed into its target
+        instrument for detection.
+
+        If the rest-frame scattering event may change the wavelength of the photon packet (i.e.
+        other than because of the bulk velocity of the medium), it is necessary to send a separate
+        peel-off packet for each medium component (to each instrument). If the wavelength cannot
+        change, we can send a consolidated peel-off packet that aggregates the relevant information
+        for all medium components.
 
         A peel-off photon packet has the same characteristics as the original photon packet, apart
         from four differences. The first one is, obviously, that the propagation direction is
         altered to the direction towards the observer. The second difference is that we have to
         alter the luminosity of the photon packet to compensate for this change in propagation
-        direction, because the scattering process is anisotropic. The third difference is that the
+        direction in case the scattering process is anisotropic. The third difference is that the
         polarization state of the peel-off photon packet is adjusted. And the last difference is
         that the wavelength of the peel-off photon packet is properly Doppler-shifted taking into
-        account the bulk velocity of the medium.
+        account the bulk velocity of the medium, and/or can be adjusted by the rest-frame
+        scattering event itself.
 
         The first argument to this function specifies the photon packet that is about to be
         scattered; the second argument provides a placeholder peel off photon packet for use by the
