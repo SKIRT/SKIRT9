@@ -415,7 +415,7 @@ void Configuration::setupSelfAfter()
         log->warning("  Selecting a grid with the model symmetry might be more efficient");
     }
 
-    // --- other warnings ---
+    // --- log (and possibly adjust) photon cycle options ---
 
     // enable explicit absorption when we have negative extinction because
     // the photon cycle without explicit absorption does not support negative extinction
@@ -433,6 +433,14 @@ void Configuration::setupSelfAfter()
         _forceScattering = true;
     }
 
+    // log photon cycle variations
+    if (_hasMedium)
+    {
+        string ea = _explicitAbsorption ? "with" : "no";
+        string fs = _forceScattering ? "with" : "no";
+        log->info("  Photon life cycle: " + ea + " explicit absorption; " + fs + " forced scattering");
+    }
+
     // disable path length stretching if the wavelength of a photon packet can change during its lifetime
     if ((_hasMovingMedia || _hasScatteringDispersion || _hubbleExpansionRate || _hasLymanAlpha) && _forceScattering
         && _pathLengthBias > 0.)
@@ -440,6 +448,8 @@ void Configuration::setupSelfAfter()
         log->warning("  Disabling path length stretching to allow Doppler shifts to be properly sampled");
         _pathLengthBias = 0.;
     }
+
+    // --- log magnetic field issues ---
 
     // if there is a magnetic field, there usually should be spheroidal particles
     if (_magneticFieldMediumIndex >= 0 && !_hasSpheroidalPolarization)
