@@ -48,6 +48,13 @@ bool MaterialMix::hasResonantScattering() const
 
 ////////////////////////////////////////////////////////////////////
 
+bool MaterialMix::hasNegativeExtinction() const
+{
+    return false;
+}
+
+////////////////////////////////////////////////////////////////////
+
 bool MaterialMix::hasStochasticDustEmission() const
 {
     return false;

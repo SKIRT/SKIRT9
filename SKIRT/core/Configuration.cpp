@@ -101,10 +101,15 @@ void Configuration::setupSelfBefore()
     // ---- set configuration relevant for simulations that have media ----
 
     // retrieve basic photon life-cycle options
+    _explicitAbsorption = ms->photonPacketOptions()->explicitAbsorption();
     _forceScattering = ms->photonPacketOptions()->forceScattering();
     _minWeightReduction = ms->photonPacketOptions()->minWeightReduction();
     _minScattEvents = ms->photonPacketOptions()->minScattEvents();
     _pathLengthBias = ms->photonPacketOptions()->pathLengthBias();
+
+    // check for negative extinction, which requires explicit absorption
+    for (auto medium : ms->media())
+        if (medium->mix()->hasNegativeExtinction()) _hasNegativeExtinction = true;
 
     // retrieve Lyman-alpha options
     if (simulationMode == SimulationMode::LyaExtinctionOnly)
@@ -271,7 +276,7 @@ void Configuration::setupSelfBefore()
         }
     }
 
-    // check for semi-dymamic medium state
+    // check for semi-dynamic medium state
     if (_hasSecondaryEmission)
         for (auto medium : ms->media())
             if (medium->mix()->hasSemiDynamicMediumState()) _hasSemiDynamicState = true;
@@ -410,7 +415,15 @@ void Configuration::setupSelfAfter()
         log->warning("  Selecting a grid with the model symmetry might be more efficient");
     }
 
-    // --- other warnings ---
+    // --- log (and possibly adjust) photon cycle options ---
+
+    // enable explicit absorption when we have negative extinction because
+    // the photon cycle without explicit absorption does not support negative extinction
+    if (_hasNegativeExtinction && !_explicitAbsorption)
+    {
+        log->warning("  Enabling explicit absorption to allow handling negative extinction cross sections");
+        _explicitAbsorption = true;
+    }
 
     // enable forced scattering when we have a radiation field because
     // the photon cycle without forced scattering does not support storing the radiation field
@@ -420,6 +433,14 @@ void Configuration::setupSelfAfter()
         _forceScattering = true;
     }
 
+    // log photon cycle variations
+    if (_hasMedium)
+    {
+        string ea = _explicitAbsorption ? "with" : "no";
+        string fs = _forceScattering ? "with" : "no";
+        log->info("  Photon life cycle: " + ea + " explicit absorption; " + fs + " forced scattering");
+    }
+
     // disable path length stretching if the wavelength of a photon packet can change during its lifetime
     if ((_hasMovingMedia || _hasScatteringDispersion || _hubbleExpansionRate || _hasLymanAlpha) && _forceScattering
         && _pathLengthBias > 0.)
@@ -427,6 +448,8 @@ void Configuration::setupSelfAfter()
         log->warning("  Disabling path length stretching to allow Doppler shifts to be properly sampled");
         _pathLengthBias = 0.;
     }
+
+    // --- log magnetic field issues ---
 
     // if there is a magnetic field, there usually should be spheroidal particles
     if (_magneticFieldMediumIndex >= 0 && !_hasSpheroidalPolarization)

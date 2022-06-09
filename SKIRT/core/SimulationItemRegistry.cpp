@@ -245,6 +245,7 @@
 #include "TreeSpatialGrid.hpp"
 #include "TreeSpatialGridTopologyProbe.hpp"
 #include "TriaxialGeometryDecorator.hpp"
+#include "TrivialGasMix.hpp"
 #include "TrustBenchmarkDustMix.hpp"
 #include "TrustGraphiteGrainComposition.hpp"
 #include "TrustNeutralPAHGrainComposition.hpp"
@@ -542,6 +543,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<EmittingGasMix>();
     ItemRegistry::add<SpinFlipHydrogenGasMix>();
     ///ItemRegistry::add<CarbonMonoxideGasMix>();
+    ItemRegistry::add<TrivialGasMix>();
 
     // material mix families
     ItemRegistry::add<MaterialMixFamily>();
