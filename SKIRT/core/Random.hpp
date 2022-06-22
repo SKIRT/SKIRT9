@@ -47,6 +47,11 @@ class Vec;
     multi-processing mode, perform serial tasks in the parent thread of each process, and perform
     all parallized tasks in a child thread.
 
+    As an additional service, this class allows temporarily installing a predictable random number
+    generator with a given seed in the current execution thread through the push() and pop()
+    functions. This supports the use case where, usually during setup, the same pseudo-random
+    sequence is required in multiple places.
+
     All random number generators used in this class are based on the 64-bit Mersenne twister, which
     offers a sufficiently long period and acceptable spectral properties for most purposes. */
 class Random : public SimulationItem
@@ -69,7 +74,7 @@ protected:
         \em seed property. */
     void setupSelfBefore() override;
 
-    //======================== Other Functions =======================
+    //=================== Generating random numbers ===================
 
 public:
     /** This function generates a uniform deviate, i.e. a random double precision number in the
@@ -155,6 +160,21 @@ public:
         generalized exponential, defined in the description of respectively the
         SpecialFunctions::gln() and SpecialFunctions::gexp() functions. */
     double cdfLogLog(const Array& xv, const Array& pv, const Array& Pv);
+
+    //=================== Installing a temporary generator ===================
+
+public:
+    /** This function pushes the active random number generator for the current thread onto the
+        stack for the current thread and establishes a new predictable random number generator,
+        initialized with the specified seed, as the active random number generator for the current
+        thread. */
+    void push(int seed);
+
+    /** This function pops the most recently pushed random number generator from the stack for the
+        current thread and establishes it as the active random number generator for the current
+        thread. If the stack does not contain a random number generator, the behavior of this
+        function is undefined. */
+    void pop();
 };
 
 //////////////////////////////////////////////////////////////////////
