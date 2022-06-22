@@ -9,6 +9,7 @@
 #include "Position.hpp"
 #include "SpecialFunctions.hpp"
 #include <random>
+#include <stack>
 
 //////////////////////////////////////////////////////////////////////
 
@@ -48,6 +49,10 @@ namespace
 
     // allocate a random generator for each thread, constructed when the thread is created
     thread_local Rand _rng;
+
+    // allocate a random generator stack for each thread, constructed when the thread is created;
+    // this stack is used solely by the push() and pop() functions
+    thread_local std::stack<Rand> _stack;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -190,6 +195,22 @@ double Random::cdfLogLog(const Array& xv, const Array& pv, const Array& Pv)
     int i = NR::locateClip(Pv, X);
     double alpha = log(pv[i + 1] / pv[i]) / log(xv[i + 1] / xv[i]);
     return xv[i] * SpecialFunctions::gexp(-alpha, (X - Pv[i]) / (pv[i] * xv[i]));
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void Random::push(int seed)
+{
+    _stack.push(_rng);
+    _rng.setState(seed);
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void Random::pop()
+{
+    _rng = _stack.top();
+    _stack.pop();
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -15,7 +15,9 @@ void ClumpyGeometryDecorator::setupSelfAfter()
 
     // generate the random positions of the clumps
     _clumpv.resize(_numClumps);
+    if (_seed) random()->push(_seed);
     for (int i = 0; i < _numClumps; i++) _clumpv[i] = _geometry->generatePosition();
+    if (_seed) random()->pop();
 
     // sort the vector with the positions of the clumps in increasing x-coordinates
     NR::sort(_clumpv);
