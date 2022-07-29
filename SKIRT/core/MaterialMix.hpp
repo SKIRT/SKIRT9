@@ -321,14 +321,16 @@ public:
 
     /** This function initializes any specific state variables requested by this material mix
         through the specificStateVariableInfo() function except for the number density. The
-        function is invoked by the medium system for each spatial cell just after the common state
-        variables and the number density have been initialized. If the material mix is configured
-        as part of an imported medium component, the imported metallicity and temperature, if any,
-        and extra parameter fields imported from the snapshot as requested by the parameterInfo()
-        function are passed to this function. If the material mix is configured in a geometric
-        medium component, or if (part of) the information has not been imported, this is indicated
-        for the metallicity and temperature by a negative value and for the custom parameters by an
-        empty array.
+        function is invoked by the medium system for each spatial cell after the common state
+        variables and the number density have been initialized to their proper values, and the
+        specific state variables have been initialized to a default value of zero.
+
+        If the material mix is configured as part of an imported medium component, the imported
+        metallicity and temperature, if any, and extra parameter fields imported from the snapshot
+        as requested by the parameterInfo() function are passed to this function. If the material
+        mix is configured in a geometric medium component, or if (part of) the information has not
+        been imported, this is indicated for the metallicity and temperature by a negative value
+        and for the custom parameters by an empty array.
 
         The default implementation in this base class does nothing. */
     virtual void initializeSpecificState(MaterialState* state, double metallicity, double temperature,
