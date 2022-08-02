@@ -10,16 +10,21 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void ImportedSourceVelocityProbe::probeImportedSourceWeighted(string sh, string sweight, const Snapshot* snapshot,
-                                                              std::function<double(int)> weight)
+void ImportedSourceVelocityProbe::probeImportedSourceWeighted(
+    string sweight, const vector<const Snapshot*>& snapshots,
+    std::function<double(const Snapshot* snapshot, int m)> weight)
 {
-    if (snapshot->hasVelocity())
+    // verify that all snapshots offer a velocity
+    bool haveVelocity = true;
+    for (auto snapshot : snapshots) haveVelocity &= snapshot->hasVelocity();
+
+    if (haveVelocity)
     {
         // construct a bridge and produce output
         ProbeFormBridge bridge(this, form());
         bridge.writeQuantity(
-            sh + "_v", "velocity", "velocity", sweight + "-weighted velocity", snapshot,
-            [snapshot](int m) { return snapshot->velocity(m); }, weight);
+            "v", "velocity", "velocity", sweight + "-weighted velocity", snapshots,
+            [](const Snapshot* snapshot, int m) { return snapshot->velocity(m); }, weight);
     }
 }
 

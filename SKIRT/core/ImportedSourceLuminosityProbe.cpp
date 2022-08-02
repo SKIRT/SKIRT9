@@ -35,8 +35,8 @@ WavelengthGrid* ImportedSourceLuminosityProbe::materialWavelengthGrid() const
 
 ////////////////////////////////////////////////////////////////////
 
-void ImportedSourceLuminosityProbe::probeImportedSource(string sh, const ImportedSource* source,
-                                                        const Snapshot* snapshot)
+void ImportedSourceLuminosityProbe::probeImportedSources(const vector<const ImportedSource*>& sources,
+                                                         const vector<const Snapshot*>& snapshots)
 {
     // locate the units system
     auto units = find<Units>();
@@ -74,40 +74,50 @@ void ImportedSourceLuminosityProbe::probeImportedSource(string sh, const Importe
     };
 
     // define the call-back function to retrieve a (compound) luminosity volume density value at a given position
-    auto valueAtPosition = [source, snapshot, wave, numWaves, cvol](Position bfr) {
+    auto valueAtPosition = [sources, snapshots, wave, numWaves, cvol](Position bfr) {
         thread_local EntityCollection entities;  // can be reused for all queries in a given execution thread
-        snapshot->getEntities(entities, bfr);
 
         Array sumvw(numWaves);
-        for (const auto& entity : entities)
+        int numSources = sources.size();
+        for (int h = 0; h != numSources; ++h)
         {
-            int m = entity.first;
-            double w = entity.second;
-            for (int ell = 0; ell != numWaves; ++ell)
-                sumvw[ell] += cvol[ell] * w * source->specificLuminosity(wave[ell], m) / snapshot->volume(m);
+            snapshots[h]->getEntities(entities, bfr);
+            for (const auto& entity : entities)
+            {
+                int m = entity.first;
+                double w = entity.second;
+                for (int ell = 0; ell != numWaves; ++ell)
+                    sumvw[ell] +=
+                        cvol[ell] * w * sources[h]->specificLuminosity(wave[ell], m) / snapshots[h]->volume(m);
+            }
         }
         return sumvw;
     };
 
     // define the call-back function to retrieve a surface brightness value along a given path
-    auto valueAlongPath = [source, snapshot, wave, numWaves, csrf](Position bfr, Direction bfk) {
+    auto valueAlongPath = [sources, snapshots, wave, numWaves, csrf](Position bfr, Direction bfk) {
         thread_local EntityCollection entities;  // can be reused for all queries in a given execution thread
-        snapshot->getEntities(entities, bfr, bfk);
 
         Array sumvw(numWaves);
-        for (const auto& entity : entities)
+        int numSources = sources.size();
+        for (int h = 0; h != numSources; ++h)
         {
-            int m = entity.first;
-            double w = entity.second;
-            for (int ell = 0; ell != numWaves; ++ell)
-                sumvw[ell] += csrf[ell] * w * source->specificLuminosity(wave[ell], m) / snapshot->volume(m);
+            snapshots[h]->getEntities(entities, bfr, bfk);
+            for (const auto& entity : entities)
+            {
+                int m = entity.first;
+                double w = entity.second;
+                for (int ell = 0; ell != numWaves; ++ell)
+                    sumvw[ell] +=
+                        csrf[ell] * w * sources[h]->specificLuminosity(wave[ell], m) / snapshots[h]->volume(m);
+            }
         }
         return sumvw;
     };
 
     // construct a bridge and tell it to produce output
     ProbeFormBridge bridge(this, form());
-    bridge.writeQuantity(sh + "_L", sh + "_S", units->umonluminosityvolumedensity(), units->usurfacebrightness(),
+    bridge.writeQuantity("L", "S", units->umonluminosityvolumedensity(), units->usurfacebrightness(),
                          "luminosity density", "surface brightness", axis, units->uwavelength(), addColumnDefinitions,
                          valueAtPosition, valueAlongPath);
 }

@@ -14,13 +14,26 @@
 
 void InputModelFormProbe::probe()
 {
-    // loop over sources
+    // handle sources together
     const auto& sources = find<SourceSystem>()->sources();
-    int numSources = sources.size();
-    for (int h = 0; h != numSources; ++h)
+    if (!sources.empty())
     {
-        auto source = dynamic_cast<ImportedSource*>(sources[h]);
-        if (source) probeImportedSource(std::to_string(h), source, source->snapshot());
+        // collect snapshots for all imported sources
+        vector<const ImportedSource*> importedSources;
+        vector<const Snapshot*> snapshots;
+        for (auto source : sources)
+        {
+            auto importedSource = dynamic_cast<ImportedSource*>(source);
+            if (!importedSource) break;
+            importedSources.push_back(importedSource);
+            snapshots.push_back(importedSource->snapshot());
+        }
+
+        // if all sources are imported, call subclass
+        if (importedSources.size() == sources.size())
+        {
+            probeImportedSources(importedSources, snapshots);
+        }
     }
 
     // loop over media
@@ -30,16 +43,16 @@ void InputModelFormProbe::probe()
         int numMedia = media.size();
         for (int h = 0; h != numMedia; ++h)
         {
-            auto medium = dynamic_cast<ImportedMedium*>(media[h]);
-            if (medium) probeImportedMedium(std::to_string(h), medium, medium->snapshot());
+            auto importedMedium = dynamic_cast<ImportedMedium*>(media[h]);
+            if (importedMedium) probeImportedMedium(std::to_string(h), importedMedium, importedMedium->snapshot());
         }
     }
 }
 
 ////////////////////////////////////////////////////////////////////
 
-void InputModelFormProbe::probeImportedSource(string /*sh*/, const ImportedSource* /*source*/,
-                                              const Snapshot* /*snapshot*/)
+void InputModelFormProbe::probeImportedSources(const vector<const ImportedSource*>& /*sources*/,
+                                               const vector<const Snapshot*>& /*snapshots*/)
 {}
 
 ////////////////////////////////////////////////////////////////////

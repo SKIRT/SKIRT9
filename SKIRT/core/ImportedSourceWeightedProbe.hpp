@@ -17,8 +17,12 @@
     that allow the user to configure the weighting mechanism. There are three choices: using the
     specific luminosity at a given wavelength, using initial mass, or using current mass.
 
-    Luminosity weighting can be accomplished for any imported source, regardless of the configured
-    %SED family, as long as the source's spectral range includes the specified wavelength.
+    The probes based on this class produce output only if the simulation has at least one source
+    component, if all sources are imported, and if all of these sources offer the properties
+    necessary to perform the requested type of weighting.
+
+    Luminosity weighting can be accomplished regardless of the configured %SED family as long as
+    the source's spectral range includes the specified wavelength.
 
     For stellar mass weighting, the situation is more complicated. The current stellar mass
     distribution of the source component is usually not automatically available to the SKIRT input
@@ -34,8 +38,7 @@
     data, a better solution is to provide it as a separate, additional column to the import
     process, enable the \em importCurrentMass option for the ImportedSource component, and set the
     \em weight option for the probe to \c CurrentMass. Now the probe will use the separately
-    imported current mass. In all cases, if a source component does not import the selected mass
-    type, the probe produces no output for that component. */
+    imported current mass. */
 class ImportedSourceWeightedProbe : public InputModelFormProbe, public MaterialWavelengthRangeInterface
 {
     /** The enumeration type specifying whether to average the probed quantity using luminosity,
@@ -72,20 +75,18 @@ public:
     //======================== Other Functions =======================
 
 protected:
-    /** This function is implemented here. It calls the probeImportedSourceWeighted() function for
-        each component of type ImportedSource that provides the data required for weighting
-        according to the user configuration. */
-    void probeImportedSource(string sh, const ImportedSource* source, const Snapshot* snapshot) override;
+    /** This function is implemented here. It defines an appropriate weight function and calls the
+        probeImportedSourceWeighted() function implemented in the subclass to implement the actual
+        probing. */
+    void probeImportedSources(const vector<const ImportedSource*>& sources,
+                              const vector<const Snapshot*>& snapshots) override;
 
-    /** This function should be implemented by each subclass. It will be called for each component
-        of type ImportedSource that provides the data required for weighting according to the user
-        configuration. The first argument is a string representation of the zero-based component
-        index (including non-imported components), and the second argument is a string
+    /** This function should be implemented by each subclass. The first argument is a string
         representation of the weighting scheme. The last argument is a call-back function that
         returns the weight for the entity with the given index in the snapshot, again according to
         the user configuration. */
-    virtual void probeImportedSourceWeighted(string sh, string sweight, const Snapshot* snapshot,
-                                             std::function<double(int m)> weight) = 0;
+    virtual void probeImportedSourceWeighted(string sweight, const vector<const Snapshot*>& snapshots,
+                                             std::function<double(const Snapshot* snapshot, int m)> weight) = 0;
 };
 
 ////////////////////////////////////////////////////////////////////

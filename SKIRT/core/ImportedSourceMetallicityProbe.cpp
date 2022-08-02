@@ -10,16 +10,21 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void ImportedSourceMetallicityProbe::probeImportedSourceWeighted(string sh, string sweight, const Snapshot* snapshot,
-                                                                 std::function<double(int)> weight)
+void ImportedSourceMetallicityProbe::probeImportedSourceWeighted(
+    string sweight, const vector<const Snapshot*>& snapshots,
+    std::function<double(const Snapshot* snapshot, int m)> weight)
 {
-    if (snapshot->hasMetallicity())
+    // verify that all snapshots offer the metallicity property
+    bool haveMetallicity = true;
+    for (auto snapshot : snapshots) haveMetallicity &= snapshot->hasMetallicity();
+
+    if (haveMetallicity)
     {
         // construct a bridge and produce output
         ProbeFormBridge bridge(this, form());
         bridge.writeQuantity(
-            sh + "_Z", "dimensionless", "metallicity", sweight + "-weighted metallicity", snapshot,
-            [snapshot](int m) { return snapshot->metallicity(m); }, weight);
+            "Z", "dimensionless", "metallicity", sweight + "-weighted metallicity", snapshots,
+            [](const Snapshot* snapshot, int m) { return snapshot->metallicity(m); }, weight);
     }
 }
 
