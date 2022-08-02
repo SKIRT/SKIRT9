@@ -10,14 +10,21 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void ImportedSourceDensityProbe::probeImportedSource(string sh, const ImportedSource* /*source*/,
-                                                     const Snapshot* snapshot)
+void ImportedSourceDensityProbe::probeImportedSources(const vector<const ImportedSource*>& /*sources*/,
+                                                      const vector<const Snapshot*>& snapshots)
 {
-    if ((massType() == MassType::InitialMass && snapshot->hasInitialMass())
-        || (massType() == MassType::CurrentMass && snapshot->hasCurrentMass()))
+    // verify that all snapshots offer the requested mass type
+    bool haveMassType = true;
+    for (auto snapshot : snapshots)
+    {
+        haveMassType &= (massType() == MassType::InitialMass && snapshot->hasInitialMass())
+                        || (massType() == MassType::CurrentMass && snapshot->hasCurrentMass());
+    }
+
+    if (haveMassType)
     {
         // define a call-back function to retrieve the density for a given entity
-        auto densityInEntity = [snapshot, this](int m) {
+        auto densityInEntity = [this](const Snapshot* snapshot, int m) {
             double mass = massType() == MassType::CurrentMass ? snapshot->currentMass(m) : snapshot->initialMass(m);
             return mass / snapshot->volume(m);
         };
@@ -25,8 +32,8 @@ void ImportedSourceDensityProbe::probeImportedSource(string sh, const ImportedSo
         // construct a bridge and produce output
         ProbeFormBridge bridge(this, form());
         string stype = massType() == MassType::CurrentMass ? "current" : "initial";
-        bridge.writeQuantity(sh + "_rho", sh + "_Sigma", "massvolumedensity", "masssurfacedensity",
-                             stype + " mass density", stype + " mass surface density", snapshot, densityInEntity);
+        bridge.writeQuantity("rho", "Sigma", "massvolumedensity", "masssurfacedensity", stype + " mass density",
+                             stype + " mass surface density", snapshots, densityInEntity);
     }
 }
 

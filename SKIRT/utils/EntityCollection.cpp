@@ -46,56 +46,35 @@ double EntityCollection::accumulate(std::function<double(int)> value)
 
 ////////////////////////////////////////////////////////////////////
 
-double EntityCollection::average(std::function<double(int m)> value, std::function<double(int m)> weight)
+std::pair<double, double> EntityCollection::average(std::function<double(int m)> value,
+                                                    std::function<double(int m)> weight)
 {
-    if (_entities.size() > 1)
+    double sumvw = 0.;
+    double sumw = 0.;
+    for (const auto& entity : _entities)
     {
-        double sumvw = 0.;
-        double sumw = 0.;
-        for (const auto& entity : _entities)
-        {
-            double v = value(entity.first);
-            double w = weight(entity.first) * entity.second;
-            sumvw += v * w;
-            sumw += w;
-        }
-        return sumw > 0. ? sumvw / sumw : 0.;
+        double v = value(entity.first);
+        double w = weight(entity.first) * entity.second;
+        sumvw += v * w;
+        sumw += w;
     }
-    else if (_entities.size() == 1)
-    {
-        return value(_entities.cbegin()->first);
-    }
-    else
-    {
-        return 0.;
-    }
+    return std::make_pair(sumvw, sumw);
 }
 
 ////////////////////////////////////////////////////////////////////
 
-Vec EntityCollection::average(std::function<Vec(int)> value, std::function<double(int)> weight)
+std::pair<Vec, double> EntityCollection::average(std::function<Vec(int m)> value, std::function<double(int m)> weight)
 {
-    if (_entities.size() > 1)
+    Vec sumvw;
+    double sumw = 0.;
+    for (const auto& entity : _entities)
     {
-        Vec sumvw;
-        double sumw = 0.;
-        for (const auto& entity : _entities)
-        {
-            Vec v = value(entity.first);
-            double w = weight(entity.first) * entity.second;
-            sumvw += v * w;
-            sumw += w;
-        }
-        return sumw > 0. ? sumvw / sumw : Vec();
+        Vec v = value(entity.first);
+        double w = weight(entity.first) * entity.second;
+        sumvw += v * w;
+        sumw += w;
     }
-    else if (_entities.size() == 1)
-    {
-        return value(_entities.cbegin()->first);
-    }
-    else
-    {
-        return Vec();
-    }
+    return std::make_pair(sumvw, sumw);
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -12,11 +12,14 @@
 
 ////////////////////////////////////////////////////////////////////
 
-/** ImportedSourceLuminosityProbe probes the specific luminosity of each imported source component
-    in the simulation at the wavelengths specified by a user-configured wavelength grid. Note that
-    the specific luminosity is sampled at the characteristic wavelength of each bin; it is \em not
-    averaged or convolved over the wavelength bin. The probe uses the data as represented by the
-    imported snapshot, without involving the spatial grid of the simulation.
+/** ImportedSourceLuminosityProbe probes the specific luminosity aggregated over all imported
+    sources in the simulation at the wavelengths specified by a user-configured wavelength grid.
+    Note that the specific luminosity is sampled at the characteristic wavelength of each bin; it
+    is \em not averaged or convolved over the wavelength bin. The probe uses the data as
+    represented by the imported snapshot, without involving the spatial grid of the simulation.
+
+    The probe produces output only if the simulation has at least one source component and if all
+    sources are imported.
 
     When associated with a form that samples the luminosity at a set of positions, such as for a
     linear or planar cut, the probe outputs a monochromatic luminosity volume density (with SI
@@ -53,8 +56,9 @@ public:
     WavelengthGrid* materialWavelengthGrid() const override;
 
 protected:
-    /** This function probes the specified imported source component. */
-    void probeImportedSource(string sh, const ImportedSource* source, const Snapshot* snapshot) override;
+    /** This function probes the specified imported source components. */
+    void probeImportedSources(const vector<const ImportedSource*>& sources,
+                              const vector<const Snapshot*>& snapshots) override;
 };
 
 ////////////////////////////////////////////////////////////////////
