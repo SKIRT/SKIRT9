@@ -10,14 +10,17 @@
 
 ////////////////////////////////////////////////////////////////////
 
-/** SpatialGridWhenFormProbe is a base class for spatial grid form probes that allow the user to decide whether
-    the probe should be performed after setup or after the full simulation run. */
+/** SpatialGridWhenFormProbe is a base class for spatial grid form probes that allow the user to
+    decide whether the probe should be performed after setup, after the full simulation run, or
+    after primary or secondary emission iterations. */
 class SpatialGridWhenFormProbe : public SpatialGridFormProbe
 {
     /** The enumeration type indicating when probing occurs. */
-    ENUM_DEF(ProbeAfter, Setup, Run)
+    ENUM_DEF(ProbeAfter, Setup, Run, Primary, Secondary)
         ENUM_VAL(ProbeAfter, Setup, "after setup")
         ENUM_VAL(ProbeAfter, Run, "after the complete simulation run")
+        ENUM_VAL(ProbeAfter, Primary, "after each iteration over primary emission")
+        ENUM_VAL(ProbeAfter, Secondary, "after each iteration over secondary emission")
     ENUM_END()
 
     ITEM_ABSTRACT(SpatialGridWhenFormProbe, SpatialGridFormProbe, "a spatial grid when form probe")
