@@ -18,9 +18,9 @@ class SpatialGridWhenFormProbe : public SpatialGridFormProbe
     /** The enumeration type indicating when probing occurs. */
     ENUM_DEF(ProbeAfter, Setup, Run, Primary, Secondary)
         ENUM_VAL(ProbeAfter, Setup, "after setup")
-    ENUM_VAL(ProbeAfter, Run, "after the complete simulation run")
-    ENUM_VAL(ProbeAfter, Primary, "after each iteration over primary emission")
-    ENUM_VAL(ProbeAfter, Secondary, "after each iteration over secondary emission")
+        ENUM_VAL(ProbeAfter, Run, "after the complete simulation run")
+        ENUM_VAL(ProbeAfter, Primary, "after each iteration over primary emission")
+        ENUM_VAL(ProbeAfter, Secondary, "after each iteration over secondary emission")
     ENUM_END()
 
     ITEM_ABSTRACT(SpatialGridWhenFormProbe, SpatialGridFormProbe, "a spatial grid when form probe")
