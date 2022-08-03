@@ -53,6 +53,8 @@
     ------|----------------------
     probeSetup() | the setup phase, i.e. after all simulation items have performed setup
     probeRun()   | the run phase, i.e. after all photon packets have been emitted and detected
+    probePrimary()   | each iteration over primary emission
+    probeSecondary() | each iteration over secondary emission (which may include primary emission)
 
     */
 class ProbeSystem : public SimulationItem
@@ -77,6 +79,20 @@ public:
         been emitted and detected. It invokes the function of the same name on all probes in the
         probe system. */
     void probeRun();
+
+    /** This function is called at the end of each iteration over primary emission, i.e. after all
+        photon packets have been processed and the medium state and the radiation field have been
+        updated if needed. The function argument specifies the one-based iteration index. This
+        function invokes the function of the same name on all probes in the probe system. */
+    void probePrimary(int iter);
+
+    /** This function is called at the end of each iteration over secondary emission, i.e. after
+        all photon packets have been processed and the medium state and the radiation field have
+        been updated if needed. In some execution flows, the iteration may include both a primary
+        and secondary emission segment. The function argument specifies the one-based iteration
+        index. This function invokes the function of the same name on all probes in the probe
+        system. */
+    void probeSecondary(int iter);
 };
 
 ////////////////////////////////////////////////////////////////////

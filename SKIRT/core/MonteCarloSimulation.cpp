@@ -307,6 +307,9 @@ void MonteCarloSimulation::runPrimaryEmissionIterations()
             converged = mediumSystem()->updateDynamicMediumState();
         }
 
+        // notify the probe system
+        probeSystem()->probePrimary(iter);
+
         // verify and log loop convergence
         if (logLoopConvergence(log(), converged, iter, minIters, maxIters)) break;
     }
@@ -373,6 +376,9 @@ void MonteCarloSimulation::runSecondaryEmissionIterations()
                 converged &= dustConvergence.logConvergenceInfo(log(), units(), mediumSystem(), iter, fractionOfPrimary,
                                                                 fractionOfPrevious);
         }
+
+        // notify the probe system
+        probeSystem()->probeSecondary(iter);
 
         // verify and log loop convergence
         if (logLoopConvergence(log(), converged, iter, minIters, maxIters)) break;
@@ -461,6 +467,9 @@ void MonteCarloSimulation::runMergedEmissionIterations()
                 converged &= dustConvergence.logConvergenceInfo(log(), units(), mediumSystem(), iter, fractionOfPrimary,
                                                                 fractionOfPrevious);
         }
+
+        // notify the probe system
+        probeSystem()->probeSecondary(iter);
 
         // verify and log loop convergence
         if (logLoopConvergence(log(), converged, iter, minIters, maxIters)) break;

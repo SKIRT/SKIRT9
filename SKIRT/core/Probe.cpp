@@ -25,6 +25,13 @@ string Probe::itemName() const
 
 ////////////////////////////////////////////////////////////////////
 
+int Probe::iter() const
+{
+    return _iter;
+}
+
+////////////////////////////////////////////////////////////////////
+
 void Probe::probeSetup()
 {
     initialize();
@@ -36,6 +43,30 @@ void Probe::probeSetup()
 void Probe::probeRun()
 {
     if (when() == When::Run) probe();
+}
+
+////////////////////////////////////////////////////////////////////
+
+void Probe::probePrimary(int iter)
+{
+    if (when() == When::Primary)
+    {
+        _iter = iter;
+        probe();
+        _iter = 0;
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
+void Probe::probeSecondary(int iter)
+{
+    if (when() == When::Secondary)
+    {
+        _iter = iter;
+        probe();
+        _iter = 0;
+    }
 }
 
 ////////////////////////////////////////////////////////////////////

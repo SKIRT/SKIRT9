@@ -370,9 +370,27 @@ const Units* ProbeFormBridge::units() const
 
 ////////////////////////////////////////////////////////////////////
 
+namespace
+{
+    // if the specified iteration index is positive, return a 3-digit decimal representation with leading zeros,
+    // otherwise return the empty string
+    string iterString(int iter)
+    {
+        string result;
+        if (iter > 0)
+        {
+            result = std::to_string(iter);
+            if (result.length() < 3) result.insert(0, 3 - result.length(), '0');
+        }
+        return result;
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
 string ProbeFormBridge::prefix() const
 {
-    string result = _probe->itemName();
+    string result = _probe->itemName() + iterString(_probe->iter());
     if (!_fileid.empty()) result += "_" + _fileid;
     return result;
 }
@@ -381,7 +399,7 @@ string ProbeFormBridge::prefix() const
 
 string ProbeFormBridge::projectedPrefix() const
 {
-    string result = _probe->itemName();
+    string result = _probe->itemName() + iterString(_probe->iter());
     if (!_projectedFileid.empty()) result += "_" + _projectedFileid;
     return result;
 }
