@@ -209,8 +209,8 @@ double ImportedSource::meanSpecificLuminosity(const Band* band, int m) const
 
     Array params, lambdav, pv, Pv;
     _snapshot->parameters(m, params);
-    _sedFamily->cdf(lambdav, pv, Pv, wavelengthRange, params);
-    return band->meanSpecificLuminosity(lambdav, pv);
+    double Ltot = _sedFamily->cdf(lambdav, pv, Pv, wavelengthRange, params);
+    return band->meanSpecificLuminosity(lambdav, pv) * Ltot;
 }
 
 ////////////////////////////////////////////////////////////////////

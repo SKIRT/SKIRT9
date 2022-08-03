@@ -88,7 +88,7 @@ public:
 public:
     /** This function returns (a pointer to) the Band object defining the transmission curve for
         the bin with index \f$\ell\f$. */
-    const Band* band(int ell) const { return _bands[ell]; }
+    const Band* band(int ell) const;
 
     //======================== Data Members ========================
 
