@@ -29,7 +29,7 @@ class SpatialGridWhenFormProbe : public SpatialGridFormProbe
 
         PROPERTY_ENUM(probeAfter, ProbeAfter, "perform the probe after")
         ATTRIBUTE_DEFAULT_VALUE(probeAfter, "Setup")
-        ATTRIBUTE_DISPLAYED_IF(probeAfter, "DynamicState|SemiDynamicState")
+        ATTRIBUTE_DISPLAYED_IF(probeAfter, "DynamicState|IterateSecondary")
 
     ITEM_END()
 

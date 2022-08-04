@@ -235,18 +235,18 @@ class MonteCarloSimulation : public Simulation
             "simulationModeGasEmission:Panchromatic,GasEmission,Emission,RadiationField;"
             "simulationModeDustAndGasEmission:Panchromatic,DustEmission,GasEmission,Emission,RadiationField")
 
-        PROPERTY_BOOL(iterateMediumState, "iterate to self-consistently determine the medium state")
-        ATTRIBUTE_DEFAULT_VALUE(iterateMediumState, "false")
-        ATTRIBUTE_RELEVANT_IF(iterateMediumState, "simulationModeExtinctionOnly|Emission")
-        ATTRIBUTE_DISPLAYED_IF(iterateMediumState, "Level3")
-        ATTRIBUTE_INSERT(iterateMediumState,
-                         "(simulationModeExtinctionOnly|Emission)&iterateMediumState:DynamicState,RadiationField")
+        PROPERTY_BOOL(iteratePrimaryEmission, "iterate over primary emission for self-consistent calculation")
+        ATTRIBUTE_DEFAULT_VALUE(iteratePrimaryEmission, "false")
+        ATTRIBUTE_RELEVANT_IF(iteratePrimaryEmission, "simulationModeExtinctionOnly|Emission")
+        ATTRIBUTE_DISPLAYED_IF(iteratePrimaryEmission, "Level3")
+        ATTRIBUTE_INSERT(iteratePrimaryEmission,
+                         "(simulationModeExtinctionOnly|Emission)&iteratePrimaryEmission:IteratePrimary,RadiationField")
 
-        PROPERTY_BOOL(iterateSecondaryEmission, "iterate to self-consistently determine secondary emission")
+        PROPERTY_BOOL(iterateSecondaryEmission, "iterate over secondary emission for self-consistent calculation")
         ATTRIBUTE_DEFAULT_VALUE(iterateSecondaryEmission, "false")
         ATTRIBUTE_RELEVANT_IF(iterateSecondaryEmission, "Emission")
         ATTRIBUTE_DISPLAYED_IF(iterateSecondaryEmission, "Level2")
-        ATTRIBUTE_INSERT(iterateSecondaryEmission, "Emission&iterateSecondaryEmission:DynamicEmission")
+        ATTRIBUTE_INSERT(iterateSecondaryEmission, "Emission&iterateSecondaryEmission:IterateSecondary")
 
         PROPERTY_DOUBLE(numPackets, "the default number of photon packets launched per simulation segment")
         ATTRIBUTE_MIN_VALUE(numPackets, "[0")

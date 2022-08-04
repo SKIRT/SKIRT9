@@ -135,20 +135,20 @@ void Configuration::setupSelfBefore()
     // retrieve the presence of phases and iterations
     if (simulationMode == SimulationMode::ExtinctionOnly)
     {
-        _hasPrimaryIterations = sim->iterateMediumState();
+        _hasPrimaryIterations = sim->iteratePrimaryEmission();
     }
     else if (simulationMode == SimulationMode::DustEmission)
     {
         _hasSecondaryEmission = true;
         _hasDustEmission = true;
-        _hasPrimaryIterations = sim->iterateMediumState();
+        _hasPrimaryIterations = sim->iteratePrimaryEmission();
         _hasSecondaryIterations = sim->iterateSecondaryEmission();
     }
     else if (simulationMode == SimulationMode::GasEmission)
     {
         _hasSecondaryEmission = true;
         _hasGasEmission = true;
-        _hasPrimaryIterations = sim->iterateMediumState();
+        _hasPrimaryIterations = sim->iteratePrimaryEmission();
         _hasSecondaryIterations = sim->iterateSecondaryEmission();
     }
     else if (simulationMode == SimulationMode::DustAndGasEmission)
@@ -156,7 +156,7 @@ void Configuration::setupSelfBefore()
         _hasSecondaryEmission = true;
         _hasDustEmission = true;
         _hasGasEmission = true;
-        _hasPrimaryIterations = sim->iterateMediumState();
+        _hasPrimaryIterations = sim->iteratePrimaryEmission();
         _hasSecondaryIterations = sim->iterateSecondaryEmission();
     }
 
@@ -186,7 +186,7 @@ void Configuration::setupSelfBefore()
     if (_hasPrimaryIterations)
     {
         if (ms->dynamicStateOptions()->recipes().empty())
-            throw FATALERROR("At least one dynamic state recipe must be configured when iterateMediumState is true");
+            throw FATALERROR("At least one dynamic state recipe must be configured when iteratePrimaryEmission is true");
         _hasDynamicState = true;
     }
 

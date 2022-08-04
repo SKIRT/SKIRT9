@@ -145,7 +145,7 @@ class CarbonMonoxideGasMix : public EmittingGasMix
 {
     ITEM_CONCRETE(CarbonMonoxideGasMix, EmittingGasMix,
                   "A gas mix supporting the carbon monoxide rotational and rovibrational transitions")
-        ATTRIBUTE_TYPE_INSERT(CarbonMonoxideGasMix, "CustomMediumState,SemiDynamicState")
+        ATTRIBUTE_TYPE_INSERT(CarbonMonoxideGasMix, "CustomMediumState,DynamicState")
 
         PROPERTY_DOUBLE(defaultTemperature, "the default temperature of the gas")
         ATTRIBUTE_QUANTITY(defaultTemperature, "temperature")

@@ -110,7 +110,7 @@ class MediumSystem : public SimulationItem
 
         PROPERTY_ITEM(dynamicStateOptions, DynamicStateOptions, "the dynamic medium state options")
         ATTRIBUTE_DEFAULT_VALUE(dynamicStateOptions, "DynamicStateOptions")
-        ATTRIBUTE_RELEVANT_IF(dynamicStateOptions, "DynamicState")
+        ATTRIBUTE_RELEVANT_IF(dynamicStateOptions, "IteratePrimary")
 
         PROPERTY_ITEM(radiationFieldOptions, RadiationFieldOptions, "the radiation field options")
         ATTRIBUTE_DEFAULT_VALUE(radiationFieldOptions, "RadiationFieldOptions")
@@ -122,7 +122,7 @@ class MediumSystem : public SimulationItem
 
         PROPERTY_ITEM(iterationOptions, IterationOptions, "the primary and/or secondary emission iteration options")
         ATTRIBUTE_DEFAULT_VALUE(iterationOptions, "IterationOptions")
-        ATTRIBUTE_RELEVANT_IF(iterationOptions, "DynamicState|DynamicEmission")
+        ATTRIBUTE_RELEVANT_IF(iterationOptions, "IteratePrimary|IterateSecondary")
 
         PROPERTY_ITEM(dustEmissionOptions, DustEmissionOptions, "the dust emission options")
         ATTRIBUTE_DEFAULT_VALUE(dustEmissionOptions, "DustEmissionOptions")
