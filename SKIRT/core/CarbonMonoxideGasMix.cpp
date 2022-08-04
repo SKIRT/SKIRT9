@@ -46,9 +46,9 @@ bool CarbonMonoxideGasMix::hasExtraSpecificState() const
 
 ////////////////////////////////////////////////////////////////////
 
-bool CarbonMonoxideGasMix::hasSemiDynamicMediumState() const
+MaterialMix::DynamicStateType CarbonMonoxideGasMix::hasDynamicMediumState() const
 {
-    return true;
+    return DynamicStateType::PrimaryIfMergedIterations;
 }
 
 ////////////////////////////////////////////////////////////////////

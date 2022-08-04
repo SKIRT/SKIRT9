@@ -212,9 +212,9 @@ public:
         mix depend on the values of specific state variables other than the number density. */
     bool hasExtraSpecificState() const override;
 
-    /** This function returns true, indicating that this material has a semi-dynamic medium state.
-        */
-    bool hasSemiDynamicMediumState() const override;
+    /** This function returns DynamicStateType::Secondary, indicating that this material mix has a
+        dynamic medium state with updates that affect only secondary emission. */
+    DynamicStateType hasDynamicMediumState() const override;
 
     /** This function returns true, indicating that this material supports secondary line emission
         from gas. */

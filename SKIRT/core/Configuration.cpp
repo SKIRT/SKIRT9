@@ -276,10 +276,11 @@ void Configuration::setupSelfBefore()
         }
     }
 
-    // check for semi-dynamic medium state
+    // check for semi-dynamic medium state XXXX TO DO XXXX
     if (_hasSecondaryEmission)
         for (auto medium : ms->media())
-            if (medium->mix()->hasSemiDynamicMediumState()) _hasSemiDynamicState = true;
+            if (medium->mix()->hasDynamicMediumState() != MaterialMix::DynamicStateType::None)
+                _hasSemiDynamicState = true;
 
     // check for velocities in media
     for (auto medium : ms->media())

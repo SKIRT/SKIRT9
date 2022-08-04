@@ -52,9 +52,9 @@ bool SpinFlipHydrogenGasMix::hasExtraSpecificState() const
 
 ////////////////////////////////////////////////////////////////////
 
-bool SpinFlipHydrogenGasMix::hasSemiDynamicMediumState() const
+MaterialMix::DynamicStateType SpinFlipHydrogenGasMix::hasDynamicMediumState() const
 {
-    return true;
+    return DynamicStateType::Secondary;
 }
 
 ////////////////////////////////////////////////////////////////////

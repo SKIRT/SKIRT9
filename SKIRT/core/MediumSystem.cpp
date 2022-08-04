@@ -266,7 +266,8 @@ void MediumSystem::setupSelfAfter()
             case MaterialMix::MaterialType::Gas: _gas_hv.push_back(h); break;
             case MaterialMix::MaterialType::Electrons: _elec_hv.push_back(h); break;
         }
-        if (mix(0, h)->hasSemiDynamicMediumState()) _sdms_hv.push_back(h);
+        // XXXX TO DO XXXX
+        if (mix(0, h)->hasDynamicMediumState() != MaterialMix::DynamicStateType::None) _sdms_hv.push_back(h);
     }
 
     // ----- inform user about allocated memory -----

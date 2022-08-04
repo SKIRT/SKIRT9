@@ -41,20 +41,37 @@ class SecondarySourceSystem;
     based on this RF.
 
     Some SKIRT media allow the density and/or the optical properties of the medium to depend on the
-    local RF. The changes to the medium may sufficiently affect the RF to cause a significant
-    change in the medium properties itself, so that the RF must be calculated self-consistently by
-    iterating over primary and/or secondary emission. We call this a \em dynamic \em medium \em
-    state (DMS).
+    local RF. These changes to the medium properties may sufficiently affect the RF to again cause
+    a significant change in the medium properties, so that the RF must be calculated
+    self-consistently by iterating over primary and/or secondary emission. We call this a \em
+    dynamic \em medium \em state (DMS). A DMS update algorithm can be defined as part of the
+    MaterialMix subclass that defines the complete behavior of a given material type, or it can be
+    defined separately in a DynamicStateRecipe subclass, which can access any of the configured
+    medium components. The latter option enables a single recipe to control different material
+    types and it allows offering alternate recipes without complicating the material mix
+    implementation.
 
-    As a special case, for some SKIRT media the properties depending on the RF are significant only
-    for determining the secondary emission spectrum and have no effect during primary emission. As
-    a result, there is no need for iteration over primary emission. We call this a \em semi-dynamic
-    \em medium \em state (SDMS).
+    If the changes to the medium state significantly affect the medium opacity in the wavelength
+    range of primary sources, iteration over primary emission is required. We call this a \em
+    primary-dynamic \em medium \em state (PDMS). Radiative dust destruction is an example of a PDMS
+    process.
 
-    Secondary emission may sufficiently affect the RF to cause a significant change in the
-    secondary emission spectrum itself. If this is the case, the RF must be calculated
-    self-consistently by iterating over the secondary emission. We call this \em dynamic \em
-    secondary \em emission (DSE).
+    Alternatively, the media properties depending on the RF may be significant only for determining
+    the secondary emission spectrum without a noticable effect during primary emission. As a
+    result, there is no need for iteration over primary emission. We call this a \em
+    secondary-dynamic \em medium \em state (SDMS). The hydrogen spin-flip transition is an example
+    of an SDMS process because the opacity change at 21 cm does not affect primary emission at much
+    shorter wavelengths (in this specific example, there is actually no need for iteration over the
+    secondary emission either, but this might be different for other processes).
+
+    Similarly, secondary emission may sufficiently affect the RF to cause a significant change in
+    the secondary emission spectrum (which is calculated from that RF). If this is the case, the RF
+    must be calculated self-consistently by iterating over the secondary emission. We call this \em
+    dynamic \em secondary \em emission (DSE). One can consider DSE as a special case of SDMS where
+    the change in the medium state is handled implicitly during the calculations rather than being
+    explicitly stored. Dust emission in high-optical depth regions is an example of a DSE process.
+    The dust temperature (or temperature probability distribution) is calculated on the fly while
+    determining the emission spectrum from the RF.
 
     A simulation consecutively performs one or more \em segments as part of the relevant \em
     iterations and \em phases. A segment processes a set of photon packets, including emission from
@@ -77,7 +94,7 @@ class SecondarySourceSystem;
 
     - \f$(r)\f$: optionally register the RF if requested for probing (not needed for instruments).
 
-    - \f$s\f$: update the DMS based on the RF after processing all photon packets for the segment.
+    - \f$s\f$: update the PDMS based on the RF after processing all photon packets for the segment.
 
     - \f$(s)\f$: update the SDMS, if any, based on the RF after processing all photon packets for
     the segment.
@@ -87,10 +104,11 @@ class SecondarySourceSystem;
     The user-configurable \em simulationMode enumeration sets the overall simulation mode. It
     determines the presence or absence of a transfer medium, the wavelength regime (oligochromatic
     or panchromatic), whether there is a secondary emission phase, and if so, which media types
-    (dust and/or gas) are emitting photon packets. The Boolean user options \em iterateMediumState
-    and \em iterateSecondaryEmission further determine whether the simulation iterates over the
-    radiation field to self-consistently calculate a DMS or DSE. The presence of an SDMS is derived
-    at run-time from the capabilities advertised by each of the configured medium components.
+    (dust and/or gas) are emitting photon packets. The Boolean user options \em
+    iteratePrimaryEmission and \em iterateSecondaryEmission (plus \em includePrimaryEmission in the
+    IterationOptions) further determine whether the simulation iterates over the radiation field to
+    self-consistently calculate a DMS and/or DSE. The presence of DMS update algorithms is detected
+    at run-time from the capabilities advertised by the configured media and recipes.
 
     An important aspect determined by the simulation mode is the simulation's wavelength regime,
     which can be oligochromatic or panchromatic. Oligochromatic simulations use just a few
@@ -118,9 +136,8 @@ class SecondarySourceSystem;
 
     <b>Execution flow</b>
 
-    The following table shows the flow of execution for each simulation mode. \c DMS1 and \c DMS2
-    indicate a dynamic medium state during primary and secondary emission, respectively. The arrows
-    in the flow diagrams indicate forward progression (\f$\rightarrow\f$) and iteration
+    The following table shows the flow of execution for each simulation mode. The arrows in the
+    flow diagrams indicate forward progression (\f$\rightarrow\f$) and iteration
     (\f$\longleftarrow\f$).
 
     | | %Simulation mode | Flow diagram |
@@ -130,24 +147,24 @@ class SecondarySourceSystem;
     | 3 | \c LyaExtinctionOnly | \f$\mathbf{P}^p_{(r)}\f$ |
     | 4 | \c NoMedium | \f$\mathbf{P}^p\f$ |
     | 5 | \c ExtinctionOnly | \f$\mathbf{P}^p_{(r)}\f$ |
-    | 6 | ... + \c DMS1 | \f$\overleftarrow{\mathbf{P}_{rs}} \;\rightarrow\; \mathbf{P}^p_{(r)}\f$ |
+    | 6 | ... + \em iteratePrimaryEmission | \f$\overleftarrow{\mathbf{P}_{rs}} \;\rightarrow\; \mathbf{P}^p_{(r)}\f$ |
     | 7 | \c Dust-, \c Gas-, \c DustAndGasEmission | \f$\mathbf{P}^p_{r(s)} \;\rightarrow\; \mathbf{S}^p_{(r)}\f$ |
-    | 8 | ... + \c DMS1 | \f$\overleftarrow{\mathbf{P}_{rs}} \;\rightarrow\; \mathbf{P}^p_{r(s)} \;\rightarrow\; \mathbf{S}^p_{(r)}\f$ |
-    | 9 | ... + \c DSE | \f$\mathbf{P}^p_{r(s)} \;\rightarrow\; \overleftarrow{\mathbf{S}_{r(s)}} \;\rightarrow\; \mathbf{S}^p_{(r)}\f$ |
-    | 10 | ... + \c DSE + \c DMS1 | \f$\overleftarrow{\mathbf{P}_{rs}} \;\rightarrow\; \textbf{}\mathbf{P}^p_{r(s)} \;\rightarrow\; \overleftarrow{\mathbf{S}_{r(s)}} \;\rightarrow\; \mathbf{S}^p_{(r)}\f$ |
-    | 11 | ... + \c DSE + \c DMS1 + \c DMS2 | \f$\overleftarrow{\mathbf{P}_{rs}} \;\rightarrow\; \overleftarrow{\mathbf{P}_{r(s)} \;\rightarrow\; \mathbf{S}_{rs}} \;\rightarrow\; \mathbf{P}^p_{r(s)} \;\rightarrow\; \mathbf{S}^p_{(r)}\f$ |
+    | 8 | ... + \em iteratePrimaryEmission | \f$\overleftarrow{\mathbf{P}_{rs}} \;\rightarrow\; \mathbf{P}^p_{r(s)} \;\rightarrow\; \mathbf{S}^p_{(r)}\f$ |
+    | 9 | ... + \em iterateSecondaryEmission | \f$\mathbf{P}^p_{r(s)} \;\rightarrow\; \overleftarrow{\mathbf{S}_{r(s)}} \;\rightarrow\; \mathbf{S}^p_{(r)}\f$ |
+    | 10 | ... + \em iteratePrimaryEmission + \em iterateSecondaryEmission | \f$\overleftarrow{\mathbf{P}_{rs}} \;\rightarrow\; \textbf{}\mathbf{P}^p_{r(s)} \;\rightarrow\; \overleftarrow{\mathbf{S}_{r(s)}} \;\rightarrow\; \mathbf{S}^p_{(r)}\f$ |
+    | 11 | ... + \em iterateSecondaryEmission + \em includePrimaryEmission | \f$\overleftarrow{\mathbf{P}_{r(s)} \;\rightarrow\; \mathbf{S}_{rs}} \;\rightarrow\; \mathbf{P}^p_{r(s)} \;\rightarrow\; \mathbf{S}^p_{(r)}\f$ |
+    | 12 | ... + \em iteratePrimaryEmission + \em iterateSecondaryEmission + \em includePrimaryEmission | \f$\overleftarrow{\mathbf{P}_{rs}} \;\rightarrow\; \overleftarrow{\mathbf{P}_{r(s)} \;\rightarrow\; \mathbf{S}_{rs}} \;\rightarrow\; \mathbf{P}^p_{r(s)} \;\rightarrow\; \mathbf{S}^p_{(r)}\f$ |
 
     Rows 1-6 describe simulation modes that include primary emission only, without or with media.
-    The last mode in this list (row 6) includes iteration over the DMS during primary emission.
-    Rows 7-11 describe modes that include dust and/or gas emission, possibly iterating over the RF
-    during secondary emission to handle DSE (rows 9-11). If one or more of the dust media have a
-    DMS, there are modes supporting iteration over primary emission (rows 8 and 10) or even over
-    both primary and secondary emission (row 11).
+    The last mode in this list (row 6) includes iteration over the PDMS during primary emission.
+    Rows 7-12 describe modes that include dust and/or gas emission, possibly iterating over the RF
+    during secondary emission to handle DSE (rows 9-12). If one or more of the media have a PDMS,
+    there are modes supporting iteration over primary emission (rows 8, 10, 12) and/or over
+    consecutive primary and secondary emission segments (rows 11, 12).
 
-    The simulation modes in rows 7-11 support medium components with SDMS by updating the medium
-    state for these components at the end of the relevant segments. It is meaningful to update an
-    SDMS at the end of a segment that performs peel-off to the instruments because the update does
-    not affect the outcome of a primary emission segment.
+    If applicable, the simulation modes in rows 7-12 update the SDMS at the end of the relevant
+    segments. It is meaningful to update an SDMS at the end of a segment that performs peel-off to
+    the instruments because the update does not affect the outcome of a primary emission segment.
 
     <b>Photon life cycle</b>
 
