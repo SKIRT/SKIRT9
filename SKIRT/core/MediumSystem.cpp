@@ -1467,7 +1467,7 @@ bool MediumSystem::updateDynamicStateRecipes()
     std::vector<UpdateStatus> flags(_numCells);
 
     // loop over the spatial cells in parallel
-    log->info("Updating dynamic medium state for " + std::to_string(_numCells) + " cells...");
+    log->info("Updating medium state for " + std::to_string(_numCells) + " cells...");
     log->infoSetElapsed(_numCells);
     parfac->parallelDistributed()->call(_numCells, [this, log, &recipes, &flags](size_t firstIndex, size_t numIndices) {
         while (numIndices)
@@ -1487,7 +1487,7 @@ bool MediumSystem::updateDynamicStateRecipes()
                     }
                 }
             }
-            log->infoIfElapsed("Updated dynamic medium state: ", currentChunkSize);
+            log->infoIfElapsed("Updated medium state: ", currentChunkSize);
             firstIndex += currentChunkSize;
             numIndices -= currentChunkSize;
         }
@@ -1520,8 +1520,7 @@ bool MediumSystem::updateDynamicStateMedia(bool primary)
     std::vector<UpdateStatus> flags(_numCells);
 
     // loop over the spatial cells in parallel
-    string dmstype = primary ? "primary" : "secondary";
-    log->info("Updating " + dmstype + " dynamic medium state for " + std::to_string(_numCells) + " cells...");
+    log->info("Updating medium state for " + std::to_string(_numCells) + " cells...");
     log->infoSetElapsed(_numCells);
     parfac->parallelDistributed()->call(_numCells, [this, primary, log, &flags](size_t firstIndex, size_t numIndices) {
         while (numIndices)
@@ -1536,8 +1535,7 @@ bool MediumSystem::updateDynamicStateMedia(bool primary)
                     flags[m].update(mix(m, h)->updateSpecificState(&mst, Jv));
                 }
             }
-            string dmstype = primary ? "primary" : "secondary";
-            log->infoIfElapsed("Updated " + dmstype + " dynamic medium state: ", currentChunkSize);
+            log->infoIfElapsed("Updated medium state: ", currentChunkSize);
             firstIndex += currentChunkSize;
             numIndices -= currentChunkSize;
         }

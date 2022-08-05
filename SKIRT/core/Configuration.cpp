@@ -404,11 +404,11 @@ void Configuration::setupSelfAfter()
     }
 
     if (_hasPrimaryDynamicState && _hasSecondaryDynamicState)
-        log->info("  With primary and secondary dynamic state");
+        log->info("  With primary and secondary dynamic medium state");
     else if (_hasPrimaryDynamicState)
-        log->info("  With primary dynamic state");
+        log->info("  With primary dynamic medium state");
     else if (_hasSecondaryDynamicState)
-        log->info("  With secondary dynamic state");
+        log->info("  With secondary dynamic medium state");
 
     // --- log cosmology ---
 
