@@ -203,7 +203,7 @@ public:
         variables used by the receiving material mix. For this class, the function returns a list
         containing descriptors for the properties defined in the input model (CO number density, H2
         number density, and temperature) and for a number of variables to hold the CO level
-        populations derived from the radiation field when the semi-dynamic medium state is updated.
+        populations derived from the radiation field when the dynamic medium state is updated.
         */
     vector<StateVariable> specificStateVariableInfo() const override;
 

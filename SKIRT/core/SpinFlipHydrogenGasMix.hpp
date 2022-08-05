@@ -25,9 +25,9 @@
     flip material mix to calculate the 21 cm line luminosity and absorption cross section for use
     during secondary emission. This calculation happens in the updateSpecificState() function,
     which is invoked at the end of primary emission (because the material mix advertises that it
-    has a semi-dynamic medium state). This does imply that the 21 cm line absorption remains zero
-    during primary emission, which is not a problem as long as the primary sources don't emit in
-    the radio wavelength range. Thus, unless dust opacities are very high, there is no need for
+    has a secondary dynamic medium state). This does imply that the 21 cm line absorption remains
+    zero during primary emission, which is not a problem as long as the primary sources don't emit
+    in the radio wavelength range. Thus, unless dust opacities are very high, there is no need for
     iteration over primary nor secondary emission.
 
     If one is not interested in dust emission (i.e. only in the 21 cm line emission), the
@@ -233,8 +233,8 @@ public:
         variables used by the receiving material mix. For this class, the function returns a list
         containing descriptors for the properties defined in the input model (number density,
         metallicity, temperature, and neutral hydrogen fraction) and for a variable to hold the
-        atomic hydrogen fraction derived from the radiation field when the semi-dynamic medium
-        state is updated. */
+        atomic hydrogen fraction derived from the radiation field when the dynamic medium state is
+        updated. */
     vector<StateVariable> specificStateVariableInfo() const override;
 
     /** This function initializes the specific state variables requested by this material mix

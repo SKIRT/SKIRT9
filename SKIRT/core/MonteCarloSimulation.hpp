@@ -316,8 +316,7 @@ private:
         instruments. It records radiation field contributions if the configuration requires it
         (e.g., because secondary emission must be calculated, or because the user configured probes
         to directly output radiation field information). If the configuration also includes
-        emission, any semi-dynamic state media in the simulation receive an update request at the
-        end of the segment.
+        emission, any secondary dynamic state updates are performed at the end of the segment.
 
         Using the notation of the table in the class header documentation, this function implements
         the execution flow \f$\mathbf{P}^p\f$, \f$\mathbf{P}^p_{(r)}\f$, or
@@ -333,9 +332,8 @@ private:
     void runSecondaryEmission();
 
     /** This function iteratively runs consecutive primary source emission segments to
-        self-consistently calculate the radiation field taking into account one or more recipes for
-        updating the dynamic medium state as a function of the radiation field. See the
-        DynamicStateRecipe class for more information.
+        self-consistently calculate the radiation field taking into account any recipes for
+        updating the primary dynamic medium state as a function of the radiation field.
 
         Each segment in the iteration tracks photon packets through the medium and subsequently
         updates the medium state based on the newly established radiation field. The number of
@@ -367,17 +365,14 @@ private:
         each segment can be configured as a multiplication factor on the default number of primary
         photon packets. The minimum and maximum number of iterations can also be specified as
         configuration options. Within these limits, the actual number of iterations performed is
-        determined by user-configured convergence criteria. Specifically, convergence is reached
+        determined by user-configured convergence criteria. For dust media, convergence is reached
         when (a) the absorbed secondary luminosity is less than a given fraction of the absorbed
         primary luminosity, \em OR (b) the absorbed secondary luminosity has changed by less than a
         given fraction compared to the previous iteration.
 
-        \note In the current implementation, the convergence criteria are based solely on dust
-        absorption. For proper operation, this function thus requires the simulated model to
-        contain one or more dust components and have dust emission enabled.
-
-        Any semi-dynamic state media in the simulation receive an update request at the end of each
-        segment.
+        Any secondary dynamic state update algorithms in the simulation are performed at the end of
+        each segment. Convergence is determined by the specific mechanism includes in each of these
+        algorithms.
 
         The photon packets emitted by this function do not perform peel-off to the instruments
         because the radiation field has not yet converged. After this function returns, a final
@@ -402,9 +397,10 @@ private:
         information see the runPrimaryEmissionIterations() and runSecondaryEmissionIterations()
         functions.
 
-        Any semi-dynamic state media in the simulation receive an update request at the end of each
-        primary segment, and the dynamic state recipes are requested to update the dynamic state
-        after each secondary emission segment.
+        Any secondary dynamic state update algorithms in the simulation are performed at the end of
+        each primary segment, and the primary dynamic state update algorithms are performed at the
+        end of each secondary emission segment. Convergence is determined by the specific mechanism
+        includes in each of these algorithms.
 
         The photon packets emitted by this function do not perform peel-off to the instruments
         because the radiation field has not yet converged. After this function returns, a final

@@ -1444,7 +1444,7 @@ Array MediumSystem::lineEmissionSpectrum(int m, int h) const
 
 ////////////////////////////////////////////////////////////////////
 
-bool MediumSystem::updateDynamicMediumState()
+bool MediumSystem::updatePrimaryDynamicMediumState()
 {
     auto log = find<Log>();
     auto parfac = find<ParallelFactory>();
@@ -1501,7 +1501,7 @@ bool MediumSystem::updateDynamicMediumState()
 
 ////////////////////////////////////////////////////////////////////
 
-bool MediumSystem::updateSemiDynamicMediumState()
+bool MediumSystem::updateSecondaryDynamicMediumState()
 {
     auto log = find<Log>();
     auto parfac = find<ParallelFactory>();

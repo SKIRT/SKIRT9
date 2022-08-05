@@ -134,8 +134,8 @@ void MonteCarloSimulation::runPrimaryEmission()
     wait(segment);
     if (_config->hasRadiationField()) mediumSystem()->communicateRadiationField(true);
 
-    // update semi-dynamic medium state if needed
-    if (_config->hasSemiDynamicState()) mediumSystem()->updateSemiDynamicMediumState();
+    // update secondary dynamic medium state if needed
+    if (_config->hasSecondaryDynamicState()) mediumSystem()->updateSecondaryDynamicMediumState();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -304,7 +304,7 @@ void MonteCarloSimulation::runPrimaryEmissionIterations()
             mediumSystem()->communicateRadiationField(true);
 
             // update the medium state based on the newly established radiation field
-            converged = mediumSystem()->updateDynamicMediumState();
+            converged = mediumSystem()->updatePrimaryDynamicMediumState();
         }
 
         // notify the probe system
@@ -368,8 +368,8 @@ void MonteCarloSimulation::runSecondaryEmissionIterations()
             wait(segment);
             mediumSystem()->communicateRadiationField(false);
 
-            // if needed, update semi-dynamic medium state and log convergence info
-            if (_config->hasSemiDynamicState()) converged &= mediumSystem()->updateSemiDynamicMediumState();
+            // if needed, update secondary dynamic medium state and log convergence info
+            if (_config->hasSecondaryDynamicState()) converged &= mediumSystem()->updateSecondaryDynamicMediumState();
 
             // log dust emission convergence info
             if (mediumSystem()->hasDust())
@@ -436,8 +436,8 @@ void MonteCarloSimulation::runMergedEmissionIterations()
             wait(segment1);
             mediumSystem()->communicateRadiationField(true);
 
-            // if needed, update semi-dynamic medium state and log convergence info
-            if (_config->hasSemiDynamicState()) converged &= mediumSystem()->updateSemiDynamicMediumState();
+            // if needed, update secondary dynamic medium state and log convergence info
+            if (_config->hasSecondaryDynamicState()) converged &= mediumSystem()->updateSecondaryDynamicMediumState();
 
             // clear the secondary radiation field
             mediumSystem()->clearRadiationField(false);
@@ -460,7 +460,7 @@ void MonteCarloSimulation::runMergedEmissionIterations()
             mediumSystem()->communicateRadiationField(false);
 
             // update the medium state based on the newly established radiation field
-            converged &= mediumSystem()->updateDynamicMediumState();
+            converged &= mediumSystem()->updatePrimaryDynamicMediumState();
 
             // log dust emission convergence info
             if (mediumSystem()->hasDust())

@@ -182,14 +182,6 @@ void Configuration::setupSelfBefore()
             _hasPrimaryIterations = false;
     }
 
-    // if iteration over primary emission is requested, verify that there are dynamic state recipes
-    if (_hasPrimaryIterations)
-    {
-        if (ms->dynamicStateOptions()->recipes().empty())
-            throw FATALERROR("At least one dynamic state recipe must be configured when iteratePrimaryEmission is true");
-        _hasDynamicState = true;
-    }
-
     // retrieve secondary iteration options; suppress secondary iteration if no packets are launched
     if (_hasSecondaryIterations)
     {
@@ -203,6 +195,38 @@ void Configuration::setupSelfBefore()
         }
         else
             _hasSecondaryIterations = false;
+    }
+
+    // check for primary dynamic medium state
+    if (_hasPrimaryIterations || _hasMergedIterations)
+    {
+        _hasDynamicStateRecipes = ms->dynamicStateOptions() && !ms->dynamicStateOptions()->recipes().empty();
+        for (auto medium : ms->media())
+        {
+            auto type = medium->mix()->hasDynamicMediumState();
+            if (type == MaterialMix::DynamicStateType::Primary
+                || (_hasMergedIterations && type == MaterialMix::DynamicStateType::PrimaryIfMergedIterations))
+                _hasPrimaryDynamicStateMedia = true;
+        }
+        _hasPrimaryDynamicState = _hasDynamicStateRecipes || _hasPrimaryDynamicStateMedia;
+
+        // when iterating over primary emission, there must be primary dynamic state recipes or media
+        if (!_hasPrimaryDynamicState)
+            throw FATALERROR(
+                "At least one dynamic state recipe or medium must be configured when iterating over primary emission");
+    }
+
+    // check for secondary dynamic medium state
+    if (_hasSecondaryEmission)
+    {
+        for (auto medium : ms->media())
+        {
+            auto type = medium->mix()->hasDynamicMediumState();
+            if (type == MaterialMix::DynamicStateType::Secondary
+                || (!_hasMergedIterations && type == MaterialMix::DynamicStateType::PrimaryIfMergedIterations))
+                _hasSecondaryDynamicStateMedia = true;
+        }
+        _hasSecondaryDynamicState = _hasSecondaryDynamicStateMedia;
     }
 
     // retrieve radiation field options
@@ -275,12 +299,6 @@ void Configuration::setupSelfBefore()
             _mediaNeedGeneratePosition = true;
         }
     }
-
-    // check for semi-dynamic medium state XXXX TO DO XXXX
-    if (_hasSecondaryEmission)
-        for (auto medium : ms->media())
-            if (medium->mix()->hasDynamicMediumState() != MaterialMix::DynamicStateType::None)
-                _hasSemiDynamicState = true;
 
     // check for velocities in media
     for (auto medium : ms->media())
@@ -366,8 +384,6 @@ void Configuration::setupSelfAfter()
         log->info("  Including dust emission with equilibrium heating");
     if (_hasGasEmission) log->info("  Including gas emission");
 
-    if (_hasSemiDynamicState) log->info("  With semi-dynamic state");
-
     if (_hasPolarization) log->info("  Including support for polarization");
     if (_hasMovingMedia) log->info("  Including support for kinematics");
 
@@ -386,6 +402,13 @@ void Configuration::setupSelfAfter()
     {
         log->info("  Iterating over secondary emission");
     }
+
+    if (_hasPrimaryDynamicState && _hasSecondaryDynamicState)
+        log->info("  With primary and secondary dynamic state");
+    else if (_hasPrimaryDynamicState)
+        log->info("  With primary dynamic state");
+    else if (_hasSecondaryDynamicState)
+        log->info("  With secondary dynamic state");
 
     // --- log cosmology ---
 
@@ -462,7 +485,6 @@ void Configuration::setupSelfAfter()
 void Configuration::setEmulationMode()
 {
     _emulationMode = true;
-    _hasDynamicState = false;
     _hasPrimaryIterations = false;
     _hasSecondaryIterations = false;
     _hasMergedIterations = false;
@@ -474,6 +496,11 @@ void Configuration::setEmulationMode()
     _numPrimaryIterationPackets = 0;
     _numSecondaryPackets = 0;
     _numSecondaryIterationPackets = 0;
+    _hasDynamicStateRecipes = false;
+    _hasPrimaryDynamicStateMedia = false;
+    _hasSecondaryDynamicStateMedia = false;
+    _hasPrimaryDynamicState = false;
+    _hasSecondaryDynamicState = false;
 }
 
 ////////////////////////////////////////////////////////////////////

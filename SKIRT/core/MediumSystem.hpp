@@ -789,16 +789,16 @@ public:
     //=============== Dynamic medium state ===================
 
 public:
-    /** This function invokes the dynamic medium state recipes configured for this simulation to
+    /** TO DO This function invokes the dynamic medium state recipes configured for this simulation to
         update the medium state for all spatial cells and medium components based on the currently
         established radiation field. The function returns true if all recipes have converged, and
         false otherwise. See the DynamicStateRecipe class for more information.
 
         This function assumes that the radiation field has been calculated and that at least one
         dynamic medium state recipe has been configured for the simulation. */
-    bool updateDynamicMediumState();
+    bool updatePrimaryDynamicMediumState();
 
-    /** This function updates the semi-dynamic medium state for all relevant medium components
+    /** TO DO This function updates the semi-dynamic medium state for all relevant medium components
         based on the currently established radiation field. A medium component is relevant in the
         context of this function if the hasSemiDynamicMediumState() function of its material mix
         returns true. The update is performed by invoking the updateSpecificState() function of the
@@ -808,7 +808,7 @@ public:
         This function assumes that the radiation field has been calculated and that at least one
         medium component in the simulation is configured with a material mix requiring/supporting a
         semi-dynamic medium state. */
-    bool updateSemiDynamicMediumState();
+    bool updateSecondaryDynamicMediumState();
 
     //======================== Data Members ========================
 
