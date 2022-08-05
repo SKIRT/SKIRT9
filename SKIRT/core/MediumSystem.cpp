@@ -266,8 +266,18 @@ void MediumSystem::setupSelfAfter()
             case MaterialMix::MaterialType::Gas: _gas_hv.push_back(h); break;
             case MaterialMix::MaterialType::Electrons: _elec_hv.push_back(h); break;
         }
-        // XXXX TO DO XXXX
-        if (mix(0, h)->hasDynamicMediumState() != MaterialMix::DynamicStateType::None) _sdms_hv.push_back(h);
+        switch (mix(0, h)->hasDynamicMediumState())
+        {
+            case MaterialMix::DynamicStateType::None: break;
+            case MaterialMix::DynamicStateType::Primary: _pdms_hv.push_back(h); break;
+            case MaterialMix::DynamicStateType::Secondary: _sdms_hv.push_back(h); break;
+            case MaterialMix::DynamicStateType::PrimaryIfMergedIterations:
+                if (_config->hasMergedIterations())
+                    _pdms_hv.push_back(h);
+                else
+                    _sdms_hv.push_back(h);
+                break;
+        }
     }
 
     // ----- inform user about allocated memory -----
@@ -1444,7 +1454,7 @@ Array MediumSystem::lineEmissionSpectrum(int m, int h) const
 
 ////////////////////////////////////////////////////////////////////
 
-bool MediumSystem::updatePrimaryDynamicMediumState()
+bool MediumSystem::updateDynamicStateRecipes()
 {
     auto log = find<Log>();
     auto parfac = find<ParallelFactory>();
@@ -1501,7 +1511,7 @@ bool MediumSystem::updatePrimaryDynamicMediumState()
 
 ////////////////////////////////////////////////////////////////////
 
-bool MediumSystem::updateSecondaryDynamicMediumState()
+bool MediumSystem::updateDynamicStateMedia(bool primary)
 {
     auto log = find<Log>();
     auto parfac = find<ParallelFactory>();
@@ -1510,22 +1520,24 @@ bool MediumSystem::updateSecondaryDynamicMediumState()
     std::vector<UpdateStatus> flags(_numCells);
 
     // loop over the spatial cells in parallel
-    log->info("Updating semi-dynamic medium state for " + std::to_string(_numCells) + " cells...");
+    string dmstype = primary ? "primary" : "secondary";
+    log->info("Updating " + dmstype + " dynamic medium state for " + std::to_string(_numCells) + " cells...");
     log->infoSetElapsed(_numCells);
-    parfac->parallelDistributed()->call(_numCells, [this, log, &flags](size_t firstIndex, size_t numIndices) {
+    parfac->parallelDistributed()->call(_numCells, [this, primary, log, &flags](size_t firstIndex, size_t numIndices) {
         while (numIndices)
         {
             size_t currentChunkSize = min(logProgressChunkSize, numIndices);
             for (size_t m = firstIndex; m != firstIndex + currentChunkSize; ++m)
             {
                 const Array& Jv = meanIntensity(m);
-                for (int h : _sdms_hv)
+                for (int h : (primary ? _pdms_hv : _sdms_hv))
                 {
                     MaterialState mst(_state, m, h);
                     flags[m].update(mix(m, h)->updateSpecificState(&mst, Jv));
                 }
             }
-            log->infoIfElapsed("Updated semi-dynamic medium state: ", currentChunkSize);
+            string dmstype = primary ? "primary" : "secondary";
+            log->infoIfElapsed("Updated " + dmstype + " dynamic medium state: ", currentChunkSize);
             firstIndex += currentChunkSize;
             numIndices -= currentChunkSize;
         }
@@ -1545,6 +1557,25 @@ bool MediumSystem::updateSecondaryDynamicMediumState()
     // collect convergence info
     bool converged = true;
     for (int h : _sdms_hv) converged &= mix(0, h)->isSpecificStateConverged(_numCells, numUpdated, numNotConverged);
+    return converged;
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool MediumSystem::updatePrimaryDynamicMediumState()
+{
+    bool converged = true;
+    if (_config->hasDynamicStateRecipes()) converged &= updateDynamicStateRecipes();
+    if (_config->hasPrimaryDynamicStateMedia()) converged &= updateDynamicStateMedia(true);
+    return converged;
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool MediumSystem::updateSecondaryDynamicMediumState()
+{
+    bool converged = true;
+    if (_config->hasSecondaryDynamicStateMedia()) converged &= updateDynamicStateMedia(false);
     return converged;
 }
 

@@ -788,26 +788,39 @@ public:
 
     //=============== Dynamic medium state ===================
 
-public:
-    /** TO DO This function invokes the dynamic medium state recipes configured for this simulation to
-        update the medium state for all spatial cells and medium components based on the currently
-        established radiation field. The function returns true if all recipes have converged, and
-        false otherwise. See the DynamicStateRecipe class for more information.
-
-        This function assumes that the radiation field has been calculated and that at least one
+private:
+    /** This function invokes the dynamic medium state recipes configured for this simulation to
+        update the medium state. The function returns true if all recipes have converged, and false
+        otherwise. It assumes that the radiation field has been calculated and that at least one
         dynamic medium state recipe has been configured for the simulation. */
+    bool updateDynamicStateRecipes();
+
+    /** This function updates the medium state for any media in the simulation with an associated
+        material mix that supports a primary or secondary dynamic medium state, depending on the
+        value of the specified flag. The function returns true if all updates have converged, and
+        false otherwise. It assumes that the radiation field has been calculated and that at least
+        one medium component in the simulation supports a dynamic medium state of the requested
+        type. */
+    bool updateDynamicStateMedia(bool primary);
+
+public:
+    /** This function updates the primary dynamic medium state (PDMS) for all spatial cells and
+        medium components based on the currently established radiation field. It invokes any
+        dynamic medium state recipes (instances of a DynamicStateRecipe subclass) configured for
+        this simulation and updates the medium state for any media in the simulation with an
+        associated material mix (instances of a MaterialMix subclass) that supports a PDMS. The
+        function returns true if all updates have converged, and false otherwise.
+
+        This function assumes that the radiation field has been calculated. */
     bool updatePrimaryDynamicMediumState();
 
-    /** TO DO This function updates the semi-dynamic medium state for all relevant medium components
-        based on the currently established radiation field. A medium component is relevant in the
-        context of this function if the hasSemiDynamicMediumState() function of its material mix
-        returns true. The update is performed by invoking the updateSpecificState() function of the
-        material mix for all spatial cells. The function returns true if the medium states for all
-        medium components have converged, and false otherwise.
+    /** This function updates the secondary dynamic medium state (SDMS) for all spatial cells and
+        medium components based on the currently established radiation field. It updates the medium
+        state for any media in the simulation with an associated material mix (instances of a
+        MaterialMix subclass) that supports a SDMS. The function returns true if all updates have
+        converged, and false otherwise.
 
-        This function assumes that the radiation field has been calculated and that at least one
-        medium component in the simulation is configured with a material mix requiring/supporting a
-        semi-dynamic medium state. */
+        This function assumes that the radiation field has been calculated. */
     bool updateSecondaryDynamicMediumState();
 
     //======================== Data Members ========================
@@ -826,7 +839,8 @@ private:
     vector<int> _dust_hv;  // a list of indices for media components containing dust
     vector<int> _gas_hv;   // a list of indices for media components containing gas
     vector<int> _elec_hv;  // a list of indices for media components containing electrons
-    vector<int> _sdms_hv;  // a list of indices for media components with a semi-dynamic medium state
+    vector<int> _pdms_hv;  // a list of indices for media components with a primary dynamic medium state
+    vector<int> _sdms_hv;  // a list of indices for media components with a secondary dynamic medium state
 
     // relevant for any simulation mode that stores the radiation field
     WavelengthGrid* _wavelengthGrid{0};  // index ell
