@@ -67,7 +67,7 @@ void MonteCarloSimulation::runSimulation()
         // special case of merged primary and secondary iterations
         if (_config->hasMergedIterations() && hasPrimaryLuminosity)
         {
-            runPrimaryEmissionIterations();
+            if (_config->hasPrimaryIterations()) runPrimaryEmissionIterations();
             runMergedEmissionIterations();
             runPrimaryEmission();
             runSecondaryEmission();
