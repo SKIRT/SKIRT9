@@ -3,7 +3,7 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "CarbonMonoxideGasMix.hpp"
+#include "MolecularLineGasMix.hpp"
 #include "Configuration.hpp"
 #include "Constants.hpp"
 #include "DisjointWavelengthGrid.hpp"
@@ -26,7 +26,7 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-void CarbonMonoxideGasMix::setupSelfBefore()
+void MolecularLineGasMix::setupSelfBefore()
 {
     EmittingGasMix::setupSelfBefore();
 
@@ -39,35 +39,42 @@ void CarbonMonoxideGasMix::setupSelfBefore()
 
 ////////////////////////////////////////////////////////////////////
 
-bool CarbonMonoxideGasMix::hasExtraSpecificState() const
+bool MolecularLineGasMix::hasNegativeExtinction() const
 {
     return true;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-MaterialMix::DynamicStateType CarbonMonoxideGasMix::hasDynamicMediumState() const
+bool MolecularLineGasMix::hasExtraSpecificState() const
+{
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////
+
+MaterialMix::DynamicStateType MolecularLineGasMix::hasDynamicMediumState() const
 {
     return DynamicStateType::PrimaryIfMergedIterations;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-bool CarbonMonoxideGasMix::hasLineEmission() const
+bool MolecularLineGasMix::hasLineEmission() const
 {
     return true;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-vector<SnapshotParameter> CarbonMonoxideGasMix::parameterInfo() const
+vector<SnapshotParameter> MolecularLineGasMix::parameterInfo() const
 {
     return {SnapshotParameter::custom("H2 number density", "numbervolumedensity", "1/cm3")};
 }
 
 ////////////////////////////////////////////////////////////////////
 
-vector<StateVariable> CarbonMonoxideGasMix::specificStateVariableInfo() const
+vector<StateVariable> MolecularLineGasMix::specificStateVariableInfo() const
 {
     vector<StateVariable> result{StateVariable::numberDensity(), StateVariable::temperature(),
                                  StateVariable::custom(0, "H2 number density", "numbervolumedensity")};
@@ -82,8 +89,8 @@ vector<StateVariable> CarbonMonoxideGasMix::specificStateVariableInfo() const
 
 ////////////////////////////////////////////////////////////////////
 
-void CarbonMonoxideGasMix::initializeSpecificState(MaterialState* state, double /*metallicity*/, double temperature,
-                                                   const Array& params) const
+void MolecularLineGasMix::initializeSpecificState(MaterialState* state, double /*metallicity*/, double temperature,
+                                                  const Array& params) const
 {
     // leave the properties untouched if the cell does not contain any material for this component
     if (state->numberDensity() > 0.)
@@ -100,7 +107,7 @@ void CarbonMonoxideGasMix::initializeSpecificState(MaterialState* state, double 
 
 ////////////////////////////////////////////////////////////////////
 
-UpdateStatus CarbonMonoxideGasMix::updateSpecificState(MaterialState* state, const Array& Jv) const
+UpdateStatus MolecularLineGasMix::updateSpecificState(MaterialState* state, const Array& Jv) const
 {
     UpdateStatus status;
 
@@ -120,45 +127,42 @@ UpdateStatus CarbonMonoxideGasMix::updateSpecificState(MaterialState* state, con
 
 ////////////////////////////////////////////////////////////////////
 
-bool CarbonMonoxideGasMix::isSpecificStateConverged(int numCells, int /*numUpdated*/, int numNotConverged) const
+bool MolecularLineGasMix::isSpecificStateConverged(int numCells, int /*numUpdated*/, int numNotConverged) const
 {
     return static_cast<double>(numNotConverged) / static_cast<double>(numCells) <= maxFractionNotConverged();
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double CarbonMonoxideGasMix::mass() const
+double MolecularLineGasMix::mass() const
 {
-    return Constants::Mproton();  // ... should be CO molecule mass
+    return Constants::Mproton();  // ... should be the mass of the species
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double CarbonMonoxideGasMix::sectionAbs(double lambda) const
-{
-    // ...
-    (void)lambda;
-
-    return 1.;
-}
-
-////////////////////////////////////////////////////////////////////
-
-double CarbonMonoxideGasMix::sectionSca(double /*lambda*/) const
+double MolecularLineGasMix::sectionAbs(double /*lambda*/) const
 {
     return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double CarbonMonoxideGasMix::sectionExt(double lambda) const
+double MolecularLineGasMix::sectionSca(double /*lambda*/) const
 {
-    return sectionAbs(lambda);
+    return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double CarbonMonoxideGasMix::opacityAbs(double lambda, const MaterialState* state, const PhotonPacket* /*pp*/) const
+double MolecularLineGasMix::sectionExt(double /*lambda*/) const
+{
+    return 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MolecularLineGasMix::opacityAbs(double lambda, const MaterialState* state, const PhotonPacket* /*pp*/) const
 {
     // ...
     (void)lambda;
@@ -169,35 +173,35 @@ double CarbonMonoxideGasMix::opacityAbs(double lambda, const MaterialState* stat
 
 ////////////////////////////////////////////////////////////////////
 
-double CarbonMonoxideGasMix::opacitySca(double /*lambda*/, const MaterialState* /*state*/,
-                                        const PhotonPacket* /*pp*/) const
+double MolecularLineGasMix::opacitySca(double /*lambda*/, const MaterialState* /*state*/,
+                                       const PhotonPacket* /*pp*/) const
 {
     return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double CarbonMonoxideGasMix::opacityExt(double lambda, const MaterialState* state, const PhotonPacket* pp) const
+double MolecularLineGasMix::opacityExt(double lambda, const MaterialState* state, const PhotonPacket* pp) const
 {
     return opacityAbs(lambda, state, pp);
 }
 
 ////////////////////////////////////////////////////////////////////
 
-void CarbonMonoxideGasMix::peeloffScattering(double& /*I*/, double& /*Q*/, double& /*U*/, double& /*V*/,
-                                             double& /*lambda*/, Direction /*bfkobs*/, Direction /*bfky*/,
-                                             const MaterialState* /*state*/, const PhotonPacket* /*pp*/) const
+void MolecularLineGasMix::peeloffScattering(double& /*I*/, double& /*Q*/, double& /*U*/, double& /*V*/,
+                                            double& /*lambda*/, Direction /*bfkobs*/, Direction /*bfky*/,
+                                            const MaterialState* /*state*/, const PhotonPacket* /*pp*/) const
 {}
 
 ////////////////////////////////////////////////////////////////////
 
-void CarbonMonoxideGasMix::performScattering(double /*lambda*/, const MaterialState* /*state*/,
-                                             PhotonPacket* /*pp*/) const
+void MolecularLineGasMix::performScattering(double /*lambda*/, const MaterialState* /*state*/,
+                                            PhotonPacket* /*pp*/) const
 {}
 
 ////////////////////////////////////////////////////////////////////
 
-Array CarbonMonoxideGasMix::lineEmissionCenters() const
+Array MolecularLineGasMix::lineEmissionCenters() const
 {
     Array centers(numLines);
     for (int i = 0; i != numLines; ++i) centers[i] = i + 1;
@@ -207,7 +211,7 @@ Array CarbonMonoxideGasMix::lineEmissionCenters() const
 
 ////////////////////////////////////////////////////////////////////
 
-Array CarbonMonoxideGasMix::lineEmissionMasses() const
+Array MolecularLineGasMix::lineEmissionMasses() const
 {
     Array masses(numLines);
     // ...
@@ -216,7 +220,7 @@ Array CarbonMonoxideGasMix::lineEmissionMasses() const
 
 ////////////////////////////////////////////////////////////////////
 
-Array CarbonMonoxideGasMix::lineEmissionSpectrum(const MaterialState* state, const Array& /*Jv*/) const
+Array MolecularLineGasMix::lineEmissionSpectrum(const MaterialState* state, const Array& /*Jv*/) const
 {
     Array luminosities(numLines);
     // ...
@@ -227,7 +231,7 @@ Array CarbonMonoxideGasMix::lineEmissionSpectrum(const MaterialState* state, con
 
 ////////////////////////////////////////////////////////////////////
 
-double CarbonMonoxideGasMix::indicativeTemperature(const MaterialState* state, const Array& /*Jv*/) const
+double MolecularLineGasMix::indicativeTemperature(const MaterialState* state, const Array& /*Jv*/) const
 {
     return state->temperature();
 }

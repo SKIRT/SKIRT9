@@ -3,81 +3,85 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef CARBONMONOXIDEGASMIX_HPP
-#define CARBONMONOXIDEGASMIX_HPP
+#ifndef MOLECULARLINEGASMIX_HPP
+#define MOLECULARLINEGASMIX_HPP
 
 #include "EmittingGasMix.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-/** The CarbonMonoxideGasMix class describes the material properties related to selected rotational
-    and rovibrational transitions in carbon monoxide (CO).
+/** The MolecularLineGasMix class describes the material properties related to selected rotational,
+    vibrational and/or rovibrational transitions in selected molecules and atoms. The class
+    properties allow configuring the species and number of transitions to be considered.
 
-    The energy levels of CO are discretized into vibrational levels (quantum number \f$v\f$) and
-    more subdivided rotational levels (quantum number \f$J\f$). The vibrational levels are
-    quantized by the magnitude of the dipole moment, and the rotational levels are quantized by the
-    magnitude of the dipole rotation. This class supports transitions involving vibrational levels
-    \f$v=0\f$ and \f$v=1\f$ and rotational levels up to \f$J=20\f$. The selection rules allow two
-    types of transitions between these energy levels. Rotational transitions change the rotational
-    energy level by \f$\Delta J=\pm 1\f$. The corresponding lines are in the far-infrared to
-    millimeter wavelength range, up to about 2600 \f$\mu\mathrm{m}\f$. Rovibrational transitions
-    change both the rotational and vibrational levels at the same time (\f$\Delta J=\pm1\f$ and
-    \f$v=0-1\f$). The corresponding lines, at least for the two supported vibrational levels, are
-    all in the near infrared around 4.7 \f$\mu\mathrm{m}\f$.
+    For each supported transition, the emission luminosity and absorption opacity in a given cell
+    are determined from the gas properties defined in the input model and the local radiation field
+    calculated by the simulation. The class performs an iterative, non-LTE calculation including
+    the effects of collisional transitions (excitation and de-excitation with one or more types of
+    interaction partners) and photonic transitions (spontaneous emission, absorption, and induced
+    emission). This allows establishing the energy level distribution (population) for a wide range
+    of material densities and radiation fields.
 
-    For each supported transition, the emission luminosity and self-absorption opacity in a given
-    cell are determined from gas properties defined in the input model (CO number density,
-    molecular hydrogen number density, kinetic gas temperature) and the local radiation field
-    calculated by the simulation taking into account dust extinction. The class performs an
-    iterative, non-LTE calculation including the effects of collisional transitions (excitation and
-    de-excitation with molecular hydrogen as interaction partner) and photonic transitions
-    (spontaneous emission, absorption, and induced emission). This allows establishing the energy
-    level distribution (population) for a wide range of material densities and radiation fields.
+    <b>Supported species and transitions</b>
+
+    [TO DO]
 
     <b>Configuring the simulation</b>
 
-    Simulations of the CO transition spectra should include primary sources and a dust medium in
-    addition to a medium component configured with the carbon monoxide mix (this class).
-    Furthermore, the \em simulationMode should be set to "DustAndGasEmission" and \em
-    iterateSecondaryEmission should be enabled. The radiation field wavelength grid should properly
-    resolve the UV, optical, and infrared wavelength range (relevant for dust emission) and the
-    wavelength ranges of the supported CO transition lines.
+    Simulations that include gas represented by the MolecularLineGasMix often also include dust,
+    although this is not a requirement. In any case, the simulation must have one or more primary
+    sources that trigger the molecular lines directly (e.g. the cosmic microwave background) or
+    indirectly (e.g. by heating the dust and thus causing thermal dust emission), or both. The \em
+    simulationMode should be set to "GasEmission" or "DustAndGasEmission" correspondingly.
 
-    Separate instruments can be configured for the relevant wavelength ranges, e.g. using a
-    logarithmic grid for the continuum spectrum and linear grids for the line profiles.
+    Because the secondary emission and the radiation field are calculated self-consistently, \em
+    iterateSecondaryEmission should always be enabled. If the wavelength range of the primary
+    source(s) significantly overlaps the emission lines of the species under consideration (in
+    other words, if the opacity at the line wavelengths significantly affects the primary radiation
+    field), then \em includePrimaryEmission in IterationOptions must be enabled as well. If not,
+    this property can be left disabled. In both cases, \em iteratePrimaryEmission can be left
+    disabled unless iteration is required for other media (for example, to self-consistently
+    calculate radiative dust destruction).
 
-    During primary emission, the simulation determines the radiation field resulting from the
-    primary sources and dust attenuation (CO line absorption is taken to be zero at this stage).
-    The resulting radiation field allows a first estimation of the CO level populations for each
-    spatial grid cell; this calculation happens in the updateSpecificState() function, which is
-    invoked at the end of primary emission.
+    The radiation field wavelength grid should properly resolve the UV, optical, and infrared
+    wavelength range (in case the simulation includes dust) and the wavelength ranges of the
+    supported transition lines. Separate instruments can be configured for the relevant wavelength
+    ranges, e.g. using a logarithmic grid for the continuum spectrum and linear grids for the line
+    profiles.
+
+    During the initial primary emission segment, the simulation determines the radiation field
+    resulting from the primary sources and dust attenuation (molecular line absorption is taken to
+    be zero at this stage). The resulting radiation field allows a first estimation of the level
+    populations for each spatial grid cell; this calculation happens in the updateSpecificState()
+    function.
 
     During secondary emission, the simulation takes into account emission from all configured media
-    (dust continuum and CO lines) in addition to absorption by these same media (dust and CO). For
-    CO, the previously stored level populations allow calculating the line emission spectrum and
-    the line self-absorption cross sections. This results in an updated radiation field, which will
-    in turn influence the CO level populations (and for high optical depths, possibly the dust
-    temperature), which in turn influences the secondary emission spectra. In order to obtain a
-    self-consistent result, the simulation must therefore iterate over secondary emission.
+    in addition to absorption by these same media, including molecular lines in both cases. The
+    previously stored level populations allow calculating the line emission spectrum and the line
+    absorption cross sections. This results in an updated radiation field, which will in turn
+    influence the level populations (and for high optical depths, possibly the dust temperature),
+    which in turn influences the secondary emission spectra. In order to obtain a self-consistent
+    result, the simulation must therefore iterate over secondary emission.
 
-    As indicated above, the input model must provide values for the spatial distribution of three
-    medium properties: CO number density, molecular hydrogen number density, and kinetic gas
-    temperature. These values remain constant during the simulation. Most often, this information
-    will be read from an input file by associating the CO material mix with a subclass of
+    The input model must provide values for the spatial distribution of several medium properties,
+    including the number density of the species under consideration, the number density of any
+    relevant collisional partner species, the kinetic gas temperature, and the microturbulence
+    level. These values remain constant during the simulation. Most often, this information will be
+    read from an input file by associating the MolecularLineGasMix with a subclass of
     ImportedMedium. For that medium component, the ski file attribute \em importTemperature
     <b>must</b> be set to 'true', and \em importMetallicity and \em importVariableMixParams must be
-    left at 'false'. The additional column required by the CO material mix (molecular hydrogen
-    number density) is automatically imported and is expected <b>after</b> all other columns. For
-    example, if bulk velocities are also imported for this medium component (i.e. \em
-    importVelocity is 'true'), the column order would be \f[ ..., n_\mathrm{CO}, T_\mathrm{kin},
-    v_\mathrm{x}, v_\mathrm{y}, v_\mathrm{z}, n_\mathrm{H2} \f]
+    left at 'false'. The additional columns required by the material mix are automatically imported
+    and are expected <b>after</b> all other columns. For example, if bulk velocities are also
+    imported for this medium component (i.e. \em importVelocity is 'true'), the column order would
+    be \f[ ..., n_\mathrm{mol}, T_\mathrm{kin}, v_\mathrm{x}, v_\mathrm{y}, v_\mathrm{z},
+    n_\mathrm{col1} [, n_\mathrm{col1}, ...], v_\mathrm{turb}\f]
 
-    For basic testing purposes, the CO material mix can also be associated with a geometric medium
-    component. The geometry then defines the spatial density distribution (i.e.
-    \f$n_\mathrm{CO}\f$), and the material mix offers configuration properties to specify a fixed
-    default value for the gas temperature and for the number of hydrogen molecules per CO molecule
-    that will be used across the spatial domain. In this case, the molecular hydrogen number
-    density is thus implicitly defined based on the CO number density by a constant multiplier.
+    For basic testing purposes, the MolecularLineGasMix can also be associated with a geometric
+    medium component. The geometry then defines the spatial density distribution of the species
+    under consideration (i.e. \f$n_\mathrm{mol}\f$), and the MolecularLineGasMix configuration
+    properties specify a fixed default value for the other properties that will be used across the
+    spatial domain. In this case, the number densities of the collisional partners are defined by a
+    constant multiplier relative to \f$n_\mathrm{mol}\f$.
 
     <b>Level populations</b>
 
@@ -88,8 +92,8 @@
 
     \f[ \sum^{N_\mathrm{lp}}_{j>i} n_jA_{ji} + \sum^{N_\mathrm{lp}}_{j\neq i} \Big[ (n_jB_{ji} -
     n_iB_{ij})J_\lambda(\lambda_{ij})\Big] + \sum^{N_\mathrm{lp}}_{j\neq i}
-    \big[n_jC_{ji}(n_\mathrm{H2} ,T_\mathrm{kin}) - n_iC_{ij}(n_\mathrm{H2},T_\mathrm{kin})\big]=0,
-    \f]
+    \big[n_jC_{ji}(n_\mathrm{col} ,T_\mathrm{kin}) - n_iC_{ij}(n_\mathrm{col}
+    ,T_\mathrm{kin})\big]=0, \f]
 
     where \f$\lambda_{ij}\f$ is the transition wavelength and \f$A_{ij}\f$, \f$B_{ij}\f$,
     \f$B_{ji}\f$ are the Einstein coefficients for spontaneous emission, induced emission, and
@@ -118,7 +122,7 @@
     where \f$\lambda_\ell\f$ is the transition wavelength, \f$u\f$ and \f$l\f$ are the indices of
     the energy levels before and after the corresponding transition, and \f$V_\mathrm{cell}\f$ is
     the volume of the cell. The SKIRT framework automatically adds a Gaussian line profile assuming
-    a thermal velocity corresponding to the kinetic temperature in the cell and the mass of a CO
+    a thermal velocity corresponding to the kinetic temperature in the cell and the mass of a
     molecule, in addition to any Doppler shifts caused by the bulk velocity in the cell.
 
     <b>Absorption</b>
@@ -141,11 +145,11 @@
     wavelength.
 
     */
-class CarbonMonoxideGasMix : public EmittingGasMix
+class MolecularLineGasMix : public EmittingGasMix
 {
-    ITEM_CONCRETE(CarbonMonoxideGasMix, EmittingGasMix,
-                  "A gas mix supporting the carbon monoxide rotational and rovibrational transitions")
-        ATTRIBUTE_TYPE_INSERT(CarbonMonoxideGasMix, "CustomMediumState,DynamicState")
+    ITEM_CONCRETE(MolecularLineGasMix, EmittingGasMix,
+                  "A gas mix supporting rotational and vibrational transitions in specific molecules and atoms")
+        ATTRIBUTE_TYPE_INSERT(MolecularLineGasMix, "CustomMediumState,DynamicState")
 
         PROPERTY_DOUBLE(defaultTemperature, "the default temperature of the gas")
         ATTRIBUTE_QUANTITY(defaultTemperature, "temperature")
@@ -154,7 +158,7 @@ class CarbonMonoxideGasMix : public EmittingGasMix
         ATTRIBUTE_DEFAULT_VALUE(defaultTemperature, "1e4")
         ATTRIBUTE_DISPLAYED_IF(defaultTemperature, "Level2")
 
-        PROPERTY_DOUBLE(defaultMolecularHydrogenRatio, "the default ratio of H2 over CO molecule numbers")
+        PROPERTY_DOUBLE(defaultMolecularHydrogenRatio, "the default ratio of collisional partner over molecule numbers")
         ATTRIBUTE_MIN_VALUE(defaultMolecularHydrogenRatio, "[0")
         ATTRIBUTE_MAX_VALUE(defaultMolecularHydrogenRatio, "1e6]")
         ATTRIBUTE_DEFAULT_VALUE(defaultMolecularHydrogenRatio, "100")
@@ -177,6 +181,11 @@ protected:
     //======== Capabilities =======
 
 public:
+    /** This function returns true, indicating that this material may have a negative absorption
+        cross section. This happens when inverted level populations cause net stimulated emission.
+        */
+    bool hasNegativeExtinction() const override;
+
     /** This function returns true, indicating that the cross sections returned by this material
         mix depend on the values of specific state variables other than the number density. */
     bool hasExtraSpecificState() const override;
@@ -195,30 +204,30 @@ public:
 public:
     /** This function returns the number and type of import parameters required by this particular
         material mix as a list of SnapshotParameter objects. For this class, the function returns a
-        descriptor for the molecular hydrogen density import parameter. Importing the kinetic gas
-        temperature should be enabled through the corresponding standard configuration flag. */
+        descriptor for the number densities of the collisional partners and for the microturbulence
+        level. Importing the kinetic gas temperature should be enabled through the corresponding
+        standard configuration flag. */
     vector<SnapshotParameter> parameterInfo() const override;
 
     /** This function returns a list of StateVariable objects describing the specific state
         variables used by the receiving material mix. For this class, the function returns a list
-        containing descriptors for the properties defined in the input model (CO number density, H2
-        number density, and temperature) and for a number of variables to hold the CO level
-        populations derived from the radiation field when the dynamic medium state is updated.
-        */
+        containing descriptors for the properties defined in the input model and for a number of
+        variables to hold the level populations derived from the radiation field and related
+        information. */
     vector<StateVariable> specificStateVariableInfo() const override;
 
     /** This function initializes the specific state variables requested by this material mix
-        through the specificStateVariableInfo() function except for the CO number density. For this
-        class, the function initializes the H2 number density and the temperature to the specified
-        imported values, or if not available, to the user-configured default values. The level
-        populations are set to zero. */
+        through the specificStateVariableInfo() function except for the number density of the
+        species under consideration. For this class, the function uses the imported values, or if
+        not available, the user-configured default values. The level populations are set to zero.
+        */
     void initializeSpecificState(MaterialState* state, double metallicity, double temperature,
                                  const Array& params) const override;
 
     //======== Medium state updates =======
 
     /** Based on the specified radiation field and the input model properties found in the given
-        material state, this function determines the level populations for the supported CO
+        material state, this function determines the level populations for the supported
         transitions and stores these results back in the given material state. The function returns
         the update status as described for the UpdateStatus class. */
     UpdateStatus updateSpecificState(MaterialState* state, const Array& Jv) const override;
@@ -234,53 +243,51 @@ public:
     //======== Low-level material properties =======
 
 public:
-    /** This function returns the mass of a neutral hydrogen atom. */
+    /** This function returns the mass of a molecule or atom of the species under consideration. */
     double mass() const override;
 
-    /** This function returns the absorption cross section per CO atom at the given wavelength and
-        using the default gas properties configured for this material mix. */
+    /** This function should return the absorption cross section using default properties. Because
+        this value is hard to calculate for this material mix, this function returns zero. */
     double sectionAbs(double lambda) const override;
 
-    /** This function returns the scattering cross section per CO atom, which is trivially zero for
-        all wavelengths. */
+    /** This function should return the scattering cross section using default properties. Because
+        this value is hard to calculate for this material mix, this function returns zero. */
     double sectionSca(double lambda) const override;
 
-    /** This function returns the total extinction cross section per CO atom at the given
-        wavelength and using the default gas properties configured for this material mix. The
-        extinction cross section is identical to the absorption cross section because the
-        scattering cross section is zero. */
+    /** This function should return the extinction cross section using default properties. Because
+        this value is hard to calculate for this material mix, this function returns zero. */
     double sectionExt(double lambda) const override;
 
     //======== High-level photon life cycle =======
 
-    /** This function returns the CO absorption opacity \f$k^\text{abs}= n_\mathrm{CO}
+    /** This function returns the absorption opacity \f$k^\text{abs}= n_\mathrm{mol}
         \varsigma^\text{abs}\f$ for the given wavelength and material state. The photon packet
         properties are not used. */
     double opacityAbs(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
 
-    /** This function returns the CO scattering opacity \f$k^\text{sca}\f$ which is trivially zero
-        at all wavelengths. */
+    /** This function returns the scattering opacity \f$k^\text{sca}\f$ which is trivially zero at
+        all wavelengths. */
     double opacitySca(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
 
-    /** This function returns the CO extinction opacity \f$k^\text{ext}=k^\text{abs}\f$ for the
-        given wavelength and material state, which equals the absorption opacity because the
-        scattering opacity is zero. The photon packet properties are not used. */
+    /** This function returns the extinction opacity \f$k^\text{ext}=k^\text{abs}\f$ for the given
+        wavelength and material state, which equals the absorption opacity because the scattering
+        opacity is zero. The photon packet properties are not used. */
     double opacityExt(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
 
-    /** This function does nothing because the CO lines do not scatter. */
+    /** This function does nothing because the lines under consideration do not scatter. */
     void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs, Direction bfky,
                            const MaterialState* state, const PhotonPacket* pp) const override;
 
-    /** This function does nothing because the CO lines do not scatter. */
+    /** This function does nothing because the lines under consideration do not scatter. */
     void performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const override;
 
     //======== Secondary emission =======
 
-    /** This function returns a list with the line centers of the supported CO transitions. */
+    /** This function returns a list with the line centers of the supported transitions. */
     Array lineEmissionCenters() const override;
 
-    /** This function returns a list with the masses of the particle emitting each of the lines,
-        i.e. the CO molecule in each case. */
+    /** This function returns a list with the masses of the particles emitting each of the lines,
+        i.e. the mass of a molecule or atom of the species under consideration in each case. */
     Array lineEmissionMasses() const override;
 
     /** This function returns a list with the line luminosities for the supported transitions in
