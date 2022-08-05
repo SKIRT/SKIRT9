@@ -191,7 +191,7 @@ void Configuration::setupSelfBefore()
         {
             _minSecondaryIterations = ms->iterationOptions()->minSecondaryIterations();
             _maxSecondaryIterations = max(_minSecondaryIterations, ms->iterationOptions()->maxSecondaryIterations());
-            if (_hasPrimaryIterations) _hasMergedIterations = ms->iterationOptions()->includePrimaryEmission();
+            _hasMergedIterations = ms->iterationOptions()->includePrimaryEmission();
         }
         else
             _hasSecondaryIterations = false;
@@ -390,7 +390,7 @@ void Configuration::setupSelfAfter()
     if (_hasPrimaryIterations && _hasSecondaryIterations)
     {
         if (_hasMergedIterations)
-            log->info("  Iterating over primary emission, and then over primary and secondary emission");
+            log->info("  Iterating over primary emission, and then over primary and secondary emission (merged)");
         else
             log->info("  Iterating over primary emission, and then over secondary emission");
     }
@@ -400,7 +400,10 @@ void Configuration::setupSelfAfter()
     }
     else if (_hasSecondaryIterations)
     {
-        log->info("  Iterating over secondary emission");
+        if (_hasMergedIterations)
+            log->info("  Iterating over primary and secondary emission (merged)");
+        else
+            log->info("  Iterating over secondary emission");
     }
 
     if (_hasPrimaryDynamicState && _hasSecondaryDynamicState)
