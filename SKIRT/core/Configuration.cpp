@@ -169,19 +169,6 @@ void Configuration::setupSelfBefore()
         _secondarySourceBias = ms->secondaryEmissionOptions()->sourceBias();
     }
 
-    // retrieve primary iteration options; suppress primary iteration if no packets are launched
-    if (_hasPrimaryIterations)
-    {
-        _numPrimaryIterationPackets = _numPrimaryPackets * ms->iterationOptions()->primaryIterationPacketsMultiplier();
-        if (_numPrimaryIterationPackets >= 1.)
-        {
-            _minPrimaryIterations = ms->iterationOptions()->minPrimaryIterations();
-            _maxPrimaryIterations = max(_minPrimaryIterations, ms->iterationOptions()->maxPrimaryIterations());
-        }
-        else
-            _hasPrimaryIterations = false;
-    }
-
     // retrieve secondary iteration options; suppress secondary iteration if no packets are launched
     if (_hasSecondaryIterations)
     {
@@ -195,6 +182,25 @@ void Configuration::setupSelfBefore()
         }
         else
             _hasSecondaryIterations = false;
+    }
+
+    // retrieve primary iteration options; suppress primary iteration if no packets are launched
+    if (_hasPrimaryIterations || _hasMergedIterations)
+    {
+        _numPrimaryIterationPackets = _numPrimaryPackets * ms->iterationOptions()->primaryIterationPacketsMultiplier();
+        if (_numPrimaryIterationPackets >= 1.)
+        {
+            if (_hasPrimaryIterations)
+            {
+                _minPrimaryIterations = ms->iterationOptions()->minPrimaryIterations();
+                _maxPrimaryIterations = max(_minPrimaryIterations, ms->iterationOptions()->maxPrimaryIterations());
+            }
+        }
+        else
+        {
+            _hasPrimaryIterations = false;
+            _hasMergedIterations = false;
+        }
     }
 
     // check for primary dynamic medium state

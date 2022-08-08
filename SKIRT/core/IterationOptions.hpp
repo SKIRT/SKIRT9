@@ -46,14 +46,13 @@ class IterationOptions : public SimulationItem
         ATTRIBUTE_DEFAULT_VALUE(includePrimaryEmission, "false")
         ATTRIBUTE_RELEVANT_IF(includePrimaryEmission, "IterateSecondary")
         ATTRIBUTE_DISPLAYED_IF(includePrimaryEmission, "Level3")
-        ATTRIBUTE_INSERT(includePrimaryEmission, "IterateSecondary&includePrimaryEmission:IteratePrimary")
 
         PROPERTY_DOUBLE(primaryIterationPacketsMultiplier,
                         "the multiplier on the number of photon packets launched for each primary emission iteration")
         ATTRIBUTE_MIN_VALUE(primaryIterationPacketsMultiplier, "]0")
         ATTRIBUTE_MAX_VALUE(primaryIterationPacketsMultiplier, "1000]")
         ATTRIBUTE_DEFAULT_VALUE(primaryIterationPacketsMultiplier, "1")
-        ATTRIBUTE_RELEVANT_IF(primaryIterationPacketsMultiplier, "IteratePrimary")
+        ATTRIBUTE_RELEVANT_IF(primaryIterationPacketsMultiplier, "IteratePrimary|includePrimaryEmission")
         ATTRIBUTE_DISPLAYED_IF(primaryIterationPacketsMultiplier, "Level3")
 
         PROPERTY_DOUBLE(secondaryIterationPacketsMultiplier,

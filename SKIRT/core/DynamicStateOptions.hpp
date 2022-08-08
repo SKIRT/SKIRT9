@@ -18,7 +18,7 @@ class DynamicStateOptions : public SimulationItem
     ITEM_CONCRETE(DynamicStateOptions, SimulationItem, "a set of options for dynamically adjusting the medium state")
 
         PROPERTY_ITEM_LIST(recipes, DynamicStateRecipe, "the dynamic medium state recipes")
-        ATTRIBUTE_RELEVANT_IF(recipes, "IteratePrimary")
+        ATTRIBUTE_RELEVANT_IF(recipes, "IteratePrimary|IterateSecondary")
         ATTRIBUTE_REQUIRED_IF(recipes, "false")
         ATTRIBUTE_INSERT(recipes, "DynamicState")
 
