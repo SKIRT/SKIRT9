@@ -8,9 +8,9 @@
 #include "Constants.hpp"
 #include "DisjointWavelengthGrid.hpp"
 #include "FatalError.hpp"
+#include "Log.hpp"
 #include "MaterialState.hpp"
 #include "StringUtils.hpp"
-#include "Log.hpp"
 #include "TextInFile.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -58,10 +58,10 @@ void MolecularLineGasMix::setupSelfBefore()
     auto config = find<Configuration>();
     if (config->hasSecondaryEmission())
     {
-        // import the enegies and the weight of energy states from a text file
-        TextInFile infile1(this, filenameEnergy, "energy states");
+        // import the energies and the weight of energy states from a text file
+        TextInFile infile1(this, filenameEnergy, "energy states", true);
         infile1.addColumn("Energy", "energy", "1/cm");
-        infile1.addColumn("Weight", "", "");
+        infile1.addColumn("Weight");
         auto result1 = infile1.readAllColumns();
         for (int i = 0; i < numLevelTable; ++i)
         {
@@ -70,11 +70,11 @@ void MolecularLineGasMix::setupSelfBefore()
         }
         infile1.close();
 
-        // import the transtion indexes and Einstein A coefficients of radiational transitions from a text file
-        TextInFile infile2(this, filenameRadiative, "radiative transitions");
-        infile2.addColumn("Up index", "", "");
-        infile2.addColumn("Low index", "", "");
-        infile2.addColumn("Einstein A", "", "");
+        // import the transition indices and Einstein A coefficients of radiational transitions from a text file
+        TextInFile infile2(this, filenameRadiative, "radiative transitions", true);
+        infile2.addColumn("Up index");
+        infile2.addColumn("Low index");
+        infile2.addColumn("Einstein A", "transitionrate", "1/s");
         auto result2 = infile2.readAllColumns();
         for (int i = 0; i < numLinesTable; ++i)
         {
@@ -84,22 +84,19 @@ void MolecularLineGasMix::setupSelfBefore()
         }
         infile2.close();
 
-        // import the transtion indexes and collisional C coefficients of collisional transitions from a text file
-        TextInFile infile3(this, filenameCollisional, "collisional transitions");
-        infile3.addColumn("Up index", "", "");
-        infile3.addColumn("Low index", "", "");
-        for (int i = 0; i < numTempereature; ++i) infile3.addColumn("Collsional C ", "collisionalrate", "cm3/s");
+        // import the transition indices and collisional K coefficients of collisional transitions from a text file
+        TextInFile infile3(this, filenameCollisional, "collisional transitions", true);
+        infile3.addColumn("Up index");
+        infile3.addColumn("Low index");
+        for (int i = 0; i < numTempereature; ++i) infile3.addColumn("Collisional K", "collisionalrate", "cm3/s");
         auto result3 = infile3.readAllColumns();
-
         for (int i = 0; i < numCollisionTable; ++i)
         {
             _indexUpCol.push_back(static_cast<int>(result3[0][i]));
             _indexLowCol.push_back(static_cast<int>(result3[1][i]));
-
             _collisionCul.push_back(vector<double>());
             for (int j = 0; j < numTempereature; ++j) _collisionCul[i].push_back(result3[2 + j][i]);
         }
-
         infile3.close();
 
         // calculate Einstein Bul using Einstein A
@@ -177,7 +174,7 @@ bool MolecularLineGasMix::hasLineEmission() const
 vector<SnapshotParameter> MolecularLineGasMix::parameterInfo() const
 {
     return {SnapshotParameter::custom("H2 number density", "numbervolumedensity", "1/cm3"),
-    SnapshotParameter::custom("Micro turbulence", "velocity", "km/s")};
+            SnapshotParameter::custom("Micro turbulence", "velocity", "km/s")};
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -206,15 +203,15 @@ vector<StateVariable> MolecularLineGasMix::specificStateVariableInfo() const
 void MolecularLineGasMix::initializeSpecificState(MaterialState* state, double /*metallicity*/, double temperature,
                                                   const Array& params) const
 {
-    // initialization of the convergence of the level populations
-    state->setCustom(numLevelPops + 1, 1e99);
-
-    // initialization of microtubulence [m/s]
-    state->setCustom(numLevelPops + 2, params.size() ? params[1] : defaultMicroTurbulenceVelocity());
-
     // leave the properties untouched if the cell does not contain any material for this component
-    if (state->numberDensity() > 0.0)
+    if (state->numberDensity() > 0.)
     {
+        // initialization of the convergence of the level populations
+        state->setCustom(numLevelPops + 1, 1e99);
+
+        // initialization of microtubulence [m/s]
+        state->setCustom(numLevelPops + 2, params.size() ? params[1] : defaultMicroTurbulenceVelocity());
+
         // if no value was imported, use default value
         state->setCustom(0, params.size() ? params[0] : state->numberDensity() * defaultCollisionPartnerRatios()[0]);
 
@@ -243,14 +240,6 @@ void MolecularLineGasMix::initializeSpecificState(MaterialState* state, double /
             state->setCustom(p + 1, statePop);
         }
     }
-    else
-    {
-        // clear the level populations
-        for (int p = 1; p <= numLevelPops; ++p) state->setCustom(p, 0.);
-    }
-
-    // initialization of radiationf fields at wavelengths of line centers (start with negative values)
-    for (int p = 1; p <= _numLines; ++p) state->setCustom(numLevelPops + 3 + p, 0.0);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -267,7 +256,6 @@ namespace
         {
             throw FATALERROR("Failed calculating a Collisional coefficient of transition "
                              + StringUtils::toString(indexTrans));
-            EXIT_FAILURE;
         }
         else if (indexTem == 0)
             Cul = tableCul[indexTrans][0];
@@ -380,11 +368,12 @@ namespace
 UpdateStatus MolecularLineGasMix::updateSpecificState(MaterialState* state, const Array& Jv) const
 {
     UpdateStatus status;
-    auto config = find<Configuration>();
 
     // leave the properties untouched if the cell does not contain any material for this component
     if (state->numberDensity() > 0.0)
     {
+        auto config = find<Configuration>();
+
         double numHydroMol = state->custom(0);
         if (isnan(numHydroMol)) throw FATALERROR("Hydrogen is nan");
 
@@ -393,9 +382,6 @@ UpdateStatus MolecularLineGasMix::updateSpecificState(MaterialState* state, cons
 
         // set up mean Intensity
         Array rf(_numLines);
-
-        // define a radiationd field of Cosmic microwave background
-        ///PlanckFunction B(Constants::Tcmb() * (1. + config->redshift()));
 
         // wavelength of transition lines
         Array centers = lineEmissionCenters();
@@ -453,20 +439,22 @@ UpdateStatus MolecularLineGasMix::updateSpecificState(MaterialState* state, cons
                             integralsum += gaussValue;
                         }
                     }
-                    else if (indexJv < 0) lambdaNow += difLambda;
+                    else if (indexJv < 0)
+                        lambdaNow += difLambda;
                     else
                     {
                         find<Log>()->info("Break Loop in calculation of radiation fields, index "
-                                          + StringUtils::toString(indexJv) + " and count " + StringUtils::toString(count_i));
+                                          + StringUtils::toString(indexJv) + " and count "
+                                          + StringUtils::toString(count_i));
                         break;
                     }
-                    count_i ++;
+                    count_i++;
                 }
 
-                if (integralsum > 1.01 or integralsum < 0.99)
+               /* if (integralsum > 1.01 or integralsum < 0.99)
                     find<Log>()->warning(
                         "Integrated Gaussian = " + StringUtils::toString(integralsum)
-                        + ", please adjust lineRange in updateSpecificState, wavelengthgrids, or temperature");
+                        + ", please adjust lineRange in updateSpecificState, wavelengthgrids, or temperature");*/
             }
         }
 
@@ -577,13 +565,8 @@ UpdateStatus MolecularLineGasMix::updateSpecificState(MaterialState* state, cons
         // memorize the radiation fields at line centers
         for (int p = 1; p <= _numLines; ++p) state->setCustom(numLevelPops + 3 + p, rf[p - 1]);
 
-        if (converge_value > maxChangeInLevelPopulations()) status.updateConverged();
-    }
-    else
-    {
-        Array rf(_numLines);
-        for (int i = 0; i < _numLines; ++i) rf[i] = Jv[_indexLines[i]];
-        for (int p = 1; p <= _numLines; ++p) state->setCustom(numLevelPops + 3 + p, rf[p - 1]);
+        if (converge_value > maxChangeInLevelPopulations()) status.updateNotConverged();
+        else status.updateConverged();
     }
 
     return status;
@@ -591,10 +574,9 @@ UpdateStatus MolecularLineGasMix::updateSpecificState(MaterialState* state, cons
 
 ////////////////////////////////////////////////////////////////////
 
-bool MolecularLineGasMix::isSpecificStateConverged(int numCells, int numUpdated, int numNotConverged) const
+bool MolecularLineGasMix::isSpecificStateConverged(int numCells, int /*numUpdated*/, int numNotConverged) const
 {
-   /// return static_cast<double>(numNotConverged) / static_cast<double>(numCells) <= maxFractionUnconvergedCells();
-    return static_cast<double>(numUpdated) / static_cast<double>(numCells) <= maxFractionUnconvergedCells();
+    return static_cast<double>(numNotConverged) / static_cast<double>(numCells) <= maxFractionUnconvergedCells();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -742,14 +724,11 @@ Array MolecularLineGasMix::lineEmissionSpectrum(const MaterialState* state, cons
         for (int p = 0; p < _numLines; ++p)
         {
             luminosities[p] = Constants::h() * Constants::c() / centers[p] * _einsteinA[_indexRadTrans[p]]
-                                  * state->custom(_indexUpRad[_indexRadTrans[p]] + 1) * state->volume();
+                              * state->custom(_indexUpRad[_indexRadTrans[p]] + 1) * state->volume();
             if (isnan(luminosities[p])) throw FATALERROR("line luminosity is nan ");
             if (luminosities[p] < 0.) throw FATALERROR("line luminosity is negaive ");
         }
     }
-    else
-        for (int p = 0; p < _numLines; ++p) luminosities[p] = 0.;
-
     return luminosities;
 }
 
