@@ -209,12 +209,12 @@ void Configuration::setupSelfBefore()
                 _hasPrimaryDynamicStateMedia = true;
         }
         _hasPrimaryDynamicState = _hasDynamicStateRecipes || _hasPrimaryDynamicStateMedia;
-
-        // when iterating over primary emission, there must be primary dynamic state recipes or media
-        if (!_hasPrimaryDynamicState)
-            throw FATALERROR(
-                "At least one dynamic state recipe or medium must be configured when iterating over primary emission");
     }
+
+    // when iterating over primary emission, there must be primary dynamic state recipes or media
+    if (_hasPrimaryIterations && !_hasPrimaryDynamicState)
+        throw FATALERROR(
+            "At least one dynamic state recipe or medium must be configured when iterating over primary emission");
 
     // check for secondary dynamic medium state
     if (_hasSecondaryEmission)
