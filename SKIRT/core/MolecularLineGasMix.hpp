@@ -24,6 +24,12 @@
 
     <b>Supported species and transitions</b>
 
+    The current implementation supports the following molecular or atomic species:
+
+    - \c TwoLevelBenchmarkMolecule: a fictive test molecule with two energy levels and a single
+    collisional partner as defined by van Zadelhoff et al. 2002 for the first benchmark problem
+    described there. The corresponding line is at 1666.67 \f$\mu\mathrm{m}\f$.
+
     [TO DO]
 
     <b>Configuring the simulation</b>
@@ -155,27 +161,43 @@ class MolecularLineGasMix : public EmittingGasMix
         ATTRIBUTE_QUANTITY(defaultTemperature, "temperature")
         ATTRIBUTE_MIN_VALUE(defaultTemperature, "[3")  // gas temperature must be above local Universe T_CMB
         ATTRIBUTE_MAX_VALUE(defaultTemperature, "1e9]")
-        ATTRIBUTE_DEFAULT_VALUE(defaultTemperature, "1e4")
+        ATTRIBUTE_DEFAULT_VALUE(defaultTemperature, "1000")
         ATTRIBUTE_DISPLAYED_IF(defaultTemperature, "Level2")
 
-        PROPERTY_DOUBLE(defaultMolecularHydrogenRatio, "the default ratio of collisional partner over molecule numbers")
-        ATTRIBUTE_MIN_VALUE(defaultMolecularHydrogenRatio, "[0")
-        ATTRIBUTE_MAX_VALUE(defaultMolecularHydrogenRatio, "1e6]")
-        ATTRIBUTE_DEFAULT_VALUE(defaultMolecularHydrogenRatio, "100")
-        ATTRIBUTE_DISPLAYED_IF(defaultMolecularHydrogenRatio, "Level2")
+        PROPERTY_DOUBLE_LIST(defaultCollisionPartnerRatios,
+                             "the default relative abundances of the collisional partners")
+        ATTRIBUTE_MIN_VALUE(defaultCollisionPartnerRatios, "[0")
+        ATTRIBUTE_MAX_VALUE(defaultCollisionPartnerRatios, "1e50]")
+        ATTRIBUTE_DEFAULT_VALUE(defaultCollisionPartnerRatios, "1e4")
+        ATTRIBUTE_DISPLAYED_IF(defaultCollisionPartnerRatios, "Level2")
 
-        PROPERTY_DOUBLE(maxFractionNotConverged, "the maximum fraction of not-converged spatial cells")
-        ATTRIBUTE_MIN_VALUE(maxFractionNotConverged, "[0")
-        ATTRIBUTE_MAX_VALUE(maxFractionNotConverged, "1]")
-        ATTRIBUTE_DEFAULT_VALUE(maxFractionNotConverged, "0.001")
-        ATTRIBUTE_DISPLAYED_IF(maxFractionNotConverged, "Level3")
+        PROPERTY_DOUBLE(defaultMicroTurbulenceVelocity, "the default (non-thermal) micro-turbulence velocity")
+        ATTRIBUTE_QUANTITY(defaultMicroTurbulenceVelocity, "velocity")
+        ATTRIBUTE_MIN_VALUE(defaultMicroTurbulenceVelocity, "[0 km/s")
+        ATTRIBUTE_MAX_VALUE(defaultMicroTurbulenceVelocity, "100000 km/s]")
+        ATTRIBUTE_DEFAULT_VALUE(defaultMicroTurbulenceVelocity, "0 km/s")
+        ATTRIBUTE_DISPLAYED_IF(defaultMicroTurbulenceVelocity, "Level2")
+
+        PROPERTY_DOUBLE(maxChangeInLevelPopulations,
+                        "the maximum relative change for the level populations in a cell to be considered converged")
+        ATTRIBUTE_MIN_VALUE(maxChangeInLevelPopulations, "[0")
+        ATTRIBUTE_MAX_VALUE(maxChangeInLevelPopulations, "1]")
+        ATTRIBUTE_DEFAULT_VALUE(maxChangeInLevelPopulations, "0.05")
+        ATTRIBUTE_DISPLAYED_IF(maxChangeInLevelPopulations, "Level2")
+
+        PROPERTY_DOUBLE(maxFractionUnconvergedCells, "the maximum fraction of spatial cells that have not convergenced")
+        ATTRIBUTE_MIN_VALUE(maxFractionUnconvergedCells, "[0")
+        ATTRIBUTE_MAX_VALUE(maxFractionUnconvergedCells, "1]")
+        ATTRIBUTE_DEFAULT_VALUE(maxFractionUnconvergedCells, "0.001")
+        ATTRIBUTE_DISPLAYED_IF(maxFractionUnconvergedCells, "Level2")
 
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============
 
 protected:
-    /** This function determines and caches some values used in the other functions. */
+    /** This function loads the transition information for the configured specifies and determines
+        and caches some further values used in the other functions. */
     void setupSelfBefore() override;
 
     //======== Capabilities =======
@@ -219,7 +241,7 @@ public:
     /** This function initializes the specific state variables requested by this material mix
         through the specificStateVariableInfo() function except for the number density of the
         species under consideration. For this class, the function uses the imported values, or if
-        not available, the user-configured default values. The level populations are set to zero.
+        not available, the user-configured default values. The level populations are left at zero.
         */
     void initializeSpecificState(MaterialState* state, double metallicity, double temperature,
                                  const Array& params) const override;
@@ -307,7 +329,23 @@ public:
     //======================== Data Members ========================
 
 private:
-    // ...
+    // These data members are loaded from text files in setupSelfBefore()
+    vector<double> _energyStates;  // the column of the energy states
+    vector<double> _weights;       // the column of the weight of energy states
+    vector<int> _indexUpRad;       // the column of the index of upper energy levels for the radiational transitions
+    vector<int> _indexLowRad;      // the column of the index of lower energy levels for radiational transitions
+    vector<double> _einsteinA;     // the column of Einstein A coefficients
+    vector<int> _indexUpCol;       // the column of the index of upper energy levels for collisional transitions
+    vector<int> _indexLowCol;      // the column of the index of lower energy levels for collisional transitions
+    vector<vector<double>>
+        _collisionCul;  // the column of collisional excitation coefficients for collisional transitions
+
+    // These data members are precalculated in setupSelfBefore()
+    vector<double> _einsteinBul;  // the column of Einstein Bul coefficients
+    int _numLines{-1};
+    vector<int> _indexRadTrans;  // index for the radiational transitions you use in this calculation
+    vector<int> _indexColTrans;  // index for the collisional transitions you use in this calculation
+    vector<int> _indexLines;     // index in the simulation's RF WLG for the bin containing rotational transition lines
 };
 
 ////////////////////////////////////////////////////////////////////
