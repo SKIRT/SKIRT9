@@ -24,20 +24,20 @@ namespace
     constexpr double molecularWeight = 7.337241790008474;
 
     // name of the file which contatins energies and weights of energy states
-    string filenameEnergy("Test_Energy_States.txt");
+    const char* filenameEnergy = "Test_Energy_States.txt";
 
     // number of energy levels in the table
     constexpr int numLevelTable = 2;
 
     // name of the file which contatins up and low indexes and Einstein A coefficients of radiational transitions
-    string filenameRadiative("Test_Radiative_Trans.txt");
+    const char* filenameRadiative = "Test_Radiative_Trans.txt";
 
     // number of radiational transition lines in the table
     constexpr int numLinesTable = 1;
 
     // name of the file which contatins up and low indexes and Collisional excitation coefficients of
     // collisional transitions
-    string filenameCollisional("Test_Collisional_Trans.txt");
+    const char* filenameCollisional = "Test_Collisional_Trans.txt";
 
     // number of coliisional transition lines in the table
     constexpr int numCollisionTable = 1;
@@ -263,9 +263,6 @@ namespace
             double steepness = (logCulHigh - logCulLow) / (logTempTableHigh - logTempTableLow);
             Cul = exp(steepness * (logTemp - logTempTableLow) + logCulLow);
         }
-        if (isnan(Cul))
-            throw FATALERROR("Failed calculation for a collisional de-excitatipon coefficient Cul "
-                             + StringUtils::toString(indexTem));
         return Cul;
     }
 
@@ -279,7 +276,6 @@ namespace
 
         expTerm = exp(-dif_energy / Constants::k() / temperature);
         double Clu = Cul * weightRatio * expTerm;
-        if (isnan(Clu)) throw FATALERROR("Failed calculation for a collisional excitation coefficeint Clu");
         return Clu;
     }
 
@@ -313,23 +309,12 @@ namespace
         for (size_t i = 0; i < rowSize; ++i)
             for (size_t j = 0; j < i; ++j) solution[i] -= matrixPop[i][j] * solution[j];
 
-        // for debug
-        for (int i = 0; i < numLevelPops; ++i)
-        {
-            for (int j = 0; j < numLevelPops + 1; ++j)
-                if (isnan(matrixPop[i][j])) throw FATALERROR("nan after forwading LU decomposition");
-        }
-
         // backward substitution
         for (int i = static_cast<int>(rowSize) - 1; i >= 0; --i)
         {
             for (size_t j = i + 1; j < collumnSize - 1; ++j) solution[i] -= matrixPop[i][j] * solution[j];
             solution[i] /= matrixPop[i][i];
         }
-
-        // for debug
-        for (size_t i = 0; i < rowSize; ++i)
-            if (isnan(solution[i])) throw FATALERROR("nan after backwading LU decomposition");
 
         // return the solution of given inverse matrix
         return solution;
@@ -367,7 +352,6 @@ UpdateStatus MolecularLineGasMix::updateSpecificState(MaterialState* state, cons
         auto config = find<Configuration>();
 
         double numHydroMol = state->custom(0);
-        if (isnan(numHydroMol)) throw FATALERROR("Hydrogen is nan");
 
         Array levelpop_before(numLevelPops);
         for (int p = 1; p <= numLevelPops; ++p) levelpop_before[p - 1] = state->custom(p);
@@ -382,80 +366,69 @@ UpdateStatus MolecularLineGasMix::updateSpecificState(MaterialState* state, cons
         // calculate radiation fields at each transition line using the line profile
         for (int i = 0; i < _numLines; ++i)
         {
-            if (isnan(Jv[_indexLines[i]]))
-                throw FATALERROR("Jv is " + StringUtils::toString(Jv[_indexLines[i] - 1]) + " "
-                                 + StringUtils::toString(_indexLines[i]) + "/"
-                                 + StringUtils::toString(static_cast<int>(Jv.size())));
-            else
+
+            // integrate radiation J fields with a weight of gaussian profile
+            double difLambda = centers[i] * const_sigmatherm / divnum;
+            double lambdaNow = centers[i] - difLambda * rangeLambdaNum;
+            double lambdaEnd = centers[i] + difLambda * rangeLambdaNum;
+
+            rf[i] = 0.;
+
+            double integralsum = 0.;
+            int count_i = 0;
+            while (lambdaNow < lambdaEnd)
             {
-                // integrate radiation J fields with a weight of gaussian profile
-                double difLambda = centers[i] * const_sigmatherm / divnum;
-                double lambdaNow = centers[i] - difLambda * rangeLambdaNum;
-                double lambdaEnd = centers[i] + difLambda * rangeLambdaNum;
-
-                rf[i] = 0.;
-
-                double integralsum = 0.;
-                int count_i = 0;
-                while (lambdaNow < lambdaEnd)
+                double lambdaPre = lambdaNow;
+                int indexJv = -1;
+                indexJv = config->radiationFieldWLG()->bin(lambdaNow);
+                if (indexJv >= 0 and indexJv < config->radiationFieldWLG()->numBins())
                 {
-                    double lambdaPre = lambdaNow;
-                    int indexJv = -1;
-                    indexJv = config->radiationFieldWLG()->bin(lambdaNow);
-                    if (indexJv >= 0 and indexJv < config->radiationFieldWLG()->numBins())
+                    double rightJvBorder = config->radiationFieldWLG()->rightBorder(indexJv);
+                    lambdaNow += difLambda;
+                    if (lambdaNow > rightJvBorder)
                     {
-                        double rightJvBorder = config->radiationFieldWLG()->rightBorder(indexJv);
-                        lambdaNow += difLambda;
-                        if (lambdaNow > rightJvBorder)
+                        double gaussValue =
+                            gaussianProfile((rightJvBorder + lambdaPre) / 2., centers[i], const_sigmatherm)
+                            * (rightJvBorder - lambdaPre);
+                        rf[i] += Jv[indexJv] * gaussValue;
+                        integralsum += gaussValue;
+                        gaussValue = gaussianProfile((rightJvBorder + lambdaNow) / 2., centers[i], const_sigmatherm)
+                                     * (lambdaNow - rightJvBorder);
+                        if (indexJv + 1 < config->radiationFieldWLG()->numBins())
                         {
-                            double gaussValue =
-                                gaussianProfile((rightJvBorder + lambdaPre) / 2., centers[i], const_sigmatherm)
-                                * (rightJvBorder - lambdaPre);
-                            rf[i] += Jv[indexJv] * gaussValue;
+                            rf[i] += Jv[indexJv + 1] * gaussValue;
                             integralsum += gaussValue;
-                            gaussValue = gaussianProfile((rightJvBorder + lambdaNow) / 2., centers[i], const_sigmatherm)
-                                         * (lambdaNow - rightJvBorder);
-                            if (indexJv + 1 < config->radiationFieldWLG()->numBins())
-                            {
-                                rf[i] += Jv[indexJv + 1] * gaussValue;
-                                integralsum += gaussValue;
-                            }
-                            else
-                                break;
                         }
                         else
-                        {
-                            double gaussValue =
-                                difLambda * gaussianProfile((lambdaNow + lambdaPre) / 2., centers[i], const_sigmatherm);
-                            rf[i] += Jv[indexJv] * gaussValue;
-                            integralsum += gaussValue;
-                        }
+                            break;
                     }
-                    else if (indexJv < 0)
-                        lambdaNow += difLambda;
                     else
                     {
-                        find<Log>()->info("Break Loop in calculation of radiation fields, index "
-                                          + StringUtils::toString(indexJv) + " and count "
-                                          + StringUtils::toString(count_i));
-                        break;
+                        double gaussValue =
+                            difLambda * gaussianProfile((lambdaNow + lambdaPre) / 2., centers[i], const_sigmatherm);
+                        rf[i] += Jv[indexJv] * gaussValue;
+                        integralsum += gaussValue;
                     }
-                    count_i++;
                 }
-
-                if (integralsum > 1.01 or integralsum < 0.99)
-                    find<Log>()->warning(
-                        "Integrated Gaussian = " + StringUtils::toString(integralsum)
-                        + ", please adjust lineRange in updateSpecificState, wavelengthgrids, or temperature");
+                else if (indexJv < 0)
+                    lambdaNow += difLambda;
+                else
+                {
+                    find<Log>()->info("Break Loop in calculation of radiation fields, index "
+                                      + StringUtils::toString(indexJv) + " and count "
+                                      + StringUtils::toString(count_i));
+                    break;
+                }
+                count_i++;
             }
+
+            if (integralsum > 1.01 or integralsum < 0.99)
+                find<Log>()->warning(
+                    "Integrated Gaussian = " + StringUtils::toString(integralsum)
+                    + ", please adjust lineRange in updateSpecificState, wavelengthgrids, or temperature");
         }
 
-        for (int i = 0; i < _numLines; ++i)
-            if (rf[i] < 0.0)
-                throw FATALERROR("Jv of line " + StringUtils::toString(i)
-                                 + "is negative: " + StringUtils::toString(Jv[i]));
-
-        // statistical equilibrium matrix for CO level population
+        // statistical equilibrium matrix for level population
         vector<vector<double>> matrixPop(numLevelPops, vector<double>(numLevelPops + 1, 0.));
 
         // temperature of the carbon monoxide to determine level populations
@@ -484,13 +457,6 @@ UpdateStatus MolecularLineGasMix::updateSpecificState(MaterialState* state, cons
             matrixPop[up][low] -= wRatio * _einsteinBul[_indexRadTrans[i]] * rf[i];
         }
 
-        // debug: confirm whether there is nan
-        for (int i = 0; i < numLevelPops; ++i)
-        {
-            for (int j = 0; j < numLevelPops + 1; ++j)
-                if (isnan(matrixPop[i][j])) throw FATALERROR("nan before gauss elimination 1");
-        }
-
         // add the terms of the collisional transtions with hydorgen molecules
         for (size_t i = 0; i < _indexColTrans.size(); ++i)
         {
@@ -506,24 +472,13 @@ UpdateStatus MolecularLineGasMix::updateSpecificState(MaterialState* state, cons
             matrixPop[low][up] -= Cul * numHydroMol;
         }
 
-        // add the normalization of CO number density in the last row of the matrix.
+        // add the normalization of number density in the last row of the matrix.
         for (int j = 0; j <= numLevelPops; ++j)
         {
             if (j == numLevelPops)
                 matrixPop[numLevelPops - 1][j] = state->numberDensity();
             else
                 matrixPop[numLevelPops - 1][j] = 1.;
-        }
-
-        // debug: confirm whether there is nan
-        for (int i = 0; i < numLevelPops; ++i)
-        {
-            for (int j = 0; j < numLevelPops + 1; ++j)
-            {
-                if (isnan(matrixPop[i][j])) throw FATALERROR("nan before gauss elimination 2");
-                //               log->info(StringUtils::toString(i) + ", " + StringUtils::toString(j) + ": "
-                // + StringUtils::toString(matrixPop[i][j]));
-            }
         }
 
         // solve the given inverse matrix
@@ -543,7 +498,7 @@ UpdateStatus MolecularLineGasMix::updateSpecificState(MaterialState* state, cons
             total_num += solution[p - 1];
         }
 
-        // for debug: confirm CO number density
+        // for debug: confirm number density
         if (total_num >= state->numberDensity() * (1.0 + 1e-5) || total_num <= state->numberDensity() * (1.0 - 1e-5))
             throw FATALERROR("Failed Update total: " + StringUtils::toString(state->numberDensity())
                              + "; after: " + StringUtils::toString(total_num));
@@ -706,8 +661,6 @@ Array MolecularLineGasMix::lineEmissionSpectrum(const MaterialState* state, cons
         {
             luminosities[p] = Constants::h() * Constants::c() / centers[p] * _einsteinA[_indexRadTrans[p]]
                               * state->custom(_indexUpRad[_indexRadTrans[p]] + 1) * state->volume();
-            if (isnan(luminosities[p])) throw FATALERROR("line luminosity is nan ");
-            if (luminosities[p] < 0.) throw FATALERROR("line luminosity is negaive ");
         }
     }
     return luminosities;
