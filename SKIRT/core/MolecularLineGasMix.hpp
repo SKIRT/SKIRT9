@@ -159,7 +159,7 @@ class MolecularLineGasMix : public EmittingGasMix
 
         PROPERTY_DOUBLE(defaultTemperature, "the default temperature of the gas")
         ATTRIBUTE_QUANTITY(defaultTemperature, "temperature")
-        ATTRIBUTE_MIN_VALUE(defaultTemperature, "[3")  // gas temperature must be above local Universe T_CMB
+        ATTRIBUTE_MIN_VALUE(defaultTemperature, "[0")
         ATTRIBUTE_MAX_VALUE(defaultTemperature, "1e9]")
         ATTRIBUTE_DEFAULT_VALUE(defaultTemperature, "1000")
         ATTRIBUTE_DISPLAYED_IF(defaultTemperature, "Level2")

@@ -206,22 +206,17 @@ void MolecularLineGasMix::initializeSpecificState(MaterialState* state, double /
     // leave the properties untouched if the cell does not contain any material for this component
     if (state->numberDensity() > 0.)
     {
-        // initialization of the convergence of the level populations
-        state->setCustom(numLevelPops + 1, 1e99);
-
-        // initialization of microtubulence [m/s]
-        state->setCustom(numLevelPops + 2, params.size() ? params[1] : defaultMicroTurbulenceVelocity());
-
-        // if no value was imported, use default value
+        // collisional partner density
         state->setCustom(0, params.size() ? params[0] : state->numberDensity() * defaultCollisionPartnerRatios()[0]);
 
-        // if no value was imported, use default value
-        // make sure the temperature is at least the local universe CMB temperature
-        double effectiveTemperature;
+        // kinetic temperature
+        double Tkin = temperature >= 0. ? temperature : defaultTemperature();
+        state->setCustom(numLevelPops + 3, Tkin);
 
-        effectiveTemperature = 20. + (pow(state->custom(numLevelPops + 2), 2.) / Constants::k() * mass());
-        state->setTemperature(max(Constants::Tcmb(), effectiveTemperature));
-        state->setCustom(numLevelPops + 3, 20.);
+        // effective temperature (including micro-turbulence)
+        double vturb = params.size() ? params[1] : defaultMicroTurbulenceVelocity();
+        double Teff = Tkin + vturb * vturb * mass() / Constants::k();
+        state->setTemperature(Teff);
 
         // initialization of the level population using boltzmann distribution (start with LTE)
         double normN = 0.;
@@ -231,12 +226,9 @@ void MolecularLineGasMix::initializeSpecificState(MaterialState* state, double /
             boltzDist[p] = _weights[p] * exp(-_energyStates[p] / Constants::k() / state->custom(numLevelPops + 3));
             normN += boltzDist[p];
         }
-
         for (int p = 0; p < numLevelPops; ++p)
         {
             double statePop = state->numberDensity() * boltzDist[p] / normN;
-            if (statePop <= 0.0 && statePop >= state->numberDensity())
-                throw FATALERROR("Failed initialization of level population: " + StringUtils::toString(statePop));
             state->setCustom(p + 1, statePop);
         }
     }
@@ -451,10 +443,10 @@ UpdateStatus MolecularLineGasMix::updateSpecificState(MaterialState* state, cons
                     count_i++;
                 }
 
-               /* if (integralsum > 1.01 or integralsum < 0.99)
+                if (integralsum > 1.01 or integralsum < 0.99)
                     find<Log>()->warning(
                         "Integrated Gaussian = " + StringUtils::toString(integralsum)
-                        + ", please adjust lineRange in updateSpecificState, wavelengthgrids, or temperature");*/
+                        + ", please adjust lineRange in updateSpecificState, wavelengthgrids, or temperature");
             }
         }
 
@@ -560,13 +552,13 @@ UpdateStatus MolecularLineGasMix::updateSpecificState(MaterialState* state, cons
         for (int p = 1; p <= numLevelPops; ++p)
             if (p < numLevelPops) converge_value += abs((levelpop_before[p - 1] / state->custom(p) - 1));
         converge_value /= (numLevelPops - 1);
-        state->setCustom(numLevelPops + 1, converge_value);
+        if (converge_value > maxChangeInLevelPopulations())
+            status.updateNotConverged();
+        else
+            status.updateConverged();
 
         // memorize the radiation fields at line centers
         for (int p = 1; p <= _numLines; ++p) state->setCustom(numLevelPops + 3 + p, rf[p - 1]);
-
-        if (converge_value > maxChangeInLevelPopulations()) status.updateNotConverged();
-        else status.updateConverged();
     }
 
     return status;
@@ -614,7 +606,6 @@ double MolecularLineGasMix::opacityAbs(double lambda, const MaterialState* state
     double kappa = 0.;
     if (state->numberDensity() > 0.0)
     {
-
         constexpr double h = Constants::h();
         constexpr double c = Constants::c();
         Array numPop(numLevelPops);
@@ -626,7 +617,6 @@ double MolecularLineGasMix::opacityAbs(double lambda, const MaterialState* state
         // wavelengths of the rotational lines
         Array centers = lineEmissionCenters();
         double const_sigmatherm = 1.0 / Constants::c() * sqrt(Constants::k() * state->temperature() / mass());
-        int line_num = -1;
 
         // calculate the total opacity including all of the rotational transition lines
         for (int p = 0; p < _numLines; ++p)
@@ -643,19 +633,10 @@ double MolecularLineGasMix::opacityAbs(double lambda, const MaterialState* state
                     double transrate = lownumber * einsteinBlu - upnumber * _einsteinBul[_indexRadTrans[p]];
                     kappa += h * c / 4.0 / M_PI / centers[p] * transrate
                              * gaussianProfile(lambda, centers[p], const_sigmatherm);
-                    if (transrate < 0.0) line_num = p;
                 }
             }
         }
-
-        // if the opacity is negative, the level population can be inverse
-        // (this is not an error but we could not treat the negative opacity)
-        if (kappa < 0.0)
-            find<Log>()->info("Cell Index " + StringUtils::toString(state->cellIndex())
-                              + " kappa= " + StringUtils::toString(kappa) + " Line " + StringUtils::toString(line_num));
     }
-    if (kappa < 0.0) kappa = 0.0;
-
     return kappa;
 }
 
