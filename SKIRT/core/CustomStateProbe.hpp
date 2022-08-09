@@ -14,7 +14,7 @@
     with a material mix that requests such variables. Examples include the dust fragment weights
     used by the FragmentDustMixDecorator, the neutral and atomic hydrogen fractions required by the
     SpinFlipHydrogenGasMix, and the energy level population densities used by the
-    CarbonMonoxideGasMix. These custom quantities are always discretized on the simulation's
+    MolecularLineGasMix. These custom quantities are always discretized on the simulation's
     spatial grid. The probe outputs a compound quantity with a value for each of the custom medium
     state quantities. It can be used with any Form subclass, taking into account the caveat
     discussed below. When associated with a form that projects the quantity along a path, the value

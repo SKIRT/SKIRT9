@@ -41,9 +41,9 @@ class PhotonPacketOptions : public SimulationItem
 
         PROPERTY_BOOL(forceScattering, "use forced scattering to reduce noise")
         ATTRIBUTE_DEFAULT_VALUE(forceScattering, "Lya:false;true")
-        ATTRIBUTE_RELEVANT_IF(forceScattering, "!(Emission|DynamicState)")
+        ATTRIBUTE_RELEVANT_IF(forceScattering, "!(Emission|IteratePrimary)")
         ATTRIBUTE_DISPLAYED_IF(forceScattering, "Level3")
-        ATTRIBUTE_INSERT(forceScattering, "Emission|DynamicState|forceScattering:ForceScattering")
+        ATTRIBUTE_INSERT(forceScattering, "Emission|IteratePrimary|forceScattering:ForceScattering")
 
         PROPERTY_DOUBLE(minWeightReduction, "the minimum weight reduction factor before a photon packet is terminated")
         ATTRIBUTE_MIN_VALUE(minWeightReduction, "[1e3")

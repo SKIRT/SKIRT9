@@ -50,7 +50,7 @@ class DustEmissionOptions : public SimulationItem, public SourceWavelengthRangeI
         ATTRIBUTE_MIN_VALUE(maxFractionOfPrimary, "]0")
         ATTRIBUTE_MAX_VALUE(maxFractionOfPrimary, "1[")
         ATTRIBUTE_DEFAULT_VALUE(maxFractionOfPrimary, "0.01")
-        ATTRIBUTE_RELEVANT_IF(maxFractionOfPrimary, "DynamicEmission")
+        ATTRIBUTE_RELEVANT_IF(maxFractionOfPrimary, "IterateSecondary")
 
         PROPERTY_DOUBLE(maxFractionOfPrevious,
                         "convergence is reached when the total absorbed dust luminosity "
@@ -58,7 +58,7 @@ class DustEmissionOptions : public SimulationItem, public SourceWavelengthRangeI
         ATTRIBUTE_MIN_VALUE(maxFractionOfPrevious, "]0")
         ATTRIBUTE_MAX_VALUE(maxFractionOfPrevious, "1[")
         ATTRIBUTE_DEFAULT_VALUE(maxFractionOfPrevious, "0.03")
-        ATTRIBUTE_RELEVANT_IF(maxFractionOfPrevious, "DynamicEmission")
+        ATTRIBUTE_RELEVANT_IF(maxFractionOfPrevious, "IterateSecondary")
 
         PROPERTY_DOUBLE(sourceWeight, "the weight of dust emission for the number of photon packets launched")
         ATTRIBUTE_MIN_VALUE(sourceWeight, "]0")

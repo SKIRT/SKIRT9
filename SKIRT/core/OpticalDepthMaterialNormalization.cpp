@@ -8,7 +8,7 @@
 #include "Geometry.hpp"
 #include "MaterialMix.hpp"
 
-//////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
 
 std::pair<double, double> OpticalDepthMaterialNormalization::numberAndMass(const Geometry* geom,
                                                                            const MaterialMix* mix) const
@@ -27,11 +27,11 @@ std::pair<double, double> OpticalDepthMaterialNormalization::numberAndMass(const
     return std::make_pair(reqNumberColumnDensity / geomColumnDensity, reqMassColumnDensity / geomColumnDensity);
 }
 
-//////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
 
 Range OpticalDepthMaterialNormalization::wavelengthRange() const
 {
     return Range(wavelength(), wavelength());
 }
 
-//////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////

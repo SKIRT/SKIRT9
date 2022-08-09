@@ -212,12 +212,21 @@ SkirtUnitDef::SkirtUnitDef()
     addUnit("time", "Myr", 1e6 * year);
     addUnit("time", "Gyr", 1e9 * year);
 
+    // transition rate
+    addUnit("transitionrate", "1/s", 1.);
+
+    // collisional rate
+    addUnit("collisionalrate", "m3/s", 1.);
+    addUnit("collisionalrate", "cm3/s", 1e-6);
+
     // temperature
     addUnit("temperature", "K", 1.);
 
     // energy
     addUnit("energy", "J", 1.);
     addUnit("energy", "erg", 1e-7);
+    addUnit("energy", "1/m", hc);
+    addUnit("energy", "1/cm", 1e2 * hc);
     addUnit("energy", "eV", Qel);
     addUnit("energy", "meV", 1e-3 * Qel);
     addUnit("energy", "keV", 1e3 * Qel);

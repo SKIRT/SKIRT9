@@ -27,7 +27,6 @@
 #include "BrokenExpDiskGeometry.hpp"
 #include "BruzualCharlotSED.hpp"
 #include "BruzualCharlotSEDFamily.hpp"
-#include "CarbonMonoxideGasMix.hpp"
 #include "CartesianSpatialGrid.hpp"
 #include "CastelliKuruczSED.hpp"
 #include "CastelliKuruczSEDFamily.hpp"
@@ -164,6 +163,7 @@
 #include "MinSilicateGrainComposition.hpp"
 #include "ModifiedLogNormalGrainSizeDistribution.hpp"
 #include "ModifiedPowerLawGrainSizeDistribution.hpp"
+#include "MolecularLineGasMix.hpp"
 #include "MollweideProjection.hpp"
 #include "MonteCarloSimulation.hpp"
 #include "MultiGaussianExpansionGeometry.hpp"
@@ -171,6 +171,7 @@
 #include "NetzerAngularDistribution.hpp"
 #include "NoPolarizationProfile.hpp"
 #include "NumberColumnMaterialNormalization.hpp"
+#include "NumberMaterialNormalization.hpp"
 #include "OffsetGeometryDecorator.hpp"
 #include "OffsetVectorFieldDecorator.hpp"
 #include "OpacityProbe.hpp"
@@ -507,6 +508,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // material normalizations
     ItemRegistry::add<MaterialNormalization>();
     ItemRegistry::add<MassMaterialNormalization>();
+    ItemRegistry::add<NumberMaterialNormalization>();
     ItemRegistry::add<AxisMaterialNormalization>();
     ItemRegistry::add<OpticalDepthMaterialNormalization>();
     ItemRegistry::add<MassColumnMaterialNormalization>();
@@ -542,7 +544,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<XRayAtomicGasMix>();
     ItemRegistry::add<EmittingGasMix>();
     ItemRegistry::add<SpinFlipHydrogenGasMix>();
-    ///ItemRegistry::add<CarbonMonoxideGasMix>();
+    //ItemRegistry::add<MolecularLineGasMix>();
     ItemRegistry::add<TrivialGasMix>();
 
     // material mix families
