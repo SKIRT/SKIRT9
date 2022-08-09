@@ -3,22 +3,22 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef MASSMATERIALNORMALIZATION_HPP
-#define MASSMATERIALNORMALIZATION_HPP
+#ifndef NUMBERMATERIALNORMALIZATION_HPP
+#define NUMBERMATERIALNORMALIZATION_HPP
 
 #include "MaterialNormalization.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-/** A MassMaterialNormalization object normalizes the amount of material in a geometric medium by
-    specifying the total mass. */
-class MassMaterialNormalization : public MaterialNormalization
+/** A NumberMaterialNormalization object normalizes the amount of material in a geometric medium by
+    specifying the total number of entities. */
+class NumberMaterialNormalization : public MaterialNormalization
 {
-    ITEM_CONCRETE(MassMaterialNormalization, MaterialNormalization, "normalization by defining the total mass")
+    ITEM_CONCRETE(NumberMaterialNormalization, MaterialNormalization,
+                  "normalization by defining the total number of entities")
 
-        PROPERTY_DOUBLE(mass, "the total mass of the material")
-        ATTRIBUTE_QUANTITY(mass, "mass")
-        ATTRIBUTE_MIN_VALUE(mass, "]0")
+        PROPERTY_DOUBLE(number, "the total number of entities in the material")
+        ATTRIBUTE_MIN_VALUE(number, "]0")
 
     ITEM_END()
 

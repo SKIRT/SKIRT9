@@ -171,6 +171,7 @@
 #include "NetzerAngularDistribution.hpp"
 #include "NoPolarizationProfile.hpp"
 #include "NumberColumnMaterialNormalization.hpp"
+#include "NumberMaterialNormalization.hpp"
 #include "OffsetGeometryDecorator.hpp"
 #include "OffsetVectorFieldDecorator.hpp"
 #include "OpacityProbe.hpp"
@@ -507,6 +508,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // material normalizations
     ItemRegistry::add<MaterialNormalization>();
     ItemRegistry::add<MassMaterialNormalization>();
+    ItemRegistry::add<NumberMaterialNormalization>();
     ItemRegistry::add<AxisMaterialNormalization>();
     ItemRegistry::add<OpticalDepthMaterialNormalization>();
     ItemRegistry::add<MassColumnMaterialNormalization>();

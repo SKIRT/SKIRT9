@@ -3,15 +3,15 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "MassMaterialNormalization.hpp"
+#include "NumberMaterialNormalization.hpp"
 #include "MaterialMix.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-std::pair<double, double> MassMaterialNormalization::numberAndMass(const Geometry* /*geom*/,
-                                                                   const MaterialMix* mix) const
+std::pair<double, double> NumberMaterialNormalization::numberAndMass(const Geometry* /*geom*/,
+                                                                     const MaterialMix* mix) const
 {
-    return std::make_pair(_mass / mix->mass(), _mass);
+    return std::make_pair(_number, _number * mix->mass());
 }
 
 ////////////////////////////////////////////////////////////////////
