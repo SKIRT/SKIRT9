@@ -544,7 +544,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<XRayAtomicGasMix>();
     ItemRegistry::add<EmittingGasMix>();
     ItemRegistry::add<SpinFlipHydrogenGasMix>();
-    //ItemRegistry::add<MolecularLineGasMix>();
+    ItemRegistry::add<MolecularLineGasMix>();
     ItemRegistry::add<TrivialGasMix>();
 
     // material mix families
