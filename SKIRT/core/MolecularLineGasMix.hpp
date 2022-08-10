@@ -10,9 +10,13 @@
 
 ////////////////////////////////////////////////////////////////////
 
-/** The MolecularLineGasMix class describes the material properties related to selected rotational,
-    vibrational and/or rovibrational transitions in selected molecules and atoms. The class
-    properties allow configuring the species and number of transitions to be considered.
+/** The MolecularLineGasMix class describes the material properties related to selected rotational
+    transitions in selected molecules and atoms. For each supported species, the current
+    implementation includes a number of rotational energy levels (quantum number \f$J\f$) at the
+    base vibrational level (quantum number \f$v=0\f$) and supports the allowed transitions between
+    these levels. Vibrational and/or rovibrational energy levels and the corresponding transitions
+    may be added later. The class properties allow configuring the species and the number of
+    transitions to be considered.
 
     For each supported transition, the emission luminosity and absorption opacity in a given cell
     are determined from the gas properties defined in the input model and the local radiation field
@@ -26,11 +30,29 @@
 
     The current implementation supports the following molecular or atomic species:
 
-    - \c TwoLevelBenchmarkMolecule: a fictive test molecule with two energy levels and a single
-    collisional partner as defined by van Zadelhoff et al. 2002 for the first benchmark problem
-    described there. The corresponding line is at 1666.67 \f$\mu\mathrm{m}\f$.
+    - \c Two-level test molecule (TT): a fictive test molecule (called TT for our purposes) that
+    has just two rotational energy levels with a corresponding transition line at 1666.67
+    \f$\mu\mathrm{m}\f$. The single collisional interaction partner is molecular hydrogen. The
+    properties of this molecule are defined by van Zadelhoff et al. 2002 for use with the the first
+    benchmark problem described there.
 
-    [TO DO]
+    - \c Hydroxyl radical (OH): includes rotational energy levels up to \f$J=7/2\f$ including
+    hyperfine splitted levels. The corresponding transition lines are at wavelengths from 16.4
+    \f$\mu\mathrm{m}\f$ to 2 \f$\mathrm{m}\f$. The single collisional interaction partner is
+    molecular hydrogen.
+
+    - \c Formyl cation (HCO+): includes rotational energy levels up to \f$J=29\f$. The
+    corresponding transition lines are at wavelengths from 7.2 to 3361 \f$\mu\mathrm{m}\f$. The
+    single collisional interaction partner is molecular hydrogen.
+
+    - \c Carbon monoxide (CO): includes rotational energy levels up to \f$J=40\f$. The
+    corresponding transition lines are at wavelengths from 3.2 to 2601 \f$\mu\mathrm{m}\f$. The
+    single collisional interaction partner is molecular hydrogen.
+
+    - \c Atomic carbon (C): includes three rotational energy levels. The corresponding transition
+    lines are at wavelengths 230.3, 370.4 and 609.1 \f$\mu\mathrm{m}\f$. The collisional
+    interaction partners include molecular hydrogen, neutral atomic hydrogen, ionized atomic
+    hydrogen, electrons, and Helium.
 
     <b>Configuring the simulation</b>
 
