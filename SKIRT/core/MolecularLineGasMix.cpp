@@ -12,42 +12,7 @@
 #include "MaterialState.hpp"
 #include "StringUtils.hpp"
 #include "TextInFile.hpp"
-
-////////////////////////////////////////////////////////////////////
-
-namespace
-{
-    // number of level populations which you use in this calculation. Users can define this number.
-    constexpr int numLevelPops = 2;
-
-    // molecular weight of test molecule for a benchmark 1 of van Zadelho et al. (2002)
-    constexpr double molecularWeight = 7.337241790008474;
-
-    // name of the file which contatins energies and weights of energy states
-    const char* filenameEnergy = "Test_Energy_States.txt";
-
-    // number of energy levels in the table
-    constexpr int numLevelTable = 2;
-
-    // name of the file which contatins up and low indexes and Einstein A coefficients of radiational transitions
-    const char* filenameRadiative = "Test_Radiative_Trans.txt";
-
-    // number of radiational transition lines in the table
-    constexpr int numLinesTable = 1;
-
-    // name of the file which contatins up and low indexes and Collisional excitation coefficients of
-    // collisional transitions
-    const char* filenameCollisional = "Test_Collisional_Trans.txt";
-
-    // number of coliisional transition lines in the table
-    constexpr int numCollisionTable = 1;
-
-    // temeratures in the table of C coefficients
-    const Array temperatureTable = {20.0};
-
-    // number of temperatures included in the table of C coefficients
-    constexpr int numTempereature = 1;
-}
+#include "Units.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -55,88 +20,137 @@ void MolecularLineGasMix::setupSelfBefore()
 {
     EmittingGasMix::setupSelfBefore();
 
+    // don't do anything if the simulation has no secondary emission
     auto config = find<Configuration>();
-    if (config->hasSecondaryEmission())
+    if (!config->hasSecondaryEmission()) return;
+
+    // get the name of the configured species and the name(s) of its collision partners
+    string name;
+    vector<string> colNames{"H2"};  // just molecular hydrogen by default
+    switch (species())
     {
-        // import the energies and the weight of energy states from a text file
-        TextInFile infile1(this, filenameEnergy, "energy states", true);
-        infile1.addColumn("Energy", "energy", "1/cm");
-        infile1.addColumn("Weight");
-        auto result1 = infile1.readAllColumns();
-        for (int i = 0; i < numLevelTable; ++i)
-        {
-            _energyStates.push_back(result1[0][i]);
-            _weights.push_back(result1[1][i]);
-        }
-        infile1.close();
+        case Species::Test: name = "TT"; break;
+        case Species::Hydroxyl: name = "OH"; break;
+        case Species::Formyl: name = "HCO+"; break;
+        case Species::CarbonMonoxide: name = "CO"; break;
+        case Species::Carbon:
+            name = "C";
+            colNames = {"H2", "H", "H+", "e-", "He"};
+            break;
+    }
 
-        // import the transition indices and Einstein A coefficients of radiational transitions from a text file
-        TextInFile infile2(this, filenameRadiative, "radiative transitions", true);
-        infile2.addColumn("Up index");
-        infile2.addColumn("Low index");
-        infile2.addColumn("Einstein A", "transitionrate", "1/s");
-        auto result2 = infile2.readAllColumns();
-        for (int i = 0; i < numLinesTable; ++i)
-        {
-            _indexUpRad.push_back(static_cast<int>(result2[0][i]));
-            _indexLowRad.push_back(static_cast<int>(result2[1][i]));
-            _einsteinA.push_back(result2[2][i]);
-        }
-        infile2.close();
+    // load the mass of the selected species
+    {
+        TextInFile infile(this, name + "_Mass.txt", "mass", true);
+        infile.addColumn("Molecular weight");
+        double weight;
+        if (infile.readRow(weight)) _mass = weight * Constants::Mproton();
+    }
 
-        // import the transition indices and collisional K coefficients of collisional transitions from a text file
-        TextInFile infile3(this, filenameCollisional, "collisional transitions", true);
-        infile3.addColumn("Up index");
-        infile3.addColumn("Low index");
-        for (int i = 0; i < numTempereature; ++i) infile3.addColumn("Collisional K", "collisionalrate", "cm3/s");
-        auto result3 = infile3.readAllColumns();
-        for (int i = 0; i < numCollisionTable; ++i)
+    // load the energy levels
+    {
+        TextInFile infile(this, name + "_Energy.txt", "energy levels", true);
+        infile.addColumn("Energy", "energy", "1/cm");
+        infile.addColumn("Weight");
+        double energy, weight;
+        while (infile.readRow(energy, weight))
         {
-            _indexUpCol.push_back(static_cast<int>(result3[0][i]));
-            _indexLowCol.push_back(static_cast<int>(result3[1][i]));
-            _collisionCul.push_back(vector<double>());
-            for (int j = 0; j < numTempereature; ++j) _collisionCul[i].push_back(result3[2 + j][i]);
+            _energy.push_back(energy);
+            _weight.push_back(weight);
+            if (_energy.size() == static_cast<size_t>(numEnergyLevels())) break;
         }
-        infile3.close();
+        _numLevels = _energy.size();
+    }
 
-        // calculate Einstein Bul using Einstein A
-        Array centers(numLinesTable);  // wavelengths of the line center of the rotational transitions
-        for (int i = 0; i < numLinesTable; ++i)
+    // load the radiative transitions
+    {
+        TextInFile infile(this, name + "_Rad_Coeff.txt", "radiative transitions", true);
+        infile.addColumn("Up index");
+        infile.addColumn("Low index");
+        infile.addColumn("Einstein A", "transitionrate", "1/s");
+        double up, low, rate;
+        while (infile.readRow(up, low, rate))
         {
-            centers[i] =
-                Constants::h() * Constants::c() / (_energyStates[_indexUpRad[i]] - _energyStates[_indexLowRad[i]]);
-            _einsteinBul.push_back(pow(centers[i], 5.0) / 2.0 / Constants::h() / Constants::c() / Constants::c()
-                                   * _einsteinA[i]);
+            int indexUp = up;
+            int indexLow = low;
+            if (indexUp < _numLevels && indexLow < _numLevels)
+            {
+                _indexUpRad.push_back(indexUp);
+                _indexLowRad.push_back(indexLow);
+                _einsteinA.push_back(rate);
+            }
         }
+    }
+    _numLines = _indexUpRad.size();
 
-        // store indexes of the radiational transitions which you use in this calculation
-        for (int i = 0; i < numLinesTable; ++i)
+    // calculate the Einstein Bul coefficients and the line centers
+    _einsteinBul.resize(_numLines);
+    _center.resize(_numLines);
+    for (int k = 0; k != _numLines; ++k)
+    {
+        _center[k] = Constants::h() * Constants::c() / (_energy[_indexUpRad[k]] - _energy[_indexLowRad[k]]);
+        _einsteinBul[k] = _einsteinA[k] * pow(_center[k], 5.) / (2. * Constants::h() * Constants::c() * Constants::c());
+    }
+
+    // load the collisional transitions for each interaction partner
+    bool first = true;
+    for (const auto& colName : colNames)
+    {
+        // add a new empty data structure and get a writable reference to it
+        _colPartner.emplace_back();
+        auto& partner = _colPartner.back();
+
+        // load the temperature grid points
         {
-            if (_indexUpRad[i] < numLevelPops && _indexLowRad[i] < numLevelPops) _indexRadTrans.push_back(i);
+            TextInFile infile(this, name + "_Col_" + colName + "_Temp.txt", "temperature grid", true);
+            infile.addColumn("Temperature", "temperature", "K");
+            double temperature;
+            while (infile.readRow(temperature)) partner.T.push_back(temperature);
         }
 
-        for (int i = 0; i < numCollisionTable; ++i)
+        // load the transition indices (just for the first partner) and coefficients (for every partner)
         {
-            if (_indexUpCol[i] < numLevelPops && _indexLowCol[i] < numLevelPops) _indexColTrans.push_back(i);
+            int numTemperatures = partner.T.size();
+            TextInFile infile(this, name + "_Col_" + colName + "_Coeff.txt", "collisional transitions", true);
+            infile.addColumn("Up index");
+            infile.addColumn("Low index");
+            for (int i = 0; i != numTemperatures; ++i) infile.addColumn("Collisional K", "collisionalrate", "cm3/s");
+            Array row;
+            while (infile.readRow(row))
+            {
+                int indexUp = row[0];
+                int indexLow = row[1];
+                if (indexUp < _numLevels && indexLow < _numLevels)
+                {
+                    if (first)
+                    {
+                        _indexUpCol.push_back(indexUp);
+                        _indexLowCol.push_back(indexLow);
+                    }
+                    Array coeff(numTemperatures);
+                    for (int i = 0; i != numTemperatures; ++i) coeff[i] = row[i + 2];
+                    partner.Kul.emplace_back(coeff);
+                }
+            }
         }
+        first = false;
+    }
+    _numColTrans = _indexUpCol.size();
+    _numColPartners = colNames.size();
 
-        // number of the radiational transition lines which you use in this calculation
-        _numLines = static_cast<int>(_indexRadTrans.size());
-        if (_numLines < 0)
-            throw FATALERROR("There is no rotational lines, please increase the number of the energy states");
+    // log summary info on the radiative lines
+    auto log = find<Log>();
+    auto units = find<Units>();
+    log->info("Radiative lines actually in use for " + name + ":");
+    if (_numLines == 0) throw FATALERROR("There are no radiative transitions; increase the number of energy levels");
+    for (int k = 0; k != _numLines; ++k)
+    {
+        log->info("  (" + StringUtils::toString(_indexUpRad[k]) + "-" + StringUtils::toString(_indexLowRad[k]) + ") "
+                  + StringUtils::toString(units->owavelength(_center[k])) + " " + units->uwavelength());
 
-        // remember the wavelength indexes of the radiation field bin corresponding to the rotational lines.
-        auto log = find<Log>();
-        for (int i = 0; i < _numLines; ++i)
-        {
-            log->info("Test molecule (" + StringUtils::toString(_indexUpRad[_indexRadTrans[i]]) + "-"
-                      + StringUtils::toString(_indexLowRad[_indexRadTrans[i]]) + ") "
-                      + StringUtils::toString(centers[_indexRadTrans[i]] * 1e6) + " [um]");
-            auto index = config->radiationFieldWLG()->bin(centers[_indexRadTrans[i]]);
-            if (index < 0)
-                throw FATALERROR("Radiation field wavelength grid does not include a transition "
-                                 + StringUtils::toString(_indexRadTrans[i]) + " line");
-        }
+        // verify that the radiation field wavelength grid has a bin covering the line center
+        if (config->radiationFieldWLG()->bin(_center[k]) < 0)
+            throw FATALERROR("Radiation field wavelength grid does not cover the central line for this transition");
     }
 }
 
@@ -185,14 +199,14 @@ vector<StateVariable> MolecularLineGasMix::specificStateVariableInfo() const
 
     // add one custom variable for each level population (the indices start at one because index zero is taken
     // by the H2 number density)
-    for (int p = 1; p <= numLevelPops; ++p)
+    for (int p = 1; p <= _numEnergyLevels; ++p)
         result.push_back(
             StateVariable::custom(p, "level population " + StringUtils::toString(p), "numbervolumedensity"));
-    result.push_back(StateVariable::custom(numLevelPops + 1, "convergence", ""));
-    result.push_back(StateVariable::custom(numLevelPops + 2, "Micro turbulence", "velocity"));
-    result.push_back(StateVariable::custom(numLevelPops + 3, "temperature", "temperature"));
+    result.push_back(StateVariable::custom(_numEnergyLevels + 1, "convergence", ""));
+    result.push_back(StateVariable::custom(_numEnergyLevels + 2, "Micro turbulence", "velocity"));
+    result.push_back(StateVariable::custom(_numEnergyLevels + 3, "temperature", "temperature"));
     for (int p = 1; p <= _numLines; ++p)
-        result.push_back(StateVariable::custom(numLevelPops + 3 + p, "radiation field", ""));
+        result.push_back(StateVariable::custom(_numEnergyLevels + 3 + p, "radiation field", ""));
 
     return result;
 }
@@ -202,6 +216,10 @@ vector<StateVariable> MolecularLineGasMix::specificStateVariableInfo() const
 void MolecularLineGasMix::initializeSpecificState(MaterialState* state, double /*metallicity*/, double temperature,
                                                   const Array& params) const
 {
+    (void)state;
+    (void)temperature;
+    (void)params;
+    /*
     // leave the properties untouched if the cell does not contain any material for this component
     if (state->numberDensity() > 0.)
     {
@@ -231,10 +249,11 @@ void MolecularLineGasMix::initializeSpecificState(MaterialState* state, double /
             state->setCustom(p + 1, statePop);
         }
     }
+*/
 }
 
 ////////////////////////////////////////////////////////////////////
-
+/*
 namespace
 {
     // return a collisional de-excitation coefficeint using log-linear interpolation based on the table of
@@ -338,13 +357,15 @@ namespace
     int rangeLambdaNum = 20;  //if:=25 (5sigma);error 1e-4%, if:=20 (4sigma); error: 1e-2%, if:=15 (3sigma); error: 0.3%
 
 }
-
+*/
 ////////////////////////////////////////////////////////////////////
 
 UpdateStatus MolecularLineGasMix::updateSpecificState(MaterialState* state, const Array& Jv) const
 {
     UpdateStatus status;
-
+    (void)state;
+    (void)Jv;
+    /*
     // leave the properties untouched if the cell does not contain any material for this component
     if (state->numberDensity() > 0.0)
     {
@@ -514,7 +535,7 @@ UpdateStatus MolecularLineGasMix::updateSpecificState(MaterialState* state, cons
         // memorize the radiation fields at line centers
         for (int p = 1; p <= _numLines; ++p) state->setCustom(numLevelPops + 3 + p, rf[p - 1]);
     }
-
+*/
     return status;
 }
 
@@ -529,7 +550,7 @@ bool MolecularLineGasMix::isSpecificStateConverged(int numCells, int /*numUpdate
 
 double MolecularLineGasMix::mass() const
 {
-    return Constants::Mproton() * molecularWeight;
+    return _mass;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -558,6 +579,9 @@ double MolecularLineGasMix::sectionExt(double /*lambda*/) const
 double MolecularLineGasMix::opacityAbs(double lambda, const MaterialState* state, const PhotonPacket* /*pp*/) const
 {
     double kappa = 0.;
+    (void)lambda;
+    (void)state;
+    /*
     if (state->numberDensity() > 0.0)
     {
         constexpr double h = Constants::h();
@@ -591,6 +615,7 @@ double MolecularLineGasMix::opacityAbs(double lambda, const MaterialState* state
             }
         }
     }
+*/
     return kappa;
 }
 
@@ -626,13 +651,7 @@ void MolecularLineGasMix::performScattering(double /*lambda*/, const MaterialSta
 
 Array MolecularLineGasMix::lineEmissionCenters() const
 {
-    Array centers(_numLines);
-
-    for (int p = 0; p < _numLines; ++p)
-        centers[p] = Constants::c()
-                     / ((_energyStates[_indexUpRad[_indexRadTrans[p]]] - _energyStates[_indexLowRad[_indexRadTrans[p]]])
-                        / Constants::h());
-    return centers;
+    return _center;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -649,6 +668,8 @@ Array MolecularLineGasMix::lineEmissionMasses() const
 Array MolecularLineGasMix::lineEmissionSpectrum(const MaterialState* state, const Array& /*Jv*/) const
 {
     Array luminosities(_numLines);
+    (void)state;
+    /*
     if (state->numberDensity() > 0.0)
     {
         Array centers = lineEmissionCenters();
@@ -662,6 +683,7 @@ Array MolecularLineGasMix::lineEmissionSpectrum(const MaterialState* state, cons
                               * state->custom(_indexUpRad[_indexRadTrans[p]] + 1) * state->volume();
         }
     }
+*/
     return luminosities;
 }
 

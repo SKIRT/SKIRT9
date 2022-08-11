@@ -126,19 +126,7 @@
     where \f$\lambda_{ij}\f$ is the transition wavelength and \f$A_{ij}\f$, \f$B_{ij}\f$,
     \f$B_{ji}\f$ are the Einstein coefficients for spontaneous emission, induced emission, and
     absorption, and \f$C_{ij}\f$, \f$C_{ji}\f$ the coefficients for collisional excitation and
-    de-excitation. These coefficients are taken from the literature (references to be provided).
-
-    \em Note
-
-    We assume that the level populations of all molecules in a given spatial cell are the same, and
-    to calculate them we use the mean intensity of the radiation field at the rest wavelength of
-    each transition. This means that the radiation field wavelength grid needs just a single bin
-    for each transition. We consider this assumption to be valid if the width of the velocity bin
-    (or wavelength bin) of the observed spectrum is larger than the velocity dispersion of each
-    cell. In reality, however, the molecules in a cell have a velocity dispersion and the perceived
-    transition wavelength is different for each molecule. Therefore, one should calculate the mean
-    intensities of each level transition at several velocity bins in the wavelength range
-    corresponding to the velocity dispersion. However, the computational cost becomes very large.
+    de-excitation. These coefficients are taken from the literature.
 
     <b>Emission</b>
 
@@ -385,22 +373,36 @@ public:
     //======================== Data Members ========================
 
 private:
-    // These data members are loaded from text files in setupSelfBefore()
-    vector<double> _energyStates;  // the column of the energy states
-    vector<double> _weights;       // the column of the weight of energy states
-    vector<int> _indexUpRad;       // the column of the index of upper energy levels for the radiational transitions
-    vector<int> _indexLowRad;      // the column of the index of lower energy levels for radiational transitions
-    vector<double> _einsteinA;     // the column of Einstein A coefficients
-    vector<int> _indexUpCol;       // the column of the index of upper energy levels for collisional transitions
-    vector<int> _indexLowCol;      // the column of the index of lower energy levels for collisional transitions
-    vector<vector<double>>
-        _collisionCul;  // the column of collisional excitation coefficients for collisional transitions
+    // All data members are loaded from text resource files and/or precalculated in setupSelfBefore()
+    // (only the energy levels and transition actually used are stored in the data members)
 
-    // These data members are precalculated in setupSelfBefore()
-    vector<double> _einsteinBul;  // the column of Einstein Bul coefficients
-    int _numLines{-1};
-    vector<int> _indexRadTrans;  // index for the radiational transitions you use in this calculation
-    vector<int> _indexColTrans;  // index for the collisional transitions you use in this calculation
+    // mass
+    double _mass{0.};  // molecular weight multiplied by proton mass
+
+    // energy levels
+    int _numLevels{0};       // the number of energy levels
+    vector<double> _energy;  // the energy of each energy level
+    vector<double> _weight;  // the weight (multiplicity) of each energy level
+
+    // radiative transitions
+    int _numLines{0};             // the number of radiative transitions
+    vector<int> _indexUpRad;      // the upper energy level index for each radiative transition
+    vector<int> _indexLowRad;     // the lower energy level index for each radiative transition
+    vector<double> _einsteinA;    // the Einstein A coefficient for each radiative transition
+    vector<double> _einsteinBul;  // the Einstein Bul coefficient for each radiative transition
+    Array _center;                // the central emission wavelength for each radiative transition
+
+    // collisional transitions -- the transitions (not the coefficients) are assumed to be identical for all partners
+    int _numColTrans{0};       // the number of collisional transitions
+    vector<int> _indexUpCol;   // the upper energy level index for collisional transitions
+    vector<int> _indexLowCol;  // the lower energy level index for collisional transitions
+    struct ColPartner          // data structure holding information on a collisional partner
+    {
+        vector<double> T;   // the temperature grid points
+        vector<Array> Kul;  // the coefficient for each collisional transition and for each temperature
+    };
+    int _numColPartners{0};          // the number of collisional interaction partners
+    vector<ColPartner> _colPartner;  // the data for each collisional partner
 };
 
 ////////////////////////////////////////////////////////////////////
