@@ -14,9 +14,9 @@
     transitions in selected molecules and atoms. For each supported species, the current
     implementation includes a number of rotational energy levels (quantum number \f$J\f$) at the
     base vibrational level (quantum number \f$v=0\f$) and supports the allowed transitions between
-    these levels. Vibrational and/or rovibrational energy levels and the corresponding transitions
-    may be added later. The class properties allow configuring the species and the number of
-    transitions to be considered.
+    these levels. Vibrational energy levels and the corresponding rovibrational transitions may be
+    added later. The class properties allow configuring the species and the number of transitions
+    to be considered.
 
     For each supported transition, the emission luminosity and absorption opacity in a given cell
     are determined from the gas properties defined in the input model and the local radiation field
@@ -175,9 +175,28 @@
     */
 class MolecularLineGasMix : public EmittingGasMix
 {
+    /** The enumeration type indicating the molecular or atomic species represented by a given
+        MolecularLineGasMix instance. See the class header for more information. */
+    ENUM_DEF(Species, Test, Hydroxyl, Formyl, CarbonMonoxide, Carbon)
+        ENUM_VAL(Species, Test, "Fictive two-level test molecule (TT)")
+        ENUM_VAL(Species, Hydroxyl, "Hydroxyl radical (OH)")
+        ENUM_VAL(Species, Formyl, "Formyl cation (HCO+)")
+        ENUM_VAL(Species, CarbonMonoxide, "Carbon monoxide (CO)")
+        ENUM_VAL(Species, Carbon, "Atomic carbon (C)")
+    ENUM_END()
+
     ITEM_CONCRETE(MolecularLineGasMix, EmittingGasMix,
-                  "A gas mix supporting rotational and vibrational transitions in specific molecules and atoms")
+                  "A gas mix supporting rotational transitions in specific molecules and atoms")
         ATTRIBUTE_TYPE_INSERT(MolecularLineGasMix, "CustomMediumState,DynamicState")
+
+        PROPERTY_ENUM(species, Species, "the molecular or atomic species being represented")
+        ATTRIBUTE_DEFAULT_VALUE(species, "CarbonMonoxide")
+
+        PROPERTY_INT(numEnergyLevels, "the number of energy levels used (or 999 for all supported)")
+        ATTRIBUTE_MIN_VALUE(numEnergyLevels, "2")
+        ATTRIBUTE_MAX_VALUE(numEnergyLevels, "999")
+        ATTRIBUTE_DEFAULT_VALUE(numEnergyLevels, "999")
+        ATTRIBUTE_DISPLAYED_IF(numEnergyLevels, "Level2")
 
         PROPERTY_DOUBLE(defaultTemperature, "the default temperature of the gas")
         ATTRIBUTE_QUANTITY(defaultTemperature, "temperature")
@@ -218,8 +237,23 @@ class MolecularLineGasMix : public EmittingGasMix
     //============= Construction - Setup - Destruction =============
 
 protected:
-    /** This function loads the transition information for the configured specifies and determines
-        and caches some further values used in the other functions. */
+    /** This function loads the required information on the configured species from resource files:
+
+        - the molecular weight of the species;
+
+        - the supported energy levels with their corresponding multiplicities;
+
+        - the Einstein A coefficients for the radiative transitions between the energy levels;
+
+        - the gas temperature grid points used for discretizing the collisional coefficients K;
+
+        - the excitation coefficients K for the collisional transitions between the energy levels,
+        given for each of the temperature grid points.
+
+        The last two items are repeated for each collisional interaction partner of the species.
+
+        In a second step, the function calculates and caches some further values, including for
+        example the Einstein B coefficients. */
     void setupSelfBefore() override;
 
     //======== Capabilities =======
@@ -367,7 +401,6 @@ private:
     int _numLines{-1};
     vector<int> _indexRadTrans;  // index for the radiational transitions you use in this calculation
     vector<int> _indexColTrans;  // index for the collisional transitions you use in this calculation
-    vector<int> _indexLines;     // index in the simulation's RF WLG for the bin containing rotational transition lines
 };
 
 ////////////////////////////////////////////////////////////////////

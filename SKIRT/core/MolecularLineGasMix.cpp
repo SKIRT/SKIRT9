@@ -132,9 +132,8 @@ void MolecularLineGasMix::setupSelfBefore()
             log->info("Test molecule (" + StringUtils::toString(_indexUpRad[_indexRadTrans[i]]) + "-"
                       + StringUtils::toString(_indexLowRad[_indexRadTrans[i]]) + ") "
                       + StringUtils::toString(centers[_indexRadTrans[i]] * 1e6) + " [um]");
-            _indexLines.push_back(-1);  // initialization of the indexes of the rotational lines
-            _indexLines[i] = config->radiationFieldWLG()->bin(centers[_indexRadTrans[i]]);
-            if (_indexLines[i] < 0)
+            auto index = config->radiationFieldWLG()->bin(centers[_indexRadTrans[i]]);
+            if (index < 0)
                 throw FATALERROR("Radiation field wavelength grid does not include a transition "
                                  + StringUtils::toString(_indexRadTrans[i]) + " line");
         }
