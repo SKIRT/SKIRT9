@@ -11,17 +11,18 @@
 SkirtUnitDef::SkirtUnitDef()
 {
     // get relevant constants in local variables
-    double k = Constants::k();
-    double c = Constants::c();
-    double hc = Constants::h() * Constants::c();
-    double pc = Constants::pc();
-    double AU = Constants::AU();
-    double Qel = Constants::Qelectron();
-    double Msun = Constants::Msun();
-    double Lsun = Constants::Lsun();
-    double year = Constants::year();
-    double arcsec = M_PI / (180. * 3600.);
-    double arcsec2 = arcsec * arcsec;
+    constexpr double k = Constants::k();
+    constexpr double c = Constants::c();
+    constexpr double hc = Constants::h() * Constants::c();
+    constexpr double pc = Constants::pc();
+    constexpr double AU = Constants::AU();
+    constexpr double Qel = Constants::Qelectron();
+    constexpr double Msun = Constants::Msun();
+    constexpr double amu = Constants::amu();
+    constexpr double Lsun = Constants::Lsun();
+    constexpr double year = Constants::year();
+    constexpr double arcsec = M_PI / (180. * 3600.);
+    constexpr double arcsec2 = arcsec * arcsec;
 
     // *** add units for each physical quantity
 
@@ -146,6 +147,7 @@ SkirtUnitDef::SkirtUnitDef()
     addUnit("mass", "kg", 1.);
     addUnit("mass", "g", 1e-3);
     addUnit("mass", "Msun", Msun);
+    addUnit("mass", "amu", amu);
 
     // bulk mass
     addUnit("bulkmass", "kg", 1.);

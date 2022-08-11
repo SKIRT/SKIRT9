@@ -37,16 +37,16 @@
     benchmark problem described there.
 
     - \c Hydroxyl radical (OH): includes rotational energy levels up to \f$J=7/2\f$ including
-    hyperfine splitted levels. The corresponding transition lines are at wavelengths from 16.4
+    hyperfine splitted levels. The corresponding transition lines are at wavelengths from 24.6
     \f$\mu\mathrm{m}\f$ to 2 \f$\mathrm{m}\f$. The single collisional interaction partner is
     molecular hydrogen.
 
     - \c Formyl cation (HCO+): includes rotational energy levels up to \f$J=29\f$. The
-    corresponding transition lines are at wavelengths from 7.2 to 3361 \f$\mu\mathrm{m}\f$. The
+    corresponding transition lines are at wavelengths from 112.4 to 3361 \f$\mu\mathrm{m}\f$. The
     single collisional interaction partner is molecular hydrogen.
 
     - \c Carbon monoxide (CO): includes rotational energy levels up to \f$J=40\f$. The
-    corresponding transition lines are at wavelengths from 3.2 to 2601 \f$\mu\mathrm{m}\f$. The
+    corresponding transition lines are at wavelengths from 65.7 to 2601 \f$\mu\mathrm{m}\f$. The
     single collisional interaction partner is molecular hydrogen.
 
     - \c Atomic carbon (C): includes three rotational energy levels. The corresponding transition

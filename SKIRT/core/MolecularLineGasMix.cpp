@@ -42,9 +42,9 @@ void MolecularLineGasMix::setupSelfBefore()
     // load the mass of the selected species
     {
         TextInFile infile(this, name + "_Mass.txt", "mass", true);
-        infile.addColumn("Molecular weight");
+        infile.addColumn("Mass", "mass", "amu");
         double weight;
-        if (infile.readRow(weight)) _mass = weight * Constants::Mproton();
+        if (infile.readRow(weight)) _mass = weight;
     }
 
     // load the energy levels
@@ -141,16 +141,21 @@ void MolecularLineGasMix::setupSelfBefore()
     // log summary info on the radiative lines
     auto log = find<Log>();
     auto units = find<Units>();
-    log->info("Radiative lines actually in use for " + name + ":");
+    log->info("Radiative lines for " + name + ":");
     if (_numLines == 0) throw FATALERROR("There are no radiative transitions; increase the number of energy levels");
     for (int k = 0; k != _numLines; ++k)
     {
         log->info("  (" + StringUtils::toString(_indexUpRad[k]) + "-" + StringUtils::toString(_indexLowRad[k]) + ") "
                   + StringUtils::toString(units->owavelength(_center[k])) + " " + units->uwavelength());
+    }
 
-        // verify that the radiation field wavelength grid has a bin covering the line center
+    // verify that the radiation field wavelength grid has a bin covering the line center
+    for (int k = 0; k != _numLines; ++k)
+    {
         if (config->radiationFieldWLG()->bin(_center[k]) < 0)
-            throw FATALERROR("Radiation field wavelength grid does not cover the central line for this transition");
+            throw FATALERROR("Radiation field wavelength grid does not cover the central line for transition ("
+                             + StringUtils::toString(_indexUpRad[k]) + "-" + StringUtils::toString(_indexLowRad[k])
+                             + ")");
     }
 }
 
