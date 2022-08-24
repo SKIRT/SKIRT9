@@ -128,6 +128,16 @@
     absorption, and \f$C_{ij}\f$, \f$C_{ji}\f$ the coefficients for collisional excitation and
     de-excitation. These coefficients are taken from the literature.
 
+    The Einstein coefficients \f$A_{ul}\f$, \f$B_{ul}\f$, and \f$B_{lu}\f$ are constant for each
+    transition, and the \f$B_{ij}\f$ and \f$B_{ji}\f$ coefficients can be obtained from the
+    \f$A_{ij}\f$ coefficients through \f[ B_{ul} = \frac{\lambda_{ul}^5}{2
+    hc^2}A_{ul} \f] and \f[ B_{lu} = \frac{g_u}{g_l} B_{ul} = \frac{g_u}{g_l} \frac{\lambda_{ul}^5}{2
+    hc^2}A_{ul},  \f] where \f$g_u\f$ and \f$g_l\f$ represent the degeneracy of the
+    upper and lower energy levels, respectively.
+
+    The collisional coefficients \f$C_{ul}\f$ depend on the number density of the collisional
+    partner and on the kinetic temperature \f$T_\mathrm{kin}\f$ of the gas.
+
     <b>Emission</b>
 
     The integrated line luminosity \f$L_\ell\f$ corresponding to the transition with index
@@ -214,11 +224,12 @@ class MolecularLineGasMix : public EmittingGasMix
         ATTRIBUTE_DEFAULT_VALUE(maxChangeInLevelPopulations, "0.05")
         ATTRIBUTE_DISPLAYED_IF(maxChangeInLevelPopulations, "Level2")
 
-        PROPERTY_DOUBLE(maxFractionUnconvergedCells, "the maximum fraction of spatial cells that have not convergenced")
-        ATTRIBUTE_MIN_VALUE(maxFractionUnconvergedCells, "[0")
-        ATTRIBUTE_MAX_VALUE(maxFractionUnconvergedCells, "1]")
-        ATTRIBUTE_DEFAULT_VALUE(maxFractionUnconvergedCells, "0.001")
-        ATTRIBUTE_DISPLAYED_IF(maxFractionUnconvergedCells, "Level2")
+        PROPERTY_DOUBLE(maxFractionNotConvergedCells,
+                        "the maximum fraction of spatial cells that have not convergenced")
+        ATTRIBUTE_MIN_VALUE(maxFractionNotConvergedCells, "[0")
+        ATTRIBUTE_MAX_VALUE(maxFractionNotConvergedCells, "1]")
+        ATTRIBUTE_DEFAULT_VALUE(maxFractionNotConvergedCells, "0.001")
+        ATTRIBUTE_DISPLAYED_IF(maxFractionNotConvergedCells, "Level2")
 
     ITEM_END()
 
@@ -229,7 +240,7 @@ protected:
 
         - the molecular weight of the species;
 
-        - the supported energy levels with their corresponding multiplicities;
+        - the supported energy levels with their corresponding degeneracies;
 
         - the Einstein A coefficients for the radiative transitions between the energy levels;
 
@@ -373,36 +384,49 @@ public:
     //======================== Data Members ========================
 
 private:
-    // All data members are loaded from text resource files and/or precalculated in setupSelfBefore()
+    // Data members loaded from text resource files and/or precalculated in setupSelfBefore()
     // (only the energy levels and transition actually used are stored in the data members)
 
     // mass
     double _mass{0.};  // molecular weight multiplied by proton mass
 
     // energy levels
-    int _numLevels{0};       // the number of energy levels
+    int _numLevels{0};       // the number of energy levels -- index p
     vector<double> _energy;  // the energy of each energy level
-    vector<double> _weight;  // the weight (multiplicity) of each energy level
+    vector<double> _weight;  // the weight (degeneracy) of each energy level
 
     // radiative transitions
-    int _numLines{0};             // the number of radiative transitions
+    int _numLines{0};             // the number of radiative transitions -- index k
     vector<int> _indexUpRad;      // the upper energy level index for each radiative transition
     vector<int> _indexLowRad;     // the lower energy level index for each radiative transition
     vector<double> _einsteinA;    // the Einstein A coefficient for each radiative transition
     vector<double> _einsteinBul;  // the Einstein Bul coefficient for each radiative transition
+    vector<double> _einsteinBlu;  // the Einstein Blu coefficient for each radiative transition
     Array _center;                // the central emission wavelength for each radiative transition
 
     // collisional transitions -- the transitions (not the coefficients) are assumed to be identical for all partners
-    int _numColTrans{0};       // the number of collisional transitions
+    int _numColTrans{0};       // the number of collisional transitions -- index l
     vector<int> _indexUpCol;   // the upper energy level index for collisional transitions
     vector<int> _indexLowCol;  // the lower energy level index for collisional transitions
     struct ColPartner          // data structure holding information on a collisional partner
     {
-        vector<double> T;   // the temperature grid points
+        string name;        // human readable species name
+        Array T;            // the temperature grid points
         vector<Array> Kul;  // the coefficient for each collisional transition and for each temperature
     };
-    int _numColPartners{0};          // the number of collisional interaction partners
+    int _numColPartners{0};          // the number of collisional interaction partners -- index q
     vector<ColPartner> _colPartner;  // the data for each collisional partner
+
+    // the radiation field wavelength grid for this simulation
+    int _numWavelengths{0};  // the number of wavelength bins -- index ell
+    Array _lambdav;          // characteristic wavelengths
+    Array _dlambdav;         // wavelength bin widths
+
+private:
+    // Data members indicating custom variable indices; initialized in specificStateVariableInfo()
+    int _indexKineticTemperature{0};
+    int _indexFirstColPartnerDensity{0};
+    int _indexFirstLevelPopulation{0};
 };
 
 ////////////////////////////////////////////////////////////////////

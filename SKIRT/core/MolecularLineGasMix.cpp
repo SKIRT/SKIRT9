@@ -10,6 +10,7 @@
 #include "FatalError.hpp"
 #include "Log.hpp"
 #include "MaterialState.hpp"
+#include "NR.hpp"
 #include "StringUtils.hpp"
 #include "TextInFile.hpp"
 #include "Units.hpp"
@@ -19,10 +20,6 @@
 void MolecularLineGasMix::setupSelfBefore()
 {
     EmittingGasMix::setupSelfBefore();
-
-    // don't do anything if the simulation has no secondary emission
-    auto config = find<Configuration>();
-    if (!config->hasSecondaryEmission()) return;
 
     // get the name of the configured species and the name(s) of its collision partners
     string name;
@@ -47,7 +44,7 @@ void MolecularLineGasMix::setupSelfBefore()
         if (infile.readRow(weight)) _mass = weight;
     }
 
-    // load the energy levels
+    // load the energy levels and weights
     {
         TextInFile infile(this, name + "_Energy.txt", "energy levels", true);
         infile.addColumn("Energy", "energy", "1/cm");
@@ -83,13 +80,15 @@ void MolecularLineGasMix::setupSelfBefore()
     }
     _numLines = _indexUpRad.size();
 
-    // calculate the Einstein Bul coefficients and the line centers
-    _einsteinBul.resize(_numLines);
+    // calculate the line centers and the Einstein B coefficients
     _center.resize(_numLines);
+    _einsteinBul.resize(_numLines);
+    _einsteinBlu.resize(_numLines);
     for (int k = 0; k != _numLines; ++k)
     {
         _center[k] = Constants::h() * Constants::c() / (_energy[_indexUpRad[k]] - _energy[_indexLowRad[k]]);
         _einsteinBul[k] = _einsteinA[k] * pow(_center[k], 5.) / (2. * Constants::h() * Constants::c() * Constants::c());
+        _einsteinBlu[k] = _einsteinBul[k] * _weight[_indexUpRad[k]] / _weight[_indexLowRad[k]];
     }
 
     // load the collisional transitions for each interaction partner
@@ -99,13 +98,13 @@ void MolecularLineGasMix::setupSelfBefore()
         // add a new empty data structure and get a writable reference to it
         _colPartner.emplace_back();
         auto& partner = _colPartner.back();
+        partner.name = colName;
 
         // load the temperature grid points
         {
             TextInFile infile(this, name + "_Col_" + colName + "_Temp.txt", "temperature grid", true);
             infile.addColumn("Temperature", "temperature", "K");
-            double temperature;
-            while (infile.readRow(temperature)) partner.T.push_back(temperature);
+            infile.readAllColumns(partner.T);
         }
 
         // load the transition indices (just for the first partner) and coefficients (for every partner)
@@ -149,13 +148,25 @@ void MolecularLineGasMix::setupSelfBefore()
                   + StringUtils::toString(units->owavelength(_center[k])) + " " + units->uwavelength());
     }
 
-    // verify that the radiation field wavelength grid has a bin covering the line center
-    for (int k = 0; k != _numLines; ++k)
+    // log summary info on the collisional partner(s)
+    log->info("Collisional partner(s) for " + name + ": " + StringUtils::join(colNames, ", "));
+
+    // verify that the radiation field wavelength grid, if present, has a bin covering the line centers
+    // and cache the characteristic wavelengths and bin widths
+    auto rfwlg = find<Configuration>()->radiationFieldWLG();
+    if (rfwlg)
     {
-        if (config->radiationFieldWLG()->bin(_center[k]) < 0)
-            throw FATALERROR("Radiation field wavelength grid does not cover the central line for transition ("
-                             + StringUtils::toString(_indexUpRad[k]) + "-" + StringUtils::toString(_indexLowRad[k])
-                             + ")");
+        rfwlg->setup();
+        for (int k = 0; k != _numLines; ++k)
+        {
+            if (rfwlg->bin(_center[k]) < 0)
+                throw FATALERROR("Radiation field wavelength grid does not cover the central line for transition ("
+                                 + StringUtils::toString(_indexUpRad[k]) + "-" + StringUtils::toString(_indexLowRad[k])
+                                 + ")");
+        }
+        _numWavelengths = rfwlg->numBins();
+        _lambdav = rfwlg->lambdav();
+        _dlambdav = rfwlg->dlambdav();
     }
 }
 
@@ -191,356 +202,281 @@ bool MolecularLineGasMix::hasLineEmission() const
 
 vector<SnapshotParameter> MolecularLineGasMix::parameterInfo() const
 {
-    return {SnapshotParameter::custom("H2 number density", "numbervolumedensity", "1/cm3"),
-            SnapshotParameter::custom("Micro turbulence", "velocity", "km/s")};
-}
+    vector<SnapshotParameter> result;
 
-////////////////////////////////////////////////////////////////////
+    // add the number density of each collisional partner
+    for (const auto& partner : _colPartner)
+        result.push_back(SnapshotParameter::custom(partner.name + " number density", "numbervolumedensity", "1/cm3"));
 
-vector<StateVariable> MolecularLineGasMix::specificStateVariableInfo() const
-{
-    vector<StateVariable> result{StateVariable::numberDensity(), StateVariable::temperature(),
-                                 StateVariable::custom(0, "H2 number density", "numbervolumedensity")};
-
-    // add one custom variable for each level population (the indices start at one because index zero is taken
-    // by the H2 number density)
-    for (int p = 1; p <= _numEnergyLevels; ++p)
-        result.push_back(
-            StateVariable::custom(p, "level population " + StringUtils::toString(p), "numbervolumedensity"));
-    result.push_back(StateVariable::custom(_numEnergyLevels + 1, "convergence", ""));
-    result.push_back(StateVariable::custom(_numEnergyLevels + 2, "Micro turbulence", "velocity"));
-    result.push_back(StateVariable::custom(_numEnergyLevels + 3, "temperature", "temperature"));
-    for (int p = 1; p <= _numLines; ++p)
-        result.push_back(StateVariable::custom(_numEnergyLevels + 3 + p, "radiation field", ""));
+    // add the micro turbulence velocity
+    result.push_back(SnapshotParameter::custom("Micro turbulence", "velocity", "km/s"));
 
     return result;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-void MolecularLineGasMix::initializeSpecificState(MaterialState* state, double /*metallicity*/, double temperature,
-                                                  const Array& params) const
+vector<StateVariable> MolecularLineGasMix::specificStateVariableInfo() const
 {
-    (void)state;
-    (void)temperature;
-    (void)params;
-    /*
-    // leave the properties untouched if the cell does not contain any material for this component
-    if (state->numberDensity() > 0.)
-    {
-        // collisional partner density
-        state->setCustom(0, params.size() ? params[0] : state->numberDensity() * defaultCollisionPartnerRatios()[0]);
+    // add standard variables for the number density of the species under consideration
+    // and for the effective gas temperature (including kinetic temperature and unresolved microturbulence)
+    vector<StateVariable> result{StateVariable::numberDensity(), StateVariable::temperature()};
 
-        // kinetic temperature
-        double Tkin = temperature >= 0. ? temperature : defaultTemperature();
-        state->setCustom(numLevelPops + 3, Tkin);
+    // next available custom variable index
+    int index = 0;
 
-        // effective temperature (including micro-turbulence)
-        double vturb = params.size() ? params[1] : defaultMicroTurbulenceVelocity();
-        double Teff = Tkin + vturb * vturb * mass() / Constants::k();
-        state->setTemperature(Teff);
+    // add custom variable for the kinetic gas temperature (i.e. excluding microturbulence)
+    const_cast<MolecularLineGasMix*>(this)->_indexKineticTemperature = index;
+    result.push_back(StateVariable::custom(index++, "kinetic gas temperature", "temperature"));
 
-        // initialization of the level population using boltzmann distribution (start with LTE)
-        double normN = 0.;
-        Array boltzDist(numLevelPops);
-        for (int p = 0; p < numLevelPops; ++p)
-        {
-            boltzDist[p] = _weights[p] * exp(-_energyStates[p] / Constants::k() / state->custom(numLevelPops + 3));
-            normN += boltzDist[p];
-        }
-        for (int p = 0; p < numLevelPops; ++p)
-        {
-            double statePop = state->numberDensity() * boltzDist[p] / normN;
-            state->setCustom(p + 1, statePop);
-        }
-    }
-*/
+    // add custom variable for the number density of each collisional partner
+    const_cast<MolecularLineGasMix*>(this)->_indexFirstColPartnerDensity = index;
+    for (const auto& partner : _colPartner)
+        result.push_back(StateVariable::custom(index++, partner.name + " number density", "numbervolumedensity"));
+
+    // add custom variable for the population of each energy level
+    const_cast<MolecularLineGasMix*>(this)->_indexFirstLevelPopulation = index;
+    for (int p = 0; p != _numEnergyLevels; ++p)
+        result.push_back(
+            StateVariable::custom(index++, "population of level " + std::to_string(p), "numbervolumedensity"));
+
+    return result;
 }
 
 ////////////////////////////////////////////////////////////////////
-/*
-namespace
+
+// Macro's for accessing custom variables in the material state
+// This is an ugly hack but there does not seem to be an elegant in-language mechanism to accomplish this
+#define setKineticTemperature(value) setCustom(_indexKineticTemperature, (value))
+#define kineticTemperature() custom(_indexKineticTemperature)
+#define setColPartnerDensity(index, value) setCustom(_indexFirstColPartnerDensity + (index), (value))
+#define colPartnerDensity(index) custom(_indexFirstColPartnerDensity + (index))
+#define setLevelPopulation(index, value) setCustom(_indexFirstLevelPopulation + (index), (value))
+#define levelPopulation(index) custom(_indexFirstLevelPopulation + (index))
+
+////////////////////////////////////////////////////////////////////
+
+void MolecularLineGasMix::initializeSpecificState(MaterialState* state, double /*metallicity*/, double temperature,
+                                                  const Array& params) const
 {
-    // return a collisional de-excitation coefficeint using log-linear interpolation based on the table of
-    // the collisional coefficients
-    double coefficientCul(double temperature, int indexTrans, int indexTem, int numTemp, const Array& tableTemp,
-                          const vector<vector<double>>& tableCul)
+    // if the cell does not contain any material for this component, leave all properties at zero values
+    if (state->numberDensity() > 0.)
     {
-        double Cul = 0.;
-        if (indexTem < 0)
+        // copy kinetic temperature from import or default
+        double Tkin = temperature >= 0. ? temperature : defaultTemperature();
+        state->setKineticTemperature(Tkin);
+
+        // set effective temperature, including imported or default micro-turbulence
+        double vturb = params.size() ? params[_numColPartners] : defaultMicroTurbulenceVelocity();
+        double Teff = Tkin + vturb * vturb * mass() / Constants::k();
+        state->setTemperature(Teff);
+
+        // copy collisional partner densities from import or default
+        if (params.size())
         {
-            throw FATALERROR("Failed calculating a Collisional coefficient of transition "
-                             + StringUtils::toString(indexTrans));
+            for (int q = 0; q != _numColPartners; ++q) state->setColPartnerDensity(q, params[q]);
         }
-        else if (indexTem == 0)
-            Cul = tableCul[indexTrans][0];
-        else if (indexTem == numTemp - 1)
-            Cul = tableCul[indexTrans][numTemp - 1];
         else
         {
-            double logTemp = log(temperature);
-            double logTempTableHigh = log(tableTemp[indexTem + 1]);
-            double logTempTableLow = log(tableTemp[indexTem]);
-            double logCulHigh = log(tableCul[indexTrans][indexTem + 1]);
-            double logCulLow = log(tableCul[indexTrans][indexTem]);
-            double steepness = (logCulHigh - logCulLow) / (logTempTableHigh - logTempTableLow);
-            Cul = exp(steepness * (logTemp - logTempTableLow) + logCulLow);
+            const auto& ratios = defaultCollisionPartnerRatios();
+            if (ratios.size() < _colPartner.size())
+                throw FATALERROR("The number of collision partners exceeds the number of default ratios");
+            for (int q = 0; q != _numColPartners; ++q)
+                state->setColPartnerDensity(q, state->numberDensity() * ratios[q]);
         }
-        return Cul;
+
+        // initialize level population using boltzmann distribution (start with LTE)
+        Array boltzmann(_numLevels);
+        for (int p = 0; p < _numLevels; ++p) boltzmann[p] = _weight[p] * exp(-_energy[p] / Constants::k() / Tkin);
+        boltzmann *= state->numberDensity() / boltzmann.sum();
+        for (int p = 0; p < _numLevels; ++p) state->setLevelPopulation(p, boltzmann[p]);
     }
+}
 
-    // return a collisional excitation coefficeint Clu using a collisional de-excitation coefficeint Cul
-    double coefficientClu(double Cul, double temperature, int up, int low, const vector<double>& weight,
-                          const vector<double>& energy)
-    {
-        double weightRatio = weight[up] / weight[low];
-        double dif_energy = abs(energy[up] - energy[low]);
-        double expTerm = 0.;
+////////////////////////////////////////////////////////////////////
 
-        expTerm = exp(-dif_energy / Constants::k() / temperature);
-        double Clu = Cul * weightRatio * expTerm;
-        return Clu;
-    }
-
+namespace
+{
     // solve the given inverse matrix using LU decomposition
-    Array solveInverseMatrix(vector<vector<double>> matrixPop)
+    Array solveInverseMatrix(vector<vector<double>>& matrix)
     {
-        size_t rowSize = matrixPop.size();
-        size_t collumnSize = matrixPop[0].size();
+        size_t rowSize = matrix.size();
+        size_t colSize = matrix[0].size();
         Array solution(rowSize);
-        double inverseMat;
 
         // forwarding elimination
-        for (size_t i = 0; i < rowSize; i++) solution[i] = matrixPop[i][collumnSize - 1];
+        for (size_t i = 0; i < rowSize; i++) solution[i] = matrix[i][colSize - 1];
 
         for (size_t k = 0; k < rowSize - 1; ++k)
         {
-            if (matrixPop[k][k] == 0.0)
+            if (matrix[k][k] == 0.0)
             {
-                std::swap(matrixPop[k], matrixPop[k + 1]);
+                std::swap(matrix[k], matrix[k + 1]);
                 std::swap(solution[k], solution[k + 1]);
             }
-            for (size_t i = k + 1; i < collumnSize - 1; ++i)
+            for (size_t i = k + 1; i < colSize - 1; ++i)
             {
-                inverseMat = matrixPop[i][k] / matrixPop[k][k];
-                for (size_t j = k + 1; j < collumnSize - 1; ++j) matrixPop[i][j] -= inverseMat * matrixPop[k][j];
-                matrixPop[i][k] = inverseMat;
+                double inverse = matrix[i][k] / matrix[k][k];
+                for (size_t j = k + 1; j < colSize - 1; ++j) matrix[i][j] -= inverse * matrix[k][j];
+                matrix[i][k] = inverse;
             }
         }
 
         // forwarding elimination
         for (size_t i = 0; i < rowSize; ++i)
-            for (size_t j = 0; j < i; ++j) solution[i] -= matrixPop[i][j] * solution[j];
+            for (size_t j = 0; j < i; ++j) solution[i] -= matrix[i][j] * solution[j];
 
         // backward substitution
         for (int i = static_cast<int>(rowSize) - 1; i >= 0; --i)
         {
-            for (size_t j = i + 1; j < collumnSize - 1; ++j) solution[i] -= matrixPop[i][j] * solution[j];
-            solution[i] /= matrixPop[i][i];
+            for (size_t j = i + 1; j < colSize - 1; ++j) solution[i] -= matrix[i][j] * solution[j];
+            solution[i] /= matrix[i][i];
         }
 
         // return the solution of given inverse matrix
         return solution;
     }
+}
 
-    double m_SQRT_2PI = M_SQRT1_2 * sqrt(M_1_PI);
+////////////////////////////////////////////////////////////////////
 
-    // return gaussian profile using 4 parameters: wavelength, wavelength of the line center,
-    // temperature, molecular mass
-    double gaussianProfile(double lambda, double center, double const_sigmatherm)
+namespace
+{
+    // return the value at ordinate x of a normalized Gaussian probability distribution
+    // with given center mu and dispersion sigma
+    double gaussian(double x, double mu, double sigma)
     {
-        double sigmatherm = center * const_sigmatherm;
-        double front = 1. / (sigmatherm)*m_SQRT_2PI;
-        double back = exp(-(lambda - center) * (lambda - center) / 2.0 / sigmatherm / sigmatherm);
-        return front * back;
+        double u = (x - mu) / sigma;
+        constexpr double front = 0.25 * M_SQRT2 * M_2_SQRTPI;
+        return front / sigma * exp(-0.5 * u * u);
     }
 
-    // this number divide the dispersion of gaussian (sigma) to determin differential wavelength for the intergration
-    //of the gaussian profile
-    double divnum = 5.0;
-    // this number determin the range of wavelength for the intergration of the gaussian profile
-    int rangeLambdaNum = 20;  //if:=25 (5sigma);error 1e-4%, if:=20 (4sigma); error: 1e-2%, if:=15 (3sigma); error: 0.3%
+    // hardcoded constant indicating the line profile range considered in the calculations
+    // expressed as a multiple of the Gaussian sigma (in each direction from the center)
+    constexpr double PROFILE_RANGE = 3.;
 
+    // hardcoded constant indicating the fractional error allowed on the integration of
+    // the Gaussian line profile over the simulation's radiation field wavelength grid
+    constexpr double MAX_GAUSS_ERROR_WARN = 0.01;
+    constexpr double MAX_GAUSS_ERROR_FAIL = 0.1;
 }
-*/
+
 ////////////////////////////////////////////////////////////////////
 
 UpdateStatus MolecularLineGasMix::updateSpecificState(MaterialState* state, const Array& Jv) const
 {
+    // initialize status indicator to "not updated"
     UpdateStatus status;
-    (void)state;
-    (void)Jv;
-    /*
-    // leave the properties untouched if the cell does not contain any material for this component
-    if (state->numberDensity() > 0.0)
+
+    // if the cell does not contain any material for this component, leave all properties untouched
+    if (state->numberDensity() > 0)
     {
-        auto config = find<Configuration>();
+        // allocate the statistical equilibrium matrix for the level populations
+        vector<vector<double>> matrix(_numLevels, vector<double>(_numLevels + 1));
 
-        double numHydroMol = state->custom(0);
-
-        Array levelpop_before(numLevelPops);
-        for (int p = 1; p <= numLevelPops; ++p) levelpop_before[p - 1] = state->custom(p);
-
-        // set up mean Intensity
-        Array rf(_numLines);
-
-        // wavelength of transition lines
-        Array centers = lineEmissionCenters();
-        double const_sigmatherm = 1.0 / Constants::c() * sqrt(Constants::k() * state->temperature() / mass());
-
-        // calculate radiation fields at each transition line using the line profile
-        for (int i = 0; i < _numLines; ++i)
+        // add the terms for the radiational transitions
+        for (int k = 0; k != _numLines; ++k)
         {
+            int up = _indexUpRad[k];
+            int low = _indexLowRad[k];
 
-            // integrate radiation J fields with a weight of gaussian profile
-            double difLambda = centers[i] * const_sigmatherm / divnum;
-            double lambdaNow = centers[i] - difLambda * rangeLambdaNum;
-            double lambdaEnd = centers[i] + difLambda * rangeLambdaNum;
+            // add the Einstein Aul coefficients (spontaneous emission)
+            matrix[up][up] += _einsteinA[k];
+            matrix[low][up] -= _einsteinA[k];
 
-            rf[i] = 0.;
-
-            double integralsum = 0.;
-            int count_i = 0;
-            while (lambdaNow < lambdaEnd)
+            // calculate the mean intensity of the radiation field convolved over the normalized line profile g:
+            //   J_convolved = \int J_lambda(lambda) g(lambda) d lambda  /  \int g(lambda) d lambda
+            // we use all wavelength points within a given range around the line center and verify that the
+            // grid is sufficiently resolved to reproduce the normalizaton value of 1 = \int g(lambda) d lambda
+            double center = _center[k];
+            double sigma = center / Constants::c() * sqrt(Constants::k() * state->temperature() / _mass);
+            double lambdamin = center - PROFILE_RANGE * sigma;
+            double lambdamax = center + PROFILE_RANGE * sigma;
+            int ellmin = std::lower_bound(begin(_lambdav), end(_lambdav), lambdamin) - begin(_lambdav);
+            int ellmax = std::upper_bound(begin(_lambdav), end(_lambdav), lambdamax) - begin(_lambdav);
+            double gsum = 0.;
+            double Jsum = 0.;
+            for (int ell = ellmin; ell != ellmax; ++ell)
             {
-                double lambdaPre = lambdaNow;
-                int indexJv = -1;
-                indexJv = config->radiationFieldWLG()->bin(lambdaNow);
-                if (indexJv >= 0 and indexJv < config->radiationFieldWLG()->numBins())
-                {
-                    double rightJvBorder = config->radiationFieldWLG()->rightBorder(indexJv);
-                    lambdaNow += difLambda;
-                    if (lambdaNow > rightJvBorder)
-                    {
-                        double gaussValue =
-                            gaussianProfile((rightJvBorder + lambdaPre) / 2., centers[i], const_sigmatherm)
-                            * (rightJvBorder - lambdaPre);
-                        rf[i] += Jv[indexJv] * gaussValue;
-                        integralsum += gaussValue;
-                        gaussValue = gaussianProfile((rightJvBorder + lambdaNow) / 2., centers[i], const_sigmatherm)
-                                     * (lambdaNow - rightJvBorder);
-                        if (indexJv + 1 < config->radiationFieldWLG()->numBins())
-                        {
-                            rf[i] += Jv[indexJv + 1] * gaussValue;
-                            integralsum += gaussValue;
-                        }
-                        else
-                            break;
-                    }
-                    else
-                    {
-                        double gaussValue =
-                            difLambda * gaussianProfile((lambdaNow + lambdaPre) / 2., centers[i], const_sigmatherm);
-                        rf[i] += Jv[indexJv] * gaussValue;
-                        integralsum += gaussValue;
-                    }
-                }
-                else if (indexJv < 0)
-                    lambdaNow += difLambda;
-                else
-                {
-                    find<Log>()->info("Break Loop in calculation of radiation fields, index "
-                                      + StringUtils::toString(indexJv) + " and count "
-                                      + StringUtils::toString(count_i));
-                    break;
-                }
-                count_i++;
+                double gdlambda = gaussian(_lambdav[ell], center, sigma) * _dlambdav[ell];
+                gsum += gdlambda;
+                Jsum += Jv[ell] * gdlambda;
             }
+            if (abs(gsum - 1.) > MAX_GAUSS_ERROR_WARN)
+            {
+                auto units = find<Units>();
+                auto outstring = [units](double wavelength) {
+                    return StringUtils::toString(units->owavelength(wavelength), 'g', 3) + " " + units->uwavelength();
+                };
+                string message = "Integral of Gaussian line profile over wavelength range " + outstring(lambdamin)
+                                 + " - " + outstring(lambdamax) + "equals " + StringUtils::toString(gsum, 'g')
+                                 + " rather than unity; adjust the radiation field wavelength grid";
+                if (abs(gsum - 1.) > MAX_GAUSS_ERROR_FAIL) throw FATALERROR(message);
+                find<Log>()->warning(message);
+            }
+            double J = Jsum / gsum;
 
-            if (integralsum > 1.01 or integralsum < 0.99)
-                find<Log>()->warning(
-                    "Integrated Gaussian = " + StringUtils::toString(integralsum)
-                    + ", please adjust lineRange in updateSpecificState, wavelengthgrids, or temperature");
+            // add the Einstein Bul coefficients (stimulated emission)
+            matrix[up][up] += _einsteinBul[k] * J;
+            matrix[low][up] -= _einsteinBul[k] * J;
+
+            // add the Einstein Blu coefficients (absorption)
+            matrix[low][low] += _einsteinBlu[k] * J;
+            matrix[up][low] -= _einsteinBlu[k] * J;
         }
 
-        // statistical equilibrium matrix for level population
-        vector<vector<double>> matrixPop(numLevelPops, vector<double>(numLevelPops + 1, 0.));
-
-        // temperature of the carbon monoxide to determine level populations
-        double tem = state->custom(numLevelPops + 3);
-
-        // the most closet index of the templeature in the collisional table to the temperature of the state
-        int indexTem = 0;
-
-        // add the terms of the raditational transtions
-        for (int i = 0; i < _numLines; ++i)
+        // add the terms for the collisional transitions
+        double T = state->kineticTemperature();
+        for (int l = 0; l != _numColTrans; ++l)
         {
-            int up = _indexUpRad[_indexRadTrans[i]];
-            int low = _indexLowRad[_indexRadTrans[i]];
+            int up = _indexUpCol[l];
+            int low = _indexLowCol[l];
+            double weightRatio = _weight[up] / _weight[low];
+            double energyDiff = _energy[up] - _energy[low];
+            double Kconversion = weightRatio * exp(-energyDiff / Constants::k() / T);
 
-            // add Eistein Aul coefficeints (spontaneous emission) in the statistical equibrium matrix
-            matrixPop[up][up] += _einsteinA[_indexRadTrans[i]];
-            matrixPop[low][up] -= _einsteinA[_indexRadTrans[i]];
+            // loop over the collisional partners
+            for (int q = 0; q != _numColPartners; ++q)
+            {
+                // determine Kul by interpolation from the temperature-dependent table
+                double Kul = NR::clampedValue<NR::interpolateLogLog>(T, _colPartner[q].T, _colPartner[q].Kul[l]);
 
-            // add Eistein Bul coefficeints (stimulated emission) in the statistical equibrium matrix
-            matrixPop[up][up] += _einsteinBul[_indexRadTrans[i]] * rf[i];
-            matrixPop[low][up] -= _einsteinBul[_indexRadTrans[i]] * rf[i];
+                // determine Klu from Kul
+                double Klu = Kul * Kconversion;
 
-            // add Eistein Blu coefficeints (absorption) in the statistical equibrium matrix
-            double wRatio = _weights[up] / _weights[low];
-            matrixPop[low][low] += wRatio * _einsteinBul[_indexRadTrans[i]] * rf[i];
-            matrixPop[up][low] -= wRatio * _einsteinBul[_indexRadTrans[i]] * rf[i];
-        }
-
-        // add the terms of the collisional transtions with hydorgen molecules
-        for (size_t i = 0; i < _indexColTrans.size(); ++i)
-        {
-            int up = _indexUpCol[_indexColTrans[i]];
-            int low = _indexLowCol[_indexColTrans[i]];
-            double Cul =
-                coefficientCul(tem, _indexColTrans[i], indexTem, numTempereature, temperatureTable, _collisionCul);
-            double Clu = coefficientClu(Cul, tem, up, low, _weights, _energyStates);
-
-            matrixPop[up][up] += Cul * numHydroMol;
-            matrixPop[low][low] += Clu * numHydroMol;
-            matrixPop[up][low] -= Clu * numHydroMol;
-            matrixPop[low][up] -= Cul * numHydroMol;
+                // add the coefficients after multiplication by the partner number density
+                double n = state->colPartnerDensity(q);
+                matrix[up][up] += Kul * n;
+                matrix[low][low] += Klu * n;
+                matrix[up][low] -= Klu * n;
+                matrix[low][up] -= Kul * n;
+            }
         }
 
         // add the normalization of number density in the last row of the matrix.
-        for (int j = 0; j <= numLevelPops; ++j)
-        {
-            if (j == numLevelPops)
-                matrixPop[numLevelPops - 1][j] = state->numberDensity();
-            else
-                matrixPop[numLevelPops - 1][j] = 1.;
-        }
+        for (int q = 0; q != _numLevels; ++q) matrix[_numLevels - 1][q] = 1.;
+        matrix[_numLevels - 1][_numLevels] = state->numberDensity();
 
         // solve the given inverse matrix
-        Array solution = solveInverseMatrix(matrixPop);
+        Array solution = solveInverseMatrix(matrix);
 
-        // update the level population
-        double total_num = 0.;
-        for (int p = 1; p <= numLevelPops; ++p)
+        // update the level populations, keeping track of the amount of change
+        double change = 0.;
+        for (int p = 0; p != _numLevels; ++p)
         {
-            if (solution[p - 1] >= state->numberDensity())
-                throw FATALERROR(StringUtils::toString(p - 1)
-                                 + " level: Failed updating level population, the number density in the level ="
-                                 + StringUtils::toString(solution[p - 1]));
-            // set level population
-            else
-                state->setCustom(p, solution[p - 1]);
-            total_num += solution[p - 1];
+            double oldPop = state->levelPopulation(p);
+            double newPop = solution[p];
+            state->setLevelPopulation(p, newPop);
+            change += abs(oldPop / newPop - 1.);
         }
+        change /= _numLevels;
 
-        // for debug: confirm number density
-        if (total_num >= state->numberDensity() * (1.0 + 1e-5) || total_num <= state->numberDensity() * (1.0 - 1e-5))
-            throw FATALERROR("Failed Update total: " + StringUtils::toString(state->numberDensity())
-                             + "; after: " + StringUtils::toString(total_num));
-        // confirm the convergence of level population
-        double converge_value = 0.;
-        for (int p = 1; p <= numLevelPops; ++p)
-            if (p < numLevelPops) converge_value += abs((levelpop_before[p - 1] / state->custom(p) - 1));
-        converge_value /= (numLevelPops - 1);
-        if (converge_value > maxChangeInLevelPopulations())
+        // verify convergence
+        if (change > maxChangeInLevelPopulations())
             status.updateNotConverged();
         else
             status.updateConverged();
-
-        // memorize the radiation fields at line centers
-        for (int p = 1; p <= _numLines; ++p) state->setCustom(numLevelPops + 3 + p, rf[p - 1]);
     }
-*/
     return status;
 }
 
@@ -548,7 +484,7 @@ UpdateStatus MolecularLineGasMix::updateSpecificState(MaterialState* state, cons
 
 bool MolecularLineGasMix::isSpecificStateConverged(int numCells, int /*numUpdated*/, int numNotConverged) const
 {
-    return static_cast<double>(numNotConverged) / static_cast<double>(numCells) <= maxFractionUnconvergedCells();
+    return static_cast<double>(numNotConverged) / static_cast<double>(numCells) <= maxFractionNotConvergedCells();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -583,45 +519,35 @@ double MolecularLineGasMix::sectionExt(double /*lambda*/) const
 
 double MolecularLineGasMix::opacityAbs(double lambda, const MaterialState* state, const PhotonPacket* /*pp*/) const
 {
-    double kappa = 0.;
-    (void)lambda;
-    (void)state;
-    /*
-    if (state->numberDensity() > 0.0)
+    double opacity = 0.;
+
+    // if the cell does not contain any material for this component, leave the opacity at zero
+    if (state->numberDensity() > 0.)
     {
-        constexpr double h = Constants::h();
-        constexpr double c = Constants::c();
-        Array numPop(numLevelPops);
-        for (int i = 0; i < numLevelPops; ++i) numPop[i] = state->custom(i + 1);
-
-        // wavelength range outside of which we calculate, the line opacities are zero (range of plus-minus lambda)
-        Range lineRange(0.97 * lambda, 1.03 * lambda);
-
-        // wavelengths of the rotational lines
-        Array centers = lineEmissionCenters();
-        double const_sigmatherm = 1.0 / Constants::c() * sqrt(Constants::k() * state->temperature() / mass());
-
-        // calculate the total opacity including all of the rotational transition lines
-        for (int p = 0; p < _numLines; ++p)
+        // accumulate the opacities for all radiational transitions
+        for (int k = 0; k != _numLines; ++k)
         {
-            if (lineRange.contains(centers[p]))
+            double center = _center[k];
+            double sigma = center / Constants::c() * sqrt(Constants::k() * state->temperature() / _mass);
+            Range range(center - PROFILE_RANGE * sigma, center + PROFILE_RANGE * sigma);
+
+            // calculate opacity only if the requested wavelength is in the line profile range
+            if (range.contains(lambda))
             {
-                int upindex = _indexUpRad[_indexRadTrans[p]];
-                int lowindex = _indexLowRad[_indexRadTrans[p]];
-                double upnumber = numPop[upindex];
-                double lownumber = numPop[lowindex];
-                if (upnumber != 0.0 && lownumber != 0.0)
+                int up = _indexUpRad[k];
+                int low = _indexLowRad[k];
+                double upnumber = state->levelPopulation(up);
+                double lownumber = state->levelPopulation(low);
+                double transrate = lownumber * _einsteinBlu[k] - upnumber * _einsteinBul[k];
+                if (transrate != 0.)
                 {
-                    double einsteinBlu = _weights[upindex] / _weights[lowindex] * _einsteinBul[_indexRadTrans[p]];
-                    double transrate = lownumber * einsteinBlu - upnumber * _einsteinBul[_indexRadTrans[p]];
-                    kappa += h * c / 4.0 / M_PI / centers[p] * transrate
-                             * gaussianProfile(lambda, centers[p], const_sigmatherm);
+                    constexpr double front = Constants::h() * Constants::c() / 4. / M_PI;
+                    opacity += front / center * transrate * gaussian(lambda, center, sigma);
                 }
             }
         }
     }
-*/
-    return kappa;
+    return opacity;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -673,22 +599,12 @@ Array MolecularLineGasMix::lineEmissionMasses() const
 Array MolecularLineGasMix::lineEmissionSpectrum(const MaterialState* state, const Array& /*Jv*/) const
 {
     Array luminosities(_numLines);
-    (void)state;
-    /*
-    if (state->numberDensity() > 0.0)
+    if (state->numberDensity() > 0.)
     {
-        Array centers = lineEmissionCenters();
-        Array numPop(numLevelPops);
-        for (int i = 0; i < numLevelPops; ++i) numPop[i] = state->custom(i + 1);
-
-        //caluculate the line luminosities in the cell
-        for (int p = 0; p < _numLines; ++p)
-        {
-            luminosities[p] = Constants::h() * Constants::c() / centers[p] * _einsteinA[_indexRadTrans[p]]
-                              * state->custom(_indexUpRad[_indexRadTrans[p]] + 1) * state->volume();
-        }
+        double front = Constants::h() * Constants::c() * state->volume();
+        for (int k = 0; k != _numLines; ++k)
+            luminosities[k] = front / _center[k] * _einsteinA[k] * state->levelPopulation(_indexUpRad[k]);
     }
-*/
     return luminosities;
 }
 

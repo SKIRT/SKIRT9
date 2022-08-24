@@ -372,7 +372,8 @@ public:
         separate data structure, and false otherwise. */
     bool hasSecondaryRadiationField() const { return _hasSecondaryRadiationField; }
 
-    /** Returns the wavelength grid to be used for storing the radiation field. */
+    /** Returns the wavelength grid to be used for storing the radiation field, or the null pointer
+        if hasRadiationField() returns false. */
     DisjointWavelengthGrid* radiationFieldWLG() const { return _radiationFieldWLG; }
 
     // ----> secondary emission
