@@ -342,6 +342,13 @@ namespace
 
 namespace
 {
+    // return the dispersion of a line profile in wavelength space
+    // given the line center, the effective gas temperature, and the species mass
+    double sigmaForLine(double center, double temperature, double mass)
+    {
+        return center / Constants::c() * sqrt(2. * Constants::k() * temperature / mass);
+    }
+
     // return the value at ordinate x of a normalized Gaussian probability distribution
     // with given center mu and dispersion sigma
     double gaussian(double x, double mu, double sigma)
@@ -353,12 +360,12 @@ namespace
 
     // hardcoded constant indicating the line profile range considered in the calculations
     // expressed as a multiple of the Gaussian sigma (in each direction from the center)
-    constexpr double PROFILE_RANGE = 3.;
+    constexpr double PROFILE_RANGE = 4.;
 
     // hardcoded constant indicating the fractional error allowed on the integration of
     // the Gaussian line profile over the simulation's radiation field wavelength grid
     constexpr double MAX_GAUSS_ERROR_WARN = 0.01;
-    constexpr double MAX_GAUSS_ERROR_FAIL = 0.1;
+    constexpr double MAX_GAUSS_ERROR_FAIL = 0.10;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -389,7 +396,7 @@ UpdateStatus MolecularLineGasMix::updateSpecificState(MaterialState* state, cons
             // we use all wavelength points within a given range around the line center and verify that the
             // grid is sufficiently resolved to reproduce the normalizaton value of 1 = \int g(lambda) d lambda
             double center = _center[k];
-            double sigma = center / Constants::c() * sqrt(Constants::k() * state->temperature() / _mass);
+            double sigma = sigmaForLine(center, state->temperature(), _mass);
             double lambdamin = center - PROFILE_RANGE * sigma;
             double lambdamax = center + PROFILE_RANGE * sigma;
             int ellmin = std::lower_bound(begin(_lambdav), end(_lambdav), lambdamin) - begin(_lambdav);
@@ -405,14 +412,17 @@ UpdateStatus MolecularLineGasMix::updateSpecificState(MaterialState* state, cons
             if (abs(gsum - 1.) > MAX_GAUSS_ERROR_WARN)
             {
                 auto units = find<Units>();
-                auto outstring = [units](double wavelength) {
-                    return StringUtils::toString(units->owavelength(wavelength), 'g', 3) + " " + units->uwavelength();
-                };
-                string message = "Integral of Gaussian line profile over wavelength range " + outstring(lambdamin)
-                                 + " - " + outstring(lambdamax) + "equals " + StringUtils::toString(gsum, 'g')
-                                 + " rather than unity; adjust the radiation field wavelength grid";
-                if (abs(gsum - 1.) > MAX_GAUSS_ERROR_FAIL) throw FATALERROR(message);
-                find<Log>()->warning(message);
+                vector<string> message = {
+                    "Integral of Gaussian line profile over radiation field is inaccurate:",
+                    "  integral equals " + StringUtils::toString(gsum) + " rather than unity",
+                    "  over wavelengths from " + StringUtils::toString(units->owavelength(lambdamin)) + " "
+                        + units->uwavelength() + " to " + StringUtils::toString(units->owavelength(lambdamax)) + " "
+                        + units->uwavelength(),
+                    "  --> increase the resolution of the radiation field wavelength grid"};
+                if (abs(gsum - 1.) > MAX_GAUSS_ERROR_FAIL) throw FATALERROR(StringUtils::join(message, "\n"));
+                auto log = find<Log>();
+                log->warning(message[0]);
+                for (size_t i = 1; i != message.size(); ++i) find<Log>()->info(message[i]);
             }
             double J = Jsum / gsum;
 
@@ -528,7 +538,7 @@ double MolecularLineGasMix::opacityAbs(double lambda, const MaterialState* state
         for (int k = 0; k != _numLines; ++k)
         {
             double center = _center[k];
-            double sigma = center / Constants::c() * sqrt(Constants::k() * state->temperature() / _mass);
+            double sigma = sigmaForLine(center, state->temperature(), _mass);
             Range range(center - PROFILE_RANGE * sigma, center + PROFILE_RANGE * sigma);
 
             // calculate opacity only if the requested wavelength is in the line profile range
