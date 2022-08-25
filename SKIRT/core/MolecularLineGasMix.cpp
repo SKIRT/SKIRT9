@@ -274,22 +274,22 @@ void MolecularLineGasMix::initializeSpecificState(MaterialState* state, double /
         // copy collisional partner densities from import or default
         if (params.size())
         {
-            for (int q = 0; q != _numColPartners; ++q) state->setColPartnerDensity(q, params[q]);
+            for (int c = 0; c != _numColPartners; ++c) state->setColPartnerDensity(c, params[c]);
         }
         else
         {
             const auto& ratios = defaultCollisionPartnerRatios();
             if (ratios.size() < _colPartner.size())
                 throw FATALERROR("The number of collision partners exceeds the number of default ratios");
-            for (int q = 0; q != _numColPartners; ++q)
-                state->setColPartnerDensity(q, state->numberDensity() * ratios[q]);
+            for (int c = 0; c != _numColPartners; ++c)
+                state->setColPartnerDensity(c, state->numberDensity() * ratios[c]);
         }
 
         // initialize level population using boltzmann distribution (start with LTE)
         Array boltzmann(_numLevels);
-        for (int p = 0; p < _numLevels; ++p) boltzmann[p] = _weight[p] * exp(-_energy[p] / Constants::k() / Tkin);
+        for (int p = 0; p != _numLevels; ++p) boltzmann[p] = _weight[p] * exp(-_energy[p] / Constants::k() / Tkin);
         boltzmann *= state->numberDensity() / boltzmann.sum();
-        for (int p = 0; p < _numLevels; ++p) state->setLevelPopulation(p, boltzmann[p]);
+        for (int p = 0; p != _numLevels; ++p) state->setLevelPopulation(p, boltzmann[p]);
     }
 }
 
@@ -437,25 +437,25 @@ UpdateStatus MolecularLineGasMix::updateSpecificState(MaterialState* state, cons
 
         // add the terms for the collisional transitions
         double T = state->kineticTemperature();
-        for (int l = 0; l != _numColTrans; ++l)
+        for (int t = 0; t != _numColTrans; ++t)
         {
-            int up = _indexUpCol[l];
-            int low = _indexLowCol[l];
+            int up = _indexUpCol[t];
+            int low = _indexLowCol[t];
             double weightRatio = _weight[up] / _weight[low];
             double energyDiff = _energy[up] - _energy[low];
             double Kconversion = weightRatio * exp(-energyDiff / Constants::k() / T);
 
             // loop over the collisional partners
-            for (int q = 0; q != _numColPartners; ++q)
+            for (int c = 0; c != _numColPartners; ++c)
             {
                 // determine Kul by interpolation from the temperature-dependent table
-                double Kul = NR::clampedValue<NR::interpolateLogLog>(T, _colPartner[q].T, _colPartner[q].Kul[l]);
+                double Kul = NR::clampedValue<NR::interpolateLogLog>(T, _colPartner[c].T, _colPartner[c].Kul[t]);
 
                 // determine Klu from Kul
                 double Klu = Kul * Kconversion;
 
                 // add the coefficients after multiplication by the partner number density
-                double n = state->colPartnerDensity(q);
+                double n = state->colPartnerDensity(c);
                 matrix[up][up] += Kul * n;
                 matrix[low][low] += Klu * n;
                 matrix[up][low] -= Klu * n;
@@ -463,11 +463,11 @@ UpdateStatus MolecularLineGasMix::updateSpecificState(MaterialState* state, cons
             }
         }
 
-        // add the normalization of number density in the last row of the matrix.
-        for (int q = 0; q != _numLevels; ++q) matrix[_numLevels - 1][q] = 1.;
+        // replace the last row of the matrix by the normalization of the number density
+        for (int p = 0; p != _numLevels; ++p) matrix[_numLevels - 1][p] = 1.;
         matrix[_numLevels - 1][_numLevels] = state->numberDensity();
 
-        // solve the given inverse matrix
+        // solve the set of equations represented by the matrix
         Array solution = solveInverseMatrix(matrix);
 
         // update the level populations, keeping track of the amount of change
@@ -600,7 +600,7 @@ Array MolecularLineGasMix::lineEmissionCenters() const
 Array MolecularLineGasMix::lineEmissionMasses() const
 {
     Array masses(_numLines);
-    for (int p = 0; p < _numLines; ++p) masses[p] = mass();
+    for (int k = 0; k != _numLines; ++k) masses[k] = _mass;
     return masses;
 }
 

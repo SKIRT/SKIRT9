@@ -78,10 +78,10 @@
     profiles.
 
     During the initial primary emission segment, the simulation determines the radiation field
-    resulting from the primary sources and dust attenuation (molecular line absorption is taken to
-    be zero at this stage). The resulting radiation field allows a first estimation of the level
-    populations for each spatial grid cell; this calculation happens in the updateSpecificState()
-    function.
+    resulting from the primary sources, dust attenuation (if present) and molecular line absorption
+    based on default equilibrium level populations. The resulting radiation field allows a first
+    estimation of the level populations for each spatial grid cell; this calculation happens in the
+    updateSpecificState() function.
 
     During secondary emission, the simulation takes into account emission from all configured media
     in addition to absorption by these same media, including molecular lines in both cases. The
@@ -113,62 +113,60 @@
 
     <b>Level populations</b>
 
-    The level populations \f$n_i\f$ (used later to calculate the emission luminosities and the
-    absorption opacities) are obtained by solving the statistical equilibrium equations. The
-    equation for the energy level with index \f$i\f$ (where indices increase from lowest to highest
-    energy state) is given by
+    We denote the populations for the \f$N\f$ supported energy levels as \f$n_i\f$, with indices
+    \f$i=0,N-1\f$ increasing from lowest to highest energy state, and with \f$\sum_i n_i =
+    n_\mathrm{mol}\f$. The level populations form the basis to calculate the emission luminosities
+    and the absorption opacities at later stage. Their values are obtained by solving the set of
+    statistical equilibrium equations given by
 
-    \f[ \sum^{N_\mathrm{lp}}_{j>i} n_jA_{ji} + \sum^{N_\mathrm{lp}}_{j\neq i} \Big[ (n_jB_{ji} -
-    n_iB_{ij})J_\lambda(\lambda_{ij})\Big] + \sum^{N_\mathrm{lp}}_{j\neq i}
-    \big[n_jC_{ji}(n_\mathrm{col} ,T_\mathrm{kin}) - n_iC_{ij}(n_\mathrm{col}
-    ,T_\mathrm{kin})\big]=0, \f]
+    \f[ \sum_{j>i} \Big[n_jA_{ji} + (n_jB_{ji} - n_iB_{ij})J_{\lambda,ji})\Big]
+    - \sum_{j<i} \Big[n_iA_{ij} + (n_iB_{ij} - n_jB_{ji})J_{\lambda,ij})\Big]
+    + \sum_{j\neq i} \Big[n_jC_{ji} - n_iC_{ij}\Big]=0, \quad i=0,N-1\f]
 
-    where \f$\lambda_{ij}\f$ is the transition wavelength and \f$A_{ij}\f$, \f$B_{ij}\f$,
-    \f$B_{ji}\f$ are the Einstein coefficients for spontaneous emission, induced emission, and
-    absorption, and \f$C_{ij}\f$, \f$C_{ji}\f$ the coefficients for collisional excitation and
-    de-excitation. These coefficients are taken from the literature.
+    where \f$J_{\lambda,ul}\f$ is the mean radiation field intensity integrated over the line
+    profile corresponding to the transition from upper energy level \f$u\f$ to lower energy level
+    \f$l\f$. Furthermore, \f$A_{ul}\f$, \f$B_{ul}\f$, \f$B_{lu}\f$ are the Einstein coefficients
+    for spontaneous emission, induced emission, and absorption, and \f$C_{ul}\f$, \f$C_{lu}\f$ the
+    coefficients for collisional excitation and de-excitation. These coefficients are taken from
+    the literature.
 
     The Einstein coefficients \f$A_{ul}\f$, \f$B_{ul}\f$, and \f$B_{lu}\f$ are constant for each
-    transition, and the \f$B_{ij}\f$ and \f$B_{ji}\f$ coefficients can be obtained from the
-    \f$A_{ij}\f$ coefficients through \f[ B_{ul} = \frac{\lambda_{ul}^5}{2
-    hc^2}A_{ul} \f] and \f[ B_{lu} = \frac{g_u}{g_l} B_{ul} = \frac{g_u}{g_l} \frac{\lambda_{ul}^5}{2
-    hc^2}A_{ul},  \f] where \f$g_u\f$ and \f$g_l\f$ represent the degeneracy of the
-    upper and lower energy levels, respectively.
-
-    The collisional coefficients \f$C_{ul}\f$ depend on the number density of the collisional
-    partner and on the kinetic temperature \f$T_\mathrm{kin}\f$ of the gas.
+    transition, and the \f$B_{ul}\f$ and \f$B_{lu}\f$ coefficients can be obtained from the
+    \f$A_{ul}\f$ coefficients through \f[ B_{ul} = \frac{\lambda_{ul}^5}{2 hc^2}A_{ul} \f] and \f[
+    B_{lu} = \frac{g_u}{g_l} B_{ul} = \frac{g_u}{g_l} \frac{\lambda_{ul}^5}{2 hc^2}A_{ul}, \f]
+    where \f$g_u\f$ and \f$g_l\f$ represent the degeneracy of the upper and lower energy levels,
+    respectively. The collisional coefficients \f$C_{ul}\f$ and \f$C_{lu}\f$ depend on the number
+    density of the collisional partner and on the kinetic temperature \f$T_\mathrm{kin}\f$ of the
+    gas.
 
     <b>Emission</b>
 
-    The integrated line luminosity \f$L_\ell\f$ corresponding to the transition with index
-    \f$\ell\f$ for a given spatial cell is given by
+    The integrated line luminosity \f$L_{ul}\f$ corresponding to the transition from upper energy
+    level \f$u\f$ to lower energy level \f$l\f$ for a given spatial cell is given by
 
-    \f[ L_\ell = \frac{hc}{\lambda_\ell} A_{ul} n_u V_\mathrm{cell}, \f]
+    \f[ L_{ul} = \frac{hc}{\lambda_{ul}} A_{ul} n_u V_\mathrm{cell}, \f]
 
-    where \f$\lambda_\ell\f$ is the transition wavelength, \f$u\f$ and \f$l\f$ are the indices of
-    the energy levels before and after the corresponding transition, and \f$V_\mathrm{cell}\f$ is
-    the volume of the cell. The SKIRT framework automatically adds a Gaussian line profile assuming
-    a thermal velocity corresponding to the kinetic temperature in the cell and the mass of a
-    molecule, in addition to any Doppler shifts caused by the bulk velocity in the cell.
+    where \f$\lambda_{ul}\f$ is the transition wavelength and \f$V_\mathrm{cell}\f$ is the volume
+    of the cell. The SKIRT framework automatically adds a Gaussian line profile assuming a thermal
+    velocity corresponding to the effective temperature in the cell and the mass of a molecule, in
+    addition to any Doppler shifts caused by the bulk velocity in the cell.
 
     <b>Absorption</b>
 
-    During primary emission, absorption cannot be calculated (and is taken to be zero) because the
-    level populations have not yet been established. During secondary emission, the absorption
-    opacity \f$k^\text{abs}(\lambda)\f$ as a function of wavelength \f$\lambda\f$ is given by
+    The absorption opacity \f$k^\text{abs}(\lambda)\f$ as a function of wavelength \f$\lambda\f$ is
+    given by
 
-    \f[ k^\text{abs}(\lambda) = \sum_\ell \, \frac{h c}{4\pi \lambda_\ell}(n_l\,B_{lu}-n_u\,B_{ul})
-    \,\phi_\ell(\lambda) \f]
+    \f[ k^\text{abs}(\lambda) = \sum_{ul} \, \frac{h c}{4\pi \lambda_{ul}}
+    (n_l\,B_{lu}-n_u\,B_{ul}) \,\phi_{ul}(\lambda) \f]
 
-    where the sum with index \f$\ell\f$ runs over all supported lines, \f$u\f$ and \f$l\f$ are the
-    indices of the energy levels before and after the corresponding transition, and
-    \f$\phi_\ell(\lambda)\f$ is the Gaussian profile of line \f$\ell\f$.
+    where the sum runs over all supported transitions, \f$u\f$ and \f$l\f$ are the indices of the
+    energy levels before and after the transition, and \f$\phi_{ul}(\lambda)\f$ is the Gaussian
+    profile of the line corresponding to the transition.
 
     The calculation explicitly includes the Gaussian line profile caused by thermal motion of the
     molecules in the local bulk velocity frame of the cell. Moreover, the absorption profiles of
     all supported lines are superposed on top of each other. In practice, the implementation
-    attempts to calculate just the terms that have a significant contribution at any given
-    wavelength.
+    includes just the terms that have a significant contribution at any given wavelength.
 
     */
 class MolecularLineGasMix : public EmittingGasMix
@@ -405,7 +403,7 @@ private:
     Array _center;                // the central emission wavelength for each radiative transition
 
     // collisional transitions -- the transitions (not the coefficients) are assumed to be identical for all partners
-    int _numColTrans{0};       // the number of collisional transitions -- index l
+    int _numColTrans{0};       // the number of collisional transitions -- index t
     vector<int> _indexUpCol;   // the upper energy level index for collisional transitions
     vector<int> _indexLowCol;  // the lower energy level index for collisional transitions
     struct ColPartner          // data structure holding information on a collisional partner
@@ -414,7 +412,7 @@ private:
         Array T;            // the temperature grid points
         vector<Array> Kul;  // the coefficient for each collisional transition and for each temperature
     };
-    int _numColPartners{0};          // the number of collisional interaction partners -- index q
+    int _numColPartners{0};          // the number of collisional interaction partners -- index c
     vector<ColPartner> _colPartner;  // the data for each collisional partner
 
     // the radiation field wavelength grid for this simulation
