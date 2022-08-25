@@ -297,43 +297,45 @@ void MolecularLineGasMix::initializeSpecificState(MaterialState* state, double /
 
 namespace
 {
-    // solve the given inverse matrix using LU decomposition
-    Array solveInverseMatrix(vector<vector<double>>& matrix)
+    // solve the square set of linear equations represented by the given matrix using LU decomposition
+    // the matrix should have N rows and N+1 columns; its contents is overwritten and
+    // the solution is returned as an array of size N
+    Array solveMatrixEquation(vector<vector<double>>& matrix)
     {
-        size_t rowSize = matrix.size();
-        size_t colSize = matrix[0].size();
-        Array solution(rowSize);
+        size_t size = matrix.size();
+        Array solution(size);
 
         // forwarding elimination
-        for (size_t i = 0; i < rowSize; i++) solution[i] = matrix[i][colSize - 1];
+        for (size_t i = 0; i < size; i++) solution[i] = matrix[i][size];
 
-        for (size_t k = 0; k < rowSize - 1; ++k)
+        // decomposition
+        for (size_t k = 0; k < size - 1; ++k)
         {
             if (matrix[k][k] == 0.0)
             {
                 std::swap(matrix[k], matrix[k + 1]);
                 std::swap(solution[k], solution[k + 1]);
             }
-            for (size_t i = k + 1; i < colSize - 1; ++i)
+            for (size_t i = k + 1; i < size; ++i)
             {
                 double inverse = matrix[i][k] / matrix[k][k];
-                for (size_t j = k + 1; j < colSize - 1; ++j) matrix[i][j] -= inverse * matrix[k][j];
+                for (size_t j = k + 1; j < size; ++j) matrix[i][j] -= inverse * matrix[k][j];
                 matrix[i][k] = inverse;
             }
         }
 
         // forwarding elimination
-        for (size_t i = 0; i < rowSize; ++i)
+        for (size_t i = 0; i < size; ++i)
             for (size_t j = 0; j < i; ++j) solution[i] -= matrix[i][j] * solution[j];
 
         // backward substitution
-        for (int i = static_cast<int>(rowSize) - 1; i >= 0; --i)
+        for (int i = static_cast<int>(size) - 1; i >= 0; --i)
         {
-            for (size_t j = i + 1; j < colSize - 1; ++j) solution[i] -= matrix[i][j] * solution[j];
+            for (size_t j = i + 1; j < size; ++j) solution[i] -= matrix[i][j] * solution[j];
             solution[i] /= matrix[i][i];
         }
 
-        // return the solution of given inverse matrix
+        // return the solution
         return solution;
     }
 }
@@ -468,7 +470,7 @@ UpdateStatus MolecularLineGasMix::updateSpecificState(MaterialState* state, cons
         matrix[_numLevels - 1][_numLevels] = state->numberDensity();
 
         // solve the set of equations represented by the matrix
-        Array solution = solveInverseMatrix(matrix);
+        Array solution = solveMatrixEquation(matrix);
 
         // update the level populations, keeping track of the amount of change
         double change = 0.;
