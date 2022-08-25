@@ -388,8 +388,8 @@ UpdateStatus MolecularLineGasMix::updateSpecificState(MaterialState* state, cons
             int low = _indexLowRad[k];
 
             // add the Einstein Aul coefficients (spontaneous emission)
-            matrix[up][up] += _einsteinA[k];
-            matrix[low][up] -= _einsteinA[k];
+            matrix[up][up] -= _einsteinA[k];
+            matrix[low][up] += _einsteinA[k];
 
             // calculate the mean intensity of the radiation field convolved over the normalized line profile g:
             //   J_convolved = \int J_lambda(lambda) g(lambda) d lambda  /  \int g(lambda) d lambda
@@ -427,12 +427,12 @@ UpdateStatus MolecularLineGasMix::updateSpecificState(MaterialState* state, cons
             double J = Jsum / gsum;
 
             // add the Einstein Bul coefficients (stimulated emission)
-            matrix[up][up] += _einsteinBul[k] * J;
-            matrix[low][up] -= _einsteinBul[k] * J;
+            matrix[up][up] -= _einsteinBul[k] * J;
+            matrix[low][up] += _einsteinBul[k] * J;
 
             // add the Einstein Blu coefficients (absorption)
-            matrix[low][low] += _einsteinBlu[k] * J;
-            matrix[up][low] -= _einsteinBlu[k] * J;
+            matrix[low][low] -= _einsteinBlu[k] * J;
+            matrix[up][low] += _einsteinBlu[k] * J;
         }
 
         // add the terms for the collisional transitions
@@ -456,10 +456,10 @@ UpdateStatus MolecularLineGasMix::updateSpecificState(MaterialState* state, cons
 
                 // add the coefficients after multiplication by the partner number density
                 double n = state->colPartnerDensity(c);
-                matrix[up][up] += Kul * n;
-                matrix[low][low] += Klu * n;
-                matrix[up][low] -= Klu * n;
-                matrix[low][up] -= Kul * n;
+                matrix[up][up] -= Kul * n;
+                matrix[low][low] -= Klu * n;
+                matrix[up][low] += Klu * n;
+                matrix[low][up] += Kul * n;
             }
         }
 
