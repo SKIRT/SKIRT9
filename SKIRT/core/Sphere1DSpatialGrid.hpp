@@ -71,9 +71,10 @@ public:
 
     /** This function returns a random location from the cell with index \f$m\f$. For a spherical
         grid, cell index \f$m\f$ corresponds to the radial bin with lower border index \f$i=m\f$,
-        and a random radius is determined using \f[ r = r_i + {\cal{X}}\,(r_{i+1}-r_i) \f] with
-        \f${\cal{X}}\f$ a random deviate. This random radius is combined with a random position on
-        the unit sphere to generate a random position from the cell. */
+        and a random radius is determined using \f[ r = \left( r_i^3 + {\cal{X}}
+        \,(r_{i+1}^3-r_i^3) \right)^{1/3} \f] with \f${\cal{X}}\f$ a random deviate. This random
+        radius is combined with a random position on the unit sphere to generate a random position
+        from the cell. */
     Position randomPositionInCell(int m) const override;
 
     /** This function creates and hands over ownership of a path segment generator (an instance of

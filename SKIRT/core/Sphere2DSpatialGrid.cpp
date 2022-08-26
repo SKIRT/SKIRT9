@@ -139,10 +139,10 @@ Position Sphere2DSpatialGrid::randomPositionInCell(int m) const
 {
     int i, k;
     invertIndex(m, i, k);
-    double ris = _rv[i] * _rv[i];
-    double ri1s = _rv[i + 1] * _rv[i + 1];
-    double r = sqrt(ris + (ri1s - ris) * random()->uniform());
-    double theta = _thetav[k] + (_thetav[k + 1] - _thetav[k]) * random()->uniform();
+    double r = cbrt(_rv[i] * _rv[i] * _rv[i]
+                    + (_rv[i + 1] - _rv[i]) * (_rv[i + 1] * _rv[i + 1] + _rv[i + 1] * _rv[i] + _rv[i] * _rv[i])
+                          * random()->uniform());
+    double theta = acos(cos(_thetav[k]) + (cos(_thetav[k + 1]) - cos(_thetav[k])) * random()->uniform());
     double phi = 2.0 * M_PI * random()->uniform();
     return Position(r, theta, phi, Position::CoordinateSystem::SPHERICAL);
 }

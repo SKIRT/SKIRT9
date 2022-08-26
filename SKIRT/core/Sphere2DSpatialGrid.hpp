@@ -77,9 +77,9 @@ public:
         the function first determines the radial and angular bin indices \f$i\f$ and \f$k\f$ that
         correspond to the cell index \f$m\f$. Then a random radius \f$r\f$, a random inclination
         \f$\theta\f$, and a random azimuth \f$\phi\f$ are determined using \f[ \begin{split} r &=
-        \left( r_i^2 + {\cal{X}}_1\,(r_{i+1}^2-r_i^2) \right)^{1/2} \\ \theta &= \theta_k +
-        {\cal{X}}_2\, (\theta_{k+1}-\theta_k) \\ \phi &= 2\pi\,{\cal{X}}_3, \end{split} \f] with
-        \f${\cal{X}}_1\f$, \f${\cal{X}}_2\f$ and \f${\cal{X}}_3\f$ three uniform deviates. */
+        \left( r_i^3 + {\cal{X}}_1\,(r_{i+1}^3-r_i^3) \right)^{1/3} \\ \cos\theta &= \cos\theta_k +
+        {\cal{X}}_2\, (\cos\theta_{k+1}-\cos\theta_k) \\ \phi &= 2\pi\,{\cal{X}}_3, \end{split} \f]
+        with \f${\cal{X}}_1\f$, \f${\cal{X}}_2\f$ and \f${\cal{X}}_3\f$ three uniform deviates. */
     Position randomPositionInCell(int m) const override;
 
     /** This function creates and hands over ownership of a path segment generator (an instance of
