@@ -74,7 +74,9 @@ Position Sphere1DSpatialGrid::randomPositionInCell(int m) const
 {
     int i = m;
     Direction bfk = random()->direction();
-    double r = _rv[i] + (_rv[i + 1] - _rv[i]) * random()->uniform();
+    double r = cbrt(_rv[i] * _rv[i] * _rv[i]
+                    + (_rv[i + 1] - _rv[i]) * (_rv[i + 1] * _rv[i + 1] + _rv[i + 1] * _rv[i] + _rv[i] * _rv[i])
+                          * random()->uniform());
     return Position(r, bfk);
 }
 
