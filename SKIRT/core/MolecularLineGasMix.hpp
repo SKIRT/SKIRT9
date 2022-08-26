@@ -8,6 +8,9 @@
 
 #include "EmittingGasMix.hpp"
 
+// comment this line to omit diagnostic code
+#define DIAGNOSTIC 1
+
 ////////////////////////////////////////////////////////////////////
 
 /** The MolecularLineGasMix class describes the material properties related to selected rotational
@@ -426,6 +429,9 @@ private:
     int _indexKineticTemperature{0};
     int _indexFirstColPartnerDensity{0};
     int _indexFirstLevelPopulation{0};
+#ifdef DIAGNOSTIC
+    int _indexFirstMeanIntensity{0};
+#endif
 };
 
 ////////////////////////////////////////////////////////////////////

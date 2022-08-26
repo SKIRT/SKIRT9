@@ -240,6 +240,14 @@ vector<StateVariable> MolecularLineGasMix::specificStateVariableInfo() const
         result.push_back(
             StateVariable::custom(index++, "population of level " + std::to_string(p), "numbervolumedensity"));
 
+#ifdef DIAGNOSTIC
+    // add custom variable for the line-profile-averaged mean intensity at each transition line
+    const_cast<MolecularLineGasMix*>(this)->_indexFirstMeanIntensity = index;
+    for (int k = 0; k != _numLines; ++k)
+        result.push_back(
+            StateVariable::custom(index++, "mean intensity at line " + std::to_string(k), "wavelengthmeanintensity"));
+#endif
+
     return result;
 }
 
@@ -253,6 +261,9 @@ vector<StateVariable> MolecularLineGasMix::specificStateVariableInfo() const
 #define colPartnerDensity(index) custom(_indexFirstColPartnerDensity + (index))
 #define setLevelPopulation(index, value) setCustom(_indexFirstLevelPopulation + (index), (value))
 #define levelPopulation(index) custom(_indexFirstLevelPopulation + (index))
+#ifdef DIAGNOSTIC
+    #define setMeanIntensity(index, value) setCustom(_indexFirstMeanIntensity + (index), (value))
+#endif
 
 ////////////////////////////////////////////////////////////////////
 
@@ -427,6 +438,9 @@ UpdateStatus MolecularLineGasMix::updateSpecificState(MaterialState* state, cons
                 for (size_t i = 1; i != message.size(); ++i) find<Log>()->info(message[i]);
             }
             double J = Jsum / gsum;
+#ifdef DIAGNOSTIC
+            state->setMeanIntensity(k, J);
+#endif
 
             // add the Einstein Bul coefficients (stimulated emission)
             matrix[up][up] -= _einsteinBul[k] * J;
