@@ -279,7 +279,7 @@ void MolecularLineGasMix::initializeSpecificState(MaterialState* state, double /
 
         // set effective temperature, including imported or default micro-turbulence
         double vturb = params.size() ? params[_numColPartners] : defaultMicroTurbulenceVelocity();
-        double Teff = Tkin + vturb * vturb * mass() / Constants::k();
+        double Teff = Tkin + 0.5 * vturb * vturb * _mass / Constants::k();
         state->setTemperature(Teff);
 
         // copy collisional partner densities from import or default
