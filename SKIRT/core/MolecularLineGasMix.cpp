@@ -359,7 +359,7 @@ namespace
     // given the line center, the effective gas temperature, and the species mass
     double sigmaForLine(double center, double temperature, double mass)
     {
-        return center / Constants::c() * sqrt(2. * Constants::k() * temperature / mass);
+        return center / Constants::c() * sqrt(Constants::k() * temperature / mass);
     }
 
     // return the value at ordinate x of a normalized Gaussian probability distribution
