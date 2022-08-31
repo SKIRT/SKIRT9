@@ -54,6 +54,11 @@ public:
         and \f$r_{i+1}\f$ the inner and outer radius of the shell respectively. */
     double volume(int m) const override;
 
+    /** This function returns the "diagonal" of the cell with index \f$m\f$. For 1D spherical
+        grids, it simply returns the cell width, i.e. the difference between the outer and inner
+        cell radius. */
+    double diagonal(int m) const override;
+
     /** This function returns the number of the cell that contains the position \f${\bf{r}}\f$. It
         just determines the radial bin index and returns that number. */
     int cellIndex(Position bfr) const override;

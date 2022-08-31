@@ -53,6 +53,11 @@ public:
         \left(R_{i+1}-R_i\right)^2 \left(z_{k+1}-z_k\right). \f] */
     double volume(int m) const override;
 
+    /** This function returns the "diagonal" of the cell with index \f$m\f$. For 2D cylindrical
+        grids, it returns the distance between the outer/upper and inner/lower corners of the cell
+        in the meridional plane. */
+    double diagonal(int m) const override;
+
     /** This function returns the number of the cell that contains the position \f${\bf{r}}\f$. It
         just determines the radial and vertical bin indices and calculates the correct cell index
         based on these two numbers. */

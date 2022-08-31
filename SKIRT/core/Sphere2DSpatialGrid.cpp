@@ -99,6 +99,18 @@ double Sphere2DSpatialGrid::volume(int m) const
 
 //////////////////////////////////////////////////////////////////////
 
+double Sphere2DSpatialGrid::diagonal(int m) const
+{
+    int i, k;
+    invertIndex(m, i, k);
+    if (i < 0 || i >= _Nr || k < 0 || k >= _Ntheta) return 0.;
+    Position p1(_rv[i + 1], _thetav[k + 1], 0., Position::CoordinateSystem::SPHERICAL);
+    Position p0(_rv[i], _thetav[k], 0., Position::CoordinateSystem::SPHERICAL);
+    return (p1 - p0).norm();
+}
+
+//////////////////////////////////////////////////////////////////////
+
 int Sphere2DSpatialGrid::cellIndex(Position bfr) const
 {
     double r, theta, phi;
