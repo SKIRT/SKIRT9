@@ -160,6 +160,13 @@ double VoronoiMeshSpatialGrid::volume(int m) const
 
 //////////////////////////////////////////////////////////////////////
 
+double VoronoiMeshSpatialGrid::diagonal(int m) const
+{
+    return cbrt(3. * _mesh->volume(m));
+}
+
+//////////////////////////////////////////////////////////////////////
+
 int VoronoiMeshSpatialGrid::cellIndex(Position bfr) const
 {
     return _mesh->cellIndex(bfr);

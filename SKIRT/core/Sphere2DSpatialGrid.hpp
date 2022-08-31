@@ -56,6 +56,11 @@ public:
         \left(r_{i+1}^3-r_i^3\right) \left(\cos\theta_k-\cos\theta_{k+1}\right). \f] */
     double volume(int m) const override;
 
+    /** This function returns the "diagonal" of the cell with index \f$m\f$. For 2D spherical
+        grids, it returns the distance between the outer/upper and inner/lower corners of the cell
+        in the meridional plane. */
+    double diagonal(int m) const override;
+
     /** This function returns the number of the cell that contains the position \f${\bf{r}}\f$. In
         this class, the function determines the radial and angular bin indices and calculates the
         correct cell index based on these two numbers. */

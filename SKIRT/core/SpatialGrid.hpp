@@ -47,12 +47,10 @@ public:
     /** This function returns the volume of the cell with index \f$m\f$. */
     virtual double volume(int m) const = 0;
 
-    /** This function returns the actual or effective diagonal of the cell with index \f$m\f$. The
-        default implementation in this class returns \f$(3V)^(1/3)\f$ where \f$V\f$ is the volume
-        of the cell. For a cube, this returns the actual diagonal; for any other form it returns
-        some approximate, "effective" diagonal. Grids that have cuboidal cells should override this
-        function to return the actual diagional for each cell. */
-    virtual double diagonal(int m) const;
+    /** This function returns the actual or approximate diagonal of the cell with index \f$m\f$.
+        For cuboidal cells, the function returns the actual diagonal. For other geometric forms, it
+        returns some approximate diagonal. */
+    virtual double diagonal(int m) const = 0;
 
     /** This function returns the index \f$m\f$ of the cell that contains the position
         \f${\bf{r}}\f$. */

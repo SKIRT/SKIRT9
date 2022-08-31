@@ -54,6 +54,15 @@ double Sphere1DSpatialGrid::volume(int m) const
 
 //////////////////////////////////////////////////////////////////////
 
+double Sphere1DSpatialGrid::diagonal(int m) const
+{
+    int i = m;
+    if (i < 0 || i >= _Nr) return 0.;
+    return _rv[i + 1] - _rv[i];
+}
+
+//////////////////////////////////////////////////////////////////////
+
 int Sphere1DSpatialGrid::cellIndex(Position bfr) const
 {
     return NR::locateFail(_rv, bfr.radius());
