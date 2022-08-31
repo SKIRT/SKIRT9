@@ -208,8 +208,8 @@ vector<SnapshotParameter> MolecularLineGasMix::parameterInfo() const
     for (const auto& partner : _colPartner)
         result.push_back(SnapshotParameter::custom(partner.name + " number density", "numbervolumedensity", "1/cm3"));
 
-    // add the micro turbulence velocity
-    result.push_back(SnapshotParameter::custom("Micro turbulence", "velocity", "km/s"));
+    // add the turbulence velocity
+    result.push_back(SnapshotParameter::custom("turbulence velocity", "velocity", "km/s"));
 
     return result;
 }
@@ -219,13 +219,13 @@ vector<SnapshotParameter> MolecularLineGasMix::parameterInfo() const
 vector<StateVariable> MolecularLineGasMix::specificStateVariableInfo() const
 {
     // add standard variables for the number density of the species under consideration
-    // and for the effective gas temperature (including kinetic temperature and unresolved microturbulence)
+    // and for the effective gas temperature (including kinetic temperature and unresolved turbulence)
     vector<StateVariable> result{StateVariable::numberDensity(), StateVariable::temperature()};
 
     // next available custom variable index
     int index = 0;
 
-    // add custom variable for the kinetic gas temperature (i.e. excluding microturbulence)
+    // add custom variable for the kinetic gas temperature (i.e. excluding turbulence)
     const_cast<MolecularLineGasMix*>(this)->_indexKineticTemperature = index;
     result.push_back(StateVariable::custom(index++, "kinetic gas temperature", "temperature"));
 
@@ -262,7 +262,7 @@ vector<StateVariable> MolecularLineGasMix::specificStateVariableInfo() const
 #define setLevelPopulation(index, value) setCustom(_indexFirstLevelPopulation + (index), (value))
 #define levelPopulation(index) custom(_indexFirstLevelPopulation + (index))
 #ifdef DIAGNOSTIC
-    #define setMeanIntensity(index, value) setCustom(_indexFirstMeanIntensity + (index), (value))
+#    define setMeanIntensity(index, value) setCustom(_indexFirstMeanIntensity + (index), (value))
 #endif
 
 ////////////////////////////////////////////////////////////////////
@@ -277,8 +277,8 @@ void MolecularLineGasMix::initializeSpecificState(MaterialState* state, double /
         double Tkin = temperature >= 0. ? temperature : defaultTemperature();
         state->setKineticTemperature(Tkin);
 
-        // set effective temperature, including imported or default micro-turbulence
-        double vturb = params.size() ? params[_numColPartners] : defaultMicroTurbulenceVelocity();
+        // set effective temperature, including imported or default turbulence
+        double vturb = params.size() ? params[_numColPartners] : defaultTurbulenceVelocity();
         double Teff = Tkin + 0.5 * vturb * vturb * _mass / Constants::k();
         state->setTemperature(Teff);
 

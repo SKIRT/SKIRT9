@@ -36,7 +36,7 @@
     - \c Two-level test molecule (TT): a fictive test molecule (called TT for our purposes) that
     has just two rotational energy levels with a corresponding transition line at 1666.67
     \f$\mu\mathrm{m}\f$. The single collisional interaction partner is molecular hydrogen. The
-    properties of this molecule are defined by van Zadelhoff et al. 2002 for use with the the first
+    properties of this molecule are defined by van Zadelhoff et al. 2002 for use with the first
     benchmark problem described there.
 
     - \c Hydroxyl radical (OH): includes rotational energy levels up to \f$J=7/2\f$ including
@@ -96,16 +96,16 @@
 
     The input model must provide values for the spatial distribution of several medium properties,
     including the number density of the species under consideration, the number density of any
-    relevant collisional partner species, the kinetic gas temperature, and the microturbulence
-    level. These values remain constant during the simulation. Most often, this information will be
-    read from an input file by associating the MolecularLineGasMix with a subclass of
-    ImportedMedium. For that medium component, the ski file attribute \em importTemperature
-    <b>must</b> be set to 'true', and \em importMetallicity and \em importVariableMixParams must be
-    left at 'false'. The additional columns required by the material mix are automatically imported
-    and are expected <b>after</b> all other columns. For example, if bulk velocities are also
-    imported for this medium component (i.e. \em importVelocity is 'true'), the column order would
-    be \f[ ..., n_\mathrm{mol}, T_\mathrm{kin}, v_\mathrm{x}, v_\mathrm{y}, v_\mathrm{z},
-    n_\mathrm{col1} [, n_\mathrm{col1}, ...], v_\mathrm{turb}\f]
+    relevant collisional partner species, the kinetic gas temperature, and the turbulence velocity.
+    These values remain constant during the simulation. Most often, this information will be read
+    from an input file by associating the MolecularLineGasMix with a subclass of ImportedMedium.
+    For that medium component, the ski file attribute \em importTemperature <b>must</b> be set to
+    'true', and \em importMetallicity and \em importVariableMixParams must be left at 'false'. The
+    additional columns required by the material mix are automatically imported and are expected
+    <b>after</b> all other columns. For example, if bulk velocities are also imported for this
+    medium component (i.e. \em importVelocity is 'true'), the column order would be \f[ ...,
+    n_\mathrm{mol}, T_\mathrm{kin}, v_\mathrm{x}, v_\mathrm{y}, v_\mathrm{z}, n_\mathrm{col1} [,
+    n_\mathrm{col1}, ...], v_\mathrm{turb}\f]
 
     For basic testing purposes, the MolecularLineGasMix can also be associated with a geometric
     medium component. The geometry then defines the spatial density distribution of the species
@@ -113,6 +113,20 @@
     properties specify a fixed default value for the other properties that will be used across the
     spatial domain. In this case, the number densities of the collisional partners are defined by a
     constant multiplier relative to \f$n_\mathrm{mol}\f$.
+
+    <b>Thermal motion and turbulence</b>
+
+    The thermal velocity in a medium of particles with mass \f$m\f$ at temperature
+    \f$T_\mathrm{kin}\f$ is defined as \f[ v_\mathrm{th} = \sqrt{\frac{2kT_\mathrm{kin}}{m}}. \f]
+    This value corresponds to the most probable particle speed, i.e. the point where the
+    probability distribution of the velocity vector norm reaches its maximum value. One often
+    considers an additional source of line broadening caused by subgrid processes other than those
+    corresponding to the kinetic temperature. This motion is characterized by the turbulent
+    velocity \f$v_\mathrm{turb}\f$. Assuming a Gaussian line profile, the total velocity dispersion
+    \f$v_\mathrm{s}\f$ (the standard deviation of the Gaussian in velocity space) is then defined
+    through \f[ \sqrt{2}\,v_\mathrm{s} = \sqrt{v_\mathrm{th}^2 + v_\mathrm{turb}^2}. \f] We can
+    artificially combine the effect of both thermal motion and turbulence into an effective
+    temperature, \f[ T_\mathrm{eff} = T_\mathrm{kin} + \frac{m v_\mathrm{turb}^2}{2k}. \f]
 
     <b>Level populations</b>
 
@@ -212,12 +226,12 @@ class MolecularLineGasMix : public EmittingGasMix
         ATTRIBUTE_DEFAULT_VALUE(defaultCollisionPartnerRatios, "1e4")
         ATTRIBUTE_DISPLAYED_IF(defaultCollisionPartnerRatios, "Level2")
 
-        PROPERTY_DOUBLE(defaultMicroTurbulenceVelocity, "the default (non-thermal) micro-turbulence velocity")
-        ATTRIBUTE_QUANTITY(defaultMicroTurbulenceVelocity, "velocity")
-        ATTRIBUTE_MIN_VALUE(defaultMicroTurbulenceVelocity, "[0 km/s")
-        ATTRIBUTE_MAX_VALUE(defaultMicroTurbulenceVelocity, "100000 km/s]")
-        ATTRIBUTE_DEFAULT_VALUE(defaultMicroTurbulenceVelocity, "0 km/s")
-        ATTRIBUTE_DISPLAYED_IF(defaultMicroTurbulenceVelocity, "Level2")
+        PROPERTY_DOUBLE(defaultTurbulenceVelocity, "the default (non-thermal) turbulence velocity")
+        ATTRIBUTE_QUANTITY(defaultTurbulenceVelocity, "velocity")
+        ATTRIBUTE_MIN_VALUE(defaultTurbulenceVelocity, "[0 km/s")
+        ATTRIBUTE_MAX_VALUE(defaultTurbulenceVelocity, "100000 km/s]")
+        ATTRIBUTE_DEFAULT_VALUE(defaultTurbulenceVelocity, "0 km/s")
+        ATTRIBUTE_DISPLAYED_IF(defaultTurbulenceVelocity, "Level2")
 
         PROPERTY_DOUBLE(maxChangeInLevelPopulations,
                         "the maximum relative change for the level populations in a cell to be considered converged")
@@ -283,8 +297,8 @@ public:
 public:
     /** This function returns the number and type of import parameters required by this particular
         material mix as a list of SnapshotParameter objects. For this class, the function returns a
-        descriptor for the number densities of the collisional partners and for the microturbulence
-        level. Importing the kinetic gas temperature should be enabled through the corresponding
+        descriptor for the number densities of the collisional partners and for the turbulence
+        velocity. Importing the kinetic gas temperature should be enabled through the corresponding
         standard configuration flag. */
     vector<SnapshotParameter> parameterInfo() const override;
 
