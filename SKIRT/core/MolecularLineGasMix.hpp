@@ -154,7 +154,7 @@
     where \f$g_u\f$ and \f$g_l\f$ represent the degeneracy of the upper and lower energy levels,
     respectively. The collisional coefficients \f$C_{ul}\f$ and \f$C_{lu}\f$ depend on the number
     density of the collisional partner and on the kinetic temperature \f$T_\mathrm{kin}\f$ of the
-    gas. These coefficients are related by \f[ \frac{C_{lu}}{C_{ul}} = \frac{g_l}{g_u}
+    gas. These coefficients are related by \f[ \frac{C_{lu}}{C_{ul}} = \frac{g_u}{g_l}
     \exp(-E_{ul}/kT_\mathrm{kin}).\f]
 
     <b>Emission</b>
