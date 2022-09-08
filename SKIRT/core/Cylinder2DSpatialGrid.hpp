@@ -53,6 +53,11 @@ public:
         \left(R_{i+1}-R_i\right)^2 \left(z_{k+1}-z_k\right). \f] */
     double volume(int m) const override;
 
+    /** This function returns the "diagonal" of the cell with index \f$m\f$. For 2D cylindrical
+        grids, it returns the distance between the outer/upper and inner/lower corners of the cell
+        in the meridional plane. */
+    double diagonal(int m) const override;
+
     /** This function returns the number of the cell that contains the position \f${\bf{r}}\f$. It
         just determines the radial and vertical bin indices and calculates the correct cell index
         based on these two numbers. */
@@ -70,8 +75,8 @@ public:
         axisymmetric grid, the function first determines the radial and vertical bin indices
         \f$i\f$ and \f$k\f$ that correspond to the index \f$m\f$. Then a random radius \f$R\f$, a
         random azimuth \f$\phi\f$, and a random height \f$z\f$ are determined using \f[
-        \begin{split} R &= R_i + {\cal{X}}_1\,(R_{i+1}-R_i) \\ \phi &= 2\pi\,{\cal{X}}_2 \\ z &=
-        z_k + {\cal{X}}_3\, (z_{k+1}-z_k), \end{split} \f] with \f${\cal{X}}_1\f$,
+        \begin{split} R &= \sqrt{R_i^2 + {\cal{X}}_1\,(R_{i+1}-R_i)^2} \\ \phi &= 2\pi\,{\cal{X}}_2
+        \\ z &= z_k + {\cal{X}}_3\, (z_{k+1}-z_k), \end{split} \f] with \f${\cal{X}}_1\f$,
         \f${\cal{X}}_2\f$ and \f${\cal{X}}_3\f$ three uniform deviates. A position with these
         cylindrical coordinates is returned. */
     Position randomPositionInCell(int m) const override;
