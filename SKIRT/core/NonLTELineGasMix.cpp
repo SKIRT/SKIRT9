@@ -35,7 +35,7 @@ void NonLTELineGasMix::setupSelfBefore()
             colNames = {"H2", "H", "H+", "e-", "He"};
             break;
         case Species::IonizedCarbon:
-            name = "C";
+            name = "C+";
             colNames = {"H2", "H", "e-"};
             break;
     }
