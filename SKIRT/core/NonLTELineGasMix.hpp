@@ -3,23 +3,23 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef MOLECULARLINEGASMIX_HPP
-#define MOLECULARLINEGASMIX_HPP
+#ifndef NONLTELINEGASMIX_H
+#define NONLTELINEGASMIX_H
 
 #include "EmittingGasMix.hpp"
 
-// comment this line to omit diagnostic code
+// comment or remove this line to omit diagnostic code
 #define DIAGNOSTIC 1
 
 ////////////////////////////////////////////////////////////////////
 
-/** The MolecularLineGasMix class describes the material properties related to selected rotational
-    transitions in selected molecules and atoms. For each supported species, the current
-    implementation includes a number of rotational energy levels (quantum number \f$J\f$) at the
-    base vibrational level (quantum number \f$v=0\f$) and supports the allowed transitions between
-    these levels. Vibrational energy levels and the corresponding rovibrational transitions may be
-    added later. The class properties allow configuring the species and the number of transitions
-    to be considered.
+/** The NonLTELineGasMix class describes the material properties related to selected transitions in
+    selected molecules and atoms. For each supported species, the current implementation includes a
+    number of rotational energy levels (quantum number \f$J\f$) at the base vibrational level
+    (quantum number \f$v=0\f$) for molecules and electronic energy levels and hyperfine split
+    levels for atoms, and supports the allowed transitions between these levels. Vibrational energy
+    levels and the corresponding rovibrational transitions may be added later. The class properties
+    allow configuring the species and the number of transitions to be considered.
 
     For each supported transition, the emission luminosity and absorption opacity in a given cell
     are determined from the gas properties defined in the input model and the local radiation field
@@ -52,14 +52,21 @@
     corresponding transition lines are at wavelengths from 65.7 to 2601 \f$\mu\mathrm{m}\f$. The
     single collisional interaction partner is molecular hydrogen.
 
-    - \c Atomic carbon (C): includes three rotational energy levels. The corresponding transition
-    lines are at wavelengths 230.3, 370.4 and 609.1 \f$\mu\mathrm{m}\f$. The collisional
-    interaction partners include molecular hydrogen, neutral atomic hydrogen, ionized atomic
-    hydrogen, electrons, and Helium.
+    - \c Atomic carbon (C): includes three hyperfine split levels at the electronic ground level of
+    3P. The corresponding transition lines are at wavelengths 230.3, 370.4 and 609.1
+    \f$\mu\mathrm{m}\f$. The collisional interaction partners include molecular hydrogen, neutral
+    atomic hydrogen, ionized atomic hydrogen, electrons, and Helium.
+
+    - \c Ionized carbon (C+): includes four electronic levels (2p, 4p, 2D, and 2S) and the
+    hyperfine split levels in the electronic levels of 2p and 4p. The corresponding fine-structure
+    transition lines for levels 2p and 4p are at wavelengths 157.74, 198.9, 353.57, 454.67
+    \f$\mu\mathrm{m}\f$. The electronic transition lines are at wavelengths from 0.1 to 0.23
+    \f$\mu\mathrm{m}\f$. The collisional interaction partners include molecular hydrogen, neutral
+    atomic hydrogen, and electrons.
 
     <b>Configuring the simulation</b>
 
-    Simulations that include gas represented by the MolecularLineGasMix often also include dust,
+    Simulations that include gas represented by the NonLTELineGasMix often also include dust,
     although this is not a requirement. In any case, the simulation must have one or more primary
     sources that trigger the molecular lines directly (e.g. the cosmic microwave background) or
     indirectly (e.g. by heating the dust and thus causing thermal dust emission), or both. The \em
@@ -98,7 +105,7 @@
     including the number density of the species under consideration, the number density of any
     relevant collisional partner species, the kinetic gas temperature, and the turbulence velocity.
     These values remain constant during the simulation. Most often, this information will be read
-    from an input file by associating the MolecularLineGasMix with a subclass of ImportedMedium.
+    from an input file by associating the NonLTELineGasMix with a subclass of ImportedMedium.
     For that medium component, the ski file attribute \em importTemperature <b>must</b> be set to
     'true', and \em importMetallicity and \em importVariableMixParams must be left at 'false'. The
     additional columns required by the material mix are automatically imported and are expected
@@ -107,9 +114,9 @@
     n_\mathrm{mol}, T_\mathrm{kin}, v_\mathrm{x}, v_\mathrm{y}, v_\mathrm{z}, n_\mathrm{col1} [,
     n_\mathrm{col1}, ...], v_\mathrm{turb}\f]
 
-    For basic testing purposes, the MolecularLineGasMix can also be associated with a geometric
+    For basic testing purposes, the NonLTELineGasMix can also be associated with a geometric
     medium component. The geometry then defines the spatial density distribution of the species
-    under consideration (i.e. \f$n_\mathrm{mol}\f$), and the MolecularLineGasMix configuration
+    under consideration (i.e. \f$n_\mathrm{mol}\f$), and the NonLTELineGasMix configuration
     properties specify a fixed default value for the other properties that will be used across the
     spatial domain. In this case, the number densities of the collisional partners are defined by a
     constant multiplier relative to \f$n_\mathrm{mol}\f$.
@@ -187,21 +194,22 @@
     includes just the terms that have a significant contribution at any given wavelength.
 
     */
-class MolecularLineGasMix : public EmittingGasMix
+class NonLTELineGasMix : public EmittingGasMix
 {
     /** The enumeration type indicating the molecular or atomic species represented by a given
-        MolecularLineGasMix instance. See the class header for more information. */
-    ENUM_DEF(Species, Test, Hydroxyl, Formyl, CarbonMonoxide, Carbon)
+        NonLTELineGasMix instance. See the class header for more information. */
+    ENUM_DEF(Species, Test, Hydroxyl, Formyl, CarbonMonoxide, AtomicCarbon, IonizedCarbon)
         ENUM_VAL(Species, Test, "Fictive two-level test molecule (TT)")
         ENUM_VAL(Species, Hydroxyl, "Hydroxyl radical (OH)")
         ENUM_VAL(Species, Formyl, "Formyl cation (HCO+)")
         ENUM_VAL(Species, CarbonMonoxide, "Carbon monoxide (CO)")
-        ENUM_VAL(Species, Carbon, "Atomic carbon (C)")
+        ENUM_VAL(Species, AtomicCarbon, "Atomic carbon (C)")
+        ENUM_VAL(Species, IonizedCarbon, "Ionized carbon (C+)")
     ENUM_END()
 
-    ITEM_CONCRETE(MolecularLineGasMix, EmittingGasMix,
+    ITEM_CONCRETE(NonLTELineGasMix, EmittingGasMix,
                   "A gas mix supporting rotational transitions in specific molecules and atoms")
-        ATTRIBUTE_TYPE_INSERT(MolecularLineGasMix, "CustomMediumState,DynamicState")
+        ATTRIBUTE_TYPE_INSERT(NonLTELineGasMix, "CustomMediumState,DynamicState")
 
         PROPERTY_ENUM(species, Species, "the molecular or atomic species being represented")
         ATTRIBUTE_DEFAULT_VALUE(species, "CarbonMonoxide")
@@ -404,7 +412,7 @@ private:
     // (only the energy levels and transition actually used are stored in the data members)
 
     // mass
-    double _mass{0.};  // molecular weight multiplied by proton mass
+    double _mass{0.};  // particle mass for the species under consideration
 
     // energy levels
     int _numLevels{0};       // the number of energy levels -- index p

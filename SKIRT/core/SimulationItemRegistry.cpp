@@ -163,13 +163,13 @@
 #include "MinSilicateGrainComposition.hpp"
 #include "ModifiedLogNormalGrainSizeDistribution.hpp"
 #include "ModifiedPowerLawGrainSizeDistribution.hpp"
-#include "MolecularLineGasMix.hpp"
 #include "MollweideProjection.hpp"
 #include "MonteCarloSimulation.hpp"
 #include "MultiGaussianExpansionGeometry.hpp"
 #include "NestedLogWavelengthGrid.hpp"
 #include "NetzerAngularDistribution.hpp"
 #include "NoPolarizationProfile.hpp"
+#include "NonLTELineGasMix.hpp"
 #include "NumberColumnMaterialNormalization.hpp"
 #include "NumberMaterialNormalization.hpp"
 #include "OffsetGeometryDecorator.hpp"
@@ -544,7 +544,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<XRayAtomicGasMix>();
     ItemRegistry::add<EmittingGasMix>();
     ItemRegistry::add<SpinFlipHydrogenGasMix>();
-    ItemRegistry::add<MolecularLineGasMix>();
+    ItemRegistry::add<NonLTELineGasMix>();
     ItemRegistry::add<TrivialGasMix>();
 
     // material mix families

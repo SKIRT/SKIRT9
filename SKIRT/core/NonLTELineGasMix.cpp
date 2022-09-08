@@ -3,7 +3,7 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "MolecularLineGasMix.hpp"
+#include "NonLTELineGasMix.hpp"
 #include "Configuration.hpp"
 #include "Constants.hpp"
 #include "DisjointWavelengthGrid.hpp"
@@ -17,7 +17,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void MolecularLineGasMix::setupSelfBefore()
+void NonLTELineGasMix::setupSelfBefore()
 {
     EmittingGasMix::setupSelfBefore();
 
@@ -30,9 +30,13 @@ void MolecularLineGasMix::setupSelfBefore()
         case Species::Hydroxyl: name = "OH"; break;
         case Species::Formyl: name = "HCO+"; break;
         case Species::CarbonMonoxide: name = "CO"; break;
-        case Species::Carbon:
+        case Species::AtomicCarbon:
             name = "C";
             colNames = {"H2", "H", "H+", "e-", "He"};
+            break;
+        case Species::IonizedCarbon:
+            name = "C";
+            colNames = {"H2", "H", "e-"};
             break;
     }
 
@@ -172,35 +176,35 @@ void MolecularLineGasMix::setupSelfBefore()
 
 ////////////////////////////////////////////////////////////////////
 
-bool MolecularLineGasMix::hasNegativeExtinction() const
+bool NonLTELineGasMix::hasNegativeExtinction() const
 {
     return true;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-bool MolecularLineGasMix::hasExtraSpecificState() const
+bool NonLTELineGasMix::hasExtraSpecificState() const
 {
     return true;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-MaterialMix::DynamicStateType MolecularLineGasMix::hasDynamicMediumState() const
+MaterialMix::DynamicStateType NonLTELineGasMix::hasDynamicMediumState() const
 {
     return DynamicStateType::PrimaryIfMergedIterations;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-bool MolecularLineGasMix::hasLineEmission() const
+bool NonLTELineGasMix::hasLineEmission() const
 {
     return true;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-vector<SnapshotParameter> MolecularLineGasMix::parameterInfo() const
+vector<SnapshotParameter> NonLTELineGasMix::parameterInfo() const
 {
     vector<SnapshotParameter> result;
 
@@ -216,7 +220,7 @@ vector<SnapshotParameter> MolecularLineGasMix::parameterInfo() const
 
 ////////////////////////////////////////////////////////////////////
 
-vector<StateVariable> MolecularLineGasMix::specificStateVariableInfo() const
+vector<StateVariable> NonLTELineGasMix::specificStateVariableInfo() const
 {
     // add standard variables for the number density of the species under consideration
     // and for the effective gas temperature (including kinetic temperature and unresolved turbulence)
@@ -226,23 +230,23 @@ vector<StateVariable> MolecularLineGasMix::specificStateVariableInfo() const
     int index = 0;
 
     // add custom variable for the kinetic gas temperature (i.e. excluding turbulence)
-    const_cast<MolecularLineGasMix*>(this)->_indexKineticTemperature = index;
+    const_cast<NonLTELineGasMix*>(this)->_indexKineticTemperature = index;
     result.push_back(StateVariable::custom(index++, "kinetic gas temperature", "temperature"));
 
     // add custom variable for the number density of each collisional partner
-    const_cast<MolecularLineGasMix*>(this)->_indexFirstColPartnerDensity = index;
+    const_cast<NonLTELineGasMix*>(this)->_indexFirstColPartnerDensity = index;
     for (const auto& partner : _colPartner)
         result.push_back(StateVariable::custom(index++, partner.name + " number density", "numbervolumedensity"));
 
     // add custom variable for the population of each energy level
-    const_cast<MolecularLineGasMix*>(this)->_indexFirstLevelPopulation = index;
+    const_cast<NonLTELineGasMix*>(this)->_indexFirstLevelPopulation = index;
     for (int p = 0; p != _numEnergyLevels; ++p)
         result.push_back(
             StateVariable::custom(index++, "population of level " + std::to_string(p), "numbervolumedensity"));
 
 #ifdef DIAGNOSTIC
     // add custom variable for the line-profile-averaged mean intensity at each transition line
-    const_cast<MolecularLineGasMix*>(this)->_indexFirstMeanIntensity = index;
+    const_cast<NonLTELineGasMix*>(this)->_indexFirstMeanIntensity = index;
     for (int k = 0; k != _numLines; ++k)
         result.push_back(
             StateVariable::custom(index++, "mean intensity at line " + std::to_string(k), "wavelengthmeanintensity"));
@@ -267,8 +271,8 @@ vector<StateVariable> MolecularLineGasMix::specificStateVariableInfo() const
 
 ////////////////////////////////////////////////////////////////////
 
-void MolecularLineGasMix::initializeSpecificState(MaterialState* state, double /*metallicity*/, double temperature,
-                                                  const Array& params) const
+void NonLTELineGasMix::initializeSpecificState(MaterialState* state, double /*metallicity*/, double temperature,
+                                               const Array& params) const
 {
     // if the cell does not contain any material for this component, leave all properties at zero values
     if (state->numberDensity() > 0.)
@@ -383,7 +387,7 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-UpdateStatus MolecularLineGasMix::updateSpecificState(MaterialState* state, const Array& Jv) const
+UpdateStatus NonLTELineGasMix::updateSpecificState(MaterialState* state, const Array& Jv) const
 {
     // initialize status indicator to "not updated"
     UpdateStatus status;
@@ -508,42 +512,42 @@ UpdateStatus MolecularLineGasMix::updateSpecificState(MaterialState* state, cons
 
 ////////////////////////////////////////////////////////////////////
 
-bool MolecularLineGasMix::isSpecificStateConverged(int numCells, int /*numUpdated*/, int numNotConverged) const
+bool NonLTELineGasMix::isSpecificStateConverged(int numCells, int /*numUpdated*/, int numNotConverged) const
 {
     return static_cast<double>(numNotConverged) / static_cast<double>(numCells) <= maxFractionNotConvergedCells();
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double MolecularLineGasMix::mass() const
+double NonLTELineGasMix::mass() const
 {
     return _mass;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double MolecularLineGasMix::sectionAbs(double /*lambda*/) const
+double NonLTELineGasMix::sectionAbs(double /*lambda*/) const
 {
     return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double MolecularLineGasMix::sectionSca(double /*lambda*/) const
+double NonLTELineGasMix::sectionSca(double /*lambda*/) const
 {
     return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double MolecularLineGasMix::sectionExt(double /*lambda*/) const
+double NonLTELineGasMix::sectionExt(double /*lambda*/) const
 {
     return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double MolecularLineGasMix::opacityAbs(double lambda, const MaterialState* state, const PhotonPacket* /*pp*/) const
+double NonLTELineGasMix::opacityAbs(double lambda, const MaterialState* state, const PhotonPacket* /*pp*/) const
 {
     double opacity = 0.;
 
@@ -578,42 +582,40 @@ double MolecularLineGasMix::opacityAbs(double lambda, const MaterialState* state
 
 ////////////////////////////////////////////////////////////////////
 
-double MolecularLineGasMix::opacitySca(double /*lambda*/, const MaterialState* /*state*/,
-                                       const PhotonPacket* /*pp*/) const
+double NonLTELineGasMix::opacitySca(double /*lambda*/, const MaterialState* /*state*/, const PhotonPacket* /*pp*/) const
 {
     return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double MolecularLineGasMix::opacityExt(double lambda, const MaterialState* state, const PhotonPacket* pp) const
+double NonLTELineGasMix::opacityExt(double lambda, const MaterialState* state, const PhotonPacket* pp) const
 {
     return opacityAbs(lambda, state, pp);
 }
 
 ////////////////////////////////////////////////////////////////////
 
-void MolecularLineGasMix::peeloffScattering(double& /*I*/, double& /*Q*/, double& /*U*/, double& /*V*/,
-                                            double& /*lambda*/, Direction /*bfkobs*/, Direction /*bfky*/,
-                                            const MaterialState* /*state*/, const PhotonPacket* /*pp*/) const
+void NonLTELineGasMix::peeloffScattering(double& /*I*/, double& /*Q*/, double& /*U*/, double& /*V*/, double& /*lambda*/,
+                                         Direction /*bfkobs*/, Direction /*bfky*/, const MaterialState* /*state*/,
+                                         const PhotonPacket* /*pp*/) const
 {}
 
 ////////////////////////////////////////////////////////////////////
 
-void MolecularLineGasMix::performScattering(double /*lambda*/, const MaterialState* /*state*/,
-                                            PhotonPacket* /*pp*/) const
+void NonLTELineGasMix::performScattering(double /*lambda*/, const MaterialState* /*state*/, PhotonPacket* /*pp*/) const
 {}
 
 ////////////////////////////////////////////////////////////////////
 
-Array MolecularLineGasMix::lineEmissionCenters() const
+Array NonLTELineGasMix::lineEmissionCenters() const
 {
     return _center;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-Array MolecularLineGasMix::lineEmissionMasses() const
+Array NonLTELineGasMix::lineEmissionMasses() const
 {
     Array masses(_numLines);
     for (int k = 0; k != _numLines; ++k) masses[k] = _mass;
@@ -622,7 +624,7 @@ Array MolecularLineGasMix::lineEmissionMasses() const
 
 ////////////////////////////////////////////////////////////////////
 
-Array MolecularLineGasMix::lineEmissionSpectrum(const MaterialState* state, const Array& /*Jv*/) const
+Array NonLTELineGasMix::lineEmissionSpectrum(const MaterialState* state, const Array& /*Jv*/) const
 {
     Array luminosities(_numLines);
     if (state->numberDensity() > 0.)
@@ -636,7 +638,7 @@ Array MolecularLineGasMix::lineEmissionSpectrum(const MaterialState* state, cons
 
 ////////////////////////////////////////////////////////////////////
 
-double MolecularLineGasMix::indicativeTemperature(const MaterialState* state, const Array& /*Jv*/) const
+double NonLTELineGasMix::indicativeTemperature(const MaterialState* state, const Array& /*Jv*/) const
 {
     return state->temperature();
 }
