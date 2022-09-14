@@ -20,7 +20,12 @@ void FileBorderWavelengthGrid::setupSelfBefore()
     infile.close();
 
     // set the wavelength grid
-    setWavelengthBorders(wavelengths, _log);
+    switch (_characteristic)
+    {
+        case Characteristic::Linear: setWavelengthBorders(wavelengths, false);
+        case Characteristic::Logarithmic: setWavelengthBorders(wavelengths, true);
+        case Characteristic::Specified: setWavelengthSegments(wavelengths);
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

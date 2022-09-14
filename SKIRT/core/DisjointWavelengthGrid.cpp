@@ -145,7 +145,7 @@ void DisjointWavelengthGrid::setWavelengthBorders(const Array& borderv, bool log
 
     // verify that there are at least two bin borders and that the smallest one is positive
     if (_borderv.size() < 2) throw FATALERROR("There must be at least two wavelength bin borders in the grid");
-    if (_borderv[0] <= 0.0) throw FATALERROR("All wavelength bin borders should be positive");
+    if (_borderv[0] <= 0.0) throw FATALERROR("All wavelength bin borders must be positive");
 
     // verify that there are no duplicates
     if (std::unique(begin(_borderv), end(_borderv)) != end(_borderv))
@@ -188,6 +188,49 @@ void DisjointWavelengthGrid::setWavelengthBorders(const Array& borderv, bool log
     _ellv[0] = -1;
     for (size_t ell = 0; ell != n; ++ell) _ellv[ell + 1] = ell;
     _ellv[n + 1] = -1;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void DisjointWavelengthGrid::setWavelengthSegments(const Array& bordcharv)
+{
+    // verify that the number of values is uneven and least three, and that the first and last values are positive
+    size_t n = bordcharv.size();
+    if (n < 3) throw FATALERROR("There must be at least three wavelength values in the list");
+    if (n % 2 == 0) throw FATALERROR("There number of wavelength values in the list must be uneven");
+    if (bordcharv[0] <= 0. || bordcharv[n - 1] <= 0.) throw FATALERROR("All wavelength bin borders must be positive");
+
+    // copy the values into vectors that can be passed to the function that will do the actual work
+    vector<double> borderv;
+    vector<double> characv;
+    size_t i = 0;
+    while (true)
+    {
+        borderv.push_back(bordcharv[i++]);
+        if (i == n) break;
+        characv.push_back(bordcharv[i++]);
+    }
+    characv.push_back(0.);  //add the "characteristic wavelength" for the final segment outside the grid
+
+    // reverse the lists if required
+    if (bordcharv[0] > bordcharv[n - 1])
+    {
+        std::reverse(borderv.begin(), borderv.end());
+        std::reverse(characv.begin(), characv.end());
+    }
+
+    // verify the ordering
+    n = borderv.size() - 1;
+    for (size_t i = 0; i != n; ++i)
+    {
+        if (borderv[i + 1] <= borderv[i])
+            throw FATALERROR("Wavelength bin borders must be in strictly monotonous order");
+        if (characv[i] != 0. && (characv[i] <= borderv[i] || characv[i] >= borderv[i + 1]))
+            throw FATALERROR("Characteristic wavelength must be within bin borders");
+    }
+
+    // call the function that will do the actual work
+    setWavelengthSegments(borderv, characv);
 }
 
 ////////////////////////////////////////////////////////////////////
