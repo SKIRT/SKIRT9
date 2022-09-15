@@ -107,6 +107,16 @@ protected:
         logarithmic scaling (geometric mean) depending on the value of the \em logScale flag. */
     void setWavelengthBorders(const Array& borderv, bool logScale);
 
+    /** This function initializes the wavelength grid from a list of interleaved bin border points
+        and corresponding characteristic wavelengths. (i.e., borders and characteristic wavelengths
+        alternate). The number of values must be uneven and at least three. The list must be in
+        strictly increasing or decreasing order, which means duplicates are not allowed, except
+        that a zero characteristic wavelength indicates a segment that is not part of the grid,
+        i.e. that lies between two non-adjacent bins. In other words, this option allows to (1)
+        arbitrarily place characteristic wavelengths within each bin and (2) to specify
+        intermediate wavelength ranges that are not covered by any bin. */
+    void setWavelengthSegments(const Array& bordcharv);
+
     /** This function initializes the wavelength grid from a list of bin border points and a
         corresponding list of characteristic wavelengths. A zero characteristic wavelength
         indicates a segment that is not part of the grid, i.e. that lies between two non-adjacent
