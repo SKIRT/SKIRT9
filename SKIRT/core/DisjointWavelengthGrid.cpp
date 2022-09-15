@@ -210,7 +210,6 @@ void DisjointWavelengthGrid::setWavelengthSegments(const Array& bordcharv)
         if (i == n) break;
         characv.push_back(bordcharv[i++]);
     }
-    characv.push_back(0.);  //add the "characteristic wavelength" for the final segment outside the grid
 
     // reverse the lists if required
     if (bordcharv[0] > bordcharv[n - 1])
@@ -218,6 +217,9 @@ void DisjointWavelengthGrid::setWavelengthSegments(const Array& bordcharv)
         std::reverse(borderv.begin(), borderv.end());
         std::reverse(characv.begin(), characv.end());
     }
+
+    // add the "characteristic wavelength" for the final segment outside the grid
+    characv.push_back(0.);
 
     // verify the ordering
     n = borderv.size() - 1;
