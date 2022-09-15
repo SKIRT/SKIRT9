@@ -227,6 +227,7 @@ void DisjointWavelengthGrid::setWavelengthSegments(const Array& bordcharv)
     {
         if (borderv[i + 1] <= borderv[i])
             throw FATALERROR("Wavelength bin borders must be in strictly monotonous order");
+        if (std::isinf(characv[i])) characv[i] = 0.;  // handle zero frequencies
         if (characv[i] != 0. && (characv[i] <= borderv[i] || characv[i] >= borderv[i + 1]))
             throw FATALERROR("Characteristic wavelength must be within bin borders");
     }
