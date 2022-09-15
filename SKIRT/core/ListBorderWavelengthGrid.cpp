@@ -16,9 +16,9 @@ void ListBorderWavelengthGrid::setupSelfBefore()
     Array waves = NR::array(_wavelengths);
     switch (_characteristic)
     {
-        case Characteristic::Linear: setWavelengthBorders(waves, false);
-        case Characteristic::Logarithmic: setWavelengthBorders(waves, true);
-        case Characteristic::Specified: setWavelengthSegments(waves);
+        case Characteristic::Linear: setWavelengthBorders(waves, false); break;
+        case Characteristic::Logarithmic: setWavelengthBorders(waves, true); break;
+        case Characteristic::Specified: setWavelengthSegments(waves); break;
     }
 }
 

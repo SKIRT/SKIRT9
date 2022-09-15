@@ -22,9 +22,9 @@ void FileBorderWavelengthGrid::setupSelfBefore()
     // set the wavelength grid
     switch (_characteristic)
     {
-        case Characteristic::Linear: setWavelengthBorders(wavelengths, false);
-        case Characteristic::Logarithmic: setWavelengthBorders(wavelengths, true);
-        case Characteristic::Specified: setWavelengthSegments(wavelengths);
+        case Characteristic::Linear: setWavelengthBorders(wavelengths, false); break;
+        case Characteristic::Logarithmic: setWavelengthBorders(wavelengths, true); break;
+        case Characteristic::Specified: setWavelengthSegments(wavelengths); break;
     }
 }
 
