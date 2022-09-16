@@ -220,6 +220,11 @@ class NonLTELineGasMix : public EmittingGasMix
         ATTRIBUTE_DEFAULT_VALUE(numEnergyLevels, "999")
         ATTRIBUTE_DISPLAYED_IF(numEnergyLevels, "Level2")
 
+#ifdef DIAGNOSTIC
+        PROPERTY_STRING(levelPopsFilename, "the name of the file with initial relative level populations")
+        ATTRIBUTE_REQUIRED_IF(levelPopsFilename, "false")
+#endif
+
         PROPERTY_DOUBLE(defaultTemperature, "the default temperature of the gas")
         ATTRIBUTE_QUANTITY(defaultTemperature, "temperature")
         ATTRIBUTE_MIN_VALUE(defaultTemperature, "[0")
@@ -445,6 +450,10 @@ private:
     int _numWavelengths{0};  // the number of wavelength bins -- index ell
     Array _lambdav;          // characteristic wavelengths
     Array _dlambdav;         // wavelength bin widths
+
+#ifdef DIAGNOSTIC
+    vector<Array> _levelPops;  // initial relative level populations for each cell -- indices m, p
+#endif
 
 private:
     // Data members indicating custom variable indices; initialized in specificStateVariableInfo()

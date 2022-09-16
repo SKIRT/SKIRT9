@@ -172,6 +172,18 @@ void NonLTELineGasMix::setupSelfBefore()
         _lambdav = rfwlg->lambdav();
         _dlambdav = rfwlg->dlambdav();
     }
+
+#ifdef DIAGNOSTIC
+    // load the initial relative level populations if the user provided a filename
+    if (!levelPopsFilename().empty())
+    {
+        TextInFile infile(this, levelPopsFilename(), "initial level populations");
+        infile.addColumn("cell index");
+        for (int p = 0; p != _numLevels; ++p)
+            infile.addColumn("population of level " + std::to_string(p), "numbervolumedensity", "1/cm3");
+        _levelPops = infile.readAllRows();
+    }
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -240,7 +252,7 @@ vector<StateVariable> NonLTELineGasMix::specificStateVariableInfo() const
 
     // add custom variable for the population of each energy level
     const_cast<NonLTELineGasMix*>(this)->_indexFirstLevelPopulation = index;
-    for (int p = 0; p != _numEnergyLevels; ++p)
+    for (int p = 0; p != _numLevels; ++p)
         result.push_back(
             StateVariable::custom(index++, "population of level " + std::to_string(p), "numbervolumedensity"));
 
@@ -303,6 +315,12 @@ void NonLTELineGasMix::initializeSpecificState(MaterialState* state, double /*me
         // initialize level population using boltzmann distribution (start with LTE)
         Array boltzmann(_numLevels);
         for (int p = 0; p != _numLevels; ++p) boltzmann[p] = _weight[p] * exp(-_energy[p] / Constants::k() / Tkin);
+#ifdef DIAGNOSTIC
+        // if the user configured a file with initial level populations, use those data instead
+        size_t m = state->cellIndex();
+        if (m < _levelPops.size())
+            for (int p = 0; p != _numLevels; ++p) boltzmann[p] = _levelPops[m][p + 1];
+#endif
         boltzmann *= state->numberDensity() / boltzmann.sum();
         for (int p = 0; p != _numLevels; ++p) state->setLevelPopulation(p, boltzmann[p]);
     }
