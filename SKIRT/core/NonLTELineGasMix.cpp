@@ -172,6 +172,16 @@ void NonLTELineGasMix::setupSelfBefore()
         _lambdav = rfwlg->lambdav();
         _dlambdav = rfwlg->dlambdav();
     }
+
+    // load the initial relative level populations if the user provided a filename
+    if (!initialLevelPopsFilename().empty())
+    {
+        TextInFile infile(this, initialLevelPopsFilename(), "initial level populations");
+        infile.addColumn("cell index");
+        for (int p = 0; p != _numLevels; ++p)
+            infile.addColumn("population of level " + std::to_string(p), "numbervolumedensity", "1/cm3");
+        _initLevelPops = infile.readAllRows();
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -240,18 +250,18 @@ vector<StateVariable> NonLTELineGasMix::specificStateVariableInfo() const
 
     // add custom variable for the population of each energy level
     const_cast<NonLTELineGasMix*>(this)->_indexFirstLevelPopulation = index;
-    for (int p = 0; p != _numEnergyLevels; ++p)
+    for (int p = 0; p != _numLevels; ++p)
         result.push_back(
             StateVariable::custom(index++, "population of level " + std::to_string(p), "numbervolumedensity"));
 
-#ifdef DIAGNOSTIC
-    // add custom variable for the line-profile-averaged mean intensity at each transition line
-    const_cast<NonLTELineGasMix*>(this)->_indexFirstMeanIntensity = index;
-    for (int k = 0; k != _numLines; ++k)
-        result.push_back(
-            StateVariable::custom(index++, "mean intensity at line " + std::to_string(k), "wavelengthmeanintensity"));
-#endif
-
+    // if requested, add custom variable for the line-profile-averaged mean intensity at each transition line
+    if (storeMeanIntensities())
+    {
+        const_cast<NonLTELineGasMix*>(this)->_indexFirstMeanIntensity = index;
+        for (int k = 0; k != _numLines; ++k)
+            result.push_back(StateVariable::custom(index++, "mean intensity at line " + std::to_string(k),
+                                                   "wavelengthmeanintensity"));
+    }
     return result;
 }
 
@@ -265,9 +275,7 @@ vector<StateVariable> NonLTELineGasMix::specificStateVariableInfo() const
 #define colPartnerDensity(index) custom(_indexFirstColPartnerDensity + (index))
 #define setLevelPopulation(index, value) setCustom(_indexFirstLevelPopulation + (index), (value))
 #define levelPopulation(index) custom(_indexFirstLevelPopulation + (index))
-#ifdef DIAGNOSTIC
-#    define setMeanIntensity(index, value) setCustom(_indexFirstMeanIntensity + (index), (value))
-#endif
+#define setMeanIntensity(index, value) setCustom(_indexFirstMeanIntensity + (index), (value))
 
 ////////////////////////////////////////////////////////////////////
 
@@ -300,11 +308,18 @@ void NonLTELineGasMix::initializeSpecificState(MaterialState* state, double /*me
                 state->setColPartnerDensity(c, state->numberDensity() * ratios[c]);
         }
 
-        // initialize level population using boltzmann distribution (start with LTE)
-        Array boltzmann(_numLevels);
-        for (int p = 0; p != _numLevels; ++p) boltzmann[p] = _weight[p] * exp(-_energy[p] / Constants::k() / Tkin);
-        boltzmann *= state->numberDensity() / boltzmann.sum();
-        for (int p = 0; p != _numLevels; ++p) state->setLevelPopulation(p, boltzmann[p]);
+        // initialize level population using boltzmann distribution (i.e., start with LTE)
+        Array levelPops(_numLevels);
+        for (int p = 0; p != _numLevels; ++p) levelPops[p] = _weight[p] * exp(-_energy[p] / Constants::k() / Tkin);
+
+        // if the user configured a file with initial level populations, use those data instead
+        size_t m = state->cellIndex();
+        if (m < _initLevelPops.size())
+            for (int p = 0; p != _numLevels; ++p) levelPops[p] = _initLevelPops[m][p + 1];
+
+        // normalize and store
+        levelPops *= state->numberDensity() / levelPops.sum();
+        for (int p = 0; p != _numLevels; ++p) state->setLevelPopulation(p, levelPops[p]);
     }
 }
 
@@ -442,9 +457,7 @@ UpdateStatus NonLTELineGasMix::updateSpecificState(MaterialState* state, const A
                 for (size_t i = 1; i != message.size(); ++i) find<Log>()->info(message[i]);
             }
             double J = Jsum / gsum;
-#ifdef DIAGNOSTIC
-            state->setMeanIntensity(k, J);
-#endif
+            if (storeMeanIntensities()) state->setMeanIntensity(k, J);
 
             // add the Einstein Bul coefficients (stimulated emission)
             matrix[up][up] -= _einsteinBul[k] * J;

@@ -8,9 +8,6 @@
 
 #include "EmittingGasMix.hpp"
 
-// comment or remove this line to omit diagnostic code
-#define DIAGNOSTIC 1
-
 ////////////////////////////////////////////////////////////////////
 
 /** The NonLTELineGasMix class describes the material properties related to selected transitions in
@@ -193,6 +190,49 @@
     all supported lines are superposed on top of each other. In practice, the implementation
     includes just the terms that have a significant contribution at any given wavelength.
 
+    <b>Storing mean intensities</b>
+
+    As discussed above, the mean radiation field intensity \f$J_{\lambda,ul}\f$ is determined for
+    each transition line as a prerequisite for calculating the level populations in a given cell.
+    These values are obtained by integrating the radiation field, as discretized on the
+    simulation's radiation field wavelength grid, over the appropriate Gaussian line profile. There
+    is no need to keep these values around for the regular operation of the code. However, they can
+    form a relevant diagnostic to assess the level of Monte Carlo noise in the simulation or to
+    evaluate iterative convergence. Therefore, if the \em storeMeanIntensities flag is turned on,
+    the mean radiation field intensity at each transition line is stored in the medium state for
+    each cell, so that the information can be probed using the CustomStateProbe class.
+
+    <b>Providing initial level populations</b>
+
+    By default, the level populations are initialized in each cell using a Boltzmann distribution
+    as a function of temperature (i.e., assuming LTE conditions). This may be far from the correct
+    non-LTE levels, possibly requiring many iterations to obtain a properly converged solution. It
+    might therefore be meaningful to provide customized initial conditions. If the \em
+    initialLevelPopsFilename string is nonempty, it specifies the name of a text column file with a
+    column for each energy level and a row for each spatial cell in the simulation. Specifically,
+    the first column lists a cell index that is ignored, and remaining columns list the relative
+    population for each energy level in units of number density (the values are scaled to the total
+    number density in the cell, so the specific units don't really matter). The rows must exactly
+    match the number and ordering of the cells in the simulation's spatial grid (see below).
+
+    This input format is designed such that the text file can easily be produced by a
+    CustomStateProbe instance in a previous simulation. For example, assuming 9 energy levels, one
+    could configure a probe as follows:
+
+        <CustomStateProbe probeName="populations" indices="2-10" probeAfter="Run">
+            <form type="Form">
+                <PerCellForm/>
+            </form>
+        </CustomStateProbe>
+
+    The requirement to have an identical spatial grid in both simulations is easily met for 1D, 2D
+    and 3D grids with a regular mesh in each spatial direction. For octree and binary tree grids
+    the precise cell hierarchy is usually determined based on random samples of the medium density
+    distribution, resulting in a slightly different structure for each run. To work around this
+    problem, one needs to output the topology of the hierarchical grid in the first simulation
+    using a TreeSpatialGridTopologyProbe instance, and load this topology in subsequent simulations
+    using a FileTreeSpatialGrid instance.
+
     */
 class NonLTELineGasMix : public EmittingGasMix
 {
@@ -254,6 +294,14 @@ class NonLTELineGasMix : public EmittingGasMix
         ATTRIBUTE_MAX_VALUE(maxFractionNotConvergedCells, "1]")
         ATTRIBUTE_DEFAULT_VALUE(maxFractionNotConvergedCells, "0.001")
         ATTRIBUTE_DISPLAYED_IF(maxFractionNotConvergedCells, "Level2")
+
+        PROPERTY_BOOL(storeMeanIntensities, "store the mean radiation field intensity at each transition line")
+        ATTRIBUTE_DEFAULT_VALUE(storeMeanIntensities, "false")
+        ATTRIBUTE_DISPLAYED_IF(storeMeanIntensities, "Level3")
+
+        PROPERTY_STRING(initialLevelPopsFilename, "the name of the file with initial level populations")
+        ATTRIBUTE_REQUIRED_IF(initialLevelPopsFilename, "false")
+        ATTRIBUTE_DISPLAYED_IF(initialLevelPopsFilename, "Level3")
 
     ITEM_END()
 
@@ -446,14 +494,15 @@ private:
     Array _lambdav;          // characteristic wavelengths
     Array _dlambdav;         // wavelength bin widths
 
+    // imported initial level populations (technical expert option)
+    vector<Array> _initLevelPops;  // initial level populations for each cell -- indices m, p
+
 private:
     // Data members indicating custom variable indices; initialized in specificStateVariableInfo()
     int _indexKineticTemperature{0};
     int _indexFirstColPartnerDensity{0};
     int _indexFirstLevelPopulation{0};
-#ifdef DIAGNOSTIC
     int _indexFirstMeanIntensity{0};
-#endif
 };
 
 ////////////////////////////////////////////////////////////////////
