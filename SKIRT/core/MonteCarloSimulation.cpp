@@ -778,20 +778,24 @@ void MonteCarloSimulation::peelOffScattering(PhotonPacket* pp, PhotonPacket* ppp
         int numMedia = wv.size();
         for (int h = 0; h != numMedia; ++h)
         {
-            for (Instrument* instr : _instrumentSystem->instruments())
+            // skip media that don't scatter this photon packet
+            if (wv[h] > 0.)
             {
-                if (!instr->isSameObserverAsPreceding())
+                for (Instrument* instr : _instrumentSystem->instruments())
                 {
-                    // get the direction towards the instrument and (for polarization only) its Y-axis orientation
-                    Direction bfkobs = instr->bfkobs(pp->position());
-                    Direction bfky = _config->hasPolarization() ? instr->bfky(pp->position()) : Direction();
+                    if (!instr->isSameObserverAsPreceding())
+                    {
+                        // get the direction towards the instrument and (for polarization only) its Y-axis orientation
+                        Direction bfkobs = instr->bfkobs(pp->position());
+                        Direction bfky = _config->hasPolarization() ? instr->bfky(pp->position()) : Direction();
 
-                    // calculate peel-off for the current component and launch the peel-off photon packet
-                    mediumSystem()->peelOffScattering(h, wv[h], lambda, bfkobs, bfky, pp, ppp);
+                        // calculate peel-off for the current component and launch the peel-off photon packet
+                        mediumSystem()->peelOffScattering(h, wv[h], lambda, bfkobs, bfky, pp, ppp);
+                    }
+
+                    // have the peel-off photon packet detected
+                    instr->detect(ppp);
                 }
-
-                // have the peel-off photon packet detected
-                instr->detect(ppp);
             }
         }
     }
