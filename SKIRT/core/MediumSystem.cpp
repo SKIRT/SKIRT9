@@ -739,14 +739,18 @@ void MediumSystem::peelOffScattering(const ShortArray& wv, double lambda, Direct
     double I = 0., Q = 0., U = 0., V = 0.;
     for (int h = 0; h != _numMedia; ++h)
     {
-        double Ih = 0., Qh = 0., Uh = 0., Vh = 0.;
-        MaterialState mst(_state, m, h);
-        pp->setScatteringComponent(h);
-        mix(m, h)->peeloffScattering(Ih, Qh, Uh, Vh, lambda, bfkobs, bfky, &mst, pp);
-        I += Ih * wv[h];
-        Q += Qh * wv[h];
-        U += Uh * wv[h];
-        V += Vh * wv[h];
+        // skip media that don't scatter this photon packet
+        if (wv[h] > 0.)
+        {
+            double Ih = 0., Qh = 0., Uh = 0., Vh = 0.;
+            MaterialState mst(_state, m, h);
+            pp->setScatteringComponent(h);
+            mix(m, h)->peeloffScattering(Ih, Qh, Uh, Vh, lambda, bfkobs, bfky, &mst, pp);
+            I += Ih * wv[h];
+            Q += Qh * wv[h];
+            U += Uh * wv[h];
+            V += Vh * wv[h];
+        }
     }
 
     // pass the result to the peel-off photon packet
