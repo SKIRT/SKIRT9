@@ -65,6 +65,8 @@ void ProcessManager::finalize()
 #endif
 }
 
+//////////////////////////////////////////////////////////////////////
+
 void ProcessManager::abort(int exitcode)
 {
 #ifdef BUILD_WITH_MPI
@@ -72,6 +74,27 @@ void ProcessManager::abort(int exitcode)
 #else
     (void)exitcode;
 #endif
+}
+
+//////////////////////////////////////////////////////////////////////
+
+namespace
+{
+    std::function<void(string)> _logger;  // the usage logger; intialize to empty
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void ProcessManager::setLogger(std::function<void(string)> logger)
+{
+    _logger = logger;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void ProcessManager::clearLogger()
+{
+    _logger = nullptr;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -91,12 +114,14 @@ bool ProcessManager::requestChunk(size_t& firstIndex, size_t& numIndices)
 #ifdef BUILD_WITH_MPI
     if (isRoot()) throwInvalidChunkInvocation();
 
+    if (_logger) _logger("MPI BEGIN: request chunk");
     std::array<int, 1> sendbuf{{_rank}};  // we pass our rank so that the receiver can ignore MPI status
     std::array<size_t, 2> recvbuf{{0, 0}};
     MPI_Sendrecv(sendbuf.begin(), sendbuf.size(), MPI_INT, 0, 1, recvbuf.begin(), recvbuf.size(), MPI_UNSIGNED_LONG, 0,
                  1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     firstIndex = recvbuf[0];
     numIndices = recvbuf[1];
+    if (_logger) _logger("MPI END: received chunk " + std::to_string(firstIndex) + ", " + std::to_string(numIndices));
     return numIndices > 0;
 #else
     (void)firstIndex;
@@ -113,17 +138,17 @@ int ProcessManager::waitForChunkRequest()
 #ifdef BUILD_WITH_MPI
     if (!isMultiProc() || !isRoot()) throwInvalidChunkInvocation();
 
-    // avoid using CPU while waiting for a message
-    while (true)
+    if (_logger) _logger("MPI BEGIN: wait for chunk request");
+    while (true)  // avoid using CPU while waiting for a message
     {
         int flag;
         MPI_Iprobe(MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &flag, MPI_STATUS_IGNORE);
         if (flag) break;
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
     }
-
     std::array<int, 1> recvbuf{{0}};
     MPI_Recv(recvbuf.begin(), recvbuf.size(), MPI_INT, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    if (_logger) _logger("MPI END: received chunk request from process " + std::to_string(recvbuf[0]));
     return recvbuf[0];
 #else
     throwInvalidChunkInvocation();
@@ -138,8 +163,10 @@ void ProcessManager::serveChunkRequest(int rank, size_t firstIndex, size_t numIn
 #ifdef BUILD_WITH_MPI
     if (!isMultiProc() || !isRoot()) throwInvalidChunkInvocation();
 
+    if (_logger) _logger("MPI BEGIN: serve chunk request to process " + std::to_string(rank));
     std::array<size_t, 2> sendbuf{{firstIndex, numIndices}};
     MPI_Send(sendbuf.begin(), sendbuf.size(), MPI_UNSIGNED_LONG, rank, 1, MPI_COMM_WORLD);
+    if (_logger) _logger("MPI END: served chunk request");
 #else
     (void)rank;
     (void)firstIndex;
@@ -153,7 +180,12 @@ void ProcessManager::serveChunkRequest(int rank, size_t firstIndex, size_t numIn
 void ProcessManager::wait()
 {
 #ifdef BUILD_WITH_MPI
-    if (isMultiProc()) MPI_Barrier(MPI_COMM_WORLD);
+    if (isMultiProc())
+    {
+        if (_logger) _logger("MPI BEGIN: wait");
+        MPI_Barrier(MPI_COMM_WORLD);
+        if (_logger) _logger("MPI END: wait");
+    }
 #endif
 }
 
@@ -164,6 +196,7 @@ void ProcessManager::sumToAll(Array& arr)
 #ifdef BUILD_WITH_MPI
     if (isMultiProc())
     {
+        if (_logger) _logger("MPI BEGIN: sum to all of size " + std::to_string(arr.size()));
         double* data = begin(arr);
         size_t remaining = arr.size();
         while (remaining > maxMessageSize)
@@ -176,6 +209,7 @@ void ProcessManager::sumToAll(Array& arr)
         {
             MPI_Allreduce(MPI_IN_PLACE, data, remaining, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
         }
+        if (_logger) _logger("MPI END: sum to all");
     }
 #else
     (void)arr;
@@ -189,6 +223,7 @@ void ProcessManager::sumToRoot(Array& arr)
 #ifdef BUILD_WITH_MPI
     if (isMultiProc())
     {
+        if (_logger) _logger("MPI BEGIN: sum to root of size " + std::to_string(arr.size()));
         double* data = begin(arr);
         size_t remaining = arr.size();
 
@@ -209,6 +244,7 @@ void ProcessManager::sumToRoot(Array& arr)
             else
                 MPI_Reduce(data, data, remaining, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
         }
+        if (_logger) _logger("MPI END: sum to root");
     }
 #else
     (void)arr;
@@ -223,6 +259,8 @@ void ProcessManager::broadcastAllToAll(std::function<void(vector<double>&)> prod
 #ifdef BUILD_WITH_MPI
     if (isMultiProc())
     {
+        if (_logger) _logger("MPI BEGIN: broadcast all to all");
+
         // allocate room for data to be sent and received
         vector<double> data;
         size_t datasize = 0;
@@ -262,6 +300,7 @@ void ProcessManager::broadcastAllToAll(std::function<void(vector<double>&)> prod
                 consumer(data);
             }
         }
+        if (_logger) _logger("MPI END: broadcast all to all");
     }
 #else
     (void)producer;
