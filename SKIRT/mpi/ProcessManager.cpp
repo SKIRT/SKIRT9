@@ -163,10 +163,12 @@ void ProcessManager::serveChunkRequest(int rank, size_t firstIndex, size_t numIn
 #ifdef BUILD_WITH_MPI
     if (!isMultiProc() || !isRoot()) throwInvalidChunkInvocation();
 
-    if (_logger) _logger("MPI BEGIN: serve chunk request to process " + std::to_string(rank));
+    if (_logger)
+        _logger("MPI BEGIN: serve chunk " + std::to_string(firstIndex) + ", " + std::to_string(numIndices)
+                + " to process " + std::to_string(rank));
     std::array<size_t, 2> sendbuf{{firstIndex, numIndices}};
     MPI_Send(sendbuf.begin(), sendbuf.size(), MPI_UNSIGNED_LONG, rank, 1, MPI_COMM_WORLD);
-    if (_logger) _logger("MPI END: served chunk request");
+    if (_logger) _logger("MPI END: served chunk");
 #else
     (void)rank;
     (void)firstIndex;
