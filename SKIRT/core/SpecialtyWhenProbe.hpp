@@ -22,7 +22,7 @@ class SpecialtyWhenProbe : public SpecialtyProbe
 
     ITEM_ABSTRACT(SpecialtyWhenProbe, SpecialtyProbe, "a specialty when probe")
 
-        ATTRIBUTE_SUB_PROPERTIES_HERE()
+        ATTRIBUTE_SUB_PROPERTIES_HERE(SpecialtyWhenProbe)
 
         PROPERTY_ENUM(probeAfter, ProbeAfter, "perform the probe after")
         ATTRIBUTE_DEFAULT_VALUE(probeAfter, "Setup")

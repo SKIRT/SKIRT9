@@ -25,7 +25,7 @@ class SpatialGridWhenFormProbe : public SpatialGridFormProbe
 
     ITEM_ABSTRACT(SpatialGridWhenFormProbe, SpatialGridFormProbe, "a spatial grid when form probe")
 
-        ATTRIBUTE_SUB_PROPERTIES_HERE()
+        ATTRIBUTE_SUB_PROPERTIES_HERE(SpatialGridWhenFormProbe)
 
         PROPERTY_ENUM(probeAfter, ProbeAfter, "perform the probe after")
         ATTRIBUTE_DEFAULT_VALUE(probeAfter, "Setup")
