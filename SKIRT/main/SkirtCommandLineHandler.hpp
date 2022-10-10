@@ -40,7 +40,9 @@ simulations in the ski files specified on the command line according to the foll
   written to a file in the output directory.
 
 - The -v option enables verbose logging for simulations running with multiple processes, causing each process to
-  create its own log file (rather than relying on the root process to log all relevant information).
+  create its own log file rather than relying on the root process to log all relevant information. The individual log
+  files then also include messages bracketing each MPI operation, facilitating the diagnose of issues related to
+  communication between the processes.
 
 - The -m option causes information on current memory usage to be included in each log message.
 
