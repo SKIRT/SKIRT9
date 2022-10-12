@@ -73,10 +73,9 @@ void SecondaryLineLuminosityProbe::probe()
                 // construct a bridge and tell it to output the luminosity
                 ProbeFormBridge bridge(this, form());
                 string sh = std::to_string(h);
-                bridge.writeQuantity(sh + "_L", sh + "_S", "bolluminosityvolumedensity",
-                                     "bolluminositysurfacedensity", "line luminosity volume density",
-                                     "line luminosity surface density", axis, units->uwavelength(), addColumnDefinitions,
-                                     valueInCell);
+                bridge.writeQuantity(sh + "_L", sh + "_S", "bolluminosityvolumedensity", "bolluminositysurfacedensity",
+                                     "line luminosity volume density", "line luminosity surface density", axis,
+                                     units->uwavelength(), addColumnDefinitions, valueInCell);
             }
         }
     }
