@@ -246,14 +246,24 @@ public:
                        ScalarValueInCell valueInCell, WeightInCell weightInCell);
 
     /** This function causes the form associated with this bridge to output a file for a vector
-        quantity according to the provided information. It should be called only from spatial grid
-        probes. Refer to the class header for more information on the arguments. */
+        quantity (which is always averaged along a path) according to the provided information. It
+        should be called only from spatial grid probes. Refer to the class header for more
+        information on the arguments. */
     void writeQuantity(string fileid, string quantity, string description, string projectedDescription,
                        VectorValueInCell valueInCell, WeightInCell weightInCell);
 
     /** This function causes the form associated with this bridge to output a file for a compound
-        quantity according to the provided information. It should be called only from spatial grid
-        probes. Refer to the class header for more information on the arguments. */
+        quantity that needs to be accumulated along a path according to the provided information.
+        It should be called only from spatial grid probes. Refer to the class header for more
+        information on the arguments. */
+    void writeQuantity(string fileid, string projectedFileid, string quantity, string projectedQuantity,
+                       string description, string projectedDescription, const Array& axis, string axisUnit,
+                       AddColumnDefinitions addColumnDefinitions, CompoundValueInCell valueInCell);
+
+    /** This function causes the form associated with this bridge to output a file for a compound
+        quantity that needs to be averaged along a path according to the provided information. It
+        should be called only from spatial grid probes. Refer to the class header for more
+        information on the arguments. */
     void writeQuantity(string fileid, string unit, string description, string projectedDescription, const Array& axis,
                        string axisUnit, AddColumnDefinitions addColumnDefinitions, CompoundValueInCell valueInCell,
                        WeightInCell weightInCell);
@@ -433,6 +443,7 @@ private:
         GridScalarAccumulated,
         GridScalarAveraged,
         GridVectorAveraged,
+        GridCompoundAccumulated,
         GridCompoundAveraged,
         InputScalar,
         InputVector,

@@ -209,6 +209,7 @@
 #include "SEDInstrument.hpp"
 #include "SIUnits.hpp"
 #include "ScaledGaussianSmoothingKernel.hpp"
+#include "SecondaryLineLuminosityProbe.hpp"
 #include "SelectDustMixFamily.hpp"
 #include "SersicGeometry.hpp"
 #include "ShellGeometry.hpp"
@@ -660,6 +661,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<MagneticFieldProbe>();
     ItemRegistry::add<CustomStateProbe>();
     ItemRegistry::add<RadiationFieldProbe>();
+    ItemRegistry::add<SecondaryLineLuminosityProbe>();
     //   .. properties
     ItemRegistry::add<SpatialCellPropertiesProbe>();
     ItemRegistry::add<SpatialGridPlotProbe>();
