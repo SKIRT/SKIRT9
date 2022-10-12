@@ -109,6 +109,30 @@ void ProbeFormBridge::writeQuantity(string fileid, string quantity, string descr
     _form->writeQuantity(this);
 }
 
+void ProbeFormBridge::writeQuantity(string fileid, string projectedFileid, string quantity, string projectedQuantity,
+                                    string description, string projectedDescription, const Array& axis, string axisUnit,
+                                    AddColumnDefinitions addColumnDefinitions, CompoundValueInCell valueInCell)
+{
+    _type = Type::GridCompoundAccumulated;
+
+    _fileid = fileid;
+    _projectedFileid = projectedFileid;
+    _unit = _units->unit(quantity);
+    _projectedUnit = _units->unit(projectedQuantity);
+    _unitFactor = _units->out(quantity, 1.);
+    _projectedUnitFactor = _units->out(projectedQuantity, 1.);
+    _description = description;
+    _projectedDescription = projectedDescription;
+    _axis = axis;
+    _axisUnit = axisUnit;
+    _numValues = axis.size();
+
+    _addColumnDefinitions = addColumnDefinitions;
+    _compoundValueInCell = valueInCell;
+
+    _form->writeQuantity(this);
+}
+
 ////////////////////////////////////////////////////////////////////
 
 void ProbeFormBridge::writeQuantity(string fileid, string unit, string description, string projectedDescription,
@@ -481,6 +505,7 @@ void ProbeFormBridge::addColumnDefinitions(TextOutFile& outfile) const
             outfile.addColumn(_description + " z", _unit);
             break;
         }
+        case Type::GridCompoundAccumulated:
         case Type::GridCompoundAveraged:
         case Type::InputCompound:
         {
@@ -509,6 +534,12 @@ void ProbeFormBridge::valuesInCell(int m, Array& values) const
             values[2] = v.z();
             break;
         }
+        case Type::GridCompoundAccumulated:
+        {
+            values = _compoundValueInCell(m);
+            values *= _unitFactor;
+            break;
+        }
         case Type::GridCompoundAveraged:
         {
             values = _compoundValueInCell(m);
@@ -531,37 +562,13 @@ void ProbeFormBridge::valuesAtPosition(Position bfr, Array& values) const
     {
         case Type::GridScalarAccumulated:
         case Type::GridScalarAveraged:
-        {
-            int m = _grid ? _grid->cellIndex(bfr) : -1;
-            if (m >= 0)
-                values[0] = _scalarValueInCell(m) * _unitFactor;
-            else
-                values[0] = 0.;
-            break;
-        }
         case Type::GridVectorAveraged:
-        {
-            int m = _grid ? _grid->cellIndex(bfr) : -1;
-            if (m >= 0)
-            {
-                Vec v = _vectorValueInCell(m) * _unitFactor;
-                values[0] = v.x();
-                values[1] = v.y();
-                values[2] = v.z();
-            }
-            else
-            {
-                values[0] = 0.;
-                values[1] = 0.;
-                values[2] = 0.;
-            }
-            break;
-        }
+        case Type::GridCompoundAccumulated:
         case Type::GridCompoundAveraged:
         {
             int m = _grid ? _grid->cellIndex(bfr) : -1;
             if (m >= 0)
-                values = _compoundValueInCell(m);
+                valuesInCell(m, values);
             else
                 values = 0.;
             break;
@@ -666,6 +673,26 @@ void ProbeFormBridge::valuesAlongPath(Position bfr, Direction bfk, Array& values
             values[0] = v.x();
             values[1] = v.y();
             values[2] = v.z();
+            break;
+        }
+        case Type::GridCompoundAccumulated:
+        {
+            values = 0.;
+            if (_grid)
+            {
+                // get a segment generator and initialize the path
+                auto generator = _grid->createPathSegmentGenerator();
+                SpatialGridPath path(bfr, bfk);
+                generator->start(&path);
+
+                // accumulate values along the path
+                while (generator->next())
+                {
+                    int m = generator->m();
+                    if (m >= 0) values += generator->ds() * _compoundValueInCell(m);
+                }
+                values *= _projectedUnitFactor;
+            }
             break;
         }
         case Type::GridCompoundAveraged:

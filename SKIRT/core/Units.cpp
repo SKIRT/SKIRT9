@@ -384,6 +384,34 @@ double Units::obolluminosity(double L) const
 
 ////////////////////////////////////////////////////////////////////
 
+string Units::ubolluminosityvolumedensity() const
+{
+    return unit("bolluminosityvolumedensity");
+}
+
+////////////////////////////////////////////////////////////////////
+
+double Units::obolluminosityvolumedensity(double L) const
+{
+    return out("bolluminosityvolumedensity", L);
+}
+
+////////////////////////////////////////////////////////////////////
+
+string Units::ubolluminositysurfacedensity() const
+{
+    return unit("bolluminositysurfacedensity");
+}
+
+////////////////////////////////////////////////////////////////////
+
+double Units::obolluminositysurfacedensity(double L) const
+{
+    return out("bolluminositysurfacedensity", L);
+}
+
+////////////////////////////////////////////////////////////////////
+
 string Units::smonluminosity() const
 {
     switch (_fluxOutputStyle)
