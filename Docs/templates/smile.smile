@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--SMILE - Simple Metadata Interactive Language Editing © Astronomical Observatory, Ghent University-->
-<smile-schema type="Schema" format="9" producer="Peter Camps -- January 2019">
+<smile-schema type="Schema" format="9" producer="Peter Camps -- October 2022">
     <Schema name="SMILE" title="a SMILE schema file" version="9" extension="smile" root="smile-schema" type="Schema" format="9">
         <types type="Type">
             <Type name="Schema" base="" title="a SMILE schema describing the structure of a dataset" concrete="true">
@@ -101,6 +101,7 @@
                     <StringProperty name="name" title="the brief name of the unit"/>
                     <StringProperty name="title" title="the user-friendly description for the unit" requiredIf="false"/>
                     <DoubleProperty name="factor" title="the factor for converting a value in this unit to internal units" default="1"/>
+                    <DoubleProperty name="power" title="the power index for converting a value in this unit to internal units" default="1"/>
                     <DoubleProperty name="offset" title="the offset for converting a value in this unit to internal units" default="0"/>
                 </properties>
             </Type>
