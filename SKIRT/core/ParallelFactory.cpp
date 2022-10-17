@@ -67,7 +67,7 @@ Parallel* ParallelFactory::parallel(TaskMode mode, int maxThreadCount)
     if (ProcessManager::isMultiProc())
     {
         if (mode == TaskMode::Distributed)
-            type = numThreads == 1 ? ParallelType::MultiProcess : ParallelType::MultiHybrid;
+            type = ParallelType::MultiHybrid;
         else if (mode == TaskMode::RootOnly && !ProcessManager::isRoot())
             type = ParallelType::Null;
         // for the other cases, the type is already set correctly by the very first assignement
@@ -82,7 +82,6 @@ Parallel* ParallelFactory::parallel(TaskMode mode, int maxThreadCount)
             case ParallelType::Null: child.reset(new NullParallel(numThreads)); break;
             case ParallelType::Serial: child.reset(new SerialParallel(numThreads)); break;
             case ParallelType::MultiThread: child.reset(new MultiThreadParallel(numThreads)); break;
-            case ParallelType::MultiProcess: child.reset(new MultiHybridParallel(1)); break;
             case ParallelType::MultiHybrid: child.reset(new MultiHybridParallel(numThreads)); break;
         }
     }

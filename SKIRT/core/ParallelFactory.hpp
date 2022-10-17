@@ -45,8 +45,7 @@ class Parallel;
     ----------|-----------------|------------
     S | SerialParallel | Single thread in the current process; isolated from any other processes
     MT | MultiThreadParallel | Multiple coordinated threads in the current process; isolated from any other processes
-    MP | MultiProcessParallel | Single thread in each of multiple, coordinated processes
-    MTP | MultiHybridParallel | Multiple threads in each of multiple processes, all coordinated as a group
+    MTP | MultiHybridParallel | One or more threads in each of multiple processes, all coordinated as a group
     0 | NullParallel | No operation; any requests for performing tasks are ignored
 
     Depending on the requested task mode and the current run-time configuration (number of processes
@@ -55,7 +54,7 @@ class Parallel;
 
     Mode/Runtime | 1P 1T | 1P MT | MP 1T | MP MT |
     -------------|-------|-------|-------|-------|
-    Distributed  |  S    |  MT   |  MP   |  MTP  |
+    Distributed  |  S    |  MT   |  MTP  |  MTP  |
     RootOnly     |  S    |  MT   |  S/0  |  MT/0 |
 
 */
@@ -125,7 +124,7 @@ private:
     std::thread::id _parentThread{std::this_thread::get_id()};
 
     // Private enumeration of the supported Parallel subclasses
-    enum class ParallelType { Null = 0, Serial, MultiThread, MultiProcess, MultiHybrid };
+    enum class ParallelType { Null = 0, Serial, MultiThread, MultiHybrid };
 
     // The collection of our children, keyed on Parallel subclass type and number of threads; initially empty
     std::map<std::pair<ParallelType, int>, std::unique_ptr<Parallel>> _children;
