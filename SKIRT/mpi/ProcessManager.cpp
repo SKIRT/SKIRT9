@@ -220,7 +220,7 @@ void ProcessManager::sumToAll(Array& arr)
 
 //////////////////////////////////////////////////////////////////////
 
-void ProcessManager::sumToRoot(Array& arr)
+void ProcessManager::sumToRoot(Array& arr, bool wait)
 {
 #ifdef BUILD_WITH_MPI
     if (isMultiProc())
@@ -246,6 +246,7 @@ void ProcessManager::sumToRoot(Array& arr)
             else
                 MPI_Reduce(data, data, remaining, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
         }
+        if (wait) MPI_Barrier(MPI_COMM_WORLD);
         if (_logger) _logger("MPI END: sum to root");
     }
 #else

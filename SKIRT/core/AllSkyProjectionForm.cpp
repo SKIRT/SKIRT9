@@ -130,7 +130,7 @@ void AllSkyProjectionForm::writeQuantity(const ProbeFormBridge* bridge) const
             log->infoIfElapsed(progress, 1);
         }
     });
-    ProcessManager::sumToRoot(vvv.data());
+    ProcessManager::sumToRoot(vvv.data(), true);
 
     // write the file
     auto units = bridge->units();

@@ -135,8 +135,20 @@ public:
         processes. The resulting sums are then stored in the same Array passed to this function on
         the root process. The arrays on the other processes are left untouched. All processes must
         call this function for the communication to proceed. If there is only one process, or if
-        the array has zero size, the function does nothing. */
-    static void sumToRoot(Array& arr);
+        the array has zero size, the function does nothing.
+
+        If the \em wait argument is true, this function causes the processes to block until all
+        other processes have invoked it as well. This is important in case the sumToRoot() call may
+        be followed by a sequence of master-slave chunk requests without an intervening call to
+        wait(). Indeed, because nonroot processes do not receive any data in this function, if the
+        MPI implementation buffers the involved send operations, the sumToRoot() function may
+        return in nonroot processes before the root process calls it. This causes problems in case
+        the sumToRoot() call is followed by a sequence of master-slave chunk requests, because the
+        nonroot process might steal a (terminating empty) chunk from the previous sequence,
+        stalling some other non-root process indefinitely. In practice, this means \em wait should
+        be set to true when sumToRoot() is called from probes and can be left to false when it is
+        called from instruments. */
+    static void sumToRoot(Array& arr, bool wait = false);
 
     /** This function broadcasts a separate sequence of floating point values from each process to
         the other processes. The chunk of data to be sent by the calling process must be generated

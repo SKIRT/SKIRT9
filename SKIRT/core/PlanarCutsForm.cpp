@@ -78,7 +78,7 @@ void PlanarCutsForm::writePlanarCut(const ProbeFormBridge* bridge, bool xd, bool
             }
         }
     });
-    ProcessManager::sumToRoot(vvv.data());
+    ProcessManager::sumToRoot(vvv.data(), true);
 
     // get the name of the coordinate plane (xy, xz, or yz)
     string plane;
