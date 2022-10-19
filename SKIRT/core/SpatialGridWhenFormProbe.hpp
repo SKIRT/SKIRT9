@@ -28,7 +28,7 @@ class SpatialGridWhenFormProbe : public SpatialGridFormProbe
         ATTRIBUTE_SUB_PROPERTIES_HERE(SpatialGridWhenFormProbe)
 
         PROPERTY_ENUM(probeAfter, ProbeAfter, "perform the probe after")
-        ATTRIBUTE_DEFAULT_VALUE(probeAfter, "Setup")
+        ATTRIBUTE_DEFAULT_VALUE(probeAfter, "thisIsTemperatureProbe&DustMix:Run;Setup")
         ATTRIBUTE_DISPLAYED_IF(probeAfter, "DynamicState|IterateSecondary")
 
     ITEM_END()

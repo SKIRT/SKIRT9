@@ -84,6 +84,7 @@ class TemperatureProbe : public SpatialGridWhenFormProbe
         PROPERTY_ENUM(aggregation, Aggregation, "how to aggregate the indicative temperature")
         ATTRIBUTE_DEFAULT_VALUE(aggregation, "Type")
         ATTRIBUTE_DISPLAYED_IF(aggregation, "Level2")
+        ATTRIBUTE_INSERT(aggregation, "thisIsTemperatureProbe")  // used to set default in SpatialGridWhenFormProbe
 
     ITEM_END()
 
