@@ -81,12 +81,13 @@ class DensityTreePolicy : public TreePolicy, public MaterialWavelengthRangeInter
         ATTRIBUTE_MIN_VALUE(maxDustFraction, "[0")
         ATTRIBUTE_MAX_VALUE(maxDustFraction, "1e-2]")
         ATTRIBUTE_DEFAULT_VALUE(maxDustFraction, "1e-6")
+        ATTRIBUTE_DISPLAYED_IF(maxDustFraction, "DustMix")
 
         PROPERTY_DOUBLE(maxDustOpticalDepth, "the maximum diagonal dust optical depth for each cell")
         ATTRIBUTE_MIN_VALUE(maxDustOpticalDepth, "[0")
         ATTRIBUTE_MAX_VALUE(maxDustOpticalDepth, "100]")
         ATTRIBUTE_DEFAULT_VALUE(maxDustOpticalDepth, "0")
-        ATTRIBUTE_DISPLAYED_IF(maxDustOpticalDepth, "Level2")
+        ATTRIBUTE_DISPLAYED_IF(maxDustOpticalDepth, "DustMix&Level2")
 
         PROPERTY_DOUBLE(wavelength, "the wavelength at which to evaluate the optical depth")
         ATTRIBUTE_QUANTITY(wavelength, "wavelength")
@@ -105,12 +106,13 @@ class DensityTreePolicy : public TreePolicy, public MaterialWavelengthRangeInter
         ATTRIBUTE_MIN_VALUE(maxElectronFraction, "[0")
         ATTRIBUTE_MAX_VALUE(maxElectronFraction, "1e-2]")
         ATTRIBUTE_DEFAULT_VALUE(maxElectronFraction, "1e-6")
+        ATTRIBUTE_DISPLAYED_IF(maxElectronFraction, "ElectronMix")
 
         PROPERTY_DOUBLE(maxGasFraction, "the maximum fraction of gas contained in each cell")
         ATTRIBUTE_MIN_VALUE(maxGasFraction, "[0")
         ATTRIBUTE_MAX_VALUE(maxGasFraction, "1e-2]")
         ATTRIBUTE_DEFAULT_VALUE(maxGasFraction, "1e-6")
-        ATTRIBUTE_DISPLAYED_IF(maxGasFraction, "Level2")
+        ATTRIBUTE_DISPLAYED_IF(maxGasFraction, "GasMix&Level2")
 
     ITEM_END()
 
