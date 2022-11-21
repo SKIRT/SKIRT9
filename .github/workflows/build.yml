@@ -51,4 +51,5 @@ jobs:
       uses: ncipollo/release-action@v1
       with:
         artifacts: "release/SKIRT/main/export/${{ env.targetZip }}"
+        allowUpdates: true
         token: ${{ secrets.GITHUB_TOKEN }}
