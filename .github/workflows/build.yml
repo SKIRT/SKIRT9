@@ -1,10 +1,5 @@
 name: build
-on:
-  workflow_dispatch:
-  push:
-    tags:
-      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
-      - 'c*' # Push events to matching v*, i.e. v1.0, v20.15.10
+on: [workflow_dispatch]
 
 # jobs that run
 jobs:
