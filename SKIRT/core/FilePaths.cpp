@@ -30,7 +30,7 @@ namespace
     std::unordered_map<string, int> _installedPackVersions;
 
     // relative paths to check for presence of built-in resources
-    const char* _intpaths[] = {"../../../git/SKIRT/resources", "../../../../git/SKIRT/resources"};
+    const char* _intpaths[] = {"./resources", "../../../git/SKIRT/resources", "../../../../git/SKIRT/resources"};
     const int _Nintpaths = sizeof(_intpaths) / sizeof(const char*);
 
     // relative paths to check for presence of external resources
@@ -79,29 +79,29 @@ namespace
 
     // parses the list of expected resource packs, if present, and stores the results
     // !! assumes that the dictionary with resource paths has already been populated !!
-    void readExpectedPacks()
-    {
-        if (_resourcePaths.count("ExpectedResources.txt"))
-        {
-            try
-            {
-                std::ifstream expectedfile(_resourcePaths.at("ExpectedResources.txt"));
-                while (expectedfile.good())
-                {
-                    string packname;
-                    int packversion = 0;
-                    expectedfile >> packname >> packversion;
-                    if (!packname.empty() && packversion > 0 && !_expectedPackVersions.count(packname))
-                    {
-                        _expectedPacks.emplace_back(packname);
-                        _expectedPackVersions.emplace(packname, packversion);
-                    }
-                }
-            }
-            catch (...)
-            {};
-        }
-    }
+    // void readExpectedPacks()
+    // {
+    //     if (_resourcePaths.count("ExpectedResources.txt"))
+    //     {
+    //         try
+    //         {
+    //             std::ifstream expectedfile(_resourcePaths.at("ExpectedResources.txt"));
+    //             while (expectedfile.good())
+    //             {
+    //                 string packname;
+    //                 int packversion = 0;
+    //                 expectedfile >> packname >> packversion;
+    //                 if (!packname.empty() && packversion > 0 && !_expectedPackVersions.count(packname))
+    //                 {
+    //                     _expectedPacks.emplace_back(packname);
+    //                     _expectedPackVersions.emplace(packname, packversion);
+    //                 }
+    //             }
+    //         }
+    //         catch (...)
+    //         {};
+    //     }
+    // }
 
     // populates the dictionary with resource paths and gathers resource pack information,
     // or throws a fatal error if there is a problem
@@ -133,7 +133,7 @@ namespace
         }
 
         // parse the list of expected resource packs, if present
-        readExpectedPacks();
+        // readExpectedPacks();
     }
 
     // returns true if the resource filename matches the requirements, false otherwise;

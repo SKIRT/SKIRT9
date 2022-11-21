@@ -6,7 +6,6 @@
 # ------------------------------------------------------------------
 # Builds the SKIRT executable
 # ------------------------------------------------------------------
-
 # set the target name
 set(TARGET skirt)
 
@@ -31,3 +30,10 @@ include_directories(../core ../mpi ../utils)
 
 # adjust C++ compiler flags to our needs
 include("../../SMILE/build/CompilerFlags.cmake")
+
+add_custom_command(
+    TARGET ${TARGET} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_SOURCE_DIR}/cmake/publish_with_resources.cmake
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    VERBATIM
+)

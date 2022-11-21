@@ -1,3 +1,0 @@
-Core 6
-BPASS 1
-AtomsMolecules 3
