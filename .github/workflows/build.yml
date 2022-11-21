@@ -40,16 +40,16 @@ jobs:
         cd release &&^
         cmake --build .
       
-      - name: Archive Release
-        uses: thedoctor0/zip-release@master
-        with:
-          type: 'zip'
-          directory: "release/SKIRT/main/export"
-          filename: "${{ env.targetZip }}"
+    - name: Archive Release
+      uses: thedoctor0/zip-release@master
+      with:
+        type: 'zip'
+        directory: "release/SKIRT/main/export"
+        filename: "${{ env.targetZip }}"
 
-      - name: Release prebuilt
-        uses: ncipollo/release-action@v1
-        with:
-          artifacts: "release/SKIRT/main/export/${{ env.targetZip }}"
-          allowUpdates: true
-          token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Release prebuilt
+      uses: ncipollo/release-action@v1
+      with:
+        artifacts: "release/SKIRT/main/export/${{ env.targetZip }}"
+        allowUpdates: true
+        token: ${{ secrets.GITHUB_TOKEN }}
