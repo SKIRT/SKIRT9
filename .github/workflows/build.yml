@@ -1,5 +1,9 @@
 name: build
-on: [workflow_dispatch]
+on:
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - 'commit_*' 
 
 # jobs that run
 jobs:
@@ -8,7 +12,7 @@ jobs:
     name: Build using MinGW64 on Windows
     runs-on:  windows-latest
     env:
-      targetZip: SKIRT-windows-x86_64.zip
+      targetZip: SKIRT-${{ github.ref_name }}-windows-x86_64.zip
     # steps that make up this job
     steps:
     # checkout using the default checkout action, v2
