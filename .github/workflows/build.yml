@@ -1,0 +1,60 @@
+name: build
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+      - 'c*' # Push events to matching v*, i.e. v1.0, v20.15.10
+
+# jobs that run
+jobs:
+  build_windows:
+    # job name, displayed in the action log
+    name: Build using MinGW64 on Windows
+    runs-on:  windows-latest
+    env:
+      targetZip: SKIRT-windows-x86_64.zip
+    # steps that make up this job
+    steps:
+    # checkout using the default checkout action, v2
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Download newer version of MinGW64
+      shell: cmd
+      run: |
+        curl https://github.com/brechtsanders/winlibs_mingw/releases/download/11.2.0-12.0.1-9.0.0-r1/winlibs-x86_64-posix-seh-gcc-11.2.0-mingw-w64-9.0.0-r1.zip -L --output winlibs-x86_64-posix-seh-gcc-11.2.0-mingw-w64-9.0.0-r1.zip && dir && 7z.exe x winlibs-x86_64-posix-seh-gcc-11.2.0-mingw-w64-9.0.0-r1.zip
+    # configure the build files through CMake
+    - name: Configure
+      shell: cmd
+      run: |
+        set PATH=^
+        ${{ github.workspace }}\mingw64;^
+        ${{ github.workspace }}\mingw64\bin;^
+        %PATH%;
+        gcc --version &&^
+        cmake.exe -G "MinGW Makefiles" ^
+        -DCMAKE_BUILD_TYPE=Release ^
+        -DCMAKE_EXE_LINKER_FLAGS="-static" ^
+        -DCMAKE_BUILD_TYPE:STRING=Release ^
+        -DWARNINGS_AS_ERRORS:BOOL=ON ^
+        -DBUILD_DOX_STYLE:BOOL=ON ^
+        -DBUILD_SMILE_SHAPES:BOOL=ON ^
+        -DBUILD_SMILE_TOOL:BOOL=ON ^
+        -L ^
+        -B release &&^
+        cd release &&^
+        cmake --build .
+      
+      - name: Archive Release
+        uses: thedoctor0/zip-release@master
+        with:
+          type: 'zip'
+          directory: "release/SKIRT/main/export"
+          filename: "${{ env.targetZip }}"
+
+      - name: Release prebuilt
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "release/SKIRT/main/export/${{ env.targetZip }}"
+          allowUpdates: true
+          token: ${{ secrets.GITHUB_TOKEN }}
