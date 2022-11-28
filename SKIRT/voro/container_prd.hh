@@ -95,7 +95,6 @@ class container_periodic_base : public unitcell, public voro_base {
         container_periodic_base(double bx_,double bxy_,double by_,double bxz_,double byz_,double bz_,
                 int nx_,int ny_,int nz_,int init_mem_,int ps);
         ~container_periodic_base();
-        void region_count();
         /** Initializes the Voronoi cell prior to a compute_cell
          * operation for a specific particle being carried out by a
          * voro_compute class. The cell is initialized to be the
@@ -169,7 +168,6 @@ class container_periodic_base : public unitcell, public voro_base {
             return qi+nx*(qj+oy*qk);
         }
         void create_all_images();
-        void check_compartmentalized();
     protected:
         void add_particle_memory(int i);
         void put_locate_block(int &ijk,double &x,double &y,double &z);
@@ -211,34 +209,6 @@ class container_periodic : public container_periodic_base, public radius_mono {
         void put(int n,double x,double y,double z);
         void put(int n,double x,double y,double z,int &ai,int &aj,int &ak);
         void put(particle_order &vo,int n,double x,double y,double z);
-        void import(FILE *fp=stdin);
-        void import(particle_order &vo,FILE *fp=stdin);
-        /** Imports a list of particles from an open file stream into
-         * the container. Entries of four numbers (Particle ID, x
-         * position, y position, z position) are searched for. If the
-         * file cannot be successfully read, then the routine causes a
-         * fatal error.
-         * \param[in] filename the name of the file to open and read
-         *                     from. */
-        inline void import(const char* filename) {
-            FILE *fp=safe_fopen(filename,"r");
-            import(fp);
-            fclose(fp);
-        }
-        /** Imports a list of particles from an open file stream into
-         * the container. Entries of four numbers (Particle ID, x
-         * position, y position, z position) are searched for. In
-         * addition, the order in which particles are read is saved
-         * into an ordering class. If the file cannot be successfully
-         * read, then the routine causes a fatal error.
-         * \param[in,out] vo the ordering class to use.
-         * \param[in] filename the name of the file to open and read
-         *                     from. */
-        inline void import(particle_order &vo,const char* filename) {
-            FILE *fp=safe_fopen(filename,"r");
-            import(vo,fp);
-            fclose(fp);
-        }
         void compute_all_cells();
         double sum_cell_volumes();
         bool find_voronoi_cell(double x,double y,double z,double &rx,double &ry,double &rz,int &pid);
@@ -304,34 +274,6 @@ class container_periodic_poly : public container_periodic_base, public radius_po
         void put(int n,double x,double y,double z,double r);
         void put(int n,double x,double y,double z,double r,int &ai,int &aj,int &ak);
         void put(particle_order &vo,int n,double x,double y,double z,double r);
-        void import(FILE *fp=stdin);
-        void import(particle_order &vo,FILE *fp=stdin);
-        /** Imports a list of particles from an open file stream into
-         * the container_poly class. Entries of five numbers (Particle
-         * ID, x position, y position, z position, radius) are searched
-         * for. If the file cannot be successfully read, then the
-         * routine causes a fatal error.
-         * \param[in] filename the name of the file to open and read
-         *                     from. */
-        inline void import(const char* filename) {
-            FILE *fp=safe_fopen(filename,"r");
-            import(fp);
-            fclose(fp);
-        }
-        /** Imports a list of particles from an open file stream into
-         * the container_poly class. Entries of five numbers (Particle
-         * ID, x position, y position, z position, radius) are searched
-         * for. In addition, the order in which particles are read is
-         * saved into an ordering class. If the file cannot be
-         * successfully read, then the routine causes a fatal error.
-         * \param[in,out] vo the ordering class to use.
-         * \param[in] filename the name of the file to open and read
-         *                     from. */
-        inline void import(particle_order &vo,const char* filename) {
-            FILE *fp=safe_fopen(filename,"r");
-            import(vo,fp);
-            fclose(fp);
-        }
         void compute_all_cells();
         double sum_cell_volumes();
 

@@ -392,64 +392,6 @@ void container_periodic_base::add_particle_memory(int i) {
     delete [] p[i];p[i]=pp;
 }
 
-/** Import a list of particles from an open file stream into the container.
- * Entries of four numbers (Particle ID, x position, y position, z position)
- * are searched for. If the file cannot be successfully read, then the routine
- * causes a fatal error.
- * \param[in] fp the file handle to read from. */
-void container_periodic::import(FILE *fp) {
-    int i,j;
-    double x,y,z;
-    while((j=fscanf(fp,"%d %lg %lg %lg",&i,&x,&y,&z))==4) put(i,x,y,z);
-    if(j!=EOF) voro_fatal_error("File import error",VOROPP_FILE_ERROR);
-}
-
-/** Import a list of particles from an open file stream, also storing the order
- * of that the particles are read. Entries of four numbers (Particle ID, x
- * position, y position, z position) are searched for. If the file cannot be
- * successfully read, then the routine causes a fatal error.
- * \param[in,out] vo a reference to an ordering class to use.
- * \param[in] fp the file handle to read from. */
-void container_periodic::import(particle_order &vo,FILE *fp) {
-    int i,j;
-    double x,y,z;
-    while((j=fscanf(fp,"%d %lg %lg %lg",&i,&x,&y,&z))==4) put(vo,i,x,y,z);
-    if(j!=EOF) voro_fatal_error("File import error",VOROPP_FILE_ERROR);
-}
-
-/** Import a list of particles from an open file stream into the container.
- * Entries of five numbers (Particle ID, x position, y position, z position,
- * radius) are searched for. If the file cannot be successfully read, then the
- * routine causes a fatal error.
- * \param[in] fp the file handle to read from. */
-void container_periodic_poly::import(FILE *fp) {
-    int i,j;
-    double x,y,z,r;
-    while((j=fscanf(fp,"%d %lg %lg %lg %lg",&i,&x,&y,&z,&r))==5) put(i,x,y,z,r);
-    if(j!=EOF) voro_fatal_error("File import error",VOROPP_FILE_ERROR);
-}
-
-/** Import a list of particles from an open file stream, also storing the order
- * of that the particles are read. Entries of four numbers (Particle ID, x
- * position, y position, z position, radius) are searched for. If the file
- * cannot be successfully read, then the routine causes a fatal error.
- * \param[in,out] vo a reference to an ordering class to use.
- * \param[in] fp the file handle to read from. */
-void container_periodic_poly::import(particle_order &vo,FILE *fp) {
-    int i,j;
-    double x,y,z,r;
-    while((j=fscanf(fp,"%d %lg %lg %lg %lg",&i,&x,&y,&z,&r))==5) put(vo,i,x,y,z,r);
-    if(j!=EOF) voro_fatal_error("File import error",VOROPP_FILE_ERROR);
-}
-
-/** Outputs the a list of all the container regions along with the number of
- * particles stored within each. */
-void container_periodic_base::region_count() {
-    int i,j,k,*cop=co;
-    for(k=0;k<nz;k++) for(j=0;j<ny;j++) for(i=0;i<nx;i++)
-        printf("Region (%d,%d,%d): %d particles\n",i,j,k,*(cop++));
-}
-
 /** Clears a container of particles. */
 void container_periodic::clear() {
     for(int *cop=co;cop<co+nxyz;cop++) *cop=0;
@@ -513,26 +455,6 @@ double container_periodic_poly::sum_cell_volumes() {
 void container_periodic_base::create_all_images() {
     int i,j,k;
     for(k=0;k<oz;k++) for(j=0;j<oy;j++) for(i=0;i<nx;i++) create_periodic_image(i,j,k);
-}
-
-/** Checks that the particles within each block lie within that block's bounds.
- * This is useful for diagnosing problems with periodic image computation. */
-void container_periodic_base::check_compartmentalized() {
-    int c,l,i,j,k;
-    double mix,miy,miz,max,may,maz,*pp;
-    for(k=l=0;k<oz;k++) for(j=0;j<oy;j++) for(i=0;i<nx;i++,l++) if(mem[l]>0) {
-
-        // Compute the block's bounds, adding in a small tolerance
-        mix=i*boxx-tolerance;max=mix+boxx+tolerance;
-        miy=(j-ey)*boxy-tolerance;may=miy+boxy+tolerance;
-        miz=(k-ez)*boxz-tolerance;maz=miz+boxz+tolerance;
-
-        // Print entries for any particles that lie outside the block's
-        // bounds
-        for(pp=p[l],c=0;c<co[l];c++,pp+=ps) if(*pp<mix||*pp>max||pp[1]<miy||pp[1]>may||pp[2]<miz||pp[2]>maz)
-            printf("%d %d %d %d %f %f %f %f %f %f %f %f %f\n",
-                   id[l][c],i,j,k,*pp,pp[1],pp[2],mix,max,miy,may,miz,maz);
-    }
 }
 
 /** Creates particles within an image block that is aligned with the primary

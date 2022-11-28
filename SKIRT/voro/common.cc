@@ -29,20 +29,4 @@ void voro_fatal_error(const char *p,int status) {
     exit(status);
 }
 
-/** \brief Opens a file and checks the operation was successful.
- *
- * Opens a file, and checks the return value to ensure that the operation
- * was successful.
- * \param[in] filename the file to open.
- * \param[in] mode the cstdio fopen mode to use.
- * \return The file handle. */
-FILE* safe_fopen(const char *filename,const char *mode) {
-    FILE *fp=fopen(filename,mode);
-    if(fp==NULL) {
-        fprintf(stderr,"voro++: Unable to open file '%s'\n",filename);
-        exit(VOROPP_FILE_ERROR);
-    }
-    return fp;
-}
-
 }

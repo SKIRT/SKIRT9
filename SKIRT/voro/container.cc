@@ -325,64 +325,6 @@ void container_base::add_particle_memory(int i) {
     delete [] p[i];p[i]=pp;
 }
 
-/** Import a list of particles from an open file stream into the container.
- * Entries of four numbers (Particle ID, x position, y position, z position)
- * are searched for. If the file cannot be successfully read, then the routine
- * causes a fatal error.
- * \param[in] fp the file handle to read from. */
-void container::import(FILE *fp) {
-    int i,j;
-    double x,y,z;
-    while((j=fscanf(fp,"%d %lg %lg %lg",&i,&x,&y,&z))==4) put(i,x,y,z);
-    if(j!=EOF) voro_fatal_error("File import error",VOROPP_FILE_ERROR);
-}
-
-/** Import a list of particles from an open file stream, also storing the order
- * of that the particles are read. Entries of four numbers (Particle ID, x
- * position, y position, z position) are searched for. If the file cannot be
- * successfully read, then the routine causes a fatal error.
- * \param[in,out] vo a reference to an ordering class to use.
- * \param[in] fp the file handle to read from. */
-void container::import(particle_order &vo,FILE *fp) {
-    int i,j;
-    double x,y,z;
-    while((j=fscanf(fp,"%d %lg %lg %lg",&i,&x,&y,&z))==4) put(vo,i,x,y,z);
-    if(j!=EOF) voro_fatal_error("File import error",VOROPP_FILE_ERROR);
-}
-
-/** Import a list of particles from an open file stream into the container.
- * Entries of five numbers (Particle ID, x position, y position, z position,
- * radius) are searched for. If the file cannot be successfully read, then the
- * routine causes a fatal error.
- * \param[in] fp the file handle to read from. */
-void container_poly::import(FILE *fp) {
-    int i,j;
-    double x,y,z,r;
-    while((j=fscanf(fp,"%d %lg %lg %lg %lg",&i,&x,&y,&z,&r))==5) put(i,x,y,z,r);
-    if(j!=EOF) voro_fatal_error("File import error",VOROPP_FILE_ERROR);
-}
-
-/** Import a list of particles from an open file stream, also storing the order
- * of that the particles are read. Entries of four numbers (Particle ID, x
- * position, y position, z position, radius) are searched for. If the file
- * cannot be successfully read, then the routine causes a fatal error.
- * \param[in,out] vo a reference to an ordering class to use.
- * \param[in] fp the file handle to read from. */
-void container_poly::import(particle_order &vo,FILE *fp) {
-    int i,j;
-    double x,y,z,r;
-    while((j=fscanf(fp,"%d %lg %lg %lg %lg",&i,&x,&y,&z,&r))==5) put(vo,i,x,y,z,r);
-    if(j!=EOF) voro_fatal_error("File import error",VOROPP_FILE_ERROR);
-}
-
-/** Outputs the a list of all the container regions along with the number of
- * particles stored within each. */
-void container_base::region_count() {
-    int i,j,k,*cop=co;
-    for(k=0;k<nz;k++) for(j=0;j<ny;j++) for(i=0;i<nx;i++)
-        printf("Region (%d,%d,%d): %d particles\n",i,j,k,*(cop++));
-}
-
 /** Clears a container of particles. */
 void container::clear() {
     for(int *cop=co;cop<co+nxyz;cop++) *cop=0;

@@ -166,7 +166,6 @@ class container_base : public voro_base, public wall_list {
                 int init_mem,int ps_);
         ~container_base();
         bool point_inside(double x,double y,double z);
-        void region_count();
         /** Initializes the Voronoi cell prior to a compute_cell
          * operation for a specific particle being carried out by a
          * voro_compute class. The cell is initialized to fill the
@@ -276,34 +275,6 @@ class container : public container_base, public radius_mono {
         void clear();
         void put(int n,double x,double y,double z);
         void put(particle_order &vo,int n,double x,double y,double z);
-        void import(FILE *fp=stdin);
-        void import(particle_order &vo,FILE *fp=stdin);
-        /** Imports a list of particles from an open file stream into
-         * the container. Entries of four numbers (Particle ID, x
-         * position, y position, z position) are searched for. If the
-         * file cannot be successfully read, then the routine causes a
-         * fatal error.
-         * \param[in] filename the name of the file to open and read
-         *                     from. */
-        inline void import(const char* filename) {
-            FILE *fp=safe_fopen(filename,"r");
-            import(fp);
-            fclose(fp);
-        }
-        /** Imports a list of particles from an open file stream into
-         * the container. Entries of four numbers (Particle ID, x
-         * position, y position, z position) are searched for. In
-         * addition, the order in which particles are read is saved
-         * into an ordering class. If the file cannot be successfully
-         * read, then the routine causes a fatal error.
-         * \param[in,out] vo the ordering class to use.
-         * \param[in] filename the name of the file to open and read
-         *                     from. */
-        inline void import(particle_order &vo,const char* filename) {
-            FILE *fp=safe_fopen(filename,"r");
-            import(vo,fp);
-            fclose(fp);
-        }
         void compute_all_cells();
         double sum_cell_volumes();
         bool find_voronoi_cell(double x,double y,double z,double &rx,double &ry,double &rz,int &pid);
@@ -370,34 +341,6 @@ class container_poly : public container_base, public radius_poly {
         void clear();
         void put(int n,double x,double y,double z,double r);
         void put(particle_order &vo,int n,double x,double y,double z,double r);
-        void import(FILE *fp=stdin);
-        void import(particle_order &vo,FILE *fp=stdin);
-        /** Imports a list of particles from an open file stream into
-         * the container_poly class. Entries of five numbers (Particle
-         * ID, x position, y position, z position, radius) are searched
-         * for. If the file cannot be successfully read, then the
-         * routine causes a fatal error.
-         * \param[in] filename the name of the file to open and read
-         *                     from. */
-        inline void import(const char* filename) {
-            FILE *fp=safe_fopen(filename,"r");
-            import(fp);
-            fclose(fp);
-        }
-        /** Imports a list of particles from an open file stream into
-         * the container_poly class. Entries of five numbers (Particle
-         * ID, x position, y position, z position, radius) are searched
-         * for. In addition, the order in which particles are read is
-         * saved into an ordering class. If the file cannot be
-         * successfully read, then the routine causes a fatal error.
-         * \param[in,out] vo the ordering class to use.
-         * \param[in] filename the name of the file to open and read
-         *                     from. */
-        inline void import(particle_order &vo,const char* filename) {
-            FILE *fp=safe_fopen(filename,"r");
-            import(vo,fp);
-            fclose(fp);
-        }
         void compute_all_cells();
         double sum_cell_volumes();
         /** Computes the Voronoi cell for a particle currently being

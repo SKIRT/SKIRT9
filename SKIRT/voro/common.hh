@@ -21,7 +21,6 @@ namespace voro {
 void check_duplicate(int n,double x,double y,double z,int id,double *qp);
 
 void voro_fatal_error(const char *p,int status);
-FILE* safe_fopen(const char *filename,const char *mode);
 
 }
 
