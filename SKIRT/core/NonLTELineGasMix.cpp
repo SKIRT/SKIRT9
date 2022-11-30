@@ -101,7 +101,6 @@ void NonLTELineGasMix::setupSelfBefore()
     }
 
     // load the collisional transitions for each interaction partner
-    bool first = true;
     for (const auto& colName : colNames)
     {
         // add a new empty data structure and get a writable reference to it
@@ -130,20 +129,16 @@ void NonLTELineGasMix::setupSelfBefore()
                 int indexLow = row[1];
                 if (indexUp < _numLevels && indexLow < _numLevels)
                 {
-                    if (first)
-                    {
-                        _indexUpCol.push_back(indexUp);
-                        _indexLowCol.push_back(indexLow);
-                    }
+                    partner._indexUpCol.push_back(indexUp);
+                    partner._indexLowCol.push_back(indexLow);
                     Array coeff(numTemperatures);
                     for (int i = 0; i != numTemperatures; ++i) coeff[i] = row[i + 2];
                     partner.Kul.emplace_back(coeff);
                 }
             }
         }
-        first = false;
+        partner._numColTrans = partner._indexUpCol.size();
     }
-    _numColTrans = _indexUpCol.size();
     _numColPartners = colNames.size();
 
     // log summary info on the radiative lines
@@ -475,17 +470,17 @@ UpdateStatus NonLTELineGasMix::updateSpecificState(MaterialState* state, const A
 
         // add the terms for the collisional transitions
         double T = state->kineticTemperature();
-        for (int t = 0; t != _numColTrans; ++t)
-        {
-            int up = _indexUpCol[t];
-            int low = _indexLowCol[t];
-            double weightRatio = _weight[up] / _weight[low];
-            double energyDiff = _energy[up] - _energy[low];
-            double Kconversion = weightRatio * exp(-energyDiff / Constants::k() / T);
 
-            // loop over the collisional partners
-            for (int c = 0; c != _numColPartners; ++c)
+        // loop over the collisional partners
+        for (int c = 0; c != _numColPartners; ++c)
+        {
+            for (int t = 0; t != _colPartner[c]._numColTrans; ++t)
             {
+                int up = _colPartner[c]._indexUpCol[t];
+                int low = _colPartner[c]._indexLowCol[t];
+                double weightRatio = _weight[up] / _weight[low];
+                double energyDiff = _energy[up] - _energy[low];
+                double Kconversion = weightRatio * exp(-energyDiff / Constants::k() / T);
                 // determine Kul by interpolation from the temperature-dependent table
                 double Kul = NR::clampedValue<NR::interpolateLogLog>(T, _colPartner[c].T, _colPartner[c].Kul[t]);
 

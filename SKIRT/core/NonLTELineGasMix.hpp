@@ -479,14 +479,17 @@ private:
     Array _center;                // the central emission wavelength for each radiative transition
 
     // collisional transitions -- the transitions (not the coefficients) are assumed to be identical for all partners
-    int _numColTrans{0};       // the number of collisional transitions -- index t
-    vector<int> _indexUpCol;   // the upper energy level index for collisional transitions
-    vector<int> _indexLowCol;  // the lower energy level index for collisional transitions
+    //int _numColTrans{0};       // the number of collisional transitions -- index t
+    //vector<int> _indexUpCol;   // the upper energy level index for collisional transitions
+    //vector<int> _indexLowCol;  // the lower energy level index for collisional transitions
     struct ColPartner          // data structure holding information on a collisional partner
     {
         string name;        // human readable species name
         Array T;            // the temperature grid points
         vector<Array> Kul;  // the coefficient for each collisional transition and for each temperature
+        int _numColTrans{0};       // the number of collisional transitions -- index t
+        vector<int> _indexUpCol;   // the upper energy level index for collisional transitions
+        vector<int> _indexLowCol;  // the lower energy level index for collisional transitions
     };
     int _numColPartners{0};          // the number of collisional interaction partners -- index c
     vector<ColPartner> _colPartner;  // the data for each collisional partner
