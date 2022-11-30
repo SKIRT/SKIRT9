@@ -38,6 +38,11 @@ void NonLTELineGasMix::setupSelfBefore()
             name = "C+";
             colNames = {"H2", "H", "e-"};
             break;
+        case Species::HydroxylHFS: name = "OHhfs"; break;
+        case Species::MolecularHydrogen:
+            name = "H2";
+            colNames = {"H2", "H", "H+", "He"};
+            break;
     }
 
     // load the mass of the selected species

@@ -238,13 +238,15 @@ class NonLTELineGasMix : public EmittingGasMix
 {
     /** The enumeration type indicating the molecular or atomic species represented by a given
         NonLTELineGasMix instance. See the class header for more information. */
-    ENUM_DEF(Species, Test, Hydroxyl, Formyl, CarbonMonoxide, AtomicCarbon, IonizedCarbon)
+    ENUM_DEF(Species, Test, Hydroxyl, Formyl, CarbonMonoxide, AtomicCarbon, IonizedCarbon, HydroxylHFS,MolecularHydrogen)
         ENUM_VAL(Species, Test, "Fictive two-level test molecule (TT)")
         ENUM_VAL(Species, Hydroxyl, "Hydroxyl radical (OH)")
         ENUM_VAL(Species, Formyl, "Formyl cation (HCO+)")
         ENUM_VAL(Species, CarbonMonoxide, "Carbon monoxide (CO)")
         ENUM_VAL(Species, AtomicCarbon, "Atomic carbon (C)")
         ENUM_VAL(Species, IonizedCarbon, "Ionized carbon (C+)")
+        ENUM_VAL(Species, HydroxylHFS, "Hydroxyl radical with Hyperfine structure (OH)")
+        ENUM_VAL(Species, MolecularHydrogen, "Molecular hydrogen (H2)")
     ENUM_END()
 
     ITEM_CONCRETE(NonLTELineGasMix, EmittingGasMix,
