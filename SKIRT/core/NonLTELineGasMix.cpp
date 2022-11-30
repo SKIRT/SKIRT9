@@ -451,7 +451,15 @@ UpdateStatus NonLTELineGasMix::updateSpecificState(MaterialState* state, const A
                         + units->uwavelength() + " to " + StringUtils::toString(units->owavelength(lambdamax)) + " "
                         + units->uwavelength(),
                     "  --> increase the resolution of the radiation field wavelength grid"};
-                if (abs(gsum - 1.) > MAX_GAUSS_ERROR_FAIL) throw FATALERROR(StringUtils::join(message, "\n"));
+                if (abs(gsum - 1.) > MAX_GAUSS_ERROR_FAIL)
+                {
+                    auto log = find<Log>();
+                    log->info("Gausss(" + StringUtils::toString(_lambdav[ellmin]) + ")="
+                                 + StringUtils::toString(gaussian(_lambdav[ellmin], center, sigma))
+                                 + "Gausss(" + StringUtils::toString(_lambdav[ellmax-1]) + ")="
+                                 + StringUtils::toString(gaussian(_lambdav[ellmax-1], center, sigma)));
+                    throw FATALERROR(StringUtils::join(message, "\n"));
+                }
                 auto log = find<Log>();
                 log->warning(message[0]);
                 for (size_t i = 1; i != message.size(); ++i) find<Log>()->info(message[i]);
@@ -512,6 +520,12 @@ UpdateStatus NonLTELineGasMix::updateSpecificState(MaterialState* state, const A
             state->setLevelPopulation(p, newPop);
             change += abs(oldPop / newPop - 1.);
         }
+        if (abs((solution.sum() - state->numberDensity())/state->numberDensity()) > 0.01)
+        {
+            throw FATALERROR("Failded updating level populations: before [m-3]="+StringUtils::toString(state->numberDensity())
+                             + ", after [m-3]"+StringUtils::toString(solution.sum()));
+        }
+
         change /= _numLevels;
 
         // verify convergence
