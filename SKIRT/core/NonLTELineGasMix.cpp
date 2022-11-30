@@ -590,7 +590,12 @@ double NonLTELineGasMix::opacityAbs(double lambda, const MaterialState* state, c
             }
         }
     }
-    return opacity;
+    double  diagonalLength = (pow(state->volume(),0.3333333333)*sqrt(3)); // Diagonal length [m]
+    if (opacity*diagonalLength < LowerLimitTau())
+    {
+        return LowerLimitTau()/diagonalLength;
+    }
+    else return opacity;
 }
 
 ////////////////////////////////////////////////////////////////////

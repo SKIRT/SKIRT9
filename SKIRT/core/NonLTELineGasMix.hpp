@@ -297,6 +297,11 @@ class NonLTELineGasMix : public EmittingGasMix
         ATTRIBUTE_DEFAULT_VALUE(maxFractionNotConvergedCells, "0.001")
         ATTRIBUTE_DISPLAYED_IF(maxFractionNotConvergedCells, "Level2")
 
+        PROPERTY_DOUBLE(LowerLimitTau, "Lower limit of diagonal optical depth")
+        ATTRIBUTE_MIN_VALUE(LowerLimitTau, "[-10")
+        ATTRIBUTE_MAX_VALUE(LowerLimitTau, "0]")
+        ATTRIBUTE_DEFAULT_VALUE(LowerLimitTau, "-2")
+        ATTRIBUTE_DISPLAYED_IF(LowerLimitTau, "Level3")
         PROPERTY_BOOL(storeMeanIntensities, "store the mean radiation field intensity at each transition line")
         ATTRIBUTE_DEFAULT_VALUE(storeMeanIntensities, "false")
         ATTRIBUTE_DISPLAYED_IF(storeMeanIntensities, "Level3")
