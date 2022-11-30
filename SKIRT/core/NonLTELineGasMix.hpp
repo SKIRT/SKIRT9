@@ -302,6 +302,14 @@ class NonLTELineGasMix : public EmittingGasMix
         ATTRIBUTE_MAX_VALUE(LowerLimitTau, "0]")
         ATTRIBUTE_DEFAULT_VALUE(LowerLimitTau, "-2")
         ATTRIBUTE_DISPLAYED_IF(LowerLimitTau, "Level3")
+
+        PROPERTY_DOUBLE(InitialGasTemperatureforLTE, "the gas tempelature specifing initial level population with LTE."
+                                                     " if 0, you can use kinetic temperature from the input data")
+        ATTRIBUTE_MIN_VALUE(InitialGasTemperatureforLTE, "[0")
+        ATTRIBUTE_MAX_VALUE(InitialGasTemperatureforLTE, "1e10]")
+        ATTRIBUTE_DEFAULT_VALUE(InitialGasTemperatureforLTE, "0")
+        ATTRIBUTE_DISPLAYED_IF(InitialGasTemperatureforLTE, "Level3")
+
         PROPERTY_BOOL(storeMeanIntensities, "store the mean radiation field intensity at each transition line")
         ATTRIBUTE_DEFAULT_VALUE(storeMeanIntensities, "false")
         ATTRIBUTE_DISPLAYED_IF(storeMeanIntensities, "Level3")
