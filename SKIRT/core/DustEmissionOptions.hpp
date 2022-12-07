@@ -73,6 +73,13 @@ class DustEmissionOptions : public SimulationItem, public SourceWavelengthRangeI
         ATTRIBUTE_DEFAULT_VALUE(wavelengthBias, "0.5")
         ATTRIBUTE_DISPLAYED_IF(wavelengthBias, "Level3")
 
+        PROPERTY_DOUBLE(spatialBias,
+                        "the fraction of secondary photon packets distributed uniformly across spatial cells")
+        ATTRIBUTE_MIN_VALUE(spatialBias, "[0")
+        ATTRIBUTE_MAX_VALUE(spatialBias, "1]")
+        ATTRIBUTE_DEFAULT_VALUE(spatialBias, "0.5")
+        ATTRIBUTE_DISPLAYED_IF(spatialBias, "Level3")
+
         PROPERTY_ITEM(wavelengthBiasDistribution, WavelengthDistribution,
                       "the bias distribution for sampling secondary photon packet wavelengths")
         ATTRIBUTE_DEFAULT_VALUE(wavelengthBiasDistribution, "LogWavelengthDistribution")

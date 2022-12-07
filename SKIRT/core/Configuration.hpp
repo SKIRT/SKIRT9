@@ -382,10 +382,6 @@ public:
         otherwise. */
     bool storeEmissionRadiationField() const { return _storeEmissionRadiationField; }
 
-    /** Returns the fraction of secondary photon packets distributed uniformly across spatial
-        cells. */
-    double secondarySpatialBias() const { return _secondarySpatialBias; }
-
     /** Returns the fraction of secondary photon packets distributed uniformly across secondary
         sources. */
     double secondarySourceBias() const { return _secondarySourceBias; }
@@ -512,7 +508,6 @@ private:
 
     // secondary emission
     bool _storeEmissionRadiationField{false};
-    double _secondarySpatialBias{0.5};
     double _secondarySourceBias{0.5};
 
     // dust emission

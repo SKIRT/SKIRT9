@@ -127,7 +127,7 @@ void DustSecondarySource::preparePacketMap(size_t firstIndex, size_t numIndices)
     wv /= wv.sum();
 
     // calculate the final, composite-biased launch weight for each cell, normalized to unity
-    double xi = _config->secondarySpatialBias();
+    double xi = _ms->dustEmissionOptions()->spatialBias();
     _Wv = (1 - xi) * _Lv + xi * wv;
 
     // determine the first history index for each cell, using the adjusted cell ordering so that

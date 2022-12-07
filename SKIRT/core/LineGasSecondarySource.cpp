@@ -45,7 +45,6 @@ double LineGasSecondarySource::prepareLuminosities()
 
     // if so, also retrieve the particle masses corresponding to each line
     if (_hasTemperature) _masses = _mix->lineEmissionMasses();
-
     // calculate the bolometric luminosity for each spatial cell by adding all line luminosities
     // this can be time-consuming, so we do this in parallel
     int numCells = _ms->numCells();
@@ -89,7 +88,7 @@ void LineGasSecondarySource::preparePacketMap(size_t firstIndex, size_t numIndic
     wv /= wv.sum();
 
     // calculate the final, composite-biased launch weight for each cell, normalized to unity
-    double xi = _config->secondarySpatialBias();
+    double xi = _mix->spatialBias();
     _Wv = (1 - xi) * _Lv + xi * wv;
 
     // determine the first history index for each cell

@@ -165,7 +165,6 @@ void Configuration::setupSelfBefore()
     {
         _numSecondaryPackets = _numPrimaryPackets * ms->secondaryEmissionOptions()->secondaryPacketsMultiplier();
         _storeEmissionRadiationField = ms->secondaryEmissionOptions()->storeEmissionRadiationField();
-        _secondarySpatialBias = ms->secondaryEmissionOptions()->spatialBias();
         _secondarySourceBias = ms->secondaryEmissionOptions()->sourceBias();
     }
 
