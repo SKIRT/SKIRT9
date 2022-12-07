@@ -36,6 +36,11 @@ class DustEmissionOptions : public SimulationItem, public SourceWavelengthRangeI
         ATTRIBUTE_DEFAULT_VALUE(includeHeatingByCMB, "false")
         ATTRIBUTE_DISPLAYED_IF(includeHeatingByCMB, "NonZeroRedshift")
 
+        PROPERTY_BOOL(DopplerShift, "consider doppler shift of dust themal emission. This is only valuable in the case "
+                                    "you want see the doppler shift of PAH emssion bands")
+        ATTRIBUTE_DEFAULT_VALUE(DopplerShift, "false")
+        ATTRIBUTE_DISPLAYED_IF(DopplerShift, "Level2")
+
         PROPERTY_ITEM(cellLibrary, SpatialCellLibrary, "the spatial cell grouping scheme for calculating dust emission")
         ATTRIBUTE_DEFAULT_VALUE(cellLibrary, "AllCellsLibrary")
         ATTRIBUTE_REQUIRED_IF(cellLibrary, "false")

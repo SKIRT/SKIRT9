@@ -269,7 +269,8 @@ namespace
             }
 
             // remember the average bulk velocity for this cell
-            _bfv = ms->bulkVelocity(m);
+            if (ms->dustEmissionOptions()->DopplerShift() == true) ms->bulkVelocity(m);
+            else _bfv = Vec(0.0,0.0,0.0);
         }
 
     private:
