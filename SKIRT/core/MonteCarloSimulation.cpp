@@ -339,6 +339,7 @@ void MonteCarloSimulation::runSecondaryEmissionIterations()
 
     // loop over the secondary emission iterations
     int iter = 0;
+    bool dustConverged = false;
     while (true)
     {
         ++iter;
@@ -373,8 +374,13 @@ void MonteCarloSimulation::runSecondaryEmissionIterations()
 
             // log dust emission convergence info
             if (mediumSystem()->hasDust())
-                converged &= dustConvergence.logConvergenceInfo(log(), units(), mediumSystem(), iter, fractionOfPrimary,
-                                                                fractionOfPrevious);
+            {
+                if(dustConverged == false)
+                    dustConverged = dustConvergence.logConvergenceInfo(log(), units(), mediumSystem(), iter,
+                                                                        fractionOfPrimary,fractionOfPrevious);
+                if (dustConverged) converged &= true;
+                else converged &= false;
+            }
         }
 
         // notify the probe system
@@ -410,7 +416,7 @@ void MonteCarloSimulation::runMergedEmissionIterations()
 
     // helper object to verify convergence of secondary emission
     DustAbsorptionConvergence dustConvergence;
-
+    bool dustConverged = false;
     // loop over the merged iterations
     int iter = 0;
     while (true)
@@ -464,8 +470,13 @@ void MonteCarloSimulation::runMergedEmissionIterations()
 
             // log dust emission convergence info
             if (mediumSystem()->hasDust())
-                converged &= dustConvergence.logConvergenceInfo(log(), units(), mediumSystem(), iter, fractionOfPrimary,
-                                                                fractionOfPrevious);
+            {
+                if(dustConverged == false)
+                    dustConverged = dustConvergence.logConvergenceInfo(log(), units(), mediumSystem(), iter,
+                                                                        fractionOfPrimary,fractionOfPrevious);
+                if (dustConverged) converged &= true;
+                else converged &= false;
+            }
         }
 
         // notify the probe system
