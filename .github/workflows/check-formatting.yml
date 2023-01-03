@@ -24,7 +24,7 @@ jobs:
     steps:
     # install clang-format-9
     - name: Install
-      run: sudo apt install clang-format-9
+      run: sudo apt-get install clang-format-9
     # checkout using a recent version of the checkout action
     - name: Checkout
       uses: actions/checkout@v3
