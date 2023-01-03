@@ -22,8 +22,8 @@ jobs:
     # configure the build files through CMake
     - name: Configure
       shell: cmd
-      run: cmake.exe -B release -DCMAKE_BUILD_TYPE:STRING=Release -DCMAKE_EXE_LINKER_FLAGS="-static" -DWARNINGS_AS_ERRORS:BOOL=ON -DBUILD_DOX_STYLE:BOOL=ON -DBUILD_SMILE_SHAPES:BOOL=ON -DBUILD_SMILE_TOOL:BOOL=ON -L
+      run: cmake -B release -DCMAKE_BUILD_TYPE:STRING=Release -DWARNINGS_AS_ERRORS:BOOL=ON -DBUILD_DOX_STYLE:BOOL=ON -DBUILD_SMILE_SHAPES:BOOL=ON -DBUILD_SMILE_TOOL:BOOL=ON -L
     # perform the actual build (Windows runners have 2 cores)
     - name: Build
       shell: cmd
-      run: cd release && cmake --build .
+      run: cd release && cmake --build . -j 2
