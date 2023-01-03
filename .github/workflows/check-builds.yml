@@ -8,7 +8,7 @@
 name: Check builds
 
 # workflow event trigger
-on: [pull_request, workflow_dispatch]
+on: [push, pull_request, workflow_dispatch]
 
 # jobs that run
 jobs:
@@ -36,7 +36,7 @@ jobs:
     # job name, displayed in the action log
     name: Build using Clang on macOS
     # run this job on the Github-provided runner with a recent macOS version
-    runs-on: macos-11
+    runs-on: macos-12
     # steps that make up this job
     steps:
     # checkout using the default checkout action, v2
