@@ -10,7 +10,7 @@
 name: Check formatting
 
 # workflow event triggers
-on: push
+on: pull_request
 
 # jobs that run
 jobs:
@@ -18,7 +18,8 @@ jobs:
   check_formatting_job:
     # job name, displayed in the action log
     name: Check source code formatting
-    # run this job on a Github-provided runner with a recent Ubuntu version
+    # run this job on a Github-provided runner with Ubuntu 20.04
+    # (and not 22.04 because we cannot install clang-format-9)
     runs-on: ubuntu-20.04
     # steps that make up this job
     steps:
