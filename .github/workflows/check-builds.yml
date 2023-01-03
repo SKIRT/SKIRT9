@@ -8,7 +8,7 @@
 name: Check builds
 
 # workflow event trigger
-on: [push, pull_request, workflow_dispatch]
+on: [push, pull_request]
 
 # jobs that run
 jobs:
@@ -18,7 +18,7 @@ jobs:
     # job name, displayed in the action log
     name: Build using GCC on Ubuntu
     # run this job on the Github-provided runner with a recent Ubuntu version
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     # steps that make up this job
     steps:
     # checkout using the default checkout action, v2
