@@ -19,7 +19,7 @@ jobs:
     # job name, displayed in the action log
     name: Check source code formatting
     # run this job on a Github-provided runner with a recent Ubuntu version
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     # steps that make up this job
     steps:
     # install clang-format-9
