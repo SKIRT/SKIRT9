@@ -8,7 +8,7 @@
 name: Check builds
 
 # workflow event trigger
-on: [push, pull_request]
+on: push
 
 # jobs that run
 jobs:
@@ -21,9 +21,9 @@ jobs:
     runs-on: ubuntu-22.04
     # steps that make up this job
     steps:
-    # checkout using the default checkout action, v2
+    # checkout using a recent version of the checkout action
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     # configure the build files through CMake
     - name: Configure
       run: cmake -B release -DCMAKE_BUILD_TYPE:STRING=Release -DWARNINGS_AS_ERRORS:BOOL=ON -DBUILD_DOX_STYLE:BOOL=ON -DBUILD_SMILE_SHAPES:BOOL=ON -DBUILD_SMILE_TOOL:BOOL=ON -L
@@ -39,9 +39,9 @@ jobs:
     runs-on: macos-12
     # steps that make up this job
     steps:
-    # checkout using the default checkout action, v2
+    # checkout using a recent version of the checkout action
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     # configure the build files through CMake
     - name: Configure
       run: cmake -B release -DCMAKE_BUILD_TYPE:STRING=Release -DWARNINGS_AS_ERRORS:BOOL=ON -DBUILD_DOX_STYLE:BOOL=ON -DBUILD_SMILE_SHAPES:BOOL=ON -DBUILD_SMILE_TOOL:BOOL=ON -L

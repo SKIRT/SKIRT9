@@ -10,7 +10,7 @@
 name: Check formatting
 
 # workflow event triggers
-on: pull_request
+on: push
 
 # jobs that run
 jobs:
@@ -23,9 +23,9 @@ jobs:
     runs-on: ubuntu-18.04
     # steps that make up this job
     steps:
-    # checkout using the default checkout action, v2
+    # checkout using a recent version of the checkout action
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     # run clang-format-9 on all .hpp and .cpp files
     - name: Autoformat
       run: find . \( -name '*.hpp' -or -name '*.cpp' \) -exec clang-format-9 -style=file -i {} \;

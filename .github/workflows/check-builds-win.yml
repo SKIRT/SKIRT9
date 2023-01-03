@@ -1,0 +1,27 @@
+# GitHub action workflow that checks the build process on Windows.
+#
+name: Check builds on Windows
+
+# workflow event trigger
+on: push
+
+# jobs that run
+jobs:
+
+  # GCC on Ubuntu
+  check_build_gcc:
+    # job name, displayed in the action log
+    name: Build using Mingw on Windows
+    # run this job on the Github-provided runner with a recent Windows version
+    runs-on: windows-2022
+    # steps that make up this job
+    steps:
+    # checkout using a recent version of the checkout action
+    - name: Checkout
+      uses: actions/checkout@v3
+    # configure the build files through CMake
+    - name: Configure
+      run: cmake -B release -DCMAKE_BUILD_TYPE:STRING=Release -DWARNINGS_AS_ERRORS:BOOL=ON -DBUILD_DOX_STYLE:BOOL=ON -DBUILD_SMILE_SHAPES:BOOL=ON -DBUILD_SMILE_TOOL:BOOL=ON -L
+    # perform the actual build (Windows runners have 2 cores)
+    - name: Build
+      run: make -C release -j 2
