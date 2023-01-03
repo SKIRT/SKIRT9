@@ -68,7 +68,7 @@ jobs:
       run: make -C release -j 2
 
   # MSVC on Windows
-  check_build_gcc:
+  check_build_msvc:
     # job name, displayed in the action log
     name: Build using MSVC on Windows
     # run this job on the Github-provided runner with a recent Windows version
