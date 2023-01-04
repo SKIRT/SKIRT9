@@ -589,6 +589,13 @@ double NonLTELineGasMix::opacityAbs(double lambda, const MaterialState* state, c
                 }
             }
         }
+
+        // apply lower limit to (negative) optical depth
+        if (opacity < 0.)
+        {
+            double diagonal = 1.7320508 * cbrt(state->volume());  // correct only for cubical cell
+            if (opacity * diagonal < lowestOpticalDepth()) opacity = lowestOpticalDepth() / diagonal;
+        }
     }
     return opacity;
 }
