@@ -14,8 +14,8 @@ cmake_minimum_required(VERSION 3.2.2 FATAL_ERROR)
 # define a user-configurable option to build SKIRT
 option(BUILD_SKIRT "build SKIRT, advanced radiative transfer" ON)
 
-# define a user-configurable option to build MakeUp, which requires Qt5
-option(BUILD_MAKE_UP "build MakeUp, desktop GUI wizard - requires Qt5")
+# define a user-configurable option to build MakeUp, which requires Qt
+option(BUILD_MAKE_UP "build MakeUp, desktop GUI wizard - requires Qt5 or Qt6")
 
 # define a user-configurable option to build doxstyle
 option(BUILD_DOX_STYLE "build doxstyle, documentation block streamliner")
