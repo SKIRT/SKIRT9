@@ -8,6 +8,7 @@
 
 #include "Basics.hpp"
 #include <QWidget>
+class QAbstractButton;
 class QButtonGroup;
 class QLabel;
 class QPushButton;
@@ -43,7 +44,7 @@ public slots:
         buttons. If the current hierarchy is dirty, and the new choice differs from the previous
         one, the function asks for confirmation from the user before actually updating the choice.
         If the new choice is the same as the previous one, the function does nothing. */
-    void setBasicChoice(int buttonIndex);
+    void setBasicChoice(QAbstractButton* button);
 
     /** This function allows the user to select a new directory containing the SMILE schema library
         in reaction to a user click on the corresponding push button. The function stores the new
