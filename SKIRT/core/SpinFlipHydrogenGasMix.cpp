@@ -26,7 +26,8 @@ namespace
 
     // indices for custom state variables
     constexpr int NEUTRAL_FRACTION = 0;
-    constexpr int ATOMIC_FRACTION = 1;
+    constexpr int NEUTRAL_SURFACE_DENSITY = 1;
+    constexpr int ATOMIC_FRACTION = 2;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -68,7 +69,8 @@ bool SpinFlipHydrogenGasMix::hasLineEmission() const
 
 vector<SnapshotParameter> SpinFlipHydrogenGasMix::parameterInfo() const
 {
-    return {SnapshotParameter::custom("neutral hydrogen fraction")};
+    return {SnapshotParameter::custom("neutral hydrogen fraction"),
+            SnapshotParameter::custom("neutral hydrogen surface density", "masssurfacedensity", "Msun/pc2")};
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -78,6 +80,7 @@ vector<StateVariable> SpinFlipHydrogenGasMix::specificStateVariableInfo() const
     return vector<StateVariable>{StateVariable::numberDensity(), StateVariable::metallicity(),
                                  StateVariable::temperature(),
                                  StateVariable::custom(NEUTRAL_FRACTION, "neutral hydrogen fraction", ""),
+                                 StateVariable::custom(NEUTRAL_SURFACE_DENSITY, "neutral hydrogen surface density", "masssurfacedensity"),
                                  StateVariable::custom(ATOMIC_FRACTION, "atomic hydrogen fraction", "")};
 }
 
@@ -94,6 +97,7 @@ void SpinFlipHydrogenGasMix::initializeSpecificState(MaterialState* state, doubl
         state->setMetallicity(metallicity >= 0. ? metallicity : defaultMetallicity());
         state->setTemperature(max(Constants::Tcmb(), temperature >= 0. ? temperature : defaultTemperature()));
         state->setCustom(NEUTRAL_FRACTION, params.size() ? params[0] : defaultNeutralFraction());
+        state->setCustom(NEUTRAL_SURFACE_DENSITY, params.size() ? params[1] : defaultNeutralSurfaceDensity());
         state->setCustom(ATOMIC_FRACTION, 0.);
     }
 }
@@ -106,9 +110,10 @@ UpdateStatus SpinFlipHydrogenGasMix::updateSpecificState(MaterialState* state, c
     UpdateStatus status;
 
     // if the cell has no hydrogen or the neutral fraction is zero, then leave the atomic fraction at zero
-    double nH = state->numberDensity();
+    double rhoH = state->numberDensity() * 1.67262e-27; // Mass density of hydrogen, computed from proton volume density times proton mass
     double fHIpH2 = state->custom(NEUTRAL_FRACTION);
-    if (nH > 0. && fHIpH2 > 0.)
+    double SigmaHIpH2 = state->custom(NEUTRAL_SURFACE_DENSITY);
+    if (rhoH > 0. && fHIpH2 > 0.)
     {
         // get the radiation field
         // scaled to the reference Milky Way radiation field at 1000 Angstrom
@@ -123,17 +128,16 @@ UpdateStatus SpinFlipHydrogenGasMix::updateSpecificState(MaterialState* state, c
         double D = state->metallicity() / 0.0127;
 
         // perform the partitioning scheme
-        double Dstar = 1.5e-3 * log(1. + pow(3 * U, 1.7));
-        double nstar = 25e6;
-        double alpha = 2.5 * U / (1. + 0.25 * U * U);
-        double s = 0.04 / (Dstar + D);
-        double g = (1. + alpha * s + s * s) / (1. + s);
-        double Lambda = log(1. + g * pow(D, 3. / 7.) * pow(U / 15., 4. / 7.));
-        double x = pow(Lambda, 3. / 7.) * log(D / Lambda * nH / nstar);
-        double fH2 = 1. / (1. + exp(-4. * x - 3. * x * x * x));
-
+        double S = pow(state->volume(), 1. / 3.) / (100. * 3.086e16); // Cell size / 100 pc, see Diemer+2018
+        double Dstar = 0.17 * (2. + pow(S, 5)) / (1. + pow(S, 5));
+        double g = sqrt(D * D + Dstar * Dstar);
+        double Sigmac = 0.1044 * sqrt(0.001 + 0.1 * U) / (g * (1. + 1.69 * sqrt(0.001 + 0.1 * U))); // In kg / m^2
+        double alpha = 0.5 + 1. / (1. + sqrt(U * D * D / 600.));
+        double Rmol = pow(SigmaHIpH2 / Sigmac, alpha);
+        double fH2 = Rmol / (Rmol + 1.); // Fraction of neutral hydrogen in molecular hydrogen
+        
         // set the atomic fraction
-        state->setCustom(ATOMIC_FRACTION, max(0., fHIpH2 - fH2));
+        state->setCustom(ATOMIC_FRACTION, max(0., fHIpH2 * (1. - fH2)));
         status.updateConverged();
     }
     return status;
@@ -160,7 +164,7 @@ namespace
         double u = Constants::c() * (lambda - lambdaSF) / lambda;
         double x = u / sigma;
         double expon = exp(-0.5 * x * x);
-        return front / Tspin / sigma * expon;
+        return front / Tspin / sigma * expon * 0.;
     }
 }
 
