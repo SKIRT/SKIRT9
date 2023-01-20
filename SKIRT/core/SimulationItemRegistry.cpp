@@ -16,6 +16,7 @@
 #include "AllCellsLibrary.hpp"
 #include "AllSkyInstrument.hpp"
 #include "AllSkyProjectionForm.hpp"
+#include "AnnulusGeometry.hpp"
 #include "AtPositionsForm.hpp"
 #include "BandLuminosityNormalization.hpp"
 #include "BlackBodySED.hpp"
@@ -55,6 +56,7 @@
 #include "DensityProbe.hpp"
 #include "DensityTreePolicy.hpp"
 #include "DiscreteWavelengthDistribution.hpp"
+#include "DonutGeometry.hpp"
 #include "DraineGraphiteGrainComposition.hpp"
 #include "DraineIonizedPAHGrainComposition.hpp"
 #include "DraineLiDustMix.hpp"
@@ -407,6 +409,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<BrokenExpDiskGeometry>();
     ItemRegistry::add<RingGeometry>();
     ItemRegistry::add<TorusGeometry>();
+    ItemRegistry::add<DonutGeometry>();
+    ItemRegistry::add<AnnulusGeometry>();
     ItemRegistry::add<TTauriDiskGeometry>();
     ItemRegistry::add<ConicalShellGeometry>();
     ItemRegistry::add<ParaboloidGeometry>();
