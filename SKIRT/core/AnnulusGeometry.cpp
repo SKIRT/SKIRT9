@@ -38,8 +38,7 @@ double AnnulusGeometry::density(double R, double z) const
 
 double AnnulusGeometry::randomCylRadius() const
 {
-    double X = random()->uniform();
-    return _Rmin + X * (_Rmax - _Rmin);
+    return sqrt(_Rmin * _Rmin + (_Rmax - _Rmin) * (_Rmax + _Rmin) * random()->uniform());
 }
 
 ////////////////////////////////////////////////////////////////////

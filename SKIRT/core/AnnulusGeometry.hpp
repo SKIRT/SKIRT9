@@ -55,8 +55,8 @@ protected:
     double density(double R, double z) const override;
 
     /** This function returns the cylindrical radius \f$R\f$ of a random position drawn from the
-        geometry, by picking a uniform deviate \f${\cal{X}}\f$ and setting \f$R = R_{\text{min}} +
-        {\cal{X}} (R_{\text{max}} - R_{\text{min}})\f$. */
+        geometry, by picking a uniform deviate \f${\cal{X}}\f$ and setting \f$R =
+        \sqrt{R_\text{min}^2 + {\cal{X}}_1\,(R_\text{max}^2-R_\text{min}^2)} \f$. */
     double randomCylRadius() const override;
 
     /** This function returns the height \f$z\f$ of a random position drawn from the geometry, by
