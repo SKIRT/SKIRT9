@@ -35,7 +35,7 @@ BasicChoiceWizardPane::BasicChoiceWizardPane(bool initialOpenExisting, string in
     _buttonGroup = new QButtonGroup;
 
     // connect the button group to ourselves, and ourselves to the target
-    connect(_buttonGroup, SIGNAL(buttonClicked(int)), this, SLOT(setBasicChoice(int)));
+    connect(_buttonGroup, SIGNAL(buttonClicked(QAbstractButton*)), this, SLOT(setBasicChoice(QAbstractButton*)));
     connect(this, SIGNAL(basicChoiceWasChanged(bool, string, string)), target,
             SLOT(setBasicChoice(bool, string, string)));
 
@@ -87,8 +87,9 @@ BasicChoiceWizardPane::BasicChoiceWizardPane(bool initialOpenExisting, string in
 
 ////////////////////////////////////////////////////////////////////
 
-void BasicChoiceWizardPane::setBasicChoice(int buttonIndex)
+void BasicChoiceWizardPane::setBasicChoice(QAbstractButton* /*button*/)
 {
+    int buttonIndex = _buttonGroup->checkedId();
     bool openExisting = (buttonIndex % 2) != 0;
     string schemaName = _schemaNames[buttonIndex >> 1];
 
