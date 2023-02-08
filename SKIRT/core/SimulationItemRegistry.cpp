@@ -18,6 +18,7 @@
 #include "AllSkyProjectionForm.hpp"
 #include "AtPositionsForm.hpp"
 #include "BandLuminosityNormalization.hpp"
+#include "BegemannPorousAluminaGrainComposition.hpp"
 #include "BlackBodySED.hpp"
 #include "BlackBodySEDFamily.hpp"
 #include "BoxClipGeometryDecorator.hpp"
@@ -55,6 +56,7 @@
 #include "DensityProbe.hpp"
 #include "DensityTreePolicy.hpp"
 #include "DiscreteWavelengthDistribution.hpp"
+#include "DorschnerOlivineGrainComposition.hpp"
 #include "DraineGraphiteGrainComposition.hpp"
 #include "DraineIonizedPAHGrainComposition.hpp"
 #include "DraineLiDustMix.hpp"
@@ -95,6 +97,7 @@
 #include "GrainPopulation.hpp"
 #include "HEALPixSkyInstrument.hpp"
 #include "HammerAitoffProjection.hpp"
+#include "HofmeisterPericlaseGrainComposition.hpp"
 #include "HollowRadialVectorField.hpp"
 #include "HyperboloidGeometry.hpp"
 #include "HyperboloidShellGeometry.hpp"
@@ -571,10 +574,13 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
 
     // grain compositions
     ItemRegistry::add<GrainComposition>();
+    ItemRegistry::add<BegemannPorousAluminaGrainComposition>();
+    ItemRegistry::add<DorschnerOlivineGrainComposition>();
     ItemRegistry::add<DraineSilicateGrainComposition>();
     ItemRegistry::add<DraineGraphiteGrainComposition>();
     ItemRegistry::add<DraineNeutralPAHGrainComposition>();
     ItemRegistry::add<DraineIonizedPAHGrainComposition>();
+    ItemRegistry::add<HofmeisterPericlaseGrainComposition>();
     ItemRegistry::add<MieSilicateGrainComposition>();
     ItemRegistry::add<MinSilicateGrainComposition>();
     ItemRegistry::add<PolarizedSilicateGrainComposition>();
