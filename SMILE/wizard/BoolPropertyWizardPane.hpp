@@ -7,6 +7,7 @@
 #define BOOLPROPERTYWIZARDPANE_HPP
 
 #include "PropertyWizardPane.hpp"
+class QAbstractButton;
 
 ////////////////////////////////////////////////////////////////////
 
@@ -29,7 +30,7 @@ public:
 public slots:
     /** This function stores the value corresponding to the specified button into the target
         property. */
-    void updateValueFor(int buttonID);
+    void updateValueFor(QAbstractButton* button);
 };
 
 ////////////////////////////////////////////////////////////////////
