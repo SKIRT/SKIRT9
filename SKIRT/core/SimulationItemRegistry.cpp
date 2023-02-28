@@ -19,6 +19,7 @@
 #include "AnnulusGeometry.hpp"
 #include "AtPositionsForm.hpp"
 #include "BandLuminosityNormalization.hpp"
+#include "BegemannPorousAluminaGrainComposition.hpp"
 #include "BlackBodySED.hpp"
 #include "BlackBodySEDFamily.hpp"
 #include "BoxClipGeometryDecorator.hpp"
@@ -57,6 +58,7 @@
 #include "DensityTreePolicy.hpp"
 #include "DiscreteWavelengthDistribution.hpp"
 #include "DonutGeometry.hpp"
+#include "DorschnerOlivineGrainComposition.hpp"
 #include "DraineGraphiteGrainComposition.hpp"
 #include "DraineIonizedPAHGrainComposition.hpp"
 #include "DraineLiDustMix.hpp"
@@ -97,6 +99,7 @@
 #include "GrainPopulation.hpp"
 #include "HEALPixSkyInstrument.hpp"
 #include "HammerAitoffProjection.hpp"
+#include "HofmeisterPericlaseGrainComposition.hpp"
 #include "HollowRadialVectorField.hpp"
 #include "HyperboloidGeometry.hpp"
 #include "HyperboloidShellGeometry.hpp"
@@ -586,6 +589,9 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<CrystalEnstatiteGrainComposition>();
     ItemRegistry::add<CrystalForsteriteGrainComposition>();
     ItemRegistry::add<DustEmGrainComposition>();
+    ItemRegistry::add<BegemannPorousAluminaGrainComposition>();
+    ItemRegistry::add<HofmeisterPericlaseGrainComposition>();
+    ItemRegistry::add<DorschnerOlivineGrainComposition>();
     ItemRegistry::add<TrustSilicateGrainComposition>();
     ItemRegistry::add<TrustGraphiteGrainComposition>();
     ItemRegistry::add<TrustNeutralPAHGrainComposition>();
