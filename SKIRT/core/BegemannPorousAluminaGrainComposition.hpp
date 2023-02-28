@@ -10,16 +10,16 @@
 
 ////////////////////////////////////////////////////////////////////
 
-/** The BegemannPorousAluminaGrainComposition class represents the optical and calorimetric properties of
-    porous alumina dust grains. The optical properties are taken from Begemann et al. (1997) for wavelengths >7.8 microns. 
-    The optical properties for wavelengths <7.8 microns are taken from Laor, A, & Draine, B.T. 1993 ApJ 402,441. The
-    calorimetric properties follow the analytical enthalpy prescription for silicate given by
-    equation (11) of Draine & Li (2001), properly integrated to obtain internal energy rather than
-    heat capacity. The bulk mass density is set to the standard value of 4020 kg/m3 for silicate
-    grains. */
+/** The BegemannPorousAluminaGrainComposition class represents the optical and calorimetric
+    properties of porous alumina dust grains. The optical properties are taken from Begemann et al.
+    (1997) for wavelengths >7.8 microns. The optical properties for wavelengths <7.8 microns are
+    taken from Laor, A, & Draine, B.T. 1993 ApJ 402,441. The calorimetric properties are those for
+    astronomical silicates given by Draine & Li (2007), originally from Draine & Lee (1984). The
+    bulk mass density is set to 4020 kg/m3. */
 class BegemannPorousAluminaGrainComposition : public GrainComposition
 {
-    ITEM_CONCRETE(BegemannPorousAluminaGrainComposition, GrainComposition, "a Begemann porous alumina dust grain composition")
+    ITEM_CONCRETE(BegemannPorousAluminaGrainComposition, GrainComposition,
+                  "a Begemann porous alumina dust grain composition")
     ITEM_END()
 
 public:

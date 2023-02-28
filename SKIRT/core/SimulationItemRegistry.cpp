@@ -57,8 +57,8 @@
 #include "DensityProbe.hpp"
 #include "DensityTreePolicy.hpp"
 #include "DiscreteWavelengthDistribution.hpp"
-#include "DorschnerOlivineGrainComposition.hpp"
 #include "DonutGeometry.hpp"
+#include "DorschnerOlivineGrainComposition.hpp"
 #include "DraineGraphiteGrainComposition.hpp"
 #include "DraineIonizedPAHGrainComposition.hpp"
 #include "DraineLiDustMix.hpp"
@@ -578,13 +578,10 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
 
     // grain compositions
     ItemRegistry::add<GrainComposition>();
-    ItemRegistry::add<BegemannPorousAluminaGrainComposition>();
-    ItemRegistry::add<DorschnerOlivineGrainComposition>();
     ItemRegistry::add<DraineSilicateGrainComposition>();
     ItemRegistry::add<DraineGraphiteGrainComposition>();
     ItemRegistry::add<DraineNeutralPAHGrainComposition>();
     ItemRegistry::add<DraineIonizedPAHGrainComposition>();
-    ItemRegistry::add<HofmeisterPericlaseGrainComposition>();
     ItemRegistry::add<MieSilicateGrainComposition>();
     ItemRegistry::add<MinSilicateGrainComposition>();
     ItemRegistry::add<PolarizedSilicateGrainComposition>();
@@ -592,6 +589,9 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<CrystalEnstatiteGrainComposition>();
     ItemRegistry::add<CrystalForsteriteGrainComposition>();
     ItemRegistry::add<DustEmGrainComposition>();
+    ItemRegistry::add<BegemannPorousAluminaGrainComposition>();
+    ItemRegistry::add<HofmeisterPericlaseGrainComposition>();
+    ItemRegistry::add<DorschnerOlivineGrainComposition>();
     ItemRegistry::add<TrustSilicateGrainComposition>();
     ItemRegistry::add<TrustGraphiteGrainComposition>();
     ItemRegistry::add<TrustNeutralPAHGrainComposition>();

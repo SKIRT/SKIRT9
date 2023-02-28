@@ -10,14 +10,14 @@
 
 ////////////////////////////////////////////////////////////////////
 
-/** The HofmeisterPericlaseGrainComposition class represents the optical and calorimetric properties of
-    periclase dust grains. The optical properties are taken from Hofmeister et al. (2003). The
-    calorimetric properties follow the analytical enthalpy prescription for silicate given by
-    equation (11) of Draine & Li (2001), properly integrated to obtain internal energy rather than
-    heat capacity. The bulk mass density is set to 3560 kg/m3  */
+/** The HofmeisterPericlaseGrainComposition class represents the optical and calorimetric
+    properties of periclase dust grains. The optical properties are taken from Hofmeister et al.
+    (2003). The calorimetric properties are those for astronomical silicates given by Draine & Li
+    (2007), originally from Draine & Lee (1984). The bulk mass density is set to 3560 kg/m3 */
 class HofmeisterPericlaseGrainComposition : public GrainComposition
 {
-    ITEM_CONCRETE(HofmeisterPericlaseGrainComposition, GrainComposition, "a Hofmeister periclase dust grain composition")
+    ITEM_CONCRETE(HofmeisterPericlaseGrainComposition, GrainComposition,
+                  "a Hofmeister periclase dust grain composition")
     ITEM_END()
 
 public:
