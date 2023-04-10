@@ -34,8 +34,13 @@
     "falls" into an empty space created by photo-absorption, emitting a new photon with a different
     energy. For each electron shell and for each possible fluorescence transition towards that
     shell, the \em yield defines the probability that such fluorescence event occurs after an
-    electron has been liberated in that shell. This class supports K\f$\alpha\f$ and K\f$\beta\f$
-    fluorescence (transitions from higher shells towards the K shell) for all elements in the gas.
+    electron has been liberated in that shell. This class supports all fluorescent lines that have
+    line energies \f$\E > 0.1 \, \mathrm{keV}}\f$, for all elements in the gas. These are 20 lines:
+    K\f$_{\alpha2}\f$, K\f$_{\alpha1}\f$, K\f$_{\beta3}\f$, K\f$_{\beta1}\f$, K\f$^{II}_{\beta5}\f$
+    , K\f$^{I}_{\beta5}\f$, L\f$_{\beta4}\f$, L\f$_{\beta3}\f$, L\f$_{\beta10}\f$, L\f$_{\beta9}\f$
+    , L\f$_{\eta}\f$, L\f$_{\beta17}\f$, L\f$_{\beta1}\f$, L\f$_{\gamma5}\f$, L\f$_{\ell}\f$,
+    L\f$_{t}\f$, L\f$_{s}\f$, L\f$_{\alpha2}\f$, L\f$_{\alpha1}\f$, L\f$_{\beta6}\f$ (i.e. all
+    transitions from higher shells towards the K and L shells, except for f$L \to L\f$ lines).
 
     Because fluorescence only occurs as the result of a photo-absorption event, this class
     implements fluorescence as a form of scattering (where the wavelength of the photon being
@@ -130,8 +135,8 @@
     <b>Fluorescence cross section</b>
 
     The total fluorescence cross section per hydrogen atom for this material mix is obtained
-    similarly, but now including only the K shell photo-absorption cross section for each element
-    and multiplying by the appropriate fluorescence yields in addition to element abundancy.
+    similarly, but now including only the K and L shell photo-absorption cross sections for each
+    element, multiplied by the appropriate fluorescence yields in addition to the element abundancy.
 
     <b>Electron scattering</b>
 
@@ -178,14 +183,14 @@
     <b>Performing scattering</b>
 
     The function performing an actual scattering event randomly selects one of the supported
-    scattering channels (i.e. scattering by an electron bound to one of the supported elements or a
-    K\f$\alpha\f$ or K\f$\beta\f$ fluorescence transition for one of the supported elements). The
-    relative probabilities for these transitions as a function of incoming photon packet wavelength
-    are also calculated during setup. The selected transition determines the scattering mechanism.
-    For bound electrons, Rayleigh or Compton scattering is used. For fluorescence, the emission
-    direction is isotropic, and the outgoing wavelength is the fluorescence wavelength. In both
-    cases, a random Gaussian dispersion reflecting the interacting element's thermal velocity is
-    applied to the outgoing wavelength.
+    scattering channels (i.e. scattering by an electron bound to one of the supported elements or
+    one of the 20 fluorescent line transition for one of the supported elements). The relative
+    probabilities for these transitions as a function of incoming photon packet wavelength are also
+    calculated during setup. The selected transition determines the scattering mechanism. For bound
+    electrons, Rayleigh or Compton scattering is used. For fluorescence, the emission direction is
+    isotropic, and the outgoing wavelength is the fluorescence wavelength. In both cases, a random
+    Gaussian dispersion reflecting the interacting element's thermal velocity is applied to the
+    outgoing wavelength.
 
     <b>Thermal dispersion</b>
 
