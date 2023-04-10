@@ -123,20 +123,22 @@
     \f$\sigma_{ph}(E)\f$ as a function of photon energy \f$E\f$ for the ground-state shells of the
     first 30 atomic elements:
 
-    \f[\begin{aligned} \sigma_{ph}(E) &= \begin{cases} 0 & E < E_\mathrm{th} \\ \sigma_0 \,
-    F(y) & E_\mathrm{th} \le E < E_\mathrm{max}\\ 0 & E_\mathrm{max} \le E \end{cases}, \\
-    x &= \frac{E}{E_0} - y_0, \; \; \; \; y = \sqrt{x^2 + y_1^2},\\ F(y) &= \left[(x-1)^2+y_{\rm w}^2
+    \f[\begin{aligned} \sigma_{ph}(E) &= \begin{cases} 0 & E < E_\mathrm{th} \\ \sigma_0 \, F(y) &
+    E_\mathrm{th} \le E < E_\mathrm{max}\\ 0 & E_\mathrm{max} \le E \end{cases}, \\ x &=
+    \frac{E}{E_0} - y_0, \; \; \; \; y = \sqrt{x^2 + y_1^2},\\ F(y) &= \left[(x-1)^2+y_{\rm w}^2
     \right]y^{-Q} \left(1+ \sqrt{(y/y_{\rm a})} \right )^{-P}, \\ Q&=5.5+l-0.5P, \end{aligned} \f]
     with \f$E_\mathrm{th}\f$ the tabulated ionization threshold energy, \f$E_\mathrm{max}\f$ the
-    tabulated maximum energy for the formula to be valid, \f$\sigma_0\f$, \f$E_0\f$, \f$y_{\rm w}\f$,
-    \f$y_{\rm a}\f$, \f$P\f$, \f$y_0\f$ and \f$y_1\f$ seven tabulated fitting parameters, and \f$l\f$
-    the subshell orbital quantum number (\f$l=0, 1, 2, 3\f$ for s, p, d, f orbitals respectively).
+    tabulated maximum energy for the formula to be valid, \f$\sigma_0\f$, \f$E_0\f$, \f$y_{\rm
+    w}\f$, \f$y_{\rm a}\f$, \f$P\f$, \f$y_0\f$ and \f$y_1\f$ seven tabulated fitting parameters,
+    and \f$l\f$ the subshell orbital quantum number (\f$l=0, 1, 2, 3\f$ for s, p, d, f orbitals
+    respectively).
 
     <b>Fluorescence cross section</b>
 
     The total fluorescence cross section per hydrogen atom for this material mix is obtained
     similarly, but now including only the K and L shell photo-absorption cross sections for each
-    element, multiplied by the appropriate fluorescence yields in addition to the element abundancy.
+    element, multiplied by the appropriate fluorescence yields in addition to the element
+    abundancy.
 
     <b>Electron scattering</b>
 
@@ -160,18 +162,18 @@
 
     For bound-electron Compton scattering, the cross sections \f$\sigma_{CS, Z}(E)\f$ are available
     as a table. The normalised scattering phase function for element Z is given by \f[ \Phi_{CS,
-    Z}(\theta, E)= \frac{3}{4}\, \frac{\sigma_T}{\sigma_{CS, Z}(E)}\Big[C^3(\theta, E) +
-    C(\theta, E) -C^2(\theta, E)\sin^2\theta\Big] \cdot S_Z(q), \f] with tabulated incoherent
-    scattering functions \f$S_Z(q)\f$ and the Compton factor \f$C(\theta, E)\f$ defined as \f[
-    C(\theta, E) = {\Big[{1+\frac{E}{m_ec^2}(1-\cos \theta)\Big]}}^{-1}. \f] Also, inelastic
-    bound-Compton scattering will change the photon energy by the Compton factor, just as for
-    free-electron scattering.
+    Z}(\theta, E)= \frac{3}{4}\, \frac{\sigma_T}{\sigma_{CS, Z}(E)}\Big[C^3(\theta, E) + C(\theta,
+    E) -C^2(\theta, E)\sin^2\theta\Big] \cdot S_Z(q), \f] with tabulated incoherent scattering
+    functions \f$S_Z(q)\f$ and the Compton factor \f$C(\theta, E)\f$ defined as \f[ C(\theta, E) =
+    {\Big[{1+\frac{E}{m_ec^2}(1-\cos \theta)\Big]}}^{-1}. \f] Also, inelastic bound-Compton
+    scattering will change the photon energy by the Compton factor, just as for free-electron
+    scattering.
 
     For smooth Rayleigh scattering, the cross sections \f$\sigma_{RSS, Z}(E)\f$ are available as a
     table. The normalised scattering phase function for element Z is given by \f[ \Phi_{RSS,
-    Z}(\theta, E)= \frac{3}{4}\, \frac{\sigma_T}{\sigma_{RSS, Z}(E)}\Big[ 1 + \cos^2\theta
-    \Big] \cdot F_Z^2(q), \f] with tabulated atomic form factors \f$F_Z(q)\f$, which converge to
-    \f$Z\f$ at small \f$q\f$ and decrease to zero for large \f$q\f$.
+    Z}(\theta, E)= \frac{3}{4}\, \frac{\sigma_T}{\sigma_{RSS, Z}(E)}\Big[ 1 + \cos^2\theta \Big]
+    \cdot F_Z^2(q), \f] with tabulated atomic form factors \f$F_Z(q)\f$, which converge to \f$Z\f$
+    at small \f$q\f$ and decrease to zero for large \f$q\f$.
 
     Similarly, for anomalous Rayleigh scattering, the cross sections \f$\sigma_{RSA, Z}(E)\f$ are
     available as a table. The normalised scattering phase function for element Z is now given by
