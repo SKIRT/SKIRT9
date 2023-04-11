@@ -35,12 +35,13 @@
     energy. For each electron shell and for each possible fluorescence transition towards that
     shell, the \em yield defines the probability that such fluorescence event occurs after an
     electron has been liberated in that shell. This class supports all fluorescent lines that have
-    line energies \f$\E > 0.1 \, \mathrm{keV}}\f$, for all elements in the gas. These are 20 lines:
-    K\f$_{\alpha2}\f$, K\f$_{\alpha1}\f$, K\f$_{\beta3}\f$, K\f$_{\beta1}\f$, K\f$^{II}_{\beta5}\f$
-    , K\f$^{I}_{\beta5}\f$, L\f$_{\beta4}\f$, L\f$_{\beta3}\f$, L\f$_{\beta10}\f$, L\f$_{\beta9}\f$
-    , L\f$_{\eta}\f$, L\f$_{\beta17}\f$, L\f$_{\beta1}\f$, L\f$_{\gamma5}\f$, L\f$_{\ell}\f$,
-    L\f$_{t}\f$, L\f$_{s}\f$, L\f$_{\alpha2}\f$, L\f$_{\alpha1}\f$, L\f$_{\beta6}\f$ (i.e. all
-    transitions from higher shells towards the K and L shells, except for f$L \to L\f$ lines).
+    line energies \f$E > 0.1 \, \text{keV}\f$, for all elements in the gas. These are 20 lines:
+    K\f$_{\alpha2}\f$, K\f$_{\alpha1}\f$, K\f$_{\beta3}\f$, K\f$_{\beta1}\f$,
+    K\f$^{II}_{\beta5}\f$, K\f$^{I}_{\beta5}\f$, L\f$_{\beta4}\f$, L\f$_{\beta3}\f$,
+    L\f$_{\beta10}\f$, L\f$_{\beta9}\f$, L\f$_{\eta}\f$, L\f$_{\beta17}\f$, L\f$_{\beta1}\f$,
+    L\f$_{\gamma5}\f$, L\f$_{\ell}\f$, L\f$_{t}\f$, L\f$_{s}\f$, L\f$_{\alpha2}\f$,
+    L\f$_{\alpha1}\f$, L\f$_{\beta6}\f$ (i.e. all transitions from higher shells towards the K and
+    L shells, except for \f$L \to L\f$ lines).
 
     Because fluorescence only occurs as the result of a photo-absorption event, this class
     implements fluorescence as a form of scattering (where the wavelength of the photon being
