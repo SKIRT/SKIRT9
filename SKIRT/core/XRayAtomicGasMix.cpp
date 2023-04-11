@@ -96,9 +96,10 @@ namespace
     // fluorescence parameters
     struct FluorescenceParams
     {
-        FluorescenceParams(const Array& a) : Z(a[0]), n(a[1]), omega(a[2]), E(a[3]) {}
+        FluorescenceParams(const Array& a) : Z(a[0]), n(a[1]), l(a[2]), omega(a[3]), E(a[4]) {}
         short Z;       // atomic number
-        short n;       // principal quantum number of the shell (always 1 because we only support K shell)
+        short n;       // principal quantum number of the shell
+        short l;       // orbital quantum number of the subshell
         double omega;  // fluorescence yield (1)
         double E;      // energy of the emitted photon (eV)
     };
@@ -680,7 +681,7 @@ void XRayAtomicGasMix::setupSelfBefore()
     auto crossSectionParams = loadStruct<CrossSectionParams, 12>(this, "XRay_PA.txt", "photo-absorption data");
 
     // load the fluorescence parameters
-    auto fluorescenceParams = loadStruct<FluorescenceParams, 4>(this, "XRay_FL.txt", "fluorescence data");
+    auto fluorescenceParams = loadStruct<FluorescenceParams, 5>(this, "XRay_FL.txt", "fluorescence data");
 
     // create scattering helpers depending on the user-configured implementation type;
     // the respective helper constructors load the required bound-electron scattering resources
@@ -854,7 +855,7 @@ void XRayAtomicGasMix::setupSelfBefore()
             auto sigmoid = sigmoidv[index++];
 
             // process all fluorescence parameter sets matching this cross section set
-            while (flp != fluorescenceParams.end() && flp->Z == csp.Z && flp->n == csp.n)
+            while (flp != fluorescenceParams.end() && flp->Z == csp.Z && flp->n == csp.n && flp->l == csp.l)
             {
                 double contribution = crossSection(E, sigmoid, csp) * atomv[csp.Z - 1].abund * flp->omega;
                 contribv[2 * numAtoms + flp - fluorescenceParams.begin()] = contribution;

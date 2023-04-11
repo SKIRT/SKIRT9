@@ -34,8 +34,14 @@
     "falls" into an empty space created by photo-absorption, emitting a new photon with a different
     energy. For each electron shell and for each possible fluorescence transition towards that
     shell, the \em yield defines the probability that such fluorescence event occurs after an
-    electron has been liberated in that shell. This class supports K\f$\alpha\f$ and K\f$\beta\f$
-    fluorescence (transitions from higher shells towards the K shell) for all elements in the gas.
+    electron has been liberated in that shell. This class supports all fluorescent lines that have
+    line energies \f$E > 0.1 \, \text{keV}\f$, for all elements in the gas. These are 20 lines:
+    K\f$_{\alpha2}\f$, K\f$_{\alpha1}\f$, K\f$_{\beta3}\f$, K\f$_{\beta1}\f$,
+    K\f$^{II}_{\beta5}\f$, K\f$^{I}_{\beta5}\f$, L\f$_{\beta4}\f$, L\f$_{\beta3}\f$,
+    L\f$_{\beta10}\f$, L\f$_{\beta9}\f$, L\f$_{\eta}\f$, L\f$_{\beta17}\f$, L\f$_{\beta1}\f$,
+    L\f$_{\gamma5}\f$, L\f$_{\ell}\f$, L\f$_{t}\f$, L\f$_{s}\f$, L\f$_{\alpha2}\f$,
+    L\f$_{\alpha1}\f$, L\f$_{\beta6}\f$ (i.e. all transitions from higher shells towards the K and
+    L shells, except for \f$L \to L\f$ lines).
 
     Because fluorescence only occurs as the result of a photo-absorption event, this class
     implements fluorescence as a form of scattering (where the wavelength of the photon being
@@ -118,20 +124,22 @@
     \f$\sigma_{ph}(E)\f$ as a function of photon energy \f$E\f$ for the ground-state shells of the
     first 30 atomic elements:
 
-    \f[\begin{aligned} \sigma_{ph}(E) &= \begin{cases} 0 & E < E_\mathrm{th} \\ \sigma_0 \,
-    F(y) & E_\mathrm{th} \le E < E_\mathrm{max}\\ 0 & E_\mathrm{max} \le E \end{cases}, \\
-    x &= \frac{E}{E_0} - y_0, \; \; \; \; y = \sqrt{x^2 + y_1^2},\\ F(y) &= \left[(x-1)^2+y_{\rm w}^2
+    \f[\begin{aligned} \sigma_{ph}(E) &= \begin{cases} 0 & E < E_\mathrm{th} \\ \sigma_0 \, F(y) &
+    E_\mathrm{th} \le E < E_\mathrm{max}\\ 0 & E_\mathrm{max} \le E \end{cases}, \\ x &=
+    \frac{E}{E_0} - y_0, \; \; \; \; y = \sqrt{x^2 + y_1^2},\\ F(y) &= \left[(x-1)^2+y_{\rm w}^2
     \right]y^{-Q} \left(1+ \sqrt{(y/y_{\rm a})} \right )^{-P}, \\ Q&=5.5+l-0.5P, \end{aligned} \f]
     with \f$E_\mathrm{th}\f$ the tabulated ionization threshold energy, \f$E_\mathrm{max}\f$ the
-    tabulated maximum energy for the formula to be valid, \f$\sigma_0\f$, \f$E_0\f$, \f$y_{\rm w}\f$,
-    \f$y_{\rm a}\f$, \f$P\f$, \f$y_0\f$ and \f$y_1\f$ seven tabulated fitting parameters, and \f$l\f$
-    the subshell orbital quantum number (\f$l=0, 1, 2, 3\f$ for s, p, d, f orbitals respectively).
+    tabulated maximum energy for the formula to be valid, \f$\sigma_0\f$, \f$E_0\f$, \f$y_{\rm
+    w}\f$, \f$y_{\rm a}\f$, \f$P\f$, \f$y_0\f$ and \f$y_1\f$ seven tabulated fitting parameters,
+    and \f$l\f$ the subshell orbital quantum number (\f$l=0, 1, 2, 3\f$ for s, p, d, f orbitals
+    respectively).
 
     <b>Fluorescence cross section</b>
 
     The total fluorescence cross section per hydrogen atom for this material mix is obtained
-    similarly, but now including only the K shell photo-absorption cross section for each element
-    and multiplying by the appropriate fluorescence yields in addition to element abundancy.
+    similarly, but now including only the K and L shell photo-absorption cross sections for each
+    element, multiplied by the appropriate fluorescence yields in addition to the element
+    abundancy.
 
     <b>Electron scattering</b>
 
@@ -155,18 +163,18 @@
 
     For bound-electron Compton scattering, the cross sections \f$\sigma_{CS, Z}(E)\f$ are available
     as a table. The normalised scattering phase function for element Z is given by \f[ \Phi_{CS,
-    Z}(\theta, E)= \frac{3}{4}\, \frac{\sigma_T}{\sigma_{CS, Z}(E)}\Big[C^3(\theta, E) +
-    C(\theta, E) -C^2(\theta, E)\sin^2\theta\Big] \cdot S_Z(q), \f] with tabulated incoherent
-    scattering functions \f$S_Z(q)\f$ and the Compton factor \f$C(\theta, E)\f$ defined as \f[
-    C(\theta, E) = {\Big[{1+\frac{E}{m_ec^2}(1-\cos \theta)\Big]}}^{-1}. \f] Also, inelastic
-    bound-Compton scattering will change the photon energy by the Compton factor, just as for
-    free-electron scattering.
+    Z}(\theta, E)= \frac{3}{4}\, \frac{\sigma_T}{\sigma_{CS, Z}(E)}\Big[C^3(\theta, E) + C(\theta,
+    E) -C^2(\theta, E)\sin^2\theta\Big] \cdot S_Z(q), \f] with tabulated incoherent scattering
+    functions \f$S_Z(q)\f$ and the Compton factor \f$C(\theta, E)\f$ defined as \f[ C(\theta, E) =
+    {\Big[{1+\frac{E}{m_ec^2}(1-\cos \theta)\Big]}}^{-1}. \f] Also, inelastic bound-Compton
+    scattering will change the photon energy by the Compton factor, just as for free-electron
+    scattering.
 
     For smooth Rayleigh scattering, the cross sections \f$\sigma_{RSS, Z}(E)\f$ are available as a
     table. The normalised scattering phase function for element Z is given by \f[ \Phi_{RSS,
-    Z}(\theta, E)= \frac{3}{4}\, \frac{\sigma_T}{\sigma_{RSS, Z}(E)}\Big[ 1 + \cos^2\theta
-    \Big] \cdot F_Z^2(q), \f] with tabulated atomic form factors \f$F_Z(q)\f$, which converge to
-    \f$Z\f$ at small \f$q\f$ and decrease to zero for large \f$q\f$.
+    Z}(\theta, E)= \frac{3}{4}\, \frac{\sigma_T}{\sigma_{RSS, Z}(E)}\Big[ 1 + \cos^2\theta \Big]
+    \cdot F_Z^2(q), \f] with tabulated atomic form factors \f$F_Z(q)\f$, which converge to \f$Z\f$
+    at small \f$q\f$ and decrease to zero for large \f$q\f$.
 
     Similarly, for anomalous Rayleigh scattering, the cross sections \f$\sigma_{RSA, Z}(E)\f$ are
     available as a table. The normalised scattering phase function for element Z is now given by
@@ -178,14 +186,14 @@
     <b>Performing scattering</b>
 
     The function performing an actual scattering event randomly selects one of the supported
-    scattering channels (i.e. scattering by an electron bound to one of the supported elements or a
-    K\f$\alpha\f$ or K\f$\beta\f$ fluorescence transition for one of the supported elements). The
-    relative probabilities for these transitions as a function of incoming photon packet wavelength
-    are also calculated during setup. The selected transition determines the scattering mechanism.
-    For bound electrons, Rayleigh or Compton scattering is used. For fluorescence, the emission
-    direction is isotropic, and the outgoing wavelength is the fluorescence wavelength. In both
-    cases, a random Gaussian dispersion reflecting the interacting element's thermal velocity is
-    applied to the outgoing wavelength.
+    scattering channels (i.e. scattering by an electron bound to one of the supported elements or
+    one of the 20 fluorescent line transition for one of the supported elements). The relative
+    probabilities for these transitions as a function of incoming photon packet wavelength are also
+    calculated during setup. The selected transition determines the scattering mechanism. For bound
+    electrons, Rayleigh or Compton scattering is used. For fluorescence, the emission direction is
+    isotropic, and the outgoing wavelength is the fluorescence wavelength. In both cases, a random
+    Gaussian dispersion reflecting the interacting element's thermal velocity is applied to the
+    outgoing wavelength.
 
     <b>Thermal dispersion</b>
 
