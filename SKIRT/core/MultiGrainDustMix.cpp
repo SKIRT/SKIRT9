@@ -349,7 +349,6 @@ size_t MultiGrainDustMix::initializeExtraProperties(const Array& lambdav)
 
         // loop over all populations and process size bins for each
         int c = 0;  // population index
-        int b = 0;  // running size bin index
         for (auto population : _populations)
         {
             // open the absorption cross section stored table for this population
@@ -441,9 +440,6 @@ size_t MultiGrainDustMix::initializeExtraProperties(const Array& lambdav)
                 {
                     _calcEq.precalculate(this, lambdav, sigmaabsv);
                 }
-
-                // increment the running bin index
-                b++;
             }
 
             // increment the population index
