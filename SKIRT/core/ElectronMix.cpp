@@ -196,7 +196,7 @@ void ElectronMix::peeloffScattering(double& I, double& Q, double& U, double& V, 
 
     // perform the scattering event in the electron rest frame
     if (_hasCompton && lambda < comptonWL)
-        _cpf.peeloffScattering(I, lambda, pp->direction(), bfkobs);
+        _cpf.peeloffScattering(I, Q, U, V, lambda, pp->direction(), bfkobs, bfky, pp);
     else
         _dpf.peeloffScattering(I, Q, U, V, pp->direction(), bfkobs, bfky, pp);
 
@@ -225,7 +225,7 @@ void ElectronMix::performScattering(double lambda, const MaterialState* state, P
 
     // determine the new propagation direction, and if required,
     // update the wavelength or the polarization state of the photon packet
-    Direction bfknew = (_hasCompton && lambda < comptonWL) ? _cpf.performScattering(lambda, pp->direction())
+    Direction bfknew = (_hasCompton && lambda < comptonWL) ? _cpf.performScattering(lambda, pp->direction(), pp)
                                                            : _dpf.performScattering(pp->direction(), pp);
 
     // if we have dispersion, adjust the outgoing wavelength from the electron rest frame

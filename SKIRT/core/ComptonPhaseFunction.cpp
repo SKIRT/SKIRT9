@@ -34,10 +34,11 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-void ComptonPhaseFunction::initialize(Random* random)
+void ComptonPhaseFunction::initialize(Random* random, bool includePolarization)
 {
-    // cache random number generator
+    // cache random number generator and polarization flag
     _random = random;
+    _includePolarization = includePolarization;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -91,7 +92,8 @@ double ComptonPhaseFunction::generateCosineFromPhaseFunction(double x) const
 
 ////////////////////////////////////////////////////////////////////
 
-void ComptonPhaseFunction::peeloffScattering(double& I, double& lambda, Direction bfk, Direction bfkobs) const
+void ComptonPhaseFunction::peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfk,
+                                             Direction bfkobs, Direction bfky, const StokesVector* sv) const
 {
     double x = scaledEnergy(lambda);
 
@@ -108,7 +110,7 @@ void ComptonPhaseFunction::peeloffScattering(double& I, double& lambda, Directio
 
 ////////////////////////////////////////////////////////////////////
 
-Direction ComptonPhaseFunction::performScattering(double& lambda, Direction bfk) const
+Direction ComptonPhaseFunction::performScattering(double& lambda, Direction bfk, StokesVector* sv) const
 {
     double x = scaledEnergy(lambda);
 

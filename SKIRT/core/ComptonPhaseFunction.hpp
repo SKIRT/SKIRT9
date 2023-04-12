@@ -9,11 +9,12 @@
 #include "Array.hpp"
 #include "Direction.hpp"
 class Random;
+class StokesVector;
 
 ////////////////////////////////////////////////////////////////////
 
 /** The ComptonPhaseFunction helper class represents Compton scattering of photons by free
-    electrons. The current implementation does not support polarization.
+    electrons, with optional support for polarization by scattering.
 
     Compton scattering forms the extension of Thomson scattering into the high-photon-energy
     domain. The scattering event is elastic (i.e. the photon wavelength is changed by the
@@ -59,10 +60,12 @@ class ComptonPhaseFunction
     //============= Construction - Setup - Destruction =============
 
 public:
-    /** This function caches a pointer to the simulation's random number generator and
-        pre-calculates some data used for sampling from the relevant phase function. The function
-        must be called during setup (i.e. in single-thread mode). */
-    void initialize(Random* random);
+    /** This function caches a pointer to the simulation's random number generator and, if
+        polarization is included, pre-calculates some data used for sampling from the relevant
+        phase function. The function must be called during setup (i.e. in single-thread mode). If
+        \em includePolarization is omitted or set to false, calling the functions implementing the
+        polarized phase function will cause undefined behavior. */
+    void initialize(Random* random, bool includePolarization = false);
 
     //======== Absorption =======
 
@@ -70,7 +73,7 @@ public:
         wavelength, normalized to the (constant) Thomson cross section. */
     double sectionSca(double lambda) const;
 
-    //======== Scattering =======
+    //======== Scattering without polarization =======
 
 private:
     /** This function returns the value of the scattering phase function \f$\Phi(x, \cos\theta)\f$
@@ -83,26 +86,58 @@ private:
         \f$\Phi(x, \cos\theta)\f$ for the specified incoming photon energy \f$x\f$. */
     double generateCosineFromPhaseFunction(double x) const;
 
+    //======== Scattering with polarization =======
+
+private:
+    /** This function returns the value of the scattering phase function \f$\Phi(\theta,\phi)\f$
+        for the specified incoming photon energy, the specified scattering angles \f$\theta\f$ and
+        \f$\phi\f$, and the specified incoming polarization state. The phase function is normalized
+        as \f[\int\Phi(\theta,\phi) \,\mathrm{d}\Omega =4\pi.\f]
+
+        For Compton scattering, ... */
+    double phaseFunctionValue(double x, double theta, double phi, const StokesVector* sv) const;
+
+    /** This function generates random scattering angles \f$\theta\f$ and \f$\phi\f$ sampled from
+        the phase function \f$\Phi(\theta,\phi)\f$ for the specified incoming photon energy and the
+        specified incoming polarization state. The results are returned as a pair of numbers in the
+        order \f$\theta\f$ and \f$\phi\f$.
+
+        For Compton scattering, ... */
+    std::pair<double, double> generateAnglesFromPhaseFunction(double x, const StokesVector* sv) const;
+
+    /** This function applies the Mueller matrix transformation for the specified incoming photon
+        energy and the specified scattering angle \f$\theta\f$ to the given polarization state
+        (which serves as both input and output for the function).
+
+        For Compton scattering, ... */
+    void applyMueller(double x, double theta, StokesVector* sv) const;
+
+    //======== Perform scattering with or without polarization =======
+
 public:
     /** This function calculates the contribution of a Compton scattering event to the peel-off
-        photon luminosity for the given geometry and wavelength, and determines the adjusted
-        wavelength of the outgoing photon packet. The luminosity contribution is added to the
-        incoming value of the \em I argument, and the adjusted wavelength is stored in the \em
-        lambda argument. See the description of the MaterialMix::peeloffScattering() function
+        photon luminosity and polarization state and determines the adjusted wavelength of the
+        outgoing photon packet for the given geometry and incoming wavelength and polarization
+        state. The contributions to the Stokes vector components are added to the incoming values
+        of the \em I, \em Q, \em U, \em V arguments, and the adjusted wavelength is stored in the
+        \em lambda argument. See the description of the MaterialMix::peeloffScattering() function
         for more information. */
-    void peeloffScattering(double& I, double& lambda, Direction bfk, Direction bfkobs) const;
+    void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfk, Direction bfkobs,
+                           Direction bfky, const StokesVector* sv) const;
 
-    /** Given the incoming photon packet wavelength and direction this function calculates a
+    /** Given the incoming photon packet wavelength, direction  and polarization
+        state this function calculates a
         randomly sampled new propagation direction for a Compton scattering event, and determines
         the adjusted wavelength of the outgoing photon packet. The adjusted wavelength is stored in
         the \em lambda argument, and the direction is returned. */
-    Direction performScattering(double& lambda, Direction bfk) const;
+    Direction performScattering(double& lambda, Direction bfk, StokesVector* sv) const;
 
     //======================== Data Members ========================
 
 private:
     // the simulation's random number generator - initialized by initialize()
     Random* _random{nullptr};
+    bool _includePolarization{false};
 };
 
 ////////////////////////////////////////////////////////////////////

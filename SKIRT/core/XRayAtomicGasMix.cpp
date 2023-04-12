@@ -251,7 +251,8 @@ namespace
         {
             if (lambda < comptonWL)
             {
-                _cpf.peeloffScattering(I, lambda, bfk, bfkobs);
+                double Q, U, V;
+                _cpf.peeloffScattering(I, Q, U, V, lambda, bfk, bfkobs, Direction(), nullptr);
             }
             else
             {
@@ -262,7 +263,8 @@ namespace
 
         Direction performScattering(double& lambda, int /*Z*/, Direction bfk) const override
         {
-            return lambda < comptonWL ? _cpf.performScattering(lambda, bfk) : _dpf.performScattering(bfk, nullptr);
+            return lambda < comptonWL ? _cpf.performScattering(lambda, bfk, nullptr)
+                                      : _dpf.performScattering(bfk, nullptr);
         }
     };
 }
