@@ -28,20 +28,12 @@ void ElectronMix::setupSelfBefore()
     // determine whether velocity dispersion is enabled
     _hasDispersion = includeThermalDispersion() && !find<Configuration>()->oligochromatic();
 
-    // determine whether we need Compton scattering because the simulation may have short wavelengths
+    // determine simulation wavelength range
     auto range = find<Configuration>()->simulationWavelengthRange();
-    _hasCompton = range.min() < comptonWL;
 
-    // disable Compton scattering if polarization is requested
-    if (_hasCompton && includePolarization())
-    {
-        _hasCompton = false;
-        find<Log>()->warning("Compton scattering disabled because the implementation does not support polarization");
-    }
-
-    // initialize our phase function helpers
-    _dpf.initialize(random(), includePolarization());
-    if (_hasCompton) _cpf.initialize(random());
+    // initialize the phase function helpers as required depending on the simulation wavelength range
+    if (range.max() >= comptonWL) _dpf.initialize(random(), includePolarization());
+    if (range.min() < comptonWL) _cpf.initialize(random(), includePolarization());
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -68,7 +60,7 @@ bool ElectronMix::hasScatteringDispersion() const
     bool hasDispersion = includeThermalDispersion() && !find<Configuration>()->oligochromatic();
 
     // determine whether we need Compton scattering because the simulation may have short wavelengths
-    if (!hasDispersion && !includePolarization())
+    if (!hasDispersion)
     {
         auto range = find<Configuration>()->simulationWavelengthRange();
         hasDispersion = range.min() < comptonWL;
@@ -121,7 +113,7 @@ double ElectronMix::sectionAbs(double /*lambda*/) const
 double ElectronMix::sectionSca(double lambda) const
 {
     double sigma = Constants::sigmaThomson();
-    if (_hasCompton && lambda < comptonWL) sigma *= _cpf.sectionSca(lambda);
+    if (lambda < comptonWL) sigma *= _cpf.sectionSca(lambda);
     return sigma;
 }
 
@@ -195,7 +187,7 @@ void ElectronMix::peeloffScattering(double& I, double& Q, double& U, double& V, 
     }
 
     // perform the scattering event in the electron rest frame
-    if (_hasCompton && lambda < comptonWL)
+    if (lambda < comptonWL)
         _cpf.peeloffScattering(I, Q, U, V, lambda, pp->direction(), bfkobs, bfky, pp);
     else
         _dpf.peeloffScattering(I, Q, U, V, pp->direction(), bfkobs, bfky, pp);
@@ -225,8 +217,8 @@ void ElectronMix::performScattering(double lambda, const MaterialState* state, P
 
     // determine the new propagation direction, and if required,
     // update the wavelength or the polarization state of the photon packet
-    Direction bfknew = (_hasCompton && lambda < comptonWL) ? _cpf.performScattering(lambda, pp->direction(), pp)
-                                                           : _dpf.performScattering(pp->direction(), pp);
+    Direction bfknew = (lambda < comptonWL) ? _cpf.performScattering(lambda, pp->direction(), pp)
+                                            : _dpf.performScattering(pp->direction(), pp);
 
     // if we have dispersion, adjust the outgoing wavelength from the electron rest frame
     if (_hasDispersion)
