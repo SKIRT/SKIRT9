@@ -61,8 +61,8 @@ class StokesVector;
     The Müller matrix describing Compton scattering can be expressed as a function of the
     scattering angle \f$\theta\f$ and the incoming photon energy \f$x\f$ as follows (Fano 1949):
 
-    \f[ {\bf{M}}(x,\theta) \propto \begin{pmatrix} C^3(x,\theta) + C(x,\theta) -C^2(\theta,
-    x)\sin^2\theta & -C^2(x,\theta)\sin^2\theta & 0 & 0 \\ -C^2(x,\theta)\sin^2\theta &
+    \f[ {\bf{M}}(x,\theta) \propto \begin{pmatrix} C^3(x,\theta) + C(x,\theta) -C^2(x,\theta)
+    \sin^2\theta & -C^2(x,\theta)\sin^2\theta & 0 & 0 \\ -C^2(x,\theta)\sin^2\theta &
     C^2(x,\theta) (1+\cos^2\theta) & 0 & 0 \\ 0 & 0 & 2C^2(x,\theta)\cos\theta & 0 \\ 0 & 0 & 0 &
     (C^3(x,\theta) + C(x,\theta)) \cos\theta \end{pmatrix}, \f]
 
@@ -141,27 +141,20 @@ private:
 
 private:
     /** This function returns the value of the scattering phase function \f$\Phi(\theta,\phi)\f$
-        for the specified incoming photon energy, the specified scattering angles \f$\theta\f$ and
-        \f$\phi\f$, and the specified incoming polarization state. The phase function is normalized
-        as \f[\int\Phi(\theta,\phi) \,\mathrm{d}\Omega =4\pi.\f]
+        for the specified incoming photon energy, the scattering angles \f$\theta\f$ (specified
+        through its cosine) and \f$\phi\f$, and the specified incoming polarization state. The
+        phase function is normalized as \f[\int\Phi(\theta,\phi) \,\mathrm{d}\Omega =4\pi.\f] */
+    double phaseFunctionValue(double x, double costheta, double phi, const StokesVector* sv) const;
 
-        For Compton scattering, ... */
-    double phaseFunctionValue(double x, double theta, double phi, const StokesVector* sv) const;
-
-    /** This function generates random scattering angles \f$\theta\f$ and \f$\phi\f$ sampled from
-        the phase function \f$\Phi(\theta,\phi)\f$ for the specified incoming photon energy and the
-        specified incoming polarization state. The results are returned as a pair of numbers in the
-        order \f$\theta\f$ and \f$\phi\f$.
-
-        For Compton scattering, ... */
-    std::pair<double, double> generateAnglesFromPhaseFunction(double x, const StokesVector* sv) const;
+    /** This function generates a random azimuthal scattering angle \f$\phi\f$ sampled from the
+        marginal phase function for the specified incoming photon energy and incoming polarization
+        state, and given the specified scattering angle cosine \f$\cos\theta\f$. */
+    double generateAzimuthFromPhaseFunction(double x, const StokesVector* sv, double costheta) const;
 
     /** This function applies the Mueller matrix transformation for the specified incoming photon
-        energy and the specified scattering angle \f$\theta\f$ to the given polarization state
-        (which serves as both input and output for the function).
-
-        For Compton scattering, ... */
-    void applyMueller(double x, double theta, StokesVector* sv) const;
+        energy and the specified scattering angle cosine \f$\cos\theta\f$ to the given polarization
+        state (which serves as both input and output for the function). */
+    void applyMueller(double x, double costheta, StokesVector* sv) const;
 
     //======== Perform scattering with or without polarization =======
 
@@ -171,16 +164,14 @@ public:
         outgoing photon packet for the given geometry and incoming wavelength and polarization
         state. The contributions to the Stokes vector components are added to the incoming values
         of the \em I, \em Q, \em U, \em V arguments, and the adjusted wavelength is stored in the
-        \em lambda argument. See the description of the MaterialMix::peeloffScattering() function
-        for more information. */
+        \em lambda argument. */
     void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfk, Direction bfkobs,
                            Direction bfky, const StokesVector* sv) const;
 
-    /** Given the incoming photon packet wavelength, direction  and polarization
-        state this function calculates a
-        randomly sampled new propagation direction for a Compton scattering event, and determines
-        the adjusted wavelength of the outgoing photon packet. The adjusted wavelength is stored in
-        the \em lambda argument, and the direction is returned. */
+    /** Given the incoming photon packet wavelength, direction and polarization state, this
+        function calculates a randomly sampled new propagation direction for a Compton scattering
+        event, and determines the adjusted wavelength of the outgoing photon packet. The adjusted
+        wavelength is stored in the \em lambda argument, and the direction is returned. */
     Direction performScattering(double& lambda, Direction bfk, StokesVector* sv) const;
 
     //======================== Data Members ========================
@@ -189,6 +180,12 @@ private:
     // the simulation's random number generator - initialized by initialize()
     Random* _random{nullptr};
     bool _includePolarization{false};
+
+    // precalculated discretizations - initialized during construction
+    Array _phiv;   // indexed on f
+    Array _phi1v;  // indexed on f
+    Array _phisv;  // indexed on f
+    Array _phicv;  // indexed on f
 };
 
 ////////////////////////////////////////////////////////////////////
