@@ -51,7 +51,7 @@
 
     Electrons bound to the atoms in the gas scatter incoming X-ray photons. This process can be
     elastic (Rayleigh scattering) or inelastic (bound-Compton scattering). The user can select one
-    of four implementations of bound-electron scattering. In increasing order of accuracy and
+    of five implementations of bound-electron scattering. In increasing order of accuracy and
     computational effort, these are:
 
     - \em None: ignore scattering by bound electrons. This approximation works reasonably well for
@@ -62,6 +62,9 @@
     high energies (because the bound-electron scattering cross section approaches that of
     free-electron scattering) and for lower energies (because the total scattering cross section is
     dominated by photo-absorption anyway). However, it is less accurate for intermediate energies.
+
+    - \em FreeWithPolarization: use free-electron Compton scattering with support for polarization.
+    In the current implementation, this is the only option with polarization support.
 
     - \em Good: use the smooth Rayleigh scattering approximation and exact bound-Compton
     scattering. This reflects the implementation by most X-ray codes and can be considered to be a
@@ -143,7 +146,7 @@
 
     <b>Electron scattering</b>
 
-    As described above, this class provides four implementations for the scattering of X-rays
+    As described above, this class provides several implementations for the scattering of X-rays
     photons by the electrons bound to the atoms. These implementations involve four types of
     scattering: free-electron Compton scattering, bound-electron Compton scattering, smooth
     Rayleigh scattering, and anomalous Rayleigh scattering. Note that, in all cases, the listed
@@ -226,9 +229,11 @@ class XRayAtomicGasMix : public MaterialMix
 {
     /** The enumeration type indicating the implementation used for scattering by bound electrons.
         */
-    ENUM_DEF(BoundElectrons, None, Free, Good, Exact)
+    ENUM_DEF(BoundElectrons, None, Free, FreeWithPolarization, Good, Exact)
         ENUM_VAL(BoundElectrons, None, "ignore bound electrons")
         ENUM_VAL(BoundElectrons, Free, "use free-electron Compton scattering")
+        ENUM_VAL(BoundElectrons, FreeWithPolarization,
+                 "use free-electron Compton scattering with support for polarization")
         ENUM_VAL(BoundElectrons, Good, "use smooth Rayleigh scattering and exact bound-Compton scattering")
         ENUM_VAL(BoundElectrons, Exact, "use anomalous Rayleigh scattering and exact bound-Compton scattering")
     ENUM_END()
@@ -280,6 +285,11 @@ public:
     /** This function returns the fundamental material type represented by this material mix, which
         is MaterialType::Gas. */
     MaterialType materialType() const override;
+
+    /** This function returns true if this material mix supports polarization during scattering
+        events. For this class, the function returns true if the \em scatterBoundElectrons property
+        has been set to \c FreeWithPolarization and false otherwise. */
+    bool hasPolarizedScattering() const override;
 
     /** This function returns true, indicating that a scattering interaction for this material mix
         may (and usually does) adjust the wavelength of the interacting photon packet. */
