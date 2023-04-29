@@ -9,11 +9,12 @@
 #include "Array.hpp"
 #include "Direction.hpp"
 class Random;
+class StokesVector;
 
 ////////////////////////////////////////////////////////////////////
 
 /** The ComptonPhaseFunction helper class represents Compton scattering of photons by free
-    electrons. The current implementation does not support polarization.
+    electrons, with optional support for polarization by scattering.
 
     Compton scattering forms the extension of Thomson scattering into the high-photon-energy
     domain. The scattering event is elastic (i.e. the photon wavelength is changed by the
@@ -31,6 +32,8 @@ class Random;
     = \big(1+x(1-\cos \theta)\big)^{-1}\f$. Equivalently, the wavelength change is given by
     \f$\lambda_\mathrm{out} / \lambda_\mathrm{in} = \big(1+x(1-\cos \theta)\big)\f$.
 
+    <b>Unpolarized Compton scattering</b>
+
     The normalized phase function for an interaction with incoming photon energy \f$x\f$ is given
     by:
 
@@ -39,8 +42,6 @@ class Random;
 
     where \f$\theta\f$ is the scattering angle and \f$C(x, \theta)\f$ is the Compton factor defined
     earlier.
-
-    <b>Sampling from the phase function</b>
 
     To draw a random scattering angle from the phase function, we use the algorithm described by
     Hua et al. 1997 (Computers in Physics 11, 660), which is a variation of the technique first
@@ -53,16 +54,69 @@ class Random;
     Compton factor \f$r = 1 + x (1-\cos\theta)\f$. The sampling algorithm draws a random number for
     \f$r\f$, i.e. from the probability distribution for the inverse Compton factor at a given
     energy. The scattering angle can then easily be obtained from the definition of the inverse
-    Compton factor. */
+    Compton factor.
+
+    <b>Polarized Compton scattering</b>
+
+    The Müller matrix describing Compton scattering can be expressed as a function of the
+    scattering angle \f$\theta\f$ and the incoming photon energy \f$x\f$ as follows (Fano 1949):
+
+    \f[ {\bf{M}}(x,\theta) \propto \begin{pmatrix} C^3(x,\theta) + C(x,\theta) -C^2(x,\theta)
+    \sin^2\theta & -C^2(x,\theta)\sin^2\theta & 0 & 0 \\ -C^2(x,\theta)\sin^2\theta &
+    C^2(x,\theta) (1+\cos^2\theta) & 0 & 0 \\ 0 & 0 & 2C^2(x,\theta)\cos\theta & 0 \\ 0 & 0 & 0 &
+    (C^3(x,\theta) + C(x,\theta)) \cos\theta \end{pmatrix}, \f]
+
+    with \f$C(x, \theta)\f$ the Compton factor defined earlier, and assuming a random distribution
+    for the electron spin direction, which causes the non-diagonal terms in the forth row and forth
+    column to be zero (Depaola 2003). This matrix has five independent coefficients and converges
+    to the Müller matrix for Thomson scattering at low photon energies, i.e. for \f$x\to 0\f$ and
+    thus \f$C(x,\theta) \to 1\f$.
+
+    Following the procedure of Peest et al. 2017 Sect 3.3 starting from the above Müller matrix,
+    we obtain the following expression for the normalized phase function:
+
+    \f[ \Phi(x, \theta, \varphi, {\bf{S}}) = \frac{\sigma_\mathrm{T}}{\sigma_\mathrm{C}(x)} \,
+    \frac{3}{4} \left[{\rm S}_{11}(x,\theta) + {\rm S}_{12}(x,\theta)
+    \,P_\text{L}\cos2(\varphi-\gamma)\right], \f]
+
+    with \f$\theta\f$ and \f$\varphi\f$ the inclination and azimuth angle of the scattering
+    geometry, \f$\sigma_\mathrm{C}(x)\f$ the total Compton scattering cross section as defined
+    earlier, \f${\rm S}_{11}(x,\theta)\f$ and \f${\rm S}_{12}(x,\theta)\f$ two of the Compton
+    Müller matrix elements, and \f$P_\text{L}\f$ and \f$\gamma\f$ the incoming photon's linear
+    polarization degree and angle.
+
+    The marginal distribution for \f$\theta\f$ is determined by the first term of this equation
+    (the second term cancels out during the integration over \f$\varphi\f$), which is identical to
+    the univariate distribution for \f$\theta\f$ given earlier for the unpolarized case. We can
+    thus use the same sampling procedure for \f$\theta\f$.
+
+    Once a random \f$\theta\f$ has been selected, we sample an azimuth angle \f$\varphi\f$ from the
+    normalized conditional distribution, again obtained similary as in Peest et al. 2017:
+
+    \f[ \Phi'_\theta(x, \varphi, {\bf{S}}) \propto 1 + \frac{{\rm S}_{12}(x,\theta)} {{\rm
+    S}_{11}(x,\theta)} P_\text{L}\cos2(\varphi-\gamma) \f]
+
+    This expression has the same form as the formula derived for Thomson scattering by Peest et al.
+    2017, but with different matrix elements \f${\rm S}_{11}(x,\theta)\f$ and \f${\rm
+    S}_{12}(x,\theta)\f$. Given a uniform deviate \f$\chi\f$ between 0 and 1, a random
+    \f$\varphi\f$ can be obtained from this distribution by solving the equation
+
+    \f[ \chi = \int_0^\varphi \Phi'_\theta(x, \varphi', {\bf{S}})\, d\varphi' =
+    \frac{1}{2\pi}\left( \varphi + \frac{{{\rm S}_{12}(\theta, x)}}{{\rm S}_{11}(\theta, x)}
+    P_\text{L}\sin\varphi\cos(\varphi-2\gamma)\right), \f]
+
+    which must be inverted for \f$\varphi\f$ numerically. */
 class ComptonPhaseFunction
 {
     //============= Construction - Setup - Destruction =============
 
 public:
-    /** This function caches a pointer to the simulation's random number generator and
-        pre-calculates some data used for sampling from the relevant phase function. The function
-        must be called during setup (i.e. in single-thread mode). */
-    void initialize(Random* random);
+    /** This function caches a pointer to the simulation's random number generator and, if
+        polarization is included, pre-calculates some data used for sampling from the relevant
+        phase function. The function must be called during setup (i.e. in single-thread mode). If
+        \em includePolarization is omitted or set to false, calling the functions implementing the
+        polarized phase function will cause undefined behavior. */
+    void initialize(Random* random, bool includePolarization = false);
 
     //======== Absorption =======
 
@@ -70,7 +124,7 @@ public:
         wavelength, normalized to the (constant) Thomson cross section. */
     double sectionSca(double lambda) const;
 
-    //======== Scattering =======
+    //======== Scattering without polarization =======
 
 private:
     /** This function returns the value of the scattering phase function \f$\Phi(x, \cos\theta)\f$
@@ -83,26 +137,55 @@ private:
         \f$\Phi(x, \cos\theta)\f$ for the specified incoming photon energy \f$x\f$. */
     double generateCosineFromPhaseFunction(double x) const;
 
+    //======== Scattering with polarization =======
+
+private:
+    /** This function returns the value of the scattering phase function \f$\Phi(\theta,\phi)\f$
+        for the specified incoming photon energy, the scattering angles \f$\theta\f$ (specified
+        through its cosine) and \f$\phi\f$, and the specified incoming polarization state. The
+        phase function is normalized as \f[\int\Phi(\theta,\phi) \,\mathrm{d}\Omega =4\pi.\f] */
+    double phaseFunctionValue(double x, double costheta, double phi, const StokesVector* sv) const;
+
+    /** This function generates a random azimuthal scattering angle \f$\phi\f$ sampled from the
+        marginal phase function for the specified incoming photon energy and incoming polarization
+        state, and given the specified scattering angle cosine \f$\cos\theta\f$. */
+    double generateAzimuthFromPhaseFunction(double x, const StokesVector* sv, double costheta) const;
+
+    /** This function applies the Mueller matrix transformation for the specified incoming photon
+        energy and the specified scattering angle cosine \f$\cos\theta\f$ to the given polarization
+        state (which serves as both input and output for the function). */
+    void applyMueller(double x, double costheta, StokesVector* sv) const;
+
+    //======== Perform scattering with or without polarization =======
+
 public:
     /** This function calculates the contribution of a Compton scattering event to the peel-off
-        photon luminosity for the given geometry and wavelength, and determines the adjusted
-        wavelength of the outgoing photon packet. The luminosity contribution is added to the
-        incoming value of the \em I argument, and the adjusted wavelength is stored in the \em
-        lambda argument. See the description of the MaterialMix::peeloffScattering() function
-        for more information. */
-    void peeloffScattering(double& I, double& lambda, Direction bfk, Direction bfkobs) const;
+        photon luminosity and polarization state and determines the adjusted wavelength of the
+        outgoing photon packet for the given geometry and incoming wavelength and polarization
+        state. The contributions to the Stokes vector components are added to the incoming values
+        of the \em I, \em Q, \em U, \em V arguments, and the adjusted wavelength is stored in the
+        \em lambda argument. */
+    void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfk, Direction bfkobs,
+                           Direction bfky, const StokesVector* sv) const;
 
-    /** Given the incoming photon packet wavelength and direction this function calculates a
-        randomly sampled new propagation direction for a Compton scattering event, and determines
-        the adjusted wavelength of the outgoing photon packet. The adjusted wavelength is stored in
-        the \em lambda argument, and the direction is returned. */
-    Direction performScattering(double& lambda, Direction bfk) const;
+    /** Given the incoming photon packet wavelength, direction and polarization state, this
+        function calculates a randomly sampled new propagation direction for a Compton scattering
+        event, and determines the adjusted wavelength of the outgoing photon packet. The adjusted
+        wavelength is stored in the \em lambda argument, and the direction is returned. */
+    Direction performScattering(double& lambda, Direction bfk, StokesVector* sv) const;
 
     //======================== Data Members ========================
 
 private:
     // the simulation's random number generator - initialized by initialize()
     Random* _random{nullptr};
+    bool _includePolarization{false};
+
+    // precalculated discretizations - initialized during construction
+    Array _phiv;   // indexed on f
+    Array _phi1v;  // indexed on f
+    Array _phisv;  // indexed on f
+    Array _phicv;  // indexed on f
 };
 
 ////////////////////////////////////////////////////////////////////

@@ -140,13 +140,20 @@ double StokesVector::rotateIntoPlane(Direction k, Direction knew)
 
 //////////////////////////////////////////////////////////////////////
 
+void StokesVector::applyMueller(double S11, double S12, double S22, double S33, double S34, double S44)
+{
+    double I = S11 + S12 * _Q;
+    double Q = S12 + S22 * _Q;
+    double U = S33 * _U + S34 * _V;
+    double V = -S34 * _U + S44 * _V;
+    setPolarized(I, Q, U, V, _normal);
+}
+
+//////////////////////////////////////////////////////////////////////
+
 void StokesVector::applyMueller(double S11, double S12, double S33, double S34)
 {
-    double I = S11 * 1. + S12 * _Q;
-    double Q = S12 * 1. + S11 * _Q;
-    double U = S33 * _U + S34 * _V;
-    double V = -S34 * _U + S33 * _V;
-    setPolarized(I, Q, U, V, _normal);
+    applyMueller(S11, S12, S11, S33, S34, S33);
 }
 
 //////////////////////////////////////////////////////////////////////

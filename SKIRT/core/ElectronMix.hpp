@@ -16,22 +16,21 @@
     Electrons do not absorb photons. They do, however, significantly scatter photons. This process
     is described by Compton scattering, which converges to Thomson scattering at low photon
     energies. It is meaningful to implement both processes, because the calculations for Compton
-    scattering are substantially slower than those for Thomson scattering.
+    scattering are substantially slower than those for Thomson scattering. If requested by the
+    user, polarization by scattering is fully supported in both regimes.
 
     <b>Compton and Thomson scattering</b>
 
     For wavelengths shorter than 10 nm, this class models Compton scattering, which features a
     wavelength-dependent cross section and phase function, and which causes the photon energy
     (wavelength) to change during the interaction. This process is implemented through the
-    ComptonPhaseFunction class; see that class for more information. The current implementation of
-    Compton scattering does not support polarization.
+    ComptonPhaseFunction class; see that class for more information.
 
     For wavelengths longer than 10nm, the scattering process can be described by elastic and
     wavelength-independent Thomson scattering. The scattering cross section is given by the
     well-known Thomson cross section (a constant) and the phase function is that of a dipole.
     Consequently, this class calls on the DipolePhaseFunction class to implement Thomson
-    scattering; see that class for more information. In this wavelength regime, polarization is
-    fully supported (if enabled by the user).
+    scattering; see that class for more information.
 
     The transition point between Compton and Thomson scattering can be justified as follows. For
     wavelengths much longer than 10 nm, the expression for the Compton cross section becomes
@@ -135,14 +134,14 @@ public:
     double sectionAbs(double lambda) const override;
 
     /** This function returns the scattering cross section per electron
-        \f$\varsigma^{\text{sca}}_{\lambda}\f$ which is constant and equal to the Thomson cross
-        section for all wavelengths \f$\lambda\f$. */
+        \f$\varsigma^{\text{sca}}_{\lambda}\f$ which varies with the wavelength \f$\lambda\f$ for
+        high energies and converges to the constant Thomson cross section at low energies. */
     double sectionSca(double lambda) const override;
 
     /** This function returns the total extinction cross section per electron
         \f$\varsigma^{\text{ext}}_{\lambda} = \varsigma^{\text{abs}}_{\lambda} +
-        \varsigma^{\text{sca}}_{\lambda}\f$ which is constant and equal to the Thomson cross
-        section for all wavelengths \f$\lambda\f$. */
+        \varsigma^{\text{sca}}_{\lambda}\f$. Because the absorption cross section is trivially
+        zero, this equals the scattering cross section. */
     double sectionExt(double lambda) const override;
 
     //======== High-level photon life cycle =======
@@ -152,33 +151,27 @@ public:
     double opacityAbs(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
 
     /** This function returns the scattering opacity \f$k^\text{sca}=n\varsigma^\text{sca}\f$ for
-        the given material state. The wavelength and photon properties are not used, because the
-        cross section is considered to be equal to the Thomson cross section for all wavelengths.
-        */
+        the given material state and wavelength. The photon properties are not used because the
+        cross section does not depend on the polarization state of the incoming photon packet. */
     double opacitySca(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
 
     /** This function returns the extinction opacity \f$k^\text{ext}=k^\text{abs}+k^\text{sca}\f$
-        for the given material state. The wavelength and photon properties are not used, because
-        the cross section is considered to be equal to the Thomson cross section for all
-        wavelengths. */
+        for the given material state and wavelength. The photon properties are not used because the
+        cross section does not depend on the polarization state of the incoming photon packet. */
     double opacityExt(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
 
     /** This function calculates the contribution of the medium component associated with this
-        material mix to the peel-off photon luminosity, polarization state, and wavelength shift
-        for the given wavelength, geometry, material state, and photon properties. See the
-        description of the MaterialMix::peeloffScattering() function for more information.
-
-        For electrons, the function implements wavelenth-independent dipole scattering without or
-        with support for polarization depending on the user-configured \em includePolarization
-        property. */
+        electron mix to the peel-off photon luminosity, polarization state, and wavelength shift
+        for the given wavelength, geometry, material state, and photon properties. If \em
+        includePolarization has been set to true, the function supports polarization; otherwise it
+        does not. */
     void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs, Direction bfky,
                            const MaterialState* state, const PhotonPacket* pp) const override;
 
     /** This function performs a scattering event on the specified photon packet in the spatial
         cell and medium component represented by the specified material state and the receiving
-        material mix. For electrons, the function implements wavelenth-independent dipole
-        scattering without or with support for polarization depending on the user-configured \em
-        includePolarization property. */
+        electron mix. If \em includePolarization has been set to true, the function supports
+        polarization; otherwise it does not. */
     void performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const override;
 
     //======================== Probing ========================
@@ -195,9 +188,8 @@ public:
     //======================== Data Members ========================
 
 private:
-    // flags initialized during setup
+    // flag initialized during setup
     bool _hasDispersion{false};  // true if thermal velocity dispersion is enabled
-    bool _hasCompton{false};     // true if support for Compton scattering is enabled
 
     // the dipole and Compton phase function helper instances - initialized during setup
     DipolePhaseFunction _dpf;

@@ -101,7 +101,17 @@ public:
 
     /** This function adjusts the Stokes vector for a rotation of the reference axis about the
         given flight direction \f$\bf{k}\f$ over the specified angle \f$\phi\f$, clockwise when
-        looking along \f$\bf{k}\f$.*/
+        looking along \f$\bf{k}\f$. Such rotation is described by the transformation matrix
+
+        \f[
+        {\bf{R}} =
+        \begin{pmatrix}
+        1 & 0 & 0 & 0 \\
+        0 & \cos 2\phi & \sin 2\phi & 0 \\
+        0 & -\sin 2\phi & \cos 2\phi & 0 \\
+        0 & 0 & 0 & 1
+        \end{pmatrix}.
+        \f]  */
     void rotateStokes(double phi, Direction k);
 
     /** This function adjusts the stokes vector reference axis so it is in the plane of the given
@@ -111,8 +121,36 @@ public:
     double rotateIntoPlane(Direction k, Direction knew);
 
     /** This function transforms the polarization state described by this Stokes vector by applying
-        the Mueller matrix with the specified coefficients (and zero elements elsewhere) to its
-        existing state. */
+        to its existing state a Mueller matrix of the form
+
+        \f[
+        {\bf{M}} \propto
+        \begin{pmatrix}
+        {\rm S}_{11} & {\rm S}_{12} & 0 & 0 \\
+        {\rm S}_{12} & {\rm S}_{22} & 0 & 0 \\
+        0 & 0 & {\rm S}_{33} & {\rm S}_{34} \\
+        0 & 0 & -{\rm S}_{34} &  {\rm S}_{44}
+        \end{pmatrix},
+        \f]
+
+        assuming that \f${\rm S}_{21} = {\rm S}_{12}\f$ and \f${\rm S}_{43} = -{\rm S}_{34}\f$. */
+    void applyMueller(double S11, double S12, double S22, double S33, double S34, double S44);
+
+    /** This function transforms the polarization state described by this Stokes vector by applying
+        to its existing state a Mueller matrix of the form
+
+        \f[
+        {\bf{M}} \propto
+        \begin{pmatrix}
+        {\rm S}_{11} & {\rm S}_{12} & 0 & 0 \\
+        {\rm S}_{12} & {\rm S}_{11} & 0 & 0 \\
+        0 & 0 & {\rm S}_{33} & {\rm S}_{34} \\
+        0 & 0 & -{\rm S}_{34} &  {\rm S}_{33}
+        \end{pmatrix},
+        \f]
+
+        assuming that \f${\rm S}_{21} = {\rm S}_{12}\f$, \f${\rm S}_{43} = -{\rm S}_{34}\f$,
+        \f${\rm S}_{22} = {\rm S}_{11}\f$ and \f${\rm S}_{44} = {\rm S}_{44}\f$. */
     void applyMueller(double S11, double S12, double S33, double S34);
 
 private:
