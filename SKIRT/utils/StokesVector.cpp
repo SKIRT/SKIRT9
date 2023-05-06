@@ -16,12 +16,29 @@ StokesVector::StokesVector(double I, double Q, double U, double V, Direction n)
 
 void StokesVector::setPolarized(double I, double Q, double U, double V, Direction n)
 {
-    if (I != 0.0)
+    if (I != 0.0 && !n.isNull())
     {
         _Q = Q / I;
         _U = U / I;
         _V = V / I;
         _normal = n;
+        _polarized = true;
+    }
+    else
+    {
+        setUnpolarized();
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void StokesVector::setPolarized(double I, double Q, double U, double V)
+{
+    if (I != 0.0)
+    {
+        _Q = Q / I;
+        _U = U / I;
+        _V = V / I;
         _polarized = true;
     }
     else
