@@ -443,9 +443,10 @@ public:
     /** This function calculates the contribution of the medium component associated with this
         material mix to the peel-off photon luminosity, polarization state, and wavelength shift
         for the given wavelength, geometry, material state, and photon properties. The
-        contributions to the Stokes vector components are added to the incoming values of the \em
-        I, \em Q, \em U, \em V arguments. If there is wavelength shift, the new wavelength value
-        replaces the incoming value of the \em lambda argument.
+        contributions to the Stokes vector components are stored in the \em I, \em Q, \em U, \em V
+        arguments, which are guaranteed to be initialized to zero by the caller. If there is a
+        wavelength shift, the new wavelength value replaces the incoming value of the \em lambda
+        argument.
 
         Since we force the peel-off photon packet to be scattered from the direction \f${\bf{k}}\f$
         into the direction \f${\bf{k}}_{\text{obs}}\f$, the corresponding biasing factor is given

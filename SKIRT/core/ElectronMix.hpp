@@ -162,9 +162,14 @@ public:
 
     /** This function calculates the contribution of the medium component associated with this
         electron mix to the peel-off photon luminosity, polarization state, and wavelength shift
-        for the given wavelength, geometry, material state, and photon properties. If \em
-        includePolarization has been set to true, the function supports polarization; otherwise it
-        does not. */
+        for the given wavelength, geometry, material state, and photon properties. The
+        contributions to the Stokes vector components are stored in the \em I, \em Q, \em U, \em V
+        arguments, which are guaranteed to be initialized to zero by the caller. If there is
+        wavelength shift, the new wavelength value replaces the incoming value of the \em lambda
+        argument.
+
+        If \em includePolarization has been set to true, the function supports polarization;
+        otherwise it does not. */
     void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs, Direction bfky,
                            const MaterialState* state, const PhotonPacket* pp) const override;
 

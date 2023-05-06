@@ -46,10 +46,19 @@ public:
         _normal.set(0, 0, 0);
     }
 
-    /** This function sets the Stokes vector to the specified parameter values, after normalizing
-        them through division by \f$I\f$. If \f$I=0\f$, the Stokes vector is set to an unpolarized
-        state. */
+    /** This function sets the Stokes vector to the specified vector components and the specified
+        normal to the reference direction. The \f$Q, U, V\f$ components are normalized through
+        division by \f$I\f$. If \f$I=0\f$ or \f$n\f$ is the null vector, the Stokes vector is set
+        to an unpolarized state. */
     void setPolarized(double I, double Q, double U, double V, Direction n);
+
+    /** This function sets the Stokes vector to the specified vector components leaving the normal
+        to the reference direction unchanged. This function can be used when the reference
+        direction should not be updated, or in case it is determined by an external convention and
+        no further transformations will be performed on the Stokes vector. The \f$Q, U, V\f$
+        components are normalized through division by \f$I\f$. If \f$I=0\f$, the Stokes vector is
+        set to an unpolarized state. */
+    void setPolarized(double I, double Q, double U, double V);
 
     /** This function copies the specified Stokes vector into the receiver. */
     void setPolarized(const StokesVector& polarization);

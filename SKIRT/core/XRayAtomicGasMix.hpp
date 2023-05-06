@@ -349,15 +349,20 @@ private:
 
 public:
     /** This function calculates the contribution of the medium component associated with this
-        material mix to the peel-off photon luminosity and wavelength shift for the given
-        wavelength and observer direction. It first calls the private setScatteringInfoIfNeeded()
-        function to establish a random scattering channel and atom velocity for this event.
+        material mix to the peel-off photon luminosity, polarization state, and wavelength shift
+        for the given wavelength, geometry, material state, and photon properties. The
+        contributions to the Stokes vector components are stored in the \em I, \em Q, \em U, \em V
+        arguments, which are guaranteed to be initialized to zero by the caller. If there is
+        wavelength shift, the new wavelength value replaces the incoming value of the \em lambda
+        argument.
 
-        In case the selected channel is bound electron scattering, the peel-off bias weight and
-        wavelength shift are determined by the Compton phase function and the selected atom
-        velocity. For fluorescence, the peel-off bias weight is trivially one because emission is
-        isotropic, and the outgoing wavelength is determined by Doppler-shifting the rest
-        wavelength of the selected fluorescence transition for the selected atom velocity. */
+        The function first calls the private setScatteringInfoIfNeeded() function to establish a
+        random scattering channel and atom velocity for this event. In case the selected channel is
+        bound electron scattering, the peel-off bias weight and wavelength shift are determined by
+        the Compton phase function and the selected atom velocity. For fluorescence, the peel-off
+        bias weight is trivially one because emission is isotropic and unpolarized, and the
+        outgoing wavelength is determined by Doppler-shifting the rest wavelength of the selected
+        fluorescence transition for the selected atom velocity. */
     void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs, Direction bfky,
                            const MaterialState* state, const PhotonPacket* pp) const override;
 

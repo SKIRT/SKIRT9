@@ -1069,8 +1069,8 @@ void XRayAtomicGasMix::peeloffScattering(double& I, double& Q, double& U, double
     // fluorescence
     else
     {
-        // unpolarized isotropic emission, so the bias weight is trivially 1 and QUV remain unchanged
-        I += 1.;
+        // unpolarized isotropic emission; the bias weight is trivially 1 and there is no contribution to Q, U, V
+        I = 1.;
 
         // update the photon packet wavelength to the wavelength of this fluorescence transition
         lambda = _lambdafluov[scatinfo->species - 2 * numAtoms];

@@ -138,8 +138,10 @@ public:
 
     /** This function calculates the contribution of the medium component associated with this
         material mix to the peel-off photon luminosity, polarization state, and wavelength shift,
-        for the given wavelength, geometry, material state, and photon properties. See the
-        description of the MaterialMix::peeloffScattering() function for more information.
+        for the given wavelength, geometry, material state, and photon properties. The
+        contributions to the Stokes vector components are stored in the \em I, \em Q, \em U, \em V
+        arguments, which are guaranteed to be initialized to zero by the caller, and the adjusted
+        wavelength is stored in the \em lambda argument.
 
         For the Lyman-alpha material mix, the function implements resonant scattering without or
         with support for polarization depending on the user-configured \em includePolarization

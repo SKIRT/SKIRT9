@@ -99,8 +99,8 @@ void TrivialGasMix::peeloffScattering(double& I, double& /*Q*/, double& /*U*/, d
     double t = 1. + g * g - 2. * g * costheta;
     double value = (1. - g) * (1. + g) / sqrt(t * t * t);
 
-    // accumulate the weighted sum in the intensity
-    I += value;
+    // store this value as the intensity
+    I = value;
 }
 
 ////////////////////////////////////////////////////////////////////

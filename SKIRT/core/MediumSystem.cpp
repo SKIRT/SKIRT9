@@ -755,7 +755,12 @@ void MediumSystem::peelOffScattering(const ShortArray& wv, double lambda, Direct
 
     // pass the result to the peel-off photon packet
     ppp->launchScatteringPeelOff(pp, bfkobs, _state.bulkVelocity(m), lambda, I);
-    if (_config->hasPolarization()) ppp->setPolarized(I, Q, U, V, pp->normal());
+    if (_config->hasPolarization())
+    {
+        // the Stokes vector has already been rotated towards the observer frame,
+        // so the reference direction is no longer used and can be left unspecified
+        ppp->setPolarized(I, Q, U, V);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -774,7 +779,12 @@ void MediumSystem::peelOffScattering(int h, double w, double lambda, Direction b
 
     // pass the result to the peel-off photon packet
     ppp->launchScatteringPeelOff(pp, bfkobs, _state.bulkVelocity(m), lambda, I * w);
-    if (_config->hasPolarization()) ppp->setPolarized(I, Q, U, V, pp->normal());
+    if (_config->hasPolarization())
+    {
+        // the Stokes vector has already been rotated towards the observer frame,
+        // so the reference direction is no longer used and can be left unspecified
+        ppp->setPolarized(I, Q, U, V);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////

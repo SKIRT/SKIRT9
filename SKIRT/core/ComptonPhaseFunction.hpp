@@ -162,9 +162,9 @@ public:
     /** This function calculates the contribution of a Compton scattering event to the peel-off
         photon luminosity and polarization state and determines the adjusted wavelength of the
         outgoing photon packet for the given geometry and incoming wavelength and polarization
-        state. The contributions to the Stokes vector components are added to the incoming values
-        of the \em I, \em Q, \em U, \em V arguments, and the adjusted wavelength is stored in the
-        \em lambda argument. */
+        state. The contributions to the Stokes vector components are stored in the \em I, \em Q,
+        \em U, \em V arguments, which are guaranteed to be initialized to zero by the caller. The
+        adjusted wavelength value replaces the incoming value of the \em lambda argument. */
     void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfk, Direction bfkobs,
                            Direction bfky, const StokesVector* sv) const;
 
