@@ -257,16 +257,18 @@ public:
 
     /** This function calculates the contribution of the medium component associated with this
         material mix to the peel-off photon luminosity, polarization state, and wavelength shift
-        for the given wavelength, geometry, material state, and photon properties. See the
-        description of the MaterialMix::peeloffScattering() function for more information.
+        for the given wavelength, geometry, material state, and photon properties. The
+        contributions to the Stokes vector components are stored in the \em I, \em Q, \em U, \em V
+        arguments, which are guaranteed to be initialized to zero by the caller. For dust mixes,
+        the wavelength remains unchanged.
 
-        For dust mixes, evaluation of the phase function depends on the scattering mode supported
-        by supported by the dust mix, as defined by each subclass. For the most basic mode, the
-        material mix provides a value for the scattering asymmetry parameter
-        \f$g=\left<\cos\theta\right>\f$. A value of \f$g=0\f$ corresponds to isotropic scattering.
-        Other values \f$-1\le g\le 1\f$ are substituted in the Henyey-Greenstein phase function,
-        \f[ \Phi(\cos\theta) = \frac{1-g^2} {(1+g^2-2g\cos\theta)^{3/2}}. \f] For other scattering
-        modes, the phase function provided by the material mix is invoked instead.
+        Evaluation of the phase function depends on the scattering mode supported by supported by
+        the dust mix, as defined by each subclass. For the most basic mode, the material mix
+        provides a value for the scattering asymmetry parameter \f$g=\left<\cos\theta\right>\f$. A
+        value of \f$g=0\f$ corresponds to isotropic scattering. Other values \f$-1\le g\le 1\f$ are
+        substituted in the Henyey-Greenstein phase function, \f[ \Phi(\cos\theta) = \frac{1-g^2}
+        {(1+g^2-2g\cos\theta)^{3/2}}. \f] For other scattering modes, the phase function provided
+        by the material mix is invoked instead.
 
         In case polarization is supported in the current simulation configuration, the polarization
         state of the peel off photon packet is adjusted as well. The adjusted Stokes vector for a

@@ -198,8 +198,8 @@ void ComptonPhaseFunction::peeloffScattering(double& I, double& Q, double& U, do
         // calculate the value of the phase function
         double value = phaseFunctionValueForCosine(x, costheta);
 
-        // accumulate the weighted sum in the intensity
-        I += value;
+        // store this value as the intensity
+        I = value;
     }
     else
     {
@@ -220,11 +220,11 @@ void ComptonPhaseFunction::peeloffScattering(double& I, double& Q, double& U, do
         // it is given bfkobs because the photon is at this point aimed towards the observer
         svnew.rotateIntoPlane(bfkobs, bfky);
 
-        // acumulate the weighted sum of all Stokes components to support polarization
-        I += value * svnew.stokesI();
-        Q += value * svnew.stokesQ();
-        U += value * svnew.stokesU();
-        V += value * svnew.stokesV();
+        // store the new Stokes vector components
+        I = value * svnew.stokesI();
+        Q = value * svnew.stokesQ();
+        U = value * svnew.stokesU();
+        V = value * svnew.stokesV();
     }
 
     // adjust the wavelength
