@@ -163,7 +163,7 @@ void StokesVector::applyMueller(double S11, double S12, double S22, double S33, 
     double Q = S12 + S22 * _Q;
     double U = S33 * _U + S34 * _V;
     double V = -S34 * _U + S44 * _V;
-    setPolarized(I, Q, U, V, _normal);
+    setPolarized(I, Q, U, V);
 }
 
 //////////////////////////////////////////////////////////////////////
