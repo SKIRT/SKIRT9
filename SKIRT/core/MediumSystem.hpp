@@ -110,7 +110,7 @@ class MediumSystem : public SimulationItem
 
         PROPERTY_ITEM(dynamicStateOptions, DynamicStateOptions, "the dynamic medium state options")
         ATTRIBUTE_DEFAULT_VALUE(dynamicStateOptions, "DynamicStateOptions")
-        ATTRIBUTE_RELEVANT_IF(dynamicStateOptions, "DynamicState")
+        ATTRIBUTE_RELEVANT_IF(dynamicStateOptions, "IteratePrimary")
 
         PROPERTY_ITEM(radiationFieldOptions, RadiationFieldOptions, "the radiation field options")
         ATTRIBUTE_DEFAULT_VALUE(radiationFieldOptions, "RadiationFieldOptions")
@@ -122,7 +122,7 @@ class MediumSystem : public SimulationItem
 
         PROPERTY_ITEM(iterationOptions, IterationOptions, "the primary and/or secondary emission iteration options")
         ATTRIBUTE_DEFAULT_VALUE(iterationOptions, "IterationOptions")
-        ATTRIBUTE_RELEVANT_IF(iterationOptions, "DynamicState|DynamicEmission")
+        ATTRIBUTE_RELEVANT_IF(iterationOptions, "IteratePrimary|IterateSecondary")
 
         PROPERTY_ITEM(dustEmissionOptions, DustEmissionOptions, "the dust emission options")
         ATTRIBUTE_DEFAULT_VALUE(dustEmissionOptions, "DustEmissionOptions")
@@ -341,6 +341,25 @@ public:
 
     //=============== High-level photon life cycle ===================
 
+private:
+    /** This function returns the absorption opacity \f$k^\text{abs}=\sum_h k_h^\text{abs}\f$
+        summed over all medium components at wavelength \f$\lambda\f$ in spatial cell with index
+        \f$m\f$, where applicable taking into account the properties of the specified incoming
+        photon packet (for example, its polarization state). */
+    double opacityAbs(double lambda, int m, const PhotonPacket* pp) const;
+
+    /** This function returns the scattering opacity \f$k^\text{sca}=\sum_h k_h^\text{sca}\f$
+        summed over all medium components at wavelength \f$\lambda\f$ in spatial cell with index
+        \f$m\f$, where applicable taking into account the properties of the specified incoming
+        photon packet (for example, its polarization state). */
+    double opacitySca(double lambda, int m, const PhotonPacket* pp) const;
+
+    /** This function returns the extinction opacity \f$k^\text{ext}=\sum_h k_h^\text{ext}\f$
+        summed over all medium components at wavelength \f$\lambda\f$ in spatial cell with index
+        \f$m\f$, where applicable taking into account the properties of the specified incoming
+        photon packet (for example, its polarization state). */
+    double opacityExt(double lambda, int m, const PhotonPacket* pp) const;
+
 public:
     /** This function returns the perceived wavelength of the photon packet at the scattering
         interaction distance, taking into account the bulk velocity and Hubble expansion velocity
@@ -420,71 +439,127 @@ public:
         MaterialMix::performScattering() function for more information. */
     void simulateScattering(Random* random, PhotonPacket* pp) const;
 
-    /** This function returns the optical depth at the specified wavelength along a path through
-        the medium system, taking into account only medium components with the specified material
-        type. The starting position and the direction of the path are taken from the specified
-        SpatialGridPath object. This function is intended for use from probes and hence is not
-        performance-sensitive.
+    /** This function calculates the cumulative extinction optical depth at the end of each path
+        segment along a path through the medium system defined by the initial position and
+        direction of the specified PhotonPacket object, and stores the results of the calculation
+        into the same PhotonPacket object.
 
-        The function determines the segments of the path \f$(\Delta s)_m\f$ as it crosses the cells
-        with indices \f$m\f$ in the spatial grid and calculates the optical depth along the path as
-        \f[ \tau_\text{path} = \sum_m (\Delta s)_m \sum_h k_{m,h}^\text{ext}, \f] where
+        This function is intended for handling random-walk photon packet paths during a photon life
+        cycle that \em does use forced-scattering, requiring the optical depth to be calculated for
+        the full path until it reaches the model boundary. Moreover, the function is intended for a
+        photon life cycle that does \em not use explicit absorption, so it suffices to consider the
+        extinction optical depth (without discriminating between scattering and absorption).
+
+        Because the function is at the heart of the photon life cycle, performance is important.
+        Firstly, separating the geometric and optical depth calculations seems to be faster,
+        probably due to memory access and caching issues. So the function first determines and
+        stores the path segments and then calculates and stores the cumulative optical depth at the
+        end of each segment. Secondly, the function implements optimized versions for media with
+        spatially constant cross sections.
+
+        With the geometric path information given, the function calculates the extinction optical
+        depth for each path segment \f$(\Delta s)_m\f$ as it crosses the spatial cell with index
+        \f$m\f$ as \f[ \tau_m^\text{ext} = (\Delta s)_m \sum_h k_{m,h}^\text{ext}, \f] where
         \f$k_{m,h}^\text{ext}\f$ is the extinction opacity corresponding to the \f$h\f$'th medium
-        component in the cell with index \f$m\f$ at the specified wavelength \f$\lambda\f$ and the
-        sum over \f$h\f$ runs only over the medium components with the specified material type. */
-    double getOpticalDepth(const SpatialGridPath* path, double lambda, MaterialMix::MaterialType type) const;
-
-    /** This function calculates the cumulative optical depth at the end of each path segment along
-        a path through the medium system defined by the initial position and direction of the
-        specified PhotonPacket object, and stores the results of the calculation into the same
-        PhotonPacket object.
-
-        This function is intended for handling random-walk photon packet paths during a
-        forced-scattering photon life cycle. Because it is at the heart of the photon life cycle,
-        performance is important. Firstly, separating the geometric and optical depth calculations
-        seems to be faster, probably due to memory access and caching issues. So the function first
-        determines and stores the path segments and then calculates and stores the cumulative
-        optical depth at the end of each segment. Secondly, the function implements optimized
-        versions for media with spatially constant cross sections.
-
-        With the geometric path information given, the function calculates the optical depth for
-        each path segment \f$(\Delta s)_m\f$ as it crosses the spatial cell with index \f$m\f$ as
-        \f[ \tau_m = (\Delta s)_m \sum_h k_{m,h}^\text{ext}, \f] where \f$k_{m,h}^\text{ext}\f$ is
-        the extinction opacity corresponding to the \f$h\f$'th medium component in the cell with
-        index \f$m\f$ and the sum over \f$h\f$ runs over all medium components. The opacities
-        \f$k_{m,h}^\text{ext}\f$ are calculated at the wavelength perceived by the medium in cell
-        \f$m\f$ taking into account the bulk velocity and Hubble expansion velocity in that cell,
-        and taking into account any relevant properties of the incoming photon packet such as the
-        polarization state.
+        component in the cell with index \f$m\f$ and the sum over \f$h\f$ runs over all medium
+        components. The opacities \f$k_{m,h}^\text{ext}\f$ are calculated at the wavelength
+        perceived by the medium in cell \f$m\f$ taking into account the bulk velocity and Hubble
+        expansion velocity in that cell, and taking into account any relevant properties of the
+        incoming photon packet such as the polarization state.
 
         Using these optical depth values per segment, the function determines the cumulative
-        optical depth at the segment exit boundaries and stores them into the specified photon
-        packet object as well. Note that the optical depth at entry of the initial segment is equal
-        to zero by definition. */
-    void setOpticalDepths(PhotonPacket* pp) const;
+        optical depths at the segment exit boundaries and stores them into the specified photon
+        packet object. Note that the optical depth at entry of the initial segment is equal to zero
+        by definition. */
+    void setExtinctionOpticalDepths(PhotonPacket* pp) const;
 
-    /** This function calculates the cumulative optical depth and distance at the end of path
-        segments along a path through the medium system defined by the initial position and
+    /** This function calculates the cumulative scattering and absorption optical depths at the end
+        of each path segment along a path through the medium system defined by the initial position
+        and direction of the specified PhotonPacket object, and stores the results of the
+        calculation into the same PhotonPacket object.
+
+        This function is intended for handling random-walk photon packet paths during a photon life
+        cycle that \em does use forced-scattering, requiring the optical depths to be calculated
+        for the full path until it reaches the model boundary. Moreover, the function is intended
+        for a photon life cycle that \em does use explicit absorption. In this case, the next
+        interaction point is determined based on the scattering optical depth (as opposed to the
+        total extinction optical depth), so we need to calculate and store the scattering and
+        absorption optical depths separately.
+
+        Because it is at the heart of the photon life cycle, performance is important. Firstly,
+        separating the geometric and optical depth calculations seems to be faster, probably due to
+        memory access and caching issues. So the function first determines and stores the path
+        segments and then calculates and stores the cumulative optical depths at the end of each
+        segment. Secondly, the function implements optimized versions for media with spatially
+        constant cross sections.
+
+        With the geometric path information given, the function calculates the scattering and
+        absorption optical depths for each path segment \f$(\Delta s)_m\f$ as it crosses the
+        spatial cell with index \f$m\f$ as \f[ \tau_m^\text{sca,abs} = (\Delta s)_m \sum_h
+        k_{m,h}^\text{sca,abs}, \f] where \f$k_{m,h}^\text{sca,abs}\f$ represent the scattering and
+        absorption opacities corresponding to the \f$h\f$'th medium component in the cell with
+        index \f$m\f$ and the sum over \f$h\f$ runs over all medium components. The opacities
+        \f$k_{m,h}^\text{sca,abs}\f$ are calculated at the wavelength perceived by the medium in
+        cell \f$m\f$ taking into account the bulk velocity and Hubble expansion velocity in that
+        cell, and taking into account any relevant properties of the incoming photon packet such as
+        the polarization state.
+
+        Using these optical depth values per segment, the function determines the cumulative
+        optical depths at the segment exit boundaries and stores them into the specified photon
+        packet object. Note that the optical depth at entry of the initial segment is equal to zero
+        by definition. */
+    void setScatteringAndAbsorptionOpticalDepths(PhotonPacket* pp) const;
+
+    /** This function calculates the cumulative extinction optical depth and distance at the end of
+        path segments along a path through the medium system defined by the initial position and
         direction of the specified PhotonPacket object until the specified interaction optical
-        depth has been reached. The function then interpolates the interaction point, stores it in
-        the photon packet, and returns true. If the specified interaction optical depth is never
-        reached within the path, the function returns false.
+        depth has been reached. The function then interpolates the extinction optical depth and
+        distance at the interaction point, stores these values in the photon packet, and returns
+        true. If the specified interaction optical depth is never reached within the path, the
+        function returns false.
 
         This function is intended for handling random-walk photon packet paths during a photon life
         cycle that does \em not use forced-scattering. In that case there is no need to calculate
-        the complete path, substantially boosting performance in high-optical depth media. Because
-        the function is at the heart of the photon life cycle, performance is important. Hence it
-        implements optimized versions for media with spatially constant cross sections.
+        the complete path, substantially boosting performance in high-optical depth media.
+        Moreover, the function is intended for a photon life cycle that does \em not use explicit
+        absorption, so it suffices to consider the extinction optical depth (without discriminating
+        between scattering and absorption). Because the function is at the heart of the photon life
+        cycle, performance is important. Hence it implements optimized versions for media with
+        spatially constant cross sections.
 
         The optical depth for each traversed path segment is calculated as described for the
-        setOpticalDepths() function, i.e. at the wavelength perceived by the medium in the cell
-        being crossed and taking into account any relevant properties of the incoming photon
-        packet. */
-    bool setInteractionPoint(PhotonPacket* pp, double tauscat) const;
+        setExtinctionOpticalDepths() function, i.e. at the wavelength perceived by the medium in
+        the cell being crossed and taking into account any relevant properties of the incoming
+        photon packet. */
+    bool setInteractionPointUsingExtinction(PhotonPacket* pp, double tauinteract) const;
 
-    /** This function calculates and returns the optical depth (or -1, see "High optical depth
-        below") along a path through the medium system defined by the initial position and
-        direction of the specified PhotonPacket object and up to the specified distance.
+    /** This function calculates the cumulative scattering optical depth, the cumulative absorption
+        optical depth, and the distance at the end of each of the path segments along a path
+        through the medium system defined by the initial position and direction of the specified
+        PhotonPacket object. The calculation proceeds until the \em scattering optical depth
+        reaches the specified interaction optical depth. The function then interpolates the
+        scattering optical depth, the cumulative absorption optical depth, and the distance at the
+        interaction point, stores these values in the photon packet, and returns true. If the
+        specified interaction optical depth is never reached within the path, the function returns
+        false.
+
+        This function is intended for handling random-walk photon packet paths during a photon life
+        cycle that does \em not use forced-scattering. In that case there is no need to calculate
+        the complete path, substantially boosting performance in high-optical depth media.
+        Moreover, the function is intended for a photon life cycle that \em does use explicit
+        absorption, requiring the separate treatment of scattering and absorption optical depth.
+        Because the function is at the heart of the photon life cycle, performance is important.
+        Hence it implements optimized versions for media with spatially constant cross sections.
+
+        The optical depth for each traversed path segment is calculated as described for the
+        setScatteringAndAbsorptionOpticalDepths() function, i.e. at the wavelength perceived by the
+        medium in the cell being crossed and taking into account any relevant properties of the
+        incoming photon packet. */
+    bool setInteractionPointUsingScatteringAndAbsorption(PhotonPacket* pp, double tauinteract) const;
+
+    /** This function calculates and returns the extinction optical depth along a path through the
+        medium system defined by the initial position and direction of the specified PhotonPacket
+        object and up to the specified distance.
 
         This function is intended for handling peel-off photon packets during the photon life
         cycle. Because it is at the heart of the photon life cycle, performance is important. Hence
@@ -495,19 +570,39 @@ public:
         segments are skipped.
 
         The optical depth for each traversed path segment is calculated as described for the
-        setOpticalDepths() function, i.e. at the wavelength perceived by the medium in the cell
-        being crossed and taking into account any relevant properties of the incoming photon
-        packet. This process may require storing intermediate results in the photon packet.
+        setExtinctionOpticalDepths() function, i.e. at the wavelength perceived by the medium in
+        the cell being crossed and taking into account any relevant properties of the incoming
+        photon packet.
 
         <b>High optical depth</b>
 
-        The observable weight of a peel-off photon packet will become numerically zero when the
-        cumulative optical depth along its path is higher than \f$ \tau_\mathrm{max} =
-        \ln(L/L_\mathrm{min}) \f$ where \f$L\f$ is the weight at the peel-off interaction site, and
-        \f$L_\mathrm{min}\f$ is the smallest representable positive double-precision floating point
-        number. Hence this function aborts the calculation and returns positive infinity when this
-        happens. */
-    double getOpticalDepth(PhotonPacket* pp, double distance) const;
+        Assuming that the extinction cross section is always positive, we know that the observable
+        weight of a peel-off photon packet will be numerically zero as soon as the cumulative
+        optical depth along its path is higher than \f$ \tau_\mathrm{max} = \ln(L/L_\mathrm{min})
+        \f$, where \f$L\f$ is the weight at the peel-off interaction site, and \f$L_\mathrm{min}\f$
+        is the smallest representable positive double-precision floating point number. Hence this
+        function aborts the calculation and returns positive infinity when this happens.
+
+        If the extinction cross section can be negative, this optimization cannot be applied
+        because the cumulative optical depth could decrease again further along the path. */
+    double getExtinctionOpticalDepth(const PhotonPacket* pp, double distance) const;
+
+    /** This function returns the extinction optical depth at the specified wavelength along a path
+        through the medium system, taking into account only medium components with the specified
+        material type. The starting position and the direction of the path are taken from the
+        specified SpatialGridPath object. This function is intended for use from probes and hence
+        is not performance-sensitive.
+
+        The function determines the segments of the path \f$(\Delta s)_m\f$ as it crosses the cells
+        with indices \f$m\f$ in the spatial grid and calculates the optical depth along the path as
+        \f[ \tau_\text{path} = \sum_m (\Delta s)_m \sum_h k_{m,h}^\text{ext}, \f] where
+        \f$k_{m,h}^\text{ext}\f$ is the extinction opacity corresponding to the \f$h\f$'th medium
+        component in the cell with index \f$m\f$ at the specified wavelength \f$\lambda\f$ and the
+        sum over \f$h\f$ runs only over the medium components with the specified material type.
+
+        Because no photon packet is available, the calculation ignores kinematic effects as well as
+        any other photon packet properties such as polarization. */
+    double getExtinctionOpticalDepth(const SpatialGridPath* path, double lambda, MaterialMix::MaterialType type) const;
 
     //=============== Radiation field ===================
 
@@ -693,27 +788,40 @@ public:
 
     //=============== Dynamic medium state ===================
 
-public:
+private:
     /** This function invokes the dynamic medium state recipes configured for this simulation to
-        update the medium state for all spatial cells and medium components based on the currently
-        established radiation field. The function returns true if all recipes have converged, and
-        false otherwise. See the DynamicStateRecipe class for more information.
-
-        This function assumes that the radiation field has been calculated and that at least one
+        update the medium state. The function returns true if all recipes have converged, and false
+        otherwise. It assumes that the radiation field has been calculated and that at least one
         dynamic medium state recipe has been configured for the simulation. */
-    bool updateDynamicMediumState();
+    bool updateDynamicStateRecipes();
 
-    /** This function updates the semi-dynamic medium state for all relevant medium components
-        based on the currently established radiation field. A medium component is relevant in the
-        context of this function if the hasSemiDynamicMediumState() function of its material mix
-        returns true. The update is performed by invoking the updateSpecificState() function of the
-        material mix for all spatial cells. The function returns true if the medium states for all
-        medium components have converged, and false otherwise.
+    /** This function updates the medium state for any media in the simulation with an associated
+        material mix that supports a primary or secondary dynamic medium state, depending on the
+        value of the specified flag. The function returns true if all updates have converged, and
+        false otherwise. It assumes that the radiation field has been calculated and that at least
+        one medium component in the simulation supports a dynamic medium state of the requested
+        type. */
+    bool updateDynamicStateMedia(bool primary);
 
-        This function assumes that the radiation field has been calculated and that at least one
-        medium component in the simulation is configured with a material mix requiring/supporting a
-        semi-dynamic medium state. */
-    bool updateSemiDynamicMediumState();
+public:
+    /** This function updates the primary dynamic medium state (PDMS) for all spatial cells and
+        medium components based on the currently established radiation field. It invokes any
+        dynamic medium state recipes (instances of a DynamicStateRecipe subclass) configured for
+        this simulation and updates the medium state for any media in the simulation with an
+        associated material mix (instances of a MaterialMix subclass) that supports a PDMS. The
+        function returns true if all updates have converged, and false otherwise.
+
+        This function assumes that the radiation field has been calculated. */
+    bool updatePrimaryDynamicMediumState();
+
+    /** This function updates the secondary dynamic medium state (SDMS) for all spatial cells and
+        medium components based on the currently established radiation field. It updates the medium
+        state for any media in the simulation with an associated material mix (instances of a
+        MaterialMix subclass) that supports a SDMS. The function returns true if all updates have
+        converged, and false otherwise.
+
+        This function assumes that the radiation field has been calculated. */
+    bool updateSecondaryDynamicMediumState();
 
     //======================== Data Members ========================
 
@@ -731,7 +839,8 @@ private:
     vector<int> _dust_hv;  // a list of indices for media components containing dust
     vector<int> _gas_hv;   // a list of indices for media components containing gas
     vector<int> _elec_hv;  // a list of indices for media components containing electrons
-    vector<int> _sdms_hv;  // a list of indices for media components with a semi-dynamic medium state
+    vector<int> _pdms_hv;  // a list of indices for media components with a primary dynamic medium state
+    vector<int> _sdms_hv;  // a list of indices for media components with a secondary dynamic medium state
 
     // relevant for any simulation mode that stores the radiation field
     WavelengthGrid* _wavelengthGrid{0};  // index ell

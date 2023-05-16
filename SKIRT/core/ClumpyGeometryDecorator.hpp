@@ -11,20 +11,31 @@
 
 ////////////////////////////////////////////////////////////////////
 
-/** The ClumpyGeometryDecorator class is a geometry decorator that adds clumpiness to
-    any  geometry. It basically assigns a fraction \f$f\f$ of the mass of the original
-    geometry to compact clumps, which are distributed statistically according to the same
-    distribution. The properties of a ClumpyGeometryDecorator object are a reference
-    to the original Geometry object being decorated, and the characteristics that
-    describe the clumpiness, i.e. the fraction \f$f\f$ of the mass locked in clumps, the total
-    number \f$N\f$ of clumps, the scale radius \f$h\f$ of a single clump, and the kernel
-    \f$W({\bf{r}},h)\f$ that describes the mass distribution of a single clump. If
-    the original geometry is characterized by the density \f$\rho_{\text{orig}}({\bf{r}})\f$, the
-    new, clumpy stellar geometry is described by \f[ \rho({\bf{r}}) = (1-f)\, \rho_{\text{orig}}
-    ({\bf{r}}) + \frac{f}{N} \sum_{i=1}^N W({\bf{r}}-{\bf{r}}_i,h). \f] where \f${\bf{r}}_i\f$ is
-    the location of the centre of the \f$i\f$'th clump, each of them drawn stochastically from the
-    three-dimensional probability density \f$p({\bf{r}})\, {\text{d}}{\bf{r}} =
-    \rho_{\text{orig}}({\bf{r}})\, {\text{d}}{\bf{r}}\f$.*/
+/** The ClumpyGeometryDecorator class is a geometry decorator that adds clumpiness to any geometry.
+    It basically assigns a fraction \f$f\f$ of the mass of the original geometry to compact clumps,
+    which are distributed statistically according to the same distribution. The properties of a
+    ClumpyGeometryDecorator object are a reference to the original Geometry object being decorated,
+    and the characteristics that describe the clumpiness, i.e. the fraction \f$f\f$ of the mass
+    locked in clumps, the total number \f$N\f$ of clumps, the scale radius \f$h\f$ of a single
+    clump, and the kernel \f$W({\bf{r}},h)\f$ that describes the mass distribution of a single
+    clump. If the original geometry is characterized by the density
+    \f$\rho_{\text{orig}}({\bf{r}})\f$, the new, clumpy stellar geometry is described by \f[
+    \rho({\bf{r}}) = (1-f)\, \rho_{\text{orig}} ({\bf{r}}) + \frac{f}{N} \sum_{i=1}^N
+    W({\bf{r}}-{\bf{r}}_i,h). \f] where \f${\bf{r}}_i\f$ is the location of the centre of the
+    \f$i\f$'th clump, each of them randomly drawn from the three-dimensional probability density
+    \f$p({\bf{r}})\, {\text{d}}{\bf{r}} = \rho_{\text{orig}}({\bf{r}})\, {\text{d}}{\bf{r}}\f$.
+
+    By default, this class uses the standard random generator also used by other classes during
+    setup. Consecutive executions of the same ski file will produce the same clump positions (even
+    if the simulation is configured to have multiple parallel execution threads or processes). On
+    the other hand, multiple occurrences of the ClumpyGeometryDecorator in a given ski file will
+    always produce a different set of clump positions, because consecutive portions of the
+    pseudo-random sequence are being employed. While this is usually just fine, in some models one
+    might want to line up, for example, the clumps in a medium distribution with those in a source
+    distribution. Therefore, if a nonzero value is specified for the \em seed property, the clump
+    positions are generated using a temporary random number generator initialized with that seed.
+    Configuring the same seed for two ClumpyGeometryDecorator instances will line up the respective
+    clump positions, assuming the underlying geometry and the number of clumps are identical. */
 class ClumpyGeometryDecorator : public GenGeometry
 {
     ITEM_CONCRETE(ClumpyGeometryDecorator, GenGeometry, "a decorator that adds clumpiness to any geometry")
@@ -50,6 +61,12 @@ class ClumpyGeometryDecorator : public GenGeometry
                       "the smoothing kernel that describes the density of a single clump")
         ATTRIBUTE_DEFAULT_VALUE(smoothingKernel, "CubicSplineSmoothingKernel")
         ATTRIBUTE_DISPLAYED_IF(smoothingKernel, "Level2")
+
+        PROPERTY_INT(seed, "the seed for the random clump position generator, or zero to use the default generator")
+        ATTRIBUTE_MIN_VALUE(seed, "0")
+        ATTRIBUTE_MAX_VALUE(seed, "1000000")
+        ATTRIBUTE_DEFAULT_VALUE(seed, "0")
+        ATTRIBUTE_DISPLAYED_IF(seed, "Level3")
 
     ITEM_END()
 

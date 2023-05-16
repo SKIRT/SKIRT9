@@ -27,7 +27,6 @@
 #include "BrokenExpDiskGeometry.hpp"
 #include "BruzualCharlotSED.hpp"
 #include "BruzualCharlotSEDFamily.hpp"
-#include "CarbonMonoxideGasMix.hpp"
 #include "CartesianSpatialGrid.hpp"
 #include "CastelliKuruczSED.hpp"
 #include "CastelliKuruczSEDFamily.hpp"
@@ -171,7 +170,9 @@
 #include "NestedLogWavelengthGrid.hpp"
 #include "NetzerAngularDistribution.hpp"
 #include "NoPolarizationProfile.hpp"
+#include "NonLTELineGasMix.hpp"
 #include "NumberColumnMaterialNormalization.hpp"
+#include "NumberMaterialNormalization.hpp"
 #include "OffsetGeometryDecorator.hpp"
 #include "OffsetVectorFieldDecorator.hpp"
 #include "OpacityProbe.hpp"
@@ -209,6 +210,7 @@
 #include "SEDInstrument.hpp"
 #include "SIUnits.hpp"
 #include "ScaledGaussianSmoothingKernel.hpp"
+#include "SecondaryLineLuminosityProbe.hpp"
 #include "SelectDustMixFamily.hpp"
 #include "SersicGeometry.hpp"
 #include "ShellGeometry.hpp"
@@ -244,10 +246,17 @@
 #include "TemperatureWavelengthCellLibrary.hpp"
 #include "ThemisDustMix.hpp"
 #include "TorusGeometry.hpp"
+#include "ToddlersContSED.hpp"
+#include "ToddlersContSEDFamily.hpp"
+#include "ToddlersLineSED.hpp"
+#include "ToddlersLineSEDFamily.hpp"
+#include "ToddlersTotLowResSED.hpp"
+#include "ToddlersTotLowResSEDFamily.hpp"
 #include "TreePolicy.hpp"
 #include "TreeSpatialGrid.hpp"
 #include "TreeSpatialGridTopologyProbe.hpp"
 #include "TriaxialGeometryDecorator.hpp"
+#include "TrivialGasMix.hpp"
 #include "TrustBenchmarkDustMix.hpp"
 #include "TrustGraphiteGrainComposition.hpp"
 #include "TrustNeutralPAHGrainComposition.hpp"
@@ -345,6 +354,9 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<FileLineSED>();
     ItemRegistry::add<ListLineSED>();
     ItemRegistry::add<SingleWavelengthSED>();
+    ItemRegistry::add<ToddlersContSED>();
+    ItemRegistry::add<ToddlersLineSED>();
+    ItemRegistry::add<ToddlersTotLowResSED>();
 
     // SED families
     ItemRegistry::add<SEDFamily>();
@@ -362,6 +374,9 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<LyaGaussianSEDFamily>();
     ItemRegistry::add<LyaDoublePeakedSEDFamily>();
     ItemRegistry::add<LyaSEDFamilyDecorator>();
+    ItemRegistry::add<ToddlersContSEDFamily>();
+    ItemRegistry::add<ToddlersLineSEDFamily>();
+    ItemRegistry::add<ToddlersTotLowResSEDFamily>();
 
     // wavelength distributions
     ItemRegistry::add<WavelengthDistribution>();
@@ -512,6 +527,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // material normalizations
     ItemRegistry::add<MaterialNormalization>();
     ItemRegistry::add<MassMaterialNormalization>();
+    ItemRegistry::add<NumberMaterialNormalization>();
     ItemRegistry::add<AxisMaterialNormalization>();
     ItemRegistry::add<OpticalDepthMaterialNormalization>();
     ItemRegistry::add<MassColumnMaterialNormalization>();
@@ -547,7 +563,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<XRayAtomicGasMix>();
     ItemRegistry::add<EmittingGasMix>();
     ItemRegistry::add<SpinFlipHydrogenGasMix>();
-    ///ItemRegistry::add<CarbonMonoxideGasMix>();
+    ItemRegistry::add<NonLTELineGasMix>();
+    ItemRegistry::add<TrivialGasMix>();
 
     // material mix families
     ItemRegistry::add<MaterialMixFamily>();
@@ -662,6 +679,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<MagneticFieldProbe>();
     ItemRegistry::add<CustomStateProbe>();
     ItemRegistry::add<RadiationFieldProbe>();
+    ItemRegistry::add<SecondaryLineLuminosityProbe>();
     //   .. properties
     ItemRegistry::add<SpatialCellPropertiesProbe>();
     ItemRegistry::add<SpatialGridPlotProbe>();

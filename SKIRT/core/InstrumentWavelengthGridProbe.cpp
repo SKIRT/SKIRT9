@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "InstrumentWavelengthGridProbe.hpp"
+#include "DisjointWavelengthGrid.hpp"
 #include "Indices.hpp"
 #include "Instrument.hpp"
 #include "InstrumentSystem.hpp"
@@ -44,7 +45,29 @@ void InstrumentWavelengthGridProbe::writeWavelengthGrid(Probe* item, const Wavel
         double width = units->owavelength(wavelengthGrid->effectiveWidth(ell));
         double left = units->owavelength(wavelengthGrid->leftBorder(ell));
         double right = units->owavelength(wavelengthGrid->rightBorder(ell));
-        if (units->rwavelength()) std::swap(left, right);
+
+        // special treatment for output units with reverse ordering
+        if (units->rwavelength())
+        {
+            // swap left and right borders
+            std::swap(left, right);
+
+            // fix the bin width
+            if (dynamic_cast<const DisjointWavelengthGrid*>(wavelengthGrid))
+            {
+                // for wavelength grids with constant transmission across the bin,
+                // the effective bin width is easily obtained from the borders
+                width = right - left;
+            }
+            else
+            {
+                // for wavelength grids with variable transmission across the bin,
+                // we apply the approximate correction factor dlambda^2 / lambda^2
+                double lambda = wavelengthGrid->wavelength(ell);
+                double dlambda = wavelengthGrid->effectiveWidth(ell);
+                width *= (dlambda * dlambda) / (lambda * lambda);
+            }
+        }
         file.writeRow(chara, width, left, right);
     }
 }

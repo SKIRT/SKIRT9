@@ -13,7 +13,13 @@ void ListBorderWavelengthGrid::setupSelfBefore()
     DisjointWavelengthGrid::setupSelfBefore();
 
     // set the wavelength grid
-    setWavelengthBorders(NR::array(_wavelengths), _log);
+    Array waves = NR::array(_wavelengths);
+    switch (_characteristic)
+    {
+        case Characteristic::Linear: setWavelengthBorders(waves, false); break;
+        case Characteristic::Logarithmic: setWavelengthBorders(waves, true); break;
+        case Characteristic::Specified: setWavelengthSegments(waves); break;
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

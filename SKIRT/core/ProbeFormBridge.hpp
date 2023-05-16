@@ -132,8 +132,9 @@ class Units;
     quantity being probed along the path starting at the specified position in the specified
     direction. Used for input model probes.
 
-    - \em snapshot: a pointer to the snapshot representing the imported source or medium component
-    being probed. Used for input model probes that probe an imported source or medium component.
+    - \em snapshots: a list of pointers to the snapshots representing the set of imported source
+    or medium components being probed. Used for input model probes that probe imported source or
+    medium components.
 
     - \em valueInEntity: the callback function that will be used to retrieve values of the quantity
     being probed in a snapshot entity with given index. Used for input model probes that probe an
@@ -216,17 +217,17 @@ public:
     /** This is the type declaration for the callback function provided by the imported model probe
         to retrieve the scalar value (in internal units) of the quantity being probed in the
         snapshot entity with index \f$m\f$. */
-    using ScalarValueInEntity = std::function<double(int m)>;
+    using ScalarValueInEntity = std::function<double(const Snapshot* snapshot, int m)>;
 
     /** This is the type declaration for the callback function provided by the imported model probe
         to retrieve the vector value (in internal units) of the quantity being probed in the
         snapshot entity with index \f$m\f$. */
-    using VectorValueInEntity = std::function<Vec(int m)>;
+    using VectorValueInEntity = std::function<Vec(const Snapshot* snapshot, int m)>;
 
     /** This is the type declaration for the callback function provided by the imported model probe
         to retrieve the weight (in arbitrary units) of the quantity being probed in the snapshot
         entity with index \f$m\f$. */
-    using WeightInEntity = std::function<double(int m)>;
+    using WeightInEntity = std::function<double(const Snapshot* snapshot, int m)>;
 
     //======== Writing: for use by spatial grid probes  =======
 
@@ -245,14 +246,24 @@ public:
                        ScalarValueInCell valueInCell, WeightInCell weightInCell);
 
     /** This function causes the form associated with this bridge to output a file for a vector
-        quantity according to the provided information. It should be called only from spatial grid
-        probes. Refer to the class header for more information on the arguments. */
+        quantity (which is always averaged along a path) according to the provided information. It
+        should be called only from spatial grid probes. Refer to the class header for more
+        information on the arguments. */
     void writeQuantity(string fileid, string quantity, string description, string projectedDescription,
                        VectorValueInCell valueInCell, WeightInCell weightInCell);
 
     /** This function causes the form associated with this bridge to output a file for a compound
-        quantity according to the provided information. It should be called only from spatial grid
-        probes. Refer to the class header for more information on the arguments. */
+        quantity that needs to be accumulated along a path according to the provided information.
+        It should be called only from spatial grid probes. Refer to the class header for more
+        information on the arguments. */
+    void writeQuantity(string fileid, string projectedFileid, string quantity, string projectedQuantity,
+                       string description, string projectedDescription, const Array& axis, string axisUnit,
+                       AddColumnDefinitions addColumnDefinitions, CompoundValueInCell valueInCell);
+
+    /** This function causes the form associated with this bridge to output a file for a compound
+        quantity that needs to be averaged along a path according to the provided information. It
+        should be called only from spatial grid probes. Refer to the class header for more
+        information on the arguments. */
     void writeQuantity(string fileid, string unit, string description, string projectedDescription, const Array& axis,
                        string axisUnit, AddColumnDefinitions addColumnDefinitions, CompoundValueInCell valueInCell,
                        WeightInCell weightInCell);
@@ -288,7 +299,7 @@ public:
         It should be called only from input model probes for imported source or media components.
         Refer to the class header for more information on the arguments. */
     void writeQuantity(string fileid, string projectedFileid, string quantity, string projectedQuantity,
-                       string description, string projectedDescription, const Snapshot* snapshot,
+                       string description, string projectedDescription, const vector<const Snapshot*>& snapshots,
                        ScalarValueInEntity valueInEntity);
 
     /** This function causes the form associated with this bridge to output a file for a scalar
@@ -296,14 +307,16 @@ public:
         should be called only from input model probes for imported source or media components.
         Refer to the class header for more information on the arguments. */
     void writeQuantity(string fileid, string quantity, string description, string projectedDescription,
-                       const Snapshot* snapshot, ScalarValueInEntity valueInEntity, WeightInEntity weightInEntity);
+                       const vector<const Snapshot*>& snapshots, ScalarValueInEntity valueInEntity,
+                       WeightInEntity weightInEntity);
 
     /** This function causes the form associated with this bridge to output a file for a vector
         quantity that needs to be averaged along a path, according to the provided information. It
         should be called only from input model probes for imported source or media components.
         Refer to the class header for more information on the arguments. */
     void writeQuantity(string fileid, string quantity, string description, string projectedDescription,
-                       const Snapshot* snapshot, VectorValueInEntity valueInEntity, WeightInEntity weightInEntity);
+                       const vector<const Snapshot*>& snapshots, VectorValueInEntity valueInEntity,
+                       WeightInEntity weightInEntity);
 
     //======== Querying: for use by all form types  =======
 
@@ -430,6 +443,7 @@ private:
         GridScalarAccumulated,
         GridScalarAveraged,
         GridVectorAveraged,
+        GridCompoundAccumulated,
         GridCompoundAveraged,
         InputScalar,
         InputVector,

@@ -67,7 +67,7 @@ void MonteCarloSimulation::runSimulation()
         // special case of merged primary and secondary iterations
         if (_config->hasMergedIterations() && hasPrimaryLuminosity)
         {
-            runPrimaryEmissionIterations();
+            if (_config->hasPrimaryIterations()) runPrimaryEmissionIterations();
             runMergedEmissionIterations();
             runPrimaryEmission();
             runSecondaryEmission();
@@ -134,8 +134,8 @@ void MonteCarloSimulation::runPrimaryEmission()
     wait(segment);
     if (_config->hasRadiationField()) mediumSystem()->communicateRadiationField(true);
 
-    // update semi-dynamic medium state if needed
-    if (_config->hasSemiDynamicState()) mediumSystem()->updateSemiDynamicMediumState();
+    // update secondary dynamic medium state if applicable (in which case we have a medium system)
+    if (_config->hasSecondaryDynamicState()) mediumSystem()->updateSecondaryDynamicMediumState();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -303,9 +303,12 @@ void MonteCarloSimulation::runPrimaryEmissionIterations()
             wait(segment);
             mediumSystem()->communicateRadiationField(true);
 
-            // update the medium state based on the newly established radiation field
-            converged = mediumSystem()->updateDynamicMediumState();
+            // update the primary dynamic medium state and log convergence info
+            converged = mediumSystem()->updatePrimaryDynamicMediumState();
         }
+
+        // notify the probe system
+        probeSystem()->probePrimary(iter);
 
         // verify and log loop convergence
         if (logLoopConvergence(log(), converged, iter, minIters, maxIters)) break;
@@ -365,14 +368,17 @@ void MonteCarloSimulation::runSecondaryEmissionIterations()
             wait(segment);
             mediumSystem()->communicateRadiationField(false);
 
-            // if needed, update semi-dynamic medium state and log convergence info
-            if (_config->hasSemiDynamicState()) converged &= mediumSystem()->updateSemiDynamicMediumState();
+            // update secondary dynamic medium state and log convergence info
+            converged &= mediumSystem()->updateSecondaryDynamicMediumState();
 
             // log dust emission convergence info
             if (mediumSystem()->hasDust())
                 converged &= dustConvergence.logConvergenceInfo(log(), units(), mediumSystem(), iter, fractionOfPrimary,
                                                                 fractionOfPrevious);
         }
+
+        // notify the probe system
+        probeSystem()->probeSecondary(iter);
 
         // verify and log loop convergence
         if (logLoopConvergence(log(), converged, iter, minIters, maxIters)) break;
@@ -430,8 +436,8 @@ void MonteCarloSimulation::runMergedEmissionIterations()
             wait(segment1);
             mediumSystem()->communicateRadiationField(true);
 
-            // if needed, update semi-dynamic medium state and log convergence info
-            if (_config->hasSemiDynamicState()) converged &= mediumSystem()->updateSemiDynamicMediumState();
+            // update secondary dynamic medium state and log convergence info
+            converged &= mediumSystem()->updateSecondaryDynamicMediumState();
 
             // clear the secondary radiation field
             mediumSystem()->clearRadiationField(false);
@@ -453,14 +459,17 @@ void MonteCarloSimulation::runMergedEmissionIterations()
             wait(segment2);
             mediumSystem()->communicateRadiationField(false);
 
-            // update the medium state based on the newly established radiation field
-            converged &= mediumSystem()->updateDynamicMediumState();
+            // update the primary dynamic medium state and log convergence info
+            converged &= mediumSystem()->updatePrimaryDynamicMediumState();
 
             // log dust emission convergence info
             if (mediumSystem()->hasDust())
                 converged &= dustConvergence.logConvergenceInfo(log(), units(), mediumSystem(), iter, fractionOfPrimary,
                                                                 fractionOfPrevious);
         }
+
+        // notify the probe system
+        probeSystem()->probeSecondary(iter);
 
         // verify and log loop convergence
         if (logLoopConvergence(log(), converged, iter, minIters, maxIters)) break;
@@ -529,15 +538,18 @@ void MonteCarloSimulation::performLifeCycle(size_t firstIndex, size_t numIndices
                 // trace the packet through the media, if any
                 if (_config->hasMedium())
                 {
+                    // --- forced scattering ---
                     if (_config->forceScattering())
                     {
-                        // perform cycle with forced scattering
                         double Lthreshold = pp.luminosity() / _config->minWeightReduction();
                         int minScattEvents = _config->minScattEvents();
                         while (true)
                         {
                             // calculate segments and optical depths for the complete path
-                            mediumSystem()->setOpticalDepths(&pp);
+                            if (_config->explicitAbsorption())
+                                mediumSystem()->setScatteringAndAbsorptionOpticalDepths(&pp);
+                            else
+                                mediumSystem()->setExtinctionOpticalDepths(&pp);
 
                             // advance the packet
                             if (store) storeRadiationField(&pp);
@@ -553,20 +565,14 @@ void MonteCarloSimulation::performLifeCycle(size_t firstIndex, size_t numIndices
                             mediumSystem()->simulateScattering(random(), &pp);
                         }
                     }
+                    // --- non-forced scattering ---
                     else
                     {
-                        // perform cycle without forced scattering
                         while (true)
                         {
-                            // generate a random interaction optical depth
-                            double tauscat = random()->expon();
-
-                            // find the physical interaction point corresponding to this optical depth
-                            // if the interaction optical depth is outside of the path, terminate the photon packet
-                            if (!mediumSystem()->setInteractionPoint(&pp, tauscat)) break;
-
-                            // advance the packet
-                            simulateNonForcedPropagation(&pp);
+                            // advance the packet (without storing the radiation field)
+                            // if the interaction point is outside of the path, terminate the packet
+                            if (!simulateNonForcedPropagation(&pp)) break;
 
                             // process the scattering event
                             if (peel) peelOffScattering(&pp, &ppp);
@@ -622,14 +628,14 @@ void MonteCarloSimulation::storeRadiationField(const PhotonPacket* pp)
             double extBeg = 1.;
             for (const auto& segment : pp->segments())
             {
-                double lnExtEnd = -segment.tau;  // extinction factor and its logarithm at end of current segment
+                double lnExtEnd = -segment.tauExt();  // extinction factor and its logarithm at end of current segment
                 double extEnd = exp(lnExtEnd);
-                int m = segment.m;
+                int m = segment.m();
                 if (m >= 0)
                 {
                     // use this flavor of the lnmean function to avoid recalculating the logarithm of the extinction
                     double extMean = SpecialFunctions::lnmean(extEnd, extBeg, lnExtEnd, lnExtBeg);
-                    double Lds = luminosity * extMean * segment.ds;
+                    double Lds = luminosity * extMean * segment.ds();
                     mediumSystem()->storeRadiationField(hasPrimaryOrigin, m, ell, Lds);
                 }
                 lnExtBeg = lnExtEnd;
@@ -643,19 +649,19 @@ void MonteCarloSimulation::storeRadiationField(const PhotonPacket* pp)
         double extBeg = 1.;
         for (const auto& segment : pp->segments())
         {
-            double lnExtEnd = -segment.tau;  // extinction factor and its logarithm at end of current segment
+            double lnExtEnd = -segment.tauExt();  // extinction factor and its logarithm at end of current segment
             double extEnd = exp(lnExtEnd);
-            int m = segment.m;
+            int m = segment.m();
             if (m >= 0)
             {
                 double lambda = pp->perceivedWavelength(mediumSystem()->bulkVelocity(m),
-                                                        _config->hubbleExpansionRate() * segment.s);
+                                                        _config->hubbleExpansionRate() * segment.s());
                 int ell = _config->radiationFieldWLG()->bin(lambda);
                 if (ell >= 0)
                 {
                     // use this flavor of the lnmean function to avoid recalculating the logarithm of the extinction
                     double extMean = SpecialFunctions::lnmean(extEnd, extBeg, lnExtEnd, lnExtBeg);
-                    double Lds = pp->perceivedLuminosity(lambda) * extMean * segment.ds;
+                    double Lds = pp->perceivedLuminosity(lambda) * extMean * segment.ds();
                     mediumSystem()->storeRadiationField(pp->hasPrimaryOrigin(), m, ell, Lds);
                 }
             }
@@ -698,28 +704,59 @@ void MonteCarloSimulation::simulateForcedPropagation(PhotonPacket* pp)
     // determine the physical position of the interaction point
     pp->findInteractionPoint(tau);
 
-    // calculate the albedo for the cell containing the interaction point
-    double albedo = mediumSystem()->albedoForScattering(pp);
+    // adjust the photon packet weight with the escape fraction and, depending on the type of photon cycle,
+    // with either the scattered fraction or the cumulative absorption optical depth at the interaction point
+    if (_config->explicitAbsorption())
+    {
+        double tauAbs = pp->interactionOpticalDepth();
+        pp->applyBias(-expm1(-taupath) * exp(-tauAbs));
+    }
+    else
+    {
+        double albedo = mediumSystem()->albedoForScattering(pp);
+        pp->applyBias(-expm1(-taupath) * albedo);
+    }
 
-    // adjust the weight by the scattered fraction
-    pp->applyBias(-expm1(-taupath) * albedo);
-
-    // advance the position
+    // advance the photon packet position
     pp->propagate(pp->interactionDistance());
 }
 
 ////////////////////////////////////////////////////////////////////
 
-void MonteCarloSimulation::simulateNonForcedPropagation(PhotonPacket* pp)
+bool MonteCarloSimulation::simulateNonForcedPropagation(PhotonPacket* pp)
 {
-    // calculate the albedo for the cell containing the interaction point
-    double albedo = mediumSystem()->albedoForScattering(pp);
+    // generate a random interaction optical depth
+    double tauinteract = random()->expon();
 
-    // adjust the weight by the albedo
-    pp->applyBias(albedo);
+    if (_config->explicitAbsorption())
+    {
+        // find the physical interaction point corresponding to this scattering optical depth
+        // and calculate the absorption optical depth at the interaction point;
+        // if the interaction point is outside of the path, terminate the photon packet
+        if (!mediumSystem()->setInteractionPointUsingScatteringAndAbsorption(pp, tauinteract)) return false;
+
+        // get the cumulative absorption optical depth at the interaction point
+        double tauAbs = pp->interactionOpticalDepth();
+
+        // adjust the photon packet weight by the corresponding extinction (or stimulation, for negative optical depth)
+        pp->applyBias(exp(-tauAbs));
+    }
+    else
+    {
+        // find the physical interaction point corresponding to this optical depth
+        // if the interaction point is outside of the path, terminate the photon packet
+        if (!mediumSystem()->setInteractionPointUsingExtinction(pp, tauinteract)) return false;
+
+        // calculate the albedo for the cell containing the interaction point
+        double albedo = mediumSystem()->albedoForScattering(pp);
+
+        // adjust the photon packet weight by the albedo
+        pp->applyBias(albedo);
+    }
 
     // advance the photon packet position
     pp->propagate(pp->interactionDistance());
+    return true;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -741,20 +778,24 @@ void MonteCarloSimulation::peelOffScattering(PhotonPacket* pp, PhotonPacket* ppp
         int numMedia = wv.size();
         for (int h = 0; h != numMedia; ++h)
         {
-            for (Instrument* instr : _instrumentSystem->instruments())
+            // skip media that don't scatter this photon packet
+            if (wv[h] > 0.)
             {
-                if (!instr->isSameObserverAsPreceding())
+                for (Instrument* instr : _instrumentSystem->instruments())
                 {
-                    // get the direction towards the instrument and (for polarization only) its Y-axis orientation
-                    Direction bfkobs = instr->bfkobs(pp->position());
-                    Direction bfky = _config->hasPolarization() ? instr->bfky(pp->position()) : Direction();
+                    if (!instr->isSameObserverAsPreceding())
+                    {
+                        // get the direction towards the instrument and (for polarization only) its Y-axis orientation
+                        Direction bfkobs = instr->bfkobs(pp->position());
+                        Direction bfky = _config->hasPolarization() ? instr->bfky(pp->position()) : Direction();
 
-                    // calculate peel-off for the current component and launch the peel-off photon packet
-                    mediumSystem()->peelOffScattering(h, wv[h], lambda, bfkobs, bfky, pp, ppp);
+                        // calculate peel-off for the current component and launch the peel-off photon packet
+                        mediumSystem()->peelOffScattering(h, wv[h], lambda, bfkobs, bfky, pp, ppp);
+                    }
+
+                    // have the peel-off photon packet detected
+                    instr->detect(ppp);
                 }
-
-                // have the peel-off photon packet detected
-                instr->detect(ppp);
             }
         }
     }

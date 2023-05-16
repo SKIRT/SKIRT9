@@ -10,11 +10,13 @@
 
 ////////////////////////////////////////////////////////////////////
 
-/** ImportedSourceDensityProbe probes the initial or current mass density of each imported source
-    component in the simulation for which the information is available. The probe uses the data as
-    represented by the imported snapshot, without involving the spatial grid of the simulation.
-    When associated with a form that projects the quantity along a path, the probe outputs mass
-    surface density.
+/** ImportedSourceDensityProbe probes the initial or current mass density aggregated over all
+    imported sources in the simulation. It uses the data as represented by the imported
+    snapshot(s), without involving the spatial grid of the simulation. When associated with a form
+    that projects the quantity along a path, the probe outputs mass surface density.
+
+    The probe produces output only if the simulation has at least one source component, if all
+    sources are imported, and if all of these sources offer the requested type of mass density.
 
     In most use cases, one will be interested in probing the current stellar mass of a source
     component. However, this information is usually not automatically available to the SKIRT input
@@ -28,10 +30,10 @@
     use the initial mass imported as one of the %SED family parameters as a suboptimal solution.
     However, assuming that the current mass can be obtained when preparing SKIRT's input data, a
     better solution is to provide it as a separate, additional column to the import process, enable
-    the \em importCurrentMass option for the ImportedSource component, and set the \em massType
+    the \em importCurrentMass option for the ImportedSource component(s), and set the \em massType
     option for the probe to \c CurrentMass. Now the probe will use the separately imported current
-    mass. In all cases, if a source component does not import the selected mass type, the probe
-    produces no output for that component. */
+    mass. Note that, as indicated above, the requested mass type must be available for all source
+    components for the probe to produce output. */
 class ImportedSourceDensityProbe : public InputModelFormProbe
 {
     /** The enumeration type indicating whether to use initial mass or current mass. */
@@ -52,8 +54,9 @@ class ImportedSourceDensityProbe : public InputModelFormProbe
     //======================== Other Functions =======================
 
 protected:
-    /** This function probes the specified imported source component. */
-    void probeImportedSource(string sh, const ImportedSource* source, const Snapshot* snapshot) override;
+    /** This function probes the specified imported source components. */
+    void probeImportedSources(const vector<const ImportedSource*>& sources,
+                              const vector<const Snapshot*>& snapshots) override;
 };
 
 ////////////////////////////////////////////////////////////////////

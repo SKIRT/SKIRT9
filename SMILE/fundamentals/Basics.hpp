@@ -9,7 +9,7 @@
 ////////////////////////////////////////////////////////////////////
 
 // Define this macro before including the system headers to silence warnings on Windows
-// about the C library functions that could cause buffer overruns, such as sprintf()
+// about C library functions that Microsoft considers to be unsafe, such as getenv()
 #define _CRT_SECURE_NO_WARNINGS
 
 // Define this macro before including the <cmath> system header to force the Windows

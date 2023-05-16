@@ -145,7 +145,7 @@ namespace
 
 void System::initialize(int argc, char** argv)
 {
-    // Force standard locale so that sprintf and stream formatting always produces the same result
+    // Force standard locale so that snprintf and stream formatting always produces the same result
     std::locale::global(std::locale::classic());  // this may or may not affect C locale so do this first
     setlocale(LC_ALL, "C");
 
@@ -363,7 +363,7 @@ string System::timestamp(bool iso8601)
     system_clock::duration since_epoch = now_tp.time_since_epoch();
     since_epoch -= duration_cast<seconds>(since_epoch);
     milliseconds millis = duration_cast<milliseconds>(since_epoch);
-    sprintf(resultBuf + milliOffset, "%03d", static_cast<int>(millis.count()));
+    snprintf(resultBuf + milliOffset, sizeof(resultBuf) - milliOffset, "%03d", static_cast<int>(millis.count()));
 
     return resultBuf;
 }

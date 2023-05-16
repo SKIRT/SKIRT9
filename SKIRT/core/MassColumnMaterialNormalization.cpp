@@ -7,7 +7,7 @@
 #include "Geometry.hpp"
 #include "MaterialMix.hpp"
 
-//////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
 
 std::pair<double, double> MassColumnMaterialNormalization::numberAndMass(const Geometry* geom,
                                                                          const MaterialMix* mix) const
@@ -21,3 +21,5 @@ std::pair<double, double> MassColumnMaterialNormalization::numberAndMass(const G
 
     return std::make_pair(reqNumberColumnDensity / geomColumnDensity, reqMassColumnDensity / geomColumnDensity);
 }
+
+////////////////////////////////////////////////////////////////////

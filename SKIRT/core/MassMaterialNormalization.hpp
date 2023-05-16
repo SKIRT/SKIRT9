@@ -8,7 +8,7 @@
 
 #include "MaterialNormalization.hpp"
 
-//////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
 
 /** A MassMaterialNormalization object normalizes the amount of material in a geometric medium by
     specifying the total mass. */
@@ -26,11 +26,11 @@ class MassMaterialNormalization : public MaterialNormalization
 
 public:
     /** This function returns the total number of entities and total mass in the medium, in that
-        order, given a geometry and material mix in addition sto the user configuration options offered
+        order, given a geometry and material mix in addition to the user configuration options offered
         by this class. */
     std::pair<double, double> numberAndMass(const Geometry* geom, const MaterialMix* mix) const override;
 };
 
-//////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
 
 #endif

@@ -101,10 +101,15 @@ void Configuration::setupSelfBefore()
     // ---- set configuration relevant for simulations that have media ----
 
     // retrieve basic photon life-cycle options
+    _explicitAbsorption = ms->photonPacketOptions()->explicitAbsorption();
     _forceScattering = ms->photonPacketOptions()->forceScattering();
     _minWeightReduction = ms->photonPacketOptions()->minWeightReduction();
     _minScattEvents = ms->photonPacketOptions()->minScattEvents();
     _pathLengthBias = ms->photonPacketOptions()->pathLengthBias();
+
+    // check for negative extinction, which requires explicit absorption
+    for (auto medium : ms->media())
+        if (medium->mix()->hasNegativeExtinction()) _hasNegativeExtinction = true;
 
     // retrieve Lyman-alpha options
     if (simulationMode == SimulationMode::LyaExtinctionOnly)
@@ -130,20 +135,20 @@ void Configuration::setupSelfBefore()
     // retrieve the presence of phases and iterations
     if (simulationMode == SimulationMode::ExtinctionOnly)
     {
-        _hasPrimaryIterations = sim->iterateMediumState();
+        _hasPrimaryIterations = sim->iteratePrimaryEmission();
     }
     else if (simulationMode == SimulationMode::DustEmission)
     {
         _hasSecondaryEmission = true;
         _hasDustEmission = true;
-        _hasPrimaryIterations = sim->iterateMediumState();
+        _hasPrimaryIterations = sim->iteratePrimaryEmission();
         _hasSecondaryIterations = sim->iterateSecondaryEmission();
     }
     else if (simulationMode == SimulationMode::GasEmission)
     {
         _hasSecondaryEmission = true;
         _hasGasEmission = true;
-        _hasPrimaryIterations = sim->iterateMediumState();
+        _hasPrimaryIterations = sim->iteratePrimaryEmission();
         _hasSecondaryIterations = sim->iterateSecondaryEmission();
     }
     else if (simulationMode == SimulationMode::DustAndGasEmission)
@@ -151,7 +156,7 @@ void Configuration::setupSelfBefore()
         _hasSecondaryEmission = true;
         _hasDustEmission = true;
         _hasGasEmission = true;
-        _hasPrimaryIterations = sim->iterateMediumState();
+        _hasPrimaryIterations = sim->iteratePrimaryEmission();
         _hasSecondaryIterations = sim->iterateSecondaryEmission();
     }
 
@@ -164,27 +169,6 @@ void Configuration::setupSelfBefore()
         _secondarySourceBias = ms->secondaryEmissionOptions()->sourceBias();
     }
 
-    // retrieve primary iteration options; suppress primary iteration if no packets are launched
-    if (_hasPrimaryIterations)
-    {
-        _numPrimaryIterationPackets = _numPrimaryPackets * ms->iterationOptions()->primaryIterationPacketsMultiplier();
-        if (_numPrimaryIterationPackets >= 1.)
-        {
-            _minPrimaryIterations = ms->iterationOptions()->minPrimaryIterations();
-            _maxPrimaryIterations = max(_minPrimaryIterations, ms->iterationOptions()->maxPrimaryIterations());
-        }
-        else
-            _hasPrimaryIterations = false;
-    }
-
-    // if iteration over primary emission is requested, verify that there are dynamic state recipes
-    if (_hasPrimaryIterations)
-    {
-        if (ms->dynamicStateOptions()->recipes().empty())
-            throw FATALERROR("At least one dynamic state recipe must be configured when iterateMediumState is true");
-        _hasDynamicState = true;
-    }
-
     // retrieve secondary iteration options; suppress secondary iteration if no packets are launched
     if (_hasSecondaryIterations)
     {
@@ -194,10 +178,61 @@ void Configuration::setupSelfBefore()
         {
             _minSecondaryIterations = ms->iterationOptions()->minSecondaryIterations();
             _maxSecondaryIterations = max(_minSecondaryIterations, ms->iterationOptions()->maxSecondaryIterations());
-            if (_hasPrimaryIterations) _hasMergedIterations = ms->iterationOptions()->includePrimaryEmission();
+            _hasMergedIterations = ms->iterationOptions()->includePrimaryEmission();
         }
         else
             _hasSecondaryIterations = false;
+    }
+
+    // retrieve primary iteration options; suppress primary iteration if no packets are launched
+    if (_hasPrimaryIterations || _hasMergedIterations)
+    {
+        _numPrimaryIterationPackets = _numPrimaryPackets * ms->iterationOptions()->primaryIterationPacketsMultiplier();
+        if (_numPrimaryIterationPackets >= 1.)
+        {
+            if (_hasPrimaryIterations)
+            {
+                _minPrimaryIterations = ms->iterationOptions()->minPrimaryIterations();
+                _maxPrimaryIterations = max(_minPrimaryIterations, ms->iterationOptions()->maxPrimaryIterations());
+            }
+        }
+        else
+        {
+            _hasPrimaryIterations = false;
+            _hasMergedIterations = false;
+        }
+    }
+
+    // check for primary dynamic medium state
+    if (_hasPrimaryIterations || _hasMergedIterations)
+    {
+        _hasDynamicStateRecipes = ms->dynamicStateOptions() && !ms->dynamicStateOptions()->recipes().empty();
+        for (auto medium : ms->media())
+        {
+            auto type = medium->mix()->hasDynamicMediumState();
+            if (type == MaterialMix::DynamicStateType::Primary
+                || (_hasMergedIterations && type == MaterialMix::DynamicStateType::PrimaryIfMergedIterations))
+                _hasPrimaryDynamicStateMedia = true;
+        }
+        _hasPrimaryDynamicState = _hasDynamicStateRecipes || _hasPrimaryDynamicStateMedia;
+    }
+
+    // when iterating over primary emission, there must be primary dynamic state recipes or media
+    if (_hasPrimaryIterations && !_hasPrimaryDynamicState)
+        throw FATALERROR(
+            "At least one dynamic state recipe or medium must be configured when iterating over primary emission");
+
+    // check for secondary dynamic medium state
+    if (_hasSecondaryEmission)
+    {
+        for (auto medium : ms->media())
+        {
+            auto type = medium->mix()->hasDynamicMediumState();
+            if (type == MaterialMix::DynamicStateType::Secondary
+                || (!_hasMergedIterations && type == MaterialMix::DynamicStateType::PrimaryIfMergedIterations))
+                _hasSecondaryDynamicStateMedia = true;
+        }
+        _hasSecondaryDynamicState = _hasSecondaryDynamicStateMedia;
     }
 
     // retrieve radiation field options
@@ -270,11 +305,6 @@ void Configuration::setupSelfBefore()
             _mediaNeedGeneratePosition = true;
         }
     }
-
-    // check for semi-dymamic medium state
-    if (_hasSecondaryEmission)
-        for (auto medium : ms->media())
-            if (medium->mix()->hasSemiDynamicMediumState()) _hasSemiDynamicState = true;
 
     // check for velocities in media
     for (auto medium : ms->media())
@@ -360,15 +390,13 @@ void Configuration::setupSelfAfter()
         log->info("  Including dust emission with equilibrium heating");
     if (_hasGasEmission) log->info("  Including gas emission");
 
-    if (_hasSemiDynamicState) log->info("  With semi-dynamic state");
-
     if (_hasPolarization) log->info("  Including support for polarization");
     if (_hasMovingMedia) log->info("  Including support for kinematics");
 
     if (_hasPrimaryIterations && _hasSecondaryIterations)
     {
         if (_hasMergedIterations)
-            log->info("  Iterating over primary emission, and then over primary and secondary emission");
+            log->info("  Iterating over primary emission, and then over primary and secondary emission (merged)");
         else
             log->info("  Iterating over primary emission, and then over secondary emission");
     }
@@ -378,8 +406,18 @@ void Configuration::setupSelfAfter()
     }
     else if (_hasSecondaryIterations)
     {
-        log->info("  Iterating over secondary emission");
+        if (_hasMergedIterations)
+            log->info("  Iterating over primary and secondary emission (merged)");
+        else
+            log->info("  Iterating over secondary emission");
     }
+
+    if (_hasPrimaryDynamicState && _hasSecondaryDynamicState)
+        log->info("  With primary and secondary dynamic medium state");
+    else if (_hasPrimaryDynamicState)
+        log->info("  With primary dynamic medium state");
+    else if (_hasSecondaryDynamicState)
+        log->info("  With secondary dynamic medium state");
 
     // --- log cosmology ---
 
@@ -410,7 +448,15 @@ void Configuration::setupSelfAfter()
         log->warning("  Selecting a grid with the model symmetry might be more efficient");
     }
 
-    // --- other warnings ---
+    // --- log (and possibly adjust) photon cycle options ---
+
+    // enable explicit absorption when we have negative extinction because
+    // the photon cycle without explicit absorption does not support negative extinction
+    if (_hasNegativeExtinction && !_explicitAbsorption)
+    {
+        log->warning("  Enabling explicit absorption to allow handling negative extinction cross sections");
+        _explicitAbsorption = true;
+    }
 
     // enable forced scattering when we have a radiation field because
     // the photon cycle without forced scattering does not support storing the radiation field
@@ -420,6 +466,14 @@ void Configuration::setupSelfAfter()
         _forceScattering = true;
     }
 
+    // log photon cycle variations
+    if (_hasMedium)
+    {
+        string ea = _explicitAbsorption ? "with" : "no";
+        string fs = _forceScattering ? "with" : "no";
+        log->info("  Photon life cycle: " + ea + " explicit absorption; " + fs + " forced scattering");
+    }
+
     // disable path length stretching if the wavelength of a photon packet can change during its lifetime
     if ((_hasMovingMedia || _hasScatteringDispersion || _hubbleExpansionRate || _hasLymanAlpha) && _forceScattering
         && _pathLengthBias > 0.)
@@ -427,6 +481,8 @@ void Configuration::setupSelfAfter()
         log->warning("  Disabling path length stretching to allow Doppler shifts to be properly sampled");
         _pathLengthBias = 0.;
     }
+
+    // --- log magnetic field issues ---
 
     // if there is a magnetic field, there usually should be spheroidal particles
     if (_magneticFieldMediumIndex >= 0 && !_hasSpheroidalPolarization)
@@ -438,7 +494,6 @@ void Configuration::setupSelfAfter()
 void Configuration::setEmulationMode()
 {
     _emulationMode = true;
-    _hasDynamicState = false;
     _hasPrimaryIterations = false;
     _hasSecondaryIterations = false;
     _hasMergedIterations = false;
@@ -450,6 +505,11 @@ void Configuration::setEmulationMode()
     _numPrimaryIterationPackets = 0;
     _numSecondaryPackets = 0;
     _numSecondaryIterationPackets = 0;
+    _hasDynamicStateRecipes = false;
+    _hasPrimaryDynamicStateMedia = false;
+    _hasSecondaryDynamicStateMedia = false;
+    _hasPrimaryDynamicState = false;
+    _hasSecondaryDynamicState = false;
 }
 
 ////////////////////////////////////////////////////////////////////

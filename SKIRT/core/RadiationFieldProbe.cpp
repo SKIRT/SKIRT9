@@ -18,6 +18,12 @@
 
 Probe::When RadiationFieldProbe::when() const
 {
+    switch (probeAfter())
+    {
+        case ProbeAfter::Run: return When::Run;
+        case ProbeAfter::Primary: return When::Primary;
+        case ProbeAfter::Secondary: return When::Secondary;
+    }
     return When::Run;
 }
 

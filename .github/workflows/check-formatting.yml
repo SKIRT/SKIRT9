@@ -10,7 +10,7 @@
 name: Check formatting
 
 # workflow event triggers
-on: [pull_request, workflow_dispatch]
+on: pull_request
 
 # jobs that run
 jobs:
@@ -18,14 +18,17 @@ jobs:
   check_formatting_job:
     # job name, displayed in the action log
     name: Check source code formatting
-    # run this job on the Github-provided runner with Ubuntu 18.04
-    # because that runner has clang-format version 9 installed
-    runs-on: ubuntu-18.04
+    # run this job on a Github-provided runner with Ubuntu 20.04
+    # (and not 22.04 because we cannot install clang-format-9)
+    runs-on: ubuntu-20.04
     # steps that make up this job
     steps:
-    # checkout using the default checkout action, v2
+    # install clang-format-9
+    - name: Install
+      run: sudo apt install clang-format-9
+    # checkout using a recent version of the checkout action
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     # run clang-format-9 on all .hpp and .cpp files
     - name: Autoformat
       run: find . \( -name '*.hpp' -or -name '*.cpp' \) -exec clang-format-9 -style=file -i {} \;

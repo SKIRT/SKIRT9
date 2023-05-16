@@ -95,38 +95,6 @@ class voronoicell_base {
         void init_octahedron_base(double l);
         void init_tetrahedron_base(double x0,double y0,double z0,double x1,double y1,double z1,double x2,double y2,double z2,double x3,double y3,double z3);
         void translate(double x,double y,double z);
-        void draw_pov(double x,double y,double z,FILE *fp=stdout);
-        /** Outputs the cell in POV-Ray format, using cylinders for edges
-         * and spheres for vertices, to a given file.
-         * \param[in] (x,y,z) a displacement to add to the cell's
-         *                    position.
-         * \param[in] filename the name of the file to write to. */
-        inline void draw_pov(double x,double y,double z,const char *filename) {
-            FILE *fp=safe_fopen(filename,"w");
-            draw_pov(x,y,z,fp);
-            fclose(fp);
-        }
-        void draw_pov_mesh(double x,double y,double z,FILE *fp=stdout);
-        /** Outputs the cell in POV-Ray format as a mesh2 object to a
-         * given file.
-         * \param[in] (x,y,z) a displacement to add to the cell's
-         *                    position.
-         * \param[in] filename the name of the file to write to. */
-        inline void draw_pov_mesh(double x,double y,double z,const char *filename) {
-            FILE *fp=safe_fopen(filename,"w");
-            draw_pov_mesh(x,y,z,fp);
-            fclose(fp);
-        }
-        void draw_gnuplot(double x,double y,double z,FILE *fp=stdout);
-        /** Outputs the cell in Gnuplot format a given file.
-         * \param[in] (x,y,z) a displacement to add to the cell's
-         *                    position.
-         * \param[in] filename the name of the file to write to. */
-        inline void draw_gnuplot(double x,double y,double z,const char *filename) {
-            FILE *fp=safe_fopen(filename,"w");
-            draw_gnuplot(x,y,z,fp);
-            fclose(fp);
-        }
         double volume();
         double max_radius_squared();
         double total_edge_distance();
@@ -135,59 +103,15 @@ class voronoicell_base {
         int number_of_faces();
         int number_of_edges();
         void vertex_orders(std::vector<int> &v);
-        void output_vertex_orders(FILE *fp=stdout);
         void vertices(std::vector<double> &v);
-        void output_vertices(FILE *fp=stdout);
         void vertices(double x,double y,double z,std::vector<double> &v);
-        void output_vertices(double x,double y,double z,FILE *fp=stdout);
         void face_areas(std::vector<double> &v);
         void minkowski(double r,double &ar,double &vo);
-        /** Outputs the areas of the faces.
-         * \param[in] fp the file handle to write to. */
-        inline void output_face_areas(FILE *fp=stdout) {
-            std::vector<double> v;face_areas(v);
-            voro_print_vector(v,fp);
-        }
         void face_orders(std::vector<int> &v);
-        /** Outputs a list of the number of sides of each face.
-         * \param[in] fp the file handle to write to. */
-        inline void output_face_orders(FILE *fp=stdout) {
-            std::vector<int> v;face_orders(v);
-            voro_print_vector(v,fp);
-        }
         void face_freq_table(std::vector<int> &v);
-        /** Outputs a */
-        inline void output_face_freq_table(FILE *fp=stdout) {
-            std::vector<int> v;face_freq_table(v);
-            voro_print_vector(v,fp);
-        }
         void face_vertices(std::vector<int> &v);
-        /** Outputs the */
-        inline void output_face_vertices(FILE *fp=stdout) {
-            std::vector<int> v;face_vertices(v);
-            voro_print_face_vertices(v,fp);
-        }
         void face_perimeters(std::vector<double> &v);
-        /** Outputs a list of the perimeters of each face.
-         * \param[in] fp the file handle to write to. */
-        inline void output_face_perimeters(FILE *fp=stdout) {
-            std::vector<double> v;face_perimeters(v);
-            voro_print_vector(v,fp);
-        }
         void normals(std::vector<double> &v);
-        /** Outputs a list of the perimeters of each face.
-         * \param[in] fp the file handle to write to. */
-        inline void output_normals(FILE *fp=stdout) {
-            std::vector<double> v;normals(v);
-            voro_print_positions(v,fp);
-        }
-        /** Outputs a custom string of information about the Voronoi
-         * cell to a file. It assumes the cell is at (0,0,0) and has a
-         * the default_radius associated with it.
-         * \param[in] format the custom format string to use.
-         * \param[in] fp the file handle to write to. */
-        inline void output_custom(const char *format,FILE *fp=stdout) {output_custom(format,0,0,0,0,default_radius,fp);}
-        void output_custom(const char *format,int i,double x,double y,double z,double r,FILE *fp=stdout);
         template<class vc_class>
         bool nplane(vc_class &vc,double x,double y,double z,double rsq,int p_id);
         bool plane_intersects(double x,double y,double z,double rsq);
@@ -195,25 +119,12 @@ class voronoicell_base {
         void construct_relations();
         void check_relations();
         void check_duplicates();
-        void print_edges();
         /** Returns a list of IDs of neighboring particles
          * corresponding to each face.
          * \param[out] v a reference to a vector in which to return the
          *               results. If no neighbor information is
          *               available, a blank vector is returned. */
         virtual void neighbors(std::vector<int> &v) {v.clear();}
-        /** This is a virtual function that is overridden by a routine
-         * to print a list of IDs of neighboring particles
-         * corresponding to each face. By default, when no neighbor
-         * information is available, the routine does nothing.
-         * \param[in] fp the file handle to write to. */
-        virtual void output_neighbors(FILE * /*fp=stdout*/) {}
-        /** This a virtual function that is overridden by a routine to
-         * print the neighboring particle IDs for a given vertex. By
-         * default, when no neighbor information is available, the
-         * routine does nothing.
-         * \param[in] i the vertex to consider. */
-        virtual void print_edges_neighbors(int /*i*/) {}
         /** This is a simple inline function for picking out the index
          * of the next edge counterclockwise at the current vertex.
          * \param[in] a the index of an edge of the current vertex.
@@ -499,11 +410,6 @@ class voronoicell_neighbor : public voronoicell_base {
         void init_tetrahedron(double x0,double y0,double z0,double x1,double y1,double z1,double x2,double y2,double z2,double x3,double y3,double z3);
         void check_facets();
         virtual void neighbors(std::vector<int> &v);
-        virtual void print_edges_neighbors(int i);
-        virtual void output_neighbors(FILE *fp=stdout) {
-            std::vector<int> v;neighbors(v);
-            voro_print_vector(v,fp);
-        }
     private:
         int *paux1;
         int *paux2;

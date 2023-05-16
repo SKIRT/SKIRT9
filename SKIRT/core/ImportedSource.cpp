@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "ImportedSource.hpp"
+#include "Band.hpp"
 #include "Configuration.hpp"
 #include "Constants.hpp"
 #include "FatalError.hpp"
@@ -184,6 +185,32 @@ double ImportedSource::specificLuminosity(double wavelength, int m) const
     Array params;
     _snapshot->parameters(m, params);
     return _sedFamily->specificLuminosity(wavelength, params);
+}
+
+////////////////////////////////////////////////////////////////////
+
+double ImportedSource::meanSpecificLuminosity(Range wavelengthRange, int m) const
+{
+    wavelengthRange.intersect(_wavelengthRange);
+    if (wavelengthRange.empty()) return 0.;
+
+    Array params, lambdav, pv, Pv;
+    _snapshot->parameters(m, params);
+    return _sedFamily->cdf(lambdav, pv, Pv, wavelengthRange, params) / wavelengthRange.width();
+}
+
+////////////////////////////////////////////////////////////////////
+
+double ImportedSource::meanSpecificLuminosity(const Band* band, int m) const
+{
+    Range wavelengthRange = band->wavelengthRange();
+    wavelengthRange.intersect(_wavelengthRange);
+    if (wavelengthRange.empty()) return 0.;
+
+    Array params, lambdav, pv, Pv;
+    _snapshot->parameters(m, params);
+    double Ltot = _sedFamily->cdf(lambdav, pv, Pv, wavelengthRange, params);
+    return band->meanSpecificLuminosity(lambdav, pv) * Ltot;
 }
 
 ////////////////////////////////////////////////////////////////////

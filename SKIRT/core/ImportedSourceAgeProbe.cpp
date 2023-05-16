@@ -10,16 +10,20 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void ImportedSourceAgeProbe::probeImportedSourceWeighted(string sh, string sweight, const Snapshot* snapshot,
-                                                         std::function<double(int)> weight)
+void ImportedSourceAgeProbe::probeImportedSourceWeighted(string sweight, const vector<const Snapshot*>& snapshots,
+                                                         std::function<double(const Snapshot* snapshot, int m)> weight)
 {
-    if (snapshot->hasAge())
+    // verify that all snapshots offer the age property
+    bool haveAge = true;
+    for (auto snapshot : snapshots) haveAge &= snapshot->hasAge();
+
+    if (haveAge)
     {
         // construct a bridge and produce output
         ProbeFormBridge bridge(this, form());
         bridge.writeQuantity(
-            sh + "_t", "time", "age", sweight + "-weighted age", snapshot,
-            [snapshot](int m) { return snapshot->age(m); }, weight);
+            "t", "time", "age", sweight + "-weighted age", snapshots,
+            [](const Snapshot* snapshot, int m) { return snapshot->age(m); }, weight);
     }
 }
 

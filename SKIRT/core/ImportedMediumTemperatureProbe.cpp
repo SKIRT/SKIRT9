@@ -19,8 +19,8 @@ void ImportedMediumTemperatureProbe::probeImportedMedium(string sh, const Import
         // define call-back functions to retrieve the probed quantity and corresponding weight for a given entity
         // for dust media, use the gas density rather than the dust density for weighting the probed quantity
         bool dust = medium->mix()->isDust() && snapshot->hasMetallicity();
-        auto getValue = [snapshot](int m) { return snapshot->temperature(m); };
-        auto getWeight = [snapshot, dust](int m) {
+        auto getValue = [](const Snapshot* snapshot, int m) { return snapshot->temperature(m); };
+        auto getWeight = [dust](const Snapshot* snapshot, int m) {
             double w = snapshot->density(m);
             if (dust) w /= snapshot->metallicity(m);
             return w;
@@ -28,8 +28,8 @@ void ImportedMediumTemperatureProbe::probeImportedMedium(string sh, const Import
 
         // construct a bridge and produce output
         ProbeFormBridge bridge(this, form());
-        bridge.writeQuantity(sh + "_T", "temperature", "temperature", "density-weighted temperature", snapshot,
-                             getValue, getWeight);
+        bridge.writeQuantity(sh + "_T", "temperature", "temperature", "density-weighted temperature",
+                             vector<const Snapshot*>{snapshot}, getValue, getWeight);
     }
 }
 

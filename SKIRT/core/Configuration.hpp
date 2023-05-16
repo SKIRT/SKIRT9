@@ -234,13 +234,6 @@ public:
 
     // ----> phases, iterations, number of packets
 
-    /** Returns true if the simulation has a dynamic medium state, and false otherwise. */
-    bool hasDynamicState() const { return _hasDynamicState; }
-
-    /** Returns true if one or more media in the simulation have a semi-dynamic medium state, and
-        false otherwise. */
-    bool hasSemiDynamicState() const { return _hasSemiDynamicState; }
-
     /** Returns true if secondary emission must be calculated for any media type, and false
         otherwise. */
     bool hasSecondaryEmission() const { return _hasSecondaryEmission; }
@@ -293,7 +286,44 @@ public:
         this fraction compared to the previous iteration. */
     double maxFractionOfPrevious() const { return _maxFractionOfPrevious; }
 
+    // ----> dynamic medium state
+
+    /** Returns true if the simulation has primary or merged iterations and includes one or more
+        dynamic medium state recipes (instances of a DynamicStateRecipe subclass), and false
+        otherwise. In the current implementation, these recipes by definition perform primary
+        dynamic medium state (PDMS) updates. */
+    bool hasDynamicStateRecipes() const { return _hasDynamicStateRecipes; }
+
+    /** Returns true if the simulation has primary or merged iterations and includes one or more
+        media with an associated MaterialMix that performs primary dynamic medium state (PDMS)
+        updates, and false otherwise. */
+    bool hasPrimaryDynamicStateMedia() const { return _hasPrimaryDynamicStateMedia; }
+
+    /** Returns true if the simulation has secondary emission and includes one or more media with
+        an associated MaterialMix that performs secondary dynamic medium state (SDMS) updates, and
+        false otherwise. */
+    bool hasSecondaryDynamicStateMedia() const { return _hasSecondaryDynamicStateMedia; }
+
+    /** Returns true if the simulation has primary or merged iterations and includes one or more
+        recipes or media that perform primary dynamic medium state (PDMS) updates, and false
+        otherwise. */
+    bool hasPrimaryDynamicState() const { return _hasPrimaryDynamicState; }
+
+    /** Returns true if the simulation has primary or merged iterations and includes one or more
+        recipes or media that perform secondary dynamic medium state (SDMS) updates, and false
+        otherwise. */
+    bool hasSecondaryDynamicState() const { return _hasSecondaryDynamicState; }
+
     // ----> photon cycle
+
+    /** Returns true if the extinction cross section (the sum of the absorption and scattering
+        cross section) for one or more material mixes in the simulation can be negative, and false
+        if not. */
+    bool hasNegativeExtinction() const { return _hasNegativeExtinction; }
+
+    /** Returns true if explicit absorption should be used during the photon cycle, false if not.
+        */
+    bool explicitAbsorption() const { return _explicitAbsorption; }
 
     /** Returns true if forced scattering should be used during the photon cycle, false if not. */
     bool forceScattering() const { return _forceScattering; }
@@ -342,7 +372,8 @@ public:
         separate data structure, and false otherwise. */
     bool hasSecondaryRadiationField() const { return _hasSecondaryRadiationField; }
 
-    /** Returns the wavelength grid to be used for storing the radiation field. */
+    /** Returns the wavelength grid to be used for storing the radiation field, or the null pointer
+        if hasRadiationField() returns false. */
     DisjointWavelengthGrid* radiationFieldWLG() const { return _radiationFieldWLG; }
 
     // ----> secondary emission
@@ -439,8 +470,6 @@ private:
     int _numPropertySamples{1};
 
     // phases, iterations, number of packets
-    bool _hasDynamicState{false};
-    bool _hasSemiDynamicState{false};
     bool _hasSecondaryEmission{false};
     bool _hasPrimaryIterations{false};
     bool _hasSecondaryIterations{false};
@@ -456,7 +485,16 @@ private:
     double _maxFractionOfPrimary{0.01};
     double _maxFractionOfPrevious{0.03};
 
+    // dynamic medium state
+    bool _hasDynamicStateRecipes{false};
+    bool _hasPrimaryDynamicStateMedia{false};
+    bool _hasSecondaryDynamicStateMedia{false};
+    bool _hasPrimaryDynamicState{false};
+    bool _hasSecondaryDynamicState{false};
+
     // photon cycle
+    bool _hasNegativeExtinction{false};
+    bool _explicitAbsorption{false};
     bool _forceScattering{true};
     double _minWeightReduction{1e4};
     int _minScattEvents{0};

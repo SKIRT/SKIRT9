@@ -43,11 +43,13 @@ void TemperatureProbe::probe()
     // can probe dust temperature only if panchromatic radiation field is available
     if (config->hasPanRadiationField() && ms->hasDust())
     {
-        // can probe dust temperature only after the full simulation run
-        if (probeAfter() == ProbeAfter::Setup)
+        // can probe dust temperature only during or after secondary emission phase
+        // issue a warning because otherwise this is a very confusing problem for the user to locate and fix
+        if (probeAfter() == ProbeAfter::Setup || probeAfter() == ProbeAfter::Primary)
         {
-            // issue a warning because (1) the default value is Setup and (2) otherwise this is a very confusing problem
-            find<Log>()->warning("Cannot probe dust temperature after setup; set probeAfter to 'Run'");
+            find<Log>()->warning(
+                typeAndName()
+                + " can probe dust temperature only during or after secondary emission; adjust probeAfter property");
         }
         else
         {

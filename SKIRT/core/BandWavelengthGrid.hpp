@@ -39,7 +39,7 @@ protected:
         class). */
     virtual vector<Band*> bandList() = 0;
 
-    //======================== Other Functions =======================
+    //================= Functions implementing virtual base class functions ===================
 
 public:
     /** This function returns the number of bands in the grid (or equivalently, the number of
@@ -82,6 +82,13 @@ public:
         returns -1. If multiple bands match this condition, the function returns the index for the
         band with the shortest characteristic wavelength. */
     int bin(double lambda) const override;
+
+    //=============== Functions specific to band wavelength grids =================
+
+public:
+    /** This function returns (a pointer to) the Band object defining the transmission curve for
+        the bin with index \f$\ell\f$. */
+    const Band* band(int ell) const;
 
     //======================== Data Members ========================
 

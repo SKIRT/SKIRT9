@@ -18,13 +18,6 @@ void SpatialGrid::setupSelfBefore()
 
 //////////////////////////////////////////////////////////////////////
 
-double SpatialGrid::diagonal(int m) const
-{
-    return cbrt(3. * volume(m));
-}
-
-//////////////////////////////////////////////////////////////////////
-
 void SpatialGrid::writeGridPlotFiles(const SimulationItem* probe) const
 {
     // For the xy plane (always)

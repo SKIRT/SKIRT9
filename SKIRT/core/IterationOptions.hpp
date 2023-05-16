@@ -22,29 +22,29 @@ class IterationOptions : public SimulationItem
         ATTRIBUTE_MIN_VALUE(minPrimaryIterations, "1")
         ATTRIBUTE_MAX_VALUE(minPrimaryIterations, "1000")
         ATTRIBUTE_DEFAULT_VALUE(minPrimaryIterations, "1")
-        ATTRIBUTE_RELEVANT_IF(minPrimaryIterations, "DynamicState")
+        ATTRIBUTE_RELEVANT_IF(minPrimaryIterations, "IteratePrimary")
 
         PROPERTY_INT(maxPrimaryIterations, "the maximum number of iterations during primary emission")
         ATTRIBUTE_MIN_VALUE(maxPrimaryIterations, "1")
         ATTRIBUTE_MAX_VALUE(maxPrimaryIterations, "1000")
         ATTRIBUTE_DEFAULT_VALUE(maxPrimaryIterations, "10")
-        ATTRIBUTE_RELEVANT_IF(maxPrimaryIterations, "DynamicState")
+        ATTRIBUTE_RELEVANT_IF(maxPrimaryIterations, "IteratePrimary")
 
         PROPERTY_INT(minSecondaryIterations, "the minimum number of iterations during secondary emission")
         ATTRIBUTE_MIN_VALUE(minSecondaryIterations, "1")
         ATTRIBUTE_MAX_VALUE(minSecondaryIterations, "1000")
         ATTRIBUTE_DEFAULT_VALUE(minSecondaryIterations, "1")
-        ATTRIBUTE_RELEVANT_IF(minSecondaryIterations, "DynamicEmission")
+        ATTRIBUTE_RELEVANT_IF(minSecondaryIterations, "IterateSecondary")
 
         PROPERTY_INT(maxSecondaryIterations, "the maximum number of iterations during secondary emission")
         ATTRIBUTE_MIN_VALUE(maxSecondaryIterations, "0")
         ATTRIBUTE_MAX_VALUE(maxSecondaryIterations, "1000")
         ATTRIBUTE_DEFAULT_VALUE(maxSecondaryIterations, "10")
-        ATTRIBUTE_RELEVANT_IF(maxSecondaryIterations, "DynamicEmission")
+        ATTRIBUTE_RELEVANT_IF(maxSecondaryIterations, "IterateSecondary")
 
         PROPERTY_BOOL(includePrimaryEmission, "include primary emission in the secondary emission iterations")
         ATTRIBUTE_DEFAULT_VALUE(includePrimaryEmission, "false")
-        ATTRIBUTE_RELEVANT_IF(includePrimaryEmission, "DynamicState&DynamicEmission")
+        ATTRIBUTE_RELEVANT_IF(includePrimaryEmission, "IterateSecondary")
         ATTRIBUTE_DISPLAYED_IF(includePrimaryEmission, "Level3")
 
         PROPERTY_DOUBLE(primaryIterationPacketsMultiplier,
@@ -52,7 +52,7 @@ class IterationOptions : public SimulationItem
         ATTRIBUTE_MIN_VALUE(primaryIterationPacketsMultiplier, "]0")
         ATTRIBUTE_MAX_VALUE(primaryIterationPacketsMultiplier, "1000]")
         ATTRIBUTE_DEFAULT_VALUE(primaryIterationPacketsMultiplier, "1")
-        ATTRIBUTE_RELEVANT_IF(primaryIterationPacketsMultiplier, "DynamicState|DynamicEmission")
+        ATTRIBUTE_RELEVANT_IF(primaryIterationPacketsMultiplier, "IteratePrimary|includePrimaryEmission")
         ATTRIBUTE_DISPLAYED_IF(primaryIterationPacketsMultiplier, "Level3")
 
         PROPERTY_DOUBLE(secondaryIterationPacketsMultiplier,
@@ -60,7 +60,7 @@ class IterationOptions : public SimulationItem
         ATTRIBUTE_MIN_VALUE(secondaryIterationPacketsMultiplier, "]0")
         ATTRIBUTE_MAX_VALUE(secondaryIterationPacketsMultiplier, "1000]")
         ATTRIBUTE_DEFAULT_VALUE(secondaryIterationPacketsMultiplier, "1")
-        ATTRIBUTE_RELEVANT_IF(secondaryIterationPacketsMultiplier, "DynamicState|DynamicEmission")
+        ATTRIBUTE_RELEVANT_IF(secondaryIterationPacketsMultiplier, "IterateSecondary")
         ATTRIBUTE_DISPLAYED_IF(secondaryIterationPacketsMultiplier, "Level3")
 
     ITEM_END()

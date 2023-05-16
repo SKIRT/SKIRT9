@@ -18,12 +18,14 @@ void ImportedMediumDensityProbe::probeImportedMedium(string sh, const ImportedMe
     if (snapshot->holdsNumber())
     {
         bridge.writeQuantity(sh + "_n", sh + "_N", "numbervolumedensity", "numbersurfacedensity", "number density",
-                             "column density", snapshot, [snapshot](int m) { return snapshot->density(m); });
+                             "column density", vector<const Snapshot*>{snapshot},
+                             [](const Snapshot* s, int m) { return s->density(m); });
     }
     else
     {
         bridge.writeQuantity(sh + "_rho", sh + "_Sigma", "massvolumedensity", "masssurfacedensity", "mass density",
-                             "mass surface density", snapshot, [snapshot](int m) { return snapshot->density(m); });
+                             "mass surface density", vector<const Snapshot*>{snapshot},
+                             [](const Snapshot* s, int m) { return s->density(m); });
     }
 }
 

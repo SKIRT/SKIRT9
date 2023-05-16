@@ -25,9 +25,9 @@
     flip material mix to calculate the 21 cm line luminosity and absorption cross section for use
     during secondary emission. This calculation happens in the updateSpecificState() function,
     which is invoked at the end of primary emission (because the material mix advertises that it
-    has a semi-dynamic medium state). This does imply that the 21 cm line absorption remains zero
-    during primary emission, which is not a problem as long as the primary sources don't emit in
-    the radio wavelength range. Thus, unless dust opacities are very high, there is no need for
+    has a secondary dynamic medium state). This does imply that the 21 cm line absorption remains
+    zero during primary emission, which is not a problem as long as the primary sources don't emit
+    in the radio wavelength range. Thus, unless dust opacities are very high, there is no need for
     iteration over primary nor secondary emission.
 
     If one is not interested in dust emission (i.e. only in the 21 cm line emission), the
@@ -175,7 +175,7 @@ class SpinFlipHydrogenGasMix : public EmittingGasMix
 {
     ITEM_CONCRETE(SpinFlipHydrogenGasMix, EmittingGasMix,
                   "A gas mix supporting the spin-flip 21 cm hydrogen transition")
-        ATTRIBUTE_TYPE_INSERT(SpinFlipHydrogenGasMix, "CustomMediumState,SemiDynamicState")
+        ATTRIBUTE_TYPE_INSERT(SpinFlipHydrogenGasMix, "CustomMediumState,DynamicState")
 
         PROPERTY_DOUBLE(defaultMetallicity, "the default metallicity of the gas")
         ATTRIBUTE_MIN_VALUE(defaultMetallicity, "]0")
@@ -208,6 +208,13 @@ class SpinFlipHydrogenGasMix : public EmittingGasMix
         ATTRIBUTE_DEFAULT_VALUE(defaultNeutralFraction, "0.5")
         ATTRIBUTE_DISPLAYED_IF(defaultNeutralFraction, "Level2")
 
+        PROPERTY_DOUBLE(defaultNeutralSurfaceDensity, "the default neutral hydrogen surface density")
+        ATTRIBUTE_QUANTITY(defaultNeutralSurfaceDensity, "masssurfacedensity")
+        ATTRIBUTE_MIN_VALUE(defaultNeutralSurfaceDensity, "]0 Msun/pc2")
+        ATTRIBUTE_MAX_VALUE(defaultNeutralSurfaceDensity, "1e9 Msun/pc2]")
+        ATTRIBUTE_DEFAULT_VALUE(defaultNeutralSurfaceDensity, "10 Msun/pc2")
+        ATTRIBUTE_DISPLAYED_IF(defaultNeutralSurfaceDensity, "Level2")
+
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============
@@ -224,9 +231,9 @@ public:
         mix depend on the values of specific state variables other than the number density. */
     bool hasExtraSpecificState() const override;
 
-    /** This function returns true, indicating that this material has a semi-dynamic medium state.
-        */
-    bool hasSemiDynamicMediumState() const override;
+    /** This function returns DynamicStateType::Secondary, indicating that this material mix has a
+        dynamic medium state with updates that affect only secondary emission. */
+    DynamicStateType hasDynamicMediumState() const override;
 
     /** This function returns true, indicating that this material supports secondary line emission
         from gas. */
@@ -245,8 +252,8 @@ public:
         variables used by the receiving material mix. For this class, the function returns a list
         containing descriptors for the properties defined in the input model (number density,
         metallicity, temperature, and neutral hydrogen fraction) and for a variable to hold the
-        atomic hydrogen fraction derived from the radiation field when the semi-dynamic medium
-        state is updated. */
+        atomic hydrogen fraction derived from the radiation field when the dynamic medium state is
+        updated. */
     vector<StateVariable> specificStateVariableInfo() const override;
 
     /** This function initializes the specific state variables requested by this material mix

@@ -25,6 +25,13 @@
     the wavelength bin width, and the left and right borders of the bin. */
 class RadiationFieldProbe : public SpatialGridFormProbe
 {
+    /** The enumeration type indicating when probing occurs. */
+    ENUM_DEF(ProbeAfter, Run, Primary, Secondary)
+        ENUM_VAL(ProbeAfter, Run, "after the complete simulation run")
+        ENUM_VAL(ProbeAfter, Primary, "after each iteration over primary emission")
+        ENUM_VAL(ProbeAfter, Secondary, "after each iteration over secondary emission")
+    ENUM_END()
+
     ITEM_CONCRETE(RadiationFieldProbe, SpatialGridFormProbe,
                   "internal spatial grid: the mean radiation field intensity")
         ATTRIBUTE_TYPE_DISPLAYED_IF(RadiationFieldProbe, "Level2&SpatialGrid&RadiationField")
@@ -32,13 +39,17 @@ class RadiationFieldProbe : public SpatialGridFormProbe
         PROPERTY_BOOL(writeWavelengthGrid, "output a text file with the radiation field wavelength grid")
         ATTRIBUTE_DEFAULT_VALUE(writeWavelengthGrid, "false")
 
+        PROPERTY_ENUM(probeAfter, ProbeAfter, "perform the probe after")
+        ATTRIBUTE_DEFAULT_VALUE(probeAfter, "Run")
+        ATTRIBUTE_DISPLAYED_IF(probeAfter, "DynamicState|IterateSecondary")
+
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============
 
 protected:
-    /** This function returns an enumeration indicating that probing must be performed at the end
-        of the simulation. */
+    /** This function returns an enumeration indicating when probing for this probe should be
+        performed corresponding to the configured value of the \em probeAfter property. */
     When when() const override;
 
     //======================== Other Functions =======================

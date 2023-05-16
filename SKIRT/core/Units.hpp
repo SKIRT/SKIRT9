@@ -278,6 +278,22 @@ public:
         (W) to the program's output units. */
     double obolluminosity(double L) const;
 
+    /** This function returns a string containing the name of the unit of bolometric luminosity
+        volume density adopted by the program for output. */
+    string ubolluminosityvolumedensity() const;
+
+    /** This function converts the bolometric luminosity volume density \f$L\f$ from the internally
+        used SI units (W/m3) to the program's output units. */
+    double obolluminosityvolumedensity(double L) const;
+
+    /** This function returns a string containing the name of the unit of bolometric luminosity
+        surface density adopted by the program for output. */
+    string ubolluminositysurfacedensity() const;
+
+    /** This function converts the bolometric luminosity surface density \f$L\f$ from the
+        internally used SI units (W/m2) to the program's output units. */
+    double obolluminositysurfacedensity(double L) const;
+
     /** This function returns a string describing the monochromatic luminosity output style adopted
         by the program. */
     string smonluminosity() const;

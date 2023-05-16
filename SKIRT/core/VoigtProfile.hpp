@@ -63,8 +63,8 @@ namespace VoigtProfile
         (-0.869789-0.565886\zeta-0.096312\zeta^2 \\ &+ x (0.110987+0.070103\zeta+0.011557\zeta^2 \\
         &+ x (-0.005200-0.003240\zeta-0.000519\zeta^2))))) \f} where \f$\zeta = \log_{10}(a)\f$.
 
-        The acceptance fractions are required to be \f$\mathrm{e}^{-􏰜u^2}\f$ and
-        \f$\mathrm{e}^{-􏰜u^2} / \mathrm{e}^{-􏰜u_0^2}\f$ in the regions \f$u\le 􏰠u_0\f$ and
+        The acceptance fractions are required to be \f$\mathrm{e}^{-u^2}\f$ and
+        \f$\mathrm{e}^{-u^2} / \mathrm{e}^{-u_0^2}\f$ in the regions \f$u\le u_0\f$ and
         \f$u>u_0\f$, respectively. A first random number uniformly distributed between 0 and 1
         determines which region we use by comparing it with p, where \f[ p =
         \frac{\int_{-\infty}^{u_0} g(u)\,\mathrm{d}u} {\int_{-\infty}^{+\infty} g(u)\,\mathrm{d}u}

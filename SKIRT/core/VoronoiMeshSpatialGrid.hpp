@@ -80,6 +80,11 @@ public:
     /** This function returns the volume of the cell with index \f$m\f$. */
     double volume(int m) const override;
 
+    /** This function returns the approximate diagonal of the cell with index \f$m\f$. For a
+        Voronoi grid, it returns \f$(3V)^(1/3)\f$ where \f$V\f$ is the volume of the cell. This
+        corresponds to the correct diagonal only for cubical cells. */
+    double diagonal(int m) const override;
+
     /** This function returns the index of the cell that contains the position \f${\bf{r}}\f$. */
     int cellIndex(Position bfr) const override;
 

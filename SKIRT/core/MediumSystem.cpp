@@ -266,7 +266,18 @@ void MediumSystem::setupSelfAfter()
             case MaterialMix::MaterialType::Gas: _gas_hv.push_back(h); break;
             case MaterialMix::MaterialType::Electrons: _elec_hv.push_back(h); break;
         }
-        if (mix(0, h)->hasSemiDynamicMediumState()) _sdms_hv.push_back(h);
+        switch (mix(0, h)->hasDynamicMediumState())
+        {
+            case MaterialMix::DynamicStateType::None: break;
+            case MaterialMix::DynamicStateType::Primary: _pdms_hv.push_back(h); break;
+            case MaterialMix::DynamicStateType::Secondary: _sdms_hv.push_back(h); break;
+            case MaterialMix::DynamicStateType::PrimaryIfMergedIterations:
+                if (_config->hasMergedIterations())
+                    _pdms_hv.push_back(h);
+                else
+                    _sdms_hv.push_back(h);
+                break;
+        }
     }
 
     // ----- inform user about allocated memory -----
@@ -611,6 +622,45 @@ double MediumSystem::opacityExt(double lambda, int m) const
 
 ////////////////////////////////////////////////////////////////////
 
+double MediumSystem::opacityAbs(double lambda, int m, const PhotonPacket* pp) const
+{
+    double result = 0.;
+    for (int h = 0; h != _numMedia; ++h)
+    {
+        MaterialState mst(_state, m, h);
+        result += mix(m, h)->opacityAbs(lambda, &mst, pp);
+    }
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::opacitySca(double lambda, int m, const PhotonPacket* pp) const
+{
+    double result = 0.;
+    for (int h = 0; h != _numMedia; ++h)
+    {
+        MaterialState mst(_state, m, h);
+        result += mix(m, h)->opacitySca(lambda, &mst, pp);
+    }
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::opacityExt(double lambda, int m, const PhotonPacket* pp) const
+{
+    double result = 0.;
+    for (int h = 0; h != _numMedia; ++h)
+    {
+        MaterialState mst(_state, m, h);
+        result += mix(m, h)->opacityExt(lambda, &mst, pp);
+    }
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////
+
 double MediumSystem::perceivedWavelengthForScattering(const PhotonPacket* pp) const
 {
     if (_config->hasMovingMedia())
@@ -689,14 +739,18 @@ void MediumSystem::peelOffScattering(const ShortArray& wv, double lambda, Direct
     double I = 0., Q = 0., U = 0., V = 0.;
     for (int h = 0; h != _numMedia; ++h)
     {
-        double Ih = 0., Qh = 0., Uh = 0., Vh = 0.;
-        MaterialState mst(_state, m, h);
-        pp->setScatteringComponent(h);
-        mix(m, h)->peeloffScattering(Ih, Qh, Uh, Vh, lambda, bfkobs, bfky, &mst, pp);
-        I += Ih * wv[h];
-        Q += Qh * wv[h];
-        U += Uh * wv[h];
-        V += Vh * wv[h];
+        // skip media that don't scatter this photon packet
+        if (wv[h] > 0.)
+        {
+            double Ih = 0., Qh = 0., Uh = 0., Vh = 0.;
+            MaterialState mst(_state, m, h);
+            pp->setScatteringComponent(h);
+            mix(m, h)->peeloffScattering(Ih, Qh, Uh, Vh, lambda, bfkobs, bfky, &mst, pp);
+            I += Ih * wv[h];
+            Q += Qh * wv[h];
+            U += Uh * wv[h];
+            V += Vh * wv[h];
+        }
     }
 
     // pass the result to the peel-off photon packet
@@ -778,21 +832,7 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::getOpticalDepth(const SpatialGridPath* path, double lambda, MaterialMix::MaterialType type) const
-{
-    // determine the geometric details of the path and calculate the optical depth at the same time
-    auto generator = getPathSegmentGenerator(_grid, path);
-    double tau = 0.;
-    while (generator->next())
-    {
-        if (generator->m() >= 0) tau += opacityExt(lambda, generator->m(), type) * generator->ds();
-    }
-    return tau;
-}
-
-////////////////////////////////////////////////////////////////////
-
-void MediumSystem::setOpticalDepths(PhotonPacket* pp) const
+void MediumSystem::setExtinctionOpticalDepths(PhotonPacket* pp) const
 {
     // determine and store the path segments in the photon packet
     auto generator = getPathSegmentGenerator(_grid, pp);
@@ -804,7 +844,6 @@ void MediumSystem::setOpticalDepths(PhotonPacket* pp) const
 
     // calculate the cumulative optical depth and store it in the photon packet for each path segment
     double tau = 0.;
-    int i = 0;
 
     // single medium, spatially constant cross sections
     if (_config->hasSingleConstantSectionMedium())
@@ -812,8 +851,8 @@ void MediumSystem::setOpticalDepths(PhotonPacket* pp) const
         double section = mix(0, 0)->sectionExt(pp->wavelength());
         for (auto& segment : pp->segments())
         {
-            if (segment.m >= 0) tau += section * _state.numberDensity(segment.m, 0) * segment.ds;
-            pp->setOpticalDepth(i++, tau);
+            if (segment.m() >= 0) tau += section * _state.numberDensity(segment.m(), 0) * segment.ds();
+            segment.setOpticalDepth(tau);
         }
     }
 
@@ -824,10 +863,10 @@ void MediumSystem::setOpticalDepths(PhotonPacket* pp) const
         for (int h = 0; h != _numMedia; ++h) sectionv[h] = mix(0, h)->sectionExt(pp->wavelength());
         for (auto& segment : pp->segments())
         {
-            if (segment.m >= 0)
+            if (segment.m() >= 0)
                 for (int h = 0; h != _numMedia; ++h)
-                    tau += sectionv[h] * _state.numberDensity(segment.m, h) * segment.ds;
-            pp->setOpticalDepth(i++, tau);
+                    tau += sectionv[h] * _state.numberDensity(segment.m(), h) * segment.ds();
+            segment.setOpticalDepth(tau);
         }
     }
 
@@ -836,20 +875,93 @@ void MediumSystem::setOpticalDepths(PhotonPacket* pp) const
     {
         for (auto& segment : pp->segments())
         {
-            if (segment.m >= 0)
+            if (segment.m() >= 0)
             {
-                double lambda =
-                    pp->perceivedWavelength(_state.bulkVelocity(segment.m), _config->hubbleExpansionRate() * segment.s);
-                tau += opacityExt(lambda, segment.m) * segment.ds;
+                double lambda = pp->perceivedWavelength(_state.bulkVelocity(segment.m()),
+                                                        _config->hubbleExpansionRate() * segment.s());
+                tau += opacityExt(lambda, segment.m(), pp) * segment.ds();
             }
-            pp->setOpticalDepth(i++, tau);
+            segment.setOpticalDepth(tau);
         }
     }
 }
 
 ////////////////////////////////////////////////////////////////////
 
-bool MediumSystem::setInteractionPoint(PhotonPacket* pp, double tauscat) const
+void MediumSystem::setScatteringAndAbsorptionOpticalDepths(PhotonPacket* pp) const
+{
+    // determine and store the path segments in the photon packet
+    auto generator = getPathSegmentGenerator(_grid, pp);
+    pp->clear();
+    while (generator->next())
+    {
+        pp->addSegment(generator->m(), generator->ds());
+    }
+
+    // calculate the cumulative optical depths and store them in the photon packet for each path segment
+    double tauSca = 0.;
+    double tauAbs = 0.;
+
+    // single medium, spatially constant cross sections
+    if (_config->hasSingleConstantSectionMedium())
+    {
+        double sectionSca = mix(0, 0)->sectionSca(pp->wavelength());
+        double sectionAbs = mix(0, 0)->sectionAbs(pp->wavelength());
+        for (auto& segment : pp->segments())
+        {
+            if (segment.m() >= 0)
+            {
+                double ns = _state.numberDensity(segment.m(), 0) * segment.ds();
+                tauSca += sectionSca * ns;
+                tauAbs += sectionAbs * ns;
+            }
+            segment.setOpticalDepth(tauSca, tauAbs);
+        }
+    }
+
+    // multiple media, spatially constant cross sections
+    else if (_config->hasMultipleConstantSectionMedia())
+    {
+        ShortArray sectionScav(_numMedia);
+        ShortArray sectionAbsv(_numMedia);
+        for (int h = 0; h != _numMedia; ++h)
+        {
+            sectionScav[h] = mix(0, h)->sectionSca(pp->wavelength());
+            sectionAbsv[h] = mix(0, h)->sectionAbs(pp->wavelength());
+        }
+        for (auto& segment : pp->segments())
+        {
+            if (segment.m() >= 0)
+                for (int h = 0; h != _numMedia; ++h)
+                {
+                    double ns = _state.numberDensity(segment.m(), h) * segment.ds();
+                    tauSca += sectionScav[h] * ns;
+                    tauAbs += sectionAbsv[h] * ns;
+                }
+            segment.setOpticalDepth(tauSca, tauAbs);
+        }
+    }
+
+    // spatially variable cross sections
+    else
+    {
+        for (auto& segment : pp->segments())
+        {
+            if (segment.m() >= 0)
+            {
+                double lambda = pp->perceivedWavelength(_state.bulkVelocity(segment.m()),
+                                                        _config->hubbleExpansionRate() * segment.s());
+                tauSca += opacitySca(lambda, segment.m(), pp) * segment.ds();
+                tauAbs += opacityAbs(lambda, segment.m(), pp) * segment.ds();
+            }
+            segment.setOpticalDepth(tauSca, tauAbs);
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool MediumSystem::setInteractionPointUsingExtinction(PhotonPacket* pp, double tauinteract) const
 {
     auto generator = getPathSegmentGenerator(_grid, pp);
     double tau = 0.;
@@ -875,9 +987,9 @@ bool MediumSystem::setInteractionPoint(PhotonPacket* pp, double tauscat) const
             s += ds;
 
             // if the interaction point is inside this segment, store it in the photon packet
-            if (tauscat < tau)
+            if (tauinteract < tau)
             {
-                pp->setInteractionPoint(m, NR::interpolateLinLin(tauscat, tau0, tau, s0, s));
+                pp->setInteractionPoint(m, NR::interpolateLinLin(tauinteract, tau0, tau, s0, s));
                 return true;
             }
         }
@@ -903,9 +1015,9 @@ bool MediumSystem::setInteractionPoint(PhotonPacket* pp, double tauscat) const
             s += ds;
 
             // if the interaction point is inside this segment, store it in the photon packet
-            if (tauscat < tau)
+            if (tauinteract < tau)
             {
-                pp->setInteractionPoint(m, NR::interpolateLinLin(tauscat, tau0, tau, s0, s));
+                pp->setInteractionPoint(m, NR::interpolateLinLin(tauinteract, tau0, tau, s0, s));
                 return true;
             }
         }
@@ -927,14 +1039,14 @@ bool MediumSystem::setInteractionPoint(PhotonPacket* pp, double tauscat) const
             if (m >= 0)
             {
                 double lambda = pp->perceivedWavelength(_state.bulkVelocity(m), _config->hubbleExpansionRate() * s);
-                tau += opacityExt(lambda, m) * ds;
+                tau += opacityExt(lambda, m, pp) * ds;
             }
             s += ds;
 
             // if the interaction point is inside this segment, store it in the photon packet
-            if (tauscat < tau)
+            if (tauinteract < tau)
             {
-                pp->setInteractionPoint(m, NR::interpolateLinLin(tauscat, tau0, tau, s0, s));
+                pp->setInteractionPoint(m, NR::interpolateLinLin(tauinteract, tau0, tau, s0, s));
                 return true;
             }
         }
@@ -946,13 +1058,131 @@ bool MediumSystem::setInteractionPoint(PhotonPacket* pp, double tauscat) const
 
 ////////////////////////////////////////////////////////////////////
 
-double MediumSystem::getOpticalDepth(PhotonPacket* pp, double distance) const
+bool MediumSystem::setInteractionPointUsingScatteringAndAbsorption(PhotonPacket* pp, double tauinteract) const
 {
-    // determine the optical depth at which the packet's contribution becomes zero
-    // or abort right away if the contribution is zero to begin with
+    auto generator = getPathSegmentGenerator(_grid, pp);
+    double tauSca = 0.;
+    double tauAbs = 0.;
+    double s = 0.;
+
+    // loop over the segments of the path until the interaction optical depth is reached or the path ends
+
+    // --> single medium, spatially constant cross sections
+    if (_config->hasSingleConstantSectionMedium())
+    {
+        double sectionSca = mix(0, 0)->sectionSca(pp->wavelength());
+        double sectionAbs = mix(0, 0)->sectionAbs(pp->wavelength());
+        while (generator->next())
+        {
+            // remember the cumulative scattering optical depth and distance at the start of this segment
+            // so that we can interpolate the interaction point should it happen to be inside this segment
+            double tauSca0 = tauSca;
+            double s0 = s;
+
+            // calculate the cumulative optical depths and distance at the end of this segment
+            double ds = generator->ds();
+            int m = generator->m();
+            if (m >= 0) tauSca += sectionSca * _state.numberDensity(m, 0) * generator->ds();
+            s += ds;
+
+            // if the interaction point is inside this segment, store it in the photon packet
+            if (tauinteract < tauSca)
+            {
+                pp->setInteractionPoint(m, NR::interpolateLinLin(tauinteract, tauSca0, tauSca, s0, s),
+                                        tauinteract * sectionAbs / sectionSca);
+                return true;
+            }
+        }
+    }
+
+    // --> multiple media, spatially constant cross sections
+    else if (_config->hasMultipleConstantSectionMedia())
+    {
+        ShortArray sectionScav(_numMedia);
+        ShortArray sectionAbsv(_numMedia);
+        for (int h = 0; h != _numMedia; ++h)
+        {
+            sectionScav[h] = mix(0, h)->sectionSca(pp->wavelength());
+            sectionAbsv[h] = mix(0, h)->sectionAbs(pp->wavelength());
+        }
+        while (generator->next())
+        {
+            // remember the cumulative optical depth and distance at the start of this segment
+            // so that we can interpolate the interaction point should it happen to be inside this segment
+            double tauSca0 = tauSca;
+            double tauAbs0 = tauAbs;
+            double s0 = s;
+
+            // calculate the cumulative optical depth and distance at the end of this segment
+            double ds = generator->ds();
+            int m = generator->m();
+            if (m >= 0)
+            {
+                for (int h = 0; h != _numMedia; ++h)
+                {
+                    double ns = _state.numberDensity(m, h) * ds;
+                    tauSca += sectionScav[h] * ns;
+                    tauAbs += sectionAbsv[h] * ns;
+                }
+            }
+            s += ds;
+
+            // if the interaction point is inside this segment, store it in the photon packet
+            if (tauinteract < tauSca)
+            {
+                pp->setInteractionPoint(m, NR::interpolateLinLin(tauinteract, tauSca0, tauSca, s0, s),
+                                        NR::interpolateLinLin(tauinteract, tauSca0, tauSca, tauAbs0, tauAbs));
+                return true;
+            }
+        }
+    }
+
+    // --> spatially variable cross sections
+    else
+    {
+        while (generator->next())
+        {
+            // remember the cumulative optical depth and distance at the start of this segment
+            // so that we can interpolate the interaction point should it happen to be inside this segment
+            double tauSca0 = tauSca;
+            double tauAbs0 = tauAbs;
+            double s0 = s;
+
+            // calculate the cumulative optical depth and distance at the end of this segment
+            double ds = generator->ds();
+            int m = generator->m();
+            if (m >= 0)
+            {
+                double lambda = pp->perceivedWavelength(_state.bulkVelocity(m), _config->hubbleExpansionRate() * s);
+                tauSca += opacitySca(lambda, m, pp) * ds;
+                tauAbs += opacityAbs(lambda, m, pp) * ds;
+            }
+            s += ds;
+
+            // if the interaction point is inside this segment, store it in the photon packet
+            if (tauinteract < tauSca)
+            {
+                pp->setInteractionPoint(m, NR::interpolateLinLin(tauinteract, tauSca0, tauSca, s0, s),
+                                        NR::interpolateLinLin(tauinteract, tauSca0, tauSca, tauAbs0, tauAbs));
+                return true;
+            }
+        }
+    }
+
+    // the interaction point is outside of the path
+    return false;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::getExtinctionOpticalDepth(const PhotonPacket* pp, double distance) const
+{
+    // abort if the packet's contribution is zero to begin with
     double L = pp->luminosity();
     if (L <= 0) return std::numeric_limits<double>::infinity();
-    double taumax = std::log(L) + 745;
+
+    // if extinction is always positive, determine the optical depth at which the packet's contribution becomes zero
+    double taumax = _config->hasNegativeExtinction() ? std::numeric_limits<double>::infinity() : std::log(L) + 745;
 
     // determine the geometric details of the path and calculate the optical depth at the same time
     auto generator = getPathSegmentGenerator(_grid, pp);
@@ -1004,7 +1234,7 @@ double MediumSystem::getOpticalDepth(PhotonPacket* pp, double distance) const
             if (m >= 0)
             {
                 double lambda = pp->perceivedWavelength(_state.bulkVelocity(m), _config->hubbleExpansionRate() * s);
-                tau += opacityExt(lambda, m) * ds;
+                tau += opacityExt(lambda, m, pp) * ds;
                 if (tau >= taumax) return std::numeric_limits<double>::infinity();
             }
             s += ds;
@@ -1012,6 +1242,21 @@ double MediumSystem::getOpticalDepth(PhotonPacket* pp, double distance) const
         }
     }
 
+    return tau;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MediumSystem::getExtinctionOpticalDepth(const SpatialGridPath* path, double lambda,
+                                               MaterialMix::MaterialType type) const
+{
+    // determine the geometric details of the path and calculate the optical depth at the same time
+    auto generator = getPathSegmentGenerator(_grid, path);
+    double tau = 0.;
+    while (generator->next())
+    {
+        if (generator->m() >= 0) tau += opacityExt(lambda, generator->m(), type) * generator->ds();
+    }
     return tau;
 }
 
@@ -1213,7 +1458,7 @@ Array MediumSystem::lineEmissionSpectrum(int m, int h) const
 
 ////////////////////////////////////////////////////////////////////
 
-bool MediumSystem::updateDynamicMediumState()
+bool MediumSystem::updateDynamicStateRecipes()
 {
     auto log = find<Log>();
     auto parfac = find<ParallelFactory>();
@@ -1226,7 +1471,7 @@ bool MediumSystem::updateDynamicMediumState()
     std::vector<UpdateStatus> flags(_numCells);
 
     // loop over the spatial cells in parallel
-    log->info("Updating dynamic medium state for " + std::to_string(_numCells) + " cells...");
+    log->info("Updating medium state for " + std::to_string(_numCells) + " cells...");
     log->infoSetElapsed(_numCells);
     parfac->parallelDistributed()->call(_numCells, [this, log, &recipes, &flags](size_t firstIndex, size_t numIndices) {
         while (numIndices)
@@ -1246,7 +1491,7 @@ bool MediumSystem::updateDynamicMediumState()
                     }
                 }
             }
-            log->infoIfElapsed("Updated dynamic medium state: ", currentChunkSize);
+            log->infoIfElapsed("Updated medium state: ", currentChunkSize);
             firstIndex += currentChunkSize;
             numIndices -= currentChunkSize;
         }
@@ -1270,7 +1515,7 @@ bool MediumSystem::updateDynamicMediumState()
 
 ////////////////////////////////////////////////////////////////////
 
-bool MediumSystem::updateSemiDynamicMediumState()
+bool MediumSystem::updateDynamicStateMedia(bool primary)
 {
     auto log = find<Log>();
     auto parfac = find<ParallelFactory>();
@@ -1279,22 +1524,22 @@ bool MediumSystem::updateSemiDynamicMediumState()
     std::vector<UpdateStatus> flags(_numCells);
 
     // loop over the spatial cells in parallel
-    log->info("Updating semi-dynamic medium state for " + std::to_string(_numCells) + " cells...");
+    log->info("Updating medium state for " + std::to_string(_numCells) + " cells...");
     log->infoSetElapsed(_numCells);
-    parfac->parallelDistributed()->call(_numCells, [this, log, &flags](size_t firstIndex, size_t numIndices) {
+    parfac->parallelDistributed()->call(_numCells, [this, primary, log, &flags](size_t firstIndex, size_t numIndices) {
         while (numIndices)
         {
             size_t currentChunkSize = min(logProgressChunkSize, numIndices);
             for (size_t m = firstIndex; m != firstIndex + currentChunkSize; ++m)
             {
                 const Array& Jv = meanIntensity(m);
-                for (int h : _sdms_hv)
+                for (int h : (primary ? _pdms_hv : _sdms_hv))
                 {
                     MaterialState mst(_state, m, h);
                     flags[m].update(mix(m, h)->updateSpecificState(&mst, Jv));
                 }
             }
-            log->infoIfElapsed("Updated semi-dynamic medium state: ", currentChunkSize);
+            log->infoIfElapsed("Updated medium state: ", currentChunkSize);
             firstIndex += currentChunkSize;
             numIndices -= currentChunkSize;
         }
@@ -1313,7 +1558,27 @@ bool MediumSystem::updateSemiDynamicMediumState()
 
     // collect convergence info
     bool converged = true;
-    for (int h : _sdms_hv) converged &= mix(0, h)->isSpecificStateConverged(_numCells, numUpdated, numNotConverged);
+    for (int h : (primary ? _pdms_hv : _sdms_hv))
+        converged &= mix(0, h)->isSpecificStateConverged(_numCells, numUpdated, numNotConverged);
+    return converged;
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool MediumSystem::updatePrimaryDynamicMediumState()
+{
+    bool converged = true;
+    if (_config->hasDynamicStateRecipes()) converged &= updateDynamicStateRecipes();
+    if (_config->hasPrimaryDynamicStateMedia()) converged &= updateDynamicStateMedia(true);
+    return converged;
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool MediumSystem::updateSecondaryDynamicMediumState()
+{
+    bool converged = true;
+    if (_config->hasSecondaryDynamicStateMedia()) converged &= updateDynamicStateMedia(false);
     return converged;
 }
 

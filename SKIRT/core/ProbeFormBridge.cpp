@@ -109,6 +109,30 @@ void ProbeFormBridge::writeQuantity(string fileid, string quantity, string descr
     _form->writeQuantity(this);
 }
 
+void ProbeFormBridge::writeQuantity(string fileid, string projectedFileid, string quantity, string projectedQuantity,
+                                    string description, string projectedDescription, const Array& axis, string axisUnit,
+                                    AddColumnDefinitions addColumnDefinitions, CompoundValueInCell valueInCell)
+{
+    _type = Type::GridCompoundAccumulated;
+
+    _fileid = fileid;
+    _projectedFileid = projectedFileid;
+    _unit = _units->unit(quantity);
+    _projectedUnit = _units->unit(projectedQuantity);
+    _unitFactor = _units->out(quantity, 1.);
+    _projectedUnitFactor = _units->out(projectedQuantity, 1.);
+    _description = description;
+    _projectedDescription = projectedDescription;
+    _axis = axis;
+    _axisUnit = axisUnit;
+    _numValues = axis.size();
+
+    _addColumnDefinitions = addColumnDefinitions;
+    _compoundValueInCell = valueInCell;
+
+    _form->writeQuantity(this);
+}
+
 ////////////////////////////////////////////////////////////////////
 
 void ProbeFormBridge::writeQuantity(string fileid, string unit, string description, string projectedDescription,
@@ -222,21 +246,31 @@ void ProbeFormBridge::writeQuantity(string fileid, string projectedFileid, strin
 ////////////////////////////////////////////////////////////////////
 
 void ProbeFormBridge::writeQuantity(string fileid, string projectedFileid, string quantity, string projectedQuantity,
-                                    string description, string projectedDescription, const Snapshot* snapshot,
-                                    ScalarValueInEntity valueInEntity)
+                                    string description, string projectedDescription,
+                                    const vector<const Snapshot*>& snapshots, ScalarValueInEntity valueInEntity)
 {
     // define the call-back function to retrieve an accumulated value at a given position
-    auto valueAtPosition = [snapshot, valueInEntity](Position bfr) {
+    auto valueAtPosition = [&snapshots, valueInEntity](Position bfr) {
         thread_local EntityCollection entities;  // can be reused for all queries in a given execution thread
-        snapshot->getEntities(entities, bfr);
-        return entities.accumulate(valueInEntity);
+        double value = 0.;
+        for (auto snapshot : snapshots)
+        {
+            snapshot->getEntities(entities, bfr);
+            value += entities.accumulate([snapshot, valueInEntity](int m) { return valueInEntity(snapshot, m); });
+        }
+        return value;
     };
 
     // define the call-back function to retrieve an accumulated value along a given path
-    auto valueAlongPath = [snapshot, valueInEntity](Position bfr, Direction bfk) {
+    auto valueAlongPath = [&snapshots, valueInEntity](Position bfr, Direction bfk) {
         thread_local EntityCollection entities;  // can be reused for all queries in a given execution thread
-        snapshot->getEntities(entities, bfr, bfk);
-        return entities.accumulate(valueInEntity);
+        double value = 0.;
+        for (auto snapshot : snapshots)
+        {
+            snapshot->getEntities(entities, bfr, bfk);
+            value += entities.accumulate([snapshot, valueInEntity](int m) { return valueInEntity(snapshot, m); });
+        }
+        return value;
     };
 
     writeQuantity(fileid, projectedFileid, quantity, projectedQuantity, description, projectedDescription,
@@ -246,21 +280,43 @@ void ProbeFormBridge::writeQuantity(string fileid, string projectedFileid, strin
 ////////////////////////////////////////////////////////////////////
 
 void ProbeFormBridge::writeQuantity(string fileid, string quantity, string description, string projectedDescription,
-                                    const Snapshot* snapshot, ScalarValueInEntity valueInEntity,
+                                    const vector<const Snapshot*>& snapshots, ScalarValueInEntity valueInEntity,
                                     WeightInEntity weightInEntity)
 {
     // define the call-back function to retrieve an averaged value at a given position
-    auto valueAtPosition = [snapshot, valueInEntity, weightInEntity](Position bfr) {
+    auto valueAtPosition = [&snapshots, valueInEntity, weightInEntity](Position bfr) {
         thread_local EntityCollection entities;  // can be reused for all queries in a given execution thread
-        snapshot->getEntities(entities, bfr);
-        return entities.average(valueInEntity, weightInEntity);
+        double sumvw = 0.;
+        double sumw = 0.;
+        for (auto snapshot : snapshots)
+        {
+            snapshot->getEntities(entities, bfr);
+            double svw, sw;
+            std::tie(svw, sw) =
+                entities.average([snapshot, valueInEntity](int m) { return valueInEntity(snapshot, m); },
+                                 [snapshot, weightInEntity](int m) { return weightInEntity(snapshot, m); });
+            sumvw += svw;
+            sumw += sw;
+        }
+        return sumw > 0. ? sumvw / sumw : 0.;
     };
 
     // define the call-back function to retrieve an averaged value along a given path
-    auto valueAlongPath = [snapshot, valueInEntity, weightInEntity](Position bfr, Direction bfk) {
+    auto valueAlongPath = [&snapshots, valueInEntity, weightInEntity](Position bfr, Direction bfk) {
         thread_local EntityCollection entities;  // can be reused for all queries in a given execution thread
-        snapshot->getEntities(entities, bfr, bfk);
-        return entities.average(valueInEntity, weightInEntity);
+        double sumvw = 0.;
+        double sumw = 0.;
+        for (auto snapshot : snapshots)
+        {
+            snapshot->getEntities(entities, bfr, bfk);
+            double svw, sw;
+            std::tie(svw, sw) =
+                entities.average([snapshot, valueInEntity](int m) { return valueInEntity(snapshot, m); },
+                                 [snapshot, weightInEntity](int m) { return weightInEntity(snapshot, m); });
+            sumvw += svw;
+            sumw += sw;
+        }
+        return sumw > 0. ? sumvw / sumw : 0.;
     };
 
     writeQuantity(fileid, fileid, quantity, quantity, description, projectedDescription, valueAtPosition,
@@ -270,21 +326,45 @@ void ProbeFormBridge::writeQuantity(string fileid, string quantity, string descr
 ////////////////////////////////////////////////////////////////////
 
 void ProbeFormBridge::writeQuantity(string fileid, string quantity, string description, string projectedDescription,
-                                    const Snapshot* snapshot, VectorValueInEntity valueInEntity,
+                                    const vector<const Snapshot*>& snapshots, VectorValueInEntity valueInEntity,
                                     WeightInEntity weightInEntity)
 {
-    // define the call-back function to retrieve an averaged quantity value at a given position
-    auto valueAtPosition = [snapshot, valueInEntity, weightInEntity](Position bfr) {
+    // define the call-back function to retrieve an averaged value at a given position
+    auto valueAtPosition = [&snapshots, valueInEntity, weightInEntity](Position bfr) {
         thread_local EntityCollection entities;  // can be reused for all queries in a given execution thread
-        snapshot->getEntities(entities, bfr);
-        return entities.average(valueInEntity, weightInEntity);
+        Vec sumvw;
+        double sumw = 0.;
+        for (auto snapshot : snapshots)
+        {
+            snapshot->getEntities(entities, bfr);
+            Vec svw;
+            double sw;
+            std::tie(svw, sw) =
+                entities.average([snapshot, valueInEntity](int m) { return valueInEntity(snapshot, m); },
+                                 [snapshot, weightInEntity](int m) { return weightInEntity(snapshot, m); });
+            sumvw += svw;
+            sumw += sw;
+        }
+        return sumw > 0. ? sumvw / sumw : Vec();
     };
 
-    // define the call-back function to retrieve an averaged quantity value along a given path
-    auto valueAlongPath = [snapshot, valueInEntity, weightInEntity](Position bfr, Direction bfk) {
+    // define the call-back function to retrieve an averaged value along a given path
+    auto valueAlongPath = [&snapshots, valueInEntity, weightInEntity](Position bfr, Direction bfk) {
         thread_local EntityCollection entities;  // can be reused for all queries in a given execution thread
-        snapshot->getEntities(entities, bfr, bfk);
-        return entities.average(valueInEntity, weightInEntity);
+        Vec sumvw;
+        double sumw = 0.;
+        for (auto snapshot : snapshots)
+        {
+            snapshot->getEntities(entities, bfr, bfk);
+            Vec svw;
+            double sw;
+            std::tie(svw, sw) =
+                entities.average([snapshot, valueInEntity](int m) { return valueInEntity(snapshot, m); },
+                                 [snapshot, weightInEntity](int m) { return weightInEntity(snapshot, m); });
+            sumvw += svw;
+            sumw += sw;
+        }
+        return sumw > 0. ? sumvw / sumw : Vec();
     };
 
     writeQuantity(fileid, fileid, quantity, quantity, description, projectedDescription, valueAtPosition,
@@ -314,9 +394,27 @@ const Units* ProbeFormBridge::units() const
 
 ////////////////////////////////////////////////////////////////////
 
+namespace
+{
+    // if the specified iteration index is positive, return a 3-digit decimal representation with leading zeros,
+    // otherwise return the empty string
+    string iterString(int iter)
+    {
+        string result;
+        if (iter > 0)
+        {
+            result = std::to_string(iter);
+            if (result.length() < 3) result.insert(0, 3 - result.length(), '0');
+        }
+        return result;
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
 string ProbeFormBridge::prefix() const
 {
-    string result = _probe->itemName();
+    string result = _probe->itemName() + iterString(_probe->iter());
     if (!_fileid.empty()) result += "_" + _fileid;
     return result;
 }
@@ -325,7 +423,7 @@ string ProbeFormBridge::prefix() const
 
 string ProbeFormBridge::projectedPrefix() const
 {
-    string result = _probe->itemName();
+    string result = _probe->itemName() + iterString(_probe->iter());
     if (!_projectedFileid.empty()) result += "_" + _projectedFileid;
     return result;
 }
@@ -407,6 +505,7 @@ void ProbeFormBridge::addColumnDefinitions(TextOutFile& outfile) const
             outfile.addColumn(_description + " z", _unit);
             break;
         }
+        case Type::GridCompoundAccumulated:
         case Type::GridCompoundAveraged:
         case Type::InputCompound:
         {
@@ -435,6 +534,12 @@ void ProbeFormBridge::valuesInCell(int m, Array& values) const
             values[2] = v.z();
             break;
         }
+        case Type::GridCompoundAccumulated:
+        {
+            values = _compoundValueInCell(m);
+            values *= _unitFactor;
+            break;
+        }
         case Type::GridCompoundAveraged:
         {
             values = _compoundValueInCell(m);
@@ -457,37 +562,13 @@ void ProbeFormBridge::valuesAtPosition(Position bfr, Array& values) const
     {
         case Type::GridScalarAccumulated:
         case Type::GridScalarAveraged:
-        {
-            int m = _grid ? _grid->cellIndex(bfr) : -1;
-            if (m >= 0)
-                values[0] = _scalarValueInCell(m) * _unitFactor;
-            else
-                values[0] = 0.;
-            break;
-        }
         case Type::GridVectorAveraged:
-        {
-            int m = _grid ? _grid->cellIndex(bfr) : -1;
-            if (m >= 0)
-            {
-                Vec v = _vectorValueInCell(m) * _unitFactor;
-                values[0] = v.x();
-                values[1] = v.y();
-                values[2] = v.z();
-            }
-            else
-            {
-                values[0] = 0.;
-                values[1] = 0.;
-                values[2] = 0.;
-            }
-            break;
-        }
+        case Type::GridCompoundAccumulated:
         case Type::GridCompoundAveraged:
         {
             int m = _grid ? _grid->cellIndex(bfr) : -1;
             if (m >= 0)
-                values = _compoundValueInCell(m);
+                valuesInCell(m, values);
             else
                 values = 0.;
             break;
@@ -592,6 +673,26 @@ void ProbeFormBridge::valuesAlongPath(Position bfr, Direction bfk, Array& values
             values[0] = v.x();
             values[1] = v.y();
             values[2] = v.z();
+            break;
+        }
+        case Type::GridCompoundAccumulated:
+        {
+            values = 0.;
+            if (_grid)
+            {
+                // get a segment generator and initialize the path
+                auto generator = _grid->createPathSegmentGenerator();
+                SpatialGridPath path(bfr, bfk);
+                generator->start(&path);
+
+                // accumulate values along the path
+                while (generator->next())
+                {
+                    int m = generator->m();
+                    if (m >= 0) values += generator->ds() * _compoundValueInCell(m);
+                }
+                values *= _projectedUnitFactor;
+            }
             break;
         }
         case Type::GridCompoundAveraged:

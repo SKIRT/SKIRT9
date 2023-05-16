@@ -41,20 +41,37 @@ class SecondarySourceSystem;
     based on this RF.
 
     Some SKIRT media allow the density and/or the optical properties of the medium to depend on the
-    local RF. The changes to the medium may sufficiently affect the RF to cause a significant
-    change in the medium properties itself, so that the RF must be calculated self-consistently by
-    iterating over primary and/or secondary emission. We call this a \em dynamic \em medium \em
-    state (DMS).
+    local RF. These changes to the medium properties may sufficiently affect the RF to again cause
+    a significant change in the medium properties, so that the RF must be calculated
+    self-consistently by iterating over primary and/or secondary emission. We call this a \em
+    dynamic \em medium \em state (DMS). A DMS update algorithm can be defined as part of the
+    MaterialMix subclass that defines the complete behavior of a given material type, or it can be
+    defined separately in a DynamicStateRecipe subclass, which can access any of the configured
+    medium components. The latter option enables a single recipe to control different material
+    types and it allows offering alternate recipes without complicating the material mix
+    implementation.
 
-    As a special case, for some SKIRT media the properties depending on the RF are significant only
-    for determining the secondary emission spectrum and have no effect during primary emission. As
-    a result, there is no need for iteration over primary emission. We call this a \em semi-dynamic
-    \em medium \em state (SDMS).
+    If the changes to the medium state significantly affect the medium opacity in the wavelength
+    range of primary sources, iteration over primary emission is required. We call this a \em
+    primary-dynamic \em medium \em state (PDMS). Radiative dust destruction is an example of a PDMS
+    process.
 
-    Secondary emission may sufficiently affect the RF to cause a significant change in the
-    secondary emission spectrum itself. If this is the case, the RF must be calculated
-    self-consistently by iterating over the secondary emission. We call this \em dynamic \em
-    secondary \em emission (DSE).
+    Alternatively, the media properties depending on the RF may be significant only for determining
+    the secondary emission spectrum without a noticable effect during primary emission. As a
+    result, there is no need for iteration over primary emission. We call this a \em
+    secondary-dynamic \em medium \em state (SDMS). The hydrogen spin-flip transition is an example
+    of an SDMS process because the opacity change at 21 cm does not affect primary emission at much
+    shorter wavelengths (in this specific example, there is actually no need for iteration over the
+    secondary emission either, but this might be different for other processes).
+
+    Similarly, secondary emission may sufficiently affect the RF to cause a significant change in
+    the secondary emission spectrum (which is calculated from that RF). If this is the case, the RF
+    must be calculated self-consistently by iterating over the secondary emission. We call this \em
+    dynamic \em secondary \em emission (DSE). One can consider DSE as a special case of SDMS where
+    the change in the medium state is handled implicitly during the calculations rather than being
+    explicitly stored. Dust emission in high-optical depth regions is an example of a DSE process.
+    The dust temperature (or temperature probability distribution) is calculated on the fly while
+    determining the emission spectrum from the RF.
 
     A simulation consecutively performs one or more \em segments as part of the relevant \em
     iterations and \em phases. A segment processes a set of photon packets, including emission from
@@ -77,7 +94,7 @@ class SecondarySourceSystem;
 
     - \f$(r)\f$: optionally register the RF if requested for probing (not needed for instruments).
 
-    - \f$s\f$: update the DMS based on the RF after processing all photon packets for the segment.
+    - \f$s\f$: update the PDMS based on the RF after processing all photon packets for the segment.
 
     - \f$(s)\f$: update the SDMS, if any, based on the RF after processing all photon packets for
     the segment.
@@ -87,10 +104,11 @@ class SecondarySourceSystem;
     The user-configurable \em simulationMode enumeration sets the overall simulation mode. It
     determines the presence or absence of a transfer medium, the wavelength regime (oligochromatic
     or panchromatic), whether there is a secondary emission phase, and if so, which media types
-    (dust and/or gas) are emitting photon packets. The Boolean user options \em iterateMediumState
-    and \em iterateSecondaryEmission further determine whether the simulation iterates over the
-    radiation field to self-consistently calculate a DMS or DSE. The presence of an SDMS is derived
-    at run-time from the capabilities advertised by each of the configured medium components.
+    (dust and/or gas) are emitting photon packets. The Boolean user options \em
+    iteratePrimaryEmission and \em iterateSecondaryEmission (plus \em includePrimaryEmission in the
+    IterationOptions) further determine whether the simulation iterates over the radiation field to
+    self-consistently calculate a DMS and/or DSE. The presence of DMS update algorithms is detected
+    at run-time from the capabilities advertised by the configured media and recipes.
 
     An important aspect determined by the simulation mode is the simulation's wavelength regime,
     which can be oligochromatic or panchromatic. Oligochromatic simulations use just a few
@@ -118,9 +136,8 @@ class SecondarySourceSystem;
 
     <b>Execution flow</b>
 
-    The following table shows the flow of execution for each simulation mode. \c DMS1 and \c DMS2
-    indicate a dynamic medium state during primary and secondary emission, respectively. The arrows
-    in the flow diagrams indicate forward progression (\f$\rightarrow\f$) and iteration
+    The following table shows the flow of execution for each simulation mode. The arrows in the
+    flow diagrams indicate forward progression (\f$\rightarrow\f$) and iteration
     (\f$\longleftarrow\f$).
 
     | | %Simulation mode | Flow diagram |
@@ -130,25 +147,59 @@ class SecondarySourceSystem;
     | 3 | \c LyaExtinctionOnly | \f$\mathbf{P}^p_{(r)}\f$ |
     | 4 | \c NoMedium | \f$\mathbf{P}^p\f$ |
     | 5 | \c ExtinctionOnly | \f$\mathbf{P}^p_{(r)}\f$ |
-    | 6 | ... + \c DMS1 | \f$\overleftarrow{\mathbf{P}_{rs}} \;\rightarrow\; \mathbf{P}^p_{(r)}\f$ |
+    | 6 | ... + \em iteratePrimaryEmission | \f$\overleftarrow{\mathbf{P}_{rs}} \;\rightarrow\; \mathbf{P}^p_{(r)}\f$ |
     | 7 | \c Dust-, \c Gas-, \c DustAndGasEmission | \f$\mathbf{P}^p_{r(s)} \;\rightarrow\; \mathbf{S}^p_{(r)}\f$ |
-    | 8 | ... + \c DMS1 | \f$\overleftarrow{\mathbf{P}_{rs}} \;\rightarrow\; \mathbf{P}^p_{r(s)} \;\rightarrow\; \mathbf{S}^p_{(r)}\f$ |
-    | 9 | ... + \c DSE | \f$\mathbf{P}^p_{r(s)} \;\rightarrow\; \overleftarrow{\mathbf{S}_{r(s)}} \;\rightarrow\; \mathbf{S}^p_{(r)}\f$ |
-    | 10 | ... + \c DSE + \c DMS1 | \f$\overleftarrow{\mathbf{P}_{rs}} \;\rightarrow\; \textbf{}\mathbf{P}^p_{r(s)} \;\rightarrow\; \overleftarrow{\mathbf{S}_{r(s)}} \;\rightarrow\; \mathbf{S}^p_{(r)}\f$ |
-    | 11 | ... + \c DSE + \c DMS1 + \c DMS2 | \f$\overleftarrow{\mathbf{P}_{rs}} \;\rightarrow\; \overleftarrow{\mathbf{P}_{r(s)} \;\rightarrow\; \mathbf{S}_{rs}} \;\rightarrow\; \mathbf{P}^p_{r(s)} \;\rightarrow\; \mathbf{S}^p_{(r)}\f$ |
+    | 8 | ... + \em iteratePrimaryEmission | \f$\overleftarrow{\mathbf{P}_{rs}} \;\rightarrow\; \mathbf{P}^p_{r(s)} \;\rightarrow\; \mathbf{S}^p_{(r)}\f$ |
+    | 9 | ... + \em iterateSecondaryEmission | \f$\mathbf{P}^p_{r(s)} \;\rightarrow\; \overleftarrow{\mathbf{S}_{r(s)}} \;\rightarrow\; \mathbf{S}^p_{(r)}\f$ |
+    | 10 | ... + \em iteratePrimaryEmission + \em iterateSecondaryEmission | \f$\overleftarrow{\mathbf{P}_{rs}} \;\rightarrow\; \textbf{}\mathbf{P}^p_{r(s)} \;\rightarrow\; \overleftarrow{\mathbf{S}_{r(s)}} \;\rightarrow\; \mathbf{S}^p_{(r)}\f$ |
+    | 11 | ... + \em iterateSecondaryEmission + \em includePrimaryEmission | \f$\overleftarrow{\mathbf{P}_{r(s)} \;\rightarrow\; \mathbf{S}_{rs}} \;\rightarrow\; \mathbf{P}^p_{r(s)} \;\rightarrow\; \mathbf{S}^p_{(r)}\f$ |
+    | 12 | ... + \em iteratePrimaryEmission + \em iterateSecondaryEmission + \em includePrimaryEmission | \f$\overleftarrow{\mathbf{P}_{rs}} \;\rightarrow\; \overleftarrow{\mathbf{P}_{r(s)} \;\rightarrow\; \mathbf{S}_{rs}} \;\rightarrow\; \mathbf{P}^p_{r(s)} \;\rightarrow\; \mathbf{S}^p_{(r)}\f$ |
 
     Rows 1-6 describe simulation modes that include primary emission only, without or with media.
-    The last mode in this list (row 6) includes iteration over the DMS during primary emission.
-    Rows 7-11 describe modes that include dust and/or gas emission, possibly iterating over the RF
-    during secondary emission to handle DSE (rows 9-11). If one or more of the dust media have a
-    DMS, there are modes supporting iteration over primary emission (rows 8 and 10) or even over
-    both primary and secondary emission (row 11).
+    The last mode in this list (row 6) includes iteration over the PDMS during primary emission.
+    Rows 7-12 describe modes that include dust and/or gas emission, possibly iterating over the RF
+    during secondary emission to handle DSE (rows 9-12). If one or more of the media have a PDMS,
+    there are modes supporting iteration over primary emission (rows 8, 10, 12) and/or over
+    consecutive primary and secondary emission segments (rows 11, 12).
 
-    The simulation modes in rows 7-11 support medium components with SDMS by updating the medium
-    state for these components at the end of the relevant segments. It is meaningful to update an
-    SDMS at the end of a segment that performs peel-off to the instruments because the update does
-    not affect the outcome of a primary emission segment.
+    If applicable, the simulation modes in rows 7-12 update the SDMS at the end of the relevant
+    segments. It is meaningful to update an SDMS at the end of a segment that performs peel-off to
+    the instruments because the update does not affect the outcome of a primary emission segment.
 
+    <b>Photon life cycle</b>
+
+    As mentioned above, each segment processes the life cycles for a set of photon packets,
+    including emission and propagation through the medium and up to the instruments. The
+    PhotonPacketOptions allow configuring four basic variations of the photon packet life cycle by
+    enabling or disabling forced scattering and/or explicit absorption. Each of these variations
+    comes with specific advantages or drawbacks, as follows:
+
+    - With forced scattering. Forced scattering tends to reduce noise for simulations with low to
+    limited optical depths, such as for most dust models on galaxy-wide scales. However, for each
+    scattering event, it requires the calculation of the geometry and optical depth of the full
+    path up to the model boundary, regardless of the location of the scattering event along the
+    path.
+
+    - Without forced scattering. In models with very intensive scattering, such as for Lyman-alpha
+    line transfer, the photon cycle without forced scattering is often the better choice, because
+    it avoids calculating the path geometry and optical depth beyond the scattering location.
+    However, our implementation does not support storing the radiation field, which means this
+    option cannot be used when the simulation includes secondary emission or dynamic state
+    iteration.
+
+    - Without explicit absorption. The default technique uses the extinction (sum of scattering and
+    absorption) along a photon packet's path to locate the next interaction point. This requires
+    the cumulative extinction optical depth to be a nondecreasing function of path length. It is
+    thus not possible to handle negative extinction cross sections.
+
+    - With explicit absorption. This technique instead used the scattering optical depth to locate
+    the next interaction point. While the scattering cross section still must be nonnegative, this
+    allows the extinction cross section to be negative. The latter is the case for materials that
+    exhibit stimulated emission as soon as the magnitude of the negative absorption cross section
+    is larger than the scattering cross section. As a drawback, this technique requires calculating
+    both the scattering and absorption optical depths for the photon packet path.
+
+    Refer to the performLifeCycle() function for more information on these life cycle variations.
     */
 class MonteCarloSimulation : public Simulation
 {
@@ -184,18 +235,18 @@ class MonteCarloSimulation : public Simulation
             "simulationModeGasEmission:Panchromatic,GasEmission,Emission,RadiationField;"
             "simulationModeDustAndGasEmission:Panchromatic,DustEmission,GasEmission,Emission,RadiationField")
 
-        PROPERTY_BOOL(iterateMediumState, "iterate to self-consistently determine the medium state")
-        ATTRIBUTE_DEFAULT_VALUE(iterateMediumState, "false")
-        ATTRIBUTE_RELEVANT_IF(iterateMediumState, "simulationModeExtinctionOnly|Emission")
-        ATTRIBUTE_DISPLAYED_IF(iterateMediumState, "Level3")
-        ATTRIBUTE_INSERT(iterateMediumState,
-                         "(simulationModeExtinctionOnly|Emission)&iterateMediumState:DynamicState,RadiationField")
+        PROPERTY_BOOL(iteratePrimaryEmission, "iterate over primary emission for self-consistent calculation")
+        ATTRIBUTE_DEFAULT_VALUE(iteratePrimaryEmission, "false")
+        ATTRIBUTE_RELEVANT_IF(iteratePrimaryEmission, "simulationModeExtinctionOnly|Emission")
+        ATTRIBUTE_DISPLAYED_IF(iteratePrimaryEmission, "Level3")
+        ATTRIBUTE_INSERT(iteratePrimaryEmission,
+                         "(simulationModeExtinctionOnly|Emission)&iteratePrimaryEmission:IteratePrimary,RadiationField")
 
-        PROPERTY_BOOL(iterateSecondaryEmission, "iterate to self-consistently determine secondary emission")
+        PROPERTY_BOOL(iterateSecondaryEmission, "iterate over secondary emission for self-consistent calculation")
         ATTRIBUTE_DEFAULT_VALUE(iterateSecondaryEmission, "false")
         ATTRIBUTE_RELEVANT_IF(iterateSecondaryEmission, "Emission")
         ATTRIBUTE_DISPLAYED_IF(iterateSecondaryEmission, "Level2")
-        ATTRIBUTE_INSERT(iterateSecondaryEmission, "Emission&iterateSecondaryEmission:DynamicEmission")
+        ATTRIBUTE_INSERT(iterateSecondaryEmission, "Emission&iterateSecondaryEmission:IterateSecondary")
 
         PROPERTY_DOUBLE(numPackets, "the default number of photon packets launched per simulation segment")
         ATTRIBUTE_MIN_VALUE(numPackets, "[0")
@@ -265,8 +316,7 @@ private:
         instruments. It records radiation field contributions if the configuration requires it
         (e.g., because secondary emission must be calculated, or because the user configured probes
         to directly output radiation field information). If the configuration also includes
-        emission, any semi-dynamic state media in the simulation receive an update request at the
-        end of the segment.
+        emission, any secondary dynamic state updates are performed at the end of the segment.
 
         Using the notation of the table in the class header documentation, this function implements
         the execution flow \f$\mathbf{P}^p\f$, \f$\mathbf{P}^p_{(r)}\f$, or
@@ -282,9 +332,8 @@ private:
     void runSecondaryEmission();
 
     /** This function iteratively runs consecutive primary source emission segments to
-        self-consistently calculate the radiation field taking into account one or more recipes for
-        updating the dynamic medium state as a function of the radiation field. See the
-        DynamicStateRecipe class for more information.
+        self-consistently calculate the radiation field taking into account any recipes for
+        updating the primary dynamic medium state as a function of the radiation field.
 
         Each segment in the iteration tracks photon packets through the medium and subsequently
         updates the medium state based on the newly established radiation field. The number of
@@ -316,17 +365,14 @@ private:
         each segment can be configured as a multiplication factor on the default number of primary
         photon packets. The minimum and maximum number of iterations can also be specified as
         configuration options. Within these limits, the actual number of iterations performed is
-        determined by user-configured convergence criteria. Specifically, convergence is reached
+        determined by user-configured convergence criteria. For dust media, convergence is reached
         when (a) the absorbed secondary luminosity is less than a given fraction of the absorbed
         primary luminosity, \em OR (b) the absorbed secondary luminosity has changed by less than a
         given fraction compared to the previous iteration.
 
-        \note In the current implementation, the convergence criteria are based solely on dust
-        absorption. For proper operation, this function thus requires the simulated model to
-        contain one or more dust components and have dust emission enabled.
-
-        Any semi-dynamic state media in the simulation receive an update request at the end of each
-        segment.
+        Any secondary dynamic state update algorithms in the simulation are performed at the end of
+        each segment. Convergence is determined by the specific mechanism includes in each of these
+        algorithms.
 
         The photon packets emitted by this function do not perform peel-off to the instruments
         because the radiation field has not yet converged. After this function returns, a final
@@ -351,9 +397,10 @@ private:
         information see the runPrimaryEmissionIterations() and runSecondaryEmissionIterations()
         functions.
 
-        Any semi-dynamic state media in the simulation receive an update request at the end of each
-        primary segment, and the dynamic state recipes are requested to update the dynamic state
-        after each secondary emission segment.
+        Any secondary dynamic state update algorithms in the simulation are performed at the end of
+        each primary segment, and the primary dynamic state update algorithms are performed at the
+        end of each secondary emission segment. Convergence is determined by the specific mechanism
+        includes in each of these algorithms.
 
         The photon packets emitted by this function do not perform peel-off to the instruments
         because the radiation field has not yet converged. After this function returns, a final
@@ -383,23 +430,40 @@ private:
 
     /** This function launches the specified chunk of photon packets from primary or secondary
         sources, and it implements the complete life-cycle for each of these photon packets. This
-        includes emission and multiple forced scattering events, and, if requested, the
-        corresponding peel-off towards the instruments, and registration of the contribution to the
-        radiation field in each spatial cell crossed.
+        includes emission and multiple scattering events, and, if requested, the corresponding
+        peel-off towards the instruments, and registration of the contribution to the radiation
+        field in each spatial cell crossed.
 
         A photon packet is born when it is emitted by either the primary or the secondary source
         system. Immediately after birth, peel-off photon packets are created and launched towards
-        the instruments (one for each instrument). If the simulation contains one or more media,
-        the photon packet now enters a cycle which consists of different steps. First, all details
-        of the path of the photon packet through the medium are calculated and stored. Based on
-        this information, the contribution of the photon packet to the radiation field in each
-        spatial cell can be stored. The packet is then propagated to a new (random) scattering
-        position, and its weight (luminosity) is adjusted for the escape fraction and the absorbed
-        energy. If the photon packet is still sufficiently luminous, scattering peel-off photon
-        packets are created and launched towards each instrument, and the actual scattering event
-        is simulated. Finally, the loop repeats itself. It is terminated only when the photon
-        packet has lost a substantial part of its original luminosity (and hence becomes
-        irrelevant).
+        the instruments, if so requested. If the simulation contains one or more media, the photon
+        packet now enters one of two life cycles: the forced scattering life cycle or the
+        non-forced scattering life cycle.
+
+        - Forced scattering. First, the geometry and optical depth information of the photon packet
+        path through the medium up to the model boundary is calculated and stored in the photon
+        packet. If explicit absorption is enabled, the scattering and absorption optical depth must
+        be calculated separately. Otherwise, it suffices to calculate and store the extinction
+        optical depth (i.e. the sum of both). Based on this information, the contribution of the
+        photon packet to the radiation field in each spatial cell can be stored, if so requested.
+        The packet is then propagated to a new (random) scattering position, and its weight
+        (luminosity) is adjusted for the escape fraction and the absorbed energy. The details of
+        this process depend on whether explicit absorption is enabled or not. Refer to the
+        simulateForcedPropagation() function. If, after this adjustment, the photon packet is still
+        sufficiently luminous, scattering peel-off photon packets are created and launched towards
+        each instrument, if so requested, and the actual scattering event is simulated. Finally,
+        the loop repeats itself. It is terminated only when the photon packet has lost a
+        substantial part of its original luminosity (and hence becomes irrelevant).
+
+        - Non-forced scattering. The photon packet is propagated to a new (random) scattering
+        position, calculating the path geometry and optical depth information on the fly up to the
+        interaction location. Because the path segment information is not stored, it is impossible
+        to register the radiation field (in the current implementation). The details of the
+        propagation process depend on whether explicit absorption is enabled or not. Refer to the
+        simulateNonForcedPropagation() function. If the selected interaction point turns out to be
+        beyond the model boundary, the packet is terminated. Otherwise, scattering peel-off photon
+        packets are created and launched towards each instrument, if so requested, the actual
+        scattering event is simulated, and the loop repeats itself.
 
         The first two arguments of this function specify the range of photon packet history indices
         to be handled. The \em primary flag is true to launch from primary sources, false for
@@ -421,7 +485,8 @@ private:
         photon packet would have been emitted towards the observer is not the same as the
         probability that it is emitted in any other direction. If the source has a nonzero
         velocity, the wavelength of the peel-off photon packet is Doppler-shifted for the new
-        direction.
+        direction. If the photon packet is polarized, the Stokes vector is rotated into the frame
+        of the target instrument.
 
         The first argument specifies the photon packet that was just emitted; the second argument
         provides a placeholder peel off photon packet for use by the function. */
@@ -473,7 +538,8 @@ private:
         We first determine the total optical depth \f$\tau_\text{path}\f$ of the photon packet's
         path. Because the path has been calculated until the edge of the simulation's spatial grid,
         \f$\tau_\text{path}\f$ is equal to the cumulative optical depth at the end of the last
-        segment in the path.
+        segment in the path. If explicit absorption is disabled, this step uses the extinction
+        optical depth. If explicit absorption is enabled, it uses the scattering optical depth.
 
         <b>%Random optical depth</b>
 
@@ -500,20 +566,28 @@ private:
         we determine the physical position of the interaction point along the path. This is
         accomplished in two steps: a binary search among the path segments to determine the segment
         (or cell) "containing" the given cumulative optical depth, and subsequent linear
-        interpolation within the cell assuming exponential behavior of the extinction.
-
-        <b>Albedo</b>
-
-        We calculate the scattering albedo \f$\varpi\f$ of the medium at the interaction point (or
-        more precisely, for the spatial cell containing the interaction point).
+        interpolation within the cell assuming exponential behavior of the extinction. Again, if
+        explicit absorption is disabled, this step uses the extinction optical depth. If explicit
+        absorption is enabled, it uses the scattering optical depth.
 
         <b>Weight adjustment</b>
 
         We adjust the weight of the photon packet to compensate for the escaped and absorbed
-        portions of the luminosity. More precisely, the weight is multiplied by the scattered
-        fraction, i.e. the fraction of the luminosity that does not escape and does not get
-        absorbed, \f[ f_\text{sca} = (1-f_\text{esc}) \,\varpi = (1-\text{e}^{-\tau_\text{path}})
-        \,\varpi. \f]
+        portions of the luminosity through multiplication by a bias factor \f$b\f$.
+
+        If explicit absorption is disabled, the bias factor is given by the scattered fraction,
+        i.e. the fraction of the luminosity that does not escape and does not get absorbed, \f[ b =
+        f_\text{sca} = (1-f_\text{esc}) \,\varpi_\text{int} =
+        (1-\text{e}^{-\tau^\text{ext}_\text{path}}) \,\varpi_\text{int}, \f] where
+        \f$\varpi_\text{int}\f$ is the scattering albedo of the medium at the interaction point (or
+        more precisely, for the spatial cell containing the interaction point).
+
+        If explicit absorption is enabled, the factor compensating for the escape fraction remains
+        the same, but now calculated using the scattering optical depth, and the albedo is replaced
+        by the absorbed fraction along the path up to the interaction point, \f[ b =
+        (1-\text{e}^{-\tau^\text{sca}_\text{path}}) \,\text{e}^{-\tau^\text{abs}_\text{int}}, \f]
+        where \f$\tau^\text{abs}_\text{int}\f$ is the absorption optical depth at the interaction
+        point.
 
         <b>Advance position</b>
 
@@ -523,10 +597,9 @@ private:
     void simulateForcedPropagation(PhotonPacket* pp);
 
     /** This function simulates the propagation of a photon packet to the next scattering location
-        in a photon life cycle without forced scattering. The function assumes that the next
-        scattering location for the photon packet's path has already been set; if this is not the
-        case, the behavior is undefined. This function proceeds in a number of steps as outlined
-        below.
+        in a photon life cycle without forced scattering. It proceeds in a number of steps as
+        outlined below. The function returns false if the photon packet must be terminated because
+        the selected interaction point is beyond the model boundary.
 
         <b>%Random optical depth</b>
 
@@ -537,48 +610,63 @@ private:
         <b>Interaction point</b>
 
         Now that the optical depth \f$\tau\f$ at the interaction site has been (randomly) chosen,
-        we determine the physical position of the interaction point along the path. This is
-        accomplished by generating the path segments for crossed cells one by one and calculating
-        the corresponding cumulative optical depth on the fly. Once the cumulative optical depth at
-        the exit point of a segment exceeds the interaction optical depth, we know that the
-        interaction point must be within this segment. The physical interaction point is then
-        obtained through linear interpolation within the segment, assuming exponential behavior of
-        the extinction. If the cumulative optical depth of the path never exceeds the interaction
-        optical depth, the photon packet escapes and is terminated.
+        we determine the physical position of the interaction point along the path. If explicit
+        absorption is disabled, this step uses the extinction optical depth. If explicit absorption
+        is enabled, it uses the scattering optical depth.
 
-        <b>Albedo</b>
-
-        We calculate the scattering albedo \f$\varpi\f$ of the medium at the interaction point (or
-        more precisely, for the spatial cell containing the interaction point).
+        The interaction point is located by generating the path segments for crossed cells one by
+        one and calculating the corresponding cumulative optical depth on the fly. Once the
+        cumulative optical depth at the exit point of a segment exceeds the interaction optical
+        depth, we know that the interaction point must be within this segment. The physical
+        interaction point is then obtained through linear interpolation within the segment,
+        assuming exponential behavior of the extinction. If the cumulative optical depth of the
+        path never exceeds the interaction optical depth, the photon packet escapes and is
+        terminated.
 
         <b>Weight adjustment</b>
 
         We adjust the weight of the photon packet to compensate for the absorbed portion of the
-        luminosity. More precisely, the weight is multiplied by the scattered fraction, i.e. \f$
-        f_\text{sca} = \varpi \f$.
+        luminosity through multiplication by a bias factor \f$b\f$.
+
+        If explicit absorption is disabled, the bias factor is given by the scattered fraction,
+        which is easily obtained as the scattering albedo of the medium at the interaction point
+        (or more precisely, for the spatial cell containing the interaction point), \f[ b =
+        f_\text{sca} = \varpi_\text{int}. \f]
+
+        If explicit absorption is enabled, the bias factor is given by the absorbed fraction along
+        the path up to the interaction point, \f[ b = \text{e}^{-\tau^\text{abs}_\text{int}}, \f]
+        where \f$\tau^\text{abs}_\text{int}\f$ is the absorption optical depth at the interaction
+        point.
 
         <b>Advance position</b>
 
         Finally we advance the initial position of the photon packet to the interaction point. This
         last step invalidates the photon packet's path (including geometric and optical depth
         information). The packet is now ready to be scattered into a new direction. */
-    void simulateNonForcedPropagation(PhotonPacket* pp);
+    bool simulateNonForcedPropagation(PhotonPacket* pp);
 
     /** This function simulates the peel-off of a photon packet before a scattering event. This
-        means that, just before a scattering event, we create a peel-off photon packet for every
-        instrument in the instrument system, which is forced to propagate in the direction of the
-        observer instead of in the propagation direction determined randomly by the scattering
-        process. Each peel-off photon packet is subsequently fed into its target instrument for
-        detection.
+        means that, just before a scattering event, we create one or more peel-off photon packets
+        for every instrument in the instrument system, which are forced to propagate in the
+        direction of the observer instead of in the propagation direction determined randomly by
+        the scattering process. Each peel-off photon packet is subsequently fed into its target
+        instrument for detection.
+
+        If the rest-frame scattering event may change the wavelength of the photon packet (i.e.
+        other than because of the bulk velocity of the medium), it is necessary to send a separate
+        peel-off packet for each medium component (to each instrument). If the wavelength cannot
+        change, we can send a consolidated peel-off packet that aggregates the relevant information
+        for all medium components.
 
         A peel-off photon packet has the same characteristics as the original photon packet, apart
         from four differences. The first one is, obviously, that the propagation direction is
         altered to the direction towards the observer. The second difference is that we have to
         alter the luminosity of the photon packet to compensate for this change in propagation
-        direction, because the scattering process is anisotropic. The third difference is that the
+        direction in case the scattering process is anisotropic. The third difference is that the
         polarization state of the peel-off photon packet is adjusted. And the last difference is
         that the wavelength of the peel-off photon packet is properly Doppler-shifted taking into
-        account the bulk velocity of the medium.
+        account the bulk velocity of the medium, and/or can be adjusted by the rest-frame
+        scattering event itself.
 
         The first argument to this function specifies the photon packet that is about to be
         scattered; the second argument provides a placeholder peel off photon packet for use by the

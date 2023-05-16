@@ -361,6 +361,10 @@ void SkirtCommandLineHandler::doSimulation(size_t index)
         // log a warning about problems with the installed resource packs
         reportResourceIssues(simulation->log());
 
+        // setup verbose MPI logging if requested and meaningful
+        if (ProcessManager::isMultiProc() && _args.isPresent("-v") && !_args.isPresent("-e"))
+            ProcessManager::setLogger([log](string message) { log->info(message); });
+
         // run the simulation and catch and properly report any exceptions to the simulation log file
         try
         {
@@ -377,6 +381,9 @@ void SkirtCommandLineHandler::doSimulation(size_t index)
             log->error("Standard Library Exception: " + string(except.what()), false);
             throw except;
         }
+
+        // clear verbose MPI logging
+        ProcessManager::clearLogger();
 
         // if this is the only or first simulation in the run, report memory statistics in the simulation's log file
         if (_parallelSims == 1 && index == 0) reportPeakMemory(_args.isPresent("-v") ? simulation->log() : log);

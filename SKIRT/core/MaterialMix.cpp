@@ -48,6 +48,13 @@ bool MaterialMix::hasResonantScattering() const
 
 ////////////////////////////////////////////////////////////////////
 
+bool MaterialMix::hasNegativeExtinction() const
+{
+    return false;
+}
+
+////////////////////////////////////////////////////////////////////
+
 bool MaterialMix::hasStochasticDustEmission() const
 {
     return false;
@@ -69,9 +76,9 @@ bool MaterialMix::hasScatteringDispersion() const
 
 ////////////////////////////////////////////////////////////////////
 
-bool MaterialMix::hasSemiDynamicMediumState() const
+MaterialMix::DynamicStateType MaterialMix::hasDynamicMediumState() const
 {
-    return false;
+    return DynamicStateType::None;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -103,13 +110,6 @@ void MaterialMix::initializeSpecificState(MaterialState* /*state*/, double /*met
 
 ////////////////////////////////////////////////////////////////////
 
-double MaterialMix::asymmpar(double /*lambda*/) const
-{
-    return 0.;
-}
-
-////////////////////////////////////////////////////////////////////
-
 UpdateStatus MaterialMix::updateSpecificState(MaterialState* /*state*/, const Array& /*Jv*/) const
 {
     throw FATALERROR("This function implementation should never be called");
@@ -120,6 +120,13 @@ UpdateStatus MaterialMix::updateSpecificState(MaterialState* /*state*/, const Ar
 bool MaterialMix::isSpecificStateConverged(int /*numCells*/, int /*numUpdated*/, int /*numNotConverged*/) const
 {
     return true;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double MaterialMix::asymmpar(double /*lambda*/) const
+{
+    return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////

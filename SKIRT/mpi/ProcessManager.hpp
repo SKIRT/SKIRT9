@@ -16,8 +16,10 @@
     class must be constructed just after program startup, and before the command-line arguments are
     used by other parts of the program. The latter is important because the MPI initialization
     functions called by the ProcessManager constructor may adjust the command-line arguments to
-    remove MPI specific options. The program should not use the exit() or abort() functions, but
-    rather let the main() function run to normal completion and return an exit code.
+    remove MPI specific options. The program should let the main() function run to normal
+    completion and return an exit code rather than calling the std::exit() function. In case of
+    abnormal termination, the program should call the ProcessManager::abort() function as opposed
+    to the std::abort() function.
 
     The functions of this class should be called only from the main thread of the program.
     Violation of this rule causes undefined behavior that may differ between MPI implementations.
@@ -58,6 +60,16 @@ public:
         process. If the MPI library is not present, or the program was invoked without MPI, or
         there is only one process, this function does nothing. */
     static void abort(int exitcode);
+
+    //======== Logging  ===========
+
+    /** This function sets the specified callback function as the usage logger, which is called
+        with diagnostic messages bracketing each MPI operation. Initially, the logger is cleared.
+        */
+    static void setLogger(std::function<void(string)> logger);
+
+    /** This function clears the usage logger so that it is no longer called. */
+    static void clearLogger();
 
     //======== Environment info  ===========
 
@@ -123,8 +135,20 @@ public:
         processes. The resulting sums are then stored in the same Array passed to this function on
         the root process. The arrays on the other processes are left untouched. All processes must
         call this function for the communication to proceed. If there is only one process, or if
-        the array has zero size, the function does nothing. */
-    static void sumToRoot(Array& arr);
+        the array has zero size, the function does nothing.
+
+        If the \em wait argument is true, this function causes the processes to block until all
+        other processes have invoked it as well. This is important in case the sumToRoot() call may
+        be followed by a sequence of master-slave chunk requests without an intervening call to
+        wait(). Indeed, because nonroot processes do not receive any data in this function, if the
+        MPI implementation buffers the involved send operations, the sumToRoot() function may
+        return in nonroot processes before the root process calls it. This causes problems in case
+        the sumToRoot() call is followed by a sequence of master-slave chunk requests, because the
+        nonroot process might steal a (terminating empty) chunk from the previous sequence,
+        stalling some other non-root process indefinitely. In practice, this means \em wait should
+        be set to true when sumToRoot() is called from probes and can be left to false when it is
+        called from instruments. */
+    static void sumToRoot(Array& arr, bool wait = false);
 
     /** This function broadcasts a separate sequence of floating point values from each process to
         the other processes. The chunk of data to be sent by the calling process must be generated

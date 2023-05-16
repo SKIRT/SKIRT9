@@ -14,9 +14,13 @@ class MaterialState;
 ////////////////////////////////////////////////////////////////////
 
 /** DynamicStateRecipe is an abstract class representing recipes for dynamically adjusting the
-    medium state by iterating over the radiation field. The purpose of the dynamic medium state
-    mechanism is to allow self-consistent calculation of medium state variables. A prototypical
-    example is the radiative destruction of dust grains.
+    medium state while iterating over the radiation field during primary and/or secondary emission.
+    The purpose of the dynamic medium state (DMS) mechanism is to allow self-consistent calculation
+    of medium state variables. For more information about DMS support, refer to the documentation
+    of the MonteCarloSimulation class. In the current implementation, the updates performed by
+    DynamicStateRecipe subclasses are assumed to affect the opacity of the medium during primary
+    emission. In other words, <b><em>DynamicStateRecipe's always implement PDMS</em></b>. A
+    prototypical example of a PDMS application is the radiative destruction of dust grains.
 
     For each iteration step, the simulation launches a set of photon packets to track the radiation
     field based on the current values of the medium state variables. At the end of the iteration

@@ -11,17 +11,18 @@
 SkirtUnitDef::SkirtUnitDef()
 {
     // get relevant constants in local variables
-    double k = Constants::k();
-    double c = Constants::c();
-    double hc = Constants::h() * Constants::c();
-    double pc = Constants::pc();
-    double AU = Constants::AU();
-    double Qel = Constants::Qelectron();
-    double Msun = Constants::Msun();
-    double Lsun = Constants::Lsun();
-    double year = Constants::year();
-    double arcsec = M_PI / (180. * 3600.);
-    double arcsec2 = arcsec * arcsec;
+    constexpr double k = Constants::k();
+    constexpr double c = Constants::c();
+    constexpr double hc = Constants::h() * Constants::c();
+    constexpr double pc = Constants::pc();
+    constexpr double AU = Constants::AU();
+    constexpr double Qel = Constants::Qelectron();
+    constexpr double Msun = Constants::Msun();
+    constexpr double amu = Constants::amu();
+    constexpr double Lsun = Constants::Lsun();
+    constexpr double year = Constants::year();
+    constexpr double arcsec = M_PI / (180. * 3600.);
+    constexpr double arcsec2 = arcsec * arcsec;
 
     // *** add units for each physical quantity
 
@@ -146,6 +147,7 @@ SkirtUnitDef::SkirtUnitDef()
     addUnit("mass", "kg", 1.);
     addUnit("mass", "g", 1e-3);
     addUnit("mass", "Msun", Msun);
+    addUnit("mass", "amu", amu);
 
     // bulk mass
     addUnit("bulkmass", "kg", 1.);
@@ -212,12 +214,21 @@ SkirtUnitDef::SkirtUnitDef()
     addUnit("time", "Myr", 1e6 * year);
     addUnit("time", "Gyr", 1e9 * year);
 
+    // transition rate
+    addUnit("transitionrate", "1/s", 1.);
+
+    // collisional rate
+    addUnit("collisionalrate", "m3/s", 1.);
+    addUnit("collisionalrate", "cm3/s", 1e-6);
+
     // temperature
     addUnit("temperature", "K", 1.);
 
     // energy
     addUnit("energy", "J", 1.);
     addUnit("energy", "erg", 1e-7);
+    addUnit("energy", "1/m", hc);
+    addUnit("energy", "1/cm", 1e2 * hc);
     addUnit("energy", "eV", Qel);
     addUnit("energy", "meV", 1e-3 * Qel);
     addUnit("energy", "keV", 1e3 * Qel);
@@ -252,12 +263,24 @@ SkirtUnitDef::SkirtUnitDef()
     addUnit("bolluminosity", "erg/s", 1e-7);
     addUnit("bolluminosity", "Lsun", Lsun);
 
+    // bolometric luminosity volume density
+    addUnit("bolluminosityvolumedensity", "W/m3", 1.);
+    addUnit("bolluminosityvolumedensity", "erg/s/cm3", 0.1);
+    addUnit("bolluminosityvolumedensity", "Lsun/AU3", Lsun / pow(AU, 3));
+    addUnit("bolluminosityvolumedensity", "Lsun/pc3", Lsun / pow(pc, 3));
+
+    // bolometric luminosity surface density
+    addUnit("bolluminositysurfacedensity", "W/m2", 1.);
+    addUnit("bolluminositysurfacedensity", "erg/s/cm2", 0.001);
+    addUnit("bolluminositysurfacedensity", "Lsun/AU2", Lsun / pow(AU, 2));
+    addUnit("bolluminositysurfacedensity", "Lsun/pc2", Lsun / pow(pc, 2));
+
     // neutral monochromatic luminosity (lambda L_lambda = nu L_nu)
     addUnit("neutralmonluminosity", "W", 1.);
     addUnit("neutralmonluminosity", "erg/s", 1e-7);
     addUnit("neutralmonluminosity", "Lsun", Lsun);
 
-    // neutral monochromatic luminosity (lambda L_lambda / V)
+    // neutral monochromatic luminosity volume density (lambda L_lambda / V)
     addUnit("neutralmonluminosityvolumedensity", "W/m3", 1.);
     addUnit("neutralmonluminosityvolumedensity", "erg/s/cm3", 0.1);
     addUnit("neutralmonluminosityvolumedensity", "Lsun/AU3", Lsun / pow(AU, 3));
@@ -509,6 +532,8 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("SIUnits", "magneticfield", "T");
     addDefaultUnit("SIUnits", "pressure", "Pa");
     addDefaultUnit("SIUnits", "bolluminosity", "W");
+    addDefaultUnit("SIUnits", "bolluminosityvolumedensity", "W/m3");
+    addDefaultUnit("SIUnits", "bolluminositysurfacedensity", "W/m2");
     addDefaultUnit("SIUnits", "neutralmonluminosity", "W");
     addDefaultUnit("SIUnits", "neutralmonluminosityvolumedensity", "W/m3");
     addDefaultUnit("SIUnits", "neutralfluxdensity", "W/m2");
@@ -563,6 +588,8 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("StellarUnits", "magneticfield", "uG");
     addDefaultUnit("StellarUnits", "pressure", "K/m3");
     addDefaultUnit("StellarUnits", "bolluminosity", "Lsun");
+    addDefaultUnit("StellarUnits", "bolluminosityvolumedensity", "Lsun/AU3");
+    addDefaultUnit("StellarUnits", "bolluminositysurfacedensity", "Lsun/AU2");
     addDefaultUnit("StellarUnits", "neutralmonluminosity", "Lsun");
     addDefaultUnit("StellarUnits", "neutralmonluminosityvolumedensity", "Lsun/AU3");
     addDefaultUnit("StellarUnits", "neutralfluxdensity", "W/m2");
@@ -617,6 +644,8 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("ExtragalacticUnits", "magneticfield", "uG");
     addDefaultUnit("ExtragalacticUnits", "pressure", "K/m3");
     addDefaultUnit("ExtragalacticUnits", "bolluminosity", "Lsun");
+    addDefaultUnit("ExtragalacticUnits", "bolluminosityvolumedensity", "Lsun/pc3");
+    addDefaultUnit("ExtragalacticUnits", "bolluminositysurfacedensity", "Lsun/pc2");
     addDefaultUnit("ExtragalacticUnits", "neutralmonluminosity", "Lsun");
     addDefaultUnit("ExtragalacticUnits", "neutralmonluminosityvolumedensity", "Lsun/pc3");
     addDefaultUnit("ExtragalacticUnits", "neutralfluxdensity", "W/m2");

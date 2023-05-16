@@ -57,6 +57,18 @@ double Cylinder2DSpatialGrid::volume(int m) const
 
 //////////////////////////////////////////////////////////////////////
 
+double Cylinder2DSpatialGrid::diagonal(int m) const
+{
+    int i, k;
+    invertIndex(m, i, k);
+    if (i < 0 || i >= _NR || k < 0 || k >= _Nz) return 0.;
+    Position p1(_Rv[i + 1], 0., _zv[k + 1], Position::CoordinateSystem::CYLINDRICAL);
+    Position p0(_Rv[i], 0., _zv[k], Position::CoordinateSystem::CYLINDRICAL);
+    return (p1 - p0).norm();
+}
+
+//////////////////////////////////////////////////////////////////////
+
 int Cylinder2DSpatialGrid::cellIndex(Position bfr) const
 {
     int i = NR::locateFail(_Rv, bfr.cylRadius());
@@ -83,7 +95,7 @@ Position Cylinder2DSpatialGrid::randomPositionInCell(int m) const
 {
     int i, k;
     invertIndex(m, i, k);
-    double R = _Rv[i] + (_Rv[i + 1] - _Rv[i]) * random()->uniform();
+    double R = sqrt(_Rv[i] * _Rv[i] + (_Rv[i + 1] - _Rv[i]) * (_Rv[i + 1] + _Rv[i]) * random()->uniform());
     double phi = 2.0 * M_PI * random()->uniform();
     double z = _zv[k] + (_zv[k + 1] - _zv[k]) * random()->uniform();
     return Position(R, phi, z, Position::CoordinateSystem::CYLINDRICAL);
