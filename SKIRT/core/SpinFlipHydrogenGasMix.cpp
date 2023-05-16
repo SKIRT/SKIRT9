@@ -79,8 +79,6 @@ vector<StateVariable> SpinFlipHydrogenGasMix::specificStateVariableInfo() const
 {
     return vector<StateVariable>{StateVariable::numberDensity(), StateVariable::metallicity(),
                                  StateVariable::temperature(),
-                                 StateVariable::custom(NEUTRAL_SURFACE_DENSITY, "neutral hydrogen surface density", "masssurfacedensity"),
-                                 StateVariable::custom(CELL_SIZE, "cell size", "length"),
                                  StateVariable::custom(NEUTRAL_FRACTION, "neutral hydrogen fraction", ""),
                                  StateVariable::custom(NEUTRAL_SURFACE_DENSITY, "neutral hydrogen surface density", "masssurfacedensity"),
                                  StateVariable::custom(ATOMIC_FRACTION, "atomic hydrogen fraction", "")};
@@ -123,8 +121,6 @@ UpdateStatus SpinFlipHydrogenGasMix::updateSpecificState(MaterialState* state, c
         constexpr double h = Constants::h();
         constexpr double c = Constants::c();
         constexpr double Qel = Constants::Qelectron();
-        constexpr double pc = Constants::pc();
-        constexpr double Msun = Constants::Msun();
         constexpr double JMW = 1e6 * 1e4 * (h * c * h * c / (lambdaUV * lambdaUV * lambdaUV)) / Qel;
         double U = Jv[_indexUV] / JMW;
 
