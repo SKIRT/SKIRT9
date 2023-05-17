@@ -15,7 +15,9 @@
     (1997) for wavelengths >7.8 microns. The optical properties for wavelengths <7.8 microns are
     taken from Laor, A, & Draine, B.T. 1993 ApJ 402,441. The calorimetric properties are those for
     astronomical silicates given by Draine & Li (2007), originally from Draine & Lee (1984). The
-    bulk mass density is set to 4020 kg/m3. */
+    bulk mass density is set to 4020 kg/m3. The grain shape is assumed to be a Continuous Distribution 
+    of Ellipsoids (CDE) and the grain size corresponds to a volume that a spherical grain with 
+    the given radius would have.*/
 class BegemannPorousAluminaGrainComposition : public GrainComposition
 {
     ITEM_CONCRETE(BegemannPorousAluminaGrainComposition, GrainComposition,

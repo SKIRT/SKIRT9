@@ -13,7 +13,8 @@
 /** The DorschnerOlivineGrainComposition class represents the optical and calorimetric properties
     of olivine dust grains. The optical properties are taken from Dorschner et al. (1995). The
     calorimetric properties are those for astronomical silicates given by Draine & Li (2007),
-    originally from Draine & Lee (1984). The bulk mass density is set to 3790 kg/m3 */
+    originally from Draine & Lee (1984). The bulk mass density is set to 3790 kg/m3. The grain shape 
+    is assumed to be a sphere (Mie particle). */
 class DorschnerOlivineGrainComposition : public GrainComposition
 {
     ITEM_CONCRETE(DorschnerOlivineGrainComposition, GrainComposition, "a Dorschner olivine dust grain composition")
