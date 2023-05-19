@@ -1,4 +1,4 @@
 Core 6
 BPASS 1
-ExtraDust 1
+ExtraDust 2
 AtomsMolecules 4
