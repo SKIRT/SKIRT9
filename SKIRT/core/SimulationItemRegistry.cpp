@@ -248,6 +248,8 @@
 #include "TemperatureWavelengthCellLibrary.hpp"
 #include "ThemisDustMix.hpp"
 #include "TorusGeometry.hpp"
+#include "ToddlersSED.hpp"
+#include "ToddlersSEDFamily.hpp"
 #include "TreePolicy.hpp"
 #include "TreeSpatialGrid.hpp"
 #include "TreeSpatialGridTopologyProbe.hpp"
@@ -349,6 +351,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<FileLineSED>();
     ItemRegistry::add<ListLineSED>();
     ItemRegistry::add<SingleWavelengthSED>();
+    ItemRegistry::add<ToddlersSED>();
 
     // SED families
     ItemRegistry::add<SEDFamily>();
@@ -365,6 +368,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<LyaGaussianSEDFamily>();
     ItemRegistry::add<LyaDoublePeakedSEDFamily>();
     ItemRegistry::add<LyaSEDFamilyDecorator>();
+    ItemRegistry::add<ToddlersSEDFamily>();
 
     // wavelength distributions
     ItemRegistry::add<WavelengthDistribution>();
