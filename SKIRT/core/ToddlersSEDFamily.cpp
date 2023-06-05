@@ -18,12 +18,11 @@ ToddlersSEDFamily::ToddlersSEDFamily(SimulationItem* parent, PAHfraction pahfrac
 
 ////////////////////////////////////////////////////////////////////
 
-
 void ToddlersSEDFamily::setupSelfBefore()
 {
     SEDFamily::setupSelfBefore();
-    
-    string name  = "ToddlersSEDFamily_";
+
+    string name = "ToddlersSEDFamily_";
     name += _pahfraction == PAHfraction::High ? "highPAHfrac" : "lowPAHfrac";
     name += "_";
     name += _resolution == Resolution::Low ? "lr" : "hr";
@@ -56,12 +55,12 @@ Range ToddlersSEDFamily::intrinsicWavelengthRange() const
 double ToddlersSEDFamily::specificLuminosity(double wavelength, const Array& parameters) const
 
 {
-    double age     = parameters[0] / (1e6*Constants::year()); 
-    double Z       = parameters[1];
-    double SFE     = parameters[2];
-    double n_cl    = parameters[3] / 1e6 ;
-    double M       = parameters[4] / Constants::Msun();
-    
+    double age = parameters[0] / (1e6 * Constants::year());
+    double Z = parameters[1];
+    double SFE = parameters[2];
+    double n_cl = parameters[3] / 1e6;
+    double M = parameters[4] / Constants::Msun();
+
     return M * _table(wavelength, age, Z, SFE, n_cl);
 }
 
@@ -71,12 +70,11 @@ double ToddlersSEDFamily::cdf(Array& lambdav, Array& pv, Array& Pv, const Range&
                               const Array& parameters) const
 
 {
-    double age     = parameters[0] / (1e6*Constants::year()); 
-    double Z       = parameters[1];
-    double SFE     = parameters[2];
-    double n_cl    = parameters[3] / 1e6;
-    double M       = parameters[4] / Constants::Msun();
-
+    double age = parameters[0] / (1e6 * Constants::year());
+    double Z = parameters[1];
+    double SFE = parameters[2];
+    double n_cl = parameters[3] / 1e6;
+    double M = parameters[4] / Constants::Msun();
 
     return M * _table.cdf(lambdav, pv, Pv, wavelengthRange, age, Z, SFE, n_cl);
 }

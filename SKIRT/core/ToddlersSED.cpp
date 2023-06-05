@@ -4,8 +4,8 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "ToddlersSED.hpp"
-#include "ToddlersSEDFamily.hpp"
 #include "NR.hpp"
+#include "ToddlersSEDFamily.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -16,9 +16,9 @@ const SEDFamily* ToddlersSED::getFamilyAndParameters(Array& parameters)
 
     // construct the library of SED models
     return new ToddlersSEDFamily(
-        this, _pahfraction == PAHfraction::High ? ToddlersSEDFamily::PAHfraction::High : ToddlersSEDFamily::PAHfraction::Low,
-         _resolution == Resolution::Low ? ToddlersSEDFamily::Resolution::Low : ToddlersSEDFamily::Resolution::High);
+        this,
+        _pahfraction == PAHfraction::High ? ToddlersSEDFamily::PAHfraction::High : ToddlersSEDFamily::PAHfraction::Low,
+        _resolution == Resolution::Low ? ToddlersSEDFamily::Resolution::Low : ToddlersSEDFamily::Resolution::High);
 }
 
 ////////////////////////////////////////////////////////////////////
-

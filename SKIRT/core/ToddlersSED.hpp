@@ -34,7 +34,7 @@ class ToddlersSED : public FamilySED
 
         PROPERTY_ENUM(pahfraction, PAHfraction, "the maximum PAH to Dust fraction value")
         ATTRIBUTE_DEFAULT_VALUE(pahfraction, "High")
-        PROPERTY_ENUM(resolution, Resolution,  "the wavelength resolution")
+        PROPERTY_ENUM(resolution, Resolution, "the wavelength resolution")
         ATTRIBUTE_DEFAULT_VALUE(resolution, "low")
 
         PROPERTY_DOUBLE(age, "Hii region age")
@@ -73,4 +73,3 @@ protected:
 ////////////////////////////////////////////////////////////////////
 
 #endif
-
