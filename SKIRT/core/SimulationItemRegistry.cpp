@@ -247,6 +247,8 @@
 #include "TemperatureProbe.hpp"
 #include "TemperatureWavelengthCellLibrary.hpp"
 #include "ThemisDustMix.hpp"
+#include "ToddlersSED.hpp"
+#include "ToddlersSEDFamily.hpp"
 #include "TorusGeometry.hpp"
 #include "TreePolicy.hpp"
 #include "TreeSpatialGrid.hpp"
@@ -339,6 +341,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<FSPSSED>();
     ItemRegistry::add<BpassSED>();
     ItemRegistry::add<MappingsSED>();
+    ItemRegistry::add<ToddlersSED>();
     ItemRegistry::add<TabulatedSED>();
     ItemRegistry::add<FileSED>();
     ItemRegistry::add<ListSED>();
@@ -362,6 +365,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<FileSSPSEDFamily>();
     ItemRegistry::add<FileIndexedSEDFamily>();
     ItemRegistry::add<MappingsSEDFamily>();
+    ItemRegistry::add<ToddlersSEDFamily>();
     ItemRegistry::add<LyaGaussianSEDFamily>();
     ItemRegistry::add<LyaDoublePeakedSEDFamily>();
     ItemRegistry::add<LyaSEDFamilyDecorator>();
