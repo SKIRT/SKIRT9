@@ -11,39 +11,42 @@
 
 //////////////////////////////////////////////////////////////////////
 
-/** An instance of the ToddlersSEDFamily class represents the family of TODDLERS star-forming
-    regions UV--mm SEDs parameterized on age, metallicity, star formation efficiency, and cloud
-    number density.
+/** An instance of the ToddlersSEDFamily class represents the TODDLERS (Time evolution of Dust
+    Diagnostics and Line Emission from Regions containing young Stars) family of star-forming
+    region SEDs parameterized on age, metallicity, star formation efficiency, and cloud number
+    density. This %SED template library is described in detail by Kapoor et al. in the manuscript
+    submitted to MNRAS on May 26, 2023. The spectra were generated using the Cloudy master branch
+    commit with SHA 69c3fa5871da3262341910e37c6ed2e5fb76dd3c.
 
-    TODDLERS = Time evolution of Dust Diagnostics and Line Emission from Regions containing young
-    Stars.
+    The SEDs in the TODDLERS library are tabulated over a wavelength range from \f$0.01\f$ to
+    \f$3000~\mu\mathrm{m}\f$ and include both continuum and line emission. The low-resolution
+    version of the library uses the default Cloudy output resolution of \f$R=300\f$ to represent
+    both the line and continuum components, resulting in 3787 wavelength points. The
+    high-resolution version represents each line using a high-resolution Gaussian line profile with
+    \f$R= 2\lambda/\Delta\lambda = 1e5\f$, where \f$\Delta\lambda\f$ is width of the \f$4 \sigma\f$
+    truncated Gaussian. The line profiles are added to the default \f$R=300\f$ resolution
+    continuum, resulting in a total of 9756 wavelength points.
 
-    The time resolved SED library is scaled by the particle mass. The scaling assumes a cloud mass
-    function obeying a power law with slope -1.8, i.e., dN/dM ∝ M^{-1.8} running from cloud mass
-    of 1e5 - 1e6.75 Msun. The SEDs span 90 ages from 0.1-30 Myr, 5 metallicity values from
-    0.001-0.04, 7 star formation efficiencies from 1-15%, and 9 cloud number densities ranging from
-    10-2560 cm^{-3}. The PAH fraction is a maximal value scaled by the neutral Hydrogen abundance
-    in a shell, two maximum q_PAH values are available: High(Default) = 4.6%, Low = 1%.
+    The TODDLERS parameter space spans 90 ages from 0.1-30 Myr, 5 metallicity values from
+    0.001-0.04, 7 star formation efficiencies from 1-15%, and 9 cloud number densities from 10-2560
+    \f$\mathrm{cm}^{-3}\f$. The PAH-to-dust fraction is a maximum value scaled by the neutral
+    hydrogen abundance in a shell. Two maximum PAH fractions are available: High = 4.6%, Low = 1%.
+    Finally, the SEDs are scaled by the mass of the imported star-forming region particle. The
+    scaling assumes a cloud mass function obeying a power law with slope -1.8, i.e., \f$dN/dM
+    \propto M^{-1.8}\f$ running from a cloud mass of \f$10^5\f$ to
+    \f$10^{6.75}~\mathrm{M}_\odot\f$.
 
-    Additionally, this class allows the use of low and high resolution spectra to represent the
-    total SED. The model spectra have 3787/9756 wavelengths in the low/high resolution SEDs. The
-    low resolution set uses the default Cloudy output resolution of R=300 to represent both the
-    line and continuum components. The high resolution SEDs contain the set of lines discussed in
-    Kapoor et al 2023 with high resolution Gaussian line profiles (\f$R= 2\lambda/\Delta\lambda =
-    1e5\f$, \f$\Delta\lambda\f$ = width of the \f$4 \sigma\f$ truncated Gaussian) added to the
-    default Cloudy resolution continuum spectra. The SEDs are tabulated over a wavelength range
-    from 100 Angstrom to 3000 micron.
-
-    The data was generated using the Cloudy master branch SHA:
-    69c3fa5871da3262341910e37c6ed2e5fb76dd3c
-
-    For more details refer to Kapoor et al 2023. */
+    When imported from a text column file, the parameters for this %SED family must appear in the
+    following order in the specified default units (unless these units are overridden by column
+    header info): \f[ t\,(\mathrm{yr}) \quad Z\,(\mathrm{dimensionless}) \quad
+    \mathrm{SFE}\,(\mathrm{dimensionless}) \quad n_\mathrm{cloud} (\mathrm{cm}^{-3}) \quad
+    M\,(\mathrm{M}_\odot) \f] */
 class ToddlersSEDFamily : public SEDFamily
 {
     /** The enumeration type indicating the maximum PAH-to-dust fraction. */
     ENUM_DEF(PAHFraction, High, Low)
-        ENUM_VAL(PAHFraction, High, "High PAH fraction (4.6%)")
-        ENUM_VAL(PAHFraction, Low, "Low PAH fraction (1%)")
+        ENUM_VAL(PAHFraction, High, "High PAH-to-dust fraction (4.6%)")
+        ENUM_VAL(PAHFraction, Low, "Low PAH-to-dust fraction (1%)")
     ENUM_END()
 
     /** The enumeration type indicating the wavelength resolution. */

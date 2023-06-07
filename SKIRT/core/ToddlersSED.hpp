@@ -11,17 +11,14 @@
 ////////////////////////////////////////////////////////////////////
 
 /** A ToddlersSED class instance represents a single star-forming region SED taken from the
-    Toddlers template library, parameterized on age, metallicity, star formation efficiency, and
-    cloud number density. See the ToddlersSEDFamily class for more information.
-
-    TODDLERS = Time evolution of Dust Diagnostics and Line Emission from Regions containing young
-    Stars. */
+    TODDLERS template library, parameterized on age, metallicity, star formation efficiency, and
+    cloud number density. See the ToddlersSEDFamily class for more information. */
 class ToddlersSED : public FamilySED
 {
     /** The enumeration type indicating the maximum PAH-to-dust fraction. */
     ENUM_DEF(PAHFraction, High, Low)
-        ENUM_VAL(PAHFraction, High, "High PAH fraction (4.6%)")
-        ENUM_VAL(PAHFraction, Low, "Low PAH fraction (1%)")
+        ENUM_VAL(PAHFraction, High, "High PAH-to-dust fraction (4.6%)")
+        ENUM_VAL(PAHFraction, Low, "Low PAH-to-dust fraction (1%)")
     ENUM_END()
 
     /** The enumeration type indicating the wavelength resolution. */

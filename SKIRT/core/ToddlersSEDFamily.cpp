@@ -39,7 +39,7 @@ vector<SnapshotParameter> ToddlersSEDFamily::parameterInfo() const
         SnapshotParameter::metallicity(),
         SnapshotParameter::custom("Star formation efficiency"),
         SnapshotParameter::custom("Cloud number density", "numbervolumedensity", "1/cm3"),
-        SnapshotParameter::custom("Stellar mass", "mass", "Msun"),
+        SnapshotParameter::custom("Mass", "mass", "Msun"),
     };
 }
 
