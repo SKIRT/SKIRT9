@@ -25,7 +25,12 @@ class Box;
     quantities, and N for compound quantities). In case of a vector quantity, the three image
     frames represent the velocity vector components in the frame of the cut, i.e. the two
     components projected on the x and y axes of the cut and the component perpendicular to the cut,
-    where positive values indicate vectors pointing away from the viewer. */
+    where positive values indicate vectors pointing away from the viewer.
+
+    This class samples the model at each pixel center in the output cut. Consequently, it ignores
+    small features in the model that intersect the pixel but do not overlap the pixel center. To
+    improve accuracy, decrease the pixel size by increasing the number of pixels along each axis.
+    */
 class PlanarCutsForm : public GenericForm
 {
     ITEM_CONCRETE(PlanarCutsForm, GenericForm, "configurable planar cuts parallel to the coordinate planes")
