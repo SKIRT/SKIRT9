@@ -35,10 +35,14 @@
     0.001-0.04, 7 star formation efficiencies from 1-15%, and 9 cloud number densities from 10-2560
     \f$\mathrm{cm}^{-3}\f$. The PAH-to-dust fraction is a maximum value scaled by the neutral
     hydrogen abundance in component shells/clouds. Two maximum PAH fractions are available: High =
-    4.6%, Low = 1%. Finally, the SEDs are scaled by the mass of the imported star-forming region
-    particle. The scaling assumes a cloud mass function obeying a power law with slope -1.8, i.e.,
-    \f$dN/dM \propto M^{-1.8}\f$ running from a cloud mass of \f$10^5\f$ to
-    \f$10^{6.75}~\mathrm{M}_\odot\f$, sampled using 8 equi-logspaced cloud masses.
+    4.6%, Low = 1%.
+
+    Finally, the SEDs are scaled by the mass of the imported star-forming region particle. The
+    scaling assumes a cloud mass function obeying a power law with slope -1.8, i.e., \f$dN/dM
+    \propto M^{-1.8}\f$ running from a cloud mass of \f$10^5\f$ to
+    \f$10^{6.75}~\mathrm{M}_\odot\f$, sampled using 8 equi-logspaced cloud masses. Given the age
+    range of the library, stellar particles younger than 30 Myr should be considered as
+    star-forming region candidates, with their \em initial mass as the mass used for scaling.
 
     When imported from a text column file, the parameters for this %SED family must appear in the
     following order in the specified default units (unless these units are overridden by column
@@ -56,7 +60,7 @@ class ToddlersSEDFamily : public SEDFamily
     /** The enumeration type indicating the wavelength resolution. */
     ENUM_DEF(Resolution, Low, High)
         ENUM_VAL(Resolution, Low, "Low wavelength resolution (continuum and lines at R=300)")
-        ENUM_VAL(Resolution, High, "High wavelength resolution (continuum at R=300 and lines at R=1e5)")
+        ENUM_VAL(Resolution, High, "High wavelength resolution (continuum at R=300 and lines at R=5e4)")
     ENUM_END()
 
     ITEM_CONCRETE(ToddlersSEDFamily, SEDFamily, "a Toddlers SED family for emission from star-forming regions")

@@ -24,7 +24,7 @@ class ToddlersSED : public FamilySED
     /** The enumeration type indicating the wavelength resolution. */
     ENUM_DEF(Resolution, Low, High)
         ENUM_VAL(Resolution, Low, "Low wavelength resolution (continuum and lines at R=300)")
-        ENUM_VAL(Resolution, High, "High wavelength resolution (continuum at R=300 and lines at R=1e5)")
+        ENUM_VAL(Resolution, High, "High wavelength resolution (continuum at R=300 and lines at R=5e4)")
     ENUM_END()
 
     ITEM_CONCRETE(ToddlersSED, FamilySED, "a Toddlers SED for emission from star-forming regions")
