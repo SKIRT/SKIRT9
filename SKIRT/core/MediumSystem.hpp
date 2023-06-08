@@ -22,6 +22,7 @@
 #include "SpatialGrid.hpp"
 #include "Table.hpp"
 class Configuration;
+class MaterialState;
 class PhotonPacket;
 class Random;
 class ShortArray;
@@ -822,6 +823,14 @@ public:
 
         This function assumes that the radiation field has been calculated. */
     bool updateSecondaryDynamicMediumState();
+
+    //=============== Specialty probing ===================
+
+public:
+    /** This function invokes the given callback function with the material state for the specified
+        cell and medium component as a single argument, and returns the resulting floating point
+        value. The function is intended for specialty probing and should be used with restraint. */
+    double callWithMaterialState(std::function<double(const MaterialState* mst)> callback, int m, int h) const;
 
     //======================== Data Members ========================
 
