@@ -1593,3 +1593,11 @@ bool MediumSystem::updateSecondaryDynamicMediumState()
 }
 
 ////////////////////////////////////////////////////////////////////
+
+double MediumSystem::callWithMaterialState(std::function<double(const MaterialState*)> callback, int m, int h) const
+{
+    MaterialState mst(_state, m, h);
+    return callback(&mst);
+}
+
+////////////////////////////////////////////////////////////////////

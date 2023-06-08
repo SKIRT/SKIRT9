@@ -349,6 +349,13 @@ double FragmentDustMixDecorator::totalMass() const
 
 ////////////////////////////////////////////////////////////////////
 
+double FragmentDustMixDecorator::populationNumberDensity(int f, const MaterialState* state) const
+{
+    return WEIGHT(f) * state->numberDensity();
+}
+
+////////////////////////////////////////////////////////////////////
+
 double FragmentDustMixDecorator::populationTemperature(int f, const Array& Jv) const
 {
     return _fragments[f]->indicativeTemperature(nullptr, Jv);  // material state is not used by dust mixes

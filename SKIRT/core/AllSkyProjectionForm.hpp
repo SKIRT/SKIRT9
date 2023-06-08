@@ -25,7 +25,12 @@
     N for compound quantities). In case of a vector quantity, the three image frames represent the
     velocity vector components in the frame of the projection, i.e. the two components projected on
     the x and y axes of the projection plane and the component perpendicular to it, where positive
-    values indicate vectors pointing away from the viewer. */
+    values indicate vectors pointing away from the viewer.
+
+    This class sends a ray through the model for each output pixel center, calculating the
+    projection by accumulating information along that ray. Consequently, it ignores small features
+    in the model that project on the pixel but do not overlap the pixel center. To improve
+    accuracy, decrease the pixel size by increasing the number of pixels along each axis. */
 class AllSkyProjectionForm : public GenericForm
 {
     ITEM_CONCRETE(AllSkyProjectionForm, GenericForm, "all-sky projection at a position inside the model")

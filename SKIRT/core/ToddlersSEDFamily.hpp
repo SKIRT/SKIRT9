@@ -20,21 +20,29 @@
 
     The SEDs in the TODDLERS library are tabulated over a wavelength range from \f$0.01\f$ to
     \f$3000~\mu\mathrm{m}\f$ and include both continuum and line emission. The low-resolution
-    version of the library uses the default Cloudy output resolution of \f$R=300\f$ to represent
-    both the line and continuum components, resulting in 3787 wavelength points. The
-    high-resolution version represents each line using a high-resolution Gaussian line profile with
-    \f$R= 2\lambda/\Delta\lambda = 1e5\f$, where \f$\Delta\lambda\f$ is width of the \f$4 \sigma\f$
-    truncated Gaussian. The line profiles are added to the default \f$R=300\f$ resolution
-    continuum, resulting in a total of 9756 wavelength points.
+    version of the library uses the default Cloudy output resolution of \f$R= \lambda/\Delta\lambda
+    = 300\f$ to represent both the line and continuum components as calculated by Cloudy, resulting
+    in 3787 wavelength points. The high-resolution version includes a large subset of the emission
+    lines (as detailed in the paper), represented using high-resolution Gaussian line profiles with
+    \f$R= \lambda/\Delta\lambda_\mathrm{G} = 5\times 10^4\f$, where \f$\Delta\lambda_\mathrm{G}\f$
+    is the width of the \f$4 \sigma\f$ truncated Gaussian. These line profiles are added to the
+    default \f$R=300\f$ resolution Cloudy continuum, resulting in a total of 9756 wavelength points
+    with the overall spectral resolution structure shown below.
+
+    \image html ToddlersSEDFamily.png
 
     The TODDLERS parameter space spans 90 ages from 0.1-30 Myr, 5 metallicity values from
     0.001-0.04, 7 star formation efficiencies from 1-15%, and 9 cloud number densities from 10-2560
     \f$\mathrm{cm}^{-3}\f$. The PAH-to-dust fraction is a maximum value scaled by the neutral
-    hydrogen abundance in a shell. Two maximum PAH fractions are available: High = 4.6%, Low = 1%.
+    hydrogen abundance in component shells/clouds. Two maximum PAH fractions are available: High =
+    4.6%, Low = 1%.
+
     Finally, the SEDs are scaled by the mass of the imported star-forming region particle. The
     scaling assumes a cloud mass function obeying a power law with slope -1.8, i.e., \f$dN/dM
     \propto M^{-1.8}\f$ running from a cloud mass of \f$10^5\f$ to
-    \f$10^{6.75}~\mathrm{M}_\odot\f$.
+    \f$10^{6.75}~\mathrm{M}_\odot\f$, sampled using 8 equi-logspaced cloud masses. Given the age
+    range of the library, stellar particles younger than 30 Myr should be considered as
+    star-forming region candidates, with their \em initial mass as the mass used for scaling.
 
     When imported from a text column file, the parameters for this %SED family must appear in the
     following order in the specified default units (unless these units are overridden by column
@@ -52,7 +60,7 @@ class ToddlersSEDFamily : public SEDFamily
     /** The enumeration type indicating the wavelength resolution. */
     ENUM_DEF(Resolution, Low, High)
         ENUM_VAL(Resolution, Low, "Low wavelength resolution (continuum and lines at R=300)")
-        ENUM_VAL(Resolution, High, "High wavelength resolution (continuum at R=300 and lines at R=1e5)")
+        ENUM_VAL(Resolution, High, "High wavelength resolution (continuum at R=300 and lines at R=5e4)")
     ENUM_END()
 
     ITEM_CONCRETE(ToddlersSEDFamily, SEDFamily, "a Toddlers SED family for emission from star-forming regions")
