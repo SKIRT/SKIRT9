@@ -32,10 +32,10 @@
     \image html ToddlersSEDFamily.png
 
     The TODDLERS parameter space spans 90 ages from 0.1-30 Myr, 5 metallicity values from
-    0.001-0.04, 7 star formation efficiencies from 1-15%, and 9 cloud number densities from 10-2560
-    \f$\mathrm{cm}^{-3}\f$. The PAH-to-dust fraction is a maximum value scaled by the neutral
-    hydrogen abundance in component shells/clouds. Two maximum PAH fractions are available: High =
-    4.6%, Low = 1%.
+    0.001-0.04, 7 star formation efficiencies from 0.01-0.15, and 9 cloud number densities from 
+    10-2560 \f$\mathrm{cm}^{-3}\f$. The PAH-to-dust fraction is a maximum value scaled by the 
+    neutral hydrogen abundance in component shells/clouds. Two maximum PAH fractions are available:
+    High = 4.6%, Low = 1%.
 
     Finally, the SEDs are scaled by the mass of the imported star-forming region particle. The
     scaling assumes a cloud mass function obeying a power law with slope -1.8, i.e., \f$dN/dM
