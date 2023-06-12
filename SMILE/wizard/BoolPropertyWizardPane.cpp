@@ -9,6 +9,7 @@
 #include <QLabel>
 #include <QRadioButton>
 #include <QVBoxLayout>
+#include <QVariant>
 
 ////////////////////////////////////////////////////////////////////
 
@@ -41,7 +42,8 @@ BoolPropertyWizardPane::BoolPropertyWizardPane(std::unique_ptr<PropertyHandler> 
         // add the choice button the group and to the layout
         auto choiceButton = new QRadioButton(QString("No") + (isDefault ? "  [default]" : ""));
         choiceButton->setFocusPolicy(Qt::NoFocus);
-        buttonGroup->addButton(choiceButton, 0);
+        choiceButton->setProperty("boolValue", false);
+        buttonGroup->addButton(choiceButton);
         layout->addWidget(choiceButton);
 
         // if this button corresponds to the current value, select it
@@ -60,7 +62,8 @@ BoolPropertyWizardPane::BoolPropertyWizardPane(std::unique_ptr<PropertyHandler> 
         // add the choice button the group and to the layout
         auto choiceButton = new QRadioButton(QString("Yes") + (isDefault ? "  [default]" : ""));
         choiceButton->setFocusPolicy(Qt::NoFocus);
-        buttonGroup->addButton(choiceButton, 1);
+        choiceButton->setProperty("boolValue", true);
+        buttonGroup->addButton(choiceButton);
         layout->addWidget(choiceButton);
 
         // if this button corresponds to the current value, select it
@@ -72,7 +75,7 @@ BoolPropertyWizardPane::BoolPropertyWizardPane(std::unique_ptr<PropertyHandler> 
     }
 
     // connect the button group to ourselves
-    connect(buttonGroup, SIGNAL(buttonClicked(int)), this, SLOT(updateValueFor(int)));
+    connect(buttonGroup, SIGNAL(buttonClicked(QAbstractButton*)), this, SLOT(updateValueFor(QAbstractButton*)));
 
     // finalize the layout and assign it to ourselves
     layout->addStretch();
@@ -81,11 +84,11 @@ BoolPropertyWizardPane::BoolPropertyWizardPane(std::unique_ptr<PropertyHandler> 
 
 ////////////////////////////////////////////////////////////////////
 
-void BoolPropertyWizardPane::updateValueFor(int buttonID)
+void BoolPropertyWizardPane::updateValueFor(QAbstractButton* button)
 {
     auto hdlr = handlerCast<BoolPropertyHandler>();
 
-    bool newValue = buttonID ? true : false;
+    bool newValue = button->property("boolValue").toBool();
     if (!hdlr->isConfigured() || hdlr->value() != newValue)
     {
         hdlr->setValue(newValue);

@@ -10,8 +10,9 @@
 # set the target name
 set(TARGET MakeUp)
 
-# enable Qt functionality
-find_package(Qt5Widgets)
+# enable Qt functionality, supporting Qt5 and Qt6
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Widgets)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Widgets)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
@@ -41,7 +42,7 @@ endif()
 
 # create the executable target
 add_executable(${TARGET} ${SOURCES} ${HEADERS})
-target_link_libraries (${TARGET} Qt5::Widgets)
+target_link_libraries (${TARGET} Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Widgets)
 
 # add SMILE library dependencies
 target_link_libraries(${TARGET} wizard fundamentals build)

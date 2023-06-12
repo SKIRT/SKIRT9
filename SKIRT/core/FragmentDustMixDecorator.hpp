@@ -181,7 +181,9 @@ public:
         material mix to the peel-off photon luminosity, polarization state, and wavelength shift
         for the given wavelength, geometry, material state, and photon properties. The relative
         weight of each fragment's contribution is adjusted by the relative scattering opacity of
-        the fragment. */
+        the fragment. The contributions to the Stokes vector components are stored in the \em I,
+        \em Q, \em U, \em V arguments, which are guaranteed to be initialized to zero by the
+        caller. For dust mixes, the wavelength remains unchanged. */
     void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs, Direction bfky,
                            const MaterialState* state, const PhotonPacket* pp) const override;
 
@@ -265,6 +267,10 @@ public:
     //=========== Exposing fragments (additional) ============
 
 public:
+    /** This function returns the number density of the dust population represented by the fragment
+        with index \f$f\f$, given the material state for a spatial cell. */
+    double populationNumberDensity(int f, const MaterialState* state) const;
+
     /** This function returns the equilibrium temperature of the dust population represented by the
         fragment with index \f$f\f$ when it would be embedded in a given radiation field. */
     double populationTemperature(int f, const Array& Jv) const;

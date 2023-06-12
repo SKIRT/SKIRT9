@@ -746,7 +746,7 @@ bool voronoicell_base::nplane(vc_class &vc,double x,double y,double z,double rsq
     int op=p;
 
     if(create_facet(vc,lp,ls,l,us,u,p_id)) return false;
-    int k=0;int xtra=0;
+    int k=0;
     while(xse+k<stackp3) {
         lp=xse[k++];
         uw=m_test(lp,l);
@@ -776,7 +776,6 @@ bool voronoicell_base::nplane(vc_class &vc,double x,double y,double z,double rsq
                 if(create_facet(vc,lp,ls,l,us,u,p_id)) return false;
             }
         }
-        xtra++;
     }
 
     // Reset back pointers on extra search stack

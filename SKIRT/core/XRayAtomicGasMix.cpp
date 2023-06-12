@@ -96,9 +96,10 @@ namespace
     // fluorescence parameters
     struct FluorescenceParams
     {
-        FluorescenceParams(const Array& a) : Z(a[0]), n(a[1]), omega(a[2]), E(a[3]) {}
+        FluorescenceParams(const Array& a) : Z(a[0]), n(a[1]), l(a[2]), omega(a[3]), E(a[4]) {}
         short Z;       // atomic number
-        short n;       // principal quantum number of the shell (always 1 because we only support K shell)
+        short n;       // principal quantum number of the shell
+        short l;       // orbital quantum number of the subshell
         double omega;  // fluorescence yield (1)
         double E;      // energy of the emitted photon (eV)
     };
@@ -182,11 +183,35 @@ public:
     // return scattering cross section for atom in m2
     virtual double sectionSca(double lambda, int Z) const = 0;
 
-    // peel-off scattering event
-    virtual void peeloffScattering(double& I, double& lambda, int Z, Direction bfk, Direction bfkobs) const = 0;
+    // peel-off unpolarized scattering event: override this in helpers that don't support polarization
+    virtual void peeloffScattering(double& /*I*/, double& /*lambda*/, int /*Z*/, Direction /*bfk*/,
+                                   Direction /*bfkobs*/) const
+    {
+        // default implementation does nothing
+    }
 
-    // perform scattering event
-    virtual Direction performScattering(double& lambda, int Z, Direction bfk) const = 0;
+    // perform unpolarized scattering event: override this in helpers that don't support polarization
+    virtual Direction performScattering(double& /*lambda*/, int /*Z*/, Direction /*bfk*/) const
+    {
+        // default implementation returns null vector
+        return Direction();
+    }
+
+    // peel-off polarized scattering event: override this in helpers that do support polarization
+    virtual void peeloffScattering(double& I, double& /*Q*/, double& /*U*/, double& /*V*/, double& lambda, int Z,
+                                   Direction bfk, Direction bfkobs, Direction /*bfky*/,
+                                   const StokesVector* /*sv*/) const
+    {
+        // default implementation calls unpolarized version
+        peeloffScattering(I, lambda, Z, bfk, bfkobs);
+    }
+
+    // perform polarized scattering event: override this in helpers that do support polarization
+    virtual Direction performScattering(double& lambda, int Z, Direction bfk, StokesVector* /*sv*/) const
+    {
+        // default implementation calls unpolarized version
+        return performScattering(lambda, Z, bfk);
+    }
 };
 
 ////////////////////////////////////////////////////////////////////
@@ -202,15 +227,6 @@ namespace
         NoScatteringHelper(SimulationItem* /*item*/) {}
 
         double sectionSca(double /*lambda*/, int /*Z*/) const override { return 0.; }
-
-        void peeloffScattering(double& /*I*/, double& /*lambda*/, int /*Z*/, Direction /*bfk*/,
-                               Direction /*bfkobs*/) const override
-        {}
-
-        Direction performScattering(double& /*lambda*/, int /*Z*/, Direction /*bfk*/) const override
-        {
-            return Direction();
-        }
     };
 }
 
@@ -250,7 +266,8 @@ namespace
         {
             if (lambda < comptonWL)
             {
-                _cpf.peeloffScattering(I, lambda, bfk, bfkobs);
+                double Q, U, V;
+                _cpf.peeloffScattering(I, Q, U, V, lambda, bfk, bfkobs, Direction(), nullptr);
             }
             else
             {
@@ -261,7 +278,51 @@ namespace
 
         Direction performScattering(double& lambda, int /*Z*/, Direction bfk) const override
         {
-            return lambda < comptonWL ? _cpf.performScattering(lambda, bfk) : _dpf.performScattering(bfk, nullptr);
+            return lambda < comptonWL ? _cpf.performScattering(lambda, bfk, nullptr)
+                                      : _dpf.performScattering(bfk, nullptr);
+        }
+    };
+}
+
+////////////////////////////////////////////////////////////////////
+
+// ---- free-electron Compton with polarization scattering helper ----
+
+namespace
+{
+    // this helper forwards all calls to an external helper class for Compton scattering
+    // (or Thomson scattering for lower energies) with support for polarization
+    class FreeComptonWithPolarizationHelper : public XRayAtomicGasMix::ScatteringHelper
+    {
+    private:
+        ComptonPhaseFunction _cpf;
+        DipolePhaseFunction _dpf;
+
+    public:
+        FreeComptonWithPolarizationHelper(SimulationItem* item)
+        {
+            auto random = item->find<Random>();
+            _cpf.initialize(random, true);
+            _dpf.initialize(random, true);
+        }
+
+        double sectionSca(double lambda, int Z) const override
+        {
+            double sigma = Z * Constants::sigmaThomson();
+            if (lambda < comptonWL) sigma *= _cpf.sectionSca(lambda);
+            return sigma;
+        }
+
+        void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, int /*Z*/, Direction bfk,
+                               Direction bfkobs, Direction bfky, const StokesVector* sv) const override
+        {
+            lambda < comptonWL ? _cpf.peeloffScattering(I, Q, U, V, lambda, bfk, bfkobs, bfky, sv)
+                               : _dpf.peeloffScattering(I, Q, U, V, bfk, bfkobs, bfky, sv);
+        }
+
+        Direction performScattering(double& lambda, int /*Z*/, Direction bfk, StokesVector* sv) const override
+        {
+            return lambda < comptonWL ? _cpf.performScattering(lambda, bfk, sv) : _dpf.performScattering(bfk, sv);
         }
     };
 }
@@ -680,7 +741,7 @@ void XRayAtomicGasMix::setupSelfBefore()
     auto crossSectionParams = loadStruct<CrossSectionParams, 12>(this, "XRay_PA.txt", "photo-absorption data");
 
     // load the fluorescence parameters
-    auto fluorescenceParams = loadStruct<FluorescenceParams, 4>(this, "XRay_FL.txt", "fluorescence data");
+    auto fluorescenceParams = loadStruct<FluorescenceParams, 5>(this, "XRay_FL.txt", "fluorescence data");
 
     // create scattering helpers depending on the user-configured implementation type;
     // the respective helper constructors load the required bound-electron scattering resources
@@ -693,6 +754,10 @@ void XRayAtomicGasMix::setupSelfBefore()
         case BoundElectrons::Free:
             _ray = new NoScatteringHelper(this);
             _com = new FreeComptonHelper(this);
+            break;
+        case BoundElectrons::FreeWithPolarization:
+            _ray = new NoScatteringHelper(this);
+            _com = new FreeComptonWithPolarizationHelper(this);
             break;
         case BoundElectrons::Good:
             _ray = new SmoothRayleighHelper(this);
@@ -854,7 +919,7 @@ void XRayAtomicGasMix::setupSelfBefore()
             auto sigmoid = sigmoidv[index++];
 
             // process all fluorescence parameter sets matching this cross section set
-            while (flp != fluorescenceParams.end() && flp->Z == csp.Z && flp->n == csp.n)
+            while (flp != fluorescenceParams.end() && flp->Z == csp.Z && flp->n == csp.n && flp->l == csp.l)
             {
                 double contribution = crossSection(E, sigmoid, csp) * atomv[csp.Z - 1].abund * flp->omega;
                 contribv[2 * numAtoms + flp - fluorescenceParams.begin()] = contribution;
@@ -887,6 +952,13 @@ int XRayAtomicGasMix::indexForLambda(double lambda) const
 MaterialMix::MaterialType XRayAtomicGasMix::materialType() const
 {
     return MaterialType::Gas;
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool XRayAtomicGasMix::hasPolarizedScattering() const
+{
+    return scatterBoundElectrons() == BoundElectrons::FreeWithPolarization;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -970,9 +1042,8 @@ void XRayAtomicGasMix::setScatteringInfoIfNeeded(PhotonPacket::ScatteringInfo* s
 
 ////////////////////////////////////////////////////////////////////
 
-void XRayAtomicGasMix::peeloffScattering(double& I, double& /*Q*/, double& /*U*/, double& /*V*/, double& lambda,
-                                         Direction bfkobs, Direction /*bfky*/, const MaterialState* /*state*/,
-                                         const PhotonPacket* pp) const
+void XRayAtomicGasMix::peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs,
+                                         Direction bfky, const MaterialState* /*state*/, const PhotonPacket* pp) const
 {
     // draw a random scattering channel and atom velocity, unless a previous peel-off stored this already
     auto scatinfo = const_cast<PhotonPacket*>(pp)->getScatteringInfo();
@@ -982,23 +1053,24 @@ void XRayAtomicGasMix::peeloffScattering(double& I, double& /*Q*/, double& /*U*/
     if (temperature() > 0. && scatinfo->species < static_cast<int>(2 * numAtoms))
         lambda = PhotonPacket::shiftedReceptionWavelength(lambda, pp->direction(), scatinfo->velocity);
 
-    // Rayleigh scattering in electron rest frame
+    // Rayleigh scattering in electron rest frame; no support for polarization
     if (scatinfo->species < static_cast<int>(numAtoms))
     {
         _ray->peeloffScattering(I, lambda, scatinfo->species + 1, pp->direction(), bfkobs);
     }
 
-    // Compton scattering in electron rest frame
+    // Compton scattering in electron rest frame; with support for polarization if enabled
     else if (scatinfo->species < static_cast<int>(2 * numAtoms))
     {
-        _com->peeloffScattering(I, lambda, scatinfo->species - numAtoms + 1, pp->direction(), bfkobs);
+        _com->peeloffScattering(I, Q, U, V, lambda, scatinfo->species - numAtoms + 1, pp->direction(), bfkobs, bfky,
+                                pp);
     }
 
     // fluorescence
     else
     {
-        // isotropic emission, so the bias weight is trivially 1
-        I += 1.;
+        // unpolarized isotropic emission; the bias weight is trivially 1 and there is no contribution to Q, U, V
+        I = 1.;
 
         // update the photon packet wavelength to the wavelength of this fluorescence transition
         lambda = _lambdafluov[scatinfo->species - 2 * numAtoms];
@@ -1023,19 +1095,20 @@ void XRayAtomicGasMix::performScattering(double lambda, const MaterialState* sta
     // room for the outgoing direction
     Direction bfknew;
 
-    // Rayleigh scattering: determine the new propagation direction
+    // Rayleigh scattering, no support for polarization: determine the new propagation direction
     if (scatinfo->species < static_cast<int>(numAtoms))
     {
         bfknew = _ray->performScattering(lambda, scatinfo->species + 1, pp->direction());
     }
 
-    // Compton scattering: determine the new propagation direction and wavelength
+    // Compton scattering, with support for polarization if enabled:
+    // determine the new propagation direction and wavelength, and if polarized, update the stokes vector
     else if (scatinfo->species < static_cast<int>(2 * numAtoms))
     {
-        bfknew = _com->performScattering(lambda, scatinfo->species - numAtoms + 1, pp->direction());
+        bfknew = _com->performScattering(lambda, scatinfo->species - numAtoms + 1, pp->direction(), pp);
     }
 
-    // fluorescence
+    // fluorescence, always unpolarized and isotropic
     else
     {
         // update the photon packet wavelength to the wavelength of this fluorescence transition
@@ -1043,6 +1116,9 @@ void XRayAtomicGasMix::performScattering(double lambda, const MaterialState* sta
 
         // draw a random, isotropic outgoing direction
         bfknew = random()->direction();
+
+        // clear the stokes vector (only relevant if polarization support is enabled)
+        pp->setUnpolarized();
     }
 
     // if we have dispersion, Doppler-shift the outgoing wavelength from the electron rest frame

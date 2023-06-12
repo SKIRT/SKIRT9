@@ -52,6 +52,18 @@
     {\sum_h \rho_{m,h}} \f] where \f${\bar{T}}_{m,h}\f$ is the indicative temperature for each
     component \f$h\f$ and \f$\rho_{m,h}\f$ is the corresponding (mass or number) density.
 
+    <b>Indicative temperature for individual grain populations in a dust mixture</b>
+
+    If one or more medium components in the simulation are equipped with a
+    FragmentDustMixDecorator, this probe can provide the individual indicative temperature for each
+    of the dust grain populations represented by the decorator by specifying the \em aggregation
+    value of \c Fragment. Depending on the value of the \em fragmentSizeBins flag on the decorator,
+    there are fragments for each of the grain material types or even for each of the grain size
+    bins defined by the underlying dust mixture. The probed information is written in a separate
+    file for each fragment, identified by a zero-based fragment index in addition to the zero-based
+    component index. Also in this case, the indicative temperature is calculated under the LTE
+    assumption, so it does not necessarily reflect a physical temperature.
+
     <b>Indicative temperature along a path</b>
 
     When a TemperatureProbe is associated with a Form subclass that projects the probed quantity
@@ -71,9 +83,10 @@ class TemperatureProbe : public SpatialGridWhenFormProbe
 {
     /** The enumeration type indicating how to aggregate the output: per medium component or per
         medium type (dust, electrons, gas). */
-    ENUM_DEF(Aggregation, Component, Type)
+    ENUM_DEF(Aggregation, Component, Type, Fragment)
         ENUM_VAL(Aggregation, Component, "per medium component")
         ENUM_VAL(Aggregation, Type, "per medium type (dust, electrons, gas)")
+        ENUM_VAL(Aggregation, Fragment, "per fragment (dust grain material type and/or size bin)")
     ENUM_END()
 
     ITEM_CONCRETE(TemperatureProbe, SpatialGridWhenFormProbe,

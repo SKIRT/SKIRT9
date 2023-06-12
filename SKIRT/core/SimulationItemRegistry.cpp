@@ -16,8 +16,10 @@
 #include "AllCellsLibrary.hpp"
 #include "AllSkyInstrument.hpp"
 #include "AllSkyProjectionForm.hpp"
+#include "AnnulusGeometry.hpp"
 #include "AtPositionsForm.hpp"
 #include "BandLuminosityNormalization.hpp"
+#include "BegemannPorousAluminaGrainComposition.hpp"
 #include "BlackBodySED.hpp"
 #include "BlackBodySEDFamily.hpp"
 #include "BoxClipGeometryDecorator.hpp"
@@ -55,6 +57,8 @@
 #include "DensityProbe.hpp"
 #include "DensityTreePolicy.hpp"
 #include "DiscreteWavelengthDistribution.hpp"
+#include "DonutGeometry.hpp"
+#include "DorschnerOlivineGrainComposition.hpp"
 #include "DraineGraphiteGrainComposition.hpp"
 #include "DraineIonizedPAHGrainComposition.hpp"
 #include "DraineLiDustMix.hpp"
@@ -95,6 +99,7 @@
 #include "GrainPopulation.hpp"
 #include "HEALPixSkyInstrument.hpp"
 #include "HammerAitoffProjection.hpp"
+#include "HofmeisterPericlaseGrainComposition.hpp"
 #include "HollowRadialVectorField.hpp"
 #include "HyperboloidGeometry.hpp"
 #include "HyperboloidShellGeometry.hpp"
@@ -245,6 +250,8 @@
 #include "TemperatureProbe.hpp"
 #include "TemperatureWavelengthCellLibrary.hpp"
 #include "ThemisDustMix.hpp"
+#include "ToddlersSED.hpp"
+#include "ToddlersSEDFamily.hpp"
 #include "TorusGeometry.hpp"
 #include "ToddlersContSED.hpp"
 #include "ToddlersContSEDFamily.hpp"
@@ -344,6 +351,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<FSPSSED>();
     ItemRegistry::add<BpassSED>();
     ItemRegistry::add<MappingsSED>();
+    ItemRegistry::add<ToddlersSED>();
     ItemRegistry::add<TabulatedSED>();
     ItemRegistry::add<FileSED>();
     ItemRegistry::add<ListSED>();
@@ -371,6 +379,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<FileSSPSEDFamily>();
     ItemRegistry::add<FileIndexedSEDFamily>();
     ItemRegistry::add<MappingsSEDFamily>();
+    ItemRegistry::add<ToddlersSEDFamily>();
     ItemRegistry::add<LyaGaussianSEDFamily>();
     ItemRegistry::add<LyaDoublePeakedSEDFamily>();
     ItemRegistry::add<LyaSEDFamilyDecorator>();
@@ -425,6 +434,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<BrokenExpDiskGeometry>();
     ItemRegistry::add<RingGeometry>();
     ItemRegistry::add<TorusGeometry>();
+    ItemRegistry::add<DonutGeometry>();
+    ItemRegistry::add<AnnulusGeometry>();
     ItemRegistry::add<TTauriDiskGeometry>();
     ItemRegistry::add<ConicalShellGeometry>();
     ItemRegistry::add<ParaboloidGeometry>();
@@ -600,6 +611,9 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<CrystalEnstatiteGrainComposition>();
     ItemRegistry::add<CrystalForsteriteGrainComposition>();
     ItemRegistry::add<DustEmGrainComposition>();
+    ItemRegistry::add<BegemannPorousAluminaGrainComposition>();
+    ItemRegistry::add<HofmeisterPericlaseGrainComposition>();
+    ItemRegistry::add<DorschnerOlivineGrainComposition>();
     ItemRegistry::add<TrustSilicateGrainComposition>();
     ItemRegistry::add<TrustGraphiteGrainComposition>();
     ItemRegistry::add<TrustNeutralPAHGrainComposition>();
