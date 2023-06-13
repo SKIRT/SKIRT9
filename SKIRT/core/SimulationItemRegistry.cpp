@@ -253,12 +253,6 @@
 #include "ToddlersSED.hpp"
 #include "ToddlersSEDFamily.hpp"
 #include "TorusGeometry.hpp"
-#include "ToddlersContSED.hpp"
-#include "ToddlersContSEDFamily.hpp"
-#include "ToddlersLineSED.hpp"
-#include "ToddlersLineSEDFamily.hpp"
-#include "ToddlersTotLowResSED.hpp"
-#include "ToddlersTotLowResSEDFamily.hpp"
 #include "TreePolicy.hpp"
 #include "TreeSpatialGrid.hpp"
 #include "TreeSpatialGridTopologyProbe.hpp"
@@ -362,9 +356,6 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<FileLineSED>();
     ItemRegistry::add<ListLineSED>();
     ItemRegistry::add<SingleWavelengthSED>();
-    ItemRegistry::add<ToddlersContSED>();
-    ItemRegistry::add<ToddlersLineSED>();
-    ItemRegistry::add<ToddlersTotLowResSED>();
 
     // SED families
     ItemRegistry::add<SEDFamily>();
@@ -383,10 +374,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<LyaGaussianSEDFamily>();
     ItemRegistry::add<LyaDoublePeakedSEDFamily>();
     ItemRegistry::add<LyaSEDFamilyDecorator>();
-    ItemRegistry::add<ToddlersContSEDFamily>();
-    ItemRegistry::add<ToddlersLineSEDFamily>();
-    ItemRegistry::add<ToddlersTotLowResSEDFamily>();
-
+    
     // wavelength distributions
     ItemRegistry::add<WavelengthDistribution>();
     ItemRegistry::add<RangeWavelengthDistribution>();
