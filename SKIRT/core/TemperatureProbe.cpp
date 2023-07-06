@@ -5,6 +5,7 @@
 
 #include "TemperatureProbe.hpp"
 #include "Configuration.hpp"
+#include "FragmentDustMixDecorator.hpp"
 #include "Log.hpp"
 #include "MediumSystem.hpp"
 #include "ProbeFormBridge.hpp"
@@ -76,6 +77,38 @@ void TemperatureProbe::probe()
                     }
                     break;
                 }
+                case Aggregation::Fragment:
+                {
+                    for (int h : ms->dustMediumIndices())
+                    {
+                        auto mix = ms->mix(0, h)->find<FragmentDustMixDecorator>(false);
+                        if (mix)
+                        {
+                            int numPops = mix->numPopulations();
+                            for (int f = 0; f != numPops; ++f)
+                            {
+                                auto weightInCell = [ms, mix, h, f](int m) {
+                                    return ms->callWithMaterialState(
+                                        [mix, f](const MaterialState* mst) {
+                                            return mix->populationNumberDensity(f, mst);
+                                        },
+                                        m, h);
+                                };
+                                auto valueInCell = [ms, mix, f, &weightInCell](int m) {
+                                    if (weightInCell(m) <= 0.) return 0.;
+                                    const Array& Jv = ms->meanIntensity(m);
+                                    return mix->populationTemperature(f, Jv);
+                                };
+
+                                string shf = std::to_string(h) + "_" + std::to_string(f);
+                                bridge.writeQuantity(shf + "_T", "temperature", "indicative temperature",
+                                                     "density-weighted indicative temperature", valueInCell,
+                                                     weightInCell);
+                            }
+                        }
+                    }
+                    break;
+                }
             }
         }
     }
@@ -107,6 +140,7 @@ void TemperatureProbe::probe()
                 }
                 break;
             }
+            case Aggregation::Fragment: break;
         }
     }
 
@@ -137,6 +171,7 @@ void TemperatureProbe::probe()
                 }
                 break;
             }
+            case Aggregation::Fragment: break;
         }
     }
 }

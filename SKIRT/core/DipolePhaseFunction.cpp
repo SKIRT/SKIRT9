@@ -128,8 +128,8 @@ void DipolePhaseFunction::peeloffScattering(double& I, double& Q, double& U, dou
         double costheta = Vec::dot(bfk, bfkobs);
         double value = phaseFunctionValueForCosine(costheta);
 
-        // accumulate the weighted sum in the intensity
-        I += value;
+        // store this value as the intensity
+        I = value;
     }
     else
     {
@@ -151,11 +151,11 @@ void DipolePhaseFunction::peeloffScattering(double& I, double& Q, double& U, dou
         // it is given bfkobs because the photon is at this point aimed towards the observer
         svnew.rotateIntoPlane(bfkobs, bfky);
 
-        // acumulate the weighted sum of all Stokes components to support polarization
-        I += value * svnew.stokesI();
-        Q += value * svnew.stokesQ();
-        U += value * svnew.stokesU();
-        V += value * svnew.stokesV();
+        // store the new Stokes vector components
+        I = value * svnew.stokesI();
+        Q = value * svnew.stokesQ();
+        U = value * svnew.stokesU();
+        V = value * svnew.stokesV();
     }
 }
 

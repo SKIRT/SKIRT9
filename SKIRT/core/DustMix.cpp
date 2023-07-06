@@ -439,8 +439,8 @@ void DustMix::peeloffScattering(double& I, double& Q, double& U, double& V, doub
             double g = asymmpar(lambda);
             double value = abs(g) > glarge ? meanHG(g, costheta) : valueHG(g, costheta);
 
-            // accumulate the weighted sum in the intensity (no support for polarization in this case)
-            I += value;
+            // store this value as the intensity (no support for polarization in this case)
+            I = value;
             break;
         }
         case DustMix::ScatteringMode::MaterialPhaseFunction:
@@ -449,8 +449,8 @@ void DustMix::peeloffScattering(double& I, double& Q, double& U, double& V, doub
             double costheta = Vec::dot(pp->direction(), bfkobs);
             double value = phaseFunctionValueForCosine(lambda, costheta);
 
-            // accumulate the weighted sum in the intensity (no support for polarization in this case)
-            I += value;
+            // store this value as the intensity (no support for polarization in this case)
+            I = value;
             break;
         }
         case DustMix::ScatteringMode::SphericalPolarization:
@@ -474,11 +474,11 @@ void DustMix::peeloffScattering(double& I, double& Q, double& U, double& V, doub
             // it is given bfkobs because the photon is at this point aimed towards the observer
             sv.rotateIntoPlane(bfkobs, bfky);
 
-            // acumulate the weighted sum of all Stokes components to support polarization
-            I += value * sv.stokesI();
-            Q += value * sv.stokesQ();
-            U += value * sv.stokesU();
-            V += value * sv.stokesV();
+            // store the new Stokes vector components to support polarization
+            I = value * sv.stokesI();
+            Q = value * sv.stokesQ();
+            U = value * sv.stokesU();
+            V = value * sv.stokesV();
             break;
         }
     }

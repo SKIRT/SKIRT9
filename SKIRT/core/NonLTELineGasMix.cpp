@@ -310,7 +310,6 @@ void NonLTELineGasMix::initializeSpecificState(MaterialState* state, double /*me
 
         // initialize level population using boltzmann distribution (i.e., start with LTE)
         Array levelPops(_numLevels);
-        if (InitialGasTemperatureforLTE() > 0.00) Tkin = InitialGasTemperatureforLTE();
         for (int p = 0; p != _numLevels; ++p) levelPops[p] = _weight[p] * exp(-_energy[p] / Constants::k() / Tkin);
 
         // if the user configured a file with initial level populations, use those data instead
@@ -604,13 +603,15 @@ double NonLTELineGasMix::opacityAbs(double lambda, const MaterialState* state, c
                 }
             }
         }
+
+        // apply lower limit to (negative) optical depth
+        if (opacity < 0.)
+        {
+            double diagonal = 1.7320508 * cbrt(state->volume());  // correct only for cubical cell
+            if (opacity * diagonal < lowestOpticalDepth()) opacity = lowestOpticalDepth() / diagonal;
+        }
     }
-    double  diagonalLength = (pow(state->volume(),0.3333333333)*sqrt(3)); // Diagonal length [m]
-    if (opacity*diagonalLength < LowerLimitTau())
-    {
-        return LowerLimitTau()/diagonalLength;
-    }
-    else return opacity;
+    return opacity;
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -190,6 +190,18 @@
     all supported lines are superposed on top of each other. In practice, the implementation
     includes just the terms that have a significant contribution at any given wavelength.
 
+    <b>Limiting negative optical depth</b>
+
+    The formula for the absorption opacity given in the previous section yields a negative value in
+    case the medium exhibits stimulated emission. The explicit absorption technique (see the
+    MonteCarloSimulation class) supports the corresponding negative optical depths along a photon
+    path. However, numerical problems arise if the negative optical depth magnitude becomes too
+    high. This may happen, for example, as a result of Monte Carlo noise, or in the early stages
+    when a simulation has not yet converged.
+
+    Therefore, this class imposes a user-configurable lower limit on the (negative) optical depth
+    along a cell diagonal before returning an absorption opacity. The default limit is -2.
+
     <b>Storing mean intensities</b>
 
     As discussed above, the mean radiation field intensity \f$J_{\lambda,ul}\f$ is determined for
@@ -297,18 +309,11 @@ class NonLTELineGasMix : public EmittingGasMix
         ATTRIBUTE_DEFAULT_VALUE(maxFractionNotConvergedCells, "0.001")
         ATTRIBUTE_DISPLAYED_IF(maxFractionNotConvergedCells, "Level2")
 
-        PROPERTY_DOUBLE(LowerLimitTau, "Lower limit of diagonal optical depth")
-        ATTRIBUTE_MIN_VALUE(LowerLimitTau, "[-10")
-        ATTRIBUTE_MAX_VALUE(LowerLimitTau, "0]")
-        ATTRIBUTE_DEFAULT_VALUE(LowerLimitTau, "-2")
-        ATTRIBUTE_DISPLAYED_IF(LowerLimitTau, "Level3")
-
-        PROPERTY_DOUBLE(InitialGasTemperatureforLTE, "the gas tempelature specifing initial level population with LTE."
-                                                     " if 0, you can use kinetic temperature from the input data")
-        ATTRIBUTE_MIN_VALUE(InitialGasTemperatureforLTE, "[0")
-        ATTRIBUTE_MAX_VALUE(InitialGasTemperatureforLTE, "1e10]")
-        ATTRIBUTE_DEFAULT_VALUE(InitialGasTemperatureforLTE, "0")
-        ATTRIBUTE_DISPLAYED_IF(InitialGasTemperatureforLTE, "Level3")
+        PROPERTY_DOUBLE(lowestOpticalDepth, "Lower limit of (negative) optical depth along a cell diagonal")
+        ATTRIBUTE_MIN_VALUE(lowestOpticalDepth, "[-10")
+        ATTRIBUTE_MAX_VALUE(lowestOpticalDepth, "0]")
+        ATTRIBUTE_DEFAULT_VALUE(lowestOpticalDepth, "-2")
+        ATTRIBUTE_DISPLAYED_IF(lowestOpticalDepth, "Level3")
 
         PROPERTY_BOOL(storeMeanIntensities, "store the mean radiation field intensity at each transition line")
         ATTRIBUTE_DEFAULT_VALUE(storeMeanIntensities, "false")

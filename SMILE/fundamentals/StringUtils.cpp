@@ -388,7 +388,7 @@ string StringUtils::toString(double value)
 
     // start with a regular semi-smart conversion
     char buf[20];
-    sprintf(buf, "%1.10g", value);
+    snprintf(buf, sizeof(buf), "%1.10g", value);
     string result(buf);
 
     // remove leading zeroes and the + sign in the exponent
@@ -432,7 +432,7 @@ string StringUtils::toString(double value, char format, int precision, int width
     // perform the conversion
     char formatString[] = {'%', '1', '.', '*', format, 0};
     char result[30];
-    sprintf(result, formatString, precision, value);
+    snprintf(result, sizeof(result), formatString, precision, value);
 
     // pad if needed
     return padLeft(result, static_cast<size_t>(max(width, 1)), pad);
