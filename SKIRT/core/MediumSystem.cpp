@@ -1312,20 +1312,43 @@ void MediumSystem::communicateRadiationField(bool primary)
 
 std::pair<double, double> MediumSystem::totalDustAbsorbedLuminosity() const
 {
-    double Labs1 = 0.;
-    double Labs2 = 0.;
-    int numWavelengths = _wavelengthGrid->numBins();
-    for (int ell = 0; ell != numWavelengths; ++ell)
-    {
-        double lambda = _wavelengthGrid->wavelength(ell);
-        for (int m = 0; m != _numCells; ++m)
+    auto log = find<Log>();
+    auto parfac = find<ParallelFactory>();
+
+    // provide room for results per spatial cell
+    Array Labs1v(_numCells);
+    Array Labs2v(_numCells);
+
+    // loop over the spatial cells in parallel
+    log->info("Calculating dust-absorbed luminosity for " + std::to_string(_numCells) + " cells...");
+    log->infoSetElapsed(_numCells);
+    parfac->parallelDistributed()->call(_numCells, [this, log, &Labs1v, &Labs2v](size_t firstIndex, size_t numIndices) {
+        while (numIndices)
         {
-            double opacity = opacityAbs(lambda, m, MaterialMix::MaterialType::Dust);
-            Labs1 += opacity * _rf1(m, ell);
-            Labs2 += opacity * _rf2(m, ell);
+            size_t currentChunkSize = min(logProgressChunkSize, numIndices);
+            for (size_t m = firstIndex; m != firstIndex + currentChunkSize; ++m)
+            {
+                int numWavelengths = _wavelengthGrid->numBins();
+                for (int ell = 0; ell != numWavelengths; ++ell)
+                {
+                    double lambda = _wavelengthGrid->wavelength(ell);
+                    double opacity = opacityAbs(lambda, m, MaterialMix::MaterialType::Dust);
+                    Labs1v[m] += opacity * _rf1(m, ell);
+                    Labs2v[m] += opacity * _rf2(m, ell);
+                }
+            }
+            log->infoIfElapsed("Calculated dust-absorbed luminosity: ", currentChunkSize);
+            firstIndex += currentChunkSize;
+            numIndices -= currentChunkSize;
         }
-    }
-    return std::make_pair(Labs1, Labs2);
+    });
+
+    // synchronize the results per spatial cell between processes, if needed
+    ProcessManager::sumToAll(Labs1v);
+    ProcessManager::sumToAll(Labs2v);
+
+    // return the respective totals
+    return std::make_pair(Labs1v.sum(), Labs2v.sum());
 }
 
 ////////////////////////////////////////////////////////////////////
