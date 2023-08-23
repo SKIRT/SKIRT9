@@ -30,36 +30,50 @@
 
     The current implementation supports the following molecular or atomic species:
 
-    - \c Two-level test molecule (TT): a fictive test molecule (called TT for our purposes) that
-    has just two rotational energy levels with a corresponding transition line at 1666.67
+    - \c Two-level \c test molecule (TT): a fictive test molecule (called TT for our purposes)
+    that has just two rotational energy levels with a corresponding transition line at 1666.67
     \f$\mu\mathrm{m}\f$. The single collisional interaction partner is molecular hydrogen. The
     properties of this molecule are defined by van Zadelhoff et al. 2002 for use with the first
     benchmark problem described there.
 
-    - \c Hydroxyl radical (OH): includes rotational energy levels up to \f$J=7/2\f$ including
+    - \c Hydroxyl radical (OH): includes rotational energy levels up to \f$J=7/2\f$ without
     hyperfine splitted levels. The corresponding transition lines are at wavelengths from 24.6
     \f$\mu\mathrm{m}\f$ to 2 \f$\mathrm{m}\f$. The single collisional interaction partner is
+    molecular hydrogen.
+
+    - \c Hydroxyl radical (OHhfs): includes rotational energy levels up to \f$J=3/2\f$ including
+    hyperfine splitted levels. The corresponding transition lines are at wavelengths from 34.6
+    \f$\mu\mathrm{m}\f$ to 186 \f$\mathrm{mm}\f$. The single collisional interaction partner is
     molecular hydrogen.
 
     - \c Formyl cation (HCO+): includes rotational energy levels up to \f$J=29\f$. The
     corresponding transition lines are at wavelengths from 112.4 to 3361 \f$\mu\mathrm{m}\f$. The
     single collisional interaction partner is molecular hydrogen.
 
-    - \c Carbon monoxide (CO): includes rotational energy levels up to \f$J=40\f$. The
+    - \c Carbon \c monoxide (CO): includes rotational energy levels up to \f$J=40\f$. The
     corresponding transition lines are at wavelengths from 65.7 to 2601 \f$\mu\mathrm{m}\f$. The
     single collisional interaction partner is molecular hydrogen.
 
-    - \c Atomic carbon (C): includes three hyperfine split levels at the electronic ground level of
-    3P. The corresponding transition lines are at wavelengths 230.3, 370.4 and 609.1
+    - \c Atomic \c carbon (C): includes three hyperfine split levels at the electronic ground level
+    of 3P. The corresponding transition lines are at wavelengths 230.3, 370.4 and 609.1
     \f$\mu\mathrm{m}\f$. The collisional interaction partners include molecular hydrogen, neutral
-    atomic hydrogen, ionized atomic hydrogen, electrons, and Helium.
+    atomic hydrogen, ionized atomic hydrogen, electrons, and helium.
 
-    - \c Ionized carbon (C+): includes four electronic levels (2p, 4p, 2D, and 2S) and the
+    - \c Ionized \c carbon (C+): includes four electronic levels (2p, 4p, 2D, and 2S) and the
     hyperfine split levels in the electronic levels of 2p and 4p. The corresponding fine-structure
     transition lines for levels 2p and 4p are at wavelengths 157.74, 198.9, 353.57, 454.67
     \f$\mu\mathrm{m}\f$. The electronic transition lines are at wavelengths from 0.1 to 0.23
     \f$\mu\mathrm{m}\f$. The collisional interaction partners include molecular hydrogen, neutral
     atomic hydrogen, and electrons.
+
+    - \c Molecular \c hydrogen (H2): includes rotational energy levels up to \f$J=31\f$. The
+    corresponding transition lines are at wavelengths from 28.2 to 3.3 \f$\mu\mathrm{m}\f$. The
+    collisional interaction partners include molecular hydrogen, neutral atomic hydrogen, ionized
+    atomic hydrogen, and helium. \em Note: Molecular hydrogen exists in ortho (J is odd) and para
+    (J is even) flavors, and these flavors have different collisional coefficients. The current
+    implementation assumes that the ratio of ortho to para is 3 to 1. While this is a reasonable
+    assumption in many cases, a correct approach would be to determine the relative number density
+    on the fly and use the appropriate collisional rates for each flavor.
 
     <b>Configuring the simulation</b>
 
@@ -250,13 +264,16 @@ class NonLTELineGasMix : public EmittingGasMix
 {
     /** The enumeration type indicating the molecular or atomic species represented by a given
         NonLTELineGasMix instance. See the class header for more information. */
-    ENUM_DEF(Species, Test, Hydroxyl, Formyl, CarbonMonoxide, AtomicCarbon, IonizedCarbon)
+    ENUM_DEF(Species, Test, Hydroxyl, HydroxylHFS, Formyl, CarbonMonoxide, AtomicCarbon, IonizedCarbon,
+             MolecularHydrogen)
         ENUM_VAL(Species, Test, "Fictive two-level test molecule (TT)")
         ENUM_VAL(Species, Hydroxyl, "Hydroxyl radical (OH)")
+        ENUM_VAL(Species, HydroxylHFS, "Hydroxyl radical (OH) with hyperfine structure")
         ENUM_VAL(Species, Formyl, "Formyl cation (HCO+)")
         ENUM_VAL(Species, CarbonMonoxide, "Carbon monoxide (CO)")
         ENUM_VAL(Species, AtomicCarbon, "Atomic carbon (C)")
         ENUM_VAL(Species, IonizedCarbon, "Ionized carbon (C+)")
+        ENUM_VAL(Species, MolecularHydrogen, "Molecular hydrogen (H2)")
     ENUM_END()
 
     ITEM_CONCRETE(NonLTELineGasMix, EmittingGasMix,
@@ -475,7 +492,7 @@ public:
 
 private:
     // Data members loaded from text resource files and/or precalculated in setupSelfBefore()
-    // (only the energy levels and transition actually used are stored in the data members)
+    // (only the energy levels and transitions actually used are stored in the data members)
 
     // mass
     double _mass{0.};  // particle mass for the species under consideration
@@ -494,15 +511,15 @@ private:
     vector<double> _einsteinBlu;  // the Einstein Blu coefficient for each radiative transition
     Array _center;                // the central emission wavelength for each radiative transition
 
-    // collisional transitions -- the transitions (not the coefficients) are assumed to be identical for all partners
-    int _numColTrans{0};       // the number of collisional transitions -- index t
-    vector<int> _indexUpCol;   // the upper energy level index for collisional transitions
-    vector<int> _indexLowCol;  // the lower energy level index for collisional transitions
-    struct ColPartner          // data structure holding information on a collisional partner
+    // collisional transitions
+    struct ColPartner  // data structure holding information on a collisional partner
     {
-        string name;        // human readable species name
-        Array T;            // the temperature grid points
-        vector<Array> Kul;  // the coefficient for each collisional transition and for each temperature
+        string name;              // human readable species name
+        Array T;                  // the temperature grid points
+        int numColTrans{0};       // the number of collisional transitions -- index t
+        vector<int> indexUpCol;   // the upper energy level index for each collisional transition
+        vector<int> indexLowCol;  // the lower energy level index for each collisional transition
+        vector<Array> Kul;        // the coefficient for each collisional transition and for each temperature
     };
     int _numColPartners{0};          // the number of collisional interaction partners -- index c
     vector<ColPartner> _colPartner;  // the data for each collisional partner
