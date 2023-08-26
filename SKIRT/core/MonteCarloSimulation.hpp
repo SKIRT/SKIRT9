@@ -461,9 +461,11 @@ private:
         to register the radiation field (in the current implementation). The details of the
         propagation process depend on whether explicit absorption is enabled or not. Refer to the
         simulateNonForcedPropagation() function. If the selected interaction point turns out to be
-        beyond the model boundary, the packet is terminated. Otherwise, scattering peel-off photon
-        packets are created and launched towards each instrument, if so requested, the actual
-        scattering event is simulated, and the loop repeats itself.
+        beyond the model boundary, the packet is terminated. As an optimization, if the packet's
+        luminosity has fallen to zero, it is terminated as well because it can no longer have any
+        contribution to the simulation results. If the packet has not been terminated, scattering
+        peel-off photon packets are created and launched towards each instrument, if so requested,
+        the actual scattering event is simulated, and the loop repeats itself.
 
         The first two arguments of this function specify the range of photon packet history indices
         to be handled. The \em primary flag is true to launch from primary sources, false for

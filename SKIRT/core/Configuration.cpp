@@ -481,6 +481,12 @@ void Configuration::setupSelfAfter()
         log->warning("  Disabling path length stretching to allow Doppler shifts to be properly sampled");
         _pathLengthBias = 0.;
     }
+    // inform user that path length stretching is not implemented for non-forced scattering
+    if (!_forceScattering && _pathLengthBias > 0.)
+    {
+        log->warning("  Disabling path length stretching because it is not implemented without forced scattering");
+        _pathLengthBias = 0.;
+    }
 
     // --- log magnetic field issues ---
 
