@@ -166,8 +166,11 @@ string AbstractDoublePropertyHandler::toString(double value) const
     if (!qty.empty())
     {
         string system = unitSystem();
-        value = schema()->out(qty, system, value);  // overwrite incoming value
-        unit = " " + schema()->unit(qty, system);   // include separating space
+        string style = StringUtils::toLower(unitStyle());
+
+        unit = schema()->unit(qty, system, style);  // get output unit string
+        value = schema()->out(qty, unit, value);    // convert and overwrite incoming value
+        unit = " " + unit;                          // include separating space
     }
 
     return StringUtils::toString(value) + unit;
@@ -262,6 +265,51 @@ string AbstractDoublePropertyHandler::unitSystem() const
         ancestor = ancestor->parent();
     }
     throw FATALERROR("No item of type " + baseType + " found in hierarchy");
+}
+
+////////////////////////////////////////////////////////////////////
+
+string AbstractDoublePropertyHandler::unitStyle() const
+{
+    // define a function to find the item representing the unit system, so we can return from multiple points
+    auto getUnitSystemItem = [this]() -> Item* {
+        // get the base type; or if there is only one unit system, its name
+        string baseType = schema()->unitSystemBase();
+
+        // loop over all ancestors
+        Item* ancestor = target();
+        while (ancestor)
+        {
+            // test the ancestor
+            if (schema()->inherits(ancestor->type(), baseType)) return ancestor;
+
+            // test its children
+            for (auto child : ancestor->children())
+            {
+                if (schema()->inherits(child->type(), baseType)) return child;
+            }
+
+            // next ancestor
+            ancestor = ancestor->parent();
+        }
+        // no unit system found
+        return nullptr;
+    };
+
+    // actually get the item representing the unit system, if any
+    Item* unitSystemItem = getUnitSystemItem();
+    if (unitSystemItem)
+    {
+        // loop over the properties of the unit system item's type
+        for (const string& property : schema()->properties(unitSystemItem->type()))
+        {
+            // return the value of the first enumeration property, if any
+            auto handler = schema()->createPropertyHandler(unitSystemItem, property, nameManager());
+            auto enumHandler = dynamic_cast<EnumPropertyHandler*>(handler.get());
+            if (enumHandler) return enumHandler->value();
+        }
+    }
+    return string();
 }
 
 ////////////////////////////////////////////////////////////////////

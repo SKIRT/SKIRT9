@@ -101,6 +101,7 @@ public:
         represent a dimensionless quantity. */
     string quantity() const;
 
+private:
     /** Returns the name of the unit system associated with the dataset in which the handled
         property resides. If the schema definition does not provide a unit system, the function
         throws an error. If the schema definition provides a single unit system, the function
@@ -109,6 +110,16 @@ public:
         that inherits the common unit system base type, and returns the actual type of that item.
         If no such data item can be found, the function throws an error. */
     string unitSystem() const;
+
+    /** Returns the name of the unit style associated with the dataset in which the handled
+        property resides. If the schema definition does not provide a unit system, the function
+        throws an error. If the schema definition provides one or more unit systems, the function
+        searches the hierarchy of the target dataset for a SMILE data item that inherits the common
+        unit system base type (or is of the sole unit system type). If such a data item is found,
+        the function returns the value of this item's first enumeration property (in schema
+        definition order). If no such data item is found, or the item does not have an enumeration
+        property, the function returns the empty string. */
+    string unitStyle() const;
 };
 
 ////////////////////////////////////////////////////////////////////
