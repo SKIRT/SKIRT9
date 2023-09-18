@@ -239,11 +239,15 @@ public:
     double out(string qty, string unit, double value) const;
 
     /** This function returns the name of the default unit listed in the schema definition for the
-        specified physical quantity in the specified unit system. The physical quantity and unit
-        system names are case sensitive and should not contain any spaces. If the specified
-        combination of physical quantity and unit system is not provided in the schema definition,
-        the function throws an exception. */
-    string unit(string qty, string unitSystem) const;
+        specified physical quantity in the specified unit system. If the specified unit style is
+        nonempty, the function first prefixes the quantity name with the unit style string and
+        attempts to locate the default value for this embellished quantity name. If this fails, the
+        function tries again with the regular quantity name.
+
+        The physical quantity, unit system, and unit style name are case sensitive and should not
+        contain any spaces. If the specified combination of physical quantity (embellished or not)
+        and unit system is not present in the unit definition, the function throws an exception. */
+    string unit(string qty, string unitSystem, string unitStyle) const;
 
     /** This function returns true if two or more unit systems are provided in the schema
         definition. Otherwise it returns false. */
