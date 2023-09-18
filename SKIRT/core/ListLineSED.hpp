@@ -15,9 +15,9 @@
     file (i.e. without referring to an input file). It is intended for use in cases where there are
     just a few wavelength/luminosity pairs, but nothing keeps the user from specifying a long list.
 
-    The wavelengths are by default given in micron and may be listed be in any order. The
-    corresponding luminosity values are by default given in solar luminosity units, but the scaling
-    of the values is arbitrary because the %SED will be normalized after being loaded.
+    The wavelengths are by default given in micron and may be listed in any order. The
+    corresponding luminosity values are given in luminosity units, but the scaling of the values is
+    arbitrary because the %SED will be normalized after being loaded.
 
     Because the specific luminosity of the spectrum is undefined, there are important restrictions
     on the use of this %SED. See the description of the LineSED class for more information. */
