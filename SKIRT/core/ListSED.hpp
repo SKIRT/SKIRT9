@@ -33,6 +33,7 @@ class ListSED : public TabulatedSED
     ENUM_END()
 
     ITEM_CONCRETE(ListSED, TabulatedSED, "a spectral energy distribution specified inside the configuration file")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(ListSED, "Level2")
 
         PROPERTY_DOUBLE_LIST(wavelengths, "the wavelengths at which to specify the specific luminosity")
         ATTRIBUTE_QUANTITY(wavelengths, "wavelength")

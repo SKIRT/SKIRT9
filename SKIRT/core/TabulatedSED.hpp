@@ -20,7 +20,6 @@
 class TabulatedSED : public ContSED
 {
     ITEM_ABSTRACT(TabulatedSED, ContSED, "a spectral energy distribution tabulated by the user")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(TabulatedSED, "Level2")
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============
