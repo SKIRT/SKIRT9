@@ -149,7 +149,17 @@ double AbstractDoublePropertyHandler::toDouble(string value) const
     if (!qty.empty())
     {
         // use the unit spec in the input value if there is one; otherwise use the unit system to get a default unit
-        string unit = segments.size() == 2 ? segments[1] : unitSystem();
+        string unit;
+        if (segments.size() == 2)
+        {
+            unit = segments[1];
+        }
+        else
+        {
+            string system = unitSystem();
+            string style = StringUtils::toLower(unitStyle());
+            unit = schema()->unit(qty, system, style);
+        }
         result = schema()->in(qty, unit, result);
     }
 
