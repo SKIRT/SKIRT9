@@ -74,7 +74,7 @@ class Source : public SimulationItem, public SourceWavelengthRangeInterface
 
         PROPERTY_ITEM(wavelengthBiasDistribution, WavelengthDistribution,
                       "the bias distribution for sampling photon packet wavelengths")
-        ATTRIBUTE_DEFAULT_VALUE(wavelengthBiasDistribution, "LogWavelengthDistribution")
+        ATTRIBUTE_DEFAULT_VALUE(wavelengthBiasDistribution, "DefaultWavelengthDistribution")
         ATTRIBUTE_RELEVANT_IF(wavelengthBiasDistribution, "Panchromatic&wavelengthBias")
         ATTRIBUTE_DISPLAYED_IF(wavelengthBiasDistribution, "Level3")
 

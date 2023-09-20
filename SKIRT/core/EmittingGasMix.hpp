@@ -35,7 +35,7 @@ class EmittingGasMix : public MaterialMix, public SourceWavelengthRangeInterface
 
         PROPERTY_ITEM(wavelengthBiasDistribution, WavelengthDistribution,
                       "the bias distribution for sampling secondary photon packet wavelengths")
-        ATTRIBUTE_DEFAULT_VALUE(wavelengthBiasDistribution, "LogWavelengthDistribution")
+        ATTRIBUTE_DEFAULT_VALUE(wavelengthBiasDistribution, "DefaultWavelengthDistribution")
         ATTRIBUTE_RELEVANT_IF(wavelengthBiasDistribution, "wavelengthBias")
         ATTRIBUTE_DISPLAYED_IF(wavelengthBiasDistribution, "Level3")
 

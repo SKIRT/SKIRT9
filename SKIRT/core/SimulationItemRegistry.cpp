@@ -54,6 +54,7 @@
 #include "CylindricalClipGeometryDecorator.hpp"
 #include "CylindricalVectorField.hpp"
 #include "DefaultCutsForm.hpp"
+#include "DefaultWavelengthDistribution.hpp"
 #include "DensityProbe.hpp"
 #include "DensityTreePolicy.hpp"
 #include "DiscreteWavelengthDistribution.hpp"
@@ -372,6 +373,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
 
     // wavelength distributions
     ItemRegistry::add<WavelengthDistribution>();
+    ItemRegistry::add<DefaultWavelengthDistribution>();
     ItemRegistry::add<RangeWavelengthDistribution>();
     ItemRegistry::add<LinWavelengthDistribution>();
     ItemRegistry::add<LogWavelengthDistribution>();
