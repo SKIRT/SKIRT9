@@ -815,9 +815,9 @@ double SchemaDef::out(string qty, string unit, double value) const
 
 ////////////////////////////////////////////////////////////////////
 
-string SchemaDef::unit(string qty, string unitSystem) const
+string SchemaDef::unit(string qty, string unitSystem, string unitStyle) const
 {
-    return _unitDef.unit(qty, unitSystem);
+    return _unitDef.unit(qty, unitSystem, unitStyle);
 }
 
 ////////////////////////////////////////////////////////////////////

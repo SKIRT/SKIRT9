@@ -574,6 +574,9 @@ void MonteCarloSimulation::performLifeCycle(size_t firstIndex, size_t numIndices
                             // if the interaction point is outside of the path, terminate the packet
                             if (!simulateNonForcedPropagation(&pp)) break;
 
+                            // if the packet's weight drops to zero, terminate it
+                            if (pp.luminosity() <= 0) break;
+
                             // process the scattering event
                             if (peel) peelOffScattering(&pp, &ppp);
                             mediumSystem()->simulateScattering(random(), &pp);

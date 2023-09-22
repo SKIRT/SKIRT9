@@ -28,6 +28,7 @@ void NonLTELineGasMix::setupSelfBefore()
     {
         case Species::Test: name = "TT"; break;
         case Species::Hydroxyl: name = "OH"; break;
+        case Species::HydroxylHFS: name = "OHhfs"; break;
         case Species::Formyl: name = "HCO+"; break;
         case Species::CarbonMonoxide: name = "CO"; break;
         case Species::AtomicCarbon:
@@ -37,6 +38,10 @@ void NonLTELineGasMix::setupSelfBefore()
         case Species::IonizedCarbon:
             name = "C+";
             colNames = {"H2", "H", "e-"};
+            break;
+        case Species::MolecularHydrogen:
+            name = "H2";
+            colNames = {"H2", "H", "H+", "He"};
             break;
     }
 
@@ -96,7 +101,6 @@ void NonLTELineGasMix::setupSelfBefore()
     }
 
     // load the collisional transitions for each interaction partner
-    bool first = true;
     for (const auto& colName : colNames)
     {
         // add a new empty data structure and get a writable reference to it
@@ -111,7 +115,7 @@ void NonLTELineGasMix::setupSelfBefore()
             infile.readAllColumns(partner.T);
         }
 
-        // load the transition indices (just for the first partner) and coefficients (for every partner)
+        // load the transition indices and coefficients
         {
             int numTemperatures = partner.T.size();
             TextInFile infile(this, name + "_Col_" + colName + "_Coeff.txt", "collisional transitions", true);
@@ -125,20 +129,16 @@ void NonLTELineGasMix::setupSelfBefore()
                 int indexLow = row[1];
                 if (indexUp < _numLevels && indexLow < _numLevels)
                 {
-                    if (first)
-                    {
-                        _indexUpCol.push_back(indexUp);
-                        _indexLowCol.push_back(indexLow);
-                    }
+                    partner.indexUpCol.push_back(indexUp);
+                    partner.indexLowCol.push_back(indexLow);
                     Array coeff(numTemperatures);
                     for (int i = 0; i != numTemperatures; ++i) coeff[i] = row[i + 2];
                     partner.Kul.emplace_back(coeff);
                 }
             }
         }
-        first = false;
+        partner.numColTrans = partner.indexUpCol.size();
     }
-    _numColTrans = _indexUpCol.size();
     _numColPartners = colNames.size();
 
     // log summary info on the radiative lines
@@ -451,7 +451,15 @@ UpdateStatus NonLTELineGasMix::updateSpecificState(MaterialState* state, const A
                         + units->uwavelength() + " to " + StringUtils::toString(units->owavelength(lambdamax)) + " "
                         + units->uwavelength(),
                     "  --> increase the resolution of the radiation field wavelength grid"};
-                if (abs(gsum - 1.) > MAX_GAUSS_ERROR_FAIL) throw FATALERROR(StringUtils::join(message, "\n"));
+                if (abs(gsum - 1.) > MAX_GAUSS_ERROR_FAIL)
+                {
+                    auto log = find<Log>();
+                    log->info("Gausss(" + StringUtils::toString(_lambdav[ellmin])
+                              + ")=" + StringUtils::toString(gaussian(_lambdav[ellmin], center, sigma)) + "Gausss("
+                              + StringUtils::toString(_lambdav[ellmax - 1])
+                              + ")=" + StringUtils::toString(gaussian(_lambdav[ellmax - 1], center, sigma)));
+                    throw FATALERROR(StringUtils::join(message, "\n"));
+                }
                 auto log = find<Log>();
                 log->warning(message[0]);
                 for (size_t i = 1; i != message.size(); ++i) find<Log>()->info(message[i]);
@@ -470,19 +478,19 @@ UpdateStatus NonLTELineGasMix::updateSpecificState(MaterialState* state, const A
 
         // add the terms for the collisional transitions
         double T = state->kineticTemperature();
-        for (int t = 0; t != _numColTrans; ++t)
+        for (int c = 0; c != _numColPartners; ++c)
         {
-            int up = _indexUpCol[t];
-            int low = _indexLowCol[t];
-            double weightRatio = _weight[up] / _weight[low];
-            double energyDiff = _energy[up] - _energy[low];
-            double Kconversion = weightRatio * exp(-energyDiff / Constants::k() / T);
+            const auto& partner = _colPartner[c];
 
-            // loop over the collisional partners
-            for (int c = 0; c != _numColPartners; ++c)
+            for (int t = 0; t != partner.numColTrans; ++t)
             {
+                int up = partner.indexUpCol[t];
+                int low = partner.indexLowCol[t];
+                double weightRatio = _weight[up] / _weight[low];
+                double energyDiff = _energy[up] - _energy[low];
+                double Kconversion = weightRatio * exp(-energyDiff / Constants::k() / T);
                 // determine Kul by interpolation from the temperature-dependent table
-                double Kul = NR::clampedValue<NR::interpolateLogLog>(T, _colPartner[c].T, _colPartner[c].Kul[t]);
+                double Kul = NR::clampedValue<NR::interpolateLogLog>(T, partner.T, partner.Kul[t]);
 
                 // determine Klu from Kul
                 double Klu = Kul * Kconversion;

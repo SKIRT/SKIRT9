@@ -102,10 +102,14 @@ double UnitDef::out(string qty, string unit, double value) const
 
 ////////////////////////////////////////////////////////////////////
 
-string UnitDef::unit(string qty, string unitSystem) const
+string UnitDef::unit(string qty, string unitSystem, string unitStyle) const
 {
-    if (_unitSystems.count(unitSystem) && _unitSystems.at(unitSystem).count(qty))
-        return _unitSystems.at(unitSystem).at(qty);
+    if (_unitSystems.count(unitSystem))
+    {
+        if (!unitStyle.empty() && _unitSystems.at(unitSystem).count(unitStyle + qty))
+            return _unitSystems.at(unitSystem).at(unitStyle + qty);
+        if (_unitSystems.at(unitSystem).count(qty)) return _unitSystems.at(unitSystem).at(qty);
+    }
 
     throw FATALERROR("Unknow quantity " + qty + " and/or unit system " + unitSystem);
 }

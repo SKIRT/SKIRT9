@@ -29,8 +29,29 @@
     not support storing the radiation field, which means it cannot be used when the simulation
     includes secondary emission or dynamic state iteration.
 
-    The remaining options serve to further configure the detailed behavior of the forced scattering
-    photon cycle. */
+    The remaining three options serve to further configure the detailed behavior of the forced
+    scattering photon cycle. The first two options determine when the photon life cycle will be
+    terminated, i.e. after the weight of photon packet has decreased to some insignificant fraction
+    of its original weight (luminosity) through interaction with the medium, with a given minimum
+    number of scattering events if so desired.
+
+    The last option configures the path length stretching mechanism. When determining the next
+    interaction location of a photon packet with the medium, this technique samples in part from a
+    distribution representing unphysically long path segments, correcting this deviation through a
+    bias factor on the photon packet's weight. This allows a photon packet to more easily skip
+    through high optical depth regions. The value configured for this option determines the
+    fraction of path lengths sampled from the unphysical distribution. A value of zero disables the
+    mechanism altogether.
+
+    The path length stretching mechanism cannot be used for models where the photon packet
+    wavelength may change during its life cycle, for example during scattering or as a result of
+    bulk motions in the medium. This is so because the unphysically long distances between
+    interactions would no longer correctly sample the effects on the wavelength. Also, path length
+    stretching is currently \em not implemented for photon cycles without forced scattering. In all
+    these cases, the path length stretching mechanism will automatically be disabled during setup.
+    As a result, these simulations will lack the potential optimization brought by the path length
+    technique. In particulatar, penetrating regions of high optical depth may require many
+    scattering events with correspondingly longer running times. */
 class PhotonPacketOptions : public SimulationItem
 {
     ITEM_CONCRETE(PhotonPacketOptions, SimulationItem, "a set of options related to the photon packet lifecycle")
@@ -62,7 +83,7 @@ class PhotonPacketOptions : public SimulationItem
         PROPERTY_DOUBLE(pathLengthBias, "the fraction of path lengths sampled from a stretched distribution")
         ATTRIBUTE_MIN_VALUE(pathLengthBias, "[0")
         ATTRIBUTE_MAX_VALUE(pathLengthBias, "1]")
-        ATTRIBUTE_DEFAULT_VALUE(pathLengthBias, "Lya:0;0.5")
+        ATTRIBUTE_DEFAULT_VALUE(pathLengthBias, "(ForceScattering)&(!Lya):0.5;0")
         ATTRIBUTE_RELEVANT_IF(pathLengthBias, "(ForceScattering)&(!Lya)")
         ATTRIBUTE_DISPLAYED_IF(pathLengthBias, "Level3")
 
