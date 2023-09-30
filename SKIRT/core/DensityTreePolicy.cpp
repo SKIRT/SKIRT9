@@ -20,6 +20,8 @@
 
 void DensityTreePolicy::setupSelfBefore()
 {
+    TreePolicy::setupSelfBefore();
+
     // get the random generator and the number of samples (not a big effort, so we do this even if we don't need it)
     _random = find<Random>();
     _numSamples = find<Configuration>()->numDensitySamples();
@@ -83,7 +85,7 @@ void DensityTreePolicy::setupSelfBefore()
 
 ////////////////////////////////////////////////////////////////////
 
-bool DensityTreePolicy::needsSubdivide(TreeNode* node)
+bool DensityTreePolicy::needsSubdivide(TreeNode* node, int level)
 {
     // results for the sampled mass or number densities, if applicable
     double rho = 0.;          // dust mass density
@@ -215,7 +217,7 @@ vector<TreeNode*> DensityTreePolicy::constructTree(TreeNode* root)
                 size_t currentChunkSize = min(logEvalChunkSize, numIndices);
                 for (size_t l = firstIndex; l != firstIndex + currentChunkSize; ++l)
                 {
-                    if (needsSubdivide(nodev[lbeg + l])) divide[l] = 1.;
+                    if (needsSubdivide(nodev[lbeg + l], level)) divide[l] = 1.;
                 }
                 log->infoIfElapsed("Evaluation for level " + std::to_string(level) + ": ", currentChunkSize);
                 firstIndex += currentChunkSize;

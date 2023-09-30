@@ -123,14 +123,13 @@ protected:
         evaluate the configured criteria. */
     void setupSelfBefore() override;
 
-private:
+public:
     /** This function returns true if the given node needs to be subdivided according to the
         criteria configured for this policy, and false otherwise. The minimum and maximum level are
         not checked, because this function is never called for nodes that don't conform to the
         level criteria. */
-    bool needsSubdivide(TreeNode* node);
+    virtual bool needsSubdivide(TreeNode* node, int level);
 
-public:
     /** This function constructs the hierarchical tree and all (interconnected) nodes forming the
         tree as described for the corresponding pure virtual function in the base class. The
         implementation for this class loops over the tree subdivision levels (up to the maximum
@@ -177,7 +176,7 @@ private:
     bool _hasElectronFraction{false};
     bool _hasGasFraction{false};
 
-    // cashed values for each material type (valid if corresponding flag is enabled)
+    // cached values for each material type (valid if corresponding flag is enabled)
     double _dustMass{0.};
     double _dustKappa{0.};
     double _electronNumber{0.};
