@@ -374,6 +374,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
 
     // wavelength distributions
     ItemRegistry::add<WavelengthDistribution>();
+    ItemRegistry::add<DefaultWavelengthDistribution>();
     ItemRegistry::add<RangeWavelengthDistribution>();
     ItemRegistry::add<LinWavelengthDistribution>();
     ItemRegistry::add<LogWavelengthDistribution>();

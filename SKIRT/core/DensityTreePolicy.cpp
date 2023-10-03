@@ -85,7 +85,7 @@ void DensityTreePolicy::setupSelfBefore()
 
 ////////////////////////////////////////////////////////////////////
 
-bool DensityTreePolicy::needsSubdivide(TreeNode* node, int level)
+bool DensityTreePolicy::needsSubdivide(TreeNode* node, int /*level*/)
 {
     // results for the sampled mass or number densities, if applicable
     double rho = 0.;          // dust mass density

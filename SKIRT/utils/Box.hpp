@@ -111,9 +111,8 @@ public:
     /** This function returns true if the given box is inside this box, false otherwise. */
     inline bool contains(const Box& box) const
     {
-        return xmin() <= box.xmin() && xmax() >= box.xmax() &&
-               ymin() <= box.ymin() && ymax() >= box.ymax() &&
-               zmin() <= box.zmin() && zmax() >= box.zmax();
+        return xmin() <= box.xmin() && xmax() >= box.xmax() && ymin() <= box.ymin() && ymax() >= box.ymax()
+               && zmin() <= box.zmin() && zmax() >= box.zmax();
     }
 
     /** This function returns the volume \f$(x_\text{max}-x_\text{min}) \times
@@ -167,8 +166,8 @@ public:
         k = std::max(0, std::min(nz - 1, static_cast<int>(nz * (r.z() - _zmin) / (_zmax - _zmin))));
     }
 
-    /** This function returns true if the given box and this box have a non-zero intersection, false
-     * otherwise. */
+    /** This function returns true if the given box and this box have a non-zero intersection,
+        false otherwise. */
     inline bool intersects(const Box& box) const
     {
         if (xmax() < box.xmin() || box.xmax() < xmin()) return false;

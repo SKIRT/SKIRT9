@@ -60,9 +60,7 @@ public:
         average) the probability of locating the correct neighbor early in the list. */
     virtual vector<TreeNode*> constructTree(TreeNode* root) = 0;
 
-    /**
-     * The NestedDensityTreePolicy needs access to the minLevel and maxLevel.
-     */
+    /** The NestedDensityTreePolicy needs access to the minLevel and maxLevel. */
     friend NestedDensityTreePolicy;
 };
 
