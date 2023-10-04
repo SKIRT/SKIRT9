@@ -5,7 +5,6 @@
 
 #include "NestedDensityTreePolicy.hpp"
 #include "Log.hpp"
-#include "MediumSystem.hpp"
 #include "SpatialGrid.hpp"
 #include "TreeNode.hpp"
 
@@ -15,10 +14,10 @@ void NestedDensityTreePolicy::setupSelfBefore()
 {
     DensityTreePolicy::setupSelfBefore();
 
-    _inner = Box(_minXInner, _minYInner, _minZInner, _maxXInner, _maxYInner, _maxZInner);
+    _inner = Box(_innerMinX, _innerMinY, _innerMinZ, _innerMaxX, _innerMaxY, _innerMaxZ);
 
-    auto ms = find<MediumSystem>(false);
-    if (!ms->grid()->boundingBox().contains(_inner))
+    auto grid = find<SpatialGrid>(false);
+    if (!grid->boundingBox().contains(_inner))
         find<Log>()->warning("The nested density tree policy region is not fully inside the spatial grid domain");
 }
 
@@ -27,7 +26,7 @@ void NestedDensityTreePolicy::setupSelfBefore()
 bool NestedDensityTreePolicy::needsSubdivide(TreeNode* node)
 {
     if (_inner.intersects(node->extent()))
-        return _nestedTree->needsSubdivide(node);
+        return _innerPolicy->needsSubdivide(node);
     else
         return DensityTreePolicy::needsSubdivide(node);
 }
