@@ -10,8 +10,8 @@
 #include "DensityTreePolicy.hpp"
 
 /** NestedDensityTreePolicy is a DensityTreePolicy policy that allows defining separate subdivision
-    criteria in a given subregion of the spatial grid. This can be used, for example, to specify
-    a higher resolution in a given region of interest.
+    criteria in a given subregion of the spatial grid. This can be used, for example, to specify a
+    higher resolution in a given region of interest.
 
     The class inherits from DensityTreePolicy and uses all the inherited properties to classify the
     outer region. Additional \em innerMin/innerMax coordinate properties define the bounding box of
@@ -32,7 +32,7 @@
     By default, the inner policy is a regular DensityTreePolicy instance. However, because
     NestedDensityTreePolicy inherits DensityTreePolicy, it is also possible to again select a
     NestedDensityTreePolicy instance as the inner policy, leading to recursive nesting. While this
-    is not a recommended use case, it would allow specifying recursively inreasing resolution in
+    is not a recommended use case, it would allow specifying recursively increasing resolution in
     nested, successively smaller regions of the spatial domain. */
 class NestedDensityTreePolicy : public DensityTreePolicy
 {
