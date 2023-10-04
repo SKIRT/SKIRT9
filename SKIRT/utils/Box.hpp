@@ -108,6 +108,13 @@ public:
         return x >= _xmin && x <= _xmax && y >= _ymin && y <= _ymax && z >= _zmin && z <= _zmax;
     }
 
+    /** This function returns true if the given box is inside this box, false otherwise. */
+    inline bool contains(const Box& box) const
+    {
+        return xmin() <= box.xmin() && xmax() >= box.xmax() && ymin() <= box.ymin() && ymax() >= box.ymax()
+               && zmin() <= box.zmin() && zmax() >= box.zmax();
+    }
+
     /** This function returns the volume \f$(x_\text{max}-x_\text{min}) \times
         (y_\text{max}-y_\text{min}) \times (z_\text{max}-z_\text{min})\f$ of the box. */
     inline double volume() const { return (_xmax - _xmin) * (_ymax - _ymin) * (_zmax - _zmin); }
@@ -157,6 +164,16 @@ public:
         i = std::max(0, std::min(nx - 1, static_cast<int>(nx * (r.x() - _xmin) / (_xmax - _xmin))));
         j = std::max(0, std::min(ny - 1, static_cast<int>(ny * (r.y() - _ymin) / (_ymax - _ymin))));
         k = std::max(0, std::min(nz - 1, static_cast<int>(nz * (r.z() - _zmin) / (_zmax - _zmin))));
+    }
+
+    /** This function returns true if the given box and this box have a non-zero intersection,
+        false otherwise. */
+    inline bool intersects(const Box& box) const
+    {
+        if (xmax() < box.xmin() || box.xmax() < xmin()) return false;
+        if (ymax() < box.ymin() || box.ymax() < ymin()) return false;
+        if (zmax() < box.zmin() || box.zmax() < zmin()) return false;
+        return true;
     }
 
     /** This function intersects the receiving axis-aligned bounding box with a ray (half-line)
