@@ -4,10 +4,12 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "NestedDensityTreePolicy.hpp"
-#include "FatalError.hpp"
+#include "Log.hpp"
 #include "MediumSystem.hpp"
+#include "SpatialGrid.hpp"
 #include "TreeNode.hpp"
-#include "TreeSpatialGrid.hpp"
+
+////////////////////////////////////////////////////////////////////
 
 void NestedDensityTreePolicy::setupSelfBefore()
 {
@@ -16,37 +18,18 @@ void NestedDensityTreePolicy::setupSelfBefore()
     _inner = Box(_minXInner, _minYInner, _minZInner, _maxXInner, _maxYInner, _maxZInner);
 
     auto ms = find<MediumSystem>(false);
-    auto grid = ms->find<TreeSpatialGrid>(false);
-    Box _outer = grid->boundingBox();
-
-    if (!_outer.contains(_inner)) throw FATALERROR("The nested density tree is not contained in the outer region");
-
-    _outerMinLevel = _minLevel;
-    _outerMaxLevel = _maxLevel;
+    if (!ms->grid()->boundingBox().contains(_inner))
+        find<Log>()->warning("The nested density tree policy region is not fully inside the spatial grid domain");
 }
 
-void NestedDensityTreePolicy::setupSelfAfter()
-{
-    DensityTreePolicy::setupSelfAfter();
+////////////////////////////////////////////////////////////////////
 
-    _minLevel = min(_minLevel, _nestedTree->_minLevel);
-    _maxLevel = max(_maxLevel, _nestedTree->_maxLevel);
-}
-
-bool NestedDensityTreePolicy::needsSubdivide(TreeNode* node, int level)
+bool NestedDensityTreePolicy::needsSubdivide(TreeNode* node)
 {
     if (_inner.intersects(node->extent()))
-    {
-        if (level < _nestedTree->_minLevel) return true;
-        if (level >= _nestedTree->_maxLevel) return false;
-
-        return _nestedTree->needsSubdivide(node, level);
-    }
+        return _nestedTree->needsSubdivide(node);
     else
-    {
-        if (level < _outerMinLevel) return true;
-        if (level >= _outerMaxLevel) return false;
-
-        return DensityTreePolicy::needsSubdivide(node, level);
-    }
+        return DensityTreePolicy::needsSubdivide(node);
 }
+
+////////////////////////////////////////////////////////////////////
