@@ -30,7 +30,7 @@ void ParallelProjectionForm::writeQuantity(const ProbeFormBridge* bridge) const
 
     // get the oversampling rate
     int Nsampling = numSampling();
-    
+
     // calculate sines and cosines for the transformation from observer to model coordinates
     double costheta = cos(inclination());
     double sintheta = sin(inclination());
@@ -83,10 +83,10 @@ void ParallelProjectionForm::writeQuantity(const ProbeFormBridge* bridge) const
                         double x = cosphi * costheta * xpp - sinphi * ypp + cosphi * sintheta * zpp;
                         double y = sinphi * costheta * xpp + cosphi * ypp + sinphi * sintheta * zpp;
                         double z = -sintheta * xpp + costheta * zpp;
-                        
+
                         // get the quantity value aggregated along a path leaving the pixel through the model
                         bridge->valuesAlongPath(Position(x, y, z), kz, values);
-                        
+
                         // add the result to the sum and store it
                         if (bridge->isVector())
                         {
