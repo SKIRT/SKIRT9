@@ -68,9 +68,9 @@ void ParallelProjectionForm::writeQuantity(const ProbeFormBridge* bridge) const
         {
             for (int i = 0; i != Nxp; ++i)
             {
-                for (int is = 0; is != Nsampling; ++is)
+                for (int is = 0; is < Nsampling; ++is)
                 {
-                    for (int js = 0; js != Nsampling; ++js)
+                    for (int js = 0; js < Nsampling; ++js)
                     {
                         // transform pixel indices to observer coordinates
                         double xp = xpmin + (i + (is + 1.0) / (Nsampling + 1.0)) * xpsiz;
