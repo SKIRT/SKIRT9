@@ -21,15 +21,17 @@
 
     The FITS file contains a number of image frames corresponding to the number of components in a
     value of the quantity being probed (i.e. 1 for scalar quantities, 3 for vector quantities, and
-    N for compound quantities). In case of a vector quantity, the three image frames represent
-    the velocity vector components in the frame of the projection, i.e. the two components
-    projected on the x and y axes of the projection plane and the component perpendicular to it,
-    where positive values indicate vectors pointing away from the viewer.
+    N for compound quantities). In case of a vector quantity, the three image frames represent the
+    velocity vector components in the frame of the projection, i.e. the two components projected on
+    the x and y axes of the projection plane and the component perpendicular to it, where positive
+    values indicate vectors pointing away from the viewer.
 
-    This class sends a ray through the model for each output pixel center, calculating the
-    projection by accumulating information along that ray. Consequently, it ignores small features
-    in the model that project on the pixel but do not overlap the pixel center. To improve
-    accuracy, decrease the pixel size by increasing the number of pixels along each axis. */
+    For each pixel of the output array, the class subdivides the pixel into \f$ N \times N\f$
+    regularly positioned subpixels, where \f$N\f$ is the user-supplied oversampling rate. For each
+    of these \f$N^2\f$ subpixels, a ray is sent through the model, calculating the projection by
+    accumulating information along that ray. At the end, the algorithm averages the result of these
+    \f$N^2\f$ calclulations. Higher oversampling rates correspond to higher accuracy, but also
+    increased compuational cost. */
 class ParallelProjectionForm : public GenericForm
 {
     ITEM_CONCRETE(ParallelProjectionForm, GenericForm, "parallel projection on a distant plane")
@@ -83,6 +85,11 @@ class ParallelProjectionForm : public GenericForm
         ATTRIBUTE_QUANTITY(centerY, "length")
         ATTRIBUTE_DEFAULT_VALUE(centerY, "0")
         ATTRIBUTE_DISPLAYED_IF(centerY, "Level2")
+
+        PROPERTY_INT(numSampling, "the oversampling rate in each direction")
+        ATTRIBUTE_MIN_VALUE(numSampling, "1")
+        ATTRIBUTE_MAX_VALUE(numSampling, "9")
+        ATTRIBUTE_DEFAULT_VALUE(numSampling, "1")
 
     ITEM_END()
 
