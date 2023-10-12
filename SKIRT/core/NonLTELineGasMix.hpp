@@ -318,11 +318,18 @@ class NonLTELineGasMix : public EmittingGasMix
         ATTRIBUTE_DISPLAYED_IF(maxChangeInLevelPopulations, "Level2")
 
         PROPERTY_DOUBLE(maxFractionNotConvergedCells,
-                        "the maximum fraction of spatial cells that have not convergenced")
+                        "the maximum fraction of not-converged cells for all cells to be considered converged")
         ATTRIBUTE_MIN_VALUE(maxFractionNotConvergedCells, "[0")
         ATTRIBUTE_MAX_VALUE(maxFractionNotConvergedCells, "1]")
-        ATTRIBUTE_DEFAULT_VALUE(maxFractionNotConvergedCells, "0.001")
+        ATTRIBUTE_DEFAULT_VALUE(maxFractionNotConvergedCells, "0.01")
         ATTRIBUTE_DISPLAYED_IF(maxFractionNotConvergedCells, "Level2")
+
+        PROPERTY_DOUBLE(maxChangeInGlobalLevelPopulations,
+                        "the maximum relative change for the global level populations to be considered converged")
+        ATTRIBUTE_MIN_VALUE(maxChangeInGlobalLevelPopulations, "[0")
+        ATTRIBUTE_MAX_VALUE(maxChangeInGlobalLevelPopulations, "1]")
+        ATTRIBUTE_DEFAULT_VALUE(maxChangeInGlobalLevelPopulations, "0.05")
+        ATTRIBUTE_DISPLAYED_IF(maxChangeInGlobalLevelPopulations, "Level2")
 
         PROPERTY_DOUBLE(lowestOpticalDepth, "Lower limit of (negative) optical depth along a cell diagonal")
         ATTRIBUTE_MIN_VALUE(lowestOpticalDepth, "[-10")
@@ -417,12 +424,10 @@ public:
     UpdateStatus updateSpecificState(MaterialState* state, const Array& Jv) const override;
 
     /** This function returns true if the state of the medium component corresponding to this
-        material mix can be considered to be converged based on the given spatial cell statistics,
-        and false otherwise. The \em numCells, \em numUpdated and \em numNotConverged arguments
-        specify respectively the number of spatial cells in the simulation, the number of cells
-        updated during the latest update cycle, and the number of updated cells that have not yet
-        converged. */
-    bool isSpecificStateConverged(int numCells, int numUpdated, int numNotConverged) const override;
+        material mix can be considered to be converged based on the given spatial cell statistics
+        and aggregate material states, and false otherwise. */
+    bool isSpecificStateConverged(int numCells, int numUpdated, int numNotConverged, MaterialState* currentAggregate,
+                                  MaterialState* previousAggregate) const override;
 
     //======== Low-level material properties =======
 

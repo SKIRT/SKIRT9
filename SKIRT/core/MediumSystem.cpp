@@ -1598,7 +1598,11 @@ bool MediumSystem::updateDynamicStateMedia(bool primary)
     // collect convergence info from the material mixes
     bool converged = true;
     for (int h : (primary ? _pdms_hv : _sdms_hv))
-        converged &= mix(0, h)->isSpecificStateConverged(_numCells, numUpdated, numNotConverged);
+    {
+        MaterialState current(_state, _numCells, h);
+        MaterialState previous(_state, _numCells + 1, h);
+        converged &= mix(0, h)->isSpecificStateConverged(_numCells, numUpdated, numNotConverged, &current, &previous);
+    }
     return converged;
 }
 

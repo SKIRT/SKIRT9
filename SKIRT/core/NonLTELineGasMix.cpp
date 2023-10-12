@@ -533,9 +533,28 @@ UpdateStatus NonLTELineGasMix::updateSpecificState(MaterialState* state, const A
 
 ////////////////////////////////////////////////////////////////////
 
-bool NonLTELineGasMix::isSpecificStateConverged(int numCells, int /*numUpdated*/, int numNotConverged) const
+bool NonLTELineGasMix::isSpecificStateConverged(int numCells, int /*numUpdated*/, int numNotConverged,
+                                                MaterialState* currentAggregate, MaterialState* previousAggregate) const
 {
-    return static_cast<double>(numNotConverged) / static_cast<double>(numCells) <= maxFractionNotConvergedCells();
+    // verify criterion related to cell statistics
+    if (static_cast<double>(numNotConverged) / static_cast<double>(numCells) > maxFractionNotConvergedCells())
+        return false;
+
+    // calculate maximum relative difference between level populations of previous and current iteration
+    double maxdiff = 0.;
+    for (int p = 0; p != _numLevels; ++p)
+    {
+        double currentPop = currentAggregate->levelPopulation(p);
+        double previousPop = previousAggregate->levelPopulation(p);
+        double diff = abs((currentPop - previousPop) / previousPop);
+        if (diff > maxdiff) maxdiff = diff;
+    }
+
+    // verify criterion related to aggregated level populations
+    if (maxdiff > maxChangeInGlobalLevelPopulations()) return false;
+
+    // if we reach here, all criteria are satisfied
+    return true;
 }
 
 ////////////////////////////////////////////////////////////////////
