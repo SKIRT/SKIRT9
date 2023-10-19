@@ -392,6 +392,9 @@ void MediumSystem::setupSelfAfter()
     // communicate the calculated states across multiple processes, if needed
     _state.initCommunicate();
 
+    // calculate the initial aggregate state, if needed
+    _state.aggregate();
+
     log->info("Done calculating cell densities");
 }
 

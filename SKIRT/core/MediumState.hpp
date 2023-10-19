@@ -83,11 +83,11 @@
     recent) aggregate state has cell index \f$m=M\f$, the previous aggregate state has cell index
     \f$m=M+1\f$, the one before that has cell index \f$m=M+2\f$, and so forth.
 
-    The aggregate() function should be called at the end of each step in the iterative process,
-    after the synchronize() function has been called. It first shifts the existing aggregate states
-    to the next higher cell index, dropping the least recent aggregate state and making room for a
-    new one. It then recalculates the current aggregate state by accumulating information over all
-    cells.
+    The aggregate() function should be called at the end of construction, i.e. after
+    initCommunicate(), and at the end of each step in the iterative process, after synchronize().
+    It first shifts the existing aggregate states to the next higher cell index, dropping the least
+    recent aggregate state and making room for a new one. It then recalculates the current
+    aggregate state by accumulating information over all cells.
 
     The current implementation performs the following aggregation. The cell volume is summed over
     all cells, providing the total volume of the spatial domain: \f$V_\mathrm{tot} = \sum V_m\f$.
