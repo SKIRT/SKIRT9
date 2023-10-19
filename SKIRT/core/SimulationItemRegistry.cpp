@@ -173,6 +173,7 @@
 #include "MollweideProjection.hpp"
 #include "MonteCarloSimulation.hpp"
 #include "MultiGaussianExpansionGeometry.hpp"
+#include "NestedDensityTreePolicy.hpp"
 #include "NestedLogWavelengthGrid.hpp"
 #include "NetzerAngularDistribution.hpp"
 #include "NoPolarizationProfile.hpp"
@@ -490,6 +491,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // spatial grid policies
     ItemRegistry::add<TreePolicy>();
     ItemRegistry::add<DensityTreePolicy>();
+    ItemRegistry::add<NestedDensityTreePolicy>();
     ItemRegistry::add<SiteListTreePolicy>();
 
     // one-dimensional meshes for spatial grids

@@ -28,6 +28,9 @@ void ParallelProjectionForm::writeQuantity(const ProbeFormBridge* bridge) const
     double ypmin = centerY() - 0.5 * fieldOfViewY();
     double ypsiz = fieldOfViewY() / numPixelsY();
 
+    // get the oversampling rate
+    int Nsampling = numSampling();
+
     // calculate sines and cosines for the transformation from observer to model coordinates
     double costheta = cos(inclination());
     double sintheta = sin(inclination());
@@ -55,8 +58,9 @@ void ParallelProjectionForm::writeQuantity(const ProbeFormBridge* bridge) const
     log->infoSetElapsed(Nyp);
     auto parallel = bridge->probe()->find<ParallelFactory>()->parallelDistributed();
     parallel->call(Nyp, [&vvv, bridge, xpmin, xpsiz, ypmin, ypsiz, kx, ky, kz, zp, costheta, sintheta, cosphi, sinphi,
-                         cosomega, sinomega, Nxp, Nv, log](size_t firstIndex, size_t numIndices) {
+                         cosomega, sinomega, Nxp, Nv, log, Nsampling](size_t firstIndex, size_t numIndices) {
         Array values(Nv);
+        int Nsampling2 = Nsampling * Nsampling;
         string progress = bridge->probe()->typeAndName() + " calculated projected pixels: ";
 
         // loop over pixels
@@ -64,32 +68,38 @@ void ParallelProjectionForm::writeQuantity(const ProbeFormBridge* bridge) const
         {
             for (int i = 0; i != Nxp; ++i)
             {
-                // transform pixel indices to observer coordinates
-                double xp = xpmin + (i + 0.5) * xpsiz;
-                double yp = ypmin + (j + 0.5) * ypsiz;
-
-                // transform observer coordinates to model coordinates (inverse transform of frame instrument)
-                double xpp = sinomega * xp - cosomega * yp;
-                double ypp = cosomega * xp + sinomega * yp;
-                double zpp = zp;
-                double x = cosphi * costheta * xpp - sinphi * ypp + cosphi * sintheta * zpp;
-                double y = sinphi * costheta * xpp + cosphi * ypp + sinphi * sintheta * zpp;
-                double z = -sintheta * xpp + costheta * zpp;
-
-                // get the quantity value aggregated along a path leaving the pixel through the model
-                bridge->valuesAlongPath(Position(x, y, z), kz, values);
-
-                // store the result
-                if (bridge->isVector())
+                for (int is = 0; is < Nsampling; ++is)
                 {
-                    Vec v(values[0], values[1], values[2]);
-                    vvv(0, j, i) = Vec::dot(v, kx);
-                    vvv(1, j, i) = Vec::dot(v, ky);
-                    vvv(2, j, i) = Vec::dot(v, kz);
-                }
-                else
-                {
-                    for (int p = 0; p != Nv; ++p) vvv(p, j, i) = values[p];
+                    for (int js = 0; js < Nsampling; ++js)
+                    {
+                        // transform pixel indices to observer coordinates
+                        double xp = xpmin + (i + (is + 1.0) / (Nsampling + 1.0)) * xpsiz;
+                        double yp = ypmin + (j + (js + 1.0) / (Nsampling + 1.0)) * ypsiz;
+
+                        // transform observer coordinates to model coordinates (inverse transform of frame instrument)
+                        double xpp = sinomega * xp - cosomega * yp;
+                        double ypp = cosomega * xp + sinomega * yp;
+                        double zpp = zp;
+                        double x = cosphi * costheta * xpp - sinphi * ypp + cosphi * sintheta * zpp;
+                        double y = sinphi * costheta * xpp + cosphi * ypp + sinphi * sintheta * zpp;
+                        double z = -sintheta * xpp + costheta * zpp;
+
+                        // get the quantity value aggregated along a path leaving the pixel through the model
+                        bridge->valuesAlongPath(Position(x, y, z), kz, values);
+
+                        // add the result to the sum and store it
+                        if (bridge->isVector())
+                        {
+                            Vec v(values[0], values[1], values[2]);
+                            vvv(0, j, i) += Vec::dot(v, kx) / Nsampling2;
+                            vvv(1, j, i) += Vec::dot(v, ky) / Nsampling2;
+                            vvv(2, j, i) += Vec::dot(v, kz) / Nsampling2;
+                        }
+                        else
+                        {
+                            for (int p = 0; p != Nv; ++p) vvv(p, j, i) += values[p] / Nsampling2;
+                        }
+                    }
                 }
             }
             log->infoIfElapsed(progress, 1);

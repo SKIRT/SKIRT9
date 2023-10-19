@@ -20,6 +20,8 @@
 
 void DensityTreePolicy::setupSelfBefore()
 {
+    TreePolicy::setupSelfBefore();
+
     // get the random generator and the number of samples (not a big effort, so we do this even if we don't need it)
     _random = find<Random>();
     _numSamples = find<Configuration>()->numDensitySamples();
@@ -85,6 +87,10 @@ void DensityTreePolicy::setupSelfBefore()
 
 bool DensityTreePolicy::needsSubdivide(TreeNode* node)
 {
+    // handle minimum and maximum level
+    if (node->level() < minLevel()) return true;
+    if (node->level() >= maxLevel()) return false;
+
     // results for the sampled mass or number densities, if applicable
     double rho = 0.;          // dust mass density
     double rhomin = DBL_MAX;  // smallest sample for dust mass density
@@ -179,28 +185,13 @@ vector<TreeNode*> DensityTreePolicy::constructTree(TreeNode* root)
     // initialize the tree node list with the root node as the first item
     vector<TreeNode*> nodev{root};
 
-    // recursively subdivide the root node until the minimum level has been reached
+    // initialize iteration variables to level 0
     int level = 0;    // current level
     size_t lbeg = 0;  // node index range for the current level;
     size_t lend = 1;  // at level 0, the node list contains just the root node
-    while (level != minLevel())
-    {
-        log->info("Subdividing level " + std::to_string(level) + ": " + std::to_string(lend - lbeg) + " nodes");
-        log->infoSetElapsed(lend - lbeg);
-        for (size_t l = lbeg; l != lend; ++l)
-        {
-            nodev[l]->subdivide(nodev);
-            if ((l + 1) % logDivideChunkSize == 0)
-                log->infoIfElapsed("Subdividing level " + std::to_string(level) + ": ", logDivideChunkSize);
-        }
-        // update iteration variables to the next level
-        level++;
-        lbeg = lend;
-        lend = nodev.size();
-    }
 
-    // recursively subdivide the nodes beyond the minimum level until all nodes satisfy the configured criteria
-    while (level != maxLevel() && lend != lbeg)
+    // recursively subdivide nodes until all nodes satisfy the configured criteria
+    while (lend != lbeg)
     {
         size_t numEvalNodes = lend - lbeg;
         log->info("Subdividing level " + std::to_string(level) + ": " + std::to_string(numEvalNodes) + " nodes");
@@ -238,6 +229,7 @@ vector<TreeNode*> DensityTreePolicy::constructTree(TreeNode* root)
                     log->infoIfElapsed("Subdivision for level " + std::to_string(level) + ": ", logDivideChunkSize);
             }
         }
+
         // update iteration variables to the next level
         level++;
         lbeg = lend;

@@ -123,26 +123,23 @@ protected:
         evaluate the configured criteria. */
     void setupSelfBefore() override;
 
-private:
-    /** This function returns true if the given node needs to be subdivided according to the
-        criteria configured for this policy, and false otherwise. The minimum and maximum level are
-        not checked, because this function is never called for nodes that don't conform to the
-        level criteria. */
-    bool needsSubdivide(TreeNode* node);
-
 public:
+    /** This function returns true if the given node needs to be subdivided according to the
+        criteria configured for this policy, including minimum and maximum level, and false
+        otherwise. */
+    virtual bool needsSubdivide(TreeNode* node);
+
     /** This function constructs the hierarchical tree and all (interconnected) nodes forming the
         tree as described for the corresponding pure virtual function in the base class. The
-        implementation for this class loops over the tree subdivision levels (up to the maximum
-        level configured in the TreePolicy base class). For each level, the function alternates
-        between evaluating all of the nodes (i.e. determining which nodes need subdivision) and
-        actually subdividing the nodes that need it.
+        implementation for this class loops over the tree subdivision levels. For each level, the
+        function alternates between evaluating all of the nodes (i.e. determining which nodes need
+        subdivision) and actually subdividing the nodes that need it.
 
         These operations are split over two phases because the first one can be parallelized (the
         only output is a Boolean flag), while the second one cannot (the tree structure is updated
         in various ways). Parallelizing the first operation is often meaningful, because
-        determining whether a node needs subdivision can be resource-intensive (for example, it may
-        require sampling densities in the source distribution). */
+        determining whether a node needs subdivision can be resource-intensive. For example, it may
+        require sampling densities in the source distribution. */
     vector<TreeNode*> constructTree(TreeNode* root) override;
 
     //======================== Other Functions =======================
@@ -177,7 +174,7 @@ private:
     bool _hasElectronFraction{false};
     bool _hasGasFraction{false};
 
-    // cashed values for each material type (valid if corresponding flag is enabled)
+    // cached values for each material type (valid if corresponding flag is enabled)
     double _dustMass{0.};
     double _dustKappa{0.};
     double _electronNumber{0.};
