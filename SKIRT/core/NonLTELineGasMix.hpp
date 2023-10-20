@@ -146,6 +146,32 @@
     artificially combine the effect of both thermal motion and turbulence into an effective
     temperature, \f[ T_\mathrm{eff} = T_\mathrm{kin} + \frac{m v_\mathrm{turb}^2}{2k}. \f]
 
+    <b>Numerical convergence</b>
+
+    As mentioned above, a simulation including this material mix performs iterations to
+    self-consistently calculate the radiation field and the medium state (i.e. the energy level
+    populations that drive the line emission). This class offers three user-configurable properties
+    that specify the convergence criteria for this iterative process.
+
+    The first two properties configure a criterion based on statistics per spatial cell. The \em
+    maxChangeInLevelPopulations property specifies the maximum relative change between consecutive
+    iterations in the level populations for a given spatial cell for that cell to be considered
+    converged. The \em maxFractionNotConvergedCells property then specifies the maximum fraction of
+    cells (relative to the total number of cells in the simulation) that may be left not converged
+    for the whole spatial domain to be considered converged.
+
+    The third property configures a global criterion. The \em maxChangeInGlobalLevelPopulations
+    property specifies the maximum relative change between consecutive iterations in the global
+    level populations, accumulated over the complete spatial domain, for the spatial domain to be
+    considered converged. In other words, convergence has been reached if \f[ \epsilon =
+    \underset{i}{\mathrm{max}} \left| \frac{N_i^{(k)} - N_i^{(k-1)}} {N_i^{(k-1)}} \right| \le
+    \epsilon_\mathrm{max}\f] where \f$N_i^{(k)}\f$ denotes the total population across the spatial
+    domain for energy level \f$i\f$ at iteration \f$k\f$ and \f$\epsilon_\mathrm{max}\f$ is the
+    user-configured value of the \em maxChangeInGlobalLevelPopulations property.
+
+    Both criteria must be satisfied simultaneously. Howver, the user can effectively disable a
+    criterion by specifying very liberal maximum values.
+
     <b>Level populations</b>
 
     We denote the populations for the \f$N\f$ supported energy levels as \f$n_i\f$, with indices
@@ -425,7 +451,8 @@ public:
 
     /** This function returns true if the state of the medium component corresponding to this
         material mix can be considered to be converged based on the given spatial cell statistics
-        and aggregate material states, and false otherwise. */
+        and aggregate material states, and false otherwise. For more information on the convergence
+        criteria, see the corresponding section in the class header. */
     bool isSpecificStateConverged(int numCells, int numUpdated, int numNotConverged, MaterialState* currentAggregate,
                                   MaterialState* previousAggregate) const override;
 
