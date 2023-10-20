@@ -238,7 +238,9 @@
 #include "SpheroidalGeometryDecorator.hpp"
 #include "SpheroidalGraphiteGrainComposition.hpp"
 #include "SpheroidalSilicateGrainComposition.hpp"
+#include "SpinFlipAbsorptionMix.hpp"
 #include "SpinFlipHydrogenGasMix.hpp"
+#include "SpinFlipSEDFamily.hpp"
 #include "SpiralStructureGeometryDecorator.hpp"
 #include "Starburst99ContSED.hpp"
 #include "Starburst99ContSEDFamily.hpp"
@@ -376,6 +378,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<LyaGaussianSEDFamily>();
     ItemRegistry::add<LyaDoublePeakedSEDFamily>();
     ItemRegistry::add<LyaSEDFamilyDecorator>();
+    ItemRegistry::add<SpinFlipSEDFamily>();
     
     // wavelength distributions
     ItemRegistry::add<WavelengthDistribution>();
@@ -562,6 +565,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<FragmentDustMixDecorator>();
 
     ItemRegistry::add<ElectronMix>();
+    ItemRegistry::add<SpinFlipAbsorptionMix>();
     ItemRegistry::add<LyaNeutralHydrogenGasMix>();
     ItemRegistry::add<XRayAtomicGasMix>();
     ItemRegistry::add<EmittingGasMix>();
