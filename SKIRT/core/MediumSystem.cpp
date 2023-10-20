@@ -1547,6 +1547,10 @@ bool MediumSystem::updateDynamicStateRecipes()
     _state.calculateAggregate();
 
     // tell all recipes to end the update cycle and collect convergence info
+    // !! we should pass aggregate medium state information to the recipes
+    // !! .. which requires calling endUpdate() for each medium component
+    // !! .. which implies an inconvenient redesign of the DynamicRecipe classes
+    // !! .. and since the info is currently not used, we postpone this until a later time
     bool converged = true;
     for (auto recipe : recipes) converged &= recipe->endUpdate(_numCells, numUpdated, numNotConverged);
     return converged;
