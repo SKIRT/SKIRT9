@@ -18,7 +18,7 @@
 
     The user can select the aggregation level, i.e. whether to produce an output file per medium
     component or per medium type (dust, electrons, gas). If one or more medium components in the
-    simulation are equipped with a FragmentDustMixDecorator, the probe can provide the masss
+    simulation are equipped with a FragmentDustMixDecorator, the probe can provide the mass
     density for each of the dust grain populations represented by the decorator. Depending on the
     value of the \em fragmentSizeBins flag on the decorator, there are fragments for each of the
     grain material types or even for each of the grain size bins defined by the underlying dust

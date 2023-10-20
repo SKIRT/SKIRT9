@@ -23,10 +23,18 @@
     ignored and the radiation is assumed to be unpolarized.
 
     The user can select the aggregation level, i.e. whether to produce an output file per medium
-    component, per medium type (dust, electrons, gas), or for the complete medium system. There is
-    also an option to decide whether the probe should be performed after setup or after the full
-    simulation run. The latter option is meaningful if the density and/or cross section of the
-    media may change during the simulation.
+    component, per medium type (dust, electrons, gas), or for the complete medium system. If one or
+    more medium components in the simulation are equipped with a FragmentDustMixDecorator, the
+    probe can provide information for each of the dust grain populations represented by the
+    decorator. Depending on the value of the \em fragmentSizeBins flag on the decorator, there are
+    fragments for each of the grain material types or even for each of the grain size bins defined
+    by the underlying dust mixture. The probed information is written in a separate file for each
+    fragment, identified by a zero-based fragment index in addition to the zero-based component
+    index.
+
+    There is also an option to decide whether the probe should be performed after setup or after
+    the full simulation run. The latter option is meaningful if the density and/or cross section of
+    the media may change during the simulation.
 
     This probe implements the MaterialWavelengthRangeInterface to indicate that
     wavelength-dependent material properties may be required for the configured wavelength. */
@@ -34,7 +42,8 @@ class OpacityProbe : public SpatialGridWhenFormProbe, public MaterialWavelengthR
 {
     /** The enumeration type indicating how to aggregate the output: per medium component, per
         medium type (dust, electrons, gas), or for the complete medium system. */
-    ENUM_DEF(Aggregation, Component, Type, System)
+    ENUM_DEF(Aggregation, Fragment, Component, Type, System)
+        ENUM_VAL(Aggregation, Fragment, "per fragment (dust grain material type and/or size bin)")
         ENUM_VAL(Aggregation, Component, "per medium component")
         ENUM_VAL(Aggregation, Type, "per medium type (dust, electrons, gas)")
         ENUM_VAL(Aggregation, System, "for the complete medium system")
