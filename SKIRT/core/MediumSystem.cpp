@@ -393,7 +393,7 @@ void MediumSystem::setupSelfAfter()
     _state.initCommunicate();
 
     // calculate the initial aggregate state, if needed
-    _state.aggregate();
+    _state.calculateAggregate();
 
     log->info("Done calculating cell densities");
 }
@@ -1544,7 +1544,7 @@ bool MediumSystem::updateDynamicStateRecipes()
               + StringUtils::toString(100. * numNotConverged / _numCells, 'f', 2) + " %)");
 
     // calculate the new current aggregate state
-    _state.aggregate();
+    _state.calculateAggregate();
 
     // tell all recipes to end the update cycle and collect convergence info
     bool converged = true;
@@ -1596,7 +1596,7 @@ bool MediumSystem::updateDynamicStateMedia(bool primary)
                   + StringUtils::toString(100. * numNotConverged / _numCells, 'f', 2) + " %)");
 
     // calculate the new current aggregate state
-    _state.aggregate();
+    _state.calculateAggregate();
 
     // collect convergence info from the material mixes
     bool converged = true;
@@ -1607,6 +1607,13 @@ bool MediumSystem::updateDynamicStateMedia(bool primary)
         converged &= mix(0, h)->isSpecificStateConverged(_numCells, numUpdated, numNotConverged, &current, &previous);
     }
     return converged;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void MediumSystem::beginDynamicMediumStateIteration()
+{
+    _state.pushAggregate();
 }
 
 ////////////////////////////////////////////////////////////////////

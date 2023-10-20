@@ -155,17 +155,11 @@ std::pair<int, int> MediumState::synchronize(const vector<UpdateStatus>& cellFla
 
 //////////////////////////////////////////////////////////////////////
 
-void MediumState::aggregate()
+void MediumState::calculateAggregate()
 {
     // if aggregation is requested
     if (_numAggregateCells)
     {
-        // shift the previous aggregate states to make room
-        for (int m = _numCells + _numAggregateCells - 1; m != _numCells; --m)
-        {
-            for (int i = 0; i != _numVars; ++i) _data[_numVars * m + i] = _data[_numVars * (m - 1) + i];
-        }
-
         // clear the variables in the current aggregate state
         for (int i = 0; i != _numVars; ++i) _data[_numVars * _numCells + i] = 0.;
 
@@ -178,6 +172,21 @@ void MediumState::aggregate()
 
             // variables of type number volume density
             for (int i : _densityOffsets) _data[_numVars * _numCells + i] += _data[_numVars * m + i] * volume;
+        }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void MediumState::pushAggregate()
+{
+    // if aggregation is requested
+    if (_numAggregateCells)
+    {
+        // shift the previous aggregate states to make room
+        for (int m = _numCells + _numAggregateCells - 1; m != _numCells; --m)
+        {
+            for (int i = 0; i != _numVars; ++i) _data[_numVars * m + i] = _data[_numVars * (m - 1) + i];
         }
     }
 }

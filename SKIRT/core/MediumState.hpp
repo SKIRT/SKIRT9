@@ -83,11 +83,12 @@
     recent) aggregate state has cell index \f$m=M\f$, the previous aggregate state has cell index
     \f$m=M+1\f$, the one before that has cell index \f$m=M+2\f$, and so forth.
 
-    The aggregate() function should be called at the end of construction, i.e. after
-    initCommunicate(), and at the end of each step in the iterative process, after synchronize().
-    It first shifts the existing aggregate states to the next higher cell index, dropping the least
-    recent aggregate state and making room for a new one. It then recalculates the current
-    aggregate state by accumulating information over all cells.
+    The calculateAggregate() function should be called at the end of construction, i.e. after
+    initCommunicate(), and at the end of each dynamic medium state update cycle, i.e. after
+    synchronize(). It recalculates the current aggregate state by accumulating information over all
+    spatial cells. The pushAggregate() function should be called at the end of each step in the
+    iterative process. It shifts the existing aggregate states to the next higher cell index,
+    dropping the least recent aggregate state and making room for a new one.
 
     The current implementation performs the following aggregation. The cell volume is summed over
     all cells, providing the total volume of the spatial domain: \f$V_\mathrm{tot} = \sum V_m\f$.
@@ -158,6 +159,7 @@ public:
 
     //============= Synchronization and Aggregation =============
 
+public:
     /** This function synchronizes the state variables between processes after each process has
         possibly updated some of their values. The provided vector indicates the cells for which
         the calling process has made some changes. The vector must be of length \em numCells as
@@ -173,10 +175,15 @@ public:
         undefined. */
     std::pair<int, int> synchronize(const vector<UpdateStatus>& cellFlags);
 
+    /** If aggregation has been requested when initializing the configuration, this function
+        calculates the current aggregate state. For more information, see the description of
+        aggregation in the class header. */
+    void calculateAggregate();
+
     /** If aggregation has been requested when initializing the configuration, this function shifts
-        the previously stored aggregate states to make room, and calculates the current aggregate
-        state. For more information, see the description of aggregation in the class header. */
-    void aggregate();
+        the previously stored aggregate states to make room for a new current aggregate state. For
+        more information, see the description of aggregation in the class header. */
+    void pushAggregate();
 
     //============= Setting =============
 
