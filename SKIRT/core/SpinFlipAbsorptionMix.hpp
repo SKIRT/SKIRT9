@@ -3,35 +3,36 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef SPINFLIPHABSORPTIONMIX_HPP
-#define SPINFLIPHABSORPTIONMIX_HPP
+#ifndef SPINFLIPABSORPTIONMIX_HPP
+#define SPINFLIPABSORPTIONMIX_HPP
 
 #include "MaterialMix.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
 /** The SpinFlipAbsorptionMix class describes the material properties related to the 21 cm
-    spin-flip transition in neutral atomic hydrogen, including only absorption (i.e. omitting 
-    emission processes). The 21 cm opacity in a given cell are determined from gas properties defined 
-    in the input model (gas temperature).
+    spin-flip transition in neutral atomic hydrogen, including only absorption (i.e. omitting
+    emission processes). The 21 cm opacity in a given cell is determined from gas properties
+    defined in the input model (gas temperature).
 
     <b>Configuring the simulation</b>
 
-    Simulations of 21 cm the spin-flip transition usually include 21 cm emission (see SpinFlipSEDFamily
-    class) in addition to a medium component configured with the spin flip material mix (this class).
-    Hence, the simulation mode should be set to "ExtinctionOnly".    
+    Simulations of 21 cm the spin-flip transition usually include 21 cm emission (see
+    SpinFlipSEDFamily class) in addition to a medium component configured with the spin flip
+    material mix (this class). Hence, the simulation mode should be set to "ExtinctionOnly".
 
-    As the opacity of the 21 cm line depends on the gas temperature, this information will be read 
-    from an input file by associating the spin flip material mix with a subclass of ImportedMedium. 
-    For that medium component, the ski file attribute\em importTemperature <b>must</b> be set to 'true',
-    and \em importVariableMixParams must be left at 'false'. For example, if bulk velocities are also 
-    imported for this medium component (i.e. \em importVelocity is 'true'), the column order would be \f[ ...,
-    T, v_\mathrm{x}, v_\mathrm{y}, v_\mathrm{z}\f]
+    As the opacity of the 21 cm line depends on the gas temperature as well as the neutral atomic
+    hydrogen density \f$n_\mathrm{HI}\f$, this information is read from an input file by
+    associating the SpinFlipAbsorptionMix with a subclass of ImportedMedium. For that medium
+    component, the ski file attribute \em importTemperature <b>must</b> be set to 'true', and \em
+    importMetallicity and \em importVariableMixParams must be left at 'false'. For example, if bulk
+    velocities are also imported for this medium component (i.e. \em importVelocity is 'true'), the
+    column order would be \f[ ..., T, v_\mathrm{x}, v_\mathrm{y}, v_\mathrm{z} \f]
 
-    For basic testing purposes, the spin flip material mix can also be associated with a geometric
+    For basic testing purposes, the SpinFlipAbsorptionMix can also be associated with a geometric
     medium component. The geometry then defines the spatial density distribution (i.e.
-    \f$n_\mathrm{HI}\f$), and the spin flip material mix offers configuration properties to specify
-    fixed default values for the other properties that will be used across the spatial domain.
+    \f$n_\mathrm{HI}\f$), and this class offers a configuration property to specify a fixed default
+    temperature value that will be used across the spatial domain.
 
     <b>Absorption</b>
 
@@ -60,8 +61,7 @@
     */
 class SpinFlipAbsorptionMix : public MaterialMix
 {
-    ITEM_CONCRETE(SpinFlipAbsorptionMix, MaterialMix,
-                  "A gas mix supporting the spin-flip 21 cm hydrogen absorption")
+    ITEM_CONCRETE(SpinFlipAbsorptionMix, MaterialMix, "A gas mix supporting the spin-flip 21 cm hydrogen absorption")
 
         PROPERTY_DOUBLE(defaultTemperature, "the default temperature of the gas")
         ATTRIBUTE_QUANTITY(defaultTemperature, "temperature")
@@ -72,19 +72,13 @@ class SpinFlipAbsorptionMix : public MaterialMix
 
     ITEM_END()
 
-    //============= Construction - Setup - Destruction =============
-
-protected:
-    /** This function initializes the DipolePhaseFunction instance held by this class. */
-    void setupSelfBefore() override;
-
     //======== Capabilities =======
 
 public:
     /** This function returns the fundamental material type represented by this material mix, which
-        is MaterialType::Electrons. */
+        is MaterialType::Gas. */
     MaterialType materialType() const override;
-    
+
     /** This function returns true, indicating that the cross sections returned by this material
         mix depend on the values of specific state variables other than the number density. */
     bool hasExtraSpecificState() const override;
@@ -94,20 +88,16 @@ public:
 public:
     /** This function returns a list of StateVariable objects describing the specific state
         variables used by the receiving material mix. For this class, the function returns a list
-        containing descriptors for the properties defined in the input model (number density,
-        metallicity, temperature, and neutral hydrogen fraction) and for a variable to hold the
-        atomic hydrogen fraction derived from the radiation field when the dynamic medium state is
-        updated. */
+        containing descriptors for the properties defined in the input model, namely number density
+        and temperature. */
     vector<StateVariable> specificStateVariableInfo() const override;
 
     /** This function initializes the specific state variables requested by this material mix
         through the specificStateVariableInfo() function except for the number density. For this
-        class, the function initializes the temperature, metallicity and neutral hydrogen fraction
-        to the specified imported values, or if not available, to the user-configured default
-        values. The atomic hydrogen fraction is set to zero. */
-        void initializeSpecificState(MaterialState* state, double metallicity, double temperature,
+        class, the function initializes the temperature to the specified imported value, or if not
+        available, to the user-configured default value. */
+    void initializeSpecificState(MaterialState* state, double metallicity, double temperature,
                                  const Array& params) const override;
-
 
     //======== Low-level material properties =======
 

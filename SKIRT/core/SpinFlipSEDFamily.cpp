@@ -49,7 +49,7 @@ double SpinFlipSEDFamily::specificLuminosity(double wavelength, const Array& par
 ////////////////////////////////////////////////////////////////////
 
 double SpinFlipSEDFamily::cdf(Array& lambdav, Array& pv, Array& Pv, const Range& wavelengthRange,
-                                 const Array& parameters) const
+                              const Array& parameters) const
 {
     double L = parameters[0];
     double s = parameters[1];
