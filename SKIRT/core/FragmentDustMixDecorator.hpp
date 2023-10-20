@@ -271,6 +271,11 @@ public:
         with index \f$f\f$, given the material state for a spatial cell. */
     double populationNumberDensity(int f, const MaterialState* state) const;
 
+    /** This function returns the extinction opacity of the dust population represented by the
+        fragment with index \f$f\f$ for the given wavelength and material state, taking into
+        account the fragment weights in the material state as described in the class header. */
+    double populationOpacityExt(int f, double lambda, const MaterialState* state) const;
+
     /** This function returns the equilibrium temperature of the dust population represented by the
         fragment with index \f$f\f$ when it would be embedded in a given radiation field. */
     double populationTemperature(int f, const Array& Jv) const;
