@@ -384,11 +384,14 @@ public:
         updateSpecificState() has been called for all spatial cells. The \em numCells, \em
         numUpdated and \em numNotConverged arguments specify respectively the number of spatial
         cells in the simulation, the number of cells updated during this update cycle, and the
-        number of updated cells that have not yet converged. Based on this information and any
-        relevant user configuration options, the function returns true if the medium state is
-        considered to be converged and false if not. The default implementation in this base class
-        always returns true. */
-    virtual bool isSpecificStateConverged(int numCells, int numUpdated, int numNotConverged) const;
+        number of updated cells that have not yet converged. The \em currentAggregate and \em
+        previousAggregate arguments provide the current and previous aggregate material states for
+        this material mix (for more information, see the section on aggregation in the MediumState
+        class header). Based on this information and any relevant user configuration options, the
+        function returns true if the medium state is considered to be converged and false if not.
+        The default implementation in this base class always returns true. */
+    virtual bool isSpecificStateConverged(int numCells, int numUpdated, int numNotConverged,
+                                          MaterialState* currentAggregate, MaterialState* previousAggregate) const;
 
     //======== Low-level material properties =======
 

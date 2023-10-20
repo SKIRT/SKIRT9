@@ -314,6 +314,11 @@ public:
         otherwise. */
     bool hasSecondaryDynamicState() const { return _hasSecondaryDynamicState; }
 
+    /** Returns true if the simulation has primary or merged iterations and includes one or more
+        recipes or media that perform primary or secondary dynamic medium state (DMS) updates, and
+        false otherwise. */
+    bool hasDynamicState() const { return _hasPrimaryDynamicState || _hasSecondaryDynamicState; }
+
     // ----> photon cycle
 
     /** Returns true if the extinction cross section (the sum of the absorption and scattering
