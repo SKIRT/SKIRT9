@@ -237,7 +237,9 @@
 #include "SpheroidalGeometryDecorator.hpp"
 #include "SpheroidalGraphiteGrainComposition.hpp"
 #include "SpheroidalSilicateGrainComposition.hpp"
+#include "SpinFlipAbsorptionMix.hpp"
 #include "SpinFlipHydrogenGasMix.hpp"
+#include "SpinFlipSEDFamily.hpp"
 #include "SpiralStructureGeometryDecorator.hpp"
 #include "Starburst99SED.hpp"
 #include "Starburst99SEDFamily.hpp"
@@ -368,6 +370,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<FileIndexedSEDFamily>();
     ItemRegistry::add<MappingsSEDFamily>();
     ItemRegistry::add<ToddlersSEDFamily>();
+    ItemRegistry::add<SpinFlipSEDFamily>();
     ItemRegistry::add<LyaGaussianSEDFamily>();
     ItemRegistry::add<LyaDoublePeakedSEDFamily>();
     ItemRegistry::add<LyaSEDFamilyDecorator>();
@@ -556,11 +559,12 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<FragmentDustMixDecorator>();
 
     ItemRegistry::add<ElectronMix>();
-    ItemRegistry::add<LyaNeutralHydrogenGasMix>();
+    ItemRegistry::add<SpinFlipAbsorptionMix>();
+    ItemRegistry::add<SpinFlipHydrogenGasMix>();
     ItemRegistry::add<XRayAtomicGasMix>();
     ItemRegistry::add<EmittingGasMix>();
-    ItemRegistry::add<SpinFlipHydrogenGasMix>();
     ItemRegistry::add<NonLTELineGasMix>();
+    ItemRegistry::add<LyaNeutralHydrogenGasMix>();
     ItemRegistry::add<TrivialGasMix>();
 
     // material mix families
