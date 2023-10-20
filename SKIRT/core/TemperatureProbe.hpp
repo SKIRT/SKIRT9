@@ -83,10 +83,10 @@ class TemperatureProbe : public SpatialGridWhenFormProbe
 {
     /** The enumeration type indicating how to aggregate the output: per medium component or per
         medium type (dust, electrons, gas). */
-    ENUM_DEF(Aggregation, Component, Type, Fragment)
+    ENUM_DEF(Aggregation, Fragment, Component, Type)
+        ENUM_VAL(Aggregation, Fragment, "per fragment (dust grain material type and/or size bin)")
         ENUM_VAL(Aggregation, Component, "per medium component")
         ENUM_VAL(Aggregation, Type, "per medium type (dust, electrons, gas)")
-        ENUM_VAL(Aggregation, Fragment, "per fragment (dust grain material type and/or size bin)")
     ENUM_END()
 
     ITEM_CONCRETE(TemperatureProbe, SpatialGridWhenFormProbe,
