@@ -30,7 +30,8 @@ vector<SnapshotParameter> SpinFlipSEDFamily::parameterInfo() const
 
 Range SpinFlipSEDFamily::intrinsicWavelengthRange() const
 {
-    return Range(0.2047, 0.2174);
+    constexpr Range range(Constants::lambdaSpinFlip() * (1. - 0.03), Constants::lambdaSpinFlip() * (1. + 0.03));
+    return range;
 }
 
 ////////////////////////////////////////////////////////////////////
