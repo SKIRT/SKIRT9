@@ -13,122 +13,138 @@
 /** The SpinFlipHydrogenGasMix class describes the material properties related to the 21 cm
     spin-flip transition in neutral atomic hydrogen, including emission and absorption. The 21 cm
     emission luminosity and self-absorption opacity in a given cell are determined from gas
-    properties defined in the input model (total hydrogen number density, neutral hydrogen mass
-    fraction, gas metallity, gas temperature) and the local UV radiation field calculated by the
-    simulation (taking into account dust extinction).
+    properties defined in the input model (neutral hydrogen volume density, gas metallity, gas
+    temperature, and neutral hydrogen surface density) and the local UV radiation field calculated
+    by the simulation taking into account dust extinction.
 
     <b>Configuring the simulation</b>
 
-    Simulations of 21 cm the spin-flip transition usually include primary sources and a dust medium
-    in addition to a medium component configured with the spin flip material mix (this class).
-    During primary emission, the dust medium determines the UV radiation field, allowing the spin
-    flip material mix to calculate the 21 cm line luminosity and absorption cross section for use
-    during secondary emission. This calculation happens in the updateSpecificState() function,
-    which is invoked at the end of primary emission (because the material mix advertises that it
-    has a secondary dynamic medium state). This does imply that the 21 cm line absorption remains
-    zero during primary emission, which is not a problem as long as the primary sources don't emit
-    in the radio wavelength range. Thus, unless dust opacities are very high, there is no need for
-    iteration over primary nor secondary emission.
+    Simulations of the 21 cm the spin-flip transition usually include primary sources and a dust
+    medium in addition to a medium component configured with the spin flip material mix (this
+    class). During primary emission, the dust medium determines the UV radiation field, allowing
+    the spin flip material mix to calculate the 21 cm line luminosity and absorption cross section
+    for use during secondary emission. This calculation happens in the updateSpecificState()
+    function, which is invoked at the end of primary emission (because the material mix advertises
+    that it has a secondary dynamic medium state). This does imply that the 21 cm line absorption
+    remains zero during primary emission, which is not a problem as long as the primary sources
+    don't emit in the radio wavelength range. Thus, unless dust opacities are very high, there is
+    no need for iteration over primary nor secondary emission.
 
     If one is not interested in dust emission (i.e. only in the 21 cm line emission), the
     simulation mode can be set to "GasEmission" and the radiation field wavelength grid can be
     limited to a single bin in the UV wavelength range. This bin should be configured to cover the
-    full Lyman-Werner band (912-1110 Angstrom) so that it accurately captures all radiation that
+    full Lyman-Werner band (912-1110 Å) so that it accurately captures all radiation that
     dissociates molecular hydrogen. Similarly, instrument wavelength grids can be limited to a
-    relevant range around 21 cm line center.
+    relevant range around the 21 cm line center.
 
-    To calculate both the dust emission spectrum and the 21 line emission in the same simulation,
-    the simulation mode must be set to "DustAndGasEmission" and the radiation field wavelength grid
-    must now include and properly resolve the UV, optical, and infrared wavelength range. Separate
-    instruments can be configured for the relevant wavelength ranges, e.g. using a logarithmic grid
-    for the continuum spectrum and a linear grid for the line profile.
+    To calculate both the dust emission spectrum and the 21 cm line emission in the same
+    simulation, the simulation mode must be set to "DustAndGasEmission" and the radiation field
+    wavelength grid must now include and properly resolve the UV, optical, and infrared wavelength
+    range. Separate instruments can be configured for the relevant wavelength ranges, e.g. using a
+    logarithmic grid for the continuum spectrum and a linear grid for the 21 cm line profile.
 
     The input model must provide values for the spatial distribution of four medium properties that
     remain constant during the simulation:
 
-    - The total hydrogen number density \f$n_\mathrm{H}\f$, defined as \f$n_\mathrm{H} =
-    n_\mathrm{HI} + n_\mathrm{HII} + 2\,n_\mathrm{H2}\f$, i.e. including atomic, ionized, and
-    molecular hydrogen. Note the factor 2 in this equation; \f$n_\mathrm{H}\f$ in fact specifies
-    the number of protons per volume rather than the number of hydrogen-like particles per volume.
-
-    - The neutral hydrogen fraction \f$f_\mathrm{HI+H2}\f$, defined as \f$f_\mathrm{HI+H2} =
-    (M_\mathrm{HI} + M_\mathrm{H2})/M_H\f$. Note that \f$f_\mathrm{HI+H2}\f$ is a mass fraction
-    rather than a number density fraction.
+    - The neutral hydrogen volume number density \f$n_\mathrm{HI+H2} = n_\mathrm{HI} +
+    2\,n_\mathrm{H2}\f$, i.e. including non-ionized atomic and molecular hydrogen. Note the factor
+    2 in this equation; \f$n_\mathrm{HI+H2}\f$ specifies the number of protons rather than the
+    number of hydrogen-like particles.
 
     - The metallicity \f$Z\f$ of the gas.
 
     - The kinetic temperature \f$T\f$ of the gas.
 
+    - The neutral hydrogen surface mass density \f$\Sigma_\mathrm{HI+H2}\f$, required by the scheme
+    that partitions the neutral hydrogen into atomic and molecular fractions (see below).
+
     Most often, this information will be read from an input file by associating the spin flip
     material mix with a subclass of ImportedMedium. For that medium component, the ski file
     attributes \em importMetallicity and \em importTemperature <b>must</b> be set to 'true', and
     \em importVariableMixParams must be left at 'false'. The additional column required by the spin
-    flip material mix (neutral hydrogen fraction) is automatically imported and is expected
-    <b>after</b> all other columns. For example, if bulk velocities are also imported for this
-    medium component (i.e. \em importVelocity is 'true'), the column order would be \f[ ...,
-    n_\mathrm{H}, Z, T, v_\mathrm{x}, v_\mathrm{y}, v_\mathrm{z}, f_\mathrm{HI+H2} \f]
+    flip material mix (neutral hydrogen surface mass density) is automatically imported and is
+    expected <b>after</b> all other columns. For example, if bulk velocities are also imported for
+    this medium component (i.e. \em importVelocity is 'true'), the column order would be \f[ ...,
+    n_\mathrm{HI+H2}, Z, T, v_\mathrm{x}, v_\mathrm{y}, v_\mathrm{z}, \Sigma_\mathrm{HI+H2} \f]
+
+    Depending on the specific ImportedMedium subclass being used, the neutral hydrogen density
+    distribution in the first column can be specified as a mass or number density, or as a
+    volume-integrated mass or number for each cell or particle. In all cases, the value is
+    automatically converted to the appropriate volume number density expected by this class. In
+    contrast, the neutral hydrogen surface density must always be specified as a surface \em mass
+    density, with default units of Msun/pc2.
+
+    \note It is customary to obtain \f$\Sigma_\mathrm{HI+H2}\f$ by multiplying
+    \f$n_\mathrm{HI+H2}\f$ with a specific length scale (and converting from number to mass
+    density). Some authors use the Sobolev length, but most use the Jeans length. The Jeans length
+    can be easily computed from the gas cell data (gas mass density, internal energy, hydrogen mass
+    fraction, and electron fraction). This rough approximation broadly matches the interpretation
+    of surface density in the partitioning scheme used by this class (see below).
 
     For basic testing purposes, the spin flip material mix can also be associated with a geometric
-    medium component. The geometry then defines the spatial density distribution (i.e.
-    \f$n_\mathrm{H}\f$), and the spin flip material mix offers configuration properties to specify
-    fixed default values for the other properties that will be used across the spatial domain.
+    medium component. The geometry then defines the spatial neutral hydrogen density distribution
+    (i.e. \f$n_\mathrm{HI+H2}\f$), and the spin flip material mix offers configuration properties
+    to specify fixed default values for the other properties that will be used across the spatial
+    domain.
 
-    <b>Partitioning</b>
+    <b>Partitioning scheme</b>
 
-    While the input model is expected to define the neutral (i.e. non-ionized) hydrogen fraction,
-    the partitioning of the hydrogen gas into its atomic and molecular components must be
-    determined based on the the UV radiation field calculated by the simulation. Since UV radiation
-    in the Lyman-Werner band (912-1110 Angstrom) dissociates molecular hydrogen, hydrogen
-    partitioning schemes usually have the UV field in that wavelength range as an important
-    parameter. For this purpose, this class samples the radiation field
-    \f$J_\lambda(\lambda_\mathrm{UV})\f$ at \f$\lambda_\mathrm{UV}=1000\,\mathrm{Angstrom}\f$ The
-    wavelength bin index for \f$\lambda_\mathrm{UV}\f$ in the radiation field grid is determined
-    during setup.
+    While the input model defines the neutral (i.e. non-ionized) hydrogen density distribution, the
+    partitioning of the hydrogen gas into its atomic and molecular components must be determined
+    based on the the UV radiation field calculated by the simulation. Since UV radiation in the
+    Lyman-Werner band (912-1110 Å) dissociates molecular hydrogen, a hydrogen partitioning scheme
+    usually has the UV field in that wavelength range as an important parameter. For this purpose,
+    this class samples the radiation field \f$J_\lambda(\lambda_\mathrm{UV})\f$ at
+    \f$\lambda_\mathrm{UV}=1000\,\mathrm{Å}\f$. The wavelength bin index for
+    \f$\lambda_\mathrm{UV}\f$ in the radiation field grid is determined during setup.
 
-    Currently, this class implements the partioning scheme described by Gnedin and Kravtsov 2011
-    (ApJ 728:88). This scheme estimates the mass fraction of molecular hydrogen compared to the
-    total hydrogen mass, i.e. \f$f_\mathrm{H2} = M_\mathrm{H2}/M_H\f$, where \f$M_\mathrm{H} =
-    M_\mathrm{HI} + M_\mathrm{HII} + M_\mathrm{H2}\f$ denotes the total (atomic, ionized, and
-    molecular) hydrogen mass. The scheme has the following three input parameters:
+    This class implements the column-density based partioning scheme of Gnedin & Draine 2014 (Apj,
+    795, 37), which is an update of Gnedin & Kravtsov 2011 (ApJ, 728, 88). The mechanism for
+    estimating the length scale of a gas cell is taken from Diemer et al. 2018 (ApJS, 238, 33).
 
-    - The total hydrogen number density \f$n_\mathrm{H}\f$ defined in the input model.
+    The scheme has the following input parameters:
 
-    - The dust-to-gas ratio \f$D\f$ relative to the representative Galactic value. Because the
-    dust-to-gas ratio can be assumed to scale with metallicity, this is roughly equivalent to the
-    gas metallicity relative to the solar value. In other words, \f$D=Z/0.0127\f$, where \f$Z\f$ is
-    defined in the input model.
+    - The neutral hydrogen surface mass density \f$\Sigma_\mathrm{HI+H2}\f$ defined in the input
+    model.
 
-    - The dimensionless UV radiation field \f$U = J_\lambda(\lambda_\mathrm{UV}) /
+    - The dust-to-gas ratio \f$D_\mathrm{MW}\f$ relative to the representative Milky Way value.
+    Because the dust-to-gas ratio can be assumed to scale with metallicity, this is roughly
+    equivalent to the gas metallicity relative to the solar value. In other words,
+    \f$D_\mathrm{MW}=Z/0.0127\f$, where \f$Z\f$ is the metallicity defined in the input model.
+
+    - The dimensionless UV radiation field \f$U_\mathrm{MW} = J_\lambda(\lambda_\mathrm{UV}) /
     J^\mathrm{MW}_\lambda(\lambda_\mathrm{UV})\f$, obtained by normalizing the sampled UV radiation
-    field to the representative Galactic value, which is taken to be
+    field to the representative Milky Way value, which is taken to be
     \f$J^\mathrm{MW}_{E}(\lambda_\mathrm{UV}) = 10^{6} \,\mathrm{photons} \,\mathrm{cm}^{-2}
     \,\mathrm{s}^{-1} \,\mathrm{sr}^{-1} \,\mathrm{eV}^{-1}\f$. The latter value is converted at
     compile time from the specified photons-per-energy cgs units to the internal SKIRT
     energy-per-wavelength SI units using \f[ J^\mathrm{MW}_\lambda(\lambda_\mathrm{UV}) = 10^4 \,
     \frac{(hc)^2}{q_\mathrm{el}\lambda^3_\mathrm{UV}} J^\mathrm{MW}_{E}(\lambda_\mathrm{UV}). \f]
 
-    The Gnedin and Kravtsov 2011 partitioning scheme is then defined by their equations (6) and
-    following, which are replicated below using our notation.
+    - The length scale \f$L_\mathrm{cell}\f$, introduced to obtain converged results when applying
+    the partitioning scheme to simulations of varying resolutions. An estimate for this value is
+    obtained using \f$L_\mathrm{cell}=V_\mathrm{cell}^{1/3}\f$, where \f$V_\mathrm{cell}\f$ denotes
+    the volume of the spatial grid cell under consideration.
 
-    \f[ f_\mathrm{H2} = \frac{1}{1 + \exp(-4x-3x^3)} \f]
+    With these input parameters, the partitioning scheme can be summarized as follows:
 
-    \f[ x = \Lambda^{3/7}\,\ln\left( \frac{D\,n_\mathrm{H}}{\Lambda\,n_*}\right) \f]
+    \f[ S=L_\mathrm{cell}/100\,\mathrm{pc} \f]
 
-    \f[ \Lambda = \ln\left( 1 + g D^{3/7} (U/15)^{4/7} \right) \f]
+    \f[ D_\ast=0.17\frac{2+S^5}{1+S^5} \f]
 
-    \f[ g = \frac{1+\alpha s + s^2}{1+s} \f]
+    \f[ g=\sqrt{D_\mathrm{MW}^2+D_\ast^2} \f]
 
-    \f[ s = \frac{0.04}{D_* + D} \f]
+    \f[ \Sigma_c=5\times10^7\,\mathrm{M}_\odot\mathrm{kpc}^{-2}\times
+        \Bigl(\frac{\sqrt{0.001+0.1U_\mathrm{MW}}}{g(1+1.69\sqrt{0.001+0.1U_\mathrm{MW}}}\Bigr) \f]
 
-    \f[ \alpha = \frac{5\,U/2}{1+(U/2)^2} \f]
+    \f[ \alpha=0.5+\frac{1}{1+\sqrt{U_\mathrm{MW}D_\mathrm{MW}^2/600}} \f]
 
-    \f[ n_* = 25\times 10^6 ~\mathrm{m}^{-3} \f]
+    \f[ R_\mathrm{mol} = \Bigl(\frac{\Sigma_\mathrm{HI+H_2}}{\Sigma_c}\Bigr)^\alpha \f]
 
-    \f[ D_* = 1.5 \times 10^{-3} \times \ln\left(1 + (3 U)^{1.7} \right) \f]
+    \f[ f_\mathrm{mol} = \frac{R_\mathrm{mol}}{R_\mathrm{mol}+1} \f]
 
-    Given the total hydrogen number density \f$n_\mathrm{H}\f$ and the neutral hydrogen mass
-    fraction \f$f_\mathrm{HI+H2}\f$ defined in the input model, the atomic number density can then
-    be easily derived as \f$n_\mathrm{HI} = n_\mathrm{H} (f_\mathrm{HI+H2} - f_\mathrm{H2})\f$.
+    where \f$f_\mathrm{mol}\f$ is the fraction of molecular hydrogen in the neutral hydrogen gas,
+    and \f$f_\mathrm{atom} = 1 - f_\mathrm{mol}\f$ is the corresponding atomic hydrogen fraction.
 
     <b>Emission</b>
 
@@ -140,7 +156,7 @@
     \f$n_\mathrm{HI}\f$ is the number density of atomic hydrogen in the cell, and \f$V\f$ is the
     cell volume.
 
-    The 21cm line is extremely narrow so that the emerging line profile is dominated by the Doppler
+    The 21 cm line is extremely narrow so that the emerging line profile is dominated by the Doppler
     shift caused by the thermal motion of the atoms. The gas temperature defined in the input model
     is used to randomly shift the wavelength of each emitted photon packet according to a
     Maxwell-Boltzmann distribution. This happens outside of this class in the secondary source
@@ -190,11 +206,12 @@ class SpinFlipHydrogenGasMix : public EmittingGasMix
         ATTRIBUTE_DEFAULT_VALUE(defaultTemperature, "1e4")
         ATTRIBUTE_DISPLAYED_IF(defaultTemperature, "Level2")
 
-        PROPERTY_DOUBLE(defaultNeutralFraction, "the default neutral hydrogen fraction")
-        ATTRIBUTE_MIN_VALUE(defaultNeutralFraction, "[0")
-        ATTRIBUTE_MAX_VALUE(defaultNeutralFraction, "1]")
-        ATTRIBUTE_DEFAULT_VALUE(defaultNeutralFraction, "0.5")
-        ATTRIBUTE_DISPLAYED_IF(defaultNeutralFraction, "Level2")
+        PROPERTY_DOUBLE(defaultNeutralSurfaceDensity, "the default neutral hydrogen surface density")
+        ATTRIBUTE_QUANTITY(defaultNeutralSurfaceDensity, "masssurfacedensity")
+        ATTRIBUTE_MIN_VALUE(defaultNeutralSurfaceDensity, "]0 Msun/pc2")
+        ATTRIBUTE_MAX_VALUE(defaultNeutralSurfaceDensity, "1e9 Msun/pc2]")
+        ATTRIBUTE_DEFAULT_VALUE(defaultNeutralSurfaceDensity, "10 Msun/pc2")
+        ATTRIBUTE_DISPLAYED_IF(defaultNeutralSurfaceDensity, "Level2")
 
     ITEM_END()
 
@@ -225,23 +242,24 @@ public:
 public:
     /** This function returns the number and type of import parameters required by this particular
         material mix as a list of SnapshotParameter objects. For this class, the function returns a
-        descriptor for the neutral hydrogen fraction import parameter. Importing metallicity and
-        temperature should be enabled through the corresponding standard configuration flags. */
+        descriptor for the neutral hydrogen mass surface density import parameter. Importing
+        metallicity and temperature should be enabled through the corresponding standard
+        configuration flags. */
     vector<SnapshotParameter> parameterInfo() const override;
 
     /** This function returns a list of StateVariable objects describing the specific state
         variables used by the receiving material mix. For this class, the function returns a list
-        containing descriptors for the properties defined in the input model (number density,
-        metallicity, temperature, and neutral hydrogen fraction) and for a variable to hold the
-        atomic hydrogen fraction derived from the radiation field when the dynamic medium state is
-        updated. */
+        containing descriptors for the properties defined in the input model (neutral hydrogen
+        number density, metallicity, temperature, and neutral hydrogen mass surface density) and
+        for a variable to hold the atomic hydrogen fraction derived from the radiation field when
+        the dynamic medium state is updated. */
     vector<StateVariable> specificStateVariableInfo() const override;
 
     /** This function initializes the specific state variables requested by this material mix
         through the specificStateVariableInfo() function except for the number density. For this
-        class, the function initializes the temperature, metallicity and neutral hydrogen fraction
-        to the specified imported values, or if not available, to the user-configured default
-        values. The atomic hydrogen fraction is set to zero. */
+        class, the function initializes the temperature, metallicity and neutral hydrogen mass
+        surface density to the specified imported values, or if not available, to the
+        user-configured default values. The atomic hydrogen fraction is set to zero. */
     void initializeSpecificState(MaterialState* state, double metallicity, double temperature,
                                  const Array& params) const override;
 
