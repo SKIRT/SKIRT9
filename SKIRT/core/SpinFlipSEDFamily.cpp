@@ -16,8 +16,6 @@ namespace
 
     // Gaussian centered on 0 with dispersion of 1, evaluated at x
     double unitGaussian(double x) { return (0.5 * M_SQRT1_2 * M_2_SQRTPI) * exp(-0.5 * x * x); }
-
-    constexpr double lambdaSF = 21.10611405413e-2;  // 21 cm
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -41,7 +39,7 @@ double SpinFlipSEDFamily::specificLuminosity(double wavelength, const Array& par
 {
     double L = parameters[0];
     double s = parameters[1];
-    double wavelengthCenter = lambdaSF;
+    double wavelengthCenter = Constants::lambdaSpinFlip();
     double wavelengthDispersion = s * wavelengthCenter / Constants::c();
     return L * unitGaussian((wavelength - wavelengthCenter) / wavelengthDispersion) / wavelengthDispersion;
 }
@@ -53,7 +51,7 @@ double SpinFlipSEDFamily::cdf(Array& lambdav, Array& pv, Array& Pv, const Range&
 {
     double L = parameters[0];
     double s = parameters[1];
-    double wavelengthCenter = lambdaSF;
+    double wavelengthCenter = Constants::lambdaSpinFlip();
     double wavelengthDispersion = s * wavelengthCenter / Constants::c();
 
     // build an appropriate grid

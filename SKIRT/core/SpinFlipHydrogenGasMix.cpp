@@ -15,14 +15,11 @@
 namespace
 {
     // special wavelengths
-    constexpr double lambdaUV = 1000e-10;           // 1000 Angstrom
-    constexpr double lambdaSF = 21.10611405413e-2;  // 21 cm
+    constexpr double lambdaUV = 1000e-10;  // 1000 Angstrom
+    constexpr double lambdaSF = Constants::lambdaSpinFlip();
 
     // wavelength range outside of which we consider absorption to be zero (range of plus-min 0.21 mm)
     constexpr Range absorptionRange(lambdaSF * 0.999, lambdaSF * 1.001);
-
-    // Einstein coefficient of the 21cm spin-flip transition
-    constexpr double ASF = 2.8843e-15;
 
     // indices for custom state variables
     constexpr int NEUTRAL_SURFACE_DENSITY = 0;
@@ -160,8 +157,8 @@ namespace
     // returns the absorption cross section per neutral hydrogen atom for the given wavelength and gas temperature
     double crossSection(double lambda, double T)
     {
-        constexpr double front = 3. * M_SQRT2 * M_2_SQRTPI / M_PI / 128. * ASF * Constants::h() * Constants::c()
-                                 * lambdaSF * lambdaSF / Constants::k();
+        constexpr double front = 3. * M_SQRT2 * M_2_SQRTPI / M_PI / 128. * Constants::EinsteinASpinFlip()
+                                 * Constants::h() * Constants::c() * lambdaSF * lambdaSF / Constants::k();
         double Tspin = 6000. * (1 - exp(-0.0002 * T));
         double sigma = sqrt(Constants::k() / Constants::Mproton() * T);
         double u = Constants::c() * (lambda - lambdaSF) / lambda;
@@ -255,7 +252,7 @@ Array SpinFlipHydrogenGasMix::lineEmissionMasses() const
 Array SpinFlipHydrogenGasMix::lineEmissionSpectrum(const MaterialState* state, const Array& /*Jv*/) const
 {
     // calculate the 21 cm luminosity
-    constexpr double front = 0.75 * ASF * Constants::h() * Constants::c() / lambdaSF;
+    constexpr double front = 0.75 * Constants::EinsteinASpinFlip() * Constants::h() * Constants::c() / lambdaSF;
     double L = front * state->custom(ATOMIC_FRACTION) * state->numberDensity() * state->volume();
 
     // encapsulate the result in an array

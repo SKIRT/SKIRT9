@@ -17,7 +17,7 @@
 
     <b>Configuring the simulation</b>
 
-    Simulations of 21 cm the spin-flip transition usually include 21 cm emission (see
+    Simulations of 21 cm the spin-flip transition usually include 21 cm emission (see the
     SpinFlipSEDFamily class) in addition to a medium component configured with the spin flip
     material mix (this class). Hence, the simulation mode should be set to "ExtinctionOnly".
 
