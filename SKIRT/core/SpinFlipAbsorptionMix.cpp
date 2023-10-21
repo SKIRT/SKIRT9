@@ -14,15 +14,11 @@
 
 namespace
 {
-    // special wavelengths
-    constexpr double lambdaSF = 21.10611405413e-2;  // 21 cm
+    // central wavelength
+    constexpr double lambdaSF = Constants::lambdaSpinFlip();
 
-    // wavelength range outside of which we consider absorption to be zero
-    // (range of plus-min 9 dispersion elements using a velocity dispersion of 1000 km/s)
-    constexpr Range absorptionRange(0.2047, 0.2174);
-
-    // Einstein coefficient of the 21cm spin-flip transition
-    constexpr double ASF = 2.8843e-15;
+    // wavelength range outside of which we consider absorption to be zero (approximately 20.47 - 21.74 cm)
+    constexpr Range absorptionRange(lambdaSF*(1. - 0.03), lambdaSF*(1. + 0.03));
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -74,8 +70,8 @@ namespace
     // returns the absorption cross section per neutral hydrogen atom for the given wavelength and gas temperature
     double crossSection(double lambda, double T)
     {
-        constexpr double front = 3. * M_SQRT2 * M_2_SQRTPI / M_PI / 128. * ASF * Constants::h() * Constants::c()
-                                 * lambdaSF * lambdaSF / Constants::k();
+        constexpr double front = 3. * M_SQRT2 * M_2_SQRTPI / M_PI / 128. * Constants::EinsteinASpinFlip()
+                                 * Constants::h() * Constants::c() * lambdaSF * lambdaSF / Constants::k();
         double Tspin = 6000. * (1 - exp(-0.0002 * T));
         double sigma = sqrt(Constants::k() / Constants::Mproton() * T);
         double u = Constants::c() * (lambda - lambdaSF) / lambda;

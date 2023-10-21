@@ -20,8 +20,8 @@
 
     The intrinsic range for the complete %SED family is taken to be approximately \f$\pm 9s\f$
     around the center for a dispersion of \f$s=1000\,\mathrm{km/s}\f$. This results in a range of
-    \f$20.47 \mathrm{cm} \le \lambda \le 21.74 \mathrm{cm}\f$. The source wavelength range
-    configured by the user must fully contain this intrinsic wavelength range.
+    approximately \f$20.47 \mathrm{cm} \le \lambda \le 21.74 \mathrm{cm}\f$. The source wavelength
+    range configured by the user must fully contain this intrinsic wavelength range.
 
     Whenever a tabular form of a Gaussian %SED is requested, this class uses 100 wavelength points
     per dispersion unit on a regular linear grid.

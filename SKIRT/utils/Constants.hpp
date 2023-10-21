@@ -67,6 +67,12 @@ namespace Constants
     /** This function returns the Einstein A-coefficient of the Lyman-alpha transition. */
     constexpr double EinsteinALya() { return 6.25e8; }
 
+    /** This function returns the central wavelength of the hydrogen spinflip transition. */
+    constexpr double lambdaSpinFlip() { return 21.10611405413e-2; }
+
+    /** This function returns the Einstein A-coefficient of the hydrogen spinflip transition. */
+    constexpr double EinsteinASpinFlip() { return 2.8843e-15; }
+
     /** This function returns the Thomson cross section for an electron. */
     constexpr double sigmaThomson() { return 6.6524587158e-29; }
 
