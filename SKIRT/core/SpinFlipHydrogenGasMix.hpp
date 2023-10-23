@@ -213,13 +213,6 @@ class SpinFlipHydrogenGasMix : public EmittingGasMix
         ATTRIBUTE_DEFAULT_VALUE(defaultNeutralSurfaceDensity, "10 Msun/pc2")
         ATTRIBUTE_DISPLAYED_IF(defaultNeutralSurfaceDensity, "Level2")
 
-        PROPERTY_DOUBLE(defaultNeutralSurfaceDensity, "the default neutral hydrogen surface density")
-        ATTRIBUTE_QUANTITY(defaultNeutralSurfaceDensity, "masssurfacedensity")
-        ATTRIBUTE_MIN_VALUE(defaultNeutralSurfaceDensity, "]0 Msun/pc2")
-        ATTRIBUTE_MAX_VALUE(defaultNeutralSurfaceDensity, "1e9 Msun/pc2]")
-        ATTRIBUTE_DEFAULT_VALUE(defaultNeutralSurfaceDensity, "10 Msun/pc2")
-        ATTRIBUTE_DISPLAYED_IF(defaultNeutralSurfaceDensity, "Level2")
-
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============

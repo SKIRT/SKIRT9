@@ -164,7 +164,7 @@ namespace
         double u = Constants::c() * (lambda - lambdaSF) / lambda;
         double x = u / sigma;
         double expon = exp(-0.5 * x * x);
-        return front / Tspin / sigma * expon * 0.;
+        return front / Tspin / sigma * expon;
     }
 }
 

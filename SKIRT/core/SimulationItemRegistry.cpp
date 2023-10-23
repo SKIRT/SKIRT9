@@ -379,7 +379,6 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<LyaGaussianSEDFamily>();
     ItemRegistry::add<LyaDoublePeakedSEDFamily>();
     ItemRegistry::add<LyaSEDFamilyDecorator>();
-    ItemRegistry::add<SpinFlipSEDFamily>();
     
     // wavelength distributions
     ItemRegistry::add<WavelengthDistribution>();
