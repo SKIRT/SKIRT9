@@ -375,6 +375,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<FileIndexedSEDFamily>();
     ItemRegistry::add<MappingsSEDFamily>();
     ItemRegistry::add<ToddlersSEDFamily>();
+    ItemRegistry::add<SpinFlipSEDFamily>();
     ItemRegistry::add<LyaGaussianSEDFamily>();
     ItemRegistry::add<LyaDoublePeakedSEDFamily>();
     ItemRegistry::add<LyaSEDFamilyDecorator>();
@@ -566,11 +567,11 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
 
     ItemRegistry::add<ElectronMix>();
     ItemRegistry::add<SpinFlipAbsorptionMix>();
-    ItemRegistry::add<LyaNeutralHydrogenGasMix>();
+    ItemRegistry::add<SpinFlipHydrogenGasMix>();
     ItemRegistry::add<XRayAtomicGasMix>();
     ItemRegistry::add<EmittingGasMix>();
-    ItemRegistry::add<SpinFlipHydrogenGasMix>();
     ItemRegistry::add<NonLTELineGasMix>();
+    ItemRegistry::add<LyaNeutralHydrogenGasMix>();
     ItemRegistry::add<TrivialGasMix>();
 
     // material mix families

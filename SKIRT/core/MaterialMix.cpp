@@ -117,7 +117,9 @@ UpdateStatus MaterialMix::updateSpecificState(MaterialState* /*state*/, const Ar
 
 ////////////////////////////////////////////////////////////////////
 
-bool MaterialMix::isSpecificStateConverged(int /*numCells*/, int /*numUpdated*/, int /*numNotConverged*/) const
+bool MaterialMix::isSpecificStateConverged(int /*numCells*/, int /*numUpdated*/, int /*numNotConverged*/,
+                                           MaterialState* /*currentAggregate*/,
+                                           MaterialState* /*previousAggregate*/) const
 {
     return true;
 }

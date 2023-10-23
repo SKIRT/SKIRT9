@@ -146,6 +146,32 @@
     artificially combine the effect of both thermal motion and turbulence into an effective
     temperature, \f[ T_\mathrm{eff} = T_\mathrm{kin} + \frac{m v_\mathrm{turb}^2}{2k}. \f]
 
+    <b>Numerical convergence</b>
+
+    As mentioned above, a simulation including this material mix performs iterations to
+    self-consistently calculate the radiation field and the medium state (i.e. the energy level
+    populations that drive the line emission). This class offers three user-configurable properties
+    that specify the convergence criteria for this iterative process.
+
+    The first two properties configure a criterion based on statistics per spatial cell. The \em
+    maxChangeInLevelPopulations property specifies the maximum relative change between consecutive
+    iterations in the level populations for a given spatial cell for that cell to be considered
+    converged. The \em maxFractionNotConvergedCells property then specifies the maximum fraction of
+    cells (relative to the total number of cells in the simulation) that may be left not converged
+    for the whole spatial domain to be considered converged.
+
+    The third property configures a global criterion. The \em maxChangeInGlobalLevelPopulations
+    property specifies the maximum relative change between consecutive iterations in the global
+    level populations, accumulated over the complete spatial domain, for the spatial domain to be
+    considered converged. In other words, convergence has been reached if \f[ \epsilon =
+    \underset{i}{\mathrm{max}} \left| \frac{N_i^{(k)} - N_i^{(k-1)}} {N_i^{(k-1)}} \right| \le
+    \epsilon_\mathrm{max}\f] where \f$N_i^{(k)}\f$ denotes the total population across the spatial
+    domain for energy level \f$i\f$ at iteration \f$k\f$ and \f$\epsilon_\mathrm{max}\f$ is the
+    user-configured value of the \em maxChangeInGlobalLevelPopulations property.
+
+    Both criteria must be satisfied simultaneously. Howver, the user can effectively disable a
+    criterion by specifying very liberal maximum values.
+
     <b>Level populations</b>
 
     We denote the populations for the \f$N\f$ supported energy levels as \f$n_i\f$, with indices
@@ -318,11 +344,18 @@ class NonLTELineGasMix : public EmittingGasMix
         ATTRIBUTE_DISPLAYED_IF(maxChangeInLevelPopulations, "Level2")
 
         PROPERTY_DOUBLE(maxFractionNotConvergedCells,
-                        "the maximum fraction of spatial cells that have not convergenced")
+                        "the maximum fraction of not-converged cells for all cells to be considered converged")
         ATTRIBUTE_MIN_VALUE(maxFractionNotConvergedCells, "[0")
         ATTRIBUTE_MAX_VALUE(maxFractionNotConvergedCells, "1]")
-        ATTRIBUTE_DEFAULT_VALUE(maxFractionNotConvergedCells, "0.001")
+        ATTRIBUTE_DEFAULT_VALUE(maxFractionNotConvergedCells, "0.01")
         ATTRIBUTE_DISPLAYED_IF(maxFractionNotConvergedCells, "Level2")
+
+        PROPERTY_DOUBLE(maxChangeInGlobalLevelPopulations,
+                        "the maximum relative change for the global level populations to be considered converged")
+        ATTRIBUTE_MIN_VALUE(maxChangeInGlobalLevelPopulations, "[0")
+        ATTRIBUTE_MAX_VALUE(maxChangeInGlobalLevelPopulations, "1]")
+        ATTRIBUTE_DEFAULT_VALUE(maxChangeInGlobalLevelPopulations, "0.05")
+        ATTRIBUTE_DISPLAYED_IF(maxChangeInGlobalLevelPopulations, "Level2")
 
         PROPERTY_DOUBLE(lowestOpticalDepth, "Lower limit of (negative) optical depth along a cell diagonal")
         ATTRIBUTE_MIN_VALUE(lowestOpticalDepth, "[-10")
@@ -417,12 +450,11 @@ public:
     UpdateStatus updateSpecificState(MaterialState* state, const Array& Jv) const override;
 
     /** This function returns true if the state of the medium component corresponding to this
-        material mix can be considered to be converged based on the given spatial cell statistics,
-        and false otherwise. The \em numCells, \em numUpdated and \em numNotConverged arguments
-        specify respectively the number of spatial cells in the simulation, the number of cells
-        updated during the latest update cycle, and the number of updated cells that have not yet
-        converged. */
-    bool isSpecificStateConverged(int numCells, int numUpdated, int numNotConverged) const override;
+        material mix can be considered to be converged based on the given spatial cell statistics
+        and aggregate material states, and false otherwise. For more information on the convergence
+        criteria, see the corresponding section in the class header. */
+    bool isSpecificStateConverged(int numCells, int numUpdated, int numNotConverged, MaterialState* currentAggregate,
+                                  MaterialState* previousAggregate) const override;
 
     //======== Low-level material properties =======
 

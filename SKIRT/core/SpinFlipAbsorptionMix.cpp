@@ -14,22 +14,14 @@
 
 namespace
 {
-    // special wavelengths
-    constexpr double lambdaSF = 21.10611405413e-2;  // 21 cm
+    // central wavelength
+    constexpr double lambdaSF = Constants::lambdaSpinFlip();
 
-    // wavelength range outside of which we consider absorption to be zero (range of plus-min 9 dispersion elements using a velocity dispersion of 1000 km/s)
-    constexpr Range absorptionRange(0.2047, 0.2174);
-
-    // Einstein coefficient of the 21cm spin-flip transition
-    constexpr double ASF = 2.8843e-15;
+    // wavelength range outside of which we consider absorption to be zero (approximately 20.47 - 21.74 cm)
+    constexpr Range absorptionRange(lambdaSF*(1. - 0.03), lambdaSF*(1. + 0.03));
 }
 
 ////////////////////////////////////////////////////////////////////
-
-void SpinFlipAbsorptionMix::setupSelfBefore()
-{
-    MaterialMix::setupSelfBefore();
-}
 
 MaterialMix::MaterialType SpinFlipAbsorptionMix::materialType() const
 {
@@ -43,19 +35,17 @@ bool SpinFlipAbsorptionMix::hasExtraSpecificState() const
     return true;
 }
 
-
 ////////////////////////////////////////////////////////////////////
 
 vector<StateVariable> SpinFlipAbsorptionMix::specificStateVariableInfo() const
 {
-    return vector<StateVariable>{StateVariable::numberDensity(),
-                                 StateVariable::temperature()};
+    return vector<StateVariable>{StateVariable::numberDensity(), StateVariable::temperature()};
 }
 
 ////////////////////////////////////////////////////////////////////
 
 void SpinFlipAbsorptionMix::initializeSpecificState(MaterialState* state, double /*metallicity*/, double temperature,
-                                          const Array& /*params*/) const
+                                                    const Array& /*params*/) const
 {
     // leave the properties at zero if the cell does not contain any material for this component
     if (state->numberDensity() > 0.)
@@ -65,7 +55,6 @@ void SpinFlipAbsorptionMix::initializeSpecificState(MaterialState* state, double
         state->setTemperature(max(Constants::Tcmb(), temperature >= 0. ? temperature : defaultTemperature()));
     }
 }
-
 
 ////////////////////////////////////////////////////////////////////
 
@@ -81,8 +70,8 @@ namespace
     // returns the absorption cross section per neutral hydrogen atom for the given wavelength and gas temperature
     double crossSection(double lambda, double T)
     {
-        constexpr double front = 3. * M_SQRT2 * M_2_SQRTPI / M_PI / 128. * ASF * Constants::h() * Constants::c()
-                                 * lambdaSF * lambdaSF / Constants::k();
+        constexpr double front = 3. * M_SQRT2 * M_2_SQRTPI / M_PI / 128. * Constants::EinsteinASpinFlip()
+                                 * Constants::h() * Constants::c() * lambdaSF * lambdaSF / Constants::k();
         double Tspin = 6000. * (1 - exp(-0.0002 * T));
         double sigma = sqrt(Constants::k() / Constants::Mproton() * T);
         double u = Constants::c() * (lambda - lambdaSF) / lambda;
@@ -128,7 +117,7 @@ double SpinFlipAbsorptionMix::opacityAbs(double lambda, const MaterialState* sta
 ////////////////////////////////////////////////////////////////////
 
 double SpinFlipAbsorptionMix::opacitySca(double /*lambda*/, const MaterialState* /*state*/,
-                                          const PhotonPacket* /*pp*/) const
+                                         const PhotonPacket* /*pp*/) const
 {
     return 0.;
 }
@@ -143,19 +132,17 @@ double SpinFlipAbsorptionMix::opacityExt(double lambda, const MaterialState* sta
 ////////////////////////////////////////////////////////////////////
 
 void SpinFlipAbsorptionMix::peeloffScattering(double& /*I*/, double& /*Q*/, double& /*U*/, double& /*V*/,
-                                               double& /*lambda*/, Direction /*bfkobs*/, Direction /*bfky*/,
-                                               const MaterialState* /*state*/, const PhotonPacket* /*pp*/) const
+                                              double& /*lambda*/, Direction /*bfkobs*/, Direction /*bfky*/,
+                                              const MaterialState* /*state*/, const PhotonPacket* /*pp*/) const
 {}
 
 ////////////////////////////////////////////////////////////////////
 
 void SpinFlipAbsorptionMix::performScattering(double /*lambda*/, const MaterialState* /*state*/,
-                                               PhotonPacket* /*pp*/) const
+                                              PhotonPacket* /*pp*/) const
 {}
 
 ////////////////////////////////////////////////////////////////////
-
-
 
 double SpinFlipAbsorptionMix::indicativeTemperature(const MaterialState* state, const Array& /*Jv*/) const
 {
