@@ -117,7 +117,7 @@ public:
 
         During its operation, the function logs some statistical information about the imported
         snapshot and the resulting data structures. */
-    void readAndClose() override;
+    // void readAndClose() override;
 
     //========== Configuration ==========
 
@@ -133,7 +133,7 @@ public:
         volume-integrated mass/number column, and (2) the snapshot will not be required to generate
         random positions or trace paths. Violating these conditions will result in undefined
         behavior. */
-    void foregoTetraMesh();
+    // void foregoTetraMesh();
 
     //========== Specialty constructors ==========
 
@@ -192,6 +192,8 @@ private:
 
     class Plucker;
 
+    class Face;
+
     // temp test
     std::vector<Vec> centers;
     std::vector<double> radii;
@@ -231,7 +233,7 @@ private:
 
     /** Private function to recursively build a binary search tree (see
         en.wikipedia.org/wiki/Kd-tree) */
-    Node* buildTree(vector<int>::iterator first, vector<int>::iterator last, int depth) const;
+    // Node* buildTree(vector<int>::iterator first, vector<int>::iterator last, int depth) const;
 
     /** This private function builds data structures that allow accelerating the operation of the
         cellIndex() function. It assumes that the Tetra mesh has already been built.
@@ -248,17 +250,17 @@ private:
         To further reduce the search time within blocks that overlap with a large number of cells,
         the function builds a binary search tree on the cell sites for those blocks (see for example
         <a href="http://en.wikipedia.org/wiki/Kd-tree">en.wikipedia.org/wiki/Kd-tree</a>). */
-    void buildSearchPerBlock();
+    // void buildSearchPerBlock();
 
     /** This private function builds a data structure that allows accelerating the operation of the
         cellIndex() function without using the Tetra mesh. The domain is not partitioned in
         blocks. The function builds a single binary search tree on all cell sites (see for example
         <a href="http://en.wikipedia.org/wiki/Kd-tree">en.wikipedia.org/wiki/Kd-tree</a>). */
-    void buildSearchSingle();
+    // void buildSearchSingle();
 
     /** This private function returns true if the given point is closer to the site with index m
         than to the sites with indices ids. */
-    bool isPointClosestTo(Vec r, int m, const vector<int>& ids) const;
+    // bool isPointClosestTo(Vec r, int m, const vector<int>& ids) const;
 
     bool inTetrahedra(const Tetra* tetra) const;
 
@@ -286,7 +288,7 @@ public:
 
     /** This function returns the centroid of the Tetra cell with index \em m. If the index is
         out of range, the behavior is undefined. */
-    Position centroidPosition(int m) const;
+    // Position centroidPosition(int m) const;
 
     /** This function returns the volume of the Tetra cell with index \em m. If the index is out
         of range, the behavior is undefined. */

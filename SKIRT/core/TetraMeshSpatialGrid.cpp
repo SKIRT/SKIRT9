@@ -176,7 +176,7 @@ int TetraMeshSpatialGrid::cellIndex(Position bfr) const
 
 Position TetraMeshSpatialGrid::centralPositionInCell(int m) const
 {
-    return _mesh->centroidPosition(m);
+    return _mesh->position(m);
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -8,6 +8,8 @@
 
 #include "SpatialGridPath.hpp"
 
+class TetraMeshSnapshot;
+
 //////////////////////////////////////////////////////////////////////
 
 /** PathSegmentGenerator is the abstract base class for classes that calculate and return the
@@ -196,6 +198,8 @@ protected:
     bool moveInside(const Box& box, double eps);
 
     // ------- Data members -------
+
+    friend TetraMeshSnapshot;
 
 private:
     State _state{State::Unknown};
