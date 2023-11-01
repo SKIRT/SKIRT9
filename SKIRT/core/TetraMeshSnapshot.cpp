@@ -137,13 +137,13 @@ public:
         int equal_vert = 0;
         int opposite = 0 + 1 + 2 + 3;
 
-        for (size_t i = 0; i < 4; i++)
+        for (int i = 0; i < 4; i++)
         {
-            const int vi = _vertex_indices[i];
+            int vi = _vertex_indices[i];
 
-            for (size_t j = 0; j < 4; j++)
+            for (int j = 0; j < 4; j++)
             {
-                const int vj = other->_vertex_indices[i];
+                int vj = other->_vertex_indices[j];
 
                 if (vi == vj)
                 {
@@ -219,16 +219,10 @@ public:
 
     static inline Plucker createFromDir(const Vec& pos, const Vec& dir) { return Plucker(dir, Vec::cross(dir, pos)); }
 
-    static inline Plucker createFromVertices(const Vec& v1, const Vec& v2)
-    {
-        Plucker p;
-        p.U = v2 - v1;
-        p.V = Vec::cross(p.U, v1);
-        return p;
-    }
+    static inline Plucker createFromVertices(const Vec& v1, const Vec& v2) { return createFromDir(v1, v2 - v1); }
 
     // permuted inner product
-    static inline double dot(const Plucker& a, const Plucker& b) { return Vec::dot(a.U, b.V) + Vec::dot(b.U, a.V); }
+    static inline double dot(const Plucker& r, const Plucker& s) { return Vec::dot(r.U, s.V) + Vec::dot(s.U, r.V); }
 };
 
 class TetraMeshSnapshot::Face
@@ -242,19 +236,19 @@ public:
 
     Face(const Tetra* tetra, int face)
     {
-        int v1 = (face + 1) % 4;
-        int v2 = (face + 2) % 4;
-        int v3 = (face + 3) % 4;
+        int v0 = (face + 1) % 4;
+        int v1 = (face + 2) % 4;
+        int v2 = (face + 3) % 4;
 
         // if face is even we should swap two edges
-        if (face % 2 == 0) std::swap(v2, v3);
+        if (face % 2 == 0) std::swap(v0, v2);
 
         _edges[0] = Plucker::createFromVertices(tetra->_vertices[v1], tetra->_vertices[v2]);
-        _edges[1] = Plucker::createFromVertices(tetra->_vertices[v2], tetra->_vertices[v3]);
-        _edges[2] = Plucker::createFromVertices(tetra->_vertices[v3], tetra->_vertices[v1]);
-        _vertex_indices[0] = v1;
-        _vertex_indices[1] = v2;
-        _vertex_indices[2] = v3;
+        _edges[1] = Plucker::createFromVertices(tetra->_vertices[v2], tetra->_vertices[v0]);
+        _edges[2] = Plucker::createFromVertices(tetra->_vertices[v0], tetra->_vertices[v1]);
+        _vertex_indices[0] = v0;
+        _vertex_indices[1] = v1;
+        _vertex_indices[2] = v2;
     }
 
     // leaving = true: returns true if the ray is leaving
@@ -264,7 +258,7 @@ public:
         for (int i = 0; i < 3; i++)
         {
             double prod = Plucker::dot(ray, _edges[i]);
-            if (leaving == prod < 0) return false;  // weird if prod == 0
+            if (leaving != (prod < 0)) return false;  // weird if prod == 0
             w[i] = prod;
         }
         double W = w[0] + w[1] + w[2];
@@ -400,25 +394,25 @@ namespace
 void TetraMeshSnapshot::buildMesh(bool relax)
 {
     ///////////////////////////////////////////////////////////////////////////
-    setExtent(Box(-1, -1, -1, 1, 1, 1));
-    vector<Vec> sites;
-    for (size_t i = 0; i < 7; i++)
-    {
-        sites.push_back(random()->position(_extent));
-    }
+    // setExtent(Box(-1, -1, -1, 1, 1, 1));
+    // vector<Vec> sites;
+    // for (size_t i = 0; i < 10; i++)
+    // {
+    //     sites.push_back(random()->position(_extent));
+    // }
 
-    // sites.push_back(Vec(0.2, 0.2, 0));
-    // sites.push_back(Vec(0.2, -0.2, 0));
+    // sites.push_back(Vec(0.2, 0.2, 0.1));
+    // sites.push_back(Vec(0.2, -0.2, 0.1));
     // sites.push_back(Vec(0.4, 0.4, 0));
     // sites.push_back(Vec(0.4, -0.4, 0));
 
-    // sites.push_back(Vec(-0.5, 0, 0));
-    // sites.push_back(Vec(0, 0, 0.5));
-    // sites.push_back(Vec(0, 0, -0.5));
+    // sites.push_back(Vec(-0.5, 0, 0.1));
+    // sites.push_back(Vec(0, 0, 0.6));
+    // sites.push_back(Vec(0, 0, -0.4));
 
-    int n = sites.size();
-    _cells.resize(n);
-    for (int m = 0; m != n; ++m) _cells[m] = new Cell(sites[m]);
+    // int n = sites.size();
+    // _cells.resize(n);
+    // for (int m = 0; m != n; ++m) _cells[m] = new Cell(sites[m]);
 
     const double A = extent().rmax().norm() * 1000;
 
@@ -969,193 +963,198 @@ public:
 
     void startwriting()
     {
-        if (!out.is_open()) out.open("photon.txt");
+        // if (!out.is_open()) out.open("photon.txt");
     }
 
-    void stopwriting() { out.close(); }
-
-    void write(const Vec& exit, double ds)
+    void stopwriting()
     {
-        out << "photon=" << _mr << "\n";
-        out << "ds=" << ds << "\n";
-        out << "r=" << r().x() << "," << r().y() << "," << r().z() << "\n";
-        out << "exit=" << exit.x() << "," << exit.y() << "," << exit.z() << "\n";
-        out << "k=" << k().x() << "," << k().y() << "," << k().z() << "\n";
-        // out.flush(); // for debug
+        // out.close();
+    }
+
+    void write(const Vec& exit, double ds, int face)
+    {
+        // out << "photon=" << _mr << "," << face << "\n";
+        // out << "ds=" << ds << "\n";
+        // out << "r=" << r().x() << "," << r().y() << "," << r().z() << "\n";
+        // out << "exit=" << exit.x() << "," << exit.y() << "," << exit.z() << "\n";
+        // out << "k=" << k().x() << "," << k().y() << "," << k().z() << "\n";
     }
 
     bool next() override
     {
-        switch (state())
+        if (state() == State::Unknown)
         {
-            case State::Unknown:
+            startwriting();
+
+            // try moving the photon packet inside the grid; if this is impossible, return an empty path
+            if (!moveInside(_grid->extent(), _grid->_eps)) return false;
+
+            // get the index of the cell containing the current position
+            _mr = _grid->cellIndex(r());
+
+            if (_mr == -1)
+                setState(State::Outside);
+            else
+                wasInside = true;
+
+            // if the photon packet started outside the grid, return the corresponding nonzero-length segment;
+            // otherwise fall through to determine the first actual segment
+            if (ds() > 0.) return true;
+
+            write(r(), 0, -1);
+        }
+
+        // intentionally falls through
+        if (state() == State::Inside)
+        {
+            // loop in case no exit point was found (which should happen only rarely)
+            while (true)
             {
-                startwriting();
+                // initialize the smallest nonnegative intersection distance and corresponding index
+                double sq = DBL_MAX;       // very large, but not infinity (so that infinite si values are discarded)
+                const int NO_INDEX = -99;  // meaningless cell index
+                int mq = NO_INDEX;
 
-                // try moving the photon packet inside the grid; if this is impossible, return an empty path
-                if (!moveInside(_grid->extent(), _grid->_eps)) return false;
+                // plucker coords
+                const Plucker ray = Plucker::createFromDir(r(), k());
+                const Tetra* tetra = _grid->_tetrahedra[_mr];
 
-                // get the index of the cell containing the current position
-                _mr = _grid->cellIndex(r());
+                int leavingIndex = -1;
+                std::array<double, 3> w;
+                Face leavingFace;
 
-                if (_mr == -1)
-                    setState(State::Outside);
-                else
-                    wasInside = true;
-
-                // if the photon packet started outside the grid, return the corresponding nonzero-length segment;
-                // otherwise fall through to determine the first actual segment
-                if (ds() > 0.) return true;
-
-                write(Vec(), 0);
-            }
-
-            // intentionally falls through
-            case State::Inside:
-            {
-                // loop in case no exit point was found (which should happen only rarely)
-                while (true)
+                for (int f = 0; f < 4; f++)
                 {
-                    // initialize the smallest nonnegative intersection distance and corresponding index
-                    double sq = DBL_MAX;  // very large, but not infinity (so that infinite si values are discarded)
-                    const int NO_INDEX = -99;  // meaningless cell index
-                    int mq = NO_INDEX;
+                    leavingFace = Face(tetra, f);
 
-                    // plucker coords
-                    const Plucker ray = Plucker::createFromDir(r(), k());
-                    const Tetra* tetra = _grid->_tetrahedra[_mr];
-
-                    int leavingFace = -1;
-                    int leaving_faces = 0;
-                    std::array<double, 3> w;
-                    Face face;
-                    for (int f = 0; f < 4; f++)
+                    if (leavingFace.intersects(w, ray, true))
                     {
-                        face = Face(tetra, f);
-
-                        if (face.intersects(w, ray, true))
-                        {
-                            leaving_faces++;
-                            leavingFace = f;
-                            bool allZero = std::all_of(w.begin(), w.end(), [](double val) { return val == 0.0; });
-                            if (allZero) _grid->log()->error("TetraMeshSnapshot: all plucker prods == 0");
-                            // break;
-                        }
+                        leavingIndex = f;
+                        bool allZero = std::all_of(w.begin(), w.end(), [](double val) { return val == 0.0; });
+                        if (allZero) std::cout << "TetraMeshSnapshot: all plucker prods == 0" << std::endl;
+                        break;
                     }
-                    if (leaving_faces != 1) _grid->log()->error("TetraMeshSnapshot: too many leaving faces!");
+                }
 
-                    Vec exit;
+                Vec exit;
+                if (leavingIndex != -1)
+                {
                     for (int i = 0; i < 3; i++)
                     {
-                        exit += tetra->_vertices[face._vertex_indices[i]] * w[i];
+                        exit += tetra->_vertices[leavingFace._vertex_indices[i]] * w[i];
                     }
-
                     sq = (exit - r()).norm();
-                    mq = tetra->_neighbors[leavingFace];
-
-                    // if no exit point was found, advance the current point by a small distance,
-                    // recalculate the cell index, and return to the start of the loop
-                    if (mq == NO_INDEX)
-                    {
-                        propagater(_grid->_eps);
-                        _mr = _grid->cellIndex(r());
-
-                        // if we're outside the domain, terminate the path without returning a path segment
-                        if (_mr < 0)
-                        {
-                            setState(State::Outside);
-                            return false;
-                        }
-                    }
-                    // otherwise set the current point to the exit point and return the path segment
-                    else
-                    {
-                        propagater(sq + _grid->_eps);
-                        setSegment(_mr, sq);
-                        write(exit, sq);
-                        _mr = mq;
-
-                        // if we're outside the domain, terminate the path after returning this path segment
-                        if (_mr < 0) setState(State::Outside);
-                        return true;
-                    }
-                }
-            }
-
-            case State::Outside:
-            {
-                // outside the convex hull and inside extent
-                if (wasInside && _grid->extent().contains(r()))
-                {
-                    double t_x, t_y, t_z;
-                    if (kx() < 0)
-                        t_x = (_grid->extent().xmin() - rx()) / kx();
-                    else
-                        t_x = (_grid->extent().xmax() - rx()) / kx();
-                    if (ky() < 0)
-                        t_y = (_grid->extent().ymin() - ry()) / ky();
-                    else
-                        t_y = (_grid->extent().ymax() - ry()) / ky();
-                    if (kz() < 0)
-                        t_z = (_grid->extent().zmin() - rz()) / kz();
-                    else
-                        t_z = (_grid->extent().zmax() - rz()) / kz();
-
-                    double ds = min(t_x, min(t_y, t_z));
-                    propagater(ds + _grid->_eps);
-                    write(r(), ds);
-                    stopwriting();
-                    return false;
+                    mq = tetra->_neighbors[leavingIndex];
                 }
 
-                // figure out if the path intersects the convex hull
-                if (!wasInside)
+                // if no exit point was found, advance the current point by a small distance,
+                // recalculate the cell index, and return to the start of the loop
+                if (mq == NO_INDEX)
                 {
-                    const Plucker ray = Plucker::createFromDir(r(), k());
-                    int enteringfaces = 0;
-                    int entering = -1;
+                    propagater(_grid->_eps);
+                    _mr = _grid->cellIndex(r());
 
-                    std::array<double, 3> w;
-                    std::array<int, 3> vertices;
-                    for (int i = 0; i < _grid->_tetrahedra.size(); i++)
+                    // if we're outside the domain, terminate the path without returning a path segment
+                    if (_mr < 0)
                     {
-                        const Tetra* tetra = _grid->_tetrahedra[i];
-                        for (int f = 0; f < 4; f++)
-                        {
-                            int n = tetra->_neighbors[f];
-                            // edge face
-                            if (n == -1)
-                            {
-                                Face face = Face(tetra, f);
-                                if (face.intersects(w, ray, false))
-                                {
-                                    _mr = i;
-                                    enteringfaces++;  // debug variable
-                                    if (enteringfaces == 0)
-                                    {
-                                        Vec exit;
-                                        for (int i = 0; i < 3; i++)
-                                        {
-                                            exit += tetra->_vertices[face._vertex_indices[i]] * w[i];
-                                        }
-
-                                        double sq = (exit - r()).norm();
-                                        propagater(sq + _grid->_eps);
-                                        write(exit, sq);
-                                    }
-                                    else
-                                    {
-                                        _grid->log()->error("too many entering faces for outside ray");
-                                    }
-                                    // break;
-                                }
-                            }
-                        }
+                        setState(State::Outside);
+                        return false;
                     }
-                    stopwriting();
+                }
+                // otherwise set the current point to the exit point and return the path segment
+                else
+                {
+                    propagater(sq + _grid->_eps);
+                    setSegment(_mr, sq);
+                    write(exit, sq, leavingIndex);
+                    _mr = mq;
+
+                    // if we're outside the domain, terminate the path after returning this path segment
+                    if (_mr < 0) setState(State::Outside);
+                    return true;
                 }
             }
         }
+
+        if (state() == State::Outside)
+        {
+            // outside the convex hull and inside extent
+            if (wasInside && _grid->extent().contains(r()))
+            {
+                double t_x, t_y, t_z;
+                if (kx() < 0)
+                    t_x = (_grid->extent().xmin() - rx()) / kx();
+                else
+                    t_x = (_grid->extent().xmax() - rx()) / kx();
+                if (ky() < 0)
+                    t_y = (_grid->extent().ymin() - ry()) / ky();
+                else
+                    t_y = (_grid->extent().ymax() - ry()) / ky();
+                if (kz() < 0)
+                    t_z = (_grid->extent().zmin() - rz()) / kz();
+                else
+                    t_z = (_grid->extent().zmax() - rz()) / kz();
+
+                double ds = min(t_x, min(t_y, t_z));
+                propagater(ds + _grid->_eps);
+                write(r(), ds, -1);
+                stopwriting();
+                return false;
+            }
+
+            // figure out if the path intersects the convex hull
+            if (!wasInside)
+            {
+                const Plucker ray = Plucker::createFromDir(r(), k());
+                int enteringfaces = 0;
+                int entering = -1;
+
+                std::array<double, 3> w;
+                std::array<int, 3> vertices;
+                for (int i = 0; i < _grid->_tetrahedra.size(); i++)
+                {
+                    const Tetra* tetra = _grid->_tetrahedra[i];
+                    for (int f = 0; f < 4; f++)
+                    {
+                        int n = tetra->_neighbors[f];
+                        // edge face
+                        if (n == -1)
+                        {
+                            Face face = Face(tetra, f);
+                            if (face.intersects(w, ray, false))
+                            {
+                                _mr = i;
+
+                                if (enteringfaces++ == 0)
+                                {
+                                    Vec exit;
+                                    for (int i = 0; i < 3; i++)
+                                    {
+                                        exit += tetra->_vertices[face._vertex_indices[i]] * w[i];
+                                    }
+
+                                    double sq = (exit - r()).norm();
+                                    propagater(sq + _grid->_eps);
+                                    write(exit, sq, f);
+                                }
+                                else
+                                {
+                                    _grid->log()->error("too many entering faces for outside ray");
+                                }
+                                // break;
+                            }
+                        }
+                    }
+                }
+                if (enteringfaces > 0)
+                {
+                    wasInside = true;
+                    setState(State::Inside);
+                    return true;
+                }
+            }
+        }
+        stopwriting();
         return false;
     }
 };
