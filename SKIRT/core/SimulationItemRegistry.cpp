@@ -18,6 +18,7 @@
 #include "AllSkyProjectionForm.hpp"
 #include "AnnulusGeometry.hpp"
 #include "AtPositionsForm.hpp"
+#include "AxPowerLawRedistributeGeometryDecorator.hpp"
 #include "BandLuminosityNormalization.hpp"
 #include "BegemannPorousAluminaGrainComposition.hpp"
 #include "BlackBodySED.hpp"
@@ -208,6 +209,7 @@
 #include "Random.hpp"
 #include "ReadFits3DGeometry.hpp"
 #include "ReadFitsGeometry.hpp"
+#include "RedistributeGeometryDecorator.hpp"
 #include "ResolutionBorderWavelengthGrid.hpp"
 #include "ResolutionWavelengthGrid.hpp"
 #include "RingGeometry.hpp"
@@ -230,6 +232,7 @@
 #include "SpatialGridPlotProbe.hpp"
 #include "SpatialGridSourceDensityProbe.hpp"
 #include "SpecificLuminosityNormalization.hpp"
+#include "SphePowerLawRedistributeGeometryDecorator.hpp"
 #include "Sphere1DSpatialGrid.hpp"
 #include "Sphere2DSpatialGrid.hpp"
 #include "SphericalBackgroundSource.hpp"
@@ -451,6 +454,9 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<SpiralStructureGeometryDecorator>();
     ItemRegistry::add<ClumpyGeometryDecorator>();
     ItemRegistry::add<CombineGeometryDecorator>();
+    ItemRegistry::add<RedistributeGeometryDecorator>();
+    ItemRegistry::add<AxPowerLawRedistributeGeometryDecorator>();
+    ItemRegistry::add<SphePowerLawRedistributeGeometryDecorator>();
 
     // smoothing kernels
     ItemRegistry::add<SmoothingKernel>();
