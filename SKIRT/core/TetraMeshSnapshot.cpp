@@ -22,7 +22,6 @@
 #include "Units.hpp"
 #include <iostream>
 #include <set>
-#include <unordered_set>
 #include "container.hh"
 
 ////////////////////////////////////////////////////////////////////
@@ -41,17 +40,13 @@ public:
 
     // constructor derives the site position from the first three property values and stores the user properties;
     // the other data members are set to zero or empty
-    Cell(const Array& prop) : _r(prop[0], prop[1], prop[2]), _properties{prop} {}
+    Cell(const Array& prop) : _r(prop[0], prop[1], prop[2]), _properties{prop} {}  // WIP
 
     // adjusts the site position with the specified offset
     void relax(double cx, double cy, double cz) { _r += Vec(cx, cy, cz); }
 
     // initializes the receiver with information taken from the specified fully computed Tetra cell
-    void init(voro::voronoicell_neighbor& cell)
-    {
-        // copy a list of neighboring cell/site ids
-        cell.neighbors(_neighbors);
-    }
+    void init(voro::voronoicell_neighbor& cell) { cell.neighbors(_neighbors); }
 
     // clears the information taken from a Tetra cell so it can be reinitialized
     void clear() { _neighbors.clear(); }
@@ -72,200 +67,257 @@ public:
     const Array& properties() { return _properties; }
 };
 
-class TetraMeshSnapshot::Tetra : public Box
+////////////////////////////////////////////////////////////////////
+
+TetraMeshSnapshot::Plucker::Plucker() {}
+
+////////////////////////////////////////////////////////////////////
+
+TetraMeshSnapshot::Plucker::Plucker(const Vec& pos, const Vec& dir) : U(dir), V(Vec::cross(dir, pos)) {}
+
+////////////////////////////////////////////////////////////////////
+
+// permuted inner product
+inline double TetraMeshSnapshot::Plucker::dot(const Plucker& a, const Plucker& b)
 {
-public:
-    double _volume;
-    std::array<Vec, 4> _vertices;
-    std::array<int, 4> _neighbors = {-1, -1, -1, -1};
-    std::array<int, 4> _vertex_indices;
-    Array _properties;  // user-defined properties, if any
+    return Vec::dot(a.U, b.V) + Vec::dot(b.U, a.V);
+}
 
-public:
-    Tetra(const vector<Cell*>& _cells, int i, int j, int k, int l)
+////////////////////////////////////////////////////////////////////
+
+TetraMeshSnapshot::Edge::Edge(const int i1, const int i2, const Vec& v1, const Vec& v2)
+    : Plucker((i1 < i2) ? v1 : v2, (i1 < i2) ? v2 : v1), i1(std::min(i1, i2)), i2(std::max(i1, i2))
+{}
+
+////////////////////////////////////////////////////////////////////
+
+bool TetraMeshSnapshot::Edge::operator==(const Edge& edge) const
+{
+    return (i1 == edge.i1 && i2 == edge.i2);
+}
+
+////////////////////////////////////////////////////////////////////
+
+size_t TetraMeshSnapshot::Edge::HashFunction::operator()(const Edge* edge) const
+{
+    return ((size_t)edge->i2 << 32) + (size_t)edge->i1;
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool TetraMeshSnapshot::Edge::EqualFunction::operator()(const Edge* e1, const Edge* e2) const
+{
+    return *e1 == *e2;
+}
+
+////////////////////////////////////////////////////////////////////
+
+TetraMeshSnapshot::Tetra::Tetra(const vector<Cell*>& _cells, int i, int j, int k, int l)
+{
+    _vertices[0] = &_cells[i]->_r;
+    _vertices[1] = &_cells[j]->_r;
+    _vertices[2] = &_cells[k]->_r;
+    _vertices[3] = &_cells[l]->_r;
+    _vertex_indices[0] = i;
+    _vertex_indices[1] = j;
+    _vertex_indices[2] = k;
+    _vertex_indices[3] = l;
+
+    double xmin = DBL_MAX;
+    double ymin = DBL_MAX;
+    double zmin = DBL_MAX;
+    double xmax = -DBL_MAX;
+    double ymax = -DBL_MAX;
+    double zmax = -DBL_MAX;
+    for (const Vec* vertex : _vertices)
     {
-        _vertices[0] = _cells[i]->_r;
-        _vertices[1] = _cells[j]->_r;
-        _vertices[2] = _cells[k]->_r;
-        _vertices[3] = _cells[l]->_r;
-
-        double xmin = DBL_MAX;
-        double ymin = DBL_MAX;
-        double zmin = DBL_MAX;
-        double xmax = -DBL_MAX;
-        double ymax = -DBL_MAX;
-        double zmax = -DBL_MAX;
-        for (const Vec& vertex : _vertices)
-        {
-            xmin = min(xmin, vertex.x());
-            ymin = min(ymin, vertex.y());
-            zmin = min(zmin, vertex.z());
-            xmax = max(xmax, vertex.x());
-            ymax = max(ymax, vertex.y());
-            zmax = max(zmax, vertex.z());
-        }
-        setExtent(Box(xmin, ymin, zmin, xmax, ymax, zmax));
-
-        _vertex_indices[0] = i;
-        _vertex_indices[1] = j;
-        _vertex_indices[2] = k;
-        _vertex_indices[3] = l;
-
-        _volume = Box::volume();  //temp
+        xmin = min(xmin, vertex->x());
+        ymin = min(ymin, vertex->y());
+        zmin = min(zmin, vertex->z());
+        xmax = max(xmax, vertex->x());
+        ymax = max(ymax, vertex->y());
+        zmax = max(zmax, vertex->z());
     }
+    setExtent(Box(xmin, ymin, zmin, xmax, ymax, zmax));
 
-    // compute normal for face 3 (in clockwise direction of vertices 012) and dot with vertex 3
-    double orient()
+    _volume = Box::volume();  // WIP
+}
+
+////////////////////////////////////////////////////////////////////
+
+int TetraMeshSnapshot::Tetra::getEdge(int t1, int t2) const
+{
+    // negative index shows that the edge is inverted
+    if (t1 > t2)
+        return -((t2 == 0) ? t1 - 1 : t2 + t1);
+    else
+        return (t1 == 0) ? t2 - 1 : t1 + t2;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double TetraMeshSnapshot::Tetra::orient()
+{
+    const Vec e01 = *_vertices[1] - *_vertices[0];
+    const Vec e02 = *_vertices[2] - *_vertices[0];
+    const Vec e03 = *_vertices[3] - *_vertices[0];
+    // this convention makes edges go clockwise around leaving rays from inside the tetrahedron
+    // so their plucker products are all negative if the ray leaves
+    double orientation = Vec::dot(Vec::cross(e01, e02), e03);
+    if (orientation > 0)
     {
-        const Vec e01 = _vertices[1] - _vertices[0];
-        const Vec e02 = _vertices[2] - _vertices[0];
-        const Vec e03 = _vertices[3] - _vertices[0];
-        // this convention makes edges go clockwise around leaving rays from inside the tetrahedron
-        double orientation = Vec::dot(Vec::cross(e02, e01), e03);
-        if (orientation < 0)
-        {
-            std::swap(_vertices[0], _vertices[1]);
-            std::swap(_vertex_indices[0], _vertex_indices[1]);
-        }
-        return orientation;
+        // swap last 2, this means first 2 indices can be ordered i < j
+        std::swap(_vertices[2], _vertices[3]);
+        std::swap(_vertex_indices[2], _vertex_indices[3]);
     }
+    return orientation;
+}
 
-    // return -1 if no shared face
-    // return 0-3 for opposite vertex of shared face
-    int shareFace(const Tetra* other) const
+////////////////////////////////////////////////////////////////////
+
+void TetraMeshSnapshot::Tetra::addEdges(EdgeSet& edgeset)
+{
+    for (int t1 = 0; t1 < 3; t1++)
     {
-        int equal_vert = 0;
-        int opposite = 0 + 1 + 2 + 3;
-
-        for (int i = 0; i < 4; i++)
+        for (int t2 = 1; t2 < 4; t2++)
         {
-            int vi = _vertex_indices[i];
+            if (t2 <= t1) continue;
 
-            for (int j = 0; j < 4; j++)
+            Edge* edge = new Edge(_vertex_indices[t1], _vertex_indices[t2], *_vertices[t1], *_vertices[t2]);
+            auto res = edgeset.insert(edge);
+
+            // insertion unsuccessful (edge already exists)
+            if (!res.second)
             {
-                int vj = other->_vertex_indices[j];
+                delete edge;
+                edge = *res.first;
+            }
 
-                if (vi == vj)
-                {
-                    equal_vert++;
-                    opposite -= i;
-                    break;
-                }
+            _edges[getEdge(t1, t2)] = edge;
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
+int TetraMeshSnapshot::Tetra::shareFace(const Tetra* other) const
+{
+    int equal_vert = 0;
+    int opposite = 0 + 1 + 2 + 3;
+
+    for (int i = 0; i < 4; i++)
+    {
+        int vi = _vertex_indices[i];
+
+        for (int j = 0; j < 4; j++)
+        {
+            int vj = other->_vertex_indices[j];
+
+            if (vi == vj)
+            {
+                equal_vert++;
+                opposite -= i;
+                break;
             }
         }
-        if (equal_vert == 3) return opposite;
-        return -1;
     }
+    if (equal_vert == 3) return opposite;
+    return -1;
+}
 
-    bool equals(const Tetra* other) const
+////////////////////////////////////////////////////////////////////
+
+bool TetraMeshSnapshot::Tetra::intersects(std::array<double, 3>& prods, const Plucker& ray, int face,
+                                          bool leaving = true) const
+{
+    int t0 = (face + 1) % 4;
+    int t1 = (face + 2) % 4;
+    int t2 = (face + 3) % 4;
+
+    // if face is even we should swap two edges
+    if (face % 2 == 0) std::swap(t0, t2);
+
+    Edge* edges[3] = {_edges[getEdge(t1, t2)], _edges[getEdge(t2, t0)], _edges[getEdge(t0, t1)]};
+
+    double sum = 0;
+    for (int i = 0; i < 3; i++)
     {
-        for (int v : _vertex_indices)
+        double prod = Plucker::dot(ray, *_edges[i]);
+        if (leaving != (prod < 0)) return false;
+        prods[i] = prod;
+        sum += prod;
+    }
+    prods = {prods[0] / sum, prods[1] / sum, prods[2] / sum};
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool TetraMeshSnapshot::Tetra::equals(const Tetra* other) const
+{
+    for (int v : _vertex_indices)
+    {
+        bool match = false;
+        for (int u : other->_vertex_indices)
         {
-            bool match = false;
-            for (int u : other->_vertex_indices)
+            if (u == v)
             {
-                if (u == v)
-                {
-                    match = true;
-                    break;
-                }
+                match = true;
+                break;
             }
-            if (!match) return false;
         }
-        return true;
+        if (!match) return false;
     }
+    return true;
+}
 
-    bool SameSide(const Vec& v0, const Vec& v1, const Vec& v2, const Vec& v3, const Vec& pos) const
-    {
-        Vec normal = Vec::cross(v1 - v0, v2 - v0);
-        double dotV4 = Vec::dot(normal, v3 - v0);
-        double dotP = Vec::dot(normal, pos - v0);
-        return (dotV4 > 0) == (dotP > 0);
-    }
+////////////////////////////////////////////////////////////////////
 
-    bool inside(const Position& bfr) const
-    {
-        // very poor implementation
-        const Vec& v0 = _vertices[0];
-        const Vec& v1 = _vertices[1];
-        const Vec& v2 = _vertices[2];
-        const Vec& v3 = _vertices[3];
-        return SameSide(v0, v1, v2, v3, bfr) && SameSide(v1, v2, v3, v0, bfr) && SameSide(v2, v3, v0, v1, bfr)
-               && SameSide(v3, v0, v1, v2, bfr);
-    }
-
-    Position position() const
-    {
-        Position pos;
-        for (int i = 0; i < 4; i++) pos += _vertices[i];
-        pos /= 4;
-        return pos;
-    }
-
-    double volume() const { return _volume; }
-
-    const Array& properties() { return _properties; }
-};
-
-class TetraMeshSnapshot::Plucker
+bool TetraMeshSnapshot::Tetra::SameSide(const Vec& v0, const Vec& v1, const Vec& v2, const Vec& v3,
+                                        const Vec& pos) const
 {
-private:
-    Vec U, V;
+    Vec normal = Vec::cross(v1 - v0, v2 - v0);
+    double dotV4 = Vec::dot(normal, v3 - v0);
+    double dotP = Vec::dot(normal, pos - v0);
+    return (dotV4 > 0) == (dotP > 0);
+}
 
-    Plucker(const Vec& U, const Vec& V) : U(U), V(V) {}
+////////////////////////////////////////////////////////////////////
 
-public:
-    Plucker() {}
-
-    static inline Plucker createFromDir(const Vec& pos, const Vec& dir) { return Plucker(dir, Vec::cross(dir, pos)); }
-
-    static inline Plucker createFromVertices(const Vec& v1, const Vec& v2) { return createFromDir(v1, v2 - v1); }
-
-    // permuted inner product
-    static inline double dot(const Plucker& r, const Plucker& s) { return Vec::dot(r.U, s.V) + Vec::dot(s.U, r.V); }
-};
-
-class TetraMeshSnapshot::Face
+bool TetraMeshSnapshot::Tetra::inside(const Position& bfr) const
 {
-public:
-    std::array<Plucker, 3> _edges;
-    std::array<int, 3> _vertex_indices;
+    // very poor implementation
+    const Vec& v0 = *_vertices[0];
+    const Vec& v1 = *_vertices[1];
+    const Vec& v2 = *_vertices[2];
+    const Vec& v3 = *_vertices[3];
+    return SameSide(v0, v1, v2, v3, bfr) && SameSide(v1, v2, v3, v0, bfr) && SameSide(v2, v3, v0, v1, bfr)
+           && SameSide(v3, v0, v1, v2, bfr);
+}
 
-public:
-    Face() {}
+////////////////////////////////////////////////////////////////////
 
-    Face(const Tetra* tetra, int face)
-    {
-        int v0 = (face + 1) % 4;
-        int v1 = (face + 2) % 4;
-        int v2 = (face + 3) % 4;
+Position TetraMeshSnapshot::Tetra::position() const
+{
+    Position pos;
+    for (int i = 0; i < 4; i++) pos += *_vertices[i];
+    pos /= 4;
+    return pos;
+}
 
-        // if face is even we should swap two edges
-        if (face % 2 == 0) std::swap(v0, v2);
+////////////////////////////////////////////////////////////////////
 
-        _edges[0] = Plucker::createFromVertices(tetra->_vertices[v1], tetra->_vertices[v2]);
-        _edges[1] = Plucker::createFromVertices(tetra->_vertices[v2], tetra->_vertices[v0]);
-        _edges[2] = Plucker::createFromVertices(tetra->_vertices[v0], tetra->_vertices[v1]);
-        _vertex_indices[0] = v0;
-        _vertex_indices[1] = v1;
-        _vertex_indices[2] = v2;
-    }
+double TetraMeshSnapshot::Tetra::volume() const
+{
+    return _volume;
+}
 
-    // leaving = true: returns true if the ray is leaving
-    // leaving = false: returns true if the ray is entering
-    inline bool intersects(std::array<double, 3>& w, const Plucker& ray, bool leaving = true)
-    {
-        for (int i = 0; i < 3; i++)
-        {
-            double prod = Plucker::dot(ray, _edges[i]);
-            if (leaving != (prod < 0)) return false;  // weird if prod == 0
-            w[i] = prod;
-        }
-        double W = w[0] + w[1] + w[2];
-        w = {w[0] / W, w[1] / W, w[2] / W};
-        return true;
-    }
-};
+////////////////////////////////////////////////////////////////////
+
+const Array& TetraMeshSnapshot::Tetra::properties()
+{
+    return _properties;
+}
 
 ////////////////////////////////////////////////////////////////////
 
@@ -393,30 +445,7 @@ namespace
 
 void TetraMeshSnapshot::buildMesh(bool relax)
 {
-    ///////////////////////////////////////////////////////////////////////////
-    // setExtent(Box(-1, -1, -1, 1, 1, 1));
-    // vector<Vec> sites;
-    // for (size_t i = 0; i < 10; i++)
-    // {
-    //     sites.push_back(random()->position(_extent));
-    // }
-
-    // sites.push_back(Vec(0.2, 0.2, 0.1));
-    // sites.push_back(Vec(0.2, -0.2, 0.1));
-    // sites.push_back(Vec(0.4, 0.4, 0));
-    // sites.push_back(Vec(0.4, -0.4, 0));
-
-    // sites.push_back(Vec(-0.5, 0, 0.1));
-    // sites.push_back(Vec(0, 0, 0.6));
-    // sites.push_back(Vec(0, 0, -0.4));
-
-    // int n = sites.size();
-    // _cells.resize(n);
-    // for (int m = 0; m != n; ++m) _cells[m] = new Cell(sites[m]);
-
-    const double A = extent().rmax().norm() * 1000;
-
-    ///////////////////////////////////////////////////////////////////////////
+    const double A = extent().rmax().norm() * 1000;  // WIP
 
     int numCells = _cells.size();
 
@@ -541,7 +570,7 @@ void TetraMeshSnapshot::buildMesh(bool relax)
     // for each site:
     //   - compute the corresponding cell in the Tetra tesselation
     //   - extract and copy the relevant information to the cell object with the corresponding index in our vector
-    log()->info("Constructing Tetra tessellation with " + std::to_string(numCells) + " cells");
+    log()->info("Constructing intermediate Voronoi tessellation with " + std::to_string(numCells) + " cells");
     log()->infoSetElapsed(numCells);
     // allocate a separate cell calculator for each thread to avoid conflicts
     voro::voro_compute<voro::container> vcompute(vcon, _nb, _nb, _nb);
@@ -566,14 +595,15 @@ void TetraMeshSnapshot::buildMesh(bool relax)
         } while (vloop.inc());
     if (numDone > 0) log()->infoIfElapsed("Computed Tetra cells: ", numDone);
 
-    ////////////////////////////////////////////////////////////////////////////////////////////
     for (int i = 0; i < numCells; i++)
     {
         Cell* c1 = _cells[i];
 
         for (int j : c1->neighbors())
         {
-            if (j < 0) continue;
+            // first 2 indices can always be ordered i < j
+            // last 2 indices can be swapped if orientation is not correct
+            if (j < 0 || j > i) continue;
 
             Cell* c2 = _cells[j];
 
@@ -629,15 +659,18 @@ void TetraMeshSnapshot::buildMesh(bool relax)
                             if (r < R)
                             {
                                 delaunay = false;
-                                break;
+                                goto end_delaunay;
                             }
                         }
-                        if (!delaunay) break;
                     }
+                end_delaunay:
                     if (!delaunay) continue;
 
                     // orient tetrahedron in the same consistent way
                     tetra->orient();
+
+                    //add edges
+                    tetra->addEdges(_edgeset);
 
                     centers.push_back(center);
                     radii.push_back(sqrt(R));
@@ -662,7 +695,6 @@ void TetraMeshSnapshot::buildMesh(bool relax)
             if (shared != -1) tetra->_neighbors[shared] = j;
         }
     }
-    ////////////////////////////////////////////////////////////////////////////////////////////
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -811,10 +843,10 @@ void TetraMeshSnapshot::writeGridPlotFiles(const SimulationItem* probe) const
 
         for (size_t j = 0; j < 4; j++)
         {
-            const Vec& v = tetra->_vertices[j];
-            coords.push_back(v.x());
-            coords.push_back(v.y());
-            coords.push_back(v.z());
+            const Vec* v = tetra->_vertices[j];
+            coords.push_back(v->x());
+            coords.push_back(v->y());
+            coords.push_back(v->z());
         }
         // write the edges of the cell to the plot files
         // if (bounds.zmin() <= 0 && bounds.zmax() >= 0) plotxy.writePolyhedron(coords, indices);
@@ -955,6 +987,7 @@ class TetraMeshSnapshot::MySegmentGenerator : public PathSegmentGenerator
     int _mr{-1};
     // true if the path is was ever inside the convex hull
     bool wasInside = false;
+    int enteringFace = -1;
 
 public:
     MySegmentGenerator(const TetraMeshSnapshot* grid) : _grid(grid) {}
@@ -963,21 +996,18 @@ public:
 
     void startwriting()
     {
-        // if (!out.is_open()) out.open("photon.txt");
+        if (!out.is_open()) out.open("photon.txt");
     }
 
-    void stopwriting()
-    {
-        // out.close();
-    }
+    void stopwriting() { out.close(); }
 
     void write(const Vec& exit, double ds, int face)
     {
-        // out << "photon=" << _mr << "," << face << "\n";
-        // out << "ds=" << ds << "\n";
-        // out << "r=" << r().x() << "," << r().y() << "," << r().z() << "\n";
-        // out << "exit=" << exit.x() << "," << exit.y() << "," << exit.z() << "\n";
-        // out << "k=" << k().x() << "," << k().y() << "," << k().z() << "\n";
+        out << "photon=" << _mr << "," << face << "\n";
+        out << "ds=" << ds << "\n";
+        out << "r=" << r().x() << "," << r().y() << "," << r().z() << "\n";
+        out << "exit=" << exit.x() << "," << exit.y() << "," << exit.z() << "\n";
+        out << "k=" << k().x() << "," << k().y() << "," << k().z() << "\n";
     }
 
     bool next() override
@@ -995,7 +1025,7 @@ public:
             if (_mr == -1)
                 setState(State::Outside);
             else
-                wasInside = true;
+                wasInside = true;  // setState has already been called
 
             // if the photon packet started outside the grid, return the corresponding nonzero-length segment;
             // otherwise fall through to determine the first actual segment
@@ -1016,32 +1046,81 @@ public:
                 int mq = NO_INDEX;
 
                 // plucker coords
-                const Plucker ray = Plucker::createFromDir(r(), k());
+                const Plucker ray = Plucker(r(), k());
                 const Tetra* tetra = _grid->_tetrahedra[_mr];
 
-                int leavingIndex = -1;
-                std::array<double, 3> w;
-                Face leavingFace;
-
-                for (int f = 0; f < 4; f++)
+                int leavingFace = -1;
+                std::array<double, 3> prods;
+                if (enteringFace == -1)  // this should only be done once
                 {
-                    leavingFace = Face(tetra, f);
-
-                    if (leavingFace.intersects(w, ray, true))
+                    for (int face = 0; face < 4; face++)
                     {
-                        leavingIndex = f;
-                        bool allZero = std::all_of(w.begin(), w.end(), [](double val) { return val == 0.0; });
-                        if (allZero) std::cout << "TetraMeshSnapshot: all plucker prods == 0" << std::endl;
-                        break;
+                        if (tetra->intersects(prods, ray, face, true))
+                        {
+                            leavingFace = face;
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    int t0 = (enteringFace + 1) % 4;
+                    int t1 = (enteringFace + 2) % 4;
+                    int t2 = (enteringFace + 3) % 4;
+                    // if face is even we should swap two edges
+                    if (enteringFace % 2 == 0) std::swap(t0, t2);
+
+                    int edges[3];
+                    edges[0] = tetra->getEdge(t0, enteringFace);
+                    edges[1] = tetra->getEdge(t1, enteringFace);
+                    edges[2] = tetra->getEdge(t2, enteringFace);
+
+                    // 2 step decision tree
+                    int i = 0, prev_i;
+                    for (int _ = 0; _ < 2; _++)
+                    {
+                        int e = edges[i];
+                        if (e < 0)
+                            prods[i] = -Plucker::dot(ray, *tetra->_edges[-e]);
+                        else
+                            prods[i] = Plucker::dot(ray, *tetra->_edges[e]);
+
+                        // if clockwise move clockwise
+                        prev_i = i;
+                        if (prods[i] < 0)
+                            i = (i + 1) % 3;
+                        else  // if counter move counter
+                            i = (i - 1) % 3;
+                    }
+
+                    // if 2 clockwise: face=t0
+                    // if 2 counter: face=t0
+                    // if clockwise then counter: face=t2
+                    // if counter then clockwise: face=t1
+
+                    // and calculate last inner products
+                    if (prods[0] == prods[i])
+                    {
+                        leavingFace = t0;
+
+                        
+                        
+                    }
+                    else
+                    {
+                        if (prods[0] < 0)
+                            leavingFace = t2;
+                        else
+                            leavingFace = t1;
                     }
                 }
 
                 Vec exit;
-                if (leavingIndex != -1)
+                if (leavingFace != -1)
                 {
                     for (int i = 0; i < 3; i++)
                     {
-                        exit += tetra->_vertices[leavingFace._vertex_indices[i]] * w[i];
+                        exit += tetra->_vertices[leavingFace._indices[i]] * w[i];
                     }
                     sq = (exit - r()).norm();
                     mq = tetra->_neighbors[leavingIndex];
@@ -1066,7 +1145,7 @@ public:
                 {
                     propagater(sq + _grid->_eps);
                     setSegment(_mr, sq);
-                    write(exit, sq, leavingIndex);
+                    write(exit, sq, leavingFace);
                     _mr = mq;
 
                     // if we're outside the domain, terminate the path after returning this path segment
@@ -1105,47 +1184,47 @@ public:
             // figure out if the path intersects the convex hull
             if (!wasInside)
             {
-                const Plucker ray = Plucker::createFromDir(r(), k());
+                const Plucker ray = Plucker(r(), k());
                 int enteringfaces = 0;
                 int entering = -1;
 
-                std::array<double, 3> w;
-                std::array<int, 3> vertices;
-                for (int i = 0; i < _grid->_tetrahedra.size(); i++)
-                {
-                    const Tetra* tetra = _grid->_tetrahedra[i];
-                    for (int f = 0; f < 4; f++)
-                    {
-                        int n = tetra->_neighbors[f];
-                        // edge face
-                        if (n == -1)
-                        {
-                            Face face = Face(tetra, f);
-                            if (face.intersects(w, ray, false))
-                            {
-                                _mr = i;
+                // std::array<double, 3> w;
+                // std::array<int, 3> vertices;
+                // for (int i = 0; i < _grid->_tetrahedra.size(); i++)
+                // {
+                //     const Tetra* tetra = _grid->_tetrahedra[i];
+                //     for (int f = 0; f < 4; f++)
+                //     {
+                //         int n = tetra->_neighbors[f];
+                //         // edge face
+                //         if (n == -1)
+                //         {
+                //             Face face = Face(tetra, f);
+                //             if (face.intersects(w, ray, false))
+                //             {
+                //                 _mr = i;
 
-                                if (enteringfaces++ == 0)
-                                {
-                                    Vec exit;
-                                    for (int i = 0; i < 3; i++)
-                                    {
-                                        exit += tetra->_vertices[face._vertex_indices[i]] * w[i];
-                                    }
+                //                 if (enteringfaces++ == 0)
+                //                 {
+                //                     Vec exit;
+                //                     for (int i = 0; i < 3; i++)
+                //                     {
+                //                         exit += tetra->_vertices[face._indices[i]] * w[i];
+                //                     }
 
-                                    double sq = (exit - r()).norm();
-                                    propagater(sq + _grid->_eps);
-                                    write(exit, sq, f);
-                                }
-                                else
-                                {
-                                    _grid->log()->error("too many entering faces for outside ray");
-                                }
-                                // break;
-                            }
-                        }
-                    }
-                }
+                //                     double sq = (exit - r()).norm();
+                //                     propagater(sq + _grid->_eps);
+                //                     write(exit, sq, f);
+                //                 }
+                //                 else
+                //                 {
+                //                     _grid->log()->error("too many entering faces for outside ray");
+                //                 }
+                //                 // break;
+                //             }
+                //         }
+                //     }
+                // }
                 if (enteringfaces > 0)
                 {
                     wasInside = true;

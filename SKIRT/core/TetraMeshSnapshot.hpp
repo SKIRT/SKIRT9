@@ -8,6 +8,7 @@
 
 #include "Array.hpp"
 #include "Snapshot.hpp"
+#include <unordered_set>
 class PathSegmentGenerator;
 class SiteListInterface;
 class SpatialGridPath;
@@ -188,11 +189,81 @@ private:
         paths and densities; see the buildMesh() function. */
     class Cell;
 
-    class Tetra;
+    class Plucker
+    {
+    private:
+        Vec U, V;
 
-    class Plucker;
+    public:
+        Plucker();
 
-    class Face;
+        Plucker(const Vec& pos, const Vec& dir);
+
+        // permuted inner product
+        static inline double dot(const Plucker& a, const Plucker& b);
+    };
+
+    class Edge : public Plucker
+    {
+    public:
+        const int i1, i2;
+
+        Edge(int i1, int i2, const Vec& v1, const Vec& v2);
+
+        bool operator==(const Edge& edge) const;
+
+        struct HashFunction
+        {
+            size_t operator()(const Edge* edge) const;
+        };
+
+        struct EqualFunction
+        {
+            bool operator()(const Edge* e1, const Edge* e2) const;
+        };
+    };
+
+    typedef std::unordered_set<Edge*, Edge::HashFunction, Edge::EqualFunction> EdgeSet;
+
+    class Tetra : public Box
+    {
+    public:
+        double _volume;
+        std::array<Vec*, 4> _vertices;
+        std::array<int, 4> _vertex_indices;
+        std::array<int, 4> _neighbors = {-1, -1, -1, -1};
+        std::array<Edge*, 6> _edges;
+        Array _properties;
+
+    public:
+        Tetra(const vector<Cell*>& _cells, int i, int j, int k, int l);
+
+        // get the edge using the tetra indices [0, 3]
+        int getEdge(int t1, int t2) const;
+
+        // compute normal for face 3 (in clockwise direction of vertices 012) and dot with vertex 3
+        double orient();
+
+        void addEdges(EdgeSet& edgeset);
+
+        // return -1 if no shared face
+        // return 0-3 for opposite vertex of shared face
+        int shareFace(const Tetra* other) const;
+
+        bool intersects(std::array<double, 3>& prods, const Plucker& ray, int face, bool leaving = true) const;
+
+        bool equals(const Tetra* other) const;
+
+        bool SameSide(const Vec& v0, const Vec& v1, const Vec& v2, const Vec& v3, const Vec& pos) const;
+
+        bool inside(const Position& bfr) const;
+
+        Position position() const;
+
+        double volume() const;
+
+        const Array& properties();
+    };
 
     // temp test
     std::vector<Vec> centers;
@@ -231,37 +302,6 @@ private:
         density columns being imported. */
     void calculateDensityAndMass();
 
-    /** Private function to recursively build a binary search tree (see
-        en.wikipedia.org/wiki/Kd-tree) */
-    // Node* buildTree(vector<int>::iterator first, vector<int>::iterator last, int depth) const;
-
-    /** This private function builds data structures that allow accelerating the operation of the
-        cellIndex() function. It assumes that the Tetra mesh has already been built.
-
-        The domain is partitioned using a linear cubodial grid into cells that are called \em
-        blocks. For each block, the function builds and stores a list of all Tetra cells that
-        possibly overlap that block. Retrieving the list of cells possibly overlapping a given
-        point in the domain then comes down to locating the block containing the point (which is
-        trivial since the grid is linear). The current implementation uses a Tetra cell's
-        enclosing cuboid to test for intersection with a block. Performing a precise intersection
-        test is \em really slow and the shortened block lists don't substantially accelerate the
-        cellIndex() function.
-
-        To further reduce the search time within blocks that overlap with a large number of cells,
-        the function builds a binary search tree on the cell sites for those blocks (see for example
-        <a href="http://en.wikipedia.org/wiki/Kd-tree">en.wikipedia.org/wiki/Kd-tree</a>). */
-    // void buildSearchPerBlock();
-
-    /** This private function builds a data structure that allows accelerating the operation of the
-        cellIndex() function without using the Tetra mesh. The domain is not partitioned in
-        blocks. The function builds a single binary search tree on all cell sites (see for example
-        <a href="http://en.wikipedia.org/wiki/Kd-tree">en.wikipedia.org/wiki/Kd-tree</a>). */
-    // void buildSearchSingle();
-
-    /** This private function returns true if the given point is closer to the site with index m
-        than to the sites with indices ids. */
-    // bool isPointClosestTo(Vec r, int m, const vector<int>& ids) const;
-
     bool inTetrahedra(const Tetra* tetra) const;
 
     //====================== Output =====================
@@ -285,10 +325,6 @@ public:
     /** This function returns the position of the site with index \em m. If the index is out of
         range, the behavior is undefined. */
     Position position(int m) const override;
-
-    /** This function returns the centroid of the Tetra cell with index \em m. If the index is
-        out of range, the behavior is undefined. */
-    // Position centroidPosition(int m) const;
 
     /** This function returns the volume of the Tetra cell with index \em m. If the index is out
         of range, the behavior is undefined. */
@@ -471,6 +507,7 @@ private:
     vector<Cell*> _cells;  // cell objects, indexed on m
 
     vector<Tetra*> _tetrahedra;
+    EdgeSet _edgeset;
 
     // data members initialized when processing snapshot input, but only if a density policy has been set
     Array _rhov;       // density for each cell (not normalized)
