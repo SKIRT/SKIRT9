@@ -533,9 +533,35 @@ UpdateStatus NonLTELineGasMix::updateSpecificState(MaterialState* state, const A
 
 ////////////////////////////////////////////////////////////////////
 
-bool NonLTELineGasMix::isSpecificStateConverged(int numCells, int /*numUpdated*/, int numNotConverged) const
+bool NonLTELineGasMix::isSpecificStateConverged(int numCells, int /*numUpdated*/, int numNotConverged,
+                                                MaterialState* currentAggregate, MaterialState* previousAggregate) const
 {
-    return static_cast<double>(numNotConverged) / static_cast<double>(numCells) <= maxFractionNotConvergedCells();
+    // calculate fraction of not converged cells
+    double fractionNotConverged = static_cast<double>(numNotConverged) / static_cast<double>(numCells);
+
+    // calculate maximum relative difference between level populations of previous and current iteration
+    double changeInGlobalLevelPops = 0.;
+    for (int p = 0; p != _numLevels; ++p)
+    {
+        double currentPop = currentAggregate->levelPopulation(p);
+        double previousPop = previousAggregate->levelPopulation(p);
+        double diff = abs((currentPop - previousPop) / previousPop);
+        if (diff > changeInGlobalLevelPops) changeInGlobalLevelPops = diff;
+    }
+
+    // log convergence info
+    auto log = find<Log>();
+    log->info("NonLTELineGasMix convergence info:");
+    log->info("  Fraction of not converged cells is " + StringUtils::toString(fractionNotConverged * 100., 'f', 2)
+              + "% (convergence criterion is " + StringUtils::toString(maxFractionNotConvergedCells() * 100., 'f', 2)
+              + "%)");
+    log->info("  Global level populations changed by " + StringUtils::toString(changeInGlobalLevelPops * 100., 'f', 2)
+              + "% compared to previous iteration (convergence criterion is "
+              + StringUtils::toString(maxChangeInGlobalLevelPopulations() * 100., 'f', 2) + "%)");
+
+    // convergence is reached when both criteria are satisfied
+    return fractionNotConverged <= maxFractionNotConvergedCells()
+           && changeInGlobalLevelPops <= maxChangeInGlobalLevelPopulations();
 }
 
 ////////////////////////////////////////////////////////////////////
