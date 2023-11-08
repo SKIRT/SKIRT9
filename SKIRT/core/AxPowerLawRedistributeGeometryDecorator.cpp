@@ -13,8 +13,7 @@ void AxPowerLawRedistributeGeometryDecorator::setupSelfAfter()
 {
     RedistributeGeometryDecorator::setupSelfAfter();
 
-    if (_pR == 0 && _pz == 0)
-        find<Log>()->warning("Both the radial and vertical exponents are zero for the axial powerlaw.");
+    if (!_pR && !_pz) find<Log>()->warning("Both radial and vertical exponents of the axial power law are zero");
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -30,7 +29,7 @@ double AxPowerLawRedistributeGeometryDecorator::weight(Position bfr) const
 {
     double R = bfr.cylRadius();
     double z = abs(bfr.z());
-    if (z < _z0 || abs(R) < _R0) return 0;
+    if ((_pz && z < _z0) || (_pR && R < _R0)) return 0.;
     return pow(R, -_pR) * pow(z, -_pz);
 }
 
@@ -38,7 +37,7 @@ double AxPowerLawRedistributeGeometryDecorator::weight(Position bfr) const
 
 double AxPowerLawRedistributeGeometryDecorator::maxWeight() const
 {
-    return weight(Position(_R0, 0, _z0, Position::CoordinateSystem::CYLINDRICAL));
+    return weight(Position(_R0, 0., _z0, Position::CoordinateSystem::CYLINDRICAL));
 }
 
 ////////////////////////////////////////////////////////////////////

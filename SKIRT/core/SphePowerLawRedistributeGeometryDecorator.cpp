@@ -18,7 +18,7 @@ int SphePowerLawRedistributeGeometryDecorator::dimension() const
 double SphePowerLawRedistributeGeometryDecorator::weight(Position bfr) const
 {
     double r = bfr.radius();
-    if (r < _minRadius) return 0;
+    if (r < _minRadius) return 0.;
     return pow(r, -_exponent);
 }
 
@@ -26,7 +26,7 @@ double SphePowerLawRedistributeGeometryDecorator::weight(Position bfr) const
 
 double SphePowerLawRedistributeGeometryDecorator::maxWeight() const
 {
-    return weight(Position(_minRadius, 0, 0));
+    return weight(Position(_minRadius, 0., 0.));
 }
 
 ////////////////////////////////////////////////////////////////////

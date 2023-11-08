@@ -39,7 +39,7 @@ Position RedistributeGeometryDecorator::generatePosition() const
     {
         Position bfr = _geometry->generatePosition();
         double t = random()->uniform() * _maxWeight / weight(bfr);
-        if (t <= 1) return bfr;
+        if (t <= 1.) return bfr;
     }
 }
 
