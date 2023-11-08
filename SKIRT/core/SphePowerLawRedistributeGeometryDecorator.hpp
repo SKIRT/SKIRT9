@@ -11,11 +11,11 @@
 
 ////////////////////////////////////////////////////////////////////
 
-/** The abstract SphePowerLawRedistributeGeometryDecorator class implements a decorator that adjusts
-    another geometry by multiplying the density with a spherical power law weight function \f[
-    \rho'(r, \theta, \phi) = n \rho(r, \theta, \phi) r^{-p}. \f] There is also a spherical clipping
-    region around the origin determined by a radius \f$r_0\f$ where the density is made zero
-    to cut out the singularity. */
+/** The SphePowerLawRedistributeGeometryDecorator class implements a decorator that adjusts another
+    geometry by multiplying the density with a spherical power law weight function \f[ \rho'(r,
+    \theta, \phi) = n \rho(r, \theta, \phi) r^{-p}. \f] There is also a spherical clipping region
+    around the origin determined by a radius \f$r_0\f$ where the density is made zero to cut out
+    the singularity. */
 class SphePowerLawRedistributeGeometryDecorator : public RedistributeGeometryDecorator
 {
     ITEM_CONCRETE(SphePowerLawRedistributeGeometryDecorator, RedistributeGeometryDecorator,
@@ -32,16 +32,16 @@ class SphePowerLawRedistributeGeometryDecorator : public RedistributeGeometryDec
 
     //======================== Other Functions =======================
 public:
-    /** The dimension of the geometry after applying the decorator cannot change and is
-        thus the dimension of the original geometry. */
+    /** The dimension of the geometry after applying the decorator cannot change and is thus the
+        dimension of the original geometry. */
     int dimension() const override;
 
 protected:
     /** The weight function is the power law: \f$r^{-p}\f$. */
     double weight(Position bfr) const override;
 
-    /** The max weight, used in the rejection method, is equal to \f$r_0^{-p}\f$ 
-        with \f$r_0\gt 0\f$ the radius of the clipping sphere. */
+    /** The max weight, used in the rejection method, is equal to \f$r_0^{-p}\f$ with \f$r_0>0\f$
+        the radius of the clipping sphere. */
     double maxWeight() const override;
 };
 

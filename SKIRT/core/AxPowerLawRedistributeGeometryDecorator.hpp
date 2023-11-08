@@ -11,14 +11,13 @@
 
 ////////////////////////////////////////////////////////////////////
 
-/** The abstract AxPowerLawRedistributeGeometryDecorator class implements a decorator that adjusts
-    another geometry by multiplying the density with an axial power law weight function \f[ \rho'(R,
-    \phi, z) = n \rho(R, \phi, z) R^{-p_R}z^{-p_z}. \f] There are also two clipping regions, one
-    around the z-axis determined by a radius \f$R_0\f$ and one above and below the
-    xy-plane determined by $z=\pm z_0$, where the density is made zero to cut out the singularity.
-    If an exponent is chosen to be zero, then the clipping region for that exponent will
-    not be prompted during the Q&A.
-    */
+/** The AxPowerLawRedistributeGeometryDecorator class implements a decorator that adjusts another
+    geometry by multiplying the density with an axial power law weight function \f[ \rho'(R, \phi,
+    z) = n \rho(R, \phi, z) R^{-p_R}z^{-p_z}. \f] There are also two clipping regions, one around
+    the z-axis determined by a radius \f$R_0\f$ and one above and below the xy-plane determined by
+    \f$z=\pm z_0\f$, where the density is made zero to cut out the singularity. If an exponent is
+    chosen to be zero, then the clipping region for that exponent will not be prompted during the
+    Q&A. */
 class AxPowerLawRedistributeGeometryDecorator : public RedistributeGeometryDecorator
 {
     ITEM_CONCRETE(AxPowerLawRedistributeGeometryDecorator, RedistributeGeometryDecorator,
@@ -60,7 +59,7 @@ protected:
     double weight(Position bfr) const override;
 
     /** The max weight is used in the rejection method and is equal to \f$R_0^{-p_R}z_0^{-p_z}\f$.
-         */
+        */
     double maxWeight() const override;
 
     //======================== Data Members ========================

@@ -51,19 +51,19 @@ public:
     /** This function returns the X-axis surface density, i.e. the integration of the density along
         the entire X-axis, \f[ \Sigma_X = \int_{-\infty}^\infty \rho(x,0,0)\,{\text{d}}x. \f] For a
         general geometry this decorator will not have an analytical solution for this integral. We
-        use the X-axis surface density of the original dsitribution. */
+        use the X-axis surface density of the original distribution. */
     double SigmaX() const override;
 
     /** This function returns the Y-axis surface density, i.e. the integration of the density along
         the entire Y-axis, \f[ \Sigma_Y = \int_{-\infty}^\infty \rho(y,0,0)\,{\text{d}}y. \f] For a
         general geometry this decorator will not have an analytical solution for this integral. We
-        use the Y-axis surface density of the original dsitribution. */
+        use the Y-axis surface density of the original distribution. */
     double SigmaY() const override;
 
     /** This function returns the Z-axis surface density, i.e. the integration of the density along
         the entire Z-axis, \f[ \Sigma_Z = \int_{-\infty}^\infty \rho(Z,0,0)\,{\text{d}}z. \f] For a
         general geometry this decorator will not have an analytical solution for this integral. We
-        use the Z-axis surface density of the original dsitribution. */
+        use the Z-axis surface density of the original distribution. */
     double SigmaZ() const override;
 
 protected:
