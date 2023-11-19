@@ -8,7 +8,7 @@
 
 #include "Array.hpp"
 #include "Snapshot.hpp"
-#include <unordered_set>
+#include <unordered_map>
 class PathSegmentGenerator;
 class SiteListInterface;
 class SpatialGridPath;
@@ -212,18 +212,11 @@ private:
 
         bool operator==(const Edge& edge) const;
 
-        struct HashFunction
-        {
-            size_t operator()(const Edge* edge) const;
-        };
-
-        struct EqualFunction
-        {
-            bool operator()(const Edge* e1, const Edge* e2) const;
-        };
+        // hash function
+        static size_t hash(const int i1, const int i2);
     };
 
-    typedef std::unordered_set<Edge*, Edge::HashFunction, Edge::EqualFunction> EdgeSet;
+    typedef std::unordered_map<size_t, Edge*> EdgeMap;
 
     class Tetra : public Box
     {
@@ -238,14 +231,14 @@ private:
     public:
         Tetra(const vector<Cell*>& _cells, int i, int j, int k, int l);
 
-        // get the edge using the tetra indices [0, 3]
-        int getEdge(int t1, int t2) const;
+        double getProd(const Plucker& ray, int t1, int t2) const;
 
         // compute normal for face 3 (in clockwise direction of vertices 012) and dot with vertex 3
         double orient();
 
-        void addEdges(EdgeSet& edgeset);
+        void addEdges(EdgeMap& edgemap);
 
+        // used to build the neighbor array
         // return -1 if no shared face
         // return 0-3 for opposite vertex of shared face
         int shareFace(const Tetra* other) const;
@@ -258,20 +251,16 @@ private:
 
         bool inside(const Position& bfr) const;
 
+        Vec calcExit(const std::array<double, 3>& barycoords, int face) const;
+
         Position position() const;
 
         double volume() const;
 
         const Array& properties();
+
+        static inline std::array<int, 3> clockwiseVertices(int face);
     };
-
-    // temp test
-    std::vector<Vec> centers;
-    std::vector<double> radii;
-
-    /** Private class to hold a node in the internal binary search tree; see the buildTree()
-        and buildSearch() functions. */
-    class Node;
 
     /** Given a list of generating sites (represented as partially initialized Cell
         objects), this private function builds the Tetra tessellation and stores the
@@ -501,13 +490,13 @@ private:
     // data members initialized during configuration
     Box _extent;                   // the spatial domain of the mesh
     double _eps{0.};               // small fraction of extent
-    bool _foregoTetraMesh{false};  // true if using search tree instead of Tetra tessellation
+    int numTetra;
 
     // data members initialized when processing snapshot input and further completed by BuildMesh()
     vector<Cell*> _cells;  // cell objects, indexed on m
 
     vector<Tetra*> _tetrahedra;
-    EdgeSet _edgeset;
+    EdgeMap _edgemap;
 
     // data members initialized when processing snapshot input, but only if a density policy has been set
     Array _rhov;       // density for each cell (not normalized)
@@ -519,7 +508,6 @@ private:
     int _nb2{0};                      // nb*nb
     int _nb3{0};                      // nb*nb*nb
     vector<vector<int>> _blocklists;  // list of cell indices per block, indexed on i*_nb2+j*_nb+k
-    vector<Node*> _blocktrees;        // root node of search tree or null for each block, indexed on i*_nb2+j*_nb+k
 
     // allow our path segment generator to access our private data members
     class MySegmentGenerator;
