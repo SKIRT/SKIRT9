@@ -9,6 +9,7 @@
 #include "Array.hpp"
 #include "Snapshot.hpp"
 #include <unordered_map>
+#include "array"
 class PathSegmentGenerator;
 class SiteListInterface;
 class SpatialGridPath;
@@ -187,7 +188,9 @@ public:
 private:
     /** Private class to hold the information about a Tetra cell that is relevant for calculating
         paths and densities; see the buildMesh() function. */
-    class Cell;
+    class Site;
+
+    class Node;
 
     class Plucker
     {
@@ -207,47 +210,26 @@ private:
     {
     public:
         const int i1, i2;
-
-        Edge(int i1, int i2, const Vec& v1, const Vec& v2);
-
-        bool operator==(const Edge& edge) const;
-
-        // hash function
-        static size_t hash(const int i1, const int i2);
+        Edge(int i1, int i2, const Vec* v1, const Vec* v2);
     };
-
-    typedef std::unordered_map<size_t, Edge*> EdgeMap;
 
     class Tetra : public Box
     {
     public:
-        double _volume;
         std::array<Vec*, 4> _vertices;
-        std::array<int, 4> _vertex_indices;
-        std::array<int, 4> _neighbors = {-1, -1, -1, -1};
+        std::array<int, 4> _indices;
         std::array<Edge*, 6> _edges;
+        std::array<int, 4> _neighbors = {-1, -1, -1, -1};
+        double _volume;
         Array _properties;
 
     public:
-        Tetra(const vector<Cell*>& _cells, int i, int j, int k, int l);
+        Tetra(const std::array<Vec*, 4>& vertices, const std::array<int, 4>& indices,
+              const std::array<int, 4>& neighbors, const std::array<Edge*, 6>& edges);
 
         double getProd(const Plucker& ray, int t1, int t2) const;
 
-        // compute normal for face 3 (in clockwise direction of vertices 012) and dot with vertex 3
-        double orient();
-
-        void addEdges(EdgeMap& edgemap);
-
-        // used to build the neighbor array
-        // return -1 if no shared face
-        // return 0-3 for opposite vertex of shared face
-        int shareFace(const Tetra* other) const;
-
         bool intersects(std::array<double, 3>& prods, const Plucker& ray, int face, bool leaving = true) const;
-
-        bool equals(const Tetra* other) const;
-
-        bool SameSide(const Vec& v0, const Vec& v1, const Vec& v2, const Vec& v3, const Vec& pos) const;
 
         bool inside(const Position& bfr) const;
 
@@ -259,7 +241,7 @@ private:
 
         const Array& properties();
 
-        static inline std::array<int, 3> clockwiseVertices(int face);
+        static inline std::array<int, 3> counterclockwiseVertices(int face);
     };
 
     /** Given a list of generating sites (represented as partially initialized Cell
@@ -290,6 +272,33 @@ private:
         either by building a Tetra tessellation, or by deriving the volume from mass and mass
         density columns being imported. */
     void calculateDensityAndMass();
+
+    /** Private function to recursively build a binary search tree (see
+        en.wikipedia.org/wiki/Kd-tree) */
+    Node* buildTree(vector<int>::iterator first, vector<int>::iterator last, int depth) const;
+
+    /** This private function builds data structures that allow accelerating the operation of the
+        cellIndex() function. It assumes that the Voronoi mesh has already been built.
+
+        The domain is partitioned using a linear cubodial grid into cells that are called \em
+        blocks. For each block, the function builds and stores a list of all Voronoi cells that
+        possibly overlap that block. Retrieving the list of cells possibly overlapping a given
+        point in the domain then comes down to locating the block containing the point (which is
+        trivial since the grid is linear). The current implementation uses a Voronoi cell's
+        enclosing cuboid to test for intersection with a block. Performing a precise intersection
+        test is \em really slow and the shortened block lists don't substantially accelerate the
+        cellIndex() function.
+
+        To further reduce the search time within blocks that overlap with a large number of cells,
+        the function builds a binary search tree on the cell sites for those blocks (see for example
+        <a href="http://en.wikipedia.org/wiki/Kd-tree">en.wikipedia.org/wiki/Kd-tree</a>). */
+    void buildSearchPerBlock();
+
+    /** This private function builds a data structure that allows accelerating the operation of the
+        cellIndex() function without using the Voronoi mesh. The domain is not partitioned in
+        blocks. The function builds a single binary search tree on all cell sites (see for example
+        <a href="http://en.wikipedia.org/wiki/Kd-tree">en.wikipedia.org/wiki/Kd-tree</a>). */
+    void buildSearchSingle();
 
     bool inTetrahedra(const Tetra* tetra) const;
 
@@ -488,15 +497,18 @@ public:
 
 private:
     // data members initialized during configuration
-    Box _extent;                   // the spatial domain of the mesh
-    double _eps{0.};               // small fraction of extent
+    Box _extent;      // the spatial domain of the mesh
+    double _eps{0.};  // small fraction of extent
     int numTetra;
+    int numEdges;
+    int numVertices;
 
     // data members initialized when processing snapshot input and further completed by BuildMesh()
-    vector<Cell*> _cells;  // cell objects, indexed on m
+    vector<Site*> _sites;  // cell objects, indexed on m
 
     vector<Tetra*> _tetrahedra;
-    EdgeMap _edgemap;
+    vector<Edge*> _edges;
+    vector<Vec*> _vertices;
 
     // data members initialized when processing snapshot input, but only if a density policy has been set
     Array _rhov;       // density for each cell (not normalized)
@@ -508,6 +520,7 @@ private:
     int _nb2{0};                      // nb*nb
     int _nb3{0};                      // nb*nb*nb
     vector<vector<int>> _blocklists;  // list of cell indices per block, indexed on i*_nb2+j*_nb+k
+    vector<Node*> _blocktrees;        // root node of search tree or null for each block, indexed on i*_nb2+j*_nb+k
 
     // allow our path segment generator to access our private data members
     class MySegmentGenerator;

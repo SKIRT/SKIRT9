@@ -1,0 +1,33 @@
+# //////////////////////////////////////////////////////////////////
+# ///     The SKIRT project -- advanced radiative transfer       ///
+# ///       © Astronomical Observatory, Ghent University         ///
+# //////////////////////////////////////////////////////////////////
+
+# ------------------------------------------------------------------
+# Builds a library that supports building Tetra meshes.
+# The source code is taken from the TetGen library written by
+# Hang Si (Weierstrass Institute for Applied Analysis and Stochastics (WIAS))
+# at https://github.com/libigl/tetgen (git commit 4f3bfba).
+#
+# Changes:
+#  - 
+#---------------------------------------------------------------------
+
+# set the target name
+set(TARGET tetgen)
+
+# list the source files in this directory
+file(GLOB SOURCES "*.cxx")
+file(GLOB HEADERS "*.h")
+
+# create the library target
+add_library(${TARGET} STATIC ${SOURCES} ${HEADERS})
+target_compile_definitions(tetgen PRIVATE -DTETLIBRARY)
+# Generate position independent code
+# set_target_properties(tetgen PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+# adjust C++ compiler flags to our needs
+# set(NO_EXTRA_WARNINGS true)  # to avoid warnings in the Voro++ code
+include("../../SMILE/build/CompilerFlags.cmake")
+
+

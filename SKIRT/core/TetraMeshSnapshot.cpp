@@ -20,14 +20,72 @@
 #include "Table.hpp"
 #include "TextInFile.hpp"
 #include "Units.hpp"
+#include "tetgen.h"
 #include <iostream>
 #include <set>
 #include "container.hh"
 
 ////////////////////////////////////////////////////////////////////
 
+namespace
+{
+    // classes used for serializing/deserializing Voronoi cell geometry when communicating the results of
+    // grid construction between multiple processes with the ProcessManager::broadcastAllToAll() function
+
+    // decorates a std::vector with functions to write serialized versions of various data types
+    class SerializedWrite
+    {
+    private:
+        vector<double>& _data;
+
+    public:
+        SerializedWrite(vector<double>& data) : _data(data) { _data.clear(); }
+        void write(double v) { _data.push_back(v); }
+        void write(Vec v) { _data.insert(_data.end(), {v.x(), v.y(), v.z()}); }
+        void write(Box v) { _data.insert(_data.end(), {v.xmin(), v.ymin(), v.zmin(), v.xmax(), v.ymax(), v.zmax()}); }
+        void write(const vector<int>& v)
+        {
+            _data.push_back(v.size());
+            _data.insert(_data.end(), v.begin(), v.end());
+        }
+    };
+
+    // decorates a std::vector with functions to read serialized versions of various data types
+    class SerializedRead
+    {
+    private:
+        const double* _data;
+        const double* _end;
+
+    public:
+        SerializedRead(const vector<double>& data) : _data(data.data()), _end(data.data() + data.size()) {}
+        bool empty() { return _data == _end; }
+        int readInt() { return *_data++; }
+        void read(double& v) { v = *_data++; }
+        void read(Vec& v)
+        {
+            v.set(*_data, *(_data + 1), *(_data + 2));
+            _data += 3;
+        }
+        void read(Box& v)
+        {
+            v = Box(*_data, *(_data + 1), *(_data + 2), *(_data + 3), *(_data + 4), *(_data + 5));
+            _data += 6;
+        }
+        void read(vector<int>& v)
+        {
+            int n = *_data++;
+            v.clear();
+            v.reserve(n);
+            for (int i = 0; i != n; ++i) v.push_back(*_data++);
+        }
+    };
+}
+
+////////////////////////////////////////////////////////////////////
+
 // class to hold the information about a Tetra cell that is relevant for calculating paths and densities
-class TetraMeshSnapshot::Cell
+class TetraMeshSnapshot::Site
 {
 public:
     Vec _r;                  // site position
@@ -36,11 +94,11 @@ public:
 
 public:
     // constructor stores the specified site position; the other data members are set to zero or empty
-    Cell(Vec r) : _r(r) {}
+    Site(Vec r) : _r(r) {}
 
     // constructor derives the site position from the first three property values and stores the user properties;
     // the other data members are set to zero or empty
-    Cell(const Array& prop) : _r(prop[0], prop[1], prop[2]), _properties{prop} {}  // WIP
+    Site(const Array& prop) : _r(prop[0], prop[1], prop[2]), _properties{prop} {}  // WIP
 
     // adjusts the site position with the specified offset
     void relax(double cx, double cy, double cz) { _r += Vec(cx, cy, cz); }
@@ -65,6 +123,20 @@ public:
 
     // returns the cell/site user properties, if any
     const Array& properties() { return _properties; }
+
+    // writes the Voronoi cell geometry to the serialized data buffer, preceded by the specified cell index,
+    // if the cell geometry has been calculated for this cell; otherwise does nothing
+    void writeGeometryIfPresent(SerializedWrite& wdata, int m)
+    {
+        if (!_neighbors.empty())
+        {
+            wdata.write(m);
+            wdata.write(_neighbors);
+        }
+    }
+
+    // reads the Voronoi cell geometry from the serialized data buffer
+    void readGeometry(SerializedRead& rdata) { rdata.read(_neighbors); }
 };
 
 ////////////////////////////////////////////////////////////////////
@@ -84,39 +156,14 @@ inline double TetraMeshSnapshot::Plucker::dot(const Plucker& a, const Plucker& b
 
 ////////////////////////////////////////////////////////////////////
 
-TetraMeshSnapshot::Edge::Edge(const int i1, const int i2, const Vec& v1, const Vec& v2)
-    : Plucker(v1, v2 - v1), i1(i1), i2(i2)
-{}
+TetraMeshSnapshot::Edge::Edge(int i1, int i2, const Vec* v1, const Vec* v2) : Plucker(*v1, *v2 - *v1), i1(i1), i2(i2) {}
 
 ////////////////////////////////////////////////////////////////////
 
-bool TetraMeshSnapshot::Edge::operator==(const Edge& edge) const
+TetraMeshSnapshot::Tetra::Tetra(const std::array<Vec*, 4>& vertices, const std::array<int, 4>& indices,
+                                const std::array<int, 4>& neighbors, const std::array<Edge*, 6>& edges)
+    : _vertices(vertices), _indices(indices), _neighbors(neighbors), _edges(edges)
 {
-    return (i1 == edge.i1 && i2 == edge.i2) || (i1 == edge.i2 && i2 == edge.i1);
-}
-
-////////////////////////////////////////////////////////////////////
-
-size_t TetraMeshSnapshot::Edge::hash(const int i1, const int i2)
-{
-    size_t max = std::max(i1, i2);
-    size_t min = std::min(i1, i2);
-    return (max << 32) + min;
-}
-
-////////////////////////////////////////////////////////////////////
-
-TetraMeshSnapshot::Tetra::Tetra(const vector<Cell*>& _cells, int i, int j, int k, int l)
-{
-    _vertices[0] = &_cells[i]->_r;
-    _vertices[1] = &_cells[j]->_r;
-    _vertices[2] = &_cells[k]->_r;
-    _vertices[3] = &_cells[l]->_r;
-    _vertex_indices[0] = i;
-    _vertex_indices[1] = j;
-    _vertex_indices[2] = k;
-    _vertex_indices[3] = l;
-
     double xmin = DBL_MAX;
     double ymin = DBL_MAX;
     double zmin = DBL_MAX;
@@ -137,106 +184,33 @@ TetraMeshSnapshot::Tetra::Tetra(const vector<Cell*>& _cells, int i, int j, int k
     _volume = 1 / 6.
               * abs(Vec::dot(Vec::cross(*_vertices[1] - *_vertices[0], *_vertices[2] - *_vertices[0]),
                              *_vertices[3] - *_vertices[0]));
+
+    const Vec e01 = *_vertices[1] - *_vertices[0];
+    const Vec e02 = *_vertices[2] - *_vertices[0];
+    const Vec e03 = *_vertices[3] - *_vertices[0];
+    // this convention makes edges go clockwise around leaving rays from inside the tetrahedron
+    // so their plucker products are all positive if the ray leaves
+    double orientation = Vec::dot(Vec::cross(e01, e02), e03);
+    if (orientation < 0)
+    {
+        std::cout << "ORIENTATION SWITCHED!!!!!!!!!" << std::endl;
+        // swap last 2, this means first 2 indices can be ordered i < j
+        std::swap(_vertices[2], _vertices[3]);
+        std::swap(_neighbors[2], _neighbors[3]);
+        std::swap(_indices[2], _indices[3]);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
 
 double TetraMeshSnapshot::Tetra::getProd(const Plucker& ray, int t1, int t2) const
 {
-    double prod = 1;
-    if (t1 > t2)
-    {
-        std::swap(t1, t2);
-        prod *= -1;
-    }
-    int e = (t1 == 0) ? t2 - 1 : t1 + t2;
+    int e = (std::min(t1, t2) == 0) ? std::max(t1, t2) - 1 : t1 + t2;
     Edge* edge = _edges[e];
-    if (_vertex_indices[t1] != edge->i1)  // not the same order
-    {
-        prod *= -1;
-    }
-    return prod * Plucker::dot(ray, *edge);
-}
 
-////////////////////////////////////////////////////////////////////
-
-double TetraMeshSnapshot::Tetra::orient()
-{
-    const Vec e01 = *_vertices[1] - *_vertices[0];
-    const Vec e02 = *_vertices[2] - *_vertices[0];
-    const Vec e03 = *_vertices[3] - *_vertices[0];
-    // this convention makes edges go clockwise around leaving rays from inside the tetrahedron
-    // so their plucker products are all negative if the ray leaves
-    double orientation = Vec::dot(Vec::cross(e01, e02), e03);
-    if (orientation > 0)
-    {
-        // swap last 2, this means first 2 indices can be ordered i < j
-        std::swap(_vertices[2], _vertices[3]);
-        std::swap(_vertex_indices[2], _vertex_indices[3]);
-    }
-    return orientation;
-}
-
-////////////////////////////////////////////////////////////////////
-
-void TetraMeshSnapshot::Tetra::addEdges(EdgeMap& edgemap)
-{
-
-    for (int t1 = 0; t1 < 3; t1++)
-    {
-        for (int t2 = t1 + 1; t2 < 4; t2++)
-        {
-            // _edgemap
-            int i1 = _vertex_indices[t1];
-            int i2 = _vertex_indices[t2];
-            size_t key = Edge::hash(i1, i2);
-            auto it = edgemap.find(key);
-
-            Edge* edge;
-            if (it == edgemap.end())  // not in map
-            {
-                edge = new Edge(i1, i2, *_vertices[t1], *_vertices[t2]);
-                // add this to the map
-                edgemap[key] = edge;
-            }
-            else  // already in map
-            {
-                edge = it->second;
-            }
-
-            // edges are labelled:
-            //  0  1  2  3  4  5
-            // 01 02 03 12 13 23
-            _edges[(t1 == 0) ? t2 - 1 : t1 + t2] = edge;
-        }
-    }
-}
-
-////////////////////////////////////////////////////////////////////
-
-int TetraMeshSnapshot::Tetra::shareFace(const Tetra* other) const
-{
-    int equal_vert = 0;
-    int opposite = 0 + 1 + 2 + 3;
-
-    for (int i = 0; i < 4; i++)
-    {
-        int vi = _vertex_indices[i];
-
-        for (int j = 0; j < 4; j++)
-        {
-            int vj = other->_vertex_indices[j];
-
-            if (vi == vj)
-            {
-                equal_vert++;
-                opposite -= i;
-                break;
-            }
-        }
-    }
-    if (equal_vert == 3) return opposite;
-    return -1;
+    // not the same order -> *-1
+    // beginning of t1 == beginning of edge (= same order)
+    return (_indices[t1] == edge->i1 ? 1 : -1) * Plucker::dot(ray, *edge);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -244,7 +218,7 @@ int TetraMeshSnapshot::Tetra::shareFace(const Tetra* other) const
 bool TetraMeshSnapshot::Tetra::intersects(std::array<double, 3>& barycoords, const Plucker& ray, int face,
                                           bool leaving) const
 {
-    std::array<int, 3> t = clockwiseVertices(face);
+    std::array<int, 3> t = counterclockwiseVertices(face);
 
     double sum = 0;
     for (int i = 0; i < 3; i++)
@@ -252,7 +226,7 @@ bool TetraMeshSnapshot::Tetra::intersects(std::array<double, 3>& barycoords, con
         // edges: 12, 20, 01
         // verts:  0,  1,  2
         double prod = getProd(ray, t[(i + 1) % 3], t[(i + 2) % 3]);
-        if (leaving != (prod < 0)) return false;
+        if (leaving != (prod >= 0)) return false;  // change this so for both leavig and entering prod=0 works
         barycoords[i] = prod;
         sum += prod;
     }
@@ -263,74 +237,58 @@ bool TetraMeshSnapshot::Tetra::intersects(std::array<double, 3>& barycoords, con
 
 ////////////////////////////////////////////////////////////////////
 
-bool TetraMeshSnapshot::Tetra::equals(const Tetra* other) const
-{
-    for (int v : _vertex_indices)
-    {
-        bool match = false;
-        for (int u : other->_vertex_indices)
-        {
-            if (u == v)
-            {
-                match = true;
-                break;
-            }
-        }
-        if (!match) return false;
-    }
-    return true;
-}
-
-////////////////////////////////////////////////////////////////////
-
-bool TetraMeshSnapshot::Tetra::SameSide(const Vec& v0, const Vec& v1, const Vec& v2, const Vec& v3,
-                                        const Vec& pos) const
-{
-    Vec normal = Vec::cross(v1 - v0, v2 - v0);
-    double dotV4 = Vec::dot(normal, v3 - v0);
-    double dotP = Vec::dot(normal, pos - v0);
-    return (dotV4 > 0) == (dotP > 0);
-}
-
-////////////////////////////////////////////////////////////////////
-
 bool TetraMeshSnapshot::Tetra::inside(const Position& bfr) const
 {
-    // std::array<double, 3> bary = getBary(_vertices);
-    // double sum = 0.;
-    // for (int i = 0; i < 3; i++)
+    if (!Box::contains(bfr)) return false;
+
+    /*
+    face: normals for which the other vertex has a positive dot product with
+    3:*02 x 01*| 10 x 12 | 21 x 20
+    2: 13 x 10 |*01 x 03*| 30 x 31
+    1: 20 x 23 | 32 x 30 |*03 x 02*
+    0: 31 x 32 | 23 x 21 |*12 x 13* // last one doesn't matter
+    */
+
+    // optimized version (probably not that much better)
+    Vec e0p = bfr - *_vertices[0];
+    Vec e02 = *_vertices[2] - *_vertices[0];
+    Vec e01 = *_vertices[1] - *_vertices[0];
+    if (Vec::dot(Vec::cross(e02, e01), e0p) > 0)  // 02 x 01
+        return false;
+
+    Vec e03 = *_vertices[3] - *_vertices[0];
+    if (Vec::dot(Vec::cross(e01, e03), e0p) > 0)  // 01 x 03
+        return false;
+
+    if (Vec::dot(Vec::cross(e03, e02), e0p) > 0)  // 03 x 02
+        return false;
+
+    Vec e1p = bfr - *_vertices[1];
+    Vec e12 = *_vertices[2] - *_vertices[1];
+    Vec e13 = *_vertices[3] - *_vertices[1];
+    return Vec::dot(Vec::cross(e12, e13), e1p) < 0;  // 12 x 13
+
+    // checks 3 edges too many but very simple
+    // for (int face = 0; face < 4; face++)
     // {
-    //     if (bary[i] < 0.) return false;
-    //     sum += bary[i];
+    //     std::array<int, 3> t = clockwiseVertices(face);
+    //     Vec& v0 = *_vertices[t[0]];
+    //     Vec& clock = *_vertices[t[1]];
+    //     Vec& counter = *_vertices[t[2]];
+    //     Vec normal = Vec::cross(counter - v0, clock - v0);
+    //     if (Vec::dot(normal, bfr - v0) < 0)  // is pos on the same side as v3
+    //     {
+    //         return false;
+    //     }
     // }
-    // return 1 - sum >= 0;
-
-    // very poor implementation
-    const Vec& v0 = *_vertices[0];
-    const Vec& v1 = *_vertices[1];
-    const Vec& v2 = *_vertices[2];
-    const Vec& v3 = *_vertices[3];
-    return SameSide(v0, v1, v2, v3, bfr) && SameSide(v1, v2, v3, v0, bfr) && SameSide(v2, v3, v0, v1, bfr)
-           && SameSide(v3, v0, v1, v2, bfr);
-
-    // Vec AB = *_vertices[1] - *_vertices[0];
-    // Vec AC = *_vertices[2] - *_vertices[0];
-    // Vec AD = *_vertices[3] - *_vertices[0];
-    // Vec AP = bfr - *_vertices[0];
-
-    // double volume_ABC = Vec::dot(Vec::cross(AB, AC), AD);
-    // double volume_PBC = Vec::dot(Vec::cross(AP, AC), AD);
-    // double volume_PAC = Vec::dot(Vec::cross(AB, AP), AD);
-    // double volume_PAB = Vec::dot(Vec::cross(AB, AC), AP);
-
-    // return (volume_ABC > 0) == (volume_PBC > 0) == (volume_PAC > 0) == (volume_PAB > 0);
+    // return true;
 }
 
 ////////////////////////////////////////////////////////////////////
 
 Vec TetraMeshSnapshot::Tetra::calcExit(const std::array<double, 3>& barycoords, int face) const
 {
-    std::array<int, 3> t = Tetra::clockwiseVertices(face);
+    std::array<int, 3> t = Tetra::counterclockwiseVertices(face);
     Vec exit;
     for (int i = 0; i < 3; i++) exit += *_vertices[t[i]] * barycoords[i];
     return exit;
@@ -362,7 +320,7 @@ const Array& TetraMeshSnapshot::Tetra::properties()
 
 ////////////////////////////////////////////////////////////////////
 
-std::array<int, 3> TetraMeshSnapshot::Tetra::clockwiseVertices(int face)
+std::array<int, 3> TetraMeshSnapshot::Tetra::counterclockwiseVertices(int face)
 {
     std::array<int, 3> t = {(face + 1) % 4, (face + 2) % 4, (face + 3) % 4};
     // if face is even we should swap two edges
@@ -374,60 +332,167 @@ std::array<int, 3> TetraMeshSnapshot::Tetra::clockwiseVertices(int face)
 
 namespace
 {
-    template<typename T> bool invec(const vector<T>& vec, const T& e)
+    bool lessthan(Vec p1, Vec p2, int axis)
     {
-        return std::find(vec.begin(), vec.end(), e) != vec.end();
+        switch (axis)
+        {
+            case 0:  // split on x
+                if (p1.x() < p2.x()) return true;
+                if (p1.x() > p2.x()) return false;
+                if (p1.y() < p2.y()) return true;
+                if (p1.y() > p2.y()) return false;
+                if (p1.z() < p2.z()) return true;
+                return false;
+            case 1:  // split on y
+                if (p1.y() < p2.y()) return true;
+                if (p1.y() > p2.y()) return false;
+                if (p1.z() < p2.z()) return true;
+                if (p1.z() > p2.z()) return false;
+                if (p1.x() < p2.x()) return true;
+                return false;
+            case 2:  // split on z
+                if (p1.z() < p2.z()) return true;
+                if (p1.z() > p2.z()) return false;
+                if (p1.x() < p2.x()) return true;
+                if (p1.x() > p2.x()) return false;
+                if (p1.y() < p2.y()) return true;
+                return false;
+            default:  // this should never happen
+                return false;
+        }
     }
 
-    double det4(double x0, double y0, double z0, double x1, double y1, double z1, double x2, double y2, double z2,
-                double x3, double y3, double z3)
+    void addFacet(tetgenio::facet* f, std::array<int, 4> vertices)
     {
-        return x0 * y1 * z2 - x0 * y1 * z3 - x0 * y2 * z1 + x0 * y2 * z3 + x0 * y3 * z1 - x0 * y3 * z2 - x1 * y0 * z2
-               + x1 * y0 * z3 + x1 * y2 * z0 - x1 * y2 * z3 - x1 * y3 * z0 + x1 * y3 * z2 + x2 * y0 * z1 - x2 * y0 * z3
-               - x2 * y1 * z0 + x2 * y1 * z3 + x2 * y3 * z0 - x2 * y3 * z1 - x3 * y0 * z1 + x3 * y0 * z2 + x3 * y1 * z0
-               - x3 * y1 * z2 - x3 * y2 * z0 + x3 * y2 * z1;
+        f->numberofpolygons = 1;
+        f->polygonlist = new tetgenio::polygon[f->numberofpolygons];
+        f->numberofholes = 0;
+        f->holelist = NULL;
+        tetgenio::polygon* p = &f->polygonlist[0];
+        p->numberofvertices = 4;
+        p->vertexlist = new int[p->numberofvertices];
+        p->vertexlist[0] = vertices[0];
+        p->vertexlist[1] = vertices[1];
+        p->vertexlist[2] = vertices[2];
+        p->vertexlist[3] = vertices[3];
     }
-
-    // std::array<double, 3> getBary(const std::array<Vec*, 4>& vertices)
-    // {
-    //     double T[3][3];
-    //     double T_inv[3][3];
-
-    //     for (int i = 0; i < 3; i++)
-    //     {
-    //         T[0][i] = vertices[i]->x() - vertices[3]->x();
-    //         T[1][i] = vertices[i]->y() - vertices[3]->y();
-    //         T[2][i] = vertices[i]->z() - vertices[3]->z();
-    //     }
-
-    //     double det = T[0][0] * (T[1][1] * T[2][2] - T[2][1] * T[1][2])
-    //                  - T[0][1] * (T[1][0] * T[2][2] - T[1][2] * T[2][0])
-    //                  + T[0][2] * (T[1][0] * T[2][1] - T[1][1] * T[2][0]);
-
-    //     double invdet = 1 / det;
-
-    //     T_inv[0][0] = (T[1][1] * T[2][2] - T[2][1] * T[1][2]) * invdet;
-    //     T_inv[0][1] = (T[0][2] * T[2][1] - T[0][1] * T[2][2]) * invdet;
-    //     T_inv[0][2] = (T[0][1] * T[1][2] - T[0][2] * T[1][1]) * invdet;
-    //     T_inv[1][0] = (T[1][2] * T[2][0] - T[1][0] * T[2][2]) * invdet;
-    //     T_inv[1][1] = (T[0][0] * T[2][2] - T[0][2] * T[2][0]) * invdet;
-    //     T_inv[1][2] = (T[1][0] * T[0][2] - T[0][0] * T[1][2]) * invdet;
-    //     T_inv[2][0] = (T[1][0] * T[2][1] - T[2][0] * T[1][1]) * invdet;
-    //     T_inv[2][1] = (T[2][0] * T[0][1] - T[0][0] * T[2][1]) * invdet;
-    //     T_inv[2][2] = (T[0][0] * T[1][1] - T[1][0] * T[0][1]) * invdet;
-
-    //     std::array<double, 3> bary;
-    //     double vec[3] = {vertices[3]->x(), vertices[3]->y(), vertices[3]->z()};
-    //     for (int i = 0; i < 3; i++)
-    //     {
-    //         for (int j = 0; j < 3; j++)
-    //         {
-    //             bary[i] += T_inv[i][j] * vec[j];
-    //         }
-    //     }
-    //     return bary;
-    // }
 }
+
+////////////////////////////////////////////////////////////////////
+
+class TetraMeshSnapshot::Node
+{
+private:
+    int _m;        // index in _cells to the site defining the split at this node
+    int _axis;     // split axis for this node (0,1,2)
+    Node* _up;     // ptr to the parent node
+    Node* _left;   // ptr to the left child node
+    Node* _right;  // ptr to the right child node
+    std::vector<int> tetra;
+
+    // returns the square of its argument
+    static double sqr(double x) { return x * x; }
+
+public:
+    // constructor stores the specified site index and child pointers (which may be null)
+    Node(int m, int depth, Node* left, Node* right) : _m(m), _axis(depth % 3), _up(0), _left(left), _right(right)
+    {
+        if (_left) _left->setParent(this);
+        if (_right) _right->setParent(this);
+    }
+
+    // destructor destroys the children
+    ~Node()
+    {
+        delete _left;
+        delete _right;
+    }
+
+    // sets parent pointer (called from parent's constructor)
+    void setParent(Node* up) { _up = up; }
+
+    // returns the corresponding data member
+    int m() const { return _m; }
+    Node* up() const { return _up; }
+    Node* left() const { return _left; }
+    Node* right() const { return _right; }
+
+    // returns the apropriate child for the specified query point
+    Node* child(Vec bfr, const vector<Site*>& sites) const
+    {
+        return lessthan(bfr, sites[_m]->position(), _axis) ? _left : _right;
+    }
+
+    // returns the other child than the one that would be apropriate for the specified query point
+    Node* otherChild(Vec bfr, const vector<Site*>& sites) const
+    {
+        return lessthan(bfr, sites[_m]->position(), _axis) ? _right : _left;
+    }
+
+    // returns the squared distance from the query point to the split plane
+    double squaredDistanceToSplitPlane(Vec bfr, const vector<Site*>& sites) const
+    {
+        switch (_axis)
+        {
+            case 0:  // split on x
+                return sqr(sites[_m]->position().x() - bfr.x());
+            case 1:  // split on y
+                return sqr(sites[_m]->position().y() - bfr.y());
+            case 2:  // split on z
+                return sqr(sites[_m]->position().z() - bfr.z());
+            default:  // this should never happen
+                return 0;
+        }
+    }
+
+    // returns the node in this subtree that represents the site nearest to the query point
+    Node* nearest(Vec bfr, const vector<Site*>& sites)
+    {
+        // recursively descend the tree until a leaf node is reached, going left or right depending on
+        // whether the specified point is less than or greater than the current node in the split dimension
+        Node* current = this;
+        while (Node* child = current->child(bfr, sites)) current = child;
+
+        // unwind the recursion, looking for the nearest node while climbing up
+        Node* best = current;
+        double bestSD = sites[best->m()]->squaredDistanceTo(bfr);
+        while (true)
+        {
+            // if the current node is closer than the current best, then it becomes the current best
+            double currentSD = sites[current->m()]->squaredDistanceTo(bfr);
+            if (currentSD < bestSD)
+            {
+                best = current;
+                bestSD = currentSD;
+            }
+
+            // if there could be points on the other side of the splitting plane for the current node
+            // that are closer to the search point than the current best, then ...
+            double splitSD = current->squaredDistanceToSplitPlane(bfr, sites);
+            if (splitSD < bestSD)
+            {
+                // move down the other branch of the tree from the current node looking for closer points,
+                // following the same recursive process as the entire search
+                Node* other = current->otherChild(bfr, sites);
+                if (other)
+                {
+                    Node* otherBest = other->nearest(bfr, sites);
+                    double otherBestSD = sites[otherBest->m()]->squaredDistanceTo(bfr);
+                    if (otherBestSD < bestSD)
+                    {
+                        best = otherBest;
+                        bestSD = otherBestSD;
+                    }
+                }
+            }
+
+            // move up to the parent until we meet the top node
+            if (current == this) break;
+            current = current->up();
+        }
+        return best;
+    }
+};
 
 ////////////////////////////////////////////////////////////////////
 
@@ -437,8 +502,9 @@ TetraMeshSnapshot::TetraMeshSnapshot() {}
 
 TetraMeshSnapshot::~TetraMeshSnapshot()
 {
-    for (auto cell : _cells) delete cell;
+    for (auto cell : _sites) delete cell;
     for (auto tetra : _tetrahedra) delete tetra;
+    for (auto tree : _blocktrees) delete tree;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -459,7 +525,7 @@ TetraMeshSnapshot::TetraMeshSnapshot(const SimulationItem* item, const Box& exte
     in.addColumn("position y", "length", "pc");
     in.addColumn("position z", "length", "pc");
     Array coords;
-    while (in.readRow(coords)) _cells.push_back(new Cell(Vec(coords[0], coords[1], coords[2])));
+    while (in.readRow(coords)) _sites.push_back(new Site(Vec(coords[0], coords[1], coords[2])));
     in.close();
 
     // calculate the Tetra cells
@@ -475,8 +541,8 @@ TetraMeshSnapshot::TetraMeshSnapshot(const SimulationItem* item, const Box& exte
 {
     // prepare the data
     int n = sli->numSites();
-    _cells.resize(n);
-    for (int m = 0; m != n; ++m) _cells[m] = new Cell(sli->sitePosition(m));
+    _sites.resize(n);
+    for (int m = 0; m != n; ++m) _sites[m] = new Site(sli->sitePosition(m));
 
     // calculate the Tetra cells
     setContext(item);
@@ -492,8 +558,8 @@ TetraMeshSnapshot::TetraMeshSnapshot(const SimulationItem* item, const Box& exte
 {
     // prepare the data
     int n = sites.size();
-    _cells.resize(n);
-    for (int m = 0; m != n; ++m) _cells[m] = new Cell(sites[m]);
+    _sites.resize(n);
+    for (int m = 0; m != n; ++m) _sites[m] = new Site(sites[m]);
 
     // calculate the Tetra cells
     setContext(item);
@@ -535,260 +601,120 @@ namespace
 
 void TetraMeshSnapshot::buildMesh(bool relax)
 {
-    const double A = extent().rmax().norm() * 1000;  // WIP
+    tetgenio in, out;
+    tetgenio::facet* f;
+    tetgenio::polygon* p;
 
-    int numCells = _cells.size();
+    in.firstnumber = 0;
+    in.numberofpoints = 8;
+    in.pointlist = new REAL[in.numberofpoints * 3];
 
-    // remove sites that lie outside of the domain
-    int numOutside = 0;
-    for (int m = 0; m != numCells; ++m)
+    // _extent = Box(-1, -1, -1, 1, 1, 1);
+
+    // bottom half (zmin)
+    in.pointlist[0] = _extent.xmin();
+    in.pointlist[1] = _extent.ymin();
+    in.pointlist[2] = _extent.zmin();
+
+    in.pointlist[3] = _extent.xmax();
+    in.pointlist[4] = _extent.xmin();
+    in.pointlist[5] = _extent.zmin();
+
+    in.pointlist[6] = _extent.xmax();
+    in.pointlist[7] = _extent.xmax();
+    in.pointlist[8] = _extent.zmin();
+
+    in.pointlist[9] = _extent.xmin();
+    in.pointlist[10] = _extent.ymax();
+    in.pointlist[11] = _extent.zmin();
+
+    // top half (zmax)
+    for (int i = 0; i < 4; i++)
     {
-        if (!_extent.contains(_cells[m]->position()))
+        in.pointlist[12 + i * 3 + 0] = in.pointlist[i * 3 + 0];
+        in.pointlist[12 + i * 3 + 1] = in.pointlist[i * 3 + 1];
+        in.pointlist[12 + i * 3 + 2] = _extent.zmax();
+    }
+
+    in.numberoffacets = 6;
+    in.facetlist = new tetgenio::facet[in.numberoffacets];
+    addFacet(&in.facetlist[0], {0, 1, 2, 3});  // Facet 1. bottom
+    addFacet(&in.facetlist[1], {4, 5, 6, 7});  // Facet 2. top
+    addFacet(&in.facetlist[2], {0, 4, 5, 1});  // Facet 3. front
+    addFacet(&in.facetlist[3], {1, 5, 6, 2});  // Facet 4. right
+    addFacet(&in.facetlist[4], {2, 6, 7, 3});  // Facet 5. back
+    addFacet(&in.facetlist[5], {3, 7, 4, 0});  // Facet 6. left
+
+    tetgenbehavior behavior;
+    behavior.plc = 1;        // -p PLC
+    behavior.quality = 1;    // -q quality mesh
+    behavior.neighout = 2;   // -nn neighbors and edges?
+    behavior.zeroindex = 1;  // -z zero index
+    behavior.edgesout = 1;   // -e edges
+
+    // parameters
+    behavior.minratio = 2.0;   // -q quality
+    behavior.maxvolume = 0.9;  // -a max volume
+    // behavior.mindihedral = 5.0;  // -q/ minimal angle
+
+    tetrahedralize(&behavior, &in, &out);
+    numTetra = out.numberoftetrahedra;
+    numEdges = out.numberofedges;
+    numVertices = out.numberofpoints;
+
+    _vertices.resize(numVertices);
+    for (int i = 0; i < numVertices; i++)
+    {
+        double x = out.pointlist[3 * i + 0];
+        double y = out.pointlist[3 * i + 1];
+        double z = out.pointlist[3 * i + 2];
+
+        _vertices[i] = new Vec(x, y, z);
+    }
+
+    _edges.resize(numEdges);
+    for (int i = 0; i < numEdges; i++)
+    {
+        int v1 = out.edgelist[2 * i];
+        int v2 = out.edgelist[2 * i + 1];
+        _edges[i] = new Edge(v1, v2, _vertices[v1], _vertices[v2]);
+    }
+
+    _tetrahedra.resize(numTetra);
+    for (int i = 0; i < numTetra; i++)
+    {
+        std::array<Vec*, 4> vertices;
+        std::array<int, 4> indices;
+        std::array<int, 4> neighbors;
+        std::array<Edge*, 6> edges;
+        for (int c = 0; c < 4; c++)
         {
-            delete _cells[m];
-            _cells[m] = 0;
-            numOutside++;
+            indices[c] = out.tetrahedronlist[4 * i + c];
+            vertices[c] = _vertices[indices[c]];
+            neighbors[c] = out.neighborlist[4 * i + c];
         }
-    }
-    if (numOutside) numCells = eraseNullPointers(_cells);
-
-    // sort sites in order of increasing x coordinate to accelerate search for nearby sites
-    std::sort(_cells.begin(), _cells.end(), [](Cell* c1, Cell* c2) { return c1->x() < c2->x(); });
-
-    // remove sites that lie too nearby another site
-    int numNearby = 0;
-    for (int m = 0; m != numCells; ++m)
-    {
-        for (int j = m + 1; j != numCells && _cells[j]->x() - _cells[m]->x() < _eps; ++j)
+        for (int e = 0; e < 6; e++)
         {
-            if ((_cells[j]->position() - _cells[m]->position()).norm2() < _eps * _eps)
-            {
-                delete _cells[m];
-                _cells[m] = 0;
-                numNearby++;
-                break;
-            }
+            int ei = out.tet2edgelist[6 * i + e];
+
+            Edge* edge = _edges[ei];
+            auto t1 = std::find(indices.begin(), indices.end(), edge->i1) - indices.begin();
+            auto t2 = std::find(indices.begin(), indices.end(), edge->i2) - indices.begin();
+
+            // tetgen edge order: 23 03 01 12 13 02
+            // static constexpr int tetgen_order[12] = {2, 3, 0, 3, 0, 1, 1, 2, 1, 3, 0, 2};
+            // int t1 = tetgen_order[2 * e];      // 2 0 0 1 1 0
+            // int t2 = tetgen_order[2 * e + 1];  // 3 3 1 2 3 2
+
+            if (t1 > t2) std::swap(t1, t2);
+            edges[(t1 == 0) ? t2 - 1 : t1 + t2] = _edges[ei];
         }
-    }
-    if (numNearby) numCells = eraseNullPointers(_cells);
-
-    // log the number of sites
-    if (!numOutside && !numNearby)
-    {
-        log()->info("  Number of sites: " + std::to_string(numCells));
-    }
-    else
-    {
-        if (numOutside) log()->info("  Number of sites outside domain: " + std::to_string(numOutside));
-        if (numNearby) log()->info("  Number of sites too nearby others: " + std::to_string(numNearby));
-        log()->info("  Number of sites retained: " + std::to_string(numCells));
+        _tetrahedra[i] = new Tetra(vertices, indices, neighbors, edges);
     }
 
-    // abort if there are no cells to calculate
-    if (numCells <= 0) return;
-
-    // calculate number of blocks in each direction based on number of cells
-    _nb = max(3, min(250, static_cast<int>(cbrt(numCells))));
-    _nb2 = _nb * _nb;
-    _nb3 = _nb * _nb * _nb;
-
-    // ========= RELAXATION =========
-
-    // if requested, perform a single relaxation step
-    if (relax)
-    {
-        // table to hold the calculate relaxation offset for each site
-        // (initialized to zero so we can communicate the result between parallel processes using sumAll)
-        Table<2> offsets(numCells, 3);
-
-        // add the retained original sites to a temporary Voronoi container, using the cell index m as ID
-        voro::container vcon(_extent.xmin(), _extent.xmax(), _extent.ymin(), _extent.ymax(), _extent.zmin(),
-                             _extent.zmax(), _nb, _nb, _nb, false, false, false, 16);
-        for (int m = 0; m != numCells; ++m)
-        {
-            Vec r = _cells[m]->position();
-            vcon.put(m, r.x(), r.y(), r.z());
-        }
-
-        // compute the cell in the Voronoi tesselation corresponding to each site
-        // and store the cell's centroid (relative to the site position) as the relaxation offset
-        log()->info("Relaxing Voronoi tessellation with " + std::to_string(numCells) + " cells");
-        log()->infoSetElapsed(numCells);
-        auto parallel = log()->find<ParallelFactory>()->parallelDistributed();
-        parallel->call(numCells, [this, &vcon, &offsets](size_t firstIndex, size_t numIndices) {
-            // allocate a separate cell calculator for each thread to avoid conflicts
-            voro::voro_compute<voro::container> vcompute(vcon, _nb, _nb, _nb);
-            // allocate space for the resulting cell info
-            voro::voronoicell vcell;
-
-            // loop over all cells and work on the ones that have a particle index in our dedicated range
-            // (we cannot access cells in the container based on cell index m without building an extra data structure)
-            int numDone = 0;
-            voro::c_loop_all vloop(vcon);
-            if (vloop.start()) do
-                {
-                    size_t m = vloop.pid();
-                    if (m >= firstIndex && m < firstIndex + numIndices)
-                    {
-                        // compute the cell and store its centroid as relaxation offset
-                        bool ok = vcompute.compute_cell(vcell, vloop.ijk, vloop.q, vloop.i, vloop.j, vloop.k);
-                        if (ok) vcell.centroid(offsets(m, 0), offsets(m, 1), offsets(m, 2));
-
-                        // log message if the minimum time has elapsed
-                        numDone = (numDone + 1) % logProgressChunkSize;
-                        if (numDone == 0) log()->infoIfElapsed("Computed Voronoi cells: ", logProgressChunkSize);
-                    }
-                } while (vloop.inc());
-            if (numDone > 0) log()->infoIfElapsed("Computed Voronoi cells: ", numDone);
-        });
-
-        // communicate the calculated offsets between parallel processes, if needed, and apply them to the cells
-        ProcessManager::sumToAll(offsets.data());
-        for (int m = 0; m != numCells; ++m) _cells[m]->relax(offsets(m, 0), offsets(m, 1), offsets(m, 2));
-    }
-
-    // ========= FINAL GRID =========
-
-    // add the final sites to a temporary Tetra container, using the cell index m as ID
-    voro::container vcon(-A, A, -A, A, -A, A, _nb, _nb, _nb, false, false, false, 16);
-    for (int m = 0; m != numCells; ++m)
-    {
-        Vec r = _cells[m]->position();
-        vcon.put(m, r.x(), r.y(), r.z());
-    }
-
-    // for each site:
-    //   - compute the corresponding cell in the Tetra tesselation
-    //   - extract and copy the relevant information to the cell object with the corresponding index in our vector
-    log()->info("Constructing intermediate Voronoi tessellation with " + std::to_string(numCells) + " cells");
-    log()->infoSetElapsed(numCells);
-    // allocate a separate cell calculator for each thread to avoid conflicts
-    voro::voro_compute<voro::container> vcompute(vcon, _nb, _nb, _nb);
-    // allocate space for the resulting cell info
-    voro::voronoicell_neighbor vcell;
-    std::vector<voro::voronoicell_neighbor> vcells;
-
-    // loop over all cells and work on the ones that have a particle index in our dedicated range
-    // (we cannot access cells in the container based on cell index m without building an extra data structure)
-    int numDone = 0;
-    voro::c_loop_all vloop(vcon);
-    if (vloop.start()) do
-        {
-            size_t m = vloop.pid();
-            // compute the cell and copy all relevant information to the cell object that will stay around
-            bool ok = vcompute.compute_cell(vcell, vloop.ijk, vloop.q, vloop.i, vloop.j, vloop.k);
-            if (ok) _cells[m]->init(vcell);
-
-            // log message if the minimum time has elapsed
-            numDone = (numDone + 1) % logProgressChunkSize;
-            if (numDone == 0) log()->infoIfElapsed("Computed Tetra cells: ", logProgressChunkSize);
-        } while (vloop.inc());
-    if (numDone > 0) log()->infoIfElapsed("Computed Tetra cells: ", numDone);
-
-    for (int i = 0; i < numCells; i++)
-    {
-        Cell* c1 = _cells[i];
-
-        for (int j : c1->neighbors())
-        {
-            // first 2 indices can always be ordered i < j
-            // last 2 indices can be swapped if orientation is not correct
-            if (j < 0 || j > i) continue;
-
-            Cell* c2 = _cells[j];
-
-            for (int k : c2->neighbors())
-            {
-                if (k < 0 || k == i) continue;
-
-                // mutual neighbours
-                if (!invec(c1->neighbors(), k)) continue;
-
-                for (int l : _cells[k]->neighbors())
-                {
-                    if (l < 0 || l == j || l == i) continue;
-
-                    // mutual neighbours of both c1 and c2
-                    if (!invec(c1->neighbors(), l) || !invec(c2->neighbors(), l)) continue;
-
-                    // no duplicates in different order // probably use set
-                    Tetra* tetra = new Tetra(_cells, i, j, k, l);
-                    if (inTetrahedra(tetra)) continue;
-
-                    // check if tetrahedron is Delaunay
-                    Vec v0 = _cells[i]->_r;
-                    Vec v1 = _cells[j]->_r;
-                    Vec v2 = _cells[k]->_r;
-                    Vec v3 = _cells[l]->_r;
-                    double x0 = v0.x(), y0 = v0.y(), z0 = v0.z();
-                    double x1 = v1.x(), y1 = v1.y(), z1 = v1.z();
-                    double x2 = v2.x(), y2 = v2.y(), z2 = v2.z();
-                    double x3 = v3.x(), y3 = v3.y(), z3 = v3.z();
-
-                    double r0 = v0.norm2();
-                    double r1 = v1.norm2();
-                    double r2 = v2.norm2();
-                    double r3 = v3.norm2();
-
-                    double a = det4(x0, y0, z0, x1, y1, z1, x2, y2, z2, x3, y3, z3);
-                    double Dx = det4(r0, y0, z0, r1, y1, z1, r2, y2, z2, r3, y3, z3);
-                    double Dy = -det4(r0, x0, z0, r1, x1, z1, r2, x2, z2, r3, x3, z3);
-                    double Dz = det4(r0, x0, y0, r1, x1, y1, r2, x2, y2, r3, x3, y3);
-
-                    Vec center(Dx / (2 * a), Dy / (2 * a), Dz / (2 * a));
-                    double R = (center - v0).norm2();
-
-                    bool delaunay = true;
-                    for (int v : tetra->_vertex_indices)
-                    {
-                        Cell* c = _cells[v];
-                        for (int n : c->neighbors())
-                        {
-                            if (n < 0 || n == i || n == j || n == k || n == l) continue;
-                            double r = (center - _cells[n]->_r).norm2();
-                            if (r < R)
-                            {
-                                delaunay = false;
-                                goto end_delaunay;
-                            }
-                        }
-                    }
-                end_delaunay:
-                    if (!delaunay) continue;
-
-                    // orient tetrahedron in the same consistent way
-                    tetra->orient();
-
-                    //add edges
-                    tetra->addEdges(_edgemap);
-
-                    _tetrahedra.push_back(tetra);
-                }
-            }
-        }
-    }
-    _tetrahedra.shrink_to_fit();
-    numTetra = _tetrahedra.size();
-
-    // find neighbors brute force
-    for (size_t i = 0; i < _tetrahedra.size(); i++)
-    {
-        Tetra* tetra = _tetrahedra[i];
-
-        for (size_t j = 0; j < _tetrahedra.size(); j++)
-        {
-            if (i == j) continue;
-
-            const Tetra* other = _tetrahedra[j];
-
-            int shared = tetra->shareFace(other);
-            if (shared != -1) tetra->_neighbors[shared] = j;
-        }
-    }
-
-    log()->info("Done computing Delaunay tetrahedralization with " + std::to_string(_tetrahedra.size()) + " cells");
-    log()->info("number of edges: " + std::to_string(_edgemap.size()));
-    log()->info("bucket count for edgeset: " + std::to_string(_edgemap.bucket_count()));
+    log()->info("number of vertices " + std::to_string(numVertices));
+    log()->info("number of edges " + std::to_string(numEdges));
+    log()->info("number of tetrahedra " + std::to_string(numTetra));
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -859,51 +785,138 @@ void TetraMeshSnapshot::calculateDensityAndMass()
 
 ////////////////////////////////////////////////////////////////////
 
-bool TetraMeshSnapshot::inTetrahedra(const Tetra* tetra) const
+TetraMeshSnapshot::Node* TetraMeshSnapshot::buildTree(vector<int>::iterator first, vector<int>::iterator last,
+                                                      int depth) const
 {
-    for (const Tetra* t : _tetrahedra)
+    auto length = last - first;
+    if (length > 0)
     {
-        if (tetra->equals(t)) return true;
+        auto median = length >> 1;
+        std::nth_element(first, first + median, last, [this, depth](int m1, int m2) {
+            return m1 != m2 && lessthan(_sites[m1]->position(), _sites[m2]->position(), depth % 3);
+        });
+        return new TetraMeshSnapshot::Node(*(first + median), depth, buildTree(first, first + median, depth + 1),
+                                           buildTree(first + median + 1, last, depth + 1));
     }
-    return false;
+    return nullptr;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void TetraMeshSnapshot::buildSearchPerBlock()
+{
+    // abort if there are no cells
+    int numTetra = _sites.size();
+    if (!numTetra) return;
+
+    log()->info("Building data structures to accelerate searching the Tetra tesselation");
+
+    // -------------  block lists  -------------
+
+    // initialize a vector of nb x nb x nb lists, each containing the cells overlapping a certain block in the domain
+    _blocklists.resize(_nb3);
+
+    // add the cell object to the lists for all blocks it may overlap
+    int i1, j1, k1, i2, j2, k2;
+    for (int m = 0; m != numTetra; ++m)
+    {
+        auto& vert = _tetrahedra[m]->_vertices;
+        auto vert_minmax =
+            std::minmax_element(vert.begin(), vert.end(), [](Vec* a, Vec* b) { return a->norm2() < b->norm2(); });
+
+        _extent.cellIndices(i1, j1, k1, **vert_minmax.first - Vec(_eps, _eps, _eps), _nb, _nb, _nb);
+        _extent.cellIndices(i2, j2, k2, **vert_minmax.second + Vec(_eps, _eps, _eps), _nb, _nb, _nb);
+        for (int i = i1; i <= i2; i++)
+            for (int j = j1; j <= j2; j++)
+                for (int k = k1; k <= k2; k++) _blocklists[i * _nb2 + j * _nb + k].push_back(m);
+    }
+
+    // compile block list statistics
+    int minRefsPerBlock = INT_MAX;
+    int maxRefsPerBlock = 0;
+    int64_t totalBlockRefs = 0;
+    for (int b = 0; b < _nb3; b++)
+    {
+        int refs = _blocklists[b].size();
+        totalBlockRefs += refs;
+        minRefsPerBlock = min(minRefsPerBlock, refs);
+        maxRefsPerBlock = max(maxRefsPerBlock, refs);
+    }
+    double avgRefsPerBlock = double(totalBlockRefs) / _nb3;
+
+    // log block list statistics
+    log()->info("  Number of blocks in search grid: " + std::to_string(_nb3) + " (" + std::to_string(_nb) + "^3)");
+    log()->info("  Average number of cells per block: " + StringUtils::toString(avgRefsPerBlock, 'f', 1));
+    log()->info("  Minimum number of cells per block: " + std::to_string(minRefsPerBlock));
+    log()->info("  Maximum number of cells per block: " + std::to_string(maxRefsPerBlock));
+
+    // -------------  search trees  -------------
+
+    // for each block that contains more than a predefined number of cells,
+    // construct a search tree on the site locations of the cells
+    _blocktrees.resize(_nb3);
+    for (int b = 0; b < _nb3; b++)
+    {
+        vector<int>& ids = _blocklists[b];
+        if (ids.size() > 9) _blocktrees[b] = buildTree(ids.begin(), ids.end(), 0);
+    }
+
+    // compile and log search tree statistics
+    int numTrees = 0;
+    for (int b = 0; b < _nb3; b++)
+        if (_blocktrees[b]) numTrees++;
+    log()->info("  Number of search trees: " + std::to_string(numTrees) + " ("
+                + StringUtils::toString(100. * numTrees / _nb3, 'f', 1) + "% of blocks)");
+}
+
+////////////////////////////////////////////////////////////////////
+
+void TetraMeshSnapshot::buildSearchSingle()
+{
+    // log the number of sites
+    int numCells = _sites.size();
+    log()->info("  Number of sites: " + std::to_string(numCells));
+
+    // abort if there are no cells
+    if (!numCells) return;
+
+    // construct a single search tree on the site locations of all cells
+    log()->info("Building data structure to accelerate searching " + std::to_string(numCells) + " Voronoi sites");
+    _blocktrees.resize(1);
+    vector<int> ids(numCells);
+    for (int m = 0; m != numCells; ++m) ids[m] = m;
+    _blocktrees[0] = buildTree(ids.begin(), ids.end(), 0);
 }
 
 ////////////////////////////////////////////////////////////////////
 
 void TetraMeshSnapshot::writeGridPlotFiles(const SimulationItem* /*probe*/) const
 {
-    std::ofstream outputFile("data/input.txt");
-    outputFile << "voronois=" << _cells.size() << "\n";
-    for (size_t i = 0; i < _cells.size(); i++)
-    {
-        outputFile << "voronoi=" << i << "\n";
-        Vec& r = _cells[i]->_r;
-        outputFile << r.x() << ", " << r.y() << ", " << r.z() << "\n";
+    std::ofstream outputFile("data/tetrahedra.txt");
+    // outputFile << "vertices=" << _vertices.size() << "\n";
+    // for (size_t i = 0; i < _vertices.size(); i++)
+    // {
+    //     outputFile << "vertex=" << i << "\n";
+    //     Vec& r = *_vertices[i];
+    //     outputFile << r.x() << ", " << r.y() << ", " << r.z() << "\n";
+    //     outputFile << "\n";
+    // }
 
-        outputFile << _cells[i]->neighbors().size() << " neighbors=";
-        for (int n : _cells[i]->neighbors())
-        {
-            if (n >= 0) outputFile << " " << n << ",";
-        }
-        outputFile << "\n";
-    }
-
-    outputFile << "tetrahedra=" << _tetrahedra.size() << "\n";
     for (size_t i = 0; i < _tetrahedra.size(); i++)
     {
         const Tetra* tetra = _tetrahedra[i];
-        outputFile << "tetrahedron=" << i << "\nvertices=";
         for (size_t l = 0; l < 4; l++)
         {
-            outputFile << " " << tetra->_vertex_indices[l] << ",";
+            const Vec* r = tetra->_vertices[l];
+            outputFile << r->x() << ", " << r->y() << ", " << r->z() << "\n";
         }
-
-        outputFile << "\n" << tetra->_neighbors.size() << " neighbors=";
-        for (size_t j = 0; j < 4; j++)
-        {
-            outputFile << " " << tetra->_neighbors[j] << ",";
-        }
-        outputFile << "\n";
+        // outputFile << "neighbors=";
+        // for (size_t j = 0; j < 4; j++)
+        // {
+        //     outputFile << " " << tetra->_neighbors[j];
+        //     if (j != 3) outputFile << ",";
+        // }
+        // outputFile << "\n";
     }
     // for (size_t i = 0; i < _tetrahedra.size(); i++)
     // {
@@ -1023,11 +1036,30 @@ Position TetraMeshSnapshot::generatePosition() const
 
 int TetraMeshSnapshot::cellIndex(Position bfr) const
 {
+    // make sure the position is inside the domain
+    // if (!_extent.contains(bfr)) return -1;
+
+    // determine the block in which the point falls
+    // if we didn't build a Voronoi mesh, the search tree is always in the first "block"
+    // int i, j, k;
+    // _extent.cellIndices(i, j, k, bfr, _nb, _nb, _nb);
+    // int b = i * _nb2 + j * _nb + k;
+
+    // look for the closest site in this block, using the search tree if there is one
+    // Node* tree = _blocktrees[b];
+    // int m = tree->nearest(bfr, _sites)->m();
+    // find all edges that connect to m
+    // Site* site = _sites[m];
+
+    // I can retreive all edges by looking at neighbors of Site
+    // i want tetra though so I'll build hashmap for Tetra instead of vector
+
+    // if there is no search tree, simply loop over the index list
+    // maybe use a k-d tree here to find nearest tetrahedra
     for (int i = 0; i < numTetra; i++)
     {
         const Tetra* tetra = _tetrahedra[i];
-        // speed up by rejecting all points that are not in de bounding box
-        if (tetra->Box::contains(bfr) && tetra->Tetra::inside(bfr)) return i;
+        if (tetra->Tetra::inside(bfr)) return i;
     }
     return -1;
 }
@@ -1036,7 +1068,7 @@ int TetraMeshSnapshot::cellIndex(Position bfr) const
 
 const Array& TetraMeshSnapshot::properties(int m) const
 {
-    return _cells[m]->properties();
+    return _sites[m]->properties();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -1065,6 +1097,30 @@ class TetraMeshSnapshot::MySegmentGenerator : public PathSegmentGenerator
 public:
     MySegmentGenerator(const TetraMeshSnapshot* grid) : _grid(grid) {}
 
+#define WRITE
+
+#ifdef WRITE
+    std::ofstream out;
+
+    void startwriting()
+    {
+        if (!out.is_open()) out.open("data/photon.txt");
+    }
+
+    void stopwriting()
+    {
+        out.close();
+    }
+
+    void write(const Vec& exit, double ds, int face)
+    {
+        out << "photon=" << _mr << "," << face << "\n";
+        out << "ds=" << ds << "\n";
+        out << "r=" << r().x() << "," << r().y() << "," << r().z() << "\n";
+        out << "exit=" << exit.x() << "," << exit.y() << "," << exit.z() << "\n";
+        out << "k=" << k().x() << "," << k().y() << "," << k().z() << std::endl;
+    }
+#endif
     bool next() override
     {
         if (state() == State::Unknown)
@@ -1083,6 +1139,11 @@ public:
             // if the photon packet started outside the grid, return the corresponding nonzero-length segment;
             // otherwise fall through to determine the first actual segment
             if (ds() > 0.) return true;
+
+#ifdef WRITE
+            startwriting();
+            write(r(), 0, _mr);
+#endif
         }
 
         // intentionally falls through
@@ -1098,7 +1159,7 @@ public:
                 std::array<double, 3> prods;
 
                 int leavingFace = -1;
-                if (enteringFace == -1)  // this should only be done once max per ray
+                if (enteringFace == -1)  // start ray traversal inside
                 {
                     for (int face = 0; face < 4; face++)
                     {
@@ -1108,18 +1169,14 @@ public:
                             break;
                         }
                     }
-                    // if (leavingFace == -1)
-                    // {
-                    //     _grid->log()->warning("no leaving face found!");
-                    // }
                 }
                 else
                 {
-                    std::array<int, 3> t = Tetra::clockwiseVertices(enteringFace);
+                    std::array<int, 3> t = Tetra::counterclockwiseVertices(enteringFace);
 
                     // 2 step decision tree
                     prods[0] = tetra->getProd(ray, t[0], enteringFace);
-                    bool clockwise0 = prods[0] < 0;
+                    bool clockwise0 = prods[0] > 0;
                     int i = clockwise0 ? 1 : 2;  // if (counter)clockwise move (counter)clockwise
                     prods[i] = tetra->getProd(ray, t[i], enteringFace);
 
@@ -1128,14 +1185,14 @@ public:
                     // if clockwise then counter: face=t2
                     // if counter then clockwise: face=t1
 
-                    if (clockwise0 == (prods[i] < 0))
+                    if (clockwise0 == (prods[i] > 0))
                         leavingFace = t[0];
                     else if (clockwise0)
                         leavingFace = t[2];
                     else
                         leavingFace = t[1];
 
-                    // get prods (this calculates one prod too many but is much cleaner)
+                    // get prods (this calculates prod[i] again but is much cleaner)
                     tetra->intersects(prods, ray, leavingFace, true);
                 }
 
@@ -1145,6 +1202,7 @@ public:
                 {
                     propagater(_grid->_eps);
                     _mr = _grid->cellIndex(r());
+                    enteringFace = -1;
 
                     // if we're outside the domain, terminate the path without returning a path segment
                     if (_mr < 0)
@@ -1164,7 +1222,9 @@ public:
 
                     propagater(ds + _grid->_eps);
                     setSegment(_mr, ds);
-
+#ifdef WRITE
+                    write(exit, ds, leavingFace);
+#endif
                     // set enteringFace if there is a neighboring cell
                     if (next_mr != -1)
                     {
@@ -1175,12 +1235,11 @@ public:
                     else
                     {
                         enteringFace = -1;
+                        setState(State::Outside);
                     }
                     // set new cell
                     _mr = next_mr;
 
-                    // if we're outside the domain, terminate the path after returning this path segment
-                    if (_mr < 0) setState(State::Outside);
                     return true;
                 }
             }
@@ -1208,6 +1267,10 @@ public:
                 double ds = min({t_x, t_y, t_z});
                 propagater(ds + _grid->_eps);
                 setSegment(_mr, ds);
+#ifdef WRITE
+                write(r(), ds, -1);
+                stopwriting();
+#endif
                 return false;
             }
 
@@ -1233,7 +1296,10 @@ public:
 
                                 double ds = (exit - r()).norm();
                                 propagater(ds + _grid->_eps);
-                                // setSegment(-1, ds);  // not sure if this is needed
+// setSegment(-1, ds);  // not sure if this is needed
+#ifdef WRITE
+                                write(exit, ds, enteringFace);
+#endif
 
                                 wasInside = true;
                                 setState(State::Inside);
@@ -1244,6 +1310,9 @@ public:
                 }
             }
         }
+#ifdef WRITE
+        stopwriting();
+#endif
         return false;
     }
 };
