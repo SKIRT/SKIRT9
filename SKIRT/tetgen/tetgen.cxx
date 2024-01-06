@@ -28403,7 +28403,7 @@ bool tetgenmesh::checktet4split(triface *chktet, REAL* param, int& qflag)
 
   if (in->tetunsuitable != NULL) {
     // Execute the user-defined meshing sizing evaluation.
-    if ((*(in->tetunsuitable))(pa, pb, pc, pd, NULL, 0)) {
+    if (((in->tetunsuitable))(pa, pb, pc, pd, vol)) { // SKIRT: removed unused parameters here
       return true;
     }
   }

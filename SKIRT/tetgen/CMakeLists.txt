@@ -10,7 +10,8 @@
 # at https://github.com/libigl/tetgen (git commit 4f3bfba).
 #
 # Changes:
-#  - 
+#  - changed TetSizeFunc from function pointer to std::function so lambda with captures can be used
+#  - adjusted the calling of the tetunsuitable to remove the last two unused parameters
 #---------------------------------------------------------------------
 
 # set the target name

@@ -10,6 +10,9 @@
 #include "Snapshot.hpp"
 #include <unordered_map>
 #include "array"
+#include "MediumSystem.hpp"
+#include "TetraMeshSpatialGrid.hpp"
+#include "Tetrahedron.hpp"
 class PathSegmentGenerator;
 class SiteListInterface;
 class SpatialGridPath;
@@ -140,109 +143,12 @@ public:
     //========== Specialty constructors ==========
 
 public:
-    /** This constructor reads the site positions from the specified text column file. The input
-        file must contain three columns specifying the x,y,z coordinates. The default unit is
-        parsec, which can be overridden by providing column header info in the file. The
-        constructor completes the configuration for the object (but without importing mass density
-        information or setting a mass density policy) and calls the private buildMesh() and
-        buildSearch() functions to create the relevant data structures.
-
-        The \em item argument specifies a simulation item in the hierarchy of the caller (usually
-        the caller itself) used to retrieve context such as an appropriate logger. The \em extent
-        argument specifies the extent of the domain as a box lined up with the coordinate axes.
-        Sites located outside of the domain and sites that are too close to another site are
-        discarded. The \em filename argument specifies the name of the input file, including
-        filename extension but excluding path and simulation prefix. If the \em relax argument is
-        true, the function performs a single relaxation step on the site positions. */
-    TetraMeshSnapshot(const SimulationItem* item, const Box& extent, string filename, bool relax);
-
-    /** This constructor obtains the site positions from a SiteListInterface instance. The
-        constructor completes the configuration for the object (but without importing mass density
-        information or setting a mass density policy) and calls the private buildMesh() and
-        buildSearch() functions to create the relevant data structures.
-
-        The \em item argument specifies a simulation item in the hierarchy of the caller (usually
-        the caller itself) used to retrieve context such as an appropriate logger. The \em extent
-        argument specifies the extent of the domain as a box lined up with the coordinate axes.
-        Sites located outside of the domain and sites that are too close to another site are
-        discarded. The \em sli argument specifies an object that provides the SiteListInterface
-        interface from which to obtain the site positions. If the \em relax argument is true, the
-        function performs a single relaxation step on the site positions. */
-    TetraMeshSnapshot(const SimulationItem* item, const Box& extent, SiteListInterface* sli, bool relax);
-
-    /** This constructor obtains the site positions from a programmatically prepared list. The
-        constructor completes the configuration for the object (but without importing mass density
-        information or setting a mass density policy) and calls the private buildMesh() and
-        buildSearch() functions to create the relevant data structures.
-
-        The \em item argument specifies a simulation item in the hierarchy of the caller (usually
-        the caller itself) used to retrieve context such as an appropriate logger. The \em extent
-        argument specifies the extent of the domain as a box lined up with the coordinate axes.
-        Sites located outside of the domain and sites that are too close to another site are
-        discarded. The \em sites argument specifies the list of site positions. If the \em relax
-        argument is true, the function performs a single relaxation step on the site positions. */
-    TetraMeshSnapshot(const SimulationItem* item, const Box& extent, const vector<Vec>& sites, bool relax);
+    TetraMeshSnapshot(const SimulationItem* item, const Box& extent, const TetraMeshSpatialGrid& grid);
 
     //=========== Private construction ==========
 
 private:
-    /** Private class to hold the information about a Tetra cell that is relevant for calculating
-        paths and densities; see the buildMesh() function. */
-    class Site;
-
     class Node;
-
-    class Plucker
-    {
-    private:
-        Vec U, V;
-
-    public:
-        Plucker();
-
-        Plucker(const Vec& pos, const Vec& dir);
-
-        // permuted inner product
-        static inline double dot(const Plucker& a, const Plucker& b);
-    };
-
-    class Edge : public Plucker
-    {
-    public:
-        const int i1, i2;
-        Edge(int i1, int i2, const Vec* v1, const Vec* v2);
-    };
-
-    class Tetra : public Box
-    {
-    public:
-        std::array<Vec*, 4> _vertices;
-        std::array<int, 4> _indices;
-        std::array<Edge*, 6> _edges;
-        std::array<int, 4> _neighbors = {-1, -1, -1, -1};
-        double _volume;
-        Array _properties;
-
-    public:
-        Tetra(const std::array<Vec*, 4>& vertices, const std::array<int, 4>& indices,
-              const std::array<int, 4>& neighbors, const std::array<Edge*, 6>& edges);
-
-        double getProd(const Plucker& ray, int t1, int t2) const;
-
-        bool intersects(std::array<double, 3>& prods, const Plucker& ray, int face, bool leaving = true) const;
-
-        bool inside(const Position& bfr) const;
-
-        Vec calcExit(const std::array<double, 3>& barycoords, int face) const;
-
-        Position position() const;
-
-        double volume() const;
-
-        const Array& properties();
-
-        static inline std::array<int, 3> counterclockwiseVertices(int face);
-    };
 
     /** Given a list of generating sites (represented as partially initialized Cell
         objects), this private function builds the Tetra tessellation and stores the
@@ -261,7 +167,7 @@ private:
         constructed with these adjusted site positions, which are distributed more uniformly,
         thereby avoiding overly elongated cells in the Tetra tessellation. Relaxation can be
         quite time-consuming because the Tetra tessellation must be constructed twice. */
-    void buildMesh(bool relax);
+    void buildMesh(const TetraMeshSpatialGrid& grid);
 
     /** This private function calculates the volumes for all cells without using the Tetra mesh.
         It assumes that both mass and mass density columns are being imported. */
@@ -504,11 +410,10 @@ private:
     int numVertices;
 
     // data members initialized when processing snapshot input and further completed by BuildMesh()
-    vector<Site*> _sites;  // cell objects, indexed on m
-
     vector<Tetra*> _tetrahedra;
     vector<Edge*> _edges;
     vector<Vec*> _vertices;
+    vector<Vec*> _centroids;
 
     // data members initialized when processing snapshot input, but only if a density policy has been set
     Array _rhov;       // density for each cell (not normalized)

@@ -8,6 +8,7 @@
 
 #include "BoxSpatialGrid.hpp"
 #include "DensityInCellInterface.hpp"
+#include "Medium.hpp"
 class TetraMeshSnapshot;
 
 //////////////////////////////////////////////////////////////////////
@@ -43,18 +44,42 @@ class TetraMeshSpatialGrid : public BoxSpatialGrid, public DensityInCellInterfac
         PROPERTY_ENUM(policy, Policy, "the policy for determining the positions of the sites")
         ATTRIBUTE_DEFAULT_VALUE(policy, "DustDensity")
 
-        PROPERTY_INT(numSites, "the number of random sites (or cells in the grid)")
-        ATTRIBUTE_MIN_VALUE(numSites, "5")
-        ATTRIBUTE_DEFAULT_VALUE(numSites, "500")
-        ATTRIBUTE_RELEVANT_IF(numSites, "policyUniform|policyCentralPeak|policyDustDensity|"
-                                        "policyElectronDensity|policyGasDensity")
+        PROPERTY_DOUBLE(maxDustFraction, "the maximum fraction of dust contained in each cell")
+        ATTRIBUTE_MIN_VALUE(maxDustFraction, "[0")
+        ATTRIBUTE_MAX_VALUE(maxDustFraction, "1e-2]")
+        ATTRIBUTE_DEFAULT_VALUE(maxDustFraction, "1e-6")
+        ATTRIBUTE_DISPLAYED_IF(maxDustFraction, "DustMix")
 
-        PROPERTY_STRING(filename, "the name of the file containing the site positions")
-        ATTRIBUTE_RELEVANT_IF(filename, "policyFile")
+        PROPERTY_DOUBLE(maxDustOpticalDepth, "the maximum diagonal dust optical depth for each cell")
+        ATTRIBUTE_MIN_VALUE(maxDustOpticalDepth, "[0")
+        ATTRIBUTE_MAX_VALUE(maxDustOpticalDepth, "100]")
+        ATTRIBUTE_DEFAULT_VALUE(maxDustOpticalDepth, "0")
+        ATTRIBUTE_DISPLAYED_IF(maxDustOpticalDepth, "DustMix&Level2")
 
-        PROPERTY_BOOL(relaxSites, "perform site relaxation to avoid overly elongated cells")
-        ATTRIBUTE_DEFAULT_VALUE(relaxSites, "false")
-        ATTRIBUTE_RELEVANT_IF(relaxSites, "!policyImportedMesh")
+        PROPERTY_DOUBLE(wavelength, "the wavelength at which to evaluate the optical depth")
+        ATTRIBUTE_QUANTITY(wavelength, "wavelength")
+        ATTRIBUTE_MIN_VALUE(wavelength, "1 pm")
+        ATTRIBUTE_MAX_VALUE(wavelength, "1 m")
+        ATTRIBUTE_DEFAULT_VALUE(wavelength, "0.55 micron")
+        ATTRIBUTE_RELEVANT_IF(wavelength, "maxDustOpticalDepth")
+
+        PROPERTY_DOUBLE(maxDustDensityDispersion, "the maximum dust density dispersion in each cell")
+        ATTRIBUTE_MIN_VALUE(maxDustDensityDispersion, "[0")
+        ATTRIBUTE_MAX_VALUE(maxDustDensityDispersion, "1]")
+        ATTRIBUTE_DEFAULT_VALUE(maxDustDensityDispersion, "0")
+        ATTRIBUTE_DISPLAYED_IF(maxDustDensityDispersion, "DustMix&Level2")
+
+        PROPERTY_DOUBLE(maxElectronFraction, "the maximum fraction of electrons contained in each cell")
+        ATTRIBUTE_MIN_VALUE(maxElectronFraction, "[0")
+        ATTRIBUTE_MAX_VALUE(maxElectronFraction, "1e-2]")
+        ATTRIBUTE_DEFAULT_VALUE(maxElectronFraction, "1e-6")
+        ATTRIBUTE_DISPLAYED_IF(maxElectronFraction, "ElectronMix")
+
+        PROPERTY_DOUBLE(maxGasFraction, "the maximum fraction of gas contained in each cell")
+        ATTRIBUTE_MIN_VALUE(maxGasFraction, "[0")
+        ATTRIBUTE_MAX_VALUE(maxGasFraction, "1e-2]")
+        ATTRIBUTE_DEFAULT_VALUE(maxGasFraction, "1e-6")
+        ATTRIBUTE_DISPLAYED_IF(maxGasFraction, "GasMix")
 
     ITEM_END()
 
@@ -74,6 +99,8 @@ protected:
     //======================== Other Functions =======================
 
 public:
+    bool needsSubdivide(double* pa, double* pb, double* pc, double* pd, double vol) const;
+
     /** This function returns the number of cells in the grid. */
     int numCells() const override;
 
@@ -128,7 +155,33 @@ protected:
 private:
     // data members initialized during setup
     TetraMeshSnapshot* _mesh{nullptr};  // Tetra mesh snapshot created here or obtained from medium component
-    double _norm{0.};                     // in the latter case, normalization factor obtained from medium component
+    double _norm{0.};                   // in the latter case, normalization factor obtained from medium component
+
+    // data members initialized by setupSelfBefore()
+    Random* _random{nullptr};
+    int _numSamples{0};
+
+    // lists of medium components of each material type;
+    // list remains empty if no criteria are enabled for the corresponding material type
+    vector<Medium*> _dustMedia;
+    vector<Medium*> _electronMedia;
+    vector<Medium*> _gasMedia;
+
+    // flags become true if corresponding criterion is enabled
+    // (i.e. configured maximum is nonzero and material type is present)
+    bool _hasAny{false};
+    bool _hasDustAny{false};
+    bool _hasDustFraction{false};
+    bool _hasDustOpticalDepth{false};
+    bool _hasDustDensityDispersion{false};
+    bool _hasElectronFraction{false};
+    bool _hasGasFraction{false};
+
+    // cached values for each material type (valid if corresponding flag is enabled)
+    double _dustMass{0.};
+    double _dustKappa{0.};
+    double _electronNumber{0.};
+    double _gasNumber{0.};
 };
 
 //////////////////////////////////////////////////////////////////////
