@@ -36,10 +36,8 @@ public:
     std::array<int, 4> _neighbors;
 
 public:
-    Tetra(const std::array<Vec*, 4>& vertices, const std::array<int, 4>& indices, const std::array<int, 4>& neighbors,
-          const std::array<Edge*, 6>& edges);
-
-    Tetra(Vec* va, Vec* vb, Vec* vc, Vec* vd);
+    Tetra(const std::array<Vec*, 4>& vertices, const std::array<int, 4>& indices,
+          const std::array<int, 4>& neighbors, const std::array<Edge*, 6>& edges);
 
     double getProd(const Plucker& ray, int t1, int t2) const;
 
@@ -54,6 +52,8 @@ public:
     double volume() const;
 
     const Array& properties();
+
+    static double generateBarycentric(double& s, double& t, double& u);
 
     Position generatePosition(double s, double t, double u) const;
 

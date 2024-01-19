@@ -7,12 +7,12 @@
 #define TETRAMESHSNAPSHOT_HPP
 
 #include "Array.hpp"
-#include "Snapshot.hpp"
-#include <unordered_map>
-#include "array"
 #include "MediumSystem.hpp"
+#include "Snapshot.hpp"
 #include "TetraMeshSpatialGrid.hpp"
 #include "Tetrahedron.hpp"
+#include <unordered_map>
+#include "array"
 class PathSegmentGenerator;
 class SiteListInterface;
 class SpatialGridPath;
@@ -205,8 +205,6 @@ private:
         blocks. The function builds a single binary search tree on all cell sites (see for example
         <a href="http://en.wikipedia.org/wiki/Kd-tree">en.wikipedia.org/wiki/Kd-tree</a>). */
     void buildSearchSingle();
-
-    bool inTetrahedra(const Tetra* tetra) const;
 
     //====================== Output =====================
 
@@ -413,7 +411,7 @@ private:
     vector<Tetra*> _tetrahedra;
     vector<Edge*> _edges;
     vector<Vec*> _vertices;
-    vector<Vec*> _centroids;
+    vector<vector<int>> _vertexTetra;
 
     // data members initialized when processing snapshot input, but only if a density policy has been set
     Array _rhov;       // density for each cell (not normalized)

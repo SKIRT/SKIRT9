@@ -50,15 +50,6 @@ Tetra::Tetra(const std::array<Vec*, 4>& vertices, const std::array<int, 4>& indi
 
 ////////////////////////////////////////////////////////////////////
 
-Tetra::Tetra(Vec* va, Vec* vb, Vec* vc, Vec* vd) : _vertices({va, vb, vc, vd})
-{
-    _volume = 1 / 6.
-              * abs(Vec::dot(Vec::cross(*_vertices[1] - *_vertices[0], *_vertices[2] - *_vertices[0]),
-                             *_vertices[3] - *_vertices[0]));
-}
-
-////////////////////////////////////////////////////////////////////
-
 double Tetra::getProd(const Plucker& ray, int t1, int t2) const
 {
     int e = (std::min(t1, t2) == 0) ? std::max(t1, t2) - 1 : t1 + t2;
@@ -85,7 +76,8 @@ bool Tetra::intersects(std::array<double, 3>& barycoords, const Plucker& ray, in
         barycoords[i] = prod;
         sum += prod;
     }
-    for (int i = 0; i < 3; i++) barycoords[i] /= sum;
+    if (sum != 0)
+        for (int i = 0; i < 3; i++) barycoords[i] /= sum;
 
     return true;
 }
@@ -175,7 +167,7 @@ const Array& Tetra::properties()
 
 ////////////////////////////////////////////////////////////////////
 
-Position Tetra::generatePosition(double s, double t, double u) const
+double Tetra::generateBarycentric(double& s, double& t, double& u)
 {
     // https://vcg.isti.cnr.it/activities/OLD/geometryegraphics/pointintetraedro.html
     if (s + t > 1.0)
@@ -198,9 +190,16 @@ Position Tetra::generatePosition(double s, double t, double u) const
         u = s + t + u - 1.0;
         s = 1 - t - tmp;
     }
-    double a = 1 - u - t - s;
+    return 1 - u - t - s;
+}
 
-    return Position(a * *_vertices[0] + u * *_vertices[1] + t * *_vertices[2] + s * *_vertices[3]);
+////////////////////////////////////////////////////////////////////
+
+Position Tetra::generatePosition(double s, double t, double u) const
+{
+    double w = Tetra::generateBarycentric(s, t, u);
+
+    return Position(w * *_vertices[0] + u * *_vertices[1] + t * *_vertices[2] + s * *_vertices[3]);
 }
 
 ////////////////////////////////////////////////////////////////////

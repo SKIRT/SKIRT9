@@ -114,20 +114,12 @@ void TetraMeshSpatialGrid::setupSelfBefore()
     _mesh = new TetraMeshSnapshot(this, extent(), *this);
 }
 
-bool TetraMeshSpatialGrid::needsSubdivide(double* pa, double* pb, double* pc, double* pd, double vol) const
+bool TetraMeshSpatialGrid::tetUnsuitable(double* pa, double* pb, double* pc, double* pd, double vol) const
 {
     Vec a(pa[0], pa[1], pa[2]);
     Vec b(pb[0], pb[1], pb[2]);
     Vec c(pc[0], pc[1], pc[2]);
     Vec d(pd[0], pd[1], pd[2]);
-    Tetra tetra(&a, &b, &c, &d);
-
-    // double x = 0, y = 0, z = 0;
-    // x += (pa[0] + pb[0] + pc[0] + pd[0]) * .25;
-    // y += (pa[1] + pb[1] + pc[1] + pd[1]) * .25;
-    // z += (pa[2] + pb[2] + pc[2] + pd[2]) * .25;
-    // double density = ms.dustMassDensity(Position(x, y, z));
-    // if (vol * density > 0.01 * M) return true;
 
     // results for the sampled mass or number densities, if applicable
     double rho = 0.;          // dust mass density
@@ -147,7 +139,8 @@ bool TetraMeshSpatialGrid::needsSubdivide(double* pa, double* pb, double* pc, do
             double s = random()->uniform();
             double t = random()->uniform();
             double u = random()->uniform();
-            Position bfr = tetra.generatePosition(s, t, u);
+            double r = Tetra::generateBarycentric(s, t, u);
+            Position bfr(r * a + u * b + t * c + s * d);
             if (_hasDustAny)
             {
                 double rhoi = 0.;

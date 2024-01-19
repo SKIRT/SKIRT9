@@ -99,7 +99,7 @@ protected:
     //======================== Other Functions =======================
 
 public:
-    bool needsSubdivide(double* pa, double* pb, double* pc, double* pd, double vol) const;
+    bool tetUnsuitable(double* pa, double* pb, double* pc, double* pd, double vol) const;
 
     /** This function returns the number of cells in the grid. */
     int numCells() const override;
