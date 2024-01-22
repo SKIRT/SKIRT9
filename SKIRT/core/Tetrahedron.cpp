@@ -185,7 +185,6 @@ double Tetra::generateBarycentric(double& s, double& t, double& u)
     }
     else if (s + t + u > 1.0)
     {
-
         double tmp = u;
         u = s + t + u - 1.0;
         s = 1 - t - tmp;

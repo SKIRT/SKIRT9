@@ -11,7 +11,6 @@
 #include "Snapshot.hpp"
 #include "TetraMeshSpatialGrid.hpp"
 #include "Tetrahedron.hpp"
-#include <unordered_map>
 #include "array"
 class PathSegmentGenerator;
 class SiteListInterface;
@@ -143,7 +142,7 @@ public:
     //========== Specialty constructors ==========
 
 public:
-    TetraMeshSnapshot(const SimulationItem* item, const Box& extent, const TetraMeshSpatialGrid& grid);
+    TetraMeshSnapshot(const TetraMeshSpatialGrid* grid, const Box& extent);
 
     //=========== Private construction ==========
 
@@ -167,7 +166,7 @@ private:
         constructed with these adjusted site positions, which are distributed more uniformly,
         thereby avoiding overly elongated cells in the Tetra tessellation. Relaxation can be
         quite time-consuming because the Tetra tessellation must be constructed twice. */
-    void buildMesh(const TetraMeshSpatialGrid& grid);
+    void buildMesh(const TetraMeshSpatialGrid* grid);
 
     /** This private function calculates the volumes for all cells without using the Tetra mesh.
         It assumes that both mass and mass density columns are being imported. */
@@ -411,7 +410,7 @@ private:
     vector<Tetra*> _tetrahedra;
     vector<Edge*> _edges;
     vector<Vec*> _vertices;
-    vector<vector<int>> _vertexTetra;
+    vector<Vec*> _centroids;
 
     // data members initialized when processing snapshot input, but only if a density policy has been set
     Array _rhov;       // density for each cell (not normalized)

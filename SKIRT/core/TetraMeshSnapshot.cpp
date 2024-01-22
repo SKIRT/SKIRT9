@@ -23,8 +23,10 @@
 #include "TextInFile.hpp"
 #include "Units.hpp"
 #include "tetgen.h"
+#include <chrono>
 #include <iostream>
-#include <set>
+#include <queue>
+#include <unordered_set>
 #include "container.hh"
 
 ////////////////////////////////////////////////////////////////////
@@ -272,13 +274,31 @@ void TetraMeshSnapshot::setExtent(const Box& extent)
 
 ////////////////////////////////////////////////////////////////////
 
-TetraMeshSnapshot::TetraMeshSnapshot(const SimulationItem* item, const Box& extent, const TetraMeshSpatialGrid& grid)
+TetraMeshSnapshot::TetraMeshSnapshot(const TetraMeshSpatialGrid* grid, const Box& extent)
 {
-    // item will also contain the policies WIP
-    setContext(item);
+    setContext(grid);
     setExtent(extent);
     buildMesh(grid);
     buildSearchPerBlock();
+
+    int N = 1e6;
+    Position pos;
+    volatile int index = 0;
+
+    auto start = std::chrono::high_resolution_clock::now();
+
+    for (int i = 0; i < N; i++)
+    {
+        pos = random()->position(_extent);
+        index += cellIndex(pos);
+    }
+    // 2994
+    // 3135
+
+    auto end = std::chrono::high_resolution_clock::now();
+    auto dur = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    printf("dur: %ld\n", dur.count());
+    printf("average checks: %f\n", index / (double)N);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -312,19 +332,16 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-void TetraMeshSnapshot::buildMesh(const TetraMeshSpatialGrid& grid)
+void TetraMeshSnapshot::buildMesh(const TetraMeshSpatialGrid* grid)
 {
     tetgenio in, out;
     // tetgenio::facet* f;
     // tetgenio::polygon* p;
 
     in.firstnumber = 0;
-    in.numberofpoints = 8 + 0;
+    in.numberofpoints = 8;
+    // in.numberofpoints += 4;
     in.pointlist = new REAL[in.numberofpoints * 3];
-
-    in.tetunsuitable = [&grid](double* pa, double* pb, double* pc, double* pd, double vol) {
-        return grid.tetUnsuitable(pa, pb, pc, pd, vol);
-    };
 
     // bottom half (zmin)
     in.pointlist[0] = _extent.xmin();
@@ -352,6 +369,13 @@ void TetraMeshSnapshot::buildMesh(const TetraMeshSpatialGrid& grid)
         in.pointlist[12 + i * 3 + 2] = _extent.zmax();
     }
 
+    // for (int i = 0; i < 4; i++)
+    // {
+    //     in.pointlist[24 + i * 3 + 0] = in.pointlist[i * 3 + 0] + _extent.xwidth() * 0.2;
+    //     in.pointlist[24 + i * 3 + 1] = in.pointlist[i * 3 + 1] + _extent.ywidth() * 0.2;
+    //     in.pointlist[24 + i * 3 + 2] = in.pointlist[i * 3 + 2] + _extent.zwidth() * 0.2;
+    // }
+
     /* psc */
     // in.numberofpointattributes = 1;
     // in.pointattributelist = new REAL[in.numberofpoints];
@@ -373,6 +397,7 @@ void TetraMeshSnapshot::buildMesh(const TetraMeshSpatialGrid& grid)
     // in.pointattributelist[8] = 50.;
 
     in.numberoffacets = 6;
+    // in.numberoffacets += 1;
     in.facetlist = new tetgenio::facet[in.numberoffacets];
     addFacet(&in.facetlist[0], {0, 1, 2, 3});  // Facet 1. bottom
     addFacet(&in.facetlist[1], {4, 5, 6, 7});  // Facet 2. top
@@ -380,6 +405,7 @@ void TetraMeshSnapshot::buildMesh(const TetraMeshSpatialGrid& grid)
     addFacet(&in.facetlist[3], {1, 5, 6, 2});  // Facet 4. right
     addFacet(&in.facetlist[4], {2, 6, 7, 3});  // Facet 5. back
     addFacet(&in.facetlist[5], {3, 7, 4, 0});  // Facet 6. left
+    // addFacet(&in.facetlist[6], {8, 9, 10, 11});  // Facet 6. left
 
     tetgenbehavior behavior;
     behavior.plc = 1;          // -p PLC
@@ -393,8 +419,12 @@ void TetraMeshSnapshot::buildMesh(const TetraMeshSpatialGrid& grid)
     // parameters
     // behavior.minratio = 5.0;   // -q quality
     behavior.maxvolume = 0.05 * _extent.volume();  // -a max volume
-    // behavior.weighted_param =
+    // behavior.weighted_param = ;
     // behavior.mindihedral = 5.0;  // -q/ minimal angle
+
+    in.tetunsuitable = [grid](double* pa, double* pb, double* pc, double* pd, double vol) {
+        return grid->tetUnsuitable(pa, pb, pc, pd, vol);
+    };
 
     tetrahedralize(&behavior, &in, &out);
 
@@ -403,7 +433,6 @@ void TetraMeshSnapshot::buildMesh(const TetraMeshSpatialGrid& grid)
     numVertices = out.numberofpoints;
 
     _vertices.resize(numVertices);
-    _vertexTetra.resize(numVertices);
     for (int i = 0; i < numVertices; i++)
     {
         double x = out.pointlist[3 * i + 0];
@@ -431,10 +460,7 @@ void TetraMeshSnapshot::buildMesh(const TetraMeshSpatialGrid& grid)
         for (int c = 0; c < 4; c++)
         {
             indices[c] = out.tetrahedronlist[4 * i + c];
-
             vertices[c] = _vertices[indices[c]];
-            _vertexTetra[indices[c]].push_back(i);  // add this Tetra to all 4 of its Vertices
-
             neighbors[c] = out.neighborlist[4 * i + c];
         }
         for (int e = 0; e < 6; e++)
@@ -454,6 +480,11 @@ void TetraMeshSnapshot::buildMesh(const TetraMeshSpatialGrid& grid)
             edges[(t1 == 0) ? t2 - 1 : t1 + t2] = _edges[ei];
         }
         _tetrahedra[i] = new Tetra(vertices, indices, neighbors, edges);
+    }
+
+    for (int i = 0; i < numTetra; i++)
+    {
+        _centroids.push_back(new Vec(_tetrahedra[i]->centroid()));
     }
 
     log()->info("number of vertices " + std::to_string(numVertices));
@@ -536,7 +567,7 @@ TetraMeshSnapshot::Node* TetraMeshSnapshot::buildTree(vector<int>::iterator firs
     {
         auto median = length >> 1;
         std::nth_element(first, first + median, last, [this, depth](int m1, int m2) {
-            return m1 != m2 && lessthan(*_vertices[m1], *_vertices[m2], depth % 3);
+            return m1 != m2 && lessthan(*_centroids[m1], *_centroids[m2], depth % 3);
         });
         return new TetraMeshSnapshot::Node(*(first + median), depth, buildTree(first, first + median, depth + 1),
                                            buildTree(first + median + 1, last, depth + 1));
@@ -549,7 +580,7 @@ TetraMeshSnapshot::Node* TetraMeshSnapshot::buildTree(vector<int>::iterator firs
 void TetraMeshSnapshot::buildSearchPerBlock()
 {
     // abort if there are no cells
-    if (!numVertices) return;
+    if (!numTetra) return;
 
     log()->info("Building data structures to accelerate searching the tetrahedralization");
 
@@ -559,16 +590,23 @@ void TetraMeshSnapshot::buildSearchPerBlock()
     _nb2 = _nb * _nb;
     _nb3 = _nb * _nb * _nb;
 
-    // initialize a vector of nb x nb x nb lists, each containing the cells overlapping a certain block in the domain
+    // initialize a vector of nb * nb * nb lists
     _blocklists.resize(_nb3);
 
-    // add the tetrahedron to the lists for all blocks it may overlap
-    for (int m = 0; m != numVertices; ++m)
+    // we add the tetrahedra to all blocks they potentially overlap with
+    // this will slow down the search tree but if no search tree is present
+    // we can simply loop over all tetrahedra inside the block
+    int i1, j1, k1, i2, j2, k2;
+    for (int c = 0; c != numTetra; ++c)
     {
-        int i, j, k;
-        _extent.cellIndices(i, j, k, *_vertices[m], _nb, _nb, _nb);
+        // _extent.cellIndices(i1, j1, k1, *_centroids[c], _nb, _nb, _nb);
+        // _blocklists[i1 * _nb2 + j1 * _nb + k1].push_back(c);
 
-        _blocklists[i * _nb2 + j * _nb + k].push_back(m);
+        _extent.cellIndices(i1, j1, k1, _tetrahedra[c]->rmin() - Vec(_eps, _eps, _eps), _nb, _nb, _nb);
+        _extent.cellIndices(i2, j2, k2, _tetrahedra[c]->rmax() + Vec(_eps, _eps, _eps), _nb, _nb, _nb);
+        for (int i = i1; i <= i2; i++)
+            for (int j = j1; j <= j2; j++)
+                for (int k = k1; k <= k2; k++) _blocklists[i * _nb2 + j * _nb + k].push_back(c);
     }
 
     // compile block list statistics
@@ -655,8 +693,9 @@ void TetraMeshSnapshot::writeGridPlotFiles(const SimulationItem* probe) const
     log()->info("Writing plot files for tetrahedralization with " + std::to_string(numTetra) + " tetrahedra");
     log()->infoSetElapsed(numTetra);
     int numDone = 0;
-    for (const Tetra* tetra : _tetrahedra)
+    for (int i = 0; i < numTetra; i++)
     {
+        const Tetra* tetra = _tetrahedra[i];
         vector<double> coords;
         coords.reserve(12);
         vector<int> indices;
@@ -680,7 +719,8 @@ void TetraMeshSnapshot::writeGridPlotFiles(const SimulationItem* probe) const
         if (tetra->zmin() <= 0 && tetra->zmax() >= 0) plotxy.writePolyhedron(coords, indices);
         if (tetra->ymin() <= 0 && tetra->ymax() >= 0) plotxz.writePolyhedron(coords, indices);
         if (tetra->xmin() <= 0 && tetra->xmax() >= 0) plotyz.writePolyhedron(coords, indices);
-        if (numTetra <= 1000) plotxyz.writePolyhedron(coords, indices);
+        if (i <= 1000)
+            plotxyz.writePolyhedron(coords, indices);  // like VoronoiMeshSnapshot, but why even write at all?
 
         // log message if the minimum time has elapsed
         numDone++;
@@ -780,25 +820,43 @@ int TetraMeshSnapshot::cellIndex(Position bfr) const
     _extent.cellIndices(i, j, k, bfr, _nb, _nb, _nb);
     int b = i * _nb2 + j * _nb + k;
 
-    // look for the closest vertex in this block using the search tree
+    // look for the closest centroid in this block using the search tree
     Node* tree = _blocktrees[b];
     if (tree)
     {
-        int m = tree->nearest(bfr, _vertices)->m();
+        // use a breadth-first search over the neighboring tetrahedra
+        int root = tree->nearest(bfr, _centroids)->m();
+        std::queue<int> queue;
+        std::unordered_set<int> explored;
+        queue.push(root);
 
-        for (int t : _vertexTetra[m])
+        int t;
+        while (queue.size() > 0)
         {
-            if (_tetrahedra[t]->Tetra::inside(bfr)) return t;
+            t = queue.front();
+            queue.pop();
+            const Tetra* tetra = _tetrahedra[t];
+
+            if (tetra->inside(bfr)) return t;
+            explored.insert(t);
+
+            for (int n : tetra->_neighbors)
+            {
+                if (n != -1 && explored.find(n) == explored.end())  // if not already explored
+                    queue.push(n);
+            }
         }
-
-        log()->error("cellIndex failed to find the tetrahedron");
+        log()->error("cellIndex failed to find the tetrahedron");  // change to warning?
     }
-
-    // if no tree or tetrahedron was not found loop over all tetrahedra
-    for (int i = 0; i < numTetra; i++)
+    else
     {
-        if (_tetrahedra[i]->Tetra::inside(bfr)) return i;
+        // if there is no search tree, simply loop over all tetrahedra in the block
+        for (int t : _blocklists[b])
+        {
+            if (_tetrahedra[t]->inside(bfr)) return t;
+        }
     }
+
     return -1;
 }
 
@@ -835,7 +893,7 @@ class TetraMeshSnapshot::MySegmentGenerator : public PathSegmentGenerator
 public:
     MySegmentGenerator(const TetraMeshSnapshot* grid) : _grid(grid) {}
 
-    #define WRITE
+    // #define WRITE
 
 #ifdef WRITE
     std::ofstream out;

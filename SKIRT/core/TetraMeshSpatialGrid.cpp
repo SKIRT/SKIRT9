@@ -111,7 +111,7 @@ void TetraMeshSpatialGrid::setupSelfBefore()
     // warn user if none of the criteria were enabled
     if (!_hasAny) find<Log>()->warning("None of the tree subdivision criteria are enabled");
 
-    _mesh = new TetraMeshSnapshot(this, extent(), *this);
+    _mesh = new TetraMeshSnapshot(this, extent());
 }
 
 bool TetraMeshSpatialGrid::tetUnsuitable(double* pa, double* pb, double* pc, double* pd, double vol) const
