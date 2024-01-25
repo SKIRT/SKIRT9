@@ -280,25 +280,6 @@ TetraMeshSnapshot::TetraMeshSnapshot(const TetraMeshSpatialGrid* grid, const Box
     setExtent(extent);
     buildMesh(grid);
     buildSearchPerBlock();
-
-    int N = 1e6;
-    Position pos;
-    volatile int index = 0;
-
-    auto start = std::chrono::high_resolution_clock::now();
-
-    for (int i = 0; i < N; i++)
-    {
-        pos = random()->position(_extent);
-        index += cellIndex(pos);
-    }
-    // 2994
-    // 3135
-
-    auto end = std::chrono::high_resolution_clock::now();
-    auto dur = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-    printf("dur: %ld\n", dur.count());
-    printf("average checks: %f\n", index / (double)N);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -413,7 +394,7 @@ void TetraMeshSnapshot::buildMesh(const TetraMeshSpatialGrid* grid)
     behavior.fixedvolume = 1;  // -a max volume
     behavior.neighout = 2;     // -nn neighbors and edges?
     behavior.zeroindex = 1;    // -z zero index
-    behavior.edgesout = 1;     // -e edges
+    // behavior.edgesout = 1;     // -e edges
     // behavior.weighted = 1;     // -w weighted
 
     // parameters
@@ -442,49 +423,32 @@ void TetraMeshSnapshot::buildMesh(const TetraMeshSpatialGrid* grid)
         _vertices[i] = new Vec(x, y, z);
     }
 
-    _edges.resize(numEdges);
-    for (int i = 0; i < numEdges; i++)
-    {
-        int v1 = out.edgelist[2 * i];
-        int v2 = out.edgelist[2 * i + 1];
-        _edges[i] = new Edge(v1, v2, _vertices[v1], _vertices[v2]);
-    }
-
     _tetrahedra.resize(numTetra);
     for (int i = 0; i < numTetra; i++)
     {
         std::array<Vec*, 4> vertices;
-        std::array<int, 4> indices;
-        std::array<int, 4> neighbors;
-        std::array<Edge*, 6> edges;
+        std::array<Face, 4> neighbors;
         for (int c = 0; c < 4; c++)
         {
-            indices[c] = out.tetrahedronlist[4 * i + c];
-            vertices[c] = _vertices[indices[c]];
-            neighbors[c] = out.neighborlist[4 * i + c];
+            vertices[c] = _vertices[out.tetrahedronlist[4 * i + c]];
+            int ntetra = out.neighborlist[4 * i + c];
+
+            // find which face is shared with neighbor
+            int nface;
+            for (int cn = 0; cn < 4; cn++)
+            {
+                if (out.neighborlist[4 * ntetra + cn] == i)
+                {
+                    nface = cn;
+                    break;
+                }
+            }
+            neighbors[c] = Face(ntetra, nface);
         }
-        for (int e = 0; e < 6; e++)
-        {
-            int ei = out.tet2edgelist[6 * i + e];
 
-            Edge* edge = _edges[ei];
-            auto t1 = std::find(indices.begin(), indices.end(), edge->i1) - indices.begin();
-            auto t2 = std::find(indices.begin(), indices.end(), edge->i2) - indices.begin();
+        _tetrahedra[i] = new Tetra(vertices, neighbors);
 
-            // tetgen edge order: 23 03 01 12 13 02
-            // static constexpr int tetgen_order[12] = {2, 3, 0, 3, 0, 1, 1, 2, 1, 3, 0, 2};
-            // int t1 = tetgen_order[2 * e];      // 2 0 0 1 1 0
-            // int t2 = tetgen_order[2 * e + 1];  // 3 3 1 2 3 2
-
-            if (t1 > t2) std::swap(t1, t2);
-            edges[(t1 == 0) ? t2 - 1 : t1 + t2] = _edges[ei];
-        }
-        _tetrahedra[i] = new Tetra(vertices, indices, neighbors, edges);
-    }
-
-    for (int i = 0; i < numTetra; i++)
-    {
-        _centroids.push_back(new Vec(_tetrahedra[i]->centroid()));
+        _centroids.push_back(&_tetrahedra[i]->_centroid);
     }
 
     log()->info("number of vertices " + std::to_string(numVertices));
@@ -746,7 +710,7 @@ int TetraMeshSnapshot::numEntities() const
 
 Position TetraMeshSnapshot::position(int m) const
 {
-    return Position(_tetrahedra[m]->centroid());
+    return Position(_tetrahedra[m]->_centroid);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -840,8 +804,9 @@ int TetraMeshSnapshot::cellIndex(Position bfr) const
             if (tetra->inside(bfr)) return t;
             explored.insert(t);
 
-            for (int n : tetra->_neighbors)
+            for (const Face& face : tetra->_faces)
             {
+                int n = face._ntetra;
                 if (n != -1 && explored.find(n) == explored.end())  // if not already explored
                     queue.push(n);
             }
@@ -886,14 +851,14 @@ void TetraMeshSnapshot::getEntities(EntityCollection& entities, Position bfr) co
 class TetraMeshSnapshot::MySegmentGenerator : public PathSegmentGenerator
 {
     const TetraMeshSnapshot* _grid{nullptr};
-    int _mr{-1};
-    bool wasInside = false;  // true if the path is was ever inside the convex hull
-    int enteringFace = -1;
+    int _mr = -1;
+    int _enteringFace = -1;
+    int _leavingFace = -1;
 
 public:
     MySegmentGenerator(const TetraMeshSnapshot* grid) : _grid(grid) {}
 
-    // #define WRITE
+#define WRITE
 
 #ifdef WRITE
     std::ofstream out;
@@ -908,12 +873,11 @@ public:
         out.close();
     }
 
-    void write(const Vec& exit, double ds, int face)
+    void write(double ds, int face)
     {
         out << "photon=" << _mr << "," << face << "\n";
         out << "ds=" << ds << "\n";
         out << "r=" << r().x() << "," << r().y() << "," << r().z() << "\n";
-        out << "exit=" << exit.x() << "," << exit.y() << "," << exit.z() << "\n";
         out << "k=" << k().x() << "," << k().y() << "," << k().z() << std::endl;
     }
 #endif
@@ -922,23 +886,60 @@ public:
         if (state() == State::Unknown)
         {
             // try moving the photon packet inside the grid; if this is impossible, return an empty path
+            // this also changes the state()
             if (!moveInside(_grid->extent(), _grid->_eps)) return false;
 
             // get the index of the cell containing the current position
             _mr = _grid->cellIndex(r());
 
-            if (_mr == -1)
-                setState(State::Outside);
-            else
-                wasInside = true;  // setState has already been called
-
             // if the photon packet started outside the grid, return the corresponding nonzero-length segment;
             // otherwise fall through to determine the first actual segment
-            if (ds() > 0.) return true;
+            // if (ds() > 0.) return true;  // is this really needed?
 
+            // find the entering face, this will do a few full plucker products for the first traversal step
+            if (state() == State::Inside)
+            {
+
+                const Tetra* tetra = _grid->_tetrahedra[_mr];
+                // Plücker coordinates of the ray
+                const Vec U = k();
+                const Vec V = Vec::cross(U, r());
+
+                for (int face = 0; face < 4; face++)
+                {
+                    bool entering = true;
+                    std::array<int, 3> cv = tetra->clockwiseVertices(face);
+
+                    for (int i = 0; i < 3; i++)
+                    {
+                        // edges: 12, 20, 01
+                        // verts:  0,  1,  2
+                        int t1 = cv[(i + 1) % 3];
+                        int t2 = cv[(i + 2) % 3];
+                        Vec edge_U = tetra->getEdge(t1, t2);
+                        Vec edge_V = Vec::cross(edge_U, *tetra->_vertices[t1]);
+
+                        // naive implementation for Plücker product with all 3 edges per face
+                        double prod = Vec::dot(U, edge_V) + Vec::dot(V, edge_U);
+
+                        // all products must be non-negative for it to be an entering face
+                        if (prod < 0)
+                        {
+                            entering = false;
+                            break;
+                        }
+                    }
+
+                    if (entering)
+                    {
+                        _enteringFace = face;
+                        break;
+                    }
+                }
+            }
 #ifdef WRITE
             startwriting();
-            write(r(), 0, _mr);
+            write(0, _mr);
 #endif
         }
 
@@ -948,169 +949,61 @@ public:
             // loop in case no exit point was found (which should happen only rarely)
             while (true)
             {
-                const Plucker ray = Plucker(r(), k());
                 const Tetra* tetra = _grid->_tetrahedra[_mr];
 
-                // temp variable to store plucker products and eventually the barycentric coordinates
-                std::array<double, 3> prods;
+                // the translated Plücker moment in the local coordinate system
+                const Vec moment = Vec::cross(k(), r() - *tetra->_vertices[_enteringFace]);
+                std::array<int, 3> cv = Tetra::clockwiseVertices(_enteringFace);
 
-                int leavingFace = -1;
-                if (enteringFace == -1)  // start ray traversal inside
-                {
-                    for (int face = 0; face < 4; face++)
-                    {
-                        if (tetra->intersects(prods, ray, face, true))
-                        {
-                            leavingFace = face;
-                            break;
-                        }
-                    }
-                }
-                else
-                {
-                    std::array<int, 3> t = Tetra::clockwiseVertices(enteringFace);
+                // 2 step decision tree
+                int clockwise0 = Vec::dot(moment, tetra->getEdge(cv[0], _enteringFace)) <= 0; // problem here is prod = 0
+                // if clockwise move clockwise
+                // (0+1)%3=1 is c and (0-1)%3=2 is cc
+                int i = clockwise0 ? 1 : 2;
+                int clockwisei = Vec::dot(moment, tetra->getEdge(cv[i], _enteringFace)) < 0;
+                // c0 and ci form binary % 3
+                //  0 0 -> 0
+                //  0 1 -> 1
+                //  1 0 -> 2
+                //  1 1 -> 0
 
-                    // 2 step decision tree
-                    prods[0] = tetra->getProd(ray, t[0], enteringFace);
-                    bool clockwise0 = prods[0] < 0;
-                    // if clockwise move clockwise (t moves c but i moves cc)
-                    // 1 is c and 2 is cc
-                    int i = clockwise0 ? 1 : 2;
-                    prods[i] = tetra->getProd(ray, t[i], enteringFace);
+                _leavingFace = cv[((clockwise0 << 1) | clockwisei) % 3];
 
-                    // if 2 clockwise: face=t0
-                    // if 2 counter: face=t0
-                    // if clockwise then counter: face=t2
-                    // if counter then clockwise: face=t1
+                // calculate ds from exit face
+                const Vec& v0 = *tetra->_vertices[0];
+                Vec e01 = tetra->getEdge(0, 1);
+                Vec e02 = tetra->getEdge(0, 2);
+                Vec n = Vec::cross(e01, e02);
 
-                    if (clockwise0 == (prods[i] < 0))
-                        leavingFace = t[0];
-                    else if (clockwise0)
-                        leavingFace = t[2];
-                    else
-                        leavingFace = t[1];
+                double ds = Vec::dot(n, v0 - r()) / Vec::dot(n, k());
 
-                    // get prods (this calculates prod[i] again but is much cleaner)
-                    tetra->intersects(prods, ray, leavingFace, true);
-                }
+                // we could assert if r+exit and r+sq*k are the same
 
-                // if no exit point was found, advance the current point by a small distance,
-                // recalculate the cell index, and return to the start of the loop
-                if (leavingFace == -1)
-                {
-                    propagater(_grid->_eps);
-                    _mr = _grid->cellIndex(r());
-                    enteringFace = -1;
-
-                    // if we're outside the domain, terminate the path without returning a path segment
-                    if (_mr < 0)
-                    {
-                        setState(State::Outside);
-                        return false;
-                    }
-                }
-                // otherwise set the current point to the exit point and return the path segment
-                else
-                {
-                    Vec exit = tetra->calcExit(prods, leavingFace);
-
-                    double ds = (exit - r()).norm();
-                    int next_mr = tetra->_neighbors[leavingFace];
-                    // we could assert if r+exit and r+sq*k are the same
-
-                    propagater(ds + _grid->_eps);
-                    setSegment(_mr, ds);
+                propagater(ds + _grid->_eps);
+                setSegment(_mr, ds);
 #ifdef WRITE
-                    write(exit, ds, leavingFace);
+                write(ds, _leavingFace);
 #endif
-                    // set enteringFace if there is a neighboring cell
-                    if (next_mr != -1)
-                    {
-                        auto& neighbors = _grid->_tetrahedra[next_mr]->_neighbors;
-                        enteringFace =
-                            std::distance(neighbors.begin(), std::find(neighbors.begin(), neighbors.end(), _mr));
-                    }
-                    else
-                    {
-                        enteringFace = -1;
-                        setState(State::Outside);
-                    }
-                    // set new cell
-                    _mr = next_mr;
 
-                    return true;
+                _mr = tetra->_faces[_leavingFace]._ntetra;
+
+                // set enteringFace only if there is a neighboring cell
+                if (_mr < 0)
+                {
+                    // _enteringFace = -1;
+                    setState(State::Outside);
                 }
+                else
+                {
+                    _enteringFace = tetra->_faces[_leavingFace]._nface;
+                }
+
+                return true;
             }
         }
 
         if (state() == State::Outside)
-        {
-            // everything below here is only useful if we use the convex hull
-            /*
-            // outside the convex hull and inside extent
-            if (wasInside && _grid->extent().contains(r()))
-            {
-                double t_x, t_y, t_z;
-                if (kx() < 0)
-                    t_x = (_grid->extent().xmin() - rx()) / kx();
-                else
-                    t_x = (_grid->extent().xmax() - rx()) / kx();
-                if (ky() < 0)
-                    t_y = (_grid->extent().ymin() - ry()) / ky();
-                else
-                    t_y = (_grid->extent().ymax() - ry()) / ky();
-                if (kz() < 0)
-                    t_z = (_grid->extent().zmin() - rz()) / kz();
-                else
-                    t_z = (_grid->extent().zmax() - rz()) / kz();
-
-                double ds = min({t_x, t_y, t_z});
-                propagater(ds + _grid->_eps);
-                setSegment(_mr, ds);
-#ifdef WRITE
-                write(r(), ds, -1);
-                stopwriting();
-#endif
-                return false;
-            }
-
-            // figure out if the path intersects the convex hull
-            if (!wasInside)
-            {
-                const Plucker ray = Plucker(r(), k());
-                std::array<double, 3> barycoords;
-                for (int i = 0; i < _grid->numTetra; i++)
-                {
-                    const Tetra* tetra = _grid->_tetrahedra[i];
-                    for (int face = 0; face < 4; face++)
-                    {
-                        // convex hull face
-                        if (tetra->_neighbors[face] == -1)
-                        {
-                            if (tetra->intersects(barycoords, ray, face, false))
-                            {
-                                _mr = i;
-                                enteringFace = face;
-
-                                Vec exit = tetra->calcExit(barycoords, enteringFace);
-
-                                double ds = (exit - r()).norm();
-                                propagater(ds + _grid->_eps);
-// setSegment(-1, ds);  // not sure if this is needed
-#ifdef WRITE
-                                write(exit, ds, enteringFace);
-#endif
-
-                                wasInside = true;
-                                setState(State::Inside);
-                                return true;
-                            }
-                        }
-                    }
-                }
-            }
-            */
-        }
+        {}
 #ifdef WRITE
         stopwriting();
 #endif

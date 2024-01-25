@@ -2,25 +2,13 @@
 #include "Box.hpp"
 #include "Position.hpp"
 
-class Plucker
+struct Face
 {
-private:
-    Vec U, V;
+    Face() {}
+    Face(int ntetra, int nface) : _ntetra(ntetra), _nface(nface) {}
 
-public:
-    Plucker();
-
-    Plucker(const Vec& pos, const Vec& dir);
-
-    // permuted inner product
-    static inline double dot(const Plucker& a, const Plucker& b);
-};
-
-class Edge : public Plucker
-{
-public:
-    const int i1, i2;
-    Edge(int i1, int i2, const Vec* v1, const Vec* v2);
+    int _ntetra;
+    int _nface;
 };
 
 class Tetra : public Box
@@ -30,24 +18,16 @@ private:
     Array _properties;
 
 public:
-    std::array<Vec*, 4> _vertices;
-    std::array<int, 4> _indices;
-    std::array<Edge*, 6> _edges;
-    std::array<int, 4> _neighbors;
+    const std::array<Vec*, 4> _vertices;
+    const std::array<Face, 4> _faces;
+    Vec _centroid;
 
 public:
-    Tetra(const std::array<Vec*, 4>& vertices, const std::array<int, 4>& indices,
-          const std::array<int, 4>& neighbors, const std::array<Edge*, 6>& edges);
-
-    double getProd(const Plucker& ray, int t1, int t2) const;
-
-    bool intersects(std::array<double, 3>& prods, const Plucker& ray, int face, bool leaving = true) const;
+    Tetra(const std::array<Vec*, 4>& vertices, const std::array<Face, 4>& neighbors);
 
     bool inside(const Position& bfr) const;
 
-    Vec calcExit(const std::array<double, 3>& barycoords, int face) const;
-
-    Vec centroid() const;
+    Vec getEdge(int t1, int t2) const;
 
     double volume() const;
 
@@ -57,5 +37,12 @@ public:
 
     Position generatePosition(double s, double t, double u) const;
 
+    /**
+     * @brief This gives the clockwise vertices of a given face looking from inside the tetrahedron.
+     * The Plücker products are thus all negative for a leaving ray and positive for an entering ray from outside
+     * 
+     * @param face 
+     * @return std::array<int, 3> 
+     */
     static std::array<int, 3> clockwiseVertices(int face);
 };

@@ -408,7 +408,6 @@ private:
 
     // data members initialized when processing snapshot input and further completed by BuildMesh()
     vector<Tetra*> _tetrahedra;
-    vector<Edge*> _edges;
     vector<Vec*> _vertices;
     vector<Vec*> _centroids;
 

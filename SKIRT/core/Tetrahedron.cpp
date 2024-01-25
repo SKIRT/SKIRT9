@@ -1,30 +1,8 @@
 #include "Tetrahedron.hpp"
 #include "FatalError.hpp"
 
-////////////////////////////////////////////////////////////////////
-
-Plucker::Plucker() {}
-
-////////////////////////////////////////////////////////////////////
-
-Plucker::Plucker(const Vec& pos, const Vec& dir) : U(dir), V(Vec::cross(dir, pos)) {}
-
-////////////////////////////////////////////////////////////////////
-
-inline double Plucker::dot(const Plucker& a, const Plucker& b)
-{
-    return Vec::dot(a.U, b.V) + Vec::dot(b.U, a.V);
-}
-
-////////////////////////////////////////////////////////////////////
-
-Edge::Edge(int i1, int i2, const Vec* v1, const Vec* v2) : Plucker(*v1, *v2 - *v1), i1(i1), i2(i2) {}
-
-////////////////////////////////////////////////////////////////////
-
-Tetra::Tetra(const std::array<Vec*, 4>& vertices, const std::array<int, 4>& indices,
-             const std::array<int, 4>& neighbors, const std::array<Edge*, 6>& edges)
-    : _vertices(vertices), _indices(indices), _edges(edges), _neighbors(neighbors)
+Tetra::Tetra(const std::array<Vec*, 4>& vertices, const std::array<Face, 4>& neighbors)
+    : _vertices(vertices), _faces(neighbors)
 {
     double xmin = DBL_MAX;
     double ymin = DBL_MAX;
@@ -46,40 +24,16 @@ Tetra::Tetra(const std::array<Vec*, 4>& vertices, const std::array<int, 4>& indi
     _volume = 1 / 6.
               * abs(Vec::dot(Vec::cross(*_vertices[1] - *_vertices[0], *_vertices[2] - *_vertices[0]),
                              *_vertices[3] - *_vertices[0]));
+
+    for (int i = 0; i < 4; i++) _centroid += *_vertices[i];
+    _centroid /= 4;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double Tetra::getProd(const Plucker& ray, int t1, int t2) const
+Vec Tetra::getEdge(int t1, int t2) const
 {
-    int e = (std::min(t1, t2) == 0) ? std::max(t1, t2) - 1 : t1 + t2;
-    Edge* edge = _edges[e];
-
-    // not the same order -> *-1
-    // beginning of t1 == beginning of edge (= same order)
-    return (_indices[t1] == edge->i1 ? 1 : -1) * Plucker::dot(ray, *edge);
-}
-
-////////////////////////////////////////////////////////////////////
-
-bool Tetra::intersects(std::array<double, 3>& barycoords, const Plucker& ray, int face, bool leaving) const
-{
-    std::array<int, 3> t = clockwiseVertices(face);
-
-    double sum = 0;
-    for (int i = 0; i < 3; i++)
-    {
-        // edges: 12, 20, 01
-        // verts:  0,  1,  2
-        double prod = getProd(ray, t[(i + 1) % 3], t[(i + 2) % 3]);
-        if (leaving != (prod <= 0)) return false;  // change this so for both leavig and entering prod=0 works
-        barycoords[i] = prod;
-        sum += prod;
-    }
-    if (sum != 0)
-        for (int i = 0; i < 3; i++) barycoords[i] /= sum;
-
-    return true;
+    return *_vertices[t2] - *_vertices[t1];
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -98,8 +52,8 @@ bool Tetra::inside(const Position& bfr) const
 
     // optimized version (probably not that much better)
     Vec e0p = bfr - *_vertices[0];
-    Vec e02 = *_vertices[2] - *_vertices[0];
-    Vec e01 = *_vertices[1] - *_vertices[0];
+    Vec e02 = getEdge(0, 2);
+    Vec e01 = getEdge(0, 1);
     if (Vec::dot(Vec::cross(e02, e01), e0p) > 0)  // 02 x 01
         return false;
 
@@ -111,8 +65,8 @@ bool Tetra::inside(const Position& bfr) const
         return false;
 
     Vec e1p = bfr - *_vertices[1];
-    Vec e12 = *_vertices[2] - *_vertices[1];
-    Vec e13 = *_vertices[3] - *_vertices[1];
+    Vec e12 = getEdge(1, 2);
+    Vec e13 = getEdge(1, 3);
     return Vec::dot(Vec::cross(e12, e13), e1p) < 0;  // 12 x 13
 
     // checks 3 edges too many but very simple
@@ -129,26 +83,6 @@ bool Tetra::inside(const Position& bfr) const
     //     }
     // }
     // return true;
-}
-
-////////////////////////////////////////////////////////////////////
-
-Vec Tetra::calcExit(const std::array<double, 3>& barycoords, int face) const
-{
-    std::array<int, 3> t = Tetra::clockwiseVertices(face);
-    Vec exit;
-    for (int i = 0; i < 3; i++) exit += *_vertices[t[i]] * barycoords[i];
-    return exit;
-}
-
-////////////////////////////////////////////////////////////////////
-
-Vec Tetra::centroid() const
-{
-    Vec pos;
-    for (int i = 0; i < 4; i++) pos += *_vertices[i];
-    pos /= 4;
-    return pos;
 }
 
 ////////////////////////////////////////////////////////////////////
