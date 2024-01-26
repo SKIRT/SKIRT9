@@ -134,6 +134,11 @@ namespace
         p->vertexlist[2] = vertices[2];
         p->vertexlist[3] = vertices[3];
     }
+
+    template<typename T> int sgn(T a)
+    {
+        return (a > T(0)) - (a < T(0));
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -807,7 +812,7 @@ int TetraMeshSnapshot::cellIndex(Position bfr) const
             for (const Face& face : tetra->_faces)
             {
                 int n = face._ntetra;
-                if (n != -1 && explored.find(n) == explored.end())  // if not already explored
+                if (n != -1 && (explored.find(n) == explored.end()))  // if not already explored
                     queue.push(n);
             }
         }
@@ -885,6 +890,12 @@ public:
     {
         if (state() == State::Unknown)
         {
+            _rx = 0;
+            _ry = 0;
+            _rz = 0;
+            _kx = 1 / sqrt(2);
+            _ky = 1 / sqrt(2);
+            _kz = 0;
             // try moving the photon packet inside the grid; if this is impossible, return an empty path
             // this also changes the state()
             if (!moveInside(_grid->extent(), _grid->_eps)) return false;
@@ -956,26 +967,43 @@ public:
                 std::array<int, 3> cv = Tetra::clockwiseVertices(_enteringFace);
 
                 // 2 step decision tree
-                int clockwise0 = Vec::dot(moment, tetra->getEdge(cv[0], _enteringFace)) <= 0; // problem here is prod = 0
-                // if clockwise move clockwise
-                // (0+1)%3=1 is c and (0-1)%3=2 is cc
-                int i = clockwise0 ? 1 : 2;
-                int clockwisei = Vec::dot(moment, tetra->getEdge(cv[i], _enteringFace)) < 0;
-                // c0 and ci form binary % 3
-                //  0 0 -> 0
-                //  0 1 -> 1
-                //  1 0 -> 2
-                //  1 1 -> 0
+                double plucker0 = Vec::dot(moment, tetra->getEdge(cv[0], _enteringFace));
+                int orientation0 = -sgn(plucker0);  // clockwise=1, cclockwise=-1, intersects=0
+                // if clockwise move clockwise else move cclockwise
+                int i = orientation0 == 1 ? 1 : 2;
+                double pluckeri = Vec::dot(moment, tetra->getEdge(cv[i], _enteringFace));
+                int orientationi = -sgn(pluckeri);  // clockwise=1, cclockwise=-1, intersects=0
+                // -1 -1 -> 0
+                //  1  1 -> 0
+                // -1  1 -> 1
+                //  1 -1 -> 2
+                //  0  0 -> any (0)
+                //  0  1 -> 1
+                //  0 -1 -> 2
+                // -1  0 -> 1
+                //  1  0 -> 2
+                static constexpr int a[3][3] = {
+                    {0, 1, 1},  // -1-1, -1 0, -1 1
+                    {2, 0, 1},  //  0-1,  0 0,  0 1
+                    {2, 2, 0}   //  1-1,  1 0,  1 1
+                };
 
-                _leavingFace = cv[((clockwise0 << 1) | clockwisei) % 3];
+                _leavingFace = cv[a[orientation0 + 1][orientationi + 1]];
 
                 // calculate ds from exit face
-                const Vec& v0 = *tetra->_vertices[0];
-                Vec e01 = tetra->getEdge(0, 1);
-                Vec e02 = tetra->getEdge(0, 2);
-                Vec n = Vec::cross(e01, e02);
 
-                double ds = Vec::dot(n, v0 - r()) / Vec::dot(n, k());
+                // we need the 3 vertices that are on the leaving face (order doesn't matter)
+                cv = tetra->clockwiseVertices(_leavingFace);
+                Vec& v0 = *tetra->_vertices[cv[0]];
+                Vec e01 = tetra->getEdge(cv[0], cv[1]);
+                Vec e02 = tetra->getEdge(cv[0], cv[2]);
+                Vec n = Vec::cross(e01, e02);
+                double ndotk = Vec::dot(n, k());
+                double ds;
+                if (ndotk == 0)  // the ray is inside the leaving face
+                    ds = 0;
+                else
+                    ds = Vec::dot(n, v0 - r()) / ndotk;
 
                 // we could assert if r+exit and r+sq*k are the same
 
