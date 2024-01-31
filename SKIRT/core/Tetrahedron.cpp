@@ -1,8 +1,8 @@
 #include "Tetrahedron.hpp"
 #include "FatalError.hpp"
+#include <iostream>
 
-Tetra::Tetra(const std::array<Vec*, 4>& vertices, const std::array<Face, 4>& neighbors)
-    : _vertices(vertices), _faces(neighbors)
+Tetra::Tetra(const std::array<Vec*, 4>& vertices, const std::array<Face, 4>& faces) : _vertices(vertices), _faces(faces)
 {
     double xmin = DBL_MAX;
     double ymin = DBL_MAX;
@@ -27,6 +27,30 @@ Tetra::Tetra(const std::array<Vec*, 4>& vertices, const std::array<Face, 4>& nei
 
     for (int i = 0; i < 4; i++) _centroid += *_vertices[i];
     _centroid /= 4;
+
+    for (int f = 0; f < 4; f++)
+    {
+        std::array<int, 3> cv = clockwiseVertices(f);
+        Vec e12 = *vertices[cv[1]] - *vertices[cv[0]];
+        Vec e13 = *vertices[cv[2]] - *vertices[cv[0]];
+        Vec normal = Vec::cross(e12, e13);
+        normal /= normal.norm();
+
+        Face& face = _faces[f];
+        face._normal = normal;
+    }
+
+    // this convention makes edges go clockwise around leaving rays from inside the tetrahedron
+    // so their plucker products are all positive if the ray leaves
+    const Vec e01 = *_vertices[1] - *_vertices[0];
+    const Vec e02 = *_vertices[2] - *_vertices[0];
+    const Vec e03 = *_vertices[3] - *_vertices[0];
+    double orientation = Vec::dot(Vec::cross(e01, e02), e03);
+    if (orientation < 0)
+    {
+        printf("ORIENTATION SWITCHED!!!!!!!!!");
+        // swap last 2, this means first 2 indices can be ordered i < j
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -139,8 +163,8 @@ Position Tetra::generatePosition(double s, double t, double u) const
 
 std::array<int, 3> Tetra::clockwiseVertices(int face)
 {
-    std::array<int, 3> t = {(face + 3) % 4, (face + 2) % 4, (face + 1) % 4};
+    std::array<int, 3> cv = {(face + 3) % 4, (face + 2) % 4, (face + 1) % 4};
     // if face is even we should swap two edges
-    if (face % 2 == 0) std::swap(t[0], t[2]);
-    return t;
+    if (face % 2 == 0) std::swap(cv[0], cv[2]);
+    return cv;
 }

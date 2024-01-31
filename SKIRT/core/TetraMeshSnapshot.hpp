@@ -403,7 +403,6 @@ private:
     Box _extent;      // the spatial domain of the mesh
     double _eps{0.};  // small fraction of extent
     int numTetra;
-    int numEdges;
     int numVertices;
 
     // data members initialized when processing snapshot input and further completed by BuildMesh()

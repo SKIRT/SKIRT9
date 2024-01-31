@@ -7,6 +7,7 @@ struct Face
     Face() {}
     Face(int ntetra, int nface) : _ntetra(ntetra), _nface(nface) {}
 
+    Vec _normal;
     int _ntetra;
     int _nface;
 };
@@ -19,11 +20,11 @@ private:
 
 public:
     const std::array<Vec*, 4> _vertices;
-    const std::array<Face, 4> _faces;
+    std::array<Face, 4> _faces;
     Vec _centroid;
 
 public:
-    Tetra(const std::array<Vec*, 4>& vertices, const std::array<Face, 4>& neighbors);
+    Tetra(const std::array<Vec*, 4>& vertices, const std::array<Face, 4>& faces);
 
     bool inside(const Position& bfr) const;
 
