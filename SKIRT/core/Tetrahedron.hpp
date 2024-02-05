@@ -5,6 +5,8 @@
 struct Face
 {
     Face() {}
+
+    // normals are calculated in the constructor of Tetra
     Face(int ntetra, int nface) : _ntetra(ntetra), _nface(nface) {}
 
     Vec _normal;
@@ -24,6 +26,8 @@ public:
     Vec _centroid;
 
 public:
+    Tetra(const std::array<Vec*, 4>& vertices, const std::array<Face, 4>& faces, const Array& prop);
+
     Tetra(const std::array<Vec*, 4>& vertices, const std::array<Face, 4>& faces);
 
     bool inside(const Position& bfr) const;

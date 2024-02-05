@@ -121,7 +121,7 @@ public:
 
         During its operation, the function logs some statistical information about the imported
         snapshot and the resulting data structures. */
-    // void readAndClose() override;
+    void readAndClose() override;
 
     //========== Configuration ==========
 
@@ -131,17 +131,13 @@ public:
         default; failing to set the extent of the domain results in undefined behavior. */
     void setExtent(const Box& extent);
 
-    /** This function configures the snapshot to skip construction of the actual Tetra
-        tessellation and instead use a search tree across all sites. It should be called only if
-        (1) the snapshot has been configured to import both a mass/number density column \em and a
-        volume-integrated mass/number column, and (2) the snapshot will not be required to generate
-        random positions or trace paths. Violating these conditions will result in undefined
-        behavior. */
-    // void foregoTetraMesh();
-
     //========== Specialty constructors ==========
 
 public:
+    // TetraMeshSnapshot(const SimulationItem* item, const Box& extent, string filename);
+
+    // TetraMeshSnapshot(const SimulationItem* item, const Box& extent, SiteListInterface* sli);
+
     TetraMeshSnapshot(const TetraMeshSpatialGrid* grid, const Box& extent);
 
     //=========== Private construction ==========
@@ -166,7 +162,7 @@ private:
         constructed with these adjusted site positions, which are distributed more uniformly,
         thereby avoiding overly elongated cells in the Tetra tessellation. Relaxation can be
         quite time-consuming because the Tetra tessellation must be constructed twice. */
-    void buildMesh(const TetraMeshSpatialGrid* grid);
+    void buildMesh(const TetraMeshSpatialGrid* grid, bool plc);
 
     /** This private function calculates the volumes for all cells without using the Tetra mesh.
         It assumes that both mass and mass density columns are being imported. */

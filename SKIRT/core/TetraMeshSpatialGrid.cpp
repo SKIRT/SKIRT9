@@ -17,10 +17,7 @@
 
 //////////////////////////////////////////////////////////////////////
 
-TetraMeshSpatialGrid::~TetraMeshSpatialGrid()
-{
-    if (_policy != Policy::ImportedMesh) delete _mesh;
-}
+TetraMeshSpatialGrid::~TetraMeshSpatialGrid() {}
 
 //////////////////////////////////////////////////////////////////////
 
@@ -267,9 +264,10 @@ bool TetraMeshSpatialGrid::offersInterface(const std::type_info& interfaceTypeIn
 {
     if (interfaceTypeInfo == typeid(DensityInCellInterface))
     {
-        if (_policy != Policy::ImportedMesh) return false;
-        auto ms = find<MediumSystem>(false);
-        return ms && ms->media().size() == 1;
+        return false;
+        // if (_policy != Policy::ImportedMesh) return false;
+        // auto ms = find<MediumSystem>(false);
+        // return ms && ms->media().size() == 1;
     }
     return SpatialGrid::offersInterface(interfaceTypeInfo);
 }

@@ -271,6 +271,29 @@ TetraMeshSnapshot::~TetraMeshSnapshot()
 
 ////////////////////////////////////////////////////////////////////
 
+void TetraMeshSnapshot::readAndClose()
+{
+    // // read the site info into memory
+    // Array prop;
+    // while (infile()->readRow(prop))
+    // {
+    //     _vertices.push_back(new Vec(prop[0], prop[1], prop[2]));
+    // }
+
+    // // close the file
+    // Snapshot::readAndClose();
+
+    // // if we are allowed to build a Voronoi mesh
+    // // calculate the Voronoi cells
+    // buildMesh(?, false);
+
+    // // if a mass density policy has been set, calculate masses and densities and build the search data structure
+    // if (hasMassDensityPolicy()) calculateDensityAndMass();
+    // if (hasMassDensityPolicy() || needGetEntities()) buildSearchPerBlock();
+}
+
+////////////////////////////////////////////////////////////////////
+
 void TetraMeshSnapshot::setExtent(const Box& extent)
 {
     _extent = extent;
@@ -279,11 +302,48 @@ void TetraMeshSnapshot::setExtent(const Box& extent)
 
 ////////////////////////////////////////////////////////////////////
 
+// TetraMeshSnapshot::TetraMeshSnapshot(const SimulationItem* item, const Box& extent, string filename, bool relax)
+// {
+//     // read the input file
+//     TextInFile in(item, filename, "Tetra vertices");
+//     in.addColumn("position x", "length", "pc");
+//     in.addColumn("position y", "length", "pc");
+//     in.addColumn("position z", "length", "pc");
+//     Array coords;
+//     while (in.readRow(coords)) _cells.push_back(new Cell(Vec(coords[0], coords[1], coords[2])));
+//     in.close();
+
+//     // calculate the Voronoi cells
+//     setContext(item);
+//     setExtent(extent);
+//     buildMesh(relax);
+//     buildSearchPerBlock();
+// }
+
+////////////////////////////////////////////////////////////////////
+
+// TetraMeshSnapshot::TetraMeshSnapshot(const SimulationItem* item, const Box& extent, SiteListInterface* sli,
+//                                          bool relax)
+// {
+//     // prepare the data
+//     int n = sli->numSites();
+//     _cells.resize(n);
+//     for (int m = 0; m != n; ++m) _cells[m] = new Cell(sli->sitePosition(m));
+
+//     // calculate the Voronoi cells
+//     setContext(item);
+//     setExtent(extent);
+//     buildMesh(relax);
+//     buildSearchPerBlock();
+// }
+
+////////////////////////////////////////////////////////////////////
+
 TetraMeshSnapshot::TetraMeshSnapshot(const TetraMeshSpatialGrid* grid, const Box& extent)
 {
     setContext(grid);
     setExtent(extent);
-    buildMesh(grid);
+    buildMesh(grid, true);
     buildSearchPerBlock();
 }
 
@@ -318,103 +378,89 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-void TetraMeshSnapshot::buildMesh(const TetraMeshSpatialGrid* grid)
+void TetraMeshSnapshot::buildMesh(const TetraMeshSpatialGrid* grid, bool plc)
 {
     tetgenio in, out;
-    // tetgenio::facet* f;
-    // tetgenio::polygon* p;
-
-    in.firstnumber = 0;
-    in.numberofpoints = 8;
-    // in.numberofpoints += 4;
-    in.pointlist = new REAL[in.numberofpoints * 3];
-
-    // bottom half (zmin)
-    in.pointlist[0] = _extent.xmin();
-    in.pointlist[1] = _extent.ymin();
-    in.pointlist[2] = _extent.zmin();
-
-    in.pointlist[3] = _extent.xmax();
-    in.pointlist[4] = _extent.xmin();
-    in.pointlist[5] = _extent.zmin();
-
-    in.pointlist[6] = _extent.xmax();
-    in.pointlist[7] = _extent.xmax();
-    in.pointlist[8] = _extent.zmin();
-
-    in.pointlist[9] = _extent.xmin();
-    in.pointlist[10] = _extent.ymax();
-    in.pointlist[11] = _extent.zmin();
-
-    // top half (zmax)
-    for (int i = 0; i < 4; i++)
-    {
-        // x, y the same but z = zmax
-        in.pointlist[12 + i * 3 + 0] = in.pointlist[i * 3 + 0];
-        in.pointlist[12 + i * 3 + 1] = in.pointlist[i * 3 + 1];
-        in.pointlist[12 + i * 3 + 2] = _extent.zmax();
-    }
-
-    // for (int i = 0; i < 4; i++)
-    // {
-    //     in.pointlist[24 + i * 3 + 0] = in.pointlist[i * 3 + 0] + _extent.xwidth() * 0.2;
-    //     in.pointlist[24 + i * 3 + 1] = in.pointlist[i * 3 + 1] + _extent.ywidth() * 0.2;
-    //     in.pointlist[24 + i * 3 + 2] = in.pointlist[i * 3 + 2] + _extent.zwidth() * 0.2;
-    // }
-
-    /* psc */
-    // in.numberofpointattributes = 1;
-    // in.pointattributelist = new REAL[in.numberofpoints];
-    // for (int i = 0; i < 8; i++)
-    // {
-    //     in.pointattributelist[i] = 1.;
-    // }
-    // for (int i = 8; i < in.numberofpoints; i++)
-    // {
-    //     Vec pos = random()->position(_extent);
-    //     in.pointlist[i * 3 + 0] = pos.x();
-    //     in.pointlist[i * 3 + 1] = pos.y();
-    //     in.pointlist[i * 3 + 2] = pos.z();
-    // }
-    // for (int i = 8; i < in.numberofpoints; i++)
-    // {
-    //     in.pointattributelist[i] = 1.;
-    // }
-    // in.pointattributelist[8] = 50.;
-
-    in.numberoffacets = 6;
-    // in.numberoffacets += 1;
-    in.facetlist = new tetgenio::facet[in.numberoffacets];
-    addFacet(&in.facetlist[0], {0, 1, 2, 3});  // Facet 1. bottom
-    addFacet(&in.facetlist[1], {4, 5, 6, 7});  // Facet 2. top
-    addFacet(&in.facetlist[2], {0, 4, 5, 1});  // Facet 3. front
-    addFacet(&in.facetlist[3], {1, 5, 6, 2});  // Facet 4. right
-    addFacet(&in.facetlist[4], {2, 6, 7, 3});  // Facet 5. back
-    addFacet(&in.facetlist[5], {3, 7, 4, 0});  // Facet 6. left
-    // addFacet(&in.facetlist[6], {8, 9, 10, 11});  // Facet 6. left
-
     tetgenbehavior behavior;
-    behavior.plc = 1;          // -p PLC
-    behavior.quality = 1;      // -q quality mesh
-    behavior.fixedvolume = 1;  // -a max volume
-    behavior.neighout = 2;     // -nn neighbors and edges?
-    behavior.zeroindex = 1;    // -z zero index
-    behavior.facesout = 1;     // -f faces
-    // behavior.edgesout = 1;     // -e edges
-    // behavior.weighted = 1;     // -w weighted
+    in.firstnumber = 0;
 
-    // parameters
-    // behavior.minratio = 5.0;   // -q quality
-    behavior.maxvolume = 0.05 * _extent.volume();  // -a max volume
-    // behavior.weighted_param = ;
-    // behavior.mindihedral = 5.0;  // -q/ minimal angle
+    if (plc)
+    {
+        in.numberofpoints = 8;
+        in.pointlist = new REAL[in.numberofpoints * 3];
 
-    in.tetunsuitable = [grid](double* pa, double* pb, double* pc, double* pd, double vol) {
-        return grid->tetUnsuitable(pa, pb, pc, pd, vol);
-    };
+        // bottom half (zmin)
+        in.pointlist[0] = _extent.xmin();
+        in.pointlist[1] = _extent.ymin();
+        in.pointlist[2] = _extent.zmin();
+
+        in.pointlist[3] = _extent.xmax();
+        in.pointlist[4] = _extent.xmin();
+        in.pointlist[5] = _extent.zmin();
+
+        in.pointlist[6] = _extent.xmax();
+        in.pointlist[7] = _extent.xmax();
+        in.pointlist[8] = _extent.zmin();
+
+        in.pointlist[9] = _extent.xmin();
+        in.pointlist[10] = _extent.ymax();
+        in.pointlist[11] = _extent.zmin();
+
+        // top half (zmax)
+        for (int i = 0; i < 4; i++)
+        {
+            // x, y the same but z = zmax
+            in.pointlist[12 + i * 3 + 0] = in.pointlist[i * 3 + 0];
+            in.pointlist[12 + i * 3 + 1] = in.pointlist[i * 3 + 1];
+            in.pointlist[12 + i * 3 + 2] = _extent.zmax();
+        }
+
+        in.numberoffacets = 6;
+        // in.numberoffacets += 1;
+        in.facetlist = new tetgenio::facet[in.numberoffacets];
+        addFacet(&in.facetlist[0], {0, 1, 2, 3});  // Facet 1. bottom
+        addFacet(&in.facetlist[1], {4, 5, 6, 7});  // Facet 2. top
+        addFacet(&in.facetlist[2], {0, 4, 5, 1});  // Facet 3. front
+        addFacet(&in.facetlist[3], {1, 5, 6, 2});  // Facet 4. right
+        addFacet(&in.facetlist[4], {2, 6, 7, 3});  // Facet 5. back
+        addFacet(&in.facetlist[5], {3, 7, 4, 0});  // Facet 6. left
+
+        behavior.plc = 1;          // -p PLC
+        behavior.quality = 1;      // -q quality mesh
+        behavior.fixedvolume = 1;  // -a max volume
+        behavior.neighout = 2;     // -nn neighbors and edges?
+        behavior.zeroindex = 1;    // -z zero index
+        behavior.facesout = 1;     // -f faces
+        // behavior.edgesout = 1;     // -e edges
+        // behavior.weighted = 1;     // -w weighted
+        // behavior.minratio = 5.0;   // -q quality
+        behavior.maxvolume = 0.05 * _extent.volume();  // -a max volume
+        // behavior.mindihedral = 5.0;  // -q/ minimal angle
+
+        in.tetunsuitable = [grid](double* pa, double* pb, double* pc, double* pd, double vol) {
+            return grid->tetUnsuitable(pa, pb, pc, pd, vol);
+        };
+    }
+    // psc
+    else
+    {
+        for (int i = 8; i < in.numberofpoints; i++)
+        {
+            Vec pos = random()->position(_extent);
+            in.pointlist[i * 3 + 0] = pos.x();
+            in.pointlist[i * 3 + 1] = pos.y();
+            in.pointlist[i * 3 + 2] = pos.z();
+        }
+
+        behavior.psc = 1;        // -s PSC
+        behavior.neighout = 2;   // -nn neighbors and edges?
+        behavior.zeroindex = 1;  // -z zero index
+        behavior.facesout = 1;   // -f faces
+    }
 
     tetrahedralize(&behavior, &in, &out);
 
+    // tranfser TetGen data in TetraMeshSnapshot data containers
     numTetra = out.numberoftetrahedra;
     numVertices = out.numberofpoints;
 
@@ -451,6 +497,7 @@ void TetraMeshSnapshot::buildMesh(const TetraMeshSpatialGrid* grid)
                     break;
                 }
             }
+
             faces[c] = Face(ntetra, nface);
         }
 
@@ -475,8 +522,8 @@ void TetraMeshSnapshot::calculateVolume()
 void TetraMeshSnapshot::calculateDensityAndMass()
 {
     // allocate vectors for mass and density
-    _rhov.resize(numVertices);
-    Array Mv(numVertices);
+    _rhov.resize(numTetra);
+    Array Mv(numTetra);
 
     // get the maximum temperature, or zero of there is none
     double maxT = useTemperatureCutoff() ? maxTemperature() : 0.;
@@ -488,7 +535,7 @@ void TetraMeshSnapshot::calculateDensityAndMass()
 
     // loop over all sites/cells
     int numIgnored = 0;
-    for (int m = 0; m != numVertices; ++m)
+    for (int m = 0; m != numTetra; ++m)
     {
         const Array& prop = _tetrahedra[m]->properties();
 
@@ -525,7 +572,7 @@ void TetraMeshSnapshot::calculateDensityAndMass()
     _mass = totalEffectiveMass;
 
     // construct a vector with the normalized cumulative site densities
-    if (numVertices) NR::cdf(_cumrhov, Mv);
+    if (numTetra) NR::cdf(_cumrhov, Mv);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -640,7 +687,7 @@ void TetraMeshSnapshot::buildSearchSingle()
 
 void TetraMeshSnapshot::writeGridPlotFiles(const SimulationItem* probe) const
 {
-    ///////////////// TEMP
+#ifdef WRITE
     std::ofstream outputFile("data/tetrahedra.txt");
     for (size_t i = 0; i < _tetrahedra.size(); i++)
     {
@@ -652,7 +699,7 @@ void TetraMeshSnapshot::writeGridPlotFiles(const SimulationItem* probe) const
         }
     }
     outputFile.close();
-    /////////////////
+#endif
 
     // create the plot files
     SpatialGridPlotFile plotxy(probe, probe->itemName() + "_grid_xy");
@@ -860,15 +907,11 @@ class TetraMeshSnapshot::MySegmentGenerator : public PathSegmentGenerator
     const TetraMeshSnapshot* _grid{nullptr};
     int _mr;
     int _enteringFace;
-    int _leavingFace;
-
-    int noleaving = 0;
-    int epsstep = 0;
 
 public:
     MySegmentGenerator(const TetraMeshSnapshot* grid) : _grid(grid) {}
 
-#define WRITE
+    // #define WRITE
 
 #ifdef WRITE
     std::ofstream out;
@@ -880,7 +923,6 @@ public:
 
     void stopwriting()
     {
-        printf("noleaving: %d, %d\n", noleaving, epsstep);
         out.close();
     }
 
@@ -896,13 +938,6 @@ public:
     {
         if (state() == State::Unknown)
         {
-            // _rx = 0;
-            // _ry = 0;
-            // _rz = 0;
-            // _kx = 0;
-            // _ky = 0;
-            // _kz = 1;
-            
             // try moving the photon packet inside the grid; if this is impossible, return an empty path
             // this also changes the state()
             if (!moveInside(_grid->extent(), _grid->_eps)) return false;
@@ -910,7 +945,6 @@ public:
             // get the index of the cell containing the current position
             _mr = _grid->cellIndex(r());
             _enteringFace = -1;
-            _leavingFace = -1;
 
             // if the photon packet started outside the grid, return the corresponding nonzero-length segment;
             // otherwise fall through to determine the first actual segment
@@ -925,6 +959,7 @@ public:
         // intentionally falls through
         if (state() == State::Inside)
         {
+            int leavingFace = -1;
             // loop in case no exit point was found (which should happen only rarely)
             while (true)
             {
@@ -935,6 +970,7 @@ public:
                 // find entering face using a single Plücker product
                 if (_enteringFace == -1)
                 {
+                    // clockwise and cclockwise adjacent faces when checking edge v1->v2
                     constexpr int etable[6][2] = {{3, 2}, {1, 3}, {2, 1}, {3, 0}, {0, 2}, {1, 0}};
                     // try all 6 edges because of rare edge cases where ray is inside edge
                     // having only 1 non-zero Plücker product
@@ -962,52 +998,76 @@ public:
                 std::array<int, 3> cv = Tetra::clockwiseVertices(_enteringFace);
 
                 // 2 step decision tree
-                int clock0 = Vec::dot(moment, tetra->getEdge(cv[0], _enteringFace)) < 0;
+                double prod0 = Vec::dot(moment, tetra->getEdge(cv[0], _enteringFace));
+                int clock0 = prod0 < 0;
                 // if clockwise move clockwise else move cclockwise
                 int i = clock0 ? 1 : 2;
-                int cclocki = Vec::dot(moment, tetra->getEdge(cv[i], _enteringFace)) >= 0;
+                double prodi = Vec::dot(moment, tetra->getEdge(cv[i], _enteringFace));
+                int cclocki = prodi >= 0;
 
-                // decision table for clock0 and cclocki
-                // 1 1 -> 2
-                // 0 0 -> 1
-                // 1 0 -> 0
-                // 0 1 -> 0
-                constexpr int dtable[2][2] = {{1, 0}, {0, 2}};
-                _leavingFace = cv[dtable[clock0][cclocki]];
-                const Vec& n = tetra->_faces[_leavingFace]._normal;
-                const Vec& v = *tetra->_vertices[_enteringFace];
-                double ndotk = Vec::dot(n, dir);
-                double ds;
-                // if ndotk == 0. we are inside the leaving face, we should just move to the neighboring tetra and not move (ds=0)
-                // once it moved to its neighbor, it can't move back to this cell and it will traverse the next step correctly
-                if (ndotk == 0.)
+                double ds = DBL_MAX;
+
+                // use plane intersection algorithm if Plücker products are ambiguous
+                if (prod0 == 0. || prodi == 0.)
                 {
-                    ds = 0;
-                }
-                else
-                {
-                    ds = Vec::dot(n, v - pos) / ndotk;
-                    // if ds is too close to leaving face or negative or ndotk is negative
-                    // we should not use the traversal algorithm
-                    if (ds < _grid->_eps || ndotk < 0)
+                    for (int face : cv)
                     {
-                        _leavingFace = -1;
-                        epsstep++;
+                        const Vec& n = tetra->_faces[face]._normal;
+                        const Vec& v = *tetra->_vertices[_enteringFace];
+                        double ndotk = Vec::dot(n, dir);
+                        if (ndotk > 0)
+                        {
+                            double dq = Vec::dot(n, v - pos) / ndotk;
+                            if (dq < ds)
+                            {
+                                ds = dq;
+                                leavingFace = face;
+                            }
+                        }
                     }
                 }
+                // use Maria (2017) algorithm otherwise
+                else
+                {
+                    // decision table for clock0 and cclocki
+                    // 1 1 -> 2
+                    // 0 0 -> 1
+                    // 1 0 -> 0
+                    // 0 1 -> 0
+                    constexpr int dtable[2][2] = {{1, 0}, {0, 2}};
+                    leavingFace = cv[dtable[clock0][cclocki]];
+                    const Vec& n = tetra->_faces[leavingFace]._normal;
+                    const Vec& v = *tetra->_vertices[_enteringFace];
+                    double ndotk = Vec::dot(n, dir);
+
+                    // if ndotk == 0. we are inside the leaving face, we should just move to the neighboring tetra and not move (ds=0)
+                    // once it moved to its neighbor, it can't move back to this cell and it will traverse the next step correctly
+                    // if (ndotk == 0.)
+                    //     ds = 0;
+                    // else
+                    //     ds = Vec::dot(n, v - pos) / ndotk;
+
+                    ds = Vec::dot(n, v - pos) / ndotk;
+                }
+
+                // if ds is too close to leaving face we recalculate cellIndex to avoid traversing when ds ~ 0
+                // this might actually slow down the traversal
 
                 // if no exit point was found, advance the current point by a small distance,
                 // recalculate the cell index, and return to the start of the loop
-                if (_leavingFace == -1)
+                if (leavingFace == -1 || ds < _grid->_eps)
                 {
-                    noleaving++;
-
+                    // move towards centroid?
                     propagater(_grid->_eps);
                     _mr = _grid->cellIndex(r());
-                    // move towards centroid?
-                    _enteringFace = -1;
 
-                    if (_mr < 0) setState(State::Outside);
+                    if (_mr < 0)
+                    {
+                        setState(State::Outside);
+                        return false;
+                    }
+
+                    _enteringFace = -1;
 #ifdef WRITE
                     write(ds, -1);
 #endif
@@ -1017,17 +1077,20 @@ public:
                 {
                     propagater(ds);
                     setSegment(_mr, ds);
-                    _mr = tetra->_faces[_leavingFace]._ntetra;
+                    _mr = tetra->_faces[leavingFace]._ntetra;
 
                     if (_mr < 0)
+                    {
                         setState(State::Outside);
-                    else
-                        _enteringFace = tetra->_faces[_leavingFace]._nface;
+                        return false;
+                    }
 
-                    _leavingFace = -1;
+                    _enteringFace = tetra->_faces[leavingFace]._nface;
+
 #ifdef WRITE
-                    write(ds, _leavingFace);
+                    write(ds, leavingFace);
 #endif
+
                     return true;
                 }
             }
@@ -1039,6 +1102,7 @@ public:
 #ifdef WRITE
         stopwriting();
 #endif
+
         return false;
     }
 };

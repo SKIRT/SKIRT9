@@ -26,23 +26,8 @@ class TetraMeshSnapshot;
     overly elongated cells. */
 class TetraMeshSpatialGrid : public BoxSpatialGrid, public DensityInCellInterface
 {
-    /** The enumeration type indicating the policy for determining the positions of the sites. */
-    ENUM_DEF(Policy, Uniform, CentralPeak, DustDensity, ElectronDensity, GasDensity, File, ImportedSites, ImportedMesh)
-        ENUM_VAL(Policy, Uniform, "random from uniform distribution")
-        ENUM_VAL(Policy, CentralPeak, "random from distribution with a steep central peak")
-        ENUM_VAL(Policy, DustDensity, "random from dust density distribution")
-        ENUM_VAL(Policy, ElectronDensity, "random from electron density distribution")
-        ENUM_VAL(Policy, GasDensity, "random from gas density distribution")
-        ENUM_VAL(Policy, File, "loaded from text column data file")
-        ENUM_VAL(Policy, ImportedSites, "positions of particles, sites or cells in imported distribution")
-        ENUM_VAL(Policy, ImportedMesh, "employ imported Tetra mesh in medium system")
-    ENUM_END()
-
     ITEM_CONCRETE(TetraMeshSpatialGrid, BoxSpatialGrid, "a Tetra tessellation-based spatial grid")
         ATTRIBUTE_TYPE_DISPLAYED_IF(TetraMeshSpatialGrid, "Level2")
-
-        PROPERTY_ENUM(policy, Policy, "the policy for determining the positions of the sites")
-        ATTRIBUTE_DEFAULT_VALUE(policy, "DustDensity")
 
         PROPERTY_DOUBLE(maxDustFraction, "the maximum fraction of dust contained in each cell")
         ATTRIBUTE_MIN_VALUE(maxDustFraction, "[0")
