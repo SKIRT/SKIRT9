@@ -61,49 +61,20 @@ Vec Tetra::getEdge(int t1, int t2) const
 
 bool Tetra::inside(const Position& bfr) const
 {
-    if (!Box::contains(bfr)) return false;
+    // since we use the k-d tree this will only slow the CellIndex
+    // if (!Box::contains(bfr)) return false;
 
-    /*
-    face: normals for which the other vertex has a positive dot product with
-    3:*02 x 01*| 10 x 12 | 21 x 20
-    2: 13 x 10 |*01 x 03*| 30 x 31
-    1: 20 x 23 | 32 x 30 |*03 x 02*
-    0: 31 x 32 | 23 x 21 |*12 x 13* // last one doesn't matter
-    */
+    // could optimize this slightly by using same vertex for 3 faces and do final face seperately
 
-    // optimized version (probably not that much better)
-    Vec e0p = bfr - *_vertices[0];
-    Vec e02 = getEdge(0, 2);
-    Vec e01 = getEdge(0, 1);
-    if (Vec::dot(Vec::cross(e02, e01), e0p) > 0)  // 02 x 01
-        return false;
+    for (int f = 0; f < 4; f++)
+    {
+        const Face& face = _faces[f];
+        const Vec* vertex = _vertices[(f + 1) % 4];  // any vertex that is on the face
 
-    Vec e03 = *_vertices[3] - *_vertices[0];
-    if (Vec::dot(Vec::cross(e01, e03), e0p) > 0)  // 01 x 03
-        return false;
-
-    if (Vec::dot(Vec::cross(e03, e02), e0p) > 0)  // 03 x 02
-        return false;
-
-    Vec e1p = bfr - *_vertices[1];
-    Vec e12 = getEdge(1, 2);
-    Vec e13 = getEdge(1, 3);
-    return Vec::dot(Vec::cross(e12, e13), e1p) < 0;  // 12 x 13
-
-    // checks 3 edges too many but very simple
-    // for (int face = 0; face < 4; face++)
-    // {
-    //     std::array<int, 3> t = clockwiseVertices(face);
-    //     Vec& v0 = *_vertices[t[0]];
-    //     Vec& clock = *_vertices[t[1]];
-    //     Vec& counter = *_vertices[t[2]];
-    //     Vec normal = Vec::cross(counter - v0, clock - v0);
-    //     if (Vec::dot(normal, bfr - v0) < 0)  // is pos on the same side as v3
-    //     {
-    //         return false;
-    //     }
-    // }
-    // return true;
+        // if point->face is opposite direction as the outward pointing normal, the point is outside
+        if (Vec::dot(*vertex - bfr, face._normal) < 0) return false;
+    }
+    return true;
 }
 
 ////////////////////////////////////////////////////////////////////
