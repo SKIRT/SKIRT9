@@ -119,7 +119,8 @@ bool TetraMeshSpatialGrid::tetUnsuitable(double* pa, double* pb, double* pc, dou
     Vec d(pd[0], pd[1], pd[2]);
 
     // results for the sampled mass or number densities, if applicable
-    double rho = 0.;          // dust mass density
+    double rho = 0.;  // dust mass density
+    // double rhovar = 0.;       // dust mass variance
     double rhomin = DBL_MAX;  // smallest sample for dust mass density
     double rhomax = 0.;       // largest sample for dust mass density
     double ne = 0;            // electron number density
@@ -129,6 +130,7 @@ bool TetraMeshSpatialGrid::tetUnsuitable(double* pa, double* pb, double* pc, dou
     if (_hasAny)
     {
         double rhosum = 0;
+        // double rhosum2 = 0;
         double nesum = 0;
         double ngsum = 0;
         for (int i = 0; i != _numSamples; ++i)
@@ -143,6 +145,7 @@ bool TetraMeshSpatialGrid::tetUnsuitable(double* pa, double* pb, double* pc, dou
                 double rhoi = 0.;
                 for (auto medium : _dustMedia) rhoi += medium->massDensity(bfr);
                 rhosum += rhoi;
+                // rhosum2 += rhoi * rhoi;
                 if (rhoi < rhomin) rhomin = rhoi;
                 if (rhoi > rhomax) rhomax = rhoi;
             }
@@ -152,6 +155,7 @@ bool TetraMeshSpatialGrid::tetUnsuitable(double* pa, double* pb, double* pc, dou
                 for (auto medium : _gasMedia) ngsum += medium->numberDensity(bfr);
         }
         rho = rhosum / _numSamples;
+        // rhovar = rhomax > 0 ? (rhosum2 / _numSamples - rho * rho) * (vol / _dustMass) * (vol / _dustMass) / (maxDustFraction() * maxDustFraction()) : 0.;
         ne = nesum / _numSamples;
         ng = ngsum / _numSamples;
     }
@@ -161,6 +165,7 @@ bool TetraMeshSpatialGrid::tetUnsuitable(double* pa, double* pb, double* pc, dou
     {
         double delta = rho * vol / _dustMass;
         if (delta > maxDustFraction()) return true;
+        if (delta < minDustFraction()) return false;
     }
 
     // handle maximum dust optical depth
@@ -173,6 +178,8 @@ bool TetraMeshSpatialGrid::tetUnsuitable(double* pa, double* pb, double* pc, dou
     // handle maximum dust density dispersion
     if (_hasDustDensityDispersion)
     {
+        // if (rhovar > maxDustDensityDispersion()) return true;
+
         double q = rhomax > 0 ? (rhomax - rhomin) / rhomax : 0.;
         if (q > maxDustDensityDispersion()) return true;
     }

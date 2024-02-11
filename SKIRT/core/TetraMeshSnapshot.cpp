@@ -139,6 +139,33 @@ namespace
     {
         return (a > T(0)) - (a < T(0));
     }
+
+    int findEnteringFace(const Tetra* tetra, const Vec& pos, const Direction& dir)
+    {
+        int enteringFace = -1;
+        // clockwise and cclockwise adjacent faces when checking edge v1->v2
+        constexpr int etable[6][2] = {{3, 2}, {1, 3}, {2, 1}, {3, 0}, {0, 2}, {1, 0}};
+        // try all 6 edges because of rare edge cases where ray is inside edge
+        // having only 1 non-zero Plücker product
+        int e = 0;
+        for (int v1 = 0; v1 < 3; v1++)
+        {
+            for (int v2 = v1 + 1; v2 < 4; v2++)
+            {
+
+                Vec moment12 = Vec::cross(dir, pos - *tetra->_vertices[v1]);
+                double prod12 = Vec::dot(moment12, tetra->getEdge(v1, v2));
+                if (prod12 != 0.)
+                {
+                    enteringFace = prod12 < 0 ? etable[e][0] : etable[e][1];
+                    break;
+                }
+                e++;
+            }
+            if (enteringFace != -1) break;
+        }
+        return enteringFace;
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -444,6 +471,8 @@ void TetraMeshSnapshot::buildMesh(const TetraMeshSpatialGrid* grid, bool plc)
     // psc
     else
     {
+        in.numberofpoints = 50;
+        in.pointlist = new REAL[in.numberofpoints * 3];
         for (int i = 8; i < in.numberofpoints; i++)
         {
             Vec pos = random()->position(_extent);
@@ -485,16 +514,20 @@ void TetraMeshSnapshot::buildMesh(const TetraMeshSpatialGrid* grid, bool plc)
 
         for (int c = 0; c < 4; c++)
         {
+            // -1 if no neighbor
             int ntetra = out.neighborlist[4 * i + c];
 
             // find which face is shared with neighbor
-            int nface;
-            for (int cn = 0; cn < 4; cn++)
+            int nface = -1;
+            if (ntetra != -1)
             {
-                if (out.neighborlist[4 * ntetra + cn] == i)
+                for (int cn = 0; cn < 4; cn++)
                 {
-                    nface = cn;
-                    break;
+                    if (out.neighborlist[4 * ntetra + cn] == i)
+                    {
+                        nface = cn;
+                        break;
+                    }
                 }
             }
 
@@ -617,9 +650,6 @@ void TetraMeshSnapshot::buildSearchPerBlock()
     int i1, j1, k1, i2, j2, k2;
     for (int c = 0; c != numTetra; ++c)
     {
-        // _extent.cellIndices(i1, j1, k1, *_centroids[c], _nb, _nb, _nb);
-        // _blocklists[i1 * _nb2 + j1 * _nb + k1].push_back(c);
-
         _extent.cellIndices(i1, j1, k1, _tetrahedra[c]->rmin() - Vec(_eps, _eps, _eps), _nb, _nb, _nb);
         _extent.cellIndices(i2, j2, k2, _tetrahedra[c]->rmax() + Vec(_eps, _eps, _eps), _nb, _nb, _nb);
         for (int i = i1; i <= i2; i++)
@@ -670,16 +700,16 @@ void TetraMeshSnapshot::buildSearchPerBlock()
 void TetraMeshSnapshot::buildSearchSingle()
 {
     // log the number of sites
-    log()->info("  Number of sites: " + std::to_string(numVertices));
+    log()->info("  Number of tetrahedra: " + std::to_string(numTetra));
 
     // abort if there are no cells
-    if (!numVertices) return;
+    if (!numTetra) return;
 
     // construct a single search tree on the site locations of all cells
-    log()->info("Building data structure to accelerate searching " + std::to_string(numVertices) + " Voronoi sites");
+    log()->info("Building data structure to accelerate searching " + std::to_string(numTetra) + " tetrahedra");
     _blocktrees.resize(1);
-    vector<int> ids(numVertices);
-    for (int m = 0; m != numVertices; ++m) ids[m] = m;
+    vector<int> ids(numTetra);
+    for (int m = 0; m != numTetra; ++m) ids[m] = m;
     _blocktrees[0] = buildTree(ids.begin(), ids.end(), 0);
 }
 
@@ -687,7 +717,6 @@ void TetraMeshSnapshot::buildSearchSingle()
 
 void TetraMeshSnapshot::writeGridPlotFiles(const SimulationItem* probe) const
 {
-#ifdef WRITE
     std::ofstream outputFile("data/tetrahedra.txt");
     for (size_t i = 0; i < _tetrahedra.size(); i++)
     {
@@ -699,7 +728,25 @@ void TetraMeshSnapshot::writeGridPlotFiles(const SimulationItem* probe) const
         }
     }
     outputFile.close();
-#endif
+
+    // outputFile.open("data/faces.txt");
+    // for (size_t i = 0; i < _tetrahedra.size(); i++)
+    // {
+    //     const Tetra* tetra = _tetrahedra[i];
+    //     bool out = false;
+    //     for (int f = 0; f < 4; f++)
+    //     {
+    //         if (tetra->_faces[f]._ntetra < 0)
+    //         {
+    //             for (int v : tetra->clockwiseVertices(f))
+    //             {
+    //                 const Vec* r = tetra->_vertices[v];
+    //                 outputFile << r->x() << ", " << r->y() << ", " << r->z() << "\n";
+    //             }
+    //         }
+    //     }
+    // }
+    // outputFile.close();
 
     // create the plot files
     SpatialGridPlotFile plotxy(probe, probe->itemName() + "_grid_xy");
@@ -838,15 +885,177 @@ int TetraMeshSnapshot::cellIndex(Position bfr) const
     _extent.cellIndices(i, j, k, bfr, _nb, _nb, _nb);
     int b = i * _nb2 + j * _nb + k;
 
+    // int test = 0;
+
     // look for the closest centroid in this block using the search tree
     Node* tree = _blocktrees[b];
     if (tree)
     {
+        // /*
+        // full traversal algorithm
+        int enteringFace = -1;
+        int leavingFace = -1;
+        int m = tree->m();
+
+        const Tetra* tetra = _tetrahedra[m];
+
+        Vec pos = tetra->_centroid;
+        Direction dir(bfr - tetra->_centroid);
+        double dist = dir.norm();  // keep subtracting ds until dist < 0
+        dir /= dist;
+
+        while (true)
+        {
+            tetra = _tetrahedra[m];
+
+            // find entering face using a single Plücker product
+            if (enteringFace == -1)
+            {
+                enteringFace = findEnteringFace(tetra, pos, dir);
+                if (enteringFace == -1) break;
+            }
+
+            // the translated Plücker moment in the local coordinate system
+            Vec moment = Vec::cross(dir, pos - *tetra->_vertices[enteringFace]);
+            std::array<int, 3> cv = Tetra::clockwiseVertices(enteringFace);
+
+            // 2 step decision tree
+            double prod0 = Vec::dot(moment, tetra->getEdge(cv[0], enteringFace));
+            int clock0 = prod0 < 0;
+            // if clockwise move clockwise else move cclockwise
+            int i = clock0 ? 1 : 2;
+            double prodi = Vec::dot(moment, tetra->getEdge(cv[i], enteringFace));
+            int cclocki = prodi >= 0;
+
+            double ds = DBL_MAX;
+
+            // use plane intersection algorithm if Plücker products are ambiguous
+            if (prod0 == 0. || prodi == 0.)
+            {
+                for (int face : cv)
+                {
+                    const Vec& n = tetra->_faces[face]._normal;
+                    double ndotk = Vec::dot(n, dir);
+                    if (ndotk > 0)
+                    {
+                        const Vec& v = *tetra->_vertices[enteringFace];
+                        double dq = Vec::dot(n, v - pos) / ndotk;
+                        if (dq < ds)
+                        {
+                            ds = dq;
+                            leavingFace = face;
+                        }
+                    }
+                }
+            }
+            // use Maria (2017) algorithm otherwise
+            else
+            {
+                // decision table for clock0 and cclocki
+                // 1 1 -> 2
+                // 0 0 -> 1
+                // 1 0 -> 0
+                // 0 1 -> 0
+                constexpr int dtable[2][2] = {{1, 0}, {0, 2}};
+                leavingFace = cv[dtable[clock0][cclocki]];
+                const Vec& n = tetra->_faces[leavingFace]._normal;
+                const Vec& v = *tetra->_vertices[enteringFace];
+                double ndotk = Vec::dot(n, dir);
+
+                ds = Vec::dot(n, v - pos) / ndotk;
+            }
+
+            // if ds is too close to leaving face we recalculate cellIndex to avoid traversing when ds ~ 0
+            // this might actually slow down the traversal
+
+            // if no exit point was found, advance the current point by a small distance,
+            // recalculate the cell index, and return to the start of the loop
+            if (leavingFace == -1)
+            {
+                break;  // traversal failed
+            }
+            // otherwise set the current point to the exit point and return the path segment
+            else
+            {
+                pos += ds * dir;
+                dist -= ds;
+                if (dist <= 0) return m;
+
+                m = tetra->_faces[leavingFace]._ntetra;
+                enteringFace = tetra->_faces[leavingFace]._nface;
+
+                if (m < 0) break;
+            }
+        }
+        // */
+
+        /*
+        // traverse towards input point from nearest centroid
+        int m = tree->nearest(bfr, _centroids)->m();
+        const Tetra* root = _tetrahedra[m];
+
+        test++;
+        if (root->inside(bfr)) return test;
+
+        Vec pos = root->_centroid;
+        Vec dir = bfr - pos;
+        double dist = dir.norm();
+        dir /= dist;
+
+        // start by checking all faces
+        std::vector<int> faces = {0, 1, 2, 3};
+
+        while (true)
+        {
+            const Tetra* tetra = _tetrahedra[m];
+
+            double ds = DBL_MAX;
+            int leavingFace = -1;
+
+            // find exit face
+            for (int face : faces)
+            {
+                const Vec& n = tetra->_faces[face]._normal;
+                double ndotk = Vec::dot(n, dir);
+                if (ndotk > 0)
+                {
+                    const Vec& v = *tetra->_vertices[(face + 1) % 4];
+                    double dq = Vec::dot(n, v - pos) / ndotk;
+                    if (dq < ds)
+                    {
+                        ds = dq;
+                        leavingFace = face;
+                    }
+                }
+            }
+
+            if (leavingFace == -1) break;
+
+            // propagate and check inside if we passed the input point
+            pos += ds * dir;
+            dist -= ds;
+            if (dist <= 0)
+            {
+                test++;
+                if (tetra->inside(bfr)) return test;
+            }
+
+            m = tetra->_faces[leavingFace]._ntetra;
+            int enteringFace = tetra->_faces[leavingFace]._nface;
+            faces = {(enteringFace + 1) % 4, (enteringFace + 2) % 4, (enteringFace + 3) % 4};
+
+            if (m < 0) break;
+        }
+        */
+
+        /*
         // use a breadth-first search over the neighboring tetrahedra
         int root = tree->nearest(bfr, _centroids)->m();
         std::queue<int> queue;
         std::unordered_set<int> explored;
         queue.push(root);
+
+        // Vec dir = bfr - _tetrahedra[root]->_centroid;
 
         int t;
         while (queue.size() > 0)
@@ -855,27 +1064,36 @@ int TetraMeshSnapshot::cellIndex(Position bfr) const
             queue.pop();
             const Tetra* tetra = _tetrahedra[t];
 
-            if (tetra->inside(bfr)) return t;
+            test++;
+            if (tetra->inside(bfr)) return test;
             explored.insert(t);
 
+            Vec dir = bfr - tetra->_centroid;
             for (const Face& face : tetra->_faces)
             {
                 int n = face._ntetra;
                 if (n != -1 && (explored.find(n) == explored.end()))  // if not already explored
-                    queue.push(n);
+                {
+                    if (Vec::dot(dir, face._normal) > 0)
+                    {
+                        queue.push(n);
+                        explored.insert(n);
+                    }
+                }
             }
         }
-        log()->error("cellIndex failed to find the tetrahedron");  // change to warning?
-    }
-    else
-    {
-        // if there is no search tree, simply loop over all tetrahedra in the block
-        for (int t : _blocklists[b])
-        {
-            if (_tetrahedra[t]->inside(bfr)) return t;
-        }
+        */
+
+        log()->error("search tree failed to find the tetrahedron");  // change to warning?
     }
 
+    // if there is no search tree or search tree failed, simply loop over all tetrahedra in the block
+    for (int t : _blocklists[b])
+    {
+        if (_tetrahedra[t]->inside(bfr)) return t;
+    }
+
+    log()->error("cellIndex failed to find the tetrahedron");  // change to warning?
     return -1;
 }
 
@@ -970,27 +1188,7 @@ public:
                 // find entering face using a single Plücker product
                 if (_enteringFace == -1)
                 {
-                    // clockwise and cclockwise adjacent faces when checking edge v1->v2
-                    constexpr int etable[6][2] = {{3, 2}, {1, 3}, {2, 1}, {3, 0}, {0, 2}, {1, 0}};
-                    // try all 6 edges because of rare edge cases where ray is inside edge
-                    // having only 1 non-zero Plücker product
-                    int e = 0;
-                    for (int v1 = 0; v1 < 3; v1++)
-                    {
-                        for (int v2 = v1 + 1; v2 < 4; v2++)
-                        {
-
-                            Vec moment12 = Vec::cross(dir, pos - *tetra->_vertices[v1]);
-                            double prod12 = Vec::dot(moment12, tetra->getEdge(v1, v2));
-                            if (prod12 != 0.)
-                            {
-                                _enteringFace = prod12 < 0 ? etable[e][0] : etable[e][1];
-                                break;
-                            }
-                            e++;
-                        }
-                        if (_enteringFace != -1) break;
-                    }
+                    _enteringFace = findEnteringFace(tetra, pos, dir);
                 }
 
                 // the translated Plücker moment in the local coordinate system
@@ -1013,10 +1211,10 @@ public:
                     for (int face : cv)
                     {
                         const Vec& n = tetra->_faces[face]._normal;
-                        const Vec& v = *tetra->_vertices[_enteringFace];
                         double ndotk = Vec::dot(n, dir);
                         if (ndotk > 0)
                         {
+                            const Vec& v = *tetra->_vertices[_enteringFace];
                             double dq = Vec::dot(n, v - pos) / ndotk;
                             if (dq < ds)
                             {

@@ -35,6 +35,12 @@ class TetraMeshSpatialGrid : public BoxSpatialGrid, public DensityInCellInterfac
         ATTRIBUTE_DEFAULT_VALUE(maxDustFraction, "1e-6")
         ATTRIBUTE_DISPLAYED_IF(maxDustFraction, "DustMix")
 
+        PROPERTY_DOUBLE(minDustFraction, "the minimum fraction of dust contained in each cell")
+        ATTRIBUTE_MIN_VALUE(minDustFraction, "[0")
+        ATTRIBUTE_MAX_VALUE(minDustFraction, "1e-2]")
+        ATTRIBUTE_DEFAULT_VALUE(minDustFraction, "1e-6")
+        ATTRIBUTE_DISPLAYED_IF(minDustFraction, "DustMix")
+
         PROPERTY_DOUBLE(maxDustOpticalDepth, "the maximum diagonal dust optical depth for each cell")
         ATTRIBUTE_MIN_VALUE(maxDustOpticalDepth, "[0")
         ATTRIBUTE_MAX_VALUE(maxDustOpticalDepth, "100]")
@@ -50,7 +56,7 @@ class TetraMeshSpatialGrid : public BoxSpatialGrid, public DensityInCellInterfac
 
         PROPERTY_DOUBLE(maxDustDensityDispersion, "the maximum dust density dispersion in each cell")
         ATTRIBUTE_MIN_VALUE(maxDustDensityDispersion, "[0")
-        ATTRIBUTE_MAX_VALUE(maxDustDensityDispersion, "1]")
+        ATTRIBUTE_MAX_VALUE(maxDustDensityDispersion, "1000]")
         ATTRIBUTE_DEFAULT_VALUE(maxDustDensityDispersion, "0")
         ATTRIBUTE_DISPLAYED_IF(maxDustDensityDispersion, "DustMix&Level2")
 
