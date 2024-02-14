@@ -539,8 +539,31 @@ void TetraMeshSnapshot::buildMesh(const TetraMeshSpatialGrid* grid, bool plc)
         _centroids.push_back(&_tetrahedra[i]->_centroid);
     }
 
-    log()->info("number of vertices " + std::to_string(numVertices));
-    log()->info("number of tetrahedra " + std::to_string(numTetra));
+    // compile statistics
+    double minVol = DBL_MAX;
+    double maxVol = 0.;
+    double totalVol = 0.;
+    double totalVol2 = 0.;
+    for (int m = 0; m < numTetra; m++)
+    {
+        double vol = _tetrahedra[m]->volume();
+        totalVol += vol;
+        totalVol2 += vol * vol;
+        minVol = min(minVol, vol);
+        maxVol = max(maxVol, vol);
+    }
+    double V = _extent.volume();
+    double avgVol = totalVol / (numTetra * V);
+    double varVol = (totalVol2 / numTetra - avgVol * avgVol) / (V * V);
+
+    // log neighbor statistics
+    log()->info("Done computing tetrahedral tessellation");
+    log()->info("  Number of vertices " + std::to_string(numVertices));
+    log()->info("  Number of tetrahedra " + std::to_string(numTetra));
+    log()->info("  Average volume\% per cell: " + StringUtils::toString(avgVol, 'e'));
+    log()->info("  Variance of volume\% per cell: " + StringUtils::toString(varVol, 'e'));
+    log()->info("  Minimum volume\% cell: " + StringUtils::toString(minVol, 'e'));
+    log()->info("  Maximum volume\% cell: " + StringUtils::toString(maxVol, 'e'));
 }
 
 ////////////////////////////////////////////////////////////////////
