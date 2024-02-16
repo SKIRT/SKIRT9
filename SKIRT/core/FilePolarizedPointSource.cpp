@@ -17,9 +17,19 @@ void FilePolarizedPointSource::setupSelfBefore()
 {
     Source::setupSelfBefore();
 
-    // read the input file
+    // open the tables with Stokes vector components as a function of wavelength and inclination angle
+    _tableI.open(this, _filename, "theta(rad),lambda(m)", "I(W/m)", false, false);
+    _tableQ.open(this, _filename, "theta(rad),lambda(m)", "Q(W/m)", false, false);
+    _tableU.open(this, _filename, "theta(rad),lambda(m)", "U(W/m)", false, false);
+    _tableV.open(this, _filename, "theta(rad),lambda(m)", "V(W/m)", false, false);
+
     // construct the SED averaged over all angles from the input file
     // _sed = ...
+    _tableI.valueAtIndices(3,4);
+    Array thetav, lambdav;
+    _tableI.axisArray<0>(thetav);
+    _tableI.axisArray<1>(lambdav);
+
     // construct angular distribution object for each wavelength point
     // construct polarization profile object for each wavelength point
     // adjust for symmetry axis orientation in both sets of objects

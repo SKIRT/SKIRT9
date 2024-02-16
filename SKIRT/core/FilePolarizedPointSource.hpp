@@ -9,6 +9,7 @@
 #include "LuminosityNormalization.hpp"
 #include "Source.hpp"
 #include "VelocityInterface.hpp"
+#include "StoredTable.hpp"
 class ContSED;
 
 //////////////////////////////////////////////////////////////////////
@@ -139,6 +140,12 @@ public:
     //======================== Data Members ========================
 
 private:
+    // user-provided Stokes vector components as a function of wavelength and inclination angle
+    StoredTable<2> _tableI;
+    StoredTable<2> _tableQ;
+    StoredTable<2> _tableU;
+    StoredTable<2> _tableV;
+
     // spectral data initialized during setup
     ContSED* _sed{nullptr};  // the SED averaged over all angles as derived from the input file
 

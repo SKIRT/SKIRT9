@@ -37,14 +37,14 @@ void BroadBand::setupSelfBefore()
 
 size_t BroadBand::dataSize() const
 {
-    return _table.size();
+    return _table.axisSize<0>();
 }
 
 ////////////////////////////////////////////////////////////////////
 
 const double* BroadBand::wavelengthData() const
 {
-    return _table.axisData();
+    return _table.axisData<0>();
 }
 
 ////////////////////////////////////////////////////////////////////
