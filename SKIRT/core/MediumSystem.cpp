@@ -398,8 +398,9 @@ void MediumSystem::setupSelfAfter()
 
     Random* rd = find<Random>();
 
-    double total_m = 0.;
-    double total_m2 = 0.;
+    double M = 0., M2 = 0.;
+    double G = 0., G2 = 0.;
+    double E = 0., E2 = 0.;
 
     constexpr double N = 1e7;
 
@@ -407,18 +408,42 @@ void MediumSystem::setupSelfAfter()
     {
         Position pos = rd->position(extent);
         int m = grid()->cellIndex(pos);
-        double gm = massDensity(m);
-        double tm = dustMassDensity(pos);
-        double md = (gm - tm) / gm;
+        if (m != -1)
+        {
+            double gm = massDensity(m);
+            double tm = dustMassDensity(pos);
+            double dm = tm ? (gm - tm) / tm : 0.;
+            M += dm;
+            M2 += dm * dm;
 
-        total_m += md;
-        total_m2 += md * md;
+            double gg = gasNumberDensity(m);
+            double tg = gasNumberDensity(pos);
+            double dg = tg ? (gg - tg) / tg : 0.;
+            G += dg;
+            G2 += dg * dg;
+
+            double ge = electronNumberDensity(m);
+            double te = electronNumberDensity(pos);
+            double de = te ? (ge - te) / te : 0.;
+            E += de;
+            E2 += de * de;
+        }
     }
-    double avg_m = total_m / N;
-    double var_m = total_m2 / N - avg_m * avg_m;
+    double avg_m = M / N;
+    double var_m = sqrt(M2 / N - avg_m * avg_m);
+
+    double avg_g = G / N;
+    double var_g = sqrt(G2 / N - avg_g * avg_g);
+
+    double avg_e = E / N;
+    double var_e = sqrt(E2 / N - avg_e * avg_e);
 
     log->info(StringUtils::toString(avg_m));
     log->info(StringUtils::toString(var_m));
+    log->info(StringUtils::toString(avg_g));
+    log->info(StringUtils::toString(var_g));
+    log->info(StringUtils::toString(avg_e));
+    log->info(StringUtils::toString(var_e));
 }
 
 ////////////////////////////////////////////////////////////////////
