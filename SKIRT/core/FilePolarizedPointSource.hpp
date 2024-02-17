@@ -6,20 +6,21 @@
 #ifndef FILEPOLARIZEDPOINTSOURCE_HPP
 #define FILEPOLARIZEDPOINTSOURCE_HPP
 
+#include "Direction.hpp"
 #include "LuminosityNormalization.hpp"
 #include "Source.hpp"
-#include "VelocityInterface.hpp"
 #include "StoredTable.hpp"
+#include "VelocityInterface.hpp"
 class ContSED;
 
 //////////////////////////////////////////////////////////////////////
 
 /** FilePolarizedPointSource represents a primary source limited to a single point in space and
     emitting polarized radiation with an axi-symmetric angular dependence. The Stokes vector
-    components of the emitted radiation, as a function of wavelength and inclination angle, are
-    loaded from a user-provided file. The input file specifies these quantities with arbitrary
-    normalization; the bolometric output is characterized by a LuminosityNormalization object
-    configured in the ski file.
+    components of the emitted radiation, as a function of wavelength and inclination angle cosine,
+    are loaded from a user-provided file. The input file specifies these quantities as an intensity
+    or luminosity per unit of wavelength, with arbitrary normalization. The bolometric output is
+    characterized by a LuminosityNormalization object configured in the ski file.
 
     The class offers properties to specify the position of the point source, the orientation of the
     symmetry axis of the angular dependence, and a "bulk" velocity. */
@@ -140,18 +141,21 @@ public:
     //======================== Data Members ========================
 
 private:
-    // user-provided Stokes vector components as a function of wavelength and inclination angle
+    // user-provided Stokes vector components as a function of wavelength and inclination angle cosine
     StoredTable<2> _tableI;
     StoredTable<2> _tableQ;
     StoredTable<2> _tableU;
     StoredTable<2> _tableV;
 
     // spectral data initialized during setup
-    ContSED* _sed{nullptr};  // the SED averaged over all angles as derived from the input file
+    ContSED* _sed{nullptr};  // the mean SED (averaged over the unit sphere) as derived from the input file
 
     // sampling parameters initialized during setup
     double _xi{0.};                                      // the wavelength bias fraction
     WavelengthDistribution* _biasDistribution{nullptr};  // the wavelength bias distribution
+
+    // symmetry axis initialized during setup
+    Direction _sym;  // direction of symmetry axis
 
     // velocity data initialized during setup
     VelocityInterface* _bvi{nullptr};  // pointer to an object offering the velocity interface, if needed
