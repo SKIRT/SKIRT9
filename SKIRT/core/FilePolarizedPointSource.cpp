@@ -192,10 +192,11 @@ namespace
         }
 
         // this function returns the probability for the angle between the given direction and the symmetry axis
+        // properly normalized to 4 pi over the unit sphere (or to 2 over the inclination angles)
         double probabilityForDirection(Direction bfk) const override
         {
             double cosine = Vec::dot(_sym, bfk);
-            return NR::value<NR::interpolateLinLin>(cosine, _cosv, _pv);
+            return 2. * NR::value<NR::interpolateLinLin>(cosine, _cosv, _pv);
         }
 
         // this function generates a random cosine from the probability distribution, and then
