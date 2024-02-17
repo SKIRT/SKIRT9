@@ -140,12 +140,15 @@ public:
 
     //======================== Data Members ========================
 
+    // structure combining the input tables representing the user-provided Stokes vector components
+    struct Tables
+    {
+        StoredTable<2> I, Q, U, V;
+    };
+
 private:
     // user-provided Stokes vector components as a function of wavelength and inclination angle cosine
-    StoredTable<2> _tableI;
-    StoredTable<2> _tableQ;
-    StoredTable<2> _tableU;
-    StoredTable<2> _tableV;
+    Tables _tables;
 
     // spectral data initialized during setup
     ContSED* _sed{nullptr};  // the mean SED (averaged over the unit sphere) as derived from the input file

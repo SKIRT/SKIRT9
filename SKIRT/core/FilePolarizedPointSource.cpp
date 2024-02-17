@@ -78,13 +78,13 @@ void FilePolarizedPointSource::setupSelfBefore()
     Source::setupSelfBefore();
 
     // open the tables with Stokes vector components as a function of wavelength and inclination angle cosine
-    _tableI.open(this, filename(), "costheta(1),lambda(m)", "I(W/m)", false, false);
-    _tableQ.open(this, filename(), "costheta(1),lambda(m)", "Q(W/m)", false, false);
-    _tableU.open(this, filename(), "costheta(1),lambda(m)", "U(W/m)", false, false);
-    _tableV.open(this, filename(), "costheta(1),lambda(m)", "V(W/m)", false, false);
+    _tables.I.open(this, filename(), "costheta(1),lambda(m)", "I(W/m)", false, false);
+    _tables.Q.open(this, filename(), "costheta(1),lambda(m)", "Q(W/m)", false, false);
+    _tables.U.open(this, filename(), "costheta(1),lambda(m)", "U(W/m)", false, false);
+    _tables.V.open(this, filename(), "costheta(1),lambda(m)", "V(W/m)", false, false);
 
     // construct the mean SED (averaged over the unit sphere) from the input file
-    _sed = new MeanSED(this, _tableI);
+    _sed = new MeanSED(this, _tables.I);
 
     // get the symmetry axis orientation
     Vec sym(symmetryX(), symmetryY(), symmetryZ());
@@ -233,13 +233,9 @@ namespace
     public:
         // this function remembers the Stokes vector component tables, the symmetry axis orientation
         // and the wavelength for which to represent the polarization profile
-        void initialize(const StoredTable<2>* tableI, const StoredTable<2>* tableQ, const StoredTable<2>* tableU,
-                        const StoredTable<2>* tableV, Direction sym, double lambda)
+        void initialize(const FilePolarizedPointSource::Tables* tables, Direction sym, double lambda)
         {
-            _tableI = tableI;
-            _tableQ = tableQ;
-            _tableU = tableU;
-            _tableV = tableV;
+            _tables = tables;
             _sym = sym;
             _lambda = lambda;
         }
@@ -248,19 +244,16 @@ namespace
         StokesVector polarizationForDirection(Direction bfk) const override
         {
             double cosine = Vec::dot(_sym, bfk);
-            double I = (*_tableI)(cosine, _lambda);
-            double Q = (*_tableQ)(cosine, _lambda);
-            double U = (*_tableU)(cosine, _lambda);
-            double V = (*_tableV)(cosine, _lambda);
+            double I = _tables->I(cosine, _lambda);
+            double Q = _tables->Q(cosine, _lambda);
+            double U = _tables->U(cosine, _lambda);
+            double V = _tables->V(cosine, _lambda);
             Direction n(Vec::cross(_sym, bfk));
             return StokesVector(I, Q, U, V, n);
         }
 
     private:
-        const StoredTable<2>* _tableI{nullptr};
-        const StoredTable<2>* _tableQ{nullptr};
-        const StoredTable<2>* _tableU{nullptr};
-        const StoredTable<2>* _tableV{nullptr};
+        const FilePolarizedPointSource::Tables* _tables{nullptr};
         Direction _sym;  // orientation of the symmetry axis
         double _lambda;  // the wavelength of the photon packet
     };
@@ -311,10 +304,10 @@ void FilePolarizedPointSource::launch(PhotonPacket* pp, size_t historyIndex, dou
     Position bfr(positionX(), positionY(), positionZ());
 
     // initialize thread-local angular distribution object for this wavelength point
-    t_angularDistribution.initialize(_tableI, lambda, _sym, random());
+    t_angularDistribution.initialize(_tables.I, lambda, _sym, random());
 
     // initialize thread-local polarization profile object for this wavelength point
-    t_polarizationProfile.initialize(&_tableI, &_tableQ, &_tableU, &_tableV, _sym, lambda);
+    t_polarizationProfile.initialize(&_tables, _sym, lambda);
 
     // launch the photon packet with the proper wavelength, weight, position, direction,
     // bulk veloclity, angular distribution and polarization profile
