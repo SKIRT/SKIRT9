@@ -212,13 +212,62 @@ namespace
         Array _pv;    // corresponding normalized probability distribution
         Array _Pv;    // corresponding normalized cumulative probability distribution
 
-        Direction _sym;   // orientation of the symmetry axis
-        Random* _random;  // the simulation's random generator
+        Direction _sym;            // orientation of the symmetry axis
+        Random* _random{nullptr};  // the simulation's random generator
     };
 
     // setup an angular distribution instance for each parallel execution thread; this works even if
     // there are multiple sources of this type because each thread handles a single photon packet at a time
     thread_local LocalAngularDistribution t_angularDistribution;
+}
+
+////////////////////////////////////////////////////////////////////
+
+namespace
+{
+    // this helper class represents the polarization profile at a given wavelength,
+    // derived from the Stokes vector components tabulated in the user input as a function of inclination,
+    // and taking into account the orientation of the symmetry axis
+    class LocalPolarizationProfile : public PolarizationProfileInterface
+    {
+    public:
+        // this function remembers the Stokes vector component tables, the symmetry axis orientation
+        // and the wavelength for which to represent the polarization profile
+        void initialize(const StoredTable<2>* tableI, const StoredTable<2>* tableQ, const StoredTable<2>* tableU,
+                        const StoredTable<2>* tableV, Direction sym, double lambda)
+        {
+            _tableI = tableI;
+            _tableQ = tableQ;
+            _tableU = tableU;
+            _tableV = tableV;
+            _sym = sym;
+            _lambda = lambda;
+        }
+
+        // this function returns the Stokes vector for the angle between the given direction and the symmetry axis
+        StokesVector polarizationForDirection(Direction bfk) const override
+        {
+            double cosine = Vec::dot(_sym, bfk);
+            double I = (*_tableI)(cosine, _lambda);
+            double Q = (*_tableQ)(cosine, _lambda);
+            double U = (*_tableU)(cosine, _lambda);
+            double V = (*_tableV)(cosine, _lambda);
+            Direction n(Vec::cross(_sym, bfk));
+            return StokesVector(I, Q, U, V, n);
+        }
+
+    private:
+        const StoredTable<2>* _tableI{nullptr};
+        const StoredTable<2>* _tableQ{nullptr};
+        const StoredTable<2>* _tableU{nullptr};
+        const StoredTable<2>* _tableV{nullptr};
+        Direction _sym;  // orientation of the symmetry axis
+        double _lambda;  // the wavelength of the photon packet
+    };
+
+    // setup a polarization profile instance for each parallel execution thread; this works even if
+    // there are multiple sources of this type because each thread handles a single photon packet at a time
+    thread_local LocalPolarizationProfile t_polarizationProfile;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -264,13 +313,13 @@ void FilePolarizedPointSource::launch(PhotonPacket* pp, size_t historyIndex, dou
     // initialize thread-local angular distribution object for this wavelength point
     t_angularDistribution.initialize(_tableI, lambda, _sym, random());
 
-    // get or construct polarization profile object for this wavelength point
-    PolarizationProfileInterface* polarizationProfile = nullptr;
+    // initialize thread-local polarization profile object for this wavelength point
+    t_polarizationProfile.initialize(&_tableI, &_tableQ, &_tableU, &_tableV, _sym, lambda);
 
     // launch the photon packet with the proper wavelength, weight, position, direction,
     // bulk veloclity, angular distribution and polarization profile
     pp->launch(historyIndex, lambda, L * w, bfr, t_angularDistribution.generateDirection(), _bvi,
-               &t_angularDistribution, polarizationProfile);
+               &t_angularDistribution, &t_polarizationProfile);
 }
 
 ////////////////////////////////////////////////////////////////////
