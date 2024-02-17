@@ -393,6 +393,32 @@ void MediumSystem::setupSelfAfter()
     _state.initCommunicate();
 
     log->info("Done calculating cell densities");
+
+    Box extent = grid()->boundingBox();
+
+    Random* rd = find<Random>();
+
+    double total_m = 0.;
+    double total_m2 = 0.;
+
+    constexpr double N = 1e7;
+
+    for (int i = 0; i < N; i++)
+    {
+        Position pos = rd->position(extent);
+        int m = grid()->cellIndex(pos);
+        double gm = massDensity(m);
+        double tm = dustMassDensity(pos);
+        double md = (gm - tm) / gm;
+
+        total_m += md;
+        total_m2 += md * md;
+    }
+    double avg_m = total_m / N;
+    double var_m = total_m2 / N - avg_m * avg_m;
+
+    log->info(StringUtils::toString(avg_m));
+    log->info(StringUtils::toString(var_m));
 }
 
 ////////////////////////////////////////////////////////////////////

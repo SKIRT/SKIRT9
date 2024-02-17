@@ -473,7 +473,7 @@ void TetraMeshSnapshot::buildMesh(const TetraMeshSpatialGrid* grid, bool plc)
     {
         in.numberofpoints = 50;
         in.pointlist = new REAL[in.numberofpoints * 3];
-        for (int i = 8; i < in.numberofpoints; i++)
+        for (int i = 0; i < in.numberofpoints; i++)
         {
             Vec pos = random()->position(_extent);
             in.pointlist[i * 3 + 0] = pos.x();
@@ -542,19 +542,19 @@ void TetraMeshSnapshot::buildMesh(const TetraMeshSpatialGrid* grid, bool plc)
     // compile statistics
     double minVol = DBL_MAX;
     double maxVol = 0.;
-    double totalVol = 0.;
     double totalVol2 = 0.;
     for (int m = 0; m < numTetra; m++)
     {
         double vol = _tetrahedra[m]->volume();
-        totalVol += vol;
         totalVol2 += vol * vol;
         minVol = min(minVol, vol);
         maxVol = max(maxVol, vol);
     }
     double V = _extent.volume();
-    double avgVol = totalVol / (numTetra * V);
-    double varVol = (totalVol2 / numTetra - avgVol * avgVol) / (V * V);
+    minVol /= V;
+    maxVol /= V;
+    double avgVol = 1 / (double)numTetra;
+    double varVol = (totalVol2 / numTetra / (V * V) - avgVol * avgVol);
 
     // log neighbor statistics
     log()->info("Done computing tetrahedral tessellation");
