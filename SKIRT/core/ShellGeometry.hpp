@@ -13,10 +13,10 @@
 /** The ShellGeometry class is a subclass of the SpheGeometry class and describes the geometry of a
     spherical shell, where the density behaves as a power law between an inner and an outer radius,
     \f[ \rho(r) = A\,r^{-p} \qquad\qquad r_{\text{min}} < r < r_{\text{max}}. \f] with \f$A\f$ a
-    normalization constant. The range of \f$p\f$ is limited to \f$p\geq0\f$, and obviously the
-    condition \f$r_{\text{min}} < r_{\text{max}}\f$ should be satisfied. This geometry is
-    characterized by three free parameters: the inner radius \f$r_{\text{min}}\f$, the outer radius
-    \f$r_{\text{max}}\f$ and the power law exponent \f$p\f$. */
+    normalization constant. Obviously the condition \f$r_{\text{min}} < r_{\text{max}}\f$ should be
+    satisfied. This geometry is characterized by three free parameters: the inner radius
+    \f$r_{\text{min}}\f$, the outer radius \f$r_{\text{max}}\f$ and the power law exponent \f$p\f$.
+    */
 class ShellGeometry : public SpheGeometry
 {
     ITEM_CONCRETE(ShellGeometry, SpheGeometry, "a shell geometry")
@@ -30,7 +30,6 @@ class ShellGeometry : public SpheGeometry
         ATTRIBUTE_MIN_VALUE(maxRadius, "]0")
 
         PROPERTY_DOUBLE(exponent, "the power law exponent")
-        ATTRIBUTE_MIN_VALUE(exponent, "[0")
 
     ITEM_END()
 
