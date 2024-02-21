@@ -78,10 +78,10 @@ void FilePolarizedPointSource::setupSelfBefore()
     Source::setupSelfBefore();
 
     // open the tables with Stokes vector components as a function of wavelength and inclination angle cosine
-    _tables.I.open(this, filename(), "costheta(1),lambda(m)", "I(W/m)", false, false);
-    _tables.Q.open(this, filename(), "costheta(1),lambda(m)", "Q(W/m)", false, false);
-    _tables.U.open(this, filename(), "costheta(1),lambda(m)", "U(W/m)", false, false);
-    _tables.V.open(this, filename(), "costheta(1),lambda(m)", "V(W/m)", false, false);
+    _tables.I.open(this, filename(), "costheta(1),lambda(m)", "I(W/m)", true, false);
+    _tables.Q.open(this, filename(), "costheta(1),lambda(m)", "Q(W/m)", true, false);
+    _tables.U.open(this, filename(), "costheta(1),lambda(m)", "U(W/m)", true, false);
+    _tables.V.open(this, filename(), "costheta(1),lambda(m)", "V(W/m)", true, false);
 
     // construct the mean SED (averaged over the unit sphere) from the input file
     _sed = new MeanSED(this, _tables.I);
