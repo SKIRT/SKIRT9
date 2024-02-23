@@ -41,7 +41,7 @@ namespace
         double kx = costheta * cosphi * kpx - sinphi * kpy + sintheta * cosphi * kpz;
         double ky = costheta * sinphi * kpx + cosphi * kpy + sintheta * sinphi * kpz;
         double kz = -sintheta * kpx + costheta * kpz;
-        return Direction(kx, ky, kz);
+        return Direction(kx, ky, kz, false);
     }
 
     // this function returns the normalized probability of launching in a certain direction

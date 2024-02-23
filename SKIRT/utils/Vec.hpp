@@ -26,7 +26,7 @@ protected:
 
 public:
     /** This is the default constructor; all vector components are initialized to zero. */
-    inline Vec() : _x(0), _y(0), _z(0) {}
+    inline Vec() : _x(0.), _y(0.), _z(0.) {}
 
     /** This constructor initializes the vector components to the values provided as arguments. */
     inline Vec(double x, double y, double z) : _x(x), _y(y), _z(z) {}
@@ -37,6 +37,14 @@ public:
         _x = x;
         _y = y;
         _z = z;
+    }
+
+    /** This function sets all vector components to a value of zero. */
+    inline void clear()
+    {
+        _x = 0.;
+        _y = 0.;
+        _z = 0.;
     }
 
     /** This function returns true if all components of the vector are trivially zero, and false

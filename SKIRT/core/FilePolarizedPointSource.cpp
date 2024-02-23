@@ -87,10 +87,8 @@ void FilePolarizedPointSource::setupSelfBefore()
     _sed = new MeanSED(this, _tables.I);
 
     // get the symmetry axis orientation
-    Vec sym(symmetryX(), symmetryY(), symmetryZ());
-    double norm = sym.norm();
-    if (norm == 0) throw FATALERROR("Symmetry axis direction cannot be null vector");
-    _sym = Direction(sym / norm);
+    _sym.set(symmetryX(), symmetryY(), symmetryZ(), true);
+    if (_sym.isNull()) throw FATALERROR("Symmetry axis direction cannot be null vector");
 
     // cache wavelength sampling parameters depending on whether this is an oligo- or panchromatic simulation
     auto config = find<Configuration>();
@@ -248,7 +246,7 @@ namespace
             double Q = _tables->Q(cosine, _lambda);
             double U = _tables->U(cosine, _lambda);
             double V = _tables->V(cosine, _lambda);
-            Direction n(Vec::cross(_sym, bfk));
+            Direction n(Vec::cross(_sym, bfk), true);
             return StokesVector(I, Q, U, V, n);
         }
 

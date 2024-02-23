@@ -100,7 +100,7 @@ void AllSkyProjectionForm::writeQuantity(const ProbeFormBridge* bridge) const
                 if (inrange)
                 {
                     // transform the direction from observer to model coordinates
-                    Direction kz = Direction(transform.transform(Direction(theta, phi)));
+                    Direction kz(transform.transform(Direction(theta, phi)), false);
 
                     // get the projected quantity values
                     bridge->valuesAlongPath(Position(_Ox, _Oy, _Oz), kz, values);
@@ -110,10 +110,8 @@ void AllSkyProjectionForm::writeQuantity(const ProbeFormBridge* bridge) const
                     {
                         // obtain the x and y axis directions in model coordinates
                         Vec ku(_Ux, _Uy, _Uz);
-                        Vec kx = Vec::cross(ku, kz);
-                        Vec ky = Vec::cross(kz, kx);
-                        kx = kx / kx.norm();
-                        ky = ky / ky.norm();
+                        Direction kx(Vec::cross(ku, kz), true);
+                        Direction ky(Vec::cross(kz, kx), true);
 
                         // project the vector on each of the axes
                         Vec v(values[0], values[1], values[2]);

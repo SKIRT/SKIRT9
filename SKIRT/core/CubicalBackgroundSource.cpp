@@ -24,12 +24,12 @@ namespace
     Direction generateLaunchWall(Random* random)
     {
         double X = random->uniform();
-        if (X < 1. / 6.) return Direction(-1., 0., 0.);
-        if (X < 2. / 6.) return Direction(1., 0., 0.);
-        if (X < 3. / 6.) return Direction(0., -1., 0.);
-        if (X < 4. / 6.) return Direction(0., 1., 0.);
-        if (X < 5. / 6.) return Direction(0., 0., -1.);
-        return Direction(0., 0., 1.);
+        if (X < 1. / 6.) return Direction(-1., 0., 0., false);
+        if (X < 2. / 6.) return Direction(1., 0., 0., false);
+        if (X < 3. / 6.) return Direction(0., -1., 0., false);
+        if (X < 4. / 6.) return Direction(0., 1., 0., false);
+        if (X < 5. / 6.) return Direction(0., 0., -1., false);
+        return Direction(0., 0., 1., false);
     }
 
     // this function generates a random launch position on the wall specified by its outward normal
@@ -54,12 +54,12 @@ namespace
         bfkp.cartesian(kpx, kpy, kpz);
 
         // conversion to the regular coordinate system
-        if (bfu.x() == -1.) return Direction(-kpz, -kpy, -kpx);
-        if (bfu.x() == 1.) return Direction(kpz, kpy, -kpx);
-        if (bfu.y() == -1.) return Direction(kpy, -kpz, -kpx);
-        if (bfu.y() == 1.) return Direction(-kpy, kpz, -kpx);
-        if (bfu.z() == -1.) return Direction(-kpx, kpy, -kpz);
-        return Direction(kpx, kpy, kpz);
+        if (bfu.x() == -1.) return Direction(-kpz, -kpy, -kpx, false);
+        if (bfu.x() == 1.) return Direction(kpz, kpy, -kpx, false);
+        if (bfu.y() == -1.) return Direction(kpy, -kpz, -kpx, false);
+        if (bfu.y() == 1.) return Direction(-kpy, kpz, -kpx, false);
+        if (bfu.z() == -1.) return Direction(-kpx, kpy, -kpz, false);
+        return Direction(kpx, kpy, kpz, false);
     }
 
     // this function returns the normalized probability of launching in a certain direction

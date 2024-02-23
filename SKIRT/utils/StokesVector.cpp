@@ -91,14 +91,14 @@ void StokesVector::rotateStokes(double phi, Direction k)
         // with phi = 0 and theta = 90 deg.
         if (fabs(kz) > 0.99999)
         {
-            _normal.set(1, 0, 0);
+            _normal.set(1, 0, 0, false);
         }
         else
         {
             double nz = sqrt((1.0 - kz) * (1.0 + kz));
             double nx = -kx * kz / nz;
             double ny = -ky * kz / nz;
-            _normal.set(nx, ny, nz);
+            _normal.set(nx, ny, nz, false);
         }
         _polarized = true;
     }
@@ -113,34 +113,30 @@ void StokesVector::rotateStokes(double phi, Direction k)
         _U = U;
     }
 
-    // rotate the stored scattering plane to obtain the new scattering plane
-    // using Rodrigues' rotation formula
-    _normal = Direction(_normal * cos(phi) + Vec::cross(k, _normal) * sin(phi));
-
-    // to prevent degradation
-    _normal /= _normal.norm();
+    // rotate the stored scattering plane to obtain the new scattering plane using Rodrigues' rotation formula;
+    // force (re)normalization to prevent degradation
+    _normal = Direction(_normal * cos(phi) + Vec::cross(k, _normal) * sin(phi), true);
 }
 
 //////////////////////////////////////////////////////////////////////
 
 double StokesVector::rotateIntoPlane(Direction k, Direction knew)
 {
-    // we want to rotate the reference into the plane. So we rotate the normal to be perpendicular to the plane.
+    // we want to rotate the reference into the plane, so we rotate the normal to be perpendicular to the plane.
     // generate the normal we want to rotate into
-    Vec nNew = Vec::cross(k, knew);
-    double nNewNorm = nNew.norm();
-    // if the given directions are nearly parallel, simplify procedure
-    if (nNewNorm < 1e-6)
+    Direction nNew(Vec::cross(k, knew), true);
+
+    // if the given directions are parallel, simplify procedure
+    if (nNew.isNull())
     {
         rotateStokes(0, k);
         return 0;
     }
-    nNew /= nNew.norm();
 
     // if the StokesVector is unpolarized, simplify procedure
     if (!_polarized)
     {
-        _normal.set(nNew.x(), nNew.y(), nNew.z());
+        _normal = nNew;
         _polarized = true;
         return 0;
     }
