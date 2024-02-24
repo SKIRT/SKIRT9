@@ -18,18 +18,17 @@ class ContSED;
 /** FilePolarizedPointSource represents a primary source limited to a single point in space and
     emitting polarized radiation with an axi-symmetric angular dependence. The Stokes vector
     components of the emitted radiation, as a function of wavelength and inclination angle cosine,
-    are loaded from a user-provided file. The input file specifies these quantities as an intensity
-    or luminosity per unit of wavelength, with arbitrary normalization. The bolometric output is
-    characterized by a LuminosityNormalization object configured in the ski file. The class
-    furthermore offers user-configured properties to specify the position of the point source, the
-    orientation of the symmetry axis of the angular dependence, and a "bulk" velocity.
+    are loaded from a user-provided file. The bolometric output is characterized by a
+    LuminosityNormalization object configured in the ski file. The class furthermore offers
+    user-configured properties to specify the position of the point source, the orientation of the
+    symmetry axis of the angular dependence, and a "bulk" velocity.
 
     <em>Inclination angle</em>
 
-    For the purposes of this class, the inclination angle is defined as the angle between the
-    user-configured symmetry axis \f$\bf{s}\f$ and the propagation direction \f$\bf{k}\f$ of the
-    emitted photon packet. The inclination cosine values given in the input file must conform to
-    this convention.
+    For the purposes of this class, the inclination angle \f$\theta\f$ is defined as the angle
+    between the user-configured symmetry axis \f$\bf{s}\f$ and the propagation direction
+    \f$\bf{k}\f$ of the emitted photon packet. The inclination cosine values given in the input
+    file must conform to this convention.
 
     In formula form, assuming that both directions \f$\bf{s}\f$ and \f$\bf{k}\f$ are given as unit
     vectors, the inclination angle cosine simply is \f$\cos\theta=\bf{s}\cdot\bf{k}\f$.
@@ -56,6 +55,95 @@ class ContSED;
     after substitution of the above expression for \f$\bf{d}\f$. If the symmetry axis and the
     propogation direction are (anti)parallel, the normal vector \f$\bf{n}\f$ is undefined and the
     emitted radiation is taken to be unpolarized.
+
+    <em>Input file format</em>
+
+    As indicated in the introduction above, the user-provided input file tabulates the Stokes
+    vector components \f$I,Q,U,V\f$ of the emitted radiation as a function of wavelength and
+    inclination angle cosine. In other words, the input file represents a two-dimensional table
+    with four values in each entry. All information is bundled in a single binary file using the
+    SKIRT stored table format (see StoredTable).
+
+    All quantities are specified in internal SKIRT units:
+
+    - The inclination axis specifies cosine grid points in the range [-1, 1], in increasing order.
+    This corresponds to angular values in the range [180 deg, 0 deg]; note the reverse order. In
+    case the outer grid points are not equal to -1 and 1, the Stokes vector values for cosines
+    outside of the grid are simply clamped to the corresponding outer grid point. This implies
+    that, even if the emission pattern is symmetric around the 90 deg inclination, it is \em not
+    sufficient to provide values for half of the inclination range. Instead, the reflected pattern
+    must be included as well.
+
+    - The wavelength axis specifies the wavelength grid points expressed in meter, in increasing
+    order. For wavelengths outside of this grid, the emission is considered to be zero.
+
+    - The Stokes vector components \f$I,Q,U,V\f$ are expressed in Watt per meter, with a scale
+    factor that is abitrary but identical for the four components and across all Stokes vectors in
+    the file. It is important to ensure that the quantities are expressed per unit of wavelength,
+    as opposed to per unit of frequency or energy. Other than that, the precise units are
+    irrelevant because of the arbitrary scaling.
+
+    <em>Example python script</em>
+
+    Below is an excerpt from a python script used to create an appropiate input file for this class
+    from the information in a set of text files. In particular, the script shows how to create the
+    file in SKIRT stored table format using the PTS function pts.storedtable.io.writeStoredTable.
+    It also illustrates some of the conversions that may need to be performed.
+
+\code{.py}
+import numpy as np
+from pts.storedtable.io import writeStoredTable
+
+# read the inclination grid (in deg); range is 0..90 deg
+theta = ...
+numTheta = len(theta)
+
+# read the energy grid (in keV)
+E = ...
+numE = len(E)
+
+# read the Stokes vector components (in ph/s/keV) for each inclination bin
+Ie = np.zeros((numTheta, numE))
+Qe = np.zeros((numTheta, numE))
+Ue = np.zeros((numTheta, numE))
+for i in range(numTheta):
+    Ie[i], Qe[i], Ue[i] = ...
+
+# add symmetrical inclination range and reverse the order so that range becomes 180..0 deg
+theta = np.concatenate((180 - theta, theta[::-1]))
+Ie = np.concatenate((Ie, Ie[::-1]))
+Qe = np.concatenate((Qe, Qe[::-1]))
+Ue = np.concatenate((Ue, Ue[::-1]))
+
+# convert inclination from deg to cosine in range -1..1
+costheta = np.cos(theta * np.pi/180)
+
+# convert energy in keV to wavelength in m
+h = 6.62606957e-34
+c = 2.99792458e8
+q = 1.602176634e-19
+lam = 1e-3 * h * c / q / E
+
+# convert flux from per-energy flavor to per-wavelength flavor,
+# with arbitrary normalization so that values are on the order of 1
+Ilam = Ie / lam**3 / 1e35
+Qlam = Qe / lam**3 / 1e35
+Ulam = Ue / lam**3 / 1e35
+
+# reverse spectral range so that wavelengths are in increasing order
+lam = np.flip(lam)
+Ilam = np.flip(Ilam, axis=1)
+Qlam = np.flip(Qlam, axis=1)
+Ulam = np.flip(Ulam, axis=1)
+
+# create zero V component
+Vlam = np.zeros_like(Ilam)
+
+# write stored table
+writeStoredTable(inputname + ".stab",
+                 ['costheta','lambda'], ['1','m'], ['lin','log'], [costheta,lam],
+                 ['I','Q','U','V'], ['W/m','W/m','W/m','W/m'], ['log','lin','lin','lin'], [Ilam,Qlam,Ulam,Vlam])
+\endcode
 
     */
 class FilePolarizedPointSource : public Source, public VelocityInterface
