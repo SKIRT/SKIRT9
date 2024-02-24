@@ -17,7 +17,7 @@
     coordinates must satisfy the normalization relation \f[ k_x^2+k_y^2+k_z^2=1. \f]
 
     To assist client code using the Direction class with ensuring this normalization, the
-    constructors and the set() function offer the Boolean \em normalize argument. If set to true,
+    constructors and the set() functions offer the Boolean \em normalize argument. If set to true,
     the constructor or function will automatically normalize the components passed by the caller.
     If set to false, the components are copied as given without any further verification. This can
     be used to avoid redundant calculations in case the caller has already ensured normalization.

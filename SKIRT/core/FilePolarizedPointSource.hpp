@@ -20,10 +20,44 @@ class ContSED;
     components of the emitted radiation, as a function of wavelength and inclination angle cosine,
     are loaded from a user-provided file. The input file specifies these quantities as an intensity
     or luminosity per unit of wavelength, with arbitrary normalization. The bolometric output is
-    characterized by a LuminosityNormalization object configured in the ski file.
+    characterized by a LuminosityNormalization object configured in the ski file. The class
+    furthermore offers user-configured properties to specify the position of the point source, the
+    orientation of the symmetry axis of the angular dependence, and a "bulk" velocity.
 
-    The class offers properties to specify the position of the point source, the orientation of the
-    symmetry axis of the angular dependence, and a "bulk" velocity. */
+    <em>Inclination angle</em>
+
+    For the purposes of this class, the inclination angle is defined as the angle between the
+    user-configured symmetry axis \f$\bf{s}\f$ and the propagation direction \f$\bf{k}\f$ of the
+    emitted photon packet. The inclination cosine values given in the input file must conform to
+    this convention.
+
+    In formula form, assuming that both directions \f$\bf{s}\f$ and \f$\bf{k}\f$ are given as unit
+    vectors, the inclination angle cosine simply is \f$\cos\theta=\bf{s}\cdot\bf{k}\f$.
+
+    <em>Reference direction</em>
+
+    The components of a Stokes vector (and hence the polarization angle derived from it) are
+    specified relative to some reference direction \f$\bf{d}\f$ which must be perpendicular to the
+    propagation direction \f$\bf{k}\f$ of the emitted photon packet. For the purposes of this
+    class, the reference direction is taken to be the orthogonal projection of the user-configured
+    symmetry axis \f$\bf{s}\f$ on the plane perpendicular to the propagation direction
+    \f$\bf{k}\f$. The Stokes vector values given in the input file must conform to this convention.
+
+    In formula form, assuming that the propagation direction \f$\bf{k}\f$ is given as a unit
+    vector, the (unnormalized) orthogonal projection of \f$\bf{s}\f$ on the plane with normal
+    \f$\bf{k}\f$ is given by \f$\bf{d} = \bf{s} - (\bf{k}\cdot\bf{s})\bf{k}\f$. Rather than the
+    reference direction itself, the implementation instead uses the normal \f$\bf{n}\f$ to the
+    reference plane, which is defined as the plane through both the reference direction and the
+    propagation direction. The normalized normal vector \f$\bf{n}\f$ is obtained from
+
+    \f[ \bf{n} = \frac{\bf{d} \times \bf{k}}{||\bf{d} \times \bf{k}||} = \frac{\bf{s} \times
+    \bf{k}}{||\bf{s} \times \bf{k}||} \f]
+
+    after substitution of the above expression for \f$\bf{d}\f$. If the symmetry axis and the
+    propogation direction are (anti)parallel, the normal vector \f$\bf{n}\f$ is undefined and the
+    emitted radiation is taken to be unpolarized.
+
+    */
 class FilePolarizedPointSource : public Source, public VelocityInterface
 {
     ITEM_CONCRETE(FilePolarizedPointSource, Source, "a primary point source with a polarized spectrum read from file")
