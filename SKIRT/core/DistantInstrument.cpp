@@ -44,7 +44,7 @@ void DistantInstrument::setupSelfBefore()
     // calculate relevant directions
     _bfkobs = Direction(_inclination, _azimuth);
     _bfky = Direction(-cosphi * costheta * cosomega - sinphi * sinomega,
-                      -sinphi * costheta * cosomega + cosphi * sinomega, +sintheta * cosomega);
+                      -sinphi * costheta * cosomega + cosphi * sinomega, +sintheta * cosomega, false);
 }
 
 ////////////////////////////////////////////////////////////////////

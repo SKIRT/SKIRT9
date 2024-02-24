@@ -41,11 +41,11 @@ void ParallelProjectionForm::writeQuantity(const ProbeFormBridge* bridge) const
 
     // determine the observer axes as directions in model coordinates (inverse transform of frame instrument)
     // k_z is the direction from observer to model (i.e. left-handed coordinate frame)
-    Direction kz(-cosphi * sintheta, -sinphi * sintheta, -costheta);
+    Direction kz(-cosphi * sintheta, -sinphi * sintheta, -costheta, false);
     Direction ky(-cosphi * costheta * cosomega - sinphi * sinomega, -sinphi * costheta * cosomega + cosphi * sinomega,
-                 sintheta * cosomega);
+                 sintheta * cosomega, false);
     Direction kx(cosphi * costheta * sinomega - sinphi * cosomega, sinphi * costheta * sinomega + cosphi * cosomega,
-                 -sintheta * sinomega);
+                 -sintheta * sinomega, false);
 
     // get a distance that should be well outside of the model (but with a similar order of magnitude)
     double zp = 10. * (fieldOfViewX() + fieldOfViewY());

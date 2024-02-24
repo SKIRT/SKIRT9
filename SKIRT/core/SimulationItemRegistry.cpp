@@ -85,6 +85,7 @@
 #include "FileIndexedSEDFamily.hpp"
 #include "FileLineSED.hpp"
 #include "FileMesh.hpp"
+#include "FilePolarizedPointSource.hpp"
 #include "FileSED.hpp"
 #include "FileSSPSEDFamily.hpp"
 #include "FileTreeSpatialGrid.hpp"
@@ -326,6 +327,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<StellarSurfaceSource>();
     ItemRegistry::add<CubicalBackgroundSource>();
     ItemRegistry::add<SphericalBackgroundSource>();
+    ItemRegistry::add<FilePolarizedPointSource>();
 
     // luminosity normalizations
     ItemRegistry::add<LuminosityNormalization>();

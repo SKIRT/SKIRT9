@@ -341,8 +341,8 @@ namespace
         vector<int> _hv;             // a list of the media indices for the media containing dust
 
         // information on a particular spatial cell, initialized by calculateIfNeeded()
-        int _m{-1};        // spatial cell index
-        Vec _B_direction;  // direction of the magnetic field
+        int _m{-1};              // spatial cell index
+        Direction _B_direction;  // direction of the magnetic field
 
         // information on a particular photon packet, initialized by calculateIfNeeded()
         double _lambda{-1.};  // wavelength of the photon packet
@@ -373,8 +373,7 @@ namespace
             _m = m;
 
             // normalise the magnetic field direction
-            _B_direction = _ms->magneticField(_m);
-            _B_direction /= _B_direction.norm();
+            _B_direction.set(_ms->magneticField(_m), true);
         }
 
         // this AngularDistributionInterface implementation returns the probability for the given direction
@@ -466,11 +465,10 @@ namespace
                 const double beta = std::acos(cosbeta);
                 const double sinbeta = std::sin(beta);
                 // compute the direction of the rotation axis, z x B
-                const Direction n(Vec::cross(Vec(0., 0., 1.), _B_direction));
+                const Direction n(Vec::cross(Vec(0., 0., 1.), _B_direction), true);
                 // now use Rodrigues' rotation formula to carry out the rotation
-                const Direction krand2(krand * cosbeta + Vec::cross(n, krand) * sinbeta
-                                       + n * Vec::dot(n, krand) * (1. - cosbeta));
-                return krand2;
+                return Direction(
+                    krand * cosbeta + Vec::cross(n, krand) * sinbeta + n * Vec::dot(n, krand) * (1. - cosbeta), false);
             }
             else
             {
@@ -499,7 +497,7 @@ namespace
             }
             // the reference direction is any direction perpendicular to the
             // propagation direction and the magnetic field direction
-            return StokesVector(Qabsval, Qabspolval, 0., 0., Direction(Vec::cross(bfk, _B_direction)));
+            return StokesVector(Qabsval, Qabspolval, 0., 0., Direction(Vec::cross(bfk, _B_direction), true));
         }
     };
 

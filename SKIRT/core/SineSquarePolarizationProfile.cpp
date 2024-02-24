@@ -12,9 +12,8 @@ void SineSquarePolarizationProfile::setupSelfBefore()
 {
     PolarizationProfile::setupSelfBefore();
 
-    Vec sym(symmetryX(), symmetryY(), symmetryZ());
-    if (sym.norm() == 0) throw FATALERROR("Symmetry axis direction cannot be null vector");
-    _sym = Direction(sym / sym.norm());
+    _sym.set(symmetryX(), symmetryY(), symmetryZ(), true);
+    if (_sym.isNull()) throw FATALERROR("Symmetry axis direction cannot be null vector");
 
     _cos2gamma = cos(2 * polarizationAngle());
     _sin2gamma = sin(2 * polarizationAngle());
@@ -41,7 +40,7 @@ StokesVector SineSquarePolarizationProfile::polarizationForDirection(Direction b
         double PL = maxPolarizationDegree() * (1 - costheta) * (1 + costheta);
         double Q = PL * _cos2gamma;
         double U = PL * _sin2gamma;
-        Direction n(Vec::cross(_sym, bfk));
+        Direction n(Vec::cross(_sym, bfk), true);
         return StokesVector(1., Q, U, 0., n);
     }
 }

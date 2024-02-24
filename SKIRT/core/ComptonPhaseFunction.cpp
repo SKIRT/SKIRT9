@@ -259,10 +259,8 @@ Direction ComptonPhaseFunction::performScattering(double& lambda, Direction bfk,
         applyMueller(x, costheta, sv);
 
         // rotate the propagation direction in the scattering plane
-        Vec newdir = bfk * costheta + Vec::cross(sv->normal(), bfk) * sin(acos(costheta));
-
-        // normalize the new direction to prevent degradation
-        return Direction(newdir / newdir.norm());
+        // (re)normalize the new direction to prevent degradation
+        return Direction(bfk * costheta + Vec::cross(sv->normal(), bfk) * sin(acos(costheta)), true);
     }
 }
 
