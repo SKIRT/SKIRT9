@@ -29,6 +29,12 @@ class TetraMeshSpatialGrid : public BoxSpatialGrid, public DensityInCellInterfac
     ITEM_CONCRETE(TetraMeshSpatialGrid, BoxSpatialGrid, "a Tetra tessellation-based spatial grid")
         ATTRIBUTE_TYPE_DISPLAYED_IF(TetraMeshSpatialGrid, "Level2")
 
+        PROPERTY_DOUBLE(minVolume, "the minimum volume of each cell")
+        ATTRIBUTE_MIN_VALUE(minVolume, "]0")
+        ATTRIBUTE_MAX_VALUE(minVolume, "1[")
+        ATTRIBUTE_DEFAULT_VALUE(minVolume, "1e-4")
+        ATTRIBUTE_DISPLAYED_IF(minVolume, "DustMix")
+
         PROPERTY_DOUBLE(maxDustFraction, "the maximum fraction of dust contained in each cell")
         ATTRIBUTE_MIN_VALUE(maxDustFraction, "[0")
         ATTRIBUTE_MAX_VALUE(maxDustFraction, "1e-2]")

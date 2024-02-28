@@ -452,16 +452,17 @@ void TetraMeshSnapshot::buildMesh(const TetraMeshSpatialGrid* grid, bool plc)
         addFacet(&in.facetlist[4], {2, 6, 7, 3});  // Facet 5. back
         addFacet(&in.facetlist[5], {3, 7, 4, 0});  // Facet 6. left
 
-        behavior.plc = 1;          // -p PLC
-        behavior.quality = 1;      // -q quality mesh
-        behavior.fixedvolume = 1;  // -a max volume
-        behavior.neighout = 2;     // -nn neighbors and edges?
-        behavior.zeroindex = 1;    // -z zero index
-        behavior.facesout = 1;     // -f faces
+        behavior.plc = 1;                                           // -p PLC
+        behavior.quality = 1;                                       // -q quality mesh
+        behavior.fixedvolume = 1;                                   // -a max volume
+        behavior.neighout = 2;                                      // -nn neighbors and edges?
+        behavior.zeroindex = 1;                                     // -z zero index
+        behavior.facesout = 1;                                      // -f faces
+        behavior.maxvolume = grid->minVolume() * _extent.volume();  // -a max volume
+        
         // behavior.edgesout = 1;     // -e edges
         // behavior.weighted = 1;     // -w weighted
         // behavior.minratio = 5.0;   // -q quality
-        behavior.maxvolume = 0.05 * _extent.volume();  // -a max volume
         // behavior.mindihedral = 5.0;  // -q/ minimal angle
 
         in.tetunsuitable = [grid](double* pa, double* pb, double* pc, double* pd, double vol) {
