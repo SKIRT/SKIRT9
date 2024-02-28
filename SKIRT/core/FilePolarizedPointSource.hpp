@@ -16,7 +16,7 @@ class ContSED;
 //////////////////////////////////////////////////////////////////////
 
 /** FilePolarizedPointSource represents a primary source limited to a single point in space and
-    emitting polarized radiation with an axi-symmetric angular dependence. The Stokes vector
+    emitting polarized radiation with an axisymmetric angular dependence. The Stokes vector
     components of the emitted radiation, as a function of wavelength and inclination angle cosine,
     are loaded from a user-provided file. The bolometric output is characterized by a
     LuminosityNormalization object configured in the ski file. The class furthermore offers
@@ -150,7 +150,7 @@ class FilePolarizedPointSource : public Source, public VelocityInterface
 {
     ITEM_CONCRETE(FilePolarizedPointSource, Source, "a primary point source with a polarized spectrum read from file")
         ATTRIBUTE_TYPE_DISPLAYED_IF(FilePolarizedPointSource, "Level2")
-        ATTRIBUTE_TYPE_INSERT(FilePolarizedPointSource, "Dimension2")
+        ATTRIBUTE_TYPE_INSERT(FilePolarizedPointSource, "Dimension2,ContSED")
 
         PROPERTY_STRING(filename, "the name of the stored table file listing the Stokes vector components")
 
