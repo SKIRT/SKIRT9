@@ -452,14 +452,20 @@ void TetraMeshSnapshot::buildMesh(const TetraMeshSpatialGrid* grid, bool plc)
         addFacet(&in.facetlist[4], {2, 6, 7, 3});  // Facet 5. back
         addFacet(&in.facetlist[5], {3, 7, 4, 0});  // Facet 6. left
 
-        behavior.plc = 1;                                           // -p PLC
-        behavior.quality = 1;                                       // -q quality mesh
-        behavior.fixedvolume = 1;                                   // -a max volume
-        behavior.neighout = 2;                                      // -nn neighbors and edges?
-        behavior.zeroindex = 1;                                     // -z zero index
-        behavior.facesout = 1;                                      // -f faces
+        behavior.plc = 1;          // -p PLC
+        behavior.quality = 1;      // -q quality mesh
+        behavior.neighout = 2;     // -nn neighbors and edges?
+        behavior.zeroindex = 1;    // -z zero index
+        behavior.facesout = 1;     // -f faces
+        behavior.fixedvolume = 1;  // -a max volume
         behavior.maxvolume = grid->minVolume() * _extent.volume();  // -a max volume
-        
+        // behavior.maxvolume = _extent.volume();  // -a max volume
+        // behavior.steinerleft = -1;              // -S infinite
+        // behavior.nofacewritten = 1;
+        // behavior.nonodewritten = 1;
+        // behavior.noelewritten = 1;
+        behavior.verbose = 1;
+
         // behavior.edgesout = 1;     // -e edges
         // behavior.weighted = 1;     // -w weighted
         // behavior.minratio = 5.0;   // -q quality
@@ -1011,104 +1017,6 @@ int TetraMeshSnapshot::cellIndex(Position bfr) const
                 if (m < 0) break;
             }
         }
-        // */
-
-        /*
-        // traverse towards input point from nearest centroid
-        int m = tree->nearest(bfr, _centroids)->m();
-        const Tetra* root = _tetrahedra[m];
-
-        test++;
-        if (root->inside(bfr)) return test;
-
-        Vec pos = root->_centroid;
-        Vec dir = bfr - pos;
-        double dist = dir.norm();
-        dir /= dist;
-
-        // start by checking all faces
-        std::vector<int> faces = {0, 1, 2, 3};
-
-        while (true)
-        {
-            const Tetra* tetra = _tetrahedra[m];
-
-            double ds = DBL_MAX;
-            int leavingFace = -1;
-
-            // find exit face
-            for (int face : faces)
-            {
-                const Vec& n = tetra->_faces[face]._normal;
-                double ndotk = Vec::dot(n, dir);
-                if (ndotk > 0)
-                {
-                    const Vec& v = *tetra->_vertices[(face + 1) % 4];
-                    double dq = Vec::dot(n, v - pos) / ndotk;
-                    if (dq < ds)
-                    {
-                        ds = dq;
-                        leavingFace = face;
-                    }
-                }
-            }
-
-            if (leavingFace == -1) break;
-
-            // propagate and check inside if we passed the input point
-            pos += ds * dir;
-            dist -= ds;
-            if (dist <= 0)
-            {
-                test++;
-                if (tetra->inside(bfr)) return test;
-            }
-
-            m = tetra->_faces[leavingFace]._ntetra;
-            int enteringFace = tetra->_faces[leavingFace]._nface;
-            faces = {(enteringFace + 1) % 4, (enteringFace + 2) % 4, (enteringFace + 3) % 4};
-
-            if (m < 0) break;
-        }
-        */
-
-        /*
-        // use a breadth-first search over the neighboring tetrahedra
-        int root = tree->nearest(bfr, _centroids)->m();
-        std::queue<int> queue;
-        std::unordered_set<int> explored;
-        queue.push(root);
-
-        // Vec dir = bfr - _tetrahedra[root]->_centroid;
-
-        int t;
-        while (queue.size() > 0)
-        {
-            t = queue.front();
-            queue.pop();
-            const Tetra* tetra = _tetrahedra[t];
-
-            test++;
-            if (tetra->inside(bfr)) return test;
-            explored.insert(t);
-
-            Vec dir = bfr - tetra->_centroid;
-            for (const Face& face : tetra->_faces)
-            {
-                int n = face._ntetra;
-                if (n != -1 && (explored.find(n) == explored.end()))  // if not already explored
-                {
-                    if (Vec::dot(dir, face._normal) > 0)
-                    {
-                        queue.push(n);
-                        explored.insert(n);
-                    }
-                }
-            }
-        }
-        */
-
-        log()->error("search tree failed to find the tetrahedron");  // change to warning?
     }
 
     // if there is no search tree or search tree failed, simply loop over all tetrahedra in the block
