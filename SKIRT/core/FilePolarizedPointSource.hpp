@@ -23,6 +23,12 @@ class ContSED;
     user-configured properties to specify the position of the point source, the orientation of the
     symmetry axis of the angular dependence, and a "bulk" velocity.
 
+    <em>Luminosity normalization</em>
+
+    The luminosity normalization property of this class can be configured in the ski file as usual,
+    keeping in mind that the given value refers to the (specific or wavelength-integrated)
+    luminosity integrated over the unit sphere.
+
     <em>Inclination angle</em>
 
     For the purposes of this class, the inclination angle \f$\theta\f$ is defined as the angle
