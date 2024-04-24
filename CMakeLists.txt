@@ -7,9 +7,11 @@
 # Builds all targets defined in the SKIRT project
 # ------------------------------------------------------------------
 
-# define project and ensure minimum level of functionality
+# ensure minimum level of functionality
+cmake_minimum_required(VERSION 3.2.2...3.5 FATAL_ERROR)
+
+# define project
 project(SKIRTproject)
-cmake_minimum_required(VERSION 3.2.2 FATAL_ERROR)
 
 # define a user-configurable option to build SKIRT
 option(BUILD_SKIRT "build SKIRT, advanced radiative transfer" ON)
