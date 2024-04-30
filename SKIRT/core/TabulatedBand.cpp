@@ -27,7 +27,7 @@ void TabulatedBand::setupSelfBefore()
     }
 
     // verify that the wavelengths now are in increasing order
-    if (!is_sorted(begin(_lambdav), end(_lambdav), std::less<>()))
+    if (!std::is_sorted(begin(_lambdav), end(_lambdav), std::less<>()))
         throw FATALERROR("Wavelengths are not sorted in increasing or decreasing order");
 
     // verify that the wavelength range is nonzero
