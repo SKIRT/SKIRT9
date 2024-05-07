@@ -34,7 +34,7 @@ public:
     {
         double inclination{0}, azimuth{0}, roll{0};                // must be in degrees, regardless of output units
         double redshift{0};                                        // if redshift is zero, both distances must be equal
-        double angularDiameterDistance{0}, luminosityDistance{0};  // distances in output units
+        double luminosityDistance{0}, angularDiameterDistance{0};  // distances in output units
         string distanceUnits;                                      // describes distance output units
     };
 

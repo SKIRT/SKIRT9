@@ -164,9 +164,9 @@ void FITSInOut::write(string filepath, const Array& data, string dataUnits, int 
         ffpkyd(fptr, "CROTA2", obsInfo->azimuth, 9, "Azimuth angle, in deg", &status);
         ffpkyd(fptr, "CROTA3", obsInfo->roll, 9, "Roll angle, in deg", &status);
         ffpkyd(fptr, "REDSHIFT", obsInfo->redshift, 9, "Redshift (if zero, distances are equal)", &status);
-        ffpkyd(fptr, "DISTANGD", obsInfo->angularDiameterDistance, 9, "Angular diameter distance", &status);
         ffpkyd(fptr, "DISTLUMI", obsInfo->luminosityDistance, 9, "Luminosity distance", &status);
-        ffpkys(fptr, "DISTUNIT", const_cast<char*>(obsInfo->distanceUnits.c_str()), "Units of the distances", &status);
+        ffpkyd(fptr, "DISTANGD", obsInfo->angularDiameterDistance, 9, "Angular diameter distance", &status);
+        ffpkys(fptr, "DISTUNIT", const_cast<char*>(obsInfo->distanceUnits.c_str()), "Units of distances", &status);
     }
     if (status) report_error(filepath, "writing", status);
 

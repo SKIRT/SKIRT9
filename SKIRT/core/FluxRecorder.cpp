@@ -473,8 +473,29 @@ void FluxRecorder::calibrateAndWrite()
                 sedArrays.push_back(_recordTotalOnly ? &empty : &_sed[PrimaryScatteredLevel + i]);
             }
 
+        // construct header comment line
+        string header = "# SED at ";
+        header += "inclination " + StringUtils::toString(units->oposangle(_inclination)) + " " + units->uposangle();
+        header += ", azimuth " + StringUtils::toString(units->oposangle(_azimuth)) + " " + units->uposangle();
+        if (_recordPolarization)
+        {
+            header += ", roll " + StringUtils::toString(units->oposangle(_roll)) + " " + units->uposangle();
+        }
+        if (_redshift)
+        {
+            header += ", redshift " + StringUtils::toString(_redshift);
+            header += ", luminosity distance " + StringUtils::toString(units->odistance(_luminosityDistance)) + " "
+                      + units->udistance();
+        }
+        else
+        {
+            header +=
+                ", distance " + StringUtils::toString(units->odistance(_luminosityDistance)) + " " + units->udistance();
+        }
+
         // open the file and add the column headers
         TextOutFile sedFile(_parentItem, _instrumentName + "_sed", "SED");
+        sedFile.writeLine(header);
         sedFile.addColumn("wavelength; " + units->swavelength(), units->uwavelength());
         for (const string& name : sedNames)
         {
@@ -625,8 +646,8 @@ void FluxRecorder::calibrateAndWrite()
             obsInfo->azimuth = _azimuth * (180. / M_PI);
             obsInfo->roll = _roll * (180. / M_PI);
             obsInfo->redshift = _redshift;
-            obsInfo->angularDiameterDistance = units->odistance(_angularDiameterDistance);
             obsInfo->luminosityDistance = units->odistance(_luminosityDistance);
+            obsInfo->angularDiameterDistance = units->odistance(_angularDiameterDistance);
             obsInfo->distanceUnits = units->udistance();
         }
 
