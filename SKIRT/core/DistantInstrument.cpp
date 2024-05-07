@@ -14,6 +14,9 @@ void DistantInstrument::setupSelfBefore()
 {
     Instrument::setupSelfBefore();
 
+    // pass the observer angles to the flux recorder
+    instrumentFluxRecorder()->setObserverAngles(_inclination, _azimuth, _roll);
+
     // configure the flux recorder with the appropriate frame and distances
     if (distance() > 0.)
     {

@@ -71,6 +71,15 @@ void FluxRecorder::setUserFlags(bool recordComponents, int numScatteringLevels, 
 
 ////////////////////////////////////////////////////////////////////
 
+void FluxRecorder::setObserverAngles(double inclination, double azimuth, double roll)
+{
+    _inclination = inclination;
+    _azimuth = azimuth;
+    _roll = roll;
+}
+
+////////////////////////////////////////////////////////////////////
+
 void FluxRecorder::setRestFrameDistance(double distance)
 {
     _redshift = 0.;
@@ -607,6 +616,20 @@ void FluxRecorder::calibrateAndWrite()
             unitsxy = units->uangle();
         }
 
+        // determine observer info for distant instruments
+        std::unique_ptr<FITSInOut::ObserverInfo> obsInfo;
+        if (!_local)
+        {
+            obsInfo = std::make_unique<FITSInOut::ObserverInfo>();
+            obsInfo->inclination = _inclination * (180. / M_PI);
+            obsInfo->azimuth = _azimuth * (180. / M_PI);
+            obsInfo->roll = _roll * (180. / M_PI);
+            obsInfo->redshift = _redshift;
+            obsInfo->angularDiameterDistance = units->odistance(_angularDiameterDistance);
+            obsInfo->luminosityDistance = units->odistance(_luminosityDistance);
+            obsInfo->distanceUnits = units->udistance();
+        }
+
         // output the files (ignoring empty arrays)
         int numFiles = ifuNames.size();
         for (int q = 0; q != numFiles; ++q)
@@ -615,7 +638,8 @@ void FluxRecorder::calibrateAndWrite()
                 string filename = _instrumentName + "_" + ifuNames[q];
                 string description = ifuNames[q] + " flux";
                 FITSInOut::write(_parentItem, description, filename, *(ifuArrays[q]), units->usurfacebrightness(),
-                                 _numPixelsX, _numPixelsY, incx, incy, cx, cy, unitsxy, wavegrid, units->uwavelength());
+                                 _numPixelsX, _numPixelsY, incx, incy, cx, cy, unitsxy, wavegrid, units->uwavelength(),
+                                 obsInfo.get());
             }
 
         // output statistics to additional files
