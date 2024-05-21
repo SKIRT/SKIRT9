@@ -1,0 +1,44 @@
+/*//////////////////////////////////////////////////////////////////
+////     The SKIRT project -- advanced radiative transfer       ////
+////       © Astronomical Observatory, Ghent University         ////
+///////////////////////////////////////////////////////////////// */
+
+#include "DraineLi2007IonizedPAHGrainComposition.hpp"
+
+//////////////////////////////////////////////////////////////////////
+
+DraineLi2007IonizedPAHGrainComposition::DraineLi2007IonizedPAHGrainComposition(SimulationItem* parent)
+{
+    parent->addChild(this);
+    setup();
+}
+
+//////////////////////////////////////////////////////////////////////
+
+string DraineLi2007IonizedPAHGrainComposition::name() const
+{
+    return "Draine_Ionized_PAH";
+}
+
+//////////////////////////////////////////////////////////////////////
+
+double DraineLi2007IonizedPAHGrainComposition::bulkDensity() const
+{
+    return 2.24e3;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+string DraineLi2007IonizedPAHGrainComposition::resourceNameForOpticalProps() const
+{
+    return "DustEM_PAH1_DL07_OpticalProps";
+}
+
+//////////////////////////////////////////////////////////////////////
+
+string DraineLi2007IonizedPAHGrainComposition::resourceNameForEnthalpies() const
+{
+    return "DustEM_PAH1_DL07_Enthalpies";
+}
+
+//////////////////////////////////////////////////////////////////////

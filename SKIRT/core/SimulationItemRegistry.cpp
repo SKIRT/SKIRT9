@@ -64,6 +64,10 @@
 #include "DraineGraphiteGrainComposition.hpp"
 #include "DraineIonizedPAHGrainComposition.hpp"
 #include "DraineLiDustMix.hpp"
+#include "DraineLi2007GraphiteGrainComposition.hpp"
+#include "DraineLi2007IonizedPAHGrainComposition.hpp"
+#include "DraineLi2007NeutralPAHGrainComposition.hpp"
+#include "DraineLi2007SilicateGrainComposition.hpp"
 #include "DraineNeutralPAHGrainComposition.hpp"
 #include "DraineSilicateGrainComposition.hpp"
 #include "DustAbsorptionPerCellProbe.hpp"
@@ -598,6 +602,10 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<GrainComposition>();
     ItemRegistry::add<DraineSilicateGrainComposition>();
     ItemRegistry::add<DraineGraphiteGrainComposition>();
+    ItemRegistry::add<DraineLi2007SilicateGrainComposition>();
+    ItemRegistry::add<DraineLi2007GraphiteGrainComposition>();
+    ItemRegistry::add<DraineLi2007NeutralPAHGrainComposition>();
+    ItemRegistry::add<DraineLi2007IonizedPAHGrainComposition>();
     ItemRegistry::add<DraineNeutralPAHGrainComposition>();
     ItemRegistry::add<DraineIonizedPAHGrainComposition>();
     ItemRegistry::add<MieSilicateGrainComposition>();
