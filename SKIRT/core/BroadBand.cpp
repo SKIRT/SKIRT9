@@ -30,7 +30,7 @@ void BroadBand::setupSelfBefore()
     string resourceName = FilePaths::resourceName("_BroadBand.stab", segments);
 
     // open the table
-    _table.open(this, resourceName, "lambda(m)", "T(1)", false);
+    _table.open(this, resourceName, "lambda(m)", "T(1/m)", false);
 }
 
 ////////////////////////////////////////////////////////////////////
