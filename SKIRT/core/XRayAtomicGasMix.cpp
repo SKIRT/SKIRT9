@@ -104,6 +104,15 @@ namespace
         double E;      // energy of the emitted photon (eV)
     };
 
+    // fluorescence (sub)line shape parameters; there are 7 sublines per line
+    struct LineShapeParams
+    {
+        LineShapeParams(const Array& a) : Iint(a[0]), Ei(a[1]), Wi(a[2]) {}
+        double Iint;  // subline integral
+        double Ei;    // subline central energy (eV)
+        double Wi;    // subline FWHM (eV)
+    };
+
     // load data from resource file with N columns into a vector of structs of type S that can be constructed
     // from an array with N elements, and return that vector
     template<class S, int N> vector<S> loadStruct(const SimulationItem* item, string filename, string description)
@@ -742,6 +751,7 @@ void XRayAtomicGasMix::setupSelfBefore()
 
     // load the fluorescence parameters
     auto fluorescenceParams = loadStruct<FluorescenceParams, 5>(this, "XRay_FL.txt", "fluorescence data");
+    auto lineShapeParams = loadStruct<LineShapeParams, 3>(this, "XRay_FL_Shapes.txt", "line shape data");
 
     // create scattering helpers depending on the user-configured implementation type;
     // the respective helper constructors load the required bound-electron scattering resources
@@ -836,8 +846,11 @@ void XRayAtomicGasMix::setupSelfBefore()
     // add the fluorescence emission wavelengths
     for (const auto& params : fluorescenceParams)
     {
-        double lambda = wavelengthToFromEnergy(params.E);
-        if (range.contains(lambda)) lambdav.push_back(lambda);
+        if (params.E > 0.)
+        {
+            double lambda = wavelengthToFromEnergy(params.E);
+            if (range.contains(lambda)) lambdav.push_back(lambda);
+        }
     }
 
     // add the outer wavelengths of our nonzero range, plus an extra just outside of that range,
@@ -885,11 +898,14 @@ void XRayAtomicGasMix::setupSelfBefore()
         _sigmaextv[ell] = sigma;
     }
 
-    // ---- scattering ----
+    // ---- scattering and fluorescence ----
 
     // calculate and store the fluorescence emission wavelengths
     _lambdafluov.reserve(fluorescenceParams.size());
-    for (const auto& params : fluorescenceParams) _lambdafluov.push_back(wavelengthToFromEnergy(params.E));
+    for (const auto& params : fluorescenceParams)
+    {
+        _lambdafluov.push_back(params.E > 0. ? wavelengthToFromEnergy(params.E) : params.E);
+    }
 
     // make room for the scattering cross section and the cumulative fluorescence/scattering probabilities
     _sigmascav.resize(numLambda);
@@ -929,6 +945,29 @@ void XRayAtomicGasMix::setupSelfBefore()
 
         // determine the normalized cumulative probability distribution and the cross section
         _sigmascav[ell] = NR::cdf(_cumprobscavv[ell], contribv);
+    }
+
+    // copy the fluorescence line shape parameters into a data structure that groups sublines per line;
+    // this code relies on there being exactly 7 sublines for each line, even if some sublines have zero values
+    constexpr int numSublines = 7;
+    int numLines = lineShapeParams.size() / numSublines;
+    _lineshapev.resize(numLines);
+    for (int j = 0; j != numLines; ++j)  // line index
+    {
+        LineShape& q = _lineshapev[j];                           // target: reference to line shape record
+        LineShapeParams* p = &lineShapeParams[j * numSublines];  // source: ptr to first subline record for this line
+
+        // build cumulative probability distribution from relative subline contributions
+        NR::cdf(q.cumPv, numSublines, [p](int i) { return p[i].Iint; });
+
+        // copy central energy and width for each subline
+        q.Ev.resize(numSublines);
+        q.Wv.resize(numSublines);
+        for (int i = 0; i != numSublines; ++i)  // subline index i
+        {
+            q.Ev[i] = p[i].Ei;
+            q.Wv[i] = p[i].Wi / 2.;  // convert from FWHM to HWHM
+        }
     }
 }
 
@@ -1042,6 +1081,16 @@ void XRayAtomicGasMix::setScatteringInfoIfNeeded(PhotonPacket::ScatteringInfo* s
 
 ////////////////////////////////////////////////////////////////////
 
+double XRayAtomicGasMix::drawWavelengthFromLineShape(double lineShapeIndex) const
+{
+    const auto& shape = _lineshapev[abs(static_cast<int>(lineShapeIndex))];
+    auto i = NR::locateClip(shape.cumPv, random()->uniform());
+    double energy = shape.Ev[i] + shape.Wv[i] * random()->lorentz();
+    return wavelengthToFromEnergy(energy);
+}
+
+////////////////////////////////////////////////////////////////////
+
 void XRayAtomicGasMix::peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs,
                                          Direction bfky, const MaterialState* /*state*/, const PhotonPacket* pp) const
 {
@@ -1074,6 +1123,9 @@ void XRayAtomicGasMix::peeloffScattering(double& I, double& Q, double& U, double
 
         // update the photon packet wavelength to the wavelength of this fluorescence transition
         lambda = _lambdafluov[scatinfo->species - 2 * numAtoms];
+
+        // for a negative value, sample a wavelength from the corresponding line shape
+        if (lambda <= 0.) lambda = drawWavelengthFromLineShape(lambda);
     }
 
     // if we have dispersion, Doppler-shift the outgoing wavelength from the electron rest frame
@@ -1113,6 +1165,9 @@ void XRayAtomicGasMix::performScattering(double lambda, const MaterialState* sta
     {
         // update the photon packet wavelength to the wavelength of this fluorescence transition
         lambda = _lambdafluov[scatinfo->species - 2 * numAtoms];
+
+        // for a negative value, sample a wavelength from the corresponding line shape
+        if (lambda <= 0.) lambda = drawWavelengthFromLineShape(lambda);
 
         // draw a random, isotropic outgoing direction
         bfknew = random()->direction();

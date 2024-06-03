@@ -347,6 +347,12 @@ private:
         peel-off stored this already. */
     void setScatteringInfoIfNeeded(PhotonPacket::ScatteringInfo* scatinfo, double lambda) const;
 
+    /** This private function draws and returns a random wavelength from the fluorescence line
+        shape definition with the given index, specified as a negative floating point value. A
+        fluorescence line shape is parameterized by the superposition of one or more Lorentzian
+        shapes. */
+    double drawWavelengthFromLineShape(double lineShapeIndex) const;
+
 public:
     /** This function calculates the contribution of the medium component associated with this
         material mix to the peel-off photon luminosity, polarization state, and wavelength shift
@@ -405,6 +411,16 @@ private:
 
     // emission wavelengths for each of the fluorescence transitions
     vector<double> _lambdafluov;  // indexed on k
+
+    // line shape info for selected fluorescence transitions
+    // each emission line consists of one or more superposed Lorentzian shapes
+    struct LineShape
+    {
+        Array cumPv;  // cumulative probabilities for the Lorentzian shapes
+        Array Ev;     // central energy for the i'th Lorentzian shape
+        Array Wv;     // HWHM (=FWHM/2) for the i'th Lorentzian shape
+    };
+    vector<LineShape> _lineshapev;
 
     // thermal velocities and normalized cumulative probability distributions for the scattering channnels:
     //   - Rayleigh scattering by bound electrons for each atom
