@@ -831,6 +831,15 @@ void XRayAtomicGasMix::setupSelfBefore()
     for (double lambda : config->simulationWavelengths())
         if (range.contains(lambda)) lambdav.push_back(lambda);
 
+    // construct a function to add an energy point to the wavelength grid
+    auto addEnergyToWavelengthGrid = [&range, &lambdav](double E) {
+        if (E > 0.)
+        {
+            double lambda = wavelengthToFromEnergy(E);
+            if (range.contains(lambda)) lambdav.push_back(lambda);
+        }
+    };
+
     // add wavelength points around the threshold energies for all transitions
     int index = 0;
     for (const auto& params : crossSectionParams)
@@ -838,20 +847,13 @@ void XRayAtomicGasMix::setupSelfBefore()
         double Es = sigmoidv[index++].first;
         for (double delta : {-2., -4. / 3., -2. / 3., 0., 2. / 3., 4. / 3., 2.})
         {
-            double lambda = wavelengthToFromEnergy(params.Eth + delta * Es);
-            if (range.contains(lambda)) lambdav.push_back(lambda);
+            addEnergyToWavelengthGrid(params.Eth + delta * Es);
         }
     }
 
     // add the fluorescence emission wavelengths
-    for (const auto& params : fluorescenceParams)
-    {
-        if (params.E > 0.)
-        {
-            double lambda = wavelengthToFromEnergy(params.E);
-            if (range.contains(lambda)) lambdav.push_back(lambda);
-        }
-    }
+    for (const auto& params : fluorescenceParams) addEnergyToWavelengthGrid(params.E);
+    for (const auto& params : lineShapeParams) addEnergyToWavelengthGrid(params.Ei);
 
     // add the outer wavelengths of our nonzero range, plus an extra just outside of that range,
     // so that there are always at least three points and thus two bins in the grid
