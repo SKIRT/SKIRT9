@@ -290,6 +290,7 @@ public:
         bool dipole{false};  // true if scattering as a dipole, false if scattering isotropically
         int species{0};      // identifier of the scattering particle species
         Vec velocity;        // the velocity vector of the scattering particle in the local frame
+        double lambda{0.};   // the outgoing wavelength of the scattered photon packet (if sampled from a distribution)
     };
 
     /** This function returns a pointer to the (writable) scattering information record maintained
