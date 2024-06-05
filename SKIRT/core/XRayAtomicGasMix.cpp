@@ -905,8 +905,8 @@ void XRayAtomicGasMix::setupSelfBefore()
         {
             // if the line shape has nonzero width, copy the parameters of the line shape
             // so that we can sample from the Lorentz distribution in energy space
-            _centralfluov[k] = wavelengthToFromEnergy(params.E);
-            _widthfluov[k] = wavelengthToFromEnergy(params.W / 2.);  // convert from FWHM to HWHM
+            _centralfluov[k] = params.E;
+            _widthfluov[k] = params.W / 2.;  // convert from FWHM to HWHM
         }
     }
 
