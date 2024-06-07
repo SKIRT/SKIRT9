@@ -1057,15 +1057,26 @@ void XRayAtomicGasMix::setScatteringInfoIfNeeded(PhotonPacket::ScatteringInfo* s
         scatinfo->species = NR::locateClip(_cumprobscavv[indexForLambda(lambda)], random()->uniform());
         if (temperature() > 0.) scatinfo->velocity = _vthermscav[scatinfo->species] * random()->maxwell();
 
-        // for a fluorescence transition, determine the outgoing wavelength from the corresponding parameters,
-        // i.e., copy the fixed wavelength or sample a wavelength from the Lorentz line shape in energy space
+        // for a fluorescence transition, determine the outgoing wavelength from the corresponding parameters
         if (scatinfo->species >= static_cast<int>(2 * numAtoms))
         {
             int i = scatinfo->species - 2 * numAtoms;
             if (_lambdafluov[i])
+            {
+                // for a zero-width line, simply copy the central wavelength
                 scatinfo->lambda = _lambdafluov[i];
+            }
             else
-                scatinfo->lambda = wavelengthToFromEnergy(_centralfluov[i] + _widthfluov[i] * random()->lorentz());
+            {
+                // otherwise sample a wavelength from the Lorentz line shape in energy space;
+                // the tails of the Lorentz distribition are very long, occasionaly resulting in negative energies;
+                // therefore we loop until the sampled wavelength is meaningful
+                while (true)
+                {
+                    scatinfo->lambda = wavelengthToFromEnergy(_centralfluov[i] + _widthfluov[i] * random()->lorentz());
+                    if (nonZeroRange.contains(scatinfo->lambda)) break;
+                }
+            }
         }
     }
 }
