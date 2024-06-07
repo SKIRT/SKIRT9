@@ -87,6 +87,13 @@ public:
         implementation are taken from Press et al. (2002). */
     double gauss();
 
+    /** This function generates a random number from a Lorentzian (or Cauchy) distribution function
+        with its peak at 0 and a half-width at half-maximum (HWHM) of 1, i.e. defined by the
+        probability distribution \f[ p(x)\,{\rm d}x = \frac{1}{\pi}\, \frac{1}{x^2+1}\,{\rm d}x.\f]
+        The cumulative distribution function is easily calculated and inverted analytically, so
+        that a simple inversion techique can be used. */
+    double lorentz();
+
     /** This function generates a random number from an exponential distribution function, defined
         by the probability distribution \f[ p(x)\,{\rm d}x = {\rm e}^{-x}\,{\rm d}x.\f] A simple
         inversion technique is used. */
