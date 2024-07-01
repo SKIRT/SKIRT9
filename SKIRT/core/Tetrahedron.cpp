@@ -1,6 +1,4 @@
 #include "Tetrahedron.hpp"
-#include "FatalError.hpp"
-#include <iostream>
 
 Tetra::Tetra(const std::array<Vec*, 4>& vertices, const std::array<Face, 4>& faces, const Array& prop)
     : Tetra(vertices, faces)
@@ -98,13 +96,11 @@ double Tetra::generateBarycentric(double& s, double& t, double& u)
     // https://vcg.isti.cnr.it/activities/OLD/geometryegraphics/pointintetraedro.html
     if (s + t > 1.0)
     {  // cut'n fold the cube into a prism
-
         s = 1.0 - s;
         t = 1.0 - t;
     }
     if (t + u > 1.0)
     {  // cut'n fold the prism into a tetrahedron
-
         double tmp = u;
         u = 1.0 - s - t;
         t = 1.0 - tmp;
@@ -122,9 +118,9 @@ double Tetra::generateBarycentric(double& s, double& t, double& u)
 
 Position Tetra::generatePosition(double s, double t, double u) const
 {
-    double w = Tetra::generateBarycentric(s, t, u);
+    double r = Tetra::generateBarycentric(s, t, u);
 
-    return Position(w * *_vertices[0] + u * *_vertices[1] + t * *_vertices[2] + s * *_vertices[3]);
+    return Position(r * *_vertices[0] + u * *_vertices[1] + t * *_vertices[2] + s * *_vertices[3]);
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -393,57 +393,6 @@ void MediumSystem::setupSelfAfter()
     _state.initCommunicate();
 
     log->info("Done calculating cell densities");
-
-    Box extent = grid()->boundingBox();
-
-    Random* rd = find<Random>();
-
-    double M = 0., M2 = 0.;
-    double G = 0., G2 = 0.;
-    double E = 0., E2 = 0.;
-
-    constexpr double N = 1e7;
-
-    for (int i = 0; i < N; i++)
-    {
-        Position pos = rd->position(extent);
-        int m = grid()->cellIndex(pos);
-        if (m != -1)
-        {
-            double gm = massDensity(m);
-            double tm = dustMassDensity(pos);
-            double dm = tm ? (gm - tm) / tm : 0.;
-            M += dm;
-            M2 += dm * dm;
-
-            double gg = gasNumberDensity(m);
-            double tg = gasNumberDensity(pos);
-            double dg = tg ? (gg - tg) / tg : 0.;
-            G += dg;
-            G2 += dg * dg;
-
-            double ge = electronNumberDensity(m);
-            double te = electronNumberDensity(pos);
-            double de = te ? (ge - te) / te : 0.;
-            E += de;
-            E2 += de * de;
-        }
-    }
-    double avg_m = M / N;
-    double var_m = sqrt(M2 / N - avg_m * avg_m);
-
-    double avg_g = G / N;
-    double var_g = sqrt(G2 / N - avg_g * avg_g);
-
-    double avg_e = E / N;
-    double var_e = sqrt(E2 / N - avg_e * avg_e);
-
-    log->info(StringUtils::toString(avg_m));
-    log->info(StringUtils::toString(var_m));
-    log->info(StringUtils::toString(avg_g));
-    log->info(StringUtils::toString(var_g));
-    log->info(StringUtils::toString(avg_e));
-    log->info(StringUtils::toString(var_e));
 }
 
 ////////////////////////////////////////////////////////////////////

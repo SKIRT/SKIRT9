@@ -18,78 +18,7 @@ class SpatialGridPath;
 
 ////////////////////////////////////////////////////////////////////
 
-/** A TetraMeshSnapshot object represents a Tetra tessellation or \em mesh of a cuboidal
-    spatial domain (given a list of generating sites) and offers several facilities related to this
-    mesh. A Tetra mesh partitions the domain in convex polyhedra. Consider a given set of points
-    in the domain, called \em sites. For each site there will be a corresponding region consisting
-    of all points in the domain closer to that site than to any other. These regions are called
-    Tetra \em cells, and together they form the Tetra tessellation of the domain.
-
-    The TetraMeshSnapshot class serves two key purposes: (1) represent snapshot data produced by
-    a hydrodynamical simulation and imported from a column text file, defining a primary source or
-    a transfer medium distribution, and (2) implement an unstructured spatial grid that discretizes
-    the spatial domain as a basis for the radiative transfer simulation itself.
-
-    To support the first use case (imported snapshot data), the TetraMeshSnapshot class is based
-    on the Snapshot class; it uses the facilities offered there to configure and help read the
-    snapshot data, and it implements all functions in the general Snapshot public interface. In
-    addition it offers functionality that is specific to this snapshot type, such as, for example,
-    the requirement to configure the spatial extent of the domain. In this use case, the client
-    employs the default constructor and then proceeds to configure the snapshot object as described
-    in the Snapshot class header.
-
-    To support the second use case (spatial grid for radiative transfer), the class offers
-    specialty constructors that accept a list of the generating sites from various sources,
-    including a programmatically generated list or a user-supplied text column file. Note that this
-    input file includes just the site coordinates, while a snapshot data file would include
-    additional properties for each site. The specialty constructors automatically complete the
-    configuration sequence of the object, so that the getters can be used immediately after
-    construction.
-
-    Once an TetraMeshSnapshot object has been constructed and fully configured, its data members
-    are no longer modified. Consequently all getters are re-entrant.
-
-    Using the Voro++ library
-    ------------------------
-
-    To build the Tetra tessellation, the buildMesh() function in this class uses the code in the
-    \c voro subfolder of the SKIRT code hierarchy, which is taken from the Voro++ library written
-    by Chris H. Rycroft (Harvard University/Lawrence Berkeley Laboratory) at
-    https://github.com/chr1shr/voro (git commit 122531f) with minimal changes to avoid compiler
-    warnings.
-
-    A distinguishing feature of the Voro++ library is that it carries out cell-based calculations,
-    computing the Tetra cell for each site individually, rather than computing the Tetra
-    tessellation as a global network of vertices and edges. It is therefore particularly
-    well-suited for applications that require cell-based properties such as the cell volume, the
-    centroid position or the number of faces or vertices. Equally important in the context of
-    SKIRT, it is easy to distribute the work over parallel execution threads because, after setting
-    up a common search data structure holding all sites, the calculations for the various cells are
-    mutually independent.
-
-    The Voro++ approach also has an important drawback. Because cells are handled independently of
-    each other, floating pointing rounding errors sometimes cause inconsistencies where the results
-    for one cell do not properly match the corresponding results for a neighboring cell. This most
-    often happens when the generating sites are very close to each other and/or form certain
-    hard-to-calculate geometries. These problems manifest themselves either as empty cells or as
-    asymmetries in the neighbor lists. To handle these situations, the buildMesh() function removes
-    some sites from the input list as described below.
-
-    Firstly, before actually building the Tetra tessellation, and in addition to removing sites
-    that lie outside of the spatial domain, the function discards sites that lie closer to any
-    previously listed site than \f$10^{-12}\f$ times the diagonal of the spatial domain. This
-    preventative measure essentially removes any "degenerate" sites from the input list. Given the
-    extremely small distances, it is very unlikely that the physcis of the input model would be
-    affected by this operation.
-
-    Secondly, after all Tetra cells have been calculated, the function verifies the cell
-    properties. If any of the cells have a zero volume or if any of the cell neighbors are not
-    mutual, the involved sites are discarded and the Tetra construction starts anew from scratch
-    with the reduced list of sites. After a maximum of 5 attempts, the function throws a fatal
-    error. In practice, this will hopefully never happen. Discarding incorrectly calculated cells
-    perhaps incurs a slightly higher risk of changing the physcis of the input model. However, in
-    practice it seems that these issues mostly occur in regions of high site density, so that the
-    errors should be fairly limited. */
+/**  */
 class TetraMeshSnapshot : public Snapshot
 {
     //================= Construction - Destruction =================

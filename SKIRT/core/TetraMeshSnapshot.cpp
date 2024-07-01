@@ -135,11 +135,6 @@ namespace
         p->vertexlist[3] = vertices[3];
     }
 
-    template<typename T> int sgn(T a)
-    {
-        return (a > T(0)) - (a < T(0));
-    }
-
     int findEnteringFace(const Tetra* tetra, const Vec& pos, const Direction& dir)
     {
         int enteringFace = -1;
@@ -422,11 +417,11 @@ void TetraMeshSnapshot::buildMesh(const TetraMeshSpatialGrid* grid, bool plc)
         in.pointlist[2] = _extent.zmin();
 
         in.pointlist[3] = _extent.xmax();
-        in.pointlist[4] = _extent.xmin();
+        in.pointlist[4] = _extent.ymin();
         in.pointlist[5] = _extent.zmin();
 
         in.pointlist[6] = _extent.xmax();
-        in.pointlist[7] = _extent.xmax();
+        in.pointlist[7] = _extent.ymax();
         in.pointlist[8] = _extent.zmin();
 
         in.pointlist[9] = _extent.xmin();
@@ -443,7 +438,6 @@ void TetraMeshSnapshot::buildMesh(const TetraMeshSpatialGrid* grid, bool plc)
         }
 
         in.numberoffacets = 6;
-        // in.numberoffacets += 1;
         in.facetlist = new tetgenio::facet[in.numberoffacets];
         addFacet(&in.facetlist[0], {0, 1, 2, 3});  // Facet 1. bottom
         addFacet(&in.facetlist[1], {4, 5, 6, 7});  // Facet 2. top
@@ -452,51 +446,41 @@ void TetraMeshSnapshot::buildMesh(const TetraMeshSpatialGrid* grid, bool plc)
         addFacet(&in.facetlist[4], {2, 6, 7, 3});  // Facet 5. back
         addFacet(&in.facetlist[5], {3, 7, 4, 0});  // Facet 6. left
 
-        behavior.plc = 1;          // -p PLC
-        behavior.quality = 1;      // -q quality mesh
-        behavior.neighout = 2;     // -nn neighbors and edges?
-        behavior.zeroindex = 1;    // -z zero index
-        behavior.facesout = 1;     // -f faces
-        behavior.fixedvolume = 1;  // -a max volume
-        behavior.maxvolume = grid->minVolume() * _extent.volume();  // -a max volume
-        // behavior.maxvolume = _extent.volume();  // -a max volume
-        // behavior.steinerleft = -1;              // -S infinite
-        // behavior.nofacewritten = 1;
-        // behavior.nonodewritten = 1;
-        // behavior.noelewritten = 1;
-        behavior.verbose = 1;
-
-        // behavior.edgesout = 1;     // -e edges
-        // behavior.weighted = 1;     // -w weighted
-        // behavior.minratio = 5.0;   // -q quality
-        // behavior.mindihedral = 5.0;  // -q/ minimal angle
-
+        behavior.plc = 1;                                                   // -p PLC
+        behavior.quality = 1;                                               // -q quality mesh
+        behavior.neighout = 2;                                              // -nn neighbors and edges
+        behavior.facesout = 1;                                              // -f faces
+        behavior.zeroindex = 1;                                             // -z zero index
+        behavior.fixedvolume = 1;                                           // -a max volume
+        behavior.maxvolume = grid->maxVolumeFraction() * _extent.volume();  // -a max volume
+        // refining criterion
         in.tetunsuitable = [grid](double* pa, double* pb, double* pc, double* pd, double vol) {
             return grid->tetUnsuitable(pa, pb, pc, pd, vol);
         };
     }
-    // psc
+    // Delaunay Triangulation
     else
     {
-        in.numberofpoints = 50;
-        in.pointlist = new REAL[in.numberofpoints * 3];
-        for (int i = 0; i < in.numberofpoints; i++)
-        {
-            Vec pos = random()->position(_extent);
-            in.pointlist[i * 3 + 0] = pos.x();
-            in.pointlist[i * 3 + 1] = pos.y();
-            in.pointlist[i * 3 + 2] = pos.z();
-        }
+        // WIP import from file!!!
+        // in.numberofpoints = 50;
+        // in.pointlist = new REAL[in.numberofpoints * 3];
+        // for (int i = 0; i < in.numberofpoints; i++)
+        // {
+        //     Vec pos = random()->position(_extent);
+        //     in.pointlist[i * 3 + 0] = pos.x();
+        //     in.pointlist[i * 3 + 1] = pos.y();
+        //     in.pointlist[i * 3 + 2] = pos.z();
+        // }
 
         behavior.psc = 1;        // -s PSC
-        behavior.neighout = 2;   // -nn neighbors and edges?
-        behavior.zeroindex = 1;  // -z zero index
+        behavior.neighout = 2;   // -nn neighbors and edges
         behavior.facesout = 1;   // -f faces
+        behavior.zeroindex = 1;  // -z zero index
     }
 
     tetrahedralize(&behavior, &in, &out);
 
-    // tranfser TetGen data in TetraMeshSnapshot data containers
+    // tranfser TetGen data to TetraMeshSnapshot data containers
     numTetra = out.numberoftetrahedra;
     numVertices = out.numberofpoints;
 
@@ -516,9 +500,13 @@ void TetraMeshSnapshot::buildMesh(const TetraMeshSpatialGrid* grid, bool plc)
         std::array<Vec*, 4> vertices;
         std::array<Face, 4> faces;
 
-        // calc vertices first
-        for (int c = 0; c < 4; c++) vertices[c] = _vertices[out.tetrahedronlist[4 * i + c]];
+        // vertices
+        for (int c = 0; c < 4; c++)
+        {
+            vertices[c] = _vertices[out.tetrahedronlist[4 * i + c]];
+        }
 
+        // faces
         for (int c = 0; c < 4; c++)
         {
             // -1 if no neighbor
@@ -537,7 +525,6 @@ void TetraMeshSnapshot::buildMesh(const TetraMeshSpatialGrid* grid, bool plc)
                     }
                 }
             }
-
             faces[c] = Face(ntetra, nface);
         }
 
@@ -564,13 +551,13 @@ void TetraMeshSnapshot::buildMesh(const TetraMeshSpatialGrid* grid, bool plc)
     double varVol = (totalVol2 / numTetra / (V * V) - avgVol * avgVol);
 
     // log neighbor statistics
-    log()->info("Done computing tetrahedral tessellation");
+    log()->info("Done computing tetrahedralisation");
     log()->info("  Number of vertices " + std::to_string(numVertices));
     log()->info("  Number of tetrahedra " + std::to_string(numTetra));
-    log()->info("  Average volume\% per cell: " + StringUtils::toString(avgVol, 'e'));
-    log()->info("  Variance of volume\% per cell: " + StringUtils::toString(varVol, 'e'));
-    log()->info("  Minimum volume\% cell: " + StringUtils::toString(minVol, 'e'));
-    log()->info("  Maximum volume\% cell: " + StringUtils::toString(maxVol, 'e'));
+    log()->info("  Average volume fraction per cell: " + StringUtils::toString(avgVol, 'e'));
+    log()->info("  Variance of volume fraction per cell: " + StringUtils::toString(varVol, 'e'));
+    log()->info("  Minimum volume fraction cell: " + StringUtils::toString(minVol, 'e'));
+    log()->info("  Maximum volume fraction cell: " + StringUtils::toString(maxVol, 'e'));
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -747,17 +734,17 @@ void TetraMeshSnapshot::buildSearchSingle()
 
 void TetraMeshSnapshot::writeGridPlotFiles(const SimulationItem* probe) const
 {
-    std::ofstream outputFile("data/tetrahedra.txt");
-    for (size_t i = 0; i < _tetrahedra.size(); i++)
-    {
-        const Tetra* tetra = _tetrahedra[i];
-        for (size_t l = 0; l < 4; l++)
-        {
-            const Vec* r = tetra->_vertices[l];
-            outputFile << r->x() << ", " << r->y() << ", " << r->z() << "\n";
-        }
-    }
-    outputFile.close();
+    // std::ofstream outputFile("data/tetrahedra.txt");
+    // for (size_t i = 0; i < _tetrahedra.size(); i++)
+    // {
+    //     const Tetra* tetra = _tetrahedra[i];
+    //     for (size_t l = 0; l < 4; l++)
+    //     {
+    //         const Vec* r = tetra->_vertices[l];
+    //         outputFile << r->x() << ", " << r->y() << ", " << r->z() << "\n";
+    //     }
+    // }
+    // outputFile.close();
 
     // outputFile.open("data/faces.txt");
     // for (size_t i = 0; i < _tetrahedra.size(); i++)
@@ -915,8 +902,6 @@ int TetraMeshSnapshot::cellIndex(Position bfr) const
     _extent.cellIndices(i, j, k, bfr, _nb, _nb, _nb);
     int b = i * _nb2 + j * _nb + k;
 
-    // int test = 0;
-
     // look for the closest centroid in this block using the search tree
     Node* tree = _blocktrees[b];
     if (tree)
@@ -1061,35 +1046,12 @@ class TetraMeshSnapshot::MySegmentGenerator : public PathSegmentGenerator
 public:
     MySegmentGenerator(const TetraMeshSnapshot* grid) : _grid(grid) {}
 
-    // #define WRITE
-
-#ifdef WRITE
-    std::ofstream out;
-
-    void startwriting()
-    {
-        if (!out.is_open()) out.open("data/photon.txt");
-    }
-
-    void stopwriting()
-    {
-        out.close();
-    }
-
-    void write(double ds, int face)
-    {
-        out << "photon=" << _mr << "," << face << "\n";
-        out << "ds=" << ds << "\n";
-        out << "r=" << r().x() << "," << r().y() << "," << r().z() << "\n";
-        out << "k=" << k().x() << "," << k().y() << "," << k().z() << std::endl;
-    }
-#endif
     bool next() override
     {
         if (state() == State::Unknown)
         {
             // try moving the photon packet inside the grid; if this is impossible, return an empty path
-            // this also changes the state()
+            // this also changes the _state
             if (!moveInside(_grid->extent(), _grid->_eps)) return false;
 
             // get the index of the cell containing the current position
@@ -1099,11 +1061,6 @@ public:
             // if the photon packet started outside the grid, return the corresponding nonzero-length segment;
             // otherwise fall through to determine the first actual segment
             if (ds() > 0.) return true;
-
-#ifdef WRITE
-            startwriting();
-            write(0, _mr);
-#endif
         }
 
         // intentionally falls through
@@ -1169,25 +1126,12 @@ public:
                     const Vec& n = tetra->_faces[leavingFace]._normal;
                     const Vec& v = *tetra->_vertices[_enteringFace];
                     double ndotk = Vec::dot(n, dir);
-
-                    // if ndotk == 0. we are inside the leaving face, we should just move to the neighboring tetra and not move (ds=0)
-                    // once it moved to its neighbor, it can't move back to this cell and it will traverse the next step correctly
-                    // if (ndotk == 0.)
-                    //     ds = 0;
-                    // else
-                    //     ds = Vec::dot(n, v - pos) / ndotk;
-
                     ds = Vec::dot(n, v - pos) / ndotk;
                 }
-
-                // if ds is too close to leaving face we recalculate cellIndex to avoid traversing when ds ~ 0
-                // this might actually slow down the traversal
-
                 // if no exit point was found, advance the current point by a small distance,
                 // recalculate the cell index, and return to the start of the loop
                 if (leavingFace == -1 || ds < _grid->_eps)
                 {
-                    // move towards centroid?
                     propagater(_grid->_eps);
                     _mr = _grid->cellIndex(r());
 
@@ -1196,11 +1140,10 @@ public:
                         setState(State::Outside);
                         return false;
                     }
-
-                    _enteringFace = -1;
-#ifdef WRITE
-                    write(ds, -1);
-#endif
+                    else
+                    {
+                        _enteringFace = -1;
+                    }
                 }
                 // otherwise set the current point to the exit point and return the path segment
                 else
@@ -1214,24 +1157,18 @@ public:
                         setState(State::Outside);
                         return false;
                     }
-
-                    _enteringFace = tetra->_faces[leavingFace]._nface;
-
-#ifdef WRITE
-                    write(ds, leavingFace);
-#endif
-
-                    return true;
+                    else
+                    {
+                        _enteringFace = tetra->_faces[leavingFace]._nface;
+                        return true;
+                    }
                 }
             }
         }
 
         if (state() == State::Outside)
-        {}
-
-#ifdef WRITE
-        stopwriting();
-#endif
+        {
+        }
 
         return false;
     }
