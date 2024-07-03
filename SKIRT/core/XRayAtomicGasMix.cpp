@@ -96,12 +96,13 @@ namespace
     // fluorescence parameters
     struct FluorescenceParams
     {
-        FluorescenceParams(const Array& a) : Z(a[0]), n(a[1]), l(a[2]), omega(a[3]), E(a[4]) {}
+        FluorescenceParams(const Array& a) : Z(a[0]), n(a[1]), l(a[2]), omega(a[3]), E(a[4]), W(a[5]) {}
         short Z;       // atomic number
         short n;       // principal quantum number of the shell
         short l;       // orbital quantum number of the subshell
         double omega;  // fluorescence yield (1)
-        double E;      // energy of the emitted photon (eV)
+        double E;      // (central) energy of the emitted photon (eV)
+        double W;      // FWHM of the Lorentz shape for the emitted photon (eV), or zero
     };
 
     // load data from resource file with N columns into a vector of structs of type S that can be constructed
@@ -741,7 +742,7 @@ void XRayAtomicGasMix::setupSelfBefore()
     auto crossSectionParams = loadStruct<CrossSectionParams, 12>(this, "XRay_PA.txt", "photo-absorption data");
 
     // load the fluorescence parameters
-    auto fluorescenceParams = loadStruct<FluorescenceParams, 5>(this, "XRay_FL.txt", "fluorescence data");
+    auto fluorescenceParams = loadStruct<FluorescenceParams, 6>(this, "XRay_FL.txt", "fluorescence data");
 
     // create scattering helpers depending on the user-configured implementation type;
     // the respective helper constructors load the required bound-electron scattering resources
@@ -887,9 +888,27 @@ void XRayAtomicGasMix::setupSelfBefore()
 
     // ---- scattering ----
 
-    // calculate and store the fluorescence emission wavelengths
-    _lambdafluov.reserve(fluorescenceParams.size());
-    for (const auto& params : fluorescenceParams) _lambdafluov.push_back(wavelengthToFromEnergy(params.E));
+    // calculate and store the fluorescence emission parameters
+    int numFluos = fluorescenceParams.size();
+    _lambdafluov.resize(numFluos);
+    _centralfluov.resize(numFluos);
+    _widthfluov.resize(numFluos);
+    for (int k = 0; k != numFluos; ++k)
+    {
+        const auto& params = fluorescenceParams[k];
+        if (!params.W)
+        {
+            // if the line shape has zero width, convert the central enery to the fixed wavelength
+            _lambdafluov[k] = wavelengthToFromEnergy(params.E);
+        }
+        else
+        {
+            // if the line shape has nonzero width, copy the parameters of the line shape
+            // so that we can sample from the Lorentz distribution in energy space
+            _centralfluov[k] = params.E;
+            _widthfluov[k] = params.W / 2.;  // convert from FWHM to HWHM
+        }
+    }
 
     // make room for the scattering cross section and the cumulative fluorescence/scattering probabilities
     _sigmascav.resize(numLambda);
@@ -1037,6 +1056,28 @@ void XRayAtomicGasMix::setScatteringInfoIfNeeded(PhotonPacket::ScatteringInfo* s
         scatinfo->valid = true;
         scatinfo->species = NR::locateClip(_cumprobscavv[indexForLambda(lambda)], random()->uniform());
         if (temperature() > 0.) scatinfo->velocity = _vthermscav[scatinfo->species] * random()->maxwell();
+
+        // for a fluorescence transition, determine the outgoing wavelength from the corresponding parameters
+        if (scatinfo->species >= static_cast<int>(2 * numAtoms))
+        {
+            int i = scatinfo->species - 2 * numAtoms;
+            if (_lambdafluov[i])
+            {
+                // for a zero-width line, simply copy the central wavelength
+                scatinfo->lambda = _lambdafluov[i];
+            }
+            else
+            {
+                // otherwise sample a wavelength from the Lorentz line shape in energy space;
+                // the tails of the Lorentz distribition are very long, occasionaly resulting in negative energies;
+                // therefore we loop until the sampled wavelength is meaningful
+                while (true)
+                {
+                    scatinfo->lambda = wavelengthToFromEnergy(_centralfluov[i] + _widthfluov[i] * random()->lorentz());
+                    if (nonZeroRange.contains(scatinfo->lambda)) break;
+                }
+            }
+        }
     }
 }
 
@@ -1072,8 +1113,8 @@ void XRayAtomicGasMix::peeloffScattering(double& I, double& Q, double& U, double
         // unpolarized isotropic emission; the bias weight is trivially 1 and there is no contribution to Q, U, V
         I = 1.;
 
-        // update the photon packet wavelength to the wavelength of this fluorescence transition
-        lambda = _lambdafluov[scatinfo->species - 2 * numAtoms];
+        // update the photon packet wavelength to the (possibly sampled) wavelength of this fluorescence transition
+        lambda = scatinfo->lambda;
     }
 
     // if we have dispersion, Doppler-shift the outgoing wavelength from the electron rest frame
@@ -1111,8 +1152,8 @@ void XRayAtomicGasMix::performScattering(double lambda, const MaterialState* sta
     // fluorescence, always unpolarized and isotropic
     else
     {
-        // update the photon packet wavelength to the wavelength of this fluorescence transition
-        lambda = _lambdafluov[scatinfo->species - 2 * numAtoms];
+        // update the photon packet wavelength to the (possibly sampled) wavelength of this fluorescence transition
+        lambda = scatinfo->lambda;
 
         // draw a random, isotropic outgoing direction
         bfknew = random()->direction();

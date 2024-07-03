@@ -1,5 +1,6 @@
-Core 6
+Core 7
 BPASS 1
 TODDLERS 1
 ExtraDust 3
-AtomsMolecules 5
+ExtraBands 1
+AtomsMolecules 6

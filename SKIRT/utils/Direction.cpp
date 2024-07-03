@@ -57,3 +57,22 @@ void Direction::spherical(double& theta, double& phi) const
 }
 
 //////////////////////////////////////////////////////////////////////
+
+void Direction::normalize()
+{
+    double s = norm();
+    if (s > 0.)
+    {
+        _x /= s;
+        _y /= s;
+        _z /= s;
+    }
+    else
+    {
+        // explicitly clear the components because the norm can be zero even when the coordinates are nonzero
+        // (because the square of a very small number can undeflow to zero)
+        clear();
+    }
+}
+
+//////////////////////////////////////////////////////////////////////

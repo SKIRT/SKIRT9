@@ -184,10 +184,8 @@ Direction DipolePhaseFunction::performScattering(Direction bfk, StokesVector* sv
         applyMueller(theta, sv);
 
         // rotate the propagation direction in the scattering plane
-        Vec newdir = bfk * cos(theta) + Vec::cross(sv->normal(), bfk) * sin(theta);
-
-        // normalize the new direction to prevent degradation
-        return Direction(newdir / newdir.norm());
+        // (re)normalize the new direction to prevent degradation
+        return Direction(bfk * cos(theta) + Vec::cross(sv->normal(), bfk) * sin(theta), true);
     }
 }
 

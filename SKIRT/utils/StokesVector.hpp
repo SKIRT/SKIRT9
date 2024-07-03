@@ -29,7 +29,7 @@ public:
     // -------- constructors and setters ----------
 
     /** The default constructor initializes the Stokes vector to an unpolarized state. */
-    StokesVector() : _polarized(false), _Q(0), _U(0), _V(0), _normal(0, 0, 0) {}
+    StokesVector() : _polarized(false), _Q(0), _U(0), _V(0), _normal(0, 0, 0, false) {}
 
     /** This constructor initializes the Stokes vector to the specified parameter values, after
         normalizing them through division by \f$I\f$. If \f$I=0\f$, the Stokes vector is set to an
@@ -43,7 +43,7 @@ public:
         _Q = 0;
         _U = 0;
         _V = 0;
-        _normal.set(0, 0, 0);
+        _normal.clear();
     }
 
     /** This function sets the Stokes vector to the specified vector components and the specified

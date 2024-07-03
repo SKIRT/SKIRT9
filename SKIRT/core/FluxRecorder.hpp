@@ -191,6 +191,11 @@ public:
         information. */
     void setUserFlags(bool recordComponents, int numScatteringLevels, bool recordPolarization, bool recordStatistics);
 
+    /** This function sets the observer angles for a distant instrument associated with this flux
+        recorder. These values are listed in the output files as a convenience to the user but are
+        not otherwise used. This function should not be called for a local instrument. */
+    void setObserverAngles(double inclination, double azimuth, double roll);
+
     /** This function configures the distance of the recorder in the model's rest frame for a
         distant instrument. The specified distance must be nonzero. The client must call either the
         setRestFrameDistance() or setObserverFrameRedshift() functions, not both. This function
@@ -329,6 +334,11 @@ private:
     bool _recordStatistics{false};
     bool _includeFluxDensity{false};
     bool _includeSurfaceBrightness{false};
+
+    // recorder configuration on observer angles, received from client during configuration
+    double _inclination{0};
+    double _azimuth{0};
+    double _roll{0};
 
     // recorder configuration on distance and redshift, received from client during configuration
     double _redshift{0};

@@ -25,6 +25,8 @@
     and the temperature are considered to be spatially constant (for a given medium component),
     while the overall density can obviously vary across space as usual.
 
+    <b>Photo-absorption and fluorescence</b>
+
     Photo-absorption by an atom is the process where the energy of a photon is used to liberate a
     bound electron from one of the electron shells of the atom. This class supports
     photo-absorption by any of the 30 elements in the gas for any of the electron shells, i.e. up
@@ -43,11 +45,23 @@
     L\f$_{\alpha1}\f$, L\f$_{\beta6}\f$ (i.e. all transitions from higher shells towards the K and
     L shells, except for \f$L \to L\f$ lines).
 
+    For a subset of these fluorescence transitions, i.e. for the K\f$_{\alpha}\f$ and
+    K\f$_{\beta}\f$ lines of the metals Cr, Mn, Fe, Co, Ni, and Cu, this class emulates the
+    intrinsic shape of the emission line. This is accomplished by randomly sampling the emitted
+    photon packet energy (wavelength) for a given fluorescence interaction from the appropriate
+    line shape. The class uses the results obtained by Hölzer+97, who measured these intrinsic
+    line shapes in the lab and suggested a parameterisation using a number of Lorentzian components
+    for each line. For the fluorescence transitions not in the above list, this class emits photon
+    packets at the fixed line energy (wavelength) corresponding to the relevant transition,
+    effectively emulating a zero-width line.
+
     Because fluorescence only occurs as the result of a photo-absorption event, this class
     implements fluorescence as a form of scattering (where the wavelength of the photon being
     scattered changes) as opposed to emission. This allows both photo-absorption and fluorescence
     to be treated during primary emission. A possible drawback is that the weaker fluorescence
     lines will be represented by a fairly small number of photon packets.
+
+    <b>Scattering by bound electrons</b>
 
     Electrons bound to the atoms in the gas scatter incoming X-ray photons. This process can be
     elastic (Rayleigh scattering) or inelastic (bound-Compton scattering). The user can select one
@@ -344,7 +358,8 @@ public:
 private:
     /** This private function draws a random scattering channel and atom velocity and stores this
         information in the photon packet's scattering information record, unless a previous
-        peel-off stored this already. */
+        peel-off stored this already. For fluorescence transitions that support a nonzero line
+        width, the function also draws a random wavelength from the line shape. */
     void setScatteringInfoIfNeeded(PhotonPacket::ScatteringInfo* scatinfo, double lambda) const;
 
 public:
@@ -403,8 +418,12 @@ private:
     Array _sigmaextv;  // indexed on ell
     Array _sigmascav;  // indexed on ell
 
-    // emission wavelengths for each of the fluorescence transitions
-    vector<double> _lambdafluov;  // indexed on k
+    // emission parameters for each of the fluorescence transitions:
+    // if wavelength is nonzero, all photons are emitted at this wavelength;
+    // if wavelength is zero, sample wavelength from Lorentz shape defined by central energy and HWHM = FWHM / 2
+    vector<double> _lambdafluov;   // indexed on k
+    vector<double> _centralfluov;  // indexed on k
+    vector<double> _widthfluov;    // indexed on k
 
     // thermal velocities and normalized cumulative probability distributions for the scattering channnels:
     //   - Rayleigh scattering by bound electrons for each atom
