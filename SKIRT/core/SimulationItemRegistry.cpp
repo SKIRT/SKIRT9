@@ -102,6 +102,7 @@
 #include "GrainPopulation.hpp"
 #include "HEALPixSkyInstrument.hpp"
 #include "HammerAitoffProjection.hpp"
+#include "HirashitaLogNormalGrainSizeDistribution.hpp"
 #include "HofmeisterPericlaseGrainComposition.hpp"
 #include "HollowRadialVectorField.hpp"
 #include "HyperboloidGeometry.hpp"
@@ -602,6 +603,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ZubkoPAHGrainSizeDistribution>();
     ItemRegistry::add<FileGrainSizeDistribution>();
     ItemRegistry::add<ListGrainSizeDistribution>();
+    ItemRegistry::add<HirashitaLogNormalGrainSizeDistribution>();
 
     // grain compositions
     ItemRegistry::add<GrainComposition>();
