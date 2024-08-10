@@ -30,7 +30,7 @@ string MinSilicateGrainComposition::resourceNameForOpticalProps() const
 
 string MinSilicateGrainComposition::resourceNameForEnthalpies() const
 {
-    return "DustEM_aSil_Entalphies";
+    return "DustEM_aSil_Enthalpies";
 }
 
 //////////////////////////////////////////////////////////////////////
