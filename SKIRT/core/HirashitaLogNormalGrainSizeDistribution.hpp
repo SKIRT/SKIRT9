@@ -10,17 +10,17 @@
 
 ////////////////////////////////////////////////////////////////////
 
-/** HirashitaLogNormalGrainSizeDistribution is a GrainSizeDistribution subclass that represents a log-normal
-    dust grain size distribution of the form \f[ \frac{\text{d}n_\text{D}}{\text{d}a} \propto
-    \frac{1}{a^4} \,\exp\left[ - \frac{(\ln(a/a_0))^2}{2\sigma^2} \right] \qquad \text{for}\quad
-    a_\text{min} \leq a \leq a_\text{max}. \f]
+/** HirashitaLogNormalGrainSizeDistribution is a GrainSizeDistribution subclass that represents a
+    log-normal dust grain size distribution of the form \f[ \frac{\text{d}n_\text{D}}{\text{d}a}
+    \propto \frac{1}{a^4} \,\exp\left[ - \frac{(\ln(a/a_0))^2}{2\sigma^2} \right] \qquad
+    \text{for}\quad a_\text{min} \leq a \leq a_\text{max}. \f]
 
     The size range of the distribution can be configured in the RangeGrainSizeDistribution base
     class. The remaining two parameters, the centroid \f$a_0\f$ and the width \f$\sigma\f$, can be
     configured as attributes in this class. The function is scaled arbitrarily.
 
     The functional form for the grain size distribution implemented by this class is taken from
-    Hirashita (2015) (https://ui.adsabs.harvard.edu/abs/2015MNRAS.447.2937H/abstract).*/
+    Hirashita (2015) (https://ui.adsabs.harvard.edu/abs/2015MNRAS.447.2937H/abstract). */
 class HirashitaLogNormalGrainSizeDistribution : public RangeGrainSizeDistribution
 {
     ITEM_CONCRETE(HirashitaLogNormalGrainSizeDistribution, RangeGrainSizeDistribution,
@@ -48,8 +48,8 @@ public:
         specified parent in the simulation hierarchy (so it will automatically be deleted), its
         properties have been initialized to the specified values, and its setup() function has been
         called. */
-    explicit HirashitaLogNormalGrainSizeDistribution(SimulationItem* parent, double minSize, double maxSize, double centroid,
-                                            double width);
+    explicit HirashitaLogNormalGrainSizeDistribution(SimulationItem* parent, double minSize, double maxSize,
+                                                     double centroid, double width);
 
     //======================== Other Functions =======================
 

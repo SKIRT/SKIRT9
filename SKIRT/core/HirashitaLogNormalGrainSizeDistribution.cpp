@@ -7,8 +7,9 @@
 
 ////////////////////////////////////////////////////////////////////
 
-HirashitaLogNormalGrainSizeDistribution::HirashitaLogNormalGrainSizeDistribution(SimulationItem* parent, double minSize, double maxSize,
-                                                               double centroid, double width)
+HirashitaLogNormalGrainSizeDistribution::HirashitaLogNormalGrainSizeDistribution(SimulationItem* parent, double minSize,
+                                                                                 double maxSize, double centroid,
+                                                                                 double width)
     : RangeGrainSizeDistribution(minSize, maxSize), _centroid(centroid), _width(width)
 {
     parent->addChild(this);
