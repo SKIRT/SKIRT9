@@ -10,7 +10,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-/** LogNormalGrainSizeDistribution is a GrainSizeDistribution subclass that represents a log-normal
+/** HirashitaLogNormalGrainSizeDistribution is a GrainSizeDistribution subclass that represents a log-normal
     dust grain size distribution of the form \f[ \frac{\text{d}n_\text{D}}{\text{d}a} \propto
     \frac{1}{a^4} \,\exp\left[ - \frac{(\ln(a/a_0))^2}{2\sigma^2} \right] \qquad \text{for}\quad
     a_\text{min} \leq a \leq a_\text{max}. \f]
@@ -24,7 +24,7 @@
 class HirashitaLogNormalGrainSizeDistribution : public RangeGrainSizeDistribution
 {
     ITEM_CONCRETE(HirashitaLogNormalGrainSizeDistribution, RangeGrainSizeDistribution,
-                  "a log-normal dust grain size distribution")
+                  "a Hirashita (2015) log-normal dust grain size distribution")
 
         PROPERTY_DOUBLE(centroid, "the centroid a0 of the log-normal law")
         ATTRIBUTE_QUANTITY(centroid, "grainsize")
