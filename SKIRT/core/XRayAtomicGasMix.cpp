@@ -360,6 +360,10 @@ namespace
         vector<Array> _CPv;  // 0: E (keV->1); 1-30: pdf for target electron momentum (1)
         vector<Array> _IBv;  // 0: E (keV->1) ionisation energy of the outer subshell electrons
 
+        // precalculated cumulative distributions for target electron momentum
+        Range _cumRange;
+        vector<Array> _cumCPv;  // 0: E axis; 1-30: cumulative pdf for target electron momentum
+
         // precalculated discretizations
         Array _costhetav = Array(numTheta);
         Array _sinthetav = Array(numTheta);
@@ -387,6 +391,18 @@ namespace
             // load ionization energies
             _IBv = loadColumns(1, item, "XRay_IB.txt", "bound Compton data");
             _IBv[0] *= keVtoScaledEnergy;  // convert from keV to 1
+
+            // precalculate cumulative distributions for target electron momentum
+            _cumRange.set(_CPv[0][0], _CPv[0][_CPv[0].size() - 1]);
+            Array xv, pv, Pv;
+            NR::cdf<NR::interpolateLinLin>(xv, pv, Pv, _CPv[0], _CPv[1], _cumRange);
+            _cumCPv.push_back(xv);
+            _cumCPv.push_back(Pv);
+            for (size_t Z = 2; Z <= numAtoms; ++Z)
+            {
+                NR::cdf<NR::interpolateLinLin>(xv, pv, Pv, _CPv[0], _CPv[1], _cumRange);
+                _cumCPv.push_back(Pv);
+            }
 
             // construct a theta grid and precalculate values used in generateCosineFromPhaseFunction()
             // to accelerate construction of the cumulative phase function distribution
@@ -440,13 +456,33 @@ namespace
             return _random->cdfLinLin(_costhetav, thetaXv);
         }
 
-        // sample a target electron momentum from the distribution with the given range
-        double sampleMomentum(Range pdfrange, double Z) const
+        // sample a target electron momentum from the distribution with the given maximum
+        double sampleMomentum(double pmax, double Z) const
         {
-            if (pdfrange.empty()) return pdfrange.min();
-            Array xv, pv, Pv;
-            NR::cdf<NR::interpolateLinLin>(xv, pv, Pv, _CPv[0], _CPv[Z], pdfrange);
-            return _random->cdfLinLin(xv, Pv);
+            // maximum momentum is below the range of the tabulated pdf -> simply return the maximum momentum
+            // (we estimate that this happens for less than 0.1 % of the events)
+            if (pmax <= _cumRange.min()) return pmax;
+
+            // maximum momentum is on the left side of the peak in the tabulated pdf;
+            // using the rejection technique on the full-range pdf is very inefficient
+            // because the majority of the generated samples would be rejected
+            // --> reconstruct a cumulative pdf with the appropriate range and use numerical inversion
+            // (we estimate that this happens for less than 10% of the events)
+            if (pmax <= _cumRange.mid())
+            {
+                Array xv, pv, Pv;
+                NR::cdf<NR::interpolateLinLin>(xv, pv, Pv, _CPv[0], _CPv[Z], Range(_cumRange.min(), pmax));
+                return _random->cdfLinLin(xv, Pv);
+            }
+
+            // maximum momentum is on the right side of the peak in the tabulated pdf, possibly even out of range;
+            // using the rejection technique on top of numerical inversion for the full-range pdf now is efficient
+            // and quite fast because we can use the precalculated cumulative pdf
+            while (true)
+            {
+                double p = _random->cdfLinLin(_cumCPv[0], _cumCPv[Z]);
+                if (p <= pmax) return p;
+            }
         }
 
         // returns the augmented inverse Compton factor
@@ -461,13 +497,8 @@ namespace
             double xminb = (x - b);
             double pmax = (x * xminb * costheta1 - b) / (xminb * sintheta22);
 
-            // determine the appropriate range for the probability distribution of the target electron momentum
-            double pdfmin = _CPv[0][0];
-            double pdfmax = _CPv[0][_CPv[0].size() - 1];
-            Range pdfrange(pdfmin, min(pdfmax, pmax));
-
-            // sample a target electron momentum from the distribution with this range
-            double p = sampleMomentum(pdfrange, Z);
+            // sample a target electron momentum from the distribution with the given maximum
+            double p = sampleMomentum(pmax, Z);
 
             // calculate the augmented inverse Compton factor
             return 1. + x * costheta1 - p * sintheta22;
