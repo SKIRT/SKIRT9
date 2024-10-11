@@ -230,7 +230,7 @@
     electrons of element Z. This condition is fulfilled only when \f$p_\text{z}c < p_zc_{max}\f$,
     with
 
-    \f[p_zc_{max} = \frac{-m_ec^2I_b-E\cdot(E-I_b)\cdot(1-\cos\theta)}{2\cdot(E-I_b)\cdot
+    \f[p_zc_{max} = \frac{-m_ec^2I_b+E\cdot(E-I_b)\cdot(1-\cos\theta)}{2\cdot(E-I_b)\cdot
     \sin(\theta/2)}.\f]
 
     This equation is undefined for \f$\theta=0\f$, but this scattering angle will never occur as
