@@ -335,10 +335,10 @@ namespace
 namespace
 {
     // returns the inverse Compton factor for a given scaled energy and scattering angle cosine
-    constexpr double inverseComptonfactor(double x, double costheta) { return 1 + x * (1 - costheta); }
+    constexpr double inverseComptonFactor(double x, double costheta) { return 1. + x * (1. - costheta); }
 
     // returns the Compton factor for a given scaled energy and scattering angle cosine
-    constexpr double comptonFactor(double x, double costheta) { return 1. / inverseComptonfactor(x, costheta); }
+    constexpr double comptonFactor(double x, double costheta) { return 1. / inverseComptonFactor(x, costheta); }
 
     // returns the value interpolated from the specified table as a function of the momentum transfer parameter
     // q = (E/12.4 keV) sin(theta/2), given the scaled energy x and the sine;
@@ -354,15 +354,24 @@ namespace
     class BoundComptonHelper : public XRayAtomicGasMix::ScatteringHelper
     {
     private:
+        // resources loaded from file
         vector<Array> _CSv;  // 0: E (keV->1); 1-30: bound Compton cross sections (cm2->m2)
         vector<Array> _SFv;  // 0: q (1); 1-30: incoherent scattering functions (1)
-        Random* _random{nullptr};
+        vector<Array> _CPv;  // 0: E (keV->1); 1-30: pdf for target electron momentum (1)
+        vector<Array> _IBv;  // 0: E (keV->1) ionisation energy of the outer subshell electrons
+
+        // precalculated cumulative distributions for target electron momentum
+        Range _cumRange;
+        vector<Array> _cumCPv;  // 0: E axis; 1-30: cumulative pdf for target electron momentum
 
         // precalculated discretizations
         Array _costhetav = Array(numTheta);
         Array _sinthetav = Array(numTheta);
         Array _sin2thetav = Array(numTheta);
         Array _sintheta2v = Array(numTheta);
+
+        // cache
+        Random* _random{nullptr};
 
     public:
         BoundComptonHelper(SimulationItem* item)
@@ -375,8 +384,25 @@ namespace
             // load incoherent scattering functions
             _SFv = loadColumns(numAtoms + 1, item, "XRay_SF.txt", "bound Compton data");
 
-            // cache random nr generator
-            _random = item->find<Random>();
+            // load pdfs for projected momentum of target electron
+            _CPv = loadColumns(numAtoms + 1, item, "XRay_CP.txt", "bound Compton data");
+            _CPv[0] *= keVtoScaledEnergy;  // convert from keV to 1
+
+            // load ionization energies
+            _IBv = loadColumns(1, item, "XRay_IB.txt", "bound Compton data");
+            _IBv[0] *= keVtoScaledEnergy;  // convert from keV to 1
+
+            // precalculate cumulative distributions for target electron momentum
+            _cumRange.set(_CPv[0][0], _CPv[0][_CPv[0].size() - 1]);
+            Array xv, pv, Pv;
+            NR::cdf<NR::interpolateLinLin>(xv, pv, Pv, _CPv[0], _CPv[1], _cumRange);
+            _cumCPv.push_back(xv);
+            _cumCPv.push_back(Pv);
+            for (size_t Z = 2; Z <= numAtoms; ++Z)
+            {
+                NR::cdf<NR::interpolateLinLin>(xv, pv, Pv, _CPv[0], _CPv[1], _cumRange);
+                _cumCPv.push_back(Pv);
+            }
 
             // construct a theta grid and precalculate values used in generateCosineFromPhaseFunction()
             // to accelerate construction of the cumulative phase function distribution
@@ -388,6 +414,9 @@ namespace
                 _sin2thetav[t] = _sinthetav[t] * _sinthetav[t];
                 _sintheta2v[t] = sin(0.5 * theta);
             }
+
+            // cache random nr generator
+            _random = item->find<Random>();
         }
 
         double sectionSca(double lambda, int Z) const override
@@ -427,6 +456,54 @@ namespace
             return _random->cdfLinLin(_costhetav, thetaXv);
         }
 
+        // sample a target electron momentum from the distribution with the given maximum
+        double sampleMomentum(double pmax, double Z) const
+        {
+            // maximum momentum is below the range of the tabulated pdf -> simply return the maximum momentum
+            // (we estimate that this happens for less than 0.1 % of the events)
+            if (pmax <= _cumRange.min()) return pmax;
+
+            // maximum momentum is on the left side of the peak in the tabulated pdf;
+            // using the rejection technique on the full-range pdf is very inefficient
+            // because the majority of the generated samples would be rejected
+            // --> reconstruct a cumulative pdf with the appropriate range and use numerical inversion
+            // (we estimate that this happens for less than 10% of the events)
+            if (pmax <= _cumRange.mid())
+            {
+                Array xv, pv, Pv;
+                NR::cdf<NR::interpolateLinLin>(xv, pv, Pv, _CPv[0], _CPv[Z], Range(_cumRange.min(), pmax));
+                return _random->cdfLinLin(xv, Pv);
+            }
+
+            // maximum momentum is on the right side of the peak in the tabulated pdf, possibly even out of range;
+            // using the rejection technique on top of numerical inversion for the full-range pdf now is efficient
+            // and quite fast because we can use the precalculated cumulative pdf
+            while (true)
+            {
+                double p = _random->cdfLinLin(_cumCPv[0], _cumCPv[Z]);
+                if (p <= pmax) return p;
+            }
+        }
+
+        // returns the augmented inverse Compton factor
+        double augmentedInverseComptonFactor(double x, double costheta, double Z) const
+        {
+            // precalculate some values
+            double costheta1 = 1. - costheta;
+            double sintheta22 = 2. * sqrt(0.5 * costheta1);  // twice the half-angle sine
+
+            // calculate the maximum target electron momentum (in scaled energy units)
+            double b = _IBv[0][Z - 1];  // scaled ionization energy
+            double xminb = (x - b);
+            double pmax = (x * xminb * costheta1 - b) / (xminb * sintheta22);
+
+            // sample a target electron momentum from the distribution with the given maximum
+            double p = sampleMomentum(pmax, Z);
+
+            // calculate the augmented inverse Compton factor
+            return 1. + x * costheta1 - p * sintheta22;
+        }
+
     public:
         void peeloffScattering(double& I, double& lambda, int Z, Direction bfk, Direction bfkobs) const override
         {
@@ -440,7 +517,7 @@ namespace
             I += value;
 
             // adjust the wavelength
-            lambda *= inverseComptonfactor(x, costheta);
+            lambda *= augmentedInverseComptonFactor(x, costheta, Z);
         }
 
         Direction performScattering(double& lambda, int Z, Direction bfk) const override
@@ -451,7 +528,7 @@ namespace
             double costheta = generateCosineFromPhaseFunction(x, Z);
 
             // adjust the wavelength
-            lambda *= inverseComptonfactor(x, costheta);
+            lambda *= augmentedInverseComptonFactor(x, costheta, Z);
 
             // determine the new propagation direction
             return _random->direction(bfk, costheta);

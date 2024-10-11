@@ -158,7 +158,7 @@
     element, multiplied by the appropriate fluorescence yields in addition to the element
     abundancy.
 
-    <b>Electron scattering</b>
+    <b>Electron scattering - cross section and phase function</b>
 
     As described above, this class provides several implementations for the scattering of X-rays
     photons by the electrons bound to the atoms. These implementations involve four types of
@@ -183,9 +183,7 @@
     Z}(\theta, E)= \frac{3}{4}\, \frac{\sigma_T}{\sigma_{CS, Z}(E)}\Big[C^3(\theta, E) + C(\theta,
     E) -C^2(\theta, E)\sin^2\theta\Big] \cdot S_Z(q), \f] with tabulated incoherent scattering
     functions \f$S_Z(q)\f$ and the Compton factor \f$C(\theta, E)\f$ defined as \f[ C(\theta, E) =
-    {\Big[{1+\frac{E}{m_ec^2}(1-\cos \theta)\Big]}}^{-1}. \f] Also, inelastic bound-Compton
-    scattering will change the photon energy by the Compton factor, just as for free-electron
-    scattering.
+    {\Big[{1+\frac{E}{m_ec^2}(1-\cos \theta)\Big]}}^{-1}. \f]
 
     For smooth Rayleigh scattering, the cross sections \f$\sigma_{RSS, Z}(E)\f$ are available as a
     table. The normalised scattering phase function for element Z is given by \f[ \Phi_{RSS,
@@ -199,6 +197,45 @@
     \cos^2\theta \Big] \cdot \Big[\big(F_Z(q) + F'_Z(E)\big)^2 + {F''_Z}^2(E)\Big], \f] with the
     same atomic form factors \f$F_Z(q)\f$ as before, and tabulated real and imaginary anomalous
     scattering functions \f$F'_Z(E)\f$ and \f$F''_Z(E)\f$.
+
+    <b>Electron scattering - photon energy shift</b>
+
+    Rayleigh scattering is elastic, meaning that the photon energy (wavelength) does not change
+    during the interaction (in the frame of the atom involved). On the other hand, Compton
+    scattering is inelastic, meaning that the photon transfers a fraction of its energy to the atom
+    (or more precisely, the electron) involved in the interaction.
+
+    For free-electron Compton scattering, the energy shift \f$E'/E\f$ is given by the Compton
+    factor \f$C(\theta, E)\f$ defined above. The implementation is delegated to the
+    ComptonPhaseFunction class.
+
+    For bound-electron Compton scattering, the energy shift is mostly determined by the momentum
+    distribution of the target electrons, which are bound to the atomic nucleus. As a result, the
+    final photon energy is no longer uniquely defined by the incoming photon energy and the
+    scattering angle, but also depends on the initial momentum of the target electron:
+
+    \f[ E' = {\Big({1+\frac{E}{m_ec^2} \, \left(1-\cos \theta\right) - \frac{p_\text{z}
+    c}{m_ec^2}2\sin \frac{\theta}{2}}\Big)}^{-1} \; E, \f]
+
+    with \f$p_\text{z}\f$ the momentum of the target electron before scattering projected on the
+    scattering vector \f$\bf{k}_\text{out}-\bf{k}_\text{in}\f$.
+
+    The momentum distribution of bound electrons in atom \f$Z\f$ is characterised by the
+    corresponding Compton profile \f$J_Z(p_\text{z}c)\f$, which can be interpreted as a probability
+    density function for the projected electron momentum \f$p_\text{z}c\f$. Compton profiles for
+    all atoms in the photo-absorbing gas are tabulated by Biggs+75.
+
+    In addition, the energy transfer from the photon to the electron should be large enough to
+    liberate an electron, i.e. larger than the ionisation potential \f$I_b\f$ of the outer
+    electrons of element Z. This condition is fulfilled only when \f$p_\text{z}c < p_zc_{max}\f$,
+    with
+
+    \f[p_zc_{max} = \frac{-m_ec^2I_b+E\cdot(E-I_b)\cdot(1-\cos\theta)}{2\cdot(E-I_b)\cdot
+    \sin(\theta/2)}.\f]
+
+    This equation is undefined for \f$\theta=0\f$, but this scattering angle will never occur as
+    the scattering phase function is zero for \f$\theta=0\f$. Following Namito+94, the probability
+    density function for \f$p_\text{z}c\f$ should be truncated at \f$p_zc_{max}\f$.
 
     <b>Performing scattering</b>
 
