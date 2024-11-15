@@ -26,57 +26,36 @@ class TetraMeshSnapshot;
     overly elongated cells. */
 class TetraMeshSpatialGrid : public BoxSpatialGrid, public DensityInCellInterface
 {
+    /** The enumeration type indicating the policy for determining the positions of the sites. */
+    ENUM_DEF(Policy, Uniform, CentralPeak, DustDensity, ElectronDensity, GasDensity, File, ImportedSites, ImportedMesh)
+        ENUM_VAL(Policy, Uniform, "random from uniform distribution")
+        ENUM_VAL(Policy, CentralPeak, "random from distribution with a steep central peak")
+        ENUM_VAL(Policy, DustDensity, "random from dust density distribution")
+        ENUM_VAL(Policy, ElectronDensity, "random from electron density distribution")
+        ENUM_VAL(Policy, GasDensity, "random from gas density distribution")
+        ENUM_VAL(Policy, File, "loaded from text column data file")
+        ENUM_VAL(Policy, ImportedSites, "positions of particles, sites or cells in imported distribution")
+        ENUM_VAL(Policy, ImportedMesh, "employ imported Tetra mesh in medium system")
+    ENUM_END()
+
     ITEM_CONCRETE(TetraMeshSpatialGrid, BoxSpatialGrid, "a Tetra tessellation-based spatial grid")
         ATTRIBUTE_TYPE_DISPLAYED_IF(TetraMeshSpatialGrid, "Level2")
 
-        PROPERTY_DOUBLE(maxVolumeFraction, "the maximum volume fraction of each cell")
-        ATTRIBUTE_MIN_VALUE(maxVolumeFraction, "]0")
-        ATTRIBUTE_MAX_VALUE(maxVolumeFraction, "1[")
-        ATTRIBUTE_DEFAULT_VALUE(maxVolumeFraction, "1e-3")
-        ATTRIBUTE_DISPLAYED_IF(maxVolumeFraction, "DustMix")
+        PROPERTY_ENUM(policy, Policy, "the policy for determining the positions of the sites")
+        ATTRIBUTE_DEFAULT_VALUE(policy, "DustDensity")
 
-        PROPERTY_DOUBLE(maxDustFraction, "the maximum fraction of dust contained in each cell")
-        ATTRIBUTE_MIN_VALUE(maxDustFraction, "[0")
-        ATTRIBUTE_MAX_VALUE(maxDustFraction, "1[")
-        ATTRIBUTE_DEFAULT_VALUE(maxDustFraction, "1e-6")
-        ATTRIBUTE_DISPLAYED_IF(maxDustFraction, "DustMix")
+        PROPERTY_INT(numSites, "the number of random sites (or cells in the grid)")
+        ATTRIBUTE_MIN_VALUE(numSites, "5")
+        ATTRIBUTE_DEFAULT_VALUE(numSites, "500")
+        ATTRIBUTE_RELEVANT_IF(numSites, "policyUniform|policyCentralPeak|policyDustDensity|"
+                                        "policyElectronDensity|policyGasDensity")
 
-        PROPERTY_DOUBLE(minDustFraction, "the minimum fraction of dust contained in each cell")
-        ATTRIBUTE_MIN_VALUE(minDustFraction, "[0")
-        ATTRIBUTE_MAX_VALUE(minDustFraction, "1[")
-        ATTRIBUTE_DEFAULT_VALUE(minDustFraction, "1e-6")
-        ATTRIBUTE_DISPLAYED_IF(minDustFraction, "DustMix")
+        PROPERTY_STRING(filename, "the name of the file containing the site positions")
+        ATTRIBUTE_RELEVANT_IF(filename, "policyFile")
 
-        PROPERTY_DOUBLE(maxDustOpticalDepth, "the maximum diagonal dust optical depth for each cell")
-        ATTRIBUTE_MIN_VALUE(maxDustOpticalDepth, "[0")
-        ATTRIBUTE_MAX_VALUE(maxDustOpticalDepth, "100]")
-        ATTRIBUTE_DEFAULT_VALUE(maxDustOpticalDepth, "0")
-        ATTRIBUTE_DISPLAYED_IF(maxDustOpticalDepth, "DustMix&Level2")
-
-        PROPERTY_DOUBLE(wavelength, "the wavelength at which to evaluate the optical depth")
-        ATTRIBUTE_QUANTITY(wavelength, "wavelength")
-        ATTRIBUTE_MIN_VALUE(wavelength, "1 pm")
-        ATTRIBUTE_MAX_VALUE(wavelength, "1 m")
-        ATTRIBUTE_DEFAULT_VALUE(wavelength, "0.55 micron")
-        ATTRIBUTE_RELEVANT_IF(wavelength, "maxDustOpticalDepth")
-
-        PROPERTY_DOUBLE(maxDustDensityDispersion, "the maximum dust density dispersion in each cell")
-        ATTRIBUTE_MIN_VALUE(maxDustDensityDispersion, "[0")
-        ATTRIBUTE_MAX_VALUE(maxDustDensityDispersion, "1000]")
-        ATTRIBUTE_DEFAULT_VALUE(maxDustDensityDispersion, "0")
-        ATTRIBUTE_DISPLAYED_IF(maxDustDensityDispersion, "DustMix&Level2")
-
-        PROPERTY_DOUBLE(maxElectronFraction, "the maximum fraction of electrons contained in each cell")
-        ATTRIBUTE_MIN_VALUE(maxElectronFraction, "[0")
-        ATTRIBUTE_MAX_VALUE(maxElectronFraction, "1e-2]")
-        ATTRIBUTE_DEFAULT_VALUE(maxElectronFraction, "1e-6")
-        ATTRIBUTE_DISPLAYED_IF(maxElectronFraction, "ElectronMix")
-
-        PROPERTY_DOUBLE(maxGasFraction, "the maximum fraction of gas contained in each cell")
-        ATTRIBUTE_MIN_VALUE(maxGasFraction, "[0")
-        ATTRIBUTE_MAX_VALUE(maxGasFraction, "1e-2]")
-        ATTRIBUTE_DEFAULT_VALUE(maxGasFraction, "1e-6")
-        ATTRIBUTE_DISPLAYED_IF(maxGasFraction, "GasMix")
+        PROPERTY_DOUBLE(mindihedral, "the minimum dihedral angle per tetrahedron")
+        ATTRIBUTE_DEFAULT_VALUE(mindihedral, "3.5")
+        ATTRIBUTE_RELEVANT_IF(mindihedral, "!policyImportedMesh")
 
     ITEM_END()
 

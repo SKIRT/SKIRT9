@@ -24,8 +24,10 @@
 #include "Units.hpp"
 #include "tetgen.h"
 #include <chrono>
+#include <fstream>
 #include <iostream>
 #include <queue>
+#include <set>
 #include <unordered_set>
 #include "container.hh"
 
@@ -33,7 +35,7 @@
 
 namespace
 {
-    // classes used for serializing/deserializing Voronoi cell geometry when communicating the results of
+    // classes used for serializing/deserializing Tetra cell geometry when communicating the results of
     // grid construction between multiple processes with the ProcessManager::broadcastAllToAll() function
 
     // decorates a std::vector with functions to write serialized versions of various data types
@@ -118,21 +120,6 @@ namespace
             default:  // this should never happen
                 return false;
         }
-    }
-
-    void addFacet(tetgenio::facet* f, std::array<int, 4> vertices)
-    {
-        f->numberofpolygons = 1;
-        f->polygonlist = new tetgenio::polygon[f->numberofpolygons];
-        f->numberofholes = 0;
-        f->holelist = NULL;
-        tetgenio::polygon* p = &f->polygonlist[0];
-        p->numberofvertices = 4;
-        p->vertexlist = new int[p->numberofvertices];
-        p->vertexlist[0] = vertices[0];
-        p->vertexlist[1] = vertices[1];
-        p->vertexlist[2] = vertices[2];
-        p->vertexlist[3] = vertices[3];
     }
 
     int findEnteringFace(const Tetra* tetra, const Vec& pos, const Direction& dir)
@@ -305,8 +292,8 @@ void TetraMeshSnapshot::readAndClose()
     // // close the file
     // Snapshot::readAndClose();
 
-    // // if we are allowed to build a Voronoi mesh
-    // // calculate the Voronoi cells
+    // // if we are allowed to build a Tetra mesh
+    // // calculate the Tetra cells
     // buildMesh(?, false);
 
     // // if a mass density policy has been set, calculate masses and densities and build the search data structure
@@ -322,50 +309,63 @@ void TetraMeshSnapshot::setExtent(const Box& extent)
     _eps = 1e-12 * extent.widths().norm();
 }
 
-////////////////////////////////////////////////////////////////////
-
-// TetraMeshSnapshot::TetraMeshSnapshot(const SimulationItem* item, const Box& extent, string filename, bool relax)
-// {
-//     // read the input file
-//     TextInFile in(item, filename, "Tetra vertices");
-//     in.addColumn("position x", "length", "pc");
-//     in.addColumn("position y", "length", "pc");
-//     in.addColumn("position z", "length", "pc");
-//     Array coords;
-//     while (in.readRow(coords)) _cells.push_back(new Cell(Vec(coords[0], coords[1], coords[2])));
-//     in.close();
-
-//     // calculate the Voronoi cells
-//     setContext(item);
-//     setExtent(extent);
-//     buildMesh(relax);
-//     buildSearchPerBlock();
-// }
-
-////////////////////////////////////////////////////////////////////
-
-// TetraMeshSnapshot::TetraMeshSnapshot(const SimulationItem* item, const Box& extent, SiteListInterface* sli,
-//                                          bool relax)
-// {
-//     // prepare the data
-//     int n = sli->numSites();
-//     _cells.resize(n);
-//     for (int m = 0; m != n; ++m) _cells[m] = new Cell(sli->sitePosition(m));
-
-//     // calculate the Voronoi cells
-//     setContext(item);
-//     setExtent(extent);
-//     buildMesh(relax);
-//     buildSearchPerBlock();
-// }
-
-////////////////////////////////////////////////////////////////////
-
-TetraMeshSnapshot::TetraMeshSnapshot(const TetraMeshSpatialGrid* grid, const Box& extent)
+TetraMeshSnapshot::TetraMeshSnapshot(const SimulationItem* item, const Box& extent, string filename, double mindihedral)
 {
-    setContext(grid);
+    // read the input file
+    TextInFile in(item, filename, "Tetra vertices");
+    in.addColumn("position x", "length", "pc");
+    in.addColumn("position y", "length", "pc");
+    in.addColumn("position z", "length", "pc");
+    Array coords;
+    while (in.readRow(coords)) _sites.push_back(Vec(coords[0], coords[1], coords[2]));
+    in.close();
+
+    // calculate the Tetra cells
+    setContext(item);
     setExtent(extent);
-    buildMesh(grid, true);
+    buildMesh(mindihedral);
+    buildSearchPerBlock();
+}
+
+////////////////////////////////////////////////////////////////////
+
+TetraMeshSnapshot::TetraMeshSnapshot(const SimulationItem* item, const Box& extent, SiteListInterface* sli,
+                                     double mindihedral)
+{
+    // prepare the data
+    int n = sli->numSites();
+    _sites.resize(n);
+    for (int m = 0; m != n; ++m) _sites[m] = sli->sitePosition(m);
+
+    // calculate the Tetra cells
+    setContext(item);
+    setExtent(extent);
+    buildMesh(mindihedral);
+    buildSearchPerBlock();
+}
+
+////////////////////////////////////////////////////////////////////
+
+TetraMeshSnapshot::TetraMeshSnapshot(const SimulationItem* item, const Box& extent, const vector<Vec>& sites,
+                                     double mindihedral)
+{
+    // store input vertices
+    _sites = sites;
+
+    // calculate the Tetra cells
+    setContext(item);
+    setExtent(extent);
+    buildMesh(mindihedral);
+    buildSearchPerBlock();
+}
+
+////////////////////////////////////////////////////////////////////
+
+TetraMeshSnapshot::TetraMeshSnapshot(const SimulationItem* item, const Box& extent, double mindihedral)
+{
+    setContext(item);
+    setExtent(extent);
+    buildMesh(mindihedral);
     buildSearchPerBlock();
 }
 
@@ -400,85 +400,33 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-void TetraMeshSnapshot::buildMesh(const TetraMeshSpatialGrid* grid, bool plc)
+void TetraMeshSnapshot::buildMesh(double mindihedral)
 {
-    tetgenio in, out;
-    tetgenbehavior behavior;
-    in.firstnumber = 0;
-
-    if (plc)
+    tetgenio in, out_Delaunay, out;
+    tetgenbehavior behavior_Delaunay, behavior;
+    
+    // in.firstnumber = 0; // remove me if no error
+    in.numberofpoints = _sites.size();
+    in.pointlist = new REAL[in.numberofpoints * 3];
+    for (int i = 0; i < in.numberofpoints; i++)
     {
-        in.numberofpoints = 8;
-        in.pointlist = new REAL[in.numberofpoints * 3];
-
-        // bottom half (zmin)
-        in.pointlist[0] = _extent.xmin();
-        in.pointlist[1] = _extent.ymin();
-        in.pointlist[2] = _extent.zmin();
-
-        in.pointlist[3] = _extent.xmax();
-        in.pointlist[4] = _extent.ymin();
-        in.pointlist[5] = _extent.zmin();
-
-        in.pointlist[6] = _extent.xmax();
-        in.pointlist[7] = _extent.ymax();
-        in.pointlist[8] = _extent.zmin();
-
-        in.pointlist[9] = _extent.xmin();
-        in.pointlist[10] = _extent.ymax();
-        in.pointlist[11] = _extent.zmin();
-
-        // top half (zmax)
-        for (int i = 0; i < 4; i++)
-        {
-            // x, y the same but z = zmax
-            in.pointlist[12 + i * 3 + 0] = in.pointlist[i * 3 + 0];
-            in.pointlist[12 + i * 3 + 1] = in.pointlist[i * 3 + 1];
-            in.pointlist[12 + i * 3 + 2] = _extent.zmax();
-        }
-
-        in.numberoffacets = 6;
-        in.facetlist = new tetgenio::facet[in.numberoffacets];
-        addFacet(&in.facetlist[0], {0, 1, 2, 3});  // Facet 1. bottom
-        addFacet(&in.facetlist[1], {4, 5, 6, 7});  // Facet 2. top
-        addFacet(&in.facetlist[2], {0, 4, 5, 1});  // Facet 3. front
-        addFacet(&in.facetlist[3], {1, 5, 6, 2});  // Facet 4. right
-        addFacet(&in.facetlist[4], {2, 6, 7, 3});  // Facet 5. back
-        addFacet(&in.facetlist[5], {3, 7, 4, 0});  // Facet 6. left
-
-        behavior.plc = 1;                                                   // -p PLC
-        behavior.quality = 1;                                               // -q quality mesh
-        behavior.neighout = 2;                                              // -nn neighbors and edges
-        behavior.facesout = 1;                                              // -f faces
-        behavior.zeroindex = 1;                                             // -z zero index
-        behavior.fixedvolume = 1;                                           // -a max volume
-        behavior.maxvolume = grid->maxVolumeFraction() * _extent.volume();  // -a max volume
-        // refining criterion
-        in.tetunsuitable = [grid](double* pa, double* pb, double* pc, double* pd, double vol) {
-            return grid->tetUnsuitable(pa, pb, pc, pd, vol);
-        };
-    }
-    // Delaunay Triangulation
-    else
-    {
-        // WIP import from file!!!
-        // in.numberofpoints = 50;
-        // in.pointlist = new REAL[in.numberofpoints * 3];
-        // for (int i = 0; i < in.numberofpoints; i++)
-        // {
-        //     Vec pos = random()->position(_extent);
-        //     in.pointlist[i * 3 + 0] = pos.x();
-        //     in.pointlist[i * 3 + 1] = pos.y();
-        //     in.pointlist[i * 3 + 2] = pos.z();
-        // }
-
-        behavior.psc = 1;        // -s PSC
-        behavior.neighout = 2;   // -nn neighbors and edges
-        behavior.facesout = 1;   // -f faces
-        behavior.zeroindex = 1;  // -z zero index
+        in.pointlist[i * 3 + 0] = _sites[i].x();
+        in.pointlist[i * 3 + 1] = _sites[i].y();
+        in.pointlist[i * 3 + 2] = _sites[i].z();
     }
 
-    tetrahedralize(&behavior, &in, &out);
+    behavior_Delaunay.psc = 1;  // -s PSC
+    behavior_Delaunay.verbose = 1;
+    tetrahedralize(&behavior_Delaunay, &in, &out_Delaunay);
+
+    behavior.refine = 1;                 // -r
+    behavior.quality = 1;                // -q
+    behavior.mindihedral = mindihedral;  // -q
+    behavior.neighout = 2;               // -nn
+    behavior.facesout = 1;               // -f
+    behavior.zeroindex = 1;              // -z
+    behavior.verbose = 1;                // -v
+    tetrahedralize(&behavior, &out_Delaunay, &out);
 
     // tranfser TetGen data to TetraMeshSnapshot data containers
     numTetra = out.numberoftetrahedra;
@@ -532,6 +480,44 @@ void TetraMeshSnapshot::buildMesh(const TetraMeshSpatialGrid* grid, bool plc)
 
         _centroids.push_back(&_tetrahedra[i]->_centroid);
     }
+
+    string filename = "tet.txt";
+    std::ofstream outFile(filename);
+
+    if (!outFile.is_open())
+    {
+        std::cerr << "Failed to open file for writing: " << filename << std::endl;
+        return;
+    }
+
+    std::set<std::pair<int, int>> uniqueEdges;  // To avoid duplicates
+
+    for (int i = 0; i < numTetra; i++)
+    {
+        for (int v1 = 0; v1 < 4; v1++)
+        {
+            for (int v2 = v1 + 1; v2 < 4; v2++)
+            {
+                int idx1 = out.tetrahedronlist[4 * i + v1];
+                int idx2 = out.tetrahedronlist[4 * i + v2];
+
+                // Store edges in sorted order
+                if (idx1 > idx2) std::swap(idx1, idx2);
+
+                uniqueEdges.emplace(idx1, idx2);
+            }
+        }
+    }
+
+    for (const auto& edge : uniqueEdges)
+    {
+        outFile << out.pointlist[3 * edge.first + 0] << " " << out.pointlist[3 * edge.first + 1] << " "
+                << out.pointlist[3 * edge.first + 2] << " " << out.pointlist[3 * edge.second + 0] << " "
+                << out.pointlist[3 * edge.second + 1] << " " << out.pointlist[3 * edge.second + 2] << "\n";
+    }
+
+    outFile.close();
+    std::cout << "Edges saved to " << filename << std::endl;
 
     // compile statistics
     double minVol = DBL_MAX;
@@ -801,8 +787,7 @@ void TetraMeshSnapshot::writeGridPlotFiles(const SimulationItem* probe) const
         if (tetra->zmin() <= 0 && tetra->zmax() >= 0) plotxy.writePolyhedron(coords, indices);
         if (tetra->ymin() <= 0 && tetra->ymax() >= 0) plotxz.writePolyhedron(coords, indices);
         if (tetra->xmin() <= 0 && tetra->xmax() >= 0) plotyz.writePolyhedron(coords, indices);
-        if (i <= 1000)
-            plotxyz.writePolyhedron(coords, indices);  // like VoronoiMeshSnapshot, but why even write at all?
+        if (i <= 1000) plotxyz.writePolyhedron(coords, indices);  // like TetraMeshSnapshot, but why even write at all?
 
         // log message if the minimum time has elapsed
         numDone++;
@@ -1010,7 +995,7 @@ int TetraMeshSnapshot::cellIndex(Position bfr) const
         if (_tetrahedra[t]->inside(bfr)) return t;
     }
 
-    log()->error("cellIndex failed to find the tetrahedron");  // change to warning?
+    // log()->error("cellIndex failed to find the tetrahedron");  // change to warning?
     return -1;
 }
 

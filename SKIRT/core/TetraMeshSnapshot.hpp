@@ -63,11 +63,13 @@ public:
     //========== Specialty constructors ==========
 
 public:
-    // TetraMeshSnapshot(const SimulationItem* item, const Box& extent, string filename);
+    TetraMeshSnapshot(const SimulationItem* item, const Box& extent, string filename, double mindihedral);
 
-    // TetraMeshSnapshot(const SimulationItem* item, const Box& extent, SiteListInterface* sli);
+    TetraMeshSnapshot(const SimulationItem* item, const Box& extent, SiteListInterface* sli, double mindihedral);
 
-    TetraMeshSnapshot(const TetraMeshSpatialGrid* grid, const Box& extent);
+    TetraMeshSnapshot(const SimulationItem* item, const Box& extent, const vector<Vec>& sites, double mindihedral);
+
+    TetraMeshSnapshot(const SimulationItem* item, const Box& extent, double mindihedral);
 
     //=========== Private construction ==========
 
@@ -79,8 +81,8 @@ private:
         corresponding cell information, including any properties relevant for supporting the
         interrogation capabilities offered by this class. All other data (such as Tetra cell
         vertices, edges and faces) are discarded. In practice, the function adds the sites to a
-        Voro++ container, computes the Tetra cells one by one, and copies the relevant cell
-        information (such as the list of neighboring cells) from the Voro++ data structures into
+        Tetra++ container, computes the Tetra cells one by one, and copies the relevant cell
+        information (such as the list of neighboring cells) from the Tetra++ data structures into
         its own.
 
         If the \em relax argument is true, the function performs a single relaxation step on the
@@ -91,7 +93,7 @@ private:
         constructed with these adjusted site positions, which are distributed more uniformly,
         thereby avoiding overly elongated cells in the Tetra tessellation. Relaxation can be
         quite time-consuming because the Tetra tessellation must be constructed twice. */
-    void buildMesh(const TetraMeshSpatialGrid* grid, bool plc);
+    void buildMesh(double mindihedral);
 
     /** This private function calculates the volumes for all cells without using the Tetra mesh.
         It assumes that both mass and mass density columns are being imported. */
@@ -108,13 +110,13 @@ private:
     Node* buildTree(vector<int>::iterator first, vector<int>::iterator last, int depth) const;
 
     /** This private function builds data structures that allow accelerating the operation of the
-        cellIndex() function. It assumes that the Voronoi mesh has already been built.
+        cellIndex() function. It assumes that the Tetra mesh has already been built.
 
         The domain is partitioned using a linear cubodial grid into cells that are called \em
-        blocks. For each block, the function builds and stores a list of all Voronoi cells that
+        blocks. For each block, the function builds and stores a list of all Tetra cells that
         possibly overlap that block. Retrieving the list of cells possibly overlapping a given
         point in the domain then comes down to locating the block containing the point (which is
-        trivial since the grid is linear). The current implementation uses a Voronoi cell's
+        trivial since the grid is linear). The current implementation uses a Tetra cell's
         enclosing cuboid to test for intersection with a block. Performing a precise intersection
         test is \em really slow and the shortened block lists don't substantially accelerate the
         cellIndex() function.
@@ -125,7 +127,7 @@ private:
     void buildSearchPerBlock();
 
     /** This private function builds a data structure that allows accelerating the operation of the
-        cellIndex() function without using the Voronoi mesh. The domain is not partitioned in
+        cellIndex() function without using the Tetra mesh. The domain is not partitioned in
         blocks. The function builds a single binary search tree on all cell sites (see for example
         <a href="http://en.wikipedia.org/wiki/Kd-tree">en.wikipedia.org/wiki/Kd-tree</a>). */
     void buildSearchSingle();
@@ -329,6 +331,9 @@ private:
     double _eps{0.};  // small fraction of extent
     int numTetra;
     int numVertices;
+
+    // input vertices
+    vector<Vec> _sites;
 
     // data members initialized when processing snapshot input and further completed by BuildMesh()
     vector<Tetra*> _tetrahedra;

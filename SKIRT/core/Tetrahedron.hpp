@@ -1,6 +1,7 @@
 #include "Position.hpp"
 #include "Array.hpp"
 #include "Box.hpp"
+#include <array>
 
 struct Face
 {

@@ -52,154 +52,96 @@ void TetraMeshSpatialGrid::setupSelfBefore()
 {
     BoxSpatialGrid::setupSelfBefore();
 
-    _random = find<Random>();
-    _numSamples = find<Configuration>()->numDensitySamples();
-
-    const MediumSystem* ms = find<MediumSystem>();
-    if (!ms) throw FATALERROR("MediumSystem not found");
-
-    for (Medium* medium : ms->media())
+    // determine an appropriate set of sites and construct the Tetra mesh
+    switch (_policy)
     {
-        medium->setup();
-        switch (medium->mix()->materialType())
+        case Policy::Uniform:
         {
-            case MaterialMix::MaterialType::Dust: _dustMedia.push_back(medium); break;
-            case MaterialMix::MaterialType::Electrons: _electronMedia.push_back(medium); break;
-            case MaterialMix::MaterialType::Gas: _gasMedia.push_back(medium); break;
+            auto random = find<Random>();
+            vector<Vec> rv(_numSites);
+            for (int m = 0; m != _numSites; ++m) rv[m] = random->position(extent());
+            _mesh = new TetraMeshSnapshot(this, extent(), rv, _mindihedral);
+            break;
         }
-    }
-
-    if (!_dustMedia.empty())
-    {
-        if (maxDustFraction() > 0) _hasAny = _hasDustAny = _hasDustFraction = true;
-        if (maxDustOpticalDepth() > 0) _hasAny = _hasDustAny = _hasDustOpticalDepth = true;
-        if (maxDustDensityDispersion() > 0) _hasAny = _hasDustAny = _hasDustDensityDispersion = true;
-        if (_hasDustFraction)
+        case Policy::CentralPeak:
         {
-            for (auto medium : _dustMedia) _dustMass += medium->mass();
-        }
-        if (_hasDustOpticalDepth)
-        {
-            double sigma = 0.;
-            double mu = 0.;
-            for (auto medium : _dustMedia)
+            auto random = find<Random>();
+            const int a = 1000;  // steepness of the peak; the central 1/a portion is NOT covered
+            const double rscale = extent().rmax().norm();
+            vector<Vec> rv(_numSites);
+            for (int m = 1; m != _numSites;)  // skip first particle so that it remains (0,0,0)
             {
-                sigma += medium->mix()->sectionExt(wavelength());
-                mu += medium->mix()->mass();
+                double r = rscale * pow(1. / a, random->uniform());  // random distribution according to 1/x
+                Direction k = random->direction();
+                Position p = Position(r, k);
+                if (extent().contains(p)) rv[m++] = p;  // discard any points outside of the domain
             }
-            _dustKappa = sigma / mu;
+            _mesh = new TetraMeshSnapshot(this, extent(), rv, _mindihedral);
+            break;
         }
-    }
-
-    // precalculate information for electrons
-    if (!_electronMedia.empty() && maxElectronFraction() > 0)
-    {
-        _hasAny = _hasElectronFraction = true;
-        for (auto medium : _electronMedia) _electronNumber += medium->number();
-    }
-
-    // precalculate information for gas
-    if (!_gasMedia.empty() && maxGasFraction() > 0)
-    {
-        _hasAny = _hasGasFraction = true;
-        for (auto medium : _gasMedia) _gasNumber += medium->number();
-    }
-
-    // warn user if none of the criteria were enabled
-    if (!_hasAny) find<Log>()->warning("None of the tree subdivision criteria are enabled");
-
-    _mesh = new TetraMeshSnapshot(this, extent());
-}
-
-bool TetraMeshSpatialGrid::tetUnsuitable(double* pa, double* pb, double* pc, double* pd, double vol) const
-{
-    Vec a(pa[0], pa[1], pa[2]);
-    Vec b(pb[0], pb[1], pb[2]);
-    Vec c(pc[0], pc[1], pc[2]);
-    Vec d(pd[0], pd[1], pd[2]);
-
-    // results for the sampled mass or number densities, if applicable
-    double rho = 0.;  // dust mass density
-    // double rhovar = 0.;       // dust mass variance
-    double rhomin = DBL_MAX;  // smallest sample for dust mass density
-    double rhomax = 0.;       // largest sample for dust mass density
-    double ne = 0;            // electron number density
-    double ng = 0.;           // gas number density
-
-    // sample densities in node
-    if (_hasAny)
-    {
-        double rhosum = 0;
-        // double rhosum2 = 0;
-        double nesum = 0;
-        double ngsum = 0;
-        for (int i = 0; i != _numSamples; ++i)
+        case Policy::DustDensity:
         {
-            double s = random()->uniform();
-            double t = random()->uniform();
-            double u = random()->uniform();
-            double r = Tetra::generateBarycentric(s, t, u);
-            Position bfr(r * a + u * b + t * c + s * d);
-            if (_hasDustAny)
-            {
-                double rhoi = 0.;
-                for (auto medium : _dustMedia) rhoi += medium->massDensity(bfr);
-                rhosum += rhoi;
-                // rhosum2 += rhoi * rhoi;
-                if (rhoi < rhomin) rhomin = rhoi;
-                if (rhoi > rhomax) rhomax = rhoi;
-            }
-            if (_hasElectronFraction)
-                for (auto medium : _electronMedia) nesum += medium->numberDensity(bfr);
-            if (_hasGasFraction)
-                for (auto medium : _gasMedia) ngsum += medium->numberDensity(bfr);
+            // build a list of media that have this material type with corresponding weights
+            vector<Medium*> media;
+            vector<double> weights;
+            auto ms = find<MediumSystem>();
+            for (auto medium : ms->media())
+                if (medium->mix()->isDust()) media.push_back(medium);
+            for (auto medium : media) weights.push_back(medium->mass());
+            _mesh =
+                new TetraMeshSnapshot(this, extent(), sampleMedia(media, weights, extent(), _numSites), _mindihedral);
+            break;
         }
-        rho = rhosum / _numSamples;
-        // rhovar = rhomax > 0 ? (rhosum2 / _numSamples - rho * rho) * (vol / _dustMass) * (vol / _dustMass) / (maxDustFraction() * maxDustFraction()) : 0.;
-        ne = nesum / _numSamples;
-        ng = ngsum / _numSamples;
+        case Policy::ElectronDensity:
+        {
+            // build a list of media that have this material type with corresponding weights
+            vector<Medium*> media;
+            vector<double> weights;
+            auto ms = find<MediumSystem>();
+            for (auto medium : ms->media())
+                if (medium->mix()->isElectrons()) media.push_back(medium);
+            for (auto medium : media) weights.push_back(medium->number());
+            _mesh =
+                new TetraMeshSnapshot(this, extent(), sampleMedia(media, weights, extent(), _numSites), _mindihedral);
+            break;
+        }
+        case Policy::GasDensity:
+        {
+            // build a list of media that have this material type with corresponding weights
+            vector<Medium*> media;
+            vector<double> weights;
+            auto ms = find<MediumSystem>();
+            for (auto medium : ms->media())
+                if (medium->mix()->isGas()) media.push_back(medium);
+            for (auto medium : media) weights.push_back(medium->number());
+            _mesh =
+                new TetraMeshSnapshot(this, extent(), sampleMedia(media, weights, extent(), _numSites), _mindihedral);
+            break;
+        }
+        case Policy::File:
+        {
+            _mesh = new TetraMeshSnapshot(this, extent(), _filename, _mindihedral);
+            break;
+        }
+        case Policy::ImportedSites:
+        {
+            auto sli = find<MediumSystem>()->interface<SiteListInterface>(2);
+            _mesh = new TetraMeshSnapshot(this, extent(), sli, _mindihedral);
+            break;
+        }
+        case Policy::ImportedMesh:
+        {
+            auto ms = find<MediumSystem>(false);
+            _mesh = ms->interface<TetraMeshInterface>(2)->tetraMesh();
+
+            // if there is a single medium component, calculate the normalization factor imposed by it;
+            // we need this to directly compute cell densities for the DensityInCellInterface
+            if (ms->media().size() == 1) _norm = _mesh->mass() > 0 ? ms->media()[0]->number() / _mesh->mass() : 0.;
+            break;
+        }
     }
 
-    // handle maximum dust mass fraction
-    if (_hasDustFraction)
-    {
-        double delta = rho * vol / _dustMass;
-        if (delta > maxDustFraction()) return true;
-        if (delta < minDustFraction()) return false;
-    }
-
-    // handle maximum dust optical depth
-    // if (_hasDustOpticalDepth)
-    // {
-    //     double tau = _dustKappa * rho * node->diagonal();
-    //     if (tau > maxDustOpticalDepth()) return true;
-    // }
-
-    // handle maximum dust density dispersion
-    if (_hasDustDensityDispersion)
-    {
-        // if (rhovar > maxDustDensityDispersion()) return true;
-
-        double q = rhomax > 0 ? (rhomax - rhomin) / rhomax : 0.;
-        if (q > maxDustDensityDispersion()) return true;
-    }
-
-    // handle maximum electron number fraction
-    if (_hasElectronFraction)
-    {
-        double delta = ne * vol / _electronNumber;
-        if (delta > maxElectronFraction()) return true;
-    }
-
-    // handle maximum gas number fraction
-    if (_hasGasFraction)
-    {
-        double delta = ng * vol / _gasNumber;
-        if (delta > maxGasFraction()) return true;
-    }
-
-    // if we get here, none of the criteria were violated
-    return false;
+    _mesh = new TetraMeshSnapshot(this, extent(), _mindihedral);
 }
 
 //////////////////////////////////////////////////////////////////////

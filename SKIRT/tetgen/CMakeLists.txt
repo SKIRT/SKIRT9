@@ -28,7 +28,7 @@ target_compile_definitions(tetgen PRIVATE -DTETLIBRARY)
 # set_target_properties(tetgen PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 # adjust C++ compiler flags to our needs
-# set(NO_EXTRA_WARNINGS true)  # to avoid warnings in the Voro++ code
+set(NO_EXTRA_WARNINGS true)  # to avoid warnings in the tetgen code (warnings still present)
 include("../../SMILE/build/CompilerFlags.cmake")
 
 
