@@ -333,7 +333,7 @@ private:
     int numVertices;
 
     // input vertices
-    vector<Vec> _sites;
+    vector<Vec*> _sites;
 
     // data members initialized when processing snapshot input and further completed by BuildMesh()
     vector<Tetra*> _tetrahedra;

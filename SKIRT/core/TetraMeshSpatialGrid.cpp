@@ -140,8 +140,6 @@ void TetraMeshSpatialGrid::setupSelfBefore()
             break;
         }
     }
-
-    _mesh = new TetraMeshSnapshot(this, extent(), _mindihedral);
 }
 
 //////////////////////////////////////////////////////////////////////

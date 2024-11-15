@@ -320,6 +320,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<MeshSource>();
     ItemRegistry::add<AdaptiveMeshSource>();
     ItemRegistry::add<VoronoiMeshSource>();
+    ItemRegistry::add<TetraMeshSource>();
     ItemRegistry::add<CenteredSource>();
     ItemRegistry::add<StellarSurfaceSource>();
     ItemRegistry::add<CubicalBackgroundSource>();
@@ -441,7 +442,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<CellGeometry>();
     ItemRegistry::add<MeshGeometry>();
     ItemRegistry::add<AdaptiveMeshGeometry>();
-    ItemRegistry::add<VoronoiMeshGeometry>();    
+    ItemRegistry::add<VoronoiMeshGeometry>();
+    ItemRegistry::add<TetraMeshGeometry>();
 
     // geometry decorators
     ItemRegistry::add<OffsetGeometryDecorator>();
@@ -515,6 +517,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<MeshMedium>();
     ItemRegistry::add<AdaptiveMeshMedium>();
     ItemRegistry::add<VoronoiMeshMedium>();
+    ItemRegistry::add<TetraMeshMedium>();
 
     // medium system options
     ItemRegistry::add<PhotonPacketOptions>();

@@ -35,63 +35,6 @@
 
 namespace
 {
-    // classes used for serializing/deserializing Tetra cell geometry when communicating the results of
-    // grid construction between multiple processes with the ProcessManager::broadcastAllToAll() function
-
-    // decorates a std::vector with functions to write serialized versions of various data types
-    class SerializedWrite
-    {
-    private:
-        vector<double>& _data;
-
-    public:
-        SerializedWrite(vector<double>& data) : _data(data) { _data.clear(); }
-        void write(double v) { _data.push_back(v); }
-        void write(Vec v) { _data.insert(_data.end(), {v.x(), v.y(), v.z()}); }
-        void write(Box v) { _data.insert(_data.end(), {v.xmin(), v.ymin(), v.zmin(), v.xmax(), v.ymax(), v.zmax()}); }
-        void write(const vector<int>& v)
-        {
-            _data.push_back(v.size());
-            _data.insert(_data.end(), v.begin(), v.end());
-        }
-    };
-
-    // decorates a std::vector with functions to read serialized versions of various data types
-    class SerializedRead
-    {
-    private:
-        const double* _data;
-        const double* _end;
-
-    public:
-        SerializedRead(const vector<double>& data) : _data(data.data()), _end(data.data() + data.size()) {}
-        bool empty() { return _data == _end; }
-        int readInt() { return *_data++; }
-        void read(double& v) { v = *_data++; }
-        void read(Vec& v)
-        {
-            v.set(*_data, *(_data + 1), *(_data + 2));
-            _data += 3;
-        }
-        void read(Box& v)
-        {
-            v = Box(*_data, *(_data + 1), *(_data + 2), *(_data + 3), *(_data + 4), *(_data + 5));
-            _data += 6;
-        }
-        void read(vector<int>& v)
-        {
-            int n = *_data++;
-            v.clear();
-            v.reserve(n);
-            for (int i = 0; i != n; ++i) v.push_back(*_data++);
-        }
-    };
-}
-
-////////////////////////////////////////////////////////////////////
-
-namespace
-{
     bool lessthan(Vec p1, Vec p2, int axis)
     {
         switch (axis)
@@ -282,23 +225,7 @@ TetraMeshSnapshot::~TetraMeshSnapshot()
 
 void TetraMeshSnapshot::readAndClose()
 {
-    // // read the site info into memory
-    // Array prop;
-    // while (infile()->readRow(prop))
-    // {
-    //     _vertices.push_back(new Vec(prop[0], prop[1], prop[2]));
-    // }
-
-    // // close the file
-    // Snapshot::readAndClose();
-
-    // // if we are allowed to build a Tetra mesh
-    // // calculate the Tetra cells
-    // buildMesh(?, false);
-
-    // // if a mass density policy has been set, calculate masses and densities and build the search data structure
-    // if (hasMassDensityPolicy()) calculateDensityAndMass();
-    // if (hasMassDensityPolicy() || needGetEntities()) buildSearchPerBlock();
+    // WIP
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -317,7 +244,7 @@ TetraMeshSnapshot::TetraMeshSnapshot(const SimulationItem* item, const Box& exte
     in.addColumn("position y", "length", "pc");
     in.addColumn("position z", "length", "pc");
     Array coords;
-    while (in.readRow(coords)) _sites.push_back(Vec(coords[0], coords[1], coords[2]));
+    while (in.readRow(coords)) _sites.push_back(new Vec(coords[0], coords[1], coords[2]));
     in.close();
 
     // calculate the Tetra cells
@@ -335,7 +262,7 @@ TetraMeshSnapshot::TetraMeshSnapshot(const SimulationItem* item, const Box& exte
     // prepare the data
     int n = sli->numSites();
     _sites.resize(n);
-    for (int m = 0; m != n; ++m) _sites[m] = sli->sitePosition(m);
+    for (int m = 0; m != n; ++m) _sites[m] = new Vec(sli->sitePosition(m));
 
     // calculate the Tetra cells
     setContext(item);
@@ -349,8 +276,10 @@ TetraMeshSnapshot::TetraMeshSnapshot(const SimulationItem* item, const Box& exte
 TetraMeshSnapshot::TetraMeshSnapshot(const SimulationItem* item, const Box& extent, const vector<Vec>& sites,
                                      double mindihedral)
 {
-    // store input vertices
-    _sites = sites;
+    // prepare the data
+    int n = sites.size();
+    _sites.resize(n);
+    for (int m = 0; m != n; ++m) _sites[m] = new Vec(sites[m]);
 
     // calculate the Tetra cells
     setContext(item);
@@ -373,12 +302,6 @@ TetraMeshSnapshot::TetraMeshSnapshot(const SimulationItem* item, const Box& exte
 
 namespace
 {
-    // maximum number of Tetra sites processed between two invocations of infoIfElapsed()
-    const int logProgressChunkSize = 1000;
-
-    // maximum number of Tetra grid construction iterations
-    const int maxConstructionIterations = 5;
-
     // function to erase null pointers from a vector of pointers in one go; returns the new size
     template<class T> size_t eraseNullPointers(vector<T*>& v)
     {
@@ -402,31 +325,55 @@ namespace
 
 void TetraMeshSnapshot::buildMesh(double mindihedral)
 {
+    // remove sites outside of the domain
+    int numOutside = 0;
+    int numSites = _sites.size();
+    for (int m = 0; m != numSites; ++m)
+    {
+        if (!_extent.contains(*_sites[m]))
+        {
+            delete _sites[m];
+            _sites[m] = 0;
+            numOutside++;
+        }
+    }
+    if (numOutside) numSites = eraseNullPointers(_sites);
+    log()->info("removed " + StringUtils::toString(numOutside, 'd') + " vertices outside of the domain");
+
     tetgenio in, out_Delaunay, out;
     tetgenbehavior behavior_Delaunay, behavior;
-    
+
     // in.firstnumber = 0; // remove me if no error
     in.numberofpoints = _sites.size();
     in.pointlist = new REAL[in.numberofpoints * 3];
     for (int i = 0; i < in.numberofpoints; i++)
     {
-        in.pointlist[i * 3 + 0] = _sites[i].x();
-        in.pointlist[i * 3 + 1] = _sites[i].y();
-        in.pointlist[i * 3 + 2] = _sites[i].z();
+        in.pointlist[i * 3 + 0] = _sites[i]->x();
+        in.pointlist[i * 3 + 1] = _sites[i]->y();
+        in.pointlist[i * 3 + 2] = _sites[i]->z();
     }
 
-    behavior_Delaunay.psc = 1;  // -s PSC
-    behavior_Delaunay.verbose = 1;
+    log()->info("Building Delaunay triangulation using input vertices...");
+
+    behavior_Delaunay.psc = 1;  // -s build Delaunay tetrahedralisation
+    // behavior_Delaunay.verbose = 1;  // -v
     tetrahedralize(&behavior_Delaunay, &in, &out_Delaunay);
 
+    log()->info("Built Delaunay triangulation");
+    log()->info("Refining triangulation...");
+
+    // tetgen refine options
     behavior.refine = 1;                 // -r
     behavior.quality = 1;                // -q
     behavior.mindihedral = mindihedral;  // -q
-    behavior.neighout = 2;               // -nn
-    behavior.facesout = 1;               // -f
-    behavior.zeroindex = 1;              // -z
-    behavior.verbose = 1;                // -v
+    // correct output options for out
+    behavior.neighout = 2;   // -nn
+    behavior.facesout = 1;   // -f
+    behavior.zeroindex = 1;  // -z
+    behavior.verbose = 1;    // -v
     tetrahedralize(&behavior, &out_Delaunay, &out);
+
+    log()->info("Refined triangulation");
 
     // tranfser TetGen data to TetraMeshSnapshot data containers
     numTetra = out.numberoftetrahedra;
@@ -480,44 +427,6 @@ void TetraMeshSnapshot::buildMesh(double mindihedral)
 
         _centroids.push_back(&_tetrahedra[i]->_centroid);
     }
-
-    string filename = "tet.txt";
-    std::ofstream outFile(filename);
-
-    if (!outFile.is_open())
-    {
-        std::cerr << "Failed to open file for writing: " << filename << std::endl;
-        return;
-    }
-
-    std::set<std::pair<int, int>> uniqueEdges;  // To avoid duplicates
-
-    for (int i = 0; i < numTetra; i++)
-    {
-        for (int v1 = 0; v1 < 4; v1++)
-        {
-            for (int v2 = v1 + 1; v2 < 4; v2++)
-            {
-                int idx1 = out.tetrahedronlist[4 * i + v1];
-                int idx2 = out.tetrahedronlist[4 * i + v2];
-
-                // Store edges in sorted order
-                if (idx1 > idx2) std::swap(idx1, idx2);
-
-                uniqueEdges.emplace(idx1, idx2);
-            }
-        }
-    }
-
-    for (const auto& edge : uniqueEdges)
-    {
-        outFile << out.pointlist[3 * edge.first + 0] << " " << out.pointlist[3 * edge.first + 1] << " "
-                << out.pointlist[3 * edge.first + 2] << " " << out.pointlist[3 * edge.second + 0] << " "
-                << out.pointlist[3 * edge.second + 1] << " " << out.pointlist[3 * edge.second + 2] << "\n";
-    }
-
-    outFile.close();
-    std::cout << "Edges saved to " << filename << std::endl;
 
     // compile statistics
     double minVol = DBL_MAX;
@@ -636,11 +545,10 @@ void TetraMeshSnapshot::buildSearchPerBlock()
     // abort if there are no cells
     if (!numTetra) return;
 
-    log()->info("Building data structures to accelerate searching the tetrahedralization");
+    log()->info("Building data structures to accelerate searching the tetrahedralisation");
 
     // -------------  block lists  -------------
     _nb = max(3, min(250, static_cast<int>(cbrt(numTetra))));
-    // _nb = 1;
     _nb2 = _nb * _nb;
     _nb3 = _nb * _nb * _nb;
 
@@ -758,7 +666,7 @@ void TetraMeshSnapshot::writeGridPlotFiles(const SimulationItem* probe) const
     SpatialGridPlotFile plotxyz(probe, probe->itemName() + "_grid_xyz");
 
     // for each site, compute the corresponding cell and output its edges
-    log()->info("Writing plot files for tetrahedralization with " + std::to_string(numTetra) + " tetrahedra");
+    log()->info("Writing plot files for tetrahedralisation with " + std::to_string(numTetra) + " tetrahedra");
     log()->infoSetElapsed(numTetra);
     int numDone = 0;
     for (int i = 0; i < numTetra; i++)
