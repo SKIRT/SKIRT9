@@ -225,7 +225,23 @@ TetraMeshSnapshot::~TetraMeshSnapshot()
 
 void TetraMeshSnapshot::readAndClose()
 {
-    // WIP
+    // read the site info into memory
+    Array prop;
+    while (infile()->readRow(prop))
+    {
+        _sites.push_back(new Vec(prop[0], prop[1], prop[2]));  // again this might have to be _positionIndex + 0 1 2
+        _properties.push_back(new Array(prop)); // properties have to be used to interpret values inside tetrahedra!
+    }
+
+    // close the file
+    Snapshot::readAndClose();
+
+    // build the mesh without refining
+    buildMesh(false, 0);
+
+    // if a mass density policy has been set, calculate masses and densities and build the search data structure
+    if (hasMassDensityPolicy()) calculateDensityAndMass();
+    if (hasMassDensityPolicy() || needGetEntities()) buildSearchPerBlock();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -236,7 +252,8 @@ void TetraMeshSnapshot::setExtent(const Box& extent)
     _eps = 1e-12 * extent.widths().norm();
 }
 
-TetraMeshSnapshot::TetraMeshSnapshot(const SimulationItem* item, const Box& extent, string filename, double mindihedral)
+TetraMeshSnapshot::TetraMeshSnapshot(const SimulationItem* item, const Box& extent, string filename, bool refine,
+                                     double mindihedral)
 {
     // read the input file
     TextInFile in(item, filename, "Tetra vertices");
@@ -250,13 +267,13 @@ TetraMeshSnapshot::TetraMeshSnapshot(const SimulationItem* item, const Box& exte
     // calculate the Tetra cells
     setContext(item);
     setExtent(extent);
-    buildMesh(mindihedral);
+    buildMesh(refine, mindihedral);
     buildSearchPerBlock();
 }
 
 ////////////////////////////////////////////////////////////////////
 
-TetraMeshSnapshot::TetraMeshSnapshot(const SimulationItem* item, const Box& extent, SiteListInterface* sli,
+TetraMeshSnapshot::TetraMeshSnapshot(const SimulationItem* item, const Box& extent, SiteListInterface* sli, bool refine,
                                      double mindihedral)
 {
     // prepare the data
@@ -267,14 +284,14 @@ TetraMeshSnapshot::TetraMeshSnapshot(const SimulationItem* item, const Box& exte
     // calculate the Tetra cells
     setContext(item);
     setExtent(extent);
-    buildMesh(mindihedral);
+    buildMesh(refine, mindihedral);
     buildSearchPerBlock();
 }
 
 ////////////////////////////////////////////////////////////////////
 
 TetraMeshSnapshot::TetraMeshSnapshot(const SimulationItem* item, const Box& extent, const vector<Vec>& sites,
-                                     double mindihedral)
+                                     bool refine, double mindihedral)
 {
     // prepare the data
     int n = sites.size();
@@ -284,17 +301,17 @@ TetraMeshSnapshot::TetraMeshSnapshot(const SimulationItem* item, const Box& exte
     // calculate the Tetra cells
     setContext(item);
     setExtent(extent);
-    buildMesh(mindihedral);
+    buildMesh(refine, mindihedral);
     buildSearchPerBlock();
 }
 
 ////////////////////////////////////////////////////////////////////
 
-TetraMeshSnapshot::TetraMeshSnapshot(const SimulationItem* item, const Box& extent, double mindihedral)
+TetraMeshSnapshot::TetraMeshSnapshot(const SimulationItem* item, const Box& extent, bool refine, double mindihedral)
 {
     setContext(item);
     setExtent(extent);
-    buildMesh(mindihedral);
+    buildMesh(refine, mindihedral);
     buildSearchPerBlock();
 }
 
@@ -321,9 +338,7 @@ namespace
     }
 }
 
-////////////////////////////////////////////////////////////////////
-
-void TetraMeshSnapshot::buildMesh(double mindihedral)
+void TetraMeshSnapshot::buildDelaunay(tetgenio& out)
 {
     // remove sites outside of the domain
     int numOutside = 0;
@@ -340,8 +355,8 @@ void TetraMeshSnapshot::buildMesh(double mindihedral)
     if (numOutside) numSites = eraseNullPointers(_sites);
     log()->info("removed " + StringUtils::toString(numOutside, 'd') + " vertices outside of the domain");
 
-    tetgenio in, out_Delaunay, out;
-    tetgenbehavior behavior_Delaunay, behavior;
+    tetgenio in;
+    tetgenbehavior behavior;
 
     // in.firstnumber = 0; // remove me if no error
     in.numberofpoints = _sites.size();
@@ -353,14 +368,17 @@ void TetraMeshSnapshot::buildMesh(double mindihedral)
         in.pointlist[i * 3 + 2] = _sites[i]->z();
     }
 
+    behavior.psc = 1;  // -s build Delaunay tetrahedralisation
+    // behavior.verbose = 1;  // -v
+
     log()->info("Building Delaunay triangulation using input vertices...");
-
-    behavior_Delaunay.psc = 1;  // -s build Delaunay tetrahedralisation
-    // behavior_Delaunay.verbose = 1;  // -v
-    tetrahedralize(&behavior_Delaunay, &in, &out_Delaunay);
-
+    tetrahedralize(&behavior, &in, &out);
     log()->info("Built Delaunay triangulation");
-    log()->info("Refining triangulation...");
+}
+
+void TetraMeshSnapshot::refineDelaunay(tetgenio& in, tetgenio& out, double mindihedral)
+{
+    tetgenbehavior behavior;
 
     // tetgen refine options
     behavior.refine = 1;                 // -r
@@ -371,10 +389,31 @@ void TetraMeshSnapshot::buildMesh(double mindihedral)
     behavior.facesout = 1;   // -f
     behavior.zeroindex = 1;  // -z
     behavior.verbose = 1;    // -v
-    tetrahedralize(&behavior, &out_Delaunay, &out);
 
+    log()->info("Refining triangulation...");
+    tetrahedralize(&behavior, &in, &out);
     log()->info("Refined triangulation");
+}
 
+////////////////////////////////////////////////////////////////////
+
+void TetraMeshSnapshot::buildMesh(bool refine, double mindihedral)
+{
+    tetgenio delaunay, refined;
+    buildDelaunay(delaunay);
+    if (refine)
+    {
+        refineDelaunay(delaunay, refined, mindihedral);
+        storeTetrahedra(refined);
+    }
+    else
+    {
+        storeTetrahedra(delaunay);
+    }
+}
+
+void TetraMeshSnapshot::storeTetrahedra(const tetgenio& out)
+{
     // tranfser TetGen data to TetraMeshSnapshot data containers
     numTetra = out.numberoftetrahedra;
     numVertices = out.numberofpoints;
@@ -453,13 +492,6 @@ void TetraMeshSnapshot::buildMesh(double mindihedral)
     log()->info("  Variance of volume fraction per cell: " + StringUtils::toString(varVol, 'e'));
     log()->info("  Minimum volume fraction cell: " + StringUtils::toString(minVol, 'e'));
     log()->info("  Maximum volume fraction cell: " + StringUtils::toString(maxVol, 'e'));
-}
-
-////////////////////////////////////////////////////////////////////
-
-void TetraMeshSnapshot::calculateVolume()
-{
-    //WIP
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -909,9 +941,9 @@ int TetraMeshSnapshot::cellIndex(Position bfr) const
 
 ////////////////////////////////////////////////////////////////////
 
-const Array& TetraMeshSnapshot::properties(int /*m*/) const
+const Array& TetraMeshSnapshot::properties(int m) const
 {
-    // return _sites[m]->properties();
+    return *_properties[m];
 }
 
 ////////////////////////////////////////////////////////////////////

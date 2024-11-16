@@ -98,7 +98,7 @@ public:
 
     // constructor derives the site position from the first three property values and stores the user properties;
     // the other data members are set to zero or empty
-    Cell(const Array& prop) : _r(prop[0], prop[1], prop[2]), _properties{prop} {}
+    Cell(const Array& prop) : _r(prop[0], prop[1], prop[2]), _properties{prop} {} // shouldn't this use _positionIndex instead of 0 1 2?
 
     // adjusts the site position with the specified offset
     void relax(double cx, double cy, double cz) { _r += Vec(cx, cy, cz); }

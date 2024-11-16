@@ -63,18 +63,24 @@ public:
     //========== Specialty constructors ==========
 
 public:
-    TetraMeshSnapshot(const SimulationItem* item, const Box& extent, string filename, double mindihedral);
+    TetraMeshSnapshot(const SimulationItem* item, const Box& extent, string filename, bool refine, double mindihedral);
 
-    TetraMeshSnapshot(const SimulationItem* item, const Box& extent, SiteListInterface* sli, double mindihedral);
+    TetraMeshSnapshot(const SimulationItem* item, const Box& extent, SiteListInterface* sli, bool refine,
+                      double mindihedral);
 
-    TetraMeshSnapshot(const SimulationItem* item, const Box& extent, const vector<Vec>& sites, double mindihedral);
+    TetraMeshSnapshot(const SimulationItem* item, const Box& extent, const vector<Vec>& sites, bool refine,
+                      double mindihedral);
 
-    TetraMeshSnapshot(const SimulationItem* item, const Box& extent, double mindihedral);
+    TetraMeshSnapshot(const SimulationItem* item, const Box& extent, bool refine, double mindihedral);
 
     //=========== Private construction ==========
 
 private:
     class Node;
+
+    void buildDelaunay(tetgenio& out);
+
+    void refineDelaunay(tetgenio& in, tetgenio& out, double mindihedral);
 
     /** Given a list of generating sites (represented as partially initialized Cell
         objects), this private function builds the Tetra tessellation and stores the
@@ -93,11 +99,9 @@ private:
         constructed with these adjusted site positions, which are distributed more uniformly,
         thereby avoiding overly elongated cells in the Tetra tessellation. Relaxation can be
         quite time-consuming because the Tetra tessellation must be constructed twice. */
-    void buildMesh(double mindihedral);
+    void buildMesh(bool refine, double mindihedral);
 
-    /** This private function calculates the volumes for all cells without using the Tetra mesh.
-        It assumes that both mass and mass density columns are being imported. */
-    void calculateVolume();
+    void storeTetrahedra(const tetgenio& out);
 
     /** This private function calculates the densities and (cumulative) masses for all cells, and
         logs some statistics. The function assumes that the cell volumes have been calculated,
@@ -334,6 +338,7 @@ private:
 
     // input vertices
     vector<Vec*> _sites;
+    vector<Array*> _properties;
 
     // data members initialized when processing snapshot input and further completed by BuildMesh()
     vector<Tetra*> _tetrahedra;

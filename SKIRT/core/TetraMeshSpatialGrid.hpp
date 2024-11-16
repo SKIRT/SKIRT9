@@ -53,9 +53,12 @@ class TetraMeshSpatialGrid : public BoxSpatialGrid, public DensityInCellInterfac
         PROPERTY_STRING(filename, "the name of the file containing the site positions")
         ATTRIBUTE_RELEVANT_IF(filename, "policyFile")
 
+        PROPERTY_BOOL(refine, "refine the grid to have higher quality cells by adding more vertices")
+        ATTRIBUTE_DEFAULT_VALUE(refine, "false");
+
         PROPERTY_DOUBLE(mindihedral, "the minimum dihedral angle per tetrahedron")
         ATTRIBUTE_DEFAULT_VALUE(mindihedral, "3.5")
-        ATTRIBUTE_RELEVANT_IF(mindihedral, "!policyImportedMesh")
+        ATTRIBUTE_RELEVANT_IF(mindihedral, "refine")
 
     ITEM_END()
 
@@ -75,8 +78,6 @@ protected:
     //======================== Other Functions =======================
 
 public:
-    bool tetUnsuitable(double* pa, double* pb, double* pc, double* pd, double vol) const;
-
     /** This function returns the number of cells in the grid. */
     int numCells() const override;
 
