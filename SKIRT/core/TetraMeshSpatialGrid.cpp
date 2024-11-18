@@ -60,7 +60,7 @@ void TetraMeshSpatialGrid::setupSelfBefore()
             auto random = find<Random>();
             vector<Vec> rv(_numSites);
             for (int m = 0; m != _numSites; ++m) rv[m] = random->position(extent());
-            _mesh = new TetraMeshSnapshot(this, extent(), rv, _mindihedral);
+            _mesh = new TetraMeshSnapshot(this, extent(), rv, _refine, _mindihedral);
             break;
         }
         case Policy::CentralPeak:
@@ -76,7 +76,7 @@ void TetraMeshSpatialGrid::setupSelfBefore()
                 Position p = Position(r, k);
                 if (extent().contains(p)) rv[m++] = p;  // discard any points outside of the domain
             }
-            _mesh = new TetraMeshSnapshot(this, extent(), rv, _mindihedral);
+            _mesh = new TetraMeshSnapshot(this, extent(), rv, _refine, _mindihedral);
             break;
         }
         case Policy::DustDensity:
@@ -89,7 +89,7 @@ void TetraMeshSpatialGrid::setupSelfBefore()
                 if (medium->mix()->isDust()) media.push_back(medium);
             for (auto medium : media) weights.push_back(medium->mass());
             _mesh =
-                new TetraMeshSnapshot(this, extent(), sampleMedia(media, weights, extent(), _numSites), _mindihedral);
+                new TetraMeshSnapshot(this, extent(), sampleMedia(media, weights, extent(), _numSites), _refine, _mindihedral);
             break;
         }
         case Policy::ElectronDensity:
@@ -102,7 +102,7 @@ void TetraMeshSpatialGrid::setupSelfBefore()
                 if (medium->mix()->isElectrons()) media.push_back(medium);
             for (auto medium : media) weights.push_back(medium->number());
             _mesh =
-                new TetraMeshSnapshot(this, extent(), sampleMedia(media, weights, extent(), _numSites), _mindihedral);
+                new TetraMeshSnapshot(this, extent(), sampleMedia(media, weights, extent(), _numSites), _refine, _mindihedral);
             break;
         }
         case Policy::GasDensity:
@@ -115,18 +115,18 @@ void TetraMeshSpatialGrid::setupSelfBefore()
                 if (medium->mix()->isGas()) media.push_back(medium);
             for (auto medium : media) weights.push_back(medium->number());
             _mesh =
-                new TetraMeshSnapshot(this, extent(), sampleMedia(media, weights, extent(), _numSites), _mindihedral);
+                new TetraMeshSnapshot(this, extent(), sampleMedia(media, weights, extent(), _numSites), _refine, _mindihedral);
             break;
         }
         case Policy::File:
         {
-            _mesh = new TetraMeshSnapshot(this, extent(), _filename, _mindihedral);
+            _mesh = new TetraMeshSnapshot(this, extent(), _filename, _refine, _mindihedral);
             break;
         }
         case Policy::ImportedSites:
         {
             auto sli = find<MediumSystem>()->interface<SiteListInterface>(2);
-            _mesh = new TetraMeshSnapshot(this, extent(), sli, _mindihedral);
+            _mesh = new TetraMeshSnapshot(this, extent(), sli, _refine, _mindihedral);
             break;
         }
         case Policy::ImportedMesh:

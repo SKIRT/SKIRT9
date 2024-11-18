@@ -22,7 +22,6 @@ Snapshot* TetraMeshMedium::createAndOpenSnapshot()
     _tetraMeshSnapshot->importPosition();
 
     // configure the density and/or mass column(s)
-    bool bothDensityAndMass = false;
     switch (massType())
     {
         case MassType::MassDensity: _tetraMeshSnapshot->importMassDensity(); break;
@@ -30,7 +29,6 @@ Snapshot* TetraMeshMedium::createAndOpenSnapshot()
         case MassType::MassDensityAndMass:
             _tetraMeshSnapshot->importMassDensity();
             _tetraMeshSnapshot->importMass();
-            bothDensityAndMass = true;
             break;
 
         case MassType::NumberDensity: _tetraMeshSnapshot->importNumberDensity(); break;
@@ -38,14 +36,8 @@ Snapshot* TetraMeshMedium::createAndOpenSnapshot()
         case MassType::NumberDensityAndNumber:
             _tetraMeshSnapshot->importNumberDensity();
             _tetraMeshSnapshot->importNumber();
-            bothDensityAndMass = true;
             break;
     }
-
-    // determine whether to forego the Tetra mesh
-    // auto config = find<Configuration>();
-    // if (bothDensityAndMass && !config->mediaNeedGeneratePosition() && !config->snapshotsNeedGetEntities())
-    //     _tetraMeshSnapshot->foregoTetraMesh();
 
     // set the domain extent
     _tetraMeshSnapshot->setExtent(domain());

@@ -22,7 +22,6 @@
 #include "Table.hpp"
 #include "TextInFile.hpp"
 #include "Units.hpp"
-#include "tetgen.h"
 #include <chrono>
 #include <fstream>
 #include <iostream>
@@ -65,7 +64,149 @@ namespace
         }
     }
 
-    int findEnteringFace(const Tetra* tetra, const Vec& pos, const Direction& dir)
+    std::array<int, 3> clockwiseVertices(int face)
+    {
+        std::array<int, 3> cv = {(face + 3) % 4, (face + 2) % 4, (face + 1) % 4};
+        // if face is even we should swap two edges
+        if (face % 2 == 0) std::swap(cv[0], cv[2]);
+        return cv;
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
+struct TetraMeshSnapshot::Face
+{
+    Face() {}
+
+    // normals are calculated in the constructor of Tetra
+    Face(int ntetra, int nface) : _ntetra(ntetra), _nface(nface) {}
+
+    Vec _normal;
+    int _ntetra;
+    int _nface;
+};
+
+////////////////////////////////////////////////////////////////////
+
+class TetraMeshSnapshot::Tetra : public Box
+{
+private:
+    double _volume;
+
+public:
+    const std::array<Vec*, 4> _vertices;
+    std::array<Face, 4> _faces;
+    Vec _centroid;
+
+public:
+    Tetra(const std::array<Vec*, 4>& vertices, const std::array<Face, 4>& faces) : _vertices(vertices), _faces(faces)
+    {
+        double xmin = DBL_MAX;
+        double ymin = DBL_MAX;
+        double zmin = DBL_MAX;
+        double xmax = -DBL_MAX;
+        double ymax = -DBL_MAX;
+        double zmax = -DBL_MAX;
+        for (const Vec* vertex : _vertices)
+        {
+            xmin = min(xmin, vertex->x());
+            ymin = min(ymin, vertex->y());
+            zmin = min(zmin, vertex->z());
+            xmax = max(xmax, vertex->x());
+            ymax = max(ymax, vertex->y());
+            zmax = max(zmax, vertex->z());
+        }
+        setExtent(Box(xmin, ymin, zmin, xmax, ymax, zmax));
+
+        // volume
+        _volume = 1 / 6.
+                  * abs(Vec::dot(Vec::cross(*_vertices[1] - *_vertices[0], *_vertices[2] - *_vertices[0]),
+                                 *_vertices[3] - *_vertices[0]));
+
+        // barycenter
+        for (int i = 0; i < 4; i++) _centroid += *_vertices[i];
+        _centroid /= 4;
+
+        // calculate normal facing out
+        for (int f = 0; f < 4; f++)
+        {
+            std::array<int, 3> cv = clockwiseVertices(f);
+            Vec e12 = *vertices[cv[1]] - *vertices[cv[0]];
+            Vec e13 = *vertices[cv[2]] - *vertices[cv[0]];
+            Vec normal = Vec::cross(e12, e13);
+            normal /= normal.norm();
+
+            Face& face = _faces[f];
+            face._normal = normal;
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////
+
+    Vec getEdge(int t1, int t2) const { return *_vertices[t2] - *_vertices[t1]; }
+
+    ////////////////////////////////////////////////////////////////////
+
+    bool inside(const Position& bfr) const
+    {
+        // since we use the k-d tree this will only slow the CellIndex
+        // if (!Box::contains(bfr)) return false;
+
+        // could optimize this slightly by using same vertex for 3 faces and do final face seperately
+
+        for (int f = 0; f < 4; f++)
+        {
+            const Face& face = _faces[f];
+            const Vec* vertex = _vertices[(f + 1) % 4];  // any vertex that is on the face
+
+            // if point->face is opposite direction as the outward pointing normal, the point is outside
+            if (Vec::dot(*vertex - bfr, face._normal) < 0) return false;
+        }
+        return true;
+    }
+
+    ////////////////////////////////////////////////////////////////////
+
+    double volume() const { return _volume; }
+
+    ////////////////////////////////////////////////////////////////////
+
+    double generateBarycentric(double& s, double& t, double& u) const
+    {
+        // https://vcg.isti.cnr.it/activities/OLD/geometryegraphics/pointintetraedro.html
+        if (s + t > 1.0)
+        {  // cut'n fold the cube into a prism
+            s = 1.0 - s;
+            t = 1.0 - t;
+        }
+        if (t + u > 1.0)
+        {  // cut'n fold the prism into a tetrahedron
+            double tmp = u;
+            u = 1.0 - s - t;
+            t = 1.0 - tmp;
+        }
+        else if (s + t + u > 1.0)
+        {
+            double tmp = u;
+            u = s + t + u - 1.0;
+            s = 1 - t - tmp;
+        }
+        return 1 - u - t - s;
+    }
+
+    ////////////////////////////////////////////////////////////////////
+
+    Position generatePosition(double s, double t, double u) const
+    {
+        double r = generateBarycentric(s, t, u);
+
+        return Position(r * *_vertices[0] + u * *_vertices[1] + t * *_vertices[2] + s * *_vertices[3]);
+    }
+
+    ////////////////////////////////////////////////////////////////////
+
+    int findEnteringFace(const Vec& pos, const Direction& dir) const
     {
         int enteringFace = -1;
         // clockwise and cclockwise adjacent faces when checking edge v1->v2
@@ -78,8 +219,8 @@ namespace
             for (int v2 = v1 + 1; v2 < 4; v2++)
             {
 
-                Vec moment12 = Vec::cross(dir, pos - *tetra->_vertices[v1]);
-                double prod12 = Vec::dot(moment12, tetra->getEdge(v1, v2));
+                Vec moment12 = Vec::cross(dir, pos - *_vertices[v1]);
+                double prod12 = Vec::dot(moment12, getEdge(v1, v2));
                 if (prod12 != 0.)
                 {
                     enteringFace = prod12 < 0 ? etable[e][0] : etable[e][1];
@@ -91,7 +232,7 @@ namespace
         }
         return enteringFace;
     }
-}
+};
 
 ////////////////////////////////////////////////////////////////////
 
@@ -230,7 +371,7 @@ void TetraMeshSnapshot::readAndClose()
     while (infile()->readRow(prop))
     {
         _sites.push_back(new Vec(prop[0], prop[1], prop[2]));  // again this might have to be _positionIndex + 0 1 2
-        _properties.push_back(new Array(prop)); // properties have to be used to interpret values inside tetrahedra!
+        _properties.push_back(new Array(prop));  // properties have to be used to interpret values inside tetrahedra!
     }
 
     // close the file
@@ -238,6 +379,12 @@ void TetraMeshSnapshot::readAndClose()
 
     // build the mesh without refining
     buildMesh(false, 0);
+
+    // interpret _properties to stored tetrahedra
+    // for (Tetra* tetra : _tetrahedra)
+    // {
+        // tetra->volume();
+    // }
 
     // if a mass density policy has been set, calculate masses and densities and build the search data structure
     if (hasMassDensityPolicy()) calculateDensityAndMass();
@@ -514,7 +661,7 @@ void TetraMeshSnapshot::calculateDensityAndMass()
     int numIgnored = 0;
     for (int m = 0; m != numTetra; ++m)
     {
-        const Array& prop = _tetrahedra[m]->properties();
+        const Array& prop = *_properties[m];
 
         // original mass is zero if temperature is above cutoff or if imported mass/density is not positive
         double originalDensity = 0.;
@@ -717,7 +864,7 @@ void TetraMeshSnapshot::writeGridPlotFiles(const SimulationItem* probe) const
             coords.push_back(vertex->z());
 
             // get vertices of opposite face
-            std::array<int, 3> faceIndices = tetra->clockwiseVertices(v);
+            std::array<int, 3> faceIndices = clockwiseVertices(v);
             indices.push_back(3);  // amount of vertices per face
             indices.push_back(faceIndices[0]);
             indices.push_back(faceIndices[1]);
@@ -851,13 +998,13 @@ int TetraMeshSnapshot::cellIndex(Position bfr) const
             // find entering face using a single Plücker product
             if (enteringFace == -1)
             {
-                enteringFace = findEnteringFace(tetra, pos, dir);
+                enteringFace = tetra->findEnteringFace(pos, dir);
                 if (enteringFace == -1) break;
             }
 
             // the translated Plücker moment in the local coordinate system
             Vec moment = Vec::cross(dir, pos - *tetra->_vertices[enteringFace]);
-            std::array<int, 3> cv = Tetra::clockwiseVertices(enteringFace);
+            std::array<int, 3> cv = clockwiseVertices(enteringFace);
 
             // 2 step decision tree
             double prod0 = Vec::dot(moment, tetra->getEdge(cv[0], enteringFace));
@@ -1002,12 +1149,12 @@ public:
                 // find entering face using a single Plücker product
                 if (_enteringFace == -1)
                 {
-                    _enteringFace = findEnteringFace(tetra, pos, dir);
+                    _enteringFace = tetra->findEnteringFace(pos, dir);
                 }
 
                 // the translated Plücker moment in the local coordinate system
                 Vec moment = Vec::cross(dir, pos - *tetra->_vertices[_enteringFace]);
-                std::array<int, 3> cv = Tetra::clockwiseVertices(_enteringFace);
+                std::array<int, 3> cv = clockwiseVertices(_enteringFace);
 
                 // 2 step decision tree
                 double prod0 = Vec::dot(moment, tetra->getEdge(cv[0], _enteringFace));

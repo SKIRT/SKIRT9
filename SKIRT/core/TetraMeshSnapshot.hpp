@@ -10,7 +10,7 @@
 #include "MediumSystem.hpp"
 #include "Snapshot.hpp"
 #include "TetraMeshSpatialGrid.hpp"
-#include "Tetrahedron.hpp"
+#include "tetgen.h"
 #include "array"
 class PathSegmentGenerator;
 class SiteListInterface;
@@ -77,6 +77,9 @@ public:
 
 private:
     class Node;
+
+    class Face;
+    class Tetra;
 
     void buildDelaunay(tetgenio& out);
 
