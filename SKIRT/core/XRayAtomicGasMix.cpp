@@ -96,12 +96,13 @@ namespace
     // fluorescence parameters
     struct FluorescenceParams
     {
-        FluorescenceParams(const Array& a) : Z(a[0]), n(a[1]), l(a[2]), omega(a[3]), E(a[4]) {}
+        FluorescenceParams(const Array& a) : Z(a[0]), n(a[1]), l(a[2]), omega(a[3]), E(a[4]), W(a[5]) {}
         short Z;       // atomic number
         short n;       // principal quantum number of the shell
         short l;       // orbital quantum number of the subshell
         double omega;  // fluorescence yield (1)
-        double E;      // energy of the emitted photon (eV)
+        double E;      // (central) energy of the emitted photon (eV)
+        double W;      // FWHM of the Lorentz shape for the emitted photon (eV), or zero
     };
 
     // load data from resource file with N columns into a vector of structs of type S that can be constructed
@@ -334,10 +335,10 @@ namespace
 namespace
 {
     // returns the inverse Compton factor for a given scaled energy and scattering angle cosine
-    constexpr double inverseComptonfactor(double x, double costheta) { return 1 + x * (1 - costheta); }
+    constexpr double inverseComptonFactor(double x, double costheta) { return 1. + x * (1. - costheta); }
 
     // returns the Compton factor for a given scaled energy and scattering angle cosine
-    constexpr double comptonFactor(double x, double costheta) { return 1. / inverseComptonfactor(x, costheta); }
+    constexpr double comptonFactor(double x, double costheta) { return 1. / inverseComptonFactor(x, costheta); }
 
     // returns the value interpolated from the specified table as a function of the momentum transfer parameter
     // q = (E/12.4 keV) sin(theta/2), given the scaled energy x and the sine;
@@ -353,15 +354,24 @@ namespace
     class BoundComptonHelper : public XRayAtomicGasMix::ScatteringHelper
     {
     private:
+        // resources loaded from file
         vector<Array> _CSv;  // 0: E (keV->1); 1-30: bound Compton cross sections (cm2->m2)
         vector<Array> _SFv;  // 0: q (1); 1-30: incoherent scattering functions (1)
-        Random* _random{nullptr};
+        vector<Array> _CPv;  // 0: E (keV->1); 1-30: pdf for target electron momentum (1)
+        vector<Array> _IBv;  // 0: E (keV->1) ionisation energy of the outer subshell electrons
+
+        // precalculated cumulative distributions for target electron momentum
+        Range _cumRange;
+        vector<Array> _cumCPv;  // 0: E axis; 1-30: cumulative pdf for target electron momentum
 
         // precalculated discretizations
         Array _costhetav = Array(numTheta);
         Array _sinthetav = Array(numTheta);
         Array _sin2thetav = Array(numTheta);
         Array _sintheta2v = Array(numTheta);
+
+        // cache
+        Random* _random{nullptr};
 
     public:
         BoundComptonHelper(SimulationItem* item)
@@ -374,8 +384,25 @@ namespace
             // load incoherent scattering functions
             _SFv = loadColumns(numAtoms + 1, item, "XRay_SF.txt", "bound Compton data");
 
-            // cache random nr generator
-            _random = item->find<Random>();
+            // load pdfs for projected momentum of target electron
+            _CPv = loadColumns(numAtoms + 1, item, "XRay_CP.txt", "bound Compton data");
+            _CPv[0] *= keVtoScaledEnergy;  // convert from keV to 1
+
+            // load ionization energies
+            _IBv = loadColumns(1, item, "XRay_IB.txt", "bound Compton data");
+            _IBv[0] *= keVtoScaledEnergy;  // convert from keV to 1
+
+            // precalculate cumulative distributions for target electron momentum
+            _cumRange.set(_CPv[0][0], _CPv[0][_CPv[0].size() - 1]);
+            Array xv, pv, Pv;
+            NR::cdf<NR::interpolateLinLin>(xv, pv, Pv, _CPv[0], _CPv[1], _cumRange);
+            _cumCPv.push_back(xv);
+            _cumCPv.push_back(Pv);
+            for (size_t Z = 2; Z <= numAtoms; ++Z)
+            {
+                NR::cdf<NR::interpolateLinLin>(xv, pv, Pv, _CPv[0], _CPv[1], _cumRange);
+                _cumCPv.push_back(Pv);
+            }
 
             // construct a theta grid and precalculate values used in generateCosineFromPhaseFunction()
             // to accelerate construction of the cumulative phase function distribution
@@ -387,6 +414,9 @@ namespace
                 _sin2thetav[t] = _sinthetav[t] * _sinthetav[t];
                 _sintheta2v[t] = sin(0.5 * theta);
             }
+
+            // cache random nr generator
+            _random = item->find<Random>();
         }
 
         double sectionSca(double lambda, int Z) const override
@@ -426,6 +456,54 @@ namespace
             return _random->cdfLinLin(_costhetav, thetaXv);
         }
 
+        // sample a target electron momentum from the distribution with the given maximum
+        double sampleMomentum(double pmax, double Z) const
+        {
+            // maximum momentum is below the range of the tabulated pdf -> simply return the maximum momentum
+            // (we estimate that this happens for less than 0.1 % of the events)
+            if (pmax <= _cumRange.min()) return pmax;
+
+            // maximum momentum is on the left side of the peak in the tabulated pdf;
+            // using the rejection technique on the full-range pdf is very inefficient
+            // because the majority of the generated samples would be rejected
+            // --> reconstruct a cumulative pdf with the appropriate range and use numerical inversion
+            // (we estimate that this happens for less than 10% of the events)
+            if (pmax <= _cumRange.mid())
+            {
+                Array xv, pv, Pv;
+                NR::cdf<NR::interpolateLinLin>(xv, pv, Pv, _CPv[0], _CPv[Z], Range(_cumRange.min(), pmax));
+                return _random->cdfLinLin(xv, Pv);
+            }
+
+            // maximum momentum is on the right side of the peak in the tabulated pdf, possibly even out of range;
+            // using the rejection technique on top of numerical inversion for the full-range pdf now is efficient
+            // and quite fast because we can use the precalculated cumulative pdf
+            while (true)
+            {
+                double p = _random->cdfLinLin(_cumCPv[0], _cumCPv[Z]);
+                if (p <= pmax) return p;
+            }
+        }
+
+        // returns the augmented inverse Compton factor
+        double augmentedInverseComptonFactor(double x, double costheta, double Z) const
+        {
+            // precalculate some values
+            double costheta1 = 1. - costheta;
+            double sintheta22 = 2. * sqrt(0.5 * costheta1);  // twice the half-angle sine
+
+            // calculate the maximum target electron momentum (in scaled energy units)
+            double b = _IBv[0][Z - 1];  // scaled ionization energy
+            double xminb = (x - b);
+            double pmax = (x * xminb * costheta1 - b) / (xminb * sintheta22);
+
+            // sample a target electron momentum from the distribution with the given maximum
+            double p = sampleMomentum(pmax, Z);
+
+            // calculate the augmented inverse Compton factor
+            return 1. + x * costheta1 - p * sintheta22;
+        }
+
     public:
         void peeloffScattering(double& I, double& lambda, int Z, Direction bfk, Direction bfkobs) const override
         {
@@ -439,7 +517,7 @@ namespace
             I += value;
 
             // adjust the wavelength
-            lambda *= inverseComptonfactor(x, costheta);
+            lambda *= augmentedInverseComptonFactor(x, costheta, Z);
         }
 
         Direction performScattering(double& lambda, int Z, Direction bfk) const override
@@ -450,7 +528,7 @@ namespace
             double costheta = generateCosineFromPhaseFunction(x, Z);
 
             // adjust the wavelength
-            lambda *= inverseComptonfactor(x, costheta);
+            lambda *= augmentedInverseComptonFactor(x, costheta, Z);
 
             // determine the new propagation direction
             return _random->direction(bfk, costheta);
@@ -741,7 +819,7 @@ void XRayAtomicGasMix::setupSelfBefore()
     auto crossSectionParams = loadStruct<CrossSectionParams, 12>(this, "XRay_PA.txt", "photo-absorption data");
 
     // load the fluorescence parameters
-    auto fluorescenceParams = loadStruct<FluorescenceParams, 5>(this, "XRay_FL.txt", "fluorescence data");
+    auto fluorescenceParams = loadStruct<FluorescenceParams, 6>(this, "XRay_FL.txt", "fluorescence data");
 
     // create scattering helpers depending on the user-configured implementation type;
     // the respective helper constructors load the required bound-electron scattering resources
@@ -887,9 +965,27 @@ void XRayAtomicGasMix::setupSelfBefore()
 
     // ---- scattering ----
 
-    // calculate and store the fluorescence emission wavelengths
-    _lambdafluov.reserve(fluorescenceParams.size());
-    for (const auto& params : fluorescenceParams) _lambdafluov.push_back(wavelengthToFromEnergy(params.E));
+    // calculate and store the fluorescence emission parameters
+    int numFluos = fluorescenceParams.size();
+    _lambdafluov.resize(numFluos);
+    _centralfluov.resize(numFluos);
+    _widthfluov.resize(numFluos);
+    for (int k = 0; k != numFluos; ++k)
+    {
+        const auto& params = fluorescenceParams[k];
+        if (!params.W)
+        {
+            // if the line shape has zero width, convert the central enery to the fixed wavelength
+            _lambdafluov[k] = wavelengthToFromEnergy(params.E);
+        }
+        else
+        {
+            // if the line shape has nonzero width, copy the parameters of the line shape
+            // so that we can sample from the Lorentz distribution in energy space
+            _centralfluov[k] = params.E;
+            _widthfluov[k] = params.W / 2.;  // convert from FWHM to HWHM
+        }
+    }
 
     // make room for the scattering cross section and the cumulative fluorescence/scattering probabilities
     _sigmascav.resize(numLambda);
@@ -1037,6 +1133,28 @@ void XRayAtomicGasMix::setScatteringInfoIfNeeded(PhotonPacket::ScatteringInfo* s
         scatinfo->valid = true;
         scatinfo->species = NR::locateClip(_cumprobscavv[indexForLambda(lambda)], random()->uniform());
         if (temperature() > 0.) scatinfo->velocity = _vthermscav[scatinfo->species] * random()->maxwell();
+
+        // for a fluorescence transition, determine the outgoing wavelength from the corresponding parameters
+        if (scatinfo->species >= static_cast<int>(2 * numAtoms))
+        {
+            int i = scatinfo->species - 2 * numAtoms;
+            if (_lambdafluov[i])
+            {
+                // for a zero-width line, simply copy the central wavelength
+                scatinfo->lambda = _lambdafluov[i];
+            }
+            else
+            {
+                // otherwise sample a wavelength from the Lorentz line shape in energy space;
+                // the tails of the Lorentz distribition are very long, occasionaly resulting in negative energies;
+                // therefore we loop until the sampled wavelength is meaningful
+                while (true)
+                {
+                    scatinfo->lambda = wavelengthToFromEnergy(_centralfluov[i] + _widthfluov[i] * random()->lorentz());
+                    if (nonZeroRange.contains(scatinfo->lambda)) break;
+                }
+            }
+        }
     }
 }
 
@@ -1072,8 +1190,8 @@ void XRayAtomicGasMix::peeloffScattering(double& I, double& Q, double& U, double
         // unpolarized isotropic emission; the bias weight is trivially 1 and there is no contribution to Q, U, V
         I = 1.;
 
-        // update the photon packet wavelength to the wavelength of this fluorescence transition
-        lambda = _lambdafluov[scatinfo->species - 2 * numAtoms];
+        // update the photon packet wavelength to the (possibly sampled) wavelength of this fluorescence transition
+        lambda = scatinfo->lambda;
     }
 
     // if we have dispersion, Doppler-shift the outgoing wavelength from the electron rest frame
@@ -1111,8 +1229,8 @@ void XRayAtomicGasMix::performScattering(double lambda, const MaterialState* sta
     // fluorescence, always unpolarized and isotropic
     else
     {
-        // update the photon packet wavelength to the wavelength of this fluorescence transition
-        lambda = _lambdafluov[scatinfo->species - 2 * numAtoms];
+        // update the photon packet wavelength to the (possibly sampled) wavelength of this fluorescence transition
+        lambda = scatinfo->lambda;
 
         // draw a random, isotropic outgoing direction
         bfknew = random()->direction();

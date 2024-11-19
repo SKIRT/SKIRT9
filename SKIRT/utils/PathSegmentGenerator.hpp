@@ -111,7 +111,7 @@ protected:
 
     /** This function returns the path's direction. This value is initialized by the start()
         function and remains immutable during segment generation for the path. */
-    Direction k() { return Direction(_kx, _ky, _kz); }
+    Direction k() { return Direction(_kx, _ky, _kz, false); }
 
     /** This function returns the x component of the path's direction. This value is initialized by
         the start() function and remains immutable during segment generation for the path. */

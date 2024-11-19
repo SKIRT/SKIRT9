@@ -106,6 +106,9 @@ class Units;
     does not perform any unit conversions and the probe is expected to provide values in output
     units.
 
+    - \em projectedUnitFactor: an additional conversion factor from straight to projected
+    quantities, to be provided only in cases where this factor cannot be automatically determined.
+
     - \em description, \em projectedDescription: the user-oriented descriptions corresponding to
     the straight and projected quantities. These strings may differ even if the quantity names or
     unit strings are the same, for example, to indicate the weighting mechanism.
@@ -171,9 +174,9 @@ public:
     using VectorValueInCell = std::function<Vec(int m)>;
 
     /** This is the type declaration for the callback function provided by the spatial grid probe
-        to retrieve the compound value (in output units) of the quantity being probed in the
-        spatial cell with index \f$m\f$. The returned array must have the same number of elements
-        as the \em axis array passed to the writeQuantity() function. */
+        to retrieve the compound value (in internal or output units) of the quantity being probed
+        in the spatial cell with index \f$m\f$. The returned array must have the same number of
+        elements as the \em axis array passed to the writeQuantity() function. */
     using CompoundValueInCell = std::function<Array(int m)>;
 
     /** This is the type declaration for the callback function provided by the spatial grid probe
@@ -259,6 +262,14 @@ public:
     void writeQuantity(string fileid, string projectedFileid, string quantity, string projectedQuantity,
                        string description, string projectedDescription, const Array& axis, string axisUnit,
                        AddColumnDefinitions addColumnDefinitions, CompoundValueInCell valueInCell);
+
+    /** This function causes the form associated with this bridge to output a file for a compound
+        quantity that needs to be accumulated along a path according to the provided information.
+        It should be called only from spatial grid probes. Refer to the class header for more
+        information on the arguments. */
+    void writeQuantity(string fileid, string projectedFileid, string unit, string projectedUnit,
+                       double projectedUnitFactor, string description, string projectedDescription, const Array& axis,
+                       string axisUnit, AddColumnDefinitions addColumnDefinitions, CompoundValueInCell valueInCell);
 
     /** This function causes the form associated with this bridge to output a file for a compound
         quantity that needs to be averaged along a path according to the provided information. It

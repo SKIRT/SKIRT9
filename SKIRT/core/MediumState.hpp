@@ -46,26 +46,68 @@
      - the initCommonStateVariables() function specifies the set of common state variables.
      - the initSpecificStateVariables() function must be called once for each medium component, in
        order of component index, specifying the set of specific state variables for that component.
-     - the initAllocate() function finalizes construction and actually allocates storage.
-     - the initCommunicate() function communicates the state variable values between processes.
+     - the initAllocate() function finalizes construction and actually allocates storage;
+       it initializes all variables to a value of zero.
+     - the setXXX() functions set any nonzero initial variable values required to reflect the input
+       model; this may happen in parallel.
+     - the initCommunicate() function communicates the initialized state variable values between
+       processes.
 
     The initCommonStateVariables() and initSpecificStateVariables() functions each receive a list
-    of StateVariable objects to identify the required state variables (only the identifier is used,
-    the other information is ignored). All required state variables must be listed, including those
-    that should always present. Variables of type Custom must be listed last. Multiple variables of
-    type Custom can be requested by supplying indices in the range \f$ 0 \le k < K\f$, where K is
-    the total number of custom variables. Each of these indices must occur in the list exactly once
-    in increasing order.
+    of StateVariable objects to identify the required state variables. All required state variables
+    must be listed, including those that should always present. Variables of type Custom must be
+    listed last. Multiple variables of type Custom can be requested by supplying indices in the
+    range \f$ 0 \le k < K\f$, where K is the total number of custom variables. Each of these
+    indices must occur in the list exactly once in increasing order.
+
+    <b>Synchronization</b>
+
+    A simulation may update the values of medium state variables, often as part of an iterative
+    process to calculate a self-consistent state. These updates may happen in parallel over cells.
+    After a set of updates, usually at the end of each step in the iterative process, the
+    synchronize() function should be called to broadcast the updates between processes.
+
+    <b>Aggregation</b>
+
+    When a simulation employs an iterative process to calculate a self-consistent medium state, it
+    needs a criterion to determine whether the state has sufficiently converged. Such criterion is
+    often based on aggregate information calculated over all cells in the spatial grid for the
+    current iteration and for one or more previous iterations. This class can calculate and store
+    such aggregate information in the form of "fake" cells that are added at the end of the array
+    of regular cells. The number of stored aggregated states, including current and previous ones,
+    must be specified as the last argument of the initConfiguration() function. If this number is
+    zero, no aggregation is performed.
+
+    Information from the aggregate states can be retrieved using the same functions as those for
+    regular cells. Assuming a number of regular spatial cells \f$M\f$, the current (i.e. most
+    recent) aggregate state has cell index \f$m=M\f$, the previous aggregate state has cell index
+    \f$m=M+1\f$, the one before that has cell index \f$m=M+2\f$, and so forth.
+
+    The calculateAggregate() function should be called at the end of construction, i.e. after
+    initCommunicate(), and at the end of each dynamic medium state update cycle, i.e. after
+    synchronize(). It recalculates the current aggregate state by accumulating information over all
+    spatial cells. The pushAggregate() function should be called at the end of each step in the
+    iterative process. It shifts the existing aggregate states to the next higher cell index,
+    dropping the least recent aggregate state and making room for a new one.
+
+    The current implementation performs the following aggregation. The cell volume is summed over
+    all cells, providing the total volume of the spatial domain: \f$V_\mathrm{tot} = \sum V_m\f$.
+    All variables with quantity type "numbervolumedensity" are summed after multiplication with the
+    cell volume, providing a total number: \f$N_\mathrm{tot} = \sum n_m V_m\f$. Any other variables
+    are not aggregated; i.e. the aggregated values are zero. The aggregated values can be retrieved
+    through the volume(), numberDensity() and custom() functions using the fake cell index
+    corresponding to the desired current or previous state.
 
     <b>Storage</b>
 
     To simplify the storage mechanism, state variables of type \c Vec are split into their three
     components, so that all state variables can considered to be of type \c double. Memory is
     allocated only for state variables that are actually needed. Given the number of spatial cells
-    \f$M\f$, the number of medium components \f$H\f$, the number of common state variables \f$C\f$,
-    and the number of specific state variables \f$S_h\f$ for each medium component \f$h\f$, the
-    number of state variables per spatial cell is \f$K = C+\sum_h S_h\f$ and the grand total number
-    of state variables is \f$N = M (C+\sum_h S_h)\f$.
+    \f$M\f$ (possibly increased by the requested number of aggregate cells), the number of medium
+    components \f$H\f$, the number of common state variables \f$C\f$, and the number of specific
+    state variables \f$S_h\f$ for each medium component \f$h\f$, the number of state variables per
+    spatial cell is \f$K = C+\sum_h S_h\f$ and the grand total number of state variables is \f$N =
+    M (C+\sum_h S_h)\f$.
 
     The MediumState class allocates a single one-dimensional data array of this size \f$N\f$ and
     provides a mapping to locate a particular state variable in this array. This is accomplished by
@@ -75,9 +117,8 @@
 
     Given the offset \f$O_x\f$ for a particular state variable \f$x\f$, a spatial cell index
     \f$m\f$ and a medium component index \f$h\f$, the index of the variable in the data array can
-    be calculated as \f$i=K \times m + O_x\f$ (storing contiguously per cell) or \f$i=M \times O_x
-    + m\f$ (storing contiguously per variable). We can evaluate the performance of these and
-    possibly other mapping schemes.
+    be calculated as \f$i=K \times m + O_x\f$. This implies that variables are stored contiguously
+    per cell.
 
     <b>Access to undefined variables</b>
 
@@ -92,8 +133,10 @@ class MediumState
     //============= Construction =============
 
 public:
-    /** This function initializes the number of spatial cells and number of medium components. */
-    void initConfiguration(int numCells, int numMedia);
+    /** This function initializes the number of spatial cells and number of medium components. If
+        the specified number of aggregate cells is nonzero, the configuration is also prepared to
+        store that number of aggregate states, as described in the class header. */
+    void initConfiguration(int numCells, int numMedia, int numAggregateCells);
 
     /** This function initializes the set of required common state variables. */
     void initCommonStateVariables(const vector<StateVariable>& variables);
@@ -114,8 +157,9 @@ public:
         assumes that the uninitialized variables have a zero value). */
     void initCommunicate();
 
-    //============= Synchronization =============
+    //============= Synchronization and Aggregation =============
 
+public:
     /** This function synchronizes the state variables between processes after each process has
         possibly updated some of their values. The provided vector indicates the cells for which
         the calling process has made some changes. The vector must be of length \em numCells as
@@ -130,6 +174,16 @@ public:
         more processes updated the state of the same cell, the result of the synchronization is
         undefined. */
     std::pair<int, int> synchronize(const vector<UpdateStatus>& cellFlags);
+
+    /** If aggregation has been requested when initializing the configuration, this function
+        calculates the current aggregate state. For more information, see the description of
+        aggregation in the class header. */
+    void calculateAggregate();
+
+    /** If aggregation has been requested when initializing the configuration, this function shifts
+        the previously stored aggregate states to make room for a new current aggregate state. For
+        more information, see the description of aggregation in the class header. */
+    void pushAggregate();
 
     //============= Setting =============
 
@@ -214,10 +268,13 @@ private:
     // data array containing the medium state variables
     Array _data;
 
-    // configuration and offsets used for mapping to indices in the data array
+    // overall configuration
     int _numCells{0};
     int _numMedia{0};
+    int _numAggregateCells{0};
     int _numVars{0};
+
+    // offsets used for mapping common and specific variables (for each medium component) to indices in the data array
     int _off_volu{0};
     int _off_velo{0};
     int _off_mfld{0};
@@ -225,6 +282,9 @@ private:
     vector<int> _off_meta;
     vector<int> _off_temp;
     vector<int> _off_cust;
+
+    // offsets used to aggregate all standard and custom specific variables of quantity type "numbervolumedensity"
+    vector<int> _densityOffsets;
 
     // indices indicating the next item to be initialized; used only during initialization
     int _nextOffset{0};

@@ -27,8 +27,9 @@ void ClumpyGeometryDecorator::setupSelfAfter()
 
 double ClumpyGeometryDecorator::density(Position bfr) const
 {
-    double rhosmooth = (1.0 - _clumpFraction) * _geometry->density(bfr);
+    double rhosmooth = _geometry->density(bfr);
     if (_cutoffClumps && !rhosmooth) return 0.0;  // don't allow clumps outside of smooth distribution
+    rhosmooth *= (1.0 - _clumpFraction);
 
     double rhoclumpy = 0.0;
     double Mclump = _clumpFraction / _numClumps;  // total mass per clump

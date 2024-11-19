@@ -14,6 +14,9 @@ void DistantInstrument::setupSelfBefore()
 {
     Instrument::setupSelfBefore();
 
+    // pass the observer angles to the flux recorder
+    instrumentFluxRecorder()->setObserverAngles(_inclination, _azimuth, _roll);
+
     // configure the flux recorder with the appropriate frame and distances
     if (distance() > 0.)
     {
@@ -44,7 +47,7 @@ void DistantInstrument::setupSelfBefore()
     // calculate relevant directions
     _bfkobs = Direction(_inclination, _azimuth);
     _bfky = Direction(-cosphi * costheta * cosomega - sinphi * sinomega,
-                      -sinphi * costheta * cosomega + cosphi * sinomega, +sintheta * cosomega);
+                      -sinphi * costheta * cosomega + cosphi * sinomega, +sintheta * cosomega, false);
 }
 
 ////////////////////////////////////////////////////////////////////

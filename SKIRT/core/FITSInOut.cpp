@@ -33,7 +33,7 @@ void FITSInOut::read(const SimulationItem* item, string filename, Array& data, i
 
 void FITSInOut::write(const SimulationItem* item, string description, string filename, const Array& data,
                       string dataUnits, int nx, int ny, double incx, double incy, double xc, double yc, string xyUnits,
-                      const Array& z, string zUnits)
+                      const Array& z, string zUnits, const ObserverInfo* obsInfo)
 {
     // Only write the FITS file if this process is the root
     if (ProcessManager::isRoot())
@@ -42,7 +42,7 @@ void FITSInOut::write(const SimulationItem* item, string description, string fil
         string filepath = item->find<FilePaths>()->output(filename + ".fits");
 
         // Write the FITS file
-        FITSInOut::write(filepath, data, dataUnits, nx, ny, incx, incy, xc, yc, xyUnits, z, zUnits);
+        FITSInOut::write(filepath, data, dataUnits, nx, ny, incx, incy, xc, yc, xyUnits, z, zUnits, obsInfo);
 
         // Log the file path
         item->find<Log>()->info(item->typeAndName() + " wrote " + description + " to FITS file " + filepath);
@@ -105,7 +105,7 @@ void FITSInOut::read(string filepath, Array& data, int& nx, int& ny, int& nz)
 ////////////////////////////////////////////////////////////////////
 
 void FITSInOut::write(string filepath, const Array& data, string dataUnits, int nx, int ny, double incx, double incy,
-                      double xc, double yc, string xyUnits, const Array& z, string zUnits)
+                      double xc, double yc, string xyUnits, const Array& z, string zUnits, const ObserverInfo* obsInfo)
 {
     // Get the z-axis size
     //   0:  a single frame that is not part of a datacube
@@ -158,6 +158,16 @@ void FITSInOut::write(string filepath, const Array& data, string dataUnits, int 
     ffpkys(fptr, "CUNIT2", const_cast<char*>(xyUnits.c_str()), "Physical units of the Y-axis", &status);
     ffpkys(fptr, "CTYPE2", " ", "Linear Y coordinates", &status);
     if (nz) ffpkys(fptr, "CUNIT3", const_cast<char*>(zUnits.c_str()), "Physical units of the Z-axis", &status);
+    if (obsInfo)
+    {
+        ffpkyd(fptr, "CROTA1", obsInfo->inclination, 9, "Inclination angle, in deg", &status);
+        ffpkyd(fptr, "CROTA2", obsInfo->azimuth, 9, "Azimuth angle, in deg", &status);
+        ffpkyd(fptr, "CROTA3", obsInfo->roll, 9, "Roll angle, in deg", &status);
+        ffpkyd(fptr, "REDSHIFT", obsInfo->redshift, 9, "Redshift (if zero, distances are equal)", &status);
+        ffpkyd(fptr, "DISTLUMI", obsInfo->luminosityDistance, 9, "Luminosity distance", &status);
+        ffpkyd(fptr, "DISTANGD", obsInfo->angularDiameterDistance, 9, "Angular diameter distance", &status);
+        ffpkys(fptr, "DISTUNIT", const_cast<char*>(obsInfo->distanceUnits.c_str()), "Units of distances", &status);
+    }
     if (status) report_error(filepath, "writing", status);
 
     // Write the array of pixels to the image

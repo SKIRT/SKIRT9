@@ -88,6 +88,13 @@ double Random::gauss()
 
 //////////////////////////////////////////////////////////////////////
 
+double Random::lorentz()
+{
+    return std::tan(M_PI * (uniform() - 0.5));
+}
+
+//////////////////////////////////////////////////////////////////////
+
 double Random::expon()
 {
     return -log(uniform());
@@ -153,7 +160,7 @@ Direction Random::direction(Direction bfk, double costheta)
         kynew = -sintheta / root * (ky * kz * cosphi + kx * sinphi) + ky * costheta;
         kznew = root * sintheta * cosphi + kz * costheta;
     }
-    return Direction(kxnew, kynew, kznew);
+    return Direction(kxnew, kynew, kznew, false);
 }
 
 //////////////////////////////////////////////////////////////////////

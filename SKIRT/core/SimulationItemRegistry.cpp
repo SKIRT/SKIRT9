@@ -18,6 +18,7 @@
 #include "AllSkyProjectionForm.hpp"
 #include "AnnulusGeometry.hpp"
 #include "AtPositionsForm.hpp"
+#include "AxPowerLawRedistributeGeometryDecorator.hpp"
 #include "BandLuminosityNormalization.hpp"
 #include "BegemannPorousAluminaGrainComposition.hpp"
 #include "BlackBodySED.hpp"
@@ -84,6 +85,7 @@
 #include "FileIndexedSEDFamily.hpp"
 #include "FileLineSED.hpp"
 #include "FileMesh.hpp"
+#include "FilePolarizedPointSource.hpp"
 #include "FileSED.hpp"
 #include "FileSSPSEDFamily.hpp"
 #include "FileTreeSpatialGrid.hpp"
@@ -100,6 +102,7 @@
 #include "GrainPopulation.hpp"
 #include "HEALPixSkyInstrument.hpp"
 #include "HammerAitoffProjection.hpp"
+#include "HirashitaLogNormalGrainSizeDistribution.hpp"
 #include "HofmeisterPericlaseGrainComposition.hpp"
 #include "HollowRadialVectorField.hpp"
 #include "HyperboloidGeometry.hpp"
@@ -208,6 +211,7 @@
 #include "Random.hpp"
 #include "ReadFits3DGeometry.hpp"
 #include "ReadFitsGeometry.hpp"
+#include "RedistributeGeometryDecorator.hpp"
 #include "ResolutionBorderWavelengthGrid.hpp"
 #include "ResolutionWavelengthGrid.hpp"
 #include "RingGeometry.hpp"
@@ -216,6 +220,7 @@
 #include "SEDInstrument.hpp"
 #include "SIUnits.hpp"
 #include "ScaledGaussianSmoothingKernel.hpp"
+#include "SecondaryDustLuminosityProbe.hpp"
 #include "SecondaryLineLuminosityProbe.hpp"
 #include "SelectDustMixFamily.hpp"
 #include "SersicGeometry.hpp"
@@ -230,6 +235,7 @@
 #include "SpatialGridPlotProbe.hpp"
 #include "SpatialGridSourceDensityProbe.hpp"
 #include "SpecificLuminosityNormalization.hpp"
+#include "SphePowerLawRedistributeGeometryDecorator.hpp"
 #include "Sphere1DSpatialGrid.hpp"
 #include "Sphere2DSpatialGrid.hpp"
 #include "SphericalBackgroundSource.hpp"
@@ -237,7 +243,9 @@
 #include "SpheroidalGeometryDecorator.hpp"
 #include "SpheroidalGraphiteGrainComposition.hpp"
 #include "SpheroidalSilicateGrainComposition.hpp"
+#include "SpinFlipAbsorptionMix.hpp"
 #include "SpinFlipHydrogenGasMix.hpp"
+#include "SpinFlipSEDFamily.hpp"
 #include "SpiralStructureGeometryDecorator.hpp"
 #include "Starburst99SED.hpp"
 #include "Starburst99SEDFamily.hpp"
@@ -320,6 +328,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<StellarSurfaceSource>();
     ItemRegistry::add<CubicalBackgroundSource>();
     ItemRegistry::add<SphericalBackgroundSource>();
+    ItemRegistry::add<FilePolarizedPointSource>();
 
     // luminosity normalizations
     ItemRegistry::add<LuminosityNormalization>();
@@ -368,6 +377,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<FileIndexedSEDFamily>();
     ItemRegistry::add<MappingsSEDFamily>();
     ItemRegistry::add<ToddlersSEDFamily>();
+    ItemRegistry::add<SpinFlipSEDFamily>();
     ItemRegistry::add<LyaGaussianSEDFamily>();
     ItemRegistry::add<LyaDoublePeakedSEDFamily>();
     ItemRegistry::add<LyaSEDFamilyDecorator>();
@@ -451,6 +461,9 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<SpiralStructureGeometryDecorator>();
     ItemRegistry::add<ClumpyGeometryDecorator>();
     ItemRegistry::add<CombineGeometryDecorator>();
+    ItemRegistry::add<RedistributeGeometryDecorator>();
+    ItemRegistry::add<AxPowerLawRedistributeGeometryDecorator>();
+    ItemRegistry::add<SphePowerLawRedistributeGeometryDecorator>();
 
     // smoothing kernels
     ItemRegistry::add<SmoothingKernel>();
@@ -556,11 +569,12 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<FragmentDustMixDecorator>();
 
     ItemRegistry::add<ElectronMix>();
-    ItemRegistry::add<LyaNeutralHydrogenGasMix>();
+    ItemRegistry::add<SpinFlipAbsorptionMix>();
+    ItemRegistry::add<SpinFlipHydrogenGasMix>();
     ItemRegistry::add<XRayAtomicGasMix>();
     ItemRegistry::add<EmittingGasMix>();
-    ItemRegistry::add<SpinFlipHydrogenGasMix>();
     ItemRegistry::add<NonLTELineGasMix>();
+    ItemRegistry::add<LyaNeutralHydrogenGasMix>();
     ItemRegistry::add<TrivialGasMix>();
 
     // material mix families
@@ -581,6 +595,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ZubkoSilicateGrainSizeDistribution>();
     ItemRegistry::add<ZubkoGraphiteGrainSizeDistribution>();
     ItemRegistry::add<ZubkoPAHGrainSizeDistribution>();
+    ItemRegistry::add<HirashitaLogNormalGrainSizeDistribution>();
     ItemRegistry::add<FileGrainSizeDistribution>();
     ItemRegistry::add<ListGrainSizeDistribution>();
 
@@ -679,6 +694,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<MagneticFieldProbe>();
     ItemRegistry::add<CustomStateProbe>();
     ItemRegistry::add<RadiationFieldProbe>();
+    ItemRegistry::add<SecondaryDustLuminosityProbe>();
     ItemRegistry::add<SecondaryLineLuminosityProbe>();
     //   .. properties
     ItemRegistry::add<SpatialCellPropertiesProbe>();

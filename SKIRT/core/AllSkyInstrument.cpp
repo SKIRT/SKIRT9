@@ -100,7 +100,7 @@ Direction AllSkyInstrument::bfkobs(const Position& bfr) const
     if (d <= _radius) return Direction();
 
     // otherwise return a unit vector in the direction from launch to observer
-    return Direction(k / d);
+    return Direction(k / d, false);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -117,10 +117,9 @@ Direction AllSkyInstrument::bfky(const Position& bfr) const
     // vector in the plane normal to the line launch-observer
     // oriented along the projection of the up direction in that plane
     Vec ku(_Ux, _Uy, _Uz);
-    Vec ky = Vec::cross(k, Vec::cross(ku, k));
 
     // return unit vector along y-axis
-    return Direction(ky / ky.norm());
+    return Direction(Vec::cross(k, Vec::cross(ku, k)), true);
 }
 
 ////////////////////////////////////////////////////////////////////

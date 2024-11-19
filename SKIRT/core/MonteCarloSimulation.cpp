@@ -291,6 +291,8 @@ void MonteCarloSimulation::runPrimaryEmissionIterations()
             string segment = "primary emission iteration " + std::to_string(iter);
             TimeLogger logger(log(), segment);
 
+            mediumSystem()->beginDynamicMediumStateIteration();
+
             // clear the radiation field
             mediumSystem()->clearRadiationField(true);
 
@@ -347,6 +349,8 @@ void MonteCarloSimulation::runSecondaryEmissionIterations()
         {
             string segment = "secondary emission iteration " + std::to_string(iter);
             TimeLogger logger(log(), segment);
+
+            mediumSystem()->beginDynamicMediumStateIteration();
 
             // clear the secondary radiation field
             mediumSystem()->clearRadiationField(false);
@@ -423,6 +427,8 @@ void MonteCarloSimulation::runMergedEmissionIterations()
             string segment1 = "merged primary emission iteration " + std::to_string(iter);
             string segment2 = "merged secondary emission iteration " + std::to_string(iter);
             TimeLogger logger(log(), segment);
+
+            mediumSystem()->beginDynamicMediumStateIteration();
 
             // clear the radiation field
             mediumSystem()->clearRadiationField(true);
