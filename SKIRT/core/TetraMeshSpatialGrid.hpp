@@ -9,7 +9,8 @@
 #include "BoxSpatialGrid.hpp"
 #include "DensityInCellInterface.hpp"
 #include "Medium.hpp"
-class TetraMeshSnapshot;
+
+class tetgenio;
 
 //////////////////////////////////////////////////////////////////////
 
@@ -33,9 +34,7 @@ class TetraMeshSpatialGrid : public BoxSpatialGrid, public DensityInCellInterfac
         ENUM_VAL(Policy, DustDensity, "random from dust density distribution")
         ENUM_VAL(Policy, ElectronDensity, "random from electron density distribution")
         ENUM_VAL(Policy, GasDensity, "random from gas density distribution")
-        ENUM_VAL(Policy, File, "loaded from text column data file")
         ENUM_VAL(Policy, ImportedSites, "positions of particles, sites or cells in imported distribution")
-        ENUM_VAL(Policy, ImportedMesh, "employ imported Tetra mesh in medium system")
     ENUM_END()
 
     ITEM_CONCRETE(TetraMeshSpatialGrid, BoxSpatialGrid, "a Tetra tessellation-based spatial grid")
@@ -44,7 +43,7 @@ class TetraMeshSpatialGrid : public BoxSpatialGrid, public DensityInCellInterfac
         PROPERTY_ENUM(policy, Policy, "the policy for determining the positions of the sites")
         ATTRIBUTE_DEFAULT_VALUE(policy, "DustDensity")
 
-        PROPERTY_INT(numSites, "the number of random sites (or cells in the grid)")
+        PROPERTY_INT(numSites, "the number of random sites to be used as vertices")
         ATTRIBUTE_MIN_VALUE(numSites, "5")
         ATTRIBUTE_DEFAULT_VALUE(numSites, "500")
         ATTRIBUTE_RELEVANT_IF(numSites, "policyUniform|policyCentralPeak|policyDustDensity|"
@@ -55,10 +54,6 @@ class TetraMeshSpatialGrid : public BoxSpatialGrid, public DensityInCellInterfac
 
         PROPERTY_BOOL(refine, "refine the grid to have higher quality cells by adding more vertices")
         ATTRIBUTE_DEFAULT_VALUE(refine, "false");
-
-        PROPERTY_DOUBLE(mindihedral, "the minimum dihedral angle per tetrahedron")
-        ATTRIBUTE_DEFAULT_VALUE(mindihedral, "3.5")
-        ATTRIBUTE_RELEVANT_IF(mindihedral, "refine")
 
     ITEM_END()
 
@@ -74,6 +69,20 @@ protected:
         configured policy, and finally constructs the Tetra tessellation through an instance of
         the TetraMeshSnapshot class. */
     void setupSelfBefore() override;
+
+private:
+    class Node;
+    class Face;
+    class Tetra;
+
+    /** Build the Delaunay triangulation */
+    void buildDelaunay(tetgenio& out);
+
+    void refineDelaunay(tetgenio& in, tetgenio& out);
+
+    void buildMesh();
+
+    void storeTetrahedra(const tetgenio& out, bool restoreVertices);
 
     //======================== Other Functions =======================
 
@@ -127,12 +136,43 @@ protected:
         class. */
     bool offersInterface(const std::type_info& interfaceTypeInfo) const override;
 
+private:
+    Node* buildTree(vector<int>::iterator first, vector<int>::iterator last, int depth) const;
+
+    void buildSearchPerBlock();
+
     //======================== Data Members ========================
 
 private:
+    Log* _log{nullptr};
+
+    // data members initialized during configuration
+    double _eps{0.};  // small fraction of extent
+    int _numTetra;
+    int _numVertices; // vertices are added/removed as the grid is built and refined
+
+    // data members initialized when processing snapshot input and further completed by BuildMesh()
+    vector<Tetra*> _tetrahedra;
+    vector<Vec*> _vertices;
+    vector<Vec*> _centroids;
+
+    // data members initialized when processing snapshot input, but only if a density policy has been set
+    Array _rhov;       // density for each cell (not normalized)
+    double _mass{0.};  // total effective mass
+
+    // data members initialized by BuildSearch()
+    int _nb{0};                       // number of blocks in each dimension (limit for indices i,j,k)
+    int _nb2{0};                      // nb*nb
+    int _nb3{0};                      // nb*nb*nb
+    vector<vector<int>> _blocklists;  // list of cell indices per block, indexed on i*_nb2+j*_nb+k
+    vector<Node*> _blocktrees;        // root node of search tree or null for each block, indexed on i*_nb2+j*_nb+k
+
+    // allow our path segment generator to access our private data members
+    class MySegmentGenerator;
+    friend class MySegmentGenerator;
+
     // data members initialized during setup
-    TetraMeshSnapshot* _mesh{nullptr};  // Tetra mesh snapshot created here or obtained from medium component
-    double _norm{0.};                   // in the latter case, normalization factor obtained from medium component
+    double _norm{0.};  // in the latter case, normalization factor obtained from medium component
 
     // data members initialized by setupSelfBefore()
     Random* _random{nullptr};

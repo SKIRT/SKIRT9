@@ -77,7 +77,6 @@ public:
 
 private:
     class Node;
-
     class Face;
     class Tetra;
 

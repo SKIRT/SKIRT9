@@ -76,7 +76,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <functional>
 
 // The types 'intptr_t' and 'uintptr_t' are signed and unsigned integer types,
 //   respectively. They are guaranteed to be the same width as a pointer.
@@ -174,9 +173,7 @@ public:
     typedef void (*GetSteinerOnFace)(void*, int, REAL*, REAL*);
 
     // A callback function for mesh refinement.
-    // typedef bool (* TetSizeFunc)(REAL*, REAL*, REAL*, REAL*, REAL*, REAL);
-    // SKIRT: changed this to std::function for lambda with captures
-    typedef std::function<bool(REAL*, REAL*, REAL*, REAL*, REAL)> TetSizeFunc;
+    typedef bool (*TetSizeFunc)(REAL*, REAL*, REAL*, REAL*, REAL*, REAL);
 
     // Items are numbered starting from 'firstnumber' (0 or 1), default is 0.
     int firstnumber;
@@ -2521,15 +2518,9 @@ public:
         initializetetgenmesh();
     }
 
-    tetgenmesh()
-    {
-        initializetetgenmesh();
-    }
+    tetgenmesh() { initializetetgenmesh(); }
 
-    ~tetgenmesh()
-    {
-        freememory();
-    }  // ~tetgenmesh()
+    ~tetgenmesh() { freememory(); }  // ~tetgenmesh()
 
 };  // End of class tetgenmesh.
 
@@ -2560,7 +2551,7 @@ void tetrahedralize(char* switches, tetgenio* in, tetgenio* out, tetgenio* addin
 //                                                                            //
 //============================================================================//
 
-inline void terminatetetgen(tetgenmesh* /*m*/, int x)
+inline void terminatetetgen(tetgenmesh* m, int x)
 {
 #ifdef TETLIBRARY
     throw x;
