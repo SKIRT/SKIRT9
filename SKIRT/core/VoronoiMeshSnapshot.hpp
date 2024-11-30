@@ -181,7 +181,7 @@ public:
         argument is true, the function performs a single relaxation step on the site positions. */
     VoronoiMeshSnapshot(const SimulationItem* item, const Box& extent, const vector<Vec>& sites, bool relax);
 
-    //=========== Private construction ==========
+    //========== Private construction ==========
 
 private:
     /** Private class to hold the information about a Voronoi cell that is relevant for calculating

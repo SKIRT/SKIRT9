@@ -8,7 +8,9 @@
 
 #include "BoxSpatialGrid.hpp"
 #include "DensityInCellInterface.hpp"
+#include "Log.hpp"
 #include "Medium.hpp"
+#include "PathSegmentGenerator.hpp"
 
 class tetgenio;
 
@@ -25,7 +27,7 @@ class tetgenio;
 
     Furthermore, the user can opt to perform a relaxation step on the site positions to avoid
     overly elongated cells. */
-class TetraMeshSpatialGrid : public BoxSpatialGrid, public DensityInCellInterface
+class TetraMeshSpatialGrid : public BoxSpatialGrid
 {
     /** The enumeration type indicating the policy for determining the positions of the sites. */
     ENUM_DEF(Policy, Uniform, CentralPeak, DustDensity, ElectronDensity, GasDensity, File, ImportedSites, ImportedMesh)
@@ -70,19 +72,40 @@ protected:
         the TetraMeshSnapshot class. */
     void setupSelfBefore() override;
 
+    //==================== Private construction ====================
 private:
     class Node;
     class Face;
     class Tetra;
 
-    /** Build the Delaunay triangulation */
+    void buildMesh();
+
     void buildDelaunay(tetgenio& out);
 
     void refineDelaunay(tetgenio& in, tetgenio& out);
 
-    void buildMesh();
+    void storeTetrahedra(const tetgenio& out, bool storeVertices);
 
-    void storeTetrahedra(const tetgenio& out, bool restoreVertices);
+    /** Private function to recursively build a binary search tree (see
+        en.wikipedia.org/wiki/Kd-tree) */
+    Node* buildTree(vector<int>::iterator first, vector<int>::iterator last, int depth) const;
+
+    /** This private function builds data structures that allow accelerating the operation of the
+        cellIndex() function. It assumes that the Voronoi mesh has already been built.
+
+        The domain is partitioned using a linear cubodial grid into cells that are called \em
+        blocks. For each block, the function builds and stores a list of all Voronoi cells that
+        possibly overlap that block. Retrieving the list of cells possibly overlapping a given
+        point in the domain then comes down to locating the block containing the point (which is
+        trivial since the grid is linear). The current implementation uses a Voronoi cell's
+        enclosing cuboid to test for intersection with a block. Performing a precise intersection
+        test is \em really slow and the shortened block lists don't substantially accelerate the
+        cellIndex() function.
+
+        To further reduce the search time within blocks that overlap with a large number of cells,
+        the function builds a binary search tree on the cell sites for those blocks (see for example
+        <a href="http://en.wikipedia.org/wiki/Kd-tree">en.wikipedia.org/wiki/Kd-tree</a>). */
+    void buildSearchPerBlock();
 
     //======================== Other Functions =======================
 
@@ -119,46 +142,20 @@ public:
         produce the coordinates of the Tetra cell vertices. */
     void writeGridPlotFiles(const SimulationItem* probe) const override;
 
-    /** This function implements the DensityInCellInterface interface. It returns the number
-        density for medium component \f$h\f$ in the grid cell with index \f$m\f$. For a Tetra
-        mesh grid, this interface can be offered only if the "ImportedMesh" policy has been
-        configured, and the medium system consists of a single component, which then, by
-        definition, supplies the Tetra mesh. Thus, the component index \f$h\f$ passed to this
-        function should always be zero; in fact, its value is actually ignored. */
-    double numberDensity(int h, int m) const override;
-
-protected:
-    /** This function is used by the interface() function to ensure that the receiving item can
-        actually offer the specified interface. If the requested interface is the
-        DensityInCellInterface, the implementation in this class returns true if the "ImportedMesh"
-        policy has been configured and the medium system consists of a single component, and false
-        otherwise. For other requested interfaces, the function invokes its counterpart in the base
-        class. */
-    bool offersInterface(const std::type_info& interfaceTypeInfo) const override;
-
-private:
-    Node* buildTree(vector<int>::iterator first, vector<int>::iterator last, int depth) const;
-
-    void buildSearchPerBlock();
-
     //======================== Data Members ========================
 
 private:
+    // data members initialized by setupSelfBefore()
     Log* _log{nullptr};
 
     // data members initialized during configuration
     double _eps{0.};  // small fraction of extent
-    int _numTetra;
-    int _numVertices; // vertices are added/removed as the grid is built and refined
 
-    // data members initialized when processing snapshot input and further completed by BuildMesh()
+    int _numTetra;
+    int _numVertices;  // vertices are added/removed as the grid is built and refined
     vector<Tetra*> _tetrahedra;
     vector<Vec*> _vertices;
     vector<Vec*> _centroids;
-
-    // data members initialized when processing snapshot input, but only if a density policy has been set
-    Array _rhov;       // density for each cell (not normalized)
-    double _mass{0.};  // total effective mass
 
     // data members initialized by BuildSearch()
     int _nb{0};                       // number of blocks in each dimension (limit for indices i,j,k)
@@ -170,35 +167,6 @@ private:
     // allow our path segment generator to access our private data members
     class MySegmentGenerator;
     friend class MySegmentGenerator;
-
-    // data members initialized during setup
-    double _norm{0.};  // in the latter case, normalization factor obtained from medium component
-
-    // data members initialized by setupSelfBefore()
-    Random* _random{nullptr};
-    int _numSamples{0};
-
-    // lists of medium components of each material type;
-    // list remains empty if no criteria are enabled for the corresponding material type
-    vector<Medium*> _dustMedia;
-    vector<Medium*> _electronMedia;
-    vector<Medium*> _gasMedia;
-
-    // flags become true if corresponding criterion is enabled
-    // (i.e. configured maximum is nonzero and material type is present)
-    bool _hasAny{false};
-    bool _hasDustAny{false};
-    bool _hasDustFraction{false};
-    bool _hasDustOpticalDepth{false};
-    bool _hasDustDensityDispersion{false};
-    bool _hasElectronFraction{false};
-    bool _hasGasFraction{false};
-
-    // cached values for each material type (valid if corresponding flag is enabled)
-    double _dustMass{0.};
-    double _dustKappa{0.};
-    double _electronNumber{0.};
-    double _gasNumber{0.};
 };
 
 //////////////////////////////////////////////////////////////////////

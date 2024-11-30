@@ -6,20 +6,23 @@
 #include "TetraMeshSpatialGrid.hpp"
 #include "Configuration.hpp"
 #include "FatalError.hpp"
-#include "Log.hpp"
 #include "MediumSystem.hpp"
 #include "NR.hpp"
-#include "PathSegmentGenerator.hpp"
 #include "Random.hpp"
 #include "SiteListInterface.hpp"
 #include "SpatialGridPlotFile.hpp"
 #include "StringUtils.hpp"
-#include "TetraMeshInterface.hpp"
 #include "tetgen.h"
 
 //////////////////////////////////////////////////////////////////////
 
-TetraMeshSpatialGrid::~TetraMeshSpatialGrid() {}
+TetraMeshSpatialGrid::~TetraMeshSpatialGrid()
+{
+    for (auto vertex : _vertices) delete vertex;
+    for (auto centroid : _centroids) delete centroid;
+    for (auto tetra : _tetrahedra) delete tetra;  // vertices are already deleted
+    for (auto tree : _blocktrees) delete tree;
+}
 
 //////////////////////////////////////////////////////////////////////
 
@@ -530,6 +533,7 @@ void TetraMeshSpatialGrid::setupSelfBefore()
     BoxSpatialGrid::setupSelfBefore();
 
     _log = find<Log>();
+    _eps = 1e-12 * widths().norm();
 
     // determine an appropriate set of sites and construct the Tetra mesh
     switch (_policy)
@@ -692,12 +696,12 @@ void TetraMeshSpatialGrid::refineDelaunay(tetgenio& in, tetgenio& out)
     _log->info("Refined triangulation");
 }
 
-void TetraMeshSpatialGrid::storeTetrahedra(const tetgenio& out, bool restoreVertices)
+void TetraMeshSpatialGrid::storeTetrahedra(const tetgenio& out, bool storeVertices)
 {
     // tranfser TetGen data to TetraMeshSpatialGrid data containers
     _numTetra = out.numberoftetrahedra;
 
-    if (restoreVertices)
+    if (storeVertices)
     {
         // delete old vertices
         for (int i = 0; i < _numVertices; i++) delete _vertices[i];
@@ -828,13 +832,6 @@ Position TetraMeshSpatialGrid::randomPositionInCell(int m) const
 
 //////////////////////////////////////////////////////////////////////
 
-std::unique_ptr<PathSegmentGenerator> TetraMeshSpatialGrid::createPathSegmentGenerator() const
-{
-    return std::make_unique<MySegmentGenerator>(this);
-}
-
-//////////////////////////////////////////////////////////////////////
-
 void TetraMeshSpatialGrid::writeGridPlotFiles(const SimulationItem* probe) const
 {
     // create the plot files
@@ -883,25 +880,6 @@ void TetraMeshSpatialGrid::writeGridPlotFiles(const SimulationItem* probe) const
 }
 
 //////////////////////////////////////////////////////////////////////
-
-double TetraMeshSpatialGrid::numberDensity(int /*h*/, int m) const
-{
-    return _norm * _rhov[m];
-}
-
-//////////////////////////////////////////////////////////////////////
-
-bool TetraMeshSpatialGrid::offersInterface(const std::type_info& interfaceTypeInfo) const
-{
-    if (interfaceTypeInfo == typeid(DensityInCellInterface))
-    {
-        return false;
-        // if (_policy != Policy::ImportedMesh) return false;
-        // auto ms = find<MediumSystem>(false);
-        // return ms && ms->media().size() == 1;
-    }
-    return SpatialGrid::offersInterface(interfaceTypeInfo);
-}
 
 int TetraMeshSpatialGrid::cellIndex(Position bfr) const
 {
@@ -962,6 +940,9 @@ int TetraMeshSpatialGrid::cellIndex(Position bfr) const
     _log->error("cellIndex failed to find the tetrahedron");
     return -1;
 }
+
+//////////////////////////////////////////////////////////////////////
+
 class TetraMeshSpatialGrid::MySegmentGenerator : public PathSegmentGenerator
 {
     const TetraMeshSpatialGrid* _grid{nullptr};
@@ -1047,5 +1028,12 @@ public:
         return false;
     }
 };
+
+//////////////////////////////////////////////////////////////////////
+
+std::unique_ptr<PathSegmentGenerator> TetraMeshSpatialGrid::createPathSegmentGenerator() const
+{
+    return std::make_unique<MySegmentGenerator>(this);
+}
 
 //////////////////////////////////////////////////////////////////////
