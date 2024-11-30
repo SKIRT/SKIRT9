@@ -46,13 +46,10 @@ class TetraMeshSpatialGrid : public BoxSpatialGrid
         ATTRIBUTE_DEFAULT_VALUE(policy, "DustDensity")
 
         PROPERTY_INT(numSites, "the number of random sites to be used as vertices")
-        ATTRIBUTE_MIN_VALUE(numSites, "5")
+        ATTRIBUTE_MIN_VALUE(numSites, "4")
         ATTRIBUTE_DEFAULT_VALUE(numSites, "500")
         ATTRIBUTE_RELEVANT_IF(numSites, "policyUniform|policyCentralPeak|policyDustDensity|"
                                         "policyElectronDensity|policyGasDensity")
-
-        PROPERTY_STRING(filename, "the name of the file containing the site positions")
-        ATTRIBUTE_RELEVANT_IF(filename, "policyFile")
 
         PROPERTY_BOOL(refine, "refine the grid to have higher quality cells by adding more vertices")
         ATTRIBUTE_DEFAULT_VALUE(refine, "false");

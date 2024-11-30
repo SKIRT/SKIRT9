@@ -16,16 +16,6 @@
 
 //////////////////////////////////////////////////////////////////////
 
-TetraMeshSpatialGrid::~TetraMeshSpatialGrid()
-{
-    for (auto vertex : _vertices) delete vertex;
-    for (auto centroid : _centroids) delete centroid;
-    for (auto tetra : _tetrahedra) delete tetra;  // vertices are already deleted
-    for (auto tree : _blocktrees) delete tree;
-}
-
-//////////////////////////////////////////////////////////////////////
-
 namespace
 {
     // function to erase null pointers from a vector of pointers in one go; returns the new size
@@ -108,6 +98,116 @@ namespace
 }
 
 ////////////////////////////////////////////////////////////////////
+
+TetraMeshSpatialGrid::~TetraMeshSpatialGrid()
+{
+    for (auto vertex : _vertices) delete vertex;
+    for (auto centroid : _centroids) delete centroid;
+    for (auto tetra : _tetrahedra) delete tetra;  // vertices are already deleted
+    for (auto tree : _blocktrees) delete tree;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void TetraMeshSpatialGrid::setupSelfBefore()
+{
+    BoxSpatialGrid::setupSelfBefore();
+
+    _log = find<Log>();
+    _eps = 1e-12 * widths().norm();
+
+    // determine an appropriate set of sites and construct the Tetra mesh
+    switch (_policy)
+    {
+        case Policy::Uniform:
+        {
+            auto random = find<Random>();
+            _vertices.resize(_numSites);
+            for (int m = 0; m != _numSites; ++m) _vertices[m] = new Vec((random->position(extent())));
+            break;
+        }
+        case Policy::CentralPeak:
+        {
+            auto random = find<Random>();
+            const int a = 1000;  // steepness of the peak; the central 1/a portion is NOT covered
+            const double rscale = extent().rmax().norm();
+            _vertices.resize(_numSites);
+            _vertices[0] = new Vec(0, 0, 0);
+            for (int m = 1; m != _numSites;)  // skip first particle so that it remains (0,0,0)
+            {
+                double r = rscale * pow(1. / a, random->uniform());  // random distribution according to 1/x
+                Direction k = random->direction();
+                Vec p = Position(r, k);
+                if (extent().contains(p)) _vertices[m++] = new Vec(p);  // discard any points outside of the domain
+            }
+            break;
+        }
+        case Policy::DustDensity:
+        {
+            // build a list of media that have this material type with corresponding weights
+            vector<Medium*> media;
+            vector<double> weights;
+            auto ms = find<MediumSystem>();
+            for (auto medium : ms->media())
+                if (medium->mix()->isDust()) media.push_back(medium);
+            for (auto medium : media) weights.push_back(medium->mass());
+            vector<Vec> sites = sampleMedia(media, weights, extent(), _numSites);
+            int n = sites.size();
+            _vertices.resize(n);
+            for (int m = 0; m != n; ++m) _vertices[m] = new Vec(sites[m]);
+            break;
+        }
+        case Policy::ElectronDensity:
+        {
+            // build a list of media that have this material type with corresponding weights
+            vector<Medium*> media;
+            vector<double> weights;
+            auto ms = find<MediumSystem>();
+            for (auto medium : ms->media())
+                if (medium->mix()->isElectrons()) media.push_back(medium);
+            for (auto medium : media) weights.push_back(medium->number());
+            vector<Vec> sites = sampleMedia(media, weights, extent(), _numSites);
+            int n = sites.size();
+            _vertices.resize(n);
+            for (int m = 0; m != n; ++m) _vertices[m] = new Vec(sites[m]);
+            break;
+        }
+        case Policy::GasDensity:
+        {
+            // build a list of media that have this material type with corresponding weights
+            vector<Medium*> media;
+            vector<double> weights;
+            auto ms = find<MediumSystem>();
+            for (auto medium : ms->media())
+                if (medium->mix()->isGas()) media.push_back(medium);
+            for (auto medium : media) weights.push_back(medium->number());
+            vector<Vec> sites = sampleMedia(media, weights, extent(), _numSites);
+            int n = sites.size();
+            _vertices.resize(n);
+            for (int m = 0; m != n; ++m) _vertices[m] = new Vec(sites[m]);
+            break;
+        }
+        case Policy::ImportedSites:
+        {
+            auto sli = find<MediumSystem>()->interface<SiteListInterface>(2);
+            // prepare the data
+            int n = sli->numSites();
+            _vertices.resize(n);
+            for (int m = 0; m != n; ++m) _vertices[m] = new Vec(sli->sitePosition(m));
+            break;
+        }
+    }
+
+    if (_vertices.empty())
+    {
+        throw FATALERROR("No vertices available for mesh generation");
+    }
+
+    buildMesh();
+    buildSearchPerBlock();
+}
+
+//////////////////////////////////////////////////////////////////////
 
 struct TetraMeshSpatialGrid::Face
 {
@@ -442,189 +542,7 @@ public:
     }
 };
 
-TetraMeshSpatialGrid::Node* TetraMeshSpatialGrid::buildTree(vector<int>::iterator first, vector<int>::iterator last,
-                                                            int depth) const
-{
-    auto length = last - first;
-    if (length > 0)
-    {
-        auto median = length >> 1;
-        std::nth_element(first, first + median, last, [this, depth](int m1, int m2) {
-            return m1 != m2 && lessthan(*_centroids[m1], *_centroids[m2], depth % 3);
-        });
-        return new TetraMeshSpatialGrid::Node(*(first + median), depth, buildTree(first, first + median, depth + 1),
-                                              buildTree(first + median + 1, last, depth + 1));
-    }
-    return nullptr;
-}
-
 ////////////////////////////////////////////////////////////////////
-
-void TetraMeshSpatialGrid::buildSearchPerBlock()
-{
-    // abort if there are no cells
-    if (!_numTetra) return;
-
-    _log->info("Building data structures to accelerate searching the tetrahedralisation");
-
-    // -------------  block lists  -------------
-    _nb = max(3, min(250, static_cast<int>(cbrt(_numTetra))));
-    _nb2 = _nb * _nb;
-    _nb3 = _nb * _nb * _nb;
-
-    // initialize a vector of nb * nb * nb lists
-    _blocklists.resize(_nb3);
-
-    // we add the tetrahedra to all blocks they potentially overlap with
-    // this will slow down the search tree but if no search tree is present
-    // we can simply loop over all tetrahedra inside the block
-    int i1, j1, k1, i2, j2, k2;
-    for (int c = 0; c != _numTetra; ++c)
-    {
-        cellIndices(i1, j1, k1, _tetrahedra[c]->rmin() - Vec(_eps, _eps, _eps), _nb, _nb, _nb);
-        cellIndices(i2, j2, k2, _tetrahedra[c]->rmax() + Vec(_eps, _eps, _eps), _nb, _nb, _nb);
-        for (int i = i1; i <= i2; i++)
-            for (int j = j1; j <= j2; j++)
-                for (int k = k1; k <= k2; k++) _blocklists[i * _nb2 + j * _nb + k].push_back(c);
-    }
-
-    // compile block list statistics
-    int minRefsPerBlock = INT_MAX;
-    int maxRefsPerBlock = 0;
-    int64_t totalBlockRefs = 0;
-    for (int b = 0; b < _nb3; b++)
-    {
-        int refs = _blocklists[b].size();
-        totalBlockRefs += refs;
-        minRefsPerBlock = min(minRefsPerBlock, refs);
-        maxRefsPerBlock = max(maxRefsPerBlock, refs);
-    }
-    double avgRefsPerBlock = double(totalBlockRefs) / _nb3;
-
-    // log block list statistics
-    _log->info("  Number of blocks in search grid: " + std::to_string(_nb3) + " (" + std::to_string(_nb) + "^3)");
-    _log->info("  Average number of cells per block: " + StringUtils::toString(avgRefsPerBlock, 'f', 1));
-    _log->info("  Minimum number of cells per block: " + std::to_string(minRefsPerBlock));
-    _log->info("  Maximum number of cells per block: " + std::to_string(maxRefsPerBlock));
-
-    // -------------  search trees  -------------
-
-    // for each block that contains more than a predefined number of cells,
-    // construct a search tree on the site locations of the cells
-    _blocktrees.resize(_nb3);
-    for (int b = 0; b < _nb3; b++)
-    {
-        vector<int>& ids = _blocklists[b];
-        if (ids.size() > 9) _blocktrees[b] = buildTree(ids.begin(), ids.end(), 0);
-    }
-
-    // compile and log search tree statistics
-    int numTrees = 0;
-    for (int b = 0; b < _nb3; b++)
-        if (_blocktrees[b]) numTrees++;
-    _log->info("  Number of search trees: " + std::to_string(numTrees) + " ("
-               + StringUtils::toString(100. * numTrees / _nb3, 'f', 1) + "% of blocks)");
-}
-
-////////////////////////////////////////////////////////////////////
-
-void TetraMeshSpatialGrid::setupSelfBefore()
-{
-    BoxSpatialGrid::setupSelfBefore();
-
-    _log = find<Log>();
-    _eps = 1e-12 * widths().norm();
-
-    // determine an appropriate set of sites and construct the Tetra mesh
-    switch (_policy)
-    {
-        case Policy::Uniform:
-        {
-            auto random = find<Random>();
-            _vertices.resize(_numSites);
-            for (int m = 0; m != _numSites; ++m) _vertices[m] = new Vec((random->position(extent())));
-            break;
-        }
-        case Policy::CentralPeak:
-        {
-            auto random = find<Random>();
-            const int a = 1000;  // steepness of the peak; the central 1/a portion is NOT covered
-            const double rscale = extent().rmax().norm();
-            _vertices.resize(_numSites);
-            _vertices[0] = new Vec(0, 0, 0);
-            for (int m = 1; m != _numSites;)  // skip first particle so that it remains (0,0,0)
-            {
-                double r = rscale * pow(1. / a, random->uniform());  // random distribution according to 1/x
-                Direction k = random->direction();
-                Vec p = Position(r, k);
-                if (extent().contains(p)) _vertices[m++] = new Vec(p);  // discard any points outside of the domain
-            }
-            break;
-        }
-        case Policy::DustDensity:
-        {
-            // build a list of media that have this material type with corresponding weights
-            vector<Medium*> media;
-            vector<double> weights;
-            auto ms = find<MediumSystem>();
-            for (auto medium : ms->media())
-                if (medium->mix()->isDust()) media.push_back(medium);
-            for (auto medium : media) weights.push_back(medium->mass());
-            vector<Vec> sites = sampleMedia(media, weights, extent(), _numSites);
-            int n = sites.size();
-            _vertices.resize(n);
-            for (int m = 0; m != n; ++m) _vertices[m] = new Vec(sites[m]);
-            break;
-        }
-        case Policy::ElectronDensity:
-        {
-            // build a list of media that have this material type with corresponding weights
-            vector<Medium*> media;
-            vector<double> weights;
-            auto ms = find<MediumSystem>();
-            for (auto medium : ms->media())
-                if (medium->mix()->isElectrons()) media.push_back(medium);
-            for (auto medium : media) weights.push_back(medium->number());
-            vector<Vec> sites = sampleMedia(media, weights, extent(), _numSites);
-            int n = sites.size();
-            _vertices.resize(n);
-            for (int m = 0; m != n; ++m) _vertices[m] = new Vec(sites[m]);
-            break;
-        }
-        case Policy::GasDensity:
-        {
-            // build a list of media that have this material type with corresponding weights
-            vector<Medium*> media;
-            vector<double> weights;
-            auto ms = find<MediumSystem>();
-            for (auto medium : ms->media())
-                if (medium->mix()->isGas()) media.push_back(medium);
-            for (auto medium : media) weights.push_back(medium->number());
-            vector<Vec> sites = sampleMedia(media, weights, extent(), _numSites);
-            int n = sites.size();
-            _vertices.resize(n);
-            for (int m = 0; m != n; ++m) _vertices[m] = new Vec(sites[m]);
-            break;
-        }
-        case Policy::ImportedSites:
-        {
-            auto sli = find<MediumSystem>()->interface<SiteListInterface>(2);
-            // prepare the data
-            int n = sli->numSites();
-            _vertices.resize(n);
-            for (int m = 0; m != n; ++m) _vertices[m] = new Vec(sli->sitePosition(m));
-            break;
-        }
-    }
-
-    if (_vertices.empty())
-    {
-        throw FATALERROR("No vertices available for mesh generation");
-    }
-
-    buildMesh();
-    buildSearchPerBlock();
-}
 
 void TetraMeshSpatialGrid::buildMesh()
 {
@@ -787,6 +705,92 @@ void TetraMeshSpatialGrid::storeTetrahedra(const tetgenio& out, bool storeVertic
 
 //////////////////////////////////////////////////////////////////////
 
+TetraMeshSpatialGrid::Node* TetraMeshSpatialGrid::buildTree(vector<int>::iterator first, vector<int>::iterator last,
+                                                            int depth) const
+{
+    auto length = last - first;
+    if (length > 0)
+    {
+        auto median = length >> 1;
+        std::nth_element(first, first + median, last, [this, depth](int m1, int m2) {
+            return m1 != m2 && lessthan(*_centroids[m1], *_centroids[m2], depth % 3);
+        });
+        return new TetraMeshSpatialGrid::Node(*(first + median), depth, buildTree(first, first + median, depth + 1),
+                                              buildTree(first + median + 1, last, depth + 1));
+    }
+    return nullptr;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void TetraMeshSpatialGrid::buildSearchPerBlock()
+{
+    // abort if there are no cells
+    if (!_numTetra) return;
+
+    _log->info("Building data structures to accelerate searching the tetrahedralisation");
+
+    // -------------  block lists  -------------
+    _nb = max(3, min(250, static_cast<int>(cbrt(_numTetra))));
+    _nb2 = _nb * _nb;
+    _nb3 = _nb * _nb * _nb;
+
+    // initialize a vector of nb * nb * nb lists
+    _blocklists.resize(_nb3);
+
+    // we add the tetrahedra to all blocks they potentially overlap with
+    // this will slow down the search tree but if no search tree is present
+    // we can simply loop over all tetrahedra inside the block
+    int i1, j1, k1, i2, j2, k2;
+    for (int c = 0; c != _numTetra; ++c)
+    {
+        cellIndices(i1, j1, k1, _tetrahedra[c]->rmin() - Vec(_eps, _eps, _eps), _nb, _nb, _nb);
+        cellIndices(i2, j2, k2, _tetrahedra[c]->rmax() + Vec(_eps, _eps, _eps), _nb, _nb, _nb);
+        for (int i = i1; i <= i2; i++)
+            for (int j = j1; j <= j2; j++)
+                for (int k = k1; k <= k2; k++) _blocklists[i * _nb2 + j * _nb + k].push_back(c);
+    }
+
+    // compile block list statistics
+    int minRefsPerBlock = INT_MAX;
+    int maxRefsPerBlock = 0;
+    int64_t totalBlockRefs = 0;
+    for (int b = 0; b < _nb3; b++)
+    {
+        int refs = _blocklists[b].size();
+        totalBlockRefs += refs;
+        minRefsPerBlock = min(minRefsPerBlock, refs);
+        maxRefsPerBlock = max(maxRefsPerBlock, refs);
+    }
+    double avgRefsPerBlock = double(totalBlockRefs) / _nb3;
+
+    // log block list statistics
+    _log->info("  Number of blocks in search grid: " + std::to_string(_nb3) + " (" + std::to_string(_nb) + "^3)");
+    _log->info("  Average number of cells per block: " + StringUtils::toString(avgRefsPerBlock, 'f', 1));
+    _log->info("  Minimum number of cells per block: " + std::to_string(minRefsPerBlock));
+    _log->info("  Maximum number of cells per block: " + std::to_string(maxRefsPerBlock));
+
+    // -------------  search trees  -------------
+
+    // for each block that contains more than a predefined number of cells,
+    // construct a search tree on the site locations of the cells
+    _blocktrees.resize(_nb3);
+    for (int b = 0; b < _nb3; b++)
+    {
+        vector<int>& ids = _blocklists[b];
+        if (ids.size() > 9) _blocktrees[b] = buildTree(ids.begin(), ids.end(), 0);
+    }
+
+    // compile and log search tree statistics
+    int numTrees = 0;
+    for (int b = 0; b < _nb3; b++)
+        if (_blocktrees[b]) numTrees++;
+    _log->info("  Number of search trees: " + std::to_string(numTrees) + " ("
+               + StringUtils::toString(100. * numTrees / _nb3, 'f', 1) + "% of blocks)");
+}
+
+//////////////////////////////////////////////////////////////////////
+
 int TetraMeshSpatialGrid::numCells() const
 {
     return _numTetra;
@@ -813,6 +817,68 @@ double TetraMeshSpatialGrid::diagonal(int m) const
     double f = tetra->getEdge(2, 3).norm2();
     return sqrt(a + b + c + d + e + f) / sqrt(6.0);
 }
+//////////////////////////////////////////////////////////////////////
+
+int TetraMeshSpatialGrid::cellIndex(Position bfr) const
+{
+    // Ensure the position is inside the domain
+    if (!contains(bfr)) return -1;
+
+    // Determine the block in which the point falls
+    int i, j, k;
+    cellIndices(i, j, k, bfr, _nb, _nb, _nb);
+    int b = i * _nb2 + j * _nb + k;
+
+    // Look for the closest centroid in this block using the search tree
+    Node* tree = _blocktrees[b];
+    if (!tree)
+    {
+        _log->error("No search tree found for block");
+        return -1;
+    }
+
+    // Full traversal algorithm
+    int enteringFace = -1;
+    int m = tree->nearest(bfr, _centroids)->m();
+    const Tetra* tetra = _tetrahedra[m];
+
+    Vec pos = tetra->_centroid;
+    Direction dir(bfr - pos);
+    double dist = dir.norm();
+    dir /= dist;
+
+    double ds;
+    int leavingFace;
+    while (true)
+    {
+        std::tie(ds, leavingFace) = tetra->traverse(pos, dir, enteringFace);
+
+        // If no exit point was found, break
+        if (leavingFace == -1) break;
+
+        // Move to the exit point
+        pos += ds * dir;
+        dist -= ds;
+        if (dist <= 0) return m;
+
+        // Get neighbour information
+        m = tetra->_faces[leavingFace]._ntetra;
+        enteringFace = tetra->_faces[leavingFace]._nface;
+
+        // If no next tetrahedron, break
+        if (m < 0) break;
+
+        tetra = _tetrahedra[m];
+    }
+
+    // If search tree traversal failed, loop over all tetrahedra in the block
+    for (int t : _blocklists[b])
+        if (_tetrahedra[t]->inside(bfr)) return t;
+
+    _log->error("cellIndex failed to find the tetrahedron");
+    return -1;
+}
+
 //////////////////////////////////////////////////////////////////////
 
 Position TetraMeshSpatialGrid::centralPositionInCell(int m) const
@@ -877,68 +943,6 @@ void TetraMeshSpatialGrid::writeGridPlotFiles(const SimulationItem* probe) const
         numDone++;
         if (numDone % 2000 == 0) _log->infoIfElapsed("Computed tetrehedra: ", 2000);
     }
-}
-
-//////////////////////////////////////////////////////////////////////
-
-int TetraMeshSpatialGrid::cellIndex(Position bfr) const
-{
-    // Ensure the position is inside the domain
-    if (!contains(bfr)) return -1;
-
-    // Determine the block in which the point falls
-    int i, j, k;
-    cellIndices(i, j, k, bfr, _nb, _nb, _nb);
-    int b = i * _nb2 + j * _nb + k;
-
-    // Look for the closest centroid in this block using the search tree
-    Node* tree = _blocktrees[b];
-    if (!tree)
-    {
-        _log->error("No search tree found for block");
-        return -1;
-    }
-
-    // Full traversal algorithm
-    int enteringFace = -1;
-    int m = tree->nearest(bfr, _centroids)->m();
-    const Tetra* tetra = _tetrahedra[m];
-
-    Vec pos = tetra->_centroid;
-    Direction dir(bfr - pos);
-    double dist = dir.norm();
-    dir /= dist;
-
-    double ds;
-    int leavingFace;
-    while (true)
-    {
-        std::tie(ds, leavingFace) = tetra->traverse(pos, dir, enteringFace);
-
-        // If no exit point was found, break
-        if (leavingFace == -1) break;
-
-        // Move to the exit point
-        pos += ds * dir;
-        dist -= ds;
-        if (dist <= 0) return m;
-
-        // Get neighbour information
-        m = tetra->_faces[leavingFace]._ntetra;
-        enteringFace = tetra->_faces[leavingFace]._nface;
-
-        // If no next tetrahedron, break
-        if (m < 0) break;
-
-        tetra = _tetrahedra[m];
-    }
-
-    // If search tree traversal failed, loop over all tetrahedra in the block
-    for (int t : _blocklists[b])
-        if (_tetrahedra[t]->inside(bfr)) return t;
-
-    _log->error("cellIndex failed to find the tetrahedron");
-    return -1;
 }
 
 //////////////////////////////////////////////////////////////////////
