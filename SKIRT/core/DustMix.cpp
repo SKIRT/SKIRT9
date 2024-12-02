@@ -531,10 +531,9 @@ void DustMix::performScattering(double lambda, const MaterialState* state, Photo
             applyMueller(lambda, theta, pp);
 
             // rotate the propagation direction in the scattering plane
-            Vec newdir = pp->direction() * cos(theta) + Vec::cross(pp->normal(), pp->direction()) * sin(theta);
-
-            // normalize the new direction to prevent degradation
-            bfknew = Direction(newdir / newdir.norm());
+            // (re)normalize the new direction to prevent degradation
+            bfknew =
+                Direction(pp->direction() * cos(theta) + Vec::cross(pp->normal(), pp->direction()) * sin(theta), true);
             break;
         }
     }

@@ -805,6 +805,10 @@ private:
     bool updateDynamicStateMedia(bool primary);
 
 public:
+    /** This function shifts the current aggregate medium state to the previous aggregate medium
+        state. It should be called at the start of each iteration step. */
+    void beginDynamicMediumStateIteration();
+
     /** This function updates the primary dynamic medium state (PDMS) for all spatial cells and
         medium components based on the currently established radiation field. It invokes any
         dynamic medium state recipes (instances of a DynamicStateRecipe subclass) configured for

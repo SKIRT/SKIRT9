@@ -5,6 +5,7 @@
 
 #include "OpacityProbe.hpp"
 #include "Configuration.hpp"
+#include "FragmentDustMixDecorator.hpp"
 #include "MediumSystem.hpp"
 #include "ProbeFormBridge.hpp"
 
@@ -65,6 +66,32 @@ void OpacityProbe::probe()
                     string sh = std::to_string(h);
                     bridge.writeQuantity(sh + "_k", sh + "_tau", "opacity", "dimensionless", "opacity", "optical depth",
                                          [ms, lambda, h](int m) { return ms->opacityExt(lambda, m, h); });
+                }
+                break;
+            }
+            case Aggregation::Fragment:
+            {
+                for (int h : ms->dustMediumIndices())
+                {
+                    auto mix = ms->mix(0, h)->find<FragmentDustMixDecorator>(false);
+                    if (mix)
+                    {
+                        int numPops = mix->numPopulations();
+                        for (int f = 0; f != numPops; ++f)
+                        {
+                            auto opacityInCell = [ms, lambda, mix, h, f](int m) {
+                                return ms->callWithMaterialState(
+                                    [lambda, mix, f](const MaterialState* mst) {
+                                        return mix->populationOpacityExt(f, lambda, mst);
+                                    },
+                                    m, h);
+                            };
+
+                            string shf = std::to_string(h) + "_" + std::to_string(f);
+                            bridge.writeQuantity(shf + "_k", shf + "_tau", "opacity", "dimensionless", "opacity",
+                                                 "optical depth", opacityInCell);
+                        }
+                    }
                 }
                 break;
             }

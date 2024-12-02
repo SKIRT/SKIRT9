@@ -41,13 +41,8 @@ std::pair<Vec, bool> LyaUtils::sampleAtomVelocity(double lambda, double T, doubl
     double x = (la - lambda) / lambda * c / vth;  // dimensionless frequency
 
     // generate two directions that are orthogonal to each other and to the incoming photon packet direction
-    Direction k1(1., 0., 0.);
-    if (kin.kx() != 0. || kin.ky() != 0.)
-    {
-        k1 = Direction(kin.ky(), -kin.kx(), 0.);
-        k1 /= k1.norm();
-    }
-    Direction k2(Vec::cross(k1, kin));
+    Direction k1 = (kin.kx() || kin.ky()) ? Direction(kin.ky(), -kin.kx(), 0., true) : Direction(1., 0., 0., false);
+    Direction k2(Vec::cross(k1, kin), false);
 
     // select the critical value of the dimensionless frequency depending on the acceleration scheme;
     // leaving the value at zero is equivalent to no acceleration

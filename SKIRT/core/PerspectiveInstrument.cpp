@@ -43,7 +43,7 @@ void PerspectiveInstrument::setupSelfBefore()
     Vec kn(_Vx - _Cx, _Vy - _Cy, _Vz - _Cz);
     Vec ku(_Ux, _Uy, _Uz);
     Vec ky = Vec::cross(kn, Vec::cross(ku, kn));
-    _bfky = Direction(ky / ky.norm());
+    _bfky = Direction(ky, true);
 
     // the perspective transformation
 
@@ -114,7 +114,7 @@ Direction PerspectiveInstrument::bfkobs(const Position& bfr) const
     if (D < _s / 10.) return Direction();
 
     // otherwise return a unit vector in the direction from launch to eye
-    return Direction((_Ex - Px) / D, (_Ey - Py) / D, (_Ez - Pz) / D);
+    return Direction((_Ex - Px) / D, (_Ey - Py) / D, (_Ez - Pz) / D, false);
 }
 
 ////////////////////////////////////////////////////////////////////

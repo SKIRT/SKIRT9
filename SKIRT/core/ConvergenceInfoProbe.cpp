@@ -25,7 +25,7 @@ namespace
         double eps = 1e-12 * ms->grid()->boundingBox().widths().norm();
         SpatialGridPath path(Position(eps, eps, eps), axis);
         double tau = ms->getExtinctionOpticalDepth(&path, lambda, type);
-        path.setDirection(Direction(-axis.x(), -axis.y(), -axis.z()));
+        path.setDirection(-axis);
         tau += ms->getExtinctionOpticalDepth(&path, lambda, type);
         return tau;
     }
@@ -84,9 +84,9 @@ namespace
         }
 
         // calculate the gridded optical depth along each of the coordinate axes
-        double tau_X_g = griddedOpticalDepth(ms, lambda, type, Direction(1., 0., 0.));
-        double tau_Y_g = griddedOpticalDepth(ms, lambda, type, Direction(0., 1., 0.));
-        double tau_Z_g = griddedOpticalDepth(ms, lambda, type, Direction(0., 0., 1.));
+        double tau_X_g = griddedOpticalDepth(ms, lambda, type, Direction(1., 0., 0., false));
+        double tau_Y_g = griddedOpticalDepth(ms, lambda, type, Direction(0., 1., 0., false));
+        double tau_Z_g = griddedOpticalDepth(ms, lambda, type, Direction(0., 0., 1., false));
 
         // output the optical depth along each of the coordinate axes
         out.writeLine("");

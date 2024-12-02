@@ -520,25 +520,31 @@ public:
         return Range(_axBeg[axisIndex][0], _axBeg[axisIndex][_axLen[axisIndex] - 1]);
     }
 
-    // ================== Accessing the raw data in a 1D table ==================
+    // ================== Accessing the raw data ==================
 
 public:
-    /** This function is available only for one-dimensional tables. It returns the number of
-        entries in the table, i.e. the number of grid points in the single axis and the number of
-        corresponding quantity values. */
-    size_t size() const
+    /** This function returns the number of grid points in the table axis indicated by the
+        zero-based index in the template argument. */
+    template<size_t axisIndex, typename = std::enable_if_t<axisIndex <= N>> size_t axisSize() const
     {
-        static_assert(N == 1, "This function is available only for one-dimensional tables");
-        return _axLen[0];
+        return _axLen[axisIndex];
     }
 
-    /** This function is available only for one-dimensional tables. It returns a pointer to the
-        first element in the axis data array. The number of elements in this array can be obtained
-        through the size() function. */
-    const double* axisData() const
+    /** This function returns a pointer to the first element in the data array containing the grid
+        points of the table axis indicated by the zero-based index in the template argument. The
+        number of elements in this array can be obtained through the axisSize() function. */
+    template<size_t axisIndex, typename = std::enable_if_t<axisIndex <= N>> const double* axisData() const
     {
-        static_assert(N == 1, "This function is available only for one-dimensional tables");
-        return _axBeg[0];
+        return _axBeg[axisIndex];
+    }
+
+    /** This function returns an array containing the grid points of the table axis indicated by
+        the zero-based index in the template argument. */
+    template<size_t axisIndex, typename = std::enable_if_t<axisIndex <= N>> void axisArray(Array& xv) const
+    {
+        size_t size = _axLen[axisIndex];
+        xv.resize(size);
+        for (size_t index = 0; index != size; ++index) xv[index] = _axBeg[axisIndex][index];
     }
 
     /** This function is available only for one-dimensional tables. It returns a pointer to the
@@ -550,17 +556,15 @@ public:
         return _qtyBeg;
     }
 
-    // ================== Accessing the raw data ==================
-
-private:
     /** This template function returns a copy of the value at the specified N indices. There is no
         range checking. Out-of-range index values cause unpredictable behavior. */
-    template<typename... Indices, typename = std::enable_if_t<CompileTimeUtils::isFloatArgList<N, Indices...>()>>
+    template<typename... Indices, typename = std::enable_if_t<CompileTimeUtils::isIntegralArgList<N, Indices...>()>>
     double valueAtIndices(Indices... indices) const
     {
         return _qtyBeg[flattenedIndex(std::array<size_t, N>({{static_cast<size_t>(indices)...}}))];
     }
 
+private:
     /** This function returns a copy of the value at the specified N indices. There is no range
         checking. Out-of-range index values cause unpredictable behavior. */
     double valueAtIndices(const std::array<size_t, N>& indices) const { return _qtyBeg[flattenedIndex(indices)]; }

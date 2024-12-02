@@ -198,7 +198,7 @@ void MediumSystem::setupSelfAfter()
     // ----- allocate memory for the medium state -----
 
     // basic configuration
-    _state.initConfiguration(_numCells, _numMedia);
+    _state.initConfiguration(_numCells, _numMedia, _config->hasDynamicState() ? 2 : 0);
 
     // common state variables
     vector<StateVariable> variables;
@@ -391,6 +391,9 @@ void MediumSystem::setupSelfAfter()
 
     // communicate the calculated states across multiple processes, if needed
     _state.initCommunicate();
+
+    // calculate the initial aggregate state, if needed
+    _state.calculateAggregate();
 
     log->info("Done calculating cell densities");
 }
@@ -1540,7 +1543,14 @@ bool MediumSystem::updateDynamicStateRecipes()
     log->info("  Not converged: " + std::to_string(numNotConverged) + " out of " + std::to_string(_numCells) + " ("
               + StringUtils::toString(100. * numNotConverged / _numCells, 'f', 2) + " %)");
 
+    // calculate the new current aggregate state
+    _state.calculateAggregate();
+
     // tell all recipes to end the update cycle and collect convergence info
+    // !! we should pass aggregate medium state information to the recipes
+    // !! .. which requires calling endUpdate() for each medium component
+    // !! .. which implies an inconvenient redesign of the DynamicRecipe classes
+    // !! .. and since the info is currently not used, we postpone this until a later time
     bool converged = true;
     for (auto recipe : recipes) converged &= recipe->endUpdate(_numCells, numUpdated, numNotConverged);
     return converged;
@@ -1589,11 +1599,25 @@ bool MediumSystem::updateDynamicStateMedia(bool primary)
         log->info("  Not converged: " + std::to_string(numNotConverged) + " out of " + std::to_string(_numCells) + " ("
                   + StringUtils::toString(100. * numNotConverged / _numCells, 'f', 2) + " %)");
 
-    // collect convergence info
+    // calculate the new current aggregate state
+    _state.calculateAggregate();
+
+    // collect convergence info from the material mixes
     bool converged = true;
     for (int h : (primary ? _pdms_hv : _sdms_hv))
-        converged &= mix(0, h)->isSpecificStateConverged(_numCells, numUpdated, numNotConverged);
+    {
+        MaterialState current(_state, _numCells, h);
+        MaterialState previous(_state, _numCells + 1, h);
+        converged &= mix(0, h)->isSpecificStateConverged(_numCells, numUpdated, numNotConverged, &current, &previous);
+    }
     return converged;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void MediumSystem::beginDynamicMediumStateIteration()
+{
+    _state.pushAggregate();
 }
 
 ////////////////////////////////////////////////////////////////////

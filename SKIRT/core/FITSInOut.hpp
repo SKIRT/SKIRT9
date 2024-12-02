@@ -26,6 +26,18 @@ public:
         function in this class. */
     static void read(const SimulationItem* item, string filename, Array& data, int& nx, int& ny, int& nz);
 
+    /** This basic data structure holds information on the observer associated with a data cube
+        being written. These fields are included in the FITS header as a convenience to the user.
+        Note: if the redshift is zero, the angular-diameter and luminosity distances must be equal.
+        */
+    struct ObserverInfo
+    {
+        double inclination{0}, azimuth{0}, roll{0};                // must be in degrees, regardless of output units
+        double redshift{0};                                        // if redshift is zero, both distances must be equal
+        double luminosityDistance{0}, angularDiameterDistance{0};  // distances in output units
+        string distanceUnits;                                      // describes distance output units
+    };
+
     /** This function writes a 2D data frame or a 3D data cube to a FITS file in the context of the
         simulation item hierarchy specified through the first argument. This allows the function to
         issue log messages using the human-readable description of the data given as the second
@@ -34,10 +46,10 @@ public:
         the simulation's output path. The output filename should \em not include the filename
         extension nor the simulation prefix. The remaining arguments of this function are the same
         as those described for the basic write() function in this class. Note that the arguments
-        describing the z-axis may be omitted when writing a 2D data frame. */
+        describing the z-axis and observer info may be omitted when writing a 2D data frame. */
     static void write(const SimulationItem* item, string description, string filename, const Array& data,
                       string dataUnits, int nx, int ny, double incx, double incy, double xc, double yc, string xyUnits,
-                      const Array& z = Array(), string zUnits = string());
+                      const Array& z = Array(), string zUnits = string(), const ObserverInfo* obsInfo = nullptr);
 
     // ================== Basic read/write ==================
 
@@ -87,10 +99,11 @@ private:
         specify the number of values in each spatial direction, \em incx and \em incy specify the
         increment between subsequent grid points in each spatial direction, \em xc and \em yc
         specify the center of the frame(s), and \em xyUnits describes the units of the xy-grid
-        increments. Finally, \em z contains the z-axis grid points (often wavelengths), and \em
-        zUnits describes the units of these grid points. */
+        increments. \em z contains the z-axis grid points (often wavelengths), and \em zUnits
+        describes the units of these grid points. Finally, \em obsInfo is a pointer to an optional
+        data structure holding observer information (or the null pointer). */
     static void write(string filepath, const Array& data, string dataUnits, int nx, int ny, double incx, double incy,
-                      double xc, double yc, string xyUnits, const Array& z, string zUnits);
+                      double xc, double yc, string xyUnits, const Array& z, string zUnits, const ObserverInfo* obsInfo);
 };
 
 ////////////////////////////////////////////////////////////////////

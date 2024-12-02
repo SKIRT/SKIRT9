@@ -262,8 +262,13 @@ public:
     void setScatteringComponent(int h) { _h = h; }
 
     /** This class defines the scattering information record maintained by a photon packet for each
-        medium component that needs it. The following data members have public scope so that they
-        can be directly accessed by client code:
+        medium component that needs it. In case some aspects of the scattering event are governed
+        by a probability distribution, this information record can be used to ensure that the
+        outgoing random walk photon packet and all corresponding peel-off photon packets use the
+        same randomly sampled values.
+
+        The following data members have public scope so that they can be directly accessed by
+        client code:
 
         - \em valid: boolean flag, initially false; should be set to true once this record holds
         valid values.
@@ -271,10 +276,12 @@ public:
         - \em dipole: boolean flag, initially false, indicating the selected scattering phase
         function: true means dipole, false means isotropic.
 
-        - \em species: integer identifier of the scattering particle species, initially zero
+        - \em species: integer identifier of the scattering particle species, initially zero.
 
         - \em velocity: velocity vector of the scattering particle in the local frame, initially
         the null vector.
+
+        - \em lambda: outgoing wavelength of the scattered photon packet, initially zero.
 
         Apart from initialization by the getScatteringInfo() function as indicated above, the
         client code is fully responsible for writing and reading these fields. */
@@ -290,6 +297,7 @@ public:
         bool dipole{false};  // true if scattering as a dipole, false if scattering isotropically
         int species{0};      // identifier of the scattering particle species
         Vec velocity;        // the velocity vector of the scattering particle in the local frame
+        double lambda{0.};   // the outgoing wavelength of the scattered photon packet
     };
 
     /** This function returns a pointer to the (writable) scattering information record maintained
