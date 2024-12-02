@@ -30,7 +30,7 @@ class tetgenio;
 class TetraMeshSpatialGrid : public BoxSpatialGrid
 {
     /** The enumeration type indicating the policy for determining the positions of the sites. */
-    ENUM_DEF(Policy, Uniform, CentralPeak, DustDensity, ElectronDensity, GasDensity, File, ImportedSites, ImportedMesh)
+    ENUM_DEF(Policy, Uniform, CentralPeak, DustDensity, ElectronDensity, GasDensity, ImportedSites)
         ENUM_VAL(Policy, Uniform, "random from uniform distribution")
         ENUM_VAL(Policy, CentralPeak, "random from distribution with a steep central peak")
         ENUM_VAL(Policy, DustDensity, "random from dust density distribution")
@@ -104,7 +104,7 @@ private:
         <a href="http://en.wikipedia.org/wiki/Kd-tree">en.wikipedia.org/wiki/Kd-tree</a>). */
     void buildSearchPerBlock();
 
-    //======================== Other Functions =======================
+    //======================== Interrogation =======================
 
 public:
     /** This function returns the number of cells in the grid. */
@@ -128,11 +128,15 @@ public:
     /** This function returns a random location from the cell with index \f$m\f$. */
     Position randomPositionInCell(int m) const override;
 
+    //====================== Path construction =====================
+
     /** This function creates and hands over ownership of a path segment generator (an instance of
         a PathSegmentGenerator subclass) appropriate for this spatial grid type. For the Tetra
         mesh grid, the path segment generator is actually implemented in the TetraMeshSnapshot
         class. */
     std::unique_ptr<PathSegmentGenerator> createPathSegmentGenerator() const override;
+
+    //====================== Output =====================
 
     /** This function outputs the grid plot files; it is provided here because the regular
         mechanism does not apply. The function reconstructs the Tetra tesselation in order to
@@ -152,7 +156,7 @@ private:
     int _numVertices;  // vertices are added/removed as the grid is built and refined
     vector<Tetra*> _tetrahedra;
     vector<Vec*> _vertices;
-    vector<Vec*> _centroids;
+    vector<const Vec*> _centroids;
 
     // data members initialized by BuildSearch()
     int _nb{0};                       // number of blocks in each dimension (limit for indices i,j,k)

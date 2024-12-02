@@ -97,6 +97,369 @@ namespace
     }
 }
 
+//////////////////////////////////////////////////////////////////////
+
+struct TetraMeshSpatialGrid::Face
+{
+    Face() {}
+
+    // normals are calculated in the constructor of Tetra
+    Face(int ntetra, int nface) : _ntetra(ntetra), _nface(nface) {}
+
+    // setters & getters required?
+
+    Vec _normal;  // outward facing normal
+    int _ntetra;  // index of neighbouring tetrahedron
+    int _nface;   // neighbouring face index
+};
+
+////////////////////////////////////////////////////////////////////
+
+class TetraMeshSpatialGrid::Tetra : public Box
+{
+private:
+    Vec _centroid;
+    std::array<Vec*, 4> _vertices;
+    std::array<Face, 4> _faces;
+
+public:
+    ~Tetra() {}  // vertices are deleted in ~TetraMeshSpatialGrid
+
+    Tetra(const std::array<Vec*, 4>& vertices, const std::array<Face, 4>& faces) : _vertices(vertices), _faces(faces)
+    {
+        double xmin = DBL_MAX;
+        double ymin = DBL_MAX;
+        double zmin = DBL_MAX;
+        double xmax = -DBL_MAX;
+        double ymax = -DBL_MAX;
+        double zmax = -DBL_MAX;
+        for (const Vec* vertex : _vertices)
+        {
+            xmin = min(xmin, vertex->x());
+            ymin = min(ymin, vertex->y());
+            zmin = min(zmin, vertex->z());
+            xmax = max(xmax, vertex->x());
+            ymax = max(ymax, vertex->y());
+            zmax = max(zmax, vertex->z());
+        }
+        setExtent(Box(xmin, ymin, zmin, xmax, ymax, zmax));
+
+        // average position of all vertices
+        for (int i = 0; i < 4; i++) _centroid += *_vertices[i];
+        _centroid /= 4;
+
+        // calculate normal facing out
+        for (int f = 0; f < 4; f++)
+        {
+            std::array<int, 3> cv = clockwiseVertices(f);
+            Vec e12 = edge(cv[0], cv[1]);
+            Vec e13 = edge(cv[0], cv[2]);
+            Vec normal = Vec::cross(e12, e13);
+            normal /= normal.norm();
+
+            Face& face = _faces[f];
+            face._normal = normal;
+        }
+    }
+
+    std::pair<double, int> traverse(Vec pos, Direction dir, int& enteringFace) const
+    {
+        int leavingFace = -1;
+        double ds = DBL_MAX;
+
+        // find entering face using a single Plücker product
+        if (enteringFace == -1) enteringFace = findEnteringFace(pos, dir);
+
+        // the translated Plücker moment in the local coordinate system
+        Vec moment = Vec::cross(dir, pos - *_vertices[enteringFace]);
+
+        // clockwise vertices around vertex 0
+        std::array<int, 3> cv = clockwiseVertices(enteringFace);
+
+        // determine orientations for use in the decision tree
+        double prod0 = Vec::dot(moment, edge(cv[0], enteringFace));
+        int clock0 = prod0 < 0;
+        // if clockwise move clockwise else move cclockwise
+        int i = clock0 ? 1 : 2;
+        double prodi = Vec::dot(moment, edge(cv[i], enteringFace));
+        int cclocki = prodi >= 0;
+
+        // use plane intersection algorithm if Plücker products are ambiguous
+        // this is actually more strict than the algorithm described by Maria (2017)
+        // but these edge cases are incredibly rare and can cause issues
+        if (prod0 == 0. || prodi == 0.)
+        {
+            for (int face : cv)
+            {
+                const Vec& n = _faces[face]._normal;
+                double ndotk = Vec::dot(n, dir);
+                if (ndotk > 0)
+                {
+                    const Vec& v = *_vertices[enteringFace];
+                    double dq = Vec::dot(n, v - pos) / ndotk;
+                    if (dq < ds)
+                    {
+                        ds = dq;
+                        leavingFace = face;
+                    }
+                }
+            }
+        }
+        // use Maria (2017) algorithm otherwise
+        else
+        {
+            // decision table for clock0 and cclocki
+            // 1 1 -> 2
+            // 0 0 -> 1
+            // 1 0 -> 0
+            // 0 1 -> 0
+            static constexpr int dtable[2][2] = {{1, 0}, {0, 2}};
+            leavingFace = cv[dtable[clock0][cclocki]];
+            const Vec& n = _faces[leavingFace]._normal;
+            const Vec& v = *_vertices[enteringFace];
+            double ndotk = Vec::dot(n, dir);
+            ds = Vec::dot(n, v - pos) / ndotk;
+        }
+
+        return std::make_pair(ds, leavingFace);
+    }
+
+    ////////////////////////////////////////////////////////////////////
+
+    int findEnteringFace(const Vec& pos, const Direction& dir) const
+    {
+        int enteringFace = -1;
+        // clockwise and cclockwise adjacent faces when checking edge v1->v2
+        static constexpr int etable[6][2] = {{3, 2}, {1, 3}, {2, 1}, {3, 0}, {0, 2}, {1, 0}};  // make this static?
+        // try all 6 edges because of very rare edge cases where ray is inside edge
+        // having only 1 non-zero Plücker product
+        int e = 0;
+        for (int v1 = 0; v1 < 3; v1++)
+        {
+            for (int v2 = v1 + 1; v2 < 4; v2++)
+            {
+
+                Vec moment12 = Vec::cross(dir, pos - *_vertices[v1]);
+                double prod12 = Vec::dot(moment12, edge(v1, v2));
+                if (prod12 != 0.)
+                {
+                    enteringFace = prod12 < 0 ? etable[e][0] : etable[e][1];
+                    break;
+                }
+                e++;
+            }
+            if (enteringFace != -1) break;
+        }
+        return enteringFace;
+    }
+
+    ////////////////////////////////////////////////////////////////////
+
+    bool inside(const Position& bfr) const
+    {
+        // since we use the k-d tree this will only slow the CellIndex
+        // if (!Box::contains(bfr)) return false;
+
+        // could optimize this slightly by using same vertex for 3 faces and do final face seperately
+        // but this function acts only as a backup
+        for (int f = 0; f < 4; f++)
+        {
+            const Face& face = _faces[f];
+            const Vec* vertex = _vertices[(f + 1) % 4];  // any vertex that is on the face
+
+            // if point->face is opposite direction as the outward pointing normal, the point is outside
+            if (Vec::dot(*vertex - bfr, face._normal) < 0) return false;
+        }
+        return true;
+    }
+
+    double generateBarycentric(double& s, double& t, double& u) const
+    {
+        // https://vcg.isti.cnr.it/activities/OLD/geometryegraphics/pointintetraedro.html
+        if (s + t > 1.0)
+        {  // cut'n fold the cube into a prism
+            s = 1.0 - s;
+            t = 1.0 - t;
+        }
+        if (t + u > 1.0)
+        {  // cut'n fold the prism into a tetrahedron
+            double tmp = u;
+            u = 1.0 - s - t;
+            t = 1.0 - tmp;
+        }
+        else if (s + t + u > 1.0)
+        {
+            double tmp = u;
+            u = s + t + u - 1.0;
+            s = 1 - t - tmp;
+        }
+        return 1 - u - t - s;
+    }
+
+    ////////////////////////////////////////////////////////////////////
+
+    Position generatePosition(Random* random) const
+    {
+        double s = random->uniform();
+        double t = random->uniform();
+        double u = random->uniform();
+
+        double r = generateBarycentric(s, t, u);
+
+        return Position(r * *_vertices[0] + u * *_vertices[1] + t * *_vertices[2] + s * *_vertices[3]);
+    }
+
+    ////////////////////////////////////////////////////////////////////
+
+    Vec edge(int t1, int t2) const { return *_vertices[t2] - *_vertices[t1]; }
+
+    ////////////////////////////////////////////////////////////////////
+
+    double volume() const { return 1 / 6. * abs(Vec::dot(Vec::cross(edge(0, 1), edge(0, 2)), edge(0, 3))); }
+
+    double diagonal() const
+    {
+        double sum = 0.0;
+        for (int i = 0; i < 3; ++i)
+        {
+            for (int j = i + 1; j < 4; ++j)
+            {
+                sum += edge(i, j).norm2();
+            }
+        }
+        return sqrt(sum / 6.0);
+    }
+
+    ////////////////////////////////////////////////////////////////////
+
+    const Face& face(int f) const { return _faces[f]; }
+
+    ////////////////////////////////////////////////////////////////////
+
+    const Vec& centroid() const { return _centroid; }
+
+    ////////////////////////////////////////////////////////////////////
+
+    const Vec& vertex(int v) const { return *_vertices[v]; }
+
+    ////////////////////////////////////////////////////////////////////
+};
+
+//////////////////////////////////////////////////////////////////////
+
+class TetraMeshSpatialGrid::Node
+{
+private:
+    int _m;        // index in _cells to the site defining the split at this node
+    int _axis;     // split axis for this node (0,1,2)
+    Node* _up;     // ptr to the parent node
+    Node* _left;   // ptr to the left child node
+    Node* _right;  // ptr to the right child node
+
+    // returns the square of its argument
+    static double sqr(double x) { return x * x; }
+
+public:
+    // constructor stores the specified site index and child pointers (which may be null)
+    Node(int m, int depth, Node* left, Node* right) : _m(m), _axis(depth % 3), _up(0), _left(left), _right(right)
+    {
+        if (_left) _left->setParent(this);
+        if (_right) _right->setParent(this);
+    }
+
+    // destructor destroys the children
+    ~Node()
+    {
+        delete _left;
+        delete _right;
+    }
+
+    // sets parent pointer (called from parent's constructor)
+    void setParent(Node* up) { _up = up; }
+
+    // returns the corresponding data member
+    int m() const { return _m; }
+    Node* up() const { return _up; }
+    Node* left() const { return _left; }
+    Node* right() const { return _right; }
+
+    // returns the apropriate child for the specified query point
+    Node* child(Vec bfr, const vector<const Vec*>& points) const
+    {
+        return lessthan(bfr, *points[_m], _axis) ? _left : _right;
+    }
+
+    // returns the other child than the one that would be apropriate for the specified query point
+    Node* otherChild(Vec bfr, const vector<const Vec*>& points) const
+    {
+        return lessthan(bfr, *points[_m], _axis) ? _right : _left;
+    }
+
+    // returns the squared distance from the query point to the split plane
+    double squaredDistanceToSplitPlane(Vec bfr, const vector<const Vec*>& points) const
+    {
+        switch (_axis)
+        {
+            case 0:  // split on x
+                return sqr(points[_m]->x() - bfr.x());
+            case 1:  // split on y
+                return sqr(points[_m]->y() - bfr.y());
+            case 2:  // split on z
+                return sqr(points[_m]->z() - bfr.z());
+            default:  // this should never happen
+                return 0;
+        }
+    }
+
+    // returns the node in this subtree that represents the site nearest to the query point
+    Node* nearest(Vec bfr, const vector<const Vec*>& points)
+    {
+        // recursively descend the tree until a leaf node is reached, going left or right depending on
+        // whether the specified point is less than or greater than the current node in the split dimension
+        Node* current = this;
+        while (Node* child = current->child(bfr, points)) current = child;
+
+        // unwind the recursion, looking for the nearest node while climbing up
+        Node* best = current;
+        double bestSD = (*points[best->m()] - bfr).norm2();
+        while (true)
+        {
+            // if the current node is closer than the current best, then it becomes the current best
+            double currentSD = (*points[current->m()] - bfr).norm2();
+            if (currentSD < bestSD)
+            {
+                best = current;
+                bestSD = currentSD;
+            }
+
+            // if there could be points on the other side of the splitting plane for the current node
+            // that are closer to the search point than the current best, then ...
+            double splitSD = current->squaredDistanceToSplitPlane(bfr, points);
+            if (splitSD < bestSD)
+            {
+                // move down the other branch of the tree from the current node looking for closer points,
+                // following the same recursive process as the entire search
+                Node* other = current->otherChild(bfr, points);
+                if (other)
+                {
+                    Node* otherBest = other->nearest(bfr, points);
+                    double otherBestSD = (*points[otherBest->m()] - bfr).norm2();
+                    if (otherBestSD < bestSD)
+                    {
+                        best = otherBest;
+                        bestSD = otherBestSD;
+                    }
+                }
+            }
+
+            // move up to the parent until we meet the top node
+            if (current == this) break;
+            current = current->up();
+        }
+        return best;
+    }
+};
+
 ////////////////////////////////////////////////////////////////////
 
 TetraMeshSpatialGrid::~TetraMeshSpatialGrid()
@@ -206,341 +569,6 @@ void TetraMeshSpatialGrid::setupSelfBefore()
     buildMesh();
     buildSearchPerBlock();
 }
-
-//////////////////////////////////////////////////////////////////////
-
-struct TetraMeshSpatialGrid::Face
-{
-    Face() {}
-
-    // normals are calculated in the constructor of Tetra
-    Face(int ntetra, int nface) : _ntetra(ntetra), _nface(nface) {}
-
-    // setters & getters required?
-
-    Vec _normal;
-    int _ntetra;  // index of neighbouring tetrahedron
-    int _nface;   // neighbouring face index
-};
-
-////////////////////////////////////////////////////////////////////
-
-class TetraMeshSpatialGrid::Tetra : public Box
-{
-private:
-    double _volume;
-
-public:
-    const std::array<Vec*, 4> _vertices;
-    std::array<Face, 4> _faces;
-    Vec _centroid;
-
-public:
-    Tetra(const std::array<Vec*, 4>& vertices, const std::array<Face, 4>& faces) : _vertices(vertices), _faces(faces)
-    {
-        double xmin = DBL_MAX;
-        double ymin = DBL_MAX;
-        double zmin = DBL_MAX;
-        double xmax = -DBL_MAX;
-        double ymax = -DBL_MAX;
-        double zmax = -DBL_MAX;
-        for (const Vec* vertex : _vertices)
-        {
-            xmin = min(xmin, vertex->x());
-            ymin = min(ymin, vertex->y());
-            zmin = min(zmin, vertex->z());
-            xmax = max(xmax, vertex->x());
-            ymax = max(ymax, vertex->y());
-            zmax = max(zmax, vertex->z());
-        }
-        setExtent(Box(xmin, ymin, zmin, xmax, ymax, zmax));
-
-        // volume
-        _volume = 1 / 6. * abs(Vec::dot(Vec::cross(getEdge(0, 1), getEdge(0, 2)), getEdge(0, 3)));
-
-        // barycenter
-        for (int i = 0; i < 4; i++) _centroid += *_vertices[i];
-        _centroid /= 4;
-
-        // calculate normal facing out
-        for (int f = 0; f < 4; f++)
-        {
-            std::array<int, 3> cv = clockwiseVertices(f);
-            Vec e12 = getEdge(cv[0], cv[1]);
-            Vec e13 = getEdge(cv[0], cv[2]);
-            Vec normal = Vec::cross(e12, e13);
-            normal /= normal.norm();
-
-            Face& face = _faces[f];
-            face._normal = normal;
-        }
-    }
-
-    std::pair<double, int> traverse(Vec pos, Direction dir, int& enteringFace) const
-    {
-        int leavingFace = -1;
-        double ds = DBL_MAX;
-        // loop in case no exit point was found (which should happen only rarely)
-
-        // find entering face using a single Plücker product
-        if (enteringFace == -1) enteringFace = findEnteringFace(pos, dir);
-
-        // the translated Plücker moment in the local coordinate system
-        Vec moment = Vec::cross(dir, pos - *_vertices[enteringFace]);
-        std::array<int, 3> cv = clockwiseVertices(enteringFace);
-
-        // 2 step decision tree
-        double prod0 = Vec::dot(moment, getEdge(cv[0], enteringFace));
-        int clock0 = prod0 < 0;
-        // if clockwise move clockwise else move cclockwise
-        int i = clock0 ? 1 : 2;
-        double prodi = Vec::dot(moment, getEdge(cv[i], enteringFace));
-        int cclocki = prodi >= 0;
-
-        // use plane intersection algorithm if Plücker products are ambiguous
-        if (prod0 == 0. || prodi == 0.)
-        {
-            for (int face : cv)
-            {
-                const Vec& n = _faces[face]._normal;
-                double ndotk = Vec::dot(n, dir);
-                if (ndotk > 0)
-                {
-                    const Vec& v = *_vertices[enteringFace];
-                    double dq = Vec::dot(n, v - pos) / ndotk;
-                    if (dq < ds)
-                    {
-                        ds = dq;
-                        leavingFace = face;
-                    }
-                }
-            }
-        }
-        // use Maria (2017) algorithm otherwise
-        else
-        {
-            // decision table for clock0 and cclocki
-            // 1 1 -> 2
-            // 0 0 -> 1
-            // 1 0 -> 0
-            // 0 1 -> 0
-            constexpr int dtable[2][2] = {{1, 0}, {0, 2}};
-            leavingFace = cv[dtable[clock0][cclocki]];
-            const Vec& n = _faces[leavingFace]._normal;
-            const Vec& v = *_vertices[enteringFace];
-            double ndotk = Vec::dot(n, dir);
-            ds = Vec::dot(n, v - pos) / ndotk;
-        }
-
-        return std::make_pair(ds, leavingFace);
-    }
-
-    ////////////////////////////////////////////////////////////////////
-
-    Vec getEdge(int t1, int t2) const { return *_vertices[t2] - *_vertices[t1]; }
-
-    ////////////////////////////////////////////////////////////////////
-
-    bool inside(const Position& bfr) const
-    {
-        // since we use the k-d tree this will only slow the CellIndex
-        // if (!Box::contains(bfr)) return false;
-
-        // could optimize this slightly by using same vertex for 3 faces and do final face seperately
-
-        for (int f = 0; f < 4; f++)
-        {
-            const Face& face = _faces[f];
-            const Vec* vertex = _vertices[(f + 1) % 4];  // any vertex that is on the face
-
-            // if point->face is opposite direction as the outward pointing normal, the point is outside
-            if (Vec::dot(*vertex - bfr, face._normal) < 0) return false;
-        }
-        return true;
-    }
-
-    ////////////////////////////////////////////////////////////////////
-
-    double volume() const { return _volume; }
-
-    ////////////////////////////////////////////////////////////////////
-
-    double generateBarycentric(double& s, double& t, double& u) const
-    {
-        // https://vcg.isti.cnr.it/activities/OLD/geometryegraphics/pointintetraedro.html
-        if (s + t > 1.0)
-        {  // cut'n fold the cube into a prism
-            s = 1.0 - s;
-            t = 1.0 - t;
-        }
-        if (t + u > 1.0)
-        {  // cut'n fold the prism into a tetrahedron
-            double tmp = u;
-            u = 1.0 - s - t;
-            t = 1.0 - tmp;
-        }
-        else if (s + t + u > 1.0)
-        {
-            double tmp = u;
-            u = s + t + u - 1.0;
-            s = 1 - t - tmp;
-        }
-        return 1 - u - t - s;
-    }
-
-    ////////////////////////////////////////////////////////////////////
-
-    Position generatePosition(double s, double t, double u) const
-    {
-        double r = generateBarycentric(s, t, u);
-
-        return Position(r * *_vertices[0] + u * *_vertices[1] + t * *_vertices[2] + s * *_vertices[3]);
-    }
-
-    ////////////////////////////////////////////////////////////////////
-
-    int findEnteringFace(const Vec& pos, const Direction& dir) const
-    {
-        int enteringFace = -1;
-        // clockwise and cclockwise adjacent faces when checking edge v1->v2
-        constexpr int etable[6][2] = {{3, 2}, {1, 3}, {2, 1}, {3, 0}, {0, 2}, {1, 0}};
-        // try all 6 edges because of rare edge cases where ray is inside edge
-        // having only 1 non-zero Plücker product
-        int e = 0;
-        for (int v1 = 0; v1 < 3; v1++)
-        {
-            for (int v2 = v1 + 1; v2 < 4; v2++)
-            {
-
-                Vec moment12 = Vec::cross(dir, pos - *_vertices[v1]);
-                double prod12 = Vec::dot(moment12, getEdge(v1, v2));
-                if (prod12 != 0.)
-                {
-                    enteringFace = prod12 < 0 ? etable[e][0] : etable[e][1];
-                    break;
-                }
-                e++;
-            }
-            if (enteringFace != -1) break;
-        }
-        return enteringFace;
-    }
-};
-
-////////////////////////////////////////////////////////////////////
-
-class TetraMeshSpatialGrid::Node
-{
-private:
-    int _m;        // index in _cells to the site defining the split at this node
-    int _axis;     // split axis for this node (0,1,2)
-    Node* _up;     // ptr to the parent node
-    Node* _left;   // ptr to the left child node
-    Node* _right;  // ptr to the right child node
-
-    // returns the square of its argument
-    static double sqr(double x) { return x * x; }
-
-public:
-    // constructor stores the specified site index and child pointers (which may be null)
-    Node(int m, int depth, Node* left, Node* right) : _m(m), _axis(depth % 3), _up(0), _left(left), _right(right)
-    {
-        if (_left) _left->setParent(this);
-        if (_right) _right->setParent(this);
-    }
-
-    // destructor destroys the children
-    ~Node()
-    {
-        delete _left;
-        delete _right;
-    }
-
-    // sets parent pointer (called from parent's constructor)
-    void setParent(Node* up) { _up = up; }
-
-    // returns the corresponding data member
-    int m() const { return _m; }
-    Node* up() const { return _up; }
-    Node* left() const { return _left; }
-    Node* right() const { return _right; }
-
-    // returns the apropriate child for the specified query point
-    Node* child(Vec bfr, const vector<Vec*>& points) const
-    {
-        return lessthan(bfr, *points[_m], _axis) ? _left : _right;
-    }
-
-    // returns the other child than the one that would be apropriate for the specified query point
-    Node* otherChild(Vec bfr, const vector<Vec*>& points) const
-    {
-        return lessthan(bfr, *points[_m], _axis) ? _right : _left;
-    }
-
-    // returns the squared distance from the query point to the split plane
-    double squaredDistanceToSplitPlane(Vec bfr, const vector<Vec*>& points) const
-    {
-        switch (_axis)
-        {
-            case 0:  // split on x
-                return sqr(points[_m]->x() - bfr.x());
-            case 1:  // split on y
-                return sqr(points[_m]->y() - bfr.y());
-            case 2:  // split on z
-                return sqr(points[_m]->z() - bfr.z());
-            default:  // this should never happen
-                return 0;
-        }
-    }
-
-    // returns the node in this subtree that represents the site nearest to the query point
-    Node* nearest(Vec bfr, const vector<Vec*>& points)
-    {
-        // recursively descend the tree until a leaf node is reached, going left or right depending on
-        // whether the specified point is less than or greater than the current node in the split dimension
-        Node* current = this;
-        while (Node* child = current->child(bfr, points)) current = child;
-
-        // unwind the recursion, looking for the nearest node while climbing up
-        Node* best = current;
-        double bestSD = (*points[best->m()] - bfr).norm2();
-        while (true)
-        {
-            // if the current node is closer than the current best, then it becomes the current best
-            double currentSD = (*points[current->m()] - bfr).norm2();
-            if (currentSD < bestSD)
-            {
-                best = current;
-                bestSD = currentSD;
-            }
-
-            // if there could be points on the other side of the splitting plane for the current node
-            // that are closer to the search point than the current best, then ...
-            double splitSD = current->squaredDistanceToSplitPlane(bfr, points);
-            if (splitSD < bestSD)
-            {
-                // move down the other branch of the tree from the current node looking for closer points,
-                // following the same recursive process as the entire search
-                Node* other = current->otherChild(bfr, points);
-                if (other)
-                {
-                    Node* otherBest = other->nearest(bfr, points);
-                    double otherBestSD = (*points[otherBest->m()] - bfr).norm2();
-                    if (otherBestSD < bestSD)
-                    {
-                        best = otherBest;
-                        bestSD = otherBestSD;
-                    }
-                }
-            }
-
-            // move up to the parent until we meet the top node
-            if (current == this) break;
-            current = current->up();
-        }
-        return best;
-    }
-};
 
 ////////////////////////////////////////////////////////////////////
 
@@ -673,7 +701,7 @@ void TetraMeshSpatialGrid::storeTetrahedra(const tetgenio& out, bool storeVertic
 
         _tetrahedra[i] = new Tetra(vertices, faces);
 
-        _centroids.push_back(&_tetrahedra[i]->_centroid);
+        _centroids.push_back(&_tetrahedra[i]->centroid());
     }
 
     // compile statistics
@@ -809,12 +837,12 @@ double TetraMeshSpatialGrid::diagonal(int m) const
 {
     // can use for loop but this is more readable
     const Tetra* tetra = _tetrahedra[m];
-    double a = tetra->getEdge(0, 1).norm2();
-    double b = tetra->getEdge(0, 2).norm2();
-    double c = tetra->getEdge(0, 3).norm2();
-    double d = tetra->getEdge(1, 2).norm2();
-    double e = tetra->getEdge(1, 3).norm2();
-    double f = tetra->getEdge(2, 3).norm2();
+    double a = tetra->edge(0, 1).norm2();
+    double b = tetra->edge(0, 2).norm2();
+    double c = tetra->edge(0, 3).norm2();
+    double d = tetra->edge(1, 2).norm2();
+    double e = tetra->edge(1, 3).norm2();
+    double f = tetra->edge(2, 3).norm2();
     return sqrt(a + b + c + d + e + f) / sqrt(6.0);
 }
 //////////////////////////////////////////////////////////////////////
@@ -831,24 +859,19 @@ int TetraMeshSpatialGrid::cellIndex(Position bfr) const
 
     // Look for the closest centroid in this block using the search tree
     Node* tree = _blocktrees[b];
-    if (!tree)
-    {
-        _log->error("No search tree found for block");
-        return -1;
-    }
-
-    // Full traversal algorithm
-    int enteringFace = -1;
+    if (!tree) throw FATALERROR("No search tree found for block " + std::to_string(b));
     int m = tree->nearest(bfr, _centroids)->m();
     const Tetra* tetra = _tetrahedra[m];
 
-    Vec pos = tetra->_centroid;
+    // traverse from centroid towards bfr until we pass it
+    Vec pos = tetra->centroid();
     Direction dir(bfr - pos);
     double dist = dir.norm();
     dir /= dist;
 
     double ds;
     int leavingFace;
+    int enteringFace = -1;
     while (true)
     {
         std::tie(ds, leavingFace) = tetra->traverse(pos, dir, enteringFace);
@@ -862,8 +885,8 @@ int TetraMeshSpatialGrid::cellIndex(Position bfr) const
         if (dist <= 0) return m;
 
         // Get neighbour information
-        m = tetra->_faces[leavingFace]._ntetra;
-        enteringFace = tetra->_faces[leavingFace]._nface;
+        m = tetra->face(leavingFace)._ntetra;
+        enteringFace = tetra->face(leavingFace)._nface;
 
         // If no next tetrahedron, break
         if (m < 0) break;
@@ -871,29 +894,25 @@ int TetraMeshSpatialGrid::cellIndex(Position bfr) const
         tetra = _tetrahedra[m];
     }
 
-    // If search tree traversal failed, loop over all tetrahedra in the block
+    // If traversal algorithm failed to find correct cell, loop over all tetrahedra in the block
     for (int t : _blocklists[b])
         if (_tetrahedra[t]->inside(bfr)) return t;
 
-    _log->error("cellIndex failed to find the tetrahedron");
-    return -1;
+    throw FATALERROR("Can't find random position in cell");
 }
 
 //////////////////////////////////////////////////////////////////////
 
 Position TetraMeshSpatialGrid::centralPositionInCell(int m) const
 {
-    return Position(_tetrahedra[m]->_centroid);
+    return Position(_tetrahedra[m]->centroid());
 }
 
 //////////////////////////////////////////////////////////////////////
 
 Position TetraMeshSpatialGrid::randomPositionInCell(int m) const
 {
-    double s = random()->uniform();
-    double t = random()->uniform();
-    double u = random()->uniform();
-    return _tetrahedra[m]->generatePosition(s, t, u);
+    return _tetrahedra[m]->generatePosition(random());
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -920,10 +939,10 @@ void TetraMeshSpatialGrid::writeGridPlotFiles(const SimulationItem* probe) const
 
         for (int v = 0; v < 4; v++)
         {
-            const Vec* vertex = tetra->_vertices[v];
-            coords.push_back(vertex->x());
-            coords.push_back(vertex->y());
-            coords.push_back(vertex->z());
+            const Vec vertex = tetra->vertex(v);
+            coords.push_back(vertex.x());
+            coords.push_back(vertex.y());
+            coords.push_back(vertex.z());
 
             // get vertices of opposite face
             std::array<int, 3> faceIndices = clockwiseVertices(v);
@@ -1009,7 +1028,7 @@ public:
                 {
                     propagater(ds);
                     setSegment(_mr, ds);
-                    _mr = tetra->_faces[leavingFace]._ntetra;
+                    _mr = tetra->face(leavingFace)._ntetra;
 
                     if (_mr < 0)
                     {
@@ -1018,7 +1037,7 @@ public:
                     }
                     else
                     {
-                        _enteringFace = tetra->_faces[leavingFace]._nface;
+                        _enteringFace = tetra->face(leavingFace)._nface;
                         return true;
                     }
                 }
