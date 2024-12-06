@@ -86,35 +86,31 @@ namespace
 class VoronoiMeshSnapshot::Cell : public Box  // enclosing box
 {
 private:
-    Vec _r;                  // site position
     Vec _c;                  // centroid position
     double _volume{0.};      // volume
     vector<int> _neighbors;  // list of neighbor indices in _cells vector
     Array _properties;       // user-defined properties, if any
 
 public:
-    // constructor stores the specified site position; the other data members are set to zero or empty
-    Cell(Vec r) : _r(r) {}
+    // constructor that initializes an empty cell
+    Cell() {}
 
     // constructor derives the site position from the first three property values and stores the user properties;
     // the other data members are set to zero or empty
-    Cell(const Array& prop) : _r(prop[0], prop[1], prop[2]), _properties{prop} {}
+    Cell(const Array& prop) : _properties{prop} {}
 
-    // adjusts the site position with the specified offset
-    void relax(double cx, double cy, double cz) { _r += Vec(cx, cy, cz); }
-
-    // initializes the receiver with information taken from the specified fully computed Voronoi cell
-    void init(voro::voronoicell_neighbor& cell)
+    // initializes the receiver with information taken from the specified fully computed Voronoi cell and site position
+    void init(voro::voronoicell_neighbor& cell, Vec r)
     {
         // copy basic geometric info
         double cx, cy, cz;
         cell.centroid(cx, cy, cz);
-        _c = Vec(cx, cy, cz) + _r;
+        _c = Vec(cx, cy, cz) + r;
         _volume = cell.volume();
 
         // get the minimal and maximal coordinates of the box enclosing the cell
         vector<double> coords;
-        cell.vertices(_r.x(), _r.y(), _r.z(), coords);
+        cell.vertices(r.x(), r.y(), r.z(), coords);
         double xmin = DBL_MAX;
         double ymin = DBL_MAX;
         double zmin = DBL_MAX;
@@ -148,15 +144,6 @@ public:
 
     // initializes the receiver with the volume calculated from imported information
     void init(double volume) { _volume = volume; }
-
-    // returns the cell's site position
-    Vec position() const { return _r; }
-
-    // returns the x coordinate of the cell's site position
-    double x() const { return _r.x(); }
-
-    // returns the squared distance from the cell's site to the specified point
-    double squaredDistanceTo(Vec r) const { return (r - _r).norm2(); }
 
     // returns the central position in the cell
     Vec centroid() const { return _c; }
@@ -196,158 +183,6 @@ public:
 
 ////////////////////////////////////////////////////////////////////
 
-namespace
-{
-    // function to compare two points according to the specified axis (0,1,2)
-    bool lessthan(Vec p1, Vec p2, int axis)
-    {
-        switch (axis)
-        {
-            case 0:  // split on x
-                if (p1.x() < p2.x()) return true;
-                if (p1.x() > p2.x()) return false;
-                if (p1.y() < p2.y()) return true;
-                if (p1.y() > p2.y()) return false;
-                if (p1.z() < p2.z()) return true;
-                return false;
-            case 1:  // split on y
-                if (p1.y() < p2.y()) return true;
-                if (p1.y() > p2.y()) return false;
-                if (p1.z() < p2.z()) return true;
-                if (p1.z() > p2.z()) return false;
-                if (p1.x() < p2.x()) return true;
-                return false;
-            case 2:  // split on z
-                if (p1.z() < p2.z()) return true;
-                if (p1.z() > p2.z()) return false;
-                if (p1.x() < p2.x()) return true;
-                if (p1.x() > p2.x()) return false;
-                if (p1.y() < p2.y()) return true;
-                return false;
-            default:  // this should never happen
-                return false;
-        }
-    }
-}
-
-////////////////////////////////////////////////////////////////////
-
-// class to hold a node in the binary search tree (see en.wikipedia.org/wiki/Kd-tree)
-class VoronoiMeshSnapshot::Node
-{
-private:
-    int _m;        // index in _cells to the site defining the split at this node
-    int _axis;     // split axis for this node (0,1,2)
-    Node* _up;     // ptr to the parent node
-    Node* _left;   // ptr to the left child node
-    Node* _right;  // ptr to the right child node
-
-    // returns the square of its argument
-    static double sqr(double x) { return x * x; }
-
-public:
-    // constructor stores the specified site index and child pointers (which may be null)
-    Node(int m, int depth, Node* left, Node* right) : _m(m), _axis(depth % 3), _up(0), _left(left), _right(right)
-    {
-        if (_left) _left->setParent(this);
-        if (_right) _right->setParent(this);
-    }
-
-    // destructor destroys the children
-    ~Node()
-    {
-        delete _left;
-        delete _right;
-    }
-
-    // sets parent pointer (called from parent's constructor)
-    void setParent(Node* up) { _up = up; }
-
-    // returns the corresponding data member
-    int m() const { return _m; }
-    Node* up() const { return _up; }
-    Node* left() const { return _left; }
-    Node* right() const { return _right; }
-
-    // returns the apropriate child for the specified query point
-    Node* child(Vec bfr, const vector<Cell*>& cells) const
-    {
-        return lessthan(bfr, cells[_m]->position(), _axis) ? _left : _right;
-    }
-
-    // returns the other child than the one that would be apropriate for the specified query point
-    Node* otherChild(Vec bfr, const vector<Cell*>& cells) const
-    {
-        return lessthan(bfr, cells[_m]->position(), _axis) ? _right : _left;
-    }
-
-    // returns the squared distance from the query point to the split plane
-    double squaredDistanceToSplitPlane(Vec bfr, const vector<Cell*>& cells) const
-    {
-        switch (_axis)
-        {
-            case 0:  // split on x
-                return sqr(cells[_m]->position().x() - bfr.x());
-            case 1:  // split on y
-                return sqr(cells[_m]->position().y() - bfr.y());
-            case 2:  // split on z
-                return sqr(cells[_m]->position().z() - bfr.z());
-            default:  // this should never happen
-                return 0;
-        }
-    }
-
-    // returns the node in this subtree that represents the site nearest to the query point
-    Node* nearest(Vec bfr, const vector<Cell*>& cells)
-    {
-        // recursively descend the tree until a leaf node is reached, going left or right depending on
-        // whether the specified point is less than or greater than the current node in the split dimension
-        Node* current = this;
-        while (Node* child = current->child(bfr, cells)) current = child;
-
-        // unwind the recursion, looking for the nearest node while climbing up
-        Node* best = current;
-        double bestSD = cells[best->m()]->squaredDistanceTo(bfr);
-        while (true)
-        {
-            // if the current node is closer than the current best, then it becomes the current best
-            double currentSD = cells[current->m()]->squaredDistanceTo(bfr);
-            if (currentSD < bestSD)
-            {
-                best = current;
-                bestSD = currentSD;
-            }
-
-            // if there could be points on the other side of the splitting plane for the current node
-            // that are closer to the search point than the current best, then ...
-            double splitSD = current->squaredDistanceToSplitPlane(bfr, cells);
-            if (splitSD < bestSD)
-            {
-                // move down the other branch of the tree from the current node looking for closer points,
-                // following the same recursive process as the entire search
-                Node* other = current->otherChild(bfr, cells);
-                if (other)
-                {
-                    Node* otherBest = other->nearest(bfr, cells);
-                    double otherBestSD = cells[otherBest->m()]->squaredDistanceTo(bfr);
-                    if (otherBestSD < bestSD)
-                    {
-                        best = otherBest;
-                        bestSD = otherBestSD;
-                    }
-                }
-            }
-
-            // move up to the parent until we meet the top node
-            if (current == this) break;
-            current = current->up();
-        }
-        return best;
-    }
-};
-
-////////////////////////////////////////////////////////////////////
-
 VoronoiMeshSnapshot::VoronoiMeshSnapshot() {}
 
 ////////////////////////////////////////////////////////////////////
@@ -355,7 +190,6 @@ VoronoiMeshSnapshot::VoronoiMeshSnapshot() {}
 VoronoiMeshSnapshot::~VoronoiMeshSnapshot()
 {
     for (auto cell : _cells) delete cell;
-    for (auto tree : _blocktrees) delete tree;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -364,7 +198,11 @@ void VoronoiMeshSnapshot::readAndClose()
 {
     // read the site info into memory
     Array prop;
-    while (infile()->readRow(prop)) _cells.push_back(new Cell(prop));
+    while (infile()->readRow(prop))
+    {
+        _sites.emplace_back(prop[0], prop[1], prop[2]);
+        _cells.push_back(new Cell(prop));
+    }
 
     // close the file
     Snapshot::readAndClose();
@@ -414,7 +252,11 @@ VoronoiMeshSnapshot::VoronoiMeshSnapshot(const SimulationItem* item, const Box& 
     in.addColumn("position y", "length", "pc");
     in.addColumn("position z", "length", "pc");
     Array coords;
-    while (in.readRow(coords)) _cells.push_back(new Cell(Vec(coords[0], coords[1], coords[2])));
+    while (in.readRow(coords))
+    {
+        _sites.emplace_back(coords[0], coords[1], coords[2]);
+        _cells.push_back(new Cell());
+    }
     in.close();
 
     // calculate the Voronoi cells
@@ -431,8 +273,13 @@ VoronoiMeshSnapshot::VoronoiMeshSnapshot(const SimulationItem* item, const Box& 
 {
     // prepare the data
     int n = sli->numSites();
+    _sites.resize(n);
     _cells.resize(n);
-    for (int m = 0; m != n; ++m) _cells[m] = new Cell(sli->sitePosition(m));
+    for (int m = 0; m != n; ++m)
+    {
+        _sites[m] = sli->sitePosition(m);
+        _cells[m] = new Cell();
+    }
 
     // calculate the Voronoi cells
     setContext(item);
@@ -448,8 +295,13 @@ VoronoiMeshSnapshot::VoronoiMeshSnapshot(const SimulationItem* item, const Box& 
 {
     // prepare the data
     int n = sites.size();
+    _sites.resize(n);
     _cells.resize(n);
-    for (int m = 0; m != n; ++m) _cells[m] = new Cell(sites[m]);
+    for (int m = 0; m != n; ++m)
+    {
+        _sites[m] = sites[m];
+        _cells[m] = new Cell();
+    }
 
     // calculate the Voronoi cells
     setContext(item);
@@ -471,20 +323,36 @@ namespace
     // function to erase null pointers from a vector of pointers in one go; returns the new size
     template<class T> size_t eraseNullPointers(vector<T*>& v)
     {
-        // scan to the first null (or to the end)
-        auto from = v.begin();
-        while (from != v.end() && *from) ++from;
-
-        // copy the tail, overwriting any nulls
-        auto to = from;
-        while (from != v.end())
-        {
-            if (*from) *to++ = *from;
-            ++from;
-        }
-        v.erase(to, v.end());
+        // not sure if this is a better implementation than the original code
+        auto newEnd = std::remove(v.begin(), v.end(), nullptr);
+        v.erase(newEnd, v.end());
         return v.size();
     }
+}
+
+////////////////////////////////////////////////////////////////////
+
+int VoronoiMeshSnapshot::removeCells(std::function<bool(int m)> removeIndex)
+{
+    int removed = 0;
+    // remove sites (and cells) that satisfy the specified condition
+    auto sitesEnd = std::remove_if(_sites.begin(), _sites.end(), [&](const Vec& site) {
+        int m = &site - &_sites[0];  // index of the site
+        if (removeIndex(m))
+        {
+            delete _cells[m];  // delete cell
+            _cells[m] = 0;
+            ++removed;
+            return true;  // delete site
+        }
+        return false;
+    });
+    _sites.erase(sitesEnd, _sites.end());
+
+    // remove null pointers from the cells vector
+    eraseNullPointers(_cells);
+
+    return removed;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -493,38 +361,38 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
 {
     int numCells = _cells.size();
 
-    // remove sites that lie outside of the domain
-    int numOutside = 0;
-    for (int m = 0; m != numCells; ++m)
-    {
-        if (!_extent.contains(_cells[m]->position()))
-        {
-            delete _cells[m];
-            _cells[m] = 0;
-            numOutside++;
-        }
-    }
-    if (numOutside) numCells = eraseNullPointers(_cells);
+    // remove sites (and cells) that lie outside of the domain
+    int numOutside = removeCells([this](int m) { return !_extent.contains(_sites[m]); });
+    numCells = _cells.size();
 
     // sort sites in order of increasing x coordinate to accelerate search for nearby sites
-    std::sort(_cells.begin(), _cells.end(), [](Cell* c1, Cell* c2) { return c1->x() < c2->x(); });
+
+    // we have to sort both _sites and _cells in the same order so we sort list of indices using site x coordinates
+    std::vector<int> indices(numCells);
+    std::iota(indices.begin(), indices.end(), 0);
+    std::sort(indices.begin(), indices.end(), [this](int i1, int i2) { return _sites[i1].x() < _sites[i2].x(); });
+
+    // reorder _sites and _cells using the sorted indices
+    std::vector<Vec> sortedSites(numCells);
+    std::vector<Cell*> sortedCells(numCells);
+    for (size_t i = 0; i < indices.size(); ++i)
+    {
+        sortedSites[i] = _sites[indices[i]];
+        sortedCells[i] = _cells[indices[i]];
+    }
+    // transfer the sorted vectors
+    _sites = std::move(sortedSites);
+    _cells = std::move(sortedCells);
 
     // remove sites that lie too nearby another site
-    int numNearby = 0;
-    for (int m = 0; m != numCells; ++m)
-    {
-        for (int j = m + 1; j != numCells && _cells[j]->x() - _cells[m]->x() < _eps; ++j)
+    int numNearby = removeCells([this, numCells](int m) {
+        for (int j = m + 1; j != numCells && _sites[j].x() - _sites[m].x() < _eps; ++j)
         {
-            if ((_cells[j]->position() - _cells[m]->position()).norm2() < _eps * _eps)
-            {
-                delete _cells[m];
-                _cells[m] = 0;
-                numNearby++;
-                break;
-            }
+            if ((_sites[j] - _sites[m]).norm2() < _eps * _eps) return true;
         }
-    }
-    if (numNearby) numCells = eraseNullPointers(_cells);
+        return false;
+    });
+    numCells = _cells.size();
 
     // log the number of sites
     if (!numOutside && !numNearby)
@@ -560,7 +428,7 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
                              _extent.zmax(), _nb, _nb, _nb, false, false, false, 16);
         for (int m = 0; m != numCells; ++m)
         {
-            Vec r = _cells[m]->position();
+            Vec r = _sites[m];
             vcon.put(m, r.x(), r.y(), r.z());
         }
 
@@ -598,7 +466,7 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
 
         // communicate the calculated offsets between parallel processes, if needed, and apply them to the cells
         ProcessManager::sumToAll(offsets.data());
-        for (int m = 0; m != numCells; ++m) _cells[m]->relax(offsets(m, 0), offsets(m, 1), offsets(m, 2));
+        for (int m = 0; m != numCells; ++m) _sites[m] += Vec(offsets(m, 0), offsets(m, 1), offsets(m, 2));
     }
 
     // ========= FINAL GRID =========
@@ -612,7 +480,7 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
                              _extent.zmax(), _nb, _nb, _nb, false, false, false, 16);
         for (int m = 0; m != numCells; ++m)
         {
-            Vec r = _cells[m]->position();
+            Vec r = _sites[m];
             vcon.put(m, r.x(), r.y(), r.z());
         }
 
@@ -639,7 +507,7 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
                     {
                         // compute the cell and copy all relevant information to the cell object that will stay around
                         bool ok = vcompute.compute_cell(vcell, vloop.ijk, vloop.q, vloop.i, vloop.j, vloop.k);
-                        if (ok) _cells[m]->init(vcell);
+                        if (ok) _cells[m]->init(vcell, _sites[m]);
 
                         // log message if the minimum time has elapsed
                         numDone = (numDone + 1) % logProgressChunkSize;
@@ -666,7 +534,7 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
 
         // discover invalid cells with zero volume and/or with neighbors that are not mutual
         log()->info("Verifying Voronoi tessellation");
-        std::set<int> invalid;
+        std::set<int> invalid;  // ascending sorted set of invalid cell indices
         for (int m = 0; m < numCells; m++)
         {
             if (!_cells[m]->volume()) invalid.insert(m);
@@ -698,11 +566,13 @@ void VoronoiMeshSnapshot::buildMesh(bool relax)
         // remove invalid cells and prepare to repeat construction
         log()->warning("Removing sites for " + std::to_string(invalid.size())
                        + " invalid Voronoi cells and reconstructing the tessellation");
-        for (auto it = invalid.begin(); it != invalid.end(); ++it)
+        // Iterate through the invalid cells in reverse order to prevent invalidating indices within the invalid set
+        for (auto it = invalid.rbegin(); it != invalid.rend(); ++it)
         {
             int m = *it;
             delete _cells[m];
             _cells[m] = 0;
+            _sites.erase(_sites.begin() + m);
         }
         numCells = eraseNullPointers(_cells);
         for (int m = 0; m != numCells; ++m) _cells[m]->clear();
@@ -804,24 +674,6 @@ void VoronoiMeshSnapshot::calculateDensityAndMass()
 
 ////////////////////////////////////////////////////////////////////
 
-VoronoiMeshSnapshot::Node* VoronoiMeshSnapshot::buildTree(vector<int>::iterator first, vector<int>::iterator last,
-                                                          int depth) const
-{
-    auto length = last - first;
-    if (length > 0)
-    {
-        auto median = length >> 1;
-        std::nth_element(first, first + median, last, [this, depth](int m1, int m2) {
-            return m1 != m2 && lessthan(_cells[m1]->position(), _cells[m2]->position(), depth % 3);
-        });
-        return new VoronoiMeshSnapshot::Node(*(first + median), depth, buildTree(first, first + median, depth + 1),
-                                             buildTree(first + median + 1, last, depth + 1));
-    }
-    return nullptr;
-}
-
-////////////////////////////////////////////////////////////////////
-
 void VoronoiMeshSnapshot::buildSearchPerBlock()
 {
     // abort if there are no cells
@@ -873,13 +725,13 @@ void VoronoiMeshSnapshot::buildSearchPerBlock()
     for (int b = 0; b < _nb3; b++)
     {
         vector<int>& ids = _blocklists[b];
-        if (ids.size() > 9) _blocktrees[b] = buildTree(ids.begin(), ids.end(), 0);
+        if (ids.size() > 9) _blocktrees[b].buildTree(_sites, ids);
     }
 
     // compile and log search tree statistics
     int numTrees = 0;
     for (int b = 0; b < _nb3; b++)
-        if (_blocktrees[b]) numTrees++;
+        if (_blocktrees[b].root()) numTrees++;
     log()->info("  Number of search trees: " + std::to_string(numTrees) + " ("
                 + StringUtils::toString(100. * numTrees / _nb3, 'f', 1) + "% of blocks)");
 }
@@ -898,19 +750,17 @@ void VoronoiMeshSnapshot::buildSearchSingle()
     // construct a single search tree on the site locations of all cells
     log()->info("Building data structure to accelerate searching " + std::to_string(numCells) + " Voronoi sites");
     _blocktrees.resize(1);
-    vector<int> ids(numCells);
-    for (int m = 0; m != numCells; ++m) ids[m] = m;
-    _blocktrees[0] = buildTree(ids.begin(), ids.end(), 0);
+    _blocktrees[0].buildTree(_sites);
 }
 
 ////////////////////////////////////////////////////////////////////
 
 bool VoronoiMeshSnapshot::isPointClosestTo(Vec r, int m, const vector<int>& ids) const
 {
-    double target = _cells[m]->squaredDistanceTo(r);
+    double target = (_sites[m] - r).norm2();
     for (int id : ids)
     {
-        if (id >= 0 && _cells[id]->squaredDistanceTo(r) < target) return false;
+        if (id >= 0 && (_sites[id] - r).norm2() < target) return false;
     }
     return true;
 }
@@ -931,7 +781,7 @@ void VoronoiMeshSnapshot::writeGridPlotFiles(const SimulationItem* probe) const
                          _nb, _nb, _nb, false, false, false, 16);
     for (int m = 0; m != numCells; ++m)
     {
-        Vec r = _cells[m]->position();
+        Vec r = _sites[m];
         vcon.put(m, r.x(), r.y(), r.z());
     }
 
@@ -985,7 +835,7 @@ int VoronoiMeshSnapshot::numEntities() const
 
 Position VoronoiMeshSnapshot::position(int m) const
 {
-    return Position(_cells[m]->position());
+    return Position(_sites[m]);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -1079,8 +929,8 @@ int VoronoiMeshSnapshot::cellIndex(Position bfr) const
     }
 
     // look for the closest site in this block, using the search tree if there is one
-    Node* tree = _blocktrees[b];
-    if (tree) return tree->nearest(bfr, _cells)->m();
+    const SearchTree& tree = _blocktrees[b];
+    if (tree.root()) return tree.nearest(bfr, _sites);
 
     // if there is no search tree, simply loop over the index list
     const vector<int>& ids = _blocklists[b];
@@ -1089,7 +939,7 @@ int VoronoiMeshSnapshot::cellIndex(Position bfr) const
     int n = ids.size();
     for (int i = 0; i < n; i++)
     {
-        double idist = _cells[ids[i]]->squaredDistanceTo(bfr);
+        double idist = (_sites[ids[i]] - bfr).norm2();
         if (idist < mdist)
         {
             m = ids[i];
@@ -1154,7 +1004,7 @@ public:
                 while (true)
                 {
                     // get the site position for this cell
-                    Vec pr = _grid->_cells[_mr]->position();
+                    Vec pr = _grid->_sites[_mr];
 
                     // initialize the smallest nonnegative intersection distance and corresponding index
                     double sq = DBL_MAX;  // very large, but not infinity (so that infinite si values are discarded)
@@ -1175,7 +1025,7 @@ public:
                         if (mi >= 0)
                         {
                             // get the site position for this neighbor
-                            Vec pi = _grid->_cells[mi]->position();
+                            Vec pi = _grid->_sites[mi];
 
                             // calculate the (unnormalized) normal on the bisecting plane
                             Vec n = pi - pr;

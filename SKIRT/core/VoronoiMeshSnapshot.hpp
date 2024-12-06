@@ -7,6 +7,7 @@
 #define VORONOIMESHSNAPSHOT_HPP
 
 #include "Array.hpp"
+#include "SearchTree.hpp"
 #include "Snapshot.hpp"
 class PathSegmentGenerator;
 class SiteListInterface;
@@ -192,6 +193,11 @@ private:
         and buildSearch() functions. */
     class Node;
 
+    /** This private function removes cells that satisfy a specified condition. The function 
+        iterates over all indices of the sites/cells and checks the \em removeIndex predicate. 
+        If the condition is met, the corresponding Cell and site position are deleted. */
+    int removeCells(std::function<bool(int m)> removeIndex);
+
     /** Given a list of generating sites (represented as partially initialized Cell
         objects), this private function builds the Voronoi tessellation and stores the
         corresponding cell information, including any properties relevant for supporting the
@@ -220,10 +226,6 @@ private:
         either by building a Voronoi tessellation, or by deriving the volume from mass and mass
         density columns being imported. */
     void calculateDensityAndMass();
-
-    /** Private function to recursively build a binary search tree (see
-        en.wikipedia.org/wiki/Kd-tree) */
-    Node* buildTree(vector<int>::iterator first, vector<int>::iterator last, int depth) const;
 
     /** This private function builds data structures that allow accelerating the operation of the
         cellIndex() function. It assumes that the Voronoi mesh has already been built.
@@ -456,6 +458,7 @@ private:
     bool _foregoVoronoiMesh{false};  // true if using search tree instead of Voronoi tessellation
 
     // data members initialized when processing snapshot input and further completed by BuildMesh()
+    vector<Vec> _sites;    // site positions, indexed on m
     vector<Cell*> _cells;  // cell objects, indexed on m
 
     // data members initialized when processing snapshot input, but only if a density policy has been set
@@ -468,7 +471,7 @@ private:
     int _nb2{0};                      // nb*nb
     int _nb3{0};                      // nb*nb*nb
     vector<vector<int>> _blocklists;  // list of cell indices per block, indexed on i*_nb2+j*_nb+k
-    vector<Node*> _blocktrees;        // root node of search tree or null for each block, indexed on i*_nb2+j*_nb+k
+    vector<SearchTree> _blocktrees;   // root node of search tree or null for each block, indexed on i*_nb2+j*_nb+k
 
     // allow our path segment generator to access our private data members
     class MySegmentGenerator;
