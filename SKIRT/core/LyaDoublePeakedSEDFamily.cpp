@@ -15,7 +15,10 @@ namespace
     const int numWavelengthsPerDispersionUnit = 100;
 
     // double-peaked spectrum centered on 0 with scale of 1, evaluated at x
-    double unitSpectrum(double x) { return 1.5 * x * x / (1. + cosh(x * x * x)); }
+    double unitSpectrum(double x)
+    {
+        return 1.5 * x * x / (1. + cosh(x * x * x));
+    }
 }
 
 ////////////////////////////////////////////////////////////////////

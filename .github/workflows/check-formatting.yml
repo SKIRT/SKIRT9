@@ -2,7 +2,7 @@
 #
 # The workflow fails if one or more of the .hpp or .cpp files in the repository
 # are not properly formatted according to the rules in the .clang-format file
-# located in the root of the repository directory, using clang-format version 9.
+# located in the root of the repository directory, using clang-format version 16.
 # In that case, the log file provides a list of improperly formatted files.
 # Source files with other extensions (including .h, .c, .hh, .cc) are NOT tested
 # to allow for differently formatted third-party code.
@@ -18,20 +18,17 @@ jobs:
   check_formatting_job:
     # job name, displayed in the action log
     name: Check source code formatting
-    # run this job on a Github-provided runner with Ubuntu 20.04
-    # (and not 22.04 because we cannot install clang-format-9)
-    runs-on: ubuntu-20.04
+    # run this job on a Github-provided runner with Ubuntu 24.04
+    # because it has clang-format-16 installed
+    runs-on: ubuntu-24.04
     # steps that make up this job
     steps:
-    # install clang-format-9
-    - name: Install
-      run: sudo apt install clang-format-9
     # checkout using a recent version of the checkout action
     - name: Checkout
       uses: actions/checkout@v3
-    # run clang-format-9 on all .hpp and .cpp files
+    # run clang-format on all .hpp and .cpp files
     - name: Autoformat
-      run: find . \( -name '*.hpp' -or -name '*.cpp' \) -exec clang-format-9 -style=file -i {} \;
+      run: find . \( -name '*.hpp' -or -name '*.cpp' \) -exec clang-format-16 -style=file -i {} \;
     # fail the workflow if anything changed to the repository
     - name: Verify
       run: git diff --stat --no-ext-diff --exit-code

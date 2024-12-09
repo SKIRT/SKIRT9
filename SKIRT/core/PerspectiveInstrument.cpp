@@ -12,7 +12,10 @@
 
 namespace
 {
-    double norm(double x, double y, double z) { return sqrt(x * x + y * y + z * z); }
+    double norm(double x, double y, double z)
+    {
+        return sqrt(x * x + y * y + z * z);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////

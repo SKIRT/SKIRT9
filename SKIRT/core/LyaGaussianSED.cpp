@@ -20,10 +20,16 @@ namespace
     const int numWavelengthsPerDispersionUnit = 100;
 
     // Gaussian centered on 0 with dispersion of 1, evaluated at x
-    double unitGaussian(double x) { return (0.5 * M_SQRT1_2 * M_2_SQRTPI) * exp(-0.5 * x * x); }
+    double unitGaussian(double x)
+    {
+        return (0.5 * M_SQRT1_2 * M_2_SQRTPI) * exp(-0.5 * x * x);
+    }
 
     // integrate unit Gaussian from x1 to x2
-    double integrateUnitGaussian(double x1, double x2) { return 0.5 * (erf(M_SQRT1_2 * x2) - erf(M_SQRT1_2 * x1)); }
+    double integrateUnitGaussian(double x1, double x2)
+    {
+        return 0.5 * (erf(M_SQRT1_2 * x2) - erf(M_SQRT1_2 * x1));
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

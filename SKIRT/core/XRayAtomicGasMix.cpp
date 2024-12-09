@@ -29,7 +29,10 @@ namespace
     }
 
     // return thermal velocity for given gas temperature (in K) and particle mass (in amu)
-    double vtherm(double T, double amu) { return sqrt(Constants::k() / Constants::amu() * T / amu); }
+    double vtherm(double T, double amu)
+    {
+        return sqrt(Constants::k() / Constants::amu() * T / amu);
+    }
 
     // multiplicator to convert energy in keV to scaled energy E / (m_e c^2)
     constexpr double keVtoScaledEnergy =
@@ -335,10 +338,16 @@ namespace
 namespace
 {
     // returns the inverse Compton factor for a given scaled energy and scattering angle cosine
-    constexpr double inverseComptonFactor(double x, double costheta) { return 1. + x * (1. - costheta); }
+    constexpr double inverseComptonFactor(double x, double costheta)
+    {
+        return 1. + x * (1. - costheta);
+    }
 
     // returns the Compton factor for a given scaled energy and scattering angle cosine
-    constexpr double comptonFactor(double x, double costheta) { return 1. / inverseComptonFactor(x, costheta); }
+    constexpr double comptonFactor(double x, double costheta)
+    {
+        return 1. / inverseComptonFactor(x, costheta);
+    }
 
     // returns the value interpolated from the specified table as a function of the momentum transfer parameter
     // q = (E/12.4 keV) sin(theta/2), given the scaled energy x and the sine;

@@ -96,7 +96,10 @@ string StringUtils::replace(string text, string find, string replace)
 
 namespace
 {
-    bool isWhiteSpace(char c) { return c == ' ' || c == '\t' || c == 0x0D || c == 0x0A; }
+    bool isWhiteSpace(char c)
+    {
+        return c == ' ' || c == '\t' || c == 0x0D || c == 0x0A;
+    }
 }
 
 string StringUtils::squeeze(string text)

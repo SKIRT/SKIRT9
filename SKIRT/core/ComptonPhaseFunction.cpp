@@ -23,7 +23,10 @@ namespace
 namespace
 {
     // returns the photon energy scaled to the electron rest energy: h nu / m_e c^2
-    double scaledEnergy(double lambda) { return (Constants::h() / Constants::Melectron() / Constants::c()) / lambda; }
+    double scaledEnergy(double lambda)
+    {
+        return (Constants::h() / Constants::Melectron() / Constants::c()) / lambda;
+    }
 
     // returns the Compton scattering cross section (relative to the Thomson cross section) for a given scaled energy
     double comptonSection(double x)
@@ -36,10 +39,16 @@ namespace
     }
 
     // returns the inverse Compton factor for a given scaled energy and scattering angle cosine
-    double inverseComptonfactor(double x, double costheta) { return 1 + x * (1 - costheta); }
+    double inverseComptonfactor(double x, double costheta)
+    {
+        return 1 + x * (1 - costheta);
+    }
 
     // returns the Compton factor for a given scaled energy and scattering angle cosine
-    double comptonFactor(double x, double costheta) { return 1. / inverseComptonfactor(x, costheta); }
+    double comptonFactor(double x, double costheta)
+    {
+        return 1. / inverseComptonfactor(x, costheta);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
