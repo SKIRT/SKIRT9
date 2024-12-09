@@ -23,9 +23,6 @@ jobs:
     runs-on: ubuntu-24.04
     # steps that make up this job
     steps:
-    # install clang-format
-    - name: Install
-      run: sudo apt install clang-format-16
     # checkout using a recent version of the checkout action
     - name: Checkout
       uses: actions/checkout@v3

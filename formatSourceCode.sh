@@ -7,12 +7,12 @@
 # automatically reformat all C++ code in the SKIRT project
 #
 # Requires clang-format version 16.0 to be installed
-# in the default path or in the home directory
+# in the default path, in the home directory, or inside Xcode.
 #
 
 # --------------------------------------------------------------------
 
-# Look for clang-format or clang-format-16 in the default path or in the home directory;
+# Look for clang-format or clang-format-16 in various places;
 # exit with an error if we don't find it
 CLANGFORMATPATH="$(which clang-format-16)"
 if [ "$CLANGFORMATPATH" == "" ]
@@ -30,6 +30,14 @@ fi
 if [ "$CLANGFORMATPATH" == "" ]
 then
     CANDIDATEPATH="$HOME/clang/bin/clang-format"
+    if [[ -x $CANDIDATEPATH ]]
+    then
+        CLANGFORMATPATH=$CANDIDATEPATH
+    fi
+fi
+if [ "$CLANGFORMATPATH" == "" ]
+then
+    CANDIDATEPATH="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-format"
     if [[ -x $CANDIDATEPATH ]]
     then
         CLANGFORMATPATH=$CANDIDATEPATH
