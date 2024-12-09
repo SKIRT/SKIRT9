@@ -6,24 +6,22 @@
 # Execute this script with "git" as default directory to
 # automatically reformat all C++ code in the SKIRT project
 #
-# Requires clang-format version 9.0.0 to be installed
+# Requires clang-format version 16.0 to be installed
 # in the default path or in the home directory
-#
-# See https://releases.llvm.org/9.0.0/tools/clang/docs/ClangFormat.html
 #
 
 # --------------------------------------------------------------------
 
-# Look for clang-format or clang-format-9 in the default path or in the home directory;
+# Look for clang-format or clang-format-16 in the default path or in the home directory;
 # exit with an error if we don't find it
-CLANGFORMATPATH="$(which clang-format-9)"
+CLANGFORMATPATH="$(which clang-format-16)"
 if [ "$CLANGFORMATPATH" == "" ]
 then
     CLANGFORMATPATH="$(which clang-format)"
 fi
 if [ "$CLANGFORMATPATH" == "" ]
 then
-    CANDIDATEPATH="$HOME/clang/bin/clang-format-9"
+    CANDIDATEPATH="$HOME/clang/bin/clang-format-16"
     if [[ -x $CANDIDATEPATH ]]
     then
         CLANGFORMATPATH=$CANDIDATEPATH
@@ -47,10 +45,10 @@ fi
 
 # Verify the clang-format version
 CLANGFORMATVERSION=$($CLANGFORMATPATH -version)
-if ! [[ $CLANGFORMATVERSION == *"9.0.0"* ]]
+if ! [[ $CLANGFORMATVERSION == *"16.0."* ]]
 then
     echo
-    echo Fatal error: $CLANGFORMATPATH is not version 9.0.0 but
+    echo Fatal error: $CLANGFORMATPATH is not version 16.0 but
     echo $CLANGFORMATVERSION
     echo
     exit

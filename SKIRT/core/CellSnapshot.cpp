@@ -67,7 +67,10 @@ namespace
     }
 
     // returns the linear index for element (i,j,k) in a p*p*p table
-    inline int index(int p, int i, int j, int k) { return ((i * p) + j) * p + k; }
+    inline int index(int p, int i, int j, int k)
+    {
+        return ((i * p) + j) * p + k;
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
