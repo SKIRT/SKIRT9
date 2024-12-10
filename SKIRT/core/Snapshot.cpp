@@ -313,16 +313,6 @@ double Snapshot::velocityDispersion(int m) const
 
 ////////////////////////////////////////////////////////////////////
 
-double Snapshot::velocityDispersion(Position bfr) const
-{
-    thread_local EntityCollection entities;  // can be reused for all queries in a given execution thread
-    getEntities(entities, bfr);
-    return entities.averageValue([this](int m) { return velocityDispersion(m); },
-                                 [this](int m) { return currentMass(m); });
-}
-
-////////////////////////////////////////////////////////////////////
-
 Vec Snapshot::magneticField(int m) const
 {
     const auto& propv = properties(m);

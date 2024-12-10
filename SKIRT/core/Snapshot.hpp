@@ -464,12 +464,6 @@ public:
         of range, the behavior is undefined. */
     double velocityDispersion(int m) const;
 
-    /** This function returns the velocity dispersion at the
-        specified point \f${\bf{r}}\f$. If the point is outside the domain, the function returns
-        zero dispersion. If the velocity dispersion is not being imported, the behavior is
-        undefined. */
-    double velocityDispersion(Position bfr) const;
-
     /** This function returns true if the magnetic field is being imported, and false otherwise. */
     bool hasMagneticField() const { return _magneticFieldIndex >= 0; }
 
