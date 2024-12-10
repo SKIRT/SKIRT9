@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "Snapshot.hpp"
+#include "EntityCollection.hpp"
 #include "Log.hpp"
 #include "Random.hpp"
 #include "StringUtils.hpp"
@@ -242,25 +243,9 @@ double Snapshot::initialMass(int m) const
 
 ////////////////////////////////////////////////////////////////////
 
-double Snapshot::initialMass(Position bfr) const
-{
-    int m = nearestEntity(bfr);
-    return m >= 0 ? initialMass(m) : 0.;
-}
-
-////////////////////////////////////////////////////////////////////
-
 double Snapshot::currentMass(int m) const
 {
     return properties(m)[currentMassIndex()];
-}
-
-////////////////////////////////////////////////////////////////////
-
-double Snapshot::currentMass(Position bfr) const
-{
-    int m = nearestEntity(bfr);
-    return m >= 0 ? currentMass(m) : 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -274,8 +259,9 @@ double Snapshot::metallicity(int m) const
 
 double Snapshot::metallicity(Position bfr) const
 {
-    int m = nearestEntity(bfr);
-    return m >= 0 ? metallicity(m) : 0.;
+    thread_local EntityCollection entities;  // can be reused for all queries in a given execution thread
+    getEntities(entities, bfr);
+    return entities.averageValue([this](int m) { return metallicity(m); }, [this](int m) { return currentMass(m); });
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -283,14 +269,6 @@ double Snapshot::metallicity(Position bfr) const
 double Snapshot::age(int m) const
 {
     return properties(m)[ageIndex()];
-}
-
-////////////////////////////////////////////////////////////////////
-
-double Snapshot::age(Position bfr) const
-{
-    int m = nearestEntity(bfr);
-    return m >= 0 ? age(m) : 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -304,8 +282,9 @@ double Snapshot::temperature(int m) const
 
 double Snapshot::temperature(Position bfr) const
 {
-    int m = nearestEntity(bfr);
-    return m >= 0 ? temperature(m) : 0.;
+    thread_local EntityCollection entities;  // can be reused for all queries in a given execution thread
+    getEntities(entities, bfr);
+    return entities.averageValue([this](int m) { return temperature(m); }, [this](int m) { return currentMass(m); });
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -320,8 +299,9 @@ Vec Snapshot::velocity(int m) const
 
 Vec Snapshot::velocity(Position bfr) const
 {
-    int m = nearestEntity(bfr);
-    return m >= 0 ? velocity(m) : Vec();
+    thread_local EntityCollection entities;  // can be reused for all queries in a given execution thread
+    getEntities(entities, bfr);
+    return entities.averageValue([this](int m) { return velocity(m); }, [this](int m) { return currentMass(m); });
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -329,14 +309,6 @@ Vec Snapshot::velocity(Position bfr) const
 double Snapshot::velocityDispersion(int m) const
 {
     return properties(m)[velocityDispersionIndex()];
-}
-
-////////////////////////////////////////////////////////////////////
-
-double Snapshot::velocityDispersion(Position bfr) const
-{
-    int m = nearestEntity(bfr);
-    return m >= 0 ? velocityDispersion(m) : 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -351,8 +323,9 @@ Vec Snapshot::magneticField(int m) const
 
 Vec Snapshot::magneticField(Position bfr) const
 {
-    int m = nearestEntity(bfr);
-    return m >= 0 ? magneticField(m) : Vec();
+    thread_local EntityCollection entities;  // can be reused for all queries in a given execution thread
+    getEntities(entities, bfr);
+    return entities.averageValue([this](int m) { return magneticField(m); }, [this](int m) { return currentMass(m); });
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -369,7 +342,22 @@ void Snapshot::parameters(int m, Array& params) const
 
 void Snapshot::parameters(Position bfr, Array& params) const
 {
-    int m = nearestEntity(bfr);
+    thread_local EntityCollection entities;  // can be reused for all queries in a given execution thread
+    getEntities(entities, bfr);
+
+    // look for the entity with the highest weight
+    double wmax = 0.;
+    int m = -1;
+    for (const auto& entity : entities)
+    {
+        if (entity.second > wmax)
+        {
+            wmax = entity.second;
+            m = entity.first;
+        }
+    }
+
+    // if found, use it
     if (m >= 0)
         parameters(m, params);
     else

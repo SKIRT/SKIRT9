@@ -10,7 +10,6 @@
 #include "Random.hpp"
 #include "StringUtils.hpp"
 #include "TextInFile.hpp"
-#include "Units.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -400,13 +399,6 @@ Position CellSnapshot::generatePosition() const
 const Array& CellSnapshot::properties(int m) const
 {
     return _propv[m];
-}
-
-////////////////////////////////////////////////////////////////////
-
-int CellSnapshot::nearestEntity(Position bfr) const
-{
-    return _grid ? _grid->cellIndexFor(bfr) : -1;
 }
 
 ////////////////////////////////////////////////////////////////////

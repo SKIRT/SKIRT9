@@ -109,11 +109,6 @@ protected:
         range, the behavior is undefined. */
     const Array& properties(int m) const override;
 
-    /** This function returns the index \f$0\le m \le N_\mathrm{ent}-1\f$ of the cell containing
-        the specified point \f${\bf{r}}\f$, or -1 if the point is outside the domain, if there are
-        no cells in the snapshot, or if the search data structures were not created. */
-    int nearestEntity(Position bfr) const override;
-
 public:
     /** This function sets the specified entity collection to the cell containing the specified
         point \f${\bf{r}}\f$, or to the empty collection if the point is outside the domain or if

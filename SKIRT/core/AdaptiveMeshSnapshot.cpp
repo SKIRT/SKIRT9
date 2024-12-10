@@ -11,9 +11,7 @@
 #include "PathSegmentGenerator.hpp"
 #include "Random.hpp"
 #include "SpatialGridPath.hpp"
-#include "StringUtils.hpp"
 #include "TextInFile.hpp"
-#include "Units.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -369,13 +367,6 @@ int AdaptiveMeshSnapshot::cellIndex(Position bfr) const
 const Array& AdaptiveMeshSnapshot::properties(int m) const
 {
     return _cells[m]->properties();
-}
-
-////////////////////////////////////////////////////////////////////
-
-int AdaptiveMeshSnapshot::nearestEntity(Position bfr) const
-{
-    return cellIndex(bfr);
 }
 
 ////////////////////////////////////////////////////////////////////
