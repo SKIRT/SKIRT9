@@ -108,12 +108,6 @@ protected:
         of range, the behavior is undefined. */
     const Array& properties(int m) const override;
 
-    /** This function returns the index \f$0\le m \le N_\mathrm{ent}-1\f$ of the particle whose
-        center is nearest to the specified point \f${\bf{r}}\f$, or -1 if the point is outside the
-        domain, if there are no particles in the snapshot, or if the search data structures were
-        not created. */
-    int nearestEntity(Position bfr) const override;
-
 public:
     /** This function replaces the contents of the specified entity collection by the set of
         particles with a smoothing kernel that overlaps the specified point \f${\bf{r}}\f$. The

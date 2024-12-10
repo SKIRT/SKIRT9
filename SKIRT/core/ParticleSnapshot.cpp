@@ -11,7 +11,6 @@
 #include "SmoothingKernel.hpp"
 #include "StringUtils.hpp"
 #include "TextInFile.hpp"
-#include "Units.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -210,24 +209,6 @@ public:
         int j = NR::locateClip(_ygrid, r.y());
         int k = NR::locateClip(_zgrid, r.z());
         return _listv[index(_m, i, j, k)];
-    }
-
-    /** This function returns a pointer to the particle centered nearest to the specified position,
-        or the null pointer if the specified position is outside of the grid. */
-    const Particle* nearestParticle(Vec r) const
-    {
-        const Particle* nearestParticle = nullptr;
-        double nearestSquaredDistance = std::numeric_limits<double>::infinity();
-        for (const Particle* particle : particlesFor(r))
-        {
-            double d2 = (r - particle->center()).norm2();
-            if (d2 < nearestSquaredDistance)
-            {
-                nearestParticle = particle;
-                nearestSquaredDistance = d2;
-            }
-        }
-        return nearestParticle;
     }
 
     /** This function replaces the contents of the specified entity collection by the set of
@@ -551,14 +532,6 @@ Position ParticleSnapshot::generatePosition() const
 const Array& ParticleSnapshot::properties(int m) const
 {
     return _propv[m];
-}
-
-////////////////////////////////////////////////////////////////////
-
-int ParticleSnapshot::nearestEntity(Position bfr) const
-{
-    const Particle* nearestParticle = _grid ? _grid->nearestParticle(bfr) : nullptr;
-    return nearestParticle ? nearestParticle->index() : -1;
 }
 
 ////////////////////////////////////////////////////////////////////
