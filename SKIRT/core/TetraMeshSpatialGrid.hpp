@@ -83,29 +83,9 @@ private:
 
     void storeTetrahedra(const tetgenio& out, bool storeVertices);
 
-    /** Private function to recursively build a binary search tree (see
-        en.wikipedia.org/wiki/Kd-tree) */
-    Node* buildTree(vector<int>::iterator first, vector<int>::iterator last, int depth) const;
-
-    /** This private function builds data structures that allow accelerating the operation of the
-        cellIndex() function. It assumes that the Voronoi mesh has already been built.
-
-        The domain is partitioned using a linear cubodial grid into cells that are called \em
-        blocks. For each block, the function builds and stores a list of all Voronoi cells that
-        possibly overlap that block. Retrieving the list of cells possibly overlapping a given
-        point in the domain then comes down to locating the block containing the point (which is
-        trivial since the grid is linear). The current implementation uses a Voronoi cell's
-        enclosing cuboid to test for intersection with a block. Performing a precise intersection
-        test is \em really slow and the shortened block lists don't substantially accelerate the
-        cellIndex() function.
-
-        To further reduce the search time within blocks that overlap with a large number of cells,
-        the function builds a binary search tree on the cell sites for those blocks (see for example
-        <a href="http://en.wikipedia.org/wiki/Kd-tree">en.wikipedia.org/wiki/Kd-tree</a>). */
-    void buildSearchPerBlock();
+    void buildSearch();
 
     //======================== Interrogation =======================
-
 public:
     /** This function returns the number of cells in the grid. */
     int numCells() const override;
@@ -152,18 +132,14 @@ private:
     // data members initialized during configuration
     double _eps{0.};  // small fraction of extent
 
-    int _numTetra;
+    int _numCells;     // number of Tetra cells and centroids
     int _numVertices;  // vertices are added/removed as the grid is built and refined
-    vector<Tetra*> _tetrahedra;
-    vector<Vec*> _vertices;
-    vector<const Vec*> _centroids;
+    vector<Tetra> _tetrahedra;
+    vector<Vec> _vertices;
 
-    // data members initialized by BuildSearch()
-    int _nb{0};                       // number of blocks in each dimension (limit for indices i,j,k)
-    int _nb2{0};                      // nb*nb
-    int _nb3{0};                      // nb*nb*nb
-    vector<vector<int>> _blocklists;  // list of cell indices per block, indexed on i*_nb2+j*_nb+k
-    vector<Node*> _blocktrees;        // root node of search tree or null for each block, indexed on i*_nb2+j*_nb+k
+    // data members initialized after reading the input file if a density policy has been set
+    class CellGrid;
+    CellGrid* _grid{nullptr};  // smart grid for locating the cell at a given location
 
     // allow our path segment generator to access our private data members
     class MySegmentGenerator;
