@@ -57,44 +57,200 @@ namespace
     }
 }
 
+////////////////////////////////////////////////////////////////////
+
+TetraMeshSpatialGrid::Tetra::Tetra(const vector<Vec>& vertices, const array<int, 4>& vertexIndices,
+                                   const array<Face, 4>& faces)
+    : _vertices(vertices), _vertexIndices(vertexIndices), _faces(faces)
+{
+    double xmin = DBL_MAX;
+    double ymin = DBL_MAX;
+    double zmin = DBL_MAX;
+    double xmax = -DBL_MAX;
+    double ymax = -DBL_MAX;
+    double zmax = -DBL_MAX;
+    for (int vi : _vertexIndices)
+    {
+        const Vec& vertex = vertices[vi];
+
+        xmin = min(xmin, vertex.x());
+        ymin = min(ymin, vertex.y());
+        zmin = min(zmin, vertex.z());
+        xmax = max(xmax, vertex.x());
+        ymax = max(ymax, vertex.y());
+        zmax = max(zmax, vertex.z());
+
+        _centroid += vertex;
+    }
+    // set bounding box
+    _extent = Box(xmin, ymin, zmin, xmax, ymax, zmax);
+
+    // average position of all vertices
+    _centroid /= 4;
+}
+
+int TetraMeshSpatialGrid::Tetra::findEnteringFace(const Vec& pos, const Direction& dir) const
+{
+    int enteringFace = -1;
+    // clockwise and cclockwise adjacent faces when checking edge v1->v2
+    static constexpr int etable[6][2] = {{3, 2}, {1, 3}, {2, 1}, {3, 0}, {0, 2}, {1, 0}};  // make this static?
+    // try all 6 edges because of very rare edge cases where ray is inside edge
+    // having only 1 non-zero Plücker product
+    int e = 0;
+    for (int v1 = 0; v1 < 3; v1++)
+    {
+        for (int v2 = v1 + 1; v2 < 4; v2++)
+        {
+            Vec moment12 = Vec::cross(dir, pos - vertex(v1));
+            double prod12 = Vec::dot(moment12, edge(v1, v2));
+            if (prod12 != 0.)
+            {
+                enteringFace = prod12 < 0 ? etable[e][0] : etable[e][1];
+                break;
+            }
+            e++;
+        }
+        if (enteringFace != -1) break;
+    }
+    return enteringFace;
+}
+
+bool TetraMeshSpatialGrid::Tetra::contains(const Position& bfr) const
+{
+    if (!_extent.contains(bfr)) return false;
+
+    // could optimize this slightly by using same vertex for 3 faces and do final face seperately, but this is more readable
+    for (int f = 0; f < 4; f++)
+    {
+        const Face& face = _faces[f];
+        Vec v = vertex((f + 1) % 4);  // any vertex that is on the face
+
+        // if point->face is opposite direction as the outward pointing normal, the point is outside
+        if (Vec::dot(v - bfr, face._normal) < 0) return false;
+    }
+    return true;
+}
+
+// https://vcg.isti.cnr.it/activities/OLD/geometryegraphics/pointintetraedro.html
+double TetraMeshSpatialGrid::Tetra::generateBarycentric(double& s, double& t, double& u) const
+{
+    if (s + t > 1.0)
+    {  // cut'n fold the cube into a prism
+        s = 1.0 - s;
+        t = 1.0 - t;
+    }
+    if (t + u > 1.0)
+    {  // cut'n fold the prism into a tetrahedron
+        double tmp = u;
+        u = 1.0 - s - t;
+        t = 1.0 - tmp;
+    }
+    else if (s + t + u > 1.0)
+    {
+        double tmp = u;
+        u = s + t + u - 1.0;
+        s = 1 - t - tmp;
+    }
+    return 1 - u - t - s;
+}
+
+Position TetraMeshSpatialGrid::Tetra::generatePosition(Random* random) const
+{
+    double s = random->uniform();
+    double t = random->uniform();
+    double u = random->uniform();
+
+    double r = generateBarycentric(s, t, u);
+
+    return Position(r * vertex(0) + u * vertex(1) + t * vertex(2) + s * vertex(3));
+}
+
+// get the vertex using local indices [0, 3]
+Vec TetraMeshSpatialGrid::Tetra::vertex(int t) const
+{
+    return _vertices[_vertexIndices[t]];
+}
+
+// get the edge t1->t2 using local indices [0, 3]
+Vec TetraMeshSpatialGrid::Tetra::edge(int t1, int t2) const
+{
+    return vertex(t2) - vertex(t1);
+}
+
+double TetraMeshSpatialGrid::Tetra::volume() const
+{
+    return 1 / 6. * abs(Vec::dot(Vec::cross(edge(0, 1), edge(0, 2)), edge(0, 3)));
+}
+
+double TetraMeshSpatialGrid::Tetra::diagonal() const
+{
+    double sum = 0.0;
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = i + 1; j < 4; ++j)
+        {
+            sum += edge(i, j).norm2();
+        }
+    }
+    return sqrt(sum / 6.0);
+}
+
+const array<TetraMeshSpatialGrid::Face, 4>& TetraMeshSpatialGrid::Tetra::faces() const
+{
+    return _faces;
+}
+
+const Vec& TetraMeshSpatialGrid::Tetra::centroid() const
+{
+    return _centroid;
+}
+
+const Box& TetraMeshSpatialGrid::Tetra::extent() const
+{
+    return _extent;
+}
+
 //////////////////////////////////////////////////////////////////////
 
-// This is a helper class for organizing cuboidal cells in a smart grid, so that
-// it is easy to retrieve the first cell that overlaps a given point in space.
-// The Box object on which this class is based specifies a cuboid guaranteed to
-// enclose all cells in the grid.
-class TetraMeshSpatialGrid::CellGrid
+// This helper class contains all cell information such as vertices and tetrahedra.
+// It also organizes cuboidal blocks in a smart grid, such that it is easy to retrieve
+// all cells inside a certain block given a position.
+class TetraMeshSpatialGrid::BlockGrid
 {
-    // data members initialized during construction
-    const vector<Tetra>& _tetra;   // reference to the original list of tetrahedra
-    int _gridsize;                 // number of grid cells in each spatial direction
+    int _numCells;                 // number of Tetra cells and centroids
+    int _numVertices;              // vertices are added/removed as the grid is built and refined
+    vector<Tetra> _tetrahedra;     // list of all tetrahedra
+    vector<Vec> _vertices;         // list of all vertices
+    int _gridsize;                 // number of grid blocks in each spatial direction
     Array _xgrid, _ygrid, _zgrid;  // the m+1 grid separation points for each spatial direction
-    vector<vector<int>> _listv;    // the m*m*m lists of indices for cells overlapping each grid cell
-    int _pmin, _pmax, _ptotal;     // minimum, maximum nr of cells in list; total nr of cells in listv
+    vector<vector<int>> _listv;    // the m*m*m lists of indices for blocks overlapping each grid block
+    int _pmin, _pmax;              // minimum, maximum nr of blocks in list; total nr of blocks in listv
 
 public:
-    // The constructor creates a cuboidal grid of the specified number of grid cells in each
-    // spatial direction, and for each of the grid cells it builds a list of all cells
-    // overlapping the grid cell. In an attempt to distribute the cells evenly over the
-    // grid cells, the sizes of the grid cells in each spatial direction are chosen so that
-    // the cell centers are evenly distributed over the grid cells.
-    CellGrid(const vector<Tetra>& tetra, Box extent, int gridsize) : _tetra(tetra), _gridsize(gridsize)
+    BlockGrid(){};
+
+    // The constructor creates a cuboidal grid of the specified number of grid blocks in each
+    // spatial direction, and for each of the grid blocks it builds a list of all blocks
+    // overlapping the grid block. In an attempt to distribute the blocks evenly over the
+    // grid blocks, the sizes of the grid blocks in each spatial direction are chosen so that
+    // the block centers are evenly distributed over the grid blocks.
+    BlockGrid(const vector<Tetra>& tetrahedra, Box extent, int gridsize) : _tetrahedra(tetrahedra), _gridsize(gridsize)
     {
         // build the grids in each spatial direction
         makegrid(0, gridsize, _xgrid, extent.xmin(), extent.xmax());
         makegrid(1, gridsize, _ygrid, extent.ymin(), extent.ymax());
         makegrid(2, gridsize, _zgrid, extent.zmin(), extent.zmax());
 
-        // make room for p*p*p grid cells
+        // make room for p*p*p grid blocks
         _listv.resize(gridsize * gridsize * gridsize);
 
-        // add each cell to the list for every grid cell that it overlaps
-        int n = _tetra.size();
+        // add each block to the list for every grid block that it overlaps
+        int n = _tetrahedra.size();
         for (int m = 0; m != n; ++m)
         {
-            Box boundingBox = _tetra[m].extent();
+            Box boundingBox = _tetrahedra[m].extent();
 
-            // find indices for first and last grid cell overlapped by cell, in each spatial direction
+            // find indices for first and last grid block overlapped by block, in each spatial direction
             int i1 = NR::locateClip(_xgrid, boundingBox.xmin());
             int i2 = NR::locateClip(_xgrid, boundingBox.xmax());
             int j1 = NR::locateClip(_ygrid, boundingBox.ymin());
@@ -102,7 +258,7 @@ public:
             int k1 = NR::locateClip(_zgrid, boundingBox.zmin());
             int k2 = NR::locateClip(_zgrid, boundingBox.zmax());
 
-            // add the cell to all grid cells in that 3D range
+            // add the block to all grid blocks in that 3D range
             for (int i = i1; i <= i2; i++)
                 for (int j = j1; j <= j2; j++)
                     for (int k = k1; k <= k2; k++)
@@ -114,40 +270,44 @@ public:
         // calculate statistics
         _pmin = n;
         _pmax = 0;
-        _ptotal = 0;
         for (int index = 0; index < gridsize * gridsize * gridsize; index++)
         {
             int size = _listv[index].size();
             _pmin = min(_pmin, size);
             _pmax = max(_pmax, size);
-            _ptotal += size;
         }
     }
 
     void makegrid(int axis, int gridsize, Array& grid, double cmin, double cmax)
     {
-        int n = _tetra.size();
+        int n = _tetrahedra.size();
 
-        // determine the cell distribution by binning at a decent resolution
+        // determine the block distribution by binning at a decent resolution
         int nbins = gridsize * 100;
         double binwidth = (cmax - cmin) / nbins;
         vector<int> bins(nbins);
-        for (const Tetra& tetra : _tetra)
+        for (const Tetra& tetra : _tetrahedra)
         {
-            double center = tetra.centroid(axis);
+            double center;
+            switch (axis)
+            {
+                case 0: center = tetra.centroid().x(); break;
+                case 1: center = tetra.centroid().y(); break;
+                case 2: center = tetra.centroid().z(); break;
+            }
             bins[static_cast<int>((center - cmin) / binwidth)] += 1;
         }
 
         // determine grid separation points based on the cumulative distribution
         grid.resize(gridsize + 1);
         grid[0] = -std::numeric_limits<double>::infinity();
-        int percell = n / gridsize;  // target number of particles per cell
-        int cumul = 0;               // cumulative number of particles in processed bins
-        int gridindex = 1;           // index of the next grid separation point to be filled
+        int perblock = n / gridsize;  // target number of particles per block
+        int cumul = 0;                // cumulative number of particles in processed bins
+        int gridindex = 1;            // index of the next grid separation point to be filled
         for (int binindex = 0; binindex < nbins; binindex++)
         {
             cumul += bins[binindex];
-            if (cumul > percell * gridindex)
+            if (cumul > perblock * gridindex)
             {
                 grid[gridindex] = cmin + (binindex + 1) * binwidth;
                 gridindex += 1;
@@ -157,208 +317,36 @@ public:
         grid[gridsize] = std::numeric_limits<double>::infinity();
     }
 
-    // This function returns the smallest number of cells overlapping a single grid cell.
-    int minCellRefsPerCell() const { return _pmin; }
+    // This function returns the smallest number of blocks overlapping a single grid block.
+    int minCellRefsPerBlock() const { return _pmin; }
 
-    // This function returns the largest number of cells overlapping a single grid cell.
-    int maxCellRefsPerCell() const { return _pmax; }
-
-    // This function returns the total number of cell references for all cells in the grid.
-    int totalCellRefs() const { return _ptotal; }
+    // This function returns the largest number of blocks overlapping a single grid block.
+    int maxCellRefsPerBlock() const { return _pmax; }
 
     // This function returns the index (in the list originally passed to the constructor)
-    // of the first cell in the list that overlaps the specified position,
-    // or -1 if none of the cells in the list overlap the specified position.
+    // of the first block in the list that overlaps the specified position,
+    // or -1 if none of the blocks in the list overlap the specified position.
     int cellIndexFor(Position r) const
     {
-        // locate the grid cell containing the specified position
+        // locate the grid block containing the specified position
         int i = NR::locateClip(_xgrid, r.x());
         int j = NR::locateClip(_ygrid, r.y());
         int k = NR::locateClip(_zgrid, r.z());
 
-        // search the list of cells for that grid cell
+        // search the list of blocks for that grid block
         for (int m : _listv[index(_gridsize, i, j, k)])
         {
-            if (_tetra[m].contains(r)) return m;
+            if (_tetrahedra[m].contains(r)) return m;
         }
         return -1;
     }
-};
-
-//////////////////////////////////////////////////////////////////////
-
-struct TetraMeshSpatialGrid::Face
-{
-    Face() {};
-
-    Face(int ntetra, int nface, Vec normal) : _ntetra(ntetra), _nface(nface), _normal(normal) {}
-
-    Vec _normal;  // outward facing normal
-    int _ntetra;  // index of neighbouring tetrahedron
-    int _nface;   // neighbouring face index
-};
-
-////////////////////////////////////////////////////////////////////
-
-class TetraMeshSpatialGrid::Tetra
-{
-private:
-    const vector<Vec>& _vertices;  // reference to the full list of vertices
-    Box _extent;                   // bounding box of the tetrahedron
-    Vec _centroid;                 // barycenter of the tetrahedron
-    array<int, 4> _vertexIndices;  // indices of the vertices in the full list
-    array<Face, 4> _faces;         // face information
-
-public:
-    Tetra(const vector<Vec>& vertices, const array<int, 4>& vertexIndices, const array<Face, 4>& faces)
-        : _vertices(vertices), _vertexIndices(vertexIndices), _faces(faces)
-    {
-        double xmin = DBL_MAX;
-        double ymin = DBL_MAX;
-        double zmin = DBL_MAX;
-        double xmax = -DBL_MAX;
-        double ymax = -DBL_MAX;
-        double zmax = -DBL_MAX;
-        for (int vi : _vertexIndices)
-        {
-            const Vec& vertex = vertices[vi];
-
-            xmin = min(xmin, vertex.x());
-            ymin = min(ymin, vertex.y());
-            zmin = min(zmin, vertex.z());
-            xmax = max(xmax, vertex.x());
-            ymax = max(ymax, vertex.y());
-            zmax = max(zmax, vertex.z());
-
-            _centroid += vertex;
-        }
-        // set bounding box
-        _extent = Box(xmin, ymin, zmin, xmax, ymax, zmax);
-
-        // average position of all vertices
-        _centroid /= 4;
-    }
-
-    int findEnteringFace(const Vec& pos, const Direction& dir) const
-    {
-        int enteringFace = -1;
-        // clockwise and cclockwise adjacent faces when checking edge v1->v2
-        static constexpr int etable[6][2] = {{3, 2}, {1, 3}, {2, 1}, {3, 0}, {0, 2}, {1, 0}};  // make this static?
-        // try all 6 edges because of very rare edge cases where ray is inside edge
-        // having only 1 non-zero Plücker product
-        int e = 0;
-        for (int v1 = 0; v1 < 3; v1++)
-        {
-            for (int v2 = v1 + 1; v2 < 4; v2++)
-            {
-                Vec moment12 = Vec::cross(dir, pos - vertex(v1));
-                double prod12 = Vec::dot(moment12, edge(v1, v2));
-                if (prod12 != 0.)
-                {
-                    enteringFace = prod12 < 0 ? etable[e][0] : etable[e][1];
-                    break;
-                }
-                e++;
-            }
-            if (enteringFace != -1) break;
-        }
-        return enteringFace;
-    }
-
-    bool contains(const Position& bfr) const
-    {
-        if (!_extent.contains(bfr)) return false;
-
-        // could optimize this slightly by using same vertex for 3 faces and do final face seperately, but this is more readable
-        for (int f = 0; f < 4; f++)
-        {
-            const Face& face = _faces[f];
-            Vec v = vertex((f + 1) % 4);  // any vertex that is on the face
-
-            // if point->face is opposite direction as the outward pointing normal, the point is outside
-            if (Vec::dot(v - bfr, face._normal) < 0) return false;
-        }
-        return true;
-    }
-
-    // https://vcg.isti.cnr.it/activities/OLD/geometryegraphics/pointintetraedro.html
-    double generateBarycentric(double& s, double& t, double& u) const
-    {
-        if (s + t > 1.0)
-        {  // cut'n fold the cube into a prism
-            s = 1.0 - s;
-            t = 1.0 - t;
-        }
-        if (t + u > 1.0)
-        {  // cut'n fold the prism into a tetrahedron
-            double tmp = u;
-            u = 1.0 - s - t;
-            t = 1.0 - tmp;
-        }
-        else if (s + t + u > 1.0)
-        {
-            double tmp = u;
-            u = s + t + u - 1.0;
-            s = 1 - t - tmp;
-        }
-        return 1 - u - t - s;
-    }
-
-    Position generatePosition(Random* random) const
-    {
-        double s = random->uniform();
-        double t = random->uniform();
-        double u = random->uniform();
-
-        double r = generateBarycentric(s, t, u);
-
-        return Position(r * vertex(0) + u * vertex(1) + t * vertex(2) + s * vertex(3));
-    }
-
-    // get the vertex using local indices [0, 3]
-    Vec vertex(int t) const { return _vertices[_vertexIndices[t]]; }
-
-    // get the edge t1->t2 using local indices [0, 3]
-    Vec edge(int t1, int t2) const { return vertex(t2) - vertex(t1); }
-
-    double volume() const { return 1 / 6. * abs(Vec::dot(Vec::cross(edge(0, 1), edge(0, 2)), edge(0, 3))); }
-
-    double diagonal() const
-    {
-        double sum = 0.0;
-        for (int i = 0; i < 3; ++i)
-        {
-            for (int j = i + 1; j < 4; ++j)
-            {
-                sum += edge(i, j).norm2();
-            }
-        }
-        return sqrt(sum / 6.0);
-    }
-
-    const array<Face, 4>& faces() const { return _faces; }
-
-    const Vec& centroid() const { return _centroid; }
-
-    const double centroid(int axis) const
-    {
-        switch (axis % 3)
-        {
-            case 0: return _centroid.x();
-            case 1: return _centroid.y();
-            case 2: return _centroid.z();
-            default: return 0.0;
-        }
-    }
-
-    const Box& extent() const { return _extent; }
 };
 
 ////////////////////////////////////////////////////////////////////
 
 TetraMeshSpatialGrid::~TetraMeshSpatialGrid()
 {
-    delete _grid;
+    delete _blocks;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -556,7 +544,7 @@ void TetraMeshSpatialGrid::storeTetrahedra(const tetgenio& out, bool storeVertic
         }
     }
 
-    _tetrahedra.reserve(_numCells);  // can't make empty Tetra so don't use resize
+    _tetrahedra.reserve(_numCells);  // no default constructor for Tetra
     for (int i = 0; i < _numCells; i++)
     {
         std::array<int, 4> vertexIndices;
@@ -635,12 +623,12 @@ void TetraMeshSpatialGrid::buildSearch()
 {
     int gridsize = max(20, static_cast<int>(pow(_tetrahedra.size(), 1. / 3.) / 5));
     string size = std::to_string(gridsize);
-    _log->info("Constructing intermediate " + size + "x" + size + "x" + size + " grid for cells...");
-    _grid = new CellGrid(_tetrahedra, extent(), gridsize);
-    _log->info("  Smallest number of cells per grid cell: " + std::to_string(_grid->minCellRefsPerCell()));
-    _log->info("  Largest  number of cells per grid cell: " + std::to_string(_grid->maxCellRefsPerCell()));
-    _log->info("  Average  number of cells per grid cell: "
-               + StringUtils::toString(_grid->totalCellRefs() / double(gridsize * gridsize * gridsize), 'f', 1));
+    _log->info("Constructing intermediate " + size + "x" + size + "x" + size + " grid for tetrahedra...");
+    _blocks = new BlockGrid(_tetrahedra, extent(), gridsize);
+    _log->info("  Smallest number of tetrahedra per grid block: " + std::to_string(_blocks->minCellRefsPerBlock()));
+    _log->info("  Largest  number of tetrahedra per grid block: " + std::to_string(_blocks->maxCellRefsPerBlock()));
+    _log->info("  Average  number of tetrahedra per grid block: "
+               + StringUtils::toString(_numCells / double(gridsize * gridsize * gridsize), 'f', 1));
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -667,7 +655,7 @@ double TetraMeshSpatialGrid::diagonal(int m) const
 
 int TetraMeshSpatialGrid::cellIndex(Position bfr) const
 {
-    return _grid->cellIndexFor(bfr);
+    return _blocks->cellIndexFor(bfr);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -765,8 +753,6 @@ public:
         // intentionally falls through
         if (state() == State::Inside)
         {
-            double ds;
-            int leavingFace;
             // loop in case no exit point was found (which should happen only rarely)
             while (true)
             {

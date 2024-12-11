@@ -11,6 +11,7 @@
 #include "Log.hpp"
 #include "Medium.hpp"
 #include "PathSegmentGenerator.hpp"
+#include <array>
 
 class tetgenio;
 
@@ -39,7 +40,7 @@ class TetraMeshSpatialGrid : public BoxSpatialGrid
         ENUM_VAL(Policy, ImportedSites, "positions of particles, sites or cells in imported distribution")
     ENUM_END()
 
-    ITEM_CONCRETE(TetraMeshSpatialGrid, BoxSpatialGrid, "a Tetra tessellation-based spatial grid")
+    ITEM_CONCRETE(TetraMeshSpatialGrid, BoxSpatialGrid, "a tetrahedral spatial grid")
         ATTRIBUTE_TYPE_DISPLAYED_IF(TetraMeshSpatialGrid, "Level2")
 
         PROPERTY_ENUM(policy, Policy, "the policy for determining the positions of the sites")
@@ -71,9 +72,53 @@ protected:
 
     //==================== Private construction ====================
 private:
-    class Node;
-    class Face;
-    class Tetra;
+    struct Face
+    {
+        Face(){};
+
+        Face(int ntetra, int nface, Vec normal) : _ntetra(ntetra), _nface(nface), _normal(normal) {}
+
+        int _ntetra;  // index of neighbouring tetrahedron
+        int _nface;   // neighbouring face index
+        Vec _normal;  // outward facing normal
+    };
+
+    class Tetra
+    {
+    private:
+        const vector<Vec>& _vertices;       // reference to the full list of vertices
+        Box _extent;                        // bounding box of the tetrahedron
+        Vec _centroid;                      // barycenter of the tetrahedron
+        std::array<int, 4> _vertexIndices;  // indices of the vertices in the full list
+        std::array<Face, 4> _faces;         // face information
+
+    public:
+        Tetra(const vector<Vec>& vertices, const std::array<int, 4>& vertexIndices, const std::array<Face, 4>& faces);
+
+        int findEnteringFace(const Vec& pos, const Direction& dir) const;
+
+        bool contains(const Position& bfr) const;
+
+        double generateBarycentric(double& s, double& t, double& u) const;
+
+        Position generatePosition(Random* random) const;
+
+        Vec vertex(int t) const;
+
+        Vec edge(int t1, int t2) const;
+
+        double volume() const;
+
+        double diagonal() const;
+
+        const std::array<Face, 4>& faces() const;
+
+        const Vec& centroid() const;
+
+        const Box& extent() const;
+    };
+
+    class BlockGrid;
 
     void buildMesh();
 
@@ -137,9 +182,9 @@ private:
     vector<Tetra> _tetrahedra;
     vector<Vec> _vertices;
 
-    // data members initialized after reading the input file if a density policy has been set
-    class CellGrid;
-    CellGrid* _grid{nullptr};  // smart grid for locating the cell at a given location
+    // smart grid that contains all cell information
+    // allows for efficiently locating the cell at a given location
+    BlockGrid* _blocks{nullptr};
 
     // allow our path segment generator to access our private data members
     class MySegmentGenerator;

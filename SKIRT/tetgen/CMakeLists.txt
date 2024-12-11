@@ -23,9 +23,7 @@ file(GLOB HEADERS "*.h")
 
 # create the library target
 add_library(${TARGET} STATIC ${SOURCES} ${HEADERS})
-target_compile_definitions(tetgen PRIVATE -DTETLIBRARY)
-# Generate position independent code
-# set_target_properties(tetgen PROPERTIES POSITION_INDEPENDENT_CODE ON)
+target_compile_definitions(tetgen PRIVATE -DTETLIBRARY) # to compile TetGen as a library
 
 # adjust C++ compiler flags to our needs
 set(NO_EXTRA_WARNINGS true)  # to avoid warnings in the tetgen code (warnings still present)
