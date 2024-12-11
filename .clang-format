@@ -70,7 +70,6 @@ IndentWidth: 4
 IndentWrappedFunctionNames: false
 InsertNewlineAtEOF: true
 KeepEmptyLinesAtTheStartOfBlocks: true
-KeepEmptyLinesAtEOF: false
 LambdaBodyIndentation: Signature
 MacroBlockBegin: "^(ITEM_CONCRETE)|(ITEM_ABSTRACT)|(ENUM_DEF)$"
 MacroBlockEnd: "^(ITEM_END)|(ENUM_END)$"
