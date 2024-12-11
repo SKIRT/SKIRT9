@@ -19,7 +19,6 @@
 #include "StringUtils.hpp"
 #include "Table.hpp"
 #include "TextInFile.hpp"
-#include "Units.hpp"
 #include <set>
 #include "container.hh"
 
@@ -1104,13 +1103,6 @@ int VoronoiMeshSnapshot::cellIndex(Position bfr) const
 const Array& VoronoiMeshSnapshot::properties(int m) const
 {
     return _cells[m]->properties();
-}
-
-////////////////////////////////////////////////////////////////////
-
-int VoronoiMeshSnapshot::nearestEntity(Position bfr) const
-{
-    return _blocktrees.size() ? cellIndex(bfr) : -1;
 }
 
 ////////////////////////////////////////////////////////////////////

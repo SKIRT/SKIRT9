@@ -19,7 +19,7 @@ namespace
     constexpr double lambdaSF = Constants::lambdaSpinFlip();
 
     // wavelength range outside of which we consider absorption to be zero (approximately 20.47 - 21.74 cm)
-    constexpr Range absorptionRange(lambdaSF*(1. - 0.03), lambdaSF*(1. + 0.03));
+    constexpr Range absorptionRange(lambdaSF * (1. - 0.03), lambdaSF * (1. + 0.03));
 
     // indices for custom state variables
     constexpr int NEUTRAL_SURFACE_DENSITY = 0;

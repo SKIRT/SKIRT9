@@ -36,7 +36,7 @@ jobs:
     # job name, displayed in the action log
     name: Build using Clang on macOS
     # run this job on the Github-provided runner with a recent macOS version
-    runs-on: macos-12
+    runs-on: macos-14
     # steps that make up this job
     steps:
     # checkout using a recent version of the checkout action

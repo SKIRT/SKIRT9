@@ -829,7 +829,7 @@ namespace
 #        elif defined(HW_PHYSMEM64)
         mib[1] = HW_PHYSMEM64; /* NetBSD, OpenBSD. --------- */
 #        endif
-        int64_t size = 0;    /* 64-bit */
+        int64_t size = 0; /* 64-bit */
         size_t len = sizeof(size);
         if (sysctl(mib, 2, &size, &len, NULL, 0) == 0) return static_cast<size_t>(size);
         return 0L; /* Failed? */
@@ -851,7 +851,7 @@ namespace
         int mib[2];
         mib[0] = CTL_HW;
 #        if defined(HW_REALMEM)
-        mib[1] = HW_REALMEM;   /* FreeBSD. ----------------- */
+        mib[1] = HW_REALMEM; /* FreeBSD. ----------------- */
 #        elif defined(HW_PYSMEM)
         mib[1] = HW_PHYSMEM; /* Others. ------------------ */
 #        endif

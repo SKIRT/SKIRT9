@@ -29,7 +29,10 @@ XmlWriter::XmlWriter(string filePath) : _out(_outfile), _streamName(filePath)
 
 namespace
 {
-    bool isLetter(char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); }
+    bool isLetter(char c)
+    {
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+    }
 
     bool isLetterOrDigitOrDash(char c)
     {
@@ -48,7 +51,10 @@ namespace
     }
 
     // a valid attribute value does not contain control characters
-    bool isValidValue(string value) { return std::none_of(value.cbegin(), value.cend(), isControlCharacter); }
+    bool isValidValue(string value)
+    {
+        return std::none_of(value.cbegin(), value.cend(), isControlCharacter);
+    }
 
     // a valid comment does not contain control characters or the sequence "--", and does not end in "-"
     bool isValidComment(string text)

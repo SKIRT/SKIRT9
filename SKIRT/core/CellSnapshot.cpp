@@ -10,7 +10,6 @@
 #include "Random.hpp"
 #include "StringUtils.hpp"
 #include "TextInFile.hpp"
-#include "Units.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -67,7 +66,10 @@ namespace
     }
 
     // returns the linear index for element (i,j,k) in a p*p*p table
-    inline int index(int p, int i, int j, int k) { return ((i * p) + j) * p + k; }
+    inline int index(int p, int i, int j, int k)
+    {
+        return ((i * p) + j) * p + k;
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -397,13 +399,6 @@ Position CellSnapshot::generatePosition() const
 const Array& CellSnapshot::properties(int m) const
 {
     return _propv[m];
-}
-
-////////////////////////////////////////////////////////////////////
-
-int CellSnapshot::nearestEntity(Position bfr) const
-{
-    return _grid ? _grid->cellIndexFor(bfr) : -1;
 }
 
 ////////////////////////////////////////////////////////////////////

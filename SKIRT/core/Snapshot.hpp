@@ -359,13 +359,6 @@ protected:
         range, the behavior is undefined. */
     virtual const Array& properties(int m) const = 0;
 
-    /** This function returns the index \f$0\le m \le N_\mathrm{ent}-1\f$ for the entity at or
-        nearest to the specified point \f${\bf{r}}\f$, or -1 if the point is outside the domain or
-        if there are no entities in the snapshot. For a cell-based snapshot, the function returns
-        the index of the cell containing the given point. For a particle-based snapshot, the
-        function returns the index of the particle whose center is nearest to the given point. */
-    virtual int nearestEntity(Position bfr) const = 0;
-
 public:
     /** This function replaces the contents of the specified entity collection by the set of
         entities that overlap the specified point \f${\bf{r}}\f$, with their corresponding weights.
@@ -407,11 +400,6 @@ public:
         range, the behavior is undefined. */
     double initialMass(int m) const;
 
-    /** This function returns the initial mass of the entity nearest to (or at) the specified point
-        \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If the
-        initial mass is not being imported, the behavior is undefined. */
-    double initialMass(Position bfr) const;
-
     /** This function returns true if the current mass is being imported, and false otherwise. */
     bool hasCurrentMass() const { return _currentMassIndex >= 0; }
 
@@ -419,11 +407,6 @@ public:
         N_\mathrm{ent}-1\f$. If the current mass is not being imported, or the index is out of
         range, the behavior is undefined. */
     double currentMass(int m) const;
-
-    /** This function returns the current mass of the entity nearest to (or at) the specified point
-        \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If the
-        current mass is not being imported, the behavior is undefined. */
-    double currentMass(Position bfr) const;
 
     /** This function returns true if the metallicity is being imported, and false otherwise. */
     bool hasMetallicity() const { return _metallicityIndex >= 0; }
@@ -433,7 +416,7 @@ public:
         range, the behavior is undefined. */
     double metallicity(int m) const;
 
-    /** This function returns the metallicity of the entity nearest to (or at) the specified point
+    /** This function returns the metallicity at the specified point
         \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If the
         metallicity is not being imported, the behavior is undefined. */
     double metallicity(Position bfr) const;
@@ -446,11 +429,6 @@ public:
         */
     double age(int m) const;
 
-    /** This function returns the age of the entity nearest to (or at) the specified point
-        \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If the age
-        is not being imported, the behavior is undefined. */
-    double age(Position bfr) const;
-
     /** This function returns true if the temperature is being imported, and false otherwise. */
     bool hasTemperature() const { return _temperatureIndex >= 0; }
 
@@ -459,7 +437,7 @@ public:
         range, the behavior is undefined. */
     double temperature(int m) const;
 
-    /** This function returns the temperature of the entity nearest to (or at) the specified point
+    /** This function returns the temperature at the specified point
         \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If the
         temperature is not being imported, the behavior is undefined. */
     double temperature(Position bfr) const;
@@ -472,7 +450,7 @@ public:
         the behavior is undefined. */
     Vec velocity(int m) const;
 
-    /** This function returns the velocity of the entity nearest to (or at) the specified point
+    /** This function returns the velocity at the specified point
         \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero velocity. If
         the velocity is not being imported, the behavior is undefined. */
     Vec velocity(Position bfr) const;
@@ -486,12 +464,6 @@ public:
         of range, the behavior is undefined. */
     double velocityDispersion(int m) const;
 
-    /** This function returns the velocity dispersion of the entity nearest to (or at) the
-        specified point \f${\bf{r}}\f$. If the point is outside the domain, the function returns
-        zero dispersion. If the velocity dispersion is not being imported, the behavior is
-        undefined. */
-    double velocityDispersion(Position bfr) const;
-
     /** This function returns true if the magnetic field is being imported, and false otherwise. */
     bool hasMagneticField() const { return _magneticFieldIndex >= 0; }
 
@@ -500,7 +472,7 @@ public:
         range, the behavior is undefined. */
     Vec magneticField(int m) const;
 
-    /** This function returns the magnetic field vector of the entity nearest to (or at) the
+    /** This function returns the magnetic field vector at the
         specified point \f${\bf{r}}\f$. If the point is outside the domain, the function returns a
         zero magnetic field. If the magnetic field is not being imported, the behavior is
         undefined. */
@@ -515,7 +487,7 @@ public:
         index is out of range, the behavior is undefined. */
     void parameters(int m, Array& params) const;
 
-    /** This function stores the parameters of the entity nearest to (or at) the specified point
+    /** This function stores the parameters at the specified point
         \f${\bf{r}}\f$ into the given array. If the point is outside the domain, the function
         returns the appropriate number of zero parameter values. If parameters are not being
         imported, the behavior is undefined. */

@@ -88,7 +88,8 @@ void ImportedSource::setupSelfAfter()
         log->info("Calculating luminosities for " + std::to_string(M) + " imported entities...");
         log->infoSetElapsed(M);
         find<ParallelFactory>()->parallelDistributed()->call(M, [this, log](size_t firstIndex, size_t numIndices) {
-            Array lambdav, pv, Pv;  // the contents of these arrays is not used, so this could be optimized if needed
+            // the contents of these three arrays is not used, so this could be optimized if needed
+            Array lambdav, pv, Pv;
             Array params;
 
             while (numIndices)

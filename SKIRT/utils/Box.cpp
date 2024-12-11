@@ -80,7 +80,10 @@ bool Box::intersects(Vec r, const Vec k, double& smin, double& smax) const
 namespace
 {
     // returns the square of the argument
-    double square(double value) { return value * value; }
+    double square(double value)
+    {
+        return value * value;
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
