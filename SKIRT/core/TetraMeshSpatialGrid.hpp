@@ -18,7 +18,7 @@ class tetgenio;
 //////////////////////////////////////////////////////////////////////
 
 /** TetraMeshSpatialGrid is a concrete subclass of the SpatialGrid class. It represents a
-    three-dimensional grid based on a Tetra tesselation of the cuboidal spatial domain of the
+    three-dimensional grid based on a tetrahedralization of the cuboidal spatial domain of the
     simulation. See the TetraMeshSnapshot class for more information on Tetra tesselations.
 
     The class offers several options for determining the positions of the sites generating the
@@ -31,13 +31,13 @@ class tetgenio;
 class TetraMeshSpatialGrid : public BoxSpatialGrid
 {
     /** The enumeration type indicating the policy for determining the positions of the sites. */
-    ENUM_DEF(Policy, Uniform, CentralPeak, DustDensity, ElectronDensity, GasDensity, ImportedSites)
+    ENUM_DEF(Policy, Uniform, CentralPeak, DustDensity, ElectronDensity, GasDensity, File)
         ENUM_VAL(Policy, Uniform, "random from uniform distribution")
         ENUM_VAL(Policy, CentralPeak, "random from distribution with a steep central peak")
         ENUM_VAL(Policy, DustDensity, "random from dust density distribution")
         ENUM_VAL(Policy, ElectronDensity, "random from electron density distribution")
         ENUM_VAL(Policy, GasDensity, "random from gas density distribution")
-        ENUM_VAL(Policy, ImportedSites, "positions of particles, sites or cells in imported distribution")
+        ENUM_VAL(Policy, File, "loaded from text column data file")
     ENUM_END()
 
     ITEM_CONCRETE(TetraMeshSpatialGrid, BoxSpatialGrid, "a tetrahedral spatial grid")
@@ -51,6 +51,9 @@ class TetraMeshSpatialGrid : public BoxSpatialGrid
         ATTRIBUTE_DEFAULT_VALUE(numSites, "500")
         ATTRIBUTE_RELEVANT_IF(numSites, "policyUniform|policyCentralPeak|policyDustDensity|"
                                         "policyElectronDensity|policyGasDensity")
+
+        PROPERTY_STRING(filename, "the name of the file containing the site positions")
+        ATTRIBUTE_RELEVANT_IF(filename, "policyFile")
 
         PROPERTY_BOOL(refine, "refine the grid to have higher quality cells by adding more vertices")
         ATTRIBUTE_DEFAULT_VALUE(refine, "false");
@@ -72,23 +75,27 @@ protected:
 
     //==================== Private construction ====================
 private:
+    /** Private class to hold all infromation for a face of a tetrahedron to allow photon
+        traversal through it. */
     struct Face
     {
-        Face(){};
-
-        Face(int ntetra, int nface, Vec normal) : _ntetra(ntetra), _nface(nface), _normal(normal) {}
-
         int _ntetra;  // index of neighbouring tetrahedron
         int _nface;   // neighbouring face index
         Vec _normal;  // outward facing normal
+
+        Face(){};
+
+        Face(int ntetra, int nface, Vec normal) : _ntetra(ntetra), _nface(nface), _normal(normal) {}
     };
 
+    /** Private class to hold all information for a tetrahedron to fully describe its geometry
+        and allow photon traversal through it. */
     class Tetra
     {
     private:
-        const vector<Vec>& _vertices;       // reference to the full list of vertices
-        Box _extent;                        // bounding box of the tetrahedron
-        Vec _centroid;                      // barycenter of the tetrahedron
+        const vector<Vec>& _vertices;  // reference to all vertices, could be passed as arg but this is more convenient
+        Box _extent;                   // bounding box of the tetrahedron
+        Vec _centroid;                 // barycenter of the tetrahedron
         std::array<int, 4> _vertexIndices;  // indices of the vertices in the full list
         std::array<Face, 4> _faces;         // face information
 
@@ -120,17 +127,34 @@ private:
 
     class BlockGrid;
 
+    /** This private function removes vertices that are outside the domain. */
+    void removeOutside();
+
+    /** This private function builds the tetrahedral mesh. Starts by constructing the Delaunay 
+        tetrahedralization and optionally refines it if the refine option is set to true. */
     void buildMesh();
 
+    /** This private function constructs the Delaunay tetrahedralization using the _vertices. */
     void buildDelaunay(tetgenio& out);
 
+    /** This private function refines the Delaunay tetrahedralization to improve cell quality.
+        The refinement process is controlled by TetGen with default quality parameters. The
+        input is the initial Delaunay tetrahedralization in a tetgenio container. The output
+        is a tetgenio container with the refined Delaunay tetrahedralization. */
     void refineDelaunay(tetgenio& in, tetgenio& out);
 
-    void storeTetrahedra(const tetgenio& out, bool storeVertices);
+    /** This private function stores the tetrahedra and vertices from the final tetgenio 
+        container into the class members. The input is the tetgenio container with the
+        final tetrahedralization. The storeVertices parameter indicates whether to
+        overwrite the vertices with those from the tetgenio container. This function
+        also logs some cell statistics after storing the data. */
+    void storeTetrahedra(const tetgenio& final, bool storeVertices);
 
+    /** This private function builds the search data structure for the tetrahedral mesh.
+        See the private BlockGrid class for more information. */
     void buildSearch();
 
-    //======================== Interrogation =======================
+    //======================= Interrogation =======================
 public:
     /** This function returns the number of cells in the grid. */
     int numCells() const override;
@@ -153,7 +177,7 @@ public:
     /** This function returns a random location from the cell with index \f$m\f$. */
     Position randomPositionInCell(int m) const override;
 
-    //====================== Path construction =====================
+    //===================== Path construction =====================
 
     /** This function creates and hands over ownership of a path segment generator (an instance of
         a PathSegmentGenerator subclass) appropriate for this spatial grid type. For the Tetra
@@ -161,7 +185,7 @@ public:
         class. */
     std::unique_ptr<PathSegmentGenerator> createPathSegmentGenerator() const override;
 
-    //====================== Output =====================
+    //===================== Output =====================
 
     /** This function outputs the grid plot files; it is provided here because the regular
         mechanism does not apply. The function reconstructs the Tetra tesselation in order to

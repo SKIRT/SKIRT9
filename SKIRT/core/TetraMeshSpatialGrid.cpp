@@ -12,6 +12,7 @@
 #include "SiteListInterface.hpp"
 #include "SpatialGridPlotFile.hpp"
 #include "StringUtils.hpp"
+#include "TextInFile.hpp"
 #include "tetgen.h"
 
 using std::array;
@@ -57,7 +58,7 @@ namespace
     }
 }
 
-////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
 
 TetraMeshSpatialGrid::Tetra::Tetra(const vector<Vec>& vertices, const array<int, 4>& vertexIndices,
                                    const array<Face, 4>& faces)
@@ -119,28 +120,35 @@ bool TetraMeshSpatialGrid::Tetra::contains(const Position& bfr) const
 {
     if (!_extent.contains(bfr)) return false;
 
-    // could optimize this slightly by using same vertex for 3 faces and do final face seperately, but this is more readable
-    for (int f = 0; f < 4; f++)
+    // Use the same vertex for the first 3 faces
+    Vec v = vertex(3);  // vertex 3 is on faces 0,1,2
+
+    for (int f = 0; f <= 2; f++)
     {
         const Face& face = _faces[f];
-        Vec v = vertex((f + 1) % 4);  // any vertex that is on the face
 
-        // if point->face is opposite direction as the outward pointing normal, the point is outside
+        // if bfr->v is opposite direction as the outward pointing normal, the point is outside
         if (Vec::dot(v - bfr, face._normal) < 0) return false;
     }
+
+    // Check face 3
+    const Face& face = _faces[3];
+    v = vertex(0);  // any vertex that is not vertex 3
+
+    if (Vec::dot(v - bfr, face._normal) < 0) return false;
+
     return true;
 }
-
-// https://vcg.isti.cnr.it/activities/OLD/geometryegraphics/pointintetraedro.html
+// Generating Random Points in a Tetrahedron: DOI 10.1080/10867651.2000.10487528
 double TetraMeshSpatialGrid::Tetra::generateBarycentric(double& s, double& t, double& u) const
 {
-    if (s + t > 1.0)
-    {  // cut'n fold the cube into a prism
+    if (s + t > 1.0)  // cut'n fold the cube into a prism
+    {
         s = 1.0 - s;
         t = 1.0 - t;
     }
-    if (t + u > 1.0)
-    {  // cut'n fold the prism into a tetrahedron
+    if (t + u > 1.0)  // cut'n fold the prism into a tetrahedron
+    {
         double tmp = u;
         u = 1.0 - s - t;
         t = 1.0 - tmp;
@@ -212,23 +220,17 @@ const Box& TetraMeshSpatialGrid::Tetra::extent() const
 
 //////////////////////////////////////////////////////////////////////
 
-// This helper class contains all cell information such as vertices and tetrahedra.
-// It also organizes cuboidal blocks in a smart grid, such that it is easy to retrieve
-// all cells inside a certain block given a position.
+// This helper class organizes the cells into cuboidal blocks in a smart grid,
+// such that it is easy to retrieve all cells inside a certain block given a position.
 class TetraMeshSpatialGrid::BlockGrid
 {
-    int _numCells;                 // number of Tetra cells and centroids
-    int _numVertices;              // vertices are added/removed as the grid is built and refined
-    vector<Tetra> _tetrahedra;     // list of all tetrahedra
-    vector<Vec> _vertices;         // list of all vertices
-    int _gridsize;                 // number of grid blocks in each spatial direction
-    Array _xgrid, _ygrid, _zgrid;  // the m+1 grid separation points for each spatial direction
-    vector<vector<int>> _listv;    // the m*m*m lists of indices for blocks overlapping each grid block
-    int _pmin, _pmax;              // minimum, maximum nr of blocks in list; total nr of blocks in listv
+    const vector<Tetra>& _tetrahedra;  // reference to list of all tetrahedra
+    int _gridsize;                     // number of grid blocks in each spatial direction
+    Array _xgrid, _ygrid, _zgrid;      // the m+1 grid separation points for each spatial direction
+    vector<vector<int>> _listv;        // the m*m*m lists of indices for blocks overlapping each grid block
+    int _pmin, _pmax;                  // minimum, maximum nr of blocks in list; total nr of blocks in listv
 
 public:
-    BlockGrid(){};
-
     // The constructor creates a cuboidal grid of the specified number of grid blocks in each
     // spatial direction, and for each of the grid blocks it builds a list of all blocks
     // overlapping the grid block. In an attempt to distribute the blocks evenly over the
@@ -429,36 +431,55 @@ void TetraMeshSpatialGrid::setupSelfBefore()
             for (int m = 0; m != n; ++m) _vertices[m] = sites[m];
             break;
         }
-        case Policy::ImportedSites:
+        case Policy::File:
         {
-            auto sli = find<MediumSystem>()->interface<SiteListInterface>(2);
-            // prepare the data
-            int n = sli->numSites();
-            _vertices.resize(n);
-            for (int m = 0; m != n; ++m) _vertices[m] = sli->sitePosition(m);
-            break;
+            // read the input file
+            TextInFile in(this, _filename, "tetrahedral vertices");
+            in.addColumn("position x", "length", "pc");
+            in.addColumn("position y", "length", "pc");
+            in.addColumn("position z", "length", "pc");
+            Array coords;
+            while (in.readRow(coords)) _vertices.emplace_back(coords[0], coords[1], coords[2]);
+            in.close();
         }
     }
 
-    if (_vertices.empty())
-    {
-        throw FATALERROR("No vertices available for mesh generation");
-    }
-
-    _numVertices = _vertices.size();
-
+    removeOutside();
+    if (_numVertices < 4) return;  // abort if there are not enough vertices
     buildMesh();
     buildSearch();
 }
 
 ////////////////////////////////////////////////////////////////////
 
+void TetraMeshSpatialGrid::removeOutside()
+{
+    _numVertices = _vertices.size();
+
+    // remove vertices outside of the domain
+    auto sitesEnd = std::remove_if(_vertices.begin(), _vertices.end(), [this](const Vec& vertex) {
+        if (!contains(vertex)) return true;  // remove vertex
+        return false;
+    });
+    _vertices.erase(sitesEnd, _vertices.end());
+
+    // log removed vertices
+    int numOutside = _numVertices - _vertices.size();
+    if (numOutside) _log->info("removed " + StringUtils::toString(numOutside, 'd') + " vertices outside of the domain");
+
+    _numVertices = _vertices.size();
+}
+
+////////////////////////////////////////////////////////////////////
+
 void TetraMeshSpatialGrid::buildMesh()
 {
-    tetgenio delaunay, refined;
+    tetgenio delaunay;
     buildDelaunay(delaunay);
+
     if (refine())
     {
+        tetgenio refined;
         refineDelaunay(delaunay, refined);
         storeTetrahedra(refined, true);
     }
@@ -472,20 +493,9 @@ void TetraMeshSpatialGrid::buildMesh()
 
 void TetraMeshSpatialGrid::buildDelaunay(tetgenio& out)
 {
-    // remove vertices outside of the domain
-    auto sitesEnd = std::remove_if(_vertices.begin(), _vertices.end(), [this](const Vec& vertex) {
-        if (!contains(vertex)) return true;  // remove vertex
-        return false;
-    });
-    _vertices.erase(sitesEnd, _vertices.end());
-    int numOutside = _numVertices - _vertices.size();
-    _numVertices = _vertices.size();
-    if (numOutside) _log->info("removed " + StringUtils::toString(numOutside, 'd') + " vertices outside of the domain");
-
     tetgenio in;
     tetgenbehavior behavior;
 
-    // in.firstnumber = 0; // remove me if no error
     in.numberofpoints = _vertices.size();
     in.pointlist = new REAL[in.numberofpoints * 3];
     for (int i = 0; i < in.numberofpoints; i++)
@@ -495,7 +505,11 @@ void TetraMeshSpatialGrid::buildDelaunay(tetgenio& out)
         in.pointlist[i * 3 + 2] = _vertices[i].z();
     }
 
-    behavior.psc = 1;  // -s build Delaunay tetrahedralisation
+    behavior.psc = 1;  // -s build Delaunay tetrahedralization
+    // correct output options for out
+    behavior.neighout = 2;   // -nn
+    behavior.facesout = 1;   // -f
+    behavior.zeroindex = 1;  // -z
 
     _log->info("Building Delaunay triangulation using input vertices...");
     tetrahedralize(&behavior, &in, &out);
@@ -518,27 +532,26 @@ void TetraMeshSpatialGrid::refineDelaunay(tetgenio& in, tetgenio& out)
 
     _log->info("Refining triangulation...");
     tetrahedralize(&behavior, &in, &out);
-    _log->info("Refined triangulation");
+    _log->info("Built refined triangulation");
 }
 
 ////////////////////////////////////////////////////////////////////
 
-void TetraMeshSpatialGrid::storeTetrahedra(const tetgenio& out, bool storeVertices)
+void TetraMeshSpatialGrid::storeTetrahedra(const tetgenio& final, bool storeVertices)
 {
-    // tranfser TetGen data to TetraMeshSpatialGrid data containers
-    _numCells = out.numberoftetrahedra;
+    _numCells = final.numberoftetrahedra;
 
     // replace old vertices
     if (storeVertices)
     {
-        _numVertices = out.numberofpoints;
+        _numVertices = final.numberofpoints;
 
         _vertices.resize(_numVertices);
         for (int i = 0; i < _numVertices; i++)
         {
-            double x = out.pointlist[3 * i + 0];
-            double y = out.pointlist[3 * i + 1];
-            double z = out.pointlist[3 * i + 2];
+            double x = final.pointlist[3 * i + 0];
+            double y = final.pointlist[3 * i + 1];
+            double z = final.pointlist[3 * i + 2];
 
             _vertices[i] = Vec(x, y, z);
         }
@@ -553,14 +566,14 @@ void TetraMeshSpatialGrid::storeTetrahedra(const tetgenio& out, bool storeVertic
         // vertices
         for (int c = 0; c < 4; c++)
         {
-            vertexIndices[c] = out.tetrahedronlist[4 * i + c];
+            vertexIndices[c] = final.tetrahedronlist[4 * i + c];
         }
 
         // faces
         for (int f = 0; f < 4; f++)
         {
             // -1 if no neighbor
-            int ntetra = out.neighborlist[4 * i + f];
+            int ntetra = final.neighborlist[4 * i + f];
 
             // find which face is shared with neighbor
             int nface = -1;
@@ -568,7 +581,7 @@ void TetraMeshSpatialGrid::storeTetrahedra(const tetgenio& out, bool storeVertic
             {
                 for (int fn = 0; fn < 4; fn++)
                 {
-                    if (out.neighborlist[4 * ntetra + fn] == i)
+                    if (final.neighborlist[4 * ntetra + fn] == i)
                     {
                         nface = fn;
                         break;
@@ -607,8 +620,8 @@ void TetraMeshSpatialGrid::storeTetrahedra(const tetgenio& out, bool storeVertic
     double avgVol = 1 / (double)_numCells;
     double varVol = (totalVol2 / _numCells / (V * V) - avgVol * avgVol);
 
-    // log neighbor statistics
-    _log->info("Done computing tetrahedralisation");
+    // log statistics
+    _log->info("Done computing tetrahedralization");
     _log->info("  Number of vertices " + std::to_string(_numVertices));
     _log->info("  Number of tetrahedra " + std::to_string(_numCells));
     _log->info("  Average volume fraction per cell: " + StringUtils::toString(avgVol, 'e'));
@@ -683,7 +696,7 @@ void TetraMeshSpatialGrid::writeGridPlotFiles(const SimulationItem* probe) const
     SpatialGridPlotFile plotxyz(probe, probe->itemName() + "_grid_xyz");
 
     // for each site, compute the corresponding cell and output its edges
-    _log->info("Writing plot files for tetrahedralisation with " + std::to_string(_numCells) + " tetrahedra");
+    _log->info("Writing plot files for tetrahedralization with " + std::to_string(_numCells) + " tetrahedra");
     _log->infoSetElapsed(_numCells);
     int numDone = 0;
     for (int i = 0; i < _numCells; i++)
@@ -744,6 +757,9 @@ public:
             // get the index of the cell containing the current position
             _mr = _grid->cellIndex(r());
             _enteringFace = -1;
+
+            // sampled outside of convex hull
+            if (_mr < 0) return false;
 
             // if the photon packet started outside the grid, return the corresponding nonzero-length segment;
             // otherwise fall through to determine the first actual segment
