@@ -55,7 +55,6 @@ AllowShortFunctionsOnASingleLine: Inline
 AllowShortIfStatementsOnASingleLine: WithoutElse
 AllowShortLambdasOnASingleLine: All
 AllowShortLoopsOnASingleLine: true
-AlwaysBreakAfterDefinitionReturnType: None
 AlwaysBreakAfterReturnType: None
 AlwaysBreakBeforeMultilineStrings: false
 AlwaysBreakTemplateDeclarations: MultiLine
@@ -105,7 +104,6 @@ DerivePointerAlignment: false
 DisableFormat:   false
 EmptyLineAfterAccessModifier: Never
 EmptyLineBeforeAccessModifier: LogicalBlock
-ExperimentalAutoDetectBinPacking: false
 FixNamespaceComments: false
 ForEachMacros:
   - foreach
@@ -237,7 +235,7 @@ SpacesInParensOptions:
   InEmptyParentheses: false
   Other:           false
 SpacesInSquareBrackets: false
-Standard:        Latest
+Standard:        c++14
 StatementAttributeLikeMacros:
   - Q_EMIT
 StatementMacros:
