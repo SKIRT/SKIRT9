@@ -31,9 +31,7 @@ jobs:
       run: |
         find . \( -name '*.hpp' -or -name '*.cpp' \) -exec clang-format-18 -style=file -i {} 2> formaterror.txt \;
         cat formaterror.txt
-    # remove the error file if it is empty
-    - name: RemoveEmptyError
-      run: bash -c "if ! [ -s formaterror.txt ] ; then rm -f formaterror.txt ; fi"
+        bash -c "if [ -s formaterror.txt ] ; then exit 1 ; fi"
     # fail the workflow if anything changed to the repository
     - name: Verify
       run: git diff --stat --no-ext-diff --exit-code
