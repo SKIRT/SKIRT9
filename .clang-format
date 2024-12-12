@@ -4,7 +4,6 @@
 BasedOnStyle: LLVM
 Language: Cpp
 
-TESTERROR: true
 AccessModifierOffset: -4
 AlignAfterOpenBracket: Align
 AlignEscapedNewlines: DontAlign
