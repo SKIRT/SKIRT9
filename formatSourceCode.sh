@@ -49,7 +49,7 @@ then
 fi
 
 # Format all .hpp and .cpp files, which skips third-party source code because it has a different filename extension
-# We use xargs so that multiple invocation can run in parallel
+# (we use xargs so that multiple invocations of clang-format can run in parallel)
 echo Using $CLANGFORMATPATH -- $CLANGFORMATVERSION...
 find . \( -name '*.hpp' -or -name '*.cpp' \) -print0 | xargs -0L1 -P0 $CLANGFORMATPATH -style=file -i 2> formaterror.txt
 
@@ -57,6 +57,9 @@ find . \( -name '*.hpp' -or -name '*.cpp' \) -print0 | xargs -0L1 -P0 $CLANGFORM
 if [ -s formaterror.txt ]
 then
     cat formaterror.txt
+    rm -f formaterror.txt
+    echo Failed!
+else
+    rm -f formaterror.txt
+    echo Done
 fi
-rm -f formaterror.txt
-echo Done
