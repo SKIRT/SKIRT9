@@ -2,7 +2,7 @@
 #
 # The workflow fails if one or more of the .hpp or .cpp files in the repository
 # are not properly formatted according to the rules in the .clang-format file
-# located in the root of the repository directory, using clang-format version 16.
+# located in the root of the repository directory, using clang-format version 18.
 # In that case, the log file provides a list of improperly formatted files.
 # Source files with other extensions (including .h, .c, .hh, .cc) are NOT tested
 # to allow for differently formatted third-party code.
@@ -19,16 +19,19 @@ jobs:
     # job name, displayed in the action log
     name: Check source code formatting
     # run this job on a Github-provided runner with Ubuntu 24.04
-    # because it has clang-format-16 installed
+    # because it has clang-format-18 installed
     runs-on: ubuntu-24.04
     # steps that make up this job
     steps:
     # checkout using a recent version of the checkout action
     - name: Checkout
       uses: actions/checkout@v3
-    # run clang-format on all .hpp and .cpp files
+    # run clang-format on all .hpp and .cpp files, writing any errors to a text file
     - name: Autoformat
-      run: find . \( -name '*.hpp' -or -name '*.cpp' \) -exec clang-format-16 -style=file -i {} \;
+      run: |
+        find . \( -name '*.hpp' -or -name '*.cpp' \) -exec clang-format-18 -style=file -i {} 2> formaterror.txt \;
+        cat formaterror.txt
+        bash -c "if [ -s formaterror.txt ] ; then exit 1 ; fi"
     # fail the workflow if anything changed to the repository
     - name: Verify
       run: git diff --stat --no-ext-diff --exit-code

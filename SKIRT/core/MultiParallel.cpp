@@ -103,6 +103,7 @@ void MultiParallel::run(int threadIndex)
         try
         {
             while (!_terminate && doSomeWork())
+
                 ;
         }
         catch (FatalError& error)
