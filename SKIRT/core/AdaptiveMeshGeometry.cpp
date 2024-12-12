@@ -8,7 +8,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-Snapshot* AdaptiveMeshGeometry::createAndOpenSnapshot()
+Snapshot*       AdaptiveMeshGeometry::createAndOpenSnapshot()
 {
     // create and open the snapshot
     _adaptiveMeshSnapshot = new AdaptiveMeshSnapshot;
