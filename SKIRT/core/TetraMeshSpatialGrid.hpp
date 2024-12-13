@@ -7,9 +7,7 @@
 #define TETRAMESHSPATIALGRID_HPP
 
 #include "BoxSpatialGrid.hpp"
-#include "DensityInCellInterface.hpp"
 #include "Log.hpp"
-#include "Medium.hpp"
 #include "PathSegmentGenerator.hpp"
 #include <array>
 
@@ -17,20 +15,49 @@ class tetgenio;
 
 //////////////////////////////////////////////////////////////////////
 
-/** TetraMeshSpatialGrid is a concrete subclass of the SpatialGrid class. It represents a
-    three-dimensional grid based on a tetrahedralization of the cuboidal spatial domain of the
-    simulation. See the TetraMeshSnapshot class for more information on Tetra tesselations.
+/** TetraMeshSpatialGrid is a concrete subclass of SpatialGrid representing a three-dimensional
+    tetrahedral mesh generated from a set of vertices. The resulting grid is always constrained
+    to lie within the convex hull of the point set. This means that the grid is not guaranteed
+    to fill the entire simulation domain! The grid is constructed using the open-source library
+    TetGen version 1.6.0 (released on August 31, 2020). TetGen is an advanced C++ tetrahedral
+    mesh generator with many features. This class uses the following key features of TetGen:
+    
+    - Delaunay Tetrahedralization:  
+      Generates a unique Delaunay tetrahedral mesh from a set of vertices.
+   
+    - Mesh Refinement:  
+      Refines the tetrahedral mesh using TetGen's Delaunay refinement algorithm. This option
+      is enabled through the \em refine property of this class.
+   
+    It should be noted that TetGen is a single-threaded library, but the algorithms used are
+    generally quite fast. The refinement process is by far the most time-consuming part of
+    the mesh generation.
 
-    The class offers several options for determining the positions of the sites generating the
-    Tetra tesselation. A specified number of sites can be distributed randomly over the domain,
-    either uniformly or with the same overall density distribution as the medium. Alternatively,
-    the positions can be copied from the sites in the imported distribution(s).
-
-    Furthermore, the user can opt to perform a relaxation step on the site positions to avoid
-    overly elongated cells. */
+    The Delaunay tetrahedralization tends to generate low-quality cells in 3D. While the 2D
+    Delaunay triangulation maximizes the smallest angle in each triangle, leading to more regular
+    cells, the 3D DT lacks this property. As a result, the cells in 3D tetrahedralization are often
+    elongated and less regular. To address this, Delaunay refinement algorithms are applied. TetGen
+    includes its own refinement process, which applies local mesh operations such as vertex 
+    smoothing, edge/face swapping, edge contraction, and vertex insertion. This refinement attempts
+    to optimize several quality metrics such as the radius-edge ratio and the minimum dihedral angle.
+    
+    All refinement parameters are kept at their default values provided by TetGen. However, it is
+    uncertain whether this refinement process will greatly improve the grids for radiative transfer
+    applications.
+ 
+    The positions of the vertices used for generating the tetrahedral mesh are determined by the
+    \em policy property. The available policies are:
+   
+    - Uniform: Randomly sampled from a uniform distribution.
+    - CentralPeak: Randomly sampled from a distribution with a steep central peak.
+    - DustDensity: Randomly sampled based on the dust density distribution.
+    - ElectronDensity: Randomly sampled based on the electron density distribution.
+    - GasDensity: Randomly sampled based on the gas density distribution.
+    - File: Loaded from a column data file specified by the \em filename property, 
+            containing vertex coordinates (x, y, z) in each column. */
 class TetraMeshSpatialGrid : public BoxSpatialGrid
 {
-    /** The enumeration type indicating the policy for determining the positions of the sites. */
+    /** The enumeration type indicating the policy for determining the positions of the vertices. */
     ENUM_DEF(Policy, Uniform, CentralPeak, DustDensity, ElectronDensity, GasDensity, File)
         ENUM_VAL(Policy, Uniform, "random from uniform distribution")
         ENUM_VAL(Policy, CentralPeak, "random from distribution with a steep central peak")
@@ -43,19 +70,19 @@ class TetraMeshSpatialGrid : public BoxSpatialGrid
     ITEM_CONCRETE(TetraMeshSpatialGrid, BoxSpatialGrid, "a tetrahedral spatial grid")
         ATTRIBUTE_TYPE_DISPLAYED_IF(TetraMeshSpatialGrid, "Level2")
 
-        PROPERTY_ENUM(policy, Policy, "the policy for determining the positions of the sites")
+        PROPERTY_ENUM(policy, Policy, "the policy for determining the positions of the vertices")
         ATTRIBUTE_DEFAULT_VALUE(policy, "DustDensity")
 
-        PROPERTY_INT(numSites, "the number of random sites to be used as vertices")
+        PROPERTY_INT(numSites, "the number of random positions to be used as vertices")
         ATTRIBUTE_MIN_VALUE(numSites, "4")
         ATTRIBUTE_DEFAULT_VALUE(numSites, "500")
         ATTRIBUTE_RELEVANT_IF(numSites, "policyUniform|policyCentralPeak|policyDustDensity|"
                                         "policyElectronDensity|policyGasDensity")
 
-        PROPERTY_STRING(filename, "the name of the file containing the site positions")
+        PROPERTY_STRING(filename, "the name of the file containing the vertex positions")
         ATTRIBUTE_RELEVANT_IF(filename, "policyFile")
 
-        PROPERTY_BOOL(refine, "refine the grid to have higher quality cells by adding more vertices")
+        PROPERTY_BOOL(refine, "refine the grid by performing local mesh operations")
         ATTRIBUTE_DEFAULT_VALUE(refine, "false");
 
     ITEM_END()
@@ -63,24 +90,24 @@ class TetraMeshSpatialGrid : public BoxSpatialGrid
     //============= Construction - Setup - Destruction =============
 
 public:
-    /** The destructor releases the Tetra mesh if this object owns it. */
+    /** The destructor releases the BlockGrid search structure. */
     ~TetraMeshSpatialGrid();
 
 protected:
-    /** This function verifies that the attributes have been appropriately set, generates or
-        retrieves the site positions for constructing the Tetra tessellation according to the
-        configured policy, and finally constructs the Tetra tessellation through an instance of
-        the TetraMeshSnapshot class. */
+    /** This function verifies that the attributes are correctly set, generates or retrieves
+        vertex positions based on the configured policy, builds (and optionally refines) the
+        tetrahedralization, and constructs the search structure to optimize the \em CellIndex
+        function. */
     void setupSelfBefore() override;
 
     //==================== Private construction ====================
 private:
-    /** Private class to hold all infromation for a face of a tetrahedron to allow photon
-        traversal through it. */
+    /** Private class that represents a face of a tetrahedron, storing all relevant
+        information for photon traversal. */
     struct Face
     {
-        int _ntetra;  // index of neighbouring tetrahedron
-        int _nface;   // neighbouring face index
+        int _ntetra;  // cell index of neighbouring tetrahedron
+        int _nface;   // index of the equivalent face in the neighbouring tetrahedron [0, 3]
         Vec _normal;  // outward facing normal
 
         Face(){};
@@ -88,66 +115,89 @@ private:
         Face(int ntetra, int nface, Vec normal) : _ntetra(ntetra), _nface(nface), _normal(normal) {}
     };
 
-    /** Private class to hold all information for a tetrahedron to fully describe its geometry
-        and allow photon traversal through it. */
+    /** Private class that represents a tetrahedron, storing all relevant information to fully
+        describe its geometry and allow photon traversal through it. */
     class Tetra
     {
     private:
         const vector<Vec>& _vertices;  // reference to all vertices, could be passed as arg but this is more convenient
         Box _extent;                   // bounding box of the tetrahedron
         Vec _centroid;                 // barycenter of the tetrahedron
-        std::array<int, 4> _vertexIndices;  // indices of the vertices in the full list
-        std::array<Face, 4> _faces;         // face information
+        std::array<int, 4> _vertexIndices;  // indices of the vertices in the global vertex list
+        std::array<Face, 4> _faces;         // faces of the tetrahedron see struct Face
 
     public:
+        /** This constructor initializes the tetrahedron by setting its fields
+            and calculating the bounding box and centroid. */
         Tetra(const vector<Vec>& vertices, const std::array<int, 4>& vertexIndices, const std::array<Face, 4>& faces);
 
+        /** This function finds the entering face or any face that is not the leaving face which can
+            act as the entering face in the traversal algorithm. */
         int findEnteringFace(const Vec& pos, const Direction& dir) const;
 
+        /** This function checks if the given position is contained inside the tetrahedron. It starts by checking
+            if the position is inside the bounding box of the tetrahedron. */
         bool contains(const Position& bfr) const;
 
+        /** This function generates three random barycentric coordinates for uniformly sampling inside this
+            tetrahedron. The fourth coordinate is calculated by ensuring their sum equals 1.
+            Source: Generating Random Points in a Tetrahedron: DOI 10.1080/10867651.2000.10487528 */
         double generateBarycentric(double& s, double& t, double& u) const;
 
+        /** This function generates a random position inside the tetrahedron by generating random
+             barycentric coordinates and using the vertices of the tetrahedron. */
         Position generatePosition(Random* random) const;
 
+        /** This function returns the vertex with index \f$t\f$ of the tetrahedron, where
+            \f$t \in \{0, 1, 2, 3\}\f$. */
         Vec vertex(int t) const;
 
+        /** This function returns the edge from vertex \f$t1\f$ to \f$t2\f$ of the tetrahedron,
+            where \f$t1, t2 \in \{0, 1, 2, 3\}\f$. */
         Vec edge(int t1, int t2) const;
 
+        /** This function calculates and returns the volume of the tetrahedron. */
         double volume() const;
 
+        /** This function calculates and returns the approximate diagonal of the tetrahedron. */
         double diagonal() const;
 
+        /** This function returns a reference to the faces of the tetrahedron. */
         const std::array<Face, 4>& faces() const;
 
+        /** This function returns the centroid of the tetrahedron. */
         const Vec& centroid() const;
 
+        /** This function returns the extent of the tetrahedron. */
         const Box& extent() const;
     };
 
+    /** This private helper class organizes the cells into cuboidal blocks in a smart grid, such
+        that it is easy to retrieve all cells inside a certain block given a position. */
     class BlockGrid;
 
     /** This private function removes vertices that are outside the domain. */
     void removeOutside();
 
-    /** This private function builds the tetrahedral mesh. Starts by constructing the Delaunay 
-        tetrahedralization and optionally refines it if the refine option is set to true. */
+    /** This private function builds the tetrahedral mesh. It starts by constructing the Delaunay 
+        tetrahedralization and optionally refines it if the \em refine option is set to true. */
     void buildMesh();
 
-    /** This private function constructs the Delaunay tetrahedralization using the _vertices. */
+    /** This private function constructs the Delaunay tetrahedralization using the vertices obtained
+        from the \em policy. The output is placed inside the tetgenio reference. */
     void buildDelaunay(tetgenio& out);
 
-    /** This private function refines the Delaunay tetrahedralization to improve cell quality.
-        The refinement process is controlled by TetGen with default quality parameters. The
-        input is the initial Delaunay tetrahedralization in a tetgenio container. The output
-        is a tetgenio container with the refined Delaunay tetrahedralization. */
+    /** This private function refines the Delaunay tetrahedralization to improve cell quality. The
+        refinement process is controlled by TetGen with default quality parameters. The input is
+        the initial Delaunay tetrahedralization in a tetgenio container. The output with the
+        refined Delaunay tetrahedralization is placed inside a tetgenio reference. */
     void refineDelaunay(tetgenio& in, tetgenio& out);
 
-    /** This private function stores the tetrahedra and vertices from the final tetgenio 
-        container into the class members. The input is the tetgenio container with the
-        final tetrahedralization. The storeVertices parameter indicates whether to
-        overwrite the vertices with those from the tetgenio container. This function
-        also logs some cell statistics after storing the data. */
+    /** This private function stores the tetrahedra and vertices from the final tetgenio container
+        into the \em TetraMeshSpatialGrid members. The input is the tetgenio container with the final
+        tetrahedralization. The storeVertices parameter indicates whether to overwrite the vertices
+        with those from the tetgenio container. This function also logs some cell statistics after
+        it finishes storing the data. */
     void storeTetrahedra(const tetgenio& final, bool storeVertices);
 
     /** This private function builds the search data structure for the tetrahedral mesh.
@@ -163,33 +213,71 @@ public:
     double volume(int m) const override;
 
     /** This function returns the approximate diagonal of the cell with index \f$m\f$. For a
-        Tetra grid, it returns \f$(3V)^(1/3)\f$ where \f$V\f$ is the volume of the cell. This
-        corresponds to the correct diagonal only for cubical cells. */
+        tetrahedron, it takes the square root of the average of the squared edge lengths. */
     double diagonal(int m) const override;
 
-    /** This function returns the index of the cell that contains the position \f${\bf{r}}\f$. */
+    /** This function returns the index of the cell that contains the position \f${\bf{r}}\f$.
+        The function uses the data structure stored in the \em BlockGrid to accelerate the
+        search. If the position is outside the convex hull, the function returns -1. */
     int cellIndex(Position bfr) const override;
 
-    /** This function returns the central location of the cell with index \f$m\f$. In this class
-        the function returns the centroid of the Tetra cell. */
+    /** This function returns the centroid of the tetrahedron with index \f$m\f$. */
     Position centralPositionInCell(int m) const override;
 
-    /** This function returns a random location from the cell with index \f$m\f$. */
+    /** This function returns a random location from the tetrahedron with index \f$m\f$. */
     Position randomPositionInCell(int m) const override;
 
     //===================== Path construction =====================
 
-    /** This function creates and hands over ownership of a path segment generator (an instance of
-        a PathSegmentGenerator subclass) appropriate for this spatial grid type. For the Tetra
-        mesh grid, the path segment generator is actually implemented in the TetraMeshSnapshot
-        class. */
+    /** This function creates and returns ownership of a path segment generator suitable for the
+        tetrahedral spatial grid, implemented as a private \em PathSegmentGenerator subclass. The
+        algorithm for constructing the path is taken from Maria et al. (2017).
+
+        The algorithm uses Plücker coordinates to identify the exit face of a ray inside a given
+        tetrahedron. Plücker coordinates are a set of six values that describe a directed line in 3D space:
+        \f[\mathbf{\pi}_R = \{\mathbf{k} : \mathbf{k} \times \mathbf{r}\} = \{\mathbf{U}_R : \mathbf{V}_R\}\f]
+        where \f$\mathbf{r}\f$ is a position along the ray, and \f$\mathbf{k}\f$ is the ray's direction.
+        The Plücker product is defined as:
+        \f[\mathbf{\pi}_R \odot \mathbf{\pi}_S = \mathbf{U}_R \cdot \mathbf{V}_S + \mathbf{U}_S \cdot \mathbf{V}_R\f]
+        This product determines the relative orientation between two rays:
+        \f[\mathbf{\pi}_R \odot \mathbf{\pi}_S = \begin{cases}
+        > 0 & \iff S \text{ goes counterclockwise around } R\\
+        < 0 & \iff S \text{ goes clockwise around } R\\
+        = 0 & \iff S \text{ intersects or is parallel to } R \end{cases} \f]
+        A ray exits a tetrahedron through a particular face if the Plücker products with all three
+        clockwise-ordered edges of that face are negative. The algorithm in Maria et al. (2017) optimizes
+        this by requiring only two Plücker products to be evaluated. Our implementation is described below.
+
+        In the first step, the function determines the cell index of the tetrahedron containing the starting
+        point. If none is found, the path is terminated. Before the traversal algorithm can commence, a
+        non-leaving face must be identified. This face acts as the entry face for the ray. Note that this
+        face does not necessarily have to be the actual entry face. This task is handled by the 
+        \em findEnteringFace function of the \em Tetra class.
+
+        Next, the traversal algorithm begins. The entering face is labeled as face 0, with its opposing vertex
+        labeled as vertex 0. We start by evaluating the Plücker product of the ray with the edge \f$1 \to 0\f$.
+        Based on whether this product is positive or negative, the next Plücker product to evaluate is determined.
+        If the product is negative (i.e., clockwise orientation), we evaluate the product with the edge in the
+        clockwise direction viewed from vertex 0. The same applies for a positive product. The exit face is
+        determined using the decision tree described in Maria et al. (2017). The distance traveled through the
+        cell is calculated using a simple line-plane intersection:
+        \f[s_i = \frac{\mathbf{n} \cdot (\mathbf{v} - \mathbf{r})}{\mathbf{n} \cdot \mathbf{k}}\f]
+        where \f$\mathbf{n}\f$ is the outward-pointing normal of the face, \f$\mathbf{v}\f$ is any vertex on
+        the exit face, and \f$\mathbf{r}\f$ is the current position.
+
+        Although the algorithm described in Maria et al. (2017) works even if one of the Plücker products is zero,
+        we revert to a plane intersection algorithm in such cases. This approach is similar to the one used in the
+        \em VoronoiMeshSnapshot class, where the closest intersection distance with all faces is found.
+
+        The algorithm continues until the exit face lies on the convex hull boundary. At this point, the path is
+        terminated. If neither the Maria et al. (2017) algorithm nor the plane intersection algorithm identifies
+        an exit face, the current point is advanced by a small distance, and the cell index is recalculated. */
     std::unique_ptr<PathSegmentGenerator> createPathSegmentGenerator() const override;
 
     //===================== Output =====================
 
-    /** This function outputs the grid plot files; it is provided here because the regular
-        mechanism does not apply. The function reconstructs the Tetra tesselation in order to
-        produce the coordinates of the Tetra cell vertices. */
+    /** This function outputs the grid plot files. It writes each tetrahedral face as a triangle
+        to the grid plot file. */
     void writeGridPlotFiles(const SimulationItem* probe) const override;
 
     //======================== Data Members ========================
@@ -197,17 +285,15 @@ public:
 private:
     // data members initialized by setupSelfBefore()
     Log* _log{nullptr};
-
-    // data members initialized during configuration
     double _eps{0.};  // small fraction of extent
 
+    // data members describing the tetrahedralization
     int _numCells;     // number of Tetra cells and centroids
     int _numVertices;  // vertices are added/removed as the grid is built and refined
     vector<Tetra> _tetrahedra;
     vector<Vec> _vertices;
 
-    // smart grid that contains all cell information
-    // allows for efficiently locating the cell at a given location
+    // smart grid that organizes the tetrahedra into blocks
     BlockGrid* _blocks{nullptr};
 
     // allow our path segment generator to access our private data members

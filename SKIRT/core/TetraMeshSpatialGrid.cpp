@@ -4,12 +4,10 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "TetraMeshSpatialGrid.hpp"
-#include "Configuration.hpp"
 #include "FatalError.hpp"
 #include "MediumSystem.hpp"
 #include "NR.hpp"
 #include "Random.hpp"
-#include "SiteListInterface.hpp"
 #include "SpatialGridPlotFile.hpp"
 #include "StringUtils.hpp"
 #include "TextInFile.hpp"
@@ -49,6 +47,7 @@ namespace
         return rv;
     }
 
+    // get the vertices around a face in clockwise order viewed from opposite vertex
     inline std::array<int, 3> clockwiseVertices(int face)
     {
         std::array<int, 3> cv = {(face + 3) % 4, (face + 2) % 4, (face + 1) % 4};
@@ -90,6 +89,8 @@ TetraMeshSpatialGrid::Tetra::Tetra(const vector<Vec>& vertices, const array<int,
     _centroid /= 4;
 }
 
+//////////////////////////////////////////////////////////////////////
+
 int TetraMeshSpatialGrid::Tetra::findEnteringFace(const Vec& pos, const Direction& dir) const
 {
     int enteringFace = -1;
@@ -116,6 +117,8 @@ int TetraMeshSpatialGrid::Tetra::findEnteringFace(const Vec& pos, const Directio
     return enteringFace;
 }
 
+//////////////////////////////////////////////////////////////////////
+
 bool TetraMeshSpatialGrid::Tetra::contains(const Position& bfr) const
 {
     if (!_extent.contains(bfr)) return false;
@@ -139,7 +142,9 @@ bool TetraMeshSpatialGrid::Tetra::contains(const Position& bfr) const
 
     return true;
 }
-// Generating Random Points in a Tetrahedron: DOI 10.1080/10867651.2000.10487528
+
+//////////////////////////////////////////////////////////////////////
+
 double TetraMeshSpatialGrid::Tetra::generateBarycentric(double& s, double& t, double& u) const
 {
     if (s + t > 1.0)  // cut'n fold the cube into a prism
@@ -162,6 +167,8 @@ double TetraMeshSpatialGrid::Tetra::generateBarycentric(double& s, double& t, do
     return 1 - u - t - s;
 }
 
+//////////////////////////////////////////////////////////////////////
+
 Position TetraMeshSpatialGrid::Tetra::generatePosition(Random* random) const
 {
     double s = random->uniform();
@@ -173,22 +180,28 @@ Position TetraMeshSpatialGrid::Tetra::generatePosition(Random* random) const
     return Position(r * vertex(0) + u * vertex(1) + t * vertex(2) + s * vertex(3));
 }
 
-// get the vertex using local indices [0, 3]
+//////////////////////////////////////////////////////////////////////
+
 Vec TetraMeshSpatialGrid::Tetra::vertex(int t) const
 {
     return _vertices[_vertexIndices[t]];
 }
 
-// get the edge t1->t2 using local indices [0, 3]
+//////////////////////////////////////////////////////////////////////
+
 Vec TetraMeshSpatialGrid::Tetra::edge(int t1, int t2) const
 {
     return vertex(t2) - vertex(t1);
 }
 
+//////////////////////////////////////////////////////////////////////
+
 double TetraMeshSpatialGrid::Tetra::volume() const
 {
     return 1 / 6. * abs(Vec::dot(Vec::cross(edge(0, 1), edge(0, 2)), edge(0, 3)));
 }
+
+//////////////////////////////////////////////////////////////////////
 
 double TetraMeshSpatialGrid::Tetra::diagonal() const
 {
@@ -203,15 +216,21 @@ double TetraMeshSpatialGrid::Tetra::diagonal() const
     return sqrt(sum / 6.0);
 }
 
+//////////////////////////////////////////////////////////////////////
+
 const array<TetraMeshSpatialGrid::Face, 4>& TetraMeshSpatialGrid::Tetra::faces() const
 {
     return _faces;
 }
 
+//////////////////////////////////////////////////////////////////////
+
 const Vec& TetraMeshSpatialGrid::Tetra::centroid() const
 {
     return _centroid;
 }
+
+//////////////////////////////////////////////////////////////////////
 
 const Box& TetraMeshSpatialGrid::Tetra::extent() const
 {
@@ -220,15 +239,13 @@ const Box& TetraMeshSpatialGrid::Tetra::extent() const
 
 //////////////////////////////////////////////////////////////////////
 
-// This helper class organizes the cells into cuboidal blocks in a smart grid,
-// such that it is easy to retrieve all cells inside a certain block given a position.
 class TetraMeshSpatialGrid::BlockGrid
 {
     const vector<Tetra>& _tetrahedra;  // reference to list of all tetrahedra
     int _gridsize;                     // number of grid blocks in each spatial direction
     Array _xgrid, _ygrid, _zgrid;      // the m+1 grid separation points for each spatial direction
-    vector<vector<int>> _listv;        // the m*m*m lists of indices for blocks overlapping each grid block
-    int _pmin, _pmax;                  // minimum, maximum nr of blocks in list; total nr of blocks in listv
+    vector<vector<int>> _listv;        // the m*m*m lists of indices for cells overlapping each grid block
+    int _pmin, _pmax;                  // statistics of the minimum and maximum number of cells per block
 
 public:
     // The constructor creates a cuboidal grid of the specified number of grid blocks in each
@@ -280,6 +297,10 @@ public:
         }
     }
 
+    // This function determines the grid separation points along a specified axis (x, y, or z)
+    // to ensure that the cells are evenly distributed across the grid blocks. It does this by
+    // binning the tetrahedra centers at a high resolution and then calculating the cumulative
+    // distribution to set the grid separation points.
     void makegrid(int axis, int gridsize, Array& grid, double cmin, double cmax)
     {
         int n = _tetrahedra.size();
@@ -530,6 +551,8 @@ void TetraMeshSpatialGrid::refineDelaunay(tetgenio& in, tetgenio& out)
     behavior.facesout = 1;   // -f
     behavior.zeroindex = 1;  // -z
 
+    behavior.quiet = 1;  // -Q
+
     _log->info("Refining triangulation...");
     tetrahedralize(&behavior, &in, &out);
     _log->info("Built refined triangulation");
@@ -695,39 +718,37 @@ void TetraMeshSpatialGrid::writeGridPlotFiles(const SimulationItem* probe) const
     SpatialGridPlotFile plotyz(probe, probe->itemName() + "_grid_yz");
     SpatialGridPlotFile plotxyz(probe, probe->itemName() + "_grid_xyz");
 
-    // for each site, compute the corresponding cell and output its edges
-    _log->info("Writing plot files for tetrahedralization with " + std::to_string(_numCells) + " tetrahedra");
+    // for each tetrahedron, compute its edges
+    _log->info("Writing plot files for tetrahedral grid with " + std::to_string(_numCells) + " tetrahedra");
     _log->infoSetElapsed(_numCells);
     int numDone = 0;
     for (int i = 0; i < _numCells; i++)
     {
         const Tetra& tetra = _tetrahedra[i];
-        vector<double> coords;
-        coords.reserve(12);
-        vector<int> indices;
-        indices.reserve(16);
+        vector<double> coords(12);
+        vector<int> indices(16);
 
+        // write each face as a polygon
         for (int v = 0; v < 4; v++)
         {
-            const Vec vertex = tetra.vertex(v);
-            coords.push_back(vertex.x());
-            coords.push_back(vertex.y());
-            coords.push_back(vertex.z());
+            Vec vertex = tetra.vertex(v);
+            coords[3 * v + 0] = vertex.x();
+            coords[3 * v + 1] = vertex.y();
+            coords[3 * v + 2] = vertex.z();
 
             // get vertices of opposite face
             std::array<int, 3> faceIndices = clockwiseVertices(v);
-            indices.push_back(3);  // amount of vertices per face
-            indices.push_back(faceIndices[0]);
-            indices.push_back(faceIndices[1]);
-            indices.push_back(faceIndices[2]);
+            indices[4 * v + 0] = 3;  // amount of vertices per face
+            indices[4 * v + 1] = faceIndices[0];
+            indices[4 * v + 2] = faceIndices[1];
+            indices[4 * v + 3] = faceIndices[2];
         }
 
         const Box& extent = tetra.extent();
         if (extent.zmin() <= 0 && extent.zmax() >= 0) plotxy.writePolyhedron(coords, indices);
         if (extent.ymin() <= 0 && extent.ymax() >= 0) plotxz.writePolyhedron(coords, indices);
         if (extent.xmin() <= 0 && extent.xmax() >= 0) plotyz.writePolyhedron(coords, indices);
-        if (i <= 1000)
-            plotxyz.writePolyhedron(coords, indices);  // like TetraMeshSpatialGrid, but why even write at all?
+        if (i <= 1000) plotxyz.writePolyhedron(coords, indices);
 
         // log message if the minimum time has elapsed
         numDone++;
@@ -750,23 +771,18 @@ public:
     {
         if (state() == State::Unknown)
         {
-            // try moving the photon packet inside the grid; if this is impossible, return an empty path
-            // this also changes the _state
-            if (!moveInside(_grid->extent(), _grid->_eps)) return false;
+            // moveInside does not move the photon packet inside the convex hull so it is currently disabled
+            // if (!moveInside(_grid->extent(), _grid->_eps)) return false;
 
             // get the index of the cell containing the current position
             _mr = _grid->cellIndex(r());
             _enteringFace = -1;
 
-            // sampled outside of convex hull
+            // position is outside of convex hull
             if (_mr < 0) return false;
-
-            // if the photon packet started outside the grid, return the corresponding nonzero-length segment;
-            // otherwise fall through to determine the first actual segment
-            if (ds() > 0.) return true;
         }
 
-        // intentionally falls through
+        // inside convex hull
         if (state() == State::Inside)
         {
             // loop in case no exit point was found (which should happen only rarely)
@@ -786,13 +802,13 @@ public:
                 // the translated Plücker moment in the local coordinate system
                 Vec moment = Vec::cross(dir, pos - tetra.vertex(_enteringFace));
 
-                // clockwise vertices around vertex 0
+                // clockwise vertices around entering face
                 std::array<int, 3> cv = clockwiseVertices(_enteringFace);
 
                 // determine orientations for use in the decision tree
                 double prod0 = Vec::dot(moment, tetra.edge(cv[0], _enteringFace));
                 int clock0 = prod0 < 0;
-                // if clockwise move clockwise else move cclockwise
+                // if clockwise move clockwise else move counterclockwise
                 int i = clock0 ? 1 : 2;
                 double prodi = Vec::dot(moment, tetra.edge(cv[i], _enteringFace));
                 int cclocki = prodi >= 0;
@@ -828,6 +844,7 @@ public:
                     // 0 1 -> 0
                     static constexpr int dtable[2][2] = {{1, 0}, {0, 2}};
                     leavingFace = cv[dtable[clock0][cclocki]];
+                    // plane intersection to leaving face
                     const Vec& n = faces[leavingFace]._normal;
                     const Vec& v = tetra.vertex(_enteringFace);
                     double ndotk = Vec::dot(n, dir);
