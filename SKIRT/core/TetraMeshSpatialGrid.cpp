@@ -381,14 +381,14 @@ void TetraMeshSpatialGrid::setupSelfBefore()
     _log = find<Log>();
     _eps = 1e-12 * widths().norm();
 
-    // determine an appropriate set of sites and construct the Tetra mesh
+    // determine an appropriate set of samples and construct the Tetra mesh
     switch (_policy)
     {
         case Policy::Uniform:
         {
             auto random = find<Random>();
-            _vertices.resize(_numSites);
-            for (int m = 0; m != _numSites; ++m) _vertices[m] = random->position(extent());
+            _vertices.resize(_numSamples);
+            for (int m = 0; m != _numSamples; ++m) _vertices[m] = random->position(extent());
             break;
         }
         case Policy::CentralPeak:
@@ -396,9 +396,9 @@ void TetraMeshSpatialGrid::setupSelfBefore()
             auto random = find<Random>();
             const int a = 1000;  // steepness of the peak; the central 1/a portion is NOT covered
             const double rscale = extent().rmax().norm();
-            _vertices.resize(_numSites);
+            _vertices.resize(_numSamples);
             _vertices[0] = Vec(0, 0, 0);
-            for (int m = 1; m != _numSites;)  // skip first particle so that it remains (0,0,0)
+            for (int m = 1; m != _numSamples;)  // skip first particle so that it remains (0,0,0)
             {
                 double r = rscale * pow(1. / a, random->uniform());  // random distribution according to 1/x
                 Direction k = random->direction();
@@ -416,10 +416,10 @@ void TetraMeshSpatialGrid::setupSelfBefore()
             for (auto medium : ms->media())
                 if (medium->mix()->isDust()) media.push_back(medium);
             for (auto medium : media) weights.push_back(medium->mass());
-            vector<Vec> sites = sampleMedia(media, weights, extent(), _numSites);
-            int n = sites.size();
+            vector<Vec> samples = sampleMedia(media, weights, extent(), _numSamples);
+            int n = samples.size();
             _vertices.resize(n);
-            for (int m = 0; m != n; ++m) _vertices[m] = sites[m];
+            for (int m = 0; m != n; ++m) _vertices[m] = samples[m];
             break;
         }
         case Policy::ElectronDensity:
@@ -431,10 +431,10 @@ void TetraMeshSpatialGrid::setupSelfBefore()
             for (auto medium : ms->media())
                 if (medium->mix()->isElectrons()) media.push_back(medium);
             for (auto medium : media) weights.push_back(medium->number());
-            vector<Vec> sites = sampleMedia(media, weights, extent(), _numSites);
-            int n = sites.size();
+            vector<Vec> samples = sampleMedia(media, weights, extent(), _numSamples);
+            int n = samples.size();
             _vertices.resize(n);
-            for (int m = 0; m != n; ++m) _vertices[m] = sites[m];
+            for (int m = 0; m != n; ++m) _vertices[m] = samples[m];
             break;
         }
         case Policy::GasDensity:
@@ -446,10 +446,10 @@ void TetraMeshSpatialGrid::setupSelfBefore()
             for (auto medium : ms->media())
                 if (medium->mix()->isGas()) media.push_back(medium);
             for (auto medium : media) weights.push_back(medium->number());
-            vector<Vec> sites = sampleMedia(media, weights, extent(), _numSites);
-            int n = sites.size();
+            vector<Vec> samples = sampleMedia(media, weights, extent(), _numSamples);
+            int n = samples.size();
             _vertices.resize(n);
-            for (int m = 0; m != n; ++m) _vertices[m] = sites[m];
+            for (int m = 0; m != n; ++m) _vertices[m] = samples[m];
             break;
         }
         case Policy::File:
@@ -478,11 +478,11 @@ void TetraMeshSpatialGrid::removeOutside()
     _numVertices = _vertices.size();
 
     // remove vertices outside of the domain
-    auto sitesEnd = std::remove_if(_vertices.begin(), _vertices.end(), [this](const Vec& vertex) {
+    auto verticesEnd = std::remove_if(_vertices.begin(), _vertices.end(), [this](const Vec& vertex) {
         if (!contains(vertex)) return true;  // remove vertex
         return false;
     });
-    _vertices.erase(sitesEnd, _vertices.end());
+    _vertices.erase(verticesEnd, _vertices.end());
 
     // log removed vertices
     int numOutside = _numVertices - _vertices.size();
@@ -531,8 +531,10 @@ void TetraMeshSpatialGrid::buildDelaunay(tetgenio& out)
     behavior.neighout = 2;   // -nn
     behavior.facesout = 1;   // -f
     behavior.zeroindex = 1;  // -z
+    behavior.quiet = 1;      // -Q
 
-    _log->info("Building Delaunay triangulation using input vertices...");
+    _log->info("Building Delaunay triangulation using " + StringUtils::toString(_numVertices, 'd')
+               + " input vertices...");
     tetrahedralize(&behavior, &in, &out);
     _log->info("Built Delaunay triangulation");
 }
@@ -776,6 +778,7 @@ public:
 
             // get the index of the cell containing the current position
             _mr = _grid->cellIndex(r());
+            if (_mr > 0) setState(State::Inside);
             _enteringFace = -1;
 
             // position is outside of convex hull

@@ -73,10 +73,10 @@ class TetraMeshSpatialGrid : public BoxSpatialGrid
         PROPERTY_ENUM(policy, Policy, "the policy for determining the positions of the vertices")
         ATTRIBUTE_DEFAULT_VALUE(policy, "DustDensity")
 
-        PROPERTY_INT(numSites, "the number of random positions to be used as vertices")
-        ATTRIBUTE_MIN_VALUE(numSites, "4")
-        ATTRIBUTE_DEFAULT_VALUE(numSites, "500")
-        ATTRIBUTE_RELEVANT_IF(numSites, "policyUniform|policyCentralPeak|policyDustDensity|"
+        PROPERTY_INT(numSamples, "the number of random positions to be used as vertices")
+        ATTRIBUTE_MIN_VALUE(numSamples, "4")
+        ATTRIBUTE_DEFAULT_VALUE(numSamples, "500")
+        ATTRIBUTE_RELEVANT_IF(numSamples, "policyUniform|policyCentralPeak|policyDustDensity|"
                                         "policyElectronDensity|policyGasDensity")
 
         PROPERTY_STRING(filename, "the name of the file containing the vertex positions")
