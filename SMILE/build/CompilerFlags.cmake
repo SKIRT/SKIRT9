@@ -27,7 +27,7 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     if (NO_EXTRA_WARNINGS)
         target_compile_options(${TARGET} PRIVATE -Wno-misleading-indentation -Wno-unused-parameter
             -Wno-unused-function -Wno-unused-result -Wno-deprecated-copy -Wno-sign-compare -Wno-restrict
-            -Wno-unused-variable -Wno-unused-but-set-variable -Wno-maybe-uninitialized)
+            -Wno-unused-variable -Wno-unused-but-set-variable -Wno-maybe-uninitialized -Wno-format)
     endif()
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "Intel")
     target_compile_options(${TARGET} PRIVATE -fp-model precise -Wall)
