@@ -20,7 +20,7 @@ using std::array;
 namespace
 {
     // returns the linear index for element (i,j,k) in a p*p*p table
-    inline int index(int p, int i, int j, int k)
+    inline int blockIndex(int p, int i, int j, int k)
     {
         return ((i * p) + j) * p + k;
     }
@@ -48,9 +48,9 @@ namespace
     }
 
     // get the vertices around a face in clockwise order viewed from opposite vertex
-    inline std::array<int, 3> clockwiseVertices(int face)
+    inline array<int, 3> clockwiseVertices(int face)
     {
-        std::array<int, 3> cv = {(face + 3) % 4, (face + 2) % 4, (face + 1) % 4};
+        array<int, 3> cv = {(face + 3) % 4, (face + 2) % 4, (face + 1) % 4};
         // if face is even we should swap two edges
         if (face % 2 == 0) std::swap(cv[0], cv[2]);
         return cv;
@@ -96,15 +96,14 @@ int TetraMeshSpatialGrid::Tetra::findEnteringFace(const Vec& pos, const Directio
     int enteringFace = -1;
     // clockwise and cclockwise adjacent faces when checking edge v1->v2
     static constexpr int etable[6][2] = {{3, 2}, {1, 3}, {2, 1}, {3, 0}, {0, 2}, {1, 0}};  // make this static?
-    // try all 6 edges because of very rare edge cases where ray is inside edge
-    // having only 1 non-zero Plücker product
     int e = 0;
-    for (int v1 = 0; v1 < 3; v1++)
+    // loop over all 6 edges because of rare cases where ray is inside edge and only 1 non-zero Plücker product
+    for (int t1 = 0; t1 < 3; t1++)
     {
-        for (int v2 = v1 + 1; v2 < 4; v2++)
+        for (int t2 = t1 + 1; t2 < 4; t2++)
         {
-            Vec moment12 = Vec::cross(dir, pos - vertex(v1));
-            double prod12 = Vec::dot(moment12, edge(v1, v2));
+            Vec moment12 = Vec::cross(dir, pos - vertex(t1));
+            double prod12 = Vec::dot(moment12, edge(t1, t2));
             if (prod12 != 0.)
             {
                 enteringFace = prod12 < 0 ? etable[e][0] : etable[e][1];
@@ -282,7 +281,7 @@ public:
                 for (int j = j1; j <= j2; j++)
                     for (int k = k1; k <= k2; k++)
                     {
-                        _listv[index(gridsize, i, j, k)].push_back(m);
+                        _listv[blockIndex(gridsize, i, j, k)].push_back(m);
                     }
         }
 
@@ -324,8 +323,8 @@ public:
         // determine grid separation points based on the cumulative distribution
         grid.resize(gridsize + 1);
         grid[0] = -std::numeric_limits<double>::infinity();
-        int perblock = n / gridsize;  // target number of particles per block
-        int cumul = 0;                // cumulative number of particles in processed bins
+        int perblock = n / gridsize;  // target number of centroids per block
+        int cumul = 0;                // cumulative number of centroids in processed bins
         int gridindex = 1;            // index of the next grid separation point to be filled
         for (int binindex = 0; binindex < nbins; binindex++)
         {
@@ -357,7 +356,7 @@ public:
         int k = NR::locateClip(_zgrid, r.z());
 
         // search the list of blocks for that grid block
-        for (int m : _listv[index(_gridsize, i, j, k)])
+        for (int m : _listv[blockIndex(_gridsize, i, j, k)])
         {
             if (_tetrahedra[m].contains(r)) return m;
         }
@@ -398,7 +397,7 @@ void TetraMeshSpatialGrid::setupSelfBefore()
             const double rscale = extent().rmax().norm();
             _vertices.resize(_numSamples);
             _vertices[0] = Vec(0, 0, 0);
-            for (int m = 1; m != _numSamples;)  // skip first particle so that it remains (0,0,0)
+            for (int m = 1; m != _numSamples;)  // skip first vertex so that it remains (0,0,0)
             {
                 double r = rscale * pow(1. / a, random->uniform());  // random distribution according to 1/x
                 Direction k = random->direction();
@@ -526,12 +525,12 @@ void TetraMeshSpatialGrid::buildDelaunay(tetgenio& out)
         in.pointlist[i * 3 + 2] = _vertices[i].z();
     }
 
-    behavior.psc = 1;  // -s build Delaunay tetrahedralization
+    behavior.quiet = 1;  // -Q no console logging
+    behavior.psc = 1;    // -s build Delaunay tetrahedralization
     // correct output options for out
     behavior.neighout = 2;   // -nn
     behavior.facesout = 1;   // -f
     behavior.zeroindex = 1;  // -z
-    behavior.quiet = 1;      // -Q
 
     _log->info("Building Delaunay triangulation using " + StringUtils::toString(_numVertices, 'd')
                + " input vertices...");
@@ -545,6 +544,7 @@ void TetraMeshSpatialGrid::refineDelaunay(tetgenio& in, tetgenio& out)
 {
     tetgenbehavior behavior;
 
+    behavior.quiet = 1;  // -Q no console logging
     // tetgen refine options
     behavior.refine = 1;   // -r
     behavior.quality = 1;  // -q with default tetgen options for quality
@@ -552,8 +552,6 @@ void TetraMeshSpatialGrid::refineDelaunay(tetgenio& in, tetgenio& out)
     behavior.neighout = 2;   // -nn
     behavior.facesout = 1;   // -f
     behavior.zeroindex = 1;  // -z
-
-    behavior.quiet = 1;  // -Q
 
     _log->info("Refining triangulation...");
     tetrahedralize(&behavior, &in, &out);
@@ -585,8 +583,8 @@ void TetraMeshSpatialGrid::storeTetrahedra(const tetgenio& final, bool storeVert
     _tetrahedra.reserve(_numCells);  // no default constructor for Tetra
     for (int i = 0; i < _numCells; i++)
     {
-        std::array<int, 4> vertexIndices;
-        std::array<Face, 4> faces;
+        array<int, 4> vertexIndices;
+        array<Face, 4> faces;
 
         // vertices
         for (int c = 0; c < 4; c++)
@@ -615,7 +613,7 @@ void TetraMeshSpatialGrid::storeTetrahedra(const tetgenio& final, bool storeVert
             }
 
             // compute outward facing normal of face
-            std::array<int, 3> cv = clockwiseVertices(f);
+            array<int, 3> cv = clockwiseVertices(f);
             Vec v0 = _vertices[vertexIndices[cv[0]]];
             Vec e12 = _vertices[vertexIndices[cv[1]]] - v0;
             Vec e13 = _vertices[vertexIndices[cv[2]]] - v0;
@@ -661,7 +659,7 @@ void TetraMeshSpatialGrid::buildSearch()
 {
     int gridsize = max(20, static_cast<int>(pow(_tetrahedra.size(), 1. / 3.) / 5));
     string size = std::to_string(gridsize);
-    _log->info("Constructing intermediate " + size + "x" + size + "x" + size + " grid for tetrahedra...");
+    _log->info("Constructing intermediate " + size + "x" + size + "x" + size + " BlockGrid for tetrahedra...");
     _blocks = new BlockGrid(_tetrahedra, extent(), gridsize);
     _log->info("  Smallest number of tetrahedra per grid block: " + std::to_string(_blocks->minCellRefsPerBlock()));
     _log->info("  Largest  number of tetrahedra per grid block: " + std::to_string(_blocks->maxCellRefsPerBlock()));
@@ -739,7 +737,7 @@ void TetraMeshSpatialGrid::writeGridPlotFiles(const SimulationItem* probe) const
             coords[3 * v + 2] = vertex.z();
 
             // get vertices of opposite face
-            std::array<int, 3> faceIndices = clockwiseVertices(v);
+            array<int, 3> faceIndices = clockwiseVertices(v);
             indices[4 * v + 0] = 3;  // amount of vertices per face
             indices[4 * v + 1] = faceIndices[0];
             indices[4 * v + 2] = faceIndices[1];
@@ -806,7 +804,7 @@ public:
                 Vec moment = Vec::cross(dir, pos - tetra.vertex(_enteringFace));
 
                 // clockwise vertices around entering face
-                std::array<int, 3> cv = clockwiseVertices(_enteringFace);
+                array<int, 3> cv = clockwiseVertices(_enteringFace);
 
                 // determine orientations for use in the decision tree
                 double prod0 = Vec::dot(moment, tetra.edge(cv[0], _enteringFace));
