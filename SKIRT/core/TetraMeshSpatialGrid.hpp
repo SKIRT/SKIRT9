@@ -109,7 +109,7 @@ private:
         int _nface;   // index of the equivalent face in the neighbouring tetrahedron [0, 3]
         Vec _normal;  // outward facing normal
 
-        Face(){}
+        Face() {}
 
         Face(int ntetra, int nface, Vec normal) : _ntetra(ntetra), _nface(nface), _normal(normal) {}
     };

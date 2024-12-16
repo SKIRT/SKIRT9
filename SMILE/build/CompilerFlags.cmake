@@ -25,7 +25,9 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     target_compile_options(${TARGET} PRIVATE -Wall -W -pedantic)
     if (NO_EXTRA_WARNINGS)
-        target_compile_options(${TARGET} PRIVATE -Wno-misleading-indentation -Wno-unused-parameter)
+        target_compile_options(${TARGET} PRIVATE -Wno-misleading-indentation -Wno-unused-parameter
+            -Wno-unused-function -Wno-unused-result -Wno-deprecated-copy -Wno-sign-compare -Wno-restrict
+            -Wno-unused-variable -Wno-unused-but-set-variable -Wno-maybe-uninitialized)
     endif()
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "Intel")
     target_compile_options(${TARGET} PRIVATE -fp-model precise -Wall)
@@ -35,7 +37,7 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES "Intel")
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     target_compile_options(${TARGET} PRIVATE /wd4267 /wd4244)  # ignore size_t to/from int conversions
     if (NO_EXTRA_WARNINGS)
-        target_compile_options(${TARGET} PRIVATE /wd4996)  # ignore unsafe C-style std functions
+        target_compile_options(${TARGET} PRIVATE /wd2220 /wd4018 /wd4101 /wd4477 /wd4996)
     endif()
 endif()
 
