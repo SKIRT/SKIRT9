@@ -108,9 +108,7 @@ jobs:
       run: sudo apt install intel-oneapi-compiler-dpcpp-cpp
     # configure the build files through CMake
     - name: Configure
-      run: |
-        ls /opt/intel/oneapi/compiler/latest/bin
-        cmake -B release CMAKE_C_COMPILER=/opt/intel/oneapi/compiler/latest/bin/icx CMAKE_CXX_COMPILER=/opt/intel/oneapi/compiler/latest/bin/icpx -DCMAKE_BUILD_TYPE:STRING=Release -DWARNINGS_AS_ERRORS:BOOL=ON -DBUILD_DOX_STYLE:BOOL=ON -DBUILD_SMILE_SHAPES:BOOL=ON -DBUILD_SMILE_TOOL:BOOL=ON -L
+      run: cmake -B release -DCMAKE_C_COMPILER=/opt/intel/oneapi/compiler/latest/bin/icx -DCMAKE_CXX_COMPILER=/opt/intel/oneapi/compiler/latest/bin/icpx -DCMAKE_BUILD_TYPE:STRING=Release -DWARNINGS_AS_ERRORS:BOOL=ON -DBUILD_DOX_STYLE:BOOL=ON -DBUILD_SMILE_SHAPES:BOOL=ON -DBUILD_SMILE_TOOL:BOOL=ON -L
     # perform the actual build (Ubuntu runners have 2 cores)
     - name: Build
       run: make -C release -j 2
