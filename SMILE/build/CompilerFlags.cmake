@@ -13,13 +13,14 @@ set_property(TARGET ${TARGET} PROPERTY CXX_STANDARD_REQUIRED ON)
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     target_compile_options(${TARGET} PRIVATE -Wall -W -pedantic)
     if (NO_EXTRA_WARNINGS)
-        target_compile_options(${TARGET} PRIVATE -Wno-unused-parameter)
+        target_compile_options(${TARGET} PRIVATE -Wno-unused-parameter -Wno-unused-function -Wno-sign-compare
+            -Wno-deprecated-declarations -Wno-unused-variable -Wno-unused-but-set-variable
+            -Wno-deprecated-copy-with-user-provided-copy)
     else()
         target_compile_options(${TARGET} PRIVATE
             -Wdeprecated -Wextra-semi -Wold-style-cast -Wdouble-promotion
             -Wunused-exception-parameter -Wmissing-variable-declarations
             -Wconditional-uninitialized -Wswitch-enum -Wcovered-switch-default)
-            # -Wconversion (ignore size_t to/from int conversions)
     endif()
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     target_compile_options(${TARGET} PRIVATE -Wall -W -pedantic)

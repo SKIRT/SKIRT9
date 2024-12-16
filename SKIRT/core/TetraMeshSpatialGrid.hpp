@@ -21,14 +21,14 @@ class tetgenio;
     simulation domain. The grid is constructed using the open-source library TetGen version 1.6.0
     (released on August 31, 2020). TetGen is an advanced C++ tetrahedral mesh generator with many
     features. This class uses the following key features of TetGen:
-    
-    - Delaunay Tetrahedralization:  
+
+    - Delaunay Tetrahedralization:
       Generate a unique Delaunay tetrahedral mesh from a given set of vertices.
-   
-    - Mesh Refinement:  
+
+    - Mesh Refinement:
       Refine the tetrahedral mesh using TetGen's Delaunay refinement algorithm. This option
       is enabled through the \em refine property of this class.
-   
+
     It should be noted that TetGen is a single-threaded library, but the algorithms used are
     generally quite fast. The refinement process is by far the most time-consuming part of the
     mesh generation.
@@ -43,16 +43,16 @@ class tetgenio;
     dihedral angle. All refinement parameters are kept at their default values provided by TetGen.
     However, it is uncertain whether this refinement process will greatly improve the grids for
     radiative transfer applications.
- 
+
     The positions of the vertices used for generating the tetrahedral mesh are determined by the
     \em policy property. The available policies are:
-   
+
     - Uniform: Randomly sampled from a uniform distribution.
     - CentralPeak: Randomly sampled from a distribution with a steep central peak.
     - DustDensity: Randomly sampled based on the dust density distribution.
     - ElectronDensity: Randomly sampled based on the electron density distribution.
     - GasDensity: Randomly sampled based on the gas density distribution.
-    - File: Loaded from a column data file specified by the \em filename property, 
+    - File: Loaded from a column data file specified by the \em filename property,
             containing vertex coordinates (x, y, z) in each column. */
 class TetraMeshSpatialGrid : public BoxSpatialGrid
 {
@@ -109,7 +109,7 @@ private:
         int _nface;   // index of the equivalent face in the neighbouring tetrahedron [0, 3]
         Vec _normal;  // outward facing normal
 
-        Face(){};
+        Face(){}
 
         Face(int ntetra, int nface, Vec normal) : _ntetra(ntetra), _nface(nface), _normal(normal) {}
     };
@@ -134,13 +134,13 @@ private:
             face in the traversal algorithm. */
         int findEnteringFace(const Vec& pos, const Direction& dir) const;
 
-        /** This function checks if the given position is contained inside the tetrahedron. 
+        /** This function checks if the given position is contained inside the tetrahedron.
             It frist checks if the position is inside the bounding box of the tetrahedron. */
         bool contains(const Position& bfr) const;
 
         /** This function generates three random barycentric coordinates for uniformly sampling
             inside this tetrahedron. The fourth coordinate is calculated by ensuring their sum
-            equals 1, i.e. r=1-s-t-u. 
+            equals 1, i.e. r=1-s-t-u.
             Source: Generating Random Points in a Tetrahedron: DOI 10.1080/10867651.2000.10487528 */
         double generateBarycentric(double& s, double& t, double& u) const;
 
@@ -180,7 +180,7 @@ private:
     /** This private function removes vertices that are outside the domain. */
     void removeOutside();
 
-    /** This private function builds the tetrahedral mesh. It starts by constructing the Delaunay 
+    /** This private function builds the tetrahedral mesh. It starts by constructing the Delaunay
         tetrahedralization and optionally refines it if the \em refine option is set to true. */
     void buildMesh();
 
@@ -190,7 +190,7 @@ private:
 
     /** This private function refines the Delaunay tetrahedralization to improve cell quality. The
         refinement process is controlled by TetGen with default quality parameters. The input is
-        the initial Delaunay tetrahedralization in the \em in tetgenio reference. The output, with 
+        the initial Delaunay tetrahedralization in the \em in tetgenio reference. The output, with
         the refined Delaunay tetrahedralization, is placed inside the \em out tetgenio reference. */
     void refineDelaunay(tetgenio& in, tetgenio& out);
 
@@ -252,7 +252,7 @@ public:
         In the first step, the function determines the cell index of the tetrahedron containing the starting
         point. If none is found, the path is terminated. Before the traversal algorithm can commence, a
         non-leaving face must be identified. This face acts as the entry face for the ray. Note that this
-        face does not necessarily have to be the actual entry face. This task is handled by the 
+        face does not necessarily have to be the actual entry face. This task is handled by the
         \em findEnteringFace function of the \em Tetra class.
 
         Next, the traversal algorithm begins. The entering face is labeled as face 0, with its opposing vertex

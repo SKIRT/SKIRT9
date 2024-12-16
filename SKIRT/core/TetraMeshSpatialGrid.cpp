@@ -310,7 +310,7 @@ public:
         vector<int> bins(nbins);
         for (const Tetra& tetra : _tetrahedra)
         {
-            double center;
+            double center = 0.;
             switch (axis)
             {
                 case 0: center = tetra.centroid().x(); break;
@@ -640,7 +640,7 @@ void TetraMeshSpatialGrid::storeTetrahedra(const tetgenio& final, bool storeVert
     double V = Box::volume();
     minVol /= V;
     maxVol /= V;
-    double avgVol = 1 / (double)_numCells;
+    double avgVol = 1. / _numCells;
     double varVol = (totalVol2 / _numCells / (V * V) - avgVol * avgVol);
 
     // log statistics
