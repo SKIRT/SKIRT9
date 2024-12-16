@@ -10,7 +10,7 @@
 set_property(TARGET ${TARGET} PROPERTY CXX_STANDARD 14)
 set_property(TARGET ${TARGET} PROPERTY CXX_STANDARD_REQUIRED ON)
 
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|IntelLLVM")  # the Intel oneAPI compiler supports Clang options
     target_compile_options(${TARGET} PRIVATE -Wall -W -pedantic)
     if (NO_EXTRA_WARNINGS)
         target_compile_options(${TARGET} PRIVATE -Wno-unused-parameter -Wno-unused-function -Wno-sign-compare
@@ -29,7 +29,7 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
             -Wno-unused-function -Wno-unused-result -Wno-deprecated-copy -Wno-sign-compare -Wno-restrict
             -Wno-unused-variable -Wno-unused-but-set-variable -Wno-maybe-uninitialized -Wno-format)
     endif()
-elseif (CMAKE_CXX_COMPILER_ID MATCHES "Intel")
+elseif (CMAKE_CXX_COMPILER_ID MATCHES "Intel")  # this catches the deprecated Intel classic compiler
     target_compile_options(${TARGET} PRIVATE -fp-model precise -Wall)
     if (NO_EXTRA_WARNINGS)
         target_compile_options(${TARGET} PRIVATE -Wno-deprecated)
