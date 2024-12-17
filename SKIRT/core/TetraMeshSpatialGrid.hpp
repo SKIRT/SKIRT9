@@ -53,7 +53,8 @@ class tetgenio;
     - ElectronDensity: Randomly sampled based on the electron density distribution.
     - GasDensity: Randomly sampled based on the gas density distribution.
     - File: Loaded from a column data file specified by the \em filename property,
-            containing vertex coordinates (x, y, z) in each column. */
+            containing vertex coordinates (x, y, z) in each column.
+*/
 class TetraMeshSpatialGrid : public BoxSpatialGrid
 {
     /** The enumeration type indicating the policy for determining the positions of the vertices. */
@@ -99,7 +100,8 @@ protected:
         function. */
     void setupSelfBefore() override;
 
-    //==================== Private construction ====================
+    //==================== Private data types ====================
+
 private:
     /** Private struct that represents a face of a tetrahedron, storing all relevant
         information for photon traversal. */
@@ -109,10 +111,16 @@ private:
         int _nface;   // index of the equivalent face in the neighbouring tetrahedron [0, 3]
         Vec _normal;  // outward facing normal
 
-        Face() {}
+        Face() : _ntetra(0), _nface(0) {}
 
         Face(int ntetra, int nface, Vec normal) : _ntetra(ntetra), _nface(nface), _normal(normal) {}
     };
+
+    /** Alias for a fixed array of 4 integer indices. */
+    using FourIndices = std::array<int, 4>;
+
+    /** Alias for a fixed array of 4 Faces. */
+    using FourFaces = std::array<Face, 4>;
 
     /** Private class that represents a tetrahedron, storing all relevant information to fully
         describe its geometry and allow photon traversal through it. */
@@ -122,20 +130,20 @@ private:
         const vector<Vec>& _vertices;  // reference to all vertices, could be passed as arg but this is more convenient
         Box _extent;                   // bounding box of the tetrahedron
         Vec _centroid;                 // barycenter of the tetrahedron
-        std::array<int, 4> _vertexIndices;  // indices of the vertices in the global vertex list
-        std::array<Face, 4> _faces;         // faces of the tetrahedron, see struct Face
+        FourIndices _vertexIndices;    // indices of the vertices in the global vertex list
+        FourFaces _faces;              // faces of the tetrahedron, see struct Face
 
     public:
         /** This constructor initializes the tetrahedron by setting its fields and calculating the
             bounding box and centroid. */
-        Tetra(const vector<Vec>& vertices, const std::array<int, 4>& vertexIndices, const std::array<Face, 4>& faces);
+        Tetra(const vector<Vec>& vertices, const FourIndices& vertexIndices, const FourFaces& faces);
 
         /** This function finds a face that is not the leaving face which can act as the entering
             face in the traversal algorithm. */
         int findEnteringFace(const Vec& pos, const Direction& dir) const;
 
         /** This function checks if the given position is contained inside the tetrahedron.
-            It frist checks if the position is inside the bounding box of the tetrahedron. */
+            It first checks if the position is inside the bounding box of the tetrahedron. */
         bool contains(const Position& bfr) const;
 
         /** This function generates three random barycentric coordinates for uniformly sampling
@@ -164,7 +172,7 @@ private:
         double diagonal() const;
 
         /** This function returns a reference to an array of the faces of the tetrahedron. */
-        const std::array<Face, 4>& faces() const;
+        const FourFaces& faces() const;
 
         /** This function returns the centroid of the tetrahedron. */
         const Vec& centroid() const;
@@ -173,6 +181,9 @@ private:
         const Box& extent() const;
     };
 
+    //==================== Private construction ====================
+
+private:
     /** This private helper class organizes the cells into cuboidal blocks in a smart grid, such
         that it is easy to retrieve all cells inside a certain block given a position. */
     class BlockGrid;
@@ -206,6 +217,7 @@ private:
     void buildSearch();
 
     //======================= Interrogation =======================
+
 public:
     /** This function returns the number of cells in the grid. */
     int numCells() const override;
@@ -230,6 +242,7 @@ public:
 
     //===================== Path construction =====================
 
+public:
     /** This function creates and returns ownership of a path segment generator suitable for the
         tetrahedral spatial grid, implemented as a private \em PathSegmentGenerator subclass. The
         algorithm for constructing the path is taken from Maria et al. (2017).
@@ -277,6 +290,7 @@ public:
 
     //===================== Output =====================
 
+public:
     /** This function outputs the grid plot files. It writes each tetrahedral face as a triangle
         to the grid plot file. */
     void writeGridPlotFiles(const SimulationItem* probe) const override;
