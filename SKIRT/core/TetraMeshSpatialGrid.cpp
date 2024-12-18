@@ -454,7 +454,7 @@ void TetraMeshSpatialGrid::setupSelfBefore()
     }
 
     removeOutside();
-    if (_numVertices < 4) return;  // abort if there are not enough vertices
+    if (_numVertices < 4) throw FATALERROR("Not enough vertices to build a tetrahedral grid");
     buildMesh();
     buildSearch();
 }
