@@ -383,7 +383,7 @@ public:
         the path is complete and the loop is terminated. If no exit point is found, which shouldn't
         happen too often, this must be due to computational inaccuracies. In that case, no path
         segment is added, the current point is advanced by a small amount, and the new current cell
-        is determined by calling the function whichcell().
+        is determined by calling the function cellIndex().
 
         The algorithm that computes the exit point has the following input data:
         <TABLE>

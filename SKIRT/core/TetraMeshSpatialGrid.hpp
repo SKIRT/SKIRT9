@@ -16,11 +16,12 @@ class tetgenio;
 //////////////////////////////////////////////////////////////////////
 
 /** TetraMeshSpatialGrid is a concrete subclass of SpatialGrid representing a 3D tetrahedral mesh
-    generated from a set of vertices. The resulting grid is always constrained to lie within the
-    convex hull of the point set. This implies that the grid is not guaranteed to fill the entire
-    simulation domain. The grid is constructed using the open-source library TetGen version 1.6.0
-    (released on August 31, 2020). TetGen is an advanced C++ tetrahedral mesh generator with many
-    features. This class uses the following key features of TetGen:
+    generated from a set of vertices. The resulting grid fully covers the domain by including the
+    8 corners of the domain as vertices. Since a tetrahedral mesh always fills the convex hull of
+    the vertices, the domain is always fully covered. This grid will thus always have at least 8
+    vertices. The grid is constructed using the open-source library TetGen version 1.6.0 (released
+    on August 31, 2020). TetGen is an advanced C++ tetrahedral mesh generator with many features.
+    This class uses the following key features of TetGen:
 
     - Delaunay Tetrahedralization:
       Generate a unique Delaunay tetrahedral mesh from a given set of vertices.
@@ -54,6 +55,8 @@ class tetgenio;
     - GasDensity: Randomly sampled based on the gas density distribution.
     - File: Loaded from a column data file specified by the \em filename property,
             containing vertex coordinates (x, y, z) in each column.
+
+    Vertices are removed if they lie outside the simulation domain or are too close to another.
 */
 class TetraMeshSpatialGrid : public BoxSpatialGrid
 {
@@ -188,8 +191,12 @@ private:
         that it is easy to retrieve all cells inside a certain block given a position. */
     class BlockGrid;
 
-    /** This private function removes vertices that are outside the domain. */
-    void removeOutside();
+    /** This private function removes vertices that are outside the domain or too close to other vertices. */
+    void removeInvalid();
+
+    /** This private function adds the 8 corners of the domain to the vertex list. This way the full
+        domain will be tetrahedralized. */
+    void addCorners();
 
     /** This private function builds the tetrahedral mesh. It starts by constructing the Delaunay
         tetrahedralization and optionally refines it if the \em refine option is set to true. */
@@ -231,7 +238,7 @@ public:
 
     /** This function returns the index of the cell that contains the position \f${\bf{r}}\f$.
         The function uses the data structure stored in the \em BlockGrid to accelerate the
-        search. If the position is outside the convex hull, the function returns -1. */
+        search. If no cell is found to contain this position, the function returns -1. */
     int cellIndex(Position bfr) const override;
 
     /** This function returns the centroid of the tetrahedron with index \f$m\f$. */
@@ -262,11 +269,14 @@ public:
         clockwise-ordered edges of that face are negative. The algorithm in Maria et al. (2017) optimizes
         this by requiring only two Plücker products to be evaluated. Our implementation is described below.
 
-        In the first step, the function determines the cell index of the tetrahedron containing the starting
-        point. If none is found, the path is terminated. Before the traversal algorithm can commence, a
-        non-leaving face must be identified. This face acts as the entry face for the ray. Note that this
-        face does not necessarily have to be the actual entry face. This task is handled by the
-        \em findEnteringFace function of the \em Tetra class.
+        In the first step, the function checks whether the start point is inside the domain. If so, the current
+        point is simply initialized to the start point. If not, the function computes the path segment to the
+        first intersection with one of the domain walls and moves the current point inside the domain. Next,
+        the function determines the cell index of the tetrahedron containing the current point. If none is
+        found, the path is terminated. Before the traversal algorithm can commence, a non-leaving face must
+        be identified. This face acts as the entry face for the ray. Note that this face does not necessarily
+        have to be the actual entry face. This task is handled by the \em findEnteringFace function of the
+        \em Tetra class.
 
         Next, the traversal algorithm begins. The entering face is labeled as face 0, with its opposing vertex
         labeled as vertex 0. We start by evaluating the Plücker product of the ray with the edge \f$1 \to 0\f$.
@@ -284,8 +294,8 @@ public:
         \em VoronoiMeshSnapshot class, where the closest intersection distance with all faces is found.
 
         The algorithm continues until the exit face lies on the convex hull boundary. At this point, the path is
-        terminated. If neither the Maria et al. (2017) algorithm nor the plane intersection algorithm identifies
-        an exit face, the current point is advanced by a small distance, and the cell index is recalculated. */
+        terminated. If the exit face is not found, which should only rarely happen due to computational
+        inaccuracies, the current point is advanced by a small distance, and the cell index is recalculated. */
     std::unique_ptr<PathSegmentGenerator> createPathSegmentGenerator() const override;
 
     //===================== Output =====================

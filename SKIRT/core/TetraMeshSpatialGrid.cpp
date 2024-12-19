@@ -453,15 +453,15 @@ void TetraMeshSpatialGrid::setupSelfBefore()
         }
     }
 
-    removeOutside();
-    if (_numVertices < 4) throw FATALERROR("Not enough vertices to build a tetrahedral grid");
+    addCorners();
+    removeInvalid();
     buildMesh();
     buildSearch();
 }
 
 ////////////////////////////////////////////////////////////////////
 
-void TetraMeshSpatialGrid::removeOutside()
+void TetraMeshSpatialGrid::removeInvalid()
 {
     _numVertices = _vertices.size();
 
@@ -475,8 +475,50 @@ void TetraMeshSpatialGrid::removeOutside()
     // log removed vertices
     int numOutside = _numVertices - _vertices.size();
     if (numOutside) _log->info("removed " + StringUtils::toString(numOutside, 'd') + " vertices outside of the domain");
-
     _numVertices = _vertices.size();
+
+    // sort vertices in order of increasing x coordinate to accelerate search for nearby sites
+    std::sort(_vertices.begin(), _vertices.end(), [](Vec& v1, Vec& v2) { return v1.x() < v2.x(); });
+    // mark vertices that lie too nearby another site
+    std::vector<int> toRemove;
+    for (int i = 0; i < _numVertices; ++i)
+    {
+        for (int j = i + 1; j < _numVertices && (_vertices[j].x() - _vertices[i].x() < _eps); ++j)
+        {
+            if ((_vertices[j] - _vertices[i]).norm2() < _eps * _eps)
+            {
+                toRemove.push_back(i);
+                break;
+            }
+        }
+    }
+    // remove marked vertices in reverse order
+    std::sort(toRemove.begin(), toRemove.end(), [](int i, int j) { return i > j; });
+    for (int index : toRemove) _vertices.erase(_vertices.begin() + index);
+
+    // log removed vertices
+    int numNearby = toRemove.size();
+    if (numNearby) _log->info("removed " + StringUtils::toString(numNearby, 'd') + " vertices too nearby to others");
+    _numVertices = _vertices.size();
+}
+
+////////////////////////////////////////////////////////////////////
+
+void TetraMeshSpatialGrid::addCorners()
+{
+    _numVertices = _vertices.size();
+    // add the 8 corners of the domain to the list of vertices
+    double xmin, ymin, zmin, xmax, ymax, zmax;
+    extent(xmin, ymin, zmin, xmax, ymax, zmax);
+    _vertices.reserve(_numVertices + 8);
+    _vertices.emplace_back(xmin, ymin, zmin);
+    _vertices.emplace_back(xmin, ymin, zmax);
+    _vertices.emplace_back(xmin, ymax, zmin);
+    _vertices.emplace_back(xmin, ymax, zmax);
+    _vertices.emplace_back(xmax, ymin, zmin);
+    _vertices.emplace_back(xmax, ymin, zmax);
+    _vertices.emplace_back(xmax, ymax, zmin);
+    _vertices.emplace_back(xmax, ymax, zmax);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -762,15 +804,17 @@ public:
         if (state() == State::Unknown)
         {
             // moveInside does not move the photon packet inside the convex hull so it is currently disabled
-            // if (!moveInside(_grid->extent(), _grid->_eps)) return false;
+            if (!moveInside(_grid->extent(), _grid->_eps)) return false;
 
             // get the index of the cell containing the current position
             _mr = _grid->cellIndex(r());
-            if (_mr > 0) setState(State::Inside);
             _enteringFace = -1;
+            // very rare edge case where no cell is found at domain boundary
+            if (_mr == -1) return false;
 
-            // position is outside of convex hull
-            if (_mr < 0) return false;
+            // if the photon packet started outside the grid, return the corresponding nonzero-length segment;
+            // otherwise fall through to determine the first actual segment
+            if (ds() > 0.) return true;
         }
 
         // inside convex hull
