@@ -20,7 +20,6 @@
     specified wavelengths is not important; they will be sorted anyway. */
 class OligoWavelengthGrid : public DisjointWavelengthGrid
 {
-
     //============= Construction - Setup - Destruction =============
 
 public:

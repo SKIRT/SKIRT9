@@ -290,8 +290,10 @@ public:
     private:
         friend class PhotonPacket;
         int _h;  // the index of the medium component to which this information record belongs
+
     public:
         ScatteringInfo(int h) : _h{h} {}  // cannot be private because we use emplace_back to construct
+
     public:
         bool valid{false};   // true if this record holds valid values
         bool dipole{false};  // true if scattering as a dipole, false if scattering isotropically

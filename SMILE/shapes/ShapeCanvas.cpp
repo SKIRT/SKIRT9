@@ -26,6 +26,7 @@ class ShapeCanvas::GraphicsStateCanvas
     Canvas _canvas;                 // regular canvas
     GraphicsState _cgs;             // current graphics state
     vector<GraphicsState> _gstack;  // graphics state stack
+
 public:
     GraphicsStateCanvas(size_t numPixels) : _canvas(numPixels) {}
     void pushState() { _gstack.push_back(_cgs); }

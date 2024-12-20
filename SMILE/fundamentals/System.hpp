@@ -23,7 +23,6 @@
     destructor, all public functions in this class are static and thread-safe. */
 class System final
 {
-
     // ================== Initialization ==================
 
 private:

@@ -34,7 +34,6 @@ class OligoWavelengthGrid;
     information from this object. */
 class OligoWavelengthDistribution : public WavelengthDistribution
 {
-
     //============= Construction - Setup - Destruction =============
 
 public:
