@@ -26,7 +26,7 @@ class tetgenio;
     - Delaunay Tetrahedralization:
       Generate a unique Delaunay tetrahedral mesh from a given set of vertices.
 
-    - Mesh Refinement:
+    - %Mesh Refinement:
       Refine the tetrahedral mesh using TetGen's Delaunay refinement algorithm. This option
       is enabled through the \em refine property of this class.
 

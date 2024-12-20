@@ -803,12 +803,13 @@ public:
     {
         if (state() == State::Unknown)
         {
-            // moveInside does not move the photon packet inside the convex hull so it is currently disabled
+            // try moving the photon packet inside the grid; if this is impossible, return an empty path
             if (!moveInside(_grid->extent(), _grid->_eps)) return false;
 
             // get the index of the cell containing the current position
             _mr = _grid->cellIndex(r());
             _enteringFace = -1;
+
             // very rare edge case where no cell is found at domain boundary
             if (_mr == -1) return false;
 
