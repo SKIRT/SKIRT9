@@ -41,7 +41,6 @@
     through an enum. */
 class SpheroidalGraphiteGrainComposition : public PolarizedGraphiteGrainComposition
 {
-
     ENUM_DEF(TableType, Builtin, OneTable, TwoTables)
         ENUM_VAL(TableType, Builtin, "builtin resources")
         ENUM_VAL(TableType, OneTable, "single custom table")

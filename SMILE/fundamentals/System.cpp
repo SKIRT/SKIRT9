@@ -707,7 +707,6 @@ void System::releaseMemoryMap(string path)
         // actually release the memory map only when count has reached zero
         if (!record.count)
         {
-
 #if defined(_WIN64)
             UnmapViewOfFile(record.start);
             CloseHandle(record.maphandle);

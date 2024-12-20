@@ -614,7 +614,6 @@ void TetraMeshSpatialGrid::storeTetrahedra(const tetgenio& final, bool storeVert
     _tetrahedra.reserve(_numCells);  // no default constructor for Tetra
     for (int i = 0; i < _numCells; i++)
     {
-
         // vertices
         FourIndices vertexIndices;
         for (int c = 0; c < 4; c++)
