@@ -31,6 +31,7 @@ class SphePowerLawRedistributeGeometryDecorator : public RedistributeGeometryDec
     ITEM_END()
 
     //======================== Other Functions =======================
+
 public:
     /** The dimension of the geometry after applying the decorator cannot change and is thus the
         dimension of the original geometry. */

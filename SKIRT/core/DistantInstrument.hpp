@@ -113,8 +113,8 @@ public:
 
     //======================== Data Members ========================
 
-    // data members derived from the discoverable properties during setup
 private:
+    // data members derived from the discoverable properties during setup
     Direction _bfkobs;
     Direction _bfky;
 };
