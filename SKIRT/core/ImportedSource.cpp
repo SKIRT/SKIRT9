@@ -70,6 +70,7 @@ void ImportedSource::setupSelfAfter()
         if (_importVelocityDispersion) _snapshot->importVelocityDispersion();
     }
     if (_importCurrentMass) _snapshot->importCurrentMass();
+    if (_importBias) _snapshot->importBias();
     _snapshot->importParameters(_sedFamily->parameterInfo());
 
     // notify about building search data structures if needed
@@ -223,7 +224,7 @@ void ImportedSource::prepareForLaunch(double sourceBias, size_t firstIndex, size
     if (!M) return;
 
     // calculate the launch weight for each entity, normalized to unity
-    _Wv = (1 - sourceBias) * _Lv + sourceBias / M;
+    _Wv = (1 - sourceBias) * _Lv + sourceBias / M; // adjust this formule using the bias
 
     // determine the first history index for each entity
     _Iv.resize(M + 1);

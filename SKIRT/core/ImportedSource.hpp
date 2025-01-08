@@ -69,6 +69,11 @@ class ImportedSource : public Source
         ATTRIBUTE_DISPLAYED_IF(importCurrentMass, "Level3")
         ATTRIBUTE_INSERT(importCurrentMass, "importCurrentMass:CurrentMass")
 
+        PROPERTY_BOOL(importBias, "import biases for each entity")
+        ATTRIBUTE_DEFAULT_VALUE(importBias, "false")
+        ATTRIBUTE_DISPLAYED_IF(importBias, "Level3")
+        // ATTRIBUTE_INSERT(importBias, "?") // what does INSERT do?
+
         PROPERTY_STRING(useColumns, "a list of names corresponding to columns in the file to be imported")
         ATTRIBUTE_DEFAULT_VALUE(useColumns, "")
         ATTRIBUTE_REQUIRED_IF(useColumns, "false")

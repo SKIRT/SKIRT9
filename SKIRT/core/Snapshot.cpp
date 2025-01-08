@@ -171,6 +171,12 @@ void Snapshot::importMagneticField()
     _infile->addColumn("magnetic field z", "magneticfield", "uG");
 }
 
+void Snapshot::importBias()
+{
+    _biasIndex = _nextIndex++;
+    _infile->addColumn("bias");
+}
+
 ////////////////////////////////////////////////////////////////////
 
 void Snapshot::importParameters(const vector<SnapshotParameter>& parameters)
@@ -326,6 +332,13 @@ Vec Snapshot::magneticField(Position bfr) const
     thread_local EntityCollection entities;  // can be reused for all queries in a given execution thread
     getEntities(entities, bfr);
     return entities.averageValue([this](int m) { return magneticField(m); }, [this](int m) { return currentMass(m); });
+}
+
+////////////////////////////////////////////////////////////////////
+
+double Snapshot::bias(int m) const
+{
+    return properties(m)[biasIndex()];
 }
 
 ////////////////////////////////////////////////////////////////////
