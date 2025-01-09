@@ -108,6 +108,18 @@ void ImportedSource::setupSelfAfter()
         });
         ProcessManager::sumToAll(_Lv);
 
+        // save the bias and biased luminosity and normalize both vectors
+        if (_snapshot->hasBias())
+        {
+            _bv.resize(M);
+            for (int m = 0; m != M; ++m) _bv[m] = _snapshot->bias(m);
+
+            _Lbv = _Lv * _bv;
+            _Lbv /= _Lbv.sum();
+
+            _bv /= _bv.sum();
+        }
+
         // remember the total luminosity and normalize the vector
         _L = _Lv.sum();
         if (_L) _Lv /= _L;
@@ -224,7 +236,10 @@ void ImportedSource::prepareForLaunch(double sourceBias, size_t firstIndex, size
     if (!M) return;
 
     // calculate the launch weight for each entity, normalized to unity
-    _Wv = (1 - sourceBias) * _Lv + sourceBias / M; // adjust this formule using the bias
+    if (_snapshot->hasBias())
+        _Wv = (1 - sourceBias) * _Lbv + sourceBias * _bv;
+    else
+        _Wv = (1 - sourceBias) * _Lv + sourceBias / M;
 
     // determine the first history index for each entity
     _Iv.resize(M + 1);

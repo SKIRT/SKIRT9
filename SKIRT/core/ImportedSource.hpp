@@ -72,7 +72,6 @@ class ImportedSource : public Source
         PROPERTY_BOOL(importBias, "import biases for each entity")
         ATTRIBUTE_DEFAULT_VALUE(importBias, "false")
         ATTRIBUTE_DISPLAYED_IF(importBias, "Level3")
-        // ATTRIBUTE_INSERT(importBias, "?") // what does INSERT do?
 
         PROPERTY_STRING(useColumns, "a list of names corresponding to columns in the file to be imported")
         ATTRIBUTE_DEFAULT_VALUE(useColumns, "")
@@ -234,6 +233,8 @@ private:
 
     // intialized by prepareForLaunch()
     Array _Wv;           // the relative launch weight for each entity (normalized to unity)
+    Array _bv;           // the bias for each entity (normalized to unity)
+    Array _Lbv;          // the bias multiplied by luminosity for each entity (normalized to unity)
     vector<size_t> _Iv;  // first history index allocated to each entity (with extra entry at the end)
 };
 

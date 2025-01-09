@@ -333,7 +333,7 @@ void ParticleSnapshot::readAndClose()
     Snapshot::readAndClose();
 
     // log the number of particles
-    if (!numTempIgnored && !numMassIgnored)
+    if (!numTempIgnored && !numMassIgnored && !numBiasIgnored)
     {
         log()->info("  Number of particles: " + std::to_string(_propv.size()));
     }
