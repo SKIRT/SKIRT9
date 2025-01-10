@@ -6,7 +6,6 @@
 #include "ImportedSource.hpp"
 #include "Band.hpp"
 #include "Configuration.hpp"
-#include "Constants.hpp"
 #include "FatalError.hpp"
 #include "Log.hpp"
 #include "NR.hpp"

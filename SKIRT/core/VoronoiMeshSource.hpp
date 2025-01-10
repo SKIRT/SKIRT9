@@ -32,11 +32,12 @@
     components of the source population represented by the cell corresponding to the site. If
     additionally the \em importVelocityDispersion option is enabled, the next column specifies the
     velocity dispersion \f$\sigma_v\f$, adjusting the velocity for each photon packet launch with a
-    random offset sampled from a spherically symmetric Gaussian distribution. If the 
+    random offset sampled from a spherically symmetric Gaussian distribution. If the
     \em importCurrentMass option is enabled, the next column provides the current mass of the
     particle, \f$M_\mathrm{curr}\f$. This mass is currently only used for probing the input model.
     If the \em importBias option is enabled, the next column specifies the bias parameter, \f$b\f$,
-    which is used to bias the photon sampling for each particle.
+    which is used to bias the photon sampling for each cell (see the documentation of the
+    ImportedSource class).
 
     The remaining columns specify the parameters required by the configured %SED family to select
     and scale the appropriate %SED. For example for the Bruzual-Charlot %SED family, the remaining

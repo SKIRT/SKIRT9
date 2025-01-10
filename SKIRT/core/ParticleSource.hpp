@@ -37,7 +37,7 @@
     is enabled, the next column provides the current mass of the particle, \f$M_\mathrm{curr}\f$.
     This mass is currently only used for probing the input model. If the \em importBias option is
     enabled, the next column specifies the bias parameter, \f$b\f$, which is used to bias the
-    photon sampling for each particle.
+    photon sampling for each particle (see the documentation of the ImportedSource class).
 
     The remaining columns specify the parameters required by the configured %SED family to select
     and scale the appropriate %SED. For example for the Bruzual-Charlot %SED family, the remaining
