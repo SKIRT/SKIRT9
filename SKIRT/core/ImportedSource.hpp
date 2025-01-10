@@ -34,16 +34,39 @@ class Snapshot;
     spatial and spectral information for an entity yields its contribution to the imported
     radiation source.
 
-    The input file may include a separate column listing the current mass. When this option is
-    enabled, the provided current mass can be used for probing the input model. This is relevant
-    because %SED families usually do not request the current mass as a parameter (they often use
-    the initial mass instead, or do not include direct mass information at all).
+    The input file may include additional columns as configured by the \em importXXX options
+    offered by this base class. Most importantly, it may include a bulk velocity vector with an
+    optional velocity dispersion for each entity. When this option is enabled, the appropriate
+    Doppler shift is taken into account when launching photon packets. Apart from the anisotropy
+    resulting from this optional Doppler shift, the radiation emitted by this primary source is
+    always isotropic. It is also always unpolarized.
 
-    The input file may also include a bulk velocity vector with an optional velocity dispersion for
-    each entity. When this option is enabled, the appropriate Doppler shift is taken into account
-    when launching photon packets. Apart from the anisotropy resulting from this optional Doppler
-    shift, the radiation emitted by this primary source is always isotropic. It is also always
-    unpolarized. */
+    Furthermore, the input file may include a separate column listing the current mass. When this
+    option is enabled, the provided current mass can be used for probing the input model. This is
+    relevant because %SED families usually do not request the current mass as a parameter (they
+    often use the initial mass instead, or do not include direct mass information at all).
+
+    <em>%Source biasing</em>
+
+    Finally, the input file may include a column specifying a source bias weight for the
+    corresponding entity. These bias weights adjust the (relative) number of photon packets
+    launched from each entity. This can be used to increase sampling in regions of interest, for
+    example to reduce Monte Carlo noise in the low-luminosity outskirts of a galaxy model.
+    Specifically, the number of photon packets \f$N_m\f$ allocated to entity \f$m\f$ is given by
+
+    \f[ N_m =  N_s \left[ (1-\xi) \frac{b_m L_m}{\sum b_m L_m} + \xi \frac{b_m}{\sum b_m} \right] \f]
+
+    where \f$N_s\f$ is the total number of photon packets to be launched by this source, \f$b_m\f$
+    is imported bias weight for entity \f$m\f$, \f$L_m\f$ is the luminosity of entity \f$m\f$, and
+    \f$\xi\f$ is the value of the \em sourceBias property offered by the SourceSystem class.
+    If the \em importBias option for this source is disabled (the default), all bias weights are
+    taken to have a value of \f$b_m=1\f$. The above formule then reduces to
+
+    \f[ N_m =  N_s \left[ (1-\xi) \frac{L_m}{L} + \xi \frac{1}{M} \right] \f]
+
+    where \f$L\f$ is the total luminosity for this source and \f$M\f$ is the total number of
+    entities in this source. In all cases, the value of \f$\xi\f$ shifts between luminosity-weighted
+    (\f$\xi=0\f$) and entity-weighted (\f$\xi=1\f$) or any combination thereof. */
 class ImportedSource : public Source
 {
     ITEM_ABSTRACT(ImportedSource, Source, "a primary source imported from snapshot data")
@@ -68,6 +91,10 @@ class ImportedSource : public Source
         ATTRIBUTE_DEFAULT_VALUE(importCurrentMass, "false")
         ATTRIBUTE_DISPLAYED_IF(importCurrentMass, "Level3")
         ATTRIBUTE_INSERT(importCurrentMass, "importCurrentMass:CurrentMass")
+
+        PROPERTY_BOOL(importBias, "import a per-particle/cell source bias weight")
+        ATTRIBUTE_DEFAULT_VALUE(importBias, "false")
+        ATTRIBUTE_DISPLAYED_IF(importBias, "Level3")
 
         PROPERTY_STRING(useColumns, "a list of names corresponding to columns in the file to be imported")
         ATTRIBUTE_DEFAULT_VALUE(useColumns, "")
@@ -165,22 +192,14 @@ public:
     double meanSpecificLuminosity(const Band* band, int m) const;
 
     /** This function performs some preparations for launching photon packets. It is called in
-         serial mode before each segment of photon packet launches, providing the history indices
-         mapped by the source system to this particular source. See the description of the
-         SourceSystem class for more background information.
+        serial mode before each segment of photon packet launches, providing the history indices
+        mapped by the source system to this particular source. See the description of the
+        SourceSystem class for more background information.
 
-         This function distributes the provided range of history indices over the individual
-         entities imported by this source, creating a map for use when actually launching the
-         photon packets. The number of photon packets allocated to each entity is determined as
-         follows:
-
-         \f[ N_m = \left[ (1-\xi) \frac{L_m}{L} + \xi \frac{1}{M} \right] N_s \f]
-
-         where \f$N_s\f$ is the total number of photon packets to be launched by this source,
-         \f$N_m\f$ is the number of photon packets to be launched by entity \f$m\f$, \f$L_m\f$ is
-         the luminosity of source \f$m\f$, \f$L\f$ is the total luminosity for this source, \f$M\f$
-         is the number of entities in this source, and \f$\xi\f$ is the \em emissionBias property
-         value of the source system. */
+        This function distributes the provided range of history indices over the individual
+        entities imported by this source, creating a map for use when actually launching the photon
+        packets. The number of photon packets allocated to each entity is determined following the
+        scheme described in the header documentation of this class. */
     void prepareForLaunch(double sourceBias, size_t firstIndex, size_t numIndices) override;
 
     /** This function causes the photon packet \em pp to be launched from the source using the
@@ -229,6 +248,8 @@ private:
 
     // intialized by prepareForLaunch()
     Array _Wv;           // the relative launch weight for each entity (normalized to unity)
+    Array _bv;           // the bias for each entity (normalized to unity)
+    Array _Lbv;          // the bias multiplied by luminosity for each entity (normalized to unity)
     vector<size_t> _Iv;  // first history index allocated to each entity (with extra entry at the end)
 };
 

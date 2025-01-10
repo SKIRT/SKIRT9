@@ -315,13 +315,16 @@ void ParticleSnapshot::readAndClose()
     // if the user configured a mass-density policy, we skip zero-mass particles
     int numTempIgnored = 0;
     int numMassIgnored = 0;
+    int numBiasIgnored = 0;
     Array row;
     while (infile()->readRow(row))
     {
         if (useTemperatureCutoff() && row[temperatureIndex()] > maxTemperature())
             numTempIgnored++;
-        else if (hasMassDensityPolicy() && row[massIndex()] == 0)
+        else if (hasMassDensityPolicy() && row[massIndex()] == 0.)
             numMassIgnored++;
+        else if (hasBias() && row[biasIndex()] == 0.)
+            numBiasIgnored++;
         else
             _propv.push_back(row);
     }
@@ -330,7 +333,7 @@ void ParticleSnapshot::readAndClose()
     Snapshot::readAndClose();
 
     // log the number of particles
-    if (!numTempIgnored && !numMassIgnored)
+    if (!numTempIgnored && !numMassIgnored && !numBiasIgnored)
     {
         log()->info("  Number of particles: " + std::to_string(_propv.size()));
     }
@@ -339,6 +342,7 @@ void ParticleSnapshot::readAndClose()
         if (numTempIgnored)
             log()->info("  Number of high-temperature particles ignored: " + std::to_string(numTempIgnored));
         if (numMassIgnored) log()->info("  Number of zero-mass particles ignored: " + std::to_string(numMassIgnored));
+        if (numBiasIgnored) log()->info("  Number of zero-bias particles ignored: " + std::to_string(numBiasIgnored));
         log()->info("  Number of particles retained: " + std::to_string(_propv.size()));
     }
 

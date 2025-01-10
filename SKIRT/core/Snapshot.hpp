@@ -182,6 +182,9 @@ public:
         components (x,y,z). The default unit is \f$\mu \mathrm{G}\f$. */
     void importMagneticField();
 
+    /** This function configures the snapshot to import a bias for each entity in the snapshot. */
+    void importBias();
+
     /** This function configures the snapshot to import a sequence of parameters as described by
         the specified list of SnapshotParameter metadata objects. */
     void importParameters(const vector<SnapshotParameter>& parameters);
@@ -263,6 +266,10 @@ protected:
     /** This function returns the column index of the first magnetic field field, or -1 if this is
         not being imported, for use by subclasses. */
     int magneticFieldIndex() const { return _magneticFieldIndex; }
+
+    /** This function returns the column index of the bias field, or -1 if this is not being
+        imported, for use by subclasses. */
+    int biasIndex() const { return _biasIndex; }
 
     /** This function returns the column index of the first field in the parameter list, or -1 if
         this is not being imported, for use by subclasses. */
@@ -478,6 +485,14 @@ public:
         undefined. */
     Vec magneticField(Position bfr) const;
 
+    /** This function returns true if the bias is being imported, and false otherwise. */
+    bool hasBias() const { return _biasIndex >= 0; }
+
+    /** This function returns the bias of the entity with index \f$0\le m \le N_\mathrm{ent}-1\f$.
+        If the bias is not being imported, or the index is out of range, the behavior is undefined.
+        */
+    double bias(int m) const;
+
     /** This function returns true if parameters are being imported (i.e. if the number of imported
          parameters is nonzero), and false otherwise. */
     bool hasParameters() const { return _numParameters > 0; }
@@ -538,6 +553,7 @@ private:
     int _velocityIndex{-1};
     int _velocityDispersionIndex{-1};
     int _magneticFieldIndex{-1};
+    int _biasIndex{-1};
     int _parametersIndex{-1};
     int _numParameters{0};
 
