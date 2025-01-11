@@ -6,11 +6,11 @@
 #ifndef TETRAMESHSPATIALGRID_HPP
 #define TETRAMESHSPATIALGRID_HPP
 
+#include "BoxSearch.hpp"
 #include "BoxSpatialGrid.hpp"
-#include "Log.hpp"
 #include "PathSegmentGenerator.hpp"
 #include <array>
-
+class Log;
 class tetgenio;
 
 //////////////////////////////////////////////////////////////////////
@@ -187,10 +187,6 @@ private:
     //==================== Private construction ====================
 
 private:
-    /** This private helper class organizes the cells into cuboidal blocks in a smart grid, such
-        that it is easy to retrieve all cells inside a certain block given a position. */
-    class BlockGrid;
-
     /** This private function removes vertices that are outside the domain or too close to other vertices. */
     void removeInvalid();
 
@@ -219,8 +215,7 @@ private:
         it finishes transferring the data. */
     void storeTetrahedra(const tetgenio& final, bool storeVertices);
 
-    /** This private function builds the search data structure for the tetrahedral mesh.
-        See the private BlockGrid class for more information. */
+    /** This private function builds the search data structure for the tetrahedral mesh. */
     void buildSearch();
 
     //======================= Interrogation =======================
@@ -236,9 +231,9 @@ public:
         tetrahedron, it takes the square root of the average of the squared edge lengths. */
     double diagonal(int m) const override;
 
-    /** This function returns the index of the cell that contains the position \f${\bf{r}}\f$.
-        The function uses the data structure stored in the \em BlockGrid to accelerate the
-        search. If no cell is found to contain this position, the function returns -1. */
+    /** This function returns the index of the cell that contains the position \f${\bf{r}}\f$. It
+        uses a search data structure to accelerate the search. If no cell is found to contain this
+        position, the function returns -1. */
     int cellIndex(Position bfr) const override;
 
     /** This function returns the centroid of the tetrahedron with index \f$m\f$. */
@@ -313,13 +308,13 @@ private:
     double _eps{0.};  // small fraction of extent
 
     // data members describing the tetrahedralization
-    int _numCells;     // total number of tetrahedra
-    int _numVertices;  // total number of vertices
+    int _numCells{0};     // total number of tetrahedra
+    int _numVertices{0};  // total number of vertices
     vector<Tetra> _tetrahedra;
     vector<Vec> _vertices;
 
     // smart grid that organizes the tetrahedra into blocks
-    BlockGrid* _blocks{nullptr};
+    BoxSearch _search;  // search structure for locating cells
 
     // allow our path segment generator to access our private data members
     class MySegmentGenerator;
