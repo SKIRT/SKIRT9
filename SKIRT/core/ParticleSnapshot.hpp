@@ -6,7 +6,6 @@
 #ifndef PARTICLESNAPSHOT_HPP
 #define PARTICLESNAPSHOT_HPP
 
-#include "Array.hpp"
 #include "BoxSearch.hpp"
 #include "Snapshot.hpp"
 class SmoothingKernel;
@@ -21,7 +20,7 @@ class SmoothingKernel;
     particles in the snapshot.
 
     If the snapshot configuration requires the ability to determine the density at a given spatial
-    position, a lot of effort is made to accelerate the density interpolation over a potentially
+    position, an effort is made to accelerate the density interpolation over a potentially
     large number of smoothed particles. */
 class ParticleSnapshot : public Snapshot
 {
@@ -131,9 +130,6 @@ public:
     //======================== Data Members ========================
 
 private:
-    // private classes
-    class Particle;
-
     // data members initialized during configuration
     const SmoothingKernel* _kernel{nullptr};
 
@@ -141,10 +137,11 @@ private:
     vector<Array> _propv;  // particle properties as imported
 
     // data members initialized when reading the input file, but only if a density policy has been set
+    class Particle;
     vector<Particle> _pv;  // compact particle objects in the same order
-    BoxSearch _search;     // search structure for locating particles
     Array _cumrhov;        // cumulative density distribution for particles
     double _mass{0.};      // total effective mass
+    BoxSearch _search;     // search structure for locating particles
 };
 
 ////////////////////////////////////////////////////////////////////

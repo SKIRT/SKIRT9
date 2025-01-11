@@ -6,6 +6,7 @@
 #ifndef CELLSNAPSHOT_HPP
 #define CELLSNAPSHOT_HPP
 
+#include "BoxSearch.hpp"
 #include "Snapshot.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -35,10 +36,6 @@
 class CellSnapshot : public Snapshot
 {
     //================= Construction - Destruction =================
-
-public:
-    /** The destructor deletes the search data structure, if it was constructed. */
-    ~CellSnapshot();
 
     //========== Reading ==========
 
@@ -123,6 +120,13 @@ public:
         data structures were not created, invoking this function causes undefined behavior. */
     void getEntities(EntityCollection& entities, Position bfr, Direction bfk) const override;
 
+    //=================== Private helper functions =====================
+
+private:
+    /** This function returns the bounding box representing the cell with the given index. If the
+        index is out of range, the behavior is undefined. */
+    Box boxForCell(int m) const;
+
     //======================== Data Members ========================
 
 private:
@@ -130,13 +134,10 @@ private:
     vector<Array> _propv;  // cell properties as imported
 
     // data members initialized after reading the input file if a density policy has been set
-    Array _rhov;       // density for each cell (not normalized)
-    Array _cumrhov;    // normalized cumulative density distribution for cells
-    double _mass{0.};  // total effective mass
-
-    // data members initialized after reading the input file if a density policy has been set
-    class CellGrid;
-    CellGrid* _grid{nullptr};  // smart grid for locating the cell at a given location
+    Array _rhov;        // density for each cell (not normalized)
+    Array _cumrhov;     // normalized cumulative density distribution for cells
+    double _mass{0.};   // total effective mass
+    BoxSearch _search;  // search structure for locating cells
 };
 
 ////////////////////////////////////////////////////////////////////
