@@ -7,6 +7,7 @@
 #define PARTICLESNAPSHOT_HPP
 
 #include "Array.hpp"
+#include "BoxSearch.hpp"
 #include "Snapshot.hpp"
 class SmoothingKernel;
 
@@ -28,10 +29,11 @@ class ParticleSnapshot : public Snapshot
 
 public:
     /** The default constructor initializes the snapshot in an invalid state; it is provided here
-        so that we don't need to expose the inplemetation of the private Particle class. */
+        so that we don't need to expose the implementation of the private Particle class. */
     ParticleSnapshot();
 
-    /** The destructor deletes the smoothed particle grid, if it was constructed. */
+    /** The destructor is provided here so that we don't need to expose the implementation of the
+        private Particle class. */
     ~ParticleSnapshot();
 
     //========== Reading ==========
@@ -130,7 +132,6 @@ public:
 private:
     // private classes
     class Particle;
-    class ParticleGrid;
 
     // data members initialized during configuration
     const SmoothingKernel* _kernel{nullptr};
@@ -139,10 +140,10 @@ private:
     vector<Array> _propv;  // particle properties as imported
 
     // data members initialized when reading the input file, but only if a density policy has been set
-    vector<Particle> _pv;          // compact particle objects in the same order
-    ParticleGrid* _grid{nullptr};  // smart grid for locating smoothed particles
-    Array _cumrhov;                // cumulative density distribution for particles
-    double _mass{0.};              // total effective mass
+    vector<Particle> _pv;  // compact particle objects in the same order
+    BoxSearch _search;     // search structure for locating particles
+    Array _cumrhov;        // cumulative density distribution for particles
+    double _mass{0.};      // total effective mass
 };
 
 ////////////////////////////////////////////////////////////////////

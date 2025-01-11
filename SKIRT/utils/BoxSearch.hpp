@@ -58,7 +58,7 @@ public:
     const Box& extent() const;
 
     /** This function returns the number of blocks in the search structure for each spatial
-        dimension. */
+        dimension, or zero if no entities have been loaded. */
     int numBlocks() const;
 
     /** This function returns the smallest number of entity references in a search block. */
@@ -68,7 +68,7 @@ public:
     int maxEntitiesPerBlock() const;
 
     /** This function returns the average number of entity references in a search block. */
-    int avgEntitiesPerBlock() const;
+    double avgEntitiesPerBlock() const;
 
     // ------- Querying -------
 
@@ -86,7 +86,20 @@ public:
 
         Note that the callback function may be called for entities whose bounding box does \em not
         overlap the position; in that case it should return false. */
-    int firstEntityContaining(Vec bfr, std::function<bool(int m)> contains) const;
+    int firstEntity(Vec bfr, std::function<bool(int m)> contains) const;
+
+    /** This function accumulates the weights returned by the callback function for all entities
+        that overlap the specified position, and returns the sum. If there are no such entities,
+        the function returns zero.
+
+        The callback function must return the weight in the entity with given index for the
+        position passed to the main function, or zero if the entity does not contain the position.
+        The callback function will be invoked with a sequence of indices in arbitrary order but
+        without duplicates.
+
+        Note that the callback function may be called for entities whose bounding box does \em not
+        overlap the position; in that case it should return zero. */
+    double accumulate(Vec bfr, std::function<double(int m)> weight) const;
 
     /** This function replaces the contents of the specified entity collection by the set of
         entities that overlap the specified position with a nonzero weight. If there are no such
@@ -94,10 +107,8 @@ public:
 
         The callback function must return the weight in the entity with given index for the
         position passed to the main function, or zero if the entity does not contain the position.
-        The callback function will be invoked with a sequence of indices in arbitrary order and
-        possibly with duplicates. For a given index, the callback function must always return the
-        same value. Even if the callback function is invoked multiple times for the same index, the
-        corresponding entity will be added to the entity collection just once.
+        The callback function will be invoked with a sequence of indices in arbitrary order but
+        without duplicates.
 
         Note that the callback function may be called for entities whose bounding box does \em not
         overlap the position; in that case it should return zero. */
@@ -122,8 +133,13 @@ public:
     // ------- Private helper functions -------
 
 private:
-    /** This function returns the linear index for element (i,j,k) in the block list table. */
-    int blockIndex(int i, int j, int k) const { return ((i * _numBlocks) + j) * _numBlocks + k; }
+    /** This function returns the linear index in the block list vector for the block with indices
+        (i,j,k) in the three spatial directions. */
+    int blockIndex(int i, int j, int k) const;
+
+    /** This function returns the linear index in the block list vector for the block containing
+        the given position. */
+    int blockIndex(Vec bfr) const;
 
     // ------- Data members -------
 
