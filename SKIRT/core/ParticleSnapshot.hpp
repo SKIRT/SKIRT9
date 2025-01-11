@@ -28,12 +28,13 @@ class ParticleSnapshot : public Snapshot
     //================= Construction - Destruction =================
 
 public:
-    /** The default constructor initializes the snapshot in an invalid state; it is provided here
-        so that we don't need to expose the implementation of the private Particle class. */
+    /** The default constructor initializes the snapshot in an invalid state0. It is provided and
+        implemented in the .cpp file so that we don't need to expose the declaration of the private
+        Particle class. */
     ParticleSnapshot();
 
-    /** The destructor is provided here so that we don't need to expose the implementation of the
-        private Particle class. */
+    /** The destructor is provided and implemented in the .cpp file so that we don't need to expose
+        the declaration of the private Particle class. */
     ~ParticleSnapshot();
 
     //========== Reading ==========
