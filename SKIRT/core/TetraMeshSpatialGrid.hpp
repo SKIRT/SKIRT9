@@ -92,10 +92,6 @@ class TetraMeshSpatialGrid : public BoxSpatialGrid
 
     //============= Construction - Setup - Destruction =============
 
-public:
-    /** This destructor releases the BlockGrid search structure. */
-    ~TetraMeshSpatialGrid();
-
 protected:
     /** This function verifies that the attributes are correctly set, generates or retrieves
         vertex positions based on the configured policy, builds (and optionally refines) the

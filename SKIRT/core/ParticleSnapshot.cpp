@@ -24,7 +24,7 @@ class ParticleSnapshot::Particle
 public:
     /** The constructor arguments specify the particle attributes: particle index, coordinates of
         the center, smoothing length, and effective mass. */
-    Particle(double x, double y, double z, double h, double M) : _x{x}, _y{y}, _z{z}, _h{h}, _M{M} {}
+    Particle(double x, double y, double z, double h, double M) : _x(x), _y(y), _z(z), _h(h), _M(M) {}
 
     /** This function returns the coordinates of the center of the particle. */
     Vec center() const { return Vec(_x, _y, _z); }

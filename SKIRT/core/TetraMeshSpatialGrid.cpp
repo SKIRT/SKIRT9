@@ -229,10 +229,6 @@ const Box& TetraMeshSpatialGrid::Tetra::extent() const
     return _extent;
 }
 
-////////////////////////////////////////////////////////////////////
-
-TetraMeshSpatialGrid::~TetraMeshSpatialGrid() {}
-
 //////////////////////////////////////////////////////////////////////
 
 void TetraMeshSpatialGrid::setupSelfBefore()
