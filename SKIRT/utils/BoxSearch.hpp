@@ -15,16 +15,24 @@ class EntityCollection;
 
 //////////////////////////////////////////////////////////////////////
 
-/** BoxSearch is a helper class for organizing spatial objects in a data structure that allows
+/** BoxSearch is a utility class for organizing spatial objects in a data structure that allows
     efficient retrieval of all objects that overlap a given point or ray. The class actually works
     with the bounding boxes of the objects being held, and leaves more detailed tests for
     containment or intersection to the client code.
 
-    The spatial objects held by a BoxSearch instance are called entities. They are identified by
-    a unique index \f$m\f$ ranging from 0 to \f$M-1\f$, where \f$M\f$ is the number of managed
-    entities.
+    The spatial objects held by a BoxSearch instance are called entities. They are identified by a
+    unique index \f$m\f$ ranging from 0 to \f$M-1\f$, where \f$M\f$ is the number of managed
+    entities. All entities are handed to the BoxSearch instance in one go, so that they can be
+    "bulk-loaded" into the search structure.
 
-    To be completed. */
+    The current implementation proceeds as follows. First, a regular Cartesian grid is contructed
+    that partitions 3D space into \f$N_b^3\f$ blocks, where \f$N_b\f$ depends on the number of
+    entities with a floor of \f$N_b=20\f$ up to 1 million entities. Each block is then assigned a
+    list of indices for all entities that possibly intersect with the block. In an attempt to
+    balance the list lengths, the block separation points in each coordinate direction are chosen
+    so that the entity bounding box centers are approximately evently distributed over the blocks
+    in that direction. Locating the block containing a given query position then boils down to
+    three binary searches (one in each direction). */
 class BoxSearch
 {
     // ------- Constructing and loading -------

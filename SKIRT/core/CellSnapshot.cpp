@@ -84,7 +84,7 @@ void CellSnapshot::readAndClose()
         if (n) NR::cdf(_cumrhov, Mv);
     }
 
-    // if needed, construct a a search structure for the cells
+    // if needed, construct a search structure for the cells
     if (hasMassDensityPolicy() || needGetEntities())
     {
         log()->info("Constructing search grid for " + std::to_string(_propv.size()) + " cells...");
