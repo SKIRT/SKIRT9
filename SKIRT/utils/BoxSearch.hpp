@@ -26,12 +26,12 @@
 
     The current implementation proceeds as follows. First, a regular Cartesian grid is contructed
     that partitions 3D space into \f$N_b^3\f$ blocks, where \f$N_b\f$ depends on the number of
-    entities with a floor of \f$N_b=20\f$ up to 1 million entities. Each block is then assigned a
-    list of indices for all entities that possibly intersect with the block. In an attempt to
-    balance the list lengths, the block separation points in each coordinate direction are chosen
-    so that the entity bounding box centers are approximately evently distributed over the blocks
-    in that direction. Locating the block containing a given query position then boils down to
-    three binary searches (one in each direction).
+    entities. Each block is then assigned a list of indices for all entities that possibly
+    intersect with the block. In an attempt to balance the list lengths, the block separation
+    points in each coordinate direction are chosen so that the entity bounding box centers are
+    approximately evently distributed over the blocks in that direction. Locating the block
+    containing a given query position then boils down to three binary searches (one in each
+    direction).
 
     For performance reasons, the query functions use a template argument type instead of the
     appropriate std::function<> type declaration, which means they must be implemented inline in

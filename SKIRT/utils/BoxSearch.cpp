@@ -91,9 +91,8 @@ void BoxSearch::loadEntities(int numEntities, std::function<Box(int)> bounds,
     _extent = boxv[0];
     for (const auto& box : boxv) _extent.extend(box);
 
-    // determine the number of blocks in each spatial direction;
-    // the floor of 20 is exceeded only for more than a million entities
-    _numBlocks = max(20, static_cast<int>(std::cbrt(numEntities) / 5.));
+    // determine the number of blocks in each spatial direction
+    _numBlocks = max(10, static_cast<int>(std::cbrt(numEntities)));
 
     // build the grids in each spatial direction
     makegrid(_xgrid, boxv, 1, _numBlocks, _extent.xmin(), _extent.xmax());
