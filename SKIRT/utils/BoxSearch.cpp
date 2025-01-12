@@ -4,7 +4,6 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "BoxSearch.hpp"
-#include "EntityCollection.hpp"
 #include "NR.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -61,26 +60,6 @@ namespace
         }
         grid[gridsize] = std::numeric_limits<double>::infinity();
     }
-}
-
-////////////////////////////////////////////////////////////////////
-
-int BoxSearch::blockIndex(int i, int j, int k) const
-{
-    return ((i * _numBlocks) + j) * _numBlocks + k;
-}
-
-////////////////////////////////////////////////////////////////////
-
-int BoxSearch::blockIndex(Vec bfr) const
-{
-    // get the indices for the block containing the position in each direction
-    int i = NR::locateClip(_xgrid, bfr.x());
-    int j = NR::locateClip(_ygrid, bfr.y());
-    int k = NR::locateClip(_zgrid, bfr.z());
-
-    // return the corresponding linear index
-    return blockIndex(i, j, k);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -200,93 +179,50 @@ double BoxSearch::avgEntitiesPerBlock() const
 
 ////////////////////////////////////////////////////////////////////
 
-int BoxSearch::firstEntity(Vec bfr, std::function<bool(int)> contains) const
+int BoxSearch::blockIndex(int i, int j, int k) const
 {
-    if (_numBlocks)
-    {
-        // loop over all entities overlapping the block containing the position
-        for (int m : _listv[blockIndex(bfr)])
-        {
-            // return the first entity that actually contains the position
-            if (contains(m)) return m;
-        }
-    }
-
-    // there is no entity containing the position
-    return -1;
+    return ((i * _numBlocks) + j) * _numBlocks + k;
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double BoxSearch::accumulate(Vec bfr, std::function<double(int)> weight) const
+int BoxSearch::blockIndex(Vec bfr) const
 {
-    double sum = 0.;
+    // get the indices for the block containing the position in each direction
+    int i = NR::locateClip(_xgrid, bfr.x());
+    int j = NR::locateClip(_ygrid, bfr.y());
+    int k = NR::locateClip(_zgrid, bfr.z());
 
-    if (_numBlocks)
-    {
-        // sum the weights for all entities overlapping the block containing the position
-        for (int m : _listv[blockIndex(bfr)]) sum += weight(m);
-    }
-    return sum;
+    // return the corresponding linear index
+    return blockIndex(i, j, k);
 }
 
 ////////////////////////////////////////////////////////////////////
 
-void BoxSearch::getEntities(EntityCollection& entities, Vec bfr, std::function<double(int)> weight) const
+bool BoxSearch::indexRangeForRay(Position bfr, Direction bfk, int& i1, int& i2, int& j1, int& j2, int& k1,
+                                 int& k2) const
 {
-    entities.clear();
-
-    if (_numBlocks)
+    // find the intersection of the ray with the domain
+    double smin, smax;
+    if (_extent.intersects(bfr, bfk, smin, smax))
     {
-        // add all entities overlapping that block to the collection with their respective weight
-        for (int m : _listv[blockIndex(bfr)]) entities.add(m, weight(m));
+        // find the indices for first and last block, in each spatial direction,
+        // overlapped by the bounding box of the ray's intersection with the domain
+        Box ray(bfr + smin * bfk, bfr + smax * bfk);
+        i1 = NR::locateClip(_xgrid, ray.xmin());
+        i2 = NR::locateClip(_xgrid, ray.xmax());
+        j1 = NR::locateClip(_ygrid, ray.ymin());
+        j2 = NR::locateClip(_ygrid, ray.ymax());
+        k1 = NR::locateClip(_zgrid, ray.zmin());
+        k2 = NR::locateClip(_zgrid, ray.zmax());
+
+        // fix reversed coords for negative bfk components
+        if (i1 > i2) std::swap(i1, i2);
+        if (j1 > j2) std::swap(j1, j2);
+        if (k1 > k2) std::swap(k1, k2);
+        return true;
     }
-}
-
-////////////////////////////////////////////////////////////////////
-
-void BoxSearch::getEntities(EntityCollection& entities, Position bfr, Direction bfk,
-                            std::function<double(int)> weight) const
-{
-    entities.clear();
-
-    if (_numBlocks)
-    {
-        // verify that the path intersects the domain
-        double smin, smax;
-        if (_extent.intersects(bfr, bfk, smin, smax))
-        {
-            // find the indices for first and last block, in each spatial direction,
-            // overlapped by the bounding box of the path's intersection with the domain
-            Box pathbox(bfr + smin * bfk, bfr + smax * bfk);
-            int i1 = NR::locateClip(_xgrid, pathbox.xmin());
-            int i2 = NR::locateClip(_xgrid, pathbox.xmax());
-            int j1 = NR::locateClip(_ygrid, pathbox.ymin());
-            int j2 = NR::locateClip(_ygrid, pathbox.ymax());
-            int k1 = NR::locateClip(_zgrid, pathbox.zmin());
-            int k2 = NR::locateClip(_zgrid, pathbox.zmax());
-            if (i1 > i2) std::swap(i1, i2);  // fix reversed coords for negative bfk components
-            if (j1 > j2) std::swap(j1, j2);
-            if (k1 > k2) std::swap(k1, k2);
-
-            // loop over all blocks in that 3D range
-            for (int i = i1; i <= i2; i++)
-                for (int j = j1; j <= j2; j++)
-                    for (int k = k1; k <= k2; k++)
-                    {
-                        // if the path intersects the block
-                        Box block(_xgrid[i], _ygrid[j], _zgrid[k], _xgrid[i + 1], _ygrid[j + 1], _zgrid[k + 1]);
-                        if (block.intersects(bfr, bfk, smin, smax))
-                        {
-                            // add all entities overlapping that block to the collection with their respective weight
-                            for (int m : _listv[blockIndex(i, j, k)])
-                            {
-                                entities.add(m, weight(m));
-                            }
-                        }
-                    }
-        }
-    }
+    return false;
 }
 
 ////////////////////////////////////////////////////////////////////

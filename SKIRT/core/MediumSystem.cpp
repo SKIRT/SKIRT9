@@ -395,7 +395,7 @@ void MediumSystem::setupSelfAfter()
     // calculate the initial aggregate state, if needed
     _state.calculateAggregate();
 
-    log->info("Done calculating cell densities");
+    log->info("Done calculating medium properties");
 }
 
 ////////////////////////////////////////////////////////////////////
