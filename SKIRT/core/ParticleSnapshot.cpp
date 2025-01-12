@@ -172,7 +172,7 @@ void ParticleSnapshot::readAndClose()
     // if needed, construct a search structure for the particles
     if (hasMassDensityPolicy() || needGetEntities())
     {
-        log()->info("Constructing search grid for particles...");
+        log()->info("Constructing search grid for " + std::to_string(_pv.size()) + " particles...");
         auto bounds = [this](int m) { return _pv[m].bounds(); };
         auto intersects = [this](int m, const Box& box) { return box.intersects(_pv[m].center(), _pv[m].radius()); };
         _search.loadEntities(_pv.size(), bounds, intersects);

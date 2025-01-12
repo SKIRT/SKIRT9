@@ -87,7 +87,7 @@ void CellSnapshot::readAndClose()
     // if needed, construct a a search structure for the cells
     if (hasMassDensityPolicy() || needGetEntities())
     {
-        log()->info("Constructing search grid for cells...");
+        log()->info("Constructing search grid for " + std::to_string(_propv.size()) + " cells...");
         auto bounds = [this](int m) { return boxForCell(m); };
         auto intersects = [this](int m, const Box& box) { return box.intersects(boxForCell(m)); };
         _search.loadEntities(_propv.size(), bounds, intersects);

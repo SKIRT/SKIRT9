@@ -547,7 +547,7 @@ void TetraMeshSpatialGrid::storeTetrahedra(const tetgenio& final, bool storeVert
 
 void TetraMeshSpatialGrid::buildSearch()
 {
-    _log->info("Constructing search grid for tetrahedra...");
+    _log->info("Constructing search grid for " + std::to_string(_tetrahedra.size()) + " tetrahedra...");
     auto bounds = [this](int m) { return _tetrahedra[m].extent(); };
     auto intersects = [this](int m, const Box& box) { return box.intersects(_tetrahedra[m].extent()); };
     _search.loadEntities(_tetrahedra.size(), bounds, intersects);
