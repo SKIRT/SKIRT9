@@ -41,12 +41,14 @@ namespace
             bins[static_cast<int>((center - cmin) / binwidth)] += 1;
         }
 
+        // set target number of entities per block (in floating point because this works better for small numbers)
+        double perblock = static_cast<double>(boxv.size()) / gridsize;
+
         // determine grid separation points based on the cumulative distribution
         grid.resize(gridsize + 1);
         grid[0] = -std::numeric_limits<double>::infinity();
-        int perblock = boxv.size() / gridsize;  // target number of entities per block
-        int cumul = 0;                          // cumulative number of entities in processed bins
-        int gridindex = 1;                      // index of the next grid separation point to be filled
+        int cumul = 0;      // cumulative number of entities in processed bins
+        int gridindex = 1;  // index of the next grid separation point to be filled
         for (int binindex = 0; binindex < nbins; binindex++)
         {
             cumul += bins[binindex];
