@@ -92,8 +92,8 @@ void CellSnapshot::readAndClose()
         auto intersects = [this](int m, const Box& box) { return box.intersects(boxForCell(m)); };
         _search.loadEntities(_propv.size(), bounds, intersects);
 
-        string size = std::to_string(_search.numBlocks());
-        log()->info("  Number of blocks in search grid: " + size + " x " + size + " x " + size);
+        int nb = _search.numBlocks();
+        log()->info("  Number of blocks in grid: " + std::to_string(nb * nb * nb) + " (" + std::to_string(nb) + "^3)");
         log()->info("  Smallest number of cells per block: " + std::to_string(_search.minEntitiesPerBlock()));
         log()->info("  Largest  number of cells per block: " + std::to_string(_search.maxEntitiesPerBlock()));
         log()->info("  Average  number of cells per block: "

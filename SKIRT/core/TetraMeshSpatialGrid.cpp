@@ -552,8 +552,8 @@ void TetraMeshSpatialGrid::buildSearch()
     auto intersects = [this](int m, const Box& box) { return box.intersects(_tetrahedra[m].extent()); };
     _search.loadEntities(_tetrahedra.size(), bounds, intersects);
 
-    string size = std::to_string(_search.numBlocks());
-    _log->info("  Number of blocks in search grid: " + size + " x " + size + " x " + size);
+    int nb = _search.numBlocks();
+    _log->info("  Number of blocks in grid: " + std::to_string(nb * nb * nb) + " (" + std::to_string(nb) + "^3)");
     _log->info("  Smallest number of tetrahedra per block: " + std::to_string(_search.minEntitiesPerBlock()));
     _log->info("  Largest  number of tetrahedra per block: " + std::to_string(_search.maxEntitiesPerBlock()));
     _log->info("  Average  number of tetrahedra per block: "
