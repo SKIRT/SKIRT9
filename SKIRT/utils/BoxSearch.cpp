@@ -212,40 +212,43 @@ BoxSearch::EntityGeneratorForRay BoxSearch::entitiesFor(Vec bfr, Vec bfk) const
 {
     EntityGeneratorForRay entities;
 
-    double smin, smax;
-    if (_extent.intersects(bfr, bfk, smin, smax))
+    if (_numBlocks)
     {
-        // find the indices for first and last block, in each spatial direction,
-        // overlapped by the bounding box of the ray's intersection with the domain
-        Box ray(bfr + smin * bfk, bfr + smax * bfk);
-        int i1 = NR::locateClip(_xgrid, ray.xmin());
-        int i2 = NR::locateClip(_xgrid, ray.xmax());
-        int j1 = NR::locateClip(_ygrid, ray.ymin());
-        int j2 = NR::locateClip(_ygrid, ray.ymax());
-        int k1 = NR::locateClip(_zgrid, ray.zmin());
-        int k2 = NR::locateClip(_zgrid, ray.zmax());
+        double smin, smax;
+        if (_extent.intersects(bfr, bfk, smin, smax))
+        {
+            // find the indices for first and last block, in each spatial direction,
+            // overlapped by the bounding box of the ray's intersection with the domain
+            Box ray(bfr + smin * bfk, bfr + smax * bfk);
+            int i1 = NR::locateClip(_xgrid, ray.xmin());
+            int i2 = NR::locateClip(_xgrid, ray.xmax());
+            int j1 = NR::locateClip(_ygrid, ray.ymin());
+            int j2 = NR::locateClip(_ygrid, ray.ymax());
+            int k1 = NR::locateClip(_zgrid, ray.zmin());
+            int k2 = NR::locateClip(_zgrid, ray.zmax());
 
-        // fix reversed coords for negative bfk components
-        if (i1 > i2) std::swap(i1, i2);
-        if (j1 > j2) std::swap(j1, j2);
-        if (k1 > k2) std::swap(k1, k2);
+            // fix reversed coords for negative bfk components
+            if (i1 > i2) std::swap(i1, i2);
+            if (j1 > j2) std::swap(j1, j2);
+            if (k1 > k2) std::swap(k1, k2);
 
-        // loop over all blocks in that 3D range
-        for (int i = i1; i <= i2; i++)
-            for (int j = j1; j <= j2; j++)
-                for (int k = k1; k <= k2; k++)
-                {
-                    // if the path intersects the block
-                    Box block(_xgrid[i], _ygrid[j], _zgrid[k], _xgrid[i + 1], _ygrid[j + 1], _zgrid[k + 1]);
-                    if (block.intersects(bfr, bfk, smin, smax))
+            // loop over all blocks in that 3D range
+            for (int i = i1; i <= i2; i++)
+                for (int j = j1; j <= j2; j++)
+                    for (int k = k1; k <= k2; k++)
                     {
-                        // add all entities overlapping that block to the output list
-                        for (int m : _listv[blockIndex(i, j, k)])
+                        // if the path intersects the block
+                        Box block(_xgrid[i], _ygrid[j], _zgrid[k], _xgrid[i + 1], _ygrid[j + 1], _zgrid[k + 1]);
+                        if (block.intersects(bfr, bfk, smin, smax))
                         {
-                            entities.insert(m);
+                            // add all entities overlapping that block to the output list
+                            for (int m : _listv[blockIndex(i, j, k)])
+                            {
+                                entities.insert(m);
+                            }
                         }
                     }
-                }
+        }
     }
     return entities;
 }
