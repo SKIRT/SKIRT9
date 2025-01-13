@@ -203,6 +203,18 @@ public:
         The function employs the algorithm due to Jim Arvo described in "Graphics Gems" (1990). */
     bool intersects(Vec rc, double r) const;
 
+    /** This function extends the receiving box so that it contains both the specified and the
+        original box. */
+    inline void extend(const Box& box)
+    {
+        _xmin = std::min(_xmin, box.xmin());
+        _ymin = std::min(_ymin, box.ymin());
+        _zmin = std::min(_zmin, box.zmin());
+        _xmax = std::max(_xmax, box.xmax());
+        _ymax = std::max(_ymax, box.ymax());
+        _zmax = std::max(_zmax, box.zmax());
+    }
+
 protected:
     /** This function replaces the extent of the box with the newly specified values. This function
         is intended for use in derived classes only. */

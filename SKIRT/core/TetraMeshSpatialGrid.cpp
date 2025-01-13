@@ -5,6 +5,7 @@
 
 #include "TetraMeshSpatialGrid.hpp"
 #include "FatalError.hpp"
+#include "Log.hpp"
 #include "MediumSystem.hpp"
 #include "NR.hpp"
 #include "Random.hpp"
@@ -17,12 +18,6 @@
 
 namespace
 {
-    // returns the linear index for element (i,j,k) in a p*p*p table
-    inline int blockIndex(int p, int i, int j, int k)
-    {
-        return ((i * p) + j) * p + k;
-    }
-
     // sample random positions from the given media components with the given relative weigths
     vector<Vec> sampleMedia(const vector<Medium*>& media, const vector<double>& weights, const Box& extent,
                             int numSites)
@@ -232,141 +227,6 @@ const Vec& TetraMeshSpatialGrid::Tetra::centroid() const
 const Box& TetraMeshSpatialGrid::Tetra::extent() const
 {
     return _extent;
-}
-
-//////////////////////////////////////////////////////////////////////
-
-class TetraMeshSpatialGrid::BlockGrid
-{
-    const vector<Tetra>& _tetrahedra;  // reference to list of all tetrahedra
-    int _gridsize;                     // number of grid blocks in each spatial direction
-    Array _xgrid, _ygrid, _zgrid;      // the m+1 grid separation points for each spatial direction
-    vector<vector<int>> _listv;        // the m*m*m lists of indices for cells overlapping each grid block
-    int _pmin, _pmax;                  // statistics of the minimum and maximum number of cells per block
-
-public:
-    // The constructor creates a cuboidal grid of the specified number of grid blocks in each
-    // spatial direction, and for each of the grid blocks it builds a list of all cells that may
-    // overlap the grid block. In an attempt to distribute the cells evenly over the
-    // grid blocks, the sizes of the grid blocks in each spatial direction are chosen so that
-    // the cell centers are evenly distributed over the grid blocks.
-    BlockGrid(const vector<Tetra>& tetrahedra, Box extent, int gridsize) : _tetrahedra(tetrahedra), _gridsize(gridsize)
-    {
-        // build the grids in each spatial direction
-        makegrid(0, gridsize, _xgrid, extent.xmin(), extent.xmax());
-        makegrid(1, gridsize, _ygrid, extent.ymin(), extent.ymax());
-        makegrid(2, gridsize, _zgrid, extent.zmin(), extent.zmax());
-
-        // make room for p*p*p grid blocks
-        _listv.resize(gridsize * gridsize * gridsize);
-
-        // add each cell to the list for every grid block that its bounding box overlaps
-        int n = _tetrahedra.size();
-        for (int m = 0; m != n; ++m)
-        {
-            Box boundingBox = _tetrahedra[m].extent();
-
-            // find indices for first and last grid block overlapped by bounding box, in each spatial direction
-            int i1 = NR::locateClip(_xgrid, boundingBox.xmin());
-            int i2 = NR::locateClip(_xgrid, boundingBox.xmax());
-            int j1 = NR::locateClip(_ygrid, boundingBox.ymin());
-            int j2 = NR::locateClip(_ygrid, boundingBox.ymax());
-            int k1 = NR::locateClip(_zgrid, boundingBox.zmin());
-            int k2 = NR::locateClip(_zgrid, boundingBox.zmax());
-
-            // add the cell to all grid blocks in that 3D range
-            for (int i = i1; i <= i2; i++)
-                for (int j = j1; j <= j2; j++)
-                    for (int k = k1; k <= k2; k++)
-                    {
-                        _listv[blockIndex(gridsize, i, j, k)].push_back(m);
-                    }
-        }
-
-        // calculate statistics
-        _pmin = n;
-        _pmax = 0;
-        for (int index = 0; index < gridsize * gridsize * gridsize; index++)
-        {
-            int size = _listv[index].size();
-            _pmin = min(_pmin, size);
-            _pmax = max(_pmax, size);
-        }
-    }
-
-    // This function determines the grid separation points along a specified axis (x, y, or z)
-    // to ensure that the cells are evenly distributed across the grid blocks. It does this by
-    // binning the tetrahedra centers at a high resolution and then calculating the cumulative
-    // distribution to set the grid separation points.
-    void makegrid(int axis, int gridsize, Array& grid, double cmin, double cmax)
-    {
-        int n = _tetrahedra.size();
-
-        // determine the block distribution by binning at a decent resolution
-        int nbins = gridsize * 100;
-        double binwidth = (cmax - cmin) / nbins;
-        vector<int> bins(nbins);
-        for (const Tetra& tetra : _tetrahedra)
-        {
-            double center = 0.;
-            switch (axis)
-            {
-                case 0: center = tetra.centroid().x(); break;
-                case 1: center = tetra.centroid().y(); break;
-                case 2: center = tetra.centroid().z(); break;
-            }
-            bins[static_cast<int>((center - cmin) / binwidth)] += 1;
-        }
-
-        // determine grid separation points based on the cumulative distribution
-        grid.resize(gridsize + 1);
-        grid[0] = -std::numeric_limits<double>::infinity();
-        int perblock = n / gridsize;  // target number of centroids per block
-        int cumul = 0;                // cumulative number of centroids in processed bins
-        int gridindex = 1;            // index of the next grid separation point to be filled
-        for (int binindex = 0; binindex < nbins; binindex++)
-        {
-            cumul += bins[binindex];
-            if (cumul > perblock * gridindex)
-            {
-                grid[gridindex] = cmin + (binindex + 1) * binwidth;
-                gridindex += 1;
-                if (gridindex >= gridsize) break;
-            }
-        }
-        grid[gridsize] = std::numeric_limits<double>::infinity();
-    }
-
-    // This function returns the smallest number of cells overlapping a single grid block.
-    int minCellRefsPerBlock() const { return _pmin; }
-
-    // This function returns the largest number of cells overlapping a single grid block.
-    int maxCellRefsPerBlock() const { return _pmax; }
-
-    // This function returns the index (in the list originally passed to the constructor)
-    // of the first cell in the list that actually overlaps the specified position,
-    // or -1 if none of the cells in the list overlap the specified position.
-    int cellIndexFor(Position r) const
-    {
-        // locate the grid block containing the specified position
-        int i = NR::locateClip(_xgrid, r.x());
-        int j = NR::locateClip(_ygrid, r.y());
-        int k = NR::locateClip(_zgrid, r.z());
-
-        // search the list of cells for that grid block
-        for (int m : _listv[blockIndex(_gridsize, i, j, k)])
-        {
-            if (_tetrahedra[m].contains(r)) return m;
-        }
-        return -1;
-    }
-};
-
-////////////////////////////////////////////////////////////////////
-
-TetraMeshSpatialGrid::~TetraMeshSpatialGrid()
-{
-    delete _blocks;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -687,14 +547,17 @@ void TetraMeshSpatialGrid::storeTetrahedra(const tetgenio& final, bool storeVert
 
 void TetraMeshSpatialGrid::buildSearch()
 {
-    int gridsize = max(20, static_cast<int>(pow(_tetrahedra.size(), 1. / 3.) / 5));
-    string size = std::to_string(gridsize);
-    _log->info("Constructing intermediate " + size + "x" + size + "x" + size + " BlockGrid for tetrahedra...");
-    _blocks = new BlockGrid(_tetrahedra, extent(), gridsize);
-    _log->info("  Smallest number of tetrahedra per grid block: " + std::to_string(_blocks->minCellRefsPerBlock()));
-    _log->info("  Largest  number of tetrahedra per grid block: " + std::to_string(_blocks->maxCellRefsPerBlock()));
-    _log->info("  Average  number of tetrahedra per grid block: "
-               + StringUtils::toString(_numCells / double(gridsize * gridsize * gridsize), 'f', 1));
+    _log->info("Constructing search grid for " + std::to_string(_tetrahedra.size()) + " tetrahedra...");
+    auto bounds = [this](int m) { return _tetrahedra[m].extent(); };
+    auto intersects = [this](int m, const Box& box) { return box.intersects(_tetrahedra[m].extent()); };
+    _search.loadEntities(_tetrahedra.size(), bounds, intersects);
+
+    int nb = _search.numBlocks();
+    _log->info("  Number of blocks in grid: " + std::to_string(nb * nb * nb) + " (" + std::to_string(nb) + "^3)");
+    _log->info("  Smallest number of tetrahedra per block: " + std::to_string(_search.minEntitiesPerBlock()));
+    _log->info("  Largest  number of tetrahedra per block: " + std::to_string(_search.maxEntitiesPerBlock()));
+    _log->info("  Average  number of tetrahedra per block: "
+               + StringUtils::toString(_search.avgEntitiesPerBlock(), 'f', 1));
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -722,7 +585,11 @@ double TetraMeshSpatialGrid::diagonal(int m) const
 
 int TetraMeshSpatialGrid::cellIndex(Position bfr) const
 {
-    return _blocks->cellIndexFor(bfr);
+    for (int m : _search.entitiesFor(bfr))
+    {
+        if (_tetrahedra[m].contains(bfr)) return m;
+    }
+    return -1;
 }
 
 //////////////////////////////////////////////////////////////////////

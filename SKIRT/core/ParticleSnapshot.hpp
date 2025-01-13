@@ -6,7 +6,7 @@
 #ifndef PARTICLESNAPSHOT_HPP
 #define PARTICLESNAPSHOT_HPP
 
-#include "Array.hpp"
+#include "BoxSearch.hpp"
 #include "Snapshot.hpp"
 class SmoothingKernel;
 
@@ -20,18 +20,20 @@ class SmoothingKernel;
     particles in the snapshot.
 
     If the snapshot configuration requires the ability to determine the density at a given spatial
-    position, a lot of effort is made to accelerate the density interpolation over a potentially
+    position, an effort is made to accelerate the density interpolation over a potentially
     large number of smoothed particles. */
 class ParticleSnapshot : public Snapshot
 {
     //================= Construction - Destruction =================
 
 public:
-    /** The default constructor initializes the snapshot in an invalid state; it is provided here
-        so that we don't need to expose the inplemetation of the private Particle class. */
+    /** The default constructor initializes the snapshot in an invalid state0. It is provided and
+        implemented in the .cpp file so that we don't need to expose the declaration of the private
+        Particle class. */
     ParticleSnapshot();
 
-    /** The destructor deletes the smoothed particle grid, if it was constructed. */
+    /** The destructor is provided and implemented in the .cpp file so that we don't need to expose
+        the declaration of the private Particle class. */
     ~ParticleSnapshot();
 
     //========== Reading ==========
@@ -128,10 +130,6 @@ public:
     //======================== Data Members ========================
 
 private:
-    // private classes
-    class Particle;
-    class ParticleGrid;
-
     // data members initialized during configuration
     const SmoothingKernel* _kernel{nullptr};
 
@@ -139,10 +137,11 @@ private:
     vector<Array> _propv;  // particle properties as imported
 
     // data members initialized when reading the input file, but only if a density policy has been set
-    vector<Particle> _pv;          // compact particle objects in the same order
-    ParticleGrid* _grid{nullptr};  // smart grid for locating smoothed particles
-    Array _cumrhov;                // cumulative density distribution for particles
-    double _mass{0.};              // total effective mass
+    class Particle;
+    vector<Particle> _pv;  // compact particle objects in the same order
+    Array _cumrhov;        // cumulative density distribution for particles
+    double _mass{0.};      // total effective mass
+    BoxSearch _search;     // search structure for locating particles
 };
 
 ////////////////////////////////////////////////////////////////////
