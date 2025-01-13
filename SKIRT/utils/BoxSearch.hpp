@@ -8,6 +8,7 @@
 
 #include "Array.hpp"
 #include "Box.hpp"
+#include <unordered_set>
 
 //////////////////////////////////////////////////////////////////////
 
@@ -95,8 +96,8 @@ private:
 
     /** This typedef defines the generator return type of the entitiesFor function for a ray.
         It represents an iterable sequence of integers. We use a private typedef to hide the actual
-        type, which in the current implementation is simply a copy of a standard vector. */
-    using EntityGeneratorForRay = vector<int>;
+        type, which in the current implementation is simply a copy of a standard unordered set. */
+    using EntityGeneratorForRay = std::unordered_set<int>;
 
     // ------- Querying -------
 
@@ -110,8 +111,8 @@ public:
     EntityGeneratorForPosition entitiesFor(Vec bfr) const;
 
     /** This function returns an iterable sequence of indices \f$m\f$ of all entities that may
-        overlap the specified ray (starting point and direction). The sequence is unordered, may
-        contain duplicates, or may be empty.
+        overlap the specified ray (starting point and direction), in arbitrary order. The sequence
+        may be empty.
 
         The function guarantees that the sequence includes all entities whose bounding box overlaps
         the ray. On the other hand, the sequence may contain entities whose bounding box does \em

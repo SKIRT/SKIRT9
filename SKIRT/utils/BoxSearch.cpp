@@ -210,7 +210,7 @@ BoxSearch::EntityGeneratorForPosition BoxSearch::entitiesFor(Vec bfr) const
 
 BoxSearch::EntityGeneratorForRay BoxSearch::entitiesFor(Vec bfr, Vec bfk) const
 {
-    vector<int> entities;
+    EntityGeneratorForRay entities;
 
     double smin, smax;
     if (_extent.intersects(bfr, bfk, smin, smax))
@@ -242,7 +242,7 @@ BoxSearch::EntityGeneratorForRay BoxSearch::entitiesFor(Vec bfr, Vec bfk) const
                         // add all entities overlapping that block to the output list
                         for (int m : _listv[blockIndex(i, j, k)])
                         {
-                            entities.push_back(m);
+                            entities.insert(m);
                         }
                     }
                 }
