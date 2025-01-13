@@ -8,6 +8,7 @@
 
 #include "Array.hpp"
 #include "Box.hpp"
+#include <functional>
 #include <unordered_set>
 
 //////////////////////////////////////////////////////////////////////
