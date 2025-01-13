@@ -155,9 +155,11 @@ double CellSnapshot::density(int m) const
 
 double CellSnapshot::density(Position bfr) const
 {
-    auto contains = [this, bfr](int m) { return boxForCell(m).contains(bfr); };
-    int m = _search.firstEntity(bfr, contains);
-    return m >= 0 ? _rhov[m] : 0.;
+    for (int m : _search.entitiesFor(bfr))
+    {
+        if (boxForCell(m).contains(bfr)) return _rhov[m];
+    }
+    return 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -205,19 +207,27 @@ const Array& CellSnapshot::properties(int m) const
 
 void CellSnapshot::getEntities(EntityCollection& entities, Position bfr) const
 {
-    auto contains = [this, bfr](int m) { return boxForCell(m).contains(bfr); };
-    entities.addSingle(_search.firstEntity(bfr, contains));
+    for (int m : _search.entitiesFor(bfr))
+    {
+        if (boxForCell(m).contains(bfr))
+        {
+            entities.addSingle(m);
+            return;
+        }
+    }
+    entities.clear();
 }
 
 ////////////////////////////////////////////////////////////////////
 
 void CellSnapshot::getEntities(EntityCollection& entities, Position bfr, Direction bfk) const
 {
-    auto weight = [this, bfr, bfk](int m) {
+    entities.clear();
+    for (int m : _search.entitiesFor(bfr, bfk))
+    {
         double smin, smax;
-        return boxForCell(m).intersects(bfr, bfk, smin, smax) ? smax - smin : 0.;
+        if (boxForCell(m).intersects(bfr, bfk, smin, smax)) entities.add(m, smax - smin);
     };
-    _search.getEntities(entities, bfr, bfk, weight);
 }
 
 ////////////////////////////////////////////////////////////////////

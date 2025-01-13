@@ -585,8 +585,11 @@ double TetraMeshSpatialGrid::diagonal(int m) const
 
 int TetraMeshSpatialGrid::cellIndex(Position bfr) const
 {
-    auto contains = [this, bfr](int m) { return _tetrahedra[m].contains(bfr); };
-    return _search.firstEntity(bfr, contains);
+    for (int m : _search.entitiesFor(bfr))
+    {
+        if (_tetrahedra[m].contains(bfr)) return m;
+    }
+    return -1;
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -247,11 +247,12 @@ double ParticleSnapshot::density(int m) const
 
 double ParticleSnapshot::density(Position bfr) const
 {
-    auto density = [this, bfr](int m) {
+    double sum = 0.;
+    for (int m : _search.entitiesFor(bfr))
+    {
         double u = (bfr - _pv[m].center()).norm() / _pv[m].radius();
-        return _kernel->density(u) * _pv[m].density();
-    };
-    double sum = _search.accumulate(bfr, density);
+        sum += _kernel->density(u) * _pv[m].density();
+    }
     return sum > 0. ? sum : 0.;  // guard against negative densities
 }
 
@@ -308,23 +309,25 @@ const Array& ParticleSnapshot::properties(int m) const
 
 void ParticleSnapshot::getEntities(EntityCollection& entities, Position bfr) const
 {
-    auto weight = [this, bfr](int m) {
+    entities.clear();
+    for (int m : _search.entitiesFor(bfr))
+    {
         double u = (bfr - _pv[m].center()).norm() / _pv[m].radius();
-        return _kernel->density(u);
+        entities.add(m, _kernel->density(u));
     };
-    _search.getEntities(entities, bfr, weight);
 }
 
 ////////////////////////////////////////////////////////////////////
 
 void ParticleSnapshot::getEntities(EntityCollection& entities, Position bfr, Direction bfk) const
 {
-    auto weight = [this, bfr, bfk](int m) {
+    entities.clear();
+    for (int m : _search.entitiesFor(bfr, bfk))
+    {
         double h = _pv[m].radius();
         double q = _pv[m].impact(bfr, bfk) / h;
-        return _kernel->columnDensity(q) * h;
+        entities.add(m, _kernel->columnDensity(q) * h);
     };
-    _search.getEntities(entities, bfr, bfk, weight);
 }
 
 ////////////////////////////////////////////////////////////////////
