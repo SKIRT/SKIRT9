@@ -64,13 +64,35 @@ void Snapshot::useColumns(string columns)
 
 ////////////////////////////////////////////////////////////////////
 
+void Snapshot::setCoordinateSystem(CoordinateSystem coordinateSystem)
+{
+    _coordinateSystem = coordinateSystem;
+}
+
+////////////////////////////////////////////////////////////////////
+
 void Snapshot::importPosition()
 {
     _positionIndex = _nextIndex;
     _nextIndex += 3;
-    _infile->addColumn("position x", "length", "pc");
-    _infile->addColumn("position y", "length", "pc");
-    _infile->addColumn("position z", "length", "pc");
+    switch (_coordinateSystem)
+    {
+        case CoordinateSystem::CARTESIAN:
+            _infile->addColumn("position x", "length", "pc");
+            _infile->addColumn("position y", "length", "pc");
+            _infile->addColumn("position z", "length", "pc");
+            break;
+        case CoordinateSystem::CYLINDRICAL:
+            _infile->addColumn("position R", "length", "pc");
+            _infile->addColumn("position phi", "posangle", "rad");
+            _infile->addColumn("position z", "length", "pc");
+            break;
+        case CoordinateSystem::SPHERICAL:
+            _infile->addColumn("position r", "length", "pc");
+            _infile->addColumn("position theta", "posangle", "rad");
+            _infile->addColumn("position phi", "posangle", "rad");
+            break;
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -87,12 +109,33 @@ void Snapshot::importBox()
 {
     _boxIndex = _nextIndex;
     _nextIndex += 6;
-    _infile->addColumn("box xmin", "length", "pc");
-    _infile->addColumn("box ymin", "length", "pc");
-    _infile->addColumn("box zmin", "length", "pc");
-    _infile->addColumn("box xmax", "length", "pc");
-    _infile->addColumn("box ymax", "length", "pc");
-    _infile->addColumn("box zmax", "length", "pc");
+    switch (_coordinateSystem)
+    {
+        case CoordinateSystem::CARTESIAN:
+            _infile->addColumn("box xmin", "length", "pc");
+            _infile->addColumn("box ymin", "length", "pc");
+            _infile->addColumn("box zmin", "length", "pc");
+            _infile->addColumn("box xmax", "length", "pc");
+            _infile->addColumn("box ymax", "length", "pc");
+            _infile->addColumn("box zmax", "length", "pc");
+            break;
+        case CoordinateSystem::CYLINDRICAL:
+            _infile->addColumn("box Rmin", "length", "pc");
+            _infile->addColumn("box phimin", "posangle", "rad");
+            _infile->addColumn("box zmin", "length", "pc");
+            _infile->addColumn("box Rmax", "length", "pc");
+            _infile->addColumn("box phimax", "posangle", "rad");
+            _infile->addColumn("box zmax", "length", "pc");
+            break;
+        case CoordinateSystem::SPHERICAL:
+            _infile->addColumn("box rmin", "length", "pc");
+            _infile->addColumn("box thetamin", "posangle", "rad");
+            _infile->addColumn("box phimin", "posangle", "rad");
+            _infile->addColumn("box rmax", "length", "pc");
+            _infile->addColumn("box thetamax", "posangle", "rad");
+            _infile->addColumn("box phimax", "posangle", "rad");
+            break;
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -159,10 +202,27 @@ void Snapshot::importVelocity()
 {
     _velocityIndex = _nextIndex;
     _nextIndex += 3;
-    _infile->addColumn("velocity x", "velocity", "km/s");
-    _infile->addColumn("velocity y", "velocity", "km/s");
-    _infile->addColumn("velocity z", "velocity", "km/s");
+    switch (_coordinateSystem)
+    {
+        case CoordinateSystem::CARTESIAN:
+            _infile->addColumn("velocity x", "velocity", "km/s");
+            _infile->addColumn("velocity y", "velocity", "km/s");
+            _infile->addColumn("velocity z", "velocity", "km/s");
+            break;
+        case CoordinateSystem::CYLINDRICAL:
+            _infile->addColumn("velocity R", "velocity", "km/s");
+            _infile->addColumn("velocity phi", "velocity", "km/s");
+            _infile->addColumn("velocity z", "velocity", "km/s");
+            break;
+        case CoordinateSystem::SPHERICAL:
+            _infile->addColumn("velocity r", "velocity", "km/s");
+            _infile->addColumn("velocity theta", "velocity", "km/s");
+            _infile->addColumn("velocity phi", "velocity", "km/s");
+            break;
+    }
 }
+
+////////////////////////////////////////////////////////////////////
 
 void Snapshot::importVelocityDispersion()
 {
@@ -170,14 +230,33 @@ void Snapshot::importVelocityDispersion()
     _infile->addColumn("velocity dispersion", "velocity", "km/s");
 }
 
+////////////////////////////////////////////////////////////////////
+
 void Snapshot::importMagneticField()
 {
     _magneticFieldIndex = _nextIndex;
     _nextIndex += 3;
-    _infile->addColumn("magnetic field x", "magneticfield", "uG");
-    _infile->addColumn("magnetic field y", "magneticfield", "uG");
-    _infile->addColumn("magnetic field z", "magneticfield", "uG");
+    switch (_coordinateSystem)
+    {
+        case CoordinateSystem::CARTESIAN:
+            _infile->addColumn("magnetic field x", "magneticfield", "uG");
+            _infile->addColumn("magnetic field y", "magneticfield", "uG");
+            _infile->addColumn("magnetic field z", "magneticfield", "uG");
+            break;
+        case CoordinateSystem::CYLINDRICAL:
+            _infile->addColumn("magnetic field R", "magneticfield", "uG");
+            _infile->addColumn("magnetic field phi", "magneticfield", "uG");
+            _infile->addColumn("magnetic field z", "magneticfield", "uG");
+            break;
+        case CoordinateSystem::SPHERICAL:
+            _infile->addColumn("magnetic field r", "magneticfield", "uG");
+            _infile->addColumn("magnetic field theta", "magneticfield", "uG");
+            _infile->addColumn("magnetic field phi", "magneticfield", "uG");
+            break;
+    }
 }
+
+////////////////////////////////////////////////////////////////////
 
 void Snapshot::importBias()
 {

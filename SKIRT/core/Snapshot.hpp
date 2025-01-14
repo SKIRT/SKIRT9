@@ -118,8 +118,22 @@ public:
         equivalent to not calling it at all. */
     void useColumns(string columns);
 
+    /** This enum has a constant for each of the supported coordinate systems. */
+    enum class CoordinateSystem { CARTESIAN, CYLINDRICAL, SPHERICAL };
+
+    /** This function configures the snapshot to use the specified coordinate system when importing
+        %Position, %Box, Velocity, and MagneticField. The default coordinate system is Cartesian.
+
+        After the input file has been read, the contents of the %Position and %Box properties are
+        fully under control of the subclass. On the other hand, the Velocity and MagneticField
+        properties are handled by query functions in this base class. Therefore, if a coordinate
+        system other than Cartesian has been configured, the subclass must convert these vector
+        components from the input coordinate system to the Cartesian coordinate system. */
+    void setCoordinateSystem(CoordinateSystem coordinateSystem);
+
     /** This function configures the snapshot to import a spatial position with three components
-        (x,y,z). The default unit is pc. */
+        \f$(x,y,z)\f$, \f$(R,\varphi,z)\f$ or \f$(r,\theta,\varphi)\f$. The default unit is pc,
+        and rad for the angular components. */
     void importPosition();
 
     /** This function configures the snapshot to import a spatial radial size. The default unit is
@@ -127,7 +141,11 @@ public:
     void importSize();
 
     /** This function configures the snapshot to import a cuboid lined up with the coordinate axes,
-        defined by six components (xmin,ymin,zmin,xmax,ymax,zmax). The default unit is pc. */
+        defined by six components \f$(x_\text{min}, y_\text{min}, z_\text{min}, x_\text{max},
+        y_\text{max}, z_\text{max})\f$, \f$(R_\text{min}, \varphi_\text{min}, z_\text{min},
+        R_\text{max}, \varphi_\text{max}, z_\text{max})\f$, or \f$(r_\text{min}, \theta_\text{min},
+        \varphi_\text{min}, r_\text{max}, \theta_\text{max}, \varphi_\text{max})\f$. The default
+        unit is pc, and rad for the angular components. */
     void importBox();
 
     /** This function configures the snapshot to import a mass density per unit of volume (for use
@@ -171,8 +189,9 @@ public:
     /** This function configures the snapshot to import a temperature. The default unit is K. */
     void importTemperature();
 
-    /** This function configures the snapshot to import a velocity with three components (x,y,z).
-        The default unit is km/s. */
+    /** This function configures the snapshot to import a velocity with three components
+        \f$(v_\text{x},v_\text{y},v_\text{z})\f$, \f$(v_\text{R},v_\varphi,v_\text{z})\f$ or
+        \f$(v_\text{r},v_\theta,v_\varphi)\f$. The default unit is km/s. */
     void importVelocity();
 
     /** This function configures the snapshot to import a single velocity dispersion value,
@@ -181,7 +200,9 @@ public:
     void importVelocityDispersion();
 
     /** This function configures the snapshot to import a magnetic field vector with three
-        components (x,y,z). The default unit is \f$\mu \mathrm{G}\f$. */
+        components \f$(B_\text{x},B_\text{y},B_\text{z})\f$,
+        \f$(B_\text{R},B_\varphi,B_\text{z})\f$ or \f$(B_\text{r},B_\theta,B_\varphi)\f$. The
+        default unit is \f$\mu \mathrm{G}\f$. */
     void importMagneticField();
 
     /** This function configures the snapshot to import a bias for each entity in the snapshot. */
@@ -553,6 +574,9 @@ private:
     Log* _log{nullptr};
     Units* _units{nullptr};
     Random* _random{nullptr};
+
+    // coordinate system
+    CoordinateSystem _coordinateSystem{CoordinateSystem::CARTESIAN};
 
     // column indices
     int _nextIndex{0};
