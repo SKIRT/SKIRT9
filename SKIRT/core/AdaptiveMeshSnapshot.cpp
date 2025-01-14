@@ -198,7 +198,7 @@ void AdaptiveMeshSnapshot::readAndClose()
     // verify that all data was read and close the file
     Array dummy;
     if (infile()->readRow(dummy)) throw FATALERROR("Superfluous lines in adaptive mesh data after all nodes were read");
-    Snapshot::readAndClose();
+    close();
 
     // log nr of cells
     log()->info("  Number of leaf cells: " + std::to_string(_cells.size()));

@@ -71,12 +71,14 @@ public:
         the log message issued after the file is successfully opened. */
     void open(const SimulationItem* item, string filename, string description);
 
+    /** This function closes the file and deletes the corresponding file object. */
+    void close();
+
     /** This function reads the snapshot data from the input file, honoring the options set through
         the configuration functions, stores the data for later use, and closes the file.
 
-        The implementation in this base class simply closes the file and deletes the corresponding
-        file object. Subclasses must override the function to actually read the data and then call
-        the implementation in this base class. */
+        The implementation in this base class simply calls close(). Subclasses must override the
+        function to actually read the data and then call close(). */
     virtual void readAndClose();
 
 protected:

@@ -28,7 +28,7 @@ void CellSnapshot::readAndClose()
     _propv = infile()->readAllRows();
 
     // close the file
-    Snapshot::readAndClose();
+    close();
 
     // inform the user
     log()->info("  Number of cells: " + std::to_string(_propv.size()));

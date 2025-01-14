@@ -366,7 +366,7 @@ void VoronoiMeshSnapshot::readAndClose()
     while (infile()->readRow(prop)) _cells.push_back(new Cell(prop));
 
     // close the file
-    Snapshot::readAndClose();
+    close();
 
     // if we are allowed to build a Voronoi mesh
     if (!_foregoVoronoiMesh)
