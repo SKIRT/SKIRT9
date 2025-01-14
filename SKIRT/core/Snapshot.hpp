@@ -306,10 +306,24 @@ protected:
         Returns false otherwise. For use by subclasses. */
     bool needGetEntities() const { return _needGetEntities; }
 
-    /** This function issues log messages with statistics on the imported masses. It is implemented
+    //========== Facilities for use during setup ==========
+
+protected:
+    /** This function issues log messages with statistics on the imported masses. It is provided
         here for use by subclasses. */
     void logMassStatistics(int numIgnored, double totalOriginalMass, double totalMetallicMass,
                            double totalEffectiveMass);
+
+    /** This function is provided here for use by subclasses that describe the snapshot through
+        cells (as opposed to particles). It determines the densities and the cumulative mass
+        distribution for all cells and stores the result in the provided array arguments, resizing
+        them and replacing any previous contents. The function also accumulates and stores the
+        total mass, and logs mass statistics by calling logMassStatistics().
+
+        The function assumes that the snapshot is fully configured, all properties have been read,
+        and the following functions implemented in the subclass return the proper values:
+        numEntities(), properties(m), volume(m). */
+    void calculateDensityAndMass(Array& rhov, Array& cumrhov, double& mass);
 
     //============== Interrogation (to be implemented in subclass) =============
 

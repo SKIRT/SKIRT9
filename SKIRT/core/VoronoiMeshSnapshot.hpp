@@ -215,12 +215,6 @@ private:
         It assumes that both mass and mass density columns are being imported. */
     void calculateVolume();
 
-    /** This private function calculates the densities and (cumulative) masses for all cells, and
-        logs some statistics. The function assumes that the cell volumes have been calculated,
-        either by building a Voronoi tessellation, or by deriving the volume from mass and mass
-        density columns being imported. */
-    void calculateDensityAndMass();
-
     /** Private function to recursively build a binary search tree (see
         en.wikipedia.org/wiki/Kd-tree) */
     Node* buildTree(vector<int>::iterator first, vector<int>::iterator last, int depth) const;
