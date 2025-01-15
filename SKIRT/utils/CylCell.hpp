@@ -6,7 +6,7 @@
 #ifndef CYLCELL_HPP
 #define CYLCELL_HPP
 
-#include "Vec.hpp"
+#include "Box.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -15,12 +15,15 @@
 
     - two concentric vertical cylinders defined by \f$ 0 \le R_\text{min} \le R_\text{max} \f$,
 
-    - two meridional half-planes (with \f$R>0\f$) defined by
-      \f$ -\pi \le \varphi_\text{min} \le \varphi_\text{max} \le \pi \f$,
+    - two meridional half-planes (with \f$R>0\f$) defined by \f$ -\pi \le \varphi_\text{min} \le
+    \varphi_\text{max} \le \pi \f$,
 
     - two horizontal planes defined by \f$ z_\text{min} \le z_\text{max}\f$.
 
     These six values are stored in data members with similar names during construction.
+
+    \note Because of the limitations on the range of \f$\varphi\f$, it is not possible for a
+    Cylcell to straddle the negative x-axis of the Cartesian model coordinate system.
 
     The class offers functions to retrieve various basic properties of the cell, such as its border
     coordinates and its volume, and for geometric operations such as determining whether a given
@@ -28,13 +31,13 @@
 class CylCell
 {
 public:
-    /// _Rmin, _phimin, _zmin, _Rmax, _phimax, _zmax
-
     /** The default constructor creates an empty cell at the origin, i.e. it initializes all border
         coordinates to zero. */
     CylCell() : _Rmin(0), _phimin(0), _zmin(0), _Rmax(0), _phimax(0), _zmax(0) {}
 
-    /** This constructor initializes the cell border coordinates to the values provided as arguments. */
+    /** This constructor initializes the cell border coordinates to the values provided as
+        arguments. It does not verify that these values conform to the limits described in the
+        class header. Non-comforming values lead to undefined behavior. */
     CylCell(double Rmin, double phimin, double zmin, double Rmax, double phimax, double zmax)
         : _Rmin(Rmin), _phimin(phimin), _zmin(zmin), _Rmax(Rmax), _phimax(phimax), _zmax(zmax)
     {}
@@ -92,6 +95,10 @@ public:
     /** This function returns true if the Cartesian position \f${\bf{r}}=(x,y,z)\f$ is inside the
         cell, and false otherwise. */
     bool contains(Vec r) const;
+
+    /** This function returns the Cartesian bounding box of the cell, in other words the smallest
+        cuboid lined up with the Cartesian coordinate axes that encloses the cell. */
+    Box boundingBox() const;
 
 private:
     // These data members represent the cylindrical border coordinates
