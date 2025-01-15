@@ -43,8 +43,8 @@ Box CylCell::boundingBox() const
 
     // angles for coordinate axis directions (cannot straddle negative x-axis)
     constexpr double negy = -M_PI_2;
-    constexpr double posx = M_PI;
-    constexpr double posy = 3. * M_PI_2;
+    constexpr double posx = 0.;
+    constexpr double posy = M_PI_2;
 
     // min/max coordinates
     double xmin = min({x1, x2, x3, x4});
@@ -54,6 +54,40 @@ Box CylCell::boundingBox() const
 
     // bounding box
     return Box(xmin, ymin, _zmin, xmax, ymax, _zmax);
+}
+
+//////////////////////////////////////////////////////////////////////
+
+double CylCell::intersection(Vec r, const Vec k) const
+{
+    constexpr double eps = 1e-9;
+    double smin = -std::numeric_limits<double>::infinity();
+    double smax = +std::numeric_limits<double>::infinity();
+
+    // --- handle XY planes ---
+
+    // check for ray parallel to plane
+    if (abs(k.z()) < eps)
+    {
+        // if parallel AND outside: no intersection possible
+        if (r.z() < zmin() || r.z() >= zmax()) return 0.;
+    }
+    else
+    {
+        // find intersection distances and put them in increasing order
+        double s1 = (zmin() - r.z()) / k.z();
+        double s2 = (zmax() - r.z()) / k.z();
+        if (s1 > s2) std::swap(s1, s2);
+
+        // compare with current values
+        if (s1 > smin) smin = s1;
+        if (s2 < smax) smax = s2;
+
+        // check if ray misses entirely
+        if (smin >= smax || smax <= 0) return 0.;
+    }
+
+    return 0.;
 }
 
 //////////////////////////////////////////////////////////////////////

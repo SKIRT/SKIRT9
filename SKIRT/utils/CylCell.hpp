@@ -13,17 +13,19 @@
 /** CylCell is a low-level class for working with basic three-dimensional cells in cylindrical
     coordinates. Each CylCell instance represents a cell bordered by:
 
-    - two concentric vertical cylinders defined by \f$ 0 \le R_\text{min} \le R_\text{max} \f$,
+    - two concentric vertical cylinders defined by radii \f$0 \le R_\text{min} \le R_\text{max}\f$,
 
-    - two meridional half-planes (with \f$R>0\f$) defined by \f$ -\pi \le \varphi_\text{min} \le
-    \varphi_\text{max} \le \pi \f$,
+    - two meridional half-planes (with \f$R>0\f$) defined by azimuth angles \f$-\pi \le
+    \varphi_\text{min} \le \varphi_\text{max} \le \pi\f$ with \f$\varphi_\text{max} -
+    \varphi_\text{min} \le \pi\f$,
 
-    - two horizontal planes defined by \f$ z_\text{min} \le z_\text{max}\f$.
+    - two horizontal planes defined by \f$z_\text{min} \le z_\text{max}\f$.
 
     These six values are stored in data members with similar names during construction.
 
-    \note Because of the limitations on the range of \f$\varphi\f$, it is not possible for a
-    Cylcell to straddle the negative x-axis of the Cartesian model coordinate system.
+    \note Because of the limitations on the range of \f$\varphi\f$, a Cylcell cannot straddle the
+    negative x-axis of the Cartesian model coordinate system, and it cannot span more than half of
+    the azimuth circle.
 
     The class offers functions to retrieve various basic properties of the cell, such as its border
     coordinates and its volume, and for geometric operations such as determining whether a given
@@ -99,6 +101,20 @@ public:
     /** This function returns the Cartesian bounding box of the cell, in other words the smallest
         cuboid lined up with the Cartesian coordinate axes that encloses the cell. */
     Box boundingBox() const;
+
+    /** This function intersects the receiving cell with a ray (half-line) defined by the specified
+        starting position \f$\bf{r}\f$ and direction \f$\bf{k}\f$. If the ray does not intersect
+        the cell, the function returns zero. If the ray does intersect the cell, the function
+        returns the length of the intersection segment, or if applicable, the sum of the two
+        intersection segments (because a cell is concave at the inner radial cylinder, a ray can
+        intersect it twice). If the starting position is inside the cell, only the portion of the
+        ray inside the cell is taken into account.
+
+        A ray that touches the cell border in a single point is not considered to intersect. A ray
+        along an edge or face on the "lower" side of the cell is considered to intersect, while ray
+        along an edge or face on the upper side of the cell is considered \em not to intersect.
+        This approach avoids duplicate intersection of adjacent cells. */
+    double intersection(Vec r, const Vec k) const;
 
 private:
     // These data members represent the cylindrical border coordinates
