@@ -25,7 +25,7 @@ Box CylCell::boundingBox() const
     // In addition, if the cell straddles one of the coordinate axes, the bounding rectangle
     // must also enclose a point on that axis at radius Rmax.
 
-    // the cosine and sine for each of the aximuthal bounding planes
+    // the cosine and sine for each of the azimuthal angles
     double cosphimin = cos(_phimin);
     double sinphimin = sin(_phimin);
     double cosphimax = cos(_phimax);
@@ -58,13 +58,44 @@ Box CylCell::boundingBox() const
 
 //////////////////////////////////////////////////////////////////////
 
+namespace
+{
+    // determines the solutions of x^2 + 2*b*x + c = 0
+    // - if there are two distinct real solutions, they are stored in x1,x2 and the function returns true
+    // - otherwise, x1 and x2 remain unchanged and the function returns false
+    bool solutions(double b, double c, double& x1, double& x2)
+    {
+        // x1 == -b - sqrt(b*b-c)
+        // x2 == -b + sqrt(b*b-c)
+        // x1*x2 == c
+
+        if (b * b > c)  // if discriminant is strictly positive, there are two distinct real solutions
+        {
+            if (b > 0)  // x1 is always negative
+            {
+                x1 = -b - sqrt(b * b - c);
+                x2 = c / x1;
+            }
+            else  // x2 is always positive
+            {
+                x2 = -b + sqrt(b * b - c);
+                x1 = c / x2;
+            }
+            return true;
+        }
+        return false;
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+
 double CylCell::intersection(Vec r, const Vec k) const
 {
     constexpr double eps = 1e-9;
     double smin = -std::numeric_limits<double>::infinity();
     double smax = +std::numeric_limits<double>::infinity();
 
-    // --- handle XY planes ---
+    // --- handle horizontal planes ---
 
     // check for ray parallel to plane
     if (abs(k.z()) < eps)
@@ -75,19 +106,71 @@ double CylCell::intersection(Vec r, const Vec k) const
     else
     {
         // find intersection distances and put them in increasing order
-        double s1 = (zmin() - r.z()) / k.z();
-        double s2 = (zmax() - r.z()) / k.z();
-        if (s1 > s2) std::swap(s1, s2);
-
-        // compare with current values
-        if (s1 > smin) smin = s1;
-        if (s2 < smax) smax = s2;
+        smin = (zmin() - r.z()) / k.z();
+        smax = (zmax() - r.z()) / k.z();
+        if (smin > smax) std::swap(smin, smax);
 
         // check if ray misses entirely
-        if (smin >= smax || smax <= 0) return 0.;
+        if (smax <= 0) return 0.;
     }
 
-    return 0.;
+    // --- handle meridional phimin plane ---
+    {
+        double cosphi = cos(_phimin);
+        double sinphi = sin(_phimin);
+        double q = k.x() * sinphi - k.y() * cosphi;
+        if (abs(q) >= eps)
+        {
+            double s = (r.x() * sinphi - r.y() * cosphi) / q;
+            smin = min(smin, s);
+            smax = max(smax, s);
+        }
+    }
+
+    // --- handle meridional phimax plane ---
+    {
+        double cosphi = cos(_phimax);
+        double sinphi = sin(_phimax);
+        double q = k.x() * sinphi - k.y() * cosphi;
+        if (abs(q) >= eps)
+        {
+            double s = (r.x() * sinphi - r.y() * cosphi) / q;
+            smin = min(smin, s);
+            smax = max(smax, s);
+        }
+    }
+
+    // --- handle cylinders ---
+    {
+        double a = k.x() * k.x() + k.y() * k.y();
+        if (abs(a) >= eps)
+        {
+            // outer
+            double b = (r.x() * k.x() + r.y() * k.y()) / a;
+            double c = (r.x() * r.x() + r.y() * r.y() - _Rmax * _Rmax) / a;
+            double s1, s2;
+            if (solutions(b, c, s1, s2))
+            {
+                smin = min({smin, s1, s2});
+                smax = max({smax, s1, s2});
+            }
+
+            // inner
+            c = (r.x() * r.x() + r.y() * r.y() - _Rmin * _Rmin) / a;
+            if (solutions(b, c, s1, s2))
+            {
+                smin = min({smin, s1, s2});
+                smax = max({smax, s1, s2});
+            }
+        }
+    }
+
+    // TODO: handles cases where the line lies inside a border plane or cylinder
+    // TODO: correct for segment outside of inner cylinder, if applicable
+
+    // if origin is inside the cell, set first intersection distance to zero
+    if (smin < 0.) smin = 0.;
+    return smax - smin;
 }
 
 //////////////////////////////////////////////////////////////////////

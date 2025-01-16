@@ -113,7 +113,29 @@ public:
         A ray that touches the cell border in a single point is not considered to intersect. A ray
         along an edge or face on the "lower" side of the cell is considered to intersect, while ray
         along an edge or face on the upper side of the cell is considered \em not to intersect.
-        This approach avoids duplicate intersection of adjacent cells. */
+        This approach avoids duplicate intersection of adjacent cells.
+
+        <em>Implementation</em>
+
+        The ray equation can be written as \f[\begin{cases} x = r_\text{x} + k_\text{x}s \\ y =
+        r_\text{y} + k_\text{y}s \\ z = r_\text{z} + k_\text{z}s \\ \end{cases} \quad \text{with}
+        \;s>0.\f]
+
+        Intersection with a horizontal plane with equation \f$z=z_*\f$ easily yields \f$s =
+        (z_*-r_\text{z})/k_\text{z}\f$.
+
+        Intersection with a meridional plane with equation \f$\sin\varphi_* x = \cos\varphi_* y\f$
+        yields \f[ s = -\;\frac{r_\text{x}\sin\varphi_* - r_\text{y}\cos\varphi_*}
+        {k_\text{x}\sin\varphi_* - k_\text{y}\cos\varphi_*} \f]
+
+        Intersection with a vertical cylinder centered on the origin with equation \f$x^2 +y^2 =
+        R_*^2\f$ yields a quadratic equation of the form \f$s^2+2bs+c=0\f$ with \f[\begin{aligned}
+        b &= \frac{r_\text{x}k_\text{x} + r_\text{y}k_\text{y}} {k_\text{x}^2 + k_\text{y}^2} \\ c
+        &= \frac{r_\text{x}^2 + r_\text{y}^2 - R_*^2} {k_\text{x}^2 + k_\text{y}^2} \\
+        \end{aligned}\f] which, if \f$b^2 \ge c\f$, has solutions described by \f[\begin{aligned}
+        s_1 &= -b - \sqrt{b^2-c} \\ s_2 &= -b + \sqrt{b^2-c} \\ s_1s_2&=c.\end{aligned}\f] To avoid
+        loss of significance in case the roots have a different order of magnitude, we use the
+        first and third equations if \f$b>0\f$ and the second and third equations otherwise. */
     double intersection(Vec r, const Vec k) const;
 
 private:
