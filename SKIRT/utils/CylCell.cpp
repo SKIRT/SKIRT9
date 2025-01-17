@@ -7,12 +7,32 @@
 
 //////////////////////////////////////////////////////////////////////
 
+CylCell::CylCell(double Rmin, double phimin, double zmin, double Rmax, double phimax, double zmax)
+    : _Rmin(Rmin), _phimin(phimin), _zmin(zmin), _Rmax(Rmax), _phimax(phimax), _zmax(zmax), _cosphimin(cos(phimin)),
+      _sinphimin(sin(phimin)), _cosphimax(cos(phimax)), _sinphimax(sin(phimax))
+
+{}
+
+//////////////////////////////////////////////////////////////////////
+
+bool CylCell::contains(double R, double phi, double z) const
+{
+    return R >= _Rmin && R < _Rmax && phi >= _phimin && phi < _phimax && z >= _zmin && z < _zmax;
+}
+
+//////////////////////////////////////////////////////////////////////
+
 bool CylCell::contains(Vec r) const
 {
+    if (r.z() < _zmin || r.z() >= _zmax) return false;
+
     double R = sqrt(r.x() * r.x() + r.y() * r.y());
+    if (R < _Rmin || R >= _Rmax) return false;
+
     double phi = atan2(r.y(), r.x());
-    double z = r.z();
-    return contains(R, phi, z);
+    if (phi < _phimin || phi >= _phimax) return false;
+
+    return true;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -25,21 +45,15 @@ Box CylCell::boundingBox() const
     // In addition, if the cell straddles one of the coordinate axes, the bounding rectangle
     // must also enclose a point on that axis at radius Rmax.
 
-    // the cosine and sine for each of the azimuthal angles
-    double cosphimin = cos(_phimin);
-    double sinphimin = sin(_phimin);
-    double cosphimax = cos(_phimax);
-    double sinphimax = cos(_phimax);
-
     // the (x,y) coordinates of the four corner points
-    double x1 = _Rmin * cosphimin;
-    double x2 = _Rmin * cosphimax;
-    double x3 = _Rmax * cosphimin;
-    double x4 = _Rmax * cosphimax;
-    double y1 = _Rmin * sinphimin;
-    double y2 = _Rmin * sinphimax;
-    double y3 = _Rmax * sinphimin;
-    double y4 = _Rmax * sinphimax;
+    double x1 = _Rmin * _cosphimin;
+    double x2 = _Rmin * _cosphimax;
+    double x3 = _Rmax * _cosphimin;
+    double x4 = _Rmax * _cosphimax;
+    double y1 = _Rmin * _sinphimin;
+    double y2 = _Rmin * _sinphimax;
+    double y3 = _Rmax * _sinphimin;
+    double y4 = _Rmax * _sinphimax;
 
     // angles for coordinate axis directions (cannot straddle negative x-axis)
     constexpr double negy = -M_PI_2;
@@ -60,7 +74,7 @@ Box CylCell::boundingBox() const
 
 namespace
 {
-    // determines the solutions of x^2 + 2*b*x + c = 0
+    // this function determines the solutions of x^2 + 2*b*x + c = 0
     // - if there are two distinct real solutions, they are stored in x1,x2 and the function returns true
     // - otherwise, x1 and x2 remain unchanged and the function returns false
     bool solutions(double b, double c, double& x1, double& x2)
@@ -91,52 +105,46 @@ namespace
 
 double CylCell::intersection(Vec r, const Vec k) const
 {
+    // our strategy is as follows:
+    // - determine all intersection points with s>=0
+    // - sort them on s
+    // - for each segment, determine whether it is inside the cell or not
+    // - accumulate the lengths of all inside segments
+
+    // small value used to check for parallel directions
     constexpr double eps = 1e-9;
-    double smin = -std::numeric_limits<double>::infinity();
-    double smax = +std::numeric_limits<double>::infinity();
+
+    // allocate room for the 8 possible intersections (1 per plane and 2 per cylinder)
+    // plus the starting position (which starts the first segment).
+    // initialize the arrar to zeroes:
+    //  - leave the first value at zero to represent the starting position
+    //  - overwrite the other values for each intersection, or leave at zero if there is none
+    std::array<double, 9> sv = {};
+    enum { START = 0, ZMIN, ZMAX, PHIMIN, PHIMAX, RMIN1, RMIN2, RMAX1, RMAX2 };
 
     // --- handle horizontal planes ---
 
-    // check for ray parallel to plane
-    if (abs(k.z()) < eps)
+    if (abs(k.z()) > eps)
     {
-        // if parallel AND outside: no intersection possible
-        if (r.z() < zmin() || r.z() >= zmax()) return 0.;
-    }
-    else
-    {
-        // find intersection distances and put them in increasing order
-        smin = (zmin() - r.z()) / k.z();
-        smax = (zmax() - r.z()) / k.z();
-        if (smin > smax) std::swap(smin, smax);
-
-        // check if ray misses entirely
-        if (smax <= 0) return 0.;
+        sv[ZMIN] = (zmin() - r.z()) / k.z();
+        sv[ZMAX] = (zmax() - r.z()) / k.z();
     }
 
     // --- handle meridional phimin plane ---
     {
-        double cosphi = cos(_phimin);
-        double sinphi = sin(_phimin);
-        double q = k.x() * sinphi - k.y() * cosphi;
+        double q = k.x() * _sinphimin - k.y() * _cosphimin;
         if (abs(q) >= eps)
         {
-            double s = (r.x() * sinphi - r.y() * cosphi) / q;
-            smin = min(smin, s);
-            smax = max(smax, s);
+            sv[PHIMIN] = -(r.x() * _sinphimin - r.y() * _cosphimin) / q;
         }
     }
 
     // --- handle meridional phimax plane ---
     {
-        double cosphi = cos(_phimax);
-        double sinphi = sin(_phimax);
-        double q = k.x() * sinphi - k.y() * cosphi;
+        double q = k.x() * _sinphimax - k.y() * _cosphimax;
         if (abs(q) >= eps)
         {
-            double s = (r.x() * sinphi - r.y() * cosphi) / q;
-            smin = min(smin, s);
-            smax = max(smax, s);
+            sv[PHIMAX] = -(r.x() * _sinphimax - r.y() * _cosphimax) / q;
         }
     }
 
@@ -145,32 +153,24 @@ double CylCell::intersection(Vec r, const Vec k) const
         double a = k.x() * k.x() + k.y() * k.y();
         if (abs(a) >= eps)
         {
-            // outer
             double b = (r.x() * k.x() + r.y() * k.y()) / a;
-            double c = (r.x() * r.x() + r.y() * r.y() - _Rmax * _Rmax) / a;
-            double s1, s2;
-            if (solutions(b, c, s1, s2))
             {
-                smin = min({smin, s1, s2});
-                smax = max({smax, s1, s2});
+                double c = (r.x() * r.x() + r.y() * r.y() - _Rmin * _Rmin) / a;
+                solutions(b, c, sv[RMIN1], sv[RMIN2]);
             }
-
-            // inner
-            c = (r.x() * r.x() + r.y() * r.y() - _Rmin * _Rmin) / a;
-            if (solutions(b, c, s1, s2))
             {
-                smin = min({smin, s1, s2});
-                smax = max({smax, s1, s2});
+                double c = (r.x() * r.x() + r.y() * r.y() - _Rmax * _Rmax) / a;
+                solutions(b, c, sv[RMAX1], sv[RMAX2]);
             }
         }
     }
 
-    // TODO: handles cases where the line lies inside a border plane or cylinder
-    // TODO: correct for segment outside of inner cylinder, if applicable
+    // sort the intersection points and remove duplicates
 
-    // if origin is inside the cell, set first intersection distance to zero
-    if (smin < 0.) smin = 0.;
-    return smax - smin;
+    // accumulate the length of all segments that are (1) beyond the starting position and (2) inside the cell
+    double length = 0.;
+
+    return length;
 }
 
 //////////////////////////////////////////////////////////////////////

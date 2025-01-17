@@ -21,8 +21,6 @@
 
     - two horizontal planes defined by \f$z_\text{min} \le z_\text{max}\f$.
 
-    These six values are stored in data members with similar names during construction.
-
     \note Because of the limitations on the range of \f$\varphi\f$, a Cylcell cannot straddle the
     negative x-axis of the Cartesian model coordinate system, and it cannot span more than half of
     the azimuth circle.
@@ -35,14 +33,12 @@ class CylCell
 public:
     /** The default constructor creates an empty cell at the origin, i.e. it initializes all border
         coordinates to zero. */
-    CylCell() : _Rmin(0), _phimin(0), _zmin(0), _Rmax(0), _phimax(0), _zmax(0) {}
+    CylCell() {}
 
     /** This constructor initializes the cell border coordinates to the values provided as
         arguments. It does not verify that these values conform to the limits described in the
         class header. Non-comforming values lead to undefined behavior. */
-    CylCell(double Rmin, double phimin, double zmin, double Rmax, double phimax, double zmax)
-        : _Rmin(Rmin), _phimin(phimin), _zmin(zmin), _Rmax(Rmax), _phimax(phimax), _zmax(zmax)
-    {}
+    CylCell(double Rmin, double phimin, double zmin, double Rmax, double phimax, double zmax);
 
     /** This function stores the cell border coordinates in the provided arguments. */
     void extent(double& Rmin, double& phimin, double& zmin, double& Rmax, double& phimax, double& zmax) const
@@ -87,12 +83,12 @@ public:
         (z_\text{max}-z_\text{min})\f$. */
     double volume() const { return 0.5 * (_Rmax * _Rmax - _Rmin * _Rmin) * (_phimax - _phimin) * (_zmax - _zmin); }
 
-    /** This function returns true if the position \f$(R,\varphi,z)\f$ in cylindrical coordinates is
-        inside the cell, and false otherwise. */
-    bool contains(double R, double phi, double z) const
-    {
-        return R >= _Rmin && R <= _Rmax && phi >= _phimin && phi <= _phimax && z >= _zmin && z <= _zmax;
-    }
+    /** This function returns true if the position \f$(R,\varphi,z)\f$ in cylindrical coordinates
+        is inside the cell, and false otherwise. A position on an edge or face on the "lower" side
+        of the cell is considered to be contained in the cell, while a position on an edge or face
+        on the "upper" side of the cell is considered \em not to be contained in the cell. This
+        approach avoids duplicate containment of adjacent cells. */
+    bool contains(double R, double phi, double z) const;
 
     /** This function returns true if the Cartesian position \f${\bf{r}}=(x,y,z)\f$ is inside the
         cell, and false otherwise. */
@@ -140,7 +136,10 @@ public:
 
 private:
     // These data members represent the cylindrical border coordinates
-    double _Rmin, _phimin, _zmin, _Rmax, _phimax, _zmax;
+    double _Rmin{0}, _phimin{0}, _zmin{0}, _Rmax{0}, _phimax{0}, _zmax{0};
+
+    // These data members remember frequently used and expensive to calculate values
+    double _cosphimin{1}, _sinphimin{0}, _cosphimax{1}, _sinphimax{0};
 };
 
 //////////////////////////////////////////////////////////////////////
