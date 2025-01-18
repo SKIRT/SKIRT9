@@ -23,9 +23,9 @@
     number of columns in the input file depends on the options configured by the user for this
     CylindricalCellGeometry instance:
 
-    \f[ R_\mathrm{min}\,(\mathrm{pc}) \quad \varphi_\mathrm{min}\,(\mathrm{rad}) \quad
+    \f[ R_\mathrm{min}\,(\mathrm{pc}) \quad \varphi_\mathrm{min}\,(\mathrm{deg}) \quad
     z_\mathrm{min}\,(\mathrm{pc}) \quad R_\mathrm{max}\,(\mathrm{pc}) \quad
-    \varphi_\mathrm{max}\,(\mathrm{rad}) \quad z_\mathrm{max}\,(\mathrm{pc}) \quad \{\,
+    \varphi_\mathrm{max}\,(\mathrm{deg}) \quad z_\mathrm{max}\,(\mathrm{pc}) \quad \{\,
     \rho\,(\text{M}_\odot\,\text{pc}^{-3}) \;\;|\;\; M\,(\text{M}_\odot) \;\;|\;\;
     n\,(\text{cm}^{-3}) \;\;|\;\; N\,(1) \,\} \quad [Z\,(1)] \quad [T\,(\mathrm{K})] \f]
 

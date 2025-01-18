@@ -52,6 +52,7 @@
 #include "CubicalBackgroundSource.hpp"
 #include "CustomStateProbe.hpp"
 #include "Cylinder2DSpatialGrid.hpp"
+#include "CylindricalCellGeometry.hpp"
 #include "CylindricalClipGeometryDecorator.hpp"
 #include "CylindricalVectorField.hpp"
 #include "DefaultCutsForm.hpp"
@@ -446,6 +447,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ImportedGeometry>();
     ItemRegistry::add<ParticleGeometry>();
     ItemRegistry::add<CellGeometry>();
+    ItemRegistry::add<CylindricalCellGeometry>();
     ItemRegistry::add<MeshGeometry>();
     ItemRegistry::add<AdaptiveMeshGeometry>();
     ItemRegistry::add<VoronoiMeshGeometry>();

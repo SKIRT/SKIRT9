@@ -133,7 +133,7 @@ public:
 
     /** This function configures the snapshot to import a spatial position with three components
         \f$(x,y,z)\f$, \f$(R,\varphi,z)\f$ or \f$(r,\theta,\varphi)\f$. The default unit is pc,
-        and rad for the angular components. */
+        and deg for the angular components. */
     void importPosition();
 
     /** This function configures the snapshot to import a spatial radial size. The default unit is
@@ -145,7 +145,7 @@ public:
         y_\text{max}, z_\text{max})\f$, \f$(R_\text{min}, \varphi_\text{min}, z_\text{min},
         R_\text{max}, \varphi_\text{max}, z_\text{max})\f$, or \f$(r_\text{min}, \theta_\text{min},
         \varphi_\text{min}, r_\text{max}, \theta_\text{max}, \varphi_\text{max})\f$. The default
-        unit is pc, and rad for the angular components. */
+        unit is pc, and deg for the angular components. */
     void importBox();
 
     /** This function configures the snapshot to import a mass density per unit of volume (for use

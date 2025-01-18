@@ -84,13 +84,13 @@ void Snapshot::importPosition()
             break;
         case CoordinateSystem::CYLINDRICAL:
             _infile->addColumn("position R", "length", "pc");
-            _infile->addColumn("position phi", "posangle", "rad");
+            _infile->addColumn("position phi", "posangle", "deg");
             _infile->addColumn("position z", "length", "pc");
             break;
         case CoordinateSystem::SPHERICAL:
             _infile->addColumn("position r", "length", "pc");
-            _infile->addColumn("position theta", "posangle", "rad");
-            _infile->addColumn("position phi", "posangle", "rad");
+            _infile->addColumn("position theta", "posangle", "deg");
+            _infile->addColumn("position phi", "posangle", "deg");
             break;
     }
 }
@@ -121,19 +121,19 @@ void Snapshot::importBox()
             break;
         case CoordinateSystem::CYLINDRICAL:
             _infile->addColumn("box Rmin", "length", "pc");
-            _infile->addColumn("box phimin", "posangle", "rad");
+            _infile->addColumn("box phimin", "posangle", "deg");
             _infile->addColumn("box zmin", "length", "pc");
             _infile->addColumn("box Rmax", "length", "pc");
-            _infile->addColumn("box phimax", "posangle", "rad");
+            _infile->addColumn("box phimax", "posangle", "deg");
             _infile->addColumn("box zmax", "length", "pc");
             break;
         case CoordinateSystem::SPHERICAL:
             _infile->addColumn("box rmin", "length", "pc");
-            _infile->addColumn("box thetamin", "posangle", "rad");
-            _infile->addColumn("box phimin", "posangle", "rad");
+            _infile->addColumn("box thetamin", "posangle", "deg");
+            _infile->addColumn("box phimin", "posangle", "deg");
             _infile->addColumn("box rmax", "length", "pc");
-            _infile->addColumn("box thetamax", "posangle", "rad");
-            _infile->addColumn("box phimax", "posangle", "rad");
+            _infile->addColumn("box thetamax", "posangle", "deg");
+            _infile->addColumn("box phimax", "posangle", "deg");
             break;
     }
 }

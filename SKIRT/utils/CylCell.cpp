@@ -10,7 +10,6 @@
 CylCell::CylCell(double Rmin, double phimin, double zmin, double Rmax, double phimax, double zmax)
     : _Rmin(Rmin), _phimin(phimin), _zmin(zmin), _Rmax(Rmax), _phimax(phimax), _zmax(zmax), _cosphimin(cos(phimin)),
       _sinphimin(sin(phimin)), _cosphimax(cos(phimax)), _sinphimax(sin(phimax))
-
 {}
 
 //////////////////////////////////////////////////////////////////////
@@ -25,13 +24,6 @@ Vec CylCell::center() const
 
 //////////////////////////////////////////////////////////////////////
 
-bool CylCell::contains(double R, double phi, double z) const
-{
-    return R >= _Rmin && R < _Rmax && phi >= _phimin && phi < _phimax && z >= _zmin && z < _zmax;
-}
-
-//////////////////////////////////////////////////////////////////////
-
 bool CylCell::contains(Vec r) const
 {
     if (r.z() < _zmin || r.z() >= _zmax) return false;
@@ -39,8 +31,10 @@ bool CylCell::contains(Vec r) const
     double R = sqrt(r.x() * r.x() + r.y() * r.y());
     if (R < _Rmin || R >= _Rmax) return false;
 
+    // as an expection, don't exclude pi from the maximum
     double phi = atan2(r.y(), r.x());
-    if (phi < _phimin || phi >= _phimax) return false;
+    if (phi < _phimin || phi > _phimax) return false;
+    if (phi != M_PI && phi == _phimax) return false;
 
     return true;
 }

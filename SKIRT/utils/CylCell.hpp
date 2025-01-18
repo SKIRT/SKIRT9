@@ -94,15 +94,11 @@ public:
         coordinates. */
     Vec center() const;
 
-    /** This function returns true if the position \f$(R,\varphi,z)\f$ in cylindrical coordinates
-        is inside the cell, and false otherwise. A position on an edge or face on the "lower" side
-        of the cell is considered to be contained in the cell, while a position on an edge or face
-        on the "upper" side of the cell is considered \em not to be contained in the cell. This
-        approach avoids duplicate containment of adjacent cells. */
-    bool contains(double R, double phi, double z) const;
-
     /** This function returns true if the Cartesian position \f${\bf{r}}=(x,y,z)\f$ is inside the
-        cell, and false otherwise. */
+        cell, and false otherwise. A position on an edge or face on the "lower" side of the cell is
+        considered to be contained in the cell, while a position on an edge or face on the "upper"
+        side of the cell is considered \em not to be contained in the cell. This approach avoids
+        duplicate containment of adjacent cells. */
     bool contains(Vec r) const;
 
     /** This function returns the Cartesian bounding box of the cell, in other words the smallest
@@ -125,7 +121,7 @@ public:
 
         A ray that touches the cell border in a single point is not considered to intersect. A ray
         along an edge or face on the "lower" side of the cell is considered to intersect, while ray
-        along an edge or face on the upper side of the cell is considered \em not to intersect.
+        along an edge or face on the "upper" side of the cell is considered \em not to intersect.
         This approach avoids duplicate intersection of adjacent cells.
 
         <em>Implementation</em>
