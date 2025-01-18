@@ -39,12 +39,6 @@ bool CylCell::contains(Vec r) const
 
 Box CylCell::boundingBox() const
 {
-    // The bounds along the z-axis are the same for Cylindrical and Cartesian coordinates,
-    // so we just need to determine the bounding rectangle projected on the xy plane.
-    // This bounding rectangle must of course enclose the four corner points of the cell.
-    // In addition, if the cell straddles one of the coordinate axes, the bounding rectangle
-    // must also enclose a point on that axis at radius Rmax.
-
     // the (x,y) coordinates of the four corner points
     double x1 = _Rmin * _cosphimin;
     double x2 = _Rmin * _cosphimax;
@@ -75,9 +69,9 @@ Box CylCell::boundingBox() const
 namespace
 {
     // this function determines the solutions of x^2 + 2*b*x + c = 0
-    // - if there are two distinct real solutions, they are stored in x1,x2 and the function returns true
-    // - otherwise, x1 and x2 remain unchanged and the function returns false
-    bool solutions(double b, double c, double& x1, double& x2)
+    // - if there are two distinct real solutions, they are stored in x1,x2
+    // - otherwise, x1 and x2 remain unchanged
+    void solutions(double b, double c, double& x1, double& x2)
     {
         // x1 == -b - sqrt(b*b-c)
         // x2 == -b + sqrt(b*b-c)
@@ -95,9 +89,7 @@ namespace
                 x2 = -b + sqrt(b * b - c);
                 x1 = c / x2;
             }
-            return true;
         }
-        return false;
     }
 }
 
@@ -105,32 +97,25 @@ namespace
 
 double CylCell::intersection(Vec r, const Vec k) const
 {
-    // our strategy is as follows:
-    // - determine all intersection points with s>=0
-    // - sort them on s
-    // - for each segment, determine whether it is inside the cell or not
-    // - accumulate the lengths of all inside segments
-
     // small value used to check for parallel directions
     constexpr double eps = 1e-9;
 
     // allocate room for the 8 possible intersections (1 per plane and 2 per cylinder)
     // plus the starting position (which starts the first segment).
-    // initialize the arrar to zeroes:
+    // initialize the array to zeroes:
     //  - leave the first value at zero to represent the starting position
     //  - overwrite the other values for each intersection, or leave at zero if there is none
-    std::array<double, 9> sv = {};
-    enum { START = 0, ZMIN, ZMAX, PHIMIN, PHIMAX, RMIN1, RMIN2, RMAX1, RMAX2 };
+    enum { START, ZMIN, ZMAX, PHIMIN, PHIMAX, RMIN1, RMIN2, RMAX1, RMAX2, LEN };
+    std::array<double, LEN> sv = {};
 
-    // --- handle horizontal planes ---
-
+    // intersections with horizontal planes
     if (abs(k.z()) > eps)
     {
         sv[ZMIN] = (zmin() - r.z()) / k.z();
         sv[ZMAX] = (zmax() - r.z()) / k.z();
     }
 
-    // --- handle meridional phimin plane ---
+    // intersection with meridional phimin plane
     {
         double q = k.x() * _sinphimin - k.y() * _cosphimin;
         if (abs(q) >= eps)
@@ -139,7 +124,7 @@ double CylCell::intersection(Vec r, const Vec k) const
         }
     }
 
-    // --- handle meridional phimax plane ---
+    // intersection with meridional phimax plane
     {
         double q = k.x() * _sinphimax - k.y() * _cosphimax;
         if (abs(q) >= eps)
@@ -148,7 +133,7 @@ double CylCell::intersection(Vec r, const Vec k) const
         }
     }
 
-    // --- handle cylinders ---
+    // intersections with cylinders
     {
         double a = k.x() * k.x() + k.y() * k.y();
         if (abs(a) >= eps)
@@ -165,11 +150,22 @@ double CylCell::intersection(Vec r, const Vec k) const
         }
     }
 
-    // sort the intersection points and remove duplicates
+    // sort the intersection points
+    std::sort(sv.begin(), sv.end());
 
-    // accumulate the length of all segments that are (1) beyond the starting position and (2) inside the cell
+    // accumulate the length of all segments that are beyond the starting position and inside the cell
+    // (there is always at least one zero in the list)
     double length = 0.;
+    for (const auto* sp = std::find_if(sv.begin() + 1, sv.end(), [](double s) { return s > 0; }); sp != sv.end(); ++sp)
+    {
+        // get the start and end points for this segment
+        double s1 = *(sp - 1);
+        double s2 = *sp;
 
+        // if the midpoint is inside the cell, add the segment length
+        double s = 0.5 * (s1 + s2);
+        if (contains(Vec(r.x() + s * k.x(), r.y() + s * k.y(), r.z() + s * k.z()))) length += s2 - s1;
+    }
     return length;
 }
 

@@ -95,7 +95,13 @@ public:
     bool contains(Vec r) const;
 
     /** This function returns the Cartesian bounding box of the cell, in other words the smallest
-        cuboid lined up with the Cartesian coordinate axes that encloses the cell. */
+        cuboid lined up with the Cartesian coordinate axes that encloses the cell.
+
+        The bounds along the z-axis are the same for Cylindrical and Cartesian coordinates, but the
+        function needs to to specifically determine the bounding rectangle projected on the xy
+        plane. This bounding rectangle must of course enclose the four corner points of the cell.
+        In addition, if the cell straddles one of the coordinate axes, the bounding rectangle must
+        also enclose a point on that axis at radius Rmax. */
     Box boundingBox() const;
 
     /** This function intersects the receiving cell with a ray (half-line) defined by the specified
@@ -112,6 +118,13 @@ public:
         This approach avoids duplicate intersection of adjacent cells.
 
         <em>Implementation</em>
+
+        The function uses the following strategy. First it calculates all intersection points with
+        the bordering planes and cylinders and sorts them on distance along the ray. Then, for each
+        segment between consecutive intersections beyond the ray's starting point, it determines
+        whether the segment's midpoint is inside the cell or not, and accumulates the lengths of
+        the inside segments. This automatically takes care of the cases where the ray lies in one
+        of the bordering planes or cylinders.
 
         The ray equation can be written as \f[\begin{cases} x = r_\text{x} + k_\text{x}s \\ y =
         r_\text{y} + k_\text{y}s \\ z = r_\text{z} + k_\text{z}s \\ \end{cases} \quad \text{with}
