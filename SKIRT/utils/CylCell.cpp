@@ -15,6 +15,16 @@ CylCell::CylCell(double Rmin, double phimin, double zmin, double Rmax, double ph
 
 //////////////////////////////////////////////////////////////////////
 
+Vec CylCell::center() const
+{
+    double R = 0.5 * (_Rmin + _Rmax);
+    double phi = 0.5 * (_phimin + _phimax);
+    double z = 0.5 * (_zmin + _zmax);
+    return Vec(R * cos(phi), R * sin(phi), z);
+}
+
+//////////////////////////////////////////////////////////////////////
+
 bool CylCell::contains(double R, double phi, double z) const
 {
     return R >= _Rmin && R < _Rmax && phi >= _phimin && phi < _phimax && z >= _zmin && z < _zmax;

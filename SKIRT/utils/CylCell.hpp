@@ -13,7 +13,8 @@
 /** CylCell is a low-level class for working with basic three-dimensional cells in cylindrical
     coordinates. Each CylCell instance represents a cell bordered by:
 
-    - two concentric vertical cylinders defined by radii \f$0 \le R_\text{min} \le R_\text{max}\f$,
+    - two vertical cylinders centered on the origin defined by radii \f$0 \le R_\text{min} \le
+    R_\text{max}\f$,
 
     - two meridional half-planes (with \f$R>0\f$) defined by azimuth angles \f$-\pi \le
     \varphi_\text{min} \le \varphi_\text{max} \le \pi\f$ with \f$\varphi_\text{max} -
@@ -82,6 +83,16 @@ public:
         (R_\text{max}^2-R_\text{min}^2) (\varphi_\text{max}-\varphi_\text{min})
         (z_\text{max}-z_\text{min})\f$. */
     double volume() const { return 0.5 * (_Rmax * _Rmax - _Rmin * _Rmin) * (_phimax - _phimin) * (_zmax - _zmin); }
+
+    /** This function returns the "center" of the cell in Cartesian coordinates. This position is
+        defined as the halfway point between the cell borders in cylindrical coordinates, i.e.
+        \f[\begin{aligned} R_\text{ctr} = (R_\text{min} + R_\text{max})/2 \\ \varphi_\text{ctr} =
+        (\varphi_\text{min} + \varphi_\text{max})/2 \\ z_\text{ctr} = (z_\text{min} +
+        z_\text{max})/2. \end{aligned}\f]
+
+        As stated above the function returns this position after converting it to Cartesian
+        coordinates. */
+    Vec center() const;
 
     /** This function returns true if the position \f$(R,\varphi,z)\f$ in cylindrical coordinates
         is inside the cell, and false otherwise. A position on an edge or face on the "lower" side
