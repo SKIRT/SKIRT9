@@ -20,6 +20,7 @@ Snapshot* CylindricalCellSource::createAndOpenSnapshot()
     // configure the cell bounding box columns
     snapshot->setCoordinateSystem(CylindricalCellSnapshot::CoordinateSystem::CYLINDRICAL);
     snapshot->importBox();
+    if (autoRevolve()) snapshot->setNumAutoRevolveBins(numAutoRevolveBins());
 
     return snapshot;
 }

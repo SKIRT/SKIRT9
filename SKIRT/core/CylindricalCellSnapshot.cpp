@@ -13,6 +13,13 @@
 
 ////////////////////////////////////////////////////////////////////
 
+void CylindricalCellSnapshot::setNumAutoRevolveBins(int numBins)
+{
+    _numAutoRevolveBins = numBins;
+}
+
+////////////////////////////////////////////////////////////////////
+
 void CylindricalCellSnapshot::readAndClose()
 {
     // read the snapshot cell info into memory

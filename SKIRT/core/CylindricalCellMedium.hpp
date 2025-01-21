@@ -12,9 +12,9 @@
 
 /** A CylindricalCellMedium instance represents a transfer medium with a spatial density
     distribution (and, optionally, other properties) described by a list of cylindrical cells lined
-    up with the cylindrical coordinate axes; refer to the CylindricalCellSnapshot and CylCell
-    classes for more information. The cell data is usually extracted from a cosmological simulation
-    snapshot, and it must be provided in a column text file formatted as described below.
+    up with the cylindrical coordinate axes; refer to the CylindricalCellSnapshot class for more
+    information. The cell data is usually extracted from a cosmological simulation snapshot, and it
+    must be provided in a column text file formatted as described below.
 
     Refer to the description of the TextInFile class for information on overall formatting and on
     how to include header lines specifying the units for each column in the input file. In case the
@@ -32,8 +32,8 @@
     \dots\text{mix family params}\dots ] \f]
 
     The first six columns specify the coordinates of the bordering planes and cylinders of the
-    cell. Note that the azimuth angle cannot straddle the negative x-axis and cannot span more than
-    half of the circle. See the CylCell class for more information.
+    cell. The \em autoRevolve property controls a feature to automatically revolve 2D data to 3D.
+    See the CylindricalCellSnapshot class for more information.
 
     Depending on the value of the \em massType option, the seventh column lists the average mass
     density \f$\rho\f$, the integrated mass \f$M\f$, the average number density \f$n\f$, or the
@@ -75,6 +75,16 @@ class CylindricalCellMedium : public ImportedMedium
     ENUM_END()
 
     ITEM_CONCRETE(CylindricalCellMedium, ImportedMedium, "a transfer medium imported from cylindrical cell data")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(CylindricalCellMedium, "Level2")
+
+        PROPERTY_BOOL(autoRevolve, "automatically revolve 2D data to a 3D model")
+        ATTRIBUTE_DEFAULT_VALUE(autoRevolve, "false")
+
+        PROPERTY_INT(numAutoRevolveBins, "the number of azimuth bins for auto-revolving 2D data")
+        ATTRIBUTE_RELEVANT_IF(numAutoRevolveBins, "autoRevolve")
+        ATTRIBUTE_MIN_VALUE(numAutoRevolveBins, "2")
+        ATTRIBUTE_MAX_VALUE(numAutoRevolveBins, "1024")
+        ATTRIBUTE_DEFAULT_VALUE(numAutoRevolveBins, "16")
 
         PROPERTY_ENUM(massType, MassType, "the type of mass quantity to be imported")
         ATTRIBUTE_DEFAULT_VALUE(massType, "MassDensity")
