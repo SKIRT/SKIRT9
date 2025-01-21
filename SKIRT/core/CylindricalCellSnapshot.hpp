@@ -48,6 +48,13 @@ public:
         the imported mass/density properties. Note that we cannot simply ignore these cells because
         an empty cell may overlap and thus hide (a portion of) a nonempty cell later in the list.
 
+        If velocity and/or magnetic field vectors are being imported, the function converts these
+        from cylindrical to Cartesian coordinates using \f[\begin{aligned} v_\text{x} &=
+        v_{R}\cos\varphi - v_\varphi\sin\varphi \\ v_\text{y} &= v_{R}\sin\varphi +
+        v_\varphi\cos\varphi \\ v_\text{z} &= v_\text{z} \end{aligned}\f] where \f$\varphi =
+        (\varphi_\text{min}+\varphi_\text{max})/2\f$ is the central angle of the corresponding
+        cell.
+
         The function also logs some statistical information about the import. If the snapshot
         configuration requires the ability to determine the density at a given spatial position,
         this function builds a data structure that accelerates the search for the appropriate cell.

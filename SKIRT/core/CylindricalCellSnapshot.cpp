@@ -26,12 +26,44 @@ void CylindricalCellSnapshot::readAndClose()
 
     // build CylCell objects so we can calculate volume and other geometric properties
     _cellv.reserve(_propv.size());
-    int i = boxIndex();
+    int bi = boxIndex();
     for (const Array& prop : _propv)
-        _cellv.emplace_back(prop[i], prop[i + 1], prop[i + 2], prop[i + 3], prop[i + 4], prop[i + 5]);
+        _cellv.emplace_back(prop[bi], prop[bi + 1], prop[bi + 2], prop[bi + 3], prop[bi + 4], prop[bi + 5]);
 
     // if a mass density policy has been set, calculate masses and densities for all cells
     if (hasMassDensityPolicy()) calculateDensityAndMass(_rhov, _cumrhov, _mass);
+
+    // if applicable, convert velocity and/or magnetic field vectors from cylindrical to Cartesian coordinates
+    int vi = velocityIndex();
+    int mi = magneticFieldIndex();
+    if (vi >= 0 || mi >= 0)
+    {
+        for (Array& prop : _propv)
+        {
+            // get the central angle of the cell
+            double phi = 0.5 * (prop[bi + 1] + prop[bi + 4]);
+            double sinphi = sin(phi);
+            double cosphi = cos(phi);
+
+            // convert the velocity vector
+            if (vi >= 0)
+            {
+                double vR = prop[vi];
+                double vphi = prop[vi + 1];
+                prop[vi] = vR * cosphi - vphi * sinphi;
+                prop[vi + 1] = vR * sinphi + vphi * cosphi;
+            }
+
+            // convert the magnetic field vector
+            if (mi >= 0)
+            {
+                double BR = prop[mi];
+                double Bphi = prop[mi + 1];
+                prop[mi] = BR * cosphi - Bphi * sinphi;
+                prop[mi + 1] = BR * sinphi + Bphi * cosphi;
+            }
+        }
+    }
 
     // if needed, construct a search structure for the cells
     if (hasMassDensityPolicy() || needGetEntities())
