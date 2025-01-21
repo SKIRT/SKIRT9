@@ -5,6 +5,7 @@
 
 #include "CylindricalCellSnapshot.hpp"
 #include "EntityCollection.hpp"
+#include "FatalError.hpp"
 #include "Log.hpp"
 #include "NR.hpp"
 #include "Random.hpp"
@@ -27,6 +28,51 @@ void CylindricalCellSnapshot::readAndClose()
 
     // close the file
     close();
+
+    // perform auto-revolve if requested
+    if (_numAutoRevolveBins >= 2)
+    {
+        int num2DCells = _propv.size();
+        log()->info("  Auto-revolving " + std::to_string(num2DCells) + " 2D cells using "
+                    + std::to_string(_numAutoRevolveBins) + " azimuth bins");
+
+        // construct the azimuth grid, and make sure the endpoints are exact
+        Array phiv;
+        NR::buildLinearGrid(phiv, -M_PI, M_PI, _numAutoRevolveBins);
+        phiv[0] = -M_PI;
+        phiv[_numAutoRevolveBins] = M_PI;
+
+        // get indices for columns we need during the revolve operation (mass indices might be -1)
+        int iphimin = boxIndex() + 1;
+        int iphimax = boxIndex() + 4;
+        int imass1 = massIndex();
+        int imass2 = initialMassIndex();
+        int imass3 = currentMassIndex();
+
+        // loop over the original 2D cells (using indices, not iterators, because we will be adding cells)
+        for (int m = 0; m != num2DCells; ++m)
+        {
+            // make a copy that we can change
+            Array prop = _propv[m];
+
+            // verify that it is 2D
+            if (prop[iphimin] || prop[iphimax])
+                throw FATALERROR("2D cell with index " + std::to_string(m) + " has nonzero azimuth angle(s)");
+
+            // distribute masses over azimuth bins
+            if (imass1 >= 0) prop[imass1] /= _numAutoRevolveBins;
+            if (imass2 >= 0) prop[imass2] /= _numAutoRevolveBins;
+            if (imass3 >= 0) prop[imass3] /= _numAutoRevolveBins;
+
+            // loop over azimuth bins and add a new 3D cell for each
+            for (int k = 0; k != _numAutoRevolveBins; ++k)
+            {
+                prop[iphimin] = phiv[k];
+                prop[iphimax] = phiv[k + 1];
+                _propv.emplace_back(prop);
+            }
+        }
+    }
 
     // inform the user
     log()->info("  Number of cells: " + std::to_string(_propv.size()));

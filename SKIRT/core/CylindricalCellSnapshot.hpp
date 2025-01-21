@@ -57,12 +57,9 @@
     After reading the text file, these 2D cells will automatically be revolved around the z-axis
     using a user-specified number of \f$\varphi\f$ bins.
 
-    To enable the auto-revolve feature, the following two conditions must be fulfilled:
-
-    - the number of auto-revolve bins must be set to a value of 2 or more, and
-
-    - all \f$\varphi_\text{min}\f$ and \f$\varphi_\text{max}\f$ values in the input file must be
-    exactly zero.
+    To enable the auto-revolve feature, the number of auto-revolve bins must be set to at least 2.
+    Also, all \f$\varphi_\text{min}\f$ and \f$\varphi_\text{max}\f$ values in the input file must
+    be exactly zero. A nonzero value in these columns will trigger a fatal error.
 
     \note It is \em not allowed to omit the \f$\varphi_\text{min}, \varphi_\text{max}\f$ columns.
 
