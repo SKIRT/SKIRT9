@@ -54,6 +54,7 @@
 #include "Cylinder2DSpatialGrid.hpp"
 #include "CylindricalCellGeometry.hpp"
 #include "CylindricalCellMedium.hpp"
+#include "CylindricalCellSource.hpp"
 #include "CylindricalClipGeometryDecorator.hpp"
 #include "CylindricalVectorField.hpp"
 #include "DefaultCutsForm.hpp"
@@ -324,6 +325,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ImportedSource>();
     ItemRegistry::add<ParticleSource>();
     ItemRegistry::add<CellSource>();
+    ItemRegistry::add<CylindricalCellSource>();
     ItemRegistry::add<MeshSource>();
     ItemRegistry::add<AdaptiveMeshSource>();
     ItemRegistry::add<VoronoiMeshSource>();
