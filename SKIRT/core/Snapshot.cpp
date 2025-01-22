@@ -6,6 +6,7 @@
 #include "Snapshot.hpp"
 #include "EntityCollection.hpp"
 #include "Log.hpp"
+#include "NR.hpp"
 #include "Random.hpp"
 #include "StringUtils.hpp"
 #include "TextInFile.hpp"
@@ -32,10 +33,17 @@ void Snapshot::open(const SimulationItem* item, string filename, string descript
 
 ////////////////////////////////////////////////////////////////////
 
-void Snapshot::readAndClose()
+void Snapshot::close()
 {
     delete _infile;
     _infile = nullptr;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void Snapshot::readAndClose()
+{
+    close();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -56,13 +64,35 @@ void Snapshot::useColumns(string columns)
 
 ////////////////////////////////////////////////////////////////////
 
+void Snapshot::setCoordinateSystem(CoordinateSystem coordinateSystem)
+{
+    _coordinateSystem = coordinateSystem;
+}
+
+////////////////////////////////////////////////////////////////////
+
 void Snapshot::importPosition()
 {
     _positionIndex = _nextIndex;
     _nextIndex += 3;
-    _infile->addColumn("position x", "length", "pc");
-    _infile->addColumn("position y", "length", "pc");
-    _infile->addColumn("position z", "length", "pc");
+    switch (_coordinateSystem)
+    {
+        case CoordinateSystem::CARTESIAN:
+            _infile->addColumn("position x", "length", "pc");
+            _infile->addColumn("position y", "length", "pc");
+            _infile->addColumn("position z", "length", "pc");
+            break;
+        case CoordinateSystem::CYLINDRICAL:
+            _infile->addColumn("position R", "length", "pc");
+            _infile->addColumn("position phi", "posangle", "deg");
+            _infile->addColumn("position z", "length", "pc");
+            break;
+        case CoordinateSystem::SPHERICAL:
+            _infile->addColumn("position r", "length", "pc");
+            _infile->addColumn("position theta", "posangle", "deg");
+            _infile->addColumn("position phi", "posangle", "deg");
+            break;
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -79,12 +109,33 @@ void Snapshot::importBox()
 {
     _boxIndex = _nextIndex;
     _nextIndex += 6;
-    _infile->addColumn("box xmin", "length", "pc");
-    _infile->addColumn("box ymin", "length", "pc");
-    _infile->addColumn("box zmin", "length", "pc");
-    _infile->addColumn("box xmax", "length", "pc");
-    _infile->addColumn("box ymax", "length", "pc");
-    _infile->addColumn("box zmax", "length", "pc");
+    switch (_coordinateSystem)
+    {
+        case CoordinateSystem::CARTESIAN:
+            _infile->addColumn("box xmin", "length", "pc");
+            _infile->addColumn("box ymin", "length", "pc");
+            _infile->addColumn("box zmin", "length", "pc");
+            _infile->addColumn("box xmax", "length", "pc");
+            _infile->addColumn("box ymax", "length", "pc");
+            _infile->addColumn("box zmax", "length", "pc");
+            break;
+        case CoordinateSystem::CYLINDRICAL:
+            _infile->addColumn("box Rmin", "length", "pc");
+            _infile->addColumn("box phimin", "posangle", "deg");
+            _infile->addColumn("box zmin", "length", "pc");
+            _infile->addColumn("box Rmax", "length", "pc");
+            _infile->addColumn("box phimax", "posangle", "deg");
+            _infile->addColumn("box zmax", "length", "pc");
+            break;
+        case CoordinateSystem::SPHERICAL:
+            _infile->addColumn("box rmin", "length", "pc");
+            _infile->addColumn("box thetamin", "posangle", "deg");
+            _infile->addColumn("box phimin", "posangle", "deg");
+            _infile->addColumn("box rmax", "length", "pc");
+            _infile->addColumn("box thetamax", "posangle", "deg");
+            _infile->addColumn("box phimax", "posangle", "deg");
+            break;
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -151,10 +202,27 @@ void Snapshot::importVelocity()
 {
     _velocityIndex = _nextIndex;
     _nextIndex += 3;
-    _infile->addColumn("velocity x", "velocity", "km/s");
-    _infile->addColumn("velocity y", "velocity", "km/s");
-    _infile->addColumn("velocity z", "velocity", "km/s");
+    switch (_coordinateSystem)
+    {
+        case CoordinateSystem::CARTESIAN:
+            _infile->addColumn("velocity x", "velocity", "km/s");
+            _infile->addColumn("velocity y", "velocity", "km/s");
+            _infile->addColumn("velocity z", "velocity", "km/s");
+            break;
+        case CoordinateSystem::CYLINDRICAL:
+            _infile->addColumn("velocity R", "velocity", "km/s");
+            _infile->addColumn("velocity phi", "velocity", "km/s");
+            _infile->addColumn("velocity z", "velocity", "km/s");
+            break;
+        case CoordinateSystem::SPHERICAL:
+            _infile->addColumn("velocity r", "velocity", "km/s");
+            _infile->addColumn("velocity theta", "velocity", "km/s");
+            _infile->addColumn("velocity phi", "velocity", "km/s");
+            break;
+    }
 }
+
+////////////////////////////////////////////////////////////////////
 
 void Snapshot::importVelocityDispersion()
 {
@@ -162,14 +230,33 @@ void Snapshot::importVelocityDispersion()
     _infile->addColumn("velocity dispersion", "velocity", "km/s");
 }
 
+////////////////////////////////////////////////////////////////////
+
 void Snapshot::importMagneticField()
 {
     _magneticFieldIndex = _nextIndex;
     _nextIndex += 3;
-    _infile->addColumn("magnetic field x", "magneticfield", "uG");
-    _infile->addColumn("magnetic field y", "magneticfield", "uG");
-    _infile->addColumn("magnetic field z", "magneticfield", "uG");
+    switch (_coordinateSystem)
+    {
+        case CoordinateSystem::CARTESIAN:
+            _infile->addColumn("magnetic field x", "magneticfield", "uG");
+            _infile->addColumn("magnetic field y", "magneticfield", "uG");
+            _infile->addColumn("magnetic field z", "magneticfield", "uG");
+            break;
+        case CoordinateSystem::CYLINDRICAL:
+            _infile->addColumn("magnetic field R", "magneticfield", "uG");
+            _infile->addColumn("magnetic field phi", "magneticfield", "uG");
+            _infile->addColumn("magnetic field z", "magneticfield", "uG");
+            break;
+        case CoordinateSystem::SPHERICAL:
+            _infile->addColumn("magnetic field r", "magneticfield", "uG");
+            _infile->addColumn("magnetic field theta", "magneticfield", "uG");
+            _infile->addColumn("magnetic field phi", "magneticfield", "uG");
+            break;
+    }
 }
+
+////////////////////////////////////////////////////////////////////
 
 void Snapshot::importBias()
 {
@@ -231,6 +318,69 @@ void Snapshot::logMassStatistics(int numIgnored, double totalOriginalMass, doubl
     log()->info("  Total original mass : " + massToString(totalOriginalMass) + " " + massUnit);
     if (useMetallicity()) log()->info("  Total metallic mass : " + massToString(totalMetallicMass) + " " + massUnit);
     log()->info("  Total effective mass: " + massToString(totalEffectiveMass) + " " + massUnit);
+}
+
+////////////////////////////////////////////////////////////////////
+
+void Snapshot::calculateDensityAndMass(Array& rhov, Array& cumrhov, double& mass)
+{
+    // resize the density array and allocate a temporary mass vector
+    int numCells = numEntities();
+    rhov.resize(numCells);
+    Array Mv(numCells);
+
+    // get the maximum temperature, or zero of there is none
+    double maxT = useTemperatureCutoff() ? maxTemperature() : 0.;
+
+    // initialize statistics
+    double totalOriginalMass = 0.;
+    double totalMetallicMass = 0.;
+    double totalEffectiveMass = 0.;
+
+    // loop over all cells
+    int numIgnored = 0;
+    for (int m = 0; m != numCells; ++m)
+    {
+        const Array& prop = properties(m);
+
+        // original mass is zero if temperature is above cutoff or if imported mass/density is not positive
+        double originalDensity = 0.;
+        double originalMass = 0.;
+        if (maxT && prop[temperatureIndex()] > maxT)
+        {
+            numIgnored++;
+        }
+        else
+        {
+            // use density or mass or both, depending on availability
+            double V = volume(m);
+            originalDensity = max(0., densityIndex() >= 0 ? prop[densityIndex()] : prop[massIndex()] / V);
+            originalMass = max(0., massIndex() >= 0 ? prop[massIndex()] : prop[densityIndex()] * V);
+        }
+
+        // determine effective mass
+        double effectiveDensity = originalDensity * (useMetallicity() ? prop[metallicityIndex()] : 1.) * multiplier();
+        double metallicMass = originalMass * (useMetallicity() ? prop[metallicityIndex()] : 1.);
+        double effectiveMass = metallicMass * multiplier();
+
+        // store density and mass for this cell
+        rhov[m] = effectiveDensity;
+        Mv[m] = effectiveMass;
+
+        // accumulate statistics
+        totalOriginalMass += originalMass;
+        totalMetallicMass += metallicMass;
+        totalEffectiveMass += effectiveMass;
+    }
+
+    // construct and store a vector with the normalized cumulative site densities
+    if (numCells) NR::cdf(cumrhov, Mv);
+
+    // store the total effective mass
+    mass = totalEffectiveMass;
+
+    // log mass statistics
+    logMassStatistics(numIgnored, totalOriginalMass, totalMetallicMass, totalEffectiveMass);
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -96,7 +96,7 @@ void ParticleSnapshot::readAndClose()
     }
 
     // close the file
-    Snapshot::readAndClose();
+    close();
 
     // log the number of particles
     if (!numTempIgnored && !numMassIgnored && !numBiasIgnored)

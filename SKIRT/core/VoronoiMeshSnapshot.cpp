@@ -366,7 +366,7 @@ void VoronoiMeshSnapshot::readAndClose()
     while (infile()->readRow(prop)) _cells.push_back(new Cell(prop));
 
     // close the file
-    Snapshot::readAndClose();
+    close();
 
     // if we are allowed to build a Voronoi mesh
     if (!_foregoVoronoiMesh)
@@ -375,7 +375,7 @@ void VoronoiMeshSnapshot::readAndClose()
         buildMesh(false);
 
         // if a mass density policy has been set, calculate masses and densities and build the search data structure
-        if (hasMassDensityPolicy()) calculateDensityAndMass();
+        if (hasMassDensityPolicy()) calculateDensityAndMass(_rhov, _cumrhov, _mass);
         if (hasMassDensityPolicy() || needGetEntities()) buildSearchPerBlock();
     }
 
@@ -383,7 +383,7 @@ void VoronoiMeshSnapshot::readAndClose()
     else
     {
         calculateVolume();
-        calculateDensityAndMass();
+        calculateDensityAndMass(_rhov, _cumrhov, _mass);
         buildSearchSingle();
     }
 }
@@ -740,65 +740,6 @@ void VoronoiMeshSnapshot::calculateVolume()
         double volume = prop[densityIndex()] > 0. ? prop[massIndex()] / prop[densityIndex()] : 0.;
         _cells[m]->init(volume);
     }
-}
-
-////////////////////////////////////////////////////////////////////
-
-void VoronoiMeshSnapshot::calculateDensityAndMass()
-{
-    // allocate vectors for mass and density
-    int numCells = _cells.size();
-    _rhov.resize(numCells);
-    Array Mv(numCells);
-
-    // get the maximum temperature, or zero of there is none
-    double maxT = useTemperatureCutoff() ? maxTemperature() : 0.;
-
-    // initialize statistics
-    double totalOriginalMass = 0;
-    double totalMetallicMass = 0;
-    double totalEffectiveMass = 0;
-
-    // loop over all sites/cells
-    int numIgnored = 0;
-    for (int m = 0; m != numCells; ++m)
-    {
-        const Array& prop = _cells[m]->properties();
-
-        // original mass is zero if temperature is above cutoff or if imported mass/density is not positive
-        double originalDensity = 0.;
-        double originalMass = 0.;
-        if (maxT && prop[temperatureIndex()] > maxT)
-        {
-            numIgnored++;
-        }
-        else
-        {
-            double volume = _cells[m]->volume();
-            originalDensity = max(0., densityIndex() >= 0 ? prop[densityIndex()] : prop[massIndex()] / volume);
-            originalMass = max(0., massIndex() >= 0 ? prop[massIndex()] : prop[densityIndex()] * volume);
-        }
-
-        double effectiveDensity = originalDensity * (useMetallicity() ? prop[metallicityIndex()] : 1.) * multiplier();
-        double metallicMass = originalMass * (useMetallicity() ? prop[metallicityIndex()] : 1.);
-        double effectiveMass = metallicMass * multiplier();
-
-        _rhov[m] = effectiveDensity;
-        Mv[m] = effectiveMass;
-
-        totalOriginalMass += originalMass;
-        totalMetallicMass += metallicMass;
-        totalEffectiveMass += effectiveMass;
-    }
-
-    // log mass statistics
-    logMassStatistics(numIgnored, totalOriginalMass, totalMetallicMass, totalEffectiveMass);
-
-    // remember the effective mass
-    _mass = totalEffectiveMass;
-
-    // construct a vector with the normalized cumulative site densities
-    if (numCells) NR::cdf(_cumrhov, Mv);
 }
 
 ////////////////////////////////////////////////////////////////////

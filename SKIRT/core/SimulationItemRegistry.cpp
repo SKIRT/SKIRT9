@@ -52,6 +52,9 @@
 #include "CubicalBackgroundSource.hpp"
 #include "CustomStateProbe.hpp"
 #include "Cylinder2DSpatialGrid.hpp"
+#include "CylindricalCellGeometry.hpp"
+#include "CylindricalCellMedium.hpp"
+#include "CylindricalCellSource.hpp"
 #include "CylindricalClipGeometryDecorator.hpp"
 #include "CylindricalVectorField.hpp"
 #include "DefaultCutsForm.hpp"
@@ -322,6 +325,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ImportedSource>();
     ItemRegistry::add<ParticleSource>();
     ItemRegistry::add<CellSource>();
+    ItemRegistry::add<CylindricalCellSource>();
     ItemRegistry::add<MeshSource>();
     ItemRegistry::add<AdaptiveMeshSource>();
     ItemRegistry::add<VoronoiMeshSource>();
@@ -446,6 +450,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ImportedGeometry>();
     ItemRegistry::add<ParticleGeometry>();
     ItemRegistry::add<CellGeometry>();
+    ItemRegistry::add<CylindricalCellGeometry>();
     ItemRegistry::add<MeshGeometry>();
     ItemRegistry::add<AdaptiveMeshGeometry>();
     ItemRegistry::add<VoronoiMeshGeometry>();
@@ -522,6 +527,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ImportedMedium>();
     ItemRegistry::add<ParticleMedium>();
     ItemRegistry::add<CellMedium>();
+    ItemRegistry::add<CylindricalCellMedium>();
     ItemRegistry::add<MeshMedium>();
     ItemRegistry::add<AdaptiveMeshMedium>();
     ItemRegistry::add<VoronoiMeshMedium>();

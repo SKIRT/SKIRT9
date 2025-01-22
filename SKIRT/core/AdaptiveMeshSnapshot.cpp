@@ -198,61 +198,13 @@ void AdaptiveMeshSnapshot::readAndClose()
     // verify that all data was read and close the file
     Array dummy;
     if (infile()->readRow(dummy)) throw FATALERROR("Superfluous lines in adaptive mesh data after all nodes were read");
-    Snapshot::readAndClose();
+    close();
 
     // log nr of cells
     log()->info("  Number of leaf cells: " + std::to_string(_cells.size()));
 
     // if a mass density policy has been set, calculate masses and densities for all cells
-    if (hasMassDensityPolicy())
-    {
-        // allocate vectors for mass and density
-        size_t n = _cells.size();
-        Array Mv(n);
-        _rhov.resize(n);
-
-        // get the maximum temperature, or zero of there is none
-        double maxT = useTemperatureCutoff() ? maxTemperature() : 0.;
-
-        // initialize statistics
-        double totalOriginalMass = 0;
-        double totalMetallicMass = 0;
-        double totalEffectiveMass = 0;
-
-        // loop over all leaf cells
-        int numIgnored = 0;
-        for (size_t m = 0; m != n; ++m)
-        {
-            const Array& prop = _cells[m]->properties();
-
-            // original mass is zero if temperature is above cutoff or if imported mass/density is not positive
-            double originalMass = 0.;
-            if (maxT && prop[temperatureIndex()] > maxT)
-                numIgnored++;
-            else
-                originalMass =
-                    max(0., massIndex() >= 0 ? prop[massIndex()] : prop[densityIndex()] * _cells[m]->volume());
-
-            double metallicMass = originalMass * (useMetallicity() ? prop[metallicityIndex()] : 1.);
-            double effectiveMass = metallicMass * multiplier();
-
-            Mv[m] = effectiveMass;
-            _rhov[m] = effectiveMass / _cells[m]->volume();
-
-            totalOriginalMass += originalMass;
-            totalMetallicMass += metallicMass;
-            totalEffectiveMass += effectiveMass;
-        }
-
-        // log mass statistics
-        logMassStatistics(numIgnored, totalOriginalMass, totalMetallicMass, totalEffectiveMass);
-
-        // remember the effective mass
-        _mass = totalEffectiveMass;
-
-        // construct a vector with the normalized cumulative cell densities
-        if (n) NR::cdf(_cumrhov, Mv);
-    }
+    if (hasMassDensityPolicy()) calculateDensityAndMass(_rhov, _cumrhov, _mass);
 }
 
 ////////////////////////////////////////////////////////////////////

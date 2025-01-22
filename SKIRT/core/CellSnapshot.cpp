@@ -28,61 +28,13 @@ void CellSnapshot::readAndClose()
     _propv = infile()->readAllRows();
 
     // close the file
-    Snapshot::readAndClose();
+    close();
 
     // inform the user
     log()->info("  Number of cells: " + std::to_string(_propv.size()));
 
     // if a mass density policy has been set, calculate masses and densities for all cells
-    if (hasMassDensityPolicy())
-    {
-        // allocate vectors for mass and density
-        size_t n = _propv.size();
-        Array Mv(n);
-        _rhov.resize(n);
-
-        // get the maximum temperature, or zero of there is none
-        double maxT = useTemperatureCutoff() ? maxTemperature() : 0.;
-
-        // initialize statistics
-        double totalOriginalMass = 0;
-        double totalMetallicMass = 0;
-        double totalEffectiveMass = 0;
-
-        // loop over all sites/cells
-        int numIgnored = 0;
-        for (size_t m = 0; m != n; ++m)
-        {
-            const Array& prop = _propv[m];
-
-            // original mass is zero if temperature is above cutoff or if imported mass/density is not positive
-            double originalMass = 0.;
-            if (maxT && prop[temperatureIndex()] > maxT)
-                numIgnored++;
-            else
-                originalMass =
-                    max(0., massIndex() >= 0 ? prop[massIndex()] : prop[densityIndex()] * boxForCell(m).volume());
-
-            double metallicMass = originalMass * (useMetallicity() ? prop[metallicityIndex()] : 1.);
-            double effectiveMass = metallicMass * multiplier();
-
-            Mv[m] = effectiveMass;
-            _rhov[m] = effectiveMass / boxForCell(m).volume();
-
-            totalOriginalMass += originalMass;
-            totalMetallicMass += metallicMass;
-            totalEffectiveMass += effectiveMass;
-        }
-
-        // log mass statistics
-        logMassStatistics(numIgnored, totalOriginalMass, totalMetallicMass, totalEffectiveMass);
-
-        // remember the effective mass
-        _mass = totalEffectiveMass;
-
-        // construct a vector with the normalized cumulative cell densities
-        if (n) NR::cdf(_cumrhov, Mv);
-    }
+    if (hasMassDensityPolicy()) calculateDensityAndMass(_rhov, _cumrhov, _mass);
 
     // if needed, construct a search structure for the cells
     if (hasMassDensityPolicy() || needGetEntities())
