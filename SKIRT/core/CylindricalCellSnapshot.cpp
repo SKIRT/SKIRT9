@@ -49,15 +49,16 @@ void CylindricalCellSnapshot::readAndClose()
         int imass2 = initialMassIndex();
         int imass3 = currentMassIndex();
 
-        // loop over the original 2D cells (using indices, not iterators, because we will be adding cells)
-        for (int m = 0; m != num2DCells; ++m)
-        {
-            // make a copy that we can change
-            Array prop = _propv[m];
+        // move the original 2D cells to a temporary vector
+        vector<Array> prop2Dv;
+        _propv.swap(prop2Dv);
+        _propv.reserve(num2DCells * _numAutoRevolveBins);
 
-            // verify that it is 2D
-            if (prop[iphimin] || prop[iphimax])
-                throw FATALERROR("2D cell with index " + std::to_string(m) + " has nonzero azimuth angle(s)");
+        // loop over the original 2D cells
+        for (Array& prop : prop2Dv)
+        {
+            // verify that the cell is 2D
+            if (prop[iphimin] || prop[iphimax]) throw FATALERROR("2D cell in input file has nonzero azimuth angle(s)");
 
             // distribute masses over azimuth bins
             if (imass1 >= 0) prop[imass1] /= _numAutoRevolveBins;
