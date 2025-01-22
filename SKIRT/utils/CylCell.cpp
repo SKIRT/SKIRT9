@@ -161,8 +161,7 @@ double CylCell::intersection(Vec r, const Vec k) const
     // accumulate the length of all segments that are beyond the starting position and inside the cell
     // (there is always at least one zero in the list)
     double length = 0.;
-    for (const double* sp = std::find_if(sv.begin() + 1, sv.end(), [](double s) { return s > 0; }); sp != sv.end();
-         ++sp)
+    for (double* sp = std::find_if(sv.begin() + 1, sv.end(), [](double s) { return s > 0; }); sp != sv.end(); ++sp)
     {
         // get the start and end points for this segment
         double s1 = *(sp - 1);
