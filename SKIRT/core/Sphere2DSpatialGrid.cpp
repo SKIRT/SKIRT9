@@ -5,17 +5,17 @@
 
 #include "Sphere2DSpatialGrid.hpp"
 #include "FatalError.hpp"
-#include "Log.hpp"
 #include "NR.hpp"
 #include "PathSegmentGenerator.hpp"
 #include "Random.hpp"
-#include "SpatialGridPath.hpp"
 #include "SpatialGridPlotFile.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
 void Sphere2DSpatialGrid::setupSelfAfter()
 {
+    SphereSpatialGrid::setupSelfAfter();
+
     // Set up the radial grid
     _Nr = _meshRadial->numBins();
     _rv = _meshRadial->mesh() * maxRadius();
@@ -66,9 +66,6 @@ void Sphere2DSpatialGrid::setupSelfAfter()
             _cv[target] = or_cv[k];
         }
     }
-
-    // base class setupSelfAfter() depends on initialization performed above
-    SphereSpatialGrid::setupSelfAfter();
 }
 
 //////////////////////////////////////////////////////////////////////

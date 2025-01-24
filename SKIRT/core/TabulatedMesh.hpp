@@ -6,7 +6,7 @@
 #ifndef TABULATEDMESH_HPP
 #define TABULATEDMESH_HPP
 
-#include "MoveableMesh.hpp"
+#include "Mesh.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -20,9 +20,9 @@
     arbitrary order. The points may be given in arbitary units. If the smallest point is not zero,
     an extra zero mesh point is inserted. The mesh is scaled so that the largest point in the table
     is mapped to unity. */
-class TabulatedMesh : public MoveableMesh
+class TabulatedMesh : public Mesh
 {
-    ITEM_ABSTRACT(TabulatedMesh, MoveableMesh, "a mesh tabulated by the user")
+    ITEM_ABSTRACT(TabulatedMesh, Mesh, "a mesh tabulated by the user")
         ATTRIBUTE_TYPE_DISPLAYED_IF(TabulatedMesh, "Level2")
     ITEM_END()
 

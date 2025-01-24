@@ -4,23 +4,20 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "Sphere1DSpatialGrid.hpp"
-#include "Log.hpp"
 #include "NR.hpp"
 #include "PathSegmentGenerator.hpp"
 #include "Random.hpp"
-#include "SpatialGridPath.hpp"
 #include "SpatialGridPlotFile.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
 void Sphere1DSpatialGrid::setupSelfAfter()
 {
+    SphereSpatialGrid::setupSelfAfter();
+
     // Set up the grid properties
     _Nr = _meshRadial->numBins();
     _rv = minRadius() + _meshRadial->mesh() * (maxRadius() - minRadius());
-
-    // base class setupSelfAfter() depends on initialization performed above
-    SphereSpatialGrid::setupSelfAfter();
 }
 
 //////////////////////////////////////////////////////////////////////

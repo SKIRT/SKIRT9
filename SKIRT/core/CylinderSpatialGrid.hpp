@@ -17,7 +17,12 @@ class CylinderSpatialGrid : public SpatialGrid
 {
     ITEM_ABSTRACT(CylinderSpatialGrid, SpatialGrid, "a spatial grid bounded by a cylinder")
 
-        PROPERTY_DOUBLE(maxRadius, "the cylindrical radius of the grid")
+        PROPERTY_DOUBLE(minRadius, "the inner cylindrical radius of the grid")
+        ATTRIBUTE_QUANTITY(minRadius, "length")
+        ATTRIBUTE_MIN_VALUE(minRadius, "[0")
+        ATTRIBUTE_DEFAULT_VALUE(minRadius, "0")
+
+        PROPERTY_DOUBLE(maxRadius, "the outer cylindrical radius of the grid")
         ATTRIBUTE_QUANTITY(maxRadius, "length")
         ATTRIBUTE_MIN_VALUE(maxRadius, "]0")
 

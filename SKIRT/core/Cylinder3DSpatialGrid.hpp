@@ -8,7 +8,7 @@
 
 #include "Array.hpp"
 #include "CylinderSpatialGrid.hpp"
-#include "MoveableMesh.hpp"
+#include "Mesh.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -28,7 +28,7 @@
 class Cylinder3DSpatialGrid : public CylinderSpatialGrid
 {
     ITEM_CONCRETE(Cylinder3DSpatialGrid, CylinderSpatialGrid,
-                  "a three-dimensional spatial grid in cylindrical coordinates")
+                  "a 3D spatial grid in cylindrical coordinates")
 
         PROPERTY_ITEM(meshRadial, Mesh, "the bin distribution in the radial direction")
         ATTRIBUTE_DEFAULT_VALUE(meshRadial, "LinMesh")
@@ -36,7 +36,7 @@ class Cylinder3DSpatialGrid : public CylinderSpatialGrid
         PROPERTY_ITEM(meshAzimuthal, Mesh, "the bin distribution in the azimuthal direction")
         ATTRIBUTE_DEFAULT_VALUE(meshAzimuthal, "LinMesh")
 
-        PROPERTY_ITEM(meshZ, MoveableMesh, "the bin distribution in the vertical direction")
+        PROPERTY_ITEM(meshZ, Mesh, "the bin distribution in the vertical direction")
         ATTRIBUTE_DEFAULT_VALUE(meshZ, "LinMesh")
 
     ITEM_END()

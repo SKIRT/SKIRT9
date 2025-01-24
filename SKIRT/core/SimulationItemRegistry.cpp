@@ -512,8 +512,6 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
 
     // one-dimensional meshes for spatial grids
     ItemRegistry::add<Mesh>();
-    ItemRegistry::add<MoveableMesh>();
-    ItemRegistry::add<AnchoredMesh>();
     ItemRegistry::add<LinMesh>();
     ItemRegistry::add<PowMesh>();
     ItemRegistry::add<SymPowMesh>();

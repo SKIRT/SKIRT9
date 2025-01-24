@@ -13,19 +13,14 @@ class Random;
 
 ////////////////////////////////////////////////////////////////////
 
-/** The Sphere1DSpatialGrid class is a subclass of the SphereSpatialGrid class, and represents
-    one-dimensional, spherically symmetric spatial grids. Each cell in such a grid is a spherical
-    shell. Internally, a spherical spatial grid is specified through a set of \f$N_r+1\f$ radial
+/** The Sphere1DSpatialGrid class is a subclass of the SphereSpatialGrid class, and represents a
+    one-dimensional, spherically symmetric spatial grid. Each cell in such a grid is a spherical
+    shell. A spherical spatial grid is specified through a set of \f$N_r+1\f$ radial
     grid points \f$r_i\f$ (with \f$i=0,\ldots,N_r\f$). */
 class Sphere1DSpatialGrid : public SphereSpatialGrid
 {
-    ITEM_CONCRETE(Sphere1DSpatialGrid, SphereSpatialGrid, "a spherically symmetric spatial grid")
+    ITEM_CONCRETE(Sphere1DSpatialGrid, SphereSpatialGrid, "a 1D spherically symmetric spatial grid")
         ATTRIBUTE_TYPE_ALLOWED_IF(Sphere1DSpatialGrid, "!Dimension2&!Dimension3")
-
-        PROPERTY_DOUBLE(minRadius, "the inner radius of the grid")
-        ATTRIBUTE_QUANTITY(minRadius, "length")
-        ATTRIBUTE_MIN_VALUE(minRadius, "[0")
-        ATTRIBUTE_DEFAULT_VALUE(minRadius, "0")
 
         PROPERTY_ITEM(meshRadial, Mesh, "the bin distribution in the radial direction")
         ATTRIBUTE_DEFAULT_VALUE(meshRadial, "LinMesh")

@@ -10,9 +10,9 @@
 
 ////////////////////////////////////////////////////////////////////
 
-/** FileMesh is a subclass of the MoveableMesh class. It represents a one-dimensional mesh over the
-    unit interval [0,1] with mesh points that are read from a file. The \em numBins property of the
-    Mesh base class is overridden to match the number of bins defined by the file.
+/** FileMesh represents a one-dimensional mesh over the unit interval [0,1] with mesh points that
+    are read from a file. The \em numBins property of the Mesh base class is overridden to match
+    the number of bins defined by the file.
 
     The input text file contains the mesh points (i.e. the border points separating the mesh bins),
     one point per line, in arbitrary order. The points may be given in arbitary units. If the

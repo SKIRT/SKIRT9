@@ -11,13 +11,13 @@
 
 void TabulatedMesh::setupSelfBefore()
 {
-    MoveableMesh::setupSelfBefore();
+    Mesh::setupSelfBefore();
 
     // get the mesh border points from the subclass
     vector<double> points = getMeshBorderPoints();
 
     // insert zero point if needed and check basic requirements
-    NR::sort(points);
+    NR::unique(points);
     if (points.size() < 1) throw FATALERROR("The mesh data file has no points");
     if (points.front() < 0.) throw FATALERROR("The mesh data file has negative points");
     if (points.front() != 0.) points.insert(points.begin(), 0.);

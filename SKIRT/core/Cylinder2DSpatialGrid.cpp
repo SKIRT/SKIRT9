@@ -4,18 +4,17 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "Cylinder2DSpatialGrid.hpp"
-#include "FatalError.hpp"
-#include "Log.hpp"
 #include "NR.hpp"
 #include "PathSegmentGenerator.hpp"
 #include "Random.hpp"
-#include "SpatialGridPath.hpp"
 #include "SpatialGridPlotFile.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
 void Cylinder2DSpatialGrid::setupSelfAfter()
 {
+    CylinderSpatialGrid::setupSelfAfter();
+
     // initialize our local mesh arrays
     _NR = _meshRadial->numBins();
     _Nz = _meshZ->numBins();
@@ -24,9 +23,6 @@ void Cylinder2DSpatialGrid::setupSelfAfter()
     double zmax = maxZ();
     _Rv = _meshRadial->mesh() * Rmax;
     _zv = _meshZ->mesh() * (zmax - zmin) + zmin;
-
-    // base class setupSelfAfter() depends on initialization performed above
-    CylinderSpatialGrid::setupSelfAfter();
 }
 
 //////////////////////////////////////////////////////////////////////

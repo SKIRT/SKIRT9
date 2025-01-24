@@ -13,6 +13,8 @@
 
 void Cylinder3DSpatialGrid::setupSelfAfter()
 {
+    CylinderSpatialGrid::setupSelfAfter();
+
     // initialize our local mesh arrays
     _NR = _meshRadial->numBins();
     _Nphi = _meshAzimuthal->numBins();
@@ -24,9 +26,6 @@ void Cylinder3DSpatialGrid::setupSelfAfter()
     _Rv = _meshRadial->mesh() * Rmax;
     _phiv = _meshAzimuthal->mesh() * (2. * M_PI) - M_PI;
     _zv = _meshZ->mesh() * (zmax - zmin) + zmin;
-
-    // base class setupSelfAfter() depends on initialization performed above
-    CylinderSpatialGrid::setupSelfAfter();
 }
 
 //////////////////////////////////////////////////////////////////////

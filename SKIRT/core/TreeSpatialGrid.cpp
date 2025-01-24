@@ -7,7 +7,6 @@
 #include "Log.hpp"
 #include "PathSegmentGenerator.hpp"
 #include "Random.hpp"
-#include "SpatialGridPath.hpp"
 #include "SpatialGridPlotFile.hpp"
 #include "StringUtils.hpp"
 #include "TreeNode.hpp"

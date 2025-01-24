@@ -17,11 +17,22 @@ class SphereSpatialGrid : public SpatialGrid
 {
     ITEM_ABSTRACT(SphereSpatialGrid, SpatialGrid, "a spatial grid bounded by a sphere")
 
+        PROPERTY_DOUBLE(minRadius, "the inner radius of the grid")
+        ATTRIBUTE_QUANTITY(minRadius, "length")
+        ATTRIBUTE_MIN_VALUE(minRadius, "[0")
+        ATTRIBUTE_DEFAULT_VALUE(minRadius, "0")
+
         PROPERTY_DOUBLE(maxRadius, "the outer radius of the grid")
         ATTRIBUTE_QUANTITY(maxRadius, "length")
         ATTRIBUTE_MIN_VALUE(maxRadius, "]0")
 
     ITEM_END()
+
+    //============= Construction - Setup - Destruction =============
+
+protected:
+    /** This function verifies the characteristics of the grid. */
+    void setupSelfBefore() override;
 
     //======================== Other Functions =======================
 
