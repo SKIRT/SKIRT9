@@ -82,7 +82,7 @@ public:
     /** This function returns the volume of the cell, given by \f$\frac{1}{2}
         (R_\text{max}^2-R_\text{min}^2) (\varphi_\text{max}-\varphi_\text{min})
         (z_\text{max}-z_\text{min})\f$. */
-    double volume() const { return 0.5 * (_Rmax * _Rmax - _Rmin * _Rmin) * (_phimax - _phimin) * (_zmax - _zmin); }
+    double volume() const;
 
     /** This function returns the "center" of the cell in Cartesian coordinates. This position is
         defined as the halfway point between the cell borders in cylindrical coordinates, i.e.

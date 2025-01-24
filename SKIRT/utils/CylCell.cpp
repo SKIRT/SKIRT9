@@ -15,6 +15,13 @@ CylCell::CylCell(double Rmin, double phimin, double zmin, double Rmax, double ph
 
 //////////////////////////////////////////////////////////////////////
 
+double CylCell::volume() const
+{
+    return 0.5 * (_Rmax - _Rmin) * (_Rmax + _Rmin) * (_phimax - _phimin) * (_zmax - _zmin);
+}
+
+//////////////////////////////////////////////////////////////////////
+
 Vec CylCell::center() const
 {
     double R = 0.5 * (_Rmin + _Rmax);
