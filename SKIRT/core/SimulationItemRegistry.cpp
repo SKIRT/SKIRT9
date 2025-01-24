@@ -52,6 +52,7 @@
 #include "CubicalBackgroundSource.hpp"
 #include "CustomStateProbe.hpp"
 #include "Cylinder2DSpatialGrid.hpp"
+#include "Cylinder3DSpatialGrid.hpp"
 #include "CylindricalCellGeometry.hpp"
 #include "CylindricalCellMedium.hpp"
 #include "CylindricalCellSource.hpp"
@@ -493,6 +494,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<Sphere2DSpatialGrid>();
     ItemRegistry::add<CylinderSpatialGrid>();
     ItemRegistry::add<Cylinder2DSpatialGrid>();
+    ItemRegistry::add<Cylinder3DSpatialGrid>();
     ItemRegistry::add<BoxSpatialGrid>();
     ItemRegistry::add<CartesianSpatialGrid>();
     ItemRegistry::add<TreeSpatialGrid>();
