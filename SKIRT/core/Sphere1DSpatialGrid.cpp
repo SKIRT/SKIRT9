@@ -15,9 +15,9 @@ void Sphere1DSpatialGrid::setupSelfAfter()
 {
     SphereSpatialGrid::setupSelfAfter();
 
-    // Set up the grid properties
+    // initialize our local mesh array
     _Nr = _meshRadial->numBins();
-    _rv = minRadius() + _meshRadial->mesh() * (maxRadius() - minRadius());
+    _rv = _meshRadial->mesh() * (maxRadius() - minRadius()) + minRadius();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -210,7 +210,8 @@ std::unique_ptr<PathSegmentGenerator> Sphere1DSpatialGrid::createPathSegmentGene
 
 void Sphere1DSpatialGrid::write_xy(SpatialGridPlotFile* outfile) const
 {
-    for (int i = 0; i <= _Nr; i++) outfile->writeCircle(_rv[i]);
+    // spheres
+    for (double r : _rv) outfile->writeCircle(r);
 }
 
 //////////////////////////////////////////////////////////////////////

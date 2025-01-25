@@ -18,11 +18,8 @@ void Cylinder2DSpatialGrid::setupSelfAfter()
     // initialize our local mesh arrays
     _NR = _meshRadial->numBins();
     _Nz = _meshZ->numBins();
-    double Rmax = maxRadius();
-    double zmin = minZ();
-    double zmax = maxZ();
-    _Rv = _meshRadial->mesh() * Rmax;
-    _zv = _meshZ->mesh() * (zmax - zmin) + zmin;
+    _Rv = _meshRadial->mesh() * (maxRadius() - minRadius()) + minRadius();
+    _zv = _meshZ->mesh() * (maxZ() - minZ()) + minZ();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -397,24 +394,26 @@ std::unique_ptr<PathSegmentGenerator> Cylinder2DSpatialGrid::createPathSegmentGe
 
 void Cylinder2DSpatialGrid::write_xy(SpatialGridPlotFile* outfile) const
 {
-    for (int i = 0; i <= _NR; i++) outfile->writeCircle(_Rv[i]);
+    // cilinders
+    for (double R : _Rv) outfile->writeCircle(R);
 }
 
 //////////////////////////////////////////////////////////////////////
 
 void Cylinder2DSpatialGrid::write_xz(SpatialGridPlotFile* outfile) const
 {
-    double Rmax = maxRadius();
-    double zmin = minZ();
-    double zmax = maxZ();
-    for (int i = 0; i <= _NR; i++)
+    // cilinders
+    for (double R : _Rv)
     {
-        outfile->writeLine(_Rv[i], zmin, _Rv[i], zmax);
-        outfile->writeLine(-_Rv[i], zmin, -_Rv[i], zmax);
+        outfile->writeLine(R, _zv[0], R, _zv[_Nz]);
+        outfile->writeLine(-R, _zv[0], -R, _zv[_Nz]);
     }
-    for (int k = 0; k <= _Nz; k++)
+
+    // horizontal planes
+    for (double z : _zv)
     {
-        outfile->writeLine(-Rmax, _zv[k], Rmax, _zv[k]);
+        outfile->writeLine(-_Rv[_NR], z, -_Rv[0], z);
+        outfile->writeLine(_Rv[0], z, _Rv[_NR], z);
     }
 }
 

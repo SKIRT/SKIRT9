@@ -20,12 +20,9 @@ void Cylinder3DSpatialGrid::setupSelfAfter()
     _Nphi = _meshAzimuthal->numBins();
     _Nz = _meshZ->numBins();
     _Ncells = _NR * _Nphi * _Nz;
-    double Rmax = maxRadius();
-    double zmin = minZ();
-    double zmax = maxZ();
-    _Rv = _meshRadial->mesh() * Rmax;
+    _Rv = _meshRadial->mesh() * (maxRadius() - minRadius()) + minRadius();
     _phiv = _meshAzimuthal->mesh() * (2. * M_PI) - M_PI;
-    _zv = _meshZ->mesh() * (zmax - zmin) + zmin;
+    _zv = _meshZ->mesh() * (maxZ() - minZ()) + minZ();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -453,22 +450,24 @@ void Cylinder3DSpatialGrid::write_yz(SpatialGridPlotFile* outfile) const
 
 void Cylinder3DSpatialGrid::write_xyz(SpatialGridPlotFile* outfile) const
 {
-    // cilinders
+    // for all cylinders
     for (double R : _Rv)
     {
-        outfile->writeLine(R, _zv[0], R, _zv[_Nz]);
-        outfile->writeLine(-R, _zv[0], -R, _zv[_Nz]);
+        // draw the intersections with the horizontal planes
+        for (double z : _zv) outfile->writeCircle(R, z);
+
+        // draw the intersections with the meridional planes
+        for (double phi : _phiv)
+            outfile->writeLine(R * cos(phi), R * sin(phi), _zv[0], R * cos(phi), R * sin(phi), _zv[_Nz]);
     }
 
-    // meridional planes
-    for (double phi : _phiv)
-        outfile->writeLine(_Rv[0] * cos(phi), _Rv[0] * sin(phi), _Rv[_NR] * cos(phi), _Rv[_NR] * sin(phi));
-
-    // horizontal planes
+    // draw the intersections of the horizontal and meridional planes
     for (double z : _zv)
     {
-        outfile->writeLine(-_Rv[_NR], z, -_Rv[0], z);
-        outfile->writeLine(_Rv[0], z, _Rv[_NR], z);
+        for (double phi : _phiv)
+        {
+            outfile->writeLine(_Rv[0] * cos(phi), _Rv[0] * sin(phi), z, _Rv[_NR] * cos(phi), _Rv[_NR] * sin(phi), z);
+        }
     }
 }
 

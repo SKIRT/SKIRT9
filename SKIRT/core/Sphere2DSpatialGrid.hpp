@@ -15,10 +15,17 @@ class Random;
 
 /** The Sphere2DSpatialGrid class is subclass of the SphereSpatialGrid class, and represents
     axisymmetric spatial grids based on spherical coordinates. The grid is defined in the
-    meridional plane and rotated around the Z-axis. The meridional grid is specified through a set
-    of \f$N_r+1\f$ radial grid points \f$r_i\f$ (with \f$i=0,\ldots,N_r\f$) and a set of
-    \f$N_\theta+1\f$ angular grid points \f$\theta_k\f$ (with \f$k=0,\ldots,N_\theta\f$). In total
-    there are \f$N_{\text{cells}} = N_r\,N_\theta\f$ cells in the grid. */
+    meridional plane and rotated around the z-axis. The meridional grid is specified through two
+    sets of grid points:
+
+    - \f$N_r+1\f$ radial grid points \f$r_i, \,i=0,\ldots,N_r\f$, with \f$0\le r_\text{min} =
+    r_0\f$, \f$r_i<r_{i+1}\f$, and \f$r_{N_r} = r_\text{max}\f$.
+
+    - \f$N_\theta+1\f$ angular (polar-inclination) grid points \f$\theta_j,
+    \,j=0,\ldots,N_\theta\f$ with \f$0=\theta_0\f$, \f$\theta_j<\theta_{j+1}\f$, and
+    \f$\theta_{N_\theta}=\pi\f$.
+
+    In total there are \f$N_{\text{cells}} = N_r\,N_\theta\f$ cells in the grid. */
 class Sphere2DSpatialGrid : public SphereSpatialGrid
 {
     ITEM_CONCRETE(Sphere2DSpatialGrid, SphereSpatialGrid, "a 2D axisymmetric spatial grid in spherical coordinates")

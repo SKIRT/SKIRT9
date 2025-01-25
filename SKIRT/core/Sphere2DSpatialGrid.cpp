@@ -18,7 +18,7 @@ void Sphere2DSpatialGrid::setupSelfAfter()
 
     // Set up the radial grid
     _Nr = _meshRadial->numBins();
-    _rv = _meshRadial->mesh() * maxRadius();
+    _rv = _meshRadial->mesh() * (maxRadius() - minRadius()) + minRadius();
 
     // Set up the polar grid; pre-calculate the cosines for each angular boundary
     _Ntheta = _meshPolar->numBins();
@@ -489,16 +489,14 @@ void Sphere2DSpatialGrid::write_xy(SpatialGridPlotFile* outfile) const
 
 void Sphere2DSpatialGrid::write_xz(SpatialGridPlotFile* outfile) const
 {
-    double rmax = maxRadius();
-    for (int i = 0; i <= _Nr; i++)
+    // spheres
+    for (double r : _rv) outfile->writeCircle(r);
+
+    // inclined planes
+    for (double theta : _thetav)
     {
-        outfile->writeCircle(_rv[i]);
-    }
-    for (int k = 0; k <= _Ntheta; k++)
-    {
-        double x = rmax * sin(_thetav[k]);
-        double z = rmax * cos(_thetav[k]);
-        outfile->writeLine(-x, -z, x, z);
+        outfile->writeLine(_rv[0] * sin(theta), _rv[0] * cos(theta), _rv[_Nr] * sin(theta), _rv[_Nr] * cos(theta));
+        outfile->writeLine(-_rv[0] * sin(theta), -_rv[0] * cos(theta), -_rv[_Nr] * sin(theta), -_rv[_Nr] * cos(theta));
     }
 }
 

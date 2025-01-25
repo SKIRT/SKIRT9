@@ -14,10 +14,16 @@
 
 /** The Cylinder2DSpatialGrid class is subclass of the CylinderSpatialGrid class, and represents
     axisymmetric spatial grids based on cylindrical coordinates. The grid is defined in the
-    meridional plane and rotated around the Z-axis. The meridional grid is specified through a set
-    of \f$N_R+1\f$ radial grid points \f$R_i\f$ (with \f$i=0,\ldots,N_R\f$) and a set of
-    \f$N_z+1\f$ vertical grid points \f$z_k\f$ (with \f$k=0,\ldots,N_z\f$). In total there are
-    \f$N_{\text{cells}} = N_R\,N_z\f$ cells in the Spatial grid. */
+    meridional plane and rotated around the z-axis. The meridional grid is specified through two
+    sets of grid points:
+
+    - \f$N_R+1\f$ radial grid points \f$R_i, \,i=0,\ldots,N_R\f$, with \f$0\le R_\text{min} =
+    R_0\f$, \f$R_i<R_{i+1}\f$, and \f$R_{N_R} = R_\text{max}\f$.
+
+    - \f$N_z+1\f$ vertical grid points \f$z_k, \,k=0,\ldots,N_z\f$, with \f$z_\text{min} = z_0\f$,
+    \f$z_i<z_{i+1}\f$, and \f$z_{N_z} = z_\text{max}\f$.
+
+    In total there are \f$N_{\text{cells}} = N_R\,N_z\f$ cells in the grid. */
 class Cylinder2DSpatialGrid : public CylinderSpatialGrid
 {
     ITEM_CONCRETE(Cylinder2DSpatialGrid, CylinderSpatialGrid,

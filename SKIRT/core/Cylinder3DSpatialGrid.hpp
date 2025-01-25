@@ -16,15 +16,16 @@
     fully three-dimensional spatial grid based on cylindrical coordinates. The grid is specified
     through three sets of grid points:
 
-    - \f$N_R+1\f$ radial grid points \f$R_i, \,i=0,\ldots,N_R\f$, with \f$0\le R_0\f$ and
-    \f$R_i<R_{i+1}\f$.
+    - \f$N_R+1\f$ radial grid points \f$R_i, \,i=0,\ldots,N_R\f$, with \f$0\le R_\text{min} =
+    R_0\f$, \f$R_i<R_{i+1}\f$, and \f$R_{N_R} = R_\text{max}\f$.
 
     - \f$N_\varphi+1\f$ azimuthal grid points \f$\varphi_j, \,j=0,\ldots,N_\varphi\f$, with
     \f$-\pi=\varphi_0\f$, \f$\varphi_j<\varphi_{j+1}\f$, and \f$\varphi_{N_\varphi}=\pi\f$.
 
-    - \f$N_z+1\f$ vertical grid points \f$z_k, \,k=0,\ldots,N_z\f$, with \f$z_i<z_{i+1}\f$.
+    - \f$N_z+1\f$ vertical grid points \f$z_k, \,k=0,\ldots,N_z\f$, with \f$z_\text{min} = z_0\f$,
+    \f$z_i<z_{i+1}\f$, and \f$z_{N_z} = z_\text{max}\f$.
 
-    In total there are \f$N_{\text{cells}} = N_R\,N_\varphi\,N_z\f$ cells in the spatial grid. */
+    In total there are \f$N_{\text{cells}} = N_R\,N_\varphi\,N_z\f$ cells in the grid. */
 class Cylinder3DSpatialGrid : public CylinderSpatialGrid
 {
     ITEM_CONCRETE(Cylinder3DSpatialGrid, CylinderSpatialGrid, "a 3D spatial grid in cylindrical coordinates")

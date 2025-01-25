@@ -15,8 +15,9 @@ class Random;
 
 /** The Sphere1DSpatialGrid class is a subclass of the SphereSpatialGrid class, and represents a
     one-dimensional, spherically symmetric spatial grid. Each cell in such a grid is a spherical
-    shell. A spherical spatial grid is specified through a set of \f$N_r+1\f$ radial
-    grid points \f$r_i\f$ (with \f$i=0,\ldots,N_r\f$). */
+    shell. A grid with \f$N_r\f$ cells is specified through a set of \f$N_r+1\f$ radial grid points
+    \f$r_i, \,i=0,\ldots,N_r\f$, with \f$0\le r_\text{min} = r_0\f$, \f$r_i<r_{i+1}\f$, and
+    \f$r_{N_r} = r_\text{max}\f$. */
 class Sphere1DSpatialGrid : public SphereSpatialGrid
 {
     ITEM_CONCRETE(Sphere1DSpatialGrid, SphereSpatialGrid, "a 1D spherically symmetric spatial grid")
