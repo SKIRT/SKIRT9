@@ -20,7 +20,8 @@
     \f$N_{\text{cells}} = N_R\,N_z\f$ cells in the Spatial grid. */
 class Cylinder2DSpatialGrid : public CylinderSpatialGrid
 {
-    ITEM_CONCRETE(Cylinder2DSpatialGrid, CylinderSpatialGrid, "a 2D axisymmetric spatial grid in cylindrical coordinates")
+    ITEM_CONCRETE(Cylinder2DSpatialGrid, CylinderSpatialGrid,
+                  "a 2D axisymmetric spatial grid in cylindrical coordinates")
         ATTRIBUTE_TYPE_ALLOWED_IF(Cylinder2DSpatialGrid, "!Dimension3")
 
         PROPERTY_ITEM(meshRadial, Mesh, "the bin distribution in the radial direction")

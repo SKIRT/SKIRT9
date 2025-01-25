@@ -25,7 +25,7 @@ void TreeSpatialGrid::setupSelfAfter()
     BoxSpatialGrid::setupSelfAfter();
 
     // determine a small fraction relative to the spatial extent of the grid; used during path traversal
-    _eps = 1e-12 * extent().widths().norm();
+    _eps = 1e-12 * extent().diagonal();
 
     // make subclass construct the tree
     Log* log = find<Log>();

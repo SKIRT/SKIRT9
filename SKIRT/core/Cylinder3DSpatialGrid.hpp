@@ -27,8 +27,7 @@
     In total there are \f$N_{\text{cells}} = N_R\,N_\varphi\,N_z\f$ cells in the spatial grid. */
 class Cylinder3DSpatialGrid : public CylinderSpatialGrid
 {
-    ITEM_CONCRETE(Cylinder3DSpatialGrid, CylinderSpatialGrid,
-                  "a 3D spatial grid in cylindrical coordinates")
+    ITEM_CONCRETE(Cylinder3DSpatialGrid, CylinderSpatialGrid, "a 3D spatial grid in cylindrical coordinates")
 
         PROPERTY_ITEM(meshRadial, Mesh, "the bin distribution in the radial direction")
         ATTRIBUTE_DEFAULT_VALUE(meshRadial, "LinMesh")

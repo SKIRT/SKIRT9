@@ -89,7 +89,7 @@ public:
             case State::Unknown:
             {
                 // try moving the photon packet inside the grid; if this is impossible, return an empty path
-                if (!moveInside(_grid->extent(), 1e-12 * _grid->extent().widths().norm())) return false;
+                if (!moveInside(_grid->extent(), 1e-12 * _grid->extent().diagonal())) return false;
 
                 // determine which grid cell we are in
                 _i = NR::locateClip(_grid->_xv, rx());

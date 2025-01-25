@@ -31,9 +31,9 @@ Array SymLogMesh::mesh() const
         tv.resize(n + 1);
         int k = 0;
         tv[k++] = 0.;
-        for (int i = n2-1; i >= 0; --i) tv[k++] = 0.5 - 0.5 * tmpv[i];
+        for (int i = n2 - 1; i >= 0; --i) tv[k++] = 0.5 - 0.5 * tmpv[i];
         if (n % 2 == 0) tv[k++] = 0.5;
-        for (int i = 0; i <= n2-1; ++i) tv[k++] = 0.5 + 0.5 * tmpv[i];
+        for (int i = 0; i <= n2 - 1; ++i) tv[k++] = 0.5 + 0.5 * tmpv[i];
         tv[k++] = 1.;
     }
     return tv;

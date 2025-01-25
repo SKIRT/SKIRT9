@@ -236,7 +236,7 @@ void TetraMeshSpatialGrid::setupSelfBefore()
     BoxSpatialGrid::setupSelfBefore();
 
     _log = find<Log>();
-    _eps = 1e-12 * widths().norm();
+    _eps = 1e-12 * extent().diagonal();
 
     // determine an appropriate set of samples and construct the Tetra mesh
     switch (_policy)
