@@ -48,52 +48,47 @@ public:
     //======================== Other Functions =======================
 
 public:
-    /** This function returns the dimension of the grid, which is 2 for this class. */
+    /** This function returns the dimension of the grid, which is 2. */
     int dimension() const override;
 
-    /** This function returns the number of cells in the grid. */
+    /** This function returns the number of cells \f$N_R\,N_z\f$ in the grid. */
     int numCells() const override;
 
-    /** This function returns the volume of the cell with index \f$m\f$. For an axisymmetric grid,
-        the function determines the radial and vertical bin indices \f$i\f$ and \f$k\f$ that
-        correspond to the index \f$m\f$, and then calculates the volume as \f[ V = \pi
-        \left(R_{i+1}-R_i\right)^2 \left(z_{k+1}-z_k\right). \f] */
+    /** This function returns the volume of the cell with index \f$m\f$. It determines the radial
+        and vertical bin indices \f$i\f$ and \f$k\f$ corresponding to the index \f$m\f$, and then
+        calculates the volume as \f[ V = \pi (R_{i+1}^2-R_i^2) (z_{k+1}-z_k). \f] */
     double volume(int m) const override;
 
-    /** This function returns the "diagonal" of the cell with index \f$m\f$. For 2D cylindrical
-        grids, it returns the distance between the outer/upper and inner/lower corners of the cell
-        in the meridional plane. */
+    /** This function returns the "diagonal" of the cell with index \f$m\f$. It determines the
+        radial and vertical bin indices \f$i\f$ and \f$k\f$ corresponding to the index \f$m\f$, and
+        then calculates the distance between the outer/upper and inner/lower corners of the cell in
+        the meridional plane. */
     double diagonal(int m) const override;
 
-    /** This function returns the number of the cell that contains the position \f${\bf{r}}\f$. It
-        just determines the radial and vertical bin indices and calculates the correct cell index
-        based on these two numbers. */
+    /** This function returns the index \f$m\f$ of the cell that contains the position
+        \f${\bf{r}}\f$. It determines the radial and vertical bin indices \f$i\f$ and \f$k\f$ of
+        the cell containing the position and calculates the correct cell index based on these two
+        numbers. */
     int cellIndex(Position bfr) const override;
 
-    /** This function returns the central location from the cell with index \f$m\f$. For an
-        axisymmetric grid, the function first determines the radial and vertical bin indices
-        \f$i\f$ and \f$k\f$ that correspond to the index \f$m\f$. The cylindrical coordinates of
-        the central position are subsequently determined from \f[ \begin{split} R &= \frac{R_i +
-        R_{i+1}}{2} \\ \phi &= 0 \\ z &= \frac{z_k + z_{k+1}}{2} \end{split} \f] A position with
-        these cylindrical coordinates is returned. */
+    /** This function returns the central location of the cell with index \f$m\f$. It determines
+        the radial and vertical bin indices \f$i\f$ and \f$k\f$ corresponding to the index \f$m\f$.
+        The cylindrical coordinates of the central position are subsequently determined from \f[
+        \begin{split} R &= \frac{R_i + R_{i+1}}{2} \\ \phi &= 0 \\ z &= \frac{z_k + z_{k+1}}{2}
+        \end{split} \f] */
     Position centralPositionInCell(int m) const override;
 
-    /** This function returns a random location from the cell with index \f$m\f$. For an
-        axisymmetric grid, the function first determines the radial and vertical bin indices
-        \f$i\f$ and \f$k\f$ that correspond to the index \f$m\f$. Then a random radius \f$R\f$, a
-        random azimuth \f$\phi\f$, and a random height \f$z\f$ are determined using \f[
-        \begin{split} R &= \sqrt{R_i^2 + {\cal{X}}_1\,(R_{i+1}^2-R_i^2)} \\ \phi &= 2\pi\,{\cal{X}}_2
-        \\ z &= z_k + {\cal{X}}_3\, (z_{k+1}-z_k), \end{split} \f] with \f${\cal{X}}_1\f$,
-        \f${\cal{X}}_2\f$ and \f${\cal{X}}_3\f$ three uniform deviates. A position with these
-        cylindrical coordinates is returned. */
+    /** This function returns a random location in the cell with index \f$m\f$. It determines the
+        radial and vertical bin indices \f$i\f$ and \f$k\f$ corresponding to the index \f$m\f$, and
+        then generates the cylindrical coordinates of a random position using \f[ \begin{split} R
+        &= \sqrt{R_i^2 + {\cal{X}}_1\,(R_{i+1}^2-R_i^2)} \\ \phi &= 2\pi\,{\cal{X}}_2 \\ z &= z_k +
+        {\cal{X}}_3\, (z_{k+1}-z_k), \end{split} \f] with \f${\cal{X}}_1\f$, \f${\cal{X}}_2\f$ and
+        \f${\cal{X}}_3\f$ three uniform deviates. */
     Position randomPositionInCell(int m) const override;
 
     /** This function creates and hands over ownership of a path segment generator (an instance of
-        a PathSegmentGenerator subclass) appropriate for an axisymmetric grid, implemented as a
-        private PathSegmentGenerator subclass.
-
-        The algorithm used to construct the path is fairly straightforward because of the symmetry
-        in the grid. */
+        a PathSegmentGenerator subclass) appropriate for a 2D cylindrical grid, implemented as a
+        private PathSegmentGenerator subclass. */
     std::unique_ptr<PathSegmentGenerator> createPathSegmentGenerator() const override;
 
 protected:
@@ -106,21 +101,27 @@ protected:
     void write_xz(SpatialGridPlotFile* outfile) const override;
 
 private:
-    /** This private function returns the index corresponding to the radial index \f$i\f$ and the
+    /** This function returns the index \f$m\f$ corresponding to the radial index \f$i\f$ and the
         vertical index \f$k\f$. The correspondence is simply \f$m=k+N_z\,i\f$. */
     int index(int i, int k) const;
 
-    /** This private function calculates the radial index \f$i\f$ and the vertical index \f$k\f$
-        from a cell index \f$m\f$. As the correspondence between \f$m\f$, \f$i\f$ and \f$k\f$ is
-        given by \f$m=k+N_z\,i\f$, one directly obtains \f$i=\lfloor m/N_z \rfloor\f$ and
-        \f$k=m\!\mod N_z\f$. */
-    void invertIndex(int m, int& i, int& k) const;
+    /** This function obtains the coordinates in the meridional plane for the corners of the cell
+        with index \f$m\f$. It determines the radial and vertical bin indices \f$i\f$ and \f$k\f$
+        corresponding to the index \f$m\f$ using \f$i=\lfloor m/N_z \rfloor\f$ and
+        \f$k=m\,\text{mod}\,N_z\f$.
+
+        If both the resulting bin indices are within range, the function stores the corresponding
+        cell corner coordinates in the provided arguments and returns true. If any of the indices
+        are out of range, the function returns false and the contents of the provided arguments
+        remains unchanged. */
+    bool getCoords(int m, double& Rmin, double& zmin, double& Rmax, double& zmax) const;
 
     //======================== Data Members ========================
 
 private:
     int _NR{0};
     int _Nz{0};
+    int _Ncells{0};
     Array _Rv;
     Array _zv;
 

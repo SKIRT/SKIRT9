@@ -68,9 +68,9 @@ public:
         points \f$\{ R_i,\varphi_j,z_k \}\f$ and \f$\{ R_{i+1},\varphi_{j+1},z_{k+1} \}\f$. */
     double diagonal(int m) const override;
 
-    /** This function returns the number of the cell that contains the position \f${\bf{r}}\f$. It
-        determines the indices \f$i,j,k\f$ of the cell containing the position and calculates the
-        correct cell index based on these numbers. */
+    /** This function returns the index \f$m\f$ of the cell that contains the position
+        \f${\bf{r}}\f$. It determines the indices \f$i,j,k\f$ of the cell containing the position
+        and calculates the correct cell index based on these numbers. */
     int cellIndex(Position bfr) const override;
 
     /** This function returns the central location of the cell with index \f$m\f$. It determines

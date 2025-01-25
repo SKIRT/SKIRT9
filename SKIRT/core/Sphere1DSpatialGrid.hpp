@@ -38,47 +38,44 @@ public:
     //======================== Other Functions =======================
 
 public:
-    /** This function returns the dimension of the grid, which is 1 for this class. */
+    /** This function returns the dimension of the grid, which is 1. */
     int dimension() const override;
 
-    /** This function returns the number of cells in the grid. */
+    /** This function returns the number of cells \f$N_r\f$ in the grid. */
     int numCells() const override;
 
-    /** This function returns the volume of the cell with index \f$m\f$. For a spherical grid, cell
-        index \f$m\f$ corresponds to the radial bin with lower border index \f$i=m\f$, and the
-        volume is easily calculated as \f[V = \frac{4\pi}{3}\, (r_{i+1}^3-r_i^3),\f] with \f$r_i\f$
-        and \f$r_{i+1}\f$ the inner and outer radius of the shell respectively. */
+    /** This function returns the volume of the cell with index \f$m\f$. The cell index \f$m\f$
+        corresponds to the radial bin with lower border index \f$i=m\f$, and the volume is easily
+        calculated as \f[V = \frac{4\pi}{3}\, (r_{i+1}^3-r_i^3),\f] with \f$r_i\f$ and
+        \f$r_{i+1}\f$ the inner and outer radius of the shell respectively. */
     double volume(int m) const override;
 
-    /** This function returns the "diagonal" of the cell with index \f$m\f$. For 1D spherical
-        grids, it simply returns the cell width, i.e. the difference between the outer and inner
-        cell radius. */
+    /** This function returns the "diagonal" of the cell with index \f$m\f$. The cell index \f$m\f$
+        corresponds to the radial bin with lower border index \f$i=m\f$. The function simply
+        returns the cell width, i.e. the difference between the outer and inner cell radius. */
     double diagonal(int m) const override;
 
-    /** This function returns the number of the cell that contains the position \f${\bf{r}}\f$. It
-        just determines the radial bin index and returns that number. */
+    /** This function returns the index \f$m\f$ of the cell that contains the position
+        \f${\bf{r}}\f$. It just determines the index of the radial bin containing the position, and
+        returns that number. */
     int cellIndex(Position bfr) const override;
 
-    /** This function returns the central location from the cell with index \f$m\f$. For a
-        spherical grid, cell index \f$m\f$ corresponds to the radial bin with lower border index
-        \f$i=m\f$, and the central radius is determined using \f[ r = \frac{r_i + r_{i+1}}{2}. \f]
-        The returned position is arbitrarily located on the x-axis. */
+    /** This function returns the central location of the cell with index \f$m\f$. The cell index
+        \f$m\f$ corresponds to the radial bin with lower border index \f$i=m\f$, and the central
+        radius is determined using \f[ r = \frac{r_i + r_{i+1}}{2}. \f] The returned position is
+        arbitrarily located on the x-axis. */
     Position centralPositionInCell(int m) const override;
 
-    /** This function returns a random location from the cell with index \f$m\f$. For a spherical
-        grid, cell index \f$m\f$ corresponds to the radial bin with lower border index \f$i=m\f$,
-        and a random radius is determined using \f[ r = \left( r_i^3 + {\cal{X}}
-        \,(r_{i+1}^3-r_i^3) \right)^{1/3} \f] with \f${\cal{X}}\f$ a random deviate. This random
-        radius is combined with a random position on the unit sphere to generate a random position
-        from the cell. */
+    /** This function returns a random location in the cell with index \f$m\f$. The cell index
+        \f$m\f$ corresponds to the radial bin with lower border index \f$i=m\f$, and a random
+        radius is determined using \f[ r = \left( r_i^3 + {\cal{X}} \,(r_{i+1}^3-r_i^3)
+        \right)^{1/3} \f] with \f${\cal{X}}\f$ a random deviate. This random radius is combined
+        with a random position on the unit sphere to obtain a random position in the cell. */
     Position randomPositionInCell(int m) const override;
 
     /** This function creates and hands over ownership of a path segment generator (an instance of
         a PathSegmentGenerator subclass) appropriate for a spherical grid, implemented as a private
-        PathSegmentGenerator subclass.
-
-        The algorithm used to construct the path is fairly straightforward because of the symmetry
-        in the grid. */
+        PathSegmentGenerator subclass. */
     std::unique_ptr<PathSegmentGenerator> createPathSegmentGenerator() const override;
 
 protected:

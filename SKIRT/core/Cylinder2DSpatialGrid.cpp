@@ -18,6 +18,7 @@ void Cylinder2DSpatialGrid::setupSelfAfter()
     // initialize our local mesh arrays
     _NR = _meshRadial->numBins();
     _Nz = _meshZ->numBins();
+    _Ncells = _NR * _Nz;
     _Rv = _meshRadial->mesh() * (maxRadius() - minRadius()) + minRadius();
     _zv = _meshZ->mesh() * (maxZ() - minZ()) + minZ();
 }
@@ -33,31 +34,33 @@ int Cylinder2DSpatialGrid::dimension() const
 
 int Cylinder2DSpatialGrid::numCells() const
 {
-    return _NR * _Nz;
+    return _Ncells;
 }
 
 //////////////////////////////////////////////////////////////////////
 
 double Cylinder2DSpatialGrid::volume(int m) const
 {
-    int i, k;
-    invertIndex(m, i, k);
-    if (i < 0 || i >= _NR || k < 0 || k >= _Nz)
-        return 0.0;
-    else
-        return M_PI * (_zv[k + 1] - _zv[k]) * (_Rv[i + 1] - _Rv[i]) * (_Rv[i + 1] + _Rv[i]);
+    double Rmin, zmin, Rmax, zmax;
+    if (getCoords(m, Rmin, zmin, Rmax, zmax))
+    {
+        return M_PI * (Rmax - Rmin) * (Rmax + Rmin) * (zmax - zmin);
+    }
+    return 0.;
 }
 
 //////////////////////////////////////////////////////////////////////
 
 double Cylinder2DSpatialGrid::diagonal(int m) const
 {
-    int i, k;
-    invertIndex(m, i, k);
-    if (i < 0 || i >= _NR || k < 0 || k >= _Nz) return 0.;
-    Position p1(_Rv[i + 1], 0., _zv[k + 1], Position::CoordinateSystem::CYLINDRICAL);
-    Position p0(_Rv[i], 0., _zv[k], Position::CoordinateSystem::CYLINDRICAL);
-    return (p1 - p0).norm();
+    double Rmin, zmin, Rmax, zmax;
+    if (getCoords(m, Rmin, zmin, Rmax, zmax))
+    {
+        Position p0(Rmin, 0., zmin, Position::CoordinateSystem::CYLINDRICAL);
+        Position p1(Rmax, 0., zmax, Position::CoordinateSystem::CYLINDRICAL);
+        return (p1 - p0).norm();
+    }
+    return 0.;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -65,8 +68,10 @@ double Cylinder2DSpatialGrid::diagonal(int m) const
 int Cylinder2DSpatialGrid::cellIndex(Position bfr) const
 {
     int i = NR::locateFail(_Rv, bfr.cylRadius());
+    if (i < 0) return -1;
     int k = NR::locateFail(_zv, bfr.height());
-    if (i < 0 || k < 0) return -1;
+    if (k < 0) return -1;
+
     return index(i, k);
 }
 
@@ -74,24 +79,30 @@ int Cylinder2DSpatialGrid::cellIndex(Position bfr) const
 
 Position Cylinder2DSpatialGrid::centralPositionInCell(int m) const
 {
-    int i, k;
-    invertIndex(m, i, k);
-    double R = (_Rv[i] + _Rv[i + 1]) / 2.0;
-    double phi = 0.0;
-    double z = (_zv[k] + _zv[k + 1]) / 2.0;
-    return Position(R, phi, z, Position::CoordinateSystem::CYLINDRICAL);
+    double Rmin, zmin, Rmax, zmax;
+    if (getCoords(m, Rmin, zmin, Rmax, zmax))
+    {
+        double R = 0.5 * (Rmin + Rmax);
+        double phi = 0.;
+        double z = 0.5 * (zmin + zmax);
+        return Position(R, phi, z, Position::CoordinateSystem::CYLINDRICAL);
+    }
+    return Position();
 }
 
 //////////////////////////////////////////////////////////////////////
 
 Position Cylinder2DSpatialGrid::randomPositionInCell(int m) const
 {
-    int i, k;
-    invertIndex(m, i, k);
-    double R = sqrt(_Rv[i] * _Rv[i] + (_Rv[i + 1] - _Rv[i]) * (_Rv[i + 1] + _Rv[i]) * random()->uniform());
-    double phi = 2.0 * M_PI * random()->uniform();
-    double z = _zv[k] + (_zv[k + 1] - _zv[k]) * random()->uniform();
-    return Position(R, phi, z, Position::CoordinateSystem::CYLINDRICAL);
+    double Rmin, zmin, Rmax, zmax;
+    if (getCoords(m, Rmin, zmin, Rmax, zmax))
+    {
+        double R = sqrt(Rmin * Rmin + (Rmax - Rmin) * (Rmax + Rmin) * random()->uniform());
+        double phi = 2.0 * M_PI * random()->uniform();
+        double z = zmin + (zmax - zmin) * random()->uniform();
+        return Position(R, phi, z, Position::CoordinateSystem::CYLINDRICAL);
+    }
+    return Position();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -394,7 +405,7 @@ std::unique_ptr<PathSegmentGenerator> Cylinder2DSpatialGrid::createPathSegmentGe
 
 void Cylinder2DSpatialGrid::write_xy(SpatialGridPlotFile* outfile) const
 {
-    // cilinders
+    // cylinders
     for (double R : _Rv) outfile->writeCircle(R);
 }
 
@@ -402,7 +413,7 @@ void Cylinder2DSpatialGrid::write_xy(SpatialGridPlotFile* outfile) const
 
 void Cylinder2DSpatialGrid::write_xz(SpatialGridPlotFile* outfile) const
 {
-    // cilinders
+    // cylinders
     for (double R : _Rv)
     {
         outfile->writeLine(R, _zv[0], R, _zv[_Nz]);
@@ -426,10 +437,18 @@ int Cylinder2DSpatialGrid::index(int i, int k) const
 
 //////////////////////////////////////////////////////////////////////
 
-void Cylinder2DSpatialGrid::invertIndex(int m, int& i, int& k) const
+bool Cylinder2DSpatialGrid::getCoords(int m, double& Rmin, double& zmin, double& Rmax, double& zmax) const
 {
-    i = m / _Nz;
-    k = m % _Nz;
+    if (m < 0 || m >= _Ncells) return false;
+
+    int i = m / _Nz;
+    int k = m % _Nz;
+
+    Rmin = _Rv[i];
+    zmin = _zv[k];
+    Rmax = _Rv[i + 1];
+    zmax = _zv[k + 1];
+    return true;
 }
 
 //////////////////////////////////////////////////////////////////////

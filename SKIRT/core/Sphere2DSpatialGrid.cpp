@@ -29,16 +29,16 @@ void Sphere2DSpatialGrid::setupSelfAfter()
     _cv[0] = 1.;
     _cv[_Ntheta] = -1.;
 
-    // The path() function in this class requires that there is a grid point corresponding to pi/2 (i.e. the xy-plane)
+    // The path segment generator requires that there is a grid point corresponding to pi/2 (i.e. the xy-plane)
 
-    // If there is a cosine value close to zero, make it exactly zero so that the test in path() succeeds
+    // If there is a cosine value close to zero, make it exactly zero
     int numzeroes = 0;
-    for (int k = 1; k < _Ntheta; k++)
+    for (int j = 1; j < _Ntheta; j++)
     {
-        if (fabs(_cv[k]) < 1e-9)
+        if (fabs(_cv[j]) < 1e-9)
         {
             numzeroes++;
-            _cv[k] = 0.;
+            _cv[j] = 0.;
         }
     }
     if (numzeroes > 1) throw FATALERROR("There are multiple grid points very close to pi/2");
@@ -59,13 +59,16 @@ void Sphere2DSpatialGrid::setupSelfAfter()
         _thetav = M_PI_2;
 
         // Copy the values from the original to the new grid, skipping the xy-plane
-        for (int k = 0; k < _Ntheta; k++)
+        for (int j = 0; j < _Ntheta; j++)
         {
-            int target = (or_cv[k] > 0) ? k : k + 1;
-            _thetav[target] = or_thetav[k];
-            _cv[target] = or_cv[k];
+            int target = (or_cv[j] > 0) ? j : j + 1;
+            _thetav[target] = or_thetav[j];
+            _cv[target] = or_cv[j];
         }
     }
+
+    // cash the final number of cells
+    _Ncells = _Nr * _Ntheta;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -79,31 +82,33 @@ int Sphere2DSpatialGrid::dimension() const
 
 int Sphere2DSpatialGrid::numCells() const
 {
-    return _Nr * _Ntheta;
+    return _Ncells;
 }
 
 //////////////////////////////////////////////////////////////////////
 
 double Sphere2DSpatialGrid::volume(int m) const
 {
-    int i, k;
-    invertIndex(m, i, k);
-    if (i < 0 || i >= _Nr || k < 0 || k >= _Ntheta)
-        return 0.0;
-    else
-        return (2.0 / 3.0) * M_PI * (pow(_rv[i + 1], 3) - pow(_rv[i], 3)) * (cos(_thetav[k]) - cos(_thetav[k + 1]));
+    double rmin, thetamin, rmax, thetamax;
+    if (getCoords(m, rmin, thetamin, rmax, thetamax))
+    {
+        return (2. / 3.) * M_PI * pow3(rmin, rmax) * (cos(thetamin) - cos(thetamax));
+    }
+    return 0.;
 }
 
 //////////////////////////////////////////////////////////////////////
 
 double Sphere2DSpatialGrid::diagonal(int m) const
 {
-    int i, k;
-    invertIndex(m, i, k);
-    if (i < 0 || i >= _Nr || k < 0 || k >= _Ntheta) return 0.;
-    Position p1(_rv[i + 1], _thetav[k + 1], 0., Position::CoordinateSystem::SPHERICAL);
-    Position p0(_rv[i], _thetav[k], 0., Position::CoordinateSystem::SPHERICAL);
-    return (p1 - p0).norm();
+    double rmin, thetamin, rmax, thetamax;
+    if (getCoords(m, rmin, thetamin, rmax, thetamax))
+    {
+        Position p0(rmin, thetamin, 0., Position::CoordinateSystem::SPHERICAL);
+        Position p1(rmax, thetamax, 0., Position::CoordinateSystem::SPHERICAL);
+        return (p1 - p0).norm();
+    }
+    return 0.;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -112,38 +117,43 @@ int Sphere2DSpatialGrid::cellIndex(Position bfr) const
 {
     double r, theta, phi;
     bfr.spherical(r, theta, phi);
+
     int i = NR::locateFail(_rv, r);
     if (i < 0) return -1;
-    int k = NR::locateClip(_thetav, theta);
-    return index(i, k);
+    int j = NR::locateClip(_thetav, theta);
+
+    return index(i, j);
 }
 
 //////////////////////////////////////////////////////////////////////
 
 Position Sphere2DSpatialGrid::centralPositionInCell(int m) const
 {
-    int i, k;
-    invertIndex(m, i, k);
-    double r = (_rv[i] + _rv[i + 1]) / 2.0;
-    double theta = (_thetav[k] + _thetav[k + 1]) / 2.0;
-    double phi = 0.0;
-    return Position(r, theta, phi, Position::CoordinateSystem::SPHERICAL);
+    double rmin, thetamin, rmax, thetamax;
+    if (getCoords(m, rmin, thetamin, rmax, thetamax))
+    {
+        double r = 0.5 * (rmin + rmax);
+        double theta = 0.5 * (thetamin + thetamax);
+        double phi = 0.;
+        return Position(r, theta, phi, Position::CoordinateSystem::SPHERICAL);
+    }
+    return Position();
 }
 
 //////////////////////////////////////////////////////////////////////
 
 Position Sphere2DSpatialGrid::randomPositionInCell(int m) const
 {
-    int i, k;
-    invertIndex(m, i, k);
-    double r = cbrt(_rv[i] * _rv[i] * _rv[i]
-                    + (_rv[i + 1] - _rv[i]) * (_rv[i + 1] * _rv[i + 1] + _rv[i + 1] * _rv[i] + _rv[i] * _rv[i])
-                          * random()->uniform());
-    double theta = acos(cos(_thetav[k]) + (cos(_thetav[k + 1]) - cos(_thetav[k])) * random()->uniform());
-    double phi = 2.0 * M_PI * random()->uniform();
-    return Position(r, theta, phi, Position::CoordinateSystem::SPHERICAL);
+    double rmin, thetamin, rmax, thetamax;
+    if (getCoords(m, rmin, thetamin, rmax, thetamax))
+    {
+        double r = cbrt(pow3(rmin) + pow3(rmin, rmax) * random()->uniform());
+        double theta = acos(cos(thetamin) + (cos(thetamax) - cos(thetamin)) * random()->uniform());
+        double phi = 2.0 * M_PI * random()->uniform();
+        return Position(r, theta, phi, Position::CoordinateSystem::SPHERICAL);
+    }
+    return Position();
 }
-
 //////////////////////////////////////////////////////////////////////
 
 namespace
@@ -502,17 +512,25 @@ void Sphere2DSpatialGrid::write_xz(SpatialGridPlotFile* outfile) const
 
 //////////////////////////////////////////////////////////////////////
 
-int Sphere2DSpatialGrid::index(int i, int k) const
+int Sphere2DSpatialGrid::index(int i, int j) const
 {
-    return k + _Ntheta * i;
+    return j + _Ntheta * i;
 }
 
 //////////////////////////////////////////////////////////////////////
 
-void Sphere2DSpatialGrid::invertIndex(int m, int& i, int& k) const
+bool Sphere2DSpatialGrid::getCoords(int m, double& rmin, double& thetamin, double& rmax, double& thetamax) const
 {
-    i = m / _Ntheta;
-    k = m % _Ntheta;
+    if (m < 0 || m >= _Ncells) return false;
+
+    int i = m / _Ntheta;
+    int j = m % _Ntheta;
+
+    rmin = _rv[i];
+    thetamin = _thetav[j];
+    rmax = _rv[i + 1];
+    thetamax = _thetav[j + 1];
+    return true;
 }
 
 //////////////////////////////////////////////////////////////////////

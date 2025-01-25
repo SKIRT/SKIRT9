@@ -40,13 +40,9 @@ double Sphere1DSpatialGrid::volume(int m) const
 {
     int i = m;
     if (i < 0 || i >= _Nr)
-        return 0.0;
+        return 0.;
     else
-    {
-        double rL = _rv[i];
-        double rR = _rv[i + 1];
-        return 4.0 * M_PI / 3.0 * (rR - rL) * (rR * rR + rR * rL + rL * rL);
-    }
+        return 4. / 3. * M_PI * pow3(_rv[i], _rv[i + 1]);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -54,8 +50,10 @@ double Sphere1DSpatialGrid::volume(int m) const
 double Sphere1DSpatialGrid::diagonal(int m) const
 {
     int i = m;
-    if (i < 0 || i >= _Nr) return 0.;
-    return _rv[i + 1] - _rv[i];
+    if (i < 0 || i >= _Nr)
+        return 0.;
+    else
+        return _rv[i + 1] - _rv[i];
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -70,8 +68,10 @@ int Sphere1DSpatialGrid::cellIndex(Position bfr) const
 Position Sphere1DSpatialGrid::centralPositionInCell(int m) const
 {
     int i = m;
-    double r = (_rv[i] + _rv[i + 1]) / 2.0;
-    return Position(r, 0, 0);
+    if (i < 0 || i >= _Nr)
+        return Position();
+    else
+        return Position(0.5 * (_rv[i] + _rv[i + 1]), 0., 0.);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -79,11 +79,14 @@ Position Sphere1DSpatialGrid::centralPositionInCell(int m) const
 Position Sphere1DSpatialGrid::randomPositionInCell(int m) const
 {
     int i = m;
-    Direction bfk = random()->direction();
-    double r = cbrt(_rv[i] * _rv[i] * _rv[i]
-                    + (_rv[i + 1] - _rv[i]) * (_rv[i + 1] * _rv[i + 1] + _rv[i + 1] * _rv[i] + _rv[i] * _rv[i])
-                          * random()->uniform());
-    return Position(r, bfk);
+    if (i < 0 || i >= _Nr)
+        return Position();
+    else
+    {
+        Direction bfk = random()->direction();
+        double r = cbrt(pow3(_rv[i]) + pow3(_rv[i], _rv[i + 1]) * random()->uniform());
+        return Position(r, bfk);
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

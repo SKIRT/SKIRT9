@@ -46,7 +46,7 @@ double Cylinder3DSpatialGrid::volume(int m) const
     double Rmin, phimin, zmin, Rmax, phimax, zmax;
     if (getCoords(m, Rmin, phimin, zmin, Rmax, phimax, zmax))
     {
-        return 0.5 * (Rmax * Rmax - Rmin * Rmin) * (phimax - phimin) * (zmax - zmin);
+        return 0.5 * (Rmax - Rmin) * (Rmax + Rmin) * (phimax - phimin) * (zmax - zmin);
     }
     return 0.;
 }
@@ -74,8 +74,7 @@ int Cylinder3DSpatialGrid::cellIndex(Position bfr) const
 
     int i = NR::locateFail(_Rv, R);
     if (i < 0) return -1;
-    int j = NR::locateFail(_phiv, phi);
-    if (j < 0) return -1;
+    int j = NR::locateClip(_phiv, phi);
     int k = NR::locateFail(_zv, z);
     if (k < 0) return -1;
 
@@ -412,7 +411,7 @@ std::unique_ptr<PathSegmentGenerator> Cylinder3DSpatialGrid::createPathSegmentGe
 
 void Cylinder3DSpatialGrid::write_xy(SpatialGridPlotFile* outfile) const
 {
-    // cilinders
+    // cylinders
     for (double R : _Rv) outfile->writeCircle(R);
 
     // meridional planes
@@ -424,7 +423,7 @@ void Cylinder3DSpatialGrid::write_xy(SpatialGridPlotFile* outfile) const
 
 void Cylinder3DSpatialGrid::write_xz(SpatialGridPlotFile* outfile) const
 {
-    // cilinders
+    // cylinders
     for (double R : _Rv)
     {
         outfile->writeLine(R, _zv[0], R, _zv[_Nz]);
