@@ -123,7 +123,7 @@ public:
     // segment generator state accordingly. The function returns true if the position is now inside.
     bool moveInside()
     {
-        // intialize position and direction
+        // initialize position and direction
         _R = sqrt(rx() * rx() + ry() * ry());
         _z = rz();
         _kq = sqrt(kx() * kx() + ky() * ky());
@@ -210,7 +210,7 @@ public:
                 if (!moveInside()) return false;
 
                 // determine the grid cell we are in
-                _i = NR::locateClip(_grid->_Rv, _R);
+                _i = NR::locate(_grid->_Rv, _R);  // i is -1 when R < rmin
                 _k = NR::locateClip(_grid->_zv, _z);
 
                 // determine the initial direction of movement for each coordinate
@@ -219,7 +219,7 @@ public:
                     _phase = Phase::UpOutwards;
                     if (_q < 0.)
                     {
-                        _imin = NR::locateClip(_grid->_Rv, _p);
+                        _imin = NR::locate(_grid->_Rv, _p);  // imin is -1 when p < rmin
                         if (_i > _imin) _phase = Phase::UpInwards;
                     }
                 }
@@ -228,7 +228,7 @@ public:
                     _phase = Phase::DownOutwards;
                     if (_q < 0.)
                     {
-                        _imin = NR::locateClip(_grid->_Rv, _p);
+                        _imin = NR::locate(_grid->_Rv, _p);  // imin is -1 when p < rmin
                         if (_i > _imin) _phase = Phase::DownInwards;
                     }
                 }
@@ -432,6 +432,7 @@ void Cylinder2DSpatialGrid::write_xz(SpatialGridPlotFile* outfile) const
 
 int Cylinder2DSpatialGrid::index(int i, int k) const
 {
+    if (i < 0) return -1;
     return k + _Nz * i;
 }
 
