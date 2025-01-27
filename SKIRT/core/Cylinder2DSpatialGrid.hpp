@@ -88,7 +88,31 @@ public:
 
     /** This function creates and hands over ownership of a path segment generator (an instance of
         a PathSegmentGenerator subclass) appropriate for a 2D cylindrical grid, implemented as a
-        private PathSegmentGenerator subclass. */
+        private PathSegmentGenerator subclass.
+
+        \image html Cylinder2DSpatialGrid.png
+
+        The figure above is a projection on the equatorial plane. It shows coordinate system origin
+        \f$\bf{o}\f$ and the path under consideration, defined by its projected starting point
+        \f$\bf{R}\f$ and projected direction vector \f$\bf{k}_\text{q}\f$. Now consider the point
+        of closest approach \f$\bf{c}\f$. The distance \f$q\f$ from \f$\bf{c}\f$ to \f$\bf{R}\f$
+        can be obtained by projecting the position vector \f${\bf{R}}\f$ onto the line formed by
+        the path. This distance is given by \f$q=\bf{R}\cdot\bf{k}_\text{q}/||\bf{k}_\text{q}||\f$,
+        where we divided the dot product by the norm of the projected direction vector because it
+        is not normalized. The resulting value is negative if \f$\bf{R}\f$ is before \f$\bf{c}\f$
+        (i.e. it is going inward) and positive if \f$\bf{R}\f$ is after \f$\bf{c}\f$ (i.e. it is
+        going outward). We further define the impact parameter \f$p\f$ as the distance of closest
+        approach. From the rectangular triangles illustrated in the figure it is easily seen that
+        \f$p^2 + q^2 = R^2\f$ and \f$p^2 + q_*^2 = R_*^2\f$. To obtain the actual 3D distance
+        traveled, the \f$q\f$ values must be divided by the projected direction cosine
+        \f$||\bf{k}_\text{q}||\f$.
+
+        In the vertical direction, the distance to the intersection of the path with a horizontal
+        plane at height \f$z_*\f$ is given by \f$(z_*-z)/k_\text{z}\f$ as usual.
+
+        The segment generator uses these relations to step the path through the cells, finding the
+        nearest intersection and updating the values of \f$q\f$, \f$\bf{R}\f$ and \f$z\f$ along the
+        way as a proxy for updating the 3D position \f${\bf{r}}\f$. */
     std::unique_ptr<PathSegmentGenerator> createPathSegmentGenerator() const override;
 
 protected:
