@@ -75,7 +75,22 @@ public:
 
     /** This function creates and hands over ownership of a path segment generator (an instance of
         a PathSegmentGenerator subclass) appropriate for a spherical grid, implemented as a private
-        PathSegmentGenerator subclass. */
+        PathSegmentGenerator subclass.
+
+        \image html Sphere1DSpatialGrid.png
+
+        Refer to the figure above. Given the starting point \f$\bf{r}\f$ and the direction vector
+        \f$\bf{k}\f$ defining the path, consider the point of closest approach \f$\bf{c}\f$ to the
+        coordinate system origin. The distance \f$q\f$ from \f$\bf{c}\f$ to \f$\bf{r}\f$ can be
+        obtained by projecting the position vector \f${\bf{r}}\f$ onto the line formed by the path.
+        Assuming \f$\bf{k}\f$ is normalized to unity, this distance is given by the dot product
+        \f$q=\bf{r}\cdot\bf{k}\f$. The resulting value is negative if \f$\bf{r}\f$ is before
+        \f$\bf{c}\f$ (i.e. it is going inward) and positive if \f$\bf{r}\f$ is after \f$\bf{c}\f$
+        (i.e. it is going outward). We further define the impact parameter \f$p\f$ as the distance
+        of closest approach. From the rectangular triangles illustrated in the figure it is easily
+        seen that \f$p^2 + q^2 = r^2\f$ and \f$p^2 + q_*^2 = r_*^2\f$. The segment generator uses
+        these relations to step the path through the consecutive spherical bins, updating the value
+        of \f$q\f$ along the way as a proxy for updating \f${\bf{r}}\f$. */
     std::unique_ptr<PathSegmentGenerator> createPathSegmentGenerator() const override;
 
 protected:
