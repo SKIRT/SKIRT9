@@ -108,7 +108,7 @@ public:
         {
             case State::Unknown:
             {
-                // try moving the photon packet inside the grid, if necessary
+                // try moving the path inside the grid, if necessary
                 double rmax = _grid->maxRadius();
                 double rmin = _grid->minRadius();
                 double r = sqrt(rx() * rx() + ry() * ry() + rz() * rz());

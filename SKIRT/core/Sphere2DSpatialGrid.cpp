@@ -16,35 +16,35 @@ void Sphere2DSpatialGrid::setupSelfAfter()
 {
     SphereSpatialGrid::setupSelfAfter();
 
-    // Set up the radial grid
+    // set up the radial grid
     _Nr = _meshRadial->numBins();
     _rv = _meshRadial->mesh() * (maxRadius() - minRadius()) + minRadius();
 
-    // Set up the polar grid; pre-calculate the cosines for each angular boundary
+    // set up the polar grid; pre-calculate the cosines for each angular boundary
     _Ntheta = _meshPolar->numBins();
     _thetav = _meshPolar->mesh() * M_PI;
     _cv = cos(_thetav);
 
-    // Make sure that the boundary cosine values are exact
+    // make sure that the boundary cosine values are exact
     _cv[0] = 1.;
     _cv[_Ntheta] = -1.;
 
-    // The path segment generator requires that there is a grid point corresponding to pi/2 (i.e. the xy-plane)
+    // the path segment generator requires that there is a grid point corresponding to pi/2 (i.e. the xy-plane)
 
-    // If there is a cosine value close to zero, make it exactly zero
-    int numzeroes = 0;
+    // if there is a cosine value close to zero, make it exactly zero
+    int numZeroes = 0;
     for (int j = 1; j < _Ntheta; j++)
     {
         if (fabs(_cv[j]) < 1e-9)
         {
-            numzeroes++;
+            numZeroes++;
             _cv[j] = 0.;
         }
     }
-    if (numzeroes > 1) throw FATALERROR("There are multiple grid points very close to pi/2");
+    if (numZeroes > 1) throw FATALERROR("There are multiple grid points very close to pi/2");
 
-    // If there is no cosine value close to zero, add an extra grid point
-    if (numzeroes == 0)
+    // if there is no cosine value close to zero, add an extra grid point
+    if (numZeroes == 0)
     {
         // Make temporary copy of the original grid
         Array or_thetav = _thetav;
@@ -154,6 +154,7 @@ Position Sphere2DSpatialGrid::randomPositionInCell(int m) const
     }
     return Position();
 }
+
 //////////////////////////////////////////////////////////////////////
 
 namespace
@@ -167,9 +168,9 @@ namespace
 
         if (b * b > c)  // if discriminant is negative, there are no real solutions
         {
-            if (b > 0)  // x1 is always negative; x2 is positive only if c<0
+            if (b > 0.)  // x1 is always negative; x2 is positive only if c<0
             {
-                if (c < 0)
+                if (c < 0.)
                 {
                     double x1 = -b - sqrt(b * b - c);
                     return c / x1;
@@ -178,7 +179,7 @@ namespace
             else  // x2 is always positive; x1 is positive only if c>0
             {
                 double x2 = -b + sqrt(b * b - c);
-                if (c > 0)
+                if (c > 0.)
                 {
                     double x1 = c / x2;
                     if (x1 < x2) return x1;
@@ -186,7 +187,7 @@ namespace
                 return x2;
             }
         }
-        return 0;
+        return 0.;
     }
 
     // returns the smallest positive solution of a*x^2 + 2*b*x + c = 0, or 0 if there is no positive solution
@@ -194,8 +195,8 @@ namespace
     {
         if (fabs(a) > 1e-9) return smallestPositiveSolution(b / a, c / a);
         double x = -0.5 * c / b;
-        if (x > 0) return x;
-        return 0;
+        if (x > 0.) return x;
+        return 0.;
     }
 
     // returns the distance to the first intersection between the ray (bfr,bfk) and the sphere with given radius,
@@ -221,19 +222,29 @@ class Sphere2DSpatialGrid::MySegmentGenerator : public PathSegmentGenerator
 {
     const Sphere2DSpatialGrid* _grid{nullptr};
     double _eps{0.};
-    int _i{-1}, _k{-1};
+    int _i{-1}, _j{-1};
 
 public:
     MySegmentGenerator(const Sphere2DSpatialGrid* grid) : _grid(grid) {}
 
-    // determine the indices of the cell containing the current position
-    // _i will be set to -1 if the position is outside the grid
-    void setCellIndices()
+    // determine the indices i and j of the cell containing the current position
+    //   i is set to -1 if the position is inside rmin and to Nr if the position is outside rmax
+    //   j is clipped to the range 0..Ntheta-1
+    // returns true if the position is inside rmax, false if it is outside rmax
+    bool setCellIndices()
     {
         double radius, theta, phi;
         r().spherical(radius, theta, phi);
-        _i = NR::locateFail(_grid->_rv, radius);
-        _k = NR::locateClip(_grid->_thetav, theta);
+        _i = NR::locate(_grid->_rv, radius);
+        _j = NR::locateClip(_grid->_thetav, theta);
+        return _i < _grid->_Nr;
+    }
+
+    // set the state to outside and return false
+    bool abortPath()
+    {
+        setState(State::Outside);
+        return false;
     }
 
     bool next() override
@@ -243,35 +254,29 @@ public:
             case State::Unknown:
             {
                 // small value relative to domain size
-                double rmax = _grid->maxRadius();
-                _eps = 1e-11 * rmax;
+                _eps = 1e-11 * _grid->maxRadius();
 
-                // if necessary, try moving the photon packet inside the grid
-                double r2 = r().norm2();
-                if (r2 > rmax * rmax)
+                // if necessary, try moving the path inside the grid
+                if (r().norm() > _grid->maxRadius())
                 {
-                    double ds = firstIntersectionSphere(r(), k(), rmax);
-                    if (ds > 0.)
-                    {
-                        propagater(ds + _eps);
-                        setCellIndices();
-                        if (_i >= 0)
-                        {
-                            // return an empty path segment with the appropriate length
-                            setEmptySegment(ds);
-                            setState(State::Inside);
-                            return true;
-                        }
-                    }
-                    // there is no intersection with the grid; return an empty path
-                    setState(State::Outside);
-                    return false;
+                    // find intersection; abort if there is none
+                    double ds = firstIntersectionSphere(r(), k(), _grid->maxRadius());
+                    if (ds <= 0.) return abortPath();
+
+                    // propagate the path to the intersection; abort in case of numerical inaccuracies
+                    propagater(ds + _eps);
+                    if (!setCellIndices()) return abortPath();
+
+                    // return an empty path segment with the appropriate length
+                    setEmptySegment(ds);
+                    setState(State::Inside);
+                    return true;
                 }
 
                 // the original position was inside the grid
-                // if necessary, move the position away from the origin so that it has meaningful cell indices
-                if (r2 == 0.) propagater(_eps);
-                setCellIndices();
+                // if necessary, move it away from the origin so that it has meaningful cell indices
+                if (r().isNull()) propagater(_eps);
+                if (!setCellIndices()) return abortPath();  // abort in case of numerical inaccuracies
                 setState(State::Inside);
 
                 // fall through to determine the first actual segment
@@ -284,78 +289,74 @@ public:
                 {
                     // remember the indices of the current cell
                     int icur = _i;
-                    int kcur = _k;
+                    int jcur = _j;
 
                     // calculate the distance travelled inside the cell by considering
                     // the potential exit points for each of the four cell boundaries;
                     // the smallest positive intersection "distance" wins.
                     double ds = DBL_MAX;  // very large, but not infinity (so that infinite values are discarded)
 
-                    // inner radial boundary (not applicable to innermost cell)
-                    if (icur > 0)
+                    // inner radial boundary (not applicable to innermost cell if its radius is zero)
+                    if (_grid->_rv[icur] > 0.)
                     {
                         double s = firstIntersectionSphere(r(), k(), _grid->_rv[icur]);
                         if (s > 0 && s < ds)
                         {
                             ds = s;
-                            _i = icur - 1;
-                            _k = kcur;
+                            _i = icur - 1;  // may be decremented to -1 (inside the innermost boundary)
+                            _j = jcur;
                         }
                     }
 
-                    // outer radial boundary (always applicable)
+                    // outer radial boundary
                     {
                         double s = firstIntersectionSphere(r(), k(), _grid->_rv[icur + 1]);
                         if (s > 0 && s < ds)
                         {
                             ds = s;
-                            _i = icur + 1;  // may be incremented beyond the outermost boundary
-                            _k = kcur;
+                            _i = icur + 1;  // may be incremented to Nr (beyond the outermost boundary)
+                            _j = jcur;
                         }
                     }
 
                     // upper angular boundary (not applicable to uppermost cell)
-                    if (kcur > 0)
+                    if (jcur > 0)
                     {
-                        double s = firstIntersectionCone(r(), k(), _grid->_cv[kcur]);
+                        double s = firstIntersectionCone(r(), k(), _grid->_cv[jcur]);
                         if (s > 0 && s < ds)
                         {
                             ds = s;
                             _i = icur;
-                            _k = kcur - 1;
+                            _j = jcur - 1;
                         }
                     }
 
                     // lower angular boundary (not applicable to lowest cell)
-                    if (kcur < _grid->_Ntheta - 1)
+                    if (jcur < _grid->_Ntheta - 1)
                     {
-                        double s = firstIntersectionCone(r(), k(), _grid->_cv[kcur + 1]);
+                        double s = firstIntersectionCone(r(), k(), _grid->_cv[jcur + 1]);
                         if (s > 0 && s < ds)
                         {
                             ds = s;
                             _i = icur;
-                            _k = kcur + 1;
+                            _j = jcur + 1;
                         }
                     }
 
                     // if an exit point was found, add a segment to the path
-                    if (_i != icur || _k != kcur)
+                    if (_i != icur || _j != jcur)
                     {
-                        setSegment(_grid->index(icur, kcur), ds);
+                        setSegment(_grid->index(icur, jcur), ds);
                         propagater(ds + _eps);
                         if (_i >= _grid->_Nr) setState(State::Outside);
                         return true;
                     }
 
                     // otherwise, move a tiny bit along the path and reset the current cell indices
+                    // if the new current point is outside the grid, there is no segment to return
                     propagater(_eps);
-                    setCellIndices();
-                    if (_i < 0)
-                    {
-                        // the new current point is outside the grid; there is no segment to return
-                        setState(State::Outside);
-                        return false;
-                    }
+                    if (!setCellIndices()) return abortPath();
+
                     // try again from the start of this loop
                 }
             }
@@ -375,119 +376,6 @@ std::unique_ptr<PathSegmentGenerator> Sphere2DSpatialGrid::createPathSegmentGene
     return std::make_unique<MySegmentGenerator>(this);
 }
 
-/*
-{
-    // Small value relative to domain size
-    double rmax = maxRadius();
-    const double eps = 1e-11 * rmax;
-
-    // Initialize the path
-    path->clear();
-    Position bfr = path->position();
-    Direction bfk = path->direction();
-
-    // Move the photon packet to the first grid cell that it will pass.
-    // If it does not pass any grid cell, return an empty path.
-    // Otherwise calculate the distance covered and add a segment to the path.
-    double r2 = bfr.norm2();
-    if (r2 > rmax * rmax)
-    {
-        double ds = firstIntersectionSphere(bfr, bfk, rmax);
-        if (!ds) return path->clear();
-        path->addSegment(-1, ds);
-        bfr += bfk * (ds + eps);
-    }
-    // Move the position a bit away from the origin so that it has a meaningful cell number
-    else if (r2 == 0)
-    {
-        bfr += bfk * eps;
-    }
-
-    // Determine the indices of the cell containing the starting point.
-    double r, theta, phi;
-    bfr.spherical(r, theta, phi);
-    int i = NR::locateFail(_rv, r);
-    int k = NR::locateClip(_thetav, theta);
-
-    // Start the loop over cells/path segments until we leave the grid
-    int inext = i;
-    int knext = k;
-    while (i < _Nr && i >= 0)
-    {
-        // Calculate the distance travelled inside the cell by considering
-        // the potential exit points for each of the four cell boundaries;
-        // the smallest positive intersection "distance" wins.
-        double ds = DBL_MAX;  // very large, but not infinity (so that infinite values are discarded)
-
-        // inner radial boundary (not applicable to innermost cell)
-        if (i > 0)
-        {
-            double s = firstIntersectionSphere(bfr, bfk, _rv[i]);
-            if (s > 0 && s < ds)
-            {
-                ds = s;
-                inext = i - 1;
-                knext = k;
-            }
-        }
-
-        // outer radial boundary (always applicable)
-        {
-            double s = firstIntersectionSphere(bfr, bfk, _rv[i + 1]);
-            if (s > 0 && s < ds)
-            {
-                ds = s;
-                inext = i + 1;  // this will cause the loop to terminate if incremented beyond the outermost boundary
-                knext = k;
-            }
-        }
-
-        // upper angular boundary (not applicable to uppermost cell)
-        if (k > 0)
-        {
-            double s = firstIntersectionCone(bfr, bfk, _cv[k]);
-            if (s > 0 && s < ds)
-            {
-                ds = s;
-                inext = i;
-                knext = k - 1;
-            }
-        }
-
-        // lower angular boundary (not applicable to lowest cell)
-        if (k < _Ntheta - 1)
-        {
-            double s = firstIntersectionCone(bfr, bfk, _cv[k + 1]);
-            if (s > 0 && s < ds)
-            {
-                ds = s;
-                inext = i;
-                knext = k + 1;
-            }
-        }
-
-        // If an exit point was found, add a segment to the path,
-        // move to the next current point, and update the cell indices
-        if (inext != i || knext != k)
-        {
-            path->addSegment(index(i, k), ds);
-            bfr += bfk * (ds + eps);
-            i = inext;
-            k = knext;
-        }
-        // Otherwise, move a tiny bit along the path and reset the current cell indices
-        else
-        {
-            find<Log>()->warning("No exit point found from Spatial grid cell");
-            bfr += bfk * eps;
-            double r, theta, phi;
-            bfr.spherical(r, theta, phi);
-            i = NR::locateFail(_rv, r);
-            k = NR::locateClip(_thetav, theta);
-        }
-    }
-}
-*/
 //////////////////////////////////////////////////////////////////////
 
 void Sphere2DSpatialGrid::write_xy(SpatialGridPlotFile* outfile) const

@@ -25,6 +25,10 @@ class Random;
     \,j=0,\ldots,N_\theta\f$ with \f$0=\theta_0\f$, \f$\theta_j<\theta_{j+1}\f$, and
     \f$\theta_{N_\theta}=\pi\f$.
 
+    \note The algorithm used by the path segment generator in this class requires that the xy-plane
+    \f$\theta=\pi/2\f$ is included in the polar grid. If this is not the case, this point is
+    automatically added, increasing the number of polar bins by one.
+
     In total there are \f$N_{\text{cells}} = N_r\,N_\theta\f$ cells in the grid. */
 class Sphere2DSpatialGrid : public SphereSpatialGrid
 {
@@ -93,19 +97,23 @@ public:
 
     /** This function creates and hands over ownership of a path segment generator (an instance of
         a PathSegmentGenerator subclass) appropriate for a 2D spherical grid, implemented as a
-        private PathSegmentGenerator subclass. The algorithm used to construct the path is
-        described below.
+        private PathSegmentGenerator subclass.
 
         We represent the path by its parameter equation \f${\bf{x}}={\bf{r}}+s\,{\bf{k}}\f$, and we
         assume that \f${\bf{k}}\f$ is a unit vector. The two intersection points with a radial
-        boundary sphere \f${\bf{x}}^2=R^2\f$ are obtained by solving the quadratic equation \f$s^2
-        + 2\,({\bf{r}}\cdot{\bf{k}})\,s + ({\bf{r}}^2-R^2)=0\f$ for \f$s\f$. The two intersection
-        points with an angular boundary cone \f$x_z^2=c^2\,{\bf{x}}^2\f$ (with \f$c=\cos\theta\f$)
-        are obtained by solving the quadratic equation \f$(c^2-k_z^2)\,s^2 +
+        boundary sphere \f${\bf{x}}^2=r_*^2\f$ are obtained by solving the quadratic equation
+        \f$s^2 + 2\,({\bf{r}}\cdot{\bf{k}})\,s + ({\bf{r}}^2-r_*^2)=0\f$ for \f$s\f$. The two
+        intersection points with an angular boundary cone \f$x_z^2=c^2\,{\bf{x}}^2\f$ (with
+        \f$c=\cos\theta_*\f$) are obtained by solving the quadratic equation \f$(c^2-k_z^2)\,s^2 +
         2\,(c^2\,{\bf{r}}\cdot{\bf{k}}-r_z k_z)\,s + (c^2\,{\bf{r}}^2-r_z^2)=0\f$ for \f$s\f$. The
         intersection points with the reflected cone are always more distant than the other cell
         boundaries (the requirement to include the xy-plane \f$\theta=\pi/2\f$ in the grid ensures
-        that this is true) and thus these phantom points are automatically ignored. */
+        that this is true) and thus these phantom points are automatically ignored.
+
+        The segment generator progresses the starting point of the path through the grid along the
+        path's direction. For each step along the way, it calculates the distances to the
+        intersections with all candidate borders of the current cell, and then selects the nearest
+        intersection point. */
     std::unique_ptr<PathSegmentGenerator> createPathSegmentGenerator() const override;
 
 protected:
