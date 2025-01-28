@@ -275,7 +275,7 @@ public:
 
                 // the original position was inside the grid
                 // if necessary, move it away from the origin so that it has meaningful cell indices
-                if (r().isNull()) propagater(_eps);
+                if (r().norm() < _eps) propagater(_eps);
                 if (!setCellIndices()) return abortPath();  // abort in case of numerical inaccuracies
                 setState(State::Inside);
 
